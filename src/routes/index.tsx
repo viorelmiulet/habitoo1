@@ -27,6 +27,8 @@ import { PublicLayout } from "@/components/marketing/PublicLayout";
 import { Reveal } from "@/components/marketing/Reveal";
 import { Container, Eyebrow, Section, SectionHeading } from "@/components/marketing/Section";
 import { publicHead, SITE_URL } from "@/components/marketing/public-head";
+import { getCurrentHostname } from "@/lib/current-host";
+import { isCrmHostname } from "@/lib/host";
 import { DashboardMock } from "@/components/marketing/mockups/DashboardMock";
 import { PropertyMatchesMock, RequestMatchesMock } from "@/components/marketing/mockups/MatchingMock";
 import { PipelineMock } from "@/components/marketing/mockups/PipelineMock";
