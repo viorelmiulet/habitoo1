@@ -13,3 +13,13 @@
 - [ ] Teste end-to-end cu Playwright pe datele QA (login, proprietate, media, vizionare, lead DnD, istoric, contact 360, matching, calendar, dashboard, rapoarte).
 - [ ] Bug-fix-uri descoperite la testare.
 - [ ] Validare finală: build/TS curat, consolă curată, RLS/roluri/audit intacte.
+
+## Site public Habitoo CRM (în lucru)
+- [ ] Tokens navy/gold + utilități marketing în styles.css (fără a atinge tokenii existenți).
+- [ ] Layout public: header sticky + meniu mobil, footer complet, helper SEO (title/description/OG/canonical/fonturi).
+- [ ] Mockup-uri UI din componente reale: dashboard, proprietăți, pipeline lead-uri, matching, rapoarte/obiective, mini-mockups module.
+- [ ] Homepage refăcut: hero, value strip, flux „totul într-un singur loc”, proprietăți, lead-uri, matching, dashboard/rapoarte, beneficii, CTA final, footer.
+- [ ] Pagini: /functionalitati, /preturi, /despre, /contact, /confidentialitate, /termeni.
+- [ ] sitemap.xml + lang="ro".
+- [ ] Verificare 1440/1024/768/390, linkuri, typecheck, build.
+- [ ] (Ulterior) Conectare formular contact la un canal real (necesită adresă de email / tabel dedicat — aprobare utilizator).
