@@ -17,6 +17,7 @@ import { Route as RegisterRouteImport } from './routes/register'
 import { Route as AuthenticatedAppRouteImport } from './routes/_authenticated/app'
 import { Route as AuthenticatedOnboardingRouteImport } from './routes/_authenticated/onboarding'
 import { Route as AuthenticatedAppIndexRouteImport } from './routes/_authenticated/app.index'
+import { Route as AuthenticatedAppRequestsRouteImport } from './routes/_authenticated/app.requests'
 import { Route as AuthenticatedAppContactsIndexRouteImport } from './routes/_authenticated/app.contacts.index'
 import { Route as AuthenticatedAppContactsIdRouteImport } from './routes/_authenticated/app.contacts.$id'
 import { Route as AuthenticatedAppPropertiesIndexRouteImport } from './routes/_authenticated/app.properties.index'
@@ -62,6 +63,12 @@ const AuthenticatedAppIndexRoute = AuthenticatedAppIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AuthenticatedAppRoute,
 } as any)
+const AuthenticatedAppRequestsRoute =
+  AuthenticatedAppRequestsRouteImport.update({
+    id: '/requests',
+    path: '/requests',
+    getParentRoute: () => AuthenticatedAppRoute,
+  } as any)
 const AuthenticatedAppContactsIndexRoute =
   AuthenticatedAppContactsIndexRouteImport.update({
     id: '/contacts/',
@@ -100,6 +107,7 @@ export interface FileRoutesByFullPath {
   '/register': typeof RegisterRoute
   '/app': typeof AuthenticatedAppRouteWithChildren
   '/onboarding': typeof AuthenticatedOnboardingRoute
+  '/app/requests': typeof AuthenticatedAppRequestsRoute
   '/app/': typeof AuthenticatedAppIndexRoute
   '/app/contacts/$id': typeof AuthenticatedAppContactsIdRoute
   '/app/properties/$id': typeof AuthenticatedAppPropertiesIdRoute
@@ -113,6 +121,7 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
+  '/app/requests': typeof AuthenticatedAppRequestsRoute
   '/app': typeof AuthenticatedAppIndexRoute
   '/app/contacts/$id': typeof AuthenticatedAppContactsIdRoute
   '/app/properties/$id': typeof AuthenticatedAppPropertiesIdRoute
@@ -129,6 +138,7 @@ export interface FileRoutesById {
   '/register': typeof RegisterRoute
   '/_authenticated/app': typeof AuthenticatedAppRouteWithChildren
   '/_authenticated/onboarding': typeof AuthenticatedOnboardingRoute
+  '/_authenticated/app/requests': typeof AuthenticatedAppRequestsRoute
   '/_authenticated/app/': typeof AuthenticatedAppIndexRoute
   '/_authenticated/app/contacts/$id': typeof AuthenticatedAppContactsIdRoute
   '/_authenticated/app/properties/$id': typeof AuthenticatedAppPropertiesIdRoute
@@ -145,6 +155,7 @@ export interface FileRouteTypes {
     | '/register'
     | '/app'
     | '/onboarding'
+    | '/app/requests'
     | '/app/'
     | '/app/contacts/$id'
     | '/app/properties/$id'
@@ -158,6 +169,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/register'
     | '/onboarding'
+    | '/app/requests'
     | '/app'
     | '/app/contacts/$id'
     | '/app/properties/$id'
@@ -173,6 +185,7 @@ export interface FileRouteTypes {
     | '/register'
     | '/_authenticated/app'
     | '/_authenticated/onboarding'
+    | '/_authenticated/app/requests'
     | '/_authenticated/app/'
     | '/_authenticated/app/contacts/$id'
     | '/_authenticated/app/properties/$id'
@@ -247,6 +260,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAppIndexRouteImport
       parentRoute: typeof AuthenticatedAppRoute
     }
+    '/_authenticated/app/requests': {
+      id: '/_authenticated/app/requests'
+      path: '/requests'
+      fullPath: '/app/requests'
+      preLoaderRoute: typeof AuthenticatedAppRequestsRouteImport
+      parentRoute: typeof AuthenticatedAppRoute
+    }
     '/_authenticated/app/contacts/': {
       id: '/_authenticated/app/contacts/'
       path: '/contacts'
@@ -286,6 +306,7 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthenticatedAppRouteChildren {
+  AuthenticatedAppRequestsRoute: typeof AuthenticatedAppRequestsRoute
   AuthenticatedAppIndexRoute: typeof AuthenticatedAppIndexRoute
   AuthenticatedAppContactsIdRoute: typeof AuthenticatedAppContactsIdRoute
   AuthenticatedAppPropertiesIdRoute: typeof AuthenticatedAppPropertiesIdRoute
@@ -295,6 +316,7 @@ interface AuthenticatedAppRouteChildren {
 }
 
 const AuthenticatedAppRouteChildren: AuthenticatedAppRouteChildren = {
+  AuthenticatedAppRequestsRoute: AuthenticatedAppRequestsRoute,
   AuthenticatedAppIndexRoute: AuthenticatedAppIndexRoute,
   AuthenticatedAppContactsIdRoute: AuthenticatedAppContactsIdRoute,
   AuthenticatedAppPropertiesIdRoute: AuthenticatedAppPropertiesIdRoute,
