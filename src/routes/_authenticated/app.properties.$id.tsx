@@ -49,6 +49,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
+import { LocationPicker, emptyLocation, type LocationValue } from "@/components/app/LocationPicker";
 import { useCurrentUser } from "@/hooks/use-session";
 import { formatDate, formatDateTime, formatMoney, formatNumber } from "@/lib/format";
 import {
@@ -112,6 +113,8 @@ function PropertyDetailPage() {
   const property = data?.property;
 
   const [draft, setDraft] = useState<Record<string, string>>({});
+  // Localizarea oficială SIRUTA a anunțului (județ + localitate).
+  const [location, setLocation] = useState<LocationValue>(emptyLocation);
   const startEdit = () => {
     if (!property) return;
     setDraft({
@@ -124,6 +127,13 @@ function PropertyDetailPage() {
       address: property.address ?? "",
       description: property.description ?? "",
       internal_notes: property.internal_notes ?? "",
+    });
+    setLocation({
+      countySirutaCode: property.county_siruta_code ?? null,
+      countyName: property.county ?? "",
+      uatSirutaCode: property.uat_siruta_code ?? null,
+      localitySirutaCode: property.locality_siruta_code ?? null,
+      localityName: property.locality_siruta_code ? (property.city ?? "") : "",
     });
     setEditing(true);
   };
@@ -457,7 +467,11 @@ function PropertyDetailPage() {
                   price: draft.price ? Number(draft.price) : null,
                   surface: draft.surface ? Number(draft.surface) : null,
                   rooms: draft.rooms ? Number(draft.rooms) : null,
-                  city: draft.city || null,
+                  city: location.localityName || draft.city || null,
+                  county: location.countyName || null,
+                  county_siruta_code: location.countySirutaCode,
+                  uat_siruta_code: location.uatSirutaCode,
+                  locality_siruta_code: location.localitySirutaCode,
                   district: draft.district || null,
                   address: draft.address || null,
                   description: draft.description || null,
@@ -466,12 +480,12 @@ function PropertyDetailPage() {
               }}
             >
               <div className="grid gap-4 md:grid-cols-2">
+                <LocationPicker idPrefix="edit" value={location} onChange={setLocation} />
                 {[
                   ["title", "Titlu"],
                   ["price", "Preț"],
                   ["surface", "Suprafață (m²)"],
                   ["rooms", "Camere"],
-                  ["city", "Oraș"],
                   ["district", "Zonă"],
                   ["address", "Adresă"],
                 ].map(([key, label]) => (
