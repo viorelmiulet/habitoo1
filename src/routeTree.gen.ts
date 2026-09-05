@@ -11,10 +11,16 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
+import { Route as ConfidentialitateRouteImport } from './routes/confidentialitate'
+import { Route as ContactRouteImport } from './routes/contact'
+import { Route as DespreRouteImport } from './routes/despre'
 import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
+import { Route as FunctionalitatiRouteImport } from './routes/functionalitati'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as PreturiRouteImport } from './routes/preturi'
 import { Route as RegisterRouteImport } from './routes/register'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
+import { Route as TermeniRouteImport } from './routes/termeni'
 import { Route as AuthenticatedAppRouteImport } from './routes/_authenticated/app'
 import { Route as AuthenticatedOnboardingRouteImport } from './routes/_authenticated/onboarding'
 import { Route as AuthenticatedSuperadminRouteImport } from './routes/_authenticated/superadmin'
@@ -50,14 +56,39 @@ const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
   id: '/_authenticated',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ConfidentialitateRoute = ConfidentialitateRouteImport.update({
+  id: '/confidentialitate',
+  path: '/confidentialitate',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ContactRoute = ContactRouteImport.update({
+  id: '/contact',
+  path: '/contact',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DespreRoute = DespreRouteImport.update({
+  id: '/despre',
+  path: '/despre',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ForgotPasswordRoute = ForgotPasswordRouteImport.update({
   id: '/forgot-password',
   path: '/forgot-password',
   getParentRoute: () => rootRouteImport,
 } as any)
+const FunctionalitatiRoute = FunctionalitatiRouteImport.update({
+  id: '/functionalitati',
+  path: '/functionalitati',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PreturiRoute = PreturiRouteImport.update({
+  id: '/preturi',
+  path: '/preturi',
   getParentRoute: () => rootRouteImport,
 } as any)
 const RegisterRoute = RegisterRouteImport.update({
@@ -68,6 +99,11 @@ const RegisterRoute = RegisterRouteImport.update({
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
   id: '/reset-password',
   path: '/reset-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TermeniRoute = TermeniRouteImport.update({
+  id: '/termeni',
+  path: '/termeni',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedAppRoute = AuthenticatedAppRouteImport.update({
@@ -215,10 +251,16 @@ const AuthenticatedAppRequestsIdRoute =
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/confidentialitate': typeof ConfidentialitateRoute
+  '/contact': typeof ContactRoute
+  '/despre': typeof DespreRoute
   '/forgot-password': typeof ForgotPasswordRoute
+  '/functionalitati': typeof FunctionalitatiRoute
   '/login': typeof LoginRoute
+  '/preturi': typeof PreturiRoute
   '/register': typeof RegisterRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/termeni': typeof TermeniRoute
   '/app': typeof AuthenticatedAppRouteWithChildren
   '/onboarding': typeof AuthenticatedOnboardingRoute
   '/superadmin': typeof AuthenticatedSuperadminRouteWithChildren
@@ -247,10 +289,16 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/confidentialitate': typeof ConfidentialitateRoute
+  '/contact': typeof ContactRoute
+  '/despre': typeof DespreRoute
   '/forgot-password': typeof ForgotPasswordRoute
+  '/functionalitati': typeof FunctionalitatiRoute
   '/login': typeof LoginRoute
+  '/preturi': typeof PreturiRoute
   '/register': typeof RegisterRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/termeni': typeof TermeniRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/app/activities': typeof AuthenticatedAppActivitiesRoute
@@ -279,10 +327,16 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
+  '/confidentialitate': typeof ConfidentialitateRoute
+  '/contact': typeof ContactRoute
+  '/despre': typeof DespreRoute
   '/forgot-password': typeof ForgotPasswordRoute
+  '/functionalitati': typeof FunctionalitatiRoute
   '/login': typeof LoginRoute
+  '/preturi': typeof PreturiRoute
   '/register': typeof RegisterRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/termeni': typeof TermeniRoute
   '/_authenticated/app': typeof AuthenticatedAppRouteWithChildren
   '/_authenticated/onboarding': typeof AuthenticatedOnboardingRoute
   '/_authenticated/superadmin': typeof AuthenticatedSuperadminRouteWithChildren
@@ -313,10 +367,16 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/confidentialitate'
+    | '/contact'
+    | '/despre'
     | '/forgot-password'
+    | '/functionalitati'
     | '/login'
+    | '/preturi'
     | '/register'
     | '/reset-password'
+    | '/termeni'
     | '/app'
     | '/onboarding'
     | '/superadmin'
@@ -345,10 +405,16 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/confidentialitate'
+    | '/contact'
+    | '/despre'
     | '/forgot-password'
+    | '/functionalitati'
     | '/login'
+    | '/preturi'
     | '/register'
     | '/reset-password'
+    | '/termeni'
     | '/onboarding'
     | '/auth/callback'
     | '/app/activities'
@@ -376,10 +442,16 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/_authenticated'
+    | '/confidentialitate'
+    | '/contact'
+    | '/despre'
     | '/forgot-password'
+    | '/functionalitati'
     | '/login'
+    | '/preturi'
     | '/register'
     | '/reset-password'
+    | '/termeni'
     | '/_authenticated/app'
     | '/_authenticated/onboarding'
     | '/_authenticated/superadmin'
@@ -410,10 +482,16 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
+  ConfidentialitateRoute: typeof ConfidentialitateRoute
+  ContactRoute: typeof ContactRoute
+  DespreRoute: typeof DespreRoute
   ForgotPasswordRoute: typeof ForgotPasswordRoute
+  FunctionalitatiRoute: typeof FunctionalitatiRoute
   LoginRoute: typeof LoginRoute
+  PreturiRoute: typeof PreturiRoute
   RegisterRoute: typeof RegisterRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
+  TermeniRoute: typeof TermeniRoute
   AuthCallbackRoute: typeof AuthCallbackRoute
 }
 
@@ -433,6 +511,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/confidentialitate': {
+      id: '/confidentialitate'
+      path: '/confidentialitate'
+      fullPath: '/confidentialitate'
+      preLoaderRoute: typeof ConfidentialitateRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/contact': {
+      id: '/contact'
+      path: '/contact'
+      fullPath: '/contact'
+      preLoaderRoute: typeof ContactRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/despre': {
+      id: '/despre'
+      path: '/despre'
+      fullPath: '/despre'
+      preLoaderRoute: typeof DespreRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/forgot-password': {
       id: '/forgot-password'
       path: '/forgot-password'
@@ -440,11 +539,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ForgotPasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/functionalitati': {
+      id: '/functionalitati'
+      path: '/functionalitati'
+      fullPath: '/functionalitati'
+      preLoaderRoute: typeof FunctionalitatiRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/login': {
       id: '/login'
       path: '/login'
       fullPath: '/login'
       preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/preturi': {
+      id: '/preturi'
+      path: '/preturi'
+      fullPath: '/preturi'
+      preLoaderRoute: typeof PreturiRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/register': {
@@ -459,6 +572,13 @@ declare module '@tanstack/react-router' {
       path: '/reset-password'
       fullPath: '/reset-password'
       preLoaderRoute: typeof ResetPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/termeni': {
+      id: '/termeni'
+      path: '/termeni'
+      fullPath: '/termeni'
+      preLoaderRoute: typeof TermeniRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/app': {
@@ -732,10 +852,16 @@ const AuthenticatedRouteRouteWithChildren =
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
+  ConfidentialitateRoute: ConfidentialitateRoute,
+  ContactRoute: ContactRoute,
+  DespreRoute: DespreRoute,
   ForgotPasswordRoute: ForgotPasswordRoute,
+  FunctionalitatiRoute: FunctionalitatiRoute,
   LoginRoute: LoginRoute,
+  PreturiRoute: PreturiRoute,
   RegisterRoute: RegisterRoute,
   ResetPasswordRoute: ResetPasswordRoute,
+  TermeniRoute: TermeniRoute,
   AuthCallbackRoute: AuthCallbackRoute,
 }
 export const routeTree = rootRouteImport
