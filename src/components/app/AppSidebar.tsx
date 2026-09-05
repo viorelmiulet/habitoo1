@@ -18,6 +18,7 @@ import {
   Users,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { BrandLogo } from "@/components/brand/BrandLogo";
 
 type NavItem = { label: string; to: LinkProps["to"]; icon: typeof Gauge; exact?: boolean };
 type NavGroup = { title?: string; items: NavItem[] };
@@ -86,12 +87,11 @@ export function AppSidebar({
 }) {
   return (
     <div className="flex h-full flex-col bg-sidebar text-sidebar-foreground">
-      <div className="flex items-center gap-3 px-5 py-5">
-        <span className="flex size-9 items-center justify-center rounded-xl bg-sidebar-primary text-sidebar-primary-foreground">
-          <Building2 className="size-5" />
-        </span>
-        <div className="min-w-0">
-          <p className="truncate text-sm font-semibold">Habitoo</p>
+      <div className="px-4 pt-4 pb-5">
+        <div className="rounded-lg bg-sidebar-foreground px-3 py-1.5">
+          <BrandLogo className="mx-auto w-full max-w-40" priority />
+        </div>
+        <div className="mt-2 min-w-0 px-1">
           <p className="flex items-center gap-1.5 truncate text-xs text-sidebar-foreground/60">
             <span className="truncate">{organizationName}</span>
             {isDemo ? (

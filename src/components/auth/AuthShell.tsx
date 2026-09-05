@@ -1,5 +1,6 @@
 import { Link } from "@tanstack/react-router";
-import { Building2, CheckCircle2 } from "lucide-react";
+import { CheckCircle2 } from "lucide-react";
+import { BrandLogo } from "@/components/brand/BrandLogo";
 
 const bullets = [
   "Portofoliu, clienți, cereri și lead-uri într-un singur loc",
@@ -21,15 +22,13 @@ export function AuthShell({
   return (
     <div className="grid min-h-screen lg:grid-cols-2">
       <div className="hero-gradient hidden flex-col justify-between p-12 lg:flex">
-        <Link to="/" className="flex items-center gap-3">
-          <span className="flex size-10 items-center justify-center rounded-xl bg-primary text-primary-foreground">
-            <Building2 className="size-5" />
-          </span>
-          <span className="text-lg font-semibold">Habitoo CRM</span>
+        <Link to="/" className="w-fit" aria-label="Habitoo CRM — pagina principală">
+          <BrandLogo className="w-44" priority />
         </Link>
         <div className="max-w-md space-y-6">
           <h2 className="text-3xl font-semibold tracking-tight">
-            Tot ce are nevoie o agenție imobiliară, <span className="text-gradient">într-un singur loc</span>
+            Tot ce are nevoie o agenție imobiliară,{" "}
+            <span className="text-gradient">într-un singur loc</span>
           </h2>
           <ul className="space-y-3">
             {bullets.map((b) => (
@@ -40,17 +39,16 @@ export function AuthShell({
             ))}
           </ul>
         </div>
-        <p className="text-xs text-muted-foreground">Platformă multi-agenție, cu izolare completă a datelor.</p>
+        <p className="text-xs text-muted-foreground">
+          Platformă multi-agenție, cu izolare completă a datelor.
+        </p>
       </div>
 
       <div className="flex items-center justify-center px-4 py-12">
         <div className="w-full max-w-sm">
           <div className="mb-8 lg:hidden">
-            <Link to="/" className="flex items-center gap-2 text-lg font-semibold">
-              <span className="flex size-9 items-center justify-center rounded-xl bg-primary text-primary-foreground">
-                <Building2 className="size-5" />
-              </span>
-              Habitoo CRM
+            <Link to="/" className="block w-fit" aria-label="Habitoo CRM — pagina principală">
+              <BrandLogo className="w-40" priority />
             </Link>
           </div>
           <h1 className="text-2xl font-semibold tracking-tight">{title}</h1>
