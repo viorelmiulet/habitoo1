@@ -112,9 +112,20 @@
   --sidebar-accent-foreground: oklch(0.97 0.005 245);
   --sidebar-border: oklch(0.32 0.03 248);
   --sidebar-ring: oklch(0.62 0.1 190);
+  /* Brand navy / gold — sampled from the Habitoo logo; used by the public site. */
+  --navy: oklch(0.22 0.035 245);
+  --navy-foreground: oklch(0.97 0.006 240);
+  --navy-muted: oklch(0.72 0.02 240);
+  --gold: oklch(0.63 0.11 72);
+  --gold-foreground: oklch(0.99 0.005 80);
 }
 
 .dark {
+  --navy: oklch(0.17 0.03 245);
+  --navy-foreground: oklch(0.97 0.006 240);
+  --navy-muted: oklch(0.72 0.02 240);
+  --gold: oklch(0.72 0.12 76);
+  --gold-foreground: oklch(0.2 0.04 70);
   --background: oklch(0.19 0.022 248);
   --foreground: oklch(0.95 0.006 245);
   --surface: oklch(0.235 0.024 248);
