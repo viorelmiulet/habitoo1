@@ -1,0 +1,1 @@
+REVOKE ALL ON FUNCTION public.admin_change_user_organization(uuid, uuid) FROM anon;
