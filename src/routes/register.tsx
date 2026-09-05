@@ -7,6 +7,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable/index";
+import { authErrorMessage } from "@/lib/auth-errors";
+
 
 export const Route = createFileRoute("/register")({
   head: () => ({
@@ -31,6 +33,8 @@ function RegisterPage() {
   const navigate = useNavigate();
   const [form, setForm] = useState({ fullName: "", agency: "", email: "", password: "" });
   const [loading, setLoading] = useState(false);
+  const [notice, setNotice] = useState<string | null>(null);
+
 
   const set = (key: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement>) =>
     setForm((f) => ({ ...f, [key]: e.target.value }));
@@ -42,19 +46,30 @@ function RegisterPage() {
       email: form.email,
       password: form.password,
       options: {
-        emailRedirectTo: `${window.location.origin}/app`,
+        emailRedirectTo: `${window.location.origin}/auth/callback`,
         data: { full_name: form.fullName, agency_name: form.agency },
       },
     });
     setLoading(false);
 
     if (error) {
-      toast.error(error.message);
+      toast.error(authErrorMessage(error.message, error.code));
+      return;
+    }
+    // Supabase nu dezvăluie conturile existente: întoarce user fără identități.
+    const existingAccount = Boolean(data.user && (data.user.identities?.length ?? 0) === 0);
+    if (existingAccount) {
+      setNotice(
+        "Există deja un cont cu acest email. Autentifică-te cu parola, cu Google sau resetează parola.",
+      );
+      toast.error("Există deja un cont cu acest email.");
       return;
     }
     if (!data.session) {
-      toast.success("Cont creat. Confirmă adresa de email pentru a continua.");
-      navigate({ to: "/login" });
+      setNotice(
+        `Cont creat. Verifică emailul ${form.email} pentru linkul de confirmare (verifică și folderul Spam). Poți retrimite mesajul din pagina de autentificare.`,
+      );
+      toast.success("Cont creat. Verifică emailul pentru confirmare.");
       return;
     }
     navigate({ to: "/onboarding" });
@@ -62,15 +77,16 @@ function RegisterPage() {
 
   const google = async () => {
     const result = await lovable.auth.signInWithOAuth("google", {
-      redirect_uri: window.location.origin,
+      redirect_uri: `${window.location.origin}/auth/callback`,
     });
     if (result.error) {
-      toast.error("Autentificarea cu Google a eșuat.");
+      toast.error(authErrorMessage(String(result.error)));
       return;
     }
     if (result.redirected) return;
-    navigate({ to: "/onboarding" });
+    navigate({ to: "/app" });
   };
+
 
   return (
     <AuthShell
@@ -85,7 +101,9 @@ function RegisterPage() {
         </>
       }
     >
+      {notice ? <div className="panel mb-4 p-4 text-sm text-muted-foreground">{notice}</div> : null}
       <form onSubmit={submit} className="space-y-4">
+
         <div className="space-y-2">
           <Label htmlFor="fullName">Nume complet</Label>
           <Input id="fullName" required value={form.fullName} onChange={set("fullName")} />

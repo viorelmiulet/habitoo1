@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable/index";
+import { authErrorMessage, authKindMessage, classifyAuthError } from "@/lib/auth-errors";
 
 export const Route = createFileRoute("/login")({
   head: () => ({
@@ -32,6 +33,8 @@ function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [needsConfirm, setNeedsConfirm] = useState(false);
+  const [resending, setResending] = useState(false);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -39,18 +42,40 @@ function LoginPage() {
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     setLoading(false);
     if (error) {
-      toast.error(error.message);
+      const kind = classifyAuthError(error.message, error.code);
+      setNeedsConfirm(kind === "email_not_confirmed");
+      toast.error(authKindMessage(kind));
       return;
     }
+    setNeedsConfirm(false);
     navigate({ to: "/app" });
+  };
+
+  const resend = async () => {
+    if (!email) {
+      toast.error("Completează adresa de email.");
+      return;
+    }
+    setResending(true);
+    const { error } = await supabase.auth.resend({
+      type: "signup",
+      email,
+      options: { emailRedirectTo: `${window.location.origin}/auth/callback` },
+    });
+    setResending(false);
+    if (error) {
+      toast.error(authErrorMessage(error.message, error.code));
+      return;
+    }
+    toast.success("Am retrimis emailul de confirmare. Verifică și folderul Spam.");
   };
 
   const google = async () => {
     const result = await lovable.auth.signInWithOAuth("google", {
-      redirect_uri: window.location.origin,
+      redirect_uri: `${window.location.origin}/auth/callback`,
     });
     if (result.error) {
-      toast.error("Autentificarea cu Google a eșuat.");
+      toast.error(authErrorMessage(String(result.error)));
       return;
     }
     if (result.redirected) return;
@@ -103,6 +128,17 @@ function LoginPage() {
           {loading ? "Se autentifică…" : "Autentificare"}
         </Button>
       </form>
+
+      {needsConfirm ? (
+        <div className="panel mt-4 space-y-3 p-4 text-sm">
+          <p className="text-muted-foreground">
+            Emailul nu este confirmat încă. Deschide linkul din mesajul primit sau cere unul nou.
+          </p>
+          <Button type="button" variant="outline" size="sm" onClick={resend} disabled={resending}>
+            {resending ? "Se trimite…" : "Retrimite emailul de confirmare"}
+          </Button>
+        </div>
+      ) : null}
 
       <div className="my-6 flex items-center gap-3 text-xs text-muted-foreground">
         <span className="h-px flex-1 bg-border" /> sau <span className="h-px flex-1 bg-border" />
