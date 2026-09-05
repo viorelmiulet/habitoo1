@@ -4,7 +4,7 @@ import { superadminNav } from "@/components/app/AppSidebar";
 import { useCurrentUser } from "@/hooks/use-session";
 
 export const Route = createFileRoute("/_authenticated/superadmin")({
-  component: SuperadminLayout;
+  component: SuperadminLayout,
 });
 
 function SuperadminLayout() {
