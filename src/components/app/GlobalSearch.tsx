@@ -119,10 +119,10 @@ export function GlobalSearch() {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="flex h-9 w-full max-w-md items-center gap-2 rounded-lg border border-border bg-surface px-3 text-sm text-muted-foreground transition-colors hover:border-primary/40 hover:text-foreground"
+        className="flex h-9 w-full max-w-md min-w-0 items-center gap-2 rounded-lg border border-border bg-surface px-3 text-sm text-muted-foreground transition-colors hover:border-primary/40 hover:text-foreground"
       >
         <Search className="size-4" />
-        <span className="truncate">Caută proprietăți, contacte, telefoane, ID-uri…</span>
+        <span className="min-w-0 truncate">Caută proprietăți, contacte, telefoane, ID-uri…</span>
         <kbd className="ml-auto hidden rounded border border-border bg-muted px-1.5 py-0.5 text-[10px] font-medium sm:inline">
           ⌘K
         </kbd>

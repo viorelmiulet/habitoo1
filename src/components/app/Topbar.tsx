@@ -52,7 +52,7 @@ export function Topbar({
         <Menu className="size-5" />
       </Button>
 
-      <div className="flex-1">
+      <div className="min-w-0 flex-1">
         <GlobalSearch />
       </div>
 
