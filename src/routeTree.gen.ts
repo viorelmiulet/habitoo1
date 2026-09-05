@@ -17,6 +17,7 @@ import { Route as RegisterRouteImport } from './routes/register'
 import { Route as AuthenticatedAppRouteImport } from './routes/_authenticated/app'
 import { Route as AuthenticatedOnboardingRouteImport } from './routes/_authenticated/onboarding'
 import { Route as AuthenticatedSuperadminRouteImport } from './routes/_authenticated/superadmin'
+import { Route as AuthCallbackRouteImport } from './routes/auth.callback'
 import { Route as AuthenticatedAppIndexRouteImport } from './routes/_authenticated/app.index'
 import { Route as AuthenticatedAppActivitiesRouteImport } from './routes/_authenticated/app.activities'
 import { Route as AuthenticatedAppCalendarRouteImport } from './routes/_authenticated/app.calendar'
@@ -77,6 +78,11 @@ const AuthenticatedSuperadminRoute = AuthenticatedSuperadminRouteImport.update({
   id: '/superadmin',
   path: '/superadmin',
   getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthCallbackRoute = AuthCallbackRouteImport.update({
+  id: '/auth/callback',
+  path: '/auth/callback',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedAppIndexRoute = AuthenticatedAppIndexRouteImport.update({
   id: '/',
@@ -209,6 +215,7 @@ export interface FileRoutesByFullPath {
   '/app': typeof AuthenticatedAppRouteWithChildren
   '/onboarding': typeof AuthenticatedOnboardingRoute
   '/superadmin': typeof AuthenticatedSuperadminRouteWithChildren
+  '/auth/callback': typeof AuthCallbackRoute
   '/app/activities': typeof AuthenticatedAppActivitiesRoute
   '/app/calendar': typeof AuthenticatedAppCalendarRoute
   '/app/goals': typeof AuthenticatedAppGoalsRoute
@@ -237,6 +244,7 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
+  '/auth/callback': typeof AuthCallbackRoute
   '/app/activities': typeof AuthenticatedAppActivitiesRoute
   '/app/calendar': typeof AuthenticatedAppCalendarRoute
   '/app/goals': typeof AuthenticatedAppGoalsRoute
@@ -269,6 +277,7 @@ export interface FileRoutesById {
   '/_authenticated/app': typeof AuthenticatedAppRouteWithChildren
   '/_authenticated/onboarding': typeof AuthenticatedOnboardingRoute
   '/_authenticated/superadmin': typeof AuthenticatedSuperadminRouteWithChildren
+  '/auth/callback': typeof AuthCallbackRoute
   '/_authenticated/app/activities': typeof AuthenticatedAppActivitiesRoute
   '/_authenticated/app/calendar': typeof AuthenticatedAppCalendarRoute
   '/_authenticated/app/goals': typeof AuthenticatedAppGoalsRoute
@@ -301,6 +310,7 @@ export interface FileRouteTypes {
     | '/app'
     | '/onboarding'
     | '/superadmin'
+    | '/auth/callback'
     | '/app/activities'
     | '/app/calendar'
     | '/app/goals'
@@ -329,6 +339,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/register'
     | '/onboarding'
+    | '/auth/callback'
     | '/app/activities'
     | '/app/calendar'
     | '/app/goals'
@@ -360,6 +371,7 @@ export interface FileRouteTypes {
     | '/_authenticated/app'
     | '/_authenticated/onboarding'
     | '/_authenticated/superadmin'
+    | '/auth/callback'
     | '/_authenticated/app/activities'
     | '/_authenticated/app/calendar'
     | '/_authenticated/app/goals'
@@ -389,6 +401,7 @@ export interface RootRouteChildren {
   ForgotPasswordRoute: typeof ForgotPasswordRoute
   LoginRoute: typeof LoginRoute
   RegisterRoute: typeof RegisterRoute
+  AuthCallbackRoute: typeof AuthCallbackRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -448,6 +461,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/superadmin'
       preLoaderRoute: typeof AuthenticatedSuperadminRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/auth/callback': {
+      id: '/auth/callback'
+      path: '/auth/callback'
+      fullPath: '/auth/callback'
+      preLoaderRoute: typeof AuthCallbackRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/_authenticated/app/': {
       id: '/_authenticated/app/'
@@ -695,6 +715,7 @@ const rootRouteChildren: RootRouteChildren = {
   ForgotPasswordRoute: ForgotPasswordRoute,
   LoginRoute: LoginRoute,
   RegisterRoute: RegisterRoute,
+  AuthCallbackRoute: AuthCallbackRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
