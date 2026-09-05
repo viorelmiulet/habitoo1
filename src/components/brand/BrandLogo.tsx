@@ -5,13 +5,14 @@ import { cn } from "@/lib/utils";
 type BrandLogoProps = {
   className?: string;
   fullIdentity?: boolean;
+  markOnly?: boolean;
   priority?: boolean;
 };
 
-export function BrandLogo({ className, fullIdentity = false, priority = false }: BrandLogoProps) {
+export function BrandLogo({ className, fullIdentity = false, markOnly = false, priority = false }: BrandLogoProps) {
   return (
     <img
-      src={fullIdentity ? habitooIdentity.url : habitooLogo.url}
+      src={markOnly ? "/favicon.png" : fullIdentity ? habitooIdentity.url : habitooLogo.url}
       alt="Habitoo CRM"
       className={cn("block h-auto max-w-full object-contain", className)}
       loading={priority ? "eager" : "lazy"}

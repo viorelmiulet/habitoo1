@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { GlobalSearch } from "@/components/app/GlobalSearch";
 import { QuickAdd } from "@/components/app/QuickAdd";
+import { BrandLogo } from "@/components/brand/BrandLogo";
 import { supabase } from "@/integrations/supabase/client";
 import { initials } from "@/lib/format";
 import { roleLabels } from "@/lib/labels";
@@ -51,6 +52,10 @@ export function Topbar({
       <Button variant="ghost" size="icon" className="lg:hidden" onClick={onOpenMenu}>
         <Menu className="size-5" />
       </Button>
+
+      <Link to="/app" className="shrink-0 lg:hidden" aria-label="Habitoo CRM — dashboard">
+        <BrandLogo markOnly className="size-8" priority />
+      </Link>
 
       <div className="min-w-0 flex-1">
         <GlobalSearch />
