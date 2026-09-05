@@ -18,6 +18,7 @@ import { PageHeader } from "@/components/app/PageHeader";
 import { DetailSkeleton } from "@/components/app/LoadingState";
 import { StatusBadge } from "@/components/app/StatusBadge";
 import { EmptyState } from "@/components/app/EmptyState";
+import { ConfirmDialog } from "@/components/app/ConfirmDialog";
 import { ActivityDialog } from "@/components/app/ActivityDialog";
 import { PropertyMediaManager } from "@/components/app/PropertyMediaManager";
 import { DocumentsPanel } from "@/components/app/DocumentsPanel";
@@ -72,6 +73,7 @@ function PropertyDetailPage() {
   const { data: user } = useCurrentUser();
   const orgId = user?.organization?.id;
   const [editing, setEditing] = useState(false);
+  const [confirmArchive, setConfirmArchive] = useState(false);
   const [activityDialog, setActivityDialog] = useState<{ open: boolean; kind?: "viewing" | "call" }>({
     open: false,
   });
@@ -383,7 +385,7 @@ function PropertyDetailPage() {
                   </DropdownMenuItem>
                 ))}
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => archive.mutate()} className="text-destructive">
+                <DropdownMenuItem onClick={() => setConfirmArchive(true)} className="text-destructive">
                   Arhivează
                 </DropdownMenuItem>
               </DropdownMenuContent>
@@ -783,6 +785,16 @@ function PropertyDetailPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <ConfirmDialog
+        open={confirmArchive}
+        onOpenChange={setConfirmArchive}
+        title="Arhivezi această proprietate?"
+        description="Proprietatea va dispărea din listele active și de pe pagina publică. Poți schimba oricând statusul înapoi."
+        confirmLabel="Arhivează"
+        destructive
+        onConfirm={() => archive.mutateAsync()}
+      />
     </>
   );
 }

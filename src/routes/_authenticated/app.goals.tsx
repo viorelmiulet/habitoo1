@@ -7,6 +7,7 @@ import { toastError } from "@/lib/errors";
 import { PageHeader } from "@/components/app/PageHeader";
 import { CardGridSkeleton } from "@/components/app/LoadingState";
 import { EmptyState } from "@/components/app/EmptyState";
+import { ConfirmDialog } from "@/components/app/ConfirmDialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -51,6 +52,7 @@ function GoalsPage() {
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
 
   const { data, isLoading } = useQuery({
     queryKey: ["goals-data"],
@@ -246,7 +248,9 @@ function GoalsPage() {
                         size="icon"
                         variant="ghost"
                         className="size-8 text-destructive"
-                        onClick={() => remove.mutate(g.id)}
+                        aria-label="Șterge obiectivul"
+                        title="Șterge obiectivul"
+                        onClick={() => setDeleteTarget(g.id)}
                       >
                         <Trash2 className="size-4" />
                       </Button>
@@ -356,6 +360,16 @@ function GoalsPage() {
           </form>
         </DialogContent>
       </Dialog>
+
+      <ConfirmDialog
+        open={deleteTarget !== null}
+        onOpenChange={(o) => !o && setDeleteTarget(null)}
+        title="Ștergi acest obiectiv?"
+        description="Obiectivul și progresul înregistrat vor fi eliminate definitiv."
+        confirmLabel="Șterge"
+        destructive
+        onConfirm={() => (deleteTarget ? remove.mutateAsync(deleteTarget) : undefined)}
+      />
     </>
   );
 }

@@ -54,6 +54,8 @@ export function ConfirmDialog({
       await onConfirm();
       onOpenChange(false);
       setTyped("");
+    } catch {
+      // Eroarea este deja raportată de mutation (toast); dialogul rămâne deschis pentru reîncercare.
     } finally {
       setPending(false);
     }
