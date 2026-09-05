@@ -14,6 +14,7 @@ import {
   X,
 } from "lucide-react";
 import { toast } from "sonner";
+import { toastError } from "@/lib/errors";
 import { PageHeader } from "@/components/app/PageHeader";
 import { StatusBadge } from "@/components/app/StatusBadge";
 import { EmptyState } from "@/components/app/EmptyState";
@@ -287,7 +288,7 @@ function PropertiesPage() {
       setSelected([]);
       toast.success("Statusul a fost actualizat.");
     },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: Error) => toastError(e),
   });
 
   const assignAgent = useMutation({
@@ -300,7 +301,7 @@ function PropertiesPage() {
       setSelected([]);
       toast.success("Agent asignat.");
     },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: Error) => toastError(e),
   });
 
   const archiveMany = useMutation({
@@ -314,7 +315,7 @@ function PropertiesPage() {
       setArchiveTarget(null);
       toast.success("Proprietăți arhivate.");
     },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: Error) => toastError(e),
   });
 
   const addTag = useMutation({
@@ -334,7 +335,7 @@ function PropertiesPage() {
       setSelected([]);
       toast.success("Etichetă adăugată.");
     },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: Error) => toastError(e),
   });
 
   const publishMany = useMutation({
@@ -350,7 +351,7 @@ function PropertiesPage() {
       setSelected([]);
       toast.success("Proprietăți publicate.");
     },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: Error) => toastError(e),
   });
 
   const toggleFavorite = useMutation({
@@ -374,7 +375,7 @@ function PropertiesPage() {
       }
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["property-favorites", user?.userId] }),
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: Error) => toastError(e),
   });
 
   const allSelected = rows.length > 0 && selected.length === rows.length;

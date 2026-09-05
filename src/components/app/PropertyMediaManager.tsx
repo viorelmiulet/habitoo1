@@ -13,6 +13,7 @@ import {
   X,
 } from "lucide-react";
 import { toast } from "sonner";
+import { toastError } from "@/lib/errors";
 import { EmptyState } from "@/components/app/EmptyState";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
@@ -124,7 +125,7 @@ export function PropertyMediaManager({
       toast.success(count === 1 ? "Imagine încărcată." : `${count} imagini încărcate.`);
       invalidate();
     },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: Error) => toastError(e),
     onSettled: () => setUploading(false),
   });
 
@@ -138,7 +139,7 @@ export function PropertyMediaManager({
       if (error) throw error;
     },
     onSuccess: () => invalidate(),
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: Error) => toastError(e),
   });
 
   const setPrimary = useMutation({
@@ -155,7 +156,7 @@ export function PropertyMediaManager({
       toast.success("Imagine principală actualizată.");
       invalidate();
     },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: Error) => toastError(e),
   });
 
   const removeImage = useMutation({
@@ -180,7 +181,7 @@ export function PropertyMediaManager({
       toast.success("Imagine ștearsă.");
       invalidate();
     },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: Error) => toastError(e),
   });
 
   const rotate = useMutation({
@@ -196,7 +197,7 @@ export function PropertyMediaManager({
       toast.success("Imagine rotită.");
       invalidate();
     },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: Error) => toastError(e),
   });
 
   const reorder = useMutation({
@@ -210,7 +211,7 @@ export function PropertyMediaManager({
       if (failed?.error) throw failed.error;
     },
     onSuccess: () => invalidate(),
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: Error) => toastError(e),
   });
 
   const MAX_UPLOAD_BYTES = 15 * 1024 * 1024;

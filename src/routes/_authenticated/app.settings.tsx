@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "sonner";
+import { toastError } from "@/lib/errors";
 import { PageHeader } from "@/components/app/PageHeader";
 import { StatusBadge } from "@/components/app/StatusBadge";
 import { Button } from "@/components/ui/button";
@@ -64,7 +65,7 @@ function SettingsPage() {
       queryClient.invalidateQueries({ queryKey: currentUserQueryKey });
       toast.success("Profilul a fost actualizat.");
     },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: Error) => toastError(e),
   });
 
   const saveOrg = useMutation({
@@ -85,7 +86,7 @@ function SettingsPage() {
       queryClient.invalidateQueries({ queryKey: currentUserQueryKey });
       toast.success("Datele agenției au fost salvate.");
     },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: Error) => toastError(e),
   });
 
   return (

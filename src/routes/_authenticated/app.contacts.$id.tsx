@@ -15,6 +15,7 @@ import {
   UserRound,
 } from "lucide-react";
 import { toast } from "sonner";
+import { toastError } from "@/lib/errors";
 import { PageHeader } from "@/components/app/PageHeader";
 import { StatusBadge } from "@/components/app/StatusBadge";
 import { EmptyState } from "@/components/app/EmptyState";
@@ -120,7 +121,7 @@ function ContactDetailPage() {
       queryClient.invalidateQueries({ queryKey: ["contact", id] });
       toast.success("Nota a fost salvată în istoric.");
     },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: Error) => toastError(e),
   });
 
   const [edit, setEdit] = useState<Record<string, string> | null>(null);
@@ -135,7 +136,7 @@ function ContactDetailPage() {
       queryClient.invalidateQueries({ queryKey: ["contacts"] });
       toast.success("Contact actualizat.");
     },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: Error) => toastError(e),
   });
 
   const [requestForm, setRequestForm] = useState({ title: "", kind: "buy", budget_min: "", budget_max: "" });
@@ -162,7 +163,7 @@ function ContactDetailPage() {
       queryClient.invalidateQueries({ queryKey: ["contact", id] });
       toast.success("Cererea a fost creată.");
     },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: Error) => toastError(e),
   });
 
   const timeline = useMemo(() => {

@@ -3,6 +3,7 @@ import { Link, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Building2, CalendarPlus, Eye, Flame, Plus, Target, UserRound } from "lucide-react";
 import { toast } from "sonner";
+import { toastError } from "@/lib/errors";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -59,7 +60,7 @@ function ContactSheet({ open, onOpenChange }: { open: boolean; onOpenChange: (v:
       setForm({ first_name: "", last_name: "", type: "buyer", phone: "", email: "" });
       toast.success("Contactul a fost adăugat.");
     },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: Error) => toastError(e),
   });
 
   return (
@@ -145,7 +146,7 @@ function LeadSheet({ open, onOpenChange }: { open: boolean; onOpenChange: (v: bo
       setForm({ name: "", phone: "", email: "", source: "" });
       toast.success("Lead-ul a fost adăugat.");
     },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: Error) => toastError(e),
   });
 
   return (

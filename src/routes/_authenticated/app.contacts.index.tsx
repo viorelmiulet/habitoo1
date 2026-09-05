@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
 import { Bookmark, Download, LayoutGrid, List, Search, Trash2, UserRound, X } from "lucide-react";
 import { toast } from "sonner";
+import { toastError } from "@/lib/errors";
 import { PageHeader } from "@/components/app/PageHeader";
 import { StatusBadge } from "@/components/app/StatusBadge";
 import { EmptyState } from "@/components/app/EmptyState";
@@ -205,7 +206,7 @@ function ContactsPage() {
       setForm({ first_name: "", last_name: "", type: "buyer", phone: "", email: "", company: "", source: "", notes: "" });
       toast.success("Contactul a fost adăugat.");
     },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: Error) => toastError(e),
   });
 
   const bulkUpdate = useMutation({
@@ -218,7 +219,7 @@ function ContactsPage() {
       setSelected([]);
       toast.success("Contactele au fost actualizate.");
     },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: Error) => toastError(e),
   });
 
   const bulkAddTag = (tag: string) => {

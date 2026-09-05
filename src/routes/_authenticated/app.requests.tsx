@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
 import { Bookmark, Download, Search, Sparkles, Target, X } from "lucide-react";
 import { toast } from "sonner";
+import { toastError } from "@/lib/errors";
 import { PageHeader } from "@/components/app/PageHeader";
 import { StatusBadge } from "@/components/app/StatusBadge";
 import { EmptyState } from "@/components/app/EmptyState";
@@ -202,7 +203,7 @@ function RequestsPage() {
       setOpen(false);
       toast.success("Cererea a fost adăugată.");
     },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: Error) => toastError(e),
   });
 
   const setStatusMutation = useMutation({
@@ -211,7 +212,7 @@ function RequestsPage() {
       if (error) throw error;
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["requests"] }),
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: Error) => toastError(e),
   });
 
   const bulkUpdate = useMutation({
@@ -224,7 +225,7 @@ function RequestsPage() {
       setSelected([]);
       toast.success("Cererile au fost actualizate.");
     },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: Error) => toastError(e),
   });
 
   const allSelected = rows.length > 0 && selected.length === rows.length;

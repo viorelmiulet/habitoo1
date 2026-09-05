@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { ListChecks, Phone, Mail, Users, Home, CheckCircle2, XCircle, Trash2, Pencil } from "lucide-react";
 import { toast } from "sonner";
+import { toastError } from "@/lib/errors";
 import { PageHeader } from "@/components/app/PageHeader";
 import { StatusBadge } from "@/components/app/StatusBadge";
 import { EmptyState } from "@/components/app/EmptyState";
@@ -140,7 +141,7 @@ function ActivitiesPage() {
       await logAudit({ organizationId: orgId, actorId: user?.userId, action: "activity.status", entity: "activity", entityId: id, newValues: { status } });
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey }),
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: Error) => toastError(e),
   });
 
   const bulkUpdate = useMutation({
@@ -156,7 +157,7 @@ function ActivitiesPage() {
       setSelected(new Set());
       toast.success("Actualizat.");
     },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: Error) => toastError(e),
   });
 
   const removeActivity = useMutation({
@@ -168,7 +169,7 @@ function ActivitiesPage() {
       queryClient.invalidateQueries({ queryKey });
       toast.success("Activitate ștearsă.");
     },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: Error) => toastError(e),
   });
 
   const doReschedule = useMutation({
@@ -187,7 +188,7 @@ function ActivitiesPage() {
       setReschedule(null);
       toast.success("Reprogramat.");
     },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: Error) => toastError(e),
   });
 
   const now = new Date();

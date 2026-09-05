@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { Layers, Trash2 } from "lucide-react";
 import { toast } from "sonner";
+import { toastError } from "@/lib/errors";
 import { PageHeader } from "@/components/app/PageHeader";
 import { EmptyState } from "@/components/app/EmptyState";
 import { Button } from "@/components/ui/button";
@@ -110,7 +111,7 @@ function GoalsPage() {
       setEditing(null);
       toast.success(editing ? "Obiectivul a fost actualizat." : "Obiectivul a fost creat.");
     },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: Error) => toastError(e),
   });
 
   const remove = useMutation({
@@ -122,7 +123,7 @@ function GoalsPage() {
       queryClient.invalidateQueries({ queryKey: ["goals-data"] });
       toast.success("Obiectivul a fost șters.");
     },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: Error) => toastError(e),
   });
 
   const updateProgress = useMutation({
@@ -131,7 +132,7 @@ function GoalsPage() {
       if (error) throw error;
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["goals-data"] }),
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: Error) => toastError(e),
   });
 
   const allGoals = data?.goals ?? [];

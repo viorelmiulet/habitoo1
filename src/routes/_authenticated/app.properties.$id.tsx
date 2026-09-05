@@ -13,6 +13,7 @@ import {
   UserPlus,
 } from "lucide-react";
 import { toast } from "sonner";
+import { toastError } from "@/lib/errors";
 import { PageHeader } from "@/components/app/PageHeader";
 import { StatusBadge } from "@/components/app/StatusBadge";
 import { EmptyState } from "@/components/app/EmptyState";
@@ -138,7 +139,7 @@ function PropertyDetailPage() {
       setEditing(false);
       toast.success("Modificările au fost salvate.");
     },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: Error) => toastError(e),
   });
 
   const changeStatus = useMutation({
@@ -159,7 +160,7 @@ function PropertyDetailPage() {
       queryClient.invalidateQueries({ queryKey: ["properties"] });
       toast.success("Status actualizat.");
     },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: Error) => toastError(e),
   });
 
   const archive = useMutation({
@@ -179,7 +180,7 @@ function PropertyDetailPage() {
       queryClient.invalidateQueries({ queryKey: ["properties"] });
       navigate({ to: "/app/properties" });
     },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: Error) => toastError(e),
   });
 
   const publish = useMutation({
@@ -201,7 +202,7 @@ function PropertyDetailPage() {
       queryClient.invalidateQueries({ queryKey: ["property", id] });
       toast.success("Proprietatea a fost publicată.");
     },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: Error) => toastError(e),
   });
 
   const duplicate = useMutation({
@@ -238,7 +239,7 @@ function PropertyDetailPage() {
       toast.success("Proprietate duplicată.");
       navigate({ to: "/app/properties/$id", params: { id: created.id } });
     },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: Error) => toastError(e),
   });
 
   const addLead = useMutation({
@@ -262,7 +263,7 @@ function PropertyDetailPage() {
       setClientPhone("");
       queryClient.invalidateQueries({ queryKey: ["property", id] });
     },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: Error) => toastError(e),
   });
 
   if (isLoading) {

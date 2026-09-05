@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { Flame, Phone, MessageCircle, Plus, History } from "lucide-react";
 import { toast } from "sonner";
+import { toastError } from "@/lib/errors";
 import { PageHeader } from "@/components/app/PageHeader";
 import { StatusBadge } from "@/components/app/StatusBadge";
 import { EmptyState } from "@/components/app/EmptyState";
@@ -274,7 +275,7 @@ function LeadsPage() {
       setOpen(false);
       toast.success(editing ? "Lead actualizat." : "Lead-ul a fost adăugat.");
     },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: Error) => toastError(e),
   });
 
   const moveStage = useMutation({
@@ -325,7 +326,7 @@ function LeadsPage() {
     },
     onError: (e: Error, _vars, ctx) => {
       if (ctx?.prev) queryClient.setQueryData(["leads", orgId], ctx.prev);
-      toast.error(e.message);
+      toastError(e);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["leads"] });
