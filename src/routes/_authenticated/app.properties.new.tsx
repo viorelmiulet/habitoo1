@@ -16,6 +16,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
+import { LocationPicker, emptyLocation, type LocationValue } from "@/components/app/LocationPicker";
 import { useCurrentUser } from "@/hooks/use-session";
 import { propertyTypeLabels } from "@/lib/labels";
 
@@ -74,6 +75,8 @@ function NewPropertyPage() {
     collaboration: false,
   });
   const [features, setFeatures] = useState<string[]>([]);
+  // Localizarea oficială (nomenclator SIRUTA); textul din `city`/`county` rămâne sincronizat cu selecția.
+  const [location, setLocation] = useState<LocationValue>(emptyLocation);
 
   const set = (key: keyof typeof form, value: string | boolean) =>
     setForm((f) => ({ ...f, [key]: value }));
@@ -110,8 +113,11 @@ function NewPropertyPage() {
           bathrooms: num(form.bathrooms),
           floor: num(form.floor),
           build_year: num(form.build_year),
-          city: form.city || null,
-          county: form.county || null,
+          city: location.localityName || form.city || null,
+          county: location.countyName || form.county || null,
+          county_siruta_code: location.countySirutaCode,
+          uat_siruta_code: location.uatSirutaCode,
+          locality_siruta_code: location.localitySirutaCode,
           district: form.district || null,
           address: form.address || null,
           description: form.description || null,
@@ -338,14 +344,7 @@ function NewPropertyPage() {
         <section className="panel space-y-4 p-5">
           <h2 className="text-sm font-semibold">Localizare</h2>
           <div className="grid gap-4 md:grid-cols-2">
-            <div className="space-y-2">
-              <Label htmlFor="city">Oraș</Label>
-              <Input id="city" value={form.city} onChange={(e) => set("city", e.target.value)} />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="county">Județ</Label>
-              <Input id="county" value={form.county} onChange={(e) => set("county", e.target.value)} />
-            </div>
+            <LocationPicker idPrefix="new" value={location} onChange={setLocation} />
             <div className="space-y-2">
               <Label htmlFor="district">Zonă / cartier</Label>
               <Input
