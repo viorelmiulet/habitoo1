@@ -78,7 +78,9 @@ function DashboardPage() {
       const [properties, leads, requests, activities, profiles, goals] = await Promise.all([
         supabase
           .from("properties")
-          .select("id,title,status,price,currency,city,created_at,updated_at,last_activity_at,transaction_kind,assigned_to")
+          .select(
+            "id,title,status,price,currency,city,district,address,property_type,rooms,surface,features,created_at,updated_at,last_activity_at,transaction_kind,assigned_to",
+          )
           .order("created_at", { ascending: false }),
         supabase
           .from("leads")
