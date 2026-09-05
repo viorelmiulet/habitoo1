@@ -32,3 +32,13 @@ export function titleCaseRo(value: string): string {
     .map((part) => (/^[\s\-/]$/.test(part) ? part : part.charAt(0).toLocaleUpperCase("ro-RO") + part.slice(1)))
     .join("");
 }
+
+/**
+ * Variante de denumire normalizată pentru potrivirea cu nomenclatorul, unde
+ * denumirile oficiale includ prefixul administrativ ("MUNICIPIUL BUCUREŞTI").
+ */
+export function nameVariants(value: string): string[] {
+  const base = normalizeRoName(prettyUatName(value));
+  if (!base) return [];
+  return [base, `municipiul ${base}`, `orasul ${base}`, `oras ${base}`, `comuna ${base}`, `judetul ${base}`];
+}

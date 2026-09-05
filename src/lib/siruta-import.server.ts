@@ -4,7 +4,7 @@
 // Se rulează exclusiv server-side, cu clientul privilegiat, și poate fi re-rulat fără duplicate.
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/integrations/supabase/types";
-import { normalizeRoName } from "@/lib/ro-normalize";
+import { nameVariants, normalizeRoName } from "@/lib/ro-normalize";
 
 
 type Admin = SupabaseClient<Database>;
@@ -265,27 +265,62 @@ export async function backfillPropertySiruta(admin: Admin): Promise<{ checked: n
     const localityName = normalizeRoName(p.city);
     if (!localityName) continue;
 
-    let query = admin
+    // Județul din text (dacă există) restrânge căutarea și rezolvă omonimele.
+    let countyCode: number | null = p.county_siruta_code ?? null;
+    if (!countyCode && p.county) {
+      const { data: counties } = await admin
+        .from("ro_counties")
+        .select("siruta_code")
+        .in("normalized_name", nameVariants(p.county))
+        .limit(2);
+      if (counties?.length === 1) countyCode = counties[0]!.siruta_code;
+    }
+
+    let locQuery = admin
       .from("ro_localities")
-      .select("siruta_code, uat_siruta_code, county_siruta_code, ro_counties!inner(normalized_name)")
-      .eq("normalized_name", localityName)
+      .select("siruta_code, uat_siruta_code, county_siruta_code")
+      .in("normalized_name", nameVariants(p.city))
       .limit(2);
+    if (countyCode) locQuery = locQuery.eq("county_siruta_code", countyCode);
+    const { data: locMatches } = await locQuery;
 
-    const countyName = p.county ? normalizeRoName(p.county) : "";
-    if (countyName) query = query.eq("ro_counties.normalized_name", countyName);
+    let patch: {
+      locality_siruta_code?: number;
+      uat_siruta_code: number | null;
+      county_siruta_code: number | null;
+    } | null = null;
 
-    const { data: matches } = await query;
-    // Ambiguu (aceeași denumire în județe diferite, fără județ setat) → lăsăm textul neatins.
-    if (!matches || matches.length !== 1) continue;
-    const match = matches[0];
+    if (locMatches?.length === 1) {
+      const m = locMatches[0]!;
+      patch = {
+        locality_siruta_code: m.siruta_code,
+        uat_siruta_code: m.uat_siruta_code,
+        county_siruta_code: m.county_siruta_code,
+      };
+    } else {
+      // Fallback: textul este un UAT (municipiu/oraș/comună), ex. „București".
+      let uatQuery = admin
+        .from("ro_uats")
+        .select("siruta_code, county_siruta_code")
+        .in("normalized_name", nameVariants(p.city))
+        .limit(2);
+      if (countyCode) uatQuery = uatQuery.eq("county_siruta_code", countyCode);
+      const { data: uatMatches } = await uatQuery;
+      if (uatMatches?.length === 1) {
+        const m = uatMatches[0]!;
+        patch = { uat_siruta_code: m.siruta_code, county_siruta_code: m.county_siruta_code };
+      } else if (countyCode) {
+        // Ultimă instanță: doar județul, ca să nu pierdem contextul geografic.
+        patch = { uat_siruta_code: null, county_siruta_code: countyCode };
+      }
+    }
+
+    // Ambiguu complet (omonime fără județ) → lăsăm textul neatins.
+    if (!patch) continue;
 
     const { error: upErr } = await admin
       .from("properties")
-      .update({
-        locality_siruta_code: match.siruta_code,
-        uat_siruta_code: match.uat_siruta_code,
-        county_siruta_code: match.county_siruta_code,
-      } as never)
+      .update(patch as never)
       .eq("id", p.id);
     if (!upErr) migrated += 1;
   }
