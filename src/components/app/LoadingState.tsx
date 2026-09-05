@@ -113,3 +113,15 @@ export function InlineLoading({ label = "Se încarcă…", className }: { label?
     </div>
   );
 }
+
+/** Ecran de încărcare pentru shell-ul autentificat (înainte de a ști utilizatorul). */
+export function ShellLoading({ label = "Se încarcă…" }: { label?: string }) {
+  return (
+    <div className="flex min-h-screen items-center justify-center bg-background" role="status" aria-busy="true">
+      <div className="flex flex-col items-center gap-3">
+        <span className="size-8 animate-spin rounded-full border-2 border-muted-foreground/25 border-t-primary" />
+        <p className="text-sm text-muted-foreground">{label}</p>
+      </div>
+    </div>
+  );
+}
