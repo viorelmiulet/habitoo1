@@ -35,6 +35,7 @@ import { PipelineMock } from "@/components/marketing/mockups/PipelineMock";
 import { PropertiesMock } from "@/components/marketing/mockups/PropertiesMock";
 import { ReportsMock } from "@/components/marketing/mockups/ReportsMock";
 import { ScoreRing } from "@/components/marketing/mockups/ScoreRing";
+import { CrmLink } from "@/components/marketing/CrmLink";
 
 const TITLE = "Habitoo CRM — CRM imobiliar pentru agenții din România";
 const DESCRIPTION =
@@ -166,9 +167,9 @@ function HomePage() {
             </p>
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
               <Button asChild size="lg" className={`${navyButton} h-12 px-7 text-base`}>
-                <Link to="/register">
+                <CrmLink to="/register">
                   Începe acum <ArrowRight />
-                </Link>
+                </CrmLink>
               </Button>
               <Button asChild size="lg" variant="outline" className="h-12 px-7 text-base">
                 <a href="#flux">Vezi cum funcționează</a>

@@ -74,3 +74,13 @@ export function safeInternalPath(value?: string | null): string | null {
   }
   return value;
 }
+
+/**
+ * Href pentru linkurile publice care duc în CRM: absolut pe domeniile de
+ * producție, relativ pe preview/local (fără bucle, fără duplicare de logică).
+ */
+export function crmHref(path: string, host?: string | null): string {
+  const h = host ?? (typeof window !== "undefined" ? window.location.hostname : "");
+  if (isPublicHostname(h) || isCrmHostname(h)) return getCrmUrl(path);
+  return path.startsWith("/") ? path : `/${path}`;
+}

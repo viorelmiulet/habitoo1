@@ -3,6 +3,7 @@ import { ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Container } from "./Section";
 import { Reveal } from "./Reveal";
+import { CrmLink } from "./CrmLink";
 
 export function CtaBand({
   title = "Transformă modul în care lucrezi cu clienții și proprietățile.",
@@ -39,9 +40,9 @@ export function CtaBand({
                   size="lg"
                   className="h-12 bg-gold px-7 text-base text-gold-foreground hover:bg-gold/90"
                 >
-                  <Link to="/register">
+                  <CrmLink to="/register">
                     {primaryLabel} <ArrowRight />
-                  </Link>
+                  </CrmLink>
                 </Button>
                 <Button
                   asChild
