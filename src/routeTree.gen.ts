@@ -36,6 +36,7 @@ import { Route as AuthenticatedAppContactsIdRouteImport } from './routes/_authen
 import { Route as AuthenticatedAppPropertiesIndexRouteImport } from './routes/_authenticated/app.properties.index'
 import { Route as AuthenticatedAppPropertiesIdRouteImport } from './routes/_authenticated/app.properties.$id'
 import { Route as AuthenticatedAppPropertiesNewRouteImport } from './routes/_authenticated/app.properties.new'
+import { Route as AuthenticatedAppRequestsIdRouteImport } from './routes/_authenticated/app.requests.$id'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -186,6 +187,12 @@ const AuthenticatedAppPropertiesNewRoute =
     path: '/properties/new',
     getParentRoute: () => AuthenticatedAppRoute,
   } as any)
+const AuthenticatedAppRequestsIdRoute =
+  AuthenticatedAppRequestsIdRouteImport.update({
+    id: '/$id',
+    path: '/$id',
+    getParentRoute: () => AuthenticatedAppRequestsRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -202,7 +209,7 @@ export interface FileRoutesByFullPath {
   '/app/matching': typeof AuthenticatedAppMatchingRoute
   '/app/notifications': typeof AuthenticatedAppNotificationsRoute
   '/app/reports': typeof AuthenticatedAppReportsRoute
-  '/app/requests': typeof AuthenticatedAppRequestsRoute
+  '/app/requests': typeof AuthenticatedAppRequestsRouteWithChildren
   '/app/settings': typeof AuthenticatedAppSettingsRoute
   '/superadmin/agencies': typeof AuthenticatedSuperadminAgenciesRoute
   '/superadmin/audit': typeof AuthenticatedSuperadminAuditRoute
@@ -212,6 +219,7 @@ export interface FileRoutesByFullPath {
   '/app/contacts/$id': typeof AuthenticatedAppContactsIdRoute
   '/app/properties/$id': typeof AuthenticatedAppPropertiesIdRoute
   '/app/properties/new': typeof AuthenticatedAppPropertiesNewRoute
+  '/app/requests/$id': typeof AuthenticatedAppRequestsIdRoute
   '/app/contacts/': typeof AuthenticatedAppContactsIndexRoute
   '/app/properties/': typeof AuthenticatedAppPropertiesIndexRoute
 }
@@ -228,7 +236,7 @@ export interface FileRoutesByTo {
   '/app/matching': typeof AuthenticatedAppMatchingRoute
   '/app/notifications': typeof AuthenticatedAppNotificationsRoute
   '/app/reports': typeof AuthenticatedAppReportsRoute
-  '/app/requests': typeof AuthenticatedAppRequestsRoute
+  '/app/requests': typeof AuthenticatedAppRequestsRouteWithChildren
   '/app/settings': typeof AuthenticatedAppSettingsRoute
   '/superadmin/agencies': typeof AuthenticatedSuperadminAgenciesRoute
   '/superadmin/audit': typeof AuthenticatedSuperadminAuditRoute
@@ -238,6 +246,7 @@ export interface FileRoutesByTo {
   '/app/contacts/$id': typeof AuthenticatedAppContactsIdRoute
   '/app/properties/$id': typeof AuthenticatedAppPropertiesIdRoute
   '/app/properties/new': typeof AuthenticatedAppPropertiesNewRoute
+  '/app/requests/$id': typeof AuthenticatedAppRequestsIdRoute
   '/app/contacts': typeof AuthenticatedAppContactsIndexRoute
   '/app/properties': typeof AuthenticatedAppPropertiesIndexRoute
 }
@@ -258,7 +267,7 @@ export interface FileRoutesById {
   '/_authenticated/app/matching': typeof AuthenticatedAppMatchingRoute
   '/_authenticated/app/notifications': typeof AuthenticatedAppNotificationsRoute
   '/_authenticated/app/reports': typeof AuthenticatedAppReportsRoute
-  '/_authenticated/app/requests': typeof AuthenticatedAppRequestsRoute
+  '/_authenticated/app/requests': typeof AuthenticatedAppRequestsRouteWithChildren
   '/_authenticated/app/settings': typeof AuthenticatedAppSettingsRoute
   '/_authenticated/superadmin/agencies': typeof AuthenticatedSuperadminAgenciesRoute
   '/_authenticated/superadmin/audit': typeof AuthenticatedSuperadminAuditRoute
@@ -268,6 +277,7 @@ export interface FileRoutesById {
   '/_authenticated/app/contacts/$id': typeof AuthenticatedAppContactsIdRoute
   '/_authenticated/app/properties/$id': typeof AuthenticatedAppPropertiesIdRoute
   '/_authenticated/app/properties/new': typeof AuthenticatedAppPropertiesNewRoute
+  '/_authenticated/app/requests/$id': typeof AuthenticatedAppRequestsIdRoute
   '/_authenticated/app/contacts/': typeof AuthenticatedAppContactsIndexRoute
   '/_authenticated/app/properties/': typeof AuthenticatedAppPropertiesIndexRoute
 }
@@ -298,6 +308,7 @@ export interface FileRouteTypes {
     | '/app/contacts/$id'
     | '/app/properties/$id'
     | '/app/properties/new'
+    | '/app/requests/$id'
     | '/app/contacts/'
     | '/app/properties/'
   fileRoutesByTo: FileRoutesByTo
@@ -324,6 +335,7 @@ export interface FileRouteTypes {
     | '/app/contacts/$id'
     | '/app/properties/$id'
     | '/app/properties/new'
+    | '/app/requests/$id'
     | '/app/contacts'
     | '/app/properties'
   id:
@@ -353,6 +365,7 @@ export interface FileRouteTypes {
     | '/_authenticated/app/contacts/$id'
     | '/_authenticated/app/properties/$id'
     | '/_authenticated/app/properties/new'
+    | '/_authenticated/app/requests/$id'
     | '/_authenticated/app/contacts/'
     | '/_authenticated/app/properties/'
   fileRoutesById: FileRoutesById
@@ -556,8 +569,29 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAppPropertiesNewRouteImport
       parentRoute: typeof AuthenticatedAppRoute
     }
+    '/_authenticated/app/requests/$id': {
+      id: '/_authenticated/app/requests/$id'
+      path: '/$id'
+      fullPath: '/app/requests/$id'
+      preLoaderRoute: typeof AuthenticatedAppRequestsIdRouteImport
+      parentRoute: typeof AuthenticatedAppRequestsRoute
+    }
   }
 }
+
+interface AuthenticatedAppRequestsRouteChildren {
+  AuthenticatedAppRequestsIdRoute: typeof AuthenticatedAppRequestsIdRoute
+}
+
+const AuthenticatedAppRequestsRouteChildren: AuthenticatedAppRequestsRouteChildren =
+  {
+    AuthenticatedAppRequestsIdRoute: AuthenticatedAppRequestsIdRoute,
+  }
+
+const AuthenticatedAppRequestsRouteWithChildren =
+  AuthenticatedAppRequestsRoute._addFileChildren(
+    AuthenticatedAppRequestsRouteChildren,
+  )
 
 interface AuthenticatedAppRouteChildren {
   AuthenticatedAppActivitiesRoute: typeof AuthenticatedAppActivitiesRoute
@@ -567,7 +601,7 @@ interface AuthenticatedAppRouteChildren {
   AuthenticatedAppMatchingRoute: typeof AuthenticatedAppMatchingRoute
   AuthenticatedAppNotificationsRoute: typeof AuthenticatedAppNotificationsRoute
   AuthenticatedAppReportsRoute: typeof AuthenticatedAppReportsRoute
-  AuthenticatedAppRequestsRoute: typeof AuthenticatedAppRequestsRoute
+  AuthenticatedAppRequestsRoute: typeof AuthenticatedAppRequestsRouteWithChildren
   AuthenticatedAppSettingsRoute: typeof AuthenticatedAppSettingsRoute
   AuthenticatedAppIndexRoute: typeof AuthenticatedAppIndexRoute
   AuthenticatedAppContactsIdRoute: typeof AuthenticatedAppContactsIdRoute
@@ -585,7 +619,7 @@ const AuthenticatedAppRouteChildren: AuthenticatedAppRouteChildren = {
   AuthenticatedAppMatchingRoute: AuthenticatedAppMatchingRoute,
   AuthenticatedAppNotificationsRoute: AuthenticatedAppNotificationsRoute,
   AuthenticatedAppReportsRoute: AuthenticatedAppReportsRoute,
-  AuthenticatedAppRequestsRoute: AuthenticatedAppRequestsRoute,
+  AuthenticatedAppRequestsRoute: AuthenticatedAppRequestsRouteWithChildren,
   AuthenticatedAppSettingsRoute: AuthenticatedAppSettingsRoute,
   AuthenticatedAppIndexRoute: AuthenticatedAppIndexRoute,
   AuthenticatedAppContactsIdRoute: AuthenticatedAppContactsIdRoute,

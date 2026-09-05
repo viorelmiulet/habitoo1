@@ -22,6 +22,7 @@ export type Database = {
           created_by: string | null
           description: string | null
           done: boolean
+          duration_minutes: number
           ends_at: string | null
           id: string
           kind: Database["public"]["Enums"]["activity_kind"]
@@ -30,6 +31,7 @@ export type Database = {
           property_id: string | null
           request_id: string | null
           starts_at: string
+          status: Database["public"]["Enums"]["activity_status"]
           title: string
           updated_at: string
           updated_by: string | null
@@ -41,6 +43,7 @@ export type Database = {
           created_by?: string | null
           description?: string | null
           done?: boolean
+          duration_minutes?: number
           ends_at?: string | null
           id?: string
           kind?: Database["public"]["Enums"]["activity_kind"]
@@ -49,6 +52,7 @@ export type Database = {
           property_id?: string | null
           request_id?: string | null
           starts_at?: string
+          status?: Database["public"]["Enums"]["activity_status"]
           title: string
           updated_at?: string
           updated_by?: string | null
@@ -60,6 +64,7 @@ export type Database = {
           created_by?: string | null
           description?: string | null
           done?: boolean
+          duration_minutes?: number
           ends_at?: string | null
           id?: string
           kind?: Database["public"]["Enums"]["activity_kind"]
@@ -68,6 +73,7 @@ export type Database = {
           property_id?: string | null
           request_id?: string | null
           starts_at?: string
+          status?: Database["public"]["Enums"]["activity_status"]
           title?: string
           updated_at?: string
           updated_by?: string | null
@@ -243,6 +249,59 @@ export type Database = {
           },
         ]
       }
+      documents: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          entity_id: string
+          entity_type: string
+          id: string
+          mime_type: string | null
+          name: string
+          organization_id: string
+          size_bytes: number | null
+          storage_path: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          entity_id: string
+          entity_type: string
+          id?: string
+          mime_type?: string | null
+          name: string
+          organization_id: string
+          size_bytes?: number | null
+          storage_path: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          entity_id?: string
+          entity_type?: string
+          id?: string
+          mime_type?: string | null
+          name?: string
+          organization_id?: string
+          size_bytes?: number | null
+          storage_path?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "documents_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       goals: {
         Row: {
           created_at: string
@@ -293,15 +352,68 @@ export type Database = {
           },
         ]
       }
+      lead_events: {
+        Row: {
+          actor_id: string | null
+          created_at: string
+          from_stage: Database["public"]["Enums"]["lead_stage"] | null
+          id: string
+          lead_id: string
+          note: string | null
+          organization_id: string
+          to_stage: Database["public"]["Enums"]["lead_stage"]
+          updated_at: string
+        }
+        Insert: {
+          actor_id?: string | null
+          created_at?: string
+          from_stage?: Database["public"]["Enums"]["lead_stage"] | null
+          id?: string
+          lead_id: string
+          note?: string | null
+          organization_id: string
+          to_stage: Database["public"]["Enums"]["lead_stage"]
+          updated_at?: string
+        }
+        Update: {
+          actor_id?: string | null
+          created_at?: string
+          from_stage?: Database["public"]["Enums"]["lead_stage"] | null
+          id?: string
+          lead_id?: string
+          note?: string | null
+          organization_id?: string
+          to_stage?: Database["public"]["Enums"]["lead_stage"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lead_events_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lead_events_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       leads: {
         Row: {
           assigned_to: string | null
+          campaign: string | null
           contact_id: string | null
           created_at: string
           created_by: string | null
           email: string | null
           id: string
           last_interaction_at: string | null
+          lost_reason: string | null
           name: string
           next_followup_at: string | null
           notes: string | null
@@ -315,15 +427,18 @@ export type Database = {
           stale: boolean
           updated_at: string
           updated_by: string | null
+          value: number | null
         }
         Insert: {
           assigned_to?: string | null
+          campaign?: string | null
           contact_id?: string | null
           created_at?: string
           created_by?: string | null
           email?: string | null
           id?: string
           last_interaction_at?: string | null
+          lost_reason?: string | null
           name?: string
           next_followup_at?: string | null
           notes?: string | null
@@ -337,15 +452,18 @@ export type Database = {
           stale?: boolean
           updated_at?: string
           updated_by?: string | null
+          value?: number | null
         }
         Update: {
           assigned_to?: string | null
+          campaign?: string | null
           contact_id?: string | null
           created_at?: string
           created_by?: string | null
           email?: string | null
           id?: string
           last_interaction_at?: string | null
+          lost_reason?: string | null
           name?: string
           next_followup_at?: string | null
           notes?: string | null
@@ -359,6 +477,7 @@ export type Database = {
           stale?: boolean
           updated_at?: string
           updated_by?: string | null
+          value?: number | null
         }
         Relationships: [
           {
@@ -574,6 +693,7 @@ export type Database = {
           id: string
           internal_notes: string | null
           land_surface: number | null
+          last_activity_at: string | null
           lat: number | null
           layout: string | null
           lng: number | null
@@ -584,6 +704,8 @@ export type Database = {
           parking: string | null
           price: number | null
           property_type: string
+          publish_status: string
+          published_at: string | null
           reference: string | null
           rooms: number | null
           source: string | null
@@ -591,6 +713,7 @@ export type Database = {
           street: string | null
           street_number: string | null
           surface: number | null
+          tags: string[]
           title: string
           transaction_kind: Database["public"]["Enums"]["transaction_kind"]
           updated_at: string
@@ -627,6 +750,7 @@ export type Database = {
           id?: string
           internal_notes?: string | null
           land_surface?: number | null
+          last_activity_at?: string | null
           lat?: number | null
           layout?: string | null
           lng?: number | null
@@ -637,6 +761,8 @@ export type Database = {
           parking?: string | null
           price?: number | null
           property_type?: string
+          publish_status?: string
+          published_at?: string | null
           reference?: string | null
           rooms?: number | null
           source?: string | null
@@ -644,6 +770,7 @@ export type Database = {
           street?: string | null
           street_number?: string | null
           surface?: number | null
+          tags?: string[]
           title: string
           transaction_kind?: Database["public"]["Enums"]["transaction_kind"]
           updated_at?: string
@@ -680,6 +807,7 @@ export type Database = {
           id?: string
           internal_notes?: string | null
           land_surface?: number | null
+          last_activity_at?: string | null
           lat?: number | null
           layout?: string | null
           lng?: number | null
@@ -690,6 +818,8 @@ export type Database = {
           parking?: string | null
           price?: number | null
           property_type?: string
+          publish_status?: string
+          published_at?: string | null
           reference?: string | null
           rooms?: number | null
           source?: string | null
@@ -697,6 +827,7 @@ export type Database = {
           street?: string | null
           street_number?: string | null
           surface?: number | null
+          tags?: string[]
           title?: string
           transaction_kind?: Database["public"]["Enums"]["transaction_kind"]
           updated_at?: string
@@ -722,45 +853,99 @@ export type Database = {
           },
         ]
       }
-      property_images: {
+      property_favorites: {
         Row: {
           created_at: string
-          created_by: string | null
           id: string
+          organization_id: string
+          property_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          organization_id: string
+          property_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          organization_id?: string
+          property_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "property_favorites_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "property_favorites_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      property_images: {
+        Row: {
+          alt: string | null
+          created_at: string
+          created_by: string | null
+          height: number | null
+          id: string
+          include_in_publish: boolean
           is_confidential: boolean
           is_primary: boolean
           organization_id: string
           position: number
           property_id: string
+          storage_path: string | null
           updated_at: string
           updated_by: string | null
           url: string
+          width: number | null
         }
         Insert: {
+          alt?: string | null
           created_at?: string
           created_by?: string | null
+          height?: number | null
           id?: string
+          include_in_publish?: boolean
           is_confidential?: boolean
           is_primary?: boolean
           organization_id: string
           position?: number
           property_id: string
+          storage_path?: string | null
           updated_at?: string
           updated_by?: string | null
           url: string
+          width?: number | null
         }
         Update: {
+          alt?: string | null
           created_at?: string
           created_by?: string | null
+          height?: number | null
           id?: string
+          include_in_publish?: boolean
           is_confidential?: boolean
           is_primary?: boolean
           organization_id?: string
           position?: number
           property_id?: string
+          storage_path?: string | null
           updated_at?: string
           updated_by?: string | null
           url?: string
+          width?: number | null
         }
         Relationships: [
           {
@@ -809,6 +994,8 @@ export type Database = {
           title: string
           updated_at: string
           updated_by: string | null
+          wants_balcony: boolean | null
+          wants_parking: boolean | null
         }
         Insert: {
           areas?: string[]
@@ -839,6 +1026,8 @@ export type Database = {
           title?: string
           updated_at?: string
           updated_by?: string | null
+          wants_balcony?: boolean | null
+          wants_parking?: boolean | null
         }
         Update: {
           areas?: string[]
@@ -869,6 +1058,8 @@ export type Database = {
           title?: string
           updated_at?: string
           updated_by?: string | null
+          wants_balcony?: boolean | null
+          wants_parking?: boolean | null
         }
         Relationships: [
           {
@@ -880,6 +1071,47 @@ export type Database = {
           },
           {
             foreignKeyName: "requests_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      saved_views: {
+        Row: {
+          config: Json
+          created_at: string
+          id: string
+          module: string
+          name: string
+          organization_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          config?: Json
+          created_at?: string
+          id?: string
+          module: string
+          name: string
+          organization_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          config?: Json
+          created_at?: string
+          id?: string
+          module?: string
+          name?: string
+          organization_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "saved_views_organization_id_fkey"
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
@@ -948,6 +1180,7 @@ export type Database = {
         | "email"
         | "followup"
         | "note"
+      activity_status: "planned" | "done" | "cancelled"
       app_role: "superadmin" | "agency_admin" | "agent"
       contact_type:
         | "owner"
@@ -1116,6 +1349,7 @@ export const Constants = {
         "followup",
         "note",
       ],
+      activity_status: ["planned", "done", "cancelled"],
       app_role: ["superadmin", "agency_admin", "agent"],
       contact_type: [
         "owner",

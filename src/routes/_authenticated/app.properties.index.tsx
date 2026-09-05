@@ -1,7 +1,18 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useMemo, useState } from "react";
-import { Building2, Bookmark, Download, Search, X } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import {
+  Building2,
+  ChevronLeft,
+  ChevronRight,
+  Columns3,
+  Download,
+  LayoutGrid,
+  List,
+  Search,
+  Star,
+  X,
+} from "lucide-react";
 import { toast } from "sonner";
 import { PageHeader } from "@/components/app/PageHeader";
 import { StatusBadge } from "@/components/app/StatusBadge";
@@ -9,6 +20,22 @@ import { EmptyState } from "@/components/app/EmptyState";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
+  DropdownMenu,
+  DropdownMenuCheckboxItem,
+  DropdownMenuContent,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   Select,
   SelectContent,
@@ -18,7 +45,9 @@ import {
 } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { useCurrentUser } from "@/hooks/use-session";
+import { useSavedViews } from "@/hooks/use-saved-views";
 import { formatMoney, formatNumber, relativeDays } from "@/lib/format";
+import { downloadCsv } from "@/lib/crm";
 import {
   propertyStatusLabels,
   propertyStatusTone,
@@ -36,7 +65,20 @@ type Filters = {
   transaction: string;
   type: string;
   city: string;
+  district: string;
+  agent: string;
+  source: string;
   mine: boolean;
+  favoritesOnly: boolean;
+  priceMin: string;
+  priceMax: string;
+  surfaceMin: string;
+  surfaceMax: string;
+  rooms: string;
+  bathrooms: string;
+  floor: string;
+  addedAfter: string;
+  addedBefore: string;
 };
 
 const emptyFilters: Filters = {
@@ -45,110 +87,318 @@ const emptyFilters: Filters = {
   transaction: "all",
   type: "all",
   city: "all",
+  district: "all",
+  agent: "all",
+  source: "all",
   mine: false,
+  favoritesOnly: false,
+  priceMin: "",
+  priceMax: "",
+  surfaceMin: "",
+  surfaceMax: "",
+  rooms: "",
+  bathrooms: "",
+  floor: "",
+  addedAfter: "",
+  addedBefore: "",
 };
 
-const SAVED_KEY = "imobiflow.savedPropertyFilters";
+type SortKey = "created_desc" | "updated_desc" | "price_asc" | "price_desc" | "surface_asc" | "surface_desc";
 
-function readSaved(): { name: string; filters: Filters }[] {
-  if (typeof window === "undefined") return [];
+const sortOptions: Record<SortKey, string> = {
+  created_desc: "Dată adăugare (nou→vechi)",
+  updated_desc: "Dată modificare (recent)",
+  price_asc: "Preț crescător",
+  price_desc: "Preț descrescător",
+  surface_asc: "Suprafață crescătoare",
+  surface_desc: "Suprafață descrescătoare",
+};
+
+const COLUMNS_KEY = "imobiflow.propertyColumns";
+const allColumns = [
+  { key: "type", label: "Tip" },
+  { key: "transaction", label: "Tranzacție" },
+  { key: "status", label: "Status" },
+  { key: "price", label: "Preț" },
+  { key: "surface", label: "Suprafață" },
+  { key: "agent", label: "Agent" },
+  { key: "updated", label: "Actualizat" },
+] as const;
+type ColumnKey = (typeof allColumns)[number]["key"];
+
+function readColumns(): ColumnKey[] {
+  if (typeof window === "undefined") return allColumns.map((c) => c.key);
   try {
-    return JSON.parse(window.localStorage.getItem(SAVED_KEY) ?? "[]");
+    const stored = JSON.parse(window.localStorage.getItem(COLUMNS_KEY) ?? "null");
+    if (Array.isArray(stored)) return stored;
   } catch {
-    return [];
+    /* ignore */
   }
+  return allColumns.map((c) => c.key);
 }
+
+const PAGE_SIZE = 25;
 
 function PropertiesPage() {
   const { data: user } = useCurrentUser();
+  const orgId = user?.organization?.id;
   const queryClient = useQueryClient();
   const [filters, setFilters] = useState<Filters>(emptyFilters);
+  const [debouncedQ, setDebouncedQ] = useState("");
   const [selected, setSelected] = useState<string[]>([]);
-  const [saved, setSaved] = useState(readSaved);
+  const [view, setView] = useState<"list" | "grid">("list");
+  const [columns, setColumns] = useState<ColumnKey[]>(readColumns);
+  const [sort, setSort] = useState<SortKey>("created_desc");
+  const [page, setPage] = useState(0);
+  const [archiveTarget, setArchiveTarget] = useState<string[] | null>(null);
 
-  const { data: properties = [], isLoading } = useQuery({
-    queryKey: ["properties"],
+  const savedViews = useSavedViews("properties", orgId, user?.userId);
+
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedQ(filters.q.trim()), 300);
+    return () => clearTimeout(t);
+  }, [filters.q]);
+
+  useEffect(() => {
+    window.localStorage.setItem(COLUMNS_KEY, JSON.stringify(columns));
+  }, [columns]);
+
+  useEffect(() => {
+    setPage(0);
+  }, [filters, sort]);
+
+  const { data: agents = [] } = useQuery({
+    queryKey: ["profiles", "org", orgId],
+    enabled: Boolean(orgId),
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("properties")
-        .select("*")
-        .order("created_at", { ascending: false });
+        .from("profiles")
+        .select("id,full_name")
+        .eq("organization_id", orgId as string)
+        .order("full_name");
       if (error) throw error;
       return data;
     },
   });
 
+  const { data: favoriteIds = [] } = useQuery({
+    queryKey: ["property-favorites", user?.userId],
+    enabled: Boolean(user?.userId),
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("property_favorites")
+        .select("property_id")
+        .eq("user_id", user!.userId);
+      if (error) throw error;
+      return data.map((f) => f.property_id);
+    },
+  });
+
+  const { data: meta } = useQuery({
+    queryKey: ["properties-meta", orgId],
+    enabled: Boolean(orgId),
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("properties")
+        .select("city,district,source")
+        .eq("organization_id", orgId as string)
+        .is("deleted_at", null);
+      if (error) throw error;
+      return {
+        cities: [...new Set(data.map((p) => p.city).filter(Boolean) as string[])].sort(),
+        districts: [...new Set(data.map((p) => p.district).filter(Boolean) as string[])].sort(),
+        sources: [...new Set(data.map((p) => p.source).filter(Boolean) as string[])].sort(),
+      };
+    },
+  });
+
+  const sortColumn: Record<SortKey, { col: string; asc: boolean }> = {
+    created_desc: { col: "created_at", asc: false },
+    updated_desc: { col: "updated_at", asc: false },
+    price_asc: { col: "price", asc: true },
+    price_desc: { col: "price", asc: false },
+    surface_asc: { col: "surface", asc: true },
+    surface_desc: { col: "surface", asc: false },
+  };
+
+  const { data: result, isLoading } = useQuery({
+    queryKey: ["properties", orgId, filters, debouncedQ, sort, page, favoriteIds],
+    enabled: Boolean(orgId),
+    queryFn: async () => {
+      let query = supabase
+        .from("properties")
+        .select("*", { count: "exact" })
+        .eq("organization_id", orgId as string)
+        .is("deleted_at", null);
+
+      if (filters.status !== "all") query = query.eq("status", filters.status as never);
+      if (filters.transaction !== "all") query = query.eq("transaction_kind", filters.transaction as never);
+      if (filters.type !== "all") query = query.eq("property_type", filters.type);
+      if (filters.city !== "all") query = query.eq("city", filters.city);
+      if (filters.district !== "all") query = query.eq("district", filters.district);
+      if (filters.source !== "all") query = query.eq("source", filters.source);
+      if (filters.agent !== "all") query = query.eq("assigned_to", filters.agent);
+      if (filters.mine && user?.userId) query = query.eq("assigned_to", user.userId);
+      if (filters.priceMin) query = query.gte("price", Number(filters.priceMin));
+      if (filters.priceMax) query = query.lte("price", Number(filters.priceMax));
+      if (filters.surfaceMin) query = query.gte("surface", Number(filters.surfaceMin));
+      if (filters.surfaceMax) query = query.lte("surface", Number(filters.surfaceMax));
+      if (filters.rooms) query = query.eq("rooms", Number(filters.rooms));
+      if (filters.bathrooms) query = query.eq("bathrooms", Number(filters.bathrooms));
+      if (filters.floor) query = query.eq("floor", Number(filters.floor));
+      if (filters.addedAfter) query = query.gte("created_at", filters.addedAfter);
+      if (filters.addedBefore) query = query.lte("created_at", filters.addedBefore);
+      if (filters.favoritesOnly) {
+        if (favoriteIds.length === 0) return { rows: [], count: 0 };
+        query = query.in("id", favoriteIds);
+      }
+      if (debouncedQ) {
+        const q = debouncedQ.replace(/[%,]/g, "");
+        query = query.or(
+          `title.ilike.%${q}%,reference.ilike.%${q}%,address.ilike.%${q}%,city.ilike.%${q}%,district.ilike.%${q}%`,
+        );
+      }
+
+      const { col, asc } = sortColumn[sort];
+      query = query.order(col, { ascending: asc, nullsFirst: false });
+      query = query.range(page * PAGE_SIZE, page * PAGE_SIZE + PAGE_SIZE - 1);
+
+      const { data, error, count } = await query;
+      if (error) throw error;
+      return { rows: data, count: count ?? 0 };
+    },
+  });
+
+  const rows = result?.rows ?? [];
+  const total = result?.count ?? 0;
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+
+  const invalidateList = () => queryClient.invalidateQueries({ queryKey: ["properties"] });
+
   const updateStatus = useMutation({
     mutationFn: async ({ ids, status }: { ids: string[]; status: string }) => {
-      const { error } = await supabase
-        .from("properties")
-        .update({ status: status as never })
-        .in("id", ids);
+      const { error } = await supabase.from("properties").update({ status: status as never }).in("id", ids);
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["properties"] });
+      invalidateList();
       setSelected([]);
       toast.success("Statusul a fost actualizat.");
     },
     onError: (e: Error) => toast.error(e.message),
   });
 
-  const cities = useMemo(
-    () => [...new Set(properties.map((p) => p.city).filter(Boolean) as string[])].sort(),
-    [properties],
-  );
+  const assignAgent = useMutation({
+    mutationFn: async ({ ids, agentId }: { ids: string[]; agentId: string }) => {
+      const { error } = await supabase.from("properties").update({ assigned_to: agentId } as never).in("id", ids);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      invalidateList();
+      setSelected([]);
+      toast.success("Agent asignat.");
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
 
-  const rows = useMemo(() => {
-    const q = filters.q.trim().toLowerCase();
-    return properties.filter((p) => {
-      if (filters.status !== "all" && p.status !== filters.status) return false;
-      if (filters.transaction !== "all" && p.transaction_kind !== filters.transaction) return false;
-      if (filters.type !== "all" && p.property_type !== filters.type) return false;
-      if (filters.city !== "all" && p.city !== filters.city) return false;
-      if (filters.mine && p.assigned_to !== user?.userId) return false;
-      if (!q) return true;
-      return [p.title, p.reference, p.address, p.city, p.district]
-        .filter(Boolean)
-        .some((v) => String(v).toLowerCase().includes(q));
-    });
-  }, [properties, filters, user?.userId]);
+  const archiveMany = useMutation({
+    mutationFn: async (ids: string[]) => {
+      const { error } = await supabase.from("properties").update({ status: "archived" as never }).in("id", ids);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      invalidateList();
+      setSelected([]);
+      setArchiveTarget(null);
+      toast.success("Proprietăți arhivate.");
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const addTag = useMutation({
+    mutationFn: async ({ ids, tag }: { ids: string[]; tag: string }) => {
+      const targets = rows.filter((r) => ids.includes(r.id));
+      await Promise.all(
+        targets.map((r) =>
+          supabase
+            .from("properties")
+            .update({ tags: [...new Set([...(r.tags ?? []), tag])] } as never)
+            .eq("id", r.id),
+        ),
+      );
+    },
+    onSuccess: () => {
+      invalidateList();
+      setSelected([]);
+      toast.success("Etichetă adăugată.");
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const publishMany = useMutation({
+    mutationFn: async (ids: string[]) => {
+      const { error } = await supabase
+        .from("properties")
+        .update({ publish_status: "published", published_at: new Date().toISOString() } as never)
+        .in("id", ids);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      invalidateList();
+      setSelected([]);
+      toast.success("Proprietăți publicate.");
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const toggleFavorite = useMutation({
+    mutationFn: async (propertyId: string) => {
+      if (!user?.userId || !orgId) throw new Error("Sesiune indisponibilă.");
+      const isFav = favoriteIds.includes(propertyId);
+      if (isFav) {
+        const { error } = await supabase
+          .from("property_favorites")
+          .delete()
+          .eq("property_id", propertyId)
+          .eq("user_id", user.userId);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase.from("property_favorites").insert({
+          organization_id: orgId,
+          property_id: propertyId,
+          user_id: user.userId,
+        } as never);
+        if (error) throw error;
+      }
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["property-favorites", user?.userId] }),
+    onError: (e: Error) => toast.error(e.message),
+  });
 
   const allSelected = rows.length > 0 && selected.length === rows.length;
 
   const exportCsv = () => {
-    const header = ["Referință", "Titlu", "Tip", "Tranzacție", "Status", "Oraș", "Preț", "Suprafață"];
-    const lines = rows.map((p) =>
-      [
-        p.reference ?? "",
-        p.title,
-        propertyTypeLabels[p.property_type] ?? p.property_type,
-        transactionLabels[p.transaction_kind],
-        propertyStatusLabels[p.status],
-        p.city ?? "",
-        p.price ?? "",
-        p.surface ?? "",
-      ]
-        .map((v) => `"${String(v).replaceAll('"', '""')}"`)
-        .join(","),
+    downloadCsv(
+      "proprietati.csv",
+      rows.map((p) => ({
+        Referință: p.reference ?? "",
+        Titlu: p.title,
+        Tip: propertyTypeLabels[p.property_type] ?? p.property_type,
+        Tranzacție: transactionLabels[p.transaction_kind],
+        Status: propertyStatusLabels[p.status],
+        Oraș: p.city ?? "",
+        Preț: p.price ?? "",
+        Suprafață: p.surface ?? "",
+      })),
     );
-    const blob = new Blob([[header.join(","), ...lines].join("\n")], {
-      type: "text/csv;charset=utf-8",
-    });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "proprietati.csv";
-    a.click();
-    URL.revokeObjectURL(url);
   };
+
+  const agentName = (id: string | null) => agents.find((a) => a.id === id)?.full_name ?? "—";
 
   const saveFilter = () => {
     const name = window.prompt("Numele filtrului salvat:");
     if (!name) return;
-    const next = [...saved.filter((s) => s.name !== name), { name, filters }];
-    setSaved(next);
-    window.localStorage.setItem(SAVED_KEY, JSON.stringify(next));
+    savedViews.save.mutate({ name, config: filters as unknown as Record<string, unknown> });
   };
 
   return (
@@ -180,10 +430,7 @@ function PropertiesPage() {
             />
           </div>
 
-          <Select
-            value={filters.status}
-            onValueChange={(v) => setFilters((f) => ({ ...f, status: v }))}
-          >
+          <Select value={filters.status} onValueChange={(v) => setFilters((f) => ({ ...f, status: v }))}>
             <SelectTrigger className="w-40">
               <SelectValue placeholder="Status" />
             </SelectTrigger>
@@ -197,10 +444,7 @@ function PropertiesPage() {
             </SelectContent>
           </Select>
 
-          <Select
-            value={filters.transaction}
-            onValueChange={(v) => setFilters((f) => ({ ...f, transaction: v }))}
-          >
+          <Select value={filters.transaction} onValueChange={(v) => setFilters((f) => ({ ...f, transaction: v }))}>
             <SelectTrigger className="w-36">
               <SelectValue placeholder="Tranzacție" />
             </SelectTrigger>
@@ -225,20 +469,174 @@ function PropertiesPage() {
             </SelectContent>
           </Select>
 
+          <Select value={sort} onValueChange={(v) => setSort(v as SortKey)}>
+            <SelectTrigger className="w-52">
+              <SelectValue placeholder="Sortare" />
+            </SelectTrigger>
+            <SelectContent>
+              {Object.entries(sortOptions).map(([k, v]) => (
+                <SelectItem key={k} value={k}>
+                  {v}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          <Button
+            variant={view === "list" ? "default" : "outline"}
+            size="icon"
+            onClick={() => setView("list")}
+            title="Listă"
+          >
+            <List className="size-4" />
+          </Button>
+          <Button
+            variant={view === "grid" ? "default" : "outline"}
+            size="icon"
+            onClick={() => setView("grid")}
+            title="Carduri"
+          >
+            <LayoutGrid className="size-4" />
+          </Button>
+
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="icon" title="Coloane">
+                <Columns3 className="size-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              {allColumns.map((c) => (
+                <DropdownMenuCheckboxItem
+                  key={c.key}
+                  checked={columns.includes(c.key)}
+                  onCheckedChange={(checked) =>
+                    setColumns((cols) => (checked ? [...cols, c.key] : cols.filter((k) => k !== c.key)))
+                  }
+                >
+                  {c.label}
+                </DropdownMenuCheckboxItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-2 border-t border-border pt-3">
+          <Select value={filters.district} onValueChange={(v) => setFilters((f) => ({ ...f, district: v }))}>
+            <SelectTrigger className="w-40">
+              <SelectValue placeholder="Zonă" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Toate zonele</SelectItem>
+              {(meta?.districts ?? []).map((d) => (
+                <SelectItem key={d} value={d}>
+                  {d}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
           <Select value={filters.city} onValueChange={(v) => setFilters((f) => ({ ...f, city: v }))}>
             <SelectTrigger className="w-40">
               <SelectValue placeholder="Oraș" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Toate orașele</SelectItem>
-              {cities.map((c) => (
+              {(meta?.cities ?? []).map((c) => (
                 <SelectItem key={c} value={c}>
                   {c}
                 </SelectItem>
               ))}
             </SelectContent>
           </Select>
-
+          <Select value={filters.agent} onValueChange={(v) => setFilters((f) => ({ ...f, agent: v }))}>
+            <SelectTrigger className="w-40">
+              <SelectValue placeholder="Agent" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Toți agenții</SelectItem>
+              {agents.map((a) => (
+                <SelectItem key={a.id} value={a.id}>
+                  {a.full_name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Select value={filters.source} onValueChange={(v) => setFilters((f) => ({ ...f, source: v }))}>
+            <SelectTrigger className="w-36">
+              <SelectValue placeholder="Sursă" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Toate sursele</SelectItem>
+              {(meta?.sources ?? []).map((s) => (
+                <SelectItem key={s} value={s}>
+                  {s}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Input
+            className="w-28"
+            placeholder="Preț min"
+            type="number"
+            value={filters.priceMin}
+            onChange={(e) => setFilters((f) => ({ ...f, priceMin: e.target.value }))}
+          />
+          <Input
+            className="w-28"
+            placeholder="Preț max"
+            type="number"
+            value={filters.priceMax}
+            onChange={(e) => setFilters((f) => ({ ...f, priceMax: e.target.value }))}
+          />
+          <Input
+            className="w-32"
+            placeholder="Supr. min (m²)"
+            type="number"
+            value={filters.surfaceMin}
+            onChange={(e) => setFilters((f) => ({ ...f, surfaceMin: e.target.value }))}
+          />
+          <Input
+            className="w-32"
+            placeholder="Supr. max (m²)"
+            type="number"
+            value={filters.surfaceMax}
+            onChange={(e) => setFilters((f) => ({ ...f, surfaceMax: e.target.value }))}
+          />
+          <Input
+            className="w-24"
+            placeholder="Camere"
+            type="number"
+            value={filters.rooms}
+            onChange={(e) => setFilters((f) => ({ ...f, rooms: e.target.value }))}
+          />
+          <Input
+            className="w-24"
+            placeholder="Băi"
+            type="number"
+            value={filters.bathrooms}
+            onChange={(e) => setFilters((f) => ({ ...f, bathrooms: e.target.value }))}
+          />
+          <Input
+            className="w-24"
+            placeholder="Etaj"
+            type="number"
+            value={filters.floor}
+            onChange={(e) => setFilters((f) => ({ ...f, floor: e.target.value }))}
+          />
+          <Input
+            className="w-40"
+            type="date"
+            title="Adăugat după"
+            value={filters.addedAfter}
+            onChange={(e) => setFilters((f) => ({ ...f, addedAfter: e.target.value }))}
+          />
+          <Input
+            className="w-40"
+            type="date"
+            title="Adăugat înainte"
+            value={filters.addedBefore}
+            onChange={(e) => setFilters((f) => ({ ...f, addedBefore: e.target.value }))}
+          />
           <Button
             variant={filters.mine ? "default" : "outline"}
             size="sm"
@@ -246,20 +644,32 @@ function PropertiesPage() {
           >
             Doar ale mele
           </Button>
+          <Button
+            variant={filters.favoritesOnly ? "default" : "outline"}
+            size="sm"
+            onClick={() => setFilters((f) => ({ ...f, favoritesOnly: !f.favoritesOnly }))}
+          >
+            <Star className="size-4" /> Doar favorite
+          </Button>
           <Button variant="ghost" size="sm" onClick={saveFilter}>
-            <Bookmark className="size-4" /> Salvează filtrul
+            Salvează filtrul
           </Button>
           <Button variant="ghost" size="sm" onClick={() => setFilters(emptyFilters)}>
             <X className="size-4" /> Resetează
           </Button>
         </div>
 
-        {saved.length > 0 ? (
+        {savedViews.views.length > 0 ? (
           <div className="flex flex-wrap items-center gap-2 border-t border-border pt-3">
             <span className="text-xs text-muted-foreground">Filtre salvate:</span>
-            {saved.map((s) => (
-              <Button key={s.name} variant="secondary" size="sm" onClick={() => setFilters(s.filters)}>
-                {s.name}
+            {savedViews.views.map((v) => (
+              <Button
+                key={v.id}
+                variant="secondary"
+                size="sm"
+                onClick={() => setFilters({ ...emptyFilters, ...(v.config as Partial<Filters>) })}
+              >
+                {v.name}
               </Button>
             ))}
           </div>
@@ -280,6 +690,37 @@ function PropertiesPage() {
                 ))}
               </SelectContent>
             </Select>
+            <Select onValueChange={(v) => assignAgent.mutate({ ids: selected, agentId: v })}>
+              <SelectTrigger className="w-48">
+                <SelectValue placeholder="Asignează agent" />
+              </SelectTrigger>
+              <SelectContent>
+                {agents.map((a) => (
+                  <SelectItem key={a.id} value={a.id}>
+                    {a.full_name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                const tag = window.prompt("Eticheta de adăugat:");
+                if (tag) addTag.mutate({ ids: selected, tag });
+              }}
+            >
+              Adaugă etichetă
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => publishMany.mutate(selected)}>
+              Publică
+            </Button>
+            <Button variant="outline" size="sm" onClick={exportCsv}>
+              Export CSV
+            </Button>
+            <Button variant="destructive" size="sm" onClick={() => setArchiveTarget(selected)}>
+              Arhivează
+            </Button>
             <Button variant="ghost" size="sm" onClick={() => setSelected([])}>
               Anulează selecția
             </Button>
@@ -288,79 +729,166 @@ function PropertiesPage() {
       </div>
 
       <div className="panel overflow-hidden">
-        <div className="hidden items-center gap-3 border-b border-border px-4 py-3 text-xs font-medium tracking-wide text-muted-foreground uppercase lg:flex">
-          <Checkbox
-            checked={allSelected}
-            onCheckedChange={(c) => setSelected(c ? rows.map((r) => r.id) : [])}
-          />
-          <span className="flex-1">Proprietate</span>
-          <span className="w-28">Tip</span>
-          <span className="w-24">Tranzacție</span>
-          <span className="w-28">Status</span>
-          <span className="w-28 text-right">Preț</span>
-          <span className="w-24 text-right">Suprafață</span>
-          <span className="w-24 text-right">Actualizat</span>
-        </div>
+        {view === "list" ? (
+          <>
+            <div className="hidden items-center gap-3 border-b border-border px-4 py-3 text-xs font-medium tracking-wide text-muted-foreground uppercase lg:flex">
+              <Checkbox checked={allSelected} onCheckedChange={(c) => setSelected(c ? rows.map((r) => r.id) : [])} />
+              <span className="flex-1">Proprietate</span>
+              {columns.includes("type") ? <span className="w-28">Tip</span> : null}
+              {columns.includes("transaction") ? <span className="w-24">Tranzacție</span> : null}
+              {columns.includes("status") ? <span className="w-28">Status</span> : null}
+              {columns.includes("price") ? <span className="w-28 text-right">Preț</span> : null}
+              {columns.includes("surface") ? <span className="w-24 text-right">Suprafață</span> : null}
+              {columns.includes("agent") ? <span className="w-32">Agent</span> : null}
+              {columns.includes("updated") ? <span className="w-24 text-right">Actualizat</span> : null}
+            </div>
 
-        {isLoading ? (
+            {isLoading ? (
+              <p className="px-4 py-10 text-center text-sm text-muted-foreground">Se încarcă…</p>
+            ) : rows.length === 0 ? (
+              <EmptyState
+                icon={Building2}
+                title="Nicio proprietate găsită"
+                description="Ajustează filtrele sau adaugă o proprietate nouă în portofoliu."
+                action={
+                  <Button asChild size="sm">
+                    <Link to="/app/properties/new">Adaugă proprietate</Link>
+                  </Button>
+                }
+              />
+            ) : (
+              <ul className="divide-y divide-border">
+                {rows.map((p) => (
+                  <li key={p.id} className="flex flex-wrap items-center gap-3 px-4 py-3 text-sm lg:flex-nowrap">
+                    <Checkbox
+                      checked={selected.includes(p.id)}
+                      onCheckedChange={(c) =>
+                        setSelected((s) => (c ? [...s, p.id] : s.filter((id) => id !== p.id)))
+                      }
+                    />
+                    <button type="button" onClick={() => toggleFavorite.mutate(p.id)} title="Favorit">
+                      <Star
+                        className={`size-4 ${favoriteIds.includes(p.id) ? "fill-warning text-warning" : "text-muted-foreground"}`}
+                      />
+                    </button>
+                    <div className="min-w-0 flex-1">
+                      <Link to="/app/properties/$id" params={{ id: p.id }} className="truncate font-medium hover:text-primary">
+                        {p.title}
+                      </Link>
+                      <p className="truncate text-xs text-muted-foreground">
+                        {p.reference ? `${p.reference} · ` : ""}
+                        {[p.district, p.city].filter(Boolean).join(", ") || "Locație nespecificată"}
+                      </p>
+                    </div>
+                    {columns.includes("type") ? (
+                      <span className="w-28 text-xs text-muted-foreground">
+                        {propertyTypeLabels[p.property_type] ?? p.property_type}
+                      </span>
+                    ) : null}
+                    {columns.includes("transaction") ? (
+                      <span className="w-24 text-xs text-muted-foreground">{transactionLabels[p.transaction_kind]}</span>
+                    ) : null}
+                    {columns.includes("status") ? (
+                      <span className="w-28">
+                        <StatusBadge tone={propertyStatusTone[p.status]}>{propertyStatusLabels[p.status]}</StatusBadge>
+                      </span>
+                    ) : null}
+                    {columns.includes("price") ? (
+                      <span className="w-28 text-right font-medium">{formatMoney(p.price, p.currency)}</span>
+                    ) : null}
+                    {columns.includes("surface") ? (
+                      <span className="w-24 text-right text-xs text-muted-foreground">
+                        {p.surface ? `${formatNumber(p.surface)} m²` : "—"}
+                      </span>
+                    ) : null}
+                    {columns.includes("agent") ? (
+                      <span className="w-32 truncate text-xs text-muted-foreground">{agentName(p.assigned_to)}</span>
+                    ) : null}
+                    {columns.includes("updated") ? (
+                      <span className="w-24 text-right text-xs text-muted-foreground">{relativeDays(p.updated_at)}</span>
+                    ) : null}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </>
+        ) : isLoading ? (
           <p className="px-4 py-10 text-center text-sm text-muted-foreground">Se încarcă…</p>
         ) : rows.length === 0 ? (
-          <EmptyState
-            icon={Building2}
-            title="Nicio proprietate găsită"
-            description="Ajustează filtrele sau adaugă o proprietate nouă în portofoliu."
-            action={
-              <Button asChild size="sm">
-                <Link to="/app/properties/new">Adaugă proprietate</Link>
-              </Button>
-            }
-          />
+          <EmptyState icon={Building2} title="Nicio proprietate găsită" />
         ) : (
-          <ul className="divide-y divide-border">
+          <div className="grid grid-cols-1 gap-4 p-4 sm:grid-cols-2 lg:grid-cols-3">
             {rows.map((p) => (
-              <li key={p.id} className="flex flex-wrap items-center gap-3 px-4 py-3 text-sm lg:flex-nowrap">
-                <Checkbox
-                  checked={selected.includes(p.id)}
-                  onCheckedChange={(c) =>
-                    setSelected((s) => (c ? [...s, p.id] : s.filter((id) => id !== p.id)))
-                  }
-                />
-                <div className="min-w-0 flex-1">
-                  <Link
-                    to="/app/properties/$id"
-                    params={{ id: p.id }}
-                    className="truncate font-medium hover:text-primary"
-                  >
-                    {p.title}
-                  </Link>
-                  <p className="truncate text-xs text-muted-foreground">
-                    {p.reference ? `${p.reference} · ` : ""}
-                    {[p.district, p.city].filter(Boolean).join(", ") || "Locație nespecificată"}
-                  </p>
+              <div key={p.id} className="panel space-y-2 p-4">
+                <div className="flex items-start justify-between gap-2">
+                  <Checkbox
+                    checked={selected.includes(p.id)}
+                    onCheckedChange={(c) => setSelected((s) => (c ? [...s, p.id] : s.filter((id) => id !== p.id)))}
+                  />
+                  <button type="button" onClick={() => toggleFavorite.mutate(p.id)} title="Favorit">
+                    <Star
+                      className={`size-4 ${favoriteIds.includes(p.id) ? "fill-warning text-warning" : "text-muted-foreground"}`}
+                    />
+                  </button>
                 </div>
-                <span className="w-28 text-xs text-muted-foreground">
-                  {propertyTypeLabels[p.property_type] ?? p.property_type}
-                </span>
-                <span className="w-24 text-xs text-muted-foreground">
-                  {transactionLabels[p.transaction_kind]}
-                </span>
-                <span className="w-28">
-                  <StatusBadge tone={propertyStatusTone[p.status]}>
-                    {propertyStatusLabels[p.status]}
-                  </StatusBadge>
-                </span>
-                <span className="w-28 text-right font-medium">{formatMoney(p.price, p.currency)}</span>
-                <span className="w-24 text-right text-xs text-muted-foreground">
+                <Link to="/app/properties/$id" params={{ id: p.id }} className="line-clamp-2 font-medium hover:text-primary">
+                  {p.title}
+                </Link>
+                <p className="text-xs text-muted-foreground">
+                  {[p.district, p.city].filter(Boolean).join(", ") || "Locație nespecificată"}
+                </p>
+                <div className="flex items-center justify-between">
+                  <StatusBadge tone={propertyStatusTone[p.status]}>{propertyStatusLabels[p.status]}</StatusBadge>
+                  <span className="font-semibold">{formatMoney(p.price, p.currency)}</span>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  {propertyTypeLabels[p.property_type] ?? p.property_type} · {transactionLabels[p.transaction_kind]} ·{" "}
                   {p.surface ? `${formatNumber(p.surface)} m²` : "—"}
-                </span>
-                <span className="w-24 text-right text-xs text-muted-foreground">
-                  {relativeDays(p.updated_at)}
-                </span>
-              </li>
+                </p>
+              </div>
             ))}
-          </ul>
+          </div>
         )}
+
+        <div className="flex items-center justify-between gap-3 border-t border-border px-4 py-3 text-sm">
+          <span className="text-xs text-muted-foreground">
+            {total > 0 ? `${page * PAGE_SIZE + 1}–${Math.min(total, (page + 1) * PAGE_SIZE)} din ${total}` : "0 rezultate"}
+          </span>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="icon" disabled={page === 0} onClick={() => setPage((p) => Math.max(0, p - 1))}>
+              <ChevronLeft className="size-4" />
+            </Button>
+            <span className="text-xs text-muted-foreground">
+              Pagina {page + 1} / {totalPages}
+            </span>
+            <Button
+              variant="outline"
+              size="icon"
+              disabled={page + 1 >= totalPages}
+              onClick={() => setPage((p) => p + 1)}
+            >
+              <ChevronRight className="size-4" />
+            </Button>
+          </div>
+        </div>
       </div>
+
+      <AlertDialog open={archiveTarget !== null} onOpenChange={(o) => !o && setArchiveTarget(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Arhivezi proprietățile selectate?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {archiveTarget?.length} proprietăți vor fi marcate ca arhivate. Poți reveni oricând asupra statusului.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Anulează</AlertDialogCancel>
+            <AlertDialogAction onClick={() => archiveTarget && archiveMany.mutate(archiveTarget)}>
+              Arhivează
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }
