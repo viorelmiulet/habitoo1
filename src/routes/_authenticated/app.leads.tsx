@@ -464,10 +464,12 @@ function LeadsPage() {
             return (
               <div
                 key={stage}
+                data-stage={stage}
                 className="panel flex w-72 shrink-0 flex-col"
                 onDragOver={(e) => e.preventDefault()}
                 onDrop={() => handleDrop(stage)}
               >
+
                 <div className="flex items-center justify-between border-b border-border px-4 py-3">
                   <div>
                     <p className="text-sm font-semibold">{leadStageLabels[stage]}</p>
