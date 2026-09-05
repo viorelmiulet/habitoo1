@@ -10,6 +10,7 @@ import {
   BarChart3,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { BrandLogo } from "@/components/brand/BrandLogo";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -70,9 +71,9 @@ function Landing() {
   return (
     <div className="min-h-screen bg-background">
       <header className="mx-auto flex max-w-6xl items-center justify-between px-4 py-5 lg:px-8">
-        <span className="text-lg font-semibold tracking-tight">
-          Habitoo <span className="text-gradient">CRM</span>
-        </span>
+        <Link to="/" className="block w-36 sm:w-44" aria-label="Habitoo CRM — pagina principală">
+          <BrandLogo priority />
+        </Link>
         <nav className="flex items-center gap-2">
           <Button asChild variant="ghost" size="sm">
             <Link to="/login">Autentificare</Link>
@@ -142,7 +143,10 @@ function Landing() {
       </section>
 
       <footer className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-2 px-4 py-8 text-xs text-muted-foreground lg:flex-row lg:px-8">
-        <span>© {new Date().getFullYear()} Habitoo CRM.</span>
+        <div className="flex items-center gap-3">
+          <BrandLogo className="w-24" />
+          <span>© {new Date().getFullYear()}</span>
+        </div>
         <span>Construit pentru agenții din România.</span>
       </footer>
     </div>
