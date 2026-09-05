@@ -419,6 +419,8 @@ function CalendarPage() {
             onDayClick={openCreate}
             onDropDay={handleDropOnDay}
             onEventClick={openDetail}
+            draggedId={draggedId}
+            setDraggedId={setDraggedId}
           />
         )}
       </div>
@@ -683,14 +685,17 @@ function MonthView({
   onDayClick,
   onDropDay,
   onEventClick,
+  draggedId,
+  setDraggedId,
 }: {
   anchor: Date;
   activities: Activity[];
   onDayClick: (d: Date) => void;
   onDropDay: (d: Date) => void;
   onEventClick: (a: Activity) => void;
+  draggedId: string | null;
+  setDraggedId: (id: string | null) => void;
 }) {
-  const [draggedId, setDraggedId] = useState<string | null>(null);
   const from = startOfWeek(startOfMonth(anchor));
   const monthEnd = new Date(anchor.getFullYear(), anchor.getMonth() + 1, 0);
   const to = addDays(startOfWeek(monthEnd), 7);
