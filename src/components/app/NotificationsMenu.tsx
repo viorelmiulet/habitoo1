@@ -30,16 +30,9 @@ function relativeShort(value: string) {
   return new Intl.DateTimeFormat("ro-RO", { day: "numeric", month: "short" }).format(new Date(value));
 }
 
-/**
- * Clopoțel cu popover: ultimele notificări, marcare citit, link către pagina completă.
- * Cheile de query sunt prefixate cu ["notifications"] pentru invalidare comună.
- */
-export function NotificationsMenu({ userId }: { userId: string }) {
-  const [open, setOpen] = useState(false);
-  const qc = useQueryClient();
-  const navigate = useNavigate();
-
-  const unread = useQuery({
+/** Numărul de notificări necitite (partajat între clopoțel și meniul lateral). */
+export function useUnreadNotificationsCount(userId: string) {
+  return useQuery({
     queryKey: ["notifications", "unread-count", userId],
     queryFn: async () => {
       const { count, error } = await supabase
@@ -52,6 +45,17 @@ export function NotificationsMenu({ userId }: { userId: string }) {
     },
     refetchInterval: 60_000,
   });
+}
+
+/**
+ * Clopoțel cu popover: ultimele notificări, marcare citit, link către pagina completă.
+ * Cheile de query sunt prefixate cu ["notifications"] pentru invalidare comună.
+ */
+export function NotificationsMenu({ userId }: { userId: string }) {
+  const [open, setOpen] = useState(false);
+  const qc = useQueryClient();
+  const navigate = useNavigate();
+  const unread = useUnreadNotificationsCount(userId);
 
   const recent = useQuery({
     queryKey: ["notifications", "recent", userId],
