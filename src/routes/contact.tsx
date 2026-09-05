@@ -22,6 +22,7 @@ import { navyButton } from "@/components/marketing/PublicHeader";
 import { PublicLayout } from "@/components/marketing/PublicLayout";
 import { Container, Section, SectionHeading } from "@/components/marketing/Section";
 import { publicHead } from "@/components/marketing/public-head";
+import { CrmLink } from "@/components/marketing/CrmLink";
 
 const TITLE = "Contact și demonstrație — Habitoo CRM";
 const DESCRIPTION =
@@ -181,9 +182,9 @@ function ContactPage() {
                           Modifică mesajul
                         </Button>
                         <Button asChild className={navyButton}>
-                          <Link to="/register">
+                          <CrmLink to="/register">
                             Creează agenția acum <ArrowRight />
-                          </Link>
+                          </CrmLink>
                         </Button>
                       </div>
                     </div>
@@ -328,9 +329,9 @@ function ContactPage() {
                   Poți crea agenția chiar acum și poți explora toate modulele cu datele tale.
                 </p>
                 <Button asChild variant="link" className="mt-2 h-auto px-0">
-                  <Link to="/register">
+                  <CrmLink to="/register">
                     Creează agenția <ArrowRight />
-                  </Link>
+                  </CrmLink>
                 </Button>
               </div>
             </div>

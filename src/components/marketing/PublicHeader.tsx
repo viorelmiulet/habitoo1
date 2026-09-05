@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
 import { publicNav } from "./public-nav";
+import { CrmLink } from "./CrmLink";
 
 export const navyButton =
   "bg-navy text-navy-foreground shadow-raised hover:bg-navy/90 focus-visible:ring-navy";
@@ -46,18 +47,18 @@ export function PublicHeader() {
 
         <div className="hidden items-center gap-2 lg:flex">
           <Button asChild variant="ghost" size="sm">
-            <Link to="/login">Autentificare</Link>
+            <CrmLink to="/login">Autentificare</CrmLink>
           </Button>
           <Button asChild size="sm" className={navyButton}>
-            <Link to="/register">
+            <CrmLink to="/register">
               Creează agenția <ArrowRight />
-            </Link>
+            </CrmLink>
           </Button>
         </div>
 
         <div className="flex items-center gap-2 lg:hidden">
           <Button asChild variant="ghost" size="sm" className="hidden sm:inline-flex">
-            <Link to="/login">Autentificare</Link>
+            <CrmLink to="/login">Autentificare</CrmLink>
           </Button>
           <Sheet open={open} onOpenChange={setOpen}>
             <SheetTrigger asChild>
@@ -93,14 +94,14 @@ export function PublicHeader() {
               </nav>
               <div className="mt-8 flex flex-col gap-2">
                 <Button asChild className={cn(navyButton, "h-11")}>
-                  <Link to="/register" onClick={() => setOpen(false)}>
+                  <CrmLink to="/register" onClick={() => setOpen(false)}>
                     Creează agenția <ArrowRight />
-                  </Link>
+                  </CrmLink>
                 </Button>
                 <Button asChild variant="outline" className="h-11">
-                  <Link to="/login" onClick={() => setOpen(false)}>
+                  <CrmLink to="/login" onClick={() => setOpen(false)}>
                     Autentificare
-                  </Link>
+                  </CrmLink>
                 </Button>
               </div>
             </SheetContent>

@@ -15,6 +15,52 @@ export function isCrmHostname(host?: string | null): boolean {
   return h === CRM_HOST || h.startsWith("crm.");
 }
 
+/** Host-urile care servesc STRICT site-ul public de marketing. */
+export const PUBLIC_SITE_HOSTS = ["habitoo.ro", "www.habitoo.ro"] as const;
+
+export function isPublicHostname(host?: string | null): boolean {
+  if (!host) return false;
+  const h = host.toLowerCase().split(":")[0];
+  return (PUBLIC_SITE_HOSTS as readonly string[]).includes(h);
+}
+
+/** Rutele care aparțin exclusiv aplicației CRM (auth + zone autentificate). */
+const CRM_PATH_RE =
+  /^\/(login|register|forgot-password|reset-password|auth\/callback|app|superadmin|onboarding)(\/|$)/;
+
+export function isCrmPath(pathname?: string | null): boolean {
+  if (!pathname) return false;
+  return CRM_PATH_RE.test(pathname);
+}
+
+/** URL absolut pe domeniul CRM. */
+export function getCrmUrl(path = "/"): string {
+  const p = path.startsWith("/") ? path : `/${path}`;
+  return `${CRM_URL}${p}`;
+}
+
+/**
+ * URL absolut pentru fluxurile de autentificare (callback, reset parolă,
+ * confirmare email, Google OAuth). Pe domeniile de producție forțează
+ * domeniul CRM; pe preview/local rămâne same-origin ca să nu rupă testarea.
+ */
+export function authUrl(path: string): string {
+  const host = typeof window !== "undefined" ? window.location.hostname : "";
+  if (isPublicHostname(host) || isCrmHostname(host)) return getCrmUrl(path);
+  if (typeof window !== "undefined") {
+    return `${window.location.origin}${path.startsWith("/") ? path : `/${path}`}`;
+  }
+  return getCrmUrl(path);
+}
+
+/** Mută navigarea pe domeniul CRM (client-side), fără bucle pe crm.*. */
+export function redirectToCrm(path = "/"): boolean {
+  if (typeof window === "undefined") return false;
+  if (isCrmHostname(window.location.hostname)) return false;
+  window.location.replace(getCrmUrl(path));
+  return true;
+}
+
 /**
  * Normalizează o destinație internă la o cale relativă sigură (same-origin).
  * Blochează URL-uri absolute, protocol-relative și rute de autentificare
@@ -27,4 +73,14 @@ export function safeInternalPath(value?: string | null): string | null {
     return null;
   }
   return value;
+}
+
+/**
+ * Href pentru linkurile publice care duc în CRM: absolut pe domeniile de
+ * producție, relativ pe preview/local (fără bucle, fără duplicare de logică).
+ */
+export function crmHref(path: string, host?: string | null): string {
+  const h = host ?? (typeof window !== "undefined" ? window.location.hostname : "");
+  if (isPublicHostname(h) || isCrmHostname(h)) return getCrmUrl(path);
+  return path.startsWith("/") ? path : `/${path}`;
 }
