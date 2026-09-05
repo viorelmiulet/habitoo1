@@ -7,6 +7,7 @@ import { toastError } from "@/lib/errors";
 import { PageHeader } from "@/components/app/PageHeader";
 import { StatusBadge } from "@/components/app/StatusBadge";
 import { EmptyState } from "@/components/app/EmptyState";
+import { PromptDialog, type PromptRequest } from "@/components/app/PromptDialog";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -71,6 +72,7 @@ function RequestsPage() {
   const [page, setPage] = useState(0);
   const [selected, setSelected] = useState<string[]>([]);
   const [open, setOpen] = useState(Boolean(openNew));
+  const [promptRequest, setPromptRequest] = useState<PromptRequest | null>(null);
   const { views, save, remove } = useSavedViews("requests", user?.organization?.id, user?.userId);
 
   useEffect(() => setPage(0), [debouncedQ, filters.kind, filters.status, filters.priority, filters.assigned, filters.city]);
@@ -247,9 +249,14 @@ function RequestsPage() {
   };
 
   const saveFilter = () => {
-    const name = window.prompt("Numele filtrului salvat:");
-    if (!name) return;
-    save.mutate({ name, config: filters });
+    setPromptRequest({
+      title: "Salvează filtrul curent",
+      description: "Filtrele active vor fi salvate sub un nume, pentru a le reaplica rapid.",
+      label: "Numele filtrului",
+      placeholder: "ex. Cereri închiriere, buget < 700 €",
+      confirmLabel: "Salvează",
+      onSubmit: (name) => save.mutateAsync({ name, config: filters }),
+    });
   };
 
   return (
@@ -521,6 +528,8 @@ function RequestsPage() {
           </form>
         </DialogContent>
       </Dialog>
+
+      <PromptDialog request={promptRequest} onClose={() => setPromptRequest(null)} />
     </>
   );
 }

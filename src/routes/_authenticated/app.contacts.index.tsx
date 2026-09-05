@@ -7,6 +7,7 @@ import { toastError } from "@/lib/errors";
 import { PageHeader } from "@/components/app/PageHeader";
 import { StatusBadge } from "@/components/app/StatusBadge";
 import { EmptyState } from "@/components/app/EmptyState";
+import { PromptDialog, type PromptRequest } from "@/components/app/PromptDialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -97,6 +98,7 @@ function ContactsPage() {
   const [selected, setSelected] = useState<string[]>([]);
   const [dialogOpen, setDialogOpen] = useState(Boolean(openNew));
   const [confirmDeactivate, setConfirmDeactivate] = useState(false);
+  const [promptRequest, setPromptRequest] = useState<PromptRequest | null>(null);
 
   const { views, save, remove } = useSavedViews("contacts", user?.organization?.id, user?.userId);
 
@@ -257,9 +259,14 @@ function ContactsPage() {
   };
 
   const saveFilter = () => {
-    const name = window.prompt("Numele filtrului salvat:");
-    if (!name) return;
-    save.mutate({ name, config: filters });
+    setPromptRequest({
+      title: "Salvează filtrul curent",
+      description: "Filtrele active vor fi salvate sub un nume, pentru a le reaplica rapid.",
+      label: "Numele filtrului",
+      placeholder: "ex. Proprietari activi, București",
+      confirmLabel: "Salvează",
+      onSubmit: (name) => save.mutateAsync({ name, config: filters }),
+    });
   };
 
   return (
@@ -404,10 +411,16 @@ function ContactsPage() {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => {
-                const tag = window.prompt("Etichetă de adăugat:");
-                if (tag) bulkAddTag(tag);
-              }}
+              onClick={() =>
+                setPromptRequest({
+                  title: "Adaugă etichetă",
+                  description: `Eticheta va fi adăugată la ${selected.length} ${selected.length === 1 ? "contact" : "contacte"}.`,
+                  label: "Etichetă",
+                  placeholder: "ex. investitor",
+                  confirmLabel: "Adaugă",
+                  onSubmit: (tag) => bulkAddTag(tag),
+                })
+              }
             >
               Adaugă etichetă
             </Button>
@@ -585,6 +598,8 @@ function ContactsPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <PromptDialog request={promptRequest} onClose={() => setPromptRequest(null)} />
     </>
   );
 }
