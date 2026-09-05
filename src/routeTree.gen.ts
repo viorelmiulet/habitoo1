@@ -27,6 +27,7 @@ import { Route as AuthenticatedAppNotificationsRouteImport } from './routes/_aut
 import { Route as AuthenticatedAppReportsRouteImport } from './routes/_authenticated/app.reports'
 import { Route as AuthenticatedAppRequestsRouteImport } from './routes/_authenticated/app.requests'
 import { Route as AuthenticatedAppSettingsRouteImport } from './routes/_authenticated/app.settings'
+import { Route as AuthenticatedSuperadminIndexRouteImport } from './routes/_authenticated/superadmin.index'
 import { Route as AuthenticatedAppContactsIndexRouteImport } from './routes/_authenticated/app.contacts.index'
 import { Route as AuthenticatedAppContactsIdRouteImport } from './routes/_authenticated/app.contacts.$id'
 import { Route as AuthenticatedAppPropertiesIndexRouteImport } from './routes/_authenticated/app.properties.index'
@@ -128,6 +129,12 @@ const AuthenticatedAppSettingsRoute =
     path: '/settings',
     getParentRoute: () => AuthenticatedAppRoute,
   } as any)
+const AuthenticatedSuperadminIndexRoute =
+  AuthenticatedSuperadminIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => AuthenticatedSuperadminRoute,
+  } as any)
 const AuthenticatedAppContactsIndexRoute =
   AuthenticatedAppContactsIndexRouteImport.update({
     id: '/contacts/',
@@ -166,7 +173,7 @@ export interface FileRoutesByFullPath {
   '/register': typeof RegisterRoute
   '/app': typeof AuthenticatedAppRouteWithChildren
   '/onboarding': typeof AuthenticatedOnboardingRoute
-  '/superadmin': typeof AuthenticatedSuperadminRoute
+  '/superadmin': typeof AuthenticatedSuperadminRouteWithChildren
   '/app/activities': typeof AuthenticatedAppActivitiesRoute
   '/app/calendar': typeof AuthenticatedAppCalendarRoute
   '/app/goals': typeof AuthenticatedAppGoalsRoute
@@ -177,6 +184,7 @@ export interface FileRoutesByFullPath {
   '/app/requests': typeof AuthenticatedAppRequestsRoute
   '/app/settings': typeof AuthenticatedAppSettingsRoute
   '/app/': typeof AuthenticatedAppIndexRoute
+  '/superadmin/': typeof AuthenticatedSuperadminIndexRoute
   '/app/contacts/$id': typeof AuthenticatedAppContactsIdRoute
   '/app/properties/$id': typeof AuthenticatedAppPropertiesIdRoute
   '/app/properties/new': typeof AuthenticatedAppPropertiesNewRoute
@@ -189,7 +197,6 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
-  '/superadmin': typeof AuthenticatedSuperadminRoute
   '/app/activities': typeof AuthenticatedAppActivitiesRoute
   '/app/calendar': typeof AuthenticatedAppCalendarRoute
   '/app/goals': typeof AuthenticatedAppGoalsRoute
@@ -200,6 +207,7 @@ export interface FileRoutesByTo {
   '/app/requests': typeof AuthenticatedAppRequestsRoute
   '/app/settings': typeof AuthenticatedAppSettingsRoute
   '/app': typeof AuthenticatedAppIndexRoute
+  '/superadmin': typeof AuthenticatedSuperadminIndexRoute
   '/app/contacts/$id': typeof AuthenticatedAppContactsIdRoute
   '/app/properties/$id': typeof AuthenticatedAppPropertiesIdRoute
   '/app/properties/new': typeof AuthenticatedAppPropertiesNewRoute
@@ -215,7 +223,7 @@ export interface FileRoutesById {
   '/register': typeof RegisterRoute
   '/_authenticated/app': typeof AuthenticatedAppRouteWithChildren
   '/_authenticated/onboarding': typeof AuthenticatedOnboardingRoute
-  '/_authenticated/superadmin': typeof AuthenticatedSuperadminRoute
+  '/_authenticated/superadmin': typeof AuthenticatedSuperadminRouteWithChildren
   '/_authenticated/app/activities': typeof AuthenticatedAppActivitiesRoute
   '/_authenticated/app/calendar': typeof AuthenticatedAppCalendarRoute
   '/_authenticated/app/goals': typeof AuthenticatedAppGoalsRoute
@@ -226,6 +234,7 @@ export interface FileRoutesById {
   '/_authenticated/app/requests': typeof AuthenticatedAppRequestsRoute
   '/_authenticated/app/settings': typeof AuthenticatedAppSettingsRoute
   '/_authenticated/app/': typeof AuthenticatedAppIndexRoute
+  '/_authenticated/superadmin/': typeof AuthenticatedSuperadminIndexRoute
   '/_authenticated/app/contacts/$id': typeof AuthenticatedAppContactsIdRoute
   '/_authenticated/app/properties/$id': typeof AuthenticatedAppPropertiesIdRoute
   '/_authenticated/app/properties/new': typeof AuthenticatedAppPropertiesNewRoute
@@ -252,6 +261,7 @@ export interface FileRouteTypes {
     | '/app/requests'
     | '/app/settings'
     | '/app/'
+    | '/superadmin/'
     | '/app/contacts/$id'
     | '/app/properties/$id'
     | '/app/properties/new'
@@ -264,7 +274,6 @@ export interface FileRouteTypes {
     | '/login'
     | '/register'
     | '/onboarding'
-    | '/superadmin'
     | '/app/activities'
     | '/app/calendar'
     | '/app/goals'
@@ -275,6 +284,7 @@ export interface FileRouteTypes {
     | '/app/requests'
     | '/app/settings'
     | '/app'
+    | '/superadmin'
     | '/app/contacts/$id'
     | '/app/properties/$id'
     | '/app/properties/new'
@@ -300,6 +310,7 @@ export interface FileRouteTypes {
     | '/_authenticated/app/requests'
     | '/_authenticated/app/settings'
     | '/_authenticated/app/'
+    | '/_authenticated/superadmin/'
     | '/_authenticated/app/contacts/$id'
     | '/_authenticated/app/properties/$id'
     | '/_authenticated/app/properties/new'
@@ -443,6 +454,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAppSettingsRouteImport
       parentRoute: typeof AuthenticatedAppRoute
     }
+    '/_authenticated/superadmin/': {
+      id: '/_authenticated/superadmin/'
+      path: '/'
+      fullPath: '/superadmin/'
+      preLoaderRoute: typeof AuthenticatedSuperadminIndexRouteImport
+      parentRoute: typeof AuthenticatedSuperadminRoute
+    }
     '/_authenticated/app/contacts/': {
       id: '/_authenticated/app/contacts/'
       path: '/contacts'
@@ -520,16 +538,30 @@ const AuthenticatedAppRouteChildren: AuthenticatedAppRouteChildren = {
 const AuthenticatedAppRouteWithChildren =
   AuthenticatedAppRoute._addFileChildren(AuthenticatedAppRouteChildren)
 
+interface AuthenticatedSuperadminRouteChildren {
+  AuthenticatedSuperadminIndexRoute: typeof AuthenticatedSuperadminIndexRoute
+}
+
+const AuthenticatedSuperadminRouteChildren: AuthenticatedSuperadminRouteChildren =
+  {
+    AuthenticatedSuperadminIndexRoute: AuthenticatedSuperadminIndexRoute,
+  }
+
+const AuthenticatedSuperadminRouteWithChildren =
+  AuthenticatedSuperadminRoute._addFileChildren(
+    AuthenticatedSuperadminRouteChildren,
+  )
+
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedAppRoute: typeof AuthenticatedAppRouteWithChildren
   AuthenticatedOnboardingRoute: typeof AuthenticatedOnboardingRoute
-  AuthenticatedSuperadminRoute: typeof AuthenticatedSuperadminRoute
+  AuthenticatedSuperadminRoute: typeof AuthenticatedSuperadminRouteWithChildren
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAppRoute: AuthenticatedAppRouteWithChildren,
   AuthenticatedOnboardingRoute: AuthenticatedOnboardingRoute,
-  AuthenticatedSuperadminRoute: AuthenticatedSuperadminRoute,
+  AuthenticatedSuperadminRoute: AuthenticatedSuperadminRouteWithChildren,
 }
 
 const AuthenticatedRouteRouteWithChildren =
