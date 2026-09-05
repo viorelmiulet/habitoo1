@@ -12,9 +12,8 @@ import { rememberPostLoginRedirect } from "@/lib/auth-redirect";
 import { safeInternalPath } from "@/lib/host";
 
 export const Route = createFileRoute("/login")({
-  validateSearch: (search: Record<string, unknown>) => ({
-    redirect: typeof search.redirect === "string" ? search.redirect : undefined,
-  }),
+  validateSearch: (search: Record<string, unknown>): { redirect?: string } =>
+    typeof search.redirect === "string" ? { redirect: search.redirect } : {},
   head: () => ({
     meta: [
       { title: "Autentificare — Habitoo CRM imobiliar" },
