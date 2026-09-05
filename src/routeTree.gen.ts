@@ -21,6 +21,7 @@ import { Route as AuthenticatedAppActivitiesRouteImport } from './routes/_authen
 import { Route as AuthenticatedAppCalendarRouteImport } from './routes/_authenticated/app.calendar'
 import { Route as AuthenticatedAppLeadsRouteImport } from './routes/_authenticated/app.leads'
 import { Route as AuthenticatedAppMatchingRouteImport } from './routes/_authenticated/app.matching'
+import { Route as AuthenticatedAppReportsRouteImport } from './routes/_authenticated/app.reports'
 import { Route as AuthenticatedAppRequestsRouteImport } from './routes/_authenticated/app.requests'
 import { Route as AuthenticatedAppContactsIndexRouteImport } from './routes/_authenticated/app.contacts.index'
 import { Route as AuthenticatedAppContactsIdRouteImport } from './routes/_authenticated/app.contacts.$id'
@@ -90,6 +91,11 @@ const AuthenticatedAppMatchingRoute =
     path: '/matching',
     getParentRoute: () => AuthenticatedAppRoute,
   } as any)
+const AuthenticatedAppReportsRoute = AuthenticatedAppReportsRouteImport.update({
+  id: '/reports',
+  path: '/reports',
+  getParentRoute: () => AuthenticatedAppRoute,
+} as any)
 const AuthenticatedAppRequestsRoute =
   AuthenticatedAppRequestsRouteImport.update({
     id: '/requests',
@@ -138,6 +144,7 @@ export interface FileRoutesByFullPath {
   '/app/calendar': typeof AuthenticatedAppCalendarRoute
   '/app/leads': typeof AuthenticatedAppLeadsRoute
   '/app/matching': typeof AuthenticatedAppMatchingRoute
+  '/app/reports': typeof AuthenticatedAppReportsRoute
   '/app/requests': typeof AuthenticatedAppRequestsRoute
   '/app/': typeof AuthenticatedAppIndexRoute
   '/app/contacts/$id': typeof AuthenticatedAppContactsIdRoute
@@ -156,6 +163,7 @@ export interface FileRoutesByTo {
   '/app/calendar': typeof AuthenticatedAppCalendarRoute
   '/app/leads': typeof AuthenticatedAppLeadsRoute
   '/app/matching': typeof AuthenticatedAppMatchingRoute
+  '/app/reports': typeof AuthenticatedAppReportsRoute
   '/app/requests': typeof AuthenticatedAppRequestsRoute
   '/app': typeof AuthenticatedAppIndexRoute
   '/app/contacts/$id': typeof AuthenticatedAppContactsIdRoute
@@ -177,6 +185,7 @@ export interface FileRoutesById {
   '/_authenticated/app/calendar': typeof AuthenticatedAppCalendarRoute
   '/_authenticated/app/leads': typeof AuthenticatedAppLeadsRoute
   '/_authenticated/app/matching': typeof AuthenticatedAppMatchingRoute
+  '/_authenticated/app/reports': typeof AuthenticatedAppReportsRoute
   '/_authenticated/app/requests': typeof AuthenticatedAppRequestsRoute
   '/_authenticated/app/': typeof AuthenticatedAppIndexRoute
   '/_authenticated/app/contacts/$id': typeof AuthenticatedAppContactsIdRoute
@@ -198,6 +207,7 @@ export interface FileRouteTypes {
     | '/app/calendar'
     | '/app/leads'
     | '/app/matching'
+    | '/app/reports'
     | '/app/requests'
     | '/app/'
     | '/app/contacts/$id'
@@ -216,6 +226,7 @@ export interface FileRouteTypes {
     | '/app/calendar'
     | '/app/leads'
     | '/app/matching'
+    | '/app/reports'
     | '/app/requests'
     | '/app'
     | '/app/contacts/$id'
@@ -236,6 +247,7 @@ export interface FileRouteTypes {
     | '/_authenticated/app/calendar'
     | '/_authenticated/app/leads'
     | '/_authenticated/app/matching'
+    | '/_authenticated/app/reports'
     | '/_authenticated/app/requests'
     | '/_authenticated/app/'
     | '/_authenticated/app/contacts/$id'
@@ -339,6 +351,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAppMatchingRouteImport
       parentRoute: typeof AuthenticatedAppRoute
     }
+    '/_authenticated/app/reports': {
+      id: '/_authenticated/app/reports'
+      path: '/reports'
+      fullPath: '/app/reports'
+      preLoaderRoute: typeof AuthenticatedAppReportsRouteImport
+      parentRoute: typeof AuthenticatedAppRoute
+    }
     '/_authenticated/app/requests': {
       id: '/_authenticated/app/requests'
       path: '/requests'
@@ -389,6 +408,7 @@ interface AuthenticatedAppRouteChildren {
   AuthenticatedAppCalendarRoute: typeof AuthenticatedAppCalendarRoute
   AuthenticatedAppLeadsRoute: typeof AuthenticatedAppLeadsRoute
   AuthenticatedAppMatchingRoute: typeof AuthenticatedAppMatchingRoute
+  AuthenticatedAppReportsRoute: typeof AuthenticatedAppReportsRoute
   AuthenticatedAppRequestsRoute: typeof AuthenticatedAppRequestsRoute
   AuthenticatedAppIndexRoute: typeof AuthenticatedAppIndexRoute
   AuthenticatedAppContactsIdRoute: typeof AuthenticatedAppContactsIdRoute
@@ -403,6 +423,7 @@ const AuthenticatedAppRouteChildren: AuthenticatedAppRouteChildren = {
   AuthenticatedAppCalendarRoute: AuthenticatedAppCalendarRoute,
   AuthenticatedAppLeadsRoute: AuthenticatedAppLeadsRoute,
   AuthenticatedAppMatchingRoute: AuthenticatedAppMatchingRoute,
+  AuthenticatedAppReportsRoute: AuthenticatedAppReportsRoute,
   AuthenticatedAppRequestsRoute: AuthenticatedAppRequestsRoute,
   AuthenticatedAppIndexRoute: AuthenticatedAppIndexRoute,
   AuthenticatedAppContactsIdRoute: AuthenticatedAppContactsIdRoute,
