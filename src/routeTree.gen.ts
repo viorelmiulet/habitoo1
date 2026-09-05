@@ -22,6 +22,7 @@ import { Route as AuthenticatedAppCalendarRouteImport } from './routes/_authenti
 import { Route as AuthenticatedAppGoalsRouteImport } from './routes/_authenticated/app.goals'
 import { Route as AuthenticatedAppLeadsRouteImport } from './routes/_authenticated/app.leads'
 import { Route as AuthenticatedAppMatchingRouteImport } from './routes/_authenticated/app.matching'
+import { Route as AuthenticatedAppNotificationsRouteImport } from './routes/_authenticated/app.notifications'
 import { Route as AuthenticatedAppReportsRouteImport } from './routes/_authenticated/app.reports'
 import { Route as AuthenticatedAppRequestsRouteImport } from './routes/_authenticated/app.requests'
 import { Route as AuthenticatedAppContactsIndexRouteImport } from './routes/_authenticated/app.contacts.index'
@@ -97,6 +98,12 @@ const AuthenticatedAppMatchingRoute =
     path: '/matching',
     getParentRoute: () => AuthenticatedAppRoute,
   } as any)
+const AuthenticatedAppNotificationsRoute =
+  AuthenticatedAppNotificationsRouteImport.update({
+    id: '/notifications',
+    path: '/notifications',
+    getParentRoute: () => AuthenticatedAppRoute,
+  } as any)
 const AuthenticatedAppReportsRoute = AuthenticatedAppReportsRouteImport.update({
   id: '/reports',
   path: '/reports',
@@ -151,6 +158,7 @@ export interface FileRoutesByFullPath {
   '/app/goals': typeof AuthenticatedAppGoalsRoute
   '/app/leads': typeof AuthenticatedAppLeadsRoute
   '/app/matching': typeof AuthenticatedAppMatchingRoute
+  '/app/notifications': typeof AuthenticatedAppNotificationsRoute
   '/app/reports': typeof AuthenticatedAppReportsRoute
   '/app/requests': typeof AuthenticatedAppRequestsRoute
   '/app/': typeof AuthenticatedAppIndexRoute
@@ -171,6 +179,7 @@ export interface FileRoutesByTo {
   '/app/goals': typeof AuthenticatedAppGoalsRoute
   '/app/leads': typeof AuthenticatedAppLeadsRoute
   '/app/matching': typeof AuthenticatedAppMatchingRoute
+  '/app/notifications': typeof AuthenticatedAppNotificationsRoute
   '/app/reports': typeof AuthenticatedAppReportsRoute
   '/app/requests': typeof AuthenticatedAppRequestsRoute
   '/app': typeof AuthenticatedAppIndexRoute
@@ -194,6 +203,7 @@ export interface FileRoutesById {
   '/_authenticated/app/goals': typeof AuthenticatedAppGoalsRoute
   '/_authenticated/app/leads': typeof AuthenticatedAppLeadsRoute
   '/_authenticated/app/matching': typeof AuthenticatedAppMatchingRoute
+  '/_authenticated/app/notifications': typeof AuthenticatedAppNotificationsRoute
   '/_authenticated/app/reports': typeof AuthenticatedAppReportsRoute
   '/_authenticated/app/requests': typeof AuthenticatedAppRequestsRoute
   '/_authenticated/app/': typeof AuthenticatedAppIndexRoute
@@ -217,6 +227,7 @@ export interface FileRouteTypes {
     | '/app/goals'
     | '/app/leads'
     | '/app/matching'
+    | '/app/notifications'
     | '/app/reports'
     | '/app/requests'
     | '/app/'
@@ -237,6 +248,7 @@ export interface FileRouteTypes {
     | '/app/goals'
     | '/app/leads'
     | '/app/matching'
+    | '/app/notifications'
     | '/app/reports'
     | '/app/requests'
     | '/app'
@@ -259,6 +271,7 @@ export interface FileRouteTypes {
     | '/_authenticated/app/goals'
     | '/_authenticated/app/leads'
     | '/_authenticated/app/matching'
+    | '/_authenticated/app/notifications'
     | '/_authenticated/app/reports'
     | '/_authenticated/app/requests'
     | '/_authenticated/app/'
@@ -370,6 +383,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAppMatchingRouteImport
       parentRoute: typeof AuthenticatedAppRoute
     }
+    '/_authenticated/app/notifications': {
+      id: '/_authenticated/app/notifications'
+      path: '/notifications'
+      fullPath: '/app/notifications'
+      preLoaderRoute: typeof AuthenticatedAppNotificationsRouteImport
+      parentRoute: typeof AuthenticatedAppRoute
+    }
     '/_authenticated/app/reports': {
       id: '/_authenticated/app/reports'
       path: '/reports'
@@ -428,6 +448,7 @@ interface AuthenticatedAppRouteChildren {
   AuthenticatedAppGoalsRoute: typeof AuthenticatedAppGoalsRoute
   AuthenticatedAppLeadsRoute: typeof AuthenticatedAppLeadsRoute
   AuthenticatedAppMatchingRoute: typeof AuthenticatedAppMatchingRoute
+  AuthenticatedAppNotificationsRoute: typeof AuthenticatedAppNotificationsRoute
   AuthenticatedAppReportsRoute: typeof AuthenticatedAppReportsRoute
   AuthenticatedAppRequestsRoute: typeof AuthenticatedAppRequestsRoute
   AuthenticatedAppIndexRoute: typeof AuthenticatedAppIndexRoute
@@ -444,6 +465,7 @@ const AuthenticatedAppRouteChildren: AuthenticatedAppRouteChildren = {
   AuthenticatedAppGoalsRoute: AuthenticatedAppGoalsRoute,
   AuthenticatedAppLeadsRoute: AuthenticatedAppLeadsRoute,
   AuthenticatedAppMatchingRoute: AuthenticatedAppMatchingRoute,
+  AuthenticatedAppNotificationsRoute: AuthenticatedAppNotificationsRoute,
   AuthenticatedAppReportsRoute: AuthenticatedAppReportsRoute,
   AuthenticatedAppRequestsRoute: AuthenticatedAppRequestsRoute,
   AuthenticatedAppIndexRoute: AuthenticatedAppIndexRoute,
