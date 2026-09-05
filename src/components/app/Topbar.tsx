@@ -97,10 +97,10 @@ export function Topbar({
 
       <Link
         to={isPlatform ? "/superadmin" : "/app"}
-        className="shrink-0 lg:hidden"
+        className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-white shadow-xs ring-1 ring-border lg:hidden"
         aria-label="Habitoo CRM — acasă"
       >
-        <BrandLogo markOnly className="size-8" priority />
+        <BrandLogo markOnly className="size-7" priority />
       </Link>
 
       {/* Breadcrumbs (desktop) */}
