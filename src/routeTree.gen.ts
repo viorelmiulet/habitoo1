@@ -18,6 +18,7 @@ import { Route as AuthenticatedAppRouteImport } from './routes/_authenticated/ap
 import { Route as AuthenticatedOnboardingRouteImport } from './routes/_authenticated/onboarding'
 import { Route as AuthenticatedAppIndexRouteImport } from './routes/_authenticated/app.index'
 import { Route as AuthenticatedAppPropertiesIndexRouteImport } from './routes/_authenticated/app.properties.index'
+import { Route as AuthenticatedAppPropertiesNewRouteImport } from './routes/_authenticated/app.properties.new'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -64,6 +65,12 @@ const AuthenticatedAppPropertiesIndexRoute =
     path: '/properties/',
     getParentRoute: () => AuthenticatedAppRoute,
   } as any)
+const AuthenticatedAppPropertiesNewRoute =
+  AuthenticatedAppPropertiesNewRouteImport.update({
+    id: '/properties/new',
+    path: '/properties/new',
+    getParentRoute: () => AuthenticatedAppRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -73,6 +80,7 @@ export interface FileRoutesByFullPath {
   '/app': typeof AuthenticatedAppRouteWithChildren
   '/onboarding': typeof AuthenticatedOnboardingRoute
   '/app/': typeof AuthenticatedAppIndexRoute
+  '/app/properties/new': typeof AuthenticatedAppPropertiesNewRoute
   '/app/properties/': typeof AuthenticatedAppPropertiesIndexRoute
 }
 export interface FileRoutesByTo {
@@ -82,6 +90,7 @@ export interface FileRoutesByTo {
   '/register': typeof RegisterRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
   '/app': typeof AuthenticatedAppIndexRoute
+  '/app/properties/new': typeof AuthenticatedAppPropertiesNewRoute
   '/app/properties': typeof AuthenticatedAppPropertiesIndexRoute
 }
 export interface FileRoutesById {
@@ -94,6 +103,7 @@ export interface FileRoutesById {
   '/_authenticated/app': typeof AuthenticatedAppRouteWithChildren
   '/_authenticated/onboarding': typeof AuthenticatedOnboardingRoute
   '/_authenticated/app/': typeof AuthenticatedAppIndexRoute
+  '/_authenticated/app/properties/new': typeof AuthenticatedAppPropertiesNewRoute
   '/_authenticated/app/properties/': typeof AuthenticatedAppPropertiesIndexRoute
 }
 export interface FileRouteTypes {
@@ -106,6 +116,7 @@ export interface FileRouteTypes {
     | '/app'
     | '/onboarding'
     | '/app/'
+    | '/app/properties/new'
     | '/app/properties/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -115,6 +126,7 @@ export interface FileRouteTypes {
     | '/register'
     | '/onboarding'
     | '/app'
+    | '/app/properties/new'
     | '/app/properties'
   id:
     | '__root__'
@@ -126,6 +138,7 @@ export interface FileRouteTypes {
     | '/_authenticated/app'
     | '/_authenticated/onboarding'
     | '/_authenticated/app/'
+    | '/_authenticated/app/properties/new'
     | '/_authenticated/app/properties/'
   fileRoutesById: FileRoutesById
 }
@@ -202,16 +215,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAppPropertiesIndexRouteImport
       parentRoute: typeof AuthenticatedAppRoute
     }
+    '/_authenticated/app/properties/new': {
+      id: '/_authenticated/app/properties/new'
+      path: '/properties/new'
+      fullPath: '/app/properties/new'
+      preLoaderRoute: typeof AuthenticatedAppPropertiesNewRouteImport
+      parentRoute: typeof AuthenticatedAppRoute
+    }
   }
 }
 
 interface AuthenticatedAppRouteChildren {
   AuthenticatedAppIndexRoute: typeof AuthenticatedAppIndexRoute
+  AuthenticatedAppPropertiesNewRoute: typeof AuthenticatedAppPropertiesNewRoute
   AuthenticatedAppPropertiesIndexRoute: typeof AuthenticatedAppPropertiesIndexRoute
 }
 
 const AuthenticatedAppRouteChildren: AuthenticatedAppRouteChildren = {
   AuthenticatedAppIndexRoute: AuthenticatedAppIndexRoute,
+  AuthenticatedAppPropertiesNewRoute: AuthenticatedAppPropertiesNewRoute,
   AuthenticatedAppPropertiesIndexRoute: AuthenticatedAppPropertiesIndexRoute,
 }
 
