@@ -1,3 +1,5 @@
+import type { LinkHTMLAttributes } from "react";
+
 export const SITE_URL = "https://www.habitoo.ro";
 export const SITE_NAME = "Habitoo CRM";
 
