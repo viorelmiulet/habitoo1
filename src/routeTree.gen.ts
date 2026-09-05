@@ -19,6 +19,7 @@ import { Route as AuthenticatedOnboardingRouteImport } from './routes/_authentic
 import { Route as AuthenticatedAppIndexRouteImport } from './routes/_authenticated/app.index'
 import { Route as AuthenticatedAppActivitiesRouteImport } from './routes/_authenticated/app.activities'
 import { Route as AuthenticatedAppCalendarRouteImport } from './routes/_authenticated/app.calendar'
+import { Route as AuthenticatedAppGoalsRouteImport } from './routes/_authenticated/app.goals'
 import { Route as AuthenticatedAppLeadsRouteImport } from './routes/_authenticated/app.leads'
 import { Route as AuthenticatedAppMatchingRouteImport } from './routes/_authenticated/app.matching'
 import { Route as AuthenticatedAppReportsRouteImport } from './routes/_authenticated/app.reports'
@@ -80,6 +81,11 @@ const AuthenticatedAppCalendarRoute =
     path: '/calendar',
     getParentRoute: () => AuthenticatedAppRoute,
   } as any)
+const AuthenticatedAppGoalsRoute = AuthenticatedAppGoalsRouteImport.update({
+  id: '/goals',
+  path: '/goals',
+  getParentRoute: () => AuthenticatedAppRoute,
+} as any)
 const AuthenticatedAppLeadsRoute = AuthenticatedAppLeadsRouteImport.update({
   id: '/leads',
   path: '/leads',
@@ -142,6 +148,7 @@ export interface FileRoutesByFullPath {
   '/onboarding': typeof AuthenticatedOnboardingRoute
   '/app/activities': typeof AuthenticatedAppActivitiesRoute
   '/app/calendar': typeof AuthenticatedAppCalendarRoute
+  '/app/goals': typeof AuthenticatedAppGoalsRoute
   '/app/leads': typeof AuthenticatedAppLeadsRoute
   '/app/matching': typeof AuthenticatedAppMatchingRoute
   '/app/reports': typeof AuthenticatedAppReportsRoute
@@ -161,6 +168,7 @@ export interface FileRoutesByTo {
   '/onboarding': typeof AuthenticatedOnboardingRoute
   '/app/activities': typeof AuthenticatedAppActivitiesRoute
   '/app/calendar': typeof AuthenticatedAppCalendarRoute
+  '/app/goals': typeof AuthenticatedAppGoalsRoute
   '/app/leads': typeof AuthenticatedAppLeadsRoute
   '/app/matching': typeof AuthenticatedAppMatchingRoute
   '/app/reports': typeof AuthenticatedAppReportsRoute
@@ -183,6 +191,7 @@ export interface FileRoutesById {
   '/_authenticated/onboarding': typeof AuthenticatedOnboardingRoute
   '/_authenticated/app/activities': typeof AuthenticatedAppActivitiesRoute
   '/_authenticated/app/calendar': typeof AuthenticatedAppCalendarRoute
+  '/_authenticated/app/goals': typeof AuthenticatedAppGoalsRoute
   '/_authenticated/app/leads': typeof AuthenticatedAppLeadsRoute
   '/_authenticated/app/matching': typeof AuthenticatedAppMatchingRoute
   '/_authenticated/app/reports': typeof AuthenticatedAppReportsRoute
@@ -205,6 +214,7 @@ export interface FileRouteTypes {
     | '/onboarding'
     | '/app/activities'
     | '/app/calendar'
+    | '/app/goals'
     | '/app/leads'
     | '/app/matching'
     | '/app/reports'
@@ -224,6 +234,7 @@ export interface FileRouteTypes {
     | '/onboarding'
     | '/app/activities'
     | '/app/calendar'
+    | '/app/goals'
     | '/app/leads'
     | '/app/matching'
     | '/app/reports'
@@ -245,6 +256,7 @@ export interface FileRouteTypes {
     | '/_authenticated/onboarding'
     | '/_authenticated/app/activities'
     | '/_authenticated/app/calendar'
+    | '/_authenticated/app/goals'
     | '/_authenticated/app/leads'
     | '/_authenticated/app/matching'
     | '/_authenticated/app/reports'
@@ -337,6 +349,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAppCalendarRouteImport
       parentRoute: typeof AuthenticatedAppRoute
     }
+    '/_authenticated/app/goals': {
+      id: '/_authenticated/app/goals'
+      path: '/goals'
+      fullPath: '/app/goals'
+      preLoaderRoute: typeof AuthenticatedAppGoalsRouteImport
+      parentRoute: typeof AuthenticatedAppRoute
+    }
     '/_authenticated/app/leads': {
       id: '/_authenticated/app/leads'
       path: '/leads'
@@ -406,6 +425,7 @@ declare module '@tanstack/react-router' {
 interface AuthenticatedAppRouteChildren {
   AuthenticatedAppActivitiesRoute: typeof AuthenticatedAppActivitiesRoute
   AuthenticatedAppCalendarRoute: typeof AuthenticatedAppCalendarRoute
+  AuthenticatedAppGoalsRoute: typeof AuthenticatedAppGoalsRoute
   AuthenticatedAppLeadsRoute: typeof AuthenticatedAppLeadsRoute
   AuthenticatedAppMatchingRoute: typeof AuthenticatedAppMatchingRoute
   AuthenticatedAppReportsRoute: typeof AuthenticatedAppReportsRoute
@@ -421,6 +441,7 @@ interface AuthenticatedAppRouteChildren {
 const AuthenticatedAppRouteChildren: AuthenticatedAppRouteChildren = {
   AuthenticatedAppActivitiesRoute: AuthenticatedAppActivitiesRoute,
   AuthenticatedAppCalendarRoute: AuthenticatedAppCalendarRoute,
+  AuthenticatedAppGoalsRoute: AuthenticatedAppGoalsRoute,
   AuthenticatedAppLeadsRoute: AuthenticatedAppLeadsRoute,
   AuthenticatedAppMatchingRoute: AuthenticatedAppMatchingRoute,
   AuthenticatedAppReportsRoute: AuthenticatedAppReportsRoute,
