@@ -45,7 +45,7 @@ export function publicHead({
   ];
   if (noindex) meta.push({ name: "robots", content: "noindex, nofollow" });
 
-  const links: Array<React.LinkHTMLAttributes<HTMLLinkElement>> = [
+  const links: Array<LinkHTMLAttributes<HTMLLinkElement>> = [
     { rel: "canonical", href: url },
     { rel: "preconnect", href: "https://fonts.googleapis.com" },
     { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
