@@ -33,6 +33,8 @@ function RegisterPage() {
   const navigate = useNavigate();
   const [form, setForm] = useState({ fullName: "", agency: "", email: "", password: "" });
   const [loading, setLoading] = useState(false);
+  const [notice, setNotice] = useState<string | null>(null);
+
 
   const set = (key: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement>) =>
     setForm((f) => ({ ...f, [key]: e.target.value }));
