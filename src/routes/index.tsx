@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, redirect } from "@tanstack/react-router";
 import {
   ArrowRight,
   ArrowRightLeft,
@@ -39,6 +39,13 @@ const DESCRIPTION =
   "Habitoo CRM organizează proprietățile, clienții, cererile și lead-urile agenției tale, cu matching automat, pipeline vizual, calendar și rapoarte. Creează agenția în câteva minute.";
 
 export const Route = createFileRoute("/")({
+  // Pe subdomeniul aplicației (crm.habitoo.ro) rădăcina deschide direct CRM-ul,
+  // nu homepage-ul de marketing. Site-ul public rămâne neschimbat.
+  beforeLoad: () => {
+    if (isCrmHostname(getCurrentHostname())) {
+      throw redirect({ to: "/app" });
+    }
+  },
   head: () =>
     publicHead({
       path: "/",
