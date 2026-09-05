@@ -28,7 +28,7 @@ function OnboardingPage() {
     const { error } = await supabase.rpc("bootstrap_agency", {
       _agency_name: form.agency,
       _full_name: form.fullName,
-      _phone: form.phone || null,
+      _phone: form.phone || undefined,
     });
     setLoading(false);
     if (error) {

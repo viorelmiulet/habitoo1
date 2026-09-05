@@ -85,7 +85,10 @@ function ContactDetailPage() {
   const [edit, setEdit] = useState<Record<string, string> | null>(null);
   const save = useMutation({
     mutationFn: async (patch: Record<string, unknown>) => {
-      const { error } = await supabase.from("contacts").update(patch).eq("id", id);
+      const { error } = await supabase
+        .from("contacts")
+        .update(patch as never)
+        .eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {
