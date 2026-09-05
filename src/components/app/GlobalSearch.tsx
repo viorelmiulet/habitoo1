@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
-import { Building2, Search, UserRound, Target, Flame } from "lucide-react";
+import { Building2, CalendarClock, Search, UserRound, Target, Flame } from "lucide-react";
 import {
   CommandDialog,
   CommandEmpty,
@@ -16,30 +16,32 @@ type Result =
   | { kind: "property"; id: string; label: string; meta: string }
   | { kind: "contact"; id: string; label: string; meta: string }
   | { kind: "lead"; id: string; label: string; meta: string }
-  | { kind: "request"; id: string; label: string; meta: string };
+  | { kind: "request"; id: string; label: string; meta: string }
+  | { kind: "activity"; id: string; label: string; meta: string };
 
 async function search(term: string): Promise<Result[]> {
   const q = term.trim();
   if (q.length < 2) return [];
   const like = `%${q}%`;
 
-  const [props, contacts, leads, requests] = await Promise.all([
+  const [props, contacts, leads, requests, activities] = await Promise.all([
     supabase
       .from("properties")
-      .select("id,title,reference,city,district,external_id")
+      .select("id,title,reference,city,district,external_id,address")
       .or(`title.ilike.${like},reference.ilike.${like},city.ilike.${like},address.ilike.${like},external_id.ilike.${like}`)
-      .limit(6),
+      .limit(5),
     supabase
       .from("contacts")
       .select("id,first_name,last_name,phone,email,type")
       .or(`first_name.ilike.${like},last_name.ilike.${like},phone.ilike.${like},email.ilike.${like}`)
-      .limit(6),
+      .limit(5),
     supabase
       .from("leads")
-      .select("id,name,phone,stage")
+      .select("id,name,phone,stage,email")
       .or(`name.ilike.${like},phone.ilike.${like},email.ilike.${like}`)
       .limit(5),
     supabase.from("requests").select("id,title,kind").ilike("title", like).limit(5),
+    supabase.from("activities").select("id,title,kind,starts_at").ilike("title", like).limit(5),
   ]);
 
   const results: Result[] = [];
@@ -58,15 +60,18 @@ async function search(term: string): Promise<Result[]> {
       meta: [c.phone, c.email].filter(Boolean).join(" · "),
     });
   for (const l of leads.data ?? [])
-    results.push({ kind: "lead", id: l.id, label: l.name, meta: l.phone ?? "" });
+    results.push({ kind: "lead", id: l.id, label: l.name, meta: [l.phone, l.email].filter(Boolean).join(" · ") });
   for (const r of requests.data ?? [])
     results.push({ kind: "request", id: r.id, label: r.title, meta: r.kind });
+  for (const a of activities.data ?? [])
+    results.push({ kind: "activity", id: a.id, label: a.title, meta: a.kind });
   return results;
 }
 
 export function GlobalSearch() {
   const [open, setOpen] = useState(false);
   const [term, setTerm] = useState("");
+  const [debounced, setDebounced] = useState("");
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -80,10 +85,15 @@ export function GlobalSearch() {
     return () => window.removeEventListener("keydown", onKey);
   }, []);
 
+  useEffect(() => {
+    const t = setTimeout(() => setDebounced(term), 250);
+    return () => clearTimeout(t);
+  }, [term]);
+
   const { data: results = [], isFetching } = useQuery({
-    queryKey: ["global-search", term],
-    queryFn: () => search(term),
-    enabled: open && term.trim().length >= 2,
+    queryKey: ["global-search", debounced],
+    queryFn: () => search(debounced),
+    enabled: open && debounced.trim().length >= 2,
   });
 
   const go = (r: Result) => {
@@ -92,6 +102,7 @@ export function GlobalSearch() {
     if (r.kind === "property") navigate({ to: "/app/properties/$id", params: { id: r.id } });
     else if (r.kind === "contact") navigate({ to: "/app/contacts/$id", params: { id: r.id } });
     else if (r.kind === "lead") navigate({ to: "/app/leads" });
+    else if (r.kind === "activity") navigate({ to: "/app/activities" });
     else navigate({ to: "/app/requests" });
   };
 
@@ -100,6 +111,7 @@ export function GlobalSearch() {
     { kind: "contact", title: "Contacte", icon: UserRound },
     { kind: "lead", title: "Lead-uri", icon: Flame },
     { kind: "request", title: "Cereri", icon: Target },
+    { kind: "activity", title: "Activități", icon: CalendarClock },
   ];
 
   return (
