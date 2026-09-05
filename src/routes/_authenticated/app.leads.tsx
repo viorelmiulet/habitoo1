@@ -295,7 +295,7 @@ function LeadsPage() {
       if (stage === "lost") payload.lost_reason = lostReasonValue ?? null;
       const { error } = await supabase.from("leads").update(payload as never).eq("id", lead.id);
       if (error) throw error;
-      await supabase.from("lead_events").insert({
+      const { error: eventError } = await supabase.from("lead_events").insert({
         organization_id: orgId,
         lead_id: lead.id,
         from_stage: lead.stage,
@@ -303,6 +303,8 @@ function LeadsPage() {
         actor_id: user?.userId ?? null,
         note: lostReasonValue ?? null,
       } as never);
+      if (eventError) throw eventError;
+
       await logAudit({
         organizationId: orgId,
         actorId: user?.userId,
@@ -325,7 +327,11 @@ function LeadsPage() {
       if (ctx?.prev) queryClient.setQueryData(["leads", orgId], ctx.prev);
       toast.error(e.message);
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["leads"] }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["leads"] });
+      queryClient.invalidateQueries({ queryKey: ["lead_events"] });
+    },
+
   });
 
   const handleDrop = (stage: LeadStage) => {
