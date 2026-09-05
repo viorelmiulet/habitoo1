@@ -14,13 +14,16 @@ const historyIcons: Record<string, typeof Phone> = {
 export function PipelineMock({
   className,
   withHistory = true,
-  columns = 4,
+  columns,
 }: {
   className?: string;
   withHistory?: boolean;
   columns?: 3 | 4 | 5;
 }) {
-  const cols = mockPipeline.slice(0, columns);
+  // With the history panel beside it, three columns keep the cards readable.
+  const count = columns ?? (withHistory ? 3 : 5);
+  const start = withHistory ? 1 : 0;
+  const cols = mockPipeline.slice(start, start + count);
   return (
     <AppFrame title="lead-uri / pipeline" className={className} activeIndex={4}>
       <MockToolbar title="Pipeline lead-uri" meta="15 lead-uri active · vedere Kanban" action="+ Lead nou" />
@@ -40,7 +43,7 @@ export function PipelineMock({
                 </div>
                 <div className="space-y-2">
                   {col.cards.map((card, i) => {
-                    const lifted = ci === 2 && i === 0;
+                    const lifted = col.stage === "qualified" && i === 0;
                     return (
                       <div
                         key={card.name}
