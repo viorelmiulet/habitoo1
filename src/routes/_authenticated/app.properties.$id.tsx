@@ -13,9 +13,12 @@ import {
   UserPlus,
 } from "lucide-react";
 import { toast } from "sonner";
+import { toastError } from "@/lib/errors";
 import { PageHeader } from "@/components/app/PageHeader";
+import { DetailSkeleton } from "@/components/app/LoadingState";
 import { StatusBadge } from "@/components/app/StatusBadge";
 import { EmptyState } from "@/components/app/EmptyState";
+import { ConfirmDialog } from "@/components/app/ConfirmDialog";
 import { ActivityDialog } from "@/components/app/ActivityDialog";
 import { PropertyMediaManager } from "@/components/app/PropertyMediaManager";
 import { DocumentsPanel } from "@/components/app/DocumentsPanel";
@@ -70,6 +73,7 @@ function PropertyDetailPage() {
   const { data: user } = useCurrentUser();
   const orgId = user?.organization?.id;
   const [editing, setEditing] = useState(false);
+  const [confirmArchive, setConfirmArchive] = useState(false);
   const [activityDialog, setActivityDialog] = useState<{ open: boolean; kind?: "viewing" | "call" }>({
     open: false,
   });
@@ -138,7 +142,7 @@ function PropertyDetailPage() {
       setEditing(false);
       toast.success("Modificările au fost salvate.");
     },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: Error) => toastError(e),
   });
 
   const changeStatus = useMutation({
@@ -159,7 +163,7 @@ function PropertyDetailPage() {
       queryClient.invalidateQueries({ queryKey: ["properties"] });
       toast.success("Status actualizat.");
     },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: Error) => toastError(e),
   });
 
   const archive = useMutation({
@@ -179,7 +183,7 @@ function PropertyDetailPage() {
       queryClient.invalidateQueries({ queryKey: ["properties"] });
       navigate({ to: "/app/properties" });
     },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: Error) => toastError(e),
   });
 
   const publish = useMutation({
@@ -201,7 +205,7 @@ function PropertyDetailPage() {
       queryClient.invalidateQueries({ queryKey: ["property", id] });
       toast.success("Proprietatea a fost publicată.");
     },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: Error) => toastError(e),
   });
 
   const duplicate = useMutation({
@@ -238,7 +242,7 @@ function PropertyDetailPage() {
       toast.success("Proprietate duplicată.");
       navigate({ to: "/app/properties/$id", params: { id: created.id } });
     },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: Error) => toastError(e),
   });
 
   const addLead = useMutation({
@@ -262,11 +266,11 @@ function PropertyDetailPage() {
       setClientPhone("");
       queryClient.invalidateQueries({ queryKey: ["property", id] });
     },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: Error) => toastError(e),
   });
 
   if (isLoading) {
-    return <p className="text-sm text-muted-foreground">Se încarcă proprietatea…</p>;
+    return <DetailSkeleton />;
   }
   if (!property) {
     return (
@@ -366,7 +370,7 @@ function PropertyDetailPage() {
             </Button>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button size="icon" variant="outline">
+                <Button size="icon" variant="outline" aria-label="Mai multe acțiuni">
                   <MoreHorizontal className="size-4" />
                 </Button>
               </DropdownMenuTrigger>
@@ -381,7 +385,7 @@ function PropertyDetailPage() {
                   </DropdownMenuItem>
                 ))}
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => archive.mutate()} className="text-destructive">
+                <DropdownMenuItem onClick={() => setConfirmArchive(true)} className="text-destructive">
                   Arhivează
                 </DropdownMenuItem>
               </DropdownMenuContent>
@@ -781,6 +785,16 @@ function PropertyDetailPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <ConfirmDialog
+        open={confirmArchive}
+        onOpenChange={setConfirmArchive}
+        title="Arhivezi această proprietate?"
+        description="Proprietatea va dispărea din listele active și de pe pagina publică. Poți schimba oricând statusul înapoi."
+        confirmLabel="Arhivează"
+        destructive
+        onConfirm={() => archive.mutateAsync()}
+      />
     </>
   );
 }

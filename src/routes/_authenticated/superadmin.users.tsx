@@ -3,7 +3,9 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { Search, Users } from "lucide-react";
 import { toast } from "sonner";
+import { toastError } from "@/lib/errors";
 import { PageHeader } from "@/components/app/PageHeader";
+import { ListSkeleton } from "@/components/app/LoadingState";
 import { StatusBadge } from "@/components/app/StatusBadge";
 import { EmptyState } from "@/components/app/EmptyState";
 import { Button } from "@/components/ui/button";
@@ -42,7 +44,7 @@ function UsersPage() {
       queryClient.invalidateQueries({ queryKey: ["superadmin", "users"] });
       toast.success("Statusul utilizatorului a fost actualizat.");
     },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: Error) => toastError(e),
   });
 
   const rows = (data?.profiles ?? []).filter((p) =>
@@ -72,7 +74,7 @@ function UsersPage() {
 
       <div className="panel overflow-hidden">
         {isLoading ? (
-          <p className="px-4 py-10 text-center text-sm text-muted-foreground">Se încarcă…</p>
+          <ListSkeleton rows={8} />
         ) : rows.length === 0 ? (
           <EmptyState icon={Users} title="Niciun utilizator găsit" />
         ) : (

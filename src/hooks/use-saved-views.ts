@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { toastError } from "@/lib/errors";
 import { supabase } from "@/integrations/supabase/client";
 
 export type SavedView = {
@@ -49,7 +50,7 @@ export function useSavedViews(module: string, orgId: string | null | undefined, 
       toast.success("Filtru salvat");
       void queryClient.invalidateQueries({ queryKey: key });
     },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: Error) => toastError(e),
   });
 
   const remove = useMutation({
@@ -61,7 +62,7 @@ export function useSavedViews(module: string, orgId: string | null | undefined, 
       toast.success("Filtru șters");
       void queryClient.invalidateQueries({ queryKey: key });
     },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: Error) => toastError(e),
   });
 
   return { views: query.data ?? [], isLoading: query.isLoading, save, remove };

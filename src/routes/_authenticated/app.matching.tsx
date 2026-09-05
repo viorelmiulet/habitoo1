@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
 import { Sparkles, Download, X, Bookmark, Check, Mail, MessageCircle, CalendarPlus, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
+import { toastError } from "@/lib/errors";
 import { PageHeader } from "@/components/app/PageHeader";
 import { StatusBadge } from "@/components/app/StatusBadge";
 import { EmptyState } from "@/components/app/EmptyState";
@@ -228,7 +229,7 @@ function MatchingPage() {
       queryClient.invalidateQueries({ queryKey: ["matching-leads"] });
       queryClient.invalidateQueries({ queryKey: ["leads"] });
     },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: Error) => toastError(e),
   });
 
   type Row = {

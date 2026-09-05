@@ -3,7 +3,9 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { ArrowLeft, Mail, MessageCircle, Phone, Sparkles, Target, UserPlus } from "lucide-react";
 import { toast } from "sonner";
+import { toastError } from "@/lib/errors";
 import { PageHeader } from "@/components/app/PageHeader";
+import { DetailSkeleton } from "@/components/app/LoadingState";
 import { StatusBadge } from "@/components/app/StatusBadge";
 import { EmptyState } from "@/components/app/EmptyState";
 import { ActivityDialog } from "@/components/app/ActivityDialog";
@@ -146,7 +148,7 @@ function RequestDetailPage() {
       setEditing(false);
       toast.success("Preferințele au fost salvate.");
     },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: Error) => toastError(e),
   });
 
   const setStatus = useMutation({
@@ -169,7 +171,7 @@ function RequestDetailPage() {
       queryClient.invalidateQueries({ queryKey: ["requests"] });
       toast.success("Status actualizat.");
     },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: Error) => toastError(e),
   });
 
   const setPriority = useMutation({
@@ -181,7 +183,7 @@ function RequestDetailPage() {
       queryClient.invalidateQueries({ queryKey: ["request", id] });
       toast.success("Prioritate actualizată.");
     },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: Error) => toastError(e),
   });
 
   const setAssigned = useMutation({
@@ -193,7 +195,7 @@ function RequestDetailPage() {
       queryClient.invalidateQueries({ queryKey: ["request", id] });
       toast.success("Agent actualizat.");
     },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: Error) => toastError(e),
   });
 
   const createLead = useMutation({
@@ -216,11 +218,11 @@ function RequestDetailPage() {
       toast.success("Lead creat.");
       queryClient.invalidateQueries({ queryKey: ["request", id] });
     },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: Error) => toastError(e),
   });
 
   if (isLoading) {
-    return <p className="text-sm text-muted-foreground">Se încarcă cererea…</p>;
+    return <DetailSkeleton />;
   }
   if (!request) {
     return (

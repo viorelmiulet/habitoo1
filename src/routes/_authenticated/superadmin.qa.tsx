@@ -23,6 +23,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { PageHeader } from "@/components/app/PageHeader";
+import { ListSkeleton } from "@/components/app/LoadingState";
 import { KpiCard } from "@/components/app/KpiCard";
 import { StatusBadge } from "@/components/app/StatusBadge";
 import { EmptyState } from "@/components/app/EmptyState";
@@ -150,7 +151,7 @@ function QaPanelPage() {
           <EmptyState icon={ShieldAlert} title="Nu am putut încărca starea QA" description={errorMessage(error)} />
         </div>
       ) : isLoading ? (
-        <p className="panel px-4 py-10 text-center text-sm text-muted-foreground">Se încarcă…</p>
+        <div className="panel overflow-hidden"><ListSkeleton rows={4} /></div>
       ) : !org ? (
         <div className="panel p-6">
           <EmptyState

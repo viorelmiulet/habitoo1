@@ -14,9 +14,12 @@ import {
   X,
 } from "lucide-react";
 import { toast } from "sonner";
+import { toastError } from "@/lib/errors";
 import { PageHeader } from "@/components/app/PageHeader";
+import { CardGridSkeleton, ListSkeleton } from "@/components/app/LoadingState";
 import { StatusBadge } from "@/components/app/StatusBadge";
 import { EmptyState } from "@/components/app/EmptyState";
+import { PromptDialog, type PromptRequest } from "@/components/app/PromptDialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -151,6 +154,7 @@ function PropertiesPage() {
   const [sort, setSort] = useState<SortKey>("created_desc");
   const [page, setPage] = useState(0);
   const [archiveTarget, setArchiveTarget] = useState<string[] | null>(null);
+  const [promptRequest, setPromptRequest] = useState<PromptRequest | null>(null);
 
   const savedViews = useSavedViews("properties", orgId, user?.userId);
 
@@ -287,7 +291,7 @@ function PropertiesPage() {
       setSelected([]);
       toast.success("Statusul a fost actualizat.");
     },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: Error) => toastError(e),
   });
 
   const assignAgent = useMutation({
@@ -300,7 +304,7 @@ function PropertiesPage() {
       setSelected([]);
       toast.success("Agent asignat.");
     },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: Error) => toastError(e),
   });
 
   const archiveMany = useMutation({
@@ -314,7 +318,7 @@ function PropertiesPage() {
       setArchiveTarget(null);
       toast.success("Proprietăți arhivate.");
     },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: Error) => toastError(e),
   });
 
   const addTag = useMutation({
@@ -334,7 +338,7 @@ function PropertiesPage() {
       setSelected([]);
       toast.success("Etichetă adăugată.");
     },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: Error) => toastError(e),
   });
 
   const publishMany = useMutation({
@@ -350,7 +354,7 @@ function PropertiesPage() {
       setSelected([]);
       toast.success("Proprietăți publicate.");
     },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: Error) => toastError(e),
   });
 
   const toggleFavorite = useMutation({
@@ -374,7 +378,7 @@ function PropertiesPage() {
       }
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["property-favorites", user?.userId] }),
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: Error) => toastError(e),
   });
 
   const allSelected = rows.length > 0 && selected.length === rows.length;
@@ -398,9 +402,14 @@ function PropertiesPage() {
   const agentName = (id: string | null) => agents.find((a) => a.id === id)?.full_name ?? "—";
 
   const saveFilter = () => {
-    const name = window.prompt("Numele filtrului salvat:");
-    if (!name) return;
-    savedViews.save.mutate({ name, config: filters as unknown as Record<string, unknown> });
+    setPromptRequest({
+      title: "Salvează filtrul curent",
+      description: "Filtrele active vor fi salvate sub un nume, pentru a le reaplica rapid.",
+      label: "Numele filtrului",
+      placeholder: "ex. Apartamente 2 camere, Nord",
+      confirmLabel: "Salvează",
+      onSubmit: (name) => savedViews.save.mutateAsync({ name, config: filters as unknown as Record<string, unknown> }),
+    });
   };
 
   return (
@@ -488,7 +497,9 @@ function PropertiesPage() {
             variant={view === "list" ? "default" : "outline"}
             size="icon"
             onClick={() => setView("list")}
-            title="Listă"
+            title="Vizualizare listă"
+            aria-label="Vizualizare listă"
+            aria-pressed={view === "list"}
           >
             <List className="size-4" />
           </Button>
@@ -496,7 +507,9 @@ function PropertiesPage() {
             variant={view === "grid" ? "default" : "outline"}
             size="icon"
             onClick={() => setView("grid")}
-            title="Carduri"
+            title="Vizualizare carduri"
+            aria-label="Vizualizare carduri"
+            aria-pressed={view === "grid"}
           >
             <LayoutGrid className="size-4" />
           </Button>
@@ -707,10 +720,16 @@ function PropertiesPage() {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => {
-                const tag = window.prompt("Eticheta de adăugat:");
-                if (tag) addTag.mutate({ ids: selected, tag });
-              }}
+              onClick={() =>
+                setPromptRequest({
+                  title: "Adaugă etichetă",
+                  description: `Eticheta va fi adăugată la ${selected.length} ${selected.length === 1 ? "proprietate" : "proprietăți"}.`,
+                  label: "Etichetă",
+                  placeholder: "ex. exclusivitate",
+                  confirmLabel: "Adaugă",
+                  onSubmit: (tag) => addTag.mutateAsync({ ids: selected, tag }),
+                })
+              }
             >
               Adaugă etichetă
             </Button>
@@ -746,7 +765,7 @@ function PropertiesPage() {
             </div>
 
             {isLoading ? (
-              <p className="px-4 py-10 text-center text-sm text-muted-foreground">Se încarcă…</p>
+              <ListSkeleton rows={8} />
             ) : rows.length === 0 ? (
               <EmptyState
                 icon={Building2}
@@ -815,7 +834,7 @@ function PropertiesPage() {
             )}
           </>
         ) : isLoading ? (
-          <p className="px-4 py-10 text-center text-sm text-muted-foreground">Se încarcă…</p>
+          <CardGridSkeleton count={6} className="p-4" />
         ) : rows.length === 0 ? (
           <EmptyState icon={Building2} title="Nicio proprietate găsită" />
         ) : (
@@ -857,7 +876,7 @@ function PropertiesPage() {
             {total > 0 ? `${page * PAGE_SIZE + 1}–${Math.min(total, (page + 1) * PAGE_SIZE)} din ${total}` : "0 rezultate"}
           </span>
           <div className="flex items-center gap-2">
-            <Button variant="outline" size="icon" disabled={page === 0} onClick={() => setPage((p) => Math.max(0, p - 1))}>
+            <Button variant="outline" size="icon" aria-label="Pagina anterioară" disabled={page === 0} onClick={() => setPage((p) => Math.max(0, p - 1))}>
               <ChevronLeft className="size-4" />
             </Button>
             <span className="text-xs text-muted-foreground">
@@ -866,6 +885,7 @@ function PropertiesPage() {
             <Button
               variant="outline"
               size="icon"
+              aria-label="Pagina următoare"
               disabled={page + 1 >= totalPages}
               onClick={() => setPage((p) => p + 1)}
             >
@@ -891,6 +911,8 @@ function PropertiesPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <PromptDialog request={promptRequest} onClose={() => setPromptRequest(null)} />
     </>
   );
 }

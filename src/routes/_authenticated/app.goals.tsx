@@ -3,8 +3,11 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { Layers, Trash2 } from "lucide-react";
 import { toast } from "sonner";
+import { toastError } from "@/lib/errors";
 import { PageHeader } from "@/components/app/PageHeader";
+import { CardGridSkeleton } from "@/components/app/LoadingState";
 import { EmptyState } from "@/components/app/EmptyState";
+import { ConfirmDialog } from "@/components/app/ConfirmDialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -49,6 +52,7 @@ function GoalsPage() {
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
 
   const { data, isLoading } = useQuery({
     queryKey: ["goals-data"],
@@ -110,7 +114,7 @@ function GoalsPage() {
       setEditing(null);
       toast.success(editing ? "Obiectivul a fost actualizat." : "Obiectivul a fost creat.");
     },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: Error) => toastError(e),
   });
 
   const remove = useMutation({
@@ -122,7 +126,7 @@ function GoalsPage() {
       queryClient.invalidateQueries({ queryKey: ["goals-data"] });
       toast.success("Obiectivul a fost șters.");
     },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: Error) => toastError(e),
   });
 
   const updateProgress = useMutation({
@@ -131,7 +135,7 @@ function GoalsPage() {
       if (error) throw error;
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["goals-data"] }),
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: Error) => toastError(e),
   });
 
   const allGoals = data?.goals ?? [];
@@ -194,7 +198,7 @@ function GoalsPage() {
       />
 
       {isLoading ? (
-        <p className="text-sm text-muted-foreground">Se încarcă obiectivele…</p>
+        <CardGridSkeleton count={6} />
       ) : goals.length === 0 ? (
         <div className="panel">
           <EmptyState
@@ -244,7 +248,9 @@ function GoalsPage() {
                         size="icon"
                         variant="ghost"
                         className="size-8 text-destructive"
-                        onClick={() => remove.mutate(g.id)}
+                        aria-label="Șterge obiectivul"
+                        title="Șterge obiectivul"
+                        onClick={() => setDeleteTarget(g.id)}
                       >
                         <Trash2 className="size-4" />
                       </Button>
@@ -354,6 +360,16 @@ function GoalsPage() {
           </form>
         </DialogContent>
       </Dialog>
+
+      <ConfirmDialog
+        open={deleteTarget !== null}
+        onOpenChange={(o) => !o && setDeleteTarget(null)}
+        title="Ștergi acest obiectiv?"
+        description="Obiectivul și progresul înregistrat vor fi eliminate definitiv."
+        confirmLabel="Șterge"
+        destructive
+        onConfirm={() => (deleteTarget ? remove.mutateAsync(deleteTarget) : undefined)}
+      />
     </>
   );
 }

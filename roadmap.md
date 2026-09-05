@@ -26,3 +26,17 @@
 - [x] crm.habitoo.ro deschide direct aplicația (redirect host-based de la `/` la `/app`).
 - [x] Guard `_authenticated` trimite la `/login?redirect=<rută>`; login și callback OAuth revin la ruta cerută.
 - [x] noindex pe layout-urile CRM (app, superadmin, onboarding).
+
+## Interfața autentificată – audit + premium (în lucru)
+- [x] Audit complet (shell, primitive, pagini agent, pagini Superadmin) – documentat în `.lovable/audit-ui-autentificata.md`.
+- [x] Fundație: fonturi brand în CRM, `friendlyError`/`toastError`, skeleton-uri, stare de eroare cu retry, ConfirmDialog, PromptDialog, SectionCard.
+- [x] Shell nou: sidebar colapsabil (persistă), workspace card, user card + logout, topbar compact cu breadcrumbs, meniu notificări, temă light/dark, bottom nav mobil.
+- [x] Shell Superadmin distinct (mod „Platformă”), fără a atinge guard-urile.
+- [x] Primitive: PageHeader (back, eyebrow, meta), KpiCard (trend, link, skeleton), EmptyState, StatusBadge (dot) – compatibile cu site-ul public.
+- [x] Pagini agent: `window.prompt` înlocuit cu PromptDialog (filtre salvate, etichete), confirmare la arhivare proprietate și ștergere obiectiv, aria-labels pe butoanele icon, skeleton-uri în loc de „Se încarcă…”, `toastError` în toate rutele autentificate.
+- [x] Superadmin: dashboard cu stări loading/eroare/gol, KPI cu linkuri, status/plan/audit umanizate; listele folosesc skeleton-uri.
+- [ ] Notificări: pagină refăcută (filtre, grupare pe zi, marcare individuală) – meniul rapid din topbar este gata.
+- [ ] Superadmin: agenții (drawer detalii, acțiuni confirmate), utilizatori (filtre), audit (filtre, paginare, detalii).
+- [ ] Pipeline lead-uri: fallback tastatură/touch pentru drag & drop.
+- [x] Verificare vizuală 1440/390 light + dark pe toate rutele autentificate, typecheck, build, fără erori consolă/network.
+  - Notă: avertismentul dev intermitent „state update on a component that hasn't mounted yet” provine din `@tanstack/react-router` (Transitioner.startTransition la încărcarea inițială), nu din codul aplicației.

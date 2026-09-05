@@ -11,14 +11,26 @@ const toneClasses: Record<Tone, string> = {
   primary: "bg-primary/10 text-primary border-primary/25",
 };
 
+const dotClasses: Record<Tone, string> = {
+  neutral: "bg-muted-foreground/60",
+  success: "bg-success",
+  warning: "bg-warning-foreground/70",
+  info: "bg-info",
+  danger: "bg-destructive",
+  primary: "bg-primary",
+};
+
 export function StatusBadge({
   children,
   tone = "neutral",
   className,
+  dot = false,
 }: {
   children: React.ReactNode;
   tone?: Tone;
   className?: string;
+  /** Afișează un punct colorat înaintea textului. */
+  dot?: boolean;
 }) {
   return (
     <span
@@ -28,6 +40,7 @@ export function StatusBadge({
         className,
       )}
     >
+      {dot ? <span className={cn("size-1.5 shrink-0 rounded-full", dotClasses[tone])} aria-hidden /> : null}
       {children}
     </span>
   );

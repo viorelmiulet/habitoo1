@@ -2,8 +2,10 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
+import { toastError } from "@/lib/errors";
 import { CalendarDays, ChevronLeft, ChevronRight, Trash2 } from "lucide-react";
 import { PageHeader } from "@/components/app/PageHeader";
+import { InlineLoading } from "@/components/app/LoadingState";
 import { StatusBadge } from "@/components/app/StatusBadge";
 import { EmptyState } from "@/components/app/EmptyState";
 import { ActivityDialog } from "@/components/app/ActivityDialog";
@@ -222,7 +224,7 @@ function CalendarPage() {
       queryClient.invalidateQueries({ queryKey: ["activities", "calendar"] });
       setDetail((prev) => (prev && prev.id === vars.id ? { ...prev, ...(vars.payload as Partial<Activity>) } : prev));
     },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: Error) => toastError(e),
   });
 
   const deleteMutation = useMutation({
@@ -237,7 +239,7 @@ function CalendarPage() {
       setDeleteTarget(null);
       setDetail(null);
     },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: Error) => toastError(e),
   });
 
   const openCreate = (startsAt: Date) => {
@@ -389,7 +391,7 @@ function CalendarPage() {
 
       <div className="panel mt-4 overflow-hidden">
         {isLoading ? (
-          <div className="p-16 text-center text-sm text-muted-foreground">Se încarcă activitățile…</div>
+          <InlineLoading label="Se încarcă activitățile…" className="py-16" />
         ) : filtered.length === 0 && view !== "month" ? (
           <EmptyState
             icon={CalendarDays}

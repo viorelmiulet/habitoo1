@@ -3,7 +3,9 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { Building2, Search } from "lucide-react";
 import { toast } from "sonner";
+import { toastError } from "@/lib/errors";
 import { PageHeader } from "@/components/app/PageHeader";
+import { ListSkeleton } from "@/components/app/LoadingState";
 import { StatusBadge } from "@/components/app/StatusBadge";
 import { EmptyState } from "@/components/app/EmptyState";
 import { Input } from "@/components/ui/input";
@@ -61,7 +63,7 @@ function AgenciesPage() {
       queryClient.invalidateQueries({ queryKey: ["superadmin"] });
       toast.success("Agenția a fost actualizată.");
     },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: Error) => toastError(e),
   });
 
   const rows = (data?.orgs ?? []).filter((o) =>
@@ -89,7 +91,7 @@ function AgenciesPage() {
 
       <div className="panel overflow-hidden">
         {isLoading ? (
-          <p className="px-4 py-10 text-center text-sm text-muted-foreground">Se încarcă…</p>
+          <ListSkeleton rows={6} />
         ) : rows.length === 0 ? (
           <EmptyState icon={Building2} title="Nicio agenție găsită" />
         ) : (

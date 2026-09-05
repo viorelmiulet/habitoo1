@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRef, useState } from "react";
 import { Download, FileText, Trash2, Upload } from "lucide-react";
 import { toast } from "sonner";
+import { toastError } from "@/lib/errors";
 import { EmptyState } from "@/components/app/EmptyState";
 import { Button } from "@/components/ui/button";
 import {
@@ -83,7 +84,7 @@ export function DocumentsPanel({
       toast.success("Document(e) încărcat(e).");
       queryClient.invalidateQueries({ queryKey });
     },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: Error) => toastError(e),
     onSettled: () => setUploading(false),
   });
 
@@ -97,7 +98,7 @@ export function DocumentsPanel({
       toast.success("Document șters.");
       queryClient.invalidateQueries({ queryKey });
     },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: Error) => toastError(e),
   });
 
   const handleDownload = async (path: string, name: string) => {

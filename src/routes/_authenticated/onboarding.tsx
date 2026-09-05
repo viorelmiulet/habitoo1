@@ -2,6 +2,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "sonner";
+import { toastError } from "@/lib/errors";
 import { AuthShell } from "@/components/auth/AuthShell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -38,7 +39,7 @@ function OnboardingPage() {
     });
     setLoading(false);
     if (error) {
-      toast.error(error.message);
+      toastError(error);
       return;
     }
     await queryClient.invalidateQueries({ queryKey: currentUserQueryKey });

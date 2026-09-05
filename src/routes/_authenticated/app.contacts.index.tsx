@@ -3,9 +3,12 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
 import { Bookmark, Download, LayoutGrid, List, Search, Trash2, UserRound, X } from "lucide-react";
 import { toast } from "sonner";
+import { toastError } from "@/lib/errors";
 import { PageHeader } from "@/components/app/PageHeader";
+import { ListSkeleton } from "@/components/app/LoadingState";
 import { StatusBadge } from "@/components/app/StatusBadge";
 import { EmptyState } from "@/components/app/EmptyState";
+import { PromptDialog, type PromptRequest } from "@/components/app/PromptDialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -96,6 +99,7 @@ function ContactsPage() {
   const [selected, setSelected] = useState<string[]>([]);
   const [dialogOpen, setDialogOpen] = useState(Boolean(openNew));
   const [confirmDeactivate, setConfirmDeactivate] = useState(false);
+  const [promptRequest, setPromptRequest] = useState<PromptRequest | null>(null);
 
   const { views, save, remove } = useSavedViews("contacts", user?.organization?.id, user?.userId);
 
@@ -205,7 +209,7 @@ function ContactsPage() {
       setForm({ first_name: "", last_name: "", type: "buyer", phone: "", email: "", company: "", source: "", notes: "" });
       toast.success("Contactul a fost adăugat.");
     },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: Error) => toastError(e),
   });
 
   const bulkUpdate = useMutation({
@@ -218,7 +222,7 @@ function ContactsPage() {
       setSelected([]);
       toast.success("Contactele au fost actualizate.");
     },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: Error) => toastError(e),
   });
 
   const bulkAddTag = (tag: string) => {
@@ -256,9 +260,14 @@ function ContactsPage() {
   };
 
   const saveFilter = () => {
-    const name = window.prompt("Numele filtrului salvat:");
-    if (!name) return;
-    save.mutate({ name, config: filters });
+    setPromptRequest({
+      title: "Salvează filtrul curent",
+      description: "Filtrele active vor fi salvate sub un nume, pentru a le reaplica rapid.",
+      label: "Numele filtrului",
+      placeholder: "ex. Proprietari activi, București",
+      confirmLabel: "Salvează",
+      onSubmit: (name) => save.mutateAsync({ name, config: filters }),
+    });
   };
 
   return (
@@ -354,10 +363,10 @@ function ContactsPage() {
             <X className="size-4" /> Resetează
           </Button>
           <div className="ml-auto flex items-center gap-1 rounded-lg border border-border p-0.5">
-            <Button variant={view === "list" ? "secondary" : "ghost"} size="icon" className="size-8" onClick={() => setView("list")}>
+            <Button variant={view === "list" ? "secondary" : "ghost"} size="icon" className="size-8" aria-label="Vizualizare listă" aria-pressed={view === "list"} onClick={() => setView("list")}>
               <List className="size-4" />
             </Button>
-            <Button variant={view === "card" ? "secondary" : "ghost"} size="icon" className="size-8" onClick={() => setView("card")}>
+            <Button variant={view === "card" ? "secondary" : "ghost"} size="icon" className="size-8" aria-label="Vizualizare carduri" aria-pressed={view === "card"} onClick={() => setView("card")}>
               <LayoutGrid className="size-4" />
             </Button>
           </div>
@@ -403,10 +412,16 @@ function ContactsPage() {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => {
-                const tag = window.prompt("Etichetă de adăugat:");
-                if (tag) bulkAddTag(tag);
-              }}
+              onClick={() =>
+                setPromptRequest({
+                  title: "Adaugă etichetă",
+                  description: `Eticheta va fi adăugată la ${selected.length} ${selected.length === 1 ? "contact" : "contacte"}.`,
+                  label: "Etichetă",
+                  placeholder: "ex. investitor",
+                  confirmLabel: "Adaugă",
+                  onSubmit: (tag) => bulkAddTag(tag),
+                })
+              }
             >
               Adaugă etichetă
             </Button>
@@ -422,7 +437,7 @@ function ContactsPage() {
 
       <div className="panel overflow-hidden">
         {isLoading ? (
-          <p className="px-4 py-10 text-center text-sm text-muted-foreground">Se încarcă…</p>
+          <ListSkeleton rows={8} />
         ) : rows.length === 0 ? (
           <EmptyState
             icon={UserRound}
@@ -584,6 +599,8 @@ function ContactsPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <PromptDialog request={promptRequest} onClose={() => setPromptRequest(null)} />
     </>
   );
 }
