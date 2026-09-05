@@ -101,7 +101,9 @@ function RegisterPage() {
         </>
       }
     >
+      {notice ? <div className="panel mb-4 p-4 text-sm text-muted-foreground">{notice}</div> : null}
       <form onSubmit={submit} className="space-y-4">
+
         <div className="space-y-2">
           <Label htmlFor="fullName">Nume complet</Label>
           <Input id="fullName" required value={form.fullName} onChange={set("fullName")} />
