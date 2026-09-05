@@ -88,7 +88,7 @@ export function AppSidebar({
   return (
     <div className="flex h-full flex-col bg-sidebar text-sidebar-foreground">
       <div className="px-4 pt-4 pb-5">
-        <div className="rounded-lg bg-sidebar-foreground px-3 py-1.5">
+        <div className="rounded-lg bg-background px-3 py-1.5">
           <BrandLogo className="mx-auto w-full max-w-40" priority />
         </div>
         <div className="mt-2 min-w-0 px-1">
