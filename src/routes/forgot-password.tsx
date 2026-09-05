@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
+import { authErrorMessage } from "@/lib/auth-errors";
 
 export const Route = createFileRoute("/forgot-password")({
   head: () => ({
@@ -29,10 +30,10 @@ function ForgotPasswordPage() {
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/login`,
+      redirectTo: `${window.location.origin}/reset-password`,
     });
     if (error) {
-      toast.error(error.message);
+      toast.error(authErrorMessage(error.message, error.code));
       return;
     }
     setSent(true);
