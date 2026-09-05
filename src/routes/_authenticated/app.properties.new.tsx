@@ -81,12 +81,23 @@ function NewPropertyPage() {
     mutationFn: async () => {
       if (!user?.organization?.id) throw new Error("Agenția nu este configurată.");
       const num = (v: string) => (v.trim() === "" ? null : Number(v));
+      // Referință internă incrementală per agenție (RF-1001, RF-1002, ...).
+      const { data: lastRef } = await supabase
+        .from("properties")
+        .select("reference")
+        .eq("organization_id", user.organization.id)
+        .not("reference", "is", null)
+        .order("reference", { ascending: false })
+        .limit(1);
+      const lastNumber = Number(String(lastRef?.[0]?.reference ?? "").replace(/\D/g, "")) || 1000;
+      const reference = `RF-${lastNumber + 1}`;
       const { data, error } = await supabase
         .from("properties")
         .insert({
           organization_id: user.organization.id,
           assigned_to: user.userId,
           created_by: user.userId,
+          reference,
           title: form.title,
           property_type: form.property_type,
           transaction_kind: form.transaction_kind as never,

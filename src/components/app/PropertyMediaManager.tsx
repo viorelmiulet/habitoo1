@@ -94,11 +94,11 @@ export function PropertyMediaManager({
   const invalidate = () => queryClient.invalidateQueries({ queryKey });
 
   const upload = useMutation({
-    mutationFn: async (files: FileList) => {
+    mutationFn: async (files: File[]) => {
       if (!orgId) throw new Error("Agenția nu este configurată.");
       let position = images.length;
-      for (const file of Array.from(files)) {
-        if (!file.type.startsWith("image/")) continue;
+      let uploaded = 0;
+      for (const file of files) {
         const { blob, width, height } = await compressImage(file);
         const path = mediaPath(orgId, propertyId, file.name);
         await uploadToBucket(MEDIA_BUCKET, path, blob, "image/jpeg");
@@ -110,20 +110,24 @@ export function PropertyMediaManager({
           position,
           width,
           height,
-          is_primary: images.length === 0 && position === images.length,
+          is_primary: images.length === 0 && uploaded === 0,
           created_by: userId ?? null,
         } as never);
         if (error) throw error;
         position += 1;
+        uploaded += 1;
       }
+      if (uploaded === 0) throw new Error("Niciun fișier valid de încărcat.");
+      return uploaded;
     },
-    onSuccess: () => {
-      toast.success("Imagini încărcate.");
+    onSuccess: (count) => {
+      toast.success(count === 1 ? "Imagine încărcată." : `${count} imagini încărcate.`);
       invalidate();
     },
     onError: (e: Error) => toast.error(e.message),
     onSettled: () => setUploading(false),
   });
+
 
   const patch = useMutation({
     mutationFn: async ({ id, values }: { id: string; values: Record<string, unknown> }) => {
@@ -139,7 +143,11 @@ export function PropertyMediaManager({
 
   const setPrimary = useMutation({
     mutationFn: async (id: string) => {
-      await supabase.from("property_images").update({ is_primary: false } as never).eq("property_id", propertyId);
+      const { error: clearError } = await supabase
+        .from("property_images")
+        .update({ is_primary: false } as never)
+        .eq("property_id", propertyId);
+      if (clearError) throw clearError;
       const { error } = await supabase.from("property_images").update({ is_primary: true } as never).eq("id", id);
       if (error) throw error;
     },
@@ -155,6 +163,18 @@ export function PropertyMediaManager({
       if (img.storage_path) await removeFromBucket(MEDIA_BUCKET, [img.storage_path]);
       const { error } = await supabase.from("property_images").delete().eq("id", img.id);
       if (error) throw error;
+
+      // Renumerotează pozițiile și promovează o nouă imagine principală dacă a fost ștearsă cea principală.
+      const remaining = images.filter((i) => i.id !== img.id);
+      for (const [idx, rest] of remaining.entries()) {
+        const values: Record<string, unknown> = { position: idx };
+        if (img.is_primary && idx === 0) values['is_primary'] = true;
+        const { error: fixError } = await supabase
+          .from("property_images")
+          .update(values as never)
+          .eq("id", rest.id);
+        if (fixError) throw fixError;
+      }
     },
     onSuccess: () => {
       toast.success("Imagine ștearsă.");
@@ -181,21 +201,34 @@ export function PropertyMediaManager({
 
   const reorder = useMutation({
     mutationFn: async (ordered: ImageRow[]) => {
-      await Promise.all(
+      const results = await Promise.all(
         ordered.map((img, idx) =>
           supabase.from("property_images").update({ position: idx } as never).eq("id", img.id),
         ),
       );
+      const failed = results.find((r) => r.error);
+      if (failed?.error) throw failed.error;
     },
     onSuccess: () => invalidate(),
     onError: (e: Error) => toast.error(e.message),
   });
 
+  const MAX_UPLOAD_BYTES = 15 * 1024 * 1024;
+
   const handleFiles = (files: FileList | null) => {
     if (!files || files.length === 0) return;
+    // FileList-ul devine gol când resetăm inputul, deci copiem fișierele imediat.
+    const all = Array.from(files);
+    const imageFiles = all.filter((f) => f.type.startsWith("image/"));
+    const tooLarge = imageFiles.filter((f) => f.size > MAX_UPLOAD_BYTES);
+    const valid = imageFiles.filter((f) => f.size <= MAX_UPLOAD_BYTES);
+    if (all.length !== imageFiles.length) toast.error("Doar fișierele imagine pot fi încărcate.");
+    if (tooLarge.length > 0) toast.error("Unele imagini depășesc 15 MB și au fost ignorate.");
+    if (valid.length === 0) return;
     setUploading(true);
-    upload.mutate(files);
+    upload.mutate(valid);
   };
+
 
   const onDropReorder = (index: number) => {
     if (dragIndex.current === null || dragIndex.current === index) return;
