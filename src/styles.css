@@ -274,7 +274,3 @@
     transform: none;
   }
 }
-
-html:has(.mk-root) {
-  scroll-behavior: smooth;
-}

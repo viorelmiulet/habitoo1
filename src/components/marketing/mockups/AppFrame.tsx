@@ -43,7 +43,7 @@ export function AppFrame({
 }) {
   return (
     <div
-      className={cn("mk-frame overflow-hidden", className)}
+      className={cn("mk-frame min-w-0 overflow-hidden", className)}
       role="img"
       aria-label={`${label}: ${title}`}
     >

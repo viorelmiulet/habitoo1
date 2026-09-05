@@ -5,7 +5,7 @@ import { mockPropertyMatches, mockRequest, mockRequestMatches } from "../mock-da
 import { ScoreRing } from "./ScoreRing";
 
 function Card({ children, className }: { children: React.ReactNode; className?: string }) {
-  return <div className={cn("mk-frame overflow-hidden", className)}>{children}</div>;
+  return <div className={cn("mk-frame min-w-0 overflow-hidden", className)}>{children}</div>;
 }
 
 export function RequestMatchesMock({ className }: { className?: string }) {

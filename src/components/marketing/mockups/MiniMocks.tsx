@@ -7,7 +7,7 @@ import { mockContacts, mockGoals, mockPhotos, mockRequests } from "../mock-data"
 
 function Panel({ title, meta, children, className }: { title: string; meta?: string; children: React.ReactNode; className?: string }) {
   return (
-    <div className={cn("mk-frame overflow-hidden", className)}>
+    <div className={cn("mk-frame min-w-0 overflow-hidden", className)}>
       <div className="border-b border-border bg-muted/50 px-4 py-2.5">
         <p className="text-xs font-semibold">{title}</p>
         {meta ? <p className="text-[10px] text-muted-foreground">{meta}</p> : null}
