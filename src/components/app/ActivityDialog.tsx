@@ -129,7 +129,13 @@ export function ActivityDialog({
         <DialogHeader>
           <DialogTitle>Activitate nouă</DialogTitle>
         </DialogHeader>
-        <div className="space-y-4">
+        <form
+          className="space-y-4"
+          onSubmit={(e) => {
+            e.preventDefault();
+            create.mutate();
+          }}
+        >
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
               <Label>Tip</Label>
@@ -205,15 +211,15 @@ export function ActivityDialog({
               </SelectContent>
             </Select>
           </div>
-        </div>
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Anulează
-          </Button>
-          <Button onClick={() => create.mutate()} disabled={create.isPending}>
-            {create.isPending ? "Se salvează…" : "Salvează activitatea"}
-          </Button>
-        </DialogFooter>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+              Anulează
+            </Button>
+            <Button type="submit" disabled={create.isPending}>
+              {create.isPending ? "Se salvează…" : "Salvează activitatea"}
+            </Button>
+          </DialogFooter>
+        </form>
       </DialogContent>
     </Dialog>
   );
