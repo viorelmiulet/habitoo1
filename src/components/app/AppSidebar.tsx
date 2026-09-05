@@ -145,13 +145,21 @@ export function AppSidebar({
       )}
     >
       {/* Brand */}
-      <div className={cn("flex items-center px-3 pt-4 pb-3", collapsed ? "justify-center" : "px-4")}>
+      {/* Fundal alb fix (nu depinde de temă): logo-ul are text navy și trebuie să rămână lizibil în dark mode.
+          `pr-12` pe drawer-ul mobil lasă loc butonului de închidere al Sheet-ului. */}
+      <div
+        className={cn(
+          "flex items-center px-3 pt-4 pb-3",
+          collapsed ? "justify-center" : "px-4",
+          onNavigate && !collapsed && "pr-12",
+        )}
+      >
         <Link
           to={homeTo}
           onClick={onNavigate}
           aria-label="Habitoo CRM — acasă"
           className={cn(
-            "flex items-center justify-center rounded-lg bg-background transition-colors hover:bg-background/90 focus-visible:ring-2 focus-visible:ring-sidebar-ring focus-visible:outline-none",
+            "flex items-center justify-center rounded-lg bg-white transition-colors hover:bg-white/90 focus-visible:ring-2 focus-visible:ring-sidebar-ring focus-visible:outline-none",
             collapsed ? "size-10" : "h-11 w-full px-3",
           )}
         >
