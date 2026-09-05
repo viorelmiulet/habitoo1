@@ -1,13 +1,16 @@
-import { Link, useNavigate } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
+import { Fragment, useMemo } from "react";
+import { Link, useLocation } from "@tanstack/react-router";
 import {
-  Bell,
+  ChevronRight,
   FlaskConical,
   HelpCircle,
   LogOut,
   Menu,
+  Monitor,
+  Moon,
   Settings,
   ShieldCheck,
+  Sun,
   UserRound,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -16,61 +19,128 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuLabel,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { GlobalSearch } from "@/components/app/GlobalSearch";
 import { QuickAdd } from "@/components/app/QuickAdd";
+import { NotificationsMenu } from "@/components/app/NotificationsMenu";
+import { navLabelByPath, type ShellVariant } from "@/components/app/AppSidebar";
 import { BrandLogo } from "@/components/brand/BrandLogo";
-import { supabase } from "@/integrations/supabase/client";
+import { useTheme, type ThemePreference } from "@/hooks/use-theme";
 import { initials } from "@/lib/format";
 import { roleLabels } from "@/lib/labels";
+import { cn } from "@/lib/utils";
 import type { CurrentUser } from "@/hooks/use-session";
+
+const segmentLabels: Record<string, string> = {
+  new: "Adaugă",
+  edit: "Editare",
+  settings: "Setări",
+  notifications: "Notificări",
+};
+
+function useBreadcrumbs(pathname: string) {
+  return useMemo(() => {
+    const parts = pathname.split("/").filter(Boolean);
+    const crumbs: { to: string; label: string }[] = [];
+    let acc = "";
+    for (const part of parts) {
+      acc += `/${part}`;
+      const label =
+        navLabelByPath[acc] ??
+        segmentLabels[part] ??
+        (/^[0-9a-f-]{20,}$/i.test(part) || /^\d+$/.test(part) ? "Detalii" : decodeURIComponent(part));
+      crumbs.push({ to: acc, label });
+    }
+    return crumbs;
+  }, [pathname]);
+}
 
 export function Topbar({
   user,
   onOpenMenu,
+  onSignOut,
   isDemo = false,
+  variant = "agency",
 }: {
   user: CurrentUser;
   onOpenMenu: () => void;
+  onSignOut: () => void;
   isDemo?: boolean;
+  variant?: ShellVariant;
 }) {
-  const navigate = useNavigate();
-
-  const { data: unread = 0 } = useQuery({
-    queryKey: ["notifications-unread", user.userId],
-    queryFn: async () => {
-      const { count } = await supabase
-        .from("notifications")
-        .select("id", { count: "exact", head: true })
-        .eq("user_id", user.userId)
-        .is("read_at", null);
-      return count ?? 0;
-    },
-    refetchInterval: 60_000,
-  });
-
-  const signOut = async () => {
-    await supabase.auth.signOut();
-    navigate({ to: "/login" });
-  };
+  const { pathname } = useLocation();
+  const crumbs = useBreadcrumbs(pathname);
+  const { preference, setPreference } = useTheme();
+  const isPlatform = variant === "platform";
+  const displayName = user.profile?.full_name || user.email;
 
   return (
-    <header className="sticky top-0 z-30 flex h-16 items-center gap-3 border-b border-border bg-surface/85 px-4 backdrop-blur lg:px-6">
-      <Button variant="ghost" size="icon" className="lg:hidden" onClick={onOpenMenu}>
+    <header
+      className={cn(
+        "sticky top-0 z-30 flex h-14 items-center gap-2 border-b border-border bg-surface/90 px-3 backdrop-blur-md sm:px-4 lg:px-6",
+        isPlatform && "shadow-[inset_0_2px_0_0_var(--color-gold)]",
+      )}
+    >
+      <Button
+        variant="ghost"
+        size="icon"
+        className="lg:hidden"
+        onClick={onOpenMenu}
+        aria-label="Deschide meniul de navigare"
+      >
         <Menu className="size-5" />
       </Button>
 
-      <Link to="/app" className="shrink-0 lg:hidden" aria-label="Habitoo CRM — dashboard">
+      <Link
+        to={isPlatform ? "/superadmin" : "/app"}
+        className="shrink-0 lg:hidden"
+        aria-label="Habitoo CRM — acasă"
+      >
         <BrandLogo markOnly className="size-8" priority />
       </Link>
 
-      <div className="min-w-0 flex-1">
+      {/* Breadcrumbs (desktop) */}
+      <nav aria-label="Poziție în aplicație" className="hidden min-w-0 flex-1 items-center lg:flex">
+        <ol className="flex min-w-0 items-center gap-1 text-sm">
+          {crumbs.map((c, i) => {
+            const last = i === crumbs.length - 1;
+            return (
+              <Fragment key={c.to}>
+                {i > 0 ? <ChevronRight className="size-3.5 shrink-0 text-muted-foreground/60" aria-hidden /> : null}
+                <li className="min-w-0">
+                  {last ? (
+                    <span aria-current="page" className="block truncate font-medium text-foreground">
+                      {c.label}
+                    </span>
+                  ) : (
+                    <Link
+                      to={c.to}
+                      className="block truncate text-muted-foreground transition-colors hover:text-foreground"
+                    >
+                      {c.label}
+                    </Link>
+                  )}
+                </li>
+              </Fragment>
+            );
+          })}
+        </ol>
+      </nav>
+
+      {/* Search (tablet+) */}
+      <div className="hidden min-w-0 flex-1 md:block lg:max-w-sm lg:flex-none xl:max-w-md">
         <GlobalSearch />
       </div>
 
-      <div className="flex items-center gap-1.5">
+      <div className="ml-auto flex items-center gap-0.5 sm:gap-1">
+        <div className="md:hidden">
+          <GlobalSearch compact />
+        </div>
+
         {isDemo ? (
           <span
             data-testid="demo-badge"
@@ -80,39 +150,34 @@ export function Topbar({
             <FlaskConical className="size-3.5" /> Demo / QA
           </span>
         ) : null}
-        <QuickAdd />
 
-        <Button variant="ghost" size="icon" asChild className="relative">
-          <Link to="/app/notifications">
-            <Bell className="size-5" />
-            {unread > 0 ? (
-              <span className="absolute top-1.5 right-1.5 flex size-4 items-center justify-center rounded-full bg-destructive text-[10px] font-semibold text-destructive-foreground">
-                {unread > 9 ? "9+" : unread}
-              </span>
-            ) : null}
-          </Link>
-        </Button>
+        {isPlatform ? (
+          <span className="mr-1 hidden items-center gap-1 rounded-full border border-gold/40 bg-gold/10 px-2.5 py-1 text-[11px] font-semibold tracking-wide text-gold uppercase sm:inline-flex">
+            <ShieldCheck className="size-3.5" /> Platformă
+          </span>
+        ) : (
+          <QuickAdd />
+        )}
 
-        <Button variant="ghost" size="icon" className="hidden sm:inline-flex" asChild>
-          <a href="https://docs.lovable.dev" target="_blank" rel="noreferrer" aria-label="Ajutor">
-            <HelpCircle className="size-5" />
-          </a>
-        </Button>
+        <NotificationsMenu userId={user.userId} />
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <button className="flex items-center gap-2 rounded-full border border-border bg-surface py-1 pr-3 pl-1 text-sm transition-colors hover:border-primary/40">
+            <button
+              type="button"
+              aria-label="Meniu utilizator"
+              className="ml-0.5 flex h-9 items-center gap-2 rounded-full border border-border bg-surface py-1 pr-1 pl-1 text-sm transition-colors hover:border-primary/40 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none md:pr-3"
+            >
               <span className="flex size-7 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-primary">
-                {initials(user.profile?.full_name || user.email)}
+                {initials(displayName)}
               </span>
-              <span className="hidden max-w-32 truncate md:inline">
-                {user.profile?.full_name || user.email}
-              </span>
+              <span className="hidden max-w-32 truncate md:inline">{displayName}</span>
             </button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-56">
+          <DropdownMenuContent align="end" className="w-60">
             <DropdownMenuLabel className="space-y-0.5">
               <p className="truncate text-sm">{user.profile?.full_name || "Utilizator"}</p>
+              <p className="truncate text-xs font-normal text-muted-foreground">{user.email}</p>
               <p className="truncate text-xs font-normal text-muted-foreground">
                 {roleLabels[user.role]} · {user.organization?.name ?? "—"}
               </p>
@@ -132,13 +197,31 @@ export function Topbar({
             ) : null}
             {user.isSuperadmin ? (
               <DropdownMenuItem asChild>
-                <Link to="/superadmin">
-                  <ShieldCheck className="size-4" /> Panou superadmin
+                <Link to={isPlatform ? "/app" : "/superadmin"}>
+                  <ShieldCheck className="size-4" /> {isPlatform ? "Înapoi la CRM" : "Panou platformă"}
                 </Link>
               </DropdownMenuItem>
             ) : null}
+            <DropdownMenuItem asChild>
+              <a href="https://docs.lovable.dev" target="_blank" rel="noreferrer">
+                <HelpCircle className="size-4" /> Ajutor
+              </a>
+            </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onSelect={signOut}>
+            <DropdownMenuLabel className="text-xs font-normal text-muted-foreground">Temă</DropdownMenuLabel>
+            <DropdownMenuRadioGroup value={preference} onValueChange={(v) => setPreference(v as ThemePreference)}>
+              <DropdownMenuRadioItem value="light">
+                <Sun className="mr-2 size-4" /> Luminoasă
+              </DropdownMenuRadioItem>
+              <DropdownMenuRadioItem value="dark">
+                <Moon className="mr-2 size-4" /> Întunecată
+              </DropdownMenuRadioItem>
+              <DropdownMenuRadioItem value="system">
+                <Monitor className="mr-2 size-4" /> Sistem
+              </DropdownMenuRadioItem>
+            </DropdownMenuRadioGroup>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onSelect={onSignOut}>
               <LogOut className="size-4" /> Deconectare
             </DropdownMenuItem>
           </DropdownMenuContent>
