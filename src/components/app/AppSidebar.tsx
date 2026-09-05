@@ -91,7 +91,7 @@ export function AppSidebar({
           <Building2 className="size-5" />
         </span>
         <div className="min-w-0">
-          <p className="truncate text-sm font-semibold">ImobiFlow</p>
+          <p className="truncate text-sm font-semibold">Habitoo</p>
           <p className="flex items-center gap-1.5 truncate text-xs text-sidebar-foreground/60">
             <span className="truncate">{organizationName}</span>
             {isDemo ? (

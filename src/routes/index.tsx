@@ -14,13 +14,13 @@ import { Button } from "@/components/ui/button";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "ImobiFlow — CRM imobiliar pentru agențiile din România" },
+      { title: "Habitoo — CRM imobiliar pentru agențiile din România" },
       {
         name: "description",
         content:
           "CRM imobiliar multi-agenție: portofoliu de proprietăți, contacte, cereri, lead-uri, matching automat și rapoarte, într-o singură platformă.",
       },
-      { property: "og:title", content: "ImobiFlow — CRM imobiliar modern" },
+      { property: "og:title", content: "Habitoo — CRM imobiliar modern" },
       {
         property: "og:description",
         content:
@@ -71,7 +71,7 @@ function Landing() {
     <div className="min-h-screen bg-background">
       <header className="mx-auto flex max-w-6xl items-center justify-between px-4 py-5 lg:px-8">
         <span className="text-lg font-semibold tracking-tight">
-          Imobi<span className="text-gradient">Flow</span>
+          Habitoo <span className="text-gradient">CRM</span>
         </span>
         <nav className="flex items-center gap-2">
           <Button asChild variant="ghost" size="sm">
@@ -142,7 +142,7 @@ function Landing() {
       </section>
 
       <footer className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-2 px-4 py-8 text-xs text-muted-foreground lg:flex-row lg:px-8">
-        <span>© {new Date().getFullYear()} ImobiFlow. CRM imobiliar.</span>
+        <span>© {new Date().getFullYear()} Habitoo CRM.</span>
         <span>Construit pentru agenții din România.</span>
       </footer>
     </div>

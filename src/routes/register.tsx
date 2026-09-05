@@ -13,13 +13,13 @@ import { authErrorMessage } from "@/lib/auth-errors";
 export const Route = createFileRoute("/register")({
   head: () => ({
     meta: [
-      { title: "Creează agenția — ImobiFlow CRM imobiliar" },
+      { title: "Creează agenția — Habitoo CRM imobiliar" },
       {
         name: "description",
         content:
-          "Deschide un cont de agenție în ImobiFlow: portofoliu, clienți, cereri, lead-uri și rapoarte în câteva minute.",
+          "Deschide un cont de agenție în Habitoo: portofoliu, clienți, cereri, lead-uri și rapoarte în câteva minute.",
       },
-      { property: "og:title", content: "Creează agenția — ImobiFlow CRM" },
+      { property: "og:title", content: "Creează agenția — Habitoo CRM" },
       {
         property: "og:description",
         content: "Începe gratuit CRM-ul imobiliar pentru agenția ta din România.",

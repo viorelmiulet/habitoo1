@@ -25,7 +25,7 @@ export function AuthShell({
           <span className="flex size-10 items-center justify-center rounded-xl bg-primary text-primary-foreground">
             <Building2 className="size-5" />
           </span>
-          <span className="text-lg font-semibold">ImobiFlow CRM</span>
+          <span className="text-lg font-semibold">Habitoo CRM</span>
         </Link>
         <div className="max-w-md space-y-6">
           <h2 className="text-3xl font-semibold tracking-tight">
@@ -50,7 +50,7 @@ export function AuthShell({
               <span className="flex size-9 items-center justify-center rounded-xl bg-primary text-primary-foreground">
                 <Building2 className="size-5" />
               </span>
-              ImobiFlow CRM
+              Habitoo CRM
             </Link>
           </div>
           <h1 className="text-2xl font-semibold tracking-tight">{title}</h1>

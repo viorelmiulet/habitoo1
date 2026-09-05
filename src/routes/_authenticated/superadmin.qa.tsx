@@ -156,7 +156,7 @@ function QaPanelPage() {
           <EmptyState
             icon={FlaskConical}
             title="Nu există încă o agenție QA"
-            description="Creează agenția „RealFlow QA Demo” (marcată DEMO / QA) și populeaz-o automat cu 4 utilizatori, contacte, proprietăți cu fotografii, cereri, lead-uri în toate etapele, activități, calendar, obiective și notificări."
+            description="Creează agenția „Habitoo QA Demo” (marcată DEMO / QA) și populeaz-o automat cu 4 utilizatori, contacte, proprietăți cu fotografii, cereri, lead-uri în toate etapele, activități, calendar, obiective și notificări."
             action={
               <Button onClick={() => seed.mutate("seed")} disabled={busy}>
                 <DatabaseZap className="size-4" /> {seed.isPending ? "Se populează…" : "Creează și populează agenția QA"}

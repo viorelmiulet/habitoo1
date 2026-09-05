@@ -8,7 +8,7 @@ import { scoreMatch } from "@/lib/matching";
 type Admin = SupabaseClient<Database>;
 
 export const QA_ORG_SLUG = "realflow-qa-demo";
-export const QA_ORG_NAME = "RealFlow QA Demo";
+export const QA_ORG_NAME = "Habitoo QA Demo";
 export const QA_SEED_VERSION = "2026.01";
 export const DEMO_EMAIL_DOMAIN = "demo.realflow-crm.test";
 const MEDIA_BUCKET = "property-media";

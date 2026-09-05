@@ -13,10 +13,10 @@ export const Route = createFileRoute("/auth/callback")({
   ssr: false,
   head: () => ({
     meta: [
-      { title: "Finalizare autentificare — ImobiFlow CRM" },
-      { name: "description", content: "Se finalizează autentificarea în contul tău ImobiFlow." },
-      { property: "og:title", content: "Finalizare autentificare — ImobiFlow CRM" },
-      { property: "og:description", content: "Se finalizează autentificarea în ImobiFlow." },
+      { title: "Finalizare autentificare — Habitoo CRM" },
+      { name: "description", content: "Se finalizează autentificarea în contul tău Habitoo." },
+      { property: "og:title", content: "Finalizare autentificare — Habitoo CRM" },
+      { property: "og:description", content: "Se finalizează autentificarea în Habitoo." },
       { name: "robots", content: "noindex" },
     ],
   }),
