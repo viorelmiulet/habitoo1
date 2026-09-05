@@ -1413,6 +1413,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      admin_change_user_organization: {
+        Args: { _new_org: string; _user_id: string }
+        Returns: undefined
+      }
       bootstrap_agency: {
         Args: { _agency_name: string; _full_name: string; _phone?: string }
         Returns: string
