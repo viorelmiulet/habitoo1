@@ -232,6 +232,8 @@ function PropertiesPage() {
         .is("deleted_at", null);
 
       if (filters.status !== "all") query = query.eq("status", filters.status as never);
+      // Arhivele nu apar în lista implicită; sunt vizibile doar cu filtrul de status "Arhivat".
+      else query = query.neq("status", "archived" as never);
       if (filters.transaction !== "all") query = query.eq("transaction_kind", filters.transaction as never);
       if (filters.type !== "all") query = query.eq("property_type", filters.type);
       if (filters.city !== "all") query = query.eq("city", filters.city);
@@ -253,7 +255,7 @@ function PropertiesPage() {
         query = query.in("id", favoriteIds);
       }
       if (debouncedQ) {
-        const q = debouncedQ.replace(/[%,]/g, "");
+        const q = debouncedQ.replace(/[%,()"\\]/g, " ").trim();
         query = query.or(
           `title.ilike.%${q}%,reference.ilike.%${q}%,address.ilike.%${q}%,city.ilike.%${q}%,district.ilike.%${q}%`,
         );
@@ -772,7 +774,7 @@ function PropertiesPage() {
                       />
                     </button>
                     <div className="min-w-0 flex-1">
-                      <Link to="/app/properties/$id" params={{ id: p.id }} className="truncate font-medium hover:text-primary">
+                      <Link to="/app/properties/$id" params={{ id: p.id }} className="block truncate font-medium hover:text-primary">
                         {p.title}
                       </Link>
                       <p className="truncate text-xs text-muted-foreground">
