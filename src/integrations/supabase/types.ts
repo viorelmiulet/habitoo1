@@ -688,6 +688,7 @@ export type Database = {
           collaboration: boolean
           commission: string | null
           county: string | null
+          county_siruta_code: number | null
           created_at: string
           created_by: string | null
           currency: string
@@ -706,6 +707,7 @@ export type Database = {
           lat: number | null
           layout: string | null
           lng: number | null
+          locality_siruta_code: number | null
           location_precise: boolean
           negotiable: boolean
           organization_id: string
@@ -725,6 +727,7 @@ export type Database = {
           tags: string[]
           title: string
           transaction_kind: Database["public"]["Enums"]["transaction_kind"]
+          uat_siruta_code: number | null
           updated_at: string
           updated_by: string | null
           usable_surface: number | null
@@ -745,6 +748,7 @@ export type Database = {
           collaboration?: boolean
           commission?: string | null
           county?: string | null
+          county_siruta_code?: number | null
           created_at?: string
           created_by?: string | null
           currency?: string
@@ -763,6 +767,7 @@ export type Database = {
           lat?: number | null
           layout?: string | null
           lng?: number | null
+          locality_siruta_code?: number | null
           location_precise?: boolean
           negotiable?: boolean
           organization_id: string
@@ -782,6 +787,7 @@ export type Database = {
           tags?: string[]
           title: string
           transaction_kind?: Database["public"]["Enums"]["transaction_kind"]
+          uat_siruta_code?: number | null
           updated_at?: string
           updated_by?: string | null
           usable_surface?: number | null
@@ -802,6 +808,7 @@ export type Database = {
           collaboration?: boolean
           commission?: string | null
           county?: string | null
+          county_siruta_code?: number | null
           created_at?: string
           created_by?: string | null
           currency?: string
@@ -820,6 +827,7 @@ export type Database = {
           lat?: number | null
           layout?: string | null
           lng?: number | null
+          locality_siruta_code?: number | null
           location_precise?: boolean
           negotiable?: boolean
           organization_id?: string
@@ -839,6 +847,7 @@ export type Database = {
           tags?: string[]
           title?: string
           transaction_kind?: Database["public"]["Enums"]["transaction_kind"]
+          uat_siruta_code?: number | null
           updated_at?: string
           updated_by?: string | null
           usable_surface?: number | null
@@ -846,6 +855,20 @@ export type Database = {
           vat_included?: boolean
         }
         Relationships: [
+          {
+            foreignKeyName: "properties_county_siruta_code_fkey"
+            columns: ["county_siruta_code"]
+            isOneToOne: false
+            referencedRelation: "ro_counties"
+            referencedColumns: ["siruta_code"]
+          },
+          {
+            foreignKeyName: "properties_locality_siruta_code_fkey"
+            columns: ["locality_siruta_code"]
+            isOneToOne: false
+            referencedRelation: "ro_localities"
+            referencedColumns: ["siruta_code"]
+          },
           {
             foreignKeyName: "properties_organization_id_fkey"
             columns: ["organization_id"]
@@ -859,6 +882,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "contacts"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "properties_uat_siruta_code_fkey"
+            columns: ["uat_siruta_code"]
+            isOneToOne: false
+            referencedRelation: "ro_uats"
+            referencedColumns: ["siruta_code"]
           },
         ]
       }
@@ -1087,6 +1117,224 @@ export type Database = {
           },
         ]
       }
+      ro_counties: {
+        Row: {
+          active: boolean
+          county_code: number
+          created_at: string
+          id: string
+          name: string
+          normalized_name: string | null
+          nuts_code: string | null
+          region_code: number | null
+          siruta_code: number
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          county_code: number
+          created_at?: string
+          id?: string
+          name: string
+          normalized_name?: string | null
+          nuts_code?: string | null
+          region_code?: number | null
+          siruta_code: number
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          county_code?: number
+          created_at?: string
+          id?: string
+          name?: string
+          normalized_name?: string | null
+          nuts_code?: string | null
+          region_code?: number | null
+          siruta_code?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      ro_localities: {
+        Row: {
+          active: boolean
+          county_id: string
+          county_siruta_code: number
+          created_at: string
+          id: string
+          latitude: number | null
+          longitude: number | null
+          medium: string | null
+          name: string
+          normalized_name: string | null
+          parent_siruta_code: number
+          postal_code: string | null
+          siruta_code: number
+          type: string
+          type_code: number
+          uat_id: string
+          uat_siruta_code: number
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          county_id: string
+          county_siruta_code: number
+          created_at?: string
+          id?: string
+          latitude?: number | null
+          longitude?: number | null
+          medium?: string | null
+          name: string
+          normalized_name?: string | null
+          parent_siruta_code: number
+          postal_code?: string | null
+          siruta_code: number
+          type: string
+          type_code: number
+          uat_id: string
+          uat_siruta_code: number
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          county_id?: string
+          county_siruta_code?: number
+          created_at?: string
+          id?: string
+          latitude?: number | null
+          longitude?: number | null
+          medium?: string | null
+          name?: string
+          normalized_name?: string | null
+          parent_siruta_code?: number
+          postal_code?: string | null
+          siruta_code?: number
+          type?: string
+          type_code?: number
+          uat_id?: string
+          uat_siruta_code?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ro_localities_county_id_fkey"
+            columns: ["county_id"]
+            isOneToOne: false
+            referencedRelation: "ro_counties"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ro_localities_uat_id_fkey"
+            columns: ["uat_id"]
+            isOneToOne: false
+            referencedRelation: "ro_uats"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ro_nomenclature_meta: {
+        Row: {
+          counties_count: number
+          created_at: string
+          id: string
+          imported_at: string
+          localities_count: number
+          source_url: string | null
+          uats_count: number
+          updated_at: string
+          version: string
+        }
+        Insert: {
+          counties_count?: number
+          created_at?: string
+          id: string
+          imported_at?: string
+          localities_count?: number
+          source_url?: string | null
+          uats_count?: number
+          updated_at?: string
+          version: string
+        }
+        Update: {
+          counties_count?: number
+          created_at?: string
+          id?: string
+          imported_at?: string
+          localities_count?: number
+          source_url?: string | null
+          uats_count?: number
+          updated_at?: string
+          version?: string
+        }
+        Relationships: []
+      }
+      ro_uats: {
+        Row: {
+          active: boolean
+          county_id: string
+          county_siruta_code: number
+          created_at: string
+          id: string
+          latitude: number | null
+          longitude: number | null
+          medium: string | null
+          name: string
+          normalized_name: string | null
+          parent_siruta_code: number | null
+          postal_code: string | null
+          siruta_code: number
+          type: string
+          type_code: number
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          county_id: string
+          county_siruta_code: number
+          created_at?: string
+          id?: string
+          latitude?: number | null
+          longitude?: number | null
+          medium?: string | null
+          name: string
+          normalized_name?: string | null
+          parent_siruta_code?: number | null
+          postal_code?: string | null
+          siruta_code: number
+          type: string
+          type_code: number
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          county_id?: string
+          county_siruta_code?: number
+          created_at?: string
+          id?: string
+          latitude?: number | null
+          longitude?: number | null
+          medium?: string | null
+          name?: string
+          normalized_name?: string | null
+          parent_siruta_code?: number | null
+          postal_code?: string | null
+          siruta_code?: number
+          type?: string
+          type_code?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ro_uats_county_id_fkey"
+            columns: ["county_id"]
+            isOneToOne: false
+            referencedRelation: "ro_counties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       saved_views: {
         Row: {
           config: Json
@@ -1181,6 +1429,9 @@ export type Database = {
       is_superadmin: { Args: never; Returns: boolean }
       qa_purge_demo_organization: { Args: { _org: string }; Returns: string[] }
       qa_reset_demo_organization: { Args: { _org: string }; Returns: Json }
+      ro_normalize_name: { Args: { _v: string }; Returns: string }
+      show_limit: { Args: never; Returns: number }
+      show_trgm: { Args: { "": string }; Returns: string[] }
     }
     Enums: {
       activity_kind:
