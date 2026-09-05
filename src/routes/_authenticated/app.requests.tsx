@@ -5,6 +5,7 @@ import { Bookmark, Download, Search, Sparkles, Target, X } from "lucide-react";
 import { toast } from "sonner";
 import { toastError } from "@/lib/errors";
 import { PageHeader } from "@/components/app/PageHeader";
+import { ListSkeleton } from "@/components/app/LoadingState";
 import { StatusBadge } from "@/components/app/StatusBadge";
 import { EmptyState } from "@/components/app/EmptyState";
 import { PromptDialog, type PromptRequest } from "@/components/app/PromptDialog";
@@ -354,7 +355,7 @@ function RequestsPage() {
 
       <div className="panel overflow-hidden">
         {isLoading ? (
-          <p className="px-4 py-10 text-center text-sm text-muted-foreground">Se încarcă…</p>
+          <ListSkeleton rows={8} />
         ) : rows.length === 0 ? (
           <EmptyState icon={Target} title="Nicio cerere" description="Adaugă o cerere pentru a primi potriviri automate." action={<Button size="sm" onClick={() => setOpen(true)}>Adaugă cerere</Button>} />
         ) : (

@@ -5,6 +5,7 @@ import { ListChecks, Phone, Mail, Users, Home, CheckCircle2, XCircle, Trash2, Pe
 import { toast } from "sonner";
 import { toastError } from "@/lib/errors";
 import { PageHeader } from "@/components/app/PageHeader";
+import { ListSkeleton } from "@/components/app/LoadingState";
 import { StatusBadge } from "@/components/app/StatusBadge";
 import { EmptyState } from "@/components/app/EmptyState";
 import { ActivityDialog } from "@/components/app/ActivityDialog";
@@ -322,7 +323,7 @@ function ActivitiesPage() {
 
       <div className="panel overflow-hidden">
         {isLoading ? (
-          <p className="px-4 py-10 text-center text-sm text-muted-foreground">Se încarcă…</p>
+          <ListSkeleton rows={8} />
         ) : rows.length === 0 ? (
           <EmptyState
             icon={ListChecks}

@@ -16,6 +16,7 @@ import {
 import { toast } from "sonner";
 import { toastError } from "@/lib/errors";
 import { PageHeader } from "@/components/app/PageHeader";
+import { CardGridSkeleton, ListSkeleton } from "@/components/app/LoadingState";
 import { StatusBadge } from "@/components/app/StatusBadge";
 import { EmptyState } from "@/components/app/EmptyState";
 import { PromptDialog, type PromptRequest } from "@/components/app/PromptDialog";
@@ -760,7 +761,7 @@ function PropertiesPage() {
             </div>
 
             {isLoading ? (
-              <p className="px-4 py-10 text-center text-sm text-muted-foreground">Se încarcă…</p>
+              <ListSkeleton rows={8} />
             ) : rows.length === 0 ? (
               <EmptyState
                 icon={Building2}
@@ -829,7 +830,7 @@ function PropertiesPage() {
             )}
           </>
         ) : isLoading ? (
-          <p className="px-4 py-10 text-center text-sm text-muted-foreground">Se încarcă…</p>
+          <CardGridSkeleton count={6} className="p-4" />
         ) : rows.length === 0 ? (
           <EmptyState icon={Building2} title="Nicio proprietate găsită" />
         ) : (

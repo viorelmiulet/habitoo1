@@ -5,6 +5,7 @@ import { Bookmark, Download, LayoutGrid, List, Search, Trash2, UserRound, X } fr
 import { toast } from "sonner";
 import { toastError } from "@/lib/errors";
 import { PageHeader } from "@/components/app/PageHeader";
+import { ListSkeleton } from "@/components/app/LoadingState";
 import { StatusBadge } from "@/components/app/StatusBadge";
 import { EmptyState } from "@/components/app/EmptyState";
 import { PromptDialog, type PromptRequest } from "@/components/app/PromptDialog";
@@ -436,7 +437,7 @@ function ContactsPage() {
 
       <div className="panel overflow-hidden">
         {isLoading ? (
-          <p className="px-4 py-10 text-center text-sm text-muted-foreground">Se încarcă…</p>
+          <ListSkeleton rows={8} />
         ) : rows.length === 0 ? (
           <EmptyState
             icon={UserRound}

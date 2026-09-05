@@ -5,6 +5,7 @@ import { Flame, Phone, MessageCircle, Plus, History } from "lucide-react";
 import { toast } from "sonner";
 import { toastError } from "@/lib/errors";
 import { PageHeader } from "@/components/app/PageHeader";
+import { InlineLoading } from "@/components/app/LoadingState";
 import { StatusBadge } from "@/components/app/StatusBadge";
 import { EmptyState } from "@/components/app/EmptyState";
 import { ActivityDialog } from "@/components/app/ActivityDialog";
@@ -443,7 +444,7 @@ function LeadsPage() {
       </div>
 
       {isLoading ? (
-        <p className="text-sm text-muted-foreground">Se încarcă pipeline-ul…</p>
+        <InlineLoading label="Se încarcă pipeline-ul…" className="panel" />
       ) : visible.length === 0 ? (
         <div className="panel">
           <EmptyState

@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Bell, CheckCheck } from "lucide-react";
 import { toastError } from "@/lib/errors";
 import { PageHeader } from "@/components/app/PageHeader";
+import { ListSkeleton } from "@/components/app/LoadingState";
 import { StatusBadge } from "@/components/app/StatusBadge";
 import { EmptyState } from "@/components/app/EmptyState";
 import { Button } from "@/components/ui/button";
@@ -64,7 +65,7 @@ function NotificationsPage() {
 
       <div className="panel overflow-hidden">
         {isLoading ? (
-          <p className="px-4 py-10 text-center text-sm text-muted-foreground">Se încarcă…</p>
+          <ListSkeleton rows={6} compact />
         ) : notifications.length === 0 ? (
           <EmptyState icon={Bell} title="Nicio notificare" description="Ești la zi cu tot." />
         ) : (

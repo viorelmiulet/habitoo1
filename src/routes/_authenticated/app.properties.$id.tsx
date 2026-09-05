@@ -15,6 +15,7 @@ import {
 import { toast } from "sonner";
 import { toastError } from "@/lib/errors";
 import { PageHeader } from "@/components/app/PageHeader";
+import { DetailSkeleton } from "@/components/app/LoadingState";
 import { StatusBadge } from "@/components/app/StatusBadge";
 import { EmptyState } from "@/components/app/EmptyState";
 import { ActivityDialog } from "@/components/app/ActivityDialog";
@@ -267,7 +268,7 @@ function PropertyDetailPage() {
   });
 
   if (isLoading) {
-    return <p className="text-sm text-muted-foreground">Se încarcă proprietatea…</p>;
+    return <DetailSkeleton />;
   }
   if (!property) {
     return (

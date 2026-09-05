@@ -5,6 +5,7 @@ import { Layers, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { toastError } from "@/lib/errors";
 import { PageHeader } from "@/components/app/PageHeader";
+import { CardGridSkeleton } from "@/components/app/LoadingState";
 import { EmptyState } from "@/components/app/EmptyState";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -195,7 +196,7 @@ function GoalsPage() {
       />
 
       {isLoading ? (
-        <p className="text-sm text-muted-foreground">Se încarcă obiectivele…</p>
+        <CardGridSkeleton count={6} />
       ) : goals.length === 0 ? (
         <div className="panel">
           <EmptyState

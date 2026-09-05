@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { ScrollText, Search } from "lucide-react";
 import { PageHeader } from "@/components/app/PageHeader";
+import { ListSkeleton } from "@/components/app/LoadingState";
 import { EmptyState } from "@/components/app/EmptyState";
 import { StatusBadge } from "@/components/app/StatusBadge";
 import { Input } from "@/components/ui/input";
@@ -53,7 +54,7 @@ function AuditPage() {
 
       <div className="panel overflow-hidden">
         {isLoading ? (
-          <p className="px-4 py-10 text-center text-sm text-muted-foreground">Se încarcă…</p>
+          <ListSkeleton rows={10} compact />
         ) : rows.length === 0 ? (
           <EmptyState icon={ScrollText} title="Niciun eveniment înregistrat" />
         ) : (

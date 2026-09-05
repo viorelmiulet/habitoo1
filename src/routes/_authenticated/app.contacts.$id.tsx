@@ -17,6 +17,7 @@ import {
 import { toast } from "sonner";
 import { toastError } from "@/lib/errors";
 import { PageHeader } from "@/components/app/PageHeader";
+import { DetailSkeleton } from "@/components/app/LoadingState";
 import { StatusBadge } from "@/components/app/StatusBadge";
 import { EmptyState } from "@/components/app/EmptyState";
 import { DocumentsPanel } from "@/components/app/DocumentsPanel";
@@ -182,7 +183,7 @@ function ContactDetailPage() {
     return items.sort((x, y) => new Date(y.at).getTime() - new Date(x.at).getTime());
   }, [data]);
 
-  if (isLoading) return <p className="text-sm text-muted-foreground">Se încarcă contactul…</p>;
+  if (isLoading) return <DetailSkeleton />;
   if (!contact) {
     return (
       <EmptyState
