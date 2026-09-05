@@ -74,6 +74,16 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
 }
 
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
+  // Domeniile publice (habitoo.ro / www.habitoo.ro) servesc doar marketingul:
+  // orice rută CRM/auth este redirectată pe crm.habitoo.ro, cu query + hash.
+  beforeLoad: ({ location }) => {
+    const host = getCurrentHostname();
+    if (isPublicHostname(host) && isCrmPath(location.pathname)) {
+      throw redirect({
+        href: getCrmUrl(`${location.pathname}${location.searchStr ?? ""}${location.hash ? `#${location.hash}` : ""}`),
+      });
+    }
+  },
   head: () => ({
     meta: [
       { charSet: "utf-8" },
