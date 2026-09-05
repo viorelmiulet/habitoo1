@@ -9,7 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable/index";
 import { authErrorMessage, authKindMessage, classifyAuthError } from "@/lib/auth-errors";
 import { rememberPostLoginRedirect } from "@/lib/auth-redirect";
-import { safeInternalPath } from "@/lib/host";
+import { safeInternalPath, authUrl } from "@/lib/host";
 
 export const Route = createFileRoute("/login")({
   validateSearch: (search: Record<string, unknown>): { redirect?: string } =>
@@ -66,7 +66,7 @@ function LoginPage() {
     const { error } = await supabase.auth.resend({
       type: "signup",
       email,
-      options: { emailRedirectTo: `${window.location.origin}/auth/callback` },
+      options: { emailRedirectTo: authUrl("/auth/callback") },
     });
     setResending(false);
     if (error) {
@@ -79,7 +79,7 @@ function LoginPage() {
   const google = async () => {
     rememberPostLoginRedirect(target);
     const result = await lovable.auth.signInWithOAuth("google", {
-      redirect_uri: `${window.location.origin}/auth/callback`,
+      redirect_uri: authUrl("/auth/callback"),
     });
     if (result.error) {
       toast.error(authErrorMessage(String(result.error)));

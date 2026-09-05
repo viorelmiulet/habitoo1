@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable/index";
 import { authErrorMessage } from "@/lib/auth-errors";
+import { authUrl } from "@/lib/host";
 
 
 export const Route = createFileRoute("/register")({
@@ -46,7 +47,7 @@ function RegisterPage() {
       email: form.email,
       password: form.password,
       options: {
-        emailRedirectTo: `${window.location.origin}/auth/callback`,
+        emailRedirectTo: authUrl("/auth/callback"),
         data: { full_name: form.fullName, agency_name: form.agency },
       },
     });
@@ -77,7 +78,7 @@ function RegisterPage() {
 
   const google = async () => {
     const result = await lovable.auth.signInWithOAuth("google", {
-      redirect_uri: `${window.location.origin}/auth/callback`,
+      redirect_uri: authUrl("/auth/callback"),
     });
     if (result.error) {
       toast.error(authErrorMessage(String(result.error)));
