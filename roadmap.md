@@ -20,3 +20,9 @@
 - [ ] Imagine OG 1200×630 dedicată pentru paginile publice (după aprobare).
 - [ ] Texte reale pentru /confidentialitate și /termeni (date companie, operator de date).
 - [ ] Leads module — audit QA complet (cerință anterioară rămasă deschisă).
+
+## Arhitectura domeniilor
+- [x] Site public pe habitoo.ro / www.habitoo.ro (comportament neschimbat).
+- [x] crm.habitoo.ro deschide direct aplicația (redirect host-based de la `/` la `/app`).
+- [x] Guard `_authenticated` trimite la `/login?redirect=<rută>`; login și callback OAuth revin la ruta cerută.
+- [x] noindex pe layout-urile CRM (app, superadmin, onboarding).

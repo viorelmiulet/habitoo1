@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { AuthShell } from "@/components/auth/AuthShell";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
+import { takePostLoginRedirect } from "@/lib/auth-redirect";
 
 /**
  * Rută publică de retur pentru autentificarea Google / linkurile din email.
@@ -32,7 +33,7 @@ function AuthCallbackPage() {
     const finish = () => {
       if (done) return;
       done = true;
-      navigate({ to: "/app", replace: true });
+      navigate({ to: takePostLoginRedirect() ?? "/app", replace: true });
     };
 
     const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {

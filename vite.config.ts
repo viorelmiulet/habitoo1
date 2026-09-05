@@ -7,6 +7,10 @@
 import { defineConfig } from "@lovable.dev/vite-tanstack-config";
 
 export default defineConfig({
+  vite: {
+    // Permite testarea locală a separării de domenii (site public vs subdomeniul CRM).
+    server: { allowedHosts: ["habitoo.ro", "www.habitoo.ro", "crm.habitoo.ro"] },
+  },
   tanstackStart: {
     // Redirect TanStack Start's bundled server entry to src/server.ts (our SSR error wrapper).
     // nitro/vite builds from this

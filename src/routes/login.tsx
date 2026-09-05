@@ -8,8 +8,12 @@ import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable/index";
 import { authErrorMessage, authKindMessage, classifyAuthError } from "@/lib/auth-errors";
+import { rememberPostLoginRedirect } from "@/lib/auth-redirect";
+import { safeInternalPath } from "@/lib/host";
 
 export const Route = createFileRoute("/login")({
+  validateSearch: (search: Record<string, unknown>): { redirect?: string } =>
+    typeof search.redirect === "string" ? { redirect: search.redirect } : {},
   head: () => ({
     meta: [
       { title: "Autentificare — Habitoo CRM imobiliar" },
@@ -30,6 +34,8 @@ export const Route = createFileRoute("/login")({
 
 function LoginPage() {
   const navigate = useNavigate();
+  const { redirect: requestedRedirect } = Route.useSearch();
+  const target = safeInternalPath(requestedRedirect) ?? "/app";
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -48,7 +54,7 @@ function LoginPage() {
       return;
     }
     setNeedsConfirm(false);
-    navigate({ to: "/app" });
+    navigate({ to: target, replace: true });
   };
 
   const resend = async () => {
@@ -71,6 +77,7 @@ function LoginPage() {
   };
 
   const google = async () => {
+    rememberPostLoginRedirect(target);
     const result = await lovable.auth.signInWithOAuth("google", {
       redirect_uri: `${window.location.origin}/auth/callback`,
     });
@@ -79,7 +86,7 @@ function LoginPage() {
       return;
     }
     if (result.redirected) return;
-    navigate({ to: "/app" });
+    navigate({ to: target, replace: true });
   };
 
   return (

@@ -4,6 +4,12 @@ import { agencyNav, superadminNav } from "@/components/app/AppSidebar";
 import { useCurrentUser } from "@/hooks/use-session";
 
 export const Route = createFileRoute("/_authenticated/app")({
+  head: () => ({
+    meta: [
+      { title: "Habitoo CRM — aplicație" },
+      { name: "robots", content: "noindex, nofollow" },
+    ],
+  }),
   component: AppLayout,
 });
 
