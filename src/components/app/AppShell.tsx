@@ -47,7 +47,7 @@ export function AppShell({
 
   const signOut = async () => {
     await supabase.auth.signOut();
-    navigate({ to: "/login" });
+    navigate({ to: "/login", replace: true });
   };
 
   const sidebarProps = {
