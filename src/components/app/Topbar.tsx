@@ -1,6 +1,6 @@
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { Bell, HelpCircle, LogOut, Menu, Settings, ShieldCheck, UserRound } from "lucide-react";
+import { Bell, FlaskConical, HelpCircle, LogOut, Menu, Settings, ShieldCheck, UserRound } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -20,9 +20,11 @@ import type { CurrentUser } from "@/hooks/use-session";
 export function Topbar({
   user,
   onOpenMenu,
+  isDemo = false,
 }: {
   user: CurrentUser;
   onOpenMenu: () => void;
+  isDemo?: boolean;
 }) {
   const navigate = useNavigate();
 
@@ -55,6 +57,15 @@ export function Topbar({
       </div>
 
       <div className="flex items-center gap-1.5">
+        {isDemo ? (
+          <span
+            data-testid="demo-badge"
+            className="mr-1 hidden items-center gap-1 rounded-full border border-warning/40 bg-warning/15 px-2.5 py-1 text-[11px] font-semibold tracking-wide text-warning-foreground uppercase sm:inline-flex"
+            title="Agenție de test – datele sunt fictive"
+          >
+            <FlaskConical className="size-3.5" /> Demo / QA
+          </span>
+        ) : null}
         <QuickAdd />
 
         <Button variant="ghost" size="icon" asChild className="relative">

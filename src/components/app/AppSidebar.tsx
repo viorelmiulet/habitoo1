@@ -5,6 +5,7 @@ import {
   CalendarDays,
   ChartBar,
   Flame,
+  FlaskConical,
   Gauge,
   Layers,
   ListChecks,
@@ -65,6 +66,7 @@ export const superadminNav: NavGroup[] = [
       { label: "Agenții", to: "/superadmin/agencies", icon: Building2 },
       { label: "Utilizatori", to: "/superadmin/users", icon: Users },
       { label: "Audit", to: "/superadmin/audit", icon: ShieldCheck },
+      { label: "QA / Demo Data", to: "/superadmin/qa", icon: FlaskConical },
     ],
   },
 ];
@@ -73,11 +75,13 @@ export function AppSidebar({
   groups,
   organizationName,
   roleLabel,
+  isDemo = false,
   onNavigate,
 }: {
   groups: NavGroup[];
   organizationName: string;
   roleLabel: string;
+  isDemo?: boolean;
   onNavigate?: () => void;
 }) {
   return (
@@ -88,7 +92,14 @@ export function AppSidebar({
         </span>
         <div className="min-w-0">
           <p className="truncate text-sm font-semibold">ImobiFlow</p>
-          <p className="truncate text-xs text-sidebar-foreground/60">{organizationName}</p>
+          <p className="flex items-center gap-1.5 truncate text-xs text-sidebar-foreground/60">
+            <span className="truncate">{organizationName}</span>
+            {isDemo ? (
+              <span className="shrink-0 rounded bg-warning/25 px-1.5 py-px text-[10px] font-semibold tracking-wide text-warning-foreground uppercase">
+                Demo
+              </span>
+            ) : null}
+          </p>
         </div>
       </div>
 
