@@ -477,7 +477,7 @@ function ContactDetailPage() {
           onOpenChange={(open) => !open && setActivityDialog(null)}
           orgId={user.organization.id}
           userId={user.userId}
-          defaults={{ contact_id: id, kind: activityDialog.kind, title: activityDialog.title }}
+          defaults={{ contactId: id, kind: activityDialog.kind, title: activityDialog.title }}
           onCreated={() => queryClient.invalidateQueries({ queryKey: ["contact", id] })}
         />
       ) : null}
