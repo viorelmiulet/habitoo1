@@ -353,8 +353,8 @@ function QaPanelPage() {
                 <li>
                   <p className="font-medium">D · Matching</p>
                   <p className="text-muted-foreground">
-                    Cererea „Ioana Vlad” (2–3 camere, Sector 6, ≤120.000 EUR) are cel puțin 3 proprietăți compatibile cu scoruri
-                    diferite (RF-1003, RF-1004, RF-1014).
+                    Cererea „Ioana Vlad” (2–3 camere, Sector 6, ≤110.000 EUR, balcon + parcare + centrală) are cel puțin 3
+                    proprietăți compatibile cu scoruri diferite (RF-1004, RF-1014, RF-1003, RF-1007).
                   </p>
                 </li>
               </ol>
