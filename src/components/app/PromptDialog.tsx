@@ -60,6 +60,9 @@ export function PromptDialog({
       setPending(true);
       await request.onSubmit(trimmed);
       onClose();
+    } catch (err) {
+      // Mutation-urile își afișează deja toast-ul; păstrăm dialogul deschis cu un mesaj clar.
+      setError(friendlyError(err));
     } finally {
       setPending(false);
     }
