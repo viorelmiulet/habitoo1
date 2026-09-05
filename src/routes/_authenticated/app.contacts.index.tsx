@@ -363,10 +363,10 @@ function ContactsPage() {
             <X className="size-4" /> Resetează
           </Button>
           <div className="ml-auto flex items-center gap-1 rounded-lg border border-border p-0.5">
-            <Button variant={view === "list" ? "secondary" : "ghost"} size="icon" className="size-8" onClick={() => setView("list")}>
+            <Button variant={view === "list" ? "secondary" : "ghost"} size="icon" className="size-8" aria-label="Vizualizare listă" aria-pressed={view === "list"} onClick={() => setView("list")}>
               <List className="size-4" />
             </Button>
-            <Button variant={view === "card" ? "secondary" : "ghost"} size="icon" className="size-8" onClick={() => setView("card")}>
+            <Button variant={view === "card" ? "secondary" : "ghost"} size="icon" className="size-8" aria-label="Vizualizare carduri" aria-pressed={view === "card"} onClick={() => setView("card")}>
               <LayoutGrid className="size-4" />
             </Button>
           </div>

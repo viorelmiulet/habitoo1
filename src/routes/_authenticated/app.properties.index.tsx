@@ -497,7 +497,9 @@ function PropertiesPage() {
             variant={view === "list" ? "default" : "outline"}
             size="icon"
             onClick={() => setView("list")}
-            title="Listă"
+            title="Vizualizare listă"
+            aria-label="Vizualizare listă"
+            aria-pressed={view === "list"}
           >
             <List className="size-4" />
           </Button>
@@ -505,7 +507,9 @@ function PropertiesPage() {
             variant={view === "grid" ? "default" : "outline"}
             size="icon"
             onClick={() => setView("grid")}
-            title="Carduri"
+            title="Vizualizare carduri"
+            aria-label="Vizualizare carduri"
+            aria-pressed={view === "grid"}
           >
             <LayoutGrid className="size-4" />
           </Button>
@@ -872,7 +876,7 @@ function PropertiesPage() {
             {total > 0 ? `${page * PAGE_SIZE + 1}–${Math.min(total, (page + 1) * PAGE_SIZE)} din ${total}` : "0 rezultate"}
           </span>
           <div className="flex items-center gap-2">
-            <Button variant="outline" size="icon" disabled={page === 0} onClick={() => setPage((p) => Math.max(0, p - 1))}>
+            <Button variant="outline" size="icon" aria-label="Pagina anterioară" disabled={page === 0} onClick={() => setPage((p) => Math.max(0, p - 1))}>
               <ChevronLeft className="size-4" />
             </Button>
             <span className="text-xs text-muted-foreground">
@@ -881,6 +885,7 @@ function PropertiesPage() {
             <Button
               variant="outline"
               size="icon"
+              aria-label="Pagina următoare"
               disabled={page + 1 >= totalPages}
               onClick={() => setPage((p) => p + 1)}
             >

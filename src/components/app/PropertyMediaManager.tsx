@@ -388,6 +388,7 @@ export function PropertyMediaManager({
                 size="icon"
                 variant="secondary"
                 className="absolute top-2 right-2"
+                aria-label="Închide previzualizarea"
                 onClick={() => setPreview(null)}
               >
                 <X className="size-4" />
@@ -398,6 +399,7 @@ export function PropertyMediaManager({
                     size="icon"
                     variant="secondary"
                     className="absolute top-1/2 left-2 -translate-y-1/2"
+                    aria-label="Imaginea anterioară"
                     onClick={() => setPreview((p) => (p === null ? p : (p - 1 + images.length) % images.length))}
                   >
                     <ChevronLeft className="size-4" />
@@ -406,6 +408,7 @@ export function PropertyMediaManager({
                     size="icon"
                     variant="secondary"
                     className="absolute top-1/2 right-2 -translate-y-1/2"
+                    aria-label="Imaginea următoare"
                     onClick={() => setPreview((p) => (p === null ? p : (p + 1) % images.length))}
                   >
                     <ChevronRight className="size-4" />

@@ -370,7 +370,7 @@ function PropertyDetailPage() {
             </Button>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button size="icon" variant="outline">
+                <Button size="icon" variant="outline" aria-label="Mai multe acțiuni">
                   <MoreHorizontal className="size-4" />
                 </Button>
               </DropdownMenuTrigger>
