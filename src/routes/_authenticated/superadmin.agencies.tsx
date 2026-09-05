@@ -97,7 +97,10 @@ function AgenciesPage() {
             {rows.map((o) => (
               <li key={o.id} className="flex flex-wrap items-center gap-3 px-4 py-3 text-sm">
                 <div className="min-w-0 flex-1">
-                  <p className="truncate font-medium">{o.name}</p>
+                  <p className="flex items-center gap-2 truncate font-medium">
+                    <span className="truncate">{o.name}</span>
+                    {o.is_demo ? <StatusBadge tone="warning">DEMO / QA</StatusBadge> : null}
+                  </p>
                   <p className="truncate text-xs text-muted-foreground">
                     {o.city ?? "—"} · {o.email ?? "fără email"}
                   </p>

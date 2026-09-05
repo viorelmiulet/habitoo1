@@ -568,8 +568,11 @@ export type Database = {
           city: string | null
           created_at: string
           created_by: string | null
+          demo_seed_version: string | null
+          demo_seeded_at: string | null
           email: string | null
           id: string
+          is_demo: boolean
           logo_url: string | null
           max_properties: number
           max_users: number
@@ -585,8 +588,11 @@ export type Database = {
           city?: string | null
           created_at?: string
           created_by?: string | null
+          demo_seed_version?: string | null
+          demo_seeded_at?: string | null
           email?: string | null
           id?: string
+          is_demo?: boolean
           logo_url?: string | null
           max_properties?: number
           max_users?: number
@@ -602,8 +608,11 @@ export type Database = {
           city?: string | null
           created_at?: string
           created_by?: string | null
+          demo_seed_version?: string | null
+          demo_seeded_at?: string | null
           email?: string | null
           id?: string
+          is_demo?: boolean
           logo_url?: string | null
           max_properties?: number
           max_users?: number
@@ -1170,6 +1179,8 @@ export type Database = {
       }
       is_org_admin: { Args: never; Returns: boolean }
       is_superadmin: { Args: never; Returns: boolean }
+      qa_purge_demo_organization: { Args: { _org: string }; Returns: string[] }
+      qa_reset_demo_organization: { Args: { _org: string }; Returns: Json }
     }
     Enums: {
       activity_kind:
