@@ -65,13 +65,13 @@ export const importSiruta = createServerFn({ method: "POST" })
   .handler(async ({ context }): Promise<SirutaImportResult> => {
     const actorId = await assertSuperadmin(context);
 
-    const [{ supabaseAdmin }, importer, { getRequestURL }] = await Promise.all([
+    const [{ supabaseAdmin }, importer, { getRequest }] = await Promise.all([
       import("@/integrations/supabase/client.server"),
       import("@/lib/siruta-import.server"),
       import("@tanstack/react-start/server"),
     ]);
 
-    const origin = new URL(getRequestURL()).origin;
+    const origin = new URL(getRequest().url).origin;
     const summary = await importer.importSirutaNomenclature(supabaseAdmin, origin);
     const backfill = await importer.backfillPropertySiruta(supabaseAdmin);
 
