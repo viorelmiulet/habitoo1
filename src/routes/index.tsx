@@ -178,7 +178,7 @@ function HomePage() {
 
           <div className="relative lg:col-span-7">
             <DashboardMock />
-            <div className="pointer-events-none absolute -top-5 -right-2 hidden w-64 rounded-2xl border border-border bg-card p-3 shadow-float md:block lg:-right-6">
+            <div className="pointer-events-none absolute -top-7 right-4 hidden w-[19rem] rounded-2xl border border-border bg-card p-3 shadow-float md:block lg:-right-8">
               <div className="flex items-center gap-3">
                 <span className="flex size-9 items-center justify-center rounded-xl bg-primary/10 text-primary">
                   <ArrowRightLeft className="size-4" />
@@ -189,7 +189,7 @@ function HomePage() {
                 </div>
               </div>
             </div>
-            <div className="pointer-events-none absolute -bottom-6 -left-2 hidden w-72 rounded-2xl border border-border bg-card p-3 shadow-float md:block lg:-left-8">
+            <div className="pointer-events-none absolute -bottom-7 left-4 hidden w-[21rem] rounded-2xl border border-border bg-card p-3 shadow-float md:block lg:-left-10">
               <div className="flex items-center gap-3">
                 <ScoreRing score={92} size={46} />
                 <div className="min-w-0">

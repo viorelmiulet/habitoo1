@@ -70,7 +70,7 @@ export function SectionHeading({
       <Tag
         className={cn(
           "text-3xl font-semibold tracking-tight text-balance sm:text-4xl",
-          Tag === "h1" && "text-4xl sm:text-5xl lg:text-6xl",
+          Tag === "h1" && "text-4xl sm:text-5xl",
           light ? "text-navy-foreground" : "text-navy",
         )}
       >

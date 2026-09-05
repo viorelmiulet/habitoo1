@@ -173,9 +173,9 @@ export const mockPropertyMatches = [
 ];
 
 export const mockKpis = [
-  { label: "Proprietăți active", value: 48, hint: "12 adăugate luna aceasta" },
+  { label: "Proprietăți", value: 48, hint: "12 adăugate luna aceasta" },
   { label: "Lead-uri noi", value: 17, hint: "ultimele 7 zile" },
-  { label: "Cereri active", value: 23, hint: "6 cu potriviri noi" },
+  { label: "Cereri", value: 23, hint: "6 cu potriviri noi" },
   { label: "Vizionări azi", value: 5, hint: "următoarea la 11:30" },
 ];
 
