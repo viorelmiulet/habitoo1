@@ -18,6 +18,7 @@ import { toastError } from "@/lib/errors";
 import { PageHeader } from "@/components/app/PageHeader";
 import { StatusBadge } from "@/components/app/StatusBadge";
 import { EmptyState } from "@/components/app/EmptyState";
+import { PromptDialog, type PromptRequest } from "@/components/app/PromptDialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -152,6 +153,7 @@ function PropertiesPage() {
   const [sort, setSort] = useState<SortKey>("created_desc");
   const [page, setPage] = useState(0);
   const [archiveTarget, setArchiveTarget] = useState<string[] | null>(null);
+  const [promptRequest, setPromptRequest] = useState<PromptRequest | null>(null);
 
   const savedViews = useSavedViews("properties", orgId, user?.userId);
 
@@ -399,9 +401,14 @@ function PropertiesPage() {
   const agentName = (id: string | null) => agents.find((a) => a.id === id)?.full_name ?? "—";
 
   const saveFilter = () => {
-    const name = window.prompt("Numele filtrului salvat:");
-    if (!name) return;
-    savedViews.save.mutate({ name, config: filters as unknown as Record<string, unknown> });
+    setPromptRequest({
+      title: "Salvează filtrul curent",
+      description: "Filtrele active vor fi salvate sub un nume, pentru a le reaplica rapid.",
+      label: "Numele filtrului",
+      placeholder: "ex. Apartamente 2 camere, Nord",
+      confirmLabel: "Salvează",
+      onSubmit: (name) => savedViews.save.mutateAsync({ name, config: filters as unknown as Record<string, unknown> }),
+    });
   };
 
   return (
@@ -708,10 +715,16 @@ function PropertiesPage() {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => {
-                const tag = window.prompt("Eticheta de adăugat:");
-                if (tag) addTag.mutate({ ids: selected, tag });
-              }}
+              onClick={() =>
+                setPromptRequest({
+                  title: "Adaugă etichetă",
+                  description: `Eticheta va fi adăugată la ${selected.length} ${selected.length === 1 ? "proprietate" : "proprietăți"}.`,
+                  label: "Etichetă",
+                  placeholder: "ex. exclusivitate",
+                  confirmLabel: "Adaugă",
+                  onSubmit: (tag) => addTag.mutateAsync({ ids: selected, tag }),
+                })
+              }
             >
               Adaugă etichetă
             </Button>
@@ -892,6 +905,8 @@ function PropertiesPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <PromptDialog request={promptRequest} onClose={() => setPromptRequest(null)} />
     </>
   );
 }
