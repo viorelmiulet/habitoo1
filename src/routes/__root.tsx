@@ -3,6 +3,7 @@ import {
   Outlet,
   Link,
   createRootRouteWithContext,
+  redirect,
   useRouter,
   HeadContent,
   Scripts,
@@ -12,6 +13,8 @@ import { useEffect, type ReactNode } from "react";
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { Toaster } from "@/components/ui/sonner";
+import { getCurrentHostname } from "@/lib/current-host";
+import { getCrmUrl, isCrmPath, isPublicHostname } from "@/lib/host";
 
 function NotFoundComponent() {
   return (
