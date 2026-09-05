@@ -16,6 +16,7 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as RegisterRouteImport } from './routes/register'
 import { Route as AuthenticatedAppRouteImport } from './routes/_authenticated/app'
 import { Route as AuthenticatedOnboardingRouteImport } from './routes/_authenticated/onboarding'
+import { Route as AuthenticatedSuperadminRouteImport } from './routes/_authenticated/superadmin'
 import { Route as AuthenticatedAppIndexRouteImport } from './routes/_authenticated/app.index'
 import { Route as AuthenticatedAppActivitiesRouteImport } from './routes/_authenticated/app.activities'
 import { Route as AuthenticatedAppCalendarRouteImport } from './routes/_authenticated/app.calendar'
@@ -64,6 +65,11 @@ const AuthenticatedAppRoute = AuthenticatedAppRouteImport.update({
 const AuthenticatedOnboardingRoute = AuthenticatedOnboardingRouteImport.update({
   id: '/onboarding',
   path: '/onboarding',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedSuperadminRoute = AuthenticatedSuperadminRouteImport.update({
+  id: '/superadmin',
+  path: '/superadmin',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedAppIndexRoute = AuthenticatedAppIndexRouteImport.update({
@@ -160,6 +166,7 @@ export interface FileRoutesByFullPath {
   '/register': typeof RegisterRoute
   '/app': typeof AuthenticatedAppRouteWithChildren
   '/onboarding': typeof AuthenticatedOnboardingRoute
+  '/superadmin': typeof AuthenticatedSuperadminRoute
   '/app/activities': typeof AuthenticatedAppActivitiesRoute
   '/app/calendar': typeof AuthenticatedAppCalendarRoute
   '/app/goals': typeof AuthenticatedAppGoalsRoute
@@ -182,6 +189,7 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
+  '/superadmin': typeof AuthenticatedSuperadminRoute
   '/app/activities': typeof AuthenticatedAppActivitiesRoute
   '/app/calendar': typeof AuthenticatedAppCalendarRoute
   '/app/goals': typeof AuthenticatedAppGoalsRoute
@@ -207,6 +215,7 @@ export interface FileRoutesById {
   '/register': typeof RegisterRoute
   '/_authenticated/app': typeof AuthenticatedAppRouteWithChildren
   '/_authenticated/onboarding': typeof AuthenticatedOnboardingRoute
+  '/_authenticated/superadmin': typeof AuthenticatedSuperadminRoute
   '/_authenticated/app/activities': typeof AuthenticatedAppActivitiesRoute
   '/_authenticated/app/calendar': typeof AuthenticatedAppCalendarRoute
   '/_authenticated/app/goals': typeof AuthenticatedAppGoalsRoute
@@ -232,6 +241,7 @@ export interface FileRouteTypes {
     | '/register'
     | '/app'
     | '/onboarding'
+    | '/superadmin'
     | '/app/activities'
     | '/app/calendar'
     | '/app/goals'
@@ -254,6 +264,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/register'
     | '/onboarding'
+    | '/superadmin'
     | '/app/activities'
     | '/app/calendar'
     | '/app/goals'
@@ -278,6 +289,7 @@ export interface FileRouteTypes {
     | '/register'
     | '/_authenticated/app'
     | '/_authenticated/onboarding'
+    | '/_authenticated/superadmin'
     | '/_authenticated/app/activities'
     | '/_authenticated/app/calendar'
     | '/_authenticated/app/goals'
@@ -352,6 +364,13 @@ declare module '@tanstack/react-router' {
       path: '/onboarding'
       fullPath: '/onboarding'
       preLoaderRoute: typeof AuthenticatedOnboardingRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/superadmin': {
+      id: '/_authenticated/superadmin'
+      path: '/superadmin'
+      fullPath: '/superadmin'
+      preLoaderRoute: typeof AuthenticatedSuperadminRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/app/': {
@@ -504,11 +523,13 @@ const AuthenticatedAppRouteWithChildren =
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedAppRoute: typeof AuthenticatedAppRouteWithChildren
   AuthenticatedOnboardingRoute: typeof AuthenticatedOnboardingRoute
+  AuthenticatedSuperadminRoute: typeof AuthenticatedSuperadminRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAppRoute: AuthenticatedAppRouteWithChildren,
   AuthenticatedOnboardingRoute: AuthenticatedOnboardingRoute,
+  AuthenticatedSuperadminRoute: AuthenticatedSuperadminRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
