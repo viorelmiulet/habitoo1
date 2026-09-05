@@ -4,6 +4,12 @@ import { superadminNav } from "@/components/app/AppSidebar";
 import { useCurrentUser } from "@/hooks/use-session";
 
 export const Route = createFileRoute("/_authenticated/superadmin")({
+  head: () => ({
+    meta: [
+      { title: "Habitoo CRM — administrare platformă" },
+      { name: "robots", content: "noindex, nofollow" },
+    ],
+  }),
   component: SuperadminLayout,
 });
 

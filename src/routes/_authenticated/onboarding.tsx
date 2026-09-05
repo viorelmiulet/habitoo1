@@ -10,6 +10,12 @@ import { supabase } from "@/integrations/supabase/client";
 import { currentUserQueryKey } from "@/hooks/use-session";
 
 export const Route = createFileRoute("/_authenticated/onboarding")({
+  head: () => ({
+    meta: [
+      { title: "Configurează agenția — Habitoo CRM" },
+      { name: "robots", content: "noindex, nofollow" },
+    ],
+  }),
   component: OnboardingPage,
 });
 
