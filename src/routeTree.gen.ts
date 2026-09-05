@@ -10,33 +10,359 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
+import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
+import { Route as LoginRouteImport } from './routes/login'
+import { Route as RegisterRouteImport } from './routes/register'
+import { Route as AuthenticatedAppRouteImport } from './routes/_authenticated/app'
+import { Route as AuthenticatedOnboardingRouteImport } from './routes/_authenticated/onboarding'
+import { Route as AuthenticatedSuperadminRouteImport } from './routes/_authenticated/superadmin'
+import { Route as AuthenticatedAppIndexRouteImport } from './routes/_authenticated/app.index'
+import { Route as AuthenticatedAppActivitiesRouteImport } from './routes/_authenticated/app.activities'
+import { Route as AuthenticatedAppCalendarRouteImport } from './routes/_authenticated/app.calendar'
+import { Route as AuthenticatedAppGoalsRouteImport } from './routes/_authenticated/app.goals'
+import { Route as AuthenticatedAppLeadsRouteImport } from './routes/_authenticated/app.leads'
+import { Route as AuthenticatedAppMatchingRouteImport } from './routes/_authenticated/app.matching'
+import { Route as AuthenticatedAppNotificationsRouteImport } from './routes/_authenticated/app.notifications'
+import { Route as AuthenticatedAppReportsRouteImport } from './routes/_authenticated/app.reports'
+import { Route as AuthenticatedAppRequestsRouteImport } from './routes/_authenticated/app.requests'
+import { Route as AuthenticatedAppSettingsRouteImport } from './routes/_authenticated/app.settings'
+import { Route as AuthenticatedSuperadminIndexRouteImport } from './routes/_authenticated/superadmin.index'
+import { Route as AuthenticatedSuperadminAgenciesRouteImport } from './routes/_authenticated/superadmin.agencies'
+import { Route as AuthenticatedSuperadminAuditRouteImport } from './routes/_authenticated/superadmin.audit'
+import { Route as AuthenticatedSuperadminUsersRouteImport } from './routes/_authenticated/superadmin.users'
+import { Route as AuthenticatedAppContactsIndexRouteImport } from './routes/_authenticated/app.contacts.index'
+import { Route as AuthenticatedAppContactsIdRouteImport } from './routes/_authenticated/app.contacts.$id'
+import { Route as AuthenticatedAppPropertiesIndexRouteImport } from './routes/_authenticated/app.properties.index'
+import { Route as AuthenticatedAppPropertiesIdRouteImport } from './routes/_authenticated/app.properties.$id'
+import { Route as AuthenticatedAppPropertiesNewRouteImport } from './routes/_authenticated/app.properties.new'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
+  id: '/_authenticated',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ForgotPasswordRoute = ForgotPasswordRouteImport.update({
+  id: '/forgot-password',
+  path: '/forgot-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RegisterRoute = RegisterRouteImport.update({
+  id: '/register',
+  path: '/register',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedAppRoute = AuthenticatedAppRouteImport.update({
+  id: '/app',
+  path: '/app',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedOnboardingRoute = AuthenticatedOnboardingRouteImport.update({
+  id: '/onboarding',
+  path: '/onboarding',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedSuperadminRoute = AuthenticatedSuperadminRouteImport.update({
+  id: '/superadmin',
+  path: '/superadmin',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedAppIndexRoute = AuthenticatedAppIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AuthenticatedAppRoute,
+} as any)
+const AuthenticatedAppActivitiesRoute =
+  AuthenticatedAppActivitiesRouteImport.update({
+    id: '/activities',
+    path: '/activities',
+    getParentRoute: () => AuthenticatedAppRoute,
+  } as any)
+const AuthenticatedAppCalendarRoute =
+  AuthenticatedAppCalendarRouteImport.update({
+    id: '/calendar',
+    path: '/calendar',
+    getParentRoute: () => AuthenticatedAppRoute,
+  } as any)
+const AuthenticatedAppGoalsRoute = AuthenticatedAppGoalsRouteImport.update({
+  id: '/goals',
+  path: '/goals',
+  getParentRoute: () => AuthenticatedAppRoute,
+} as any)
+const AuthenticatedAppLeadsRoute = AuthenticatedAppLeadsRouteImport.update({
+  id: '/leads',
+  path: '/leads',
+  getParentRoute: () => AuthenticatedAppRoute,
+} as any)
+const AuthenticatedAppMatchingRoute =
+  AuthenticatedAppMatchingRouteImport.update({
+    id: '/matching',
+    path: '/matching',
+    getParentRoute: () => AuthenticatedAppRoute,
+  } as any)
+const AuthenticatedAppNotificationsRoute =
+  AuthenticatedAppNotificationsRouteImport.update({
+    id: '/notifications',
+    path: '/notifications',
+    getParentRoute: () => AuthenticatedAppRoute,
+  } as any)
+const AuthenticatedAppReportsRoute = AuthenticatedAppReportsRouteImport.update({
+  id: '/reports',
+  path: '/reports',
+  getParentRoute: () => AuthenticatedAppRoute,
+} as any)
+const AuthenticatedAppRequestsRoute =
+  AuthenticatedAppRequestsRouteImport.update({
+    id: '/requests',
+    path: '/requests',
+    getParentRoute: () => AuthenticatedAppRoute,
+  } as any)
+const AuthenticatedAppSettingsRoute =
+  AuthenticatedAppSettingsRouteImport.update({
+    id: '/settings',
+    path: '/settings',
+    getParentRoute: () => AuthenticatedAppRoute,
+  } as any)
+const AuthenticatedSuperadminIndexRoute =
+  AuthenticatedSuperadminIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => AuthenticatedSuperadminRoute,
+  } as any)
+const AuthenticatedSuperadminAgenciesRoute =
+  AuthenticatedSuperadminAgenciesRouteImport.update({
+    id: '/agencies',
+    path: '/agencies',
+    getParentRoute: () => AuthenticatedSuperadminRoute,
+  } as any)
+const AuthenticatedSuperadminAuditRoute =
+  AuthenticatedSuperadminAuditRouteImport.update({
+    id: '/audit',
+    path: '/audit',
+    getParentRoute: () => AuthenticatedSuperadminRoute,
+  } as any)
+const AuthenticatedSuperadminUsersRoute =
+  AuthenticatedSuperadminUsersRouteImport.update({
+    id: '/users',
+    path: '/users',
+    getParentRoute: () => AuthenticatedSuperadminRoute,
+  } as any)
+const AuthenticatedAppContactsIndexRoute =
+  AuthenticatedAppContactsIndexRouteImport.update({
+    id: '/contacts/',
+    path: '/contacts/',
+    getParentRoute: () => AuthenticatedAppRoute,
+  } as any)
+const AuthenticatedAppContactsIdRoute =
+  AuthenticatedAppContactsIdRouteImport.update({
+    id: '/contacts/$id',
+    path: '/contacts/$id',
+    getParentRoute: () => AuthenticatedAppRoute,
+  } as any)
+const AuthenticatedAppPropertiesIndexRoute =
+  AuthenticatedAppPropertiesIndexRouteImport.update({
+    id: '/properties/',
+    path: '/properties/',
+    getParentRoute: () => AuthenticatedAppRoute,
+  } as any)
+const AuthenticatedAppPropertiesIdRoute =
+  AuthenticatedAppPropertiesIdRouteImport.update({
+    id: '/properties/$id',
+    path: '/properties/$id',
+    getParentRoute: () => AuthenticatedAppRoute,
+  } as any)
+const AuthenticatedAppPropertiesNewRoute =
+  AuthenticatedAppPropertiesNewRouteImport.update({
+    id: '/properties/new',
+    path: '/properties/new',
+    getParentRoute: () => AuthenticatedAppRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/forgot-password': typeof ForgotPasswordRoute
+  '/login': typeof LoginRoute
+  '/register': typeof RegisterRoute
+  '/app': typeof AuthenticatedAppRouteWithChildren
+  '/onboarding': typeof AuthenticatedOnboardingRoute
+  '/superadmin': typeof AuthenticatedSuperadminRouteWithChildren
+  '/app/activities': typeof AuthenticatedAppActivitiesRoute
+  '/app/calendar': typeof AuthenticatedAppCalendarRoute
+  '/app/goals': typeof AuthenticatedAppGoalsRoute
+  '/app/leads': typeof AuthenticatedAppLeadsRoute
+  '/app/matching': typeof AuthenticatedAppMatchingRoute
+  '/app/notifications': typeof AuthenticatedAppNotificationsRoute
+  '/app/reports': typeof AuthenticatedAppReportsRoute
+  '/app/requests': typeof AuthenticatedAppRequestsRoute
+  '/app/settings': typeof AuthenticatedAppSettingsRoute
+  '/superadmin/agencies': typeof AuthenticatedSuperadminAgenciesRoute
+  '/superadmin/audit': typeof AuthenticatedSuperadminAuditRoute
+  '/superadmin/users': typeof AuthenticatedSuperadminUsersRoute
+  '/app/': typeof AuthenticatedAppIndexRoute
+  '/superadmin/': typeof AuthenticatedSuperadminIndexRoute
+  '/app/contacts/$id': typeof AuthenticatedAppContactsIdRoute
+  '/app/properties/$id': typeof AuthenticatedAppPropertiesIdRoute
+  '/app/properties/new': typeof AuthenticatedAppPropertiesNewRoute
+  '/app/contacts/': typeof AuthenticatedAppContactsIndexRoute
+  '/app/properties/': typeof AuthenticatedAppPropertiesIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/forgot-password': typeof ForgotPasswordRoute
+  '/login': typeof LoginRoute
+  '/register': typeof RegisterRoute
+  '/onboarding': typeof AuthenticatedOnboardingRoute
+  '/app/activities': typeof AuthenticatedAppActivitiesRoute
+  '/app/calendar': typeof AuthenticatedAppCalendarRoute
+  '/app/goals': typeof AuthenticatedAppGoalsRoute
+  '/app/leads': typeof AuthenticatedAppLeadsRoute
+  '/app/matching': typeof AuthenticatedAppMatchingRoute
+  '/app/notifications': typeof AuthenticatedAppNotificationsRoute
+  '/app/reports': typeof AuthenticatedAppReportsRoute
+  '/app/requests': typeof AuthenticatedAppRequestsRoute
+  '/app/settings': typeof AuthenticatedAppSettingsRoute
+  '/superadmin/agencies': typeof AuthenticatedSuperadminAgenciesRoute
+  '/superadmin/audit': typeof AuthenticatedSuperadminAuditRoute
+  '/superadmin/users': typeof AuthenticatedSuperadminUsersRoute
+  '/app': typeof AuthenticatedAppIndexRoute
+  '/superadmin': typeof AuthenticatedSuperadminIndexRoute
+  '/app/contacts/$id': typeof AuthenticatedAppContactsIdRoute
+  '/app/properties/$id': typeof AuthenticatedAppPropertiesIdRoute
+  '/app/properties/new': typeof AuthenticatedAppPropertiesNewRoute
+  '/app/contacts': typeof AuthenticatedAppContactsIndexRoute
+  '/app/properties': typeof AuthenticatedAppPropertiesIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
+  '/forgot-password': typeof ForgotPasswordRoute
+  '/login': typeof LoginRoute
+  '/register': typeof RegisterRoute
+  '/_authenticated/app': typeof AuthenticatedAppRouteWithChildren
+  '/_authenticated/onboarding': typeof AuthenticatedOnboardingRoute
+  '/_authenticated/superadmin': typeof AuthenticatedSuperadminRouteWithChildren
+  '/_authenticated/app/activities': typeof AuthenticatedAppActivitiesRoute
+  '/_authenticated/app/calendar': typeof AuthenticatedAppCalendarRoute
+  '/_authenticated/app/goals': typeof AuthenticatedAppGoalsRoute
+  '/_authenticated/app/leads': typeof AuthenticatedAppLeadsRoute
+  '/_authenticated/app/matching': typeof AuthenticatedAppMatchingRoute
+  '/_authenticated/app/notifications': typeof AuthenticatedAppNotificationsRoute
+  '/_authenticated/app/reports': typeof AuthenticatedAppReportsRoute
+  '/_authenticated/app/requests': typeof AuthenticatedAppRequestsRoute
+  '/_authenticated/app/settings': typeof AuthenticatedAppSettingsRoute
+  '/_authenticated/superadmin/agencies': typeof AuthenticatedSuperadminAgenciesRoute
+  '/_authenticated/superadmin/audit': typeof AuthenticatedSuperadminAuditRoute
+  '/_authenticated/superadmin/users': typeof AuthenticatedSuperadminUsersRoute
+  '/_authenticated/app/': typeof AuthenticatedAppIndexRoute
+  '/_authenticated/superadmin/': typeof AuthenticatedSuperadminIndexRoute
+  '/_authenticated/app/contacts/$id': typeof AuthenticatedAppContactsIdRoute
+  '/_authenticated/app/properties/$id': typeof AuthenticatedAppPropertiesIdRoute
+  '/_authenticated/app/properties/new': typeof AuthenticatedAppPropertiesNewRoute
+  '/_authenticated/app/contacts/': typeof AuthenticatedAppContactsIndexRoute
+  '/_authenticated/app/properties/': typeof AuthenticatedAppPropertiesIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/forgot-password'
+    | '/login'
+    | '/register'
+    | '/app'
+    | '/onboarding'
+    | '/superadmin'
+    | '/app/activities'
+    | '/app/calendar'
+    | '/app/goals'
+    | '/app/leads'
+    | '/app/matching'
+    | '/app/notifications'
+    | '/app/reports'
+    | '/app/requests'
+    | '/app/settings'
+    | '/superadmin/agencies'
+    | '/superadmin/audit'
+    | '/superadmin/users'
+    | '/app/'
+    | '/superadmin/'
+    | '/app/contacts/$id'
+    | '/app/properties/$id'
+    | '/app/properties/new'
+    | '/app/contacts/'
+    | '/app/properties/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/forgot-password'
+    | '/login'
+    | '/register'
+    | '/onboarding'
+    | '/app/activities'
+    | '/app/calendar'
+    | '/app/goals'
+    | '/app/leads'
+    | '/app/matching'
+    | '/app/notifications'
+    | '/app/reports'
+    | '/app/requests'
+    | '/app/settings'
+    | '/superadmin/agencies'
+    | '/superadmin/audit'
+    | '/superadmin/users'
+    | '/app'
+    | '/superadmin'
+    | '/app/contacts/$id'
+    | '/app/properties/$id'
+    | '/app/properties/new'
+    | '/app/contacts'
+    | '/app/properties'
+  id:
+    | '__root__'
+    | '/'
+    | '/_authenticated'
+    | '/forgot-password'
+    | '/login'
+    | '/register'
+    | '/_authenticated/app'
+    | '/_authenticated/onboarding'
+    | '/_authenticated/superadmin'
+    | '/_authenticated/app/activities'
+    | '/_authenticated/app/calendar'
+    | '/_authenticated/app/goals'
+    | '/_authenticated/app/leads'
+    | '/_authenticated/app/matching'
+    | '/_authenticated/app/notifications'
+    | '/_authenticated/app/reports'
+    | '/_authenticated/app/requests'
+    | '/_authenticated/app/settings'
+    | '/_authenticated/superadmin/agencies'
+    | '/_authenticated/superadmin/audit'
+    | '/_authenticated/superadmin/users'
+    | '/_authenticated/app/'
+    | '/_authenticated/superadmin/'
+    | '/_authenticated/app/contacts/$id'
+    | '/_authenticated/app/properties/$id'
+    | '/_authenticated/app/properties/new'
+    | '/_authenticated/app/contacts/'
+    | '/_authenticated/app/properties/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
+  ForgotPasswordRoute: typeof ForgotPasswordRoute
+  LoginRoute: typeof LoginRoute
+  RegisterRoute: typeof RegisterRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -48,11 +374,271 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated': {
+      id: '/_authenticated'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AuthenticatedRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/forgot-password': {
+      id: '/forgot-password'
+      path: '/forgot-password'
+      fullPath: '/forgot-password'
+      preLoaderRoute: typeof ForgotPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/register': {
+      id: '/register'
+      path: '/register'
+      fullPath: '/register'
+      preLoaderRoute: typeof RegisterRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/app': {
+      id: '/_authenticated/app'
+      path: '/app'
+      fullPath: '/app'
+      preLoaderRoute: typeof AuthenticatedAppRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/onboarding': {
+      id: '/_authenticated/onboarding'
+      path: '/onboarding'
+      fullPath: '/onboarding'
+      preLoaderRoute: typeof AuthenticatedOnboardingRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/superadmin': {
+      id: '/_authenticated/superadmin'
+      path: '/superadmin'
+      fullPath: '/superadmin'
+      preLoaderRoute: typeof AuthenticatedSuperadminRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/app/': {
+      id: '/_authenticated/app/'
+      path: '/'
+      fullPath: '/app/'
+      preLoaderRoute: typeof AuthenticatedAppIndexRouteImport
+      parentRoute: typeof AuthenticatedAppRoute
+    }
+    '/_authenticated/app/activities': {
+      id: '/_authenticated/app/activities'
+      path: '/activities'
+      fullPath: '/app/activities'
+      preLoaderRoute: typeof AuthenticatedAppActivitiesRouteImport
+      parentRoute: typeof AuthenticatedAppRoute
+    }
+    '/_authenticated/app/calendar': {
+      id: '/_authenticated/app/calendar'
+      path: '/calendar'
+      fullPath: '/app/calendar'
+      preLoaderRoute: typeof AuthenticatedAppCalendarRouteImport
+      parentRoute: typeof AuthenticatedAppRoute
+    }
+    '/_authenticated/app/goals': {
+      id: '/_authenticated/app/goals'
+      path: '/goals'
+      fullPath: '/app/goals'
+      preLoaderRoute: typeof AuthenticatedAppGoalsRouteImport
+      parentRoute: typeof AuthenticatedAppRoute
+    }
+    '/_authenticated/app/leads': {
+      id: '/_authenticated/app/leads'
+      path: '/leads'
+      fullPath: '/app/leads'
+      preLoaderRoute: typeof AuthenticatedAppLeadsRouteImport
+      parentRoute: typeof AuthenticatedAppRoute
+    }
+    '/_authenticated/app/matching': {
+      id: '/_authenticated/app/matching'
+      path: '/matching'
+      fullPath: '/app/matching'
+      preLoaderRoute: typeof AuthenticatedAppMatchingRouteImport
+      parentRoute: typeof AuthenticatedAppRoute
+    }
+    '/_authenticated/app/notifications': {
+      id: '/_authenticated/app/notifications'
+      path: '/notifications'
+      fullPath: '/app/notifications'
+      preLoaderRoute: typeof AuthenticatedAppNotificationsRouteImport
+      parentRoute: typeof AuthenticatedAppRoute
+    }
+    '/_authenticated/app/reports': {
+      id: '/_authenticated/app/reports'
+      path: '/reports'
+      fullPath: '/app/reports'
+      preLoaderRoute: typeof AuthenticatedAppReportsRouteImport
+      parentRoute: typeof AuthenticatedAppRoute
+    }
+    '/_authenticated/app/requests': {
+      id: '/_authenticated/app/requests'
+      path: '/requests'
+      fullPath: '/app/requests'
+      preLoaderRoute: typeof AuthenticatedAppRequestsRouteImport
+      parentRoute: typeof AuthenticatedAppRoute
+    }
+    '/_authenticated/app/settings': {
+      id: '/_authenticated/app/settings'
+      path: '/settings'
+      fullPath: '/app/settings'
+      preLoaderRoute: typeof AuthenticatedAppSettingsRouteImport
+      parentRoute: typeof AuthenticatedAppRoute
+    }
+    '/_authenticated/superadmin/': {
+      id: '/_authenticated/superadmin/'
+      path: '/'
+      fullPath: '/superadmin/'
+      preLoaderRoute: typeof AuthenticatedSuperadminIndexRouteImport
+      parentRoute: typeof AuthenticatedSuperadminRoute
+    }
+    '/_authenticated/superadmin/agencies': {
+      id: '/_authenticated/superadmin/agencies'
+      path: '/agencies'
+      fullPath: '/superadmin/agencies'
+      preLoaderRoute: typeof AuthenticatedSuperadminAgenciesRouteImport
+      parentRoute: typeof AuthenticatedSuperadminRoute
+    }
+    '/_authenticated/superadmin/audit': {
+      id: '/_authenticated/superadmin/audit'
+      path: '/audit'
+      fullPath: '/superadmin/audit'
+      preLoaderRoute: typeof AuthenticatedSuperadminAuditRouteImport
+      parentRoute: typeof AuthenticatedSuperadminRoute
+    }
+    '/_authenticated/superadmin/users': {
+      id: '/_authenticated/superadmin/users'
+      path: '/users'
+      fullPath: '/superadmin/users'
+      preLoaderRoute: typeof AuthenticatedSuperadminUsersRouteImport
+      parentRoute: typeof AuthenticatedSuperadminRoute
+    }
+    '/_authenticated/app/contacts/': {
+      id: '/_authenticated/app/contacts/'
+      path: '/contacts'
+      fullPath: '/app/contacts/'
+      preLoaderRoute: typeof AuthenticatedAppContactsIndexRouteImport
+      parentRoute: typeof AuthenticatedAppRoute
+    }
+    '/_authenticated/app/contacts/$id': {
+      id: '/_authenticated/app/contacts/$id'
+      path: '/contacts/$id'
+      fullPath: '/app/contacts/$id'
+      preLoaderRoute: typeof AuthenticatedAppContactsIdRouteImport
+      parentRoute: typeof AuthenticatedAppRoute
+    }
+    '/_authenticated/app/properties/': {
+      id: '/_authenticated/app/properties/'
+      path: '/properties'
+      fullPath: '/app/properties/'
+      preLoaderRoute: typeof AuthenticatedAppPropertiesIndexRouteImport
+      parentRoute: typeof AuthenticatedAppRoute
+    }
+    '/_authenticated/app/properties/$id': {
+      id: '/_authenticated/app/properties/$id'
+      path: '/properties/$id'
+      fullPath: '/app/properties/$id'
+      preLoaderRoute: typeof AuthenticatedAppPropertiesIdRouteImport
+      parentRoute: typeof AuthenticatedAppRoute
+    }
+    '/_authenticated/app/properties/new': {
+      id: '/_authenticated/app/properties/new'
+      path: '/properties/new'
+      fullPath: '/app/properties/new'
+      preLoaderRoute: typeof AuthenticatedAppPropertiesNewRouteImport
+      parentRoute: typeof AuthenticatedAppRoute
+    }
   }
 }
 
+interface AuthenticatedAppRouteChildren {
+  AuthenticatedAppActivitiesRoute: typeof AuthenticatedAppActivitiesRoute
+  AuthenticatedAppCalendarRoute: typeof AuthenticatedAppCalendarRoute
+  AuthenticatedAppGoalsRoute: typeof AuthenticatedAppGoalsRoute
+  AuthenticatedAppLeadsRoute: typeof AuthenticatedAppLeadsRoute
+  AuthenticatedAppMatchingRoute: typeof AuthenticatedAppMatchingRoute
+  AuthenticatedAppNotificationsRoute: typeof AuthenticatedAppNotificationsRoute
+  AuthenticatedAppReportsRoute: typeof AuthenticatedAppReportsRoute
+  AuthenticatedAppRequestsRoute: typeof AuthenticatedAppRequestsRoute
+  AuthenticatedAppSettingsRoute: typeof AuthenticatedAppSettingsRoute
+  AuthenticatedAppIndexRoute: typeof AuthenticatedAppIndexRoute
+  AuthenticatedAppContactsIdRoute: typeof AuthenticatedAppContactsIdRoute
+  AuthenticatedAppPropertiesIdRoute: typeof AuthenticatedAppPropertiesIdRoute
+  AuthenticatedAppPropertiesNewRoute: typeof AuthenticatedAppPropertiesNewRoute
+  AuthenticatedAppContactsIndexRoute: typeof AuthenticatedAppContactsIndexRoute
+  AuthenticatedAppPropertiesIndexRoute: typeof AuthenticatedAppPropertiesIndexRoute
+}
+
+const AuthenticatedAppRouteChildren: AuthenticatedAppRouteChildren = {
+  AuthenticatedAppActivitiesRoute: AuthenticatedAppActivitiesRoute,
+  AuthenticatedAppCalendarRoute: AuthenticatedAppCalendarRoute,
+  AuthenticatedAppGoalsRoute: AuthenticatedAppGoalsRoute,
+  AuthenticatedAppLeadsRoute: AuthenticatedAppLeadsRoute,
+  AuthenticatedAppMatchingRoute: AuthenticatedAppMatchingRoute,
+  AuthenticatedAppNotificationsRoute: AuthenticatedAppNotificationsRoute,
+  AuthenticatedAppReportsRoute: AuthenticatedAppReportsRoute,
+  AuthenticatedAppRequestsRoute: AuthenticatedAppRequestsRoute,
+  AuthenticatedAppSettingsRoute: AuthenticatedAppSettingsRoute,
+  AuthenticatedAppIndexRoute: AuthenticatedAppIndexRoute,
+  AuthenticatedAppContactsIdRoute: AuthenticatedAppContactsIdRoute,
+  AuthenticatedAppPropertiesIdRoute: AuthenticatedAppPropertiesIdRoute,
+  AuthenticatedAppPropertiesNewRoute: AuthenticatedAppPropertiesNewRoute,
+  AuthenticatedAppContactsIndexRoute: AuthenticatedAppContactsIndexRoute,
+  AuthenticatedAppPropertiesIndexRoute: AuthenticatedAppPropertiesIndexRoute,
+}
+
+const AuthenticatedAppRouteWithChildren =
+  AuthenticatedAppRoute._addFileChildren(AuthenticatedAppRouteChildren)
+
+interface AuthenticatedSuperadminRouteChildren {
+  AuthenticatedSuperadminAgenciesRoute: typeof AuthenticatedSuperadminAgenciesRoute
+  AuthenticatedSuperadminAuditRoute: typeof AuthenticatedSuperadminAuditRoute
+  AuthenticatedSuperadminUsersRoute: typeof AuthenticatedSuperadminUsersRoute
+  AuthenticatedSuperadminIndexRoute: typeof AuthenticatedSuperadminIndexRoute
+}
+
+const AuthenticatedSuperadminRouteChildren: AuthenticatedSuperadminRouteChildren =
+  {
+    AuthenticatedSuperadminAgenciesRoute: AuthenticatedSuperadminAgenciesRoute,
+    AuthenticatedSuperadminAuditRoute: AuthenticatedSuperadminAuditRoute,
+    AuthenticatedSuperadminUsersRoute: AuthenticatedSuperadminUsersRoute,
+    AuthenticatedSuperadminIndexRoute: AuthenticatedSuperadminIndexRoute,
+  }
+
+const AuthenticatedSuperadminRouteWithChildren =
+  AuthenticatedSuperadminRoute._addFileChildren(
+    AuthenticatedSuperadminRouteChildren,
+  )
+
+interface AuthenticatedRouteRouteChildren {
+  AuthenticatedAppRoute: typeof AuthenticatedAppRouteWithChildren
+  AuthenticatedOnboardingRoute: typeof AuthenticatedOnboardingRoute
+  AuthenticatedSuperadminRoute: typeof AuthenticatedSuperadminRouteWithChildren
+}
+
+const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedAppRoute: AuthenticatedAppRouteWithChildren,
+  AuthenticatedOnboardingRoute: AuthenticatedOnboardingRoute,
+  AuthenticatedSuperadminRoute: AuthenticatedSuperadminRouteWithChildren,
+}
+
+const AuthenticatedRouteRouteWithChildren =
+  AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
+  ForgotPasswordRoute: ForgotPasswordRoute,
+  LoginRoute: LoginRoute,
+  RegisterRoute: RegisterRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
