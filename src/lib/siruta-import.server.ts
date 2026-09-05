@@ -260,25 +260,23 @@ export async function backfillPropertySiruta(admin: Admin): Promise<{ checked: n
   let migrated = 0;
   for (const p of props ?? []) {
     if (!p.city) continue;
-    const { data: matches } = await admin
-      .rpc("ro_normalize_name", { _v: p.city })
-      .then(async (res) => {
-        const normalized = (res.data as string | null) ?? "";
-        if (!normalized) return { data: [] as Array<{ siruta_code: number; uat_siruta_code: number; county_siruta_code: number }> };
-        let q = admin
-          .from("ro_localities")
-          .select("siruta_code, uat_siruta_code, county_siruta_code, county_id, ro_counties!inner(name)")
-          .eq("normalized_name", normalized)
-          .limit(5);
-        if (p.county) {
-          const { data: cn } = await admin.rpc("ro_normalize_name", { _v: p.county });
-          if (cn) q = q.eq("ro_counties.normalized_name", cn as string);
-        }
-        return q;
-      });
+    const localityName = normalizeRoName(p.city);
+    if (!localityName) continue;
 
-    const match = (matches as Array<{ siruta_code: number; uat_siruta_code: number; county_siruta_code: number }> | null)?.[0];
-    if (!match) continue;
+    let query = admin
+      .from("ro_localities")
+      .select("siruta_code, uat_siruta_code, county_siruta_code, ro_counties!inner(normalized_name)")
+      .eq("normalized_name", localityName)
+      .limit(2);
+
+    const countyName = p.county ? normalizeRoName(p.county) : "";
+    if (countyName) query = query.eq("ro_counties.normalized_name", countyName);
+
+    const { data: matches } = await query;
+    // Ambiguu (aceeași denumire în județe diferite, fără județ setat) → lăsăm textul neatins.
+    if (!matches || matches.length !== 1) continue;
+    const match = matches[0];
+
     const { error: upErr } = await admin
       .from("properties")
       .update({
@@ -292,3 +290,4 @@ export async function backfillPropertySiruta(admin: Admin): Promise<{ checked: n
 
   return { checked: props?.length ?? 0, migrated };
 }
+
