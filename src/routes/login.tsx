@@ -12,13 +12,13 @@ import { authErrorMessage, authKindMessage, classifyAuthError } from "@/lib/auth
 export const Route = createFileRoute("/login")({
   head: () => ({
     meta: [
-      { title: "Autentificare — ImobiFlow CRM imobiliar" },
+      { title: "Autentificare — Habitoo CRM imobiliar" },
       {
         name: "description",
         content:
-          "Intră în contul tău ImobiFlow și gestionează proprietățile, clienții și lead-urile agenției imobiliare.",
+          "Intră în contul tău Habitoo și gestionează proprietățile, clienții și lead-urile agenției imobiliare.",
       },
-      { property: "og:title", content: "Autentificare — ImobiFlow CRM imobiliar" },
+      { property: "og:title", content: "Autentificare — Habitoo CRM imobiliar" },
       {
         property: "og:description",
         content: "Acces securizat pentru agenții imobiliare: portofoliu, clienți, lead-uri și rapoarte.",

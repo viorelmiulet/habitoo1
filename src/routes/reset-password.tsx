@@ -12,13 +12,13 @@ export const Route = createFileRoute("/reset-password")({
   ssr: false,
   head: () => ({
     meta: [
-      { title: "Setează o parolă nouă — ImobiFlow CRM" },
+      { title: "Setează o parolă nouă — Habitoo CRM" },
       {
         name: "description",
-        content: "Alege o parolă nouă pentru contul tău ImobiFlow și revino în CRM-ul agenției.",
+        content: "Alege o parolă nouă pentru contul tău Habitoo și revino în CRM-ul agenției.",
       },
-      { property: "og:title", content: "Setează o parolă nouă — ImobiFlow CRM" },
-      { property: "og:description", content: "Finalizează resetarea parolei contului ImobiFlow." },
+      { property: "og:title", content: "Setează o parolă nouă — Habitoo CRM" },
+      { property: "og:description", content: "Finalizează resetarea parolei contului Habitoo." },
       { name: "robots", content: "noindex" },
     ],
   }),

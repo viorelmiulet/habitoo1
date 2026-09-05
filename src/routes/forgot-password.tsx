@@ -11,12 +11,12 @@ import { authErrorMessage } from "@/lib/auth-errors";
 export const Route = createFileRoute("/forgot-password")({
   head: () => ({
     meta: [
-      { title: "Resetare parolă — ImobiFlow CRM" },
+      { title: "Resetare parolă — Habitoo CRM" },
       {
         name: "description",
-        content: "Primești pe email un link pentru resetarea parolei contului tău ImobiFlow.",
+        content: "Primești pe email un link pentru resetarea parolei contului tău Habitoo.",
       },
-      { property: "og:title", content: "Resetare parolă — ImobiFlow CRM" },
+      { property: "og:title", content: "Resetare parolă — Habitoo CRM" },
       { property: "og:description", content: "Recuperează accesul la contul agenției tale." },
     ],
   }),
