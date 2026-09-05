@@ -1,3 +1,4 @@
 
 ## Faza 2 – de finalizat
-- [ ] Rezolvă toate erorile de typecheck/build (vezi /tmp/observability/build-errors.log), inclusiv cele preexistente.
+- [x] Erorile de typecheck rezolvate (typecheck curat).
+- [x] Faza 2: proprietăți, media, contacte, cereri, potriviri, lead-uri, activități, calendar, dashboard-uri, rapoarte, obiective, search global, quick add.
