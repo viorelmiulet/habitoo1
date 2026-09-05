@@ -31,9 +31,8 @@ import { formatDateTime } from "@/lib/format";
 import { activityKindLabels } from "@/lib/labels";
 
 export const Route = createFileRoute("/_authenticated/app/activities")({
-  validateSearch: (search: Record<string, unknown>) => ({
-    new: search.new === true || search.new === "true" ? true : undefined,
-  }),
+  validateSearch: (search: Record<string, unknown>): { new?: boolean } =>
+    search["new"] === true || search["new"] === "true" ? { new: true } : {},
   component: ActivitiesPage,
 });
 

@@ -30,9 +30,8 @@ import { relativeDays } from "@/lib/format";
 import { leadStageLabels, leadStages } from "@/lib/labels";
 
 export const Route = createFileRoute("/_authenticated/app/leads")({
-  validateSearch: (search: Record<string, unknown>) => ({
-    new: search.new === true || search.new === "true" ? true : undefined,
-  }),
+  validateSearch: (search: Record<string, unknown>): { new?: boolean } =>
+    search["new"] === true || search["new"] === "true" ? { new: true } : {},
   component: LeadsPage,
 });
 

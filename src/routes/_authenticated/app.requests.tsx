@@ -31,9 +31,8 @@ import { propertyTypeLabels, requestKindLabels } from "@/lib/labels";
 import { matchTone, scoreMatch } from "@/lib/matching";
 
 export const Route = createFileRoute("/_authenticated/app/requests")({
-  validateSearch: (search: Record<string, unknown>) => ({
-    new: search.new === true || search.new === "true" ? true : undefined,
-  }),
+  validateSearch: (search: Record<string, unknown>): { new?: boolean } =>
+    search["new"] === true || search["new"] === "true" ? { new: true } : {},
   component: RequestsPage,
 });
 
