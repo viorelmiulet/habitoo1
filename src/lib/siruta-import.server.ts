@@ -4,6 +4,8 @@
 // Se rulează exclusiv server-side, cu clientul privilegiat, și poate fi re-rulat fără duplicate.
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/integrations/supabase/types";
+import { normalizeRoName } from "@/lib/ro-normalize";
+
 
 type Admin = SupabaseClient<Database>;
 
