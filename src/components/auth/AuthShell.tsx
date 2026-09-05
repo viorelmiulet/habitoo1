@@ -27,7 +27,8 @@ export function AuthShell({
         </Link>
         <div className="max-w-md space-y-6">
           <h2 className="text-3xl font-semibold tracking-tight">
-            Tot ce are nevoie o agenție imobiliară, <span className="text-gradient">într-un singur loc</span>
+            Tot ce are nevoie o agenție imobiliară,{" "}
+            <span className="text-gradient">într-un singur loc</span>
           </h2>
           <ul className="space-y-3">
             {bullets.map((b) => (
@@ -38,7 +39,9 @@ export function AuthShell({
             ))}
           </ul>
         </div>
-        <p className="text-xs text-muted-foreground">Platformă multi-agenție, cu izolare completă a datelor.</p>
+        <p className="text-xs text-muted-foreground">
+          Platformă multi-agenție, cu izolare completă a datelor.
+        </p>
       </div>
 
       <div className="flex items-center justify-center px-4 py-12">

@@ -1,6 +1,15 @@
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { Bell, FlaskConical, HelpCircle, LogOut, Menu, Settings, ShieldCheck, UserRound } from "lucide-react";
+import {
+  Bell,
+  FlaskConical,
+  HelpCircle,
+  LogOut,
+  Menu,
+  Settings,
+  ShieldCheck,
+  UserRound,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,

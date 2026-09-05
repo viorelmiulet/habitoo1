@@ -9,7 +9,12 @@ type BrandLogoProps = {
   priority?: boolean;
 };
 
-export function BrandLogo({ className, fullIdentity = false, markOnly = false, priority = false }: BrandLogoProps) {
+export function BrandLogo({
+  className,
+  fullIdentity = false,
+  markOnly = false,
+  priority = false,
+}: BrandLogoProps) {
   return (
     <img
       src={markOnly ? "/favicon.png" : fullIdentity ? habitooIdentity.url : habitooLogo.url}

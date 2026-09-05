@@ -133,8 +133,8 @@ function Landing() {
             Pornește în câteva minute
           </h2>
           <p className="max-w-xl text-sm text-muted-foreground">
-            Îți creezi contul, îți configurezi agenția și începi să adaugi proprietăți și clienți. Fără
-            instalări, fără setări complicate.
+            Îți creezi contul, îți configurezi agenția și începi să adaugi proprietăți și clienți.
+            Fără instalări, fără setări complicate.
           </p>
           <Button asChild size="lg">
             <Link to="/register">Începe acum</Link>
