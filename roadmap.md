@@ -26,3 +26,14 @@
 - [x] crm.habitoo.ro deschide direct aplicația (redirect host-based de la `/` la `/app`).
 - [x] Guard `_authenticated` trimite la `/login?redirect=<rută>`; login și callback OAuth revin la ruta cerută.
 - [x] noindex pe layout-urile CRM (app, superadmin, onboarding).
+
+## Interfața autentificată – audit + premium (în lucru)
+- [ ] Audit complet (shell, primitive, pagini agent, pagini Superadmin) – documentat în `.lovable/audit-ui-autentificata.md`.
+- [ ] Fundație: fonturi brand în CRM, `friendlyError`/`toastError`, skeleton-uri, stare de eroare cu retry, ConfirmDialog, PromptDialog, SectionCard.
+- [ ] Shell nou: sidebar colapsabil (persistă), workspace card, user card + logout, topbar compact cu breadcrumbs, meniu notificări, temă light/dark, bottom nav mobil.
+- [ ] Shell Superadmin distinct (mod „Platformă”), fără a atinge guard-urile.
+- [ ] Primitive: PageHeader (back, eyebrow, meta), KpiCard (trend, link, skeleton), EmptyState, StatusBadge (dot) – compatibile cu site-ul public.
+- [ ] Pagini agent: înlocuire `window.prompt`, confirmare arhivare proprietate, aria-labels, tab-uri scrollabile pe mobil, loading/eroare consistente, mesaje de eroare prietenoase.
+- [ ] Notificări: pagină refăcută (filtre, grupare pe zi, marcare individuală), meniu rapid în topbar.
+- [ ] Superadmin: dashboard cu KPI + grafice, agenții (tabel, filtre, drawer detalii, acțiuni confirmate), utilizatori (filtre, confirmare), audit (filtre, detalii).
+- [ ] Verificare vizuală 1440/1024/768/390 light + dark, typecheck, build, fără erori consolă.
