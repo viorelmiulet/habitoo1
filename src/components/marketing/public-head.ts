@@ -43,14 +43,16 @@ export function publicHead({
   ];
   if (noindex) meta.push({ name: "robots", content: "noindex, nofollow" });
 
+  const links: Array<React.LinkHTMLAttributes<HTMLLinkElement>> = [
+    { rel: "canonical", href: url },
+    { rel: "preconnect", href: "https://fonts.googleapis.com" },
+    { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
+    { rel: "stylesheet", href: FONTS_HREF },
+  ];
+
   return {
     meta,
-    links: [
-      { rel: "canonical", href: url },
-      { rel: "preconnect", href: "https://fonts.googleapis.com" },
-      { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
-      { rel: "stylesheet", href: FONTS_HREF },
-    ],
+    links,
     scripts: jsonLd
       ? [
           {
