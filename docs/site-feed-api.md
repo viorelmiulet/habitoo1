@@ -171,7 +171,22 @@ strict proprietăți publicate, nearhivate, cu status public, și doar fotografi
 ### Câmpuri noi în feed
 
 `nrdormitoare`, `tvainclus`, `referintaexterna`, `strada`, `numarstradal`,
-`cod_siruta_judet`, `cod_siruta_uat`, `cod_siruta_localitate`. Câmpurile fără
-echivalent real în Habitoo (`pretfaratva`, `comisioncumparator`, `confort`,
-`caroiaj`, `energy.*`, `custom1/2`, `finisaje`, `vecinatati`) rămân
-null/goale — nu se derivează valori.
+`cod_siruta_judet`, `cod_siruta_uat`, `cod_siruta_localitate`.
+
+Extindere pentru compatibilitate maximă cu maparea ImmoFlux (nume exacte
+documentate de ImmoFlux, aceleași în `/properties` și `/properties/{id}`):
+
+| Câmp ImmoFlux | Sursa Habitoo |
+| --- | --- |
+| `tip` | `properties.property_type` |
+| `mobilat_value` | `properties.furnishing` (același ca `mobilare_value`) |
+| `utilitati_values` | `properties.utilities` (același ca `utilitati`) |
+| `dotari_values` | `properties.features` (același ca `dotari`) |
+
+Câmpurile fără echivalent real rămân expuse explicit ca `null`/listă goală, ca
+integratorul să vadă contractul complet: `stadiuconstructie_value`,
+`tipconstructie_value`, `starefinisaje_value`, `bucatarie_values`,
+`eficienta_energetica`, `consum_specific`, `indice_emisii`,
+`consum_energie_regenerabila`, `nrfronturistradale`, `frontstradal`,
+`latimedrumacces`, plus cele listate în „Limitări cunoscute”.
+
