@@ -150,7 +150,7 @@ async function notify(
         feedVisible: diagnostics.feedVisible,
         processed: null,
         detail: `dry_run ${operation} → ${safeUrl(ctx)}`,
-        message: `Verificat local: feed ${diagnostics.feedVisible ? "OK" : "indisponibil"}, ${diagnostics.images.resolvable}/${diagnostics.images.total} imagini, agent ${diagnostics.agentName ?? "lipsă"}.`,
+        message: `Verificat local: feed ${diagnostics.feedVisible ? "OK" : "indisponibil"}, ${diagnostics.images.resolvable}/${diagnostics.images.total} imagini, agent ${diagnostics.agentName ?? "lipsă"}.${withdrawWarning ? ` ${withdrawWarning}` : ""}`,
       },
     };
   }
@@ -204,9 +204,9 @@ async function notify(
         processed,
         detail: `${operation} http_${response.status}${processed === null ? "" : ` processed=${processed}`}`,
         message:
-          processed === null
+          (processed === null
             ? `Portalul a confirmat notificarea (HTTP ${response.status}).`
-            : `Portalul a procesat ${processed} anunț(uri).`,
+            : `Portalul a procesat ${processed} anunț(uri).`) + (withdrawWarning ? ` ${withdrawWarning}` : ""),
       },
     };
   } catch (error) {
