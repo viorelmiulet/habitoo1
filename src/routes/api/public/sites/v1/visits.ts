@@ -70,14 +70,15 @@ export const Route = createFileRoute("/api/public/sites/v1/visits")({
             if (!allowed.has(entry.id)) continue;
             const occurredOn = entry.date ?? new Date().toISOString().slice(0, 10);
             const source = entry.source ?? null;
-            const existing = await supabaseAdmin
+            const dayQuery = supabaseAdmin
               .from("site_feed_visits")
               .select("id, views")
               .eq("organization_id", auth.organizationId)
               .eq("property_id", entry.id)
-              .eq("occurred_on", occurredOn)
-              .is("source", source)
+              .eq("occurred_on", occurredOn);
+            const existing = await (source ? dayQuery.eq("source", source) : dayQuery.is("source", null))
               .maybeSingle();
+
 
             if (existing.data) {
               await supabaseAdmin
