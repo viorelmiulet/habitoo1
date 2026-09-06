@@ -246,8 +246,10 @@ export function mapPropertyToFeed(p: PropertyRow, options: MapPropertyOptions): 
     // Modelul intern nu garantează că `price` este prețul fără TVA când
     // `vat_included = false`, deci nu publicăm o valoare derivată greșit.
     pretfaratva: null,
+    tvainclus: typeof p.vat_included === "boolean" ? p.vat_included : null,
     // `properties.commission` este comision intern (nepublic) → nu se expune.
     comisioncumparator: null,
+    referintaexterna: p.external_id ?? null,
     images,
     publicare: p.publish_status === "published",
     top: (p.tags ?? []).includes("top"),
