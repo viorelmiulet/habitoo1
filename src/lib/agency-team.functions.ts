@@ -176,14 +176,28 @@ export const inviteAgent = createServerFn({ method: "POST" })
       );
     }
 
+    // Un cont poate exista deja în Auth fără profil (ex. o agenție ștearsă anterior sau
+    // o înregistrare neterminată). În acest caz nu mai trimitem o invitație nouă — îl
+    // atașăm agenției și îi trimitem un link de setare a parolei.
+    let newUserId: string;
     const invited = await admin.auth.admin.inviteUserByEmail(email, {
       redirectTo: getCrmUrl("/auth/callback"),
       data: { full_name: data.full_name },
     });
-    if (invited.error || !invited.data?.user) {
-      throw new Error(invited.error?.message ?? "Invitația nu a putut fi trimisă.");
+    if (invited.data?.user) {
+      newUserId = invited.data.user.id;
+    } else {
+      const orphan = await findAuthUserByEmail(admin, email);
+      if (!orphan) {
+        throw new Error(invited.error?.message ?? "Invitația nu a putut fi trimisă.");
+      }
+      newUserId = orphan.id;
+      await admin.auth.admin.updateUserById(newUserId, {
+        user_metadata: { full_name: data.full_name },
+      });
+      await sendPasswordSetupEmail(email);
     }
-    const newUserId = invited.data.user.id;
+
 
     const profile = await admin.from("profiles").upsert({
       id: newUserId,
