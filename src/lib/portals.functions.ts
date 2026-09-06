@@ -1105,3 +1105,76 @@ export const publishPropertyToSelectedPortals = createServerFn({ method: "POST" 
 
     return { ok: results.every((r) => r.ok), code: null, message: null, results };
   });
+
+/* ------------------------------------------------------------------------- */
+/* Portaluri de tip feed: previzualizarea exactă a ce vede portalul          */
+/* ------------------------------------------------------------------------- */
+
+export type PortalFeedPreview = {
+  ok: boolean;
+  portalId: string;
+  portalName: string;
+  feedUrl: string;
+  /** Câte oferte sunt selectate pentru portal. */
+  selected: number;
+  /** Câte oferte intră efectiv în feed. */
+  valid: number;
+  /** Primele oferte, exact în forma trimisă portalului. */
+  sample: unknown[];
+  /** Oferte selectate dar excluse, cu motivul exact. */
+  excluded: { propertyId: string; reference: string | null; title: string | null; reasons: string[] }[];
+  warnings: { externalId: string; messages: string[] }[];
+  /** Portalul are o cheie activă cu care poate citi feedul. */
+  hasActiveKey: boolean;
+};
+
+/**
+ * Previzualizare read-only a feedului unui portal de tip feed (dry-run):
+ * nu trimite nimic, nu modifică nimic, doar arată ce ar citi portalul acum.
+ */
+export const previewPortalFeed = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) =>
+    z.object({ portalId: z.string().min(1).max(40), limit: z.number().int().min(1).max(10).default(3) }).parse(input),
+  )
+  .handler(async ({ data, context }): Promise<PortalFeedPreview> => {
+    const organizationId = await requireOrgAdmin(context as unknown as AuthContext);
+    const definition = getPortalDefinition(data.portalId);
+    if (!definition) throw new Error("Portal necunoscut.");
+    if (definition.id !== "imove") {
+      throw new Error("Previzualizarea de feed este disponibilă doar pentru portalurile de tip feed.");
+    }
+
+    const feedUrl = await feedUrlForOrg(definition.id);
+    const { buildImoveFeed } = await import("@/lib/portals/imove/feed.server");
+    const build = await buildImoveFeed({ organizationId, requestUrl: feedUrl, perPage: 500 });
+
+    const admin = await loadAdmin();
+    const { count } = await admin
+      .from("portal_api_keys")
+      .select("id", { count: "exact", head: true })
+      .eq("organization_id", organizationId)
+      .eq("portal", definition.id)
+      .eq("status", "active");
+
+    await logOperation({
+      organizationId,
+      portal: definition.id,
+      operation: "feed_preview",
+      success: true,
+      actorId: context.userId,
+    });
+
+    return {
+      ok: true,
+      portalId: definition.id,
+      portalName: definition.display_name,
+      feedUrl,
+      selected: build.selected,
+      valid: build.listings.length,
+      sample: build.listings.slice(0, data.limit),
+      excluded: build.excluded,
+      warnings: build.warnings,
+      hasActiveKey: (count ?? 0) > 0,
+    };
+  });
