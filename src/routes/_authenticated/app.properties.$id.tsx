@@ -28,6 +28,7 @@ import { PROPERTY_DETAIL_FIELDS } from "@/lib/property-detail-fields";
 import {
   PropertyTransactionFields,
   emptyTransaction,
+  hasTransactionSelection,
   transactionFromProperty,
   transactionPayload,
   type TransactionValue,
@@ -483,6 +484,10 @@ function PropertyDetailPage() {
               className="panel space-y-4 p-5"
               onSubmit={(e) => {
                 e.preventDefault();
+                if (!hasTransactionSelection(tx)) {
+                  toast.error("Alege tipul tranzacției: de vânzare, de închiriere sau ambele.");
+                  return;
+                }
                 save.mutate({
                   title: draft.title,
                   ...transactionPayload(tx),

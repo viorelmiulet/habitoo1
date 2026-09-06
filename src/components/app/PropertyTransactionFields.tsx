@@ -33,6 +33,11 @@ export const emptyTransaction: TransactionValue = {
  * sincronizate cu tranzacția principală, ca filtrele și matching-ul existente
  * să funcționeze neschimbat.
  */
+/** True dacă utilizatorul a bifat cel puțin una dintre variantele de tranzacție. */
+export function hasTransactionSelection(v: TransactionValue) {
+  return v.for_sale || v.for_rent;
+}
+
 export function transactionPayload(v: TransactionValue) {
   const forSale = v.for_sale || !v.for_rent; // niciuna bifată → tratăm ca vânzare
   const primaryIsSale = forSale;
@@ -87,19 +92,22 @@ export function PropertyTransactionFields({ idPrefix = "tx", value, onChange }: 
   return (
     <div className="space-y-4">
       <p className="text-sm text-muted-foreground">
-        O proprietate poate fi listată simultan de vânzare și de închiriere. Completează prețul pentru
+        Bifează cel puțin o variantă: de vânzare, de închiriere sau ambele simultan. Completează prețul pentru
         fiecare variantă bifată.
       </p>
 
       <div className="grid gap-4 md:grid-cols-2">
         <div className="rounded-lg border p-4 space-y-3">
-          <label className="flex items-center gap-2 text-sm font-medium">
+          <div className="flex items-center gap-2 text-sm font-medium">
             <Checkbox
+              id={`${idPrefix}-for-sale`}
               checked={value.for_sale}
               onCheckedChange={(c) => set({ for_sale: c === true })}
             />
-            De vânzare
-          </label>
+            <Label htmlFor={`${idPrefix}-for-sale`} className="cursor-pointer font-medium">
+              De vânzare
+            </Label>
+          </div>
           <div className="grid gap-3 sm:grid-cols-2">
             <div className="space-y-2">
               <Label htmlFor={`${idPrefix}-sale-price`}>Preț vânzare</Label>
@@ -135,13 +143,16 @@ export function PropertyTransactionFields({ idPrefix = "tx", value, onChange }: 
         </div>
 
         <div className="rounded-lg border p-4 space-y-3">
-          <label className="flex items-center gap-2 text-sm font-medium">
+          <div className="flex items-center gap-2 text-sm font-medium">
             <Checkbox
+              id={`${idPrefix}-for-rent`}
               checked={value.for_rent}
               onCheckedChange={(c) => set({ for_rent: c === true })}
             />
-            De închiriere
-          </label>
+            <Label htmlFor={`${idPrefix}-for-rent`} className="cursor-pointer font-medium">
+              De închiriere
+            </Label>
+          </div>
           <div className="grid gap-3 sm:grid-cols-2">
             <div className="space-y-2">
               <Label htmlFor={`${idPrefix}-rent-price`}>Chirie / lună</Label>
