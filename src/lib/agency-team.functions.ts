@@ -126,7 +126,7 @@ async function buildOverview(admin: Admin, organizationId: string): Promise<Team
 
 async function writeAudit(
   admin: Admin,
-  input: { organizationId: string; actorId: string; action: string; entityId: string; values: Record<string, unknown> },
+  input: { organizationId: string; actorId: string; action: string; entityId: string; values: Record<string, string | number | boolean | null> },
 ) {
   await admin.from("audit_logs").insert({
     organization_id: input.organizationId,
