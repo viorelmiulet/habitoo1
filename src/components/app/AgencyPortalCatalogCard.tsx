@@ -5,9 +5,9 @@
  */
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { Plug } from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
+import { PortalLogo } from "@/components/app/PortalLogo";
 import { Button } from "@/components/ui/button";
 import { InlineLoading } from "@/components/app/LoadingState";
 import { QueryError } from "@/components/app/QueryError";
@@ -68,7 +68,7 @@ export function AgencyPortalCatalogCard() {
               >
                 <div className="min-w-0">
                   <div className="flex items-center gap-2">
-                    <Plug className="size-4 text-muted-foreground" />
+                    <PortalLogo portalId={item.id} name={item.displayName} size={24} />
                     <span className="text-sm font-medium">{item.displayName}</span>
                     {item.activated ? (
                       <Badge variant="default">Activat</Badge>

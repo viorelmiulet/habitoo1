@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { StatusBadge } from "@/components/app/StatusBadge";
+import { PortalLogo } from "@/components/app/PortalLogo";
 import { InlineLoading } from "@/components/app/LoadingState";
 import { QueryError } from "@/components/app/QueryError";
 import { ConfirmDialog } from "@/components/app/ConfirmDialog";
@@ -192,12 +193,13 @@ export function PortalsCard({ organizationId }: { organizationId: string }) {
           <div key={item.portal.id} className="panel space-y-4 p-5">
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div className="flex items-start gap-3">
-                <span
-                  className="flex size-10 shrink-0 items-center justify-center rounded-lg border border-border bg-muted text-sm font-semibold"
-                  aria-hidden
-                >
-                  {item.portal.logo}
-                </span>
+                <PortalLogo
+                  portalId={item.portal.id}
+                  name={item.portal.display_name}
+                  fallback={item.portal.logo}
+                  size={40}
+                  className="rounded-lg"
+                />
                 <div>
                   <h3 className="flex items-center gap-2 font-medium">
                     {item.portal.display_name}
