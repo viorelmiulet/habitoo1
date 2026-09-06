@@ -14,6 +14,7 @@ import { Input } from "@/components/ui/input";
 import { InlineLoading } from "@/components/app/LoadingState";
 import { QueryError } from "@/components/app/QueryError";
 import { EmptyState } from "@/components/app/EmptyState";
+import { PortalLogo } from "@/components/app/PortalLogo";
 import {
   listPortalActivationRequests,
   resolvePortalActivationRequest,
@@ -86,6 +87,7 @@ export function PortalActivationRequestsCard({
               <div className="flex flex-wrap items-center gap-2">
                 <span className="font-medium">{r.organizationName}</span>
                 <span className="text-muted-foreground">→</span>
+                <PortalLogo portalId={r.portalId} name={r.portalName} size={24} />
                 <span className="font-medium">{r.portalName}</span>
                 {r.status === "pending" ? (
                   <Badge variant="secondary">În așteptare</Badge>
