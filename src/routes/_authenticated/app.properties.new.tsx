@@ -27,6 +27,7 @@ import {
 } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { LocationPicker, emptyLocation, type LocationValue } from "@/components/app/LocationPicker";
+import { PropertyLocationMap } from "@/components/app/PropertyLocationMap";
 import { useCurrentUser } from "@/hooks/use-session";
 import { propertyTypeLabels } from "@/lib/labels";
 
@@ -144,6 +145,9 @@ function NewPropertyPage() {
           locality_siruta_code: location.localitySirutaCode,
           district: form.district || null,
           address: form.address || null,
+          lat: coords?.lat ?? null,
+          lng: coords?.lng ?? null,
+          location_precise: locationPrecise,
           description: form.description || null,
           internal_notes: form.internal_notes || null,
           owner_contact_id: form.owner_contact_id || null,
