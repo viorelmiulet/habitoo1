@@ -2,6 +2,7 @@ import type { LinkHTMLAttributes } from "react";
 
 export const SITE_URL = "https://www.habitoo.ro";
 export const SITE_NAME = "Habitoo CRM";
+export const OG_IMAGE_URL = `${SITE_URL}/assets/og-cover.jpg`;
 
 const FONTS_HREF =
   "https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Sora:wght@500;600;700&display=swap";
