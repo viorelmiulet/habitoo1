@@ -2,10 +2,12 @@
 import type { PortalAdapter } from "../adapter";
 import { clickimobAdapter } from "./clickimob.server";
 import { imoveAdapter } from "./imove.server";
+import { imospotAdapter } from "./imospot.server";
 
 const ADAPTERS: Record<string, PortalAdapter> = {
   clickimob: clickimobAdapter,
   imove: imoveAdapter,
+  imospot: imospotAdapter,
 };
 
 
