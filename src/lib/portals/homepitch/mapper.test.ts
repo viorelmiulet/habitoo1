@@ -46,8 +46,8 @@ const image = {
   property_id: baseProperty.id,
   is_primary: true,
   position: 0,
-  is_public: true,
-  deleted_at: null,
+  include_in_publish: true,
+  is_confidential: false,
   storage_path: "org/prop/1.jpg",
 } as unknown as PropertyImageRow;
 
