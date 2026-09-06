@@ -5,7 +5,6 @@ import { ShellLoading } from "@/components/app/LoadingState";
 import { OrgBlocked } from "@/components/app/OrgBlocked";
 import { appHead } from "@/components/app/app-head";
 import { useCurrentUser } from "@/hooks/use-session";
-import { orgBlockReason } from "@/lib/org-access";
 
 export const Route = createFileRoute("/_authenticated/app")({
   head: () => appHead("Habitoo CRM — aplicație"),
@@ -17,10 +16,9 @@ function AppLayout() {
 
   if (isLoading) return <ShellLoading label="Se încarcă spațiul de lucru…" />;
   if (!user) return <Navigate to="/login" />;
-  if (!user.organization && !user.isSuperadmin) return <Navigate to="/onboarding" />;
-
-  const blocked = user.isSuperadmin ? null : orgBlockReason(user.organization);
+  const blocked = user.isSuperadmin ? null : user.orgBlocked;
   if (blocked) return <OrgBlocked reason={blocked} />;
+  if (!user.organization && !user.isSuperadmin) return <Navigate to="/onboarding" />;
 
 
   const groups = user.isSuperadmin ? [...agencyNav, ...superadminNav] : agencyNav;
