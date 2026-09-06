@@ -55,7 +55,9 @@ export function readTokenFromRequest(request: Request): string | null {
 function tokenPrefixOf(token: string | null): string | null {
   if (!token) return null;
   const prefix = token.split(".")[0] ?? "";
-  return prefix.startsWith("hbt_") ? prefix : null;
+  if (prefix.startsWith("hbt_")) return prefix;
+  // Cheile emise pentru portaluri: <portal>_portal_<8 hex>
+  return /_portal_[0-9a-f]{8}$/.test(prefix) ? prefix : null;
 }
 
 // Rate limit BEST-EFFORT: contorul trăiește în memoria instanței de server, deci
