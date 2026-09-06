@@ -49,7 +49,37 @@ function SettingsPage() {
     },
   });
 
+  const uploadAvatar = useMutation({
+    mutationFn: async (file: File) => {
+      if (!user?.userId) throw new Error("Sesiune expirată.");
+      if (!user.organization?.id) throw new Error("Agenția nu este configurată.");
+      if (!AVATAR_TYPES.includes(file.type)) {
+        throw new Error("Folosește o imagine JPG, PNG sau WebP.");
+      }
+      if (file.size > AVATAR_MAX_BYTES) {
+        throw new Error("Imaginea depășește 5 MB.");
+      }
+      const { blob } = await compressImage(file, 512, 0.85);
+      const path = avatarPath(user.organization.id, user.userId);
+      await uploadToBucket(AVATAR_BUCKET, path, blob, "image/jpeg");
+      const previous = user.profile?.avatar_url ?? null;
+      const { error } = await supabase
+        .from("profiles")
+        .update({ avatar_url: path })
+        .eq("id", user.userId);
+      if (error) throw error;
+      if (previous && previous !== path) await removeFromBucket(AVATAR_BUCKET, [previous]);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: currentUserQueryKey });
+      queryClient.invalidateQueries({ queryKey: ["team"] });
+      toast.success("Fotografia de profil a fost actualizată.");
+    },
+    onError: (e: Error) => toastError(e),
+  });
+
   const saveProfile = useMutation({
+
     mutationFn: async () => {
       if (!user) throw new Error("Sesiune expirată.");
       const { error } = await supabase
