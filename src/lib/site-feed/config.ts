@@ -4,11 +4,11 @@
  * În producție linkurile TREBUIE să fie stabile și independente de hostul pe
  * care a venit cererea:
  *  - imagine: https://crm.habitoo.ro/api/public/sites/v1/media/{imageId}
- *  - ofertă:  https://habitoo.ro/oferta-{propertyId}
+ *  - ofertă:  https://habitoo.ro/oferta/{propertyId}
  *
  * Pe preview/local rămânem same-origin ca să putem testa fără DNS de producție.
  * Nu folosim niciodată `url.origin` ca `publicSiteUrl` pe hosturile de
- * producție (altfel s-ar genera https://crm.habitoo.ro/oferta-...).
+ * producție (altfel s-ar genera https://crm.habitoo.ro/oferta/...).
  */
 import { CRM_URL, isCrmHostname, isPublicHostname } from "@/lib/host";
 

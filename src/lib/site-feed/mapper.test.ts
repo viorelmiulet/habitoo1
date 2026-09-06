@@ -141,7 +141,7 @@ describe("mapPropertyToFeed", () => {
     expect(mapped.dataadaugare).toBe("2026-01-01T00:00:00Z");
     expect(mapped.datamodificare).toBe("2026-02-01T00:00:00Z");
     expect(mapped.agent).toBe("Mihai Popescu");
-    expect(mapped.url).toBe(`https://habitoo.ro/oferta-${baseProperty.id}`);
+    expect(mapped.url).toBe(`https://habitoo.ro/oferta/${baseProperty.id}`);
   });
 
   it("separă vânzarea de închiriere", () => {
@@ -222,7 +222,7 @@ describe("mapper — câmpuri fără echivalent real în schemă", () => {
       baseUrl: "https://crm.habitoo.ro",
       publicSiteUrl: "https://habitoo.ro",
     });
-    expect(mapped.url).toBe(`https://habitoo.ro/oferta-${baseProperty.id}`);
+    expect(mapped.url).toBe(`https://habitoo.ro/oferta/${baseProperty.id}`);
   });
 });
 

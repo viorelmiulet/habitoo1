@@ -74,7 +74,7 @@ ca integratorul să poată itera în siguranță.
 În producție linkurile sunt independente de hostul cererii:
 
 - imagine: `https://crm.habitoo.ro/api/public/sites/v1/media/{imageId}`
-- ofertă: `https://habitoo.ro/oferta-{propertyId}`
+- ofertă: `https://habitoo.ro/oferta/{propertyId}`
 
 Pe preview/local rămân same-origin, pentru testare.
 

@@ -167,7 +167,7 @@ export function mapAgent(profile: ProfileRow, baseUrl?: string): FeedAgent {
 export type MapPropertyOptions = {
   /** Origin absolut HTTPS pentru URL-urile de imagine (ex. https://crm.habitoo.ro). */
   baseUrl: string;
-  /** Origin absolut al site-ului public, pentru linkul /oferta-{id}. */
+  /** Origin absolut al site-ului public, pentru linkul /oferta/{id}. */
   publicSiteUrl?: string;
   images?: PropertyImageRow[];
   agent?: Pick<ProfileRow, "id" | "full_name"> | null;
