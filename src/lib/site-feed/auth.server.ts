@@ -89,7 +89,15 @@ export type FeedAuthOptions = {
    * (ex. iMove citește un URL de feed simplu).
    */
   allowQueryToken?: boolean;
+  /**
+   * Acceptă și cheia API emisă de portal și salvată de utilizator în
+   * configurarea integrării (`portal_connections.portal_credentials_encrypted`).
+   * Se activează doar pe ruta portalului respectiv (ex. feedul iMove), unde
+   * credențialul este emis de portal, nu de Habitoo.
+   */
+  portalCredential?: string;
 };
+
 
 export async function authenticateFeedRequest(
   request: Request,
