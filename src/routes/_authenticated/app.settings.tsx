@@ -11,6 +11,16 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
+import { UserAvatar } from "@/components/app/UserAvatar";
+import {
+  AVATAR_BUCKET,
+  AVATAR_MAX_BYTES,
+  AVATAR_TYPES,
+  avatarPath,
+  compressImage,
+  removeFromBucket,
+  uploadToBucket,
+} from "@/lib/storage";
 import { currentUserQueryKey, useCurrentUser } from "@/hooks/use-session";
 import { formatDate } from "@/lib/format";
 import { roleLabels } from "@/lib/labels";
