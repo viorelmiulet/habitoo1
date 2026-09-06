@@ -275,6 +275,7 @@ function SettingsPage() {
             )}
           </form>
         </TabsContent>
+        ) : null}
 
         {user?.isAdmin ? (
         <TabsContent value="team">
@@ -308,6 +309,7 @@ function SettingsPage() {
             .
           </p>
         </TabsContent>
+        ) : null}
 
         {user?.isAdmin ? (
           <TabsContent value="integrations">
