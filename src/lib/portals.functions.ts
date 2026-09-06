@@ -236,13 +236,28 @@ export const getPortalHub = createServerFn({ method: "GET" })
           pending: portalListings.filter((l) => l.status === "pending").length,
         },
         eligibleProperties: eligible.count ?? 0,
-        feedUrl,
-        feed: {
-          ok: feedProperties.status === 200 && feedAgents.status === 200,
-          apiVersion: feedProperties.apiVersion,
-          properties: feedProperties.total,
-          agents: feedAgents.total,
-        },
+        feedUrl: portal.id === "imove" ? imoveFeedUrl : genericFeedUrl,
+        // Portal care primește datele DOAR prin feed (fără operații de scriere).
+        feedOnly: portal.capabilities.includes("feed_pull") && !portal.capabilities.includes("publish_listing"),
+        feed:
+          portal.id === "imove"
+            ? {
+                ok: true,
+                apiVersion: "habitoo-imove-feed/1.0",
+                properties: imoveFeed.listings.length,
+                agents: null,
+                selected: imoveFeed.selected,
+                excluded: imoveFeed.excluded.length,
+              }
+            : {
+                ok: feedProperties.status === 200 && feedAgents.status === 200,
+                apiVersion: feedProperties.apiVersion,
+                properties: feedProperties.total,
+                agents: feedAgents.total,
+                selected: null,
+                excluded: null,
+              },
+
       };
     });
   });
