@@ -260,10 +260,28 @@ function SettingsPage() {
                 onChange={(e) => setOrgForm((f) => ({ ...f, email: e.target.value }))}
               />
             </div>
+            <div className="flex items-start justify-between gap-4 rounded-xl border border-border p-4">
+              <div className="space-y-1">
+                <Label htmlFor="collab_enabled" className="text-sm">
+                  Participă la Colaborare Habitoo
+                </Label>
+                <p className="text-xs text-muted-foreground">
+                  Când este activ, proprietățile tale marcate „Disponibilă pentru colaborare” sunt
+                  vizibile celorlalte agenții Habitoo, iar tu vezi ofertele lor. Dezactivarea te scoate
+                  complet din rețea, în ambele sensuri.
+                </p>
+              </div>
+              <Switch
+                id="collab_enabled"
+                checked={orgForm.collaboration_enabled}
+                onCheckedChange={(v) => setOrgForm((f) => ({ ...f, collaboration_enabled: v }))}
+              />
+            </div>
             <div className="flex items-center justify-between gap-3 rounded-xl border border-border p-4 text-sm">
               <span className="text-muted-foreground">Plan curent</span>
               <StatusBadge tone="primary">{user?.organization?.plan ?? "—"}</StatusBadge>
             </div>
+
             {user?.isAdmin ? (
               <div className="flex justify-end">
                 <Button type="submit" disabled={saveOrg.isPending}>
