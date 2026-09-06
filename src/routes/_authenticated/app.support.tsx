@@ -15,6 +15,7 @@ import { EmptyState } from "@/components/app/EmptyState";
 import { appHead } from "@/components/app/app-head";
 import { SupportStatusBadge, SupportThread } from "@/components/app/SupportThread";
 import { SupportWidget } from "@/components/app/SupportWidget";
+import { Button } from "@/components/ui/button";
 import { formatDateTime } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { listMySupportTickets, SUPPORT_CATEGORY_LABELS } from "@/lib/support.functions";
