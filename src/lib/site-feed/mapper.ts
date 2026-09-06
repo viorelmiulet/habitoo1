@@ -72,6 +72,11 @@ export type FeedProperty = {
   localitate: string | null;
   judet: string | null;
   zona: string | null;
+  strada: string | null;
+  numarstradal: string | null;
+  cod_siruta_judet: number | null;
+  cod_siruta_uat: number | null;
+  cod_siruta_localitate: number | null;
   caroiaj: string | null;
   devanzare: boolean;
   deinchiriere: boolean;
