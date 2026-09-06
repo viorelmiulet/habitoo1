@@ -3,8 +3,7 @@
  * hartă interactivă OpenStreetMap, buton de geocodare din adresă și comutatorul
  * de precizie (zonă estimativă vs. locație exactă).
  */
-import { lazy, Suspense, useState } from "react";
-import { ClientOnly } from "@tanstack/react-router";
+import { useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { MapPin, Loader2 } from "lucide-react";
 import { toast } from "sonner";
@@ -13,8 +12,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { geocodeAddress } from "@/lib/geocode.functions";
 import { APPROX_RADIUS_M } from "@/lib/geo";
-
-const PropertyMap = lazy(() => import("@/components/app/PropertyMap"));
+import { PropertyMapClient } from "@/components/app/PropertyMapClient";
 
 type Props = {
   idPrefix?: string;
@@ -85,17 +83,13 @@ export function PropertyLocationMap({
         </Button>
       </div>
 
-      <ClientOnly fallback={<div className="h-72 w-full animate-pulse rounded-lg border bg-muted" />}>
-        <Suspense fallback={<div className="h-72 w-full animate-pulse rounded-lg border bg-muted" />}>
-          <PropertyMap
-            lat={lat}
-            lng={lng}
-            precise={precise}
-            seed={seed}
-            onChange={onCoordsChange}
-          />
-        </Suspense>
-      </ClientOnly>
+      <PropertyMapClient
+        lat={lat}
+        lng={lng}
+        precise={precise}
+        seed={seed}
+        onChange={onCoordsChange}
+      />
 
       <div className="flex items-start justify-between gap-4">
         <div className="space-y-1">

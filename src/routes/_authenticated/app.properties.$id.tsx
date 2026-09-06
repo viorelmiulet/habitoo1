@@ -68,7 +68,8 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { LocationPicker, emptyLocation, type LocationValue } from "@/components/app/LocationPicker";
 import { PropertyLocationMap } from "@/components/app/PropertyLocationMap";
-import { PropertyMap } from "@/components/app/PropertyMap";
+import { PropertyMapClient } from "@/components/app/PropertyMapClient";
+import { APPROX_RADIUS_M, publicCoords } from "@/lib/geo";
 import { useCurrentUser } from "@/hooks/use-session";
 import { formatDate, formatDateTime, formatMoney, formatNumber } from "@/lib/format";
 import {
@@ -477,6 +478,9 @@ function PropertyDetailPage() {
     w.print();
   };
 
+  // Coordonatele arătate în panoul read-only: exacte sau zona aproximativă.
+  const mapCoords = publicCoords(property);
+
   /** Nudge-ul apare doar dacă agenția participă, colaborarea e oprită și nu am întrebat deja. */
   const shouldNudgeCollab = () =>
     user?.organization?.collaboration_enabled === true &&
@@ -756,7 +760,7 @@ function PropertyDetailPage() {
                   <h2 className="text-sm font-semibold">Hartă</h2>
                   {mapCoords ? (
                     <div className="mt-3 space-y-2">
-                      <PropertyMap
+                      <PropertyMapClient
                         lat={mapCoords.lat}
                         lng={mapCoords.lng}
                         precise={mapCoords.precise}
