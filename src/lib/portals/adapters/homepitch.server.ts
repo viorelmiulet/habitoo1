@@ -99,7 +99,7 @@ async function pushProperty(ctx: PortalContext, ref: ListingRef): Promise<Portal
   if (excluded) {
     return {
       ok: false,
-      code: "VALIDATION_FAILED",
+      code: "VALIDATION_ERROR",
       message: `Oferta nu poate fi trimisă la HomePitch: ${excluded.reasons.join(" ")}`,
       detail: excluded.reasons.join(" | "),
     };
@@ -107,7 +107,7 @@ async function pushProperty(ctx: PortalContext, ref: ListingRef): Promise<Portal
   if (!feed.properties[0]) {
     return {
       ok: false,
-      code: "VALIDATION_FAILED",
+      code: "VALIDATION_ERROR",
       message: "Oferta nu este bifată pentru HomePitch sau nu este publicată.",
     };
   }
@@ -177,14 +177,14 @@ async function pushProperty(ctx: PortalContext, ref: ListingRef): Promise<Portal
     if (response.status === 402) {
       return {
         ok: false,
-        code: "PLAN_LIMIT",
+        code: "PORTAL_ERROR",
         message: "Contul HomePitch a atins limita planului: oferta nu a fost importată.",
       };
     }
     if (response.status === 403) {
       return {
         ok: false,
-        code: "FORBIDDEN",
+        code: "AUTH_ERROR",
         message: "HomePitch nu recunoaște agentul ofertei (emailul agentului nu corespunde contului).",
       };
     }
@@ -199,16 +199,16 @@ async function pushProperty(ctx: PortalContext, ref: ListingRef): Promise<Portal
       const details = body["details"];
       return {
         ok: false,
-        code: "VALIDATION_FAILED",
+        code: "VALIDATION_ERROR",
         message: "HomePitch a respins datele ofertei.",
         detail: typeof details === "string" ? details : JSON.stringify(details ?? {}),
       };
     }
     if (response.status === 401) {
-      return { ok: false, code: "AUTH_FAILED", message: "Cheia API nu este acceptată de HomePitch." };
+      return { ok: false, code: "AUTH_ERROR", message: "Cheia API nu este acceptată de HomePitch." };
     }
     if (response.status === 429) {
-      return { ok: false, code: "RATE_LIMITED", message: "HomePitch a limitat temporar cererile. Reîncearcă." };
+      return { ok: false, code: "RATE_LIMIT", message: "HomePitch a limitat temporar cererile. Reîncearcă." };
     }
     return {
       ok: false,
