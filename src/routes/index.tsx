@@ -21,6 +21,7 @@ import {
   Users,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { CollaborationSection } from "@/components/marketing/CollaborationSection";
 import { CtaBand } from "@/components/marketing/CtaBand";
 import { PortalsSection } from "@/components/marketing/PortalsSection";
 import { navyButton } from "@/components/marketing/PublicHeader";
@@ -465,6 +466,8 @@ function HomePage() {
       </Section>
 
       <PortalsSection />
+
+      <CollaborationSection />
 
       {/* BENEFITS */}
       <Section tone="muted">
