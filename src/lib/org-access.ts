@@ -1,10 +1,10 @@
-// Blocare reală (server-side) a accesului pentru agențiile suspendate sau arhivate.
+// Blocare reală (server-side) a accesului pentru agențiile suspendate, anulate sau arhivate.
 // Rulează imediat după validarea tokenului JWT, pe orice server function care
 // folosește `requireActiveOrgAuth` în loc de `requireSupabaseAuth`.
 import { createMiddleware } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
-export type OrgBlockReason = "suspended" | "archived";
+export type OrgBlockReason = "suspended" | "archived" | "cancelled";
 
 /** Prefix distinct, ca frontendul să poată afișa o pagină dedicată. */
 export const ORG_BLOCKED_CODE = "ORG_ACCESS_BLOCKED";
@@ -14,6 +14,8 @@ export const ORG_BLOCKED_MESSAGES: Record<OrgBlockReason, string> = {
     "Contul agenției tale este suspendat. Contactează administratorul platformei.",
   archived:
     "Contul agenției tale a fost arhivat. Contactează administratorul platformei.",
+  cancelled:
+    "Contul agenției tale a fost anulat. Contactează administratorul platformei.",
 };
 
 export function orgBlockedError(reason: OrgBlockReason): Error {
@@ -28,7 +30,9 @@ export function parseOrgBlocked(error: unknown): OrgBlockReason | null {
   const raw =
     error instanceof Error ? error.message : typeof error === "string" ? error : "";
   if (!raw.includes(ORG_BLOCKED_CODE)) return null;
-  return raw.includes(":archived") ? "archived" : "suspended";
+  if (raw.includes(":archived")) return "archived";
+  if (raw.includes(":cancelled")) return "cancelled";
+  return "suspended";
 }
 
 export function orgBlockReason(org: {
@@ -38,6 +42,7 @@ export function orgBlockReason(org: {
   if (!org) return null;
   if (org.archived_at) return "archived";
   if (org.status === "suspended") return "suspended";
+  if (org.status === "cancelled") return "cancelled";
   return null;
 }
 
