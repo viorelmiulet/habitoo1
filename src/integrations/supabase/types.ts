@@ -1579,6 +1579,16 @@ export type Database = {
       qa_purge_demo_organization: { Args: { _org: string }; Returns: string[] }
       qa_reset_demo_organization: { Args: { _org: string }; Returns: Json }
       ro_normalize_name: { Args: { _v: string }; Returns: string }
+      site_feed_record_visit: {
+        Args: {
+          _occurred_on: string
+          _org: string
+          _property: string
+          _source: string
+          _views: number
+        }
+        Returns: undefined
+      }
     }
     Enums: {
       activity_kind:
