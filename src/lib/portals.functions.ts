@@ -64,7 +64,10 @@ export const getPortalIntegrations = createServerFn({ method: "GET" })
   .handler(async ({ context }): Promise<PortalCardData[]> => {
     const organizationId = await requireOrgAdmin(context as unknown as AuthContext);
     const admin = await loadAdmin();
-    const { CANONICAL_CRM_URL, FEED_BASE_PATH } = await import("@/lib/portals/urls.server");
+    const [{ CRM_URL }, { FEED_BASE_PATH }] = await Promise.all([
+      import("@/lib/host"),
+      import("@/lib/site-feed/auth.server"),
+    ]);
 
     const [{ data: rows }, eligible, tokens, { data: pubs }] = await Promise.all([
       admin
@@ -123,7 +126,7 @@ export const getPortalIntegrations = createServerFn({ method: "GET" })
         eligibleProperties: eligible.count ?? 0,
         publications: pubCount.get(definition.key) ?? 0,
         hasFeedToken: (tokens.count ?? 0) > 0,
-        feedBaseUrl: `${CANONICAL_CRM_URL}${FEED_BASE_PATH}`,
+        feedBaseUrl: `${CRM_URL}${FEED_BASE_PATH}`,
       };
     });
   });
