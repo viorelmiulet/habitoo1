@@ -447,7 +447,7 @@ function OfferDetailDialog({
   onClose: () => void;
   onPropose: (offer: CollaborationOffer) => void;
 }) {
-  const fetchOffer = useServerFn(getCollaborationOfferRef);
+  const fetchOffer = useServerFn(getCollaborationOffer);
   const detail = useQuery({
     queryKey: ["collab-offer", offer?.id],
     enabled: Boolean(offer?.id),
@@ -520,9 +520,6 @@ function OfferDetailDialog({
     </Dialog>
   );
 }
-
-// Referință separată pentru a evita confuzia cu importul de tip.
-const getCollaborationOfferRef = getCollaborationOffer;
 
 function ProposeDialog({
   offer,
