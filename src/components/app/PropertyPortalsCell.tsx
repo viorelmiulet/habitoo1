@@ -43,7 +43,7 @@ const STATE_META: Record<
 > = {
   published: {
     label: "Publicat",
-    classes: "border-success/40 bg-success/10 text-success-foreground",
+    classes: "border-success/40 bg-success/10 text-success",
     dot: "bg-success",
   },
   selected: {
@@ -53,7 +53,7 @@ const STATE_META: Record<
   },
   syncing: {
     label: "În sincronizare",
-    classes: "border-warning/40 bg-warning/10 text-warning-foreground",
+    classes: "border-warning/50 bg-warning/15 text-foreground",
     dot: "bg-warning",
   },
   error: {
@@ -186,7 +186,9 @@ export function PropertyPortalsCell({
 
   return (
     <div className={compact ? "w-full space-y-2" : "w-full space-y-2 lg:w-[300px]"}>
-      <p className="text-[10px] font-medium tracking-wide text-muted-foreground uppercase">Portaluri</p>
+      {compact ? null : (
+        <p className="text-[10px] font-medium tracking-wide text-muted-foreground uppercase">Portaluri</p>
+      )}
       <div className="flex flex-wrap items-center gap-1.5">
         {cells.map((cell) => {
           const meta = STATE_META[cell.state];
