@@ -224,14 +224,19 @@ export function mapPropertyToFeed(p: PropertyRow, options: MapPropertyOptions): 
     monedainchiriere: isRent ? (p.currency ?? null) : null,
     pretvanzare: isRent ? null : (p.price ?? null),
     pretinchiriere: isRent ? (p.price ?? null) : null,
-    pretfaratva: p.vat_included === false ? (p.price ?? null) : null,
-    comisioncumparator: p.commission ?? null,
+    // Modelul intern nu garantează că `price` este prețul fără TVA când
+    // `vat_included = false`, deci nu publicăm o valoare derivată greșit.
+    pretfaratva: null,
+    // `properties.commission` este comision intern (nepublic) → nu se expune.
+    comisioncumparator: null,
     images,
     publicare: p.publish_status === "published",
     top: (p.tags ?? []).includes("top"),
     pole: (p.tags ?? []).includes("pole"),
     custom1: null,
     custom2: null,
+    // Nu există un câmp dedicat pentru portaluri în schemă; singura sursă este
+    // convenția de tag `portal:<nume>`. Fără taguri, lista rămâne goală.
     portals: (p.tags ?? []).filter((t) => t.startsWith("portal:")).map((t) => t.slice("portal:".length)),
     suprafata_value: p.surface ?? null,
     incalzire_value: p.heating ?? null,
@@ -296,4 +301,22 @@ export function buildPaginatedFeed<T>(input: {
     to: total === 0 ? null : Math.max(from ?? 0, Math.min(to ?? 0, total)),
     data,
   };
+}
+
+/** Fereastra acceptată pentru datele raportate de site (zile). */
+export const VISIT_DATE_MAX_PAST_DAYS = 365;
+export const VISIT_DATE_MAX_FUTURE_DAYS = 1;
+
+/**
+ * Validare reală de dată calendaristică (nu doar regex): `2026-99-99` este
+ * respinsă, la fel și datele prea vechi sau din viitor îndepărtat.
+ */
+export function isVisitDateAcceptable(value: string, now: Date = new Date()): boolean {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+  const parsed = new Date(`${value}T00:00:00.000Z`);
+  if (Number.isNaN(parsed.getTime())) return false;
+  if (parsed.toISOString().slice(0, 10) !== value) return false; // 2026-02-31 → invalid
+  const today = new Date(`${now.toISOString().slice(0, 10)}T00:00:00.000Z`);
+  const diffDays = Math.round((parsed.getTime() - today.getTime()) / 86_400_000);
+  return diffDays <= VISIT_DATE_MAX_FUTURE_DAYS && diffDays >= -VISIT_DATE_MAX_PAST_DAYS;
 }
