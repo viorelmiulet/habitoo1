@@ -51,7 +51,10 @@ export function readTokenFromRequest(request: Request): string | null {
       }
     }
   }
-  const alt = request.headers.get("x-habitoo-feed-token");
+  const alt =
+    request.headers.get("x-habitoo-feed-token") ??
+    request.headers.get("x-api-key") ??
+    request.headers.get("x-apikey");
   return alt?.trim() || null;
 }
 
@@ -84,7 +87,8 @@ function rateLimited(key: string): boolean {
 /** Opțiuni de autentificare. Comportamentul implicit rămâne neschimbat. */
 export type FeedAuthOptions = {
   /**
-   * Acceptă tokenul și din parametrul de URL `?token=` / `?key=`.
+   * Acceptă tokenul și din parametrul de URL `?token=` / `?key=` /
+   * `?api_key=` / `?apikey=`.
    * Se activează DOAR pentru portalurile care nu pot trimite headere
    * (ex. iMove citește un URL de feed simplu).
    */
@@ -106,7 +110,16 @@ export async function authenticateFeedRequest(
   let token = readTokenFromRequest(request);
   if (!token && options.allowQueryToken) {
     const url = new URL(request.url);
-    token = (url.searchParams.get("token") ?? url.searchParams.get("key"))?.trim() || null;
+    // Sync-urile generice de URL (ex. iMove) nu pot trimite headere: acceptăm
+    // cheia și ca parametru de query, sub numele uzuale.
+    token =
+      (
+        url.searchParams.get("token") ??
+        url.searchParams.get("key") ??
+        url.searchParams.get("api_key") ??
+        url.searchParams.get("apikey") ??
+        url.searchParams.get("apiKey")
+      )?.trim() || null;
   }
   const prefix = tokenPrefixOf(token);
 
