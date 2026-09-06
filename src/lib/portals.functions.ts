@@ -825,8 +825,18 @@ function deriveState(input: {
   selected: boolean;
   listingStatus: string;
   publicationStatus: string | null;
+  /** Portalul acceptă trimiteri directe; altfel oferta circulă doar prin feed. */
+  pushSupported: boolean;
+  /** Doar pentru portalurile de tip feed: oferta este publicabilă în feed. */
+  feedEligible: boolean;
 }): PortalSelectionState {
   if (input.availability !== "available") return "coming_soon";
+  if (!input.pushSupported) {
+    // Portal de tip feed: nu există „trimitere”. Starea reală este prezența în feed.
+    if (!input.configured) return "not_configured";
+    if (!input.selected) return "not_selected";
+    return input.feedEligible ? "in_feed" : "error";
+  }
   if (input.listingStatus === "error" || input.publicationStatus === "error") return "error";
   if (input.listingStatus === "published" || input.listingStatus === "updated") return "published";
   if (input.listingStatus === "pending") return "syncing";
@@ -847,22 +857,34 @@ export const getPropertiesPortalMatrix = createServerFn({ method: "POST" })
     if (data.propertyIds.length === 0) return { canManage, properties: {} };
 
     const admin = await loadAdmin();
-    const [{ data: publications }, { data: listings }, { data: connections }] = await Promise.all([
-      admin
-        .from("portal_publications")
-        .select("property_id, portal_key, enabled, status, last_synced_at, last_error, external_ref")
-        .eq("organization_id", organizationId)
-        .in("property_id", data.propertyIds),
-      admin
-        .from("portal_listings")
-        .select("property_id, portal, status, last_sync_at, last_error, external_id")
-        .eq("organization_id", organizationId)
-        .in("property_id", data.propertyIds),
-      admin.from("portal_connections").select("portal, status").eq("organization_id", organizationId),
-    ]);
+    const [{ data: publications }, { data: listings }, { data: connections }, { data: propertyRows }] =
+      await Promise.all([
+        admin
+          .from("portal_publications")
+          .select("property_id, portal_key, enabled, status, last_synced_at, last_error, external_ref")
+          .eq("organization_id", organizationId)
+          .in("property_id", data.propertyIds),
+        admin
+          .from("portal_listings")
+          .select("property_id, portal, status, last_sync_at, last_error, external_id")
+          .eq("organization_id", organizationId)
+          .in("property_id", data.propertyIds),
+        admin.from("portal_connections").select("portal, status").eq("organization_id", organizationId),
+        admin
+          .from("properties")
+          .select("id, publish_status, status, deleted_at")
+          .eq("organization_id", organizationId)
+          .in("id", data.propertyIds),
+      ]);
+
+    const { isPropertyFeedEligible } = await import("@/lib/site-feed/mapper");
+    const eligibleById = new Map(
+      (propertyRows ?? []).map((row) => [row.id, isPropertyFeedEligible(row as never)]),
+    );
 
     const properties: Record<string, PropertyPortalCell[]> = {};
     for (const propertyId of data.propertyIds) {
+      const feedEligible = eligibleById.get(propertyId) === true;
       properties[propertyId] = PORTALS.map((portal) => {
         const pub = (publications ?? []).find(
           (p) => p.property_id === propertyId && p.portal_key === portal.id,
@@ -872,6 +894,16 @@ export const getPropertiesPortalMatrix = createServerFn({ method: "POST" })
         const configured =
           portal.status === "available" && (connection?.status === "connected" || connection?.status === "ready");
         const listingStatus = listing?.status ?? "not_published";
+        const pushSupported = portal.capabilities.includes("publish_listing");
+        const state = deriveState({
+          availability: portal.status,
+          configured,
+          selected: pub?.enabled === true,
+          listingStatus,
+          publicationStatus: pub?.status ?? null,
+          pushSupported,
+          feedEligible,
+        });
         return {
           portalId: portal.id,
           portalName: portal.display_name,
@@ -880,21 +912,21 @@ export const getPropertiesPortalMatrix = createServerFn({ method: "POST" })
           selected: pub?.enabled === true,
           configured,
           listingStatus,
-          state: deriveState({
-            availability: portal.status,
-            configured,
-            selected: pub?.enabled === true,
-            listingStatus,
-            publicationStatus: pub?.status ?? null,
-          }),
+          state,
+          pushSupported,
           lastSyncAt: listing?.last_sync_at ?? pub?.last_synced_at ?? null,
-          lastError: listing?.last_error ?? pub?.last_error ?? null,
+          lastError:
+            !pushSupported && state === "error"
+              ? "Oferta este selectată, dar nu intră în feed: verifică statusul și publicarea pe site."
+              : (listing?.last_error ?? pub?.last_error ?? null),
           externalId: listing?.external_id ?? pub?.external_ref ?? null,
         };
       });
     }
     return { canManage, properties };
   });
+
+
 
 /** Activează/dezactivează publicarea unei proprietăți pe un portal. */
 export const setPropertyPortalSelection = createServerFn({ method: "POST" })
