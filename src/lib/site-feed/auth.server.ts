@@ -13,8 +13,16 @@ export type FeedAuthOk = {
   tokenPrefix: string;
   /** Din ce credențial a venit cererea: tokenul de site sau o cheie de portal. */
   source: "site_token" | "portal_key";
+  /**
+   * Portalul care citește feedul, când cererea vine cu o cheie de portal.
+   * `null` = token de site (feedul propriu al agenției, fără filtrare pe portal).
+   * Feedul portalului expune EXCLUSIV ofertele bifate pentru acel portal:
+   * altfel o ofertă retrasă ar fi reimportată la următoarea citire.
+   */
+  portal: string | null;
   scopes: string[];
 };
+
 export type FeedAuthErr = { ok: false; status: 401 | 429; message: string; tokenPrefix: string | null };
 export type FeedAuth = FeedAuthOk | FeedAuthErr;
 
