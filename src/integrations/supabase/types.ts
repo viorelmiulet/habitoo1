@@ -175,6 +175,129 @@ export type Database = {
           },
         ]
       }
+      collaboration_messages: {
+        Row: {
+          body: string
+          created_at: string
+          id: string
+          proposal_id: string
+          sender_id: string
+          sender_organization_id: string
+        }
+        Insert: {
+          body: string
+          created_at?: string
+          id?: string
+          proposal_id: string
+          sender_id: string
+          sender_organization_id: string
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          id?: string
+          proposal_id?: string
+          sender_id?: string
+          sender_organization_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "collaboration_messages_proposal_id_fkey"
+            columns: ["proposal_id"]
+            isOneToOne: false
+            referencedRelation: "collaboration_proposals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "collaboration_messages_sender_organization_id_fkey"
+            columns: ["sender_organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      collaboration_proposals: {
+        Row: {
+          client_label: string
+          contact_id: string | null
+          created_at: string
+          id: string
+          lead_id: string | null
+          message: string | null
+          owner_organization_id: string
+          property_id: string
+          requester_organization_id: string
+          requester_user_id: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          client_label: string
+          contact_id?: string | null
+          created_at?: string
+          id?: string
+          lead_id?: string | null
+          message?: string | null
+          owner_organization_id: string
+          property_id: string
+          requester_organization_id: string
+          requester_user_id: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          client_label?: string
+          contact_id?: string | null
+          created_at?: string
+          id?: string
+          lead_id?: string | null
+          message?: string | null
+          owner_organization_id?: string
+          property_id?: string
+          requester_organization_id?: string
+          requester_user_id?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "collaboration_proposals_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "collaboration_proposals_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "collaboration_proposals_owner_organization_id_fkey"
+            columns: ["owner_organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "collaboration_proposals_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "collaboration_proposals_requester_organization_id_fkey"
+            columns: ["requester_organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       contact_requests: {
         Row: {
           agency: string
@@ -610,6 +733,7 @@ export type Database = {
           archived_at: string | null
           archived_by: string | null
           city: string | null
+          collaboration_enabled: boolean
           created_at: string
           created_by: string | null
           cui: string | null
@@ -634,6 +758,7 @@ export type Database = {
           archived_at?: string | null
           archived_by?: string | null
           city?: string | null
+          collaboration_enabled?: boolean
           created_at?: string
           created_by?: string | null
           cui?: string | null
@@ -658,6 +783,7 @@ export type Database = {
           archived_at?: string | null
           archived_by?: string | null
           city?: string | null
+          collaboration_enabled?: boolean
           created_at?: string
           created_by?: string | null
           cui?: string | null
@@ -1195,6 +1321,8 @@ export type Database = {
           built_surface: number | null
           category: string | null
           city: string | null
+          collab_commission_percent: number | null
+          collab_terms: string | null
           collaboration: boolean
           comfort: string | null
           commission: string | null
@@ -1308,6 +1436,8 @@ export type Database = {
           built_surface?: number | null
           category?: string | null
           city?: string | null
+          collab_commission_percent?: number | null
+          collab_terms?: string | null
           collaboration?: boolean
           comfort?: string | null
           commission?: string | null
@@ -1421,6 +1551,8 @@ export type Database = {
           built_surface?: number | null
           category?: string | null
           city?: string | null
+          collab_commission_percent?: number | null
+          collab_terms?: string | null
           collaboration?: boolean
           comfort?: string | null
           commission?: string | null
