@@ -2139,6 +2139,103 @@ export type Database = {
           },
         ]
       }
+      support_ticket_messages: {
+        Row: {
+          body: string
+          created_at: string
+          id: string
+          is_internal_note: boolean
+          is_staff: boolean
+          sender_id: string | null
+          ticket_id: string
+          updated_at: string
+        }
+        Insert: {
+          body: string
+          created_at?: string
+          id?: string
+          is_internal_note?: boolean
+          is_staff?: boolean
+          sender_id?: string | null
+          ticket_id: string
+          updated_at?: string
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          id?: string
+          is_internal_note?: boolean
+          is_staff?: boolean
+          sender_id?: string | null
+          ticket_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "support_ticket_messages_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: false
+            referencedRelation: "support_tickets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      support_tickets: {
+        Row: {
+          category: string
+          context_path: string | null
+          created_at: string
+          created_by: string
+          id: string
+          last_message_at: string
+          last_reply_by_staff: boolean
+          organization_id: string | null
+          resolved_at: string | null
+          resolved_by: string | null
+          status: string
+          subject: string
+          updated_at: string
+        }
+        Insert: {
+          category?: string
+          context_path?: string | null
+          created_at?: string
+          created_by: string
+          id?: string
+          last_message_at?: string
+          last_reply_by_staff?: boolean
+          organization_id?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          status?: string
+          subject: string
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          context_path?: string | null
+          created_at?: string
+          created_by?: string
+          id?: string
+          last_message_at?: string
+          last_reply_by_staff?: boolean
+          organization_id?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          status?: string
+          subject?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "support_tickets_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           created_at: string

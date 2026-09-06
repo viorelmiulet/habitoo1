@@ -36,6 +36,7 @@ import { Route as AuthenticatedAppNotificationsRouteImport } from './routes/_aut
 import { Route as AuthenticatedAppReportsRouteImport } from './routes/_authenticated/app.reports'
 import { Route as AuthenticatedAppRequestsRouteImport } from './routes/_authenticated/app.requests'
 import { Route as AuthenticatedAppSettingsRouteImport } from './routes/_authenticated/app.settings'
+import { Route as AuthenticatedAppSupportRouteImport } from './routes/_authenticated/app.support'
 import { Route as AuthenticatedAppTeamRouteImport } from './routes/_authenticated/app.team'
 import { Route as AuthenticatedSuperadminIndexRouteImport } from './routes/_authenticated/superadmin.index'
 import { Route as AuthenticatedSuperadminAgenciesRouteImport } from './routes/_authenticated/superadmin.agencies'
@@ -43,6 +44,7 @@ import { Route as AuthenticatedSuperadminAuditRouteImport } from './routes/_auth
 import { Route as AuthenticatedSuperadminNomenclatorRouteImport } from './routes/_authenticated/superadmin.nomenclator'
 import { Route as AuthenticatedSuperadminPortalsRouteImport } from './routes/_authenticated/superadmin.portals'
 import { Route as AuthenticatedSuperadminQaRouteImport } from './routes/_authenticated/superadmin.qa'
+import { Route as AuthenticatedSuperadminSupportRouteImport } from './routes/_authenticated/superadmin.support'
 import { Route as AuthenticatedSuperadminUsersRouteImport } from './routes/_authenticated/superadmin.users'
 import { Route as AuthenticatedAppContactsIndexRouteImport } from './routes/_authenticated/app.contacts.index'
 import { Route as AuthenticatedAppContactsIdRouteImport } from './routes/_authenticated/app.contacts.$id'
@@ -208,6 +210,11 @@ const AuthenticatedAppSettingsRoute =
     path: '/settings',
     getParentRoute: () => AuthenticatedAppRoute,
   } as any)
+const AuthenticatedAppSupportRoute = AuthenticatedAppSupportRouteImport.update({
+  id: '/support',
+  path: '/support',
+  getParentRoute: () => AuthenticatedAppRoute,
+} as any)
 const AuthenticatedAppTeamRoute = AuthenticatedAppTeamRouteImport.update({
   id: '/team',
   path: '/team',
@@ -247,6 +254,12 @@ const AuthenticatedSuperadminQaRoute =
   AuthenticatedSuperadminQaRouteImport.update({
     id: '/qa',
     path: '/qa',
+    getParentRoute: () => AuthenticatedSuperadminRoute,
+  } as any)
+const AuthenticatedSuperadminSupportRoute =
+  AuthenticatedSuperadminSupportRouteImport.update({
+    id: '/support',
+    path: '/support',
     getParentRoute: () => AuthenticatedSuperadminRoute,
   } as any)
 const AuthenticatedSuperadminUsersRoute =
@@ -414,12 +427,14 @@ export interface FileRoutesByFullPath {
   '/app/reports': typeof AuthenticatedAppReportsRoute
   '/app/requests': typeof AuthenticatedAppRequestsRouteWithChildren
   '/app/settings': typeof AuthenticatedAppSettingsRoute
+  '/app/support': typeof AuthenticatedAppSupportRoute
   '/app/team': typeof AuthenticatedAppTeamRoute
   '/superadmin/agencies': typeof AuthenticatedSuperadminAgenciesRoute
   '/superadmin/audit': typeof AuthenticatedSuperadminAuditRoute
   '/superadmin/nomenclator': typeof AuthenticatedSuperadminNomenclatorRoute
   '/superadmin/portals': typeof AuthenticatedSuperadminPortalsRoute
   '/superadmin/qa': typeof AuthenticatedSuperadminQaRoute
+  '/superadmin/support': typeof AuthenticatedSuperadminSupportRoute
   '/superadmin/users': typeof AuthenticatedSuperadminUsersRoute
   '/app/': typeof AuthenticatedAppIndexRoute
   '/superadmin/': typeof AuthenticatedSuperadminIndexRoute
@@ -471,12 +486,14 @@ export interface FileRoutesByTo {
   '/app/reports': typeof AuthenticatedAppReportsRoute
   '/app/requests': typeof AuthenticatedAppRequestsRouteWithChildren
   '/app/settings': typeof AuthenticatedAppSettingsRoute
+  '/app/support': typeof AuthenticatedAppSupportRoute
   '/app/team': typeof AuthenticatedAppTeamRoute
   '/superadmin/agencies': typeof AuthenticatedSuperadminAgenciesRoute
   '/superadmin/audit': typeof AuthenticatedSuperadminAuditRoute
   '/superadmin/nomenclator': typeof AuthenticatedSuperadminNomenclatorRoute
   '/superadmin/portals': typeof AuthenticatedSuperadminPortalsRoute
   '/superadmin/qa': typeof AuthenticatedSuperadminQaRoute
+  '/superadmin/support': typeof AuthenticatedSuperadminSupportRoute
   '/superadmin/users': typeof AuthenticatedSuperadminUsersRoute
   '/app': typeof AuthenticatedAppIndexRoute
   '/superadmin': typeof AuthenticatedSuperadminIndexRoute
@@ -532,12 +549,14 @@ export interface FileRoutesById {
   '/_authenticated/app/reports': typeof AuthenticatedAppReportsRoute
   '/_authenticated/app/requests': typeof AuthenticatedAppRequestsRouteWithChildren
   '/_authenticated/app/settings': typeof AuthenticatedAppSettingsRoute
+  '/_authenticated/app/support': typeof AuthenticatedAppSupportRoute
   '/_authenticated/app/team': typeof AuthenticatedAppTeamRoute
   '/_authenticated/superadmin/agencies': typeof AuthenticatedSuperadminAgenciesRoute
   '/_authenticated/superadmin/audit': typeof AuthenticatedSuperadminAuditRoute
   '/_authenticated/superadmin/nomenclator': typeof AuthenticatedSuperadminNomenclatorRoute
   '/_authenticated/superadmin/portals': typeof AuthenticatedSuperadminPortalsRoute
   '/_authenticated/superadmin/qa': typeof AuthenticatedSuperadminQaRoute
+  '/_authenticated/superadmin/support': typeof AuthenticatedSuperadminSupportRoute
   '/_authenticated/superadmin/users': typeof AuthenticatedSuperadminUsersRoute
   '/_authenticated/app/': typeof AuthenticatedAppIndexRoute
   '/_authenticated/superadmin/': typeof AuthenticatedSuperadminIndexRoute
@@ -593,12 +612,14 @@ export interface FileRouteTypes {
     | '/app/reports'
     | '/app/requests'
     | '/app/settings'
+    | '/app/support'
     | '/app/team'
     | '/superadmin/agencies'
     | '/superadmin/audit'
     | '/superadmin/nomenclator'
     | '/superadmin/portals'
     | '/superadmin/qa'
+    | '/superadmin/support'
     | '/superadmin/users'
     | '/app/'
     | '/superadmin/'
@@ -650,12 +671,14 @@ export interface FileRouteTypes {
     | '/app/reports'
     | '/app/requests'
     | '/app/settings'
+    | '/app/support'
     | '/app/team'
     | '/superadmin/agencies'
     | '/superadmin/audit'
     | '/superadmin/nomenclator'
     | '/superadmin/portals'
     | '/superadmin/qa'
+    | '/superadmin/support'
     | '/superadmin/users'
     | '/app'
     | '/superadmin'
@@ -710,12 +733,14 @@ export interface FileRouteTypes {
     | '/_authenticated/app/reports'
     | '/_authenticated/app/requests'
     | '/_authenticated/app/settings'
+    | '/_authenticated/app/support'
     | '/_authenticated/app/team'
     | '/_authenticated/superadmin/agencies'
     | '/_authenticated/superadmin/audit'
     | '/_authenticated/superadmin/nomenclator'
     | '/_authenticated/superadmin/portals'
     | '/_authenticated/superadmin/qa'
+    | '/_authenticated/superadmin/support'
     | '/_authenticated/superadmin/users'
     | '/_authenticated/app/'
     | '/_authenticated/superadmin/'
@@ -966,6 +991,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAppSettingsRouteImport
       parentRoute: typeof AuthenticatedAppRoute
     }
+    '/_authenticated/app/support': {
+      id: '/_authenticated/app/support'
+      path: '/support'
+      fullPath: '/app/support'
+      preLoaderRoute: typeof AuthenticatedAppSupportRouteImport
+      parentRoute: typeof AuthenticatedAppRoute
+    }
     '/_authenticated/app/team': {
       id: '/_authenticated/app/team'
       path: '/team'
@@ -1013,6 +1045,13 @@ declare module '@tanstack/react-router' {
       path: '/qa'
       fullPath: '/superadmin/qa'
       preLoaderRoute: typeof AuthenticatedSuperadminQaRouteImport
+      parentRoute: typeof AuthenticatedSuperadminRoute
+    }
+    '/_authenticated/superadmin/support': {
+      id: '/_authenticated/superadmin/support'
+      path: '/support'
+      fullPath: '/superadmin/support'
+      preLoaderRoute: typeof AuthenticatedSuperadminSupportRouteImport
       parentRoute: typeof AuthenticatedSuperadminRoute
     }
     '/_authenticated/superadmin/users': {
@@ -1210,6 +1249,7 @@ interface AuthenticatedAppRouteChildren {
   AuthenticatedAppReportsRoute: typeof AuthenticatedAppReportsRoute
   AuthenticatedAppRequestsRoute: typeof AuthenticatedAppRequestsRouteWithChildren
   AuthenticatedAppSettingsRoute: typeof AuthenticatedAppSettingsRoute
+  AuthenticatedAppSupportRoute: typeof AuthenticatedAppSupportRoute
   AuthenticatedAppTeamRoute: typeof AuthenticatedAppTeamRoute
   AuthenticatedAppIndexRoute: typeof AuthenticatedAppIndexRoute
   AuthenticatedAppContactsIdRoute: typeof AuthenticatedAppContactsIdRoute
@@ -1229,6 +1269,7 @@ const AuthenticatedAppRouteChildren: AuthenticatedAppRouteChildren = {
   AuthenticatedAppReportsRoute: AuthenticatedAppReportsRoute,
   AuthenticatedAppRequestsRoute: AuthenticatedAppRequestsRouteWithChildren,
   AuthenticatedAppSettingsRoute: AuthenticatedAppSettingsRoute,
+  AuthenticatedAppSupportRoute: AuthenticatedAppSupportRoute,
   AuthenticatedAppTeamRoute: AuthenticatedAppTeamRoute,
   AuthenticatedAppIndexRoute: AuthenticatedAppIndexRoute,
   AuthenticatedAppContactsIdRoute: AuthenticatedAppContactsIdRoute,
@@ -1247,6 +1288,7 @@ interface AuthenticatedSuperadminRouteChildren {
   AuthenticatedSuperadminNomenclatorRoute: typeof AuthenticatedSuperadminNomenclatorRoute
   AuthenticatedSuperadminPortalsRoute: typeof AuthenticatedSuperadminPortalsRoute
   AuthenticatedSuperadminQaRoute: typeof AuthenticatedSuperadminQaRoute
+  AuthenticatedSuperadminSupportRoute: typeof AuthenticatedSuperadminSupportRoute
   AuthenticatedSuperadminUsersRoute: typeof AuthenticatedSuperadminUsersRoute
   AuthenticatedSuperadminIndexRoute: typeof AuthenticatedSuperadminIndexRoute
 }
@@ -1259,6 +1301,7 @@ const AuthenticatedSuperadminRouteChildren: AuthenticatedSuperadminRouteChildren
       AuthenticatedSuperadminNomenclatorRoute,
     AuthenticatedSuperadminPortalsRoute: AuthenticatedSuperadminPortalsRoute,
     AuthenticatedSuperadminQaRoute: AuthenticatedSuperadminQaRoute,
+    AuthenticatedSuperadminSupportRoute: AuthenticatedSuperadminSupportRoute,
     AuthenticatedSuperadminUsersRoute: AuthenticatedSuperadminUsersRoute,
     AuthenticatedSuperadminIndexRoute: AuthenticatedSuperadminIndexRoute,
   }

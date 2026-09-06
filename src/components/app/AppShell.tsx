@@ -7,6 +7,9 @@ import { AppSidebar, type NavGroup, type ShellVariant } from "@/components/app/A
 import { Topbar } from "@/components/app/Topbar";
 import { MobileNav } from "@/components/app/MobileNav";
 import { useUnreadNotificationsCount } from "@/components/app/NotificationsMenu";
+import { useQuery } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
+import { countUnresolvedSupportTickets } from "@/lib/support.functions";
 import { useApplyTheme } from "@/hooks/use-theme";
 import { useSidebarCollapsed } from "@/hooks/use-sidebar-state";
 import { supabase } from "@/integrations/supabase/client";
@@ -43,7 +46,16 @@ export function AppShell({
   const roleLabel = roleLabels[user.role];
 
   const unread = useUnreadNotificationsCount(user.userId);
-  const badges = unread.data ? { "/app/notifications": unread.data } : undefined;
+  const countTickets = useServerFn(countUnresolvedSupportTickets);
+  const supportOpen = useQuery({
+    queryKey: ["support-unresolved"],
+    enabled: user.isSuperadmin,
+    queryFn: () => countTickets({}),
+    refetchInterval: 60_000,
+  });
+  const badges: Partial<Record<string, number>> = {};
+  if (unread.data) badges["/app/notifications"] = unread.data;
+  if (supportOpen.data) badges["/superadmin/support"] = supportOpen.data;
 
   const signOut = async () => {
     await supabase.auth.signOut();

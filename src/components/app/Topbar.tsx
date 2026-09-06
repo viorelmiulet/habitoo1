@@ -27,6 +27,7 @@ import {
 import { GlobalSearch } from "@/components/app/GlobalSearch";
 import { QuickAdd } from "@/components/app/QuickAdd";
 import { NotificationsMenu } from "@/components/app/NotificationsMenu";
+import { SupportWidget } from "@/components/app/SupportWidget";
 import { navLabelByPath, type ShellVariant } from "@/components/app/AppSidebar";
 import { BrandLogo } from "@/components/brand/BrandLogo";
 import { useTheme, type ThemePreference } from "@/hooks/use-theme";
@@ -159,6 +160,8 @@ export function Topbar({
         ) : (
           <QuickAdd />
         )}
+
+        {isPlatform ? null : <SupportWidget />}
 
         <NotificationsMenu userId={user.userId} />
 
