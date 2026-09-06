@@ -22,15 +22,25 @@ export const Route = createFileRoute("/api/public/sites/v1/properties")({
           const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
           const from = (page - 1) * perPage;
-          const { data, count, error } = await supabaseAdmin
-            .from("properties")
-            .select("*", { count: "exact" })
-            .eq("organization_id", auth.organizationId)
-            .eq("publish_status", "published")
-            .is("deleted_at", null)
-            .in("status", [...FEED_PUBLIC_STATUSES])
+          const baseQuery = () =>
+            supabaseAdmin
+              .from("properties")
+              .select("*", { count: "exact" })
+              .eq("organization_id", auth.organizationId)
+              .eq("publish_status", "published")
+              .is("deleted_at", null)
+              .in("status", [...FEED_PUBLIC_STATUSES]);
+
+          let { data, count, error } = await baseQuery()
             .order("updated_at", { ascending: false })
             .range(from, from + perPage - 1);
+          if (error?.code === "PGRST103") {
+            // Pagină peste last_page: 200 cu data=[] și metadata consistentă.
+            const head = await baseQuery().range(0, 0);
+            data = [];
+            count = head.count ?? 0;
+            error = null;
+          }
           if (error) throw error;
 
           const rows = (data ?? []) as PropertyRow[];

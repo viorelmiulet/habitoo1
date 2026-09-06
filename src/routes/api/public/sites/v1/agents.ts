@@ -13,13 +13,22 @@ export const Route = createFileRoute("/api/public/sites/v1/agents")({
           const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
           const from = (page - 1) * perPage;
-          const { data, count, error } = await supabaseAdmin
-            .from("profiles")
-            .select("*", { count: "exact" })
-            .eq("organization_id", auth.organizationId)
-            .eq("is_active", true)
+          const baseQuery = () =>
+            supabaseAdmin
+              .from("profiles")
+              .select("*", { count: "exact" })
+              .eq("organization_id", auth.organizationId)
+              .eq("is_active", true);
+
+          let { data, count, error } = await baseQuery()
             .order("full_name", { ascending: true })
             .range(from, from + perPage - 1);
+          if (error?.code === "PGRST103") {
+            const head = await baseQuery().range(0, 0);
+            data = [];
+            count = head.count ?? 0;
+            error = null;
+          }
           if (error) throw error;
 
           const feed = buildPaginatedFeed({
