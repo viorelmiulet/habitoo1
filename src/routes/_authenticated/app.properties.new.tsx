@@ -421,7 +421,18 @@ function NewPropertyPage() {
               <Input id="address" value={form.address} onChange={(e) => set("address", e.target.value)} />
             </div>
           </div>
+          <PropertyLocationMap
+            idPrefix="new"
+            seed={mapSeed}
+            lat={coords?.lat ?? null}
+            lng={coords?.lng ?? null}
+            precise={locationPrecise}
+            addressParts={[form.address, form.district, location.localityName, location.countyName]}
+            onCoordsChange={setCoords}
+            onPreciseChange={setLocationPrecise}
+          />
         </section>
+
 
         <section className="panel space-y-4 p-5">
           <h2 className="text-sm font-semibold">Descriere</h2>
