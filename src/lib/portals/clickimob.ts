@@ -17,7 +17,7 @@
 export const CLICKIMOB_PORTAL_KEY = "clickimob";
 export const CLICKIMOB_WEBHOOK_URL = "https://www.clickimob.ro/api/public/crm-webhook";
 /** Providerul acceptat astăzi de endpointul public ClickImob. */
-export const CLICKIMOB_PROVIDER = "immoflux";
+export const CLICKIMOB_PROVIDER = "habitoo";
 
 export type ClickImobConfig = {
   /** UUID-ul agenției în ClickImob (primit de la ClickImob). */
