@@ -80,7 +80,9 @@ export type PortalLogItem = {
 
 type AuthContext = {
   supabase: {
-    rpc: (fn: "is_superadmin") => PromiseLike<{ data: boolean | null; error: { message: string } | null }>;
+    rpc: (
+      fn: "is_superadmin" | "is_org_admin",
+    ) => PromiseLike<{ data: boolean | null; error: { message: string } | null }>;
     from: (table: "profiles") => {
       select: (cols: string) => {
         eq: (
@@ -94,8 +96,8 @@ type AuthContext = {
 };
 
 /**
- * Integrările de portaluri sunt EXCLUSIV ale platformei (Superadmin).
- * Administratorii de agenție nu au acces, nici măcar read-only.
+ * Conexiunile de portaluri (credențiale, chei, test, disconnect) rămân EXCLUSIV
+ * ale platformei (Superadmin). Agențiile nu le văd și nu le pot modifica.
  */
 async function requireSuperadmin(context: AuthContext): Promise<void> {
   const { data, error } = await context.supabase.rpc("is_superadmin");
@@ -116,6 +118,53 @@ async function requireSuperadminOrg(context: AuthContext, organizationId: string
   if (!org) throw new Error("Agenția nu a fost găsită.");
   return org.id;
 }
+
+/**
+ * Publicarea ofertelor pe portaluri (bifarea per proprietate) este fluxul
+ * zilnic al agenției. Superadminul poate lucra pe orice agenție (panou de
+ * suport), iar administratorul de agenție doar pe agenția din SESIUNE —
+ * niciodată pe una primită din input.
+ */
+async function resolvePublishingOrg(
+  context: AuthContext,
+  requestedOrganizationId?: string,
+): Promise<{ organizationId: string; superadmin: boolean }> {
+  const { data: isSuper } = await context.supabase.rpc("is_superadmin");
+  if (isSuper === true) {
+    const admin = await loadAdmin();
+    if (!requestedOrganizationId) throw new Error("Alege agenția.");
+    const { data: org } = await admin
+      .from("organizations")
+      .select("id")
+      .eq("id", requestedOrganizationId)
+      .maybeSingle();
+    if (!org) throw new Error("Agenția nu a fost găsită.");
+    return { organizationId: org.id, superadmin: true };
+  }
+
+  const { data: isOrgAdmin } = await context.supabase.rpc("is_org_admin");
+  if (isOrgAdmin !== true) {
+    throw new Error("Acces refuzat: doar administratorul agenției poate publica pe portaluri.");
+  }
+  const { data: profile } = await context.supabase
+    .from("profiles")
+    .select("organization_id")
+    .eq("id", context.userId)
+    .maybeSingle();
+  if (!profile?.organization_id) throw new Error("Contul nu este asociat unei agenții.");
+  return { organizationId: profile.organization_id, superadmin: false };
+}
+
+/** Portalurile activate explicit de Superadmin pentru agenție. */
+async function activatedPortalIds(organizationId: string): Promise<Set<string>> {
+  const admin = await loadAdmin();
+  const { data } = await admin
+    .from("portal_connections")
+    .select("portal, activated")
+    .eq("organization_id", organizationId);
+  return new Set((data ?? []).filter((row) => row.activated === true).map((row) => row.portal));
+}
+
 
 async function loadAdmin() {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
