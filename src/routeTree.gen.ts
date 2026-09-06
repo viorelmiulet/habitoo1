@@ -59,6 +59,7 @@ import { Route as ApiPublicSitesV1AgentsRouteImport } from './routes/api/public/
 import { Route as ApiPublicSitesV1ContactsRouteImport } from './routes/api/public/sites/v1/contacts'
 import { Route as ApiPublicSitesV1PropertiesRouteImport } from './routes/api/public/sites/v1/properties'
 import { Route as ApiPublicSitesV1VisitsRouteImport } from './routes/api/public/sites/v1/visits'
+import { Route as ApiPublicHomepitchV1AgentsMeRouteImport } from './routes/api/public/homepitch/v1/agents.me'
 import { Route as ApiPublicHomepitchV1PropertiesIdRouteImport } from './routes/api/public/homepitch/v1/properties.$id'
 import { Route as ApiPublicPortalV1ImoveFeedRouteImport } from './routes/api/public/portal/v1/imove.feed'
 import { Route as ApiPublicPortalV1ImoveFeedDotcsvRouteImport } from './routes/api/public/portal/v1/imove.feed[.]csv'
@@ -339,6 +340,12 @@ const ApiPublicSitesV1VisitsRoute = ApiPublicSitesV1VisitsRouteImport.update({
   path: '/api/public/sites/v1/visits',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicHomepitchV1AgentsMeRoute =
+  ApiPublicHomepitchV1AgentsMeRouteImport.update({
+    id: '/api/public/homepitch/v1/agents/me',
+    path: '/api/public/homepitch/v1/agents/me',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicHomepitchV1PropertiesIdRoute =
   ApiPublicHomepitchV1PropertiesIdRouteImport.update({
     id: '/$id',
@@ -431,6 +438,7 @@ export interface FileRoutesByFullPath {
   '/api/public/sites/v1/contacts': typeof ApiPublicSitesV1ContactsRoute
   '/api/public/sites/v1/properties': typeof ApiPublicSitesV1PropertiesRouteWithChildren
   '/api/public/sites/v1/visits': typeof ApiPublicSitesV1VisitsRoute
+  '/api/public/homepitch/v1/agents/me': typeof ApiPublicHomepitchV1AgentsMeRoute
   '/api/public/homepitch/v1/properties/$id': typeof ApiPublicHomepitchV1PropertiesIdRoute
   '/api/public/portal/v1/imove/feed': typeof ApiPublicPortalV1ImoveFeedRoute
   '/api/public/portal/v1/imove/feed.csv': typeof ApiPublicPortalV1ImoveFeedDotcsvRoute
@@ -487,6 +495,7 @@ export interface FileRoutesByTo {
   '/api/public/sites/v1/contacts': typeof ApiPublicSitesV1ContactsRoute
   '/api/public/sites/v1/properties': typeof ApiPublicSitesV1PropertiesRouteWithChildren
   '/api/public/sites/v1/visits': typeof ApiPublicSitesV1VisitsRoute
+  '/api/public/homepitch/v1/agents/me': typeof ApiPublicHomepitchV1AgentsMeRoute
   '/api/public/homepitch/v1/properties/$id': typeof ApiPublicHomepitchV1PropertiesIdRoute
   '/api/public/portal/v1/imove/feed': typeof ApiPublicPortalV1ImoveFeedRoute
   '/api/public/portal/v1/imove/feed.csv': typeof ApiPublicPortalV1ImoveFeedDotcsvRoute
@@ -547,6 +556,7 @@ export interface FileRoutesById {
   '/api/public/sites/v1/contacts': typeof ApiPublicSitesV1ContactsRoute
   '/api/public/sites/v1/properties': typeof ApiPublicSitesV1PropertiesRouteWithChildren
   '/api/public/sites/v1/visits': typeof ApiPublicSitesV1VisitsRoute
+  '/api/public/homepitch/v1/agents/me': typeof ApiPublicHomepitchV1AgentsMeRoute
   '/api/public/homepitch/v1/properties/$id': typeof ApiPublicHomepitchV1PropertiesIdRoute
   '/api/public/portal/v1/imove/feed': typeof ApiPublicPortalV1ImoveFeedRoute
   '/api/public/portal/v1/imove/feed.csv': typeof ApiPublicPortalV1ImoveFeedDotcsvRoute
@@ -607,6 +617,7 @@ export interface FileRouteTypes {
     | '/api/public/sites/v1/contacts'
     | '/api/public/sites/v1/properties'
     | '/api/public/sites/v1/visits'
+    | '/api/public/homepitch/v1/agents/me'
     | '/api/public/homepitch/v1/properties/$id'
     | '/api/public/portal/v1/imove/feed'
     | '/api/public/portal/v1/imove/feed.csv'
@@ -663,6 +674,7 @@ export interface FileRouteTypes {
     | '/api/public/sites/v1/contacts'
     | '/api/public/sites/v1/properties'
     | '/api/public/sites/v1/visits'
+    | '/api/public/homepitch/v1/agents/me'
     | '/api/public/homepitch/v1/properties/$id'
     | '/api/public/portal/v1/imove/feed'
     | '/api/public/portal/v1/imove/feed.csv'
@@ -722,6 +734,7 @@ export interface FileRouteTypes {
     | '/api/public/sites/v1/contacts'
     | '/api/public/sites/v1/properties'
     | '/api/public/sites/v1/visits'
+    | '/api/public/homepitch/v1/agents/me'
     | '/api/public/homepitch/v1/properties/$id'
     | '/api/public/portal/v1/imove/feed'
     | '/api/public/portal/v1/imove/feed.csv'
@@ -755,6 +768,7 @@ export interface RootRouteChildren {
   ApiPublicSitesV1ContactsRoute: typeof ApiPublicSitesV1ContactsRoute
   ApiPublicSitesV1PropertiesRoute: typeof ApiPublicSitesV1PropertiesRouteWithChildren
   ApiPublicSitesV1VisitsRoute: typeof ApiPublicSitesV1VisitsRoute
+  ApiPublicHomepitchV1AgentsMeRoute: typeof ApiPublicHomepitchV1AgentsMeRoute
   ApiPublicPortalV1ImoveFeedRoute: typeof ApiPublicPortalV1ImoveFeedRoute
   ApiPublicPortalV1ImoveFeedDotcsvRoute: typeof ApiPublicPortalV1ImoveFeedDotcsvRoute
   ApiPublicPortalV1ImoveFeedDotjsonRoute: typeof ApiPublicPortalV1ImoveFeedDotjsonRoute
@@ -1113,6 +1127,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicSitesV1VisitsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/homepitch/v1/agents/me': {
+      id: '/api/public/homepitch/v1/agents/me'
+      path: '/api/public/homepitch/v1/agents/me'
+      fullPath: '/api/public/homepitch/v1/agents/me'
+      preLoaderRoute: typeof ApiPublicHomepitchV1AgentsMeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/homepitch/v1/properties/$id': {
       id: '/api/public/homepitch/v1/properties/$id'
       path: '/$id'
@@ -1331,6 +1352,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicSitesV1ContactsRoute: ApiPublicSitesV1ContactsRoute,
   ApiPublicSitesV1PropertiesRoute: ApiPublicSitesV1PropertiesRouteWithChildren,
   ApiPublicSitesV1VisitsRoute: ApiPublicSitesV1VisitsRoute,
+  ApiPublicHomepitchV1AgentsMeRoute: ApiPublicHomepitchV1AgentsMeRoute,
   ApiPublicPortalV1ImoveFeedRoute: ApiPublicPortalV1ImoveFeedRoute,
   ApiPublicPortalV1ImoveFeedDotcsvRoute: ApiPublicPortalV1ImoveFeedDotcsvRoute,
   ApiPublicPortalV1ImoveFeedDotjsonRoute:
