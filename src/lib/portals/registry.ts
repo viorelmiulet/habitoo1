@@ -219,6 +219,34 @@ export const PORTALS: PortalDefinition[] = [
       "Publicarea este PUSH direct, idempotentă după external_id (derivat din identificatorul intern al ofertei). Retragerea arhivează anunțul la Imospot, nu îl șterge definitiv, iar o nouă publicare îl readuce live. Cerințe obligatorii verificate înainte de trimitere: titlu de minimum 8 caractere, descriere de minimum 60 caractere, preț întreg pozitiv, telefon de contact, județ și localitate, minimum o imagine publicabilă. O proprietate cu ambele tranzacții active generează două anunțuri separate (vânzare și închiriere). Promovările plătite nu sunt trimise din Habitoo.",
   },
   {
+    id: "homepitch",
+    display_name: "HomePitch.ro",
+    description:
+      "HomePitch citește feedul dedicat Habitoo cu o cheie emisă de noi și, opțional, primește o notificare de import instant la bifarea unei oferte.",
+    logo: "HP",
+    status: "available",
+    directions: ["habitoo_to_portal"],
+    // Cheia este EMISĂ DE HABITOO (ca la ClickImob) și se introduce în HomePitch.
+    authentication: ["habitoo_api_key"],
+    capabilities: ["test_connection", "feed_pull", "publish_listing", "update_listing", "sync"],
+    configuration_schema: {
+      fields: [
+        {
+          key: "habitoo_api_key",
+          label: "Cheia Habitoo folosită pentru import instant (opțional)",
+          help: "Copiază aici cheia API emisă mai jos pentru HomePitch. Este necesară doar pentru importul instant la bifarea unei oferte; citirea feedului funcționează fără ea.",
+          secret: true,
+          optional: true,
+          target: "credentials",
+        },
+      ],
+    },
+    website: "https://homepitch.ro",
+    docs: "https://homepitch.ro/setari-crm",
+    notes:
+      "Model PULL: HomePitch citește endpointurile Habitoo /api/public/homepitch/v1/* cu cheia emisă de noi (agency-wide, acoperă toți agenții agenției). Agentul o introduce în HomePitch la /setari-crm. O ofertă intră în feed doar dacă are coordonate (lat/lng), agent asignat cu email valid, titlu, descriere, preț în EUR și tip de proprietate mapabil — ofertele în altă monedă nu sunt trimise. O proprietate cu ambele tranzacții active se expune o singură dată, ca vânzare, cu mențiunea închirierii în descriere. Retragerea se face prin dispariția din feed. Importul instant (push) necesită cheia publică HomePitch salvată ca HOMEPITCH_PUBLIC_ANON_KEY.",
+  },
+  {
     id: "imobiliare_ro",
 
     display_name: "Imobiliare.ro",
