@@ -182,7 +182,21 @@ export function PropertyDetailsFields({ idPrefix = "det", value, onChange }: Pro
         <AccordionTrigger>Detalii</AccordionTrigger>
         <AccordionContent className="space-y-4">
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            <SelectField field="property_kind" label="Tip apartament / imobil" options={propertyKindOptions} />
+            <div className="space-y-2">
+              <Label htmlFor={`${idPrefix}-property_type`}>Tip apartament / imobil</Label>
+              <Select value={str("property_type")} onValueChange={(v) => setField("property_type", v)}>
+                <SelectTrigger id={`${idPrefix}-property_type`}>
+                  <SelectValue placeholder="Selectează" />
+                </SelectTrigger>
+                <SelectContent>
+                  {Object.entries(propertyTypeLabels).map(([k, v]) => (
+                    <SelectItem key={k} value={k}>
+                      {v}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
             <SelectField field="layout" label="Compartimentare" options={layoutOptions} />
             <SelectField field="comfort" label="Confort" options={comfortOptions} />
             <SelectField field="destination" label="Destinație" options={destinationOptions} />
