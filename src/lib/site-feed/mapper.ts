@@ -289,15 +289,29 @@ export function mapPropertyToFeed(p: PropertyRow, options: MapPropertyOptions): 
         ...(p.tags ?? []).filter((t) => t.startsWith("portal:")).map((t) => t.slice("portal:".length)),
       ]),
     ],
+    tip: p.property_type,
     suprafata_value: p.surface ?? null,
     incalzire_value: p.heating ?? null,
     mobilare_value: p.furnishing ?? null,
+    mobilat_value: p.furnishing ?? null,
     parcare_value: p.parking ?? null,
     balcon_value: typeof p.balcony === "boolean" ? p.balcony : null,
+    utilitati_values: p.utilities ?? [],
+    dotari_values: p.features ?? [],
+    // Fără coloane echivalente în Habitoo → rămân null/goale, nu se derivează.
+    stadiuconstructie_value: null,
+    tipconstructie_value: null,
+    starefinisaje_value: null,
+    bucatarie_values: [],
+    eficienta_energetica: null,
+    consum_specific: null,
+    indice_emisii: null,
+    consum_energie_regenerabila: null,
     energy: { clasa: null, consum: null, emisii: null },
     url: options.publicSiteUrl ? offerUrl(options.publicSiteUrl, p.id) : null,
   };
 }
+
 
 export type PaginatedFeed<T> = {
   total: number;
