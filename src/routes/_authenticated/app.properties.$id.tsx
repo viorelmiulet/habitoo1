@@ -367,7 +367,9 @@ function PropertyDetailPage() {
     return (
       <EmptyState
         icon={Building2}
-        title="Proprietatea nu a fost găsită"
+        title="Proprietate indisponibilă"
+        description="Proprietatea nu există sau nu îți este asignată. Ca agent vezi doar proprietățile alocate ție — cere administratorului agenției să ți-o asigneze."
+
         action={
           <Button asChild size="sm">
             <Link to="/app/properties">Înapoi la listă</Link>
