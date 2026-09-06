@@ -41,6 +41,11 @@ const STATE_META: Record<
   PropertyPortalCell["state"],
   { label: string; classes: string; dot: string }
 > = {
+  in_feed: {
+    label: "În feed",
+    classes: "border-success/40 bg-success/10 text-success",
+    dot: "bg-success",
+  },
   published: {
     label: "Publicat",
     classes: "border-success/40 bg-success/10 text-success",
@@ -182,7 +187,10 @@ export function PropertyPortalsCell({
   });
 
   const busy = toggle.isPending || publish.isPending || withdraw.isPending;
-  const hasSelection = cells.some((c) => c.selected && c.availability === "available" && c.configured);
+  // Butonul de trimitere există doar pentru portalurile care acceptă trimiteri.
+  const hasSelection = cells.some(
+    (c) => c.selected && c.availability === "available" && c.configured && c.pushSupported,
+  );
 
   return (
     <div className={compact ? "w-full space-y-2" : "w-full space-y-2 lg:w-[300px]"}>
@@ -238,6 +246,12 @@ export function PropertyPortalsCell({
                 </p>
                 {cell.state === "coming_soon" ? (
                   <p>Integrarea nu este încă disponibilă. Nu se poate publica pe acest portal.</p>
+                ) : null}
+                {!cell.pushSupported && cell.availability === "available" ? (
+                  <p>
+                    Portalul preia ofertele automat din feedul Habitoo. Selectarea este suficientă;
+                    deselectarea o scoate din feed, iar portalul o arhivează.
+                  </p>
                 ) : null}
                 {cell.state === "not_configured" ? (
                   <p>Portalul nu este configurat. Configurează-l din Setări → Integrări.</p>
