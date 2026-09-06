@@ -31,6 +31,7 @@ import { navLabelByPath, type ShellVariant } from "@/components/app/AppSidebar";
 import { BrandLogo } from "@/components/brand/BrandLogo";
 import { useTheme, type ThemePreference } from "@/hooks/use-theme";
 import { initials } from "@/lib/format";
+import { UserAvatar } from "@/components/app/UserAvatar";
 import { roleLabels } from "@/lib/labels";
 import { cn } from "@/lib/utils";
 import type { CurrentUser } from "@/hooks/use-session";
@@ -168,9 +169,12 @@ export function Topbar({
               aria-label="Meniu utilizator"
               className="ml-0.5 flex h-9 items-center gap-2 rounded-full border border-border bg-surface py-1 pr-1 pl-1 text-sm transition-colors hover:border-primary/40 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none md:pr-3"
             >
-              <span className="flex size-7 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-primary">
-                {initials(displayName)}
-              </span>
+              <UserAvatar
+                name={displayName}
+                path={user.profile?.avatar_url}
+                className="size-7 bg-primary/10 text-primary"
+              />
+
               <span className="hidden max-w-32 truncate md:inline">{displayName}</span>
             </button>
           </DropdownMenuTrigger>

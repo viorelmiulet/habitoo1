@@ -11,6 +11,16 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
+import { UserAvatar } from "@/components/app/UserAvatar";
+import {
+  AVATAR_BUCKET,
+  AVATAR_MAX_BYTES,
+  AVATAR_TYPES,
+  avatarPath,
+  compressImage,
+  removeFromBucket,
+  uploadToBucket,
+} from "@/lib/storage";
 import { currentUserQueryKey, useCurrentUser } from "@/hooks/use-session";
 import { formatDate } from "@/lib/format";
 import { roleLabels } from "@/lib/labels";
@@ -49,7 +59,37 @@ function SettingsPage() {
     },
   });
 
+  const uploadAvatar = useMutation({
+    mutationFn: async (file: File) => {
+      if (!user?.userId) throw new Error("Sesiune expirată.");
+      if (!user.organization?.id) throw new Error("Agenția nu este configurată.");
+      if (!AVATAR_TYPES.includes(file.type)) {
+        throw new Error("Folosește o imagine JPG, PNG sau WebP.");
+      }
+      if (file.size > AVATAR_MAX_BYTES) {
+        throw new Error("Imaginea depășește 5 MB.");
+      }
+      const { blob } = await compressImage(file, 512, 0.85);
+      const path = avatarPath(user.organization.id, user.userId);
+      await uploadToBucket(AVATAR_BUCKET, path, blob, "image/jpeg");
+      const previous = user.profile?.avatar_url ?? null;
+      const { error } = await supabase
+        .from("profiles")
+        .update({ avatar_url: path })
+        .eq("id", user.userId);
+      if (error) throw error;
+      if (previous && previous !== path) await removeFromBucket(AVATAR_BUCKET, [previous]);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: currentUserQueryKey });
+      queryClient.invalidateQueries({ queryKey: ["team"] });
+      toast.success("Fotografia de profil a fost actualizată.");
+    },
+    onError: (e: Error) => toastError(e),
+  });
+
   const saveProfile = useMutation({
+
     mutationFn: async () => {
       if (!user) throw new Error("Sesiune expirată.");
       const { error } = await supabase
@@ -114,6 +154,29 @@ function SettingsPage() {
               saveProfile.mutate();
             }}
           >
+            <div className="flex items-center gap-4">
+              <UserAvatar
+                name={user?.profile?.full_name ?? user?.email}
+                path={user?.profile?.avatar_url}
+                className="size-16 text-base"
+              />
+              <div className="space-y-1">
+                <Label htmlFor="avatar">Fotografie de profil</Label>
+                <Input
+                  id="avatar"
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp"
+                  disabled={uploadAvatar.isPending}
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    e.target.value = "";
+                    if (file) uploadAvatar.mutate(file);
+                  }}
+                />
+                <p className="text-xs text-muted-foreground">JPG, PNG sau WebP, maximum 5 MB.</p>
+              </div>
+            </div>
+
             <div className="space-y-2">
               <Label htmlFor="full_name">Nume complet</Label>
               <Input
@@ -217,6 +280,7 @@ function SettingsPage() {
             <ul className="divide-y divide-border">
               {team.map((m) => (
                 <li key={m.id} className="flex flex-wrap items-center gap-3 px-5 py-3 text-sm">
+                  <UserAvatar name={m.full_name} path={m.avatar_url} />
                   <div className="min-w-0 flex-1">
                     <p className="truncate font-medium">{m.full_name}</p>
                     <p className="truncate text-xs text-muted-foreground">{m.email ?? "—"}</p>

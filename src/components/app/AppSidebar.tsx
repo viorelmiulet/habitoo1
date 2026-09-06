@@ -25,6 +25,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { initials } from "@/lib/format";
+import { UserAvatar } from "@/components/app/UserAvatar";
 import { BrandLogo } from "@/components/brand/BrandLogo";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import type { CurrentUser } from "@/hooks/use-session";
@@ -304,9 +305,12 @@ export function AppSidebar({
         {user ? (
           <div className={cn("flex items-center gap-2.5 rounded-lg px-2 py-1.5", collapsed && "justify-center px-0")}>
             <CollapsedTip collapsed={collapsed} label={`${displayName} · ${roleLabel}`}>
-              <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-sidebar-primary/20 text-xs font-semibold text-sidebar-accent-foreground ring-1 ring-sidebar-primary/40 ring-inset">
-                {initials(displayName)}
-              </span>
+              <UserAvatar
+                name={displayName}
+                path={user.profile?.avatar_url}
+                className="size-8 bg-sidebar-primary/20 text-sidebar-accent-foreground ring-1 ring-sidebar-primary/40 ring-inset"
+              />
+
             </CollapsedTip>
             {collapsed ? null : (
               <>

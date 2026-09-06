@@ -28,6 +28,7 @@ export type TeamMember = {
   email: string | null;
   phone: string | null;
   job_title: string | null;
+  avatar_url: string | null;
   is_active: boolean;
   created_at: string;
   roles: string[];
@@ -73,7 +74,7 @@ async function buildOverview(admin: Admin, organizationId: string): Promise<Team
     admin.from("organizations").select("id,name,plan").eq("id", organizationId).maybeSingle(),
     admin
       .from("profiles")
-      .select("id,full_name,email,phone,job_title,is_active,created_at")
+      .select("id,full_name,email,phone,job_title,avatar_url,is_active,created_at")
       .eq("organization_id", organizationId)
       .order("created_at", { ascending: true }),
     admin.from("user_roles").select("user_id,role").eq("organization_id", organizationId),
@@ -93,6 +94,7 @@ async function buildOverview(admin: Admin, organizationId: string): Promise<Team
         email: p.email,
         phone: p.phone,
         job_title: p.job_title,
+        avatar_url: p.avatar_url,
         is_active: p.is_active,
         created_at: p.created_at,
         roles: roleRows.filter((r) => r.user_id === p.id).map((r) => r.role as string),
@@ -139,7 +141,32 @@ async function writeAudit(
   });
 }
 
+/** Caută un utilizator Auth existent după email (contul poate exista fără profil). */
+async function findAuthUserByEmail(admin: Admin, email: string) {
+  for (let page = 1; page <= 20; page += 1) {
+    const { data, error } = await admin.auth.admin.listUsers({ page, perPage: 200 });
+    if (error) return null;
+    const users = data?.users ?? [];
+    const match = users.find((u) => (u.email ?? "").toLowerCase() === email);
+    if (match) return match;
+    if (users.length < 200) return null;
+  }
+  return null;
+}
+
+/** Trimite un email de setare a parolei pentru un cont Auth deja existent. */
+async function sendPasswordSetupEmail(email: string) {
+  const { createClient } = await import("@supabase/supabase-js");
+  const client = createClient(
+    process.env["SUPABASE_URL"]!,
+    process.env["SUPABASE_PUBLISHABLE_KEY"]!,
+    { auth: { persistSession: false, autoRefreshToken: false } },
+  );
+  await client.auth.resetPasswordForEmail(email, { redirectTo: getCrmUrl("/reset-password") });
+}
+
 export const getTeamOverview = createServerFn({ method: "GET" })
+
   .middleware([requireActiveOrgAuth])
   .handler(async ({ context }): Promise<TeamOverview> => {
     const { organizationId } = await requireOrgAdmin(context as unknown as AuthContext);
@@ -176,14 +203,28 @@ export const inviteAgent = createServerFn({ method: "POST" })
       );
     }
 
+    // Un cont poate exista deja în Auth fără profil (ex. o agenție ștearsă anterior sau
+    // o înregistrare neterminată). În acest caz nu mai trimitem o invitație nouă — îl
+    // atașăm agenției și îi trimitem un link de setare a parolei.
+    let newUserId: string;
     const invited = await admin.auth.admin.inviteUserByEmail(email, {
       redirectTo: getCrmUrl("/auth/callback"),
       data: { full_name: data.full_name },
     });
-    if (invited.error || !invited.data?.user) {
-      throw new Error(invited.error?.message ?? "Invitația nu a putut fi trimisă.");
+    if (invited.data?.user) {
+      newUserId = invited.data.user.id;
+    } else {
+      const orphan = await findAuthUserByEmail(admin, email);
+      if (!orphan) {
+        throw new Error(invited.error?.message ?? "Invitația nu a putut fi trimisă.");
+      }
+      newUserId = orphan.id;
+      await admin.auth.admin.updateUserById(newUserId, {
+        user_metadata: { full_name: data.full_name },
+      });
+      await sendPasswordSetupEmail(email);
     }
-    const newUserId = invited.data.user.id;
+
 
     const profile = await admin.from("profiles").upsert({
       id: newUserId,
