@@ -23,7 +23,6 @@ import { EmptyState } from "@/components/app/EmptyState";
 import { ConfirmDialog } from "@/components/app/ConfirmDialog";
 import { ActivityDialog } from "@/components/app/ActivityDialog";
 import { PropertyMediaManager } from "@/components/app/PropertyMediaManager";
-import { PropertyPortalsCard } from "@/components/app/PropertyPortalsCard";
 import { PropertyDetailsFields, type PropertyDetailsValue } from "@/components/app/PropertyDetailsFields";
 import { PROPERTY_DETAIL_FIELDS } from "@/lib/property-detail-fields";
 import {
@@ -567,8 +566,6 @@ function PropertyDetailPage() {
             </form>
           ) : null}
 
-          {editing ? <PropertyPortalsCard propertyId={id} /> : null}
-
           {!editing ? (
 
             <div className="grid gap-6 lg:grid-cols-3">
@@ -772,7 +769,6 @@ function PropertyDetailPage() {
         </TabsContent>
 
         <TabsContent value="publishing" className="space-y-4">
-          <PropertyPortalsCard propertyId={id} />
           <div className="panel space-y-4 p-5">
             <div className="flex items-center justify-between">
               <div>

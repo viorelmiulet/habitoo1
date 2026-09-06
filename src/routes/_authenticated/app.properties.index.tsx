@@ -18,7 +18,6 @@ import { toastError } from "@/lib/errors";
 import { PageHeader } from "@/components/app/PageHeader";
 import { CardGridSkeleton, ListSkeleton } from "@/components/app/LoadingState";
 import { PropertyThumb, usePropertyCovers } from "@/components/app/PropertyThumb";
-import { PropertyPortalsCell, usePropertyPortals } from "@/components/app/PropertyPortalsCell";
 import { StatusBadge } from "@/components/app/StatusBadge";
 import { EmptyState } from "@/components/app/EmptyState";
 import { PromptDialog, type PromptRequest } from "@/components/app/PromptDialog";
@@ -840,28 +839,6 @@ function PropertiesPage() {
                     {columns.includes("agent") ? (
                       <span className="w-32 truncate text-xs text-muted-foreground">{agentName(p.assigned_to)}</span>
                     ) : null}
-                    <div className="w-full lg:w-[300px]">
-                      <details className="rounded-lg border border-border px-3 py-2 lg:hidden">
-                        <summary className="cursor-pointer text-xs font-medium text-muted-foreground">
-                          Portaluri publicare
-                        </summary>
-                        <div className="pt-2">
-                          <PropertyPortalsCell
-                            propertyId={p.id}
-                            cells={portals.cellsOf(p.id)}
-                            canManage={portals.canManage}
-                            compact
-                          />
-                        </div>
-                      </details>
-                      <div className="hidden lg:block">
-                        <PropertyPortalsCell
-                          propertyId={p.id}
-                          cells={portals.cellsOf(p.id)}
-                          canManage={portals.canManage}
-                        />
-                      </div>
-                    </div>
                     {columns.includes("updated") ? (
                       <span className="w-24 text-right text-xs text-muted-foreground">{relativeDays(p.updated_at)}</span>
                     ) : null}
@@ -909,12 +886,6 @@ function PropertiesPage() {
                   {propertyTypeLabels[p.property_type] ?? p.property_type} · {transactionLabels[p.transaction_kind]} ·{" "}
                   {p.surface ? `${formatNumber(p.surface)} m²` : "—"}
                 </p>
-                <PropertyPortalsCell
-                  propertyId={p.id}
-                  cells={portals.cellsOf(p.id)}
-                  canManage={portals.canManage}
-                  compact
-                />
               </div>
             ))}
           </div>

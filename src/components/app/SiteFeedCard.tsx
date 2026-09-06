@@ -91,9 +91,9 @@ export function SiteFeedCard() {
       <div className="panel space-y-4 p-5">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
-            <h3 className="font-medium">Feed portaluri imobiliare</h3>
+            <h3 className="font-medium">Feed pentru site-ul agenției</h3>
             <p className="text-sm text-muted-foreground">
-              Un token de acces permite site-ului sau portalului conectat să citească ofertele
+              Un token de acces permite site-ului agenției să citească ofertele
               publicate și să trimită înapoi cereri de contact.
             </p>
           </div>
