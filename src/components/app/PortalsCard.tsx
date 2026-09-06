@@ -352,6 +352,19 @@ export function PortalsCard() {
                       <Copy className="size-3.5" />
                     </Button>
                   </div>
+                  {item.feedUrlCsv ? (
+                    <div className="flex items-center justify-between gap-3 text-xs">
+                      <span className="truncate font-mono">{item.feedUrlCsv}</span>
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => copy(item.feedUrlCsv!, "Link CSV copiat.")}
+                      >
+                        <Copy className="size-3.5" />
+                      </Button>
+                    </div>
+                  ) : null}
                   {activeKeys.length ? (
                     <ul className="divide-y divide-border text-sm">
                       {activeKeys.map((k) => (

@@ -57,6 +57,8 @@ import { Route as ApiPublicSitesV1ContactsRouteImport } from './routes/api/publi
 import { Route as ApiPublicSitesV1PropertiesRouteImport } from './routes/api/public/sites/v1/properties'
 import { Route as ApiPublicSitesV1VisitsRouteImport } from './routes/api/public/sites/v1/visits'
 import { Route as ApiPublicPortalV1ImoveFeedRouteImport } from './routes/api/public/portal/v1/imove.feed'
+import { Route as ApiPublicPortalV1ImoveFeedDotcsvRouteImport } from './routes/api/public/portal/v1/imove.feed[.]csv'
+import { Route as ApiPublicPortalV1ImoveFeedDotjsonRouteImport } from './routes/api/public/portal/v1/imove.feed[.]json'
 import { Route as ApiPublicPortalV1PropertiesIdRouteImport } from './routes/api/public/portal/v1/properties.$id'
 import { Route as ApiPublicSitesV1MediaIdRouteImport } from './routes/api/public/sites/v1/media.$id'
 import { Route as ApiPublicSitesV1PropertiesIdRouteImport } from './routes/api/public/sites/v1/properties.$id'
@@ -322,6 +324,18 @@ const ApiPublicPortalV1ImoveFeedRoute =
     path: '/api/public/portal/v1/imove/feed',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicPortalV1ImoveFeedDotcsvRoute =
+  ApiPublicPortalV1ImoveFeedDotcsvRouteImport.update({
+    id: '/api/public/portal/v1/imove/feed.csv',
+    path: '/api/public/portal/v1/imove/feed.csv',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicPortalV1ImoveFeedDotjsonRoute =
+  ApiPublicPortalV1ImoveFeedDotjsonRouteImport.update({
+    id: '/api/public/portal/v1/imove/feed.json',
+    path: '/api/public/portal/v1/imove/feed.json',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicPortalV1PropertiesIdRoute =
   ApiPublicPortalV1PropertiesIdRouteImport.update({
     id: '/$id',
@@ -388,6 +402,8 @@ export interface FileRoutesByFullPath {
   '/api/public/sites/v1/properties': typeof ApiPublicSitesV1PropertiesRouteWithChildren
   '/api/public/sites/v1/visits': typeof ApiPublicSitesV1VisitsRoute
   '/api/public/portal/v1/imove/feed': typeof ApiPublicPortalV1ImoveFeedRoute
+  '/api/public/portal/v1/imove/feed.csv': typeof ApiPublicPortalV1ImoveFeedDotcsvRoute
+  '/api/public/portal/v1/imove/feed.json': typeof ApiPublicPortalV1ImoveFeedDotjsonRoute
   '/api/public/portal/v1/properties/$id': typeof ApiPublicPortalV1PropertiesIdRoute
   '/api/public/sites/v1/media/$id': typeof ApiPublicSitesV1MediaIdRoute
   '/api/public/sites/v1/properties/$id': typeof ApiPublicSitesV1PropertiesIdRoute
@@ -438,6 +454,8 @@ export interface FileRoutesByTo {
   '/api/public/sites/v1/properties': typeof ApiPublicSitesV1PropertiesRouteWithChildren
   '/api/public/sites/v1/visits': typeof ApiPublicSitesV1VisitsRoute
   '/api/public/portal/v1/imove/feed': typeof ApiPublicPortalV1ImoveFeedRoute
+  '/api/public/portal/v1/imove/feed.csv': typeof ApiPublicPortalV1ImoveFeedDotcsvRoute
+  '/api/public/portal/v1/imove/feed.json': typeof ApiPublicPortalV1ImoveFeedDotjsonRoute
   '/api/public/portal/v1/properties/$id': typeof ApiPublicPortalV1PropertiesIdRoute
   '/api/public/sites/v1/media/$id': typeof ApiPublicSitesV1MediaIdRoute
   '/api/public/sites/v1/properties/$id': typeof ApiPublicSitesV1PropertiesIdRoute
@@ -492,6 +510,8 @@ export interface FileRoutesById {
   '/api/public/sites/v1/properties': typeof ApiPublicSitesV1PropertiesRouteWithChildren
   '/api/public/sites/v1/visits': typeof ApiPublicSitesV1VisitsRoute
   '/api/public/portal/v1/imove/feed': typeof ApiPublicPortalV1ImoveFeedRoute
+  '/api/public/portal/v1/imove/feed.csv': typeof ApiPublicPortalV1ImoveFeedDotcsvRoute
+  '/api/public/portal/v1/imove/feed.json': typeof ApiPublicPortalV1ImoveFeedDotjsonRoute
   '/api/public/portal/v1/properties/$id': typeof ApiPublicPortalV1PropertiesIdRoute
   '/api/public/sites/v1/media/$id': typeof ApiPublicSitesV1MediaIdRoute
   '/api/public/sites/v1/properties/$id': typeof ApiPublicSitesV1PropertiesIdRoute
@@ -546,6 +566,8 @@ export interface FileRouteTypes {
     | '/api/public/sites/v1/properties'
     | '/api/public/sites/v1/visits'
     | '/api/public/portal/v1/imove/feed'
+    | '/api/public/portal/v1/imove/feed.csv'
+    | '/api/public/portal/v1/imove/feed.json'
     | '/api/public/portal/v1/properties/$id'
     | '/api/public/sites/v1/media/$id'
     | '/api/public/sites/v1/properties/$id'
@@ -596,6 +618,8 @@ export interface FileRouteTypes {
     | '/api/public/sites/v1/properties'
     | '/api/public/sites/v1/visits'
     | '/api/public/portal/v1/imove/feed'
+    | '/api/public/portal/v1/imove/feed.csv'
+    | '/api/public/portal/v1/imove/feed.json'
     | '/api/public/portal/v1/properties/$id'
     | '/api/public/sites/v1/media/$id'
     | '/api/public/sites/v1/properties/$id'
@@ -649,6 +673,8 @@ export interface FileRouteTypes {
     | '/api/public/sites/v1/properties'
     | '/api/public/sites/v1/visits'
     | '/api/public/portal/v1/imove/feed'
+    | '/api/public/portal/v1/imove/feed.csv'
+    | '/api/public/portal/v1/imove/feed.json'
     | '/api/public/portal/v1/properties/$id'
     | '/api/public/sites/v1/media/$id'
     | '/api/public/sites/v1/properties/$id'
@@ -678,6 +704,8 @@ export interface RootRouteChildren {
   ApiPublicSitesV1PropertiesRoute: typeof ApiPublicSitesV1PropertiesRouteWithChildren
   ApiPublicSitesV1VisitsRoute: typeof ApiPublicSitesV1VisitsRoute
   ApiPublicPortalV1ImoveFeedRoute: typeof ApiPublicPortalV1ImoveFeedRoute
+  ApiPublicPortalV1ImoveFeedDotcsvRoute: typeof ApiPublicPortalV1ImoveFeedDotcsvRoute
+  ApiPublicPortalV1ImoveFeedDotjsonRoute: typeof ApiPublicPortalV1ImoveFeedDotjsonRoute
   ApiPublicSitesV1MediaIdRoute: typeof ApiPublicSitesV1MediaIdRoute
 }
 
@@ -1019,6 +1047,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicPortalV1ImoveFeedRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/portal/v1/imove/feed.csv': {
+      id: '/api/public/portal/v1/imove/feed.csv'
+      path: '/api/public/portal/v1/imove/feed.csv'
+      fullPath: '/api/public/portal/v1/imove/feed.csv'
+      preLoaderRoute: typeof ApiPublicPortalV1ImoveFeedDotcsvRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/portal/v1/imove/feed.json': {
+      id: '/api/public/portal/v1/imove/feed.json'
+      path: '/api/public/portal/v1/imove/feed.json'
+      fullPath: '/api/public/portal/v1/imove/feed.json'
+      preLoaderRoute: typeof ApiPublicPortalV1ImoveFeedDotjsonRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/portal/v1/properties/$id': {
       id: '/api/public/portal/v1/properties/$id'
       path: '/$id'
@@ -1189,6 +1231,9 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicSitesV1PropertiesRoute: ApiPublicSitesV1PropertiesRouteWithChildren,
   ApiPublicSitesV1VisitsRoute: ApiPublicSitesV1VisitsRoute,
   ApiPublicPortalV1ImoveFeedRoute: ApiPublicPortalV1ImoveFeedRoute,
+  ApiPublicPortalV1ImoveFeedDotcsvRoute: ApiPublicPortalV1ImoveFeedDotcsvRoute,
+  ApiPublicPortalV1ImoveFeedDotjsonRoute:
+    ApiPublicPortalV1ImoveFeedDotjsonRoute,
   ApiPublicSitesV1MediaIdRoute: ApiPublicSitesV1MediaIdRoute,
 }
 export const routeTree = rootRouteImport
