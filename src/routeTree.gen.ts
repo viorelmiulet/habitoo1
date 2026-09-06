@@ -50,6 +50,7 @@ import { Route as AuthenticatedAppRequestsIdRouteImport } from './routes/_authen
 import { Route as LovableEmailAuthPreviewRouteImport } from './routes/lovable/email/auth/preview'
 import { Route as LovableEmailAuthWebhookRouteImport } from './routes/lovable/email/auth/webhook'
 import { Route as ApiPublicSitesV1PropertiesRouteImport } from './routes/api/public/sites/v1/properties'
+import { Route as ApiPublicSitesV1PropertiesIdRouteImport } from './routes/api/public/sites/v1/properties.$id'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -274,6 +275,12 @@ const ApiPublicSitesV1PropertiesRoute =
     path: '/api/public/sites/v1/properties',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicSitesV1PropertiesIdRoute =
+  ApiPublicSitesV1PropertiesIdRouteImport.update({
+    id: '/$id',
+    path: '/$id',
+    getParentRoute: () => ApiPublicSitesV1PropertiesRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -315,7 +322,8 @@ export interface FileRoutesByFullPath {
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
   '/app/contacts/': typeof AuthenticatedAppContactsIndexRoute
   '/app/properties/': typeof AuthenticatedAppPropertiesIndexRoute
-  '/api/public/sites/v1/properties': typeof ApiPublicSitesV1PropertiesRoute
+  '/api/public/sites/v1/properties': typeof ApiPublicSitesV1PropertiesRouteWithChildren
+  '/api/public/sites/v1/properties/$id': typeof ApiPublicSitesV1PropertiesIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -355,7 +363,8 @@ export interface FileRoutesByTo {
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
   '/app/contacts': typeof AuthenticatedAppContactsIndexRoute
   '/app/properties': typeof AuthenticatedAppPropertiesIndexRoute
-  '/api/public/sites/v1/properties': typeof ApiPublicSitesV1PropertiesRoute
+  '/api/public/sites/v1/properties': typeof ApiPublicSitesV1PropertiesRouteWithChildren
+  '/api/public/sites/v1/properties/$id': typeof ApiPublicSitesV1PropertiesIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -399,7 +408,8 @@ export interface FileRoutesById {
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
   '/_authenticated/app/contacts/': typeof AuthenticatedAppContactsIndexRoute
   '/_authenticated/app/properties/': typeof AuthenticatedAppPropertiesIndexRoute
-  '/api/public/sites/v1/properties': typeof ApiPublicSitesV1PropertiesRoute
+  '/api/public/sites/v1/properties': typeof ApiPublicSitesV1PropertiesRouteWithChildren
+  '/api/public/sites/v1/properties/$id': typeof ApiPublicSitesV1PropertiesIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -444,6 +454,7 @@ export interface FileRouteTypes {
     | '/app/contacts/'
     | '/app/properties/'
     | '/api/public/sites/v1/properties'
+    | '/api/public/sites/v1/properties/$id'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -484,6 +495,7 @@ export interface FileRouteTypes {
     | '/app/contacts'
     | '/app/properties'
     | '/api/public/sites/v1/properties'
+    | '/api/public/sites/v1/properties/$id'
   id:
     | '__root__'
     | '/'
@@ -527,6 +539,7 @@ export interface FileRouteTypes {
     | '/_authenticated/app/contacts/'
     | '/_authenticated/app/properties/'
     | '/api/public/sites/v1/properties'
+    | '/api/public/sites/v1/properties/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -545,7 +558,7 @@ export interface RootRouteChildren {
   AuthCallbackRoute: typeof AuthCallbackRoute
   LovableEmailAuthPreviewRoute: typeof LovableEmailAuthPreviewRoute
   LovableEmailAuthWebhookRoute: typeof LovableEmailAuthWebhookRoute
-  ApiPublicSitesV1PropertiesRoute: typeof ApiPublicSitesV1PropertiesRoute
+  ApiPublicSitesV1PropertiesRoute: typeof ApiPublicSitesV1PropertiesRouteWithChildren
 }
 
 declare module '@tanstack/react-router' {
@@ -837,6 +850,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicSitesV1PropertiesRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/sites/v1/properties/$id': {
+      id: '/api/public/sites/v1/properties/$id'
+      path: '/$id'
+      fullPath: '/api/public/sites/v1/properties/$id'
+      preLoaderRoute: typeof ApiPublicSitesV1PropertiesIdRouteImport
+      parentRoute: typeof ApiPublicSitesV1PropertiesRoute
+    }
   }
 }
 
@@ -933,6 +953,20 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
 const AuthenticatedRouteRouteWithChildren =
   AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
 
+interface ApiPublicSitesV1PropertiesRouteChildren {
+  ApiPublicSitesV1PropertiesIdRoute: typeof ApiPublicSitesV1PropertiesIdRoute
+}
+
+const ApiPublicSitesV1PropertiesRouteChildren: ApiPublicSitesV1PropertiesRouteChildren =
+  {
+    ApiPublicSitesV1PropertiesIdRoute: ApiPublicSitesV1PropertiesIdRoute,
+  }
+
+const ApiPublicSitesV1PropertiesRouteWithChildren =
+  ApiPublicSitesV1PropertiesRoute._addFileChildren(
+    ApiPublicSitesV1PropertiesRouteChildren,
+  )
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
@@ -949,7 +983,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthCallbackRoute: AuthCallbackRoute,
   LovableEmailAuthPreviewRoute: LovableEmailAuthPreviewRoute,
   LovableEmailAuthWebhookRoute: LovableEmailAuthWebhookRoute,
-  ApiPublicSitesV1PropertiesRoute: ApiPublicSitesV1PropertiesRoute,
+  ApiPublicSitesV1PropertiesRoute: ApiPublicSitesV1PropertiesRouteWithChildren,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
