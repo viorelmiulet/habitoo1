@@ -154,15 +154,26 @@ async function findAuthUserByEmail(admin: Admin, email: string) {
   return null;
 }
 
-/** Trimite un email de setare a parolei pentru un cont Auth deja existent. */
-async function sendPasswordSetupEmail(email: string) {
+/**
+ * Trimite emailul de setare a parolei (flux de resetare parolă).
+ * Este singurul email primit de agentul invitat, în ambele situații: cont nou creat
+ * de administrator sau cont Auth deja existent fără profil. Numele agenției călătorește
+ * prin `redirect_to`, ca webhookul de email să poată personaliza mesajul.
+ */
+async function sendPasswordSetupEmail(email: string, agencyName?: string) {
   const { createClient } = await import("@supabase/supabase-js");
   const client = createClient(
     process.env["SUPABASE_URL"]!,
     process.env["SUPABASE_PUBLISHABLE_KEY"]!,
     { auth: { persistSession: false, autoRefreshToken: false } },
   );
-  await client.auth.resetPasswordForEmail(email, { redirectTo: getCrmUrl("/reset-password") });
+  const path = agencyName
+    ? `/reset-password?agency=${encodeURIComponent(agencyName)}`
+    : "/reset-password";
+  const { error } = await client.auth.resetPasswordForEmail(email, {
+    redirectTo: getCrmUrl(path),
+  });
+  if (error) throw new Error(`Emailul de setare a parolei nu a putut fi trimis: ${error.message}`);
 }
 
 export const getTeamOverview = createServerFn({ method: "GET" })
@@ -210,34 +221,35 @@ export const inviteAgent = createServerFn({ method: "POST" })
       .select("name")
       .eq("id", organizationId)
       .maybeSingle();
-    const agencyName = (org.data?.name ?? "").trim();
-    const callbackPath = agencyName
-      ? `/auth/callback?agency=${encodeURIComponent(agencyName)}`
-      : "/auth/callback";
+    const agencyName = (org.data?.name ?? "").trim() || undefined;
 
-    // Un cont poate exista deja în Auth fără profil (ex. o agenție ștearsă anterior sau
-    // o înregistrare neterminată). În acest caz nu mai trimitem o invitație nouă — îl
-    // atașăm agenției și îi trimitem un link de setare a parolei.
+    // Flux unificat: contul este creat direct de administrator (fără parolă utilizabilă),
+    // iar agentul primește UN SINGUR email — cel de setare/resetare a parolei. Nu folosim
+    // invitația standard Supabase, ca formatul emailului să fie mereu același.
     let newUserId: string;
-    const invited = await admin.auth.admin.inviteUserByEmail(email, {
-      redirectTo: getCrmUrl(callbackPath),
-      data: { full_name: data.full_name },
+    const created = await admin.auth.admin.createUser({
+      email,
+      email_confirm: true,
+      password: crypto.randomUUID() + crypto.randomUUID(),
+      user_metadata: { full_name: data.full_name, invited_by_agency: agencyName ?? null },
     });
 
-    if (invited.data?.user) {
-      newUserId = invited.data.user.id;
+    if (created.data?.user) {
+      newUserId = created.data.user.id;
     } else {
+      // Contul poate exista deja în Auth fără profil (agenție ștearsă anterior sau
+      // înregistrare neterminată): îl atașăm agenției fără să îl recreăm.
       const orphan = await findAuthUserByEmail(admin, email);
       if (!orphan) {
-        throw new Error(invited.error?.message ?? "Invitația nu a putut fi trimisă.");
+        throw new Error(created.error?.message ?? "Contul agentului nu a putut fi creat.");
       }
       newUserId = orphan.id;
       await admin.auth.admin.updateUserById(newUserId, {
-        user_metadata: { full_name: data.full_name },
+        user_metadata: { full_name: data.full_name, invited_by_agency: agencyName ?? null },
       });
-      await sendPasswordSetupEmail(email);
     }
 
+    await sendPasswordSetupEmail(email, agencyName);
 
     const profile = await admin.from("profiles").upsert({
       id: newUserId,
