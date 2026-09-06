@@ -797,7 +797,13 @@ export const runPortalListingAction = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => listingSchema.parse(input))
   .handler(async ({ data, context }) => {
-    const organizationId = await requireSuperadminOrg(context as unknown as AuthContext, data.organizationId);
+    const { organizationId, superadmin } = await resolvePublishingOrg(
+      context as unknown as AuthContext,
+      data.organizationId,
+    );
+    if (!superadmin && !(await activatedPortalIds(organizationId)).has(data.portalId)) {
+      throw new Error("Acest portal nu este activat pentru agenția ta.");
+    }
     return await executeListingAction({
       organizationId,
       actorId: context.userId,
@@ -810,9 +816,13 @@ export const runPortalListingAction = createServerFn({ method: "POST" })
 
 export const getPropertyPortalStatus = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) => z.object({ organizationId: z.string().uuid(), propertyId: z.string().uuid() }).parse(input))
+  .inputValidator((input: unknown) => z.object({ organizationId: z.string().uuid().optional(), propertyId: z.string().uuid() }).parse(input))
   .handler(async ({ data, context }) => {
-    const organizationId = await requireSuperadminOrg(context as unknown as AuthContext, data.organizationId);
+    const { organizationId, superadmin } = await resolvePublishingOrg(
+      context as unknown as AuthContext,
+      data.organizationId,
+    );
+    const visiblePortals = superadmin ? null : await activatedPortalIds(organizationId);
     const admin = await loadAdmin();
     const [{ data: listings }, { data: connections }] = await Promise.all([
       admin
@@ -827,7 +837,9 @@ export const getPropertyPortalStatus = createServerFn({ method: "POST" })
     ]);
 
     const { getPortalAdapter } = await import("@/lib/portals/adapters/index.server");
-    const available = PORTALS.filter((p) => p.status === "available");
+    const available = PORTALS.filter(
+      (p) => p.status === "available" && (visiblePortals === null || visiblePortals.has(p.id)),
+    );
 
     return await Promise.all(
       available.map(async (portal) => {
@@ -971,12 +983,19 @@ function deriveState(input: {
 export const getPropertiesPortalMatrix = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) =>
-    z.object({ organizationId: z.string().uuid(), propertyIds: z.array(z.string().uuid()).max(100) }).parse(input),
+    z
+      .object({
+        organizationId: z.string().uuid().optional(),
+        propertyIds: z.array(z.string().uuid()).max(100),
+      })
+      .parse(input),
   )
   .handler(async ({ data, context }): Promise<PropertyPortalMatrix> => {
     const ctxAuth = context as unknown as AuthContext;
-    const organizationId = await requireSuperadminOrg(ctxAuth, data.organizationId);
+    const { organizationId, superadmin } = await resolvePublishingOrg(ctxAuth, data.organizationId);
     const canManage = true;
+    // Agenția vede DOAR portalurile activate pentru ea de Superadmin.
+    const visiblePortals = superadmin ? null : await activatedPortalIds(organizationId);
     if (data.propertyIds.length === 0) return { canManage, properties: {} };
 
     const admin = await loadAdmin();
@@ -1021,7 +1040,9 @@ export const getPropertiesPortalMatrix = createServerFn({ method: "POST" })
     const properties: Record<string, PropertyPortalCell[]> = {};
     for (const propertyId of data.propertyIds) {
       const feedEligible = eligibleById.get(propertyId) === true;
-      properties[propertyId] = PORTALS.map((portal) => {
+      properties[propertyId] = PORTALS.filter(
+        (portal) => visiblePortals === null || visiblePortals.has(portal.id),
+      ).map((portal) => {
         const pub = (publications ?? []).find(
           (p) => p.property_id === propertyId && p.portal_key === portal.id,
         );
@@ -1073,7 +1094,7 @@ export const setPropertyPortalSelection = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) =>
     z
       .object({
-        organizationId: z.string().uuid(),
+        organizationId: z.string().uuid().optional(),
         propertyId: z.string().uuid(),
         portalId: z.string().min(1).max(40),
         enabled: z.boolean(),
@@ -1081,9 +1102,15 @@ export const setPropertyPortalSelection = createServerFn({ method: "POST" })
       .parse(input),
   )
   .handler(async ({ data, context }) => {
-    const organizationId = await requireSuperadminOrg(context as unknown as AuthContext, data.organizationId);
+    const { organizationId, superadmin } = await resolvePublishingOrg(
+      context as unknown as AuthContext,
+      data.organizationId,
+    );
     const definition = getPortalDefinition(data.portalId);
     if (!definition) throw new Error("Portal necunoscut.");
+    if (!superadmin && !(await activatedPortalIds(organizationId)).has(definition.id)) {
+      throw new Error("Acest portal nu este activat pentru agenția ta.");
+    }
     if (definition.status !== "available") {
       return {
         ok: false as const,
@@ -1160,14 +1187,18 @@ export const publishPropertyToSelectedPortals = createServerFn({ method: "POST" 
   .inputValidator((input: unknown) =>
     z
       .object({
-        organizationId: z.string().uuid(),
+        organizationId: z.string().uuid().optional(),
         propertyId: z.string().uuid(),
         mode: z.enum(["publish", "update"]).default("publish"),
       })
       .parse(input),
   )
   .handler(async ({ data, context }) => {
-    const organizationId = await requireSuperadminOrg(context as unknown as AuthContext, data.organizationId);
+    const { organizationId, superadmin } = await resolvePublishingOrg(
+      context as unknown as AuthContext,
+      data.organizationId,
+    );
+    const allowedPortals = superadmin ? null : await activatedPortalIds(organizationId);
     const admin = await loadAdmin();
 
     const [{ data: publications }, { data: listings }] = await Promise.all([
@@ -1187,6 +1218,7 @@ export const publishPropertyToSelectedPortals = createServerFn({ method: "POST" 
     const selected = (publications ?? [])
       .map((p) => p.portal_key)
       .filter((key) => {
+        if (allowedPortals !== null && !allowedPortals.has(key)) return false;
         const definition = getPortalDefinition(key);
         // Portalurile de tip feed (ex. iMove) nu primesc trimiteri: selecția
         // este suficientă, oferta apare la următoarea citire a feedului.
@@ -1337,7 +1369,7 @@ export type PortalSelectionOutcome = {
 };
 
 const applySelectionSchema = z.object({
-  organizationId: z.string().uuid(),
+  organizationId: z.string().uuid().optional(),
   propertyId: z.string().uuid(),
   selections: z
     .array(z.object({ portalId: z.string().min(1).max(40), enabled: z.boolean() }))
@@ -1361,7 +1393,11 @@ export const applyPropertyPortalSelection = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => applySelectionSchema.parse(input))
   .handler(async ({ data, context }): Promise<{ ok: boolean; results: PortalSelectionOutcome[] }> => {
-    const organizationId = await requireSuperadminOrg(context as unknown as AuthContext, data.organizationId);
+    const { organizationId, superadmin } = await resolvePublishingOrg(
+      context as unknown as AuthContext,
+      data.organizationId,
+    );
+    const allowedPortals = superadmin ? null : await activatedPortalIds(organizationId);
     const actorId = context.userId;
     const admin = await loadAdmin();
 
@@ -1399,6 +1435,19 @@ export const applyPropertyPortalSelection = createServerFn({ method: "POST" })
     for (const wanted of data.selections) {
       const definition = getPortalDefinition(wanted.portalId);
       if (!definition) continue;
+      // Portalurile neactivate pentru agenție sunt respinse, nu ignorate silențios.
+      if (allowedPortals !== null && !allowedPortals.has(definition.id)) {
+        if (wanted.enabled) {
+          results.push({
+            portalId: definition.id,
+            portalName: definition.display_name,
+            action: "blocked",
+            ok: false,
+            message: `${definition.display_name} nu este activat pentru agenția ta.`,
+          });
+        }
+        continue;
+      }
       const name = definition.display_name;
       const previous =
         (publications ?? []).find((p) => p.portal_key === definition.id)?.enabled === true;
@@ -1504,7 +1553,9 @@ export const applyPropertyPortalSelection = createServerFn({ method: "POST" })
           portalName: name,
           action: "blocked",
           ok: false,
-          message: `${name} nu este configurat. Configurează portalul din Setări → Integrări.`,
+          message: superadmin
+            ? `${name} nu este configurat. Configurează portalul din Superadmin → Portaluri.`
+            : `${name} nu este încă pregătit de administratorul platformei.`,
         });
         continue;
       }
