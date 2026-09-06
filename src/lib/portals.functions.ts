@@ -80,7 +80,7 @@ export type PortalLogItem = {
 
 type AuthContext = {
   supabase: {
-    rpc: (fn: "is_org_admin") => PromiseLike<{ data: boolean | null; error: { message: string } | null }>;
+    rpc: (fn: "is_superadmin") => PromiseLike<{ data: boolean | null; error: { message: string } | null }>;
     from: (table: "profiles") => {
       select: (cols: string) => {
         eq: (
@@ -93,18 +93,28 @@ type AuthContext = {
   userId: string;
 };
 
-async function requireOrgAdmin(context: AuthContext): Promise<string> {
-  const { data: isAdmin, error } = await context.supabase.rpc("is_org_admin");
-  if (error || isAdmin !== true) {
-    throw new Error("Acces refuzat: doar administratorul agenției poate gestiona portalurile.");
+/**
+ * Integrările de portaluri sunt EXCLUSIV ale platformei (Superadmin).
+ * Administratorii de agenție nu au acces, nici măcar read-only.
+ */
+async function requireSuperadmin(context: AuthContext): Promise<void> {
+  const { data, error } = await context.supabase.rpc("is_superadmin");
+  if (error || data !== true) {
+    throw new Error("Acces refuzat: integrările de portaluri se gestionează doar de Superadmin.");
   }
-  const { data: profile } = await context.supabase
-    .from("profiles")
-    .select("organization_id")
-    .eq("id", context.userId)
+}
+
+/** Verifică rolul de Superadmin și validează agenția-țintă primită explicit. */
+async function requireSuperadminOrg(context: AuthContext, organizationId: string): Promise<string> {
+  await requireSuperadmin(context);
+  const admin = await loadAdmin();
+  const { data: org } = await admin
+    .from("organizations")
+    .select("id")
+    .eq("id", organizationId)
     .maybeSingle();
-  if (!profile?.organization_id) throw new Error("Agenția nu este configurată.");
-  return profile.organization_id;
+  if (!org) throw new Error("Agenția nu a fost găsită.");
+  return org.id;
 }
 
 async function loadAdmin() {
@@ -171,10 +181,11 @@ async function buildContext(organizationId: string, definition: PortalDefinition
   };
 }
 
-export const getPortalHub = createServerFn({ method: "GET" })
+export const getPortalHub = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .handler(async ({ context }): Promise<PortalHubItem[]> => {
-    const organizationId = await requireOrgAdmin(context as unknown as AuthContext);
+  .inputValidator((input: unknown) => z.object({ organizationId: z.string().uuid() }).parse(input))
+  .handler(async ({ data, context }): Promise<PortalHubItem[]> => {
+    const organizationId = await requireSuperadminOrg(context as unknown as AuthContext, data.organizationId);
     const admin = await loadAdmin();
     const genericFeedUrl = await feedUrlForOrg();
     const imoveFeedUrl = await feedUrlForOrg("imove");
@@ -279,6 +290,7 @@ export const getPortalHub = createServerFn({ method: "GET" })
   });
 
 const saveSchema = z.object({
+  organizationId: z.string().uuid(),
   portalId: z.string().min(1).max(40),
   externalAccountId: z.string().trim().max(200).optional(),
   credential: z.string().trim().min(1).max(500).optional(),
@@ -290,7 +302,7 @@ export const savePortalConnection = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => saveSchema.parse(input))
   .handler(async ({ data, context }) => {
-    const organizationId = await requireOrgAdmin(context as unknown as AuthContext);
+    const organizationId = await requireSuperadminOrg(context as unknown as AuthContext, data.organizationId);
     const definition = getPortalDefinition(data.portalId);
     if (!definition) throw new Error("Portal necunoscut.");
     if (definition.status !== "available") throw new Error("Integrarea cu acest portal nu este încă disponibilă.");
@@ -348,9 +360,9 @@ export const savePortalConnection = createServerFn({ method: "POST" })
 
 export const disconnectPortal = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) => z.object({ portalId: z.string().min(1).max(40) }).parse(input))
+  .inputValidator((input: unknown) => z.object({ organizationId: z.string().uuid(), portalId: z.string().min(1).max(40) }).parse(input))
   .handler(async ({ data, context }) => {
-    const organizationId = await requireOrgAdmin(context as unknown as AuthContext);
+    const organizationId = await requireSuperadminOrg(context as unknown as AuthContext, data.organizationId);
     const admin = await loadAdmin();
 
     await admin
@@ -384,9 +396,9 @@ export const disconnectPortal = createServerFn({ method: "POST" })
 
 export const testPortalConnection = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) => z.object({ portalId: z.string().min(1).max(40) }).parse(input))
+  .inputValidator((input: unknown) => z.object({ organizationId: z.string().uuid(), portalId: z.string().min(1).max(40) }).parse(input))
   .handler(async ({ data, context }) => {
-    const organizationId = await requireOrgAdmin(context as unknown as AuthContext);
+    const organizationId = await requireSuperadminOrg(context as unknown as AuthContext, data.organizationId);
     const definition = getPortalDefinition(data.portalId);
     if (!definition) throw new Error("Portal necunoscut.");
 
@@ -441,6 +453,7 @@ export const issuePortalApiKey = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) =>
     z
       .object({
+        organizationId: z.string().uuid(),
         portalId: z.string().min(1).max(40),
         label: z.string().trim().min(2).max(80),
         scopes: z.array(z.enum(["feed:read", "agents:read", "leads:write"])).min(1).optional(),
@@ -448,7 +461,7 @@ export const issuePortalApiKey = createServerFn({ method: "POST" })
       .parse(input),
   )
   .handler(async ({ data, context }) => {
-    const organizationId = await requireOrgAdmin(context as unknown as AuthContext);
+    const organizationId = await requireSuperadminOrg(context as unknown as AuthContext, data.organizationId);
     const definition = getPortalDefinition(data.portalId);
     if (!definition) throw new Error("Portal necunoscut.");
     // Habitoo emite chei DOAR pentru portalurile care declară acest model.
@@ -493,9 +506,9 @@ export const issuePortalApiKey = createServerFn({ method: "POST" })
 
 export const revokePortalApiKey = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) => z.object({ keyId: z.string().uuid() }).parse(input))
+  .inputValidator((input: unknown) => z.object({ organizationId: z.string().uuid(), keyId: z.string().uuid() }).parse(input))
   .handler(async ({ data, context }) => {
-    const organizationId = await requireOrgAdmin(context as unknown as AuthContext);
+    const organizationId = await requireSuperadminOrg(context as unknown as AuthContext, data.organizationId);
     const admin = await loadAdmin();
     const { data: row } = await admin
       .from("portal_api_keys")
@@ -522,6 +535,7 @@ export const revokePortalApiKey = createServerFn({ method: "POST" })
 
 /** Operațiile pe o ofertă: publicare, actualizare, retragere. */
 const listingSchema = z.object({
+  organizationId: z.string().uuid(),
   portalId: z.string().min(1).max(40),
   propertyId: z.string().uuid(),
   action: z.enum(["publish", "update", "withdraw"]),
@@ -671,7 +685,7 @@ export const runPortalListingAction = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => listingSchema.parse(input))
   .handler(async ({ data, context }) => {
-    const organizationId = await requireOrgAdmin(context as unknown as AuthContext);
+    const organizationId = await requireSuperadminOrg(context as unknown as AuthContext, data.organizationId);
     return await executeListingAction({
       organizationId,
       actorId: context.userId,
@@ -684,9 +698,9 @@ export const runPortalListingAction = createServerFn({ method: "POST" })
 
 export const getPropertyPortalStatus = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) => z.object({ propertyId: z.string().uuid() }).parse(input))
+  .inputValidator((input: unknown) => z.object({ organizationId: z.string().uuid(), propertyId: z.string().uuid() }).parse(input))
   .handler(async ({ data, context }) => {
-    const organizationId = await requireOrgAdmin(context as unknown as AuthContext);
+    const organizationId = await requireSuperadminOrg(context as unknown as AuthContext, data.organizationId);
     const admin = await loadAdmin();
     const [{ data: listings }, { data: connections }] = await Promise.all([
       admin
@@ -751,19 +765,20 @@ export const getPropertyPortalStatus = createServerFn({ method: "POST" })
     );
   });
 
-export const getPortalLogs = createServerFn({ method: "GET" })
+export const getPortalLogs = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .handler(async ({ context }): Promise<PortalLogItem[]> => {
-    const organizationId = await requireOrgAdmin(context as unknown as AuthContext);
+  .inputValidator((input: unknown) => z.object({ organizationId: z.string().uuid() }).parse(input))
+  .handler(async ({ data, context }): Promise<PortalLogItem[]> => {
+    const organizationId = await requireSuperadminOrg(context as unknown as AuthContext, data.organizationId);
     const admin = await loadAdmin();
-    const { data } = await admin
+    const { data: rows } = await admin
       .from("portal_operation_logs")
       .select("id, portal, operation, success, error_code, error_message, property_id, created_at")
       .eq("organization_id", organizationId)
       .order("created_at", { ascending: false })
       .limit(50);
 
-    return (data ?? []).map((row) => ({
+    return (rows ?? []).map((row) => ({
       id: row.id,
       portal: row.portal,
       operation: row.operation,
@@ -815,22 +830,6 @@ export type PropertyPortalMatrix = {
   properties: Record<string, PropertyPortalCell[]>;
 };
 
-/** Agenția utilizatorului curent, fără cerință de rol (doar citire). */
-async function requireOrgMember(context: AuthContext): Promise<string> {
-  const { data: profile } = await context.supabase
-    .from("profiles")
-    .select("organization_id")
-    .eq("id", context.userId)
-    .maybeSingle();
-  if (!profile?.organization_id) throw new Error("Agenția nu este configurată.");
-  return profile.organization_id;
-}
-
-async function isOrgAdmin(context: AuthContext): Promise<boolean> {
-  const { data, error } = await context.supabase.rpc("is_org_admin");
-  return !error && data === true;
-}
-
 function deriveState(input: {
   availability: "available" | "coming_soon" | "disabled";
   configured: boolean;
@@ -860,12 +859,12 @@ function deriveState(input: {
 export const getPropertiesPortalMatrix = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) =>
-    z.object({ propertyIds: z.array(z.string().uuid()).max(100) }).parse(input),
+    z.object({ organizationId: z.string().uuid(), propertyIds: z.array(z.string().uuid()).max(100) }).parse(input),
   )
   .handler(async ({ data, context }): Promise<PropertyPortalMatrix> => {
     const ctxAuth = context as unknown as AuthContext;
-    const organizationId = await requireOrgMember(ctxAuth);
-    const canManage = await isOrgAdmin(ctxAuth);
+    const organizationId = await requireSuperadminOrg(ctxAuth, data.organizationId);
+    const canManage = true;
     if (data.propertyIds.length === 0) return { canManage, properties: {} };
 
     const admin = await loadAdmin();
@@ -962,6 +961,7 @@ export const setPropertyPortalSelection = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) =>
     z
       .object({
+        organizationId: z.string().uuid(),
         propertyId: z.string().uuid(),
         portalId: z.string().min(1).max(40),
         enabled: z.boolean(),
@@ -969,7 +969,7 @@ export const setPropertyPortalSelection = createServerFn({ method: "POST" })
       .parse(input),
   )
   .handler(async ({ data, context }) => {
-    const organizationId = await requireOrgAdmin(context as unknown as AuthContext);
+    const organizationId = await requireSuperadminOrg(context as unknown as AuthContext, data.organizationId);
     const definition = getPortalDefinition(data.portalId);
     if (!definition) throw new Error("Portal necunoscut.");
     if (definition.status !== "available") {
@@ -1048,13 +1048,14 @@ export const publishPropertyToSelectedPortals = createServerFn({ method: "POST" 
   .inputValidator((input: unknown) =>
     z
       .object({
+        organizationId: z.string().uuid(),
         propertyId: z.string().uuid(),
         mode: z.enum(["publish", "update"]).default("publish"),
       })
       .parse(input),
   )
   .handler(async ({ data, context }) => {
-    const organizationId = await requireOrgAdmin(context as unknown as AuthContext);
+    const organizationId = await requireSuperadminOrg(context as unknown as AuthContext, data.organizationId);
     const admin = await loadAdmin();
 
     const [{ data: publications }, { data: listings }] = await Promise.all([
@@ -1163,10 +1164,10 @@ export type PortalFeedPreview = {
 export const previewPortalFeed = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) =>
-    z.object({ portalId: z.string().min(1).max(40), limit: z.number().int().min(1).max(10).default(3) }).parse(input),
+    z.object({ organizationId: z.string().uuid(), portalId: z.string().min(1).max(40), limit: z.number().int().min(1).max(10).default(3) }).parse(input),
   )
   .handler(async ({ data, context }): Promise<PortalFeedPreview> => {
-    const organizationId = await requireOrgAdmin(context as unknown as AuthContext);
+    const organizationId = await requireSuperadminOrg(context as unknown as AuthContext, data.organizationId);
     const definition = getPortalDefinition(data.portalId);
     if (!definition) throw new Error("Portal necunoscut.");
     if (definition.id !== "imove") {
@@ -1224,6 +1225,7 @@ export type PortalSelectionOutcome = {
 };
 
 const applySelectionSchema = z.object({
+  organizationId: z.string().uuid(),
   propertyId: z.string().uuid(),
   selections: z
     .array(z.object({ portalId: z.string().min(1).max(40), enabled: z.boolean() }))
@@ -1247,7 +1249,7 @@ export const applyPropertyPortalSelection = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => applySelectionSchema.parse(input))
   .handler(async ({ data, context }): Promise<{ ok: boolean; results: PortalSelectionOutcome[] }> => {
-    const organizationId = await requireOrgAdmin(context as unknown as AuthContext);
+    const organizationId = await requireSuperadminOrg(context as unknown as AuthContext, data.organizationId);
     const actorId = context.userId;
     const admin = await loadAdmin();
 
@@ -1436,4 +1438,43 @@ export const applyPropertyPortalSelection = createServerFn({ method: "POST" })
     }
 
     return { ok: results.every((r) => r.ok), results };
+  });
+
+
+/** Agențiile disponibile în panoul Superadmin → Portaluri. */
+export const listPortalOrganizations = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }): Promise<{ id: string; name: string }[]> => {
+    await requireSuperadmin(context as unknown as AuthContext);
+    const admin = await loadAdmin();
+    const { data } = await admin.from("organizations").select("id, name").order("name");
+    return (data ?? []).map((o) => ({ id: o.id, name: o.name }));
+  });
+
+/** Ofertele unei agenții, pentru selecția de portaluri din Superadmin. */
+export const listOrgPropertiesForPortals = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) =>
+    z
+      .object({
+        organizationId: z.string().uuid(),
+        search: z.string().trim().max(120).optional(),
+        limit: z.number().int().min(1).max(50).default(25),
+      })
+      .parse(input),
+  )
+  .handler(async ({ data, context }): Promise<{ id: string; title: string; city: string | null }[]> => {
+    const organizationId = await requireSuperadminOrg(context as unknown as AuthContext, data.organizationId);
+    const admin = await loadAdmin();
+    let query = admin
+      .from("properties")
+      .select("id, title, city")
+      .eq("organization_id", organizationId)
+      .is("deleted_at", null)
+      .order("updated_at", { ascending: false })
+      .limit(data.limit);
+    const search = data.search?.replace(/[%,()]/g, " ").trim();
+    if (search) query = query.ilike("title", `%${search}%`);
+    const { data: rows } = await query;
+    return (rows ?? []).map((r) => ({ id: r.id, title: r.title, city: r.city ?? null }));
   });

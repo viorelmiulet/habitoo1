@@ -41,6 +41,7 @@ import { Route as AuthenticatedSuperadminIndexRouteImport } from './routes/_auth
 import { Route as AuthenticatedSuperadminAgenciesRouteImport } from './routes/_authenticated/superadmin.agencies'
 import { Route as AuthenticatedSuperadminAuditRouteImport } from './routes/_authenticated/superadmin.audit'
 import { Route as AuthenticatedSuperadminNomenclatorRouteImport } from './routes/_authenticated/superadmin.nomenclator'
+import { Route as AuthenticatedSuperadminPortalsRouteImport } from './routes/_authenticated/superadmin.portals'
 import { Route as AuthenticatedSuperadminQaRouteImport } from './routes/_authenticated/superadmin.qa'
 import { Route as AuthenticatedSuperadminUsersRouteImport } from './routes/_authenticated/superadmin.users'
 import { Route as AuthenticatedAppContactsIndexRouteImport } from './routes/_authenticated/app.contacts.index'
@@ -233,6 +234,12 @@ const AuthenticatedSuperadminNomenclatorRoute =
     path: '/nomenclator',
     getParentRoute: () => AuthenticatedSuperadminRoute,
   } as any)
+const AuthenticatedSuperadminPortalsRoute =
+  AuthenticatedSuperadminPortalsRouteImport.update({
+    id: '/portals',
+    path: '/portals',
+    getParentRoute: () => AuthenticatedSuperadminRoute,
+  } as any)
 const AuthenticatedSuperadminQaRoute =
   AuthenticatedSuperadminQaRouteImport.update({
     id: '/qa',
@@ -390,6 +397,7 @@ export interface FileRoutesByFullPath {
   '/superadmin/agencies': typeof AuthenticatedSuperadminAgenciesRoute
   '/superadmin/audit': typeof AuthenticatedSuperadminAuditRoute
   '/superadmin/nomenclator': typeof AuthenticatedSuperadminNomenclatorRoute
+  '/superadmin/portals': typeof AuthenticatedSuperadminPortalsRoute
   '/superadmin/qa': typeof AuthenticatedSuperadminQaRoute
   '/superadmin/users': typeof AuthenticatedSuperadminUsersRoute
   '/app/': typeof AuthenticatedAppIndexRoute
@@ -443,6 +451,7 @@ export interface FileRoutesByTo {
   '/superadmin/agencies': typeof AuthenticatedSuperadminAgenciesRoute
   '/superadmin/audit': typeof AuthenticatedSuperadminAuditRoute
   '/superadmin/nomenclator': typeof AuthenticatedSuperadminNomenclatorRoute
+  '/superadmin/portals': typeof AuthenticatedSuperadminPortalsRoute
   '/superadmin/qa': typeof AuthenticatedSuperadminQaRoute
   '/superadmin/users': typeof AuthenticatedSuperadminUsersRoute
   '/app': typeof AuthenticatedAppIndexRoute
@@ -500,6 +509,7 @@ export interface FileRoutesById {
   '/_authenticated/superadmin/agencies': typeof AuthenticatedSuperadminAgenciesRoute
   '/_authenticated/superadmin/audit': typeof AuthenticatedSuperadminAuditRoute
   '/_authenticated/superadmin/nomenclator': typeof AuthenticatedSuperadminNomenclatorRoute
+  '/_authenticated/superadmin/portals': typeof AuthenticatedSuperadminPortalsRoute
   '/_authenticated/superadmin/qa': typeof AuthenticatedSuperadminQaRoute
   '/_authenticated/superadmin/users': typeof AuthenticatedSuperadminUsersRoute
   '/_authenticated/app/': typeof AuthenticatedAppIndexRoute
@@ -557,6 +567,7 @@ export interface FileRouteTypes {
     | '/superadmin/agencies'
     | '/superadmin/audit'
     | '/superadmin/nomenclator'
+    | '/superadmin/portals'
     | '/superadmin/qa'
     | '/superadmin/users'
     | '/app/'
@@ -610,6 +621,7 @@ export interface FileRouteTypes {
     | '/superadmin/agencies'
     | '/superadmin/audit'
     | '/superadmin/nomenclator'
+    | '/superadmin/portals'
     | '/superadmin/qa'
     | '/superadmin/users'
     | '/app'
@@ -666,6 +678,7 @@ export interface FileRouteTypes {
     | '/_authenticated/superadmin/agencies'
     | '/_authenticated/superadmin/audit'
     | '/_authenticated/superadmin/nomenclator'
+    | '/_authenticated/superadmin/portals'
     | '/_authenticated/superadmin/qa'
     | '/_authenticated/superadmin/users'
     | '/_authenticated/app/'
@@ -947,6 +960,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSuperadminNomenclatorRouteImport
       parentRoute: typeof AuthenticatedSuperadminRoute
     }
+    '/_authenticated/superadmin/portals': {
+      id: '/_authenticated/superadmin/portals'
+      path: '/portals'
+      fullPath: '/superadmin/portals'
+      preLoaderRoute: typeof AuthenticatedSuperadminPortalsRouteImport
+      parentRoute: typeof AuthenticatedSuperadminRoute
+    }
     '/_authenticated/superadmin/qa': {
       id: '/_authenticated/superadmin/qa'
       path: '/qa'
@@ -1163,6 +1183,7 @@ interface AuthenticatedSuperadminRouteChildren {
   AuthenticatedSuperadminAgenciesRoute: typeof AuthenticatedSuperadminAgenciesRoute
   AuthenticatedSuperadminAuditRoute: typeof AuthenticatedSuperadminAuditRoute
   AuthenticatedSuperadminNomenclatorRoute: typeof AuthenticatedSuperadminNomenclatorRoute
+  AuthenticatedSuperadminPortalsRoute: typeof AuthenticatedSuperadminPortalsRoute
   AuthenticatedSuperadminQaRoute: typeof AuthenticatedSuperadminQaRoute
   AuthenticatedSuperadminUsersRoute: typeof AuthenticatedSuperadminUsersRoute
   AuthenticatedSuperadminIndexRoute: typeof AuthenticatedSuperadminIndexRoute
@@ -1174,6 +1195,7 @@ const AuthenticatedSuperadminRouteChildren: AuthenticatedSuperadminRouteChildren
     AuthenticatedSuperadminAuditRoute: AuthenticatedSuperadminAuditRoute,
     AuthenticatedSuperadminNomenclatorRoute:
       AuthenticatedSuperadminNomenclatorRoute,
+    AuthenticatedSuperadminPortalsRoute: AuthenticatedSuperadminPortalsRoute,
     AuthenticatedSuperadminQaRoute: AuthenticatedSuperadminQaRoute,
     AuthenticatedSuperadminUsersRoute: AuthenticatedSuperadminUsersRoute,
     AuthenticatedSuperadminIndexRoute: AuthenticatedSuperadminIndexRoute,

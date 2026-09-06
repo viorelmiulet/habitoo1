@@ -15,7 +15,6 @@ import {
 import { toast } from "sonner";
 import { useServerFn } from "@tanstack/react-start";
 import { toastError } from "@/lib/errors";
-import { publishPropertyToSelectedPortals } from "@/lib/portals.functions";
 import { PageHeader } from "@/components/app/PageHeader";
 import { DetailSkeleton } from "@/components/app/LoadingState";
 import { StatusBadge } from "@/components/app/StatusBadge";
@@ -23,7 +22,6 @@ import { EmptyState } from "@/components/app/EmptyState";
 import { ConfirmDialog } from "@/components/app/ConfirmDialog";
 import { ActivityDialog } from "@/components/app/ActivityDialog";
 import { PropertyMediaManager } from "@/components/app/PropertyMediaManager";
-import { PropertyPortalsCard } from "@/components/app/PropertyPortalsCard";
 import { PropertyDetailsFields, type PropertyDetailsValue } from "@/components/app/PropertyDetailsFields";
 import { PROPERTY_DETAIL_FIELDS } from "@/lib/property-detail-fields";
 import {
@@ -160,9 +158,6 @@ function PropertyDetailPage() {
     setEditing(true);
   };
 
-  // Actualizarea atinge DOAR portalurile bifate pentru această proprietate.
-  const syncPortals = useServerFn(publishPropertyToSelectedPortals);
-
   const save = useMutation({
     mutationFn: async (patch: Record<string, unknown>) => {
       const { error } = await supabase
@@ -176,20 +171,6 @@ function PropertyDetailPage() {
       queryClient.invalidateQueries({ queryKey: ["properties"] });
       setEditing(false);
       toast.success("Modificările au fost salvate.");
-      if (!user?.isAdmin) return;
-      try {
-        const res = await syncPortals({ data: { propertyId: id, mode: "update" } });
-        const failed = res.results.filter((r) => !r.ok);
-        if (res.results.length > 0 && failed.length === 0) {
-          toast.success(`Actualizat pe: ${res.results.map((r) => r.portalName).join(", ")}.`);
-        } else if (failed.length > 0) {
-          toast.error(failed.map((r) => `${r.portalName}: ${r.message ?? "eroare"}`).join(" · "));
-        }
-        queryClient.invalidateQueries({ queryKey: ["property-portals-selection", id] });
-        queryClient.invalidateQueries({ queryKey: ["property-portals-matrix"] });
-      } catch {
-        // Salvarea proprietății a reușit; problema de sincronizare apare în starea portalurilor.
-      }
     },
     onError: (e: Error) => toastError(e),
   });
@@ -567,8 +548,6 @@ function PropertyDetailPage() {
             </form>
           ) : null}
 
-          {editing ? <PropertyPortalsCard propertyId={id} /> : null}
-
           {!editing ? (
 
             <div className="grid gap-6 lg:grid-cols-3">
@@ -772,7 +751,6 @@ function PropertyDetailPage() {
         </TabsContent>
 
         <TabsContent value="publishing" className="space-y-4">
-          <PropertyPortalsCard propertyId={id} />
           <div className="panel space-y-4 p-5">
             <div className="flex items-center justify-between">
               <div>

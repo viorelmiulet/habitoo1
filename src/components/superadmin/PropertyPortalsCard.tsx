@@ -12,7 +12,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { Link } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { Loader2, Save } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -53,15 +52,21 @@ const STATE_LABEL: Record<
   coming_soon: { label: "În curând", tone: "neutral" },
 };
 
-export function PropertyPortalsCard({ propertyId }: { propertyId: string }) {
+export function PropertyPortalsCard({
+  organizationId,
+  propertyId,
+}: {
+  organizationId: string;
+  propertyId: string;
+}) {
   const queryClient = useQueryClient();
   const loadMatrix = useServerFn(getPropertiesPortalMatrix);
   const applyFn = useServerFn(applyPropertyPortalSelection);
-  const queryKey = ["property-portals-selection", propertyId] as const;
+  const queryKey = ["property-portals-selection", organizationId, propertyId] as const;
 
   const matrix = useQuery({
     queryKey,
-    queryFn: () => loadMatrix({ data: { propertyIds: [propertyId] } }),
+    queryFn: () => loadMatrix({ data: { organizationId, propertyIds: [propertyId] } }),
   });
 
   const cells = useMemo<PropertyPortalCell[]>(
@@ -88,6 +93,7 @@ export function PropertyPortalsCard({ propertyId }: { propertyId: string }) {
     mutationFn: () =>
       applyFn({
         data: {
+          organizationId,
           propertyId,
           selections: cells
             .filter((c) => c.availability === "available")
@@ -135,7 +141,7 @@ export function PropertyPortalsCard({ propertyId }: { propertyId: string }) {
                 onCheckedChange={(next) => {
                   if (next === true && cell.availability === "available" && !cell.configured) {
                     toast.error(
-                      `${cell.portalName} nu este configurat. Configurează portalul din Setări → Integrări.`,
+                      `${cell.portalName} nu este configurat. Configurează portalul în această pagină.`,
                     );
                   }
                   setChecked((prev) => ({ ...prev, [cell.portalId]: next === true }));
@@ -149,7 +155,7 @@ export function PropertyPortalsCard({ propertyId }: { propertyId: string }) {
                   {cell.availability !== "available"
                     ? "Integrarea nu este încă disponibilă."
                     : !cell.configured
-                      ? "Portal neconfigurat — Setări → Integrări."
+                      ? "Portal neconfigurat."
                       : cell.pushSupported
                         ? "Trimitere directă către portal."
                         : "Portalul preia oferta automat din feedul Habitoo."}
@@ -173,9 +179,7 @@ export function PropertyPortalsCard({ propertyId }: { propertyId: string }) {
         </p>
         <div className="flex items-center gap-3">
           {cells.some((c) => c.availability === "available" && !c.configured) ? (
-            <Link to="/app/settings" className="text-xs text-primary underline-offset-2 hover:underline">
-              Setări → Integrări
-            </Link>
+            <span className="text-xs text-muted-foreground">Configurează portalul mai sus.</span>
           ) : null}
           <Button
             type="button"

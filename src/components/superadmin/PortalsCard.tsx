@@ -1,5 +1,5 @@
 /**
- * Hub-ul de portaluri imobiliare (Setări → Integrări).
+ * Hub-ul de portaluri imobiliare (Superadmin → Portaluri), per agenție.
  * UI generic: totul vine din registry, nimic nu este hardcodat pentru un portal.
  */
 import { useState } from "react";
@@ -37,10 +37,9 @@ import {
   type PortalDirection,
 } from "@/lib/portals/registry";
 
-const hubKey = ["portal-hub"] as const;
-const logsKey = ["portal-logs"] as const;
-
-export function PortalsCard() {
+export function PortalsCard({ organizationId }: { organizationId: string }) {
+  const hubKey = ["portal-hub", organizationId] as const;
+  const logsKey = ["portal-logs", organizationId] as const;
   const queryClient = useQueryClient();
   const loadHub = useServerFn(getPortalHub);
   const loadLogs = useServerFn(getPortalLogs);
@@ -60,8 +59,8 @@ export function PortalsCard() {
   const [confirmRevoke, setConfirmRevoke] = useState<string | null>(null);
   const [feedPreview, setFeedPreview] = useState<Awaited<ReturnType<typeof previewPortalFeed>> | null>(null);
 
-  const hub = useQuery({ queryKey: hubKey, queryFn: () => loadHub({}) });
-  const logs = useQuery({ queryKey: logsKey, queryFn: () => loadLogs({}) });
+  const hub = useQuery({ queryKey: hubKey, queryFn: () => loadHub({ data: { organizationId } }) });
+  const logs = useQuery({ queryKey: logsKey, queryFn: () => loadLogs({ data: { organizationId } }) });
   const invalidate = () => {
     queryClient.invalidateQueries({ queryKey: hubKey });
     queryClient.invalidateQueries({ queryKey: logsKey });
@@ -71,6 +70,7 @@ export function PortalsCard() {
     mutationFn: (input: { portalId: string; allowLiveRequests?: boolean }) =>
       runSave({
         data: {
+          organizationId,
           portalId: input.portalId,
           externalAccountId: accountId[input.portalId]?.trim(),
           credential: credential[input.portalId]?.trim() || undefined,
@@ -87,7 +87,7 @@ export function PortalsCard() {
   });
 
   const test = useMutation({
-    mutationFn: (portalId: string) => runTest({ data: { portalId } }),
+    mutationFn: (portalId: string) => runTest({ data: { organizationId, portalId } }),
     onSuccess: (res) => {
       invalidate();
       if (res.ok) {
@@ -107,7 +107,7 @@ export function PortalsCard() {
   });
 
   const disconnect = useMutation({
-    mutationFn: (portalId: string) => runDisconnect({ data: { portalId } }),
+    mutationFn: (portalId: string) => runDisconnect({ data: { organizationId, portalId } }),
     onSuccess: () => {
       invalidate();
       toast.success("Portalul a fost deconectat, iar cheile emise au fost revocate.");
@@ -117,7 +117,7 @@ export function PortalsCard() {
 
   const issueKey = useMutation({
     mutationFn: (portalId: string) =>
-      runIssueKey({ data: { portalId, label: keyLabel[portalId]?.trim() || "Cheie portal" } }),
+      runIssueKey({ data: { organizationId, portalId, label: keyLabel[portalId]?.trim() || "Cheie portal" } }),
     onSuccess: (res, portalId) => {
       setKeyLabel((prev) => ({ ...prev, [portalId]: "" }));
       setFreshKey({ portalId, key: res.key });
@@ -127,7 +127,7 @@ export function PortalsCard() {
   });
 
   const revokeKey = useMutation({
-    mutationFn: (keyId: string) => runRevokeKey({ data: { keyId } }),
+    mutationFn: (keyId: string) => runRevokeKey({ data: { organizationId, keyId } }),
     onSuccess: () => {
       invalidate();
       toast.success("Cheia a fost revocată.");
@@ -137,7 +137,7 @@ export function PortalsCard() {
 
   // Previzualizare read-only: arată exact ce oferte ar citi portalul acum.
   const preview = useMutation({
-    mutationFn: (portalId: string) => runPreview({ data: { portalId, limit: 3 } }),
+    mutationFn: (portalId: string) => runPreview({ data: { organizationId, portalId, limit: 3 } }),
     onSuccess: (res) => {
       setFeedPreview(res);
       toast.success(`${res.valid} oferte valide din ${res.selected} selectate.`);
