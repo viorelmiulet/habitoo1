@@ -41,6 +41,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Dialog,
@@ -136,6 +137,8 @@ function PropertyDetailPage() {
   const [details, setDetails] = useState<PropertyDetailsValue>({});
   // Vânzare / închiriere (pot fi active simultan), fiecare cu preț și monedă.
   const [tx, setTx] = useState<TransactionValue>(emptyTransaction);
+  // Colaborare Habitoo: expunerea anunțului către celelalte agenții din platformă.
+  const [collab, setCollab] = useState(false);
   const startEdit = () => {
     if (!property) return;
     setDraft({
@@ -148,7 +151,13 @@ function PropertyDetailPage() {
       address: property.address ?? "",
       description: property.description ?? "",
       internal_notes: property.internal_notes ?? "",
+      collab_commission_percent:
+        property.collab_commission_percent !== null && property.collab_commission_percent !== undefined
+          ? String(property.collab_commission_percent)
+          : "",
+      collab_terms: property.collab_terms ?? "",
     });
+    setCollab(Boolean(property.collaboration));
     setTx(transactionFromProperty(property));
     setDetails(
       Object.fromEntries(
@@ -196,6 +205,10 @@ function PropertyDetailPage() {
     address: draft.address || null,
     description: draft.description || null,
     internal_notes: draft.internal_notes || null,
+    collaboration: collab,
+    collab_commission_percent:
+      collab && draft.collab_commission_percent ? Number(draft.collab_commission_percent) : null,
+    collab_terms: collab ? draft.collab_terms || null : null,
     ...details,
   });
 
@@ -581,6 +594,46 @@ function PropertyDetailPage() {
                 value={details}
                 onChange={(patch) => setDetails((d) => ({ ...d, ...patch }))}
               />
+              <div className="space-y-3 rounded-xl border border-border p-4">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="space-y-1">
+                    <Label htmlFor="collaboration" className="text-sm">
+                      Disponibilă pentru colaborare
+                    </Label>
+                    <p className="text-xs text-muted-foreground">
+                      Anunțul devine vizibil celorlalte agenții Habitoo (fără date de proprietar sau
+                      note interne), în secțiunea Colaborare.
+                    </p>
+                  </div>
+                  <Switch id="collaboration" checked={collab} onCheckedChange={setCollab} />
+                </div>
+                {collab ? (
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <div className="space-y-2">
+                      <Label htmlFor="collab_commission_percent">Comision colaborare (%)</Label>
+                      <Input
+                        id="collab_commission_percent"
+                        inputMode="decimal"
+                        placeholder="Ex. 1.5"
+                        value={draft.collab_commission_percent ?? ""}
+                        onChange={(e) =>
+                          setDraft((d) => ({ ...d, collab_commission_percent: e.target.value }))
+                        }
+                      />
+                    </div>
+                    <div className="space-y-2 sm:col-span-2">
+                      <Label htmlFor="collab_terms">Condiții de colaborare (opțional)</Label>
+                      <Textarea
+                        id="collab_terms"
+                        rows={2}
+                        placeholder="Ex. doar cumpărători cu credit aprobat"
+                        value={draft.collab_terms ?? ""}
+                        onChange={(e) => setDraft((d) => ({ ...d, collab_terms: e.target.value }))}
+                      />
+                    </div>
+                  </div>
+                ) : null}
+              </div>
               <div className="space-y-2">
                 <Label htmlFor="internal_notes">Note interne</Label>
                 <Textarea

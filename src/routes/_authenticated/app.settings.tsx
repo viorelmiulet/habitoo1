@@ -10,6 +10,7 @@ import { SiteFeedCard } from "@/components/app/SiteFeedCard";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { UserAvatar } from "@/components/app/UserAvatar";
@@ -44,6 +45,7 @@ function SettingsPage() {
     city: user?.organization?.city ?? "",
     phone: user?.organization?.phone ?? "",
     email: user?.organization?.email ?? "",
+    collaboration_enabled: user?.organization?.collaboration_enabled !== false,
   });
 
   const { data: team = [] } = useQuery({
@@ -120,6 +122,7 @@ function SettingsPage() {
           city: orgForm.city || null,
           phone: orgForm.phone || null,
           email: orgForm.email || null,
+          collaboration_enabled: orgForm.collaboration_enabled,
         })
         .eq("id", user.organization.id);
       if (error) throw error;
@@ -260,10 +263,28 @@ function SettingsPage() {
                 onChange={(e) => setOrgForm((f) => ({ ...f, email: e.target.value }))}
               />
             </div>
+            <div className="flex items-start justify-between gap-4 rounded-xl border border-border p-4">
+              <div className="space-y-1">
+                <Label htmlFor="collab_enabled" className="text-sm">
+                  Participă la Colaborare Habitoo
+                </Label>
+                <p className="text-xs text-muted-foreground">
+                  Când este activ, proprietățile tale marcate „Disponibilă pentru colaborare” sunt
+                  vizibile celorlalte agenții Habitoo, iar tu vezi ofertele lor. Dezactivarea te scoate
+                  complet din rețea, în ambele sensuri.
+                </p>
+              </div>
+              <Switch
+                id="collab_enabled"
+                checked={orgForm.collaboration_enabled}
+                onCheckedChange={(v) => setOrgForm((f) => ({ ...f, collaboration_enabled: v }))}
+              />
+            </div>
             <div className="flex items-center justify-between gap-3 rounded-xl border border-border p-4 text-sm">
               <span className="text-muted-foreground">Plan curent</span>
               <StatusBadge tone="primary">{user?.organization?.plan ?? "—"}</StatusBadge>
             </div>
+
             {user?.isAdmin ? (
               <div className="flex justify-end">
                 <Button type="submit" disabled={saveOrg.isPending}>

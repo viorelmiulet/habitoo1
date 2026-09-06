@@ -8,6 +8,8 @@ import {
   Flame,
   FlaskConical,
   Gauge,
+  Handshake,
+
   Layers,
   LifeBuoy,
   MapPin,
@@ -52,6 +54,11 @@ export const agencyNav: NavGroup[] = [
       { label: "Lead-uri", to: "/app/leads", icon: Flame },
     ],
   },
+  {
+    title: "Rețea",
+    items: [{ label: "Colaborare", to: "/app/collaboration", icon: Handshake }],
+  },
+
   {
     title: "Productivitate",
     items: [
