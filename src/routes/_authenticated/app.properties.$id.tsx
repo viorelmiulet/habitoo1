@@ -722,7 +722,8 @@ function PropertyDetailPage() {
           <DocumentsPanel entityType="property" entityId={id} orgId={orgId} />
         </TabsContent>
 
-        <TabsContent value="publishing">
+        <TabsContent value="publishing" className="space-y-4">
+          {user?.isAdmin ? <PropertyPortalsCard propertyId={id} /> : null}
           <div className="panel space-y-4 p-5">
             <div className="flex items-center justify-between">
               <div>
