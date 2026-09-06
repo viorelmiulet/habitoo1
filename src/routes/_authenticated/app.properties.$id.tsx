@@ -495,7 +495,6 @@ function PropertyDetailPage() {
                   title: draft.title,
                   price: draft.price ? Number(draft.price) : null,
                   surface: draft.surface ? Number(draft.surface) : null,
-                  rooms: draft.rooms ? Number(draft.rooms) : null,
                   city: location.localityName || draft.city || null,
                   county: location.countyName || null,
                   county_siruta_code: location.countySirutaCode,
@@ -515,7 +514,6 @@ function PropertyDetailPage() {
                   ["title", "Titlu"],
                   ["price", "Preț"],
                   ["surface", "Suprafață (m²)"],
-                  ["rooms", "Camere"],
                   ["district", "Zonă"],
                   ["address", "Adresă"],
                 ].map(([key, label]) => (

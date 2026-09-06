@@ -198,6 +198,38 @@ export type MapPropertyOptions = {
   portalKeys?: string[];
 };
 
+/** Finisajele publicabile, adunate din grupurile de checkbox ale formularului. */
+function finishes(p: PropertyRow): string[] {
+  return [
+    ...(p.insulation ?? []),
+    ...(p.wall_finishes ?? []),
+    ...(p.floor_finishes ?? []),
+    ...(p.windows ?? []),
+    ...(p.blinds ?? []),
+    ...(p.shutters ?? []),
+    ...(p.entry_door ?? []),
+    ...(p.interior_doors ?? []),
+  ];
+}
+
+/** Dotările publicabile (features legacy + grupurile noi din formular). */
+function amenities(p: PropertyRow): string[] {
+  return [
+    ...new Set([
+      ...(p.features ?? []),
+      ...(p.additional_spaces ?? []),
+      ...(p.kitchen_features ?? []),
+      ...(p.metering ?? []),
+      ...(p.appliances ?? []),
+      ...(p.building_amenities ?? []),
+      ...(p.street_arrangement ?? []),
+      ...(p.views ?? []),
+      ...(p.misc_features ?? []),
+      ...(p.cooling_systems ?? []),
+    ]),
+  ];
+}
+
 export function mapPropertyToFeed(p: PropertyRow, options: MapPropertyOptions): FeedProperty {
   const isRent = p.transaction_kind === "rent";
   const images = (options.images ?? [])
@@ -221,8 +253,8 @@ export function mapPropertyToFeed(p: PropertyRow, options: MapPropertyOptions): 
     descriere: { ro: p.description ?? null, en: null },
     vecinatati: [],
     utilitati: p.utilities ?? [],
-    finisaje: [],
-    dotari: p.features ?? [],
+    finisaje: finishes(p),
+    dotari: amenities(p),
     altedetaliizona: p.district ?? null,
     pretnegociabil: Boolean(p.negotiable),
     longitudine: p.lng ?? null,
@@ -239,19 +271,19 @@ export function mapPropertyToFeed(p: PropertyRow, options: MapPropertyOptions): 
 
     nrcamere: p.rooms ?? null,
     nrdormitoare: p.bedrooms ?? null,
-    nrbucatarii: null,
+    nrbucatarii: p.kitchens ?? null,
     etaj: p.floor ?? null,
     tipcompartimentare: p.layout ?? null,
     suprafatautila: p.usable_surface ?? null,
-    confort: null,
+    confort: p.comfort ?? null,
     suprafataconstruita: p.built_surface ?? null,
     anconstructie: p.build_year ?? null,
     nrbai: p.bathrooms ?? null,
     nrnivele: p.building_floors ?? null,
-    nrbalcoane: null,
-    nrgaraje: null,
-    stadiuconstructie: null,
-    structurarezistenta: null,
+    nrbalcoane: p.balconies ?? null,
+    nrgaraje: p.garages ?? null,
+    stadiuconstructie: p.construction_stage ?? null,
+    structurarezistenta: p.building_structure ?? null,
     status: p.status,
     localitate: p.city ?? null,
     judet: p.county ?? null,
@@ -291,18 +323,18 @@ export function mapPropertyToFeed(p: PropertyRow, options: MapPropertyOptions): 
     ],
     tip: p.property_type,
     suprafata_value: p.surface ?? null,
-    incalzire_value: p.heating ?? null,
+    incalzire_value: p.heating ?? p.heating_systems?.[0] ?? null,
     mobilare_value: p.furnishing ?? null,
     mobilat_value: p.furnishing ?? null,
     parcare_value: p.parking ?? null,
     balcon_value: typeof p.balcony === "boolean" ? p.balcony : null,
     utilitati_values: p.utilities ?? [],
-    dotari_values: p.features ?? [],
+    dotari_values: amenities(p),
     // Fără coloane echivalente în Habitoo → rămân null/goale, nu se derivează.
-    stadiuconstructie_value: null,
-    tipconstructie_value: null,
-    starefinisaje_value: null,
-    bucatarie_values: [],
+    stadiuconstructie_value: p.construction_stage ?? null,
+    tipconstructie_value: p.building_type ?? null,
+    starefinisaje_value: p.finish_state ?? null,
+    bucatarie_values: p.kitchen_features ?? [],
     eficienta_energetica: null,
     consum_specific: null,
     indice_emisii: null,
