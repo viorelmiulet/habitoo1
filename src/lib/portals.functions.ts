@@ -858,8 +858,13 @@ export const getPropertiesPortalMatrix = createServerFn({ method: "POST" })
     if (data.propertyIds.length === 0) return { canManage, properties: {} };
 
     const admin = await loadAdmin();
-    const [{ data: publications }, { data: listings }, { data: connections }, { data: propertyRows }] =
-      await Promise.all([
+    const [
+      { data: publications },
+      { data: listings },
+      { data: connections },
+      { data: propertyRows },
+      { data: activeKeys },
+    ] = await Promise.all([
         admin
           .from("portal_publications")
           .select("property_id, portal_key, enabled, status, last_synced_at, last_error, external_ref")
@@ -876,7 +881,15 @@ export const getPropertiesPortalMatrix = createServerFn({ method: "POST" })
           .select("id, publish_status, status, deleted_at")
           .eq("organization_id", organizationId)
           .in("id", data.propertyIds),
+        admin
+          .from("portal_api_keys")
+          .select("portal")
+          .eq("organization_id", organizationId)
+          .eq("status", "active"),
       ]);
+    // Portalurile de tip feed nu au conexiune cu credențiale: sunt „configurate”
+    // când există o cheie Habitoo activă cu care pot citi feedul.
+    const keyedPortals = new Set((activeKeys ?? []).map((k) => k.portal));
 
     const { isPropertyFeedEligible } = await import("@/lib/site-feed/mapper");
     const eligibleById = new Map(
@@ -892,10 +905,13 @@ export const getPropertiesPortalMatrix = createServerFn({ method: "POST" })
         );
         const listing = (listings ?? []).find((l) => l.property_id === propertyId && l.portal === portal.id);
         const connection = (connections ?? []).find((c) => c.portal === portal.id);
-        const configured =
-          portal.status === "available" && (connection?.status === "connected" || connection?.status === "ready");
-        const listingStatus = listing?.status ?? "not_published";
         const pushSupported = portal.capabilities.includes("publish_listing");
+        const configured =
+          portal.status === "available" &&
+          (pushSupported
+            ? connection?.status === "connected" || connection?.status === "ready"
+            : keyedPortals.has(portal.id));
+        const listingStatus = listing?.status ?? "not_published";
         const state = deriveState({
           availability: portal.status,
           configured,
