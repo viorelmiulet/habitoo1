@@ -21,6 +21,7 @@ import { EmptyState } from "@/components/app/EmptyState";
 import { ConfirmDialog } from "@/components/app/ConfirmDialog";
 import { ActivityDialog } from "@/components/app/ActivityDialog";
 import { PropertyMediaManager } from "@/components/app/PropertyMediaManager";
+import { PropertyPortalsCard } from "@/components/app/PropertyPortalsCard";
 import { DocumentsPanel } from "@/components/app/DocumentsPanel";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
