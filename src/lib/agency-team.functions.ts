@@ -203,14 +203,27 @@ export const inviteAgent = createServerFn({ method: "POST" })
       );
     }
 
+    // Numele agenției ajunge în emailul de invitație prin parametrul din redirect_to:
+    // webhookul de email nu primește metadatele utilizatorului.
+    const org = await admin
+      .from("organizations")
+      .select("name")
+      .eq("id", organizationId)
+      .maybeSingle();
+    const agencyName = (org.data?.name ?? "").trim();
+    const callbackPath = agencyName
+      ? `/auth/callback?agency=${encodeURIComponent(agencyName)}`
+      : "/auth/callback";
+
     // Un cont poate exista deja în Auth fără profil (ex. o agenție ștearsă anterior sau
     // o înregistrare neterminată). În acest caz nu mai trimitem o invitație nouă — îl
     // atașăm agenției și îi trimitem un link de setare a parolei.
     let newUserId: string;
     const invited = await admin.auth.admin.inviteUserByEmail(email, {
-      redirectTo: getCrmUrl("/auth/callback"),
+      redirectTo: getCrmUrl(callbackPath),
       data: { full_name: data.full_name },
     });
+
     if (invited.data?.user) {
       newUserId = invited.data.user.id;
     } else {
