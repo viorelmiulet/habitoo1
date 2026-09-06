@@ -19,6 +19,7 @@ import {
   type PortalDefinition,
 } from "@/lib/portals/registry";
 import { PORTAL_ERROR_MESSAGE } from "@/lib/portals/errors";
+import type { ImoveListing } from "@/lib/portals/imove/mapper";
 
 export type PortalHubItem = {
   portal: PortalDefinition;
@@ -1120,7 +1121,7 @@ export type PortalFeedPreview = {
   /** Câte oferte intră efectiv în feed. */
   valid: number;
   /** Primele oferte, exact în forma trimisă portalului. */
-  sample: unknown[];
+  sample: ImoveListing[];
   /** Oferte selectate dar excluse, cu motivul exact. */
   excluded: { propertyId: string; reference: string | null; title: string | null; reasons: string[] }[];
   warnings: { externalId: string; messages: string[] }[];
