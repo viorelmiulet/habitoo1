@@ -453,6 +453,7 @@ export const issuePortalApiKey = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) =>
     z
       .object({
+        organizationId: z.string().uuid(),
         portalId: z.string().min(1).max(40),
         label: z.string().trim().min(2).max(80),
         scopes: z.array(z.enum(["feed:read", "agents:read", "leads:write"])).min(1).optional(),
@@ -770,14 +771,14 @@ export const getPortalLogs = createServerFn({ method: "POST" })
   .handler(async ({ data, context }): Promise<PortalLogItem[]> => {
     const organizationId = await requireSuperadminOrg(context as unknown as AuthContext, data.organizationId);
     const admin = await loadAdmin();
-    const { data } = await admin
+    const { data: rows } = await admin
       .from("portal_operation_logs")
       .select("id, portal, operation, success, error_code, error_message, property_id, created_at")
       .eq("organization_id", organizationId)
       .order("created_at", { ascending: false })
       .limit(50);
 
-    return (data ?? []).map((row) => ({
+    return (rows ?? []).map((row) => ({
       id: row.id,
       portal: row.portal,
       operation: row.operation,
