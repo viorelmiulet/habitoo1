@@ -258,17 +258,33 @@ function PropertyDetailPage() {
    * (2) publică pe site, (3) aplică bifele curente de portaluri.
    */
   const publish = useMutation({
-    mutationFn: async () => {
+    mutationFn: async (vars?: { enableCollab?: boolean; percent?: number | null; prompted?: boolean }) => {
+      const extra: Record<string, unknown> = {};
+      if (vars?.enableCollab) {
+        extra.collaboration = true;
+        if (vars.percent !== null && vars.percent !== undefined) {
+          extra.collab_commission_percent = vars.percent;
+        }
+      }
+      if (vars?.prompted) extra.collab_prompted_at = new Date().toISOString();
+
       if (editing) {
         if (!hasTransactionSelection(tx)) {
           throw new Error("Alege tipul tranzacției: de vânzare, de închiriere sau ambele.");
         }
         const { error: saveError } = await supabase
           .from("properties")
-          .update({ ...buildEditPatch(), updated_by: user?.userId ?? null } as never)
+          .update({ ...buildEditPatch(), ...extra, updated_by: user?.userId ?? null } as never)
           .eq("id", id);
         if (saveError) throw saveError;
+      } else if (Object.keys(extra).length > 0) {
+        const { error: extraError } = await supabase
+          .from("properties")
+          .update({ ...extra, updated_by: user?.userId ?? null } as never)
+          .eq("id", id);
+        if (extraError) throw extraError;
       }
+
 
       const { error } = await supabase
         .from("properties")
