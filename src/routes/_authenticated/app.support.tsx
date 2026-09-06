@@ -49,7 +49,15 @@ function MyTicketsPage() {
         <EmptyState
           icon={LifeBuoy}
           title="Nu ai tichete deschise"
-          description="Folosește butonul de ajutor din bara de sus pentru a trimite o solicitare echipei Habitoo."
+          description="Ai o problemă, o întrebare sau o idee? Deschide un tichet și echipa Habitoo îți răspunde direct în aplicație."
+          action={
+            <SupportWidget>
+              <Button>
+                <LifeBuoy className="mr-2 size-4" />
+                Deschide tichet
+              </Button>
+            </SupportWidget>
+          }
         />
       ) : (
         <div className="grid gap-4 lg:grid-cols-[minmax(0,340px)_minmax(0,1fr)]">
