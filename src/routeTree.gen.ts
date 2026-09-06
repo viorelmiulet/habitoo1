@@ -53,6 +53,7 @@ import { Route as ApiPublicSitesV1AgentsRouteImport } from './routes/api/public/
 import { Route as ApiPublicSitesV1ContactsRouteImport } from './routes/api/public/sites/v1/contacts'
 import { Route as ApiPublicSitesV1PropertiesRouteImport } from './routes/api/public/sites/v1/properties'
 import { Route as ApiPublicSitesV1VisitsRouteImport } from './routes/api/public/sites/v1/visits'
+import { Route as ApiPublicSitesV1MediaIdRouteImport } from './routes/api/public/sites/v1/media.$id'
 import { Route as ApiPublicSitesV1PropertiesIdRouteImport } from './routes/api/public/sites/v1/properties.$id'
 
 const IndexRoute = IndexRouteImport.update({
@@ -294,6 +295,11 @@ const ApiPublicSitesV1VisitsRoute = ApiPublicSitesV1VisitsRouteImport.update({
   path: '/api/public/sites/v1/visits',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicSitesV1MediaIdRoute = ApiPublicSitesV1MediaIdRouteImport.update({
+  id: '/api/public/sites/v1/media/$id',
+  path: '/api/public/sites/v1/media/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicSitesV1PropertiesIdRoute =
   ApiPublicSitesV1PropertiesIdRouteImport.update({
     id: '/$id',
@@ -345,6 +351,7 @@ export interface FileRoutesByFullPath {
   '/api/public/sites/v1/contacts': typeof ApiPublicSitesV1ContactsRoute
   '/api/public/sites/v1/properties': typeof ApiPublicSitesV1PropertiesRouteWithChildren
   '/api/public/sites/v1/visits': typeof ApiPublicSitesV1VisitsRoute
+  '/api/public/sites/v1/media/$id': typeof ApiPublicSitesV1MediaIdRoute
   '/api/public/sites/v1/properties/$id': typeof ApiPublicSitesV1PropertiesIdRoute
 }
 export interface FileRoutesByTo {
@@ -389,6 +396,7 @@ export interface FileRoutesByTo {
   '/api/public/sites/v1/contacts': typeof ApiPublicSitesV1ContactsRoute
   '/api/public/sites/v1/properties': typeof ApiPublicSitesV1PropertiesRouteWithChildren
   '/api/public/sites/v1/visits': typeof ApiPublicSitesV1VisitsRoute
+  '/api/public/sites/v1/media/$id': typeof ApiPublicSitesV1MediaIdRoute
   '/api/public/sites/v1/properties/$id': typeof ApiPublicSitesV1PropertiesIdRoute
 }
 export interface FileRoutesById {
@@ -437,6 +445,7 @@ export interface FileRoutesById {
   '/api/public/sites/v1/contacts': typeof ApiPublicSitesV1ContactsRoute
   '/api/public/sites/v1/properties': typeof ApiPublicSitesV1PropertiesRouteWithChildren
   '/api/public/sites/v1/visits': typeof ApiPublicSitesV1VisitsRoute
+  '/api/public/sites/v1/media/$id': typeof ApiPublicSitesV1MediaIdRoute
   '/api/public/sites/v1/properties/$id': typeof ApiPublicSitesV1PropertiesIdRoute
 }
 export interface FileRouteTypes {
@@ -485,6 +494,7 @@ export interface FileRouteTypes {
     | '/api/public/sites/v1/contacts'
     | '/api/public/sites/v1/properties'
     | '/api/public/sites/v1/visits'
+    | '/api/public/sites/v1/media/$id'
     | '/api/public/sites/v1/properties/$id'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -529,6 +539,7 @@ export interface FileRouteTypes {
     | '/api/public/sites/v1/contacts'
     | '/api/public/sites/v1/properties'
     | '/api/public/sites/v1/visits'
+    | '/api/public/sites/v1/media/$id'
     | '/api/public/sites/v1/properties/$id'
   id:
     | '__root__'
@@ -576,6 +587,7 @@ export interface FileRouteTypes {
     | '/api/public/sites/v1/contacts'
     | '/api/public/sites/v1/properties'
     | '/api/public/sites/v1/visits'
+    | '/api/public/sites/v1/media/$id'
     | '/api/public/sites/v1/properties/$id'
   fileRoutesById: FileRoutesById
 }
@@ -599,6 +611,7 @@ export interface RootRouteChildren {
   ApiPublicSitesV1ContactsRoute: typeof ApiPublicSitesV1ContactsRoute
   ApiPublicSitesV1PropertiesRoute: typeof ApiPublicSitesV1PropertiesRouteWithChildren
   ApiPublicSitesV1VisitsRoute: typeof ApiPublicSitesV1VisitsRoute
+  ApiPublicSitesV1MediaIdRoute: typeof ApiPublicSitesV1MediaIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -911,6 +924,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicSitesV1VisitsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/sites/v1/media/$id': {
+      id: '/api/public/sites/v1/media/$id'
+      path: '/api/public/sites/v1/media/$id'
+      fullPath: '/api/public/sites/v1/media/$id'
+      preLoaderRoute: typeof ApiPublicSitesV1MediaIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/sites/v1/properties/$id': {
       id: '/api/public/sites/v1/properties/$id'
       path: '/$id'
@@ -1048,6 +1068,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicSitesV1ContactsRoute: ApiPublicSitesV1ContactsRoute,
   ApiPublicSitesV1PropertiesRoute: ApiPublicSitesV1PropertiesRouteWithChildren,
   ApiPublicSitesV1VisitsRoute: ApiPublicSitesV1VisitsRoute,
+  ApiPublicSitesV1MediaIdRoute: ApiPublicSitesV1MediaIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
