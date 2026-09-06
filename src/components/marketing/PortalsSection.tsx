@@ -49,9 +49,6 @@ export function PortalsSection() {
                   />
                   <div className="min-w-0">
                     <p className="truncate text-sm font-semibold text-navy">{portal.display_name}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {portal.status === "available" ? "Integrare disponibilă" : "În pregătire"}
-                    </p>
                   </div>
                 </div>
               </Reveal>
