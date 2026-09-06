@@ -96,7 +96,10 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { title: "Habitoo CRM" },
       { name: "description", content: "CRM imobiliar multi-agenție pentru agențiile din România." },
       { name: "author", content: "Lovable" },
-      { property: "og:title", content: "Habitoo CRM" },
+      {
+        property: "og:title",
+        content: "Habitoo CRM — CRM imobiliar pentru agențiile din România",
+      },
       {
         property: "og:description",
         content: "CRM imobiliar multi-agenție pentru agențiile din România.",
