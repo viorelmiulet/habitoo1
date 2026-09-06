@@ -90,6 +90,13 @@ function NewPropertyPage() {
   const set = (key: keyof typeof form, value: string | boolean) =>
     setForm((f) => ({ ...f, [key]: value }));
 
+  // Colaborare Habitoo: comisionul și condițiile completate la crearea anunțului.
+  const [collabPercent, setCollabPercent] = useState("");
+  const [collabTerms, setCollabTerms] = useState("");
+  // Nudge-ul de colaborare se arată o singură dată, doar dacă agenția participă.
+  const [nudgeOpen, setNudgeOpen] = useState(false);
+  const orgCollabEnabled = user?.organization?.collaboration_enabled === true;
+
   const create = useMutation({
     mutationFn: async () => {
       if (!user?.organization?.id) throw new Error("Agenția nu este configurată.");
