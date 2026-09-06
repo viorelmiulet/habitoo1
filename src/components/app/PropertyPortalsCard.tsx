@@ -96,7 +96,6 @@ export function PropertyPortalsCard({ propertyId }: { propertyId: string }) {
         },
       }),
     onSuccess: (res) => {
-      setConfirming(false);
       queryClient.invalidateQueries({ queryKey });
       queryClient.invalidateQueries({ queryKey: ["property-portals-matrix"] });
       const failed = res.results.filter((r) => !r.ok);
@@ -218,7 +217,12 @@ export function PropertyPortalsCard({ propertyId }: { propertyId: string }) {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Anulează</AlertDialogCancel>
-            <AlertDialogAction onClick={() => apply.mutate()}>Confirmă retragerea</AlertDialogAction>
+            <AlertDialogAction
+              onClick={() => {
+                setConfirming(false);
+                apply.mutate();
+              }}
+            >Confirmă retragerea</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
