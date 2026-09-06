@@ -2126,14 +2126,6 @@ export type Database = {
       }
       is_org_admin: { Args: never; Returns: boolean }
       is_superadmin: { Args: never; Returns: boolean }
-      org_seat_usage: {
-        Args: { _org: string }
-        Returns: {
-          plan: string
-          seat_limit: number
-          used: number
-        }[]
-      }
       plan_agent_limit: { Args: { _plan: string }; Returns: number }
       qa_purge_demo_organization: { Args: { _org: string }; Returns: string[] }
       qa_reset_demo_organization: { Args: { _org: string }; Returns: Json }
