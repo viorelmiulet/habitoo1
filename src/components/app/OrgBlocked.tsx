@@ -1,4 +1,4 @@
-import { ShieldOff } from "lucide-react";
+import { Clock, ShieldOff } from "lucide-react";
 import { useNavigate } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
@@ -16,9 +16,15 @@ export function OrgBlocked({ reason }: { reason: OrgBlockReason }) {
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="panel max-w-md space-y-4 p-8 text-center">
-        <ShieldOff className="mx-auto size-10 text-muted-foreground" />
+        {reason === "pending_approval" ? (
+          <Clock className="mx-auto size-10 text-primary" />
+        ) : (
+          <ShieldOff className="mx-auto size-10 text-muted-foreground" />
+        )}
         <h1 className="text-lg font-semibold">
-          {reason === "archived"
+          {reason === "pending_approval"
+            ? "Agenție în așteptarea aprobării"
+            : reason === "archived"
             ? "Agenție arhivată"
             : reason === "cancelled"
               ? "Agenție anulată"

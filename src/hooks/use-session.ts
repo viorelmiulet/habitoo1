@@ -58,7 +58,10 @@ export async function fetchCurrentUser(): Promise<CurrentUser | null> {
     isSuperadmin: roles.includes("superadmin"),
     isAdmin: roles.includes("superadmin") || roles.includes("agency_admin"),
     orgBlocked:
-      blockedRaw === "suspended" || blockedRaw === "archived" || blockedRaw === "cancelled"
+      blockedRaw === "suspended" ||
+      blockedRaw === "archived" ||
+      blockedRaw === "cancelled" ||
+      blockedRaw === "pending_approval"
         ? (blockedRaw as OrgBlockReason)
         : null,
   };

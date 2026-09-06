@@ -4,7 +4,7 @@
 import { createMiddleware } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
-export type OrgBlockReason = "suspended" | "archived" | "cancelled";
+export type OrgBlockReason = "suspended" | "archived" | "cancelled" | "pending_approval";
 
 /** Prefix distinct, ca frontendul să poată afișa o pagină dedicată. */
 export const ORG_BLOCKED_CODE = "ORG_ACCESS_BLOCKED";
@@ -16,6 +16,8 @@ export const ORG_BLOCKED_MESSAGES: Record<OrgBlockReason, string> = {
     "Contul agenției tale a fost arhivat. Contactează administratorul platformei.",
   cancelled:
     "Contul agenției tale a fost anulat. Contactează administratorul platformei.",
+  pending_approval:
+    "Contul agenției tale așteaptă aprobare. Vei primi acces imediat ce este validat.",
 };
 
 export function orgBlockedError(reason: OrgBlockReason): Error {
@@ -32,6 +34,7 @@ export function parseOrgBlocked(error: unknown): OrgBlockReason | null {
   if (!raw.includes(ORG_BLOCKED_CODE)) return null;
   if (raw.includes(":archived")) return "archived";
   if (raw.includes(":cancelled")) return "cancelled";
+  if (raw.includes(":pending_approval")) return "pending_approval";
   return "suspended";
 }
 
@@ -43,6 +46,7 @@ export function orgBlockReason(org: {
   if (org.archived_at) return "archived";
   if (org.status === "suspended") return "suspended";
   if (org.status === "cancelled") return "cancelled";
+  if (org.status === "pending_approval") return "pending_approval";
   return null;
 }
 
