@@ -74,22 +74,23 @@ export function usePropertyCovers(propertyIds: string[]) {
     },
   });
 
+  // Cheie stabilă: efectul rulează doar când se schimbă efectiv căile.
+  const paths = Object.values(covers)
+    .map((c) => c.storage_path)
+    .filter((v): v is string => Boolean(v))
+    .sort();
+  const pathsKey = paths.join("|");
+
   useEffect(() => {
-    const paths = Object.values(covers)
-      .map((c) => c.storage_path)
-      .filter((p): p is string => Boolean(p));
-    if (paths.length === 0) {
-      setSigned({});
-      return;
-    }
+    if (!pathsKey) return;
     let active = true;
-    signedUrls(MEDIA_BUCKET, paths).then((map) => {
+    signedUrls(MEDIA_BUCKET, pathsKey.split("|")).then((map) => {
       if (active) setSigned(map);
     });
     return () => {
       active = false;
     };
-  }, [covers]);
+  }, [pathsKey]);
 
   return (propertyId: string): PropertyCover => {
     const cover = covers[propertyId];
