@@ -139,6 +139,8 @@ function PropertyDetailPage() {
   const [tx, setTx] = useState<TransactionValue>(emptyTransaction);
   // Colaborare Habitoo: expunerea anunțului către celelalte agenții din platformă.
   const [collab, setCollab] = useState(false);
+  // Nudge-ul de colaborare: o singură dată per proprietate, doar dacă agenția participă.
+  const [nudgeOpen, setNudgeOpen] = useState(false);
   const startEdit = () => {
     if (!property) return;
     setDraft({
