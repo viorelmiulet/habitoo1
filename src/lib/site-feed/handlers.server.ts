@@ -73,6 +73,25 @@ async function portalKeysFor(
   return result;
 }
 
+/**
+ * Ofertele bifate pentru un portal anume. Feedul citit de un portal (ClickImob
+ * etc.) trebuie să conțină DOAR aceste oferte: dacă o ofertă retrasă rămâne în
+ * feed, portalul o reimportă la următoarea citire și retragerea nu are efect.
+ */
+async function selectedPropertyIdsForPortal(
+  organizationId: string,
+  portal: string,
+): Promise<string[]> {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { data } = await supabaseAdmin
+    .from("portal_publications")
+    .select("property_id")
+    .eq("organization_id", organizationId)
+    .eq("portal_key", portal)
+    .eq("enabled", true);
+  return [...new Set((data ?? []).map((row) => row.property_id))];
+}
+
 export async function handlePropertiesList(
   request: Request,
   auth: FeedAuthOk,
@@ -83,14 +102,30 @@ export async function handlePropertiesList(
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
   const from = (page - 1) * perPage;
-  const baseQuery = () =>
-    supabaseAdmin
+  // Cheie de portal → feed restrâns la ofertele bifate pentru acel portal.
+  const selectedIds = auth.portal
+    ? await selectedPropertyIdsForPortal(auth.organizationId, auth.portal)
+    : null;
+  if (selectedIds !== null && selectedIds.length === 0) {
+    const empty = buildPaginatedFeed({
+      data: [],
+      total: 0,
+      page,
+      perPage,
+      requestUrl: url,
+    });
+    return { response: jsonResponse({ ...empty, api_version: FEED_API_VERSION }, 200, 60), items: 0 };
+  }
+  const baseQuery = () => {
+    const query = supabaseAdmin
       .from("properties")
       .select("*", { count: "exact" })
       .eq("organization_id", auth.organizationId)
       .eq("publish_status", "published")
       .is("deleted_at", null)
       .in("status", [...FEED_PUBLIC_STATUSES]);
+    return selectedIds ? query.in("id", selectedIds) : query;
+  };
 
   let { data, count, error } = await baseQuery()
     .order("updated_at", { ascending: false })
@@ -178,6 +213,13 @@ export async function handlePropertyDetail(
   const row = (data ?? [])[0] as PropertyRow | undefined;
   if (!row || !isPropertyFeedEligible(row)) {
     return { response: errorResponse(404, "Property not found."), items: 0 };
+  }
+  // Pentru o cheie de portal, oferta există doar dacă este bifată pentru el.
+  if (auth.portal) {
+    const selected = await selectedPropertyIdsForPortal(auth.organizationId, auth.portal);
+    if (!selected.includes(row.id)) {
+      return { response: errorResponse(404, "Property not found."), items: 0 };
+    }
   }
 
   const [images, agent, portalsByProperty] = await Promise.all([
