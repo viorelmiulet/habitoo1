@@ -237,7 +237,14 @@ function SettingsPage() {
             Invitarea de agenți noi și permisiunile avansate ajung în faza următoare.
           </p>
         </TabsContent>
+
+        {user?.isAdmin ? (
+          <TabsContent value="integrations">
+            <SiteFeedCard />
+          </TabsContent>
+        ) : null}
       </Tabs>
+
     </>
   );
 }
