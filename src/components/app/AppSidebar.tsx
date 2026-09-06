@@ -63,6 +63,7 @@ export const agencyNav: NavGroup[] = [
       { label: "Rapoarte", to: "/app/reports", icon: ChartBar },
       { label: "Obiective", to: "/app/goals", icon: Layers },
       { label: "Notificări", to: "/app/notifications", icon: Bell },
+      { label: "Agenți", to: "/app/team", icon: Users },
       { label: "Setări agenție", to: "/app/settings", icon: Settings },
     ],
   },
