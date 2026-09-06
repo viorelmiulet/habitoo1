@@ -8,6 +8,8 @@ import {
   Flame,
   FlaskConical,
   Gauge,
+  Handshake,
+
   Layers,
   LifeBuoy,
   MapPin,
