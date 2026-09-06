@@ -11,10 +11,13 @@ export const Route = createFileRoute("/api/public/sites/v1/media/$id")({
   server: {
     handlers: {
       GET: async ({ params }) => {
-        const id = String(params.id ?? "");
+        // Acceptăm și forma `{id}.jpg`: unele portaluri (iMove) validează
+        // extensia imaginii din URL înainte de a o descărca.
+        const id = String(params.id ?? "").replace(/\.(jpe?g|png|webp)$/i, "");
         if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)) {
           return new Response("Not found", { status: 404 });
         }
+
         try {
           const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
           const { data: image } = await supabaseAdmin
