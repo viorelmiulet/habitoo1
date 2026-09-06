@@ -290,6 +290,15 @@ function AgenciesPage() {
                     Arhivează
                   </Button>
                 )}
+                <Button
+                  size="sm"
+                  variant="destructive"
+                  disabled={hardDelete.isPending}
+                  onClick={() => setPendingDelete({ id: o.id, name: o.name })}
+                >
+                  <Trash2 className="mr-1.5 size-4" />
+                  Șterge
+                </Button>
                 <span className="w-24 text-right text-xs text-muted-foreground">
                   {formatDate(o.created_at)}
                 </span>
