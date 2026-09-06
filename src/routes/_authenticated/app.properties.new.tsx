@@ -62,10 +62,7 @@ function NewPropertyPage() {
   const [form, setForm] = useState({
     title: "",
     property_type: "apartment",
-    transaction_kind: "sale",
     status: "draft",
-    price: "",
-    currency: "EUR",
     surface: "",
     rooms: "",
     bathrooms: "",
@@ -236,28 +233,6 @@ function NewPropertyPage() {
           <h2 className="text-sm font-semibold">Tranzacție, preț și caracteristici</h2>
           <PropertyTransactionFields idPrefix="new" value={tx} onChange={setTx} />
           <div className="grid gap-4 md:grid-cols-3">
-            <div className="space-y-2">
-              <Label htmlFor="price">Preț</Label>
-              <Input
-                id="price"
-                type="number"
-                min="0"
-                value={form.price}
-                onChange={(e) => set("price", e.target.value)}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Monedă</Label>
-              <Select value={form.currency} onValueChange={(v) => set("currency", v)}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="EUR">EUR</SelectItem>
-                  <SelectItem value="RON">RON</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
             <div className="space-y-2">
               <Label htmlFor="commission">Comision</Label>
               <Input
