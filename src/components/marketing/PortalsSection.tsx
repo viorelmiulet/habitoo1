@@ -12,7 +12,7 @@ const benefits = [
 
 export function PortalsSection() {
   return (
-    <Section id="portaluri" tone="muted">
+    <Section id="portaluri">
       <Container>
         <SectionHeading
           eyebrow={
