@@ -2,7 +2,7 @@
 // Citirea statisticilor este permisă oricărui utilizator autentificat (RLS: read-only),
 // dar importul/actualizarea nomenclatorului este permis exclusiv superadminului și este auditat.
 import { createServerFn } from "@tanstack/react-start";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { requireActiveOrgAuth } from "@/lib/org-access";
 
 type AuthContext = {
   supabase: { rpc: (fn: "is_superadmin") => PromiseLike<{ data: boolean | null; error: { message: string } | null }> };
@@ -27,7 +27,7 @@ export type NomenclatureStats = {
 };
 
 export const getNomenclatureStats = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireActiveOrgAuth])
   .handler(async ({ context }): Promise<NomenclatureStats> => {
     const supabase = context.supabase as unknown as import("@supabase/supabase-js").SupabaseClient<
       import("@/integrations/supabase/types").Database
@@ -61,7 +61,7 @@ export type SirutaImportResult = {
 };
 
 export const importSiruta = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireActiveOrgAuth])
   .handler(async ({ context }): Promise<SirutaImportResult> => {
     const actorId = await assertSuperadmin(context);
 

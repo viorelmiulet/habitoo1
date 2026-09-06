@@ -10,7 +10,7 @@
  */
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { requireActiveOrgAuth } from "@/lib/org-access";
 import {
   PORTALS,
   derivePortalConnectionStatus,
@@ -233,7 +233,7 @@ async function buildContext(organizationId: string, definition: PortalDefinition
 }
 
 export const getPortalHub = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireActiveOrgAuth])
   .inputValidator((input: unknown) => z.object({ organizationId: z.string().uuid() }).parse(input))
   .handler(async ({ data, context }): Promise<PortalHubItem[]> => {
     const organizationId = await requireSuperadminOrg(context as unknown as AuthContext, data.organizationId);
@@ -356,7 +356,7 @@ const saveSchema = z.object({
  * și totuși dezactivat pentru o agenție (ex. relație comercială neîncheiată).
  */
 export const setPortalActivation = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireActiveOrgAuth])
   .inputValidator((input: unknown) =>
     z
       .object({
@@ -405,7 +405,7 @@ export const setPortalActivation = createServerFn({ method: "POST" })
   });
 
 export const savePortalConnection = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireActiveOrgAuth])
   .inputValidator((input: unknown) => saveSchema.parse(input))
   .handler(async ({ data, context }) => {
     const organizationId = await requireSuperadminOrg(context as unknown as AuthContext, data.organizationId);
@@ -465,7 +465,7 @@ export const savePortalConnection = createServerFn({ method: "POST" })
   });
 
 export const disconnectPortal = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireActiveOrgAuth])
   .inputValidator((input: unknown) => z.object({ organizationId: z.string().uuid(), portalId: z.string().min(1).max(40) }).parse(input))
   .handler(async ({ data, context }) => {
     const organizationId = await requireSuperadminOrg(context as unknown as AuthContext, data.organizationId);
@@ -501,7 +501,7 @@ export const disconnectPortal = createServerFn({ method: "POST" })
   });
 
 export const testPortalConnection = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireActiveOrgAuth])
   .inputValidator((input: unknown) => z.object({ organizationId: z.string().uuid(), portalId: z.string().min(1).max(40) }).parse(input))
   .handler(async ({ data, context }) => {
     const organizationId = await requireSuperadminOrg(context as unknown as AuthContext, data.organizationId);
@@ -555,7 +555,7 @@ export const testPortalConnection = createServerFn({ method: "POST" })
   });
 
 export const issuePortalApiKey = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireActiveOrgAuth])
   .inputValidator((input: unknown) =>
     z
       .object({
@@ -611,7 +611,7 @@ export const issuePortalApiKey = createServerFn({ method: "POST" })
   });
 
 export const revokePortalApiKey = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireActiveOrgAuth])
   .inputValidator((input: unknown) => z.object({ organizationId: z.string().uuid(), keyId: z.string().uuid() }).parse(input))
   .handler(async ({ data, context }) => {
     const organizationId = await requireSuperadminOrg(context as unknown as AuthContext, data.organizationId);
@@ -794,7 +794,7 @@ async function executeListingAction(input: {
 }
 
 export const runPortalListingAction = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireActiveOrgAuth])
   .inputValidator((input: unknown) => listingSchema.parse(input))
   .handler(async ({ data, context }) => {
     const { organizationId, superadmin } = await resolvePublishingOrg(
@@ -815,7 +815,7 @@ export const runPortalListingAction = createServerFn({ method: "POST" })
 
 
 export const getPropertyPortalStatus = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireActiveOrgAuth])
   .inputValidator((input: unknown) => z.object({ organizationId: z.string().uuid().optional(), propertyId: z.string().uuid() }).parse(input))
   .handler(async ({ data, context }) => {
     const { organizationId, superadmin } = await resolvePublishingOrg(
@@ -890,7 +890,7 @@ export const getPropertyPortalStatus = createServerFn({ method: "POST" })
   });
 
 export const getPortalLogs = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireActiveOrgAuth])
   .inputValidator((input: unknown) => z.object({ organizationId: z.string().uuid() }).parse(input))
   .handler(async ({ data, context }): Promise<PortalLogItem[]> => {
     const organizationId = await requireSuperadminOrg(context as unknown as AuthContext, data.organizationId);
@@ -981,7 +981,7 @@ function deriveState(input: {
 }
 
 export const getPropertiesPortalMatrix = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireActiveOrgAuth])
   .inputValidator((input: unknown) =>
     z
       .object({
@@ -1090,7 +1090,7 @@ export const getPropertiesPortalMatrix = createServerFn({ method: "POST" })
 
 /** Activează/dezactivează publicarea unei proprietăți pe un portal. */
 export const setPropertyPortalSelection = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireActiveOrgAuth])
   .inputValidator((input: unknown) =>
     z
       .object({
@@ -1183,7 +1183,7 @@ export const setPropertyPortalSelection = createServerFn({ method: "POST" })
  * `mode: "update"` atinge exclusiv portalurile unde oferta este deja publicată.
  */
 export const publishPropertyToSelectedPortals = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireActiveOrgAuth])
   .inputValidator((input: unknown) =>
     z
       .object({
@@ -1306,7 +1306,7 @@ export type PortalFeedPreview = {
  * nu trimite nimic, nu modifică nimic, doar arată ce ar citi portalul acum.
  */
 export const previewPortalFeed = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireActiveOrgAuth])
   .inputValidator((input: unknown) =>
     z.object({ organizationId: z.string().uuid(), portalId: z.string().min(1).max(40), limit: z.number().int().min(1).max(10).default(3) }).parse(input),
   )
@@ -1390,7 +1390,7 @@ const applySelectionSchema = z.object({
  * Eșecul unui portal nu anulează operațiunile reușite pe celelalte.
  */
 export const applyPropertyPortalSelection = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireActiveOrgAuth])
   .inputValidator((input: unknown) => applySelectionSchema.parse(input))
   .handler(async ({ data, context }): Promise<{ ok: boolean; results: PortalSelectionOutcome[] }> => {
     const { organizationId, superadmin } = await resolvePublishingOrg(
@@ -1609,7 +1609,7 @@ export const applyPropertyPortalSelection = createServerFn({ method: "POST" })
 
 /** Agențiile disponibile în panoul Superadmin → Portaluri. */
 export const listPortalOrganizations = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireActiveOrgAuth])
   .handler(async ({ context }): Promise<{ id: string; name: string }[]> => {
     await requireSuperadmin(context as unknown as AuthContext);
     const admin = await loadAdmin();
@@ -1619,7 +1619,7 @@ export const listPortalOrganizations = createServerFn({ method: "POST" })
 
 /** Ofertele unei agenții, pentru selecția de portaluri din Superadmin. */
 export const listOrgPropertiesForPortals = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireActiveOrgAuth])
   .inputValidator((input: unknown) =>
     z
       .object({

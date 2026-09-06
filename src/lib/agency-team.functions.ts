@@ -4,7 +4,7 @@
 // aplicată server-side, nu doar în interfață.
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { requireActiveOrgAuth } from "@/lib/org-access";
 import { planAgentLimit, planLabel, normalizePlan, nextPlan, type PlanKey } from "@/lib/plans";
 import { getCrmUrl } from "@/lib/host";
 
@@ -140,7 +140,7 @@ async function writeAudit(
 }
 
 export const getTeamOverview = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireActiveOrgAuth])
   .handler(async ({ context }): Promise<TeamOverview> => {
     const { organizationId } = await requireOrgAdmin(context as unknown as AuthContext);
     return buildOverview(await loadAdmin(), organizationId);
@@ -155,7 +155,7 @@ export const inviteAgent = createServerFn({ method: "POST" })
       })
       .parse(data),
   )
-  .middleware([requireSupabaseAuth])
+  .middleware([requireActiveOrgAuth])
   .handler(async ({ data, context }): Promise<TeamOverview> => {
     const { organizationId, actorId } = await requireOrgAdmin(context as unknown as AuthContext);
     const admin = await loadAdmin();
@@ -214,7 +214,7 @@ export const setAgentActive = createServerFn({ method: "POST" })
   .inputValidator((data: unknown) =>
     z.object({ userId: z.string().uuid(), isActive: z.boolean() }).parse(data),
   )
-  .middleware([requireSupabaseAuth])
+  .middleware([requireActiveOrgAuth])
   .handler(async ({ data, context }): Promise<TeamOverview> => {
     const { organizationId, actorId } = await requireOrgAdmin(context as unknown as AuthContext);
     const admin = await loadAdmin();
@@ -252,7 +252,7 @@ export const setAgentActive = createServerFn({ method: "POST" })
 
 export const removeAgent = createServerFn({ method: "POST" })
   .inputValidator((data: unknown) => z.object({ userId: z.string().uuid() }).parse(data))
-  .middleware([requireSupabaseAuth])
+  .middleware([requireActiveOrgAuth])
   .handler(async ({ data, context }): Promise<TeamOverview> => {
     const { organizationId, actorId } = await requireOrgAdmin(context as unknown as AuthContext);
     if (data.userId === actorId) throw new Error("Nu îți poți elimina propriul cont.");

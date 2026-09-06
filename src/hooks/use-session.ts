@@ -14,6 +14,7 @@ export type CurrentUser = {
   role: AppRole;
   isSuperadmin: boolean;
   isAdmin: boolean;
+  orgBlocked: "suspended" | "archived" | null;
 };
 
 export const currentUserQueryKey = ["current-user"] as const;
@@ -23,9 +24,10 @@ export async function fetchCurrentUser(): Promise<CurrentUser | null> {
   const user = userData.user;
   if (!user) return null;
 
-  const [{ data: profile }, { data: roleRows }] = await Promise.all([
+  const [{ data: profile }, { data: roleRows }, { data: blockedRaw }] = await Promise.all([
     supabase.from("profiles").select("*").eq("id", user.id).maybeSingle(),
     supabase.from("user_roles").select("role").eq("user_id", user.id),
+    supabase.rpc("org_access_blocked"),
   ]);
 
   let organization: Tables<"organizations"> | null = null;
@@ -54,6 +56,10 @@ export async function fetchCurrentUser(): Promise<CurrentUser | null> {
     role,
     isSuperadmin: roles.includes("superadmin"),
     isAdmin: roles.includes("superadmin") || roles.includes("agency_admin"),
+    orgBlocked:
+      blockedRaw === "suspended" || blockedRaw === "archived"
+        ? (blockedRaw as "suspended" | "archived")
+        : null,
   };
 }
 

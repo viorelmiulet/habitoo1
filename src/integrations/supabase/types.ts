@@ -565,6 +565,8 @@ export type Database = {
       }
       organizations: {
         Row: {
+          archived_at: string | null
+          archived_by: string | null
           city: string | null
           created_at: string
           created_by: string | null
@@ -585,6 +587,8 @@ export type Database = {
           updated_by: string | null
         }
         Insert: {
+          archived_at?: string | null
+          archived_by?: string | null
           city?: string | null
           created_at?: string
           created_by?: string | null
@@ -605,6 +609,8 @@ export type Database = {
           updated_by?: string | null
         }
         Update: {
+          archived_at?: string | null
+          archived_by?: string | null
           city?: string | null
           created_at?: string
           created_by?: string | null
@@ -2129,6 +2135,7 @@ export type Database = {
       }
       is_org_admin: { Args: never; Returns: boolean }
       is_superadmin: { Args: never; Returns: boolean }
+      org_access_blocked: { Args: never; Returns: string }
       plan_agent_limit: { Args: { _plan: string }; Returns: number }
       qa_purge_demo_organization: { Args: { _org: string }; Returns: string[] }
       qa_reset_demo_organization: { Args: { _org: string }; Returns: Json }
