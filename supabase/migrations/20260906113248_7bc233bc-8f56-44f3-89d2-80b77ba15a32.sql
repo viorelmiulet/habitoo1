@@ -1,0 +1,1 @@
+DROP FUNCTION IF EXISTS public.org_seat_usage(uuid);

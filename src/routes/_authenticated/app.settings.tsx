@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -236,7 +236,11 @@ function SettingsPage() {
             </ul>
           </div>
           <p className="mt-3 text-xs text-muted-foreground">
-            Invitarea de agenți noi și permisiunile avansate ajung în faza următoare.
+            Invitarea de agenți noi și locurile disponibile în plan se gestionează din pagina{" "}
+            <Link to="/app/team" className="underline">
+              Agenți
+            </Link>
+            .
           </p>
         </TabsContent>
 

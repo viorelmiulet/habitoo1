@@ -17,7 +17,15 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
+import { Button } from "@/components/ui/button";
 import { formatDate } from "@/lib/format";
+import {
+  PLAN_AGENT_LIMITS,
+  PLAN_KEYS,
+  PLAN_LABELS,
+  normalizePlan,
+  type PlanKey,
+} from "@/lib/plans";
 
 export const Route = createFileRoute("/_authenticated/superadmin/agencies")({
   component: AgenciesPage,
@@ -29,6 +37,39 @@ const statusLabels: Record<string, string> = {
   suspended: "Suspendată",
   cancelled: "Anulată",
 };
+
+/** Selector de plan cu salvare explicită. */
+function PlanPicker({
+  plan,
+  onSave,
+  saving,
+}: {
+  plan: string;
+  onSave: (plan: PlanKey) => void;
+  saving: boolean;
+}) {
+  const [value, setValue] = useState<PlanKey>(normalizePlan(plan));
+  const dirty = value !== normalizePlan(plan);
+  return (
+    <div className="flex items-center gap-2">
+      <Select value={value} onValueChange={(v) => setValue(v as PlanKey)}>
+        <SelectTrigger className="w-36">
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          {PLAN_KEYS.map((k) => (
+            <SelectItem key={k} value={k}>
+              {PLAN_LABELS[k]} · {PLAN_AGENT_LIMITS[k]} agenți
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+      <Button size="sm" variant="outline" disabled={!dirty || saving} onClick={() => onSave(value)}>
+        Salvează
+      </Button>
+    </div>
+  );
+}
 
 function AgenciesPage() {
   const queryClient = useQueryClient();
@@ -62,6 +103,27 @@ function AgenciesPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["superadmin"] });
       toast.success("Agenția a fost actualizată.");
+    },
+    onError: (e: Error) => toastError(e),
+  });
+
+  const savePlan = useMutation({
+    mutationFn: async ({ id, plan, previous }: { id: string; plan: PlanKey; previous: string }) => {
+      const { error } = await supabase.from("organizations").update({ plan }).eq("id", id);
+      if (error) throw error;
+      // Jurnalizarea schimbării de plan în audit log.
+      await supabase.from("audit_logs").insert({
+        organization_id: id,
+        action: "organization.plan_changed",
+        entity: "organizations",
+        entity_id: id,
+        old_values: { plan: previous },
+        new_values: { plan, agent_limit: PLAN_AGENT_LIMITS[plan] },
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["superadmin"] });
+      toast.success("Planul agenției a fost salvat.");
     },
     onError: (e: Error) => toastError(e),
   });
@@ -115,16 +177,11 @@ function AgenciesPage() {
                   {data?.properties.filter((p) => p.organization_id === o.id).length ?? 0}/
                   {o.max_properties} proprietăți
                 </span>
-                <Select value={o.plan} onValueChange={(v) => update.mutate({ id: o.id, patch: { plan: v } })}>
-                  <SelectTrigger className="w-32">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="starter">starter</SelectItem>
-                    <SelectItem value="growth">growth</SelectItem>
-                    <SelectItem value="enterprise">enterprise</SelectItem>
-                  </SelectContent>
-                </Select>
+                <PlanPicker
+                  plan={o.plan}
+                  onSave={(plan) => savePlan.mutate({ id: o.id, plan, previous: o.plan })}
+                  saving={savePlan.isPending}
+                />
                 <Select
                   value={o.status}
                   onValueChange={(v) => update.mutate({ id: o.id, patch: { status: v } })}
