@@ -213,6 +213,7 @@ export function mapPropertyToFeed(p: PropertyRow, options: MapPropertyOptions): 
     clasificareteren: isLand ? (p.category ?? null) : null,
     suprafatateren: p.land_surface ?? null,
     nrcamere: p.rooms ?? null,
+    nrdormitoare: p.bedrooms ?? null,
     nrbucatarii: null,
     etaj: p.floor ?? null,
     tipcompartimentare: p.layout ?? null,
