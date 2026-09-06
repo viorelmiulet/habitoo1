@@ -52,7 +52,11 @@ export type FeedProperty = {
   tipimobil: string | null;
   tipteren: string | null;
   clasificareteren: string | null;
+  nrfronturistradale: number | null;
+  frontstradal: number | null;
+  latimedrumacces: number | null;
   suprafatateren: number | null;
+
   nrcamere: number | null;
   nrdormitoare: number | null;
   nrbucatarii: number | null;
