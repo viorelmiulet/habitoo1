@@ -2,6 +2,12 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { PropertyDetailsFields, type PropertyDetailsValue } from "@/components/app/PropertyDetailsFields";
+import {
+  PropertyTransactionFields,
+  emptyTransaction,
+  transactionPayload,
+  type TransactionValue,
+} from "@/components/app/PropertyTransactionFields";
 import { toast } from "sonner";
 import { toastError } from "@/lib/errors";
 import { PageHeader } from "@/components/app/PageHeader";
@@ -78,6 +84,8 @@ function NewPropertyPage() {
   const [features, setFeatures] = useState<string[]>([]);
   // Secțiunile de detalii (Detalii / Suprafețe / Clădire / Utilități / Finisaje / Dotări).
   const [details, setDetails] = useState<PropertyDetailsValue>({});
+  // Vânzare / închiriere (pot fi active simultan), fiecare cu preț și monedă.
+  const [tx, setTx] = useState<TransactionValue>(emptyTransaction);
   // Localizarea oficială (nomenclator SIRUTA); textul din `city`/`county` rămâne sincronizat cu selecția.
   const [location, setLocation] = useState<LocationValue>(emptyLocation);
 
@@ -107,10 +115,8 @@ function NewPropertyPage() {
           reference,
           title: form.title,
           property_type: form.property_type,
-          transaction_kind: form.transaction_kind as never,
           status: form.status as never,
-          price: num(form.price),
-          currency: form.currency,
+          ...transactionPayload(tx),
           surface: num(form.surface),
           rooms: num(form.rooms),
           bathrooms: num(form.bathrooms),
@@ -192,18 +198,6 @@ function NewPropertyPage() {
               </Select>
             </div>
             <div className="space-y-2">
-              <Label>Tranzacție</Label>
-              <Select value={form.transaction_kind} onValueChange={(v) => set("transaction_kind", v)}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="sale">Vânzare</SelectItem>
-                  <SelectItem value="rent">Închiriere</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
               <Label>Status</Label>
               <Select value={form.status} onValueChange={(v) => set("status", v)}>
                 <SelectTrigger>
@@ -239,7 +233,8 @@ function NewPropertyPage() {
         </section>
 
         <section className="panel space-y-4 p-5">
-          <h2 className="text-sm font-semibold">Preț și caracteristici</h2>
+          <h2 className="text-sm font-semibold">Tranzacție, preț și caracteristici</h2>
+          <PropertyTransactionFields idPrefix="new" value={tx} onChange={setTx} />
           <div className="grid gap-4 md:grid-cols-3">
             <div className="space-y-2">
               <Label htmlFor="price">Preț</Label>
