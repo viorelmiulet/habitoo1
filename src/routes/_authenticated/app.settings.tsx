@@ -114,6 +114,29 @@ function SettingsPage() {
               saveProfile.mutate();
             }}
           >
+            <div className="flex items-center gap-4">
+              <UserAvatar
+                name={user?.profile?.full_name ?? user?.email}
+                path={user?.profile?.avatar_url}
+                className="size-16 text-base"
+              />
+              <div className="space-y-1">
+                <Label htmlFor="avatar">Fotografie de profil</Label>
+                <Input
+                  id="avatar"
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp"
+                  disabled={uploadAvatar.isPending}
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    e.target.value = "";
+                    if (file) uploadAvatar.mutate(file);
+                  }}
+                />
+                <p className="text-xs text-muted-foreground">JPG, PNG sau WebP, maximum 5 MB.</p>
+              </div>
+            </div>
+
             <div className="space-y-2">
               <Label htmlFor="full_name">Nume complet</Label>
               <Input
