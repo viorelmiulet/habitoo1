@@ -26,6 +26,13 @@ import { PropertyMediaManager } from "@/components/app/PropertyMediaManager";
 import { PropertyPortalsCard } from "@/components/app/PropertyPortalsCard";
 import { PropertyDetailsFields, type PropertyDetailsValue } from "@/components/app/PropertyDetailsFields";
 import { PROPERTY_DETAIL_FIELDS } from "@/lib/property-detail-fields";
+import {
+  PropertyTransactionFields,
+  emptyTransaction,
+  transactionFromProperty,
+  transactionPayload,
+  type TransactionValue,
+} from "@/components/app/PropertyTransactionFields";
 import { DocumentsPanel } from "@/components/app/DocumentsPanel";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -122,6 +129,8 @@ function PropertyDetailPage() {
   const [location, setLocation] = useState<LocationValue>(emptyLocation);
   // Secțiunile de detalii (Detalii / Suprafețe / Clădire / Utilități / Finisaje / Dotări).
   const [details, setDetails] = useState<PropertyDetailsValue>({});
+  // Vânzare / închiriere (pot fi active simultan), fiecare cu preț și monedă.
+  const [tx, setTx] = useState<TransactionValue>(emptyTransaction);
   const startEdit = () => {
     if (!property) return;
     setDraft({
@@ -135,6 +144,7 @@ function PropertyDetailPage() {
       description: property.description ?? "",
       internal_notes: property.internal_notes ?? "",
     });
+    setTx(transactionFromProperty(property));
     setDetails(
       Object.fromEntries(
         PROPERTY_DETAIL_FIELDS.map((key) => [key, (property as Record<string, unknown>)[key] ?? null]),
@@ -493,7 +503,7 @@ function PropertyDetailPage() {
                 e.preventDefault();
                 save.mutate({
                   title: draft.title,
-                  price: draft.price ? Number(draft.price) : null,
+                  ...transactionPayload(tx),
                   surface: draft.surface ? Number(draft.surface) : null,
                   city: location.localityName || draft.city || null,
                   county: location.countyName || null,
@@ -512,7 +522,6 @@ function PropertyDetailPage() {
                 <LocationPicker idPrefix="edit" value={location} onChange={setLocation} />
                 {[
                   ["title", "Titlu"],
-                  ["price", "Preț"],
                   ["surface", "Suprafață (m²)"],
                   ["district", "Zonă"],
                   ["address", "Adresă"],
@@ -523,6 +532,7 @@ function PropertyDetailPage() {
                   </div>
                 ))}
               </div>
+              <PropertyTransactionFields idPrefix="edit" value={tx} onChange={setTx} />
               <div className="space-y-2">
                 <Label htmlFor="description">Descriere</Label>
                 <Textarea

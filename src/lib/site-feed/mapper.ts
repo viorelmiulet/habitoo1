@@ -232,6 +232,16 @@ function amenities(p: PropertyRow): string[] {
 
 export function mapPropertyToFeed(p: PropertyRow, options: MapPropertyOptions): FeedProperty {
   const isRent = p.transaction_kind === "rent";
+  // O proprietate poate fi simultan de vânzare și de închiriere; feedul trimite
+  // ambele seturi de preț/monedă pe aceeași intrare, iar portalul decide
+  // câte rânduri generează din ele. Datele vechi (fără `for_sale`/`for_rent`)
+  // sunt interpretate din `transaction_kind`.
+  const forSale = p.for_sale ?? !isRent;
+  const forRent = p.for_rent ?? isRent;
+  const salePrice = p.sale_price ?? (isRent ? null : (p.price ?? null));
+  const rentPrice = p.rent_price ?? (isRent ? (p.price ?? null) : null);
+  const saleCurrency = p.sale_currency ?? (isRent ? null : (p.currency ?? null));
+  const rentCurrency = p.rent_currency ?? (isRent ? (p.currency ?? null) : null);
   const images = (options.images ?? [])
     .filter(isImageFeedEligible)
     .sort((a, b) => (a.is_primary === b.is_primary ? (a.position ?? 0) - (b.position ?? 0) : a.is_primary ? -1 : 1))
@@ -294,12 +304,12 @@ export function mapPropertyToFeed(p: PropertyRow, options: MapPropertyOptions): 
     cod_siruta_uat: p.uat_siruta_code ?? null,
     cod_siruta_localitate: p.locality_siruta_code ?? null,
     caroiaj: null,
-    devanzare: !isRent,
-    deinchiriere: isRent,
-    monedavanzare: isRent ? null : (p.currency ?? null),
-    monedainchiriere: isRent ? (p.currency ?? null) : null,
-    pretvanzare: isRent ? null : (p.price ?? null),
-    pretinchiriere: isRent ? (p.price ?? null) : null,
+    devanzare: forSale,
+    deinchiriere: forRent,
+    monedavanzare: forSale ? saleCurrency : null,
+    monedainchiriere: forRent ? rentCurrency : null,
+    pretvanzare: forSale ? salePrice : null,
+    pretinchiriere: forRent ? rentPrice : null,
     // Modelul intern nu garantează că `price` este prețul fără TVA când
     // `vat_included = false`, deci nu publicăm o valoare derivată greșit.
     pretfaratva: null,

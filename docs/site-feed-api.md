@@ -217,3 +217,30 @@ parcări, geam la baie, bucătărie deschisă, pet friendly, cheia în agenție,
 suprafețe pe balcoane/terase/grădină, risc seismic, înălțime S+/D+/P+/M/Pod,
 etaje retrase) se stochează în Habitoo, dar nu au un câmp ImmoFlux documentat,
 deci nu sunt inventate în feed.
+
+
+## Tranzacție: vânzare, închiriere sau ambele
+
+O proprietate poate fi listată simultan de vânzare și de închiriere. În formular
+există două bife independente („De vânzare”, „De închiriere”), fiecare cu preț și
+monedă proprii (`properties.for_sale`, `sale_price`, `sale_currency`,
+`for_rent`, `rent_price`, `rent_currency`). `transaction_kind`, `price` și
+`currency` rămân sincronizate cu tranzacția principală, pentru compatibilitate
+cu filtrele și matching-ul existente.
+
+În feed:
+
+| Câmp | Regulă |
+| --- | --- |
+| `devanzare` | true doar dacă „De vânzare” este bifat |
+| `deinchiriere` | true doar dacă „De închiriere” este bifat |
+| `pretvanzare`, `monedavanzare` | completate doar când vânzarea e activă |
+| `pretinchiriere`, `monedainchiriere` | completate doar când închirierea e activă |
+
+Feedul trimite ambele seturi pe **aceeași** intrare din `/properties` — nu
+duplicăm proprietatea. Portalul (ex. ClickImob, prin `mapImmofluxProperty`)
+generează din același payload rândurile de care are nevoie. `status` (`active`,
+`reserved`, `negotiation`) este independent de tipul de tranzacție.
+
+Feedul iMove rămâne mono-tranzacție (`SALE|RENT`, conform documentației iMove) și
+folosește tranzacția principală a proprietății.

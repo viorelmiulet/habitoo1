@@ -1106,6 +1106,8 @@ export type Database = {
           floor: number | null
           floor_finishes: string[]
           floor_label: string | null
+          for_rent: boolean
+          for_sale: boolean
           furnishing: string | null
           garages: number | null
           garden_surface: number | null
@@ -1147,7 +1149,11 @@ export type Database = {
           recessed_floors: number | null
           reference: string | null
           renovation_year: number | null
+          rent_currency: string | null
+          rent_price: number | null
           rooms: number | null
+          sale_currency: string | null
+          sale_price: number | null
           seismic_risk: string | null
           shutters: string[]
           source: string | null
@@ -1213,6 +1219,8 @@ export type Database = {
           floor?: number | null
           floor_finishes?: string[]
           floor_label?: string | null
+          for_rent?: boolean
+          for_sale?: boolean
           furnishing?: string | null
           garages?: number | null
           garden_surface?: number | null
@@ -1254,7 +1262,11 @@ export type Database = {
           recessed_floors?: number | null
           reference?: string | null
           renovation_year?: number | null
+          rent_currency?: string | null
+          rent_price?: number | null
           rooms?: number | null
+          sale_currency?: string | null
+          sale_price?: number | null
           seismic_risk?: string | null
           shutters?: string[]
           source?: string | null
@@ -1320,6 +1332,8 @@ export type Database = {
           floor?: number | null
           floor_finishes?: string[]
           floor_label?: string | null
+          for_rent?: boolean
+          for_sale?: boolean
           furnishing?: string | null
           garages?: number | null
           garden_surface?: number | null
@@ -1361,7 +1375,11 @@ export type Database = {
           recessed_floors?: number | null
           reference?: string | null
           renovation_year?: number | null
+          rent_currency?: string | null
+          rent_price?: number | null
           rooms?: number | null
+          sale_currency?: string | null
+          sale_price?: number | null
           seismic_risk?: string | null
           shutters?: string[]
           source?: string | null
