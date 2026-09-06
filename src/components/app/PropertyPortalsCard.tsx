@@ -40,9 +40,9 @@ export function PropertyPortalsCard({ propertyId }: { propertyId: string }) {
       if (!res.ok) {
         toast.error(res.message);
       } else if (res.live) {
-        toast.success("Operațiunea a fost trimisă portalului.");
+        toast.success(res.message ?? "Operațiunea a fost trimisă portalului.");
       } else {
-        toast.message("Verificat local. Trimiterile reale sunt oprite în Setări → Integrări.");
+        toast.message(res.message ?? "Verificat local. Trimiterile reale sunt oprite în Setări → Integrări.");
       }
     },
     onError: (e: Error) => toastError(e),
@@ -58,6 +58,7 @@ export function PropertyPortalsCard({ propertyId }: { propertyId: string }) {
     <div className="panel divide-y divide-border">
       {(status.data ?? []).map((item) => {
         const badge = LISTING_LABEL[item.status] ?? LISTING_LABEL["not_published"]!;
+        const diag = item.diagnostics;
         return (
           <div key={item.portalId} className="flex flex-wrap items-center gap-3 px-5 py-4 text-sm">
             <div className="min-w-0 flex-1">
@@ -66,6 +67,18 @@ export function PropertyPortalsCard({ propertyId }: { propertyId: string }) {
                 {item.connected ? "Conexiune configurată" : "Portal neconectat — configurează în Setări → Integrări"}
                 {item.lastSyncAt ? ` · ultima operațiune ${formatDateTime(item.lastSyncAt)}` : ""}
               </p>
+              {diag ? (
+                <p className="text-xs text-muted-foreground">
+                  {diag.feedVisible ? "Vizibilă în feed" : "Nu apare în feed"}
+                  {` · ${diag.images.resolvable}/${diag.images.total} fotografii`}
+                  {diag.images.total > 0 && !diag.images.primary ? " (fără principală)" : ""}
+                  {` · agent ${diag.agentName ?? "neasignat"}`}
+                  {item.externalId ? ` · referință ${item.externalId}` : ""}
+                </p>
+              ) : null}
+              {diag?.notes.length ? (
+                <p className="text-xs text-warning-foreground">{diag.notes.join(" ")}</p>
+              ) : null}
               {item.lastError ? <p className="text-xs text-destructive">{item.lastError}</p> : null}
             </div>
             <StatusBadge tone={badge.tone}>{badge.label}</StatusBadge>
