@@ -675,7 +675,8 @@ function PropertyDetailPage() {
                 </div>
               </div>
             </div>
-          )}
+          ) : null}
+
         </TabsContent>
 
         <TabsContent value="media">
