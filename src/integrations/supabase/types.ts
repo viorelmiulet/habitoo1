@@ -570,11 +570,13 @@ export type Database = {
           city: string | null
           created_at: string
           created_by: string | null
+          cui: string | null
           demo_seed_version: string | null
           demo_seeded_at: string | null
           email: string | null
           id: string
           is_demo: boolean
+          legal_name: string | null
           logo_url: string | null
           max_properties: number
           max_users: number
@@ -592,11 +594,13 @@ export type Database = {
           city?: string | null
           created_at?: string
           created_by?: string | null
+          cui?: string | null
           demo_seed_version?: string | null
           demo_seeded_at?: string | null
           email?: string | null
           id?: string
           is_demo?: boolean
+          legal_name?: string | null
           logo_url?: string | null
           max_properties?: number
           max_users?: number
@@ -614,11 +618,13 @@ export type Database = {
           city?: string | null
           created_at?: string
           created_by?: string | null
+          cui?: string | null
           demo_seed_version?: string | null
           demo_seeded_at?: string | null
           email?: string | null
           id?: string
           is_demo?: boolean
+          legal_name?: string | null
           logo_url?: string | null
           max_properties?: number
           max_users?: number
@@ -2185,7 +2191,12 @@ export type Database = {
         | "transaction"
         | "won"
         | "lost"
-      org_status: "active" | "trial" | "suspended" | "cancelled"
+      org_status:
+        | "active"
+        | "trial"
+        | "suspended"
+        | "cancelled"
+        | "pending_approval"
       property_status:
         | "draft"
         | "active"
@@ -2356,7 +2367,13 @@ export const Constants = {
         "won",
         "lost",
       ],
-      org_status: ["active", "trial", "suspended", "cancelled"],
+      org_status: [
+        "active",
+        "trial",
+        "suspended",
+        "cancelled",
+        "pending_approval",
+      ],
       property_status: [
         "draft",
         "active",
