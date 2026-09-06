@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import { Archive, ArchiveRestore, Building2, Search } from "lucide-react";
+import { Archive, ArchiveRestore, Building2, Search, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { toastError } from "@/lib/errors";
 import { PageHeader } from "@/components/app/PageHeader";
@@ -23,6 +23,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { formatDate } from "@/lib/format";
 import { useCurrentUser } from "@/hooks/use-session";
+import { deleteOrganizationPermanently } from "@/lib/superadmin-orgs.functions";
 import {
   PLAN_AGENT_LIMITS,
   PLAN_KEYS,
@@ -35,12 +36,16 @@ export const Route = createFileRoute("/_authenticated/superadmin/agencies")({
   component: AgenciesPage,
 });
 
+// Etichete pentru afișare (pot exista agenții vechi cu status "trial"/"cancelled").
 const statusLabels: Record<string, string> = {
   active: "Activă",
   trial: "Trial",
   suspended: "Suspendată",
   cancelled: "Anulată",
 };
+
+/** Statusurile selectabile din interfață: doar Activă și Suspendată. */
+const selectableStatuses = ["active", "suspended"] as const;
 
 
 /** Selector de plan cu salvare explicită. */
@@ -82,6 +87,7 @@ function AgenciesPage() {
   const [q, setQ] = useState("");
   const [showArchived, setShowArchived] = useState(false);
   const [pendingArchive, setPendingArchive] = useState<{ id: string; name: string } | null>(null);
+  const [pendingDelete, setPendingDelete] = useState<{ id: string; name: string } | null>(null);
 
   const { data, isLoading } = useQuery({
     queryKey: ["superadmin", "agencies"],
@@ -163,6 +169,22 @@ function AgenciesPage() {
     onError: (e: Error) => toastError(e),
   });
 
+  // Ștergere definitivă: elimină agenția și toate datele ei, ireversibil.
+  const hardDelete = useMutation({
+    mutationFn: async (vars: { id: string; name: string }) =>
+      deleteOrganizationPermanently({ data: { organizationId: vars.id, confirmName: vars.name } }),
+    onSuccess: (res) => {
+      queryClient.invalidateQueries({ queryKey: ["superadmin"] });
+      const total = Object.values(res.deletedRows).reduce((a, b) => a + Number(b ?? 0), 0);
+      toast.success(
+        `Agenția „${res.organizationName}” a fost ștearsă definitiv (${total} înregistrări, ${res.deletedAuthUsers} conturi).`,
+      );
+      if (res.authErrors.length)
+        toast.warning(`Unele conturi nu au putut fi șterse: ${res.authErrors.join("; ")}`);
+    },
+    onError: (e: Error) => toastError(e),
+  });
+
   const rows = (data?.orgs ?? [])
     .filter((o) => (showArchived ? true : !o.archived_at))
     .filter((o) =>
@@ -234,11 +256,23 @@ function AgenciesPage() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {Object.entries(statusLabels).map(([k, v]) => (
+                    {selectableStatuses.map((k) => (
                       <SelectItem key={k} value={k}>
-                        {v}
+                        {statusLabels[k]}
                       </SelectItem>
                     ))}
+                    {selectableStatuses.includes(o.status as "active" | "suspended") ? null : (
+                      <SelectItem value={o.status}>{statusLabels[o.status] ?? o.status}</SelectItem>
+                    )}
+                <Button
+                  size="sm"
+                  variant="destructive"
+                  disabled={hardDelete.isPending}
+                  onClick={() => setPendingDelete({ id: o.id, name: o.name })}
+                >
+                  <Trash2 className="mr-1.5 size-4" />
+                  Șterge
+                </Button>
                   </SelectContent>
                 </Select>
                 <StatusBadge tone={o.status === "active" ? "success" : "warning"}>
