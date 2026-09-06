@@ -121,10 +121,13 @@ async function logOperation(input: {
   });
 }
 
-async function feedUrlForOrg(): Promise<string> {
+/** URL-ul feedului pe care îl citește portalul (specific unde portalul cere altul). */
+async function feedUrlForOrg(portalId?: string): Promise<string> {
   const { CRM_URL } = await import("@/lib/host");
+  if (portalId === "imove") return `${CRM_URL}/api/public/portal/v1/imove/feed`;
   return `${CRM_URL}/api/public/portal/v1/properties`;
 }
+
 
 /** Context complet pentru adaptor, cu credențialul decriptat. */
 async function buildContext(organizationId: string, definition: PortalDefinition) {
