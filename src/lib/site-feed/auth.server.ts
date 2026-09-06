@@ -11,6 +11,9 @@ export type FeedAuthOk = {
   organizationId: string;
   tokenId: string;
   tokenPrefix: string;
+  /** Din ce credențial a venit cererea: tokenul de site sau o cheie de portal. */
+  source: "site_token" | "portal_key";
+  scopes: string[];
 };
 export type FeedAuthErr = { ok: false; status: 401 | 429; message: string; tokenPrefix: string | null };
 export type FeedAuth = FeedAuthOk | FeedAuthErr;
