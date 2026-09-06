@@ -104,10 +104,13 @@ export const superadminNav: NavGroup[] = [
       { label: "Utilizatori", to: "/superadmin/users", icon: Users },
       { label: "Portaluri", to: "/superadmin/portals", icon: PlugZap },
       { label: "Suport", to: "/superadmin/support", icon: LifeBuoy },
-      { label: "Audit", to: "/superadmin/audit", icon: ShieldCheck },
       { label: "Nomenclator SIRUTA", to: "/superadmin/nomenclator", icon: MapPin },
       { label: "QA / Demo Data", to: "/superadmin/qa", icon: FlaskConical },
     ],
+  },
+  {
+    title: "Audit",
+    items: [{ label: "Jurnal audit", to: "/superadmin/audit", icon: ShieldCheck }],
   },
 ];
 
