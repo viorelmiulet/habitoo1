@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { CtaBand } from "@/components/marketing/CtaBand";
+import { PortalsSection } from "@/components/marketing/PortalsSection";
 import { navyButton } from "@/components/marketing/PublicHeader";
 import { PublicLayout } from "@/components/marketing/PublicLayout";
 import { Reveal } from "@/components/marketing/Reveal";
@@ -462,6 +463,8 @@ function HomePage() {
           </Reveal>
         </Container>
       </Section>
+
+      <PortalsSection />
 
       {/* BENEFITS */}
       <Section tone="muted">
