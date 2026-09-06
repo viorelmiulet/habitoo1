@@ -570,11 +570,13 @@ export type Database = {
           city: string | null
           created_at: string
           created_by: string | null
+          cui: string | null
           demo_seed_version: string | null
           demo_seeded_at: string | null
           email: string | null
           id: string
           is_demo: boolean
+          legal_name: string | null
           logo_url: string | null
           max_properties: number
           max_users: number
@@ -592,11 +594,13 @@ export type Database = {
           city?: string | null
           created_at?: string
           created_by?: string | null
+          cui?: string | null
           demo_seed_version?: string | null
           demo_seeded_at?: string | null
           email?: string | null
           id?: string
           is_demo?: boolean
+          legal_name?: string | null
           logo_url?: string | null
           max_properties?: number
           max_users?: number
@@ -614,11 +618,13 @@ export type Database = {
           city?: string | null
           created_at?: string
           created_by?: string | null
+          cui?: string | null
           demo_seed_version?: string | null
           demo_seeded_at?: string | null
           email?: string | null
           id?: string
           is_demo?: boolean
+          legal_name?: string | null
           logo_url?: string | null
           max_properties?: number
           max_users?: number
@@ -2121,8 +2127,15 @@ export type Database = {
         Args: { _new_org: string; _user_id: string }
         Returns: undefined
       }
+      approve_organization: { Args: { _org: string }; Returns: undefined }
       bootstrap_agency: {
-        Args: { _agency_name: string; _full_name: string; _phone?: string }
+        Args: {
+          _agency_name: string
+          _cui?: string
+          _full_name: string
+          _legal_name?: string
+          _phone?: string
+        }
         Returns: string
       }
       current_org: { Args: never; Returns: string }
@@ -2185,7 +2198,12 @@ export type Database = {
         | "transaction"
         | "won"
         | "lost"
-      org_status: "active" | "trial" | "suspended" | "cancelled"
+      org_status:
+        | "active"
+        | "trial"
+        | "suspended"
+        | "cancelled"
+        | "pending_approval"
       property_status:
         | "draft"
         | "active"
@@ -2356,7 +2374,13 @@ export const Constants = {
         "won",
         "lost",
       ],
-      org_status: ["active", "trial", "suspended", "cancelled"],
+      org_status: [
+        "active",
+        "trial",
+        "suspended",
+        "cancelled",
+        "pending_approval",
+      ],
       property_status: [
         "draft",
         "active",
