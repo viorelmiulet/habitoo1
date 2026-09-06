@@ -23,7 +23,7 @@ import {
 } from "@/components/ui/select";
 import { appHead } from "@/components/app/app-head";
 import { PortalsCard } from "@/components/superadmin/PortalsCard";
-import { PropertyPortalsCard } from "@/components/superadmin/PropertyPortalsCard";
+import { PropertyPortalsCard } from "@/components/app/PropertyPortalsCard";
 import {
   listOrgPropertiesForPortals,
   listPortalOrganizations,

@@ -703,6 +703,7 @@ export type Database = {
       }
       portal_connections: {
         Row: {
+          activated: boolean
           authentication_mode: string
           created_at: string
           created_by: string | null
@@ -721,6 +722,7 @@ export type Database = {
           updated_by: string | null
         }
         Insert: {
+          activated?: boolean
           authentication_mode?: string
           created_at?: string
           created_by?: string | null
@@ -739,6 +741,7 @@ export type Database = {
           updated_by?: string | null
         }
         Update: {
+          activated?: boolean
           authentication_mode?: string
           created_at?: string
           created_by?: string | null

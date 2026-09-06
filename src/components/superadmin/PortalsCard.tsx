@@ -25,6 +25,7 @@ import {
   previewPortalFeed,
   revokePortalApiKey,
   savePortalConnection,
+  setPortalActivation,
   testPortalConnection,
 } from "@/lib/portals.functions";
 import {
@@ -49,6 +50,7 @@ export function PortalsCard({ organizationId }: { organizationId: string }) {
   const runIssueKey = useServerFn(issuePortalApiKey);
   const runRevokeKey = useServerFn(revokePortalApiKey);
   const runPreview = useServerFn(previewPortalFeed);
+  const runActivation = useServerFn(setPortalActivation);
 
   const [accountId, setAccountId] = useState<Record<string, string>>({});
   const [credential, setCredential] = useState<Record<string, string>>({});
@@ -82,6 +84,21 @@ export function PortalsCard({ organizationId }: { organizationId: string }) {
       setCredential((prev) => ({ ...prev, [input.portalId]: "" }));
       invalidate();
       toast.success("Configurarea portalului a fost salvată.");
+    },
+    onError: (e: Error) => toastError(e),
+  });
+
+  /** Activarea comercială a portalului pentru agenție (separat de conexiune). */
+  const activation = useMutation({
+    mutationFn: (input: { portalId: string; activated: boolean }) =>
+      runActivation({ data: { organizationId, portalId: input.portalId, activated: input.activated } }),
+    onSuccess: (res) => {
+      invalidate();
+      toast.success(
+        res.activated
+          ? "Portalul este activat pentru agenție: își poate publica singură ofertele."
+          : "Portalul a fost dezactivat pentru agenție.",
+      );
     },
     onError: (e: Error) => toastError(e),
   });
@@ -323,6 +340,23 @@ export function PortalsCard({ organizationId }: { organizationId: string }) {
                       </div>
                     );
                   })}
+                </div>
+
+                <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border p-3">
+                  <div className="text-sm">
+                    <p className="font-medium">Activat pentru agenție</p>
+                    <p className="text-xs text-muted-foreground">
+                      Când este activat, agenția vede portalul și își bifează singură ofertele pentru publicare.
+                    </p>
+                  </div>
+                  <Switch
+                    checked={item.connection.activated}
+                    disabled={activation.isPending || item.portal.status !== "available"}
+                    onCheckedChange={(checked) =>
+                      activation.mutate({ portalId: item.portal.id, activated: checked })
+                    }
+                    aria-label="Activat pentru agenție"
+                  />
                 </div>
 
                 {item.feedOnly ? null : (
