@@ -280,7 +280,6 @@ function PropertiesPage() {
   // Coverul fiecărei proprietăți din pagina curentă (is_primary → prima poziție).
   const coverOf = usePropertyCovers(rows.map((r) => r.id));
   // Selecția de portaluri per proprietate (portal_publications) + starea reală (portal_listings).
-  const portals = usePropertyPortals(rows.map((r) => r.id));
   const total = result?.count ?? 0;
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
@@ -768,7 +767,6 @@ function PropertiesPage() {
               {columns.includes("price") ? <span className="w-28 text-right">Preț</span> : null}
               {columns.includes("surface") ? <span className="w-24 text-right">Suprafață</span> : null}
               {columns.includes("agent") ? <span className="w-32">Agent</span> : null}
-              <span className="w-[300px]">Portaluri</span>
               {columns.includes("updated") ? <span className="w-24 text-right">Actualizat</span> : null}
             </div>
 
