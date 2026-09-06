@@ -2,6 +2,16 @@ import { supabase } from "@/integrations/supabase/client";
 
 export const MEDIA_BUCKET = "property-media";
 export const DOCS_BUCKET = "crm-documents";
+export const AVATAR_BUCKET = "avatars";
+
+/** Tipuri și dimensiune acceptate pentru fotografia de profil. */
+export const AVATAR_TYPES = ["image/jpeg", "image/png", "image/webp"];
+export const AVATAR_MAX_BYTES = 5 * 1024 * 1024;
+
+export function avatarPath(orgId: string, userId: string) {
+  return `${orgId}/${userId}/avatar-${Date.now()}.jpg`;
+}
+
 
 function safeName(name: string) {
   return name
