@@ -487,7 +487,17 @@ function PropertyDetailPage() {
             <Button size="sm" variant="outline" onClick={() => duplicate.mutate()} disabled={duplicate.isPending}>
               Duplică
             </Button>
-            <Button size="sm" onClick={() => publish.mutate()} disabled={publish.isPending || save.isPending}>
+            <Button
+              size="sm"
+              onClick={() => {
+                if (shouldNudgeCollab()) {
+                  setNudgeOpen(true);
+                  return;
+                }
+                publish.mutate(undefined);
+              }}
+              disabled={publish.isPending || save.isPending}
+            >
               {publish.isPending ? "Se publică…" : "Publică"}
             </Button>
             <DropdownMenu>
