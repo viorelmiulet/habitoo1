@@ -774,6 +774,7 @@ type PortalSelectionState =
   | "selected"
   | "syncing"
   | "published"
+  | "in_feed"
   | "error"
   | "withdrawn";
 
@@ -789,10 +790,13 @@ export type PropertyPortalCell = {
   /** Starea reală a ofertei pe portal (portal_listings.status). */
   listingStatus: string;
   state: PortalSelectionState;
+  /** Portalul acceptă trimiteri directe (publicare/retragere) din Habitoo. */
+  pushSupported: boolean;
   lastSyncAt: string | null;
   lastError: string | null;
   externalId: string | null;
 };
+
 
 export type PropertyPortalMatrix = {
   canManage: boolean;
