@@ -1,5 +1,6 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
 import { ArrowRight, CalendarCheck, Info, MailCheck, MessageSquare, Sparkles } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
@@ -23,6 +24,7 @@ import { PublicLayout } from "@/components/marketing/PublicLayout";
 import { Container, Section, SectionHeading } from "@/components/marketing/Section";
 import { publicHead } from "@/components/marketing/public-head";
 import { CrmLink } from "@/components/marketing/CrmLink";
+import { submitContactRequest } from "@/lib/contact.functions";
 
 const TITLE = "Contact și demonstrație — Habitoo CRM";
 const DESCRIPTION =
@@ -313,8 +315,13 @@ function ContactPage() {
                         </FormItem>
                       )}
                     />
-                    <Button type="submit" size="lg" className={`${navyButton} h-12 w-full sm:w-auto`}>
-                      Trimite solicitarea <ArrowRight />
+                    <Button
+                      type="submit"
+                      size="lg"
+                      disabled={form.formState.isSubmitting}
+                      className={`${navyButton} h-12 w-full sm:w-auto`}
+                    >
+                      {form.formState.isSubmitting ? "Se trimite..." : "Trimite solicitarea"} <ArrowRight />
                     </Button>
                   </form>
                 </Form>
