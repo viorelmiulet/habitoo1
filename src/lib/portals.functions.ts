@@ -290,6 +290,7 @@ export const getPortalHub = createServerFn({ method: "POST" })
   });
 
 const saveSchema = z.object({
+  organizationId: z.string().uuid(),
   portalId: z.string().min(1).max(40),
   externalAccountId: z.string().trim().max(200).optional(),
   credential: z.string().trim().min(1).max(500).optional(),
@@ -533,6 +534,7 @@ export const revokePortalApiKey = createServerFn({ method: "POST" })
 
 /** Operațiile pe o ofertă: publicare, actualizare, retragere. */
 const listingSchema = z.object({
+  organizationId: z.string().uuid(),
   portalId: z.string().min(1).max(40),
   propertyId: z.string().uuid(),
   action: z.enum(["publish", "update", "withdraw"]),
@@ -1222,6 +1224,7 @@ export type PortalSelectionOutcome = {
 };
 
 const applySelectionSchema = z.object({
+  organizationId: z.string().uuid(),
   propertyId: z.string().uuid(),
   selections: z
     .array(z.object({ portalId: z.string().min(1).max(40), enabled: z.boolean() }))
@@ -1434,4 +1437,43 @@ export const applyPropertyPortalSelection = createServerFn({ method: "POST" })
     }
 
     return { ok: results.every((r) => r.ok), results };
+  });
+
+
+/** Agențiile disponibile în panoul Superadmin → Portaluri. */
+export const listPortalOrganizations = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }): Promise<{ id: string; name: string }[]> => {
+    await requireSuperadmin(context as unknown as AuthContext);
+    const admin = await loadAdmin();
+    const { data } = await admin.from("organizations").select("id, name").order("name");
+    return (data ?? []).map((o) => ({ id: o.id, name: o.name }));
+  });
+
+/** Ofertele unei agenții, pentru selecția de portaluri din Superadmin. */
+export const listOrgPropertiesForPortals = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) =>
+    z
+      .object({
+        organizationId: z.string().uuid(),
+        search: z.string().trim().max(120).optional(),
+        limit: z.number().int().min(1).max(50).default(25),
+      })
+      .parse(input),
+  )
+  .handler(async ({ data, context }): Promise<{ id: string; title: string; city: string | null }[]> => {
+    const organizationId = await requireSuperadminOrg(context as unknown as AuthContext, data.organizationId);
+    const admin = await loadAdmin();
+    let query = admin
+      .from("properties")
+      .select("id, title, city")
+      .eq("organization_id", organizationId)
+      .is("deleted_at", null)
+      .order("updated_at", { ascending: false })
+      .limit(data.limit);
+    const search = data.search?.replace(/[%,()]/g, " ").trim();
+    if (search) query = query.ilike("title", `%${search}%`);
+    const { data: rows } = await query;
+    return (rows ?? []).map((r) => ({ id: r.id, title: r.title, city: r.city ?? null }));
   });
