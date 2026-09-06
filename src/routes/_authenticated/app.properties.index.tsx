@@ -759,7 +759,7 @@ function PropertiesPage() {
               <Checkbox checked={allSelected} onCheckedChange={(c) => setSelected(c ? rows.map((r) => r.id) : [])} />
               <span className="w-4" aria-hidden />
               <span className="w-[120px]">Foto</span>
-              <span className="min-w-[180px] flex-1">Proprietate</span>
+              <span className="flex-1 basis-[200px]">Proprietate</span>
               {columns.includes("type") ? <span className="w-28">Tip</span> : null}
               {columns.includes("transaction") ? <span className="w-24">Tranzacție</span> : null}
               {columns.includes("status") ? <span className="w-28">Status</span> : null}
@@ -803,7 +803,7 @@ function PropertiesPage() {
                       cover={coverOf(p.id)}
                       className="h-[90px] w-[110px] sm:h-[100px] sm:w-[120px]"
                     />
-                    <div className="min-w-[180px] flex-1">
+                    <div className="min-w-0 flex-1 basis-[200px]">
                       <Link to="/app/properties/$id" params={{ id: p.id }} className="block truncate font-medium hover:text-primary">
                         {p.title}
                       </Link>
