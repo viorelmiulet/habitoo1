@@ -1049,11 +1049,11 @@ export const getPropertiesPortalMatrix = createServerFn({ method: "POST" })
         const listing = (listings ?? []).find((l) => l.property_id === propertyId && l.portal === portal.id);
         const connection = (connections ?? []).find((c) => c.portal === portal.id);
         const pushSupported = portal.capabilities.includes("publish_listing");
+        const connectionReady = connection?.status === "connected" || connection?.status === "ready";
         const configured =
           portal.status === "available" &&
-          (pushSupported
-            ? connection?.status === "connected" || connection?.status === "ready"
-            : keyedPortals.has(portal.id));
+          (pushSupported ? connectionReady : keyedPortals.has(portal.id) || connectionReady);
+
         const listingStatus = listing?.status ?? "not_published";
         const state = deriveState({
           availability: portal.status,
