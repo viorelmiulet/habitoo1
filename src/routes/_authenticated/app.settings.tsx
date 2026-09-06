@@ -280,6 +280,7 @@ function SettingsPage() {
             <ul className="divide-y divide-border">
               {team.map((m) => (
                 <li key={m.id} className="flex flex-wrap items-center gap-3 px-5 py-3 text-sm">
+                  <UserAvatar name={m.full_name} path={m.avatar_url} />
                   <div className="min-w-0 flex-1">
                     <p className="truncate font-medium">{m.full_name}</p>
                     <p className="truncate text-xs text-muted-foreground">{m.email ?? "—"}</p>

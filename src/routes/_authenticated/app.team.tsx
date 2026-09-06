@@ -22,6 +22,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { useCurrentUser } from "@/hooks/use-session";
+import { UserAvatar } from "@/components/app/UserAvatar";
 import { formatDate } from "@/lib/format";
 import { roleLabels } from "@/lib/labels";
 import {
