@@ -48,8 +48,20 @@ export type PortalHubItem = {
   listings: { published: number; failed: number; pending: number };
   eligibleProperties: number;
   feedUrl: string;
+  /** Portalul primește ofertele doar prin feed, fără operații de scriere. */
+  feedOnly: boolean;
   /** Diagnoză reală a feedului pe care îl citește portalul. */
-  feed: { ok: boolean; apiVersion: string | null; properties: number | null; agents: number | null };
+  feed: {
+    ok: boolean;
+    apiVersion: string | null;
+    properties: number | null;
+    agents: number | null;
+    /** Oferte selectate pentru portal (doar la portalurile de tip feed). */
+    selected: number | null;
+    /** Oferte selectate dar excluse din feed pentru date incomplete. */
+    excluded: number | null;
+  };
+
 };
 
 export type PortalLogItem = {
