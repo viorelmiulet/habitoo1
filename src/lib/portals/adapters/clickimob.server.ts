@@ -131,16 +131,13 @@ async function notify(
       detail: `${operation} feed_not_visible`,
     };
   }
-  if (options.expect === "absent" && diagnostics.feedVisible) {
-    return {
-      ok: false,
-      code: "VALIDATION_ERROR",
-      message:
-        "Retragerea nu poate fi confirmată: oferta este încă publicată în feed. " +
-        "Schimbă statusul sau oprește publicarea pe site, apoi retrage.",
-      detail: `${operation} feed_still_visible`,
-    };
-  }
+  // La retragere nu blocăm operațiunea: notificăm portalul oricum, dar avertizăm
+  // dacă oferta e încă în feed, pentru că atunci portalul o va reimporta.
+  const withdrawWarning =
+    options.expect === "absent" && diagnostics.feedVisible
+      ? "Atenție: oferta este încă publicată în feed, deci portalul o poate reimporta. Oprește publicarea pe site pentru retragere definitivă."
+      : null;
+
 
   const externalId = diagnostics.externalId ?? ref.externalId;
 
