@@ -520,7 +520,7 @@ export function PortalsCard() {
           </div>
           <p className="text-sm text-muted-foreground">
             {feedPreview.valid} oferte valide din {feedPreview.selected} selectate ·{" "}
-            {feedPreview.hasActiveKey ? "cheie de acces activă" : "fără cheie activă — portalul nu poate citi feedul"}
+            {feedPreview.hasActiveKey ? "cheie API salvată" : "cheia API a portalului nu e salvată — portalul nu poate citi feedul"}
           </p>
           {feedPreview.excluded.length ? (
             <ul className="space-y-1 text-sm">

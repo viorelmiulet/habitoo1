@@ -1206,7 +1206,7 @@ export const previewPortalFeed = createServerFn({ method: "POST" })
       sample: build.listings.slice(0, data.limit),
       excluded: build.excluded,
       warnings: build.warnings,
-      hasActiveKey: (count ?? 0) > 0,
+      hasActiveKey: hasCredential,
     };
   });
 
