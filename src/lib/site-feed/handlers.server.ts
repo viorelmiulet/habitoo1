@@ -36,6 +36,11 @@ function hasScope(auth: FeedAuthOk, scope: string): boolean {
   return auth.scopes.length === 0 ? false : auth.scopes.includes(scope);
 }
 
+/** Gard reutilizabil pentru rutele care scriu date. `null` = permis. */
+export function requireFeedScope(auth: FeedAuthOk, scope: string): FeedHandlerResult | null {
+  return hasScope(auth, scope) ? null : missingScope(scope);
+}
+
 /** Portalurile pe care oferta este publicată activ (model generic + legacy). */
 async function portalKeysFor(
   organizationId: string,
