@@ -93,7 +93,14 @@ export const getAgencyPortalCatalog = createServerFn({ method: "POST" })
     const activated = new Set(
       (connections ?? []).filter((c) => c.activated === true).map((c) => c.portal),
     );
-    const latest = new Map<string, (typeof requests)[number]>();
+    type RequestRow = {
+      id: string;
+      portal: string;
+      status: string;
+      requested_at: string;
+      rejection_reason: string | null;
+    };
+    const latest = new Map<string, RequestRow>();
     for (const row of requests ?? []) {
       if (!latest.has(row.portal)) latest.set(row.portal, row);
     }
@@ -104,7 +111,7 @@ export const getAgencyPortalCatalog = createServerFn({ method: "POST" })
         id: p.id,
         displayName: p.display_name,
         description: p.description,
-        availability: p.availability,
+        availability: p.status,
         activated: activated.has(p.id),
         request: req
           ? {
