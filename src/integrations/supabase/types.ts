@@ -1322,6 +1322,7 @@ export type Database = {
           category: string | null
           city: string | null
           collab_commission_percent: number | null
+          collab_prompted_at: string | null
           collab_terms: string | null
           collaboration: boolean
           comfort: string | null
@@ -1437,6 +1438,7 @@ export type Database = {
           category?: string | null
           city?: string | null
           collab_commission_percent?: number | null
+          collab_prompted_at?: string | null
           collab_terms?: string | null
           collaboration?: boolean
           comfort?: string | null
@@ -1552,6 +1554,7 @@ export type Database = {
           category?: string | null
           city?: string | null
           collab_commission_percent?: number | null
+          collab_prompted_at?: string | null
           collab_terms?: string | null
           collaboration?: boolean
           comfort?: string | null

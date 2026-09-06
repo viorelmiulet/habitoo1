@@ -2,6 +2,8 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { PropertyDetailsFields, type PropertyDetailsValue } from "@/components/app/PropertyDetailsFields";
+import { CollaborationNudgeDialog } from "@/components/app/CollaborationNudgeDialog";
+import { Switch } from "@/components/ui/switch";
 import {
   PropertyTransactionFields,
   emptyTransaction,
@@ -90,8 +92,15 @@ function NewPropertyPage() {
   const set = (key: keyof typeof form, value: string | boolean) =>
     setForm((f) => ({ ...f, [key]: value }));
 
+  // Colaborare Habitoo: comisionul și condițiile completate la crearea anunțului.
+  const [collabPercent, setCollabPercent] = useState("");
+  const [collabTerms, setCollabTerms] = useState("");
+  // Nudge-ul de colaborare se arată o singură dată, doar dacă agenția participă.
+  const [nudgeOpen, setNudgeOpen] = useState(false);
+  const orgCollabEnabled = user?.organization?.collaboration_enabled === true;
+
   const create = useMutation({
-    mutationFn: async () => {
+    mutationFn: async (vars: { collaboration: boolean; percent: number | null; prompted: boolean }) => {
       if (!user?.organization?.id) throw new Error("Agenția nu este configurată.");
       if (!hasTransactionSelection(tx))
         throw new Error("Alege tipul tranzacției: de vânzare, de închiriere sau ambele.");
@@ -133,7 +142,10 @@ function NewPropertyPage() {
           internal_notes: form.internal_notes || null,
           owner_contact_id: form.owner_contact_id || null,
           commission: form.commission || null,
-          collaboration: form.collaboration,
+          collaboration: vars.collaboration,
+          collab_commission_percent: vars.collaboration ? vars.percent : null,
+          collab_terms: vars.collaboration ? collabTerms || null : null,
+          collab_prompted_at: vars.prompted ? new Date().toISOString() : null,
           features,
           ...details,
         })
@@ -162,11 +174,32 @@ function NewPropertyPage() {
         }
       />
 
+      <CollaborationNudgeDialog
+        open={nudgeOpen}
+        onOpenChange={setNudgeOpen}
+        pending={create.isPending}
+        onResolve={(result) => {
+          setNudgeOpen(false);
+          if (result.enable) {
+            set("collaboration", true);
+            if (result.percent !== null) setCollabPercent(String(result.percent));
+            create.mutate({ collaboration: true, percent: result.percent, prompted: true });
+          } else {
+            create.mutate({ collaboration: false, percent: null, prompted: true });
+          }
+        }}
+      />
+
       <form
         className="space-y-6"
         onSubmit={(e) => {
           e.preventDefault();
-          create.mutate();
+          const percent = collabPercent.trim() === "" ? null : Number(collabPercent);
+          if (orgCollabEnabled && !form.collaboration) {
+            setNudgeOpen(true);
+            return;
+          }
+          create.mutate({ collaboration: form.collaboration, percent, prompted: false });
         }}
       >
         <section className="panel space-y-4 p-5">
@@ -235,6 +268,50 @@ function NewPropertyPage() {
         <section className="panel space-y-4 p-5">
           <h2 className="text-sm font-semibold">Tranzacție, preț și caracteristici</h2>
           <PropertyTransactionFields idPrefix="new" value={tx} onChange={setTx} />
+
+          <div className="rounded-lg border p-4 space-y-3">
+            <div className="flex items-start justify-between gap-4">
+              <div className="space-y-1">
+                <Label htmlFor="new-collaboration" className="text-sm">
+                  Disponibilă pentru colaborare
+                </Label>
+                <p className="text-xs text-muted-foreground">
+                  Anunțul devine vizibil pentru celelalte agenții Habitoo, fără date confidențiale.
+                </p>
+              </div>
+              <Switch
+                id="new-collaboration"
+                checked={form.collaboration}
+                onCheckedChange={(c) => set("collaboration", c)}
+              />
+            </div>
+            {form.collaboration ? (
+              <div className="grid gap-4 md:grid-cols-2">
+                <div className="space-y-2">
+                  <Label htmlFor="new-collab-percent">Comision colaborare (%)</Label>
+                  <Input
+                    id="new-collab-percent"
+                    type="number"
+                    min="0"
+                    step="0.1"
+                    value={collabPercent}
+                    onChange={(e) => setCollabPercent(e.target.value)}
+                    placeholder="ex. 1.5"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="new-collab-terms">Condiții de colaborare (opțional)</Label>
+                  <Input
+                    id="new-collab-terms"
+                    value={collabTerms}
+                    onChange={(e) => setCollabTerms(e.target.value)}
+                    placeholder="ex. vizionări doar cu agentul proprietății"
+                  />
+                </div>
+              </div>
+            ) : null}
+          </div>
+
           <div className="grid gap-4 md:grid-cols-3">
             <div className="space-y-2">
               <Label htmlFor="commission">Comision</Label>

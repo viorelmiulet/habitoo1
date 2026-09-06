@@ -28,6 +28,7 @@ import {
 } from "@/components/app/PropertyPortalsCard";
 import { PropertyDetailsFields, type PropertyDetailsValue } from "@/components/app/PropertyDetailsFields";
 import { PROPERTY_DETAIL_FIELDS } from "@/lib/property-detail-fields";
+import { CollaborationNudgeDialog } from "@/components/app/CollaborationNudgeDialog";
 import {
   PropertyTransactionFields,
   emptyTransaction,
@@ -139,6 +140,8 @@ function PropertyDetailPage() {
   const [tx, setTx] = useState<TransactionValue>(emptyTransaction);
   // Colaborare Habitoo: expunerea anunțului către celelalte agenții din platformă.
   const [collab, setCollab] = useState(false);
+  // Nudge-ul de colaborare: o singură dată per proprietate, doar dacă agenția participă.
+  const [nudgeOpen, setNudgeOpen] = useState(false);
   const startEdit = () => {
     if (!property) return;
     setDraft({
@@ -258,17 +261,33 @@ function PropertyDetailPage() {
    * (2) publică pe site, (3) aplică bifele curente de portaluri.
    */
   const publish = useMutation({
-    mutationFn: async () => {
+    mutationFn: async (vars?: { enableCollab?: boolean; percent?: number | null; prompted?: boolean }) => {
+      const extra: Record<string, unknown> = {};
+      if (vars?.enableCollab) {
+        extra.collaboration = true;
+        if (vars.percent !== null && vars.percent !== undefined) {
+          extra.collab_commission_percent = vars.percent;
+        }
+      }
+      if (vars?.prompted) extra.collab_prompted_at = new Date().toISOString();
+
       if (editing) {
         if (!hasTransactionSelection(tx)) {
           throw new Error("Alege tipul tranzacției: de vânzare, de închiriere sau ambele.");
         }
         const { error: saveError } = await supabase
           .from("properties")
-          .update({ ...buildEditPatch(), updated_by: user?.userId ?? null } as never)
+          .update({ ...buildEditPatch(), ...extra, updated_by: user?.userId ?? null } as never)
           .eq("id", id);
         if (saveError) throw saveError;
+      } else if (Object.keys(extra).length > 0) {
+        const { error: extraError } = await supabase
+          .from("properties")
+          .update({ ...extra, updated_by: user?.userId ?? null } as never)
+          .eq("id", id);
+        if (extraError) throw extraError;
       }
+
 
       const { error } = await supabase
         .from("properties")
@@ -444,8 +463,29 @@ function PropertyDetailPage() {
     w.print();
   };
 
+  /** Nudge-ul apare doar dacă agenția participă, colaborarea e oprită și nu am întrebat deja. */
+  const shouldNudgeCollab = () =>
+    user?.organization?.collaboration_enabled === true &&
+    !(editing ? collab : Boolean(property.collaboration)) &&
+    !property.collab_prompted_at;
+
   return (
     <>
+      <CollaborationNudgeDialog
+        open={nudgeOpen}
+        onOpenChange={setNudgeOpen}
+        pending={publish.isPending}
+        onResolve={(result) => {
+          setNudgeOpen(false);
+          if (result.enable) {
+            setCollab(true);
+            publish.mutate({ enableCollab: true, percent: result.percent, prompted: true });
+          } else {
+            publish.mutate({ prompted: true });
+          }
+        }}
+      />
+
       <Button variant="ghost" size="sm" className="-ml-2 w-fit" asChild>
         <Link to="/app/properties">
           <ArrowLeft className="size-4" /> Proprietăți
@@ -471,7 +511,17 @@ function PropertyDetailPage() {
             <Button size="sm" variant="outline" onClick={() => duplicate.mutate()} disabled={duplicate.isPending}>
               Duplică
             </Button>
-            <Button size="sm" onClick={() => publish.mutate()} disabled={publish.isPending || save.isPending}>
+            <Button
+              size="sm"
+              onClick={() => {
+                if (shouldNudgeCollab()) {
+                  setNudgeOpen(true);
+                  return;
+                }
+                publish.mutate(undefined);
+              }}
+              disabled={publish.isPending || save.isPending}
+            >
               {publish.isPending ? "Se publică…" : "Publică"}
             </Button>
             <DropdownMenu>
