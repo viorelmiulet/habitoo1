@@ -58,12 +58,13 @@ export const Route = createFileRoute("/api/public/sites/v1/properties")({
           }
           const agentById = new Map((agents.data ?? []).map((a) => [a.id, a]));
 
-          const baseUrl = url.origin;
+          const { baseUrl, publicSiteUrl } = feedUrlsForRequest(url);
           const feed = buildPaginatedFeed({
             data: rows.map((row) =>
               mapPropertyToFeed(row, {
                 baseUrl,
-                publicSiteUrl: baseUrl,
+                publicSiteUrl,
+
                 images: imagesByProperty.get(row.id) ?? [],
                 agent: row.assigned_to ? (agentById.get(row.assigned_to) ?? null) : null,
               }),
