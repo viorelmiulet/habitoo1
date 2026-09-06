@@ -2,7 +2,7 @@
  * Feedul JSON pentru iMove.ro: GET /api/public/portal/v1/imove/feed.json
  *
  * Alias explicit pentru `/feed`, cu aceeași selecție, aceeași mapare și aceeași
- * autentificare (cheia Habitoo pentru portal, scope `feed:read`).
+ * autentificare (cheia API iMove salvată în Habitoo, scope `feed:read`).
  */
 import { createFileRoute } from "@tanstack/react-router";
 import { errorResponse, jsonResponse, withFeedAuth } from "@/lib/site-feed/auth.server";
@@ -33,7 +33,7 @@ export const Route = createFileRoute("/api/public/portal/v1/imove/feed.json")({
             });
             return { response: jsonResponse(imoveFeedBody(build)), items: build.listings.length };
           },
-          { allowQueryToken: true },
+          { allowQueryToken: true, portalCredential: "imove" },
         ),
     },
   },
