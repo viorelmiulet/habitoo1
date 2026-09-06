@@ -6,7 +6,7 @@ import { getPublicOffer } from "@/lib/public-offer.functions";
 import { mediaOriginForHost } from "@/lib/site-feed/config";
 import { feedImageUrl } from "@/lib/site-feed/mapper";
 import { getCurrentHostname } from "@/lib/current-host";
-import { formatPrice } from "@/lib/format";
+import { formatMoney } from "@/lib/format";
 
 export const Route = createFileRoute("/oferta/$id")({
   loader: async ({ params }) => {
@@ -80,7 +80,7 @@ function OfferPage() {
             </p>
             <h1 className="text-3xl font-semibold tracking-tight">{offer.title}</h1>
             <p className="text-2xl font-semibold text-primary">
-              {offer.price ? formatPrice(offer.price, offer.currency) : "Preț la cerere"}
+              {offer.price ? formatMoney(offer.price, offer.currency) : "Preț la cerere"}
             </p>
           </header>
 
