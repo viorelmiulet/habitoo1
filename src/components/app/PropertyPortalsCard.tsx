@@ -77,7 +77,7 @@ export function PropertyPortalsCard({ propertyId }: { propertyId: string }) {
                 </p>
               ) : null}
               {diag?.notes.length ? (
-                <p className="text-xs text-warning">{diag.notes.join(" ")}</p>
+                <p className="text-xs text-warning-foreground">{diag.notes.join(" ")}</p>
               ) : null}
               {item.lastError ? <p className="text-xs text-destructive">{item.lastError}</p> : null}
             </div>
