@@ -85,7 +85,7 @@ export const Route = createFileRoute("/lovable/email/auth/webhook")({
             },
 
             email_change: {
-              subject: 'Confirm your new email',
+              subject: 'Confirmă noua adresă de email — Habitoo CRM',
               render: (data) =>
                 React.createElement(EmailChangeEmail, {
                   siteName: SITE_NAME,
@@ -96,7 +96,7 @@ export const Route = createFileRoute("/lovable/email/auth/webhook")({
                 }),
             },
             reauthentication: {
-              subject: 'Your verification code',
+              subject: 'Codul tău de verificare Habitoo CRM',
               render: (data) =>
                 React.createElement(ReauthenticationEmail, { token: data.token ?? '' }),
             },
