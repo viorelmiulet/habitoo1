@@ -266,6 +266,50 @@ function NewPropertyPage() {
         <section className="panel space-y-4 p-5">
           <h2 className="text-sm font-semibold">Tranzacție, preț și caracteristici</h2>
           <PropertyTransactionFields idPrefix="new" value={tx} onChange={setTx} />
+
+          <div className="rounded-lg border p-4 space-y-3">
+            <div className="flex items-start justify-between gap-4">
+              <div className="space-y-1">
+                <Label htmlFor="new-collaboration" className="text-sm">
+                  Disponibilă pentru colaborare
+                </Label>
+                <p className="text-xs text-muted-foreground">
+                  Anunțul devine vizibil pentru celelalte agenții Habitoo, fără date confidențiale.
+                </p>
+              </div>
+              <Switch
+                id="new-collaboration"
+                checked={form.collaboration}
+                onCheckedChange={(c) => set("collaboration", c)}
+              />
+            </div>
+            {form.collaboration ? (
+              <div className="grid gap-4 md:grid-cols-2">
+                <div className="space-y-2">
+                  <Label htmlFor="new-collab-percent">Comision colaborare (%)</Label>
+                  <Input
+                    id="new-collab-percent"
+                    type="number"
+                    min="0"
+                    step="0.1"
+                    value={collabPercent}
+                    onChange={(e) => setCollabPercent(e.target.value)}
+                    placeholder="ex. 1.5"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="new-collab-terms">Condiții de colaborare (opțional)</Label>
+                  <Input
+                    id="new-collab-terms"
+                    value={collabTerms}
+                    onChange={(e) => setCollabTerms(e.target.value)}
+                    placeholder="ex. vizionări doar cu agentul proprietății"
+                  />
+                </div>
+              </div>
+            ) : null}
+          </div>
+
           <div className="grid gap-4 md:grid-cols-3">
             <div className="space-y-2">
               <Label htmlFor="commission">Comision</Label>
