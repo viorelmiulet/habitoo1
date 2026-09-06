@@ -240,6 +240,25 @@ export const getPortalHub = createServerFn({ method: "POST" })
     const admin = await loadAdmin();
     const genericFeedUrl = await feedUrlForOrg();
     const imoveFeedUrl = await feedUrlForOrg("imove");
+    // iMove citește feedul printr-un sync generic de URL, fără headere: cheia
+    // salvată pentru portal se adaugă direct în URL-ul afișat/copiat.
+    const imoveFeedKey = await (async () => {
+      const { data: row } = await admin
+        .from("portal_connections")
+        .select("portal_credentials_encrypted")
+        .eq("organization_id", organizationId)
+        .eq("portal", "imove")
+        .maybeSingle();
+      if (!row?.portal_credentials_encrypted) return null;
+      try {
+        const { decryptPortalCredential } = await import("@/lib/portals/crypto.server");
+        return decryptPortalCredential(row.portal_credentials_encrypted);
+      } catch {
+        return null;
+      }
+    })();
+    const withImoveKey = (url: string) =>
+      imoveFeedKey ? `${url}?api_key=${encodeURIComponent(imoveFeedKey)}` : url;
     // Feedul iMove are schemă proprie, deci și numărătoare proprie de oferte.
     const { buildImoveFeed } = await import("@/lib/portals/imove/feed.server");
     const imoveFeed = await buildImoveFeed({
@@ -314,8 +333,8 @@ export const getPortalHub = createServerFn({ method: "POST" })
           pending: portalListings.filter((l) => l.status === "pending").length,
         },
         eligibleProperties: eligible.count ?? 0,
-        feedUrl: portal.id === "imove" ? `${imoveFeedUrl}.json` : genericFeedUrl,
-        feedUrlCsv: portal.id === "imove" ? `${imoveFeedUrl}.csv` : null,
+        feedUrl: portal.id === "imove" ? withImoveKey(`${imoveFeedUrl}.json`) : genericFeedUrl,
+        feedUrlCsv: portal.id === "imove" ? withImoveKey(`${imoveFeedUrl}.csv`) : null,
         // Portal care primește datele DOAR prin feed (fără operații de scriere).
         feedOnly: portal.capabilities.includes("feed_pull") && !portal.capabilities.includes("publish_listing"),
         feed:
