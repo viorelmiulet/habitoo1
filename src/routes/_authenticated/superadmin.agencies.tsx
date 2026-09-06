@@ -115,16 +115,11 @@ function AgenciesPage() {
                   {data?.properties.filter((p) => p.organization_id === o.id).length ?? 0}/
                   {o.max_properties} proprietăți
                 </span>
-                <Select value={o.plan} onValueChange={(v) => update.mutate({ id: o.id, patch: { plan: v } })}>
-                  <SelectTrigger className="w-32">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="starter">starter</SelectItem>
-                    <SelectItem value="growth">growth</SelectItem>
-                    <SelectItem value="enterprise">enterprise</SelectItem>
-                  </SelectContent>
-                </Select>
+                <PlanPicker
+                  plan={o.plan}
+                  onSave={(plan) => savePlan.mutate({ id: o.id, plan, previous: o.plan })}
+                  saving={savePlan.isPending}
+                />
                 <Select
                   value={o.status}
                   onValueChange={(v) => update.mutate({ id: o.id, patch: { status: v } })}
