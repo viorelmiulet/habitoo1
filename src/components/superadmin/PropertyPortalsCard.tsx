@@ -84,10 +84,22 @@ export function PropertyPortalsCard({
   }, [cells]);
 
   const dirty = cells.filter((c) => (checked[c.portalId] ?? c.selected) !== c.selected);
+  /**
+   * Portaluri bifate a căror ofertă NU este publicată în realitate (retrasă sau
+   * eroare): salvarea trebuie să rămână posibilă, ca republicarea să pornească.
+   */
+  const toRepublish = cells.filter(
+    (c) =>
+      c.availability === "available" &&
+      (checked[c.portalId] ?? c.selected) &&
+      (c.state === "withdrawn" || c.state === "error"),
+  );
+  const actionable = [...new Set([...dirty, ...toRepublish])];
   /** Portaluri debifate care sunt efectiv publicate → necesită confirmare. */
   const toWithdraw = dirty.filter(
     (c) => !(checked[c.portalId] ?? false) && (c.state === "published" || c.state === "in_feed"),
   );
+
 
   const apply = useMutation({
     mutationFn: () =>
