@@ -56,7 +56,8 @@ export function PropertyPortalsCard({
   organizationId,
   propertyId,
 }: {
-  organizationId: string;
+  /** Doar Superadmin trimite agenția explicit; agenția o ia din sesiune. */
+  organizationId?: string;
   propertyId: string;
 }) {
   const queryClient = useQueryClient();
@@ -66,7 +67,10 @@ export function PropertyPortalsCard({
 
   const matrix = useQuery({
     queryKey,
-    queryFn: () => loadMatrix({ data: { organizationId, propertyIds: [propertyId] } }),
+    queryFn: () =>
+      loadMatrix({
+        data: { ...(organizationId ? { organizationId } : {}), propertyIds: [propertyId] },
+      }),
   });
 
   const cells = useMemo<PropertyPortalCell[]>(
@@ -105,7 +109,7 @@ export function PropertyPortalsCard({
     mutationFn: () =>
       applyFn({
         data: {
-          organizationId,
+          ...(organizationId ? { organizationId } : {}),
           propertyId,
           selections: cells
             .filter((c) => c.availability === "available")
@@ -127,6 +131,8 @@ export function PropertyPortalsCard({
 
   if (matrix.isLoading) return <InlineLoading label="Se încarcă publicarea pe portaluri…" />;
   if (matrix.isError) return <QueryError error={matrix.error} onRetry={() => matrix.refetch()} />;
+  // Nicio secțiune când agenției nu i-a fost activat niciun portal.
+  if (cells.length === 0) return null;
 
   return (
     <section className="panel">
