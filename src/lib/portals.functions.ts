@@ -1195,3 +1195,231 @@ export const previewPortalFeed = createServerFn({ method: "POST" })
       hasActiveKey: (count ?? 0) > 0,
     };
   });
+
+/* ------------------------------------------------------------------------- */
+/* Sursa de adevăr: checkbox-urile din pagina de editare a proprietății      */
+/* ------------------------------------------------------------------------- */
+
+export type PortalSelectionOutcome = {
+  portalId: string;
+  portalName: string;
+  /** Ce s-a executat efectiv pentru portal. */
+  action: "none" | "selected" | "published" | "updated" | "withdrawn" | "blocked";
+  ok: boolean;
+  message: string | null;
+};
+
+const applySelectionSchema = z.object({
+  propertyId: z.string().uuid(),
+  selections: z
+    .array(z.object({ portalId: z.string().min(1).max(40), enabled: z.boolean() }))
+    .max(40),
+  /** Sincronizează portalurile rămase bifate (după salvarea datelor proprietății). */
+  syncExisting: z.boolean().default(false),
+});
+
+/**
+ * Aplică intenția utilizatorului (checkbox-uri) asupra portalurilor unei proprietăți.
+ *
+ * Diferența față de starea salvată decide acțiunea reală:
+ *  - false → true  = publicare (portal push) / intrare în feed (portal feed);
+ *  - true  → true  = actualizare doar dacă s-a cerut sincronizarea;
+ *  - true  → false = retragere (portal push) / ieșire din feed (portal feed);
+ *  - false → false = nimic.
+ *
+ * Eșecul unui portal nu anulează operațiunile reușite pe celelalte.
+ */
+export const applyPropertyPortalSelection = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) => applySelectionSchema.parse(input))
+  .handler(async ({ data, context }): Promise<{ ok: boolean; results: PortalSelectionOutcome[] }> => {
+    const organizationId = await requireOrgAdmin(context as unknown as AuthContext);
+    const actorId = context.userId;
+    const admin = await loadAdmin();
+
+    const { data: property } = await admin
+      .from("properties")
+      .select("id")
+      .eq("id", data.propertyId)
+      .eq("organization_id", organizationId)
+      .maybeSingle();
+    if (!property) throw new Error("Proprietatea nu a fost găsită.");
+
+    const [{ data: publications }, { data: listings }, { data: connections }, { data: activeKeys }] =
+      await Promise.all([
+        admin
+          .from("portal_publications")
+          .select("portal_key, enabled")
+          .eq("organization_id", organizationId)
+          .eq("property_id", data.propertyId),
+        admin
+          .from("portal_listings")
+          .select("portal, status")
+          .eq("organization_id", organizationId)
+          .eq("property_id", data.propertyId),
+        admin.from("portal_connections").select("portal, status").eq("organization_id", organizationId),
+        admin
+          .from("portal_api_keys")
+          .select("portal")
+          .eq("organization_id", organizationId)
+          .eq("status", "active"),
+      ]);
+    const keyedPortals = new Set((activeKeys ?? []).map((k) => k.portal));
+
+    const results: PortalSelectionOutcome[] = [];
+
+    for (const wanted of data.selections) {
+      const definition = getPortalDefinition(wanted.portalId);
+      if (!definition) continue;
+      const name = definition.display_name;
+      const previous =
+        (publications ?? []).find((p) => p.portal_key === definition.id)?.enabled === true;
+
+      if (definition.status !== "available") {
+        if (wanted.enabled) {
+          results.push({
+            portalId: definition.id,
+            portalName: name,
+            action: "blocked",
+            ok: false,
+            message: `Integrarea ${name} nu este încă disponibilă.`,
+          });
+        }
+        continue;
+      }
+
+      const pushSupported = definition.capabilities.includes("publish_listing");
+      const configured = pushSupported
+        ? (() => {
+            const status = (connections ?? []).find((c) => c.portal === definition.id)?.status;
+            return status === "connected" || status === "ready";
+          })()
+        : keyedPortals.has(definition.id);
+      const published = (listings ?? []).some(
+        (l) => l.portal === definition.id && (l.status === "published" || l.status === "updated"),
+      );
+
+      // A. false → false: nimic.
+      if (!wanted.enabled && !previous) continue;
+
+      // Intenția se salvează întotdeauna când se schimbă.
+      if (wanted.enabled !== previous) {
+        const { error } = await admin.from("portal_publications").upsert(
+          {
+            organization_id: organizationId,
+            property_id: data.propertyId,
+            portal_key: definition.id,
+            enabled: wanted.enabled,
+            status: wanted.enabled ? "pending" : "disabled",
+            updated_by: actorId,
+            created_by: actorId,
+          } as never,
+          { onConflict: "organization_id,property_id,portal_key" },
+        );
+        if (error) throw new Error(error.message);
+
+        await admin.from("audit_logs").insert({
+          organization_id: organizationId,
+          actor_id: actorId,
+          action: wanted.enabled ? "portal.selection_enabled" : "portal.selection_disabled",
+          entity: "portal_publications",
+          entity_id: data.propertyId,
+          old_values: { portal: definition.id, selected: previous },
+          new_values: { portal: definition.id, selected: wanted.enabled },
+          created_by: actorId,
+        } as never);
+        await logOperation({
+          organizationId,
+          portal: definition.id,
+          operation: wanted.enabled ? "select" : "deselect",
+          success: true,
+          propertyId: data.propertyId,
+          actorId,
+        });
+      }
+
+      // D. true → false: retragere reală.
+      if (!wanted.enabled) {
+        if (pushSupported && published) {
+          const res = await executeListingAction({
+            organizationId,
+            actorId,
+            portalId: definition.id,
+            propertyId: data.propertyId,
+            action: "withdraw",
+          });
+          results.push({
+            portalId: definition.id,
+            portalName: name,
+            action: res.ok ? "withdrawn" : "blocked",
+            ok: res.ok,
+            message: res.ok ? `${name}: oferta a fost retrasă.` : res.message,
+          });
+        } else {
+          results.push({
+            portalId: definition.id,
+            portalName: name,
+            action: "withdrawn",
+            ok: true,
+            message: pushSupported
+              ? `${name}: oferta nu mai este trimisă.`
+              : `${name}: oferta nu mai apare în feed și portalul o arhivează.`,
+          });
+        }
+        continue;
+      }
+
+      // Portal neconfigurat: intenția rămâne salvată, statusul rămâne nepublicat.
+      if (!configured) {
+        results.push({
+          portalId: definition.id,
+          portalName: name,
+          action: "blocked",
+          ok: false,
+          message: `${name} nu este configurat. Configurează portalul din Setări → Integrări.`,
+        });
+        continue;
+      }
+
+      // Portalurile de tip feed nu primesc trimiteri: selecția este suficientă.
+      if (!pushSupported) {
+        results.push({
+          portalId: definition.id,
+          portalName: name,
+          action: previous ? "none" : "selected",
+          ok: true,
+          message: previous ? null : `${name}: oferta intră în feed.`,
+        });
+        continue;
+      }
+
+      // B. true → true: actualizare doar când s-a cerut sincronizarea.
+      if (previous && !data.syncExisting) {
+        results.push({ portalId: definition.id, portalName: name, action: "none", ok: true, message: null });
+        continue;
+      }
+      if (previous && !published) {
+        // Bifat, dar niciodată trimis cu succes: reîncearcă publicarea.
+      }
+
+      const action = published ? "update" : "publish";
+      const res = await executeListingAction({
+        organizationId,
+        actorId,
+        portalId: definition.id,
+        propertyId: data.propertyId,
+        action,
+      });
+      results.push({
+        portalId: definition.id,
+        portalName: name,
+        action: res.ok ? (action === "update" ? "updated" : "published") : "blocked",
+        ok: res.ok,
+        message: res.ok
+          ? `${name}: ${action === "update" ? "actualizat" : "publicat"}.`
+          : res.message,
+      });
+    }
+
+    return { ok: results.every((r) => r.ok), results };
+  });
