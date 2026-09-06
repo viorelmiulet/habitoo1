@@ -88,6 +88,12 @@ function NewPropertyPage() {
   const [tx, setTx] = useState<TransactionValue>(emptyTransaction);
   // Localizarea oficială (nomenclator SIRUTA); textul din `city`/`county` rămâne sincronizat cu selecția.
   const [location, setLocation] = useState<LocationValue>(emptyLocation);
+  // Poziția pe hartă (Leaflet/OpenStreetMap) și precizia locației.
+  const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null);
+  const [locationPrecise, setLocationPrecise] = useState(false);
+  // Seed stabil pentru aproximarea zonei înainte ca proprietatea să aibă id.
+  const [mapSeed] = useState(() => `new-${Math.random().toString(36).slice(2)}`);
+
 
   const set = (key: keyof typeof form, value: string | boolean) =>
     setForm((f) => ({ ...f, [key]: value }));
