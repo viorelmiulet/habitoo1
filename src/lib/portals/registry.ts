@@ -275,6 +275,16 @@ export function derivePortalConnectionStatus(input: {
     return true;
   });
   if (!complete) return "not_configured";
+  // Portalurile fără credențiale proprii (doar feed cu cheie Habitoo) nu pot
+  // funcționa fără o cheie activă emisă de noi.
+  if (
+    required.length === 0 &&
+    input.definition.authentication.includes("habitoo_api_key") &&
+    !input.hasHabitooKey
+  ) {
+    return "not_configured";
+  }
   if (input.lastError) return "error";
+
   return input.testedOk ? "connected" : "ready";
 }
