@@ -8,8 +8,12 @@
 import { useState } from "react";
 import clickimobLogo from "@/assets/portals/clickimob.png";
 import homepitchLogo from "@/assets/portals/homepitch.png";
+import imobiliareRoLogo from "@/assets/portals/imobiliare_ro.png";
 import imospotLogo from "@/assets/portals/imospot.png";
 import imoveLogo from "@/assets/portals/imove.png";
+import olxLogo from "@/assets/portals/olx.png";
+import publi24Logo from "@/assets/portals/publi24.png";
+import storiaLogo from "@/assets/portals/storia.png";
 import { cn } from "@/lib/utils";
 
 const PORTAL_LOGOS: Record<string, string> = {
@@ -17,6 +21,10 @@ const PORTAL_LOGOS: Record<string, string> = {
   imove: imoveLogo,
   imospot: imospotLogo,
   homepitch: homepitchLogo,
+  imobiliare_ro: imobiliareRoLogo,
+  storia: storiaLogo,
+  olx: olxLogo,
+  publi24: publi24Logo,
 };
 
 /** Există logo local pentru portalul dat? */
