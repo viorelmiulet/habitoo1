@@ -2167,6 +2167,18 @@ export type Database = {
         Args: { _actor?: string; _org: string }
         Returns: Json
       }
+      superadmin_delete_user: {
+        Args: { _actor?: string; _reassign_to?: string; _user: string }
+        Returns: Json
+      }
+      superadmin_reassign_user_data: {
+        Args: { _actor?: string; _from: string; _to: string }
+        Returns: Json
+      }
+      superadmin_user_workload: {
+        Args: { _actor?: string; _user: string }
+        Returns: Json
+      }
     }
     Enums: {
       activity_kind:
