@@ -86,21 +86,35 @@ export const Route = createFileRoute("/api/public/sites/v1/contacts")({
             contactId = created.id;
           }
 
-          // Deduplicare lead: același contact + aceeași proprietate, încă deschis.
-          const openLead = await supabaseAdmin
+          // Deduplicare lead: același contact + exact aceeași proprietate (sau
+          // ambele fără proprietate), încă deschis. Un lead nu este niciodată
+          // reutilizat pentru o altă proprietate.
+          const openLeadQuery = supabaseAdmin
             .from("leads")
-            .select("id")
+            .select("id, notes")
             .eq("organization_id", auth.organizationId)
             .eq("contact_id", contactId)
             .not("stage", "in", "(won,lost)")
-            .limit(1)
-            .maybeSingle();
+            .limit(1);
+          const openLead = await (propertyId
+            ? openLeadQuery.eq("property_id", propertyId)
+            : openLeadQuery.is("property_id", null)
+          ).maybeSingle();
 
           let leadId: string;
           let deduplicated = false;
-          if (openLead.data && propertyId === null) {
+          if (openLead.data) {
             leadId = openLead.data.id;
             deduplicated = true;
+            // Nu suprascriem datele CRM: doar marcăm interacțiunea și adăugăm mesajul nou.
+            const notes = input.mesaj
+              ? [openLead.data.notes, input.mesaj].filter(Boolean).join("\n---\n").slice(0, 8000)
+              : openLead.data.notes;
+            await supabaseAdmin
+              .from("leads")
+              .update({ last_interaction_at: new Date().toISOString(), notes })
+              .eq("organization_id", auth.organizationId)
+              .eq("id", leadId);
           } else {
             const { data: lead, error: leadError } = await supabaseAdmin
               .from("leads")
@@ -127,6 +141,7 @@ export const Route = createFileRoute("/api/public/sites/v1/contacts")({
               note: `Lead primit din site (${source}).`,
             });
           }
+
 
           await supabaseAdmin.from("audit_logs").insert({
             organization_id: auth.organizationId,
