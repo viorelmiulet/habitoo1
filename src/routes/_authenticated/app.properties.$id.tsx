@@ -28,6 +28,7 @@ import {
 } from "@/components/app/PropertyPortalsCard";
 import { PropertyDetailsFields, type PropertyDetailsValue } from "@/components/app/PropertyDetailsFields";
 import { PROPERTY_DETAIL_FIELDS } from "@/lib/property-detail-fields";
+import { CollaborationNudgeDialog } from "@/components/app/CollaborationNudgeDialog";
 import {
   PropertyTransactionFields,
   emptyTransaction,
