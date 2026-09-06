@@ -1,6 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
+import { PropertyDetailsFields, type PropertyDetailsValue } from "@/components/app/PropertyDetailsFields";
 import { toast } from "sonner";
 import { toastError } from "@/lib/errors";
 import { PageHeader } from "@/components/app/PageHeader";
@@ -75,6 +76,8 @@ function NewPropertyPage() {
     collaboration: false,
   });
   const [features, setFeatures] = useState<string[]>([]);
+  // Secțiunile de detalii (Detalii / Suprafețe / Clădire / Utilități / Finisaje / Dotări).
+  const [details, setDetails] = useState<PropertyDetailsValue>({});
   // Localizarea oficială (nomenclator SIRUTA); textul din `city`/`county` rămâne sincronizat cu selecția.
   const [location, setLocation] = useState<LocationValue>(emptyLocation);
 
@@ -126,6 +129,7 @@ function NewPropertyPage() {
           commission: form.commission || null,
           collaboration: form.collaboration,
           features,
+          ...details,
         })
         .select("id")
         .single();
@@ -339,6 +343,15 @@ function NewPropertyPage() {
               })}
             </div>
           </div>
+        </section>
+
+        <section className="panel space-y-2 p-5">
+          <h2 className="text-sm font-semibold">Detalii complete</h2>
+          <PropertyDetailsFields
+            idPrefix="new"
+            value={details}
+            onChange={(patch) => setDetails((d) => ({ ...d, ...patch }))}
+          />
         </section>
 
         <section className="panel space-y-4 p-5">
