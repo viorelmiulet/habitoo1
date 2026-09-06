@@ -98,7 +98,7 @@ function NewPropertyPage() {
   const orgCollabEnabled = user?.organization?.collaboration_enabled === true;
 
   const create = useMutation({
-    mutationFn: async () => {
+    mutationFn: async (vars: { collaboration: boolean; percent: number | null; prompted: boolean }) => {
       if (!user?.organization?.id) throw new Error("Agenția nu este configurată.");
       if (!hasTransactionSelection(tx))
         throw new Error("Alege tipul tranzacției: de vânzare, de închiriere sau ambele.");
