@@ -25,6 +25,7 @@ import { Route as AuthenticatedAppRouteImport } from './routes/_authenticated/ap
 import { Route as AuthenticatedOnboardingRouteImport } from './routes/_authenticated/onboarding'
 import { Route as AuthenticatedSuperadminRouteImport } from './routes/_authenticated/superadmin'
 import { Route as AuthCallbackRouteImport } from './routes/auth.callback'
+import { Route as OfertaIdRouteImport } from './routes/oferta.$id'
 import { Route as AuthenticatedAppIndexRouteImport } from './routes/_authenticated/app.index'
 import { Route as AuthenticatedAppActivitiesRouteImport } from './routes/_authenticated/app.activities'
 import { Route as AuthenticatedAppCalendarRouteImport } from './routes/_authenticated/app.calendar'
@@ -133,6 +134,11 @@ const AuthenticatedSuperadminRoute = AuthenticatedSuperadminRouteImport.update({
 const AuthCallbackRoute = AuthCallbackRouteImport.update({
   id: '/auth/callback',
   path: '/auth/callback',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OfertaIdRoute = OfertaIdRouteImport.update({
+  id: '/oferta/$id',
+  path: '/oferta/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedAppIndexRoute = AuthenticatedAppIndexRouteImport.update({
@@ -323,6 +329,7 @@ export interface FileRoutesByFullPath {
   '/onboarding': typeof AuthenticatedOnboardingRoute
   '/superadmin': typeof AuthenticatedSuperadminRouteWithChildren
   '/auth/callback': typeof AuthCallbackRoute
+  '/oferta/$id': typeof OfertaIdRoute
   '/app/activities': typeof AuthenticatedAppActivitiesRoute
   '/app/calendar': typeof AuthenticatedAppCalendarRoute
   '/app/goals': typeof AuthenticatedAppGoalsRoute
@@ -368,6 +375,7 @@ export interface FileRoutesByTo {
   '/termeni': typeof TermeniRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
   '/auth/callback': typeof AuthCallbackRoute
+  '/oferta/$id': typeof OfertaIdRoute
   '/app/activities': typeof AuthenticatedAppActivitiesRoute
   '/app/calendar': typeof AuthenticatedAppCalendarRoute
   '/app/goals': typeof AuthenticatedAppGoalsRoute
@@ -417,6 +425,7 @@ export interface FileRoutesById {
   '/_authenticated/onboarding': typeof AuthenticatedOnboardingRoute
   '/_authenticated/superadmin': typeof AuthenticatedSuperadminRouteWithChildren
   '/auth/callback': typeof AuthCallbackRoute
+  '/oferta/$id': typeof OfertaIdRoute
   '/_authenticated/app/activities': typeof AuthenticatedAppActivitiesRoute
   '/_authenticated/app/calendar': typeof AuthenticatedAppCalendarRoute
   '/_authenticated/app/goals': typeof AuthenticatedAppGoalsRoute
@@ -466,6 +475,7 @@ export interface FileRouteTypes {
     | '/onboarding'
     | '/superadmin'
     | '/auth/callback'
+    | '/oferta/$id'
     | '/app/activities'
     | '/app/calendar'
     | '/app/goals'
@@ -511,6 +521,7 @@ export interface FileRouteTypes {
     | '/termeni'
     | '/onboarding'
     | '/auth/callback'
+    | '/oferta/$id'
     | '/app/activities'
     | '/app/calendar'
     | '/app/goals'
@@ -559,6 +570,7 @@ export interface FileRouteTypes {
     | '/_authenticated/onboarding'
     | '/_authenticated/superadmin'
     | '/auth/callback'
+    | '/oferta/$id'
     | '/_authenticated/app/activities'
     | '/_authenticated/app/calendar'
     | '/_authenticated/app/goals'
@@ -605,6 +617,7 @@ export interface RootRouteChildren {
   ResetPasswordRoute: typeof ResetPasswordRoute
   TermeniRoute: typeof TermeniRoute
   AuthCallbackRoute: typeof AuthCallbackRoute
+  OfertaIdRoute: typeof OfertaIdRoute
   LovableEmailAuthPreviewRoute: typeof LovableEmailAuthPreviewRoute
   LovableEmailAuthWebhookRoute: typeof LovableEmailAuthWebhookRoute
   ApiPublicSitesV1AgentsRoute: typeof ApiPublicSitesV1AgentsRoute
@@ -726,6 +739,13 @@ declare module '@tanstack/react-router' {
       path: '/auth/callback'
       fullPath: '/auth/callback'
       preLoaderRoute: typeof AuthCallbackRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/oferta/$id': {
+      id: '/oferta/$id'
+      path: '/oferta/$id'
+      fullPath: '/oferta/$id'
+      preLoaderRoute: typeof OfertaIdRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/app/': {
@@ -1062,6 +1082,7 @@ const rootRouteChildren: RootRouteChildren = {
   ResetPasswordRoute: ResetPasswordRoute,
   TermeniRoute: TermeniRoute,
   AuthCallbackRoute: AuthCallbackRoute,
+  OfertaIdRoute: OfertaIdRoute,
   LovableEmailAuthPreviewRoute: LovableEmailAuthPreviewRoute,
   LovableEmailAuthWebhookRoute: LovableEmailAuthWebhookRoute,
   ApiPublicSitesV1AgentsRoute: ApiPublicSitesV1AgentsRoute,

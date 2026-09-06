@@ -3,7 +3,8 @@ import { PublicLayout } from "@/components/marketing/PublicLayout";
 import { Container, Section } from "@/components/marketing/Section";
 import { publicHead } from "@/components/marketing/public-head";
 import { getPublicOffer } from "@/lib/public-offer.functions";
-import { feedImageUrl, mediaOriginForHost } from "@/lib/site-feed/config-image";
+import { mediaOriginForHost } from "@/lib/site-feed/config";
+import { feedImageUrl } from "@/lib/site-feed/mapper";
 import { getCurrentHostname } from "@/lib/current-host";
 import { formatPrice } from "@/lib/format";
 
