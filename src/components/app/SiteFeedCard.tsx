@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { StatusBadge } from "@/components/app/StatusBadge";
-import { LoadingState } from "@/components/app/LoadingState";
+import { InlineLoading } from "@/components/app/LoadingState";
 import { QueryError } from "@/components/app/QueryError";
 import { ConfirmDialog } from "@/components/app/ConfirmDialog";
 import { toastError } from "@/lib/errors";
