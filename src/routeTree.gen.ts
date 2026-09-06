@@ -56,6 +56,7 @@ import { Route as ApiPublicSitesV1AgentsRouteImport } from './routes/api/public/
 import { Route as ApiPublicSitesV1ContactsRouteImport } from './routes/api/public/sites/v1/contacts'
 import { Route as ApiPublicSitesV1PropertiesRouteImport } from './routes/api/public/sites/v1/properties'
 import { Route as ApiPublicSitesV1VisitsRouteImport } from './routes/api/public/sites/v1/visits'
+import { Route as ApiPublicPortalV1ImoveFeedRouteImport } from './routes/api/public/portal/v1/imove.feed'
 import { Route as ApiPublicPortalV1PropertiesIdRouteImport } from './routes/api/public/portal/v1/properties.$id'
 import { Route as ApiPublicSitesV1MediaIdRouteImport } from './routes/api/public/sites/v1/media.$id'
 import { Route as ApiPublicSitesV1PropertiesIdRouteImport } from './routes/api/public/sites/v1/properties.$id'
@@ -315,6 +316,12 @@ const ApiPublicSitesV1VisitsRoute = ApiPublicSitesV1VisitsRouteImport.update({
   path: '/api/public/sites/v1/visits',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicPortalV1ImoveFeedRoute =
+  ApiPublicPortalV1ImoveFeedRouteImport.update({
+    id: '/api/public/portal/v1/imove/feed',
+    path: '/api/public/portal/v1/imove/feed',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicPortalV1PropertiesIdRoute =
   ApiPublicPortalV1PropertiesIdRouteImport.update({
     id: '/$id',
@@ -380,6 +387,7 @@ export interface FileRoutesByFullPath {
   '/api/public/sites/v1/contacts': typeof ApiPublicSitesV1ContactsRoute
   '/api/public/sites/v1/properties': typeof ApiPublicSitesV1PropertiesRouteWithChildren
   '/api/public/sites/v1/visits': typeof ApiPublicSitesV1VisitsRoute
+  '/api/public/portal/v1/imove/feed': typeof ApiPublicPortalV1ImoveFeedRoute
   '/api/public/portal/v1/properties/$id': typeof ApiPublicPortalV1PropertiesIdRoute
   '/api/public/sites/v1/media/$id': typeof ApiPublicSitesV1MediaIdRoute
   '/api/public/sites/v1/properties/$id': typeof ApiPublicSitesV1PropertiesIdRoute
@@ -429,6 +437,7 @@ export interface FileRoutesByTo {
   '/api/public/sites/v1/contacts': typeof ApiPublicSitesV1ContactsRoute
   '/api/public/sites/v1/properties': typeof ApiPublicSitesV1PropertiesRouteWithChildren
   '/api/public/sites/v1/visits': typeof ApiPublicSitesV1VisitsRoute
+  '/api/public/portal/v1/imove/feed': typeof ApiPublicPortalV1ImoveFeedRoute
   '/api/public/portal/v1/properties/$id': typeof ApiPublicPortalV1PropertiesIdRoute
   '/api/public/sites/v1/media/$id': typeof ApiPublicSitesV1MediaIdRoute
   '/api/public/sites/v1/properties/$id': typeof ApiPublicSitesV1PropertiesIdRoute
@@ -482,6 +491,7 @@ export interface FileRoutesById {
   '/api/public/sites/v1/contacts': typeof ApiPublicSitesV1ContactsRoute
   '/api/public/sites/v1/properties': typeof ApiPublicSitesV1PropertiesRouteWithChildren
   '/api/public/sites/v1/visits': typeof ApiPublicSitesV1VisitsRoute
+  '/api/public/portal/v1/imove/feed': typeof ApiPublicPortalV1ImoveFeedRoute
   '/api/public/portal/v1/properties/$id': typeof ApiPublicPortalV1PropertiesIdRoute
   '/api/public/sites/v1/media/$id': typeof ApiPublicSitesV1MediaIdRoute
   '/api/public/sites/v1/properties/$id': typeof ApiPublicSitesV1PropertiesIdRoute
@@ -535,6 +545,7 @@ export interface FileRouteTypes {
     | '/api/public/sites/v1/contacts'
     | '/api/public/sites/v1/properties'
     | '/api/public/sites/v1/visits'
+    | '/api/public/portal/v1/imove/feed'
     | '/api/public/portal/v1/properties/$id'
     | '/api/public/sites/v1/media/$id'
     | '/api/public/sites/v1/properties/$id'
@@ -584,6 +595,7 @@ export interface FileRouteTypes {
     | '/api/public/sites/v1/contacts'
     | '/api/public/sites/v1/properties'
     | '/api/public/sites/v1/visits'
+    | '/api/public/portal/v1/imove/feed'
     | '/api/public/portal/v1/properties/$id'
     | '/api/public/sites/v1/media/$id'
     | '/api/public/sites/v1/properties/$id'
@@ -636,6 +648,7 @@ export interface FileRouteTypes {
     | '/api/public/sites/v1/contacts'
     | '/api/public/sites/v1/properties'
     | '/api/public/sites/v1/visits'
+    | '/api/public/portal/v1/imove/feed'
     | '/api/public/portal/v1/properties/$id'
     | '/api/public/sites/v1/media/$id'
     | '/api/public/sites/v1/properties/$id'
@@ -664,6 +677,7 @@ export interface RootRouteChildren {
   ApiPublicSitesV1ContactsRoute: typeof ApiPublicSitesV1ContactsRoute
   ApiPublicSitesV1PropertiesRoute: typeof ApiPublicSitesV1PropertiesRouteWithChildren
   ApiPublicSitesV1VisitsRoute: typeof ApiPublicSitesV1VisitsRoute
+  ApiPublicPortalV1ImoveFeedRoute: typeof ApiPublicPortalV1ImoveFeedRoute
   ApiPublicSitesV1MediaIdRoute: typeof ApiPublicSitesV1MediaIdRoute
 }
 
@@ -998,6 +1012,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicSitesV1VisitsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/portal/v1/imove/feed': {
+      id: '/api/public/portal/v1/imove/feed'
+      path: '/api/public/portal/v1/imove/feed'
+      fullPath: '/api/public/portal/v1/imove/feed'
+      preLoaderRoute: typeof ApiPublicPortalV1ImoveFeedRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/portal/v1/properties/$id': {
       id: '/api/public/portal/v1/properties/$id'
       path: '/$id'
@@ -1167,6 +1188,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicSitesV1ContactsRoute: ApiPublicSitesV1ContactsRoute,
   ApiPublicSitesV1PropertiesRoute: ApiPublicSitesV1PropertiesRouteWithChildren,
   ApiPublicSitesV1VisitsRoute: ApiPublicSitesV1VisitsRoute,
+  ApiPublicPortalV1ImoveFeedRoute: ApiPublicPortalV1ImoveFeedRoute,
   ApiPublicSitesV1MediaIdRoute: ApiPublicSitesV1MediaIdRoute,
 }
 export const routeTree = rootRouteImport

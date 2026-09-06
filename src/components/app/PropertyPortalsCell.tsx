@@ -41,6 +41,11 @@ const STATE_META: Record<
   PropertyPortalCell["state"],
   { label: string; classes: string; dot: string }
 > = {
+  in_feed: {
+    label: "În feed",
+    classes: "border-success/40 bg-success/10 text-success",
+    dot: "bg-success",
+  },
   published: {
     label: "Publicat",
     classes: "border-success/40 bg-success/10 text-success",
@@ -182,7 +187,11 @@ export function PropertyPortalsCell({
   });
 
   const busy = toggle.isPending || publish.isPending || withdraw.isPending;
-  const hasSelection = cells.some((c) => c.selected && c.availability === "available" && c.configured);
+  // Butonul de trimitere există doar pentru portalurile care acceptă trimiteri.
+  const hasSelection = cells.some(
+    (c) => c.selected && c.availability === "available" && c.configured && c.pushSupported,
+  );
+  const anyPush = cells.some((c) => c.availability === "available" && c.pushSupported);
 
   return (
     <div className={compact ? "w-full space-y-2" : "w-full space-y-2 lg:w-[300px]"}>
@@ -239,6 +248,12 @@ export function PropertyPortalsCell({
                 {cell.state === "coming_soon" ? (
                   <p>Integrarea nu este încă disponibilă. Nu se poate publica pe acest portal.</p>
                 ) : null}
+                {!cell.pushSupported && cell.availability === "available" ? (
+                  <p>
+                    Portalul preia ofertele automat din feedul Habitoo. Selectarea este suficientă;
+                    deselectarea o scoate din feed, iar portalul o arhivează.
+                  </p>
+                ) : null}
                 {cell.state === "not_configured" ? (
                   <p>Portalul nu este configurat. Configurează-l din Setări → Integrări.</p>
                 ) : null}
@@ -253,18 +268,21 @@ export function PropertyPortalsCell({
 
       {canManage ? (
         <div className="flex flex-wrap items-center gap-2">
-          <Button
-            type="button"
-            size="sm"
-            variant="outline"
-            disabled={!hasSelection || busy}
-            onClick={() => publish.mutate()}
-            title={hasSelection ? "Publică pe portalurile selectate" : "Selectează cel puțin un portal configurat"}
-          >
-            {publish.isPending ? <Loader2 className="size-3.5 animate-spin" /> : <Send className="size-3.5" />}
-            Publică
-          </Button>
+          {anyPush ? (
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              disabled={!hasSelection || busy}
+              onClick={() => publish.mutate()}
+              title={hasSelection ? "Publică pe portalurile selectate" : "Selectează cel puțin un portal configurat"}
+            >
+              {publish.isPending ? <Loader2 className="size-3.5 animate-spin" /> : <Send className="size-3.5" />}
+              Publică
+            </Button>
+          ) : null}
           {cells.some((c) => c.state === "published") ? (
+
             <Button
               type="button"
               size="sm"

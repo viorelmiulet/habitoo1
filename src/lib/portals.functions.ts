@@ -19,6 +19,7 @@ import {
   type PortalDefinition,
 } from "@/lib/portals/registry";
 import { PORTAL_ERROR_MESSAGE } from "@/lib/portals/errors";
+import type { ImoveListing } from "@/lib/portals/imove/mapper";
 
 export type PortalHubItem = {
   portal: PortalDefinition;
@@ -48,8 +49,20 @@ export type PortalHubItem = {
   listings: { published: number; failed: number; pending: number };
   eligibleProperties: number;
   feedUrl: string;
+  /** Portalul primește ofertele doar prin feed, fără operații de scriere. */
+  feedOnly: boolean;
   /** Diagnoză reală a feedului pe care îl citește portalul. */
-  feed: { ok: boolean; apiVersion: string | null; properties: number | null; agents: number | null };
+  feed: {
+    ok: boolean;
+    apiVersion: string | null;
+    properties: number | null;
+    agents: number | null;
+    /** Oferte selectate pentru portal (doar la portalurile de tip feed). */
+    selected: number | null;
+    /** Oferte selectate dar excluse din feed pentru date incomplete. */
+    excluded: number | null;
+  };
+
 };
 
 export type PortalLogItem = {
@@ -121,10 +134,13 @@ async function logOperation(input: {
   });
 }
 
-async function feedUrlForOrg(): Promise<string> {
+/** URL-ul feedului pe care îl citește portalul (specific unde portalul cere altul). */
+async function feedUrlForOrg(portalId?: string): Promise<string> {
   const { CRM_URL } = await import("@/lib/host");
+  if (portalId === "imove") return `${CRM_URL}/api/public/portal/v1/imove/feed`;
   return `${CRM_URL}/api/public/portal/v1/properties`;
 }
+
 
 /** Context complet pentru adaptor, cu credențialul decriptat. */
 async function buildContext(organizationId: string, definition: PortalDefinition) {
@@ -158,7 +174,16 @@ export const getPortalHub = createServerFn({ method: "GET" })
   .handler(async ({ context }): Promise<PortalHubItem[]> => {
     const organizationId = await requireOrgAdmin(context as unknown as AuthContext);
     const admin = await loadAdmin();
-    const feedUrl = await feedUrlForOrg();
+    const genericFeedUrl = await feedUrlForOrg();
+    const imoveFeedUrl = await feedUrlForOrg("imove");
+    // Feedul iMove are schemă proprie, deci și numărătoare proprie de oferte.
+    const { buildImoveFeed } = await import("@/lib/portals/imove/feed.server");
+    const imoveFeed = await buildImoveFeed({
+      organizationId,
+      requestUrl: imoveFeedUrl,
+      perPage: 500,
+    });
+
 
     const { inspectFeedAgents, inspectFeedProperties } = await import("@/lib/portals/feed-inspect.server");
     const [connections, keys, listings, eligible, feedProperties, feedAgents] = await Promise.all([
@@ -224,13 +249,28 @@ export const getPortalHub = createServerFn({ method: "GET" })
           pending: portalListings.filter((l) => l.status === "pending").length,
         },
         eligibleProperties: eligible.count ?? 0,
-        feedUrl,
-        feed: {
-          ok: feedProperties.status === 200 && feedAgents.status === 200,
-          apiVersion: feedProperties.apiVersion,
-          properties: feedProperties.total,
-          agents: feedAgents.total,
-        },
+        feedUrl: portal.id === "imove" ? imoveFeedUrl : genericFeedUrl,
+        // Portal care primește datele DOAR prin feed (fără operații de scriere).
+        feedOnly: portal.capabilities.includes("feed_pull") && !portal.capabilities.includes("publish_listing"),
+        feed:
+          portal.id === "imove"
+            ? {
+                ok: true,
+                apiVersion: "habitoo-imove-feed/1.0",
+                properties: imoveFeed.listings.length,
+                agents: null,
+                selected: imoveFeed.selected,
+                excluded: imoveFeed.excluded.length,
+              }
+            : {
+                ok: feedProperties.status === 200 && feedAgents.status === 200,
+                apiVersion: feedProperties.apiVersion,
+                properties: feedProperties.total,
+                agents: feedAgents.total,
+                selected: null,
+                excluded: null,
+              },
+
       };
     });
   });
@@ -735,6 +775,7 @@ type PortalSelectionState =
   | "selected"
   | "syncing"
   | "published"
+  | "in_feed"
   | "error"
   | "withdrawn";
 
@@ -750,10 +791,13 @@ export type PropertyPortalCell = {
   /** Starea reală a ofertei pe portal (portal_listings.status). */
   listingStatus: string;
   state: PortalSelectionState;
+  /** Portalul acceptă trimiteri directe (publicare/retragere) din Habitoo. */
+  pushSupported: boolean;
   lastSyncAt: string | null;
   lastError: string | null;
   externalId: string | null;
 };
+
 
 export type PropertyPortalMatrix = {
   canManage: boolean;
@@ -782,8 +826,18 @@ function deriveState(input: {
   selected: boolean;
   listingStatus: string;
   publicationStatus: string | null;
+  /** Portalul acceptă trimiteri directe; altfel oferta circulă doar prin feed. */
+  pushSupported: boolean;
+  /** Doar pentru portalurile de tip feed: oferta este publicabilă în feed. */
+  feedEligible: boolean;
 }): PortalSelectionState {
   if (input.availability !== "available") return "coming_soon";
+  if (!input.pushSupported) {
+    // Portal de tip feed: nu există „trimitere”. Starea reală este prezența în feed.
+    if (!input.configured) return "not_configured";
+    if (!input.selected) return "not_selected";
+    return input.feedEligible ? "in_feed" : "error";
+  }
   if (input.listingStatus === "error" || input.publicationStatus === "error") return "error";
   if (input.listingStatus === "published" || input.listingStatus === "updated") return "published";
   if (input.listingStatus === "pending") return "syncing";
@@ -804,22 +858,34 @@ export const getPropertiesPortalMatrix = createServerFn({ method: "POST" })
     if (data.propertyIds.length === 0) return { canManage, properties: {} };
 
     const admin = await loadAdmin();
-    const [{ data: publications }, { data: listings }, { data: connections }] = await Promise.all([
-      admin
-        .from("portal_publications")
-        .select("property_id, portal_key, enabled, status, last_synced_at, last_error, external_ref")
-        .eq("organization_id", organizationId)
-        .in("property_id", data.propertyIds),
-      admin
-        .from("portal_listings")
-        .select("property_id, portal, status, last_sync_at, last_error, external_id")
-        .eq("organization_id", organizationId)
-        .in("property_id", data.propertyIds),
-      admin.from("portal_connections").select("portal, status").eq("organization_id", organizationId),
-    ]);
+    const [{ data: publications }, { data: listings }, { data: connections }, { data: propertyRows }] =
+      await Promise.all([
+        admin
+          .from("portal_publications")
+          .select("property_id, portal_key, enabled, status, last_synced_at, last_error, external_ref")
+          .eq("organization_id", organizationId)
+          .in("property_id", data.propertyIds),
+        admin
+          .from("portal_listings")
+          .select("property_id, portal, status, last_sync_at, last_error, external_id")
+          .eq("organization_id", organizationId)
+          .in("property_id", data.propertyIds),
+        admin.from("portal_connections").select("portal, status").eq("organization_id", organizationId),
+        admin
+          .from("properties")
+          .select("id, publish_status, status, deleted_at")
+          .eq("organization_id", organizationId)
+          .in("id", data.propertyIds),
+      ]);
+
+    const { isPropertyFeedEligible } = await import("@/lib/site-feed/mapper");
+    const eligibleById = new Map(
+      (propertyRows ?? []).map((row) => [row.id, isPropertyFeedEligible(row as never)]),
+    );
 
     const properties: Record<string, PropertyPortalCell[]> = {};
     for (const propertyId of data.propertyIds) {
+      const feedEligible = eligibleById.get(propertyId) === true;
       properties[propertyId] = PORTALS.map((portal) => {
         const pub = (publications ?? []).find(
           (p) => p.property_id === propertyId && p.portal_key === portal.id,
@@ -829,6 +895,16 @@ export const getPropertiesPortalMatrix = createServerFn({ method: "POST" })
         const configured =
           portal.status === "available" && (connection?.status === "connected" || connection?.status === "ready");
         const listingStatus = listing?.status ?? "not_published";
+        const pushSupported = portal.capabilities.includes("publish_listing");
+        const state = deriveState({
+          availability: portal.status,
+          configured,
+          selected: pub?.enabled === true,
+          listingStatus,
+          publicationStatus: pub?.status ?? null,
+          pushSupported,
+          feedEligible,
+        });
         return {
           portalId: portal.id,
           portalName: portal.display_name,
@@ -837,21 +913,21 @@ export const getPropertiesPortalMatrix = createServerFn({ method: "POST" })
           selected: pub?.enabled === true,
           configured,
           listingStatus,
-          state: deriveState({
-            availability: portal.status,
-            configured,
-            selected: pub?.enabled === true,
-            listingStatus,
-            publicationStatus: pub?.status ?? null,
-          }),
+          state,
+          pushSupported,
           lastSyncAt: listing?.last_sync_at ?? pub?.last_synced_at ?? null,
-          lastError: listing?.last_error ?? pub?.last_error ?? null,
+          lastError:
+            !pushSupported && state === "error"
+              ? "Oferta este selectată, dar nu intră în feed: verifică statusul și publicarea pe site."
+              : (listing?.last_error ?? pub?.last_error ?? null),
           externalId: listing?.external_id ?? pub?.external_ref ?? null,
         };
       });
     }
     return { canManage, properties };
   });
+
+
 
 /** Activează/dezactivează publicarea unei proprietăți pe un portal. */
 export const setPropertyPortalSelection = createServerFn({ method: "POST" })
@@ -970,16 +1046,32 @@ export const publishPropertyToSelectedPortals = createServerFn({ method: "POST" 
 
     const selected = (publications ?? [])
       .map((p) => p.portal_key)
-      .filter((key) => getPortalDefinition(key)?.status === "available");
+      .filter((key) => {
+        const definition = getPortalDefinition(key);
+        // Portalurile de tip feed (ex. iMove) nu primesc trimiteri: selecția
+        // este suficientă, oferta apare la următoarea citire a feedului.
+        return definition?.status === "available" && definition.capabilities.includes("publish_listing");
+      });
 
     if (selected.length === 0) {
+      const feedOnly = (publications ?? []).some((p) => {
+        const definition = getPortalDefinition(p.portal_key);
+        return (
+          definition?.status === "available" &&
+          !definition.capabilities.includes("publish_listing") &&
+          definition.capabilities.includes("feed_pull")
+        );
+      });
       return {
         ok: false as const,
-        code: "NO_SELECTION",
-        message: "Nu ai selectat niciun portal disponibil pentru această proprietate.",
+        code: feedOnly ? "FEED_ONLY" : "NO_SELECTION",
+        message: feedOnly
+          ? "Portalurile selectate preiau ofertele automat din feed. Nu este nevoie de nicio trimitere."
+          : "Nu ai selectat niciun portal disponibil pentru această proprietate.",
         results: [] as { portalId: string; portalName: string; ok: boolean; message: string | null }[],
       };
     }
+
 
     const results: { portalId: string; portalName: string; ok: boolean; message: string | null }[] = [];
     for (const portalId of selected) {
@@ -1013,4 +1105,77 @@ export const publishPropertyToSelectedPortals = createServerFn({ method: "POST" 
     }
 
     return { ok: results.every((r) => r.ok), code: null, message: null, results };
+  });
+
+/* ------------------------------------------------------------------------- */
+/* Portaluri de tip feed: previzualizarea exactă a ce vede portalul          */
+/* ------------------------------------------------------------------------- */
+
+export type PortalFeedPreview = {
+  ok: boolean;
+  portalId: string;
+  portalName: string;
+  feedUrl: string;
+  /** Câte oferte sunt selectate pentru portal. */
+  selected: number;
+  /** Câte oferte intră efectiv în feed. */
+  valid: number;
+  /** Primele oferte, exact în forma trimisă portalului. */
+  sample: ImoveListing[];
+  /** Oferte selectate dar excluse, cu motivul exact. */
+  excluded: { propertyId: string; reference: string | null; title: string | null; reasons: string[] }[];
+  warnings: { externalId: string; messages: string[] }[];
+  /** Portalul are o cheie activă cu care poate citi feedul. */
+  hasActiveKey: boolean;
+};
+
+/**
+ * Previzualizare read-only a feedului unui portal de tip feed (dry-run):
+ * nu trimite nimic, nu modifică nimic, doar arată ce ar citi portalul acum.
+ */
+export const previewPortalFeed = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) =>
+    z.object({ portalId: z.string().min(1).max(40), limit: z.number().int().min(1).max(10).default(3) }).parse(input),
+  )
+  .handler(async ({ data, context }): Promise<PortalFeedPreview> => {
+    const organizationId = await requireOrgAdmin(context as unknown as AuthContext);
+    const definition = getPortalDefinition(data.portalId);
+    if (!definition) throw new Error("Portal necunoscut.");
+    if (definition.id !== "imove") {
+      throw new Error("Previzualizarea de feed este disponibilă doar pentru portalurile de tip feed.");
+    }
+
+    const feedUrl = await feedUrlForOrg(definition.id);
+    const { buildImoveFeed } = await import("@/lib/portals/imove/feed.server");
+    const build = await buildImoveFeed({ organizationId, requestUrl: feedUrl, perPage: 500 });
+
+    const admin = await loadAdmin();
+    const { count } = await admin
+      .from("portal_api_keys")
+      .select("id", { count: "exact", head: true })
+      .eq("organization_id", organizationId)
+      .eq("portal", definition.id)
+      .eq("status", "active");
+
+    await logOperation({
+      organizationId,
+      portal: definition.id,
+      operation: "feed_preview",
+      success: true,
+      actorId: context.userId,
+    });
+
+    return {
+      ok: true,
+      portalId: definition.id,
+      portalName: definition.display_name,
+      feedUrl,
+      selected: build.selected,
+      valid: build.listings.length,
+      sample: build.listings.slice(0, data.limit),
+      excluded: build.excluded,
+      warnings: build.warnings,
+      hasActiveKey: (count ?? 0) > 0,
+    };
   });

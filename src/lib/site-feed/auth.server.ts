@@ -81,9 +81,27 @@ function rateLimited(key: string): boolean {
   return bucket.count > RATE_MAX;
 }
 
-export async function authenticateFeedRequest(request: Request): Promise<FeedAuth> {
-  const token = readTokenFromRequest(request);
+/** Opțiuni de autentificare. Comportamentul implicit rămâne neschimbat. */
+export type FeedAuthOptions = {
+  /**
+   * Acceptă tokenul și din parametrul de URL `?token=` / `?key=`.
+   * Se activează DOAR pentru portalurile care nu pot trimite headere
+   * (ex. iMove citește un URL de feed simplu).
+   */
+  allowQueryToken?: boolean;
+};
+
+export async function authenticateFeedRequest(
+  request: Request,
+  options: FeedAuthOptions = {},
+): Promise<FeedAuth> {
+  let token = readTokenFromRequest(request);
+  if (!token && options.allowQueryToken) {
+    const url = new URL(request.url);
+    token = (url.searchParams.get("token") ?? url.searchParams.get("key"))?.trim() || null;
+  }
   const prefix = tokenPrefixOf(token);
+
   if (!token) {
     return { ok: false, status: 401, message: "Missing API token.", tokenPrefix: null };
   }
@@ -200,9 +218,11 @@ export async function withFeedAuth(
   request: Request,
   endpoint: string,
   handler: (auth: FeedAuthOk) => Promise<{ response: Response; items?: number }>,
+  options: FeedAuthOptions = {},
 ): Promise<Response> {
   const method = request.method;
-  const auth = await authenticateFeedRequest(request);
+  const auth = await authenticateFeedRequest(request, options);
+
   if (!auth.ok) {
     await logFeedAccess({
       organizationId: null,
