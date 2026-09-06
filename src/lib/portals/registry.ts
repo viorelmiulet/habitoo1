@@ -157,8 +157,28 @@ export const PORTALS: PortalDefinition[] = [
     notes:
       "ClickImob nu expune un API general de creare/editare anunțuri. Publicarea se face prin notificare + citirea feedului Habitoo. Importul de anunțuri sau agenți din ClickImob nu este suportat.",
   },
+  {
+    id: "imove",
+    display_name: "iMove.ro",
+    description:
+      "iMove citește periodic feedul JSON Habitoo și importă automat ofertele selectate. Retragerea se face prin dispariția ofertei din feed.",
+    logo: "iM",
+    status: "available",
+    // Un singur sens: Habitoo expune feedul, iMove îl consumă.
+    directions: ["habitoo_to_portal"],
+    // Cheia de acces la feed este emisă de Habitoo și poate fi trimisă și în URL.
+    authentication: ["habitoo_api_key", "query_parameter"],
+    capabilities: ["test_connection", "feed_pull"],
+    // Nu are credențiale de portal: nu cerem nimic ce iMove nu emite.
+    configuration_schema: { fields: [] },
+    website: "https://imove.ro",
+    docs: "https://imove.ro/docs/feeds",
+    notes:
+      "iMove nu documentează un API de creare/editare/ștergere anunț pentru CRM-uri. Publicarea se face exclusiv prin feedul Habitoo: selectezi oferta, iMove o importă la următoarea sincronizare; dacă o deselectezi, dispare din feed și iMove o arhivează.",
+  },
   // Portalurile de mai jos NU au încă integrare implementată. Nu declarăm
   // metode de autentificare sau capabilități pe care nu le-am verificat.
+
   {
     id: "imobiliare_ro",
     display_name: "Imobiliare.ro",
