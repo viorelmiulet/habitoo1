@@ -71,6 +71,28 @@ export const agencyNav: NavGroup[] = [
   },
 ];
 
+/**
+ * Navigația vizibilă unui agent simplu: zonele de administrare a agenției
+ * (Agenți, Setări agenție) sunt ascunse complet, nu doar dezactivate.
+ * Agentul păstrează accesul la propriul profil.
+ */
+export const agentNav: NavGroup[] = agencyNav.map((group) =>
+  group.title === "Management"
+    ? {
+        ...group,
+        items: [
+          ...group.items.filter((i) => i.to !== "/app/team" && i.to !== "/app/settings"),
+          { label: "Profilul meu", to: "/app/settings", icon: UserRound },
+        ],
+      }
+    : group,
+);
+
+/** Navigația agenției, filtrată în funcție de rol. */
+export function agencyNavFor(isAdmin: boolean): NavGroup[] {
+  return isAdmin ? agencyNav : agentNav;
+}
+
 export const superadminNav: NavGroup[] = [
   { items: [{ label: "Dashboard global", to: "/superadmin", icon: Gauge, exact: true }] },
   {
