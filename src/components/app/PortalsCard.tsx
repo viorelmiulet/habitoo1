@@ -247,8 +247,7 @@ export function PortalsCard() {
                         ? (accountId[item.portal.id] ?? item.connection.externalAccountId ?? "")
                         : field.target === "credentials"
                           ? (credential[item.portal.id] ?? "")
-                          : (endpoint[item.portal.id] ??
-                            String(item.connection.settings["endpoint_url"] ?? ""));
+                          : (endpoint[item.portal.id] ?? item.connection.endpointUrl ?? "");
                     const setValue = (next: string) => {
                       if (field.target === "external_account_id") {
                         setAccountId((prev) => ({ ...prev, [item.portal.id]: next }));
@@ -352,7 +351,7 @@ export function PortalsCard() {
                       Generează cheie
                     </Button>
                   </div>
-                  {freshKey?.portalId === item.portal.id ? (
+                  {freshKey && freshKey.portalId === item.portal.id ? (
                     <div className="space-y-2 rounded-lg border border-primary/40 bg-primary/5 p-3">
                       <p className="text-sm font-medium">Copiază cheia acum — nu se mai afișează.</p>
                       <div className="flex items-center gap-2">

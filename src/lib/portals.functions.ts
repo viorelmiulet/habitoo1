@@ -29,7 +29,7 @@ export type PortalHubItem = {
     authenticationMode: string;
     externalAccountId: string | null;
     hasPortalCredential: boolean;
-    settings: Record<string, unknown>;
+    endpointUrl: string | null;
     allowLiveRequests: boolean;
     lastSyncAt: string | null;
     lastSyncStatus: string | null;
@@ -197,7 +197,7 @@ export const getPortalHub = createServerFn({ method: "GET" })
           authenticationMode: row?.authentication_mode ?? portal.authentication[0] ?? "none",
           externalAccountId: row?.external_account_id ?? null,
           hasPortalCredential: Boolean(row?.portal_credentials_encrypted),
-          settings: { ...settings, allow_live: settings["allow_live"] === true },
+          endpointUrl: typeof settings["endpoint_url"] === "string" ? String(settings["endpoint_url"]) : null,
           allowLiveRequests: settings["allow_live"] === true,
           lastSyncAt: row?.last_sync_at ?? null,
           lastSyncStatus: row?.last_sync_status ?? null,
@@ -270,7 +270,10 @@ export const savePortalConnection = createServerFn({ method: "POST" })
     patch["last_sync_error"] = null;
 
     if (row) {
-      const { error } = await admin.from("portal_connections").update(patch).eq("id", row.id);
+      const { error } = await admin
+        .from("portal_connections")
+        .update(patch as never)
+        .eq("id", row.id);
       if (error) throw new Error("Configurarea nu a putut fi salvată.");
     } else {
       const { error } = await admin
