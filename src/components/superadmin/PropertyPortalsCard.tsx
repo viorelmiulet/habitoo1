@@ -184,8 +184,8 @@ export function PropertyPortalsCard({
       <footer className="flex flex-wrap items-center justify-between gap-3 border-t border-border px-5 py-4">
         <p className="text-xs text-muted-foreground">
           {canManage
-            ? dirty.length > 0
-              ? `${dirty.length} ${dirty.length === 1 ? "modificare" : "modificări"} nesalvate.`
+            ? actionable.length > 0
+              ? `${actionable.length} ${actionable.length === 1 ? "modificare" : "modificări"} de aplicat.`
               : "Nicio modificare de salvat."
             : "Doar administratorul agenției poate modifica publicarea."}
         </p>
@@ -196,7 +196,8 @@ export function PropertyPortalsCard({
           <Button
             type="button"
             size="sm"
-            disabled={!canManage || dirty.length === 0 || apply.isPending}
+            disabled={!canManage || actionable.length === 0 || apply.isPending}
+
             onClick={() => (toWithdraw.length > 0 ? setConfirming(true) : apply.mutate())}
           >
             {apply.isPending ? (
