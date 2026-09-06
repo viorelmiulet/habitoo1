@@ -14,7 +14,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireActiveOrgAuth } from "@/lib/org-access";
-import { MEDIA_BUCKET } from "@/lib/storage";
 
 export type CollaborationProposalStatus =
   | "pending"
@@ -74,6 +73,9 @@ type AuthContext = {
   supabase: unknown;
   userId: string;
 };
+
+/** Bucketul de media al proprietăților (constantă locală: fără import de client browser). */
+const MEDIA_BUCKET = "property-media";
 
 async function loadAdmin() {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
