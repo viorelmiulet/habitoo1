@@ -47,6 +47,7 @@ import {
   COLLAB_STATUS_LABELS,
   createCollaborationProposal,
   getCollaborationFacets,
+  getCollaborationOffer,
   getCollaborationProposal,
   listCollaborationOffers,
   listCollaborationProposals,
@@ -465,7 +466,7 @@ function OfferDetailDialog({
           <div className="space-y-4 text-sm">
             {full.images.length > 0 ? (
               <div className="grid grid-cols-3 gap-2">
-                {full.images.slice(0, 6).map((src) => (
+                {full.images.slice(0, 6).map((src: string) => (
                   <img key={src} src={src} alt="" className="aspect-[4/3] w-full rounded-lg object-cover" />
                 ))}
               </div>

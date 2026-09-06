@@ -290,7 +290,7 @@ export const listCollaborationOffers = createServerFn({ method: "GET" })
       .in("organization_id", [...agencies.keys()])
       .eq("collaboration", true)
       .is("deleted_at", null)
-      .in("status", OFFERABLE_STATUSES as unknown as string[])
+      .in("status", [...OFFERABLE_STATUSES])
       .order("updated_at", { ascending: false })
       .limit(data.limit ?? 60);
 
@@ -359,7 +359,7 @@ export const getCollaborationOffer = createServerFn({ method: "GET" })
       .eq("id", data.id)
       .eq("collaboration", true)
       .is("deleted_at", null)
-      .in("status", OFFERABLE_STATUSES as unknown as string[])
+      .in("status", [...OFFERABLE_STATUSES])
       .limit(1);
     if (error) throw error;
     const row = (rows ?? [])[0] as unknown as OfferRow | undefined;
@@ -386,7 +386,7 @@ export const getCollaborationFacets = createServerFn({ method: "GET" })
       .in("organization_id", [...agencies.keys()])
       .eq("collaboration", true)
       .is("deleted_at", null)
-      .in("status", OFFERABLE_STATUSES as unknown as string[]);
+      .in("status", [...OFFERABLE_STATUSES]);
     const cities = new Set<string>();
     const types = new Set<string>();
     for (const row of data ?? []) {
