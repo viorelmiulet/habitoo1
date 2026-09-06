@@ -49,6 +49,12 @@ import { Route as AuthenticatedAppPropertiesNewRouteImport } from './routes/_aut
 import { Route as AuthenticatedAppRequestsIdRouteImport } from './routes/_authenticated/app.requests.$id'
 import { Route as LovableEmailAuthPreviewRouteImport } from './routes/lovable/email/auth/preview'
 import { Route as LovableEmailAuthWebhookRouteImport } from './routes/lovable/email/auth/webhook'
+import { Route as ApiPublicSitesV1AgentsRouteImport } from './routes/api/public/sites/v1/agents'
+import { Route as ApiPublicSitesV1ContactsRouteImport } from './routes/api/public/sites/v1/contacts'
+import { Route as ApiPublicSitesV1PropertiesRouteImport } from './routes/api/public/sites/v1/properties'
+import { Route as ApiPublicSitesV1VisitsRouteImport } from './routes/api/public/sites/v1/visits'
+import { Route as ApiPublicSitesV1MediaIdRouteImport } from './routes/api/public/sites/v1/media.$id'
+import { Route as ApiPublicSitesV1PropertiesIdRouteImport } from './routes/api/public/sites/v1/properties.$id'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -267,6 +273,39 @@ const LovableEmailAuthWebhookRoute = LovableEmailAuthWebhookRouteImport.update({
   path: '/lovable/email/auth/webhook',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicSitesV1AgentsRoute = ApiPublicSitesV1AgentsRouteImport.update({
+  id: '/api/public/sites/v1/agents',
+  path: '/api/public/sites/v1/agents',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicSitesV1ContactsRoute =
+  ApiPublicSitesV1ContactsRouteImport.update({
+    id: '/api/public/sites/v1/contacts',
+    path: '/api/public/sites/v1/contacts',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicSitesV1PropertiesRoute =
+  ApiPublicSitesV1PropertiesRouteImport.update({
+    id: '/api/public/sites/v1/properties',
+    path: '/api/public/sites/v1/properties',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicSitesV1VisitsRoute = ApiPublicSitesV1VisitsRouteImport.update({
+  id: '/api/public/sites/v1/visits',
+  path: '/api/public/sites/v1/visits',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicSitesV1MediaIdRoute = ApiPublicSitesV1MediaIdRouteImport.update({
+  id: '/api/public/sites/v1/media/$id',
+  path: '/api/public/sites/v1/media/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicSitesV1PropertiesIdRoute =
+  ApiPublicSitesV1PropertiesIdRouteImport.update({
+    id: '/$id',
+    path: '/$id',
+    getParentRoute: () => ApiPublicSitesV1PropertiesRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -308,6 +347,12 @@ export interface FileRoutesByFullPath {
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
   '/app/contacts/': typeof AuthenticatedAppContactsIndexRoute
   '/app/properties/': typeof AuthenticatedAppPropertiesIndexRoute
+  '/api/public/sites/v1/agents': typeof ApiPublicSitesV1AgentsRoute
+  '/api/public/sites/v1/contacts': typeof ApiPublicSitesV1ContactsRoute
+  '/api/public/sites/v1/properties': typeof ApiPublicSitesV1PropertiesRouteWithChildren
+  '/api/public/sites/v1/visits': typeof ApiPublicSitesV1VisitsRoute
+  '/api/public/sites/v1/media/$id': typeof ApiPublicSitesV1MediaIdRoute
+  '/api/public/sites/v1/properties/$id': typeof ApiPublicSitesV1PropertiesIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -347,6 +392,12 @@ export interface FileRoutesByTo {
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
   '/app/contacts': typeof AuthenticatedAppContactsIndexRoute
   '/app/properties': typeof AuthenticatedAppPropertiesIndexRoute
+  '/api/public/sites/v1/agents': typeof ApiPublicSitesV1AgentsRoute
+  '/api/public/sites/v1/contacts': typeof ApiPublicSitesV1ContactsRoute
+  '/api/public/sites/v1/properties': typeof ApiPublicSitesV1PropertiesRouteWithChildren
+  '/api/public/sites/v1/visits': typeof ApiPublicSitesV1VisitsRoute
+  '/api/public/sites/v1/media/$id': typeof ApiPublicSitesV1MediaIdRoute
+  '/api/public/sites/v1/properties/$id': typeof ApiPublicSitesV1PropertiesIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -390,6 +441,12 @@ export interface FileRoutesById {
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
   '/_authenticated/app/contacts/': typeof AuthenticatedAppContactsIndexRoute
   '/_authenticated/app/properties/': typeof AuthenticatedAppPropertiesIndexRoute
+  '/api/public/sites/v1/agents': typeof ApiPublicSitesV1AgentsRoute
+  '/api/public/sites/v1/contacts': typeof ApiPublicSitesV1ContactsRoute
+  '/api/public/sites/v1/properties': typeof ApiPublicSitesV1PropertiesRouteWithChildren
+  '/api/public/sites/v1/visits': typeof ApiPublicSitesV1VisitsRoute
+  '/api/public/sites/v1/media/$id': typeof ApiPublicSitesV1MediaIdRoute
+  '/api/public/sites/v1/properties/$id': typeof ApiPublicSitesV1PropertiesIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -433,6 +490,12 @@ export interface FileRouteTypes {
     | '/lovable/email/auth/webhook'
     | '/app/contacts/'
     | '/app/properties/'
+    | '/api/public/sites/v1/agents'
+    | '/api/public/sites/v1/contacts'
+    | '/api/public/sites/v1/properties'
+    | '/api/public/sites/v1/visits'
+    | '/api/public/sites/v1/media/$id'
+    | '/api/public/sites/v1/properties/$id'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -472,6 +535,12 @@ export interface FileRouteTypes {
     | '/lovable/email/auth/webhook'
     | '/app/contacts'
     | '/app/properties'
+    | '/api/public/sites/v1/agents'
+    | '/api/public/sites/v1/contacts'
+    | '/api/public/sites/v1/properties'
+    | '/api/public/sites/v1/visits'
+    | '/api/public/sites/v1/media/$id'
+    | '/api/public/sites/v1/properties/$id'
   id:
     | '__root__'
     | '/'
@@ -514,6 +583,12 @@ export interface FileRouteTypes {
     | '/lovable/email/auth/webhook'
     | '/_authenticated/app/contacts/'
     | '/_authenticated/app/properties/'
+    | '/api/public/sites/v1/agents'
+    | '/api/public/sites/v1/contacts'
+    | '/api/public/sites/v1/properties'
+    | '/api/public/sites/v1/visits'
+    | '/api/public/sites/v1/media/$id'
+    | '/api/public/sites/v1/properties/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -532,6 +607,11 @@ export interface RootRouteChildren {
   AuthCallbackRoute: typeof AuthCallbackRoute
   LovableEmailAuthPreviewRoute: typeof LovableEmailAuthPreviewRoute
   LovableEmailAuthWebhookRoute: typeof LovableEmailAuthWebhookRoute
+  ApiPublicSitesV1AgentsRoute: typeof ApiPublicSitesV1AgentsRoute
+  ApiPublicSitesV1ContactsRoute: typeof ApiPublicSitesV1ContactsRoute
+  ApiPublicSitesV1PropertiesRoute: typeof ApiPublicSitesV1PropertiesRouteWithChildren
+  ApiPublicSitesV1VisitsRoute: typeof ApiPublicSitesV1VisitsRoute
+  ApiPublicSitesV1MediaIdRoute: typeof ApiPublicSitesV1MediaIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -816,6 +896,48 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LovableEmailAuthWebhookRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/sites/v1/agents': {
+      id: '/api/public/sites/v1/agents'
+      path: '/api/public/sites/v1/agents'
+      fullPath: '/api/public/sites/v1/agents'
+      preLoaderRoute: typeof ApiPublicSitesV1AgentsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/sites/v1/contacts': {
+      id: '/api/public/sites/v1/contacts'
+      path: '/api/public/sites/v1/contacts'
+      fullPath: '/api/public/sites/v1/contacts'
+      preLoaderRoute: typeof ApiPublicSitesV1ContactsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/sites/v1/properties': {
+      id: '/api/public/sites/v1/properties'
+      path: '/api/public/sites/v1/properties'
+      fullPath: '/api/public/sites/v1/properties'
+      preLoaderRoute: typeof ApiPublicSitesV1PropertiesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/sites/v1/visits': {
+      id: '/api/public/sites/v1/visits'
+      path: '/api/public/sites/v1/visits'
+      fullPath: '/api/public/sites/v1/visits'
+      preLoaderRoute: typeof ApiPublicSitesV1VisitsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/sites/v1/media/$id': {
+      id: '/api/public/sites/v1/media/$id'
+      path: '/api/public/sites/v1/media/$id'
+      fullPath: '/api/public/sites/v1/media/$id'
+      preLoaderRoute: typeof ApiPublicSitesV1MediaIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/sites/v1/properties/$id': {
+      id: '/api/public/sites/v1/properties/$id'
+      path: '/$id'
+      fullPath: '/api/public/sites/v1/properties/$id'
+      preLoaderRoute: typeof ApiPublicSitesV1PropertiesIdRouteImport
+      parentRoute: typeof ApiPublicSitesV1PropertiesRoute
+    }
   }
 }
 
@@ -912,6 +1034,20 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
 const AuthenticatedRouteRouteWithChildren =
   AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
 
+interface ApiPublicSitesV1PropertiesRouteChildren {
+  ApiPublicSitesV1PropertiesIdRoute: typeof ApiPublicSitesV1PropertiesIdRoute
+}
+
+const ApiPublicSitesV1PropertiesRouteChildren: ApiPublicSitesV1PropertiesRouteChildren =
+  {
+    ApiPublicSitesV1PropertiesIdRoute: ApiPublicSitesV1PropertiesIdRoute,
+  }
+
+const ApiPublicSitesV1PropertiesRouteWithChildren =
+  ApiPublicSitesV1PropertiesRoute._addFileChildren(
+    ApiPublicSitesV1PropertiesRouteChildren,
+  )
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
@@ -928,6 +1064,11 @@ const rootRouteChildren: RootRouteChildren = {
   AuthCallbackRoute: AuthCallbackRoute,
   LovableEmailAuthPreviewRoute: LovableEmailAuthPreviewRoute,
   LovableEmailAuthWebhookRoute: LovableEmailAuthWebhookRoute,
+  ApiPublicSitesV1AgentsRoute: ApiPublicSitesV1AgentsRoute,
+  ApiPublicSitesV1ContactsRoute: ApiPublicSitesV1ContactsRoute,
+  ApiPublicSitesV1PropertiesRoute: ApiPublicSitesV1PropertiesRouteWithChildren,
+  ApiPublicSitesV1VisitsRoute: ApiPublicSitesV1VisitsRoute,
+  ApiPublicSitesV1MediaIdRoute: ApiPublicSitesV1MediaIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

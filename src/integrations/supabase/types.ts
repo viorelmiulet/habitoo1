@@ -1376,6 +1376,151 @@ export type Database = {
           },
         ]
       }
+      site_feed_access_logs: {
+        Row: {
+          created_at: string
+          detail: string | null
+          endpoint: string
+          id: string
+          items: number | null
+          method: string
+          organization_id: string | null
+          status: number
+          token_prefix: string | null
+        }
+        Insert: {
+          created_at?: string
+          detail?: string | null
+          endpoint: string
+          id?: string
+          items?: number | null
+          method: string
+          organization_id?: string | null
+          status: number
+          token_prefix?: string | null
+        }
+        Update: {
+          created_at?: string
+          detail?: string | null
+          endpoint?: string
+          id?: string
+          items?: number | null
+          method?: string
+          organization_id?: string | null
+          status?: number
+          token_prefix?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "site_feed_access_logs_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      site_feed_tokens: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          last_used_at: string | null
+          name: string
+          organization_id: string
+          request_count: number
+          revoked_at: string | null
+          token_hash: string
+          token_prefix: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          last_used_at?: string | null
+          name?: string
+          organization_id: string
+          request_count?: number
+          revoked_at?: string | null
+          token_hash: string
+          token_prefix: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          last_used_at?: string | null
+          name?: string
+          organization_id?: string
+          request_count?: number
+          revoked_at?: string | null
+          token_hash?: string
+          token_prefix?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "site_feed_tokens_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      site_feed_visits: {
+        Row: {
+          created_at: string
+          id: string
+          occurred_on: string
+          organization_id: string
+          property_id: string
+          source: string | null
+          updated_at: string
+          views: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          occurred_on?: string
+          organization_id: string
+          property_id: string
+          source?: string | null
+          updated_at?: string
+          views?: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          occurred_on?: string
+          organization_id?: string
+          property_id?: string
+          source?: string | null
+          updated_at?: string
+          views?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "site_feed_visits_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "site_feed_visits_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           created_at: string

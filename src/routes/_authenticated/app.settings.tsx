@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { toastError } from "@/lib/errors";
 import { PageHeader } from "@/components/app/PageHeader";
 import { StatusBadge } from "@/components/app/StatusBadge";
+import { SiteFeedCard } from "@/components/app/SiteFeedCard";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -101,7 +102,9 @@ function SettingsPage() {
           <TabsTrigger value="profile">Profil</TabsTrigger>
           <TabsTrigger value="agency">Agenție</TabsTrigger>
           <TabsTrigger value="team">Echipă ({team.length})</TabsTrigger>
+          {user?.isAdmin ? <TabsTrigger value="integrations">Integrări</TabsTrigger> : null}
         </TabsList>
+
 
         <TabsContent value="profile">
           <form
@@ -235,7 +238,14 @@ function SettingsPage() {
             Invitarea de agenți noi și permisiunile avansate ajung în faza următoare.
           </p>
         </TabsContent>
+
+        {user?.isAdmin ? (
+          <TabsContent value="integrations">
+            <SiteFeedCard />
+          </TabsContent>
+        ) : null}
       </Tabs>
+
     </>
   );
 }
