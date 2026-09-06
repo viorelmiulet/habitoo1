@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import { Archive, ArchiveRestore, Building2, Search, Trash2 } from "lucide-react";
+import { Archive, ArchiveRestore, Building2, Check, Search, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { toastError } from "@/lib/errors";
 import { PageHeader } from "@/components/app/PageHeader";
@@ -41,6 +41,7 @@ const statusLabels: Record<string, string> = {
   active: "Activă",
   trial: "Trial",
   suspended: "Suspendată",
+  pending_approval: "În așteptare",
   cancelled: "Anulată",
 };
 
@@ -86,6 +87,7 @@ function AgenciesPage() {
   const { data: me } = useCurrentUser();
   const [q, setQ] = useState("");
   const [showArchived, setShowArchived] = useState(false);
+  const [tab, setTab] = useState<"pending" | "all">("pending");
   const [pendingArchive, setPendingArchive] = useState<{ id: string; name: string } | null>(null);
   const [pendingDelete, setPendingDelete] = useState<{ id: string; name: string } | null>(null);
 
@@ -142,6 +144,19 @@ function AgenciesPage() {
     onError: (e: Error) => toastError(e),
   });
 
+  // Aprobarea unei agenții aflate în așteptare: userii ei primesc acces imediat.
+  const approve = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.rpc("approve_organization", { _org: id });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["superadmin"] });
+      toast.success("Agenția a fost aprobată și are acces în aplicație.");
+    },
+    onError: (e: Error) => toastError(e),
+  });
+
   // Arhivarea nu șterge date: marchează doar agenția și blochează accesul membrilor.
   const setArchived = useMutation({
     mutationFn: async ({ id, archived }: { id: string; archived: boolean }) => {
@@ -185,7 +200,12 @@ function AgenciesPage() {
     onError: (e: Error) => toastError(e),
   });
 
+  const pendingCount = (data?.orgs ?? []).filter(
+    (o) => o.status === "pending_approval" && !o.archived_at,
+  ).length;
+
   const rows = (data?.orgs ?? [])
+    .filter((o) => (tab === "pending" ? o.status === "pending_approval" : true))
     .filter((o) => (showArchived ? true : !o.archived_at))
     .filter((o) =>
       q.trim() ? `${o.name} ${o.city ?? ""}`.toLowerCase().includes(q.trim().toLowerCase()) : true,
@@ -195,7 +215,7 @@ function AgenciesPage() {
     <>
       <PageHeader
         title="Agenții"
-        description="Statusul, planul și limitele fiecărei agenții din platformă."
+        description="Cererile noi de înscriere, statusul, planul și limitele fiecărei agenții."
       />
 
       <div className="panel flex flex-wrap items-center justify-between gap-4 p-4">
@@ -207,6 +227,22 @@ function AgenciesPage() {
             placeholder="Caută agenție sau oraș…"
             className="pl-9"
           />
+        </div>
+        <div className="flex items-center gap-1 rounded-lg bg-muted p-1">
+          <Button
+            size="sm"
+            variant={tab === "pending" ? "default" : "ghost"}
+            onClick={() => setTab("pending")}
+          >
+            În așteptare{pendingCount ? ` (${pendingCount})` : ""}
+          </Button>
+          <Button
+            size="sm"
+            variant={tab === "all" ? "default" : "ghost"}
+            onClick={() => setTab("all")}
+          >
+            Toate agențiile
+          </Button>
         </div>
         <div className="flex items-center gap-2">
           <Switch id="show-archived" checked={showArchived} onCheckedChange={setShowArchived} />
@@ -220,7 +256,12 @@ function AgenciesPage() {
         {isLoading ? (
           <ListSkeleton rows={6} />
         ) : rows.length === 0 ? (
-          <EmptyState icon={Building2} title="Nicio agenție găsită" />
+          <EmptyState
+            icon={Building2}
+            title={
+              tab === "pending" ? "Nicio cerere în așteptare" : "Nicio agenție găsită"
+            }
+          />
         ) : (
           <ul className="divide-y divide-border">
             {rows.map((o) => (
@@ -230,6 +271,12 @@ function AgenciesPage() {
                     <span className="truncate">{o.name}</span>
                     {o.is_demo ? <StatusBadge tone="warning">DEMO / QA</StatusBadge> : null}
                     {o.archived_at ? <StatusBadge tone="danger">Arhivată</StatusBadge> : null}
+                    {o.status === "pending_approval" ? (
+                      <StatusBadge tone="warning">În așteptare</StatusBadge>
+                    ) : null}
+                  </p>
+                  <p className="truncate text-xs text-muted-foreground">
+                    {o.legal_name ?? "fără nume legal"} · CUI {o.cui ?? "—"}
                   </p>
                   <p className="truncate text-xs text-muted-foreground">
                     {o.city ?? "—"} · {o.email ?? "fără email"}
@@ -269,6 +316,12 @@ function AgenciesPage() {
                 <StatusBadge tone={o.status === "active" ? "success" : "warning"}>
                   {statusLabels[o.status] ?? o.status}
                 </StatusBadge>
+                {o.status === "pending_approval" ? (
+                  <Button size="sm" disabled={approve.isPending} onClick={() => approve.mutate(o.id)}>
+                    <Check className="mr-1.5 size-4" />
+                    Aprobă
+                  </Button>
+                ) : null}
                 {o.archived_at ? (
                   <Button
                     size="sm"
