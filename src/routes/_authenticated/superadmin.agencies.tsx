@@ -323,6 +323,30 @@ function AgenciesPage() {
           setPendingArchive(null);
         }}
       />
+
+      <ConfirmDialog
+        open={pendingDelete !== null}
+        onOpenChange={(v) => {
+          if (!v) setPendingDelete(null);
+        }}
+        title={`Ștergi DEFINITIV „${pendingDelete?.name ?? ""}”?`}
+        description={
+          <span className="text-destructive">
+            Această acțiune este ireversibilă. Se șterg definitiv toate proprietățile și
+            fotografiile lor, contactele, lead-urile și istoricul, cererile, activitățile,
+            documentele, obiectivele, notificările, conexiunile și cheile de portal, precum și
+            toți membrii agenției împreună cu conturile lor de autentificare. Nu există restaurare.
+          </span>
+        }
+        confirmLabel="Șterge definitiv"
+        destructive
+        typeToConfirm={pendingDelete?.name}
+        onConfirm={async () => {
+          if (!pendingDelete) return;
+          await hardDelete.mutateAsync({ id: pendingDelete.id, name: pendingDelete.name });
+          setPendingDelete(null);
+        }}
+      />
     </>
 
   );
