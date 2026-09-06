@@ -7,35 +7,17 @@
  *  - NECONFIGURAT = agenția nu are conexiune activă la portal;
  *  - ÎN CURÂND    = integrarea nu este disponibilă în registry.
  *
- * Nu introduce logică nouă de publicare: refolosește server functions existente.
+ * AFIȘARE DOAR: sursa de adevăr a publicării este checkbox-ul din pagina de
+ * editare a proprietății. Aici nu se poate schimba selecția.
  */
-import { useMemo, useState } from "react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMemo } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { Link } from "@tanstack/react-router";
-import { toast } from "sonner";
-import { AlertTriangle, Check, Clock, Loader2, Send, Undo2 } from "lucide-react";
+import { AlertTriangle, Check, Clock, Loader2 } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { Button } from "@/components/ui/button";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import { toastError } from "@/lib/errors";
 import { formatDateTime } from "@/lib/format";
-import {
-  getPropertiesPortalMatrix,
-  publishPropertyToSelectedPortals,
-  runPortalListingAction,
-  setPropertyPortalSelection,
-  type PropertyPortalCell,
-} from "@/lib/portals.functions";
+import { getPropertiesPortalMatrix, type PropertyPortalCell } from "@/lib/portals.functions";
 
 const STATE_META: Record<
   PropertyPortalCell["state"],
@@ -106,8 +88,6 @@ export function usePropertyPortals(propertyIds: string[]) {
   };
 }
 
-type PendingWithdraw = { propertyId: string; portalId: string; portalName: string };
-
 export function PropertyPortalsCell({
   propertyId,
   cells,
@@ -119,80 +99,6 @@ export function PropertyPortalsCell({
   canManage: boolean;
   compact?: boolean;
 }) {
-  const queryClient = useQueryClient();
-  const toggleFn = useServerFn(setPropertyPortalSelection);
-  const publishFn = useServerFn(publishPropertyToSelectedPortals);
-  const actionFn = useServerFn(runPortalListingAction);
-  const [pendingWithdraw, setPendingWithdraw] = useState<PendingWithdraw | null>(null);
-
-  const refresh = () => {
-    queryClient.invalidateQueries({ queryKey: ["property-portals-matrix"] });
-    queryClient.invalidateQueries({ queryKey: ["property-portals", propertyId] });
-  };
-
-  const toggle = useMutation({
-    mutationFn: (input: { portalId: string; portalName: string; enabled: boolean }) =>
-      toggleFn({ data: { propertyId, portalId: input.portalId, enabled: input.enabled } }).then((res) => ({
-        res,
-        input,
-      })),
-    onSuccess: ({ res, input }) => {
-      refresh();
-      if (!res.ok) {
-        toast.error(res.message);
-        return;
-      }
-      if (res.needsWithdraw) {
-        setPendingWithdraw({ propertyId, portalId: input.portalId, portalName: input.portalName });
-        toast.message(`${input.portalName}: oferta rămâne publicată până la retragere.`);
-        return;
-      }
-      toast.success(
-        input.enabled
-          ? `${input.portalName} selectat pentru publicare.`
-          : `${input.portalName} deselectat.`,
-      );
-    },
-    onError: (e: Error) => toastError(e),
-  });
-
-  const publish = useMutation({
-    mutationFn: () => publishFn({ data: { propertyId, mode: "publish" } }),
-    onSuccess: (res) => {
-      refresh();
-      if (!res.ok && res.results.length === 0) {
-        toast.error(res.message ?? "Publicarea nu a putut fi realizată.");
-        return;
-      }
-      const failed = res.results.filter((r) => !r.ok);
-      if (failed.length === 0) {
-        toast.success(`Trimis către: ${res.results.map((r) => r.portalName).join(", ")}.`);
-      } else {
-        toast.error(failed.map((r) => `${r.portalName}: ${r.message ?? "eroare"}`).join(" · "));
-      }
-    },
-    onError: (e: Error) => toastError(e),
-  });
-
-  const withdraw = useMutation({
-    mutationFn: (input: { portalId: string }) =>
-      actionFn({ data: { propertyId, portalId: input.portalId, action: "withdraw" } }),
-    onSuccess: (res) => {
-      refresh();
-      setPendingWithdraw(null);
-      if (!res.ok) toast.error(res.message);
-      else toast.success(res.message ?? "Oferta a fost retrasă de pe portal.");
-    },
-    onError: (e: Error) => toastError(e),
-  });
-
-  const busy = toggle.isPending || publish.isPending || withdraw.isPending;
-  // Butonul de trimitere există doar pentru portalurile care acceptă trimiteri.
-  const hasSelection = cells.some(
-    (c) => c.selected && c.availability === "available" && c.configured && c.pushSupported,
-  );
-  const anyPush = cells.some((c) => c.availability === "available" && c.pushSupported);
-
   return (
     <div className={compact ? "w-full space-y-2" : "w-full space-y-2 lg:w-[300px]"}>
       {compact ? null : (
@@ -201,9 +107,8 @@ export function PropertyPortalsCell({
       <div className="flex flex-wrap items-center gap-1.5">
         {cells.map((cell) => {
           const meta = STATE_META[cell.state];
-          const disabled = !canManage || cell.availability !== "available" || busy;
           const icon =
-            cell.state === "published" ? (
+            cell.state === "published" || cell.state === "in_feed" ? (
               <Check className="size-3" />
             ) : cell.state === "error" || cell.state === "not_configured" ? (
               <AlertTriangle className="size-3" />
@@ -217,42 +122,29 @@ export function PropertyPortalsCell({
           return (
             <Tooltip key={cell.portalId}>
               <TooltipTrigger asChild>
-                <button
-                  type="button"
-                  aria-pressed={cell.selected}
-                  disabled={disabled}
-                  onClick={() =>
-                    toggle.mutate({
-                      portalId: cell.portalId,
-                      portalName: cell.portalName,
-                      enabled: !cell.selected,
-                    })
-                  }
-                  className={`inline-flex items-center gap-1.5 rounded-full border px-2 py-1 text-xs transition-colors ${meta.classes} ${
-                    disabled ? "cursor-not-allowed opacity-70" : "cursor-pointer hover:brightness-105"
-                  } ${cell.selected ? "font-medium" : ""}`}
+                <span
+                  className={`inline-flex items-center gap-1.5 rounded-full border px-2 py-1 text-xs ${meta.classes} ${
+                    cell.selected ? "font-medium" : ""
+                  }`}
                 >
                   {icon}
                   <span>{cell.portalName}</span>
                   {cell.availability !== "available" ? (
                     <span className="text-[10px] uppercase">În curând</span>
                   ) : null}
-                </button>
+                </span>
               </TooltipTrigger>
               <TooltipContent side="top" className="max-w-64 space-y-1 text-xs">
                 <p className="font-medium">{cell.portalName}</p>
                 <p>
                   Status: {meta.label}
-                  {cell.availability === "available" ? (cell.selected ? " · selectat" : " · neselectat") : ""}
+                  {cell.availability === "available" ? (cell.selected ? " · bifat" : " · nebifat") : ""}
                 </p>
                 {cell.state === "coming_soon" ? (
-                  <p>Integrarea nu este încă disponibilă. Nu se poate publica pe acest portal.</p>
+                  <p>Integrarea nu este încă disponibilă.</p>
                 ) : null}
                 {!cell.pushSupported && cell.availability === "available" ? (
-                  <p>
-                    Portalul preia ofertele automat din feedul Habitoo. Selectarea este suficientă;
-                    deselectarea o scoate din feed, iar portalul o arhivează.
-                  </p>
+                  <p>Portalul preia ofertele automat din feedul Habitoo.</p>
                 ) : null}
                 {cell.state === "not_configured" ? (
                   <p>Portalul nu este configurat. Configurează-l din Setări → Integrări.</p>
@@ -265,66 +157,17 @@ export function PropertyPortalsCell({
           );
         })}
       </div>
-
       {canManage ? (
-        <div className="flex flex-wrap items-center gap-2">
-          {anyPush ? (
-            <Button
-              type="button"
-              size="sm"
-              variant="outline"
-              disabled={!hasSelection || busy}
-              onClick={() => publish.mutate()}
-              title={hasSelection ? "Publică pe portalurile selectate" : "Selectează cel puțin un portal configurat"}
-            >
-              {publish.isPending ? <Loader2 className="size-3.5 animate-spin" /> : <Send className="size-3.5" />}
-              Publică
-            </Button>
-          ) : null}
-          {cells.some((c) => c.state === "published") ? (
-
-            <Button
-              type="button"
-              size="sm"
-              variant="ghost"
-              disabled={busy}
-              onClick={() => {
-                const target = cells.find((c) => c.state === "published");
-                if (target)
-                  setPendingWithdraw({ propertyId, portalId: target.portalId, portalName: target.portalName });
-              }}
-            >
-              <Undo2 className="size-3.5" /> Retrage
-            </Button>
-          ) : null}
-          {cells.some((c) => c.state === "not_configured") ? (
-            <Link to="/app/settings" className="text-xs text-primary underline-offset-2 hover:underline">
-              Setări → Integrări
-            </Link>
-          ) : null}
-        </div>
+        <Link
+          to="/app/properties/$id"
+          params={{ id: propertyId }}
+          className="text-xs text-primary underline-offset-2 hover:underline"
+        >
+          Editează publicarea
+        </Link>
       ) : (
-        <p className="text-[11px] text-muted-foreground">Doar administratorul agenției poate modifica publicarea.</p>
+        <p className="text-[11px] text-muted-foreground">Publicarea se gestionează din pagina proprietății.</p>
       )}
-
-      <AlertDialog open={pendingWithdraw !== null} onOpenChange={(o) => !o && setPendingWithdraw(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Retragi oferta de pe {pendingWithdraw?.portalName}?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Oferta rămâne în Habitoo. Se retrage doar de pe acest portal; celelalte portaluri nu sunt afectate.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Anulează</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={() => pendingWithdraw && withdraw.mutate({ portalId: pendingWithdraw.portalId })}
-            >
-              Retrage de pe portal
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </div>
   );
 }
