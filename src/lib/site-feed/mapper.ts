@@ -231,7 +231,12 @@ export function mapPropertyToFeed(p: PropertyRow, options: MapPropertyOptions): 
     tipimobil: p.property_type,
     tipteren: isLand ? (p.category ?? null) : null,
     clasificareteren: isLand ? (p.category ?? null) : null,
+    // Terenuri: Habitoo nu are coloane pentru fronturi stradale / drum de acces.
+    nrfronturistradale: null,
+    frontstradal: null,
+    latimedrumacces: null,
     suprafatateren: p.land_surface ?? null,
+
     nrcamere: p.rooms ?? null,
     nrdormitoare: p.bedrooms ?? null,
     nrbucatarii: null,
