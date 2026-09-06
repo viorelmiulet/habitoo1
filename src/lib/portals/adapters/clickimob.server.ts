@@ -95,8 +95,18 @@ async function notify(ctx: PortalContext, ref: ListingRef, operation: string): P
     }
     if (!response.ok) {
       const code = codeFromHttpStatus(response.status);
-      return { ok: false, code, message: PORTAL_ERROR_MESSAGE[code], detail: `${operation} http_${response.status}` };
+      // Răspunsul brut al portalului, trunchiat, ca administratorul să vadă
+      // eroarea EXACTĂ. Nu conține credențiale (tokenul e doar în URL).
+      let body = "";
+      try {
+        body = (await response.text()).slice(0, 300).replace(/\s+/g, " ").trim();
+      } catch {
+        body = "";
+      }
+      const message = `${PORTAL_ERROR_MESSAGE[code]} Răspuns portal: HTTP ${response.status}${body ? ` — ${body}` : ""}`;
+      return { ok: false, code, message, detail: `${operation} http_${response.status} ${body}`.trim() };
     }
+
     return {
       ok: true,
       data: { externalId: ref.externalId, live: true, detail: `${operation} http_${response.status}` },
