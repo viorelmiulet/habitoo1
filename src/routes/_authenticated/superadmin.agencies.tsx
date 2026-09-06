@@ -264,15 +264,6 @@ function AgenciesPage() {
                     {selectableStatuses.includes(o.status as "active" | "suspended") ? null : (
                       <SelectItem value={o.status}>{statusLabels[o.status] ?? o.status}</SelectItem>
                     )}
-                <Button
-                  size="sm"
-                  variant="destructive"
-                  disabled={hardDelete.isPending}
-                  onClick={() => setPendingDelete({ id: o.id, name: o.name })}
-                >
-                  <Trash2 className="mr-1.5 size-4" />
-                  Șterge
-                </Button>
                   </SelectContent>
                 </Select>
                 <StatusBadge tone={o.status === "active" ? "success" : "warning"}>
