@@ -1,14 +1,17 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import { Building2, Search } from "lucide-react";
+import { Archive, ArchiveRestore, Building2, Search } from "lucide-react";
 import { toast } from "sonner";
 import { toastError } from "@/lib/errors";
 import { PageHeader } from "@/components/app/PageHeader";
 import { ListSkeleton } from "@/components/app/LoadingState";
 import { StatusBadge } from "@/components/app/StatusBadge";
 import { EmptyState } from "@/components/app/EmptyState";
+import { ConfirmDialog } from "@/components/app/ConfirmDialog";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import {
   Select,
   SelectContent,
@@ -19,6 +22,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { formatDate } from "@/lib/format";
+import { useCurrentUser } from "@/hooks/use-session";
 import {
   PLAN_AGENT_LIMITS,
   PLAN_KEYS,
@@ -37,6 +41,7 @@ const statusLabels: Record<string, string> = {
   suspended: "Suspendată",
   cancelled: "Anulată",
 };
+
 
 /** Selector de plan cu salvare explicită. */
 function PlanPicker({
