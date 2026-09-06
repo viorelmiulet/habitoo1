@@ -131,16 +131,13 @@ async function notify(
       detail: `${operation} feed_not_visible`,
     };
   }
-  if (options.expect === "absent" && diagnostics.feedVisible) {
-    return {
-      ok: false,
-      code: "VALIDATION_ERROR",
-      message:
-        "Retragerea nu poate fi confirmată: oferta este încă publicată în feed. " +
-        "Schimbă statusul sau oprește publicarea pe site, apoi retrage.",
-      detail: `${operation} feed_still_visible`,
-    };
-  }
+  // La retragere nu blocăm operațiunea: notificăm portalul oricum, dar avertizăm
+  // dacă oferta e încă în feed, pentru că atunci portalul o va reimporta.
+  const withdrawWarning =
+    options.expect === "absent" && diagnostics.feedVisible
+      ? "Atenție: oferta este încă publicată în feed, deci portalul o poate reimporta. Oprește publicarea pe site pentru retragere definitivă."
+      : null;
+
 
   const externalId = diagnostics.externalId ?? ref.externalId;
 
@@ -153,7 +150,7 @@ async function notify(
         feedVisible: diagnostics.feedVisible,
         processed: null,
         detail: `dry_run ${operation} → ${safeUrl(ctx)}`,
-        message: `Verificat local: feed ${diagnostics.feedVisible ? "OK" : "indisponibil"}, ${diagnostics.images.resolvable}/${diagnostics.images.total} imagini, agent ${diagnostics.agentName ?? "lipsă"}.`,
+        message: `Verificat local: feed ${diagnostics.feedVisible ? "OK" : "indisponibil"}, ${diagnostics.images.resolvable}/${diagnostics.images.total} imagini, agent ${diagnostics.agentName ?? "lipsă"}.${withdrawWarning ? ` ${withdrawWarning}` : ""}`,
       },
     };
   }
@@ -207,9 +204,9 @@ async function notify(
         processed,
         detail: `${operation} http_${response.status}${processed === null ? "" : ` processed=${processed}`}`,
         message:
-          processed === null
+          (processed === null
             ? `Portalul a confirmat notificarea (HTTP ${response.status}).`
-            : `Portalul a procesat ${processed} anunț(uri).`,
+            : `Portalul a procesat ${processed} anunț(uri).`) + (withdrawWarning ? ` ${withdrawWarning}` : ""),
       },
     };
   } catch (error) {
