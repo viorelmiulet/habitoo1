@@ -2150,6 +2150,10 @@ export type Database = {
         }
         Returns: undefined
       }
+      superadmin_delete_organization: {
+        Args: { _actor?: string; _org: string }
+        Returns: Json
+      }
     }
     Enums: {
       activity_kind:
