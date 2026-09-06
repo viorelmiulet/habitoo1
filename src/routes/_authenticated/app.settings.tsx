@@ -101,7 +101,9 @@ function SettingsPage() {
           <TabsTrigger value="profile">Profil</TabsTrigger>
           <TabsTrigger value="agency">Agenție</TabsTrigger>
           <TabsTrigger value="team">Echipă ({team.length})</TabsTrigger>
+          {user?.isAdmin ? <TabsTrigger value="integrations">Integrări</TabsTrigger> : null}
         </TabsList>
+
 
         <TabsContent value="profile">
           <form
