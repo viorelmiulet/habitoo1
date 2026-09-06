@@ -80,6 +80,8 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
   // Domeniile publice (habitoo.ro / www.habitoo.ro) servesc doar marketingul:
   // orice rută CRM/auth este redirectată pe crm.habitoo.ro, cu query + hash.
   beforeLoad: ({ location }) => {
+    // Rutele server /lovable/* (webhook-uri email, preview) nu trec prin redirecturi.
+    if (location.pathname.startsWith("/lovable/")) return;
     const host = getCurrentHostname();
     if (isPublicHostname(host) && isCrmPath(location.pathname)) {
       throw redirect({
