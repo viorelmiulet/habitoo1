@@ -307,7 +307,7 @@ export const clickimobAdapter: PortalAdapter = {
   async fetchListings(ctx) {
     try {
       const { inspectFeedProperties } = await import("../feed-inspect.server");
-      const snapshot = await inspectFeedProperties(ctx.organizationId, 50);
+      const snapshot = await inspectFeedProperties(ctx.organizationId, 50, "clickimob");
       if (snapshot.status !== 200) {
         return { ok: false, code: "FEED_ERROR", message: "Feedul de oferte nu a răspuns.", detail: `http_${snapshot.status}` };
       }
