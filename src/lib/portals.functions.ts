@@ -49,6 +49,8 @@ export type PortalHubItem = {
   listings: { published: number; failed: number; pending: number };
   eligibleProperties: number;
   feedUrl: string;
+  /** Variantă CSV a feedului (aceeași selecție, altă serializare). */
+  feedUrlCsv: string | null;
   /** Portalul primește ofertele doar prin feed, fără operații de scriere. */
   feedOnly: boolean;
   /** Diagnoză reală a feedului pe care îl citește portalul. */
@@ -249,7 +251,8 @@ export const getPortalHub = createServerFn({ method: "GET" })
           pending: portalListings.filter((l) => l.status === "pending").length,
         },
         eligibleProperties: eligible.count ?? 0,
-        feedUrl: portal.id === "imove" ? imoveFeedUrl : genericFeedUrl,
+        feedUrl: portal.id === "imove" ? `${imoveFeedUrl}.json` : genericFeedUrl,
+        feedUrlCsv: portal.id === "imove" ? `${imoveFeedUrl}.csv` : null,
         // Portal care primește datele DOAR prin feed (fără operații de scriere).
         feedOnly: portal.capabilities.includes("feed_pull") && !portal.capabilities.includes("publish_listing"),
         feed:
