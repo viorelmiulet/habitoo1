@@ -13,8 +13,16 @@ export type FeedAuthOk = {
   tokenPrefix: string;
   /** Din ce credențial a venit cererea: tokenul de site sau o cheie de portal. */
   source: "site_token" | "portal_key";
+  /**
+   * Portalul care citește feedul, când cererea vine cu o cheie de portal.
+   * `null` = token de site (feedul propriu al agenției, fără filtrare pe portal).
+   * Feedul portalului expune EXCLUSIV ofertele bifate pentru acel portal:
+   * altfel o ofertă retrasă ar fi reimportată la următoarea citire.
+   */
+  portal: string | null;
   scopes: string[];
 };
+
 export type FeedAuthErr = { ok: false; status: 401 | 429; message: string; tokenPrefix: string | null };
 export type FeedAuth = FeedAuthOk | FeedAuthErr;
 
@@ -155,6 +163,7 @@ export async function authenticateFeedRequest(
       tokenId: data.id,
       tokenPrefix: data.token_prefix,
       source: "site_token",
+      portal: null,
       scopes: ["feed:read", "agents:read", "leads:write"],
     };
   }
@@ -163,7 +172,7 @@ export async function authenticateFeedRequest(
   // Agenția este determinată EXCLUSIV din cheie, niciodată din query/body.
   const { data: portalKey } = await supabaseAdmin
     .from("portal_api_keys")
-    .select("id, organization_id, key_prefix, status, scopes, expires_at, request_count")
+    .select("id, organization_id, portal, key_prefix, status, scopes, expires_at, request_count")
     .eq("key_hash", hash)
     .eq("status", "active")
     .maybeSingle();
@@ -183,6 +192,7 @@ export async function authenticateFeedRequest(
       tokenId: portalKey.id,
       tokenPrefix: portalKey.key_prefix,
       source: "portal_key",
+      portal: portalKey.portal ?? null,
       scopes: portalKey.scopes ?? [],
     };
   }
@@ -213,6 +223,7 @@ export async function authenticateFeedRequest(
           tokenId: conn.id,
           tokenPrefix: `${options.portalCredential}_cred`,
           source: "portal_key",
+          portal: options.portalCredential,
           scopes: ["feed:read"],
         };
       }

@@ -21,13 +21,16 @@ import type { FeedProperty } from "@/lib/site-feed/mapper";
 const SIGNED_URL_TTL = 60 * 60; // verificare, nu livrare
 
 /** Context intern: aceleași drepturi ca o cheie de portal cu citire completă. */
-function internalAuth(organizationId: string): FeedAuthOk {
+function internalAuth(organizationId: string, portal?: string | null): FeedAuthOk {
   return {
     ok: true,
     organizationId,
     tokenId: "internal-diagnostics",
     tokenPrefix: "internal",
     source: "portal_key",
+    // Cu portal precizat, diagnoza vede EXACT ce vede portalul (doar ofertele
+    // bifate pentru el), deci „vizibil în feed" nu mai e o aproximare.
+    portal: portal ?? null,
     scopes: ["feed:read", "agents:read"],
   };
 }
@@ -56,10 +59,11 @@ export type FeedSnapshot = {
 export async function inspectFeedProperties(
   organizationId: string,
   perPage = 1,
+  portal?: string | null,
 ): Promise<FeedSnapshot> {
   const result = await handlePropertiesList(
     internalRequest(`/properties?page=1&per_page=${perPage}`),
-    internalAuth(organizationId),
+    internalAuth(organizationId, portal),
   );
   const body = await readJson(result.response);
   return {
@@ -103,10 +107,11 @@ export type FeedPropertySnapshot = {
 export async function inspectFeedProperty(
   organizationId: string,
   propertyId: string,
+  portal?: string | null,
 ): Promise<FeedPropertySnapshot> {
   const result = await handlePropertyDetail(
     internalRequest(`/properties/${propertyId}`),
-    internalAuth(organizationId),
+    internalAuth(organizationId, portal),
     propertyId,
   );
   const body = await readJson(result.response);
