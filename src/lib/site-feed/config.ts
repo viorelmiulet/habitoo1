@@ -31,3 +31,10 @@ export function feedUrlsForRequest(requestUrl: URL | string): FeedUrls {
   // Preview / local: totul rămâne testabil pe originul curent.
   return { baseUrl: url.origin, publicSiteUrl: url.origin };
 }
+
+/** Originul pe care se servesc imaginile publice, pornind de la hostul curent. */
+export function mediaOriginForHost(host?: string | null): string {
+  if (host && (isCrmHostname(host) || isPublicHostname(host))) return CRM_URL;
+  if (typeof window !== "undefined") return window.location.origin;
+  return CRM_URL;
+}
