@@ -1,8 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
 import { initials } from "@/lib/format";
-import { AVATAR_BUCKET } from "@/lib/storage";
-import { signedUrl } from "@/lib/storage";
+import { AVATAR_BUCKET, signedUrl } from "@/lib/storage";
 
 /** Rezolvă un URL semnat pentru fotografia de profil stocată privat. */
 export function useAvatarUrl(path?: string | null) {
