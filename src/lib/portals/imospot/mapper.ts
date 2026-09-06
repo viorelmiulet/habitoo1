@@ -22,6 +22,7 @@ import {
   type PropertyImageRow,
   type PropertyRow,
 } from "@/lib/site-feed/mapper";
+import { publicCoords } from "@/lib/geo";
 
 export const IMOSPOT_MIN_TITLE = 8;
 export const IMOSPOT_MIN_DESCRIPTION = 60;

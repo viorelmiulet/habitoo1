@@ -4,6 +4,7 @@
  * documentată public de ImmoFlux; câmpurile inexistente în Habitoo rămân null.
  */
 import type { Tables } from "@/integrations/supabase/types";
+import { publicCoords } from "@/lib/geo";
 
 export type PropertyRow = Tables<"properties">;
 export type PropertyImageRow = Tables<"property_images">;
@@ -246,6 +247,9 @@ export function mapPropertyToFeed(p: PropertyRow, options: MapPropertyOptions): 
     .filter(isImageFeedEligible)
     .sort((a, b) => (a.is_primary === b.is_primary ? (a.position ?? 0) - (b.position ?? 0) : a.is_primary ? -1 : 1))
     .map((img) => mapImage(img, options.baseUrl));
+
+  // Coordonatele publicate respectă setarea de precizie a locației.
+  const feedCoords = publicCoords(p);
 
   const isLand = p.property_type === "land";
   const isResidential = ["apartment", "studio", "house", "villa"].includes(p.property_type);
