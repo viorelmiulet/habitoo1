@@ -244,3 +244,53 @@ generează din același payload rândurile de care are nevoie. `status` (`active
 
 Feedul iMove rămâne mono-tranzacție (`SALE|RENT`, conform documentației iMove) și
 folosește tranzacția principală a proprietății.
+
+## Imospot.ro — API REST cu push direct
+
+Imospot este primul portal integrat prin **push direct**: Habitoo trimite
+anunțul, nu așteaptă ca portalul să citească un feed.
+
+- Base URL: `https://www.imospot.ro/api/v1`
+- Autentificare: `Authorization: Bearer <cheie API>` — cheia este **emisă de
+  Imospot** pentru contul agenției și se salvează criptat în Habitoo
+  (`portal_connections.portal_credentials_encrypted`, câmpul `api_key` din
+  Superadmin → Portaluri). Habitoo nu generează chei pentru Imospot.
+- Idempotență: `external_id`.
+
+| Operație Habitoo | Request |
+| --- | --- |
+| Publicare | `POST /listings` (creează sau actualizează) |
+| Actualizare | `PUT /listings/{external_id}`, cu fallback `POST /listings` la 404 |
+| Retragere | `DELETE /listings/{external_id}` (anunțul devine `archived`) |
+| Test conexiune | `GET /account` (validează cheia și afișează creditele) |
+
+### `external_id`
+
+`HBT-<property.id>-SALE` / `HBT-<property.id>-RENT`. Sursa este UUID-ul intern al
+proprietății, nu referința agenției (`reference` poate fi editată, UUID-ul nu).
+
+### Tranzacții
+
+O proprietate cu ambele bife active („De vânzare” + „De închiriere”) generează
+**două anunțuri separate**, fiecare cu prețul și moneda tranzacției lui. Sunt
+independente la Imospot și se retrag amândouă la debifarea portalului.
+
+### Validare înainte de request (nu așteptăm eroarea API)
+
+`title` ≥ 8 caractere, `description` ≥ 60 caractere, `price` întreg > 0 (prețurile
+cu zecimale sunt rotunjite, cu avertisment), `contact.phone` (agent, altfel
+telefonul agenției), `location.county` + `location.city`, minimum o imagine
+publicabilă (maximum 40). Când ceva lipsește, oferta nu se trimite și
+utilizatorul vede motivul exact.
+
+### Erori tratate explicit
+
+`401/403` → cheie invalidă; `422` → câmpurile din `errors`, afișate ca atare;
+`404` la `PUT` → se creează prin `POST`; `404` la `DELETE` → anunțul nu exista, nu
+e o eroare; `429` → se respectă `Retry-After`, altfel un backoff de 2 secunde.
+
+### Ce NU trimitem
+
+`exclusive`, `zero_commission`, `video_url` și `promotion` nu au echivalent real
+în Habitoo, deci lipsesc complet din payload. Nu trimitem id-uri de taxonomie:
+Imospot rezolvă oraș/cartier/categorie din text plus coordonate.
