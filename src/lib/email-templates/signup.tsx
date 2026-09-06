@@ -7,10 +7,14 @@ import {
   Head,
   Heading,
   Html,
+  Img,
   Link,
   Preview,
   Text,
 } from '@react-email/components'
+
+// Stable public logo URL for email clients (PNG for maximum compatibility).
+const LOGO_URL = 'https://habitoo.ro/assets/habitoo-logo.png'
 
 interface SignupEmailProps {
   siteName: string
