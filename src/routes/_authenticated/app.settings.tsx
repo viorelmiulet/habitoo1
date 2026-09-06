@@ -10,6 +10,7 @@ import { SiteFeedCard } from "@/components/app/SiteFeedCard";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { UserAvatar } from "@/components/app/UserAvatar";
@@ -44,6 +45,7 @@ function SettingsPage() {
     city: user?.organization?.city ?? "",
     phone: user?.organization?.phone ?? "",
     email: user?.organization?.email ?? "",
+    collaboration_enabled: user?.organization?.collaboration_enabled !== false,
   });
 
   const { data: team = [] } = useQuery({
@@ -120,6 +122,7 @@ function SettingsPage() {
           city: orgForm.city || null,
           phone: orgForm.phone || null,
           email: orgForm.email || null,
+          collaboration_enabled: orgForm.collaboration_enabled,
         })
         .eq("id", user.organization.id);
       if (error) throw error;
