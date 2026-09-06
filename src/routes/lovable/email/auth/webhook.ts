@@ -15,6 +15,22 @@ const ROOT_DOMAIN = "habitoo.ro"
 const FROM_DOMAIN = "habitoo.ro"
 const SITE_URL = `https://${ROOT_DOMAIN}`
 
+/**
+ * Numele agenției care invită, transmis de `inviteAgent` prin `redirect_to`.
+ * Payloadul webhookului nu include metadatele utilizatorului, deci îl citim din URL.
+ */
+function agencyFromUrl(rawUrl: string): string | undefined {
+  try {
+    const url = new URL(rawUrl)
+    const redirect = url.searchParams.get('redirect_to')
+    if (!redirect) return undefined
+    const agency = new URL(redirect, SITE_URL).searchParams.get('agency')?.trim()
+    return agency || undefined
+  } catch {
+    return undefined
+  }
+}
+
 // The SDK handler owns verification, dispatch, and retry semantics; this file
 // owns only the email decisions: subjects, templates, and per-type props.
 export const Route = createFileRoute("/lovable/email/auth/webhook")({
@@ -28,7 +44,7 @@ export const Route = createFileRoute("/lovable/email/auth/webhook")({
           sendUrl: process.env['LOVABLE_SEND_URL'],
           emails: {
             signup: {
-              subject: 'Confirm your email',
+              subject: 'Confirmă adresa de email pentru Habitoo CRM',
               render: (data) =>
                 React.createElement(SignupEmail, {
                   siteName: SITE_NAME,
@@ -37,17 +53,22 @@ export const Route = createFileRoute("/lovable/email/auth/webhook")({
                   confirmationUrl: data.url,
                 }),
             },
-            invite: {
-              subject: "You've been invited",
-              render: (data) =>
-                React.createElement(InviteEmail, {
+            invite: (data) => {
+              const agencyName = agencyFromUrl(data.url)
+              return {
+                subject: agencyName
+                  ? `${agencyName} te invită în echipa sa pe Habitoo CRM`
+                  : 'Ai fost invitat în echipa unei agenții pe Habitoo CRM',
+                element: React.createElement(InviteEmail, {
                   siteName: SITE_NAME,
                   siteUrl: SITE_URL,
                   confirmationUrl: data.url,
+                  agencyName,
                 }),
+              }
             },
             magiclink: {
-              subject: 'Your login link',
+              subject: 'Linkul tău de autentificare în Habitoo CRM',
               render: (data) =>
                 React.createElement(MagicLinkEmail, {
                   siteName: SITE_NAME,
@@ -55,13 +76,14 @@ export const Route = createFileRoute("/lovable/email/auth/webhook")({
                 }),
             },
             recovery: {
-              subject: 'Reset your password',
+              subject: 'Resetează parola contului Habitoo CRM',
               render: (data) =>
                 React.createElement(RecoveryEmail, {
                   siteName: SITE_NAME,
                   confirmationUrl: data.url,
                 }),
             },
+
             email_change: {
               subject: 'Confirm your new email',
               render: (data) =>
