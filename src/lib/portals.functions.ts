@@ -723,3 +723,294 @@ export const getPortalLogs = createServerFn({ method: "GET" })
       createdAt: row.created_at,
     }));
   });
+
+/* ------------------------------------------------------------------------- */
+/* Selecția de portaluri per proprietate (lista de proprietăți)              */
+/* ------------------------------------------------------------------------- */
+
+type PortalSelectionState =
+  | "coming_soon"
+  | "not_configured"
+  | "not_selected"
+  | "selected"
+  | "syncing"
+  | "published"
+  | "error"
+  | "withdrawn";
+
+export type PropertyPortalCell = {
+  portalId: string;
+  portalName: string;
+  logo: string;
+  availability: "available" | "coming_soon" | "disabled";
+  /** Utilizatorul a cerut publicarea pe acest portal (portal_publications.enabled). */
+  selected: boolean;
+  /** Conexiunea agenției există și poate publica. */
+  configured: boolean;
+  /** Starea reală a ofertei pe portal (portal_listings.status). */
+  listingStatus: string;
+  state: PortalSelectionState;
+  lastSyncAt: string | null;
+  lastError: string | null;
+  externalId: string | null;
+};
+
+export type PropertyPortalMatrix = {
+  canManage: boolean;
+  properties: Record<string, PropertyPortalCell[]>;
+};
+
+/** Agenția utilizatorului curent, fără cerință de rol (doar citire). */
+async function requireOrgMember(context: AuthContext): Promise<string> {
+  const { data: profile } = await context.supabase
+    .from("profiles")
+    .select("organization_id")
+    .eq("id", context.userId)
+    .maybeSingle();
+  if (!profile?.organization_id) throw new Error("Agenția nu este configurată.");
+  return profile.organization_id;
+}
+
+async function isOrgAdmin(context: AuthContext): Promise<boolean> {
+  const { data, error } = await context.supabase.rpc("is_org_admin");
+  return !error && data === true;
+}
+
+function deriveState(input: {
+  availability: "available" | "coming_soon" | "disabled";
+  configured: boolean;
+  selected: boolean;
+  listingStatus: string;
+  publicationStatus: string | null;
+}): PortalSelectionState {
+  if (input.availability !== "available") return "coming_soon";
+  if (input.listingStatus === "error" || input.publicationStatus === "error") return "error";
+  if (input.listingStatus === "published" || input.listingStatus === "updated") return "published";
+  if (input.listingStatus === "pending") return "syncing";
+  if (input.listingStatus === "withdrawn") return "withdrawn";
+  if (!input.configured) return "not_configured";
+  return input.selected ? "selected" : "not_selected";
+}
+
+export const getPropertiesPortalMatrix = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) =>
+    z.object({ propertyIds: z.array(z.string().uuid()).max(100) }).parse(input),
+  )
+  .handler(async ({ data, context }): Promise<PropertyPortalMatrix> => {
+    const ctxAuth = context as unknown as AuthContext;
+    const organizationId = await requireOrgMember(ctxAuth);
+    const canManage = await isOrgAdmin(ctxAuth);
+    if (data.propertyIds.length === 0) return { canManage, properties: {} };
+
+    const admin = await loadAdmin();
+    const [{ data: publications }, { data: listings }, { data: connections }] = await Promise.all([
+      admin
+        .from("portal_publications")
+        .select("property_id, portal_key, enabled, status, last_synced_at, last_error, external_ref")
+        .eq("organization_id", organizationId)
+        .in("property_id", data.propertyIds),
+      admin
+        .from("portal_listings")
+        .select("property_id, portal, status, last_sync_at, last_error, external_id")
+        .eq("organization_id", organizationId)
+        .in("property_id", data.propertyIds),
+      admin.from("portal_connections").select("portal, status").eq("organization_id", organizationId),
+    ]);
+
+    const properties: Record<string, PropertyPortalCell[]> = {};
+    for (const propertyId of data.propertyIds) {
+      properties[propertyId] = PORTALS.map((portal) => {
+        const pub = (publications ?? []).find(
+          (p) => p.property_id === propertyId && p.portal_key === portal.id,
+        );
+        const listing = (listings ?? []).find((l) => l.property_id === propertyId && l.portal === portal.id);
+        const connection = (connections ?? []).find((c) => c.portal === portal.id);
+        const configured =
+          portal.status === "available" && (connection?.status === "connected" || connection?.status === "ready");
+        const listingStatus = listing?.status ?? "not_published";
+        return {
+          portalId: portal.id,
+          portalName: portal.display_name,
+          logo: portal.logo,
+          availability: portal.status,
+          selected: pub?.enabled === true,
+          configured,
+          listingStatus,
+          state: deriveState({
+            availability: portal.status,
+            configured,
+            selected: pub?.enabled === true,
+            listingStatus,
+            publicationStatus: pub?.status ?? null,
+          }),
+          lastSyncAt: listing?.last_sync_at ?? pub?.last_synced_at ?? null,
+          lastError: listing?.last_error ?? pub?.last_error ?? null,
+          externalId: listing?.external_id ?? pub?.external_ref ?? null,
+        };
+      });
+    }
+    return { canManage, properties };
+  });
+
+/** Activează/dezactivează publicarea unei proprietăți pe un portal. */
+export const setPropertyPortalSelection = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) =>
+    z
+      .object({
+        propertyId: z.string().uuid(),
+        portalId: z.string().min(1).max(40),
+        enabled: z.boolean(),
+      })
+      .parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    const organizationId = await requireOrgAdmin(context as unknown as AuthContext);
+    const definition = getPortalDefinition(data.portalId);
+    if (!definition) throw new Error("Portal necunoscut.");
+    if (definition.status !== "available") {
+      return {
+        ok: false as const,
+        code: "NOT_SUPPORTED",
+        message: `Integrarea ${definition.display_name} nu este încă disponibilă.`,
+      };
+    }
+
+    const admin = await loadAdmin();
+    const { data: property } = await admin
+      .from("properties")
+      .select("id")
+      .eq("id", data.propertyId)
+      .eq("organization_id", organizationId)
+      .maybeSingle();
+    if (!property) throw new Error("Proprietatea nu a fost găsită.");
+
+    const { data: listing } = await admin
+      .from("portal_listings")
+      .select("status")
+      .eq("organization_id", organizationId)
+      .eq("portal", definition.id)
+      .eq("property_id", data.propertyId)
+      .maybeSingle();
+    const stillPublished = listing?.status === "published" || listing?.status === "updated";
+
+    const { error } = await admin.from("portal_publications").upsert(
+      {
+        organization_id: organizationId,
+        property_id: data.propertyId,
+        portal_key: definition.id,
+        enabled: data.enabled,
+        status: data.enabled ? "pending" : "disabled",
+        updated_by: context.userId,
+        created_by: context.userId,
+      } as never,
+      { onConflict: "organization_id,property_id,portal_key" },
+    );
+    if (error) throw new Error(error.message);
+
+    await admin.from("audit_logs").insert({
+      organization_id: organizationId,
+      actor_id: context.userId,
+      action: data.enabled ? "portal.selection_enabled" : "portal.selection_disabled",
+      entity: "portal_publications",
+      entity_id: data.propertyId,
+      new_values: { portal_key: definition.id, enabled: data.enabled },
+      created_by: context.userId,
+    } as never);
+
+    await logOperation({
+      organizationId,
+      portal: definition.id,
+      operation: data.enabled ? "select" : "deselect",
+      success: true,
+      propertyId: data.propertyId,
+      actorId: context.userId,
+    });
+
+    return {
+      ok: true as const,
+      enabled: data.enabled,
+      // Dezactivarea selecției nu retrage automat oferta deja publicată.
+      needsWithdraw: !data.enabled && stillPublished,
+    };
+  });
+
+/**
+ * Publică sau actualizează o proprietate DOAR pe portalurile selectate pentru ea.
+ * `mode: "update"` atinge exclusiv portalurile unde oferta este deja publicată.
+ */
+export const publishPropertyToSelectedPortals = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) =>
+    z
+      .object({
+        propertyId: z.string().uuid(),
+        mode: z.enum(["publish", "update"]).default("publish"),
+      })
+      .parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    const organizationId = await requireOrgAdmin(context as unknown as AuthContext);
+    const admin = await loadAdmin();
+
+    const [{ data: publications }, { data: listings }] = await Promise.all([
+      admin
+        .from("portal_publications")
+        .select("portal_key")
+        .eq("organization_id", organizationId)
+        .eq("property_id", data.propertyId)
+        .eq("enabled", true),
+      admin
+        .from("portal_listings")
+        .select("portal, status")
+        .eq("organization_id", organizationId)
+        .eq("property_id", data.propertyId),
+    ]);
+
+    const selected = (publications ?? [])
+      .map((p) => p.portal_key)
+      .filter((key) => getPortalDefinition(key)?.status === "available");
+
+    if (selected.length === 0) {
+      return {
+        ok: false as const,
+        code: "NO_SELECTION",
+        message: "Nu ai selectat niciun portal disponibil pentru această proprietate.",
+        results: [] as { portalId: string; portalName: string; ok: boolean; message: string | null }[],
+      };
+    }
+
+    const results: { portalId: string; portalName: string; ok: boolean; message: string | null }[] = [];
+    for (const portalId of selected) {
+      const published = (listings ?? []).some(
+        (l) => l.portal === portalId && (l.status === "published" || l.status === "updated"),
+      );
+      if (data.mode === "update" && !published) continue;
+      const action = published ? "update" : "publish";
+      const result = await executeListingAction({
+        organizationId,
+        actorId: context.userId,
+        portalId,
+        propertyId: data.propertyId,
+        action,
+      });
+      results.push({
+        portalId,
+        portalName: getPortalDefinition(portalId)?.display_name ?? portalId,
+        ok: result.ok,
+        message: result.ok ? (result.message ?? result.detail) : result.message,
+      });
+    }
+
+    if (results.length === 0) {
+      return {
+        ok: false as const,
+        code: "NOTHING_TO_UPDATE",
+        message: "Oferta nu este publicată pe niciun portal selectat.",
+        results,
+      };
+    }
+
+    return { ok: results.every((r) => r.ok), code: null, message: null, results };
+  });
