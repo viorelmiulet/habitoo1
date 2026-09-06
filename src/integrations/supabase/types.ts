@@ -2127,8 +2127,15 @@ export type Database = {
         Args: { _new_org: string; _user_id: string }
         Returns: undefined
       }
+      approve_organization: { Args: { _org: string }; Returns: undefined }
       bootstrap_agency: {
-        Args: { _agency_name: string; _full_name: string; _phone?: string }
+        Args: {
+          _agency_name: string
+          _cui?: string
+          _full_name: string
+          _legal_name?: string
+          _phone?: string
+        }
         Returns: string
       }
       current_org: { Args: never; Returns: string }
