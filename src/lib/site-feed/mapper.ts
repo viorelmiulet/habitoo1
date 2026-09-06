@@ -256,9 +256,14 @@ export function mapPropertyToFeed(p: PropertyRow, options: MapPropertyOptions): 
     pole: (p.tags ?? []).includes("pole"),
     custom1: null,
     custom2: null,
-    // Nu există un câmp dedicat pentru portaluri în schemă; singura sursă este
-    // convenția de tag `portal:<nume>`. Fără taguri, lista rămâne goală.
-    portals: (p.tags ?? []).filter((t) => t.startsWith("portal:")).map((t) => t.slice("portal:".length)),
+    // Sursa principală: modelul generic `portal_publications` (publicare activă).
+    // Compatibilitate: tagurile legacy `portal:<nume>`. Fără niciuna, lista e goală.
+    portals: [
+      ...new Set([
+        ...(options.portalKeys ?? []),
+        ...(p.tags ?? []).filter((t) => t.startsWith("portal:")).map((t) => t.slice("portal:".length)),
+      ]),
+    ],
     suprafata_value: p.surface ?? null,
     incalzire_value: p.heating ?? null,
     mobilare_value: p.furnishing ?? null,
