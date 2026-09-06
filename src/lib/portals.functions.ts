@@ -643,9 +643,14 @@ async function executeListingAction(input: {
 
   // Starea selecției per proprietate reflectă rezultatul ultimei operațiuni,
   // fără să dubleze informația din `portal_listings`.
+  // Starea selecției per proprietate reflectă rezultatul ultimei operațiuni,
+  // fără să dubleze informația din `portal_listings`. La o retragere reușită
+  // intenția trebuie să dispară, altfel checkbox-ul rămâne bifat pentru o
+  // ofertă retrasă și republicarea nu mai are ce tranziție să declanșeze.
   await admin
     .from("portal_publications")
     .update({
+      ...(result.ok && action === "withdraw" ? { enabled: false } : {}),
       status: result.ok ? (action === "withdraw" ? "disabled" : "synced") : "error",
       last_synced_at: now,
       last_error: result.ok ? null : result.message,
@@ -655,6 +660,7 @@ async function executeListingAction(input: {
     .eq("organization_id", organizationId)
     .eq("property_id", propertyId)
     .eq("portal_key", definition.id);
+
 
   await logOperation({
     organizationId,
