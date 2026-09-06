@@ -43,7 +43,7 @@ const STATE_META: Record<
 > = {
   published: {
     label: "Publicat",
-    classes: "border-success/40 bg-success/10 text-success-foreground",
+    classes: "border-success/40 bg-success/10 text-success",
     dot: "bg-success",
   },
   selected: {
@@ -53,7 +53,7 @@ const STATE_META: Record<
   },
   syncing: {
     label: "În sincronizare",
-    classes: "border-warning/40 bg-warning/10 text-warning-foreground",
+    classes: "border-warning/50 bg-warning/15 text-foreground",
     dot: "bg-warning",
   },
   error: {
