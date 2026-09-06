@@ -95,7 +95,7 @@ function UsersPage() {
 
   const { data, isLoading } = useQuery({
     queryKey: ["superadmin", "users"],
-    queryFn: () => fetchUsers({ data: {} }),
+    queryFn: () => fetchUsers(),
   });
 
   const invalidate = () => queryClient.invalidateQueries({ queryKey: ["superadmin", "users"] });
@@ -463,7 +463,7 @@ function UsersPage() {
             <div className="grid gap-1.5">
               <Label>De la</Label>
               <Select
-                value={reassignFrom}
+                value={reassignFrom || undefined}
                 onValueChange={(v) => {
                   setReassignFrom(v);
                   setReassignTo("");
@@ -485,7 +485,7 @@ function UsersPage() {
             </div>
             <div className="grid gap-1.5">
               <Label>Către</Label>
-              <Select value={reassignTo} onValueChange={setReassignTo} disabled={!reassignFrom}>
+              <Select value={reassignTo || undefined} onValueChange={setReassignTo} disabled={!reassignFrom}>
                 <SelectTrigger>
                   <SelectValue placeholder="Alege utilizatorul destinație" />
                 </SelectTrigger>

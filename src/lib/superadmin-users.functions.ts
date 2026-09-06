@@ -154,7 +154,7 @@ export const updatePlatformUser = createServerFn({ method: "POST" })
       if (isSuperadmin) throw new Error("Agenția unui superadmin nu se schimbă din această pagină.");
       const { error: moveError } = await supabaseAdmin.rpc("admin_change_user_organization", {
         _user_id: data.userId,
-        _new_org: data.organizationId,
+        _new_org: data.organizationId as string,
       });
       if (moveError) throw new Error(moveError.message);
     }
@@ -291,7 +291,7 @@ export const deletePlatformUser = createServerFn({ method: "POST" })
 
     const { data: result, error } = await supabaseAdmin.rpc("superadmin_delete_user", {
       _user: data.userId,
-      _reassign_to: data.reassignToUserId,
+      _reassign_to: data.reassignToUserId as string,
       _actor: actorId,
     });
     if (error) throw new Error(error.message);
