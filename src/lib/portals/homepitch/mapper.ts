@@ -20,6 +20,7 @@ import {
   type PropertyImageRow,
   type PropertyRow,
 } from "@/lib/site-feed/mapper";
+import { publicCoords } from "@/lib/geo";
 
 export const HOMEPITCH_MAX_IMAGES = 40;
 export const HOMEPITCH_MAX_TITLE = 200;
@@ -248,8 +249,11 @@ export function mapPropertyToHomePitch(
     reasons.push(`HomePitch acceptă doar EUR; oferta este în ${currency}.`);
   }
 
-  const lat = numberOrNull(p.lat);
-  const lng = numberOrNull(p.lng);
+  // HomePitch cere lat/lng obligatoriu: dacă locația nu e marcată exactă,
+  // trimitem coordonatele aproximative, nu excludem oferta.
+  const coords = publicCoords(p);
+  const lat = coords ? coords.lat : numberOrNull(p.lat);
+  const lng = coords ? coords.lng : numberOrNull(p.lng);
   if (lat === null || lng === null || (lat === 0 && lng === 0)) {
     reasons.push("Lipsesc coordonatele (lat/lng) — HomePitch le cere obligatoriu.");
   }

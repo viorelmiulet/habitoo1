@@ -22,6 +22,7 @@ import {
   type PropertyImageRow,
   type PropertyRow,
 } from "@/lib/site-feed/mapper";
+import { publicCoords } from "@/lib/geo";
 
 export const IMOSPOT_MIN_TITLE = 8;
 export const IMOSPOT_MIN_DESCRIPTION = 60;
@@ -317,9 +318,11 @@ export function mapPropertyToImospot(p: PropertyRow, options: ImospotMapOptions)
     // Strada exactă doar dacă locația este marcată ca publicabilă precis.
     const street = p.location_precise ? (p.address ?? p.street ?? "").trim() : (p.street ?? "").trim();
     if (street) listing.location.street = street;
-    if (typeof p.lat === "number" && typeof p.lng === "number") {
-      listing.location.lat = p.lat;
-      listing.location.lng = p.lng;
+    // Coordonatele respectă setarea de precizie: exacte doar cu `location_precise`.
+    const coords = publicCoords(p);
+    if (coords) {
+      listing.location.lat = coords.lat;
+      listing.location.lng = coords.lng;
     }
     return listing;
   });

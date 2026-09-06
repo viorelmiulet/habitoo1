@@ -27,6 +27,7 @@ import {
 } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { LocationPicker, emptyLocation, type LocationValue } from "@/components/app/LocationPicker";
+import { PropertyLocationMap } from "@/components/app/PropertyLocationMap";
 import { useCurrentUser } from "@/hooks/use-session";
 import { propertyTypeLabels } from "@/lib/labels";
 
@@ -88,6 +89,12 @@ function NewPropertyPage() {
   const [tx, setTx] = useState<TransactionValue>(emptyTransaction);
   // Localizarea oficială (nomenclator SIRUTA); textul din `city`/`county` rămâne sincronizat cu selecția.
   const [location, setLocation] = useState<LocationValue>(emptyLocation);
+  // Poziția pe hartă (Leaflet/OpenStreetMap) și precizia locației.
+  const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null);
+  const [locationPrecise, setLocationPrecise] = useState(false);
+  // Seed stabil pentru aproximarea zonei înainte ca proprietatea să aibă id.
+  const [mapSeed] = useState(() => `new-${Math.random().toString(36).slice(2)}`);
+
 
   const set = (key: keyof typeof form, value: string | boolean) =>
     setForm((f) => ({ ...f, [key]: value }));
@@ -138,6 +145,9 @@ function NewPropertyPage() {
           locality_siruta_code: location.localitySirutaCode,
           district: form.district || null,
           address: form.address || null,
+          lat: coords?.lat ?? null,
+          lng: coords?.lng ?? null,
+          location_precise: locationPrecise,
           description: form.description || null,
           internal_notes: form.internal_notes || null,
           owner_contact_id: form.owner_contact_id || null,
@@ -421,7 +431,18 @@ function NewPropertyPage() {
               <Input id="address" value={form.address} onChange={(e) => set("address", e.target.value)} />
             </div>
           </div>
+          <PropertyLocationMap
+            idPrefix="new"
+            seed={mapSeed}
+            lat={coords?.lat ?? null}
+            lng={coords?.lng ?? null}
+            precise={locationPrecise}
+            addressParts={[form.address, form.district, location.localityName, location.countyName]}
+            onCoordsChange={setCoords}
+            onPreciseChange={setLocationPrecise}
+          />
         </section>
+
 
         <section className="panel space-y-4 p-5">
           <h2 className="text-sm font-semibold">Descriere</h2>
