@@ -130,9 +130,9 @@ export function feedImageUrl(baseUrl: string, imageId: string): string {
   return `${baseUrl.replace(/\/$/, "")}/api/public/sites/v1/media/${imageId}`;
 }
 
-/** URL public al ofertei, folosit de site-ul conectat: /oferta-{propertyId}. */
+/** URL public stabil al ofertei pe site: /oferta/{propertyId}. */
 export function offerUrl(publicSiteUrl: string, propertyId: string): string {
-  return `${publicSiteUrl.replace(/\/$/, "")}/oferta-${propertyId}`;
+  return `${publicSiteUrl.replace(/\/$/, "")}/oferta/${propertyId}`;
 }
 
 export function mapImage(image: PropertyImageRow, baseUrl: string): FeedImage {
