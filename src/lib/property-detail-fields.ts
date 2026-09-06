@@ -1,0 +1,75 @@
+/**
+ * Coloanele din `properties` editate prin secțiunile de detalii ale anunțului.
+ * Listate explicit ca patch-ul trimis la salvare să fie previzibil.
+ */
+export const PROPERTY_DETAIL_FIELDS = [
+  // Detalii
+  "property_type",
+  "layout",
+  "comfort",
+  "destination",
+  "rooms",
+  "bedrooms",
+  "kitchens",
+  "bathrooms",
+  "balconies",
+  "terraces",
+  "floor_label",
+  "orientation",
+  "build_year",
+  "renovation_year",
+  "parking_spaces",
+  "garages",
+  "parking",
+  "bathroom_window",
+  "open_kitchen",
+  "pet_friendly",
+  "key_in_agency",
+  "balcony",
+  // Suprafețe
+  "usable_surface",
+  "built_surface",
+  "total_usable_surface",
+  "balcony_surface",
+  "terrace_surface",
+  "garden_surface",
+  "land_surface",
+  // Clădire
+  "construction_stage",
+  "building_type",
+  "building_structure",
+  "seismic_risk",
+  "building_floors",
+  "recessed_floors",
+  "has_basement",
+  "has_semi_basement",
+  "has_ground_floor",
+  "has_attic",
+  "has_loft",
+  // Utilități
+  "utilities",
+  "heating_systems",
+  "cooling_systems",
+  // Finisaje
+  "finish_state",
+  "insulation",
+  "wall_finishes",
+  "floor_finishes",
+  "windows",
+  "blinds",
+  "shutters",
+  "entry_door",
+  "interior_doors",
+  // Dotări
+  "furnishing",
+  "additional_spaces",
+  "kitchen_features",
+  "metering",
+  "appliances",
+  "building_amenities",
+  "street_arrangement",
+  "views",
+  "misc_features",
+] as const;
+
+export type PropertyDetailField = (typeof PROPERTY_DETAIL_FIELDS)[number];

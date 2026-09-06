@@ -1066,18 +1066,30 @@ export type Database = {
       }
       properties: {
         Row: {
+          additional_spaces: string[]
           address: string | null
+          appliances: string[]
           assigned_to: string | null
+          balconies: number | null
           balcony: boolean
+          balcony_surface: number | null
+          bathroom_window: boolean
           bathrooms: number | null
           bedrooms: number | null
+          blinds: string[]
           build_year: number | null
+          building_amenities: string[]
           building_floors: number | null
+          building_structure: string | null
+          building_type: string | null
           built_surface: number | null
           category: string | null
           city: string | null
           collaboration: boolean
+          comfort: string | null
           commission: string | null
+          construction_stage: string | null
+          cooling_systems: string[]
           county: string | null
           county_siruta_code: number | null
           created_at: string
@@ -1085,14 +1097,32 @@ export type Database = {
           currency: string
           deleted_at: string | null
           description: string | null
+          destination: string | null
           district: string | null
+          entry_door: string[]
           external_id: string | null
           features: string[]
+          finish_state: string | null
           floor: number | null
+          floor_finishes: string[]
+          floor_label: string | null
           furnishing: string | null
+          garages: number | null
+          garden_surface: number | null
+          has_attic: boolean
+          has_basement: boolean
+          has_ground_floor: boolean
+          has_loft: boolean
+          has_semi_basement: boolean
           heating: string | null
+          heating_systems: string[]
           id: string
+          insulation: string[]
+          interior_doors: string[]
           internal_notes: string | null
+          key_in_agency: boolean
+          kitchen_features: string[]
+          kitchens: number | null
           land_surface: number | null
           last_activity_at: string | null
           lat: number | null
@@ -1100,23 +1130,37 @@ export type Database = {
           lng: number | null
           locality_siruta_code: number | null
           location_precise: boolean
+          metering: string[]
+          misc_features: string[]
           negotiable: boolean
+          open_kitchen: boolean
           organization_id: string
+          orientation: string | null
           owner_contact_id: string | null
           parking: string | null
+          parking_spaces: number | null
+          pet_friendly: boolean
           price: number | null
           property_type: string
           publish_status: string
           published_at: string | null
+          recessed_floors: number | null
           reference: string | null
+          renovation_year: number | null
           rooms: number | null
+          seismic_risk: string | null
+          shutters: string[]
           source: string | null
           status: Database["public"]["Enums"]["property_status"]
           street: string | null
+          street_arrangement: string[]
           street_number: string | null
           surface: number | null
           tags: string[]
+          terrace_surface: number | null
+          terraces: number | null
           title: string
+          total_usable_surface: number | null
           transaction_kind: Database["public"]["Enums"]["transaction_kind"]
           uat_siruta_code: number | null
           updated_at: string
@@ -1124,20 +1168,35 @@ export type Database = {
           usable_surface: number | null
           utilities: string[]
           vat_included: boolean
+          views: string[]
+          wall_finishes: string[]
+          windows: string[]
         }
         Insert: {
+          additional_spaces?: string[]
           address?: string | null
+          appliances?: string[]
           assigned_to?: string | null
+          balconies?: number | null
           balcony?: boolean
+          balcony_surface?: number | null
+          bathroom_window?: boolean
           bathrooms?: number | null
           bedrooms?: number | null
+          blinds?: string[]
           build_year?: number | null
+          building_amenities?: string[]
           building_floors?: number | null
+          building_structure?: string | null
+          building_type?: string | null
           built_surface?: number | null
           category?: string | null
           city?: string | null
           collaboration?: boolean
+          comfort?: string | null
           commission?: string | null
+          construction_stage?: string | null
+          cooling_systems?: string[]
           county?: string | null
           county_siruta_code?: number | null
           created_at?: string
@@ -1145,14 +1204,32 @@ export type Database = {
           currency?: string
           deleted_at?: string | null
           description?: string | null
+          destination?: string | null
           district?: string | null
+          entry_door?: string[]
           external_id?: string | null
           features?: string[]
+          finish_state?: string | null
           floor?: number | null
+          floor_finishes?: string[]
+          floor_label?: string | null
           furnishing?: string | null
+          garages?: number | null
+          garden_surface?: number | null
+          has_attic?: boolean
+          has_basement?: boolean
+          has_ground_floor?: boolean
+          has_loft?: boolean
+          has_semi_basement?: boolean
           heating?: string | null
+          heating_systems?: string[]
           id?: string
+          insulation?: string[]
+          interior_doors?: string[]
           internal_notes?: string | null
+          key_in_agency?: boolean
+          kitchen_features?: string[]
+          kitchens?: number | null
           land_surface?: number | null
           last_activity_at?: string | null
           lat?: number | null
@@ -1160,23 +1237,37 @@ export type Database = {
           lng?: number | null
           locality_siruta_code?: number | null
           location_precise?: boolean
+          metering?: string[]
+          misc_features?: string[]
           negotiable?: boolean
+          open_kitchen?: boolean
           organization_id: string
+          orientation?: string | null
           owner_contact_id?: string | null
           parking?: string | null
+          parking_spaces?: number | null
+          pet_friendly?: boolean
           price?: number | null
           property_type?: string
           publish_status?: string
           published_at?: string | null
+          recessed_floors?: number | null
           reference?: string | null
+          renovation_year?: number | null
           rooms?: number | null
+          seismic_risk?: string | null
+          shutters?: string[]
           source?: string | null
           status?: Database["public"]["Enums"]["property_status"]
           street?: string | null
+          street_arrangement?: string[]
           street_number?: string | null
           surface?: number | null
           tags?: string[]
+          terrace_surface?: number | null
+          terraces?: number | null
           title: string
+          total_usable_surface?: number | null
           transaction_kind?: Database["public"]["Enums"]["transaction_kind"]
           uat_siruta_code?: number | null
           updated_at?: string
@@ -1184,20 +1275,35 @@ export type Database = {
           usable_surface?: number | null
           utilities?: string[]
           vat_included?: boolean
+          views?: string[]
+          wall_finishes?: string[]
+          windows?: string[]
         }
         Update: {
+          additional_spaces?: string[]
           address?: string | null
+          appliances?: string[]
           assigned_to?: string | null
+          balconies?: number | null
           balcony?: boolean
+          balcony_surface?: number | null
+          bathroom_window?: boolean
           bathrooms?: number | null
           bedrooms?: number | null
+          blinds?: string[]
           build_year?: number | null
+          building_amenities?: string[]
           building_floors?: number | null
+          building_structure?: string | null
+          building_type?: string | null
           built_surface?: number | null
           category?: string | null
           city?: string | null
           collaboration?: boolean
+          comfort?: string | null
           commission?: string | null
+          construction_stage?: string | null
+          cooling_systems?: string[]
           county?: string | null
           county_siruta_code?: number | null
           created_at?: string
@@ -1205,14 +1311,32 @@ export type Database = {
           currency?: string
           deleted_at?: string | null
           description?: string | null
+          destination?: string | null
           district?: string | null
+          entry_door?: string[]
           external_id?: string | null
           features?: string[]
+          finish_state?: string | null
           floor?: number | null
+          floor_finishes?: string[]
+          floor_label?: string | null
           furnishing?: string | null
+          garages?: number | null
+          garden_surface?: number | null
+          has_attic?: boolean
+          has_basement?: boolean
+          has_ground_floor?: boolean
+          has_loft?: boolean
+          has_semi_basement?: boolean
           heating?: string | null
+          heating_systems?: string[]
           id?: string
+          insulation?: string[]
+          interior_doors?: string[]
           internal_notes?: string | null
+          key_in_agency?: boolean
+          kitchen_features?: string[]
+          kitchens?: number | null
           land_surface?: number | null
           last_activity_at?: string | null
           lat?: number | null
@@ -1220,23 +1344,37 @@ export type Database = {
           lng?: number | null
           locality_siruta_code?: number | null
           location_precise?: boolean
+          metering?: string[]
+          misc_features?: string[]
           negotiable?: boolean
+          open_kitchen?: boolean
           organization_id?: string
+          orientation?: string | null
           owner_contact_id?: string | null
           parking?: string | null
+          parking_spaces?: number | null
+          pet_friendly?: boolean
           price?: number | null
           property_type?: string
           publish_status?: string
           published_at?: string | null
+          recessed_floors?: number | null
           reference?: string | null
+          renovation_year?: number | null
           rooms?: number | null
+          seismic_risk?: string | null
+          shutters?: string[]
           source?: string | null
           status?: Database["public"]["Enums"]["property_status"]
           street?: string | null
+          street_arrangement?: string[]
           street_number?: string | null
           surface?: number | null
           tags?: string[]
+          terrace_surface?: number | null
+          terraces?: number | null
           title?: string
+          total_usable_surface?: number | null
           transaction_kind?: Database["public"]["Enums"]["transaction_kind"]
           uat_siruta_code?: number | null
           updated_at?: string
@@ -1244,6 +1382,9 @@ export type Database = {
           usable_surface?: number | null
           utilities?: string[]
           vat_included?: boolean
+          views?: string[]
+          wall_finishes?: string[]
+          windows?: string[]
         }
         Relationships: [
           {
