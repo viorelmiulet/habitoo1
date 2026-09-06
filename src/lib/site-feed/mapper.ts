@@ -54,6 +54,7 @@ export type FeedProperty = {
   clasificareteren: string | null;
   suprafatateren: number | null;
   nrcamere: number | null;
+  nrdormitoare: number | null;
   nrbucatarii: number | null;
   etaj: number | null;
   tipcompartimentare: string | null;
