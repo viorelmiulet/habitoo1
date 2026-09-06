@@ -134,3 +134,21 @@ describe("CSV iMove — valori", () => {
     expect(cells[8]).toBe("gheorgheni");
   });
 });
+
+describe("conformitate cu exemplul oficial iMove", () => {
+  const official = readFileSync(
+    new URL("./__fixtures__/imove-feed-example.csv", import.meta.url),
+    "utf-8",
+  );
+
+  it("headerul nostru este identic caracter-cu-caracter cu exemplul oficial", () => {
+    const officialHeader = official.split(/\r?\n/)[0];
+    expect(IMOVE_CSV_HEADER.join(",")).toBe(officialHeader);
+    expect(IMOVE_CSV_HEADER).toHaveLength(19);
+  });
+
+  it("exemplul oficial folosește `;` pentru imageUrls și lasă numericele lipsă goale", () => {
+    expect(official).toContain("cover.jpg;https://");
+    expect(official).toContain(",140,,,2023,");
+  });
+});
