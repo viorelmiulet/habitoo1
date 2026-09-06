@@ -542,7 +542,12 @@ function PropertyDetailPage() {
                 </Button>
               </div>
             </form>
-          ) : (
+          ) : null}
+
+          {editing ? <PropertyPortalsCard propertyId={id} /> : null}
+
+          {!editing ? (
+
             <div className="grid gap-6 lg:grid-cols-3">
               <div className="space-y-6 lg:col-span-2">
                 <div className="panel p-5">
@@ -670,7 +675,8 @@ function PropertyDetailPage() {
                 </div>
               </div>
             </div>
-          )}
+          ) : null}
+
         </TabsContent>
 
         <TabsContent value="media">
@@ -743,7 +749,7 @@ function PropertyDetailPage() {
         </TabsContent>
 
         <TabsContent value="publishing" className="space-y-4">
-          {user?.isAdmin ? <PropertyPortalsCard propertyId={id} /> : null}
+          <PropertyPortalsCard propertyId={id} />
           <div className="panel space-y-4 p-5">
             <div className="flex items-center justify-between">
               <div>
