@@ -174,7 +174,40 @@ export async function authenticateFeedRequest(
     };
   }
 
+  // Fallback: cheia API emisă de portal (ex. iMove) și salvată de utilizator în
+  // configurarea integrării. Agenția rezultă exclusiv din conexiunea găsită.
+  if (options.portalCredential) {
+    const { data: connections } = await supabaseAdmin
+      .from("portal_connections")
+      .select("id, organization_id, portal_credentials_encrypted")
+      .eq("portal", options.portalCredential)
+      .not("portal_credentials_encrypted", "is", null);
+
+    const { decryptPortalCredential } = await import("@/lib/portals/crypto.server");
+    for (const conn of connections ?? []) {
+      let saved: string | null = null;
+      try {
+        saved = decryptPortalCredential(conn.portal_credentials_encrypted);
+      } catch {
+        saved = null;
+      }
+      if (!saved) continue;
+      const savedHash = hashFeedToken(saved);
+      if (savedHash === hash) {
+        return {
+          ok: true,
+          organizationId: conn.organization_id,
+          tokenId: conn.id,
+          tokenPrefix: `${options.portalCredential}_cred`,
+          source: "portal_key",
+          scopes: ["feed:read"],
+        };
+      }
+    }
+  }
+
   // Mesaj generic, fără detalii care ar permite enumerarea tokenurilor.
+
   return { ok: false, status: 401, message: "Invalid or revoked API token.", tokenPrefix: prefix };
 }
 
