@@ -101,16 +101,14 @@ export const PropertyPortalsCard = forwardRef<
 
   const dirty = cells.filter((c) => (checked[c.portalId] ?? c.selected) !== c.selected);
   /**
-   * Portaluri bifate a căror ofertă NU este publicată în realitate (retrasă sau
-   * eroare): salvarea trebuie să rămână posibilă, ca republicarea să pornească.
+   * Portaluri bifate care trebuie sincronizate la apăsarea butonului „Publică”:
+   * fie sunt publicate (→ actualizare cu datele curente), fie sunt retrase/în
+   * eroare (→ republicare).
    */
-  const toRepublish = cells.filter(
-    (c) =>
-      c.availability === "available" &&
-      (checked[c.portalId] ?? c.selected) &&
-      (c.state === "withdrawn" || c.state === "error"),
+  const toSync = cells.filter(
+    (c) => c.availability === "available" && (checked[c.portalId] ?? c.selected),
   );
-  const actionable = [...new Set([...dirty, ...toRepublish])];
+  const actionable = [...new Set([...dirty, ...toSync])];
   /** Portaluri debifate care sunt efectiv publicate → necesită confirmare. */
   const toWithdraw = dirty.filter(
     (c) => !(checked[c.portalId] ?? false) && (c.state === "published" || c.state === "in_feed"),
@@ -126,9 +124,12 @@ export const PropertyPortalsCard = forwardRef<
           selections: cells
             .filter((c) => c.availability === "available")
             .map((c) => ({ portalId: c.portalId, enabled: checked[c.portalId] ?? c.selected })),
-          syncExisting: false,
+          // Butonul unic „Publică” sincronizează starea curentă, deci ofertele
+          // deja publicate primesc o actualizare reală cu datele editate.
+          syncExisting: true,
         },
       }),
+
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey });
       queryClient.invalidateQueries({ queryKey: ["property-portals-matrix"] });
