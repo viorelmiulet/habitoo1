@@ -17,7 +17,15 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
+import { Button } from "@/components/ui/button";
 import { formatDate } from "@/lib/format";
+import {
+  PLAN_AGENT_LIMITS,
+  PLAN_KEYS,
+  PLAN_LABELS,
+  normalizePlan,
+  type PlanKey,
+} from "@/lib/plans";
 
 export const Route = createFileRoute("/_authenticated/superadmin/agencies")({
   component: AgenciesPage,
@@ -29,6 +37,39 @@ const statusLabels: Record<string, string> = {
   suspended: "Suspendată",
   cancelled: "Anulată",
 };
+
+/** Selector de plan cu salvare explicită. */
+function PlanPicker({
+  plan,
+  onSave,
+  saving,
+}: {
+  plan: string;
+  onSave: (plan: PlanKey) => void;
+  saving: boolean;
+}) {
+  const [value, setValue] = useState<PlanKey>(normalizePlan(plan));
+  const dirty = value !== normalizePlan(plan);
+  return (
+    <div className="flex items-center gap-2">
+      <Select value={value} onValueChange={(v) => setValue(v as PlanKey)}>
+        <SelectTrigger className="w-36">
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          {PLAN_KEYS.map((k) => (
+            <SelectItem key={k} value={k}>
+              {PLAN_LABELS[k]} · {PLAN_AGENT_LIMITS[k]} agenți
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+      <Button size="sm" variant="outline" disabled={!dirty || saving} onClick={() => onSave(value)}>
+        Salvează
+      </Button>
+    </div>
+  );
+}
 
 function AgenciesPage() {
   const queryClient = useQueryClient();
