@@ -171,6 +171,11 @@ export type MapPropertyOptions = {
   publicSiteUrl?: string;
   images?: PropertyImageRow[];
   agent?: Pick<ProfileRow, "id" | "full_name"> | null;
+  /**
+   * Portalurile pentru care oferta are publicare activă în modelul generic
+   * `portal_publications`. Se combină cu tagurile legacy `portal:<nume>`.
+   */
+  portalKeys?: string[];
 };
 
 export function mapPropertyToFeed(p: PropertyRow, options: MapPropertyOptions): FeedProperty {
