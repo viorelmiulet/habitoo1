@@ -1466,12 +1466,14 @@ export const applyPropertyPortalSelection = createServerFn({ method: "POST" })
       }
 
       const pushSupported = definition.capabilities.includes("publish_listing");
+      const connStatus = (connections ?? []).find((c) => c.portal === definition.id)?.status;
+      const connectionReady = connStatus === "connected" || connStatus === "ready";
+      // Portalurile de tip feed sunt „configurate” fie prin cheia Habitoo activă,
+      // fie prin cheia API a portalului salvată pe conexiune (ex. iMove).
       const configured = pushSupported
-        ? (() => {
-            const status = (connections ?? []).find((c) => c.portal === definition.id)?.status;
-            return status === "connected" || status === "ready";
-          })()
-        : keyedPortals.has(definition.id);
+        ? connectionReady
+        : keyedPortals.has(definition.id) || connectionReady;
+
       const published = (listings ?? []).some(
         (l) => l.portal === definition.id && (l.status === "published" || l.status === "updated"),
       );
