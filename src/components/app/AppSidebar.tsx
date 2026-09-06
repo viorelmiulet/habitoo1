@@ -25,6 +25,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { initials } from "@/lib/format";
+import { UserAvatar } from "@/components/app/UserAvatar";
 import { BrandLogo } from "@/components/brand/BrandLogo";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import type { CurrentUser } from "@/hooks/use-session";
