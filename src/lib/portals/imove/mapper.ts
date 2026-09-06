@@ -165,9 +165,12 @@ export function mapPropertyToImove(p: PropertyRow, options: ImoveMapOptions): Im
       `Oferta are ${eligibleImages.length} imagini publicabile; iMove acceptă maximum ${IMOVE_MAX_IMAGES}.`,
     );
   }
+  // Extensia `.jpg` este necesară pentru importatoarele care validează
+  // formatul imaginii din URL (iMove ignoră silențios URL-uri fără extensie).
   const imageUrls = eligibleImages
     .slice(0, IMOVE_MAX_IMAGES)
-    .map((img) => feedImageUrl(options.baseUrl, img.id));
+    .map((img) => `${feedImageUrl(options.baseUrl, img.id)}.jpg`);
+
   if (imageUrls.length === 0) warnings.push("Oferta nu are nicio imagine publicabilă.");
 
   const citySlug = imoveSlug(p.city);
