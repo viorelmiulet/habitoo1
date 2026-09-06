@@ -2,7 +2,7 @@
 // Tokenul în clar este returnat o singură dată, la generare; ulterior există doar hash-ul.
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { requireActiveOrgAuth } from "@/lib/org-access";
 
 export type FeedTokenInfo = {
   id: string;
@@ -67,7 +67,7 @@ async function loadServer() {
 }
 
 export const getSiteFeedStatus = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireActiveOrgAuth])
   .handler(async ({ context }): Promise<FeedStatus> => {
     const organizationId = await requireOrgAdmin(context as unknown as AuthContext);
     const { admin, feed } = await loadServer();
@@ -118,7 +118,7 @@ export const generateSiteFeedToken = createServerFn({ method: "POST" })
   .inputValidator((data: unknown) =>
     z.object({ name: z.string().trim().min(2).max(60).optional() }).parse(data ?? {}),
   )
-  .middleware([requireSupabaseAuth])
+  .middleware([requireActiveOrgAuth])
   .handler(async ({ data, context }): Promise<{ token: string; prefix: string }> => {
     const organizationId = await requireOrgAdmin(context as unknown as AuthContext);
     const { admin, feed } = await loadServer();
@@ -152,7 +152,7 @@ export const generateSiteFeedToken = createServerFn({ method: "POST" })
   });
 
 export const revokeSiteFeedToken = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireActiveOrgAuth])
   .handler(async ({ context }): Promise<{ revoked: number }> => {
     const organizationId = await requireOrgAdmin(context as unknown as AuthContext);
     const { admin } = await loadServer();
@@ -176,7 +176,7 @@ export const revokeSiteFeedToken = createServerFn({ method: "POST" })
 
 /** Test de conexiune: numără proprietățile și agenții eligibili pentru feed. */
 export const testSiteFeed = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireActiveOrgAuth])
   .handler(async ({ context }): Promise<{ properties: number; agents: number; hasToken: boolean }> => {
     const organizationId = await requireOrgAdmin(context as unknown as AuthContext);
     const { admin } = await loadServer();
