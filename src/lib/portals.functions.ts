@@ -1178,12 +1178,15 @@ export const previewPortalFeed = createServerFn({ method: "POST" })
     const build = await buildImoveFeed({ organizationId, requestUrl: feedUrl, perPage: 500 });
 
     const admin = await loadAdmin();
-    const { count } = await admin
-      .from("portal_api_keys")
-      .select("id", { count: "exact", head: true })
+    // Pentru iMove cheia este emisă de portal și salvată criptat de utilizator.
+    const { data: connRow } = await admin
+      .from("portal_connections")
+      .select("portal_credentials_encrypted")
       .eq("organization_id", organizationId)
       .eq("portal", definition.id)
-      .eq("status", "active");
+      .maybeSingle();
+    const hasCredential = Boolean(connRow?.portal_credentials_encrypted);
+
 
     await logOperation({
       organizationId,
