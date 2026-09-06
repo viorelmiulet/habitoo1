@@ -14,6 +14,7 @@ import { Input } from "@/components/ui/input";
 import { InlineLoading } from "@/components/app/LoadingState";
 import { QueryError } from "@/components/app/QueryError";
 import { EmptyState } from "@/components/app/EmptyState";
+import { PortalLogo } from "@/components/app/PortalLogo";
 import {
   listPortalActivationRequests,
   resolvePortalActivationRequest,
