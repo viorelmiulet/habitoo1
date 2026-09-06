@@ -166,15 +166,26 @@ export const PORTALS: PortalDefinition[] = [
     status: "available",
     // Un singur sens: Habitoo expune feedul, iMove îl consumă.
     directions: ["habitoo_to_portal"],
-    // Cheia de acces la feed este emisă de Habitoo și poate fi trimisă și în URL.
-    authentication: ["habitoo_api_key", "query_parameter"],
+    // Cheia API este emisă de iMove pentru contul agenției; Habitoo doar o
+    // stochează și o acceptă la citirea feedului (inclusiv în URL).
+    authentication: ["portal_api_key", "query_parameter"],
     capabilities: ["test_connection", "feed_pull"],
-    // Nu are credențiale de portal: nu cerem nimic ce iMove nu emite.
-    configuration_schema: { fields: [] },
+    configuration_schema: {
+      fields: [
+        {
+          key: "api_key",
+          label: "Cheie API iMove",
+          help: "Cheia primită din contul tău iMove.ro. Se salvează criptat și este folosită de iMove pentru a citi feedul.",
+          secret: true,
+          target: "credentials",
+        },
+      ],
+    },
     website: "https://imove.ro",
     docs: "https://imove.ro/docs/feeds",
     notes:
-      "iMove nu documentează un API de creare/editare/ștergere anunț pentru CRM-uri. Publicarea se face exclusiv prin feedul Habitoo: selectezi oferta, iMove o importă la următoarea sincronizare; dacă o deselectezi, dispare din feed și iMove o arhivează.",
+      "iMove nu documentează un API de creare/editare/ștergere anunț pentru CRM-uri. Publicarea se face exclusiv prin feedul Habitoo: selectezi oferta, iMove o importă la următoarea sincronizare; dacă o deselectezi, dispare din feed și iMove o arhivează. Cheia API o emite iMove, nu Habitoo.",
+
   },
   // Portalurile de mai jos NU au încă integrare implementată. Nu declarăm
   // metode de autentificare sau capabilități pe care nu le-am verificat.
