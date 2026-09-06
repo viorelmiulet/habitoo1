@@ -172,11 +172,32 @@ function NewPropertyPage() {
         }
       />
 
+      <CollaborationNudgeDialog
+        open={nudgeOpen}
+        onOpenChange={setNudgeOpen}
+        pending={create.isPending}
+        onResolve={(result) => {
+          setNudgeOpen(false);
+          if (result.enable) {
+            set("collaboration", true);
+            if (result.percent !== null) setCollabPercent(String(result.percent));
+            create.mutate({ collaboration: true, percent: result.percent, prompted: true });
+          } else {
+            create.mutate({ collaboration: false, percent: null, prompted: true });
+          }
+        }}
+      />
+
       <form
         className="space-y-6"
         onSubmit={(e) => {
           e.preventDefault();
-          create.mutate();
+          const percent = collabPercent.trim() === "" ? null : Number(collabPercent);
+          if (orgCollabEnabled && !form.collaboration) {
+            setNudgeOpen(true);
+            return;
+          }
+          create.mutate({ collaboration: form.collaboration, percent, prompted: false });
         }}
       >
         <section className="panel space-y-4 p-5">
