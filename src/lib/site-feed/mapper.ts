@@ -85,7 +85,9 @@ export type FeedProperty = {
   pretvanzare: number | null;
   pretinchiriere: number | null;
   pretfaratva: number | null;
+  tvainclus: boolean | null;
   comisioncumparator: string | null;
+  referintaexterna: string | null;
   images: FeedImage[];
   publicare: boolean;
   top: boolean;
