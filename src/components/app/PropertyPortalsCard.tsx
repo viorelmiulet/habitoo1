@@ -15,6 +15,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { Checkbox } from "@/components/ui/checkbox";
 import { StatusBadge } from "@/components/app/StatusBadge";
+import { PortalLogo } from "@/components/app/PortalLogo";
 import { InlineLoading } from "@/components/app/LoadingState";
 import { QueryError } from "@/components/app/QueryError";
 import {
@@ -189,6 +190,7 @@ export const PropertyPortalsCard = forwardRef<
                   setChecked((prev) => ({ ...prev, [cell.portalId]: next === true }));
                 }}
               />
+              <PortalLogo portalId={cell.portalId} name={cell.portalName} size={28} />
               <div className="min-w-0 flex-1">
                 <label htmlFor={`portal-${cell.portalId}`} className="font-medium">
                   {cell.portalName}

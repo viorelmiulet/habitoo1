@@ -8,6 +8,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { StatusBadge } from "@/components/app/StatusBadge";
+import { PortalLogo } from "@/components/app/PortalLogo";
 import { getPropertiesPortalMatrix, type PropertyPortalCell } from "@/lib/portals.functions";
 
 const TONE: Record<PropertyPortalCell["state"], "success" | "warning" | "danger" | "neutral"> = {
@@ -45,6 +46,7 @@ export function PropertyPortalsCell({ cells }: { cells: PropertyPortalCell[] }) 
     <span className="flex flex-wrap gap-1">
       {active.map((c) => (
         <StatusBadge key={c.portalId} tone={TONE[c.state]}>
+          <PortalLogo portalId={c.portalId} name={c.portalName} size={16} className="mr-1 rounded-sm" />
           {c.portalName}
         </StatusBadge>
       ))}
