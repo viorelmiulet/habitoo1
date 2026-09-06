@@ -40,7 +40,6 @@ import {
   miscFeatureOptions,
   orientationOptions,
   parkingOptions,
-  propertyKindOptions,
   seismicRiskOptions,
   shutterOptions,
   streetArrangementOptions,
@@ -49,6 +48,7 @@ import {
   wallFinishOptions,
   windowOptions,
 } from "@/lib/property-taxonomy";
+import { propertyTypeLabels } from "@/lib/labels";
 
 export type PropertyDetailsValue = Record<string, unknown>;
 
