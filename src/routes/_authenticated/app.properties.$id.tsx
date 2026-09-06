@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import {
   ArrowLeft,
   Building2,
@@ -22,7 +22,10 @@ import { EmptyState } from "@/components/app/EmptyState";
 import { ConfirmDialog } from "@/components/app/ConfirmDialog";
 import { ActivityDialog } from "@/components/app/ActivityDialog";
 import { PropertyMediaManager } from "@/components/app/PropertyMediaManager";
-import { PropertyPortalsCard } from "@/components/app/PropertyPortalsCard";
+import {
+  PropertyPortalsCard,
+  type PropertyPortalsHandle,
+} from "@/components/app/PropertyPortalsCard";
 import { PropertyDetailsFields, type PropertyDetailsValue } from "@/components/app/PropertyDetailsFields";
 import { PROPERTY_DETAIL_FIELDS } from "@/lib/property-detail-fields";
 import {
@@ -93,6 +96,8 @@ function PropertyDetailPage() {
   const [addClientOpen, setAddClientOpen] = useState(false);
   const [clientName, setClientName] = useState("");
   const [clientPhone, setClientPhone] = useState("");
+  // Butonul unic „Publică” din antet declanșează și aplicarea bifelor de portal.
+  const portalsRef = useRef<PropertyPortalsHandle | null>(null);
 
   const { data, isLoading } = useQuery({
     queryKey: ["property", id],
@@ -177,6 +182,23 @@ function PropertyDetailPage() {
     onError: (e: Error) => toastError(e),
   });
 
+  /** Datele formularului de editare, folosite atât la „Salvează”, cât și la „Publică”. */
+  const buildEditPatch = (): Record<string, unknown> => ({
+    title: draft.title,
+    ...transactionPayload(tx),
+    surface: draft.surface ? Number(draft.surface) : null,
+    city: location.localityName || draft.city || null,
+    county: location.countyName || null,
+    county_siruta_code: location.countySirutaCode,
+    uat_siruta_code: location.uatSirutaCode,
+    locality_siruta_code: location.localitySirutaCode,
+    district: draft.district || null,
+    address: draft.address || null,
+    description: draft.description || null,
+    internal_notes: draft.internal_notes || null,
+    ...details,
+  });
+
   const changeStatus = useMutation({
     mutationFn: async (status: string) => {
       const { error } = await supabase.from("properties").update({ status: status as never }).eq("id", id);
@@ -218,8 +240,23 @@ function PropertyDetailPage() {
     onError: (e: Error) => toastError(e),
   });
 
+  /**
+   * Acțiunea unică de publicare: (1) salvează modificările nesalvate din formular,
+   * (2) publică pe site, (3) aplică bifele curente de portaluri.
+   */
   const publish = useMutation({
     mutationFn: async () => {
+      if (editing) {
+        if (!hasTransactionSelection(tx)) {
+          throw new Error("Alege tipul tranzacției: de vânzare, de închiriere sau ambele.");
+        }
+        const { error: saveError } = await supabase
+          .from("properties")
+          .update({ ...buildEditPatch(), updated_by: user?.userId ?? null } as never)
+          .eq("id", id);
+        if (saveError) throw saveError;
+      }
+
       const { error } = await supabase
         .from("properties")
         .update({ publish_status: "published", published_at: new Date().toISOString() } as never)
@@ -232,10 +269,32 @@ function PropertyDetailPage() {
         entity: "property",
         entityId: id,
       });
+
+      // Portalurile sunt opționale: fără bife schimbate nu se întâmplă nimic aici.
+      let portals: { results: { ok: boolean; message: string | null }[] } | null = null;
+      let portalsError: string | null = null;
+      try {
+        portals = (await portalsRef.current?.applyPending()) ?? null;
+      } catch (e) {
+        portalsError = e instanceof Error ? e.message : "Aplicarea portalurilor a eșuat.";
+      }
+      return { saved: editing, portals, portalsError };
     },
-    onSuccess: () => {
+    onSuccess: ({ saved, portals, portalsError }) => {
+      setEditing(false);
       queryClient.invalidateQueries({ queryKey: ["property", id] });
-      toast.success("Proprietatea a fost publicată.");
+      queryClient.invalidateQueries({ queryKey: ["properties"] });
+
+      const base = saved
+        ? "Modificările au fost salvate și proprietatea a fost publicată."
+        : "Proprietatea a fost publicată.";
+      const done = (portals?.results ?? []).filter((r) => r.ok && r.message);
+      const failed = (portals?.results ?? []).filter((r) => !r.ok);
+
+      if (done.length > 0) toast.success(`${base} ${done.map((r) => r.message).join(" · ")}`);
+      else toast.success(base);
+      if (failed.length > 0) toast.error(`Portaluri cu erori: ${failed.map((r) => r.message).join(" · ")}`);
+      if (portalsError) toast.error(portalsError);
     },
     onError: (e: Error) => toastError(e),
   });
@@ -397,8 +456,8 @@ function PropertyDetailPage() {
             <Button size="sm" variant="outline" onClick={() => duplicate.mutate()} disabled={duplicate.isPending}>
               Duplică
             </Button>
-            <Button size="sm" onClick={() => publish.mutate()} disabled={publish.isPending}>
-              Publică
+            <Button size="sm" onClick={() => publish.mutate()} disabled={publish.isPending || save.isPending}>
+              {publish.isPending ? "Se publică…" : "Publică"}
             </Button>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -488,21 +547,7 @@ function PropertyDetailPage() {
                   toast.error("Alege tipul tranzacției: de vânzare, de închiriere sau ambele.");
                   return;
                 }
-                save.mutate({
-                  title: draft.title,
-                  ...transactionPayload(tx),
-                  surface: draft.surface ? Number(draft.surface) : null,
-                  city: location.localityName || draft.city || null,
-                  county: location.countyName || null,
-                  county_siruta_code: location.countySirutaCode,
-                  uat_siruta_code: location.uatSirutaCode,
-                  locality_siruta_code: location.localitySirutaCode,
-                  district: draft.district || null,
-                  address: draft.address || null,
-                  description: draft.description || null,
-                  internal_notes: draft.internal_notes || null,
-                  ...details,
-                });
+                save.mutate(buildEditPatch());
               }}
             >
               <div className="grid gap-4 md:grid-cols-2">
@@ -756,7 +801,7 @@ function PropertyDetailPage() {
           <DocumentsPanel entityType="property" entityId={id} orgId={orgId} />
         </TabsContent>
 
-        <TabsContent value="publishing" className="space-y-4">
+        <TabsContent forceMount value="publishing" className="space-y-4 data-[state=inactive]:hidden">
           <div className="panel space-y-4 p-5">
             <div className="flex items-center justify-between">
               <div>
@@ -767,9 +812,6 @@ function PropertyDetailPage() {
                     : "Proprietatea nu este publicată încă."}
                 </p>
               </div>
-              <Button size="sm" onClick={() => publish.mutate()} disabled={publish.isPending}>
-                Publică acum
-              </Button>
             </div>
             {property.tags.length > 0 ? (
               <div className="flex flex-wrap gap-2">
@@ -780,7 +822,7 @@ function PropertyDetailPage() {
             ) : null}
           </div>
 
-          <PropertyPortalsCard propertyId={id} />
+          <PropertyPortalsCard ref={portalsRef} propertyId={id} />
         </TabsContent>
 
         <TabsContent value="history">
