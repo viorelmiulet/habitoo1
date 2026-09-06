@@ -17,6 +17,7 @@ import { toast } from "sonner";
 import { toastError } from "@/lib/errors";
 import { PageHeader } from "@/components/app/PageHeader";
 import { CardGridSkeleton, ListSkeleton } from "@/components/app/LoadingState";
+import { PropertyPortalsCell, usePropertyPortals } from "@/components/app/PropertyPortalsCell";
 import { PropertyThumb, usePropertyCovers } from "@/components/app/PropertyThumb";
 import { StatusBadge } from "@/components/app/StatusBadge";
 import { EmptyState } from "@/components/app/EmptyState";
@@ -280,6 +281,8 @@ function PropertiesPage() {
   // Coverul fiecărei proprietăți din pagina curentă (is_primary → prima poziție).
   const coverOf = usePropertyCovers(rows.map((r) => r.id));
   // Selecția de portaluri per proprietate (portal_publications) + starea reală (portal_listings).
+  // Apare doar dacă Superadmin a activat cel puțin un portal pentru agenție.
+  const portals = usePropertyPortals(rows.map((r) => r.id));
   const total = result?.count ?? 0;
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
@@ -766,6 +769,7 @@ function PropertiesPage() {
               {columns.includes("status") ? <span className="w-28">Status</span> : null}
               {columns.includes("price") ? <span className="w-28 text-right">Preț</span> : null}
               {columns.includes("surface") ? <span className="w-24 text-right">Suprafață</span> : null}
+              {portals.hasPortals ? <span className="w-40">Portaluri</span> : null}
               {columns.includes("agent") ? <span className="w-32">Agent</span> : null}
               {columns.includes("updated") ? <span className="w-24 text-right">Actualizat</span> : null}
             </div>
@@ -834,6 +838,11 @@ function PropertiesPage() {
                         {p.surface ? `${formatNumber(p.surface)} m²` : "—"}
                       </span>
                     ) : null}
+                    {portals.hasPortals ? (
+                      <span className="w-40">
+                        <PropertyPortalsCell cells={portals.cellsFor(p.id)} />
+                      </span>
+                    ) : null}
                     {columns.includes("agent") ? (
                       <span className="w-32 truncate text-xs text-muted-foreground">{agentName(p.assigned_to)}</span>
                     ) : null}
@@ -884,6 +893,7 @@ function PropertiesPage() {
                   {propertyTypeLabels[p.property_type] ?? p.property_type} · {transactionLabels[p.transaction_kind]} ·{" "}
                   {p.surface ? `${formatNumber(p.surface)} m²` : "—"}
                 </p>
+                {portals.hasPortals ? <PropertyPortalsCell cells={portals.cellsFor(p.id)} /> : null}
               </div>
             ))}
           </div>

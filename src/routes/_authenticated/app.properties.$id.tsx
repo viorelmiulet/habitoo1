@@ -22,6 +22,7 @@ import { EmptyState } from "@/components/app/EmptyState";
 import { ConfirmDialog } from "@/components/app/ConfirmDialog";
 import { ActivityDialog } from "@/components/app/ActivityDialog";
 import { PropertyMediaManager } from "@/components/app/PropertyMediaManager";
+import { PropertyPortalsCard } from "@/components/app/PropertyPortalsCard";
 import { PropertyDetailsFields, type PropertyDetailsValue } from "@/components/app/PropertyDetailsFields";
 import { PROPERTY_DETAIL_FIELDS } from "@/lib/property-detail-fields";
 import {
@@ -773,6 +774,8 @@ function PropertyDetailPage() {
               </div>
             ) : null}
           </div>
+
+          <PropertyPortalsCard propertyId={id} />
         </TabsContent>
 
         <TabsContent value="history">
