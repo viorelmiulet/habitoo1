@@ -1,3 +1,4 @@
+import type { OrgBlockReason } from "@/lib/org-access";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -14,7 +15,7 @@ export type CurrentUser = {
   role: AppRole;
   isSuperadmin: boolean;
   isAdmin: boolean;
-  orgBlocked: "suspended" | "archived" | null;
+  orgBlocked: OrgBlockReason | null;
 };
 
 export const currentUserQueryKey = ["current-user"] as const;
@@ -57,8 +58,8 @@ export async function fetchCurrentUser(): Promise<CurrentUser | null> {
     isSuperadmin: roles.includes("superadmin"),
     isAdmin: roles.includes("superadmin") || roles.includes("agency_admin"),
     orgBlocked:
-      blockedRaw === "suspended" || blockedRaw === "archived"
-        ? (blockedRaw as "suspended" | "archived")
+      blockedRaw === "suspended" || blockedRaw === "archived" || blockedRaw === "cancelled"
+        ? (blockedRaw as OrgBlockReason)
         : null,
   };
 }
