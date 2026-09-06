@@ -24,6 +24,8 @@ import { ConfirmDialog } from "@/components/app/ConfirmDialog";
 import { ActivityDialog } from "@/components/app/ActivityDialog";
 import { PropertyMediaManager } from "@/components/app/PropertyMediaManager";
 import { PropertyPortalsCard } from "@/components/app/PropertyPortalsCard";
+import { PropertyDetailsFields, type PropertyDetailsValue } from "@/components/app/PropertyDetailsFields";
+import { PROPERTY_DETAIL_FIELDS } from "@/lib/property-detail-fields";
 import { DocumentsPanel } from "@/components/app/DocumentsPanel";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -118,6 +120,8 @@ function PropertyDetailPage() {
   const [draft, setDraft] = useState<Record<string, string>>({});
   // Localizarea oficială SIRUTA a anunțului (județ + localitate).
   const [location, setLocation] = useState<LocationValue>(emptyLocation);
+  // Secțiunile de detalii (Detalii / Suprafețe / Clădire / Utilități / Finisaje / Dotări).
+  const [details, setDetails] = useState<PropertyDetailsValue>({});
   const startEdit = () => {
     if (!property) return;
     setDraft({
@@ -131,6 +135,11 @@ function PropertyDetailPage() {
       description: property.description ?? "",
       internal_notes: property.internal_notes ?? "",
     });
+    setDetails(
+      Object.fromEntries(
+        PROPERTY_DETAIL_FIELDS.map((key) => [key, (property as Record<string, unknown>)[key] ?? null]),
+      ),
+    );
     setLocation({
       countySirutaCode: property.county_siruta_code ?? null,
       countyName: property.county ?? "",
@@ -496,6 +505,7 @@ function PropertyDetailPage() {
                   address: draft.address || null,
                   description: draft.description || null,
                   internal_notes: draft.internal_notes || null,
+                  ...details,
                 });
               }}
             >
@@ -524,6 +534,11 @@ function PropertyDetailPage() {
                   onChange={(e) => setDraft((d) => ({ ...d, description: e.target.value }))}
                 />
               </div>
+              <PropertyDetailsFields
+                idPrefix="edit"
+                value={details}
+                onChange={(patch) => setDetails((d) => ({ ...d, ...patch }))}
+              />
               <div className="space-y-2">
                 <Label htmlFor="internal_notes">Note interne</Label>
                 <Textarea
