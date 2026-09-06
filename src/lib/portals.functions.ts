@@ -80,7 +80,7 @@ export type PortalLogItem = {
 
 type AuthContext = {
   supabase: {
-    rpc: (fn: "is_org_admin") => PromiseLike<{ data: boolean | null; error: { message: string } | null }>;
+    rpc: (fn: "is_superadmin") => PromiseLike<{ data: boolean | null; error: { message: string } | null }>;
     from: (table: "profiles") => {
       select: (cols: string) => {
         eq: (
@@ -93,18 +93,28 @@ type AuthContext = {
   userId: string;
 };
 
-async function requireOrgAdmin(context: AuthContext): Promise<string> {
-  const { data: isAdmin, error } = await context.supabase.rpc("is_org_admin");
-  if (error || isAdmin !== true) {
-    throw new Error("Acces refuzat: doar administratorul agenției poate gestiona portalurile.");
+/**
+ * Integrările de portaluri sunt EXCLUSIV ale platformei (Superadmin).
+ * Administratorii de agenție nu au acces, nici măcar read-only.
+ */
+async function requireSuperadmin(context: AuthContext): Promise<void> {
+  const { data, error } = await context.supabase.rpc("is_superadmin");
+  if (error || data !== true) {
+    throw new Error("Acces refuzat: integrările de portaluri se gestionează doar de Superadmin.");
   }
-  const { data: profile } = await context.supabase
-    .from("profiles")
-    .select("organization_id")
-    .eq("id", context.userId)
+}
+
+/** Verifică rolul de Superadmin și validează agenția-țintă primită explicit. */
+async function requireSuperadminOrg(context: AuthContext, organizationId: string): Promise<string> {
+  await requireSuperadmin(context);
+  const admin = await loadAdmin();
+  const { data: org } = await admin
+    .from("organizations")
+    .select("id")
+    .eq("id", organizationId)
     .maybeSingle();
-  if (!profile?.organization_id) throw new Error("Agenția nu este configurată.");
-  return profile.organization_id;
+  if (!org) throw new Error("Agenția nu a fost găsită.");
+  return org.id;
 }
 
 async function loadAdmin() {
@@ -171,10 +181,11 @@ async function buildContext(organizationId: string, definition: PortalDefinition
   };
 }
 
-export const getPortalHub = createServerFn({ method: "GET" })
+export const getPortalHub = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .handler(async ({ context }): Promise<PortalHubItem[]> => {
-    const organizationId = await requireOrgAdmin(context as unknown as AuthContext);
+  .inputValidator((input: unknown) => z.object({ organizationId: z.string().uuid() }).parse(input))
+  .handler(async ({ data, context }): Promise<PortalHubItem[]> => {
+    const organizationId = await requireSuperadminOrg(context as unknown as AuthContext, data.organizationId);
     const admin = await loadAdmin();
     const genericFeedUrl = await feedUrlForOrg();
     const imoveFeedUrl = await feedUrlForOrg("imove");
@@ -290,7 +301,7 @@ export const savePortalConnection = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => saveSchema.parse(input))
   .handler(async ({ data, context }) => {
-    const organizationId = await requireOrgAdmin(context as unknown as AuthContext);
+    const organizationId = await requireSuperadminOrg(context as unknown as AuthContext, data.organizationId);
     const definition = getPortalDefinition(data.portalId);
     if (!definition) throw new Error("Portal necunoscut.");
     if (definition.status !== "available") throw new Error("Integrarea cu acest portal nu este încă disponibilă.");
@@ -348,9 +359,9 @@ export const savePortalConnection = createServerFn({ method: "POST" })
 
 export const disconnectPortal = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) => z.object({ portalId: z.string().min(1).max(40) }).parse(input))
+  .inputValidator((input: unknown) => z.object({ organizationId: z.string().uuid(), portalId: z.string().min(1).max(40) }).parse(input))
   .handler(async ({ data, context }) => {
-    const organizationId = await requireOrgAdmin(context as unknown as AuthContext);
+    const organizationId = await requireSuperadminOrg(context as unknown as AuthContext, data.organizationId);
     const admin = await loadAdmin();
 
     await admin
@@ -384,9 +395,9 @@ export const disconnectPortal = createServerFn({ method: "POST" })
 
 export const testPortalConnection = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) => z.object({ portalId: z.string().min(1).max(40) }).parse(input))
+  .inputValidator((input: unknown) => z.object({ organizationId: z.string().uuid(), portalId: z.string().min(1).max(40) }).parse(input))
   .handler(async ({ data, context }) => {
-    const organizationId = await requireOrgAdmin(context as unknown as AuthContext);
+    const organizationId = await requireSuperadminOrg(context as unknown as AuthContext, data.organizationId);
     const definition = getPortalDefinition(data.portalId);
     if (!definition) throw new Error("Portal necunoscut.");
 
@@ -448,7 +459,7 @@ export const issuePortalApiKey = createServerFn({ method: "POST" })
       .parse(input),
   )
   .handler(async ({ data, context }) => {
-    const organizationId = await requireOrgAdmin(context as unknown as AuthContext);
+    const organizationId = await requireSuperadminOrg(context as unknown as AuthContext, data.organizationId);
     const definition = getPortalDefinition(data.portalId);
     if (!definition) throw new Error("Portal necunoscut.");
     // Habitoo emite chei DOAR pentru portalurile care declară acest model.
@@ -493,9 +504,9 @@ export const issuePortalApiKey = createServerFn({ method: "POST" })
 
 export const revokePortalApiKey = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) => z.object({ keyId: z.string().uuid() }).parse(input))
+  .inputValidator((input: unknown) => z.object({ organizationId: z.string().uuid(), keyId: z.string().uuid() }).parse(input))
   .handler(async ({ data, context }) => {
-    const organizationId = await requireOrgAdmin(context as unknown as AuthContext);
+    const organizationId = await requireSuperadminOrg(context as unknown as AuthContext, data.organizationId);
     const admin = await loadAdmin();
     const { data: row } = await admin
       .from("portal_api_keys")
@@ -671,7 +682,7 @@ export const runPortalListingAction = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => listingSchema.parse(input))
   .handler(async ({ data, context }) => {
-    const organizationId = await requireOrgAdmin(context as unknown as AuthContext);
+    const organizationId = await requireSuperadminOrg(context as unknown as AuthContext, data.organizationId);
     return await executeListingAction({
       organizationId,
       actorId: context.userId,
@@ -684,9 +695,9 @@ export const runPortalListingAction = createServerFn({ method: "POST" })
 
 export const getPropertyPortalStatus = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) => z.object({ propertyId: z.string().uuid() }).parse(input))
+  .inputValidator((input: unknown) => z.object({ organizationId: z.string().uuid(), propertyId: z.string().uuid() }).parse(input))
   .handler(async ({ data, context }) => {
-    const organizationId = await requireOrgAdmin(context as unknown as AuthContext);
+    const organizationId = await requireSuperadminOrg(context as unknown as AuthContext, data.organizationId);
     const admin = await loadAdmin();
     const [{ data: listings }, { data: connections }] = await Promise.all([
       admin
@@ -751,10 +762,11 @@ export const getPropertyPortalStatus = createServerFn({ method: "POST" })
     );
   });
 
-export const getPortalLogs = createServerFn({ method: "GET" })
+export const getPortalLogs = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .handler(async ({ context }): Promise<PortalLogItem[]> => {
-    const organizationId = await requireOrgAdmin(context as unknown as AuthContext);
+  .inputValidator((input: unknown) => z.object({ organizationId: z.string().uuid() }).parse(input))
+  .handler(async ({ data, context }): Promise<PortalLogItem[]> => {
+    const organizationId = await requireSuperadminOrg(context as unknown as AuthContext, data.organizationId);
     const admin = await loadAdmin();
     const { data } = await admin
       .from("portal_operation_logs")
@@ -815,22 +827,6 @@ export type PropertyPortalMatrix = {
   properties: Record<string, PropertyPortalCell[]>;
 };
 
-/** Agenția utilizatorului curent, fără cerință de rol (doar citire). */
-async function requireOrgMember(context: AuthContext): Promise<string> {
-  const { data: profile } = await context.supabase
-    .from("profiles")
-    .select("organization_id")
-    .eq("id", context.userId)
-    .maybeSingle();
-  if (!profile?.organization_id) throw new Error("Agenția nu este configurată.");
-  return profile.organization_id;
-}
-
-async function isOrgAdmin(context: AuthContext): Promise<boolean> {
-  const { data, error } = await context.supabase.rpc("is_org_admin");
-  return !error && data === true;
-}
-
 function deriveState(input: {
   availability: "available" | "coming_soon" | "disabled";
   configured: boolean;
@@ -860,12 +856,12 @@ function deriveState(input: {
 export const getPropertiesPortalMatrix = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) =>
-    z.object({ propertyIds: z.array(z.string().uuid()).max(100) }).parse(input),
+    z.object({ organizationId: z.string().uuid(), propertyIds: z.array(z.string().uuid()).max(100) }).parse(input),
   )
   .handler(async ({ data, context }): Promise<PropertyPortalMatrix> => {
     const ctxAuth = context as unknown as AuthContext;
-    const organizationId = await requireOrgMember(ctxAuth);
-    const canManage = await isOrgAdmin(ctxAuth);
+    const organizationId = await requireSuperadminOrg(ctxAuth, data.organizationId);
+    const canManage = true;
     if (data.propertyIds.length === 0) return { canManage, properties: {} };
 
     const admin = await loadAdmin();
@@ -962,6 +958,7 @@ export const setPropertyPortalSelection = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) =>
     z
       .object({
+        organizationId: z.string().uuid(),
         propertyId: z.string().uuid(),
         portalId: z.string().min(1).max(40),
         enabled: z.boolean(),
@@ -969,7 +966,7 @@ export const setPropertyPortalSelection = createServerFn({ method: "POST" })
       .parse(input),
   )
   .handler(async ({ data, context }) => {
-    const organizationId = await requireOrgAdmin(context as unknown as AuthContext);
+    const organizationId = await requireSuperadminOrg(context as unknown as AuthContext, data.organizationId);
     const definition = getPortalDefinition(data.portalId);
     if (!definition) throw new Error("Portal necunoscut.");
     if (definition.status !== "available") {
@@ -1048,13 +1045,14 @@ export const publishPropertyToSelectedPortals = createServerFn({ method: "POST" 
   .inputValidator((input: unknown) =>
     z
       .object({
+        organizationId: z.string().uuid(),
         propertyId: z.string().uuid(),
         mode: z.enum(["publish", "update"]).default("publish"),
       })
       .parse(input),
   )
   .handler(async ({ data, context }) => {
-    const organizationId = await requireOrgAdmin(context as unknown as AuthContext);
+    const organizationId = await requireSuperadminOrg(context as unknown as AuthContext, data.organizationId);
     const admin = await loadAdmin();
 
     const [{ data: publications }, { data: listings }] = await Promise.all([
@@ -1163,10 +1161,10 @@ export type PortalFeedPreview = {
 export const previewPortalFeed = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) =>
-    z.object({ portalId: z.string().min(1).max(40), limit: z.number().int().min(1).max(10).default(3) }).parse(input),
+    z.object({ organizationId: z.string().uuid(), portalId: z.string().min(1).max(40), limit: z.number().int().min(1).max(10).default(3) }).parse(input),
   )
   .handler(async ({ data, context }): Promise<PortalFeedPreview> => {
-    const organizationId = await requireOrgAdmin(context as unknown as AuthContext);
+    const organizationId = await requireSuperadminOrg(context as unknown as AuthContext, data.organizationId);
     const definition = getPortalDefinition(data.portalId);
     if (!definition) throw new Error("Portal necunoscut.");
     if (definition.id !== "imove") {
@@ -1247,7 +1245,7 @@ export const applyPropertyPortalSelection = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => applySelectionSchema.parse(input))
   .handler(async ({ data, context }): Promise<{ ok: boolean; results: PortalSelectionOutcome[] }> => {
-    const organizationId = await requireOrgAdmin(context as unknown as AuthContext);
+    const organizationId = await requireSuperadminOrg(context as unknown as AuthContext, data.organizationId);
     const actorId = context.userId;
     const admin = await loadAdmin();
 
