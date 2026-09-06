@@ -74,7 +74,7 @@ function configured(ctx: PortalContext): boolean {
 async function diagnose(ctx: PortalContext, ref: ListingRef): Promise<ListingDiagnostics> {
   const { inspectFeedMedia, inspectFeedProperty } = await import("../feed-inspect.server");
   const [property, media] = await Promise.all([
-    inspectFeedProperty(ctx.organizationId, ref.propertyId),
+    inspectFeedProperty(ctx.organizationId, ref.propertyId, "clickimob"),
     inspectFeedMedia(ctx.organizationId, ref.propertyId),
   ]);
 
@@ -226,7 +226,7 @@ async function status(ctx: PortalContext): Promise<PortalResult<ConnectionStatus
     const { inspectFeedAgents, inspectFeedProperties } = await import("../feed-inspect.server");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const [properties, agents, keys] = await Promise.all([
-      inspectFeedProperties(ctx.organizationId),
+      inspectFeedProperties(ctx.organizationId, 1, "clickimob"),
       inspectFeedAgents(ctx.organizationId),
       supabaseAdmin
         .from("portal_api_keys")
