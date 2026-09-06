@@ -100,11 +100,8 @@ semnat, temporar; nu se expun căi interne de storage sau credențiale.
   doar service role îl poate citi.
 - Câmpurile ImmoFlux fără echivalent real în Habitoo rămân `null`/goale — nu se
   derivează și nu se inventează valori: `pretfaratva` (modelul nu garantează
-  prețul fără TVA), `comisioncumparator` (comision intern, nepublic), `confort`,
-  `nrbucatarii`, `nrbalcoane`, `nrgaraje`, `stadiuconstructie`,
-  `structurarezistenta`, `caroiaj`, `finisaje`, `vecinatati`, `titlu.en`,
-  `descriere.en`, `custom1`, `custom2`, `stadiuconstructie_value`,
-  `tipconstructie_value`, `starefinisaje_value`, `bucatarie_values`,
+  prețul fără TVA), `comisioncumparator` (comision intern, nepublic), `caroiaj`,
+  `titlu.en`, `descriere.en`, `custom1`, `custom2`, `vecinatati`,
   `eficienta_energetica`, `consum_specific`, `indice_emisii`,
   `consum_energie_regenerabila`, `energy.*`, iar pentru terenuri
   `nrfronturistradale`, `frontstradal`, `latimedrumacces` (nu există coloane).
@@ -190,3 +187,33 @@ integratorul să vadă contractul complet: `stadiuconstructie_value`,
 `consum_energie_regenerabila`, `nrfronturistradale`, `frontstradal`,
 `latimedrumacces`, plus cele listate în „Limitări cunoscute”.
 
+
+
+## Câmpuri alimentate din secțiunile de detalii ale anunțului
+
+Formularul proprietății are secțiunile Detalii, Suprafețe, Clădire, Utilități,
+Finisaje și Dotări (taxonomie apropiată de ImmoFlux, cu denumiri text în
+română). Din ele se alimentează:
+
+| Câmp ImmoFlux | Sursa Habitoo |
+| --- | --- |
+| `confort` | `properties.comfort` |
+| `nrbucatarii` | `properties.kitchens` |
+| `nrbalcoane` | `properties.balconies` |
+| `nrgaraje` | `properties.garages` |
+| `stadiuconstructie`, `stadiuconstructie_value` | `properties.construction_stage` |
+| `structurarezistenta` | `properties.building_structure` |
+| `tipconstructie_value` | `properties.building_type` |
+| `starefinisaje_value` | `properties.finish_state` |
+| `bucatarie_values` | `properties.kitchen_features` |
+| `mobilat_value` / `mobilare_value` | `properties.furnishing` |
+| `incalzire_value` | `properties.heating` sau prima valoare din `heating_systems` |
+| `finisaje` | izolații + pereți + podele + ferestre + jaluzele + rulouri + ușă intrare + uși interior |
+| `dotari`, `dotari_values` | `features` + spații adiționale + bucătărie + contorizare + electrocasnice + imobil + amenajare străzi + priveliște + diverse + climatizare |
+| `utilitati`, `utilitati_values` | `properties.utilities` |
+
+Restul câmpurilor colectate în formular (destinație, orientare, an renovare,
+parcări, geam la baie, bucătărie deschisă, pet friendly, cheia în agenție,
+suprafețe pe balcoane/terase/grădină, risc seismic, înălțime S+/D+/P+/M/Pod,
+etaje retrase) se stochează în Habitoo, dar nu au un câmp ImmoFlux documentat,
+deci nu sunt inventate în feed.
