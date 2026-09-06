@@ -93,29 +93,60 @@ export async function authenticateFeedRequest(request: Request): Promise<FeedAut
   }
 
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const hash = hashFeedToken(token);
   const { data, error } = await supabaseAdmin
     .from("site_feed_tokens")
     .select("id, organization_id, token_prefix, revoked_at, request_count")
-    .eq("token_hash", hashFeedToken(token))
+    .eq("token_hash", hash)
     .is("revoked_at", null)
     .maybeSingle();
 
-  if (error || !data) {
-    // Mesaj generic, fără detalii care ar permite enumerarea tokenurilor.
-    return { ok: false, status: 401, message: "Invalid or revoked API token.", tokenPrefix: prefix };
+  if (!error && data) {
+    await supabaseAdmin
+      .from("site_feed_tokens")
+      .update({ last_used_at: new Date().toISOString(), request_count: (data.request_count ?? 0) + 1 })
+      .eq("id", data.id);
+
+    return {
+      ok: true,
+      organizationId: data.organization_id,
+      tokenId: data.id,
+      tokenPrefix: data.token_prefix,
+      source: "site_token",
+      scopes: ["feed:read", "agents:read", "leads:write"],
+    };
   }
 
-  await supabaseAdmin
-    .from("site_feed_tokens")
-    .update({ last_used_at: new Date().toISOString(), request_count: (data.request_count ?? 0) + 1 })
-    .eq("id", data.id);
+  // Fallback: cheie emisă de Habitoo pentru un portal (direcția portal → Habitoo).
+  // Agenția este determinată EXCLUSIV din cheie, niciodată din query/body.
+  const { data: portalKey } = await supabaseAdmin
+    .from("portal_api_keys")
+    .select("id, organization_id, key_prefix, status, scopes, expires_at, request_count")
+    .eq("key_hash", hash)
+    .eq("status", "active")
+    .maybeSingle();
 
-  return {
-    ok: true,
-    organizationId: data.organization_id,
-    tokenId: data.id,
-    tokenPrefix: data.token_prefix,
-  };
+  if (portalKey && (!portalKey.expires_at || new Date(portalKey.expires_at).getTime() > Date.now())) {
+    await supabaseAdmin
+      .from("portal_api_keys")
+      .update({
+        last_used_at: new Date().toISOString(),
+        request_count: (portalKey.request_count ?? 0) + 1,
+      })
+      .eq("id", portalKey.id);
+
+    return {
+      ok: true,
+      organizationId: portalKey.organization_id,
+      tokenId: portalKey.id,
+      tokenPrefix: portalKey.key_prefix,
+      source: "portal_key",
+      scopes: portalKey.scopes ?? [],
+    };
+  }
+
+  // Mesaj generic, fără detalii care ar permite enumerarea tokenurilor.
+  return { ok: false, status: 401, message: "Invalid or revoked API token.", tokenPrefix: prefix };
 }
 
 export async function logFeedAccess(input: {
