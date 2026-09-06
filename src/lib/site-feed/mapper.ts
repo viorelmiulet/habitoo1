@@ -52,7 +52,11 @@ export type FeedProperty = {
   tipimobil: string | null;
   tipteren: string | null;
   clasificareteren: string | null;
+  nrfronturistradale: number | null;
+  frontstradal: number | null;
+  latimedrumacces: number | null;
   suprafatateren: number | null;
+
   nrcamere: number | null;
   nrdormitoare: number | null;
   nrbucatarii: number | null;
@@ -95,11 +99,26 @@ export type FeedProperty = {
   custom1: string | null;
   custom2: string | null;
   portals: string[];
+  tip: string | null;
   suprafata_value: number | null;
   incalzire_value: string | null;
   mobilare_value: string | null;
+  /** Nume ImmoFlux pentru aceeași sursă ca `mobilare_value` (properties.furnishing). */
+  mobilat_value: string | null;
   parcare_value: string | null;
   balcon_value: boolean | null;
+  /** Nume ImmoFlux pentru aceeași sursă ca `utilitati` (properties.utilities). */
+  utilitati_values: string[];
+  /** Nume ImmoFlux pentru aceeași sursă ca `dotari` (properties.features). */
+  dotari_values: string[];
+  stadiuconstructie_value: string | null;
+  tipconstructie_value: string | null;
+  starefinisaje_value: string | null;
+  bucatarie_values: string[];
+  eficienta_energetica: string | null;
+  consum_specific: number | null;
+  indice_emisii: number | null;
+  consum_energie_regenerabila: number | null;
   energy: {
     clasa: string | null;
     consum: number | null;
@@ -107,6 +126,7 @@ export type FeedProperty = {
   };
   url: string | null;
 };
+
 
 /** Statusurile Habitoo care pot apărea în feedul public. */
 export const FEED_PUBLIC_STATUSES = ["active", "reserved", "negotiation"] as const;
@@ -211,7 +231,12 @@ export function mapPropertyToFeed(p: PropertyRow, options: MapPropertyOptions): 
     tipimobil: p.property_type,
     tipteren: isLand ? (p.category ?? null) : null,
     clasificareteren: isLand ? (p.category ?? null) : null,
+    // Terenuri: Habitoo nu are coloane pentru fronturi stradale / drum de acces.
+    nrfronturistradale: null,
+    frontstradal: null,
+    latimedrumacces: null,
     suprafatateren: p.land_surface ?? null,
+
     nrcamere: p.rooms ?? null,
     nrdormitoare: p.bedrooms ?? null,
     nrbucatarii: null,
@@ -264,15 +289,29 @@ export function mapPropertyToFeed(p: PropertyRow, options: MapPropertyOptions): 
         ...(p.tags ?? []).filter((t) => t.startsWith("portal:")).map((t) => t.slice("portal:".length)),
       ]),
     ],
+    tip: p.property_type,
     suprafata_value: p.surface ?? null,
     incalzire_value: p.heating ?? null,
     mobilare_value: p.furnishing ?? null,
+    mobilat_value: p.furnishing ?? null,
     parcare_value: p.parking ?? null,
     balcon_value: typeof p.balcony === "boolean" ? p.balcony : null,
+    utilitati_values: p.utilities ?? [],
+    dotari_values: p.features ?? [],
+    // Fără coloane echivalente în Habitoo → rămân null/goale, nu se derivează.
+    stadiuconstructie_value: null,
+    tipconstructie_value: null,
+    starefinisaje_value: null,
+    bucatarie_values: [],
+    eficienta_energetica: null,
+    consum_specific: null,
+    indice_emisii: null,
+    consum_energie_regenerabila: null,
     energy: { clasa: null, consum: null, emisii: null },
     url: options.publicSiteUrl ? offerUrl(options.publicSiteUrl, p.id) : null,
   };
 }
+
 
 export type PaginatedFeed<T> = {
   total: number;
