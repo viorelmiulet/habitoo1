@@ -74,7 +74,8 @@ export const Route = createFileRoute("/api/public/sites/v1/visits")({
               _org: auth.organizationId,
               _property: entry.id,
               _views: entry.views,
-              _source: entry.source ?? null,
+              // Indexul unic folosește coalesce(source, ''), deci "" și NULL sunt același grup.
+              _source: entry.source ?? "",
               _occurred_on: occurredOn,
             });
             if (rpcError) throw rpcError;
