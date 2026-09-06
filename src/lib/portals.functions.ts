@@ -1045,16 +1045,32 @@ export const publishPropertyToSelectedPortals = createServerFn({ method: "POST" 
 
     const selected = (publications ?? [])
       .map((p) => p.portal_key)
-      .filter((key) => getPortalDefinition(key)?.status === "available");
+      .filter((key) => {
+        const definition = getPortalDefinition(key);
+        // Portalurile de tip feed (ex. iMove) nu primesc trimiteri: selecția
+        // este suficientă, oferta apare la următoarea citire a feedului.
+        return definition?.status === "available" && definition.capabilities.includes("publish_listing");
+      });
 
     if (selected.length === 0) {
+      const feedOnly = (publications ?? []).some((p) => {
+        const definition = getPortalDefinition(p.portal_key);
+        return (
+          definition?.status === "available" &&
+          !definition.capabilities.includes("publish_listing") &&
+          definition.capabilities.includes("feed_pull")
+        );
+      });
       return {
         ok: false as const,
-        code: "NO_SELECTION",
-        message: "Nu ai selectat niciun portal disponibil pentru această proprietate.",
+        code: feedOnly ? "FEED_ONLY" : "NO_SELECTION",
+        message: feedOnly
+          ? "Portalurile selectate preiau ofertele automat din feed. Nu este nevoie de nicio trimitere."
+          : "Nu ai selectat niciun portal disponibil pentru această proprietate.",
         results: [] as { portalId: string; portalName: string; ok: boolean; message: string | null }[],
       };
     }
+
 
     const results: { portalId: string; portalName: string; ok: boolean; message: string | null }[] = [];
     for (const portalId of selected) {
