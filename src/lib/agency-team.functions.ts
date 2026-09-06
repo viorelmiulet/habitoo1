@@ -139,7 +139,32 @@ async function writeAudit(
   });
 }
 
+/** Caută un utilizator Auth existent după email (contul poate exista fără profil). */
+async function findAuthUserByEmail(admin: Admin, email: string) {
+  for (let page = 1; page <= 20; page += 1) {
+    const { data, error } = await admin.auth.admin.listUsers({ page, perPage: 200 });
+    if (error) return null;
+    const users = data?.users ?? [];
+    const match = users.find((u) => (u.email ?? "").toLowerCase() === email);
+    if (match) return match;
+    if (users.length < 200) return null;
+  }
+  return null;
+}
+
+/** Trimite un email de setare a parolei pentru un cont Auth deja existent. */
+async function sendPasswordSetupEmail(email: string) {
+  const { createClient } = await import("@supabase/supabase-js");
+  const client = createClient(
+    process.env["SUPABASE_URL"]!,
+    process.env["SUPABASE_PUBLISHABLE_KEY"]!,
+    { auth: { persistSession: false, autoRefreshToken: false } },
+  );
+  await client.auth.resetPasswordForEmail(email, { redirectTo: getCrmUrl("/reset-password") });
+}
+
 export const getTeamOverview = createServerFn({ method: "GET" })
+
   .middleware([requireActiveOrgAuth])
   .handler(async ({ context }): Promise<TeamOverview> => {
     const { organizationId } = await requireOrgAdmin(context as unknown as AuthContext);
