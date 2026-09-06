@@ -110,10 +110,16 @@ export function PropertyDetailsFields({ idPrefix = "det", value, onChange }: Pro
   );
 
   const BoolField = ({ field, label }: { field: string; label: string }) => (
-    <label className="flex items-center gap-2 text-sm">
-      <Checkbox checked={bool(field)} onCheckedChange={(c) => setField(field, c === true)} />
-      {label}
-    </label>
+    <div className="flex items-center gap-2 text-sm">
+      <Checkbox
+        id={`${idPrefix}-${field}`}
+        checked={bool(field)}
+        onCheckedChange={(c) => setField(field, c === true)}
+      />
+      <Label htmlFor={`${idPrefix}-${field}`} className="cursor-pointer font-normal">
+        {label}
+      </Label>
+    </div>
   );
 
   const CheckGroup = ({
@@ -129,13 +135,19 @@ export function PropertyDetailsFields({ idPrefix = "det", value, onChange }: Pro
       <legend className="text-sm font-medium">{label}</legend>
       <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
         {options.map((o) => (
-          <label key={o} className="flex items-center gap-2 text-sm">
+          <div key={o} className="flex items-center gap-2 text-sm">
             <Checkbox
+              id={`${idPrefix}-${field}-${o}`}
               checked={arr(field).includes(o)}
               onCheckedChange={(c) => toggleInArray(field, o, c === true)}
             />
-            <span className="min-w-0 break-words">{o}</span>
-          </label>
+            <Label
+              htmlFor={`${idPrefix}-${field}-${o}`}
+              className="min-w-0 cursor-pointer font-normal break-words"
+            >
+              {o}
+            </Label>
+          </div>
         ))}
       </div>
     </fieldset>
@@ -158,10 +170,12 @@ export function PropertyDetailsFields({ idPrefix = "det", value, onChange }: Pro
         className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3"
       >
         {options.map((o) => (
-          <label key={o} className="flex items-center gap-2 text-sm">
+          <div key={o} className="flex items-center gap-2 text-sm">
             <RadioGroupItem value={o} id={`${idPrefix}-${field}-${o}`} />
-            {o}
-          </label>
+            <Label htmlFor={`${idPrefix}-${field}-${o}`} className="cursor-pointer font-normal">
+              {o}
+            </Label>
+          </div>
         ))}
       </RadioGroup>
       {str(field) ? (

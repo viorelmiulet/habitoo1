@@ -5,6 +5,7 @@ import { PropertyDetailsFields, type PropertyDetailsValue } from "@/components/a
 import {
   PropertyTransactionFields,
   emptyTransaction,
+  hasTransactionSelection,
   transactionPayload,
   type TransactionValue,
 } from "@/components/app/PropertyTransactionFields";
@@ -92,6 +93,8 @@ function NewPropertyPage() {
   const create = useMutation({
     mutationFn: async () => {
       if (!user?.organization?.id) throw new Error("Agenția nu este configurată.");
+      if (!hasTransactionSelection(tx))
+        throw new Error("Alege tipul tranzacției: de vânzare, de închiriere sau ambele.");
       const num = (v: string) => (v.trim() === "" ? null : Number(v));
       // Referință internă incrementală per agenție (RF-1001, RF-1002, ...).
       const { data: lastRef } = await supabase
