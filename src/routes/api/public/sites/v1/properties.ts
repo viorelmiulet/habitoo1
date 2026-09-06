@@ -26,7 +26,7 @@ export const Route = createFileRoute("/api/public/sites/v1/properties")({
             .eq("organization_id", auth.organizationId)
             .eq("publish_status", "published")
             .is("deleted_at", null)
-            .in("status", FEED_PUBLIC_STATUSES as unknown as string[])
+            .in("status", [...FEED_PUBLIC_STATUSES])
             .order("updated_at", { ascending: false })
             .range(from, from + perPage - 1);
           if (error) throw error;
