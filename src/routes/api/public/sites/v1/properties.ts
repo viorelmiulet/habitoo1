@@ -47,7 +47,7 @@ export const Route = createFileRoute("/api/public/sites/v1/properties")({
           const ids = rows.map((r) => r.id);
           const agentIds = [...new Set(rows.map((r) => r.assigned_to).filter((v): v is string => Boolean(v)))];
 
-          const [images, agents] = await Promise.all([
+          const [images, agents, publications] = await Promise.all([
             ids.length
               ? supabaseAdmin
                   .from("property_images")
@@ -60,7 +60,22 @@ export const Route = createFileRoute("/api/public/sites/v1/properties")({
             agentIds.length
               ? supabaseAdmin.from("profiles").select("id, full_name").in("id", agentIds)
               : Promise.resolve({ data: [] as { id: string; full_name: string }[], error: null }),
+            ids.length
+              ? supabaseAdmin
+                  .from("portal_publications")
+                  .select("property_id, portal_key")
+                  .eq("organization_id", auth.organizationId)
+                  .eq("enabled", true)
+                  .in("property_id", ids)
+              : Promise.resolve({ data: [] as { property_id: string; portal_key: string }[], error: null }),
           ]);
+
+          const portalsByProperty = new Map<string, string[]>();
+          for (const row of publications.data ?? []) {
+            const list = portalsByProperty.get(row.property_id) ?? [];
+            list.push(row.portal_key);
+            portalsByProperty.set(row.property_id, list);
+          }
 
           const imagesByProperty = new Map<string, PropertyImageRow[]>();
           for (const img of (images.data ?? []) as PropertyImageRow[]) {
@@ -79,6 +94,7 @@ export const Route = createFileRoute("/api/public/sites/v1/properties")({
 
                 images: imagesByProperty.get(row.id) ?? [],
                 agent: row.assigned_to ? (agentById.get(row.assigned_to) ?? null) : null,
+                portalKeys: portalsByProperty.get(row.id) ?? [],
               }),
             ),
             total: count ?? 0,
