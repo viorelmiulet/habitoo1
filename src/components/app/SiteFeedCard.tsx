@@ -70,7 +70,7 @@ export function SiteFeedCard() {
     onError: (e: Error) => toastError(e),
   });
 
-  if (status.isLoading) return <LoadingState label="Se încarcă integrarea…" />;
+  if (status.isLoading) return <InlineLoading label="Se încarcă integrarea…" />;
   if (status.isError) return <QueryError error={status.error} onRetry={() => status.refetch()} />;
 
   const data = status.data;
