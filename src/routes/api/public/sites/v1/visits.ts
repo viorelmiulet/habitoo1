@@ -3,15 +3,14 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
 import { withFeedAuth, jsonResponse, errorResponse, FEED_API_VERSION } from "@/lib/site-feed/auth.server";
+import { isVisitDateAcceptable } from "@/lib/site-feed/mapper";
 
 const visitSchema = z.object({
   id: z.string().uuid("id must be the property UUID"),
   views: z.number().int().min(0).max(1_000_000).default(1),
   source: z.string().trim().max(60).optional(),
-  date: z
-    .string()
-    .regex(/^\d{4}-\d{2}-\d{2}$/)
-    .optional(),
+  // Dată calendaristică reală (nu doar regex): 2026-99-99 este respinsă.
+  date: z.string().refine(isVisitDateAcceptable, "date must be a real date within the accepted window").optional(),
 });
 
 const payloadSchema = z.union([visitSchema, z.object({ visits: z.array(visitSchema).min(1).max(500) })]);
@@ -69,31 +68,17 @@ export const Route = createFileRoute("/api/public/sites/v1/visits")({
           for (const entry of entries) {
             if (!allowed.has(entry.id)) continue;
             const occurredOn = entry.date ?? new Date().toISOString().slice(0, 10);
-            const source = entry.source ?? null;
-            const dayQuery = supabaseAdmin
-              .from("site_feed_visits")
-              .select("id, views")
-              .eq("organization_id", auth.organizationId)
-              .eq("property_id", entry.id)
-              .eq("occurred_on", occurredOn);
-            const existing = await (source ? dayQuery.eq("source", source) : dayQuery.is("source", null))
-              .maybeSingle();
-
-
-            if (existing.data) {
-              await supabaseAdmin
-                .from("site_feed_visits")
-                .update({ views: (existing.data.views ?? 0) + entry.views })
-                .eq("id", existing.data.id);
-            } else {
-              await supabaseAdmin.from("site_feed_visits").insert({
-                organization_id: auth.organizationId,
-                property_id: entry.id,
-                views: entry.views,
-                source,
-                occurred_on: occurredOn,
-              });
-            }
+            // Increment atomic în DB (INSERT ... ON CONFLICT DO UPDATE): două cereri
+            // simultane nu pierd incrementări și nu lovesc indexul unic.
+            const { error: rpcError } = await supabaseAdmin.rpc("site_feed_record_visit", {
+              _org: auth.organizationId,
+              _property: entry.id,
+              _views: entry.views,
+              // Indexul unic folosește coalesce(source, ''), deci "" și NULL sunt același grup.
+              _source: entry.source ?? "",
+              _occurred_on: occurredOn,
+            });
+            if (rpcError) throw rpcError;
             accepted += 1;
           }
 

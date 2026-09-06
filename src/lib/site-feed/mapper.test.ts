@@ -5,6 +5,7 @@ import {
   isPropertyFeedEligible,
   mapPropertyToFeed,
   parsePagination,
+  isVisitDateAcceptable,
   FEED_MAX_PER_PAGE,
   type PropertyImageRow,
   type PropertyRow,
@@ -183,5 +184,59 @@ describe("paginare", () => {
     const url = new URL("https://crm.habitoo.ro/api/public/sites/v1/properties");
     const feed = buildPaginatedFeed({ data: [], total: 0, page: 1, perPage: 50, requestUrl: url });
     expect(feed).toMatchObject({ total: 0, last_page: 1, from: null, to: null, next_page_url: null });
+  });
+});
+
+describe("mapper — câmpuri fără echivalent real în schemă", () => {
+  it("nu publică preț fără TVA derivat și nici comisionul intern", () => {
+    const mapped = mapPropertyToFeed(
+      { ...(baseProperty as PropertyRow), vat_included: false, commission: "2%" },
+      { baseUrl: "https://crm.habitoo.ro", publicSiteUrl: "https://habitoo.ro" },
+    );
+    expect(mapped.pretfaratva).toBeNull();
+    expect(mapped.comisioncumparator).toBeNull();
+  });
+
+  it("folosește domeniile canonice pentru media și ofertă", () => {
+    const mapped = mapPropertyToFeed(baseProperty as PropertyRow, {
+      baseUrl: "https://crm.habitoo.ro",
+      publicSiteUrl: "https://habitoo.ro",
+    });
+    expect(mapped.url).toBe(`https://habitoo.ro/oferta-${baseProperty.id}`);
+  });
+});
+
+describe("isVisitDateAcceptable", () => {
+  const now = new Date("2026-09-06T10:00:00.000Z");
+  it("respinge date imposibile care trec regexul", () => {
+    expect(isVisitDateAcceptable("2026-99-99", now)).toBe(false);
+    expect(isVisitDateAcceptable("2026-02-31", now)).toBe(false);
+    expect(isVisitDateAcceptable("azi", now)).toBe(false);
+  });
+  it("acceptă doar date rezonabile", () => {
+    expect(isVisitDateAcceptable("2026-09-06", now)).toBe(true);
+    expect(isVisitDateAcceptable("2026-09-05", now)).toBe(true);
+    expect(isVisitDateAcceptable("2030-01-01", now)).toBe(false);
+    expect(isVisitDateAcceptable("2000-01-01", now)).toBe(false);
+  });
+});
+
+describe("pagination edge cases", () => {
+  const url = new URL("https://crm.habitoo.ro/api/public/sites/v1/properties");
+  const parse = (qs: string) => parsePagination(new URL(`${url}?${qs}`));
+  it("normalizează valori invalide", () => {
+    expect(parse("page=0").page).toBe(1);
+    expect(parse("page=-5").page).toBe(1);
+    expect(parse("page=abc").page).toBe(1);
+    expect(parse("per_page=0").perPage).toBe(50);
+    expect(parse("per_page=-10").perPage).toBe(50);
+    expect(parse("per_page=99999").perPage).toBe(FEED_MAX_PER_PAGE);
+  });
+  it("pagina peste last_page returnează listă goală cu metadata consistentă", () => {
+    const feed = buildPaginatedFeed({ data: [], total: 3, page: 99, perPage: 50, requestUrl: url });
+    expect(feed.data).toEqual([]);
+    expect(feed.last_page).toBe(1);
+    expect(feed.next_page_url).toBeNull();
+    expect(feed.total).toBe(3);
   });
 });

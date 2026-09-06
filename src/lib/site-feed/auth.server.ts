@@ -58,7 +58,9 @@ function tokenPrefixOf(token: string | null): string | null {
   return prefix.startsWith("hbt_") ? prefix : null;
 }
 
-// Rate limit best-effort, per instanță de server (nu înlocuiește un limiter distribuit).
+// Rate limit BEST-EFFORT: contorul trăiește în memoria instanței de server, deci
+// nu este o protecție distribuită (mai multe instanțe = mai multe bucket-uri).
+// Limitarea se face pe token prefix + IP (IP-ul nu este niciodată persistat).
 const RATE_WINDOW_MS = 60_000;
 const RATE_MAX = 120;
 const buckets = new Map<string, { count: number; resetAt: number }>();
@@ -80,7 +82,11 @@ export async function authenticateFeedRequest(request: Request): Promise<FeedAut
   if (!token) {
     return { ok: false, status: 401, message: "Missing API token.", tokenPrefix: null };
   }
-  if (rateLimited(prefix ?? "anonymous")) {
+  const ip =
+    request.headers.get("cf-connecting-ip") ??
+    request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
+    "unknown";
+  if (rateLimited(`${prefix ?? "anonymous"}|${ip}`)) {
     return { ok: false, status: 429, message: "Too many requests.", tokenPrefix: prefix };
   }
 
@@ -93,6 +99,7 @@ export async function authenticateFeedRequest(request: Request): Promise<FeedAut
     .maybeSingle();
 
   if (error || !data) {
+    // Mesaj generic, fără detalii care ar permite enumerarea tokenurilor.
     return { ok: false, status: 401, message: "Invalid or revoked API token.", tokenPrefix: prefix };
   }
 
@@ -167,7 +174,8 @@ export async function withFeedAuth(
       endpoint,
       method,
       status: auth.status,
-      detail: auth.message,
+      // Detaliu generic în loguri: niciodată tokenul, secretul sau headerul Authorization.
+      detail: auth.status === 429 ? "rate_limited" : "unauthorized",
     });
     return errorResponse(auth.status, auth.message);
   }

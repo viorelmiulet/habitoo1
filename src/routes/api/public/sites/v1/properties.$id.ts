@@ -2,6 +2,7 @@
 // :id acceptă atât UUID-ul intern stabil, cât și referința (ex. RF-1001).
 import { createFileRoute } from "@tanstack/react-router";
 import { withFeedAuth, jsonResponse, errorResponse, FEED_API_VERSION } from "@/lib/site-feed/auth.server";
+import { feedUrlsForRequest } from "@/lib/site-feed/config";
 import {
   isPropertyFeedEligible,
   mapPropertyToFeed,
@@ -50,10 +51,10 @@ export const Route = createFileRoute("/api/public/sites/v1/properties/$id")({
               : Promise.resolve({ data: null }),
           ]);
 
-          const baseUrl = new URL(request.url).origin;
+          const { baseUrl, publicSiteUrl } = feedUrlsForRequest(new URL(request.url));
           const mapped = mapPropertyToFeed(row, {
             baseUrl,
-            publicSiteUrl: baseUrl,
+            publicSiteUrl,
             images: (images.data ?? []) as PropertyImageRow[],
             agent: agent.data ?? null,
           });
