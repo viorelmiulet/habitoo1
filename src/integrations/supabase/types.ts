@@ -633,6 +633,7 @@ export type Database = {
           created_by: string | null
           credential_hash: string | null
           credential_prefix: string | null
+          credential_secret: string | null
           enabled: boolean
           endpoint_url: string | null
           external_agency_id: string | null
@@ -652,6 +653,7 @@ export type Database = {
           created_by?: string | null
           credential_hash?: string | null
           credential_prefix?: string | null
+          credential_secret?: string | null
           enabled?: boolean
           endpoint_url?: string | null
           external_agency_id?: string | null
@@ -671,6 +673,7 @@ export type Database = {
           created_by?: string | null
           credential_hash?: string | null
           credential_prefix?: string | null
+          credential_secret?: string | null
           enabled?: boolean
           endpoint_url?: string | null
           external_agency_id?: string | null
