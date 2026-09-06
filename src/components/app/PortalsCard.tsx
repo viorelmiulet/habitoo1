@@ -88,10 +88,13 @@ export function PortalsCard() {
     onSuccess: (res) => {
       invalidate();
       if (res.ok) {
+        const feed = res.feed;
         toast.success(
-          res.live
-            ? "Conexiunea a fost verificată cu portalul."
-            : "Configurarea este completă. Trimiterile reale sunt încă oprite (mod simulare).",
+          feed
+            ? `Feed verificat: ${feed.properties ?? 0} oferte, ${feed.agents ?? 0} agenți, ${feed.activeKeys ?? 0} chei active.`
+            : res.live
+              ? "Conexiunea a fost verificată cu portalul."
+              : "Configurarea este completă. Trimiterile reale sunt încă oprite (mod simulare).",
         );
       } else {
         toast.error(res.message);
@@ -231,6 +234,21 @@ export function PortalsCard() {
                   <div>
                     <dt className="text-muted-foreground">Ultima verificare</dt>
                     <dd>{item.connection.lastSyncAt ? formatDateTime(item.connection.lastSyncAt) : "Niciodată"}</dd>
+                  </div>
+                </dl>
+
+                <dl className="grid gap-3 rounded-lg border border-border p-3 text-sm sm:grid-cols-3">
+                  <div>
+                    <dt className="text-muted-foreground">Oferte în feed</dt>
+                    <dd>{item.feed.properties ?? 0}</dd>
+                  </div>
+                  <div>
+                    <dt className="text-muted-foreground">Agenți în feed</dt>
+                    <dd>{item.feed.agents ?? 0}</dd>
+                  </div>
+                  <div>
+                    <dt className="text-muted-foreground">Feed</dt>
+                    <dd>{item.feed.ok ? (item.feed.apiVersion ?? "funcțional") : "indisponibil"}</dd>
                   </div>
                 </dl>
 
