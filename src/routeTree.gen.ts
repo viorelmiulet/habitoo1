@@ -59,6 +59,7 @@ import { Route as ApiPublicSitesV1AgentsRouteImport } from './routes/api/public/
 import { Route as ApiPublicSitesV1ContactsRouteImport } from './routes/api/public/sites/v1/contacts'
 import { Route as ApiPublicSitesV1PropertiesRouteImport } from './routes/api/public/sites/v1/properties'
 import { Route as ApiPublicSitesV1VisitsRouteImport } from './routes/api/public/sites/v1/visits'
+import { Route as ApiPublicHomepitchV1PropertiesIdRouteImport } from './routes/api/public/homepitch/v1/properties.$id'
 import { Route as ApiPublicPortalV1ImoveFeedRouteImport } from './routes/api/public/portal/v1/imove.feed'
 import { Route as ApiPublicPortalV1ImoveFeedDotcsvRouteImport } from './routes/api/public/portal/v1/imove.feed[.]csv'
 import { Route as ApiPublicPortalV1ImoveFeedDotjsonRouteImport } from './routes/api/public/portal/v1/imove.feed[.]json'
@@ -338,6 +339,12 @@ const ApiPublicSitesV1VisitsRoute = ApiPublicSitesV1VisitsRouteImport.update({
   path: '/api/public/sites/v1/visits',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicHomepitchV1PropertiesIdRoute =
+  ApiPublicHomepitchV1PropertiesIdRouteImport.update({
+    id: '/$id',
+    path: '/$id',
+    getParentRoute: () => ApiPublicHomepitchV1PropertiesRoute,
+  } as any)
 const ApiPublicPortalV1ImoveFeedRoute =
   ApiPublicPortalV1ImoveFeedRouteImport.update({
     id: '/api/public/portal/v1/imove/feed',
@@ -417,13 +424,14 @@ export interface FileRoutesByFullPath {
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
   '/app/contacts/': typeof AuthenticatedAppContactsIndexRoute
   '/app/properties/': typeof AuthenticatedAppPropertiesIndexRoute
-  '/api/public/homepitch/v1/properties': typeof ApiPublicHomepitchV1PropertiesRoute
+  '/api/public/homepitch/v1/properties': typeof ApiPublicHomepitchV1PropertiesRouteWithChildren
   '/api/public/portal/v1/agents': typeof ApiPublicPortalV1AgentsRoute
   '/api/public/portal/v1/properties': typeof ApiPublicPortalV1PropertiesRouteWithChildren
   '/api/public/sites/v1/agents': typeof ApiPublicSitesV1AgentsRoute
   '/api/public/sites/v1/contacts': typeof ApiPublicSitesV1ContactsRoute
   '/api/public/sites/v1/properties': typeof ApiPublicSitesV1PropertiesRouteWithChildren
   '/api/public/sites/v1/visits': typeof ApiPublicSitesV1VisitsRoute
+  '/api/public/homepitch/v1/properties/$id': typeof ApiPublicHomepitchV1PropertiesIdRoute
   '/api/public/portal/v1/imove/feed': typeof ApiPublicPortalV1ImoveFeedRoute
   '/api/public/portal/v1/imove/feed.csv': typeof ApiPublicPortalV1ImoveFeedDotcsvRoute
   '/api/public/portal/v1/imove/feed.json': typeof ApiPublicPortalV1ImoveFeedDotjsonRoute
@@ -472,13 +480,14 @@ export interface FileRoutesByTo {
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
   '/app/contacts': typeof AuthenticatedAppContactsIndexRoute
   '/app/properties': typeof AuthenticatedAppPropertiesIndexRoute
-  '/api/public/homepitch/v1/properties': typeof ApiPublicHomepitchV1PropertiesRoute
+  '/api/public/homepitch/v1/properties': typeof ApiPublicHomepitchV1PropertiesRouteWithChildren
   '/api/public/portal/v1/agents': typeof ApiPublicPortalV1AgentsRoute
   '/api/public/portal/v1/properties': typeof ApiPublicPortalV1PropertiesRouteWithChildren
   '/api/public/sites/v1/agents': typeof ApiPublicSitesV1AgentsRoute
   '/api/public/sites/v1/contacts': typeof ApiPublicSitesV1ContactsRoute
   '/api/public/sites/v1/properties': typeof ApiPublicSitesV1PropertiesRouteWithChildren
   '/api/public/sites/v1/visits': typeof ApiPublicSitesV1VisitsRoute
+  '/api/public/homepitch/v1/properties/$id': typeof ApiPublicHomepitchV1PropertiesIdRoute
   '/api/public/portal/v1/imove/feed': typeof ApiPublicPortalV1ImoveFeedRoute
   '/api/public/portal/v1/imove/feed.csv': typeof ApiPublicPortalV1ImoveFeedDotcsvRoute
   '/api/public/portal/v1/imove/feed.json': typeof ApiPublicPortalV1ImoveFeedDotjsonRoute
@@ -531,13 +540,14 @@ export interface FileRoutesById {
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
   '/_authenticated/app/contacts/': typeof AuthenticatedAppContactsIndexRoute
   '/_authenticated/app/properties/': typeof AuthenticatedAppPropertiesIndexRoute
-  '/api/public/homepitch/v1/properties': typeof ApiPublicHomepitchV1PropertiesRoute
+  '/api/public/homepitch/v1/properties': typeof ApiPublicHomepitchV1PropertiesRouteWithChildren
   '/api/public/portal/v1/agents': typeof ApiPublicPortalV1AgentsRoute
   '/api/public/portal/v1/properties': typeof ApiPublicPortalV1PropertiesRouteWithChildren
   '/api/public/sites/v1/agents': typeof ApiPublicSitesV1AgentsRoute
   '/api/public/sites/v1/contacts': typeof ApiPublicSitesV1ContactsRoute
   '/api/public/sites/v1/properties': typeof ApiPublicSitesV1PropertiesRouteWithChildren
   '/api/public/sites/v1/visits': typeof ApiPublicSitesV1VisitsRoute
+  '/api/public/homepitch/v1/properties/$id': typeof ApiPublicHomepitchV1PropertiesIdRoute
   '/api/public/portal/v1/imove/feed': typeof ApiPublicPortalV1ImoveFeedRoute
   '/api/public/portal/v1/imove/feed.csv': typeof ApiPublicPortalV1ImoveFeedDotcsvRoute
   '/api/public/portal/v1/imove/feed.json': typeof ApiPublicPortalV1ImoveFeedDotjsonRoute
@@ -597,6 +607,7 @@ export interface FileRouteTypes {
     | '/api/public/sites/v1/contacts'
     | '/api/public/sites/v1/properties'
     | '/api/public/sites/v1/visits'
+    | '/api/public/homepitch/v1/properties/$id'
     | '/api/public/portal/v1/imove/feed'
     | '/api/public/portal/v1/imove/feed.csv'
     | '/api/public/portal/v1/imove/feed.json'
@@ -652,6 +663,7 @@ export interface FileRouteTypes {
     | '/api/public/sites/v1/contacts'
     | '/api/public/sites/v1/properties'
     | '/api/public/sites/v1/visits'
+    | '/api/public/homepitch/v1/properties/$id'
     | '/api/public/portal/v1/imove/feed'
     | '/api/public/portal/v1/imove/feed.csv'
     | '/api/public/portal/v1/imove/feed.json'
@@ -710,6 +722,7 @@ export interface FileRouteTypes {
     | '/api/public/sites/v1/contacts'
     | '/api/public/sites/v1/properties'
     | '/api/public/sites/v1/visits'
+    | '/api/public/homepitch/v1/properties/$id'
     | '/api/public/portal/v1/imove/feed'
     | '/api/public/portal/v1/imove/feed.csv'
     | '/api/public/portal/v1/imove/feed.json'
@@ -735,7 +748,7 @@ export interface RootRouteChildren {
   OfertaIdRoute: typeof OfertaIdRoute
   LovableEmailAuthPreviewRoute: typeof LovableEmailAuthPreviewRoute
   LovableEmailAuthWebhookRoute: typeof LovableEmailAuthWebhookRoute
-  ApiPublicHomepitchV1PropertiesRoute: typeof ApiPublicHomepitchV1PropertiesRoute
+  ApiPublicHomepitchV1PropertiesRoute: typeof ApiPublicHomepitchV1PropertiesRouteWithChildren
   ApiPublicPortalV1AgentsRoute: typeof ApiPublicPortalV1AgentsRoute
   ApiPublicPortalV1PropertiesRoute: typeof ApiPublicPortalV1PropertiesRouteWithChildren
   ApiPublicSitesV1AgentsRoute: typeof ApiPublicSitesV1AgentsRoute
@@ -1100,6 +1113,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicSitesV1VisitsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/homepitch/v1/properties/$id': {
+      id: '/api/public/homepitch/v1/properties/$id'
+      path: '/$id'
+      fullPath: '/api/public/homepitch/v1/properties/$id'
+      preLoaderRoute: typeof ApiPublicHomepitchV1PropertiesIdRouteImport
+      parentRoute: typeof ApiPublicHomepitchV1PropertiesRoute
+    }
     '/api/public/portal/v1/imove/feed': {
       id: '/api/public/portal/v1/imove/feed'
       path: '/api/public/portal/v1/imove/feed'
@@ -1242,6 +1262,21 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
 const AuthenticatedRouteRouteWithChildren =
   AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
 
+interface ApiPublicHomepitchV1PropertiesRouteChildren {
+  ApiPublicHomepitchV1PropertiesIdRoute: typeof ApiPublicHomepitchV1PropertiesIdRoute
+}
+
+const ApiPublicHomepitchV1PropertiesRouteChildren: ApiPublicHomepitchV1PropertiesRouteChildren =
+  {
+    ApiPublicHomepitchV1PropertiesIdRoute:
+      ApiPublicHomepitchV1PropertiesIdRoute,
+  }
+
+const ApiPublicHomepitchV1PropertiesRouteWithChildren =
+  ApiPublicHomepitchV1PropertiesRoute._addFileChildren(
+    ApiPublicHomepitchV1PropertiesRouteChildren,
+  )
+
 interface ApiPublicPortalV1PropertiesRouteChildren {
   ApiPublicPortalV1PropertiesIdRoute: typeof ApiPublicPortalV1PropertiesIdRoute
 }
@@ -1287,7 +1322,8 @@ const rootRouteChildren: RootRouteChildren = {
   OfertaIdRoute: OfertaIdRoute,
   LovableEmailAuthPreviewRoute: LovableEmailAuthPreviewRoute,
   LovableEmailAuthWebhookRoute: LovableEmailAuthWebhookRoute,
-  ApiPublicHomepitchV1PropertiesRoute: ApiPublicHomepitchV1PropertiesRoute,
+  ApiPublicHomepitchV1PropertiesRoute:
+    ApiPublicHomepitchV1PropertiesRouteWithChildren,
   ApiPublicPortalV1AgentsRoute: ApiPublicPortalV1AgentsRoute,
   ApiPublicPortalV1PropertiesRoute:
     ApiPublicPortalV1PropertiesRouteWithChildren,
