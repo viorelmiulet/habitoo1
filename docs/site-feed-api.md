@@ -98,10 +98,20 @@ semnat, temporar; nu se expun căi interne de storage sau credențiale.
   nu sunt niciodată salvate.
 - `token_hash` nu este accesibil utilizatorilor autentificați (grant pe coloane);
   doar service role îl poate citi.
-- Câmpurile fără echivalent real în Habitoo rămân `null`: `pretfaratva`
-  (modelul nu garantează prețul fără TVA), `comisioncumparator` (comision
-  intern, nepublic), `confort`, `nrbalcoane`, `nrgaraje`, `energy.*`.
-  `portals` provine exclusiv din convenția de tag `portal:<nume>`.
+- Câmpurile ImmoFlux fără echivalent real în Habitoo rămân `null`/goale — nu se
+  derivează și nu se inventează valori: `pretfaratva` (modelul nu garantează
+  prețul fără TVA), `comisioncumparator` (comision intern, nepublic), `confort`,
+  `nrbucatarii`, `nrbalcoane`, `nrgaraje`, `stadiuconstructie`,
+  `structurarezistenta`, `caroiaj`, `finisaje`, `vecinatati`, `titlu.en`,
+  `descriere.en`, `custom1`, `custom2`, `stadiuconstructie_value`,
+  `tipconstructie_value`, `starefinisaje_value`, `bucatarie_values`,
+  `eficienta_energetica`, `consum_specific`, `indice_emisii`,
+  `consum_energie_regenerabila`, `energy.*`, iar pentru terenuri
+  `nrfronturistradale`, `frontstradal`, `latimedrumacces` (nu există coloane).
+  `tipteren` / `clasificareteren` depind de `properties.category`, care în
+  practică este încă necompletat.
+  `portals` provine din publicările active plus convenția de tag `portal:<nume>`.
+
 
 ## Sincronizare
 
