@@ -89,6 +89,8 @@ const nextSteps = [
 function ContactPage() {
   const { interes } = Route.useSearch();
   const [submitted, setSubmitted] = useState<FormValues | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const send = useServerFn(submitContactRequest);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -102,8 +104,24 @@ function ContactPage() {
     },
   });
 
-  function onSubmit(values: FormValues) {
-    setSubmitted(values);
+  async function onSubmit(values: FormValues) {
+    setError(null);
+    try {
+      await send({
+        data: {
+          ...values,
+          phone: values.phone?.trim() ? values.phone.trim() : undefined,
+          sourcePath: typeof window !== "undefined" ? window.location.pathname + window.location.search : undefined,
+        },
+      });
+      setSubmitted(values);
+    } catch (e) {
+      setError(
+        e instanceof Error && e.message
+          ? e.message
+          : "Nu am putut trimite solicitarea. Te rugăm să încerci din nou sau scrie-ne la contact@habitoo.ro.",
+      );
+    }
   }
 
   return (
@@ -127,15 +145,13 @@ function ContactPage() {
         <Container className="grid gap-12 lg:grid-cols-12">
           <div className="lg:col-span-7">
             <div className="panel p-6 sm:p-8">
-              <Alert className="mb-6 border-info/30 bg-info/8">
-                <Info className="size-4 text-info" />
-                <AlertTitle>Trimiterea online nu este încă activă</AlertTitle>
-                <AlertDescription>
-                  Formularul este funcțional, dar mesajele nu sunt încă transmise automat către echipa
-                  Habitoo. Trimiterea va fi activată înainte de lansarea comercială. Poți completa
-                  formularul pentru a testa fluxul; datele nu sunt salvate.
-                </AlertDescription>
-              </Alert>
+              {error ? (
+                <Alert variant="destructive" className="mb-6">
+                  <Info className="size-4" />
+                  <AlertTitle>Solicitarea nu a putut fi trimisă</AlertTitle>
+                  <AlertDescription>{error}</AlertDescription>
+                </Alert>
+              ) : null}
 
               {submitted ? (
                 <div className="rounded-2xl border border-border bg-muted/40 p-6" role="status">
@@ -144,10 +160,10 @@ function ContactPage() {
                       <MessageSquare className="size-5" />
                     </span>
                     <div className="min-w-0 flex-1">
-                      <h2 className="text-lg font-semibold text-navy">Formular completat corect</h2>
+                      <h2 className="text-lg font-semibold text-navy">Solicitarea ta a fost trimisă</h2>
                       <p className="mt-1 text-sm text-muted-foreground">
-                        Mesajul tău a fost validat, dar nu a fost transmis, pentru că trimiterea online nu
-                        este încă activă. Iată ce ai completat:
+                        Am primit mesajul tău și revenim în cel mai scurt timp la {submitted.email}. Iată ce
+                        ne-ai trimis:
                       </p>
                       <dl className="mt-4 grid gap-2 text-sm sm:grid-cols-2">
                         <div>
@@ -179,7 +195,7 @@ function ContactPage() {
                             form.reset({ ...form.getValues(), message: "" });
                           }}
                         >
-                          Modifică mesajul
+                          Trimite alt mesaj
                         </Button>
                         <Button asChild className={navyButton}>
                           <CrmLink to="/register">
@@ -191,6 +207,7 @@ function ContactPage() {
                   </div>
                 </div>
               ) : (
+
                 <Form {...form}>
                   <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5" noValidate>
                     <div className="grid gap-5 sm:grid-cols-2">
