@@ -1,6 +1,8 @@
 // GET /api/public/sites/v1/properties — feed paginat cu proprietățile publicabile ale agenției.
 import { createFileRoute } from "@tanstack/react-router";
 import { withFeedAuth, jsonResponse, FEED_API_VERSION } from "@/lib/site-feed/auth.server";
+import { feedUrlsForRequest } from "@/lib/site-feed/config";
+
 import {
   buildPaginatedFeed,
   mapPropertyToFeed,
