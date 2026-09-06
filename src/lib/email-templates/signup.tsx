@@ -32,6 +32,13 @@ export const SignupEmail = ({
     <Preview>Confirm your email for {siteName}</Preview>
     <Body style={main}>
       <Container style={container}>
+        <Img
+          src={LOGO_URL}
+          alt={siteName}
+          width="200"
+          height="95"
+          style={logo}
+        />
         <Heading style={h1}>Confirm your email</Heading>
         <Text style={text}>
           Thanks for signing up for{' '}
