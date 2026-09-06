@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { toastError } from "@/lib/errors";
 import { PageHeader } from "@/components/app/PageHeader";
 import { StatusBadge } from "@/components/app/StatusBadge";
+import { AgencyPortalCatalogCard } from "@/components/app/AgencyPortalCatalogCard";
 import { SiteFeedCard } from "@/components/app/SiteFeedCard";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -143,6 +144,7 @@ function SettingsPage() {
           {user?.isAdmin ? <TabsTrigger value="agency">Agenție</TabsTrigger> : null}
           {user?.isAdmin ? <TabsTrigger value="team">Echipă ({team.length})</TabsTrigger> : null}
           {user?.isAdmin ? <TabsTrigger value="integrations">Integrări</TabsTrigger> : null}
+          {user?.isAdmin ? <TabsTrigger value="portals">Portaluri</TabsTrigger> : null}
         </TabsList>
 
 
@@ -316,6 +318,12 @@ function SettingsPage() {
             <div className="space-y-6">
               <SiteFeedCard />
             </div>
+          </TabsContent>
+        ) : null}
+
+        {user?.isAdmin ? (
+          <TabsContent value="portals">
+            <AgencyPortalCatalogCard />
           </TabsContent>
         ) : null}
       </Tabs>
