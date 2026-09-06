@@ -638,6 +638,59 @@ export type Database = {
         }
         Relationships: []
       }
+      portal_activation_requests: {
+        Row: {
+          created_at: string
+          id: string
+          note: string | null
+          organization_id: string
+          portal: string
+          rejection_reason: string | null
+          requested_at: string
+          requested_by: string | null
+          resolved_at: string | null
+          resolved_by: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          note?: string | null
+          organization_id: string
+          portal: string
+          rejection_reason?: string | null
+          requested_at?: string
+          requested_by?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          note?: string | null
+          organization_id?: string
+          portal?: string
+          rejection_reason?: string | null
+          requested_at?: string
+          requested_by?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "portal_activation_requests_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       portal_api_keys: {
         Row: {
           created_at: string

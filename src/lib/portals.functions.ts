@@ -412,6 +412,38 @@ export const setPortalActivation = createServerFn({ method: "POST" })
       created_by: context.userId,
     } as never);
 
+    // Activarea directă rezolvă automat o cerere în așteptare a agenției,
+    // ca să nu rămână orfană în lista Superadminului.
+    if (data.activated) {
+      const { data: pending } = await admin
+        .from("portal_activation_requests")
+        .select("id")
+        .eq("organization_id", organizationId)
+        .eq("portal", definition.id)
+        .eq("status", "pending")
+        .maybeSingle();
+      if (pending) {
+        await admin
+          .from("portal_activation_requests")
+          .update({
+            status: "approved",
+            resolved_by: context.userId,
+            resolved_at: new Date().toISOString(),
+          } as never)
+          .eq("id", pending.id);
+        await admin.from("audit_logs").insert({
+          organization_id: organizationId,
+          actor_id: context.userId,
+          action: "portal.activation_request_approved",
+          entity: "portal_activation_requests",
+          entity_id: pending.id,
+          old_values: { status: "pending" },
+          new_values: { status: "approved", portal: definition.id, via: "portal_activation" },
+          created_by: context.userId,
+        } as never);
+      }
+    }
+
     await logOperation({
       organizationId,
       portal: definition.id,
