@@ -7,10 +7,14 @@ import {
   Head,
   Heading,
   Html,
+  Img,
   Link,
   Preview,
   Text,
 } from '@react-email/components'
+
+// Stable public logo URL for email clients (PNG for maximum compatibility).
+const LOGO_URL = 'https://habitoo.ro/assets/habitoo-logo.png'
 
 interface SignupEmailProps {
   siteName: string
@@ -32,6 +36,13 @@ export const SignupEmail = ({
     <Preview>Confirm your email for {siteName}</Preview>
     <Body style={main}>
       <Container style={container}>
+        <Img
+          src={LOGO_URL}
+          alt={siteName}
+          width="200"
+          height="95"
+          style={logo}
+        />
         <Heading style={h1}>Confirm your email</Heading>
         <Text style={text}>
           Thanks for signing up for{' '}
@@ -62,6 +73,7 @@ export default SignupEmail
 
 const main = { backgroundColor: '#ffffff', fontFamily: 'Arial, sans-serif' }
 const container = { padding: '20px 25px' }
+const logo = { display: 'block', margin: '0 0 24px' }
 const h1 = {
   fontSize: '22px',
   fontWeight: 'bold' as const,
