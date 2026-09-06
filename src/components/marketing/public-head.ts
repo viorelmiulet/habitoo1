@@ -42,6 +42,10 @@ export function publicHead({
     { name: "twitter:card", content: "summary_large_image" },
     { name: "twitter:title", content: ogTitle ?? title },
     { name: "twitter:description", content: ogDescription ?? description },
+    { property: "og:image", content: OG_IMAGE_URL },
+    { property: "og:image:width", content: "1200" },
+    { property: "og:image:height", content: "630" },
+    { name: "twitter:image", content: OG_IMAGE_URL },
   ];
   if (noindex) meta.push({ name: "robots", content: "noindex, nofollow" });
 
