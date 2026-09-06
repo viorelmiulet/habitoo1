@@ -451,6 +451,14 @@ export const issuePortalApiKey = createServerFn({ method: "POST" })
     const organizationId = await requireOrgAdmin(context as unknown as AuthContext);
     const definition = getPortalDefinition(data.portalId);
     if (!definition) throw new Error("Portal necunoscut.");
+    // Habitoo emite chei DOAR pentru portalurile care declară acest model.
+    // Ex. iMove emite propria cheie API, pe care utilizatorul o salvează la noi.
+    if (!definition.authentication.includes("habitoo_api_key")) {
+      throw new Error(
+        `${definition.display_name} folosește o cheie API emisă de portal. Salvează cheia primită de la ei în configurarea integrării.`,
+      );
+    }
+
 
     const { portalRateLimited } = await import("@/lib/portals/rate-limit.server");
     if (portalRateLimited("key", organizationId)) {
