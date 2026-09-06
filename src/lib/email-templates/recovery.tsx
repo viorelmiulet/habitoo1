@@ -1,92 +1,31 @@
 import * as React from 'react'
 
-import {
-  Body,
-  Button,
-  Container,
-  Head,
-  Heading,
-  Html,
-  Img,
-  Preview,
-  Text,
-} from '@react-email/components'
+import { Text } from '@react-email/components'
 
-// Stable public logo URL for email clients (PNG for maximum compatibility).
-const LOGO_URL = 'https://habitoo.ro/assets/habitoo-logo.png'
+import { EmailLayout, PrimaryButton, paragraph, strongText } from './layout'
 
 interface RecoveryEmailProps {
   siteName: string
   confirmationUrl: string
 }
 
-export const RecoveryEmail = ({
-  siteName,
-  confirmationUrl,
-}: RecoveryEmailProps) => (
-  <Html lang="ro" dir="ltr">
-    <Head>
-      <style>{darkModeCss}</style>
-    </Head>
-    <Preview>Reset your password for {siteName}</Preview>
-    <Body style={main}>
-      <Container style={container}>
-        <Img
-          src={LOGO_URL}
-          alt={siteName}
-          width="200"
-          height="95"
-          style={logo}
-        />
-        <Heading style={h1}>Reset your password</Heading>
-        <Text style={text}>
-          We received a request to reset your password for {siteName}. Click
-          the button below to choose a new password.
-        </Text>
-        <Button className="dm-btn" style={button} href={confirmationUrl}>
-          Reset Password
-        </Button>
-        <Text style={footer}>
-          If you didn't request a password reset, you can safely ignore this
-          email. Your password will not be changed.
-        </Text>
-      </Container>
-    </Body>
-  </Html>
+export const RecoveryEmail = ({ siteName, confirmationUrl }: RecoveryEmailProps) => (
+  <EmailLayout
+    preview={`Resetează parola contului ${siteName}`}
+    heading="Resetează-ți parola"
+    note="Dacă nu ai cerut resetarea parolei, poți ignora acest email — parola actuală rămâne neschimbată."
+  >
+    <Text style={paragraph}>Bună,</Text>
+    <Text style={paragraph}>
+      Am primit o cerere de resetare a parolei pentru contul tău din{' '}
+      <strong>{siteName}</strong>.
+    </Text>
+    <Text style={strongText}>
+      Apasă butonul de mai jos ca să îți alegi o parolă nouă. Linkul este valabil o
+      perioadă limitată.
+    </Text>
+    <PrimaryButton href={confirmationUrl}>Setează o parolă nouă</PrimaryButton>
+  </EmailLayout>
 )
 
 export default RecoveryEmail
-
-const main = { backgroundColor: '#ffffff', fontFamily: 'Arial, sans-serif' }
-const container = { padding: '20px 25px' }
-const logo = { display: 'block', margin: '0 0 24px' }
-const h1 = {
-  fontSize: '22px',
-  fontWeight: 'bold' as const,
-  color: '#16223C',
-  margin: '0 0 20px',
-}
-const text = {
-  fontSize: '14px',
-  color: '#55575d',
-  lineHeight: '1.5',
-  margin: '0 0 25px',
-}
-const button = {
-  backgroundColor: '#16223C',
-  color: '#ffffff',
-  fontSize: '14px',
-  border: '1px solid #16223C',
-  borderRadius: '8px',
-  padding: '12px 20px',
-  textDecoration: 'none',
-}
-const footer = { fontSize: '12px', color: '#999999', margin: '30px 0 0' }
-// Rendered as a text child, which React may HTML-escape: keep this CSS free of >, &, and quotes.
-const darkModeCss = `
-  @media (prefers-color-scheme: dark) {
-    .dm-btn { background-color: #C9A227 !important; color: #16223C !important; }
-  }
-  [data-ogsc] .dm-btn { background-color: #C9A227 !important; color: #16223C !important; }
-  [data-ogsb] .dm-btn { background-color: #C9A227 !important; color: #16223C !important; }
-`

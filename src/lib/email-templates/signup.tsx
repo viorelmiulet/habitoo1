@@ -1,20 +1,8 @@
 import * as React from 'react'
 
-import {
-  Body,
-  Button,
-  Container,
-  Head,
-  Heading,
-  Html,
-  Img,
-  Link,
-  Preview,
-  Text,
-} from '@react-email/components'
+import { Link, Text } from '@react-email/components'
 
-// Stable public logo URL for email clients (PNG for maximum compatibility).
-const LOGO_URL = 'https://habitoo.ro/assets/habitoo-logo.png'
+import { EmailLayout, PrimaryButton, link, paragraph, strongText } from './layout'
 
 interface SignupEmailProps {
   siteName: string
@@ -25,83 +13,27 @@ interface SignupEmailProps {
 
 export const SignupEmail = ({
   siteName,
-  siteUrl,
   recipient,
   confirmationUrl,
 }: SignupEmailProps) => (
-  <Html lang="ro" dir="ltr">
-    <Head>
-      <style>{darkModeCss}</style>
-    </Head>
-    <Preview>Confirm your email for {siteName}</Preview>
-    <Body style={main}>
-      <Container style={container}>
-        <Img
-          src={LOGO_URL}
-          alt={siteName}
-          width="200"
-          height="95"
-          style={logo}
-        />
-        <Heading style={h1}>Confirm your email</Heading>
-        <Text style={text}>
-          Thanks for signing up for{' '}
-          <Link href={siteUrl} style={link}>
-            <strong>{siteName}</strong>
-          </Link>
-          !
-        </Text>
-        <Text style={text}>
-          Please confirm your email address (
-          <Link href={`mailto:${recipient}`} style={link}>
-            {recipient}
-          </Link>
-          ) by clicking the button below:
-        </Text>
-        <Button className="dm-btn" style={button} href={confirmationUrl}>
-          Verify Email
-        </Button>
-        <Text style={footer}>
-          If you didn't create an account, you can safely ignore this email.
-        </Text>
-      </Container>
-    </Body>
-  </Html>
+  <EmailLayout
+    preview={`Confirmă adresa de email pentru ${siteName}`}
+    heading="Bine ai venit în Habitoo"
+    note="Dacă nu ai creat acest cont, poți ignora acest email."
+  >
+    <Text style={paragraph}>Bună,</Text>
+    <Text style={paragraph}>
+      Îți mulțumim că ți-ai creat cont în <strong>{siteName}</strong>.
+    </Text>
+    <Text style={strongText}>
+      Confirmă adresa{' '}
+      <Link href={`mailto:${recipient}`} style={link}>
+        {recipient}
+      </Link>{' '}
+      ca să îți activăm contul.
+    </Text>
+    <PrimaryButton href={confirmationUrl}>Confirmă adresa de email</PrimaryButton>
+  </EmailLayout>
 )
 
 export default SignupEmail
-
-const main = { backgroundColor: '#ffffff', fontFamily: 'Arial, sans-serif' }
-const container = { padding: '20px 25px' }
-const logo = { display: 'block', margin: '0 0 24px' }
-const h1 = {
-  fontSize: '22px',
-  fontWeight: 'bold' as const,
-  color: '#16223C',
-  margin: '0 0 20px',
-}
-const text = {
-  fontSize: '14px',
-  color: '#55575d',
-  lineHeight: '1.5',
-  margin: '0 0 25px',
-}
-const link = { color: 'inherit', textDecoration: 'underline' }
-const button = {
-  backgroundColor: '#16223C',
-  color: '#ffffff',
-  fontSize: '14px',
-  border: '1px solid #16223C',
-  borderRadius: '8px',
-  padding: '12px 20px',
-  textDecoration: 'none',
-}
-const footer = { fontSize: '12px', color: '#999999', margin: '30px 0 0' }
-// Rendered as a text child, which React may HTML-escape: keep this CSS free of >, &, and quotes.
-const darkModeCss = `
-  @media (prefers-color-scheme: dark) {
-    .dm-btn { background-color: #C9A227 !important; color: #16223C !important; }
-  }
-  [data-ogsc] .dm-btn { background-color: #C9A227 !important; color: #16223C !important; }
-  [data-ogsb] .dm-btn { background-color: #C9A227 !important; color: #16223C !important; }
-`

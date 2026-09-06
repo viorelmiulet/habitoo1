@@ -1,16 +1,8 @@
 import * as React from 'react'
 
-import {
-  Body,
-  Button,
-  Container,
-  Head,
-  Heading,
-  Html,
-  Link,
-  Preview,
-  Text,
-} from '@react-email/components'
+import { Link, Text } from '@react-email/components'
+
+import { EmailLayout, PrimaryButton, link, paragraph, strongText } from './layout'
 
 interface EmailChangeEmailProps {
   siteName: string
@@ -30,72 +22,29 @@ export const EmailChangeEmail = ({
   newEmail,
   confirmationUrl,
 }: EmailChangeEmailProps) => (
-  <Html lang="ro" dir="ltr">
-    <Head>
-      <style>{darkModeCss}</style>
-    </Head>
-    <Preview>Confirm your email change for {siteName}</Preview>
-    <Body style={main}>
-      <Container style={container}>
-        <Heading style={h1}>Confirm your email change</Heading>
-        <Text style={text}>
-          You requested to change your email address for {siteName} from{' '}
-          <Link href={`mailto:${oldEmail}`} style={link}>
-            {oldEmail}
-          </Link>{' '}
-          to{' '}
-          <Link href={`mailto:${newEmail}`} style={link}>
-            {newEmail}
-          </Link>
-          .
-        </Text>
-        <Text style={text}>
-          Click the button below to confirm this change:
-        </Text>
-        <Button className="dm-btn" style={button} href={confirmationUrl}>
-          Confirm Email Change
-        </Button>
-        <Text style={footer}>
-          If you didn't request this change, please secure your account
-          immediately.
-        </Text>
-      </Container>
-    </Body>
-  </Html>
+  <EmailLayout
+    preview={`Confirmă schimbarea adresei de email pentru ${siteName}`}
+    heading="Confirmă noua adresă de email"
+    note="Dacă nu ai cerut această schimbare, îți recomandăm să îți schimbi imediat parola."
+  >
+    <Text style={paragraph}>Bună,</Text>
+    <Text style={paragraph}>
+      Ai cerut schimbarea adresei de email a contului tău din <strong>{siteName}</strong>{' '}
+      din{' '}
+      <Link href={`mailto:${oldEmail}`} style={link}>
+        {oldEmail}
+      </Link>{' '}
+      în{' '}
+      <Link href={`mailto:${newEmail}`} style={link}>
+        {newEmail}
+      </Link>
+      .
+    </Text>
+    <Text style={strongText}>
+      Confirmă schimbarea ca să folosești noua adresă la autentificare.
+    </Text>
+    <PrimaryButton href={confirmationUrl}>Confirmă schimbarea</PrimaryButton>
+  </EmailLayout>
 )
 
 export default EmailChangeEmail
-
-const main = { backgroundColor: '#ffffff', fontFamily: 'Arial, sans-serif' }
-const container = { padding: '20px 25px' }
-const h1 = {
-  fontSize: '22px',
-  fontWeight: 'bold' as const,
-  color: '#16223C',
-  margin: '0 0 20px',
-}
-const text = {
-  fontSize: '14px',
-  color: '#55575d',
-  lineHeight: '1.5',
-  margin: '0 0 25px',
-}
-const link = { color: 'inherit', textDecoration: 'underline' }
-const button = {
-  backgroundColor: '#16223C',
-  color: '#ffffff',
-  fontSize: '14px',
-  border: '1px solid #16223C',
-  borderRadius: '8px',
-  padding: '12px 20px',
-  textDecoration: 'none',
-}
-const footer = { fontSize: '12px', color: '#999999', margin: '30px 0 0' }
-// Rendered as a text child, which React may HTML-escape: keep this CSS free of >, &, and quotes.
-const darkModeCss = `
-  @media (prefers-color-scheme: dark) {
-    .dm-btn { background-color: #C9A227 !important; color: #16223C !important; }
-  }
-  [data-ogsc] .dm-btn { background-color: #C9A227 !important; color: #16223C !important; }
-  [data-ogsb] .dm-btn { background-color: #C9A227 !important; color: #16223C !important; }
-`

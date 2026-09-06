@@ -1,88 +1,54 @@
 import * as React from 'react'
 
-import {
-  Body,
-  Button,
-  Container,
-  Head,
-  Heading,
-  Html,
-  Link,
-  Preview,
-  Text,
-} from '@react-email/components'
+import { Text } from '@react-email/components'
+
+import { EmailLayout, PrimaryButton, paragraph, strongText } from './layout'
 
 interface InviteEmailProps {
   siteName: string
   siteUrl: string
   confirmationUrl: string
+  /** Numele agenției care face invitația, când e cunoscut. */
+  agencyName?: string
 }
 
 export const InviteEmail = ({
   siteName,
-  siteUrl,
   confirmationUrl,
+  agencyName,
 }: InviteEmailProps) => (
-  <Html lang="ro" dir="ltr">
-    <Head>
-      <style>{darkModeCss}</style>
-    </Head>
-    <Preview>You've been invited to join {siteName}</Preview>
-    <Body style={main}>
-      <Container style={container}>
-        <Heading style={h1}>You've been invited</Heading>
-        <Text style={text}>
-          You've been invited to join{' '}
-          <Link href={siteUrl} style={link}>
-            <strong>{siteName}</strong>
-          </Link>
-          . Click the button below to accept the invitation and create your
-          account.
-        </Text>
-        <Button className="dm-btn" style={button} href={confirmationUrl}>
-          Accept Invitation
-        </Button>
-        <Text style={footer}>
-          If you weren't expecting this invitation, you can safely ignore this
-          email.
-        </Text>
-      </Container>
-    </Body>
-  </Html>
+  <EmailLayout
+    preview={
+      agencyName
+        ? `${agencyName} te invită în echipa sa pe ${siteName}`
+        : `Ai fost invitat în ${siteName}`
+    }
+    heading={agencyName ? `${agencyName} te invită în echipă` : 'Ai fost invitat în echipă'}
+    note="Dacă nu te așteptai la această invitație, poți ignora emailul — contul nu se activează fără acțiunea ta."
+  >
+    <Text style={paragraph}>Bună,</Text>
+    <Text style={paragraph}>
+      {agencyName ? (
+        <>
+          Administratorul agenției <strong>{agencyName}</strong> ți-a creat un cont de
+          agent în {siteName} și te-a adăugat în echipa agenției.
+        </>
+      ) : (
+        <>
+          Administratorul agenției ți-a creat un cont de agent în {siteName} și te-a
+          adăugat în echipa agenției.
+        </>
+      )}
+    </Text>
+    <Text style={strongText}>
+      Mai ai un singur pas: îți setezi parola și intri direct în contul tău.
+    </Text>
+    <Text style={paragraph}>
+      După ce îți setezi parola, vei avea acces la proprietățile, contactele, cererile
+      și calendarul agenției, în funcție de drepturile primite.
+    </Text>
+    <PrimaryButton href={confirmationUrl}>Setează parola și intră în cont</PrimaryButton>
+  </EmailLayout>
 )
 
 export default InviteEmail
-
-const main = { backgroundColor: '#ffffff', fontFamily: 'Arial, sans-serif' }
-const container = { padding: '20px 25px' }
-const h1 = {
-  fontSize: '22px',
-  fontWeight: 'bold' as const,
-  color: '#16223C',
-  margin: '0 0 20px',
-}
-const text = {
-  fontSize: '14px',
-  color: '#55575d',
-  lineHeight: '1.5',
-  margin: '0 0 25px',
-}
-const link = { color: 'inherit', textDecoration: 'underline' }
-const button = {
-  backgroundColor: '#16223C',
-  color: '#ffffff',
-  fontSize: '14px',
-  border: '1px solid #16223C',
-  borderRadius: '8px',
-  padding: '12px 20px',
-  textDecoration: 'none',
-}
-const footer = { fontSize: '12px', color: '#999999', margin: '30px 0 0' }
-// Rendered as a text child, which React may HTML-escape: keep this CSS free of >, &, and quotes.
-const darkModeCss = `
-  @media (prefers-color-scheme: dark) {
-    .dm-btn { background-color: #C9A227 !important; color: #16223C !important; }
-  }
-  [data-ogsc] .dm-btn { background-color: #C9A227 !important; color: #16223C !important; }
-  [data-ogsb] .dm-btn { background-color: #C9A227 !important; color: #16223C !important; }
-`
