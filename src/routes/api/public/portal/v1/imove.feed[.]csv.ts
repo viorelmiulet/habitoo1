@@ -34,11 +34,16 @@ export const Route = createFileRoute("/api/public/portal/v1/imove/feed.csv")({
               response: new Response(body, {
                 status: 200,
                 headers: {
+                  // Tip explicit CSV, servit INLINE: un `Content-Disposition:
+                  // attachment` face ca unele sincronizări (iMove) să nu
+                  // detecteze corect formatul și să-l trateze ca XML.
                   "Content-Type": "text/csv; charset=utf-8",
-                  "Content-Disposition": 'attachment; filename="habitoo-imove-feed.csv"',
+                  "Content-Disposition": 'inline; filename="habitoo-imove-feed.csv"',
+                  "X-Content-Type-Options": "nosniff",
                   "Cache-Control": "no-store",
                 },
               }),
+
               items: build.listings.length,
             };
           },
