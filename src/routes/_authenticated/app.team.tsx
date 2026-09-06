@@ -242,7 +242,9 @@ function TeamPage() {
 
       <ConfirmDialog
         open={pendingRemoval !== null}
-        onOpenChange={(v) => (v ? null : setPendingRemoval(null))}
+        onOpenChange={(v) => {
+          if (!v) setPendingRemoval(null);
+        }}
         title="Elimini agentul din agenție?"
         description={`Contul lui ${pendingRemoval?.name ?? ""} va fi șters și locul se eliberează în planul tău.`}
         confirmLabel="Elimină agentul"
