@@ -267,18 +267,21 @@ export function PropertyPortalsCell({
 
       {canManage ? (
         <div className="flex flex-wrap items-center gap-2">
-          <Button
-            type="button"
-            size="sm"
-            variant="outline"
-            disabled={!hasSelection || busy}
-            onClick={() => publish.mutate()}
-            title={hasSelection ? "Publică pe portalurile selectate" : "Selectează cel puțin un portal configurat"}
-          >
-            {publish.isPending ? <Loader2 className="size-3.5 animate-spin" /> : <Send className="size-3.5" />}
-            Publică
-          </Button>
+          {anyPush ? (
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              disabled={!hasSelection || busy}
+              onClick={() => publish.mutate()}
+              title={hasSelection ? "Publică pe portalurile selectate" : "Selectează cel puțin un portal configurat"}
+            >
+              {publish.isPending ? <Loader2 className="size-3.5 animate-spin" /> : <Send className="size-3.5" />}
+              Publică
+            </Button>
+          ) : null}
           {cells.some((c) => c.state === "published") ? (
+
             <Button
               type="button"
               size="sm"
