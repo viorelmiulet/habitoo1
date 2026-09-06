@@ -99,11 +99,26 @@ export type FeedProperty = {
   custom1: string | null;
   custom2: string | null;
   portals: string[];
+  tip: string | null;
   suprafata_value: number | null;
   incalzire_value: string | null;
   mobilare_value: string | null;
+  /** Nume ImmoFlux pentru aceeași sursă ca `mobilare_value` (properties.furnishing). */
+  mobilat_value: string | null;
   parcare_value: string | null;
   balcon_value: boolean | null;
+  /** Nume ImmoFlux pentru aceeași sursă ca `utilitati` (properties.utilities). */
+  utilitati_values: string[];
+  /** Nume ImmoFlux pentru aceeași sursă ca `dotari` (properties.features). */
+  dotari_values: string[];
+  stadiuconstructie_value: string | null;
+  tipconstructie_value: string | null;
+  starefinisaje_value: string | null;
+  bucatarie_values: string[];
+  eficienta_energetica: string | null;
+  consum_specific: number | null;
+  indice_emisii: number | null;
+  consum_energie_regenerabila: number | null;
   energy: {
     clasa: string | null;
     consum: number | null;
@@ -111,6 +126,7 @@ export type FeedProperty = {
   };
   url: string | null;
 };
+
 
 /** Statusurile Habitoo care pot apărea în feedul public. */
 export const FEED_PUBLIC_STATUSES = ["active", "reserved", "negotiation"] as const;
