@@ -136,6 +136,8 @@ function PropertyDetailPage() {
   const [details, setDetails] = useState<PropertyDetailsValue>({});
   // Vânzare / închiriere (pot fi active simultan), fiecare cu preț și monedă.
   const [tx, setTx] = useState<TransactionValue>(emptyTransaction);
+  // Colaborare Habitoo: expunerea anunțului către celelalte agenții din platformă.
+  const [collab, setCollab] = useState(false);
   const startEdit = () => {
     if (!property) return;
     setDraft({
@@ -148,7 +150,13 @@ function PropertyDetailPage() {
       address: property.address ?? "",
       description: property.description ?? "",
       internal_notes: property.internal_notes ?? "",
+      collab_commission_percent:
+        property.collab_commission_percent !== null && property.collab_commission_percent !== undefined
+          ? String(property.collab_commission_percent)
+          : "",
+      collab_terms: property.collab_terms ?? "",
     });
+    setCollab(Boolean(property.collaboration));
     setTx(transactionFromProperty(property));
     setDetails(
       Object.fromEntries(
@@ -196,6 +204,10 @@ function PropertyDetailPage() {
     address: draft.address || null,
     description: draft.description || null,
     internal_notes: draft.internal_notes || null,
+    collaboration: collab,
+    collab_commission_percent:
+      collab && draft.collab_commission_percent ? Number(draft.collab_commission_percent) : null,
+    collab_terms: collab ? draft.collab_terms || null : null,
     ...details,
   });
 
