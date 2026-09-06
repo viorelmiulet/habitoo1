@@ -94,7 +94,15 @@ function SuperadminPortalsPage() {
 
       {organizationId ? (
         <div className="mt-6 space-y-6">
+          <PortalActivationRequestsCard
+            onOpenOrganization={(orgId) => {
+              setOrganizationId(orgId);
+              setPropertyId("");
+              window.scrollTo({ top: 0, behavior: "smooth" });
+            }}
+          />
           <PortalsCard organizationId={organizationId} />
+
 
           <section className="panel">
             <header className="space-y-3 border-b border-border px-5 py-4">
