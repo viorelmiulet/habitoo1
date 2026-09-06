@@ -9,12 +9,10 @@
  * Separă intenția (checkbox) de starea reală a integrării (status), fără să
  * introducă o a doua sursă de adevăr.
  */
-import { useEffect, useMemo, useState } from "react";
+import { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { Loader2, Save } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { StatusBadge } from "@/components/app/StatusBadge";
 import { InlineLoading } from "@/components/app/LoadingState";
@@ -52,14 +50,29 @@ const STATE_LABEL: Record<
   coming_soon: { label: "În curând", tone: "neutral" },
 };
 
-export function PropertyPortalsCard({
-  organizationId,
-  propertyId,
-}: {
-  /** Doar Superadmin trimite agenția explicit; agenția o ia din sesiune. */
-  organizationId?: string;
-  propertyId: string;
-}) {
+export type PortalApplyResult = {
+  portalId: string;
+  portalName: string;
+  ok: boolean;
+  message: string | null;
+};
+
+/**
+ * Handle imperativ folosit de butonul unic „Publică” din antetul paginii:
+ * aplică exact bifele curente. `null` = nimic de aplicat (sau retragere anulată).
+ */
+export type PropertyPortalsHandle = {
+  applyPending: () => Promise<{ results: PortalApplyResult[] } | null>;
+};
+
+export const PropertyPortalsCard = forwardRef<
+  PropertyPortalsHandle,
+  {
+    /** Doar Superadmin trimite agenția explicit; agenția o ia din sesiune. */
+    organizationId?: string;
+    propertyId: string;
+  }
+>(function PropertyPortalsCard({ organizationId, propertyId }, ref) {
   const queryClient = useQueryClient();
   const loadMatrix = useServerFn(getPropertiesPortalMatrix);
   const applyFn = useServerFn(applyPropertyPortalSelection);
@@ -117,17 +130,28 @@ export function PropertyPortalsCard({
           syncExisting: false,
         },
       }),
-    onSuccess: (res) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey });
       queryClient.invalidateQueries({ queryKey: ["property-portals-matrix"] });
-      const failed = res.results.filter((r) => !r.ok);
-      const done = res.results.filter((r) => r.ok && r.message);
-      if (done.length > 0) toast.success(done.map((r) => r.message).join(" · "));
-      if (failed.length > 0) toast.error(failed.map((r) => r.message).join(" · "));
-      if (done.length === 0 && failed.length === 0) toast.message("Nicio schimbare de publicare.");
     },
-    onError: (e: Error) => toastError(e),
   });
+
+  /** Rezolvatorul confirmării de retragere, cât timp dialogul este deschis. */
+  const confirmResolver = useRef<((ok: boolean) => void) | null>(null);
+
+  const applyPending = useCallback(async () => {
+    if (!canManage || actionable.length === 0) return null;
+    if (toWithdraw.length > 0) {
+      const confirmed = await new Promise<boolean>((resolve) => {
+        confirmResolver.current = resolve;
+        setConfirming(true);
+      });
+      if (!confirmed) return null;
+    }
+    return await apply.mutateAsync();
+  }, [canManage, actionable.length, toWithdraw.length, apply]);
+
+  useImperativeHandle(ref, () => ({ applyPending }), [applyPending]);
 
   if (matrix.isLoading) return <InlineLoading label="Se încarcă publicarea pe portaluri…" />;
   if (matrix.isError) return <QueryError error={matrix.error} onRetry={() => matrix.refetch()} />;
@@ -199,24 +223,22 @@ export function PropertyPortalsCard({
           {cells.some((c) => c.availability === "available" && !c.configured) ? (
             <span className="text-xs text-muted-foreground">Configurează portalul mai sus.</span>
           ) : null}
-          <Button
-            type="button"
-            size="sm"
-            disabled={!canManage || actionable.length === 0 || apply.isPending}
-
-            onClick={() => (toWithdraw.length > 0 ? setConfirming(true) : apply.mutate())}
-          >
-            {apply.isPending ? (
-              <Loader2 className="mr-2 size-3.5 animate-spin" />
-            ) : (
-              <Save className="mr-2 size-3.5" />
-            )}
-            Salvează publicarea
-          </Button>
+          <span className="text-xs text-muted-foreground">
+            Se aplică prin butonul „Publică” din partea de sus a paginii.
+          </span>
         </div>
       </footer>
 
-      <AlertDialog open={confirming} onOpenChange={setConfirming}>
+      <AlertDialog
+        open={confirming}
+        onOpenChange={(open) => {
+          setConfirming(open);
+          if (!open) {
+            confirmResolver.current?.(false);
+            confirmResolver.current = null;
+          }
+        }}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>
@@ -242,8 +264,10 @@ export function PropertyPortalsCard({
             <AlertDialogCancel>Anulează</AlertDialogCancel>
             <AlertDialogAction
               onClick={() => {
+                const resolve = confirmResolver.current;
+                confirmResolver.current = null;
                 setConfirming(false);
-                apply.mutate();
+                resolve?.(true);
               }}
             >Confirmă retragerea</AlertDialogAction>
           </AlertDialogFooter>
@@ -251,4 +275,4 @@ export function PropertyPortalsCard({
       </AlertDialog>
     </section>
   );
-}
+});
