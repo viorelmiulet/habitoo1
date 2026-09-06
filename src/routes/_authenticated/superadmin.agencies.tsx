@@ -66,6 +66,27 @@ function AgenciesPage() {
     onError: (e: Error) => toastError(e),
   });
 
+  const savePlan = useMutation({
+    mutationFn: async ({ id, plan, previous }: { id: string; plan: PlanKey; previous: string }) => {
+      const { error } = await supabase.from("organizations").update({ plan }).eq("id", id);
+      if (error) throw error;
+      // Jurnalizarea schimbării de plan în audit log.
+      await supabase.from("audit_logs").insert({
+        organization_id: id,
+        action: "organization.plan_changed",
+        entity: "organizations",
+        entity_id: id,
+        old_values: { plan: previous },
+        new_values: { plan, agent_limit: PLAN_AGENT_LIMITS[plan] },
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["superadmin"] });
+      toast.success("Planul agenției a fost salvat.");
+    },
+    onError: (e: Error) => toastError(e),
+  });
+
   const rows = (data?.orgs ?? []).filter((o) =>
     q.trim() ? `${o.name} ${o.city ?? ""}`.toLowerCase().includes(q.trim().toLowerCase()) : true,
   );
