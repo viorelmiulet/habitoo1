@@ -3,6 +3,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
 import { withFeedAuth, jsonResponse, errorResponse, FEED_API_VERSION } from "@/lib/site-feed/auth.server";
+import { requireFeedScope } from "@/lib/site-feed/handlers.server";
 
 const schema = z.object({
   nume: z.string().trim().min(2).max(120),
@@ -18,6 +19,8 @@ export const Route = createFileRoute("/api/public/sites/v1/contacts")({
     handlers: {
       POST: async ({ request }) =>
         withFeedAuth(request, "contacts", async (auth) => {
+          const denied = requireFeedScope(auth, "leads:write");
+          if (denied) return denied;
           let body: unknown;
           try {
             body = await request.json();

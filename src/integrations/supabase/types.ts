@@ -626,6 +626,146 @@ export type Database = {
         }
         Relationships: []
       }
+      portal_api_keys: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          expires_at: string | null
+          id: string
+          key_hash: string
+          key_prefix: string
+          label: string
+          last_used_at: string | null
+          organization_id: string
+          portal: string
+          portal_connection_id: string | null
+          request_count: number
+          revoked_at: string | null
+          revoked_by: string | null
+          scopes: string[]
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          expires_at?: string | null
+          id?: string
+          key_hash: string
+          key_prefix: string
+          label: string
+          last_used_at?: string | null
+          organization_id: string
+          portal: string
+          portal_connection_id?: string | null
+          request_count?: number
+          revoked_at?: string | null
+          revoked_by?: string | null
+          scopes?: string[]
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          expires_at?: string | null
+          id?: string
+          key_hash?: string
+          key_prefix?: string
+          label?: string
+          last_used_at?: string | null
+          organization_id?: string
+          portal?: string
+          portal_connection_id?: string | null
+          request_count?: number
+          revoked_at?: string | null
+          revoked_by?: string | null
+          scopes?: string[]
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "portal_api_keys_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "portal_api_keys_portal_connection_id_fkey"
+            columns: ["portal_connection_id"]
+            isOneToOne: false
+            referencedRelation: "portal_connections"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      portal_connections: {
+        Row: {
+          authentication_mode: string
+          created_at: string
+          created_by: string | null
+          direction: string
+          external_account_id: string | null
+          id: string
+          last_sync_at: string | null
+          last_sync_error: string | null
+          last_sync_status: string | null
+          organization_id: string
+          portal: string
+          portal_credentials_encrypted: string | null
+          settings: Json
+          status: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          authentication_mode?: string
+          created_at?: string
+          created_by?: string | null
+          direction?: string
+          external_account_id?: string | null
+          id?: string
+          last_sync_at?: string | null
+          last_sync_error?: string | null
+          last_sync_status?: string | null
+          organization_id: string
+          portal: string
+          portal_credentials_encrypted?: string | null
+          settings?: Json
+          status?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          authentication_mode?: string
+          created_at?: string
+          created_by?: string | null
+          direction?: string
+          external_account_id?: string | null
+          id?: string
+          last_sync_at?: string | null
+          last_sync_error?: string | null
+          last_sync_status?: string | null
+          organization_id?: string
+          portal?: string
+          portal_credentials_encrypted?: string | null
+          settings?: Json
+          status?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "portal_connections_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       portal_integrations: {
         Row: {
           config: Json
@@ -693,6 +833,123 @@ export type Database = {
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      portal_listings: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          external_id: string | null
+          id: string
+          last_error: string | null
+          last_sync_at: string | null
+          organization_id: string
+          portal: string
+          property_id: string
+          published_at: string | null
+          status: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          external_id?: string | null
+          id?: string
+          last_error?: string | null
+          last_sync_at?: string | null
+          organization_id: string
+          portal: string
+          property_id: string
+          published_at?: string | null
+          status?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          external_id?: string | null
+          id?: string
+          last_error?: string | null
+          last_sync_at?: string | null
+          organization_id?: string
+          portal?: string
+          property_id?: string
+          published_at?: string | null
+          status?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "portal_listings_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "portal_listings_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      portal_operation_logs: {
+        Row: {
+          actor_id: string | null
+          created_at: string
+          error_code: string | null
+          error_message: string | null
+          id: string
+          operation: string
+          organization_id: string
+          portal: string
+          property_id: string | null
+          success: boolean
+        }
+        Insert: {
+          actor_id?: string | null
+          created_at?: string
+          error_code?: string | null
+          error_message?: string | null
+          id?: string
+          operation: string
+          organization_id: string
+          portal: string
+          property_id?: string | null
+          success: boolean
+        }
+        Update: {
+          actor_id?: string | null
+          created_at?: string
+          error_code?: string | null
+          error_message?: string | null
+          id?: string
+          operation?: string
+          organization_id?: string
+          portal?: string
+          property_id?: string | null
+          success?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "portal_operation_logs_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "portal_operation_logs_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
             referencedColumns: ["id"]
           },
         ]

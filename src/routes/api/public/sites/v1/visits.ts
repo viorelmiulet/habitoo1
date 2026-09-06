@@ -3,6 +3,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
 import { withFeedAuth, jsonResponse, errorResponse, FEED_API_VERSION } from "@/lib/site-feed/auth.server";
+import { requireFeedScope } from "@/lib/site-feed/handlers.server";
 import { isVisitDateAcceptable } from "@/lib/site-feed/mapper";
 
 const visitSchema = z.object({
@@ -20,6 +21,8 @@ export const Route = createFileRoute("/api/public/sites/v1/visits")({
     handlers: {
       GET: async ({ request }) =>
         withFeedAuth(request, "visits", async (auth) => {
+          const denied = requireFeedScope(auth, "leads:write");
+          if (denied) return denied;
           const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
           const { data, error } = await supabaseAdmin
             .from("site_feed_visits")
@@ -41,6 +44,8 @@ export const Route = createFileRoute("/api/public/sites/v1/visits")({
 
       POST: async ({ request }) =>
         withFeedAuth(request, "visits", async (auth) => {
+          const denied = requireFeedScope(auth, "leads:write");
+          if (denied) return denied;
           let body: unknown;
           try {
             body = await request.json();
