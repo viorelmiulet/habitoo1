@@ -17,6 +17,7 @@ import { toast } from "sonner";
 import { toastError } from "@/lib/errors";
 import { PageHeader } from "@/components/app/PageHeader";
 import { CardGridSkeleton, ListSkeleton } from "@/components/app/LoadingState";
+import { PropertyThumb, usePropertyCovers } from "@/components/app/PropertyThumb";
 import { StatusBadge } from "@/components/app/StatusBadge";
 import { EmptyState } from "@/components/app/EmptyState";
 import { PromptDialog, type PromptRequest } from "@/components/app/PromptDialog";
@@ -276,6 +277,8 @@ function PropertiesPage() {
   });
 
   const rows = result?.rows ?? [];
+  // Coverul fiecărei proprietăți din pagina curentă (is_primary → prima poziție).
+  const coverOf = usePropertyCovers(rows.map((r) => r.id));
   const total = result?.count ?? 0;
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
@@ -754,7 +757,9 @@ function PropertiesPage() {
           <>
             <div className="hidden items-center gap-3 border-b border-border px-4 py-3 text-xs font-medium tracking-wide text-muted-foreground uppercase lg:flex">
               <Checkbox checked={allSelected} onCheckedChange={(c) => setSelected(c ? rows.map((r) => r.id) : [])} />
-              <span className="flex-1">Proprietate</span>
+              <span className="w-4" aria-hidden />
+              <span className="w-[120px]">Foto</span>
+              <span className="flex-1 basis-[200px]">Proprietate</span>
               {columns.includes("type") ? <span className="w-28">Tip</span> : null}
               {columns.includes("transaction") ? <span className="w-24">Tranzacție</span> : null}
               {columns.includes("status") ? <span className="w-28">Status</span> : null}
@@ -792,7 +797,13 @@ function PropertiesPage() {
                         className={`size-4 ${favoriteIds.includes(p.id) ? "fill-warning text-warning" : "text-muted-foreground"}`}
                       />
                     </button>
-                    <div className="min-w-0 flex-1">
+                    <PropertyThumb
+                      propertyId={p.id}
+                      title={p.title}
+                      cover={coverOf(p.id)}
+                      className="h-[90px] w-[110px] sm:h-[100px] sm:w-[120px]"
+                    />
+                    <div className="min-w-0 flex-1 basis-[200px]">
                       <Link to="/app/properties/$id" params={{ id: p.id }} className="block truncate font-medium hover:text-primary">
                         {p.title}
                       </Link>
@@ -852,6 +863,12 @@ function PropertiesPage() {
                     />
                   </button>
                 </div>
+                <PropertyThumb
+                  propertyId={p.id}
+                  title={p.title}
+                  cover={coverOf(p.id)}
+                  className="h-40 w-full"
+                />
                 <Link to="/app/properties/$id" params={{ id: p.id }} className="line-clamp-2 font-medium hover:text-primary">
                   {p.title}
                 </Link>
