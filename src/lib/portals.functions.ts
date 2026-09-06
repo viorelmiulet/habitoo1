@@ -48,6 +48,8 @@ export type PortalHubItem = {
   listings: { published: number; failed: number; pending: number };
   eligibleProperties: number;
   feedUrl: string;
+  /** Diagnoză reală a feedului pe care îl citește portalul. */
+  feed: { ok: boolean; apiVersion: string | null; properties: number | null; agents: number | null };
 };
 
 export type PortalLogItem = {
@@ -158,7 +160,8 @@ export const getPortalHub = createServerFn({ method: "GET" })
     const admin = await loadAdmin();
     const feedUrl = await feedUrlForOrg();
 
-    const [connections, keys, listings, eligible] = await Promise.all([
+    const { inspectFeedAgents, inspectFeedProperties } = await import("@/lib/portals/feed-inspect.server");
+    const [connections, keys, listings, eligible, feedProperties, feedAgents] = await Promise.all([
       admin.from("portal_connections").select("*").eq("organization_id", organizationId),
       admin
         .from("portal_api_keys")
@@ -173,6 +176,8 @@ export const getPortalHub = createServerFn({ method: "GET" })
         .eq("publish_status", "published")
         .is("deleted_at", null)
         .in("status", ["active", "reserved", "negotiation"]),
+      inspectFeedProperties(organizationId),
+      inspectFeedAgents(organizationId),
     ]);
 
     return PORTALS.map((portal) => {
@@ -220,6 +225,12 @@ export const getPortalHub = createServerFn({ method: "GET" })
         },
         eligibleProperties: eligible.count ?? 0,
         feedUrl,
+        feed: {
+          ok: feedProperties.status === 200 && feedAgents.status === 200,
+          apiVersion: feedProperties.apiVersion,
+          properties: feedProperties.total,
+          agents: feedAgents.total,
+        },
       };
     });
   });
@@ -373,7 +384,12 @@ export const testPortalConnection = createServerFn({ method: "POST" })
     });
 
     return result.ok
-      ? { ok: true as const, live: result.data.live, detail: result.data.detail }
+      ? {
+          ok: true as const,
+          live: result.data.live,
+          detail: result.data.detail,
+          feed: result.data.feed ?? null,
+        }
       : { ok: false as const, code: result.code, message: result.message };
   });
 
@@ -522,17 +538,18 @@ export const runPortalListingAction = createServerFn({ method: "POST" })
         : data.action === "update"
           ? "updated"
           : "published";
-    const patch = {
+    const patch: Record<string, unknown> = {
       organization_id: organizationId,
       portal: definition.id,
       property_id: data.propertyId,
       status,
       last_sync_at: now,
       last_error: result.ok ? null : result.message,
+      ...(result.ok && result.data.externalId ? { external_id: result.data.externalId } : {}),
       ...(result.ok && data.action === "publish" ? { published_at: now } : {}),
       updated_by: context.userId,
     };
-    if (listing) await admin.from("portal_listings").update(patch).eq("id", listing.id);
+    if (listing) await admin.from("portal_listings").update(patch as never).eq("id", listing.id);
     else await admin.from("portal_listings").insert({ ...patch, created_by: context.userId } as never);
 
     await logOperation({
@@ -547,7 +564,16 @@ export const runPortalListingAction = createServerFn({ method: "POST" })
     });
 
     return result.ok
-      ? { ok: true as const, live: result.data.live, detail: result.data.detail, status }
+      ? {
+          ok: true as const,
+          live: result.data.live,
+          detail: result.data.detail,
+          status,
+          externalId: result.data.externalId,
+          feedVisible: result.data.feedVisible ?? null,
+          processed: result.data.processed ?? null,
+          message: result.data.message ?? null,
+        }
       : { ok: false as const, code: result.code, message: result.message };
   });
 
@@ -569,20 +595,55 @@ export const getPropertyPortalStatus = createServerFn({ method: "POST" })
         .eq("organization_id", organizationId),
     ]);
 
-    return PORTALS.filter((p) => p.status === "available").map((portal) => {
-      const listing = (listings ?? []).find((l) => l.portal === portal.id) ?? null;
-      const connection = (connections ?? []).find((c) => c.portal === portal.id) ?? null;
-      return {
-        portalId: portal.id,
-        portalName: portal.display_name,
-        connected: connection?.status === "connected" || connection?.status === "ready",
-        status: listing?.status ?? "not_published",
-        externalId: listing?.external_id ?? null,
-        publishedAt: listing?.published_at ?? null,
-        lastSyncAt: listing?.last_sync_at ?? null,
-        lastError: listing?.last_error ?? null,
-      };
-    });
+    const { getPortalAdapter } = await import("@/lib/portals/adapters/index.server");
+    const available = PORTALS.filter((p) => p.status === "available");
+
+    return await Promise.all(
+      available.map(async (portal) => {
+        const listing = (listings ?? []).find((l) => l.portal === portal.id) ?? null;
+        const connection = (connections ?? []).find((c) => c.portal === portal.id) ?? null;
+        const adapter = getPortalAdapter(portal.id);
+
+        // Statusul REAL: pe lângă ce am salvat noi, ce vede efectiv portalul.
+        let diagnostics: {
+          feedVisible: boolean;
+          externalId: string | null;
+          offerUrl: string | null;
+          agentName: string | null;
+          images: { total: number; resolvable: number; broken: number; primary: boolean };
+          notes: string[];
+        } | null = null;
+        if (adapter?.diagnoseListing) {
+          const { ctx } = await buildContext(organizationId, portal);
+          const result = await adapter.diagnoseListing(ctx, {
+            propertyId: data.propertyId,
+            externalId: listing?.external_id ?? null,
+          });
+          if (result.ok) {
+            diagnostics = {
+              feedVisible: result.data.feedVisible,
+              externalId: result.data.externalId,
+              offerUrl: result.data.offerUrl,
+              agentName: result.data.agentName,
+              images: result.data.images,
+              notes: result.data.notes,
+            };
+          }
+        }
+
+        return {
+          portalId: portal.id,
+          portalName: portal.display_name,
+          connected: connection?.status === "connected" || connection?.status === "ready",
+          status: listing?.status ?? "not_published",
+          externalId: listing?.external_id ?? diagnostics?.externalId ?? null,
+          publishedAt: listing?.published_at ?? null,
+          lastSyncAt: listing?.last_sync_at ?? null,
+          lastError: listing?.last_error ?? null,
+          diagnostics,
+        };
+      }),
+    );
   });
 
 export const getPortalLogs = createServerFn({ method: "GET" })

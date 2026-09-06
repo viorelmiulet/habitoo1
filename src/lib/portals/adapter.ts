@@ -45,12 +45,42 @@ export type ListingOutcome = {
   live: boolean;
   /** Descriere sanitizată a ce s-a trimis (fără secrete). */
   detail: string;
+  /** Oferta este vizibilă în feedul pe care îl citește portalul. */
+  feedVisible?: boolean;
+  /** Câte anunțuri a confirmat portalul că a procesat (dacă răspunde cu asta). */
+  processed?: number | null;
+  /** Mesaj scurt pentru utilizator despre rezultatul real. */
+  message?: string;
 };
 
 export type ConnectionStatusOutcome = {
   configured: boolean;
   live: boolean;
   detail: string;
+  /** Diagnoză reală a feedului pe care îl consumă portalul. */
+  feed?: {
+    ok: boolean;
+    apiVersion: string | null;
+    /** Oferte eligibile expuse portalului. */
+    properties: number | null;
+    /** Agenți expuși portalului. */
+    agents: number | null;
+    /** Chei active emise de Habitoo pentru portal. */
+    activeKeys: number | null;
+    url: string;
+  };
+};
+
+/** Diagnoza feedului, imaginilor și agenților pentru o ofertă anume. */
+export type ListingDiagnostics = {
+  feedVisible: boolean;
+  externalId: string | null;
+  offerUrl: string | null;
+  agentId: string | null;
+  agentName: string | null;
+  images: { total: number; resolvable: number; broken: number; primary: boolean };
+  updatedAt: string | null;
+  notes: string[];
 };
 
 export interface PortalAdapter {
@@ -64,6 +94,8 @@ export interface PortalAdapter {
   /** Opționale — implementate doar dacă portalul le documentează. */
   fetchListings?(ctx: PortalContext): Promise<PortalResult<unknown[]>>;
   fetchAgents?(ctx: PortalContext): Promise<PortalResult<unknown[]>>;
+  /** Diagnoză feed + imagini + agent pentru o ofertă. */
+  diagnoseListing?(ctx: PortalContext, ref: ListingRef): Promise<PortalResult<ListingDiagnostics>>;
   publishBulk?(ctx: PortalContext, refs: ListingRef[]): Promise<PortalResult<{ processed: number }>>;
   webhookSend?(ctx: PortalContext, ref: ListingRef): Promise<PortalResult<ListingOutcome>>;
   webhookReceive?(ctx: PortalContext, payload: unknown): Promise<PortalResult<{ handled: boolean }>>;

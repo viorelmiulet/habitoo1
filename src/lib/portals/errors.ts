@@ -14,6 +14,7 @@ export type PortalErrorCode =
   | "TIMEOUT"
   | "PORTAL_ERROR"
   | "VALIDATION_ERROR"
+  | "FEED_ERROR"
   | "CONFIG_ERROR";
 
 export const PORTAL_ERROR_MESSAGE: Record<PortalErrorCode, string> = {
@@ -26,6 +27,7 @@ export const PORTAL_ERROR_MESSAGE: Record<PortalErrorCode, string> = {
   TIMEOUT: "Portalul nu a răspuns în timp util.",
   PORTAL_ERROR: "Portalul a returnat o eroare. Reîncearcă mai târziu.",
   VALIDATION_ERROR: "Datele proprietății nu îndeplinesc cerințele de publicare.",
+  FEED_ERROR: "Feedul Habitoo pe care îl citește portalul nu a răspuns corect.",
   CONFIG_ERROR: "Integrarea nu este configurată complet.",
 };
 
