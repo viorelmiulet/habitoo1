@@ -467,6 +467,8 @@ function HomePage() {
 
       <PortalsSection />
 
+      <CollaborationSection />
+
       {/* BENEFITS */}
       <Section tone="muted">
         <Container>
