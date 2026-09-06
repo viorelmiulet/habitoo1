@@ -175,6 +175,48 @@ export type Database = {
           },
         ]
       }
+      contact_requests: {
+        Row: {
+          agency: string
+          created_at: string
+          email: string
+          id: string
+          interest: string
+          message: string
+          name: string
+          phone: string | null
+          source_path: string | null
+          status: string
+          user_agent: string | null
+        }
+        Insert: {
+          agency: string
+          created_at?: string
+          email: string
+          id?: string
+          interest: string
+          message: string
+          name: string
+          phone?: string | null
+          source_path?: string | null
+          status?: string
+          user_agent?: string | null
+        }
+        Update: {
+          agency?: string
+          created_at?: string
+          email?: string
+          id?: string
+          interest?: string
+          message?: string
+          name?: string
+          phone?: string | null
+          source_path?: string | null
+          status?: string
+          user_agent?: string | null
+        }
+        Relationships: []
+      }
       contacts: {
         Row: {
           assigned_to: string | null
