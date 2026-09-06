@@ -112,6 +112,26 @@ describe("mapPropertyToFeed", () => {
     publicSiteUrl: "https://habitoo.ro",
     images: [image, { ...image, id: "44444444-4444-4444-8444-444444444444", is_confidential: true }],
     agent: { id: "22222222-2222-4222-8222-222222222222", full_name: "Mihai Popescu" },
+    portalKeys: ["clickimob"],
+  });
+
+  it("expune portalurile o singură dată din publicări + taguri legacy", () => {
+    expect(mapped.portals).toEqual(["clickimob"]);
+  });
+
+  it("nu inventează câmpuri fără echivalent și păstrează cele reale", () => {
+    expect(mapped.pretfaratva).toBeNull();
+    expect(mapped.comisioncumparator).toBeNull();
+    expect(mapped.tvainclus).toBe(true);
+    expect(mapped.nrdormitoare).toBe(2);
+    expect(mapped.cod_siruta_localitate).toBeNull();
+  });
+
+  it("linkul public al ofertei rămâne pe site, nu pe CRM", () => {
+    expect(mapped.url).toBe(`https://habitoo.ro/oferta/${baseProperty.id}`);
+    expect(mapped.images[0]?.src).toBe(
+      "https://crm.habitoo.ro/api/public/sites/v1/media/33333333-3333-4333-8333-333333333333",
+    );
   });
 
   it("mapează identificatorii și datele", () => {
