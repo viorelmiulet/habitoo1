@@ -365,6 +365,13 @@ export function PortalsCard() {
                       </Button>
                     </div>
                   ) : null}
+                  {!item.portal.authentication.includes("habitoo_api_key") ? (
+                    <p className="text-xs text-muted-foreground">
+                      {item.portal.display_name} folosește cheia API proprie, emisă de portal. Salvează cheia mai
+                      sus — Habitoo nu emite chei pentru acest portal.
+                    </p>
+                  ) : (
+                    <>
                   {activeKeys.length ? (
                     <ul className="divide-y divide-border text-sm">
                       {activeKeys.map((k) => (
@@ -427,6 +434,9 @@ export function PortalsCard() {
                       </div>
                     </div>
                   ) : null}
+                    </>
+                  )}
+
                 </div>
 
                 <div className="flex flex-wrap gap-2">
