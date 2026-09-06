@@ -32,6 +32,8 @@ export type PortalHubItem = {
     hasPortalCredential: boolean;
     endpointUrl: string | null;
     allowLiveRequests: boolean;
+    /** Superadmin a activat explicit portalul pentru această agenție. */
+    activated: boolean;
     lastSyncAt: string | null;
     lastSyncStatus: string | null;
     lastSyncError: string | null;
@@ -291,6 +293,7 @@ export const getPortalHub = createServerFn({ method: "POST" })
           hasPortalCredential: Boolean(row?.portal_credentials_encrypted),
           endpointUrl: typeof settings["endpoint_url"] === "string" ? String(settings["endpoint_url"]) : null,
           allowLiveRequests: settings["allow_live"] === true,
+          activated: row?.activated === true,
           lastSyncAt: row?.last_sync_at ?? null,
           lastSyncStatus: row?.last_sync_status ?? null,
           lastSyncError: row?.last_sync_error ?? null,
@@ -346,6 +349,60 @@ const saveSchema = z.object({
   endpointUrl: z.string().trim().max(300).optional(),
   allowLiveRequests: z.boolean().optional(),
 });
+
+/**
+ * Superadmin decide explicit dacă portalul este ACTIVAT pentru agenție.
+ * Separat de starea tehnică a conexiunii: un portal poate fi configurat corect
+ * și totuși dezactivat pentru o agenție (ex. relație comercială neîncheiată).
+ */
+export const setPortalActivation = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) =>
+    z
+      .object({
+        organizationId: z.string().uuid(),
+        portalId: z.string().min(1).max(40),
+        activated: z.boolean(),
+      })
+      .parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    const organizationId = await requireSuperadminOrg(context as unknown as AuthContext, data.organizationId);
+    const definition = getPortalDefinition(data.portalId);
+    if (!definition) throw new Error("Portal necunoscut.");
+
+    const admin = await loadAdmin();
+    const { error } = await admin.from("portal_connections").upsert(
+      {
+        organization_id: organizationId,
+        portal: definition.id,
+        activated: data.activated,
+        updated_by: context.userId,
+        created_by: context.userId,
+      } as never,
+      { onConflict: "organization_id,portal" },
+    );
+    if (error) throw new Error(error.message);
+
+    await admin.from("audit_logs").insert({
+      organization_id: organizationId,
+      actor_id: context.userId,
+      action: data.activated ? "portal.activated_for_org" : "portal.deactivated_for_org",
+      entity: "portal_connections",
+      new_values: { portal: definition.id, activated: data.activated },
+      created_by: context.userId,
+    } as never);
+
+    await logOperation({
+      organizationId,
+      portal: definition.id,
+      operation: data.activated ? "activate_org" : "deactivate_org",
+      success: true,
+      actorId: context.userId,
+    });
+
+    return { ok: true as const, activated: data.activated };
+  });
 
 export const savePortalConnection = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
