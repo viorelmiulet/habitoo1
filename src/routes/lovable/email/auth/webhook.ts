@@ -75,13 +75,28 @@ export const Route = createFileRoute("/lovable/email/auth/webhook")({
                   confirmationUrl: data.url,
                 }),
             },
-            recovery: {
-              subject: 'Resetează parola contului Habitoo CRM',
-              render: (data) =>
-                React.createElement(RecoveryEmail, {
+            // Agenții invitați de un administrator primesc tot un email de resetare
+            // parolă, dar cu mesajul de invitație în agenția respectivă.
+            recovery: (data) => {
+              const agencyName = agencyFromUrl(data.url)
+              if (agencyName) {
+                return {
+                  subject: `${agencyName} te invită în echipa sa pe ${SITE_NAME} — setează-ți parola`,
+                  element: React.createElement(InviteEmail, {
+                    siteName: SITE_NAME,
+                    siteUrl: SITE_URL,
+                    confirmationUrl: data.url,
+                    agencyName,
+                  }),
+                }
+              }
+              return {
+                subject: 'Resetează parola contului Habitoo CRM',
+                element: React.createElement(RecoveryEmail, {
                   siteName: SITE_NAME,
                   confirmationUrl: data.url,
                 }),
+              }
             },
 
             email_change: {
