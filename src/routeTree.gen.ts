@@ -50,6 +50,7 @@ import { Route as AuthenticatedAppRequestsIdRouteImport } from './routes/_authen
 import { Route as LovableEmailAuthPreviewRouteImport } from './routes/lovable/email/auth/preview'
 import { Route as LovableEmailAuthWebhookRouteImport } from './routes/lovable/email/auth/webhook'
 import { Route as ApiPublicSitesV1AgentsRouteImport } from './routes/api/public/sites/v1/agents'
+import { Route as ApiPublicSitesV1ContactsRouteImport } from './routes/api/public/sites/v1/contacts'
 import { Route as ApiPublicSitesV1PropertiesRouteImport } from './routes/api/public/sites/v1/properties'
 import { Route as ApiPublicSitesV1VisitsRouteImport } from './routes/api/public/sites/v1/visits'
 import { Route as ApiPublicSitesV1PropertiesIdRouteImport } from './routes/api/public/sites/v1/properties.$id'
@@ -276,6 +277,12 @@ const ApiPublicSitesV1AgentsRoute = ApiPublicSitesV1AgentsRouteImport.update({
   path: '/api/public/sites/v1/agents',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicSitesV1ContactsRoute =
+  ApiPublicSitesV1ContactsRouteImport.update({
+    id: '/api/public/sites/v1/contacts',
+    path: '/api/public/sites/v1/contacts',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicSitesV1PropertiesRoute =
   ApiPublicSitesV1PropertiesRouteImport.update({
     id: '/api/public/sites/v1/properties',
@@ -335,6 +342,7 @@ export interface FileRoutesByFullPath {
   '/app/contacts/': typeof AuthenticatedAppContactsIndexRoute
   '/app/properties/': typeof AuthenticatedAppPropertiesIndexRoute
   '/api/public/sites/v1/agents': typeof ApiPublicSitesV1AgentsRoute
+  '/api/public/sites/v1/contacts': typeof ApiPublicSitesV1ContactsRoute
   '/api/public/sites/v1/properties': typeof ApiPublicSitesV1PropertiesRouteWithChildren
   '/api/public/sites/v1/visits': typeof ApiPublicSitesV1VisitsRoute
   '/api/public/sites/v1/properties/$id': typeof ApiPublicSitesV1PropertiesIdRoute
@@ -378,6 +386,7 @@ export interface FileRoutesByTo {
   '/app/contacts': typeof AuthenticatedAppContactsIndexRoute
   '/app/properties': typeof AuthenticatedAppPropertiesIndexRoute
   '/api/public/sites/v1/agents': typeof ApiPublicSitesV1AgentsRoute
+  '/api/public/sites/v1/contacts': typeof ApiPublicSitesV1ContactsRoute
   '/api/public/sites/v1/properties': typeof ApiPublicSitesV1PropertiesRouteWithChildren
   '/api/public/sites/v1/visits': typeof ApiPublicSitesV1VisitsRoute
   '/api/public/sites/v1/properties/$id': typeof ApiPublicSitesV1PropertiesIdRoute
@@ -425,6 +434,7 @@ export interface FileRoutesById {
   '/_authenticated/app/contacts/': typeof AuthenticatedAppContactsIndexRoute
   '/_authenticated/app/properties/': typeof AuthenticatedAppPropertiesIndexRoute
   '/api/public/sites/v1/agents': typeof ApiPublicSitesV1AgentsRoute
+  '/api/public/sites/v1/contacts': typeof ApiPublicSitesV1ContactsRoute
   '/api/public/sites/v1/properties': typeof ApiPublicSitesV1PropertiesRouteWithChildren
   '/api/public/sites/v1/visits': typeof ApiPublicSitesV1VisitsRoute
   '/api/public/sites/v1/properties/$id': typeof ApiPublicSitesV1PropertiesIdRoute
@@ -472,6 +482,7 @@ export interface FileRouteTypes {
     | '/app/contacts/'
     | '/app/properties/'
     | '/api/public/sites/v1/agents'
+    | '/api/public/sites/v1/contacts'
     | '/api/public/sites/v1/properties'
     | '/api/public/sites/v1/visits'
     | '/api/public/sites/v1/properties/$id'
@@ -515,6 +526,7 @@ export interface FileRouteTypes {
     | '/app/contacts'
     | '/app/properties'
     | '/api/public/sites/v1/agents'
+    | '/api/public/sites/v1/contacts'
     | '/api/public/sites/v1/properties'
     | '/api/public/sites/v1/visits'
     | '/api/public/sites/v1/properties/$id'
@@ -561,6 +573,7 @@ export interface FileRouteTypes {
     | '/_authenticated/app/contacts/'
     | '/_authenticated/app/properties/'
     | '/api/public/sites/v1/agents'
+    | '/api/public/sites/v1/contacts'
     | '/api/public/sites/v1/properties'
     | '/api/public/sites/v1/visits'
     | '/api/public/sites/v1/properties/$id'
@@ -583,6 +596,7 @@ export interface RootRouteChildren {
   LovableEmailAuthPreviewRoute: typeof LovableEmailAuthPreviewRoute
   LovableEmailAuthWebhookRoute: typeof LovableEmailAuthWebhookRoute
   ApiPublicSitesV1AgentsRoute: typeof ApiPublicSitesV1AgentsRoute
+  ApiPublicSitesV1ContactsRoute: typeof ApiPublicSitesV1ContactsRoute
   ApiPublicSitesV1PropertiesRoute: typeof ApiPublicSitesV1PropertiesRouteWithChildren
   ApiPublicSitesV1VisitsRoute: typeof ApiPublicSitesV1VisitsRoute
 }
@@ -876,6 +890,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicSitesV1AgentsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/sites/v1/contacts': {
+      id: '/api/public/sites/v1/contacts'
+      path: '/api/public/sites/v1/contacts'
+      fullPath: '/api/public/sites/v1/contacts'
+      preLoaderRoute: typeof ApiPublicSitesV1ContactsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/sites/v1/properties': {
       id: '/api/public/sites/v1/properties'
       path: '/api/public/sites/v1/properties'
@@ -1024,6 +1045,7 @@ const rootRouteChildren: RootRouteChildren = {
   LovableEmailAuthPreviewRoute: LovableEmailAuthPreviewRoute,
   LovableEmailAuthWebhookRoute: LovableEmailAuthWebhookRoute,
   ApiPublicSitesV1AgentsRoute: ApiPublicSitesV1AgentsRoute,
+  ApiPublicSitesV1ContactsRoute: ApiPublicSitesV1ContactsRoute,
   ApiPublicSitesV1PropertiesRoute: ApiPublicSitesV1PropertiesRouteWithChildren,
   ApiPublicSitesV1VisitsRoute: ApiPublicSitesV1VisitsRoute,
 }
