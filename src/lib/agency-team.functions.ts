@@ -28,6 +28,7 @@ export type TeamMember = {
   email: string | null;
   phone: string | null;
   job_title: string | null;
+  avatar_url: string | null;
   is_active: boolean;
   created_at: string;
   roles: string[];
@@ -73,7 +74,7 @@ async function buildOverview(admin: Admin, organizationId: string): Promise<Team
     admin.from("organizations").select("id,name,plan").eq("id", organizationId).maybeSingle(),
     admin
       .from("profiles")
-      .select("id,full_name,email,phone,job_title,is_active,created_at")
+      .select("id,full_name,email,phone,job_title,avatar_url,is_active,created_at")
       .eq("organization_id", organizationId)
       .order("created_at", { ascending: true }),
     admin.from("user_roles").select("user_id,role").eq("organization_id", organizationId),
@@ -93,6 +94,7 @@ async function buildOverview(admin: Admin, organizationId: string): Promise<Team
         email: p.email,
         phone: p.phone,
         job_title: p.job_title,
+        avatar_url: p.avatar_url,
         is_active: p.is_active,
         created_at: p.created_at,
         roles: roleRows.filter((r) => r.user_id === p.id).map((r) => r.role as string),
