@@ -5,7 +5,7 @@
  *  - ClickImob nu are API de creare/editare/ștergere directă a anunțurilor.
  *  - CRM-ul notifică portalul că o proprietate s-a modificat:
  *      POST https://www.clickimob.ro/api/public/crm-webhook
- *           ?agency=<agency_id>&token=<webhook_token>&provider=immoflux
+ *           ?agency=<agency_id>&token=<webhook_token>&provider=habitoo
  *      body: { "id": "<property_id>" }
  *  - ClickImob citește apoi datele (ofertă, imagini, agent) din feedul Habitoo,
  *    folosind o cheie emisă de Habitoo.
@@ -49,7 +49,7 @@ function buildRequestUrl(ctx: PortalContext): URL {
   // Query parameter impus explicit de API-ul public ClickImob.
   url.searchParams.set("agency", ctx.externalAccountId ?? "");
   url.searchParams.set("token", ctx.portalCredential ?? "");
-  url.searchParams.set("provider", "immoflux");
+  url.searchParams.set("provider", "habitoo");
   return url;
 }
 
@@ -59,7 +59,7 @@ function safeUrl(ctx: PortalContext): string {
     const url = new URL(endpointOf(ctx));
     url.searchParams.set("agency", ctx.externalAccountId ?? "");
     url.searchParams.set("token", "***");
-    url.searchParams.set("provider", "immoflux");
+    url.searchParams.set("provider", "habitoo");
     return url.toString();
   } catch {
     return endpointOf(ctx);
