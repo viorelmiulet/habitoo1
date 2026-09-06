@@ -109,3 +109,59 @@ Feedul este pull-based: site-ul citește `/properties` periodic și folosește
 `datamodificare` pentru a detecta schimbările. Imaginile sunt servite prin
 `/media/{imageId}`, deci URL-urile rămân stabile chiar dacă storage-ul rotește
 semnăturile.
+
+## Portaluri imobiliare (model generic) — ClickImob
+
+### Baza URL a feedului
+
+Baza canonică rămâne `https://crm.habitoo.ro/api/public/sites/v1`. Prefixul
+`/api/public/` este singurul care ocolește autentificarea site-ului publicat;
+un alias `/api/sites/v1/*` ar fi blocat înainte de a ajunge la handler, deci nu
+îl expunem. Structura răspunsurilor rămâne compatibilă cu modelul ImmoFlux
+(`total`, `per_page`, `current_page`, `last_page`, `next_page_url`,
+`prev_page_url`, `from`, `to`, `data`).
+
+### Model generic de publicare
+
+- `portal_integrations` — o configurare per agenție și portal: `portal_key`,
+  `status` (`not_configured` | `ready` | `active` | `error`), `enabled`,
+  `endpoint_url`, `external_agency_id`, `credential_prefix`,
+  `credential_secret` (fără grant pentru `authenticated`), `last_sync_at`,
+  `last_error`, `last_error_at`, `config`.
+- `portal_publications` — publicarea unei oferte pe un portal: `property_id`,
+  `portal_key`, `enabled`, `status`, `external_ref`, `last_synced_at`,
+  `last_error`.
+- Câmpul `portals` din feed provine din publicările active, unit cu tagurile
+  legacy `portal:<nume>`. Nicio cheie de portal nu este presupusă în cod.
+
+### Adaptorul ClickImob (doar pregătire)
+
+`src/lib/portals/clickimob.ts` construiește notificarea documentată public:
+
+```
+POST https://www.clickimob.ro/api/public/crm-webhook
+     ?agency=<agency_uuid>&token=<webhook_token>&provider=immoflux
+body: {"id": "<property_id>"}
+```
+
+`notifyPropertyChanged` rulează implicit în dry-run: nu se face niciun request
+real către ClickImob fără `allowLiveRequests: true`, integrare activă și
+credențiale reale. Tokenul este mascat în orice URL folosit pentru diagnostic.
+Dependențe externe rămase de confirmat de ClickImob: acceptarea Habitoo ca
+provider (astăzi endpointul acceptă `provider=immoflux`), `agency` UUID și
+tokenul de webhook.
+
+### Pagina publică a ofertei
+
+Fiecare ofertă publicată are o adresă stabilă pe site: `https://habitoo.ro/oferta/{propertyId}`
+(`url` în feed). Pagina CRM rămâne pe `crm.habitoo.ro`; pagina publică citește
+strict proprietăți publicate, nearhivate, cu status public, și doar fotografii
+`include_in_publish = true` și `is_confidential = false`.
+
+### Câmpuri noi în feed
+
+`nrdormitoare`, `tvainclus`, `referintaexterna`, `strada`, `numarstradal`,
+`cod_siruta_judet`, `cod_siruta_uat`, `cod_siruta_localitate`. Câmpurile fără
+echivalent real în Habitoo (`pretfaratva`, `comisioncumparator`, `confort`,
+`caroiaj`, `energy.*`, `custom1/2`, `finisaje`, `vecinatati`) rămân
+null/goale — nu se derivează valori.
