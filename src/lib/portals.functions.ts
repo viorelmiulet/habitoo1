@@ -643,9 +643,14 @@ async function executeListingAction(input: {
 
   // Starea selecției per proprietate reflectă rezultatul ultimei operațiuni,
   // fără să dubleze informația din `portal_listings`.
+  // Starea selecției per proprietate reflectă rezultatul ultimei operațiuni,
+  // fără să dubleze informația din `portal_listings`. La o retragere reușită
+  // intenția trebuie să dispară, altfel checkbox-ul rămâne bifat pentru o
+  // ofertă retrasă și republicarea nu mai are ce tranziție să declanșeze.
   await admin
     .from("portal_publications")
     .update({
+      ...(result.ok && action === "withdraw" ? { enabled: false } : {}),
       status: result.ok ? (action === "withdraw" ? "disabled" : "synced") : "error",
       last_synced_at: now,
       last_error: result.ok ? null : result.message,
@@ -655,6 +660,7 @@ async function executeListingAction(input: {
     .eq("organization_id", organizationId)
     .eq("property_id", propertyId)
     .eq("portal_key", definition.id);
+
 
   await logOperation({
     organizationId,
@@ -1409,14 +1415,15 @@ export const applyPropertyPortalSelection = createServerFn({ method: "POST" })
         continue;
       }
 
-      // B. true → true: actualizare doar când s-a cerut sincronizarea.
-      if (previous && !data.syncExisting) {
+      // B. true → true: actualizare doar când s-a cerut sincronizarea, ÎNSĂ
+      // doar dacă oferta este efectiv publicată pe portal. Dacă listarea este
+      // retrasă sau nu a plecat niciodată cu succes, bifa rămasă activă trebuie
+      // să declanșeze o publicare, nu „nicio schimbare".
+      if (previous && published && !data.syncExisting) {
         results.push({ portalId: definition.id, portalName: name, action: "none", ok: true, message: null });
         continue;
       }
-      if (previous && !published) {
-        // Bifat, dar niciodată trimis cu succes: reîncearcă publicarea.
-      }
+
 
       const action = published ? "update" : "publish";
       const res = await executeListingAction({

@@ -84,10 +84,22 @@ export function PropertyPortalsCard({
   }, [cells]);
 
   const dirty = cells.filter((c) => (checked[c.portalId] ?? c.selected) !== c.selected);
+  /**
+   * Portaluri bifate a căror ofertă NU este publicată în realitate (retrasă sau
+   * eroare): salvarea trebuie să rămână posibilă, ca republicarea să pornească.
+   */
+  const toRepublish = cells.filter(
+    (c) =>
+      c.availability === "available" &&
+      (checked[c.portalId] ?? c.selected) &&
+      (c.state === "withdrawn" || c.state === "error"),
+  );
+  const actionable = [...new Set([...dirty, ...toRepublish])];
   /** Portaluri debifate care sunt efectiv publicate → necesită confirmare. */
   const toWithdraw = dirty.filter(
     (c) => !(checked[c.portalId] ?? false) && (c.state === "published" || c.state === "in_feed"),
   );
+
 
   const apply = useMutation({
     mutationFn: () =>
@@ -172,8 +184,8 @@ export function PropertyPortalsCard({
       <footer className="flex flex-wrap items-center justify-between gap-3 border-t border-border px-5 py-4">
         <p className="text-xs text-muted-foreground">
           {canManage
-            ? dirty.length > 0
-              ? `${dirty.length} ${dirty.length === 1 ? "modificare" : "modificări"} nesalvate.`
+            ? actionable.length > 0
+              ? `${actionable.length} ${actionable.length === 1 ? "modificare" : "modificări"} de aplicat.`
               : "Nicio modificare de salvat."
             : "Doar administratorul agenției poate modifica publicarea."}
         </p>
@@ -184,7 +196,8 @@ export function PropertyPortalsCard({
           <Button
             type="button"
             size="sm"
-            disabled={!canManage || dirty.length === 0 || apply.isPending}
+            disabled={!canManage || actionable.length === 0 || apply.isPending}
+
             onClick={() => (toWithdraw.length > 0 ? setConfirming(true) : apply.mutate())}
           >
             {apply.isPending ? (
