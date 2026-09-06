@@ -476,106 +476,160 @@ const listingSchema = z.object({
   action: z.enum(["publish", "update", "withdraw"]),
 });
 
+export type ListingActionResult =
+  | {
+      ok: true;
+      live: boolean;
+      detail: string | null;
+      status: string;
+      externalId: string | null;
+      feedVisible: boolean | null;
+      processed: number | null;
+      message: string | null;
+    }
+  | { ok: false; code: string; message: string };
+
+/**
+ * Nucleul unei operațiuni pe o ofertă. Refolosit de acțiunea individuală și de
+ * publicarea per proprietate pe portalurile selectate. Nu conține verificări de
+ * permisiuni: apelantul trebuie să valideze deja agenția și rolul.
+ */
+async function executeListingAction(input: {
+  organizationId: string;
+  actorId: string;
+  portalId: string;
+  propertyId: string;
+  action: "publish" | "update" | "withdraw";
+}): Promise<ListingActionResult> {
+  const { organizationId, actorId, portalId, propertyId, action } = input;
+  const definition = getPortalDefinition(portalId);
+  if (!definition) throw new Error("Portal necunoscut.");
+  if (definition.status !== "available") {
+    return { ok: false as const, code: "NOT_SUPPORTED", message: PORTAL_ERROR_MESSAGE.NOT_SUPPORTED };
+  }
+
+  const admin = await loadAdmin();
+  const { data: property } = await admin
+    .from("properties")
+    .select("id, publish_status, status, deleted_at")
+    .eq("id", propertyId)
+    .eq("organization_id", organizationId)
+    .maybeSingle();
+  if (!property) throw new Error("Proprietatea nu a fost găsită.");
+
+  const { isPropertyFeedEligible } = await import("@/lib/site-feed/mapper");
+  if (action !== "withdraw" && !isPropertyFeedEligible(property as never)) {
+    return {
+      ok: false as const,
+      code: "VALIDATION_ERROR",
+      message: "Oferta nu este publicabilă: verifică statusul și publicarea pe site.",
+    };
+  }
+
+  const { portalRateLimited } = await import("@/lib/portals/rate-limit.server");
+  if (portalRateLimited(action, `${organizationId}|${portalId}`)) {
+    return { ok: false as const, code: "RATE_LIMIT", message: PORTAL_ERROR_MESSAGE.RATE_LIMIT };
+  }
+
+  const { getPortalAdapter } = await import("@/lib/portals/adapters/index.server");
+  const adapter = getPortalAdapter(definition.id);
+  if (!adapter) {
+    return { ok: false as const, code: "NOT_SUPPORTED", message: PORTAL_ERROR_MESSAGE.NOT_SUPPORTED };
+  }
+
+  const { data: listing } = await admin
+    .from("portal_listings")
+    .select("id, external_id")
+    .eq("organization_id", organizationId)
+    .eq("portal", definition.id)
+    .eq("property_id", propertyId)
+    .maybeSingle();
+
+  const { ctx } = await buildContext(organizationId, definition);
+  const ref = { propertyId, externalId: listing?.external_id ?? null };
+  const result =
+    action === "publish"
+      ? await adapter.publishListing(ctx, ref)
+      : action === "update"
+        ? await adapter.updateListing(ctx, ref)
+        : await adapter.withdrawListing(ctx, ref);
+
+  const now = new Date().toISOString();
+  const status = !result.ok
+    ? "error"
+    : action === "withdraw"
+      ? "withdrawn"
+      : action === "update"
+        ? "updated"
+        : "published";
+  const patch: Record<string, unknown> = {
+    organization_id: organizationId,
+    portal: definition.id,
+    property_id: propertyId,
+    status,
+    last_sync_at: now,
+    last_error: result.ok ? null : result.message,
+    ...(result.ok && result.data.externalId ? { external_id: result.data.externalId } : {}),
+    ...(result.ok && action === "publish" ? { published_at: now } : {}),
+    updated_by: actorId,
+  };
+  if (listing) await admin.from("portal_listings").update(patch as never).eq("id", listing.id);
+  else await admin.from("portal_listings").insert({ ...patch, created_by: actorId } as never);
+
+  // Starea selecției per proprietate reflectă rezultatul ultimei operațiuni,
+  // fără să dubleze informația din `portal_listings`.
+  await admin
+    .from("portal_publications")
+    .update({
+      status: result.ok ? (action === "withdraw" ? "disabled" : "synced") : "error",
+      last_synced_at: now,
+      last_error: result.ok ? null : result.message,
+      external_ref: result.ok && result.data.externalId ? result.data.externalId : null,
+      updated_by: actorId,
+    } as never)
+    .eq("organization_id", organizationId)
+    .eq("property_id", propertyId)
+    .eq("portal_key", definition.id);
+
+  await logOperation({
+    organizationId,
+    portal: definition.id,
+    operation: action,
+    success: result.ok,
+    errorCode: result.ok ? null : result.code,
+    errorMessage: result.ok ? null : result.message,
+    propertyId,
+    actorId,
+  });
+
+  return result.ok
+    ? {
+        ok: true as const,
+        live: result.data.live,
+        detail: result.data.detail,
+        status,
+        externalId: result.data.externalId,
+        feedVisible: result.data.feedVisible ?? null,
+        processed: result.data.processed ?? null,
+        message: result.data.message ?? null,
+      }
+    : { ok: false as const, code: result.code, message: result.message };
+}
+
 export const runPortalListingAction = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => listingSchema.parse(input))
   .handler(async ({ data, context }) => {
     const organizationId = await requireOrgAdmin(context as unknown as AuthContext);
-    const definition = getPortalDefinition(data.portalId);
-    if (!definition) throw new Error("Portal necunoscut.");
-
-    const admin = await loadAdmin();
-    const { data: property } = await admin
-      .from("properties")
-      .select("id, publish_status, status, deleted_at")
-      .eq("id", data.propertyId)
-      .eq("organization_id", organizationId)
-      .maybeSingle();
-    if (!property) throw new Error("Proprietatea nu a fost găsită.");
-
-    const { isPropertyFeedEligible } = await import("@/lib/site-feed/mapper");
-    if (data.action !== "withdraw" && !isPropertyFeedEligible(property as never)) {
-      return {
-        ok: false as const,
-        code: "VALIDATION_ERROR",
-        message: "Oferta nu este publicabilă: verifică statusul și publicarea pe site.",
-      };
-    }
-
-    const { portalRateLimited } = await import("@/lib/portals/rate-limit.server");
-    if (portalRateLimited(data.action, `${organizationId}|${data.portalId}`)) {
-      return { ok: false as const, code: "RATE_LIMIT", message: PORTAL_ERROR_MESSAGE.RATE_LIMIT };
-    }
-
-    const { getPortalAdapter } = await import("@/lib/portals/adapters/index.server");
-    const adapter = getPortalAdapter(definition.id);
-    if (!adapter) {
-      return { ok: false as const, code: "NOT_SUPPORTED", message: PORTAL_ERROR_MESSAGE.NOT_SUPPORTED };
-    }
-
-    const { data: listing } = await admin
-      .from("portal_listings")
-      .select("id, external_id")
-      .eq("organization_id", organizationId)
-      .eq("portal", definition.id)
-      .eq("property_id", data.propertyId)
-      .maybeSingle();
-
-    const { ctx } = await buildContext(organizationId, definition);
-    const ref = { propertyId: data.propertyId, externalId: listing?.external_id ?? null };
-    const result =
-      data.action === "publish"
-        ? await adapter.publishListing(ctx, ref)
-        : data.action === "update"
-          ? await adapter.updateListing(ctx, ref)
-          : await adapter.withdrawListing(ctx, ref);
-
-    const now = new Date().toISOString();
-    const status = !result.ok
-      ? "error"
-      : data.action === "withdraw"
-        ? "withdrawn"
-        : data.action === "update"
-          ? "updated"
-          : "published";
-    const patch: Record<string, unknown> = {
-      organization_id: organizationId,
-      portal: definition.id,
-      property_id: data.propertyId,
-      status,
-      last_sync_at: now,
-      last_error: result.ok ? null : result.message,
-      ...(result.ok && result.data.externalId ? { external_id: result.data.externalId } : {}),
-      ...(result.ok && data.action === "publish" ? { published_at: now } : {}),
-      updated_by: context.userId,
-    };
-    if (listing) await admin.from("portal_listings").update(patch as never).eq("id", listing.id);
-    else await admin.from("portal_listings").insert({ ...patch, created_by: context.userId } as never);
-
-    await logOperation({
+    return await executeListingAction({
       organizationId,
-      portal: definition.id,
-      operation: data.action,
-      success: result.ok,
-      errorCode: result.ok ? null : result.code,
-      errorMessage: result.ok ? null : result.message,
-      propertyId: data.propertyId,
       actorId: context.userId,
+      portalId: data.portalId,
+      propertyId: data.propertyId,
+      action: data.action,
     });
-
-    return result.ok
-      ? {
-          ok: true as const,
-          live: result.data.live,
-          detail: result.data.detail,
-          status,
-          externalId: result.data.externalId,
-          feedVisible: result.data.feedVisible ?? null,
-          processed: result.data.processed ?? null,
-          message: result.data.message ?? null,
-        }
-      : { ok: false as const, code: result.code, message: result.message };
   });
+
 
 export const getPropertyPortalStatus = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
