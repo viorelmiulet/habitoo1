@@ -2,7 +2,10 @@
  * Widget global de suport, disponibil din topbar pe orice pagină din zona
  * autentificată. Deschide un tichet către Superadmin și atașează automat
  * pagina din care a fost trimis (context de debugging, nu vizibil userului).
+ *
+ * Acceptă un trigger custom prin `children` (ex. buton text în empty state).
  */
+import type { ReactNode } from "react";
 import { useState } from "react";
 import { Link, useLocation } from "@tanstack/react-router";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -27,7 +30,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { toastError } from "@/lib/errors";
 import { createSupportTicket, SUPPORT_CATEGORIES, type SupportCategory } from "@/lib/support.functions";
 
-export function SupportWidget() {
+export function SupportWidget({ children }: { children?: ReactNode }) {
   const [open, setOpen] = useState(false);
   const [subject, setSubject] = useState("");
   const [category, setCategory] = useState<SupportCategory>("technical");
@@ -57,16 +60,20 @@ export function SupportWidget() {
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <DialogTrigger asChild>
-            <Button variant="ghost" size="icon" aria-label="Ajutor și suport">
-              <LifeBuoy className="size-5" />
-            </Button>
-          </DialogTrigger>
-        </TooltipTrigger>
-        <TooltipContent>Ajutor și suport</TooltipContent>
-      </Tooltip>
+      {children ? (
+        <DialogTrigger asChild>{children}</DialogTrigger>
+      ) : (
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <DialogTrigger asChild>
+              <Button variant="ghost" size="icon" aria-label="Ajutor și suport">
+                <LifeBuoy className="size-5" />
+              </Button>
+            </DialogTrigger>
+          </TooltipTrigger>
+          <TooltipContent>Ajutor și suport</TooltipContent>
+        </Tooltip>
+      )}
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>Trimite un tichet către suport</DialogTitle>
