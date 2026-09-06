@@ -1,7 +1,7 @@
 /**
  * Feedul public pentru iMove.ro: GET /api/public/portal/v1/imove/feed
  *
- * Autentificare: cheie emisă de Habitoo pentru portal, trimisă ca
+ * Autentificare: cheia API emisă de iMove pentru contul agenției și salvată în Habitoo, trimisă ca
  * `Authorization: Bearer <cheie>` sau, pentru compatibilitate cu un URL de feed
  * simplu, ca parametru `?token=<cheie>`. Agenția este determinată EXCLUSIV din
  * cheie, niciodată din query. Necesită scope `feed:read`.
@@ -35,7 +35,7 @@ export const Route = createFileRoute("/api/public/portal/v1/imove/feed")({
             });
             return { response: jsonResponse(imoveFeedBody(build)), items: build.listings.length };
           },
-          { allowQueryToken: true },
+          { allowQueryToken: true, portalCredential: "imove" },
         ),
     },
   },

@@ -451,6 +451,14 @@ export const issuePortalApiKey = createServerFn({ method: "POST" })
     const organizationId = await requireOrgAdmin(context as unknown as AuthContext);
     const definition = getPortalDefinition(data.portalId);
     if (!definition) throw new Error("Portal necunoscut.");
+    // Habitoo emite chei DOAR pentru portalurile care declară acest model.
+    // Ex. iMove emite propria cheie API, pe care utilizatorul o salvează la noi.
+    if (!definition.authentication.includes("habitoo_api_key")) {
+      throw new Error(
+        `${definition.display_name} folosește o cheie API emisă de portal. Salvează cheia primită de la ei în configurarea integrării.`,
+      );
+    }
+
 
     const { portalRateLimited } = await import("@/lib/portals/rate-limit.server");
     if (portalRateLimited("key", organizationId)) {
@@ -1170,12 +1178,15 @@ export const previewPortalFeed = createServerFn({ method: "POST" })
     const build = await buildImoveFeed({ organizationId, requestUrl: feedUrl, perPage: 500 });
 
     const admin = await loadAdmin();
-    const { count } = await admin
-      .from("portal_api_keys")
-      .select("id", { count: "exact", head: true })
+    // Pentru iMove cheia este emisă de portal și salvată criptat de utilizator.
+    const { data: connRow } = await admin
+      .from("portal_connections")
+      .select("portal_credentials_encrypted")
       .eq("organization_id", organizationId)
       .eq("portal", definition.id)
-      .eq("status", "active");
+      .maybeSingle();
+    const hasCredential = Boolean(connRow?.portal_credentials_encrypted);
+
 
     await logOperation({
       organizationId,
@@ -1195,7 +1206,7 @@ export const previewPortalFeed = createServerFn({ method: "POST" })
       sample: build.listings.slice(0, data.limit),
       excluded: build.excluded,
       warnings: build.warnings,
-      hasActiveKey: (count ?? 0) > 0,
+      hasActiveKey: hasCredential,
     };
   });
 

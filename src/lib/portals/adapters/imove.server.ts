@@ -37,19 +37,20 @@ async function statusOutcome(ctx: PortalContext): Promise<PortalResult<Connectio
   const build = await buildImoveFeed({ organizationId: ctx.organizationId, requestUrl: url, perPage: 500 });
 
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-  const { count: activeKeys } = await supabaseAdmin
-    .from("portal_api_keys")
-    .select("id", { count: "exact", head: true })
+  // Credențialul este EMIS DE iMOVE și salvat de utilizator; Habitoo nu emite chei.
+  const { data: connection } = await supabaseAdmin
+    .from("portal_connections")
+    .select("portal_credentials_encrypted")
     .eq("organization_id", ctx.organizationId)
     .eq("portal", "imove")
-    .eq("status", "active");
+    .maybeSingle();
 
-  const configured = (activeKeys ?? 0) > 0;
+  const configured = Boolean(connection?.portal_credentials_encrypted);
   const detail = configured
     ? `Feed pregătit: ${build.listings.length} oferte valide din ${build.selected} selectate` +
       (build.excluded.length ? `, ${build.excluded.length} excluse` : "") +
       "."
-    : "Generează o cheie de acces pentru iMove: fără ea, feedul nu poate fi citit.";
+    : "Salvează cheia API primită de la iMove: fără ea, feedul nu poate fi citit.";
 
   return {
     ok: true,
@@ -63,12 +64,13 @@ async function statusOutcome(ctx: PortalContext): Promise<PortalResult<Connectio
         apiVersion: IMOVE_FEED_VERSION,
         properties: build.listings.length,
         agents: null,
-        activeKeys: activeKeys ?? 0,
+        activeKeys: configured ? 1 : 0,
         url,
       },
     },
   };
 }
+
 
 export const imoveAdapter: PortalAdapter = {
   id: "imove",
