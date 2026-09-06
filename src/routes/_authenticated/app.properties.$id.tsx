@@ -67,6 +67,8 @@ import {
 } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { LocationPicker, emptyLocation, type LocationValue } from "@/components/app/LocationPicker";
+import { PropertyLocationMap } from "@/components/app/PropertyLocationMap";
+import { PropertyMap } from "@/components/app/PropertyMap";
 import { useCurrentUser } from "@/hooks/use-session";
 import { formatDate, formatDateTime, formatMoney, formatNumber } from "@/lib/format";
 import {
@@ -142,6 +144,9 @@ function PropertyDetailPage() {
   const [collab, setCollab] = useState(false);
   // Nudge-ul de colaborare: o singură dată per proprietate, doar dacă agenția participă.
   const [nudgeOpen, setNudgeOpen] = useState(false);
+  // Poziția pe hartă (Leaflet/OpenStreetMap) și precizia locației, în modul editare.
+  const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null);
+  const [locationPrecise, setLocationPrecise] = useState(false);
   const startEdit = () => {
     if (!property) return;
     setDraft({
@@ -161,6 +166,12 @@ function PropertyDetailPage() {
       collab_terms: property.collab_terms ?? "",
     });
     setCollab(Boolean(property.collaboration));
+    setCoords(
+      typeof property.lat === "number" && typeof property.lng === "number"
+        ? { lat: property.lat, lng: property.lng }
+        : null,
+    );
+    setLocationPrecise(Boolean(property.location_precise));
     setTx(transactionFromProperty(property));
     setDetails(
       Object.fromEntries(
@@ -206,6 +217,9 @@ function PropertyDetailPage() {
     locality_siruta_code: location.localitySirutaCode,
     district: draft.district || null,
     address: draft.address || null,
+    lat: coords?.lat ?? null,
+    lng: coords?.lng ?? null,
+    location_precise: locationPrecise,
     description: draft.description || null,
     internal_notes: draft.internal_notes || null,
     collaboration: collab,
@@ -629,6 +643,16 @@ function PropertyDetailPage() {
                   </div>
                 ))}
               </div>
+              <PropertyLocationMap
+                idPrefix="edit"
+                seed={property.id}
+                lat={coords?.lat ?? null}
+                lng={coords?.lng ?? null}
+                precise={locationPrecise}
+                addressParts={[draft.address, draft.district, location.localityName || draft.city, location.countyName]}
+                onCoordsChange={setCoords}
+                onPreciseChange={setLocationPrecise}
+              />
               <PropertyTransactionFields idPrefix="edit" value={tx} onChange={setTx} />
               <div className="space-y-2">
                 <Label htmlFor="description">Descriere</Label>
@@ -730,12 +754,21 @@ function PropertyDetailPage() {
 
                 <div className="panel p-5">
                   <h2 className="text-sm font-semibold">Hartă</h2>
-                  {property.lat && property.lng ? (
-                    <iframe
-                      title="Hartă"
-                      className="mt-3 h-64 w-full rounded-xl border border-border"
-                      src={`https://www.openstreetmap.org/export/embed.html?bbox=${property.lng - 0.01}%2C${property.lat - 0.01}%2C${property.lng + 0.01}%2C${property.lat + 0.01}&layer=mapnik&marker=${property.lat}%2C${property.lng}`}
-                    />
+                  {mapCoords ? (
+                    <div className="mt-3 space-y-2">
+                      <PropertyMap
+                        lat={mapCoords.lat}
+                        lng={mapCoords.lng}
+                        precise={mapCoords.precise}
+                        seed={property.id}
+                        className="h-64 w-full overflow-hidden rounded-xl border border-border"
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        {mapCoords.precise
+                          ? "Locație exactă."
+                          : `Hartă estimativă — zonă de aproximativ ${APPROX_RADIUS_M} m.`}
+                      </p>
+                    </div>
                   ) : (
                     <p className="mt-3 text-sm text-muted-foreground">
                       Nu există coordonate GPS pentru această proprietate.
