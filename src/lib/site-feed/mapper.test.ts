@@ -157,6 +157,51 @@ describe("mapPropertyToFeed", () => {
     expect(rent.pretvanzare).toBeNull();
   });
 
+  it("trimite ambele seturi de preț când proprietatea e și de vânzare și de închiriere", () => {
+    const both = mapPropertyToFeed(
+      {
+        ...baseProperty,
+        transaction_kind: "sale",
+        for_sale: true,
+        for_rent: true,
+        sale_price: 165000,
+        sale_currency: "EUR",
+        rent_price: 900,
+        rent_currency: "EUR",
+        status: "reserved",
+      } as PropertyRow,
+      { baseUrl: "https://crm.habitoo.ro" },
+    );
+    expect(both.devanzare).toBe(true);
+    expect(both.deinchiriere).toBe(true);
+    expect(both.pretvanzare).toBe(165000);
+    expect(both.monedavanzare).toBe("EUR");
+    expect(both.pretinchiriere).toBe(900);
+    expect(both.monedainchiriere).toBe("EUR");
+    // Statusul nu depinde de tipul de tranzacție.
+    expect(both.status).toBe("reserved");
+  });
+
+  it("doar închiriere → nu expune preț de vânzare", () => {
+    const rentOnly = mapPropertyToFeed(
+      {
+        ...baseProperty,
+        transaction_kind: "rent",
+        for_sale: false,
+        for_rent: true,
+        sale_price: null,
+        rent_price: 700,
+        rent_currency: "RON",
+      } as PropertyRow,
+      { baseUrl: "https://crm.habitoo.ro" },
+    );
+    expect(rentOnly.devanzare).toBe(false);
+    expect(rentOnly.pretvanzare).toBeNull();
+    expect(rentOnly.monedavanzare).toBeNull();
+    expect(rentOnly.pretinchiriere).toBe(700);
+    expect(rentOnly.monedainchiriere).toBe("RON");
+  });
+
   it("nu inventează valori pentru câmpurile inexistente", () => {
     expect(mapped.nrbucatarii).toBeNull();
     expect(mapped.confort).toBeNull();
