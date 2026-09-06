@@ -1,28 +1,64 @@
-// Server functions pentru cardul „Portaluri imobiliare” din Setări → Integrări.
-// Secretul portalului nu este niciodată returnat către frontend sau logat.
+/**
+ * Server functions pentru modulul de portaluri imobiliare.
+ *
+ * Reguli respectate peste tot în acest fișier:
+ *  - doar administratorul agenției poate gestiona portaluri;
+ *  - agenția vine din sesiune, niciodată din input;
+ *  - credențialele portalului nu sunt niciodată returnate către frontend;
+ *  - cheile emise de Habitoo se afișează o singură dată, la generare;
+ *  - fiecare operație este jurnalizată sanitizat în `portal_operation_logs`.
+ */
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { PORTALS, derivePortalStatus, getPortalDefinition, type PortalIntegrationStatus } from "@/lib/portals/registry";
+import {
+  PORTALS,
+  derivePortalConnectionStatus,
+  getPortalDefinition,
+  type PortalConnectionStatus,
+  type PortalDefinition,
+} from "@/lib/portals/registry";
+import { PORTAL_ERROR_MESSAGE } from "@/lib/portals/errors";
 
-export type PortalCardData = {
-  key: string;
-  name: string;
-  website: string;
-  description: string;
-  status: PortalIntegrationStatus;
-  enabled: boolean;
-  externalAgencyId: string | null;
-  hasCredential: boolean;
-  credentialPrefix: string | null;
-  endpointUrl: string | null;
-  lastSyncAt: string | null;
-  lastError: string | null;
-  lastErrorAt: string | null;
+export type PortalHubItem = {
+  portal: PortalDefinition;
+  connection: {
+    exists: boolean;
+    status: PortalConnectionStatus;
+    direction: string;
+    authenticationMode: string;
+    externalAccountId: string | null;
+    hasPortalCredential: boolean;
+    settings: Record<string, unknown>;
+    allowLiveRequests: boolean;
+    lastSyncAt: string | null;
+    lastSyncStatus: string | null;
+    lastSyncError: string | null;
+  };
+  keys: {
+    id: string;
+    label: string;
+    keyPrefix: string;
+    scopes: string[];
+    status: string;
+    lastUsedAt: string | null;
+    requestCount: number;
+    createdAt: string;
+  }[];
+  listings: { published: number; failed: number; pending: number };
   eligibleProperties: number;
-  publications: number;
-  hasFeedToken: boolean;
-  feedBaseUrl: string;
+  feedUrl: string;
+};
+
+export type PortalLogItem = {
+  id: string;
+  portal: string;
+  operation: string;
+  success: boolean;
+  errorCode: string | null;
+  errorMessage: string | null;
+  propertyId: string | null;
+  createdAt: string;
 };
 
 type AuthContext = {
@@ -59,23 +95,77 @@ async function loadAdmin() {
   return supabaseAdmin;
 }
 
-export const getPortalIntegrations = createServerFn({ method: "GET" })
+async function logOperation(input: {
+  organizationId: string;
+  portal: string;
+  operation: string;
+  success: boolean;
+  errorCode?: string | null;
+  errorMessage?: string | null;
+  propertyId?: string | null;
+  actorId?: string | null;
+}) {
+  const admin = await loadAdmin();
+  await admin.from("portal_operation_logs").insert({
+    organization_id: input.organizationId,
+    portal: input.portal,
+    operation: input.operation,
+    success: input.success,
+    error_code: input.errorCode ?? null,
+    // Doar mesaje pregătite pentru utilizator; niciun secret, niciun payload brut.
+    error_message: input.errorMessage ?? null,
+    property_id: input.propertyId ?? null,
+    actor_id: input.actorId ?? null,
+  });
+}
+
+async function feedUrlForOrg(): Promise<string> {
+  const { CRM_URL } = await import("@/lib/host");
+  return `${CRM_URL}/api/public/portal/v1/properties`;
+}
+
+/** Context complet pentru adaptor, cu credențialul decriptat. */
+async function buildContext(organizationId: string, definition: PortalDefinition) {
+  const admin = await loadAdmin();
+  const { decryptPortalCredential } = await import("@/lib/portals/crypto.server");
+  const { data: row } = await admin
+    .from("portal_connections")
+    .select("*")
+    .eq("organization_id", organizationId)
+    .eq("portal", definition.id)
+    .maybeSingle();
+
+  const settings = (row?.settings ?? {}) as Record<string, unknown>;
+  return {
+    row,
+    ctx: {
+      organizationId,
+      definition,
+      direction: (row?.direction ?? definition.directions[0] ?? "habitoo_to_portal") as never,
+      authenticationMode: (row?.authentication_mode ?? definition.authentication[0] ?? "none") as never,
+      externalAccountId: row?.external_account_id ?? null,
+      portalCredential: row ? decryptPortalCredential(row.portal_credentials_encrypted) : null,
+      settings,
+      allowLiveRequests: settings["allow_live"] === true,
+    },
+  };
+}
+
+export const getPortalHub = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .handler(async ({ context }): Promise<PortalCardData[]> => {
+  .handler(async ({ context }): Promise<PortalHubItem[]> => {
     const organizationId = await requireOrgAdmin(context as unknown as AuthContext);
     const admin = await loadAdmin();
-    const [{ CRM_URL }, { FEED_BASE_PATH }] = await Promise.all([
-      import("@/lib/host"),
-      import("@/lib/site-feed/auth.server"),
-    ]);
+    const feedUrl = await feedUrlForOrg();
 
-    const [{ data: rows }, eligible, tokens, { data: pubs }] = await Promise.all([
+    const [connections, keys, listings, eligible] = await Promise.all([
+      admin.from("portal_connections").select("*").eq("organization_id", organizationId),
       admin
-        .from("portal_integrations")
-        .select(
-          "portal_key, status, enabled, endpoint_url, external_agency_id, credential_prefix, credential_secret, last_sync_at, last_error, last_error_at",
-        )
-        .eq("organization_id", organizationId),
+        .from("portal_api_keys")
+        .select("id, portal, label, key_prefix, scopes, status, last_used_at, request_count, created_at")
+        .eq("organization_id", organizationId)
+        .order("created_at", { ascending: false }),
+      admin.from("portal_listings").select("portal, status").eq("organization_id", organizationId),
       admin
         .from("properties")
         .select("id", { count: "exact", head: true })
@@ -83,200 +173,435 @@ export const getPortalIntegrations = createServerFn({ method: "GET" })
         .eq("publish_status", "published")
         .is("deleted_at", null)
         .in("status", ["active", "reserved", "negotiation"]),
-      admin
-        .from("site_feed_tokens")
-        .select("id", { count: "exact", head: true })
-        .eq("organization_id", organizationId)
-        .is("revoked_at", null),
-      admin
-        .from("portal_publications")
-        .select("portal_key")
-        .eq("organization_id", organizationId)
-        .eq("enabled", true),
     ]);
 
-    const byKey = new Map((rows ?? []).map((r) => [r.portal_key, r]));
-    const pubCount = new Map<string, number>();
-    for (const p of pubs ?? []) pubCount.set(p.portal_key, (pubCount.get(p.portal_key) ?? 0) + 1);
+    return PORTALS.map((portal) => {
+      const row = (connections.data ?? []).find((c) => c.portal === portal.id) ?? null;
+      const settings = (row?.settings ?? {}) as Record<string, unknown>;
+      const portalKeys = (keys.data ?? []).filter((k) => k.portal === portal.id);
+      const portalListings = (listings.data ?? []).filter((l) => l.portal === portal.id);
 
-    return PORTALS.map((definition) => {
-      const row = byKey.get(definition.key);
-      const hasCredential = Boolean(row?.credential_secret);
-      const status = derivePortalStatus({
-        definition,
-        externalAgencyId: row?.external_agency_id ?? null,
-        hasCredential,
-        enabled: Boolean(row?.enabled),
-        lastError: row?.last_error ?? null,
-      });
       return {
-        key: definition.key,
-        name: definition.name,
-        website: definition.website,
-        description: definition.description,
-        status,
-        enabled: Boolean(row?.enabled),
-        externalAgencyId: row?.external_agency_id ?? null,
-        hasCredential,
-        credentialPrefix: row?.credential_prefix ?? null,
-        endpointUrl: row?.endpoint_url ?? null,
-        lastSyncAt: row?.last_sync_at ?? null,
-        lastError: row?.last_error ?? null,
-        lastErrorAt: row?.last_error_at ?? null,
+        portal,
+        connection: {
+          exists: Boolean(row),
+          status: derivePortalConnectionStatus({
+            definition: portal,
+            externalAccountId: row?.external_account_id ?? null,
+            hasPortalCredential: Boolean(row?.portal_credentials_encrypted),
+            hasHabitooKey: portalKeys.some((k) => k.status === "active"),
+            lastError: row?.last_sync_error ?? null,
+            testedOk: row?.status === "connected",
+          }),
+          direction: row?.direction ?? portal.directions[0] ?? "habitoo_to_portal",
+          authenticationMode: row?.authentication_mode ?? portal.authentication[0] ?? "none",
+          externalAccountId: row?.external_account_id ?? null,
+          hasPortalCredential: Boolean(row?.portal_credentials_encrypted),
+          settings: { ...settings, allow_live: settings["allow_live"] === true },
+          allowLiveRequests: settings["allow_live"] === true,
+          lastSyncAt: row?.last_sync_at ?? null,
+          lastSyncStatus: row?.last_sync_status ?? null,
+          lastSyncError: row?.last_sync_error ?? null,
+        },
+        keys: portalKeys.map((k) => ({
+          id: k.id,
+          label: k.label,
+          keyPrefix: k.key_prefix,
+          scopes: k.scopes ?? [],
+          status: k.status,
+          lastUsedAt: k.last_used_at,
+          requestCount: Number(k.request_count ?? 0),
+          createdAt: k.created_at,
+        })),
+        listings: {
+          published: portalListings.filter((l) => l.status === "published" || l.status === "updated").length,
+          failed: portalListings.filter((l) => l.status === "error").length,
+          pending: portalListings.filter((l) => l.status === "pending").length,
+        },
         eligibleProperties: eligible.count ?? 0,
-        publications: pubCount.get(definition.key) ?? 0,
-        hasFeedToken: (tokens.count ?? 0) > 0,
-        feedBaseUrl: `${CRM_URL}${FEED_BASE_PATH}`,
+        feedUrl,
       };
     });
   });
 
 const saveSchema = z.object({
-  portalKey: z.string().trim().min(2).max(40),
-  externalAgencyId: z.string().trim().max(120).optional(),
-  credential: z.string().trim().max(400).optional(),
-  endpointUrl: z.string().trim().url().max(300).optional(),
-  enabled: z.boolean().optional(),
+  portalId: z.string().min(1).max(40),
+  externalAccountId: z.string().trim().max(200).optional(),
+  credential: z.string().trim().min(1).max(500).optional(),
+  endpointUrl: z.string().trim().max(300).optional(),
+  allowLiveRequests: z.boolean().optional(),
 });
 
-export const savePortalIntegration = createServerFn({ method: "POST" })
-  .inputValidator((data: unknown) => saveSchema.parse(data))
+export const savePortalConnection = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .handler(async ({ data, context }): Promise<{ status: PortalIntegrationStatus }> => {
+  .inputValidator((input: unknown) => saveSchema.parse(input))
+  .handler(async ({ data, context }) => {
     const organizationId = await requireOrgAdmin(context as unknown as AuthContext);
-    const definition = getPortalDefinition(data.portalKey);
+    const definition = getPortalDefinition(data.portalId);
     if (!definition) throw new Error("Portal necunoscut.");
+    if (definition.status !== "available") throw new Error("Integrarea cu acest portal nu este încă disponibilă.");
+
     const admin = await loadAdmin();
+    const { encryptPortalCredential } = await import("@/lib/portals/crypto.server");
+    const { row } = await buildContext(organizationId, definition);
+    const settings = { ...((row?.settings ?? {}) as Record<string, unknown>) };
+    if (data.endpointUrl !== undefined) {
+      if (data.endpointUrl) settings["endpoint_url"] = data.endpointUrl;
+      else delete settings["endpoint_url"];
+    }
+    if (data.allowLiveRequests !== undefined) settings["allow_live"] = data.allowLiveRequests;
 
-    const { data: existing } = await admin
-      .from("portal_integrations")
-      .select("id, external_agency_id, credential_secret, enabled")
-      .eq("organization_id", organizationId)
-      .eq("portal_key", definition.key)
-      .maybeSingle();
-
-    const credential = data.credential?.trim() || null;
-    const externalAgencyId = data.externalAgencyId?.trim() || existing?.external_agency_id || null;
-    const hasCredential = Boolean(credential ?? existing?.credential_secret);
-    const enabled = data.enabled ?? Boolean(existing?.enabled);
-    const status = derivePortalStatus({
-      definition,
-      externalAgencyId,
-      hasCredential,
-      enabled,
-      lastError: null,
-    });
-
-    const payload = {
+    const patch: Record<string, unknown> = {
       organization_id: organizationId,
-      portal_key: definition.key,
-      external_agency_id: externalAgencyId,
-      endpoint_url: data.endpointUrl ?? null,
-      enabled: status === "not_configured" ? false : enabled,
-      status,
-      last_error: null,
-      last_error_at: null,
+      portal: definition.id,
+      direction: row?.direction ?? definition.directions[0] ?? "habitoo_to_portal",
+      authentication_mode: row?.authentication_mode ?? definition.authentication[0] ?? "none",
+      settings,
       updated_by: context.userId,
-      ...(credential
-        ? { credential_secret: credential, credential_prefix: credential.slice(0, 4) }
-        : {}),
     };
+    if (data.externalAccountId !== undefined) {
+      patch["external_account_id"] = data.externalAccountId || null;
+    }
+    if (data.credential) {
+      patch["portal_credentials_encrypted"] = encryptPortalCredential(data.credential);
+    }
+    // Orice modificare de configurare invalidează un test reușit anterior.
+    patch["status"] = "ready";
+    patch["last_sync_error"] = null;
 
-    const { error } = existing
-      ? await admin.from("portal_integrations").update(payload).eq("id", existing.id)
-      : await admin
-          .from("portal_integrations")
-          .insert({ ...payload, created_by: context.userId });
-    if (error) throw new Error("Configurarea portalului nu a putut fi salvată.");
+    if (row) {
+      const { error } = await admin.from("portal_connections").update(patch).eq("id", row.id);
+      if (error) throw new Error("Configurarea nu a putut fi salvată.");
+    } else {
+      const { error } = await admin
+        .from("portal_connections")
+        .insert({ ...patch, created_by: context.userId } as never);
+      if (error) throw new Error("Configurarea nu a putut fi salvată.");
+    }
 
-    await admin.from("audit_logs").insert({
-      organization_id: organizationId,
-      actor_id: context.userId,
-      action: "portal_integration.saved",
-      entity: "portal_integrations",
-      // Fără secret în audit: doar cheia portalului și starea rezultată.
-      new_values: { portal_key: definition.key, status, enabled: payload.enabled },
+    await logOperation({
+      organizationId,
+      portal: definition.id,
+      operation: "save_connection",
+      success: true,
+      actorId: context.userId,
     });
-
-    return { status };
+    return { ok: true as const };
   });
 
-export const disconnectPortalIntegration = createServerFn({ method: "POST" })
-  .inputValidator((data: unknown) => z.object({ portalKey: z.string().trim().min(2).max(40) }).parse(data))
+export const disconnectPortal = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .handler(async ({ data, context }): Promise<{ ok: true }> => {
+  .inputValidator((input: unknown) => z.object({ portalId: z.string().min(1).max(40) }).parse(input))
+  .handler(async ({ data, context }) => {
     const organizationId = await requireOrgAdmin(context as unknown as AuthContext);
     const admin = await loadAdmin();
-    const { error } = await admin
-      .from("portal_integrations")
+
+    await admin
+      .from("portal_connections")
       .update({
-        enabled: false,
-        status: "not_configured",
-        credential_secret: null,
-        credential_prefix: null,
-        external_agency_id: null,
-        last_error: null,
-        last_error_at: null,
+        status: "disconnected",
+        portal_credentials_encrypted: null,
+        external_account_id: null,
+        last_sync_error: null,
         updated_by: context.userId,
       })
       .eq("organization_id", organizationId)
-      .eq("portal_key", data.portalKey);
-    if (error) throw new Error("Deconectarea portalului a eșuat.");
+      .eq("portal", data.portalId);
 
-    await admin.from("audit_logs").insert({
-      organization_id: organizationId,
-      actor_id: context.userId,
-      action: "portal_integration.disconnected",
-      entity: "portal_integrations",
-      new_values: { portal_key: data.portalKey },
+    await admin
+      .from("portal_api_keys")
+      .update({ status: "revoked", revoked_at: new Date().toISOString(), revoked_by: context.userId })
+      .eq("organization_id", organizationId)
+      .eq("portal", data.portalId)
+      .eq("status", "active");
+
+    await logOperation({
+      organizationId,
+      portal: data.portalId,
+      operation: "disconnect",
+      success: true,
+      actorId: context.userId,
     });
-    return { ok: true };
+    return { ok: true as const };
   });
 
-/**
- * Verificare locală (dry-run): confirmă configurarea și pregătește cererea de
- * notificare fără să contacteze portalul. Nu se face niciun request extern.
- */
-export const testPortalIntegration = createServerFn({ method: "POST" })
-  .inputValidator((data: unknown) => z.object({ portalKey: z.string().trim().min(2).max(40) }).parse(data))
+export const testPortalConnection = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .handler(async ({ data, context }): Promise<{ ready: boolean; reason: string; safeUrl: string | null }> => {
+  .inputValidator((input: unknown) => z.object({ portalId: z.string().min(1).max(40) }).parse(input))
+  .handler(async ({ data, context }) => {
+    const organizationId = await requireOrgAdmin(context as unknown as AuthContext);
+    const definition = getPortalDefinition(data.portalId);
+    if (!definition) throw new Error("Portal necunoscut.");
+
+    const { portalRateLimited } = await import("@/lib/portals/rate-limit.server");
+    if (portalRateLimited("test", `${organizationId}|${data.portalId}`)) {
+      return { ok: false as const, code: "RATE_LIMIT", message: PORTAL_ERROR_MESSAGE.RATE_LIMIT };
+    }
+
+    const { getPortalAdapter } = await import("@/lib/portals/adapters/index.server");
+    const adapter = getPortalAdapter(definition.id);
+    if (!adapter) {
+      return { ok: false as const, code: "NOT_SUPPORTED", message: PORTAL_ERROR_MESSAGE.NOT_SUPPORTED };
+    }
+
+    const { row, ctx } = await buildContext(organizationId, definition);
+    const result = await adapter.testConnection(ctx);
+    const admin = await loadAdmin();
+    if (row) {
+      await admin
+        .from("portal_connections")
+        .update({
+          status: result.ok ? "connected" : "error",
+          last_sync_status: result.ok ? "ok" : "error",
+          last_sync_error: result.ok ? null : result.message,
+          last_sync_at: new Date().toISOString(),
+        })
+        .eq("id", row.id);
+    }
+
+    await logOperation({
+      organizationId,
+      portal: definition.id,
+      operation: "test_connection",
+      success: result.ok,
+      errorCode: result.ok ? null : result.code,
+      errorMessage: result.ok ? null : result.message,
+      actorId: context.userId,
+    });
+
+    return result.ok
+      ? { ok: true as const, live: result.data.live, detail: result.data.detail }
+      : { ok: false as const, code: result.code, message: result.message };
+  });
+
+export const issuePortalApiKey = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) =>
+    z
+      .object({
+        portalId: z.string().min(1).max(40),
+        label: z.string().trim().min(2).max(80),
+        scopes: z.array(z.enum(["feed:read", "agents:read", "leads:write"])).min(1).optional(),
+      })
+      .parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    const organizationId = await requireOrgAdmin(context as unknown as AuthContext);
+    const definition = getPortalDefinition(data.portalId);
+    if (!definition) throw new Error("Portal necunoscut.");
+
+    const { portalRateLimited } = await import("@/lib/portals/rate-limit.server");
+    if (portalRateLimited("key", organizationId)) {
+      throw new Error(PORTAL_ERROR_MESSAGE.RATE_LIMIT);
+    }
+
+    const { generatePortalKey } = await import("@/lib/portals/keys.server");
+    const generated = generatePortalKey(definition.id);
+    const admin = await loadAdmin();
+    const { error } = await admin.from("portal_api_keys").insert({
+      organization_id: organizationId,
+      portal: definition.id,
+      label: data.label,
+      key_prefix: generated.prefix,
+      key_hash: generated.hash,
+      scopes: data.scopes ?? ["feed:read", "agents:read"],
+      created_by: context.userId,
+    });
+    if (error) throw new Error("Cheia nu a putut fi creată.");
+
+    await logOperation({
+      organizationId,
+      portal: definition.id,
+      operation: "issue_api_key",
+      success: true,
+      actorId: context.userId,
+    });
+
+    // Singura dată când cheia în clar părăsește serverul.
+    return { ok: true as const, key: generated.key, prefix: generated.prefix };
+  });
+
+export const revokePortalApiKey = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) => z.object({ keyId: z.string().uuid() }).parse(input))
+  .handler(async ({ data, context }) => {
     const organizationId = await requireOrgAdmin(context as unknown as AuthContext);
     const admin = await loadAdmin();
-    const [{ data: row }, { data: sample }] = await Promise.all([
+    const { data: row } = await admin
+      .from("portal_api_keys")
+      .select("id, portal")
+      .eq("id", data.keyId)
+      .eq("organization_id", organizationId)
+      .maybeSingle();
+    if (!row) throw new Error("Cheia nu a fost găsită.");
+
+    await admin
+      .from("portal_api_keys")
+      .update({ status: "revoked", revoked_at: new Date().toISOString(), revoked_by: context.userId })
+      .eq("id", row.id);
+
+    await logOperation({
+      organizationId,
+      portal: row.portal,
+      operation: "revoke_api_key",
+      success: true,
+      actorId: context.userId,
+    });
+    return { ok: true as const };
+  });
+
+/** Operațiile pe o ofertă: publicare, actualizare, retragere. */
+const listingSchema = z.object({
+  portalId: z.string().min(1).max(40),
+  propertyId: z.string().uuid(),
+  action: z.enum(["publish", "update", "withdraw"]),
+});
+
+export const runPortalListingAction = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) => listingSchema.parse(input))
+  .handler(async ({ data, context }) => {
+    const organizationId = await requireOrgAdmin(context as unknown as AuthContext);
+    const definition = getPortalDefinition(data.portalId);
+    if (!definition) throw new Error("Portal necunoscut.");
+
+    const admin = await loadAdmin();
+    const { data: property } = await admin
+      .from("properties")
+      .select("id, publish_status, status, deleted_at")
+      .eq("id", data.propertyId)
+      .eq("organization_id", organizationId)
+      .maybeSingle();
+    if (!property) throw new Error("Proprietatea nu a fost găsită.");
+
+    const { isPropertyFeedEligible } = await import("@/lib/site-feed/mapper");
+    if (data.action !== "withdraw" && !isPropertyFeedEligible(property as never)) {
+      return {
+        ok: false as const,
+        code: "VALIDATION_ERROR",
+        message: "Oferta nu este publicabilă: verifică statusul și publicarea pe site.",
+      };
+    }
+
+    const { portalRateLimited } = await import("@/lib/portals/rate-limit.server");
+    if (portalRateLimited(data.action, `${organizationId}|${data.portalId}`)) {
+      return { ok: false as const, code: "RATE_LIMIT", message: PORTAL_ERROR_MESSAGE.RATE_LIMIT };
+    }
+
+    const { getPortalAdapter } = await import("@/lib/portals/adapters/index.server");
+    const adapter = getPortalAdapter(definition.id);
+    if (!adapter) {
+      return { ok: false as const, code: "NOT_SUPPORTED", message: PORTAL_ERROR_MESSAGE.NOT_SUPPORTED };
+    }
+
+    const { data: listing } = await admin
+      .from("portal_listings")
+      .select("id, external_id")
+      .eq("organization_id", organizationId)
+      .eq("portal", definition.id)
+      .eq("property_id", data.propertyId)
+      .maybeSingle();
+
+    const { ctx } = await buildContext(organizationId, definition);
+    const ref = { propertyId: data.propertyId, externalId: listing?.external_id ?? null };
+    const result =
+      data.action === "publish"
+        ? await adapter.publishListing(ctx, ref)
+        : data.action === "update"
+          ? await adapter.updateListing(ctx, ref)
+          : await adapter.withdrawListing(ctx, ref);
+
+    const now = new Date().toISOString();
+    const status = !result.ok
+      ? "error"
+      : data.action === "withdraw"
+        ? "withdrawn"
+        : data.action === "update"
+          ? "updated"
+          : "published";
+    const patch = {
+      organization_id: organizationId,
+      portal: definition.id,
+      property_id: data.propertyId,
+      status,
+      last_sync_at: now,
+      last_error: result.ok ? null : result.message,
+      ...(result.ok && data.action === "publish" ? { published_at: now } : {}),
+      updated_by: context.userId,
+    };
+    if (listing) await admin.from("portal_listings").update(patch).eq("id", listing.id);
+    else await admin.from("portal_listings").insert({ ...patch, created_by: context.userId } as never);
+
+    await logOperation({
+      organizationId,
+      portal: definition.id,
+      operation: data.action,
+      success: result.ok,
+      errorCode: result.ok ? null : result.code,
+      errorMessage: result.ok ? null : result.message,
+      propertyId: data.propertyId,
+      actorId: context.userId,
+    });
+
+    return result.ok
+      ? { ok: true as const, live: result.data.live, detail: result.data.detail, status }
+      : { ok: false as const, code: result.code, message: result.message };
+  });
+
+export const getPropertyPortalStatus = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) => z.object({ propertyId: z.string().uuid() }).parse(input))
+  .handler(async ({ data, context }) => {
+    const organizationId = await requireOrgAdmin(context as unknown as AuthContext);
+    const admin = await loadAdmin();
+    const [{ data: listings }, { data: connections }] = await Promise.all([
       admin
-        .from("portal_integrations")
-        .select("external_agency_id, credential_secret, endpoint_url, enabled")
+        .from("portal_listings")
+        .select("portal, status, external_id, published_at, last_sync_at, last_error")
         .eq("organization_id", organizationId)
-        .eq("portal_key", data.portalKey)
-        .maybeSingle(),
+        .eq("property_id", data.propertyId),
       admin
-        .from("properties")
-        .select("id")
-        .eq("organization_id", organizationId)
-        .eq("publish_status", "published")
-        .is("deleted_at", null)
-        .limit(1),
+        .from("portal_connections")
+        .select("portal, status")
+        .eq("organization_id", organizationId),
     ]);
 
-    if (data.portalKey !== "clickimob") {
-      return { ready: false, reason: "unsupported_portal", safeUrl: null };
-    }
-    const { notifyPropertyChanged } = await import("@/lib/portals/clickimob");
-    const result = await notifyPropertyChanged({
-      config: {
-        agencyId: row?.external_agency_id ?? "",
-        webhookToken: row?.credential_secret ?? "",
-        endpointUrl: row?.endpoint_url ?? undefined,
-      },
-      propertyId: sample?.[0]?.id ?? "00000000-0000-4000-8000-000000000000",
-      enabled: Boolean(row?.enabled),
-      // Fără cereri reale către portal până la acceptarea Habitoo ca provider.
-      allowLiveRequests: false,
+    return PORTALS.filter((p) => p.status === "available").map((portal) => {
+      const listing = (listings ?? []).find((l) => l.portal === portal.id) ?? null;
+      const connection = (connections ?? []).find((c) => c.portal === portal.id) ?? null;
+      return {
+        portalId: portal.id,
+        portalName: portal.display_name,
+        connected: connection?.status === "connected" || connection?.status === "ready",
+        status: listing?.status ?? "not_published",
+        externalId: listing?.external_id ?? null,
+        publishedAt: listing?.published_at ?? null,
+        lastSyncAt: listing?.last_sync_at ?? null,
+        lastError: listing?.last_error ?? null,
+      };
     });
-    return {
-      ready: result.sent === false && result.reason === "dry_run",
-      reason: result.sent ? "sent" : result.reason,
-      safeUrl: result.sent ? result.safeUrl : result.safeUrl,
-    };
+  });
+
+export const getPortalLogs = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }): Promise<PortalLogItem[]> => {
+    const organizationId = await requireOrgAdmin(context as unknown as AuthContext);
+    const admin = await loadAdmin();
+    const { data } = await admin
+      .from("portal_operation_logs")
+      .select("id, portal, operation, success, error_code, error_message, property_id, created_at")
+      .eq("organization_id", organizationId)
+      .order("created_at", { ascending: false })
+      .limit(50);
+
+    return (data ?? []).map((row) => ({
+      id: row.id,
+      portal: row.portal,
+      operation: row.operation,
+      success: row.success,
+      errorCode: row.error_code,
+      errorMessage: row.error_message,
+      propertyId: row.property_id,
+      createdAt: row.created_at,
+    }));
   });
