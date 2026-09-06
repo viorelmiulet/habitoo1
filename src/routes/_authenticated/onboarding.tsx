@@ -8,7 +8,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
-import { currentUserQueryKey } from "@/hooks/use-session";
+import { currentUserQueryKey, useCurrentUser } from "@/hooks/use-session";
+import { OrgBlocked } from "@/components/app/OrgBlocked";
+import { ShellLoading } from "@/components/app/LoadingState";
 
 export const Route = createFileRoute("/_authenticated/onboarding")({
   head: () => ({
@@ -23,7 +25,14 @@ export const Route = createFileRoute("/_authenticated/onboarding")({
 function OnboardingPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const [form, setForm] = useState({ agency: "", fullName: "", phone: "" });
+  const { data: me, isLoading: loadingMe } = useCurrentUser();
+  const [form, setForm] = useState({
+    agency: "",
+    legalName: "",
+    cui: "",
+    fullName: "",
+    phone: "",
+  });
   const [loading, setLoading] = useState(false);
 
   const set = (key: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement>) =>
@@ -36,6 +45,8 @@ function OnboardingPage() {
       _agency_name: form.agency,
       _full_name: form.fullName,
       _phone: form.phone || undefined,
+      _legal_name: form.legalName,
+      _cui: form.cui,
     });
     setLoading(false);
     if (error) {
@@ -43,19 +54,49 @@ function OnboardingPage() {
       return;
     }
     await queryClient.invalidateQueries({ queryKey: currentUserQueryKey });
-    toast.success("Agenția a fost creată. Am pregătit și câteva date demo.");
+    toast.success("Cererea de înscriere a fost trimisă. Îți activăm accesul după aprobare.");
     navigate({ to: "/app" });
   };
+
+  if (loadingMe) return <ShellLoading label="Se verifică agenția…" />;
+  // Agenția a fost deja creată și așteaptă validarea platformei.
+  if (me?.orgBlocked && !me.isSuperadmin) return <OrgBlocked reason={me.orgBlocked} />;
 
   return (
     <AuthShell
       title="Configurează agenția"
-      subtitle="Ultimul pas: numele agenției și datele tale de agent."
+      subtitle="Completează datele agenției. Contul devine activ după validarea platformei."
     >
       <form onSubmit={submit} className="space-y-4">
         <div className="space-y-2">
-          <Label htmlFor="agency">Numele agenției</Label>
-          <Input id="agency" required value={form.agency} onChange={set("agency")} />
+          <Label htmlFor="agency">Nume comercial</Label>
+          <Input
+            id="agency"
+            required
+            value={form.agency}
+            onChange={set("agency")}
+            placeholder="Numele sub care activează agenția"
+          />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="legalName">Nume legal</Label>
+          <Input
+            id="legalName"
+            required
+            value={form.legalName}
+            onChange={set("legalName")}
+            placeholder="Exact ca în certificatul de înregistrare"
+          />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="cui">CUI</Label>
+          <Input
+            id="cui"
+            required
+            value={form.cui}
+            onChange={set("cui")}
+            placeholder="ex. RO12345678"
+          />
         </div>
         <div className="space-y-2">
           <Label htmlFor="fullName">Numele tău</Label>
@@ -66,7 +107,7 @@ function OnboardingPage() {
           <Input id="phone" value={form.phone} onChange={set("phone")} placeholder="07xx xxx xxx" />
         </div>
         <Button type="submit" className="w-full" disabled={loading}>
-          {loading ? "Se configurează…" : "Intră în CRM"}
+          {loading ? "Se trimite…" : "Trimite spre aprobare"}
         </Button>
       </form>
     </AuthShell>
