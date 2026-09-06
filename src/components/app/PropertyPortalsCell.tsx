@@ -191,6 +191,7 @@ export function PropertyPortalsCell({
   const hasSelection = cells.some(
     (c) => c.selected && c.availability === "available" && c.configured && c.pushSupported,
   );
+  const anyPush = cells.some((c) => c.availability === "available" && c.pushSupported);
 
   return (
     <div className={compact ? "w-full space-y-2" : "w-full space-y-2 lg:w-[300px]"}>
