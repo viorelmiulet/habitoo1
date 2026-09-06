@@ -161,7 +161,16 @@ export const getPortalHub = createServerFn({ method: "GET" })
   .handler(async ({ context }): Promise<PortalHubItem[]> => {
     const organizationId = await requireOrgAdmin(context as unknown as AuthContext);
     const admin = await loadAdmin();
-    const feedUrl = await feedUrlForOrg();
+    const genericFeedUrl = await feedUrlForOrg();
+    const imoveFeedUrl = await feedUrlForOrg("imove");
+    // Feedul iMove are schemă proprie, deci și numărătoare proprie de oferte.
+    const { buildImoveFeed } = await import("@/lib/portals/imove/feed.server");
+    const imoveFeed = await buildImoveFeed({
+      organizationId,
+      requestUrl: imoveFeedUrl,
+      perPage: 500,
+    });
+
 
     const { inspectFeedAgents, inspectFeedProperties } = await import("@/lib/portals/feed-inspect.server");
     const [connections, keys, listings, eligible, feedProperties, feedAgents] = await Promise.all([
