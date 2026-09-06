@@ -191,7 +191,36 @@ export const PORTALS: PortalDefinition[] = [
   // metode de autentificare sau capabilități pe care nu le-am verificat.
 
   {
+    id: "imospot",
+    display_name: "Imospot.ro",
+    description:
+      "Imospot expune un API REST clasic: Habitoo trimite direct anunțul (creare, actualizare, retragere) cu cheia API a agenției.",
+    logo: "IS",
+    status: "available",
+    directions: ["habitoo_to_portal"],
+    // Cheia este EMISĂ DE IMOSPOT pentru contul agenției; Habitoo doar o salvează.
+    authentication: ["portal_api_key"],
+    capabilities: ["test_connection", "publish_listing", "update_listing", "withdraw_listing", "sync"],
+    configuration_schema: {
+      fields: [
+        {
+          key: "api_key",
+          label: "Cheie API Imospot",
+          help: "Cheia primită din contul tău Imospot.ro (ex. sk_agentie_…). Se salvează criptat și se trimite ca Bearer token.",
+          placeholder: "sk_agentie_…",
+          secret: true,
+          target: "credentials",
+        },
+      ],
+    },
+    website: "https://www.imospot.ro",
+    docs: "https://www.imospot.ro/api/v1",
+    notes:
+      "Publicarea este PUSH direct, idempotentă după external_id (derivat din identificatorul intern al ofertei). Retragerea arhivează anunțul la Imospot, nu îl șterge definitiv, iar o nouă publicare îl readuce live. Cerințe obligatorii verificate înainte de trimitere: titlu de minimum 8 caractere, descriere de minimum 60 caractere, preț întreg pozitiv, telefon de contact, județ și localitate, minimum o imagine publicabilă. O proprietate cu ambele tranzacții active generează două anunțuri separate (vânzare și închiriere). Promovările plătite nu sunt trimise din Habitoo.",
+  },
+  {
     id: "imobiliare_ro",
+
     display_name: "Imobiliare.ro",
     description: "Integrare de publicare anunțuri. Necesită acord și documentație de la portal.",
     logo: "IR",
