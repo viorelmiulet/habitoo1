@@ -38,7 +38,7 @@ export const Route = createFileRoute("/api/public/sites/v1/properties/$id")({
             return { response: errorResponse(404, "Property not found."), items: 0 };
           }
 
-          const [images, agent] = await Promise.all([
+          const [images, agent, publications] = await Promise.all([
             supabaseAdmin
               .from("property_images")
               .select("*")
@@ -49,6 +49,12 @@ export const Route = createFileRoute("/api/public/sites/v1/properties/$id")({
             row.assigned_to
               ? supabaseAdmin.from("profiles").select("id, full_name").eq("id", row.assigned_to).maybeSingle()
               : Promise.resolve({ data: null }),
+            supabaseAdmin
+              .from("portal_publications")
+              .select("portal_key")
+              .eq("organization_id", auth.organizationId)
+              .eq("property_id", row.id)
+              .eq("enabled", true),
           ]);
 
           const { baseUrl, publicSiteUrl } = feedUrlsForRequest(new URL(request.url));
@@ -57,6 +63,7 @@ export const Route = createFileRoute("/api/public/sites/v1/properties/$id")({
             publicSiteUrl,
             images: (images.data ?? []) as PropertyImageRow[],
             agent: agent.data ?? null,
+            portalKeys: (publications.data ?? []).map((p) => p.portal_key),
           });
 
           return {

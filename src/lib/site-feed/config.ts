@@ -4,11 +4,11 @@
  * În producție linkurile TREBUIE să fie stabile și independente de hostul pe
  * care a venit cererea:
  *  - imagine: https://crm.habitoo.ro/api/public/sites/v1/media/{imageId}
- *  - ofertă:  https://habitoo.ro/oferta-{propertyId}
+ *  - ofertă:  https://habitoo.ro/oferta/{propertyId}
  *
  * Pe preview/local rămânem same-origin ca să putem testa fără DNS de producție.
  * Nu folosim niciodată `url.origin` ca `publicSiteUrl` pe hosturile de
- * producție (altfel s-ar genera https://crm.habitoo.ro/oferta-...).
+ * producție (altfel s-ar genera https://crm.habitoo.ro/oferta/...).
  */
 import { CRM_URL, isCrmHostname, isPublicHostname } from "@/lib/host";
 
@@ -30,4 +30,11 @@ export function feedUrlsForRequest(requestUrl: URL | string): FeedUrls {
   }
   // Preview / local: totul rămâne testabil pe originul curent.
   return { baseUrl: url.origin, publicSiteUrl: url.origin };
+}
+
+/** Originul pe care se servesc imaginile publice, pornind de la hostul curent. */
+export function mediaOriginForHost(host?: string | null): string {
+  if (host && (isCrmHostname(host) || isPublicHostname(host))) return CRM_URL;
+  if (typeof window !== "undefined") return window.location.origin;
+  return CRM_URL;
 }

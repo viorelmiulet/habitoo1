@@ -6,6 +6,7 @@ import { toastError } from "@/lib/errors";
 import { PageHeader } from "@/components/app/PageHeader";
 import { StatusBadge } from "@/components/app/StatusBadge";
 import { SiteFeedCard } from "@/components/app/SiteFeedCard";
+import { PortalsCard } from "@/components/app/PortalsCard";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -241,7 +242,10 @@ function SettingsPage() {
 
         {user?.isAdmin ? (
           <TabsContent value="integrations">
-            <SiteFeedCard />
+            <div className="space-y-6">
+              <SiteFeedCard />
+              <PortalsCard />
+            </div>
           </TabsContent>
         ) : null}
       </Tabs>

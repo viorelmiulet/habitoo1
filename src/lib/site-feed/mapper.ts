@@ -54,6 +54,7 @@ export type FeedProperty = {
   clasificareteren: string | null;
   suprafatateren: number | null;
   nrcamere: number | null;
+  nrdormitoare: number | null;
   nrbucatarii: number | null;
   etaj: number | null;
   tipcompartimentare: string | null;
@@ -71,6 +72,11 @@ export type FeedProperty = {
   localitate: string | null;
   judet: string | null;
   zona: string | null;
+  strada: string | null;
+  numarstradal: string | null;
+  cod_siruta_judet: number | null;
+  cod_siruta_uat: number | null;
+  cod_siruta_localitate: number | null;
   caroiaj: string | null;
   devanzare: boolean;
   deinchiriere: boolean;
@@ -79,7 +85,9 @@ export type FeedProperty = {
   pretvanzare: number | null;
   pretinchiriere: number | null;
   pretfaratva: number | null;
+  tvainclus: boolean | null;
   comisioncumparator: string | null;
+  referintaexterna: string | null;
   images: FeedImage[];
   publicare: boolean;
   top: boolean;
@@ -122,9 +130,9 @@ export function feedImageUrl(baseUrl: string, imageId: string): string {
   return `${baseUrl.replace(/\/$/, "")}/api/public/sites/v1/media/${imageId}`;
 }
 
-/** URL public al ofertei, folosit de site-ul conectat: /oferta-{propertyId}. */
+/** URL public stabil al ofertei pe site: /oferta/{propertyId}. */
 export function offerUrl(publicSiteUrl: string, propertyId: string): string {
-  return `${publicSiteUrl.replace(/\/$/, "")}/oferta-${propertyId}`;
+  return `${publicSiteUrl.replace(/\/$/, "")}/oferta/${propertyId}`;
 }
 
 export function mapImage(image: PropertyImageRow, baseUrl: string): FeedImage {
@@ -159,10 +167,15 @@ export function mapAgent(profile: ProfileRow, baseUrl?: string): FeedAgent {
 export type MapPropertyOptions = {
   /** Origin absolut HTTPS pentru URL-urile de imagine (ex. https://crm.habitoo.ro). */
   baseUrl: string;
-  /** Origin absolut al site-ului public, pentru linkul /oferta-{id}. */
+  /** Origin absolut al site-ului public, pentru linkul /oferta/{id}. */
   publicSiteUrl?: string;
   images?: PropertyImageRow[];
   agent?: Pick<ProfileRow, "id" | "full_name"> | null;
+  /**
+   * Portalurile pentru care oferta are publicare activă în modelul generic
+   * `portal_publications`. Se combină cu tagurile legacy `portal:<nume>`.
+   */
+  portalKeys?: string[];
 };
 
 export function mapPropertyToFeed(p: PropertyRow, options: MapPropertyOptions): FeedProperty {
@@ -200,6 +213,7 @@ export function mapPropertyToFeed(p: PropertyRow, options: MapPropertyOptions): 
     clasificareteren: isLand ? (p.category ?? null) : null,
     suprafatateren: p.land_surface ?? null,
     nrcamere: p.rooms ?? null,
+    nrdormitoare: p.bedrooms ?? null,
     nrbucatarii: null,
     etaj: p.floor ?? null,
     tipcompartimentare: p.layout ?? null,
@@ -217,6 +231,11 @@ export function mapPropertyToFeed(p: PropertyRow, options: MapPropertyOptions): 
     localitate: p.city ?? null,
     judet: p.county ?? null,
     zona: p.district ?? null,
+    strada: p.street ?? null,
+    numarstradal: p.street_number ?? null,
+    cod_siruta_judet: p.county_siruta_code ?? null,
+    cod_siruta_uat: p.uat_siruta_code ?? null,
+    cod_siruta_localitate: p.locality_siruta_code ?? null,
     caroiaj: null,
     devanzare: !isRent,
     deinchiriere: isRent,
@@ -227,17 +246,24 @@ export function mapPropertyToFeed(p: PropertyRow, options: MapPropertyOptions): 
     // Modelul intern nu garantează că `price` este prețul fără TVA când
     // `vat_included = false`, deci nu publicăm o valoare derivată greșit.
     pretfaratva: null,
+    tvainclus: typeof p.vat_included === "boolean" ? p.vat_included : null,
     // `properties.commission` este comision intern (nepublic) → nu se expune.
     comisioncumparator: null,
+    referintaexterna: p.external_id ?? null,
     images,
     publicare: p.publish_status === "published",
     top: (p.tags ?? []).includes("top"),
     pole: (p.tags ?? []).includes("pole"),
     custom1: null,
     custom2: null,
-    // Nu există un câmp dedicat pentru portaluri în schemă; singura sursă este
-    // convenția de tag `portal:<nume>`. Fără taguri, lista rămâne goală.
-    portals: (p.tags ?? []).filter((t) => t.startsWith("portal:")).map((t) => t.slice("portal:".length)),
+    // Sursa principală: modelul generic `portal_publications` (publicare activă).
+    // Compatibilitate: tagurile legacy `portal:<nume>`. Fără niciuna, lista e goală.
+    portals: [
+      ...new Set([
+        ...(options.portalKeys ?? []),
+        ...(p.tags ?? []).filter((t) => t.startsWith("portal:")).map((t) => t.slice("portal:".length)),
+      ]),
+    ],
     suprafata_value: p.surface ?? null,
     incalzire_value: p.heating ?? null,
     mobilare_value: p.furnishing ?? null,
