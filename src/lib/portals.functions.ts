@@ -1415,14 +1415,15 @@ export const applyPropertyPortalSelection = createServerFn({ method: "POST" })
         continue;
       }
 
-      // B. true → true: actualizare doar când s-a cerut sincronizarea.
-      if (previous && !data.syncExisting) {
+      // B. true → true: actualizare doar când s-a cerut sincronizarea, ÎNSĂ
+      // doar dacă oferta este efectiv publicată pe portal. Dacă listarea este
+      // retrasă sau nu a plecat niciodată cu succes, bifa rămasă activă trebuie
+      // să declanșeze o publicare, nu „nicio schimbare".
+      if (previous && published && !data.syncExisting) {
         results.push({ portalId: definition.id, portalName: name, action: "none", ok: true, message: null });
         continue;
       }
-      if (previous && !published) {
-        // Bifat, dar niciodată trimis cu succes: reîncearcă publicarea.
-      }
+
 
       const action = published ? "update" : "publish";
       const res = await executeListingAction({
