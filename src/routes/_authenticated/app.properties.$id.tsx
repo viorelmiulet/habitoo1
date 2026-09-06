@@ -41,6 +41,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Dialog,
@@ -593,6 +594,46 @@ function PropertyDetailPage() {
                 value={details}
                 onChange={(patch) => setDetails((d) => ({ ...d, ...patch }))}
               />
+              <div className="space-y-3 rounded-xl border border-border p-4">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="space-y-1">
+                    <Label htmlFor="collaboration" className="text-sm">
+                      Disponibilă pentru colaborare
+                    </Label>
+                    <p className="text-xs text-muted-foreground">
+                      Anunțul devine vizibil celorlalte agenții Habitoo (fără date de proprietar sau
+                      note interne), în secțiunea Colaborare.
+                    </p>
+                  </div>
+                  <Switch id="collaboration" checked={collab} onCheckedChange={setCollab} />
+                </div>
+                {collab ? (
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <div className="space-y-2">
+                      <Label htmlFor="collab_commission_percent">Comision colaborare (%)</Label>
+                      <Input
+                        id="collab_commission_percent"
+                        inputMode="decimal"
+                        placeholder="Ex. 1.5"
+                        value={draft.collab_commission_percent ?? ""}
+                        onChange={(e) =>
+                          setDraft((d) => ({ ...d, collab_commission_percent: e.target.value }))
+                        }
+                      />
+                    </div>
+                    <div className="space-y-2 sm:col-span-2">
+                      <Label htmlFor="collab_terms">Condiții de colaborare (opțional)</Label>
+                      <Textarea
+                        id="collab_terms"
+                        rows={2}
+                        placeholder="Ex. doar cumpărători cu credit aprobat"
+                        value={draft.collab_terms ?? ""}
+                        onChange={(e) => setDraft((d) => ({ ...d, collab_terms: e.target.value }))}
+                      />
+                    </div>
+                  </div>
+                ) : null}
+              </div>
               <div className="space-y-2">
                 <Label htmlFor="internal_notes">Note interne</Label>
                 <Textarea
