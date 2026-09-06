@@ -140,8 +140,8 @@ function SettingsPage() {
       <Tabs defaultValue="profile">
         <TabsList>
           <TabsTrigger value="profile">Profil</TabsTrigger>
-          <TabsTrigger value="agency">Agenție</TabsTrigger>
-          <TabsTrigger value="team">Echipă ({team.length})</TabsTrigger>
+          {user?.isAdmin ? <TabsTrigger value="agency">Agenție</TabsTrigger> : null}
+          {user?.isAdmin ? <TabsTrigger value="team">Echipă ({team.length})</TabsTrigger> : null}
           {user?.isAdmin ? <TabsTrigger value="integrations">Integrări</TabsTrigger> : null}
         </TabsList>
 
@@ -213,6 +213,7 @@ function SettingsPage() {
           </form>
         </TabsContent>
 
+        {user?.isAdmin ? (
         <TabsContent value="agency">
           <form
             className="panel max-w-xl space-y-4 p-5"
@@ -275,6 +276,7 @@ function SettingsPage() {
           </form>
         </TabsContent>
 
+        {user?.isAdmin ? (
         <TabsContent value="team">
           <div className="panel overflow-hidden">
             <ul className="divide-y divide-border">

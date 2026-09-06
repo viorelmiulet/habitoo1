@@ -1,6 +1,6 @@
 import { createFileRoute, Navigate, Outlet } from "@tanstack/react-router";
 import { AppShell } from "@/components/app/AppShell";
-import { agencyNav, superadminNav } from "@/components/app/AppSidebar";
+import { agencyNavFor, superadminNav } from "@/components/app/AppSidebar";
 import { ShellLoading } from "@/components/app/LoadingState";
 import { OrgBlocked } from "@/components/app/OrgBlocked";
 import { appHead } from "@/components/app/app-head";
@@ -21,7 +21,8 @@ function AppLayout() {
   if (!user.organization && !user.isSuperadmin) return <Navigate to="/onboarding" />;
 
 
-  const groups = user.isSuperadmin ? [...agencyNav, ...superadminNav] : agencyNav;
+  const agencyGroups = agencyNavFor(user.isAdmin);
+  const groups = user.isSuperadmin ? [...agencyGroups, ...superadminNav] : agencyGroups;
 
   return (
     <AppShell user={user} groups={groups} variant="agency">
