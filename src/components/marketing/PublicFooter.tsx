@@ -1,5 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { BrandLogo } from "@/components/brand/BrandLogo";
+import { openCookiePreferences } from "@/lib/cookie-consent";
 import { footerColumns } from "./public-nav";
 
 export function PublicFooter() {
