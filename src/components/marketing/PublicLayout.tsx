@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { CookieConsent } from "./CookieConsent";
 import { PublicFooter } from "./PublicFooter";
 import { PublicHeader } from "./PublicHeader";
 
