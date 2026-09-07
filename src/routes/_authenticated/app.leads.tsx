@@ -399,9 +399,19 @@ function LeadsPage() {
     <>
       <PageHeader
         title="Pipeline lead-uri"
-        description="Urmărește fiecare lead pe etape, de la primul contact până la tranzacție."
+        description={
+          stageParam
+            ? `Filtrat pe etapa „${leadStageLabels[stageParam]}”.`
+            : "Urmărește fiecare lead pe etape, de la primul contact până la tranzacție."
+        }
         actions={
           <>
+            {stageParam ? (
+              <Button variant="outline" size="sm" asChild>
+                <Link to="/app/leads">Toate etapele</Link>
+              </Button>
+            ) : null}
+
             <Button
               variant={onlyMine ? "default" : "outline"}
               size="sm"
