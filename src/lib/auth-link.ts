@@ -26,9 +26,18 @@ export type AuthLinkParams = {
 
 const EMPTY: AuthLinkParams = { present: false };
 
+/**
+ * Parametrii citiți o singură dată pe încărcare de pagină: hash-ul este șters
+ * imediat, iar efectele React pot rula de două ori (StrictMode) fără să piardă
+ * tokenul.
+ */
+let captured: AuthLinkParams | null = null;
+
 /** Citește parametrii din hash + query și curăță URL-ul (fără reload). */
 export function readAuthLinkParams(): AuthLinkParams {
   if (typeof window === "undefined") return EMPTY;
+  if (captured) return captured;
+
 
   const hash = window.location.hash.startsWith("#") ? window.location.hash.slice(1) : "";
   const fromHash = new URLSearchParams(hash);
