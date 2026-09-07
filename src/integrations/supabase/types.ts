@@ -2538,6 +2538,7 @@ export type Database = {
         }
         Returns: string
       }
+      can_access_ticket: { Args: { _ticket_id: string }; Returns: boolean }
       current_org: { Args: never; Returns: string }
       has_role: {
         Args: {
