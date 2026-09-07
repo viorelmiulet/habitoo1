@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import { Archive, ArchiveRestore, Building2, Check, Search, Trash2 } from "lucide-react";
+import { Archive, ArchiveRestore, Building2, Check, Search, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
 import { toastError } from "@/lib/errors";
 import { PageHeader } from "@/components/app/PageHeader";
@@ -90,6 +90,9 @@ function AgenciesPage() {
   const [tab, setTab] = useState<"pending" | "all">("pending");
   const [pendingArchive, setPendingArchive] = useState<{ id: string; name: string } | null>(null);
   const [pendingDelete, setPendingDelete] = useState<{ id: string; name: string } | null>(null);
+  // Respingerea unei cereri de înscriere, cu motiv opțional.
+  const [rejecting, setRejecting] = useState<string | null>(null);
+  const [rejectReason, setRejectReason] = useState("");
 
   const { data, isLoading } = useQuery({
     queryKey: ["superadmin", "agencies"],
@@ -106,6 +109,48 @@ function AgenciesPage() {
         properties: properties.data ?? [],
       };
     },
+  });
+
+  // Cererile de înscriere: sursa unică pentru tabul „În așteptare”.
+  // Organizația nu există până la aprobare.
+  const { data: requests, isLoading: loadingRequests } = useQuery({
+    queryKey: ["superadmin", "registration-requests"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("agency_registration_requests")
+        .select("*")
+        .eq("status", "pending")
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const approveRequest = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.rpc("approve_registration_request", { _request_id: id });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["superadmin"] });
+      toast.success("Cererea a fost aprobată — agenția și contul de administrator au fost create.");
+    },
+    onError: (e: Error) => toastError(e),
+  });
+
+  const rejectRequest = useMutation({
+    mutationFn: async ({ id, reason }: { id: string; reason: string }) => {
+      const { error } = await supabase.rpc("reject_registration_request", {
+        _request_id: id,
+        _reason: reason || undefined,
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["superadmin"] });
+      toast.success("Cererea a fost respinsă.");
+    },
+    onError: (e: Error) => toastError(e),
   });
 
   const update = useMutation({
@@ -200,12 +245,17 @@ function AgenciesPage() {
     onError: (e: Error) => toastError(e),
   });
 
-  const pendingCount = (data?.orgs ?? []).filter(
-    (o) => o.status === "pending_approval" && !o.archived_at,
-  ).length;
+  const pendingCount = (requests ?? []).length;
+
+  const requestRows = (requests ?? []).filter((r) =>
+    q.trim()
+      ? `${r.agency_name} ${r.legal_name} ${r.cui} ${r.full_name} ${r.email ?? ""}`
+          .toLowerCase()
+          .includes(q.trim().toLowerCase())
+      : true,
+  );
 
   const rows = (data?.orgs ?? [])
-    .filter((o) => (tab === "pending" ? o.status === "pending_approval" : true))
     .filter((o) => (showArchived ? true : !o.archived_at))
     .filter((o) =>
       q.trim() ? `${o.name} ${o.city ?? ""}`.toLowerCase().includes(q.trim().toLowerCase()) : true,
@@ -252,16 +302,86 @@ function AgenciesPage() {
         </div>
       </div>
 
+      {tab === "pending" ? (
+        <div className="panel overflow-hidden">
+          {loadingRequests ? (
+            <ListSkeleton rows={4} />
+          ) : requestRows.length === 0 ? (
+            <EmptyState icon={Building2} title="Nicio cerere în așteptare" />
+          ) : (
+            <ul className="divide-y divide-border">
+              {requestRows.map((r) => (
+                <li key={r.id} className="space-y-3 px-4 py-4 text-sm">
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="flex items-center gap-2 font-medium">
+                        <span className="truncate">{r.agency_name}</span>
+                        <StatusBadge tone="warning">În așteptare</StatusBadge>
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {r.legal_name} · CUI {r.cui} · Reg. Com. {r.trade_registry_number}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {r.full_name} · {r.phone ?? "fără telefon"} · {r.email ?? "fără email"}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs text-muted-foreground">
+                        {formatDate(r.created_at)}
+                      </span>
+                      <Button
+                        size="sm"
+                        disabled={approveRequest.isPending}
+                        onClick={() => approveRequest.mutate(r.id)}
+                      >
+                        <Check className="mr-1.5 size-4" />
+                        Aprobă
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() =>
+                          setRejecting((cur) => (cur === r.id ? null : r.id))
+                        }
+                      >
+                        <X className="mr-1.5 size-4" />
+                        Respinge
+                      </Button>
+                    </div>
+                  </div>
+                  {rejecting === r.id ? (
+                    <div className="flex flex-wrap items-center gap-2">
+                      <Input
+                        value={rejectReason}
+                        onChange={(e) => setRejectReason(e.target.value)}
+                        placeholder="Motivul respingerii (opțional, vizibil agenției)"
+                        className="max-w-md"
+                      />
+                      <Button
+                        size="sm"
+                        variant="destructive"
+                        disabled={rejectRequest.isPending}
+                        onClick={async () => {
+                          await rejectRequest.mutateAsync({ id: r.id, reason: rejectReason });
+                          setRejecting(null);
+                          setRejectReason("");
+                        }}
+                      >
+                        Confirmă respingerea
+                      </Button>
+                    </div>
+                  ) : null}
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      ) : (
       <div className="panel overflow-hidden">
         {isLoading ? (
           <ListSkeleton rows={6} />
         ) : rows.length === 0 ? (
-          <EmptyState
-            icon={Building2}
-            title={
-              tab === "pending" ? "Nicio cerere în așteptare" : "Nicio agenție găsită"
-            }
-          />
+          <EmptyState icon={Building2} title="Nicio agenție găsită" />
         ) : (
           <ul className="divide-y divide-border">
             {rows.map((o) => (
@@ -361,6 +481,7 @@ function AgenciesPage() {
           </ul>
         )}
       </div>
+      )}
 
       <ConfirmDialog
         open={pendingArchive !== null}

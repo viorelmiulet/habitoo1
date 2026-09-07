@@ -116,6 +116,71 @@ export type Database = {
           },
         ]
       }
+      agency_registration_requests: {
+        Row: {
+          agency_name: string
+          created_at: string
+          cui: string
+          email: string | null
+          full_name: string
+          id: string
+          legal_name: string
+          organization_id: string | null
+          phone: string | null
+          rejection_reason: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string
+          trade_registry_number: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          agency_name: string
+          created_at?: string
+          cui: string
+          email?: string | null
+          full_name: string
+          id?: string
+          legal_name: string
+          organization_id?: string | null
+          phone?: string | null
+          rejection_reason?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          trade_registry_number: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          agency_name?: string
+          created_at?: string
+          cui?: string
+          email?: string | null
+          full_name?: string
+          id?: string
+          legal_name?: string
+          organization_id?: string | null
+          phone?: string | null
+          rejection_reason?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          trade_registry_number?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agency_registration_requests_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       audit_logs: {
         Row: {
           action: string
@@ -2458,6 +2523,10 @@ export type Database = {
         Returns: undefined
       }
       approve_organization: { Args: { _org: string }; Returns: undefined }
+      approve_registration_request: {
+        Args: { _request_id: string }
+        Returns: string
+      }
       bootstrap_agency: {
         Args: {
           _agency_name: string
@@ -2483,6 +2552,10 @@ export type Database = {
       plan_agent_limit: { Args: { _plan: string }; Returns: number }
       qa_purge_demo_organization: { Args: { _org: string }; Returns: string[] }
       qa_reset_demo_organization: { Args: { _org: string }; Returns: Json }
+      reject_registration_request: {
+        Args: { _reason?: string; _request_id: string }
+        Returns: undefined
+      }
       ro_normalize_name: { Args: { _v: string }; Returns: string }
       site_feed_record_visit: {
         Args: {
@@ -2493,6 +2566,17 @@ export type Database = {
           _views: number
         }
         Returns: undefined
+      }
+      submit_agency_registration_request: {
+        Args: {
+          _agency_name: string
+          _cui: string
+          _full_name: string
+          _legal_name: string
+          _phone?: string
+          _trade_registry_number: string
+        }
+        Returns: string
       }
       superadmin_delete_organization: {
         Args: { _actor?: string; _org: string }

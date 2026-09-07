@@ -16,6 +16,8 @@ export type CurrentUser = {
   isSuperadmin: boolean;
   isAdmin: boolean;
   orgBlocked: OrgBlockReason | null;
+  /** Cererea de înscriere a agenției; organizația se creează abia la aprobare. */
+  registration: Tables<"agency_registration_requests"> | null;
 };
 
 export const currentUserQueryKey = ["current-user"] as const;
@@ -25,11 +27,17 @@ export async function fetchCurrentUser(): Promise<CurrentUser | null> {
   const user = userData.user;
   if (!user) return null;
 
-  const [{ data: profile }, { data: roleRows }, { data: blockedRaw }] = await Promise.all([
-    supabase.from("profiles").select("*").eq("id", user.id).maybeSingle(),
-    supabase.from("user_roles").select("role").eq("user_id", user.id),
-    supabase.rpc("org_access_blocked"),
-  ]);
+  const [{ data: profile }, { data: roleRows }, { data: blockedRaw }, { data: registration }] =
+    await Promise.all([
+      supabase.from("profiles").select("*").eq("id", user.id).maybeSingle(),
+      supabase.from("user_roles").select("role").eq("user_id", user.id),
+      supabase.rpc("org_access_blocked"),
+      supabase
+        .from("agency_registration_requests")
+        .select("*")
+        .eq("user_id", user.id)
+        .maybeSingle(),
+    ]);
 
   let organization: Tables<"organizations"> | null = null;
   if (profile?.organization_id) {
@@ -64,6 +72,7 @@ export async function fetchCurrentUser(): Promise<CurrentUser | null> {
       blockedRaw === "pending_approval"
         ? (blockedRaw as OrgBlockReason)
         : null,
+    registration: registration ?? null,
   };
 }
 
