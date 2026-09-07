@@ -32,24 +32,34 @@ import {
 
 export const Route = createFileRoute("/_authenticated/superadmin/portals")({
   head: () => appHead("Habitoo CRM — portaluri imobiliare"),
+  // Deep-link din dashboard: `?org=<id>` preselectează agenția vizată.
+  validateSearch: (search: Record<string, unknown>) => ({
+    org: typeof search.org === "string" ? search.org : undefined,
+  }),
   component: SuperadminPortalsPage,
 });
 
 function SuperadminPortalsPage() {
   const loadOrgs = useServerFn(listPortalOrganizations);
   const loadProperties = useServerFn(listOrgPropertiesForPortals);
+  const { org: orgFromLink } = Route.useSearch();
 
-  const [organizationId, setOrganizationId] = useState<string>("");
+  const [organizationId, setOrganizationId] = useState<string>(orgFromLink ?? "");
   const [search, setSearch] = useState("");
   const [propertyId, setPropertyId] = useState<string>("");
 
   const orgs = useQuery({ queryKey: ["portal-organizations"], queryFn: () => loadOrgs({}) });
 
   useEffect(() => {
+    if (orgFromLink) setOrganizationId(orgFromLink);
+  }, [orgFromLink]);
+
+  useEffect(() => {
     if (!organizationId && orgs.data && orgs.data.length > 0) {
       setOrganizationId(orgs.data[0]!.id);
     }
   }, [orgs.data, organizationId]);
+
 
   const properties = useQuery({
     queryKey: ["portal-org-properties", organizationId, search],
