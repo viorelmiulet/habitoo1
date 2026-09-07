@@ -229,12 +229,24 @@ const sections: LegalSection[] = [
     body: (
       <>
         <p>
-          Folosim cookie-uri strict necesare pentru autentificare și pentru menținerea sesiunii.
-          Acestea nu pot fi dezactivate fără a afecta funcționarea platformei.
+          Folosim cookie-uri și tehnologii similare pe trei categorii: <strong>strict necesare</strong>{" "}
+          (autentificare, menținerea sesiunii, securitatea formularelor și memorarea preferinței tale
+          de consimțământ) — acestea nu pot fi dezactivate fără a afecta funcționarea platformei;{" "}
+          <strong>analiză</strong> și <strong>marketing</strong> — dezactivate implicit și folosite
+          numai dacă îți dai acordul explicit. În acest moment nu folosim cookie-uri de analiză sau de
+          marketing.
         </p>
         <p>
-          Dacă vom introduce cookie-uri de analiză sau de marketing, vom cere consimțământul
-          prealabil printr-un mecanism dedicat.
+          Pe site-ul public poți accepta toate categoriile, le poți refuza (păstrând doar cele strict
+          necesare) sau poți alege individual din panoul „Personalizează”. Alegerea este salvată local,
+          în browserul tău (localStorage), împreună cu data și versiunea politicii; dacă schimbăm
+          categoriile, îți vom cere din nou acordul. Îți poți retrage sau modifica acordul oricând din
+          linkul „Preferințe cookie-uri” din footerul site-ului, la fel de simplu cum l-ai acordat.
+        </p>
+        <p>
+          În aplicația CRM (contul autentificat) folosim exclusiv cookie-uri strict necesare pentru
+          autentificare și securitate, motiv pentru care acolo nu se afișează bannerul de
+          consimțământ.
         </p>
       </>
     ),

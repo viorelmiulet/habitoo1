@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { CookieConsent } from "./CookieConsent";
 import { PublicFooter } from "./PublicFooter";
 import { PublicHeader } from "./PublicHeader";
 
@@ -16,6 +17,7 @@ export function PublicLayout({ children }: { children: ReactNode }) {
         {children}
       </main>
       <PublicFooter />
+      <CookieConsent />
     </div>
   );
 }
