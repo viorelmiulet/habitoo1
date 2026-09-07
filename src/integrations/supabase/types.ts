@@ -751,6 +751,7 @@ export type Database = {
           plan: string
           slug: string
           status: Database["public"]["Enums"]["org_status"]
+          trade_registry_number: string | null
           updated_at: string
           updated_by: string | null
         }
@@ -776,6 +777,7 @@ export type Database = {
           plan?: string
           slug: string
           status?: Database["public"]["Enums"]["org_status"]
+          trade_registry_number?: string | null
           updated_at?: string
           updated_by?: string | null
         }
@@ -801,6 +803,7 @@ export type Database = {
           plan?: string
           slug?: string
           status?: Database["public"]["Enums"]["org_status"]
+          trade_registry_number?: string | null
           updated_at?: string
           updated_by?: string | null
         }
@@ -2462,6 +2465,7 @@ export type Database = {
           _full_name: string
           _legal_name?: string
           _phone?: string
+          _trade_registry_number?: string
         }
         Returns: string
       }
