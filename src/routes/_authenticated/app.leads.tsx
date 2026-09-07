@@ -42,10 +42,16 @@ import { leadLostReasons, logAudit } from "@/lib/crm";
 import type { Tables } from "@/integrations/supabase/types";
 
 export const Route = createFileRoute("/_authenticated/app/leads")({
-  validateSearch: (search: Record<string, unknown>): { new?: boolean } =>
-    search["new"] === true || search["new"] === "true" ? { new: true } : {},
+  validateSearch: (search: Record<string, unknown>): { new?: boolean; stage?: string } => {
+    const out: { new?: boolean; stage?: string } = {};
+    if (search["new"] === true || search["new"] === "true") out.new = true;
+    const stage = typeof search["stage"] === "string" ? search["stage"] : undefined;
+    if (stage && (leadStages as readonly string[]).includes(stage)) out.stage = stage;
+    return out;
+  },
   component: LeadsPage,
 });
+
 
 type Lead = Tables<"leads">;
 type LeadStage = Lead["stage"];
