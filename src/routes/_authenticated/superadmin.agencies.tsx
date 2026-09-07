@@ -108,6 +108,48 @@ function AgenciesPage() {
     },
   });
 
+  // Cererile de înscriere: sursa unică pentru tabul „În așteptare”.
+  // Organizația nu există până la aprobare.
+  const { data: requests, isLoading: loadingRequests } = useQuery({
+    queryKey: ["superadmin", "registration-requests"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("agency_registration_requests")
+        .select("*")
+        .eq("status", "pending")
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const approveRequest = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.rpc("approve_registration_request", { _request_id: id });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["superadmin"] });
+      toast.success("Cererea a fost aprobată — agenția și contul de administrator au fost create.");
+    },
+    onError: (e: Error) => toastError(e),
+  });
+
+  const rejectRequest = useMutation({
+    mutationFn: async ({ id, reason }: { id: string; reason: string }) => {
+      const { error } = await supabase.rpc("reject_registration_request", {
+        _request_id: id,
+        _reason: reason || undefined,
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["superadmin"] });
+      toast.success("Cererea a fost respinsă.");
+    },
+    onError: (e: Error) => toastError(e),
+  });
+
   const update = useMutation({
     mutationFn: async ({ id, patch }: { id: string; patch: Record<string, unknown> }) => {
       const { error } = await supabase
