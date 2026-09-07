@@ -478,6 +478,7 @@ function AgenciesPage() {
           </ul>
         )}
       </div>
+      )}
 
       <ConfirmDialog
         open={pendingArchive !== null}
