@@ -35,6 +35,22 @@ function OnboardingPage() {
   });
   const [loading, setLoading] = useState(false);
 
+  // Precompletează datele din metadata contului (completate la înscriere).
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => {
+      const meta = data.user?.user_metadata as
+        | { full_name?: string; agency_name?: string; phone?: string }
+        | undefined;
+      if (!meta) return;
+      setForm((f) => ({
+        ...f,
+        fullName: f.fullName || meta.full_name || "",
+        agency: f.agency || meta.agency_name || "",
+        phone: f.phone || meta.phone || "",
+      }));
+    });
+  }, []);
+
   const set = (key: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement>) =>
     setForm((f) => ({ ...f, [key]: e.target.value }));
 
