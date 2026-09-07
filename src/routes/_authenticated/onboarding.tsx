@@ -30,6 +30,7 @@ function OnboardingPage() {
     agency: "",
     legalName: "",
     cui: "",
+    tradeRegistry: "",
     fullName: "",
     phone: "",
   });
@@ -112,6 +113,16 @@ function OnboardingPage() {
             value={form.cui}
             onChange={set("cui")}
             placeholder="ex. RO12345678"
+          />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="tradeRegistry">Număr de înregistrare Registrul Comerțului</Label>
+          <Input
+            id="tradeRegistry"
+            required
+            value={form.tradeRegistry}
+            onChange={set("tradeRegistry")}
+            placeholder="ex. J40/1234/2020"
           />
         </div>
         <div className="space-y-2">

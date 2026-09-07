@@ -276,7 +276,8 @@ function AgenciesPage() {
                     ) : null}
                   </p>
                   <p className="truncate text-xs text-muted-foreground">
-                    {o.legal_name ?? "fără nume legal"} · CUI {o.cui ?? "—"}
+                    {o.legal_name ?? "fără nume legal"} · CUI {o.cui ?? "—"} · Reg. Com.{" "}
+                    {o.trade_registry_number ?? "—"}
                   </p>
                   <p className="truncate text-xs text-muted-foreground">
                     {o.city ?? "—"} · {o.email ?? "fără email"}
