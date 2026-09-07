@@ -1,6 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
+import { Clock, XCircle } from "lucide-react";
 import { toast } from "sonner";
 import { toastError } from "@/lib/errors";
 import { AuthShell } from "@/components/auth/AuthShell";
@@ -35,6 +36,8 @@ function OnboardingPage() {
     phone: "",
   });
   const [loading, setLoading] = useState(false);
+  // Retrimiterea unei cereri respinse: afișează din nou formularul.
+  const [resubmit, setResubmit] = useState(false);
 
   // Precompletează datele din metadata contului (completate la înscriere).
   useEffect(() => {
@@ -52,33 +55,112 @@ function OnboardingPage() {
     });
   }, []);
 
+  // Precompletează formularul din cererea respinsă, ca să nu rescrie totul.
+  const request = me?.registration ?? null;
+  useEffect(() => {
+    if (!request) return;
+    setForm((f) => ({
+      agency: f.agency || request.agency_name,
+      legalName: f.legalName || request.legal_name,
+      cui: f.cui || request.cui,
+      tradeRegistry: f.tradeRegistry || request.trade_registry_number,
+      fullName: f.fullName || request.full_name,
+      phone: f.phone || request.phone || "",
+    }));
+  }, [request]);
+
   const set = (key: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement>) =>
     setForm((f) => ({ ...f, [key]: e.target.value }));
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    const { error } = await supabase.rpc("bootstrap_agency", {
+    // Se înregistrează DOAR cererea de înscriere. Organizația, profilul și rolul
+    // de agency_admin se creează abia la aprobarea superadminului.
+    const { error } = await supabase.rpc("submit_agency_registration_request", {
       _agency_name: form.agency,
-      _full_name: form.fullName,
-      _phone: form.phone || undefined,
       _legal_name: form.legalName,
       _cui: form.cui,
       _trade_registry_number: form.tradeRegistry,
+      _full_name: form.fullName,
+      _phone: form.phone,
     });
     setLoading(false);
     if (error) {
       toastError(error);
       return;
     }
+    setResubmit(false);
     await queryClient.invalidateQueries({ queryKey: currentUserQueryKey });
     toast.success("Cererea de înscriere a fost trimisă. Îți activăm accesul după aprobare.");
-    navigate({ to: "/app" });
   };
 
   if (loadingMe) return <ShellLoading label="Se verifică agenția…" />;
-  // Agenția a fost deja creată și așteaptă validarea platformei.
+  // Agenție existentă, dar blocată (suspendată/arhivată/anulată).
   if (me?.orgBlocked && !me.isSuperadmin) return <OrgBlocked reason={me.orgBlocked} />;
+  // Cererea a fost deja aprobată — accesul e activ.
+  if (me?.organization) {
+    navigate({ to: "/app", replace: true });
+    return <ShellLoading label="Se deschide aplicația…" />;
+  }
+
+  const signOut = async () => {
+    await supabase.auth.signOut();
+    navigate({ to: "/login", replace: true });
+  };
+
+  // Cerere în așteptare → ecran de așteptare, fără formular.
+  if (request?.status === "pending") {
+    return (
+      <AuthShell
+        title="Cerere trimisă"
+        subtitle="Îți verificăm datele agenției și îți activăm accesul după aprobare."
+      >
+        <div className="space-y-4 text-sm">
+          <Clock className="mx-auto size-10 text-primary" />
+          <div className="rounded-xl border border-border p-4">
+            <p className="font-medium">{request.agency_name}</p>
+            <p className="text-xs text-muted-foreground">
+              {request.legal_name} · CUI {request.cui} · Reg. Com. {request.trade_registry_number}
+            </p>
+          </div>
+          <p className="text-muted-foreground">
+            Nu trebuie să faci nimic altceva. Vei primi acces imediat ce cererea este validată.
+          </p>
+          <Button variant="outline" className="w-full" onClick={signOut}>
+            Deconectare
+          </Button>
+        </div>
+      </AuthShell>
+    );
+  }
+
+  // Cerere respinsă → motivul și opțiunea de retrimitere.
+  if (request?.status === "rejected" && !resubmit) {
+    return (
+      <AuthShell title="Cerere respinsă" subtitle="Poți corecta datele și trimite din nou cererea.">
+        <div className="space-y-4 text-sm">
+          <XCircle className="mx-auto size-10 text-destructive" />
+          {request.rejection_reason ? (
+            <div className="rounded-xl border border-border p-4">
+              <p className="text-xs text-muted-foreground">Motivul respingerii</p>
+              <p className="mt-1">{request.rejection_reason}</p>
+            </div>
+          ) : (
+            <p className="text-muted-foreground">
+              Nu a fost specificat un motiv. Verifică datele agenției și trimite din nou cererea.
+            </p>
+          )}
+          <Button className="w-full" onClick={() => setResubmit(true)}>
+            Trimite din nou cererea
+          </Button>
+          <Button variant="outline" className="w-full" onClick={signOut}>
+            Deconectare
+          </Button>
+        </div>
+      </AuthShell>
+    );
+  }
 
   return (
     <AuthShell
