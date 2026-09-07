@@ -242,12 +242,17 @@ function AgenciesPage() {
     onError: (e: Error) => toastError(e),
   });
 
-  const pendingCount = (data?.orgs ?? []).filter(
-    (o) => o.status === "pending_approval" && !o.archived_at,
-  ).length;
+  const pendingCount = (requests ?? []).length;
+
+  const requestRows = (requests ?? []).filter((r) =>
+    q.trim()
+      ? `${r.agency_name} ${r.legal_name} ${r.cui} ${r.full_name} ${r.email ?? ""}`
+          .toLowerCase()
+          .includes(q.trim().toLowerCase())
+      : true,
+  );
 
   const rows = (data?.orgs ?? [])
-    .filter((o) => (tab === "pending" ? o.status === "pending_approval" : true))
     .filter((o) => (showArchived ? true : !o.archived_at))
     .filter((o) =>
       q.trim() ? `${o.name} ${o.city ?? ""}`.toLowerCase().includes(q.trim().toLowerCase()) : true,
