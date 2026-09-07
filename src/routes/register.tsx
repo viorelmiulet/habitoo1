@@ -2,6 +2,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { toast } from "sonner";
 import { AuthShell } from "@/components/auth/AuthShell";
+import { AuthRouteError } from "@/components/auth/AuthRouteError";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -28,6 +29,7 @@ export const Route = createFileRoute("/register")({
     ],
   }),
   component: RegisterPage,
+  errorComponent: AuthRouteError,
 });
 
 function RegisterPage() {
