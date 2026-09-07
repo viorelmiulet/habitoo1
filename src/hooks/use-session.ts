@@ -27,11 +27,17 @@ export async function fetchCurrentUser(): Promise<CurrentUser | null> {
   const user = userData.user;
   if (!user) return null;
 
-  const [{ data: profile }, { data: roleRows }, { data: blockedRaw }] = await Promise.all([
-    supabase.from("profiles").select("*").eq("id", user.id).maybeSingle(),
-    supabase.from("user_roles").select("role").eq("user_id", user.id),
-    supabase.rpc("org_access_blocked"),
-  ]);
+  const [{ data: profile }, { data: roleRows }, { data: blockedRaw }, { data: registration }] =
+    await Promise.all([
+      supabase.from("profiles").select("*").eq("id", user.id).maybeSingle(),
+      supabase.from("user_roles").select("role").eq("user_id", user.id),
+      supabase.rpc("org_access_blocked"),
+      supabase
+        .from("agency_registration_requests")
+        .select("*")
+        .eq("user_id", user.id)
+        .maybeSingle(),
+    ]);
 
   let organization: Tables<"organizations"> | null = null;
   if (profile?.organization_id) {
