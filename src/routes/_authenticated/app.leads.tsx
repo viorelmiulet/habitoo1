@@ -91,7 +91,10 @@ function emptyForm() {
 }
 
 function LeadsPage() {
-  const { new: openNew } = Route.useSearch();
+  const { new: openNew, stage: stageParam } = Route.useSearch();
+  // Etapa primită din dashboard restrânge board-ul la o singură coloană.
+  const columns = stageParam ? [stageParam as LeadStage] : allColumns;
+
   const { data: user } = useCurrentUser();
   const orgId = user?.organization?.id;
   const queryClient = useQueryClient();
