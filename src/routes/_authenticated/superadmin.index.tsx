@@ -118,6 +118,13 @@ function SuperadminDashboard() {
         </header>
         {isLoading ? (
           <ListSkeleton rows={4} />
+        ) : isError ? (
+          <QueryError
+            compact
+            error={error}
+            onRetry={() => void refetch()}
+            title="Starea integrărilor nu a putut fi citită"
+          />
         ) : (data?.integrations ?? []).length === 0 ? (
           <EmptyState
             compact
@@ -196,6 +203,13 @@ function SuperadminDashboard() {
         </header>
         {isLoading ? (
           <ListSkeleton rows={5} compact />
+        ) : isError ? (
+          <QueryError
+            compact
+            error={error}
+            onRetry={() => void refetch()}
+            title="Activitatea recentă nu a putut fi citită"
+          />
         ) : (data?.audit ?? []).length === 0 ? (
           <EmptyState
             compact

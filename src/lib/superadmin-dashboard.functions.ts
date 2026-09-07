@@ -159,6 +159,33 @@ export const getSuperadminDashboard = createServerFn({ method: "POST" })
         .limit(15),
     ]);
 
+    // O eroare de coloană sau de permisiune nu trebuie să arate ca „nicio
+    // conexiune”: o ridicăm ca eroare vizibilă în interfață.
+    const failures = (
+      [
+        ["cereri de înscriere", registrations],
+        ["cereri de activare portal", activations],
+        ["tichete de suport", tickets],
+        ["agenții active", activeOrgs],
+        ["agenții în așteptare", pendingOrgs],
+        ["agenții în colaborare", collabOrgs],
+        ["proprietăți", properties],
+        ["roluri", roles],
+        ["profiluri", profilesCount],
+        ["publicări portal", publications],
+        ["conexiuni portal", connections],
+        ["organizații", orgs],
+        ["jurnal audit", auditSensitive],
+      ] as [string, { error: { message: string } | null }][]
+    )
+      .filter(([, r]) => r.error)
+      .map(([label, r]) => `${label}: ${r.error?.message}`);
+
+    if (failures.length > 0) {
+      console.error("[superadmin-dashboard] query failures", failures);
+      throw new Error(`Interogările dashboardului au eșuat — ${failures.join(" | ")}`);
+    }
+
     const orgName = new Map((orgs.data ?? []).map((o) => [o.id, o.name]));
 
     // Fallback: dacă nicio acțiune sensibilă nu este înregistrată încă, arătăm
