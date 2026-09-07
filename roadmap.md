@@ -18,7 +18,7 @@
 ## Următorii pași (pregătiți)
 - [ ] Conectare formular contact la un canal real (necesită adresă de email / tabel dedicat — aprobare utilizator).
 - [ ] Imagine OG 1200×630 dedicată pentru paginile publice (după aprobare).
-- [ ] Texte reale pentru /confidentialitate și /termeni (date companie, operator de date).
+- [x] Texte reale pentru /confidentialitate și /termeni (date companie rămase placeholder [...], completate de client).
 - [ ] Leads module — audit QA complet (cerință anterioară rămasă deschisă).
 
 ## Arhitectura domeniilor
