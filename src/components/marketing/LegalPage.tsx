@@ -1,7 +1,4 @@
-import { Link } from "@tanstack/react-router";
-import { Info } from "lucide-react";
 import type { ReactNode } from "react";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { PublicLayout } from "./PublicLayout";
 import { Container, Eyebrow } from "./Section";
 
@@ -11,11 +8,13 @@ export function LegalPage({
   eyebrow,
   title,
   intro,
+  lastUpdated,
   sections,
 }: {
   eyebrow: string;
   title: string;
   intro: string;
+  lastUpdated?: string;
   sections: LegalSection[];
 }) {
   return (
@@ -25,6 +24,11 @@ export function LegalPage({
           <Eyebrow>{eyebrow}</Eyebrow>
           <h1 className="mt-4 text-3xl font-semibold tracking-tight text-navy sm:text-4xl">{title}</h1>
           <p className="mt-4 max-w-2xl text-base text-muted-foreground">{intro}</p>
+          {lastUpdated ? (
+            <p className="mt-3 text-sm font-medium text-muted-foreground">
+              Ultima actualizare: {lastUpdated}
+            </p>
+          ) : null}
         </Container>
       </section>
       <Container className="grid gap-10 py-12 lg:grid-cols-12 lg:py-16">
@@ -46,25 +50,13 @@ export function LegalPage({
           </div>
         </nav>
         <article className="max-w-3xl lg:col-span-9">
-          <Alert className="mb-8 border-info/30 bg-info/8">
-            <Info className="size-4 text-info" />
-            <AlertTitle>Document în curs de finalizare</AlertTitle>
-            <AlertDescription>
-              Versiunea completă a acestui document va fi publicată înainte de lansarea comercială.
-              Textul de mai jos descrie principiile pe care le aplicăm deja. Pentru întrebări, folosește{" "}
-              <Link to="/contact" className="font-medium text-primary underline-offset-4 hover:underline">
-                pagina de contact
-              </Link>
-              .
-            </AlertDescription>
-          </Alert>
           <div className="space-y-10">
             {sections.map((s, i) => (
               <section key={s.title} id={`sectiune-${i + 1}`} className="scroll-mt-28">
                 <h2 className="text-xl font-semibold text-navy">
                   {i + 1}. {s.title}
                 </h2>
-                <div className="mt-3 space-y-3 text-base leading-relaxed text-muted-foreground [&_ul]:list-disc [&_ul]:space-y-1.5 [&_ul]:pl-5">
+                <div className="mt-3 space-y-3 text-base leading-relaxed text-muted-foreground [&_strong]:font-semibold [&_strong]:text-foreground [&_table]:w-full [&_table]:border-collapse [&_td]:border [&_td]:border-border [&_td]:px-3 [&_td]:py-2 [&_td]:align-top [&_th]:border [&_th]:border-border [&_th]:bg-card [&_th]:px-3 [&_th]:py-2 [&_th]:text-left [&_th]:font-semibold [&_th]:text-foreground [&_ul]:list-disc [&_ul]:space-y-1.5 [&_ul]:pl-5">
                   {s.body}
                 </div>
               </section>
