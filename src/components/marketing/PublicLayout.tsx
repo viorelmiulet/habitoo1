@@ -17,6 +17,7 @@ export function PublicLayout({ children }: { children: ReactNode }) {
         {children}
       </main>
       <PublicFooter />
+      <CookieConsent />
     </div>
   );
 }
