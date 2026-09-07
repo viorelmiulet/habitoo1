@@ -2,11 +2,13 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { AuthShell } from "@/components/auth/AuthShell";
+import { AuthRouteError } from "@/components/auth/AuthRouteError";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { authErrorMessage } from "@/lib/auth-errors";
+import { establishSessionFromLink, readAuthLinkParams } from "@/lib/auth-link";
 
 export const Route = createFileRoute("/reset-password")({
   ssr: false,
@@ -23,6 +25,7 @@ export const Route = createFileRoute("/reset-password")({
     ],
   }),
   component: ResetPasswordPage,
+  errorComponent: AuthRouteError,
 });
 
 function ResetPasswordPage() {
@@ -31,15 +34,27 @@ function ResetPasswordPage() {
   const [confirm, setConfirm] = useState("");
   const [loading, setLoading] = useState(false);
   const [ready, setReady] = useState<boolean | null>(null);
+  const [linkError, setLinkError] = useState<string | null>(null);
 
   useEffect(() => {
-    const { data: sub } = supabase.auth.onAuthStateChange((event, session) => {
-      if (event === "PASSWORD_RECOVERY" || session) setReady(true);
-    });
-    void supabase.auth.getSession().then(({ data }) => {
-      setReady((prev) => prev ?? Boolean(data.session));
-    });
-    return () => sub.subscription.unsubscribe();
+    let cancelled = false;
+    // Parametrii se citesc sincron, înainte de orice apel Supabase; sesiunea
+    // veche din browser este înlocuită de tokenul din link.
+    const params = readAuthLinkParams();
+    void (async () => {
+      const result = await establishSessionFromLink(params);
+      if (cancelled) return;
+      if (result.ok) {
+        setReady(true);
+        setLinkError(null);
+      } else {
+        setReady(false);
+        setLinkError(result.message);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const submit = async (e: React.FormEvent) => {
@@ -55,7 +70,7 @@ function ResetPasswordPage() {
       toast.error(authErrorMessage(error.message, error.code));
       return;
     }
-    toast.success("Parola a fost schimbată. Te poți autentifica.");
+    toast.success("Parola a fost salvată.");
     navigate({ to: "/app", replace: true });
   };
 
@@ -69,13 +84,14 @@ function ResetPasswordPage() {
         </Link>
       }
     >
-      {ready === false ? (
-        <div className="panel p-5 text-sm text-muted-foreground">
-          Linkul de resetare este expirat sau incomplet. Cere un link nou din pagina{" "}
-          <Link to="/forgot-password" className="font-medium text-primary hover:underline">
-            Ai uitat parola
-          </Link>
-          .
+      {ready === null ? (
+        <div className="panel p-5 text-sm text-muted-foreground">Se verifică linkul…</div>
+      ) : ready === false ? (
+        <div className="panel space-y-3 p-5 text-sm text-muted-foreground">
+          <p>{linkError ?? "Linkul a expirat sau este invalid. Solicită unul nou."}</p>
+          <Button asChild size="sm" variant="outline">
+            <Link to="/forgot-password">Cere un link nou</Link>
+          </Button>
         </div>
       ) : (
         <form onSubmit={submit} className="space-y-4">
