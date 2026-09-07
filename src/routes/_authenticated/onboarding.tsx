@@ -64,6 +64,7 @@ function OnboardingPage() {
       _phone: form.phone || undefined,
       _legal_name: form.legalName,
       _cui: form.cui,
+      _trade_registry_number: form.tradeRegistry,
     });
     setLoading(false);
     if (error) {
