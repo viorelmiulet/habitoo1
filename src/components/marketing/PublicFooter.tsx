@@ -46,7 +46,16 @@ export function PublicFooter() {
         </div>
         <div className="mt-12 flex flex-col gap-3 border-t border-border pt-6 text-xs text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
           <p>© {year} Habitoo CRM. Toate drepturile rezervate.</p>
-          <p>Platformă multi-agenție, cu date izolate pentru fiecare agenție.</p>
+          <div className="flex flex-wrap items-center gap-4">
+            <button
+              type="button"
+              onClick={openCookiePreferences}
+              className="underline transition-colors hover:text-foreground"
+            >
+              Preferințe cookie-uri
+            </button>
+            <p>Platformă multi-agenție, cu date izolate pentru fiecare agenție.</p>
+          </div>
         </div>
       </div>
     </footer>
