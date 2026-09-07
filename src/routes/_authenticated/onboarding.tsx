@@ -120,7 +120,15 @@ function OnboardingPage() {
         </div>
         <div className="space-y-2">
           <Label htmlFor="phone">Telefon</Label>
-          <Input id="phone" value={form.phone} onChange={set("phone")} placeholder="07xx xxx xxx" />
+          <Input
+            id="phone"
+            type="tel"
+            required
+            value={form.phone}
+            onChange={set("phone")}
+            placeholder="07xx xxx xxx"
+            autoComplete="tel"
+          />
         </div>
         <Button type="submit" className="w-full" disabled={loading}>
           {loading ? "Se trimite…" : "Trimite spre aprobare"}
