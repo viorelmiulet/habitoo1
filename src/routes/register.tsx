@@ -32,7 +32,7 @@ export const Route = createFileRoute("/register")({
 
 function RegisterPage() {
   const navigate = useNavigate();
-  const [form, setForm] = useState({ fullName: "", agency: "", email: "", password: "" });
+  const [form, setForm] = useState({ fullName: "", agency: "", phone: "", email: "", password: "" });
   const [loading, setLoading] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
 
@@ -48,7 +48,7 @@ function RegisterPage() {
       password: form.password,
       options: {
         emailRedirectTo: authUrl("/auth/callback"),
-        data: { full_name: form.fullName, agency_name: form.agency },
+        data: { full_name: form.fullName, agency_name: form.agency, phone: form.phone },
       },
     });
     setLoading(false);
@@ -112,6 +112,18 @@ function RegisterPage() {
         <div className="space-y-2">
           <Label htmlFor="agency">Numele agenției</Label>
           <Input id="agency" required value={form.agency} onChange={set("agency")} />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="phone">Telefon</Label>
+          <Input
+            id="phone"
+            type="tel"
+            required
+            value={form.phone}
+            onChange={set("phone")}
+            placeholder="07xx xxx xxx"
+            autoComplete="tel"
+          />
         </div>
         <div className="space-y-2">
           <Label htmlFor="email">Email de lucru</Label>
