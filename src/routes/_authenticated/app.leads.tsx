@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { Flame, Phone, MessageCircle, Plus, History } from "lucide-react";
@@ -42,10 +42,16 @@ import { leadLostReasons, logAudit } from "@/lib/crm";
 import type { Tables } from "@/integrations/supabase/types";
 
 export const Route = createFileRoute("/_authenticated/app/leads")({
-  validateSearch: (search: Record<string, unknown>): { new?: boolean } =>
-    search["new"] === true || search["new"] === "true" ? { new: true } : {},
+  validateSearch: (search: Record<string, unknown>): { new?: boolean; stage?: string } => {
+    const out: { new?: boolean; stage?: string } = {};
+    if (search["new"] === true || search["new"] === "true") out.new = true;
+    const stage = typeof search["stage"] === "string" ? search["stage"] : undefined;
+    if (stage && (leadStages as readonly string[]).includes(stage)) out.stage = stage;
+    return out;
+  },
   component: LeadsPage,
 });
+
 
 type Lead = Tables<"leads">;
 type LeadStage = Lead["stage"];
@@ -85,7 +91,10 @@ function emptyForm() {
 }
 
 function LeadsPage() {
-  const { new: openNew } = Route.useSearch();
+  const { new: openNew, stage: stageParam } = Route.useSearch();
+  // Etapa primită din dashboard restrânge board-ul la o singură coloană.
+  const columns = stageParam ? [stageParam as LeadStage] : allColumns;
+
   const { data: user } = useCurrentUser();
   const orgId = user?.organization?.id;
   const queryClient = useQueryClient();
@@ -390,9 +399,19 @@ function LeadsPage() {
     <>
       <PageHeader
         title="Pipeline lead-uri"
-        description="Urmărește fiecare lead pe etape, de la primul contact până la tranzacție."
+        description={
+          stageParam
+            ? `Filtrat pe etapa „${leadStageLabels[stageParam]}”.`
+            : "Urmărește fiecare lead pe etape, de la primul contact până la tranzacție."
+        }
         actions={
           <>
+            {stageParam ? (
+              <Button variant="outline" size="sm" asChild>
+                <Link to="/app/leads">Toate etapele</Link>
+              </Button>
+            ) : null}
+
             <Button
               variant={onlyMine ? "default" : "outline"}
               size="sm"
@@ -460,7 +479,7 @@ function LeadsPage() {
         </div>
       ) : (
         <div className="flex gap-4 overflow-x-auto pb-4">
-          {allColumns.map((stage) => {
+          {columns.map((stage) => {
             const items = visible.filter((l) => l.stage === stage);
             const total = items.reduce((sum, l) => sum + (l.value ?? 0), 0);
             return (
