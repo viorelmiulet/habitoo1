@@ -72,6 +72,7 @@ export async function fetchCurrentUser(): Promise<CurrentUser | null> {
       blockedRaw === "pending_approval"
         ? (blockedRaw as OrgBlockReason)
         : null,
+    registration: registration ?? null,
   };
 }
 
