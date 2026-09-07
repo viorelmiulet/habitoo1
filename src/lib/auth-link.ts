@@ -71,7 +71,9 @@ export function readAuthLinkParams(): AuthLinkParams {
     }
   }
 
+  captured = params;
   return params;
+
 }
 
 export type AuthLinkResult = { ok: true } | { ok: false; message: string };
