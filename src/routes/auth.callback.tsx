@@ -1,14 +1,16 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { AuthShell } from "@/components/auth/AuthShell";
+import { AuthRouteError } from "@/components/auth/AuthRouteError";
 import { Button } from "@/components/ui/button";
-import { supabase } from "@/integrations/supabase/client";
+import { establishSessionFromLink, readAuthLinkParams } from "@/lib/auth-link";
 import { takePostLoginRedirect } from "@/lib/auth-redirect";
 
 /**
- * Rută publică de retur pentru autentificarea Google / linkurile din email.
- * Așteaptă hidratarea sesiunii, apoi trimite utilizatorul în aplicație
- * (unde /app decide singur între dashboard și onboarding).
+ * Rută publică de retur pentru autentificarea Google / linkurile din email
+ * (confirmare cont, magic link). Tokenul din link are prioritate față de o
+ * eventuală sesiune deja existentă în browser; apoi utilizatorul intră în
+ * aplicație (unde /app decide între dashboard și onboarding).
  */
 export const Route = createFileRoute("/auth/callback")({
   ssr: false,
@@ -22,39 +24,35 @@ export const Route = createFileRoute("/auth/callback")({
     ],
   }),
   component: AuthCallbackPage,
+  errorComponent: AuthRouteError,
 });
 
 function AuthCallbackPage() {
   const navigate = useNavigate();
-  const [failed, setFailed] = useState(false);
+  const [failed, setFailed] = useState<string | null>(null);
 
   useEffect(() => {
-    let done = false;
-    const finish = () => {
-      if (done) return;
-      done = true;
-      navigate({ to: takePostLoginRedirect() ?? "/app", replace: true });
-    };
-
-    const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (session) finish();
-    });
+    let cancelled = false;
+    const params = readAuthLinkParams();
+    const isRecovery = params.type === "recovery";
 
     void (async () => {
-      const { data } = await supabase.auth.getSession();
-      if (data.session) {
-        finish();
+      const result = await establishSessionFromLink(params);
+      if (cancelled) return;
+      if (!result.ok) {
+        setFailed(result.message);
         return;
       }
-      // Sesiunea poate sosi cu întârziere după redirectul providerului.
-      window.setTimeout(async () => {
-        const { data: retry } = await supabase.auth.getSession();
-        if (retry.session) finish();
-        else if (!done) setFailed(true);
-      }, 3000);
+      if (isRecovery) {
+        navigate({ to: "/reset-password", replace: true });
+        return;
+      }
+      navigate({ to: takePostLoginRedirect() ?? "/app", replace: true });
     })();
 
-    return () => sub.subscription.unsubscribe();
+    return () => {
+      cancelled = true;
+    };
   }, [navigate]);
 
   if (!failed) {
@@ -67,13 +65,15 @@ function AuthCallbackPage() {
 
   return (
     <AuthShell title="Autentificare neterminată" subtitle="Nu am putut confirma sesiunea.">
-      <p className="text-sm text-muted-foreground">
-        Încearcă din nou autentificarea. Dacă folosești Google, permite ferestrele pop-up pentru acest
-        site.
-      </p>
-      <Button className="mt-4 w-full" onClick={() => navigate({ to: "/login" })}>
-        Înapoi la autentificare
-      </Button>
+      <div className="panel p-5 text-sm text-muted-foreground">{failed}</div>
+      <div className="mt-4 flex flex-col gap-2">
+        <Button className="w-full" onClick={() => navigate({ to: "/login" })}>
+          Înapoi la autentificare
+        </Button>
+        <Button asChild variant="outline" className="w-full">
+          <Link to="/forgot-password">Cere un link nou</Link>
+        </Button>
+      </div>
     </AuthShell>
   );
 }
