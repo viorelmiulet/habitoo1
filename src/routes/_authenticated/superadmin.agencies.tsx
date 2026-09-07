@@ -24,6 +24,7 @@ import { Button } from "@/components/ui/button";
 import { formatDate } from "@/lib/format";
 import { useCurrentUser } from "@/hooks/use-session";
 import { deleteOrganizationPermanently } from "@/lib/superadmin-orgs.functions";
+import { approveRegistrationRequest } from "@/lib/registration-approval.functions";
 import {
   PLAN_AGENT_LIMITS,
   PLAN_KEYS,
@@ -127,13 +128,15 @@ function AgenciesPage() {
   });
 
   const approveRequest = useMutation({
-    mutationFn: async (id: string) => {
-      const { error } = await supabase.rpc("approve_registration_request", { _request_id: id });
-      if (error) throw error;
-    },
-    onSuccess: () => {
+    mutationFn: async (id: string) =>
+      approveRegistrationRequest({ data: { requestId: id } }),
+    onSuccess: (result) => {
       queryClient.invalidateQueries({ queryKey: ["superadmin"] });
-      toast.success("Cererea a fost aprobată — agenția și contul de administrator au fost create.");
+      toast.success(
+        result.emailSent
+          ? "Cererea a fost aprobată — agenția a fost creată, iar solicitantul a primit email de confirmare."
+          : "Cererea a fost aprobată — agenția a fost creată (emailul de confirmare nu a putut fi trimis).",
+      );
     },
     onError: (e: Error) => toastError(e),
   });
