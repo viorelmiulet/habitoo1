@@ -94,10 +94,17 @@ function messageFor(code?: string | null, description?: string | null): string {
 /**
  * Aplică tokenul din link ca sesiune activă. Sesiunea veche (chiar expirată sau
  * parțială) este ștearsă local înainte, ca să nu intre în conflict cu tokenul nou.
+ * Rezultatul este memoizat: dacă efectul rulează de două ori, nu ștergem sesiunea
+ * abia creată din link.
  */
-export async function establishSessionFromLink(
-  params: AuthLinkParams,
-): Promise<AuthLinkResult> {
+let inFlight: Promise<AuthLinkResult> | null = null;
+
+export function establishSessionFromLink(params: AuthLinkParams): Promise<AuthLinkResult> {
+  if (!inFlight) inFlight = runLinkExchange(params);
+  return inFlight;
+}
+
+async function runLinkExchange(params: AuthLinkParams): Promise<AuthLinkResult> {
   if (params.errorCode) {
     return { ok: false, message: messageFor(params.errorCode, params.errorDescription) };
   }
@@ -113,13 +120,20 @@ export async function establishSessionFromLink(
     /* fără sesiune de curățat */
   }
 
+  const fail = async (code?: string | null, message?: string | null): Promise<AuthLinkResult> => {
+    // Chiar dacă apelul a raportat eroare, o sesiune validă venită din link e suficientă.
+    const { data } = await supabase.auth.getSession();
+    if (data.session) return { ok: true };
+    return { ok: false, message: messageFor(code, message) };
+  };
+
   try {
     if (params.accessToken && params.refreshToken) {
       const { error } = await supabase.auth.setSession({
         access_token: params.accessToken,
         refresh_token: params.refreshToken,
       });
-      if (error) return { ok: false, message: messageFor(error.code, error.message) };
+      if (error) return fail(error.code, error.message);
       return { ok: true };
     }
 
@@ -129,23 +143,21 @@ export async function establishSessionFromLink(
         type,
         token_hash: params.tokenHash,
       });
-      if (error) return { ok: false, message: messageFor(error.code, error.message) };
+      if (error) return fail(error.code, error.message);
       return { ok: true };
     }
 
     if (params.code) {
       const { error } = await supabase.auth.exchangeCodeForSession(params.code);
-      if (error) return { ok: false, message: messageFor(error.code, error.message) };
+      if (error) return fail(error.code, error.message);
       return { ok: true };
     }
   } catch (err) {
-    return {
-      ok: false,
-      message: messageFor(null, err instanceof Error ? err.message : String(err)),
-    };
+    return fail(null, err instanceof Error ? err.message : String(err));
   }
 
   return { ok: false, message: EXPIRED_MESSAGE };
 }
+
 
 export { EXPIRED_MESSAGE };
