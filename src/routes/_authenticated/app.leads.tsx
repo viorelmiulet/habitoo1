@@ -469,7 +469,7 @@ function LeadsPage() {
         </div>
       ) : (
         <div className="flex gap-4 overflow-x-auto pb-4">
-          {allColumns.map((stage) => {
+          {columns.map((stage) => {
             const items = visible.filter((l) => l.stage === stage);
             const total = items.reduce((sum, l) => sum + (l.value ?? 0), 0);
             return (
