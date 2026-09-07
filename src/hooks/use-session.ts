@@ -16,6 +16,8 @@ export type CurrentUser = {
   isSuperadmin: boolean;
   isAdmin: boolean;
   orgBlocked: OrgBlockReason | null;
+  /** Cererea de înscriere a agenției; organizația se creează abia la aprobare. */
+  registration: Tables<"agency_registration_requests"> | null;
 };
 
 export const currentUserQueryKey = ["current-user"] as const;
