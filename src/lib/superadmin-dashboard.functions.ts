@@ -25,7 +25,7 @@ async function assertSuperadmin(context: AuthContext) {
 
 export type WorkQueue = {
   pendingRegistrations: number;
-  pendingPortalActivations: number
+  pendingPortalActivations: number;
   unresolvedTickets: number;
 };
 
