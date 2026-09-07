@@ -90,6 +90,9 @@ function AgenciesPage() {
   const [tab, setTab] = useState<"pending" | "all">("pending");
   const [pendingArchive, setPendingArchive] = useState<{ id: string; name: string } | null>(null);
   const [pendingDelete, setPendingDelete] = useState<{ id: string; name: string } | null>(null);
+  // Respingerea unei cereri de înscriere, cu motiv opțional.
+  const [rejecting, setRejecting] = useState<string | null>(null);
+  const [rejectReason, setRejectReason] = useState("");
 
   const { data, isLoading } = useQuery({
     queryKey: ["superadmin", "agencies"],
