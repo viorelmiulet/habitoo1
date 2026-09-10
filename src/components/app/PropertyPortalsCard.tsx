@@ -205,7 +205,16 @@ export const PropertyPortalsCard = forwardRef<
                         : "Portalul preia oferta automat din feedul Habitoo."}
                   {cell.lastSyncAt ? ` · Ultima sincronizare: ${formatDateTime(cell.lastSyncAt)}` : ""}
                 </p>
-                {cell.lastError ? <p className="text-xs text-destructive">{cell.lastError}</p> : null}
+                {/* Un badge „Eroare” fără explicație nu ajută agentul. */}
+                {cell.lastError ? (
+                  <p className="text-xs text-destructive">{cell.lastError}</p>
+                ) : cell.state === "error" ? (
+                  <p className="text-xs text-destructive">
+                    Portalul a raportat o problemă la acest anunț, fără detalii. Apasă „Publică” pentru a
+                    retrimite oferta și a obține mesajul portalului.
+                  </p>
+                ) : null}
+
               </div>
               <StatusBadge tone={badge.tone}>{badge.label}</StatusBadge>
             </li>
