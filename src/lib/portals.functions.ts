@@ -1188,6 +1188,8 @@ export const getPropertiesPortalMatrix = createServerFn({ method: "POST" })
               ? "Oferta este selectată, dar nu intră în feed: verifică statusul și publicarea pe site."
               : (listing?.last_error ?? pub?.last_error ?? null),
           externalId: listing?.external_id ?? pub?.external_ref ?? null,
+          publicUrl: listing?.public_url ?? null,
+
         };
       });
     }
