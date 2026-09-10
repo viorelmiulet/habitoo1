@@ -51,6 +51,12 @@ export type ListingOutcome = {
   processed?: number | null;
   /** Mesaj scurt pentru utilizator despre rezultatul real. */
   message?: string;
+  /**
+   * Starea reală raportată de portal, când operațiunea este asincronă
+   * (`pending` = acceptat, dar încă nepublicat). Suprascrie starea deduse din
+   * acțiune, ca să nu marcăm „publicat” un anunț aflat în validare.
+   */
+  portalStatus?: string | null;
 };
 
 export type ConnectionStatusOutcome = {
