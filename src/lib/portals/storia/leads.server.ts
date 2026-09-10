@@ -223,10 +223,14 @@ async function matchListing(admin: Admin, shape: StoriaEventShape): Promise<Matc
     if (match) return match;
   }
 
+  // `data.ad_id` poate fi id numeric SAU slugul alfanumeric din link — nu forțăm
+  // o singură interpretare, căutăm ambele forme.
   const needles = [
     shape.advertUuid,
     shape.adId ? `AD:${shape.adId}` : null,
+    shape.adId ? `ADSLUG:${shape.adId}` : null,
     shape.adSlug ? `ADSLUG:${shape.adSlug}` : null,
+    shape.adSlug ? `AD:${shape.adSlug}` : null,
   ].filter(Boolean) as string[];
   if (!needles.length) return null;
 
@@ -243,9 +247,14 @@ async function matchListing(admin: Admin, shape: StoriaEventShape): Promise<Matc
       Object.values(parseAdvertRefs(listing.external_id)).some(
         (uuid) => uuid?.toLowerCase() === shape.advertUuid,
       );
-    const adHit = shape.adId && parseStoriaAdIds(listing.external_id).includes(shape.adId);
-    const slugHit = shape.adSlug && parseStoriaAdSlugs(listing.external_id).includes(shape.adSlug);
+    const known = [
+      ...parseStoriaAdIds(listing.external_id),
+      ...parseStoriaAdSlugs(listing.external_id),
+    ];
+    const adHit = shape.adId ? known.includes(shape.adId) : false;
+    const slugHit = shape.adSlug ? known.includes(shape.adSlug) : false;
     if (!uuidHit && !adHit && !slugHit) continue;
+
     const match = await propertyMatch(admin, listing.property_id, listing.external_id);
     if (match) return match;
   }
