@@ -173,6 +173,16 @@ async function pushListing(
 
   const notes: string[] = [...build.warnings];
   const statuses: string[] = [];
+  // Linkul public al anunțului + id-ul numeric extras din el (`AD:<id>`), care
+  // este puntea sigură dintre notificările de mesaje și oferta din CRM.
+  const publicUrls: Partial<Record<StoriaTransaction, string>> = {};
+  const adIds: string[] = [];
+  const finalExternalId = () => {
+    let id = serializeAdvertRefs(refs);
+    for (const adId of adIds) id = withStoriaAdId(id, adId);
+    return id || null;
+  };
+
 
   try {
     for (const listing of build.listings) {
