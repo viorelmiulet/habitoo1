@@ -53,11 +53,9 @@ export const Route = createFileRoute("/api/public/portal/v1/storia/notifications
         });
 
         const processNote =
-          signature.valid === false
-            ? "respins: semnătură invalidă"
-            : "primit și jurnalizat; procesarea fluxurilor vine în Faza 4";
+          signature.valid === false ? "respins: semnătură invalidă" : "primit și jurnalizat";
 
-        await logStoriaNotification({
+        const eventId = await logStoriaNotification({
           method: "POST",
           headers,
           rawBody,
@@ -73,7 +71,14 @@ export const Route = createFileRoute("/api/public/portal/v1/storia/notifications
           });
         }
 
-        return new Response(JSON.stringify({ status: "ok" }), { status: 200, headers: OK_HEADERS });
+        const { processStoriaNotification } = await import("@/lib/portals/storia/leads.server");
+        const result = await processStoriaNotification({ eventId, parsed });
+
+        return new Response(JSON.stringify({ status: "ok", processed: result.processed }), {
+          status: 200,
+          headers: OK_HEADERS,
+        });
+
       },
     },
   },
