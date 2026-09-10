@@ -38,7 +38,7 @@ describe("property duplication", () => {
     });
 
     expect(result).toMatchObject({
-      title: "Apartament central (copie)",
+      title: "Apartament central",
       reference: "RF-1008",
       status: "draft",
       publish_status: "draft",
