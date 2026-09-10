@@ -233,6 +233,12 @@ async function pushListing(
       // Statusul real: `/meta` best-effort; confirmarea finală vine prin notificări.
       const meta = await waitForAdvertSettled(ctx.organizationId, uuid, reactivated ? 4 : 1, 3000);
       const code = meta?.code ?? null;
+      if (meta?.url) {
+        publicUrls[listing.transaction] = meta.url;
+        const adId = storiaAdIdFromUrl(meta.url);
+        if (adId && !adIds.includes(adId)) adIds.push(adId);
+      }
+
 
       // După o reactivare, portalul poate raporta încă starea veche câteva
       // secunde: nu o marcăm „retras”, ci „în procesare”.
