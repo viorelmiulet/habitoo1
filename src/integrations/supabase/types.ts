@@ -1362,6 +1362,62 @@ export type Database = {
           },
         ]
       }
+      portal_webhook_events: {
+        Row: {
+          headers: Json
+          http_method: string
+          id: string
+          organization_id: string | null
+          parsed_payload: Json | null
+          portal: string
+          process_note: string | null
+          processed: boolean
+          raw_payload: string | null
+          received_at: string
+          signature_note: string | null
+          signature_present: boolean
+          signature_valid: boolean | null
+        }
+        Insert: {
+          headers?: Json
+          http_method: string
+          id?: string
+          organization_id?: string | null
+          parsed_payload?: Json | null
+          portal: string
+          process_note?: string | null
+          processed?: boolean
+          raw_payload?: string | null
+          received_at?: string
+          signature_note?: string | null
+          signature_present?: boolean
+          signature_valid?: boolean | null
+        }
+        Update: {
+          headers?: Json
+          http_method?: string
+          id?: string
+          organization_id?: string | null
+          parsed_payload?: Json | null
+          portal?: string
+          process_note?: string | null
+          processed?: boolean
+          raw_payload?: string | null
+          received_at?: string
+          signature_note?: string | null
+          signature_present?: boolean
+          signature_valid?: boolean | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "portal_webhook_events_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null

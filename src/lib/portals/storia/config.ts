@@ -29,6 +29,10 @@ export const OLX_TOKEN_PATH = "/oauth/v1/token";
 /** Ruta publică pe care o înregistrăm în Application Manager ca callback. */
 export const STORIA_CALLBACK_PATH = "/api/public/portal/v1/storia/oauth/callback";
 
+/** Ruta publică de notificări („Notification callback url” în App Manager). */
+export const STORIA_NOTIFICATIONS_PATH = "/api/public/portal/v1/storia/notifications";
+
+
 /** User-Agent identificabil, cerut explicit de documentația OLX. */
 export const OLX_USER_AGENT = "HabitooCRM/1.0 (+https://crm.habitoo.ro)";
 
