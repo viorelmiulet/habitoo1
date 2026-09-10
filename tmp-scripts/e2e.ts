@@ -1,0 +1,16 @@
+import { storiaAdapter } from "../src/lib/portals/adapters/storia.server";
+import { readAdvertMeta } from "../src/lib/portals/storia/adverts.server";
+const organizationId = "04041622-b3d2-4cbe-a214-2ae9bfa34492";
+const propertyId = "13e713e9-9066-412f-afac-2306b042d5b8";
+const uuid = "073b754d-040a-4c66-8959-b1c8d74289f1";
+const ctx: any = { organizationId, allowLiveRequests: true, settings: {}, portalCredential: "x" };
+const ref: any = { propertyId, externalId: `SALE:${uuid}` };
+const w = await storiaAdapter.withdrawListing(ctx, ref);
+console.log("WITHDRAW", JSON.stringify(w));
+await new Promise(r => setTimeout(r, 8000));
+console.log("meta:", (await readAdvertMeta(organizationId, uuid))?.code);
+const p = await storiaAdapter.publishListing(ctx, ref);
+console.log("PUBLISH", JSON.stringify(p, null, 2));
+await new Promise(r => setTimeout(r, 8000));
+const m = await readAdvertMeta(organizationId, uuid);
+console.log("FINAL", m?.code, m?.visibleInProfile, m?.url);
