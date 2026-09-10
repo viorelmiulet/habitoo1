@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { useServerFn } from "@tanstack/react-start";
+import { duplicateProperty } from "@/lib/property-duplicate.functions";
 import { toastError } from "@/lib/errors";
 import { PageHeader } from "@/components/app/PageHeader";
 import { DetailSkeleton } from "@/components/app/LoadingState";
@@ -103,6 +104,7 @@ function PropertyDetailPage() {
   const [clientPhone, setClientPhone] = useState("");
   // Butonul unic „Publică” din antet declanșează și aplicarea bifelor de portal.
   const portalsRef = useRef<PropertyPortalsHandle | null>(null);
+  const duplicatePropertyFn = useServerFn(duplicateProperty);
 
   const { data, isLoading } = useQuery({
     queryKey: ["property", id],
@@ -348,36 +350,20 @@ function PropertyDetailPage() {
 
   const duplicate = useMutation({
     mutationFn: async () => {
-      if (!property || !orgId) throw new Error("Date insuficiente.");
-      const { id: _oldId, created_at, updated_at, reference, ...rest } = property;
-      const { data: created, error } = await supabase
-        .from("properties")
-        .insert({
-          ...rest,
-          organization_id: orgId,
-          created_by: user?.userId ?? null,
-          title: `${property.title} (copie)`,
-          reference: reference ? `${reference}-COPY` : null,
-          status: "draft" as never,
-          publish_status: "draft",
-          published_at: null,
-        } as never)
-        .select("id")
-        .single();
-      if (error) throw error;
-      await logAudit({
-        organizationId: orgId,
-        actorId: user?.userId,
-        action: "property_duplicated",
-        entity: "property",
-        entityId: id,
-        newValues: { newId: created.id },
-      });
-      return created;
+      if (!property) throw new Error("Date insuficiente.");
+      return duplicatePropertyFn({ data: { propertyId: property.id } });
     },
     onSuccess: (created) => {
       queryClient.invalidateQueries({ queryKey: ["properties"] });
-      toast.success("Proprietate duplicată.");
+      const details = [
+        created.imagesCopied === 1
+          ? "1 fotografie copiată"
+          : `${created.imagesCopied} fotografii copiate`,
+        created.documentsCopied === 1
+          ? "1 document copiat"
+          : `${created.documentsCopied} documente copiate`,
+      ].join(" · ");
+      toast.success(`Proprietate duplicată. ${details}.`);
       navigate({ to: "/app/properties/$id", params: { id: created.id } });
     },
     onError: (e: Error) => toastError(e),
