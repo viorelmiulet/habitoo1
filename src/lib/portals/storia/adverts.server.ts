@@ -107,6 +107,23 @@ export function withStoriaAdId(externalId: string | null, adId: string): string 
   return [...existing, `AD:${adId}`].join("|");
 }
 
+/**
+ * Id-ul numeric al anunțului extras din linkul public Storia. Este sursa cea
+ * mai sigură pentru `AD:<id>`, pentru că `data.ad_id` lipsea din notificările
+ * reale, în timp ce `state.url` / `data.url` există.
+ * Formate acceptate: `...-IDxxxxx.html`, `...IDxxxxx`, `.../123456`.
+ */
+export function storiaAdIdFromUrl(url: string | null): string | null {
+  if (!url) return null;
+  const patterns = [/-ID(\d{3,})\.html/i, /\bID(\d{4,})\b/i, /\/(\d{6,})(?:[-/.?#]|$)/];
+  for (const re of patterns) {
+    const match = re.exec(url);
+    if (match?.[1]) return match[1];
+  }
+  return null;
+}
+
+
 
 // --------------------------------------------------------------- erori Storia
 
