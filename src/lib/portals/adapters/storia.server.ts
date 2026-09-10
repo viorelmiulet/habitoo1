@@ -247,9 +247,12 @@ async function pushListing(
   // Starea agregată: cea mai puțin favorabilă dintre anunțurile trimise.
   const portalStatus = statuses.includes("error")
     ? "error"
-    : statuses.includes("pending") || statuses.length === 0
-      ? "pending"
-      : "published";
+    : statuses.includes("withdrawn")
+      ? "withdrawn"
+      : statuses.includes("pending") || statuses.length === 0
+        ? "pending"
+        : "published";
+
 
   return {
     ok: true,
