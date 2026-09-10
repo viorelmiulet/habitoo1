@@ -1742,7 +1742,7 @@ export const applyPropertyPortalSelection = createServerFn({ method: "POST" })
               : `${name}: ${res.message}`,
         });
       } catch (error) {
-        // Izolare per portal: un portal cu probleme nu opreșteierarhia celorlalte.
+        // Izolare per portal: un portal cu probleme nu oprește procesarea celorlalte.
         const { toPortalError } = await import("@/lib/portals/errors");
         const portalError = toPortalError(error);
         const reason = error instanceof Error ? error.message : portalError.message;
