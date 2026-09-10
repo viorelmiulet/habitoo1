@@ -306,9 +306,15 @@ function PropertyDetailPage() {
       }
 
 
+      // O ofertă publicată nu poate rămâne „Ciornă”: statusul ciornă este exclus
+      // din feeduri și din portaluri, deci publicarea îl trece pe „Activ”.
       const { error } = await supabase
         .from("properties")
-        .update({ publish_status: "published", published_at: new Date().toISOString() } as never)
+        .update({
+          publish_status: "published",
+          published_at: new Date().toISOString(),
+          ...(property?.status === "draft" ? { status: "active" } : {}),
+        } as never)
         .eq("id", id);
       if (error) throw error;
       await logAudit({
