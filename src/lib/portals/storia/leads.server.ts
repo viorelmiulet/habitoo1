@@ -367,19 +367,24 @@ async function processLifecycle(admin: Admin, shape: StoriaEventShape): Promise<
     shape.adId && !parseStoriaAdIds(match.externalId).includes(shape.adId)
       ? withStoriaAdId(match.externalId, shape.adId)
       : null;
+  const urlPatch = shape.publicUrl ? { public_url: shape.publicUrl } : {};
 
   if (!code) {
-    if (externalId) {
+    if (externalId || shape.publicUrl) {
       await admin
         .from("portal_listings")
-        .update({ external_id: externalId })
+        .update({ ...(externalId ? { external_id: externalId } : {}), ...urlPatch })
         .eq("portal", "storia")
         .eq("organization_id", match.organizationId)
         .eq("property_id", match.propertyId);
-      return { processed: true, note: `id anunț Storia memorat (AD:${shape.adId})` };
+      return {
+        processed: true,
+        note: `link/id anunț Storia memorat (${externalId ? `AD:${shape.adId}` : "url"})`,
+      };
     }
     return { processed: false, note: "ciclu de viață Storia fără cod de status în payload" };
   }
+
 
   const status = storiaListingStatus(code);
   const detail =
