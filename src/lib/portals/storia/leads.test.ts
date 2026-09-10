@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { parseStoriaAdIds, withStoriaAdId } from "./adverts.server";
+import { parseStoriaAdIds, storiaAdIdFromUrl, withStoriaAdId } from "./adverts.server";
 import { parseStoriaCustomId, readEventShape, readMessagePayload } from "./leads.server";
 
 /** Payload real din jurnal (test App Manager, `flow: publish_advert`). */
