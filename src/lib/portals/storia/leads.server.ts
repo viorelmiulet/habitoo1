@@ -402,7 +402,9 @@ async function processLifecycle(admin: Admin, shape: StoriaEventShape): Promise<
       last_error: message,
       last_sync_at: now,
       ...(externalId ? { external_id: externalId } : {}),
+      ...urlPatch,
     })
+
     .eq("portal", "storia")
     .eq("organization_id", match.organizationId)
     .eq("property_id", match.propertyId);
