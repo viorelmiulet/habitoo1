@@ -254,6 +254,15 @@ async function matchListing(admin: Admin, shape: StoriaEventShape): Promise<Matc
 
 const SOURCE = "Storia.ro";
 
+/** Cât timp păstrăm textul mesajelor primite din portaluri (date personale). */
+export const PORTAL_MESSAGE_RETENTION_DAYS = 180;
+
+export function portalMessageExpiry(sentAt: string): string {
+  const base = new Date(sentAt);
+  const from = Number.isFinite(base.getTime()) ? base : new Date();
+  return new Date(from.getTime() + PORTAL_MESSAGE_RETENTION_DAYS * 86_400_000).toISOString();
+}
+
 async function processMessage(admin: Admin, shape: StoriaEventShape): Promise<StoriaProcessResult> {
   const message = readMessagePayload(shape);
   if (!message.body && !message.senderName && !message.email && !message.phone) {
@@ -276,6 +285,61 @@ async function processMessage(admin: Admin, shape: StoriaEventShape): Promise<St
   const sentAt = message.sentAt ?? now;
   const bodyText = message.body ? message.body.slice(0, 4000) : null;
   const noteLine = [`Mesaj Storia.ro (${sentAt})`, bodyText].filter(Boolean).join(":\n");
+
+  // Idempotență la nivel de mesaj: dacă OLX reîncearcă aceeași notificare,
+  // indexul unic pe (portal, organizație, id mesaj) oprește efectele repetate
+  // ÎNAINTE de a atinge lead-ul, deci nu se creează lead-uri duplicate.
+  const externalMessageId = message.messageId ?? shape.transactionId ?? null;
+  let messageRowId: string | null = null;
+  if (externalMessageId) {
+    const inserted = await admin
+      .from("portal_messages")
+      .insert({
+        organization_id: match.organizationId,
+        portal: "storia",
+        property_id: match.propertyId,
+        external_message_id: externalMessageId,
+        sender_name: message.senderName,
+        sender_email: message.email,
+        sender_phone: message.phone,
+        body: bodyText,
+        sent_at: sentAt,
+        expires_at: portalMessageExpiry(sentAt),
+      })
+      .select("id")
+      .maybeSingle();
+    if (inserted.error) {
+      if (inserted.error.code === "23505") {
+        return {
+          processed: true,
+          note: `mesaj Storia deja înregistrat (id ${externalMessageId}) — reîncercare ignorată`,
+        };
+      }
+      throw inserted.error;
+    }
+    messageRowId = inserted.data?.id ?? null;
+  }
+
+  const attachMessageToLead = async (leadId: string) => {
+    if (messageRowId) {
+      await admin.from("portal_messages").update({ lead_id: leadId }).eq("id", messageRowId);
+      return;
+    }
+    // Fără id de mesaj de la portal nu putem deduplica, dar păstrăm mesajul.
+    await admin.from("portal_messages").insert({
+      organization_id: match.organizationId,
+      portal: "storia",
+      property_id: match.propertyId,
+      lead_id: leadId,
+      sender_name: message.senderName,
+      sender_email: message.email,
+      sender_phone: message.phone,
+      body: bodyText,
+      sent_at: sentAt,
+      expires_at: portalMessageExpiry(sentAt),
+    });
+  };
+
 
   // Deduplicare: același expeditor, aceeași proprietate, lead încă deschis.
   const query = admin
@@ -308,6 +372,7 @@ async function processMessage(admin: Admin, shape: StoriaEventShape): Promise<St
       to_stage: "new",
       note: noteLine.slice(0, 2000),
     });
+    await attachMessageToLead(leadId);
     return { processed: true, note: `mesaj Storia adăugat pe lead-ul existent ${leadId}` };
   }
 
@@ -335,6 +400,10 @@ async function processMessage(admin: Admin, shape: StoriaEventShape): Promise<St
     to_stage: "new",
     note: `Lead creat din mesaj Storia.ro. ${bodyText ?? ""}`.trim().slice(0, 2000),
   });
+
+  await attachMessageToLead(lead.id);
+
+
 
   if (match.assignedTo) {
     await admin.from("notifications").insert({
@@ -499,6 +568,16 @@ export async function processStoriaNotification(args: {
     console.error("[storia] procesarea notificării a eșuat", error);
     result = { processed: false, note: `eroare la procesare: ${String(error).slice(0, 300)}` };
   }
+
+  // Curățare oportunistă: mesajele mai vechi decât perioada de păstrare dispar.
+  if (admin) {
+    try {
+      await admin.rpc("purge_expired_portal_messages");
+    } catch (error) {
+      console.error("[storia] curățarea mesajelor expirate a eșuat", error);
+    }
+  }
+
 
   if (args.eventId && admin) {
     try {
