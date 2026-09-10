@@ -137,7 +137,10 @@ export async function logStoriaNotification(args: {
       headers: args.headers,
       raw_payload: args.rawBody.slice(0, RAW_PAYLOAD_LOG_LIMIT) || null,
       parsed_payload:
-        args.parsed && typeof args.parsed === "object" ? (args.parsed as Record<string, unknown>) : null,
+        args.parsed && typeof args.parsed === "object"
+          ? (args.parsed as Record<string, never>)
+          : null,
+
       signature_present: args.signature.present,
       signature_valid: args.signature.valid,
       signature_note: args.signature.note,
