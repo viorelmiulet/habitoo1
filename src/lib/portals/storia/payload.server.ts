@@ -32,9 +32,20 @@ export async function buildStoriaPayload(input: {
 
   const row = property as PropertyRow;
   if (!isPropertyFeedEligible(row)) {
+    // Mesaj explicit: agentul trebuie să știe exact ce blochează publicarea.
+    const reasons: string[] = [];
+    if (row.deleted_at) reasons.push("Oferta este ștearsă.");
+    if (row.publish_status !== "published") {
+      reasons.push("Oferta nu este publicată pe site (apasă „Publică” pe fișa ofertei).");
+    }
+    if (row.status === "draft") {
+      reasons.push("Statusul ofertei este „Ciornă”; schimbă-l în „Activ” pentru a publica pe portaluri.");
+    } else if (!["active", "reserved", "negotiation"].includes(row.status)) {
+      reasons.push(`Statusul ofertei („${row.status}”) nu permite publicarea pe portaluri.`);
+    }
     return {
       ok: false,
-      reasons: ["Oferta nu este publicabilă: verifică statusul și publicarea pe site."],
+      reasons: reasons.length > 0 ? reasons : ["Oferta nu este publicabilă pe portaluri."],
     };
   }
 
