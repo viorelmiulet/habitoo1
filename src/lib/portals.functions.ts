@@ -814,13 +814,12 @@ async function executeListingAction(input: {
         : await adapter.withdrawListing(ctx, ref);
 
   const now = new Date().toISOString();
+  // Portalurile asincrone (Storia) raportează starea reală a anunțului: un
+  // anunț acceptat, dar aflat în validare, nu trebuie marcat „publicat”.
   const status = !result.ok
     ? "error"
-    : action === "withdraw"
-      ? "withdrawn"
-      : action === "update"
-        ? "updated"
-        : "published";
+    : (result.data.portalStatus ??
+      (action === "withdraw" ? "withdrawn" : action === "update" ? "updated" : "published"));
   const patch: Record<string, unknown> = {
     organization_id: organizationId,
     portal: definition.id,
