@@ -57,7 +57,14 @@ export type ListingOutcome = {
    * acțiune, ca să nu marcăm „publicat” un anunț aflat în validare.
    */
   portalStatus?: string | null;
+  /**
+   * Linkul public al anunțului pe portal, dacă portalul îl întoarce. Se
+   * salvează în `portal_listings.public_url` și devine iconița de deschidere
+   * din fila Publicare.
+   */
+  publicUrl?: string | null;
 };
+
 
 export type ConnectionStatusOutcome = {
   configured: boolean;
