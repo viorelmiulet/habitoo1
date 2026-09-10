@@ -839,6 +839,9 @@ async function executeListingAction(input: {
     last_sync_at: now,
     last_error: errorMessage,
     ...(result.ok && result.data.externalId ? { external_id: result.data.externalId } : {}),
+    // Linkul public al anunțului, când portalul îl întoarce (generic, nu doar Storia).
+    ...(result.ok && result.data.publicUrl ? { public_url: result.data.publicUrl } : {}),
+
     ...(result.ok && action === "publish" ? { published_at: now } : {}),
     updated_by: actorId,
   };
