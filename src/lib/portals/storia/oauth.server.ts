@@ -205,7 +205,8 @@ async function tokenRequest(payload: Record<string, string>): Promise<StoriaToke
     response = await fetch(`${OLX_API_BASE}${OLX_TOKEN_PATH}`, {
       method: "POST",
       headers: {
-        authorization: `Basic ${basic}`,
+        // `basic` este deja normalizat cu prefixul "Basic " în appCredentials().
+        authorization: basic,
         "x-api-key": apiKey,
         "content-type": "application/json",
         accept: "application/json",
