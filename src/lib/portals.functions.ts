@@ -66,8 +66,22 @@ export type PortalHubItem = {
     /** Oferte selectate dar excluse din feed pentru date incomplete. */
     excluded: number | null;
   };
+  /**
+   * Portalurile cu OAuth (Storia): starea autorizării contului agenției.
+   * `null` la portalurile care nu folosesc OAuth. Niciun token, doar metadate.
+   */
+  oauth: {
+    appConfigured: boolean;
+    connected: boolean;
+    expiresAt: string | null;
+    expired: boolean;
+    canRefresh: boolean;
+    connectedAt: string | null;
+    refreshedAt: string | null;
+  } | null;
 
 };
+
 
 export type PortalLogItem = {
   id: string;
