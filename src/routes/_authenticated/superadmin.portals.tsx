@@ -33,10 +33,17 @@ import {
 export const Route = createFileRoute("/_authenticated/superadmin/portals")({
   head: () => appHead("Habitoo CRM — portaluri imobiliare"),
   // Deep-link din dashboard: `?org=<id>` preselectează agenția vizată.
-  validateSearch: (search: Record<string, unknown>): { org?: string } =>
-    typeof search.org === "string" ? { org: search.org } : {},
+  // `?storia=` / `?storia_error=` vin de la returnarea autorizării OAuth Storia.
+  validateSearch: (
+    search: Record<string, unknown>,
+  ): { org?: string; storia?: string; storia_error?: string } => ({
+    ...(typeof search.org === "string" ? { org: search.org } : {}),
+    ...(typeof search.storia === "string" ? { storia: search.storia } : {}),
+    ...(typeof search.storia_error === "string" ? { storia_error: search.storia_error } : {}),
+  }),
   component: SuperadminPortalsPage,
 });
+
 
 function SuperadminPortalsPage() {
   const loadOrgs = useServerFn(listPortalOrganizations);
