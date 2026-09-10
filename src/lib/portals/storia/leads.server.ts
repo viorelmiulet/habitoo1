@@ -28,7 +28,9 @@ import {
   STORIA_STATUS_MESSAGE,
   parseAdvertRefs,
   parseStoriaAdIds,
+  storiaAdIdFromUrl,
   storiaListingStatus,
+
   withStoriaAdId,
 } from "./adverts.server";
 
@@ -86,9 +88,12 @@ export type StoriaEventShape = {
   advertUuid: string | null;
   /** id-ul numeric al anunțului pe Storia (fluxul de mesaje: `data.ad_id`). */
   adId: string | null;
+  /** Linkul public al anunțului (`data.url`), când vine în notificare. */
+  publicUrl: string | null;
   customId: string | null;
   data: Json;
 };
+
 
 export function readEventShape(parsed: unknown): StoriaEventShape | null {
   const root = asRecord(parsed);
@@ -105,21 +110,18 @@ export function readEventShape(parsed: unknown): StoriaEventShape | null {
     : (pick(root, ["object_id", "objectId"]) ??
       pick(data, ["advert_id", "advertId", "advert.uuid", "advert.id", "id"]));
 
-  const adId =
-    pick(data, ["ad_id", "adId", "advert.ad_id"]) ??
-    // Fallback: id-ul numeric din url-ul anunțului (`...-IDxyz.html` / `/123456`).
-    (() => {
-      const url = pick(data, ["url", "advert.url"]);
-      const match = url ? /(?:ID|\/)(\d{4,})(?:\D|$)/i.exec(url) : null;
-      return match?.[1] ?? null;
-    })();
+  const publicUrl = pick(data, ["url", "advert.url", "state.url"]);
+  // `data.ad_id` lipsea din notificările reale; linkul public conține însă id-ul
+  // numeric, deci el este sursa principală.
+  const adId = storiaAdIdFromUrl(publicUrl) ?? pick(data, ["ad_id", "adId", "advert.ad_id"]);
 
   return {
     flow,
     eventType: pick(root, ["event_type", "eventType", "type"]),
     transactionId: pick(root, ["transaction_id", "transactionId"]),
     advertUuid: advertCandidate && UUID_RE.test(advertCandidate) ? advertCandidate.toLowerCase() : null,
-    adId: adId && /^\d+$/.test(adId) ? adId : null,
+    adId: adId && /^[A-Za-z0-9]{2,}$/.test(adId) ? adId : null,
+    publicUrl: publicUrl && /^https?:\/\//i.test(publicUrl) ? publicUrl : null,
     customId: pick(data, [
       "custom_fields.id",
       "advert.custom_fields.id",
@@ -130,6 +132,7 @@ export function readEventShape(parsed: unknown): StoriaEventShape | null {
     data,
   };
 }
+
 
 function isMessageEvent(shape: StoriaEventShape): boolean {
   return /message|conversation|inquiry|enquiry|lead/i.test(
@@ -366,19 +369,24 @@ async function processLifecycle(admin: Admin, shape: StoriaEventShape): Promise<
     shape.adId && !parseStoriaAdIds(match.externalId).includes(shape.adId)
       ? withStoriaAdId(match.externalId, shape.adId)
       : null;
+  const urlPatch = shape.publicUrl ? { public_url: shape.publicUrl } : {};
 
   if (!code) {
-    if (externalId) {
+    if (externalId || shape.publicUrl) {
       await admin
         .from("portal_listings")
-        .update({ external_id: externalId })
+        .update({ ...(externalId ? { external_id: externalId } : {}), ...urlPatch })
         .eq("portal", "storia")
         .eq("organization_id", match.organizationId)
         .eq("property_id", match.propertyId);
-      return { processed: true, note: `id anunț Storia memorat (AD:${shape.adId})` };
+      return {
+        processed: true,
+        note: `link/id anunț Storia memorat (${externalId ? `AD:${shape.adId}` : "url"})`,
+      };
     }
     return { processed: false, note: "ciclu de viață Storia fără cod de status în payload" };
   }
+
 
   const status = storiaListingStatus(code);
   const detail =
@@ -396,7 +404,9 @@ async function processLifecycle(admin: Admin, shape: StoriaEventShape): Promise<
       last_error: message,
       last_sync_at: now,
       ...(externalId ? { external_id: externalId } : {}),
+      ...urlPatch,
     })
+
     .eq("portal", "storia")
     .eq("organization_id", match.organizationId)
     .eq("property_id", match.propertyId);

@@ -839,6 +839,9 @@ async function executeListingAction(input: {
     last_sync_at: now,
     last_error: errorMessage,
     ...(result.ok && result.data.externalId ? { external_id: result.data.externalId } : {}),
+    // Linkul public al anunțului, când portalul îl întoarce (generic, nu doar Storia).
+    ...(result.ok && result.data.publicUrl ? { public_url: result.data.publicUrl } : {}),
+
     ...(result.ok && action === "publish" ? { published_at: now } : {}),
     updated_by: actorId,
   };
@@ -926,8 +929,9 @@ export const getPropertyPortalStatus = createServerFn({ method: "POST" })
     const [{ data: listings }, { data: connections }] = await Promise.all([
       admin
         .from("portal_listings")
-        .select("portal, status, external_id, published_at, last_sync_at, last_error")
+        .select("portal, status, external_id, public_url, published_at, last_sync_at, last_error")
         .eq("organization_id", organizationId)
+
         .eq("property_id", data.propertyId),
       admin
         .from("portal_connections")
@@ -979,6 +983,8 @@ export const getPropertyPortalStatus = createServerFn({ method: "POST" })
           connected: connection?.status === "connected" || connection?.status === "ready",
           status: listing?.status ?? "not_published",
           externalId: listing?.external_id ?? diagnostics?.externalId ?? null,
+          publicUrl: listing?.public_url ?? diagnostics?.offerUrl ?? null,
+
           publishedAt: listing?.published_at ?? null,
           lastSyncAt: listing?.last_sync_at ?? null,
           lastError: listing?.last_error ?? null,
@@ -1045,6 +1051,9 @@ export type PropertyPortalCell = {
   lastSyncAt: string | null;
   lastError: string | null;
   externalId: string | null;
+  /** Linkul public al anunțului pe portal, dacă portalul îl întoarce. */
+  publicUrl: string | null;
+
 };
 
 
@@ -1112,7 +1121,7 @@ export const getPropertiesPortalMatrix = createServerFn({ method: "POST" })
           .in("property_id", data.propertyIds),
         admin
           .from("portal_listings")
-          .select("property_id, portal, status, last_sync_at, last_error, external_id")
+          .select("property_id, portal, status, last_sync_at, last_error, external_id, public_url")
           .eq("organization_id", organizationId)
           .in("property_id", data.propertyIds),
         admin.from("portal_connections").select("portal, status").eq("organization_id", organizationId),
@@ -1179,6 +1188,8 @@ export const getPropertiesPortalMatrix = createServerFn({ method: "POST" })
               ? "Oferta este selectată, dar nu intră în feed: verifică statusul și publicarea pe site."
               : (listing?.last_error ?? pub?.last_error ?? null),
           externalId: listing?.external_id ?? pub?.external_ref ?? null,
+          publicUrl: listing?.public_url ?? null,
+
         };
       });
     }
@@ -1742,4 +1753,67 @@ export const listOrgPropertiesForPortals = createServerFn({ method: "POST" })
     if (search) query = query.ilike("title", `%${search}%`);
     const { data: rows } = await query;
     return (rows ?? []).map((r) => ({ id: r.id, title: r.title, city: r.city ?? null }));
+  });
+
+/* ------------------------------------------------------------------------- */
+/* Backfill linkuri publice Storia                                           */
+/* ------------------------------------------------------------------------- */
+
+/**
+ * Citește `/meta` pentru anunțurile Storia existente și salvează linkul public
+ * (`state.url`) plus id-ul numeric extras din el (`AD:<id>`), care este puntea
+ * sigură dintre notificările de mesaje și oferta din CRM.
+ *
+ * Necesar o singură dată pentru anunțurile publicate înainte de introducerea
+ * coloanei `public_url`; ulterior linkul se salvează automat la publicare și
+ * din notificările de ciclu de viață. Superadmin-only.
+ */
+export const backfillStoriaPublicUrls = createServerFn({ method: "POST" })
+  .middleware([requireActiveOrgAuth])
+  .inputValidator((input: unknown) =>
+    z.object({ organizationId: z.string().uuid().optional() }).parse(input ?? {}),
+  )
+  .handler(async ({ data, context }) => {
+    await requireSuperadmin(context as unknown as AuthContext);
+    const admin = await loadAdmin();
+    const { parseAdvertRefs, readAdvertMeta, storiaAdIdFromUrl, withStoriaAdId } = await import(
+      "@/lib/portals/storia/adverts.server"
+    );
+
+    let query = admin
+      .from("portal_listings")
+      .select("id, organization_id, property_id, external_id, public_url")
+      .eq("portal", "storia");
+    if (data.organizationId) query = query.eq("organization_id", data.organizationId);
+    const { data: rows } = await query;
+
+    const results: {
+      propertyId: string;
+      url: string | null;
+      adId: string | null;
+      externalId: string | null;
+    }[] = [];
+
+    for (const row of rows ?? []) {
+      const refs = parseAdvertRefs(row.external_id);
+      let url: string | null = null;
+      for (const uuid of [refs.sale, refs.rent].filter(Boolean) as string[]) {
+        const meta = await readAdvertMeta(row.organization_id, uuid).catch(() => null);
+        if (meta?.url) {
+          url = meta.url;
+          break;
+        }
+      }
+      const adId = storiaAdIdFromUrl(url);
+      const externalId = adId ? withStoriaAdId(row.external_id, adId) : row.external_id;
+      if (url) {
+        await admin
+          .from("portal_listings")
+          .update({ public_url: url, external_id: externalId } as never)
+          .eq("id", row.id);
+      }
+      results.push({ propertyId: row.property_id, url, adId, externalId });
+    }
+
+    return { checked: (rows ?? []).length, results };
   });

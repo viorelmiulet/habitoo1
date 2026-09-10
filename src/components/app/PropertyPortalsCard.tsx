@@ -10,6 +10,8 @@
  * introducă o a doua sursă de adevăr.
  */
 import { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from "react";
+import { ExternalLink } from "lucide-react";
+
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
@@ -192,9 +194,25 @@ export const PropertyPortalsCard = forwardRef<
               />
               <PortalLogo portalId={cell.portalId} name={cell.portalName} size={28} />
               <div className="min-w-0 flex-1">
-                <label htmlFor={`portal-${cell.portalId}`} className="font-medium">
-                  {cell.portalName}
-                </label>
+                <span className="flex items-center gap-1.5">
+                  <label htmlFor={`portal-${cell.portalId}`} className="font-medium">
+                    {cell.portalName}
+                  </label>
+                  {/* Linkul public al anunțului, când portalul îl întoarce. */}
+                  {cell.publicUrl ? (
+                    <a
+                      href={cell.publicUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      title={`Deschide anunțul pe ${cell.portalName}`}
+                      aria-label={`Deschide anunțul pe ${cell.portalName} într-un tab nou`}
+                      className="text-muted-foreground transition-colors hover:text-primary"
+                    >
+                      <ExternalLink className="size-3.5" aria-hidden />
+                    </a>
+                  ) : null}
+                </span>
+
                 <p className="text-xs text-muted-foreground">
                   {cell.availability !== "available"
                     ? "Integrarea nu este încă disponibilă."

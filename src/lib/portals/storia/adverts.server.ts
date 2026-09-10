@@ -107,6 +107,27 @@ export function withStoriaAdId(externalId: string | null, adId: string): string 
   return [...existing, `AD:${adId}`].join("|");
 }
 
+/**
+ * Id-ul public al anunțului extras din linkul Storia. Este sursa cea mai sigură
+ * pentru `AD:<id>`, pentru că `data.ad_id` lipsea din notificările reale, în
+ * timp ce `state.url` / `data.url` există.
+ *
+ * Formatul REAL confirmat pe un anunț live este alfanumeric, nu numeric:
+ * `https://www.storia.ro/ro/oferta/apartament-test-IDIwcT.html` → `IwcT`.
+ * Acceptăm și varianta numerică din ultimul segment, pentru siguranță.
+ */
+export function storiaAdIdFromUrl(url: string | null): string | null {
+  if (!url) return null;
+  const patterns = [/-ID([A-Za-z0-9]{2,})\.html/, /\bID([A-Za-z0-9]{4,})\b/, /\/(\d{6,})(?:[-/.?#]|$)/];
+  for (const re of patterns) {
+    const match = re.exec(url);
+    if (match?.[1]) return match[1];
+  }
+  return null;
+}
+
+
+
 
 // --------------------------------------------------------------- erori Storia
 

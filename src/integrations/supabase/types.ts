@@ -1152,6 +1152,7 @@ export type Database = {
           organization_id: string
           portal: string
           property_id: string
+          public_url: string | null
           published_at: string | null
           status: string
           updated_at: string
@@ -1167,6 +1168,7 @@ export type Database = {
           organization_id: string
           portal: string
           property_id: string
+          public_url?: string | null
           published_at?: string | null
           status?: string
           updated_at?: string
@@ -1182,6 +1184,7 @@ export type Database = {
           organization_id?: string
           portal?: string
           property_id?: string
+          public_url?: string | null
           published_at?: string | null
           status?: string
           updated_at?: string

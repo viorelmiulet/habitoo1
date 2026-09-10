@@ -29,7 +29,10 @@ import {
   parseAdvertRefs,
   readAdvertMeta,
   serializeAdvertRefs,
+  storiaAdIdFromUrl,
   storiaListingStatus,
+  withStoriaAdId,
+
   storiaReactivationPlan,
   waitForAdvertSettled,
   STORIA_STATUS_MESSAGE,
@@ -173,6 +176,16 @@ async function pushListing(
 
   const notes: string[] = [...build.warnings];
   const statuses: string[] = [];
+  // Linkul public al anunțului + id-ul numeric extras din el (`AD:<id>`), care
+  // este puntea sigură dintre notificările de mesaje și oferta din CRM.
+  const publicUrls: Partial<Record<StoriaTransaction, string>> = {};
+  const adIds: string[] = [];
+  const finalExternalId = () => {
+    let id = serializeAdvertRefs(refs);
+    for (const adId of adIds) id = withStoriaAdId(id, adId);
+    return id || null;
+  };
+
 
   try {
     for (const listing of build.listings) {
@@ -223,6 +236,12 @@ async function pushListing(
       // Statusul real: `/meta` best-effort; confirmarea finală vine prin notificări.
       const meta = await waitForAdvertSettled(ctx.organizationId, uuid, reactivated ? 4 : 1, 3000);
       const code = meta?.code ?? null;
+      if (meta?.url) {
+        publicUrls[listing.transaction] = meta.url;
+        const adId = storiaAdIdFromUrl(meta.url);
+        if (adId && !adIds.includes(adId)) adIds.push(adId);
+      }
+
 
       // După o reactivare, portalul poate raporta încă starea veche câteva
       // secunde: nu o marcăm „retras”, ci „în procesare”.
@@ -250,9 +269,10 @@ async function pushListing(
 
 
     const failed = fail(error);
-    const partial = serializeAdvertRefs(refs);
+    const partial = finalExternalId();
     return partial ? { ...failed, detail: `${failed.detail ?? ""} refs_saved`.trim() } : failed;
   }
+
 
   // Starea agregată: cea mai puțin favorabilă dintre anunțurile trimise.
   const portalStatus = statuses.includes("error")
@@ -267,7 +287,11 @@ async function pushListing(
   return {
     ok: true,
     data: {
-      externalId: serializeAdvertRefs(refs),
+      externalId: finalExternalId(),
+      // O ofertă cu ambele tranzacții are două anunțuri; păstrăm linkul celui
+      // de vânzare, iar dacă lipsește pe cel de închiriere.
+      publicUrl: publicUrls.sale ?? publicUrls.rent ?? null,
+
       live: true,
       detail: `storia ${mode}: ${build.listings.length} anunț(uri), stare ${portalStatus}`,
       processed: build.listings.length,
