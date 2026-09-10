@@ -372,6 +372,7 @@ async function processMessage(admin: Admin, shape: StoriaEventShape): Promise<St
       to_stage: "new",
       note: noteLine.slice(0, 2000),
     });
+    await attachMessageToLead(leadId);
     return { processed: true, note: `mesaj Storia adăugat pe lead-ul existent ${leadId}` };
   }
 
