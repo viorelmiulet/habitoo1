@@ -29,9 +29,9 @@ import {
   parseAdvertRefs,
   readAdvertMeta,
   serializeAdvertRefs,
-  storiaAdIdFromUrl,
+  storiaAdSlugFromUrl,
   storiaListingStatus,
-  withStoriaAdId,
+  withStoriaAdSlug,
 
   storiaReactivationPlan,
   waitForAdvertSettled,
@@ -176,13 +176,13 @@ async function pushListing(
 
   const notes: string[] = [...build.warnings];
   const statuses: string[] = [];
-  // Linkul public al anunțului + id-ul numeric extras din el (`AD:<id>`), care
-  // este puntea sigură dintre notificările de mesaje și oferta din CRM.
+  // Linkul public al anunțului + slug-ul din link (`ADSLUG:<id>`). Id-ul numeric
+  // folosit în notificările de mesaje este DIFERIT și se învață din ele.
   const publicUrls: Partial<Record<StoriaTransaction, string>> = {};
-  const adIds: string[] = [];
+  const adSlugs: string[] = [];
   const finalExternalId = () => {
     let id = serializeAdvertRefs(refs);
-    for (const adId of adIds) id = withStoriaAdId(id, adId);
+    for (const slug of adSlugs) id = withStoriaAdSlug(id, slug);
     return id || null;
   };
 
@@ -238,8 +238,8 @@ async function pushListing(
       const code = meta?.code ?? null;
       if (meta?.url) {
         publicUrls[listing.transaction] = meta.url;
-        const adId = storiaAdIdFromUrl(meta.url);
-        if (adId && !adIds.includes(adId)) adIds.push(adId);
+        const slug = storiaAdSlugFromUrl(meta.url);
+        if (slug && !adSlugs.includes(slug)) adSlugs.push(slug);
       }
 
 

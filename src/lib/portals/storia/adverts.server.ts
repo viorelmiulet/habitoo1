@@ -86,37 +86,54 @@ export function serializeAdvertRefs(refs: AdvertRefs): string | null {
 }
 
 /**
- * Id-ul numeric al anunțului pe Storia (`ad_id`), stocat ca segment suplimentar
- * `AD:<id>` în `external_id`. Este necesar pentru că notificările de mesaje
- * identifică anunțul DOAR prin acest id numeric, nu prin uuid.
- * Îl învățăm din notificările de ciclu de viață; dacă o republicare rescrie
- * `external_id` și segmentul se pierde, prima notificare următoare îl re-adaugă.
+ * Storia expune DOUĂ identificatoare distincte pentru același anunț:
+ *   - `AD:<id>` — id-ul numeric intern (`data.ad_id` din notificările de mesaje);
+ *   - `ADSLUG:<id>` — id-ul din linkul public (`...-IDIwcT.html`), alfanumeric.
+ *
+ * Verificat pe date reale: `GET /advert/v1/{uuid}/meta` NU întoarce niciun id
+ * numeric (doar `uuid`, `custom_fields.id` și `state.url`), deci id-ul numeric
+ * nu poate fi derivat din link. Păstrăm ambele forme în `external_id` și facem
+ * potrivirea mesajelor tolerantă la oricare dintre ele.
  */
-export function parseStoriaAdIds(externalId: string | null): string[] {
+function parseSegments(externalId: string | null, key: string): string[] {
   const out: string[] = [];
   for (const part of (externalId ?? "").split("|")) {
-    const [key, value] = part.split(":");
-    if (key?.trim().toUpperCase() === "AD" && value?.trim()) out.push(value.trim());
+    const [k, value] = part.split(":");
+    if (k?.trim().toUpperCase() === key && value?.trim()) out.push(value.trim());
   }
   return out;
 }
 
-export function withStoriaAdId(externalId: string | null, adId: string): string {
+function withSegment(externalId: string | null, key: string, value: string): string {
   const existing = (externalId ?? "").split("|").filter(Boolean);
-  if (parseStoriaAdIds(externalId).includes(adId)) return existing.join("|");
-  return [...existing, `AD:${adId}`].join("|");
+  if (parseSegments(externalId, key).includes(value)) return existing.join("|");
+  return [...existing, `${key}:${value}`].join("|");
+}
+
+/** Id-ul numeric intern al anunțului (`data.ad_id` din notificările de mesaje). */
+export function parseStoriaAdIds(externalId: string | null): string[] {
+  return parseSegments(externalId, "AD");
+}
+
+export function withStoriaAdId(externalId: string | null, adId: string): string {
+  return withSegment(externalId, "AD", adId);
+}
+
+/** Id-ul din linkul public (slug), alfanumeric — util pentru afișare și potrivire. */
+export function parseStoriaAdSlugs(externalId: string | null): string[] {
+  return parseSegments(externalId, "ADSLUG");
+}
+
+export function withStoriaAdSlug(externalId: string | null, slug: string): string {
+  return withSegment(externalId, "ADSLUG", slug);
 }
 
 /**
- * Id-ul public al anunțului extras din linkul Storia. Este sursa cea mai sigură
- * pentru `AD:<id>`, pentru că `data.ad_id` lipsea din notificările reale, în
- * timp ce `state.url` / `data.url` există.
- *
- * Formatul REAL confirmat pe un anunț live este alfanumeric, nu numeric:
- * `https://www.storia.ro/ro/oferta/apartament-test-IDIwcT.html` → `IwcT`.
- * Acceptăm și varianta numerică din ultimul segment, pentru siguranță.
+ * Id-ul din linkul public Storia. Formatul REAL confirmat pe un anunț live este
+ * alfanumeric: `https://www.storia.ro/ro/oferta/apartament-test-IDIwcT.html`
+ * → `IwcT`. NU este id-ul numeric folosit în notificările de mesaje.
  */
-export function storiaAdIdFromUrl(url: string | null): string | null {
+export function storiaAdSlugFromUrl(url: string | null): string | null {
   if (!url) return null;
   const patterns = [/-ID([A-Za-z0-9]{2,})\.html/, /\bID([A-Za-z0-9]{4,})\b/, /\/(\d{6,})(?:[-/.?#]|$)/];
   for (const re of patterns) {
