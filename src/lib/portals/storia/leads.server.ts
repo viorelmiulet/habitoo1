@@ -108,14 +108,10 @@ export function readEventShape(parsed: unknown): StoriaEventShape | null {
     : (pick(root, ["object_id", "objectId"]) ??
       pick(data, ["advert_id", "advertId", "advert.uuid", "advert.id", "id"]));
 
-  const adId =
-    pick(data, ["ad_id", "adId", "advert.ad_id"]) ??
-    // Fallback: id-ul numeric din url-ul anunțului (`...-IDxyz.html` / `/123456`).
-    (() => {
-      const url = pick(data, ["url", "advert.url"]);
-      const match = url ? /(?:ID|\/)(\d{4,})(?:\D|$)/i.exec(url) : null;
-      return match?.[1] ?? null;
-    })();
+  const publicUrl = pick(data, ["url", "advert.url", "state.url"]);
+  // `data.ad_id` lipsea din notificările reale; linkul public conține însă id-ul
+  // numeric, deci el este sursa principală.
+  const adId = storiaAdIdFromUrl(publicUrl) ?? pick(data, ["ad_id", "adId", "advert.ad_id"]);
 
   return {
     flow,
@@ -123,6 +119,7 @@ export function readEventShape(parsed: unknown): StoriaEventShape | null {
     transactionId: pick(root, ["transaction_id", "transactionId"]),
     advertUuid: advertCandidate && UUID_RE.test(advertCandidate) ? advertCandidate.toLowerCase() : null,
     adId: adId && /^\d+$/.test(adId) ? adId : null,
+    publicUrl: publicUrl && /^https?:\/\//i.test(publicUrl) ? publicUrl : null,
     customId: pick(data, [
       "custom_fields.id",
       "advert.custom_fields.id",
@@ -133,6 +130,7 @@ export function readEventShape(parsed: unknown): StoriaEventShape | null {
     data,
   };
 }
+
 
 function isMessageEvent(shape: StoriaEventShape): boolean {
   return /message|conversation|inquiry|enquiry|lead/i.test(
