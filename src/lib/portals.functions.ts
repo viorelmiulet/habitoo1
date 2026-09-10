@@ -983,6 +983,8 @@ export const getPropertyPortalStatus = createServerFn({ method: "POST" })
           connected: connection?.status === "connected" || connection?.status === "ready",
           status: listing?.status ?? "not_published",
           externalId: listing?.external_id ?? diagnostics?.externalId ?? null,
+          publicUrl: listing?.public_url ?? diagnostics?.offerUrl ?? null,
+
           publishedAt: listing?.published_at ?? null,
           lastSyncAt: listing?.last_sync_at ?? null,
           lastError: listing?.last_error ?? null,
