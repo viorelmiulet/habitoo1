@@ -66,8 +66,22 @@ export type PortalHubItem = {
     /** Oferte selectate dar excluse din feed pentru date incomplete. */
     excluded: number | null;
   };
+  /**
+   * Portalurile cu OAuth (Storia): starea autorizării contului agenției.
+   * `null` la portalurile care nu folosesc OAuth. Niciun token, doar metadate.
+   */
+  oauth: {
+    appConfigured: boolean;
+    connected: boolean;
+    expiresAt: string | null;
+    expired: boolean;
+    canRefresh: boolean;
+    connectedAt: string | null;
+    refreshedAt: string | null;
+  } | null;
 
 };
+
 
 export type PortalLogItem = {
   id: string;
@@ -288,11 +302,20 @@ export const getPortalHub = createServerFn({ method: "POST" })
       inspectFeedAgents(organizationId),
     ]);
 
+    // Storia: starea autorizării OAuth a agenției (metadate, fără tokenuri).
+    const { readStoriaOAuthMeta, storiaAppConfigured, loadStoriaTokens } = await import(
+      "@/lib/portals/storia/oauth.server"
+    );
+    const storiaTokens = await loadStoriaTokens(organizationId);
+    const storiaAppReady = storiaAppConfigured();
+
     return PORTALS.map((portal) => {
       const row = (connections.data ?? []).find((c) => c.portal === portal.id) ?? null;
       const settings = (row?.settings ?? {}) as Record<string, unknown>;
       const portalKeys = (keys.data ?? []).filter((k) => k.portal === portal.id);
       const portalListings = (listings.data ?? []).filter((l) => l.portal === portal.id);
+      const oauthMeta = portal.authentication.includes("oauth") ? readStoriaOAuthMeta(settings) : null;
+      const oauthExpiresAt = oauthMeta?.expires_at ?? storiaTokens?.expires_at ?? null;
 
       return {
         portal,
@@ -305,7 +328,9 @@ export const getPortalHub = createServerFn({ method: "POST" })
             hasHabitooKey: portalKeys.some((k) => k.status === "active"),
             lastError: row?.last_sync_error ?? null,
             testedOk: row?.status === "connected",
+            hasOAuthTokens: Boolean(row?.portal_credentials_encrypted),
           }),
+
           direction: row?.direction ?? portal.directions[0] ?? "habitoo_to_portal",
           authenticationMode: row?.authentication_mode ?? portal.authentication[0] ?? "none",
           externalAccountId: row?.external_account_id ?? null,
@@ -355,8 +380,20 @@ export const getPortalHub = createServerFn({ method: "POST" })
                 selected: null,
                 excluded: null,
               },
+        oauth: portal.authentication.includes("oauth")
+          ? {
+              appConfigured: storiaAppReady,
+              connected: Boolean(row?.portal_credentials_encrypted),
+              expiresAt: oauthExpiresAt,
+              expired: oauthExpiresAt ? new Date(oauthExpiresAt).getTime() <= Date.now() : false,
+              canRefresh: oauthMeta?.has_refresh_token ?? Boolean(storiaTokens?.refresh_token),
+              connectedAt: oauthMeta?.connected_at ?? null,
+              refreshedAt: oauthMeta?.refreshed_at ?? null,
+            }
+          : null,
 
       };
+
     });
   });
 

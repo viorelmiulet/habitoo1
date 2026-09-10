@@ -8,6 +8,8 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { Search } from "lucide-react";
+import { toast } from "sonner";
+
 import { PageHeader } from "@/components/app/PageHeader";
 import { InlineLoading } from "@/components/app/LoadingState";
 import { QueryError } from "@/components/app/QueryError";
@@ -33,15 +35,22 @@ import {
 export const Route = createFileRoute("/_authenticated/superadmin/portals")({
   head: () => appHead("Habitoo CRM — portaluri imobiliare"),
   // Deep-link din dashboard: `?org=<id>` preselectează agenția vizată.
-  validateSearch: (search: Record<string, unknown>): { org?: string } =>
-    typeof search.org === "string" ? { org: search.org } : {},
+  // `?storia=` / `?storia_error=` vin de la returnarea autorizării OAuth Storia.
+  validateSearch: (
+    search: Record<string, unknown>,
+  ): { org?: string; storia?: string; storia_error?: string } => ({
+    ...(typeof search.org === "string" ? { org: search.org } : {}),
+    ...(typeof search.storia === "string" ? { storia: search.storia } : {}),
+    ...(typeof search.storia_error === "string" ? { storia_error: search.storia_error } : {}),
+  }),
   component: SuperadminPortalsPage,
 });
+
 
 function SuperadminPortalsPage() {
   const loadOrgs = useServerFn(listPortalOrganizations);
   const loadProperties = useServerFn(listOrgPropertiesForPortals);
-  const { org: orgFromLink } = Route.useSearch();
+  const { org: orgFromLink, storia, storia_error: storiaError } = Route.useSearch();
 
   const [organizationId, setOrganizationId] = useState<string>(orgFromLink ?? "");
   const [search, setSearch] = useState("");
@@ -52,6 +61,22 @@ function SuperadminPortalsPage() {
   useEffect(() => {
     if (orgFromLink) setOrganizationId(orgFromLink);
   }, [orgFromLink]);
+
+  // Rezultatul autorizării Storia (returnat de ruta publică de callback).
+  useEffect(() => {
+    if (storia === "connected") {
+      toast.success("Contul Storia al agenției a fost conectat.");
+    } else if (storiaError) {
+      toast.error(
+        storiaError === "invalid_state"
+          ? "Autorizarea Storia nu a putut fi validată. Pornește conectarea din nou."
+          : storiaError === "missing_code"
+            ? "Storia nu a trimis codul de autorizare. Reia conectarea."
+            : "Autorizarea Storia nu s-a finalizat. Codul este valabil doar un minut — reia conectarea.",
+      );
+    }
+  }, [storia, storiaError]);
+
 
   useEffect(() => {
     if (!organizationId && orgs.data && orgs.data.length > 0) {

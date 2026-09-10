@@ -40,3 +40,11 @@
 - [ ] Pipeline lead-uri: fallback tastatură/touch pentru drag & drop.
 - [x] Verificare vizuală 1440/390 light + dark pe toate rutele autentificate, typecheck, build, fără erori consolă/network.
   - Notă: avertismentul dev intermitent „state update on a component that hasn't mounted yet” provine din `@tanstack/react-router` (Transitioner.startTransition la încărcarea inițială), nu din codul aplicației.
+
+## Storia.ro (OLX Group RE API)
+- [x] Faza 1 — OAuth2 per agenție: buton de conectare în Superadmin → Portaluri, `state` CSRF cu un singur consum, callback public, schimb de cod pe token, tokenuri criptate per agenție, reîmprospătare automată + o reîncercare la 401, stare afișată în Superadmin.
+- [ ] Faza 2 — taxonomie Storia (URN-uri) cu cache și reîmprospătare periodică (așteaptă confirmarea utilizatorului).
+- [ ] Faza 3 — publicare/actualizare/retragere anunțuri, flux asincron cu `advert_uuid` + validări locale înainte de trimitere.
+- [ ] Faza 4 — webhook de notificări (HMAC SHA1, răspuns rapid 2xx) + mesaje Storia transformate în lead-uri.
+- [ ] Neimplementat intenționat: promovări (VAS), Primary Market.
+- [ ] Necesită de la utilizator: secretele `OLX_CLIENT_ID`, `OLX_CLIENT_SECRET`, `OLX_BASIC_BASE64`, `OLX_API_KEY`, `OLX_NOTIFICATION_SECRET` și înregistrarea callback-ului în Application Manager.

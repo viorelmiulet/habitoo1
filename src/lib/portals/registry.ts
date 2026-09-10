@@ -261,16 +261,25 @@ export const PORTALS: PortalDefinition[] = [
   },
   {
     id: "storia",
-    display_name: "Storia",
-    description: "Integrare de publicare anunțuri. Necesită acord și documentație de la portal.",
+    display_name: "Storia.ro",
+    description:
+      "Storia (OLX Group RE API): Habitoo folosește un singur set de credențiale de aplicație, iar fiecare agenție își autorizează propriul cont Storia prin OAuth2.",
     logo: "ST",
-    status: "coming_soon",
-    directions: [],
-    authentication: [],
-    capabilities: [],
+    status: "available",
+    directions: ["habitoo_to_portal"],
+    // Nu există „cheie API a agenției”: accesul vine din autorizarea OAuth2 a
+    // contului Storia al agenției, cu token reîmprospătat automat.
+    authentication: ["oauth"],
+    // Faza 1 acoperă exclusiv conexiunea. Taxonomia, publicarea și webhook-urile
+    // se adaugă în fazele următoare, împreună cu capabilitățile lor.
+    capabilities: ["test_connection"],
     configuration_schema: { fields: [] },
     website: "https://www.storia.ro",
+    docs: "https://developer.olxgroup.com/docs/overview",
+    notes:
+      "Autorizare OAuth2 per agenție: butonul „Conectează contul Storia” duce agenția la https://www.storia.ro/ro/crm/authorization/, iar retururul este procesat pe /api/public/portal/v1/storia/oauth/callback. Codul de autorizare este valabil 60 de secunde, iar tokenul de acces ~1 oră și se reîmprospătează automat. Publicarea anunțurilor (asincronă, cu confirmare prin webhook), maparea taxonomiei prin URN-uri și preluarea mesajelor ca lead-uri urmează în fazele 2-4. Promovările plătite (VAS) și Primary Market nu sunt implementate.",
   },
+
   {
     id: "olx",
     display_name: "OLX",
@@ -335,7 +344,15 @@ export function derivePortalConnectionStatus(input: {
   hasHabitooKey: boolean;
   lastError: string | null;
   testedOk: boolean;
+  /** Portalurile cu OAuth au tokenurile agenției salvate. */
+  hasOAuthTokens?: boolean;
 }): PortalConnectionStatus {
+  // OAuth: nu există câmpuri de completat; conexiunea există doar cu tokenuri.
+  if (input.definition.authentication.includes("oauth")) {
+    if (!input.hasOAuthTokens) return "not_configured";
+    if (input.lastError) return "error";
+    return "connected";
+  }
   const required = input.definition.configuration_schema.fields.filter((f) => !f.optional);
   const complete = required.every((field) => {
     if (field.target === "external_account_id") return Boolean(input.externalAccountId);
@@ -356,3 +373,4 @@ export function derivePortalConnectionStatus(input: {
 
   return input.testedOk ? "connected" : "ready";
 }
+

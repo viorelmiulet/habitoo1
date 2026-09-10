@@ -4,13 +4,16 @@ import { clickimobAdapter } from "./clickimob.server";
 import { imoveAdapter } from "./imove.server";
 import { imospotAdapter } from "./imospot.server";
 import { homepitchAdapter } from "./homepitch.server";
+import { storiaAdapter } from "./storia.server";
 
 const ADAPTERS: Record<string, PortalAdapter> = {
   clickimob: clickimobAdapter,
   imove: imoveAdapter,
   imospot: imospotAdapter,
   homepitch: homepitchAdapter,
+  storia: storiaAdapter,
 };
+
 
 
 export function getPortalAdapter(portalId: string): PortalAdapter | null {

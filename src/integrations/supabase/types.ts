@@ -1204,6 +1204,47 @@ export type Database = {
           },
         ]
       }
+      portal_oauth_states: {
+        Row: {
+          consumed_at: string | null
+          created_at: string
+          created_by: string | null
+          expires_at: string
+          id: string
+          organization_id: string
+          portal: string
+          state_hash: string
+        }
+        Insert: {
+          consumed_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          expires_at: string
+          id?: string
+          organization_id: string
+          portal: string
+          state_hash: string
+        }
+        Update: {
+          consumed_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          expires_at?: string
+          id?: string
+          organization_id?: string
+          portal?: string
+          state_hash?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "portal_oauth_states_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       portal_operation_logs: {
         Row: {
           actor_id: string | null
