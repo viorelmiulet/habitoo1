@@ -929,8 +929,9 @@ export const getPropertyPortalStatus = createServerFn({ method: "POST" })
     const [{ data: listings }, { data: connections }] = await Promise.all([
       admin
         .from("portal_listings")
-        .select("portal, status, external_id, published_at, last_sync_at, last_error")
+        .select("portal, status, external_id, public_url, published_at, last_sync_at, last_error")
         .eq("organization_id", organizationId)
+
         .eq("property_id", data.propertyId),
       admin
         .from("portal_connections")
