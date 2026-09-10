@@ -1051,6 +1051,9 @@ export type PropertyPortalCell = {
   lastSyncAt: string | null;
   lastError: string | null;
   externalId: string | null;
+  /** Linkul public al anunțului pe portal, dacă portalul îl întoarce. */
+  publicUrl: string | null;
+
 };
 
 
