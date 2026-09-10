@@ -77,6 +77,34 @@ describe("mapPropertyToStoria", () => {
     );
   });
 
+  it("trimite compartimentarea și tipul clădirii cu valorile confirmate", () => {
+    const result = mapPropertyToStoria(
+      baseProperty({ layout: "Semidecomandat", building_type: "Bloc" } as Partial<PropertyRow>),
+      options,
+    );
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.listings[0]!.advert.attributes).toEqual(
+      expect.arrayContaining([
+        { urn: "urn:concept:house-type", value: "urn:concept:semidetached" },
+        { urn: "urn:concept:building-type", value: "urn:concept:block" },
+      ]),
+    );
+  });
+
+  it("nu trimite compartimentări fără valoare confirmată în taxonomie", () => {
+    const result = mapPropertyToStoria(
+      baseProperty({ layout: "Open space" } as Partial<PropertyRow>),
+      options,
+    );
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(
+      result.listings[0]!.advert.attributes.some((a) => a.urn === "urn:concept:house-type"),
+    ).toBe(false);
+  });
+
+
   it("cere coordonate, imagini și monedă acceptată", () => {
     const result = mapPropertyToStoria(
       baseProperty({ lat: null, lng: null, sale_currency: "USD" }),
