@@ -1670,7 +1670,12 @@ export const applyPropertyPortalSelection = createServerFn({ method: "POST" })
             portalName: name,
             action: res.ok ? "withdrawn" : "blocked",
             ok: res.ok,
-            message: res.ok ? `${name}: oferta a fost retrasă.` : res.message,
+            message: res.ok
+              ? `${name}: oferta a fost retrasă.`
+              : res.message.startsWith(name)
+                ? res.message
+                : `${name}: ${res.message}`,
+
           });
         } else {
           results.push({
