@@ -170,8 +170,12 @@ async function pushListing(
   try {
     for (const listing of build.listings) {
       const existing = refs[listing.transaction];
+      const label = TX_LABEL[listing.transaction];
       let uuid = existing ?? null;
       let created = false;
+      let reactivated = false;
+      let recreated = false;
+
       if (uuid) {
         const outcome = await updateAdvert(ctx.organizationId, uuid, listing.advert);
         if (outcome === "missing") {
@@ -185,18 +189,53 @@ async function pushListing(
       refs[listing.transaction] = uuid;
 
       // Statusul real: `/meta` best-effort; confirmarea finală vine prin notificări.
-      const meta = await readAdvertMeta(ctx.organizationId, uuid).catch(() => null);
+      let meta = await readAdvertMeta(ctx.organizationId, uuid).catch(() => null);
+
+      // Un PUT actualizează datele, dar NU readuce online un anunț dezactivat:
+      // portalul cere explicit `activate` (sau un anunț nou, dacă nu mai poate
+      // fi reactivat din starea respectivă).
+      if (!created && meta) {
+        const plan = storiaReactivationPlan(meta);
+        if (plan === "activate") {
+          const outcome = await activateAdvert(ctx.organizationId, uuid);
+          if (outcome === "activated") {
+            reactivated = true;
+            meta = await readAdvertMeta(ctx.organizationId, uuid).catch(() => meta);
+          } else {
+            uuid = await createAdvert(ctx.organizationId, listing.advert);
+            refs[listing.transaction] = uuid;
+            recreated = true;
+            meta = await readAdvertMeta(ctx.organizationId, uuid).catch(() => null);
+          }
+        } else if (plan === "recreate") {
+          uuid = await createAdvert(ctx.organizationId, listing.advert);
+          refs[listing.transaction] = uuid;
+          recreated = true;
+          meta = await readAdvertMeta(ctx.organizationId, uuid).catch(() => null);
+        }
+      }
+
       const code = meta?.code ?? null;
       statuses.push(storiaListingStatus(code));
-      const label = TX_LABEL[listing.transaction];
+      const prefix = recreated
+        ? `Anunțul de ${label} nu mai putea fi reactivat pe Storia, așa că a fost publicat ca anunț nou.`
+        : reactivated
+          ? `Anunțul de ${label} a fost reactivat pe Storia.`
+          : null;
       notes.push(
-        code
-          ? `Anunțul de ${label} este ${STORIA_STATUS_MESSAGE[code] ?? `în starea „${code}”`}.` +
+        [
+          prefix,
+          code
+            ? `Anunțul de ${label} este ${STORIA_STATUS_MESSAGE[code] ?? `în starea „${code}”`}.` +
               (meta?.moderationReason ? ` Motiv moderare: ${meta.moderationReason}.` : "")
-          : `Anunțul de ${label} a fost ${created ? "trimis" : "actualizat"} și este în procesare la Storia; statusul final vine prin notificare.`,
+            : `Anunțul de ${label} a fost ${created || recreated ? "trimis" : "actualizat"} și este în procesare la Storia; statusul final vine prin notificare.`,
+        ]
+          .filter(Boolean)
+          .join(" "),
       );
     }
   } catch (error) {
+
     const failed = fail(error);
     const partial = serializeAdvertRefs(refs);
     return partial ? { ...failed, detail: `${failed.detail ?? ""} refs_saved`.trim() } : failed;
