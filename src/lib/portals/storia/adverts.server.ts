@@ -213,8 +213,16 @@ export async function readAdvertMeta(organizationId: string, uuid: string): Prom
   const moderation = (state["moderation"] && typeof state["moderation"] === "object"
     ? state["moderation"]
     : {}) as Record<string, unknown>;
+  const visible = state["visible_in_profile"];
   return {
     uuid,
+    visibleInProfile:
+      typeof visible === "boolean"
+        ? visible
+        : typeof visible === "string"
+          ? visible.toLowerCase() === "true"
+          : null,
+
     lastActionStatus: typeof rec["last_action_status"] === "string" ? rec["last_action_status"] : null,
     code: typeof state["code"] === "string" ? state["code"] : null,
     url: typeof state["url"] === "string" ? state["url"] : null,
