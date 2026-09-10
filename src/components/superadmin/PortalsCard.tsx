@@ -30,6 +30,11 @@ import {
   testPortalConnection,
 } from "@/lib/portals.functions";
 import {
+  revokeStoriaAuthorization,
+  startStoriaAuthorization,
+} from "@/lib/portals/storia.functions";
+
+import {
   PORTAL_AUTH_LABEL,
   PORTAL_AVAILABILITY_LABEL,
   PORTAL_CAPABILITY_LABEL,
