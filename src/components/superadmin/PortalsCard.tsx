@@ -344,6 +344,83 @@ export function PortalsCard({ organizationId }: { organizationId: string }) {
                   })}
                 </div>
 
+                {item.oauth ? (
+                  <div className="space-y-3 rounded-lg border border-border p-3">
+                    <div>
+                      <p className="text-sm font-medium">Contul {item.portal.display_name} al agenției</p>
+                      <p className="text-xs text-muted-foreground">
+                        {item.portal.display_name} nu folosește o cheie API a agenției. Agenția își
+                        autorizează contul o singură dată, iar Habitoo păstrează autorizarea criptat și o
+                        reînnoiește automat.
+                      </p>
+                    </div>
+
+                    {item.oauth.appConfigured ? null : (
+                      <p className="rounded-lg border border-destructive/40 bg-destructive/5 p-3 text-xs text-destructive">
+                        Credențialele de aplicație pentru {item.portal.display_name} nu sunt încă
+                        configurate în platformă. Conectarea nu poate porni.
+                      </p>
+                    )}
+
+                    <dl className="grid gap-2 text-sm sm:grid-cols-2">
+                      <div>
+                        <dt className="text-muted-foreground">Autorizare</dt>
+                        <dd>
+                          {!item.oauth.connected
+                            ? "Neconectat"
+                            : item.oauth.expired
+                              ? item.oauth.canRefresh
+                                ? "Token expirat — se reînnoiește automat"
+                                : "Token expirat — reia conectarea"
+                              : "Activă"}
+                        </dd>
+                      </div>
+                      <div>
+                        <dt className="text-muted-foreground">Conectat la</dt>
+                        <dd>
+                          {item.oauth.connectedAt ? formatDateTime(item.oauth.connectedAt) : "—"}
+                        </dd>
+                      </div>
+                      <div>
+                        <dt className="text-muted-foreground">Token valabil până la</dt>
+                        <dd>{item.oauth.expiresAt ? formatDateTime(item.oauth.expiresAt) : "—"}</dd>
+                      </div>
+                      <div>
+                        <dt className="text-muted-foreground">Ultima reînnoire</dt>
+                        <dd>
+                          {item.oauth.refreshedAt ? formatDateTime(item.oauth.refreshedAt) : "—"}
+                        </dd>
+                      </div>
+                    </dl>
+
+                    <div className="flex flex-wrap gap-2">
+                      <Button
+                        type="button"
+                        onClick={() => startOAuth.mutate(item.portal.id)}
+                        disabled={startOAuth.isPending || item.oauth?.appConfigured !== true}
+                      >
+                        <ExternalLink className="mr-2 size-4" />
+                        {item.oauth.connected
+                          ? "Reconectează contul"
+                          : `Conectează contul ${item.portal.display_name}`}
+                      </Button>
+                      {item.oauth.connected ? (
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => revokeOAuth.mutate(item.portal.id)}
+                          disabled={revokeOAuth.isPending}
+                        >
+                          <Unplug className="mr-2 size-4" />
+                          Desface autorizarea
+                        </Button>
+                      ) : null}
+                    </div>
+                  </div>
+                ) : null}
+
+
+
                 <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border p-3">
                   <div className="text-sm">
                     <p className="font-medium">Activat pentru agenție</p>
@@ -380,7 +457,9 @@ export function PortalsCard({ organizationId }: { organizationId: string }) {
                 </div>
                 )}
 
+                {item.oauth ? null : (
                 <div className="space-y-2 rounded-lg border border-border p-3">
+
                   <p className="text-sm font-medium">Acces al portalului la ofertele tale</p>
                   <div className="flex items-center justify-between gap-3 text-xs">
                     <span className="truncate font-mono">{item.feedUrl}</span>
@@ -474,6 +553,8 @@ export function PortalsCard({ organizationId }: { organizationId: string }) {
                   )}
 
                 </div>
+                )}
+
 
                 <div className="flex flex-wrap gap-2">
                   {item.portal.configuration_schema.fields.length ? (
