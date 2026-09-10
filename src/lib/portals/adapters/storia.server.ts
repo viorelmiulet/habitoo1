@@ -23,16 +23,20 @@ import { PortalError, codeFromHttpStatus, toPortalError } from "../errors";
 import { loadStoriaTokens, olxAuthorizedRequest, readStoriaOAuthMeta, storiaAppConfigured } from "../storia/oauth.server";
 import { buildStoriaPayload } from "../storia/payload.server";
 import {
+  activateAdvert,
   createAdvert,
   deactivateAdvert,
   parseAdvertRefs,
   readAdvertMeta,
   serializeAdvertRefs,
   storiaListingStatus,
+  storiaReactivationPlan,
+  waitForAdvertSettled,
   STORIA_STATUS_MESSAGE,
   updateAdvert,
   type AdvertRefs,
 } from "../storia/adverts.server";
+
 import type { StoriaTransaction } from "../storia/taxonomy";
 
 /** Endpoint minim, folosit doar ca să confirmăm că tokenul este acceptat. */
@@ -40,7 +44,10 @@ const PROBE_PATH = "/advert/v1/adverts?limit=1";
 
 const TX_LABEL: Record<StoriaTransaction, string> = { sale: "vânzare", rent: "închiriere" };
 
+const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
 function connectedState(ctx: PortalContext): { hasTokens: boolean; expiresAt: string | null } {
+
   const meta = readStoriaOAuthMeta(ctx.settings);
   return { hasTokens: Boolean(ctx.portalCredential), expiresAt: meta?.expires_at ?? null };
 }
@@ -169,14 +176,43 @@ async function pushListing(
 
   try {
     for (const listing of build.listings) {
-      const existing = refs[listing.transaction];
-      let uuid = existing ?? null;
+      const label = TX_LABEL[listing.transaction];
+      let uuid = refs[listing.transaction] ?? null;
       let created = false;
+      let reactivated = false;
+      let recreated = false;
+
+      // Un PUT actualizează datele, dar NU readuce online un anunț dezactivat:
+      // portalul cere explicit `activate`, iar dacă starea nu mai permite
+      // reactivarea (moderare, șters din profil) trebuie creat un anunț nou.
       if (uuid) {
-        const outcome = await updateAdvert(ctx.organizationId, uuid, listing.advert);
-        if (outcome === "missing") {
+        const before = await readAdvertMeta(ctx.organizationId, uuid).catch(() => null);
+        const plan = before ? storiaReactivationPlan(before) : "none";
+        if (plan === "activate") {
+          let outcome = await activateAdvert(ctx.organizationId, uuid);
+          if (outcome === "not_allowed") {
+            // Portalul procesează asincron: o operațiune încă în curs poate
+            // refuza activarea. Reîncercăm o singură dată.
+            await delay(4000);
+            outcome = await activateAdvert(ctx.organizationId, uuid);
+          }
+          if (outcome === "activated") reactivated = true;
+          else recreated = true;
+        } else if (plan === "recreate") {
+          recreated = true;
+        }
+
+        if (recreated) {
           uuid = await createAdvert(ctx.organizationId, listing.advert);
-          created = true;
+        } else {
+          // Activarea este asincronă: trimitem datele abia după ce portalul a
+          // terminat operațiunea, altfel răspunde 409 „Illegal status change”.
+          if (reactivated) await waitForAdvertSettled(ctx.organizationId, uuid);
+          const outcome = await updateAdvert(ctx.organizationId, uuid, listing.advert);
+          if (outcome === "missing") {
+            uuid = await createAdvert(ctx.organizationId, listing.advert);
+            created = true;
+          }
         }
       } else {
         uuid = await createAdvert(ctx.organizationId, listing.advert);
@@ -185,18 +221,34 @@ async function pushListing(
       refs[listing.transaction] = uuid;
 
       // Statusul real: `/meta` best-effort; confirmarea finală vine prin notificări.
-      const meta = await readAdvertMeta(ctx.organizationId, uuid).catch(() => null);
+      const meta = await waitForAdvertSettled(ctx.organizationId, uuid, reactivated ? 4 : 1, 3000);
       const code = meta?.code ?? null;
-      statuses.push(storiaListingStatus(code));
-      const label = TX_LABEL[listing.transaction];
+
+      // După o reactivare, portalul poate raporta încă starea veche câteva
+      // secunde: nu o marcăm „retras”, ci „în procesare”.
+      const status = storiaListingStatus(code);
+      statuses.push(reactivated && status === "withdrawn" ? "pending" : status);
+
+      const prefix = recreated
+        ? `Anunțul de ${label} nu mai putea fi reactivat pe Storia, așa că a fost publicat ca anunț nou.`
+        : reactivated
+          ? `Anunțul de ${label} a fost reactivat pe Storia.`
+          : null;
       notes.push(
-        code
-          ? `Anunțul de ${label} este ${STORIA_STATUS_MESSAGE[code] ?? `în starea „${code}”`}.` +
+        [
+          prefix,
+          code && !(reactivated && status === "withdrawn")
+            ? `Anunțul de ${label} este ${STORIA_STATUS_MESSAGE[code] ?? `în starea „${code}”`}.` +
               (meta?.moderationReason ? ` Motiv moderare: ${meta.moderationReason}.` : "")
-          : `Anunțul de ${label} a fost ${created ? "trimis" : "actualizat"} și este în procesare la Storia; statusul final vine prin notificare.`,
+            : `Anunțul de ${label} a fost ${created || recreated ? "trimis" : reactivated ? "reactivat" : "actualizat"} și este în procesare la Storia; statusul final vine prin notificare.`,
+        ]
+          .filter(Boolean)
+          .join(" "),
       );
     }
   } catch (error) {
+
+
     const failed = fail(error);
     const partial = serializeAdvertRefs(refs);
     return partial ? { ...failed, detail: `${failed.detail ?? ""} refs_saved`.trim() } : failed;
@@ -205,9 +257,12 @@ async function pushListing(
   // Starea agregată: cea mai puțin favorabilă dintre anunțurile trimise.
   const portalStatus = statuses.includes("error")
     ? "error"
-    : statuses.includes("pending") || statuses.length === 0
-      ? "pending"
-      : "published";
+    : statuses.includes("withdrawn")
+      ? "withdrawn"
+      : statuses.includes("pending") || statuses.length === 0
+        ? "pending"
+        : "published";
+
 
   return {
     ok: true,

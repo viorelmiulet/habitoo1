@@ -34,8 +34,33 @@ export function storiaListingStatus(code: string | null): string {
   if (!code) return "pending";
   if (code === "active") return "published";
   if (code === "new" || code === "unpaid" || code === "blocked") return "pending";
+  // Retragerea (din CRM sau din contul Storia) este o stare normală, nu o eroare.
+  if (code === "removed_by_user" || code === "removed_by_parent_ad") return "withdrawn";
   return "error";
 }
+
+/**
+ * Ce se poate face cu un anunț inactiv, conform tabelelor „next available
+ * operations” din documentația OLX (pagina publish-advert):
+ *  - `removed_by_user`, `outdated` → ACTIVATE (dacă mai e vizibil în profil) sau POST;
+ *  - `moderated`, `removed_by_moderator` → nicio operațiune, deci anunț nou (POST);
+ *  - restul stărilor nu au nevoie de reactivare.
+ */
+export function storiaReactivationPlan(meta: {
+  code: string | null;
+  visibleInProfile: boolean | null;
+}): "none" | "activate" | "recreate" {
+  const code = meta.code;
+  if (!code) return "none";
+  if (code === "removed_by_user" || code === "outdated") {
+    return meta.visibleInProfile === false ? "recreate" : "activate";
+  }
+  if (code === "moderated" || code === "removed_by_moderator" || code === "removed_by_parent_ad") {
+    return "recreate";
+  }
+  return "none";
+}
+
 
 // ------------------------------------------------ referințe advert per ofertă
 
@@ -123,17 +148,42 @@ export async function createAdvert(organizationId: string, advert: StoriaAdvert)
   return uuid;
 }
 
-/** Actualizare; `null` înseamnă că anunțul nu mai există la portal (404). */
+/**
+ * Actualizare. `missing` = anunțul nu mai există la portal (404); `busy` = o
+ * altă operațiune asincronă este încă în curs (409 „Illegal status change”),
+ * caz în care datele se retrimit la următoarea publicare.
+ */
 export async function updateAdvert(
   organizationId: string,
   uuid: string,
   advert: StoriaAdvert,
-): Promise<"updated" | "missing"> {
+): Promise<"updated" | "missing" | "busy"> {
   const res = await olxAuthorizedRequest(organizationId, "PUT", `/advert/v1/${uuid}`, advert);
   if (res.status === 404) return "missing";
+  if (res.status === 409 && /illegal status change/i.test(res.raw)) return "busy";
   if (res.status < 200 || res.status >= 300) throw failure(res.status, res.body);
   return "updated";
 }
+
+/**
+ * Așteaptă finalizarea operațiunii asincrone în curs (`last_action_status`
+ * de forma `TO_*`) înainte de o nouă cerere de scriere. Best-effort.
+ */
+export async function waitForAdvertSettled(
+  organizationId: string,
+  uuid: string,
+  attempts = 5,
+  intervalMs = 3000,
+): Promise<AdvertMeta | null> {
+  let meta: AdvertMeta | null = null;
+  for (let i = 0; i < attempts; i += 1) {
+    meta = await readAdvertMeta(organizationId, uuid).catch(() => null);
+    if (!meta?.lastActionStatus || !/^TO_/i.test(meta.lastActionStatus)) return meta;
+    await new Promise((resolve) => setTimeout(resolve, intervalMs));
+  }
+  return meta;
+}
+
 
 export async function deactivateAdvert(
   organizationId: string,
@@ -145,13 +195,34 @@ export async function deactivateAdvert(
   return "deactivated";
 }
 
+/**
+ * Reactivarea unui anunț dezactivat: `POST /advert/v1/{uuid}/activate`.
+ * Portalul acceptă operațiunea doar pentru anunțuri dezactivate care mai sunt
+ * vizibile în profilul utilizatorului; altfel răspunde 4xx și trebuie creat un
+ * anunț nou. De aceea nu aruncăm pentru 400/403/404/409.
+ */
+export async function activateAdvert(
+  organizationId: string,
+  uuid: string,
+): Promise<"activated" | "not_allowed"> {
+  const res = await olxAuthorizedRequest(organizationId, "POST", `/advert/v1/${uuid}/activate`);
+  if (res.status >= 200 && res.status < 300) return "activated";
+  if (res.status === 400 || res.status === 403 || res.status === 404 || res.status === 409) {
+    return "not_allowed";
+  }
+  throw failure(res.status, res.body);
+}
+
 export type AdvertMeta = {
   uuid: string;
   lastActionStatus: string | null;
   code: string | null;
   url: string | null;
   moderationReason: string | null;
+  /** `state.visible_in_profile` — condiție pentru activate/deactivate. */
+  visibleInProfile: boolean | null;
 };
+
 
 /**
  * Statusul real al anunțului. Documentația marchează `/meta` drept soluție
@@ -167,8 +238,16 @@ export async function readAdvertMeta(organizationId: string, uuid: string): Prom
   const moderation = (state["moderation"] && typeof state["moderation"] === "object"
     ? state["moderation"]
     : {}) as Record<string, unknown>;
+  const visible = state["visible_in_profile"];
   return {
     uuid,
+    visibleInProfile:
+      typeof visible === "boolean"
+        ? visible
+        : typeof visible === "string"
+          ? visible.toLowerCase() === "true"
+          : null,
+
     lastActionStatus: typeof rec["last_action_status"] === "string" ? rec["last_action_status"] : null,
     code: typeof state["code"] === "string" ? state["code"] : null,
     url: typeof state["url"] === "string" ? state["url"] : null,
