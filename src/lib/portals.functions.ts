@@ -1793,7 +1793,9 @@ export async function applyPortalSelectionForOrg(input: {
 
 
     return { ok: results.every((r) => r.ok), results };
-  });
+  }
+}
+
 
 
 /** Agențiile disponibile în panoul Superadmin → Portaluri. */
