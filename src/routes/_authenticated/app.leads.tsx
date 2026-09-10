@@ -818,30 +818,72 @@ function LeadsPage() {
                 </Select>
               </div>
 
-              <div>
-                <p className="mb-2 flex items-center gap-2 text-sm font-semibold"><History className="size-4" /> Istoric</p>
-                <ul className="space-y-2 text-sm">
-                  {(detailData?.events ?? []).map((ev) => (
-                    <li key={ev.id} className="rounded-lg border border-border p-2 text-xs">
-                      <p>
-                        {ev.from_stage ? `${leadStageLabels[ev.from_stage]} → ` : ""}
-                        {leadStageLabels[ev.to_stage]}
+              <Tabs defaultValue="history">
+                <TabsList>
+                  <TabsTrigger value="history">
+                    <History className="size-4" /> Istoric
+                  </TabsTrigger>
+                  <TabsTrigger value="messages">
+                    <MessageCircle className="size-4" /> Mesaje
+                    {(detailData?.messages ?? []).length > 0 ? (
+                      <span className="ml-1 rounded-full bg-primary/10 px-1.5 text-[11px] font-semibold text-primary">
+                        {(detailData?.messages ?? []).length}
+                      </span>
+                    ) : null}
+                  </TabsTrigger>
+                </TabsList>
+
+                <TabsContent value="history" className="mt-3">
+                  <ul className="space-y-2 text-sm">
+                    {(detailData?.events ?? []).map((ev) => (
+                      <li key={ev.id} className="rounded-lg border border-border p-2 text-xs">
+                        <p>
+                          {ev.from_stage ? `${leadStageLabels[ev.from_stage]} → ` : ""}
+                          {leadStageLabels[ev.to_stage]}
+                        </p>
+                        <p className="text-muted-foreground">{formatDateTime(ev.created_at)}</p>
+                        {ev.note ? <p className="mt-1 text-muted-foreground">{ev.note}</p> : null}
+                      </li>
+                    ))}
+                    {(detailData?.activities ?? []).map((a) => (
+                      <li key={a.id} className="rounded-lg border border-border p-2 text-xs">
+                        <p className="font-medium">{a.title}</p>
+                        <p className="text-muted-foreground">{formatDateTime(a.starts_at)}</p>
+                      </li>
+                    ))}
+                    {(detailData?.events ?? []).length === 0 && (detailData?.activities ?? []).length === 0 ? (
+                      <p className="text-xs text-muted-foreground">Fără evenimente încă.</p>
+                    ) : null}
+                  </ul>
+                </TabsContent>
+
+                <TabsContent value="messages" className="mt-3">
+                  <ul className="space-y-2">
+                    {(detailData?.messages ?? []).map((m) => (
+                      <li key={m.id} className="rounded-lg border border-border p-3 text-xs">
+                        <div className="flex flex-wrap items-center justify-between gap-2">
+                          <p className="font-medium">{m.sender_name ?? "Contact"}</p>
+                          <StatusBadge tone="neutral">{m.portal === "storia" ? "Storia.ro" : m.portal}</StatusBadge>
+                        </div>
+                        <p className="text-muted-foreground">{formatDateTime(m.sent_at)}</p>
+                        {m.body ? <p className="mt-2 whitespace-pre-wrap text-sm">{m.body}</p> : null}
+                        <div className="mt-2 flex flex-wrap gap-3 text-muted-foreground">
+                          {m.sender_phone ? <a href={`tel:${m.sender_phone}`}>{m.sender_phone}</a> : null}
+                          {m.sender_email ? <a href={`mailto:${m.sender_email}`}>{m.sender_email}</a> : null}
+                        </div>
+                      </li>
+                    ))}
+                    {(detailData?.messages ?? []).length === 0 ? (
+                      <p className="text-xs text-muted-foreground">
+                        Nicio mesaj primit din portaluri pentru acest lead.
                       </p>
-                      <p className="text-muted-foreground">{formatDateTime(ev.created_at)}</p>
-                      {ev.note ? <p className="mt-1 text-muted-foreground">{ev.note}</p> : null}
-                    </li>
-                  ))}
-                  {(detailData?.activities ?? []).map((a) => (
-                    <li key={a.id} className="rounded-lg border border-border p-2 text-xs">
-                      <p className="font-medium">{a.title}</p>
-                      <p className="text-muted-foreground">{formatDateTime(a.starts_at)}</p>
-                    </li>
-                  ))}
-                  {(detailData?.events ?? []).length === 0 && (detailData?.activities ?? []).length === 0 ? (
-                    <p className="text-xs text-muted-foreground">Fără evenimente încă.</p>
-                  ) : null}
-                </ul>
-              </div>
+                    ) : null}
+                  </ul>
+                  <p className="mt-3 text-[11px] text-muted-foreground">
+                    Mesajele primite din portaluri se păstrează 180 de zile, apoi se șterg automat.
+                  </p>
+                </TabsContent>
+              </Tabs>
             </div>
           ) : null}
         </SheetContent>
