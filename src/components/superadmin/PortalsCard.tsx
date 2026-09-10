@@ -57,6 +57,9 @@ export function PortalsCard({ organizationId }: { organizationId: string }) {
   const runRevokeKey = useServerFn(revokePortalApiKey);
   const runPreview = useServerFn(previewPortalFeed);
   const runActivation = useServerFn(setPortalActivation);
+  const runStartOAuth = useServerFn(startStoriaAuthorization);
+  const runRevokeOAuth = useServerFn(revokeStoriaAuthorization);
+
 
   const [accountId, setAccountId] = useState<Record<string, string>>({});
   const [credential, setCredential] = useState<Record<string, string>>({});
@@ -108,6 +111,28 @@ export function PortalsCard({ organizationId }: { organizationId: string }) {
     },
     onError: (e: Error) => toastError(e),
   });
+
+  /**
+   * Autorizarea OAuth a contului agenției: browserul pleacă spre portal, iar
+   * returnarea este procesată de ruta publică de callback.
+   */
+  const startOAuth = useMutation({
+    mutationFn: (_portalId: string) => runStartOAuth({ data: { organizationId } }),
+    onSuccess: (res) => {
+      window.location.href = res.url;
+    },
+    onError: (e: Error) => toastError(e),
+  });
+
+  const revokeOAuth = useMutation({
+    mutationFn: (_portalId: string) => runRevokeOAuth({ data: { organizationId } }),
+    onSuccess: () => {
+      invalidate();
+      toast.success("Autorizarea a fost desfăcută. Agenția trebuie să reconecteze contul.");
+    },
+    onError: (e: Error) => toastError(e),
+  });
+
 
   const test = useMutation({
     mutationFn: (portalId: string) => runTest({ data: { organizationId, portalId } }),
