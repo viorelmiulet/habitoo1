@@ -380,8 +380,20 @@ export const getPortalHub = createServerFn({ method: "POST" })
                 selected: null,
                 excluded: null,
               },
+        oauth: portal.authentication.includes("oauth")
+          ? {
+              appConfigured: storiaAppReady,
+              connected: Boolean(row?.portal_credentials_encrypted),
+              expiresAt: oauthExpiresAt,
+              expired: oauthExpiresAt ? new Date(oauthExpiresAt).getTime() <= Date.now() : false,
+              canRefresh: oauthMeta?.has_refresh_token ?? Boolean(storiaTokens?.refresh_token),
+              connectedAt: oauthMeta?.connected_at ?? null,
+              refreshedAt: oauthMeta?.refreshed_at ?? null,
+            }
+          : null,
 
       };
+
     });
   });
 
