@@ -804,14 +804,34 @@ async function executeListingAction(input: {
     .eq("property_id", propertyId)
     .maybeSingle();
 
-  const { ctx } = await buildContext(organizationId, definition);
-  const ref = { propertyId, externalId: listing?.external_id ?? null };
-  const result =
-    action === "publish"
-      ? await adapter.publishListing(ctx, ref)
-      : action === "update"
-        ? await adapter.updateListing(ctx, ref)
-        : await adapter.withdrawListing(ctx, ref);
+  /**
+   * O excepție aruncată aici (token expirat, portal nereachable, validare care
+   * aruncă în loc să returneze) NU trebuie să iasă din funcție: altfel oprea
+   * întreaga buclă de publicare și celelalte portaluri nu mai erau procesate.
+   * O normalizăm în același rezultat de eșec, ca să se scrie și starea în
+   * `portal_listings` / `portal_publications`.
+   */
+  const { toPortalError } = await import("@/lib/portals/errors");
+  let result: Awaited<ReturnType<typeof adapter.publishListing>>;
+  try {
+    const { ctx } = await buildContext(organizationId, definition);
+    const ref = { propertyId, externalId: listing?.external_id ?? null };
+    result =
+      action === "publish"
+        ? await adapter.publishListing(ctx, ref)
+        : action === "update"
+          ? await adapter.updateListing(ctx, ref)
+          : await adapter.withdrawListing(ctx, ref);
+  } catch (error) {
+    const portalError = toPortalError(error);
+    result = {
+      ok: false as const,
+      code: portalError.code,
+      message: `${definition.display_name}: ${portalError.message}`,
+      detail: portalError.detail,
+    };
+  }
+
 
   const now = new Date().toISOString();
   // Portalurile asincrone (Storia) raportează starea reală a anunțului: un
@@ -1507,9 +1527,29 @@ export const applyPropertyPortalSelection = createServerFn({ method: "POST" })
       context as unknown as AuthContext,
       data.organizationId,
     );
+    return await applyPortalSelectionForOrg({
+      organizationId,
+      superadmin,
+      actorId: context.userId,
+      data,
+    });
+  });
+
+/**
+ * Nucleul publicării pe portalurile selectate, fără verificări de permisiuni
+ * (apelantul le-a făcut deja). Separat de server function ca să fie testabil.
+ */
+export async function applyPortalSelectionForOrg(input: {
+  organizationId: string;
+  superadmin: boolean;
+  actorId: string;
+  data: z.infer<typeof applySelectionSchema>;
+}): Promise<{ ok: boolean; results: PortalSelectionOutcome[] }> {
+  {
+    const { organizationId, superadmin, actorId, data } = input;
     const allowedPortals = superadmin ? null : await activatedPortalIds(organizationId);
-    const actorId = context.userId;
     const admin = await loadAdmin();
+
 
     const { data: property } = await admin
       .from("properties")
@@ -1545,6 +1585,14 @@ export const applyPropertyPortalSelection = createServerFn({ method: "POST" })
     for (const wanted of data.selections) {
       const definition = getPortalDefinition(wanted.portalId);
       if (!definition) continue;
+      /**
+       * Fiecare portal se procesează INDEPENDENT. Fără acest try/catch, o
+       * excepție dintr-un adaptor (validare Storia, token expirat, portal
+       * nereachable) ieșea din buclă și oprea publicarea pe toate celelalte
+       * portaluri, iar utilizatorul vedea un singur mesaj generic de eroare.
+       */
+      try {
+
       // Portalurile neactivate pentru agenție sunt respinse, nu ignorate silențios.
       if (allowedPortals !== null && !allowedPortals.has(definition.id)) {
         if (wanted.enabled) {
@@ -1642,7 +1690,12 @@ export const applyPropertyPortalSelection = createServerFn({ method: "POST" })
             portalName: name,
             action: res.ok ? "withdrawn" : "blocked",
             ok: res.ok,
-            message: res.ok ? `${name}: oferta a fost retrasă.` : res.message,
+            message: res.ok
+              ? `${name}: oferta a fost retrasă.`
+              : res.message.startsWith(name)
+                ? res.message
+                : `${name}: ${res.message}`,
+
           });
         } else {
           results.push({
@@ -1702,19 +1755,47 @@ export const applyPropertyPortalSelection = createServerFn({ method: "POST" })
         propertyId: data.propertyId,
         action,
       });
-      results.push({
-        portalId: definition.id,
-        portalName: name,
-        action: res.ok ? (action === "update" ? "updated" : "published") : "blocked",
-        ok: res.ok,
-        message: res.ok
-          ? `${name}: ${action === "update" ? "actualizat" : "publicat"}.`
-          : res.message,
-      });
+        results.push({
+          portalId: definition.id,
+          portalName: name,
+          action: res.ok ? (action === "update" ? "updated" : "published") : "blocked",
+          ok: res.ok,
+          message: res.ok
+            ? `${name}: ${action === "update" ? "actualizat" : "publicat"}.`
+            : res.message.startsWith(name)
+              ? res.message
+              : `${name}: ${res.message}`,
+        });
+      } catch (error) {
+        // Izolare per portal: un portal cu probleme nu oprește procesarea celorlalte.
+        const { toPortalError } = await import("@/lib/portals/errors");
+        const portalError = toPortalError(error);
+        const reason = error instanceof Error ? error.message : portalError.message;
+        results.push({
+          portalId: definition.id,
+          portalName: definition.display_name,
+          action: "blocked",
+          ok: false,
+          message: `${definition.display_name}: ${reason}`,
+        });
+        await logOperation({
+          organizationId,
+          portal: definition.id,
+          operation: "apply_selection",
+          success: false,
+          errorCode: portalError.code,
+          errorMessage: reason,
+          propertyId: data.propertyId,
+          actorId,
+        }).catch(() => undefined);
+      }
     }
 
+
     return { ok: results.every((r) => r.ok), results };
-  });
+  }
+}
+
 
 
 /** Agențiile disponibile în panoul Superadmin → Portaluri. */
