@@ -1857,7 +1857,7 @@ export const backfillStoriaPublicUrls = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     await requireSuperadmin(context as unknown as AuthContext);
     const admin = await loadAdmin();
-    const { parseAdvertRefs, readAdvertMeta, storiaAdIdFromUrl, withStoriaAdId } = await import(
+    const { parseAdvertRefs, readAdvertMeta, storiaAdSlugFromUrl, withStoriaAdSlug } = await import(
       "@/lib/portals/storia/adverts.server"
     );
 
@@ -1871,7 +1871,7 @@ export const backfillStoriaPublicUrls = createServerFn({ method: "POST" })
     const results: {
       propertyId: string;
       url: string | null;
-      adId: string | null;
+      adSlug: string | null;
       externalId: string | null;
     }[] = [];
 
@@ -1885,15 +1885,15 @@ export const backfillStoriaPublicUrls = createServerFn({ method: "POST" })
           break;
         }
       }
-      const adId = storiaAdIdFromUrl(url);
-      const externalId = adId ? withStoriaAdId(row.external_id, adId) : row.external_id;
+      const adSlug = storiaAdSlugFromUrl(url);
+      const externalId = adSlug ? withStoriaAdSlug(row.external_id, adSlug) : row.external_id;
       if (url) {
         await admin
           .from("portal_listings")
           .update({ public_url: url, external_id: externalId } as never)
           .eq("id", row.id);
       }
-      results.push({ propertyId: row.property_id, url, adId, externalId });
+      results.push({ propertyId: row.property_id, url, adSlug, externalId });
     }
 
     return { checked: (rows ?? []).length, results };

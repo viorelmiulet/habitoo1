@@ -28,10 +28,12 @@ import {
   STORIA_STATUS_MESSAGE,
   parseAdvertRefs,
   parseStoriaAdIds,
-  storiaAdIdFromUrl,
+  parseStoriaAdSlugs,
+  storiaAdSlugFromUrl,
   storiaListingStatus,
 
   withStoriaAdId,
+  withStoriaAdSlug,
 } from "./adverts.server";
 
 type Json = Record<string, unknown>;
@@ -86,8 +88,10 @@ export type StoriaEventShape = {
   transactionId: string | null;
   /** uuid-ul anunțului (fluxul de anunțuri: `object_id`). */
   advertUuid: string | null;
-  /** id-ul numeric al anunțului pe Storia (fluxul de mesaje: `data.ad_id`). */
+  /** id-ul numeric intern al anunțului (fluxul de mesaje: `data.ad_id`). */
   adId: string | null;
+  /** id-ul din linkul public (slug alfanumeric, ex. `IwcT`) — alt identificator. */
+  adSlug: string | null;
   /** Linkul public al anunțului (`data.url`), când vine în notificare. */
   publicUrl: string | null;
   customId: string | null;
@@ -111,9 +115,10 @@ export function readEventShape(parsed: unknown): StoriaEventShape | null {
       pick(data, ["advert_id", "advertId", "advert.uuid", "advert.id", "id"]));
 
   const publicUrl = pick(data, ["url", "advert.url", "state.url"]);
-  // `data.ad_id` lipsea din notificările reale; linkul public conține însă id-ul
-  // numeric, deci el este sursa principală.
-  const adId = storiaAdIdFromUrl(publicUrl) ?? pick(data, ["ad_id", "adId", "advert.ad_id"]);
+  // Cele două identificatoare sunt DIFERITE: `data.ad_id` este id-ul numeric
+  // intern, iar linkul public conține un slug alfanumeric. Le păstrăm separat.
+  const adId = pick(data, ["ad_id", "adId", "advert.ad_id", "advert_numeric_id"]);
+  const adSlug = storiaAdSlugFromUrl(publicUrl);
 
   return {
     flow,
@@ -121,6 +126,7 @@ export function readEventShape(parsed: unknown): StoriaEventShape | null {
     transactionId: pick(root, ["transaction_id", "transactionId"]),
     advertUuid: advertCandidate && UUID_RE.test(advertCandidate) ? advertCandidate.toLowerCase() : null,
     adId: adId && /^[A-Za-z0-9]{2,}$/.test(adId) ? adId : null,
+    adSlug: adSlug && /^[A-Za-z0-9]{2,}$/.test(adSlug) ? adSlug : null,
     publicUrl: publicUrl && /^https?:\/\//i.test(publicUrl) ? publicUrl : null,
     customId: pick(data, [
       "custom_fields.id",
@@ -217,15 +223,19 @@ async function matchListing(admin: Admin, shape: StoriaEventShape): Promise<Matc
     if (match) return match;
   }
 
-  const needle = shape.advertUuid ?? (shape.adId ? `AD:${shape.adId}` : null);
-  if (!needle) return null;
+  const needles = [
+    shape.advertUuid,
+    shape.adId ? `AD:${shape.adId}` : null,
+    shape.adSlug ? `ADSLUG:${shape.adSlug}` : null,
+  ].filter(Boolean) as string[];
+  if (!needles.length) return null;
 
   const { data: listings } = await admin
     .from("portal_listings")
     .select("organization_id, property_id, external_id")
     .eq("portal", "storia")
-    .ilike("external_id", `%${needle}%`)
-    .limit(10);
+    .or(needles.map((n) => `external_id.ilike.%${n}%`).join(","))
+    .limit(20);
 
   for (const listing of listings ?? []) {
     const uuidHit =
@@ -234,7 +244,8 @@ async function matchListing(admin: Admin, shape: StoriaEventShape): Promise<Matc
         (uuid) => uuid?.toLowerCase() === shape.advertUuid,
       );
     const adHit = shape.adId && parseStoriaAdIds(listing.external_id).includes(shape.adId);
-    if (!uuidHit && !adHit) continue;
+    const slugHit = shape.adSlug && parseStoriaAdSlugs(listing.external_id).includes(shape.adSlug);
+    if (!uuidHit && !adHit && !slugHit) continue;
     const match = await propertyMatch(admin, listing.property_id, listing.external_id);
     if (match) return match;
   }
@@ -256,7 +267,7 @@ async function processMessage(admin: Admin, shape: StoriaEventShape): Promise<St
   if (!match) {
     return {
       processed: false,
-      note: `mesaj Storia fără proprietate identificabilă (ad_id=${shape.adId ?? "-"}, custom_id=${shape.customId ?? "-"})`,
+      note: `mesaj Storia fără proprietate identificabilă (ad_id=${shape.adId ?? "-"}, slug=${shape.adSlug ?? "-"}, custom_id=${shape.customId ?? "-"})`,
     };
   }
 
@@ -364,11 +375,16 @@ async function processLifecycle(admin: Admin, shape: StoriaEventShape): Promise<
   const code = pick(shape.data, ["code", "status", "advert.code"]);
   const now = new Date().toISOString();
 
-  // Memorăm id-ul numeric al anunțului: notificările de mesaje îl folosesc.
-  const externalId =
-    shape.adId && !parseStoriaAdIds(match.externalId).includes(shape.adId)
-      ? withStoriaAdId(match.externalId, shape.adId)
-      : null;
+  // Memorăm ambele identificatoare: cel numeric (folosit de mesaje) și slug-ul
+  // din linkul public. Sunt diferite, deci le stocăm separat.
+  let learned: string | null = null;
+  if (shape.adId && !parseStoriaAdIds(match.externalId).includes(shape.adId)) {
+    learned = withStoriaAdId(learned ?? match.externalId, shape.adId);
+  }
+  if (shape.adSlug && !parseStoriaAdSlugs(match.externalId).includes(shape.adSlug)) {
+    learned = withStoriaAdSlug(learned ?? match.externalId, shape.adSlug);
+  }
+  const externalId = learned;
   const urlPatch = shape.publicUrl ? { public_url: shape.publicUrl } : {};
 
   if (!code) {
@@ -381,7 +397,13 @@ async function processLifecycle(admin: Admin, shape: StoriaEventShape): Promise<
         .eq("property_id", match.propertyId);
       return {
         processed: true,
-        note: `link/id anunț Storia memorat (${externalId ? `AD:${shape.adId}` : "url"})`,
+        note: `link/id anunț Storia memorat (${
+          externalId
+            ? [shape.adId ? `AD:${shape.adId}` : null, shape.adSlug ? `ADSLUG:${shape.adSlug}` : null]
+                .filter(Boolean)
+                .join(" ")
+            : "url"
+        })`,
       };
     }
     return { processed: false, note: "ciclu de viață Storia fără cod de status în payload" };

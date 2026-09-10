@@ -29,9 +29,9 @@ import {
   parseAdvertRefs,
   readAdvertMeta,
   serializeAdvertRefs,
-  storiaAdIdFromUrl,
+  storiaAdSlugFromUrl,
   storiaListingStatus,
-  withStoriaAdId,
+  withStoriaAdSlug,
 
   storiaReactivationPlan,
   waitForAdvertSettled,
@@ -182,7 +182,7 @@ async function pushListing(
   const adIds: string[] = [];
   const finalExternalId = () => {
     let id = serializeAdvertRefs(refs);
-    for (const adId of adIds) id = withStoriaAdId(id, adId);
+    for (const adId of adIds) id = withStoriaAdSlug(id, adId);
     return id || null;
   };
 
@@ -238,7 +238,7 @@ async function pushListing(
       const code = meta?.code ?? null;
       if (meta?.url) {
         publicUrls[listing.transaction] = meta.url;
-        const adId = storiaAdIdFromUrl(meta.url);
+        const adId = storiaAdSlugFromUrl(meta.url);
         if (adId && !adIds.includes(adId)) adIds.push(adId);
       }
 
