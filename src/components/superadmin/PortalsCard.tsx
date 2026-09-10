@@ -33,6 +33,10 @@ import {
   revokeStoriaAuthorization,
   startStoriaAuthorization,
 } from "@/lib/portals/storia.functions";
+import {
+  getStoriaTaxonomyState,
+  refreshStoriaTaxonomy,
+} from "@/lib/portals/storia-taxonomy.functions";
 
 import {
   PORTAL_AUTH_LABEL,
@@ -59,6 +63,8 @@ export function PortalsCard({ organizationId }: { organizationId: string }) {
   const runActivation = useServerFn(setPortalActivation);
   const runStartOAuth = useServerFn(startStoriaAuthorization);
   const runRevokeOAuth = useServerFn(revokeStoriaAuthorization);
+  const loadTaxonomy = useServerFn(getStoriaTaxonomyState);
+  const runRefreshTaxonomy = useServerFn(refreshStoriaTaxonomy);
 
 
   const [accountId, setAccountId] = useState<Record<string, string>>({});
@@ -120,6 +126,27 @@ export function PortalsCard({ organizationId }: { organizationId: string }) {
     mutationFn: (_portalId: string) => runStartOAuth({ data: { organizationId } }),
     onSuccess: (res) => {
       window.location.href = res.url;
+    },
+    onError: (e: Error) => toastError(e),
+  });
+
+  /**
+   * Taxonomia Storia se citește din cache (o descărcare pe zi este suficientă),
+   * nu la fiecare publicare. Butonul de mai jos o reîmprospătează manual.
+   */
+  const taxonomyKey = ["storia-taxonomy"] as const;
+  const taxonomy = useQuery({ queryKey: taxonomyKey, queryFn: () => loadTaxonomy({}) });
+  const refreshTaxonomy = useMutation({
+    mutationFn: () => runRefreshTaxonomy({ data: { organizationId } }),
+    onSuccess: (res) => {
+      queryClient.invalidateQueries({ queryKey: taxonomyKey });
+      if (res.ok) {
+        toast.success(
+          `Taxonomia Storia a fost actualizată: ${res.cache?.categoryCount ?? 0} categorii.`,
+        );
+      } else {
+        toast.error(res.error);
+      }
     },
     onError: (e: Error) => toastError(e),
   });
@@ -449,7 +476,56 @@ export function PortalsCard({ organizationId }: { organizationId: string }) {
                   </div>
                 ) : null}
 
-
+                {item.portal.id === "storia" ? (
+                  <div className="space-y-3 rounded-lg border border-border p-3">
+                    <div>
+                      <p className="text-sm font-medium">Structura de categorii Storia</p>
+                      <p className="text-xs text-muted-foreground">
+                        Habitoo trimite doar câmpurile confirmate de Storia. Reîmprospătează lista
+                        când portalul își schimbă cerințele.
+                      </p>
+                    </div>
+                    {taxonomy.data && taxonomy.data.ok === false ? (
+                      <p className="rounded-lg border border-destructive/40 bg-destructive/5 p-3 text-xs text-destructive">
+                        {taxonomy.data.error}
+                      </p>
+                    ) : null}
+                    <dl className="grid gap-2 text-sm sm:grid-cols-2">
+                      <div>
+                        <dt className="text-muted-foreground">Ultima actualizare</dt>
+                        <dd>
+                          {taxonomy.data?.ok && taxonomy.data.cache
+                            ? formatDateTime(taxonomy.data.cache.fetchedAt)
+                            : "Niciodată"}
+                        </dd>
+                      </div>
+                      <div>
+                        <dt className="text-muted-foreground">Categorii disponibile</dt>
+                        <dd>
+                          {taxonomy.data?.ok && taxonomy.data.cache
+                            ? taxonomy.data.cache.categoryCount
+                            : "—"}
+                        </dd>
+                      </div>
+                    </dl>
+                    {taxonomy.data?.ok && taxonomy.data.cache?.stale ? (
+                      <p className="text-xs text-muted-foreground">
+                        Lista este mai veche de o zi. Reîmprospătează-o pentru siguranță.
+                      </p>
+                    ) : null}
+                    {taxonomy.data?.ok && taxonomy.data.cache ? (
+                      <TaxonomyDiscrepancies cache={taxonomy.data.cache} />
+                    ) : null}
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => refreshTaxonomy.mutate()}
+                      disabled={refreshTaxonomy.isPending}
+                    >
+                      {refreshTaxonomy.isPending ? "Se actualizează…" : "Reîmprospătează taxonomia"}
+                    </Button>
+                  </div>
+                ) : null}
 
                 <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border p-3">
                   <div className="text-sm">
@@ -734,5 +810,46 @@ export function PortalsCard({ organizationId }: { organizationId: string }) {
         }}
       />
     </div>
+  );
+}
+
+/** Diferențele dintre cerințele reale ale portalului și maparea din Habitoo. */
+function TaxonomyDiscrepancies({
+  cache,
+}: {
+  cache: { discrepancies?: {
+    missingCategories?: string[];
+    newRequired?: { category: string; attribute: string }[];
+    noLongerRequired?: { category: string; attribute: string }[];
+    changedAttributes?: { category: string; attribute: string }[];
+  } };
+}) {
+  const d = cache.discrepancies ?? {};
+  const items: string[] = [];
+  for (const category of d.missingCategories ?? []) {
+    items.push(`Categorie folosită de Habitoo, dar inexistentă pe portal: ${category}`);
+  }
+  for (const entry of d.newRequired ?? []) {
+    items.push(`Câmp devenit obligatoriu: ${entry.attribute} (${entry.category})`);
+  }
+  for (const entry of d.noLongerRequired ?? []) {
+    items.push(`Câmp care nu mai este obligatoriu: ${entry.attribute} (${entry.category})`);
+  }
+  for (const entry of d.changedAttributes ?? []) {
+    items.push(`Câmp modificat de portal: ${entry.attribute} (${entry.category})`);
+  }
+  if (items.length === 0) {
+    return (
+      <p className="text-xs text-muted-foreground">
+        Maparea Habitoo corespunde cerințelor actuale ale portalului.
+      </p>
+    );
+  }
+  return (
+    <ul className="list-disc space-y-1 pl-5 text-xs text-muted-foreground">
+      {items.slice(0, 12).map((line) => (
+        <li key={line}>{line}</li>
+      ))}
+    </ul>
   );
 }

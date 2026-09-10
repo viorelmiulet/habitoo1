@@ -20,10 +20,10 @@ import {
   type PropertyRow,
 } from "@/lib/site-feed/mapper";
 import { publicCoords } from "@/lib/geo";
+import { storiaAttributesFor } from "./attributes";
 import {
   ATTRIBUTE_LABEL,
   REQUIRED_ATTRIBUTES,
-  roomsUrn,
   storiaCategoryUrn,
   storiaFamily,
   type StoriaTransaction,
@@ -114,11 +114,6 @@ function priceFor(p: PropertyRow, transaction: StoriaTransaction) {
 export function storiaMarket(p: PropertyRow): "primary" | "secondary" {
   const stage = (p.construction_stage ?? "").toString().toLowerCase();
   return /nou|construc|dezvolt|ansamblu|primary/.test(stage) ? "primary" : "secondary";
-}
-
-function surfaceValue(value: unknown): string | null {
-  if (typeof value !== "number" || !Number.isFinite(value) || value <= 0) return null;
-  return String(Math.round(value));
 }
 
 export type StoriaMapOptions = {
@@ -244,27 +239,17 @@ export function mapPropertyToStoria(p: PropertyRow, options: StoriaMapOptions): 
     }
   }
 
-  // Atribute: doar cele documentate. Lipsa unui atribut obligatoriu blochează
-  // publicarea, cu mesaj despre exact ce trebuie completat în ofertă.
-  const netArea = surfaceValue(p.usable_surface ?? p.total_usable_surface ?? p.surface ?? p.built_surface);
-  const terrainArea = surfaceValue(p.land_surface);
-  const rooms = roomsUrn(p.rooms ?? null);
+  // Atribute: exclusiv cele confirmate în taxonomia reală Storia, per categorie.
+  // Lipsa unui atribut marcat obligatoriu de Storia blochează publicarea, cu
+  // mesaj despre exact ce trebuie completat în ofertă.
   const market = storiaMarket(p);
-
-  const baseAttributes: StoriaAttribute[] = [];
-  if (netArea) baseAttributes.push({ urn: "urn:concept:net-area-m2", value: netArea });
-  if (terrainArea) baseAttributes.push({ urn: "urn:concept:terrain-area-m2", value: terrainArea });
-  if (rooms) baseAttributes.push({ urn: "urn:concept:number-of-rooms", value: rooms });
-  if (p.negotiable) {
-    baseAttributes.push({ urn: "urn:concept:price-negotiable", value: "urn:concept:yes" });
-  }
-
+  const attributesByCategory = new Map<string, StoriaAttribute[]>();
   for (const entry of categories) {
-    if (!entry.urn) continue;
-    const required = REQUIRED_ATTRIBUTES[entry.urn] ?? [];
-    for (const urn of required) {
-      if (urn === "urn:concept:market") continue; // se trimite mereu, derivat.
-      if (!baseAttributes.some((a) => a.urn === urn)) {
+    if (!entry.urn || attributesByCategory.has(entry.urn)) continue;
+    const attributes = storiaAttributesFor(p, entry.urn, market);
+    attributesByCategory.set(entry.urn, attributes);
+    for (const urn of REQUIRED_ATTRIBUTES[entry.urn] ?? []) {
+      if (!attributes.some((a) => a.urn === urn)) {
         reasons.push(
           `Storia cere ${ATTRIBUTE_LABEL[urn] ?? urn} pentru această categorie; completează câmpul în ofertă.`,
         );
@@ -288,10 +273,7 @@ export function mapPropertyToStoria(p: PropertyRow, options: StoriaMapOptions): 
 
   const listings: StoriaListing[] = priced.map((entry) => {
     const categoryUrn = categories.find((c) => c.transaction === entry.transaction)?.urn as string;
-    const attributes = [...baseAttributes];
-    if ((REQUIRED_ATTRIBUTES[categoryUrn] ?? []).includes("urn:concept:market")) {
-      attributes.push({ urn: "urn:concept:market", value: `urn:concept:${market}` });
-    }
+    const attributes = attributesByCategory.get(categoryUrn) ?? [];
     const advert: StoriaAdvert = {
       title,
       description,

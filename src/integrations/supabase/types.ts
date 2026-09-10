@@ -1362,6 +1362,53 @@ export type Database = {
           },
         ]
       }
+      portal_taxonomy_cache: {
+        Row: {
+          categories: Json
+          created_at: string
+          discrepancies: Json
+          fetched_at: string
+          fetched_by: string | null
+          id: string
+          organization_id: string | null
+          portal: string
+          site_urn: string
+          updated_at: string
+        }
+        Insert: {
+          categories?: Json
+          created_at?: string
+          discrepancies?: Json
+          fetched_at?: string
+          fetched_by?: string | null
+          id?: string
+          organization_id?: string | null
+          portal: string
+          site_urn: string
+          updated_at?: string
+        }
+        Update: {
+          categories?: Json
+          created_at?: string
+          discrepancies?: Json
+          fetched_at?: string
+          fetched_by?: string | null
+          id?: string
+          organization_id?: string | null
+          portal?: string
+          site_urn?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "portal_taxonomy_cache_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       portal_webhook_events: {
         Row: {
           headers: Json
