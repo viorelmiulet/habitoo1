@@ -804,14 +804,34 @@ async function executeListingAction(input: {
     .eq("property_id", propertyId)
     .maybeSingle();
 
-  const { ctx } = await buildContext(organizationId, definition);
-  const ref = { propertyId, externalId: listing?.external_id ?? null };
-  const result =
-    action === "publish"
-      ? await adapter.publishListing(ctx, ref)
-      : action === "update"
-        ? await adapter.updateListing(ctx, ref)
-        : await adapter.withdrawListing(ctx, ref);
+  /**
+   * O excepție aruncată aici (token expirat, portal nereachable, validare care
+   * aruncă în loc să returneze) NU trebuie să iasă din funcție: altfel oprea
+   * întreaga buclă de publicare și celelalte portaluri nu mai erau procesate.
+   * O normalizăm în același rezultat de eșec, ca să se scrie și starea în
+   * `portal_listings` / `portal_publications`.
+   */
+  const { toPortalError } = await import("@/lib/portals/errors");
+  let result: Awaited<ReturnType<typeof adapter.publishListing>>;
+  try {
+    const { ctx } = await buildContext(organizationId, definition);
+    const ref = { propertyId, externalId: listing?.external_id ?? null };
+    result =
+      action === "publish"
+        ? await adapter.publishListing(ctx, ref)
+        : action === "update"
+          ? await adapter.updateListing(ctx, ref)
+          : await adapter.withdrawListing(ctx, ref);
+  } catch (error) {
+    const portalError = toPortalError(error);
+    result = {
+      ok: false as const,
+      code: portalError.code,
+      message: `${definition.display_name}: ${portalError.message}`,
+      detail: portalError.detail,
+    };
+  }
+
 
   const now = new Date().toISOString();
   // Portalurile asincrone (Storia) raportează starea reală a anunțului: un
