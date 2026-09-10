@@ -52,7 +52,7 @@ function chain(table: string) {
   };
   const singleFor = (): unknown => {
     if (table === "properties") {
-      return { id: "prop-1", publish_status: "published", status: "available", deleted_at: null };
+      return { id: "prop-1", publish_status: "published", status: "active", deleted_at: null };
     }
     if (table === "portal_connections") {
       return {
@@ -161,7 +161,6 @@ describe("applyPropertyPortalSelection", () => {
       },
     });
 
-    console.log(JSON.stringify(out, null, 2));
     const storia = out.results.find((r) => r.portalId === "storia");
     const clickimob = out.results.find((r) => r.portalId === "clickimob");
 
