@@ -85,6 +85,29 @@ export function serializeAdvertRefs(refs: AdvertRefs): string | null {
   return parts.length ? parts.join("|") : null;
 }
 
+/**
+ * Id-ul numeric al anunțului pe Storia (`ad_id`), stocat ca segment suplimentar
+ * `AD:<id>` în `external_id`. Este necesar pentru că notificările de mesaje
+ * identifică anunțul DOAR prin acest id numeric, nu prin uuid.
+ * Îl învățăm din notificările de ciclu de viață; dacă o republicare rescrie
+ * `external_id` și segmentul se pierde, prima notificare următoare îl re-adaugă.
+ */
+export function parseStoriaAdIds(externalId: string | null): string[] {
+  const out: string[] = [];
+  for (const part of (externalId ?? "").split("|")) {
+    const [key, value] = part.split(":");
+    if (key?.trim().toUpperCase() === "AD" && value?.trim()) out.push(value.trim());
+  }
+  return out;
+}
+
+export function withStoriaAdId(externalId: string | null, adId: string): string {
+  const existing = (externalId ?? "").split("|").filter(Boolean);
+  if (parseStoriaAdIds(externalId).includes(adId)) return existing.join("|");
+  return [...existing, `AD:${adId}`].join("|");
+}
+
+
 // --------------------------------------------------------------- erori Storia
 
 function detailOf(body: Record<string, unknown> | null): string | null {
