@@ -1527,9 +1527,29 @@ export const applyPropertyPortalSelection = createServerFn({ method: "POST" })
       context as unknown as AuthContext,
       data.organizationId,
     );
+    return await applyPortalSelectionForOrg({
+      organizationId,
+      superadmin,
+      actorId: context.userId,
+      data,
+    });
+  });
+
+/**
+ * Nucleul publicării pe portalurile selectate, fără verificări de permisiuni
+ * (apelantul le-a făcut deja). Separat de server function ca să fie testabil.
+ */
+export async function applyPortalSelectionForOrg(input: {
+  organizationId: string;
+  superadmin: boolean;
+  actorId: string;
+  data: z.infer<typeof applySelectionSchema>;
+}): Promise<{ ok: boolean; results: PortalSelectionOutcome[] }> {
+  {
+    const { organizationId, superadmin, actorId, data } = input;
     const allowedPortals = superadmin ? null : await activatedPortalIds(organizationId);
-    const actorId = context.userId;
     const admin = await loadAdmin();
+
 
     const { data: property } = await admin
       .from("properties")
