@@ -23,16 +23,19 @@ import { PortalError, codeFromHttpStatus, toPortalError } from "../errors";
 import { loadStoriaTokens, olxAuthorizedRequest, readStoriaOAuthMeta, storiaAppConfigured } from "../storia/oauth.server";
 import { buildStoriaPayload } from "../storia/payload.server";
 import {
+  activateAdvert,
   createAdvert,
   deactivateAdvert,
   parseAdvertRefs,
   readAdvertMeta,
   serializeAdvertRefs,
   storiaListingStatus,
+  storiaReactivationPlan,
   STORIA_STATUS_MESSAGE,
   updateAdvert,
   type AdvertRefs,
 } from "../storia/adverts.server";
+
 import type { StoriaTransaction } from "../storia/taxonomy";
 
 /** Endpoint minim, folosit doar ca să confirmăm că tokenul este acceptat. */
