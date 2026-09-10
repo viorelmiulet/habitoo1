@@ -258,8 +258,24 @@ async function matchListing(admin: Admin, shape: StoriaEventShape): Promise<Matc
     const match = await propertyMatch(admin, listing.property_id, listing.external_id);
     if (match) return match;
   }
+
+  // Ultimă punte: slugul din linkul public salvat pe anunț (`...-ID<slug>.html`).
+  const slugCandidates = [shape.adSlug, shape.adId].filter(Boolean) as string[];
+  for (const slug of slugCandidates) {
+    const { data: byUrl } = await admin
+      .from("portal_listings")
+      .select("property_id, external_id, public_url")
+      .eq("portal", "storia")
+      .ilike("public_url", `%ID${slug}.html%`)
+      .limit(5);
+    for (const listing of byUrl ?? []) {
+      const match = await propertyMatch(admin, listing.property_id, listing.external_id);
+      if (match) return match;
+    }
+  }
   return null;
 }
+
 
 const SOURCE = "Storia.ro";
 
