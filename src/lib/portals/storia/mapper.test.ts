@@ -113,10 +113,21 @@ describe("mapPropertyToStoria", () => {
     ]);
   });
 
+  it("publică terenul pe categoria de loturi confirmată", () => {
+    const result = mapPropertyToStoria(
+      baseProperty({ property_type: "teren", land_surface: 500 }),
+      options,
+    );
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.listings[0]?.advert.category_urn).toBe("urn:concept:lots-for-sale");
+  });
+
   it("blochează tipurile fără categorie Storia", () => {
-    const result = mapPropertyToStoria(baseProperty({ property_type: "teren" }), options);
+    const result = mapPropertyToStoria(baseProperty({ property_type: "cabana" }), options);
     expect(result.ok).toBe(false);
   });
+
 });
 
 describe("helpers Storia", () => {
