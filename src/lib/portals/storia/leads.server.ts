@@ -86,9 +86,12 @@ export type StoriaEventShape = {
   advertUuid: string | null;
   /** id-ul numeric al anunțului pe Storia (fluxul de mesaje: `data.ad_id`). */
   adId: string | null;
+  /** Linkul public al anunțului (`data.url`), când vine în notificare. */
+  publicUrl: string | null;
   customId: string | null;
   data: Json;
 };
+
 
 export function readEventShape(parsed: unknown): StoriaEventShape | null {
   const root = asRecord(parsed);
