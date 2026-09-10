@@ -1121,7 +1121,7 @@ export const getPropertiesPortalMatrix = createServerFn({ method: "POST" })
           .in("property_id", data.propertyIds),
         admin
           .from("portal_listings")
-          .select("property_id, portal, status, last_sync_at, last_error, external_id")
+          .select("property_id, portal, status, last_sync_at, last_error, external_id, public_url")
           .eq("organization_id", organizationId)
           .in("property_id", data.propertyIds),
         admin.from("portal_connections").select("portal, status").eq("organization_id", organizationId),
