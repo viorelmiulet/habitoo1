@@ -1,17 +1,21 @@
 /**
  * Endpoint public de notificări Storia.ro / OLX Group.
  *
- * FAZA „doar recepție”: primim, verificăm semnătura, jurnalizăm și răspundem
- * imediat 2xx. Procesarea fluxurilor (Advert Lifecycle, mesaje/lead-uri) vine
- * în Faza 4, după ce vedem structura reală a payload-ului în jurnale.
+ * Recepție + procesare (Faza 4, parțial):
+ *   - jurnalizăm întotdeauna cererea în `portal_webhook_events`;
+ *   - procesăm fluxul de mesaje (`incoming_message` → lead) și ciclul de viață
+ *     al anunțului (`publish_advert` → `portal_listings.status`);
+ *   - procesarea este scurtă (câteva interogări) și nu poate întârzia răspunsul
+ *     cu operațiuni de rețea externe; orice eroare este prinsă și notată în
+ *     `process_note`, iar răspunsul rămâne 2xx.
  *
  * Reguli respectate:
  *   - POST neautentificat, orice formă de payload (inclusiv gol) este acceptată;
- *   - răspuns rapid, fără procesare grea sincron;
  *   - semnătură absentă → se jurnalizează, dar se răspunde 2xx (altfel testul
  *     „Test Callback” din App Manager ar pica);
- *   - semnătură prezentă dar invalidă → 401.
+ *   - semnătură prezentă dar invalidă → 401, fără procesare.
  */
+
 import { createFileRoute } from "@tanstack/react-router";
 
 const OK_HEADERS = { "content-type": "application/json; charset=utf-8" } as const;
@@ -49,11 +53,9 @@ export const Route = createFileRoute("/api/public/portal/v1/storia/notifications
         });
 
         const processNote =
-          signature.valid === false
-            ? "respins: semnătură invalidă"
-            : "primit și jurnalizat; procesarea fluxurilor vine în Faza 4";
+          signature.valid === false ? "respins: semnătură invalidă" : "primit și jurnalizat";
 
-        await logStoriaNotification({
+        const eventId = await logStoriaNotification({
           method: "POST",
           headers,
           rawBody,
@@ -69,7 +71,14 @@ export const Route = createFileRoute("/api/public/portal/v1/storia/notifications
           });
         }
 
-        return new Response(JSON.stringify({ status: "ok" }), { status: 200, headers: OK_HEADERS });
+        const { processStoriaNotification } = await import("@/lib/portals/storia/leads.server");
+        const result = await processStoriaNotification({ eventId, parsed });
+
+        return new Response(JSON.stringify({ status: "ok", processed: result.processed }), {
+          status: 200,
+          headers: OK_HEADERS,
+        });
+
       },
     },
   },

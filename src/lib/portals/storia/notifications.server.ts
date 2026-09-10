@@ -120,7 +120,10 @@ export function parsePayload(rawBody: string): unknown {
   }
 }
 
-/** Jurnalizează cererea; niciodată nu propagă erori către răspuns. */
+/**
+ * Jurnalizează cererea și întoarce id-ul rândului (necesar pentru marcarea
+ * procesării). Niciodată nu propagă erori către răspuns.
+ */
 export async function logStoriaNotification(args: {
   method: string;
   headers: Record<string, string>;
@@ -128,26 +131,33 @@ export async function logStoriaNotification(args: {
   parsed: unknown;
   signature: SignatureCheck;
   processNote: string;
-}): Promise<void> {
+}): Promise<string | null> {
   try {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    await supabaseAdmin.from("portal_webhook_events").insert({
-      portal: "storia",
-      http_method: args.method,
-      headers: args.headers,
-      raw_payload: args.rawBody.slice(0, RAW_PAYLOAD_LOG_LIMIT) || null,
-      parsed_payload:
-        args.parsed && typeof args.parsed === "object"
-          ? (args.parsed as Record<string, never>)
-          : null,
+    const { data } = await supabaseAdmin
+      .from("portal_webhook_events")
+      .insert({
+        portal: "storia",
+        http_method: args.method,
+        headers: args.headers,
+        raw_payload: args.rawBody.slice(0, RAW_PAYLOAD_LOG_LIMIT) || null,
+        parsed_payload:
+          args.parsed && typeof args.parsed === "object"
+            ? (args.parsed as Record<string, never>)
+            : null,
 
-      signature_present: args.signature.present,
-      signature_valid: args.signature.valid,
-      signature_note: args.signature.note,
-      processed: false,
-      process_note: args.processNote,
-    });
+        signature_present: args.signature.present,
+        signature_valid: args.signature.valid,
+        signature_note: args.signature.note,
+        processed: false,
+        process_note: args.processNote,
+      })
+      .select("id")
+      .maybeSingle();
+    return data?.id ?? null;
   } catch (error) {
     console.error("[storia] jurnalizarea notificării a eșuat", error);
+    return null;
   }
 }
+
