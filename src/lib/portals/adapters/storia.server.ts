@@ -284,7 +284,11 @@ async function pushListing(
   return {
     ok: true,
     data: {
-      externalId: serializeAdvertRefs(refs),
+      externalId: finalExternalId(),
+      // O ofertă cu ambele tranzacții are două anunțuri; păstrăm linkul celui
+      // de vânzare, iar dacă lipsește pe cel de închiriere.
+      publicUrl: publicUrls.sale ?? publicUrls.rent ?? null,
+
       live: true,
       detail: `storia ${mode}: ${build.listings.length} anunț(uri), stare ${portalStatus}`,
       processed: build.listings.length,
