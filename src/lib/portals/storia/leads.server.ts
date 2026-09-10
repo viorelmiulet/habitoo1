@@ -120,7 +120,7 @@ export function readEventShape(parsed: unknown): StoriaEventShape | null {
     eventType: pick(root, ["event_type", "eventType", "type"]),
     transactionId: pick(root, ["transaction_id", "transactionId"]),
     advertUuid: advertCandidate && UUID_RE.test(advertCandidate) ? advertCandidate.toLowerCase() : null,
-    adId: adId && /^\d+$/.test(adId) ? adId : null,
+    adId: adId && /^[A-Za-z0-9]{2,}$/.test(adId) ? adId : null,
     publicUrl: publicUrl && /^https?:\/\//i.test(publicUrl) ? publicUrl : null,
     customId: pick(data, [
       "custom_fields.id",
