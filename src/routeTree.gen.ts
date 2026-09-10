@@ -70,6 +70,7 @@ import { Route as ApiPublicPortalV1ImoveFeedDotjsonRouteImport } from './routes/
 import { Route as ApiPublicPortalV1PropertiesIdRouteImport } from './routes/api/public/portal/v1/properties.$id'
 import { Route as ApiPublicSitesV1MediaIdRouteImport } from './routes/api/public/sites/v1/media.$id'
 import { Route as ApiPublicSitesV1PropertiesIdRouteImport } from './routes/api/public/sites/v1/properties.$id'
+import { Route as ApiPublicPortalV1StoriaOauthCallbackRouteImport } from './routes/api/public/portal/v1/storia.oauth.callback'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -407,6 +408,12 @@ const ApiPublicSitesV1PropertiesIdRoute =
     path: '/$id',
     getParentRoute: () => ApiPublicSitesV1PropertiesRoute,
   } as any)
+const ApiPublicPortalV1StoriaOauthCallbackRoute =
+  ApiPublicPortalV1StoriaOauthCallbackRouteImport.update({
+    id: '/api/public/portal/v1/storia/oauth/callback',
+    path: '/api/public/portal/v1/storia/oauth/callback',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -469,6 +476,7 @@ export interface FileRoutesByFullPath {
   '/api/public/portal/v1/properties/$id': typeof ApiPublicPortalV1PropertiesIdRoute
   '/api/public/sites/v1/media/$id': typeof ApiPublicSitesV1MediaIdRoute
   '/api/public/sites/v1/properties/$id': typeof ApiPublicSitesV1PropertiesIdRoute
+  '/api/public/portal/v1/storia/oauth/callback': typeof ApiPublicPortalV1StoriaOauthCallbackRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -529,6 +537,7 @@ export interface FileRoutesByTo {
   '/api/public/portal/v1/properties/$id': typeof ApiPublicPortalV1PropertiesIdRoute
   '/api/public/sites/v1/media/$id': typeof ApiPublicSitesV1MediaIdRoute
   '/api/public/sites/v1/properties/$id': typeof ApiPublicSitesV1PropertiesIdRoute
+  '/api/public/portal/v1/storia/oauth/callback': typeof ApiPublicPortalV1StoriaOauthCallbackRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -593,6 +602,7 @@ export interface FileRoutesById {
   '/api/public/portal/v1/properties/$id': typeof ApiPublicPortalV1PropertiesIdRoute
   '/api/public/sites/v1/media/$id': typeof ApiPublicSitesV1MediaIdRoute
   '/api/public/sites/v1/properties/$id': typeof ApiPublicSitesV1PropertiesIdRoute
+  '/api/public/portal/v1/storia/oauth/callback': typeof ApiPublicPortalV1StoriaOauthCallbackRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -657,6 +667,7 @@ export interface FileRouteTypes {
     | '/api/public/portal/v1/properties/$id'
     | '/api/public/sites/v1/media/$id'
     | '/api/public/sites/v1/properties/$id'
+    | '/api/public/portal/v1/storia/oauth/callback'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -717,6 +728,7 @@ export interface FileRouteTypes {
     | '/api/public/portal/v1/properties/$id'
     | '/api/public/sites/v1/media/$id'
     | '/api/public/sites/v1/properties/$id'
+    | '/api/public/portal/v1/storia/oauth/callback'
   id:
     | '__root__'
     | '/'
@@ -780,6 +792,7 @@ export interface FileRouteTypes {
     | '/api/public/portal/v1/properties/$id'
     | '/api/public/sites/v1/media/$id'
     | '/api/public/sites/v1/properties/$id'
+    | '/api/public/portal/v1/storia/oauth/callback'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -811,6 +824,7 @@ export interface RootRouteChildren {
   ApiPublicPortalV1ImoveFeedDotcsvRoute: typeof ApiPublicPortalV1ImoveFeedDotcsvRoute
   ApiPublicPortalV1ImoveFeedDotjsonRoute: typeof ApiPublicPortalV1ImoveFeedDotjsonRoute
   ApiPublicSitesV1MediaIdRoute: typeof ApiPublicSitesV1MediaIdRoute
+  ApiPublicPortalV1StoriaOauthCallbackRoute: typeof ApiPublicPortalV1StoriaOauthCallbackRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -1242,6 +1256,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicSitesV1PropertiesIdRouteImport
       parentRoute: typeof ApiPublicSitesV1PropertiesRoute
     }
+    '/api/public/portal/v1/storia/oauth/callback': {
+      id: '/api/public/portal/v1/storia/oauth/callback'
+      path: '/api/public/portal/v1/storia/oauth/callback'
+      fullPath: '/api/public/portal/v1/storia/oauth/callback'
+      preLoaderRoute: typeof ApiPublicPortalV1StoriaOauthCallbackRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -1423,6 +1444,8 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicPortalV1ImoveFeedDotjsonRoute:
     ApiPublicPortalV1ImoveFeedDotjsonRoute,
   ApiPublicSitesV1MediaIdRoute: ApiPublicSitesV1MediaIdRoute,
+  ApiPublicPortalV1StoriaOauthCallbackRoute:
+    ApiPublicPortalV1StoriaOauthCallbackRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
