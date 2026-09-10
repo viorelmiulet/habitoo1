@@ -204,6 +204,9 @@ async function pushListing(
         if (recreated) {
           uuid = await createAdvert(ctx.organizationId, listing.advert);
         } else {
+          // Activarea este asincronă: trimitem datele abia după ce portalul a
+          // terminat operațiunea, altfel răspunde 409 „Illegal status change”.
+          if (reactivated) await waitForAdvertSettled(ctx.organizationId, uuid);
           const outcome = await updateAdvert(ctx.organizationId, uuid, listing.advert);
           if (outcome === "missing") {
             uuid = await createAdvert(ctx.organizationId, listing.advert);
@@ -217,9 +220,9 @@ async function pushListing(
       refs[listing.transaction] = uuid;
 
       // Statusul real: `/meta` best-effort; confirmarea finală vine prin notificări.
-      if (reactivated) await delay(3000);
-      const meta = await readAdvertMeta(ctx.organizationId, uuid).catch(() => null);
+      const meta = await waitForAdvertSettled(ctx.organizationId, uuid, reactivated ? 4 : 1, 3000);
       const code = meta?.code ?? null;
+
       // După o reactivare, portalul poate raporta încă starea veche câteva
       // secunde: nu o marcăm „retras”, ci „în procesare”.
       const status = storiaListingStatus(code);
