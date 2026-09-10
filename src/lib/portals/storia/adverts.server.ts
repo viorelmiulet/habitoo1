@@ -148,17 +148,42 @@ export async function createAdvert(organizationId: string, advert: StoriaAdvert)
   return uuid;
 }
 
-/** Actualizare; `null` înseamnă că anunțul nu mai există la portal (404). */
+/**
+ * Actualizare. `missing` = anunțul nu mai există la portal (404); `busy` = o
+ * altă operațiune asincronă este încă în curs (409 „Illegal status change”),
+ * caz în care datele se retrimit la următoarea publicare.
+ */
 export async function updateAdvert(
   organizationId: string,
   uuid: string,
   advert: StoriaAdvert,
-): Promise<"updated" | "missing"> {
+): Promise<"updated" | "missing" | "busy"> {
   const res = await olxAuthorizedRequest(organizationId, "PUT", `/advert/v1/${uuid}`, advert);
   if (res.status === 404) return "missing";
+  if (res.status === 409 && /illegal status change/i.test(res.raw)) return "busy";
   if (res.status < 200 || res.status >= 300) throw failure(res.status, res.body);
   return "updated";
 }
+
+/**
+ * Așteaptă finalizarea operațiunii asincrone în curs (`last_action_status`
+ * de forma `TO_*`) înainte de o nouă cerere de scriere. Best-effort.
+ */
+export async function waitForAdvertSettled(
+  organizationId: string,
+  uuid: string,
+  attempts = 5,
+  intervalMs = 3000,
+): Promise<AdvertMeta | null> {
+  let meta: AdvertMeta | null = null;
+  for (let i = 0; i < attempts; i += 1) {
+    meta = await readAdvertMeta(organizationId, uuid).catch(() => null);
+    if (!meta?.lastActionStatus || !/^TO_/i.test(meta.lastActionStatus)) return meta;
+    await new Promise((resolve) => setTimeout(resolve, intervalMs));
+  }
+  return meta;
+}
+
 
 export async function deactivateAdvert(
   organizationId: string,
