@@ -34,8 +34,33 @@ export function storiaListingStatus(code: string | null): string {
   if (!code) return "pending";
   if (code === "active") return "published";
   if (code === "new" || code === "unpaid" || code === "blocked") return "pending";
+  // Retragerea (din CRM sau din contul Storia) este o stare normală, nu o eroare.
+  if (code === "removed_by_user" || code === "removed_by_parent_ad") return "withdrawn";
   return "error";
 }
+
+/**
+ * Ce se poate face cu un anunț inactiv, conform tabelelor „next available
+ * operations” din documentația OLX (pagina publish-advert):
+ *  - `removed_by_user`, `outdated` → ACTIVATE (dacă mai e vizibil în profil) sau POST;
+ *  - `moderated`, `removed_by_moderator` → nicio operațiune, deci anunț nou (POST);
+ *  - restul stărilor nu au nevoie de reactivare.
+ */
+export function storiaReactivationPlan(meta: {
+  code: string | null;
+  visibleInProfile: boolean | null;
+}): "none" | "activate" | "recreate" {
+  const code = meta.code;
+  if (!code) return "none";
+  if (code === "removed_by_user" || code === "outdated") {
+    return meta.visibleInProfile === false ? "recreate" : "activate";
+  }
+  if (code === "moderated" || code === "removed_by_moderator" || code === "removed_by_parent_ad") {
+    return "recreate";
+  }
+  return "none";
+}
+
 
 // ------------------------------------------------ referințe advert per ofertă
 
