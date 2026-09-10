@@ -89,4 +89,20 @@ describe("identificatori", () => {
     expect(parseStoriaAdIds(updated)).toEqual(["9846457"]);
     expect(withStoriaAdId(updated, "9846457")).toBe(updated);
   });
+
+  it("extrage linkul public și id-ul anunțului din notificarea de ciclu de viață", () => {
+    const shape = readEventShape(lifecyclePayload)!;
+    expect(shape.publicUrl).toBe("https://www.storia.ro/ro/oferta/apartament-IDabc.html");
+    expect(shape.adId).toBe("abc");
+  });
+
+  it("citește id-ul alfanumeric din formatul real al linkului Storia", () => {
+    // Format confirmat pe un anunț live din contul agenției.
+    expect(storiaAdIdFromUrl("https://www.storia.ro/ro/oferta/apartament-test-IDIwcT.html")).toBe(
+      "IwcT",
+    );
+    expect(storiaAdIdFromUrl(null)).toBeNull();
+    expect(storiaAdIdFromUrl("https://www.storia.ro/ro/rezultate/vanzare")).toBeNull();
+  });
 });
+
