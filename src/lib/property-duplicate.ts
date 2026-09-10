@@ -32,7 +32,8 @@ export function buildDuplicatedProperty(
     organization_id: input.organizationId,
     created_by: input.actorId,
     updated_by: input.actorId,
-    title: `${source.title} (copie)`,
+    // Titlul rămâne identic cu sursa; copia se distinge prin referința nouă.
+    title: source.title,
     reference: input.reference,
     status: "draft",
     publish_status: "draft",
