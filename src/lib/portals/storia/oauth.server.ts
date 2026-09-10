@@ -54,10 +54,10 @@ type OlxAppCredentials = {
 
 /** Credențialele de aplicație. Lipsa oricăreia oprește fluxul cu mesaj clar. */
 function appCredentials(): OlxAppCredentials {
-  const clientId = process.env["OLX_CLIENT_ID"];
-  const clientSecret = process.env["OLX_CLIENT_SECRET"];
-  const basicFromEnv = process.env["OLX_BASIC_BASE64"];
-  const apiKey = process.env["OLX_API_KEY"];
+  const clientId = process.env["OLX_CLIENT_ID"]?.trim();
+  const clientSecret = process.env["OLX_CLIENT_SECRET"]?.trim();
+  const basicFromEnv = process.env["OLX_BASIC_BASE64"]?.trim();
+  const apiKey = process.env["OLX_API_KEY"]?.trim();
 
   if (!clientId || !apiKey) {
     throw new PortalError(
@@ -66,9 +66,16 @@ function appCredentials(): OlxAppCredentials {
       "Integrarea Storia nu este configurată: lipsesc credențialele de aplicație OLX.",
     );
   }
-  const basic =
-    basicFromEnv?.trim() ||
-    (clientSecret ? Buffer.from(`${clientId}:${clientSecret}`, "utf8").toString("base64") : "");
+
+  let basic = "";
+  if (basicFromEnv) {
+    // OLX App Manager afișează valoarea fie cu prefixul "Basic ", fie fără.
+    const alreadyPrefixed = /^Basic\s+/i.test(basicFromEnv);
+    basic = alreadyPrefixed ? basicFromEnv : `Basic ${basicFromEnv}`;
+  } else if (clientSecret) {
+    basic = `Basic ${Buffer.from(`${clientId}:${clientSecret}`, "utf8").toString("base64")}`;
+  }
+
   if (!basic) {
     throw new PortalError(
       "CONFIG_ERROR",
