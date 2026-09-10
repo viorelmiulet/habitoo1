@@ -569,6 +569,16 @@ export async function processStoriaNotification(args: {
     result = { processed: false, note: `eroare la procesare: ${String(error).slice(0, 300)}` };
   }
 
+  // Curățare oportunistă: mesajele mai vechi decât perioada de păstrare dispar.
+  if (admin) {
+    try {
+      await admin.rpc("purge_expired_portal_messages");
+    } catch (error) {
+      console.error("[storia] curățarea mesajelor expirate a eșuat", error);
+    }
+  }
+
+
   if (args.eventId && admin) {
     try {
       await admin
