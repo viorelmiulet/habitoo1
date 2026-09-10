@@ -1207,6 +1207,79 @@ export type Database = {
           },
         ]
       }
+      portal_messages: {
+        Row: {
+          body: string | null
+          created_at: string
+          expires_at: string
+          external_message_id: string | null
+          id: string
+          lead_id: string | null
+          organization_id: string
+          portal: string
+          property_id: string | null
+          sender_email: string | null
+          sender_name: string | null
+          sender_phone: string | null
+          sent_at: string
+          updated_at: string
+        }
+        Insert: {
+          body?: string | null
+          created_at?: string
+          expires_at?: string
+          external_message_id?: string | null
+          id?: string
+          lead_id?: string | null
+          organization_id: string
+          portal: string
+          property_id?: string | null
+          sender_email?: string | null
+          sender_name?: string | null
+          sender_phone?: string | null
+          sent_at?: string
+          updated_at?: string
+        }
+        Update: {
+          body?: string | null
+          created_at?: string
+          expires_at?: string
+          external_message_id?: string | null
+          id?: string
+          lead_id?: string | null
+          organization_id?: string
+          portal?: string
+          property_id?: string | null
+          sender_email?: string | null
+          sender_name?: string | null
+          sender_phone?: string | null
+          sent_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "portal_messages_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "portal_messages_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "portal_messages_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       portal_oauth_states: {
         Row: {
           consumed_at: string | null
@@ -2698,6 +2771,7 @@ export type Database = {
       is_superadmin: { Args: never; Returns: boolean }
       org_access_blocked: { Args: never; Returns: string }
       plan_agent_limit: { Args: { _plan: string }; Returns: number }
+      purge_expired_portal_messages: { Args: never; Returns: number }
       qa_purge_demo_organization: { Args: { _org: string }; Returns: string[] }
       qa_reset_demo_organization: { Args: { _org: string }; Returns: Json }
       reject_registration_request: {
