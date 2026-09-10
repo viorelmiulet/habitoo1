@@ -43,7 +43,10 @@ const PROBE_PATH = "/advert/v1/adverts?limit=1";
 
 const TX_LABEL: Record<StoriaTransaction, string> = { sale: "vânzare", rent: "închiriere" };
 
+const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
 function connectedState(ctx: PortalContext): { hasTokens: boolean; expiresAt: string | null } {
+
   const meta = readStoriaOAuthMeta(ctx.settings);
   return { hasTokens: Boolean(ctx.portalCredential), expiresAt: meta?.expires_at ?? null };
 }
