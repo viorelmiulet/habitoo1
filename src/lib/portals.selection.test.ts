@@ -145,13 +145,12 @@ describe("applyPropertyPortalSelection", () => {
   });
 
   it("continuă publicarea pe celelalte portaluri când unul aruncă o excepție", async () => {
-    const { applyPropertyPortalSelection } = await import("@/lib/portals.functions");
-    const run = applyPropertyPortalSelection as unknown as (a: {
-      data: unknown;
-      context: unknown;
-    }) => Promise<{ ok: boolean; results: { portalId: string; ok: boolean; message: string | null }[] }>;
+    const { applyPortalSelectionForOrg } = await import("@/lib/portals.functions");
 
-    const out = await run({
+    const out = await applyPortalSelectionForOrg({
+      organizationId: "org-1",
+      superadmin: false,
+      actorId: "user-1",
       data: {
         propertyId: "11111111-1111-1111-1111-111111111111",
         selections: [
@@ -160,7 +159,6 @@ describe("applyPropertyPortalSelection", () => {
         ],
         syncExisting: true,
       },
-      context,
     });
 
     const storia = out.results.find((r) => r.portalId === "storia");
