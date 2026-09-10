@@ -68,6 +68,7 @@ import { Route as ApiPublicPortalV1ImoveFeedRouteImport } from './routes/api/pub
 import { Route as ApiPublicPortalV1ImoveFeedDotcsvRouteImport } from './routes/api/public/portal/v1/imove.feed[.]csv'
 import { Route as ApiPublicPortalV1ImoveFeedDotjsonRouteImport } from './routes/api/public/portal/v1/imove.feed[.]json'
 import { Route as ApiPublicPortalV1PropertiesIdRouteImport } from './routes/api/public/portal/v1/properties.$id'
+import { Route as ApiPublicPortalV1StoriaNotificationsRouteImport } from './routes/api/public/portal/v1/storia.notifications'
 import { Route as ApiPublicSitesV1MediaIdRouteImport } from './routes/api/public/sites/v1/media.$id'
 import { Route as ApiPublicSitesV1PropertiesIdRouteImport } from './routes/api/public/sites/v1/properties.$id'
 import { Route as ApiPublicPortalV1StoriaOauthCallbackRouteImport } from './routes/api/public/portal/v1/storia.oauth.callback'
@@ -397,6 +398,12 @@ const ApiPublicPortalV1PropertiesIdRoute =
     path: '/$id',
     getParentRoute: () => ApiPublicPortalV1PropertiesRoute,
   } as any)
+const ApiPublicPortalV1StoriaNotificationsRoute =
+  ApiPublicPortalV1StoriaNotificationsRouteImport.update({
+    id: '/api/public/portal/v1/storia/notifications',
+    path: '/api/public/portal/v1/storia/notifications',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicSitesV1MediaIdRoute = ApiPublicSitesV1MediaIdRouteImport.update({
   id: '/api/public/sites/v1/media/$id',
   path: '/api/public/sites/v1/media/$id',
@@ -474,6 +481,7 @@ export interface FileRoutesByFullPath {
   '/api/public/portal/v1/imove/feed.csv': typeof ApiPublicPortalV1ImoveFeedDotcsvRoute
   '/api/public/portal/v1/imove/feed.json': typeof ApiPublicPortalV1ImoveFeedDotjsonRoute
   '/api/public/portal/v1/properties/$id': typeof ApiPublicPortalV1PropertiesIdRoute
+  '/api/public/portal/v1/storia/notifications': typeof ApiPublicPortalV1StoriaNotificationsRoute
   '/api/public/sites/v1/media/$id': typeof ApiPublicSitesV1MediaIdRoute
   '/api/public/sites/v1/properties/$id': typeof ApiPublicSitesV1PropertiesIdRoute
   '/api/public/portal/v1/storia/oauth/callback': typeof ApiPublicPortalV1StoriaOauthCallbackRoute
@@ -535,6 +543,7 @@ export interface FileRoutesByTo {
   '/api/public/portal/v1/imove/feed.csv': typeof ApiPublicPortalV1ImoveFeedDotcsvRoute
   '/api/public/portal/v1/imove/feed.json': typeof ApiPublicPortalV1ImoveFeedDotjsonRoute
   '/api/public/portal/v1/properties/$id': typeof ApiPublicPortalV1PropertiesIdRoute
+  '/api/public/portal/v1/storia/notifications': typeof ApiPublicPortalV1StoriaNotificationsRoute
   '/api/public/sites/v1/media/$id': typeof ApiPublicSitesV1MediaIdRoute
   '/api/public/sites/v1/properties/$id': typeof ApiPublicSitesV1PropertiesIdRoute
   '/api/public/portal/v1/storia/oauth/callback': typeof ApiPublicPortalV1StoriaOauthCallbackRoute
@@ -600,6 +609,7 @@ export interface FileRoutesById {
   '/api/public/portal/v1/imove/feed.csv': typeof ApiPublicPortalV1ImoveFeedDotcsvRoute
   '/api/public/portal/v1/imove/feed.json': typeof ApiPublicPortalV1ImoveFeedDotjsonRoute
   '/api/public/portal/v1/properties/$id': typeof ApiPublicPortalV1PropertiesIdRoute
+  '/api/public/portal/v1/storia/notifications': typeof ApiPublicPortalV1StoriaNotificationsRoute
   '/api/public/sites/v1/media/$id': typeof ApiPublicSitesV1MediaIdRoute
   '/api/public/sites/v1/properties/$id': typeof ApiPublicSitesV1PropertiesIdRoute
   '/api/public/portal/v1/storia/oauth/callback': typeof ApiPublicPortalV1StoriaOauthCallbackRoute
@@ -665,6 +675,7 @@ export interface FileRouteTypes {
     | '/api/public/portal/v1/imove/feed.csv'
     | '/api/public/portal/v1/imove/feed.json'
     | '/api/public/portal/v1/properties/$id'
+    | '/api/public/portal/v1/storia/notifications'
     | '/api/public/sites/v1/media/$id'
     | '/api/public/sites/v1/properties/$id'
     | '/api/public/portal/v1/storia/oauth/callback'
@@ -726,6 +737,7 @@ export interface FileRouteTypes {
     | '/api/public/portal/v1/imove/feed.csv'
     | '/api/public/portal/v1/imove/feed.json'
     | '/api/public/portal/v1/properties/$id'
+    | '/api/public/portal/v1/storia/notifications'
     | '/api/public/sites/v1/media/$id'
     | '/api/public/sites/v1/properties/$id'
     | '/api/public/portal/v1/storia/oauth/callback'
@@ -790,6 +802,7 @@ export interface FileRouteTypes {
     | '/api/public/portal/v1/imove/feed.csv'
     | '/api/public/portal/v1/imove/feed.json'
     | '/api/public/portal/v1/properties/$id'
+    | '/api/public/portal/v1/storia/notifications'
     | '/api/public/sites/v1/media/$id'
     | '/api/public/sites/v1/properties/$id'
     | '/api/public/portal/v1/storia/oauth/callback'
@@ -823,6 +836,7 @@ export interface RootRouteChildren {
   ApiPublicPortalV1ImoveFeedRoute: typeof ApiPublicPortalV1ImoveFeedRoute
   ApiPublicPortalV1ImoveFeedDotcsvRoute: typeof ApiPublicPortalV1ImoveFeedDotcsvRoute
   ApiPublicPortalV1ImoveFeedDotjsonRoute: typeof ApiPublicPortalV1ImoveFeedDotjsonRoute
+  ApiPublicPortalV1StoriaNotificationsRoute: typeof ApiPublicPortalV1StoriaNotificationsRoute
   ApiPublicSitesV1MediaIdRoute: typeof ApiPublicSitesV1MediaIdRoute
   ApiPublicPortalV1StoriaOauthCallbackRoute: typeof ApiPublicPortalV1StoriaOauthCallbackRoute
 }
@@ -1242,6 +1256,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicPortalV1PropertiesIdRouteImport
       parentRoute: typeof ApiPublicPortalV1PropertiesRoute
     }
+    '/api/public/portal/v1/storia/notifications': {
+      id: '/api/public/portal/v1/storia/notifications'
+      path: '/api/public/portal/v1/storia/notifications'
+      fullPath: '/api/public/portal/v1/storia/notifications'
+      preLoaderRoute: typeof ApiPublicPortalV1StoriaNotificationsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/sites/v1/media/$id': {
       id: '/api/public/sites/v1/media/$id'
       path: '/api/public/sites/v1/media/$id'
@@ -1443,6 +1464,8 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicPortalV1ImoveFeedDotcsvRoute: ApiPublicPortalV1ImoveFeedDotcsvRoute,
   ApiPublicPortalV1ImoveFeedDotjsonRoute:
     ApiPublicPortalV1ImoveFeedDotjsonRoute,
+  ApiPublicPortalV1StoriaNotificationsRoute:
+    ApiPublicPortalV1StoriaNotificationsRoute,
   ApiPublicSitesV1MediaIdRoute: ApiPublicSitesV1MediaIdRoute,
   ApiPublicPortalV1StoriaOauthCallbackRoute:
     ApiPublicPortalV1StoriaOauthCallbackRoute,
