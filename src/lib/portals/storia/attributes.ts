@@ -108,12 +108,64 @@ function windowsTypeUrn(p: PropertyRow): string | null {
   return null;
 }
 
-function buildingTypeUrn(p: PropertyRow): string | null {
+/**
+ * Tipul clădirii. Valorile permise diferă per categorie (apartamente: `block`,
+ * `house`…; case: `detached`, `residence`…; spații comerciale: `private-house`,
+ * `office-building`…), așa că trimitem candidații în ordine de preferință și
+ * filtrul final păstrează primul confirmat pentru categoria respectivă.
+ */
+function buildingTypeUrns(p: PropertyRow): string[] {
   const type = norm(p.building_type);
-  if (/bloc/.test(type)) return "urn:concept:block";
-  if (/casa|vila/.test(type)) return "urn:concept:house";
+  const codes: string[] =
+    /bloc/.test(type)
+      ? ["block"]
+      : /vila/.test(type)
+        ? ["house", "residence"]
+        : /casa/.test(type)
+          ? ["house", "private-house", "detached"]
+          : /imobil de birouri/.test(type)
+            ? ["office-building"]
+            : /ansamblu rezidential/.test(type)
+              ? ["residence"]
+              : [];
+  return codes.map((c) => `urn:concept:${c}`);
+}
+
+/**
+ * Compartimentarea (`urn:concept:house-type` pe categoriile de apartamente).
+ * Taxonomia reală acceptă exact `circular`, `detached`, `semidetached`,
+ * `undetached` — echivalentul celor patru compartimentări românești.
+ * „Vagon" și „Open space" nu au valoare confirmată, deci nu se trimit.
+ */
+function layoutUrn(p: PropertyRow): string | null {
+  const layout = norm(p.layout);
+  if (/semidecomandat/.test(layout)) return "urn:concept:semidetached";
+  if (/nedecomandat/.test(layout)) return "urn:concept:undetached";
+  if (/decomandat/.test(layout)) return "urn:concept:detached";
+  if (/circular/.test(layout)) return "urn:concept:circular";
   return null;
 }
+
+/** Structura → `structure-type` (hale, garaje). Doar echivalențe confirmate. */
+function structureTypeUrn(p: PropertyRow): string | null {
+  const structure = norm(p.building_structure);
+  if (/caramida/.test(structure)) return "urn:concept:brick";
+  if (/lemn/.test(structure)) return "urn:concept:wood";
+  if (/metal/.test(structure)) return "urn:concept:steel";
+  return null;
+}
+
+/** Destinația → `use-types` (spații comerciale, hale). */
+function useTypesUrns(p: PropertyRow): string[] {
+  const destination = norm(p.destination);
+  const out: string[] = [];
+  const add = (...codes: string[]) => out.push(...codes.map((c) => `urn:concept:${c}`));
+  if (/comercial/.test(destination)) add("retail", "commercial");
+  if (/birouri/.test(destination)) add("office");
+  if (/industrial/.test(destination)) add("industrial", "manufacturing");
+  return out;
+}
+
 
 /** Încălzirea, ca enum de apartament (categoriile comerciale folosesc y/n). */
 function heatingSelectUrn(p: PropertyRow): string | null {
