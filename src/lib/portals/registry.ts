@@ -272,7 +272,13 @@ export const PORTALS: PortalDefinition[] = [
     authentication: ["oauth"],
     // Conexiune OAuth2 + publicare/actualizare/retragere anunțuri. Preluarea
     // mesajelor ca lead-uri și promovările plătite nu sunt implementate.
-    capabilities: ["test_connection", "publish", "update", "withdraw"],
+    capabilities: [
+      "test_connection",
+      "publish_listing",
+      "update_listing",
+      "withdraw_listing",
+      "webhook_receive",
+    ],
     configuration_schema: { fields: [] },
     website: "https://www.storia.ro",
     docs: "https://developer.olxgroup.com/docs/overview",
