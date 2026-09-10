@@ -401,6 +401,10 @@ async function processMessage(admin: Admin, shape: StoriaEventShape): Promise<St
     note: `Lead creat din mesaj Storia.ro. ${bodyText ?? ""}`.trim().slice(0, 2000),
   });
 
+  await attachMessageToLead(lead.id);
+
+
+
   if (match.assignedTo) {
     await admin.from("notifications").insert({
       organization_id: match.organizationId,
