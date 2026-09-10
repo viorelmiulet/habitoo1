@@ -270,14 +270,20 @@ export const PORTALS: PortalDefinition[] = [
     // Nu există „cheie API a agenției”: accesul vine din autorizarea OAuth2 a
     // contului Storia al agenției, cu token reîmprospătat automat.
     authentication: ["oauth"],
-    // Faza 1 acoperă exclusiv conexiunea. Taxonomia, publicarea și webhook-urile
-    // se adaugă în fazele următoare, împreună cu capabilitățile lor.
-    capabilities: ["test_connection"],
+    // Conexiune OAuth2 + publicare/actualizare/retragere anunțuri. Preluarea
+    // mesajelor ca lead-uri și promovările plătite nu sunt implementate.
+    capabilities: [
+      "test_connection",
+      "publish_listing",
+      "update_listing",
+      "withdraw_listing",
+      "webhook_receive",
+    ],
     configuration_schema: { fields: [] },
     website: "https://www.storia.ro",
     docs: "https://developer.olxgroup.com/docs/overview",
     notes:
-      "Autorizare OAuth2 per agenție: butonul „Conectează contul Storia” duce agenția la https://www.storia.ro/ro/crm/authorization/, iar retururul este procesat pe /api/public/portal/v1/storia/oauth/callback. Codul de autorizare este valabil 60 de secunde, iar tokenul de acces ~1 oră și se reîmprospătează automat. Publicarea anunțurilor (asincronă, cu confirmare prin webhook), maparea taxonomiei prin URN-uri și preluarea mesajelor ca lead-uri urmează în fazele 2-4. Promovările plătite (VAS) și Primary Market nu sunt implementate.",
+      "Autorizare OAuth2 per agenție: butonul „Conectează contul Storia” duce agenția la https://www.storia.ro/ro/crm/authorization/, iar retururul este procesat pe /api/public/portal/v1/storia/oauth/callback. Codul de autorizare este valabil 60 de secunde, iar tokenul de acces ~1 oră și se reîmprospătează automat. Publicarea este asincronă: cererea este acceptată imediat, iar statusul real al anunțului („în validare”, „publicat”, „respins de moderare”) vine din API sau prin notificare. Doar categoriile rezidențiale și comerciale documentate în taxonomia Storia sunt mapate; dotările fără URN confirmat nu se trimit. Preluarea mesajelor ca lead-uri, promovările plătite (VAS) și Primary Market nu sunt implementate.",
   },
 
   {
