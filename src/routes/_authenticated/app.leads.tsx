@@ -188,7 +188,7 @@ function LeadsPage() {
     queryKey: ["lead-detail", detailLead?.id],
     enabled: Boolean(detailLead?.id),
     queryFn: async () => {
-      const [events, activities] = await Promise.all([
+      const [events, activities, messages] = await Promise.all([
         supabase
           .from("lead_events")
           .select("*")
@@ -199,8 +199,19 @@ function LeadsPage() {
           .select("*")
           .eq("lead_id", detailLead!.id)
           .order("starts_at", { ascending: false }),
+        // Mesajele primite din portaluri; cele expirate nu mai sunt afișate.
+        supabase
+          .from("portal_messages")
+          .select("*")
+          .eq("lead_id", detailLead!.id)
+          .gt("expires_at", new Date().toISOString())
+          .order("sent_at", { ascending: false }),
       ]);
-      return { events: events.data ?? [], activities: activities.data ?? [] };
+      return {
+        events: events.data ?? [],
+        activities: activities.data ?? [],
+        messages: messages.data ?? [],
+      };
     },
   });
 
