@@ -170,13 +170,34 @@ export async function deactivateAdvert(
   return "deactivated";
 }
 
+/**
+ * Reactivarea unui anunț dezactivat: `POST /advert/v1/{uuid}/activate`.
+ * Portalul acceptă operațiunea doar pentru anunțuri dezactivate care mai sunt
+ * vizibile în profilul utilizatorului; altfel răspunde 4xx și trebuie creat un
+ * anunț nou. De aceea nu aruncăm pentru 400/403/404/409.
+ */
+export async function activateAdvert(
+  organizationId: string,
+  uuid: string,
+): Promise<"activated" | "not_allowed"> {
+  const res = await olxAuthorizedRequest(organizationId, "POST", `/advert/v1/${uuid}/activate`);
+  if (res.status >= 200 && res.status < 300) return "activated";
+  if (res.status === 400 || res.status === 403 || res.status === 404 || res.status === 409) {
+    return "not_allowed";
+  }
+  throw failure(res.status, res.body);
+}
+
 export type AdvertMeta = {
   uuid: string;
   lastActionStatus: string | null;
   code: string | null;
   url: string | null;
   moderationReason: string | null;
+  /** `state.visible_in_profile` — condiție pentru activate/deactivate. */
+  visibleInProfile: boolean | null;
 };
+
 
 /**
  * Statusul real al anunțului. Documentația marchează `/meta` drept soluție
