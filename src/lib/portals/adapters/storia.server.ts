@@ -266,9 +266,10 @@ async function pushListing(
 
 
     const failed = fail(error);
-    const partial = serializeAdvertRefs(refs);
+    const partial = finalExternalId();
     return partial ? { ...failed, detail: `${failed.detail ?? ""} refs_saved`.trim() } : failed;
   }
+
 
   // Starea agregată: cea mai puțin favorabilă dintre anunțurile trimise.
   const portalStatus = statuses.includes("error")
