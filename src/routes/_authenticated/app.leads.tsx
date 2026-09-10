@@ -875,7 +875,7 @@ function LeadsPage() {
                     ))}
                     {(detailData?.messages ?? []).length === 0 ? (
                       <p className="text-xs text-muted-foreground">
-                        Nicio mesaj primit din portaluri pentru acest lead.
+                        Niciun mesaj primit din portaluri pentru acest lead.
                       </p>
                     ) : null}
                   </ul>
