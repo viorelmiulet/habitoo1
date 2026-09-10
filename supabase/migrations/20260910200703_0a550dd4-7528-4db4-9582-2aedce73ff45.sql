@@ -1,0 +1,1 @@
+ALTER TABLE public.portal_listings ADD COLUMN IF NOT EXISTS public_url text;
