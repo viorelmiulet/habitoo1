@@ -270,9 +270,9 @@ export const PORTALS: PortalDefinition[] = [
     // Nu există „cheie API a agenției”: accesul vine din autorizarea OAuth2 a
     // contului Storia al agenției, cu token reîmprospătat automat.
     authentication: ["oauth"],
-    // Faza 1 acoperă exclusiv conexiunea. Taxonomia, publicarea și webhook-urile
-    // se adaugă în fazele următoare, împreună cu capabilitățile lor.
-    capabilities: ["test_connection"],
+    // Conexiune OAuth2 + publicare/actualizare/retragere anunțuri. Preluarea
+    // mesajelor ca lead-uri și promovările plătite nu sunt implementate.
+    capabilities: ["test_connection", "publish", "update", "withdraw"],
     configuration_schema: { fields: [] },
     website: "https://www.storia.ro",
     docs: "https://developer.olxgroup.com/docs/overview",
