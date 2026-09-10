@@ -1565,6 +1565,14 @@ export const applyPropertyPortalSelection = createServerFn({ method: "POST" })
     for (const wanted of data.selections) {
       const definition = getPortalDefinition(wanted.portalId);
       if (!definition) continue;
+      /**
+       * Fiecare portal se procesează INDEPENDENT. Fără acest try/catch, o
+       * excepție dintr-un adaptor (validare Storia, token expirat, portal
+       * nereachable) ieșea din buclă și oprea publicarea pe toate celelalte
+       * portaluri, iar utilizatorul vedea un singur mesaj generic de eroare.
+       */
+      try {
+
       // Portalurile neactivate pentru agenție sunt respinse, nu ignorate silențios.
       if (allowedPortals !== null && !allowedPortals.has(definition.id)) {
         if (wanted.enabled) {
