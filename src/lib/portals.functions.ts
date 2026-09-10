@@ -820,13 +820,24 @@ async function executeListingAction(input: {
     ? "error"
     : (result.data.portalStatus ??
       (action === "withdraw" ? "withdrawn" : action === "update" ? "updated" : "published"));
+  /**
+   * Explicația arătată agentului. O operațiune poate reuși tehnic, dar
+   * portalul să raporteze o stare problematică (ex. anunț respins la
+   * moderare): fără mesajul portalului, interfața ar arăta un badge „Eroare”
+   * fără nicio explicație.
+   */
+  const errorMessage = !result.ok
+    ? result.message
+    : status === "error"
+      ? (result.data.message ?? "Portalul a raportat o problemă la acest anunț.")
+      : null;
   const patch: Record<string, unknown> = {
     organization_id: organizationId,
     portal: definition.id,
     property_id: propertyId,
     status,
     last_sync_at: now,
-    last_error: result.ok ? null : result.message,
+    last_error: errorMessage,
     ...(result.ok && result.data.externalId ? { external_id: result.data.externalId } : {}),
     ...(result.ok && action === "publish" ? { published_at: now } : {}),
     updated_by: actorId,
@@ -844,15 +855,16 @@ async function executeListingAction(input: {
     .from("portal_publications")
     .update({
       ...(result.ok && action === "withdraw" ? { enabled: false } : {}),
-      status: result.ok ? (action === "withdraw" ? "disabled" : "synced") : "error",
+      status: status === "error" ? "error" : action === "withdraw" ? "disabled" : "synced",
       last_synced_at: now,
-      last_error: result.ok ? null : result.message,
+      last_error: errorMessage,
       external_ref: result.ok && result.data.externalId ? result.data.externalId : null,
       updated_by: actorId,
     } as never)
     .eq("organization_id", organizationId)
     .eq("property_id", propertyId)
     .eq("portal_key", definition.id);
+
 
 
   await logOperation({
