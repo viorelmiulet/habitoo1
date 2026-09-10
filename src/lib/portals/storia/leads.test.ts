@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { parseStoriaAdIds, storiaAdIdFromUrl, withStoriaAdId } from "./adverts.server";
+import {
+  parseStoriaAdIds,
+  parseStoriaAdSlugs,
+  storiaAdSlugFromUrl,
+  withStoriaAdId,
+  withStoriaAdSlug,
+} from "./adverts.server";
 import { parseStoriaCustomId, readEventShape, readMessagePayload } from "./leads.server";
 
 /** Payload real din jurnal (test App Manager, `flow: publish_advert`). */
@@ -90,19 +96,28 @@ describe("identificatori", () => {
     expect(withStoriaAdId(updated, "9846457")).toBe(updated);
   });
 
-  it("extrage linkul public și id-ul anunțului din notificarea de ciclu de viață", () => {
+  it("memorează slug-ul din link separat de id-ul numeric", () => {
+    const external = "SALE:43744f15-9268-4cda-a46e-ffa3c2b7182e";
+    const updated = withStoriaAdSlug(withStoriaAdId(external, "9846457"), "IwcT");
+    expect(updated).toBe(`${external}|AD:9846457|ADSLUG:IwcT`);
+    expect(parseStoriaAdSlugs(updated)).toEqual(["IwcT"]);
+    expect(parseStoriaAdIds(updated)).toEqual(["9846457"]);
+  });
+
+  it("separă slug-ul din link de id-ul numeric în notificarea de ciclu de viață", () => {
     const shape = readEventShape(lifecyclePayload)!;
     expect(shape.publicUrl).toBe("https://www.storia.ro/ro/oferta/apartament-IDabc.html");
-    expect(shape.adId).toBe("abc");
+    expect(shape.adSlug).toBe("abc");
+    expect(shape.adId).toBeNull();
   });
 
   it("citește id-ul alfanumeric din formatul real al linkului Storia", () => {
     // Format confirmat pe un anunț live din contul agenției.
-    expect(storiaAdIdFromUrl("https://www.storia.ro/ro/oferta/apartament-test-IDIwcT.html")).toBe(
+    expect(storiaAdSlugFromUrl("https://www.storia.ro/ro/oferta/apartament-test-IDIwcT.html")).toBe(
       "IwcT",
     );
-    expect(storiaAdIdFromUrl(null)).toBeNull();
-    expect(storiaAdIdFromUrl("https://www.storia.ro/ro/rezultate/vanzare")).toBeNull();
+    expect(storiaAdSlugFromUrl(null)).toBeNull();
+    expect(storiaAdSlugFromUrl("https://www.storia.ro/ro/rezultate/vanzare")).toBeNull();
   });
 });
 
