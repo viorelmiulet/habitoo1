@@ -161,6 +161,7 @@ describe("applyPropertyPortalSelection", () => {
       },
     });
 
+    console.log(JSON.stringify(out, null, 2));
     const storia = out.results.find((r) => r.portalId === "storia");
     const clickimob = out.results.find((r) => r.portalId === "clickimob");
 
