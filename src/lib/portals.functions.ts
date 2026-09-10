@@ -1722,16 +1722,42 @@ export const applyPropertyPortalSelection = createServerFn({ method: "POST" })
         propertyId: data.propertyId,
         action,
       });
-      results.push({
-        portalId: definition.id,
-        portalName: name,
-        action: res.ok ? (action === "update" ? "updated" : "published") : "blocked",
-        ok: res.ok,
-        message: res.ok
-          ? `${name}: ${action === "update" ? "actualizat" : "publicat"}.`
-          : res.message,
-      });
+        results.push({
+          portalId: definition.id,
+          portalName: name,
+          action: res.ok ? (action === "update" ? "updated" : "published") : "blocked",
+          ok: res.ok,
+          message: res.ok
+            ? `${name}: ${action === "update" ? "actualizat" : "publicat"}.`
+            : res.message.startsWith(name)
+              ? res.message
+              : `${name}: ${res.message}`,
+        });
+      } catch (error) {
+        // Izolare per portal: un portal cu probleme nu opreșteierarhia celorlalte.
+        const { toPortalError } = await import("@/lib/portals/errors");
+        const portalError = toPortalError(error);
+        const reason = error instanceof Error ? error.message : portalError.message;
+        results.push({
+          portalId: definition.id,
+          portalName: definition.display_name,
+          action: "blocked",
+          ok: false,
+          message: `${definition.display_name}: ${reason}`,
+        });
+        await logOperation({
+          organizationId,
+          portal: definition.id,
+          operation: "apply_selection",
+          success: false,
+          errorCode: portalError.code,
+          errorMessage: reason,
+          propertyId: data.propertyId,
+          actorId,
+        }).catch(() => undefined);
+      }
     }
+
 
     return { ok: results.every((r) => r.ok), results };
   });
