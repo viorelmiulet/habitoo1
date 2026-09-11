@@ -314,15 +314,19 @@ export async function saveStoriaTokens(input: {
   };
 
   if (row) {
-    await db.from("portal_connections").update(patch as never).eq("id", row.id);
-  } else {
     await db
       .from("portal_connections")
-      .insert({ ...patch, created_by: input.actorId } as never);
+      .update(patch as never)
+      .eq("id", row.id);
+  } else {
+    await db.from("portal_connections").insert({ ...patch, created_by: input.actorId } as never);
   }
 }
 
-export async function clearStoriaTokens(organizationId: string, actorId: string | null): Promise<void> {
+export async function clearStoriaTokens(
+  organizationId: string,
+  actorId: string | null,
+): Promise<void> {
   const db = await admin();
   const { data: row } = await db
     .from("portal_connections")
@@ -439,7 +443,9 @@ export async function olxAuthorizedRequest(
 }
 
 /** Metadatele NEsecrete ale conexiunii, pentru afișare în Superadmin. */
-export function readStoriaOAuthMeta(settings: Record<string, unknown> | null): StoriaOAuthMeta | null {
+export function readStoriaOAuthMeta(
+  settings: Record<string, unknown> | null,
+): StoriaOAuthMeta | null {
   const raw = settings?.["oauth"];
   if (!raw || typeof raw !== "object") return null;
   const meta = raw as Partial<StoriaOAuthMeta>;

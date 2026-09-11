@@ -23,15 +23,15 @@ niciodată.
 
 ## Endpointuri
 
-| Metodă | Cale | Descriere |
-| --- | --- | --- |
-| GET | `/properties?page=1&per_page=50` | Listă paginată (max. 200/pagină) |
-| GET | `/properties/{id}` | O ofertă, după UUID sau referință (`RF-1001`) |
-| GET | `/agents` | Agenții activi, doar câmpuri publice |
-| POST | `/contacts` | Lead din site → contact + lead în pipeline |
-| POST | `/visits` | Raportare vizualizări externe |
-| GET | `/visits` | Total vizualizări pe proprietate |
-| GET | `/media/{imageId}` | Redirect 302 către URL semnat al imaginii |
+| Metodă | Cale                             | Descriere                                     |
+| ------ | -------------------------------- | --------------------------------------------- |
+| GET    | `/properties?page=1&per_page=50` | Listă paginată (max. 200/pagină)              |
+| GET    | `/properties/{id}`               | O ofertă, după UUID sau referință (`RF-1001`) |
+| GET    | `/agents`                        | Agenții activi, doar câmpuri publice          |
+| POST   | `/contacts`                      | Lead din site → contact + lead în pipeline    |
+| POST   | `/visits`                        | Raportare vizualizări externe                 |
+| GET    | `/visits`                        | Total vizualizări pe proprietate              |
+| GET    | `/media/{imageId}`               | Redirect 302 către URL semnat al imaginii     |
 
 Listele returnează `total`, `per_page`, `current_page`, `last_page`,
 `next_page_url`, `prev_page_url`, `from`, `to`, `data`.
@@ -39,8 +39,14 @@ Listele returnează `total`, `per_page`, `current_page`, `last_page`,
 ### POST /contacts
 
 ```json
-{ "nume": "Ana Popa", "telefon": "0722000000", "email": "ana@example.com",
-  "mesaj": "Doresc o vizionare", "id": "<property uuid>", "source": "habitoo.ro" }
+{
+  "nume": "Ana Popa",
+  "telefon": "0722000000",
+  "email": "ana@example.com",
+  "mesaj": "Doresc o vizionare",
+  "id": "<property uuid>",
+  "source": "habitoo.ro"
+}
 ```
 
 Necesită telefon sau email. Contactul se deduplică pe email/telefon în agenție.
@@ -53,7 +59,9 @@ suprascrise. Sursa devine `website` / `website:<source>`, iar acțiunea este aud
 ### POST /visits
 
 ```json
-{ "visits": [{ "id": "<property uuid>", "views": 12, "date": "2026-09-06", "source": "habitoo.ro" }] }
+{
+  "visits": [{ "id": "<property uuid>", "views": 12, "date": "2026-09-06", "source": "habitoo.ro" }]
+}
 ```
 
 Vizualizările se agregă pe zi și sursă printr-o operație atomică în baza de date
@@ -108,7 +116,6 @@ semnat, temporar; nu se expun căi interne de storage sau credențiale.
   `tipteren` / `clasificareteren` depind de `properties.category`, care în
   practică este încă necompletat.
   `portals` provine din publicările active plus convenția de tag `portal:<nume>`.
-
 
 ## Sincronizare
 
@@ -173,12 +180,12 @@ strict proprietăți publicate, nearhivate, cu status public, și doar fotografi
 Extindere pentru compatibilitate maximă cu maparea ImmoFlux (nume exacte
 documentate de ImmoFlux, aceleași în `/properties` și `/properties/{id}`):
 
-| Câmp ImmoFlux | Sursa Habitoo |
-| --- | --- |
-| `tip` | `properties.property_type` |
-| `mobilat_value` | `properties.furnishing` (același ca `mobilare_value`) |
-| `utilitati_values` | `properties.utilities` (același ca `utilitati`) |
-| `dotari_values` | `properties.features` (același ca `dotari`) |
+| Câmp ImmoFlux      | Sursa Habitoo                                         |
+| ------------------ | ----------------------------------------------------- |
+| `tip`              | `properties.property_type`                            |
+| `mobilat_value`    | `properties.furnishing` (același ca `mobilare_value`) |
+| `utilitati_values` | `properties.utilities` (același ca `utilitati`)       |
+| `dotari_values`    | `properties.features` (același ca `dotari`)           |
 
 Câmpurile fără echivalent real rămân expuse explicit ca `null`/listă goală, ca
 integratorul să vadă contractul complet: `stadiuconstructie_value`,
@@ -187,37 +194,34 @@ integratorul să vadă contractul complet: `stadiuconstructie_value`,
 `consum_energie_regenerabila`, `nrfronturistradale`, `frontstradal`,
 `latimedrumacces`, plus cele listate în „Limitări cunoscute”.
 
-
-
 ## Câmpuri alimentate din secțiunile de detalii ale anunțului
 
 Formularul proprietății are secțiunile Detalii, Suprafețe, Clădire, Utilități,
 Finisaje și Dotări (taxonomie apropiată de ImmoFlux, cu denumiri text în
 română). Din ele se alimentează:
 
-| Câmp ImmoFlux | Sursa Habitoo |
-| --- | --- |
-| `confort` | `properties.comfort` |
-| `nrbucatarii` | `properties.kitchens` |
-| `nrbalcoane` | `properties.balconies` |
-| `nrgaraje` | `properties.garages` |
-| `stadiuconstructie`, `stadiuconstructie_value` | `properties.construction_stage` |
-| `structurarezistenta` | `properties.building_structure` |
-| `tipconstructie_value` | `properties.building_type` |
-| `starefinisaje_value` | `properties.finish_state` |
-| `bucatarie_values` | `properties.kitchen_features` |
-| `mobilat_value` / `mobilare_value` | `properties.furnishing` |
-| `incalzire_value` | `properties.heating` sau prima valoare din `heating_systems` |
-| `finisaje` | izolații + pereți + podele + ferestre + jaluzele + rulouri + ușă intrare + uși interior |
-| `dotari`, `dotari_values` | `features` + spații adiționale + bucătărie + contorizare + electrocasnice + imobil + amenajare străzi + priveliște + diverse + climatizare |
-| `utilitati`, `utilitati_values` | `properties.utilities` |
+| Câmp ImmoFlux                                  | Sursa Habitoo                                                                                                                              |
+| ---------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| `confort`                                      | `properties.comfort`                                                                                                                       |
+| `nrbucatarii`                                  | `properties.kitchens`                                                                                                                      |
+| `nrbalcoane`                                   | `properties.balconies`                                                                                                                     |
+| `nrgaraje`                                     | `properties.garages`                                                                                                                       |
+| `stadiuconstructie`, `stadiuconstructie_value` | `properties.construction_stage`                                                                                                            |
+| `structurarezistenta`                          | `properties.building_structure`                                                                                                            |
+| `tipconstructie_value`                         | `properties.building_type`                                                                                                                 |
+| `starefinisaje_value`                          | `properties.finish_state`                                                                                                                  |
+| `bucatarie_values`                             | `properties.kitchen_features`                                                                                                              |
+| `mobilat_value` / `mobilare_value`             | `properties.furnishing`                                                                                                                    |
+| `incalzire_value`                              | `properties.heating` sau prima valoare din `heating_systems`                                                                               |
+| `finisaje`                                     | izolații + pereți + podele + ferestre + jaluzele + rulouri + ușă intrare + uși interior                                                    |
+| `dotari`, `dotari_values`                      | `features` + spații adiționale + bucătărie + contorizare + electrocasnice + imobil + amenajare străzi + priveliște + diverse + climatizare |
+| `utilitati`, `utilitati_values`                | `properties.utilities`                                                                                                                     |
 
 Restul câmpurilor colectate în formular (destinație, orientare, an renovare,
 parcări, geam la baie, bucătărie deschisă, pet friendly, cheia în agenție,
 suprafețe pe balcoane/terase/grădină, risc seismic, înălțime S+/D+/P+/M/Pod,
 etaje retrase) se stochează în Habitoo, dar nu au un câmp ImmoFlux documentat,
 deci nu sunt inventate în feed.
-
 
 ## Tranzacție: vânzare, închiriere sau ambele
 
@@ -230,11 +234,11 @@ cu filtrele și matching-ul existente.
 
 În feed:
 
-| Câmp | Regulă |
-| --- | --- |
-| `devanzare` | true doar dacă „De vânzare” este bifat |
-| `deinchiriere` | true doar dacă „De închiriere” este bifat |
-| `pretvanzare`, `monedavanzare` | completate doar când vânzarea e activă |
+| Câmp                                 | Regulă                                    |
+| ------------------------------------ | ----------------------------------------- |
+| `devanzare`                          | true doar dacă „De vânzare” este bifat    |
+| `deinchiriere`                       | true doar dacă „De închiriere” este bifat |
+| `pretvanzare`, `monedavanzare`       | completate doar când vânzarea e activă    |
 | `pretinchiriere`, `monedainchiriere` | completate doar când închirierea e activă |
 
 Feedul trimite ambele seturi pe **aceeași** intrare din `/properties` — nu
@@ -257,12 +261,12 @@ anunțul, nu așteaptă ca portalul să citească un feed.
   Superadmin → Portaluri). Habitoo nu generează chei pentru Imospot.
 - Idempotență: `external_id`.
 
-| Operație Habitoo | Request |
-| --- | --- |
-| Publicare | `POST /listings` (creează sau actualizează) |
-| Actualizare | `PUT /listings/{external_id}`, cu fallback `POST /listings` la 404 |
-| Retragere | `DELETE /listings/{external_id}` (anunțul devine `archived`) |
-| Test conexiune | `GET /account` (validează cheia și afișează creditele) |
+| Operație Habitoo | Request                                                            |
+| ---------------- | ------------------------------------------------------------------ |
+| Publicare        | `POST /listings` (creează sau actualizează)                        |
+| Actualizare      | `PUT /listings/{external_id}`, cu fallback `POST /listings` la 404 |
+| Retragere        | `DELETE /listings/{external_id}` (anunțul devine `archived`)       |
+| Test conexiune   | `GET /account` (validează cheia și afișează creditele)             |
 
 ### `external_id`
 

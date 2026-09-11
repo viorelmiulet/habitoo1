@@ -28,7 +28,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { toastError } from "@/lib/errors";
-import { createSupportTicket, SUPPORT_CATEGORIES, type SupportCategory } from "@/lib/support.functions";
+import {
+  createSupportTicket,
+  SUPPORT_CATEGORIES,
+  type SupportCategory,
+} from "@/lib/support.functions";
 
 export function SupportWidget({ children }: { children?: ReactNode }) {
   const [open, setOpen] = useState(false);
@@ -42,9 +46,15 @@ export function SupportWidget({ children }: { children?: ReactNode }) {
   const submit = useMutation({
     mutationFn: async () => {
       if (subject.trim().length < 4) throw new Error("Adaugă un subiect (minim 4 caractere).");
-      if (body.trim().length < 10) throw new Error("Descrie problema în câteva cuvinte (minim 10 caractere).");
+      if (body.trim().length < 10)
+        throw new Error("Descrie problema în câteva cuvinte (minim 10 caractere).");
       return create({
-        data: { subject: subject.trim(), body: body.trim(), category, contextPath: pathname.slice(0, 300) },
+        data: {
+          subject: subject.trim(),
+          body: body.trim(),
+          category,
+          contextPath: pathname.slice(0, 300),
+        },
       });
     },
     onSuccess: () => {
@@ -79,7 +89,11 @@ export function SupportWidget({ children }: { children?: ReactNode }) {
           <DialogTitle>Trimite un tichet către suport</DialogTitle>
           <DialogDescription>
             Echipa Habitoo îți răspunde direct în aplicație. Poți urmări conversația în{" "}
-            <Link to="/app/support" onClick={() => setOpen(false)} className="font-medium text-primary underline">
+            <Link
+              to="/app/support"
+              onClick={() => setOpen(false)}
+              className="font-medium text-primary underline"
+            >
               Tichetele mele
             </Link>
             .

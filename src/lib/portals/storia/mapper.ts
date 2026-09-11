@@ -57,11 +57,13 @@ export type StoriaAdvert = {
 export type StoriaListing = { transaction: StoriaTransaction; advert: StoriaAdvert };
 
 export type StoriaMapResult =
-  | { ok: true; listings: StoriaListing[]; warnings: string[] }
-  | { ok: false; reasons: string[] };
+  { ok: true; listings: StoriaListing[]; warnings: string[] } | { ok: false; reasons: string[] };
 
 /** Identificator stabil trimis în `custom_fields.id`. */
-export function storiaCustomId(property: Pick<PropertyRow, "id">, transaction: StoriaTransaction): string {
+export function storiaCustomId(
+  property: Pick<PropertyRow, "id">,
+  transaction: StoriaTransaction,
+): string {
   return `HBT-${property.id}-${transaction.toUpperCase()}`;
 }
 
@@ -83,7 +85,10 @@ export function softenUppercase(text: string): string {
 const EMOJI = /[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{FE0F}\u{1F1E6}-\u{1F1FF}]/gu;
 
 function stripEmoji(text: string): string {
-  return text.replace(EMOJI, "").replace(/[ \t]{2,}/g, " ").trim();
+  return text
+    .replace(EMOJI, "")
+    .replace(/[ \t]{2,}/g, " ")
+    .trim();
 }
 
 /** Cifrele telefonului: Storia acceptă 7–14 cifre. */
@@ -131,7 +136,9 @@ export function mapPropertyToStoria(p: PropertyRow, options: StoriaMapOptions): 
 
   let title = softenUppercase((p.title ?? "").trim());
   if (title !== (p.title ?? "").trim()) {
-    warnings.push("Titlul avea cuvinte scrise integral cu majuscule; Storia le refuză, așa că au fost normalizate.");
+    warnings.push(
+      "Titlul avea cuvinte scrise integral cu majuscule; Storia le refuză, așa că au fost normalizate.",
+    );
   }
   if (title.length < STORIA_MIN_TITLE) {
     reasons.push(`Titlul trebuie să aibă minimum ${STORIA_MIN_TITLE} caractere.`);
@@ -186,7 +193,9 @@ export function mapPropertyToStoria(p: PropertyRow, options: StoriaMapOptions): 
   const agentEmail = (options.agent?.email ?? "").trim();
   const phone = storiaPhone(options.agent?.phone) ?? storiaPhone(options.organizationPhone);
   if (!phone && (options.agent?.phone || options.organizationPhone)) {
-    warnings.push("Telefonul de contact nu are între 7 și 14 cifre, așa că nu se trimite către Storia.");
+    warnings.push(
+      "Telefonul de contact nu are între 7 și 14 cifre, așa că nu se trimite către Storia.",
+    );
   }
   const contactEmail = agentEmail || (options.organizationEmail ?? "").trim();
   const useContact = Boolean(agentName && contactEmail);

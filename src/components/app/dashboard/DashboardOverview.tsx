@@ -121,7 +121,14 @@ function PortalDonut({
     <div className="flex flex-col items-center gap-6 sm:flex-row sm:items-center">
       <div className="relative size-40 shrink-0">
         <svg viewBox="0 0 140 140" className="size-full -rotate-90">
-          <circle cx="70" cy="70" r={radius} fill="none" stroke="var(--color-muted)" strokeWidth="16" />
+          <circle
+            cx="70"
+            cy="70"
+            r={radius}
+            fill="none"
+            stroke="var(--color-muted)"
+            strokeWidth="16"
+          />
           {sum > 0
             ? rows.map((row, i) => {
                 const length = (row.count / sum) * circumference;
@@ -254,7 +261,9 @@ export function DashboardOverview({
     <div className="space-y-6">
       <div className="flex flex-wrap items-end justify-between gap-2">
         <div>
-          <h1 className="text-2xl font-medium tracking-tight sm:text-3xl">Bun venit, {firstName}!</h1>
+          <h1 className="text-2xl font-medium tracking-tight sm:text-3xl">
+            Bun venit, {firstName}!
+          </h1>
           <p className="mt-1 text-sm text-muted-foreground">
             Iată ce se întâmplă azi în agenția ta.
           </p>
@@ -351,7 +360,9 @@ export function DashboardOverview({
                       </Link>
                       <p className="truncate text-xs text-muted-foreground">{p.area ?? "—"}</p>
                       <p className="text-base font-medium">
-                        {p.price !== null ? formatMoney(p.price, p.currency ?? "EUR") : "Preț la cerere"}
+                        {p.price !== null
+                          ? formatMoney(p.price, p.currency ?? "EUR")
+                          : "Preț la cerere"}
                       </p>
                       <p className="text-xs text-muted-foreground">
                         {[

@@ -24,7 +24,8 @@ export const Route = createFileRoute("/api/public/portal/v1/storia/notifications
   server: {
     handlers: {
       // App Manager poate face un GET de sondare înainte de POST-ul de test.
-      GET: async () => new Response(JSON.stringify({ status: "ok" }), { status: 200, headers: OK_HEADERS }),
+      GET: async () =>
+        new Response(JSON.stringify({ status: "ok" }), { status: 200, headers: OK_HEADERS }),
 
       HEAD: async () => new Response(null, { status: 200 }),
 
@@ -78,7 +79,6 @@ export const Route = createFileRoute("/api/public/portal/v1/storia/notifications
           status: 200,
           headers: OK_HEADERS,
         });
-
       },
     },
   },

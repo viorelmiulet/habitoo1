@@ -8,7 +8,12 @@ import type { PortalErrorCode } from "./errors";
 import { PORTAL_ERROR_MESSAGE } from "./errors";
 
 export type PortalOk<T> = { ok: true; data: T };
-export type PortalFail = { ok: false; code: PortalErrorCode; message: string; detail?: string | null };
+export type PortalFail = {
+  ok: false;
+  code: PortalErrorCode;
+  message: string;
+  detail?: string | null;
+};
 export type PortalResult<T> = PortalOk<T> | PortalFail;
 
 export function notSupported(operation: string): PortalFail {
@@ -65,7 +70,6 @@ export type ListingOutcome = {
   publicUrl?: string | null;
 };
 
-
 export type ConnectionStatusOutcome = {
   configured: boolean;
   live: boolean;
@@ -103,13 +107,22 @@ export interface PortalAdapter {
   publishListing(ctx: PortalContext, ref: ListingRef): Promise<PortalResult<ListingOutcome>>;
   updateListing(ctx: PortalContext, ref: ListingRef): Promise<PortalResult<ListingOutcome>>;
   withdrawListing(ctx: PortalContext, ref: ListingRef): Promise<PortalResult<ListingOutcome>>;
-  sync(ctx: PortalContext, refs: ListingRef[]): Promise<PortalResult<{ processed: number; failed: number }>>;
+  sync(
+    ctx: PortalContext,
+    refs: ListingRef[],
+  ): Promise<PortalResult<{ processed: number; failed: number }>>;
   /** Opționale — implementate doar dacă portalul le documentează. */
   fetchListings?(ctx: PortalContext): Promise<PortalResult<unknown[]>>;
   fetchAgents?(ctx: PortalContext): Promise<PortalResult<unknown[]>>;
   /** Diagnoză feed + imagini + agent pentru o ofertă. */
   diagnoseListing?(ctx: PortalContext, ref: ListingRef): Promise<PortalResult<ListingDiagnostics>>;
-  publishBulk?(ctx: PortalContext, refs: ListingRef[]): Promise<PortalResult<{ processed: number }>>;
+  publishBulk?(
+    ctx: PortalContext,
+    refs: ListingRef[],
+  ): Promise<PortalResult<{ processed: number }>>;
   webhookSend?(ctx: PortalContext, ref: ListingRef): Promise<PortalResult<ListingOutcome>>;
-  webhookReceive?(ctx: PortalContext, payload: unknown): Promise<PortalResult<{ handled: boolean }>>;
+  webhookReceive?(
+    ctx: PortalContext,
+    payload: unknown,
+  ): Promise<PortalResult<{ handled: boolean }>>;
 }

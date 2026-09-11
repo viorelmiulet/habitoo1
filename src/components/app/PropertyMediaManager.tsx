@@ -79,7 +79,9 @@ export function PropertyMediaManager({
     queryFn: async () => {
       const { data, error } = await supabase
         .from("property_images")
-        .select("id,url,storage_path,position,is_primary,include_in_publish,is_confidential,width,height")
+        .select(
+          "id,url,storage_path,position,is_primary,include_in_publish,is_confidential,width,height",
+        )
         .eq("property_id", propertyId)
         .order("position", { ascending: true });
       if (error) throw error;
@@ -130,7 +132,6 @@ export function PropertyMediaManager({
     onSettled: () => setUploading(false),
   });
 
-
   const patch = useMutation({
     mutationFn: async ({ id, values }: { id: string; values: Record<string, unknown> }) => {
       const { error } = await supabase
@@ -150,7 +151,10 @@ export function PropertyMediaManager({
         .update({ is_primary: false } as never)
         .eq("property_id", propertyId);
       if (clearError) throw clearError;
-      const { error } = await supabase.from("property_images").update({ is_primary: true } as never).eq("id", id);
+      const { error } = await supabase
+        .from("property_images")
+        .update({ is_primary: true } as never)
+        .eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -170,7 +174,7 @@ export function PropertyMediaManager({
       const remaining = images.filter((i) => i.id !== img.id);
       for (const [idx, rest] of remaining.entries()) {
         const values: Record<string, unknown> = { position: idx };
-        if (img.is_primary && idx === 0) values['is_primary'] = true;
+        if (img.is_primary && idx === 0) values["is_primary"] = true;
         const { error: fixError } = await supabase
           .from("property_images")
           .update(values as never)
@@ -205,7 +209,10 @@ export function PropertyMediaManager({
     mutationFn: async (ordered: ImageRow[]) => {
       const results = await Promise.all(
         ordered.map((img, idx) =>
-          supabase.from("property_images").update({ position: idx } as never).eq("id", img.id),
+          supabase
+            .from("property_images")
+            .update({ position: idx } as never)
+            .eq("id", img.id),
         ),
       );
       const failed = results.find((r) => r.error);
@@ -230,7 +237,6 @@ export function PropertyMediaManager({
     setUploading(true);
     upload.mutate(valid);
   };
-
 
   const onDropReorder = (index: number) => {
     if (dragIndex.current === null || dragIndex.current === index) return;
@@ -278,22 +284,31 @@ export function PropertyMediaManager({
             e.target.value = "";
           }}
         />
-        <Button size="sm" variant="outline" onClick={() => inputRef.current?.click()} disabled={uploading}>
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={() => inputRef.current?.click()}
+          disabled={uploading}
+        >
           <Upload className="size-4" /> {uploading ? "Se încarcă…" : "Alege fișiere"}
         </Button>
       </div>
 
       {images.length > 1 ? (
         <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
-          <GripVertical className="size-3.5" aria-hidden /> Trage fotografiile pentru a schimba ordinea.
-          Fotografia marcată „Principală" este coperta anunțului.
+          <GripVertical className="size-3.5" aria-hidden /> Trage fotografiile pentru a schimba
+          ordinea. Fotografia marcată „Principală" este coperta anunțului.
         </p>
       ) : null}
 
       {isLoading ? (
         <p className="text-center text-sm text-muted-foreground">Se încarcă imaginile…</p>
       ) : images.length === 0 ? (
-        <EmptyState icon={ImageOff} title="Nicio imagine încărcată" description="Adaugă poze pentru acest anunț." />
+        <EmptyState
+          icon={ImageOff}
+          title="Nicio imagine încărcată"
+          description="Adaugă poze pentru acest anunț."
+        />
       ) : (
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
           {images.map((img, idx) => {
@@ -339,9 +354,16 @@ export function PropertyMediaManager({
                     title="Setează principală"
                     onClick={() => setPrimary.mutate(img.id)}
                   >
-                    <Star className={`size-3.5 ${img.is_primary ? "fill-primary text-primary" : ""}`} />
+                    <Star
+                      className={`size-3.5 ${img.is_primary ? "fill-primary text-primary" : ""}`}
+                    />
                   </Button>
-                  <Button size="sm" variant="ghost" title="Rotește" onClick={() => rotate.mutate(img)}>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    title="Rotește"
+                    onClick={() => rotate.mutate(img)}
+                  >
                     <RotateCw className="size-3.5" />
                   </Button>
                   <Button
@@ -349,7 +371,10 @@ export function PropertyMediaManager({
                     variant="ghost"
                     title="Ascunde/arată"
                     onClick={() =>
-                      patch.mutate({ id: img.id, values: { is_confidential: !img.is_confidential } })
+                      patch.mutate({
+                        id: img.id,
+                        values: { is_confidential: !img.is_confidential },
+                      })
                     }
                   >
                     <EyeOff className={`size-3.5 ${img.is_confidential ? "text-primary" : ""}`} />
@@ -363,11 +388,15 @@ export function PropertyMediaManager({
                     <AlertDialogContent>
                       <AlertDialogHeader>
                         <AlertDialogTitle>Ștergi imaginea?</AlertDialogTitle>
-                        <AlertDialogDescription>Această acțiune nu poate fi anulată.</AlertDialogDescription>
+                        <AlertDialogDescription>
+                          Această acțiune nu poate fi anulată.
+                        </AlertDialogDescription>
                       </AlertDialogHeader>
                       <AlertDialogFooter>
                         <AlertDialogCancel>Anulează</AlertDialogCancel>
-                        <AlertDialogAction onClick={() => removeImage.mutate(img)}>Șterge</AlertDialogAction>
+                        <AlertDialogAction onClick={() => removeImage.mutate(img)}>
+                          Șterge
+                        </AlertDialogAction>
                       </AlertDialogFooter>
                     </AlertDialogContent>
                   </AlertDialog>
@@ -376,7 +405,9 @@ export function PropertyMediaManager({
                   <span>Publică</span>
                   <Switch
                     checked={img.include_in_publish}
-                    onCheckedChange={(c) => patch.mutate({ id: img.id, values: { include_in_publish: c } })}
+                    onCheckedChange={(c) =>
+                      patch.mutate({ id: img.id, values: { include_in_publish: c } })
+                    }
                   />
                 </div>
               </div>
@@ -410,7 +441,9 @@ export function PropertyMediaManager({
                     variant="secondary"
                     className="absolute top-1/2 left-2 -translate-y-1/2"
                     aria-label="Imaginea anterioară"
-                    onClick={() => setPreview((p) => (p === null ? p : (p - 1 + images.length) % images.length))}
+                    onClick={() =>
+                      setPreview((p) => (p === null ? p : (p - 1 + images.length) % images.length))
+                    }
                   >
                     <ChevronLeft className="size-4" />
                   </Button>

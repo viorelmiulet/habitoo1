@@ -175,16 +175,31 @@ export function ActivityDialog({
           </div>
           <div className="space-y-2">
             <Label htmlFor="activity-desc">Descriere</Label>
-            <Textarea id="activity-desc" rows={3} value={description} onChange={(e) => setDescription(e.target.value)} />
+            <Textarea
+              id="activity-desc"
+              rows={3}
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+            />
           </div>
           <div className="grid gap-4 sm:grid-cols-3">
             <div className="space-y-2">
               <Label htmlFor="activity-date">Dată</Label>
-              <Input id="activity-date" type="date" value={date} onChange={(e) => setDate(e.target.value)} />
+              <Input
+                id="activity-date"
+                type="date"
+                value={date}
+                onChange={(e) => setDate(e.target.value)}
+              />
             </div>
             <div className="space-y-2">
               <Label htmlFor="activity-time">Oră</Label>
-              <Input id="activity-time" type="time" value={time} onChange={(e) => setTime(e.target.value)} />
+              <Input
+                id="activity-time"
+                type="time"
+                value={time}
+                onChange={(e) => setTime(e.target.value)}
+              />
             </div>
             <div className="space-y-2">
               <Label htmlFor="activity-duration">Durată (min)</Label>

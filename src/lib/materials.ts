@@ -110,10 +110,7 @@ export const samplePresentation: PresentationData = {
  * configurat și datele de contact în subsol. Fără logo, numele agenției apare
  * ca text stilizat — niciodată logo-ul Habitoo în locul lui.
  */
-export function buildPresentationHtml(
-  branding: MaterialBranding,
-  data: PresentationData,
-): string {
+export function buildPresentationHtml(branding: MaterialBranding, data: PresentationData): string {
   const accent = safeAccent(branding.accent);
   const header = branding.logoUrl
     ? `<img class="logo" src="${escapeHtml(branding.logoUrl)}" alt="${escapeHtml(branding.agencyName)}" />`

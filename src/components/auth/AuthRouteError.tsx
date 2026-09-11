@@ -10,7 +10,10 @@ export function AuthRouteError({ error }: { error?: Error }) {
   if (error) console.error(error);
 
   return (
-    <AuthShell title="Linkul nu a putut fi deschis" subtitle="A apărut o problemă la autentificare.">
+    <AuthShell
+      title="Linkul nu a putut fi deschis"
+      subtitle="A apărut o problemă la autentificare."
+    >
       <div className="panel p-5 text-sm text-muted-foreground">
         Linkul a expirat sau este invalid. Solicită unul nou.
       </div>

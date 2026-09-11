@@ -34,7 +34,11 @@ export function UserAvatar({ name, path, className, textClassName }: Props) {
       )}
     >
       {url ? (
-        <img src={url} alt={`Fotografia de profil a lui ${label}`} className="size-full object-cover" />
+        <img
+          src={url}
+          alt={`Fotografia de profil a lui ${label}`}
+          className="size-full object-cover"
+        />
       ) : (
         <span className={textClassName}>{initials(label)}</span>
       )}

@@ -37,7 +37,9 @@ export function SectionCard({
           ) : null}
           <div className="min-w-0 flex-1">
             {title ? <h2 className="truncate text-sm font-semibold">{title}</h2> : null}
-            {description ? <p className="truncate text-xs text-muted-foreground">{description}</p> : null}
+            {description ? (
+              <p className="truncate text-xs text-muted-foreground">{description}</p>
+            ) : null}
           </div>
           {action ? <div className="flex shrink-0 items-center gap-2">{action}</div> : null}
         </header>

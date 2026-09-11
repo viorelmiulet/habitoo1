@@ -5,7 +5,17 @@ import { activityKindLabels, contactTypeLabels, requestKindLabels, roleLabels } 
 import { cn } from "@/lib/utils";
 import { mockContacts, mockGoals, mockPhotos, mockRequests } from "../mock-data";
 
-function Panel({ title, meta, children, className }: { title: string; meta?: string; children: React.ReactNode; className?: string }) {
+function Panel({
+  title,
+  meta,
+  children,
+  className,
+}: {
+  title: string;
+  meta?: string;
+  children: React.ReactNode;
+  className?: string;
+}) {
   return (
     <div className={cn("mk-frame min-w-0 overflow-hidden", className)}>
       <div className="border-b border-border bg-muted/50 px-4 py-2.5">
@@ -45,7 +55,11 @@ export function ContactsMini({ className }: { className?: string }) {
 
 export function RequestsMini({ className }: { className?: string }) {
   return (
-    <Panel title="Cereri" meta="Criterii structurate · potriviri calculate live" className={className}>
+    <Panel
+      title="Cereri"
+      meta="Criterii structurate · potriviri calculate live"
+      className={className}
+    >
       <ul className="divide-y divide-border">
         {mockRequests.map((r) => (
           <li key={r.title} className="px-4 py-2.5">
@@ -75,7 +89,11 @@ const activities = [
 
 export function ActivitiesMini({ className }: { className?: string }) {
   return (
-    <Panel title="Activități" meta="Apeluri, vizionări, follow-up-uri, task-uri" className={className}>
+    <Panel
+      title="Activități"
+      meta="Apeluri, vizionări, follow-up-uri, task-uri"
+      className={className}
+    >
       <ul className="divide-y divide-border">
         {activities.map((a) => (
           <li key={a.title} className="flex items-center gap-3 px-4 py-2.5">
@@ -85,7 +103,12 @@ export function ActivitiesMini({ className }: { className?: string }) {
               <Circle className="size-4 shrink-0 text-muted-foreground/50" />
             )}
             <div className="min-w-0 flex-1">
-              <p className={cn("truncate text-xs font-medium", a.done && "text-muted-foreground line-through")}>
+              <p
+                className={cn(
+                  "truncate text-xs font-medium",
+                  a.done && "text-muted-foreground line-through",
+                )}
+              >
                 {a.title}
               </p>
               <p className="text-[10px] text-muted-foreground">
@@ -117,7 +140,11 @@ const eventTone = {
 
 export function CalendarMini({ className }: { className?: string }) {
   return (
-    <Panel title="Calendar" meta="Săptămâna 13–19 mai · vizionări și întâlniri" className={className}>
+    <Panel
+      title="Calendar"
+      meta="Săptămâna 13–19 mai · vizionări și întâlniri"
+      className={className}
+    >
       <div className="grid grid-cols-7 gap-px bg-border">
         {week.map((d, i) => (
           <div key={d} className="min-h-24 bg-background p-1.5">
@@ -128,7 +155,10 @@ export function CalendarMini({ className }: { className?: string }) {
               {(events[i] ?? []).map((e) => (
                 <span
                   key={e.label}
-                  className={cn("block truncate rounded px-1 py-0.5 text-[8px] font-medium", eventTone[e.kind])}
+                  className={cn(
+                    "block truncate rounded px-1 py-0.5 text-[8px] font-medium",
+                    eventTone[e.kind],
+                  )}
                 >
                   {e.label}
                 </span>
@@ -166,11 +196,22 @@ export function GoalsMini({ className }: { className?: string }) {
 export function MediaMini({ className }: { className?: string }) {
   const photos = [mockPhotos.living, mockPhotos.kitchen, mockPhotos.bedroom, mockPhotos.exterior];
   return (
-    <Panel title="Media manager" meta="Încărcare, reordonare, fotografie principală" className={className}>
+    <Panel
+      title="Media manager"
+      meta="Încărcare, reordonare, fotografie principală"
+      className={className}
+    >
       <div className="grid grid-cols-4 gap-2 p-3">
         {photos.map((src, i) => (
           <div key={i} className="relative overflow-hidden rounded-lg">
-            <img src={src} alt="" width={768} height={512} loading="lazy" className="aspect-[4/3] w-full object-cover" />
+            <img
+              src={src}
+              alt=""
+              width={768}
+              height={512}
+              loading="lazy"
+              className="aspect-[4/3] w-full object-cover"
+            />
             {i === 0 ? (
               <span className="absolute top-1 left-1 inline-flex items-center gap-0.5 rounded bg-gold px-1 py-0.5 text-[8px] font-semibold text-gold-foreground">
                 <Star className="size-2.5 fill-current" /> Principală
@@ -194,7 +235,11 @@ const team = [
 
 export function TeamMini({ className }: { className?: string }) {
   return (
-    <Panel title="Echipă și roluri" meta="Admin agenție și agenți, cu permisiuni diferite" className={className}>
+    <Panel
+      title="Echipă și roluri"
+      meta="Admin agenție și agenți, cu permisiuni diferite"
+      className={className}
+    >
       <ul className="divide-y divide-border">
         {team.map((m) => (
           <li key={m.name} className="flex items-center gap-3 px-4 py-2.5">
@@ -203,8 +248,15 @@ export function TeamMini({ className }: { className?: string }) {
               {m.name.split(" ")[1]![0]}
             </span>
             <p className="min-w-0 flex-1 truncate text-xs font-medium">{m.name}</p>
-            <StatusBadge tone={m.role === "agency_admin" ? "primary" : "neutral"} className="text-[9px]">
-              {m.role === "agency_admin" ? <Shield className="size-3" /> : <Users className="size-3" />}
+            <StatusBadge
+              tone={m.role === "agency_admin" ? "primary" : "neutral"}
+              className="text-[9px]"
+            >
+              {m.role === "agency_admin" ? (
+                <Shield className="size-3" />
+              ) : (
+                <Users className="size-3" />
+              )}
               {roleLabels[m.role]}
             </StatusBadge>
           </li>

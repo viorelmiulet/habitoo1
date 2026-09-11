@@ -37,7 +37,8 @@ const ALLOWED_HOSTS = new Set(["clickimob.ro", "www.clickimob.ro"]);
 const TIMEOUT_MS = 10_000;
 
 function endpointOf(ctx: PortalContext): string {
-  const raw = typeof ctx.settings["endpoint_url"] === "string" ? String(ctx.settings["endpoint_url"]) : "";
+  const raw =
+    typeof ctx.settings["endpoint_url"] === "string" ? String(ctx.settings["endpoint_url"]) : "";
   return raw.trim() || DEFAULT_ENDPOINT;
 }
 
@@ -116,7 +117,12 @@ async function notify(
   options: NotifyOptions,
 ): Promise<PortalResult<ListingOutcome>> {
   if (!configured(ctx)) {
-    return { ok: false, code: "CONFIG_ERROR", message: PORTAL_ERROR_MESSAGE.CONFIG_ERROR, detail: operation };
+    return {
+      ok: false,
+      code: "CONFIG_ERROR",
+      message: PORTAL_ERROR_MESSAGE.CONFIG_ERROR,
+      detail: operation,
+    };
   }
 
   // Preflight real: verificăm ce va găsi portalul, nu ce presupunem noi.
@@ -137,7 +143,6 @@ async function notify(
     options.expect === "absent" && diagnostics.feedVisible
       ? "Atenție: oferta este încă publicată în feed, deci portalul o poate reimporta. Oprește publicarea pe site pentru retragere definitivă."
       : null;
-
 
   const externalId = diagnostics.externalId ?? ref.externalId;
 
@@ -184,7 +189,12 @@ async function notify(
       // Răspunsul brut al portalului, trunchiat, ca administratorul să vadă
       // eroarea EXACTĂ. Nu conține credențiale (tokenul e doar în URL).
       const message = `${PORTAL_ERROR_MESSAGE[code]} Răspuns portal: HTTP ${response.status}${compact ? ` — ${compact}` : ""}`;
-      return { ok: false, code, message, detail: `${operation} http_${response.status} ${compact}`.trim() };
+      return {
+        ok: false,
+        code,
+        message,
+        detail: `${operation} http_${response.status} ${compact}`.trim(),
+      };
     }
 
     let processed: number | null = null;
@@ -206,15 +216,26 @@ async function notify(
         message:
           (processed === null
             ? `Portalul a confirmat notificarea (HTTP ${response.status}).`
-            : `Portalul a procesat ${processed} anunț(uri).`) + (withdrawWarning ? ` ${withdrawWarning}` : ""),
+            : `Portalul a procesat ${processed} anunț(uri).`) +
+          (withdrawWarning ? ` ${withdrawWarning}` : ""),
       },
     };
   } catch (error) {
     if ((error as { portalCode?: string }).portalCode === "CONFIG_ERROR") {
-      return { ok: false, code: "CONFIG_ERROR", message: "Adresa webhook nu este permisă.", detail: "blocked_host" };
+      return {
+        ok: false,
+        code: "CONFIG_ERROR",
+        message: "Adresa webhook nu este permisă.",
+        detail: "blocked_host",
+      };
     }
     const normalized = toPortalError(error);
-    return { ok: false, code: normalized.code, message: normalized.message, detail: normalized.detail };
+    return {
+      ok: false,
+      code: normalized.code,
+      message: normalized.message,
+      detail: normalized.detail,
+    };
   }
 }
 
@@ -255,7 +276,12 @@ async function status(ctx: PortalContext): Promise<PortalResult<ConnectionStatus
     };
   } catch (error) {
     const normalized = toPortalError(error);
-    return { ok: false, code: normalized.code, message: normalized.message, detail: normalized.detail };
+    return {
+      ok: false,
+      code: normalized.code,
+      message: normalized.message,
+      detail: normalized.detail,
+    };
   }
 }
 
@@ -264,14 +290,24 @@ export const clickimobAdapter: PortalAdapter = {
 
   async testConnection(ctx) {
     if (!configured(ctx)) {
-      return { ok: false, code: "CONFIG_ERROR", message: PORTAL_ERROR_MESSAGE.CONFIG_ERROR, detail: "test" };
+      return {
+        ok: false,
+        code: "CONFIG_ERROR",
+        message: PORTAL_ERROR_MESSAGE.CONFIG_ERROR,
+        detail: "test",
+      };
     }
     // ClickImob nu documentează un endpoint de ping; testul real verifică
     // feedul pe care îl va citi portalul plus cheia emisă de Habitoo.
     const result = await status(ctx);
     if (!result.ok) return result;
     if (!result.data.feed?.ok) {
-      return { ok: false, code: "FEED_ERROR", message: "Feedul Habitoo nu răspunde corect.", detail: "feed_check" };
+      return {
+        ok: false,
+        code: "FEED_ERROR",
+        message: "Feedul Habitoo nu răspunde corect.",
+        detail: "feed_check",
+      };
     }
     if ((result.data.feed.activeKeys ?? 0) === 0) {
       return {
@@ -296,7 +332,12 @@ export const clickimobAdapter: PortalAdapter = {
       return { ok: true, data: await diagnose(ctx, ref) };
     } catch (error) {
       const normalized = toPortalError(error);
-      return { ok: false, code: normalized.code, message: normalized.message, detail: normalized.detail };
+      return {
+        ok: false,
+        code: normalized.code,
+        message: normalized.message,
+        detail: normalized.detail,
+      };
     }
   },
 
@@ -309,12 +350,27 @@ export const clickimobAdapter: PortalAdapter = {
       const { inspectFeedProperties } = await import("../feed-inspect.server");
       const snapshot = await inspectFeedProperties(ctx.organizationId, 50, "clickimob");
       if (snapshot.status !== 200) {
-        return { ok: false, code: "FEED_ERROR", message: "Feedul de oferte nu a răspuns.", detail: `http_${snapshot.status}` };
+        return {
+          ok: false,
+          code: "FEED_ERROR",
+          message: "Feedul de oferte nu a răspuns.",
+          detail: `http_${snapshot.status}`,
+        };
       }
-      return { ok: true, data: [{ total: snapshot.total, page_items: snapshot.items, api_version: snapshot.apiVersion }] };
+      return {
+        ok: true,
+        data: [
+          { total: snapshot.total, page_items: snapshot.items, api_version: snapshot.apiVersion },
+        ],
+      };
     } catch (error) {
       const normalized = toPortalError(error);
-      return { ok: false, code: normalized.code, message: normalized.message, detail: normalized.detail };
+      return {
+        ok: false,
+        code: normalized.code,
+        message: normalized.message,
+        detail: normalized.detail,
+      };
     }
   },
 
@@ -324,12 +380,22 @@ export const clickimobAdapter: PortalAdapter = {
       const { inspectFeedAgents } = await import("../feed-inspect.server");
       const snapshot = await inspectFeedAgents(ctx.organizationId);
       if (snapshot.status !== 200) {
-        return { ok: false, code: "FEED_ERROR", message: "Feedul de agenți nu a răspuns.", detail: `http_${snapshot.status}` };
+        return {
+          ok: false,
+          code: "FEED_ERROR",
+          message: "Feedul de agenți nu a răspuns.",
+          detail: `http_${snapshot.status}`,
+        };
       }
       return { ok: true, data: [{ total: snapshot.total, api_version: snapshot.apiVersion }] };
     } catch (error) {
       const normalized = toPortalError(error);
-      return { ok: false, code: normalized.code, message: normalized.message, detail: normalized.detail };
+      return {
+        ok: false,
+        code: normalized.code,
+        message: normalized.message,
+        detail: normalized.detail,
+      };
     }
   },
 

@@ -224,7 +224,11 @@ export function AgencyBrandingCard() {
       <div className="flex flex-wrap items-center gap-4">
         <div className="flex size-20 items-center justify-center overflow-hidden rounded-2xl bg-secondary/60">
           {logoUrl ? (
-            <img src={logoUrl} alt={org?.name ?? "Logo agenție"} className="size-full object-contain p-2" />
+            <img
+              src={logoUrl}
+              alt={org?.name ?? "Logo agenție"}
+              className="size-full object-contain p-2"
+            />
           ) : (
             <ImageIcon className="size-6 text-muted-foreground" aria-hidden />
           )}
@@ -430,7 +434,9 @@ export function AgencyBrandingCard() {
               step={5}
               value={[wm.opacityPercent]}
               disabled={!canEdit}
-              onValueChange={([v]) => setWm((f) => ({ ...f, opacityPercent: v ?? f.opacityPercent }))}
+              onValueChange={([v]) =>
+                setWm((f) => ({ ...f, opacityPercent: v ?? f.opacityPercent }))
+              }
             />
           </div>
           <div className="space-y-2">
@@ -463,8 +469,7 @@ export function AgencyBrandingCard() {
                     ? { left: "50%", top: "50%", transform: "translate(-50%, -50%)" }
                     : {
                         [wm.position.includes("left") ? "left" : "right"]: `${wm.marginPercent}%`,
-                        [wm.position.includes("top") ? "top" : "bottom"]:
-                          `${wm.marginPercent}%`,
+                        [wm.position.includes("top") ? "top" : "bottom"]: `${wm.marginPercent}%`,
                       }),
                 }}
               />
@@ -477,7 +482,11 @@ export function AgencyBrandingCard() {
 
         {canEdit ? (
           <div className="flex justify-end">
-            <Button type="button" disabled={saveWatermark.isPending} onClick={() => saveWatermark.mutate()}>
+            <Button
+              type="button"
+              disabled={saveWatermark.isPending}
+              onClick={() => saveWatermark.mutate()}
+            >
               Salvează watermark-ul
             </Button>
           </div>

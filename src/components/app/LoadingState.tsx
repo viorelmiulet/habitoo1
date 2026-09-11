@@ -12,7 +12,12 @@ export function ListSkeleton({
   compact?: boolean;
 }) {
   return (
-    <div className={cn("divide-y divide-border", className)} role="status" aria-live="polite" aria-busy="true">
+    <div
+      className={cn("divide-y divide-border", className)}
+      role="status"
+      aria-live="polite"
+      aria-busy="true"
+    >
       <span className="sr-only">Se încarcă…</span>
       {Array.from({ length: rows }).map((_, i) => (
         <div key={i} className={cn("flex items-center gap-4 px-4", compact ? "py-2.5" : "py-3.5")}>
@@ -30,15 +35,13 @@ export function ListSkeleton({
 }
 
 /** Grilă de carduri în curs de încărcare. */
-export function CardGridSkeleton({
-  count = 6,
-  className,
-}: {
-  count?: number;
-  className?: string;
-}) {
+export function CardGridSkeleton({ count = 6, className }: { count?: number; className?: string }) {
   return (
-    <div className={cn("grid gap-4 sm:grid-cols-2 xl:grid-cols-3", className)} role="status" aria-busy="true">
+    <div
+      className={cn("grid gap-4 sm:grid-cols-2 xl:grid-cols-3", className)}
+      role="status"
+      aria-busy="true"
+    >
       <span className="sr-only">Se încarcă…</span>
       {Array.from({ length: count }).map((_, i) => (
         <div key={i} className="panel overflow-hidden">
@@ -57,7 +60,11 @@ export function CardGridSkeleton({
 /** KPI-uri în curs de încărcare. */
 export function KpiSkeleton({ count = 4, className }: { count?: number; className?: string }) {
   return (
-    <div className={cn("grid gap-4 sm:grid-cols-2 xl:grid-cols-4", className)} role="status" aria-busy="true">
+    <div
+      className={cn("grid gap-4 sm:grid-cols-2 xl:grid-cols-4", className)}
+      role="status"
+      aria-busy="true"
+    >
       <span className="sr-only">Se încarcă…</span>
       {Array.from({ length: count }).map((_, i) => (
         <div key={i} className="panel p-5">
@@ -105,9 +112,21 @@ export function DetailSkeleton({ className }: { className?: string }) {
 }
 
 /** Text de încărcare mic, inline (pentru zone compacte). */
-export function InlineLoading({ label = "Se încarcă…", className }: { label?: string; className?: string }) {
+export function InlineLoading({
+  label = "Se încarcă…",
+  className,
+}: {
+  label?: string;
+  className?: string;
+}) {
   return (
-    <div className={cn("flex items-center justify-center gap-2 px-4 py-10 text-sm text-muted-foreground", className)} role="status">
+    <div
+      className={cn(
+        "flex items-center justify-center gap-2 px-4 py-10 text-sm text-muted-foreground",
+        className,
+      )}
+      role="status"
+    >
       <span className="size-4 animate-spin rounded-full border-2 border-muted-foreground/30 border-t-primary" />
       {label}
     </div>
@@ -117,7 +136,11 @@ export function InlineLoading({ label = "Se încarcă…", className }: { label?
 /** Ecran de încărcare pentru shell-ul autentificat (înainte de a ști utilizatorul). */
 export function ShellLoading({ label = "Se încarcă…" }: { label?: string }) {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background" role="status" aria-busy="true">
+    <div
+      className="flex min-h-screen items-center justify-center bg-background"
+      role="status"
+      aria-busy="true"
+    >
       <div className="flex flex-col items-center gap-3">
         <span className="size-8 animate-spin rounded-full border-2 border-muted-foreground/25 border-t-primary" />
         <p className="text-sm text-muted-foreground">{label}</p>

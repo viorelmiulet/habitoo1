@@ -38,7 +38,6 @@ export function readAuthLinkParams(): AuthLinkParams {
   if (typeof window === "undefined") return EMPTY;
   if (captured) return captured;
 
-
   const hash = window.location.hash.startsWith("#") ? window.location.hash.slice(1) : "";
   const fromHash = new URLSearchParams(hash);
   const fromQuery = new URLSearchParams(window.location.search);
@@ -61,11 +60,7 @@ export function readAuthLinkParams(): AuthLinkParams {
   // Scoatem tokenul din bara de adrese ca să nu rămână în istoric / referrer.
   if (hash && params.present) {
     try {
-      window.history.replaceState(
-        null,
-        "",
-        `${window.location.pathname}${window.location.search}`,
-      );
+      window.history.replaceState(null, "", `${window.location.pathname}${window.location.search}`);
     } catch {
       /* history indisponibil */
     }
@@ -73,7 +68,6 @@ export function readAuthLinkParams(): AuthLinkParams {
 
   captured = params;
   return params;
-
 }
 
 export type AuthLinkResult = { ok: true } | { ok: false; message: string };
@@ -158,6 +152,5 @@ async function runLinkExchange(params: AuthLinkParams): Promise<AuthLinkResult> 
 
   return { ok: false, message: EXPIRED_MESSAGE };
 }
-
 
 export { EXPIRED_MESSAGE };

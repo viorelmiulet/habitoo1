@@ -20,7 +20,13 @@ const platformItems: Item[] = [
 ];
 
 /** Bară de navigare fixă pe mobil (sub 1024px) cu cele mai folosite secțiuni. */
-export function MobileNav({ variant = "agency", onOpenMenu }: { variant?: ShellVariant; onOpenMenu: () => void }) {
+export function MobileNav({
+  variant = "agency",
+  onOpenMenu,
+}: {
+  variant?: ShellVariant;
+  onOpenMenu: () => void;
+}) {
   const items = variant === "platform" ? platformItems : agencyItems;
   return (
     <nav

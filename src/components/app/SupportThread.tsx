@@ -10,7 +10,13 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { InlineLoading } from "@/components/app/LoadingState";
 import { QueryError } from "@/components/app/QueryError";
 import { toastError } from "@/lib/errors";
@@ -35,7 +41,12 @@ export function SupportStatusBadge({ status }: { status: SupportStatus }) {
     closed: "border-border bg-muted text-muted-foreground",
   };
   return (
-    <span className={cn("inline-flex rounded-full border px-2.5 py-0.5 text-[11px] font-semibold", tone[status])}>
+    <span
+      className={cn(
+        "inline-flex rounded-full border px-2.5 py-0.5 text-[11px] font-semibold",
+        tone[status],
+      )}
+    >
       {SUPPORT_STATUS_LABELS[status]}
     </span>
   );
@@ -89,7 +100,8 @@ export function SupportThread({ ticketId, staff = false }: { ticketId: string; s
   });
 
   if (ticket.isLoading) return <InlineLoading label="Se încarcă tichetul…" />;
-  if (ticket.error) return <QueryError error={ticket.error} onRetry={() => void ticket.refetch()} />;
+  if (ticket.error)
+    return <QueryError error={ticket.error} onRetry={() => void ticket.refetch()} />;
   if (!ticket.data) return null;
   const t = ticket.data;
 
@@ -132,7 +144,11 @@ export function SupportThread({ ticketId, staff = false }: { ticketId: string; s
           return (
             <li key={m.id} className={cn("flex flex-col", mine ? "items-end" : "items-start")}>
               <p className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
-                {m.isInternalNote ? <Lock className="size-3" /> : m.isStaff ? <ShieldCheck className="size-3" /> : null}
+                {m.isInternalNote ? (
+                  <Lock className="size-3" />
+                ) : m.isStaff ? (
+                  <ShieldCheck className="size-3" />
+                ) : null}
                 <span className="font-semibold">
                   {m.isInternalNote
                     ? "Notiță internă"
@@ -154,7 +170,6 @@ export function SupportThread({ ticketId, staff = false }: { ticketId: string; s
               >
                 {m.body}
               </p>
-
             </li>
           );
         })}
@@ -168,7 +183,9 @@ export function SupportThread({ ticketId, staff = false }: { ticketId: string; s
             rows={3}
             value={body}
             onChange={(e) => setBody(e.target.value)}
-            placeholder={staff ? "Răspunsul către agenție…" : "Scrie un mesaj pentru echipa de suport…"}
+            placeholder={
+              staff ? "Răspunsul către agenție…" : "Scrie un mesaj pentru echipa de suport…"
+            }
           />
           <div className="flex flex-wrap items-center justify-between gap-3">
             {staff ? (
@@ -180,7 +197,11 @@ export function SupportThread({ ticketId, staff = false }: { ticketId: string; s
               <span />
             )}
             <Button onClick={() => send.mutate()} disabled={send.isPending}>
-              {send.isPending ? <Loader2 className="size-4 animate-spin" /> : <Send className="size-4" />}
+              {send.isPending ? (
+                <Loader2 className="size-4 animate-spin" />
+              ) : (
+                <Send className="size-4" />
+              )}
               Trimite
             </Button>
           </div>

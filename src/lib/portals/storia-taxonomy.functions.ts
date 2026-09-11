@@ -24,8 +24,7 @@ async function requireSuperadmin(context: SuperadminContext): Promise<void> {
 }
 
 export type StoriaTaxonomyState =
-  | { ok: true; cache: StoriaTaxonomyCache | null }
-  | { ok: false; error: string };
+  { ok: true; cache: StoriaTaxonomyCache | null } | { ok: false; error: string };
 
 export const getStoriaTaxonomyState = createServerFn({ method: "POST" })
   .middleware([requireActiveOrgAuth])
@@ -38,7 +37,8 @@ export const getStoriaTaxonomyState = createServerFn({ method: "POST" })
       console.error("[storia-taxonomy] citirea cache-ului a eșuat", error);
       return {
         ok: false,
-        error: error instanceof Error ? error.message : "Cache-ul de taxonomie nu a putut fi citit.",
+        error:
+          error instanceof Error ? error.message : "Cache-ul de taxonomie nu a putut fi citit.",
       };
     }
   });
@@ -75,9 +75,7 @@ export const refreshStoriaTaxonomy = createServerFn({ method: "POST" })
       return {
         ok: false,
         error:
-          error instanceof Error
-            ? error.message
-            : "Taxonomia Storia nu a putut fi reîmprospătată.",
+          error instanceof Error ? error.message : "Taxonomia Storia nu a putut fi reîmprospătată.",
       };
     }
   });

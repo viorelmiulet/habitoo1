@@ -28,8 +28,6 @@ export function agencyLogoPath(orgId: string, mimeType: string) {
   return `${orgId}/logo-${Date.now()}.${LOGO_EXT[mimeType] ?? "png"}`;
 }
 
-
-
 function safeName(name: string) {
   return name
     .toLowerCase()

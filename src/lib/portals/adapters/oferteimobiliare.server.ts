@@ -35,7 +35,8 @@ const ALLOWED_HOSTS = new Set(["admin.imoro.ro", "oferteimobiliare.ro", "www.ofe
 const TIMEOUT_MS = 15_000;
 
 function baseUrlOf(ctx: PortalContext): string {
-  const raw = typeof ctx.settings["endpoint_url"] === "string" ? String(ctx.settings["endpoint_url"]) : "";
+  const raw =
+    typeof ctx.settings["endpoint_url"] === "string" ? String(ctx.settings["endpoint_url"]) : "";
   return (raw.trim() || DEFAULT_BASE_URL).replace(/\/$/, "");
 }
 
@@ -127,7 +128,10 @@ async function call(
   }
   return {
     status: response.status,
-    body: parsed && typeof parsed === "object" && !Array.isArray(parsed) ? (parsed as Record<string, unknown>) : null,
+    body:
+      parsed && typeof parsed === "object" && !Array.isArray(parsed)
+        ? (parsed as Record<string, unknown>)
+        : null,
     list: parsed,
     raw,
     authMode: mode,
@@ -150,7 +154,10 @@ async function request(
   return second.status === 401 || second.status === 403 ? first : second;
 }
 
-function failure(res: ApiResponse, operation: string): { code: PortalErrorCode; message: string; detail: string } {
+function failure(
+  res: ApiResponse,
+  operation: string,
+): { code: PortalErrorCode; message: string; detail: string } {
   const code = codeFromHttpStatus(res.status);
   const compact = res.raw.replace(/\s+/g, " ").trim().slice(0, 300);
 
@@ -206,7 +213,12 @@ function fromThrown(error: unknown, operation: string): PortalResult<never> {
     };
   }
   const normalized = toPortalError(error);
-  return { ok: false, code: normalized.code, message: normalized.message, detail: normalized.detail };
+  return {
+    ok: false,
+    code: normalized.code,
+    message: normalized.message,
+    detail: normalized.detail,
+  };
 }
 
 /** Nomenclatoarele de locații, cu cache; se descarcă doar când lipsesc/expiră. */
@@ -232,7 +244,10 @@ async function payloadFor(ctx: PortalContext, ref: ListingRef) {
 }
 
 function readEcho(res: ApiResponse): { id: string | null; url: string | null } {
-  const node = (res.body?.["property"] ?? res.body?.["data"] ?? res.body) as Record<string, unknown> | null;
+  const node = (res.body?.["property"] ?? res.body?.["data"] ?? res.body) as Record<
+    string,
+    unknown
+  > | null;
   const value = (key: string) => {
     const raw = node?.[key];
     return typeof raw === "string" || typeof raw === "number" ? String(raw) : null;
@@ -242,7 +257,11 @@ function readEcho(res: ApiResponse): { id: string | null; url: string | null } {
 
 type PushMode = "publish" | "update";
 
-async function push(ctx: PortalContext, ref: ListingRef, mode: PushMode): Promise<PortalResult<ListingOutcome>> {
+async function push(
+  ctx: PortalContext,
+  ref: ListingRef,
+  mode: PushMode,
+): Promise<PortalResult<ListingOutcome>> {
   if (!configured(ctx)) return configError(mode);
 
   const build = await payloadFor(ctx, ref);
@@ -310,7 +329,10 @@ async function push(ctx: PortalContext, ref: ListingRef, mode: PushMode): Promis
 }
 
 /** `POST /properties` este cel mai simplu apel autentificat care confirmă contul. */
-async function status(ctx: PortalContext, live: boolean): Promise<PortalResult<ConnectionStatusOutcome>> {
+async function status(
+  ctx: PortalContext,
+  live: boolean,
+): Promise<PortalResult<ConnectionStatusOutcome>> {
   if (!configured(ctx)) {
     return {
       ok: true,
@@ -342,7 +364,8 @@ async function status(ctx: PortalContext, live: boolean): Promise<PortalResult<C
       return { ok: false, code: f.code, message: f.message, detail: f.detail };
     }
     const geo = await geoFor(ctx);
-    const authNote = res.authMode === "base64" ? "Basic codificat" : "Basic brut (ca în documentație)";
+    const authNote =
+      res.authMode === "base64" ? "Basic codificat" : "Basic brut (ca în documentație)";
     return {
       ok: true,
       data: {

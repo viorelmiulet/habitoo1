@@ -321,9 +321,11 @@ export const getAgentDashboard = createServerFn({ method: "GET" })
         created_at: string;
         properties: { title: string } | null;
       };
-      incoming = ((incomingRes.data ?? []) as unknown as (ProposalRaw & {
-        requester_organization_id: string;
-      })[]).map((row) => ({
+      incoming = (
+        (incomingRes.data ?? []) as unknown as (ProposalRaw & {
+          requester_organization_id: string;
+        })[]
+      ).map((row) => ({
         id: row.id,
         clientLabel: row.client_label,
         propertyId: row.property_id,
@@ -331,9 +333,11 @@ export const getAgentDashboard = createServerFn({ method: "GET" })
         agencyName: namesById.get(row.requester_organization_id) ?? null,
         createdAt: row.created_at,
       }));
-      outgoing = ((outgoingRes.data ?? []) as unknown as (ProposalRaw & {
-        owner_organization_id: string;
-      })[]).map((row) => ({
+      outgoing = (
+        (outgoingRes.data ?? []) as unknown as (ProposalRaw & {
+          owner_organization_id: string;
+        })[]
+      ).map((row) => ({
         id: row.id,
         clientLabel: row.client_label,
         propertyId: row.property_id,
@@ -361,9 +365,7 @@ export const getAgentDashboard = createServerFn({ method: "GET" })
       startsAt: a.starts_at,
       propertyId: a.property_id,
       propertyTitle: a.properties?.title ?? null,
-      contactName: a.contacts
-        ? `${a.contacts.first_name} ${a.contacts.last_name}`.trim()
-        : null,
+      contactName: a.contacts ? `${a.contacts.first_name} ${a.contacts.last_name}`.trim() : null,
       contactPhone: a.contacts?.phone ?? null,
       leadId: a.lead_id,
     }));
@@ -440,7 +442,12 @@ export type ManagerDashboard = {
     incomplete: ListingIssueRow[];
     incompleteCount: number;
     staleCount: number;
-    stale: { propertyId: string; title: string; agentName: string | null; lastActivityAt: string }[];
+    stale: {
+      propertyId: string;
+      title: string;
+      agentName: string | null;
+      lastActivityAt: string;
+    }[];
     unassigned: number;
     totalLive: number;
   };
@@ -480,10 +487,7 @@ export const getManagerDashboard = createServerFn({ method: "GET" })
 
     const [profilesRes, rolesRes, leadsRes, propertiesRes, viewingsRes, publicationsRes] =
       await Promise.all([
-        supabase
-          .from("profiles")
-          .select("id,full_name,is_active")
-          .eq("organization_id", org.id),
+        supabase.from("profiles").select("id,full_name,is_active").eq("organization_id", org.id),
         supabase.from("user_roles").select("user_id,role").eq("organization_id", org.id),
         supabase
           .from("leads")
@@ -641,7 +645,9 @@ export const getManagerDashboard = createServerFn({ method: "GET" })
       else entry.active += 1;
       portalMap.set(row.portal_key, entry);
     }
-    const portals = [...portalMap.values()].sort((a, b) => b.errors - a.errors || b.active - a.active);
+    const portals = [...portalMap.values()].sort(
+      (a, b) => b.errors - a.errors || b.active - a.active,
+    );
 
     // --- Secțiunea 4: conversie ------------------------------------------
     const inWindow = (iso: string | null, from: string, to?: string) => {

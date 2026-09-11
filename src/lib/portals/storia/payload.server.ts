@@ -13,8 +13,7 @@ import {
 import { mapPropertyToStoria, type StoriaListing } from "./mapper";
 
 export type StoriaPayloadBuild =
-  | { ok: true; listings: StoriaListing[]; warnings: string[] }
-  | { ok: false; reasons: string[] };
+  { ok: true; listings: StoriaListing[]; warnings: string[] } | { ok: false; reasons: string[] };
 
 export async function buildStoriaPayload(input: {
   organizationId: string;
@@ -39,7 +38,9 @@ export async function buildStoriaPayload(input: {
       reasons.push("Oferta nu este publicată pe site (apasă „Publică” pe fișa ofertei).");
     }
     if (row.status === "draft") {
-      reasons.push("Statusul ofertei este „Ciornă”; schimbă-l în „Activ” pentru a publica pe portaluri.");
+      reasons.push(
+        "Statusul ofertei este „Ciornă”; schimbă-l în „Activ” pentru a publica pe portaluri.",
+      );
     } else if (!["active", "reserved", "negotiation"].includes(row.status)) {
       reasons.push(`Statusul ofertei („${row.status}”) nu permite publicarea pe portaluri.`);
     }

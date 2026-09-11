@@ -23,9 +23,7 @@ export type ApproveRegistrationResult = {
 
 export const approveRegistrationRequest = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((data: unknown) =>
-    z.object({ requestId: z.string().uuid() }).parse(data),
-  )
+  .inputValidator((data: unknown) => z.object({ requestId: z.string().uuid() }).parse(data))
   .handler(async ({ data, context }): Promise<ApproveRegistrationResult> => {
     const ctx = context as AuthContext;
 
@@ -67,7 +65,10 @@ export const approveRegistrationRequest = createServerFn({ method: "POST" })
           agencyName: request.agency_name,
           fullName: request.full_name,
         });
-        const [html, text] = await Promise.all([render(element), render(element, { plainText: true })]);
+        const [html, text] = await Promise.all([
+          render(element),
+          render(element, { plainText: true }),
+        ]);
 
         await sendLovableEmail(
           {

@@ -99,11 +99,14 @@ export type OiListing = {
 };
 
 export type OiMapResult =
-  | { ok: true; listings: OiListing[]; warnings: string[] }
-  | { ok: false; reasons: string[] };
+  { ok: true; listings: OiListing[]; warnings: string[] } | { ok: false; reasons: string[] };
 
 /** Locațiile portalului, rezolvate din cache-ul geografic. */
-export type OiLocationIds = { countyId: number | null; cityId: number | null; zoneId: number | null };
+export type OiLocationIds = {
+  countyId: number | null;
+  cityId: number | null;
+  zoneId: number | null;
+};
 
 export type OiMapOptions = {
   /** Origin absolut pentru URL-urile de imagine (imaginile trec prin proxy-ul Habitoo). */
@@ -225,7 +228,8 @@ export function mapPropertyToOferteImobiliare(p: PropertyRow, options: OiMapOpti
   }
 
   const transactions = oiTransactions(p);
-  if (transactions.length === 0) reasons.push("Nu este bifată nicio tranzacție (vânzare sau închiriere).");
+  if (transactions.length === 0)
+    reasons.push("Nu este bifată nicio tranzacție (vânzare sau închiriere).");
 
   if (!options.location.countyId) {
     reasons.push(
@@ -238,7 +242,9 @@ export function mapPropertyToOferteImobiliare(p: PropertyRow, options: OiMapOpti
     );
   }
   if (!options.location.zoneId && (p.district ?? "").trim()) {
-    warnings.push(`Zona „${p.district}” nu există în lista portalului; anunțul se trimite fără zonă.`);
+    warnings.push(
+      `Zona „${p.district}” nu există în lista portalului; anunțul se trimite fără zonă.`,
+    );
   }
 
   const priced = transactions.map((t) => ({ transaction: t, ...priceFor(p, t) }));
@@ -251,7 +257,9 @@ export function mapPropertyToOferteImobiliare(p: PropertyRow, options: OiMapOpti
       );
     }
     if (entry.currencyId === null) {
-      reasons.push(`Moneda ${entry.currency} nu este acceptată de portal (doar EUR, RON, USD, CHF).`);
+      reasons.push(
+        `Moneda ${entry.currency} nu este acceptată de portal (doar EUR, RON, USD, CHF).`,
+      );
     }
   }
 
@@ -338,8 +346,16 @@ export function mapPropertyToOferteImobiliare(p: PropertyRow, options: OiMapOpti
     put(listing, "land_size", p.land_surface);
     put(listing, "garden_size", p.garden_surface);
     put(listing, "confort", OI_COMFORT[(p.comfort ?? "").toLowerCase()] ?? null);
-    put(listing, "partitioning", p.layout ? (codesFor(OI_PARTITIONING, [p.layout])[0] ?? null) : null);
-    put(listing, "furniture", p.furnishing ? (codesFor(OI_FURNITURE, [p.furnishing])[0] ?? null) : null);
+    put(
+      listing,
+      "partitioning",
+      p.layout ? (codesFor(OI_PARTITIONING, [p.layout])[0] ?? null) : null,
+    );
+    put(
+      listing,
+      "furniture",
+      p.furnishing ? (codesFor(OI_FURNITURE, [p.furnishing])[0] ?? null) : null,
+    );
     put(
       listing,
       "orientation",
@@ -358,7 +374,9 @@ export function mapPropertyToOferteImobiliare(p: PropertyRow, options: OiMapOpti
     put(
       listing,
       "building_structure",
-      p.building_structure ? (codesFor(OI_BUILDING_STRUCTURE, [p.building_structure])[0] ?? null) : null,
+      p.building_structure
+        ? (codesFor(OI_BUILDING_STRUCTURE, [p.building_structure])[0] ?? null)
+        : null,
     );
     put(listing, "building_attic", p.has_attic);
     put(listing, "building_s", p.has_basement);

@@ -74,10 +74,15 @@ describe("taxonomia IMMOFLUX", () => {
 
 describe("locațiile portalului", () => {
   it("normalizează listele și potrivește ierarhic", () => {
-    const cities = normalizeGeoList([{ id: "340", name: " Cluj-Napoca ", county_id: 12 }], ["county_id"]);
+    const cities = normalizeGeoList(
+      [{ id: "340", name: " Cluj-Napoca ", county_id: 12 }],
+      ["county_id"],
+    );
     expect(cities).toEqual([{ id: 340, name: "Cluj-Napoca", parentId: 12 }]);
     expect(matchGeo(cities, "cluj napoca", 12)?.id).toBe(340);
-    expect(resolveOiLocation(geo, { county: "Cluj", city: "Cluj-Napoca", district: "Zorilor" })).toEqual({
+    expect(
+      resolveOiLocation(geo, { county: "Cluj", city: "Cluj-Napoca", district: "Zorilor" }),
+    ).toEqual({
       countyId: 12,
       cityId: 340,
       zoneId: 9001,

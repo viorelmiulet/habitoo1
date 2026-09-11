@@ -11,12 +11,7 @@ import {
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import {
-  CATEGORIES,
-  OPEN_PREFERENCES_EVENT,
-  readConsent,
-  saveConsent,
-} from "@/lib/cookie-consent";
+import { CATEGORIES, OPEN_PREFERENCES_EVENT, readConsent, saveConsent } from "@/lib/cookie-consent";
 
 /**
  * Banner de consimțământ pentru site-ul public. Nu se randează în aplicația
@@ -67,7 +62,8 @@ export function CookieConsent() {
           <div className="panel mx-auto flex w-full max-w-5xl flex-col gap-3 p-4 sm:gap-4 lg:flex-row lg:items-center lg:justify-between lg:gap-6">
             <p className="text-sm leading-relaxed text-muted-foreground">
               Folosim cookie-uri strict necesare pentru funcționarea site-ului. Pentru analiză și
-              marketing avem nevoie de acordul tău. Poți refuza sau îți poți retrage acordul oricând.{" "}
+              marketing avem nevoie de acordul tău. Poți refuza sau îți poți retrage acordul
+              oricând.{" "}
               <Link to="/confidentialitate" className="font-medium text-navy underline">
                 Politica de confidențialitate
               </Link>
@@ -118,7 +114,9 @@ export function CookieConsent() {
                       {cat.label}
                       {cat.locked ? " (mereu active)" : null}
                     </Label>
-                    <p className="text-xs leading-relaxed text-muted-foreground">{cat.description}</p>
+                    <p className="text-xs leading-relaxed text-muted-foreground">
+                      {cat.description}
+                    </p>
                   </div>
                   <Switch
                     id={`cookie-${cat.id}`}
@@ -133,7 +131,10 @@ export function CookieConsent() {
           </div>
 
           <DialogFooter className="gap-2 sm:justify-between">
-            <Button variant="outline" onClick={() => persist({ analytics: false, marketing: false })}>
+            <Button
+              variant="outline"
+              onClick={() => persist({ analytics: false, marketing: false })}
+            >
               Refuz tot
             </Button>
             <Button onClick={() => persist({ analytics, marketing })}>Salvează preferințele</Button>

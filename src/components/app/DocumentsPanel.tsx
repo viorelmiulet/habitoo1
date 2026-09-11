@@ -132,7 +132,12 @@ export function DocumentsPanel({
               e.target.value = "";
             }}
           />
-          <Button size="sm" variant="outline" onClick={() => inputRef.current?.click()} disabled={uploading}>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => inputRef.current?.click()}
+            disabled={uploading}
+          >
             <Upload className="size-4" /> {uploading ? "Se încarcă…" : "Încarcă document"}
           </Button>
         </div>
@@ -141,7 +146,11 @@ export function DocumentsPanel({
       {isLoading ? (
         <p className="py-6 text-center text-sm text-muted-foreground">Se încarcă…</p>
       ) : docs.length === 0 ? (
-        <EmptyState icon={FileText} title="Niciun document" description="Încarcă contracte, acte sau alte fișiere." />
+        <EmptyState
+          icon={FileText}
+          title="Niciun document"
+          description="Încarcă contracte, acte sau alte fișiere."
+        />
       ) : (
         <ul className="divide-y divide-border">
           {docs.map((d) => (
@@ -153,7 +162,11 @@ export function DocumentsPanel({
                   {formatSize(d.size_bytes)} · {formatDateTime(d.created_at)}
                 </p>
               </div>
-              <Button size="sm" variant="ghost" onClick={() => handleDownload(d.storage_path, d.name)}>
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => handleDownload(d.storage_path, d.name)}
+              >
                 <Download className="size-4" />
               </Button>
               <AlertDialog>
@@ -171,7 +184,9 @@ export function DocumentsPanel({
                   </AlertDialogHeader>
                   <AlertDialogFooter>
                     <AlertDialogCancel>Anulează</AlertDialogCancel>
-                    <AlertDialogAction onClick={() => remove.mutate({ id: d.id, storage_path: d.storage_path })}>
+                    <AlertDialogAction
+                      onClick={() => remove.mutate({ id: d.id, storage_path: d.storage_path })}
+                    >
                       Șterge
                     </AlertDialogAction>
                   </AlertDialogFooter>

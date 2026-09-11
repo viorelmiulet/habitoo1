@@ -47,7 +47,6 @@ export type MailgunConfigStatus = {
   events_endpoint: string;
 };
 
-
 const DEFAULT_BASE_URL = "https://api.mailgun.net";
 const EU_BASE_URL = "https://api.eu.mailgun.net";
 const MAILGUN_HOST_RE = /^https:\/\/api(\.[a-z0-9-]+)?\.mailgun\.net$/;
@@ -107,11 +106,17 @@ export function getMailgunStatus(): MailgunConfigStatus {
   for (const key of ["MAILGUN_API_KEY", "MAILGUN_DOMAIN", "MAILGUN_WEBHOOK_SIGNING_KEY"]) {
     if (!readEnv(key)) missing.push(key);
   }
-  if (!resolveBaseUrl()) missing.push(readEnv("MAILGUN_BASE_URL") ? "MAILGUN_BASE_URL" : "MAILGUN_REGION");
+  if (!resolveBaseUrl())
+    missing.push(readEnv("MAILGUN_BASE_URL") ? "MAILGUN_BASE_URL" : "MAILGUN_REGION");
 
   // Optional, but the mailbox is only usable end to end once they exist.
   const optional: string[] = [];
-  for (const key of ["MAILGUN_REGION", "MAILGUN_INBOUND_DOMAIN", "MAILGUN_DEFAULT_FROM", "MAILGUN_ALLOWED_FROM"]) {
+  for (const key of [
+    "MAILGUN_REGION",
+    "MAILGUN_INBOUND_DOMAIN",
+    "MAILGUN_DEFAULT_FROM",
+    "MAILGUN_ALLOWED_FROM",
+  ]) {
     if (!readEnv(key)) optional.push(key);
   }
 
@@ -200,7 +205,14 @@ export async function testMailgunConnection(): Promise<MailgunConnectionTest> {
           : res.status === 404
             ? "Domeniul nu există în contul Mailgun."
             : "Mailgun connection failed";
-      return { ...base, connected: false, httpStatus: res.status, domainState: null, sendingReady: null, error };
+      return {
+        ...base,
+        connected: false,
+        httpStatus: res.status,
+        domainState: null,
+        sendingReady: null,
+        error,
+      };
     }
 
     let domainState: string | null = null;
@@ -219,8 +231,18 @@ export async function testMailgunConnection(): Promise<MailgunConnectionTest> {
       domainState = null;
     }
 
-    console.info("[mailgun] connection test", safeLogFields({ status: res.status, metric: "mail_connection_test" }));
-    return { ...base, connected: true, httpStatus: res.status, domainState, sendingReady, error: null };
+    console.info(
+      "[mailgun] connection test",
+      safeLogFields({ status: res.status, metric: "mail_connection_test" }),
+    );
+    return {
+      ...base,
+      connected: true,
+      httpStatus: res.status,
+      domainState,
+      sendingReady,
+      error: null,
+    };
   } catch (e) {
     console.error(
       "[mailgun] connection test transport error",
@@ -237,7 +259,6 @@ export async function testMailgunConnection(): Promise<MailgunConnectionTest> {
   }
 }
 
-
 /* ------------------------------------------------------------------ */
 /* Signature verification                                              */
 /* ------------------------------------------------------------------ */
@@ -247,8 +268,7 @@ export const SIGNATURE_WINDOW_SECONDS = 15 * 60;
 export type SignatureInput = { timestamp: string; token: string; signature: string };
 
 export type SignatureResult =
-  | { ok: true }
-  | { ok: false; reason: "missing" | "timestamp" | "token" | "signature" };
+  { ok: true } | { ok: false; reason: "missing" | "timestamp" | "token" | "signature" };
 
 /**
  * Mailgun signs `timestamp + token` with the webhook signing key (HMAC-SHA256,
@@ -284,8 +304,7 @@ export function verifyMailgunSignature(
 /* ------------------------------------------------------------------ */
 
 export type SendResult =
-  | { ok: true; providerMessageId: string | null }
-  | { ok: false; error: string; code?: number };
+  { ok: true; providerMessageId: string | null } | { ok: false; error: string; code?: number };
 
 export type OutboundAttachment = {
   filename: string;
@@ -401,7 +420,10 @@ export async function sendEmail(input: OutboundInput & SendOptions): Promise<Sen
   // are stripped of CR/LF before they reach the provider.
   for (const [name, value] of Object.entries(input.headers ?? {})) {
     if (!/^[A-Za-z][A-Za-z0-9-]{0,60}$/.test(name)) continue;
-    const clean = String(value).replace(/[\r\n]+/g, " ").slice(0, 998).trim();
+    const clean = String(value)
+      .replace(/[\r\n]+/g, " ")
+      .slice(0, 998)
+      .trim();
     if (clean) form.set(`h:${name}`, clean);
   }
   if (input.tracking) {
@@ -426,11 +448,10 @@ export async function sendEmail(input: OutboundInput & SendOptions): Promise<Sen
       recipient_hash: hashRecipient(checked.value.to[0] ?? null),
       ok: result.ok,
       provider_message_id: result.ok ? result.providerMessageId : null,
-      code: result.ok ? null : result.code ?? null,
+      code: result.ok ? null : (result.code ?? null),
     }),
   );
   return result;
-
 }
 
 /** Sends a Mailgun stored template with typed variables. */
@@ -504,7 +525,9 @@ export async function fetchMailgunAttachment(
   return {
     ok: true,
     data: buf,
-    contentType: (res.headers.get("content-type") ?? "application/octet-stream").split(";")[0]!.trim(),
+    contentType: (res.headers.get("content-type") ?? "application/octet-stream")
+      .split(";")[0]!
+      .trim(),
   };
 }
 
@@ -623,5 +646,10 @@ export async function sendMailboxEmail(input: MailboxSendInput): Promise<Mailbox
     .eq("id", created.id);
 
   if (!result.ok) return { ok: false, error: result.error };
-  return { ok: true, messageId: created.id, providerMessageId: result.providerMessageId, duplicate: false };
+  return {
+    ok: true,
+    messageId: created.id,
+    providerMessageId: result.providerMessageId,
+    duplicate: false,
+  };
 }

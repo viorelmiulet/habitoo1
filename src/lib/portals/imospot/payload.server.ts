@@ -13,7 +13,11 @@ import {
 import { mapPropertyToImospot, type ImospotMapResult } from "./mapper";
 
 export type ImospotPayloadBuild =
-  | { ok: true; listings: NonNullable<Extract<ImospotMapResult, { ok: true }>["listings"]>; warnings: string[] }
+  | {
+      ok: true;
+      listings: NonNullable<Extract<ImospotMapResult, { ok: true }>["listings"]>;
+      warnings: string[];
+    }
   | { ok: false; reasons: string[] };
 
 export async function buildImospotPayload(input: {
@@ -44,7 +48,11 @@ export async function buildImospotPayload(input: {
       .select("*")
       .eq("organization_id", input.organizationId)
       .eq("property_id", input.propertyId),
-    supabaseAdmin.from("organizations").select("phone").eq("id", input.organizationId).maybeSingle(),
+    supabaseAdmin
+      .from("organizations")
+      .select("phone")
+      .eq("id", input.organizationId)
+      .maybeSingle(),
     row.assigned_to
       ? supabaseAdmin
           .from("profiles")

@@ -13,13 +13,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetFooter,
-} from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetFooter } from "@/components/ui/sheet";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -34,10 +28,22 @@ import { useCurrentUser } from "@/hooks/use-session";
 import { contactTypeLabels } from "@/lib/labels";
 import { ActivityDialog } from "@/components/app/ActivityDialog";
 
-function ContactSheet({ open, onOpenChange }: { open: boolean; onOpenChange: (v: boolean) => void }) {
+function ContactSheet({
+  open,
+  onOpenChange,
+}: {
+  open: boolean;
+  onOpenChange: (v: boolean) => void;
+}) {
   const { data: user } = useCurrentUser();
   const queryClient = useQueryClient();
-  const [form, setForm] = useState({ first_name: "", last_name: "", type: "buyer", phone: "", email: "" });
+  const [form, setForm] = useState({
+    first_name: "",
+    last_name: "",
+    type: "buyer",
+    phone: "",
+    email: "",
+  });
 
   const create = useMutation({
     mutationFn: async () => {
@@ -73,11 +79,17 @@ function ContactSheet({ open, onOpenChange }: { open: boolean; onOpenChange: (v:
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
               <Label>Prenume</Label>
-              <Input value={form.first_name} onChange={(e) => setForm((f) => ({ ...f, first_name: e.target.value }))} />
+              <Input
+                value={form.first_name}
+                onChange={(e) => setForm((f) => ({ ...f, first_name: e.target.value }))}
+              />
             </div>
             <div className="space-y-2">
               <Label>Nume</Label>
-              <Input value={form.last_name} onChange={(e) => setForm((f) => ({ ...f, last_name: e.target.value }))} />
+              <Input
+                value={form.last_name}
+                onChange={(e) => setForm((f) => ({ ...f, last_name: e.target.value }))}
+              />
             </div>
           </div>
           <div className="space-y-2">
@@ -98,11 +110,17 @@ function ContactSheet({ open, onOpenChange }: { open: boolean; onOpenChange: (v:
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
               <Label>Telefon</Label>
-              <Input value={form.phone} onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))} />
+              <Input
+                value={form.phone}
+                onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))}
+              />
             </div>
             <div className="space-y-2">
               <Label>Email</Label>
-              <Input value={form.email} onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))} />
+              <Input
+                value={form.email}
+                onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
+              />
             </div>
           </div>
         </div>
@@ -158,21 +176,33 @@ function LeadSheet({ open, onOpenChange }: { open: boolean; onOpenChange: (v: bo
         <div className="space-y-4 px-4">
           <div className="space-y-2">
             <Label>Nume</Label>
-            <Input value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} />
+            <Input
+              value={form.name}
+              onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
+            />
           </div>
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
               <Label>Telefon</Label>
-              <Input value={form.phone} onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))} />
+              <Input
+                value={form.phone}
+                onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))}
+              />
             </div>
             <div className="space-y-2">
               <Label>Email</Label>
-              <Input value={form.email} onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))} />
+              <Input
+                value={form.email}
+                onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
+              />
             </div>
           </div>
           <div className="space-y-2">
             <Label>Sursă</Label>
-            <Input value={form.source} onChange={(e) => setForm((f) => ({ ...f, source: e.target.value }))} />
+            <Input
+              value={form.source}
+              onChange={(e) => setForm((f) => ({ ...f, source: e.target.value }))}
+            />
           </div>
         </div>
         <SheetFooter>
@@ -216,7 +246,9 @@ export function QuickAdd() {
           <DropdownMenuItem onSelect={() => setLeadOpen(true)}>
             <Flame className="size-4" /> Lead
           </DropdownMenuItem>
-          <DropdownMenuItem onSelect={() => navigate({ to: "/app/requests", search: { new: true } })}>
+          <DropdownMenuItem
+            onSelect={() => navigate({ to: "/app/requests", search: { new: true } })}
+          >
             <Target className="size-4" /> Cerere
           </DropdownMenuItem>
           <DropdownMenuItem onSelect={() => setActivityOpen(true)}>

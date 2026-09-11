@@ -23,7 +23,12 @@ export type FeedAuthOk = {
   scopes: string[];
 };
 
-export type FeedAuthErr = { ok: false; status: 401 | 429; message: string; tokenPrefix: string | null };
+export type FeedAuthErr = {
+  ok: false;
+  status: 401 | 429;
+  message: string;
+  tokenPrefix: string | null;
+};
 export type FeedAuth = FeedAuthOk | FeedAuthErr;
 
 export function hashFeedToken(token: string): string {
@@ -110,7 +115,6 @@ export type FeedAuthOptions = {
   portalCredential?: string;
 };
 
-
 export async function authenticateFeedRequest(
   request: Request,
   options: FeedAuthOptions = {},
@@ -154,7 +158,10 @@ export async function authenticateFeedRequest(
   if (!error && data) {
     await supabaseAdmin
       .from("site_feed_tokens")
-      .update({ last_used_at: new Date().toISOString(), request_count: (data.request_count ?? 0) + 1 })
+      .update({
+        last_used_at: new Date().toISOString(),
+        request_count: (data.request_count ?? 0) + 1,
+      })
       .eq("id", data.id);
 
     return {
@@ -177,7 +184,10 @@ export async function authenticateFeedRequest(
     .eq("status", "active")
     .maybeSingle();
 
-  if (portalKey && (!portalKey.expires_at || new Date(portalKey.expires_at).getTime() > Date.now())) {
+  if (
+    portalKey &&
+    (!portalKey.expires_at || new Date(portalKey.expires_at).getTime() > Date.now())
+  ) {
     await supabaseAdmin
       .from("portal_api_keys")
       .update({

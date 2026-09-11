@@ -66,7 +66,9 @@ export function matchGeo(
 ): OiGeoItem | null {
   const target = name ? normalizeLabel(name) : "";
   if (!target) return null;
-  const scoped = parentId ? items.filter((i) => i.parentId === parentId || i.parentId === null) : items;
+  const scoped = parentId
+    ? items.filter((i) => i.parentId === parentId || i.parentId === null)
+    : items;
   const pool = scoped.length ? scoped : items;
   return (
     pool.find((i) => normalizeLabel(i.name) === target) ??
@@ -136,7 +138,9 @@ export async function refreshOiGeoCache(
     zones: normalizeGeoList(zonesRaw, OI_ZONE_PARENT_KEYS),
   };
   if (geo.counties.length === 0 || geo.cities.length === 0) {
-    throw new Error("Listele de locații OferteImobiliare au venit goale; cache-ul nu a fost actualizat.");
+    throw new Error(
+      "Listele de locații OferteImobiliare au venit goale; cache-ul nu a fost actualizat.",
+    );
   }
   return writeOiGeoCache(geo, meta);
 }

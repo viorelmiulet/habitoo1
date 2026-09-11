@@ -13,7 +13,11 @@ import { QueryError } from "@/components/app/QueryError";
 import { SectionCard } from "@/components/app/SectionCard";
 import { Button } from "@/components/ui/button";
 import { toastError } from "@/lib/errors";
-import { getNomenclatureStats, importSiruta, type SirutaImportResult } from "@/lib/siruta.functions";
+import {
+  getNomenclatureStats,
+  importSiruta,
+  type SirutaImportResult,
+} from "@/lib/siruta.functions";
 
 export const Route = createFileRoute("/_authenticated/superadmin/nomenclator")({
   component: NomenclatorPage,
@@ -23,7 +27,9 @@ const QUERY_KEY = ["superadmin", "nomenclature"] as const;
 
 function fmtDateTime(value: string | null | undefined) {
   if (!value) return "—";
-  return new Intl.DateTimeFormat("ro-RO", { dateStyle: "medium", timeStyle: "short" }).format(new Date(value));
+  return new Intl.DateTimeFormat("ro-RO", { dateStyle: "medium", timeStyle: "short" }).format(
+    new Date(value),
+  );
 }
 
 function NomenclatorPage() {
@@ -72,8 +78,18 @@ function NomenclatorPage() {
       ) : (
         <>
           <div className="grid gap-4 sm:grid-cols-3">
-            <KpiCard label="Județe" value={data?.counties ?? 0} icon={Landmark} hint="42 (inclusiv București)" />
-            <KpiCard label="UAT-uri" value={data?.uats ?? 0} icon={Building2} hint="municipii, orașe, comune" />
+            <KpiCard
+              label="Județe"
+              value={data?.counties ?? 0}
+              icon={Landmark}
+              hint="42 (inclusiv București)"
+            />
+            <KpiCard
+              label="UAT-uri"
+              value={data?.uats ?? 0}
+              icon={Building2}
+              hint="municipii, orașe, comune"
+            />
             <KpiCard
               label="Localități"
               value={data?.localities ?? 0}
@@ -106,15 +122,16 @@ function NomenclatorPage() {
               </div>
             </dl>
             <p className="mt-4 text-xs text-muted-foreground">
-              Importul este idempotent: rulările repetate actualizează denumirile fără să creeze duplicate. Anunțurile
-              existente care au deja localitate ca text sunt completate automat cu codul SIRUTA atunci când potrivirea
-              este neambiguă; textul introdus de agenți nu este șters.
+              Importul este idempotent: rulările repetate actualizează denumirile fără să creeze
+              duplicate. Anunțurile existente care au deja localitate ca text sunt completate
+              automat cu codul SIRUTA atunci când potrivirea este neambiguă; textul introdus de
+              agenți nu este șters.
             </p>
             {lastImport && (
               <p className="mt-2 text-xs text-muted-foreground">
-                Ultimul import: {lastImport.counties} județe · {lastImport.uats} UAT-uri · {lastImport.localities}{" "}
-                localități · {lastImport.propertiesMigrated} anunțuri completate din {lastImport.propertiesChecked}{" "}
-                verificate.
+                Ultimul import: {lastImport.counties} județe · {lastImport.uats} UAT-uri ·{" "}
+                {lastImport.localities} localități · {lastImport.propertiesMigrated} anunțuri
+                completate din {lastImport.propertiesChecked} verificate.
               </p>
             )}
           </SectionCard>

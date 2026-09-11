@@ -2,7 +2,12 @@
 // GET  /api/public/sites/v1/visits — totalul vizualizărilor raportate, pe proprietate.
 import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
-import { withFeedAuth, jsonResponse, errorResponse, FEED_API_VERSION } from "@/lib/site-feed/auth.server";
+import {
+  withFeedAuth,
+  jsonResponse,
+  errorResponse,
+  FEED_API_VERSION,
+} from "@/lib/site-feed/auth.server";
 import { requireFeedScope } from "@/lib/site-feed/handlers.server";
 import { isVisitDateAcceptable } from "@/lib/site-feed/mapper";
 
@@ -11,10 +16,16 @@ const visitSchema = z.object({
   views: z.number().int().min(0).max(1_000_000).default(1),
   source: z.string().trim().max(60).optional(),
   // Dată calendaristică reală (nu doar regex): 2026-99-99 este respinsă.
-  date: z.string().refine(isVisitDateAcceptable, "date must be a real date within the accepted window").optional(),
+  date: z
+    .string()
+    .refine(isVisitDateAcceptable, "date must be a real date within the accepted window")
+    .optional(),
 });
 
-const payloadSchema = z.union([visitSchema, z.object({ visits: z.array(visitSchema).min(1).max(500) })]);
+const payloadSchema = z.union([
+  visitSchema,
+  z.object({ visits: z.array(visitSchema).min(1).max(500) }),
+]);
 
 export const Route = createFileRoute("/api/public/sites/v1/visits")({
   server: {

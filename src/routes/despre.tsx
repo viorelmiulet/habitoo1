@@ -171,7 +171,9 @@ function AboutPage() {
                     <span className="flex size-10 items-center justify-center rounded-xl bg-gold/20 text-gold">
                       <t.icon className="size-5" />
                     </span>
-                    <h3 className="mt-4 font-sans text-base font-semibold text-navy-foreground">{t.title}</h3>
+                    <h3 className="mt-4 font-sans text-base font-semibold text-navy-foreground">
+                      {t.title}
+                    </h3>
                     <p className="mt-2 text-sm text-navy-muted">{t.text}</p>
                   </div>
                 </Reveal>

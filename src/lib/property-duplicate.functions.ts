@@ -45,7 +45,8 @@ export const duplicateProperty = createServerFn({ method: "POST" })
 
     // Referința nouă vine din aceeași secvență globală ca la creare, deci nu
     // se poate repeta nici între agenții, nici la duplicări simultane.
-    const { data: reference, error: referenceError } = await supabase.rpc("next_property_reference");
+    const { data: reference, error: referenceError } =
+      await supabase.rpc("next_property_reference");
     if (referenceError) throw new Error(referenceError.message);
 
     const { data: created, error: createError } = await supabase
@@ -77,7 +78,10 @@ export const duplicateProperty = createServerFn({ method: "POST" })
         const { error } = await supabase.storage
           .from(MEDIA_BUCKET)
           .copy(image.storage_path, destination);
-        if (error) throw new Error(`Fotografia ${image.position + 1} nu a putut fi copiată: ${error.message}`);
+        if (error)
+          throw new Error(
+            `Fotografia ${image.position + 1} nu a putut fi copiată: ${error.message}`,
+          );
         copiedFiles.push({ bucket: MEDIA_BUCKET, path: destination });
         imageRows.push({
           organization_id: source.organization_id,
@@ -110,7 +114,8 @@ export const duplicateProperty = createServerFn({ method: "POST" })
         const { error } = await supabase.storage
           .from(DOCS_BUCKET)
           .copy(document.storage_path, destination);
-        if (error) throw new Error(`Documentul „${document.name}” nu a putut fi copiat: ${error.message}`);
+        if (error)
+          throw new Error(`Documentul „${document.name}” nu a putut fi copiat: ${error.message}`);
         copiedFiles.push({ bucket: DOCS_BUCKET, path: destination });
         documentRows.push({
           organization_id: source.organization_id,

@@ -212,7 +212,12 @@ export async function readThread(
 /** Messages of a mailbox by direction — powers "Sent" and "Drafts". */
 export async function listMessages(
   db: Db,
-  input: { mailboxId: string | null; direction?: "inbound" | "outbound"; status?: string; page: number },
+  input: {
+    mailboxId: string | null;
+    direction?: "inbound" | "outbound";
+    status?: string;
+    page: number;
+  },
 ): Promise<MailMessage[]> {
   let query = db
     .from("email_messages")

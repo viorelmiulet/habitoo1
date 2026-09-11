@@ -46,12 +46,19 @@ export const geocodeAddress = createServerFn({ method: "POST" })
       if (!res.ok) {
         return { ok: false, message: `Serviciul de geocodare a răspuns ${res.status}.` };
       }
-      const rows = (await res.json()) as Array<{ lat?: string; lon?: string; display_name?: string }>;
+      const rows = (await res.json()) as Array<{
+        lat?: string;
+        lon?: string;
+        display_name?: string;
+      }>;
       const hit = rows[0];
       const lat = hit?.lat ? Number(hit.lat) : NaN;
       const lng = hit?.lon ? Number(hit.lon) : NaN;
       if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
-        return { ok: false, message: "Adresa nu a fost găsită. Poziționează pinul manual pe hartă." };
+        return {
+          ok: false,
+          message: "Adresa nu a fost găsită. Poziționează pinul manual pe hartă.",
+        };
       }
       return {
         ok: true,
@@ -60,6 +67,9 @@ export const geocodeAddress = createServerFn({ method: "POST" })
         label: hit?.display_name ?? undefined,
       };
     } catch {
-      return { ok: false, message: "Geocodarea nu a putut fi realizată. Poziționează pinul manual." };
+      return {
+        ok: false,
+        message: "Geocodarea nu a putut fi realizată. Poziționează pinul manual.",
+      };
     }
   });

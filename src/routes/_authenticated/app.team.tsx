@@ -120,11 +120,11 @@ function TeamPage() {
       <div className="panel flex flex-wrap items-center justify-between gap-3 p-5">
         <div>
           <p className="text-sm font-medium">
-            {data ? `${data.seatsUsed} din ${data.seatLimit} agenți folosiți` : "Se încarcă locurile…"}
+            {data
+              ? `${data.seatsUsed} din ${data.seatLimit} agenți folosiți`
+              : "Se încarcă locurile…"}
           </p>
-          <p className="text-xs text-muted-foreground">
-            {data ? `Plan ${data.planLabel}` : "—"}
-          </p>
+          <p className="text-xs text-muted-foreground">{data ? `Plan ${data.planLabel}` : "—"}</p>
         </div>
         {data ? (
           <StatusBadge tone={limitReached ? "warning" : "success"}>
@@ -201,8 +201,8 @@ function TeamPage() {
           <DialogHeader>
             <DialogTitle>Adaugă agent</DialogTitle>
             <DialogDescription>
-              Agentul primește un email de invitație pentru a-și seta parola și intră direct în agenția
-              ta.
+              Agentul primește un email de invitație pentru a-și seta parola și intră direct în
+              agenția ta.
             </DialogDescription>
           </DialogHeader>
           <form

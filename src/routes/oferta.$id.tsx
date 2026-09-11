@@ -18,10 +18,7 @@ export const Route = createFileRoute("/oferta/$id")({
   head: ({ loaderData }) => {
     if (!loaderData) {
       return {
-        meta: [
-          { title: "Ofertă indisponibilă — Habitoo" },
-          { name: "robots", content: "noindex" },
-        ],
+        meta: [{ title: "Ofertă indisponibilă — Habitoo" }, { name: "robots", content: "noindex" }],
       };
     }
     const { offer } = loaderData;

@@ -114,7 +114,10 @@ export async function handlePropertiesList(
       perPage,
       requestUrl: url,
     });
-    return { response: jsonResponse({ ...empty, api_version: FEED_API_VERSION }, 200, 60), items: 0 };
+    return {
+      response: jsonResponse({ ...empty, api_version: FEED_API_VERSION }, 200, 60),
+      items: 0,
+    };
   }
   const baseQuery = () => {
     const query = supabaseAdmin
@@ -141,7 +144,9 @@ export async function handlePropertiesList(
 
   const rows = (data ?? []) as PropertyRow[];
   const ids = rows.map((r) => r.id);
-  const agentIds = [...new Set(rows.map((r) => r.assigned_to).filter((v): v is string => Boolean(v)))];
+  const agentIds = [
+    ...new Set(rows.map((r) => r.assigned_to).filter((v): v is string => Boolean(v))),
+  ];
 
   const [images, agents, portalsByProperty] = await Promise.all([
     ids.length
@@ -207,7 +212,9 @@ export async function handlePropertyDetail(
     .select("*")
     .eq("organization_id", auth.organizationId)
     .limit(1);
-  const { data, error } = UUID_RE.test(id) ? await query.eq("id", id) : await query.eq("reference", id);
+  const { data, error } = UUID_RE.test(id)
+    ? await query.eq("id", id)
+    : await query.eq("reference", id);
   if (error) throw error;
 
   const row = (data ?? [])[0] as PropertyRow | undefined;
@@ -231,7 +238,11 @@ export async function handlePropertyDetail(
       .eq("include_in_publish", true)
       .eq("is_confidential", false),
     row.assigned_to
-      ? supabaseAdmin.from("profiles").select("id, full_name").eq("id", row.assigned_to).maybeSingle()
+      ? supabaseAdmin
+          .from("profiles")
+          .select("id, full_name")
+          .eq("id", row.assigned_to)
+          .maybeSingle()
       : Promise.resolve({ data: null }),
     portalKeysFor(auth.organizationId, [row.id]),
   ]);

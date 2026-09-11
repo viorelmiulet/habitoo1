@@ -14,8 +14,7 @@ import { mapPropertyToOferteImobiliare, type OiListing } from "./mapper";
 import { resolveOiLocation, type OiGeoData } from "./geo.server";
 
 export type OiPayloadBuild =
-  | { ok: true; listings: OiListing[]; warnings: string[] }
-  | { ok: false; reasons: string[] };
+  { ok: true; listings: OiListing[]; warnings: string[] } | { ok: false; reasons: string[] };
 
 export async function buildOiPayload(input: {
   organizationId: string;

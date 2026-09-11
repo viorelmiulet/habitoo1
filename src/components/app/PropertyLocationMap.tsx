@@ -56,7 +56,9 @@ export function PropertyLocationMap({
         onCoordsChange({ lat: result.lat, lng: result.lng });
         toast.success("Pin mutat la adresa găsită. Îl poți ajusta manual.");
       } else {
-        toast.info(result.message ?? "Adresa nu a fost găsită. Poziționează pinul manual pe hartă.");
+        toast.info(
+          result.message ?? "Adresa nu a fost găsită. Poziționează pinul manual pe hartă.",
+        );
       }
     } catch {
       toast.info("Geocodarea nu a răspuns. Poziționează pinul manual pe hartă.");

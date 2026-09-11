@@ -53,7 +53,11 @@ export const CATEGORIES: {
 function isValid(value: unknown): value is ConsentState {
   if (!value || typeof value !== "object") return false;
   const v = value as Partial<ConsentState>;
-  return v.version === CONSENT_VERSION && typeof v.analytics === "boolean" && typeof v.marketing === "boolean";
+  return (
+    v.version === CONSENT_VERSION &&
+    typeof v.analytics === "boolean" &&
+    typeof v.marketing === "boolean"
+  );
 }
 
 /** Preferința salvată sau null dacă nu există / versiunea e depășită. */

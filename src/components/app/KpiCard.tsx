@@ -48,7 +48,9 @@ export function KpiCard({
     <>
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
-          <p className="truncate text-xs font-medium tracking-wide text-muted-foreground uppercase">{label}</p>
+          <p className="truncate text-xs font-medium tracking-wide text-muted-foreground uppercase">
+            {label}
+          </p>
           {loading ? (
             <Skeleton className="mt-2.5 h-7 w-20" />
           ) : (
@@ -59,14 +61,21 @@ export function KpiCard({
           ) : trend !== undefined && trend !== null ? (
             <p className="mt-1 flex items-center gap-1.5 text-xs">
               <TrendPill value={trend} />
-              <span className="truncate text-muted-foreground">{trendLabel ?? "vs. perioada anterioară"}</span>
+              <span className="truncate text-muted-foreground">
+                {trendLabel ?? "vs. perioada anterioară"}
+              </span>
             </p>
           ) : hint ? (
             <p className="mt-1 truncate text-xs text-muted-foreground">{hint}</p>
           ) : null}
         </div>
         {Icon ? (
-          <span className={cn("flex size-10 shrink-0 items-center justify-center rounded-xl", toneClass[tone])}>
+          <span
+            className={cn(
+              "flex size-10 shrink-0 items-center justify-center rounded-xl",
+              toneClass[tone],
+            )}
+          >
             <Icon className="size-5" />
           </span>
         ) : null}

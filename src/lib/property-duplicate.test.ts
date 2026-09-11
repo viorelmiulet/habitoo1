@@ -60,8 +60,18 @@ describe("property duplication", () => {
   });
 
   it("creates independent paths under the destination property", () => {
-    const first = duplicateStoragePath("org", "new-property", "org/old-property/photo.jpg", "photo.jpg");
-    const second = duplicateStoragePath("org", "new-property", "org/old-property/photo.jpg", "photo.jpg");
+    const first = duplicateStoragePath(
+      "org",
+      "new-property",
+      "org/old-property/photo.jpg",
+      "photo.jpg",
+    );
+    const second = duplicateStoragePath(
+      "org",
+      "new-property",
+      "org/old-property/photo.jpg",
+      "photo.jpg",
+    );
     expect(first).toMatch(/^org\/new-property\/.+-photo\.jpg$/);
     expect(second).not.toBe(first);
   });

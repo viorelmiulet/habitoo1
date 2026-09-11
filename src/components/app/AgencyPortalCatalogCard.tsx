@@ -13,10 +13,7 @@ import { Button } from "@/components/ui/button";
 import { InlineLoading } from "@/components/app/LoadingState";
 import { QueryError } from "@/components/app/QueryError";
 import { useCurrentUser } from "@/hooks/use-session";
-import {
-  getAgencyPortalCatalog,
-  requestPortalActivation,
-} from "@/lib/portal-activation.functions";
+import { getAgencyPortalCatalog, requestPortalActivation } from "@/lib/portal-activation.functions";
 
 export function AgencyPortalCatalogCard() {
   const queryClient = useQueryClient();

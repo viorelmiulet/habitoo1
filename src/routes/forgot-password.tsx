@@ -54,8 +54,8 @@ function ForgotPasswordPage() {
     >
       {sent ? (
         <div className="panel p-5 text-sm">
-          Am trimis instrucțiunile la <span className="font-medium">{email}</span>. Verifică și folderul
-          Spam.
+          Am trimis instrucțiunile la <span className="font-medium">{email}</span>. Verifică și
+          folderul Spam.
         </div>
       ) : (
         <form onSubmit={submit} className="space-y-4">

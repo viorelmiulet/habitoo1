@@ -5,7 +5,11 @@ import { createServerFn } from "@tanstack/react-start";
 import { requireActiveOrgAuth } from "@/lib/org-access";
 
 type AuthContext = {
-  supabase: { rpc: (fn: "is_superadmin") => PromiseLike<{ data: boolean | null; error: { message: string } | null }> };
+  supabase: {
+    rpc: (
+      fn: "is_superadmin",
+    ) => PromiseLike<{ data: boolean | null; error: { message: string } | null }>;
+  };
   userId: string;
 };
 

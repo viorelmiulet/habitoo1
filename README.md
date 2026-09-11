@@ -128,8 +128,7 @@ poate vedea dashboardul personal
 
 Arhitectura de permisiuni trebuie să permită ulterior introducerea unor roluri custom.
 
-==================================================
-2. DASHBOARD
+================================================== 2. DASHBOARD
 
 Creează dashboard diferit în funcție de rol.
 
@@ -219,8 +218,7 @@ notificări
 
 Dashboard-ul trebuie să fie foarte vizual, cu carduri KPI, grafice și liste scurte.
 
-==================================================
-3. SIDEBAR PRINCIPAL
+================================================== 3. SIDEBAR PRINCIPAL
 
 Structură recomandată:
 
@@ -386,8 +384,7 @@ Audit
 
 Pentru Superadmin trebuie să existe o zonă separată de administrare globală.
 
-==================================================
-4. PROPRIETĂȚI
+================================================== 4. PROPRIETĂȚI
 
 Modul extrem de important.
 
@@ -527,8 +524,7 @@ ID extern
 
 Afișează avertisment înainte de creare dacă există o posibilă dublură.
 
-==================================================
-5. IMAGINI
+================================================== 5. IMAGINI
 
 Crearea unui Media Manager modern.
 
@@ -564,8 +560,7 @@ generare automată dimensiuni pentru diverse portaluri
 
 Pregătește arhitectura pentru integrarea ulterioară a unui Media Studio mai avansat.
 
-==================================================
-6. CONTACTE / CRM
+================================================== 6. CONTACTE / CRM
 
 Contactele trebuie să fie centralizate.
 
@@ -641,8 +636,7 @@ istoric
 
 timeline complet
 
-==================================================
-7. CERERI
+================================================== 7. CERERI
 
 Cererea reprezintă nevoia clientului.
 
@@ -692,8 +686,7 @@ durată
 
 Trebuie să existe matching automat între cereri și proprietăți.
 
-==================================================
-8. LEAD MANAGEMENT
+================================================== 8. LEAD MANAGEMENT
 
 Lead pipeline:
 
@@ -737,8 +730,7 @@ note
 
 Lead-urile fără activitate de X zile trebuie marcate automat.
 
-==================================================
-9. ACTIVITĂȚI + CALENDAR
+================================================== 9. ACTIVITĂȚI + CALENDAR
 
 Activități:
 
@@ -786,8 +778,7 @@ ulterior WhatsApp
 
 Pregătește integrarea Google Calendar.
 
-==================================================
-10. CĂUTARE GLOBALĂ
+================================================== 10. CĂUTARE GLOBALĂ
 
 Una dintre funcțiile cele mai importante.
 
@@ -817,8 +808,7 @@ Rezultatele să apară instant, fără reload.
 
 Căutarea trebuie să accepte inclusiv ID-uri externe și numere de telefon.
 
-==================================================
-11. FILTRE ȘI CĂUTĂRI SALVATE
+================================================== 11. FILTRE ȘI CĂUTĂRI SALVATE
 
 Toate listele importante trebuie să aibă:
 
@@ -841,8 +831,7 @@ Utilizatorul trebuie să poată salva o combinație de filtre.
 Exemplu:
 "3 camere, Militari Residence, sub 120.000 EUR"
 
-==================================================
-12. PUBLICARE PORTALURI
+================================================== 12. PUBLICARE PORTALURI
 
 Creează un modul centralizat de publicare.
 
@@ -900,8 +889,7 @@ sync
 
 getStatus
 
-==================================================
-13. PUBLICARE SOCIAL MEDIA
+================================================== 13. PUBLICARE SOCIAL MEDIA
 
 Pregătește integrare pentru:
 
@@ -929,8 +917,7 @@ imagini
 
 Pregătește integrarea cu Facebook Graph API și cu o extensie Chrome pentru publicare în grupuri, care va fi conectată ulterior.
 
-==================================================
-14. SITE AGENȚIE
+================================================== 14. SITE AGENȚIE
 
 Pregătește posibilitatea ca fiecare agenție să aibă:
 
@@ -950,8 +937,7 @@ branding propriu
 
 Proprietățile publicate pe site trebuie să fie sincronizate cu CRM-ul.
 
-==================================================
-15. MATCHING
+================================================== 15. MATCHING
 
 Sistem de matching inteligent.
 
@@ -986,8 +972,7 @@ etaj
 
 facilități
 
-==================================================
-16. RAPOARTE
+================================================== 16. RAPOARTE
 
 Dashboard pentru management.
 
@@ -1035,8 +1020,7 @@ XLSX
 
 PDF
 
-==================================================
-17. OBIECTIVE
+================================================== 17. OBIECTIVE
 
 Adminul poate defini obiective:
 
@@ -1054,8 +1038,7 @@ X lei comision
 
 Dashboard cu progres în timp real.
 
-==================================================
-18. DOCUMENTE
+================================================== 18. DOCUMENTE
 
 Document manager.
 
@@ -1083,8 +1066,7 @@ fișier proprietate
 
 Pregătește arhitectura pentru semnătură electronică.
 
-==================================================
-19. AUTOMATIZĂRI
+================================================== 19. AUTOMATIZĂRI
 
 Creează un motor simplu de workflow.
 
@@ -1127,8 +1109,7 @@ notifică agentul
 
 notifică managerul
 
-==================================================
-20. NOTIFICĂRI
+================================================== 20. NOTIFICĂRI
 
 Inbox central de notificări.
 
@@ -1152,8 +1133,7 @@ obiectiv
 
 mesaj
 
-==================================================
-21. COLABORARE / MLS
+================================================== 21. COLABORARE / MLS
 
 Pregătește un modul de colaborare între agenții.
 
@@ -1181,8 +1161,7 @@ date necesare colaborării
 
 Telefonul proprietarului și datele interne trebuie să rămână ascunse.
 
-==================================================
-22. ANSAMBLURI IMOBILIARE
+================================================== 22. ANSAMBLURI IMOBILIARE
 
 Creează modul:
 Ansamblu → Clădiri → Unități
@@ -1210,8 +1189,7 @@ disponibilitate
 
 Permite clonarea rapidă a proprietăților.
 
-==================================================
-23. HARTĂ
+================================================== 23. HARTĂ
 
 Integrează hartă pentru proprietăți.
 
@@ -1225,8 +1203,7 @@ poziționare exactă / aproximativă
 
 filtrare proprietăți pe hartă
 
-==================================================
-24. IMPORT / EXPORT
+================================================== 24. IMPORT / EXPORT
 
 Import:
 
@@ -1258,8 +1235,7 @@ activități
 
 tranzacții
 
-==================================================
-25. INTEGRARE IMMOFLUX
+================================================== 25. INTEGRARE IMMOFLUX
 
 Arhitectura trebuie pregătită pentru integrarea cu ImmoFlux.
 
@@ -1281,8 +1257,7 @@ sincronizare periodică
 
 Nu hardcoda integrarea direct în modulele CRM. Creează un sistem de Integration Providers.
 
-==================================================
-26. API
+================================================== 26. API
 
 Creează API pentru integrarea:
 
@@ -1310,8 +1285,7 @@ vedea ultima utilizare
 
 Păstrează audit pentru fiecare request important.
 
-==================================================
-27. SECURITATE
+================================================== 27. SECURITATE
 
 Securitatea este critică.
 
@@ -1371,8 +1345,7 @@ valoare veche
 
 valoare nouă
 
-==================================================
-28. UX/UI
+================================================== 28. UX/UI
 
 Design:
 
@@ -1440,8 +1413,7 @@ charts
 
 Păstrează consistență vizuală în toate modulele.
 
-==================================================
-29. DATABASE
+================================================== 29. DATABASE
 
 Construiește o schemă de database scalabilă.
 
@@ -1502,8 +1474,7 @@ updated_by
 
 Entitățile tenant-specific trebuie să aibă organization_id.
 
-==================================================
-30. ARHITECTURA TEHNICĂ
+================================================== 30. ARHITECTURA TEHNICĂ
 
 Folosește:
 
@@ -1539,8 +1510,7 @@ Nu pune toată logica într-un singur fișier.
 
 Folosește reusable components.
 
-==================================================
-31. SUPERADMIN
+================================================== 31. SUPERADMIN
 
 Creează un panou separat:
 
@@ -1581,8 +1551,7 @@ abonament
 
 Superadmin poate deschide o sesiune de support într-o agenție, dar toate aceste acțiuni trebuie auditate.
 
-==================================================
-32. ADMIN AGENȚIE
+================================================== 32. ADMIN AGENȚIE
 
 Ruta:
 
@@ -1614,8 +1583,7 @@ billing
 
 settings
 
-==================================================
-33. AGENT
+================================================== 33. AGENT
 
 Agentul trebuie să aibă o experiență simplificată.
 
@@ -1637,8 +1605,7 @@ task-uri
 
 Nu afișa opțiuni administrative.
 
-==================================================
-34. PAGINI PRINCIPALE
+================================================== 34. PAGINI PRINCIPALE
 
 Construiește efectiv aceste pagini:
 
@@ -1677,8 +1644,7 @@ Construiește efectiv aceste pagini:
 /app/developments
 /app/settings
 
-==================================================
-35. IMPORTANT – ORDINEA IMPLEMENTĂRII
+================================================== 35. IMPORTANT – ORDINEA IMPLEMENTĂRII
 
 Nu încerca să construiești tot CRM-ul într-un singur pas.
 
@@ -1765,8 +1731,7 @@ billing SaaS
 IMPORTANT:
 După fiecare fază, codul trebuie să fie production-ready și să nu rupă funcționalitățile existente.
 
-==================================================
-36. PRINCIPIU ESENȚIAL
+================================================== 36. PRINCIPIU ESENȚIAL
 
 Vreau un CRM foarte rapid.
 
@@ -1808,8 +1773,7 @@ vedea cererea
 programa vizionare
 fără să pierd contextul.
 
-==================================================
-37. EXPERIENȚA FINALĂ
+================================================== 37. EXPERIENȚA FINALĂ
 
 Produsul trebuie să transmită:
 

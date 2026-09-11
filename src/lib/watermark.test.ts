@@ -55,7 +55,9 @@ describe("configurația watermark", () => {
     expect(base.startsWith("watermarked/")).toBe(true);
     expect(base.endsWith("/org/prop/foto.jpg")).toBe(true);
     expect(watermarkedPath("org/prop/foto.jpg", { ...cfg, scalePercent: 30 })).not.toBe(base);
-    expect(watermarkedPath("org/prop/foto.jpg", { ...cfg, logoPath: "org/logo-2.png" })).not.toBe(base);
+    expect(watermarkedPath("org/prop/foto.jpg", { ...cfg, logoPath: "org/logo-2.png" })).not.toBe(
+      base,
+    );
     expect(watermarkConfigHash(cfg)).toBe(watermarkConfigHash({ ...cfg, enabled: false }));
   });
 });

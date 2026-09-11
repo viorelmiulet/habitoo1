@@ -79,7 +79,8 @@ export function ConfirmDialog({
         {typeToConfirm ? (
           <div className="space-y-2">
             <Label htmlFor="confirm-typed">
-              Scrie <span className="font-mono font-semibold">{typeToConfirm}</span> pentru a confirma
+              Scrie <span className="font-mono font-semibold">{typeToConfirm}</span> pentru a
+              confirma
             </Label>
             <Input
               id="confirm-typed"
@@ -96,7 +97,8 @@ export function ConfirmDialog({
             onClick={handleConfirm}
             disabled={!canConfirm}
             className={cn(
-              destructive && "bg-destructive text-destructive-foreground shadow-sm hover:bg-destructive/90",
+              destructive &&
+                "bg-destructive text-destructive-foreground shadow-sm hover:bg-destructive/90",
             )}
           >
             {pending ? "Se procesează…" : confirmLabel}

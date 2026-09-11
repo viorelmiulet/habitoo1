@@ -33,7 +33,8 @@ const ALLOWED_HOSTS = new Set(["imospot.ro", "www.imospot.ro"]);
 const TIMEOUT_MS = 10_000;
 
 function baseUrlOf(ctx: PortalContext): string {
-  const raw = typeof ctx.settings["endpoint_url"] === "string" ? String(ctx.settings["endpoint_url"]) : "";
+  const raw =
+    typeof ctx.settings["endpoint_url"] === "string" ? String(ctx.settings["endpoint_url"]) : "";
   return (raw.trim() || DEFAULT_BASE_URL).replace(/\/$/, "");
 }
 
@@ -106,7 +107,10 @@ async function request(
 }
 
 /** Mesaj clar pentru utilizator din răspunsul portalului (fără secrete). */
-function failure(res: ApiResponse, operation: string): { code: PortalErrorCode; message: string; detail: string } {
+function failure(
+  res: ApiResponse,
+  operation: string,
+): { code: PortalErrorCode; message: string; detail: string } {
   const code = codeFromHttpStatus(res.status);
   const compact = res.raw.replace(/\s+/g, " ").trim().slice(0, 300);
 
@@ -142,7 +146,10 @@ function failure(res: ApiResponse, operation: string): { code: PortalErrorCode; 
 type ListingEcho = { id: string | null; url: string | null; state: string | null };
 
 function readListing(res: ApiResponse): ListingEcho {
-  const listing = (res.body?.["listing"] ?? res.body?.["data"] ?? res.body) as Record<string, unknown> | null;
+  const listing = (res.body?.["listing"] ?? res.body?.["data"] ?? res.body) as Record<
+    string,
+    unknown
+  > | null;
   const value = (key: string) => {
     const raw = listing?.[key];
     return typeof raw === "string" || typeof raw === "number" ? String(raw) : null;
@@ -155,7 +162,11 @@ async function payloadFor(ctx: PortalContext, ref: ListingRef) {
   return buildImospotPayload({ organizationId: ctx.organizationId, propertyId: ref.propertyId });
 }
 
-function dryRun(listings: ImospotListing[], warnings: string[], operation: string): PortalResult<ListingOutcome> {
+function dryRun(
+  listings: ImospotListing[],
+  warnings: string[],
+  operation: string,
+): PortalResult<ListingOutcome> {
   return {
     ok: true,
     data: {
@@ -172,7 +183,11 @@ function dryRun(listings: ImospotListing[], warnings: string[], operation: strin
 
 type PushMode = "create_or_update" | "update";
 
-async function push(ctx: PortalContext, ref: ListingRef, mode: PushMode): Promise<PortalResult<ListingOutcome>> {
+async function push(
+  ctx: PortalContext,
+  ref: ListingRef,
+  mode: PushMode,
+): Promise<PortalResult<ListingOutcome>> {
   if (!configured(ctx)) {
     return {
       ok: false,
@@ -201,7 +216,12 @@ async function push(ctx: PortalContext, ref: ListingRef, mode: PushMode): Promis
     for (const listing of build.listings) {
       let res =
         mode === "update"
-          ? await request(ctx, "PUT", `/listings/${encodeURIComponent(listing.external_id)}`, listing)
+          ? await request(
+              ctx,
+              "PUT",
+              `/listings/${encodeURIComponent(listing.external_id)}`,
+              listing,
+            )
           : await request(ctx, "POST", "/listings", listing);
 
       // PUT pe un external_id necunoscut: creăm anunțul, nu raportăm eroare.
@@ -220,10 +240,20 @@ async function push(ctx: PortalContext, ref: ListingRef, mode: PushMode): Promis
     }
   } catch (error) {
     if ((error as { portalCode?: string }).portalCode === "CONFIG_ERROR") {
-      return { ok: false, code: "CONFIG_ERROR", message: "Adresa API Imospot nu este permisă.", detail: "blocked_host" };
+      return {
+        ok: false,
+        code: "CONFIG_ERROR",
+        message: "Adresa API Imospot nu este permisă.",
+        detail: "blocked_host",
+      };
     }
     const normalized = toPortalError(error);
-    return { ok: false, code: normalized.code, message: normalized.message, detail: normalized.detail };
+    return {
+      ok: false,
+      code: normalized.code,
+      message: normalized.message,
+      detail: normalized.detail,
+    };
   }
 
   const stateText = states.length ? ` Stare: ${[...new Set(states)].join(", ")}.` : "";
@@ -243,7 +273,10 @@ async function push(ctx: PortalContext, ref: ListingRef, mode: PushMode): Promis
 }
 
 /** Retragerea acoperă ambele variante posibile de tranzacție ale ofertei. */
-async function withdraw(ctx: PortalContext, ref: ListingRef): Promise<PortalResult<ListingOutcome>> {
+async function withdraw(
+  ctx: PortalContext,
+  ref: ListingRef,
+): Promise<PortalResult<ListingOutcome>> {
   if (!configured(ctx)) {
     return {
       ok: false,
@@ -288,10 +321,20 @@ async function withdraw(ctx: PortalContext, ref: ListingRef): Promise<PortalResu
     }
   } catch (error) {
     if ((error as { portalCode?: string }).portalCode === "CONFIG_ERROR") {
-      return { ok: false, code: "CONFIG_ERROR", message: "Adresa API Imospot nu este permisă.", detail: "blocked_host" };
+      return {
+        ok: false,
+        code: "CONFIG_ERROR",
+        message: "Adresa API Imospot nu este permisă.",
+        detail: "blocked_host",
+      };
     }
     const normalized = toPortalError(error);
-    return { ok: false, code: normalized.code, message: normalized.message, detail: normalized.detail };
+    return {
+      ok: false,
+      code: normalized.code,
+      message: normalized.message,
+      detail: normalized.detail,
+    };
   }
 
   return {
@@ -309,7 +352,10 @@ async function withdraw(ctx: PortalContext, ref: ListingRef): Promise<PortalResu
 }
 
 /** Statusul real al conexiunii: GET /account confirmă cheia și soldul. */
-async function status(ctx: PortalContext, live: boolean): Promise<PortalResult<ConnectionStatusOutcome>> {
+async function status(
+  ctx: PortalContext,
+  live: boolean,
+): Promise<PortalResult<ConnectionStatusOutcome>> {
   if (!configured(ctx)) {
     return {
       ok: true,
@@ -360,10 +406,20 @@ async function status(ctx: PortalContext, live: boolean): Promise<PortalResult<C
     };
   } catch (error) {
     if ((error as { portalCode?: string }).portalCode === "CONFIG_ERROR") {
-      return { ok: false, code: "CONFIG_ERROR", message: "Adresa API Imospot nu este permisă.", detail: "blocked_host" };
+      return {
+        ok: false,
+        code: "CONFIG_ERROR",
+        message: "Adresa API Imospot nu este permisă.",
+        detail: "blocked_host",
+      };
     }
     const normalized = toPortalError(error);
-    return { ok: false, code: normalized.code, message: normalized.message, detail: normalized.detail };
+    return {
+      ok: false,
+      code: normalized.code,
+      message: normalized.message,
+      detail: normalized.detail,
+    };
   }
 }
 

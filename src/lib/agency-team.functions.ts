@@ -10,11 +10,19 @@ import { getCrmUrl } from "@/lib/host";
 
 type AuthContext = {
   supabase: {
-    rpc: (fn: "is_org_admin") => PromiseLike<{ data: boolean | null; error: { message: string } | null }>;
+    rpc: (
+      fn: "is_org_admin",
+    ) => PromiseLike<{ data: boolean | null; error: { message: string } | null }>;
     from: (table: string) => {
       select: (cols: string) => {
-        eq: (col: string, value: string) => {
-          maybeSingle: () => PromiseLike<{ data: { organization_id: string | null } | null; error: unknown }>;
+        eq: (
+          col: string,
+          value: string,
+        ) => {
+          maybeSingle: () => PromiseLike<{
+            data: { organization_id: string | null } | null;
+            error: unknown;
+          }>;
         };
       };
     };
@@ -128,7 +136,13 @@ async function buildOverview(admin: Admin, organizationId: string): Promise<Team
 
 async function writeAudit(
   admin: Admin,
-  input: { organizationId: string; actorId: string; action: string; entityId: string; values: Record<string, string | number | boolean | null> },
+  input: {
+    organizationId: string;
+    actorId: string;
+    action: string;
+    entityId: string;
+    values: Record<string, string | number | boolean | null>;
+  },
 ) {
   await admin.from("audit_logs").insert({
     organization_id: input.organizationId,
@@ -177,7 +191,6 @@ async function sendPasswordSetupEmail(email: string, agencyName?: string) {
 }
 
 export const getTeamOverview = createServerFn({ method: "GET" })
-
   .middleware([requireActiveOrgAuth])
   .handler(async ({ context }): Promise<TeamOverview> => {
     const { organizationId } = await requireOrgAdmin(context as unknown as AuthContext);
@@ -205,7 +218,11 @@ export const inviteAgent = createServerFn({ method: "POST" })
     }
 
     const email = data.email.toLowerCase();
-    const existing = await admin.from("profiles").select("id,organization_id").eq("email", email).maybeSingle();
+    const existing = await admin
+      .from("profiles")
+      .select("id,organization_id")
+      .eq("email", email)
+      .maybeSingle();
     if (existing.data) {
       throw new Error(
         existing.data.organization_id === organizationId
@@ -262,7 +279,10 @@ export const inviteAgent = createServerFn({ method: "POST" })
 
     const role = await admin
       .from("user_roles")
-      .upsert({ user_id: newUserId, organization_id: organizationId, role: "agent" }, { onConflict: "user_id,role" });
+      .upsert(
+        { user_id: newUserId, organization_id: organizationId, role: "agent" },
+        { onConflict: "user_id,role" },
+      );
     if (role.error) throw role.error;
 
     await writeAudit(admin, {
@@ -270,7 +290,12 @@ export const inviteAgent = createServerFn({ method: "POST" })
       actorId,
       action: "team.agent_invited",
       entityId: newUserId,
-      values: { email, full_name: data.full_name, plan: before.plan, seats_used: before.seatsUsed + 1 },
+      values: {
+        email,
+        full_name: data.full_name,
+        plan: before.plan,
+        seats_used: before.seatsUsed + 1,
+      },
     });
 
     return buildOverview(admin, organizationId);
@@ -302,7 +327,10 @@ export const setAgentActive = createServerFn({ method: "POST" })
       }
     }
 
-    const update = await admin.from("profiles").update({ is_active: data.isActive }).eq("id", data.userId);
+    const update = await admin
+      .from("profiles")
+      .update({ is_active: data.isActive })
+      .eq("id", data.userId);
     if (update.error) throw update.error;
 
     await writeAudit(admin, {

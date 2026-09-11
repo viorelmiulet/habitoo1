@@ -35,7 +35,9 @@ import { stageOutboundAttachment } from "@/lib/mail-outbound.server";
 const DENIED = "Acces refuzat: acțiunea este permisă exclusiv superadminului.";
 
 /** Authorization first, privileged client second — never the other way round. */
-async function admin(context: { supabase: { rpc: (fn: string) => Promise<{ data: unknown; error: unknown }> } }) {
+async function admin(context: {
+  supabase: { rpc: (fn: string) => Promise<{ data: unknown; error: unknown }> };
+}) {
   const { data, error } = await context.supabase.rpc("is_superadmin");
   if (error || data !== true) throw new Error(DENIED);
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -338,7 +340,9 @@ export const replyMail = createServerFn({ method: "POST" })
       threadId: data.threadId,
       text: data.text ?? null,
       html: data.html ?? null,
-      ...(data.to ? { to: data.to.map(normalizeRecipient).filter((v): v is string => !!v && isEmail(v)) } : {}),
+      ...(data.to
+        ? { to: data.to.map(normalizeRecipient).filter((v): v is string => !!v && isEmail(v)) }
+        : {}),
       sendKey: data.sendKey,
       attachmentIds: data.attachmentIds ?? [],
       actorId: context.userId,

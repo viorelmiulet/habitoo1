@@ -8,12 +8,18 @@ import { threadPreview, validateAttachmentSet, MAX_ATTACHMENT_BYTES } from "../.
 describe("thread preview", () => {
   test("uses the stripped text of the last message", () => {
     expect(
-      threadPreview({ strippedText: "Bună ziua, revin cu detalii.", textBody: "vechi", hasHtml: false }),
+      threadPreview({
+        strippedText: "Bună ziua, revin cu detalii.",
+        textBody: "vechi",
+        hasHtml: false,
+      }),
     ).toBe("Bună ziua, revin cu detalii.");
   });
 
   test("falls back to the plain body when there is no stripped text", () => {
-    expect(threadPreview({ strippedText: null, textBody: "Text simplu", hasHtml: true })).toBe("Text simplu");
+    expect(threadPreview({ strippedText: null, textBody: "Text simplu", hasHtml: true })).toBe(
+      "Text simplu",
+    );
   });
 
   test("an HTML-only message never leaks markup into the list", () => {
@@ -54,14 +60,20 @@ describe("outbound attachment set validation", () => {
   });
 
   test("rejects a disallowed mime type", () => {
-    const res = validateAttachmentSet([file({ filename: "a.exe", contentType: "application/x-msdownload" })]);
+    const res = validateAttachmentSet([
+      file({ filename: "a.exe", contentType: "application/x-msdownload" }),
+    ]);
     expect(res.ok).toBe(false);
     if (!res.ok) expect(res.error).toBe("Tip de fișier neacceptat.");
   });
 
   test("rejects active html/svg content", () => {
-    expect(validateAttachmentSet([file({ filename: "x.svg", contentType: "image/svg+xml" })]).ok).toBe(false);
-    expect(validateAttachmentSet([file({ filename: "x.html", contentType: "text/html" })]).ok).toBe(false);
+    expect(
+      validateAttachmentSet([file({ filename: "x.svg", contentType: "image/svg+xml" })]).ok,
+    ).toBe(false);
+    expect(validateAttachmentSet([file({ filename: "x.html", contentType: "text/html" })]).ok).toBe(
+      false,
+    );
   });
 
   test("rejects a file above 10 MB", () => {
@@ -71,7 +83,9 @@ describe("outbound attachment set validation", () => {
   });
 
   test("rejects a total above 25 MB", () => {
-    const res = validateAttachmentSet(Array.from({ length: 4 }, () => file({ size: 9 * 1024 * 1024 })));
+    const res = validateAttachmentSet(
+      Array.from({ length: 4 }, () => file({ size: 9 * 1024 * 1024 })),
+    );
     expect(res.ok).toBe(false);
     if (!res.ok) expect(res.error).toBe("Dimensiunea totală depășește 25 MB.");
   });
@@ -91,13 +105,8 @@ vi.mock("@/lib/mailgun.server", async (importOriginal) => ({
   sendMailboxEmail: (input: unknown) => sendMailboxEmail(input),
 }));
 
-
-const {
-  stageOutboundAttachment,
-  loadStagedAttachments,
-  persistOutboundAttachments,
-  stagingPath,
-} = await import("../../src/lib/mail-outbound.server");
+const { stageOutboundAttachment, loadStagedAttachments, persistOutboundAttachments, stagingPath } =
+  await import("../../src/lib/mail-outbound.server");
 
 const ACTOR = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
 const UPLOAD = "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb";
@@ -276,7 +285,10 @@ function sendDb() {
       }
       return { data: null, error: null };
     },
-    download: () => ({ data: { arrayBuffer: async () => Buffer.from("hello world") }, error: null }),
+    download: () => ({
+      data: { arrayBuffer: async () => Buffer.from("hello world") },
+      error: null,
+    }),
   });
 }
 
@@ -359,6 +371,8 @@ describe("sending with attachments", () => {
     });
     expect(res.ok).toBe(false);
     expect(db.moves).toHaveLength(0);
-    expect(db.calls.some((c) => c.table === "email_attachments" && hasOp(c.ops, "insert"))).toBe(false);
+    expect(db.calls.some((c) => c.table === "email_attachments" && hasOp(c.ops, "insert"))).toBe(
+      false,
+    );
   });
 });

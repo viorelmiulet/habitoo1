@@ -104,7 +104,6 @@ describe("mapPropertyToStoria", () => {
     ).toBe(false);
   });
 
-
   it("cere coordonate, imagini și monedă acceptată", () => {
     const result = mapPropertyToStoria(
       baseProperty({ lat: null, lng: null, sale_currency: "USD" }),
@@ -155,7 +154,6 @@ describe("mapPropertyToStoria", () => {
     const result = mapPropertyToStoria(baseProperty({ property_type: "cabana" }), options);
     expect(result.ok).toBe(false);
   });
-
 });
 
 describe("helpers Storia", () => {

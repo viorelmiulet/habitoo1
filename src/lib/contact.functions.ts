@@ -28,11 +28,7 @@ const contactRequestSchema = z.object({
 export type ContactRequestInput = z.infer<typeof contactRequestSchema>;
 
 const escapeHtml = (value: string) =>
-  value
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;");
+  value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 
 export const submitContactRequest = createServerFn({ method: "POST" })
   .inputValidator((data: unknown) => contactRequestSchema.parse(data))
@@ -72,12 +68,7 @@ export const submitContactRequest = createServerFn({ method: "POST" })
           ["Motiv", interestLabels[data.interest]],
           ["Pagina", data.sourcePath ?? "—"],
         ];
-        const text = [
-          ...rows.map(([k, v]) => `${k}: ${v}`),
-          "",
-          "Mesaj:",
-          data.message,
-        ].join("\n");
+        const text = [...rows.map(([k, v]) => `${k}: ${v}`), "", "Mesaj:", data.message].join("\n");
         const html = `<h2>Solicitare nouă din formularul de contact</h2><table cellpadding="6">${rows
           .map(([k, v]) => `<tr><td><strong>${k}</strong></td><td>${escapeHtml(v)}</td></tr>`)
           .join("")}</table><p><strong>Mesaj:</strong><br/>${escapeHtml(data.message).replace(

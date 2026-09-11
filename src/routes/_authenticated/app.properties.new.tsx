@@ -1,7 +1,10 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import { PropertyDetailsFields, type PropertyDetailsValue } from "@/components/app/PropertyDetailsFields";
+import {
+  PropertyDetailsFields,
+  type PropertyDetailsValue,
+} from "@/components/app/PropertyDetailsFields";
 import {
   PropertyTransactionFields,
   emptyTransaction,
@@ -93,7 +96,6 @@ function NewPropertyPage() {
   // Seed stabil pentru aproximarea zonei înainte ca proprietatea să aibă id.
   const [mapSeed] = useState(() => `new-${Math.random().toString(36).slice(2)}`);
 
-
   const set = (key: keyof typeof form, value: string | boolean) =>
     setForm((f) => ({ ...f, [key]: value }));
 
@@ -106,7 +108,8 @@ function NewPropertyPage() {
       // Referință unică pe toată platforma: o secvență în baza de date, nu
       // „max + 1” per agenție (doi agenți care salvau simultan puteau primi
       // același număr, iar numerele se dublau între agenții).
-      const { data: reference, error: referenceError } = await supabase.rpc("next_property_reference");
+      const { data: reference, error: referenceError } =
+        await supabase.rpc("next_property_reference");
       if (referenceError) throw referenceError;
       const { data, error } = await supabase
         .from("properties")
@@ -241,7 +244,6 @@ function NewPropertyPage() {
         <FormSection title="Tranzacție, preț și caracteristici">
           <PropertyTransactionFields idPrefix="new" value={tx} onChange={setTx} />
 
-
           <div className="grid gap-4 md:grid-cols-3">
             <div className="space-y-2">
               <Label htmlFor="commission">Comision</Label>
@@ -346,7 +348,11 @@ function NewPropertyPage() {
             </div>
             <div className="space-y-2">
               <Label htmlFor="address">Adresă</Label>
-              <Input id="address" value={form.address} onChange={(e) => set("address", e.target.value)} />
+              <Input
+                id="address"
+                value={form.address}
+                onChange={(e) => set("address", e.target.value)}
+              />
             </div>
           </div>
           <PropertyLocationMap
@@ -360,7 +366,6 @@ function NewPropertyPage() {
             onPreciseChange={setLocationPrecise}
           />
         </FormSection>
-
 
         <FormSection title="Descriere">
           <div className="space-y-2">
@@ -384,7 +389,11 @@ function NewPropertyPage() {
         </FormSection>
 
         <div className="flex justify-end gap-2">
-          <Button type="button" variant="outline" onClick={() => navigate({ to: "/app/properties" })}>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => navigate({ to: "/app/properties" })}
+          >
             Renunță
           </Button>
           <Button type="submit" disabled={create.isPending}>

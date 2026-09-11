@@ -16,8 +16,6 @@ const ADAPTERS: Record<string, PortalAdapter> = {
   storia: storiaAdapter,
 };
 
-
-
 export function getPortalAdapter(portalId: string): PortalAdapter | null {
   return ADAPTERS[portalId] ?? null;
 }

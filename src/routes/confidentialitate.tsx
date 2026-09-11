@@ -21,8 +21,8 @@ const sections: LegalSection[] = [
     body: (
       <>
         <p>
-          Această politică explică ce date cu caracter personal prelucrăm, în ce scop și ce
-          drepturi ai. Se aplică platformei Habitoo (habitoo.ro și crm.habitoo.ro).
+          Această politică explică ce date cu caracter personal prelucrăm, în ce scop și ce drepturi
+          ai. Se aplică platformei Habitoo (habitoo.ro și crm.habitoo.ro).
         </p>
         <p>
           Operator de date: [DENUMIRE LEGALĂ SRL], sediul în [ADRESĂ], CUI [RO________], email{" "}
@@ -44,8 +44,7 @@ const sections: LegalSection[] = [
         <p>Prelucrăm date în două calități distincte, cu responsabilități diferite:</p>
         <p>
           <strong>Ca operator</strong> — pentru datele utilizatorilor platformei (administratori de
-          agenție și agenți): datele de cont, datele de facturare, datele de utilizare a
-          platformei.
+          agenție și agenți): datele de cont, datele de facturare, datele de utilizare a platformei.
         </p>
         <p>
           <strong>Ca persoană împuternicită</strong> — pentru datele pe care agențiile le introduc
@@ -78,8 +77,8 @@ const sections: LegalSection[] = [
           și de activitate în platformă, necesare pentru securitate și depanare.
         </p>
         <p>
-          <strong>Comunicări:</strong> mesajele trimise prin formularul de contact sau prin
-          sistemul de tichete de suport.
+          <strong>Comunicări:</strong> mesajele trimise prin formularul de contact sau prin sistemul
+          de tichete de suport.
         </p>
       </>
     ),
@@ -158,8 +157,8 @@ const sections: LegalSection[] = [
     body: (
       <p>
         Datele sunt stocate pe servere din Uniunea Europeană. Dacă un furnizor prelucrează date în
-        afara UE, ne asigurăm că există garanții adecvate conform GDPR (clauze contractuale
-        standard sau decizie de adecvare).
+        afara UE, ne asigurăm că există garanții adecvate conform GDPR (clauze contractuale standard
+        sau decizie de adecvare).
       </p>
     ),
   },
@@ -197,8 +196,8 @@ const sections: LegalSection[] = [
         </p>
         <p>
           Dacă datele tale au fost introduse în platformă de o agenție (ești clientul acesteia),
-          adresează-te direct agenției respective — ea este operatorul acelor date. Îți putem
-          indica agenția în cauză dacă este necesar.
+          adresează-te direct agenției respective — ea este operatorul acelor date. Îți putem indica
+          agenția în cauză dacă este necesar.
         </p>
         <p>
           Ai dreptul de a depune plângere la Autoritatea Națională de Supraveghere a Prelucrării
@@ -213,8 +212,8 @@ const sections: LegalSection[] = [
       <>
         <p>
           Aplicăm măsuri tehnice și organizatorice adecvate: criptare în tranzit, separarea strictă
-          a datelor între agenții, control al accesului pe roluri, jurnalizarea acțiunilor
-          sensibile și copii de siguranță periodice.
+          a datelor între agenții, control al accesului pe roluri, jurnalizarea acțiunilor sensibile
+          și copii de siguranță periodice.
         </p>
         <p>
           Niciun sistem nu este complet invulnerabil; în caz de breșă de securitate cu risc pentru
@@ -229,19 +228,20 @@ const sections: LegalSection[] = [
     body: (
       <>
         <p>
-          Folosim cookie-uri și tehnologii similare pe trei categorii: <strong>strict necesare</strong>{" "}
-          (autentificare, menținerea sesiunii, securitatea formularelor și memorarea preferinței tale
-          de consimțământ) — acestea nu pot fi dezactivate fără a afecta funcționarea platformei;{" "}
-          <strong>analiză</strong> și <strong>marketing</strong> — dezactivate implicit și folosite
-          numai dacă îți dai acordul explicit. În acest moment nu folosim cookie-uri de analiză sau de
-          marketing.
+          Folosim cookie-uri și tehnologii similare pe trei categorii:{" "}
+          <strong>strict necesare</strong> (autentificare, menținerea sesiunii, securitatea
+          formularelor și memorarea preferinței tale de consimțământ) — acestea nu pot fi
+          dezactivate fără a afecta funcționarea platformei; <strong>analiză</strong> și{" "}
+          <strong>marketing</strong> — dezactivate implicit și folosite numai dacă îți dai acordul
+          explicit. În acest moment nu folosim cookie-uri de analiză sau de marketing.
         </p>
         <p>
-          Pe site-ul public poți accepta toate categoriile, le poți refuza (păstrând doar cele strict
-          necesare) sau poți alege individual din panoul „Personalizează”. Alegerea este salvată local,
-          în browserul tău (localStorage), împreună cu data și versiunea politicii; dacă schimbăm
-          categoriile, îți vom cere din nou acordul. Îți poți retrage sau modifica acordul oricând din
-          linkul „Preferințe cookie-uri” din footerul site-ului, la fel de simplu cum l-ai acordat.
+          Pe site-ul public poți accepta toate categoriile, le poți refuza (păstrând doar cele
+          strict necesare) sau poți alege individual din panoul „Personalizează”. Alegerea este
+          salvată local, în browserul tău (localStorage), împreună cu data și versiunea politicii;
+          dacă schimbăm categoriile, îți vom cere din nou acordul. Îți poți retrage sau modifica
+          acordul oricând din linkul „Preferințe cookie-uri” din footerul site-ului, la fel de
+          simplu cum l-ai acordat.
         </p>
         <p>
           În aplicația CRM (contul autentificat) folosim exclusiv cookie-uri strict necesare pentru
@@ -255,8 +255,8 @@ const sections: LegalSection[] = [
     title: "Minori",
     body: (
       <p>
-        Platforma este destinată exclusiv utilizării profesionale și nu se adresează persoanelor
-        sub 16 ani.
+        Platforma este destinată exclusiv utilizării profesionale și nu se adresează persoanelor sub
+        16 ani.
       </p>
     ),
   },

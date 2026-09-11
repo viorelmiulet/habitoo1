@@ -41,7 +41,8 @@ type ClaimedJob = {
 /** Processes one claimed job. Never throws: the outcome drives the job state. */
 async function processJob(db: Db, job: ClaimedJob): Promise<"stored" | "rejected" | "failed"> {
   const payload = (job.payload ?? {}) as Record<string, unknown>;
-  const attachmentId = typeof payload["attachment_id"] === "string" ? payload["attachment_id"] : null;
+  const attachmentId =
+    typeof payload["attachment_id"] === "string" ? payload["attachment_id"] : null;
   const url = typeof payload["url"] === "string" ? payload["url"] : null;
   if (!attachmentId || !url) return "failed";
 
@@ -117,7 +118,10 @@ async function processJob(db: Db, job: ClaimedJob): Promise<"stored" | "rejected
  * Drains up to `limit` queued attachment jobs. Safe to call repeatedly and
  * concurrently — the claim is atomic, so two runners never take the same job.
  */
-export async function runInboundAttachmentJobs(db: Db, limit = 10): Promise<AttachmentWorkerResult> {
+export async function runInboundAttachmentJobs(
+  db: Db,
+  limit = 10,
+): Promise<AttachmentWorkerResult> {
   const result: AttachmentWorkerResult = { claimed: 0, stored: 0, rejected: 0, failed: 0 };
 
   const { data, error } = await db.rpc("email_jobs_claim", {
@@ -138,7 +142,10 @@ export async function runInboundAttachmentJobs(db: Db, limit = 10): Promise<Atta
       outcome = await processJob(db, job);
     } catch (e) {
       // Filenames and addresses are personal data: only the reason is logged.
-      console.error("[mail:jobs] processing error", safeLogFields({ message: (e as Error).message }));
+      console.error(
+        "[mail:jobs] processing error",
+        safeLogFields({ message: (e as Error).message }),
+      );
     }
 
     result[outcome] += 1;
@@ -150,7 +157,10 @@ export async function runInboundAttachmentJobs(db: Db, limit = 10): Promise<Atta
   }
 
   if (result.claimed) {
-    console.info("[mail:jobs] processed", safeLogFields({ metric: "mail_attachment_jobs", ...result }));
+    console.info(
+      "[mail:jobs] processed",
+      safeLogFields({ metric: "mail_attachment_jobs", ...result }),
+    );
   }
   return result;
 }

@@ -74,14 +74,12 @@ export function normalizeStoriaTaxonomy(payload: unknown): StoriaTaxonomy {
       for (const rawAttribute of attributes as RawNode[] & { mandatory?: unknown }[]) {
         const attributeCode = asString((rawAttribute as RawNode)?.code);
         if (!attributeCode) continue;
-        const existing =
-          merged.get(attributeCode) ??
-          {
-            code: attributeCode,
-            type: attributeType((rawAttribute as { type?: unknown }).type),
-            mandatory: false,
-            values: [] as string[],
-          };
+        const existing = merged.get(attributeCode) ?? {
+          code: attributeCode,
+          type: attributeType((rawAttribute as { type?: unknown }).type),
+          mandatory: false,
+          values: [] as string[],
+        };
         if ((rawAttribute as { mandatory?: unknown }).mandatory === true) existing.mandatory = true;
         const values = (rawAttribute as { values?: unknown }).values;
         if (Array.isArray(values)) {

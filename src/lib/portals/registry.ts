@@ -185,7 +185,6 @@ export const PORTALS: PortalDefinition[] = [
     docs: "https://imove.ro/docs/feeds",
     notes:
       "iMove nu documentează un API de creare/editare/ștergere anunț pentru CRM-uri. Publicarea se face exclusiv prin feedul Habitoo: selectezi oferta, iMove o importă la următoarea sincronizare; dacă o deselectezi, dispare din feed și iMove o arhivează. Cheia API o emite iMove, nu Habitoo.",
-
   },
   // Portalurile de mai jos NU au încă integrare implementată. Nu declarăm
   // metode de autentificare sau capabilități pe care nu le-am verificat.
@@ -200,7 +199,13 @@ export const PORTALS: PortalDefinition[] = [
     directions: ["habitoo_to_portal"],
     // Cheia este EMISĂ DE IMOSPOT pentru contul agenției; Habitoo doar o salvează.
     authentication: ["portal_api_key"],
-    capabilities: ["test_connection", "publish_listing", "update_listing", "withdraw_listing", "sync"],
+    capabilities: [
+      "test_connection",
+      "publish_listing",
+      "update_listing",
+      "withdraw_listing",
+      "sync",
+    ],
     configuration_schema: {
       fields: [
         {
@@ -229,7 +234,13 @@ export const PORTALS: PortalDefinition[] = [
     // Credențialele sunt EMISE DE PORTAL pentru contul agenției; Habitoo le salvează.
     authentication: ["basic_auth"],
     // Nu declarăm `withdraw_listing`: API-ul portalului nu are endpoint de retragere.
-    capabilities: ["test_connection", "publish_listing", "update_listing", "sync", "fetch_listings"],
+    capabilities: [
+      "test_connection",
+      "publish_listing",
+      "update_listing",
+      "sync",
+      "fetch_listings",
+    ],
     configuration_schema: {
       fields: [
         {
@@ -364,17 +375,16 @@ export function getPortalDefinition(id: string): PortalDefinition | null {
   return PORTALS.find((p) => p.id === id) ?? null;
 }
 
-export function portalSupports(definition: PortalDefinition, capability: PortalCapability): boolean {
+export function portalSupports(
+  definition: PortalDefinition,
+  capability: PortalCapability,
+): boolean {
   return definition.capabilities.includes(capability);
 }
 
 /** Starea conexiunii unei agenții (diferită de disponibilitatea integrării). */
 export type PortalConnectionStatus =
-  | "not_configured"
-  | "ready"
-  | "connected"
-  | "error"
-  | "disconnected";
+  "not_configured" | "ready" | "connected" | "error" | "disconnected";
 
 export const PORTAL_CONNECTION_LABEL: Record<
   PortalConnectionStatus,
@@ -427,4 +437,3 @@ export function derivePortalConnectionStatus(input: {
 
   return input.testedOk ? "connected" : "ready";
 }
-

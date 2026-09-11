@@ -40,7 +40,9 @@ export function StatusBadge({
         className,
       )}
     >
-      {dot ? <span className={cn("size-1.5 shrink-0 rounded-full", dotClasses[tone])} aria-hidden /> : null}
+      {dot ? (
+        <span className={cn("size-1.5 shrink-0 rounded-full", dotClasses[tone])} aria-hidden />
+      ) : null}
       {children}
     </span>
   );

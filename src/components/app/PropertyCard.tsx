@@ -37,7 +37,8 @@ const NEW_DAYS = 7;
 
 /** Badge-ul din colțul imaginii: un singur badge, în ordinea de importanță. */
 function cornerBadge(p: PropertyCardRow): { label: string; tone: string } | null {
-  if (p.status === "reserved") return { label: "Rezervat", tone: "bg-warning text-warning-foreground" };
+  if (p.status === "reserved")
+    return { label: "Rezervat", tone: "bg-warning text-warning-foreground" };
   const exclusive = (p.tags ?? []).some((t) => t.toLowerCase().includes("exclusiv"));
   if (exclusive) return { label: "Exclusivitate", tone: "bg-primary text-primary-foreground" };
   const ageDays = (Date.now() - new Date(p.created_at).getTime()) / 86_400_000;
@@ -127,11 +128,14 @@ export function PropertyCard({
             {property.title}
           </Link>
           <p className="mt-0.5 truncate text-sm text-muted-foreground">
-            {[property.district, property.city].filter(Boolean).join(", ") || "Locație nespecificată"}
+            {[property.district, property.city].filter(Boolean).join(", ") ||
+              "Locație nespecificată"}
           </p>
         </div>
 
-        <p className="text-xl font-medium tracking-tight">{formatMoney(property.price, property.currency)}</p>
+        <p className="text-xl font-medium tracking-tight">
+          {formatMoney(property.price, property.currency)}
+        </p>
 
         {facts.length > 0 ? (
           <div className="flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-border/70 pt-3 text-xs text-muted-foreground">
@@ -151,7 +155,12 @@ export function PropertyCard({
                 title={c.portalName}
                 className="relative inline-flex items-center gap-1.5 rounded-full bg-muted px-2 py-0.5 text-[11px] text-muted-foreground"
               >
-                <PortalLogo portalId={c.portalId} name={c.portalName} size={14} className="rounded-sm" />
+                <PortalLogo
+                  portalId={c.portalId}
+                  name={c.portalName}
+                  size={14}
+                  className="rounded-sm"
+                />
                 {c.portalName}
                 {c.state === "error" ? (
                   <span

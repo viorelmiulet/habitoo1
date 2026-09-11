@@ -27,10 +27,7 @@ import { appHead } from "@/components/app/app-head";
 import { PortalsCard } from "@/components/superadmin/PortalsCard";
 import { PortalActivationRequestsCard } from "@/components/superadmin/PortalActivationRequestsCard";
 import { PropertyPortalsCard } from "@/components/app/PropertyPortalsCard";
-import {
-  listOrgPropertiesForPortals,
-  listPortalOrganizations,
-} from "@/lib/portals.functions";
+import { listOrgPropertiesForPortals, listPortalOrganizations } from "@/lib/portals.functions";
 
 export const Route = createFileRoute("/_authenticated/superadmin/portals")({
   head: () => appHead("Habitoo CRM — portaluri imobiliare"),
@@ -45,7 +42,6 @@ export const Route = createFileRoute("/_authenticated/superadmin/portals")({
   }),
   component: SuperadminPortalsPage,
 });
-
 
 function SuperadminPortalsPage() {
   const loadOrgs = useServerFn(listPortalOrganizations);
@@ -77,13 +73,11 @@ function SuperadminPortalsPage() {
     }
   }, [storia, storiaError]);
 
-
   useEffect(() => {
     if (!organizationId && orgs.data && orgs.data.length > 0) {
       setOrganizationId(orgs.data[0]!.id);
     }
   }, [orgs.data, organizationId]);
-
 
   const properties = useQuery({
     queryKey: ["portal-org-properties", organizationId, search],
@@ -137,7 +131,6 @@ function SuperadminPortalsPage() {
             }}
           />
           <PortalsCard organizationId={organizationId} />
-
 
           <section className="panel">
             <header className="space-y-3 border-b border-border px-5 py-4">

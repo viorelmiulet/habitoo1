@@ -41,10 +41,14 @@ export function EmptyState({
       <div className="max-w-sm">
         <p className={cn("font-medium", compact && "text-sm")}>{title}</p>
         {description ? (
-          <p className={cn("mt-1 text-muted-foreground", compact ? "text-xs" : "text-sm")}>{description}</p>
+          <p className={cn("mt-1 text-muted-foreground", compact ? "text-xs" : "text-sm")}>
+            {description}
+          </p>
         ) : null}
       </div>
-      {action ? <div className="flex flex-wrap items-center justify-center gap-2">{action}</div> : null}
+      {action ? (
+        <div className="flex flex-wrap items-center justify-center gap-2">{action}</div>
+      ) : null}
     </div>
   );
 }

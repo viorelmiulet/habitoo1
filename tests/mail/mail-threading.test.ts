@@ -11,7 +11,10 @@ import {
 type Db = Parameters<typeof resolveThread>[0];
 
 /** Fake db whose email_messages lookup answers with the given rows. */
-function db(rows: unknown[], rpcResult: { data?: unknown; error?: unknown } = { data: "thread-1" }) {
+function db(
+  rows: unknown[],
+  rpcResult: { data?: unknown; error?: unknown } = { data: "thread-1" },
+) {
   const calls: { table: string; ops: FakeOp[] }[] = [];
   const fake = makeFakeDb({
     handler: (table, ops) => {
@@ -55,8 +58,18 @@ describe("outbound threading", () => {
   test("two concurrent sends converge on ONE thread via the upsert", async () => {
     const fake = db([]);
     const [t1, t2] = await Promise.all([
-      resolveThread(fake, { mailboxId: "mb-1", subject: "S", counterpart: "x@y.z", participants: [] }),
-      resolveThread(fake, { mailboxId: "mb-1", subject: "S", counterpart: "x@y.z", participants: [] }),
+      resolveThread(fake, {
+        mailboxId: "mb-1",
+        subject: "S",
+        counterpart: "x@y.z",
+        participants: [],
+      }),
+      resolveThread(fake, {
+        mailboxId: "mb-1",
+        subject: "S",
+        counterpart: "x@y.z",
+        participants: [],
+      }),
     ]);
     expect(t1).toBe(t2);
     expect(new Set(fake.rpcCalls.map((c) => JSON.stringify(c.args))).size).toBe(1);
@@ -65,7 +78,12 @@ describe("outbound threading", () => {
   test("a failed upsert never invents a thread id", async () => {
     const fake = db([], { data: null, error: { code: "XX000" } });
     expect(
-      await resolveThread(fake, { mailboxId: "mb-1", subject: "S", counterpart: "a@b.c", participants: [] }),
+      await resolveThread(fake, {
+        mailboxId: "mb-1",
+        subject: "S",
+        counterpart: "a@b.c",
+        participants: [],
+      }),
     ).toBeNull();
   });
 });
@@ -87,9 +105,9 @@ describe("inbound reply linking", () => {
 
   test("References is used when In-Reply-To is absent", async () => {
     const fake = db([{ thread_id: "thread-9", provider_message_id: "root@clickimob.ro" }]);
-    expect(
-      await findThreadByReferences(fake, "mb-1", [null, "<root@clickimob.ro>"]),
-    ).toBe("thread-9");
+    expect(await findThreadByReferences(fake, "mb-1", [null, "<root@clickimob.ro>"])).toBe(
+      "thread-9",
+    );
   });
 
   test("unknown headers do not link anything (no fuzzy matching)", async () => {

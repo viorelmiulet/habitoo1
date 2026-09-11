@@ -31,13 +31,17 @@ export type FeedStatus = {
 
 type AuthContext = {
   supabase: {
-    rpc: (fn: "is_org_admin") => PromiseLike<{ data: boolean | null; error: { message: string } | null }>;
+    rpc: (
+      fn: "is_org_admin",
+    ) => PromiseLike<{ data: boolean | null; error: { message: string } | null }>;
     from: (table: "profiles") => {
       select: (cols: string) => {
         eq: (
           col: string,
           value: string,
-        ) => { maybeSingle: () => PromiseLike<{ data: { organization_id: string | null } | null }> };
+        ) => {
+          maybeSingle: () => PromiseLike<{ data: { organization_id: string | null } | null }>;
+        };
       };
     };
   };
@@ -177,31 +181,33 @@ export const revokeSiteFeedToken = createServerFn({ method: "POST" })
 /** Test de conexiune: numără proprietățile și agenții eligibili pentru feed. */
 export const testSiteFeed = createServerFn({ method: "POST" })
   .middleware([requireActiveOrgAuth])
-  .handler(async ({ context }): Promise<{ properties: number; agents: number; hasToken: boolean }> => {
-    const organizationId = await requireOrgAdmin(context as unknown as AuthContext);
-    const { admin } = await loadServer();
-    const [properties, agents, tokens] = await Promise.all([
-      admin
-        .from("properties")
-        .select("id", { count: "exact", head: true })
-        .eq("organization_id", organizationId)
-        .eq("publish_status", "published")
-        .is("deleted_at", null)
-        .in("status", ["active", "reserved", "negotiation"]),
-      admin
-        .from("profiles")
-        .select("id", { count: "exact", head: true })
-        .eq("organization_id", organizationId)
-        .eq("is_active", true),
-      admin
-        .from("site_feed_tokens")
-        .select("id", { count: "exact", head: true })
-        .eq("organization_id", organizationId)
-        .is("revoked_at", null),
-    ]);
-    return {
-      properties: properties.count ?? 0,
-      agents: agents.count ?? 0,
-      hasToken: (tokens.count ?? 0) > 0,
-    };
-  });
+  .handler(
+    async ({ context }): Promise<{ properties: number; agents: number; hasToken: boolean }> => {
+      const organizationId = await requireOrgAdmin(context as unknown as AuthContext);
+      const { admin } = await loadServer();
+      const [properties, agents, tokens] = await Promise.all([
+        admin
+          .from("properties")
+          .select("id", { count: "exact", head: true })
+          .eq("organization_id", organizationId)
+          .eq("publish_status", "published")
+          .is("deleted_at", null)
+          .in("status", ["active", "reserved", "negotiation"]),
+        admin
+          .from("profiles")
+          .select("id", { count: "exact", head: true })
+          .eq("organization_id", organizationId)
+          .eq("is_active", true),
+        admin
+          .from("site_feed_tokens")
+          .select("id", { count: "exact", head: true })
+          .eq("organization_id", organizationId)
+          .is("revoked_at", null),
+      ]);
+      return {
+        properties: properties.count ?? 0,
+        agents: agents.count ?? 0,
+        hasToken: (tokens.count ?? 0) > 0,
+      };
+    },
+  );

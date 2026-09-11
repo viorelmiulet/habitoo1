@@ -82,7 +82,14 @@ export const propertyStatusOptions = [
   "archived",
 ] as const;
 
-export const requestStatusOptions = ["new", "active", "working", "paused", "solved", "lost"] as const;
+export const requestStatusOptions = [
+  "new",
+  "active",
+  "working",
+  "paused",
+  "solved",
+  "lost",
+] as const;
 
 export const requestStatusLabels: Record<string, string> = {
   new: "Nouă",
@@ -93,7 +100,10 @@ export const requestStatusLabels: Record<string, string> = {
   lost: "Pierdută",
 };
 
-export const requestStatusTone: Record<string, "neutral" | "success" | "warning" | "info" | "danger"> = {
+export const requestStatusTone: Record<
+  string,
+  "neutral" | "success" | "warning" | "info" | "danger"
+> = {
   new: "info",
   active: "success",
   working: "warning",
@@ -108,7 +118,10 @@ export const activityStatusLabels: Record<string, string> = {
   cancelled: "Anulată",
 };
 
-export const activityStatusTone: Record<string, "neutral" | "success" | "warning" | "info" | "danger"> = {
+export const activityStatusTone: Record<
+  string,
+  "neutral" | "success" | "warning" | "info" | "danger"
+> = {
   planned: "warning",
   done: "success",
   cancelled: "neutral",

@@ -4,7 +4,10 @@ import { toast } from "sonner";
  * Transformă erorile tehnice (Supabase / Postgres / rețea) în mesaje clare
  * pentru utilizator, în limba română. Mesajul tehnic rămâne în consolă.
  */
-export function friendlyError(error: unknown, fallback = "A apărut o eroare. Încearcă din nou."): string {
+export function friendlyError(
+  error: unknown,
+  fallback = "A apărut o eroare. Încearcă din nou.",
+): string {
   const raw = extractMessage(error);
   const code = extractCode(error);
   const lower = raw.toLowerCase();
@@ -23,7 +26,11 @@ export function friendlyError(error: unknown, fallback = "A apărut o eroare. Î
   if (code === "23514" || lower.includes("violates check constraint")) {
     return "Una dintre valori nu este acceptată. Verifică datele introduse.";
   }
-  if (code === "42501" || lower.includes("row-level security") || lower.includes("permission denied")) {
+  if (
+    code === "42501" ||
+    lower.includes("row-level security") ||
+    lower.includes("permission denied")
+  ) {
     return "Nu ai permisiunea necesară pentru această acțiune.";
   }
   if (code === "PGRST116" || lower.includes("0 rows")) {
@@ -32,7 +39,11 @@ export function friendlyError(error: unknown, fallback = "A apărut o eroare. Î
   if (code === "PGRST301" || lower.includes("jwt expired") || lower.includes("invalid jwt")) {
     return "Sesiunea a expirat. Autentifică-te din nou.";
   }
-  if (lower.includes("failed to fetch") || lower.includes("networkerror") || lower.includes("network request failed")) {
+  if (
+    lower.includes("failed to fetch") ||
+    lower.includes("networkerror") ||
+    lower.includes("network request failed")
+  ) {
     return "Nu s-a putut contacta serverul. Verifică conexiunea la internet.";
   }
   if (lower.includes("payload too large") || lower.includes("exceeded the maximum allowed size")) {

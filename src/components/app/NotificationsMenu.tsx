@@ -1,7 +1,15 @@
 import { useState } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Bell, CalendarClock, CheckCheck, Sparkles, Target, UserPlus, type LucideIcon } from "lucide-react";
+import {
+  Bell,
+  CalendarClock,
+  CheckCheck,
+  Sparkles,
+  Target,
+  UserPlus,
+  type LucideIcon,
+} from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -27,7 +35,9 @@ function relativeShort(value: string) {
   const d = Math.round(h / 24);
   if (d === 1) return "ieri";
   if (d < 7) return `${d} zile`;
-  return new Intl.DateTimeFormat("ro-RO", { day: "numeric", month: "short" }).format(new Date(value));
+  return new Intl.DateTimeFormat("ro-RO", { day: "numeric", month: "short" }).format(
+    new Date(value),
+  );
 }
 
 /** Numărul de notificări necitite (partajat între clopoțel și meniul lateral). */
@@ -170,14 +180,21 @@ export function NotificationsMenu({ userId }: { userId: string }) {
                       <span
                         className={cn(
                           "mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-lg",
-                          isUnread ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground",
+                          isUnread
+                            ? "bg-primary/10 text-primary"
+                            : "bg-muted text-muted-foreground",
                         )}
                       >
                         <Icon className="size-4" />
                       </span>
                       <span className="min-w-0 flex-1">
                         <span className="flex items-start justify-between gap-2">
-                          <span className={cn("line-clamp-1 text-sm", isUnread ? "font-semibold" : "font-medium")}>
+                          <span
+                            className={cn(
+                              "line-clamp-1 text-sm",
+                              isUnread ? "font-semibold" : "font-medium",
+                            )}
+                          >
                             {n.title}
                           </span>
                           <span className="shrink-0 text-[11px] text-muted-foreground tabular-nums">
@@ -185,11 +202,16 @@ export function NotificationsMenu({ userId }: { userId: string }) {
                           </span>
                         </span>
                         {n.body ? (
-                          <span className="mt-0.5 line-clamp-2 block text-xs text-muted-foreground">{n.body}</span>
+                          <span className="mt-0.5 line-clamp-2 block text-xs text-muted-foreground">
+                            {n.body}
+                          </span>
                         ) : null}
                       </span>
                       {isUnread ? (
-                        <span className="mt-2 size-2 shrink-0 rounded-full bg-primary" aria-hidden />
+                        <span
+                          className="mt-2 size-2 shrink-0 rounded-full bg-primary"
+                          aria-hidden
+                        />
                       ) : null}
                     </button>
                   </li>

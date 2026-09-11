@@ -30,7 +30,11 @@ export const Route = createFileRoute("/api/public/homepitch/v1/properties/$id")(
             if (excluded) {
               return {
                 response: jsonResponse(
-                  { api_version: HOMEPITCH_API_VERSION, error: "excluded", reasons: excluded.reasons },
+                  {
+                    api_version: HOMEPITCH_API_VERSION,
+                    error: "excluded",
+                    reasons: excluded.reasons,
+                  },
                   422,
                 ),
               };

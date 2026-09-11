@@ -94,7 +94,6 @@ function SettingsPage() {
   });
 
   const saveProfile = useMutation({
-
     mutationFn: async () => {
       if (!user) throw new Error("Sesiune expirată.");
       const { error } = await supabase
@@ -152,7 +151,6 @@ function SettingsPage() {
           {user?.isAdmin ? <TabsTrigger value="integrations">Integrări</TabsTrigger> : null}
           {user?.isAdmin ? <TabsTrigger value="portals">Portaluri</TabsTrigger> : null}
         </TabsList>
-
 
         <TabsContent value="profile">
           <form
@@ -222,128 +220,129 @@ function SettingsPage() {
         </TabsContent>
 
         {user?.isAdmin ? (
-        <TabsContent value="agency">
-          <form
-            className="panel max-w-xl space-y-4 p-5"
-            onSubmit={(e) => {
-              e.preventDefault();
-              saveOrg.mutate();
-            }}
-          >
-            <div className="space-y-2">
-              <Label htmlFor="name">Numele agenției</Label>
-              <Input
-                id="name"
-                value={orgForm.name}
-                disabled={!user?.isAdmin}
-                onChange={(e) => setOrgForm((f) => ({ ...f, name: e.target.value }))}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="city">Oraș</Label>
-              <Input
-                id="city"
-                value={orgForm.city}
-                disabled={!user?.isAdmin}
-                onChange={(e) => setOrgForm((f) => ({ ...f, city: e.target.value }))}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="org_phone">Telefon</Label>
-              <Input
-                id="org_phone"
-                value={orgForm.phone}
-                disabled={!user?.isAdmin}
-                onChange={(e) => setOrgForm((f) => ({ ...f, phone: e.target.value }))}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="org_email">Email</Label>
-              <Input
-                id="org_email"
-                value={orgForm.email}
-                disabled={!user?.isAdmin}
-                onChange={(e) => setOrgForm((f) => ({ ...f, email: e.target.value }))}
-              />
-            </div>
-            <div className="flex items-start justify-between gap-4 rounded-xl border border-border p-4">
-              <div className="space-y-1">
-                <Label htmlFor="collab_enabled" className="text-sm">
-                  Participă la Colaborare Habitoo
-                </Label>
+          <TabsContent value="agency">
+            <form
+              className="panel max-w-xl space-y-4 p-5"
+              onSubmit={(e) => {
+                e.preventDefault();
+                saveOrg.mutate();
+              }}
+            >
+              <div className="space-y-2">
+                <Label htmlFor="name">Numele agenției</Label>
+                <Input
+                  id="name"
+                  value={orgForm.name}
+                  disabled={!user?.isAdmin}
+                  onChange={(e) => setOrgForm((f) => ({ ...f, name: e.target.value }))}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="city">Oraș</Label>
+                <Input
+                  id="city"
+                  value={orgForm.city}
+                  disabled={!user?.isAdmin}
+                  onChange={(e) => setOrgForm((f) => ({ ...f, city: e.target.value }))}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="org_phone">Telefon</Label>
+                <Input
+                  id="org_phone"
+                  value={orgForm.phone}
+                  disabled={!user?.isAdmin}
+                  onChange={(e) => setOrgForm((f) => ({ ...f, phone: e.target.value }))}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="org_email">Email</Label>
+                <Input
+                  id="org_email"
+                  value={orgForm.email}
+                  disabled={!user?.isAdmin}
+                  onChange={(e) => setOrgForm((f) => ({ ...f, email: e.target.value }))}
+                />
+              </div>
+              <div className="flex items-start justify-between gap-4 rounded-xl border border-border p-4">
+                <div className="space-y-1">
+                  <Label htmlFor="collab_enabled" className="text-sm">
+                    Participă la Colaborare Habitoo
+                  </Label>
+                  <p className="text-xs text-muted-foreground">
+                    Când este activ, proprietățile tale marcate „Disponibilă pentru colaborare” sunt
+                    vizibile celorlalte agenții Habitoo, iar tu vezi ofertele lor. Dezactivarea te
+                    scoate complet din rețea, în ambele sensuri.
+                  </p>
+                </div>
+                <Switch
+                  id="collab_enabled"
+                  checked={orgForm.collaboration_enabled}
+                  onCheckedChange={(v) => setOrgForm((f) => ({ ...f, collaboration_enabled: v }))}
+                />
+              </div>
+              <div className="flex items-center justify-between gap-3 rounded-xl border border-border p-4 text-sm">
+                <span className="text-muted-foreground">Plan curent</span>
+                <StatusBadge tone="primary">{user?.organization?.plan ?? "—"}</StatusBadge>
+              </div>
+
+              {user?.isAdmin ? (
+                <div className="flex justify-end">
+                  <Button type="submit" disabled={saveOrg.isPending}>
+                    Salvează agenția
+                  </Button>
+                </div>
+              ) : (
                 <p className="text-xs text-muted-foreground">
-                  Când este activ, proprietățile tale marcate „Disponibilă pentru colaborare” sunt
-                  vizibile celorlalte agenții Habitoo, iar tu vezi ofertele lor. Dezactivarea te scoate
-                  complet din rețea, în ambele sensuri.
+                  Doar administratorul agenției poate modifica aceste date.
                 </p>
-              </div>
-              <Switch
-                id="collab_enabled"
-                checked={orgForm.collaboration_enabled}
-                onCheckedChange={(v) => setOrgForm((f) => ({ ...f, collaboration_enabled: v }))}
-              />
-            </div>
-            <div className="flex items-center justify-between gap-3 rounded-xl border border-border p-4 text-sm">
-              <span className="text-muted-foreground">Plan curent</span>
-              <StatusBadge tone="primary">{user?.organization?.plan ?? "—"}</StatusBadge>
-            </div>
-
-            {user?.isAdmin ? (
-              <div className="flex justify-end">
-                <Button type="submit" disabled={saveOrg.isPending}>
-                  Salvează agenția
-                </Button>
-              </div>
-            ) : (
-              <p className="text-xs text-muted-foreground">
-                Doar administratorul agenției poate modifica aceste date.
-              </p>
-            )}
-          </form>
-        </TabsContent>
-
+              )}
+            </form>
+          </TabsContent>
         ) : null}
 
         {user?.isAdmin ? (
-        <TabsContent value="branding">
-          <div className="max-w-3xl">
-            <AgencyBrandingCard />
-          </div>
-        </TabsContent>
+          <TabsContent value="branding">
+            <div className="max-w-3xl">
+              <AgencyBrandingCard />
+            </div>
+          </TabsContent>
         ) : null}
 
         {user?.isAdmin ? (
-        <TabsContent value="team">
-          <div className="panel overflow-hidden">
-            <ul className="divide-y divide-border">
-              {team.map((m) => (
-                <li key={m.id} className="flex flex-wrap items-center gap-3 px-5 py-3 text-sm">
-                  <UserAvatar name={m.full_name} path={m.avatar_url} />
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate font-medium">{m.full_name}</p>
-                    <p className="truncate text-xs text-muted-foreground">{m.email ?? "—"}</p>
-                  </div>
-                  {m.roles.map((r) => (
-                    <StatusBadge key={r} tone="primary">
-                      {roleLabels[r] ?? r}
+          <TabsContent value="team">
+            <div className="panel overflow-hidden">
+              <ul className="divide-y divide-border">
+                {team.map((m) => (
+                  <li key={m.id} className="flex flex-wrap items-center gap-3 px-5 py-3 text-sm">
+                    <UserAvatar name={m.full_name} path={m.avatar_url} />
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate font-medium">{m.full_name}</p>
+                      <p className="truncate text-xs text-muted-foreground">{m.email ?? "—"}</p>
+                    </div>
+                    {m.roles.map((r) => (
+                      <StatusBadge key={r} tone="primary">
+                        {roleLabels[r] ?? r}
+                      </StatusBadge>
+                    ))}
+                    <StatusBadge tone={m.is_active ? "success" : "neutral"}>
+                      {m.is_active ? "Activ" : "Inactiv"}
                     </StatusBadge>
-                  ))}
-                  <StatusBadge tone={m.is_active ? "success" : "neutral"}>
-                    {m.is_active ? "Activ" : "Inactiv"}
-                  </StatusBadge>
-                  <span className="text-xs text-muted-foreground">{formatDate(m.created_at)}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
-          <p className="mt-3 text-xs text-muted-foreground">
-            Invitarea de agenți noi și locurile disponibile în plan se gestionează din pagina{" "}
-            <Link to="/app/team" className="underline">
-              Agenți
-            </Link>
-            .
-          </p>
-        </TabsContent>
+                    <span className="text-xs text-muted-foreground">
+                      {formatDate(m.created_at)}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <p className="mt-3 text-xs text-muted-foreground">
+              Invitarea de agenți noi și locurile disponibile în plan se gestionează din pagina{" "}
+              <Link to="/app/team" className="underline">
+                Agenți
+              </Link>
+              .
+            </p>
+          </TabsContent>
         ) : null}
 
         {user?.isAdmin ? (
@@ -360,7 +359,6 @@ function SettingsPage() {
           </TabsContent>
         ) : null}
       </Tabs>
-
     </>
   );
 }

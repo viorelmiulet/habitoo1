@@ -115,7 +115,8 @@ const emptyFilters: Filters = {
   addedBefore: "",
 };
 
-type SortKey = "created_desc" | "updated_desc" | "price_asc" | "price_desc" | "surface_asc" | "surface_desc";
+type SortKey =
+  "created_desc" | "updated_desc" | "price_asc" | "price_desc" | "surface_asc" | "surface_desc";
 
 const sortOptions: Record<SortKey, string> = {
   created_desc: "Dată adăugare (nou→vechi)",
@@ -262,7 +263,8 @@ function PropertiesPage() {
       // Arhivele nu apar în lista implicită; revin la vedere cu "Arată și arhivate"
       // sau când se filtrează explicit după statusul "Arhivat".
       else if (!filters.showArchived) query = query.neq("status", "archived" as never);
-      if (filters.transaction !== "all") query = query.eq("transaction_kind", filters.transaction as never);
+      if (filters.transaction !== "all")
+        query = query.eq("transaction_kind", filters.transaction as never);
       if (filters.type !== "all") query = query.eq("property_type", filters.type);
       if (filters.city !== "all") query = query.eq("city", filters.city);
       if (filters.district !== "all") query = query.eq("district", filters.district);
@@ -312,7 +314,10 @@ function PropertiesPage() {
 
   const updateStatus = useMutation({
     mutationFn: async ({ ids, status }: { ids: string[]; status: string }) => {
-      const { error } = await supabase.from("properties").update({ status: status as never }).in("id", ids);
+      const { error } = await supabase
+        .from("properties")
+        .update({ status: status as never })
+        .in("id", ids);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -325,7 +330,10 @@ function PropertiesPage() {
 
   const assignAgent = useMutation({
     mutationFn: async ({ ids, agentId }: { ids: string[]; agentId: string }) => {
-      const { error } = await supabase.from("properties").update({ assigned_to: agentId } as never).in("id", ids);
+      const { error } = await supabase
+        .from("properties")
+        .update({ assigned_to: agentId } as never)
+        .in("id", ids);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -428,7 +436,8 @@ function PropertiesPage() {
         if (error) throw error;
       }
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["property-favorites", user?.userId] }),
+    onSuccess: () =>
+      queryClient.invalidateQueries({ queryKey: ["property-favorites", user?.userId] }),
     onError: (e: Error) => toastError(e),
   });
 
@@ -459,10 +468,18 @@ function PropertiesPage() {
   const activePills: { key: keyof Filters; label: string }[] = [
     filters.q ? { key: "q" as const, label: `„${filters.q}”` } : null,
     filters.status !== "all"
-      ? { key: "status" as const, label: propertyStatusLabels[filters.status as keyof typeof propertyStatusLabels] ?? filters.status }
+      ? {
+          key: "status" as const,
+          label:
+            propertyStatusLabels[filters.status as keyof typeof propertyStatusLabels] ??
+            filters.status,
+        }
       : null,
     filters.transaction !== "all"
-      ? { key: "transaction" as const, label: filters.transaction === "sale" ? "Vânzare" : "Închiriere" }
+      ? {
+          key: "transaction" as const,
+          label: filters.transaction === "sale" ? "Vânzare" : "Închiriere",
+        }
       : null,
     filters.type !== "all"
       ? { key: "type" as const, label: propertyTypeLabels[filters.type] ?? filters.type }
@@ -475,13 +492,19 @@ function PropertiesPage() {
     filters.favoritesOnly ? { key: "favoritesOnly" as const, label: "Doar favorite" } : null,
     filters.priceMin ? { key: "priceMin" as const, label: `Preț ≥ ${filters.priceMin}` } : null,
     filters.priceMax ? { key: "priceMax" as const, label: `Preț ≤ ${filters.priceMax}` } : null,
-    filters.surfaceMin ? { key: "surfaceMin" as const, label: `Supr. ≥ ${filters.surfaceMin} m²` } : null,
-    filters.surfaceMax ? { key: "surfaceMax" as const, label: `Supr. ≤ ${filters.surfaceMax} m²` } : null,
+    filters.surfaceMin
+      ? { key: "surfaceMin" as const, label: `Supr. ≥ ${filters.surfaceMin} m²` }
+      : null,
+    filters.surfaceMax
+      ? { key: "surfaceMax" as const, label: `Supr. ≤ ${filters.surfaceMax} m²` }
+      : null,
     filters.rooms ? { key: "rooms" as const, label: `${filters.rooms} camere` } : null,
     filters.bathrooms ? { key: "bathrooms" as const, label: `${filters.bathrooms} băi` } : null,
     filters.floor ? { key: "floor" as const, label: `Etaj ${filters.floor}` } : null,
     filters.addedAfter ? { key: "addedAfter" as const, label: `După ${filters.addedAfter}` } : null,
-    filters.addedBefore ? { key: "addedBefore" as const, label: `Înainte de ${filters.addedBefore}` } : null,
+    filters.addedBefore
+      ? { key: "addedBefore" as const, label: `Înainte de ${filters.addedBefore}` }
+      : null,
   ].filter(Boolean) as { key: keyof Filters; label: string }[];
 
   const clearPill = (key: keyof Filters) =>
@@ -521,7 +544,11 @@ function PropertiesPage() {
       label: "Numele filtrului",
       placeholder: "ex. Apartamente 2 camere, Nord",
       confirmLabel: "Salvează",
-      onSubmit: (name) => savedViews.save.mutateAsync({ name, config: filters as unknown as Record<string, unknown> }),
+      onSubmit: (name) =>
+        savedViews.save.mutateAsync({
+          name,
+          config: filters as unknown as Record<string, unknown>,
+        }),
     });
   };
 
@@ -554,7 +581,10 @@ function PropertiesPage() {
             />
           </div>
 
-          <Select value={filters.status} onValueChange={(v) => setFilters((f) => ({ ...f, status: v }))}>
+          <Select
+            value={filters.status}
+            onValueChange={(v) => setFilters((f) => ({ ...f, status: v }))}
+          >
             <SelectTrigger className="w-40">
               <SelectValue placeholder="Status" />
             </SelectTrigger>
@@ -568,7 +598,10 @@ function PropertiesPage() {
             </SelectContent>
           </Select>
 
-          <Select value={filters.transaction} onValueChange={(v) => setFilters((f) => ({ ...f, transaction: v }))}>
+          <Select
+            value={filters.transaction}
+            onValueChange={(v) => setFilters((f) => ({ ...f, transaction: v }))}
+          >
             <SelectTrigger className="w-36">
               <SelectValue placeholder="Tranzacție" />
             </SelectTrigger>
@@ -579,7 +612,10 @@ function PropertiesPage() {
             </SelectContent>
           </Select>
 
-          <Select value={filters.type} onValueChange={(v) => setFilters((f) => ({ ...f, type: v }))}>
+          <Select
+            value={filters.type}
+            onValueChange={(v) => setFilters((f) => ({ ...f, type: v }))}
+          >
             <SelectTrigger className="w-40">
               <SelectValue placeholder="Tip" />
             </SelectTrigger>
@@ -639,7 +675,9 @@ function PropertiesPage() {
                   key={c.key}
                   checked={columns.includes(c.key)}
                   onCheckedChange={(checked) =>
-                    setColumns((cols) => (checked ? [...cols, c.key] : cols.filter((k) => k !== c.key)))
+                    setColumns((cols) =>
+                      checked ? [...cols, c.key] : cols.filter((k) => k !== c.key),
+                    )
                   }
                 >
                   {c.label}
@@ -650,7 +688,10 @@ function PropertiesPage() {
         </div>
 
         <div className="flex flex-wrap items-center gap-2 border-t border-border pt-3">
-          <Select value={filters.district} onValueChange={(v) => setFilters((f) => ({ ...f, district: v }))}>
+          <Select
+            value={filters.district}
+            onValueChange={(v) => setFilters((f) => ({ ...f, district: v }))}
+          >
             <SelectTrigger className="w-40">
               <SelectValue placeholder="Zonă" />
             </SelectTrigger>
@@ -663,7 +704,10 @@ function PropertiesPage() {
               ))}
             </SelectContent>
           </Select>
-          <Select value={filters.city} onValueChange={(v) => setFilters((f) => ({ ...f, city: v }))}>
+          <Select
+            value={filters.city}
+            onValueChange={(v) => setFilters((f) => ({ ...f, city: v }))}
+          >
             <SelectTrigger className="w-40">
               <SelectValue placeholder="Oraș" />
             </SelectTrigger>
@@ -676,7 +720,10 @@ function PropertiesPage() {
               ))}
             </SelectContent>
           </Select>
-          <Select value={filters.agent} onValueChange={(v) => setFilters((f) => ({ ...f, agent: v }))}>
+          <Select
+            value={filters.agent}
+            onValueChange={(v) => setFilters((f) => ({ ...f, agent: v }))}
+          >
             <SelectTrigger className="w-40">
               <SelectValue placeholder="Agent" />
             </SelectTrigger>
@@ -689,7 +736,10 @@ function PropertiesPage() {
               ))}
             </SelectContent>
           </Select>
-          <Select value={filters.source} onValueChange={(v) => setFilters((f) => ({ ...f, source: v }))}>
+          <Select
+            value={filters.source}
+            onValueChange={(v) => setFilters((f) => ({ ...f, source: v }))}
+          >
             <SelectTrigger className="w-36">
               <SelectValue placeholder="Sursă" />
             </SelectTrigger>
@@ -891,7 +941,10 @@ function PropertiesPage() {
         {view === "list" ? (
           <>
             <div className="hidden items-center gap-3 border-b border-border px-4 py-3 text-xs font-medium tracking-wide text-muted-foreground uppercase lg:flex">
-              <Checkbox checked={allSelected} onCheckedChange={(c) => setSelected(c ? rows.map((r) => r.id) : [])} />
+              <Checkbox
+                checked={allSelected}
+                onCheckedChange={(c) => setSelected(c ? rows.map((r) => r.id) : [])}
+              />
               <span className="w-4" aria-hidden />
               <span className="w-[120px]">Foto</span>
               <span className="flex-1 basis-[200px]">Proprietate</span>
@@ -899,10 +952,14 @@ function PropertiesPage() {
               {columns.includes("transaction") ? <span className="w-24">Tranzacție</span> : null}
               {columns.includes("status") ? <span className="w-28">Status</span> : null}
               {columns.includes("price") ? <span className="w-28 text-right">Preț</span> : null}
-              {columns.includes("surface") ? <span className="w-24 text-right">Suprafață</span> : null}
+              {columns.includes("surface") ? (
+                <span className="w-24 text-right">Suprafață</span>
+              ) : null}
               {portals.hasPortals ? <span className="w-40">Portaluri</span> : null}
               {columns.includes("agent") ? <span className="w-32">Agent</span> : null}
-              {columns.includes("updated") ? <span className="w-24 text-right">Actualizat</span> : null}
+              {columns.includes("updated") ? (
+                <span className="w-24 text-right">Actualizat</span>
+              ) : null}
             </div>
 
             {isLoading ? (
@@ -912,14 +969,21 @@ function PropertiesPage() {
             ) : (
               <ul className="divide-y divide-border">
                 {rows.map((p) => (
-                  <li key={p.id} className="flex flex-wrap items-center gap-3 px-4 py-3 text-sm lg:flex-nowrap">
+                  <li
+                    key={p.id}
+                    className="flex flex-wrap items-center gap-3 px-4 py-3 text-sm lg:flex-nowrap"
+                  >
                     <Checkbox
                       checked={selected.includes(p.id)}
                       onCheckedChange={(c) =>
                         setSelected((s) => (c ? [...s, p.id] : s.filter((id) => id !== p.id)))
                       }
                     />
-                    <button type="button" onClick={() => toggleFavorite.mutate(p.id)} title="Favorit">
+                    <button
+                      type="button"
+                      onClick={() => toggleFavorite.mutate(p.id)}
+                      title="Favorit"
+                    >
                       <Star
                         className={`size-4 ${favoriteIds.includes(p.id) ? "fill-warning text-warning" : "text-muted-foreground"}`}
                       />
@@ -931,7 +995,11 @@ function PropertiesPage() {
                       className="h-[90px] w-[110px] sm:h-[100px] sm:w-[120px]"
                     />
                     <div className="min-w-0 flex-1 basis-[200px]">
-                      <Link to="/app/properties/$id" params={{ id: p.id }} className="block truncate font-medium hover:text-primary">
+                      <Link
+                        to="/app/properties/$id"
+                        params={{ id: p.id }}
+                        className="block truncate font-medium hover:text-primary"
+                      >
                         {p.title}
                       </Link>
                       <p className="truncate text-xs text-muted-foreground">
@@ -945,15 +1013,21 @@ function PropertiesPage() {
                       </span>
                     ) : null}
                     {columns.includes("transaction") ? (
-                      <span className="w-24 text-xs text-muted-foreground">{transactionLabels[p.transaction_kind]}</span>
+                      <span className="w-24 text-xs text-muted-foreground">
+                        {transactionLabels[p.transaction_kind]}
+                      </span>
                     ) : null}
                     {columns.includes("status") ? (
                       <span className="w-28">
-                        <StatusBadge tone={propertyStatusTone[p.status]}>{propertyStatusLabels[p.status]}</StatusBadge>
+                        <StatusBadge tone={propertyStatusTone[p.status]}>
+                          {propertyStatusLabels[p.status]}
+                        </StatusBadge>
                       </span>
                     ) : null}
                     {columns.includes("price") ? (
-                      <span className="w-28 text-right font-medium">{formatMoney(p.price, p.currency)}</span>
+                      <span className="w-28 text-right font-medium">
+                        {formatMoney(p.price, p.currency)}
+                      </span>
                     ) : null}
                     {columns.includes("surface") ? (
                       <span className="w-24 text-right text-xs text-muted-foreground">
@@ -966,10 +1040,14 @@ function PropertiesPage() {
                       </span>
                     ) : null}
                     {columns.includes("agent") ? (
-                      <span className="w-32 truncate text-xs text-muted-foreground">{agentName(p.assigned_to)}</span>
+                      <span className="w-32 truncate text-xs text-muted-foreground">
+                        {agentName(p.assigned_to)}
+                      </span>
                     ) : null}
                     {columns.includes("updated") ? (
-                      <span className="w-24 text-right text-xs text-muted-foreground">{relativeDays(p.updated_at)}</span>
+                      <span className="w-24 text-right text-xs text-muted-foreground">
+                        {relativeDays(p.updated_at)}
+                      </span>
                     ) : null}
                     {p.status === "archived" ? (
                       <Button
@@ -1011,10 +1089,18 @@ function PropertiesPage() {
 
         <div className="flex items-center justify-between gap-3 border-t border-border px-4 py-3 text-sm">
           <span className="text-xs text-muted-foreground">
-            {total > 0 ? `${page * PAGE_SIZE + 1}–${Math.min(total, (page + 1) * PAGE_SIZE)} din ${total}` : "0 rezultate"}
+            {total > 0
+              ? `${page * PAGE_SIZE + 1}–${Math.min(total, (page + 1) * PAGE_SIZE)} din ${total}`
+              : "0 rezultate"}
           </span>
           <div className="flex items-center gap-2">
-            <Button variant="outline" size="icon" aria-label="Pagina anterioară" disabled={page === 0} onClick={() => setPage((p) => Math.max(0, p - 1))}>
+            <Button
+              variant="outline"
+              size="icon"
+              aria-label="Pagina anterioară"
+              disabled={page === 0}
+              onClick={() => setPage((p) => Math.max(0, p - 1))}
+            >
               <ChevronLeft className="size-4" />
             </Button>
             <span className="text-xs text-muted-foreground">
@@ -1038,7 +1124,8 @@ function PropertiesPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>Arhivezi proprietățile selectate?</AlertDialogTitle>
             <AlertDialogDescription>
-              {archiveTarget?.length} proprietăți vor fi marcate ca arhivate. Poți reveni oricând asupra statusului.
+              {archiveTarget?.length} proprietăți vor fi marcate ca arhivate. Poți reveni oricând
+              asupra statusului.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

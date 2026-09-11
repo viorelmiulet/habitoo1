@@ -10,12 +10,9 @@ export type OrgBlockReason = "suspended" | "archived" | "cancelled" | "pending_a
 export const ORG_BLOCKED_CODE = "ORG_ACCESS_BLOCKED";
 
 export const ORG_BLOCKED_MESSAGES: Record<OrgBlockReason, string> = {
-  suspended:
-    "Contul agenției tale este suspendat. Contactează administratorul platformei.",
-  archived:
-    "Contul agenției tale a fost arhivat. Contactează administratorul platformei.",
-  cancelled:
-    "Contul agenției tale a fost anulat. Contactează administratorul platformei.",
+  suspended: "Contul agenției tale este suspendat. Contactează administratorul platformei.",
+  archived: "Contul agenției tale a fost arhivat. Contactează administratorul platformei.",
+  cancelled: "Contul agenției tale a fost anulat. Contactează administratorul platformei.",
   pending_approval:
     "Contul agenției tale așteaptă aprobare. Vei primi acces imediat ce este validat.",
 };
@@ -29,8 +26,7 @@ export function orgBlockedError(reason: OrgBlockReason): Error {
 
 /** Extrage motivul blocării dintr-o eroare venită de la server, dacă există. */
 export function parseOrgBlocked(error: unknown): OrgBlockReason | null {
-  const raw =
-    error instanceof Error ? error.message : typeof error === "string" ? error : "";
+  const raw = error instanceof Error ? error.message : typeof error === "string" ? error : "";
   if (!raw.includes(ORG_BLOCKED_CODE)) return null;
   if (raw.includes(":archived")) return "archived";
   if (raw.includes(":cancelled")) return "cancelled";
@@ -38,10 +34,15 @@ export function parseOrgBlocked(error: unknown): OrgBlockReason | null {
   return "suspended";
 }
 
-export function orgBlockReason(org: {
-  status?: string | null;
-  archived_at?: string | null;
-} | null | undefined): OrgBlockReason | null {
+export function orgBlockReason(
+  org:
+    | {
+        status?: string | null;
+        archived_at?: string | null;
+      }
+    | null
+    | undefined,
+): OrgBlockReason | null {
   if (!org) return null;
   if (org.archived_at) return "archived";
   if (org.status === "suspended") return "suspended";

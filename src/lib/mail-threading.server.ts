@@ -30,7 +30,9 @@ export async function findThreadByReferences(
   mailboxId: string,
   ids: (string | null | undefined)[],
 ): Promise<string | null> {
-  const candidates = Array.from(new Set(ids.map(bareId).filter((v): v is string => !!v))).slice(-20);
+  const candidates = Array.from(new Set(ids.map(bareId).filter((v): v is string => !!v))).slice(
+    -20,
+  );
   if (!candidates.length) return null;
 
   const { data } = await db

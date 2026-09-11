@@ -83,9 +83,7 @@ export const mockPipeline = [
   },
   {
     stage: "contacted",
-    cards: [
-      { name: "Mihai Ionescu", subject: "Apartament 3 camere, Aviației", source: "Telefon" },
-    ],
+    cards: [{ name: "Mihai Ionescu", subject: "Apartament 3 camere, Aviației", source: "Telefon" }],
   },
   {
     stage: "qualified",
@@ -96,7 +94,9 @@ export const mockPipeline = [
   },
   {
     stage: "viewing",
-    cards: [{ name: "Cristina Marin", subject: "Apartament 2 camere, Floreasca", source: "Referral" }],
+    cards: [
+      { name: "Cristina Marin", subject: "Apartament 2 camere, Floreasca", source: "Referral" },
+    ],
   },
   {
     stage: "offer",
@@ -197,9 +197,19 @@ export const mockGoals = [
 
 export const mockAgenda = [
   { time: "09:30", kind: "call", title: "Apel — Andreea Popescu", meta: "Follow-up ofertă" },
-  { time: "11:30", kind: "viewing", title: "Vizionare — RF-1024", meta: "Mihai Ionescu · Aviației" },
+  {
+    time: "11:30",
+    kind: "viewing",
+    title: "Vizionare — RF-1024",
+    meta: "Mihai Ionescu · Aviației",
+  },
   { time: "14:00", kind: "meeting", title: "Semnare precontract", meta: "Casă P+1, Pipera" },
-  { time: "17:00", kind: "followup", title: "Follow-up — Elena Dumitrescu", meta: "După vizionare" },
+  {
+    time: "17:00",
+    kind: "followup",
+    title: "Follow-up — Elena Dumitrescu",
+    meta: "După vizionare",
+  },
 ];
 
 export const mockContacts = [

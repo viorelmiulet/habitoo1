@@ -2,7 +2,6 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRef, useState } from "react";
 import {
-  
   Building2,
   MessageCircle,
   MoreHorizontal,
@@ -30,7 +29,10 @@ import {
   PropertyPortalsCard,
   type PropertyPortalsHandle,
 } from "@/components/app/PropertyPortalsCard";
-import { PropertyDetailsFields, type PropertyDetailsValue } from "@/components/app/PropertyDetailsFields";
+import {
+  PropertyDetailsFields,
+  type PropertyDetailsValue,
+} from "@/components/app/PropertyDetailsFields";
 import { PROPERTY_DETAIL_FIELDS } from "@/lib/property-detail-fields";
 import {
   PropertyTransactionFields,
@@ -101,8 +103,11 @@ function PropertyDetailPage() {
   const agencyLogoUrl = useAgencyLogoUrl(user?.organization?.logo_path);
 
   const [editing, setEditing] = useState(false);
-  
-  const [activityDialog, setActivityDialog] = useState<{ open: boolean; kind?: "viewing" | "call" }>({
+
+  const [activityDialog, setActivityDialog] = useState<{
+    open: boolean;
+    kind?: "viewing" | "call";
+  }>({
     open: false,
   });
   const [addClientOpen, setAddClientOpen] = useState(false);
@@ -119,7 +124,11 @@ function PropertyDetailPage() {
     queryFn: async () => {
       const [property, activities, leads, requests, contacts, audit] = await Promise.all([
         supabase.from("properties").select("*").eq("id", id).maybeSingle(),
-        supabase.from("activities").select("*").eq("property_id", id).order("starts_at", { ascending: false }),
+        supabase
+          .from("activities")
+          .select("*")
+          .eq("property_id", id)
+          .order("starts_at", { ascending: false }),
         supabase.from("leads").select("*").eq("property_id", id),
         supabase.from("requests").select("*").eq("status", "active"),
         supabase.from("contacts").select("id,first_name,last_name,phone,email,whatsapp"),
@@ -176,7 +185,10 @@ function PropertyDetailPage() {
     setTx(transactionFromProperty(property));
     setDetails(
       Object.fromEntries(
-        PROPERTY_DETAIL_FIELDS.map((key) => [key, (property as Record<string, unknown>)[key] ?? null]),
+        PROPERTY_DETAIL_FIELDS.map((key) => [
+          key,
+          (property as Record<string, unknown>)[key] ?? null,
+        ]),
       ),
     );
     setLocation({
@@ -228,7 +240,10 @@ function PropertyDetailPage() {
 
   const changeStatus = useMutation({
     mutationFn: async (status: string) => {
-      const { error } = await supabase.from("properties").update({ status: status as never }).eq("id", id);
+      const { error } = await supabase
+        .from("properties")
+        .update({ status: status as never })
+        .eq("id", id);
       if (error) throw error;
       await logAudit({
         organizationId: orgId,
@@ -276,8 +291,6 @@ function PropertyDetailPage() {
         if (saveError) throw saveError;
       }
 
-
-
       // O ofertă publicată nu poate rămâne „Ciornă”: statusul ciornă este exclus
       // din feeduri și din portaluri, deci publicarea îl trece pe „Activ”.
       const { error } = await supabase
@@ -320,7 +333,8 @@ function PropertyDetailPage() {
 
       if (done.length > 0) toast.success(`${base} ${done.map((r) => r.message).join(" · ")}`);
       else toast.success(base);
-      if (failed.length > 0) toast.error(`Portaluri cu erori: ${failed.map((r) => r.message).join(" · ")}`);
+      if (failed.length > 0)
+        toast.error(`Portaluri cu erori: ${failed.map((r) => r.message).join(" · ")}`);
       if (portalsError) toast.error(portalsError);
     },
     onError: (e: Error) => toastError(e),
@@ -434,7 +448,6 @@ function PropertyDetailPage() {
     w.print();
   };
 
-
   // Coordonatele arătate în panoul read-only: exacte sau zona aproximativă.
   const mapCoords = publicCoords(property);
 
@@ -446,12 +459,13 @@ function PropertyDetailPage() {
     { label: "Suprafață", value: property.surface ? `${formatNumber(property.surface)} m²` : "—" },
     {
       label: "Camere / etaj",
-      value: [
-        property.rooms ? `${property.rooms} cam.` : null,
-        property.floor !== null && property.floor !== undefined ? `etaj ${property.floor}` : null,
-      ]
-        .filter(Boolean)
-        .join(" · ") || "—",
+      value:
+        [
+          property.rooms ? `${property.rooms} cam.` : null,
+          property.floor !== null && property.floor !== undefined ? `etaj ${property.floor}` : null,
+        ]
+          .filter(Boolean)
+          .join(" · ") || "—",
     },
     { label: "Lead-uri active", value: String(activeLeads.length) },
     {
@@ -462,8 +476,6 @@ function PropertyDetailPage() {
 
   return (
     <>
-
-
       <PageHeader
         backTo="/app/properties"
         backLabel="Proprietăți"
@@ -473,7 +485,9 @@ function PropertyDetailPage() {
             .join(" · ") || "Proprietate"
         }
         title={property.title}
-        description={[property.address, property.district, property.city].filter(Boolean).join(", ")}
+        description={[property.address, property.district, property.city]
+          .filter(Boolean)
+          .join(", ")}
         meta={
           <>
             <StatusBadge tone={propertyStatusTone[property.status]} dot>
@@ -507,7 +521,12 @@ function PropertyDetailPage() {
                   <Pencil className="size-4" /> Editează
                 </Button>
               )}
-              <Button size="sm" variant="ghost" onClick={() => duplicate.mutate()} disabled={duplicate.isPending}>
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => duplicate.mutate()}
+                disabled={duplicate.isPending}
+              >
                 Duplică
               </Button>
               <Button
@@ -557,8 +576,6 @@ function PropertyDetailPage() {
         onArchived={() => navigate({ to: "/app/properties" })}
       />
 
-
-
       {/* Bandă de metrici: date reale, fără borduri, doar fundal ușor diferit. */}
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         {metrics.map((m) => (
@@ -588,10 +605,18 @@ function PropertyDetailPage() {
             </a>
           </Button>
         ) : null}
-        <Button size="sm" variant="outline" onClick={() => setActivityDialog({ open: true, kind: "call" })}>
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={() => setActivityDialog({ open: true, kind: "call" })}
+        >
           Adaugă activitate
         </Button>
-        <Button size="sm" variant="outline" onClick={() => setActivityDialog({ open: true, kind: "viewing" })}>
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={() => setActivityDialog({ open: true, kind: "viewing" })}
+        >
           Creează vizionare
         </Button>
         <Button size="sm" variant="outline" onClick={() => setAddClientOpen(true)}>
@@ -635,49 +660,61 @@ function PropertyDetailPage() {
               }}
             >
               <FormSection title="Date generale">
-              <div className="grid gap-5 md:grid-cols-2">
-                <LocationPicker idPrefix="edit" value={location} onChange={setLocation} />
-                {[
-                  ["title", "Titlu"],
-                  ["surface", "Suprafață (m²)"],
-                  ["district", "Zonă"],
-                  ["address", "Adresă"],
-                ].map(([key, label]) => (
-                  <div key={key} className="space-y-2">
-                    <Label htmlFor={key}>
-                      {label}
-                      {key === "title" ? <RequiredMark /> : null}
-                    </Label>
-                    <Input id={key} value={draft[key] ?? ""} onChange={(e) => setDraft((d) => ({ ...d, [key]: e.target.value }))} />
-                  </div>
-                ))}
-              </div>
-              <PropertyLocationMap
-                idPrefix="edit"
-                seed={property.id}
-                lat={coords?.lat ?? null}
-                lng={coords?.lng ?? null}
-                precise={locationPrecise}
-                addressParts={[draft.address, draft.district, location.localityName || draft.city, location.countyName]}
-                onCoordsChange={setCoords}
-                onPreciseChange={setLocationPrecise}
-              />
+                <div className="grid gap-5 md:grid-cols-2">
+                  <LocationPicker idPrefix="edit" value={location} onChange={setLocation} />
+                  {[
+                    ["title", "Titlu"],
+                    ["surface", "Suprafață (m²)"],
+                    ["district", "Zonă"],
+                    ["address", "Adresă"],
+                  ].map(([key, label]) => (
+                    <div key={key} className="space-y-2">
+                      <Label htmlFor={key}>
+                        {label}
+                        {key === "title" ? <RequiredMark /> : null}
+                      </Label>
+                      <Input
+                        id={key}
+                        value={draft[key] ?? ""}
+                        onChange={(e) => setDraft((d) => ({ ...d, [key]: e.target.value }))}
+                      />
+                    </div>
+                  ))}
+                </div>
+                <PropertyLocationMap
+                  idPrefix="edit"
+                  seed={property.id}
+                  lat={coords?.lat ?? null}
+                  lng={coords?.lng ?? null}
+                  precise={locationPrecise}
+                  addressParts={[
+                    draft.address,
+                    draft.district,
+                    location.localityName || draft.city,
+                    location.countyName,
+                  ]}
+                  onCoordsChange={setCoords}
+                  onPreciseChange={setLocationPrecise}
+                />
               </FormSection>
 
-              <FormSection title="Tranzacție și preț" description="Alege vânzare, închiriere sau ambele.">
+              <FormSection
+                title="Tranzacție și preț"
+                description="Alege vânzare, închiriere sau ambele."
+              >
                 <PropertyTransactionFields idPrefix="edit" value={tx} onChange={setTx} />
               </FormSection>
 
               <FormSection title="Descriere">
-              <div className="space-y-2">
-                <Label htmlFor="description">Descriere</Label>
-                <Textarea
-                  id="description"
-                  rows={4}
-                  value={draft.description ?? ""}
-                  onChange={(e) => setDraft((d) => ({ ...d, description: e.target.value }))}
-                />
-              </div>
+                <div className="space-y-2">
+                  <Label htmlFor="description">Descriere</Label>
+                  <Textarea
+                    id="description"
+                    rows={4}
+                    value={draft.description ?? ""}
+                    onChange={(e) => setDraft((d) => ({ ...d, description: e.target.value }))}
+                  />
+                </div>
               </FormSection>
 
               <FormSection title="Detalii complete">
@@ -688,17 +725,19 @@ function PropertyDetailPage() {
                 />
               </FormSection>
 
-
-              <FormSection title="Note interne" description="Nu se publică pe site sau pe portaluri.">
-              <div className="space-y-2">
-                <Label htmlFor="internal_notes">Note interne</Label>
-                <Textarea
-                  id="internal_notes"
-                  rows={3}
-                  value={draft.internal_notes ?? ""}
-                  onChange={(e) => setDraft((d) => ({ ...d, internal_notes: e.target.value }))}
-                />
-              </div>
+              <FormSection
+                title="Note interne"
+                description="Nu se publică pe site sau pe portaluri."
+              >
+                <div className="space-y-2">
+                  <Label htmlFor="internal_notes">Note interne</Label>
+                  <Textarea
+                    id="internal_notes"
+                    rows={3}
+                    value={draft.internal_notes ?? ""}
+                    onChange={(e) => setDraft((d) => ({ ...d, internal_notes: e.target.value }))}
+                  />
+                </div>
               </FormSection>
 
               <div className="flex justify-end gap-2">
@@ -713,7 +752,6 @@ function PropertyDetailPage() {
           ) : null}
 
           {!editing ? (
-
             <div className="grid gap-6 lg:grid-cols-3">
               <div className="space-y-6 lg:col-span-2">
                 <div className="panel p-5">
@@ -764,7 +802,10 @@ function PropertyDetailPage() {
                   <h2 className="text-sm font-semibold">Specificații</h2>
                   <dl className="mt-3 grid gap-2 sm:grid-cols-2">
                     {specs.map((s) => (
-                      <div key={s.label} className="flex items-center justify-between gap-3 text-sm">
+                      <div
+                        key={s.label}
+                        className="flex items-center justify-between gap-3 text-sm"
+                      >
                         <dt className="text-muted-foreground">{s.label}</dt>
                         <dd className="text-right font-medium">{s.value}</dd>
                       </div>
@@ -776,7 +817,11 @@ function PropertyDetailPage() {
                   <h2 className="text-sm font-semibold">Proprietar</h2>
                   {ownerContact ? (
                     <div className="mt-3 space-y-1 text-sm">
-                      <Link to="/app/contacts/$id" params={{ id: ownerContact.id }} className="font-medium hover:text-primary">
+                      <Link
+                        to="/app/contacts/$id"
+                        params={{ id: ownerContact.id }}
+                        className="font-medium hover:text-primary"
+                      >
                         {ownerContact.first_name} {ownerContact.last_name}
                       </Link>
                       <p className="text-muted-foreground">{ownerContact.phone ?? "—"}</p>
@@ -797,7 +842,9 @@ function PropertyDetailPage() {
                       <p className="text-muted-foreground">{formatDateTime(upcoming.starts_at)}</p>
                     </div>
                   ) : (
-                    <p className="mt-3 text-sm text-muted-foreground">Nicio activitate planificată.</p>
+                    <p className="mt-3 text-sm text-muted-foreground">
+                      Nicio activitate planificată.
+                    </p>
                   )}
                 </div>
 
@@ -810,7 +857,9 @@ function PropertyDetailPage() {
                       {recentActivities.map((a) => (
                         <li key={a.id} className="flex items-center justify-between gap-2">
                           <span className="truncate">{a.title}</span>
-                          <StatusBadge tone={activityStatusTone[a.status]}>{activityStatusLabels[a.status]}</StatusBadge>
+                          <StatusBadge tone={activityStatusTone[a.status]}>
+                            {activityStatusLabels[a.status]}
+                          </StatusBadge>
                         </li>
                       ))}
                     </ul>
@@ -851,7 +900,6 @@ function PropertyDetailPage() {
               </div>
             </div>
           ) : null}
-
         </TabsContent>
 
         <TabsContent value="media">
@@ -879,14 +927,23 @@ function PropertyDetailPage() {
         <TabsContent value="matching">
           <div className="panel overflow-hidden">
             {matches.length === 0 ? (
-              <EmptyState icon={Sparkles} title="Nicio cerere potrivită" description="Când vor apărea cereri compatibile, le vezi aici automat." />
+              <EmptyState
+                icon={Sparkles}
+                title="Nicio cerere potrivită"
+                description="Când vor apărea cereri compatibile, le vezi aici automat."
+              />
             ) : (
               <ul className="divide-y divide-border">
                 {matches.map(({ request, match }) => (
-                  <li key={request.id} className="flex flex-wrap items-center gap-3 px-5 py-3 text-sm">
+                  <li
+                    key={request.id}
+                    className="flex flex-wrap items-center gap-3 px-5 py-3 text-sm"
+                  >
                     <div className="min-w-0 flex-1">
                       <p className="truncate font-medium">{request.title}</p>
-                      <p className="truncate text-xs text-muted-foreground">{match.reasons.join(" · ") || "Potrivire parțială"}</p>
+                      <p className="truncate text-xs text-muted-foreground">
+                        {match.reasons.join(" · ") || "Potrivire parțială"}
+                      </p>
                     </div>
                     <StatusBadge tone={matchTone(match.score)}>
                       {match.score}% · {matchLabel(match.score)}
@@ -909,9 +966,13 @@ function PropertyDetailPage() {
               <ul className="divide-y divide-border">
                 {activities.map((a) => (
                   <li key={a.id} className="flex items-center gap-3 px-5 py-3 text-sm">
-                    <StatusBadge tone={activityStatusTone[a.status]}>{activityKindLabels[a.kind]}</StatusBadge>
+                    <StatusBadge tone={activityStatusTone[a.status]}>
+                      {activityKindLabels[a.kind]}
+                    </StatusBadge>
                     <span className="min-w-0 flex-1 truncate">{a.title}</span>
-                    <span className="text-xs text-muted-foreground">{formatDateTime(a.starts_at)}</span>
+                    <span className="text-xs text-muted-foreground">
+                      {formatDateTime(a.starts_at)}
+                    </span>
                   </li>
                 ))}
               </ul>
@@ -923,7 +984,11 @@ function PropertyDetailPage() {
           <DocumentsPanel entityType="property" entityId={id} orgId={orgId} />
         </TabsContent>
 
-        <TabsContent forceMount value="publishing" className="space-y-4 data-[state=inactive]:hidden">
+        <TabsContent
+          forceMount
+          value="publishing"
+          className="space-y-4 data-[state=inactive]:hidden"
+        >
           <div className="panel space-y-4 p-5">
             <div className="flex items-center justify-between">
               <div>
@@ -982,11 +1047,19 @@ function PropertyDetailPage() {
           <div className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="client-name">Nume</Label>
-              <Input id="client-name" value={clientName} onChange={(e) => setClientName(e.target.value)} />
+              <Input
+                id="client-name"
+                value={clientName}
+                onChange={(e) => setClientName(e.target.value)}
+              />
             </div>
             <div className="space-y-2">
               <Label htmlFor="client-phone">Telefon</Label>
-              <Input id="client-phone" value={clientPhone} onChange={(e) => setClientPhone(e.target.value)} />
+              <Input
+                id="client-phone"
+                value={clientPhone}
+                onChange={(e) => setClientPhone(e.target.value)}
+              />
             </div>
           </div>
           <DialogFooter>
@@ -999,7 +1072,6 @@ function PropertyDetailPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-
     </>
   );
 }

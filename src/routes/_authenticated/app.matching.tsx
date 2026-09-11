@@ -1,7 +1,18 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
-import { Sparkles, ArrowRight, Download, X, Bookmark, Check, Mail, MessageCircle, CalendarPlus, ExternalLink } from "lucide-react";
+import {
+  Sparkles,
+  ArrowRight,
+  Download,
+  X,
+  Bookmark,
+  Check,
+  Mail,
+  MessageCircle,
+  CalendarPlus,
+  ExternalLink,
+} from "lucide-react";
 import { toast } from "sonner";
 import { toastError } from "@/lib/errors";
 import { PageHeader } from "@/components/app/PageHeader";
@@ -282,10 +293,16 @@ function MatchingPage() {
     return allRows
       .filter((r) => r.match.score >= minScore)
       .filter((r) => !ignored.has(r.key))
-      .filter((r) => (agentFilter === "all" ? true : r.property.assigned_to === agentFilter || r.request.assigned_to === agentFilter))
+      .filter((r) =>
+        agentFilter === "all"
+          ? true
+          : r.property.assigned_to === agentFilter || r.request.assigned_to === agentFilter,
+      )
       .filter((r) => (cityFilter === "all" ? true : r.property.city === cityFilter))
       .filter((r) => (typeFilter === "all" ? true : r.property.property_type === typeFilter))
-      .filter((r) => (onlyMine ? r.request.assigned_to === userId || r.property.assigned_to === userId : true))
+      .filter((r) =>
+        onlyMine ? r.request.assigned_to === userId || r.property.assigned_to === userId : true,
+      )
       .filter((r) =>
         q
           ? r.request.title.toLowerCase().includes(q) || r.property.title.toLowerCase().includes(q)
@@ -340,12 +357,16 @@ ${materialSignature(brandingFromOrg(me?.organization))}`;
           ) : undefined
         }
         actions={
-          <Button variant="outline" size="sm" onClick={handleExport} disabled={filteredRows.length === 0}>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleExport}
+            disabled={filteredRows.length === 0}
+          >
             <Download className="mr-1.5 size-4" /> Export CSV
           </Button>
         }
       />
-
 
       <div className="panel space-y-4 p-4">
         <div className="flex flex-wrap items-center gap-2">
@@ -369,7 +390,10 @@ ${materialSignature(brandingFromOrg(me?.organization))}`;
           {mode === "request-to-property" ? (
             <div className="space-y-1.5">
               <Label className="text-xs">Cerere</Label>
-              <Select value={selectedRequestId ?? "all"} onValueChange={(v) => setSelectedRequestId(v === "all" ? null : v)}>
+              <Select
+                value={selectedRequestId ?? "all"}
+                onValueChange={(v) => setSelectedRequestId(v === "all" ? null : v)}
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="Toate cererile" />
                 </SelectTrigger>
@@ -386,7 +410,10 @@ ${materialSignature(brandingFromOrg(me?.organization))}`;
           ) : (
             <div className="space-y-1.5">
               <Label className="text-xs">Proprietate</Label>
-              <Select value={selectedPropertyId ?? "all"} onValueChange={(v) => setSelectedPropertyId(v === "all" ? null : v)}>
+              <Select
+                value={selectedPropertyId ?? "all"}
+                onValueChange={(v) => setSelectedPropertyId(v === "all" ? null : v)}
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="Toate proprietățile" />
                 </SelectTrigger>
@@ -541,8 +568,12 @@ ${materialSignature(brandingFromOrg(me?.organization))}`;
                     }`}
                   >
                     <div>
-                      <p className="text-lg leading-none font-semibold tabular-nums">{row.match.score}%</p>
-                      <p className="mt-1 text-[10px] leading-none opacity-80">{matchLabel(row.match.score)}</p>
+                      <p className="text-lg leading-none font-semibold tabular-nums">
+                        {row.match.score}%
+                      </p>
+                      <p className="mt-1 text-[10px] leading-none opacity-80">
+                        {matchLabel(row.match.score)}
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -574,7 +605,11 @@ ${materialSignature(brandingFromOrg(me?.organization))}`;
                     variant={row.saved ? "secondary" : "default"}
                     disabled={row.saved || saveLead.isPending}
                     onClick={() =>
-                      saveLead.mutate({ request: row.request, property: row.property, score: row.match.score })
+                      saveLead.mutate({
+                        request: row.request,
+                        property: row.property,
+                        score: row.match.score,
+                      })
                     }
                   >
                     {row.saved ? (
@@ -644,7 +679,6 @@ ${materialSignature(brandingFromOrg(me?.organization))}`;
           })}
         </div>
       )}
-
 
       <ActivityDialog
         open={Boolean(activityFor)}

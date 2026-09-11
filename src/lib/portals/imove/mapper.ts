@@ -24,13 +24,7 @@ export const IMOVE_MAX_IMAGES = 40;
 export const IMOVE_EXTERNAL_ID_MAX = 120;
 
 export type ImoveTransactionType = "SALE" | "RENT";
-export type ImovePropertyType =
-  | "APARTMENT"
-  | "STUDIO"
-  | "HOUSE"
-  | "LAND"
-  | "COMMERCIAL"
-  | "OFFICE";
+export type ImovePropertyType = "APARTMENT" | "STUDIO" | "HOUSE" | "LAND" | "COMMERCIAL" | "OFFICE";
 
 export type ImoveListing = {
   externalId: string;
@@ -57,8 +51,7 @@ export type ImoveListing = {
 };
 
 export type ImoveMapResult =
-  | { ok: true; listing: ImoveListing; warnings: string[] }
-  | { ok: false; reasons: string[] };
+  { ok: true; listing: ImoveListing; warnings: string[] } | { ok: false; reasons: string[] };
 
 const PROPERTY_TYPE_MAP: Record<string, ImovePropertyType> = {
   apartment: "APARTMENT",
@@ -67,13 +60,13 @@ const PROPERTY_TYPE_MAP: Record<string, ImovePropertyType> = {
   duplex: "APARTMENT",
   studio: "STUDIO",
   garsoniera: "STUDIO",
-  "garsonieră": "STUDIO",
+  garsonieră: "STUDIO",
   house: "HOUSE",
   casa: "HOUSE",
-  "casă": "HOUSE",
+  casă: "HOUSE",
   villa: "HOUSE",
   vila: "HOUSE",
-  "vilă": "HOUSE",
+  vilă: "HOUSE",
   land: "LAND",
   teren: "LAND",
   commercial: "COMMERCIAL",
@@ -150,7 +143,9 @@ export function mapPropertyToImove(p: PropertyRow, options: ImoveMapOptions): Im
 
   const propertyType = imovePropertyType(p.property_type);
   if (!propertyType) {
-    reasons.push(`Tipul de proprietate „${p.property_type ?? "necunoscut"}” nu are echivalent iMove.`);
+    reasons.push(
+      `Tipul de proprietate „${p.property_type ?? "necunoscut"}” nu are echivalent iMove.`,
+    );
   }
 
   if (reasons.length) return { ok: false, reasons };

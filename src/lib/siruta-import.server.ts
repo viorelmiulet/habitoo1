@@ -6,7 +6,6 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/integrations/supabase/types";
 import { nameVariants, normalizeRoName } from "@/lib/ro-normalize";
 
-
 type Admin = SupabaseClient<Database>;
 
 export const SIRUTA_VERSION = "SIRUTA 2025 (S1)";
@@ -118,9 +117,7 @@ async function chunkedUpsert<T extends Record<string, unknown>>(
 ) {
   for (let i = 0; i < rows.length; i += size) {
     const slice = rows.slice(i, i + size);
-    const { error } = await admin
-      .from(table)
-      .upsert(slice as never, { onConflict: "siruta_code" });
+    const { error } = await admin.from(table).upsert(slice as never, { onConflict: "siruta_code" });
     if (error) throw new Error(`${table}: ${error.message}`);
   }
 }
@@ -136,9 +133,13 @@ export async function loadSirutaRows(origin: string): Promise<SirutaRow[]> {
  * Importă/actualizează nomenclatorul. Idempotent: cheia de conflict este codul SIRUTA,
  * deci re-rularea actualizează denumirile fără să creeze duplicate.
  */
-export async function importSirutaNomenclature(admin: Admin, origin: string): Promise<SirutaImportSummary> {
+export async function importSirutaNomenclature(
+  admin: Admin,
+  origin: string,
+): Promise<SirutaImportSummary> {
   const rows = await loadSirutaRows(origin);
-  if (rows.length < 10000) throw new Error("Fișierul SIRUTA pare incomplet; importul a fost oprit.");
+  if (rows.length < 10000)
+    throw new Error("Fișierul SIRUTA pare incomplet; importul a fost oprit.");
 
   let skipped = 0;
 
@@ -185,7 +186,10 @@ export async function importSirutaNomenclature(admin: Admin, origin: string): Pr
   }
   await chunkedUpsert(admin, "ro_uats", uats);
 
-  const uatIndex = new Map<number, { id: string; siruta_code: number; county_id: string; county_siruta_code: number }>();
+  const uatIndex = new Map<
+    number,
+    { id: string; siruta_code: number; county_id: string; county_siruta_code: number }
+  >();
   for (let from = 0; ; from += 1000) {
     const { data, error } = await admin
       .from("ro_uats")
@@ -252,7 +256,9 @@ export async function importSirutaNomenclature(admin: Admin, origin: string): Pr
  * Completează codurile SIRUTA pentru anunțurile existente care au doar text.
  * Nu suprascrie valori deja setate și nu modifică textul introdus de agenți.
  */
-export async function backfillPropertySiruta(admin: Admin): Promise<{ checked: number; migrated: number }> {
+export async function backfillPropertySiruta(
+  admin: Admin,
+): Promise<{ checked: number; migrated: number }> {
   const { data: props, error } = await admin
     .from("properties")
     .select("id, city, county, county_siruta_code, locality_siruta_code")
@@ -327,4 +333,3 @@ export async function backfillPropertySiruta(admin: Admin): Promise<{ checked: n
 
   return { checked: props?.length ?? 0, migrated };
 }
-

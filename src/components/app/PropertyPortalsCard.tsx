@@ -9,7 +9,15 @@
  * Separă intenția (checkbox) de starea reală a integrării (status), fără să
  * introducă o a doua sursă de adevăr.
  */
-import { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from "react";
+import {
+  forwardRef,
+  useCallback,
+  useEffect,
+  useImperativeHandle,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { AlertTriangle, CheckCircle2, Circle, ExternalLink } from "lucide-react";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -41,10 +49,7 @@ import {
   getPropertiesPortalMatrix,
   type PropertyPortalCell,
 } from "@/lib/portals.functions";
-import {
-  getPropertyCollaboration,
-  setPropertyCollaboration,
-} from "@/lib/collaboration.functions";
+import { getPropertyCollaboration, setPropertyCollaboration } from "@/lib/collaboration.functions";
 
 /** „acum 4 min” / „acum 3 h” / data completă, pentru ultima sincronizare. */
 function syncAgo(iso: string) {
@@ -72,8 +77,7 @@ function stateSentence(cell: PropertyPortalCell, selected: boolean) {
     return cell.lastSyncAt ? `${base} · sincronizat ${syncAgo(cell.lastSyncAt)}` : base;
   }
   if (cell.state === "withdrawn") return "Retrasă de pe portal.";
-  if (cell.state === "selected")
-    return "Selectat — se trimite la următoarea apăsare pe „Publică”.";
+  if (cell.state === "selected") return "Selectat — se trimite la următoarea apăsare pe „Publică”.";
   return "Neselectat.";
 }
 
@@ -180,7 +184,6 @@ export const PropertyPortalsCard = forwardRef<
   const toWithdraw = dirty.filter(
     (c) => !(checked[c.portalId] ?? false) && (c.state === "published" || c.state === "in_feed"),
   );
-
 
   const apply = useMutation({
     mutationFn: () =>
@@ -296,8 +299,8 @@ export const PropertyPortalsCard = forwardRef<
         <div>
           <h2 className="text-sm font-medium">Publicare pe portaluri</h2>
           <p className="mt-0.5 text-xs text-muted-foreground">
-            Bifează portalurile pe care vrei oferta publicată. Debifarea unui portal retrage oferta doar de pe
-            acel portal.
+            Bifează portalurile pe care vrei oferta publicată. Debifarea unui portal retrage oferta
+            doar de pe acel portal.
           </p>
         </div>
         <span className="text-xs text-muted-foreground">
@@ -417,7 +420,11 @@ export const PropertyPortalsCard = forwardRef<
                 aria-hidden
                 className={cn(
                   "mt-0.5 size-4 shrink-0",
-                  problem ? "text-warning-foreground" : value ? "text-success" : "text-muted-foreground/60",
+                  problem
+                    ? "text-warning-foreground"
+                    : value
+                      ? "text-success"
+                      : "text-muted-foreground/60",
                 )}
               />
               <PortalLogo portalId={cell.portalId} name={cell.portalName} size={28} />
@@ -478,7 +485,6 @@ export const PropertyPortalsCard = forwardRef<
         </span>
       </footer>
 
-
       <AlertDialog
         open={confirming}
         onOpenChange={(open) => {
@@ -519,7 +525,9 @@ export const PropertyPortalsCard = forwardRef<
                 setConfirming(false);
                 resolve?.(true);
               }}
-            >Confirmă retragerea</AlertDialogAction>
+            >
+              Confirmă retragerea
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

@@ -76,14 +76,27 @@ function NotificationsPage() {
         </span>
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
-            <p className={isUnread ? "font-semibold" : "font-medium text-muted-foreground"}>{n.title}</p>
-            {isUnread ? <StatusBadge tone="primary" dot>Nou</StatusBadge> : null}
+            <p className={isUnread ? "font-semibold" : "font-medium text-muted-foreground"}>
+              {n.title}
+            </p>
+            {isUnread ? (
+              <StatusBadge tone="primary" dot>
+                Nou
+              </StatusBadge>
+            ) : null}
           </div>
-          {n.body ? <p className="mt-0.5 text-xs leading-relaxed text-muted-foreground">{n.body}</p> : null}
+          {n.body ? (
+            <p className="mt-0.5 text-xs leading-relaxed text-muted-foreground">{n.body}</p>
+          ) : null}
           <p className="mt-1 text-[11px] text-muted-foreground">{formatDateTime(n.created_at)}</p>
         </div>
         {isUnread ? (
-          <Button size="sm" variant="ghost" className="shrink-0" onClick={() => markRead.mutate([n.id])}>
+          <Button
+            size="sm"
+            variant="ghost"
+            className="shrink-0"
+            onClick={() => markRead.mutate([n.id])}
+          >
             Marchează citit
           </Button>
         ) : null}
@@ -108,7 +121,11 @@ function NotificationsPage() {
         }
         actions={
           unread.length > 0 ? (
-            <Button size="sm" variant="outline" onClick={() => markRead.mutate(unread.map((n) => n.id))}>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => markRead.mutate(unread.map((n) => n.id))}
+            >
               <CheckCheck className="size-4" /> Marchează toate ca citite
             </Button>
           ) : undefined
@@ -149,4 +166,3 @@ function NotificationsPage() {
     </>
   );
 }
-

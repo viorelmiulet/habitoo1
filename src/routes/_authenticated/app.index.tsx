@@ -15,7 +15,6 @@ import { AgentDashboard } from "@/components/app/dashboard/AgentDashboard";
 import { ManagerDashboard } from "@/components/app/dashboard/ManagerDashboard";
 import { DashboardOverview } from "@/components/app/dashboard/DashboardOverview";
 
-
 export const Route = createFileRoute("/_authenticated/app/")({
   component: DashboardPage,
 });
@@ -54,4 +53,3 @@ function DashboardPage() {
     </div>
   );
 }
-

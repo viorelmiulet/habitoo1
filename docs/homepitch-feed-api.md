@@ -30,11 +30,11 @@ Scope-uri necesare: `feed:read` pentru proprietăți, `agents:read` pentru `/age
 
 Bază: `https://crm.habitoo.ro/api/public/homepitch/v1`
 
-| Endpoint | Descriere |
-| --- | --- |
+| Endpoint                             | Descriere                                                                                        |
+| ------------------------------------ | ------------------------------------------------------------------------------------------------ |
 | `GET /properties?limit=100&offset=0` | Listă paginată. Suportă `updated_since=ISO8601` (sincronizare incrementală) și `is_active=true`. |
-| `GET /properties/{id}` | O ofertă completă. `422` cu `reasons[]` dacă oferta este exclusă din feed. |
-| `GET /agents/me` | `{ email, first_name, last_name, phone, agency_name }` al agenției cheii. |
+| `GET /properties/{id}`               | O ofertă completă. `422` cu `reasons[]` dacă oferta este exclusă din feed.                       |
+| `GET /agents/me`                     | `{ email, first_name, last_name, phone, agency_name }` al agenției cheii.                        |
 
 Răspunsul de listă:
 
@@ -60,14 +60,14 @@ colaborare și textul comisionului conține explicit un procent.
 
 ## 5. Mapare `property_type`
 
-| Habitoo | HomePitch |
-| --- | --- |
-| `apartment`, `studio` | `apartament` |
-| `house` (casă / vilă) | `casa` |
-| `office` | `birou` |
-| `commercial` | `spatiu_comercial` |
-| `land` | `teren` |
-| `industrial` | `spatiu_industrial` |
+| Habitoo               | HomePitch           |
+| --------------------- | ------------------- |
+| `apartment`, `studio` | `apartament`        |
+| `house` (casă / vilă) | `casa`              |
+| `office`              | `birou`             |
+| `commercial`          | `spatiu_comercial`  |
+| `land`                | `teren`             |
+| `industrial`          | `spatiu_industrial` |
 
 ## 6. Tranzacție dublă
 

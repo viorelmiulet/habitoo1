@@ -23,7 +23,9 @@ type AuthContext = {
         eq: (
           col: string,
           value: string,
-        ) => { maybeSingle: () => PromiseLike<{ data: { organization_id: string | null } | null }> };
+        ) => {
+          maybeSingle: () => PromiseLike<{ data: { organization_id: string | null } | null }>;
+        };
       };
     };
   };
@@ -46,7 +48,9 @@ async function requireSuperadmin(context: AuthContext): Promise<void> {
 async function requireOrgAdminOrg(context: AuthContext): Promise<string> {
   const { data: isOrgAdmin } = await context.supabase.rpc("is_org_admin");
   if (isOrgAdmin !== true) {
-    throw new Error("Acces refuzat: doar administratorul agenției poate cere activarea unui portal.");
+    throw new Error(
+      "Acces refuzat: doar administratorul agenției poate cere activarea unui portal.",
+    );
   }
   const { data: profile } = await context.supabase
     .from("profiles")
@@ -129,7 +133,9 @@ export const getAgencyPortalCatalog = createServerFn({ method: "POST" })
 export const requestPortalActivation = createServerFn({ method: "POST" })
   .middleware([requireActiveOrgAuth])
   .inputValidator((input: unknown) =>
-    z.object({ portalId: z.string().min(1).max(40), note: z.string().max(500).optional() }).parse(input),
+    z
+      .object({ portalId: z.string().min(1).max(40), note: z.string().max(500).optional() })
+      .parse(input),
   )
   .handler(async ({ data, context }) => {
     const organizationId = await requireOrgAdminOrg(context as unknown as AuthContext);
@@ -178,7 +184,10 @@ export const requestPortalActivation = createServerFn({ method: "POST" })
     ]);
 
     // Notificare pentru toți superadminii, în clopoțelul existent.
-    const { data: supers } = await admin.from("user_roles").select("user_id").eq("role", "superadmin");
+    const { data: supers } = await admin
+      .from("user_roles")
+      .select("user_id")
+      .eq("role", "superadmin");
     const uniqueSupers = Array.from(new Set((supers ?? []).map((r) => r.user_id)));
     if (uniqueSupers.length > 0) {
       await admin.from("notifications").insert(
@@ -235,7 +244,9 @@ export const listPortalActivationRequests = createServerFn({ method: "POST" })
 
     let query = admin
       .from("portal_activation_requests")
-      .select("id, organization_id, portal, status, requested_at, requested_by, resolved_at, rejection_reason, note")
+      .select(
+        "id, organization_id, portal, status, requested_at, requested_by, resolved_at, rejection_reason, note",
+      )
       .order("requested_at", { ascending: false })
       .limit(200);
     if (data.status !== "all") query = query.eq("status", data.status);
@@ -246,7 +257,9 @@ export const listPortalActivationRequests = createServerFn({ method: "POST" })
     if (list.length === 0) return [];
 
     const orgIds = Array.from(new Set(list.map((r) => r.organization_id)));
-    const userIds = Array.from(new Set(list.map((r) => r.requested_by).filter((v): v is string => !!v)));
+    const userIds = Array.from(
+      new Set(list.map((r) => r.requested_by).filter((v): v is string => !!v)),
+    );
     const [{ data: orgs }, { data: profiles }] = await Promise.all([
       admin.from("organizations").select("id, name").in("id", orgIds),
       userIds.length > 0
@@ -309,7 +322,10 @@ export const resolvePortalActivationRequest = createServerFn({ method: "POST" })
     await admin.from("audit_logs").insert({
       organization_id: request.organization_id,
       actor_id: context.userId,
-      action: data.status === "approved" ? "portal.activation_request_approved" : "portal.activation_request_rejected",
+      action:
+        data.status === "approved"
+          ? "portal.activation_request_approved"
+          : "portal.activation_request_rejected",
       entity: "portal_activation_requests",
       entity_id: request.id,
       old_values: { status: "pending" },

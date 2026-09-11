@@ -24,7 +24,6 @@ import {
 } from "@/lib/mailgun.server";
 import { resolveThread } from "@/lib/mail-threading.server";
 
-
 const MAX_BODY_BYTES = 30 * 1024 * 1024;
 /** Generous on purpose: Mailgun bursts must never be throttled as abuse. */
 const RATE_LIMIT = { limit: 240, windowSeconds: 60 };
@@ -107,7 +106,10 @@ async function handleInbound(request: Request): Promise<Response> {
     _window_seconds: RATE_LIMIT.windowSeconds,
   });
   if (rlError) {
-    console.error("[mailgun:inbound] rate limit check failed", safeLogFields({ code: rlError.code ?? null }));
+    console.error(
+      "[mailgun:inbound] rate limit check failed",
+      safeLogFields({ code: rlError.code ?? null }),
+    );
     return json({ ok: false, error: "temporary_failure" }, 500);
   }
   if (allowed === false) return json({ ok: false, error: "rate_limited" }, 429);
@@ -136,13 +138,18 @@ async function handleInbound(request: Request): Promise<Response> {
       .eq("provider_message_id", inbound.providerMessageId)
       .limit(1);
     if (existing?.length) {
-      console.info("[mailgun:inbound] duplicate ignored", safeLogFields({ metric: "mail_duplicate" }));
+      console.info(
+        "[mailgun:inbound] duplicate ignored",
+        safeLogFields({ metric: "mail_duplicate" }),
+      );
       return json({ ok: true, duplicate: true, message_id: existing[0]!.id }, 200);
     }
   }
 
   const participants = Array.from(
-    new Set([inbound.fromEmail, ...inbound.recipients, ...inbound.cc].filter((v): v is string => !!v)),
+    new Set(
+      [inbound.fromEmail, ...inbound.recipients, ...inbound.cc].filter((v): v is string => !!v),
+    ),
   );
 
   // Exact header linking first (In-Reply-To / References -> our own outbound
@@ -156,7 +163,10 @@ async function handleInbound(request: Request): Promise<Response> {
     references: inbound.references,
   });
   if (!threadId) {
-    console.error("[mailgun:inbound] thread resolution failed", safeLogFields({ metric: "mail_thread_failed" }));
+    console.error(
+      "[mailgun:inbound] thread resolution failed",
+      safeLogFields({ metric: "mail_thread_failed" }),
+    );
     return json({ ok: false, error: "temporary_failure" }, 500);
   }
 
@@ -193,10 +203,16 @@ async function handleInbound(request: Request): Promise<Response> {
     // Unique index on (mailbox, provider, provider_message_id): a concurrent
     // retry already stored it. Acknowledge so Mailgun stops retrying.
     if (messageError?.code === "23505") {
-      console.info("[mailgun:inbound] duplicate ignored", safeLogFields({ metric: "mail_duplicate" }));
+      console.info(
+        "[mailgun:inbound] duplicate ignored",
+        safeLogFields({ metric: "mail_duplicate" }),
+      );
       return json({ ok: true, duplicate: true }, 200);
     }
-    console.error("[mailgun:inbound] insert failed", safeLogFields({ code: messageError?.code ?? null }));
+    console.error(
+      "[mailgun:inbound] insert failed",
+      safeLogFields({ code: messageError?.code ?? null }),
+    );
     return json({ ok: false, error: "temporary_failure" }, 500);
   }
 
@@ -235,9 +251,7 @@ async function handleInbound(request: Request): Promise<Response> {
   return json({ ok: true, message_id: message.id }, 200);
 }
 
-type AdminClient = Awaited<
-  typeof import("@/integrations/supabase/client.server")
->["supabaseAdmin"];
+type AdminClient = Awaited<typeof import("@/integrations/supabase/client.server")>["supabaseAdmin"];
 
 /** Routes the message to a configured mailbox; unknown recipients are dropped. */
 async function resolveMailbox(
@@ -288,7 +302,10 @@ async function persistAttachments(
     .insert(rows)
     .select("id, status");
   if (error) {
-    console.error("[mailgun:inbound] attachment metadata failed", safeLogFields({ code: error.code }));
+    console.error(
+      "[mailgun:inbound] attachment metadata failed",
+      safeLogFields({ code: error.code }),
+    );
     return { rejected: 0 };
   }
 
@@ -318,7 +335,10 @@ async function persistAttachments(
       const path = `${messageId}/${row.id}`;
       const upload = await supabaseAdmin.storage
         .from(ATTACHMENT_BUCKET)
-        .upload(path, entry.bytes, { contentType: entry.check.ok ? entry.meta.contentType : "application/octet-stream", upsert: true });
+        .upload(path, entry.bytes, {
+          contentType: entry.check.ok ? entry.meta.contentType : "application/octet-stream",
+          upsert: true,
+        });
       await supabaseAdmin
         .from("email_attachments")
         .update(

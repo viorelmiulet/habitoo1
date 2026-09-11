@@ -78,7 +78,11 @@ export function verifyNotificationSignature(args: {
 }): SignatureCheck {
   const { rawBody, parsed, signature } = args;
   if (!signature) {
-    return { present: false, valid: null, note: "semnătură absentă (acceptat pentru testul App Manager)" };
+    return {
+      present: false,
+      valid: null,
+      note: "semnătură absentă (acceptat pentru testul App Manager)",
+    };
   }
 
   const secret = notificationSecret();
@@ -98,7 +102,9 @@ export function verifyNotificationSignature(args: {
     const objectId = record["object_id"] ?? record["objectId"];
     const transactionId = record["transaction_id"] ?? record["transactionId"];
     if (objectId != null || transactionId != null) {
-      candidates.add(hmacSha1Hex(secret, `${String(objectId ?? "")},${String(transactionId ?? "")}`));
+      candidates.add(
+        hmacSha1Hex(secret, `${String(objectId ?? "")},${String(transactionId ?? "")}`),
+      );
     }
   }
 
@@ -160,4 +166,3 @@ export async function logStoriaNotification(args: {
     return null;
   }
 }
-

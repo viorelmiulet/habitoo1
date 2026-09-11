@@ -10,7 +10,11 @@ export function PropertiesMock({ className }: { className?: string }) {
   const p = mockProperty;
   return (
     <AppFrame title={`proprietati / ${p.reference}`} className={className} activeIndex={1}>
-      <MockToolbar title={p.title} meta={`${p.reference} · ${p.district}, ${p.city}`} action="Editează" />
+      <MockToolbar
+        title={p.title}
+        meta={`${p.reference} · ${p.district}, ${p.city}`}
+        action="Editează"
+      />
       <div className="grid gap-4 p-4 lg:grid-cols-5">
         <div className="lg:col-span-3">
           <div className="grid grid-cols-3 grid-rows-2 gap-1.5 overflow-hidden rounded-xl">
@@ -45,7 +49,9 @@ export function PropertiesMock({ className }: { className?: string }) {
             </div>
           </div>
           <div className="mt-3 flex flex-wrap items-center gap-2">
-            <StatusBadge tone={propertyStatusTone[p.status]}>{propertyStatusLabels[p.status]}</StatusBadge>
+            <StatusBadge tone={propertyStatusTone[p.status]}>
+              {propertyStatusLabels[p.status]}
+            </StatusBadge>
             <StatusBadge tone="primary">{transactionLabels[p.transaction]}</StatusBadge>
             <span className="ml-auto text-lg font-semibold tracking-tight text-navy">
               {formatMoney(p.price, p.currency)}
@@ -68,7 +74,10 @@ export function PropertiesMock({ className }: { className?: string }) {
           </dl>
           <div className="mt-3 flex flex-wrap gap-1.5">
             {p.features.map((f) => (
-              <span key={f} className="rounded-md bg-muted px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
+              <span
+                key={f}
+                className="rounded-md bg-muted px-2 py-0.5 text-[10px] font-medium text-muted-foreground"
+              >
                 {f}
               </span>
             ))}
@@ -79,7 +88,10 @@ export function PropertiesMock({ className }: { className?: string }) {
           <p className="mb-2 text-xs font-semibold">Portofoliu · 48 active</p>
           <ul className="space-y-2">
             {mockPortfolio.slice(1).map((item, i) => (
-              <li key={item.reference} className="flex items-center gap-3 rounded-lg border border-border p-2">
+              <li
+                key={item.reference}
+                className="flex items-center gap-3 rounded-lg border border-border p-2"
+              >
                 <img
                   src={item.photo}
                   alt=""
@@ -94,7 +106,10 @@ export function PropertiesMock({ className }: { className?: string }) {
                     {item.reference} · {item.rooms} cam · {item.surface} m²
                   </p>
                   <div className="mt-1 flex items-center gap-1.5">
-                    <StatusBadge tone={propertyStatusTone[item.status]} className="px-1.5 py-0 text-[9px]">
+                    <StatusBadge
+                      tone={propertyStatusTone[item.status]}
+                      className="px-1.5 py-0 text-[9px]"
+                    >
                       {propertyStatusLabels[item.status]}
                     </StatusBadge>
                     <span className="text-[10px] font-semibold text-navy">
@@ -103,7 +118,12 @@ export function PropertiesMock({ className }: { className?: string }) {
                     </span>
                   </div>
                 </div>
-                <Star className={cn("size-3.5 shrink-0", i === 0 ? "fill-gold text-gold" : "text-border")} />
+                <Star
+                  className={cn(
+                    "size-3.5 shrink-0",
+                    i === 0 ? "fill-gold text-gold" : "text-border",
+                  )}
+                />
               </li>
             ))}
           </ul>

@@ -34,7 +34,9 @@ export function RequestMatchesMock({ className }: { className?: string }) {
             <div className="min-w-0 flex-1">
               <div className="flex items-center justify-between gap-2">
                 <p className="truncate text-xs font-semibold">{m.title}</p>
-                <span className="shrink-0 text-xs font-semibold text-navy">{formatMoney(m.price)}</span>
+                <span className="shrink-0 text-xs font-semibold text-navy">
+                  {formatMoney(m.price)}
+                </span>
               </div>
               <p className="text-[10px] text-muted-foreground">{m.reference}</p>
               <div className="mt-1.5 flex flex-wrap gap-1">
@@ -71,8 +73,12 @@ export function PropertyMatchesMock({ className }: { className?: string }) {
         <p className="text-[10px] font-semibold tracking-wide text-muted-foreground uppercase">
           Proprietate → clienți potriviți
         </p>
-        <p className="mt-1 truncate text-sm font-semibold">Apartament 3 camere, Aviației · RF-1024</p>
-        <p className="truncate text-[11px] text-muted-foreground">Vânzare · 158.000 € · 78 m² · etaj 4/8</p>
+        <p className="mt-1 truncate text-sm font-semibold">
+          Apartament 3 camere, Aviației · RF-1024
+        </p>
+        <p className="truncate text-[11px] text-muted-foreground">
+          Vânzare · 158.000 € · 78 m² · etaj 4/8
+        </p>
       </div>
       <ul className="divide-y divide-border">
         {mockPropertyMatches.map((m) => (

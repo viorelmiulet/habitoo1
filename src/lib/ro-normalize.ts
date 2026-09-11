@@ -29,7 +29,9 @@ export function titleCaseRo(value: string): string {
   return value
     .toLocaleLowerCase("ro-RO")
     .split(/(\s|-|\/)/)
-    .map((part) => (/^[\s\-/]$/.test(part) ? part : part.charAt(0).toLocaleUpperCase("ro-RO") + part.slice(1)))
+    .map((part) =>
+      /^[\s\-/]$/.test(part) ? part : part.charAt(0).toLocaleUpperCase("ro-RO") + part.slice(1),
+    )
     .join("");
 }
 
@@ -40,5 +42,12 @@ export function titleCaseRo(value: string): string {
 export function nameVariants(value: string): string[] {
   const base = normalizeRoName(prettyUatName(value));
   if (!base) return [];
-  return [base, `municipiul ${base}`, `orasul ${base}`, `oras ${base}`, `comuna ${base}`, `judetul ${base}`];
+  return [
+    base,
+    `municipiul ${base}`,
+    `orasul ${base}`,
+    `oras ${base}`,
+    `comuna ${base}`,
+    `judetul ${base}`,
+  ];
 }

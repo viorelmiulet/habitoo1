@@ -52,7 +52,11 @@ export function PromptDialog({
     e.preventDefault();
     if (!request) return;
     const trimmed = value.trim();
-    const validation = request.validate ? request.validate(trimmed) : trimmed ? null : "Completează acest câmp.";
+    const validation = request.validate
+      ? request.validate(trimmed)
+      : trimmed
+        ? null
+        : "Completează acest câmp.";
     if (validation) {
       setError(validation);
       return;
@@ -75,7 +79,9 @@ export function PromptDialog({
         <form onSubmit={submit} className="space-y-4">
           <DialogHeader>
             <DialogTitle>{request?.title}</DialogTitle>
-            {request?.description ? <DialogDescription>{request.description}</DialogDescription> : null}
+            {request?.description ? (
+              <DialogDescription>{request.description}</DialogDescription>
+            ) : null}
           </DialogHeader>
           <div className="space-y-2">
             <Label htmlFor="prompt-value">{request?.label ?? "Valoare"}</Label>

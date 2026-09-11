@@ -74,7 +74,10 @@ export async function purgeExpiredUploads(db: Db): Promise<number> {
   await db
     .from("mail_outbound_uploads")
     .delete()
-    .in("id", rows.map((r) => r.id));
+    .in(
+      "id",
+      rows.map((r) => r.id),
+    );
   return rows.length;
 }
 
@@ -114,7 +117,10 @@ export async function stageOutboundAttachment(
     .single();
 
   if (error || !row) {
-    console.error("[mail:outbound] stage insert failed", safeLogFields({ code: error?.code ?? null }));
+    console.error(
+      "[mail:outbound] stage insert failed",
+      safeLogFields({ code: error?.code ?? null }),
+    );
     return { upload: null, error: "Fișierul nu a putut fi încărcat." };
   }
 
@@ -125,7 +131,10 @@ export async function stageOutboundAttachment(
 
   if (upload.error) {
     await db.from("mail_outbound_uploads").delete().eq("id", row.id);
-    console.error("[mail:outbound] stage upload failed", safeLogFields({ metric: "mail_upload_failed" }));
+    console.error(
+      "[mail:outbound] stage upload failed",
+      safeLogFields({ metric: "mail_upload_failed" }),
+    );
     return { upload: null, error: "Fișierul nu a putut fi încărcat." };
   }
 
@@ -166,9 +175,12 @@ export async function loadStagedAttachments(
     if (row.expires_at && Date.parse(row.expires_at) < now) {
       return { ok: false, error: "Atașament indisponibil." };
     }
-    if (row.storage_path !== stagingPath(row.id)) return { ok: false, error: "Atașament indisponibil." };
+    if (row.storage_path !== stagingPath(row.id))
+      return { ok: false, error: "Atașament indisponibil." };
 
-    const { data: blob, error } = await db.storage.from(ATTACHMENT_BUCKET).download(row.storage_path);
+    const { data: blob, error } = await db.storage
+      .from(ATTACHMENT_BUCKET)
+      .download(row.storage_path);
     if (error || !blob) return { ok: false, error: "Atașament indisponibil." };
 
     const bytes = new Uint8Array(await blob.arrayBuffer());
@@ -218,7 +230,10 @@ export async function persistOutboundAttachments(
       .single();
 
     if (error || !row) {
-      console.error("[mail:outbound] attachment insert failed", safeLogFields({ code: error?.code ?? null }));
+      console.error(
+        "[mail:outbound] attachment insert failed",
+        safeLogFields({ code: error?.code ?? null }),
+      );
       continue;
     }
 
@@ -227,7 +242,10 @@ export async function persistOutboundAttachments(
     if (moved.error) {
       // No orphan metadata: the row goes away if its bytes did not follow.
       await db.from("email_attachments").delete().eq("id", row.id);
-      console.error("[mail:outbound] attachment move failed", safeLogFields({ metric: "mail_attachment_move_failed" }));
+      console.error(
+        "[mail:outbound] attachment move failed",
+        safeLogFields({ metric: "mail_attachment_move_failed" }),
+      );
       continue;
     }
 

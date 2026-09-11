@@ -70,7 +70,9 @@ function MyTicketsPage() {
                   onClick={() => setSelected(t.id)}
                   className={cn(
                     "w-full rounded-xl border bg-surface px-4 py-3.5 text-left transition-colors hover:border-primary/40",
-                    selected === t.id ? "border-primary/60 ring-1 ring-primary/30" : "border-border",
+                    selected === t.id
+                      ? "border-primary/60 ring-1 ring-primary/30"
+                      : "border-border",
                   )}
                 >
                   <div className="flex items-start justify-between gap-2">

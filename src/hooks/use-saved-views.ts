@@ -11,7 +11,11 @@ export type SavedView = {
 };
 
 /** Filtre salvate per utilizator și per modul (persistate în backend). */
-export function useSavedViews(module: string, orgId: string | null | undefined, userId: string | undefined) {
+export function useSavedViews(
+  module: string,
+  orgId: string | null | undefined,
+  userId: string | undefined,
+) {
   const queryClient = useQueryClient();
   const key = ["saved-views", module, userId] as const;
 
