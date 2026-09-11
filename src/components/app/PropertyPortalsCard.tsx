@@ -161,23 +161,41 @@ export const PropertyPortalsCard = forwardRef<
   // Nicio secțiune când agenției nu i-a fost activat niciun portal.
   if (cells.length === 0) return null;
 
+  const activeCount = cells.filter((c) => c.state === "published" || c.state === "in_feed").length;
+
   return (
     <section className="panel">
-      <header className="border-b border-border px-5 py-4">
-        <h2 className="text-sm font-semibold tracking-wide uppercase">Publicare pe portaluri</h2>
-        <p className="text-xs text-muted-foreground">
-          Bifează portalurile pe care vrei oferta publicată. Debifarea unui portal retrage oferta doar de pe
-          acel portal.
-        </p>
+      <header className="flex flex-wrap items-end justify-between gap-3 border-b border-border px-5 py-4">
+        <div>
+          <h2 className="text-sm font-medium">Publicare pe portaluri</h2>
+          <p className="mt-0.5 text-xs text-muted-foreground">
+            Bifează portalurile pe care vrei oferta publicată. Debifarea unui portal retrage oferta doar de pe
+            acel portal.
+          </p>
+        </div>
+        <span className="text-xs text-muted-foreground">
+          {activeCount} din {cells.length} active
+        </span>
       </header>
 
       <ul className="divide-y divide-border">
         {cells.map((cell) => {
-          const badge = STATE_LABEL[cell.state];
           const value = checked[cell.portalId] ?? cell.selected;
           const disabled = !canManage || cell.availability !== "available" || apply.isPending;
+          const problem =
+            cell.state === "error" ||
+            Boolean(cell.lastError) ||
+            (cell.availability === "available" && value && !cell.configured);
+          const StateIcon = problem ? AlertTriangle : value ? CheckCircle2 : Circle;
+
           return (
-            <li key={cell.portalId} className="flex flex-wrap items-start gap-3 px-5 py-3.5 text-sm">
+            <li
+              key={cell.portalId}
+              className={cn(
+                "flex flex-wrap items-start gap-3 px-5 py-4 text-sm",
+                problem && "bg-warning/10",
+              )}
+            >
               <Checkbox
                 id={`portal-${cell.portalId}`}
                 checked={value}
@@ -192,49 +210,53 @@ export const PropertyPortalsCard = forwardRef<
                   setChecked((prev) => ({ ...prev, [cell.portalId]: next === true }));
                 }}
               />
+              <StateIcon
+                aria-hidden
+                className={cn(
+                  "mt-0.5 size-4 shrink-0",
+                  problem ? "text-warning-foreground" : value ? "text-success" : "text-muted-foreground/60",
+                )}
+              />
               <PortalLogo portalId={cell.portalId} name={cell.portalName} size={28} />
               <div className="min-w-0 flex-1">
-                <span className="flex items-center gap-1.5">
-                  <label htmlFor={`portal-${cell.portalId}`} className="font-medium">
-                    {cell.portalName}
-                  </label>
-                  {/* Linkul public al anunțului, când portalul îl întoarce. */}
-                  {cell.publicUrl ? (
-                    <a
-                      href={cell.publicUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      title={`Deschide anunțul pe ${cell.portalName}`}
-                      aria-label={`Deschide anunțul pe ${cell.portalName} într-un tab nou`}
-                      className="text-muted-foreground transition-colors hover:text-primary"
-                    >
-                      <ExternalLink className="size-3.5" aria-hidden />
-                    </a>
-                  ) : null}
-                </span>
-
-                <p className="text-xs text-muted-foreground">
-                  {cell.availability !== "available"
-                    ? "Integrarea nu este încă disponibilă."
-                    : !cell.configured
-                      ? "Portal neconfigurat."
-                      : cell.pushSupported
-                        ? "Trimitere directă către portal."
-                        : "Portalul preia oferta automat din feedul Habitoo."}
-                  {cell.lastSyncAt ? ` · Ultima sincronizare: ${formatDateTime(cell.lastSyncAt)}` : ""}
+                <label htmlFor={`portal-${cell.portalId}`} className="font-medium">
+                  {cell.portalName}
+                </label>
+                <p
+                  className={cn(
+                    "text-xs",
+                    problem ? "text-warning-foreground" : "text-muted-foreground",
+                  )}
+                >
+                  {stateSentence(cell, value)}
                 </p>
-                {/* Un badge „Eroare” fără explicație nu ajută agentul. */}
-                {cell.lastError ? (
-                  <p className="text-xs text-destructive">{cell.lastError}</p>
-                ) : cell.state === "error" ? (
-                  <p className="text-xs text-destructive">
-                    Portalul a raportat o problemă la acest anunț, fără detalii. Apasă „Publică” pentru a
-                    retrimite oferta și a obține mesajul portalului.
-                  </p>
-                ) : null}
-
               </div>
-              <StatusBadge tone={badge.tone}>{badge.label}</StatusBadge>
+
+              {problem && canManage && cell.availability === "available" && cell.configured ? (
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  disabled={apply.isPending}
+                  onClick={() => void applyPending()}
+                >
+                  Retrimite
+                </Button>
+              ) : null}
+
+              {/* Linkul public al anunțului, când portalul îl întoarce. */}
+              {cell.publicUrl ? (
+                <a
+                  href={cell.publicUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  title={`Deschide anunțul pe ${cell.portalName}`}
+                  aria-label={`Deschide anunțul pe ${cell.portalName} într-un tab nou`}
+                  className="mt-1 text-muted-foreground transition-colors hover:text-primary"
+                >
+                  <ExternalLink className="size-4" aria-hidden />
+                </a>
+              ) : null}
             </li>
           );
         })}
@@ -248,15 +270,11 @@ export const PropertyPortalsCard = forwardRef<
               : "Nicio modificare de salvat."
             : "Doar administratorul agenției poate modifica publicarea."}
         </p>
-        <div className="flex items-center gap-3">
-          {cells.some((c) => c.availability === "available" && !c.configured) ? (
-            <span className="text-xs text-muted-foreground">Configurează portalul mai sus.</span>
-          ) : null}
-          <span className="text-xs text-muted-foreground">
-            Se aplică prin butonul „Publică” din partea de sus a paginii.
-          </span>
-        </div>
+        <span className="text-xs text-muted-foreground">
+          Se aplică prin butonul „Publică” din partea de sus a paginii.
+        </span>
       </footer>
+
 
       <AlertDialog
         open={confirming}
