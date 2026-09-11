@@ -270,7 +270,7 @@ function CollaborationPage() {
             <EmptyState
               icon={Handshake}
               title="Nicio ofertă de colaborare disponibilă"
-              description="Nicio altă agenție Habitoo nu are momentan proprietăți deschise spre colaborare care să corespundă filtrelor tale."
+              description="Colaborarea înseamnă că o agenție deschide o proprietate din portofoliul ei către celelalte agenții Habitoo și afișează comisionul pe care îl împarte. Momentan nicio ofertă nu corespunde filtrelor tale. Îți poți marca propriile proprietăți pentru colaborare din pagina proprietății, secțiunea Colaborare, unde stabilești comisionul și condițiile."
             />
           ) : (
             <ul className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
@@ -279,7 +279,7 @@ function CollaborationPage() {
                   <button
                     type="button"
                     onClick={() => setDetailOffer(offer)}
-                    className="block aspect-[4/3] w-full overflow-hidden bg-muted text-left"
+                    className="relative block aspect-[4/3] w-full overflow-hidden bg-muted text-left"
                   >
                     {offer.coverUrl ? (
                       <img
@@ -293,14 +293,17 @@ function CollaborationPage() {
                         Fără fotografii
                       </span>
                     )}
+                    {offer.collabCommissionPercent !== null ? (
+                      <span className="absolute top-3 left-3 rounded-full bg-gold px-3 py-1 text-sm font-semibold text-gold-foreground shadow-sm">
+                        {offer.collabCommissionPercent}% comision
+                      </span>
+                    ) : null}
                   </button>
-                  <div className="flex flex-1 flex-col gap-2 p-4">
-                    <div className="flex items-start justify-between gap-2">
-                      <h3 className="line-clamp-2 text-sm font-semibold">{offer.title}</h3>
-                      {offer.collabCommissionPercent !== null ? (
-                        <StatusBadge tone="success">{offer.collabCommissionPercent}% comision</StatusBadge>
-                      ) : null}
-                    </div>
+                  <div className="flex flex-1 flex-col gap-1.5 p-4">
+                    <h3 className="line-clamp-2 text-sm font-semibold">{offer.title}</h3>
+                    <p className="text-xs text-muted-foreground">
+                      {[offer.district, offer.city, offer.county].filter(Boolean).join(", ") || "Locație nespecificată"}
+                    </p>
                     <p className="text-lg font-semibold">{formatMoney(offer.price, offer.currency)}</p>
                     <p className="text-xs text-muted-foreground">
                       {[
@@ -312,13 +315,7 @@ function CollaborationPage() {
                         .filter(Boolean)
                         .join(" · ")}
                     </p>
-                    <p className="text-xs text-muted-foreground">
-                      {[offer.district, offer.city, offer.county].filter(Boolean).join(", ") || "Locație nespecificată"}
-                    </p>
-                    <p className="mt-auto flex items-center gap-1.5 pt-2 text-xs text-muted-foreground">
-                      <Building2 className="size-3.5" /> {offer.agencyName}
-                    </p>
-                    <div className="flex gap-2">
+                    <div className="mt-auto flex gap-2 pt-3">
                       <Button size="sm" variant="outline" className="flex-1" onClick={() => setDetailOffer(offer)}>
                         Detalii
                       </Button>
@@ -326,11 +323,10 @@ function CollaborationPage() {
                         Propune unui client
                       </Button>
                     </div>
-                    {offer.myProposalCount > 0 ? (
-                      <p className="text-[11px] text-muted-foreground">
-                        Agenția ta a trimis deja {offer.myProposalCount} propunere(i) pe această ofertă.
-                      </p>
-                    ) : null}
+                    <p className="flex items-center gap-1.5 border-t border-border/70 pt-2 text-[11px] text-muted-foreground">
+                      <Building2 className="size-3" /> Mandat: {offer.agencyName}
+                      {offer.myProposalCount > 0 ? ` · ${offer.myProposalCount} propunere(i) trimise` : ""}
+                    </p>
                   </div>
                 </li>
               ))}
@@ -411,8 +407,8 @@ function ProposalList({
   return (
     <ul className="panel divide-y divide-border overflow-hidden">
       {proposals.map((p) => (
-        <li key={p.id} className="flex flex-wrap items-center gap-3 px-4 py-3 text-sm">
-          <div className="size-12 shrink-0 overflow-hidden rounded-lg bg-muted">
+        <li key={p.id} className="flex flex-wrap items-center gap-3 px-4 py-3.5 text-sm">
+          <div className="size-14 shrink-0 overflow-hidden rounded-xl bg-muted">
             {p.coverUrl ? (
               <img src={p.coverUrl} alt="" className="size-full object-cover" loading="lazy" />
             ) : null}
@@ -420,16 +416,25 @@ function ProposalList({
           <div className="min-w-0 flex-1">
             <p className="truncate font-medium">{p.propertyTitle}</p>
             <p className="truncate text-xs text-muted-foreground">
+              Client: <span className="text-foreground">{p.clientLabel}</span>
+            </p>
+            <p className="mt-0.5 flex items-center gap-1.5 truncate text-[11px] text-muted-foreground">
+              <Building2 className="size-3 shrink-0" />
               {perspective === "incoming"
-                ? `${p.requesterAgencyName}${p.requesterAgentName ? ` · ${p.requesterAgentName}` : ""} → client: ${p.clientLabel}`
-                : `${p.ownerAgencyName} · client propus: ${p.clientLabel}`}
+                ? `${p.requesterAgencyName}${p.requesterAgentName ? ` · ${p.requesterAgentName}` : ""}`
+                : p.ownerAgencyName}
+              {" · "}
+              {formatDateTime(p.updatedAt)}
             </p>
           </div>
           {p.collabCommissionPercent !== null ? (
-            <StatusBadge tone="success">{p.collabCommissionPercent}%</StatusBadge>
+            <span className="rounded-full bg-gold px-2.5 py-0.5 text-xs font-semibold text-gold-foreground">
+              {p.collabCommissionPercent}%
+            </span>
           ) : null}
-          <StatusBadge tone={statusTone[p.status]}>{COLLAB_STATUS_LABELS[p.status]}</StatusBadge>
-          <span className="text-xs text-muted-foreground">{formatDateTime(p.updatedAt)}</span>
+          <StatusBadge tone={statusTone[p.status]} dot>
+            {COLLAB_STATUS_LABELS[p.status]}
+          </StatusBadge>
           <Button size="sm" variant="outline" onClick={() => onOpen(p.id)}>
             <MessageCircle className="size-4" /> Mesaje ({p.messageCount})
           </Button>
@@ -702,9 +707,9 @@ function ThreadDialog({ id, onClose }: { id: string | null; onClose: () => void 
               </p>
             ) : null}
 
-            <div className="space-y-2">
-              <Label>Status colaborare</Label>
-              <div className="flex flex-wrap gap-2">
+            <div className="rounded-xl border border-border p-3">
+              <Label className="text-xs text-muted-foreground">Status colaborare</Label>
+              <div className="mt-2 flex flex-wrap gap-2">
                 {(["pending", "accepted", "viewing", "declined", "closed"] as CollaborationProposalStatus[]).map(
                   (s) => (
                     <Button
@@ -728,16 +733,20 @@ function ThreadDialog({ id, onClose }: { id: string | null; onClose: () => void 
                   vizionări).
                 </p>
               ) : (
-                <ul className="space-y-3">
+                <ul className="space-y-4">
                   {data.messages.map((m) => (
-                    <li
-                      key={m.id}
-                      className={`rounded-xl border border-border p-3 text-sm ${m.mine ? "bg-muted/50" : ""}`}
-                    >
-                      <p className="text-xs text-muted-foreground">
-                        {m.senderName ?? "Utilizator"} · {m.agencyName} · {formatDateTime(m.createdAt)}
+                    <li key={m.id} className={m.mine ? "flex flex-col items-end" : "flex flex-col items-start"}>
+                      <p className="text-[11px] text-muted-foreground">
+                        {m.mine ? "Tu" : (m.senderName ?? "Utilizator")} · {m.agencyName} ·{" "}
+                        {formatDateTime(m.createdAt)}
                       </p>
-                      <p className="mt-1 whitespace-pre-line">{m.body}</p>
+                      <p
+                        className={`mt-1 max-w-[85%] rounded-xl px-3 py-2 text-sm whitespace-pre-line ${
+                          m.mine ? "bg-primary/8 text-foreground" : "bg-muted"
+                        }`}
+                      >
+                        {m.body}
+                      </p>
                     </li>
                   ))}
                 </ul>

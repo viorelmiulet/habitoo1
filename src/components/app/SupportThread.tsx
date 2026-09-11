@@ -126,27 +126,33 @@ export function SupportThread({ ticketId, staff = false }: { ticketId: string; s
         </div>
       </div>
 
-      <ol className="space-y-3">
-        {t.messages.map((m) => (
-          <li
-            key={m.id}
-            className={cn(
-              "rounded-lg border px-3 py-2.5 text-sm",
-              m.isInternalNote
-                ? "border-warning/40 bg-warning/10"
-                : m.isStaff
-                  ? "border-gold/30 bg-gold/5"
-                  : "border-border bg-muted/40",
-            )}
-          >
-            <p className="mb-1 flex items-center gap-1.5 text-[11px] font-semibold text-muted-foreground">
-              {m.isInternalNote ? <Lock className="size-3" /> : m.isStaff ? <ShieldCheck className="size-3" /> : null}
-              {m.isInternalNote ? "Notiță internă" : m.isStaff ? "Suport Habitoo" : (m.senderName ?? "Utilizator")}
-              <span className="font-normal">· {formatDateTime(m.createdAt)}</span>
-            </p>
-            <p className="whitespace-pre-wrap">{m.body}</p>
-          </li>
-        ))}
+      <ol className="space-y-4">
+        {t.messages.map((m) => {
+          const mine = staff ? m.isStaff : !m.isStaff;
+          return (
+            <li key={m.id} className={cn("flex flex-col", mine ? "items-end" : "items-start")}>
+              <p className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+                {m.isInternalNote ? <Lock className="size-3" /> : m.isStaff ? <ShieldCheck className="size-3" /> : null}
+                <span className="font-semibold">
+                  {m.isInternalNote
+                    ? "Notiță internă"
+                    : m.isStaff
+                      ? "Suport Habitoo"
+                      : (m.senderName ?? "Utilizator")}
+                </span>
+                · {formatDateTime(m.createdAt)}
+              </p>
+              <p
+                className={cn(
+                  "mt-1 max-w-[85%] rounded-xl px-3 py-2 text-sm whitespace-pre-wrap",
+                  m.isInternalNote ? "bg-warning/10" : mine ? "bg-primary/8" : "bg-muted",
+                )}
+              >
+                {m.body}
+              </p>
+            </li>
+          );
+        })}
       </ol>
 
       {t.canReply || staff ? (
