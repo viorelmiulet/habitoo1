@@ -15,6 +15,7 @@ import {
 import { toast } from "sonner";
 import { useServerFn } from "@tanstack/react-start";
 import { duplicateProperty } from "@/lib/property-duplicate.functions";
+import { DeletePropertyDialog } from "@/components/app/DeletePropertyDialog";
 import { toastError } from "@/lib/errors";
 import { PageHeader } from "@/components/app/PageHeader";
 import { FormSection, RequiredMark } from "@/components/app/FormSection";
@@ -109,6 +110,7 @@ function PropertyDetailPage() {
   // Butonul unic „Publică” din antet declanșează și aplicarea bifelor de portal.
   const portalsRef = useRef<PropertyPortalsHandle | null>(null);
   const duplicatePropertyFn = useServerFn(duplicateProperty);
+  const [deleteOpen, setDeleteOpen] = useState(false);
 
   const { data, isLoading } = useQuery({
     queryKey: ["property", id],
@@ -538,8 +540,15 @@ function PropertyDetailPage() {
                     </DropdownMenuItem>
                   ))}
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={() => archive.mutateAsync()} className="text-destructive">
+                  <DropdownMenuItem onClick={() => archive.mutateAsync()}>
                     Arhivează
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    onClick={() => setDeleteOpen(true)}
+                    className="text-destructive focus:text-destructive"
+                  >
+                    Șterge definitiv
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -547,6 +556,16 @@ function PropertyDetailPage() {
           </div>
         }
       />
+
+      <DeletePropertyDialog
+        propertyId={id}
+        open={deleteOpen}
+        onOpenChange={setDeleteOpen}
+        archived={property.status === "archived"}
+        onArchive={() => archive.mutateAsync()}
+        onDeleted={() => navigate({ to: "/app/properties" })}
+      />
+
 
       {/* Bandă de metrici: date reale, fără borduri, doar fundal ușor diferit. */}
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
