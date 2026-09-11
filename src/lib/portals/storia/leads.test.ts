@@ -32,8 +32,10 @@ const messagePayload = {
     created_at: "2018-07-16T11:04:50.000+0100",
     from: "storiaro",
     id: 208853314,
-    message: "Sunt interesat de apartament, se poate vedea sâmbătă?",
-    sender_name: "John Doe",
+    message: {
+      name: "John Doe",
+      text: "Sunt interesat de apartament, se poate vedea sâmbătă?",
+    },
     sender_email: "myemail@gmail.com",
     sender_phone: 961231212,
     uuid: "6073df05-2979-4372-a552-4c906a02a5cc",

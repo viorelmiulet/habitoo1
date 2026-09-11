@@ -166,6 +166,7 @@ export function readMessagePayload(shape: StoriaEventShape): MessagePayload {
       "user.name",
       "contact.name",
       "from.name",
+      "message.name",
       "name",
     ]),
     phone: pick(d, [
