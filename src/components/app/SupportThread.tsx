@@ -145,11 +145,16 @@ export function SupportThread({ ticketId, staff = false }: { ticketId: string; s
               <p
                 className={cn(
                   "mt-1 max-w-[85%] rounded-xl px-3 py-2 text-sm whitespace-pre-wrap",
-                  m.isInternalNote ? "bg-warning/10" : mine ? "bg-primary/8" : "bg-muted",
+                  m.isInternalNote
+                    ? "border border-dashed border-warning/50 bg-warning/10 text-warning-foreground"
+                    : mine
+                      ? "bg-primary/8"
+                      : "bg-muted",
                 )}
               >
                 {m.body}
               </p>
+
             </li>
           );
         })}

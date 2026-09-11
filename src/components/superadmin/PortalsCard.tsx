@@ -257,10 +257,11 @@ export function PortalsCard({ organizationId }: { organizationId: string }) {
                   portalId={item.portal.id}
                   name={item.portal.display_name}
                   fallback={item.portal.logo}
-                  size={40}
+                  size={48}
                   className="rounded-lg"
                 />
                 <div>
+
                   <h3 className="flex items-center gap-2 font-medium">
                     {item.portal.display_name}
                     {item.portal.website ? (

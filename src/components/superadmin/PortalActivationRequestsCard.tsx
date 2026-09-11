@@ -85,18 +85,25 @@ export function PortalActivationRequestsCard({
           {(requests.data ?? []).map((r) => (
             <li key={r.id} className="space-y-2 px-5 py-4 text-sm">
               <div className="flex flex-wrap items-center gap-2">
-                <span className="font-medium">{r.organizationName}</span>
-                <span className="text-muted-foreground">→</span>
-                <PortalLogo portalId={r.portalId} name={r.portalName} size={24} />
+                <PortalLogo portalId={r.portalId} name={r.portalName} size={32} className="rounded-md" />
                 <span className="font-medium">{r.portalName}</span>
+                <span className="text-muted-foreground">·</span>
+                <span className="truncate">{r.organizationName}</span>
                 {r.status === "pending" ? (
-                  <Badge variant="secondary">În așteptare</Badge>
+                  <StatusBadge tone="warning" dot>
+                    În așteptare
+                  </StatusBadge>
                 ) : r.status === "approved" ? (
-                  <Badge variant="default">Aprobată</Badge>
+                  <StatusBadge tone="success" dot>
+                    Aprobată
+                  </StatusBadge>
                 ) : (
-                  <Badge variant="outline">Respinsă</Badge>
+                  <StatusBadge tone="danger" dot>
+                    Respinsă
+                  </StatusBadge>
                 )}
               </div>
+
               <p className="text-xs text-muted-foreground">
                 Cerut de {r.requestedByName ?? "administrator agenție"} pe{" "}
                 {new Date(r.requestedAt).toLocaleString("ro-RO")}
