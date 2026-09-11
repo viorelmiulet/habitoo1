@@ -17,6 +17,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { duplicateProperty } from "@/lib/property-duplicate.functions";
 import { toastError } from "@/lib/errors";
 import { PageHeader } from "@/components/app/PageHeader";
+import { FormSection, RequiredMark } from "@/components/app/FormSection";
 import { DetailSkeleton } from "@/components/app/LoadingState";
 import { StatusBadge } from "@/components/app/StatusBadge";
 import { EmptyState } from "@/components/app/EmptyState";
@@ -669,7 +670,7 @@ function PropertyDetailPage() {
         <TabsContent value="overview" className="space-y-6">
           {editing ? (
             <form
-              className="panel space-y-4 p-5"
+              className="space-y-8"
               onSubmit={(e) => {
                 e.preventDefault();
                 if (!hasTransactionSelection(tx)) {
@@ -679,7 +680,8 @@ function PropertyDetailPage() {
                 save.mutate(buildEditPatch());
               }}
             >
-              <div className="grid gap-4 md:grid-cols-2">
+              <FormSection title="Date generale">
+              <div className="grid gap-5 md:grid-cols-2">
                 <LocationPicker idPrefix="edit" value={location} onChange={setLocation} />
                 {[
                   ["title", "Titlu"],
@@ -688,7 +690,10 @@ function PropertyDetailPage() {
                   ["address", "Adresă"],
                 ].map(([key, label]) => (
                   <div key={key} className="space-y-2">
-                    <Label htmlFor={key}>{label}</Label>
+                    <Label htmlFor={key}>
+                      {label}
+                      {key === "title" ? <RequiredMark /> : null}
+                    </Label>
                     <Input id={key} value={draft[key] ?? ""} onChange={(e) => setDraft((d) => ({ ...d, [key]: e.target.value }))} />
                   </div>
                 ))}
@@ -703,7 +708,13 @@ function PropertyDetailPage() {
                 onCoordsChange={setCoords}
                 onPreciseChange={setLocationPrecise}
               />
-              <PropertyTransactionFields idPrefix="edit" value={tx} onChange={setTx} />
+              </FormSection>
+
+              <FormSection title="Tranzacție și preț" description="Alege vânzare, închiriere sau ambele.">
+                <PropertyTransactionFields idPrefix="edit" value={tx} onChange={setTx} />
+              </FormSection>
+
+              <FormSection title="Descriere">
               <div className="space-y-2">
                 <Label htmlFor="description">Descriere</Label>
                 <Textarea
@@ -713,12 +724,18 @@ function PropertyDetailPage() {
                   onChange={(e) => setDraft((d) => ({ ...d, description: e.target.value }))}
                 />
               </div>
-              <PropertyDetailsFields
-                idPrefix="edit"
-                value={details}
-                onChange={(patch) => setDetails((d) => ({ ...d, ...patch }))}
-              />
-              <div className="space-y-3 rounded-xl border border-border p-4">
+              </FormSection>
+
+              <FormSection title="Detalii complete">
+                <PropertyDetailsFields
+                  idPrefix="edit"
+                  value={details}
+                  onChange={(patch) => setDetails((d) => ({ ...d, ...patch }))}
+                />
+              </FormSection>
+
+              <FormSection title="Colaborare">
+              <div className="space-y-3">
                 <div className="flex items-start justify-between gap-4">
                   <div className="space-y-1">
                     <Label htmlFor="collaboration" className="text-sm">
@@ -758,6 +775,9 @@ function PropertyDetailPage() {
                   </div>
                 ) : null}
               </div>
+              </FormSection>
+
+              <FormSection title="Note interne" description="Nu se publică pe site sau pe portaluri.">
               <div className="space-y-2">
                 <Label htmlFor="internal_notes">Note interne</Label>
                 <Textarea
@@ -767,8 +787,10 @@ function PropertyDetailPage() {
                   onChange={(e) => setDraft((d) => ({ ...d, internal_notes: e.target.value }))}
                 />
               </div>
+              </FormSection>
+
               <div className="flex justify-end gap-2">
-                <Button type="button" variant="outline" onClick={() => setEditing(false)}>
+                <Button type="button" variant="ghost" onClick={() => setEditing(false)}>
                   Anulează
                 </Button>
                 <Button type="submit" disabled={save.isPending}>
