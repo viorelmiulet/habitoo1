@@ -146,7 +146,7 @@ function SuperadminDashboard() {
         <h2 className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
           Creșterea platformei
         </h2>
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
+        <div className="grid gap-px overflow-hidden rounded-2xl bg-border sm:grid-cols-2 xl:grid-cols-5">
           <MetricCard
             label="Agenții active"
             value={growth?.activeAgencies}
@@ -218,25 +218,27 @@ function SuperadminDashboard() {
             description="Acțiunile sensibile din platformă vor apărea aici."
           />
         ) : (
-          <ul className="divide-y divide-border">
+          <ol className="space-y-0 px-5 py-4">
             {(data?.audit ?? []).map((a) => (
-              <li key={a.id} className="flex flex-wrap items-center gap-x-3 gap-y-1 px-5 py-3 text-sm">
-                <div className="min-w-0 flex-1 basis-56">
+              <li key={a.id} className="flex gap-3 py-2.5 text-sm">
+                <span className="w-24 shrink-0 pt-0.5 text-xs text-muted-foreground tabular-nums">
+                  {formatDateTime(a.createdAt)}
+                </span>
+                <span className="mt-0.5 flex size-6 shrink-0 items-center justify-center rounded-full bg-muted text-muted-foreground">
+                  <History className="size-3.5" />
+                </span>
+                <div className="min-w-0 flex-1">
                   <p className="truncate font-medium">{auditActionLabel(a.action)}</p>
                   <p className="truncate text-xs text-muted-foreground">
                     {a.actorName ?? "Sistem"}
                     {a.organizationName ? ` · ${a.organizationName}` : ""}
+                    {a.entity ? ` · ${auditEntityLabels[a.entity] ?? a.entity}` : ""}
                   </p>
                 </div>
-                <span className="text-xs text-muted-foreground">
-                  {a.entity ? (auditEntityLabels[a.entity] ?? a.entity) : "—"}
-                </span>
-                <span className="text-xs text-muted-foreground tabular-nums">
-                  {formatDateTime(a.createdAt)}
-                </span>
               </li>
             ))}
-          </ul>
+          </ol>
+
         )}
       </section>
     </>
@@ -338,12 +340,13 @@ function MetricCard({
   );
   if (to) {
     return (
-      <Link to={to} className="panel block p-5 transition-shadow hover:shadow-raised">
+      <Link to={to} className="block bg-surface p-5 transition-colors hover:bg-muted/40">
         {body}
       </Link>
     );
   }
-  return <div className="panel p-5">{body}</div>;
+  return <div className="bg-surface p-5">{body}</div>;
+
 }
 
 function IntegrationRow({ row }: { row: IntegrationHealthRow }) {

@@ -6,7 +6,7 @@ import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { Copy, Eye, ExternalLink, KeyRound, PlugZap, Save, Trash2, Unplug } from "lucide-react";
+import { Copy, Eye, EyeOff, ExternalLink, KeyRound, PlugZap, Save, Trash2, Unplug } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -70,6 +70,9 @@ export function PortalsCard({ organizationId }: { organizationId: string }) {
   const [accountId, setAccountId] = useState<Record<string, string>>({});
   const [credential, setCredential] = useState<Record<string, string>>({});
   const [endpoint, setEndpoint] = useState<Record<string, string>>({});
+  // Credențialele rămân mascate implicit; dezvăluirea se face la cerere, per câmp.
+  const [revealed, setRevealed] = useState<Record<string, boolean>>({});
+
   const [keyLabel, setKeyLabel] = useState<Record<string, string>>({});
   const [freshKey, setFreshKey] = useState<{ portalId: string; key: string } | null>(null);
   const [confirmDisconnect, setConfirmDisconnect] = useState<string | null>(null);
@@ -254,10 +257,11 @@ export function PortalsCard({ organizationId }: { organizationId: string }) {
                   portalId={item.portal.id}
                   name={item.portal.display_name}
                   fallback={item.portal.logo}
-                  size={40}
+                  size={48}
                   className="rounded-lg"
                 />
                 <div>
+
                   <h3 className="flex items-center gap-2 font-medium">
                     {item.portal.display_name}
                     {item.portal.website ? (
@@ -380,24 +384,46 @@ export function PortalsCard({ organizationId }: { organizationId: string }) {
                         setEndpoint((prev) => ({ ...prev, [item.portal.id]: next }));
                       }
                     };
+                    const fieldId = `${item.portal.id}-${field.key}`;
+                    const isRevealed = revealed[fieldId] === true;
                     return (
                       <div key={field.key} className="space-y-1.5">
-                        <Label htmlFor={`${item.portal.id}-${field.key}`}>{field.label}</Label>
-                        <Input
-                          id={`${item.portal.id}-${field.key}`}
-                          type={field.secret ? "password" : "text"}
-                          autoComplete="off"
-                          value={value}
-                          onChange={(e) => setValue(e.target.value)}
-                          placeholder={
-                            field.secret && item.connection.hasPortalCredential
-                              ? "Salvat — completează pentru a-l înlocui"
-                              : (field.placeholder ?? "")
-                          }
-                        />
+                        <Label htmlFor={fieldId}>{field.label}</Label>
+                        <div className="relative">
+                          <Input
+                            id={fieldId}
+                            type={field.secret && !isRevealed ? "password" : "text"}
+                            autoComplete="off"
+                            value={value}
+                            onChange={(e) => setValue(e.target.value)}
+                            className={field.secret ? "pr-10" : undefined}
+                            placeholder={
+                              field.secret && item.connection.hasPortalCredential
+                                ? "Salvat — completează pentru a-l înlocui"
+                                : (field.placeholder ?? "")
+                            }
+                          />
+                          {field.secret ? (
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setRevealed((prev) => ({ ...prev, [fieldId]: !isRevealed }))
+                              }
+                              className="absolute top-1/2 right-2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                              aria-label={isRevealed ? "Ascunde valoarea" : "Arată valoarea"}
+                            >
+                              {isRevealed ? (
+                                <EyeOff className="size-4" />
+                              ) : (
+                                <Eye className="size-4" />
+                              )}
+                            </button>
+                          ) : null}
+                        </div>
                         {field.help ? <p className="text-xs text-muted-foreground">{field.help}</p> : null}
                       </div>
                     );
+
                   })}
                 </div>
 

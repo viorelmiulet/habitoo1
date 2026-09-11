@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
-import { ArrowRightLeft, Pencil, Search, Trash2, Users } from "lucide-react";
+import { ArrowRightLeft, Pencil, Search, Trash2, Users, X } from "lucide-react";
 import { toast } from "sonner";
 import { toastError } from "@/lib/errors";
 import { PageHeader } from "@/components/app/PageHeader";
@@ -28,6 +28,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetFooter,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
+
 import { formatDate } from "@/lib/format";
 import { roleLabels } from "@/lib/labels";
 import {
@@ -288,6 +297,50 @@ function UsersPage() {
         </div>
       </div>
 
+      {/* Filtrele active, ca pastile care se pot închide */}
+      {q.trim() || orgFilter !== "all" || roleFilter !== "all" || statusFilter !== "all" ? (
+        <div className="flex flex-wrap items-center gap-2">
+          {q.trim() ? (
+            <FilterPill label={`Căutare: ${q.trim()}`} onClear={() => setQ("")} />
+          ) : null}
+          {orgFilter !== "all" ? (
+            <FilterPill
+              label={
+                orgFilter === "none"
+                  ? "Fără agenție"
+                  : (orgs.find((o) => o.id === orgFilter)?.name ?? "Agenție")
+              }
+              onClear={() => setOrgFilter("all")}
+            />
+          ) : null}
+          {roleFilter !== "all" ? (
+            <FilterPill
+              label={roleLabels[roleFilter] ?? roleFilter}
+              onClear={() => setRoleFilter("all")}
+            />
+          ) : null}
+          {statusFilter !== "all" ? (
+            <FilterPill
+              label={statusFilter === "active" ? "Active" : "Dezactivate"}
+              onClear={() => setStatusFilter("all")}
+            />
+          ) : null}
+          <button
+            type="button"
+            className="text-xs font-medium text-primary hover:underline"
+            onClick={() => {
+              setQ("");
+              setOrgFilter("all");
+              setRoleFilter("all");
+              setStatusFilter("all");
+            }}
+          >
+            Șterge filtrele
+          </button>
+        </div>
+      ) : null}
+
+
       <div className="panel overflow-hidden">
         {isLoading ? (
           <ListSkeleton rows={8} />
@@ -450,15 +503,16 @@ function UsersPage() {
       </Dialog>
 
       {/* Realocare independentă */}
-      <Dialog open={reassignOpen} onOpenChange={setReassignOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Realocă proprietăți și lead-uri</DialogTitle>
-            <DialogDescription>
+      <Sheet open={reassignOpen} onOpenChange={setReassignOpen}>
+        <SheetContent className="flex w-full flex-col gap-4 overflow-y-auto p-6 sm:max-w-md">
+          <SheetHeader className="p-0">
+            <SheetTitle>Realocă proprietăți și lead-uri</SheetTitle>
+            <SheetDescription>
               Mută tot ce este asignat unui utilizator (proprietăți, lead-uri, activități, cereri,
               contacte, obiective) către un coleg din aceeași agenție. Nu se șterge nimeni.
-            </DialogDescription>
-          </DialogHeader>
+            </SheetDescription>
+          </SheetHeader>
+
           <div className="grid gap-3">
             <div className="grid gap-1.5">
               <Label>De la</Label>
@@ -504,7 +558,7 @@ function UsersPage() {
               ) : null}
             </div>
           </div>
-          <DialogFooter>
+          <SheetFooter className="mt-auto flex-row justify-end gap-2 p-0">
             <Button variant="outline" onClick={() => setReassignOpen(false)}>
               Renunță
             </Button>
@@ -516,9 +570,10 @@ function UsersPage() {
             >
               Realocă
             </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          </SheetFooter>
+        </SheetContent>
+      </Sheet>
+
 
       {/* Ștergere definitivă */}
       <Dialog open={deleting !== null} onOpenChange={(o) => !o && setDeleting(null)}>
@@ -586,5 +641,22 @@ function UsersPage() {
         </DialogContent>
       </Dialog>
     </>
+  );
+}
+
+/** Pastilă de filtru activ, cu închidere — același tipar ca la Proprietăți. */
+function FilterPill({ label, onClear }: { label: string; onClear: () => void }) {
+  return (
+    <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-surface px-2.5 py-1 text-xs font-medium">
+      {label}
+      <button
+        type="button"
+        onClick={onClear}
+        className="text-muted-foreground hover:text-foreground"
+        aria-label={`Elimină filtrul ${label}`}
+      >
+        <X className="size-3.5" />
+      </button>
+    </span>
   );
 }
