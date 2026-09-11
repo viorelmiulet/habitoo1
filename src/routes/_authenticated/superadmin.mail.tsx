@@ -143,7 +143,7 @@ function SuperadminMailPage() {
     return (
       <>
         <PageHeader title="Email platformă" description="Căsuța de email a platformei, prin Mailgun." />
-        <QueryError message="Căsuța de email nu a putut fi încărcată." onRetry={() => mailboxesQuery.refetch()} />
+        <QueryError error={mailboxesQuery.error} onRetry={() => mailboxesQuery.refetch()} />
       </>
     );
   }
@@ -299,7 +299,7 @@ function ThreadList({
     enabled: !!mailboxId,
   });
 
-  if (query.isError) return <QueryError message="Conversațiile nu au putut fi încărcate." onRetry={() => query.refetch()} />;
+  if (query.isError) return <QueryError error={query.error} onRetry={() => query.refetch()} />;
   if (query.isLoading) return <InlineLoading label="Se încarcă conversațiile…" />;
 
   const threads = query.data?.threads ?? [];
@@ -400,7 +400,7 @@ function SentList({
     enabled: !!mailboxId,
   });
 
-  if (query.isError) return <QueryError message="Mesajele trimise nu au putut fi încărcate." onRetry={() => query.refetch()} />;
+  if (query.isError) return <QueryError error={query.error} onRetry={() => query.refetch()} />;
   if (query.isLoading) return <InlineLoading label="Se încarcă mesajele trimise…" />;
 
   const messages = query.data?.messages ?? [];
@@ -495,7 +495,7 @@ function ThreadView({ threadId, onBack, onChanged }: { threadId: string; onBack:
     else window.open(res.url, "_blank", "noopener");
   };
 
-  if (query.isError) return <QueryError message="Conversația nu a putut fi încărcată." onRetry={() => query.refetch()} />;
+  if (query.isError) return <QueryError error={query.error} onRetry={() => query.refetch()} />;
   if (query.isLoading || !thread) return <InlineLoading label="Se încarcă conversația…" />;
 
   return (
