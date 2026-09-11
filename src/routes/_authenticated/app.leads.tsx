@@ -554,64 +554,120 @@ function LeadsPage() {
           {columns.map((stage) => {
             const items = visible.filter((l) => l.stage === stage);
             const total = items.reduce((sum, l) => sum + (l.value ?? 0), 0);
+            const isDropTarget = dragOverStage === stage && dragId !== null;
             return (
               <div
                 key={stage}
                 data-stage={stage}
-                className="panel flex w-72 shrink-0 flex-col"
-                onDragOver={(e) => e.preventDefault()}
-                onDrop={() => handleDrop(stage)}
+                className={cn(
+                  "flex w-76 shrink-0 flex-col rounded-2xl bg-muted/40 ring-1 ring-border/60 transition",
+                  isDropTarget && "bg-primary/5 ring-2 ring-primary/50",
+                )}
+                onDragOver={(e) => {
+                  e.preventDefault();
+                  if (dragOverStage !== stage) setDragOverStage(stage);
+                }}
+                onDragLeave={() => setDragOverStage((s) => (s === stage ? null : s))}
+                onDrop={() => {
+                  setDragOverStage(null);
+                  handleDrop(stage);
+                }}
               >
-
-                <div className="flex items-center justify-between border-b border-border px-4 py-3">
-                  <div>
-                    <p className="text-sm font-semibold">{leadStageLabels[stage]}</p>
-                    <p className="text-xs text-muted-foreground">{formatMoney(total)}</p>
+                <div className="flex items-start justify-between gap-2 px-4 pt-4 pb-3">
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-semibold">{leadStageLabels[stage]}</p>
+                    {total > 0 ? (
+                      <p className="mt-0.5 text-xs text-muted-foreground">{formatMoney(total)}</p>
+                    ) : null}
                   </div>
                   <StatusBadge tone={stageTone[stage]}>{items.length}</StatusBadge>
                 </div>
-                <div className="flex-1 space-y-3 p-3">
-                  {items.map((l) => (
-                    <div
-                      key={l.id}
-                      draggable
-                      onDragStart={() => setDragId(l.id)}
-                      onClick={() => setDetailLead(l)}
-                      className="cursor-pointer rounded-xl border border-border bg-card p-3 shadow-sm transition hover:border-primary/40"
-                    >
-                      <p className="text-sm font-medium">{l.name}</p>
-                      {l.property_id ? (
-                        <p className="mt-0.5 truncate text-xs text-muted-foreground">
-                          {propertyById.get(l.property_id) ?? "Proprietate"}
-                        </p>
-                      ) : null}
-                      <p className="mt-0.5 text-xs text-muted-foreground">
-                        {l.source ?? "necunoscut"} · {formatMoney(l.value)}
-                      </p>
-                      <div className="mt-2 flex items-center justify-between text-xs text-muted-foreground">
-                        <span>{agentById.get(l.assigned_to ?? "") ?? "Neasignat"}</span>
-                        <span>{relativeDays(l.last_interaction_at)}</span>
-                      </div>
-                      {l.next_followup_at ? (
-                        <p className={`mt-1 text-xs ${isOverdue(l) ? "font-medium text-destructive" : "text-warning"}`}>
-                          Follow-up: {relativeDays(l.next_followup_at)}
-                        </p>
-                      ) : null}
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="mt-2 h-7 w-full text-xs"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          openEdit(l);
+                <div className="flex-1 space-y-3 px-3 pb-3">
+                  {items.map((l) => {
+                    const portalKey = portalKeyOf(l.source);
+                    const stale = isStale(l);
+                    const agentName = agentById.get(l.assigned_to ?? "") ?? null;
+                    return (
+                      <div
+                        key={l.id}
+                        draggable
+                        onDragStart={() => setDragId(l.id)}
+                        onDragEnd={() => {
+                          setDragId(null);
+                          setDragOverStage(null);
                         }}
+                        onClick={() => setDetailLead(l)}
+                        className={cn(
+                          "cursor-pointer rounded-xl bg-card p-3.5 ring-1 ring-border/60 transition hover:ring-primary/40",
+                          dragId === l.id && "opacity-40 ring-primary/60",
+                        )}
                       >
-                        Editează
-                      </Button>
-                    </div>
-                  ))}
+                        <div className="flex items-start justify-between gap-2">
+                          <p className="min-w-0 flex-1 truncate text-sm font-medium">{l.name}</p>
+                          {stale ? (
+                            <span
+                              className="inline-flex items-center gap-1 rounded-full bg-warning/15 px-1.5 py-0.5 text-[10px] font-medium text-warning-foreground"
+                              title="Fără activitate de peste o săptămână"
+                            >
+                              <Clock className="size-3" aria-hidden /> stagnat
+                            </span>
+                          ) : null}
+                        </div>
+
+                        {l.property_id ? (
+                          <p className="mt-1 truncate text-xs text-muted-foreground">
+                            {propertyById.get(l.property_id) ?? "Proprietate"}
+                          </p>
+                        ) : null}
+
+                        <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                          <span className="inline-flex max-w-40 items-center gap-1.5 rounded-full bg-muted px-2 py-0.5 text-[11px] text-muted-foreground">
+                            {portalKey ? (
+                              <PortalLogo portalId={portalKey} name={l.source ?? portalKey} size={14} />
+                            ) : null}
+                            <span className="truncate">{l.source ?? "sursă necunoscută"}</span>
+                          </span>
+                          {l.value ? (
+                            <span className="text-xs font-medium">{formatMoney(l.value)}</span>
+                          ) : null}
+                        </div>
+
+                        <div className="mt-3 flex items-center justify-between gap-2 text-xs text-muted-foreground">
+                          <span className="flex min-w-0 items-center gap-1.5">
+                            <UserAvatar name={agentName} className="size-6 text-[10px]" />
+                            <span className="truncate">{agentName ?? "Neasignat"}</span>
+                          </span>
+                          <span className="shrink-0">{relativeDays(l.last_interaction_at)}</span>
+                        </div>
+
+                        {l.next_followup_at ? (
+                          <p
+                            className={cn(
+                              "mt-2 text-xs",
+                              isOverdue(l) ? "font-medium text-destructive" : "text-muted-foreground",
+                            )}
+                          >
+                            Follow-up: {relativeDays(l.next_followup_at)}
+                          </p>
+                        ) : null}
+
+                        <button
+                          type="button"
+                          className="mt-2 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            openEdit(l);
+                          }}
+                        >
+                          Editează
+                        </button>
+                      </div>
+                    );
+                  })}
                   {items.length === 0 ? (
-                    <p className="px-1 py-6 text-center text-xs text-muted-foreground">Gol</p>
+                    <p className="rounded-xl border border-dashed border-border px-3 py-6 text-center text-xs text-muted-foreground">
+                      Nimic în „{leadStageLabels[stage]}”. Trage un lead aici.
+                    </p>
                   ) : null}
                 </div>
               </div>
