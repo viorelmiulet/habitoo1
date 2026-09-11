@@ -258,22 +258,14 @@ export const sendMail = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const db = await admin(context as never);
 
-    const check = validateOutbound({
-      to: data.to,
-      cc: data.cc ?? [],
-      subject: data.subject,
-      text: data.text ?? null,
-      html: data.html ?? null,
-    });
-    if (!check.ok) {
-      return { ok: false, messageId: null, threadId: null, duplicate: false, attachmentCount: 0, error: check.error };
-    }
-
+    // Sender/recipient rules (From allowlist included) are enforced once, in
+    // `sendMailboxEmail` — never duplicated here.
     return sendMailboxMessage(db, {
       mailboxId: data.mailboxId,
-      to: check.to,
-      cc: check.cc,
-      subject: check.subject,
+      to: data.to,
+      cc: (data.cc ?? []).map(normalizeRecipient).filter((v): v is string => !!v && isEmail(v)),
+      subject: data.subject,
+
       text: data.text ?? null,
       html: data.html ?? null,
       threadId: data.threadId ?? null,
