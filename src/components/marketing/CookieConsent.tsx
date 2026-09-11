@@ -60,9 +60,11 @@ export function CookieConsent() {
         <div
           role="region"
           aria-label="Consimțământ cookie-uri"
-          className="fixed inset-x-0 bottom-0 z-50 border-t border-border bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/90"
+          className="fixed inset-x-0 bottom-0 z-50 px-3 pb-3 sm:px-6 sm:pb-6"
         >
-          <div className="mx-auto flex w-full max-w-7xl flex-col gap-4 px-4 py-4 sm:px-6 lg:flex-row lg:items-center lg:justify-between lg:gap-8 lg:px-8">
+          {/* Cele trei acțiuni au aceeași greutate vizuală: refuzul este la fel
+              de accesibil ca acceptarea (cerință legală, nu preferință). */}
+          <div className="panel mx-auto flex w-full max-w-5xl flex-col gap-3 p-4 sm:gap-4 lg:flex-row lg:items-center lg:justify-between lg:gap-6">
             <p className="text-sm leading-relaxed text-muted-foreground">
               Folosim cookie-uri strict necesare pentru funcționarea site-ului. Pentru analiză și
               marketing avem nevoie de acordul tău. Poți refuza sau îți poți retrage acordul oricând.{" "}
@@ -70,8 +72,12 @@ export function CookieConsent() {
                 Politica de confidențialitate
               </Link>
             </p>
-            <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-              <Button className="sm:min-w-36" onClick={() => persist({ analytics: true, marketing: true })}>
+            <div className="grid gap-2 sm:grid-cols-3 lg:shrink-0">
+              <Button
+                variant="outline"
+                className="sm:min-w-36"
+                onClick={() => persist({ analytics: true, marketing: true })}
+              >
                 Acceptă toate
               </Button>
               <Button
