@@ -77,13 +77,13 @@ export const previewAccessRequestByToken = createServerFn({ method: "POST" })
     if (r["ok"] !== true) return { ok: false, reason: "invalid" };
     return {
       ok: true,
-      status: r["status"] as TokenPreview extends { ok: true } ? never : never,
+      status: String(r["status"] ?? "pending") as "pending",
       used: r["used"] === true,
       reasonText: String(r["reason_text"] ?? ""),
       superadminName: (r["superadmin_name"] as string | null) ?? null,
       requestedAt: String(r["requested_at"] ?? ""),
       expiresAt: String(r["expires_at"] ?? ""),
-    } as TokenPreview;
+    };
   });
 
 /** Aprobare sau respingere din email. Tokenul se consumă la prima folosire. */
