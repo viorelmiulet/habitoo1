@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
 import {
+  ArchiveRestore,
   Building2,
   ChevronLeft,
   ChevronRight,
@@ -171,6 +172,8 @@ function PropertiesPage() {
   const [page, setPage] = useState(0);
   const [archiveTarget, setArchiveTarget] = useState<string[] | null>(null);
   const [promptRequest, setPromptRequest] = useState<PromptRequest | null>(null);
+  const archivePropertyFn = useServerFn(archiveProperty);
+  const unarchivePropertyFn = useServerFn(unarchiveProperty);
 
   const savedViews = useSavedViews("properties", orgId, user?.userId);
 
