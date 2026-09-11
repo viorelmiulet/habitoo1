@@ -270,7 +270,7 @@ function CollaborationPage() {
             <EmptyState
               icon={Handshake}
               title="Nicio ofertă de colaborare disponibilă"
-              description="Nicio altă agenție Habitoo nu are momentan proprietăți deschise spre colaborare care să corespundă filtrelor tale."
+              description="Colaborarea înseamnă că o agenție deschide o proprietate din portofoliul ei către celelalte agenții Habitoo și afișează comisionul pe care îl împarte. Momentan nicio ofertă nu corespunde filtrelor tale. Îți poți marca propriile proprietăți pentru colaborare din pagina proprietății, secțiunea Colaborare, unde stabilești comisionul și condițiile."
             />
           ) : (
             <ul className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
@@ -279,7 +279,7 @@ function CollaborationPage() {
                   <button
                     type="button"
                     onClick={() => setDetailOffer(offer)}
-                    className="block aspect-[4/3] w-full overflow-hidden bg-muted text-left"
+                    className="relative block aspect-[4/3] w-full overflow-hidden bg-muted text-left"
                   >
                     {offer.coverUrl ? (
                       <img
@@ -293,14 +293,17 @@ function CollaborationPage() {
                         Fără fotografii
                       </span>
                     )}
+                    {offer.collabCommissionPercent !== null ? (
+                      <span className="absolute top-3 left-3 rounded-full bg-gold px-3 py-1 text-sm font-semibold text-gold-foreground shadow-sm">
+                        {offer.collabCommissionPercent}% comision
+                      </span>
+                    ) : null}
                   </button>
-                  <div className="flex flex-1 flex-col gap-2 p-4">
-                    <div className="flex items-start justify-between gap-2">
-                      <h3 className="line-clamp-2 text-sm font-semibold">{offer.title}</h3>
-                      {offer.collabCommissionPercent !== null ? (
-                        <StatusBadge tone="success">{offer.collabCommissionPercent}% comision</StatusBadge>
-                      ) : null}
-                    </div>
+                  <div className="flex flex-1 flex-col gap-1.5 p-4">
+                    <h3 className="line-clamp-2 text-sm font-semibold">{offer.title}</h3>
+                    <p className="text-xs text-muted-foreground">
+                      {[offer.district, offer.city, offer.county].filter(Boolean).join(", ") || "Locație nespecificată"}
+                    </p>
                     <p className="text-lg font-semibold">{formatMoney(offer.price, offer.currency)}</p>
                     <p className="text-xs text-muted-foreground">
                       {[
@@ -312,13 +315,7 @@ function CollaborationPage() {
                         .filter(Boolean)
                         .join(" · ")}
                     </p>
-                    <p className="text-xs text-muted-foreground">
-                      {[offer.district, offer.city, offer.county].filter(Boolean).join(", ") || "Locație nespecificată"}
-                    </p>
-                    <p className="mt-auto flex items-center gap-1.5 pt-2 text-xs text-muted-foreground">
-                      <Building2 className="size-3.5" /> {offer.agencyName}
-                    </p>
-                    <div className="flex gap-2">
+                    <div className="mt-auto flex gap-2 pt-3">
                       <Button size="sm" variant="outline" className="flex-1" onClick={() => setDetailOffer(offer)}>
                         Detalii
                       </Button>
@@ -326,11 +323,10 @@ function CollaborationPage() {
                         Propune unui client
                       </Button>
                     </div>
-                    {offer.myProposalCount > 0 ? (
-                      <p className="text-[11px] text-muted-foreground">
-                        Agenția ta a trimis deja {offer.myProposalCount} propunere(i) pe această ofertă.
-                      </p>
-                    ) : null}
+                    <p className="flex items-center gap-1.5 border-t border-border/70 pt-2 text-[11px] text-muted-foreground">
+                      <Building2 className="size-3" /> Mandat: {offer.agencyName}
+                      {offer.myProposalCount > 0 ? ` · ${offer.myProposalCount} propunere(i) trimise` : ""}
+                    </p>
                   </div>
                 </li>
               ))}
