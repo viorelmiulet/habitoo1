@@ -1,4 +1,11 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+
+const priorityLabels: Record<string, string> = { low: "Scăzută", medium: "Medie", high: "Ridicată" };
+const priorityTone: Record<string, "neutral" | "info" | "warning"> = {
+  low: "neutral",
+  medium: "info",
+  high: "warning",
+};
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import {
