@@ -1955,7 +1955,7 @@ export const listOrgPropertiesForPortals = createServerFn({ method: "POST" })
 
 /**
  * Citește `/meta` pentru anunțurile Storia existente și salvează linkul public
- * (`state.url`) plus id-ul numeric extras din el (`AD:<id>`), care este puntea
+ * (`state.url`) plus slugul extras din el (`ADSLUG:<slug>`), care este puntea
  * sigură dintre notificările de mesaje și oferta din CRM.
  *
  * Necesar o singură dată pentru anunțurile publicate înainte de introducerea

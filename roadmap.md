@@ -54,3 +54,10 @@
 - [ ] Faza 4 — webhook de notificări (HMAC SHA1, răspuns rapid 2xx) + mesaje Storia transformate în lead-uri.
 - [ ] Neimplementat intenționat: promovări (VAS), Primary Market.
 - [ ] Necesită de la utilizator: secretele `OLX_CLIENT_ID`, `OLX_CLIENT_SECRET`, `OLX_BASIC_BASE64`, `OLX_API_KEY`, `OLX_NOTIFICATION_SECRET` și înregistrarea callback-ului în Application Manager.
+
+## Storia — legarea mesajelor reale
+
+- [ ] Identificator canonic `ADSLUG:` pentru URL și `data.ad_id`, cu fallback de citire pentru `AD:` istoric.
+- [ ] Backfill sluguri din `public_url` pentru anunțurile existente.
+- [ ] Reprocesare notificări nefinalizate și verificare lead pentru `RF-1001`.
+- [ ] Typecheck, teste, build și publicare.

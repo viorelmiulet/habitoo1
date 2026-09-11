@@ -179,8 +179,8 @@ async function pushListing(
 
   const notes: string[] = [...build.warnings];
   const statuses: string[] = [];
-  // Linkul public al anunțului + slug-ul din link (`ADSLUG:<id>`). Id-ul numeric
-  // folosit în notificările de mesaje este DIFERIT și se învață din ele.
+  // Linkul public al anunțului + slug-ul canonic (`ADSLUG:<id>`). Aceeași
+  // valoare este trimisă de Storia în `data.ad_id` la mesajele cumpărătorilor.
   const publicUrls: Partial<Record<StoriaTransaction, string>> = {};
   const adSlugs: string[] = [];
   const finalExternalId = () => {

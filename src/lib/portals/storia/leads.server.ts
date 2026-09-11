@@ -5,9 +5,9 @@
  *
  *  1. `flow: "incoming_message"` — mesaj de la un cumpărător pe un anunț → lead
  *     în CRM, legat de proprietate, asignat agentului responsabil, cu notificare.
- *     CONFIRMAT DIN DOCUMENTAȚIE (developer.olxgroup.com/docs/incoming-message),
- *     NU din date reale: în `portal_webhook_events` nu a sosit încă niciun mesaj.
- *     Câmpuri documentate: `data.ad_id` (id NUMERIC al anunțului pe Storia),
+ *     CONFIRMAT PE PAYLOAD REAL: `data.ad_id` conține slugul alfanumeric din
+ *     linkul public al anunțului (de exemplu `IwcT`), nu un id numeric.
+ *     Câmpuri documentate: `data.ad_id`,
  *     `data.sender_name`, `data.sender_email`, `data.sender_phone`,
  *     `data.message`, `data.id`, `data.conversation_id`, `data.created_at`.
  *     Atenție: `object_id` de la nivelul rădăcină este uuid-ul MESAJULUI, nu al
@@ -19,8 +19,8 @@
  *     payload-uri reale din jurnal (`event_type: advert_posted_success`,
  *     `data.code: active`, `object_id` = uuid-ul anunțului). Actualizează
  *     `portal_listings.status` / `last_error` prin `storiaListingStatus` și, când
- *     payload-ul îl expune, memorează id-ul numeric al anunțului (`AD:<id>` în
- *     `external_id`) — puntea necesară pentru a lega mesajele de proprietate.
+ *     payload-ul expune URL-ul, memorează slugul (`ADSLUG:<slug>` în
+ *     `external_id`) — puntea folosită pentru a lega mesajele de proprietate.
  *
  * Idempotență: `transaction_id` deja procesat → nu se repetă niciun efect.
  */
@@ -31,7 +31,6 @@ import {
   parseStoriaAdSlugs,
   storiaAdSlugFromUrl,
   storiaListingStatus,
-  withStoriaAdId,
   withStoriaAdSlug,
 } from "./adverts.server";
 
@@ -87,9 +86,7 @@ export type StoriaEventShape = {
   transactionId: string | null;
   /** uuid-ul anunțului (fluxul de anunțuri: `object_id`). */
   advertUuid: string | null;
-  /** id-ul numeric intern al anunțului (fluxul de mesaje: `data.ad_id`). */
-  adId: string | null;
-  /** id-ul din linkul public (slug alfanumeric, ex. `IwcT`) — alt identificator. */
+  /** Slugul alfanumeric din URL; la mesaje vine în `data.ad_id`. */
   adSlug: string | null;
   /** Linkul public al anunțului (`data.url`), când vine în notificare. */
   publicUrl: string | null;
@@ -113,10 +110,11 @@ export function readEventShape(parsed: unknown): StoriaEventShape | null {
       pick(data, ["advert_id", "advertId", "advert.uuid", "advert.id", "id"]));
 
   const publicUrl = pick(data, ["url", "advert.url", "state.url"]);
-  // Cele două identificatoare sunt DIFERITE: `data.ad_id` este id-ul numeric
-  // intern, iar linkul public conține un slug alfanumeric. Le păstrăm separat.
-  const adId = pick(data, ["ad_id", "adId", "advert.ad_id", "advert_numeric_id"]);
-  const adSlug = storiaAdSlugFromUrl(publicUrl);
+  // Payloadurile reale confirmă că `data.ad_id` este chiar slugul din URL.
+  // Acceptăm valori alfanumerice și folosim URL-ul drept fallback.
+  const adSlugCandidate =
+    pick(data, ["ad_id", "adId", "advert.ad_id", "advert.id"]) ??
+    storiaAdSlugFromUrl(publicUrl);
 
   return {
     flow,
@@ -124,8 +122,10 @@ export function readEventShape(parsed: unknown): StoriaEventShape | null {
     transactionId: pick(root, ["transaction_id", "transactionId"]),
     advertUuid:
       advertCandidate && UUID_RE.test(advertCandidate) ? advertCandidate.toLowerCase() : null,
-    adId: adId && /^[A-Za-z0-9]{2,}$/.test(adId) ? adId : null,
-    adSlug: adSlug && /^[A-Za-z0-9]{2,}$/.test(adSlug) ? adSlug : null,
+    adSlug:
+      adSlugCandidate && /^[A-Za-z0-9]{2,}$/.test(adSlugCandidate)
+        ? adSlugCandidate
+        : null,
     publicUrl: publicUrl && /^https?:\/\//i.test(publicUrl) ? publicUrl : null,
     customId: pick(data, [
       "custom_fields.id",
@@ -220,7 +220,7 @@ async function propertyMatch(
  * Identifică proprietatea, în ordinea siguranței:
  *   1. `custom_fields.id` (`HBT-<propertyId>-SALE`) — îl trimitem noi la publicare;
  *   2. uuid-ul anunțului, căutat în `portal_listings.external_id` (`SALE:uuid|RENT:uuid`);
- *   3. id-ul numeric al anunțului, căutat în segmentul `AD:<id>`.
+ *   3. slugul anunțului, căutat în segmentul canonic `ADSLUG:<slug>`.
  */
 async function matchListing(admin: Admin, shape: StoriaEventShape): Promise<MatchedListing | null> {
   const custom = parseStoriaCustomId(shape.customId);
@@ -235,12 +235,9 @@ async function matchListing(admin: Admin, shape: StoriaEventShape): Promise<Matc
     if (match) return match;
   }
 
-  // `data.ad_id` poate fi id numeric SAU slugul alfanumeric din link — nu forțăm
-  // o singură interpretare, căutăm ambele forme.
+  // Forma canonică este `ADSLUG:`. `AD:` rămâne doar fallback pentru date vechi.
   const needles = [
     shape.advertUuid,
-    shape.adId ? `AD:${shape.adId}` : null,
-    shape.adId ? `ADSLUG:${shape.adId}` : null,
     shape.adSlug ? `ADSLUG:${shape.adSlug}` : null,
     shape.adSlug ? `AD:${shape.adSlug}` : null,
   ].filter(Boolean) as string[];
@@ -263,16 +260,15 @@ async function matchListing(admin: Admin, shape: StoriaEventShape): Promise<Matc
       ...parseStoriaAdIds(listing.external_id),
       ...parseStoriaAdSlugs(listing.external_id),
     ];
-    const adHit = shape.adId ? known.includes(shape.adId) : false;
     const slugHit = shape.adSlug ? known.includes(shape.adSlug) : false;
-    if (!uuidHit && !adHit && !slugHit) continue;
+    if (!uuidHit && !slugHit) continue;
 
     const match = await propertyMatch(admin, listing.property_id, listing.external_id);
     if (match) return match;
   }
 
   // Ultimă punte: slugul din linkul public salvat pe anunț (`...-ID<slug>.html`).
-  const slugCandidates = [shape.adSlug, shape.adId].filter(Boolean) as string[];
+  const slugCandidates = [shape.adSlug].filter(Boolean) as string[];
   for (const slug of slugCandidates) {
     const { data: byUrl } = await admin
       .from("portal_listings")
@@ -312,7 +308,7 @@ async function processMessage(admin: Admin, shape: StoriaEventShape): Promise<St
   if (!match) {
     return {
       processed: false,
-      note: `mesaj Storia fără proprietate identificabilă (ad_id=${shape.adId ?? "-"}, slug=${shape.adSlug ?? "-"}, custom_id=${shape.customId ?? "-"})`,
+      note: `mesaj Storia fără proprietate identificabilă (slug=${shape.adSlug ?? "-"}, custom_id=${shape.customId ?? "-"})`,
     };
   }
 
@@ -481,12 +477,8 @@ async function processLifecycle(
   const code = pick(shape.data, ["code", "status", "advert.code"]);
   const now = new Date().toISOString();
 
-  // Memorăm ambele identificatoare: cel numeric (folosit de mesaje) și slug-ul
-  // din linkul public. Sunt diferite, deci le stocăm separat.
+  // Memorăm doar forma canonică `ADSLUG:`; mesajele folosesc același slug.
   let learned: string | null = null;
-  if (shape.adId && !parseStoriaAdIds(match.externalId).includes(shape.adId)) {
-    learned = withStoriaAdId(learned ?? match.externalId, shape.adId);
-  }
   if (shape.adSlug && !parseStoriaAdSlugs(match.externalId).includes(shape.adSlug)) {
     learned = withStoriaAdSlug(learned ?? match.externalId, shape.adSlug);
   }
@@ -506,7 +498,6 @@ async function processLifecycle(
         note: `link/id anunț Storia memorat (${
           externalId
             ? [
-                shape.adId ? `AD:${shape.adId}` : null,
                 shape.adSlug ? `ADSLUG:${shape.adSlug}` : null,
               ]
                 .filter(Boolean)
