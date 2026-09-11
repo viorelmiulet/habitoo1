@@ -54,6 +54,10 @@ import { formatDateTime, formatMoney, relativeDays } from "@/lib/format";
 import { leadStageLabels, leadStages } from "@/lib/labels";
 import { leadLostReasons, logAudit } from "@/lib/crm";
 import type { Tables } from "@/integrations/supabase/types";
+import { PortalLogo, hasPortalLogo } from "@/components/app/PortalLogo";
+import { UserAvatar } from "@/components/app/UserAvatar";
+import { PropertyThumb, usePropertyCovers } from "@/components/app/PropertyThumb";
+import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authenticated/app/leads")({
   validateSearch: (search: Record<string, unknown>): { new?: boolean; stage?: string } => {
