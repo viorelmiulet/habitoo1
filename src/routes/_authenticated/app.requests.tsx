@@ -44,6 +44,13 @@ export const Route = createFileRoute("/_authenticated/app/requests")({
 
 const PAGE_SIZE = 25;
 
+const priorityLabels: Record<string, string> = { low: "Scăzută", medium: "Medie", high: "Ridicată" };
+const priorityTone: Record<string, "neutral" | "info" | "warning"> = {
+  low: "neutral",
+  medium: "info",
+  high: "warning",
+};
+
 type Filters = {
   q: string;
   kind: string;
