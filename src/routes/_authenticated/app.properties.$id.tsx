@@ -30,7 +30,6 @@ import {
 } from "@/components/app/PropertyPortalsCard";
 import { PropertyDetailsFields, type PropertyDetailsValue } from "@/components/app/PropertyDetailsFields";
 import { PROPERTY_DETAIL_FIELDS } from "@/lib/property-detail-fields";
-import { CollaborationNudgeDialog } from "@/components/app/CollaborationNudgeDialog";
 import {
   PropertyTransactionFields,
   emptyTransaction,
@@ -44,7 +43,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Dialog,

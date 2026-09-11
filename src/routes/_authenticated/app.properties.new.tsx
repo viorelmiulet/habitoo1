@@ -2,8 +2,6 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { PropertyDetailsFields, type PropertyDetailsValue } from "@/components/app/PropertyDetailsFields";
-import { CollaborationNudgeDialog } from "@/components/app/CollaborationNudgeDialog";
-import { Switch } from "@/components/ui/switch";
 import {
   PropertyTransactionFields,
   emptyTransaction,
@@ -81,7 +79,6 @@ function NewPropertyPage() {
     internal_notes: "",
     owner_contact_id: "",
     commission: "",
-    collaboration: false,
   });
   const [features, setFeatures] = useState<string[]>([]);
   // Secțiunile de detalii (Detalii / Suprafețe / Clădire / Utilități / Finisaje / Dotări).
