@@ -338,6 +338,32 @@ export function AppSidebar({
         ) : null}
       </nav>
 
+      {/* Planul agenției: date reale (plan + locuri folosite din limită). */}
+      {plan && !collapsed ? (
+        <div className="mx-3 mb-2 rounded-2xl border border-sidebar-border bg-sidebar-accent/50 px-3 py-3">
+          <p className="flex items-center gap-1.5 text-sm font-medium text-sidebar-accent-foreground">
+            <Crown className="size-3.5 text-gold" aria-hidden />
+            Plan {plan.label}
+          </p>
+          <div className="mt-2 flex items-center justify-between text-[11px] text-sidebar-foreground/70">
+            <span>Utilizatori</span>
+            <span className="tabular-nums">
+              {plan.used}/{plan.limit}
+            </span>
+          </div>
+          <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-sidebar-foreground/15">
+            <div
+              className="h-full rounded-full bg-gold"
+              style={{
+                width: `${plan.limit > 0 ? Math.min(100, Math.round((plan.used / plan.limit) * 100)) : 0}%`,
+              }}
+            />
+          </div>
+        </div>
+      ) : null}
+
+
+
       {/* Footer: user + collapse */}
       <div className="border-t border-sidebar-border p-2">
         {user ? (
