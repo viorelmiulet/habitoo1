@@ -29,6 +29,8 @@ async function search(term: string): Promise<Result[]> {
       .from("properties")
       .select("id,title,reference,city,district,external_id,address")
       .or(`title.ilike.${like},reference.ilike.${like},city.ilike.${like},address.ilike.${like},external_id.ilike.${like}`)
+      // Proprietățile arhivate sunt scoase din circulație: nu apar în căutare.
+      .neq("status", "archived" as never)
       .limit(5),
     supabase
       .from("contacts")

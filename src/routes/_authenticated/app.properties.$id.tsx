@@ -15,7 +15,8 @@ import {
 import { toast } from "sonner";
 import { useServerFn } from "@tanstack/react-start";
 import { duplicateProperty } from "@/lib/property-duplicate.functions";
-import { DeletePropertyDialog } from "@/components/app/DeletePropertyDialog";
+import { ArchivePropertyDialog } from "@/components/app/ArchivePropertyDialog";
+import { unarchiveProperty } from "@/lib/property-archive.functions";
 import { toastError } from "@/lib/errors";
 import { PageHeader } from "@/components/app/PageHeader";
 import { FormSection, RequiredMark } from "@/components/app/FormSection";
@@ -110,7 +111,8 @@ function PropertyDetailPage() {
   // Butonul unic „Publică” din antet declanșează și aplicarea bifelor de portal.
   const portalsRef = useRef<PropertyPortalsHandle | null>(null);
   const duplicatePropertyFn = useServerFn(duplicateProperty);
-  const [deleteOpen, setDeleteOpen] = useState(false);
+  const unarchivePropertyFn = useServerFn(unarchiveProperty);
+  const [archiveOpen, setArchiveOpen] = useState(false);
 
   const { data, isLoading } = useQuery({
     queryKey: ["property", id],
@@ -245,22 +247,14 @@ function PropertyDetailPage() {
     onError: (e: Error) => toastError(e),
   });
 
-  const archive = useMutation({
-    mutationFn: async () => {
-      const { error } = await supabase.from("properties").update({ status: "archived" as never }).eq("id", id);
-      if (error) throw error;
-      await logAudit({
-        organizationId: orgId,
-        actorId: user?.userId,
-        action: "property_archived",
-        entity: "property",
-        entityId: id,
-      });
-    },
+  // Dezarhivarea readuce statusul comercial de dinainte de arhivare (server-side).
+  const unarchive = useMutation({
+    mutationFn: async () => await unarchivePropertyFn({ data: { propertyId: id } }),
     onSuccess: () => {
-      toast.success("Proprietatea a fost arhivată.");
+      toast.success("Proprietatea a fost readusă în circulație.");
       queryClient.invalidateQueries({ queryKey: ["properties"] });
-      navigate({ to: "/app/properties" });
+      queryClient.invalidateQueries({ queryKey: ["property", id] });
+      queryClient.invalidateQueries({ queryKey: ["property-archive-state", id] });
     },
     onError: (e: Error) => toastError(e),
   });
@@ -540,16 +534,15 @@ function PropertyDetailPage() {
                     </DropdownMenuItem>
                   ))}
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={() => archive.mutateAsync()}>
-                    Arhivează
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem
-                    onClick={() => setDeleteOpen(true)}
-                    className="text-destructive focus:text-destructive"
-                  >
-                    Șterge definitiv
-                  </DropdownMenuItem>
+                  {property.status === "archived" ? (
+                    <DropdownMenuItem onClick={() => unarchive.mutate()}>
+                      Dezarhivează
+                    </DropdownMenuItem>
+                  ) : (
+                    <DropdownMenuItem onClick={() => setArchiveOpen(true)}>
+                      Arhivează
+                    </DropdownMenuItem>
+                  )}
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
@@ -557,14 +550,13 @@ function PropertyDetailPage() {
         }
       />
 
-      <DeletePropertyDialog
+      <ArchivePropertyDialog
         propertyId={id}
-        open={deleteOpen}
-        onOpenChange={setDeleteOpen}
-        archived={property.status === "archived"}
-        onArchive={() => archive.mutateAsync()}
-        onDeleted={() => navigate({ to: "/app/properties" })}
+        open={archiveOpen}
+        onOpenChange={setArchiveOpen}
+        onArchived={() => navigate({ to: "/app/properties" })}
       />
+
 
 
       {/* Bandă de metrici: date reale, fără borduri, doar fundal ușor diferit. */}

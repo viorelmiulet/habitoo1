@@ -2068,6 +2068,8 @@ export type Database = {
           additional_spaces: string[]
           address: string | null
           appliances: string[]
+          archived_at: string | null
+          archived_by: string | null
           assigned_to: string | null
           balconies: number | null
           balcony: boolean
@@ -2143,6 +2145,9 @@ export type Database = {
           parking: string | null
           parking_spaces: number | null
           pet_friendly: boolean
+          pre_archive_status:
+            | Database["public"]["Enums"]["property_status"]
+            | null
           price: number | null
           property_type: string
           publish_status: string
@@ -2183,6 +2188,8 @@ export type Database = {
           additional_spaces?: string[]
           address?: string | null
           appliances?: string[]
+          archived_at?: string | null
+          archived_by?: string | null
           assigned_to?: string | null
           balconies?: number | null
           balcony?: boolean
@@ -2258,6 +2265,9 @@ export type Database = {
           parking?: string | null
           parking_spaces?: number | null
           pet_friendly?: boolean
+          pre_archive_status?:
+            | Database["public"]["Enums"]["property_status"]
+            | null
           price?: number | null
           property_type?: string
           publish_status?: string
@@ -2298,6 +2308,8 @@ export type Database = {
           additional_spaces?: string[]
           address?: string | null
           appliances?: string[]
+          archived_at?: string | null
+          archived_by?: string | null
           assigned_to?: string | null
           balconies?: number | null
           balcony?: boolean
@@ -2373,6 +2385,9 @@ export type Database = {
           parking?: string | null
           parking_spaces?: number | null
           pet_friendly?: boolean
+          pre_archive_status?:
+            | Database["public"]["Enums"]["property_status"]
+            | null
           price?: number | null
           property_type?: string
           publish_status?: string

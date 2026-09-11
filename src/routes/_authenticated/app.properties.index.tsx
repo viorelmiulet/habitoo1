@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
 import {
+  ArchiveRestore,
   Building2,
   ChevronLeft,
   ChevronRight,
@@ -19,6 +20,8 @@ import { PageHeader } from "@/components/app/PageHeader";
 import { CardGridSkeleton, ListSkeleton } from "@/components/app/LoadingState";
 import { PropertyPortalsCell, usePropertyPortals } from "@/components/app/PropertyPortalsCell";
 import { PropertyCard, type PropertyCardRow } from "@/components/app/PropertyCard";
+import { useServerFn } from "@tanstack/react-start";
+import { archiveProperty, unarchiveProperty } from "@/lib/property-archive.functions";
 import { PropertyThumb, usePropertyCovers } from "@/components/app/PropertyThumb";
 import { StatusBadge } from "@/components/app/StatusBadge";
 import { EmptyState } from "@/components/app/EmptyState";
@@ -76,6 +79,8 @@ type Filters = {
   source: string;
   mine: boolean;
   favoritesOnly: boolean;
+  /** Aduce înapoi la vedere proprietățile arhivate. */
+  showArchived: boolean;
   priceMin: string;
   priceMax: string;
   surfaceMin: string;
@@ -98,6 +103,7 @@ const emptyFilters: Filters = {
   source: "all",
   mine: false,
   favoritesOnly: false,
+  showArchived: false,
   priceMin: "",
   priceMax: "",
   surfaceMin: "",
@@ -166,6 +172,8 @@ function PropertiesPage() {
   const [page, setPage] = useState(0);
   const [archiveTarget, setArchiveTarget] = useState<string[] | null>(null);
   const [promptRequest, setPromptRequest] = useState<PromptRequest | null>(null);
+  const archivePropertyFn = useServerFn(archiveProperty);
+  const unarchivePropertyFn = useServerFn(unarchiveProperty);
 
   const savedViews = useSavedViews("properties", orgId, user?.userId);
 
@@ -251,8 +259,9 @@ function PropertiesPage() {
         .is("deleted_at", null);
 
       if (filters.status !== "all") query = query.eq("status", filters.status as never);
-      // Arhivele nu apar în lista implicită; sunt vizibile doar cu filtrul de status "Arhivat".
-      else query = query.neq("status", "archived" as never);
+      // Arhivele nu apar în lista implicită; revin la vedere cu "Arată și arhivate"
+      // sau când se filtrează explicit după statusul "Arhivat".
+      else if (!filters.showArchived) query = query.neq("status", "archived" as never);
       if (filters.transaction !== "all") query = query.eq("transaction_kind", filters.transaction as never);
       if (filters.type !== "all") query = query.eq("property_type", filters.type);
       if (filters.city !== "all") query = query.eq("city", filters.city);
@@ -327,16 +336,38 @@ function PropertiesPage() {
     onError: (e: Error) => toastError(e),
   });
 
+  /**
+   * Arhivarea trece prin server: acolo se verifică drepturile și condiția de
+   * siguranță (nicio proprietate activă pe portaluri sau în Colaborare).
+   */
   const archiveMany = useMutation({
     mutationFn: async (ids: string[]) => {
-      const { error } = await supabase.from("properties").update({ status: "archived" as never }).in("id", ids);
-      if (error) throw error;
+      const failed: string[] = [];
+      for (const id of ids) {
+        try {
+          await archivePropertyFn({ data: { propertyId: id } });
+        } catch (e) {
+          const row = rows.find((r) => r.id === id);
+          failed.push(`${row?.reference ?? id}: ${e instanceof Error ? e.message : "eroare"}`);
+        }
+      }
+      return failed;
     },
-    onSuccess: () => {
+    onSuccess: (failed) => {
       invalidateList();
       setSelected([]);
       setArchiveTarget(null);
-      toast.success("Proprietăți arhivate.");
+      if (failed.length > 0) toast.error(failed.join(" · "));
+      else toast.success("Proprietăți arhivate.");
+    },
+    onError: (e: Error) => toastError(e),
+  });
+
+  const unarchiveOne = useMutation({
+    mutationFn: async (id: string) => await unarchivePropertyFn({ data: { propertyId: id } }),
+    onSuccess: () => {
+      invalidateList();
+      toast.success("Proprietatea a fost readusă în circulație.");
     },
     onError: (e: Error) => toastError(e),
   });
@@ -748,6 +779,13 @@ function PropertiesPage() {
           >
             <Star className="size-4" /> Doar favorite
           </Button>
+          <Button
+            variant={filters.showArchived ? "default" : "outline"}
+            size="sm"
+            onClick={() => setFilters((f) => ({ ...f, showArchived: !f.showArchived }))}
+          >
+            <ArchiveRestore className="size-4" /> Arată și arhivate
+          </Button>
           <Button variant="ghost" size="sm" onClick={saveFilter}>
             Salvează filtrul
           </Button>
@@ -932,6 +970,16 @@ function PropertiesPage() {
                     ) : null}
                     {columns.includes("updated") ? (
                       <span className="w-24 text-right text-xs text-muted-foreground">{relativeDays(p.updated_at)}</span>
+                    ) : null}
+                    {p.status === "archived" ? (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        disabled={unarchiveOne.isPending}
+                        onClick={() => unarchiveOne.mutate(p.id)}
+                      >
+                        <ArchiveRestore className="size-4" /> Dezarhivează
+                      </Button>
                     ) : null}
                   </li>
                 ))}
