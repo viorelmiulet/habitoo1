@@ -179,6 +179,10 @@ function PropertiesPage() {
   }, [columns]);
 
   useEffect(() => {
+    window.localStorage.setItem(VIEW_KEY, view);
+  }, [view]);
+
+  useEffect(() => {
     setPage(0);
   }, [filters, sort]);
 
