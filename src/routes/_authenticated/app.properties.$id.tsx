@@ -473,6 +473,28 @@ function PropertyDetailPage() {
   // Coordonatele arătate în panoul read-only: exacte sau zona aproximativă.
   const mapCoords = publicCoords(property);
 
+  /**
+   * Banda de metrici: doar date reale existente în CRM (nu avem contor de
+   * vizualizări, deci folosim activitățile planificate).
+   */
+  const metrics: { label: string; value: string }[] = [
+    { label: "Suprafață", value: property.surface ? `${formatNumber(property.surface)} m²` : "—" },
+    {
+      label: "Camere / etaj",
+      value: [
+        property.rooms ? `${property.rooms} cam.` : null,
+        property.floor !== null && property.floor !== undefined ? `etaj ${property.floor}` : null,
+      ]
+        .filter(Boolean)
+        .join(" · ") || "—",
+    },
+    { label: "Lead-uri active", value: String(activeLeads.length) },
+    {
+      label: "Activități planificate",
+      value: String(activities.filter((a) => a.status === "planned").length),
+    },
+  ];
+
   /** Nudge-ul apare doar dacă agenția participă, colaborarea e oprită și nu am întrebat deja. */
   const shouldNudgeCollab = () =>
     user?.organization?.collaboration_enabled === true &&
