@@ -3353,6 +3353,7 @@ export type Database = {
         Args: { _bucket: string; _token: string; _ttl_seconds: number }
         Returns: boolean
       }
+      next_property_reference: { Args: never; Returns: string }
       org_access_blocked: { Args: never; Returns: string }
       plan_agent_limit: { Args: { _plan: string }; Returns: number }
       purge_expired_portal_messages: { Args: never; Returns: number }
