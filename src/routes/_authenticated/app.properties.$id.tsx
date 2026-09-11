@@ -30,7 +30,6 @@ import {
 } from "@/components/app/PropertyPortalsCard";
 import { PropertyDetailsFields, type PropertyDetailsValue } from "@/components/app/PropertyDetailsFields";
 import { PROPERTY_DETAIL_FIELDS } from "@/lib/property-detail-fields";
-import { CollaborationNudgeDialog } from "@/components/app/CollaborationNudgeDialog";
 import {
   PropertyTransactionFields,
   emptyTransaction,
@@ -44,7 +43,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Dialog,
@@ -149,10 +147,6 @@ function PropertyDetailPage() {
   const [details, setDetails] = useState<PropertyDetailsValue>({});
   // Vânzare / închiriere (pot fi active simultan), fiecare cu preț și monedă.
   const [tx, setTx] = useState<TransactionValue>(emptyTransaction);
-  // Colaborare Habitoo: expunerea anunțului către celelalte agenții din platformă.
-  const [collab, setCollab] = useState(false);
-  // Nudge-ul de colaborare: o singură dată per proprietate, doar dacă agenția participă.
-  const [nudgeOpen, setNudgeOpen] = useState(false);
   // Poziția pe hartă (Leaflet/OpenStreetMap) și precizia locației, în modul editare.
   const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null);
   const [locationPrecise, setLocationPrecise] = useState(false);
@@ -168,13 +162,7 @@ function PropertyDetailPage() {
       address: property.address ?? "",
       description: property.description ?? "",
       internal_notes: property.internal_notes ?? "",
-      collab_commission_percent:
-        property.collab_commission_percent !== null && property.collab_commission_percent !== undefined
-          ? String(property.collab_commission_percent)
-          : "",
-      collab_terms: property.collab_terms ?? "",
     });
-    setCollab(Boolean(property.collaboration));
     setCoords(
       typeof property.lat === "number" && typeof property.lng === "number"
         ? { lat: property.lat, lng: property.lng }
@@ -231,10 +219,6 @@ function PropertyDetailPage() {
     location_precise: locationPrecise,
     description: draft.description || null,
     internal_notes: draft.internal_notes || null,
-    collaboration: collab,
-    collab_commission_percent:
-      collab && draft.collab_commission_percent ? Number(draft.collab_commission_percent) : null,
-    collab_terms: collab ? draft.collab_terms || null : null,
     ...details,
   });
 
@@ -284,32 +268,18 @@ function PropertyDetailPage() {
    * (2) publică pe site, (3) aplică bifele curente de portaluri.
    */
   const publish = useMutation({
-    mutationFn: async (vars?: { enableCollab?: boolean; percent?: number | null; prompted?: boolean }) => {
-      const extra: Record<string, unknown> = {};
-      if (vars?.enableCollab) {
-        extra.collaboration = true;
-        if (vars.percent !== null && vars.percent !== undefined) {
-          extra.collab_commission_percent = vars.percent;
-        }
-      }
-      if (vars?.prompted) extra.collab_prompted_at = new Date().toISOString();
-
+    mutationFn: async () => {
       if (editing) {
         if (!hasTransactionSelection(tx)) {
           throw new Error("Alege tipul tranzacției: de vânzare, de închiriere sau ambele.");
         }
         const { error: saveError } = await supabase
           .from("properties")
-          .update({ ...buildEditPatch(), ...extra, updated_by: user?.userId ?? null } as never)
+          .update({ ...buildEditPatch(), updated_by: user?.userId ?? null } as never)
           .eq("id", id);
         if (saveError) throw saveError;
-      } else if (Object.keys(extra).length > 0) {
-        const { error: extraError } = await supabase
-          .from("properties")
-          .update({ ...extra, updated_by: user?.userId ?? null } as never)
-          .eq("id", id);
-        if (extraError) throw extraError;
       }
+
 
 
       // O ofertă publicată nu poate rămâne „Ciornă”: statusul ciornă este exclus
@@ -494,28 +464,9 @@ function PropertyDetailPage() {
     },
   ];
 
-  /** Nudge-ul apare doar dacă agenția participă, colaborarea e oprită și nu am întrebat deja. */
-  const shouldNudgeCollab = () =>
-    user?.organization?.collaboration_enabled === true &&
-    !(editing ? collab : Boolean(property.collaboration)) &&
-    !property.collab_prompted_at;
-
   return (
     <>
-      <CollaborationNudgeDialog
-        open={nudgeOpen}
-        onOpenChange={setNudgeOpen}
-        pending={publish.isPending}
-        onResolve={(result) => {
-          setNudgeOpen(false);
-          if (result.enable) {
-            setCollab(true);
-            publish.mutate({ enableCollab: true, percent: result.percent, prompted: true });
-          } else {
-            publish.mutate({ prompted: true });
-          }
-        }}
-      />
+
 
       <PageHeader
         backTo="/app/properties"
@@ -565,13 +516,7 @@ function PropertyDetailPage() {
               </Button>
               <Button
                 size="sm"
-                onClick={() => {
-                  if (shouldNudgeCollab()) {
-                    setNudgeOpen(true);
-                    return;
-                  }
-                  publish.mutate(undefined);
-                }}
+                onClick={() => publish.mutate()}
                 disabled={publish.isPending || save.isPending}
               >
                 {publish.isPending ? "Se publică…" : "Publică"}
@@ -732,48 +677,6 @@ function PropertyDetailPage() {
                 />
               </FormSection>
 
-              <FormSection title="Colaborare">
-              <div className="space-y-3">
-                <div className="flex items-start justify-between gap-4">
-                  <div className="space-y-1">
-                    <Label htmlFor="collaboration" className="text-sm">
-                      Disponibilă pentru colaborare
-                    </Label>
-                    <p className="text-xs text-muted-foreground">
-                      Anunțul devine vizibil celorlalte agenții Habitoo (fără date de proprietar sau
-                      note interne), în secțiunea Colaborare.
-                    </p>
-                  </div>
-                  <Switch id="collaboration" checked={collab} onCheckedChange={setCollab} />
-                </div>
-                {collab ? (
-                  <div className="grid gap-3 sm:grid-cols-2">
-                    <div className="space-y-2">
-                      <Label htmlFor="collab_commission_percent">Comision colaborare (%)</Label>
-                      <Input
-                        id="collab_commission_percent"
-                        inputMode="decimal"
-                        placeholder="Ex. 1.5"
-                        value={draft.collab_commission_percent ?? ""}
-                        onChange={(e) =>
-                          setDraft((d) => ({ ...d, collab_commission_percent: e.target.value }))
-                        }
-                      />
-                    </div>
-                    <div className="space-y-2 sm:col-span-2">
-                      <Label htmlFor="collab_terms">Condiții de colaborare (opțional)</Label>
-                      <Textarea
-                        id="collab_terms"
-                        rows={2}
-                        placeholder="Ex. doar cumpărători cu credit aprobat"
-                        value={draft.collab_terms ?? ""}
-                        onChange={(e) => setDraft((d) => ({ ...d, collab_terms: e.target.value }))}
-                      />
-                    </div>
-                  </div>
-                ) : null}
-              </div>
-              </FormSection>
 
               <FormSection title="Note interne" description="Nu se publică pe site sau pe portaluri.">
               <div className="space-y-2">

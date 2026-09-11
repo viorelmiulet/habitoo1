@@ -1,0 +1,1 @@
+ALTER TABLE public.properties DROP COLUMN collab_prompted_at;

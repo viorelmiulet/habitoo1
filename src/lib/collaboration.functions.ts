@@ -838,3 +838,88 @@ export const setCollaborationProposalStatus = createServerFn({ method: "POST" })
     });
     return { ok: true };
   });
+
+/* ========================================================================
+ * COLABORAREA CA „PORTAL" ÎN FILA PUBLICARE A PROPRIETĂȚII
+ * Sursa de adevăr rămâne pe `properties`: `collaboration`,
+ * `collab_commission_percent`, `collab_terms`. Nicio coloană nouă.
+ * ====================================================================== */
+
+export type PropertyCollaborationRow = {
+  /** Agenția participă la Colaborare Habitoo (comutatorul global din Setări). */
+  participating: boolean;
+  enabled: boolean;
+  commissionPercent: number | null;
+  terms: string | null;
+  /** Statusul proprietății permite expunerea către alte agenții. */
+  offerable: boolean;
+};
+
+async function loadOwnProperty(actor: Actor, propertyId: string) {
+  const admin = await loadAdmin();
+  const { data: property, error } = await admin
+    .from("properties")
+    .select(
+      "id,organization_id,assigned_to,status,deleted_at,collaboration,collab_commission_percent,collab_terms",
+    )
+    .eq("id", propertyId)
+    .maybeSingle();
+  if (error) throw error;
+  if (!property || property.organization_id !== actor.organizationId || property.deleted_at) {
+    throw new Error("Proprietatea nu este disponibilă.");
+  }
+  return property;
+}
+
+export const getPropertyCollaboration = createServerFn({ method: "POST" })
+  .middleware([requireActiveOrgAuth])
+  .inputValidator((data: unknown) => z.object({ propertyId: z.string().uuid() }).parse(data))
+  .handler(async ({ context, data }): Promise<PropertyCollaborationRow> => {
+    const actor = await loadActor(context as AuthContext);
+    const property = await loadOwnProperty(actor, data.propertyId);
+    return {
+      participating: actor.collaborationEnabled,
+      enabled: property.collaboration === true,
+      commissionPercent: property.collab_commission_percent ?? null,
+      terms: property.collab_terms ?? null,
+      offerable: OFFERABLE_STATUSES.includes(
+        property.status as (typeof OFFERABLE_STATUSES)[number],
+      ),
+    };
+  });
+
+export const setPropertyCollaboration = createServerFn({ method: "POST" })
+  .middleware([requireActiveOrgAuth])
+  .inputValidator((data: unknown) =>
+    z
+      .object({
+        propertyId: z.string().uuid(),
+        enabled: z.boolean(),
+        commissionPercent: z.number().min(0).max(100).nullable().optional(),
+        terms: z.string().trim().max(2000).nullable().optional(),
+      })
+      .parse(data),
+  )
+  .handler(async ({ context, data }): Promise<{ ok: true; enabled: boolean }> => {
+    const actor = await loadActor(context as AuthContext);
+    requireParticipation(actor);
+    await loadOwnProperty(actor, data.propertyId);
+
+    if (data.enabled && (data.commissionPercent === null || data.commissionPercent === undefined)) {
+      throw new Error("Completează comisionul oferit pentru colaborare.");
+    }
+
+    const admin = await loadAdmin();
+    const { error } = await admin
+      .from("properties")
+      .update({
+        collaboration: data.enabled,
+        collab_commission_percent: data.enabled ? (data.commissionPercent ?? null) : null,
+        collab_terms: data.enabled ? (data.terms ?? null) : null,
+        updated_by: actor.userId,
+      })
+      .eq("id", data.propertyId)
+      .eq("organization_id", actor.organizationId);
+    if (error) throw error;
+    return { ok: true, enabled: data.enabled };
+  });

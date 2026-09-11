@@ -8,9 +8,11 @@ import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { StatusBadge } from "@/components/app/StatusBadge";
 import { PortalLogo } from "@/components/app/PortalLogo";
+import { BrandLogo } from "@/components/brand/BrandLogo";
 import { Button } from "@/components/ui/button";
 import { InlineLoading } from "@/components/app/LoadingState";
 import { QueryError } from "@/components/app/QueryError";
+import { useCurrentUser } from "@/hooks/use-session";
 import {
   getAgencyPortalCatalog,
   requestPortalActivation,
@@ -20,6 +22,12 @@ export function AgencyPortalCatalogCard() {
   const queryClient = useQueryClient();
   const loadCatalog = useServerFn(getAgencyPortalCatalog);
   const sendRequest = useServerFn(requestPortalActivation);
+  const { data: currentUser } = useCurrentUser();
+  /**
+   * Colaborarea Habitoo apare aici doar informativ: e o alegere a agenției
+   * (Setări → Agenție), nu o activare aprobată de echipa Habitoo.
+   */
+  const collaborating = currentUser?.organization?.collaboration_enabled === true;
 
   const catalog = useQuery({
     queryKey: ["agency-portal-catalog"],
@@ -59,6 +67,35 @@ export function AgencyPortalCatalogCard() {
         </div>
       ) : (
         <ul className="grid gap-4 p-5 sm:grid-cols-2 xl:grid-cols-3">
+          <li className="flex flex-col gap-3 rounded-xl border border-border bg-surface p-4">
+            <div className="flex items-start gap-3">
+              <span className="flex size-12 shrink-0 items-center justify-center rounded-xl border border-border bg-background">
+                <BrandLogo markOnly className="size-8" />
+              </span>
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm font-semibold">Colaborare Habitoo</p>
+                <div className="mt-1 flex flex-wrap gap-1.5">
+                  {collaborating ? (
+                    <StatusBadge tone="success" dot>
+                      Participi
+                    </StatusBadge>
+                  ) : (
+                    <StatusBadge tone="neutral">Neactivat</StatusBadge>
+                  )}
+                </div>
+              </div>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Rețeaua internă Habitoo: proprietățile bifate ajung la celelalte agenții, fără date de
+              proprietar. Este alegerea agenției, nu necesită aprobare.
+            </p>
+            <div className="mt-auto pt-1">
+              <span className="text-xs text-muted-foreground">
+                Se comută din Setări → Agenție, apoi se bifează per proprietate în fila Publicare.
+              </span>
+            </div>
+          </li>
+
           {(catalog.data ?? []).map((item) => {
             const pending = item.request?.status === "pending";
             const rejected = item.request?.status === "rejected";
