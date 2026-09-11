@@ -265,11 +265,12 @@ function ReportsPage() {
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <KpiCard label="Proprietăți active" value={active} hint={`${propertiesInPeriod.length} noi în perioadă`} />
-        <KpiCard label="Lead-uri noi" value={leadsInPeriod.length} tone="accent" hint={`${qualified} calificate`} />
-        <KpiCard label="Rată conversie" value={`${conversion}%`} hint={`${won} câștigate · ${lost} pierdute`} tone="success" />
-        <KpiCard label="Vândute / Închiriate" value={`${sold} / ${rented}`} hint={`${expired} expirate`} tone="info" />
+        <KpiCard label="Proprietăți active" value={active} hint={`${propertiesInPeriod.length} noi în perioadă`} icon={Building2} />
+        <KpiCard label="Lead-uri noi" value={leadsInPeriod.length} tone="accent" hint={`${qualified} calificate`} icon={Flame} />
+        <KpiCard label="Rată conversie" value={`${conversion}%`} hint={`${won} câștigate · ${lost} pierdute`} tone="success" icon={TrendingUp} />
+        <KpiCard label="Vândute / Închiriate" value={`${sold} / ${rented}`} hint={`${expired} expirate`} tone="info" icon={Handshake} />
       </div>
+
 
       <div className="grid gap-6 xl:grid-cols-2">
         <div className="panel">
