@@ -56,7 +56,7 @@ export const ImpersonationRequestEmail = ({
     </Text>
     <Text style={paragraph}>
       Linkurile funcționează o singură dată, fără să fie nevoie să te autentifici, și expiră odată cu
-      cererea — în 48 de ore. Dacă poți intra în cont, găsești aceeași cerere în{" "}
+      cererea — în 48 de ore. Dacă poți intra în cont, deschizi direct aceeași cerere în{" "}
       <Link href={appUrl} style={{ color: brand.navy }}>
         Setări → Acces la cont
       </Link>
