@@ -58,42 +58,60 @@ export function AgencyPortalCatalogCard() {
           <QueryError error={catalog.error} onRetry={() => catalog.refetch()} />
         </div>
       ) : (
-        <ul className="divide-y divide-border">
+        <ul className="grid gap-4 p-5 sm:grid-cols-2 xl:grid-cols-3">
           {(catalog.data ?? []).map((item) => {
             const pending = item.request?.status === "pending";
+            const rejected = item.request?.status === "rejected";
             return (
               <li
                 key={item.id}
-                className="flex flex-col gap-3 px-5 py-4 sm:flex-row sm:items-center sm:justify-between"
+                className="flex flex-col gap-3 rounded-xl border border-border bg-surface p-4"
               >
-                <div className="min-w-0">
-                  <div className="flex items-center gap-2">
-                    <PortalLogo portalId={item.id} name={item.displayName} size={24} />
-                    <span className="text-sm font-medium">{item.displayName}</span>
-                    {item.activated ? (
-                      <Badge variant="default">Activat</Badge>
-                    ) : (
-                      <Badge variant="secondary">Neactivat</Badge>
-                    )}
-                    {item.availability !== "available" ? (
-                      <Badge variant="outline">În pregătire</Badge>
-                    ) : null}
+                <div className="flex items-start gap-3">
+                  <span className="flex size-12 shrink-0 items-center justify-center rounded-xl border border-border bg-background">
+                    <PortalLogo portalId={item.id} name={item.displayName} size={32} />
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-semibold">{item.displayName}</p>
+                    <div className="mt-1 flex flex-wrap gap-1.5">
+                      {item.activated ? (
+                        <StatusBadge tone="success" dot>
+                          Activat
+                        </StatusBadge>
+                      ) : pending ? (
+                        <StatusBadge tone="warning" dot>
+                          Cerere trimisă
+                        </StatusBadge>
+                      ) : rejected ? (
+                        <StatusBadge tone="danger" dot>
+                          Respins
+                        </StatusBadge>
+                      ) : (
+                        <StatusBadge tone="neutral">Neactivat</StatusBadge>
+                      )}
+                      {item.availability !== "available" ? (
+                        <StatusBadge tone="neutral">În pregătire</StatusBadge>
+                      ) : null}
+                    </div>
                   </div>
-                  <p className="mt-1 text-xs text-muted-foreground">{item.description}</p>
-                  {item.request?.status === "rejected" ? (
-                    <p className="mt-1 text-xs text-destructive">
-                      Cerere respinsă
-                      {item.request.rejectionReason ? `: ${item.request.rejectionReason}` : "."}
-                    </p>
-                  ) : null}
                 </div>
 
-                <div className="shrink-0">
+                <p className="text-xs text-muted-foreground">{item.description}</p>
+                {rejected ? (
+                  <p className="text-xs text-destructive">
+                    {item.request?.rejectionReason
+                      ? `Motiv: ${item.request.rejectionReason}`
+                      : "Cererea a fost respinsă."}
+                  </p>
+                ) : null}
+
+                <div className="mt-auto pt-1">
                   {item.activated ? (
                     <span className="text-xs text-muted-foreground">Disponibil în publicare</span>
                   ) : (
                     <Button
                       size="sm"
+                      className="w-full"
                       variant={pending ? "outline" : "default"}
                       disabled={pending || request.isPending}
                       onClick={() => request.mutate(item.id)}
