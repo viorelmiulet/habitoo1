@@ -231,10 +231,6 @@ function PropertyDetailPage() {
     location_precise: locationPrecise,
     description: draft.description || null,
     internal_notes: draft.internal_notes || null,
-    collaboration: collab,
-    collab_commission_percent:
-      collab && draft.collab_commission_percent ? Number(draft.collab_commission_percent) : null,
-    collab_terms: collab ? draft.collab_terms || null : null,
     ...details,
   });
 
