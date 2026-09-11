@@ -98,6 +98,8 @@ function PropertyDetailPage() {
   const queryClient = useQueryClient();
   const { data: user } = useCurrentUser();
   const orgId = user?.organization?.id;
+  const agencyLogoUrl = useAgencyLogoUrl(user?.organization?.logo_path);
+
   const [editing, setEditing] = useState(false);
   
   const [activityDialog, setActivityDialog] = useState<{ open: boolean; kind?: "viewing" | "call" }>({
