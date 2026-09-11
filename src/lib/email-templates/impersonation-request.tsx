@@ -1,12 +1,16 @@
 import * as React from "react";
 
-import { Text } from "@react-email/components";
+import { Link, Text } from "@react-email/components";
 
-import { EmailLayout, PrimaryButton, paragraph, strongText } from "./layout";
+import { EmailLayout, PrimaryButton, brand, paragraph, strongText } from "./layout";
 
 interface ImpersonationRequestEmailProps {
   siteName: string;
   appUrl: string;
+  /** Link direct de aprobare, valabil fără autentificare, o singură dată. */
+  approveUrl: string;
+  /** Link direct de respingere, cu același token de unică folosință. */
+  rejectUrl: string;
   fullName?: string;
   requesterName: string;
   reason: string;
@@ -15,6 +19,8 @@ interface ImpersonationRequestEmailProps {
 export const ImpersonationRequestEmail = ({
   siteName,
   appUrl,
+  approveUrl,
+  rejectUrl,
   fullName,
   requesterName,
   reason,
@@ -22,7 +28,7 @@ export const ImpersonationRequestEmail = ({
   <EmailLayout
     preview={`Cerere de acces temporar la contul tău ${siteName}`}
     heading="Cerere de acces temporar la contul tău"
-    note="Dacă nu recunoști această cerere, respinge-o din aplicație și scrie-ne la contact@habitoo.ro."
+    note="Dacă nu recunoști această cerere, respinge-o din linkul de mai sus și scrie-ne la contact@habitoo.ro."
   >
     <Text style={paragraph}>Bună{fullName ? ` ${fullName}` : ""},</Text>
     <Text style={paragraph}>
@@ -38,8 +44,24 @@ export const ImpersonationRequestEmail = ({
       poate schimba parola, emailul sau modul de autentificare. Toate acțiunile sunt jurnalizate.
     </Text>
     <Text style={strongText}>Poți revoca accesul oricând, chiar și după ce l-ai aprobat.</Text>
-    <Text style={paragraph}>Cererea expiră singură dacă nu răspunzi în 48 de ore.</Text>
-    <PrimaryButton href={appUrl}>Vezi cererea în aplicație</PrimaryButton>
+
+    <PrimaryButton href={approveUrl}>Aprob accesul pentru 24 de ore</PrimaryButton>
+
+    <Text style={paragraph}>
+      Nu vrei să acorzi accesul?{" "}
+      <Link href={rejectUrl} style={{ color: brand.navy, fontWeight: 600 }}>
+        Respinge cererea
+      </Link>
+      .
+    </Text>
+    <Text style={paragraph}>
+      Linkurile funcționează o singură dată, fără să fie nevoie să te autentifici, și expiră odată cu
+      cererea — în 48 de ore. Dacă poți intra în cont, găsești aceeași cerere în{" "}
+      <Link href={appUrl} style={{ color: brand.navy }}>
+        Setări → Acces la cont
+      </Link>
+      .
+    </Text>
   </EmailLayout>
 );
 
