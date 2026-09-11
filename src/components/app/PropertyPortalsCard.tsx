@@ -29,7 +29,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
-import { PortalLogo } from "@/components/app/PortalLogo";
+import { PortalLogoStack } from "@/components/app/PortalLogo";
 import { BrandLogo } from "@/components/brand/BrandLogo";
 import { InlineLoading } from "@/components/app/LoadingState";
 import { QueryError } from "@/components/app/QueryError";
@@ -427,7 +427,7 @@ export const PropertyPortalsCard = forwardRef<
                       : "text-muted-foreground/60",
                 )}
               />
-              <PortalLogo portalId={cell.portalId} name={cell.portalName} size={28} />
+              <PortalLogoStack portalId={cell.portalId} name={cell.portalName} size={28} />
               <div className="min-w-0 flex-1">
                 <label htmlFor={`portal-${cell.portalId}`} className="font-medium">
                   {cell.portalName}

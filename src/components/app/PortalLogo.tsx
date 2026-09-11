@@ -16,6 +16,7 @@ import olxLogo from "@/assets/portals/olx.png";
 import publi24Logo from "@/assets/portals/publi24.png";
 import romimoLogo from "@/assets/portals/romimo.png";
 import storiaLogo from "@/assets/portals/storia.png";
+import { portalLogoIds } from "@/lib/portals/registry";
 import { cn } from "@/lib/utils";
 
 const PORTAL_LOGOS: Record<string, string> = {
@@ -76,6 +77,34 @@ export function PortalLogo({ portalId, name, fallback, size = 32, className }: P
       ) : (
         initials
       )}
+    </span>
+  );
+}
+
+/**
+ * Logo-urile unei intrări de portal. Pentru perechile acoperite de o singură
+ * integrare (ex. Storia + OLX) se afișează ambele logo-uri pe același rând.
+ */
+export function PortalLogoStack({
+  portalId,
+  name,
+  size = 32,
+  className,
+}: {
+  portalId: string;
+  name: string;
+  size?: number;
+  className?: string;
+}) {
+  const ids = portalLogoIds(portalId);
+  if (ids.length === 1) {
+    return <PortalLogo portalId={portalId} name={name} size={size} className={className} />;
+  }
+  return (
+    <span className={cn("inline-flex shrink-0 items-center gap-1", className)}>
+      {ids.map((id) => (
+        <PortalLogo key={id} portalId={id} name={name} size={size} />
+      ))}
     </span>
   );
 }

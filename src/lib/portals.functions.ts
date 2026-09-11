@@ -13,6 +13,9 @@ import { z } from "zod";
 import { requireActiveOrgAuth } from "@/lib/org-access";
 import {
   PORTALS,
+  configurablePortals,
+  isPortalCovered,
+  portalDisplayName,
   derivePortalConnectionStatus,
   getPortalDefinition,
   type PortalConnectionStatus,
@@ -313,7 +316,7 @@ export const getPortalHub = createServerFn({ method: "POST" })
     const storiaTokens = await loadStoriaTokens(organizationId);
     const storiaAppReady = storiaAppConfigured();
 
-    return PORTALS.map((portal) => {
+    return configurablePortals().map((portal) => {
       const row = (connections.data ?? []).find((c) => c.portal === portal.id) ?? null;
       const settings = (row?.settings ?? {}) as Record<string, unknown>;
       const portalKeys = (keys.data ?? []).filter((k) => k.portal === portal.id);
@@ -1025,7 +1028,10 @@ export const getPropertyPortalStatus = createServerFn({ method: "POST" })
 
     const { getPortalAdapter } = await import("@/lib/portals/adapters/index.server");
     const available = PORTALS.filter(
-      (p) => p.status === "available" && (visiblePortals === null || visiblePortals.has(p.id)),
+      (p) =>
+        p.status === "available" &&
+        !isPortalCovered(p.id) &&
+        (visiblePortals === null || visiblePortals.has(p.id)),
     );
 
     return await Promise.all(
@@ -1063,7 +1069,7 @@ export const getPropertyPortalStatus = createServerFn({ method: "POST" })
 
         return {
           portalId: portal.id,
-          portalName: portal.display_name,
+          portalName: portalDisplayName(portal.id),
           connected: connection?.status === "connected" || connection?.status === "ready",
           status: listing?.status ?? "not_published",
           externalId: listing?.external_id ?? diagnostics?.externalId ?? null,
@@ -1239,7 +1245,9 @@ export const getPropertiesPortalMatrix = createServerFn({ method: "POST" })
     for (const propertyId of data.propertyIds) {
       const feedEligible = eligibleById.get(propertyId) === true;
       properties[propertyId] = PORTALS.filter(
-        (portal) => visiblePortals === null || visiblePortals.has(portal.id),
+        (portal) =>
+          !isPortalCovered(portal.id) &&
+          (visiblePortals === null || visiblePortals.has(portal.id)),
       ).map((portal) => {
         const pub = (publications ?? []).find(
           (p) => p.property_id === propertyId && p.portal_key === portal.id,
@@ -1267,7 +1275,7 @@ export const getPropertiesPortalMatrix = createServerFn({ method: "POST" })
         });
         return {
           portalId: portal.id,
-          portalName: portal.display_name,
+          portalName: portalDisplayName(portal.id),
           logo: portal.logo,
           availability: portal.status,
           selected: pub?.enabled === true,
@@ -1468,7 +1476,7 @@ export const publishPropertyToSelectedPortals = createServerFn({ method: "POST" 
       });
       results.push({
         portalId,
-        portalName: getPortalDefinition(portalId)?.display_name ?? portalId,
+        portalName: portalDisplayName(portalId),
         ok: result.ok,
         message: result.ok ? (result.message ?? result.detail) : result.message,
       });
@@ -1566,7 +1574,7 @@ export const previewPortalFeed = createServerFn({ method: "POST" })
     return {
       ok: true,
       portalId: definition.id,
-      portalName: definition.display_name,
+      portalName: portalDisplayName(definition.id),
       feedUrl,
       selected: build.selected,
       valid: build.listings.length,
@@ -1697,7 +1705,7 @@ export async function applyPortalSelectionForOrg(input: {
           if (wanted.enabled) {
             results.push({
               portalId: definition.id,
-              portalName: definition.display_name,
+              portalName: portalDisplayName(definition.id),
               action: "blocked",
               ok: false,
               message: `${definition.display_name} nu este activat pentru agenția ta.`,
@@ -1876,7 +1884,7 @@ export async function applyPortalSelectionForOrg(input: {
         const reason = error instanceof Error ? error.message : portalError.message;
         results.push({
           portalId: definition.id,
-          portalName: definition.display_name,
+          portalName: portalDisplayName(definition.id),
           action: "blocked",
           ok: false,
           message: `${definition.display_name}: ${reason}`,

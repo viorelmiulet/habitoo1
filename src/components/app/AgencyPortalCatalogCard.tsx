@@ -7,7 +7,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { StatusBadge } from "@/components/app/StatusBadge";
-import { PortalLogo } from "@/components/app/PortalLogo";
+import { PortalLogoStack } from "@/components/app/PortalLogo";
 import { BrandLogo } from "@/components/brand/BrandLogo";
 import { Button } from "@/components/ui/button";
 import { InlineLoading } from "@/components/app/LoadingState";
@@ -102,8 +102,8 @@ export function AgencyPortalCatalogCard() {
                 className="flex flex-col gap-3 rounded-xl border border-border bg-surface p-4"
               >
                 <div className="flex items-start gap-3">
-                  <span className="flex size-12 shrink-0 items-center justify-center rounded-xl border border-border bg-background">
-                    <PortalLogo portalId={item.id} name={item.displayName} size={32} />
+                  <span className="flex shrink-0 items-center justify-center gap-1 rounded-xl border border-border bg-background px-2 py-2">
+                    <PortalLogoStack portalId={item.id} name={item.displayName} size={32} />
                   </span>
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-semibold">{item.displayName}</p>
