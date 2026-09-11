@@ -4,6 +4,7 @@
 // ne-confidențiale, care aparțin unei proprietăți eligibile pentru feed.
 import { createFileRoute } from "@tanstack/react-router";
 import { isPropertyFeedEligible } from "@/lib/site-feed/mapper";
+import { watermarkFromOrg } from "@/lib/watermark";
 
 const SIGNED_URL_TTL = 60 * 60 * 24; // 24h
 
@@ -22,7 +23,9 @@ export const Route = createFileRoute("/api/public/sites/v1/media/$id")({
           const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
           const { data: image } = await supabaseAdmin
             .from("property_images")
-            .select("id, url, storage_path, property_id, include_in_publish, is_confidential")
+            .select(
+              "id, url, storage_path, property_id, organization_id, include_in_publish, is_confidential",
+            )
             .eq("id", id)
             .maybeSingle();
           if (!image || image.include_in_publish !== true || image.is_confidential === true) {
@@ -40,9 +43,23 @@ export const Route = createFileRoute("/api/public/sites/v1/media/$id")({
 
           let target = image.url;
           if (image.storage_path) {
+            // Watermark doar pe varianta servită portalurilor; originalul rămâne intact.
+            let path = image.storage_path;
+            const { data: org } = await supabaseAdmin
+              .from("organizations")
+              .select(
+                "logo_path, watermark_enabled, watermark_position, watermark_scale_percent, watermark_opacity_percent, watermark_margin_percent",
+              )
+              .eq("id", image.organization_id)
+              .maybeSingle();
+            const cfg = watermarkFromOrg(org);
+            if (cfg.enabled) {
+              const { ensureWatermarkedPath } = await import("@/lib/watermark.server");
+              path = (await ensureWatermarkedPath(supabaseAdmin, image.storage_path, cfg)) ?? path;
+            }
             const { data: signed } = await supabaseAdmin.storage
               .from("property-media")
-              .createSignedUrl(image.storage_path, SIGNED_URL_TTL);
+              .createSignedUrl(path, SIGNED_URL_TTL);
             if (signed?.signedUrl) target = signed.signedUrl;
           }
           if (!target) return new Response("Not found", { status: 404 });
