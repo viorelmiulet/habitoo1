@@ -28,6 +28,7 @@ const PORTAL_LOGOS: Record<string, string> = {
   storia: storiaLogo,
   olx: olxLogo,
   publi24: publi24Logo,
+  romimo: romimoLogo,
 };
 
 /** Există logo local pentru portalul dat? */
