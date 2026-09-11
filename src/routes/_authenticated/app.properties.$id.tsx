@@ -565,13 +565,7 @@ function PropertyDetailPage() {
               </Button>
               <Button
                 size="sm"
-                onClick={() => {
-                  if (shouldNudgeCollab()) {
-                    setNudgeOpen(true);
-                    return;
-                  }
-                  publish.mutate(undefined);
-                }}
+                onClick={() => publish.mutate()}
                 disabled={publish.isPending || save.isPending}
               >
                 {publish.isPending ? "Se publică…" : "Publică"}
