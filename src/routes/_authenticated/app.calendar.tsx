@@ -62,6 +62,17 @@ const kindTone: Record<string, string> = {
   note: "border-border bg-card text-foreground",
 };
 
+/** Prezentare: punctul din calendarul lunar, colorat după tipul activității. */
+const kindDot: Record<string, string> = {
+  call: "bg-info",
+  meeting: "bg-primary",
+  viewing: "bg-success",
+  task: "bg-warning",
+  email: "bg-muted-foreground",
+  followup: "bg-accent",
+  note: "bg-border",
+};
+
 const durationOptions = [15, 30, 45, 60, 90, 120];
 const HOURS = Array.from({ length: 14 }, (_, i) => i + 7); // 07:00 - 20:00
 
