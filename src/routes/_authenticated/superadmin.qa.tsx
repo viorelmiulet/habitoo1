@@ -283,20 +283,33 @@ function QaPanelPage() {
 
           <div className="grid gap-6 lg:grid-cols-2">
             <section className="panel p-5">
-              <h3 className="text-sm font-semibold">Conturi demo</h3>
-              <p className="mt-1 text-xs text-muted-foreground">
-                Conturi reale create prin autentificarea existentă (email confirmat automat). Se autentifică din pagina de login
-                obișnuită.
-              </p>
+              <div className="flex items-start gap-3">
+                <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary">
+                  <Users className="size-4" aria-hidden />
+                </span>
+                <div>
+                  <h3 className="text-sm font-semibold">Conturi demo</h3>
+                  <p className="mt-0.5 text-xs text-muted-foreground">
+                    Conturi reale create prin autentificarea existentă (email confirmat automat). Se autentifică din pagina de
+                    login obișnuită.
+                  </p>
+                </div>
+              </div>
+
               {data?.users.length ? (
                 <ul className="mt-4 divide-y divide-border">
                   {data.users.map((u) => (
                     <li key={u.id} className="flex flex-wrap items-center justify-between gap-2 py-2.5 text-sm">
-                      <div className="min-w-0">
-                        <p className="truncate font-medium">{u.full_name}</p>
-                        <p className="truncate text-xs text-muted-foreground">
-                          {u.email} {u.job_title ? `· ${u.job_title}` : ""}
-                        </p>
+                      <div className="flex min-w-0 items-center gap-2.5">
+                        <span className="grid size-8 shrink-0 place-items-center rounded-full bg-muted text-[11px] font-semibold text-muted-foreground">
+                          {(u.full_name ?? "?").slice(0, 2).toUpperCase()}
+                        </span>
+                        <div className="min-w-0">
+                          <p className="truncate font-medium">{u.full_name}</p>
+                          <p className="truncate text-xs text-muted-foreground">
+                            {u.email} {u.job_title ? `· ${u.job_title}` : ""}
+                          </p>
+                        </div>
                       </div>
                       <StatusBadge tone={u.role === "agency_admin" ? "primary" : "neutral"}>
                         {u.role === "unknown" ? "fără rol" : roleLabels[u.role]}
@@ -304,6 +317,7 @@ function QaPanelPage() {
                     </li>
                   ))}
                 </ul>
+
               ) : (
                 <p className="mt-4 text-sm text-muted-foreground">Niciun cont demo încă.</p>
               )}
@@ -328,8 +342,19 @@ function QaPanelPage() {
             </section>
 
             <section className="panel p-5">
-              <h3 className="text-sm font-semibold">Scenarii de test incluse în seed</h3>
-              <ol className="mt-3 space-y-3 text-sm">
+              <div className="flex items-start gap-3">
+                <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-accent/20 text-accent-foreground">
+                  <ListChecks className="size-4" aria-hidden />
+                </span>
+                <div>
+                  <h3 className="text-sm font-semibold">Scenarii de test incluse în seed</h3>
+                  <p className="mt-0.5 text-xs text-muted-foreground">
+                    Fluxurile verificabile imediat după populare.
+                  </p>
+                </div>
+              </div>
+              <ol className="mt-4 space-y-3 text-sm">
+
                 <li>
                   <p className="font-medium">A · Proprietate flagship</p>
                   <p className="text-muted-foreground">

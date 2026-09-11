@@ -44,6 +44,13 @@ export const Route = createFileRoute("/_authenticated/app/requests")({
 
 const PAGE_SIZE = 25;
 
+const priorityLabels: Record<string, string> = { low: "Scăzută", medium: "Medie", high: "Ridicată" };
+const priorityTone: Record<string, "neutral" | "info" | "warning"> = {
+  low: "neutral",
+  medium: "info",
+  high: "warning",
+};
+
 type Filters = {
   q: string;
   kind: string;
@@ -360,22 +367,34 @@ function RequestsPage() {
           <EmptyState icon={Target} title="Nicio cerere" description="Adaugă o cerere pentru a primi potriviri automate." action={<Button size="sm" onClick={() => setOpen(true)}>Adaugă cerere</Button>} />
         ) : (
           <ul className="divide-y divide-border">
-            <li className="flex items-center gap-3 px-4 py-2 text-xs text-muted-foreground">
+            <li className="flex items-center gap-3 bg-surface px-5 py-2.5 text-xs text-muted-foreground">
               <Checkbox checked={allSelected} onCheckedChange={(v) => setSelected(v ? rows.map((r) => r.id) : [])} />
               <span>Selectează tot</span>
+              <span className="ml-auto">{total} cereri</span>
             </li>
             {rows.map((r) => {
               const matches = bestMatchCount(r);
               return (
-                <li key={r.id} className="flex flex-wrap items-center gap-3 px-4 py-3 text-sm">
+                <li key={r.id} className="flex flex-wrap items-center gap-3 px-5 py-4 text-sm transition-colors hover:bg-surface">
                   <Checkbox checked={selected.includes(r.id)} onCheckedChange={(v) => setSelected((s) => (v ? [...s, r.id] : s.filter((id) => id !== r.id)))} />
+                  <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary">
+                    <Target className="size-4" aria-hidden />
+                  </span>
                   <div className="min-w-0 flex-1">
-                    <Link to="/app/requests/$id" params={{ id: r.id }} className="truncate font-medium hover:text-primary">{r.title}</Link>
-                    <p className="truncate text-xs text-muted-foreground">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <Link to="/app/requests/$id" params={{ id: r.id }} className="truncate font-medium hover:text-primary">{r.title}</Link>
+                      <StatusBadge tone={priorityTone[r.priority] ?? "neutral"} dot>
+                        {priorityLabels[r.priority] ?? r.priority}
+                      </StatusBadge>
+                    </div>
+                    <p className="mt-0.5 truncate text-xs text-muted-foreground">
                       {requestKindLabels[r.kind]} · {propertyTypeLabels[r.property_type ?? ""] ?? "orice tip"} · {(r.cities ?? []).join(", ") || "orice oraș"} · {agentName(r.assigned_to)}
                     </p>
                   </div>
-                  <span className="text-xs text-muted-foreground">{formatMoney(r.budget_min, r.currency)} – {formatMoney(r.budget_max, r.currency)}</span>
+                  <div className="text-right">
+                    <p className="text-sm font-medium tabular-nums">{formatMoney(r.budget_max, r.currency)}</p>
+                    <p className="text-[11px] text-muted-foreground tabular-nums">de la {formatMoney(r.budget_min, r.currency)}</p>
+                  </div>
                   <StatusBadge tone={matchTone(matches > 0 ? 80 : 40)}><Sparkles className="size-3" /> {matches} potriviri</StatusBadge>
                   <Select value={r.status} onValueChange={(v) => setStatusMutation.mutate({ id: r.id, value: v })}>
                     <SelectTrigger className="w-36"><SelectValue /></SelectTrigger>
@@ -390,6 +409,7 @@ function RequestsPage() {
           </ul>
         )}
       </div>
+
 
       {total > PAGE_SIZE ? (
         <div className="flex items-center justify-between text-xs text-muted-foreground">
