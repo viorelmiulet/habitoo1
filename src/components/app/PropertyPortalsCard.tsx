@@ -301,11 +301,87 @@ export const PropertyPortalsCard = forwardRef<
           </p>
         </div>
         <span className="text-xs text-muted-foreground">
-          {activeCount} din {cells.length} active
+          {activeCount} din {totalRows} active
         </span>
       </header>
 
       <ul className="divide-y divide-border">
+        {collabVisible ? (
+          <li
+            className={cn(
+              "px-5 py-4 text-sm",
+              collabValue && collabPercent.trim() === "" && "bg-warning/10",
+            )}
+          >
+            <div className="flex flex-wrap items-start gap-3">
+              <Checkbox
+                id="portal-habitoo-collaboration"
+                checked={collabValue}
+                className="mt-0.5"
+                onCheckedChange={(next) => setCollabChecked(next === true)}
+              />
+              {collabValue ? (
+                <CheckCircle2 aria-hidden className="mt-0.5 size-4 shrink-0 text-success" />
+              ) : (
+                <Circle aria-hidden className="mt-0.5 size-4 shrink-0 text-muted-foreground/60" />
+              )}
+              <span className="inline-flex size-7 shrink-0 items-center justify-center overflow-hidden rounded-md border border-border bg-white">
+                <BrandLogo markOnly className="size-5" />
+              </span>
+              <div className="min-w-0 flex-1">
+                <label htmlFor="portal-habitoo-collaboration" className="font-medium">
+                  Colaborare Habitoo
+                </label>
+                <p className="text-xs text-muted-foreground">
+                  {!collabRow?.offerable && collabValue
+                    ? "Oferta ajunge la celelalte agenții doar când proprietatea este activă."
+                    : collabValue
+                      ? collabRow?.enabled
+                        ? "Vizibilă altor agenții Habitoo, fără datele proprietarului."
+                        : "Selectat — se trimite la următoarea apăsare pe „Publică”."
+                      : collabRow?.enabled
+                        ? "Se retrage din rețeaua de colaborare la următoarea publicare."
+                        : "Neselectat."}
+                </p>
+              </div>
+            </div>
+
+            {collabValue ? (
+              <div className="mt-3 grid gap-3 pl-9 sm:grid-cols-2">
+                <div className="space-y-1.5">
+                  <Label htmlFor="collab-percent" className="text-xs">
+                    Comision oferit (%)
+                  </Label>
+                  <Input
+                    id="collab-percent"
+                    inputMode="decimal"
+                    placeholder="Ex. 1.5"
+                    value={collabPercent}
+                    onChange={(e) => setCollabPercent(e.target.value)}
+                  />
+                  {collabPercent.trim() === "" ? (
+                    <p className="text-xs text-warning-foreground">
+                      Obligatoriu cât timp colaborarea este activă.
+                    </p>
+                  ) : null}
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="collab-terms" className="text-xs">
+                    Condiții (opțional)
+                  </Label>
+                  <Textarea
+                    id="collab-terms"
+                    rows={2}
+                    placeholder="Ex. vizionări doar cu agentul proprietății"
+                    value={collabTerms}
+                    onChange={(e) => setCollabTerms(e.target.value)}
+                  />
+                </div>
+              </div>
+            ) : null}
+          </li>
+        ) : null}
+
         {cells.map((cell) => {
           const value = checked[cell.portalId] ?? cell.selected;
           const disabled = !canManage || cell.availability !== "available" || apply.isPending;
