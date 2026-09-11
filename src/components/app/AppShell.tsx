@@ -8,6 +8,7 @@ import { Topbar } from "@/components/app/Topbar";
 import { MobileNav } from "@/components/app/MobileNav";
 import { useUnreadNotificationsCount } from "@/components/app/NotificationsMenu";
 import { useQuery } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { countUnresolvedSupportTickets } from "@/lib/support.functions";
 import { ImpersonationBanner } from "@/components/app/ImpersonationBanner";
@@ -20,6 +21,7 @@ import { planAgentLimit, planLabel } from "@/lib/plans";
 
 import { cn } from "@/lib/utils";
 import type { CurrentUser } from "@/hooks/use-session";
+import { clearAuthenticatedSession } from "@/lib/sign-out";
 
 /**
  * Shell-ul zonei autentificate: sidebar colapsabil (desktop), drawer + bară
@@ -40,6 +42,7 @@ export function AppShell({
   const [menuOpen, setMenuOpen] = useState(false);
   const { collapsed, toggle } = useSidebarCollapsed();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   useApplyTheme();
 
   const isPlatform = variant === "platform";
@@ -85,8 +88,8 @@ export function AppShell({
       : undefined;
 
   const signOut = async () => {
-    await supabase.auth.signOut();
-    navigate({ to: "/login", replace: true });
+    await clearAuthenticatedSession(queryClient);
+    await navigate({ to: "/login", replace: true });
   };
 
   const sidebarProps = {

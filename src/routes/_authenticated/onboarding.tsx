@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { currentUserQueryKey, useCurrentUser } from "@/hooks/use-session";
+import { clearAuthenticatedSession } from "@/lib/sign-out";
 import { OrgBlocked } from "@/components/app/OrgBlocked";
 import { ShellLoading } from "@/components/app/LoadingState";
 
@@ -104,8 +105,8 @@ function OnboardingPage() {
   }
 
   const signOut = async () => {
-    await supabase.auth.signOut();
-    navigate({ to: "/login", replace: true });
+    await clearAuthenticatedSession(queryClient);
+    await navigate({ to: "/login", replace: true });
   };
 
   // Cerere în așteptare → ecran de așteptare, fără formular.

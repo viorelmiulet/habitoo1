@@ -1,4 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "sonner";
 import { AuthShell } from "@/components/auth/AuthShell";
@@ -11,6 +12,7 @@ import { lovable } from "@/integrations/lovable/index";
 import { authErrorMessage, authKindMessage, classifyAuthError } from "@/lib/auth-errors";
 import { rememberPostLoginRedirect } from "@/lib/auth-redirect";
 import { safeInternalPath, authUrl } from "@/lib/host";
+import { currentUserQueryKey } from "@/hooks/use-session";
 
 export const Route = createFileRoute("/login")({
   validateSearch: (search: Record<string, unknown>): { redirect?: string } =>
@@ -37,6 +39,7 @@ export const Route = createFileRoute("/login")({
 
 function LoginPage() {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const { redirect: requestedRedirect } = Route.useSearch();
   const target = safeInternalPath(requestedRedirect) ?? "/app";
   const [email, setEmail] = useState("");
@@ -48,7 +51,7 @@ function LoginPage() {
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
     setLoading(false);
     if (error) {
       const kind = classifyAuthError(error.message, error.code);
@@ -57,7 +60,12 @@ function LoginPage() {
       return;
     }
     setNeedsConfirm(false);
-    navigate({ to: target, replace: true });
+    queryClient.removeQueries({ queryKey: currentUserQueryKey });
+    if (!data.session) {
+      toast.error("Sesiunea nu a putut fi inițializată. Încearcă din nou.");
+      return;
+    }
+    await navigate({ to: target, replace: true });
   };
 
   const resend = async () => {
