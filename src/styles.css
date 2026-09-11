@@ -198,18 +198,18 @@
 @utility hero-gradient {
   background-image: radial-gradient(
       120% 120% at 15% 0%,
-      oklch(0.5 0.088 190 / 0.14) 0%,
+      oklch(0.215 0.033 250 / 0.06) 0%,
       transparent 55%
     ),
-    radial-gradient(100% 100% at 90% 10%, oklch(0.79 0.13 76 / 0.16) 0%, transparent 60%);
+    radial-gradient(100% 100% at 90% 10%, oklch(0.66 0.105 72 / 0.12) 0%, transparent 60%);
 }
 
 @utility text-gradient {
   background-image: linear-gradient(
     92deg,
-    var(--color-primary) 0%,
-    oklch(0.62 0.11 200) 45%,
-    var(--color-accent) 100%
+    var(--color-navy) 0%,
+    oklch(0.45 0.06 250) 45%,
+    var(--color-gold) 100%
   );
   background-clip: text;
   color: transparent;
@@ -224,16 +224,16 @@
 
 @utility mk-hero-bg {
   background-image:
-    radial-gradient(90% 70% at 85% 10%, oklch(0.63 0.11 72 / 0.16) 0%, transparent 60%),
-    radial-gradient(80% 60% at 5% 20%, oklch(0.5 0.088 190 / 0.14) 0%, transparent 55%),
+    radial-gradient(90% 70% at 85% 10%, oklch(0.66 0.105 72 / 0.14) 0%, transparent 60%),
+    radial-gradient(80% 60% at 5% 20%, oklch(0.215 0.033 250 / 0.07) 0%, transparent 55%),
     linear-gradient(180deg, var(--color-background) 0%, var(--color-card) 100%);
 }
 
 @utility mk-navy-bg {
   background-color: var(--color-navy);
   background-image:
-    radial-gradient(70% 60% at 100% 0%, oklch(0.63 0.11 72 / 0.22) 0%, transparent 60%),
-    radial-gradient(60% 60% at 0% 100%, oklch(0.5 0.088 190 / 0.28) 0%, transparent 60%);
+    radial-gradient(70% 60% at 100% 0%, oklch(0.66 0.105 72 / 0.24) 0%, transparent 60%),
+    radial-gradient(60% 60% at 0% 100%, oklch(0.32 0.045 250 / 0.55) 0%, transparent 60%);
   color: var(--color-navy-foreground);
 }
 
