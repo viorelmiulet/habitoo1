@@ -1,9 +1,10 @@
 import { Archive, Clock, ShieldOff, XCircle } from "lucide-react";
 import { useNavigate } from "@tanstack/react-router";
+import { useQueryClient } from "@tanstack/react-query";
 import { AuthShell } from "@/components/auth/AuthShell";
 import { Button } from "@/components/ui/button";
-import { supabase } from "@/integrations/supabase/client";
 import type { OrgBlockReason } from "@/lib/org-access";
+import { clearAuthenticatedSession } from "@/lib/sign-out";
 
 /** Text dedicat pentru fiecare motiv de blocare, cu indicația cui să se adreseze. */
 const BLOCKED: Record<
@@ -41,12 +42,13 @@ const BLOCKED: Record<
 /** Ecran dedicat pentru membrii unei agenții suspendate, anulate sau arhivate. */
 export function OrgBlocked({ reason }: { reason: OrgBlockReason }) {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const info = BLOCKED[reason];
   const Icon = info.icon;
 
   const signOut = async () => {
-    await supabase.auth.signOut();
-    navigate({ to: "/login", replace: true });
+    await clearAuthenticatedSession(queryClient);
+    await navigate({ to: "/login", replace: true });
   };
 
   return (

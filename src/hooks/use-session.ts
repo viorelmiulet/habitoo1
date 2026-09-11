@@ -136,8 +136,9 @@ export function useCurrentUser() {
 
   useEffect(() => {
     const { data } = supabase.auth.onAuthStateChange((event) => {
-      if (event === "SIGNED_IN" || event === "SIGNED_OUT" || event === "USER_UPDATED") {
-        queryClient.invalidateQueries({ queryKey: currentUserQueryKey });
+      if (event === "SIGNED_OUT") return;
+      if (event === "SIGNED_IN" || event === "USER_UPDATED") {
+        void queryClient.invalidateQueries({ queryKey: currentUserQueryKey });
       }
     });
     return () => data.subscription.unsubscribe();
