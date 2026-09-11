@@ -99,10 +99,9 @@ describe("identificatori", () => {
     expect(parseStoriaAdIds("SALE:uuid|AD:9846457")).toEqual(["9846457"]);
   });
 
-  it("separă slug-ul din link de id-ul numeric în notificarea de ciclu de viață", () => {
+  it("extrage slug-ul din link în notificarea de ciclu de viață", () => {
     const shape = readEventShape(lifecyclePayload)!;
     expect(shape.publicUrl).toBe("https://www.storia.ro/ro/oferta/apartament-IDabc.html");
-    expect(shape.adSlug).toBe("abc");
     expect(shape.adSlug).toBe("abc");
   });
 
