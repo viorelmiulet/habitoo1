@@ -429,7 +429,7 @@ function CalendarPage() {
           <MonthView
             anchor={anchor}
             activities={filtered}
-            onDayClick={openCreate}
+            onDayClick={setDayPanel}
             onDropDay={handleDropOnDay}
             onEventClick={openDetail}
             draggedId={draggedId}
