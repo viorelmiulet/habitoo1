@@ -216,14 +216,24 @@ function ActivitiesPage() {
     return true;
   });
 
+  const nowMs = now.getTime();
+  /** Restanțele sunt afișate separat, sus; restul rămâne agendă pe zile. */
+  const overdueRows = rows.filter(
+    (a) => a.status === "planned" && new Date(a.starts_at).getTime() < nowMs,
+  );
+  const upcomingRows = rows.filter(
+    (a) => !(a.status === "planned" && new Date(a.starts_at).getTime() < nowMs),
+  );
+
   const grouped = useMemo(() => {
     const map = new Map<string, Activity[]>();
-    for (const a of rows) {
+    for (const a of upcomingRows) {
       const key = new Date(a.starts_at).toDateString();
       if (!map.has(key)) map.set(key, []);
       map.get(key)!.push(a);
     }
     return Array.from(map.entries());
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [rows]);
 
   const toggleSelect = (id: string) => {
