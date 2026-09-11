@@ -19,6 +19,8 @@ import { PageHeader } from "@/components/app/PageHeader";
 import { CardGridSkeleton, ListSkeleton } from "@/components/app/LoadingState";
 import { PropertyPortalsCell, usePropertyPortals } from "@/components/app/PropertyPortalsCell";
 import { PropertyCard, type PropertyCardRow } from "@/components/app/PropertyCard";
+import { useServerFn } from "@tanstack/react-start";
+import { archiveProperty, unarchiveProperty } from "@/lib/property-archive.functions";
 import { PropertyThumb, usePropertyCovers } from "@/components/app/PropertyThumb";
 import { StatusBadge } from "@/components/app/StatusBadge";
 import { EmptyState } from "@/components/app/EmptyState";
@@ -76,6 +78,8 @@ type Filters = {
   source: string;
   mine: boolean;
   favoritesOnly: boolean;
+  /** Aduce înapoi la vedere proprietățile arhivate. */
+  showArchived: boolean;
   priceMin: string;
   priceMax: string;
   surfaceMin: string;
@@ -98,6 +102,7 @@ const emptyFilters: Filters = {
   source: "all",
   mine: false,
   favoritesOnly: false,
+  showArchived: false,
   priceMin: "",
   priceMax: "",
   surfaceMin: "",
