@@ -17,8 +17,12 @@ import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { PortalLogo } from "@/components/app/PortalLogo";
+import { BrandLogo } from "@/components/brand/BrandLogo";
 import { InlineLoading } from "@/components/app/LoadingState";
 import { QueryError } from "@/components/app/QueryError";
 import {
@@ -37,6 +41,10 @@ import {
   getPropertiesPortalMatrix,
   type PropertyPortalCell,
 } from "@/lib/portals.functions";
+import {
+  getPropertyCollaboration,
+  setPropertyCollaboration,
+} from "@/lib/collaboration.functions";
 
 /** „acum 4 min” / „acum 3 h” / data completă, pentru ultima sincronizare. */
 function syncAgo(iso: string) {
