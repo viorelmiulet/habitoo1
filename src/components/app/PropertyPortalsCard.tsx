@@ -119,6 +119,45 @@ export const PropertyPortalsCard = forwardRef<
   );
   const canManage = matrix.data?.canManage ?? false;
 
+  /**
+   * Colaborarea Habitoo se comportă ca un portal: același rând, aceeași bifă,
+   * aplicată prin același buton „Publică”. Datele rămân pe proprietate.
+   */
+  const loadCollab = useServerFn(getPropertyCollaboration);
+  const saveCollab = useServerFn(setPropertyCollaboration);
+  const collabKey = ["property-collaboration", propertyId] as const;
+  const collab = useQuery({
+    queryKey: collabKey,
+    queryFn: () => loadCollab({ data: { propertyId } }),
+  });
+  const collabRow = collab.data ?? null;
+  /** Rândul apare doar dacă agenția participă la rețeaua de colaborare. */
+  const collabVisible = collabRow?.participating === true;
+
+  const [collabChecked, setCollabChecked] = useState<boolean | null>(null);
+  const [collabPercent, setCollabPercent] = useState("");
+  const [collabTerms, setCollabTerms] = useState("");
+
+  useEffect(() => {
+    if (!collabRow) return;
+    setCollabChecked(collabRow.enabled);
+    setCollabPercent(
+      collabRow.commissionPercent !== null ? String(collabRow.commissionPercent) : "",
+    );
+    setCollabTerms(collabRow.terms ?? "");
+  }, [collabRow]);
+
+  const collabValue = collabChecked ?? collabRow?.enabled ?? false;
+  const collabDirty =
+    collabVisible &&
+    (collabValue !== (collabRow?.enabled ?? false) ||
+      (collabValue &&
+        (collabPercent.trim() !==
+          (collabRow?.commissionPercent !== null && collabRow?.commissionPercent !== undefined
+            ? String(collabRow.commissionPercent)
+            : "") ||
+          collabTerms.trim() !== (collabRow?.terms ?? ""))));
+
   const [checked, setChecked] = useState<Record<string, boolean>>({});
   const [confirming, setConfirming] = useState(false);
 
@@ -168,25 +207,88 @@ export const PropertyPortalsCard = forwardRef<
   const confirmResolver = useRef<((ok: boolean) => void) | null>(null);
 
   const applyPending = useCallback(async () => {
-    if (!canManage || actionable.length === 0) return null;
-    if (toWithdraw.length > 0) {
+    const portalsActionable = canManage && actionable.length > 0;
+    if (!portalsActionable && !collabDirty) return null;
+
+    if (portalsActionable && toWithdraw.length > 0) {
       const confirmed = await new Promise<boolean>((resolve) => {
         confirmResolver.current = resolve;
         setConfirming(true);
       });
       if (!confirmed) return null;
     }
-    return await apply.mutateAsync();
-  }, [canManage, actionable.length, toWithdraw.length, apply]);
+
+    const results: PortalApplyResult[] = [];
+
+    // Colaborarea se salvează separat de portaluri: o eroare aici nu blochează
+    // publicarea pe portaluri, exact ca între portaluri.
+    if (collabDirty) {
+      const percent = collabPercent.trim() === "" ? null : Number(collabPercent);
+      if (collabValue && (percent === null || Number.isNaN(percent))) {
+        throw new Error("Completează comisionul oferit pentru Colaborare Habitoo.");
+      }
+      try {
+        await saveCollab({
+          data: {
+            propertyId,
+            enabled: collabValue,
+            commissionPercent: collabValue ? percent : null,
+            terms: collabValue ? collabTerms.trim() || null : null,
+          },
+        });
+        results.push({
+          portalId: "habitoo_collaboration",
+          portalName: "Colaborare Habitoo",
+          ok: true,
+          message: collabValue
+            ? "Colaborare Habitoo: ofertă activă"
+            : "Colaborare Habitoo: ofertă retrasă",
+        });
+      } catch (e) {
+        results.push({
+          portalId: "habitoo_collaboration",
+          portalName: "Colaborare Habitoo",
+          ok: false,
+          message: e instanceof Error ? e.message : "Colaborare Habitoo: salvarea a eșuat.",
+        });
+      }
+      void queryClient.invalidateQueries({ queryKey: collabKey });
+      void queryClient.invalidateQueries({ queryKey: ["collaboration-offers"] });
+    }
+
+    if (portalsActionable) {
+      const portals = await apply.mutateAsync();
+      results.push(...portals.results);
+    }
+
+    return { results };
+  }, [
+    canManage,
+    actionable.length,
+    toWithdraw.length,
+    apply,
+    collabDirty,
+    collabValue,
+    collabPercent,
+    collabTerms,
+    propertyId,
+    saveCollab,
+    queryClient,
+  ]);
 
   useImperativeHandle(ref, () => ({ applyPending }), [applyPending]);
 
-  if (matrix.isLoading) return <InlineLoading label="Se încarcă publicarea pe portaluri…" />;
+  if (matrix.isLoading || collab.isLoading)
+    return <InlineLoading label="Se încarcă publicarea pe portaluri…" />;
   if (matrix.isError) return <QueryError error={matrix.error} onRetry={() => matrix.refetch()} />;
-  // Nicio secțiune când agenției nu i-a fost activat niciun portal.
-  if (cells.length === 0) return null;
+  // Nicio secțiune când agenției nu i-a fost activat niciun portal și nu participă la colaborare.
+  if (cells.length === 0 && !collabVisible) return null;
 
-  const activeCount = cells.filter((c) => c.state === "published" || c.state === "in_feed").length;
+  const activeCount =
+    cells.filter((c) => c.state === "published" || c.state === "in_feed").length +
+    (collabVisible && collabRow?.enabled ? 1 : 0);
+  const totalRows = cells.length + (collabVisible ? 1 : 0);
+  const pendingCount = (canManage ? actionable.length : 0) + (collabDirty ? 1 : 0);
 
   return (
     <section className="panel">
