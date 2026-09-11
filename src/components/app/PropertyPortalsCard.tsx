@@ -10,13 +10,14 @@
  * introducă o a doua sursă de adevăr.
  */
 import { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from "react";
-import { ExternalLink } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Circle, ExternalLink } from "lucide-react";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { Checkbox } from "@/components/ui/checkbox";
-import { StatusBadge } from "@/components/app/StatusBadge";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import { PortalLogo } from "@/components/app/PortalLogo";
 import { InlineLoading } from "@/components/app/LoadingState";
 import { QueryError } from "@/components/app/QueryError";
