@@ -12,6 +12,7 @@ import {
   ArrowLeft,
   Banknote,
   BedDouble,
+  CalendarClock,
   Check,
   Mail,
   MapPin,
@@ -669,10 +670,15 @@ ${materialSignature(brandingFromOrg(user?.organization))}`;
             ) : (
               <ul className="divide-y divide-border">
                 {activities.map((a) => (
-                  <li key={a.id} className="flex items-center gap-3 px-5 py-3 text-sm">
+                  <li key={a.id} className="flex items-center gap-4 px-5 py-4 text-sm transition-colors hover:bg-surface">
+                    <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary">
+                      <CalendarClock className="size-4" aria-hidden />
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate font-medium text-foreground">{a.title}</p>
+                      <p className="text-xs text-muted-foreground">{formatDateTime(a.starts_at)}</p>
+                    </div>
                     <StatusBadge tone={activityStatusTone[a.status]}>{activityKindLabels[a.kind]}</StatusBadge>
-                    <span className="min-w-0 flex-1 truncate">{a.title}</span>
-                    <span className="text-xs text-muted-foreground">{formatDateTime(a.starts_at)}</span>
                   </li>
                 ))}
               </ul>
