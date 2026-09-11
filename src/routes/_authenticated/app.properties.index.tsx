@@ -143,6 +143,14 @@ function readColumns(): ColumnKey[] {
   return allColumns.map((c) => c.key);
 }
 
+/** Grila e vizualizarea implicită; preferința utilizatorului se ține local. */
+const VIEW_KEY = "habitoo.propertyView";
+
+function readView(): "list" | "grid" {
+  if (typeof window === "undefined") return "grid";
+  return window.localStorage.getItem(VIEW_KEY) === "list" ? "list" : "grid";
+}
+
 const PAGE_SIZE = 25;
 
 function PropertiesPage() {
