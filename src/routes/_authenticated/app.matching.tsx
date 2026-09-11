@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { useCurrentUser } from "@/hooks/use-session";
+import { brandingFromOrg, materialSignature } from "@/lib/materials";
 import { formatMoney } from "@/lib/format";
 import {
   propertyStatusLabels,
@@ -298,7 +299,9 @@ function MatchingPage() {
     return `Bună! Am o proprietate care s-ar putea potrivi: ${property.title}, preț ${formatMoney(
       property.price,
       property.currency,
-    )}, în ${property.city ?? "—"}, ${property.rooms ?? "—"} camere, ${property.surface ?? "—"} mp.`;
+    )}, în ${property.city ?? "—"}, ${property.rooms ?? "—"} camere, ${property.surface ?? "—"} mp.
+
+${materialSignature(brandingFromOrg(me?.organization))}`;
   }
 
   function handleExport() {

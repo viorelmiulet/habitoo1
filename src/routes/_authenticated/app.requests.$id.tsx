@@ -25,6 +25,7 @@ import {
 } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { useCurrentUser } from "@/hooks/use-session";
+import { brandingFromOrg, materialSignature } from "@/lib/materials";
 import { formatDateTime, formatMoney, formatNumber, relativeDays } from "@/lib/format";
 import { activityKindLabels, leadStageLabels, propertyTypeLabels, requestKindLabels } from "@/lib/labels";
 import { activityStatusLabels, activityStatusTone, logAudit, requestStatusLabels, requestStatusOptions, requestStatusTone } from "@/lib/crm";
@@ -249,7 +250,9 @@ function RequestDetailPage() {
   const whatsappHref = (phone: string) => `https://wa.me/${phone.replace(/[^\d]/g, "")}`;
 
   const propertyMessage = (p: (typeof properties)[number]) =>
-    `${p.title} – ${formatMoney(p.price, p.currency)}, ${p.city ?? ""}, ${p.rooms ?? "?"} camere, ${formatNumber(p.surface)} m²`;
+    `${p.title} – ${formatMoney(p.price, p.currency)}, ${p.city ?? ""}, ${p.rooms ?? "?"} camere, ${formatNumber(p.surface)} m²
+
+${materialSignature(brandingFromOrg(user?.organization))}`;
 
   return (
     <>
