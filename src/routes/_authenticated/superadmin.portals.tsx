@@ -93,32 +93,35 @@ function SuperadminPortalsPage() {
         description="Integrările cu portalurile se configurează exclusiv de aici, separat pentru fiecare agenție."
       />
 
-      <div className="panel space-y-3 p-5">
-        <Label htmlFor="portal-org">Agenție</Label>
-        {orgs.isLoading ? (
-          <InlineLoading label="Se încarcă agențiile…" />
-        ) : orgs.isError ? (
-          <QueryError error={orgs.error} onRetry={() => orgs.refetch()} />
-        ) : (
-          <Select
-            value={organizationId}
-            onValueChange={(v) => {
-              setOrganizationId(v);
-              setPropertyId("");
-            }}
-          >
-            <SelectTrigger id="portal-org" className="max-w-md">
-              <SelectValue placeholder="Alege agenția" />
-            </SelectTrigger>
-            <SelectContent>
-              {(orgs.data ?? []).map((o) => (
-                <SelectItem key={o.id} value={o.id}>
-                  {o.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        )}
+      {/* Selectorul de agenție rămâne vizibil la derulare. */}
+      <div className="sticky top-0 z-20 -mx-1 bg-background/95 px-1 py-2 backdrop-blur">
+        <div className="panel space-y-3 p-5">
+          <Label htmlFor="portal-org">Agenție</Label>
+          {orgs.isLoading ? (
+            <InlineLoading label="Se încarcă agențiile…" />
+          ) : orgs.isError ? (
+            <QueryError error={orgs.error} onRetry={() => orgs.refetch()} />
+          ) : (
+            <Select
+              value={organizationId}
+              onValueChange={(v) => {
+                setOrganizationId(v);
+                setPropertyId("");
+              }}
+            >
+              <SelectTrigger id="portal-org" className="max-w-md">
+                <SelectValue placeholder="Alege agenția" />
+              </SelectTrigger>
+              <SelectContent>
+                {(orgs.data ?? []).map((o) => (
+                  <SelectItem key={o.id} value={o.id}>
+                    {o.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+        </div>
       </div>
 
       {organizationId ? (
