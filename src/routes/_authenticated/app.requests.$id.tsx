@@ -1,7 +1,30 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+
+const priorityLabels: Record<string, string> = { low: "Scăzută", medium: "Medie", high: "Ridicată" };
+const priorityTone: Record<string, "neutral" | "info" | "warning"> = {
+  low: "neutral",
+  medium: "info",
+  high: "warning",
+};
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import { ArrowLeft, Mail, MessageCircle, Phone, Sparkles, Target, UserPlus } from "lucide-react";
+import {
+  ArrowLeft,
+  Banknote,
+  BedDouble,
+  CalendarClock,
+  Check,
+  Mail,
+  MapPin,
+  MessageCircle,
+  Phone,
+  Ruler,
+  Sparkles,
+  Target,
+  User,
+  UserPlus,
+  X,
+} from "lucide-react";
 import { toast } from "sonner";
 import { toastError } from "@/lib/errors";
 import { PageHeader } from "@/components/app/PageHeader";
@@ -278,37 +301,76 @@ ${materialSignature(brandingFromOrg(user?.organization))}`;
         }
       />
 
-      <div className="panel flex flex-wrap items-center gap-3 p-4">
-        <Select value={request.status} onValueChange={(v) => setStatus.mutate(v)}>
-          <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>
-          <SelectContent>
-            {requestStatusOptions.map((k) => (<SelectItem key={k} value={k}>{requestStatusLabels[k]}</SelectItem>))}
-          </SelectContent>
-        </Select>
-        <Select value={request.priority} onValueChange={(v) => setPriority.mutate(v)}>
-          <SelectTrigger className="w-36"><SelectValue placeholder="Prioritate" /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="low">Scăzută</SelectItem>
-            <SelectItem value="medium">Medie</SelectItem>
-            <SelectItem value="high">Ridicată</SelectItem>
-          </SelectContent>
-        </Select>
-        <Select value={request.assigned_to ?? ""} onValueChange={(v) => setAssigned.mutate(v)}>
-          <SelectTrigger className="w-48"><SelectValue placeholder="Agent responsabil" /></SelectTrigger>
-          <SelectContent>
-            {(data?.agents ?? []).map((a) => (<SelectItem key={a.id} value={a.id}>{a.full_name}</SelectItem>))}
-          </SelectContent>
-        </Select>
-        <StatusBadge tone={requestStatusTone[request.status]}>{requestStatusLabels[request.status]}</StatusBadge>
-        <span className="text-xs text-muted-foreground">{relativeDays(request.created_at)}</span>
+      <div className="panel space-y-4 p-4 sm:p-5">
+        <div className="flex flex-wrap items-center gap-3">
+          <span className="grid size-11 shrink-0 place-items-center rounded-2xl bg-primary/10 text-primary">
+            <Target className="size-5" aria-hidden />
+          </span>
+          <div className="min-w-0 flex-1">
+            <div className="flex flex-wrap items-center gap-2">
+              <StatusBadge tone={requestStatusTone[request.status]}>{requestStatusLabels[request.status]}</StatusBadge>
+              <StatusBadge tone={priorityTone[request.priority] ?? "neutral"} dot>
+                {priorityLabels[request.priority] ?? request.priority}
+              </StatusBadge>
+              <StatusBadge>{requestKindLabels[request.kind]}</StatusBadge>
+            </div>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Creată {relativeDays(request.created_at)} · Responsabil: {agentName(request.assigned_to)}
+            </p>
+          </div>
+          <div className="text-right">
+            <p className="text-lg font-semibold tabular-nums text-foreground">{formatMoney(request.budget_max, request.currency)}</p>
+            <p className="text-[11px] text-muted-foreground tabular-nums">buget minim {formatMoney(request.budget_min, request.currency)}</p>
+          </div>
+        </div>
+        <div className="grid gap-3 border-t border-border pt-4 sm:grid-cols-3">
+          <div className="space-y-1">
+            <span className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">Status</span>
+            <Select value={request.status} onValueChange={(v) => setStatus.mutate(v)}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {requestStatusOptions.map((k) => (<SelectItem key={k} value={k}>{requestStatusLabels[k]}</SelectItem>))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-1">
+            <span className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">Prioritate</span>
+            <Select value={request.priority} onValueChange={(v) => setPriority.mutate(v)}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="low">Scăzută</SelectItem>
+                <SelectItem value="medium">Medie</SelectItem>
+                <SelectItem value="high">Ridicată</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-1">
+            <span className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">Agent responsabil</span>
+            <Select value={request.assigned_to ?? ""} onValueChange={(v) => setAssigned.mutate(v)}>
+              <SelectTrigger><SelectValue placeholder="Neasignat" /></SelectTrigger>
+              <SelectContent>
+                {(data?.agents ?? []).map((a) => (<SelectItem key={a.id} value={a.id}>{a.full_name}</SelectItem>))}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
       </div>
 
-      <div className="panel flex flex-wrap items-center gap-3 p-4">
-        {contact ? (
-          <>
-            <Link to="/app/contacts/$id" params={{ id: contact.id }} className="font-medium hover:text-primary">
+      {contact ? (
+        <div className="panel flex flex-wrap items-center gap-4 p-4 sm:p-5">
+          <span className="grid size-11 shrink-0 place-items-center rounded-full bg-primary/10 text-sm font-semibold text-primary">
+            {(contact.first_name?.[0] ?? "?").toUpperCase()}
+            {(contact.last_name?.[0] ?? "").toUpperCase()}
+          </span>
+          <div className="min-w-0 flex-1">
+            <Link to="/app/contacts/$id" params={{ id: contact.id }} className="truncate font-semibold text-foreground hover:text-primary">
               {contact.first_name} {contact.last_name}
             </Link>
+            <p className="truncate text-xs text-muted-foreground">
+              {[contact.phone, contact.email].filter(Boolean).join(" · ") || "Clientul acestei cereri"}
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-2">
             {contact.phone ? (
               <Button size="sm" variant="outline" asChild>
                 <a href={`tel:${contact.phone}`}>
@@ -323,11 +385,23 @@ ${materialSignature(brandingFromOrg(user?.organization))}`;
                 </a>
               </Button>
             ) : null}
-          </>
-        ) : (
-          <p className="text-sm text-muted-foreground">Niciun contact asociat.</p>
-        )}
-      </div>
+            {contact.email ? (
+              <Button size="sm" variant="outline" asChild>
+                <a href={`mailto:${contact.email}`}>
+                  <Mail className="size-4" /> Email
+                </a>
+              </Button>
+            ) : null}
+          </div>
+        </div>
+      ) : (
+        <div className="panel flex flex-wrap items-center gap-4 p-4 sm:p-5">
+          <span className="grid size-11 shrink-0 place-items-center rounded-full bg-muted text-muted-foreground">
+            <User className="size-5" aria-hidden />
+          </span>
+          <p className="text-sm text-muted-foreground">Niciun contact asociat acestei cereri.</p>
+        </div>
+      )}
 
       <Tabs defaultValue="overview">
         <TabsList className="flex-wrap">
@@ -438,60 +512,48 @@ ${materialSignature(brandingFromOrg(user?.organization))}`;
               </div>
             </form>
           ) : (
-            <div className="panel p-5">
+            <div className="panel space-y-6 p-5">
+              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                {[
+                  { icon: Banknote, label: "Buget", value: `${formatMoney(request.budget_min, request.currency)} – ${formatMoney(request.budget_max, request.currency)}` },
+                  { icon: MapPin, label: "Localități", value: (request.cities ?? []).join(", ") || "orice oraș" },
+                  { icon: BedDouble, label: "Camere", value: `${request.rooms_min ?? "—"} – ${request.rooms_max ?? "—"}` },
+                  { icon: Ruler, label: "Suprafață minimă", value: request.surface_min ? `${formatNumber(request.surface_min)} m²` : "—" },
+                ].map(({ icon: Icon, label, value }) => (
+                  <div key={label} className="flex items-center gap-3 rounded-xl border border-border bg-surface p-3">
+                    <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-primary/10 text-primary">
+                      <Icon className="size-4" aria-hidden />
+                    </span>
+                    <div className="min-w-0">
+                      <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">{label}</p>
+                      <p className="truncate text-sm font-medium text-foreground">{value}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
               <dl className="grid gap-3 sm:grid-cols-2">
-                <div className="flex items-center justify-between gap-3 text-sm">
-                  <dt className="text-muted-foreground">Buget</dt>
-                  <dd className="font-medium">{formatMoney(request.budget_min, request.currency)} – {formatMoney(request.budget_max, request.currency)}</dd>
-                </div>
-                <div className="flex items-center justify-between gap-3 text-sm">
-                  <dt className="text-muted-foreground">Localități</dt>
-                  <dd className="font-medium">{(request.cities ?? []).join(", ") || "orice oraș"}</dd>
-                </div>
-                <div className="flex items-center justify-between gap-3 text-sm">
-                  <dt className="text-muted-foreground">Zone</dt>
-                  <dd className="font-medium">{(request.areas ?? []).join(", ") || "—"}</dd>
-                </div>
-                <div className="flex items-center justify-between gap-3 text-sm">
-                  <dt className="text-muted-foreground">Camere</dt>
-                  <dd className="font-medium">{request.rooms_min ?? "—"} – {request.rooms_max ?? "—"}</dd>
-                </div>
-                <div className="flex items-center justify-between gap-3 text-sm">
-                  <dt className="text-muted-foreground">Suprafață minimă</dt>
-                  <dd className="font-medium">{request.surface_min ? `${formatNumber(request.surface_min)} m²` : "—"}</dd>
-                </div>
-                <div className="flex items-center justify-between gap-3 text-sm">
-                  <dt className="text-muted-foreground">Etaj preferat</dt>
-                  <dd className="font-medium">{request.floor_preference || "—"}</dd>
-                </div>
-                <div className="flex items-center justify-between gap-3 text-sm">
-                  <dt className="text-muted-foreground">Mobilat</dt>
-                  <dd className="font-medium">{request.furnished ? "Da" : "Nu contează"}</dd>
-                </div>
-                <div className="flex items-center justify-between gap-3 text-sm">
-                  <dt className="text-muted-foreground">Parcare</dt>
-                  <dd className="font-medium">{request.wants_parking ? "Da" : "Nu contează"}</dd>
-                </div>
-                <div className="flex items-center justify-between gap-3 text-sm">
-                  <dt className="text-muted-foreground">Balcon</dt>
-                  <dd className="font-medium">{request.wants_balcony ? "Da" : "Nu contează"}</dd>
-                </div>
-                <div className="flex items-center justify-between gap-3 text-sm">
-                  <dt className="text-muted-foreground">Termen</dt>
-                  <dd className="font-medium">{request.term || "—"}</dd>
-                </div>
-                <div className="flex items-center justify-between gap-3 text-sm">
-                  <dt className="text-muted-foreground">Sursă</dt>
-                  <dd className="font-medium">{request.source || "—"}</dd>
-                </div>
+                {[
+                  { label: "Zone preferate", value: (request.areas ?? []).join(", ") || "—" },
+                  { label: "Etaj preferat", value: request.floor_preference || "—" },
+                  { label: "Mobilat", value: request.furnished ? "Da" : "Nu contează" },
+                  { label: "Parcare", value: request.wants_parking ? "Da" : "Nu contează" },
+                  { label: "Balcon", value: request.wants_balcony ? "Da" : "Nu contează" },
+                  { label: "Termen", value: request.term || "—" },
+                  { label: "Sursă", value: request.source || "—" },
+                ].map(({ label, value }) => (
+                  <div key={label} className="flex items-center justify-between gap-3 text-sm">
+                    <dt className="text-muted-foreground">{label}</dt>
+                    <dd className="font-medium">{value}</dd>
+                  </div>
+                ))}
               </dl>
               {request.features.length > 0 ? (
-                <div className="mt-5 flex flex-wrap gap-2">
+                <div className="flex flex-wrap gap-2 border-t border-border pt-4">
                   {request.features.map((f) => (<StatusBadge key={f}>{f}</StatusBadge>))}
                 </div>
               ) : null}
               {request.notes ? (
-                <div className="mt-5 rounded-xl border border-border bg-muted/40 p-4 text-sm">
+                <div className="rounded-xl border border-border bg-muted/40 p-4 text-sm">
                   <p className="font-medium">Note</p>
                   <p className="mt-1 whitespace-pre-line text-muted-foreground">{request.notes}</p>
                 </div>
@@ -507,24 +569,45 @@ ${materialSignature(brandingFromOrg(user?.organization))}`;
             ) : (
               <ul className="divide-y divide-border">
                 {matches.map(({ property, match }) => (
-                  <li key={property.id} className="flex flex-wrap items-center gap-3 px-5 py-3 text-sm">
+                  <li key={property.id} className="flex flex-wrap items-center gap-4 px-5 py-4 text-sm transition-colors hover:bg-surface">
+                    <span
+                      className={`grid size-11 shrink-0 place-items-center rounded-full text-xs font-bold tabular-nums ${
+                        match.score >= 80
+                          ? "bg-success/15 text-success"
+                          : match.score >= 60
+                            ? "bg-primary/10 text-primary"
+                            : "bg-muted text-muted-foreground"
+                      }`}
+                      aria-label={`Scor ${match.score}%`}
+                    >
+                      {match.score}%
+                    </span>
                     <div className="min-w-0 flex-1">
-                      <Link to="/app/properties/$id" params={{ id: property.id }} className="truncate font-medium hover:text-primary">
+                      <Link to="/app/properties/$id" params={{ id: property.id }} className="truncate font-semibold text-foreground hover:text-primary">
                         {property.title}
                       </Link>
                       <p className="truncate text-xs text-muted-foreground">
-                        {formatMoney(property.price, property.currency)} · {property.city ?? "—"}
+                        {formatMoney(property.price, property.currency)} · {property.city ?? "—"} · {matchLabel(match.score)}
                       </p>
-                      <p className="mt-1 text-xs text-success">
-                        {match.reasons.length > 0 ? match.reasons.map((r) => `✓ ${r}`).join("  ") : null}
-                      </p>
+                      {match.reasons.length > 0 ? (
+                        <div className="mt-1.5 flex flex-wrap gap-1.5">
+                          {match.reasons.map((r) => (
+                            <span key={r} className="inline-flex items-center gap-1 rounded-full bg-success/10 px-2 py-0.5 text-[11px] text-success">
+                              <Check className="size-3" aria-hidden /> {r}
+                            </span>
+                          ))}
+                        </div>
+                      ) : null}
                       {match.misses.length > 0 ? (
-                        <p className="text-xs text-destructive">{match.misses.map((m) => `✕ ${m}`).join("  ")}</p>
+                        <div className="mt-1 flex flex-wrap gap-1.5">
+                          {match.misses.map((m) => (
+                            <span key={m} className="inline-flex items-center gap-1 rounded-full bg-destructive/10 px-2 py-0.5 text-[11px] text-destructive">
+                              <X className="size-3" aria-hidden /> {m}
+                            </span>
+                          ))}
+                        </div>
                       ) : null}
                     </div>
-                    <StatusBadge tone={matchTone(match.score)}>
-                      {match.score}% · {matchLabel(match.score)}
-                    </StatusBadge>
                     <div className="flex flex-wrap gap-2">
                       <Button variant="outline" size="sm" onClick={() => createLead.mutate(property.id)} disabled={createLead.isPending}>
                         <UserPlus className="size-4" /> Lead
@@ -533,15 +616,15 @@ ${materialSignature(brandingFromOrg(user?.organization))}`;
                         Vizionare
                       </Button>
                       {contact?.phone ? (
-                        <Button variant="outline" size="sm" asChild>
-                          <a href={whatsappHref(contact.whatsapp ?? contact.phone ?? "")} target="_blank" rel="noreferrer">
+                        <Button variant="outline" size="icon" asChild title="Trimite pe WhatsApp">
+                          <a href={whatsappHref(contact.whatsapp ?? contact.phone ?? "")} target="_blank" rel="noreferrer" aria-label="Trimite pe WhatsApp">
                             <MessageCircle className="size-4" />
                           </a>
                         </Button>
                       ) : null}
                       {contact?.email ? (
-                        <Button variant="outline" size="sm" asChild>
-                          <a href={`mailto:${contact.email}?subject=${encodeURIComponent(property.title)}&body=${encodeURIComponent(propertyMessage(property))}`}>
+                        <Button variant="outline" size="icon" asChild title="Trimite pe email">
+                          <a href={`mailto:${contact.email}?subject=${encodeURIComponent(property.title)}&body=${encodeURIComponent(propertyMessage(property))}`} aria-label="Trimite pe email">
                             <Mail className="size-4" />
                           </a>
                         </Button>
@@ -560,13 +643,21 @@ ${materialSignature(brandingFromOrg(user?.organization))}`;
               <EmptyState title="Niciun lead legat de această cerere" />
             ) : (
               <ul className="divide-y divide-border">
-                {leads.map((l) => (
-                  <li key={l.id} className="flex items-center gap-3 px-5 py-3 text-sm">
-                    <span className="min-w-0 flex-1 truncate font-medium">{l.name}</span>
-                    <StatusBadge tone="info">{leadStageLabels[l.stage]}</StatusBadge>
-                    <span className="text-xs text-muted-foreground">Scor {l.score}</span>
-                  </li>
-                ))}
+                {leads.map((l) => {
+                  const initials = l.name.split(" ").filter(Boolean).map((w: string) => w[0]).slice(0, 2).join("").toUpperCase();
+                  return (
+                    <li key={l.id} className="flex items-center gap-4 px-5 py-4 text-sm transition-colors hover:bg-surface">
+                      <span className="grid size-10 shrink-0 place-items-center rounded-full bg-primary/10 text-xs font-semibold text-primary">
+                        {initials || "?"}
+                      </span>
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate font-semibold text-foreground">{l.name}</p>
+                        <p className="text-xs text-muted-foreground">Scor {l.score} · {relativeDays(l.created_at)}</p>
+                      </div>
+                      <StatusBadge tone="info">{leadStageLabels[l.stage]}</StatusBadge>
+                    </li>
+                  );
+                })}
               </ul>
             )}
           </div>
@@ -579,10 +670,15 @@ ${materialSignature(brandingFromOrg(user?.organization))}`;
             ) : (
               <ul className="divide-y divide-border">
                 {activities.map((a) => (
-                  <li key={a.id} className="flex items-center gap-3 px-5 py-3 text-sm">
+                  <li key={a.id} className="flex items-center gap-4 px-5 py-4 text-sm transition-colors hover:bg-surface">
+                    <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary">
+                      <CalendarClock className="size-4" aria-hidden />
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate font-medium text-foreground">{a.title}</p>
+                      <p className="text-xs text-muted-foreground">{formatDateTime(a.starts_at)}</p>
+                    </div>
                     <StatusBadge tone={activityStatusTone[a.status]}>{activityKindLabels[a.kind]}</StatusBadge>
-                    <span className="min-w-0 flex-1 truncate">{a.title}</span>
-                    <span className="text-xs text-muted-foreground">{formatDateTime(a.starts_at)}</span>
                   </li>
                 ))}
               </ul>
