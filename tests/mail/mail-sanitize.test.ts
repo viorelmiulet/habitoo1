@@ -1,4 +1,4 @@
-// @vitest-environment happy-dom
+// @vitest-environment jsdom
 import { expect, test } from "vitest";
 import DOMPurify from "dompurify";
 const SAFE_URI = /^(?:https?:|mailto:|tel:|cid:|#|\/)/i;
