@@ -478,57 +478,120 @@ function ContactsPage() {
             action={<Button size="sm" onClick={() => setDialogOpen(true)}>Adaugă contact</Button>}
           />
         ) : view === "list" ? (
-          <ul className="divide-y divide-border">
-            <li className="flex items-center gap-3 px-4 py-2 text-xs text-muted-foreground">
+          <ul className="divide-y divide-border/70">
+            <li className="flex items-center gap-3 px-5 py-2.5 text-xs text-muted-foreground">
               <Checkbox
                 checked={allSelected}
                 onCheckedChange={(v) => setSelected(v ? rows.map((r) => r.id) : [])}
               />
               <span>Selectează tot</span>
             </li>
-            {rows.map((c) => (
-              <li key={c.id} className="flex flex-wrap items-center gap-3 px-4 py-3 text-sm">
-                <Checkbox
-                  checked={selected.includes(c.id)}
-                  onCheckedChange={(v) =>
-                    setSelected((s) => (v ? [...s, c.id] : s.filter((id) => id !== c.id)))
-                  }
-                />
-                <div className="min-w-0 flex-1">
-                  <Link to="/app/contacts/$id" params={{ id: c.id }} className="truncate font-medium hover:text-primary">
-                    {c.first_name} {c.last_name}
-                  </Link>
-                  <p className="truncate text-xs text-muted-foreground">{c.company || c.source || "—"}</p>
-                </div>
-                <StatusBadge tone="primary">{contactTypeLabels[c.type] ?? c.type}</StatusBadge>
-                <StatusBadge tone={c.status === "active" ? "success" : "neutral"}>
-                  {statusLabels[c.status] ?? c.status}
-                </StatusBadge>
-                <span className="w-36 text-xs text-muted-foreground">{c.phone ?? "—"}</span>
-                <span className="w-52 truncate text-xs text-muted-foreground">{c.email ?? "—"}</span>
-                <span className="w-36 truncate text-xs text-muted-foreground">{agentName(c.assigned_to)}</span>
-                <span className="w-24 text-right text-xs text-muted-foreground">{relativeDays(c.created_at)}</span>
-              </li>
-            ))}
+            {rows.map((c) => {
+              const leads = leadCounts?.get(c.id) ?? 0;
+              const fullName = `${c.first_name} ${c.last_name}`.trim();
+              return (
+                <li key={c.id} className="flex flex-wrap items-center gap-4 px-5 py-4 text-sm">
+                  <Checkbox
+                    checked={selected.includes(c.id)}
+                    onCheckedChange={(v) =>
+                      setSelected((s) => (v ? [...s, c.id] : s.filter((id) => id !== c.id)))
+                    }
+                  />
+                  <UserAvatar name={fullName} className="size-10 text-sm" />
+                  <div className="min-w-0 flex-1">
+                    <Link
+                      to="/app/contacts/$id"
+                      params={{ id: c.id }}
+                      className="truncate font-medium hover:text-primary"
+                    >
+                      {fullName}
+                    </Link>
+                    <p className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-muted-foreground">
+                      <span>{contactTypeLabels[c.type] ?? c.type}</span>
+                      {c.company || c.source ? <span>· {c.company || c.source}</span> : null}
+                      <span>· adăugat {relativeDays(c.created_at)}</span>
+                    </p>
+                  </div>
+                  <span className="w-40 text-xs text-muted-foreground">{c.phone ?? "—"}</span>
+                  <span className="w-56 truncate text-xs text-muted-foreground">{c.email ?? "—"}</span>
+                  <span className="w-24 text-xs text-muted-foreground">
+                    {leads > 0 ? `${leads} ${leads === 1 ? "lead" : "lead-uri"}` : "fără lead-uri"}
+                  </span>
+                  <span className="flex w-36 min-w-0 items-center gap-1.5 text-xs text-muted-foreground">
+                    <UserAvatar name={agentName(c.assigned_to)} className="size-6 text-[10px]" />
+                    <span className="truncate">{agentName(c.assigned_to)}</span>
+                  </span>
+                  <div className="flex items-center gap-1">
+                    {c.phone ? (
+                      <>
+                        <a
+                          href={`tel:${c.phone}`}
+                          aria-label={`Sună ${fullName}`}
+                          className="rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                        >
+                          <Phone className="size-4" aria-hidden />
+                        </a>
+                        <a
+                          href={`https://wa.me/${c.phone.replace(/[^\d]/g, "")}`}
+                          target="_blank"
+                          rel="noreferrer"
+                          aria-label={`WhatsApp ${fullName}`}
+                          className="rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                        >
+                          <MessageCircle className="size-4" aria-hidden />
+                        </a>
+                      </>
+                    ) : null}
+                    {c.email ? (
+                      <a
+                        href={`mailto:${c.email}`}
+                        aria-label={`Email ${fullName}`}
+                        className="rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                      >
+                        <Mail className="size-4" aria-hidden />
+                      </a>
+                    ) : null}
+                  </div>
+                  <StatusBadge tone={c.status === "active" ? "success" : "neutral"}>
+                    {statusLabels[c.status] ?? c.status}
+                  </StatusBadge>
+                </li>
+              );
+            })}
           </ul>
         ) : (
-          <div className="grid gap-3 p-4 sm:grid-cols-2 lg:grid-cols-3">
-            {rows.map((c) => (
-              <Link
-                key={c.id}
-                to="/app/contacts/$id"
-                params={{ id: c.id }}
-                className="rounded-xl border border-border p-4 text-sm hover:border-primary/40"
-              >
-                <div className="flex items-center justify-between gap-2">
-                  <span className="font-medium">{c.first_name} {c.last_name}</span>
-                  <StatusBadge tone="primary">{contactTypeLabels[c.type] ?? c.type}</StatusBadge>
-                </div>
-                <p className="mt-1 truncate text-xs text-muted-foreground">{c.company || c.source || "—"}</p>
-                <p className="mt-2 text-xs text-muted-foreground">{c.phone ?? "—"} · {c.email ?? "—"}</p>
-                <p className="mt-2 text-xs text-muted-foreground">Agent: {agentName(c.assigned_to)}</p>
-              </Link>
-            ))}
+          <div className="grid gap-4 p-4 sm:grid-cols-2 lg:grid-cols-3">
+            {rows.map((c) => {
+              const leads = leadCounts?.get(c.id) ?? 0;
+              const fullName = `${c.first_name} ${c.last_name}`.trim();
+              return (
+                <Link
+                  key={c.id}
+                  to="/app/contacts/$id"
+                  params={{ id: c.id }}
+                  className="rounded-2xl bg-card p-4 text-sm ring-1 ring-border/60 transition hover:ring-primary/40"
+                >
+                  <div className="flex items-center gap-3">
+                    <UserAvatar name={fullName} className="size-10 text-sm" />
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate font-medium">{fullName}</span>
+                      <span className="block truncate text-xs text-muted-foreground">
+                        {contactTypeLabels[c.type] ?? c.type}
+                      </span>
+                    </span>
+                  </div>
+                  <p className="mt-3 truncate text-xs text-muted-foreground">{c.phone ?? "—"}</p>
+                  <p className="truncate text-xs text-muted-foreground">{c.email ?? "—"}</p>
+                  <p className="mt-3 flex items-center justify-between text-xs text-muted-foreground">
+                    <span className="flex min-w-0 items-center gap-1.5">
+                      <UserAvatar name={agentName(c.assigned_to)} className="size-6 text-[10px]" />
+                      <span className="truncate">{agentName(c.assigned_to)}</span>
+                    </span>
+                    <span>{leads > 0 ? `${leads} ${leads === 1 ? "lead" : "lead-uri"}` : "fără lead-uri"}</span>
+                  </p>
+                </Link>
+              );
+            })}
           </div>
         )}
       </div>
