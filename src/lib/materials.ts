@@ -99,7 +99,7 @@ export const samplePresentation: PresentationData = {
     { label: "Suprafață", value: "78 m²" },
     { label: "Camere", value: "3" },
     { label: "Etaj", value: "4" },
-    { label: "Referință", value: "RF-1024" },
+    { label: "Referință", value: "HB-1024" },
   ],
   description:
     "Apartament luminos, bloc nou, finisaje premium, parcare subterană. Text de probă pentru previzualizarea materialului.",
