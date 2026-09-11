@@ -712,7 +712,7 @@ function ReplyBox({ threadId, onSent }: { threadId: string; onSent: () => void }
 
   const send = async () => {
     if (!text.trim() && !staged.items.length) {
-      toast.error("Scrie un mesaj sau atașează un fișier."); return; }
+      toast.error("Scrie un mesaj sau atașează un fișier.");
       return;
     }
     setSending(true);
