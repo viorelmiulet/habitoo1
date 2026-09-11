@@ -284,16 +284,15 @@ export function AppSidebar({
                         activeOptions={{ exact: item.exact }}
                         onClick={onNavigate}
                         className={cn(
-                          "group relative flex items-center gap-3 rounded-lg text-sm font-medium text-sidebar-foreground/75 transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:ring-2 focus-visible:ring-sidebar-ring focus-visible:outline-none",
-                          collapsed ? "mx-auto size-10 justify-center" : "px-3 py-2",
+                          "group relative flex items-center gap-3 rounded-xl text-sm text-sidebar-foreground/75 transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:ring-2 focus-visible:ring-sidebar-ring focus-visible:outline-none",
+                          collapsed ? "mx-auto size-10 justify-center" : "px-3 py-2.5",
                         )}
                         activeProps={{
                           className: cn(
-                            "bg-sidebar-accent text-sidebar-accent-foreground before:absolute before:top-1/2 before:left-0 before:h-5 before:w-0.5 before:-translate-y-1/2 before:rounded-r-full",
-                            isPlatform ? "before:bg-gold" : "before:bg-sidebar-primary",
-                            collapsed && "before:-left-2",
+                            "bg-sidebar-primary font-medium text-sidebar-primary-foreground hover:bg-sidebar-primary hover:text-sidebar-primary-foreground",
                           ),
                         }}
+
                       >
                         <item.icon className="size-4 shrink-0" />
                         {collapsed ? null : <span className="truncate">{item.label}</span>}
