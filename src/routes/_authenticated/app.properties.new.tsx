@@ -14,6 +14,7 @@ import {
 import { toast } from "sonner";
 import { toastError } from "@/lib/errors";
 import { PageHeader } from "@/components/app/PageHeader";
+import { FormSection, RequiredMark } from "@/components/app/FormSection";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -201,7 +202,7 @@ function NewPropertyPage() {
       />
 
       <form
-        className="space-y-6"
+        className="space-y-8"
         onSubmit={(e) => {
           e.preventDefault();
           const percent = collabPercent.trim() === "" ? null : Number(collabPercent);
@@ -212,11 +213,13 @@ function NewPropertyPage() {
           create.mutate({ collaboration: form.collaboration, percent, prompted: false });
         }}
       >
-        <section className="panel space-y-4 p-5">
-          <h2 className="text-sm font-semibold">Informații generale</h2>
+        <FormSection title="Informații generale">
           <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-2 md:col-span-2">
-              <Label htmlFor="title">Titlu anunț</Label>
+              <Label htmlFor="title">
+                Titlu anunț
+                <RequiredMark />
+              </Label>
               <Input
                 id="title"
                 required
@@ -273,10 +276,9 @@ function NewPropertyPage() {
               </Select>
             </div>
           </div>
-        </section>
+        </FormSection>
 
-        <section className="panel space-y-4 p-5">
-          <h2 className="text-sm font-semibold">Tranzacție, preț și caracteristici</h2>
+        <FormSection title="Tranzacție, preț și caracteristici">
           <PropertyTransactionFields idPrefix="new" value={tx} onChange={setTx} />
 
           <div className="rounded-lg border p-4 space-y-3">
@@ -403,19 +405,17 @@ function NewPropertyPage() {
               })}
             </div>
           </div>
-        </section>
+        </FormSection>
 
-        <section className="panel space-y-2 p-5">
-          <h2 className="text-sm font-semibold">Detalii complete</h2>
+        <FormSection title="Detalii complete">
           <PropertyDetailsFields
             idPrefix="new"
             value={details}
             onChange={(patch) => setDetails((d) => ({ ...d, ...patch }))}
           />
-        </section>
+        </FormSection>
 
-        <section className="panel space-y-4 p-5">
-          <h2 className="text-sm font-semibold">Localizare</h2>
+        <FormSection title="Localizare">
           <div className="grid gap-4 md:grid-cols-2">
             <LocationPicker idPrefix="new" value={location} onChange={setLocation} />
             <div className="space-y-2">
@@ -441,11 +441,10 @@ function NewPropertyPage() {
             onCoordsChange={setCoords}
             onPreciseChange={setLocationPrecise}
           />
-        </section>
+        </FormSection>
 
 
-        <section className="panel space-y-4 p-5">
-          <h2 className="text-sm font-semibold">Descriere</h2>
+        <FormSection title="Descriere">
           <div className="space-y-2">
             <Label htmlFor="description">Descriere publică</Label>
             <Textarea
@@ -464,7 +463,7 @@ function NewPropertyPage() {
               onChange={(e) => set("internal_notes", e.target.value)}
             />
           </div>
-        </section>
+        </FormSection>
 
         <div className="flex justify-end gap-2">
           <Button type="button" variant="outline" onClick={() => navigate({ to: "/app/properties" })}>
