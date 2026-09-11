@@ -342,8 +342,19 @@ function QaPanelPage() {
             </section>
 
             <section className="panel p-5">
-              <h3 className="text-sm font-semibold">Scenarii de test incluse în seed</h3>
-              <ol className="mt-3 space-y-3 text-sm">
+              <div className="flex items-start gap-3">
+                <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-accent/20 text-accent-foreground">
+                  <ListChecks className="size-4" aria-hidden />
+                </span>
+                <div>
+                  <h3 className="text-sm font-semibold">Scenarii de test incluse în seed</h3>
+                  <p className="mt-0.5 text-xs text-muted-foreground">
+                    Fluxurile verificabile imediat după populare.
+                  </p>
+                </div>
+              </div>
+              <ol className="mt-4 space-y-3 text-sm">
+
                 <li>
                   <p className="font-medium">A · Proprietate flagship</p>
                   <p className="text-muted-foreground">
