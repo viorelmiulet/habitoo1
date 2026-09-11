@@ -16,7 +16,7 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { Download } from "lucide-react";
+import { Building2, Download, Flame, Handshake, TrendingUp } from "lucide-react";
 import { PageHeader } from "@/components/app/PageHeader";
 import { KpiCard } from "@/components/app/KpiCard";
 import { Button } from "@/components/ui/button";
@@ -380,36 +380,53 @@ function ReportsPage() {
 
       <div className="panel overflow-hidden">
         <div className="flex items-center justify-between border-b border-border px-5 py-4">
-          <h2 className="text-sm font-semibold">Activitatea agenților</h2>
+          <div>
+            <h2 className="text-sm font-semibold">Activitatea agenților</h2>
+            <p className="text-xs text-muted-foreground">Comparativ pe perioada și filtrele selectate.</p>
+          </div>
           <Button size="sm" variant="outline" onClick={() => downloadCsv("agenti.csv", perAgent)}>
             <Download className="size-3.5" /> CSV
           </Button>
         </div>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Agent</TableHead>
-              <TableHead>Proprietăți</TableHead>
-              <TableHead>Lead-uri</TableHead>
-              <TableHead>Vizionări</TableHead>
-              <TableHead>Activități</TableHead>
-              <TableHead>Tranzacții</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {perAgent.map((a) => (
-              <TableRow key={a.id}>
-                <TableCell className="font-medium">{a.name}</TableCell>
-                <TableCell>{a.proprietati}</TableCell>
-                <TableCell>{a.leaduri}</TableCell>
-                <TableCell>{a.vizionari}</TableCell>
-                <TableCell>{a.activitati}</TableCell>
-                <TableCell>{a.tranzactii}</TableCell>
+        {perAgent.length === 0 ? (
+          <p className="px-5 py-10 text-center text-sm text-muted-foreground">
+            Nu există agenți în agenție pentru intervalul selectat.
+          </p>
+        ) : (
+          <Table>
+            <TableHeader>
+              <TableRow className="bg-surface">
+                <TableHead>Agent</TableHead>
+                <TableHead className="text-right">Proprietăți</TableHead>
+                <TableHead className="text-right">Lead-uri</TableHead>
+                <TableHead className="text-right">Vizionări</TableHead>
+                <TableHead className="text-right">Activități</TableHead>
+                <TableHead className="text-right">Tranzacții</TableHead>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+            </TableHeader>
+            <TableBody>
+              {perAgent.map((a) => (
+                <TableRow key={a.id}>
+                  <TableCell className="font-medium">
+                    <span className="flex items-center gap-2.5">
+                      <span className="grid size-8 shrink-0 place-items-center rounded-full bg-primary/10 text-xs font-semibold text-primary">
+                        {a.name.slice(0, 2).toUpperCase()}
+                      </span>
+                      {a.name}
+                    </span>
+                  </TableCell>
+                  <TableCell className="text-right tabular-nums">{a.proprietati}</TableCell>
+                  <TableCell className="text-right tabular-nums">{a.leaduri}</TableCell>
+                  <TableCell className="text-right tabular-nums">{a.vizionari}</TableCell>
+                  <TableCell className="text-right tabular-nums">{a.activitati}</TableCell>
+                  <TableCell className="text-right font-medium tabular-nums">{a.tranzactii}</TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        )}
       </div>
+
     </>
   );
 }
