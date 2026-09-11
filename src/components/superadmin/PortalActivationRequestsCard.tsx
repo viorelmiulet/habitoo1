@@ -15,7 +15,7 @@ import { Input } from "@/components/ui/input";
 import { InlineLoading } from "@/components/app/LoadingState";
 import { QueryError } from "@/components/app/QueryError";
 import { EmptyState } from "@/components/app/EmptyState";
-import { PortalLogo } from "@/components/app/PortalLogo";
+import { PortalLogoStack } from "@/components/app/PortalLogo";
 import {
   listPortalActivationRequests,
   resolvePortalActivationRequest,
@@ -86,12 +86,7 @@ export function PortalActivationRequestsCard({
           {(requests.data ?? []).map((r) => (
             <li key={r.id} className="space-y-2 px-5 py-4 text-sm">
               <div className="flex flex-wrap items-center gap-2">
-                <PortalLogo
-                  portalId={r.portalId}
-                  name={r.portalName}
-                  size={32}
-                  className="rounded-md"
-                />
+                <PortalLogoStack portalId={r.portalId} name={r.portalName} size={32} />
                 <span className="font-medium">{r.portalName}</span>
                 <span className="text-muted-foreground">·</span>
                 <span className="truncate">{r.organizationName}</span>

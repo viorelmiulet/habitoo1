@@ -55,6 +55,7 @@ import {
   PORTAL_CAPABILITY_LABEL,
   PORTAL_CONNECTION_LABEL,
   PORTAL_DIRECTION_LABEL,
+  portalDisplayName,
   type PortalAuthenticationMode,
   type PortalDirection,
 } from "@/lib/portals/registry";
