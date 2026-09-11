@@ -6,6 +6,8 @@ import { toastError } from "@/lib/errors";
 import { PageHeader } from "@/components/app/PageHeader";
 import { StatusBadge } from "@/components/app/StatusBadge";
 import { AgencyPortalCatalogCard } from "@/components/app/AgencyPortalCatalogCard";
+import { AgencyBrandingCard } from "@/components/app/AgencyBrandingCard";
+
 import { SiteFeedCard } from "@/components/app/SiteFeedCard";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
