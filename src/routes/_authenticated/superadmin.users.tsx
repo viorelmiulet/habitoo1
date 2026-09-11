@@ -643,3 +643,20 @@ function UsersPage() {
     </>
   );
 }
+
+/** Pastilă de filtru activ, cu închidere — același tipar ca la Proprietăți. */
+function FilterPill({ label, onClear }: { label: string; onClear: () => void }) {
+  return (
+    <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-surface px-2.5 py-1 text-xs font-medium">
+      {label}
+      <button
+        type="button"
+        onClick={onClear}
+        className="text-muted-foreground hover:text-foreground"
+        aria-label={`Elimină filtrul ${label}`}
+      >
+        <X className="size-3.5" />
+      </button>
+    </span>
+  );
+}
