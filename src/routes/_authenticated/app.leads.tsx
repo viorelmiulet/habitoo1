@@ -1,7 +1,20 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
-import { Flame, Phone, MessageCircle, Plus, History } from "lucide-react";
+import {
+  Flame,
+  Phone,
+  MessageCircle,
+  Plus,
+  History,
+  Mail,
+  Clock,
+  ArrowRight,
+  Home,
+  CalendarClock,
+  StickyNote,
+  Users,
+} from "lucide-react";
 import { toast } from "sonner";
 import { toastError } from "@/lib/errors";
 import { PageHeader } from "@/components/app/PageHeader";
