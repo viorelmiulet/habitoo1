@@ -383,24 +383,46 @@ export function PortalsCard({ organizationId }: { organizationId: string }) {
                         setEndpoint((prev) => ({ ...prev, [item.portal.id]: next }));
                       }
                     };
+                    const fieldId = `${item.portal.id}-${field.key}`;
+                    const isRevealed = revealed[fieldId] === true;
                     return (
                       <div key={field.key} className="space-y-1.5">
-                        <Label htmlFor={`${item.portal.id}-${field.key}`}>{field.label}</Label>
-                        <Input
-                          id={`${item.portal.id}-${field.key}`}
-                          type={field.secret ? "password" : "text"}
-                          autoComplete="off"
-                          value={value}
-                          onChange={(e) => setValue(e.target.value)}
-                          placeholder={
-                            field.secret && item.connection.hasPortalCredential
-                              ? "Salvat — completează pentru a-l înlocui"
-                              : (field.placeholder ?? "")
-                          }
-                        />
+                        <Label htmlFor={fieldId}>{field.label}</Label>
+                        <div className="relative">
+                          <Input
+                            id={fieldId}
+                            type={field.secret && !isRevealed ? "password" : "text"}
+                            autoComplete="off"
+                            value={value}
+                            onChange={(e) => setValue(e.target.value)}
+                            className={field.secret ? "pr-10" : undefined}
+                            placeholder={
+                              field.secret && item.connection.hasPortalCredential
+                                ? "Salvat — completează pentru a-l înlocui"
+                                : (field.placeholder ?? "")
+                            }
+                          />
+                          {field.secret ? (
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setRevealed((prev) => ({ ...prev, [fieldId]: !isRevealed }))
+                              }
+                              className="absolute top-1/2 right-2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                              aria-label={isRevealed ? "Ascunde valoarea" : "Arată valoarea"}
+                            >
+                              {isRevealed ? (
+                                <EyeOff className="size-4" />
+                              ) : (
+                                <Eye className="size-4" />
+                              )}
+                            </button>
+                          ) : null}
+                        </div>
                         {field.help ? <p className="text-xs text-muted-foreground">{field.help}</p> : null}
                       </div>
                     );
+
                   })}
                 </div>
 
