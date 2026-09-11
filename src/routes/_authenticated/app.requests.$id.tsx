@@ -304,37 +304,76 @@ ${materialSignature(brandingFromOrg(user?.organization))}`;
         }
       />
 
-      <div className="panel flex flex-wrap items-center gap-3 p-4">
-        <Select value={request.status} onValueChange={(v) => setStatus.mutate(v)}>
-          <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>
-          <SelectContent>
-            {requestStatusOptions.map((k) => (<SelectItem key={k} value={k}>{requestStatusLabels[k]}</SelectItem>))}
-          </SelectContent>
-        </Select>
-        <Select value={request.priority} onValueChange={(v) => setPriority.mutate(v)}>
-          <SelectTrigger className="w-36"><SelectValue placeholder="Prioritate" /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="low">Scăzută</SelectItem>
-            <SelectItem value="medium">Medie</SelectItem>
-            <SelectItem value="high">Ridicată</SelectItem>
-          </SelectContent>
-        </Select>
-        <Select value={request.assigned_to ?? ""} onValueChange={(v) => setAssigned.mutate(v)}>
-          <SelectTrigger className="w-48"><SelectValue placeholder="Agent responsabil" /></SelectTrigger>
-          <SelectContent>
-            {(data?.agents ?? []).map((a) => (<SelectItem key={a.id} value={a.id}>{a.full_name}</SelectItem>))}
-          </SelectContent>
-        </Select>
-        <StatusBadge tone={requestStatusTone[request.status]}>{requestStatusLabels[request.status]}</StatusBadge>
-        <span className="text-xs text-muted-foreground">{relativeDays(request.created_at)}</span>
+      <div className="panel space-y-4 p-4 sm:p-5">
+        <div className="flex flex-wrap items-center gap-3">
+          <span className="grid size-11 shrink-0 place-items-center rounded-2xl bg-primary/10 text-primary">
+            <Target className="size-5" aria-hidden />
+          </span>
+          <div className="min-w-0 flex-1">
+            <div className="flex flex-wrap items-center gap-2">
+              <StatusBadge tone={requestStatusTone[request.status]}>{requestStatusLabels[request.status]}</StatusBadge>
+              <StatusBadge tone={priorityTone[request.priority] ?? "neutral"} dot>
+                {priorityLabels[request.priority] ?? request.priority}
+              </StatusBadge>
+              <StatusBadge>{requestKindLabels[request.kind]}</StatusBadge>
+            </div>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Creată {relativeDays(request.created_at)} · Responsabil: {agentName(request.assigned_to)}
+            </p>
+          </div>
+          <div className="text-right">
+            <p className="text-lg font-semibold tabular-nums text-foreground">{formatMoney(request.budget_max, request.currency)}</p>
+            <p className="text-[11px] text-muted-foreground tabular-nums">buget minim {formatMoney(request.budget_min, request.currency)}</p>
+          </div>
+        </div>
+        <div className="grid gap-3 border-t border-border pt-4 sm:grid-cols-3">
+          <div className="space-y-1">
+            <span className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">Status</span>
+            <Select value={request.status} onValueChange={(v) => setStatus.mutate(v)}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {requestStatusOptions.map((k) => (<SelectItem key={k} value={k}>{requestStatusLabels[k]}</SelectItem>))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-1">
+            <span className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">Prioritate</span>
+            <Select value={request.priority} onValueChange={(v) => setPriority.mutate(v)}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="low">Scăzută</SelectItem>
+                <SelectItem value="medium">Medie</SelectItem>
+                <SelectItem value="high">Ridicată</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-1">
+            <span className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">Agent responsabil</span>
+            <Select value={request.assigned_to ?? ""} onValueChange={(v) => setAssigned.mutate(v)}>
+              <SelectTrigger><SelectValue placeholder="Neasignat" /></SelectTrigger>
+              <SelectContent>
+                {(data?.agents ?? []).map((a) => (<SelectItem key={a.id} value={a.id}>{a.full_name}</SelectItem>))}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
       </div>
 
-      <div className="panel flex flex-wrap items-center gap-3 p-4">
-        {contact ? (
-          <>
-            <Link to="/app/contacts/$id" params={{ id: contact.id }} className="font-medium hover:text-primary">
+      {contact ? (
+        <div className="panel flex flex-wrap items-center gap-4 p-4 sm:p-5">
+          <span className="grid size-11 shrink-0 place-items-center rounded-full bg-primary/10 text-sm font-semibold text-primary">
+            {(contact.first_name?.[0] ?? "?").toUpperCase()}
+            {(contact.last_name?.[0] ?? "").toUpperCase()}
+          </span>
+          <div className="min-w-0 flex-1">
+            <Link to="/app/contacts/$id" params={{ id: contact.id }} className="truncate font-semibold text-foreground hover:text-primary">
               {contact.first_name} {contact.last_name}
             </Link>
+            <p className="truncate text-xs text-muted-foreground">
+              {[contact.phone, contact.email].filter(Boolean).join(" · ") || "Clientul acestei cereri"}
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-2">
             {contact.phone ? (
               <Button size="sm" variant="outline" asChild>
                 <a href={`tel:${contact.phone}`}>
@@ -349,11 +388,23 @@ ${materialSignature(brandingFromOrg(user?.organization))}`;
                 </a>
               </Button>
             ) : null}
-          </>
-        ) : (
-          <p className="text-sm text-muted-foreground">Niciun contact asociat.</p>
-        )}
-      </div>
+            {contact.email ? (
+              <Button size="sm" variant="outline" asChild>
+                <a href={`mailto:${contact.email}`}>
+                  <Mail className="size-4" /> Email
+                </a>
+              </Button>
+            ) : null}
+          </div>
+        </div>
+      ) : (
+        <div className="panel flex flex-wrap items-center gap-4 p-4 sm:p-5">
+          <span className="grid size-11 shrink-0 place-items-center rounded-full bg-muted text-muted-foreground">
+            <User className="size-5" aria-hidden />
+          </span>
+          <p className="text-sm text-muted-foreground">Niciun contact asociat acestei cereri.</p>
+        </div>
+      )}
 
       <Tabs defaultValue="overview">
         <TabsList className="flex-wrap">
