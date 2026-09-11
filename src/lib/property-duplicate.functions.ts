@@ -43,20 +43,10 @@ export const duplicateProperty = createServerFn({ method: "POST" })
     if (imagesError) throw new Error(imagesError.message);
     if (documentsError) throw new Error(documentsError.message);
 
-    // Referința nouă se calculează NUMERIC (ordonarea textuală ar pune „RF-999”
-    // înaintea lui „RF-1002” și ar genera un identificator deja folosit).
-    const { data: existingRefs, error: referenceError } = await supabase
-      .from("properties")
-      .select("reference")
-      .eq("organization_id", source.organization_id)
-      .not("reference", "is", null);
+    // Referința nouă vine din aceeași secvență globală ca la creare, deci nu
+    // se poate repeta nici între agenții, nici la duplicări simultane.
+    const { data: reference, error: referenceError } = await supabase.rpc("next_property_reference");
     if (referenceError) throw new Error(referenceError.message);
-    const maxNumber = (existingRefs ?? []).reduce((max, row) => {
-      const digits = String(row.reference ?? "").replace(/\D/g, "");
-      const value = digits ? Number(digits) : 0;
-      return Number.isSafeInteger(value) && value > max ? value : max;
-    }, 1000);
-    const reference = `RF-${maxNumber + 1}`;
 
     const { data: created, error: createError } = await supabase
       .from("properties")

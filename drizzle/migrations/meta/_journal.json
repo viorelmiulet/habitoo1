@@ -50,6 +50,13 @@
       "when": 1789148410360,
       "tag": "0006_property_archive_metadata",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1789148705888,
+      "tag": "0007_global_property_reference_sequence",
+      "breakpoints": true
     }
   ]
 }
