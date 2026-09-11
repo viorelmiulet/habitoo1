@@ -245,22 +245,14 @@ function PropertyDetailPage() {
     onError: (e: Error) => toastError(e),
   });
 
-  const archive = useMutation({
-    mutationFn: async () => {
-      const { error } = await supabase.from("properties").update({ status: "archived" as never }).eq("id", id);
-      if (error) throw error;
-      await logAudit({
-        organizationId: orgId,
-        actorId: user?.userId,
-        action: "property_archived",
-        entity: "property",
-        entityId: id,
-      });
-    },
+  // Dezarhivarea readuce statusul comercial de dinainte de arhivare (server-side).
+  const unarchive = useMutation({
+    mutationFn: async () => await unarchivePropertyFn({ data: { propertyId: id } }),
     onSuccess: () => {
-      toast.success("Proprietatea a fost arhivată.");
+      toast.success("Proprietatea a fost readusă în circulație.");
       queryClient.invalidateQueries({ queryKey: ["properties"] });
-      navigate({ to: "/app/properties" });
+      queryClient.invalidateQueries({ queryKey: ["property", id] });
+      queryClient.invalidateQueries({ queryKey: ["property-archive-state", id] });
     },
     onError: (e: Error) => toastError(e),
   });
