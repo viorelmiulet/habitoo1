@@ -106,11 +106,7 @@ function PortalDonut({
 }: {
   published: number;
   total: number;
-  rows: ReturnType<typeof useDashboardOverview>["data"] extends infer T
-    ? T extends { portals: { rows: infer R } }
-      ? R
-      : never
-    : never;
+  rows: OverviewPortalUsage[];
 }) {
   const sum = rows.reduce((acc, r) => acc + r.count, 0);
   const radius = 56;
