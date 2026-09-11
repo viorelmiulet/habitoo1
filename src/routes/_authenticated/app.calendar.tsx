@@ -737,13 +737,22 @@ function MonthView({
             onDrop={() => onDropDay(day)}
             onClick={() => onDayClick(day)}
           >
-            <p className={cn("mb-1 text-xs font-semibold", isToday && "text-primary")}>{day.getDate()}</p>
-            <div className="space-y-1">
-              {items.slice(0, 3).map((a) => (
+            <span
+              className={cn(
+                "mb-1.5 grid size-6 place-items-center rounded-full text-xs font-semibold",
+                isToday && "bg-primary text-primary-foreground",
+              )}
+            >
+              {day.getDate()}
+            </span>
+            <div className="flex flex-wrap items-center gap-1">
+              {items.slice(0, 8).map((a) => (
                 <button
                   key={a.id}
                   type="button"
                   draggable
+                  title={`${formatTime(a.starts_at)} · ${a.title}`}
+                  aria-label={`${formatTime(a.starts_at)} ${a.title}`}
                   onDragStart={() => setDraggedId(a.id)}
                   onDragEnd={() => setDraggedId(null)}
                   onClick={(e) => {
@@ -751,17 +760,15 @@ function MonthView({
                     onEventClick(a);
                   }}
                   className={cn(
-                    "block w-full truncate rounded border px-1.5 py-0.5 text-left text-[11px]",
-                    kindTone[a.kind] ?? "border-border bg-card",
-                    a.status === "cancelled" && "opacity-50 line-through",
+                    "size-2.5 rounded-full ring-1 ring-background transition hover:scale-125",
+                    kindDot[a.kind] ?? "bg-border",
+                    a.status === "cancelled" && "opacity-40",
                     draggedId === a.id && "opacity-30",
                   )}
-                >
-                  {formatTime(a.starts_at)} {a.title}
-                </button>
+                />
               ))}
-              {items.length > 3 ? (
-                <p className="text-[11px] text-muted-foreground">+{items.length - 3} altele</p>
+              {items.length > 8 ? (
+                <span className="text-[11px] text-muted-foreground">+{items.length - 8}</span>
               ) : null}
             </div>
           </div>
