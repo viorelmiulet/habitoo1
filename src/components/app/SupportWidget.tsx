@@ -25,7 +25,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { cn } from "@/lib/utils";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { toastError } from "@/lib/errors";
 import { createSupportTicket, SUPPORT_CATEGORIES, type SupportCategory } from "@/lib/support.functions";
@@ -98,9 +98,7 @@ export function SupportWidget({ children }: { children?: ReactNode }) {
             />
           </div>
           <div className="space-y-1.5">
-            <Label asChild>
-              <span>Categorie</span>
-            </Label>
+            <p className="text-sm font-medium">Categorie</p>
             <div className="flex flex-wrap gap-2" role="radiogroup" aria-label="Categorie">
               {SUPPORT_CATEGORIES.map((c) => (
                 <button
