@@ -22,6 +22,12 @@ export function AgencyPortalCatalogCard() {
   const queryClient = useQueryClient();
   const loadCatalog = useServerFn(getAgencyPortalCatalog);
   const sendRequest = useServerFn(requestPortalActivation);
+  const { data: currentUser } = useCurrentUser();
+  /**
+   * Colaborarea Habitoo apare aici doar informativ: e o alegere a agenției
+   * (Setări → Agenție), nu o activare aprobată de echipa Habitoo.
+   */
+  const collaborating = currentUser?.organization?.collaboration_enabled === true;
 
   const catalog = useQuery({
     queryKey: ["agency-portal-catalog"],
