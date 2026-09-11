@@ -467,11 +467,11 @@ export const PropertyPortalsCard = forwardRef<
 
       <footer className="flex flex-wrap items-center justify-between gap-3 border-t border-border px-5 py-4">
         <p className="text-xs text-muted-foreground">
-          {canManage
-            ? actionable.length > 0
-              ? `${actionable.length} ${actionable.length === 1 ? "modificare" : "modificări"} de aplicat.`
-              : "Nicio modificare de salvat."
-            : "Doar administratorul agenției poate modifica publicarea."}
+          {pendingCount > 0
+            ? `${pendingCount} ${pendingCount === 1 ? "modificare" : "modificări"} de aplicat.`
+            : canManage
+              ? "Nicio modificare de salvat."
+              : "Doar administratorul agenției poate modifica publicarea pe portaluri."}
         </p>
         <span className="text-xs text-muted-foreground">
           Se aplică prin butonul „Publică” din partea de sus a paginii.
