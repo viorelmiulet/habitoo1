@@ -346,6 +346,18 @@ export const PORTALS: PortalDefinition[] = [
     configuration_schema: { fields: [] },
     website: "https://www.publi24.ro",
   },
+  {
+    id: "romimo",
+    display_name: "Romimo.ro",
+    description: "Integrare de publicare anunțuri. Necesită acord și documentație de la portal.",
+    logo: "RI",
+    status: "coming_soon",
+    directions: [],
+    authentication: [],
+    capabilities: [],
+    configuration_schema: { fields: [] },
+    website: "https://www.romimo.ro",
+  },
 ];
 
 export function getPortalDefinition(id: string): PortalDefinition | null {
