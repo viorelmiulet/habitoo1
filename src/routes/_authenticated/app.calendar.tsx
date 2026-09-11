@@ -115,6 +115,8 @@ function CalendarPage() {
   const [dialogDefaults, setDialogDefaults] = useState<{ startsAt: Date } | undefined>(undefined);
 
   const [detail, setDetail] = useState<Activity | null>(null);
+  /** Panoul lateral cu lista zilei, deschis din calendarul lunar. */
+  const [dayPanel, setDayPanel] = useState<Date | null>(null);
   const [rescheduleDate, setRescheduleDate] = useState("");
   const [rescheduleTime, setRescheduleTime] = useState("");
   const [deleteTarget, setDeleteTarget] = useState<Activity | null>(null);
