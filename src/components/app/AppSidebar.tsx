@@ -4,6 +4,8 @@ import {
   Bell,
   Building2,
   CalendarDays,
+  Crown,
+
   ChartBar,
   Flame,
   FlaskConical,
