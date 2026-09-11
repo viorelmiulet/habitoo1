@@ -18,6 +18,7 @@ import { toastError } from "@/lib/errors";
 import { PageHeader } from "@/components/app/PageHeader";
 import { CardGridSkeleton, ListSkeleton } from "@/components/app/LoadingState";
 import { PropertyPortalsCell, usePropertyPortals } from "@/components/app/PropertyPortalsCell";
+import { PropertyCard, type PropertyCardRow } from "@/components/app/PropertyCard";
 import { PropertyThumb, usePropertyCovers } from "@/components/app/PropertyThumb";
 import { StatusBadge } from "@/components/app/StatusBadge";
 import { EmptyState } from "@/components/app/EmptyState";
