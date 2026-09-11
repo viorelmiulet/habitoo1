@@ -8,7 +8,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { isEmail, normalizeRecipient, validateOutbound } from "@/lib/mailgun";
+import { isEmail, normalizeRecipient } from "@/lib/mailgun";
 import {
   attachmentUrl,
   countThreads,
