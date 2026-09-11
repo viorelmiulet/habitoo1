@@ -3294,6 +3294,46 @@ export type Database = {
           unread_count: number
         }[]
       }
+      mail_thread_search: {
+        Args: {
+          _from?: string
+          _has_attachments?: boolean
+          _limit: number
+          _mailbox_id: string
+          _offset: number
+          _q?: string
+          _status: string
+          _to?: string
+          _unread_only?: boolean
+        }
+        Returns: {
+          has_attachments: boolean
+          id: string
+          last_direction: string
+          last_has_html: boolean
+          last_message_at: string
+          last_stripped_text: string
+          last_text_body: string
+          mailbox_id: string
+          message_count: number
+          participants: string[]
+          status: string
+          subject: string
+          unread_count: number
+        }[]
+      }
+      mail_thread_search_count: {
+        Args: {
+          _from?: string
+          _has_attachments?: boolean
+          _mailbox_id: string
+          _q?: string
+          _status: string
+          _to?: string
+          _unread_only?: boolean
+        }
+        Returns: number
+      }
       mail_webhook_nonce_claim: {
         Args: { _bucket: string; _token: string; _ttl_seconds: number }
         Returns: boolean

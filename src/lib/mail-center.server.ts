@@ -43,6 +43,7 @@ export type MailThreadListItem = MailThread & {
 
 export type MailMessage = {
   id: string;
+  mailbox_id: string;
   thread_id: string | null;
   direction: string;
   status: string;
@@ -105,27 +106,36 @@ type ThreadListRow = MailThread & {
   has_attachments: boolean | null;
 };
 
+export type ThreadFilters = {
+  mailboxId: string | null;
+  status: string;
+  unreadOnly?: boolean;
+  hasAttachments?: boolean | null;
+  /** Free text over sender, recipients, subject and body. */
+  q?: string | null;
+  from?: string | null;
+  to?: string | null;
+};
+
 /**
- * One round trip for the whole page: the `mail_thread_list` SQL function joins
+ * One round trip for the whole page: the `mail_thread_search` SQL function joins
  * the LAST message (the one that also drives `last_message_at`/`last_direction`)
- * and an EXISTS over attachments laterally. No per-thread follow-up query, so
- * the list stays O(1) requests whatever the page size.
+ * and an EXISTS over attachments laterally, and applies the search term plus the
+ * date range in the same statement. No per-thread follow-up query, so the list
+ * stays O(1) requests whatever the page size.
  */
 export async function listThreads(
   db: Db,
-  input: {
-    mailboxId: string | null;
-    status: string;
-    page: number;
-    unreadOnly?: boolean;
-    hasAttachments?: boolean | null;
-  },
+  input: ThreadFilters & { page: number },
 ): Promise<MailThreadListItem[]> {
-  const { data, error } = await db.rpc("mail_thread_list", {
+  const { data, error } = await db.rpc("mail_thread_search", {
     _mailbox_id: input.mailboxId,
     _status: input.status,
     _limit: PAGE_SIZE,
     _offset: input.page * PAGE_SIZE,
+    _q: input.q?.trim() || null,
+    _from: input.from ?? null,
+    _to: input.to ?? null,
     _unread_only: input.unreadOnly === true,
     _has_attachments: input.hasAttachments ?? null,
   } as never);
@@ -155,7 +165,7 @@ export async function listThreads(
 }
 
 const MESSAGE_COLUMNS =
-  "id, thread_id, direction, status, delivery_status, from_email, from_name, to_emails, cc_emails, reply_to, subject, text_body, html_body, stripped_text, has_attachments, sent_at, received_at, delivered_at, last_error, created_at";
+  "id, mailbox_id, thread_id, direction, status, delivery_status, from_email, from_name, to_emails, cc_emails, reply_to, subject, text_body, html_body, stripped_text, has_attachments, sent_at, received_at, delivered_at, last_error, created_at";
 
 /** Thread + its messages + their attachments, in three queries, never N+1. */
 export async function readThread(
@@ -222,15 +232,22 @@ export async function listMessages(
   return (data ?? []) as MailMessage[];
 }
 
-export async function countThreads(
-  db: Db,
-  input: { mailboxId: string | null; status: string; unreadOnly?: boolean },
-): Promise<number> {
-  let query = db.from("email_threads").select("id", { count: "exact", head: true }).eq("status", input.status);
-  if (input.mailboxId) query = query.eq("mailbox_id", input.mailboxId);
-  if (input.unreadOnly) query = query.gt("unread_count", 0);
-  const { count } = await query;
-  return count ?? 0;
+/** Total for the SAME filters as `listThreads`, so paging never lies. */
+export async function countThreads(db: Db, input: ThreadFilters): Promise<number> {
+  const { data, error } = await db.rpc("mail_thread_search_count", {
+    _mailbox_id: input.mailboxId,
+    _status: input.status,
+    _q: input.q?.trim() || null,
+    _from: input.from ?? null,
+    _to: input.to ?? null,
+    _unread_only: input.unreadOnly === true,
+    _has_attachments: input.hasAttachments ?? null,
+  } as never);
+  if (error) {
+    console.error("[mail:threads] count failed", { code: error.code });
+    return 0;
+  }
+  return Number(data ?? 0);
 }
 
 /** Provider delivery history of one message (delivered, bounced, complained). */

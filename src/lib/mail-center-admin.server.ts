@@ -411,3 +411,98 @@ export async function replyToThread(
   };
 
 }
+
+/* ------------------------------------------------------------------ */
+/* Drafts                                                             */
+/* ------------------------------------------------------------------ */
+
+export type DraftInput = {
+  draftId?: string | null;
+  mailboxId: string;
+  to: string[];
+  cc: string[];
+  subject: string;
+  text: string | null;
+};
+
+/**
+ * Creates or updates a draft. A draft is an `email_messages` row with
+ * `status = 'draft'` and no thread, so it never touches thread counters and can
+ * never be mistaken for something already sent.
+ */
+export async function saveDraft(
+  db: Db,
+  input: DraftInput,
+): Promise<{ draftId: string | null; error: string | null }> {
+  const { mailbox, error } = await activeMailbox(db, input.mailboxId);
+  if (!mailbox) return { draftId: null, error };
+
+  const to = input.to.map(normalizeRecipient).filter((v): v is string => !!v && isEmail(v));
+  const cc = input.cc.map(normalizeRecipient).filter((v): v is string => !!v && isEmail(v));
+  const subject = input.subject.trim().slice(0, 300) || null;
+  const text = input.text?.trim() || null;
+
+  if (!to.length && !subject && !text) return { draftId: null, error: "Ciorna este goală." };
+
+  const row = {
+    mailbox_id: mailbox.id,
+    thread_id: null,
+    direction: "outbound",
+    status: "draft",
+    delivery_status: "queued",
+    from_email: mailbox.address,
+    from_name: mailbox.display_name ?? null,
+    to_emails: to,
+    cc_emails: cc,
+    subject,
+    text_body: text,
+    is_read: true,
+  };
+
+  if (input.draftId) {
+    const { data, error: updateError } = await db
+      .from("email_messages")
+      .update(row)
+      .eq("id", input.draftId)
+      .eq("status", "draft")
+      .select("id")
+      .maybeSingle();
+    if (updateError) {
+      console.error("[mail:draft] update failed", { code: updateError.code });
+      return { draftId: null, error: "Ciorna nu a putut fi salvată." };
+    }
+    if (!data) return { draftId: null, error: "Ciorna nu există." };
+    return { draftId: data.id, error: null };
+  }
+
+  const { data, error: insertError } = await db
+    .from("email_messages")
+    .insert(row)
+    .select("id")
+    .single();
+  if (insertError) {
+    console.error("[mail:draft] insert failed", { code: insertError.code });
+    return { draftId: null, error: "Ciorna nu a putut fi salvată." };
+  }
+  return { draftId: data.id, error: null };
+}
+
+/** Deletes a draft. The guard on `status` keeps sent mail undeletable. */
+export async function deleteDraft(
+  db: Db,
+  draftId: string,
+): Promise<{ ok: boolean; error: string | null }> {
+  const { data, error } = await db
+    .from("email_messages")
+    .delete()
+    .eq("id", draftId)
+    .eq("status", "draft")
+    .select("id")
+    .maybeSingle();
+  if (error) {
+    console.error("[mail:draft] delete failed", { code: error.code });
+    return { ok: false, error: "Ciorna nu a putut fi ștearsă." };
+  }
+  if (!data) return { ok: false, error: "Ciorna nu există." };
+  return { ok: true, error: null };
+}

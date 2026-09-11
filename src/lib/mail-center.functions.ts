@@ -22,8 +22,10 @@ import {
 import {
   THREAD_STATUSES,
   createMailbox as createMailboxMutation,
+  deleteDraft as deleteDraftMutation,
   markThreadRead,
   replyToThread as replyToThreadMutation,
+  saveDraft as saveDraftMutation,
   sendMailboxMessage,
   setThreadStatus,
   updateMailbox as updateMailboxMutation,
@@ -115,26 +117,66 @@ export const getThreads = createServerFn({ method: "POST" })
         page: z.number().int().min(0).max(500).default(0),
         unreadOnly: z.boolean().optional(),
         hasAttachments: z.boolean().nullable().optional(),
+        q: z.string().max(200).nullable().optional(),
+        from: z.string().datetime().nullable().optional(),
+        to: z.string().datetime().nullable().optional(),
       })
       .parse(input ?? {}),
   )
   .handler(async ({ data, context }) => {
     const db = await admin(context as never);
+    const filters = {
+      mailboxId: data.mailboxId ?? null,
+      status: data.status,
+      ...(data.unreadOnly === undefined ? {} : { unreadOnly: data.unreadOnly }),
+      hasAttachments: data.hasAttachments ?? null,
+      q: data.q ?? null,
+      from: data.from ?? null,
+      to: data.to ?? null,
+    };
     const [threads, total] = await Promise.all([
-      listThreads(db, {
-        mailboxId: data.mailboxId ?? null,
-        status: data.status,
-        page: data.page,
-        ...(data.unreadOnly === undefined ? {} : { unreadOnly: data.unreadOnly }),
-        hasAttachments: data.hasAttachments ?? null,
-      }),
-      countThreads(db, {
-        mailboxId: data.mailboxId ?? null,
-        status: data.status,
-        ...(data.unreadOnly === undefined ? {} : { unreadOnly: data.unreadOnly }),
-      }),
+      listThreads(db, { ...filters, page: data.page }),
+      countThreads(db, filters),
     ]);
     return { threads, total };
+  });
+
+/* ------------------------------------------------------------------ */
+/* Drafts                                                             */
+/* ------------------------------------------------------------------ */
+
+export const saveMailDraft = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) =>
+    z
+      .object({
+        draftId: uuid.nullable().optional(),
+        mailboxId: uuid,
+        to: z.array(z.string().max(320)).max(20).default([]),
+        cc: z.array(z.string().max(320)).max(20).default([]),
+        subject: z.string().max(300).default(""),
+        text: z.string().max(200_000).nullable().optional(),
+      })
+      .parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    const db = await admin(context as never);
+    return saveDraftMutation(db, {
+      draftId: data.draftId ?? null,
+      mailboxId: data.mailboxId,
+      to: data.to,
+      cc: data.cc,
+      subject: data.subject,
+      text: data.text ?? null,
+    });
+  });
+
+export const deleteMailDraft = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) => z.object({ draftId: uuid }).parse(input))
+  .handler(async ({ data, context }) => {
+    const db = await admin(context as never);
+    return deleteDraftMutation(db, data.draftId);
   });
 
 export const getThread = createServerFn({ method: "POST" })
