@@ -85,12 +85,12 @@ describe("outbound attachment set validation", () => {
 
 /* --------------------------- staging + persist -------------------------- */
 
-const realMailgunServer = await import("@/lib/mailgun.server");
 const sendMailboxEmail = vi.fn();
-vi.mock("@/lib/mailgun.server", () => ({
-  ...realMailgunServer,
+vi.mock("@/lib/mailgun.server", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/lib/mailgun.server")>()),
   sendMailboxEmail: (input: unknown) => sendMailboxEmail(input),
 }));
+
 
 const {
   stageOutboundAttachment,
