@@ -43,6 +43,13 @@
       "when": 1789135372529,
       "tag": "0005_fix_mail_thread_search_count",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1789148410360,
+      "tag": "0006_property_archive_metadata",
+      "breakpoints": true
     }
   ]
 }
