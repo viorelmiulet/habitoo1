@@ -57,6 +57,13 @@
       "when": 1789148705888,
       "tag": "0007_global_property_reference_sequence",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1789148811684,
+      "tag": "0008_habitoo_property_reference_prefix",
+      "breakpoints": true
     }
   ]
 }
