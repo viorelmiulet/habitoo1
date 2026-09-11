@@ -1,7 +1,19 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
-import { Bookmark, Download, LayoutGrid, List, Search, Trash2, UserRound, X } from "lucide-react";
+import {
+  Bookmark,
+  Download,
+  LayoutGrid,
+  List,
+  Mail,
+  MessageCircle,
+  Phone,
+  Search,
+  Trash2,
+  UserRound,
+  X,
+} from "lucide-react";
 import { toast } from "sonner";
 import { toastError } from "@/lib/errors";
 import { PageHeader } from "@/components/app/PageHeader";
