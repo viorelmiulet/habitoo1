@@ -568,24 +568,45 @@ ${materialSignature(brandingFromOrg(user?.organization))}`;
             ) : (
               <ul className="divide-y divide-border">
                 {matches.map(({ property, match }) => (
-                  <li key={property.id} className="flex flex-wrap items-center gap-3 px-5 py-3 text-sm">
+                  <li key={property.id} className="flex flex-wrap items-center gap-4 px-5 py-4 text-sm transition-colors hover:bg-surface">
+                    <span
+                      className={`grid size-11 shrink-0 place-items-center rounded-full text-xs font-bold tabular-nums ${
+                        match.score >= 80
+                          ? "bg-success/15 text-success"
+                          : match.score >= 60
+                            ? "bg-primary/10 text-primary"
+                            : "bg-muted text-muted-foreground"
+                      }`}
+                      aria-label={`Scor ${match.score}%`}
+                    >
+                      {match.score}%
+                    </span>
                     <div className="min-w-0 flex-1">
-                      <Link to="/app/properties/$id" params={{ id: property.id }} className="truncate font-medium hover:text-primary">
+                      <Link to="/app/properties/$id" params={{ id: property.id }} className="truncate font-semibold text-foreground hover:text-primary">
                         {property.title}
                       </Link>
                       <p className="truncate text-xs text-muted-foreground">
-                        {formatMoney(property.price, property.currency)} · {property.city ?? "—"}
+                        {formatMoney(property.price, property.currency)} · {property.city ?? "—"} · {matchLabel(match.score)}
                       </p>
-                      <p className="mt-1 text-xs text-success">
-                        {match.reasons.length > 0 ? match.reasons.map((r) => `✓ ${r}`).join("  ") : null}
-                      </p>
+                      {match.reasons.length > 0 ? (
+                        <div className="mt-1.5 flex flex-wrap gap-1.5">
+                          {match.reasons.map((r) => (
+                            <span key={r} className="inline-flex items-center gap-1 rounded-full bg-success/10 px-2 py-0.5 text-[11px] text-success">
+                              <Check className="size-3" aria-hidden /> {r}
+                            </span>
+                          ))}
+                        </div>
+                      ) : null}
                       {match.misses.length > 0 ? (
-                        <p className="text-xs text-destructive">{match.misses.map((m) => `✕ ${m}`).join("  ")}</p>
+                        <div className="mt-1 flex flex-wrap gap-1.5">
+                          {match.misses.map((m) => (
+                            <span key={m} className="inline-flex items-center gap-1 rounded-full bg-destructive/10 px-2 py-0.5 text-[11px] text-destructive">
+                              <X className="size-3" aria-hidden /> {m}
+                            </span>
+                          ))}
+                        </div>
                       ) : null}
                     </div>
-                    <StatusBadge tone={matchTone(match.score)}>
-                      {match.score}% · {matchLabel(match.score)}
-                    </StatusBadge>
                     <div className="flex flex-wrap gap-2">
                       <Button variant="outline" size="sm" onClick={() => createLead.mutate(property.id)} disabled={createLead.isPending}>
                         <UserPlus className="size-4" /> Lead
@@ -594,15 +615,15 @@ ${materialSignature(brandingFromOrg(user?.organization))}`;
                         Vizionare
                       </Button>
                       {contact?.phone ? (
-                        <Button variant="outline" size="sm" asChild>
-                          <a href={whatsappHref(contact.whatsapp ?? contact.phone ?? "")} target="_blank" rel="noreferrer">
+                        <Button variant="outline" size="icon-sm" asChild title="Trimite pe WhatsApp">
+                          <a href={whatsappHref(contact.whatsapp ?? contact.phone ?? "")} target="_blank" rel="noreferrer" aria-label="Trimite pe WhatsApp">
                             <MessageCircle className="size-4" />
                           </a>
                         </Button>
                       ) : null}
                       {contact?.email ? (
-                        <Button variant="outline" size="sm" asChild>
-                          <a href={`mailto:${contact.email}?subject=${encodeURIComponent(property.title)}&body=${encodeURIComponent(propertyMessage(property))}`}>
+                        <Button variant="outline" size="icon-sm" asChild title="Trimite pe email">
+                          <a href={`mailto:${contact.email}?subject=${encodeURIComponent(property.title)}&body=${encodeURIComponent(propertyMessage(property))}`} aria-label="Trimite pe email">
                             <Mail className="size-4" />
                           </a>
                         </Button>
