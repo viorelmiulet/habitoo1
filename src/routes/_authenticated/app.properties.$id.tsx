@@ -2,7 +2,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRef, useState } from "react";
 import {
-  ArrowLeft,
+  
   Building2,
   MessageCircle,
   MoreHorizontal,
@@ -17,6 +17,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { duplicateProperty } from "@/lib/property-duplicate.functions";
 import { toastError } from "@/lib/errors";
 import { PageHeader } from "@/components/app/PageHeader";
+import { FormSection, RequiredMark } from "@/components/app/FormSection";
 import { DetailSkeleton } from "@/components/app/LoadingState";
 import { StatusBadge } from "@/components/app/StatusBadge";
 import { EmptyState } from "@/components/app/EmptyState";
@@ -473,6 +474,28 @@ function PropertyDetailPage() {
   // Coordonatele arătate în panoul read-only: exacte sau zona aproximativă.
   const mapCoords = publicCoords(property);
 
+  /**
+   * Banda de metrici: doar date reale existente în CRM (nu avem contor de
+   * vizualizări, deci folosim activitățile planificate).
+   */
+  const metrics: { label: string; value: string }[] = [
+    { label: "Suprafață", value: property.surface ? `${formatNumber(property.surface)} m²` : "—" },
+    {
+      label: "Camere / etaj",
+      value: [
+        property.rooms ? `${property.rooms} cam.` : null,
+        property.floor !== null && property.floor !== undefined ? `etaj ${property.floor}` : null,
+      ]
+        .filter(Boolean)
+        .join(" · ") || "—",
+    },
+    { label: "Lead-uri active", value: String(activeLeads.length) },
+    {
+      label: "Activități planificate",
+      value: String(activities.filter((a) => a.status === "planned").length),
+    },
+  ];
+
   /** Nudge-ul apare doar dacă agenția participă, colaborarea e oprită și nu am întrebat deja. */
   const shouldNudgeCollab = () =>
     user?.organization?.collaboration_enabled === true &&
@@ -496,78 +519,100 @@ function PropertyDetailPage() {
         }}
       />
 
-      <Button variant="ghost" size="sm" className="-ml-2 w-fit" asChild>
-        <Link to="/app/properties">
-          <ArrowLeft className="size-4" /> Proprietăți
-        </Link>
-      </Button>
-
       <PageHeader
+        backTo="/app/properties"
+        backLabel="Proprietăți"
+        eyebrow={
+          [property.reference, [property.district, property.city].filter(Boolean).join(", ")]
+            .filter(Boolean)
+            .join(" · ") || "Proprietate"
+        }
         title={property.title}
-        description={`${property.reference ? `${property.reference} · ` : ""}${[property.address, property.district, property.city]
-          .filter(Boolean)
-          .join(", ")}`}
-        actions={
+        description={[property.address, property.district, property.city].filter(Boolean).join(", ")}
+        meta={
           <>
-            {editing ? (
-              <Button size="sm" variant="outline" onClick={() => setEditing(false)}>
-                Anulează
-              </Button>
-            ) : (
-              <Button size="sm" variant="outline" onClick={startEdit}>
-                <Pencil className="size-4" /> Editează
-              </Button>
-            )}
-            <Button size="sm" variant="outline" onClick={() => duplicate.mutate()} disabled={duplicate.isPending}>
-              Duplică
-            </Button>
-            <Button
-              size="sm"
-              onClick={() => {
-                if (shouldNudgeCollab()) {
-                  setNudgeOpen(true);
-                  return;
-                }
-                publish.mutate(undefined);
-              }}
-              disabled={publish.isPending || save.isPending}
-            >
-              {publish.isPending ? "Se publică…" : "Publică"}
-            </Button>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button size="icon" variant="outline" aria-label="Mai multe acțiuni">
-                  <MoreHorizontal className="size-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={printSummary}>
-                  <Printer className="size-4" /> Generează prezentare
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                {Object.entries(propertyStatusLabels).map(([k, v]) => (
-                  <DropdownMenuItem key={k} onClick={() => changeStatus.mutate(k)}>
-                    Status: {v}
-                  </DropdownMenuItem>
-                ))}
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => archive.mutateAsync()} className="text-destructive">
-                  Arhivează
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <StatusBadge tone={propertyStatusTone[property.status]} dot>
+              {propertyStatusLabels[property.status]}
+            </StatusBadge>
+            <StatusBadge tone={property.publish_status === "published" ? "success" : "neutral"} dot>
+              {property.publish_status === "published" ? "Publicat" : "Nepublicat"}
+            </StatusBadge>
+            {property.negotiable ? <StatusBadge tone="info">Negociabil</StatusBadge> : null}
+            {property.collaboration ? (
+              <StatusBadge tone="primary">
+                {property.collab_commission_percent
+                  ? `Colaborare · ${property.collab_commission_percent}%`
+                  : "Colaborare"}
+              </StatusBadge>
+            ) : null}
           </>
+        }
+        actions={
+          <div className="flex flex-col items-end gap-3">
+            <span className="text-2xl font-medium tracking-tight">
+              {formatMoney(property.price, property.currency)}
+            </span>
+            <div className="flex flex-wrap items-center justify-end gap-2">
+              {editing ? (
+                <Button size="sm" variant="ghost" onClick={() => setEditing(false)}>
+                  Anulează
+                </Button>
+              ) : (
+                <Button size="sm" variant="ghost" onClick={startEdit}>
+                  <Pencil className="size-4" /> Editează
+                </Button>
+              )}
+              <Button size="sm" variant="ghost" onClick={() => duplicate.mutate()} disabled={duplicate.isPending}>
+                Duplică
+              </Button>
+              <Button
+                size="sm"
+                onClick={() => {
+                  if (shouldNudgeCollab()) {
+                    setNudgeOpen(true);
+                    return;
+                  }
+                  publish.mutate(undefined);
+                }}
+                disabled={publish.isPending || save.isPending}
+              >
+                {publish.isPending ? "Se publică…" : "Publică"}
+              </Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button size="icon" variant="ghost" aria-label="Mai multe acțiuni">
+                    <MoreHorizontal className="size-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={printSummary}>
+                    <Printer className="size-4" /> Generează prezentare
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  {Object.entries(propertyStatusLabels).map(([k, v]) => (
+                    <DropdownMenuItem key={k} onClick={() => changeStatus.mutate(k)}>
+                      Status: {v}
+                    </DropdownMenuItem>
+                  ))}
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => archive.mutateAsync()} className="text-destructive">
+                    Arhivează
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          </div>
         }
       />
 
-      <div className="flex flex-wrap items-center gap-3">
-        <StatusBadge tone={propertyStatusTone[property.status]}>{propertyStatusLabels[property.status]}</StatusBadge>
-        <span className="text-2xl font-semibold tracking-tight">{formatMoney(property.price, property.currency)}</span>
-        {property.negotiable ? <StatusBadge tone="info">Negociabil</StatusBadge> : null}
-        {property.collaboration ? <StatusBadge tone="primary">Colaborare</StatusBadge> : null}
-        <StatusBadge tone={property.publish_status === "published" ? "success" : "neutral"}>
-          {property.publish_status === "published" ? "Publicat" : "Nepublicat"}
-        </StatusBadge>
+      {/* Bandă de metrici: date reale, fără borduri, doar fundal ușor diferit. */}
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+        {metrics.map((m) => (
+          <div key={m.label} className="rounded-2xl bg-secondary/60 px-4 py-3">
+            <p className="text-xs text-muted-foreground">{m.label}</p>
+            <p className="mt-0.5 text-lg font-medium tracking-tight">{m.value}</p>
+          </div>
+        ))}
       </div>
 
       <div className="flex flex-wrap gap-2">
@@ -601,21 +646,31 @@ function PropertyDetailPage() {
       </div>
 
       <Tabs defaultValue="overview">
-        <TabsList className="flex-wrap">
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="media">Media</TabsTrigger>
-          <TabsTrigger value="leads">Lead-uri ({data?.leads.length ?? 0})</TabsTrigger>
-          <TabsTrigger value="matching">Cereri compatibile ({matches.length})</TabsTrigger>
-          <TabsTrigger value="activities">Activități ({activities.length})</TabsTrigger>
-          <TabsTrigger value="documents">Documente</TabsTrigger>
-          <TabsTrigger value="publishing">Publicare</TabsTrigger>
-          <TabsTrigger value="history">Istoric</TabsTrigger>
+        <TabsList className="h-auto flex-wrap justify-start gap-1 rounded-none border-b border-border bg-transparent p-0">
+          {[
+            ["overview", "Overview"],
+            ["media", "Media"],
+            ["leads", `Lead-uri (${data?.leads.length ?? 0})`],
+            ["matching", `Cereri compatibile (${matches.length})`],
+            ["activities", `Activități (${activities.length})`],
+            ["documents", "Documente"],
+            ["publishing", "Publicare"],
+            ["history", "Istoric"],
+          ].map(([value, label]) => (
+            <TabsTrigger
+              key={value}
+              value={value as string}
+              className="rounded-none border-b-2 border-transparent bg-transparent px-3 py-2.5 font-normal shadow-none data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:font-medium data-[state=active]:shadow-none"
+            >
+              {label}
+            </TabsTrigger>
+          ))}
         </TabsList>
 
         <TabsContent value="overview" className="space-y-6">
           {editing ? (
             <form
-              className="panel space-y-4 p-5"
+              className="space-y-8"
               onSubmit={(e) => {
                 e.preventDefault();
                 if (!hasTransactionSelection(tx)) {
@@ -625,7 +680,8 @@ function PropertyDetailPage() {
                 save.mutate(buildEditPatch());
               }}
             >
-              <div className="grid gap-4 md:grid-cols-2">
+              <FormSection title="Date generale">
+              <div className="grid gap-5 md:grid-cols-2">
                 <LocationPicker idPrefix="edit" value={location} onChange={setLocation} />
                 {[
                   ["title", "Titlu"],
@@ -634,7 +690,10 @@ function PropertyDetailPage() {
                   ["address", "Adresă"],
                 ].map(([key, label]) => (
                   <div key={key} className="space-y-2">
-                    <Label htmlFor={key}>{label}</Label>
+                    <Label htmlFor={key}>
+                      {label}
+                      {key === "title" ? <RequiredMark /> : null}
+                    </Label>
                     <Input id={key} value={draft[key] ?? ""} onChange={(e) => setDraft((d) => ({ ...d, [key]: e.target.value }))} />
                   </div>
                 ))}
@@ -649,7 +708,13 @@ function PropertyDetailPage() {
                 onCoordsChange={setCoords}
                 onPreciseChange={setLocationPrecise}
               />
-              <PropertyTransactionFields idPrefix="edit" value={tx} onChange={setTx} />
+              </FormSection>
+
+              <FormSection title="Tranzacție și preț" description="Alege vânzare, închiriere sau ambele.">
+                <PropertyTransactionFields idPrefix="edit" value={tx} onChange={setTx} />
+              </FormSection>
+
+              <FormSection title="Descriere">
               <div className="space-y-2">
                 <Label htmlFor="description">Descriere</Label>
                 <Textarea
@@ -659,12 +724,18 @@ function PropertyDetailPage() {
                   onChange={(e) => setDraft((d) => ({ ...d, description: e.target.value }))}
                 />
               </div>
-              <PropertyDetailsFields
-                idPrefix="edit"
-                value={details}
-                onChange={(patch) => setDetails((d) => ({ ...d, ...patch }))}
-              />
-              <div className="space-y-3 rounded-xl border border-border p-4">
+              </FormSection>
+
+              <FormSection title="Detalii complete">
+                <PropertyDetailsFields
+                  idPrefix="edit"
+                  value={details}
+                  onChange={(patch) => setDetails((d) => ({ ...d, ...patch }))}
+                />
+              </FormSection>
+
+              <FormSection title="Colaborare">
+              <div className="space-y-3">
                 <div className="flex items-start justify-between gap-4">
                   <div className="space-y-1">
                     <Label htmlFor="collaboration" className="text-sm">
@@ -704,6 +775,9 @@ function PropertyDetailPage() {
                   </div>
                 ) : null}
               </div>
+              </FormSection>
+
+              <FormSection title="Note interne" description="Nu se publică pe site sau pe portaluri.">
               <div className="space-y-2">
                 <Label htmlFor="internal_notes">Note interne</Label>
                 <Textarea
@@ -713,8 +787,10 @@ function PropertyDetailPage() {
                   onChange={(e) => setDraft((d) => ({ ...d, internal_notes: e.target.value }))}
                 />
               </div>
+              </FormSection>
+
               <div className="flex justify-end gap-2">
-                <Button type="button" variant="outline" onClick={() => setEditing(false)}>
+                <Button type="button" variant="ghost" onClick={() => setEditing(false)}>
                   Anulează
                 </Button>
                 <Button type="submit" disabled={save.isPending}>

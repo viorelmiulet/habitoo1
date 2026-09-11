@@ -18,6 +18,7 @@ import { toastError } from "@/lib/errors";
 import { PageHeader } from "@/components/app/PageHeader";
 import { CardGridSkeleton, ListSkeleton } from "@/components/app/LoadingState";
 import { PropertyPortalsCell, usePropertyPortals } from "@/components/app/PropertyPortalsCell";
+import { PropertyCard, type PropertyCardRow } from "@/components/app/PropertyCard";
 import { PropertyThumb, usePropertyCovers } from "@/components/app/PropertyThumb";
 import { StatusBadge } from "@/components/app/StatusBadge";
 import { EmptyState } from "@/components/app/EmptyState";
@@ -142,6 +143,14 @@ function readColumns(): ColumnKey[] {
   return allColumns.map((c) => c.key);
 }
 
+/** Grila e vizualizarea implicită; preferința utilizatorului se ține local. */
+const VIEW_KEY = "habitoo.propertyView";
+
+function readView(): "list" | "grid" {
+  if (typeof window === "undefined") return "grid";
+  return window.localStorage.getItem(VIEW_KEY) === "list" ? "list" : "grid";
+}
+
 const PAGE_SIZE = 25;
 
 function PropertiesPage() {
@@ -151,7 +160,7 @@ function PropertiesPage() {
   const [filters, setFilters] = useState<Filters>(emptyFilters);
   const [debouncedQ, setDebouncedQ] = useState("");
   const [selected, setSelected] = useState<string[]>([]);
-  const [view, setView] = useState<"list" | "grid">("list");
+  const [view, setView] = useState<"list" | "grid">(readView);
   const [columns, setColumns] = useState<ColumnKey[]>(readColumns);
   const [sort, setSort] = useState<SortKey>("created_desc");
   const [page, setPage] = useState(0);
@@ -168,6 +177,10 @@ function PropertiesPage() {
   useEffect(() => {
     window.localStorage.setItem(COLUMNS_KEY, JSON.stringify(columns));
   }, [columns]);
+
+  useEffect(() => {
+    window.localStorage.setItem(VIEW_KEY, view);
+  }, [view]);
 
   useEffect(() => {
     setPage(0);
@@ -407,6 +420,68 @@ function PropertiesPage() {
   };
 
   const agentName = (id: string | null) => agents.find((a) => a.id === id)?.full_name ?? "—";
+
+  /**
+   * Filtrele active, ca pastile închizabile individual. Doar prezentare:
+   * fiecare pastilă readuce câmpul la valoarea implicită din `emptyFilters`.
+   */
+  const activePills: { key: keyof Filters; label: string }[] = [
+    filters.q ? { key: "q" as const, label: `„${filters.q}”` } : null,
+    filters.status !== "all"
+      ? { key: "status" as const, label: propertyStatusLabels[filters.status as keyof typeof propertyStatusLabels] ?? filters.status }
+      : null,
+    filters.transaction !== "all"
+      ? { key: "transaction" as const, label: filters.transaction === "sale" ? "Vânzare" : "Închiriere" }
+      : null,
+    filters.type !== "all"
+      ? { key: "type" as const, label: propertyTypeLabels[filters.type] ?? filters.type }
+      : null,
+    filters.city !== "all" ? { key: "city" as const, label: filters.city } : null,
+    filters.district !== "all" ? { key: "district" as const, label: filters.district } : null,
+    filters.source !== "all" ? { key: "source" as const, label: `Sursă: ${filters.source}` } : null,
+    filters.agent !== "all" ? { key: "agent" as const, label: agentName(filters.agent) } : null,
+    filters.mine ? { key: "mine" as const, label: "Doar ale mele" } : null,
+    filters.favoritesOnly ? { key: "favoritesOnly" as const, label: "Doar favorite" } : null,
+    filters.priceMin ? { key: "priceMin" as const, label: `Preț ≥ ${filters.priceMin}` } : null,
+    filters.priceMax ? { key: "priceMax" as const, label: `Preț ≤ ${filters.priceMax}` } : null,
+    filters.surfaceMin ? { key: "surfaceMin" as const, label: `Supr. ≥ ${filters.surfaceMin} m²` } : null,
+    filters.surfaceMax ? { key: "surfaceMax" as const, label: `Supr. ≤ ${filters.surfaceMax} m²` } : null,
+    filters.rooms ? { key: "rooms" as const, label: `${filters.rooms} camere` } : null,
+    filters.bathrooms ? { key: "bathrooms" as const, label: `${filters.bathrooms} băi` } : null,
+    filters.floor ? { key: "floor" as const, label: `Etaj ${filters.floor}` } : null,
+    filters.addedAfter ? { key: "addedAfter" as const, label: `După ${filters.addedAfter}` } : null,
+    filters.addedBefore ? { key: "addedBefore" as const, label: `Înainte de ${filters.addedBefore}` } : null,
+  ].filter(Boolean) as { key: keyof Filters; label: string }[];
+
+  const clearPill = (key: keyof Filters) =>
+    setFilters((f) => ({ ...f, [key]: emptyFilters[key] }) as Filters);
+
+  const filtersActive = activePills.length > 0;
+
+  /** Stare goală utilă: fără portofoliu vs. fără rezultate la filtrare. */
+  const emptyBlock = filtersActive ? (
+    <EmptyState
+      icon={Building2}
+      title="Nicio proprietate pentru filtrele curente"
+      description="Renunță la unul dintre filtrele active sau resetează-le pe toate."
+      action={
+        <Button size="sm" variant="outline" onClick={() => setFilters(emptyFilters)}>
+          <X className="size-4" /> Resetează filtrele
+        </Button>
+      }
+    />
+  ) : (
+    <EmptyState
+      icon={Building2}
+      title="Nicio proprietate în portofoliu"
+      description="Adaugă primul anunț, apoi îl poți publica pe portaluri direct din pagina proprietății."
+      action={
+        <Button asChild size="sm">
+          <Link to="/app/properties/new">Adaugă proprietate</Link>
+        </Button>
+      }
+    />
+  );
 
   const saveFilter = () => {
     setPromptRequest({
@@ -681,6 +756,24 @@ function PropertiesPage() {
           </Button>
         </div>
 
+        {filtersActive ? (
+          <div className="flex flex-wrap items-center gap-2 border-t border-border pt-3">
+            <span className="text-xs text-muted-foreground">Filtre active:</span>
+            {activePills.map((pill) => (
+              <button
+                key={String(pill.key)}
+                type="button"
+                onClick={() => clearPill(pill.key)}
+                aria-label={`Renunță la filtrul ${pill.label}`}
+                className="inline-flex items-center gap-1.5 rounded-full bg-muted px-2.5 py-1 text-xs text-foreground transition-colors hover:bg-secondary"
+              >
+                {pill.label}
+                <X className="size-3 text-muted-foreground" aria-hidden />
+              </button>
+            ))}
+          </div>
+        ) : null}
+
         {savedViews.views.length > 0 ? (
           <div className="flex flex-wrap items-center gap-2 border-t border-border pt-3">
             <span className="text-xs text-muted-foreground">Filtre salvate:</span>
@@ -777,16 +870,7 @@ function PropertiesPage() {
             {isLoading ? (
               <ListSkeleton rows={8} />
             ) : rows.length === 0 ? (
-              <EmptyState
-                icon={Building2}
-                title="Nicio proprietate găsită"
-                description="Ajustează filtrele sau adaugă o proprietate nouă în portofoliu."
-                action={
-                  <Button asChild size="sm">
-                    <Link to="/app/properties/new">Adaugă proprietate</Link>
-                  </Button>
-                }
-              />
+              emptyBlock
             ) : (
               <ul className="divide-y divide-border">
                 {rows.map((p) => (
@@ -857,44 +941,22 @@ function PropertiesPage() {
         ) : isLoading ? (
           <CardGridSkeleton count={6} className="p-4" />
         ) : rows.length === 0 ? (
-          <EmptyState icon={Building2} title="Nicio proprietate găsită" />
+          emptyBlock
         ) : (
-          <div className="grid grid-cols-1 gap-4 p-4 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid grid-cols-1 gap-4 p-4 sm:grid-cols-2 xl:grid-cols-3">
             {rows.map((p) => (
-              <div key={p.id} className="panel space-y-2 p-4">
-                <div className="flex items-start justify-between gap-2">
-                  <Checkbox
-                    checked={selected.includes(p.id)}
-                    onCheckedChange={(c) => setSelected((s) => (c ? [...s, p.id] : s.filter((id) => id !== p.id)))}
-                  />
-                  <button type="button" onClick={() => toggleFavorite.mutate(p.id)} title="Favorit">
-                    <Star
-                      className={`size-4 ${favoriteIds.includes(p.id) ? "fill-warning text-warning" : "text-muted-foreground"}`}
-                    />
-                  </button>
-                </div>
-                <PropertyThumb
-                  propertyId={p.id}
-                  title={p.title}
-                  cover={coverOf(p.id)}
-                  className="h-40 w-full"
-                />
-                <Link to="/app/properties/$id" params={{ id: p.id }} className="line-clamp-2 font-medium hover:text-primary">
-                  {p.title}
-                </Link>
-                <p className="text-xs text-muted-foreground">
-                  {[p.district, p.city].filter(Boolean).join(", ") || "Locație nespecificată"}
-                </p>
-                <div className="flex items-center justify-between">
-                  <StatusBadge tone={propertyStatusTone[p.status]}>{propertyStatusLabels[p.status]}</StatusBadge>
-                  <span className="font-semibold">{formatMoney(p.price, p.currency)}</span>
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  {propertyTypeLabels[p.property_type] ?? p.property_type} · {transactionLabels[p.transaction_kind]} ·{" "}
-                  {p.surface ? `${formatNumber(p.surface)} m²` : "—"}
-                </p>
-                {portals.hasPortals ? <PropertyPortalsCell cells={portals.cellsFor(p.id)} /> : null}
-              </div>
+              <PropertyCard
+                key={p.id}
+                property={p as unknown as PropertyCardRow}
+                cover={coverOf(p.id)}
+                favorite={favoriteIds.includes(p.id)}
+                onToggleFavorite={() => toggleFavorite.mutate(p.id)}
+                selected={selected.includes(p.id)}
+                onSelectedChange={(next) =>
+                  setSelected((s) => (next ? [...s, p.id] : s.filter((id) => id !== p.id)))
+                }
+                portalCells={portals.hasPortals ? portals.cellsFor(p.id) : []}
+              />
             ))}
           </div>
         )}
