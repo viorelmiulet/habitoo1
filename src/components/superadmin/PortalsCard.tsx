@@ -6,7 +6,7 @@ import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { Copy, Eye, ExternalLink, KeyRound, PlugZap, Save, Trash2, Unplug } from "lucide-react";
+import { Copy, Eye, EyeOff, ExternalLink, KeyRound, PlugZap, Save, Trash2, Unplug } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
