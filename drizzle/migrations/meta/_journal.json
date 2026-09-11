@@ -29,6 +29,20 @@
       "when": 1789119622814,
       "tag": "0003_mail_outbound_uploads",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1789134976559,
+      "tag": "0004_mail_thread_search",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1789135372529,
+      "tag": "0005_fix_mail_thread_search_count",
+      "breakpoints": true
     }
   ]
 }

@@ -15,6 +15,7 @@ import {
   AlertOctagon,
   ArrowLeft,
   CircleAlert,
+  ImageOff,
   Inbox,
   Loader2,
   Mail,
@@ -22,9 +23,11 @@ import {
   Paperclip,
   Plus,
   RefreshCw,
+  Search,
   Send,
   Settings2,
   Trash2,
+  X,
 } from "lucide-react";
 import { toast } from "sonner";
 import { PageHeader } from "@/components/app/PageHeader";
@@ -44,12 +47,14 @@ import { formatDateTime } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import {
   createMailbox,
+  deleteMailDraft,
   getAttachmentUrl,
   getMailboxes,
   getMailMessages,
   getThread,
   getThreads,
   replyMail,
+  saveMailDraft,
   sendMail,
   setMailThreadRead,
   setMailThreadStatus,
@@ -97,12 +102,79 @@ function deliveryBadge(status: string) {
   );
 }
 
-function sanitizeMailHtml(html: string): string {
-  return DOMPurify.sanitize(html, {
-    USE_PROFILES: { html: true },
-    FORBID_TAGS: ["style", "form", "input", "button", "iframe", "object", "embed", "link", "meta"],
-    FORBID_ATTR: ["srcset", "onerror", "onload"],
+/* ------------------------------------------------------------------ */
+/* Igienizare HTML                                                     */
+/* ------------------------------------------------------------------ */
+
+/** Numărăm imaginile blocate în timpul igienizării, nu după. */
+let blockRemoteImages = true;
+let blockedImageCount = 0;
+let hooksInstalled = false;
+
+/** Doar scheme inofensive: `javascript:`, `data:` și `vbscript:` cad afară. */
+const SAFE_URI = /^(?:https?:|mailto:|tel:|cid:|#|\/)/i;
+
+function installHooks() {
+  if (hooksInstalled || typeof window === "undefined") return;
+  hooksInstalled = true;
+
+  DOMPurify.addHook("afterSanitizeAttributes", (node) => {
+    const el = node as Element;
+    const tag = el.tagName?.toUpperCase();
+
+    // Orice atribut de eveniment rămas dispare, indiferent de nume.
+    for (const attr of Array.from(el.attributes ?? [])) {
+      if (/^on/i.test(attr.name)) el.removeAttribute(attr.name);
+    }
+
+    if (tag === "A") {
+      const href = el.getAttribute("href") ?? "";
+      if (href && !SAFE_URI.test(href.trim())) el.removeAttribute("href");
+      // Linkurile externe se deschid izolat, fără acces la fereastra noastră.
+      if (el.getAttribute("href")) {
+        el.setAttribute("target", "_blank");
+        el.setAttribute("rel", "noopener noreferrer");
+      }
+    }
+
+    if (tag === "IMG") {
+      el.removeAttribute("srcset");
+      const src = el.getAttribute("src") ?? "";
+      if (src && !SAFE_URI.test(src.trim())) {
+        el.removeAttribute("src");
+        return;
+      }
+      // Imaginile la distanță sunt urmăritori de deschidere: implicit nu se
+      // încarcă, adresa e păstrată doar ca text până când utilizatorul cere.
+      if (blockRemoteImages && /^https?:/i.test(src.trim())) {
+        el.removeAttribute("src");
+        el.setAttribute("data-blocked-src", src);
+        el.setAttribute("alt", el.getAttribute("alt") || "Imagine blocată");
+        blockedImageCount += 1;
+      } else if (src) {
+        el.setAttribute("loading", "lazy");
+        el.setAttribute("referrerpolicy", "no-referrer");
+      }
+    }
   });
+}
+
+function sanitizeMailHtml(html: string, showImages: boolean): { html: string; blocked: number } {
+  installHooks();
+  blockRemoteImages = !showImages;
+  blockedImageCount = 0;
+  const clean = DOMPurify.sanitize(html, {
+    USE_PROFILES: { html: true },
+    FORBID_TAGS: [
+      "style", "form", "input", "button", "select", "textarea",
+      "iframe", "object", "embed", "param", "applet",
+      "script", "svg", "math", "link", "meta", "base", "frame", "frameset",
+    ],
+    FORBID_ATTR: ["srcset", "formaction", "background", "style"],
+    ALLOW_DATA_ATTR: false,
+    ADD_ATTR: ["target", "rel", "data-blocked-src", "loading", "referrerpolicy"],
+  });
+  return { html: clean, blocked: blockedImageCount };
 }
 
 function fileToBase64(file: File): Promise<string> {
@@ -112,6 +184,105 @@ function fileToBase64(file: File): Promise<string> {
     reader.onerror = () => reject(new Error("read failed"));
     reader.readAsDataURL(file);
   });
+}
+
+/* ------------------------------------------------------------------ */
+/* Filtre de căutare                                                   */
+/* ------------------------------------------------------------------ */
+
+type MailFilters = {
+  /** Text liber: expeditor, destinatar, subiect, conținut. */
+  q: string;
+  unreadOnly: boolean;
+  withAttachments: boolean;
+  /** Interval pe data ultimului mesaj (input `date`, format YYYY-MM-DD). */
+  from: string;
+  to: string;
+};
+
+const EMPTY_FILTERS: MailFilters = { q: "", unreadOnly: false, withAttachments: false, from: "", to: "" };
+
+/** `2026-09-11` -> ISO la începutul/sfârșitul zilei, ca intervalul să fie inclusiv. */
+function dayBoundary(value: string, end: boolean): string | null {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return null;
+  const date = new Date(`${value}T${end ? "23:59:59.999" : "00:00:00.000"}Z`);
+  return Number.isNaN(date.getTime()) ? null : date.toISOString();
+}
+
+function MailSearchBar({
+  filters,
+  onChange,
+}: {
+  filters: MailFilters;
+  onChange: (next: MailFilters) => void;
+}) {
+  const [term, setTerm] = useState(filters.q);
+  const active = filters.q || filters.unreadOnly || filters.withAttachments || filters.from || filters.to;
+
+  return (
+    <form
+      className="flex flex-wrap items-end gap-2 rounded-xl border border-border bg-surface p-3"
+      onSubmit={(e) => { e.preventDefault(); onChange({ ...filters, q: term.trim() }); }}
+    >
+      <div className="min-w-56 flex-1 space-y-1.5">
+        <Label htmlFor="mail-search">Caută</Label>
+        <div className="relative">
+          <Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            id="mail-search"
+            className="pl-8"
+            value={term}
+            onChange={(e) => setTerm(e.target.value)}
+            placeholder="Expeditor, destinatar, subiect sau conținut"
+          />
+        </div>
+      </div>
+      <div className="space-y-1.5">
+        <Label htmlFor="mail-from">De la data</Label>
+        <Input
+          id="mail-from"
+          type="date"
+          className="w-40"
+          value={filters.from}
+          onChange={(e) => onChange({ ...filters, from: e.target.value })}
+        />
+      </div>
+      <div className="space-y-1.5">
+        <Label htmlFor="mail-to">Până la data</Label>
+        <Input
+          id="mail-to"
+          type="date"
+          className="w-40"
+          value={filters.to}
+          onChange={(e) => onChange({ ...filters, to: e.target.value })}
+        />
+      </div>
+      <Button type="submit" size="sm">
+        <Search className="mr-1.5 h-4 w-4" /> Caută
+      </Button>
+      <Button
+        type="button"
+        variant={filters.unreadOnly ? "default" : "outline"}
+        size="sm"
+        onClick={() => onChange({ ...filters, unreadOnly: !filters.unreadOnly })}
+      >
+        <Mail className="mr-1.5 h-4 w-4" /> Necitite
+      </Button>
+      <Button
+        type="button"
+        variant={filters.withAttachments ? "default" : "outline"}
+        size="sm"
+        onClick={() => onChange({ ...filters, withAttachments: !filters.withAttachments })}
+      >
+        <Paperclip className="mr-1.5 h-4 w-4" /> Cu atașamente
+      </Button>
+      {active && (
+        <Button type="button" variant="ghost" size="sm" onClick={() => { setTerm(""); onChange(EMPTY_FILTERS); }}>
+          <X className="mr-1.5 h-4 w-4" /> Golește
+        </Button>
+      )}
+    </form>
+  );
 }
 
 function SuperadminMailPage() {
@@ -128,6 +299,8 @@ function SuperadminMailPage() {
   const [selectedThread, setSelectedThread] = useState<string | null>(null);
   const [composeOpen, setComposeOpen] = useState(false);
   const [manageOpen, setManageOpen] = useState(false);
+  const [filters, setFilters] = useState<MailFilters>(EMPTY_FILTERS);
+  const [editingDraft, setEditingDraft] = useState<MailMessage | null>(null);
 
   // Aleg implicit prima căsuță activă, ca lista să nu pornească goală.
   useEffect(() => {
@@ -237,9 +410,20 @@ function SuperadminMailPage() {
           </aside>
 
           {/* Listă + detaliu */}
-          <div className="min-w-0">
+          <div className="min-w-0 space-y-3">
+            {folder !== "sent" && folder !== "draft" && !selectedThread && (
+              <MailSearchBar filters={filters} onChange={(next) => { setFilters(next); setPage(0); }} />
+            )}
             {folder === "sent" ? (
               <SentList mailboxId={mailboxId} page={page} setPage={setPage} onOpenThread={setSelectedThread} />
+            ) : folder === "draft" ? (
+              <DraftsList
+                mailboxId={mailboxId}
+                page={page}
+                setPage={setPage}
+                onEdit={(draft) => { setEditingDraft(draft); setComposeOpen(true); }}
+                onChanged={refreshAll}
+              />
             ) : selectedThread ? (
               <ThreadView
                 threadId={selectedThread}
@@ -250,6 +434,7 @@ function SuperadminMailPage() {
               <ThreadList
                 mailboxId={mailboxId}
                 status={folder}
+                filters={filters}
                 page={page}
                 setPage={setPage}
                 onOpen={(id) => setSelectedThread(id)}
@@ -261,10 +446,11 @@ function SuperadminMailPage() {
 
       <ComposeDialog
         open={composeOpen}
-        onOpenChange={setComposeOpen}
+        onOpenChange={(open) => { setComposeOpen(open); if (!open) setEditingDraft(null); }}
         mailboxes={mailboxes.filter((m) => m.is_active)}
         defaultMailboxId={mailboxId}
-        onSent={() => { setComposeOpen(false); refreshAll(); }}
+        draft={editingDraft}
+        onSent={() => { setComposeOpen(false); setEditingDraft(null); refreshAll(); }}
       />
       <MailboxesDialog
         open={manageOpen}
@@ -283,20 +469,32 @@ function SuperadminMailPage() {
 function ThreadList({
   mailboxId,
   status,
+  filters,
   page,
   setPage,
   onOpen,
 }: {
   mailboxId: string | null;
   status: "open" | "archived" | "spam";
+  filters: MailFilters;
   page: number;
   setPage: (p: number) => void;
   onOpen: (threadId: string) => void;
 }) {
   const load = useServerFn(getThreads);
+  const args = {
+    mailboxId,
+    status,
+    page,
+    q: filters.q || null,
+    unreadOnly: filters.unreadOnly,
+    hasAttachments: filters.withAttachments ? true : null,
+    from: dayBoundary(filters.from, false),
+    to: dayBoundary(filters.to, true),
+  };
   const query = useQuery({
-    queryKey: ["mail", "threads", mailboxId, status, page],
-    queryFn: () => load({ data: { mailboxId, status, page } }),
+    queryKey: ["mail", "threads", args],
+    queryFn: () => load({ data: args }),
     enabled: !!mailboxId,
   });
 
@@ -306,16 +504,24 @@ function ThreadList({
   const threads = query.data?.threads ?? [];
   const total = query.data?.total ?? 0;
   const totalPages = Math.max(1, Math.ceil(total / 50));
+  const filtered = !!(filters.q || filters.unreadOnly || filters.withAttachments || filters.from || filters.to);
 
   if (!threads.length) {
     return (
       <EmptyState
         icon={Inbox}
-        title="Nicio conversație"
-        description={status === "open" ? "Emailurile primite vor apărea aici." : "Nimic în acest dosar."}
+        title={filtered ? "Nicio conversație găsită" : "Nicio conversație"}
+        description={
+          filtered
+            ? "Încearcă alt text de căutare sau golește filtrele."
+            : status === "open"
+              ? "Emailurile primite vor apărea aici."
+              : "Nimic în acest dosar."
+        }
       />
     );
   }
+
 
   return (
     <div className="space-y-2">
@@ -452,6 +658,118 @@ function SentList({
 }
 
 /* ------------------------------------------------------------------ */
+/* Ciorne                                                             */
+/* ------------------------------------------------------------------ */
+
+function DraftsList({
+  mailboxId,
+  page,
+  setPage,
+  onEdit,
+  onChanged,
+}: {
+  mailboxId: string | null;
+  page: number;
+  setPage: (p: number) => void;
+  onEdit: (draft: MailMessage) => void;
+  onChanged: () => void;
+}) {
+  const load = useServerFn(getMailMessages);
+  const remove = useServerFn(deleteMailDraft);
+  const [deleting, setDeleting] = useState<string | null>(null);
+
+  const query = useQuery({
+    queryKey: ["mail", "drafts", mailboxId, page],
+    queryFn: () => load({ data: { mailboxId, direction: "outbound", status: "draft", page } }),
+    enabled: !!mailboxId,
+  });
+
+  const drop = async (draftId: string) => {
+    setDeleting(draftId);
+    try {
+      const res = await remove({ data: { draftId } });
+      if (res.error) toast.error(res.error);
+      else {
+        toast.success("Ciorna a fost ștearsă.");
+        onChanged();
+      }
+    } finally {
+      setDeleting(null);
+    }
+  };
+
+  if (query.isError) return <QueryError error={query.error} onRetry={() => query.refetch()} />;
+  if (query.isLoading) return <InlineLoading label="Se încarcă ciornele…" />;
+
+  const drafts = query.data?.messages ?? [];
+  if (!drafts.length) {
+    return (
+      <EmptyState
+        icon={Mail}
+        title="Nicio ciornă"
+        description="Mesajele salvate din fereastra de compunere apar aici, pregătite pentru continuare."
+      />
+    );
+  }
+
+  return (
+    <div className="space-y-2">
+      <div className="overflow-hidden rounded-xl border border-border bg-surface">
+        {drafts.map((d, i) => (
+          <div
+            key={d.id}
+            className={cn("flex items-center gap-3 px-4 py-3", i > 0 && "border-t border-border")}
+          >
+            <button type="button" className="flex min-w-0 flex-1 items-center gap-3 text-left" onClick={() => onEdit(d)}>
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-muted text-muted-foreground">
+                <Mail className="h-4 w-4" />
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block truncate text-sm font-medium text-foreground">
+                  {d.to_emails.length ? `Către: ${d.to_emails.join(", ")}` : "Fără destinatar"}
+                </span>
+                <span className="block truncate text-sm text-muted-foreground">
+                  {d.subject || "(fără subiect)"}
+                </span>
+                {d.text_body && (
+                  <span className="block truncate text-xs text-muted-foreground">{d.text_body}</span>
+                )}
+              </span>
+            </button>
+            <span className="shrink-0 text-xs text-muted-foreground">{formatDateTime(d.created_at)}</span>
+            <Button variant="outline" size="sm" onClick={() => onEdit(d)}>
+              Continuă
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              aria-label="Șterge ciorna"
+              disabled={deleting === d.id}
+              onClick={() => void drop(d.id)}
+            >
+              {deleting === d.id ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Trash2 className="h-4 w-4 text-muted-foreground hover:text-destructive" />
+              )}
+            </Button>
+          </div>
+        ))}
+      </div>
+      <div className="flex items-center justify-end gap-2">
+        <Button variant="outline" size="sm" disabled={page === 0} onClick={() => setPage(page - 1)}>
+          Anterior
+        </Button>
+        <Button variant="outline" size="sm" disabled={drafts.length < 50} onClick={() => setPage(page + 1)}>
+          Următor
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+
+/* ------------------------------------------------------------------ */
 /* Conversație deschisă                                                */
 /* ------------------------------------------------------------------ */
 
@@ -562,7 +880,12 @@ function MessageCard({
   onDownload: (id: string) => void;
 }) {
   const inbound = message.direction === "inbound";
-  const html = message.html_body ? sanitizeMailHtml(message.html_body) : null;
+  const [showImages, setShowImages] = useState(false);
+  const rendered = useMemo(
+    () => (message.html_body ? sanitizeMailHtml(message.html_body, showImages) : null),
+    [message.html_body, showImages],
+  );
+  const html = rendered?.html ?? null;
   const text = message.stripped_text || message.text_body;
 
   return (
@@ -599,11 +922,25 @@ function MessageCard({
       </header>
 
       {html ? (
-        <div
-          className="prose prose-sm max-w-none overflow-x-auto text-foreground [&_a]:text-accent-foreground [&_img]:max-w-full"
-          // HTML sanitizat cu DOMPurify mai sus — singura cale de randare.
-          dangerouslySetInnerHTML={{ __html: html }}
-        />
+        <>
+          {!showImages && (rendered?.blocked ?? 0) > 0 && (
+            <div className="mb-3 flex flex-wrap items-center gap-2 rounded-lg border border-border bg-muted/50 px-3 py-2 text-xs text-muted-foreground">
+              <ImageOff className="h-3.5 w-3.5" />
+              <span>
+                {rendered!.blocked} imagini externe au fost blocate (pot semnala expeditorului că ai
+                deschis mesajul).
+              </span>
+              <Button variant="outline" size="sm" className="h-7" onClick={() => setShowImages(true)}>
+                Afișează imaginile
+              </Button>
+            </div>
+          )}
+          <div
+            className="prose prose-sm max-w-none overflow-x-auto text-foreground [&_a]:text-accent-foreground [&_img]:max-w-full"
+            // HTML sanitizat cu DOMPurify mai sus — singura cale de randare.
+            dangerouslySetInnerHTML={{ __html: html }}
+          />
+        </>
       ) : (
         <p className="whitespace-pre-wrap text-sm text-foreground/90">{text || "(mesaj gol)"}</p>
       )}
@@ -770,31 +1107,45 @@ function ComposeDialog({
   onOpenChange,
   mailboxes,
   defaultMailboxId,
+  draft,
   onSent,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   mailboxes: MailMailbox[];
   defaultMailboxId: string | null;
+  /** Ciornă deschisă pentru continuare; `null` = email nou. */
+  draft: MailMessage | null;
   onSent: () => void;
 }) {
   const send = useServerFn(sendMail);
+  const saveDraft = useServerFn(saveMailDraft);
+  const dropDraft = useServerFn(deleteMailDraft);
   const [mailboxId, setMailboxId] = useState<string>("");
   const [to, setTo] = useState("");
   const [cc, setCc] = useState("");
   const [subject, setSubject] = useState("");
   const [text, setText] = useState("");
   const [sending, setSending] = useState(false);
+  const [savingDraft, setSavingDraft] = useState(false);
+  const draftIdRef = useRef<string | null>(null);
   const staged = useStagedAttachments();
   const fileRef = useRef<HTMLInputElement | null>(null);
   const sendKeyRef = useRef(crypto.randomUUID());
 
   useEffect(() => {
     if (open) {
-      setMailboxId((mailboxes.find((m) => m.id === defaultMailboxId) ?? mailboxes[0])?.id ?? "");
+      setMailboxId(
+        (mailboxes.find((m) => m.id === (draft?.mailbox_id ?? defaultMailboxId)) ?? mailboxes[0])?.id ?? "",
+      );
+      setTo(draft?.to_emails.join(", ") ?? "");
+      setCc(draft?.cc_emails.join(", ") ?? "");
+      setSubject(draft?.subject ?? "");
+      setText(draft?.text_body ?? "");
+      draftIdRef.current = draft?.id ?? null;
       sendKeyRef.current = crypto.randomUUID();
     }
-  }, [open, mailboxes, defaultMailboxId]);
+  }, [open, mailboxes, defaultMailboxId, draft]);
 
   const split = (value: string) => value.split(/[;,]/).map((s) => s.trim()).filter(Boolean);
 
@@ -823,6 +1174,11 @@ function ComposeDialog({
         sendKeyRef.current = crypto.randomUUID();
         return;
       }
+      // Ciorna a devenit un mesaj trimis, deci nu mai are ce căuta în dosar.
+      if (draftIdRef.current) {
+        await dropDraft({ data: { draftId: draftIdRef.current } });
+        draftIdRef.current = null;
+      }
       toast.success("Email trimis.");
       setTo(""); setCc(""); setSubject(""); setText("");
       staged.reset();
@@ -832,11 +1188,37 @@ function ComposeDialog({
     }
   };
 
+  const keepAsDraft = async () => {
+    if (!mailboxId) { toast.error("Alege căsuța expeditor."); return; }
+    setSavingDraft(true);
+    try {
+      const res = await saveDraft({
+        data: {
+          draftId: draftIdRef.current,
+          mailboxId,
+          to: split(to),
+          cc: split(cc),
+          subject: subject.trim(),
+          text: text.trim() || null,
+        },
+      });
+      if (res.error || !res.draftId) {
+        toast.error(res.error ?? "Ciorna nu a putut fi salvată.");
+        return;
+      }
+      draftIdRef.current = res.draftId;
+      toast.success("Ciorna a fost salvată.");
+      onSent();
+    } finally {
+      setSavingDraft(false);
+    }
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl">
         <DialogHeader>
-          <DialogTitle>Email nou</DialogTitle>
+          <DialogTitle>{draft ? "Continuă ciorna" : "Email nou"}</DialogTitle>
           <DialogDescription>Trimite un email dintr-o căsuță a platformei.</DialogDescription>
         </DialogHeader>
         <div className="space-y-3">
@@ -876,10 +1258,14 @@ function ComposeDialog({
           <AttachmentPicker staged={staged} inputRef={fileRef} />
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={sending}>
+          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={sending || savingDraft}>
             Renunță
           </Button>
-          <Button onClick={submit} disabled={sending}>
+          <Button variant="outline" onClick={keepAsDraft} disabled={sending || savingDraft}>
+            {savingDraft ? <Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> : <Mail className="mr-1.5 h-4 w-4" />}
+            Salvează ciorna
+          </Button>
+          <Button onClick={submit} disabled={sending || savingDraft}>
             {sending ? <Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> : <Send className="mr-1.5 h-4 w-4" />}
             Trimite
           </Button>
