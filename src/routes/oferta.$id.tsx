@@ -7,6 +7,7 @@ import { mediaOriginForHost } from "@/lib/site-feed/config";
 import { feedImageUrl } from "@/lib/site-feed/mapper";
 import { getCurrentHostname } from "@/lib/current-host";
 import { formatMoney } from "@/lib/format";
+import { contactLines, safeAccent } from "@/lib/materials";
 
 export const Route = createFileRoute("/oferta/$id")({
   loader: async ({ params }) => {
@@ -69,17 +70,38 @@ function OfferPage() {
     offer.buildYear ? ["An construcție", String(offer.buildYear)] : null,
   ].filter((v): v is [string, string] => Array.isArray(v));
 
+  const branding = offer.branding;
+  const accent = safeAccent(branding.accent);
+  const contacts = contactLines(branding);
+
   return (
     <PublicLayout>
       <Section>
         <Container className="space-y-8">
+          {/* Identitatea agenției care trimite oferta, nu a platformei. */}
+          <div
+            className="flex flex-wrap items-center justify-between gap-4 border-b-[3px] pb-4"
+            style={{ borderBottomColor: accent }}
+          >
+            {branding.logoUrl ? (
+              <img
+                src={branding.logoUrl}
+                alt={branding.agencyName}
+                className="max-h-14 w-auto max-w-52 object-contain"
+              />
+            ) : (
+              <span className="text-xl font-semibold tracking-tight">{branding.agencyName}</span>
+            )}
+            <span className="text-sm text-muted-foreground">{branding.agencyName}</span>
+          </div>
+
           <header className="space-y-2">
             <p className="text-sm text-muted-foreground">
               {[offer.district, offer.city, offer.county].filter(Boolean).join(", ")}
               {offer.reference ? ` · Ref. ${offer.reference}` : ""}
             </p>
             <h1 className="text-3xl font-semibold tracking-tight">{offer.title}</h1>
-            <p className="text-2xl font-semibold text-primary">
+            <p className="text-2xl font-semibold" style={{ color: accent }}>
               {offer.price ? formatMoney(offer.price, offer.currency) : "Preț la cerere"}
             </p>
           </header>
@@ -139,11 +161,13 @@ function OfferPage() {
             </div>
           ) : null}
 
-          {offer.agencyName ? (
-            <p className="text-sm text-muted-foreground">
-              Ofertă administrată de {offer.agencyName} în Habitoo CRM.
-            </p>
-          ) : null}
+          <footer className="space-y-1 border-t border-border pt-4 text-sm text-muted-foreground">
+            <p className="font-medium text-foreground">{branding.agencyName}</p>
+            {contacts.length ? <p>{contacts.join(" · ")}</p> : null}
+            {branding.showHabitoo ? (
+              <p className="text-xs">Material generat cu Habitoo CRM</p>
+            ) : null}
+          </footer>
         </Container>
       </Section>
     </PublicLayout>

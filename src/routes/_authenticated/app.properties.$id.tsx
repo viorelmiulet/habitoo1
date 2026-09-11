@@ -73,6 +73,9 @@ import { PropertyLocationMap } from "@/components/app/PropertyLocationMap";
 import { PropertyMapClient } from "@/components/app/PropertyMapClient";
 import { APPROX_RADIUS_M, publicCoords } from "@/lib/geo";
 import { useCurrentUser } from "@/hooks/use-session";
+import { brandingFromOrg, buildPresentationHtml } from "@/lib/materials";
+import { useAgencyLogoUrl } from "@/components/app/AgencyBrandingCard";
+
 import { formatDate, formatDateTime, formatMoney, formatNumber } from "@/lib/format";
 import {
   activityKindLabels,
@@ -95,6 +98,8 @@ function PropertyDetailPage() {
   const queryClient = useQueryClient();
   const { data: user } = useCurrentUser();
   const orgId = user?.organization?.id;
+  const agencyLogoUrl = useAgencyLogoUrl(user?.organization?.logo_path);
+
   const [editing, setEditing] = useState(false);
   
   const [activityDialog, setActivityDialog] = useState<{ open: boolean; kind?: "viewing" | "call" }>({
@@ -446,30 +451,23 @@ function PropertyDetailPage() {
     { label: "Adăugat", value: formatDate(property.created_at) },
   ];
 
-  const escapeHtml = (value: unknown) =>
-    String(value ?? "")
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;")
-      .replace(/"/g, "&quot;");
-
+  /** Prezentarea folosește identitatea vizuală configurată de agenție. */
   const printSummary = () => {
     const w = window.open("", "_blank", "width=900,height=1000");
     if (!w) return;
-    w.document.write(`
-      <html><head><title>${escapeHtml(property.title)}</title>
-      <style>body{font-family:sans-serif;padding:32px;color:#111}h1{margin-bottom:4px}
-      dl{display:grid;grid-template-columns:160px 1fr;gap:6px;margin-top:16px}
-      dt{color:#666}p{white-space:pre-line}</style></head><body>
-      <h1>${escapeHtml(property.title)}</h1>
-      <p>${escapeHtml([property.address, property.district, property.city].filter(Boolean).join(", "))}</p>
-      <h2>${formatMoney(property.price, property.currency)}</h2>
-      <dl>${specs.map((s) => `<dt>${escapeHtml(s.label)}</dt><dd>${escapeHtml(s.value)}</dd>`).join("")}</dl>
-      <h3>Descriere</h3><p>${escapeHtml(property.description ?? "—")}</p>
-      </body></html>`);
+    w.document.write(
+      buildPresentationHtml(brandingFromOrg(user?.organization, agencyLogoUrl), {
+        title: property.title,
+        location: [property.address, property.district, property.city].filter(Boolean).join(", "),
+        price: formatMoney(property.price, property.currency),
+        specs,
+        description: property.description,
+      }),
+    );
     w.document.close();
     w.print();
   };
+
 
   // Coordonatele arătate în panoul read-only: exacte sau zona aproximativă.
   const mapCoords = publicCoords(property);

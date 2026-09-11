@@ -6,6 +6,8 @@ import { toastError } from "@/lib/errors";
 import { PageHeader } from "@/components/app/PageHeader";
 import { StatusBadge } from "@/components/app/StatusBadge";
 import { AgencyPortalCatalogCard } from "@/components/app/AgencyPortalCatalogCard";
+import { AgencyBrandingCard } from "@/components/app/AgencyBrandingCard";
+
 import { SiteFeedCard } from "@/components/app/SiteFeedCard";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -297,7 +299,12 @@ function SettingsPage() {
               </p>
             )}
           </form>
+
+          <div className="mt-6 max-w-3xl">
+            <AgencyBrandingCard />
+          </div>
         </TabsContent>
+
         ) : null}
 
         {user?.isAdmin ? (
