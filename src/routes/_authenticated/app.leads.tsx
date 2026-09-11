@@ -1154,25 +1154,43 @@ function LeadsPage() {
                 </TabsContent>
 
                 <TabsContent value="messages" className="mt-3">
-                  <ul className="space-y-2">
+                  <ul className="space-y-3">
                     {(detailData?.messages ?? []).map((m) => (
-                      <li key={m.id} className="rounded-lg border border-border p-3 text-xs">
+                      <li
+                        key={m.id}
+                        className="rounded-xl border border-border bg-card p-4 shadow-sm"
+                      >
                         <div className="flex flex-wrap items-center justify-between gap-2">
-                          <p className="font-medium">{m.sender_name ?? "Contact"}</p>
+                          <p className="text-sm font-semibold">{m.sender_name ?? "Contact"}</p>
                           <StatusBadge tone="neutral">
-                            {m.portal === "storia" ? "Storia.ro" : m.portal}
+                            Sursa: {m.portal === "storia" ? "Storia.ro" : m.portal}
                           </StatusBadge>
                         </div>
-                        <p className="text-muted-foreground">{formatDateTime(m.sent_at)}</p>
+                        <p className="mt-0.5 text-xs tabular-nums text-muted-foreground">
+                          {m.sent_at ? formatDateTime(m.sent_at) : "Dată necunoscută"}
+                        </p>
                         {m.body ? (
-                          <p className="mt-2 whitespace-pre-wrap text-sm">{m.body}</p>
-                        ) : null}
-                        <div className="mt-2 flex flex-wrap gap-3 text-muted-foreground">
+                          <p className="mt-3 whitespace-pre-wrap rounded-lg bg-muted/50 p-3 text-sm leading-relaxed">
+                            {m.body}
+                          </p>
+                        ) : (
+                          <p className="mt-3 text-sm italic text-muted-foreground">
+                            Mesajul nu are conținut text.
+                          </p>
+                        )}
+                        <div className="mt-3 flex flex-wrap gap-4 text-xs text-muted-foreground">
                           {m.sender_phone ? (
-                            <a href={`tel:${m.sender_phone}`}>{m.sender_phone}</a>
+                            <a className="hover:text-foreground" href={`tel:${m.sender_phone}`}>
+                              {m.sender_phone}
+                            </a>
                           ) : null}
                           {m.sender_email ? (
-                            <a href={`mailto:${m.sender_email}`}>{m.sender_email}</a>
+                            <a
+                              className="hover:text-foreground"
+                              href={`mailto:${m.sender_email}`}
+                            >
+                              {m.sender_email}
+                            </a>
                           ) : null}
                         </div>
                       </li>
