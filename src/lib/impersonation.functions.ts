@@ -109,12 +109,12 @@ async function hydrate(rows: Record<string, unknown>[]): Promise<ImpersonationRo
 
 /** Superadminul cere acces. Motivul este obligatoriu și ajunge în notificare, email și audit. */
 export const requestImpersonation = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((data: unknown) =>
     z
       .object({ targetUserId: z.string().uuid(), reason: z.string().trim().min(10).max(500) })
       .parse(data),
   )
-  .middleware([requireSupabaseAuth])
   .handler(async ({ data, context }): Promise<{ id: string; emailSent: boolean }> => {
     const ctx = context as unknown as AuthContext;
     await assertSuperadmin(ctx);
@@ -179,10 +179,10 @@ export const requestImpersonation = createServerFn({ method: "POST" })
 
 /** Utilizatorul acceptă sau respinge cererea primită. */
 export const respondImpersonation = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((data: unknown) =>
     z.object({ id: z.string().uuid(), accept: z.boolean() }).parse(data),
   )
-  .middleware([requireSupabaseAuth])
   .handler(async ({ data, context }) => {
     const ctx = context as unknown as AuthContext;
     const { error } = await ctx.supabase.rpc("impersonation_respond", {
@@ -195,8 +195,8 @@ export const respondImpersonation = createServerFn({ method: "POST" })
 
 /** Revocare: de către utilizator oricând, sau de superadmin la ieșirea din sesiune. */
 export const revokeImpersonation = createServerFn({ method: "POST" })
-  .inputValidator((data: unknown) => z.object({ id: z.string().uuid() }).parse(data))
   .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) => z.object({ id: z.string().uuid() }).parse(data))
   .handler(async ({ data, context }) => {
     const ctx = context as unknown as AuthContext;
     const { error } = await ctx.supabase.rpc("impersonation_revoke", { _id: data.id });
@@ -209,8 +209,8 @@ export const revokeImpersonation = createServerFn({ method: "POST" })
  * `null` înseamnă sesiune inexistentă, respinsă, revocată sau expirată.
  */
 export const getImpersonationSession = createServerFn({ method: "POST" })
-  .inputValidator((data: unknown) => z.object({ id: z.string().uuid() }).parse(data))
   .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) => z.object({ id: z.string().uuid() }).parse(data))
   .handler(async ({ data, context }): Promise<ImpersonationSession | null> => {
     const ctx = context as unknown as AuthContext;
     const { data: targetId, error } = await ctx.supabase.rpc("impersonation_target", {
