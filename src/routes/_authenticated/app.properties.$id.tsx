@@ -15,7 +15,8 @@ import {
 import { toast } from "sonner";
 import { useServerFn } from "@tanstack/react-start";
 import { duplicateProperty } from "@/lib/property-duplicate.functions";
-import { DeletePropertyDialog } from "@/components/app/DeletePropertyDialog";
+import { ArchivePropertyDialog } from "@/components/app/ArchivePropertyDialog";
+import { unarchiveProperty } from "@/lib/property-archive.functions";
 import { toastError } from "@/lib/errors";
 import { PageHeader } from "@/components/app/PageHeader";
 import { FormSection, RequiredMark } from "@/components/app/FormSection";
