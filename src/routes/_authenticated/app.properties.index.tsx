@@ -259,8 +259,9 @@ function PropertiesPage() {
         .is("deleted_at", null);
 
       if (filters.status !== "all") query = query.eq("status", filters.status as never);
-      // Arhivele nu apar în lista implicită; sunt vizibile doar cu filtrul de status "Arhivat".
-      else query = query.neq("status", "archived" as never);
+      // Arhivele nu apar în lista implicită; revin la vedere cu "Arată și arhivate"
+      // sau când se filtrează explicit după statusul "Arhivat".
+      else if (!filters.showArchived) query = query.neq("status", "archived" as never);
       if (filters.transaction !== "all") query = query.eq("transaction_kind", filters.transaction as never);
       if (filters.type !== "all") query = query.eq("property_type", filters.type);
       if (filters.city !== "all") query = query.eq("city", filters.city);
