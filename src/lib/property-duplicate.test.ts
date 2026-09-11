@@ -15,7 +15,6 @@ describe("property duplication", () => {
       external_id: "legacy-external",
       deleted_at: null,
       last_activity_at: "2026-09-10T11:00:00Z",
-      collab_prompted_at: "2026-09-10T11:00:00Z",
       created_at: "2026-09-01T10:00:00Z",
       updated_at: "2026-09-10T10:00:00Z",
       created_by: "old-user",

@@ -16,7 +16,6 @@ export const PROPERTY_DUPLICATE_EXCLUDED_FIELDS = [
   "external_id",
   "deleted_at",
   "last_activity_at",
-  "collab_prompted_at",
 ] as const satisfies readonly (keyof PropertyRow)[];
 
 /** Construiește exclusiv datele descriptive ale proprietății duplicate. */
@@ -41,7 +40,6 @@ export function buildDuplicatedProperty(
     external_id: null,
     deleted_at: null,
     last_activity_at: null,
-    collab_prompted_at: null,
   };
 }
 
