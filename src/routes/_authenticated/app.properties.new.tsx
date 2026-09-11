@@ -103,16 +103,11 @@ function NewPropertyPage() {
       if (!hasTransactionSelection(tx))
         throw new Error("Alege tipul tranzacției: de vânzare, de închiriere sau ambele.");
       const num = (v: string) => (v.trim() === "" ? null : Number(v));
-      // Referință internă incrementală per agenție (RF-1001, RF-1002, ...).
-      const { data: lastRef } = await supabase
-        .from("properties")
-        .select("reference")
-        .eq("organization_id", user.organization.id)
-        .not("reference", "is", null)
-        .order("reference", { ascending: false })
-        .limit(1);
-      const lastNumber = Number(String(lastRef?.[0]?.reference ?? "").replace(/\D/g, "")) || 1000;
-      const reference = `RF-${lastNumber + 1}`;
+      // Referință unică pe toată platforma: o secvență în baza de date, nu
+      // „max + 1” per agenție (doi agenți care salvau simultan puteau primi
+      // același număr, iar numerele se dublau între agenții).
+      const { data: reference, error: referenceError } = await supabase.rpc("next_property_reference");
+      if (referenceError) throw referenceError;
       const { data, error } = await supabase
         .from("properties")
         .insert({
