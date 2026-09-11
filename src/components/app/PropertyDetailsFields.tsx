@@ -131,9 +131,9 @@ export function PropertyDetailsFields({ idPrefix = "det", value, onChange }: Pro
     label: string;
     options: readonly string[];
   }) => (
-    <fieldset className="space-y-2">
+    <fieldset className="space-y-3">
       <legend className="text-sm font-medium">{label}</legend>
-      <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="grid items-start gap-x-6 gap-y-2.5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         {options.map((o) => (
           <div key={o} className="flex items-center gap-2 text-sm">
             <Checkbox
@@ -162,12 +162,12 @@ export function PropertyDetailsFields({ idPrefix = "det", value, onChange }: Pro
     label: string;
     options: readonly string[];
   }) => (
-    <fieldset className="space-y-2">
+    <fieldset className="space-y-3">
       <legend className="text-sm font-medium">{label}</legend>
       <RadioGroup
         value={str(field)}
         onValueChange={(v) => setField(field, v || null)}
-        className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3"
+        className="grid items-start gap-x-6 gap-y-2.5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
       >
         {options.map((o) => (
           <div key={o} className="flex items-center gap-2 text-sm">
@@ -193,8 +193,8 @@ export function PropertyDetailsFields({ idPrefix = "det", value, onChange }: Pro
   return (
     <Accordion type="multiple" className="w-full">
       <AccordionItem value="detalii">
-        <AccordionTrigger>Detalii</AccordionTrigger>
-        <AccordionContent className="space-y-4">
+        <AccordionTrigger className="text-sm font-medium">Detalii</AccordionTrigger>
+        <AccordionContent className="space-y-6 pt-2">
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             <div className="space-y-2">
               <Label htmlFor={`${idPrefix}-property_type`}>Tip apartament / imobil</Label>
@@ -228,7 +228,7 @@ export function PropertyDetailsFields({ idPrefix = "det", value, onChange }: Pro
             <NumberField field="garages" label="Garaje" />
             <SelectField field="parking" label="Tip parcare" options={parkingOptions} />
           </div>
-          <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid items-start gap-x-6 gap-y-2.5 sm:grid-cols-2 lg:grid-cols-4">
             <BoolField field="bathroom_window" label="Geam la baie" />
             <BoolField field="open_kitchen" label="Bucătărie deschisă" />
             <BoolField field="pet_friendly" label="Pet friendly" />
@@ -239,7 +239,7 @@ export function PropertyDetailsFields({ idPrefix = "det", value, onChange }: Pro
       </AccordionItem>
 
       <AccordionItem value="suprafete">
-        <AccordionTrigger>Suprafețe</AccordionTrigger>
+        <AccordionTrigger className="text-sm font-medium">Suprafețe</AccordionTrigger>
         <AccordionContent>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             <NumberField field="usable_surface" label="Utilă (m²)" />
@@ -254,8 +254,8 @@ export function PropertyDetailsFields({ idPrefix = "det", value, onChange }: Pro
       </AccordionItem>
 
       <AccordionItem value="cladire">
-        <AccordionTrigger>Clădire</AccordionTrigger>
-        <AccordionContent className="space-y-4">
+        <AccordionTrigger className="text-sm font-medium">Clădire</AccordionTrigger>
+        <AccordionContent className="space-y-6 pt-2">
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             <SelectField field="construction_stage" label="Stadiu construcție" options={constructionStageOptions} />
             <SelectField field="building_type" label="Tip" options={buildingTypeOptions} />
@@ -278,8 +278,8 @@ export function PropertyDetailsFields({ idPrefix = "det", value, onChange }: Pro
       </AccordionItem>
 
       <AccordionItem value="utilitati">
-        <AccordionTrigger>Utilități</AccordionTrigger>
-        <AccordionContent className="space-y-5">
+        <AccordionTrigger className="text-sm font-medium">Utilități</AccordionTrigger>
+        <AccordionContent className="space-y-6 pt-2">
           <CheckGroup field="utilities" label="Generale" options={utilityOptions} />
           <CheckGroup field="heating_systems" label="Sistem încălzire" options={heatingOptions} />
           <CheckGroup field="cooling_systems" label="Climatizare" options={coolingOptions} />
@@ -287,8 +287,8 @@ export function PropertyDetailsFields({ idPrefix = "det", value, onChange }: Pro
       </AccordionItem>
 
       <AccordionItem value="finisaje">
-        <AccordionTrigger>Finisaje</AccordionTrigger>
-        <AccordionContent className="space-y-5">
+        <AccordionTrigger className="text-sm font-medium">Finisaje</AccordionTrigger>
+        <AccordionContent className="space-y-6 pt-2">
           <RadioField field="finish_state" label="Stare" options={finishStateOptions} />
           <CheckGroup field="insulation" label="Izolații" options={insulationOptions} />
           <CheckGroup field="wall_finishes" label="Pereți" options={wallFinishOptions} />
@@ -302,8 +302,8 @@ export function PropertyDetailsFields({ idPrefix = "det", value, onChange }: Pro
       </AccordionItem>
 
       <AccordionItem value="dotari">
-        <AccordionTrigger>Dotări</AccordionTrigger>
-        <AccordionContent className="space-y-5">
+        <AccordionTrigger className="text-sm font-medium">Dotări</AccordionTrigger>
+        <AccordionContent className="space-y-6 pt-2">
           <RadioField field="furnishing" label="Mobilat" options={furnishingOptions} />
           <CheckGroup field="additional_spaces" label="Spații adiționale" options={additionalSpaceOptions} />
           <CheckGroup field="kitchen_features" label="Bucătărie" options={kitchenOptions} />

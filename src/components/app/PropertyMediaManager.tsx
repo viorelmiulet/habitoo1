@@ -4,6 +4,7 @@ import {
   ChevronLeft,
   ChevronRight,
   EyeOff,
+  GripVertical,
   ImageOff,
   Images,
   RotateCw,
@@ -282,6 +283,13 @@ export function PropertyMediaManager({
         </Button>
       </div>
 
+      {images.length > 1 ? (
+        <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
+          <GripVertical className="size-3.5" aria-hidden /> Trage fotografiile pentru a schimba ordinea.
+          Fotografia marcată „Principală" este coperta anunțului.
+        </p>
+      ) : null}
+
       {isLoading ? (
         <p className="text-center text-sm text-muted-foreground">Se încarcă imaginile…</p>
       ) : images.length === 0 ? (
@@ -297,7 +305,9 @@ export function PropertyMediaManager({
                 onDragStart={() => (dragIndex.current = idx)}
                 onDragOver={(e) => e.preventDefault()}
                 onDrop={() => onDropReorder(idx)}
-                className="panel group relative overflow-hidden p-0"
+                className={`group relative overflow-hidden rounded-2xl bg-card p-0 ring-1 transition-shadow hover:shadow-soft ${
+                  img.is_primary ? "ring-2 ring-primary" : "ring-border/60"
+                }`}
               >
                 <button
                   type="button"
