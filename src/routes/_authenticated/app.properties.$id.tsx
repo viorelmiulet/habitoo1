@@ -494,28 +494,9 @@ function PropertyDetailPage() {
     },
   ];
 
-  /** Nudge-ul apare doar dacă agenția participă, colaborarea e oprită și nu am întrebat deja. */
-  const shouldNudgeCollab = () =>
-    user?.organization?.collaboration_enabled === true &&
-    !(editing ? collab : Boolean(property.collaboration)) &&
-    !property.collab_prompted_at;
-
   return (
     <>
-      <CollaborationNudgeDialog
-        open={nudgeOpen}
-        onOpenChange={setNudgeOpen}
-        pending={publish.isPending}
-        onResolve={(result) => {
-          setNudgeOpen(false);
-          if (result.enable) {
-            setCollab(true);
-            publish.mutate({ enableCollab: true, percent: result.percent, prompted: true });
-          } else {
-            publish.mutate({ prompted: true });
-          }
-        }}
-      />
+
 
       <PageHeader
         backTo="/app/properties"
