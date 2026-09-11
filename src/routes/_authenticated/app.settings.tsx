@@ -147,6 +147,7 @@ function SettingsPage() {
         <TabsList>
           <TabsTrigger value="profile">Profil</TabsTrigger>
           {user?.isAdmin ? <TabsTrigger value="agency">Agenție</TabsTrigger> : null}
+          {user?.isAdmin ? <TabsTrigger value="branding">Logo &amp; watermark</TabsTrigger> : null}
           {user?.isAdmin ? <TabsTrigger value="team">Echipă ({team.length})</TabsTrigger> : null}
           {user?.isAdmin ? <TabsTrigger value="integrations">Integrări</TabsTrigger> : null}
           {user?.isAdmin ? <TabsTrigger value="portals">Portaluri</TabsTrigger> : null}
