@@ -23,7 +23,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { StatusBadge } from "@/components/app/StatusBadge";
-import { PortalLogo } from "@/components/app/PortalLogo";
+import { PortalLogoStack } from "@/components/app/PortalLogo";
 import { InlineLoading } from "@/components/app/LoadingState";
 import { QueryError } from "@/components/app/QueryError";
 import { ConfirmDialog } from "@/components/app/ConfirmDialog";
@@ -335,15 +335,13 @@ export function PortalsCard({ organizationId }: { organizationId: string }) {
                 aria-expanded={open}
                 className="flex min-w-0 flex-1 flex-wrap items-center gap-3 text-left"
               >
-                <PortalLogo
+                <PortalLogoStack
                   portalId={item.portal.id}
-                  name={item.portal.display_name}
-                  fallback={item.portal.logo}
+                  name={portalDisplayName(item.portal.id)}
                   size={40}
-                  className="rounded-lg"
                 />
                 <span className="min-w-0 flex-1">
-                  <span className="block truncate font-medium">{item.portal.display_name}</span>
+                  <span className="block truncate font-medium">{portalDisplayName(item.portal.id)}</span>
                   <span className="block text-xs text-muted-foreground">
                     Ultima verificare:{" "}
                     {item.connection.lastSyncAt
@@ -381,7 +379,7 @@ export function PortalsCard({ organizationId }: { organizationId: string }) {
                   target="_blank"
                   rel="noreferrer noopener"
                   className="text-muted-foreground hover:text-foreground"
-                  aria-label={`Deschide ${item.portal.display_name}`}
+                  aria-label={`Deschide ${portalDisplayName(item.portal.id)}`}
                 >
                   <ExternalLink className="size-4" />
                 </a>
@@ -550,10 +548,10 @@ export function PortalsCard({ organizationId }: { organizationId: string }) {
                       <div className="space-y-3 rounded-lg border border-border p-3">
                         <div>
                           <p className="text-sm font-medium">
-                            Contul {item.portal.display_name} al agenției
+                            Contul {portalDisplayName(item.portal.id)} al agenției
                           </p>
                           <p className="text-xs text-muted-foreground">
-                            {item.portal.display_name} nu folosește o cheie API a agenției. Agenția
+                            {portalDisplayName(item.portal.id)} nu folosește o cheie API a agenției. Agenția
                             își autorizează contul o singură dată, iar Habitoo păstrează autorizarea
                             criptat și o reînnoiește automat.
                           </p>
@@ -561,7 +559,7 @@ export function PortalsCard({ organizationId }: { organizationId: string }) {
 
                         {item.oauth.appConfigured ? null : (
                           <p className="rounded-lg border border-destructive/40 bg-destructive/5 p-3 text-xs text-destructive">
-                            Credențialele de aplicație pentru {item.portal.display_name} nu sunt
+                            Credențialele de aplicație pentru {portalDisplayName(item.portal.id)} nu sunt
                             încă configurate în platformă. Conectarea nu poate porni.
                           </p>
                         )}
@@ -612,7 +610,7 @@ export function PortalsCard({ organizationId }: { organizationId: string }) {
                             <ExternalLink className="mr-2 size-4" />
                             {item.oauth.connected
                               ? "Reconectează contul"
-                              : `Conectează contul ${item.portal.display_name}`}
+                              : `Conectează contul ${portalDisplayName(item.portal.id)}`}
                           </Button>
                           {item.oauth.connected ? (
                             <Button
@@ -749,7 +747,7 @@ export function PortalsCard({ organizationId }: { organizationId: string }) {
                         ) : null}
                         {!item.portal.authentication.includes("habitoo_api_key") ? (
                           <p className="text-xs text-muted-foreground">
-                            {item.portal.display_name} folosește cheia API proprie, emisă de portal.
+                            {portalDisplayName(item.portal.id)} folosește cheia API proprie, emisă de portal.
                             Salvează cheia mai sus — Habitoo nu emite chei pentru acest portal.
                           </p>
                         ) : (
@@ -795,7 +793,7 @@ export function PortalsCard({ organizationId }: { organizationId: string }) {
                                       [item.portal.id]: e.target.value,
                                     }))
                                   }
-                                  placeholder={`Cheie ${item.portal.display_name}`}
+                                  placeholder={`Cheie ${portalDisplayName(item.portal.id)}`}
                                 />
                               </div>
                               <Button
