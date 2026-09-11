@@ -38,20 +38,36 @@ import {
   type PropertyPortalCell,
 } from "@/lib/portals.functions";
 
-const STATE_LABEL: Record<
-  PropertyPortalCell["state"],
-  { label: string; tone: "success" | "warning" | "danger" | "neutral" }
-> = {
-  in_feed: { label: "Publicată în feed", tone: "success" },
-  published: { label: "Publicată", tone: "success" },
-  selected: { label: "În așteptare", tone: "warning" },
-  syncing: { label: "Se sincronizează", tone: "warning" },
-  error: { label: "Eroare", tone: "danger" },
-  withdrawn: { label: "Retrasă", tone: "neutral" },
-  not_selected: { label: "Nepublicată", tone: "neutral" },
-  not_configured: { label: "Nepublicată", tone: "neutral" },
-  coming_soon: { label: "În curând", tone: "neutral" },
-};
+/** „acum 4 min” / „acum 3 h” / data completă, pentru ultima sincronizare. */
+function syncAgo(iso: string) {
+  const minutes = Math.round((Date.now() - new Date(iso).getTime()) / 60_000);
+  if (minutes < 1) return "chiar acum";
+  if (minutes < 60) return `acum ${minutes} min`;
+  const hours = Math.round(minutes / 60);
+  if (hours < 24) return `acum ${hours} h`;
+  return formatDateTime(iso);
+}
+
+/** Starea concretă a portalului, în cuvinte, pentru rândul din listă. */
+function stateSentence(cell: PropertyPortalCell, selected: boolean) {
+  if (cell.availability !== "available") return "Integrarea nu este încă disponibilă.";
+  if (!cell.configured)
+    return selected
+      ? "Portal neconfigurat — configurează-l pentru a putea publica."
+      : "Portal neconfigurat.";
+  if (cell.lastError) return cell.lastError;
+  if (cell.state === "error")
+    return "Portalul a raportat o problemă la acest anunț, fără detalii. Apasă „Retrimite” pentru mesajul portalului.";
+  if (cell.state === "syncing") return "Se sincronizează cu portalul…";
+  if (cell.state === "published" || cell.state === "in_feed") {
+    const base = cell.state === "in_feed" ? "Activ în feedul portalului" : "Activ pe portal";
+    return cell.lastSyncAt ? `${base} · sincronizat ${syncAgo(cell.lastSyncAt)}` : base;
+  }
+  if (cell.state === "withdrawn") return "Retrasă de pe portal.";
+  if (cell.state === "selected")
+    return "Selectat — se trimite la următoarea apăsare pe „Publică”.";
+  return "Neselectat.";
+}
 
 export type PortalApplyResult = {
   portalId: string;
