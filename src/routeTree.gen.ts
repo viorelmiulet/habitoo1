@@ -53,6 +53,8 @@ import { Route as AuthenticatedAppPropertiesIndexRouteImport } from './routes/_a
 import { Route as AuthenticatedAppPropertiesIdRouteImport } from './routes/_authenticated/app.properties.$id'
 import { Route as AuthenticatedAppPropertiesNewRouteImport } from './routes/_authenticated/app.properties.new'
 import { Route as AuthenticatedAppRequestsIdRouteImport } from './routes/_authenticated/app.requests.$id'
+import { Route as ApiPublicMailgunEventsRouteImport } from './routes/api/public/mailgun/events'
+import { Route as ApiPublicMailgunInboundRouteImport } from './routes/api/public/mailgun/inbound'
 import { Route as LovableEmailAuthPreviewRouteImport } from './routes/lovable/email/auth/preview'
 import { Route as LovableEmailAuthWebhookRouteImport } from './routes/lovable/email/auth/webhook'
 import { Route as ApiPublicHomepitchV1PropertiesRouteImport } from './routes/api/public/homepitch/v1/properties'
@@ -313,6 +315,16 @@ const AuthenticatedAppRequestsIdRoute =
     path: '/$id',
     getParentRoute: () => AuthenticatedAppRequestsRoute,
   } as any)
+const ApiPublicMailgunEventsRoute = ApiPublicMailgunEventsRouteImport.update({
+  id: '/api/public/mailgun/events',
+  path: '/api/public/mailgun/events',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicMailgunInboundRoute = ApiPublicMailgunInboundRouteImport.update({
+  id: '/api/public/mailgun/inbound',
+  path: '/api/public/mailgun/inbound',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const LovableEmailAuthPreviewRoute = LovableEmailAuthPreviewRouteImport.update({
   id: '/lovable/email/auth/preview',
   path: '/lovable/email/auth/preview',
@@ -464,6 +476,8 @@ export interface FileRoutesByFullPath {
   '/app/properties/$id': typeof AuthenticatedAppPropertiesIdRoute
   '/app/properties/new': typeof AuthenticatedAppPropertiesNewRoute
   '/app/requests/$id': typeof AuthenticatedAppRequestsIdRoute
+  '/api/public/mailgun/events': typeof ApiPublicMailgunEventsRoute
+  '/api/public/mailgun/inbound': typeof ApiPublicMailgunInboundRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
   '/app/contacts/': typeof AuthenticatedAppContactsIndexRoute
@@ -526,6 +540,8 @@ export interface FileRoutesByTo {
   '/app/properties/$id': typeof AuthenticatedAppPropertiesIdRoute
   '/app/properties/new': typeof AuthenticatedAppPropertiesNewRoute
   '/app/requests/$id': typeof AuthenticatedAppRequestsIdRoute
+  '/api/public/mailgun/events': typeof ApiPublicMailgunEventsRoute
+  '/api/public/mailgun/inbound': typeof ApiPublicMailgunInboundRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
   '/app/contacts': typeof AuthenticatedAppContactsIndexRoute
@@ -592,6 +608,8 @@ export interface FileRoutesById {
   '/_authenticated/app/properties/$id': typeof AuthenticatedAppPropertiesIdRoute
   '/_authenticated/app/properties/new': typeof AuthenticatedAppPropertiesNewRoute
   '/_authenticated/app/requests/$id': typeof AuthenticatedAppRequestsIdRoute
+  '/api/public/mailgun/events': typeof ApiPublicMailgunEventsRoute
+  '/api/public/mailgun/inbound': typeof ApiPublicMailgunInboundRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
   '/_authenticated/app/contacts/': typeof AuthenticatedAppContactsIndexRoute
@@ -658,6 +676,8 @@ export interface FileRouteTypes {
     | '/app/properties/$id'
     | '/app/properties/new'
     | '/app/requests/$id'
+    | '/api/public/mailgun/events'
+    | '/api/public/mailgun/inbound'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
     | '/app/contacts/'
@@ -720,6 +740,8 @@ export interface FileRouteTypes {
     | '/app/properties/$id'
     | '/app/properties/new'
     | '/app/requests/$id'
+    | '/api/public/mailgun/events'
+    | '/api/public/mailgun/inbound'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
     | '/app/contacts'
@@ -785,6 +807,8 @@ export interface FileRouteTypes {
     | '/_authenticated/app/properties/$id'
     | '/_authenticated/app/properties/new'
     | '/_authenticated/app/requests/$id'
+    | '/api/public/mailgun/events'
+    | '/api/public/mailgun/inbound'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
     | '/_authenticated/app/contacts/'
@@ -823,6 +847,8 @@ export interface RootRouteChildren {
   TermeniRoute: typeof TermeniRoute
   AuthCallbackRoute: typeof AuthCallbackRoute
   OfertaIdRoute: typeof OfertaIdRoute
+  ApiPublicMailgunEventsRoute: typeof ApiPublicMailgunEventsRoute
+  ApiPublicMailgunInboundRoute: typeof ApiPublicMailgunInboundRoute
   LovableEmailAuthPreviewRoute: typeof LovableEmailAuthPreviewRoute
   LovableEmailAuthWebhookRoute: typeof LovableEmailAuthWebhookRoute
   ApiPublicHomepitchV1PropertiesRoute: typeof ApiPublicHomepitchV1PropertiesRouteWithChildren
@@ -1151,6 +1177,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAppRequestsIdRouteImport
       parentRoute: typeof AuthenticatedAppRequestsRoute
     }
+    '/api/public/mailgun/events': {
+      id: '/api/public/mailgun/events'
+      path: '/api/public/mailgun/events'
+      fullPath: '/api/public/mailgun/events'
+      preLoaderRoute: typeof ApiPublicMailgunEventsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/mailgun/inbound': {
+      id: '/api/public/mailgun/inbound'
+      path: '/api/public/mailgun/inbound'
+      fullPath: '/api/public/mailgun/inbound'
+      preLoaderRoute: typeof ApiPublicMailgunInboundRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/lovable/email/auth/preview': {
       id: '/lovable/email/auth/preview'
       path: '/lovable/email/auth/preview'
@@ -1448,6 +1488,8 @@ const rootRouteChildren: RootRouteChildren = {
   TermeniRoute: TermeniRoute,
   AuthCallbackRoute: AuthCallbackRoute,
   OfertaIdRoute: OfertaIdRoute,
+  ApiPublicMailgunEventsRoute: ApiPublicMailgunEventsRoute,
+  ApiPublicMailgunInboundRoute: ApiPublicMailgunInboundRoute,
   LovableEmailAuthPreviewRoute: LovableEmailAuthPreviewRoute,
   LovableEmailAuthWebhookRoute: LovableEmailAuthWebhookRoute,
   ApiPublicHomepitchV1PropertiesRoute:
