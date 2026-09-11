@@ -62,6 +62,17 @@ const kindTone: Record<string, string> = {
   note: "border-border bg-card text-foreground",
 };
 
+/** Prezentare: punctul din calendarul lunar, colorat după tipul activității. */
+const kindDot: Record<string, string> = {
+  call: "bg-info",
+  meeting: "bg-primary",
+  viewing: "bg-success",
+  task: "bg-warning",
+  email: "bg-muted-foreground",
+  followup: "bg-accent",
+  note: "bg-border",
+};
+
 const durationOptions = [15, 30, 45, 60, 90, 120];
 const HOURS = Array.from({ length: 14 }, (_, i) => i + 7); // 07:00 - 20:00
 
@@ -104,6 +115,8 @@ function CalendarPage() {
   const [dialogDefaults, setDialogDefaults] = useState<{ startsAt: Date } | undefined>(undefined);
 
   const [detail, setDetail] = useState<Activity | null>(null);
+  /** Panoul lateral cu lista zilei, deschis din calendarul lunar. */
+  const [dayPanel, setDayPanel] = useState<Date | null>(null);
   const [rescheduleDate, setRescheduleDate] = useState("");
   const [rescheduleTime, setRescheduleTime] = useState("");
   const [deleteTarget, setDeleteTarget] = useState<Activity | null>(null);
@@ -418,7 +431,7 @@ function CalendarPage() {
           <MonthView
             anchor={anchor}
             activities={filtered}
-            onDayClick={openCreate}
+            onDayClick={setDayPanel}
             onDropDay={handleDropOnDay}
             onEventClick={openDetail}
             draggedId={draggedId}
@@ -434,6 +447,80 @@ function CalendarPage() {
         userId={userId}
         defaults={dialogDefaults}
       />
+
+      <Sheet open={Boolean(dayPanel)} onOpenChange={(o) => !o && setDayPanel(null)}>
+        <SheetContent className="w-full overflow-y-auto sm:max-w-md">
+          {dayPanel ? (
+            <>
+              <SheetHeader>
+                <SheetTitle>
+                  {dayPanel.toLocaleDateString("ro-RO", {
+                    weekday: "long",
+                    day: "numeric",
+                    month: "long",
+                  })}
+                </SheetTitle>
+              </SheetHeader>
+              <div className="mt-4 space-y-2">
+                {filtered
+                  .filter((a) => sameDay(new Date(a.starts_at), dayPanel))
+                  .sort((x, y) => x.starts_at.localeCompare(y.starts_at))
+                  .map((a) => (
+                    <button
+                      key={a.id}
+                      type="button"
+                      onClick={() => {
+                        setDayPanel(null);
+                        openDetail(a);
+                      }}
+                      className="flex w-full items-start gap-3 rounded-xl bg-card p-3 text-left ring-1 ring-border/60 transition hover:ring-primary/40"
+                    >
+                      <span className="w-14 shrink-0 text-xs tabular-nums text-muted-foreground">
+                        {formatTime(a.starts_at)}
+                      </span>
+                      <span
+                        className={cn(
+                          "mt-1 size-2.5 shrink-0 rounded-full",
+                          kindDot[a.kind] ?? "bg-border",
+                        )}
+                      />
+                      <span className="min-w-0 flex-1">
+                        <span
+                          className={cn(
+                            "block truncate text-sm font-medium",
+                            a.status === "cancelled" && "text-muted-foreground line-through",
+                          )}
+                        >
+                          {a.title}
+                        </span>
+                        <span className="block truncate text-xs text-muted-foreground">
+                          {activityKindLabels[a.kind]} · {activityStatusLabels[a.status]}
+                        </span>
+                      </span>
+                    </button>
+                  ))}
+                {filtered.filter((a) => sameDay(new Date(a.starts_at), dayPanel)).length === 0 ? (
+                  <p className="rounded-xl border border-dashed border-border px-3 py-6 text-center text-sm text-muted-foreground">
+                    Nicio activitate în această zi.
+                  </p>
+                ) : null}
+              </div>
+              <SheetFooter className="mt-6 flex-row gap-2 sm:justify-start">
+                <Button
+                  size="sm"
+                  onClick={() => {
+                    const d = dayPanel;
+                    setDayPanel(null);
+                    openCreate(d);
+                  }}
+                >
+                  Adaugă activitate
+                </Button>
+              </SheetFooter>
+            </>
+          ) : null}
+        </SheetContent>
+      </Sheet>
 
       <Sheet open={Boolean(detail)} onOpenChange={(o) => !o && setDetail(null)}>
         <SheetContent className="w-full overflow-y-auto sm:max-w-md">
@@ -726,13 +813,22 @@ function MonthView({
             onDrop={() => onDropDay(day)}
             onClick={() => onDayClick(day)}
           >
-            <p className={cn("mb-1 text-xs font-semibold", isToday && "text-primary")}>{day.getDate()}</p>
-            <div className="space-y-1">
-              {items.slice(0, 3).map((a) => (
+            <span
+              className={cn(
+                "mb-1.5 grid size-6 place-items-center rounded-full text-xs font-semibold",
+                isToday && "bg-primary text-primary-foreground",
+              )}
+            >
+              {day.getDate()}
+            </span>
+            <div className="flex flex-wrap items-center gap-1">
+              {items.slice(0, 8).map((a) => (
                 <button
                   key={a.id}
                   type="button"
                   draggable
+                  title={`${formatTime(a.starts_at)} · ${a.title}`}
+                  aria-label={`${formatTime(a.starts_at)} ${a.title}`}
                   onDragStart={() => setDraggedId(a.id)}
                   onDragEnd={() => setDraggedId(null)}
                   onClick={(e) => {
@@ -740,17 +836,15 @@ function MonthView({
                     onEventClick(a);
                   }}
                   className={cn(
-                    "block w-full truncate rounded border px-1.5 py-0.5 text-left text-[11px]",
-                    kindTone[a.kind] ?? "border-border bg-card",
-                    a.status === "cancelled" && "opacity-50 line-through",
+                    "size-2.5 rounded-full ring-1 ring-background transition hover:scale-125",
+                    kindDot[a.kind] ?? "bg-border",
+                    a.status === "cancelled" && "opacity-40",
                     draggedId === a.id && "opacity-30",
                   )}
-                >
-                  {formatTime(a.starts_at)} {a.title}
-                </button>
+                />
               ))}
-              {items.length > 3 ? (
-                <p className="text-[11px] text-muted-foreground">+{items.length - 3} altele</p>
+              {items.length > 8 ? (
+                <span className="text-[11px] text-muted-foreground">+{items.length - 8}</span>
               ) : null}
             </div>
           </div>

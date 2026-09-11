@@ -2,7 +2,6 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import {
-  ArrowLeft,
   CalendarClock,
   Eye,
   FileText,
@@ -19,6 +18,7 @@ import { toastError } from "@/lib/errors";
 import { PageHeader } from "@/components/app/PageHeader";
 import { DetailSkeleton } from "@/components/app/LoadingState";
 import { StatusBadge } from "@/components/app/StatusBadge";
+import { UserAvatar } from "@/components/app/UserAvatar";
 import { EmptyState } from "@/components/app/EmptyState";
 import { DocumentsPanel } from "@/components/app/DocumentsPanel";
 import { ActivityDialog } from "@/components/app/ActivityDialog";
@@ -196,11 +196,10 @@ function ContactDetailPage() {
 
   return (
     <>
-      <Button variant="ghost" size="sm" className="-ml-2 w-fit" asChild>
-        <Link to="/app/contacts"><ArrowLeft className="size-4" /> Contacte</Link>
-      </Button>
-
       <PageHeader
+        backTo="/app/contacts"
+        backLabel="Contacte"
+        eyebrow="Contact"
         title={`${contact.first_name} ${contact.last_name}`}
         description={contact.company || contactTypeLabels[contact.type]}
         actions={
@@ -222,48 +221,99 @@ function ContactDetailPage() {
         }
       />
 
-      <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
-        <StatusBadge tone="primary">{contactTypeLabels[contact.type] ?? contact.type}</StatusBadge>
-        <StatusBadge tone={contact.status === "active" ? "success" : "neutral"}>
-          {contact.status === "active" ? "Activ" : "Inactiv"}
-        </StatusBadge>
-        <span>{contact.phone ?? "fără telefon"}</span>
-        <span>{contact.email ?? "fără email"}</span>
-        <span>Agent: {agentName(contact.assigned_to)}</span>
-        <span>Adăugat {formatDate(contact.created_at)}</span>
-        {contact.gdpr_consent ? <StatusBadge tone="success">Consimțământ GDPR</StatusBadge> : null}
-      </div>
-
-      <div className="panel flex flex-wrap gap-2 p-3">
-        {contact.phone ? (
-          <>
-            <Button size="sm" variant="outline" asChild>
-              <a href={`tel:${contact.phone}`}><Phone className="size-4" /> Apel</a>
-            </Button>
-            <Button size="sm" variant="outline" asChild>
-              <a href={`https://wa.me/${contact.phone.replace(/[^\d]/g, "")}`} target="_blank" rel="noreferrer">
-                <MessageCircle className="size-4" /> WhatsApp
+      <div className="rounded-2xl bg-card p-5 ring-1 ring-border/60">
+        <div className="flex flex-wrap items-start gap-4">
+          <UserAvatar
+            name={`${contact.first_name} ${contact.last_name}`}
+            className="size-14 text-base"
+          />
+          <div className="min-w-0 flex-1">
+            <div className="flex flex-wrap items-center gap-2">
+              <StatusBadge tone="primary">{contactTypeLabels[contact.type] ?? contact.type}</StatusBadge>
+              <StatusBadge tone={contact.status === "active" ? "success" : "neutral"}>
+                {contact.status === "active" ? "Activ" : "Inactiv"}
+              </StatusBadge>
+              {contact.gdpr_consent ? <StatusBadge tone="success">Consimțământ GDPR</StatusBadge> : null}
+            </div>
+            <div className="mt-3 grid gap-x-6 gap-y-2 text-sm sm:grid-cols-2 lg:grid-cols-4">
+              <div>
+                <p className="text-xs text-muted-foreground">Telefon</p>
+                <p>{contact.phone ?? "—"}</p>
+              </div>
+              <div className="min-w-0">
+                <p className="text-xs text-muted-foreground">Email</p>
+                <p className="truncate">{contact.email ?? "—"}</p>
+              </div>
+              <div className="min-w-0">
+                <p className="text-xs text-muted-foreground">Agent</p>
+                <p className="flex items-center gap-1.5">
+                  <UserAvatar name={agentName(contact.assigned_to)} className="size-6 text-[10px]" />
+                  <span className="truncate">{agentName(contact.assigned_to)}</span>
+                </p>
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground">Adăugat</p>
+                <p>{formatDate(contact.created_at)}</p>
+              </div>
+            </div>
+          </div>
+          <div className="flex flex-wrap items-center gap-1">
+            {contact.phone ? (
+              <>
+                <a
+                  href={`tel:${contact.phone}`}
+                  className="flex flex-col items-center gap-0.5 rounded-lg px-2.5 py-1.5 text-[11px] text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                >
+                  <Phone className="size-4" aria-hidden /> Sună
+                </a>
+                <a
+                  href={`https://wa.me/${contact.phone.replace(/[^\d]/g, "")}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="flex flex-col items-center gap-0.5 rounded-lg px-2.5 py-1.5 text-[11px] text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                >
+                  <MessageCircle className="size-4" aria-hidden /> WhatsApp
+                </a>
+              </>
+            ) : null}
+            {contact.email ? (
+              <a
+                href={`mailto:${contact.email}`}
+                className="flex flex-col items-center gap-0.5 rounded-lg px-2.5 py-1.5 text-[11px] text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+              >
+                <Mail className="size-4" aria-hidden /> Email
               </a>
-            </Button>
-          </>
-        ) : null}
-        {contact.email ? (
-          <Button size="sm" variant="outline" asChild>
-            <a href={`mailto:${contact.email}`}><Mail className="size-4" /> Email</a>
-          </Button>
-        ) : null}
-        <Button size="sm" variant="outline" onClick={() => setActivityDialog({ kind: "meeting", title: "Activitate" })}>
-          <CalendarClock className="size-4" /> Activitate
-        </Button>
-        <Button size="sm" variant="outline" onClick={() => setActivityDialog({ kind: "task", title: "Task" })}>
-          <Plus className="size-4" /> Task
-        </Button>
-        <Button size="sm" variant="outline" onClick={() => setActivityDialog({ kind: "viewing", title: "Vizionare" })}>
-          <Eye className="size-4" /> Vizionare
-        </Button>
-        <Button size="sm" variant="outline" onClick={() => setRequestDialogOpen(true)}>
-          <Target className="size-4" /> Cerere
-        </Button>
+            ) : null}
+            <button
+              type="button"
+              onClick={() => setActivityDialog({ kind: "meeting", title: "Activitate" })}
+              className="flex flex-col items-center gap-0.5 rounded-lg px-2.5 py-1.5 text-[11px] text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+            >
+              <CalendarClock className="size-4" aria-hidden /> Activitate
+            </button>
+            <button
+              type="button"
+              onClick={() => setActivityDialog({ kind: "task", title: "Task" })}
+              className="flex flex-col items-center gap-0.5 rounded-lg px-2.5 py-1.5 text-[11px] text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+            >
+              <Plus className="size-4" aria-hidden /> Task
+            </button>
+            <button
+              type="button"
+              onClick={() => setActivityDialog({ kind: "viewing", title: "Vizionare" })}
+              className="flex flex-col items-center gap-0.5 rounded-lg px-2.5 py-1.5 text-[11px] text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+            >
+              <Eye className="size-4" aria-hidden /> Vizionare
+            </button>
+            <button
+              type="button"
+              onClick={() => setRequestDialogOpen(true)}
+              className="flex flex-col items-center gap-0.5 rounded-lg px-2.5 py-1.5 text-[11px] text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+            >
+              <Target className="size-4" aria-hidden /> Cerere
+            </button>
+          </div>
+        </div>
       </div>
 
       {edit ? (

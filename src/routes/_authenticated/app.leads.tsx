@@ -1,7 +1,20 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
-import { Flame, Phone, MessageCircle, Plus, History } from "lucide-react";
+import {
+  Flame,
+  Phone,
+  MessageCircle,
+  Plus,
+  History,
+  Mail,
+  Clock,
+  ArrowRight,
+  Home,
+  CalendarClock,
+  StickyNote,
+  Users,
+} from "lucide-react";
 import { toast } from "sonner";
 import { toastError } from "@/lib/errors";
 import { PageHeader } from "@/components/app/PageHeader";
@@ -41,6 +54,10 @@ import { formatDateTime, formatMoney, relativeDays } from "@/lib/format";
 import { leadStageLabels, leadStages } from "@/lib/labels";
 import { leadLostReasons, logAudit } from "@/lib/crm";
 import type { Tables } from "@/integrations/supabase/types";
+import { PortalLogo, hasPortalLogo } from "@/components/app/PortalLogo";
+import { UserAvatar } from "@/components/app/UserAvatar";
+import { PropertyThumb, usePropertyCovers } from "@/components/app/PropertyThumb";
+import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authenticated/app/leads")({
   validateSearch: (search: Record<string, unknown>): { new?: boolean; stage?: string } => {
@@ -70,6 +87,48 @@ const stageTone: Record<string, "neutral" | "success" | "warning" | "info" | "da
   transaction: "success",
   won: "success",
   lost: "danger",
+};
+
+/** Prezentare: potrivește o sursă textuală cu un portal care are logo local. */
+const SOURCE_PORTAL_KEYS = [
+  "storia",
+  "olx",
+  "imobiliare_ro",
+  "imobiliare",
+  "publi24",
+  "clickimob",
+  "imospot",
+  "homepitch",
+  "imove",
+];
+
+function portalKeyOf(source: string | null): string | null {
+  if (!source) return null;
+  const s = source.toLowerCase().replace(/[\s.-]/g, "_");
+  for (const key of SOURCE_PORTAL_KEYS) {
+    if (s.includes(key)) {
+      const normalized = key === "imobiliare" ? "imobiliare_ro" : key;
+      return hasPortalLogo(normalized) ? normalized : null;
+    }
+  }
+  return null;
+}
+
+const STALE_MS = 7 * 24 * 60 * 60 * 1000;
+
+/** Lead fără nicio atingere de peste o săptămână. */
+function isStale(lead: Lead) {
+  const last = lead.last_interaction_at ?? lead.created_at;
+  if (!last) return false;
+  return Date.now() - new Date(last).getTime() > STALE_MS;
+}
+
+const LEAD_EVENT_ICONS: Record<string, typeof Phone> = {
+  call: Phone,
+  email: Mail,
+  meeting: Users,
+  viewing: Home,
+  note: StickyNote,
 };
 
 function emptyForm() {
@@ -108,6 +167,7 @@ function LeadsPage() {
   const [campaignFilter, setCampaignFilter] = useState("all");
   const [detailLead, setDetailLead] = useState<Lead | null>(null);
   const [dragId, setDragId] = useState<string | null>(null);
+  const [dragOverStage, setDragOverStage] = useState<LeadStage | null>(null);
   const [lostDialog, setLostDialog] = useState<{ lead: Lead } | null>(null);
   const [lostReason, setLostReason] = useState(leadLostReasons[0]);
   const [lostReasonFree, setLostReasonFree] = useState("");
@@ -156,6 +216,7 @@ function LeadsPage() {
   });
   const propertyById = useMemo(() => new Map(properties.map((p) => [p.id, p.title])), [properties]);
   const agentById = useMemo(() => new Map(agents.map((a) => [a.id, a.full_name])), [agents]);
+  const coverFor = usePropertyCovers(propertyIds);
 
   const { data: contacts = [] } = useQuery({
     queryKey: ["contacts", "for-leads", orgId],
@@ -215,6 +276,31 @@ function LeadsPage() {
       };
     },
   });
+
+  /** Prezentare: îmbină evenimentele de etapă și activitățile într-un singur fir. */
+  const timelineItems = useMemo(() => {
+    type Item = { id: string; at: string; label: string; note?: string | null; icon: typeof Phone };
+    const items: Item[] = [];
+    for (const ev of detailData?.events ?? []) {
+      items.push({
+        id: `ev-${ev.id}`,
+        at: ev.created_at,
+        label: `${ev.from_stage ? `${leadStageLabels[ev.from_stage]} → ` : ""}${leadStageLabels[ev.to_stage]}`,
+        note: ev.note,
+        icon: ArrowRight,
+      });
+    }
+    for (const a of detailData?.activities ?? []) {
+      items.push({
+        id: `ac-${a.id}`,
+        at: a.starts_at,
+        label: a.title,
+        note: a.description,
+        icon: LEAD_EVENT_ICONS[a.kind] ?? CalendarClock,
+      });
+    }
+    return items.sort((x, y) => new Date(y.at).getTime() - new Date(x.at).getTime());
+  }, [detailData]);
 
   const [form, setForm] = useState(emptyForm());
 
@@ -494,64 +580,120 @@ function LeadsPage() {
           {columns.map((stage) => {
             const items = visible.filter((l) => l.stage === stage);
             const total = items.reduce((sum, l) => sum + (l.value ?? 0), 0);
+            const isDropTarget = dragOverStage === stage && dragId !== null;
             return (
               <div
                 key={stage}
                 data-stage={stage}
-                className="panel flex w-72 shrink-0 flex-col"
-                onDragOver={(e) => e.preventDefault()}
-                onDrop={() => handleDrop(stage)}
+                className={cn(
+                  "flex w-76 shrink-0 flex-col rounded-2xl bg-muted/40 ring-1 ring-border/60 transition",
+                  isDropTarget && "bg-primary/5 ring-2 ring-primary/50",
+                )}
+                onDragOver={(e) => {
+                  e.preventDefault();
+                  if (dragOverStage !== stage) setDragOverStage(stage);
+                }}
+                onDragLeave={() => setDragOverStage((s) => (s === stage ? null : s))}
+                onDrop={() => {
+                  setDragOverStage(null);
+                  handleDrop(stage);
+                }}
               >
-
-                <div className="flex items-center justify-between border-b border-border px-4 py-3">
-                  <div>
-                    <p className="text-sm font-semibold">{leadStageLabels[stage]}</p>
-                    <p className="text-xs text-muted-foreground">{formatMoney(total)}</p>
+                <div className="flex items-start justify-between gap-2 px-4 pt-4 pb-3">
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-semibold">{leadStageLabels[stage]}</p>
+                    {total > 0 ? (
+                      <p className="mt-0.5 text-xs text-muted-foreground">{formatMoney(total)}</p>
+                    ) : null}
                   </div>
                   <StatusBadge tone={stageTone[stage]}>{items.length}</StatusBadge>
                 </div>
-                <div className="flex-1 space-y-3 p-3">
-                  {items.map((l) => (
-                    <div
-                      key={l.id}
-                      draggable
-                      onDragStart={() => setDragId(l.id)}
-                      onClick={() => setDetailLead(l)}
-                      className="cursor-pointer rounded-xl border border-border bg-card p-3 shadow-sm transition hover:border-primary/40"
-                    >
-                      <p className="text-sm font-medium">{l.name}</p>
-                      {l.property_id ? (
-                        <p className="mt-0.5 truncate text-xs text-muted-foreground">
-                          {propertyById.get(l.property_id) ?? "Proprietate"}
-                        </p>
-                      ) : null}
-                      <p className="mt-0.5 text-xs text-muted-foreground">
-                        {l.source ?? "necunoscut"} · {formatMoney(l.value)}
-                      </p>
-                      <div className="mt-2 flex items-center justify-between text-xs text-muted-foreground">
-                        <span>{agentById.get(l.assigned_to ?? "") ?? "Neasignat"}</span>
-                        <span>{relativeDays(l.last_interaction_at)}</span>
-                      </div>
-                      {l.next_followup_at ? (
-                        <p className={`mt-1 text-xs ${isOverdue(l) ? "font-medium text-destructive" : "text-warning"}`}>
-                          Follow-up: {relativeDays(l.next_followup_at)}
-                        </p>
-                      ) : null}
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="mt-2 h-7 w-full text-xs"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          openEdit(l);
+                <div className="flex-1 space-y-3 px-3 pb-3">
+                  {items.map((l) => {
+                    const portalKey = portalKeyOf(l.source);
+                    const stale = isStale(l);
+                    const agentName = agentById.get(l.assigned_to ?? "") ?? null;
+                    return (
+                      <div
+                        key={l.id}
+                        draggable
+                        onDragStart={() => setDragId(l.id)}
+                        onDragEnd={() => {
+                          setDragId(null);
+                          setDragOverStage(null);
                         }}
+                        onClick={() => setDetailLead(l)}
+                        className={cn(
+                          "cursor-pointer rounded-xl bg-card p-3.5 ring-1 ring-border/60 transition hover:ring-primary/40",
+                          dragId === l.id && "opacity-40 ring-primary/60",
+                        )}
                       >
-                        Editează
-                      </Button>
-                    </div>
-                  ))}
+                        <div className="flex items-start justify-between gap-2">
+                          <p className="min-w-0 flex-1 truncate text-sm font-medium">{l.name}</p>
+                          {stale ? (
+                            <span
+                              className="inline-flex items-center gap-1 rounded-full bg-warning/15 px-1.5 py-0.5 text-[10px] font-medium text-warning-foreground"
+                              title="Fără activitate de peste o săptămână"
+                            >
+                              <Clock className="size-3" aria-hidden /> stagnat
+                            </span>
+                          ) : null}
+                        </div>
+
+                        {l.property_id ? (
+                          <p className="mt-1 truncate text-xs text-muted-foreground">
+                            {propertyById.get(l.property_id) ?? "Proprietate"}
+                          </p>
+                        ) : null}
+
+                        <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                          <span className="inline-flex max-w-40 items-center gap-1.5 rounded-full bg-muted px-2 py-0.5 text-[11px] text-muted-foreground">
+                            {portalKey ? (
+                              <PortalLogo portalId={portalKey} name={l.source ?? portalKey} size={14} />
+                            ) : null}
+                            <span className="truncate">{l.source ?? "sursă necunoscută"}</span>
+                          </span>
+                          {l.value ? (
+                            <span className="text-xs font-medium">{formatMoney(l.value)}</span>
+                          ) : null}
+                        </div>
+
+                        <div className="mt-3 flex items-center justify-between gap-2 text-xs text-muted-foreground">
+                          <span className="flex min-w-0 items-center gap-1.5">
+                            <UserAvatar name={agentName} className="size-6 text-[10px]" />
+                            <span className="truncate">{agentName ?? "Neasignat"}</span>
+                          </span>
+                          <span className="shrink-0">{relativeDays(l.last_interaction_at)}</span>
+                        </div>
+
+                        {l.next_followup_at ? (
+                          <p
+                            className={cn(
+                              "mt-2 text-xs",
+                              isOverdue(l) ? "font-medium text-destructive" : "text-muted-foreground",
+                            )}
+                          >
+                            Follow-up: {relativeDays(l.next_followup_at)}
+                          </p>
+                        ) : null}
+
+                        <button
+                          type="button"
+                          className="mt-2 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            openEdit(l);
+                          }}
+                        >
+                          Editează
+                        </button>
+                      </div>
+                    );
+                  })}
                   {items.length === 0 ? (
-                    <p className="px-1 py-6 text-center text-xs text-muted-foreground">Gol</p>
+                    <p className="rounded-xl border border-dashed border-border px-3 py-6 text-center text-xs text-muted-foreground">
+                      Nimic în „{leadStageLabels[stage]}”. Trage un lead aici.
+                    </p>
                   ) : null}
                 </div>
               </div>
@@ -762,36 +904,99 @@ function LeadsPage() {
         <SheetContent className="w-full overflow-y-auto sm:max-w-lg">
           {detailLead ? (
             <div className="space-y-5 px-1">
-              <SheetHeader>
+              <SheetHeader className="pb-0">
                 <SheetTitle>{detailLead.name}</SheetTitle>
               </SheetHeader>
-              <div className="flex flex-wrap items-center gap-2">
-                <StatusBadge tone={stageTone[detailLead.stage]}>{leadStageLabels[detailLead.stage]}</StatusBadge>
-                <span className="text-sm text-muted-foreground">{formatMoney(detailLead.value)}</span>
-              </div>
-              <div className="grid grid-cols-2 gap-3 text-sm">
-                <div><p className="text-xs text-muted-foreground">Telefon</p><p>{detailLead.phone ?? "—"}</p></div>
-                <div><p className="text-xs text-muted-foreground">Email</p><p>{detailLead.email ?? "—"}</p></div>
-                <div><p className="text-xs text-muted-foreground">Sursă</p><p>{detailLead.source ?? "—"}</p></div>
-                <div><p className="text-xs text-muted-foreground">Campanie</p><p>{detailLead.campaign ?? "—"}</p></div>
-                <div><p className="text-xs text-muted-foreground">Agent</p><p>{agentById.get(detailLead.assigned_to ?? "") ?? "Neasignat"}</p></div>
-                <div><p className="text-xs text-muted-foreground">Scor</p><p>{detailLead.score}</p></div>
-              </div>
-              {detailLead.notes ? <p className="rounded-lg bg-muted p-3 text-sm">{detailLead.notes}</p> : null}
 
-              <div className="flex flex-wrap gap-2">
-                {detailLead.phone ? (
-                  <Button size="sm" variant="outline" asChild>
-                    <a href={`tel:${detailLead.phone}`}><Phone className="size-4" /> Apel</a>
-                  </Button>
-                ) : null}
-                {detailLead.phone ? (
-                  <Button size="sm" variant="outline" asChild>
-                    <a href={`https://wa.me/${detailLead.phone.replace(/[^0-9]/g, "")}`} target="_blank" rel="noreferrer">
-                      <MessageCircle className="size-4" /> WhatsApp
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div className="flex flex-wrap items-center gap-2">
+                  <StatusBadge tone={stageTone[detailLead.stage]}>{leadStageLabels[detailLead.stage]}</StatusBadge>
+                  <span className="inline-flex max-w-40 items-center gap-1.5 rounded-full bg-muted px-2 py-0.5 text-[11px] text-muted-foreground">
+                    {portalKeyOf(detailLead.source) ? (
+                      <PortalLogo
+                        portalId={portalKeyOf(detailLead.source) as string}
+                        name={detailLead.source ?? ""}
+                        size={14}
+                      />
+                    ) : null}
+                    <span className="truncate">{detailLead.source ?? "sursă necunoscută"}</span>
+                  </span>
+                  {detailLead.value ? (
+                    <span className="text-sm font-medium">{formatMoney(detailLead.value)}</span>
+                  ) : null}
+                </div>
+                <div className="flex items-center gap-1">
+                  {detailLead.phone ? (
+                    <>
+                      <a
+                        href={`tel:${detailLead.phone}`}
+                        className="flex flex-col items-center gap-0.5 rounded-lg px-2 py-1 text-[11px] text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                      >
+                        <Phone className="size-4" aria-hidden /> Sună
+                      </a>
+                      <a
+                        href={`https://wa.me/${detailLead.phone.replace(/[^0-9]/g, "")}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="flex flex-col items-center gap-0.5 rounded-lg px-2 py-1 text-[11px] text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                      >
+                        <MessageCircle className="size-4" aria-hidden /> WhatsApp
+                      </a>
+                    </>
+                  ) : null}
+                  {detailLead.email ? (
+                    <a
+                      href={`mailto:${detailLead.email}`}
+                      className="flex flex-col items-center gap-0.5 rounded-lg px-2 py-1 text-[11px] text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                    >
+                      <Mail className="size-4" aria-hidden /> Email
                     </a>
-                  </Button>
-                ) : null}
+                  ) : null}
+                </div>
+              </div>
+
+              {detailLead.property_id ? (
+                <Link
+                  to="/app/properties/$id"
+                  params={{ id: detailLead.property_id }}
+                  className="flex items-center gap-3 rounded-xl bg-card p-3 ring-1 ring-border/60 transition hover:ring-primary/40"
+                >
+                  <PropertyThumb
+                    propertyId={detailLead.property_id}
+                    title={propertyById.get(detailLead.property_id) ?? "Proprietate"}
+                    cover={coverFor(detailLead.property_id)}
+                    className="size-14 rounded-lg"
+                  />
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate text-sm font-medium">
+                      {propertyById.get(detailLead.property_id) ?? "Proprietate"}
+                    </span>
+                    <span className="block text-xs text-muted-foreground">Proprietatea legată</span>
+                  </span>
+                  <ArrowRight className="size-4 shrink-0 text-muted-foreground" aria-hidden />
+                </Link>
+              ) : null}
+
+              <div className="grid grid-cols-2 gap-3 rounded-xl bg-card p-4 text-sm ring-1 ring-border/60">
+                <div><p className="text-xs text-muted-foreground">Telefon</p><p>{detailLead.phone ?? "—"}</p></div>
+                <div><p className="text-xs text-muted-foreground">Email</p><p className="truncate">{detailLead.email ?? "—"}</p></div>
+                <div><p className="text-xs text-muted-foreground">Campanie</p><p>{detailLead.campaign ?? "—"}</p></div>
+                <div><p className="text-xs text-muted-foreground">Scor</p><p>{detailLead.score}</p></div>
+                <div className="col-span-2">
+                  <p className="text-xs text-muted-foreground">Agent</p>
+                  <p className="flex items-center gap-2">
+                    <UserAvatar
+                      name={agentById.get(detailLead.assigned_to ?? "") ?? null}
+                      className="size-6 text-[10px]"
+                    />
+                    {agentById.get(detailLead.assigned_to ?? "") ?? "Neasignat"}
+                  </p>
+                </div>
+              </div>
+
+              {detailLead.notes ? <p className="rounded-xl bg-muted p-3 text-sm">{detailLead.notes}</p> : null}
+
+              <div className="flex flex-wrap items-center gap-2">
                 <Button size="sm" variant="outline" onClick={() => setActivityOpen(true)}>
                   <Plus className="size-4" /> Adaugă activitate
                 </Button>
@@ -834,27 +1039,31 @@ function LeadsPage() {
                 </TabsList>
 
                 <TabsContent value="history" className="mt-3">
-                  <ul className="space-y-2 text-sm">
-                    {(detailData?.events ?? []).map((ev) => (
-                      <li key={ev.id} className="rounded-lg border border-border p-2 text-xs">
-                        <p>
-                          {ev.from_stage ? `${leadStageLabels[ev.from_stage]} → ` : ""}
-                          {leadStageLabels[ev.to_stage]}
-                        </p>
-                        <p className="text-muted-foreground">{formatDateTime(ev.created_at)}</p>
-                        {ev.note ? <p className="mt-1 text-muted-foreground">{ev.note}</p> : null}
-                      </li>
-                    ))}
-                    {(detailData?.activities ?? []).map((a) => (
-                      <li key={a.id} className="rounded-lg border border-border p-2 text-xs">
-                        <p className="font-medium">{a.title}</p>
-                        <p className="text-muted-foreground">{formatDateTime(a.starts_at)}</p>
-                      </li>
-                    ))}
-                    {(detailData?.events ?? []).length === 0 && (detailData?.activities ?? []).length === 0 ? (
-                      <p className="text-xs text-muted-foreground">Fără evenimente încă.</p>
-                    ) : null}
-                  </ul>
+                  {timelineItems.length === 0 ? (
+                    <p className="text-xs text-muted-foreground">Fără evenimente încă.</p>
+                  ) : (
+                    <ul className="space-y-3">
+                      {timelineItems.map((item) => {
+                        const Icon = item.icon;
+                        return (
+                          <li key={item.id} className="flex gap-3">
+                            <span className="w-24 shrink-0 pt-0.5 text-xs tabular-nums text-muted-foreground">
+                              {formatDateTime(item.at)}
+                            </span>
+                            <span className="mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                              <Icon className="size-3.5" aria-hidden />
+                            </span>
+                            <span className="min-w-0">
+                              <span className="block text-sm">{item.label}</span>
+                              {item.note ? (
+                                <span className="block text-xs text-muted-foreground">{item.note}</span>
+                              ) : null}
+                            </span>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  )}
                 </TabsContent>
 
                 <TabsContent value="messages" className="mt-3">

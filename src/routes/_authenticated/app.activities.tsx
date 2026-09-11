@@ -82,6 +82,10 @@ function startOfWeek(d: Date) {
   return x;
 }
 
+function sameDayAsToday(day: string) {
+  return new Date(day).toDateString() === new Date().toDateString();
+}
+
 function ActivitiesPage() {
   const { new: openNew } = Route.useSearch();
   const { data: user } = useCurrentUser();
@@ -216,14 +220,24 @@ function ActivitiesPage() {
     return true;
   });
 
+  const nowMs = now.getTime();
+  /** Restanțele sunt afișate separat, sus; restul rămâne agendă pe zile. */
+  const overdueRows = rows.filter(
+    (a) => a.status === "planned" && new Date(a.starts_at).getTime() < nowMs,
+  );
+  const upcomingRows = rows.filter(
+    (a) => !(a.status === "planned" && new Date(a.starts_at).getTime() < nowMs),
+  );
+
   const grouped = useMemo(() => {
     const map = new Map<string, Activity[]>();
-    for (const a of rows) {
+    for (const a of upcomingRows) {
       const key = new Date(a.starts_at).toDateString();
       if (!map.has(key)) map.set(key, []);
       map.get(key)!.push(a);
     }
     return Array.from(map.entries());
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [rows]);
 
   const toggleSelect = (id: string) => {
@@ -247,6 +261,108 @@ function ActivitiesPage() {
         durata: a.duration_minutes,
         responsabil: profileById.get(a.assigned_to ?? "") ?? "",
       })),
+    );
+  };
+
+  /** Un rând de agendă: ora pe stânga, pictogramă după tip, titlu și context. */
+  const renderRow = (a: Activity) => {
+    const Icon = kindIcon[a.kind] ?? ListChecks;
+    const overdue = a.status === "planned" && new Date(a.starts_at) < now;
+    const context = [
+      a.contact_id ? `Contact: ${contactById.get(a.contact_id) ?? "—"}` : null,
+      a.property_id ? `Proprietate: ${propertyById.get(a.property_id) ?? "—"}` : null,
+      a.lead_id ? `Lead: ${leadById.get(a.lead_id) ?? "—"}` : null,
+      a.request_id ? `Cerere: ${requestById.get(a.request_id) ?? "—"}` : null,
+    ].filter(Boolean) as string[];
+    return (
+      <li key={a.id} className="flex items-start gap-3 px-5 py-3.5 text-sm">
+        <Checkbox
+          className="mt-1"
+          checked={selected.has(a.id)}
+          onCheckedChange={() => toggleSelect(a.id)}
+        />
+        <div className="w-24 shrink-0 pt-0.5 text-xs tabular-nums">
+          <p className={overdue ? "font-medium text-destructive" : "text-muted-foreground"}>
+            {new Date(a.starts_at).toLocaleTimeString("ro-RO", { hour: "2-digit", minute: "2-digit" })}
+          </p>
+          <p className="text-[11px] text-muted-foreground">{a.duration_minutes} min</p>
+        </div>
+        <span
+          className={`mt-0.5 grid size-8 shrink-0 place-items-center rounded-lg ${
+            overdue ? "bg-destructive/10 text-destructive" : "bg-primary/10 text-primary"
+          }`}
+        >
+          <Icon className="size-4" aria-hidden />
+        </span>
+        <div className="min-w-0 flex-1">
+          <p
+            className={
+              a.status === "done" ? "truncate text-muted-foreground line-through" : "truncate font-medium"
+            }
+          >
+            {a.title}
+          </p>
+          {a.description ? (
+            <p className="truncate text-xs text-muted-foreground">{a.description}</p>
+          ) : null}
+          <p className="mt-0.5 truncate text-xs text-muted-foreground">
+            {[activityKindLabels[a.kind], ...context, profileById.get(a.assigned_to ?? "") ?? null]
+              .filter(Boolean)
+              .join(" · ")}
+          </p>
+        </div>
+        <StatusBadge tone={activityStatusTone[a.status]}>{activityStatusLabels[a.status]}</StatusBadge>
+        <div className="flex items-center gap-0.5">
+          {a.status !== "done" ? (
+            <Button
+              size="icon"
+              variant="ghost"
+              title="Finalizează"
+              onClick={() => updateStatus.mutate({ id: a.id, status: "done" })}
+            >
+              <CheckCircle2 className="size-4" />
+            </Button>
+          ) : null}
+          {a.status !== "cancelled" ? (
+            <Button
+              size="icon"
+              variant="ghost"
+              title="Anulează"
+              onClick={() => updateStatus.mutate({ id: a.id, status: "cancelled" })}
+            >
+              <XCircle className="size-4" />
+            </Button>
+          ) : null}
+          <Button
+            size="icon"
+            variant="ghost"
+            title="Reprogramează"
+            onClick={() => {
+              setReschedule(a);
+              setRescheduleValue(a.starts_at.slice(0, 16));
+            }}
+          >
+            <Pencil className="size-4" />
+          </Button>
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button size="icon" variant="ghost" title="Șterge">
+                <Trash2 className="size-4 text-destructive" />
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Ștergi activitatea?</AlertDialogTitle>
+                <AlertDialogDescription>„{a.title}” va fi ștearsă definitiv.</AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Anulează</AlertDialogCancel>
+                <AlertDialogAction onClick={() => removeActivity.mutate(a.id)}>Șterge</AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        </div>
+      </li>
     );
   };
 
@@ -332,87 +448,30 @@ function ActivitiesPage() {
             action={<Button size="sm" onClick={() => setDialogOpen(true)}>Adaugă activitate</Button>}
           />
         ) : (
-          <div className="divide-y divide-border">
-            {grouped.map(([day, items]) => {
-              const isOverdueDay = new Date(day) < startOfDay(now);
-              return (
-                <div key={day}>
-                  <div className={`px-4 py-2 text-xs font-semibold uppercase tracking-wide ${isOverdueDay ? "bg-destructive/10 text-destructive" : "bg-muted text-muted-foreground"}`}>
-                    {isOverdueDay ? "Restante · " : ""}
-                    {new Date(day).toLocaleDateString("ro-RO", { weekday: "long", day: "numeric", month: "long" })}
-                  </div>
-                  <ul className="divide-y divide-border">
-                    {items.map((a) => {
-                      const Icon = kindIcon[a.kind] ?? ListChecks;
-                      const overdue = a.status === "planned" && new Date(a.starts_at) < now;
-                      return (
-                        <li key={a.id} className="flex flex-wrap items-center gap-3 px-4 py-3 text-sm">
-                          <Checkbox checked={selected.has(a.id)} onCheckedChange={() => toggleSelect(a.id)} />
-                          <Icon className="size-4 shrink-0 text-muted-foreground" />
-                          <div className="min-w-0 flex-1">
-                            <p className={a.status === "done" ? "truncate text-muted-foreground line-through" : "truncate font-medium"}>
-                              {a.title}
-                            </p>
-                            {a.description ? <p className="truncate text-xs text-muted-foreground">{a.description}</p> : null}
-                            <div className="mt-1 flex flex-wrap gap-2 text-xs text-muted-foreground">
-                              {a.contact_id ? <span>Contact: {contactById.get(a.contact_id) ?? "—"}</span> : null}
-                              {a.property_id ? <span>Proprietate: {propertyById.get(a.property_id) ?? "—"}</span> : null}
-                              {a.lead_id ? <span>Lead: {leadById.get(a.lead_id) ?? "—"}</span> : null}
-                              {a.request_id ? <span>Cerere: {requestById.get(a.request_id) ?? "—"}</span> : null}
-                            </div>
-                          </div>
-                          <span className="text-xs text-muted-foreground">{profileById.get(a.assigned_to ?? "") ?? "—"}</span>
-                          <span className={`text-xs ${overdue ? "font-medium text-destructive" : "text-muted-foreground"}`}>
-                            {formatDateTime(a.starts_at)} · {a.duration_minutes}min
-                          </span>
-                          <StatusBadge tone={activityStatusTone[a.status]}>{activityStatusLabels[a.status]}</StatusBadge>
-                          <div className="flex items-center gap-1">
-                            {a.status !== "done" ? (
-                              <Button size="icon" variant="ghost" title="Finalizează" onClick={() => updateStatus.mutate({ id: a.id, status: "done" })}>
-                                <CheckCircle2 className="size-4" />
-                              </Button>
-                            ) : null}
-                            {a.status !== "cancelled" ? (
-                              <Button size="icon" variant="ghost" title="Anulează" onClick={() => updateStatus.mutate({ id: a.id, status: "cancelled" })}>
-                                <XCircle className="size-4" />
-                              </Button>
-                            ) : null}
-                            <Button
-                              size="icon"
-                              variant="ghost"
-                              title="Reprogramează"
-                              onClick={() => {
-                                setReschedule(a);
-                                setRescheduleValue(a.starts_at.slice(0, 16));
-                              }}
-                            >
-                              <Pencil className="size-4" />
-                            </Button>
-                            <AlertDialog>
-                              <AlertDialogTrigger asChild>
-                                <Button size="icon" variant="ghost" title="Șterge">
-                                  <Trash2 className="size-4 text-destructive" />
-                                </Button>
-                              </AlertDialogTrigger>
-                              <AlertDialogContent>
-                                <AlertDialogHeader>
-                                  <AlertDialogTitle>Ștergi activitatea?</AlertDialogTitle>
-                                  <AlertDialogDescription>„{a.title}” va fi ștearsă definitiv.</AlertDialogDescription>
-                                </AlertDialogHeader>
-                                <AlertDialogFooter>
-                                  <AlertDialogCancel>Anulează</AlertDialogCancel>
-                                  <AlertDialogAction onClick={() => removeActivity.mutate(a.id)}>Șterge</AlertDialogAction>
-                                </AlertDialogFooter>
-                              </AlertDialogContent>
-                            </AlertDialog>
-                          </div>
-                        </li>
-                      );
-                    })}
-                  </ul>
+          <div className="divide-y divide-border/70">
+            {overdueRows.length > 0 ? (
+              <div>
+                <div className="flex items-center justify-between gap-2 bg-destructive/10 px-5 py-2.5 text-xs font-semibold tracking-wide text-destructive uppercase">
+                  <span>Restante</span>
+                  <span>{overdueRows.length}</span>
                 </div>
-              );
-            })}
+                <ul className="divide-y divide-border/70">{overdueRows.map(renderRow)}</ul>
+              </div>
+            ) : null}
+            {grouped.map(([day, items]) => (
+              <div key={day}>
+                <div className="bg-muted/60 px-5 py-2.5 text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+                  {sameDayAsToday(day)
+                    ? "Azi"
+                    : new Date(day).toLocaleDateString("ro-RO", {
+                        weekday: "long",
+                        day: "numeric",
+                        month: "long",
+                      })}
+                </div>
+                <ul className="divide-y divide-border/70">{items.map(renderRow)}</ul>
+              </div>
+            ))}
           </div>
         )}
       </div>
