@@ -407,8 +407,8 @@ function ProposalList({
   return (
     <ul className="panel divide-y divide-border overflow-hidden">
       {proposals.map((p) => (
-        <li key={p.id} className="flex flex-wrap items-center gap-3 px-4 py-3 text-sm">
-          <div className="size-12 shrink-0 overflow-hidden rounded-lg bg-muted">
+        <li key={p.id} className="flex flex-wrap items-center gap-3 px-4 py-3.5 text-sm">
+          <div className="size-14 shrink-0 overflow-hidden rounded-xl bg-muted">
             {p.coverUrl ? (
               <img src={p.coverUrl} alt="" className="size-full object-cover" loading="lazy" />
             ) : null}
@@ -416,16 +416,25 @@ function ProposalList({
           <div className="min-w-0 flex-1">
             <p className="truncate font-medium">{p.propertyTitle}</p>
             <p className="truncate text-xs text-muted-foreground">
+              Client: <span className="text-foreground">{p.clientLabel}</span>
+            </p>
+            <p className="mt-0.5 flex items-center gap-1.5 truncate text-[11px] text-muted-foreground">
+              <Building2 className="size-3 shrink-0" />
               {perspective === "incoming"
-                ? `${p.requesterAgencyName}${p.requesterAgentName ? ` · ${p.requesterAgentName}` : ""} → client: ${p.clientLabel}`
-                : `${p.ownerAgencyName} · client propus: ${p.clientLabel}`}
+                ? `${p.requesterAgencyName}${p.requesterAgentName ? ` · ${p.requesterAgentName}` : ""}`
+                : p.ownerAgencyName}
+              {" · "}
+              {formatDateTime(p.updatedAt)}
             </p>
           </div>
           {p.collabCommissionPercent !== null ? (
-            <StatusBadge tone="success">{p.collabCommissionPercent}%</StatusBadge>
+            <span className="rounded-full bg-gold px-2.5 py-0.5 text-xs font-semibold text-gold-foreground">
+              {p.collabCommissionPercent}%
+            </span>
           ) : null}
-          <StatusBadge tone={statusTone[p.status]}>{COLLAB_STATUS_LABELS[p.status]}</StatusBadge>
-          <span className="text-xs text-muted-foreground">{formatDateTime(p.updatedAt)}</span>
+          <StatusBadge tone={statusTone[p.status]} dot>
+            {COLLAB_STATUS_LABELS[p.status]}
+          </StatusBadge>
           <Button size="sm" variant="outline" onClick={() => onOpen(p.id)}>
             <MessageCircle className="size-4" /> Mesaje ({p.messageCount})
           </Button>
