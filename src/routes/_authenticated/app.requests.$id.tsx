@@ -616,14 +616,14 @@ ${materialSignature(brandingFromOrg(user?.organization))}`;
                         Vizionare
                       </Button>
                       {contact?.phone ? (
-                        <Button variant="outline" size="icon-sm" asChild title="Trimite pe WhatsApp">
+                        <Button variant="outline" size="icon" asChild title="Trimite pe WhatsApp">
                           <a href={whatsappHref(contact.whatsapp ?? contact.phone ?? "")} target="_blank" rel="noreferrer" aria-label="Trimite pe WhatsApp">
                             <MessageCircle className="size-4" />
                           </a>
                         </Button>
                       ) : null}
                       {contact?.email ? (
-                        <Button variant="outline" size="icon-sm" asChild title="Trimite pe email">
+                        <Button variant="outline" size="icon" asChild title="Trimite pe email">
                           <a href={`mailto:${contact.email}?subject=${encodeURIComponent(property.title)}&body=${encodeURIComponent(propertyMessage(property))}`} aria-label="Trimite pe email">
                             <Mail className="size-4" />
                           </a>
