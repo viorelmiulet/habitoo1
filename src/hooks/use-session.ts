@@ -126,7 +126,9 @@ export async function fetchCurrentUser(): Promise<CurrentUser | null> {
         ? (blockedRaw as OrgBlockReason)
         : null,
     registration: registration ?? null,
+    impersonation: null,
   };
+
 }
 
 export function useCurrentUser() {
