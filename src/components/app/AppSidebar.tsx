@@ -158,6 +158,7 @@ export function AppSidebar({
   user,
   onSignOut,
   badges,
+  plan,
 }: {
   groups: NavGroup[];
   organizationName: string;
@@ -172,7 +173,10 @@ export function AppSidebar({
   onSignOut?: () => void;
   /** Contoare afișate lângă itemi (cheie = ruta). */
   badges?: Partial<Record<string, number>>;
+  /** Planul agenției și consumul de locuri, pentru cardul din josul meniului. */
+  plan?: { label: string; used: number; limit: number };
 }) {
+
   const isPlatform = variant === "platform";
   const homeTo: LinkProps["to"] = isPlatform ? "/superadmin" : "/app";
   const displayName = user?.profile?.full_name || user?.email || "Utilizator";
