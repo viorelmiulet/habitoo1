@@ -3,6 +3,7 @@
 // fotografiile marcate ca publicabile și neconfidențiale.
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
+import { brandingFromOrg, type MaterialBranding } from "@/lib/materials";
 
 export type PublicOfferImage = { id: string; alt: string | null; isPrimary: boolean };
 
@@ -30,6 +31,8 @@ export type PublicOffer = {
   utilities: string[];
   images: PublicOfferImage[];
   agencyName: string | null;
+  /** Identitatea vizuală a agenției, aplicată pe materialele către clienți. */
+  branding: MaterialBranding;
   updatedAt: string;
 };
 
@@ -58,8 +61,23 @@ export const getPublicOffer = createServerFn({ method: "GET" })
         .eq("include_in_publish", true)
         .eq("is_confidential", false)
         .order("position", { ascending: true }),
-      supabaseAdmin.from("organizations").select("name").eq("id", property.organization_id).maybeSingle(),
+      supabaseAdmin
+        .from("organizations")
+        .select(
+          "name, phone, email, logo_path, material_accent_color, material_phone, material_email, material_website, material_address, material_show_habitoo",
+        )
+        .eq("id", property.organization_id)
+        .maybeSingle(),
     ]);
+
+    // Bucket privat: destinatarii primesc un link semnat, regenerat la fiecare afișare.
+    let logoUrl: string | null = null;
+    if (org.data?.logo_path) {
+      const signed = await supabaseAdmin.storage
+        .from("agency-logos")
+        .createSignedUrl(org.data.logo_path, 7 * 24 * 3600);
+      logoUrl = signed.data?.signedUrl ?? null;
+    }
 
     return {
       id: property.id,
@@ -87,6 +105,7 @@ export const getPublicOffer = createServerFn({ method: "GET" })
         .sort((a, b) => (a.is_primary === b.is_primary ? 0 : a.is_primary ? -1 : 1))
         .map((img) => ({ id: img.id, alt: img.alt, isPrimary: Boolean(img.is_primary) })),
       agencyName: org.data?.name ?? null,
+      branding: brandingFromOrg(org.data, logoUrl),
       updatedAt: property.updated_at,
     };
   });
