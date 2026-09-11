@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -31,10 +31,22 @@ import { formatDate } from "@/lib/format";
 import { roleLabels } from "@/lib/labels";
 
 export const Route = createFileRoute("/_authenticated/app/settings")({
+  validateSearch: (
+    search: Record<string, unknown>,
+  ): { tab?: "profile" | "access" | "agency" | "branding" | "team" | "integrations" | "portals"; request?: string } => {
+    const tabs = ["profile", "access", "agency", "branding", "team", "integrations", "portals"] as const;
+    const tab = tabs.find((value) => value === search.tab);
+    return {
+      ...(tab ? { tab } : {}),
+      ...(typeof search.request === "string" ? { request: search.request } : {}),
+    };
+  },
   component: SettingsPage,
 });
 
 function SettingsPage() {
+  const { tab = "profile", request } = Route.useSearch();
+  const navigate = useNavigate({ from: Route.fullPath });
   const { data: user } = useCurrentUser();
   const queryClient = useQueryClient();
 
@@ -143,7 +155,19 @@ function SettingsPage() {
         description="Profilul tău, datele agenției și echipa care are acces la CRM."
       />
 
-      <Tabs defaultValue="profile">
+      <Tabs
+        value={tab}
+        onValueChange={(value) => {
+          void navigate({
+            search: (previous) => ({
+              ...previous,
+              tab: value as typeof tab,
+              request: value === "access" ? previous.request : undefined,
+            }),
+            replace: true,
+          });
+        }}
+      >
         <TabsList>
           <TabsTrigger value="profile">Profil</TabsTrigger>
           <TabsTrigger value="access">Acces la cont</TabsTrigger>
@@ -155,7 +179,7 @@ function SettingsPage() {
         </TabsList>
 
         <TabsContent value="access">
-          <AccountAccessCard />
+          <AccountAccessCard highlightedRequestId={request} />
         </TabsContent>
 
         <TabsContent value="profile">

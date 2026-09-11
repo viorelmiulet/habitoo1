@@ -1,5 +1,6 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
+import { useEffect, useRef, useState } from "react";
 import { Check, ShieldQuestion, X } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -62,16 +63,26 @@ export function ActiveAccessBanner({ enabled }: { enabled: boolean }) {
  * Transparență completă pentru utilizator: cererile primite, sesiunea activă și
  * istoricul acceselor la contul lui.
  */
-export function AccountAccessCard() {
+export function AccountAccessCard({ highlightedRequestId }: { highlightedRequestId?: string }) {
   const access = useMyAccountAccess();
   const queryClient = useQueryClient();
   const respond = useServerFn(respondImpersonation);
   const revoke = useServerFn(revokeImpersonation);
+  const highlightedRef = useRef<HTMLLIElement>(null);
+  const [isHighlighted, setIsHighlighted] = useState(Boolean(highlightedRequestId));
 
   const rows = access.data ?? [];
   const pending = rows.filter((r) => r.status === "pending");
   const live = rows.filter(isLive);
   const history = rows.filter((r) => r.status !== "pending" && !isLive(r));
+
+  useEffect(() => {
+    if (!highlightedRequestId || access.isLoading) return;
+    setIsHighlighted(true);
+    highlightedRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+    const timeout = window.setTimeout(() => setIsHighlighted(false), 3_000);
+    return () => window.clearTimeout(timeout);
+  }, [access.isLoading, highlightedRequestId]);
 
   const refresh = () => queryClient.invalidateQueries();
 
@@ -103,7 +114,13 @@ export function AccountAccessCard() {
         ) : (
           <ul className="mt-4 space-y-3">
             {pending.map((r) => (
-              <li key={r.id} className="rounded-xl border border-warning/40 bg-warning/10 p-3">
+              <li
+                key={r.id}
+                ref={r.id === highlightedRequestId ? highlightedRef : undefined}
+                className={`rounded-xl border border-warning/40 bg-warning/10 p-3 transition-shadow duration-500 ${
+                  r.id === highlightedRequestId && isHighlighted ? "ring-2 ring-primary ring-offset-2" : ""
+                }`}
+              >
                 <p className="text-sm font-medium">
                   {r.superadmin_name || "Superadmin Habitoo"}{" "}
                   <span className="font-normal text-muted-foreground">

@@ -157,7 +157,7 @@ export const requestImpersonation = createServerFn({ method: "POST" })
         const base = `https://crm.habitoo.ro/acces-cont?id=${String(id)}&token=${approveToken}`;
         const element = React.createElement(ImpersonationRequestEmail, {
           siteName: "Habitoo CRM",
-          appUrl: "https://crm.habitoo.ro/app/settings",
+          appUrl: `https://crm.habitoo.ro/app/settings?tab=access&request=${String(id)}`,
           approveUrl: `${base}&actiune=aprob`,
           rejectUrl: `${base}&actiune=resping`,
           fullName: target.full_name ?? undefined,
