@@ -70,6 +70,9 @@ export function PortalsCard({ organizationId }: { organizationId: string }) {
   const [accountId, setAccountId] = useState<Record<string, string>>({});
   const [credential, setCredential] = useState<Record<string, string>>({});
   const [endpoint, setEndpoint] = useState<Record<string, string>>({});
+  // Credențialele rămân mascate implicit; dezvăluirea se face la cerere, per câmp.
+  const [revealed, setRevealed] = useState<Record<string, boolean>>({});
+
   const [keyLabel, setKeyLabel] = useState<Record<string, string>>({});
   const [freshKey, setFreshKey] = useState<{ portalId: string; key: string } | null>(null);
   const [confirmDisconnect, setConfirmDisconnect] = useState<string | null>(null);
