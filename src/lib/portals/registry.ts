@@ -219,6 +219,42 @@ export const PORTALS: PortalDefinition[] = [
       "Publicarea este PUSH direct, idempotentă după external_id (derivat din identificatorul intern al ofertei). Retragerea arhivează anunțul la Imospot, nu îl șterge definitiv, iar o nouă publicare îl readuce live. Cerințe obligatorii verificate înainte de trimitere: titlu de minimum 8 caractere, descriere de minimum 60 caractere, preț întreg pozitiv, telefon de contact, județ și localitate, minimum o imagine publicabilă. O proprietate cu ambele tranzacții active generează două anunțuri separate (vânzare și închiriere). Promovările plătite nu sunt trimise din Habitoo.",
   },
   {
+    id: "oferteimobiliare",
+    display_name: "OferteImobiliare.ro",
+    description:
+      "OferteImobiliare (Powered by ImmoFlux) expune un API REST: Habitoo trimite direct anunțul cu id-ul de agenție și parola primite de agenție de la portal.",
+    logo: "OI",
+    status: "available",
+    directions: ["habitoo_to_portal"],
+    // Credențialele sunt EMISE DE PORTAL pentru contul agenției; Habitoo le salvează.
+    authentication: ["basic_auth"],
+    // Nu declarăm `withdraw_listing`: API-ul portalului nu are endpoint de retragere.
+    capabilities: ["test_connection", "publish_listing", "update_listing", "sync", "fetch_listings"],
+    configuration_schema: {
+      fields: [
+        {
+          key: "agency_id",
+          label: "Id agenție OferteImobiliare",
+          help: "Id-ul agenției primit de la OferteImobiliare.ro. Împreună cu parola formează autentificarea Basic.",
+          placeholder: "idagentie",
+          secret: true,
+          target: "credentials",
+        },
+        {
+          key: "password",
+          label: "Parola agenției",
+          help: "Parola primită de la OferteImobiliare.ro. Se salvează criptat și nu se afișează niciodată.",
+          secret: true,
+          target: "credentials",
+        },
+      ],
+    },
+    website: "https://oferteimobiliare.ro",
+    docs: "https://oferteimobiliare.ro/integrare",
+    notes:
+      "Publicarea este PUSH direct pe POST /property, idempotentă după identificatorul intern al ofertei (a doua trimitere actualizează anunțul). Codurile de utilități, finisaje și dotări sunt taxonomia numerică IMMOFLUX; etichetele Habitoo fără cod documentat nu se trimit și apar ca avertisment. Locația se trimite ca id de județ, oraș și zonă din nomenclatoarele portalului (cache o săptămână) — fără potrivirea județului și a localității anunțul nu se trimite. LIMITARE: API-ul nu are endpoint de retragere sau ștergere, deci debifarea portalului în Habitoo nu retrage anunțul; dezactivarea se face din contul agenției pe OferteImobiliare. O proprietate cu ambele tranzacții active generează două anunțuri separate (vânzare și închiriere).",
+  },
+  {
     id: "homepitch",
     display_name: "HomePitch.ro",
     description:
