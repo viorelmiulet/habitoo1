@@ -513,13 +513,6 @@ function UsersPage() {
             </SheetDescription>
           </SheetHeader>
 
-          <DialogHeader>
-            <DialogTitle>Realocă proprietăți și lead-uri</DialogTitle>
-            <DialogDescription>
-              Mută tot ce este asignat unui utilizator (proprietăți, lead-uri, activități, cereri,
-              contacte, obiective) către un coleg din aceeași agenție. Nu se șterge nimeni.
-            </DialogDescription>
-          </DialogHeader>
           <div className="grid gap-3">
             <div className="grid gap-1.5">
               <Label>De la</Label>
