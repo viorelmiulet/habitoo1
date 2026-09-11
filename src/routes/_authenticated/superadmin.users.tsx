@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
-import { ArrowRightLeft, Pencil, Search, Trash2, Users, X } from "lucide-react";
+import { ArrowRightLeft, KeyRound, LogIn, Pencil, Search, Trash2, Users, X } from "lucide-react";
 import { toast } from "sonner";
 import { toastError } from "@/lib/errors";
 import { PageHeader } from "@/components/app/PageHeader";
@@ -48,6 +48,10 @@ import {
   updatePlatformUser,
   type PlatformUser,
 } from "@/lib/superadmin-users.functions";
+import { ImpersonationRequestDialog } from "@/components/app/ImpersonationRequestDialog";
+import { listMyImpersonationRequests } from "@/lib/impersonation.functions";
+import { setImpersonationId } from "@/lib/impersonation-client";
+import { useNavigate } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/_authenticated/superadmin/users")({
   component: UsersPage,
@@ -71,6 +75,28 @@ function workloadText(w: Record<string, number>) {
 
 function UsersPage() {
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
+  const fetchMyRequests = useServerFn(listMyImpersonationRequests);
+  const myRequests = useQuery({
+    queryKey: ["impersonation-requests"],
+    queryFn: () => fetchMyRequests({}),
+    refetchInterval: 60_000,
+  });
+  const [accessTarget, setAccessTarget] = useState<PlatformUser | null>(null);
+  const liveSessionFor = (userId: string) =>
+    (myRequests.data ?? []).find(
+      (r) =>
+        r.target_user_id === userId &&
+        r.status === "approved" &&
+        new Date(r.expires_at).getTime() > Date.now(),
+    ) ?? null;
+  const pendingFor = (userId: string) =>
+    (myRequests.data ?? []).some((r) => r.target_user_id === userId && r.status === "pending");
+  const enterAccount = async (requestId: string) => {
+    setImpersonationId(requestId);
+    await queryClient.invalidateQueries();
+    void navigate({ to: "/app" });
+  };
   const fetchUsers = useServerFn(listPlatformUsers);
   const fetchWorkload = useServerFn(getUserWorkload);
   const saveUser = useServerFn(updatePlatformUser);
@@ -380,6 +406,30 @@ function UsersPage() {
                   >
                     {u.is_active ? "Dezactivează" : "Reactivează"}
                   </Button>
+                  {u.roles.includes("superadmin") ? null : liveSessionFor(u.id) ? (
+                    <Button
+                      size="sm"
+                      onClick={() => void enterAccount(liveSessionFor(u.id)!.id)}
+                      title="Accesul a fost aprobat de utilizator"
+                    >
+                      <LogIn className="size-4" /> Intră în cont
+                    </Button>
+                  ) : (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      disabled={pendingFor(u.id)}
+                      onClick={() => setAccessTarget(u)}
+                      title={
+                        pendingFor(u.id)
+                          ? "Cerere trimisă, în așteptarea acordului utilizatorului"
+                          : "Solicită acces temporar la cont"
+                      }
+                    >
+                      <KeyRound className="size-4" />
+                      <span className="sr-only">Solicită acces</span>
+                    </Button>
+                  )}
                   <Button
                     size="sm"
                     variant="outline"
@@ -396,6 +446,13 @@ function UsersPage() {
           </ul>
         )}
       </div>
+
+      <ImpersonationRequestDialog
+        open={accessTarget !== null}
+        onOpenChange={(o) => setAccessTarget(o ? accessTarget : null)}
+        targetUserId={accessTarget?.id ?? null}
+        targetLabel={accessTarget?.full_name || accessTarget?.email || "Utilizatorul"}
+      />
 
       {/* Editare cont */}
       <Dialog open={editing !== null} onOpenChange={(o) => !o && setEditing(null)}>

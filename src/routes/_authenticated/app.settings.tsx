@@ -14,6 +14,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { AccountAccessCard } from "@/components/app/AccountAccessCard";
 import { supabase } from "@/integrations/supabase/client";
 import { UserAvatar } from "@/components/app/UserAvatar";
 import {
@@ -145,12 +146,17 @@ function SettingsPage() {
       <Tabs defaultValue="profile">
         <TabsList>
           <TabsTrigger value="profile">Profil</TabsTrigger>
+          <TabsTrigger value="access">Acces la cont</TabsTrigger>
           {user?.isAdmin ? <TabsTrigger value="agency">Agenție</TabsTrigger> : null}
           {user?.isAdmin ? <TabsTrigger value="branding">Logo &amp; watermark</TabsTrigger> : null}
           {user?.isAdmin ? <TabsTrigger value="team">Echipă ({team.length})</TabsTrigger> : null}
           {user?.isAdmin ? <TabsTrigger value="integrations">Integrări</TabsTrigger> : null}
           {user?.isAdmin ? <TabsTrigger value="portals">Portaluri</TabsTrigger> : null}
         </TabsList>
+
+        <TabsContent value="access">
+          <AccountAccessCard />
+        </TabsContent>
 
         <TabsContent value="profile">
           <form

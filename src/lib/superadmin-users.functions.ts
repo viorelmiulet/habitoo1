@@ -4,6 +4,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { assertNoActiveImpersonation } from "@/lib/impersonation.functions";
 
 type AuthContext = {
   supabase: {
@@ -86,6 +87,7 @@ export const getUserWorkload = createServerFn({ method: "POST" })
   .validator((data: unknown) => z.object({ userId: z.string().uuid() }).parse(data))
   .handler(async ({ data, context }): Promise<Record<string, number>> => {
     const actorId = await assertSuperadmin(context as AuthContext);
+    await assertNoActiveImpersonation(actorId);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: result, error } = await supabaseAdmin.rpc("superadmin_user_workload", {
       _user: data.userId,
@@ -111,6 +113,7 @@ export const updatePlatformUser = createServerFn({ method: "POST" })
   .validator((data: unknown) => profilePatch.parse(data))
   .handler(async ({ data, context }): Promise<{ ok: true }> => {
     const actorId = await assertSuperadmin(context as AuthContext);
+    await assertNoActiveImpersonation(actorId);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
     const { data: before, error: beforeError } = await supabaseAdmin
@@ -207,6 +210,7 @@ export const setPlatformUserActive = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }): Promise<{ ok: true }> => {
     const actorId = await assertSuperadmin(context as AuthContext);
+    await assertNoActiveImpersonation(actorId);
     if (data.userId === actorId && !data.isActive) {
       throw new Error("Nu îți poți dezactiva propriul cont de superadmin.");
     }
@@ -246,6 +250,7 @@ export const reassignUserData = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }): Promise<Record<string, number>> => {
     const actorId = await assertSuperadmin(context as AuthContext);
+    await assertNoActiveImpersonation(actorId);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: result, error } = await supabaseAdmin.rpc("superadmin_reassign_user_data", {
       _from: data.fromUserId,
@@ -278,6 +283,7 @@ export const deletePlatformUser = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }): Promise<DeleteUserResult> => {
     const actorId = await assertSuperadmin(context as AuthContext);
+    await assertNoActiveImpersonation(actorId);
     if (data.userId === actorId) throw new Error("Nu îți poți șterge propriul cont.");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 

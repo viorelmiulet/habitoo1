@@ -908,6 +908,57 @@ export type Database = {
           },
         ]
       }
+      impersonation_requests: {
+        Row: {
+          created_at: string
+          expires_at: string
+          id: string
+          last_used_at: string | null
+          mode: string
+          reason: string
+          requested_at: string
+          responded_at: string | null
+          revoked_at: string | null
+          revoked_by: string | null
+          status: string
+          superadmin_id: string
+          target_user_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          expires_at?: string
+          id?: string
+          last_used_at?: string | null
+          mode?: string
+          reason: string
+          requested_at?: string
+          responded_at?: string | null
+          revoked_at?: string | null
+          revoked_by?: string | null
+          status?: string
+          superadmin_id: string
+          target_user_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string
+          id?: string
+          last_used_at?: string | null
+          mode?: string
+          reason?: string
+          requested_at?: string
+          responded_at?: string | null
+          revoked_at?: string | null
+          revoked_by?: string | null
+          status?: string
+          superadmin_id?: string
+          target_user_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       lead_events: {
         Row: {
           actor_id: string | null
@@ -3278,6 +3329,17 @@ export type Database = {
         }
         Returns: boolean
       }
+      impersonation_expire_stale: { Args: never; Returns: undefined }
+      impersonation_request_create: {
+        Args: { _reason: string; _target: string }
+        Returns: string
+      }
+      impersonation_respond: {
+        Args: { _accept: boolean; _id: string }
+        Returns: undefined
+      }
+      impersonation_revoke: { Args: { _id: string }; Returns: undefined }
+      impersonation_target: { Args: { _id: string }; Returns: string }
       is_org_admin: { Args: never; Returns: boolean }
       is_superadmin: { Args: never; Returns: boolean }
       mail_rate_limit_hit: {
