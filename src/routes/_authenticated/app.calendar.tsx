@@ -446,6 +446,80 @@ function CalendarPage() {
         defaults={dialogDefaults}
       />
 
+      <Sheet open={Boolean(dayPanel)} onOpenChange={(o) => !o && setDayPanel(null)}>
+        <SheetContent className="w-full overflow-y-auto sm:max-w-md">
+          {dayPanel ? (
+            <>
+              <SheetHeader>
+                <SheetTitle>
+                  {dayPanel.toLocaleDateString("ro-RO", {
+                    weekday: "long",
+                    day: "numeric",
+                    month: "long",
+                  })}
+                </SheetTitle>
+              </SheetHeader>
+              <div className="mt-4 space-y-2">
+                {filtered
+                  .filter((a) => sameDay(new Date(a.starts_at), dayPanel))
+                  .sort((x, y) => x.starts_at.localeCompare(y.starts_at))
+                  .map((a) => (
+                    <button
+                      key={a.id}
+                      type="button"
+                      onClick={() => {
+                        setDayPanel(null);
+                        openDetail(a);
+                      }}
+                      className="flex w-full items-start gap-3 rounded-xl bg-card p-3 text-left ring-1 ring-border/60 transition hover:ring-primary/40"
+                    >
+                      <span className="w-14 shrink-0 text-xs tabular-nums text-muted-foreground">
+                        {formatTime(a.starts_at)}
+                      </span>
+                      <span
+                        className={cn(
+                          "mt-1 size-2.5 shrink-0 rounded-full",
+                          kindDot[a.kind] ?? "bg-border",
+                        )}
+                      />
+                      <span className="min-w-0 flex-1">
+                        <span
+                          className={cn(
+                            "block truncate text-sm font-medium",
+                            a.status === "cancelled" && "text-muted-foreground line-through",
+                          )}
+                        >
+                          {a.title}
+                        </span>
+                        <span className="block truncate text-xs text-muted-foreground">
+                          {activityKindLabels[a.kind]} · {activityStatusLabels[a.status]}
+                        </span>
+                      </span>
+                    </button>
+                  ))}
+                {filtered.filter((a) => sameDay(new Date(a.starts_at), dayPanel)).length === 0 ? (
+                  <p className="rounded-xl border border-dashed border-border px-3 py-6 text-center text-sm text-muted-foreground">
+                    Nicio activitate în această zi.
+                  </p>
+                ) : null}
+              </div>
+              <SheetFooter className="mt-6 flex-row gap-2 sm:justify-start">
+                <Button
+                  size="sm"
+                  onClick={() => {
+                    const d = dayPanel;
+                    setDayPanel(null);
+                    openCreate(d);
+                  }}
+                >
+                  Adaugă activitate
+                </Button>
+              </SheetFooter>
+            </>
+          ) : null}
+        </SheetContent>
+      </Sheet>
+
       <Sheet open={Boolean(detail)} onOpenChange={(o) => !o && setDetail(null)}>
         <SheetContent className="w-full overflow-y-auto sm:max-w-md">
           {detail ? (
