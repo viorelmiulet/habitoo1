@@ -57,6 +57,7 @@ import { useSavedViews } from "@/hooks/use-saved-views";
 import { relativeDays } from "@/lib/format";
 import { contactTypeLabels } from "@/lib/labels";
 import { downloadCsv } from "@/lib/crm";
+import { UserAvatar } from "@/components/app/UserAvatar";
 
 export const Route = createFileRoute("/_authenticated/app/contacts/")({
   validateSearch: (search: Record<string, unknown>): { new?: boolean } =>
