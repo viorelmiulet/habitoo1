@@ -2,11 +2,12 @@
  * Hub-ul de portaluri imobiliare (Superadmin → Portaluri), per agenție.
  * UI generic: totul vine din registry, nimic nu este hardcodat pentru un portal.
  */
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import {
+  ChevronDown,
   Copy,
   Eye,
   EyeOff,
@@ -85,6 +86,36 @@ export function PortalsCard({ organizationId }: { organizationId: string }) {
   const [keyLabel, setKeyLabel] = useState<Record<string, string>>({});
   const [freshKey, setFreshKey] = useState<{ portalId: string; key: string } | null>(null);
   const [confirmDisconnect, setConfirmDisconnect] = useState<string | null>(null);
+  // Carduri restrânse implicit; starea se păstrează la navigare înapoi (per agenție).
+  const expandedStorageKey = `habitoo:portals-expanded:${organizationId}`;
+  const [expanded, setExpanded] = useState<Record<string, boolean>>({});
+  const [confirmCollapse, setConfirmCollapse] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      const raw = window.sessionStorage.getItem(expandedStorageKey);
+      setExpanded(raw ? (JSON.parse(raw) as Record<string, boolean>) : {});
+    } catch {
+      setExpanded({});
+    }
+  }, [expandedStorageKey]);
+
+  const persistExpanded = (next: Record<string, boolean>) => {
+    setExpanded(next);
+    if (typeof window === "undefined") return;
+    try {
+      window.sessionStorage.setItem(expandedStorageKey, JSON.stringify(next));
+    } catch {
+      /* sesiunea nu poate fi scrisă — starea rămâne doar în pagină */
+    }
+  };
+
+  const collapse = (portalId: string) => {
+    const next = { ...expanded };
+    delete next[portalId];
+    persistExpanded(next);
+  };
   const [confirmRevoke, setConfirmRevoke] = useState<string | null>(null);
   const [feedPreview, setFeedPreview] = useState<Awaited<
     ReturnType<typeof previewPortalFeed>
@@ -268,47 +299,102 @@ export function PortalsCard({ organizationId }: { organizationId: string }) {
         const badge = PORTAL_CONNECTION_LABEL[item.connection.status];
         const unavailable = item.portal.status !== "available";
         const activeKeys = item.keys.filter((k) => k.status === "active");
+        const open = expanded[item.portal.id] === true;
+        // Un portal cu erori rămâne evidențiat și restrâns, ca să nu fie ratat.
+        const hasError =
+          item.connection.status === "error" || Boolean(item.connection.lastSyncError);
+        // Modificări tastate, dar nesalvate — blochează restrângerea silențioasă.
+        const dirty =
+          (credential[item.portal.id]?.trim() ?? "") !== "" ||
+          (accountId[item.portal.id] !== undefined &&
+            accountId[item.portal.id] !== (item.connection.externalAccountId ?? "")) ||
+          (endpoint[item.portal.id] !== undefined &&
+            endpoint[item.portal.id] !== (item.connection.endpointUrl ?? ""));
+        const toggle = () => {
+          if (open) {
+            if (dirty) {
+              setConfirmCollapse(item.portal.id);
+              return;
+            }
+            collapse(item.portal.id);
+            return;
+          }
+          persistExpanded({ ...expanded, [item.portal.id]: true });
+        };
         return (
-          <div key={item.portal.id} className="panel space-y-4 p-5">
-            <div className="flex flex-wrap items-start justify-between gap-3">
-              <div className="flex items-start gap-3">
+          <div
+            key={item.portal.id}
+            className={
+              hasError ? "panel border-destructive/50 ring-1 ring-destructive/20" : "panel"
+            }
+          >
+            <div className="flex items-center gap-2 px-5 py-4">
+              <button
+                type="button"
+                onClick={toggle}
+                aria-expanded={open}
+                className="flex min-w-0 flex-1 flex-wrap items-center gap-3 text-left"
+              >
                 <PortalLogo
                   portalId={item.portal.id}
                   name={item.portal.display_name}
                   fallback={item.portal.logo}
-                  size={48}
+                  size={40}
                   className="rounded-lg"
                 />
-                <div>
-                  <h3 className="flex items-center gap-2 font-medium">
-                    {item.portal.display_name}
-                    {item.portal.website ? (
-                      <a
-                        href={item.portal.website}
-                        target="_blank"
-                        rel="noreferrer noopener"
-                        className="text-muted-foreground hover:text-foreground"
-                        aria-label={`Deschide ${item.portal.display_name}`}
-                      >
-                        <ExternalLink className="size-3.5" />
-                      </a>
-                    ) : null}
-                  </h3>
-                  <p className="text-sm text-muted-foreground">{item.portal.description}</p>
-                </div>
-              </div>
-              <div className="flex flex-wrap items-center gap-2">
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate font-medium">{item.portal.display_name}</span>
+                  <span className="block text-xs text-muted-foreground">
+                    Ultima verificare:{" "}
+                    {item.connection.lastSyncAt
+                      ? formatDateTime(item.connection.lastSyncAt)
+                      : "niciodată"}
+                  </span>
+                </span>
                 {unavailable ? (
                   <StatusBadge tone="neutral">
                     {PORTAL_AVAILABILITY_LABEL[item.portal.status]}
                   </StatusBadge>
                 ) : (
-                  <StatusBadge tone={badge.tone} dot>
-                    {badge.label}
-                  </StatusBadge>
+                  <>
+                    <StatusBadge tone={badge.tone} dot>
+                      {badge.label}
+                    </StatusBadge>
+                    <StatusBadge tone={item.connection.activated ? "success" : "neutral"}>
+                      {item.connection.activated ? "Activat pentru agenție" : "Neactivat"}
+                    </StatusBadge>
+                  </>
                 )}
-              </div>
+                {dirty ? <StatusBadge tone="warning">Modificări nesalvate</StatusBadge> : null}
+                <ChevronDown
+                  className={
+                    open
+                      ? "size-4 shrink-0 rotate-180 text-muted-foreground transition-transform"
+                      : "size-4 shrink-0 text-muted-foreground transition-transform"
+                  }
+                  aria-hidden
+                />
+              </button>
+              {item.portal.website ? (
+                <a
+                  href={item.portal.website}
+                  target="_blank"
+                  rel="noreferrer noopener"
+                  className="text-muted-foreground hover:text-foreground"
+                  aria-label={`Deschide ${item.portal.display_name}`}
+                >
+                  <ExternalLink className="size-4" />
+                </a>
+              ) : null}
             </div>
+
+            {hasError && !open && item.connection.lastSyncError ? (
+              <p className="px-5 pb-4 text-sm text-destructive">{item.connection.lastSyncError}</p>
+            ) : null}
+
+            {open ? (
+              <div className="space-y-4 border-t border-border p-5">
+                <p className="text-sm text-muted-foreground">{item.portal.description}</p>
 
             {unavailable ? (
               <p className="text-sm text-muted-foreground">
@@ -813,6 +899,8 @@ export function PortalsCard({ organizationId }: { organizationId: string }) {
                 ) : null}
               </>
             )}
+              </div>
+            ) : null}
           </div>
         );
       })}
@@ -882,6 +970,33 @@ export function PortalsCard({ organizationId }: { organizationId: string }) {
         onConfirm={() => {
           if (confirmDisconnect) disconnect.mutate(confirmDisconnect);
           setConfirmDisconnect(null);
+        }}
+      />
+
+      <ConfirmDialog
+        open={confirmCollapse !== null}
+        onOpenChange={(o) => setConfirmCollapse(o ? confirmCollapse : null)}
+        title="Ai modificări nesalvate"
+        description="Datele completate pentru acest portal nu au fost salvate. Dacă restrângi cardul, se pierd."
+        confirmLabel="Restrânge și renunță"
+        destructive
+        onConfirm={() => {
+          if (confirmCollapse) {
+            const id = confirmCollapse;
+            setAccountId((prev) => {
+              const next = { ...prev };
+              delete next[id];
+              return next;
+            });
+            setEndpoint((prev) => {
+              const next = { ...prev };
+              delete next[id];
+              return next;
+            });
+            setCredential((prev) => ({ ...prev, [id]: "" }));
+            collapse(id);
+          }
+          setConfirmCollapse(null);
         }}
       />
 
