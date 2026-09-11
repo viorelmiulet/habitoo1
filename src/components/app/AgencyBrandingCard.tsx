@@ -7,6 +7,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import { Slider } from "@/components/ui/slider";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { currentUserQueryKey, useCurrentUser } from "@/hooks/use-session";
 import {
@@ -18,6 +26,17 @@ import {
   signedUrl,
   uploadToBucket,
 } from "@/lib/storage";
+import {
+  MEDIA_BUCKET,
+} from "@/lib/storage";
+import samplePhoto from "@/assets/mock/living.jpg";
+import {
+  WATERMARK_POSITIONS,
+  isWatermarkableLogo,
+  watermarkFromOrg,
+  watermarkPositionLabels,
+  type WatermarkPosition,
+} from "@/lib/watermark";
 import {
   HABITOO_GOLD,
   brandingFromOrg,
@@ -57,6 +76,35 @@ export function AgencyBrandingCard() {
   });
 
   const logoUrl = useAgencyLogoUrl(org?.logo_path);
+  const saved = watermarkFromOrg(org);
+  const [wm, setWm] = useState({
+    enabled: saved.enabled,
+    position: saved.position as WatermarkPosition,
+    scalePercent: saved.scalePercent,
+    opacityPercent: saved.opacityPercent,
+    marginPercent: saved.marginPercent,
+  });
+  const logoRasterizable = isWatermarkableLogo(org?.logo_path);
+
+  /** Previzualizare pe o fotografie reală din portofoliu, cu una de probă ca rezervă. */
+  const { data: previewPhoto } = useQuery({
+    queryKey: ["watermark-preview-photo", org?.id],
+    enabled: Boolean(org?.id),
+    staleTime: 30 * 60_000,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("property_images")
+        .select("storage_path")
+        .not("storage_path", "is", null)
+        .eq("is_confidential", false)
+        .order("created_at", { ascending: false })
+        .limit(1);
+      const path = data?.[0]?.storage_path;
+      if (!path) return null;
+      return await signedUrl(MEDIA_BUCKET, path, 3600);
+    },
+  });
+  const photoUrl = previewPhoto ?? samplePhoto;
 
   const invalidate = () => queryClient.invalidateQueries({ queryKey: currentUserQueryKey });
 
@@ -120,6 +168,28 @@ export function AgencyBrandingCard() {
     onSuccess: () => {
       invalidate();
       toast.success("Setările materialelor au fost salvate.");
+    },
+    onError: (e: Error) => toastError(e),
+  });
+
+  const saveWatermark = useMutation({
+    mutationFn: async () => {
+      if (!org?.id) throw new Error("Agenția nu este configurată.");
+      const { error } = await supabase
+        .from("organizations")
+        .update({
+          watermark_enabled: wm.enabled,
+          watermark_position: wm.position,
+          watermark_scale_percent: wm.scalePercent,
+          watermark_opacity_percent: wm.opacityPercent,
+          watermark_margin_percent: wm.marginPercent,
+        })
+        .eq("id", org.id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      invalidate();
+      toast.success("Setările watermark-ului au fost salvate.");
     },
     onError: (e: Error) => toastError(e),
   });
@@ -292,6 +362,128 @@ export function AgencyBrandingCard() {
           Doar administratorul agenției poate modifica identitatea materialelor.
         </p>
       )}
+      <div className="space-y-5 border-t border-border pt-5">
+        <div className="space-y-1">
+          <h3 className="text-base font-medium tracking-tight">
+            Watermark pe fotografiile trimise portalurilor
+          </h3>
+          <p className="text-sm text-muted-foreground">
+            Se aplică doar pe copiile servite portalurilor. Fotografiile din CRM rămân curate și pot
+            fi descărcate oricând fără watermark.
+          </p>
+        </div>
+
+        <div className="flex items-start justify-between gap-4 rounded-xl border border-border p-4">
+          <div className="space-y-1">
+            <Label htmlFor="wm_enabled" className="text-sm">
+              Activează watermark-ul
+            </Label>
+            <p className="text-xs text-muted-foreground">
+              {logoRasterizable
+                ? "Implicit dezactivat. Nimic nu se schimbă până nu îl activezi."
+                : "Pentru watermark este nevoie de un logo PNG sau JPG. Fișierele SVG și WebP nu pot fi folosite."}
+            </p>
+          </div>
+          <Switch
+            id="wm_enabled"
+            checked={wm.enabled}
+            disabled={!canEdit || !logoRasterizable}
+            onCheckedChange={(v) => setWm((f) => ({ ...f, enabled: v }))}
+          />
+        </div>
+
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div className="space-y-2">
+            <Label htmlFor="wm_position">Poziție</Label>
+            <Select
+              value={wm.position}
+              disabled={!canEdit}
+              onValueChange={(v) => setWm((f) => ({ ...f, position: v as WatermarkPosition }))}
+            >
+              <SelectTrigger id="wm_position">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {WATERMARK_POSITIONS.map((p) => (
+                  <SelectItem key={p} value={p}>
+                    {watermarkPositionLabels[p]}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-2">
+            <Label>Dimensiune: {wm.scalePercent}% din lățimea fotografiei</Label>
+            <Slider
+              min={10}
+              max={35}
+              step={1}
+              value={[wm.scalePercent]}
+              disabled={!canEdit}
+              onValueChange={([v]) => setWm((f) => ({ ...f, scalePercent: v ?? f.scalePercent }))}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label>Opacitate: {wm.opacityPercent}%</Label>
+            <Slider
+              min={20}
+              max={100}
+              step={5}
+              value={[wm.opacityPercent]}
+              disabled={!canEdit}
+              onValueChange={([v]) => setWm((f) => ({ ...f, opacityPercent: v ?? f.opacityPercent }))}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label>Margine: {wm.marginPercent}%</Label>
+            <Slider
+              min={0}
+              max={20}
+              step={1}
+              value={[wm.marginPercent]}
+              disabled={!canEdit}
+              onValueChange={([v]) => setWm((f) => ({ ...f, marginPercent: v ?? f.marginPercent }))}
+            />
+          </div>
+        </div>
+
+        <div className="space-y-2">
+          <p className="text-sm font-medium">Previzualizare pe fotografie</p>
+          <div className="relative overflow-hidden rounded-xl border border-border bg-secondary/40">
+            <img src={photoUrl} alt="Previzualizare watermark" className="block w-full" />
+            {logoUrl && logoRasterizable ? (
+              <img
+                src={logoUrl}
+                alt=""
+                aria-hidden
+                className="absolute object-contain"
+                style={{
+                  width: `${wm.scalePercent}%`,
+                  opacity: wm.opacityPercent / 100,
+                  ...(wm.position === "center"
+                    ? { left: "50%", top: "50%", transform: "translate(-50%, -50%)" }
+                    : {
+                        [wm.position.includes("left") ? "left" : "right"]: `${wm.marginPercent}%`,
+                        [wm.position.includes("top") ? "top" : "bottom"]:
+                          `${wm.marginPercent}%`,
+                      }),
+                }}
+              />
+            ) : null}
+          </div>
+          <p className="text-xs text-muted-foreground">
+            {previewPhoto ? "Fotografie din portofoliul agenției." : "Fotografie de probă."}
+          </p>
+        </div>
+
+        {canEdit ? (
+          <div className="flex justify-end">
+            <Button type="button" disabled={saveWatermark.isPending} onClick={() => saveWatermark.mutate()}>
+              Salvează watermark-ul
+            </Button>
+          </div>
+        ) : null}
+      </div>
     </section>
   );
 }
