@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
-import { ArrowRightLeft, Pencil, Search, Trash2, Users } from "lucide-react";
+import { ArrowRightLeft, Pencil, Search, Trash2, Users, X } from "lucide-react";
 import { toast } from "sonner";
 import { toastError } from "@/lib/errors";
 import { PageHeader } from "@/components/app/PageHeader";
@@ -28,6 +28,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetFooter,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
+
 import { formatDate } from "@/lib/format";
 import { roleLabels } from "@/lib/labels";
 import {
@@ -287,6 +296,50 @@ function UsersPage() {
           </Select>
         </div>
       </div>
+
+      {/* Filtrele active, ca pastile care se pot închide */}
+      {q.trim() || orgFilter !== "all" || roleFilter !== "all" || statusFilter !== "all" ? (
+        <div className="flex flex-wrap items-center gap-2">
+          {q.trim() ? (
+            <FilterPill label={`Căutare: ${q.trim()}`} onClear={() => setQ("")} />
+          ) : null}
+          {orgFilter !== "all" ? (
+            <FilterPill
+              label={
+                orgFilter === "none"
+                  ? "Fără agenție"
+                  : (orgs.find((o) => o.id === orgFilter)?.name ?? "Agenție")
+              }
+              onClear={() => setOrgFilter("all")}
+            />
+          ) : null}
+          {roleFilter !== "all" ? (
+            <FilterPill
+              label={roleLabels[roleFilter] ?? roleFilter}
+              onClear={() => setRoleFilter("all")}
+            />
+          ) : null}
+          {statusFilter !== "all" ? (
+            <FilterPill
+              label={statusFilter === "active" ? "Active" : "Dezactivate"}
+              onClear={() => setStatusFilter("all")}
+            />
+          ) : null}
+          <button
+            type="button"
+            className="text-xs font-medium text-primary hover:underline"
+            onClick={() => {
+              setQ("");
+              setOrgFilter("all");
+              setRoleFilter("all");
+              setStatusFilter("all");
+            }}
+          >
+            Șterge filtrele
+          </button>
+        </div>
+      ) : null}
+
 
       <div className="panel overflow-hidden">
         {isLoading ? (
