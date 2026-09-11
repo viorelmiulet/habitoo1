@@ -300,12 +300,16 @@ function SettingsPage() {
               </p>
             )}
           </form>
+        </TabsContent>
 
-          <div className="mt-6 max-w-3xl">
+        ) : null}
+
+        {user?.isAdmin ? (
+        <TabsContent value="branding">
+          <div className="max-w-3xl">
             <AgencyBrandingCard />
           </div>
         </TabsContent>
-
         ) : null}
 
         {user?.isAdmin ? (
