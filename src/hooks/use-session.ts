@@ -43,6 +43,43 @@ export async function fetchCurrentUser(): Promise<CurrentUser | null> {
   const user = userData.user;
   if (!user) return null;
 
+  // Sesiune de acces temporar: aplicația se vede exact ca la utilizatorul vizat.
+  // Serverul revalidează starea cererii, deci un id inventat local nu are efect.
+  const impersonationId = getImpersonationId();
+  if (impersonationId) {
+    const session = await getImpersonationSession({ data: { id: impersonationId } }).catch(
+      () => null,
+    );
+    if (!session) {
+      clearImpersonationId();
+    } else {
+      const roles = session.target.roles;
+      return {
+        userId: session.target.userId,
+        email: session.target.email,
+        profile: session.target.profile,
+        organization: session.target.organization,
+        roles,
+        role: roles.includes("agency_admin") ? "agency_admin" : "agent",
+        isSuperadmin: false,
+        isAdmin: roles.includes("agency_admin"),
+        orgBlocked: null,
+        registration: null,
+        impersonation: {
+          id: session.id,
+          expiresAt: session.expiresAt,
+          mode: session.mode,
+          reason: session.reason,
+          realUserId: session.realUserId,
+          realEmail: session.realEmail,
+          realName: session.realName,
+        },
+      };
+    }
+  }
+
+
+
   const [{ data: profile }, { data: roleRows }, { data: blockedRaw }, { data: registration }] =
     await Promise.all([
       supabase.from("profiles").select("*").eq("id", user.id).maybeSingle(),
