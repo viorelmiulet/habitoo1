@@ -178,7 +178,9 @@ export function readMessagePayload(shape: StoriaEventShape): MessagePayload {
       "phone_number",
     ]),
     email: pick(d, ["sender_email", "sender.email", "user.email", "contact.email", "email"]),
-    body: pick(d, ["message", "message.text", "message.body", "text", "body", "content"]),
+    // Payloadul real folosește obiectul `message: { name, text }`.
+    // Căutăm explicit câmpurile imbricate înaintea variantelor legacy plate.
+    body: pick(d, ["message.text", "message.body", "text", "body", "content", "message"]),
     messageId: pick(d, ["id", "message_id", "message.id", "conversation_id", "conversation.id"]),
     sentAt: pick(d, ["created_at", "message.created_at", "sent_at", "recorded_at"]),
   };
