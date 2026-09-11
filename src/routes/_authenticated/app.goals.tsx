@@ -1,10 +1,12 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
-import { Layers, Trash2 } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Layers, Pencil, Target, Trash2, TrendingUp } from "lucide-react";
 import { toast } from "sonner";
 import { toastError } from "@/lib/errors";
 import { PageHeader } from "@/components/app/PageHeader";
+import { KpiCard } from "@/components/app/KpiCard";
+import { StatusBadge } from "@/components/app/StatusBadge";
 import { CardGridSkeleton } from "@/components/app/LoadingState";
 import { EmptyState } from "@/components/app/EmptyState";
 import { ConfirmDialog } from "@/components/app/ConfirmDialog";
