@@ -113,20 +113,81 @@ function OnboardingPage() {
   if (request?.status === "pending") {
     return (
       <AuthShell
-        title="Cerere trimisă"
-        subtitle="Îți verificăm datele agenției și îți activăm accesul după aprobare."
+        title="Cererea ta a plecat spre noi"
+        subtitle="Verificăm datele agenției și îți activăm accesul după aprobare."
       >
-        <div className="space-y-4 text-sm">
-          <Clock className="mx-auto size-10 text-primary" />
-          <div className="rounded-xl border border-border p-4">
-            <p className="font-medium">{request.agency_name}</p>
-            <p className="text-xs text-muted-foreground">
-              {request.legal_name} · CUI {request.cui} · Reg. Com. {request.trade_registry_number}
-            </p>
+        <div className="space-y-6 text-sm">
+          <span className="mx-auto flex size-12 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+            <Clock className="size-6" />
+          </span>
+
+          <div className="rounded-xl border border-border bg-muted/40 p-4">
+            <p className="text-xs font-medium text-muted-foreground">Datele trimise</p>
+            <p className="mt-2 font-semibold">{request.agency_name}</p>
+            <dl className="mt-2 space-y-1 text-xs text-muted-foreground">
+              <div className="flex justify-between gap-3">
+                <dt>Denumire legală</dt>
+                <dd className="text-right text-foreground">{request.legal_name}</dd>
+              </div>
+              <div className="flex justify-between gap-3">
+                <dt>CUI</dt>
+                <dd className="text-right text-foreground">{request.cui}</dd>
+              </div>
+              <div className="flex justify-between gap-3">
+                <dt>Reg. Comerțului</dt>
+                <dd className="text-right text-foreground">{request.trade_registry_number}</dd>
+              </div>
+              <div className="flex justify-between gap-3">
+                <dt>Persoană de contact</dt>
+                <dd className="text-right text-foreground">
+                  {request.full_name}
+                  {request.phone ? ` · ${request.phone}` : ""}
+                </dd>
+              </div>
+            </dl>
           </div>
-          <p className="text-muted-foreground">
-            Nu trebuie să faci nimic altceva. Vei primi acces imediat ce cererea este validată.
+
+          <ol className="space-y-3">
+            {[
+              {
+                title: "Cererea a fost înregistrată",
+                text: "Am primit datele agenției tale.",
+                done: true,
+              },
+              {
+                title: "Verificăm datele firmei",
+                text: "De regulă în una-două zile lucrătoare.",
+                done: false,
+              },
+              {
+                title: "Primești emailul de activare",
+                text: "Te autentifici cu același email și intri direct în CRM.",
+                done: false,
+              },
+            ].map((step) => (
+              <li key={step.title} className="flex gap-3">
+                <span
+                  className={
+                    step.done
+                      ? "mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full bg-primary/12 text-primary"
+                      : "mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full bg-muted text-muted-foreground"
+                  }
+                >
+                  <Check className="size-3" />
+                </span>
+                <div className="min-w-0">
+                  <p className="font-medium">{step.title}</p>
+                  <p className="text-xs text-muted-foreground">{step.text}</p>
+                </div>
+              </li>
+            ))}
+          </ol>
+
+          <p className="text-xs text-muted-foreground">
+            Nu trebuie să faci nimic altceva. Dacă vrei să corectezi ceva, scrie-ne la
+            contact@habitoo.ro.
           </p>
+
           <Button variant="outline" className="w-full" onClick={signOut}>
             Deconectare
           </Button>
@@ -138,21 +199,32 @@ function OnboardingPage() {
   // Cerere respinsă → motivul și opțiunea de retrimitere.
   if (request?.status === "rejected" && !resubmit) {
     return (
-      <AuthShell title="Cerere respinsă" subtitle="Poți corecta datele și trimite din nou cererea.">
-        <div className="space-y-4 text-sm">
-          <XCircle className="mx-auto size-10 text-destructive" />
-          {request.rejection_reason ? (
-            <div className="rounded-xl border border-border p-4">
-              <p className="text-xs text-muted-foreground">Motivul respingerii</p>
-              <p className="mt-1">{request.rejection_reason}</p>
-            </div>
-          ) : (
-            <p className="text-muted-foreground">
-              Nu a fost specificat un motiv. Verifică datele agenției și trimite din nou cererea.
+      <AuthShell
+        title="Cererea nu a fost aprobată"
+        subtitle="Poți corecta datele și trimite din nou cererea — câmpurile rămân precompletate."
+      >
+        <div className="space-y-5 text-sm">
+          <span className="mx-auto flex size-12 items-center justify-center rounded-2xl bg-muted text-muted-foreground">
+            <XCircle className="size-6" />
+          </span>
+
+          <div className="rounded-xl border border-border bg-muted/40 p-4">
+            <p className="text-xs font-medium text-muted-foreground">Motivul</p>
+            <p className="mt-1">
+              {request.rejection_reason ??
+                "Nu a fost specificat un motiv. Verifică datele firmei și trimite din nou cererea."}
             </p>
-          )}
+          </div>
+
+          <div className="rounded-xl border border-border p-4 text-xs text-muted-foreground">
+            <p className="font-medium text-foreground">{request.agency_name}</p>
+            <p className="mt-1">
+              {request.legal_name} · CUI {request.cui} · Reg. Com. {request.trade_registry_number}
+            </p>
+          </div>
+
           <Button className="w-full" onClick={() => setResubmit(true)}>
-            Trimite din nou cererea
+            Corectează și trimite din nou
           </Button>
           <Button variant="outline" className="w-full" onClick={signOut}>
             Deconectare
@@ -164,69 +236,98 @@ function OnboardingPage() {
 
   return (
     <AuthShell
-      title="Configurează agenția"
-      subtitle="Completează datele agenției. Contul devine activ după validarea platformei."
+      title="Înscrie agenția"
+      subtitle="Completează datele firmei. Contul devine activ după validarea echipei Habitoo."
+      width="md"
     >
-      <form onSubmit={submit} className="space-y-4">
-        <div className="space-y-2">
-          <Label htmlFor="agency">Nume comercial</Label>
-          <Input
-            id="agency"
-            required
-            value={form.agency}
-            onChange={set("agency")}
-            placeholder="Numele sub care activează agenția"
-          />
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="legalName">Nume legal</Label>
-          <Input
-            id="legalName"
-            required
-            value={form.legalName}
-            onChange={set("legalName")}
-            placeholder="Exact ca în certificatul de înregistrare"
-          />
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="cui">CUI</Label>
-          <Input
-            id="cui"
-            required
-            value={form.cui}
-            onChange={set("cui")}
-            placeholder="ex. RO12345678"
-          />
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="tradeRegistry">Număr de înregistrare Registrul Comerțului</Label>
-          <Input
-            id="tradeRegistry"
-            required
-            value={form.tradeRegistry}
-            onChange={set("tradeRegistry")}
-            placeholder="ex. J40/1234/2020"
-          />
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="fullName">Numele tău</Label>
-          <Input id="fullName" required value={form.fullName} onChange={set("fullName")} />
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="phone">Telefon</Label>
-          <Input
-            id="phone"
-            type="tel"
-            required
-            value={form.phone}
-            onChange={set("phone")}
-            placeholder="07xx xxx xxx"
-            autoComplete="tel"
-          />
-        </div>
+      <form onSubmit={submit} className="space-y-7">
+        <fieldset className="space-y-4">
+          <legend className="text-sm font-semibold">Date de identificare a firmei</legend>
+          <p className="text-xs text-muted-foreground">
+            Le folosim pentru a verifica agenția. Trebuie să corespundă documentelor oficiale.
+          </p>
+          <div className="space-y-2">
+            <Label htmlFor="agency">Nume comercial</Label>
+            <Input
+              id="agency"
+              required
+              value={form.agency}
+              onChange={set("agency")}
+              placeholder="ex. Habitoo Imobiliare"
+            />
+            <p className="text-xs text-muted-foreground">
+              Numele sub care ești cunoscut de clienți — apare în aplicație și pe anunțuri.
+            </p>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="legalName">Denumire legală</Label>
+            <Input
+              id="legalName"
+              required
+              value={form.legalName}
+              onChange={set("legalName")}
+              placeholder="ex. HABITOO IMOBILIARE S.R.L."
+            />
+            <p className="text-xs text-muted-foreground">
+              Denumirea exactă din certificatul de înregistrare, cu forma juridică (S.R.L., S.A.).
+              Poate fi diferită de numele comercial.
+            </p>
+          </div>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="space-y-2">
+              <Label htmlFor="cui">CUI</Label>
+              <Input
+                id="cui"
+                required
+                value={form.cui}
+                onChange={set("cui")}
+                placeholder="ex. RO12345678"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="tradeRegistry">Nr. Registrul Comerțului</Label>
+              <Input
+                id="tradeRegistry"
+                required
+                value={form.tradeRegistry}
+                onChange={set("tradeRegistry")}
+                placeholder="ex. J40/1234/2020"
+              />
+            </div>
+          </div>
+        </fieldset>
+
+        <fieldset className="space-y-4">
+          <legend className="text-sm font-semibold">Persoana de contact</legend>
+          <p className="text-xs text-muted-foreground">
+            Cu acest cont devii administratorul agenției în Habitoo.
+          </p>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="space-y-2">
+              <Label htmlFor="fullName">Numele tău</Label>
+              <Input id="fullName" required value={form.fullName} onChange={set("fullName")} />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="phone">Telefon</Label>
+              <Input
+                id="phone"
+                type="tel"
+                required
+                value={form.phone}
+                onChange={set("phone")}
+                placeholder="07xx xxx xxx"
+                autoComplete="tel"
+              />
+            </div>
+          </div>
+        </fieldset>
+
         <Button type="submit" className="w-full" disabled={loading}>
           {loading ? "Se trimite…" : "Trimite spre aprobare"}
         </Button>
+        <p className="text-center text-xs text-muted-foreground">
+          Verificarea durează de regulă una-două zile lucrătoare.
+        </p>
       </form>
     </AuthShell>
   );
