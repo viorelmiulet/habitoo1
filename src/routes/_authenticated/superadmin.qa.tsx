@@ -300,11 +300,16 @@ function QaPanelPage() {
                 <ul className="mt-4 divide-y divide-border">
                   {data.users.map((u) => (
                     <li key={u.id} className="flex flex-wrap items-center justify-between gap-2 py-2.5 text-sm">
-                      <div className="min-w-0">
-                        <p className="truncate font-medium">{u.full_name}</p>
-                        <p className="truncate text-xs text-muted-foreground">
-                          {u.email} {u.job_title ? `· ${u.job_title}` : ""}
-                        </p>
+                      <div className="flex min-w-0 items-center gap-2.5">
+                        <span className="grid size-8 shrink-0 place-items-center rounded-full bg-muted text-[11px] font-semibold text-muted-foreground">
+                          {(u.full_name ?? "?").slice(0, 2).toUpperCase()}
+                        </span>
+                        <div className="min-w-0">
+                          <p className="truncate font-medium">{u.full_name}</p>
+                          <p className="truncate text-xs text-muted-foreground">
+                            {u.email} {u.job_title ? `· ${u.job_title}` : ""}
+                          </p>
+                        </div>
                       </div>
                       <StatusBadge tone={u.role === "agency_admin" ? "primary" : "neutral"}>
                         {u.role === "unknown" ? "fără rol" : roleLabels[u.role]}
@@ -312,6 +317,7 @@ function QaPanelPage() {
                     </li>
                   ))}
                 </ul>
+
               ) : (
                 <p className="mt-4 text-sm text-muted-foreground">Niciun cont demo încă.</p>
               )}
