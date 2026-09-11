@@ -21,14 +21,13 @@ import {
   AGENCY_LOGO_BUCKET,
   AGENCY_LOGO_MAX_BYTES,
   AGENCY_LOGO_TYPES,
+  MEDIA_BUCKET,
   agencyLogoPath,
   removeFromBucket,
   signedUrl,
   uploadToBucket,
 } from "@/lib/storage";
-import {
-  MEDIA_BUCKET,
-} from "@/lib/storage";
+
 import samplePhoto from "@/assets/mock/living.jpg";
 import {
   WATERMARK_POSITIONS,
