@@ -770,6 +770,13 @@ function PropertiesPage() {
           >
             <Star className="size-4" /> Doar favorite
           </Button>
+          <Button
+            variant={filters.showArchived ? "default" : "outline"}
+            size="sm"
+            onClick={() => setFilters((f) => ({ ...f, showArchived: !f.showArchived }))}
+          >
+            <ArchiveRestore className="size-4" /> Arată și arhivate
+          </Button>
           <Button variant="ghost" size="sm" onClick={saveFilter}>
             Salvează filtrul
           </Button>
@@ -954,6 +961,16 @@ function PropertiesPage() {
                     ) : null}
                     {columns.includes("updated") ? (
                       <span className="w-24 text-right text-xs text-muted-foreground">{relativeDays(p.updated_at)}</span>
+                    ) : null}
+                    {p.status === "archived" ? (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        disabled={unarchiveOne.isPending}
+                        onClick={() => unarchiveOne.mutate(p.id)}
+                      >
+                        <ArchiveRestore className="size-4" /> Dezarhivează
+                      </Button>
                     ) : null}
                   </li>
                 ))}
