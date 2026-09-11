@@ -941,44 +941,22 @@ function PropertiesPage() {
         ) : isLoading ? (
           <CardGridSkeleton count={6} className="p-4" />
         ) : rows.length === 0 ? (
-          <EmptyState icon={Building2} title="Nicio proprietate găsită" />
+          emptyBlock
         ) : (
-          <div className="grid grid-cols-1 gap-4 p-4 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid grid-cols-1 gap-4 p-4 sm:grid-cols-2 xl:grid-cols-3">
             {rows.map((p) => (
-              <div key={p.id} className="panel space-y-2 p-4">
-                <div className="flex items-start justify-between gap-2">
-                  <Checkbox
-                    checked={selected.includes(p.id)}
-                    onCheckedChange={(c) => setSelected((s) => (c ? [...s, p.id] : s.filter((id) => id !== p.id)))}
-                  />
-                  <button type="button" onClick={() => toggleFavorite.mutate(p.id)} title="Favorit">
-                    <Star
-                      className={`size-4 ${favoriteIds.includes(p.id) ? "fill-warning text-warning" : "text-muted-foreground"}`}
-                    />
-                  </button>
-                </div>
-                <PropertyThumb
-                  propertyId={p.id}
-                  title={p.title}
-                  cover={coverOf(p.id)}
-                  className="h-40 w-full"
-                />
-                <Link to="/app/properties/$id" params={{ id: p.id }} className="line-clamp-2 font-medium hover:text-primary">
-                  {p.title}
-                </Link>
-                <p className="text-xs text-muted-foreground">
-                  {[p.district, p.city].filter(Boolean).join(", ") || "Locație nespecificată"}
-                </p>
-                <div className="flex items-center justify-between">
-                  <StatusBadge tone={propertyStatusTone[p.status]}>{propertyStatusLabels[p.status]}</StatusBadge>
-                  <span className="font-semibold">{formatMoney(p.price, p.currency)}</span>
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  {propertyTypeLabels[p.property_type] ?? p.property_type} · {transactionLabels[p.transaction_kind]} ·{" "}
-                  {p.surface ? `${formatNumber(p.surface)} m²` : "—"}
-                </p>
-                {portals.hasPortals ? <PropertyPortalsCell cells={portals.cellsFor(p.id)} /> : null}
-              </div>
+              <PropertyCard
+                key={p.id}
+                property={p as unknown as PropertyCardRow}
+                cover={coverOf(p.id)}
+                favorite={favoriteIds.includes(p.id)}
+                onToggleFavorite={() => toggleFavorite.mutate(p.id)}
+                selected={selected.includes(p.id)}
+                onSelectedChange={(next) =>
+                  setSelected((s) => (next ? [...s, p.id] : s.filter((id) => id !== p.id)))
+                }
+                portalCells={portals.hasPortals ? portals.cellsFor(p.id) : []}
+              />
             ))}
           </div>
         )}
