@@ -642,13 +642,21 @@ ${materialSignature(brandingFromOrg(user?.organization))}`;
               <EmptyState title="Niciun lead legat de această cerere" />
             ) : (
               <ul className="divide-y divide-border">
-                {leads.map((l) => (
-                  <li key={l.id} className="flex items-center gap-3 px-5 py-3 text-sm">
-                    <span className="min-w-0 flex-1 truncate font-medium">{l.name}</span>
-                    <StatusBadge tone="info">{leadStageLabels[l.stage]}</StatusBadge>
-                    <span className="text-xs text-muted-foreground">Scor {l.score}</span>
-                  </li>
-                ))}
+                {leads.map((l) => {
+                  const initials = l.name.split(" ").filter(Boolean).map((w: string) => w[0]).slice(0, 2).join("").toUpperCase();
+                  return (
+                    <li key={l.id} className="flex items-center gap-4 px-5 py-4 text-sm transition-colors hover:bg-surface">
+                      <span className="grid size-10 shrink-0 place-items-center rounded-full bg-primary/10 text-xs font-semibold text-primary">
+                        {initials || "?"}
+                      </span>
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate font-semibold text-foreground">{l.name}</p>
+                        <p className="text-xs text-muted-foreground">Scor {l.score} · {relativeDays(l.created_at)}</p>
+                      </div>
+                      <StatusBadge tone="info">{leadStageLabels[l.stage]}</StatusBadge>
+                    </li>
+                  );
+                })}
               </ul>
             )}
           </div>
