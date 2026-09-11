@@ -147,6 +147,25 @@ function ContactsPage() {
     },
   });
 
+  /** Doar pentru afișare: câte lead-uri are fiecare contact. RLS decide ce se vede. */
+  const { data: leadCounts } = useQuery({
+    queryKey: ["contacts-lead-counts", user?.organization?.id],
+    enabled: Boolean(user?.organization?.id),
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("leads")
+        .select("contact_id")
+        .eq("organization_id", user!.organization!.id);
+      if (error) throw error;
+      const map = new Map<string, number>();
+      for (const row of data) {
+        if (!row.contact_id) continue;
+        map.set(row.contact_id, (map.get(row.contact_id) ?? 0) + 1);
+      }
+      return map;
+    },
+  });
+
   const sources = useMemo(
     () => [...new Set(metaContacts.map((c) => c.source).filter(Boolean) as string[])].sort(),
     [metaContacts],
