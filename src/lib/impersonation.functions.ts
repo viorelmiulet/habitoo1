@@ -125,6 +125,15 @@ export const requestImpersonation = createServerFn({ method: "POST" })
     });
     if (error) throw new Error(error.message);
 
+    // Token pentru aprobarea din email: valoarea brută pleacă doar în email,
+    // în baza de date rămâne exclusiv hash-ul SHA-256.
+    const { generateToken, sha256Hex } = await import("@/lib/impersonation-token.functions");
+    const approveToken = generateToken();
+    await ctx.supabase.rpc("impersonation_set_approve_token", {
+      _id: id,
+      _hash: await sha256Hex(approveToken),
+    });
+
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const [{ data: target }, { data: requester }] = await Promise.all([
       supabaseAdmin
@@ -145,9 +154,12 @@ export const requestImpersonation = createServerFn({ method: "POST" })
           import("@/lib/email-templates/impersonation-request"),
         ]);
         const React = await import("react");
+        const base = `https://crm.habitoo.ro/acces-cont?id=${String(id)}&token=${approveToken}`;
         const element = React.createElement(ImpersonationRequestEmail, {
           siteName: "Habitoo CRM",
           appUrl: "https://crm.habitoo.ro/app/settings",
+          approveUrl: `${base}&actiune=aprob`,
+          rejectUrl: `${base}&actiune=resping`,
           fullName: target.full_name ?? undefined,
           requesterName: requester?.full_name || "Superadmin Habitoo",
           reason: data.reason,
