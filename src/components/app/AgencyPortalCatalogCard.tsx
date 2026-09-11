@@ -8,9 +8,11 @@ import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { StatusBadge } from "@/components/app/StatusBadge";
 import { PortalLogo } from "@/components/app/PortalLogo";
+import { BrandLogo } from "@/components/brand/BrandLogo";
 import { Button } from "@/components/ui/button";
 import { InlineLoading } from "@/components/app/LoadingState";
 import { QueryError } from "@/components/app/QueryError";
+import { useCurrentUser } from "@/hooks/use-session";
 import {
   getAgencyPortalCatalog,
   requestPortalActivation,
