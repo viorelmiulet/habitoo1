@@ -712,7 +712,7 @@ function ReplyBox({ threadId, onSent }: { threadId: string; onSent: () => void }
 
   const send = async () => {
     if (!text.trim() && !staged.items.length) {
-      toast.error("Scrie un mesaj sau atașează un fișier.");
+      toast.error("Scrie un mesaj sau atașează un fișier."); return; }
       return;
     }
     setSending(true);
@@ -799,10 +799,10 @@ function ComposeDialog({
 
   const submit = async () => {
     const recipients = split(to);
-    if (!mailboxId) return toast.error("Alege căsuța expeditor.");
-    if (!recipients.length) return toast.error("Adaugă cel puțin un destinatar.");
-    if (!subject.trim()) return toast.error("Adaugă un subiect.");
-    if (!text.trim() && !staged.items.length) return toast.error("Scrie un mesaj sau atașează un fișier.");
+    if (!mailboxId) { toast.error("Alege căsuța expeditor."); return; }
+    if (!recipients.length) { toast.error("Adaugă cel puțin un destinatar."); return; }
+    if (!subject.trim()) { toast.error("Adaugă un subiect."); return; }
+    if (!text.trim() && !staged.items.length) { toast.error("Scrie un mesaj sau atașează un fișier."); return; }
 
     setSending(true);
     try {
@@ -910,7 +910,7 @@ function MailboxesDialog({
   const [saving, setSaving] = useState(false);
 
   const add = async () => {
-    if (!address.trim()) return toast.error("Adaugă adresa de email.");
+    if (!address.trim()) { toast.error("Adaugă adresa de email."); return; }
     setSaving(true);
     try {
       const res = await create({
