@@ -260,6 +260,108 @@ function ActivitiesPage() {
     );
   };
 
+  /** Un rând de agendă: ora pe stânga, pictogramă după tip, titlu și context. */
+  const renderRow = (a: Activity) => {
+    const Icon = kindIcon[a.kind] ?? ListChecks;
+    const overdue = a.status === "planned" && new Date(a.starts_at) < now;
+    const context = [
+      a.contact_id ? `Contact: ${contactById.get(a.contact_id) ?? "—"}` : null,
+      a.property_id ? `Proprietate: ${propertyById.get(a.property_id) ?? "—"}` : null,
+      a.lead_id ? `Lead: ${leadById.get(a.lead_id) ?? "—"}` : null,
+      a.request_id ? `Cerere: ${requestById.get(a.request_id) ?? "—"}` : null,
+    ].filter(Boolean) as string[];
+    return (
+      <li key={a.id} className="flex items-start gap-3 px-5 py-3.5 text-sm">
+        <Checkbox
+          className="mt-1"
+          checked={selected.has(a.id)}
+          onCheckedChange={() => toggleSelect(a.id)}
+        />
+        <div className="w-24 shrink-0 pt-0.5 text-xs tabular-nums">
+          <p className={overdue ? "font-medium text-destructive" : "text-muted-foreground"}>
+            {new Date(a.starts_at).toLocaleTimeString("ro-RO", { hour: "2-digit", minute: "2-digit" })}
+          </p>
+          <p className="text-[11px] text-muted-foreground">{a.duration_minutes} min</p>
+        </div>
+        <span
+          className={`mt-0.5 grid size-8 shrink-0 place-items-center rounded-lg ${
+            overdue ? "bg-destructive/10 text-destructive" : "bg-primary/10 text-primary"
+          }`}
+        >
+          <Icon className="size-4" aria-hidden />
+        </span>
+        <div className="min-w-0 flex-1">
+          <p
+            className={
+              a.status === "done" ? "truncate text-muted-foreground line-through" : "truncate font-medium"
+            }
+          >
+            {a.title}
+          </p>
+          {a.description ? (
+            <p className="truncate text-xs text-muted-foreground">{a.description}</p>
+          ) : null}
+          <p className="mt-0.5 truncate text-xs text-muted-foreground">
+            {[activityKindLabels[a.kind], ...context, profileById.get(a.assigned_to ?? "") ?? null]
+              .filter(Boolean)
+              .join(" · ")}
+          </p>
+        </div>
+        <StatusBadge tone={activityStatusTone[a.status]}>{activityStatusLabels[a.status]}</StatusBadge>
+        <div className="flex items-center gap-0.5">
+          {a.status !== "done" ? (
+            <Button
+              size="icon"
+              variant="ghost"
+              title="Finalizează"
+              onClick={() => updateStatus.mutate({ id: a.id, status: "done" })}
+            >
+              <CheckCircle2 className="size-4" />
+            </Button>
+          ) : null}
+          {a.status !== "cancelled" ? (
+            <Button
+              size="icon"
+              variant="ghost"
+              title="Anulează"
+              onClick={() => updateStatus.mutate({ id: a.id, status: "cancelled" })}
+            >
+              <XCircle className="size-4" />
+            </Button>
+          ) : null}
+          <Button
+            size="icon"
+            variant="ghost"
+            title="Reprogramează"
+            onClick={() => {
+              setReschedule(a);
+              setRescheduleValue(a.starts_at.slice(0, 16));
+            }}
+          >
+            <Pencil className="size-4" />
+          </Button>
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button size="icon" variant="ghost" title="Șterge">
+                <Trash2 className="size-4 text-destructive" />
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Ștergi activitatea?</AlertDialogTitle>
+                <AlertDialogDescription>„{a.title}” va fi ștearsă definitiv.</AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Anulează</AlertDialogCancel>
+                <AlertDialogAction onClick={() => removeActivity.mutate(a.id)}>Șterge</AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        </div>
+      </li>
+    );
+  };
+
   return (
     <>
       <PageHeader
