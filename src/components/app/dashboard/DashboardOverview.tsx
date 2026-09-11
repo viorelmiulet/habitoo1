@@ -22,7 +22,11 @@ import {
 import { PortalLogo } from "@/components/app/PortalLogo";
 import { PropertyThumb, usePropertyCovers } from "@/components/app/PropertyThumb";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useDashboardOverview, type OverviewDelta } from "@/hooks/use-dashboard-overview";
+import {
+  useDashboardOverview,
+  type OverviewDelta,
+  type OverviewPortalUsage,
+} from "@/hooks/use-dashboard-overview";
 import { formatMoney, formatNumber, formatTime } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
