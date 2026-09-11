@@ -327,16 +327,38 @@ function PropertiesPage() {
     onError: (e: Error) => toastError(e),
   });
 
+  /**
+   * Arhivarea trece prin server: acolo se verifică drepturile și condiția de
+   * siguranță (nicio proprietate activă pe portaluri sau în Colaborare).
+   */
   const archiveMany = useMutation({
     mutationFn: async (ids: string[]) => {
-      const { error } = await supabase.from("properties").update({ status: "archived" as never }).in("id", ids);
-      if (error) throw error;
+      const failed: string[] = [];
+      for (const id of ids) {
+        try {
+          await archivePropertyFn({ data: { propertyId: id } });
+        } catch (e) {
+          const row = rows.find((r) => r.id === id);
+          failed.push(`${row?.reference ?? id}: ${e instanceof Error ? e.message : "eroare"}`);
+        }
+      }
+      return failed;
     },
-    onSuccess: () => {
+    onSuccess: (failed) => {
       invalidateList();
       setSelected([]);
       setArchiveTarget(null);
-      toast.success("Proprietăți arhivate.");
+      if (failed.length > 0) toast.error(failed.join(" · "));
+      else toast.success("Proprietăți arhivate.");
+    },
+    onError: (e: Error) => toastError(e),
+  });
+
+  const unarchiveOne = useMutation({
+    mutationFn: async (id: string) => await unarchivePropertyFn({ data: { propertyId: id } }),
+    onSuccess: () => {
+      invalidateList();
+      toast.success("Proprietatea a fost readusă în circulație.");
     },
     onError: (e: Error) => toastError(e),
   });
