@@ -43,6 +43,13 @@ function DashboardPage() {
     );
   }
 
-  if (user.role === "agent") return <AgentDashboard />;
-  return <ManagerDashboard />;
+  const firstName = (user.profile?.full_name || user.email || "").trim().split(/\s+/)[0] || "coleg";
+
+  return (
+    <div className="space-y-8">
+      <DashboardOverview organizationId={user.organization?.id} firstName={firstName} />
+      {user.role === "agent" ? <AgentDashboard /> : <ManagerDashboard />}
+    </div>
+  );
 }
+
