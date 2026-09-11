@@ -396,509 +396,520 @@ export function PortalsCard({ organizationId }: { organizationId: string }) {
               <div className="space-y-4 border-t border-border p-5">
                 <p className="text-sm text-muted-foreground">{item.portal.description}</p>
 
-            {unavailable ? (
-              <p className="text-sm text-muted-foreground">
-                Integrarea va fi activată după ce portalul confirmă accesul și documentația.
-              </p>
-            ) : (
-              <>
-                <div className="flex flex-wrap gap-1.5">
-                  {item.portal.directions.map((d) => (
-                    <StatusBadge key={d} tone="info">
-                      {PORTAL_DIRECTION_LABEL[d as PortalDirection]}
-                    </StatusBadge>
-                  ))}
-                  {item.portal.authentication.map((a) => (
-                    <StatusBadge key={a} tone="neutral">
-                      {PORTAL_AUTH_LABEL[a as PortalAuthenticationMode]}
-                    </StatusBadge>
-                  ))}
-                </div>
-
-                <dl className="grid gap-3 text-sm sm:grid-cols-2">
-                  <div>
-                    <dt className="text-muted-foreground">Oferte publicabile</dt>
-                    <dd>{item.eligibleProperties}</dd>
-                  </div>
-                  {item.feedOnly ? (
-                    <div>
-                      <dt className="text-muted-foreground">Oferte selectate pentru portal</dt>
-                      <dd>{item.feed.selected ?? 0}</dd>
-                    </div>
-                  ) : (
-                    <>
-                      <div>
-                        <dt className="text-muted-foreground">Oferte trimise către portal</dt>
-                        <dd>
-                          {item.listings.published} trimise · {item.listings.failed} cu eroare
-                        </dd>
-                      </div>
-                      <div>
-                        <dt className="text-muted-foreground">Credențiale portal</dt>
-                        <dd>
-                          {item.connection.hasPortalCredential
-                            ? "Salvate și criptate"
-                            : "Nesalvate"}
-                        </dd>
-                      </div>
-                    </>
-                  )}
-                  <div>
-                    <dt className="text-muted-foreground">Ultima verificare</dt>
-                    <dd>
-                      {item.connection.lastSyncAt
-                        ? formatDateTime(item.connection.lastSyncAt)
-                        : "Niciodată"}
-                    </dd>
-                  </div>
-                </dl>
-
-                <dl className="grid gap-3 rounded-lg border border-border p-3 text-sm sm:grid-cols-3">
-                  <div>
-                    <dt className="text-muted-foreground">Oferte în feed</dt>
-                    <dd>{item.feed.properties ?? 0}</dd>
-                  </div>
-                  {item.feedOnly ? (
-                    <div>
-                      <dt className="text-muted-foreground">Oferte excluse (date incomplete)</dt>
-                      <dd>{item.feed.excluded ?? 0}</dd>
-                    </div>
-                  ) : (
-                    <div>
-                      <dt className="text-muted-foreground">Agenți în feed</dt>
-                      <dd>{item.feed.agents ?? 0}</dd>
-                    </div>
-                  )}
-                  <div>
-                    <dt className="text-muted-foreground">Feed</dt>
-                    <dd>
-                      {item.feed.ok ? (item.feed.apiVersion ?? "funcțional") : "indisponibil"}
-                    </dd>
-                  </div>
-                </dl>
-
-                {item.connection.lastSyncError ? (
-                  <p className="rounded-lg border border-destructive/40 bg-destructive/5 p-3 text-sm text-destructive">
-                    {item.connection.lastSyncError}
+                {unavailable ? (
+                  <p className="text-sm text-muted-foreground">
+                    Integrarea va fi activată după ce portalul confirmă accesul și documentația.
                   </p>
-                ) : null}
+                ) : (
+                  <>
+                    <div className="flex flex-wrap gap-1.5">
+                      {item.portal.directions.map((d) => (
+                        <StatusBadge key={d} tone="info">
+                          {PORTAL_DIRECTION_LABEL[d as PortalDirection]}
+                        </StatusBadge>
+                      ))}
+                      {item.portal.authentication.map((a) => (
+                        <StatusBadge key={a} tone="neutral">
+                          {PORTAL_AUTH_LABEL[a as PortalAuthenticationMode]}
+                        </StatusBadge>
+                      ))}
+                    </div>
 
-                <div className="grid gap-3 sm:grid-cols-2">
-                  {item.portal.configuration_schema.fields.map((field) => {
-                    const value =
-                      field.target === "external_account_id"
-                        ? (accountId[item.portal.id] ?? item.connection.externalAccountId ?? "")
-                        : field.target === "credentials"
-                          ? (credential[item.portal.id] ?? "")
-                          : (endpoint[item.portal.id] ?? item.connection.endpointUrl ?? "");
-                    const setValue = (next: string) => {
-                      if (field.target === "external_account_id") {
-                        setAccountId((prev) => ({ ...prev, [item.portal.id]: next }));
-                      } else if (field.target === "credentials") {
-                        setCredential((prev) => ({ ...prev, [item.portal.id]: next }));
-                      } else {
-                        setEndpoint((prev) => ({ ...prev, [item.portal.id]: next }));
-                      }
-                    };
-                    const fieldId = `${item.portal.id}-${field.key}`;
-                    const isRevealed = revealed[fieldId] === true;
-                    return (
-                      <div key={field.key} className="space-y-1.5">
-                        <Label htmlFor={fieldId}>{field.label}</Label>
-                        <div className="relative">
-                          <Input
-                            id={fieldId}
-                            type={field.secret && !isRevealed ? "password" : "text"}
-                            autoComplete="off"
-                            value={value}
-                            onChange={(e) => setValue(e.target.value)}
-                            className={field.secret ? "pr-10" : undefined}
-                            placeholder={
-                              field.secret && item.connection.hasPortalCredential
-                                ? "Salvat — completează pentru a-l înlocui"
-                                : (field.placeholder ?? "")
-                            }
-                          />
-                          {field.secret ? (
-                            <button
-                              type="button"
-                              onClick={() =>
-                                setRevealed((prev) => ({ ...prev, [fieldId]: !isRevealed }))
-                              }
-                              className="absolute top-1/2 right-2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                              aria-label={isRevealed ? "Ascunde valoarea" : "Arată valoarea"}
-                            >
-                              {isRevealed ? (
-                                <EyeOff className="size-4" />
-                              ) : (
-                                <Eye className="size-4" />
-                              )}
-                            </button>
-                          ) : null}
+                    <dl className="grid gap-3 text-sm sm:grid-cols-2">
+                      <div>
+                        <dt className="text-muted-foreground">Oferte publicabile</dt>
+                        <dd>{item.eligibleProperties}</dd>
+                      </div>
+                      {item.feedOnly ? (
+                        <div>
+                          <dt className="text-muted-foreground">Oferte selectate pentru portal</dt>
+                          <dd>{item.feed.selected ?? 0}</dd>
                         </div>
-                        {field.help ? (
-                          <p className="text-xs text-muted-foreground">{field.help}</p>
-                        ) : null}
-                      </div>
-                    );
-                  })}
-                </div>
-
-                {item.oauth ? (
-                  <div className="space-y-3 rounded-lg border border-border p-3">
-                    <div>
-                      <p className="text-sm font-medium">
-                        Contul {item.portal.display_name} al agenției
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {item.portal.display_name} nu folosește o cheie API a agenției. Agenția își
-                        autorizează contul o singură dată, iar Habitoo păstrează autorizarea criptat
-                        și o reînnoiește automat.
-                      </p>
-                    </div>
-
-                    {item.oauth.appConfigured ? null : (
-                      <p className="rounded-lg border border-destructive/40 bg-destructive/5 p-3 text-xs text-destructive">
-                        Credențialele de aplicație pentru {item.portal.display_name} nu sunt încă
-                        configurate în platformă. Conectarea nu poate porni.
-                      </p>
-                    )}
-
-                    <dl className="grid gap-2 text-sm sm:grid-cols-2">
+                      ) : (
+                        <>
+                          <div>
+                            <dt className="text-muted-foreground">Oferte trimise către portal</dt>
+                            <dd>
+                              {item.listings.published} trimise · {item.listings.failed} cu eroare
+                            </dd>
+                          </div>
+                          <div>
+                            <dt className="text-muted-foreground">Credențiale portal</dt>
+                            <dd>
+                              {item.connection.hasPortalCredential
+                                ? "Salvate și criptate"
+                                : "Nesalvate"}
+                            </dd>
+                          </div>
+                        </>
+                      )}
                       <div>
-                        <dt className="text-muted-foreground">Autorizare</dt>
+                        <dt className="text-muted-foreground">Ultima verificare</dt>
                         <dd>
-                          {!item.oauth.connected
-                            ? "Neconectat"
-                            : item.oauth.expired
-                              ? item.oauth.canRefresh
-                                ? "Token expirat — se reînnoiește automat"
-                                : "Token expirat — reia conectarea"
-                              : "Activă"}
-                        </dd>
-                      </div>
-                      <div>
-                        <dt className="text-muted-foreground">Conectat la</dt>
-                        <dd>
-                          {item.oauth.connectedAt ? formatDateTime(item.oauth.connectedAt) : "—"}
-                        </dd>
-                      </div>
-                      <div>
-                        <dt className="text-muted-foreground">Token valabil până la</dt>
-                        <dd>{item.oauth.expiresAt ? formatDateTime(item.oauth.expiresAt) : "—"}</dd>
-                      </div>
-                      <div>
-                        <dt className="text-muted-foreground">Ultima reînnoire</dt>
-                        <dd>
-                          {item.oauth.refreshedAt ? formatDateTime(item.oauth.refreshedAt) : "—"}
-                        </dd>
-                      </div>
-                    </dl>
-
-                    <div className="flex flex-wrap gap-2">
-                      <Button
-                        type="button"
-                        onClick={() => startOAuth.mutate(item.portal.id)}
-                        disabled={startOAuth.isPending || item.oauth?.appConfigured !== true}
-                      >
-                        <ExternalLink className="mr-2 size-4" />
-                        {item.oauth.connected
-                          ? "Reconectează contul"
-                          : `Conectează contul ${item.portal.display_name}`}
-                      </Button>
-                      {item.oauth.connected ? (
-                        <Button
-                          type="button"
-                          variant="outline"
-                          onClick={() => revokeOAuth.mutate(item.portal.id)}
-                          disabled={revokeOAuth.isPending}
-                        >
-                          <Unplug className="mr-2 size-4" />
-                          Desface autorizarea
-                        </Button>
-                      ) : null}
-                    </div>
-                  </div>
-                ) : null}
-
-                {item.portal.id === "storia" ? (
-                  <div className="space-y-3 rounded-lg border border-border p-3">
-                    <div>
-                      <p className="text-sm font-medium">Structura de categorii Storia</p>
-                      <p className="text-xs text-muted-foreground">
-                        Habitoo trimite doar câmpurile confirmate de Storia. Reîmprospătează lista
-                        când portalul își schimbă cerințele.
-                      </p>
-                    </div>
-                    {taxonomy.data && taxonomy.data.ok === false ? (
-                      <p className="rounded-lg border border-destructive/40 bg-destructive/5 p-3 text-xs text-destructive">
-                        {taxonomy.data.error}
-                      </p>
-                    ) : null}
-                    <dl className="grid gap-2 text-sm sm:grid-cols-2">
-                      <div>
-                        <dt className="text-muted-foreground">Ultima actualizare</dt>
-                        <dd>
-                          {taxonomy.data?.ok && taxonomy.data.cache
-                            ? formatDateTime(taxonomy.data.cache.fetchedAt)
+                          {item.connection.lastSyncAt
+                            ? formatDateTime(item.connection.lastSyncAt)
                             : "Niciodată"}
                         </dd>
                       </div>
+                    </dl>
+
+                    <dl className="grid gap-3 rounded-lg border border-border p-3 text-sm sm:grid-cols-3">
                       <div>
-                        <dt className="text-muted-foreground">Categorii disponibile</dt>
+                        <dt className="text-muted-foreground">Oferte în feed</dt>
+                        <dd>{item.feed.properties ?? 0}</dd>
+                      </div>
+                      {item.feedOnly ? (
+                        <div>
+                          <dt className="text-muted-foreground">
+                            Oferte excluse (date incomplete)
+                          </dt>
+                          <dd>{item.feed.excluded ?? 0}</dd>
+                        </div>
+                      ) : (
+                        <div>
+                          <dt className="text-muted-foreground">Agenți în feed</dt>
+                          <dd>{item.feed.agents ?? 0}</dd>
+                        </div>
+                      )}
+                      <div>
+                        <dt className="text-muted-foreground">Feed</dt>
                         <dd>
-                          {taxonomy.data?.ok && taxonomy.data.cache
-                            ? taxonomy.data.cache.categoryCount
-                            : "—"}
+                          {item.feed.ok ? (item.feed.apiVersion ?? "funcțional") : "indisponibil"}
                         </dd>
                       </div>
                     </dl>
-                    {taxonomy.data?.ok && taxonomy.data.cache?.stale ? (
-                      <p className="text-xs text-muted-foreground">
-                        Lista este mai veche de o zi. Reîmprospătează-o pentru siguranță.
+
+                    {item.connection.lastSyncError ? (
+                      <p className="rounded-lg border border-destructive/40 bg-destructive/5 p-3 text-sm text-destructive">
+                        {item.connection.lastSyncError}
                       </p>
                     ) : null}
-                    {taxonomy.data?.ok && taxonomy.data.cache ? (
-                      <TaxonomyDiscrepancies cache={taxonomy.data.cache} />
+
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      {item.portal.configuration_schema.fields.map((field) => {
+                        const value =
+                          field.target === "external_account_id"
+                            ? (accountId[item.portal.id] ?? item.connection.externalAccountId ?? "")
+                            : field.target === "credentials"
+                              ? (credential[item.portal.id] ?? "")
+                              : (endpoint[item.portal.id] ?? item.connection.endpointUrl ?? "");
+                        const setValue = (next: string) => {
+                          if (field.target === "external_account_id") {
+                            setAccountId((prev) => ({ ...prev, [item.portal.id]: next }));
+                          } else if (field.target === "credentials") {
+                            setCredential((prev) => ({ ...prev, [item.portal.id]: next }));
+                          } else {
+                            setEndpoint((prev) => ({ ...prev, [item.portal.id]: next }));
+                          }
+                        };
+                        const fieldId = `${item.portal.id}-${field.key}`;
+                        const isRevealed = revealed[fieldId] === true;
+                        return (
+                          <div key={field.key} className="space-y-1.5">
+                            <Label htmlFor={fieldId}>{field.label}</Label>
+                            <div className="relative">
+                              <Input
+                                id={fieldId}
+                                type={field.secret && !isRevealed ? "password" : "text"}
+                                autoComplete="off"
+                                value={value}
+                                onChange={(e) => setValue(e.target.value)}
+                                className={field.secret ? "pr-10" : undefined}
+                                placeholder={
+                                  field.secret && item.connection.hasPortalCredential
+                                    ? "Salvat — completează pentru a-l înlocui"
+                                    : (field.placeholder ?? "")
+                                }
+                              />
+                              {field.secret ? (
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    setRevealed((prev) => ({ ...prev, [fieldId]: !isRevealed }))
+                                  }
+                                  className="absolute top-1/2 right-2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                                  aria-label={isRevealed ? "Ascunde valoarea" : "Arată valoarea"}
+                                >
+                                  {isRevealed ? (
+                                    <EyeOff className="size-4" />
+                                  ) : (
+                                    <Eye className="size-4" />
+                                  )}
+                                </button>
+                              ) : null}
+                            </div>
+                            {field.help ? (
+                              <p className="text-xs text-muted-foreground">{field.help}</p>
+                            ) : null}
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    {item.oauth ? (
+                      <div className="space-y-3 rounded-lg border border-border p-3">
+                        <div>
+                          <p className="text-sm font-medium">
+                            Contul {item.portal.display_name} al agenției
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            {item.portal.display_name} nu folosește o cheie API a agenției. Agenția
+                            își autorizează contul o singură dată, iar Habitoo păstrează autorizarea
+                            criptat și o reînnoiește automat.
+                          </p>
+                        </div>
+
+                        {item.oauth.appConfigured ? null : (
+                          <p className="rounded-lg border border-destructive/40 bg-destructive/5 p-3 text-xs text-destructive">
+                            Credențialele de aplicație pentru {item.portal.display_name} nu sunt
+                            încă configurate în platformă. Conectarea nu poate porni.
+                          </p>
+                        )}
+
+                        <dl className="grid gap-2 text-sm sm:grid-cols-2">
+                          <div>
+                            <dt className="text-muted-foreground">Autorizare</dt>
+                            <dd>
+                              {!item.oauth.connected
+                                ? "Neconectat"
+                                : item.oauth.expired
+                                  ? item.oauth.canRefresh
+                                    ? "Token expirat — se reînnoiește automat"
+                                    : "Token expirat — reia conectarea"
+                                  : "Activă"}
+                            </dd>
+                          </div>
+                          <div>
+                            <dt className="text-muted-foreground">Conectat la</dt>
+                            <dd>
+                              {item.oauth.connectedAt
+                                ? formatDateTime(item.oauth.connectedAt)
+                                : "—"}
+                            </dd>
+                          </div>
+                          <div>
+                            <dt className="text-muted-foreground">Token valabil până la</dt>
+                            <dd>
+                              {item.oauth.expiresAt ? formatDateTime(item.oauth.expiresAt) : "—"}
+                            </dd>
+                          </div>
+                          <div>
+                            <dt className="text-muted-foreground">Ultima reînnoire</dt>
+                            <dd>
+                              {item.oauth.refreshedAt
+                                ? formatDateTime(item.oauth.refreshedAt)
+                                : "—"}
+                            </dd>
+                          </div>
+                        </dl>
+
+                        <div className="flex flex-wrap gap-2">
+                          <Button
+                            type="button"
+                            onClick={() => startOAuth.mutate(item.portal.id)}
+                            disabled={startOAuth.isPending || item.oauth?.appConfigured !== true}
+                          >
+                            <ExternalLink className="mr-2 size-4" />
+                            {item.oauth.connected
+                              ? "Reconectează contul"
+                              : `Conectează contul ${item.portal.display_name}`}
+                          </Button>
+                          {item.oauth.connected ? (
+                            <Button
+                              type="button"
+                              variant="outline"
+                              onClick={() => revokeOAuth.mutate(item.portal.id)}
+                              disabled={revokeOAuth.isPending}
+                            >
+                              <Unplug className="mr-2 size-4" />
+                              Desface autorizarea
+                            </Button>
+                          ) : null}
+                        </div>
+                      </div>
                     ) : null}
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={() => refreshTaxonomy.mutate()}
-                      disabled={refreshTaxonomy.isPending}
-                    >
-                      {refreshTaxonomy.isPending ? "Se actualizează…" : "Reîmprospătează taxonomia"}
-                    </Button>
-                  </div>
-                ) : null}
 
-                <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border p-3">
-                  <div className="text-sm">
-                    <p className="font-medium">Activat pentru agenție</p>
-                    <p className="text-xs text-muted-foreground">
-                      Când este activat, agenția vede portalul și își bifează singură ofertele
-                      pentru publicare.
-                    </p>
-                  </div>
-                  <Switch
-                    checked={item.connection.activated}
-                    disabled={activation.isPending || item.portal.status !== "available"}
-                    onCheckedChange={(checked) =>
-                      activation.mutate({ portalId: item.portal.id, activated: checked })
-                    }
-                    aria-label="Activat pentru agenție"
-                  />
-                </div>
-
-                {item.feedOnly ? null : (
-                  <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border p-3">
-                    <div className="text-sm">
-                      <p className="font-medium">Trimiteri reale către portal</p>
-                      <p className="text-xs text-muted-foreground">
-                        Cât timp este oprit, Habitoo doar verifică local și îți arată ce ar trimite.
-                      </p>
-                    </div>
-                    <Switch
-                      checked={item.connection.allowLiveRequests}
-                      disabled={save.isPending || !item.connection.hasPortalCredential}
-                      onCheckedChange={(checked) =>
-                        save.mutate({ portalId: item.portal.id, allowLiveRequests: checked })
-                      }
-                      aria-label="Trimiteri reale către portal"
-                    />
-                  </div>
-                )}
-
-                {item.oauth ? null : (
-                  <div className="space-y-2 rounded-lg border border-border p-3">
-                    <p className="text-sm font-medium">Acces al portalului la ofertele tale</p>
-                    <div className="flex items-center justify-between gap-3 text-xs">
-                      <span className="truncate font-mono">{item.feedUrl}</span>
-                      <Button
-                        type="button"
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => copy(item.feedUrl, "Link copiat.")}
-                      >
-                        <Copy className="size-3.5" />
-                      </Button>
-                    </div>
-                    {item.feedUrlCsv ? (
-                      <div className="flex items-center justify-between gap-3 text-xs">
-                        <span className="truncate font-mono">{item.feedUrlCsv}</span>
+                    {item.portal.id === "storia" ? (
+                      <div className="space-y-3 rounded-lg border border-border p-3">
+                        <div>
+                          <p className="text-sm font-medium">Structura de categorii Storia</p>
+                          <p className="text-xs text-muted-foreground">
+                            Habitoo trimite doar câmpurile confirmate de Storia. Reîmprospătează
+                            lista când portalul își schimbă cerințele.
+                          </p>
+                        </div>
+                        {taxonomy.data && taxonomy.data.ok === false ? (
+                          <p className="rounded-lg border border-destructive/40 bg-destructive/5 p-3 text-xs text-destructive">
+                            {taxonomy.data.error}
+                          </p>
+                        ) : null}
+                        <dl className="grid gap-2 text-sm sm:grid-cols-2">
+                          <div>
+                            <dt className="text-muted-foreground">Ultima actualizare</dt>
+                            <dd>
+                              {taxonomy.data?.ok && taxonomy.data.cache
+                                ? formatDateTime(taxonomy.data.cache.fetchedAt)
+                                : "Niciodată"}
+                            </dd>
+                          </div>
+                          <div>
+                            <dt className="text-muted-foreground">Categorii disponibile</dt>
+                            <dd>
+                              {taxonomy.data?.ok && taxonomy.data.cache
+                                ? taxonomy.data.cache.categoryCount
+                                : "—"}
+                            </dd>
+                          </div>
+                        </dl>
+                        {taxonomy.data?.ok && taxonomy.data.cache?.stale ? (
+                          <p className="text-xs text-muted-foreground">
+                            Lista este mai veche de o zi. Reîmprospătează-o pentru siguranță.
+                          </p>
+                        ) : null}
+                        {taxonomy.data?.ok && taxonomy.data.cache ? (
+                          <TaxonomyDiscrepancies cache={taxonomy.data.cache} />
+                        ) : null}
                         <Button
                           type="button"
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => copy(item.feedUrlCsv!, "Link CSV copiat.")}
+                          variant="outline"
+                          onClick={() => refreshTaxonomy.mutate()}
+                          disabled={refreshTaxonomy.isPending}
                         >
-                          <Copy className="size-3.5" />
+                          {refreshTaxonomy.isPending
+                            ? "Se actualizează…"
+                            : "Reîmprospătează taxonomia"}
                         </Button>
                       </div>
                     ) : null}
-                    {!item.portal.authentication.includes("habitoo_api_key") ? (
-                      <p className="text-xs text-muted-foreground">
-                        {item.portal.display_name} folosește cheia API proprie, emisă de portal.
-                        Salvează cheia mai sus — Habitoo nu emite chei pentru acest portal.
-                      </p>
-                    ) : (
-                      <>
-                        {activeKeys.length ? (
-                          <ul className="divide-y divide-border text-sm">
-                            {activeKeys.map((k) => (
-                              <li key={k.id} className="flex flex-wrap items-center gap-2 py-2">
-                                <span className="min-w-0 flex-1 truncate">
-                                  {k.label} ·{" "}
-                                  <span className="font-mono text-xs">{k.keyPrefix}…</span>
-                                </span>
-                                <span className="text-xs text-muted-foreground">
-                                  {k.requestCount} cereri ·{" "}
-                                  {k.lastUsedAt ? formatDateTime(k.lastUsedAt) : "nefolosită"}
-                                </span>
-                                <Button
-                                  type="button"
-                                  size="sm"
-                                  variant="ghost"
-                                  className="text-destructive"
-                                  onClick={() => setConfirmRevoke(k.id)}
-                                >
-                                  <Trash2 className="size-3.5" />
-                                </Button>
-                              </li>
-                            ))}
-                          </ul>
-                        ) : (
+
+                    <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border p-3">
+                      <div className="text-sm">
+                        <p className="font-medium">Activat pentru agenție</p>
+                        <p className="text-xs text-muted-foreground">
+                          Când este activat, agenția vede portalul și își bifează singură ofertele
+                          pentru publicare.
+                        </p>
+                      </div>
+                      <Switch
+                        checked={item.connection.activated}
+                        disabled={activation.isPending || item.portal.status !== "available"}
+                        onCheckedChange={(checked) =>
+                          activation.mutate({ portalId: item.portal.id, activated: checked })
+                        }
+                        aria-label="Activat pentru agenție"
+                      />
+                    </div>
+
+                    {item.feedOnly ? null : (
+                      <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border p-3">
+                        <div className="text-sm">
+                          <p className="font-medium">Trimiteri reale către portal</p>
                           <p className="text-xs text-muted-foreground">
-                            Nicio cheie activă. Generează una și trimite-o portalului.
+                            Cât timp este oprit, Habitoo doar verifică local și îți arată ce ar
+                            trimite.
                           </p>
-                        )}
-                        <div className="flex flex-wrap items-end gap-2">
-                          <div className="min-w-40 flex-1 space-y-1.5">
-                            <Label htmlFor={`${item.portal.id}-key-label`}>Nume cheie</Label>
-                            <Input
-                              id={`${item.portal.id}-key-label`}
-                              value={keyLabel[item.portal.id] ?? ""}
-                              onChange={(e) =>
-                                setKeyLabel((prev) => ({
-                                  ...prev,
-                                  [item.portal.id]: e.target.value,
-                                }))
-                              }
-                              placeholder={`Cheie ${item.portal.display_name}`}
-                            />
-                          </div>
+                        </div>
+                        <Switch
+                          checked={item.connection.allowLiveRequests}
+                          disabled={save.isPending || !item.connection.hasPortalCredential}
+                          onCheckedChange={(checked) =>
+                            save.mutate({ portalId: item.portal.id, allowLiveRequests: checked })
+                          }
+                          aria-label="Trimiteri reale către portal"
+                        />
+                      </div>
+                    )}
+
+                    {item.oauth ? null : (
+                      <div className="space-y-2 rounded-lg border border-border p-3">
+                        <p className="text-sm font-medium">Acces al portalului la ofertele tale</p>
+                        <div className="flex items-center justify-between gap-3 text-xs">
+                          <span className="truncate font-mono">{item.feedUrl}</span>
                           <Button
                             type="button"
-                            variant="outline"
-                            onClick={() => issueKey.mutate(item.portal.id)}
-                            disabled={issueKey.isPending}
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => copy(item.feedUrl, "Link copiat.")}
                           >
-                            <KeyRound className="mr-2 size-4" />
-                            Generează cheie
+                            <Copy className="size-3.5" />
                           </Button>
                         </div>
-                        {freshKey && freshKey.portalId === item.portal.id ? (
-                          <div className="space-y-2 rounded-lg border border-primary/40 bg-primary/5 p-3">
-                            <p className="text-sm font-medium">
-                              Copiază cheia acum — nu se mai afișează.
-                            </p>
-                            <div className="flex items-center gap-2">
-                              <code className="min-w-0 flex-1 truncate text-xs">
-                                {freshKey.key}
-                              </code>
-                              <Button
-                                type="button"
-                                size="sm"
-                                onClick={() => copy(freshKey.key, "Cheie copiată.")}
-                              >
-                                <Copy className="size-3.5" />
-                              </Button>
-                              <Button
-                                type="button"
-                                size="sm"
-                                variant="ghost"
-                                onClick={() => setFreshKey(null)}
-                              >
-                                Am salvat-o
-                              </Button>
-                            </div>
+                        {item.feedUrlCsv ? (
+                          <div className="flex items-center justify-between gap-3 text-xs">
+                            <span className="truncate font-mono">{item.feedUrlCsv}</span>
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => copy(item.feedUrlCsv!, "Link CSV copiat.")}
+                            >
+                              <Copy className="size-3.5" />
+                            </Button>
                           </div>
                         ) : null}
-                      </>
+                        {!item.portal.authentication.includes("habitoo_api_key") ? (
+                          <p className="text-xs text-muted-foreground">
+                            {item.portal.display_name} folosește cheia API proprie, emisă de portal.
+                            Salvează cheia mai sus — Habitoo nu emite chei pentru acest portal.
+                          </p>
+                        ) : (
+                          <>
+                            {activeKeys.length ? (
+                              <ul className="divide-y divide-border text-sm">
+                                {activeKeys.map((k) => (
+                                  <li key={k.id} className="flex flex-wrap items-center gap-2 py-2">
+                                    <span className="min-w-0 flex-1 truncate">
+                                      {k.label} ·{" "}
+                                      <span className="font-mono text-xs">{k.keyPrefix}…</span>
+                                    </span>
+                                    <span className="text-xs text-muted-foreground">
+                                      {k.requestCount} cereri ·{" "}
+                                      {k.lastUsedAt ? formatDateTime(k.lastUsedAt) : "nefolosită"}
+                                    </span>
+                                    <Button
+                                      type="button"
+                                      size="sm"
+                                      variant="ghost"
+                                      className="text-destructive"
+                                      onClick={() => setConfirmRevoke(k.id)}
+                                    >
+                                      <Trash2 className="size-3.5" />
+                                    </Button>
+                                  </li>
+                                ))}
+                              </ul>
+                            ) : (
+                              <p className="text-xs text-muted-foreground">
+                                Nicio cheie activă. Generează una și trimite-o portalului.
+                              </p>
+                            )}
+                            <div className="flex flex-wrap items-end gap-2">
+                              <div className="min-w-40 flex-1 space-y-1.5">
+                                <Label htmlFor={`${item.portal.id}-key-label`}>Nume cheie</Label>
+                                <Input
+                                  id={`${item.portal.id}-key-label`}
+                                  value={keyLabel[item.portal.id] ?? ""}
+                                  onChange={(e) =>
+                                    setKeyLabel((prev) => ({
+                                      ...prev,
+                                      [item.portal.id]: e.target.value,
+                                    }))
+                                  }
+                                  placeholder={`Cheie ${item.portal.display_name}`}
+                                />
+                              </div>
+                              <Button
+                                type="button"
+                                variant="outline"
+                                onClick={() => issueKey.mutate(item.portal.id)}
+                                disabled={issueKey.isPending}
+                              >
+                                <KeyRound className="mr-2 size-4" />
+                                Generează cheie
+                              </Button>
+                            </div>
+                            {freshKey && freshKey.portalId === item.portal.id ? (
+                              <div className="space-y-2 rounded-lg border border-primary/40 bg-primary/5 p-3">
+                                <p className="text-sm font-medium">
+                                  Copiază cheia acum — nu se mai afișează.
+                                </p>
+                                <div className="flex items-center gap-2">
+                                  <code className="min-w-0 flex-1 truncate text-xs">
+                                    {freshKey.key}
+                                  </code>
+                                  <Button
+                                    type="button"
+                                    size="sm"
+                                    onClick={() => copy(freshKey.key, "Cheie copiată.")}
+                                  >
+                                    <Copy className="size-3.5" />
+                                  </Button>
+                                  <Button
+                                    type="button"
+                                    size="sm"
+                                    variant="ghost"
+                                    onClick={() => setFreshKey(null)}
+                                  >
+                                    Am salvat-o
+                                  </Button>
+                                </div>
+                              </div>
+                            ) : null}
+                          </>
+                        )}
+                      </div>
                     )}
-                  </div>
+
+                    <div className="flex flex-wrap gap-2">
+                      {item.portal.configuration_schema.fields.length ? (
+                        <Button
+                          type="button"
+                          onClick={() => save.mutate({ portalId: item.portal.id })}
+                          disabled={save.isPending}
+                        >
+                          <Save className="mr-2 size-4" />
+                          Salvează
+                        </Button>
+                      ) : null}
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => test.mutate(item.portal.id)}
+                        disabled={test.isPending}
+                      >
+                        <PlugZap className="mr-2 size-4" />
+                        {item.feedOnly ? "Verifică feedul" : "Testează conexiunea"}
+                      </Button>
+                      {item.feedOnly ? (
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => preview.mutate(item.portal.id)}
+                          disabled={preview.isPending}
+                        >
+                          <Eye className="mr-2 size-4" />
+                          Previzualizează ofertele
+                        </Button>
+                      ) : null}
+                      {item.portal.docs ? (
+                        <a
+                          href={item.portal.docs}
+                          target="_blank"
+                          rel="noreferrer noopener"
+                          className="inline-flex items-center gap-1.5 text-sm text-primary underline-offset-2 hover:underline"
+                        >
+                          <ExternalLink className="size-3.5" /> Documentație portal
+                        </a>
+                      ) : null}
+                      {item.connection.hasPortalCredential || item.connection.externalAccountId ? (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          className="text-destructive"
+                          onClick={() => setConfirmDisconnect(item.portal.id)}
+                        >
+                          <Unplug className="mr-2 size-4" />
+                          Deconectează
+                        </Button>
+                      ) : null}
+                    </div>
+
+                    <div className="flex flex-wrap gap-1.5">
+                      {item.portal.capabilities.map((c) => (
+                        <span
+                          key={c}
+                          className="rounded-md bg-muted px-2 py-0.5 text-xs text-muted-foreground"
+                        >
+                          {PORTAL_CAPABILITY_LABEL[c]}
+                        </span>
+                      ))}
+                    </div>
+
+                    {item.portal.notes ? (
+                      <p className="text-xs text-muted-foreground">{item.portal.notes}</p>
+                    ) : null}
+                  </>
                 )}
-
-                <div className="flex flex-wrap gap-2">
-                  {item.portal.configuration_schema.fields.length ? (
-                    <Button
-                      type="button"
-                      onClick={() => save.mutate({ portalId: item.portal.id })}
-                      disabled={save.isPending}
-                    >
-                      <Save className="mr-2 size-4" />
-                      Salvează
-                    </Button>
-                  ) : null}
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => test.mutate(item.portal.id)}
-                    disabled={test.isPending}
-                  >
-                    <PlugZap className="mr-2 size-4" />
-                    {item.feedOnly ? "Verifică feedul" : "Testează conexiunea"}
-                  </Button>
-                  {item.feedOnly ? (
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={() => preview.mutate(item.portal.id)}
-                      disabled={preview.isPending}
-                    >
-                      <Eye className="mr-2 size-4" />
-                      Previzualizează ofertele
-                    </Button>
-                  ) : null}
-                  {item.portal.docs ? (
-                    <a
-                      href={item.portal.docs}
-                      target="_blank"
-                      rel="noreferrer noopener"
-                      className="inline-flex items-center gap-1.5 text-sm text-primary underline-offset-2 hover:underline"
-                    >
-                      <ExternalLink className="size-3.5" /> Documentație portal
-                    </a>
-                  ) : null}
-                  {item.connection.hasPortalCredential || item.connection.externalAccountId ? (
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      className="text-destructive"
-                      onClick={() => setConfirmDisconnect(item.portal.id)}
-                    >
-                      <Unplug className="mr-2 size-4" />
-                      Deconectează
-                    </Button>
-                  ) : null}
-                </div>
-
-                <div className="flex flex-wrap gap-1.5">
-                  {item.portal.capabilities.map((c) => (
-                    <span
-                      key={c}
-                      className="rounded-md bg-muted px-2 py-0.5 text-xs text-muted-foreground"
-                    >
-                      {PORTAL_CAPABILITY_LABEL[c]}
-                    </span>
-                  ))}
-                </div>
-
-                {item.portal.notes ? (
-                  <p className="text-xs text-muted-foreground">{item.portal.notes}</p>
-                ) : null}
-              </>
-            )}
               </div>
             ) : null}
           </div>
