@@ -20,7 +20,6 @@ function AppLayout() {
   if (blocked) return <OrgBlocked reason={blocked} />;
   if (!user.organization && !user.isSuperadmin) return <Navigate to="/onboarding" />;
 
-
   const agencyGroups = agencyNavFor(user.isAdmin);
   const groups = user.isSuperadmin ? [...agencyGroups, ...superadminNav] : agencyGroups;
 

@@ -28,7 +28,8 @@ export const Route = createFileRoute("/api/public/homepitch/v1/properties")({
             baseUrl,
             limit: Number.isFinite(limit) ? limit : 100,
             offset: Number.isFinite(offset) ? offset : 0,
-            updatedSince: updatedSince && !Number.isNaN(Date.parse(updatedSince)) ? updatedSince : null,
+            updatedSince:
+              updatedSince && !Number.isNaN(Date.parse(updatedSince)) ? updatedSince : null,
             isActiveOnly: isActive,
           });
 

@@ -75,7 +75,10 @@ describe("mapPropertyToHomePitch", () => {
   });
 
   it("exclude ofertele fără coordonate", () => {
-    const result = mapPropertyToHomePitch({ ...baseProperty, lat: null, lng: null } as PropertyRow, options);
+    const result = mapPropertyToHomePitch(
+      { ...baseProperty, lat: null, lng: null } as PropertyRow,
+      options,
+    );
     expect(result.ok).toBe(false);
     if (result.ok) return;
     expect(result.reasons.join(" ")).toMatch(/coordonate/i);
@@ -114,7 +117,11 @@ describe("mapPropertyToHomePitch", () => {
   });
 
   it("nu inventează procentul de colaborare", () => {
-    expect(collabCommissionPercent({ ...baseProperty, commission: "negociabil" } as PropertyRow)).toBeNull();
-    expect(collabCommissionPercent({ ...baseProperty, collaboration: false } as PropertyRow)).toBeNull();
+    expect(
+      collabCommissionPercent({ ...baseProperty, commission: "negociabil" } as PropertyRow),
+    ).toBeNull();
+    expect(
+      collabCommissionPercent({ ...baseProperty, collaboration: false } as PropertyRow),
+    ).toBeNull();
   });
 });

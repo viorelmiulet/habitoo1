@@ -7,7 +7,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 import {
   Select,
   SelectContent,
@@ -73,7 +78,15 @@ export function PropertyDetailsFields({ idPrefix = "det", value, onChange }: Pro
     onChange({ [key]: next });
   };
 
-  const SelectField = ({ field, label, options }: { field: string; label: string; options: readonly string[] }) => (
+  const SelectField = ({
+    field,
+    label,
+    options,
+  }: {
+    field: string;
+    label: string;
+    options: readonly string[];
+  }) => (
     <div className="space-y-2">
       <Label htmlFor={`${idPrefix}-${field}`}>{label}</Label>
       <Select
@@ -198,7 +211,10 @@ export function PropertyDetailsFields({ idPrefix = "det", value, onChange }: Pro
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             <div className="space-y-2">
               <Label htmlFor={`${idPrefix}-property_type`}>Tip apartament / imobil</Label>
-              <Select value={str("property_type")} onValueChange={(v) => setField("property_type", v)}>
+              <Select
+                value={str("property_type")}
+                onValueChange={(v) => setField("property_type", v)}
+              >
                 <SelectTrigger id={`${idPrefix}-property_type`}>
                   <SelectValue placeholder="Selectează" />
                 </SelectTrigger>
@@ -257,9 +273,17 @@ export function PropertyDetailsFields({ idPrefix = "det", value, onChange }: Pro
         <AccordionTrigger className="text-sm font-medium">Clădire</AccordionTrigger>
         <AccordionContent className="space-y-6 pt-2">
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            <SelectField field="construction_stage" label="Stadiu construcție" options={constructionStageOptions} />
+            <SelectField
+              field="construction_stage"
+              label="Stadiu construcție"
+              options={constructionStageOptions}
+            />
             <SelectField field="building_type" label="Tip" options={buildingTypeOptions} />
-            <SelectField field="building_structure" label="Structură" options={buildingStructureOptions} />
+            <SelectField
+              field="building_structure"
+              label="Structură"
+              options={buildingStructureOptions}
+            />
             <SelectField field="seismic_risk" label="Risc seismic" options={seismicRiskOptions} />
             <NumberField field="building_floors" label="Etaje" />
             <NumberField field="recessed_floors" label="Etaje retrase" />
@@ -305,12 +329,20 @@ export function PropertyDetailsFields({ idPrefix = "det", value, onChange }: Pro
         <AccordionTrigger className="text-sm font-medium">Dotări</AccordionTrigger>
         <AccordionContent className="space-y-6 pt-2">
           <RadioField field="furnishing" label="Mobilat" options={furnishingOptions} />
-          <CheckGroup field="additional_spaces" label="Spații adiționale" options={additionalSpaceOptions} />
+          <CheckGroup
+            field="additional_spaces"
+            label="Spații adiționale"
+            options={additionalSpaceOptions}
+          />
           <CheckGroup field="kitchen_features" label="Bucătărie" options={kitchenOptions} />
           <CheckGroup field="metering" label="Contorizare" options={meteringOptions} />
           <CheckGroup field="appliances" label="Electrocasnice" options={applianceOptions} />
           <CheckGroup field="building_amenities" label="Imobil" options={buildingAmenityOptions} />
-          <CheckGroup field="street_arrangement" label="Amenajare străzi" options={streetArrangementOptions} />
+          <CheckGroup
+            field="street_arrangement"
+            label="Amenajare străzi"
+            options={streetArrangementOptions}
+          />
           <CheckGroup field="views" label="Priveliște" options={viewOptions} />
           <CheckGroup field="misc_features" label="Diverse" options={miscFeatureOptions} />
         </AccordionContent>

@@ -50,7 +50,9 @@ export const listPlatformUsers = createServerFn({ method: "POST" })
     const [{ data: profiles, error }, { data: roles }, { data: orgs }] = await Promise.all([
       supabaseAdmin
         .from("profiles")
-        .select("id,full_name,email,phone,job_title,avatar_url,is_active,created_at,organization_id")
+        .select(
+          "id,full_name,email,phone,job_title,avatar_url,is_active,created_at,organization_id",
+        )
         .order("created_at", { ascending: false }),
       supabaseAdmin.from("user_roles").select("user_id,role"),
       supabaseAdmin.from("organizations").select("id,name").order("name"),
@@ -151,7 +153,8 @@ export const updatePlatformUser = createServerFn({ method: "POST" })
 
     // 3. Agenția (funcție dedicată, cu audit propriu).
     if (data.organizationId !== before.organization_id) {
-      if (isSuperadmin) throw new Error("Agenția unui superadmin nu se schimbă din această pagină.");
+      if (isSuperadmin)
+        throw new Error("Agenția unui superadmin nu se schimbă din această pagină.");
       const { error: moveError } = await supabaseAdmin.rpc("admin_change_user_organization", {
         _user_id: data.userId,
         _new_org: data.organizationId as string,

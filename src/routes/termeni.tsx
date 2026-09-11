@@ -22,8 +22,8 @@ const sections: LegalSection[] = [
       <>
         <p>
           Habitoo este o platformă software (CRM) destinată agențiilor imobiliare, operată de
-          [DENUMIRE LEGALĂ SRL], cu sediul în [ADRESĂ], înregistrată la Registrul Comerțului sub
-          nr. [J__/____/____], CUI [RO________], denumită în continuare „Habitoo" sau „noi".
+          [DENUMIRE LEGALĂ SRL], cu sediul în [ADRESĂ], înregistrată la Registrul Comerțului sub nr.
+          [J__/____/____], CUI [RO________], denumită în continuare „Habitoo" sau „noi".
         </p>
         <p>Platforma este disponibilă la habitoo.ro și crm.habitoo.ro.</p>
       </>
@@ -68,8 +68,8 @@ const sections: LegalSection[] = [
         <p>
           Crearea unui cont de agenție necesită completarea unei cereri de înscriere cu date reale
           de identificare (denumire comercială, denumire legală, CUI, număr de înregistrare la
-          Registrul Comerțului). Cererea este supusă verificării și aprobării din partea noastră;
-          ne rezervăm dreptul de a refuza o cerere fără obligația de a motiva refuzul.
+          Registrul Comerțului). Cererea este supusă verificării și aprobării din partea noastră; ne
+          rezervăm dreptul de a refuza o cerere fără obligația de a motiva refuzul.
         </p>
         <p>
           Administratorul agenției poate adăuga utilizatori suplimentari (agenți), în limita
@@ -87,9 +87,8 @@ const sections: LegalSection[] = [
     title: "Planuri și limite",
     body: (
       <p>
-        Accesul la platformă se face în baza unui plan care determină, printre altele, numărul
-        maxim de utilizatori ai agenției. Trecerea la un plan superior sau inferior se face la
-        cerere.
+        Accesul la platformă se face în baza unui plan care determină, printre altele, numărul maxim
+        de utilizatori ai agenției. Trecerea la un plan superior sau inferior se face la cerere.
       </p>
     ),
   },
@@ -121,10 +120,12 @@ const sections: LegalSection[] = [
         <p>Te obligi să nu utilizezi platforma pentru:</p>
         <ul>
           <li>
-            publicarea de anunțuri false, înșelătoare sau pentru proprietăți asupra cărora nu
-            deții drepturi;
+            publicarea de anunțuri false, înșelătoare sau pentru proprietăți asupra cărora nu deții
+            drepturi;
           </li>
-          <li>încărcarea de conținut care încalcă drepturi de autor sau alte drepturi ale terților;</li>
+          <li>
+            încărcarea de conținut care încalcă drepturi de autor sau alte drepturi ale terților;
+          </li>
           <li>colectarea sau extragerea automată a datelor altor agenții;</li>
           <li>încercări de acces neautorizat la conturi, date sau infrastructură;</li>
           <li>orice activitate ilegală sau care contravine legislației aplicabile.</li>
@@ -164,14 +165,14 @@ const sections: LegalSection[] = [
         </p>
         <p>
           Doar proprietățile marcate explicit pentru colaborare devin vizibile celorlalte agenții
-          participante. Datele confidențiale — proprietarul, datele lui de contact și notele
-          interne — nu sunt expuse.
+          participante. Datele confidențiale — proprietarul, datele lui de contact și notele interne
+          — nu sunt expuse.
         </p>
         <p>
           Comisionul de colaborare afișat reprezintă oferta agenției care deține mandatul. Habitoo
-          nu este parte în acordul dintre agenții, nu intermediază plata comisionului și nu
-          răspunde pentru executarea sau neexecutarea acestuia. Orice dispută se soluționează
-          direct între agențiile implicate.
+          nu este parte în acordul dintre agenții, nu intermediază plata comisionului și nu răspunde
+          pentru executarea sau neexecutarea acestuia. Orice dispută se soluționează direct între
+          agențiile implicate.
         </p>
       </>
     ),
@@ -180,9 +181,9 @@ const sections: LegalSection[] = [
     title: "Disponibilitate",
     body: (
       <p>
-        Depunem eforturi rezonabile pentru ca platforma să fie disponibilă continuu, dar nu
-        garantăm funcționarea neîntreruptă sau lipsită de erori. Pot exista întreruperi pentru
-        mentenanță, actualizări sau din cauze independente de noi.
+        Depunem eforturi rezonabile pentru ca platforma să fie disponibilă continuu, dar nu garantăm
+        funcționarea neîntreruptă sau lipsită de erori. Pot exista întreruperi pentru mentenanță,
+        actualizări sau din cauze independente de noi.
       </p>
     ),
   },
@@ -213,8 +214,8 @@ const sections: LegalSection[] = [
           abuzivă, sau la cererea unei autorități competente.
         </p>
         <p>
-          La încetare, datele agenției pot fi șterse definitiv. Îți recomandăm să îți exporți
-          datele înainte de închiderea contului.
+          La încetare, datele agenției pot fi șterse definitiv. Îți recomandăm să îți exporți datele
+          înainte de închiderea contului.
         </p>
       </>
     ),
@@ -223,8 +224,8 @@ const sections: LegalSection[] = [
     title: "Modificarea termenilor",
     body: (
       <p>
-        Putem actualiza acești termeni. Modificările substanțiale vor fi anunțate prin platformă
-        sau pe email, cu un preaviz rezonabil. Continuarea utilizării după intrarea în vigoare a
+        Putem actualiza acești termeni. Modificările substanțiale vor fi anunțate prin platformă sau
+        pe email, cu un preaviz rezonabil. Continuarea utilizării după intrarea în vigoare a
         modificărilor înseamnă acceptarea lor.
       </p>
     ),

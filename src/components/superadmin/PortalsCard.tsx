@@ -6,7 +6,17 @@ import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { Copy, Eye, EyeOff, ExternalLink, KeyRound, PlugZap, Save, Trash2, Unplug } from "lucide-react";
+import {
+  Copy,
+  Eye,
+  EyeOff,
+  ExternalLink,
+  KeyRound,
+  PlugZap,
+  Save,
+  Trash2,
+  Unplug,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -66,7 +76,6 @@ export function PortalsCard({ organizationId }: { organizationId: string }) {
   const loadTaxonomy = useServerFn(getStoriaTaxonomyState);
   const runRefreshTaxonomy = useServerFn(refreshStoriaTaxonomy);
 
-
   const [accountId, setAccountId] = useState<Record<string, string>>({});
   const [credential, setCredential] = useState<Record<string, string>>({});
   const [endpoint, setEndpoint] = useState<Record<string, string>>({});
@@ -77,10 +86,15 @@ export function PortalsCard({ organizationId }: { organizationId: string }) {
   const [freshKey, setFreshKey] = useState<{ portalId: string; key: string } | null>(null);
   const [confirmDisconnect, setConfirmDisconnect] = useState<string | null>(null);
   const [confirmRevoke, setConfirmRevoke] = useState<string | null>(null);
-  const [feedPreview, setFeedPreview] = useState<Awaited<ReturnType<typeof previewPortalFeed>> | null>(null);
+  const [feedPreview, setFeedPreview] = useState<Awaited<
+    ReturnType<typeof previewPortalFeed>
+  > | null>(null);
 
   const hub = useQuery({ queryKey: hubKey, queryFn: () => loadHub({ data: { organizationId } }) });
-  const logs = useQuery({ queryKey: logsKey, queryFn: () => loadLogs({ data: { organizationId } }) });
+  const logs = useQuery({
+    queryKey: logsKey,
+    queryFn: () => loadLogs({ data: { organizationId } }),
+  });
   const invalidate = () => {
     queryClient.invalidateQueries({ queryKey: hubKey });
     queryClient.invalidateQueries({ queryKey: logsKey });
@@ -95,7 +109,9 @@ export function PortalsCard({ organizationId }: { organizationId: string }) {
           externalAccountId: accountId[input.portalId]?.trim(),
           credential: credential[input.portalId]?.trim() || undefined,
           endpointUrl: endpoint[input.portalId]?.trim(),
-          ...(input.allowLiveRequests === undefined ? {} : { allowLiveRequests: input.allowLiveRequests }),
+          ...(input.allowLiveRequests === undefined
+            ? {}
+            : { allowLiveRequests: input.allowLiveRequests }),
         },
       }),
     onSuccess: (_r, input) => {
@@ -109,7 +125,9 @@ export function PortalsCard({ organizationId }: { organizationId: string }) {
   /** Activarea comercială a portalului pentru agenție (separat de conexiune). */
   const activation = useMutation({
     mutationFn: (input: { portalId: string; activated: boolean }) =>
-      runActivation({ data: { organizationId, portalId: input.portalId, activated: input.activated } }),
+      runActivation({
+        data: { organizationId, portalId: input.portalId, activated: input.activated },
+      }),
     onSuccess: (res) => {
       invalidate();
       toast.success(
@@ -163,7 +181,6 @@ export function PortalsCard({ organizationId }: { organizationId: string }) {
     onError: (e: Error) => toastError(e),
   });
 
-
   const test = useMutation({
     mutationFn: (portalId: string) => runTest({ data: { organizationId, portalId } }),
     onSuccess: (res) => {
@@ -195,7 +212,9 @@ export function PortalsCard({ organizationId }: { organizationId: string }) {
 
   const issueKey = useMutation({
     mutationFn: (portalId: string) =>
-      runIssueKey({ data: { organizationId, portalId, label: keyLabel[portalId]?.trim() || "Cheie portal" } }),
+      runIssueKey({
+        data: { organizationId, portalId, label: keyLabel[portalId]?.trim() || "Cheie portal" },
+      }),
     onSuccess: (res, portalId) => {
       setKeyLabel((prev) => ({ ...prev, [portalId]: "" }));
       setFreshKey({ portalId, key: res.key });
@@ -261,7 +280,6 @@ export function PortalsCard({ organizationId }: { organizationId: string }) {
                   className="rounded-lg"
                 />
                 <div>
-
                   <h3 className="flex items-center gap-2 font-medium">
                     {item.portal.display_name}
                     {item.portal.website ? (
@@ -281,7 +299,9 @@ export function PortalsCard({ organizationId }: { organizationId: string }) {
               </div>
               <div className="flex flex-wrap items-center gap-2">
                 {unavailable ? (
-                  <StatusBadge tone="neutral">{PORTAL_AVAILABILITY_LABEL[item.portal.status]}</StatusBadge>
+                  <StatusBadge tone="neutral">
+                    {PORTAL_AVAILABILITY_LABEL[item.portal.status]}
+                  </StatusBadge>
                 ) : (
                   <StatusBadge tone={badge.tone} dot>
                     {badge.label}
@@ -329,13 +349,21 @@ export function PortalsCard({ organizationId }: { organizationId: string }) {
                       </div>
                       <div>
                         <dt className="text-muted-foreground">Credențiale portal</dt>
-                        <dd>{item.connection.hasPortalCredential ? "Salvate și criptate" : "Nesalvate"}</dd>
+                        <dd>
+                          {item.connection.hasPortalCredential
+                            ? "Salvate și criptate"
+                            : "Nesalvate"}
+                        </dd>
                       </div>
                     </>
                   )}
                   <div>
                     <dt className="text-muted-foreground">Ultima verificare</dt>
-                    <dd>{item.connection.lastSyncAt ? formatDateTime(item.connection.lastSyncAt) : "Niciodată"}</dd>
+                    <dd>
+                      {item.connection.lastSyncAt
+                        ? formatDateTime(item.connection.lastSyncAt)
+                        : "Niciodată"}
+                    </dd>
                   </div>
                 </dl>
 
@@ -357,7 +385,9 @@ export function PortalsCard({ organizationId }: { organizationId: string }) {
                   )}
                   <div>
                     <dt className="text-muted-foreground">Feed</dt>
-                    <dd>{item.feed.ok ? (item.feed.apiVersion ?? "funcțional") : "indisponibil"}</dd>
+                    <dd>
+                      {item.feed.ok ? (item.feed.apiVersion ?? "funcțional") : "indisponibil"}
+                    </dd>
                   </div>
                 </dl>
 
@@ -420,21 +450,24 @@ export function PortalsCard({ organizationId }: { organizationId: string }) {
                             </button>
                           ) : null}
                         </div>
-                        {field.help ? <p className="text-xs text-muted-foreground">{field.help}</p> : null}
+                        {field.help ? (
+                          <p className="text-xs text-muted-foreground">{field.help}</p>
+                        ) : null}
                       </div>
                     );
-
                   })}
                 </div>
 
                 {item.oauth ? (
                   <div className="space-y-3 rounded-lg border border-border p-3">
                     <div>
-                      <p className="text-sm font-medium">Contul {item.portal.display_name} al agenției</p>
+                      <p className="text-sm font-medium">
+                        Contul {item.portal.display_name} al agenției
+                      </p>
                       <p className="text-xs text-muted-foreground">
                         {item.portal.display_name} nu folosește o cheie API a agenției. Agenția își
-                        autorizează contul o singură dată, iar Habitoo păstrează autorizarea criptat și o
-                        reînnoiește automat.
+                        autorizează contul o singură dată, iar Habitoo păstrează autorizarea criptat
+                        și o reînnoiește automat.
                       </p>
                     </div>
 
@@ -557,7 +590,8 @@ export function PortalsCard({ organizationId }: { organizationId: string }) {
                   <div className="text-sm">
                     <p className="font-medium">Activat pentru agenție</p>
                     <p className="text-xs text-muted-foreground">
-                      Când este activat, agenția vede portalul și își bifează singură ofertele pentru publicare.
+                      Când este activat, agenția vede portalul și își bifează singură ofertele
+                      pentru publicare.
                     </p>
                   </div>
                   <Switch
@@ -571,122 +605,143 @@ export function PortalsCard({ organizationId }: { organizationId: string }) {
                 </div>
 
                 {item.feedOnly ? null : (
-                <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border p-3">
-                  <div className="text-sm">
-                    <p className="font-medium">Trimiteri reale către portal</p>
-                    <p className="text-xs text-muted-foreground">
-                      Cât timp este oprit, Habitoo doar verifică local și îți arată ce ar trimite.
-                    </p>
+                  <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border p-3">
+                    <div className="text-sm">
+                      <p className="font-medium">Trimiteri reale către portal</p>
+                      <p className="text-xs text-muted-foreground">
+                        Cât timp este oprit, Habitoo doar verifică local și îți arată ce ar trimite.
+                      </p>
+                    </div>
+                    <Switch
+                      checked={item.connection.allowLiveRequests}
+                      disabled={save.isPending || !item.connection.hasPortalCredential}
+                      onCheckedChange={(checked) =>
+                        save.mutate({ portalId: item.portal.id, allowLiveRequests: checked })
+                      }
+                      aria-label="Trimiteri reale către portal"
+                    />
                   </div>
-                  <Switch
-                    checked={item.connection.allowLiveRequests}
-                    disabled={save.isPending || !item.connection.hasPortalCredential}
-                    onCheckedChange={(checked) =>
-                      save.mutate({ portalId: item.portal.id, allowLiveRequests: checked })
-                    }
-                    aria-label="Trimiteri reale către portal"
-                  />
-                </div>
                 )}
 
                 {item.oauth ? null : (
-                <div className="space-y-2 rounded-lg border border-border p-3">
-
-                  <p className="text-sm font-medium">Acces al portalului la ofertele tale</p>
-                  <div className="flex items-center justify-between gap-3 text-xs">
-                    <span className="truncate font-mono">{item.feedUrl}</span>
-                    <Button type="button" size="sm" variant="ghost" onClick={() => copy(item.feedUrl, "Link copiat.")}>
-                      <Copy className="size-3.5" />
-                    </Button>
-                  </div>
-                  {item.feedUrlCsv ? (
+                  <div className="space-y-2 rounded-lg border border-border p-3">
+                    <p className="text-sm font-medium">Acces al portalului la ofertele tale</p>
                     <div className="flex items-center justify-between gap-3 text-xs">
-                      <span className="truncate font-mono">{item.feedUrlCsv}</span>
+                      <span className="truncate font-mono">{item.feedUrl}</span>
                       <Button
                         type="button"
                         size="sm"
                         variant="ghost"
-                        onClick={() => copy(item.feedUrlCsv!, "Link CSV copiat.")}
+                        onClick={() => copy(item.feedUrl, "Link copiat.")}
                       >
                         <Copy className="size-3.5" />
                       </Button>
                     </div>
-                  ) : null}
-                  {!item.portal.authentication.includes("habitoo_api_key") ? (
-                    <p className="text-xs text-muted-foreground">
-                      {item.portal.display_name} folosește cheia API proprie, emisă de portal. Salvează cheia mai
-                      sus — Habitoo nu emite chei pentru acest portal.
-                    </p>
-                  ) : (
-                    <>
-                  {activeKeys.length ? (
-                    <ul className="divide-y divide-border text-sm">
-                      {activeKeys.map((k) => (
-                        <li key={k.id} className="flex flex-wrap items-center gap-2 py-2">
-                          <span className="min-w-0 flex-1 truncate">
-                            {k.label} · <span className="font-mono text-xs">{k.keyPrefix}…</span>
-                          </span>
-                          <span className="text-xs text-muted-foreground">
-                            {k.requestCount} cereri ·{" "}
-                            {k.lastUsedAt ? formatDateTime(k.lastUsedAt) : "nefolosită"}
-                          </span>
-                          <Button
-                            type="button"
-                            size="sm"
-                            variant="ghost"
-                            className="text-destructive"
-                            onClick={() => setConfirmRevoke(k.id)}
-                          >
-                            <Trash2 className="size-3.5" />
-                          </Button>
-                        </li>
-                      ))}
-                    </ul>
-                  ) : (
-                    <p className="text-xs text-muted-foreground">
-                      Nicio cheie activă. Generează una și trimite-o portalului.
-                    </p>
-                  )}
-                  <div className="flex flex-wrap items-end gap-2">
-                    <div className="min-w-40 flex-1 space-y-1.5">
-                      <Label htmlFor={`${item.portal.id}-key-label`}>Nume cheie</Label>
-                      <Input
-                        id={`${item.portal.id}-key-label`}
-                        value={keyLabel[item.portal.id] ?? ""}
-                        onChange={(e) => setKeyLabel((prev) => ({ ...prev, [item.portal.id]: e.target.value }))}
-                        placeholder={`Cheie ${item.portal.display_name}`}
-                      />
-                    </div>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={() => issueKey.mutate(item.portal.id)}
-                      disabled={issueKey.isPending}
-                    >
-                      <KeyRound className="mr-2 size-4" />
-                      Generează cheie
-                    </Button>
-                  </div>
-                  {freshKey && freshKey.portalId === item.portal.id ? (
-                    <div className="space-y-2 rounded-lg border border-primary/40 bg-primary/5 p-3">
-                      <p className="text-sm font-medium">Copiază cheia acum — nu se mai afișează.</p>
-                      <div className="flex items-center gap-2">
-                        <code className="min-w-0 flex-1 truncate text-xs">{freshKey.key}</code>
-                        <Button type="button" size="sm" onClick={() => copy(freshKey.key, "Cheie copiată.")}>
+                    {item.feedUrlCsv ? (
+                      <div className="flex items-center justify-between gap-3 text-xs">
+                        <span className="truncate font-mono">{item.feedUrlCsv}</span>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => copy(item.feedUrlCsv!, "Link CSV copiat.")}
+                        >
                           <Copy className="size-3.5" />
                         </Button>
-                        <Button type="button" size="sm" variant="ghost" onClick={() => setFreshKey(null)}>
-                          Am salvat-o
-                        </Button>
                       </div>
-                    </div>
-                  ) : null}
-                    </>
-                  )}
-
-                </div>
+                    ) : null}
+                    {!item.portal.authentication.includes("habitoo_api_key") ? (
+                      <p className="text-xs text-muted-foreground">
+                        {item.portal.display_name} folosește cheia API proprie, emisă de portal.
+                        Salvează cheia mai sus — Habitoo nu emite chei pentru acest portal.
+                      </p>
+                    ) : (
+                      <>
+                        {activeKeys.length ? (
+                          <ul className="divide-y divide-border text-sm">
+                            {activeKeys.map((k) => (
+                              <li key={k.id} className="flex flex-wrap items-center gap-2 py-2">
+                                <span className="min-w-0 flex-1 truncate">
+                                  {k.label} ·{" "}
+                                  <span className="font-mono text-xs">{k.keyPrefix}…</span>
+                                </span>
+                                <span className="text-xs text-muted-foreground">
+                                  {k.requestCount} cereri ·{" "}
+                                  {k.lastUsedAt ? formatDateTime(k.lastUsedAt) : "nefolosită"}
+                                </span>
+                                <Button
+                                  type="button"
+                                  size="sm"
+                                  variant="ghost"
+                                  className="text-destructive"
+                                  onClick={() => setConfirmRevoke(k.id)}
+                                >
+                                  <Trash2 className="size-3.5" />
+                                </Button>
+                              </li>
+                            ))}
+                          </ul>
+                        ) : (
+                          <p className="text-xs text-muted-foreground">
+                            Nicio cheie activă. Generează una și trimite-o portalului.
+                          </p>
+                        )}
+                        <div className="flex flex-wrap items-end gap-2">
+                          <div className="min-w-40 flex-1 space-y-1.5">
+                            <Label htmlFor={`${item.portal.id}-key-label`}>Nume cheie</Label>
+                            <Input
+                              id={`${item.portal.id}-key-label`}
+                              value={keyLabel[item.portal.id] ?? ""}
+                              onChange={(e) =>
+                                setKeyLabel((prev) => ({
+                                  ...prev,
+                                  [item.portal.id]: e.target.value,
+                                }))
+                              }
+                              placeholder={`Cheie ${item.portal.display_name}`}
+                            />
+                          </div>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => issueKey.mutate(item.portal.id)}
+                            disabled={issueKey.isPending}
+                          >
+                            <KeyRound className="mr-2 size-4" />
+                            Generează cheie
+                          </Button>
+                        </div>
+                        {freshKey && freshKey.portalId === item.portal.id ? (
+                          <div className="space-y-2 rounded-lg border border-primary/40 bg-primary/5 p-3">
+                            <p className="text-sm font-medium">
+                              Copiază cheia acum — nu se mai afișează.
+                            </p>
+                            <div className="flex items-center gap-2">
+                              <code className="min-w-0 flex-1 truncate text-xs">
+                                {freshKey.key}
+                              </code>
+                              <Button
+                                type="button"
+                                size="sm"
+                                onClick={() => copy(freshKey.key, "Cheie copiată.")}
+                              >
+                                <Copy className="size-3.5" />
+                              </Button>
+                              <Button
+                                type="button"
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => setFreshKey(null)}
+                              >
+                                Am salvat-o
+                              </Button>
+                            </div>
+                          </div>
+                        ) : null}
+                      </>
+                    )}
+                  </div>
                 )}
-
 
                 <div className="flex flex-wrap gap-2">
                   {item.portal.configuration_schema.fields.length ? (
@@ -744,7 +799,10 @@ export function PortalsCard({ organizationId }: { organizationId: string }) {
 
                 <div className="flex flex-wrap gap-1.5">
                   {item.portal.capabilities.map((c) => (
-                    <span key={c} className="rounded-md bg-muted px-2 py-0.5 text-xs text-muted-foreground">
+                    <span
+                      key={c}
+                      className="rounded-md bg-muted px-2 py-0.5 text-xs text-muted-foreground"
+                    >
                       {PORTAL_CAPABILITY_LABEL[c]}
                     </span>
                   ))}
@@ -769,7 +827,9 @@ export function PortalsCard({ organizationId }: { organizationId: string }) {
           </div>
           <p className="text-sm text-muted-foreground">
             {feedPreview.valid} oferte valide din {feedPreview.selected} selectate ·{" "}
-            {feedPreview.hasActiveKey ? "cheie API salvată" : "cheia API a portalului nu e salvată — portalul nu poate citi feedul"}
+            {feedPreview.hasActiveKey
+              ? "cheie API salvată"
+              : "cheia API a portalului nu e salvată — portalul nu poate citi feedul"}
           </p>
           {feedPreview.excluded.length ? (
             <ul className="space-y-1 text-sm">
@@ -803,7 +863,9 @@ export function PortalsCard({ organizationId }: { organizationId: string }) {
                   {log.portal} · {log.operation}
                   {log.errorMessage ? ` — ${log.errorMessage}` : ""}
                 </span>
-                <span className="text-xs text-muted-foreground">{formatDateTime(log.createdAt)}</span>
+                <span className="text-xs text-muted-foreground">
+                  {formatDateTime(log.createdAt)}
+                </span>
               </li>
             ))}
           </ul>
@@ -843,12 +905,14 @@ export function PortalsCard({ organizationId }: { organizationId: string }) {
 function TaxonomyDiscrepancies({
   cache,
 }: {
-  cache: { discrepancies?: {
-    missingCategories?: string[];
-    newRequired?: { category: string; attribute: string }[];
-    noLongerRequired?: { category: string; attribute: string }[];
-    changedAttributes?: { category: string; attribute: string }[];
-  } };
+  cache: {
+    discrepancies?: {
+      missingCategories?: string[];
+      newRequired?: { category: string; attribute: string }[];
+      noLongerRequired?: { category: string; attribute: string }[];
+      changedAttributes?: { category: string; attribute: string }[];
+    };
+  };
 }) {
   const d = cache.discrepancies ?? {};
   const items: string[] = [];

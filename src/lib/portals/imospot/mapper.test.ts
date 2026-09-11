@@ -87,14 +87,23 @@ describe("mapPropertyToImospot", () => {
     expect(listing.currency).toBe("EUR");
     expect(listing.contact.phone).toBe("0722111222");
     expect(listing.contact.agent?.name).toBe("Ana Pop");
-    expect(listing.location).toMatchObject({ county: "București", city: "București", neighborhood: "Sector 6" });
+    expect(listing.location).toMatchObject({
+      county: "București",
+      city: "București",
+      neighborhood: "Sector 6",
+    });
     expect(listing.images).toEqual([
       "https://crm.habitoo.ro/api/public/sites/v1/media/22222222-2222-4222-8222-222222222222",
     ]);
     expect(listing.features).toContain("elevator");
     expect(listing.features).toContain("balcony");
     expect(listing.features).toContain("parking");
-    expect(listing.attributes).toMatchObject({ rooms: 3, bathrooms: 2, surface: 78, total_floors: 8 });
+    expect(listing.attributes).toMatchObject({
+      rooms: 3,
+      bathrooms: 2,
+      surface: 78,
+      total_floors: 8,
+    });
     // Câmpurile fără echivalent real nu sunt inventate.
     expect(Object.keys(listing)).not.toContain("promotion");
     expect(Object.keys(listing)).not.toContain("video_url");
@@ -131,7 +140,10 @@ describe("mapPropertyToImospot", () => {
   });
 
   it("rotunjește prețul cu zecimale și avertizează", () => {
-    const result = mapPropertyToImospot({ ...baseProperty, sale_price: 84999.6 } as PropertyRow, options);
+    const result = mapPropertyToImospot(
+      { ...baseProperty, sale_price: 84999.6 } as PropertyRow,
+      options,
+    );
     expect(result.ok).toBe(true);
     if (!result.ok) return;
     expect(result.listings[0]!.price).toBe(85000);

@@ -120,4 +120,3 @@ describe("identificatori", () => {
     expect(storiaAdSlugFromUrl("https://www.storia.ro/ro/rezultate/vanzare")).toBeNull();
   });
 });
-

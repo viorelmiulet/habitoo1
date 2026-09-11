@@ -6,7 +6,13 @@
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 export const CURRENCY_OPTIONS = ["EUR", "RON", "USD"] as const;
 
@@ -92,8 +98,8 @@ export function PropertyTransactionFields({ idPrefix = "tx", value, onChange }: 
   return (
     <div className="space-y-4">
       <p className="text-sm text-muted-foreground">
-        Bifează cel puțin o variantă: de vânzare, de închiriere sau ambele simultan. Completează prețul pentru
-        fiecare variantă bifată.
+        Bifează cel puțin o variantă: de vânzare, de închiriere sau ambele simultan. Completează
+        prețul pentru fiecare variantă bifată.
       </p>
 
       <div className="grid gap-4 md:grid-cols-2">

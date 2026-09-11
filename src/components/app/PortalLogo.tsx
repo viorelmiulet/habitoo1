@@ -14,6 +14,7 @@ import imoveLogo from "@/assets/portals/imove.png";
 import oferteImobiliareLogo from "@/assets/portals/oferteimobiliare.png";
 import olxLogo from "@/assets/portals/olx.png";
 import publi24Logo from "@/assets/portals/publi24.png";
+import romimoLogo from "@/assets/portals/romimo.png";
 import storiaLogo from "@/assets/portals/storia.png";
 import { cn } from "@/lib/utils";
 
@@ -27,6 +28,7 @@ const PORTAL_LOGOS: Record<string, string> = {
   storia: storiaLogo,
   olx: olxLogo,
   publi24: publi24Logo,
+  romimo: romimoLogo,
 };
 
 /** Există logo local pentru portalul dat? */

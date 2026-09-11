@@ -84,7 +84,8 @@ export async function notifyPropertyChanged(input: {
   }
   const { url, prepared } = buildWebhookRequest(input.config as ClickImobConfig, input.propertyId);
   if (!input.enabled) return { sent: false, reason: "disabled", safeUrl: prepared.safeUrl };
-  if (!input.allowLiveRequests) return { sent: false, reason: "dry_run", safeUrl: prepared.safeUrl };
+  if (!input.allowLiveRequests)
+    return { sent: false, reason: "dry_run", safeUrl: prepared.safeUrl };
 
   const response = await fetch(url, {
     method: prepared.method,

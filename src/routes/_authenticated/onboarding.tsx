@@ -43,8 +43,7 @@ function OnboardingPage() {
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
       const meta = data.user?.user_metadata as
-        | { full_name?: string; agency_name?: string; phone?: string }
-        | undefined;
+        { full_name?: string; agency_name?: string; phone?: string } | undefined;
       if (!meta) return;
       setForm((f) => ({
         ...f,

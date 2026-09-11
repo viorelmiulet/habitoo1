@@ -105,14 +105,19 @@ describe("mapPropertyToImove", () => {
   });
 
   it("exclude ofertele fără câmpuri obligatorii, cu motiv", () => {
-    const result = mapPropertyToImove({ ...baseProperty, description: null } as PropertyRow, options);
+    const result = mapPropertyToImove(
+      { ...baseProperty, description: null } as PropertyRow,
+      options,
+    );
     expect(result.ok).toBe(false);
     if (result.ok) return;
     expect(result.reasons.join(" ")).toContain("descrierea");
   });
 
   it("exclude prețul lipsă sau nepozitiv", () => {
-    expect(mapPropertyToImove({ ...baseProperty, price: 0 } as PropertyRow, options).ok).toBe(false);
+    expect(mapPropertyToImove({ ...baseProperty, price: 0 } as PropertyRow, options).ok).toBe(
+      false,
+    );
   });
 
   it("nu trimite imagini confidențiale sau nepublicabile", () => {
@@ -144,7 +149,10 @@ describe("mapPropertyToImove", () => {
   });
 
   it("nu expune adresa exactă când locația nu este precisă", () => {
-    const result = mapPropertyToImove({ ...baseProperty, location_precise: false } as PropertyRow, options);
+    const result = mapPropertyToImove(
+      { ...baseProperty, location_precise: false } as PropertyRow,
+      options,
+    );
     expect(result.ok).toBe(true);
     if (!result.ok) return;
     expect(result.listing.addressPublic).toBe("Str. Exemplu");

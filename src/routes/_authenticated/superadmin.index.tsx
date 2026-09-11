@@ -112,7 +112,10 @@ function SuperadminDashboard() {
               Erorile apar primele. Dacă un portal e roșu la toate agențiile, problema e la portal.
             </p>
           </div>
-          <Link to="/superadmin/portals" className="text-xs font-medium text-primary hover:underline">
+          <Link
+            to="/superadmin/portals"
+            className="text-xs font-medium text-primary hover:underline"
+          >
             Configurări
           </Link>
         </header>
@@ -151,7 +154,9 @@ function SuperadminDashboard() {
             label="Agenții active"
             value={growth?.activeAgencies}
             hint={
-              growth ? `${formatNumber(growth.pendingAgencies)} în așteptare de aprobare` : undefined
+              growth
+                ? `${formatNumber(growth.pendingAgencies)} în așteptare de aprobare`
+                : undefined
             }
             icon={Building2}
             loading={isLoading}
@@ -238,7 +243,6 @@ function SuperadminDashboard() {
               </li>
             ))}
           </ol>
-
         )}
       </section>
     </>
@@ -346,14 +350,14 @@ function MetricCard({
     );
   }
   return <div className="bg-surface p-5">{body}</div>;
-
 }
 
 function IntegrationRow({ row }: { row: IntegrationHealthRow }) {
   const definition = getPortalDefinition(row.portal);
-  const key = (row.status as PortalConnectionStatus) in PORTAL_CONNECTION_LABEL
-    ? (row.status as PortalConnectionStatus)
-    : "not_configured";
+  const key =
+    (row.status as PortalConnectionStatus) in PORTAL_CONNECTION_LABEL
+      ? (row.status as PortalConnectionStatus)
+      : "not_configured";
   const meta = row.lastError
     ? { label: "Eroare", tone: "danger" as const }
     : PORTAL_CONNECTION_LABEL[key];

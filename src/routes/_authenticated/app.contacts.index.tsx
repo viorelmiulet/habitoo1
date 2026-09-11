@@ -118,7 +118,15 @@ function ContactsPage() {
 
   useEffect(() => {
     setPage(0);
-  }, [debouncedQ, filters.type, filters.source, filters.assigned, filters.status, filters.mine, filters.tag]);
+  }, [
+    debouncedQ,
+    filters.type,
+    filters.source,
+    filters.assigned,
+    filters.status,
+    filters.mine,
+    filters.tag,
+  ]);
 
   const { data: agents = [] } = useQuery({
     queryKey: ["profiles-agents", user?.organization?.id],
@@ -195,7 +203,9 @@ function ContactsPage() {
           `first_name.ilike.%${term}%,last_name.ilike.%${term}%,phone.ilike.%${term}%,email.ilike.%${term}%,company.ilike.%${term}%`,
         );
       }
-      query = query.order("created_at", { ascending: false }).range(page * PAGE_SIZE, page * PAGE_SIZE + PAGE_SIZE - 1);
+      query = query
+        .order("created_at", { ascending: false })
+        .range(page * PAGE_SIZE, page * PAGE_SIZE + PAGE_SIZE - 1);
       const { data, error, count } = await query;
       if (error) throw error;
       return { rows: data, count: count ?? 0 };
@@ -238,7 +248,16 @@ function ContactsPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["contacts"] });
       setDialogOpen(false);
-      setForm({ first_name: "", last_name: "", type: "buyer", phone: "", email: "", company: "", source: "", notes: "" });
+      setForm({
+        first_name: "",
+        last_name: "",
+        type: "buyer",
+        phone: "",
+        email: "",
+        company: "",
+        source: "",
+        notes: "",
+      });
       toast.success("Contactul a fost adăugat.");
     },
     onError: (e: Error) => toastError(e),
@@ -246,7 +265,10 @@ function ContactsPage() {
 
   const bulkUpdate = useMutation({
     mutationFn: async (patch: Record<string, unknown>) => {
-      const { error } = await supabase.from("contacts").update(patch as never).in("id", selected);
+      const { error } = await supabase
+        .from("contacts")
+        .update(patch as never)
+        .in("id", selected);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -330,47 +352,67 @@ function ContactsPage() {
               className="pl-9"
             />
           </div>
-          <Select value={filters.type} onValueChange={(v) => setFilters((f) => ({ ...f, type: v }))}>
+          <Select
+            value={filters.type}
+            onValueChange={(v) => setFilters((f) => ({ ...f, type: v }))}
+          >
             <SelectTrigger className="w-44">
               <SelectValue placeholder="Tip contact" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Toate tipurile</SelectItem>
               {Object.entries(contactTypeLabels).map(([k, v]) => (
-                <SelectItem key={k} value={k}>{v}</SelectItem>
+                <SelectItem key={k} value={k}>
+                  {v}
+                </SelectItem>
               ))}
             </SelectContent>
           </Select>
-          <Select value={filters.source} onValueChange={(v) => setFilters((f) => ({ ...f, source: v }))}>
+          <Select
+            value={filters.source}
+            onValueChange={(v) => setFilters((f) => ({ ...f, source: v }))}
+          >
             <SelectTrigger className="w-40">
               <SelectValue placeholder="Sursă" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Toate sursele</SelectItem>
               {sources.map((s) => (
-                <SelectItem key={s} value={s}>{s}</SelectItem>
+                <SelectItem key={s} value={s}>
+                  {s}
+                </SelectItem>
               ))}
             </SelectContent>
           </Select>
-          <Select value={filters.assigned} onValueChange={(v) => setFilters((f) => ({ ...f, assigned: v }))}>
+          <Select
+            value={filters.assigned}
+            onValueChange={(v) => setFilters((f) => ({ ...f, assigned: v }))}
+          >
             <SelectTrigger className="w-44">
               <SelectValue placeholder="Agent responsabil" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Toți agenții</SelectItem>
               {agents.map((a) => (
-                <SelectItem key={a.id} value={a.id}>{a.full_name}</SelectItem>
+                <SelectItem key={a.id} value={a.id}>
+                  {a.full_name}
+                </SelectItem>
               ))}
             </SelectContent>
           </Select>
-          <Select value={filters.status} onValueChange={(v) => setFilters((f) => ({ ...f, status: v }))}>
+          <Select
+            value={filters.status}
+            onValueChange={(v) => setFilters((f) => ({ ...f, status: v }))}
+          >
             <SelectTrigger className="w-36">
               <SelectValue placeholder="Status" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Toate statusurile</SelectItem>
               {Object.entries(statusLabels).map(([k, v]) => (
-                <SelectItem key={k} value={k}>{v}</SelectItem>
+                <SelectItem key={k} value={k}>
+                  {v}
+                </SelectItem>
               ))}
             </SelectContent>
           </Select>
@@ -381,11 +423,17 @@ function ContactsPage() {
             <SelectContent>
               <SelectItem value="all">Toate etichetele</SelectItem>
               {tags.map((t) => (
-                <SelectItem key={t} value={t}>{t}</SelectItem>
+                <SelectItem key={t} value={t}>
+                  {t}
+                </SelectItem>
               ))}
             </SelectContent>
           </Select>
-          <Button variant={filters.mine ? "default" : "outline"} size="sm" onClick={() => setFilters((f) => ({ ...f, mine: !f.mine }))}>
+          <Button
+            variant={filters.mine ? "default" : "outline"}
+            size="sm"
+            onClick={() => setFilters((f) => ({ ...f, mine: !f.mine }))}
+          >
             Doar ale mele
           </Button>
           <Button variant="ghost" size="sm" onClick={saveFilter}>
@@ -395,10 +443,24 @@ function ContactsPage() {
             <X className="size-4" /> Resetează
           </Button>
           <div className="ml-auto flex items-center gap-1 rounded-lg border border-border p-0.5">
-            <Button variant={view === "list" ? "secondary" : "ghost"} size="icon" className="size-8" aria-label="Vizualizare listă" aria-pressed={view === "list"} onClick={() => setView("list")}>
+            <Button
+              variant={view === "list" ? "secondary" : "ghost"}
+              size="icon"
+              className="size-8"
+              aria-label="Vizualizare listă"
+              aria-pressed={view === "list"}
+              onClick={() => setView("list")}
+            >
               <List className="size-4" />
             </Button>
-            <Button variant={view === "card" ? "secondary" : "ghost"} size="icon" className="size-8" aria-label="Vizualizare carduri" aria-pressed={view === "card"} onClick={() => setView("card")}>
+            <Button
+              variant={view === "card" ? "secondary" : "ghost"}
+              size="icon"
+              className="size-8"
+              aria-label="Vizualizare carduri"
+              aria-pressed={view === "card"}
+              onClick={() => setView("card")}
+            >
               <LayoutGrid className="size-4" />
             </Button>
           </div>
@@ -426,18 +488,26 @@ function ContactsPage() {
           <div className="flex flex-wrap items-center gap-3 rounded-xl border border-primary/30 bg-primary/5 px-4 py-3">
             <span className="text-sm font-medium">{selected.length} selectate</span>
             <Select onValueChange={(v) => bulkUpdate.mutate({ assigned_to: v })}>
-              <SelectTrigger className="w-48"><SelectValue placeholder="Asignează agent" /></SelectTrigger>
+              <SelectTrigger className="w-48">
+                <SelectValue placeholder="Asignează agent" />
+              </SelectTrigger>
               <SelectContent>
                 {agents.map((a) => (
-                  <SelectItem key={a.id} value={a.id}>{a.full_name}</SelectItem>
+                  <SelectItem key={a.id} value={a.id}>
+                    {a.full_name}
+                  </SelectItem>
                 ))}
               </SelectContent>
             </Select>
             <Select onValueChange={(v) => bulkUpdate.mutate({ status: v })}>
-              <SelectTrigger className="w-40"><SelectValue placeholder="Schimbă status" /></SelectTrigger>
+              <SelectTrigger className="w-40">
+                <SelectValue placeholder="Schimbă status" />
+              </SelectTrigger>
               <SelectContent>
                 {Object.entries(statusLabels).map(([k, v]) => (
-                  <SelectItem key={k} value={k}>{v}</SelectItem>
+                  <SelectItem key={k} value={k}>
+                    {v}
+                  </SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -475,7 +545,11 @@ function ContactsPage() {
             icon={UserRound}
             title="Niciun contact"
             description="Adaugă primul contact sau ajustează filtrele."
-            action={<Button size="sm" onClick={() => setDialogOpen(true)}>Adaugă contact</Button>}
+            action={
+              <Button size="sm" onClick={() => setDialogOpen(true)}>
+                Adaugă contact
+              </Button>
+            }
           />
         ) : view === "list" ? (
           <ul className="divide-y divide-border/70">
@@ -513,7 +587,9 @@ function ContactsPage() {
                     </p>
                   </div>
                   <span className="w-40 text-xs text-muted-foreground">{c.phone ?? "—"}</span>
-                  <span className="w-56 truncate text-xs text-muted-foreground">{c.email ?? "—"}</span>
+                  <span className="w-56 truncate text-xs text-muted-foreground">
+                    {c.email ?? "—"}
+                  </span>
                   <span className="w-24 text-xs text-muted-foreground">
                     {leads > 0 ? `${leads} ${leads === 1 ? "lead" : "lead-uri"}` : "fără lead-uri"}
                   </span>
@@ -587,7 +663,11 @@ function ContactsPage() {
                       <UserAvatar name={agentName(c.assigned_to)} className="size-6 text-[10px]" />
                       <span className="truncate">{agentName(c.assigned_to)}</span>
                     </span>
-                    <span>{leads > 0 ? `${leads} ${leads === 1 ? "lead" : "lead-uri"}` : "fără lead-uri"}</span>
+                    <span>
+                      {leads > 0
+                        ? `${leads} ${leads === 1 ? "lead" : "lead-uri"}`
+                        : "fără lead-uri"}
+                    </span>
                   </p>
                 </Link>
               );
@@ -598,9 +678,16 @@ function ContactsPage() {
 
       {total > PAGE_SIZE ? (
         <div className="flex items-center justify-between text-xs text-muted-foreground">
-          <span>{page * PAGE_SIZE + 1}–{Math.min(total, (page + 1) * PAGE_SIZE)} din {total}</span>
+          <span>
+            {page * PAGE_SIZE + 1}–{Math.min(total, (page + 1) * PAGE_SIZE)} din {total}
+          </span>
           <div className="flex gap-2">
-            <Button variant="outline" size="sm" disabled={page === 0} onClick={() => setPage((p) => p - 1)}>
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={page === 0}
+              onClick={() => setPage((p) => p - 1)}
+            >
               Anterior
             </Button>
             <Button
@@ -619,7 +706,9 @@ function ContactsPage() {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Contact nou</DialogTitle>
-            <DialogDescription>Datele minime necesare; restul se pot completa ulterior.</DialogDescription>
+            <DialogDescription>
+              Datele minime necesare; restul se pot completa ulterior.
+            </DialogDescription>
           </DialogHeader>
           <form
             className="space-y-4"
@@ -631,43 +720,82 @@ function ContactsPage() {
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
                 <Label htmlFor="first_name">Prenume</Label>
-                <Input id="first_name" required value={form.first_name} onChange={(e) => setForm((f) => ({ ...f, first_name: e.target.value }))} />
+                <Input
+                  id="first_name"
+                  required
+                  value={form.first_name}
+                  onChange={(e) => setForm((f) => ({ ...f, first_name: e.target.value }))}
+                />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="last_name">Nume</Label>
-                <Input id="last_name" required value={form.last_name} onChange={(e) => setForm((f) => ({ ...f, last_name: e.target.value }))} />
+                <Input
+                  id="last_name"
+                  required
+                  value={form.last_name}
+                  onChange={(e) => setForm((f) => ({ ...f, last_name: e.target.value }))}
+                />
               </div>
               <div className="space-y-2">
                 <Label>Tip</Label>
-                <Select value={form.type} onValueChange={(v) => setForm((f) => ({ ...f, type: v }))}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
+                <Select
+                  value={form.type}
+                  onValueChange={(v) => setForm((f) => ({ ...f, type: v }))}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
                   <SelectContent>
                     {Object.entries(contactTypeLabels).map(([k, v]) => (
-                      <SelectItem key={k} value={k}>{v}</SelectItem>
+                      <SelectItem key={k} value={k}>
+                        {v}
+                      </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="phone">Telefon</Label>
-                <Input id="phone" value={form.phone} onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))} />
+                <Input
+                  id="phone"
+                  value={form.phone}
+                  onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))}
+                />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="email">Email</Label>
-                <Input id="email" type="email" value={form.email} onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))} />
+                <Input
+                  id="email"
+                  type="email"
+                  value={form.email}
+                  onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
+                />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="company">Companie</Label>
-                <Input id="company" value={form.company} onChange={(e) => setForm((f) => ({ ...f, company: e.target.value }))} />
+                <Input
+                  id="company"
+                  value={form.company}
+                  onChange={(e) => setForm((f) => ({ ...f, company: e.target.value }))}
+                />
               </div>
             </div>
             <div className="space-y-2">
               <Label htmlFor="notes">Note</Label>
-              <Textarea id="notes" rows={3} value={form.notes} onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value }))} />
+              <Textarea
+                id="notes"
+                rows={3}
+                value={form.notes}
+                onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value }))}
+              />
             </div>
             <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>Renunță</Button>
-              <Button type="submit" disabled={create.isPending}>Salvează</Button>
+              <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>
+                Renunță
+              </Button>
+              <Button type="submit" disabled={create.isPending}>
+                Salvează
+              </Button>
             </DialogFooter>
           </form>
         </DialogContent>
@@ -678,7 +806,8 @@ function ContactsPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>Dezactivezi {selected.length} contacte?</AlertDialogTitle>
             <AlertDialogDescription>
-              Contactele vor fi marcate ca inactive (ștergere logică). Poți reveni oricând asupra statusului.
+              Contactele vor fi marcate ca inactive (ștergere logică). Poți reveni oricând asupra
+              statusului.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

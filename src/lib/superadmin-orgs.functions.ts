@@ -64,10 +64,7 @@ export const deleteOrganizationPermanently = createServerFn({ method: "POST" })
         .select("storage_path")
         .eq("organization_id", org.id)
         .not("storage_path", "is", null),
-      supabaseAdmin
-        .from("documents")
-        .select("storage_path")
-        .eq("organization_id", org.id),
+      supabaseAdmin.from("documents").select("storage_path").eq("organization_id", org.id),
     ]);
     const mediaPaths = (images ?? [])
       .map((r) => r.storage_path)

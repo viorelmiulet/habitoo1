@@ -10,11 +10,7 @@ export function PublicFooter() {
       <div className="mx-auto w-full max-w-7xl px-4 py-14 sm:px-6 lg:px-8">
         <div className="grid gap-10 lg:grid-cols-12">
           <div className="lg:col-span-5">
-            <Link
-              to="/"
-              className="block w-40"
-              aria-label="Habitoo CRM — pagina principală"
-            >
+            <Link to="/" className="block w-40" aria-label="Habitoo CRM — pagina principală">
               <BrandLogo />
             </Link>
             <p className="mt-5 max-w-sm text-sm leading-relaxed text-muted-foreground">

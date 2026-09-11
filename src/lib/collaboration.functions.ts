@@ -16,11 +16,7 @@ import { z } from "zod";
 import { requireActiveOrgAuth } from "@/lib/org-access";
 
 export type CollaborationProposalStatus =
-  | "pending"
-  | "accepted"
-  | "viewing"
-  | "declined"
-  | "closed";
+  "pending" | "accepted" | "viewing" | "declined" | "closed";
 
 export const COLLAB_STATUS_LABELS: Record<CollaborationProposalStatus, string> = {
   pending: "În așteptare",
@@ -116,7 +112,9 @@ function requireParticipation(actor: Actor) {
 }
 
 /** Agențiile care participă la colaborare, fără agenția curentă. */
-async function participatingOrgIds(actor: Actor): Promise<Map<string, { name: string; city: string | null }>> {
+async function participatingOrgIds(
+  actor: Actor,
+): Promise<Map<string, { name: string; city: string | null }>> {
   const admin = await loadAdmin();
   const { data, error } = await admin
     .from("organizations")
@@ -214,9 +212,7 @@ async function signedImages(
   grouped.forEach((list) => paths.push(...list.slice(0, perProperty)));
   if (paths.length === 0) return result;
 
-  const { data: signed } = await admin.storage
-    .from(MEDIA_BUCKET)
-    .createSignedUrls(paths, 60 * 60);
+  const { data: signed } = await admin.storage.from(MEDIA_BUCKET).createSignedUrls(paths, 60 * 60);
   const byPath = new Map<string, string>();
   for (const item of signed ?? []) {
     if (item.path && item.signedUrl) byPath.set(item.path, item.signedUrl);
@@ -374,31 +370,33 @@ export const getCollaborationOffer = createServerFn({ method: "GET" })
 /** Orașele și tipurile disponibile în ofertele de colaborare, pentru filtre. */
 export const getCollaborationFacets = createServerFn({ method: "GET" })
   .middleware([requireActiveOrgAuth])
-  .handler(async ({ context }): Promise<{ cities: string[]; types: string[]; participating: boolean }> => {
-    const actor = await loadActor(context as AuthContext);
-    if (!actor.collaborationEnabled) return { cities: [], types: [], participating: false };
-    const agencies = await participatingOrgIds(actor);
-    if (agencies.size === 0) return { cities: [], types: [], participating: true };
-    const admin = await loadAdmin();
-    const { data } = await admin
-      .from("properties")
-      .select("city,property_type")
-      .in("organization_id", [...agencies.keys()])
-      .eq("collaboration", true)
-      .is("deleted_at", null)
-      .in("status", [...OFFERABLE_STATUSES]);
-    const cities = new Set<string>();
-    const types = new Set<string>();
-    for (const row of data ?? []) {
-      if (row.city) cities.add(row.city);
-      if (row.property_type) types.add(row.property_type);
-    }
-    return {
-      cities: [...cities].sort((a, b) => a.localeCompare(b, "ro")),
-      types: [...types].sort(),
-      participating: true,
-    };
-  });
+  .handler(
+    async ({ context }): Promise<{ cities: string[]; types: string[]; participating: boolean }> => {
+      const actor = await loadActor(context as AuthContext);
+      if (!actor.collaborationEnabled) return { cities: [], types: [], participating: false };
+      const agencies = await participatingOrgIds(actor);
+      if (agencies.size === 0) return { cities: [], types: [], participating: true };
+      const admin = await loadAdmin();
+      const { data } = await admin
+        .from("properties")
+        .select("city,property_type")
+        .in("organization_id", [...agencies.keys()])
+        .eq("collaboration", true)
+        .is("deleted_at", null)
+        .in("status", [...OFFERABLE_STATUSES]);
+      const cities = new Set<string>();
+      const types = new Set<string>();
+      for (const row of data ?? []) {
+        if (row.city) cities.add(row.city);
+        if (row.property_type) types.add(row.property_type);
+      }
+      return {
+        cities: [...cities].sort((a, b) => a.localeCompare(b, "ro")),
+        types: [...types].sort(),
+        participating: true,
+      };
+    },
+  );
 
 export type CollaborationProposal = {
   id: string;
@@ -439,7 +437,9 @@ async function mapProposals(actor: Actor, rows: ProposalRow[]): Promise<Collabor
   if (rows.length === 0) return [];
   const admin = await loadAdmin();
   const propertyIds = [...new Set(rows.map((r) => r.property_id))];
-  const orgIds = [...new Set(rows.flatMap((r) => [r.owner_organization_id, r.requester_organization_id]))];
+  const orgIds = [
+    ...new Set(rows.flatMap((r) => [r.owner_organization_id, r.requester_organization_id])),
+  ];
   const userIds = [...new Set(rows.map((r) => r.requester_user_id))];
 
   const [properties, orgs, profiles, images, messages] = await Promise.all([
@@ -450,10 +450,13 @@ async function mapProposals(actor: Actor, rows: ProposalRow[]): Promise<Collabor
     admin.from("organizations").select("id,name").in("id", orgIds),
     admin.from("profiles").select("id,full_name").in("id", userIds),
     signedImages(propertyIds, 1),
-    admin.from("collaboration_messages").select("proposal_id").in(
-      "proposal_id",
-      rows.map((r) => r.id),
-    ),
+    admin
+      .from("collaboration_messages")
+      .select("proposal_id")
+      .in(
+        "proposal_id",
+        rows.map((r) => r.id),
+      ),
   ]);
 
   const propertyById = new Map((properties.data ?? []).map((p) => [p.id, p]));
@@ -556,7 +559,10 @@ async function auditAndNotify(params: {
 }
 
 /** Cine trebuie anunțat în agenția care deține mandatul: agentul asignat + adminii. */
-async function ownerRecipients(organizationId: string, assignedTo: string | null): Promise<string[]> {
+async function ownerRecipients(
+  organizationId: string,
+  assignedTo: string | null,
+): Promise<string[]> {
   const admin = await loadAdmin();
   const { data: roles } = await admin
     .from("user_roles")
@@ -681,7 +687,10 @@ export type CollaborationProposalDetail = CollaborationProposal & {
   clientLeadId: string | null;
 };
 
-async function loadProposal(actor: Actor, id: string): Promise<ProposalRow & { contact_id: string | null; lead_id: string | null }> {
+async function loadProposal(
+  actor: Actor,
+  id: string,
+): Promise<ProposalRow & { contact_id: string | null; lead_id: string | null }> {
   const admin = await loadAdmin();
   const { data, error } = await admin
     .from("collaboration_proposals")

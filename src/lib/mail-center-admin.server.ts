@@ -51,7 +51,11 @@ export async function createMailbox(
   const organizationId = input.scope === "agency" ? input.organizationId : null;
 
   if (organizationId) {
-    const { data: agency } = await db.from("organizations").select("id").eq("id", organizationId).maybeSingle();
+    const { data: agency } = await db
+      .from("organizations")
+      .select("id")
+      .eq("id", organizationId)
+      .maybeSingle();
     if (!agency) return { mailbox: null, error: "Agenția nu există." };
   }
 
@@ -81,7 +85,12 @@ export async function createMailbox(
  */
 export async function updateMailbox(
   db: Db,
-  input: { mailboxId: string; address?: string | null; displayName?: string | null; isActive?: boolean | null },
+  input: {
+    mailboxId: string;
+    address?: string | null;
+    displayName?: string | null;
+    isActive?: boolean | null;
+  },
 ): Promise<{ mailbox: MailMailbox | null; error: string | null }> {
   const patch: { address?: string; display_name?: string | null; is_active?: boolean } = {};
 
@@ -302,7 +311,6 @@ export async function sendMailboxMessage(db: Db, input: SendInput): Promise<Send
   };
 }
 
-
 /**
  * Replies inside an existing thread.
  *
@@ -338,15 +346,23 @@ export async function replyToThread(
   // inbound message is preferred because that is who we are answering.
   const { data: history } = await db
     .from("email_messages")
-    .select("id, direction, from_email, to_emails, cc_emails, reply_to, subject, provider_message_id, in_reply_to, message_references, created_at")
+    .select(
+      "id, direction, from_email, to_emails, cc_emails, reply_to, subject, provider_message_id, in_reply_to, message_references, created_at",
+    )
     .eq("thread_id", thread.id)
     .order("created_at", { ascending: false })
     .limit(20);
 
   const messages = history ?? [];
-  const parent = messages.find((m) => m.direction === "inbound" && m.provider_message_id) ?? messages[0];
+  const parent =
+    messages.find((m) => m.direction === "inbound" && m.provider_message_id) ?? messages[0];
   if (!parent) {
-    return { ok: false, ...EMPTY_OUTCOME, threadId: thread.id, error: "Conversația nu are mesaje." };
+    return {
+      ok: false,
+      ...EMPTY_OUTCOME,
+      threadId: thread.id,
+      error: "Conversația nu are mesaje.",
+    };
   }
 
   const recipients = input.to?.length
@@ -409,7 +425,6 @@ export async function replyToThread(
     attachmentCount: persisted.stored,
     error: null,
   };
-
 }
 
 /* ------------------------------------------------------------------ */

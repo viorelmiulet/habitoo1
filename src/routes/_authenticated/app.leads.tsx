@@ -34,12 +34,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-} from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Select,
@@ -70,24 +65,24 @@ export const Route = createFileRoute("/_authenticated/app/leads")({
   component: LeadsPage,
 });
 
-
 type Lead = Tables<"leads">;
 type LeadStage = Lead["stage"];
 
 const pipelineStages = leadStages.filter((s) => s !== "lost") as LeadStage[];
 const allColumns = [...pipelineStages, "lost" as LeadStage];
 
-const stageTone: Record<string, "neutral" | "success" | "warning" | "info" | "danger" | "primary"> = {
-  new: "info",
-  contacted: "primary",
-  qualified: "primary",
-  viewing: "warning",
-  offer: "warning",
-  negotiation: "warning",
-  transaction: "success",
-  won: "success",
-  lost: "danger",
-};
+const stageTone: Record<string, "neutral" | "success" | "warning" | "info" | "danger" | "primary"> =
+  {
+    new: "info",
+    contacted: "primary",
+    qualified: "primary",
+    viewing: "warning",
+    offer: "warning",
+    negotiation: "warning",
+    transaction: "success",
+    won: "success",
+    lost: "danger",
+  };
 
 /** Prezentare: potrivește o sursă textuală cu un portal care are logo local. */
 const SOURCE_PORTAL_KEYS = [
@@ -209,7 +204,10 @@ function LeadsPage() {
     queryKey: ["properties", "for-leads", propertyIds],
     enabled: propertyIds.length > 0,
     queryFn: async () => {
-      const { data, error } = await supabase.from("properties").select("id,title").in("id", propertyIds);
+      const { data, error } = await supabase
+        .from("properties")
+        .select("id,title")
+        .in("id", propertyIds);
       if (error) throw error;
       return data;
     },
@@ -348,11 +346,16 @@ function LeadsPage() {
         value: form.value ? Number(form.value) : null,
         property_id: form.property_id || null,
         request_id: form.request_id || null,
-        next_followup_at: form.next_followup_at ? new Date(form.next_followup_at).toISOString() : null,
+        next_followup_at: form.next_followup_at
+          ? new Date(form.next_followup_at).toISOString()
+          : null,
         notes: form.notes || null,
       };
       if (editing) {
-        const { error } = await supabase.from("leads").update(payload as never).eq("id", editing.id);
+        const { error } = await supabase
+          .from("leads")
+          .update(payload as never)
+          .eq("id", editing.id);
         if (error) throw error;
         await logAudit({
           organizationId: orgId,
@@ -402,7 +405,10 @@ function LeadsPage() {
         last_interaction_at: new Date().toISOString(),
       };
       if (stage === "lost") payload.lost_reason = lostReasonValue ?? null;
-      const { error } = await supabase.from("leads").update(payload as never).eq("id", lead.id);
+      const { error } = await supabase
+        .from("leads")
+        .update(payload as never)
+        .eq("id", lead.id);
       if (error) throw error;
       const { error: eventError } = await supabase.from("lead_events").insert({
         organization_id: orgId,
@@ -440,7 +446,6 @@ function LeadsPage() {
       queryClient.invalidateQueries({ queryKey: ["leads"] });
       queryClient.invalidateQueries({ queryKey: ["lead_events"] });
     },
-
   });
 
   const handleDrop = (stage: LeadStage) => {
@@ -532,29 +537,41 @@ function LeadsPage() {
           className="w-56"
         />
         <Select value={agentFilter} onValueChange={setAgentFilter}>
-          <SelectTrigger className="w-44"><SelectValue placeholder="Agent" /></SelectTrigger>
+          <SelectTrigger className="w-44">
+            <SelectValue placeholder="Agent" />
+          </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">Toți agenții</SelectItem>
             {agents.map((a) => (
-              <SelectItem key={a.id} value={a.id}>{a.full_name}</SelectItem>
+              <SelectItem key={a.id} value={a.id}>
+                {a.full_name}
+              </SelectItem>
             ))}
           </SelectContent>
         </Select>
         <Select value={sourceFilter} onValueChange={setSourceFilter}>
-          <SelectTrigger className="w-40"><SelectValue placeholder="Sursă" /></SelectTrigger>
+          <SelectTrigger className="w-40">
+            <SelectValue placeholder="Sursă" />
+          </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">Toate sursele</SelectItem>
             {sources.map((s) => (
-              <SelectItem key={s} value={s}>{s}</SelectItem>
+              <SelectItem key={s} value={s}>
+                {s}
+              </SelectItem>
             ))}
           </SelectContent>
         </Select>
         <Select value={campaignFilter} onValueChange={setCampaignFilter}>
-          <SelectTrigger className="w-40"><SelectValue placeholder="Campanie" /></SelectTrigger>
+          <SelectTrigger className="w-40">
+            <SelectValue placeholder="Campanie" />
+          </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">Toate campaniile</SelectItem>
             {campaigns.map((c) => (
-              <SelectItem key={c} value={c}>{c}</SelectItem>
+              <SelectItem key={c} value={c}>
+                {c}
+              </SelectItem>
             ))}
           </SelectContent>
         </Select>
@@ -649,7 +666,11 @@ function LeadsPage() {
                         <div className="mt-2 flex flex-wrap items-center gap-1.5">
                           <span className="inline-flex max-w-40 items-center gap-1.5 rounded-full bg-muted px-2 py-0.5 text-[11px] text-muted-foreground">
                             {portalKey ? (
-                              <PortalLogo portalId={portalKey} name={l.source ?? portalKey} size={14} />
+                              <PortalLogo
+                                portalId={portalKey}
+                                name={l.source ?? portalKey}
+                                size={14}
+                              />
                             ) : null}
                             <span className="truncate">{l.source ?? "sursă necunoscută"}</span>
                           </span>
@@ -670,7 +691,9 @@ function LeadsPage() {
                           <p
                             className={cn(
                               "mt-2 text-xs",
-                              isOverdue(l) ? "font-medium text-destructive" : "text-muted-foreground",
+                              isOverdue(l)
+                                ? "font-medium text-destructive"
+                                : "text-muted-foreground",
                             )}
                           >
                             Follow-up: {relativeDays(l.next_followup_at)}
@@ -745,13 +768,19 @@ function LeadsPage() {
                 <Label>Proprietate</Label>
                 <Select
                   value={form.property_id || "none"}
-                  onValueChange={(v) => setForm((f) => ({ ...f, property_id: v === "none" ? "" : v }))}
+                  onValueChange={(v) =>
+                    setForm((f) => ({ ...f, property_id: v === "none" ? "" : v }))
+                  }
                 >
-                  <SelectTrigger><SelectValue placeholder="Opțional" /></SelectTrigger>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Opțional" />
+                  </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="none">Fără proprietate</SelectItem>
                     {properties.map((p) => (
-                      <SelectItem key={p.id} value={p.id}>{p.title}</SelectItem>
+                      <SelectItem key={p.id} value={p.id}>
+                        {p.title}
+                      </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -760,21 +789,32 @@ function LeadsPage() {
                 <Label>Cerere</Label>
                 <Select
                   value={form.request_id || "none"}
-                  onValueChange={(v) => setForm((f) => ({ ...f, request_id: v === "none" ? "" : v }))}
+                  onValueChange={(v) =>
+                    setForm((f) => ({ ...f, request_id: v === "none" ? "" : v }))
+                  }
                 >
-                  <SelectTrigger><SelectValue placeholder="Opțional" /></SelectTrigger>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Opțional" />
+                  </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="none">Fără cerere</SelectItem>
                     {requests.map((r) => (
-                      <SelectItem key={r.id} value={r.id}>{r.title}</SelectItem>
+                      <SelectItem key={r.id} value={r.id}>
+                        {r.title}
+                      </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
               <div className="space-y-2">
                 <Label>Sursă</Label>
-                <Select value={form.source} onValueChange={(v) => setForm((f) => ({ ...f, source: v }))}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
+                <Select
+                  value={form.source}
+                  onValueChange={(v) => setForm((f) => ({ ...f, source: v }))}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="site">Site propriu</SelectItem>
                     <SelectItem value="portal">Portal imobiliar</SelectItem>
@@ -804,11 +844,18 @@ function LeadsPage() {
               </div>
               <div className="space-y-2">
                 <Label>Etapă</Label>
-                <Select value={form.stage} onValueChange={(v) => setForm((f) => ({ ...f, stage: v as LeadStage }))}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
+                <Select
+                  value={form.stage}
+                  onValueChange={(v) => setForm((f) => ({ ...f, stage: v as LeadStage }))}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
                   <SelectContent>
                     {leadStages.map((s) => (
-                      <SelectItem key={s} value={s}>{leadStageLabels[s]}</SelectItem>
+                      <SelectItem key={s} value={s}>
+                        {leadStageLabels[s]}
+                      </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -817,13 +864,19 @@ function LeadsPage() {
                 <Label>Agent</Label>
                 <Select
                   value={form.assigned_to || "none"}
-                  onValueChange={(v) => setForm((f) => ({ ...f, assigned_to: v === "none" ? "" : v }))}
+                  onValueChange={(v) =>
+                    setForm((f) => ({ ...f, assigned_to: v === "none" ? "" : v }))
+                  }
                 >
-                  <SelectTrigger><SelectValue placeholder="Neasignat" /></SelectTrigger>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Neasignat" />
+                  </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="none">Neasignat</SelectItem>
                     {agents.map((a) => (
-                      <SelectItem key={a.id} value={a.id}>{a.full_name}</SelectItem>
+                      <SelectItem key={a.id} value={a.id}>
+                        {a.full_name}
+                      </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -878,10 +931,14 @@ function LeadsPage() {
             <div className="space-y-2">
               <Label>Motiv</Label>
               <Select value={lostReason} onValueChange={setLostReason}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
                 <SelectContent>
                   {leadLostReasons.map((r) => (
-                    <SelectItem key={r} value={r}>{r}</SelectItem>
+                    <SelectItem key={r} value={r}>
+                      {r}
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -889,13 +946,21 @@ function LeadsPage() {
             {lostReason === "Altul" ? (
               <div className="space-y-2">
                 <Label>Detalii</Label>
-                <Textarea value={lostReasonFree} onChange={(e) => setLostReasonFree(e.target.value)} rows={3} />
+                <Textarea
+                  value={lostReasonFree}
+                  onChange={(e) => setLostReasonFree(e.target.value)}
+                  rows={3}
+                />
               </div>
             ) : null}
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setLostDialog(null)}>Renunță</Button>
-            <Button variant="destructive" onClick={confirmLost}>Confirmă pierderea</Button>
+            <Button variant="outline" onClick={() => setLostDialog(null)}>
+              Renunță
+            </Button>
+            <Button variant="destructive" onClick={confirmLost}>
+              Confirmă pierderea
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -910,7 +975,9 @@ function LeadsPage() {
 
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div className="flex flex-wrap items-center gap-2">
-                  <StatusBadge tone={stageTone[detailLead.stage]}>{leadStageLabels[detailLead.stage]}</StatusBadge>
+                  <StatusBadge tone={stageTone[detailLead.stage]}>
+                    {leadStageLabels[detailLead.stage]}
+                  </StatusBadge>
                   <span className="inline-flex max-w-40 items-center gap-1.5 rounded-full bg-muted px-2 py-0.5 text-[11px] text-muted-foreground">
                     {portalKeyOf(detailLead.source) ? (
                       <PortalLogo
@@ -978,10 +1045,22 @@ function LeadsPage() {
               ) : null}
 
               <div className="grid grid-cols-2 gap-3 rounded-xl bg-card p-4 text-sm ring-1 ring-border/60">
-                <div><p className="text-xs text-muted-foreground">Telefon</p><p>{detailLead.phone ?? "—"}</p></div>
-                <div><p className="text-xs text-muted-foreground">Email</p><p className="truncate">{detailLead.email ?? "—"}</p></div>
-                <div><p className="text-xs text-muted-foreground">Campanie</p><p>{detailLead.campaign ?? "—"}</p></div>
-                <div><p className="text-xs text-muted-foreground">Scor</p><p>{detailLead.score}</p></div>
+                <div>
+                  <p className="text-xs text-muted-foreground">Telefon</p>
+                  <p>{detailLead.phone ?? "—"}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">Email</p>
+                  <p className="truncate">{detailLead.email ?? "—"}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">Campanie</p>
+                  <p>{detailLead.campaign ?? "—"}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">Scor</p>
+                  <p>{detailLead.score}</p>
+                </div>
                 <div className="col-span-2">
                   <p className="text-xs text-muted-foreground">Agent</p>
                   <p className="flex items-center gap-2">
@@ -994,7 +1073,9 @@ function LeadsPage() {
                 </div>
               </div>
 
-              {detailLead.notes ? <p className="rounded-xl bg-muted p-3 text-sm">{detailLead.notes}</p> : null}
+              {detailLead.notes ? (
+                <p className="rounded-xl bg-muted p-3 text-sm">{detailLead.notes}</p>
+              ) : null}
 
               <div className="flex flex-wrap items-center gap-2">
                 <Button size="sm" variant="outline" onClick={() => setActivityOpen(true)}>
@@ -1014,10 +1095,14 @@ function LeadsPage() {
                     setDetailLead({ ...detailLead, stage });
                   }}
                 >
-                  <SelectTrigger className="h-8 w-40 text-xs"><SelectValue /></SelectTrigger>
+                  <SelectTrigger className="h-8 w-40 text-xs">
+                    <SelectValue />
+                  </SelectTrigger>
                   <SelectContent>
                     {leadStages.map((s) => (
-                      <SelectItem key={s} value={s}>{leadStageLabels[s]}</SelectItem>
+                      <SelectItem key={s} value={s}>
+                        {leadStageLabels[s]}
+                      </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -1056,7 +1141,9 @@ function LeadsPage() {
                             <span className="min-w-0">
                               <span className="block text-sm">{item.label}</span>
                               {item.note ? (
-                                <span className="block text-xs text-muted-foreground">{item.note}</span>
+                                <span className="block text-xs text-muted-foreground">
+                                  {item.note}
+                                </span>
                               ) : null}
                             </span>
                           </li>
@@ -1072,13 +1159,21 @@ function LeadsPage() {
                       <li key={m.id} className="rounded-lg border border-border p-3 text-xs">
                         <div className="flex flex-wrap items-center justify-between gap-2">
                           <p className="font-medium">{m.sender_name ?? "Contact"}</p>
-                          <StatusBadge tone="neutral">{m.portal === "storia" ? "Storia.ro" : m.portal}</StatusBadge>
+                          <StatusBadge tone="neutral">
+                            {m.portal === "storia" ? "Storia.ro" : m.portal}
+                          </StatusBadge>
                         </div>
                         <p className="text-muted-foreground">{formatDateTime(m.sent_at)}</p>
-                        {m.body ? <p className="mt-2 whitespace-pre-wrap text-sm">{m.body}</p> : null}
+                        {m.body ? (
+                          <p className="mt-2 whitespace-pre-wrap text-sm">{m.body}</p>
+                        ) : null}
                         <div className="mt-2 flex flex-wrap gap-3 text-muted-foreground">
-                          {m.sender_phone ? <a href={`tel:${m.sender_phone}`}>{m.sender_phone}</a> : null}
-                          {m.sender_email ? <a href={`mailto:${m.sender_email}`}>{m.sender_email}</a> : null}
+                          {m.sender_phone ? (
+                            <a href={`tel:${m.sender_phone}`}>{m.sender_phone}</a>
+                          ) : null}
+                          {m.sender_email ? (
+                            <a href={`mailto:${m.sender_email}`}>{m.sender_email}</a>
+                          ) : null}
                         </div>
                       </li>
                     ))}
@@ -1103,8 +1198,12 @@ function LeadsPage() {
         onOpenChange={setActivityOpen}
         orgId={orgId}
         userId={user?.userId}
-        defaults={detailLead ? { leadId: detailLead.id, title: `Follow-up ${detailLead.name}` } : undefined}
-        onCreated={() => queryClient.invalidateQueries({ queryKey: ["lead-detail", detailLead?.id] })}
+        defaults={
+          detailLead ? { leadId: detailLead.id, title: `Follow-up ${detailLead.name}` } : undefined
+        }
+        onCreated={() =>
+          queryClient.invalidateQueries({ queryKey: ["lead-detail", detailLead?.id] })
+        }
       />
     </>
   );

@@ -79,9 +79,7 @@ export type PortalHubItem = {
     connectedAt: string | null;
     refreshedAt: string | null;
   } | null;
-
 };
-
 
 export type PortalLogItem = {
   id: string;
@@ -104,7 +102,9 @@ type AuthContext = {
         eq: (
           col: string,
           value: string,
-        ) => { maybeSingle: () => PromiseLike<{ data: { organization_id: string | null } | null }> };
+        ) => {
+          maybeSingle: () => PromiseLike<{ data: { organization_id: string | null } | null }>;
+        };
       };
     };
   };
@@ -181,7 +181,6 @@ async function activatedPortalIds(organizationId: string): Promise<Set<string>> 
   return new Set((data ?? []).filter((row) => row.activated === true).map((row) => row.portal));
 }
 
-
 async function loadAdmin() {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   return supabaseAdmin;
@@ -218,7 +217,6 @@ async function feedUrlForOrg(portalId?: string): Promise<string> {
   return `${CRM_URL}/api/public/portal/v1/properties`;
 }
 
-
 /** Context complet pentru adaptor, cu credențialul decriptat. */
 async function buildContext(organizationId: string, definition: PortalDefinition) {
   const admin = await loadAdmin();
@@ -237,7 +235,9 @@ async function buildContext(organizationId: string, definition: PortalDefinition
       organizationId,
       definition,
       direction: (row?.direction ?? definition.directions[0] ?? "habitoo_to_portal") as never,
-      authenticationMode: (row?.authentication_mode ?? definition.authentication[0] ?? "none") as never,
+      authenticationMode: (row?.authentication_mode ??
+        definition.authentication[0] ??
+        "none") as never,
       externalAccountId: row?.external_account_id ?? null,
       portalCredential: row ? decryptPortalCredential(row.portal_credentials_encrypted) : null,
       settings,
@@ -250,7 +250,10 @@ export const getPortalHub = createServerFn({ method: "POST" })
   .middleware([requireActiveOrgAuth])
   .inputValidator((input: unknown) => z.object({ organizationId: z.string().uuid() }).parse(input))
   .handler(async ({ data, context }): Promise<PortalHubItem[]> => {
-    const organizationId = await requireSuperadminOrg(context as unknown as AuthContext, data.organizationId);
+    const organizationId = await requireSuperadminOrg(
+      context as unknown as AuthContext,
+      data.organizationId,
+    );
     const admin = await loadAdmin();
     const genericFeedUrl = await feedUrlForOrg();
     const imoveFeedUrl = await feedUrlForOrg("imove");
@@ -281,13 +284,15 @@ export const getPortalHub = createServerFn({ method: "POST" })
       perPage: 500,
     });
 
-
-    const { inspectFeedAgents, inspectFeedProperties } = await import("@/lib/portals/feed-inspect.server");
+    const { inspectFeedAgents, inspectFeedProperties } =
+      await import("@/lib/portals/feed-inspect.server");
     const [connections, keys, listings, eligible, feedProperties, feedAgents] = await Promise.all([
       admin.from("portal_connections").select("*").eq("organization_id", organizationId),
       admin
         .from("portal_api_keys")
-        .select("id, portal, label, key_prefix, scopes, status, last_used_at, request_count, created_at")
+        .select(
+          "id, portal, label, key_prefix, scopes, status, last_used_at, request_count, created_at",
+        )
         .eq("organization_id", organizationId)
         .order("created_at", { ascending: false }),
       admin.from("portal_listings").select("portal, status").eq("organization_id", organizationId),
@@ -303,9 +308,8 @@ export const getPortalHub = createServerFn({ method: "POST" })
     ]);
 
     // Storia: starea autorizării OAuth a agenției (metadate, fără tokenuri).
-    const { readStoriaOAuthMeta, storiaAppConfigured, loadStoriaTokens } = await import(
-      "@/lib/portals/storia/oauth.server"
-    );
+    const { readStoriaOAuthMeta, storiaAppConfigured, loadStoriaTokens } =
+      await import("@/lib/portals/storia/oauth.server");
     const storiaTokens = await loadStoriaTokens(organizationId);
     const storiaAppReady = storiaAppConfigured();
 
@@ -314,7 +318,9 @@ export const getPortalHub = createServerFn({ method: "POST" })
       const settings = (row?.settings ?? {}) as Record<string, unknown>;
       const portalKeys = (keys.data ?? []).filter((k) => k.portal === portal.id);
       const portalListings = (listings.data ?? []).filter((l) => l.portal === portal.id);
-      const oauthMeta = portal.authentication.includes("oauth") ? readStoriaOAuthMeta(settings) : null;
+      const oauthMeta = portal.authentication.includes("oauth")
+        ? readStoriaOAuthMeta(settings)
+        : null;
       const oauthExpiresAt = oauthMeta?.expires_at ?? storiaTokens?.expires_at ?? null;
 
       return {
@@ -335,7 +341,8 @@ export const getPortalHub = createServerFn({ method: "POST" })
           authenticationMode: row?.authentication_mode ?? portal.authentication[0] ?? "none",
           externalAccountId: row?.external_account_id ?? null,
           hasPortalCredential: Boolean(row?.portal_credentials_encrypted),
-          endpointUrl: typeof settings["endpoint_url"] === "string" ? String(settings["endpoint_url"]) : null,
+          endpointUrl:
+            typeof settings["endpoint_url"] === "string" ? String(settings["endpoint_url"]) : null,
           allowLiveRequests: settings["allow_live"] === true,
           activated: row?.activated === true,
           lastSyncAt: row?.last_sync_at ?? null,
@@ -353,7 +360,9 @@ export const getPortalHub = createServerFn({ method: "POST" })
           createdAt: k.created_at,
         })),
         listings: {
-          published: portalListings.filter((l) => l.status === "published" || l.status === "updated").length,
+          published: portalListings.filter(
+            (l) => l.status === "published" || l.status === "updated",
+          ).length,
           failed: portalListings.filter((l) => l.status === "error").length,
           pending: portalListings.filter((l) => l.status === "pending").length,
         },
@@ -361,7 +370,9 @@ export const getPortalHub = createServerFn({ method: "POST" })
         feedUrl: portal.id === "imove" ? withImoveKey(`${imoveFeedUrl}.json`) : genericFeedUrl,
         feedUrlCsv: portal.id === "imove" ? withImoveKey(`${imoveFeedUrl}.csv`) : null,
         // Portal care primește datele DOAR prin feed (fără operații de scriere).
-        feedOnly: portal.capabilities.includes("feed_pull") && !portal.capabilities.includes("publish_listing"),
+        feedOnly:
+          portal.capabilities.includes("feed_pull") &&
+          !portal.capabilities.includes("publish_listing"),
         feed:
           portal.id === "imove"
             ? {
@@ -391,9 +402,7 @@ export const getPortalHub = createServerFn({ method: "POST" })
               refreshedAt: oauthMeta?.refreshed_at ?? null,
             }
           : null,
-
       };
-
     });
   });
 
@@ -423,7 +432,10 @@ export const setPortalActivation = createServerFn({ method: "POST" })
       .parse(input),
   )
   .handler(async ({ data, context }) => {
-    const organizationId = await requireSuperadminOrg(context as unknown as AuthContext, data.organizationId);
+    const organizationId = await requireSuperadminOrg(
+      context as unknown as AuthContext,
+      data.organizationId,
+    );
     const definition = getPortalDefinition(data.portalId);
     if (!definition) throw new Error("Portal necunoscut.");
 
@@ -496,10 +508,14 @@ export const savePortalConnection = createServerFn({ method: "POST" })
   .middleware([requireActiveOrgAuth])
   .inputValidator((input: unknown) => saveSchema.parse(input))
   .handler(async ({ data, context }) => {
-    const organizationId = await requireSuperadminOrg(context as unknown as AuthContext, data.organizationId);
+    const organizationId = await requireSuperadminOrg(
+      context as unknown as AuthContext,
+      data.organizationId,
+    );
     const definition = getPortalDefinition(data.portalId);
     if (!definition) throw new Error("Portal necunoscut.");
-    if (definition.status !== "available") throw new Error("Integrarea cu acest portal nu este încă disponibilă.");
+    if (definition.status !== "available")
+      throw new Error("Integrarea cu acest portal nu este încă disponibilă.");
 
     const admin = await loadAdmin();
     const { encryptPortalCredential } = await import("@/lib/portals/crypto.server");
@@ -554,9 +570,16 @@ export const savePortalConnection = createServerFn({ method: "POST" })
 
 export const disconnectPortal = createServerFn({ method: "POST" })
   .middleware([requireActiveOrgAuth])
-  .inputValidator((input: unknown) => z.object({ organizationId: z.string().uuid(), portalId: z.string().min(1).max(40) }).parse(input))
+  .inputValidator((input: unknown) =>
+    z
+      .object({ organizationId: z.string().uuid(), portalId: z.string().min(1).max(40) })
+      .parse(input),
+  )
   .handler(async ({ data, context }) => {
-    const organizationId = await requireSuperadminOrg(context as unknown as AuthContext, data.organizationId);
+    const organizationId = await requireSuperadminOrg(
+      context as unknown as AuthContext,
+      data.organizationId,
+    );
     const admin = await loadAdmin();
 
     await admin
@@ -573,7 +596,11 @@ export const disconnectPortal = createServerFn({ method: "POST" })
 
     await admin
       .from("portal_api_keys")
-      .update({ status: "revoked", revoked_at: new Date().toISOString(), revoked_by: context.userId })
+      .update({
+        status: "revoked",
+        revoked_at: new Date().toISOString(),
+        revoked_by: context.userId,
+      })
       .eq("organization_id", organizationId)
       .eq("portal", data.portalId)
       .eq("status", "active");
@@ -590,9 +617,16 @@ export const disconnectPortal = createServerFn({ method: "POST" })
 
 export const testPortalConnection = createServerFn({ method: "POST" })
   .middleware([requireActiveOrgAuth])
-  .inputValidator((input: unknown) => z.object({ organizationId: z.string().uuid(), portalId: z.string().min(1).max(40) }).parse(input))
+  .inputValidator((input: unknown) =>
+    z
+      .object({ organizationId: z.string().uuid(), portalId: z.string().min(1).max(40) })
+      .parse(input),
+  )
   .handler(async ({ data, context }) => {
-    const organizationId = await requireSuperadminOrg(context as unknown as AuthContext, data.organizationId);
+    const organizationId = await requireSuperadminOrg(
+      context as unknown as AuthContext,
+      data.organizationId,
+    );
     const definition = getPortalDefinition(data.portalId);
     if (!definition) throw new Error("Portal necunoscut.");
 
@@ -604,7 +638,11 @@ export const testPortalConnection = createServerFn({ method: "POST" })
     const { getPortalAdapter } = await import("@/lib/portals/adapters/index.server");
     const adapter = getPortalAdapter(definition.id);
     if (!adapter) {
-      return { ok: false as const, code: "NOT_SUPPORTED", message: PORTAL_ERROR_MESSAGE.NOT_SUPPORTED };
+      return {
+        ok: false as const,
+        code: "NOT_SUPPORTED",
+        message: PORTAL_ERROR_MESSAGE.NOT_SUPPORTED,
+      };
     }
 
     const { row, ctx } = await buildContext(organizationId, definition);
@@ -650,12 +688,18 @@ export const issuePortalApiKey = createServerFn({ method: "POST" })
         organizationId: z.string().uuid(),
         portalId: z.string().min(1).max(40),
         label: z.string().trim().min(2).max(80),
-        scopes: z.array(z.enum(["feed:read", "agents:read", "leads:write"])).min(1).optional(),
+        scopes: z
+          .array(z.enum(["feed:read", "agents:read", "leads:write"]))
+          .min(1)
+          .optional(),
       })
       .parse(input),
   )
   .handler(async ({ data, context }) => {
-    const organizationId = await requireSuperadminOrg(context as unknown as AuthContext, data.organizationId);
+    const organizationId = await requireSuperadminOrg(
+      context as unknown as AuthContext,
+      data.organizationId,
+    );
     const definition = getPortalDefinition(data.portalId);
     if (!definition) throw new Error("Portal necunoscut.");
     // Habitoo emite chei DOAR pentru portalurile care declară acest model.
@@ -665,7 +709,6 @@ export const issuePortalApiKey = createServerFn({ method: "POST" })
         `${definition.display_name} folosește o cheie API emisă de portal. Salvează cheia primită de la ei în configurarea integrării.`,
       );
     }
-
 
     const { portalRateLimited } = await import("@/lib/portals/rate-limit.server");
     if (portalRateLimited("key", organizationId)) {
@@ -700,9 +743,14 @@ export const issuePortalApiKey = createServerFn({ method: "POST" })
 
 export const revokePortalApiKey = createServerFn({ method: "POST" })
   .middleware([requireActiveOrgAuth])
-  .inputValidator((input: unknown) => z.object({ organizationId: z.string().uuid(), keyId: z.string().uuid() }).parse(input))
+  .inputValidator((input: unknown) =>
+    z.object({ organizationId: z.string().uuid(), keyId: z.string().uuid() }).parse(input),
+  )
   .handler(async ({ data, context }) => {
-    const organizationId = await requireSuperadminOrg(context as unknown as AuthContext, data.organizationId);
+    const organizationId = await requireSuperadminOrg(
+      context as unknown as AuthContext,
+      data.organizationId,
+    );
     const admin = await loadAdmin();
     const { data: row } = await admin
       .from("portal_api_keys")
@@ -714,7 +762,11 @@ export const revokePortalApiKey = createServerFn({ method: "POST" })
 
     await admin
       .from("portal_api_keys")
-      .update({ status: "revoked", revoked_at: new Date().toISOString(), revoked_by: context.userId })
+      .update({
+        status: "revoked",
+        revoked_at: new Date().toISOString(),
+        revoked_by: context.userId,
+      })
       .eq("id", row.id);
 
     await logOperation({
@@ -764,7 +816,11 @@ async function executeListingAction(input: {
   const definition = getPortalDefinition(portalId);
   if (!definition) throw new Error("Portal necunoscut.");
   if (definition.status !== "available") {
-    return { ok: false as const, code: "NOT_SUPPORTED", message: PORTAL_ERROR_MESSAGE.NOT_SUPPORTED };
+    return {
+      ok: false as const,
+      code: "NOT_SUPPORTED",
+      message: PORTAL_ERROR_MESSAGE.NOT_SUPPORTED,
+    };
   }
 
   const admin = await loadAdmin();
@@ -793,7 +849,11 @@ async function executeListingAction(input: {
   const { getPortalAdapter } = await import("@/lib/portals/adapters/index.server");
   const adapter = getPortalAdapter(definition.id);
   if (!adapter) {
-    return { ok: false as const, code: "NOT_SUPPORTED", message: PORTAL_ERROR_MESSAGE.NOT_SUPPORTED };
+    return {
+      ok: false as const,
+      code: "NOT_SUPPORTED",
+      message: PORTAL_ERROR_MESSAGE.NOT_SUPPORTED,
+    };
   }
 
   const { data: listing } = await admin
@@ -832,7 +892,6 @@ async function executeListingAction(input: {
     };
   }
 
-
   const now = new Date().toISOString();
   // Portalurile asincrone (Storia) raportează starea reală a anunțului: un
   // anunț acceptat, dar aflat în validare, nu trebuie marcat „publicat”.
@@ -865,7 +924,11 @@ async function executeListingAction(input: {
     ...(result.ok && action === "publish" ? { published_at: now } : {}),
     updated_by: actorId,
   };
-  if (listing) await admin.from("portal_listings").update(patch as never).eq("id", listing.id);
+  if (listing)
+    await admin
+      .from("portal_listings")
+      .update(patch as never)
+      .eq("id", listing.id);
   else await admin.from("portal_listings").insert({ ...patch, created_by: actorId } as never);
 
   // Starea selecției per proprietate reflectă rezultatul ultimei operațiuni,
@@ -887,8 +950,6 @@ async function executeListingAction(input: {
     .eq("organization_id", organizationId)
     .eq("property_id", propertyId)
     .eq("portal_key", definition.id);
-
-
 
   await logOperation({
     organizationId,
@@ -935,10 +996,13 @@ export const runPortalListingAction = createServerFn({ method: "POST" })
     });
   });
 
-
 export const getPropertyPortalStatus = createServerFn({ method: "POST" })
   .middleware([requireActiveOrgAuth])
-  .inputValidator((input: unknown) => z.object({ organizationId: z.string().uuid().optional(), propertyId: z.string().uuid() }).parse(input))
+  .inputValidator((input: unknown) =>
+    z
+      .object({ organizationId: z.string().uuid().optional(), propertyId: z.string().uuid() })
+      .parse(input),
+  )
   .handler(async ({ data, context }) => {
     const { organizationId, superadmin } = await resolvePublishingOrg(
       context as unknown as AuthContext,
@@ -1018,7 +1082,10 @@ export const getPortalLogs = createServerFn({ method: "POST" })
   .middleware([requireActiveOrgAuth])
   .inputValidator((input: unknown) => z.object({ organizationId: z.string().uuid() }).parse(input))
   .handler(async ({ data, context }): Promise<PortalLogItem[]> => {
-    const organizationId = await requireSuperadminOrg(context as unknown as AuthContext, data.organizationId);
+    const organizationId = await requireSuperadminOrg(
+      context as unknown as AuthContext,
+      data.organizationId,
+    );
     const admin = await loadAdmin();
     const { data: rows } = await admin
       .from("portal_operation_logs")
@@ -1073,9 +1140,7 @@ export type PropertyPortalCell = {
   externalId: string | null;
   /** Linkul public al anunțului pe portal, dacă portalul îl întoarce. */
   publicUrl: string | null;
-
 };
-
 
 export type PropertyPortalMatrix = {
   canManage: boolean;
@@ -1134,28 +1199,33 @@ export const getPropertiesPortalMatrix = createServerFn({ method: "POST" })
       { data: propertyRows },
       { data: activeKeys },
     ] = await Promise.all([
-        admin
-          .from("portal_publications")
-          .select("property_id, portal_key, enabled, status, last_synced_at, last_error, external_ref")
-          .eq("organization_id", organizationId)
-          .in("property_id", data.propertyIds),
-        admin
-          .from("portal_listings")
-          .select("property_id, portal, status, last_sync_at, last_error, external_id, public_url")
-          .eq("organization_id", organizationId)
-          .in("property_id", data.propertyIds),
-        admin.from("portal_connections").select("portal, status").eq("organization_id", organizationId),
-        admin
-          .from("properties")
-          .select("id, publish_status, status, deleted_at")
-          .eq("organization_id", organizationId)
-          .in("id", data.propertyIds),
-        admin
-          .from("portal_api_keys")
-          .select("portal")
-          .eq("organization_id", organizationId)
-          .eq("status", "active"),
-      ]);
+      admin
+        .from("portal_publications")
+        .select(
+          "property_id, portal_key, enabled, status, last_synced_at, last_error, external_ref",
+        )
+        .eq("organization_id", organizationId)
+        .in("property_id", data.propertyIds),
+      admin
+        .from("portal_listings")
+        .select("property_id, portal, status, last_sync_at, last_error, external_id, public_url")
+        .eq("organization_id", organizationId)
+        .in("property_id", data.propertyIds),
+      admin
+        .from("portal_connections")
+        .select("portal, status")
+        .eq("organization_id", organizationId),
+      admin
+        .from("properties")
+        .select("id, publish_status, status, deleted_at")
+        .eq("organization_id", organizationId)
+        .in("id", data.propertyIds),
+      admin
+        .from("portal_api_keys")
+        .select("portal")
+        .eq("organization_id", organizationId)
+        .eq("status", "active"),
+    ]);
     // Portalurile de tip feed nu au conexiune cu credențiale: sunt „configurate”
     // când există o cheie Habitoo activă cu care pot citi feedul.
     const keyedPortals = new Set((activeKeys ?? []).map((k) => k.portal));
@@ -1174,10 +1244,13 @@ export const getPropertiesPortalMatrix = createServerFn({ method: "POST" })
         const pub = (publications ?? []).find(
           (p) => p.property_id === propertyId && p.portal_key === portal.id,
         );
-        const listing = (listings ?? []).find((l) => l.property_id === propertyId && l.portal === portal.id);
+        const listing = (listings ?? []).find(
+          (l) => l.property_id === propertyId && l.portal === portal.id,
+        );
         const connection = (connections ?? []).find((c) => c.portal === portal.id);
         const pushSupported = portal.capabilities.includes("publish_listing");
-        const connectionReady = connection?.status === "connected" || connection?.status === "ready";
+        const connectionReady =
+          connection?.status === "connected" || connection?.status === "ready";
         const configured =
           portal.status === "available" &&
           (pushSupported ? connectionReady : keyedPortals.has(portal.id) || connectionReady);
@@ -1209,14 +1282,11 @@ export const getPropertiesPortalMatrix = createServerFn({ method: "POST" })
               : (listing?.last_error ?? pub?.last_error ?? null),
           externalId: listing?.external_id ?? pub?.external_ref ?? null,
           publicUrl: listing?.public_url ?? null,
-
         };
       });
     }
     return { canManage, properties };
   });
-
-
 
 /** Activează/dezactivează publicarea unei proprietăți pe un portal. */
 export const setPropertyPortalSelection = createServerFn({ method: "POST" })
@@ -1352,7 +1422,9 @@ export const publishPropertyToSelectedPortals = createServerFn({ method: "POST" 
         const definition = getPortalDefinition(key);
         // Portalurile de tip feed (ex. iMove) nu primesc trimiteri: selecția
         // este suficientă, oferta apare la următoarea citire a feedului.
-        return definition?.status === "available" && definition.capabilities.includes("publish_listing");
+        return (
+          definition?.status === "available" && definition.capabilities.includes("publish_listing")
+        );
       });
 
     if (selected.length === 0) {
@@ -1370,12 +1442,17 @@ export const publishPropertyToSelectedPortals = createServerFn({ method: "POST" 
         message: feedOnly
           ? "Portalurile selectate preiau ofertele automat din feed. Nu este nevoie de nicio trimitere."
           : "Nu ai selectat niciun portal disponibil pentru această proprietate.",
-        results: [] as { portalId: string; portalName: string; ok: boolean; message: string | null }[],
+        results: [] as {
+          portalId: string;
+          portalName: string;
+          ok: boolean;
+          message: string | null;
+        }[],
       };
     }
 
-
-    const results: { portalId: string; portalName: string; ok: boolean; message: string | null }[] = [];
+    const results: { portalId: string; portalName: string; ok: boolean; message: string | null }[] =
+      [];
     for (const portalId of selected) {
       const published = (listings ?? []).some(
         (l) => l.portal === portalId && (l.status === "published" || l.status === "updated"),
@@ -1425,7 +1502,12 @@ export type PortalFeedPreview = {
   /** Primele oferte, exact în forma trimisă portalului. */
   sample: ImoveListing[];
   /** Oferte selectate dar excluse, cu motivul exact. */
-  excluded: { propertyId: string; reference: string | null; title: string | null; reasons: string[] }[];
+  excluded: {
+    propertyId: string;
+    reference: string | null;
+    title: string | null;
+    reasons: string[];
+  }[];
   warnings: { externalId: string; messages: string[] }[];
   /** Portalul are o cheie activă cu care poate citi feedul. */
   hasActiveKey: boolean;
@@ -1438,14 +1520,25 @@ export type PortalFeedPreview = {
 export const previewPortalFeed = createServerFn({ method: "POST" })
   .middleware([requireActiveOrgAuth])
   .inputValidator((input: unknown) =>
-    z.object({ organizationId: z.string().uuid(), portalId: z.string().min(1).max(40), limit: z.number().int().min(1).max(10).default(3) }).parse(input),
+    z
+      .object({
+        organizationId: z.string().uuid(),
+        portalId: z.string().min(1).max(40),
+        limit: z.number().int().min(1).max(10).default(3),
+      })
+      .parse(input),
   )
   .handler(async ({ data, context }): Promise<PortalFeedPreview> => {
-    const organizationId = await requireSuperadminOrg(context as unknown as AuthContext, data.organizationId);
+    const organizationId = await requireSuperadminOrg(
+      context as unknown as AuthContext,
+      data.organizationId,
+    );
     const definition = getPortalDefinition(data.portalId);
     if (!definition) throw new Error("Portal necunoscut.");
     if (definition.id !== "imove") {
-      throw new Error("Previzualizarea de feed este disponibilă doar pentru portalurile de tip feed.");
+      throw new Error(
+        "Previzualizarea de feed este disponibilă doar pentru portalurile de tip feed.",
+      );
     }
 
     const feedUrl = await feedUrlForOrg(definition.id);
@@ -1461,7 +1554,6 @@ export const previewPortalFeed = createServerFn({ method: "POST" })
       .eq("portal", definition.id)
       .maybeSingle();
     const hasCredential = Boolean(connRow?.portal_credentials_encrypted);
-
 
     await logOperation({
       organizationId,
@@ -1522,18 +1614,20 @@ const applySelectionSchema = z.object({
 export const applyPropertyPortalSelection = createServerFn({ method: "POST" })
   .middleware([requireActiveOrgAuth])
   .inputValidator((input: unknown) => applySelectionSchema.parse(input))
-  .handler(async ({ data, context }): Promise<{ ok: boolean; results: PortalSelectionOutcome[] }> => {
-    const { organizationId, superadmin } = await resolvePublishingOrg(
-      context as unknown as AuthContext,
-      data.organizationId,
-    );
-    return await applyPortalSelectionForOrg({
-      organizationId,
-      superadmin,
-      actorId: context.userId,
-      data,
-    });
-  });
+  .handler(
+    async ({ data, context }): Promise<{ ok: boolean; results: PortalSelectionOutcome[] }> => {
+      const { organizationId, superadmin } = await resolvePublishingOrg(
+        context as unknown as AuthContext,
+        data.organizationId,
+      );
+      return await applyPortalSelectionForOrg({
+        organizationId,
+        superadmin,
+        actorId: context.userId,
+        data,
+      });
+    },
+  );
 
 /**
  * Nucleul publicării pe portalurile selectate, fără verificări de permisiuni
@@ -1550,7 +1644,6 @@ export async function applyPortalSelectionForOrg(input: {
     const allowedPortals = superadmin ? null : await activatedPortalIds(organizationId);
     const admin = await loadAdmin();
 
-
     const { data: property } = await admin
       .from("properties")
       .select("id")
@@ -1559,25 +1652,32 @@ export async function applyPortalSelectionForOrg(input: {
       .maybeSingle();
     if (!property) throw new Error("Proprietatea nu a fost găsită.");
 
-    const [{ data: publications }, { data: listings }, { data: connections }, { data: activeKeys }] =
-      await Promise.all([
-        admin
-          .from("portal_publications")
-          .select("portal_key, enabled")
-          .eq("organization_id", organizationId)
-          .eq("property_id", data.propertyId),
-        admin
-          .from("portal_listings")
-          .select("portal, status")
-          .eq("organization_id", organizationId)
-          .eq("property_id", data.propertyId),
-        admin.from("portal_connections").select("portal, status").eq("organization_id", organizationId),
-        admin
-          .from("portal_api_keys")
-          .select("portal")
-          .eq("organization_id", organizationId)
-          .eq("status", "active"),
-      ]);
+    const [
+      { data: publications },
+      { data: listings },
+      { data: connections },
+      { data: activeKeys },
+    ] = await Promise.all([
+      admin
+        .from("portal_publications")
+        .select("portal_key, enabled")
+        .eq("organization_id", organizationId)
+        .eq("property_id", data.propertyId),
+      admin
+        .from("portal_listings")
+        .select("portal, status")
+        .eq("organization_id", organizationId)
+        .eq("property_id", data.propertyId),
+      admin
+        .from("portal_connections")
+        .select("portal, status")
+        .eq("organization_id", organizationId),
+      admin
+        .from("portal_api_keys")
+        .select("portal")
+        .eq("organization_id", organizationId)
+        .eq("status", "active"),
+    ]);
     const keyedPortals = new Set((activeKeys ?? []).map((k) => k.portal));
 
     const results: PortalSelectionOutcome[] = [];
@@ -1592,169 +1692,172 @@ export async function applyPortalSelectionForOrg(input: {
        * portaluri, iar utilizatorul vedea un singur mesaj generic de eroare.
        */
       try {
-
-      // Portalurile neactivate pentru agenție sunt respinse, nu ignorate silențios.
-      if (allowedPortals !== null && !allowedPortals.has(definition.id)) {
-        if (wanted.enabled) {
-          results.push({
-            portalId: definition.id,
-            portalName: definition.display_name,
-            action: "blocked",
-            ok: false,
-            message: `${definition.display_name} nu este activat pentru agenția ta.`,
-          });
+        // Portalurile neactivate pentru agenție sunt respinse, nu ignorate silențios.
+        if (allowedPortals !== null && !allowedPortals.has(definition.id)) {
+          if (wanted.enabled) {
+            results.push({
+              portalId: definition.id,
+              portalName: definition.display_name,
+              action: "blocked",
+              ok: false,
+              message: `${definition.display_name} nu este activat pentru agenția ta.`,
+            });
+          }
+          continue;
         }
-        continue;
-      }
-      const name = definition.display_name;
-      const previous =
-        (publications ?? []).find((p) => p.portal_key === definition.id)?.enabled === true;
+        const name = definition.display_name;
+        const previous =
+          (publications ?? []).find((p) => p.portal_key === definition.id)?.enabled === true;
 
-      if (definition.status !== "available") {
-        if (wanted.enabled) {
-          results.push({
-            portalId: definition.id,
-            portalName: name,
-            action: "blocked",
-            ok: false,
-            message: `Integrarea ${name} nu este încă disponibilă.`,
-          });
+        if (definition.status !== "available") {
+          if (wanted.enabled) {
+            results.push({
+              portalId: definition.id,
+              portalName: name,
+              action: "blocked",
+              ok: false,
+              message: `Integrarea ${name} nu este încă disponibilă.`,
+            });
+          }
+          continue;
         }
-        continue;
-      }
 
-      const pushSupported = definition.capabilities.includes("publish_listing");
-      const connStatus = (connections ?? []).find((c) => c.portal === definition.id)?.status;
-      const connectionReady = connStatus === "connected" || connStatus === "ready";
-      // Portalurile de tip feed sunt „configurate” fie prin cheia Habitoo activă,
-      // fie prin cheia API a portalului salvată pe conexiune (ex. iMove).
-      const configured = pushSupported
-        ? connectionReady
-        : keyedPortals.has(definition.id) || connectionReady;
+        const pushSupported = definition.capabilities.includes("publish_listing");
+        const connStatus = (connections ?? []).find((c) => c.portal === definition.id)?.status;
+        const connectionReady = connStatus === "connected" || connStatus === "ready";
+        // Portalurile de tip feed sunt „configurate” fie prin cheia Habitoo activă,
+        // fie prin cheia API a portalului salvată pe conexiune (ex. iMove).
+        const configured = pushSupported
+          ? connectionReady
+          : keyedPortals.has(definition.id) || connectionReady;
 
-      const published = (listings ?? []).some(
-        (l) => l.portal === definition.id && (l.status === "published" || l.status === "updated"),
-      );
-
-      // A. false → false: nimic.
-      if (!wanted.enabled && !previous) continue;
-
-      // Intenția se salvează întotdeauna când se schimbă.
-      if (wanted.enabled !== previous) {
-        const { error } = await admin.from("portal_publications").upsert(
-          {
-            organization_id: organizationId,
-            property_id: data.propertyId,
-            portal_key: definition.id,
-            enabled: wanted.enabled,
-            status: wanted.enabled ? "pending" : "disabled",
-            updated_by: actorId,
-            created_by: actorId,
-          } as never,
-          { onConflict: "organization_id,property_id,portal_key" },
+        const published = (listings ?? []).some(
+          (l) => l.portal === definition.id && (l.status === "published" || l.status === "updated"),
         );
-        if (error) throw new Error(error.message);
 
-        await admin.from("audit_logs").insert({
-          organization_id: organizationId,
-          actor_id: actorId,
-          action: wanted.enabled ? "portal.selection_enabled" : "portal.selection_disabled",
-          entity: "portal_publications",
-          entity_id: data.propertyId,
-          old_values: { portal: definition.id, selected: previous },
-          new_values: { portal: definition.id, selected: wanted.enabled },
-          created_by: actorId,
-        } as never);
-        await logOperation({
-          organizationId,
-          portal: definition.id,
-          operation: wanted.enabled ? "select" : "deselect",
-          success: true,
-          propertyId: data.propertyId,
-          actorId,
-        });
-      }
+        // A. false → false: nimic.
+        if (!wanted.enabled && !previous) continue;
 
-      // D. true → false: retragere reală.
-      if (!wanted.enabled) {
-        if (pushSupported && published) {
-          const res = await executeListingAction({
+        // Intenția se salvează întotdeauna când se schimbă.
+        if (wanted.enabled !== previous) {
+          const { error } = await admin.from("portal_publications").upsert(
+            {
+              organization_id: organizationId,
+              property_id: data.propertyId,
+              portal_key: definition.id,
+              enabled: wanted.enabled,
+              status: wanted.enabled ? "pending" : "disabled",
+              updated_by: actorId,
+              created_by: actorId,
+            } as never,
+            { onConflict: "organization_id,property_id,portal_key" },
+          );
+          if (error) throw new Error(error.message);
+
+          await admin.from("audit_logs").insert({
+            organization_id: organizationId,
+            actor_id: actorId,
+            action: wanted.enabled ? "portal.selection_enabled" : "portal.selection_disabled",
+            entity: "portal_publications",
+            entity_id: data.propertyId,
+            old_values: { portal: definition.id, selected: previous },
+            new_values: { portal: definition.id, selected: wanted.enabled },
+            created_by: actorId,
+          } as never);
+          await logOperation({
             organizationId,
-            actorId,
-            portalId: definition.id,
+            portal: definition.id,
+            operation: wanted.enabled ? "select" : "deselect",
+            success: true,
             propertyId: data.propertyId,
-            action: "withdraw",
-          });
-          results.push({
-            portalId: definition.id,
-            portalName: name,
-            action: res.ok ? "withdrawn" : "blocked",
-            ok: res.ok,
-            message: res.ok
-              ? `${name}: oferta a fost retrasă.`
-              : res.message.startsWith(name)
-                ? res.message
-                : `${name}: ${res.message}`,
-
-          });
-        } else {
-          results.push({
-            portalId: definition.id,
-            portalName: name,
-            action: "withdrawn",
-            ok: true,
-            message: pushSupported
-              ? `${name}: oferta nu mai este trimisă.`
-              : `${name}: oferta nu mai apare în feed și portalul o arhivează.`,
+            actorId,
           });
         }
-        continue;
-      }
 
-      // Portal neconfigurat: intenția rămâne salvată, statusul rămâne nepublicat.
-      if (!configured) {
-        results.push({
+        // D. true → false: retragere reală.
+        if (!wanted.enabled) {
+          if (pushSupported && published) {
+            const res = await executeListingAction({
+              organizationId,
+              actorId,
+              portalId: definition.id,
+              propertyId: data.propertyId,
+              action: "withdraw",
+            });
+            results.push({
+              portalId: definition.id,
+              portalName: name,
+              action: res.ok ? "withdrawn" : "blocked",
+              ok: res.ok,
+              message: res.ok
+                ? `${name}: oferta a fost retrasă.`
+                : res.message.startsWith(name)
+                  ? res.message
+                  : `${name}: ${res.message}`,
+            });
+          } else {
+            results.push({
+              portalId: definition.id,
+              portalName: name,
+              action: "withdrawn",
+              ok: true,
+              message: pushSupported
+                ? `${name}: oferta nu mai este trimisă.`
+                : `${name}: oferta nu mai apare în feed și portalul o arhivează.`,
+            });
+          }
+          continue;
+        }
+
+        // Portal neconfigurat: intenția rămâne salvată, statusul rămâne nepublicat.
+        if (!configured) {
+          results.push({
+            portalId: definition.id,
+            portalName: name,
+            action: "blocked",
+            ok: false,
+            message: superadmin
+              ? `${name} nu este configurat. Configurează portalul din Superadmin → Portaluri.`
+              : `${name} nu este încă pregătit de administratorul platformei.`,
+          });
+          continue;
+        }
+
+        // Portalurile de tip feed nu primesc trimiteri: selecția este suficientă.
+        if (!pushSupported) {
+          results.push({
+            portalId: definition.id,
+            portalName: name,
+            action: previous ? "none" : "selected",
+            ok: true,
+            message: previous ? null : `${name}: oferta intră în feed.`,
+          });
+          continue;
+        }
+
+        // B. true → true: actualizare doar când s-a cerut sincronizarea, ÎNSĂ
+        // doar dacă oferta este efectiv publicată pe portal. Dacă listarea este
+        // retrasă sau nu a plecat niciodată cu succes, bifa rămasă activă trebuie
+        // să declanșeze o publicare, nu „nicio schimbare".
+        if (previous && published && !data.syncExisting) {
+          results.push({
+            portalId: definition.id,
+            portalName: name,
+            action: "none",
+            ok: true,
+            message: null,
+          });
+          continue;
+        }
+
+        const action = published ? "update" : "publish";
+        const res = await executeListingAction({
+          organizationId,
+          actorId,
           portalId: definition.id,
-          portalName: name,
-          action: "blocked",
-          ok: false,
-          message: superadmin
-            ? `${name} nu este configurat. Configurează portalul din Superadmin → Portaluri.`
-            : `${name} nu este încă pregătit de administratorul platformei.`,
+          propertyId: data.propertyId,
+          action,
         });
-        continue;
-      }
-
-      // Portalurile de tip feed nu primesc trimiteri: selecția este suficientă.
-      if (!pushSupported) {
-        results.push({
-          portalId: definition.id,
-          portalName: name,
-          action: previous ? "none" : "selected",
-          ok: true,
-          message: previous ? null : `${name}: oferta intră în feed.`,
-        });
-        continue;
-      }
-
-      // B. true → true: actualizare doar când s-a cerut sincronizarea, ÎNSĂ
-      // doar dacă oferta este efectiv publicată pe portal. Dacă listarea este
-      // retrasă sau nu a plecat niciodată cu succes, bifa rămasă activă trebuie
-      // să declanșeze o publicare, nu „nicio schimbare".
-      if (previous && published && !data.syncExisting) {
-        results.push({ portalId: definition.id, portalName: name, action: "none", ok: true, message: null });
-        continue;
-      }
-
-
-      const action = published ? "update" : "publish";
-      const res = await executeListingAction({
-        organizationId,
-        actorId,
-        portalId: definition.id,
-        propertyId: data.propertyId,
-        action,
-      });
         results.push({
           portalId: definition.id,
           portalName: name,
@@ -1791,12 +1894,9 @@ export async function applyPortalSelectionForOrg(input: {
       }
     }
 
-
     return { ok: results.every((r) => r.ok), results };
   }
 }
-
-
 
 /** Agențiile disponibile în panoul Superadmin → Portaluri. */
 export const listPortalOrganizations = createServerFn({ method: "POST" })
@@ -1820,21 +1920,26 @@ export const listOrgPropertiesForPortals = createServerFn({ method: "POST" })
       })
       .parse(input),
   )
-  .handler(async ({ data, context }): Promise<{ id: string; title: string; city: string | null }[]> => {
-    const organizationId = await requireSuperadminOrg(context as unknown as AuthContext, data.organizationId);
-    const admin = await loadAdmin();
-    let query = admin
-      .from("properties")
-      .select("id, title, city")
-      .eq("organization_id", organizationId)
-      .is("deleted_at", null)
-      .order("updated_at", { ascending: false })
-      .limit(data.limit);
-    const search = data.search?.replace(/[%,()]/g, " ").trim();
-    if (search) query = query.ilike("title", `%${search}%`);
-    const { data: rows } = await query;
-    return (rows ?? []).map((r) => ({ id: r.id, title: r.title, city: r.city ?? null }));
-  });
+  .handler(
+    async ({ data, context }): Promise<{ id: string; title: string; city: string | null }[]> => {
+      const organizationId = await requireSuperadminOrg(
+        context as unknown as AuthContext,
+        data.organizationId,
+      );
+      const admin = await loadAdmin();
+      let query = admin
+        .from("properties")
+        .select("id, title, city")
+        .eq("organization_id", organizationId)
+        .is("deleted_at", null)
+        .order("updated_at", { ascending: false })
+        .limit(data.limit);
+      const search = data.search?.replace(/[%,()]/g, " ").trim();
+      if (search) query = query.ilike("title", `%${search}%`);
+      const { data: rows } = await query;
+      return (rows ?? []).map((r) => ({ id: r.id, title: r.title, city: r.city ?? null }));
+    },
+  );
 
 /* ------------------------------------------------------------------------- */
 /* Backfill linkuri publice Storia                                           */
@@ -1857,9 +1962,8 @@ export const backfillStoriaPublicUrls = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     await requireSuperadmin(context as unknown as AuthContext);
     const admin = await loadAdmin();
-    const { parseAdvertRefs, readAdvertMeta, storiaAdSlugFromUrl, withStoriaAdSlug } = await import(
-      "@/lib/portals/storia/adverts.server"
-    );
+    const { parseAdvertRefs, readAdvertMeta, storiaAdSlugFromUrl, withStoriaAdSlug } =
+      await import("@/lib/portals/storia/adverts.server");
 
     let query = admin
       .from("portal_listings")

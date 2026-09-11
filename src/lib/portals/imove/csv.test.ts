@@ -13,7 +13,6 @@ import type { ImoveListing } from "./mapper";
 const OFFICIAL_HEADER =
   "externalId,title,description,price,currency,transactionType,propertyType,city,district,addressPublic,rooms,bathrooms,usableArea,floor,totalFloors,constructionYear,agentPhone,agentEmail,imageUrls";
 
-
 /** Parser CSV minimal (RFC 4180) folosit doar în teste. */
 function parseCsvLine(line: string): string[] {
   const out: string[] = [];
@@ -22,12 +21,16 @@ function parseCsvLine(line: string): string[] {
   for (let i = 0; i < line.length; i += 1) {
     const ch = line[i];
     if (quoted) {
-      if (ch === '"' && line[i + 1] === '"') { cur += '"'; i += 1; }
-      else if (ch === '"') quoted = false;
+      if (ch === '"' && line[i + 1] === '"') {
+        cur += '"';
+        i += 1;
+      } else if (ch === '"') quoted = false;
       else cur += ch;
     } else if (ch === '"') quoted = true;
-    else if (ch === ",") { out.push(cur); cur = ""; }
-    else cur += ch;
+    else if (ch === ",") {
+      out.push(cur);
+      cur = "";
+    } else cur += ch;
   }
   out.push(cur);
   return out;
@@ -126,7 +129,9 @@ describe("CSV iMove — valori", () => {
   });
 
   it("externalId rămâne stabil între generări succesive", () => {
-    expect(parseCsvLine(imoveCsvRow(base))[0]).toBe(parseCsvLine(imoveCsvRow({ ...base, price: 1 }))[0]);
+    expect(parseCsvLine(imoveCsvRow(base))[0]).toBe(
+      parseCsvLine(imoveCsvRow({ ...base, price: 1 }))[0],
+    );
   });
 
   it("city/district folosesc valorile canonice publicabile", () => {

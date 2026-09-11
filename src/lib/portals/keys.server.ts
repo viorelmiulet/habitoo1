@@ -13,7 +13,11 @@ export function hashPortalKey(value: string): string {
 
 /** `<portal-prefix>_portal_<prefix>.<secret>` — prefixul identifică cheia în loguri. */
 export function generatePortalKey(portalId: string): { key: string; prefix: string; hash: string } {
-  const slug = portalId.replace(/[^a-z0-9]/gi, "").slice(0, 6).toLowerCase() || "portal";
+  const slug =
+    portalId
+      .replace(/[^a-z0-9]/gi, "")
+      .slice(0, 6)
+      .toLowerCase() || "portal";
   const prefix = `${slug}_portal_${randomBytes(4).toString("hex")}`;
   const secret = randomBytes(32).toString("base64url");
   const key = `${prefix}.${secret}`;

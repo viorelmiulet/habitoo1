@@ -28,12 +28,7 @@ export const HOMEPITCH_MAX_TITLE = 200;
 export const HOMEPITCH_RECOMMENDED_DESCRIPTION = 300;
 
 export type HomePitchPropertyType =
-  | "apartament"
-  | "casa"
-  | "birou"
-  | "spatiu_comercial"
-  | "teren"
-  | "spatiu_industrial";
+  "apartament" | "casa" | "birou" | "spatiu_comercial" | "teren" | "spatiu_industrial";
 
 export type HomePitchTransactionType = "vanzare" | "inchiriere";
 
@@ -66,12 +61,16 @@ export type HomePitchProperty = {
   collab_commission_percent: number | null;
   date_added: string | null;
   date_updated: string | null;
-  agent: { email: string; first_name: string | null; last_name: string | null; phone: string | null };
+  agent: {
+    email: string;
+    first_name: string | null;
+    last_name: string | null;
+    phone: string | null;
+  };
 };
 
 export type HomePitchMapResult =
-  | { ok: true; property: HomePitchProperty; warnings: string[] }
-  | { ok: false; reasons: string[] };
+  { ok: true; property: HomePitchProperty; warnings: string[] } | { ok: false; reasons: string[] };
 
 /** Habitoo → cele 6 valori acceptate de HomePitch. */
 const PROPERTY_TYPE_MAP: Record<string, HomePitchPropertyType> = {
@@ -243,7 +242,9 @@ export function mapPropertyToHomePitch(
   const transaction = homepitchTransaction(p);
   if (!transaction) reasons.push("Nu este bifată nicio tranzacție (vânzare sau închiriere).");
 
-  const { price, currency } = transaction ? priceEur(p, transaction) : { price: null, currency: "EUR" };
+  const { price, currency } = transaction
+    ? priceEur(p, transaction)
+    : { price: null, currency: "EUR" };
   if (price === null) reasons.push("Lipsește prețul tranzacției sau nu este pozitiv.");
   else if (currency !== "EUR") {
     reasons.push(`HomePitch acceptă doar EUR; oferta este în ${currency}.`);
@@ -279,11 +280,13 @@ export function mapPropertyToHomePitch(
   // Dual: o singură intrare, ca vânzare, cu mențiunea închirierii în descriere.
   let finalDescription = description;
   const alsoRent =
-    transaction === "vanzare" && (p.for_rent === true) && numberOrNull(p.rent_price ?? null) !== null;
+    transaction === "vanzare" && p.for_rent === true && numberOrNull(p.rent_price ?? null) !== null;
   if (alsoRent) {
     const rentCurrency = (p.rent_currency ?? p.currency ?? "EUR").toUpperCase();
     finalDescription = `${description}\n\nDisponibilă și pentru închiriere: ${p.rent_price} ${rentCurrency}/lună.`;
-    warnings.push("Oferta are ambele tranzacții active: se expune ca vânzare, cu mențiune în descriere.");
+    warnings.push(
+      "Oferta are ambele tranzacții active: se expune ca vânzare, cu mențiune în descriere.",
+    );
   }
 
   const names = agentNames(options.agent?.full_name ?? null);
@@ -300,7 +303,8 @@ export function mapPropertyToHomePitch(
       price: price as number,
       city_name: (p.city ?? "").trim() || null,
       zone_name: (p.district ?? "").trim() || null,
-      street: (p.location_precise ? (p.street ?? p.address ?? "") : (p.street ?? "")).trim() || null,
+      street:
+        (p.location_precise ? (p.street ?? p.address ?? "") : (p.street ?? "")).trim() || null,
       lat: lat as number,
       lng: lng as number,
       rooms: numberOrNull(p.rooms),

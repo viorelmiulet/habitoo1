@@ -39,7 +39,11 @@ export function ArchivePropertyDialog({
   const applyPortalsFn = useServerFn(applyPropertyPortalSelection);
   const collaborationFn = useServerFn(setPropertyCollaboration);
 
-  const { data: state, isLoading, refetch } = useQuery({
+  const {
+    data: state,
+    isLoading,
+    refetch,
+  } = useQuery({
     queryKey: ["property-archive-state", propertyId],
     queryFn: () => stateFn({ data: { propertyId } }),
     enabled: open,
@@ -146,7 +150,12 @@ export function ArchivePropertyDialog({
                 </li>
               ))}
             </ul>
-            <Button variant="outline" className="w-full" disabled={busy} onClick={() => withdrawAll.mutate()}>
+            <Button
+              variant="outline"
+              className="w-full"
+              disabled={busy}
+              onClick={() => withdrawAll.mutate()}
+            >
               {withdrawAll.isPending ? "Se retrage…" : "Retrage de pe toate"}
             </Button>
           </div>

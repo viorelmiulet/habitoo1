@@ -89,7 +89,9 @@ function ReportsPage() {
       const [properties, leads, activities, profiles] = await Promise.all([
         supabase
           .from("properties")
-          .select("id,status,price,currency,city,assigned_to,transaction_kind,created_at,updated_at,source"),
+          .select(
+            "id,status,price,currency,city,assigned_to,transaction_kind,created_at,updated_at,source",
+          ),
         supabase.from("leads").select("id,stage,source,assigned_to,created_at,value"),
         supabase.from("activities").select("id,kind,done,status,assigned_to,starts_at"),
         supabase.from("profiles").select("id,full_name"),
@@ -116,10 +118,11 @@ function ReportsPage() {
   );
   const leads = (data?.leads ?? []).filter(
     (l) =>
-      (agentId === "all" || l.assigned_to === agentId) &&
-      (source === "all" || l.source === source),
+      (agentId === "all" || l.assigned_to === agentId) && (source === "all" || l.source === source),
   );
-  const activities = (data?.activities ?? []).filter((a) => agentId === "all" || a.assigned_to === agentId);
+  const activities = (data?.activities ?? []).filter(
+    (a) => agentId === "all" || a.assigned_to === agentId,
+  );
 
   const propertiesInPeriod = properties.filter((p) => inRange(p.created_at));
   const leadsInPeriod = leads.filter((l) => inRange(l.created_at));
@@ -158,10 +161,14 @@ function ReportsPage() {
   }));
 
   const activityByWeek = useMemo(() => {
-    const buckets = new Map<string, { week: string; apeluri: number; intalniri: number; vizionari: number; task: number }>();
+    const buckets = new Map<
+      string,
+      { week: string; apeluri: number; intalniri: number; vizionari: number; task: number }
+    >();
     for (const a of activitiesInPeriod) {
       const k = weekKey(new Date(a.starts_at));
-      if (!buckets.has(k)) buckets.set(k, { week: k.slice(5), apeluri: 0, intalniri: 0, vizionari: 0, task: 0 });
+      if (!buckets.has(k))
+        buckets.set(k, { week: k.slice(5), apeluri: 0, intalniri: 0, vizionari: 0, task: 0 });
       const b = buckets.get(k)!;
       if (a.kind === "call") b.apeluri += 1;
       else if (a.kind === "meeting") b.intalniri += 1;
@@ -173,18 +180,25 @@ function ReportsPage() {
 
   const won = leadsInPeriod.filter((l) => l.stage === "won").length;
   const lost = leadsInPeriod.filter((l) => l.stage === "lost").length;
-  const qualified = leadsInPeriod.filter((l) => ["qualified", "viewing", "offer", "negotiation", "transaction", "won"].includes(l.stage)).length;
+  const qualified = leadsInPeriod.filter((l) =>
+    ["qualified", "viewing", "offer", "negotiation", "transaction", "won"].includes(l.stage),
+  ).length;
   const conversion = leadsInPeriod.length > 0 ? Math.round((won / leadsInPeriod.length) * 100) : 0;
   const sold = properties.filter((p) => p.status === "sold" && inRange(p.updated_at)).length;
   const rented = properties.filter((p) => p.status === "rented" && inRange(p.updated_at)).length;
   const expired = properties.filter((p) => p.status === "expired").length;
   const active = properties.filter((p) => p.status === "active").length;
 
-  const sources = Array.from(new Set((data?.leads ?? []).map((l) => l.source).filter(Boolean))) as string[];
+  const sources = Array.from(
+    new Set((data?.leads ?? []).map((l) => l.source).filter(Boolean)),
+  ) as string[];
 
   return (
     <>
-      <PageHeader title="Rapoarte" description="Performanța portofoliului, a lead-urilor și a echipei." />
+      <PageHeader
+        title="Rapoarte"
+        description="Performanța portofoliului, a lead-urilor și a echipei."
+      />
 
       <div className="panel flex flex-wrap items-end gap-3 p-4">
         <div className="space-y-1">
@@ -265,12 +279,34 @@ function ReportsPage() {
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <KpiCard label="Proprietăți active" value={active} hint={`${propertiesInPeriod.length} noi în perioadă`} icon={Building2} />
-        <KpiCard label="Lead-uri noi" value={leadsInPeriod.length} tone="accent" hint={`${qualified} calificate`} icon={Flame} />
-        <KpiCard label="Rată conversie" value={`${conversion}%`} hint={`${won} câștigate · ${lost} pierdute`} tone="success" icon={TrendingUp} />
-        <KpiCard label="Vândute / Închiriate" value={`${sold} / ${rented}`} hint={`${expired} expirate`} tone="info" icon={Handshake} />
+        <KpiCard
+          label="Proprietăți active"
+          value={active}
+          hint={`${propertiesInPeriod.length} noi în perioadă`}
+          icon={Building2}
+        />
+        <KpiCard
+          label="Lead-uri noi"
+          value={leadsInPeriod.length}
+          tone="accent"
+          hint={`${qualified} calificate`}
+          icon={Flame}
+        />
+        <KpiCard
+          label="Rată conversie"
+          value={`${conversion}%`}
+          hint={`${won} câștigate · ${lost} pierdute`}
+          tone="success"
+          icon={TrendingUp}
+        />
+        <KpiCard
+          label="Vândute / Închiriate"
+          value={`${sold} / ${rented}`}
+          hint={`${expired} expirate`}
+          tone="info"
+          icon={Handshake}
+        />
       </div>
-
 
       <div className="grid gap-6 xl:grid-cols-2">
         <div className="panel">
@@ -287,14 +323,25 @@ function ReportsPage() {
           <div className="h-72 p-4">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
-                <Pie data={byStatus} dataKey="value" nameKey="name" innerRadius={55} outerRadius={95}>
+                <Pie
+                  data={byStatus}
+                  dataKey="value"
+                  nameKey="name"
+                  innerRadius={55}
+                  outerRadius={95}
+                >
                   {byStatus.map((_, i) => (
                     <Cell key={i} fill={pieColors[i % pieColors.length]} />
                   ))}
                 </Pie>
                 <Legend />
                 <ReTooltip
-                  contentStyle={{ background: "var(--color-popover)", border: "1px solid var(--color-border)", borderRadius: 12, fontSize: 12 }}
+                  contentStyle={{
+                    background: "var(--color-popover)",
+                    border: "1px solid var(--color-border)",
+                    borderRadius: 12,
+                    fontSize: 12,
+                  }}
                 />
               </PieChart>
             </ResponsiveContainer>
@@ -304,21 +351,36 @@ function ReportsPage() {
         <div className="panel">
           <div className="flex items-center justify-between border-b border-border px-5 py-4">
             <h2 className="text-sm font-semibold">Lead-uri după sursă</h2>
-            <Button size="sm" variant="outline" onClick={() => downloadCsv("leaduri-sursa.csv", bySource)}>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => downloadCsv("leaduri-sursa.csv", bySource)}
+            >
               <Download className="size-3.5" /> CSV
             </Button>
           </div>
           <div className="h-72 p-4">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
-                <Pie data={bySource} dataKey="value" nameKey="name" innerRadius={55} outerRadius={95}>
+                <Pie
+                  data={bySource}
+                  dataKey="value"
+                  nameKey="name"
+                  innerRadius={55}
+                  outerRadius={95}
+                >
                   {bySource.map((_, i) => (
                     <Cell key={i} fill={pieColors[i % pieColors.length]} />
                   ))}
                 </Pie>
                 <Legend />
                 <ReTooltip
-                  contentStyle={{ background: "var(--color-popover)", border: "1px solid var(--color-border)", borderRadius: 12, fontSize: 12 }}
+                  contentStyle={{
+                    background: "var(--color-popover)",
+                    border: "1px solid var(--color-border)",
+                    borderRadius: 12,
+                    fontSize: 12,
+                  }}
                 />
               </PieChart>
             </ResponsiveContainer>
@@ -328,20 +390,45 @@ function ReportsPage() {
         <div className="panel">
           <div className="flex items-center justify-between border-b border-border px-5 py-4">
             <h2 className="text-sm font-semibold">Funnel lead-uri pe etape</h2>
-            <Button size="sm" variant="outline" onClick={() => downloadCsv("leaduri-etape.csv", byStage)}>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => downloadCsv("leaduri-etape.csv", byStage)}
+            >
               <Download className="size-3.5" /> CSV
             </Button>
           </div>
           <div className="h-72 p-4">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={byStage} layout="vertical">
-                <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" horizontal={false} />
-                <XAxis type="number" fontSize={12} tickLine={false} axisLine={false} />
-                <YAxis type="category" dataKey="name" fontSize={12} tickLine={false} axisLine={false} width={90} />
-                <ReTooltip
-                  contentStyle={{ background: "var(--color-popover)", border: "1px solid var(--color-border)", borderRadius: 12, fontSize: 12 }}
+                <CartesianGrid
+                  strokeDasharray="3 3"
+                  stroke="var(--color-border)"
+                  horizontal={false}
                 />
-                <Bar dataKey="leaduri" name="Lead-uri" fill="var(--color-chart-1)" radius={[0, 6, 6, 0]} />
+                <XAxis type="number" fontSize={12} tickLine={false} axisLine={false} />
+                <YAxis
+                  type="category"
+                  dataKey="name"
+                  fontSize={12}
+                  tickLine={false}
+                  axisLine={false}
+                  width={90}
+                />
+                <ReTooltip
+                  contentStyle={{
+                    background: "var(--color-popover)",
+                    border: "1px solid var(--color-border)",
+                    borderRadius: 12,
+                    fontSize: 12,
+                  }}
+                />
+                <Bar
+                  dataKey="leaduri"
+                  name="Lead-uri"
+                  fill="var(--color-chart-1)"
+                  radius={[0, 6, 6, 0]}
+                />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -361,17 +448,50 @@ function ReportsPage() {
           <div className="h-72 p-4">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={activityByWeek}>
-                <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" vertical={false} />
+                <CartesianGrid
+                  strokeDasharray="3 3"
+                  stroke="var(--color-border)"
+                  vertical={false}
+                />
                 <XAxis dataKey="week" fontSize={12} tickLine={false} axisLine={false} />
                 <YAxis fontSize={12} tickLine={false} axisLine={false} width={28} />
                 <ReTooltip
-                  contentStyle={{ background: "var(--color-popover)", border: "1px solid var(--color-border)", borderRadius: 12, fontSize: 12 }}
+                  contentStyle={{
+                    background: "var(--color-popover)",
+                    border: "1px solid var(--color-border)",
+                    borderRadius: 12,
+                    fontSize: 12,
+                  }}
                 />
                 <Legend />
-                <Line type="monotone" dataKey="apeluri" name="Apeluri" stroke="var(--color-chart-1)" strokeWidth={2} />
-                <Line type="monotone" dataKey="intalniri" name="Întâlniri" stroke="var(--color-chart-2)" strokeWidth={2} />
-                <Line type="monotone" dataKey="vizionari" name="Vizionări" stroke="var(--color-chart-3)" strokeWidth={2} />
-                <Line type="monotone" dataKey="task" name="Task-uri" stroke="var(--color-chart-4)" strokeWidth={2} />
+                <Line
+                  type="monotone"
+                  dataKey="apeluri"
+                  name="Apeluri"
+                  stroke="var(--color-chart-1)"
+                  strokeWidth={2}
+                />
+                <Line
+                  type="monotone"
+                  dataKey="intalniri"
+                  name="Întâlniri"
+                  stroke="var(--color-chart-2)"
+                  strokeWidth={2}
+                />
+                <Line
+                  type="monotone"
+                  dataKey="vizionari"
+                  name="Vizionări"
+                  stroke="var(--color-chart-3)"
+                  strokeWidth={2}
+                />
+                <Line
+                  type="monotone"
+                  dataKey="task"
+                  name="Task-uri"
+                  stroke="var(--color-chart-4)"
+                  strokeWidth={2}
+                />
               </LineChart>
             </ResponsiveContainer>
           </div>
@@ -382,7 +502,9 @@ function ReportsPage() {
         <div className="flex items-center justify-between border-b border-border px-5 py-4">
           <div>
             <h2 className="text-sm font-semibold">Activitatea agenților</h2>
-            <p className="text-xs text-muted-foreground">Comparativ pe perioada și filtrele selectate.</p>
+            <p className="text-xs text-muted-foreground">
+              Comparativ pe perioada și filtrele selectate.
+            </p>
           </div>
           <Button size="sm" variant="outline" onClick={() => downloadCsv("agenti.csv", perAgent)}>
             <Download className="size-3.5" /> CSV
@@ -419,14 +541,15 @@ function ReportsPage() {
                   <TableCell className="text-right tabular-nums">{a.leaduri}</TableCell>
                   <TableCell className="text-right tabular-nums">{a.vizionari}</TableCell>
                   <TableCell className="text-right tabular-nums">{a.activitati}</TableCell>
-                  <TableCell className="text-right font-medium tabular-nums">{a.tranzactii}</TableCell>
+                  <TableCell className="text-right font-medium tabular-nums">
+                    {a.tranzactii}
+                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>
           </Table>
         )}
       </div>
-
     </>
   );
 }

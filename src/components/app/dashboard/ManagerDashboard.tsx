@@ -208,7 +208,9 @@ export function ManagerDashboard() {
                             <span className="text-muted-foreground">0</span>
                           )}
                         </TableCell>
-                        <TableCell className="text-right tabular-nums">{agent.properties}</TableCell>
+                        <TableCell className="text-right tabular-nums">
+                          {agent.properties}
+                        </TableCell>
                         <TableCell className="text-xs text-muted-foreground">
                           {agent.lastTouchAt ? relativeDays(agent.lastTouchAt) : "—"}
                         </TableCell>
@@ -241,14 +243,18 @@ export function ManagerDashboard() {
                 <p className="mt-1 text-2xl font-semibold tabular-nums">
                   {data?.portfolio.staleCount ?? 0}
                 </p>
-                <p className="mt-1 text-xs text-muted-foreground">necesită re-contactarea proprietarului</p>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  necesită re-contactarea proprietarului
+                </p>
               </div>
               <div className="rounded-xl border border-border p-4">
                 <p className="text-xs text-muted-foreground uppercase">Neasignate</p>
                 <p className="mt-1 text-2xl font-semibold tabular-nums">
                   {data?.portfolio.unassigned ?? 0}
                 </p>
-                <p className="mt-1 text-xs text-muted-foreground">anunțuri fără agent responsabil</p>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  anunțuri fără agent responsabil
+                </p>
               </div>
             </div>
 
@@ -378,9 +384,7 @@ export function ManagerDashboard() {
                   <p className="mt-1 text-2xl font-semibold tabular-nums">{row.current}</p>
                   <div className="mt-1 flex items-center gap-2">
                     <Delta current={row.current} previous={row.previous} />
-                    <span className="text-xs text-muted-foreground">
-                      (anterior {row.previous})
-                    </span>
+                    <span className="text-xs text-muted-foreground">(anterior {row.previous})</span>
                   </div>
                 </div>
               ))}

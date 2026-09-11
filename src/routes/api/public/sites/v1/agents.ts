@@ -6,7 +6,8 @@ import { handleAgentsList } from "@/lib/site-feed/handlers.server";
 export const Route = createFileRoute("/api/public/sites/v1/agents")({
   server: {
     handlers: {
-      GET: async ({ request }) => withFeedAuth(request, "agents", (auth) => handleAgentsList(request, auth)),
+      GET: async ({ request }) =>
+        withFeedAuth(request, "agents", (auth) => handleAgentsList(request, auth)),
     },
   },
 });

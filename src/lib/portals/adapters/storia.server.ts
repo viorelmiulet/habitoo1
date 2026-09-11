@@ -20,7 +20,12 @@ import {
   type PortalResult,
 } from "../adapter";
 import { PortalError, codeFromHttpStatus, toPortalError } from "../errors";
-import { loadStoriaTokens, olxAuthorizedRequest, readStoriaOAuthMeta, storiaAppConfigured } from "../storia/oauth.server";
+import {
+  loadStoriaTokens,
+  olxAuthorizedRequest,
+  readStoriaOAuthMeta,
+  storiaAppConfigured,
+} from "../storia/oauth.server";
 import { buildStoriaPayload } from "../storia/payload.server";
 import {
   activateAdvert,
@@ -32,7 +37,6 @@ import {
   storiaAdSlugFromUrl,
   storiaListingStatus,
   withStoriaAdSlug,
-
   storiaReactivationPlan,
   waitForAdvertSettled,
   STORIA_STATUS_MESSAGE,
@@ -50,7 +54,6 @@ const TX_LABEL: Record<StoriaTransaction, string> = { sale: "vânzare", rent: "�
 const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 function connectedState(ctx: PortalContext): { hasTokens: boolean; expiresAt: string | null } {
-
   const meta = readStoriaOAuthMeta(ctx.settings);
   return { hasTokens: Boolean(ctx.portalCredential), expiresAt: meta?.expires_at ?? null };
 }
@@ -186,7 +189,6 @@ async function pushListing(
     return id || null;
   };
 
-
   try {
     for (const listing of build.listings) {
       const label = TX_LABEL[listing.transaction];
@@ -242,7 +244,6 @@ async function pushListing(
         if (slug && !adSlugs.includes(slug)) adSlugs.push(slug);
       }
 
-
       // După o reactivare, portalul poate raporta încă starea veche câteva
       // secunde: nu o marcăm „retras”, ci „în procesare”.
       const status = storiaListingStatus(code);
@@ -266,13 +267,10 @@ async function pushListing(
       );
     }
   } catch (error) {
-
-
     const failed = fail(error);
     const partial = finalExternalId();
     return partial ? { ...failed, detail: `${failed.detail ?? ""} refs_saved`.trim() } : failed;
   }
-
 
   // Starea agregată: cea mai puțin favorabilă dintre anunțurile trimise.
   const portalStatus = statuses.includes("error")
@@ -282,7 +280,6 @@ async function pushListing(
       : statuses.includes("pending") || statuses.length === 0
         ? "pending"
         : "published";
-
 
   return {
     ok: true,

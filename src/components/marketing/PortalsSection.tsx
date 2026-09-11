@@ -48,7 +48,9 @@ export function PortalsSection() {
                     size={40}
                   />
                   <div className="min-w-0">
-                    <p className="truncate text-sm font-semibold text-navy">{portal.display_name}</p>
+                    <p className="truncate text-sm font-semibold text-navy">
+                      {portal.display_name}
+                    </p>
                   </div>
                 </div>
               </Reveal>

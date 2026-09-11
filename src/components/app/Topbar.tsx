@@ -155,7 +155,8 @@ export function Topbar({
             {user.isSuperadmin ? (
               <DropdownMenuItem asChild>
                 <Link to={isPlatform ? "/app" : "/superadmin"}>
-                  <ShieldCheck className="size-4" /> {isPlatform ? "Înapoi la CRM" : "Panou platformă"}
+                  <ShieldCheck className="size-4" />{" "}
+                  {isPlatform ? "Înapoi la CRM" : "Panou platformă"}
                 </Link>
               </DropdownMenuItem>
             ) : null}
@@ -165,8 +166,13 @@ export function Topbar({
               </a>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuLabel className="text-xs font-normal text-muted-foreground">Temă</DropdownMenuLabel>
-            <DropdownMenuRadioGroup value={preference} onValueChange={(v) => setPreference(v as ThemePreference)}>
+            <DropdownMenuLabel className="text-xs font-normal text-muted-foreground">
+              Temă
+            </DropdownMenuLabel>
+            <DropdownMenuRadioGroup
+              value={preference}
+              onValueChange={(v) => setPreference(v as ThemePreference)}
+            >
               <DropdownMenuRadioItem value="light">
                 <Sun className="mr-2 size-4" /> Luminoasă
               </DropdownMenuRadioItem>

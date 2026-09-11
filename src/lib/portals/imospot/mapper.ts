@@ -57,23 +57,22 @@ export type ImospotListing = {
 };
 
 export type ImospotMapResult =
-  | { ok: true; listings: ImospotListing[]; warnings: string[] }
-  | { ok: false; reasons: string[] };
+  { ok: true; listings: ImospotListing[]; warnings: string[] } | { ok: false; reasons: string[] };
 
 const PROPERTY_TYPE_MAP: Record<string, ImospotPropertyType> = {
   apartment: "apartment",
   apartament: "apartment",
   studio: "apartment",
   garsoniera: "apartment",
-  "garsonieră": "apartment",
+  garsonieră: "apartment",
   penthouse: "apartment",
   duplex: "apartment",
   house: "house",
   casa: "house",
-  "casă": "house",
+  casă: "house",
   villa: "house",
   vila: "house",
-  "vilă": "house",
+  vilă: "house",
   land: "land",
   teren: "land",
   commercial: "commercial",
@@ -85,7 +84,7 @@ const PROPERTY_TYPE_MAP: Record<string, ImospotPropertyType> = {
   birouri: "commercial",
   warehouse: "warehouse",
   hala: "warehouse",
-  "hală": "warehouse",
+  hală: "warehouse",
   depozit: "warehouse",
   industrial: "warehouse",
 };
@@ -138,7 +137,10 @@ export function imospotTransactions(p: PropertyRow): ImospotTransaction[] {
   return list;
 }
 
-function priceFor(p: PropertyRow, transaction: ImospotTransaction): { price: number | null; currency: string; rounded: boolean } {
+function priceFor(
+  p: PropertyRow,
+  transaction: ImospotTransaction,
+): { price: number | null; currency: string; rounded: boolean } {
   const raw = transaction === "sale" ? (p.sale_price ?? p.price) : (p.rent_price ?? p.price);
   const currency = (
     (transaction === "sale" ? p.sale_currency : p.rent_currency) ??
@@ -229,7 +231,9 @@ export function mapPropertyToImospot(p: PropertyRow, options: ImospotMapOptions)
 
   const propertyType = imospotPropertyType(p.property_type);
   if (!propertyType) {
-    reasons.push(`Tipul de proprietate „${p.property_type ?? "necunoscut"}” nu are echivalent Imospot.`);
+    reasons.push(
+      `Tipul de proprietate „${p.property_type ?? "necunoscut"}” nu are echivalent Imospot.`,
+    );
   }
 
   const transactions = imospotTransactions(p);
@@ -316,7 +320,9 @@ export function mapPropertyToImospot(p: PropertyRow, options: ImospotMapOptions)
     const neighborhood = (p.district ?? "").trim();
     if (neighborhood) listing.location.neighborhood = neighborhood;
     // Strada exactă doar dacă locația este marcată ca publicabilă precis.
-    const street = p.location_precise ? (p.address ?? p.street ?? "").trim() : (p.street ?? "").trim();
+    const street = p.location_precise
+      ? (p.address ?? p.street ?? "").trim()
+      : (p.street ?? "").trim();
     if (street) listing.location.street = street;
     // Coordonatele respectă setarea de precizie: exacte doar cu `location_precise`.
     const coords = publicCoords(p);

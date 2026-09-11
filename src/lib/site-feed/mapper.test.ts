@@ -110,7 +110,10 @@ describe("mapPropertyToFeed", () => {
   const mapped = mapPropertyToFeed(baseProperty, {
     baseUrl: "https://crm.habitoo.ro",
     publicSiteUrl: "https://habitoo.ro",
-    images: [image, { ...image, id: "44444444-4444-4444-8444-444444444444", is_confidential: true }],
+    images: [
+      image,
+      { ...image, id: "44444444-4444-4444-8444-444444444444", is_confidential: true },
+    ],
     agent: { id: "22222222-2222-4222-8222-222222222222", full_name: "Mihai Popescu" },
     portalKeys: ["clickimob"],
   });
@@ -149,9 +152,12 @@ describe("mapPropertyToFeed", () => {
     expect(mapped.pretvanzare).toBe(165000);
     expect(mapped.pretinchiriere).toBeNull();
     expect(mapped.monedavanzare).toBe("EUR");
-    const rent = mapPropertyToFeed({ ...baseProperty, transaction_kind: "rent", price: 450 } as PropertyRow, {
-      baseUrl: "https://crm.habitoo.ro",
-    });
+    const rent = mapPropertyToFeed(
+      { ...baseProperty, transaction_kind: "rent", price: 450 } as PropertyRow,
+      {
+        baseUrl: "https://crm.habitoo.ro",
+      },
+    );
     expect(rent.deinchiriere).toBe(true);
     expect(rent.pretinchiriere).toBe(450);
     expect(rent.pretvanzare).toBeNull();
@@ -211,7 +217,9 @@ describe("mapPropertyToFeed", () => {
 
   it("expune imaginile prin URL public de proxy, fără URL-uri interne", () => {
     expect(mapped.images).toHaveLength(1);
-    expect(mapped.images[0]!.src).toBe(`https://crm.habitoo.ro/api/public/sites/v1/media/${image.id}`);
+    expect(mapped.images[0]!.src).toBe(
+      `https://crm.habitoo.ro/api/public/sites/v1/media/${image.id}`,
+    );
     expect(mapped.images[0]!.tip).toBe("principala");
     expect(mapped.images[0]!.pozitie).toBe(0);
     expect(mapped.images[0]!.modificata).toBe("2026-01-05T00:00:00Z");
@@ -233,14 +241,29 @@ describe("mapPropertyToFeed", () => {
 
 describe("paginare", () => {
   it("limitează per_page", () => {
-    const url = new URL("https://crm.habitoo.ro/api/public/sites/v1/properties?page=2&per_page=9999");
+    const url = new URL(
+      "https://crm.habitoo.ro/api/public/sites/v1/properties?page=2&per_page=9999",
+    );
     expect(parsePagination(url)).toEqual({ page: 2, perPage: FEED_MAX_PER_PAGE });
   });
 
   it("construiește metadatele de listă", () => {
     const url = new URL("https://crm.habitoo.ro/api/public/sites/v1/properties");
-    const feed = buildPaginatedFeed({ data: [1, 2], total: 5, page: 2, perPage: 2, requestUrl: url });
-    expect(feed).toMatchObject({ total: 5, per_page: 2, current_page: 2, last_page: 3, from: 3, to: 4 });
+    const feed = buildPaginatedFeed({
+      data: [1, 2],
+      total: 5,
+      page: 2,
+      perPage: 2,
+      requestUrl: url,
+    });
+    expect(feed).toMatchObject({
+      total: 5,
+      per_page: 2,
+      current_page: 2,
+      last_page: 3,
+      from: 3,
+      to: 4,
+    });
     expect(feed.next_page_url).toContain("page=3");
     expect(feed.prev_page_url).toContain("page=1");
   });
@@ -248,7 +271,13 @@ describe("paginare", () => {
   it("tratează feedul gol", () => {
     const url = new URL("https://crm.habitoo.ro/api/public/sites/v1/properties");
     const feed = buildPaginatedFeed({ data: [], total: 0, page: 1, perPage: 50, requestUrl: url });
-    expect(feed).toMatchObject({ total: 0, last_page: 1, from: null, to: null, next_page_url: null });
+    expect(feed).toMatchObject({
+      total: 0,
+      last_page: 1,
+      from: null,
+      to: null,
+      next_page_url: null,
+    });
   });
 });
 

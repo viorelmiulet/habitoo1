@@ -1,19 +1,19 @@
-import * as React from 'react'
+import * as React from "react";
 
-import { Link, Text } from '@react-email/components'
+import { Link, Text } from "@react-email/components";
 
-import { EmailLayout, PrimaryButton, link, paragraph, strongText } from './layout'
+import { EmailLayout, PrimaryButton, link, paragraph, strongText } from "./layout";
 
 interface EmailChangeEmailProps {
-  siteName: string
+  siteName: string;
   // oldEmail is the user's current address (HookData.OldEmail). For the
   // NEW-recipient half of a secure email_change fanout, `email` equals the
   // recipient (NEW), so the "from" line must render oldEmail to read
   // "from OLD to NEW" instead of "from NEW to NEW".
-  oldEmail: string
-  email: string
-  newEmail: string
-  confirmationUrl: string
+  oldEmail: string;
+  email: string;
+  newEmail: string;
+  confirmationUrl: string;
 }
 
 export const EmailChangeEmail = ({
@@ -29,12 +29,11 @@ export const EmailChangeEmail = ({
   >
     <Text style={paragraph}>Bună,</Text>
     <Text style={paragraph}>
-      Ai cerut schimbarea adresei de email a contului tău din <strong>{siteName}</strong>{' '}
-      din{' '}
+      Ai cerut schimbarea adresei de email a contului tău din <strong>{siteName}</strong> din{" "}
       <Link href={`mailto:${oldEmail}`} style={link}>
         {oldEmail}
-      </Link>{' '}
-      în{' '}
+      </Link>{" "}
+      în{" "}
       <Link href={`mailto:${newEmail}`} style={link}>
         {newEmail}
       </Link>
@@ -45,6 +44,6 @@ export const EmailChangeEmail = ({
     </Text>
     <PrimaryButton href={confirmationUrl}>Confirmă schimbarea</PrimaryButton>
   </EmailLayout>
-)
+);
 
-export default EmailChangeEmail
+export default EmailChangeEmail;

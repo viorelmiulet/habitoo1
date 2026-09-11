@@ -138,10 +138,7 @@ export const getSuperadminDashboard = createServerFn({ method: "POST" })
         .from("organizations")
         .select("id", { count: "exact", head: true })
         .eq("collaboration_enabled", true),
-      admin
-        .from("properties")
-        .select("id", { count: "exact", head: true })
-        .is("deleted_at", null),
+      admin.from("properties").select("id", { count: "exact", head: true }).is("deleted_at", null),
       admin.from("user_roles").select("role"),
       admin.from("profiles").select("id", { count: "exact", head: true }),
       admin.from("portal_publications").select("property_id").eq("enabled", true),

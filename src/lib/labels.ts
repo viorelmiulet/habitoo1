@@ -9,7 +9,10 @@ export const propertyStatusLabels: Record<string, string> = {
   archived: "Arhivat",
 };
 
-export const propertyStatusTone: Record<string, "neutral" | "success" | "warning" | "info" | "danger"> = {
+export const propertyStatusTone: Record<
+  string,
+  "neutral" | "success" | "warning" | "info" | "danger"
+> = {
   draft: "neutral",
   active: "success",
   reserved: "warning",
@@ -109,7 +112,10 @@ export const organizationStatusLabels: Record<string, string> = {
   cancelled: "Anulată",
 };
 
-export const organizationStatusTone: Record<string, "neutral" | "success" | "warning" | "info" | "danger"> = {
+export const organizationStatusTone: Record<
+  string,
+  "neutral" | "success" | "warning" | "info" | "danger"
+> = {
   active: "success",
   trial: "info",
   suspended: "warning",

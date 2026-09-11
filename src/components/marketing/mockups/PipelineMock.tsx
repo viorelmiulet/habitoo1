@@ -26,7 +26,11 @@ export function PipelineMock({
   const cols = mockPipeline.slice(start, start + count);
   return (
     <AppFrame title="lead-uri / pipeline" className={className} activeIndex={4}>
-      <MockToolbar title="Pipeline lead-uri" meta="15 lead-uri active · vedere Kanban" action="+ Lead nou" />
+      <MockToolbar
+        title="Pipeline lead-uri"
+        meta="15 lead-uri active · vedere Kanban"
+        action="+ Lead nou"
+      />
       <div className={cn("grid gap-3 p-4", withHistory && "lg:grid-cols-3")}>
         <div className={cn("min-w-0", withHistory && "lg:col-span-2")}>
           <div
@@ -34,9 +38,14 @@ export function PipelineMock({
             style={{ gridTemplateColumns: `repeat(${cols.length}, minmax(0, 1fr))` }}
           >
             {cols.map((col, ci) => (
-              <div key={col.stage} className="min-w-0 rounded-xl border border-border bg-muted/40 p-2">
+              <div
+                key={col.stage}
+                className="min-w-0 rounded-xl border border-border bg-muted/40 p-2"
+              >
                 <div className="mb-2 flex items-center justify-between px-1">
-                  <span className="truncate text-[11px] font-semibold">{leadStageLabels[col.stage]}</span>
+                  <span className="truncate text-[11px] font-semibold">
+                    {leadStageLabels[col.stage]}
+                  </span>
                   <span className="rounded-full bg-background px-1.5 text-[10px] font-medium text-muted-foreground tabular-nums">
                     {col.cards.length}
                   </span>
@@ -58,7 +67,9 @@ export function PipelineMock({
                           <GripVertical className="mt-0.5 size-3 shrink-0 text-muted-foreground/60" />
                           <div className="min-w-0">
                             <p className="truncate text-[11px] font-semibold">{card.name}</p>
-                            <p className="truncate text-[10px] text-muted-foreground">{card.subject}</p>
+                            <p className="truncate text-[10px] text-muted-foreground">
+                              {card.subject}
+                            </p>
                           </div>
                         </div>
                         <div className="mt-1.5 flex items-center justify-between">
@@ -79,7 +90,9 @@ export function PipelineMock({
         {withHistory ? (
           <div className="rounded-xl border border-border p-3">
             <p className="text-xs font-semibold">Istoric lead · Elena Dumitrescu</p>
-            <p className="text-[10px] text-muted-foreground">Fiecare schimbare rămâne înregistrată</p>
+            <p className="text-[10px] text-muted-foreground">
+              Fiecare schimbare rămâne înregistrată
+            </p>
             <ol className="mt-3 space-y-3">
               {mockLeadHistory.map((h, i) => {
                 const Icon = historyIcons[h.kind] ?? Phone;
@@ -88,7 +101,9 @@ export function PipelineMock({
                     <span
                       className={cn(
                         "flex size-6 shrink-0 items-center justify-center rounded-full",
-                        i === 0 ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground",
+                        i === 0
+                          ? "bg-primary text-primary-foreground"
+                          : "bg-muted text-muted-foreground",
                       )}
                     >
                       <Icon className="size-3" />

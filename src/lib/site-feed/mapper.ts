@@ -128,11 +128,12 @@ export type FeedProperty = {
   url: string | null;
 };
 
-
 /** Statusurile Habitoo care pot apărea în feedul public. */
 export const FEED_PUBLIC_STATUSES = ["active", "reserved", "negotiation"] as const;
 
-export function isPropertyFeedEligible(p: Pick<PropertyRow, "publish_status" | "deleted_at" | "status">): boolean {
+export function isPropertyFeedEligible(
+  p: Pick<PropertyRow, "publish_status" | "deleted_at" | "status">,
+): boolean {
   if (p.deleted_at) return false;
   if (p.publish_status !== "published") return false;
   return (FEED_PUBLIC_STATUSES as readonly string[]).includes(p.status);
@@ -245,7 +246,9 @@ export function mapPropertyToFeed(p: PropertyRow, options: MapPropertyOptions): 
   const rentCurrency = p.rent_currency ?? (isRent ? (p.currency ?? null) : null);
   const images = (options.images ?? [])
     .filter(isImageFeedEligible)
-    .sort((a, b) => (a.is_primary === b.is_primary ? (a.position ?? 0) - (b.position ?? 0) : a.is_primary ? -1 : 1))
+    .sort((a, b) =>
+      a.is_primary === b.is_primary ? (a.position ?? 0) - (b.position ?? 0) : a.is_primary ? -1 : 1,
+    )
     .map((img) => mapImage(img, options.baseUrl));
 
   // Coordonatele publicate respectă setarea de precizie a locației.
@@ -332,7 +335,9 @@ export function mapPropertyToFeed(p: PropertyRow, options: MapPropertyOptions): 
     portals: [
       ...new Set([
         ...(options.portalKeys ?? []),
-        ...(p.tags ?? []).filter((t) => t.startsWith("portal:")).map((t) => t.slice("portal:".length)),
+        ...(p.tags ?? [])
+          .filter((t) => t.startsWith("portal:"))
+          .map((t) => t.slice("portal:".length)),
       ]),
     ],
     tip: p.property_type,
@@ -358,7 +363,6 @@ export function mapPropertyToFeed(p: PropertyRow, options: MapPropertyOptions): 
   };
 }
 
-
 export type PaginatedFeed<T> = {
   total: number;
   per_page: number;
@@ -378,9 +382,10 @@ export function parsePagination(url: URL): { page: number; perPage: number } {
   const rawPage = Number(url.searchParams.get("page") ?? "1");
   const rawPerPage = Number(url.searchParams.get("per_page") ?? FEED_DEFAULT_PER_PAGE);
   const page = Number.isFinite(rawPage) && rawPage >= 1 ? Math.floor(rawPage) : 1;
-  const perPage = Number.isFinite(rawPerPage) && rawPerPage >= 1
-    ? Math.min(Math.floor(rawPerPage), FEED_MAX_PER_PAGE)
-    : FEED_DEFAULT_PER_PAGE;
+  const perPage =
+    Number.isFinite(rawPerPage) && rawPerPage >= 1
+      ? Math.min(Math.floor(rawPerPage), FEED_MAX_PER_PAGE)
+      : FEED_DEFAULT_PER_PAGE;
   return { page, perPage };
 }
 

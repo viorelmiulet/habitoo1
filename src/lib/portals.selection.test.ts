@@ -122,7 +122,10 @@ vi.mock("@/lib/portals/adapters/index.server", () => ({
         ok: true,
         data: { live: true, detail: null, externalId: "CI-1", message: null },
       }),
-      withdrawListing: async () => ({ ok: true, data: { live: true, detail: null, externalId: null } }),
+      withdrawListing: async () => ({
+        ok: true,
+        data: { live: true, detail: null, externalId: null },
+      }),
     };
   },
 }));
@@ -133,7 +136,9 @@ const context = {
     rpc: async (fn: string) => ({ data: fn === "is_org_admin", error: null }),
     from: () => ({
       select: () => ({
-        eq: () => ({ maybeSingle: async () => ({ data: { organization_id: "org-1" }, error: null }) }),
+        eq: () => ({
+          maybeSingle: async () => ({ data: { organization_id: "org-1" }, error: null }),
+        }),
       }),
     }),
   },

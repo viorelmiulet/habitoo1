@@ -40,7 +40,12 @@ async function loadAdmin() {
   return supabaseAdmin;
 }
 
-type Actor = { userId: string; organizationId: string | null; isAdmin: boolean; isSuperadmin: boolean };
+type Actor = {
+  userId: string;
+  organizationId: string | null;
+  isAdmin: boolean;
+  isSuperadmin: boolean;
+};
 
 async function loadActor(context: AuthContext): Promise<Actor> {
   const admin = await loadAdmin();
@@ -66,7 +71,9 @@ async function loadProperty(actor: Actor, propertyId: string) {
   const admin = await loadAdmin();
   const { data: property, error } = await admin
     .from("properties")
-    .select("id, organization_id, reference, title, status, assigned_to, collaboration, pre_archive_status")
+    .select(
+      "id, organization_id, reference, title, status, assigned_to, collaboration, pre_archive_status",
+    )
     .eq("id", propertyId)
     .maybeSingle();
   if (error) throw new Error(error.message);
@@ -165,7 +172,12 @@ export const getPropertyArchiveState = createServerFn({ method: "POST" })
     };
   });
 
-export type ArchiveResult = { ok: true; archived: boolean; reference: string | null; status: string };
+export type ArchiveResult = {
+  ok: true;
+  archived: boolean;
+  reference: string | null;
+  status: string;
+};
 
 export const archiveProperty = createServerFn({ method: "POST" })
   .middleware([requireActiveOrgAuth])
@@ -176,11 +188,20 @@ export const archiveProperty = createServerFn({ method: "POST" })
     const admin = await loadAdmin();
 
     if (String(property.status) === "archived") {
-      return { ok: true, archived: true, reference: property.reference ?? null, status: "archived" };
+      return {
+        ok: true,
+        archived: true,
+        reference: property.reference ?? null,
+        status: "archived",
+      };
     }
 
     // Blocajul se re-verifică pe server: interfața poate fi învechită.
-    const blockers = await collectBlockers(property.organization_id, property.id, property.collaboration);
+    const blockers = await collectBlockers(
+      property.organization_id,
+      property.id,
+      property.collaboration,
+    );
     if (blockers.length > 0) {
       throw new Error(
         `Proprietatea este încă activă pe: ${blockers.map((b) => b.name).join(", ")}. Retrage-o de acolo înainte de arhivare.`,
@@ -221,7 +242,12 @@ export const unarchiveProperty = createServerFn({ method: "POST" })
     const admin = await loadAdmin();
 
     if (String(property.status) !== "archived") {
-      return { ok: true, archived: false, reference: property.reference ?? null, status: String(property.status) };
+      return {
+        ok: true,
+        archived: false,
+        reference: property.reference ?? null,
+        status: String(property.status),
+      };
     }
 
     // Se readuce statusul comercial de dinainte de arhivare; dacă lipsește, `draft`.

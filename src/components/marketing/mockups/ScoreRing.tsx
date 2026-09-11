@@ -1,6 +1,14 @@
 import { cn } from "@/lib/utils";
 
-export function ScoreRing({ score, size = 44, className }: { score: number; size?: number; className?: string }) {
+export function ScoreRing({
+  score,
+  size = 44,
+  className,
+}: {
+  score: number;
+  size?: number;
+  className?: string;
+}) {
   const r = (size - 6) / 2;
   const c = 2 * Math.PI * r;
   const filled = Math.max(0, Math.min(100, score)) / 100;
@@ -12,7 +20,14 @@ export function ScoreRing({ score, size = 44, className }: { score: number; size
       aria-label={`Scor potrivire ${score}%`}
     >
       <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className="-rotate-90">
-        <circle cx={size / 2} cy={size / 2} r={r} className="stroke-border" strokeWidth={4} fill="none" />
+        <circle
+          cx={size / 2}
+          cy={size / 2}
+          r={r}
+          className="stroke-border"
+          strokeWidth={4}
+          fill="none"
+        />
         <circle
           cx={size / 2}
           cy={size / 2}

@@ -1,4 +1,12 @@
-import { Building2, CalendarDays, ClipboardList, Phone, Sparkles, Users, Video } from "lucide-react";
+import {
+  Building2,
+  CalendarDays,
+  ClipboardList,
+  Phone,
+  Sparkles,
+  Users,
+  Video,
+} from "lucide-react";
 import { StatusBadge } from "@/components/app/StatusBadge";
 import { Progress } from "@/components/ui/progress";
 import { leadStageLabels } from "@/lib/labels";
@@ -24,7 +32,11 @@ export function DashboardMock({ className }: { className?: string }) {
   const max = Math.max(...mockFunnel.map((f) => f.value));
   return (
     <AppFrame title="dashboard" className={className} activeIndex={0}>
-      <MockToolbar title="Bună dimineața, Andrei" meta="Marți, 14 mai · 4 activități programate azi" action="+ Adaugă" />
+      <MockToolbar
+        title="Bună dimineața, Andrei"
+        meta="Marți, 14 mai · 4 activități programate azi"
+        action="+ Adaugă"
+      />
       <div className="space-y-4 p-4">
         <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
           {mockKpis.map((k, i) => {
@@ -39,7 +51,12 @@ export function DashboardMock({ className }: { className?: string }) {
                     <p className="mt-1 text-xl font-semibold tracking-tight">{k.value}</p>
                     <p className="mt-0.5 truncate text-[10px] text-muted-foreground">{k.hint}</p>
                   </div>
-                  <span className={cn("flex size-8 shrink-0 items-center justify-center rounded-lg", kpiTones[i])}>
+                  <span
+                    className={cn(
+                      "flex size-8 shrink-0 items-center justify-center rounded-lg",
+                      kpiTones[i],
+                    )}
+                  >
                     <Icon className="size-4" />
                   </span>
                 </div>
@@ -59,7 +76,9 @@ export function DashboardMock({ className }: { className?: string }) {
                 const Icon = agendaIcons[a.kind] ?? Phone;
                 return (
                   <li key={a.time} className="flex items-center gap-3 py-2">
-                    <span className="w-10 shrink-0 text-[11px] font-semibold tabular-nums text-navy">{a.time}</span>
+                    <span className="w-10 shrink-0 text-[11px] font-semibold tabular-nums text-navy">
+                      {a.time}
+                    </span>
                     <span className="flex size-7 shrink-0 items-center justify-center rounded-md bg-muted text-muted-foreground">
                       <Icon className="size-3.5" />
                     </span>
@@ -88,7 +107,9 @@ export function DashboardMock({ className }: { className?: string }) {
                         style={{ width: `${(f.value / max) * 100}%` }}
                       />
                     </div>
-                    <span className="w-6 text-right text-[10px] font-medium tabular-nums">{f.value}</span>
+                    <span className="w-6 text-right text-[10px] font-medium tabular-nums">
+                      {f.value}
+                    </span>
                   </li>
                 ))}
               </ul>

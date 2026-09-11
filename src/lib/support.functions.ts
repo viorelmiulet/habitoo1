@@ -130,7 +130,9 @@ async function decorate(
 ): Promise<SupportTicketRow[]> {
   if (rows.length === 0) return [];
   const userIds = Array.from(new Set(rows.map((r) => r.created_by)));
-  const orgIds = Array.from(new Set(rows.map((r) => r.organization_id).filter(Boolean))) as string[];
+  const orgIds = Array.from(
+    new Set(rows.map((r) => r.organization_id).filter(Boolean)),
+  ) as string[];
   const ticketIds = rows.map((r) => r.id);
 
   const [{ data: profiles }, { data: orgs }, { data: messages }] = await Promise.all([
@@ -173,7 +175,11 @@ export const listMySupportTickets = createServerFn({ method: "POST" })
     const actor = await loadActor(context as unknown as AuthContext);
     const admin = await loadAdmin();
 
-    let query = admin.from("support_tickets").select(TICKET_COLUMNS).order("last_message_at", { ascending: false }).limit(200);
+    let query = admin
+      .from("support_tickets")
+      .select(TICKET_COLUMNS)
+      .order("last_message_at", { ascending: false })
+      .limit(200);
     if (actor.isOrgAdmin && actor.organizationId) {
       query = query.eq("organization_id", actor.organizationId);
     } else {
@@ -193,7 +199,14 @@ export const createSupportTicket = createServerFn({ method: "POST" })
       .object({
         subject: z.string().trim().min(4).max(160),
         body: z.string().trim().min(10).max(5000),
-        category: z.enum(["technical", "billing", "feature_request", "data_import", "account_access", "other"]),
+        category: z.enum([
+          "technical",
+          "billing",
+          "feature_request",
+          "data_import",
+          "account_access",
+          "other",
+        ]),
         contextPath: z.string().max(300).optional(),
       })
       .parse(input),
@@ -235,7 +248,10 @@ export const createSupportTicket = createServerFn({ method: "POST" })
       admin.from("profiles").select("full_name").eq("id", actor.userId).maybeSingle(),
     ]);
 
-    const { data: supers } = await admin.from("user_roles").select("user_id").eq("role", "superadmin");
+    const { data: supers } = await admin
+      .from("user_roles")
+      .select("user_id")
+      .eq("role", "superadmin");
     const uniqueSupers = Array.from(new Set((supers ?? []).map((r) => r.user_id)));
     if (uniqueSupers.length > 0) {
       await admin.from("notifications").insert(
@@ -357,13 +373,16 @@ async function appendMessage(
 export const replyToSupportTicket = createServerFn({ method: "POST" })
   .middleware([requireActiveOrgAuth])
   .inputValidator((input: unknown) =>
-    z.object({ ticketId: z.string().uuid(), body: z.string().trim().min(2).max(5000) }).parse(input),
+    z
+      .object({ ticketId: z.string().uuid(), body: z.string().trim().min(2).max(5000) })
+      .parse(input),
   )
   .handler(async ({ data, context }) => {
     const actor = await loadActor(context as unknown as AuthContext);
     const admin = await loadAdmin();
     const ticket = await loadTicketForActor(data.ticketId, actor, admin);
-    if (ticket.status === "closed") throw new Error("Tichetul este închis. Deschide un tichet nou.");
+    if (ticket.status === "closed")
+      throw new Error("Tichetul este închis. Deschide un tichet nou.");
 
     await appendMessage(admin, ticket, {
       senderId: actor.userId,
@@ -383,7 +402,9 @@ export const listAllSupportTickets = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) =>
     z
       .object({
-        status: z.enum(["open", "in_progress", "resolved", "closed", "unresolved", "all"]).default("unresolved"),
+        status: z
+          .enum(["open", "in_progress", "resolved", "closed", "unresolved", "all"])
+          .default("unresolved"),
         organizationId: z.string().uuid().optional(),
         category: z.string().max(40).optional(),
         search: z.string().max(120).optional(),
@@ -443,7 +464,11 @@ export const replySupportTicketAsStaff = createServerFn({ method: "POST" })
     const ctx = context as unknown as AuthContext;
     const admin = await loadAdmin();
 
-    const { data: raw } = await admin.from("support_tickets").select(TICKET_COLUMNS).eq("id", data.ticketId).maybeSingle();
+    const { data: raw } = await admin
+      .from("support_tickets")
+      .select(TICKET_COLUMNS)
+      .eq("id", data.ticketId)
+      .maybeSingle();
     const ticket = raw as unknown as TicketDbRow | null;
     if (!ticket) throw new Error("Tichetul nu există.");
 
@@ -465,7 +490,10 @@ export const replySupportTicketAsStaff = createServerFn({ method: "POST" })
         created_by: ctx.userId,
       } as never);
       if (ticket.status === "open") {
-        await admin.from("support_tickets").update({ status: "in_progress" } as never).eq("id", ticket.id);
+        await admin
+          .from("support_tickets")
+          .update({ status: "in_progress" } as never)
+          .eq("id", ticket.id);
       }
     }
 
@@ -488,7 +516,11 @@ export const setSupportTicketStatus = createServerFn({ method: "POST" })
     const ctx = context as unknown as AuthContext;
     const admin = await loadAdmin();
 
-    const { data: raw } = await admin.from("support_tickets").select(TICKET_COLUMNS).eq("id", data.ticketId).maybeSingle();
+    const { data: raw } = await admin
+      .from("support_tickets")
+      .select(TICKET_COLUMNS)
+      .eq("id", data.ticketId)
+      .maybeSingle();
     const ticket = raw as unknown as TicketDbRow | null;
     if (!ticket) throw new Error("Tichetul nu există.");
     if (ticket.status === data.status) return { ok: true as const };

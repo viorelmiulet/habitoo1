@@ -22,7 +22,9 @@ export function LegalPage({
       <section className="border-b border-border bg-card">
         <Container className="py-14 sm:py-16">
           <Eyebrow>{eyebrow}</Eyebrow>
-          <h1 className="mt-4 text-3xl font-semibold tracking-tight text-navy sm:text-4xl">{title}</h1>
+          <h1 className="mt-4 text-3xl font-semibold tracking-tight text-navy sm:text-4xl">
+            {title}
+          </h1>
           <p className="mt-4 max-w-2xl text-base text-muted-foreground">{intro}</p>
           {lastUpdated ? (
             <p className="mt-3 text-sm font-medium text-muted-foreground">

@@ -28,14 +28,18 @@ async function search(term: string): Promise<Result[]> {
     supabase
       .from("properties")
       .select("id,title,reference,city,district,external_id,address")
-      .or(`title.ilike.${like},reference.ilike.${like},city.ilike.${like},address.ilike.${like},external_id.ilike.${like}`)
+      .or(
+        `title.ilike.${like},reference.ilike.${like},city.ilike.${like},address.ilike.${like},external_id.ilike.${like}`,
+      )
       // Proprietățile arhivate sunt scoase din circulație: nu apar în căutare.
       .neq("status", "archived" as never)
       .limit(5),
     supabase
       .from("contacts")
       .select("id,first_name,last_name,phone,email,type")
-      .or(`first_name.ilike.${like},last_name.ilike.${like},phone.ilike.${like},email.ilike.${like}`)
+      .or(
+        `first_name.ilike.${like},last_name.ilike.${like},phone.ilike.${like},email.ilike.${like}`,
+      )
       .limit(5),
     supabase
       .from("leads")
@@ -62,7 +66,12 @@ async function search(term: string): Promise<Result[]> {
       meta: [c.phone, c.email].filter(Boolean).join(" · "),
     });
   for (const l of leads.data ?? [])
-    results.push({ kind: "lead", id: l.id, label: l.name, meta: [l.phone, l.email].filter(Boolean).join(" · ") });
+    results.push({
+      kind: "lead",
+      id: l.id,
+      label: l.name,
+      meta: [l.phone, l.email].filter(Boolean).join(" · "),
+    });
   for (const r of requests.data ?? [])
     results.push({ kind: "request", id: r.id, label: r.title, meta: r.kind });
   for (const a of activities.data ?? [])
@@ -139,16 +148,11 @@ export function GlobalSearch({ compact = false }: { compact?: boolean } = {}) {
           <kbd className="ml-auto hidden rounded-md border border-border bg-muted px-1.5 py-0.5 text-[10px] font-medium sm:inline">
             ⌘K
           </kbd>
-
         </button>
       )}
 
       <CommandDialog open={open} onOpenChange={setOpen}>
-        <CommandInput
-          value={term}
-          onValueChange={setTerm}
-          placeholder="Caută în toată agenția…"
-        />
+        <CommandInput value={term} onValueChange={setTerm} placeholder="Caută în toată agenția…" />
         <CommandList>
           {term.trim().length < 2 ? (
             <div className="px-4 py-8 text-center text-sm text-muted-foreground">
@@ -165,11 +169,17 @@ export function GlobalSearch({ compact = false }: { compact?: boolean } = {}) {
             return (
               <CommandGroup key={kind} heading={title}>
                 {items.map((r) => (
-                  <CommandItem key={`${r.kind}-${r.id}`} value={`${r.label} ${r.meta} ${r.id}`} onSelect={() => go(r)}>
+                  <CommandItem
+                    key={`${r.kind}-${r.id}`}
+                    value={`${r.label} ${r.meta} ${r.id}`}
+                    onSelect={() => go(r)}
+                  >
                     <Icon className="size-4 text-muted-foreground" />
                     <span className="truncate">{r.label}</span>
                     {r.meta ? (
-                      <span className="ml-auto truncate text-xs text-muted-foreground">{r.meta}</span>
+                      <span className="ml-auto truncate text-xs text-muted-foreground">
+                        {r.meta}
+                      </span>
                     ) : null}
                   </CommandItem>
                 ))}

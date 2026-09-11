@@ -49,8 +49,14 @@ export const Route = createFileRoute("/api/public/portal/v1/storia/oauth/callbac
         };
 
         if (portalError || !code) {
-          await log(false, portalError ? `portal a refuzat autorizarea (${portalError})` : "cod lipsă");
-          return back({ org: validated.organizationId, storia_error: portalError || "missing_code" });
+          await log(
+            false,
+            portalError ? `portal a refuzat autorizarea (${portalError})` : "cod lipsă",
+          );
+          return back({
+            org: validated.organizationId,
+            storia_error: portalError || "missing_code",
+          });
         }
 
         try {

@@ -32,7 +32,8 @@ export const Route = createFileRoute("/preturi")({
 const plans = [
   {
     name: "Start",
-    audience: "Pentru agenții mici sau agenți independenți care vor ordine în portofoliu și în clienți.",
+    audience:
+      "Pentru agenții mici sau agenți independenți care vor ordine în portofoliu și în clienți.",
     highlights: [
       "Toate modulele CRM",
       "Un administrator și primii agenți",
@@ -43,7 +44,8 @@ const plans = [
   },
   {
     name: "Agenție",
-    audience: "Pentru echipe care lucrează zilnic în CRM și au nevoie de pipeline, obiective și rapoarte.",
+    audience:
+      "Pentru echipe care lucrează zilnic în CRM și au nevoie de pipeline, obiective și rapoarte.",
     highlights: [
       "Tot ce include Start",
       "Roluri pentru admin și agenți",
@@ -132,22 +134,45 @@ function PricingPage() {
                       Recomandat
                     </span>
                   ) : null}
-                  <h2 className={cn("text-xl font-semibold", p.featured ? "text-navy-foreground" : "text-navy")}>
+                  <h2
+                    className={cn(
+                      "text-xl font-semibold",
+                      p.featured ? "text-navy-foreground" : "text-navy",
+                    )}
+                  >
                     {p.name}
                   </h2>
-                  <p className={cn("mt-2 text-sm", p.featured ? "text-navy-muted" : "text-muted-foreground")}>
+                  <p
+                    className={cn(
+                      "mt-2 text-sm",
+                      p.featured ? "text-navy-muted" : "text-muted-foreground",
+                    )}
+                  >
                     {p.audience}
                   </p>
-                  <p className={cn("mt-6 text-3xl font-semibold tracking-tight", p.featured ? "text-navy-foreground" : "text-navy")}>
+                  <p
+                    className={cn(
+                      "mt-6 text-3xl font-semibold tracking-tight",
+                      p.featured ? "text-navy-foreground" : "text-navy",
+                    )}
+                  >
                     Preț la cerere
                   </p>
                   <ul className="mt-6 space-y-2.5">
                     {p.highlights.map((h) => (
                       <li
                         key={h}
-                        className={cn("flex items-start gap-2.5 text-sm", p.featured ? "text-navy-foreground" : "text-foreground")}
+                        className={cn(
+                          "flex items-start gap-2.5 text-sm",
+                          p.featured ? "text-navy-foreground" : "text-foreground",
+                        )}
                       >
-                        <Check className={cn("mt-0.5 size-4 shrink-0", p.featured ? "text-gold" : "text-success")} />
+                        <Check
+                          className={cn(
+                            "mt-0.5 size-4 shrink-0",
+                            p.featured ? "text-gold" : "text-success",
+                          )}
+                        />
                         {h}
                       </li>
                     ))}
@@ -167,7 +192,11 @@ function PricingPage() {
                     <Button
                       asChild
                       variant="ghost"
-                      className={cn("h-10", p.featured && "text-navy-foreground hover:bg-navy-foreground/10 hover:text-navy-foreground")}
+                      className={cn(
+                        "h-10",
+                        p.featured &&
+                          "text-navy-foreground hover:bg-navy-foreground/10 hover:text-navy-foreground",
+                      )}
                     >
                       <Link to="/contact" search={{ interes: "preturi" }}>
                         <MessageCircle /> Vorbește cu noi
@@ -193,7 +222,10 @@ function PricingPage() {
           </div>
           <ul className="grid gap-3 sm:grid-cols-2 lg:col-span-7">
             {included.map((item) => (
-              <li key={item} className="flex items-start gap-3 rounded-xl border border-border bg-card p-4 text-sm">
+              <li
+                key={item}
+                className="flex items-start gap-3 rounded-xl border border-border bg-card p-4 text-sm"
+              >
                 <Check className="mt-0.5 size-4 shrink-0 text-success" />
                 <span>{item}</span>
               </li>
@@ -204,14 +236,19 @@ function PricingPage() {
 
       <Section>
         <Container className="max-w-3xl">
-          <SectionHeading eyebrow="Întrebări frecvente" title="Ce ne întreabă de obicei agențiile" />
+          <SectionHeading
+            eyebrow="Întrebări frecvente"
+            title="Ce ne întreabă de obicei agențiile"
+          />
           <Accordion type="single" collapsible className="mt-10">
             {faq.map((f, i) => (
               <AccordionItem key={f.q} value={`item-${i}`}>
                 <AccordionTrigger className="text-left text-base font-semibold text-navy">
                   {f.q}
                 </AccordionTrigger>
-                <AccordionContent className="text-base text-muted-foreground">{f.a}</AccordionContent>
+                <AccordionContent className="text-base text-muted-foreground">
+                  {f.a}
+                </AccordionContent>
               </AccordionItem>
             ))}
           </Accordion>

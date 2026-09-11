@@ -85,7 +85,9 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     const host = getCurrentHostname();
     if (isPublicHostname(host) && isCrmPath(location.pathname)) {
       throw redirect({
-        href: getCrmUrl(`${location.pathname}${location.searchStr ?? ""}${location.hash ? `#${location.hash}` : ""}`),
+        href: getCrmUrl(
+          `${location.pathname}${location.searchStr ?? ""}${location.hash ? `#${location.hash}` : ""}`,
+        ),
       });
     }
   },

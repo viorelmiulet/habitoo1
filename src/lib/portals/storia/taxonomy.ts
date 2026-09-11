@@ -19,13 +19,7 @@ export type StoriaTransaction = "sale" | "rent";
 
 /** Familia de bunuri, derivată din tipul de proprietate Habitoo. */
 export type StoriaFamily =
-  | "apartment"
-  | "house"
-  | "room"
-  | "store"
-  | "warehouse"
-  | "garage"
-  | "land";
+  "apartment" | "house" | "room" | "store" | "warehouse" | "garage" | "land";
 
 /** URN-uri de categorie, toate confirmate în arborele real Storia. */
 const CATEGORY_URN: Record<StoriaFamily, Record<StoriaTransaction, string | null>> = {
@@ -66,18 +60,18 @@ const FAMILY_MAP: Record<string, StoriaFamily> = {
   apartament: "apartment",
   studio: "apartment",
   garsoniera: "apartment",
-  "garsonieră": "apartment",
+  garsonieră: "apartment",
   penthouse: "apartment",
   duplex: "apartment",
   house: "house",
   casa: "house",
-  "casă": "house",
+  casă: "house",
   villa: "house",
   vila: "house",
-  "vilă": "house",
+  vilă: "house",
   room: "room",
   camera: "room",
-  "cameră": "room",
+  cameră: "room",
   commercial: "store",
   spatiu_comercial: "store",
   "spațiu comercial": "store",
@@ -87,7 +81,7 @@ const FAMILY_MAP: Record<string, StoriaFamily> = {
   birouri: "store",
   warehouse: "warehouse",
   hala: "warehouse",
-  "hală": "warehouse",
+  hală: "warehouse",
   depozit: "warehouse",
   industrial: "warehouse",
   garage: "garage",
@@ -97,7 +91,7 @@ const FAMILY_MAP: Record<string, StoriaFamily> = {
   teren: "land",
   lot: "land",
   parcela: "land",
-  "parcelă": "land",
+  parcelă: "land",
 };
 
 export function storiaFamily(propertyType: string | null): StoriaFamily | null {

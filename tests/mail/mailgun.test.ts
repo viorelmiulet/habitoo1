@@ -66,7 +66,11 @@ describe("attachments", () => {
   });
 
   test("blocks disallowed mime types", () => {
-    const r = validateAttachment({ filename: "a.bin", contentType: "application/octet-stream", size: 10 });
+    const r = validateAttachment({
+      filename: "a.bin",
+      contentType: "application/octet-stream",
+      size: 10,
+    });
     expect(r).toMatchObject({ ok: false, reason: "mime_not_allowed" });
   });
 
@@ -76,7 +80,13 @@ describe("attachments", () => {
   });
 
   test("accepts a normal pdf", () => {
-    expect(validateAttachment({ filename: "of.pdf", contentType: "application/pdf; charset=x", size: 1000 })).toEqual({
+    expect(
+      validateAttachment({
+        filename: "of.pdf",
+        contentType: "application/pdf; charset=x",
+        size: 1000,
+      }),
+    ).toEqual({
       ok: true,
       filename: "of.pdf",
     });
@@ -102,13 +112,21 @@ describe("outbound validation", () => {
   });
 
   test("rejects header injection in the subject", () => {
-    const r = validateOutbound({ ...base, subject: "a\r\nBcc: x@y.ro" }, allowed, "noreply@clickimob.ro");
+    const r = validateOutbound(
+      { ...base, subject: "a\r\nBcc: x@y.ro" },
+      allowed,
+      "noreply@clickimob.ro",
+    );
     expect(r.ok).toBe(false);
   });
 
   test("rejects empty bodies and missing recipients", () => {
-    expect(validateOutbound({ to: "a@b.ro", subject: "S" }, allowed, "n@clickimob.ro").ok).toBe(false);
-    expect(validateOutbound({ to: "nope", subject: "S", text: "x" }, allowed, "n@clickimob.ro").ok).toBe(false);
+    expect(validateOutbound({ to: "a@b.ro", subject: "S" }, allowed, "n@clickimob.ro").ok).toBe(
+      false,
+    );
+    expect(
+      validateOutbound({ to: "nope", subject: "S", text: "x" }, allowed, "n@clickimob.ro").ok,
+    ).toBe(false);
   });
 });
 
@@ -119,19 +137,27 @@ describe("signature verification", () => {
   const sign = (ts: number) => createHmac("sha256", key).update(`${ts}${token}`).digest("hex");
 
   test("accepts a valid signature", () => {
-    expect(verifyMailgunSignature({ timestamp: String(now), token, signature: sign(now) }, key, now)).toEqual({
+    expect(
+      verifyMailgunSignature({ timestamp: String(now), token, signature: sign(now) }, key, now),
+    ).toEqual({
       ok: true,
     });
   });
 
   test("rejects a tampered signature", () => {
     const bad = sign(now).replace(/^./, (c) => (c === "0" ? "1" : "0"));
-    expect(verifyMailgunSignature({ timestamp: String(now), token, signature: bad }, key, now).ok).toBe(false);
+    expect(
+      verifyMailgunSignature({ timestamp: String(now), token, signature: bad }, key, now).ok,
+    ).toBe(false);
   });
 
   test("rejects replays outside the window", () => {
     const old = now - 3600;
-    const r = verifyMailgunSignature({ timestamp: String(old), token, signature: sign(old) }, key, now);
+    const r = verifyMailgunSignature(
+      { timestamp: String(old), token, signature: sign(old) },
+      key,
+      now,
+    );
     expect(r).toMatchObject({ ok: false, reason: "timestamp" });
   });
 
@@ -163,7 +189,9 @@ describe("inbound normalization", () => {
     const inbound = normalizeInbound({
       from: "a@b.ro",
       recipient: "c@clickimob.ro",
-      attachments: JSON.stringify([{ name: "of.pdf", "content-type": "application/pdf", size: 12, url: "u" }]),
+      attachments: JSON.stringify([
+        { name: "of.pdf", "content-type": "application/pdf", size: 12, url: "u" },
+      ]),
     });
     expect(inbound.attachments[0]).toMatchObject({ filename: "of.pdf", size: 12 });
   });
@@ -178,7 +206,11 @@ describe("events", () => {
       recipient: "A@B.ro",
       message: { headers: { "message-id": "m1@x.ro" } },
     });
-    expect(e).toMatchObject({ eventKey: "evt-1", eventType: "delivered", providerMessageId: "m1@x.ro" });
+    expect(e).toMatchObject({
+      eventKey: "evt-1",
+      eventType: "delivered",
+      providerMessageId: "m1@x.ro",
+    });
   });
 
   test("drops events without an id or a known type", () => {
@@ -235,13 +267,22 @@ describe("delivery events — failures", () => {
   const base = { id: "e", timestamp: 1_700_000_000, message: { headers: { "message-id": "m@x" } } };
 
   test("temporary failure keeps the message recoverable", () => {
-    const e = normalizeEvent({ ...base, event: "temporary_fail", severity: "temporary", reason: "greylisted" });
+    const e = normalizeEvent({
+      ...base,
+      event: "temporary_fail",
+      severity: "temporary",
+      reason: "greylisted",
+    });
     expect(deliveryStatusForEvent(e!.eventType)).toBe("temporary_fail");
     expect(e!.reason).toBe("greylisted");
   });
 
   test("permanent failure carries the smtp code", () => {
-    const e = normalizeEvent({ ...base, event: "permanent_fail", "delivery-status": { code: 550 } });
+    const e = normalizeEvent({
+      ...base,
+      event: "permanent_fail",
+      "delivery-status": { code: 550 },
+    });
     expect(deliveryStatusForEvent(e!.eventType)).toBe("permanent_fail");
     expect(e!.errorCode).toBe("550");
   });
@@ -260,8 +301,12 @@ describe("attachment limits", () => {
   });
 
   test("rejects active html and svg payloads", () => {
-    expect(validateAttachment({ filename: "a.svg", contentType: "image/svg+xml", size: 10 }).ok).toBe(false);
-    expect(validateAttachment({ filename: "a.html", contentType: "text/html", size: 10 }).ok).toBe(false);
+    expect(
+      validateAttachment({ filename: "a.svg", contentType: "image/svg+xml", size: 10 }).ok,
+    ).toBe(false);
+    expect(validateAttachment({ filename: "a.html", contentType: "text/html", size: 10 }).ok).toBe(
+      false,
+    );
   });
 
   test("total size cap is stricter than count x per-file", () => {
@@ -277,7 +322,9 @@ describe("threading fallbacks", () => {
   });
 
   test("in-reply-to beats references and subject", () => {
-    expect(deriveThreadKey({ inReplyTo: "<r@x>", references: ["<other@x>"], subject: "S" })).toBe("mid:r@x");
+    expect(deriveThreadKey({ inReplyTo: "<r@x>", references: ["<other@x>"], subject: "S" })).toBe(
+      "mid:r@x",
+    );
   });
 });
 

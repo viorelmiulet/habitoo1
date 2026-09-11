@@ -25,12 +25,16 @@ export function encryptPortalCredential(plain: string): string {
 export function decryptPortalCredential(payload: string | null): string | null {
   if (!payload) return null;
   const parts = payload.split(".");
-  if (parts.length !== 4 || parts[0] !== "v1") throw new PortalError("CONFIG_ERROR", "bad_credential_format");
+  if (parts.length !== 4 || parts[0] !== "v1")
+    throw new PortalError("CONFIG_ERROR", "bad_credential_format");
   const [, iv, data, tag] = parts as [string, string, string, string];
   try {
     const decipher = createDecipheriv("aes-256-gcm", key(), Buffer.from(iv, "base64url"));
     decipher.setAuthTag(Buffer.from(tag, "base64url"));
-    return Buffer.concat([decipher.update(Buffer.from(data, "base64url")), decipher.final()]).toString("utf8");
+    return Buffer.concat([
+      decipher.update(Buffer.from(data, "base64url")),
+      decipher.final(),
+    ]).toString("utf8");
   } catch {
     throw new PortalError("CONFIG_ERROR", "credential_decrypt_failed");
   }

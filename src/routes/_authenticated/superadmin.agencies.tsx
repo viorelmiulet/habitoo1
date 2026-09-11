@@ -49,7 +49,6 @@ const statusLabels: Record<string, string> = {
 /** Statusurile selectabile din interfață: doar Activă și Suspendată. */
 const selectableStatuses = ["active", "suspended"] as const;
 
-
 /** Selector de plan cu salvare explicită. */
 function PlanPicker({
   plan,
@@ -128,8 +127,7 @@ function AgenciesPage() {
   });
 
   const approveRequest = useMutation({
-    mutationFn: async (id: string) =>
-      approveRegistrationRequest({ data: { requestId: id } }),
+    mutationFn: async (id: string) => approveRegistrationRequest({ data: { requestId: id } }),
     onSuccess: (result) => {
       queryClient.invalidateQueries({ queryKey: ["superadmin"] });
       toast.success(
@@ -343,9 +341,7 @@ function AgenciesPage() {
                       <Button
                         size="sm"
                         variant="outline"
-                        onClick={() =>
-                          setRejecting((cur) => (cur === r.id ? null : r.id))
-                        }
+                        onClick={() => setRejecting((cur) => (cur === r.id ? null : r.id))}
                       >
                         <X className="mr-1.5 size-4" />
                         Respinge
@@ -380,124 +376,126 @@ function AgenciesPage() {
           )}
         </div>
       ) : (
-      <div className="panel overflow-hidden">
-        {isLoading ? (
-          <ListSkeleton rows={6} />
-        ) : rows.length === 0 ? (
-          <EmptyState icon={Building2} title="Nicio agenție găsită" />
-        ) : (
-          <ul className="divide-y divide-border">
-            {rows.map((o) => (
-              <li key={o.id} className="space-y-3 px-4 py-4 text-sm">
-                <div className="flex flex-wrap items-start justify-between gap-3">
-                  <div className="min-w-0">
-                    <p className="flex flex-wrap items-center gap-2">
-                      <span className="truncate text-base font-semibold">{o.name}</span>
-                      <StatusBadge tone="primary">{PLAN_LABELS[normalizePlan(o.plan)]}</StatusBadge>
-                      <StatusBadge tone={o.status === "active" ? "success" : "warning"}>
-                        {statusLabels[o.status] ?? o.status}
-                      </StatusBadge>
-                      {o.is_demo ? <StatusBadge tone="warning">DEMO / QA</StatusBadge> : null}
-                      {o.archived_at ? <StatusBadge tone="danger">Arhivată</StatusBadge> : null}
-                    </p>
-                    <p className="truncate text-xs text-muted-foreground">
-                      {o.legal_name ?? "fără nume legal"} · CUI {o.cui ?? "—"} · Reg. Com.{" "}
-                      {o.trade_registry_number ?? "—"}
-                    </p>
-                    <p className="truncate text-xs text-muted-foreground">
-                      {o.city ?? "—"} · {o.email ?? "fără email"} · înscrisă {formatDate(o.created_at)}
-                    </p>
-                  </div>
-                  <div className="flex flex-wrap items-center gap-4 text-xs text-muted-foreground">
-                    <span className="tabular-nums">
-                      {data?.profiles.filter((p) => p.organization_id === o.id).length ?? 0}/
-                      {o.max_users} utilizatori
-                    </span>
-                    <span className="tabular-nums">
-                      {data?.properties.filter((p) => p.organization_id === o.id).length ?? 0}/
-                      {o.max_properties} proprietăți
-                    </span>
-                  </div>
-                </div>
-
-                <div className="flex flex-wrap items-center gap-3">
-                  <PlanPicker
-                    plan={o.plan}
-                    onSave={(plan) => savePlan.mutate({ id: o.id, plan, previous: o.plan })}
-                    saving={savePlan.isPending}
-                  />
-                  <Select
-                    value={o.status}
-                    onValueChange={(v) => update.mutate({ id: o.id, patch: { status: v } })}
-                  >
-                    <SelectTrigger className="w-36">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {selectableStatuses.map((k) => (
-                        <SelectItem key={k} value={k}>
-                          {statusLabels[k]}
-                        </SelectItem>
-                      ))}
-                      {selectableStatuses.includes(o.status as "active" | "suspended") ? null : (
-                        <SelectItem value={o.status}>
+        <div className="panel overflow-hidden">
+          {isLoading ? (
+            <ListSkeleton rows={6} />
+          ) : rows.length === 0 ? (
+            <EmptyState icon={Building2} title="Nicio agenție găsită" />
+          ) : (
+            <ul className="divide-y divide-border">
+              {rows.map((o) => (
+                <li key={o.id} className="space-y-3 px-4 py-4 text-sm">
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="flex flex-wrap items-center gap-2">
+                        <span className="truncate text-base font-semibold">{o.name}</span>
+                        <StatusBadge tone="primary">
+                          {PLAN_LABELS[normalizePlan(o.plan)]}
+                        </StatusBadge>
+                        <StatusBadge tone={o.status === "active" ? "success" : "warning"}>
                           {statusLabels[o.status] ?? o.status}
-                        </SelectItem>
-                      )}
-                    </SelectContent>
-                  </Select>
-                  {o.status === "pending_approval" ? (
-                    <Button
-                      size="sm"
-                      disabled={approve.isPending}
-                      onClick={() => approve.mutate(o.id)}
-                    >
-                      <Check className="mr-1.5 size-4" />
-                      Aprobă
-                    </Button>
-                  ) : null}
-
-                  {/* Acțiuni distructive, separate vizual de restul */}
-                  <div className="ml-auto flex items-center gap-2 border-l border-border pl-3">
-                    {o.archived_at ? (
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        disabled={setArchived.isPending}
-                        onClick={() => setArchived.mutate({ id: o.id, archived: false })}
-                      >
-                        <ArchiveRestore className="mr-1.5 size-4" />
-                        Reactivează
-                      </Button>
-                    ) : (
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        disabled={setArchived.isPending}
-                        onClick={() => setPendingArchive({ id: o.id, name: o.name })}
-                      >
-                        <Archive className="mr-1.5 size-4" />
-                        Arhivează
-                      </Button>
-                    )}
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      className="text-destructive hover:bg-destructive/10 hover:text-destructive"
-                      disabled={hardDelete.isPending}
-                      onClick={() => setPendingDelete({ id: o.id, name: o.name })}
-                    >
-                      <Trash2 className="mr-1.5 size-4" />
-                      Șterge
-                    </Button>
+                        </StatusBadge>
+                        {o.is_demo ? <StatusBadge tone="warning">DEMO / QA</StatusBadge> : null}
+                        {o.archived_at ? <StatusBadge tone="danger">Arhivată</StatusBadge> : null}
+                      </p>
+                      <p className="truncate text-xs text-muted-foreground">
+                        {o.legal_name ?? "fără nume legal"} · CUI {o.cui ?? "—"} · Reg. Com.{" "}
+                        {o.trade_registry_number ?? "—"}
+                      </p>
+                      <p className="truncate text-xs text-muted-foreground">
+                        {o.city ?? "—"} · {o.email ?? "fără email"} · înscrisă{" "}
+                        {formatDate(o.created_at)}
+                      </p>
+                    </div>
+                    <div className="flex flex-wrap items-center gap-4 text-xs text-muted-foreground">
+                      <span className="tabular-nums">
+                        {data?.profiles.filter((p) => p.organization_id === o.id).length ?? 0}/
+                        {o.max_users} utilizatori
+                      </span>
+                      <span className="tabular-nums">
+                        {data?.properties.filter((p) => p.organization_id === o.id).length ?? 0}/
+                        {o.max_properties} proprietăți
+                      </span>
+                    </div>
                   </div>
-                </div>
-              </li>
 
-            ))}
-          </ul>
-        )}
-      </div>
+                  <div className="flex flex-wrap items-center gap-3">
+                    <PlanPicker
+                      plan={o.plan}
+                      onSave={(plan) => savePlan.mutate({ id: o.id, plan, previous: o.plan })}
+                      saving={savePlan.isPending}
+                    />
+                    <Select
+                      value={o.status}
+                      onValueChange={(v) => update.mutate({ id: o.id, patch: { status: v } })}
+                    >
+                      <SelectTrigger className="w-36">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {selectableStatuses.map((k) => (
+                          <SelectItem key={k} value={k}>
+                            {statusLabels[k]}
+                          </SelectItem>
+                        ))}
+                        {selectableStatuses.includes(o.status as "active" | "suspended") ? null : (
+                          <SelectItem value={o.status}>
+                            {statusLabels[o.status] ?? o.status}
+                          </SelectItem>
+                        )}
+                      </SelectContent>
+                    </Select>
+                    {o.status === "pending_approval" ? (
+                      <Button
+                        size="sm"
+                        disabled={approve.isPending}
+                        onClick={() => approve.mutate(o.id)}
+                      >
+                        <Check className="mr-1.5 size-4" />
+                        Aprobă
+                      </Button>
+                    ) : null}
+
+                    {/* Acțiuni distructive, separate vizual de restul */}
+                    <div className="ml-auto flex items-center gap-2 border-l border-border pl-3">
+                      {o.archived_at ? (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          disabled={setArchived.isPending}
+                          onClick={() => setArchived.mutate({ id: o.id, archived: false })}
+                        >
+                          <ArchiveRestore className="mr-1.5 size-4" />
+                          Reactivează
+                        </Button>
+                      ) : (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          disabled={setArchived.isPending}
+                          onClick={() => setPendingArchive({ id: o.id, name: o.name })}
+                        >
+                          <Archive className="mr-1.5 size-4" />
+                          Arhivează
+                        </Button>
+                      )}
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+                        disabled={hardDelete.isPending}
+                        onClick={() => setPendingDelete({ id: o.id, name: o.name })}
+                      >
+                        <Trash2 className="mr-1.5 size-4" />
+                        Șterge
+                      </Button>
+                    </div>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
       )}
 
       <ConfirmDialog
@@ -526,8 +524,8 @@ function AgenciesPage() {
           <span className="text-destructive">
             Această acțiune este ireversibilă. Se șterg definitiv toate proprietățile și
             fotografiile lor, contactele, lead-urile și istoricul, cererile, activitățile,
-            documentele, obiectivele, notificările, conexiunile și cheile de portal, precum și
-            toți membrii agenției împreună cu conturile lor de autentificare. Nu există restaurare.
+            documentele, obiectivele, notificările, conexiunile și cheile de portal, precum și toți
+            membrii agenției împreună cu conturile lor de autentificare. Nu există restaurare.
           </span>
         }
         confirmLabel="Șterge definitiv"
@@ -540,6 +538,5 @@ function AgenciesPage() {
         }}
       />
     </>
-
   );
 }

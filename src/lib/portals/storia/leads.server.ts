@@ -31,7 +31,6 @@ import {
   parseStoriaAdSlugs,
   storiaAdSlugFromUrl,
   storiaListingStatus,
-
   withStoriaAdId,
   withStoriaAdSlug,
 } from "./adverts.server";
@@ -98,7 +97,6 @@ export type StoriaEventShape = {
   data: Json;
 };
 
-
 export function readEventShape(parsed: unknown): StoriaEventShape | null {
   const root = asRecord(parsed);
   if (!root) return null;
@@ -124,7 +122,8 @@ export function readEventShape(parsed: unknown): StoriaEventShape | null {
     flow,
     eventType: pick(root, ["event_type", "eventType", "type"]),
     transactionId: pick(root, ["transaction_id", "transactionId"]),
-    advertUuid: advertCandidate && UUID_RE.test(advertCandidate) ? advertCandidate.toLowerCase() : null,
+    advertUuid:
+      advertCandidate && UUID_RE.test(advertCandidate) ? advertCandidate.toLowerCase() : null,
     adId: adId && /^[A-Za-z0-9]{2,}$/.test(adId) ? adId : null,
     adSlug: adSlug && /^[A-Za-z0-9]{2,}$/.test(adSlug) ? adSlug : null,
     publicUrl: publicUrl && /^https?:\/\//i.test(publicUrl) ? publicUrl : null,
@@ -138,7 +137,6 @@ export function readEventShape(parsed: unknown): StoriaEventShape | null {
     data,
   };
 }
-
 
 function isMessageEvent(shape: StoriaEventShape): boolean {
   return /message|conversation|inquiry|enquiry|lead/i.test(
@@ -162,8 +160,22 @@ export type MessagePayload = {
 export function readMessagePayload(shape: StoriaEventShape): MessagePayload {
   const d = shape.data;
   return {
-    senderName: pick(d, ["sender_name", "sender.name", "user.name", "contact.name", "from.name", "name"]),
-    phone: pick(d, ["sender_phone", "sender.phone", "user.phone", "contact.phone", "phone", "phone_number"]),
+    senderName: pick(d, [
+      "sender_name",
+      "sender.name",
+      "user.name",
+      "contact.name",
+      "from.name",
+      "name",
+    ]),
+    phone: pick(d, [
+      "sender_phone",
+      "sender.phone",
+      "user.phone",
+      "contact.phone",
+      "phone",
+      "phone_number",
+    ]),
     email: pick(d, ["sender_email", "sender.email", "user.email", "contact.email", "email"]),
     body: pick(d, ["message", "message.text", "message.body", "text", "body", "content"]),
     messageId: pick(d, ["id", "message_id", "message.id", "conversation_id", "conversation.id"]),
@@ -173,7 +185,7 @@ export function readMessagePayload(shape: StoriaEventShape): MessagePayload {
 
 // --------------------------------------------------------------- procesarea
 
-type Admin = typeof import("@/integrations/supabase/client.server")["supabaseAdmin"];
+type Admin = (typeof import("@/integrations/supabase/client.server"))["supabaseAdmin"];
 
 type MatchedListing = {
   organizationId: string;
@@ -276,7 +288,6 @@ async function matchListing(admin: Admin, shape: StoriaEventShape): Promise<Matc
   return null;
 }
 
-
 const SOURCE = "Storia.ro";
 
 /** Cât timp păstrăm textul mesajelor primite din portaluri (date personale). */
@@ -365,7 +376,6 @@ async function processMessage(admin: Admin, shape: StoriaEventShape): Promise<St
     });
   };
 
-
   // Deduplicare: același expeditor, aceeași proprietate, lead încă deschis.
   const query = admin
     .from("leads")
@@ -375,11 +385,12 @@ async function processMessage(admin: Admin, shape: StoriaEventShape): Promise<St
     .eq("source", SOURCE)
     .not("stage", "in", "(won,lost)")
     .limit(1);
-  const existing = await (message.email
-    ? query.eq("email", message.email)
-    : message.phone
-      ? query.eq("phone", message.phone)
-      : query.eq("name", name)
+  const existing = await (
+    message.email
+      ? query.eq("email", message.email)
+      : message.phone
+        ? query.eq("phone", message.phone)
+        : query.eq("name", name)
   ).maybeSingle();
 
   if (existing.data) {
@@ -428,8 +439,6 @@ async function processMessage(admin: Admin, shape: StoriaEventShape): Promise<St
 
   await attachMessageToLead(lead.id);
 
-
-
   if (match.assignedTo) {
     await admin.from("notifications").insert({
       organization_id: match.organizationId,
@@ -457,7 +466,10 @@ async function processMessage(admin: Admin, shape: StoriaEventShape): Promise<St
   return { processed: true, note: `lead nou din mesaj Storia (${lead.id})` };
 }
 
-async function processLifecycle(admin: Admin, shape: StoriaEventShape): Promise<StoriaProcessResult> {
+async function processLifecycle(
+  admin: Admin,
+  shape: StoriaEventShape,
+): Promise<StoriaProcessResult> {
   const match = await matchListing(admin, shape);
   if (!match) {
     return {
@@ -493,7 +505,10 @@ async function processLifecycle(admin: Admin, shape: StoriaEventShape): Promise<
         processed: true,
         note: `link/id anunț Storia memorat (${
           externalId
-            ? [shape.adId ? `AD:${shape.adId}` : null, shape.adSlug ? `ADSLUG:${shape.adSlug}` : null]
+            ? [
+                shape.adId ? `AD:${shape.adId}` : null,
+                shape.adSlug ? `ADSLUG:${shape.adSlug}` : null,
+              ]
                 .filter(Boolean)
                 .join(" ")
             : "url"
@@ -502,7 +517,6 @@ async function processLifecycle(admin: Admin, shape: StoriaEventShape): Promise<
     }
     return { processed: false, note: "ciclu de viață Storia fără cod de status în payload" };
   }
-
 
   const status = storiaListingStatus(code);
   const detail =
@@ -578,7 +592,10 @@ export async function processStoriaNotification(args: {
       shape.transactionId &&
       (await alreadyProcessed(admin, shape.transactionId, args.eventId))
     ) {
-      result = { processed: true, note: `duplicat ignorat (transaction_id ${shape.transactionId})` };
+      result = {
+        processed: true,
+        note: `duplicat ignorat (transaction_id ${shape.transactionId})`,
+      };
     } else if (isMessageEvent(shape)) {
       result = await processMessage(admin, shape);
     } else if (isLifecycleEvent(shape)) {
@@ -602,7 +619,6 @@ export async function processStoriaNotification(args: {
       console.error("[storia] curățarea mesajelor expirate a eșuat", error);
     }
   }
-
 
   if (args.eventId && admin) {
     try {

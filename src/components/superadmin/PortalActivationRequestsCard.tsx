@@ -86,7 +86,12 @@ export function PortalActivationRequestsCard({
           {(requests.data ?? []).map((r) => (
             <li key={r.id} className="space-y-2 px-5 py-4 text-sm">
               <div className="flex flex-wrap items-center gap-2">
-                <PortalLogo portalId={r.portalId} name={r.portalName} size={32} className="rounded-md" />
+                <PortalLogo
+                  portalId={r.portalId}
+                  name={r.portalName}
+                  size={32}
+                  className="rounded-md"
+                />
                 <span className="font-medium">{r.portalName}</span>
                 <span className="text-muted-foreground">·</span>
                 <span className="truncate">{r.organizationName}</span>
@@ -119,9 +124,7 @@ export function PortalActivationRequestsCard({
                   <Button
                     size="sm"
                     variant="outline"
-                    onClick={() =>
-                      resolve.mutate({ requestId: r.id, status: "approved" })
-                    }
+                    onClick={() => resolve.mutate({ requestId: r.id, status: "approved" })}
                     disabled={resolve.isPending}
                   >
                     Marchează rezolvată

@@ -27,7 +27,10 @@ export function parseAddress(raw: string): { name: string | null; email: string 
   const value = (raw ?? "").trim();
   const angled = value.match(/^(.*)<([^>]+)>\s*$/);
   if (angled) {
-    const name = angled[1]!.trim().replace(/^["']|["']$/g, "").trim();
+    const name = angled[1]!
+      .trim()
+      .replace(/^["']|["']$/g, "")
+      .trim();
     return { name: name || null, email: angled[2]!.trim().toLowerCase() || null };
   }
   return { name: null, email: value ? value.toLowerCase() : null };
@@ -80,7 +83,8 @@ export function deriveThreadKey(input: {
   // `In-Reply-To` names the direct parent, so it is the most precise signal;
   // the first `References` entry (the thread root) is the fallback.
   const root =
-    normalizeMessageId(input.inReplyTo ?? null) ?? normalizeMessageId(input.references?.[0] ?? null);
+    normalizeMessageId(input.inReplyTo ?? null) ??
+    normalizeMessageId(input.references?.[0] ?? null);
   if (root) return `mid:${root.toLowerCase()}`;
   const subject = normalizeSubject(input.subject).toLowerCase();
   const counterpart = (input.counterpart ?? "").toLowerCase();
@@ -95,7 +99,6 @@ export const MAX_ATTACHMENT_BYTES = 10 * 1024 * 1024; // 10 MB, matches the buck
 export const MAX_TOTAL_ATTACHMENT_BYTES = 25 * 1024 * 1024;
 /** Hard cap on how many attachments a single message may carry. */
 export const MAX_ATTACHMENT_COUNT = 20;
-
 
 /** Allowlist: anything not listed here is stored as rejected metadata only. */
 export const ALLOWED_ATTACHMENT_TYPES = [
@@ -116,8 +119,28 @@ export const ALLOWED_ATTACHMENT_TYPES = [
 
 /** Active content: never stored, never served. */
 const BLOCKED_EXTENSIONS = [
-  "exe", "dll", "bat", "cmd", "com", "msi", "scr", "pif", "jar", "js", "mjs",
-  "vbs", "ps1", "sh", "app", "apk", "svg", "html", "htm", "xhtml", "hta", "iso",
+  "exe",
+  "dll",
+  "bat",
+  "cmd",
+  "com",
+  "msi",
+  "scr",
+  "pif",
+  "jar",
+  "js",
+  "mjs",
+  "vbs",
+  "ps1",
+  "sh",
+  "app",
+  "apk",
+  "svg",
+  "html",
+  "htm",
+  "xhtml",
+  "hta",
+  "iso",
 ];
 
 export function fileExtension(filename: string): string {
@@ -129,13 +152,15 @@ export function fileExtension(filename: string): string {
 /** Strips paths and dangerous characters so a filename can be stored safely. */
 export function sanitizeFilename(filename: string): string {
   const base = (filename ?? "").split(/[\\/]/).pop() ?? "";
-  const cleaned = base.replace(/[^A-Za-z0-9._ -]/g, "_").replace(/\s+/g, " ").trim();
+  const cleaned = base
+    .replace(/[^A-Za-z0-9._ -]/g, "_")
+    .replace(/\s+/g, " ")
+    .trim();
   return (cleaned || "atasament").slice(0, 180);
 }
 
 export type AttachmentCheck =
-  | { ok: true; filename: string }
-  | { ok: false; filename: string; reason: string };
+  { ok: true; filename: string } | { ok: false; filename: string; reason: string };
 
 export function validateAttachment(input: {
   filename: string;
@@ -209,7 +234,11 @@ export function validateAttachmentSet(
   }
   const total = out.reduce((sum, f) => sum + f.size, 0);
   if (total > MAX_TOTAL_ATTACHMENT_BYTES) {
-    return { ok: false, error: attachmentReasonMessage("total_exceeded"), reason: "total_exceeded" };
+    return {
+      ok: false,
+      error: attachmentReasonMessage("total_exceeded"),
+      reason: "total_exceeded",
+    };
   }
   return { ok: true, files: out };
 }
@@ -238,7 +267,6 @@ export function threadPreview(
   const limit = Math.max(20, maxLength);
   return normalized.length > limit ? `${normalized.slice(0, limit).trimEnd()}…` : normalized;
 }
-
 
 /* ------------------------------------------------------------------ */
 /* Inbound normalization                                               */
@@ -313,7 +341,6 @@ export function normalizeInbound(
       }
     }
   }
-
 
   return {
     providerMessageId: normalizeMessageId(messageHeaders),
@@ -486,7 +513,6 @@ export function normalizeEvent(eventData: unknown): NormalizedEvent | null {
   };
 }
 
-
 /* ------------------------------------------------------------------ */
 /* Outbound validation                                                 */
 /* ------------------------------------------------------------------ */
@@ -503,7 +529,10 @@ export type OutboundInput = {
 };
 
 export type OutboundValidation =
-  | { ok: true; value: { from: string; to: string[]; cc: string[]; replyTo: string | null; subject: string } }
+  | {
+      ok: true;
+      value: { from: string; to: string[]; cc: string[]; replyTo: string | null; subject: string };
+    }
   | { ok: false; error: string };
 
 /**

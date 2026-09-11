@@ -1,7 +1,15 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
-import { AlertTriangle, CheckCircle2, Layers, Pencil, Target, Trash2, TrendingUp } from "lucide-react";
+import {
+  AlertTriangle,
+  CheckCircle2,
+  Layers,
+  Pencil,
+  Target,
+  Trash2,
+  TrendingUp,
+} from "lucide-react";
 import { toast } from "sonner";
 import { toastError } from "@/lib/errors";
 import { PageHeader } from "@/components/app/PageHeader";
@@ -142,7 +150,8 @@ function GoalsPage() {
 
   const allGoals = data?.goals ?? [];
   const goals = useMemo(
-    () => (user?.isAdmin ? allGoals : allGoals.filter((g) => g.user_id === user?.userId || !g.user_id)),
+    () =>
+      user?.isAdmin ? allGoals : allGoals.filter((g) => g.user_id === user?.userId || !g.user_id),
     [allGoals, user],
   );
 
@@ -158,9 +167,12 @@ function GoalsPage() {
     const filterUser = (assigned: string | null) => !goal.user_id || assigned === goal.user_id;
     switch (goal.metric) {
       case "new_properties":
-        return (data?.properties ?? []).filter((p) => inRange(p.created_at) && filterUser(p.assigned_to)).length;
+        return (data?.properties ?? []).filter(
+          (p) => inRange(p.created_at) && filterUser(p.assigned_to),
+        ).length;
       case "leads":
-        return (data?.leads ?? []).filter((l) => inRange(l.created_at) && filterUser(l.assigned_to)).length;
+        return (data?.leads ?? []).filter((l) => inRange(l.created_at) && filterUser(l.assigned_to))
+          .length;
       case "viewings":
         return (data?.activities ?? []).filter(
           (a) => a.kind === "viewing" && inRange(a.starts_at) && filterUser(a.assigned_to),
@@ -248,7 +260,12 @@ function GoalsPage() {
         <>
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
             <KpiCard label="Obiective active" value={computed.length} icon={Target} />
-            <KpiCard label="Realizare medie" value={`${average}%`} icon={TrendingUp} tone="accent" />
+            <KpiCard
+              label="Realizare medie"
+              value={`${average}%`}
+              icon={TrendingUp}
+              tone="accent"
+            />
             <KpiCard label="Îndeplinite" value={done} icon={CheckCircle2} tone="success" />
             <KpiCard label="Sub 50%" value={risk} icon={AlertTriangle} tone="warning" />
           </div>
@@ -283,7 +300,9 @@ function GoalsPage() {
                             <p className="truncate text-sm font-semibold">
                               {goalMetricLabels[g.metric] ?? g.metric}
                             </p>
-                            <p className="truncate text-xs text-muted-foreground">{nameFor(g.user_id)}</p>
+                            <p className="truncate text-xs text-muted-foreground">
+                              {nameFor(g.user_id)}
+                            </p>
                           </div>
                         </div>
                         <StatusBadge tone={tone}>{pct}%</StatusBadge>
@@ -310,7 +329,10 @@ function GoalsPage() {
                               className="h-8 w-20"
                               defaultValue={Number(g.progress)}
                               onBlur={(e) =>
-                                updateProgress.mutate({ id: g.id, progress: Number(e.target.value) || 0 })
+                                updateProgress.mutate({
+                                  id: g.id,
+                                  progress: Number(e.target.value) || 0,
+                                })
                               }
                             />
                             <Button
@@ -354,7 +376,6 @@ function GoalsPage() {
         </>
       )}
 
-
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent>
           <DialogHeader>
@@ -369,7 +390,10 @@ function GoalsPage() {
           >
             <div className="space-y-2">
               <Label>Indicator</Label>
-              <Select value={form.metric} onValueChange={(v) => setForm((f) => ({ ...f, metric: v }))}>
+              <Select
+                value={form.metric}
+                onValueChange={(v) => setForm((f) => ({ ...f, metric: v }))}
+              >
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>

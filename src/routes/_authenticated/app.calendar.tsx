@@ -17,13 +17,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetFooter,
-} from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetFooter } from "@/components/ui/sheet";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -182,7 +176,15 @@ function CalendarPage() {
   const agentName = (id: string | null) => agents.find((a) => a.id === id)?.full_name ?? "—";
 
   const rescheduleMutation = useMutation({
-    mutationFn: async ({ id, startsAt, durationMinutes }: { id: string; startsAt: Date; durationMinutes: number }) => {
+    mutationFn: async ({
+      id,
+      startsAt,
+      durationMinutes,
+    }: {
+      id: string;
+      startsAt: Date;
+      durationMinutes: number;
+    }) => {
       const endsAt = new Date(startsAt.getTime() + durationMinutes * 60_000);
       const { error } = await supabase
         .from("activities")
@@ -200,7 +202,9 @@ function CalendarPage() {
     },
     onMutate: async ({ id, startsAt, durationMinutes }) => {
       await queryClient.cancelQueries({ queryKey: ["activities", "calendar"] });
-      const previous = queryClient.getQueriesData<Activity[]>({ queryKey: ["activities", "calendar"] });
+      const previous = queryClient.getQueriesData<Activity[]>({
+        queryKey: ["activities", "calendar"],
+      });
       queryClient.setQueriesData<Activity[]>({ queryKey: ["activities", "calendar"] }, (old) =>
         old?.map((a) =>
           a.id === id
@@ -227,15 +231,34 @@ function CalendarPage() {
   });
 
   const updateMutation = useMutation({
-    mutationFn: async ({ id, payload, action }: { id: string; payload: Record<string, unknown>; action: string }) => {
-      const { error } = await supabase.from("activities").update(payload as never).eq("id", id);
+    mutationFn: async ({
+      id,
+      payload,
+      action,
+    }: {
+      id: string;
+      payload: Record<string, unknown>;
+      action: string;
+    }) => {
+      const { error } = await supabase
+        .from("activities")
+        .update(payload as never)
+        .eq("id", id);
       if (error) throw error;
-      await logAudit({ organizationId: orgId, actorId: userId, action, entity: "activity", entityId: id });
+      await logAudit({
+        organizationId: orgId,
+        actorId: userId,
+        action,
+        entity: "activity",
+        entityId: id,
+      });
     },
     onSuccess: (_d, vars) => {
       toast.success("Activitate actualizată.");
       queryClient.invalidateQueries({ queryKey: ["activities", "calendar"] });
-      setDetail((prev) => (prev && prev.id === vars.id ? { ...prev, ...(vars.payload as Partial<Activity>) } : prev));
+      setDetail((prev) =>
+        prev && prev.id === vars.id ? { ...prev, ...(vars.payload as Partial<Activity>) } : prev,
+      );
     },
     onError: (e: Error) => toastError(e),
   });
@@ -244,7 +267,13 @@ function CalendarPage() {
     mutationFn: async (id: string) => {
       const { error } = await supabase.from("activities").delete().eq("id", id);
       if (error) throw error;
-      await logAudit({ organizationId: orgId, actorId: userId, action: "activity.delete", entity: "activity", entityId: id });
+      await logAudit({
+        organizationId: orgId,
+        actorId: userId,
+        action: "activity.delete",
+        entity: "activity",
+        entityId: id,
+      });
     },
     onSuccess: () => {
       toast.success("Activitate ștearsă.");
@@ -276,7 +305,11 @@ function CalendarPage() {
     const next = new Date(day);
     next.setHours(original.getHours(), original.getMinutes(), 0, 0);
     if (sameDay(next, original)) return;
-    rescheduleMutation.mutate({ id: activity.id, startsAt: next, durationMinutes: activity.duration_minutes || 30 });
+    rescheduleMutation.mutate({
+      id: activity.id,
+      startsAt: next,
+      durationMinutes: activity.duration_minutes || 30,
+    });
   };
 
   const handleDropOnSlot = (day: Date, hour: number) => {
@@ -286,7 +319,11 @@ function CalendarPage() {
     if (!activity) return;
     const next = new Date(day);
     next.setHours(hour, 0, 0, 0);
-    rescheduleMutation.mutate({ id: activity.id, startsAt: next, durationMinutes: activity.duration_minutes || 30 });
+    rescheduleMutation.mutate({
+      id: activity.id,
+      startsAt: next,
+      durationMinutes: activity.duration_minutes || 30,
+    });
   };
 
   const navigate = (dir: -1 | 1) => {
@@ -296,7 +333,8 @@ function CalendarPage() {
   };
 
   const rangeLabel = useMemo(() => {
-    if (view === "day") return anchor.toLocaleDateString("ro-RO", { day: "numeric", month: "long", year: "numeric" });
+    if (view === "day")
+      return anchor.toLocaleDateString("ro-RO", { day: "numeric", month: "long", year: "numeric" });
     if (view === "week") {
       const from = startOfWeek(anchor);
       const to = addDays(from, 6);
@@ -343,7 +381,9 @@ function CalendarPage() {
                   onClick={() => setView(v)}
                   className={cn(
                     "px-3 py-1.5 text-sm font-medium transition",
-                    view === v ? "bg-primary text-primary-foreground" : "bg-transparent hover:bg-muted",
+                    view === v
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-transparent hover:bg-muted",
                   )}
                 >
                   {v === "day" ? "Zi" : v === "week" ? "Săptămână" : "Lună"}
@@ -546,14 +586,22 @@ function CalendarPage() {
                   </p>
                   {detail.contact_id ? (
                     <p>
-                      <Link to="/app/contacts/$id" params={{ id: detail.contact_id }} className="text-primary hover:underline">
+                      <Link
+                        to="/app/contacts/$id"
+                        params={{ id: detail.contact_id }}
+                        className="text-primary hover:underline"
+                      >
                         Vezi contactul asociat
                       </Link>
                     </p>
                   ) : null}
                   {detail.property_id ? (
                     <p>
-                      <Link to="/app/properties/$id" params={{ id: detail.property_id }} className="text-primary hover:underline">
+                      <Link
+                        to="/app/properties/$id"
+                        params={{ id: detail.property_id }}
+                        className="text-primary hover:underline"
+                      >
                         Vezi proprietatea asociată
                       </Link>
                     </p>
@@ -597,15 +645,25 @@ function CalendarPage() {
                 <div className="space-y-2 rounded-lg border border-border p-3">
                   <p className="text-sm font-medium">Reprogramează</p>
                   <div className="grid grid-cols-2 gap-2">
-                    <Input type="date" value={rescheduleDate} onChange={(e) => setRescheduleDate(e.target.value)} />
-                    <Input type="time" value={rescheduleTime} onChange={(e) => setRescheduleTime(e.target.value)} />
+                    <Input
+                      type="date"
+                      value={rescheduleDate}
+                      onChange={(e) => setRescheduleDate(e.target.value)}
+                    />
+                    <Input
+                      type="time"
+                      value={rescheduleTime}
+                      onChange={(e) => setRescheduleTime(e.target.value)}
+                    />
                   </div>
                   <Button
                     size="sm"
                     variant="outline"
                     className="w-full"
                     onClick={() => {
-                      const startsAt = new Date(`${rescheduleDate}T${rescheduleTime || "00:00"}:00`);
+                      const startsAt = new Date(
+                        `${rescheduleDate}T${rescheduleTime || "00:00"}:00`,
+                      );
                       rescheduleMutation.mutate({
                         id: detail.id,
                         startsAt,
@@ -660,12 +718,15 @@ function CalendarPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>Ștergi această activitate?</AlertDialogTitle>
             <AlertDialogDescription>
-              Acțiunea este ireversibilă. Activitatea „{deleteTarget?.title}” va fi ștearsă definitiv.
+              Acțiunea este ireversibilă. Activitatea „{deleteTarget?.title}” va fi ștearsă
+              definitiv.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Renunță</AlertDialogCancel>
-            <AlertDialogAction onClick={() => deleteTarget && deleteMutation.mutate(deleteTarget.id)}>
+            <AlertDialogAction
+              onClick={() => deleteTarget && deleteMutation.mutate(deleteTarget.id)}
+            >
               Șterge
             </AlertDialogAction>
           </AlertDialogFooter>
@@ -705,7 +766,9 @@ function DayView({
             onDrop={() => onDropSlot(day, hour)}
             onClick={() => onSlotClick(slot)}
           >
-            <span className="w-14 shrink-0 pt-1 text-xs text-muted-foreground">{String(hour).padStart(2, "0")}:00</span>
+            <span className="w-14 shrink-0 pt-1 text-xs text-muted-foreground">
+              {String(hour).padStart(2, "0")}:00
+            </span>
             <div className="flex-1 space-y-1">
               {items.map((a) => (
                 <EventChip key={a.id} activity={a} />
@@ -746,13 +809,18 @@ function WeekView({
             onDrop={() => onDropDay(day)}
           >
             <div
-              className={cn("cursor-pointer border-b border-border px-3 py-2", isToday && "bg-primary/10")}
+              className={cn(
+                "cursor-pointer border-b border-border px-3 py-2",
+                isToday && "bg-primary/10",
+              )}
               onClick={() => onDayClick(day)}
             >
               <p className="text-xs tracking-wide text-muted-foreground uppercase">
                 {day.toLocaleDateString("ro-RO", { weekday: "short" })}
               </p>
-              <p className="text-sm font-semibold">{day.toLocaleDateString("ro-RO", { day: "numeric", month: "short" })}</p>
+              <p className="text-sm font-semibold">
+                {day.toLocaleDateString("ro-RO", { day: "numeric", month: "short" })}
+              </p>
             </div>
             <div className="flex-1 space-y-1.5 p-2">
               {items.length === 0 ? (
@@ -794,7 +862,10 @@ function MonthView({
   return (
     <div className="grid grid-cols-7">
       {["Lu", "Ma", "Mi", "Jo", "Vi", "Sâ", "Du"].map((d) => (
-        <div key={d} className="border-b border-border px-2 py-1.5 text-center text-xs font-medium text-muted-foreground">
+        <div
+          key={d}
+          className="border-b border-border px-2 py-1.5 text-center text-xs font-medium text-muted-foreground"
+        >
           {d}
         </div>
       ))}

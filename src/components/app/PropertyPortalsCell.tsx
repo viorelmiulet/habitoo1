@@ -34,19 +34,26 @@ export function usePropertyPortals(propertyIds: string[]) {
   });
   return {
     hasPortals: Object.values(query.data?.properties ?? {}).some((cells) => cells.length > 0),
-    cellsFor: (propertyId: string): PropertyPortalCell[] => query.data?.properties[propertyId] ?? [],
+    cellsFor: (propertyId: string): PropertyPortalCell[] =>
+      query.data?.properties[propertyId] ?? [],
   };
 }
 
 export function PropertyPortalsCell({ cells }: { cells: PropertyPortalCell[] }) {
   if (cells.length === 0) return <span className="text-xs text-muted-foreground">—</span>;
   const active = cells.filter((c) => c.selected);
-  if (active.length === 0) return <span className="text-xs text-muted-foreground">Nepublicată</span>;
+  if (active.length === 0)
+    return <span className="text-xs text-muted-foreground">Nepublicată</span>;
   return (
     <span className="flex flex-wrap gap-1">
       {active.map((c) => (
         <StatusBadge key={c.portalId} tone={TONE[c.state]}>
-          <PortalLogo portalId={c.portalId} name={c.portalName} size={16} className="mr-1 rounded-sm" />
+          <PortalLogo
+            portalId={c.portalId}
+            name={c.portalName}
+            size={16}
+            className="mr-1 rounded-sm"
+          />
           {c.portalName}
         </StatusBadge>
       ))}

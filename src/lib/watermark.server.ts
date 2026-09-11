@@ -66,11 +66,7 @@ function decodeRaster(bytes: Uint8Array, mime: string | null): Raster | null {
 }
 
 /** Compune logo-ul peste fotografie și întoarce un JPEG. */
-export function composeWatermark(
-  photo: Raster,
-  logo: Raster,
-  cfg: WatermarkConfig,
-): Uint8Array {
+export function composeWatermark(photo: Raster, logo: Raster, cfg: WatermarkConfig): Uint8Array {
   const rect = watermarkRect(photo.width, photo.height, logo.width, logo.height, cfg);
   const alpha = cfg.opacityPercent / 100;
 

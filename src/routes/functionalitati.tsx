@@ -26,7 +26,10 @@ import { Reveal } from "@/components/marketing/Reveal";
 import { Container, Eyebrow, Section, SectionHeading } from "@/components/marketing/Section";
 import { publicHead } from "@/components/marketing/public-head";
 import { DashboardMock } from "@/components/marketing/mockups/DashboardMock";
-import { PropertyMatchesMock, RequestMatchesMock } from "@/components/marketing/mockups/MatchingMock";
+import {
+  PropertyMatchesMock,
+  RequestMatchesMock,
+} from "@/components/marketing/mockups/MatchingMock";
 import {
   ActivitiesMini,
   CalendarMini,
@@ -249,7 +252,10 @@ function FeaturesPage() {
             title="Toate modulele de care are nevoie o agenție imobiliară, într-un singur CRM"
             text="Fiecare modul funcționează împreună cu celelalte: proprietățile alimentează matching-ul, cererile generează lead-uri, iar activitățile apar în calendar și în rapoarte."
           />
-          <nav aria-label="Module" className="mx-auto mt-10 flex max-w-4xl flex-wrap justify-center gap-2">
+          <nav
+            aria-label="Module"
+            className="mx-auto mt-10 flex max-w-4xl flex-wrap justify-center gap-2"
+          >
             {modules.map((m) => (
               <a
                 key={m.id}
@@ -264,12 +270,13 @@ function FeaturesPage() {
       </section>
 
       {modules.map((m, i) => (
-        <Section key={m.id} id={m.id} tone={i % 2 === 1 ? "muted" : "default"} className="py-14 sm:py-16 lg:py-20">
-          <Container
-            className={cn(
-              "grid items-center gap-10 lg:grid-cols-12",
-            )}
-          >
+        <Section
+          key={m.id}
+          id={m.id}
+          tone={i % 2 === 1 ? "muted" : "default"}
+          className="py-14 sm:py-16 lg:py-20"
+        >
+          <Container className={cn("grid items-center gap-10 lg:grid-cols-12")}>
             <div
               className={cn(
                 m.wide ? "lg:col-span-5" : "lg:col-span-6",
@@ -320,7 +327,9 @@ function FeaturesPage() {
                     <span className="flex size-10 items-center justify-center rounded-xl bg-gold/20 text-gold">
                       <p.icon className="size-5" />
                     </span>
-                    <h3 className="mt-4 font-sans text-sm font-semibold text-navy-foreground">{p.title}</h3>
+                    <h3 className="mt-4 font-sans text-sm font-semibold text-navy-foreground">
+                      {p.title}
+                    </h3>
                     <p className="mt-2 text-sm text-navy-muted">{p.text}</p>
                   </div>
                 </Reveal>

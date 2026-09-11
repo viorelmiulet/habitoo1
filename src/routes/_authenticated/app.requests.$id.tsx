@@ -1,6 +1,10 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 
-const priorityLabels: Record<string, string> = { low: "Scăzută", medium: "Medie", high: "Ridicată" };
+const priorityLabels: Record<string, string> = {
+  low: "Scăzută",
+  medium: "Medie",
+  high: "Ridicată",
+};
 const priorityTone: Record<string, "neutral" | "info" | "warning"> = {
   low: "neutral",
   medium: "info",
@@ -50,8 +54,20 @@ import { supabase } from "@/integrations/supabase/client";
 import { useCurrentUser } from "@/hooks/use-session";
 import { brandingFromOrg, materialSignature } from "@/lib/materials";
 import { formatDateTime, formatMoney, formatNumber, relativeDays } from "@/lib/format";
-import { activityKindLabels, leadStageLabels, propertyTypeLabels, requestKindLabels } from "@/lib/labels";
-import { activityStatusLabels, activityStatusTone, logAudit, requestStatusLabels, requestStatusOptions, requestStatusTone } from "@/lib/crm";
+import {
+  activityKindLabels,
+  leadStageLabels,
+  propertyTypeLabels,
+  requestKindLabels,
+} from "@/lib/labels";
+import {
+  activityStatusLabels,
+  activityStatusTone,
+  logAudit,
+  requestStatusLabels,
+  requestStatusOptions,
+  requestStatusTone,
+} from "@/lib/crm";
 import { matchLabel, matchTone, scoreMatch } from "@/lib/matching";
 
 export const Route = createFileRoute("/_authenticated/app/requests/$id")({
@@ -67,7 +83,9 @@ function RequestDetailPage() {
 
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState<Record<string, string | boolean>>({});
-  const [activityDialog, setActivityDialog] = useState<{ open: boolean; propertyId?: string }>({ open: false });
+  const [activityDialog, setActivityDialog] = useState<{ open: boolean; propertyId?: string }>({
+    open: false,
+  });
 
   const { data, isLoading } = useQuery({
     queryKey: ["request", id],
@@ -76,8 +94,16 @@ function RequestDetailPage() {
         supabase.from("requests").select("*").eq("id", id).maybeSingle(),
         supabase.from("contacts").select("id,first_name,last_name,phone,email,whatsapp"),
         supabase.from("profiles").select("id,full_name"),
-        supabase.from("leads").select("*").eq("request_id", id).order("created_at", { ascending: false }),
-        supabase.from("activities").select("*").eq("request_id", id).order("starts_at", { ascending: false }),
+        supabase
+          .from("leads")
+          .select("*")
+          .eq("request_id", id)
+          .order("created_at", { ascending: false }),
+        supabase
+          .from("activities")
+          .select("*")
+          .eq("request_id", id)
+          .order("starts_at", { ascending: false }),
       ]);
       if (request.error) throw request.error;
       return {
@@ -108,7 +134,8 @@ function RequestDetailPage() {
   });
 
   const contact = data?.contacts.find((c) => c.id === request?.contact_id);
-  const agentName = (aid: string | null) => data?.agents.find((a) => a.id === aid)?.full_name ?? "—";
+  const agentName = (aid: string | null) =>
+    data?.agents.find((a) => a.id === aid)?.full_name ?? "—";
 
   const startEdit = () => {
     if (!request) return;
@@ -136,7 +163,11 @@ function RequestDetailPage() {
   const save = useMutation({
     mutationFn: async () => {
       const num = (v: string) => (v.trim() === "" ? null : Number(v));
-      const list = (v: string) => v.split(",").map((s) => s.trim()).filter(Boolean);
+      const list = (v: string) =>
+        v
+          .split(",")
+          .map((s) => s.trim())
+          .filter(Boolean);
       const patch = {
         budget_min: num(String(draft.budget_min ?? "")),
         budget_max: num(String(draft.budget_max ?? "")),
@@ -156,7 +187,10 @@ function RequestDetailPage() {
         notes: draft.notes || null,
         updated_by: user?.userId ?? null,
       };
-      const { error } = await supabase.from("requests").update(patch as never).eq("id", id);
+      const { error } = await supabase
+        .from("requests")
+        .update(patch as never)
+        .eq("id", id);
       if (error) throw error;
       await logAudit({
         organizationId: orgId,
@@ -178,7 +212,10 @@ function RequestDetailPage() {
   const setStatus = useMutation({
     mutationFn: async (status: string) => {
       const oldStatus = request?.status;
-      const { error } = await supabase.from("requests").update({ status } as never).eq("id", id);
+      const { error } = await supabase
+        .from("requests")
+        .update({ status } as never)
+        .eq("id", id);
       if (error) throw error;
       await logAudit({
         organizationId: orgId,
@@ -200,7 +237,10 @@ function RequestDetailPage() {
 
   const setPriority = useMutation({
     mutationFn: async (priority: string) => {
-      const { error } = await supabase.from("requests").update({ priority } as never).eq("id", id);
+      const { error } = await supabase
+        .from("requests")
+        .update({ priority } as never)
+        .eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -212,7 +252,10 @@ function RequestDetailPage() {
 
   const setAssigned = useMutation({
     mutationFn: async (assigned_to: string) => {
-      const { error } = await supabase.from("requests").update({ assigned_to } as never).eq("id", id);
+      const { error } = await supabase
+        .from("requests")
+        .update({ assigned_to } as never)
+        .eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -308,35 +351,54 @@ ${materialSignature(brandingFromOrg(user?.organization))}`;
           </span>
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-2">
-              <StatusBadge tone={requestStatusTone[request.status]}>{requestStatusLabels[request.status]}</StatusBadge>
+              <StatusBadge tone={requestStatusTone[request.status]}>
+                {requestStatusLabels[request.status]}
+              </StatusBadge>
               <StatusBadge tone={priorityTone[request.priority] ?? "neutral"} dot>
                 {priorityLabels[request.priority] ?? request.priority}
               </StatusBadge>
               <StatusBadge>{requestKindLabels[request.kind]}</StatusBadge>
             </div>
             <p className="mt-1 text-xs text-muted-foreground">
-              Creată {relativeDays(request.created_at)} · Responsabil: {agentName(request.assigned_to)}
+              Creată {relativeDays(request.created_at)} · Responsabil:{" "}
+              {agentName(request.assigned_to)}
             </p>
           </div>
           <div className="text-right">
-            <p className="text-lg font-semibold tabular-nums text-foreground">{formatMoney(request.budget_max, request.currency)}</p>
-            <p className="text-[11px] text-muted-foreground tabular-nums">buget minim {formatMoney(request.budget_min, request.currency)}</p>
+            <p className="text-lg font-semibold tabular-nums text-foreground">
+              {formatMoney(request.budget_max, request.currency)}
+            </p>
+            <p className="text-[11px] text-muted-foreground tabular-nums">
+              buget minim {formatMoney(request.budget_min, request.currency)}
+            </p>
           </div>
         </div>
         <div className="grid gap-3 border-t border-border pt-4 sm:grid-cols-3">
           <div className="space-y-1">
-            <span className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">Status</span>
+            <span className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+              Status
+            </span>
             <Select value={request.status} onValueChange={(v) => setStatus.mutate(v)}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
               <SelectContent>
-                {requestStatusOptions.map((k) => (<SelectItem key={k} value={k}>{requestStatusLabels[k]}</SelectItem>))}
+                {requestStatusOptions.map((k) => (
+                  <SelectItem key={k} value={k}>
+                    {requestStatusLabels[k]}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
           <div className="space-y-1">
-            <span className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">Prioritate</span>
+            <span className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+              Prioritate
+            </span>
             <Select value={request.priority} onValueChange={(v) => setPriority.mutate(v)}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
               <SelectContent>
                 <SelectItem value="low">Scăzută</SelectItem>
                 <SelectItem value="medium">Medie</SelectItem>
@@ -345,11 +407,19 @@ ${materialSignature(brandingFromOrg(user?.organization))}`;
             </Select>
           </div>
           <div className="space-y-1">
-            <span className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">Agent responsabil</span>
+            <span className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+              Agent responsabil
+            </span>
             <Select value={request.assigned_to ?? ""} onValueChange={(v) => setAssigned.mutate(v)}>
-              <SelectTrigger><SelectValue placeholder="Neasignat" /></SelectTrigger>
+              <SelectTrigger>
+                <SelectValue placeholder="Neasignat" />
+              </SelectTrigger>
               <SelectContent>
-                {(data?.agents ?? []).map((a) => (<SelectItem key={a.id} value={a.id}>{a.full_name}</SelectItem>))}
+                {(data?.agents ?? []).map((a) => (
+                  <SelectItem key={a.id} value={a.id}>
+                    {a.full_name}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
@@ -363,11 +433,16 @@ ${materialSignature(brandingFromOrg(user?.organization))}`;
             {(contact.last_name?.[0] ?? "").toUpperCase()}
           </span>
           <div className="min-w-0 flex-1">
-            <Link to="/app/contacts/$id" params={{ id: contact.id }} className="truncate font-semibold text-foreground hover:text-primary">
+            <Link
+              to="/app/contacts/$id"
+              params={{ id: contact.id }}
+              className="truncate font-semibold text-foreground hover:text-primary"
+            >
               {contact.first_name} {contact.last_name}
             </Link>
             <p className="truncate text-xs text-muted-foreground">
-              {[contact.phone, contact.email].filter(Boolean).join(" · ") || "Clientul acestei cereri"}
+              {[contact.phone, contact.email].filter(Boolean).join(" · ") ||
+                "Clientul acestei cereri"}
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
@@ -380,7 +455,11 @@ ${materialSignature(brandingFromOrg(user?.organization))}`;
             ) : null}
             {(contact.whatsapp ?? contact.phone) ? (
               <Button size="sm" variant="outline" asChild>
-                <a href={whatsappHref(contact.whatsapp ?? contact.phone ?? "")} target="_blank" rel="noreferrer">
+                <a
+                  href={whatsappHref(contact.whatsapp ?? contact.phone ?? "")}
+                  target="_blank"
+                  rel="noreferrer"
+                >
                   <MessageCircle className="size-4" /> WhatsApp
                 </a>
               </Button>
@@ -424,16 +503,29 @@ ${materialSignature(brandingFromOrg(user?.organization))}`;
               <div className="grid gap-4 md:grid-cols-3">
                 <div className="space-y-2">
                   <Label htmlFor="budget_min">Buget minim</Label>
-                  <Input id="budget_min" value={String(draft.budget_min ?? "")} onChange={(e) => setDraft((d) => ({ ...d, budget_min: e.target.value }))} />
+                  <Input
+                    id="budget_min"
+                    value={String(draft.budget_min ?? "")}
+                    onChange={(e) => setDraft((d) => ({ ...d, budget_min: e.target.value }))}
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="budget_max">Buget maxim</Label>
-                  <Input id="budget_max" value={String(draft.budget_max ?? "")} onChange={(e) => setDraft((d) => ({ ...d, budget_max: e.target.value }))} />
+                  <Input
+                    id="budget_max"
+                    value={String(draft.budget_max ?? "")}
+                    onChange={(e) => setDraft((d) => ({ ...d, budget_max: e.target.value }))}
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="currency">Monedă</Label>
-                  <Select value={String(draft.currency ?? "EUR")} onValueChange={(v) => setDraft((d) => ({ ...d, currency: v }))}>
-                    <SelectTrigger id="currency"><SelectValue /></SelectTrigger>
+                  <Select
+                    value={String(draft.currency ?? "EUR")}
+                    onValueChange={(v) => setDraft((d) => ({ ...d, currency: v }))}
+                  >
+                    <SelectTrigger id="currency">
+                      <SelectValue />
+                    </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="EUR">EUR</SelectItem>
                       <SelectItem value="RON">RON</SelectItem>
@@ -445,62 +537,112 @@ ${materialSignature(brandingFromOrg(user?.organization))}`;
               <div className="grid gap-4 md:grid-cols-2">
                 <div className="space-y-2">
                   <Label htmlFor="cities">Localități (separate prin virgulă)</Label>
-                  <Input id="cities" value={String(draft.cities ?? "")} onChange={(e) => setDraft((d) => ({ ...d, cities: e.target.value }))} />
+                  <Input
+                    id="cities"
+                    value={String(draft.cities ?? "")}
+                    onChange={(e) => setDraft((d) => ({ ...d, cities: e.target.value }))}
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="areas">Zone (separate prin virgulă)</Label>
-                  <Input id="areas" value={String(draft.areas ?? "")} onChange={(e) => setDraft((d) => ({ ...d, areas: e.target.value }))} />
+                  <Input
+                    id="areas"
+                    value={String(draft.areas ?? "")}
+                    onChange={(e) => setDraft((d) => ({ ...d, areas: e.target.value }))}
+                  />
                 </div>
               </div>
               <div className="grid gap-4 md:grid-cols-3">
                 <div className="space-y-2">
                   <Label htmlFor="rooms_min">Camere minim</Label>
-                  <Input id="rooms_min" value={String(draft.rooms_min ?? "")} onChange={(e) => setDraft((d) => ({ ...d, rooms_min: e.target.value }))} />
+                  <Input
+                    id="rooms_min"
+                    value={String(draft.rooms_min ?? "")}
+                    onChange={(e) => setDraft((d) => ({ ...d, rooms_min: e.target.value }))}
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="rooms_max">Camere maxim</Label>
-                  <Input id="rooms_max" value={String(draft.rooms_max ?? "")} onChange={(e) => setDraft((d) => ({ ...d, rooms_max: e.target.value }))} />
+                  <Input
+                    id="rooms_max"
+                    value={String(draft.rooms_max ?? "")}
+                    onChange={(e) => setDraft((d) => ({ ...d, rooms_max: e.target.value }))}
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="surface_min">Suprafață minimă (m²)</Label>
-                  <Input id="surface_min" value={String(draft.surface_min ?? "")} onChange={(e) => setDraft((d) => ({ ...d, surface_min: e.target.value }))} />
+                  <Input
+                    id="surface_min"
+                    value={String(draft.surface_min ?? "")}
+                    onChange={(e) => setDraft((d) => ({ ...d, surface_min: e.target.value }))}
+                  />
                 </div>
               </div>
               <div className="grid gap-4 md:grid-cols-2">
                 <div className="space-y-2">
                   <Label htmlFor="floor_preference">Etaj preferat</Label>
-                  <Input id="floor_preference" value={String(draft.floor_preference ?? "")} onChange={(e) => setDraft((d) => ({ ...d, floor_preference: e.target.value }))} />
+                  <Input
+                    id="floor_preference"
+                    value={String(draft.floor_preference ?? "")}
+                    onChange={(e) => setDraft((d) => ({ ...d, floor_preference: e.target.value }))}
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="term">Termen</Label>
-                  <Input id="term" value={String(draft.term ?? "")} onChange={(e) => setDraft((d) => ({ ...d, term: e.target.value }))} />
+                  <Input
+                    id="term"
+                    value={String(draft.term ?? "")}
+                    onChange={(e) => setDraft((d) => ({ ...d, term: e.target.value }))}
+                  />
                 </div>
               </div>
               <div className="flex flex-wrap gap-6">
                 <label className="flex items-center gap-2 text-sm">
-                  <Checkbox checked={Boolean(draft.furnished)} onCheckedChange={(v) => setDraft((d) => ({ ...d, furnished: Boolean(v) }))} />
+                  <Checkbox
+                    checked={Boolean(draft.furnished)}
+                    onCheckedChange={(v) => setDraft((d) => ({ ...d, furnished: Boolean(v) }))}
+                  />
                   Mobilat
                 </label>
                 <label className="flex items-center gap-2 text-sm">
-                  <Checkbox checked={Boolean(draft.wants_parking)} onCheckedChange={(v) => setDraft((d) => ({ ...d, wants_parking: Boolean(v) }))} />
+                  <Checkbox
+                    checked={Boolean(draft.wants_parking)}
+                    onCheckedChange={(v) => setDraft((d) => ({ ...d, wants_parking: Boolean(v) }))}
+                  />
                   Parcare
                 </label>
                 <label className="flex items-center gap-2 text-sm">
-                  <Checkbox checked={Boolean(draft.wants_balcony)} onCheckedChange={(v) => setDraft((d) => ({ ...d, wants_balcony: Boolean(v) }))} />
+                  <Checkbox
+                    checked={Boolean(draft.wants_balcony)}
+                    onCheckedChange={(v) => setDraft((d) => ({ ...d, wants_balcony: Boolean(v) }))}
+                  />
                   Balcon
                 </label>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="features">Facilități (separate prin virgulă)</Label>
-                <Input id="features" value={String(draft.features ?? "")} onChange={(e) => setDraft((d) => ({ ...d, features: e.target.value }))} />
+                <Input
+                  id="features"
+                  value={String(draft.features ?? "")}
+                  onChange={(e) => setDraft((d) => ({ ...d, features: e.target.value }))}
+                />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="source">Sursă</Label>
-                <Input id="source" value={String(draft.source ?? "")} onChange={(e) => setDraft((d) => ({ ...d, source: e.target.value }))} />
+                <Input
+                  id="source"
+                  value={String(draft.source ?? "")}
+                  onChange={(e) => setDraft((d) => ({ ...d, source: e.target.value }))}
+                />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="notes">Note</Label>
-                <Textarea id="notes" rows={4} value={String(draft.notes ?? "")} onChange={(e) => setDraft((d) => ({ ...d, notes: e.target.value }))} />
+                <Textarea
+                  id="notes"
+                  rows={4}
+                  value={String(draft.notes ?? "")}
+                  onChange={(e) => setDraft((d) => ({ ...d, notes: e.target.value }))}
+                />
               </div>
               <div className="flex justify-end gap-2">
                 <Button type="button" variant="outline" onClick={() => setEditing(false)}>
@@ -515,17 +657,38 @@ ${materialSignature(brandingFromOrg(user?.organization))}`;
             <div className="panel space-y-6 p-5">
               <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
                 {[
-                  { icon: Banknote, label: "Buget", value: `${formatMoney(request.budget_min, request.currency)} – ${formatMoney(request.budget_max, request.currency)}` },
-                  { icon: MapPin, label: "Localități", value: (request.cities ?? []).join(", ") || "orice oraș" },
-                  { icon: BedDouble, label: "Camere", value: `${request.rooms_min ?? "—"} – ${request.rooms_max ?? "—"}` },
-                  { icon: Ruler, label: "Suprafață minimă", value: request.surface_min ? `${formatNumber(request.surface_min)} m²` : "—" },
+                  {
+                    icon: Banknote,
+                    label: "Buget",
+                    value: `${formatMoney(request.budget_min, request.currency)} – ${formatMoney(request.budget_max, request.currency)}`,
+                  },
+                  {
+                    icon: MapPin,
+                    label: "Localități",
+                    value: (request.cities ?? []).join(", ") || "orice oraș",
+                  },
+                  {
+                    icon: BedDouble,
+                    label: "Camere",
+                    value: `${request.rooms_min ?? "—"} – ${request.rooms_max ?? "—"}`,
+                  },
+                  {
+                    icon: Ruler,
+                    label: "Suprafață minimă",
+                    value: request.surface_min ? `${formatNumber(request.surface_min)} m²` : "—",
+                  },
                 ].map(({ icon: Icon, label, value }) => (
-                  <div key={label} className="flex items-center gap-3 rounded-xl border border-border bg-surface p-3">
+                  <div
+                    key={label}
+                    className="flex items-center gap-3 rounded-xl border border-border bg-surface p-3"
+                  >
                     <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-primary/10 text-primary">
                       <Icon className="size-4" aria-hidden />
                     </span>
                     <div className="min-w-0">
-                      <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">{label}</p>
+                      <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+                        {label}
+                      </p>
                       <p className="truncate text-sm font-medium text-foreground">{value}</p>
                     </div>
                   </div>
@@ -549,7 +712,9 @@ ${materialSignature(brandingFromOrg(user?.organization))}`;
               </dl>
               {request.features.length > 0 ? (
                 <div className="flex flex-wrap gap-2 border-t border-border pt-4">
-                  {request.features.map((f) => (<StatusBadge key={f}>{f}</StatusBadge>))}
+                  {request.features.map((f) => (
+                    <StatusBadge key={f}>{f}</StatusBadge>
+                  ))}
                 </div>
               ) : null}
               {request.notes ? (
@@ -565,11 +730,18 @@ ${materialSignature(brandingFromOrg(user?.organization))}`;
         <TabsContent value="matching">
           <div className="panel overflow-hidden">
             {matches.length === 0 ? (
-              <EmptyState icon={Sparkles} title="Nicio proprietate potrivită" description="Când vor apărea proprietăți compatibile, le vezi aici automat." />
+              <EmptyState
+                icon={Sparkles}
+                title="Nicio proprietate potrivită"
+                description="Când vor apărea proprietăți compatibile, le vezi aici automat."
+              />
             ) : (
               <ul className="divide-y divide-border">
                 {matches.map(({ property, match }) => (
-                  <li key={property.id} className="flex flex-wrap items-center gap-4 px-5 py-4 text-sm transition-colors hover:bg-surface">
+                  <li
+                    key={property.id}
+                    className="flex flex-wrap items-center gap-4 px-5 py-4 text-sm transition-colors hover:bg-surface"
+                  >
                     <span
                       className={`grid size-11 shrink-0 place-items-center rounded-full text-xs font-bold tabular-nums ${
                         match.score >= 80
@@ -583,16 +755,24 @@ ${materialSignature(brandingFromOrg(user?.organization))}`;
                       {match.score}%
                     </span>
                     <div className="min-w-0 flex-1">
-                      <Link to="/app/properties/$id" params={{ id: property.id }} className="truncate font-semibold text-foreground hover:text-primary">
+                      <Link
+                        to="/app/properties/$id"
+                        params={{ id: property.id }}
+                        className="truncate font-semibold text-foreground hover:text-primary"
+                      >
                         {property.title}
                       </Link>
                       <p className="truncate text-xs text-muted-foreground">
-                        {formatMoney(property.price, property.currency)} · {property.city ?? "—"} · {matchLabel(match.score)}
+                        {formatMoney(property.price, property.currency)} · {property.city ?? "—"} ·{" "}
+                        {matchLabel(match.score)}
                       </p>
                       {match.reasons.length > 0 ? (
                         <div className="mt-1.5 flex flex-wrap gap-1.5">
                           {match.reasons.map((r) => (
-                            <span key={r} className="inline-flex items-center gap-1 rounded-full bg-success/10 px-2 py-0.5 text-[11px] text-success">
+                            <span
+                              key={r}
+                              className="inline-flex items-center gap-1 rounded-full bg-success/10 px-2 py-0.5 text-[11px] text-success"
+                            >
                               <Check className="size-3" aria-hidden /> {r}
                             </span>
                           ))}
@@ -601,7 +781,10 @@ ${materialSignature(brandingFromOrg(user?.organization))}`;
                       {match.misses.length > 0 ? (
                         <div className="mt-1 flex flex-wrap gap-1.5">
                           {match.misses.map((m) => (
-                            <span key={m} className="inline-flex items-center gap-1 rounded-full bg-destructive/10 px-2 py-0.5 text-[11px] text-destructive">
+                            <span
+                              key={m}
+                              className="inline-flex items-center gap-1 rounded-full bg-destructive/10 px-2 py-0.5 text-[11px] text-destructive"
+                            >
                               <X className="size-3" aria-hidden /> {m}
                             </span>
                           ))}
@@ -609,22 +792,39 @@ ${materialSignature(brandingFromOrg(user?.organization))}`;
                       ) : null}
                     </div>
                     <div className="flex flex-wrap gap-2">
-                      <Button variant="outline" size="sm" onClick={() => createLead.mutate(property.id)} disabled={createLead.isPending}>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => createLead.mutate(property.id)}
+                        disabled={createLead.isPending}
+                      >
                         <UserPlus className="size-4" /> Lead
                       </Button>
-                      <Button variant="outline" size="sm" onClick={() => setActivityDialog({ open: true, propertyId: property.id })}>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setActivityDialog({ open: true, propertyId: property.id })}
+                      >
                         Vizionare
                       </Button>
                       {contact?.phone ? (
                         <Button variant="outline" size="icon" asChild title="Trimite pe WhatsApp">
-                          <a href={whatsappHref(contact.whatsapp ?? contact.phone ?? "")} target="_blank" rel="noreferrer" aria-label="Trimite pe WhatsApp">
+                          <a
+                            href={whatsappHref(contact.whatsapp ?? contact.phone ?? "")}
+                            target="_blank"
+                            rel="noreferrer"
+                            aria-label="Trimite pe WhatsApp"
+                          >
                             <MessageCircle className="size-4" />
                           </a>
                         </Button>
                       ) : null}
                       {contact?.email ? (
                         <Button variant="outline" size="icon" asChild title="Trimite pe email">
-                          <a href={`mailto:${contact.email}?subject=${encodeURIComponent(property.title)}&body=${encodeURIComponent(propertyMessage(property))}`} aria-label="Trimite pe email">
+                          <a
+                            href={`mailto:${contact.email}?subject=${encodeURIComponent(property.title)}&body=${encodeURIComponent(propertyMessage(property))}`}
+                            aria-label="Trimite pe email"
+                          >
                             <Mail className="size-4" />
                           </a>
                         </Button>
@@ -644,15 +844,26 @@ ${materialSignature(brandingFromOrg(user?.organization))}`;
             ) : (
               <ul className="divide-y divide-border">
                 {leads.map((l) => {
-                  const initials = l.name.split(" ").filter(Boolean).map((w: string) => w[0]).slice(0, 2).join("").toUpperCase();
+                  const initials = l.name
+                    .split(" ")
+                    .filter(Boolean)
+                    .map((w: string) => w[0])
+                    .slice(0, 2)
+                    .join("")
+                    .toUpperCase();
                   return (
-                    <li key={l.id} className="flex items-center gap-4 px-5 py-4 text-sm transition-colors hover:bg-surface">
+                    <li
+                      key={l.id}
+                      className="flex items-center gap-4 px-5 py-4 text-sm transition-colors hover:bg-surface"
+                    >
                       <span className="grid size-10 shrink-0 place-items-center rounded-full bg-primary/10 text-xs font-semibold text-primary">
                         {initials || "?"}
                       </span>
                       <div className="min-w-0 flex-1">
                         <p className="truncate font-semibold text-foreground">{l.name}</p>
-                        <p className="text-xs text-muted-foreground">Scor {l.score} · {relativeDays(l.created_at)}</p>
+                        <p className="text-xs text-muted-foreground">
+                          Scor {l.score} · {relativeDays(l.created_at)}
+                        </p>
                       </div>
                       <StatusBadge tone="info">{leadStageLabels[l.stage]}</StatusBadge>
                     </li>
@@ -670,7 +881,10 @@ ${materialSignature(brandingFromOrg(user?.organization))}`;
             ) : (
               <ul className="divide-y divide-border">
                 {activities.map((a) => (
-                  <li key={a.id} className="flex items-center gap-4 px-5 py-4 text-sm transition-colors hover:bg-surface">
+                  <li
+                    key={a.id}
+                    className="flex items-center gap-4 px-5 py-4 text-sm transition-colors hover:bg-surface"
+                  >
                     <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary">
                       <CalendarClock className="size-4" aria-hidden />
                     </span>
@@ -678,7 +892,9 @@ ${materialSignature(brandingFromOrg(user?.organization))}`;
                       <p className="truncate font-medium text-foreground">{a.title}</p>
                       <p className="text-xs text-muted-foreground">{formatDateTime(a.starts_at)}</p>
                     </div>
-                    <StatusBadge tone={activityStatusTone[a.status]}>{activityKindLabels[a.kind]}</StatusBadge>
+                    <StatusBadge tone={activityStatusTone[a.status]}>
+                      {activityKindLabels[a.kind]}
+                    </StatusBadge>
                   </li>
                 ))}
               </ul>

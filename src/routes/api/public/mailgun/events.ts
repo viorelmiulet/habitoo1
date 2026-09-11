@@ -38,7 +38,8 @@ async function handleEvents(request: Request): Promise<Response> {
   if (!cfg) return json({ ok: false, error: "not_configured" }, 503);
 
   const length = Number(request.headers.get("content-length") ?? "0");
-  if (length && length > MAX_BODY_BYTES) return json({ ok: false, error: "payload_too_large" }, 413);
+  if (length && length > MAX_BODY_BYTES)
+    return json({ ok: false, error: "payload_too_large" }, 413);
 
   let body: { signature?: SignaturePayload; "event-data"?: unknown };
   try {
@@ -89,7 +90,10 @@ async function handleEvents(request: Request): Promise<Response> {
     _window_seconds: RATE_LIMIT.windowSeconds,
   });
   if (rlError) {
-    console.error("[mailgun:events] rate limit check failed", safeLogFields({ code: rlError.code }));
+    console.error(
+      "[mailgun:events] rate limit check failed",
+      safeLogFields({ code: rlError.code }),
+    );
     return json({ ok: false, error: "temporary_failure" }, 500);
   }
   if (allowed === false) return json({ ok: false, error: "rate_limited" }, 429);
@@ -155,9 +159,6 @@ async function handleEvents(request: Request): Promise<Response> {
     await supabaseAdmin.from("email_messages").update(patch).eq("id", message.id);
   }
 
-
-
-
   console.info(
     "[mailgun:events] processed",
     safeLogFields({
@@ -168,7 +169,6 @@ async function handleEvents(request: Request): Promise<Response> {
   );
   return json({ ok: true }, 200);
 }
-
 
 export const Route = createFileRoute("/api/public/mailgun/events")({
   server: {

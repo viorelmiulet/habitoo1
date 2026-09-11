@@ -99,7 +99,6 @@ export function AppShell({
     plan,
   };
 
-
   return (
     <TooltipProvider delayDuration={150}>
       <div className="min-h-screen bg-background">
@@ -120,13 +119,22 @@ export function AppShell({
         </aside>
 
         <Sheet open={menuOpen} onOpenChange={setMenuOpen}>
-          <SheetContent side="left" className="w-[min(85vw,300px)] p-0" aria-describedby={undefined}>
+          <SheetContent
+            side="left"
+            className="w-[min(85vw,300px)] p-0"
+            aria-describedby={undefined}
+          >
             <SheetTitle className="sr-only">Meniu de navigare</SheetTitle>
             <AppSidebar {...sidebarProps} onNavigate={() => setMenuOpen(false)} />
           </SheetContent>
         </Sheet>
 
-        <div className={cn("transition-[padding] duration-200", collapsed ? "lg:pl-[72px]" : "lg:pl-64")}>
+        <div
+          className={cn(
+            "transition-[padding] duration-200",
+            collapsed ? "lg:pl-[72px]" : "lg:pl-64",
+          )}
+        >
           <Topbar
             user={user}
             onOpenMenu={() => setMenuOpen(true)}
@@ -141,8 +149,8 @@ export function AppShell({
             >
               <FlaskConical className="size-3.5 shrink-0" />
               <span>
-                Lucrezi în agenția <strong>DEMO / QA</strong> – toate datele sunt fictive și pot fi resetate oricând de
-                un superadmin.
+                Lucrezi în agenția <strong>DEMO / QA</strong> – toate datele sunt fictive și pot fi
+                resetate oricând de un superadmin.
               </span>
             </div>
           ) : null}

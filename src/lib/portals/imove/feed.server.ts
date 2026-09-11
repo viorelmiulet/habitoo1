@@ -11,7 +11,11 @@
  * documentației oficiale. Nu există o operație separată de retragere.
  */
 import { feedUrlsForRequest } from "@/lib/site-feed/config";
-import { FEED_PUBLIC_STATUSES, type PropertyImageRow, type PropertyRow } from "@/lib/site-feed/mapper";
+import {
+  FEED_PUBLIC_STATUSES,
+  type PropertyImageRow,
+  type PropertyRow,
+} from "@/lib/site-feed/mapper";
 import { mapPropertyToImove, type ImoveListing } from "./mapper";
 
 export const IMOVE_PORTAL_ID = "imove";
@@ -39,7 +43,8 @@ export type ImoveFeedBuild = {
 
 export function parseImovePagination(url: URL): { page: number; perPage: number } {
   const page = Math.max(1, Number(url.searchParams.get("page") ?? 1) || 1);
-  const raw = Number(url.searchParams.get("per_page") ?? IMOVE_DEFAULT_PER_PAGE) || IMOVE_DEFAULT_PER_PAGE;
+  const raw =
+    Number(url.searchParams.get("per_page") ?? IMOVE_DEFAULT_PER_PAGE) || IMOVE_DEFAULT_PER_PAGE;
   const perPage = Math.min(IMOVE_MAX_PER_PAGE, Math.max(1, raw));
   return { page, perPage };
 }
@@ -87,7 +92,9 @@ export async function buildImoveFeed(input: {
 
   const rows = (data ?? []) as PropertyRow[];
   const ids = rows.map((r) => r.id);
-  const agentIds = [...new Set(rows.map((r) => r.assigned_to).filter((v): v is string => Boolean(v)))];
+  const agentIds = [
+    ...new Set(rows.map((r) => r.assigned_to).filter((v): v is string => Boolean(v))),
+  ];
 
   const [images, agents] = await Promise.all([
     ids.length
@@ -101,7 +108,14 @@ export async function buildImoveFeed(input: {
       : Promise.resolve({ data: [] as PropertyImageRow[] }),
     agentIds.length
       ? supabaseAdmin.from("profiles").select("id, full_name, email, phone").in("id", agentIds)
-      : Promise.resolve({ data: [] as { id: string; full_name: string; email: string | null; phone: string | null }[] }),
+      : Promise.resolve({
+          data: [] as {
+            id: string;
+            full_name: string;
+            email: string | null;
+            phone: string | null;
+          }[],
+        }),
   ]);
 
   const imagesByProperty = new Map<string, PropertyImageRow[]>();
@@ -216,7 +230,11 @@ export async function imoveFeedContains(input: {
       .eq("include_in_publish", true)
       .eq("is_confidential", false),
     row.assigned_to
-      ? supabaseAdmin.from("profiles").select("id, full_name, email, phone").eq("id", row.assigned_to).maybeSingle()
+      ? supabaseAdmin
+          .from("profiles")
+          .select("id, full_name, email, phone")
+          .eq("id", row.assigned_to)
+          .maybeSingle()
       : Promise.resolve({ data: null }),
   ]);
 

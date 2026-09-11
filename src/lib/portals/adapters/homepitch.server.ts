@@ -24,8 +24,7 @@ import { HOMEPITCH_API_VERSION, HOMEPITCH_BASE_PATH } from "@/lib/portals/homepi
 import { buildHomePitchFeed } from "@/lib/portals/homepitch/feed.server";
 
 /** Endpointul fix al HomePitch pentru importul punctual. */
-const PUSH_ENDPOINT =
-  "https://bwfexvoapabfvkmmnxkg.supabase.co/functions/v1/crm-push-property";
+const PUSH_ENDPOINT = "https://bwfexvoapabfvkmmnxkg.supabase.co/functions/v1/crm-push-property";
 
 /**
  * Cheia publică (anon) a proiectului HomePitch. NU este un secret al nostru,
@@ -62,7 +61,9 @@ async function statusOutcome(ctx: PortalContext): Promise<PortalResult<Connectio
   const configured = activeKeys > 0;
   const detail = configured
     ? `Feed pregătit: ${feed.total} oferte valide din ${feed.selected} selectate` +
-      (feed.excluded.length ? `, ${feed.excluded.length} excluse (coordonate, email agent, monedă)` : "") +
+      (feed.excluded.length
+        ? `, ${feed.excluded.length} excluse (coordonate, email agent, monedă)`
+        : "") +
       "."
     : "Emite o cheie API Habitoo pentru HomePitch și introdu-o în HomePitch la /setari-crm.";
 
@@ -86,7 +87,10 @@ async function statusOutcome(ctx: PortalContext): Promise<PortalResult<Connectio
 
 type PushResult = { live: boolean; message: string; propertyUrl: string | null };
 
-async function pushProperty(ctx: PortalContext, ref: ListingRef): Promise<PortalResult<PushResult>> {
+async function pushProperty(
+  ctx: PortalContext,
+  ref: ListingRef,
+): Promise<PortalResult<PushResult>> {
   const baseUrl = (await import("@/lib/host")).CRM_URL;
   // Validăm exact ca la feed: dacă oferta nu e eligibilă, nu trimitem nimic.
   const feed = await buildHomePitchFeed({
@@ -185,14 +189,16 @@ async function pushProperty(ctx: PortalContext, ref: ListingRef): Promise<Portal
       return {
         ok: false,
         code: "AUTH_ERROR",
-        message: "HomePitch nu recunoaște agentul ofertei (emailul agentului nu corespunde contului).",
+        message:
+          "HomePitch nu recunoaște agentul ofertei (emailul agentului nu corespunde contului).",
       };
     }
     if (response.status === 404) {
       return {
         ok: false,
         code: "NOT_FOUND",
-        message: "HomePitch nu a găsit oferta în feedul nostru. Verifică dacă este bifată și publicată.",
+        message:
+          "HomePitch nu a găsit oferta în feedul nostru. Verifică dacă este bifată și publicată.",
       };
     }
     if (response.status === 422) {
@@ -205,10 +211,18 @@ async function pushProperty(ctx: PortalContext, ref: ListingRef): Promise<Portal
       };
     }
     if (response.status === 401) {
-      return { ok: false, code: "AUTH_ERROR", message: "Cheia API nu este acceptată de HomePitch." };
+      return {
+        ok: false,
+        code: "AUTH_ERROR",
+        message: "Cheia API nu este acceptată de HomePitch.",
+      };
     }
     if (response.status === 429) {
-      return { ok: false, code: "RATE_LIMIT", message: "HomePitch a limitat temporar cererile. Reîncearcă." };
+      return {
+        ok: false,
+        code: "RATE_LIMIT",
+        message: "HomePitch a limitat temporar cererile. Reîncearcă.",
+      };
     }
     return {
       ok: false,

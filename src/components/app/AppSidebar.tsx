@@ -5,13 +5,11 @@ import {
   Building2,
   CalendarDays,
   Crown,
-
   ChartBar,
   Flame,
   FlaskConical,
   Gauge,
   Handshake,
-
   Layers,
   LifeBuoy,
   Mail,
@@ -180,7 +178,6 @@ export function AppSidebar({
   /** Planul agenției și consumul de locuri, pentru cardul din josul meniului. */
   plan?: { label: string; used: number; limit: number };
 }) {
-
   const isPlatform = variant === "platform";
   const homeTo: LinkProps["to"] = isPlatform ? "/superadmin" : "/app";
   const displayName = user?.profile?.full_name || user?.email || "Utilizator";
@@ -256,7 +253,9 @@ export function AppSidebar({
             {isPlatform ? <ShieldCheck className="size-3" /> : null}
             {isPlatform ? "Administrare platformă" : "Agenție"}
           </p>
-          <p className="mt-0.5 truncate text-sm font-semibold text-sidebar-accent-foreground">{organizationName}</p>
+          <p className="mt-0.5 truncate text-sm font-semibold text-sidebar-accent-foreground">
+            {organizationName}
+          </p>
           <div className="mt-1 flex items-center gap-1.5 text-[11px] text-sidebar-foreground/65">
             <span className="truncate">{roleLabel}</span>
             {isDemo ? (
@@ -269,7 +268,10 @@ export function AppSidebar({
       )}
 
       {/* Navigation */}
-      <nav aria-label="Navigare principală" className="flex-1 overflow-x-hidden overflow-y-auto px-2 pb-3">
+      <nav
+        aria-label="Navigare principală"
+        className="flex-1 overflow-x-hidden overflow-y-auto px-2 pb-3"
+      >
         {groups.map((group, i) => (
           <div key={group.title ?? i} className="mb-3">
             {group.title ? (
@@ -300,7 +302,6 @@ export function AppSidebar({
                             "bg-sidebar-primary font-medium text-sidebar-primary-foreground hover:bg-sidebar-primary hover:text-sidebar-primary-foreground",
                           ),
                         }}
-
                       >
                         <item.icon className="size-4 shrink-0" />
                         {collapsed ? null : <span className="truncate">{item.label}</span>}
@@ -366,24 +367,28 @@ export function AppSidebar({
         </div>
       ) : null}
 
-
-
       {/* Footer: user + collapse */}
       <div className="border-t border-sidebar-border p-2">
         {user ? (
-          <div className={cn("flex items-center gap-2.5 rounded-lg px-2 py-1.5", collapsed && "justify-center px-0")}>
+          <div
+            className={cn(
+              "flex items-center gap-2.5 rounded-lg px-2 py-1.5",
+              collapsed && "justify-center px-0",
+            )}
+          >
             <CollapsedTip collapsed={collapsed} label={`${displayName} · ${roleLabel}`}>
               <UserAvatar
                 name={displayName}
                 path={user.profile?.avatar_url}
                 className="size-8 bg-sidebar-primary/20 text-sidebar-accent-foreground ring-1 ring-sidebar-primary/40 ring-inset"
               />
-
             </CollapsedTip>
             {collapsed ? null : (
               <>
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-medium text-sidebar-accent-foreground">{displayName}</p>
+                  <p className="truncate text-sm font-medium text-sidebar-accent-foreground">
+                    {displayName}
+                  </p>
                   <p className="truncate text-[11px] text-sidebar-foreground/60">{user.email}</p>
                 </div>
                 {onSignOut ? (

@@ -22,7 +22,6 @@ export function makeFakeDb(options: {
   download?: (path: string) => { data: unknown; error: unknown | null };
   move?: (from: string, to: string) => { error: unknown | null };
 }): FakeDb {
-
   const calls: { table: string; ops: FakeOp[] }[] = [];
   const rpcCalls: { name: string; args: unknown }[] = [];
   const uploads: { path: string; bytes: unknown }[] = [];
@@ -98,6 +97,8 @@ export function makeFakeDb(options: {
 /** True when the recorded chain contains `method(...args)`. */
 export function hasOp(ops: FakeOp[], method: string, ...args: unknown[]): boolean {
   return ops.some(
-    (op) => op.method === method && args.every((a, i) => JSON.stringify(op.args[i]) === JSON.stringify(a)),
+    (op) =>
+      op.method === method &&
+      args.every((a, i) => JSON.stringify(op.args[i]) === JSON.stringify(a)),
   );
 }

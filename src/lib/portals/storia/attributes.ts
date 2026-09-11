@@ -116,18 +116,17 @@ function windowsTypeUrn(p: PropertyRow): string | null {
  */
 function buildingTypeUrns(p: PropertyRow): string[] {
   const type = norm(p.building_type);
-  const codes: string[] =
-    /bloc/.test(type)
-      ? ["block"]
-      : /vila/.test(type)
-        ? ["house", "residence"]
-        : /casa/.test(type)
-          ? ["house", "private-house", "detached"]
-          : /imobil de birouri/.test(type)
-            ? ["office-building"]
-            : /ansamblu rezidential/.test(type)
-              ? ["residence"]
-              : [];
+  const codes: string[] = /bloc/.test(type)
+    ? ["block"]
+    : /vila/.test(type)
+      ? ["house", "residence"]
+      : /casa/.test(type)
+        ? ["house", "private-house", "detached"]
+        : /imobil de birouri/.test(type)
+          ? ["office-building"]
+          : /ansamblu rezidential/.test(type)
+            ? ["residence"]
+            : [];
   return codes.map((c) => `urn:concept:${c}`);
 }
 
@@ -165,7 +164,6 @@ function useTypesUrns(p: PropertyRow): string[] {
   if (/industrial/.test(destination)) add("industrial", "manufacturing");
   return out;
 }
-
 
 /** Încălzirea, ca enum de apartament (categoriile comerciale folosesc y/n). */
 function heatingSelectUrn(p: PropertyRow): string | null {
@@ -238,7 +236,8 @@ function extrasUrns(p: PropertyRow): string[] {
   if (amenities.some((a) => /lift/.test(a))) add("lift", "elevator");
   if (p.balcony === true || (positive(p.balconies) ?? 0) > 0) add("balcony");
   if ((positive(p.terraces) ?? 0) > 0 || spaces.some((s) => /terasa/.test(s))) add("terrace");
-  if (positive(p.garden_surface) !== null || amenities.some((a) => /gradina/.test(a))) add("garden");
+  if (positive(p.garden_surface) !== null || amenities.some((a) => /gradina/.test(a)))
+    add("garden");
   if (list(p.cooling_systems).some((c) => /aer conditionat/.test(c))) add("air-conditioning");
   if (p.has_basement === true || spaces.some((s) => /boxa|pivnita/.test(s))) add("basement");
   if ((positive(p.garages) ?? 0) > 0 || /garaj/.test(norm(p.parking))) add("garage");

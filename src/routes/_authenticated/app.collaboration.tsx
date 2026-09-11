@@ -61,7 +61,10 @@ export const Route = createFileRoute("/_authenticated/app/collaboration")({
   component: CollaborationPage,
 });
 
-const statusTone: Record<CollaborationProposalStatus, "primary" | "success" | "info" | "neutral" | "danger"> = {
+const statusTone: Record<
+  CollaborationProposalStatus,
+  "primary" | "success" | "info" | "neutral" | "danger"
+> = {
   pending: "info",
   accepted: "success",
   viewing: "primary",
@@ -139,7 +142,9 @@ function CollaborationPage() {
     queryFn: () => fetchProposals(),
   });
 
-  const incomingPending = (proposals.data?.incoming ?? []).filter((p) => p.status === "pending").length;
+  const incomingPending = (proposals.data?.incoming ?? []).filter(
+    (p) => p.status === "pending",
+  ).length;
 
   return (
     <>
@@ -179,7 +184,6 @@ function CollaborationPage() {
         </TabsList>
 
         <TabsContent value="offers" className="space-y-4">
-
           <div className="panel grid gap-3 p-4 sm:grid-cols-2 lg:grid-cols-4">
             <div className="relative sm:col-span-2">
               <Search className="pointer-events-none absolute top-2.5 left-3 size-4 text-muted-foreground" />
@@ -206,7 +210,10 @@ function CollaborationPage() {
                 ))}
               </SelectContent>
             </Select>
-            <Select value={filters.type} onValueChange={(v) => setFilters((f) => ({ ...f, type: v }))}>
+            <Select
+              value={filters.type}
+              onValueChange={(v) => setFilters((f) => ({ ...f, type: v }))}
+            >
               <SelectTrigger>
                 <SelectValue placeholder="Tip" />
               </SelectTrigger>
@@ -221,7 +228,9 @@ function CollaborationPage() {
             </Select>
             <Select
               value={filters.transaction}
-              onValueChange={(v) => setFilters((f) => ({ ...f, transaction: v as Filters["transaction"] }))}
+              onValueChange={(v) =>
+                setFilters((f) => ({ ...f, transaction: v as Filters["transaction"] }))
+              }
             >
               <SelectTrigger>
                 <SelectValue placeholder="Tranzacție" />
@@ -257,7 +266,11 @@ function CollaborationPage() {
                 placeholder="Suprafață min. (m²)"
                 onChange={(e) => setFilters((f) => ({ ...f, surfaceMin: e.target.value }))}
               />
-              <Button variant="outline" onClick={() => setFilters(emptyFilters)} aria-label="Resetează filtrele">
+              <Button
+                variant="outline"
+                onClick={() => setFilters(emptyFilters)}
+                aria-label="Resetează filtrele"
+              >
                 <X className="size-4" />
               </Button>
             </div>
@@ -301,9 +314,12 @@ function CollaborationPage() {
                   <div className="flex flex-1 flex-col gap-1.5 p-4">
                     <h3 className="line-clamp-2 text-sm font-semibold">{offer.title}</h3>
                     <p className="text-xs text-muted-foreground">
-                      {[offer.district, offer.city, offer.county].filter(Boolean).join(", ") || "Locație nespecificată"}
+                      {[offer.district, offer.city, offer.county].filter(Boolean).join(", ") ||
+                        "Locație nespecificată"}
                     </p>
-                    <p className="text-lg font-semibold">{formatMoney(offer.price, offer.currency)}</p>
+                    <p className="text-lg font-semibold">
+                      {formatMoney(offer.price, offer.currency)}
+                    </p>
                     <p className="text-xs text-muted-foreground">
                       {[
                         propertyTypeLabels[offer.propertyType] ?? offer.propertyType,
@@ -315,7 +331,12 @@ function CollaborationPage() {
                         .join(" · ")}
                     </p>
                     <div className="mt-auto flex gap-2 pt-3">
-                      <Button size="sm" variant="outline" className="flex-1" onClick={() => setDetailOffer(offer)}>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="flex-1"
+                        onClick={() => setDetailOffer(offer)}
+                      >
                         Detalii
                       </Button>
                       <Button size="sm" className="flex-1" onClick={() => setProposeFor(offer)}>
@@ -324,7 +345,9 @@ function CollaborationPage() {
                     </div>
                     <p className="flex items-center gap-1.5 border-t border-border/70 pt-2 text-[11px] text-muted-foreground">
                       <Building2 className="size-3" /> Mandat: {offer.agencyName}
-                      {offer.myProposalCount > 0 ? ` · ${offer.myProposalCount} propunere(i) trimise` : ""}
+                      {offer.myProposalCount > 0
+                        ? ` · ${offer.myProposalCount} propunere(i) trimise`
+                        : ""}
                     </p>
                   </div>
                 </li>
@@ -471,14 +494,23 @@ function OfferDetailDialog({
             {full.images.length > 0 ? (
               <div className="grid grid-cols-3 gap-2">
                 {full.images.slice(0, 6).map((src: string) => (
-                  <img key={src} src={src} alt="" className="aspect-[4/3] w-full rounded-lg object-cover" />
+                  <img
+                    key={src}
+                    src={src}
+                    alt=""
+                    className="aspect-[4/3] w-full rounded-lg object-cover"
+                  />
                 ))}
               </div>
             ) : null}
             <div className="flex flex-wrap items-center gap-2">
-              <span className="text-xl font-semibold">{formatMoney(full.price, full.currency)}</span>
+              <span className="text-xl font-semibold">
+                {formatMoney(full.price, full.currency)}
+              </span>
               {full.collabCommissionPercent !== null ? (
-                <StatusBadge tone="success">Comision colaborare {full.collabCommissionPercent}%</StatusBadge>
+                <StatusBadge tone="success">
+                  Comision colaborare {full.collabCommissionPercent}%
+                </StatusBadge>
               ) : null}
               <StatusBadge tone="primary">{full.agencyName}</StatusBadge>
             </div>
@@ -491,7 +523,10 @@ function OfferDetailDialog({
                 ["Suprafață", full.surface ? `${formatNumber(full.surface)} m²` : "—"],
                 ["Etaj", full.floor !== null ? String(full.floor) : "—"],
                 ["An construcție", full.buildYear ? String(full.buildYear) : "—"],
-                ["Locație", [full.district, full.city, full.county].filter(Boolean).join(", ") || "—"],
+                [
+                  "Locație",
+                  [full.district, full.city, full.county].filter(Boolean).join(", ") || "—",
+                ],
                 ["Referință", full.reference ?? "—"],
               ].map(([label, value]) => (
                 <div key={label}>
@@ -502,7 +537,9 @@ function OfferDetailDialog({
             </dl>
             {full.collabTerms ? (
               <div className="rounded-xl border border-border p-3">
-                <p className="text-xs font-semibold text-muted-foreground">Condiții de colaborare</p>
+                <p className="text-xs font-semibold text-muted-foreground">
+                  Condiții de colaborare
+                </p>
                 <p className="mt-1 whitespace-pre-line">{full.collabTerms}</p>
               </div>
             ) : null}
@@ -510,8 +547,8 @@ function OfferDetailDialog({
               <p className="whitespace-pre-line text-muted-foreground">{full.description}</p>
             ) : null}
             <p className="text-xs text-muted-foreground">
-              Datele proprietarului rămân la agenția care deține mandatul. Comunicarea se face prin firul
-              de mesaje al propunerii.
+              Datele proprietarului rămân la agenția care deține mandatul. Comunicarea se face prin
+              firul de mesaje al propunerii.
             </p>
           </div>
         ) : null}
@@ -693,7 +730,9 @@ function ThreadDialog({ id, onClose }: { id: string | null; onClose: () => void 
         {data ? (
           <div className="space-y-4">
             <div className="flex flex-wrap items-center gap-2 text-sm">
-              <StatusBadge tone={statusTone[data.status]}>{COLLAB_STATUS_LABELS[data.status]}</StatusBadge>
+              <StatusBadge tone={statusTone[data.status]}>
+                {COLLAB_STATUS_LABELS[data.status]}
+              </StatusBadge>
               <span className="text-muted-foreground">
                 {data.direction === "incoming"
                   ? `${data.requesterAgencyName} · client: ${data.clientLabel}`
@@ -709,32 +748,41 @@ function ThreadDialog({ id, onClose }: { id: string | null; onClose: () => void 
             <div className="rounded-xl border border-border p-3">
               <Label className="text-xs text-muted-foreground">Status colaborare</Label>
               <div className="mt-2 flex flex-wrap gap-2">
-                {(["pending", "accepted", "viewing", "declined", "closed"] as CollaborationProposalStatus[]).map(
-                  (s) => (
-                    <Button
-                      key={s}
-                      size="sm"
-                      variant={data.status === s ? "default" : "outline"}
-                      disabled={status.isPending}
-                      onClick={() => status.mutate(s)}
-                    >
-                      {COLLAB_STATUS_LABELS[s]}
-                    </Button>
-                  ),
-                )}
+                {(
+                  [
+                    "pending",
+                    "accepted",
+                    "viewing",
+                    "declined",
+                    "closed",
+                  ] as CollaborationProposalStatus[]
+                ).map((s) => (
+                  <Button
+                    key={s}
+                    size="sm"
+                    variant={data.status === s ? "default" : "outline"}
+                    disabled={status.isPending}
+                    onClick={() => status.mutate(s)}
+                  >
+                    {COLLAB_STATUS_LABELS[s]}
+                  </Button>
+                ))}
               </div>
             </div>
 
             <div className="space-y-3">
               {data.messages.length === 0 ? (
                 <p className="text-sm text-muted-foreground">
-                  Niciun mesaj încă. Scrie primul mesaj pentru a stabili detaliile (ex. programarea unei
-                  vizionări).
+                  Niciun mesaj încă. Scrie primul mesaj pentru a stabili detaliile (ex. programarea
+                  unei vizionări).
                 </p>
               ) : (
                 <ul className="space-y-4">
                   {data.messages.map((m) => (
-                    <li key={m.id} className={m.mine ? "flex flex-col items-end" : "flex flex-col items-start"}>
+                    <li
+                      key={m.id}
+                      className={m.mine ? "flex flex-col items-end" : "flex flex-col items-start"}
+                    >
                       <p className="text-[11px] text-muted-foreground">
                         {m.mine ? "Tu" : (m.senderName ?? "Utilizator")} · {m.agencyName} ·{" "}
                         {formatDateTime(m.createdAt)}

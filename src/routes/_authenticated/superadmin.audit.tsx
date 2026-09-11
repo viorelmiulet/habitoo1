@@ -21,7 +21,11 @@ function AuditPage() {
     queryKey: ["superadmin", "audit"],
     queryFn: async () => {
       const [logs, orgs, profiles] = await Promise.all([
-        supabase.from("audit_logs").select("*").order("created_at", { ascending: false }).limit(300),
+        supabase
+          .from("audit_logs")
+          .select("*")
+          .order("created_at", { ascending: false })
+          .limit(300),
         supabase.from("organizations").select("id,name"),
         supabase.from("profiles").select("id,full_name"),
       ]);
@@ -38,7 +42,10 @@ function AuditPage() {
 
   return (
     <>
-      <PageHeader title="Jurnal de audit" description="Cine a făcut ce și când, în toate agențiile." />
+      <PageHeader
+        title="Jurnal de audit"
+        description="Cine a făcut ce și când, în toate agențiile."
+      />
 
       <div className="panel p-4">
         <div className="relative max-w-md">

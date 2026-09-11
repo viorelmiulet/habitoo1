@@ -170,7 +170,12 @@ export function useDashboardOverview(organizationId?: string | null) {
                 ? Number(p.price)
                 : null,
         currency: p.sale_currency ?? p.rent_currency ?? p.currency ?? "EUR",
-        surface: p.usable_surface !== null ? Number(p.usable_surface) : p.surface !== null ? Number(p.surface) : null,
+        surface:
+          p.usable_surface !== null
+            ? Number(p.usable_surface)
+            : p.surface !== null
+              ? Number(p.surface)
+              : null,
         rooms: p.rooms,
         floor: p.floor,
         buildingFloors: p.building_floors,

@@ -75,7 +75,9 @@ export async function buildHomePitchFeed(query: HomePitchFeedQuery): Promise<Hom
   const rows = ((data ?? []) as PropertyRow[]).filter((row) => selectedIds.has(row.id));
 
   const ids = rows.map((r) => r.id);
-  const agentIds = [...new Set(rows.map((r) => r.assigned_to).filter((v): v is string => Boolean(v)))];
+  const agentIds = [
+    ...new Set(rows.map((r) => r.assigned_to).filter((v): v is string => Boolean(v))),
+  ];
   const [imagesResult, agentsResult] = await Promise.all([
     ids.length
       ? db
@@ -86,7 +88,14 @@ export async function buildHomePitchFeed(query: HomePitchFeedQuery): Promise<Hom
       : Promise.resolve({ data: [] as PropertyImageRow[] }),
     agentIds.length
       ? db.from("profiles").select("id, full_name, email, phone").in("id", agentIds)
-      : Promise.resolve({ data: [] as { id: string; full_name: string; email: string | null; phone: string | null }[] }),
+      : Promise.resolve({
+          data: [] as {
+            id: string;
+            full_name: string;
+            email: string | null;
+            phone: string | null;
+          }[],
+        }),
   ]);
 
   const imagesByProperty = new Map<string, PropertyImageRow[]>();

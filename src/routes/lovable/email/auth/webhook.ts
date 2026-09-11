@@ -1,19 +1,19 @@
-import * as React from 'react'
-import { createAuthEmailHandler } from '@lovable.dev/email-js'
-import { createFileRoute } from '@tanstack/react-router'
-import { SignupEmail } from '@/lib/email-templates/signup'
-import { InviteEmail } from '@/lib/email-templates/invite'
-import { MagicLinkEmail } from '@/lib/email-templates/magic-link'
-import { RecoveryEmail } from '@/lib/email-templates/recovery'
-import { EmailChangeEmail } from '@/lib/email-templates/email-change'
-import { ReauthenticationEmail } from '@/lib/email-templates/reauthentication'
+import * as React from "react";
+import { createAuthEmailHandler } from "@lovable.dev/email-js";
+import { createFileRoute } from "@tanstack/react-router";
+import { SignupEmail } from "@/lib/email-templates/signup";
+import { InviteEmail } from "@/lib/email-templates/invite";
+import { MagicLinkEmail } from "@/lib/email-templates/magic-link";
+import { RecoveryEmail } from "@/lib/email-templates/recovery";
+import { EmailChangeEmail } from "@/lib/email-templates/email-change";
+import { ReauthenticationEmail } from "@/lib/email-templates/reauthentication";
 
 // Configuration
-const SITE_NAME = "Habitoo CRM"
-const SENDER_DOMAIN = "notify.habitoo.ro"
-const ROOT_DOMAIN = "habitoo.ro"
-const FROM_DOMAIN = "habitoo.ro"
-const SITE_URL = `https://${ROOT_DOMAIN}`
+const SITE_NAME = "Habitoo CRM";
+const SENDER_DOMAIN = "notify.habitoo.ro";
+const ROOT_DOMAIN = "habitoo.ro";
+const FROM_DOMAIN = "habitoo.ro";
+const SITE_URL = `https://${ROOT_DOMAIN}`;
 
 /**
  * Numele agenției care invită, transmis de `inviteAgent` prin `redirect_to`.
@@ -21,13 +21,13 @@ const SITE_URL = `https://${ROOT_DOMAIN}`
  */
 function agencyFromUrl(rawUrl: string): string | undefined {
   try {
-    const url = new URL(rawUrl)
-    const redirect = url.searchParams.get('redirect_to')
-    if (!redirect) return undefined
-    const agency = new URL(redirect, SITE_URL).searchParams.get('agency')?.trim()
-    return agency || undefined
+    const url = new URL(rawUrl);
+    const redirect = url.searchParams.get("redirect_to");
+    if (!redirect) return undefined;
+    const agency = new URL(redirect, SITE_URL).searchParams.get("agency")?.trim();
+    return agency || undefined;
   } catch {
-    return undefined
+    return undefined;
   }
 }
 
@@ -38,13 +38,13 @@ export const Route = createFileRoute("/lovable/email/auth/webhook")({
     handlers: {
       POST: ({ request }) => {
         const handler = createAuthEmailHandler({
-          apiKey: process.env['LOVABLE_API_KEY']!,
+          apiKey: process.env["LOVABLE_API_KEY"]!,
           from: `${SITE_NAME} <noreply@${FROM_DOMAIN}>`,
           senderDomain: SENDER_DOMAIN,
-          sendUrl: process.env['LOVABLE_SEND_URL'],
+          sendUrl: process.env["LOVABLE_SEND_URL"],
           emails: {
             signup: {
-              subject: 'Confirmă adresa de email pentru Habitoo CRM',
+              subject: "Confirmă adresa de email pentru Habitoo CRM",
               render: (data) =>
                 React.createElement(SignupEmail, {
                   siteName: SITE_NAME,
@@ -54,21 +54,21 @@ export const Route = createFileRoute("/lovable/email/auth/webhook")({
                 }),
             },
             invite: (data) => {
-              const agencyName = agencyFromUrl(data.url)
+              const agencyName = agencyFromUrl(data.url);
               return {
                 subject: agencyName
                   ? `${agencyName} te invită în echipa sa pe Habitoo CRM`
-                  : 'Ai fost invitat în echipa unei agenții pe Habitoo CRM',
+                  : "Ai fost invitat în echipa unei agenții pe Habitoo CRM",
                 element: React.createElement(InviteEmail, {
                   siteName: SITE_NAME,
                   siteUrl: SITE_URL,
                   confirmationUrl: data.url,
                   agencyName,
                 }),
-              }
+              };
             },
             magiclink: {
-              subject: 'Linkul tău de autentificare în Habitoo CRM',
+              subject: "Linkul tău de autentificare în Habitoo CRM",
               render: (data) =>
                 React.createElement(MagicLinkEmail, {
                   siteName: SITE_NAME,
@@ -78,7 +78,7 @@ export const Route = createFileRoute("/lovable/email/auth/webhook")({
             // Agenții invitați de un administrator primesc tot un email de resetare
             // parolă, dar cu mesajul de invitație în agenția respectivă.
             recovery: (data) => {
-              const agencyName = agencyFromUrl(data.url)
+              const agencyName = agencyFromUrl(data.url);
               if (agencyName) {
                 return {
                   subject: `${agencyName} te invită în echipa sa pe ${SITE_NAME} — setează-ți parola`,
@@ -88,37 +88,37 @@ export const Route = createFileRoute("/lovable/email/auth/webhook")({
                     confirmationUrl: data.url,
                     agencyName,
                   }),
-                }
+                };
               }
               return {
-                subject: 'Resetează parola contului Habitoo CRM',
+                subject: "Resetează parola contului Habitoo CRM",
                 element: React.createElement(RecoveryEmail, {
                   siteName: SITE_NAME,
                   confirmationUrl: data.url,
                 }),
-              }
+              };
             },
 
             email_change: {
-              subject: 'Confirmă noua adresă de email — Habitoo CRM',
+              subject: "Confirmă noua adresă de email — Habitoo CRM",
               render: (data) =>
                 React.createElement(EmailChangeEmail, {
                   siteName: SITE_NAME,
-                  oldEmail: data.old_email ?? '',
+                  oldEmail: data.old_email ?? "",
                   email: data.email,
-                  newEmail: data.new_email ?? '',
+                  newEmail: data.new_email ?? "",
                   confirmationUrl: data.url,
                 }),
             },
             reauthentication: {
-              subject: 'Codul tău de verificare Habitoo CRM',
+              subject: "Codul tău de verificare Habitoo CRM",
               render: (data) =>
-                React.createElement(ReauthenticationEmail, { token: data.token ?? '' }),
+                React.createElement(ReauthenticationEmail, { token: data.token ?? "" }),
             },
           },
-        })
-        return handler(request)
+        });
+        return handler(request);
       },
     },
   },
-})
+});

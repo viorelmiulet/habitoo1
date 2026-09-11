@@ -1,7 +1,17 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
-import { ListChecks, Phone, Mail, Users, Home, CheckCircle2, XCircle, Trash2, Pencil } from "lucide-react";
+import {
+  ListChecks,
+  Phone,
+  Mail,
+  Users,
+  Home,
+  CheckCircle2,
+  XCircle,
+  Trash2,
+  Pencil,
+} from "lucide-react";
 import { toast } from "sonner";
 import { toastError } from "@/lib/errors";
 import { PageHeader } from "@/components/app/PageHeader";
@@ -92,7 +102,9 @@ function ActivitiesPage() {
   const orgId = user?.organization?.id;
   const queryClient = useQueryClient();
   const [dialogOpen, setDialogOpen] = useState(Boolean(openNew));
-  const [statusFilter, setStatusFilter] = useState<"planned" | "done" | "cancelled" | "all">("planned");
+  const [statusFilter, setStatusFilter] = useState<"planned" | "done" | "cancelled" | "all">(
+    "planned",
+  );
   const [kindFilter, setKindFilter] = useState("all");
   const [agentFilter, setAgentFilter] = useState("all");
   const [periodFilter, setPeriodFilter] = useState<"today" | "week" | "overdue" | "all">("all");
@@ -107,14 +119,35 @@ function ActivitiesPage() {
     queryKey,
     enabled: Boolean(orgId),
     queryFn: async () => {
-      const [activities, properties, contacts, leadsRes, requestsRes, profiles] = await Promise.all([
-        supabase.from("activities").select("*").eq("organization_id", orgId as string).order("starts_at", { ascending: true }),
-        supabase.from("properties").select("id,title").eq("organization_id", orgId as string),
-        supabase.from("contacts").select("id,first_name,last_name").eq("organization_id", orgId as string),
-        supabase.from("leads").select("id,name").eq("organization_id", orgId as string),
-        supabase.from("requests").select("id,title").eq("organization_id", orgId as string),
-        supabase.from("profiles").select("id,full_name").eq("organization_id", orgId as string),
-      ]);
+      const [activities, properties, contacts, leadsRes, requestsRes, profiles] = await Promise.all(
+        [
+          supabase
+            .from("activities")
+            .select("*")
+            .eq("organization_id", orgId as string)
+            .order("starts_at", { ascending: true }),
+          supabase
+            .from("properties")
+            .select("id,title")
+            .eq("organization_id", orgId as string),
+          supabase
+            .from("contacts")
+            .select("id,first_name,last_name")
+            .eq("organization_id", orgId as string),
+          supabase
+            .from("leads")
+            .select("id,name")
+            .eq("organization_id", orgId as string),
+          supabase
+            .from("requests")
+            .select("id,title")
+            .eq("organization_id", orgId as string),
+          supabase
+            .from("profiles")
+            .select("id,full_name")
+            .eq("organization_id", orgId as string),
+        ],
+      );
       if (activities.error) throw activities.error;
       return {
         activities: (activities.data ?? []) as Activity[],
@@ -127,30 +160,58 @@ function ActivitiesPage() {
     },
   });
 
-  const propertyById = useMemo(() => new Map((data?.properties ?? []).map((p) => [p.id, p.title])), [data]);
+  const propertyById = useMemo(
+    () => new Map((data?.properties ?? []).map((p) => [p.id, p.title])),
+    [data],
+  );
   const contactById = useMemo(
     () => new Map((data?.contacts ?? []).map((c) => [c.id, `${c.first_name} ${c.last_name}`])),
     [data],
   );
   const leadById = useMemo(() => new Map((data?.leads ?? []).map((l) => [l.id, l.name])), [data]);
-  const requestById = useMemo(() => new Map((data?.requests ?? []).map((r) => [r.id, r.title])), [data]);
-  const profileById = useMemo(() => new Map((data?.profiles ?? []).map((p) => [p.id, p.full_name])), [data]);
+  const requestById = useMemo(
+    () => new Map((data?.requests ?? []).map((r) => [r.id, r.title])),
+    [data],
+  );
+  const profileById = useMemo(
+    () => new Map((data?.profiles ?? []).map((p) => [p.id, p.full_name])),
+    [data],
+  );
 
   const updateStatus = useMutation({
-    mutationFn: async ({ id, status }: { id: string; status: "planned" | "done" | "cancelled" }) => {
+    mutationFn: async ({
+      id,
+      status,
+    }: {
+      id: string;
+      status: "planned" | "done" | "cancelled";
+    }) => {
       const { error } = await supabase
         .from("activities")
         .update({ status: status as never, done: status === "done" })
         .eq("id", id);
       if (error) throw error;
-      await logAudit({ organizationId: orgId, actorId: user?.userId, action: "activity.status", entity: "activity", entityId: id, newValues: { status } });
+      await logAudit({
+        organizationId: orgId,
+        actorId: user?.userId,
+        action: "activity.status",
+        entity: "activity",
+        entityId: id,
+        newValues: { status },
+      });
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey }),
     onError: (e: Error) => toastError(e),
   });
 
   const bulkUpdate = useMutation({
-    mutationFn: async ({ ids, status }: { ids: string[]; status: "planned" | "done" | "cancelled" }) => {
+    mutationFn: async ({
+      ids,
+      status,
+    }: {
+      ids: string[];
+      status: "planned" | "done" | "cancelled";
+    }) => {
       const { error } = await supabase
         .from("activities")
         .update({ status: status as never, done: status === "done" })
@@ -215,7 +276,8 @@ function ActivitiesPage() {
     }
     if (search.trim()) {
       const q = search.toLowerCase();
-      if (!a.title.toLowerCase().includes(q) && !(a.description ?? "").toLowerCase().includes(q)) return false;
+      if (!a.title.toLowerCase().includes(q) && !(a.description ?? "").toLowerCase().includes(q))
+        return false;
     }
     return true;
   });
@@ -283,7 +345,10 @@ function ActivitiesPage() {
         />
         <div className="w-24 shrink-0 pt-0.5 text-xs tabular-nums">
           <p className={overdue ? "font-medium text-destructive" : "text-muted-foreground"}>
-            {new Date(a.starts_at).toLocaleTimeString("ro-RO", { hour: "2-digit", minute: "2-digit" })}
+            {new Date(a.starts_at).toLocaleTimeString("ro-RO", {
+              hour: "2-digit",
+              minute: "2-digit",
+            })}
           </p>
           <p className="text-[11px] text-muted-foreground">{a.duration_minutes} min</p>
         </div>
@@ -297,7 +362,9 @@ function ActivitiesPage() {
         <div className="min-w-0 flex-1">
           <p
             className={
-              a.status === "done" ? "truncate text-muted-foreground line-through" : "truncate font-medium"
+              a.status === "done"
+                ? "truncate text-muted-foreground line-through"
+                : "truncate font-medium"
             }
           >
             {a.title}
@@ -311,7 +378,9 @@ function ActivitiesPage() {
               .join(" · ")}
           </p>
         </div>
-        <StatusBadge tone={activityStatusTone[a.status]}>{activityStatusLabels[a.status]}</StatusBadge>
+        <StatusBadge tone={activityStatusTone[a.status]}>
+          {activityStatusLabels[a.status]}
+        </StatusBadge>
         <div className="flex items-center gap-0.5">
           {a.status !== "done" ? (
             <Button
@@ -353,11 +422,15 @@ function ActivitiesPage() {
             <AlertDialogContent>
               <AlertDialogHeader>
                 <AlertDialogTitle>Ștergi activitatea?</AlertDialogTitle>
-                <AlertDialogDescription>„{a.title}” va fi ștearsă definitiv.</AlertDialogDescription>
+                <AlertDialogDescription>
+                  „{a.title}” va fi ștearsă definitiv.
+                </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
                 <AlertDialogCancel>Anulează</AlertDialogCancel>
-                <AlertDialogAction onClick={() => removeActivity.mutate(a.id)}>Șterge</AlertDialogAction>
+                <AlertDialogAction onClick={() => removeActivity.mutate(a.id)}>
+                  Șterge
+                </AlertDialogAction>
               </AlertDialogFooter>
             </AlertDialogContent>
           </AlertDialog>
@@ -385,8 +458,13 @@ function ActivitiesPage() {
           onChange={(e) => setSearchInput(e.target.value)}
           className="w-52"
         />
-        <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as typeof statusFilter)}>
-          <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>
+        <Select
+          value={statusFilter}
+          onValueChange={(v) => setStatusFilter(v as typeof statusFilter)}
+        >
+          <SelectTrigger className="w-40">
+            <SelectValue />
+          </SelectTrigger>
           <SelectContent>
             <SelectItem value="planned">Planificate</SelectItem>
             <SelectItem value="done">Finalizate</SelectItem>
@@ -395,25 +473,38 @@ function ActivitiesPage() {
           </SelectContent>
         </Select>
         <Select value={kindFilter} onValueChange={setKindFilter}>
-          <SelectTrigger className="w-40"><SelectValue placeholder="Tip" /></SelectTrigger>
+          <SelectTrigger className="w-40">
+            <SelectValue placeholder="Tip" />
+          </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">Toate tipurile</SelectItem>
             {Object.entries(activityKindLabels).map(([k, v]) => (
-              <SelectItem key={k} value={k}>{v}</SelectItem>
+              <SelectItem key={k} value={k}>
+                {v}
+              </SelectItem>
             ))}
           </SelectContent>
         </Select>
         <Select value={agentFilter} onValueChange={setAgentFilter}>
-          <SelectTrigger className="w-40"><SelectValue placeholder="Agent" /></SelectTrigger>
+          <SelectTrigger className="w-40">
+            <SelectValue placeholder="Agent" />
+          </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">Toți agenții</SelectItem>
             {(data?.profiles ?? []).map((p) => (
-              <SelectItem key={p.id} value={p.id}>{p.full_name}</SelectItem>
+              <SelectItem key={p.id} value={p.id}>
+                {p.full_name}
+              </SelectItem>
             ))}
           </SelectContent>
         </Select>
-        <Select value={periodFilter} onValueChange={(v) => setPeriodFilter(v as typeof periodFilter)}>
-          <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>
+        <Select
+          value={periodFilter}
+          onValueChange={(v) => setPeriodFilter(v as typeof periodFilter)}
+        >
+          <SelectTrigger className="w-40">
+            <SelectValue />
+          </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">Toată perioada</SelectItem>
             <SelectItem value="today">Azi</SelectItem>
@@ -424,16 +515,28 @@ function ActivitiesPage() {
         {selected.size > 0 ? (
           <div className="ml-auto flex items-center gap-2">
             <span className="text-xs text-muted-foreground">{selected.size} selectate</span>
-            <Button size="sm" variant="outline" onClick={() => bulkUpdate.mutate({ ids: Array.from(selected), status: "done" })}>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => bulkUpdate.mutate({ ids: Array.from(selected), status: "done" })}
+            >
               Finalizează
             </Button>
-            <Button size="sm" variant="outline" onClick={() => bulkUpdate.mutate({ ids: Array.from(selected), status: "cancelled" })}>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => bulkUpdate.mutate({ ids: Array.from(selected), status: "cancelled" })}
+            >
               Anulează
             </Button>
-            <Button size="sm" variant="outline" onClick={exportCsv}>Export CSV</Button>
+            <Button size="sm" variant="outline" onClick={exportCsv}>
+              Export CSV
+            </Button>
           </div>
         ) : (
-          <Button size="sm" variant="outline" className="ml-auto" onClick={exportCsv}>Export CSV</Button>
+          <Button size="sm" variant="outline" className="ml-auto" onClick={exportCsv}>
+            Export CSV
+          </Button>
         )}
       </div>
 
@@ -445,7 +548,11 @@ function ActivitiesPage() {
             icon={ListChecks}
             title="Nicio activitate"
             description="Programează un apel sau o vizionare pentru a începe."
-            action={<Button size="sm" onClick={() => setDialogOpen(true)}>Adaugă activitate</Button>}
+            action={
+              <Button size="sm" onClick={() => setDialogOpen(true)}>
+                Adaugă activitate
+              </Button>
+            }
           />
         ) : (
           <div className="divide-y divide-border/70">
@@ -495,7 +602,12 @@ function ActivitiesPage() {
         </AlertDialog>
       ) : null}
 
-      <ActivityDialog open={dialogOpen} onOpenChange={setDialogOpen} orgId={orgId} userId={user?.userId} />
+      <ActivityDialog
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+        orgId={orgId}
+        userId={user?.userId}
+      />
     </>
   );
 }

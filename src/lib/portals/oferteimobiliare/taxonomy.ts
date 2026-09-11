@@ -42,7 +42,10 @@ export function codesFor(map: CodeMap, labels: readonly (string | null | undefin
 }
 
 /** Etichetele care NU au corespondent numeric (pentru avertismente în UI). */
-export function unmappedLabels(map: CodeMap, labels: readonly (string | null | undefined)[]): string[] {
+export function unmappedLabels(
+  map: CodeMap,
+  labels: readonly (string | null | undefined)[],
+): string[] {
   const out: string[] = [];
   for (const label of labels) {
     if (!label) continue;
@@ -58,10 +61,10 @@ export function unmappedLabels(map: CodeMap, labels: readonly (string | null | u
 export const OI_UTILITIES_GENERAL = codeMap({
   "Curent electric": 10001,
   Curent: 10001,
-  "Apă": 10002,
+  Apă: 10002,
   Canalizare: 10003,
   Gaz: 10004,
-  "Puț": 10005,
+  Puț: 10005,
   "Fosă septică": 10006,
   "Curent trifazic": 10007,
   CATV: 10009,
@@ -83,7 +86,7 @@ export const OI_HEATING = codeMap({
   "Încălzire pardoseală": 10107,
   Calorifere: 10108,
   Semineu: 10109,
-  "Șemineu": 10109,
+  Șemineu: 10109,
 });
 
 export const OI_COOLING = codeMap({
@@ -103,10 +106,10 @@ export const OI_INSULATION = codeMap({
 export const OI_WALLS = codeMap({
   "Vopsea lavabilă": 20101,
   Var: 20102,
-  "Faianță": 20103,
+  Faianță: 20103,
   Lambriu: 20104,
   Tapet: 20105,
-  "Marmură": 20106,
+  Marmură: 20106,
   Huma: 20107,
   Vinarom: 20108,
 });
@@ -114,9 +117,9 @@ export const OI_WALLS = codeMap({
 export const OI_FLOORS = codeMap({
   Parchet: 20201,
   Gresie: 20202,
-  "Marmură": 20203,
-  "Mochetă": 20204,
-  "Dușumea": 20205,
+  Marmură: 20203,
+  Mochetă: 20204,
+  Dușumea: 20205,
   Linoleum: 20206,
 });
 
@@ -124,9 +127,9 @@ export const OI_FINISH_STAGE = codeMap({
   Finisat: 20301,
   Gri: 20302,
   "La gri": 20302,
-  "Roșu": 20303,
+  Roșu: 20303,
   "La roșu": 20303,
-  "Bună": 20304,
+  Bună: 20304,
   "Necesită renovare": 20305,
   Renovat: 20306,
 });
@@ -140,19 +143,19 @@ export const OI_INTERIOR_DOORS = codeMap({
   Lemn: 20902,
   Panel: 20903,
   PVC: 20904,
-  "Sticlă": 20905,
+  Sticlă: 20905,
   Metal: 20906,
 });
 
 // ————————————————————————————— equipment —————————————————————————————
 
 export const OI_SPACES = codeMap({
-  "Terasă": 30001,
+  Terasă: 30001,
   "WC serviciu": 30002,
   "Boxă la subsol": 30003,
   Debara: 30004,
-  "Pivniță": 30011,
-  "Cramă": 30012,
+  Pivniță: 30011,
+  Cramă: 30012,
   "Spațiu depozitare": 30013,
   Dressing: 30014,
   Anexe: 30016,
@@ -160,12 +163,12 @@ export const OI_SPACES = codeMap({
 });
 
 export const OI_KITCHEN = codeMap({
-  "Mobilată": 30101,
+  Mobilată: 30101,
   "Parțial mobilată": 30102,
-  "Utilată": 30103,
+  Utilată: 30103,
   "Parțial utilată": 30104,
-  "Nemobilată": 30105,
-  "Neutilată": 30106,
+  Nemobilată: 30105,
+  Neutilată: 30106,
 });
 
 export const OI_METERING = codeMap({
@@ -176,7 +179,7 @@ export const OI_METERING = codeMap({
 
 export const OI_FURNITURE_EQUIPMENT = codeMap({
   Nemobilat: 30301,
-  "Parțial": 30302,
+  Parțial: 30302,
   Complet: 30303,
   Lux: 30304,
 });
@@ -188,13 +191,13 @@ export const OI_BUILDING = codeMap({
   "Spații agrement": 30404,
   Sauna: 30405,
   SPA: 30406,
-  "Acoperiș": 30407,
+  Acoperiș: 30407,
   Curte: 30408,
   "Curte comună": 30409,
-  "Grădină": 30410,
+  Grădină: 30410,
   "Piscină interioară": 30411,
   "Piscină exterioară": 30412,
-  "Uscătorie": 30413,
+  Uscătorie: 30413,
 });
 
 export const OI_APPLIANCES = codeMap({
@@ -204,13 +207,13 @@ export const OI_APPLIANCES = codeMap({
   "Mașină de spălat vase": 30512,
   "Fier de călcat": 30501,
   TV: 30515,
-  "Cafetieră": 30502,
+  Cafetieră: 30502,
   "Uscător păr": 30503,
   Toaster: 30504,
   DVD: 30505,
   "Sandwich-maker": 30507,
   "Cuptor microunde": 30509,
-  "Hotă": 30511,
+  Hotă: 30511,
   "Robot bucătărie": 30513,
   Aspirator: 30514,
   "HI-FI": 30516,
@@ -219,7 +222,7 @@ export const OI_APPLIANCES = codeMap({
 export const OI_MISC = codeMap({
   Jacuzzi: 30601,
   "Scară interioară": 30602,
-  "Șemineu": 30603,
+  Șemineu: 30603,
   "Senzor de fum": 30604,
   "Sistem de alarmă": 30605,
   "Telecomandă poartă garaj": 30606,
@@ -273,14 +276,14 @@ const SUBCATEGORY_BY_TYPE: Record<string, number> = {
 
 /** Subcategoriile de teren, după categoria textuală a ofertei. */
 const LAND_SUBCATEGORY = codeMap({
-  "Construcții": 301,
+  Construcții: 301,
   Construcibil: 301,
   Agricol: 302,
-  "Pădure": 303,
-  "Livadă": 304,
-  "Pășune": 305,
-  "Fâneață": 306,
-  "Heleșteu": 307,
+  Pădure: 303,
+  Livadă: 304,
+  Pășune: 305,
+  Fâneață: 306,
+  Heleșteu: 307,
 });
 
 export function oiCategoryId(propertyType: string | null): number | null {
@@ -288,7 +291,10 @@ export function oiCategoryId(propertyType: string | null): number | null {
   return CATEGORY_BY_TYPE[normalizeLabel(propertyType)] ?? null;
 }
 
-export function oiSubcategoryId(propertyType: string | null, category: string | null): number | null {
+export function oiSubcategoryId(
+  propertyType: string | null,
+  category: string | null,
+): number | null {
   if (!propertyType) return null;
   const key = normalizeLabel(propertyType);
   if (CATEGORY_BY_TYPE[key] === 3) {
@@ -314,7 +320,7 @@ export const OI_PARTITIONING = codeMap({
 export const OI_FURNITURE = codeMap({
   Complet: 1,
   Mobilat: 1,
-  "Parțial": 2,
+  Parțial: 2,
   Semimobilat: 2,
   Nemobilat: 3,
   Lux: 4,
@@ -334,12 +340,12 @@ export const OI_ORIENTATION = codeMap({
 
 export const OI_BUILDING_TYPE = codeMap({
   Bloc: 1,
-  "Casă": 2,
-  "Vilă": 2,
+  Casă: 2,
+  Vilă: 2,
   "Casă/Vilă": 2,
   "Imobil de birouri": 8,
   "Clădire birouri": 8,
-  "Hală": 4,
+  Hală: 4,
   "Centru comercial": 5,
   Depozit: 6,
   Stradal: 7,
@@ -347,15 +353,15 @@ export const OI_BUILDING_TYPE = codeMap({
 });
 
 export const OI_BUILDING_STRUCTURE = codeMap({
-  "Cărămidă": 1,
+  Cărămidă: 1,
   Beton: 6,
   BCA: 2,
-  "Plăci": 3,
+  Plăci: 3,
   Prefabricate: 3,
   Lemn: 4,
   Metal: 5,
   Altele: 7,
-  "Mixtă": 7,
+  Mixtă: 7,
 });
 
 export const OI_LAND_CLASSIFICATION = codeMap({ Intravilan: 1, Extravilan: 2 });

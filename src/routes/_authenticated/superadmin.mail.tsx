@@ -40,8 +40,21 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { appHead } from "@/components/app/app-head";
 import { formatDateTime } from "@/lib/format";
 import { cn } from "@/lib/utils";
@@ -61,7 +74,12 @@ import {
   updateMailbox,
   uploadMailAttachment,
 } from "@/lib/mail-center.functions";
-import type { MailAttachment, MailMailbox, MailMessage, MailThreadListItem } from "@/lib/mail-center.server";
+import type {
+  MailAttachment,
+  MailMailbox,
+  MailMessage,
+  MailThreadListItem,
+} from "@/lib/mail-center.server";
 
 export const Route = createFileRoute("/_authenticated/superadmin/mail")({
   head: () => appHead("Habitoo CRM — email platformă"),
@@ -166,9 +184,25 @@ function sanitizeMailHtml(html: string, showImages: boolean): { html: string; bl
   const clean = DOMPurify.sanitize(html, {
     USE_PROFILES: { html: true },
     FORBID_TAGS: [
-      "style", "form", "input", "button", "select", "textarea",
-      "iframe", "object", "embed", "param", "applet",
-      "script", "svg", "math", "link", "meta", "base", "frame", "frameset",
+      "style",
+      "form",
+      "input",
+      "button",
+      "select",
+      "textarea",
+      "iframe",
+      "object",
+      "embed",
+      "param",
+      "applet",
+      "script",
+      "svg",
+      "math",
+      "link",
+      "meta",
+      "base",
+      "frame",
+      "frameset",
     ],
     FORBID_ATTR: ["srcset", "formaction", "background", "style"],
     ALLOW_DATA_ATTR: false,
@@ -200,7 +234,13 @@ type MailFilters = {
   to: string;
 };
 
-const EMPTY_FILTERS: MailFilters = { q: "", unreadOnly: false, withAttachments: false, from: "", to: "" };
+const EMPTY_FILTERS: MailFilters = {
+  q: "",
+  unreadOnly: false,
+  withAttachments: false,
+  from: "",
+  to: "",
+};
 
 /** `2026-09-11` -> ISO la începutul/sfârșitul zilei, ca intervalul să fie inclusiv. */
 function dayBoundary(value: string, end: boolean): string | null {
@@ -217,12 +257,16 @@ function MailSearchBar({
   onChange: (next: MailFilters) => void;
 }) {
   const [term, setTerm] = useState(filters.q);
-  const active = filters.q || filters.unreadOnly || filters.withAttachments || filters.from || filters.to;
+  const active =
+    filters.q || filters.unreadOnly || filters.withAttachments || filters.from || filters.to;
 
   return (
     <form
       className="flex flex-wrap items-end gap-2 rounded-xl border border-border bg-surface p-3"
-      onSubmit={(e) => { e.preventDefault(); onChange({ ...filters, q: term.trim() }); }}
+      onSubmit={(e) => {
+        e.preventDefault();
+        onChange({ ...filters, q: term.trim() });
+      }}
     >
       <div className="min-w-56 flex-1 space-y-1.5">
         <Label htmlFor="mail-search">Caută</Label>
@@ -277,7 +321,15 @@ function MailSearchBar({
         <Paperclip className="mr-1.5 h-4 w-4" /> Cu atașamente
       </Button>
       {active && (
-        <Button type="button" variant="ghost" size="sm" onClick={() => { setTerm(""); onChange(EMPTY_FILTERS); }}>
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          onClick={() => {
+            setTerm("");
+            onChange(EMPTY_FILTERS);
+          }}
+        >
           <X className="mr-1.5 h-4 w-4" /> Golește
         </Button>
       )}
@@ -289,7 +341,10 @@ function SuperadminMailPage() {
   const queryClient = useQueryClient();
   const loadMailboxes = useServerFn(getMailboxes);
 
-  const mailboxesQuery = useQuery({ queryKey: ["mail", "mailboxes"], queryFn: () => loadMailboxes() });
+  const mailboxesQuery = useQuery({
+    queryKey: ["mail", "mailboxes"],
+    queryFn: () => loadMailboxes(),
+  });
   const mailboxes = useMemo(() => mailboxesQuery.data?.mailboxes ?? [], [mailboxesQuery.data]);
   const status = mailboxesQuery.data?.status;
 
@@ -316,7 +371,10 @@ function SuperadminMailPage() {
   if (mailboxesQuery.isError) {
     return (
       <>
-        <PageHeader title="Email platformă" description="Căsuța de email a platformei, prin Mailgun." />
+        <PageHeader
+          title="Email platformă"
+          description="Căsuța de email a platformei, prin Mailgun."
+        />
         <QueryError error={mailboxesQuery.error} onRetry={() => mailboxesQuery.refetch()} />
       </>
     );
@@ -335,7 +393,11 @@ function SuperadminMailPage() {
             <Button variant="outline" size="sm" onClick={() => setManageOpen(true)}>
               <Settings2 className="mr-1.5 h-4 w-4" /> Căsuțe
             </Button>
-            <Button size="sm" onClick={() => setComposeOpen(true)} disabled={!mailboxes.some((m) => m.is_active)}>
+            <Button
+              size="sm"
+              onClick={() => setComposeOpen(true)}
+              disabled={!mailboxes.some((m) => m.is_active)}
+            >
               <Plus className="mr-1.5 h-4 w-4" /> Email nou
             </Button>
           </div>
@@ -375,7 +437,14 @@ function SuperadminMailPage() {
           <aside className="space-y-4">
             <div className="space-y-1.5">
               <Label>Căsuță</Label>
-              <Select value={mailboxId ?? ""} onValueChange={(v) => { setMailboxId(v); setSelectedThread(null); setPage(0); }}>
+              <Select
+                value={mailboxId ?? ""}
+                onValueChange={(v) => {
+                  setMailboxId(v);
+                  setSelectedThread(null);
+                  setPage(0);
+                }}
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="Alege căsuța" />
                 </SelectTrigger>
@@ -394,7 +463,11 @@ function SuperadminMailPage() {
                 <button
                   key={f.id}
                   type="button"
-                  onClick={() => { setFolder(f.id); setPage(0); setSelectedThread(null); }}
+                  onClick={() => {
+                    setFolder(f.id);
+                    setPage(0);
+                    setSelectedThread(null);
+                  }}
                   className={cn(
                     "flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
                     folder === f.id
@@ -412,16 +485,30 @@ function SuperadminMailPage() {
           {/* Listă + detaliu */}
           <div className="min-w-0 space-y-3">
             {folder !== "sent" && folder !== "draft" && !selectedThread && (
-              <MailSearchBar filters={filters} onChange={(next) => { setFilters(next); setPage(0); }} />
+              <MailSearchBar
+                filters={filters}
+                onChange={(next) => {
+                  setFilters(next);
+                  setPage(0);
+                }}
+              />
             )}
             {folder === "sent" ? (
-              <SentList mailboxId={mailboxId} page={page} setPage={setPage} onOpenThread={setSelectedThread} />
+              <SentList
+                mailboxId={mailboxId}
+                page={page}
+                setPage={setPage}
+                onOpenThread={setSelectedThread}
+              />
             ) : folder === "draft" ? (
               <DraftsList
                 mailboxId={mailboxId}
                 page={page}
                 setPage={setPage}
-                onEdit={(draft) => { setEditingDraft(draft); setComposeOpen(true); }}
+                onEdit={(draft) => {
+                  setEditingDraft(draft);
+                  setComposeOpen(true);
+                }}
                 onChanged={refreshAll}
               />
             ) : selectedThread ? (
@@ -446,11 +533,18 @@ function SuperadminMailPage() {
 
       <ComposeDialog
         open={composeOpen}
-        onOpenChange={(open) => { setComposeOpen(open); if (!open) setEditingDraft(null); }}
+        onOpenChange={(open) => {
+          setComposeOpen(open);
+          if (!open) setEditingDraft(null);
+        }}
         mailboxes={mailboxes.filter((m) => m.is_active)}
         defaultMailboxId={mailboxId}
         draft={editingDraft}
-        onSent={() => { setComposeOpen(false); setEditingDraft(null); refreshAll(); }}
+        onSent={() => {
+          setComposeOpen(false);
+          setEditingDraft(null);
+          refreshAll();
+        }}
       />
       <MailboxesDialog
         open={manageOpen}
@@ -504,7 +598,13 @@ function ThreadList({
   const threads = query.data?.threads ?? [];
   const total = query.data?.total ?? 0;
   const totalPages = Math.max(1, Math.ceil(total / 50));
-  const filtered = !!(filters.q || filters.unreadOnly || filters.withAttachments || filters.from || filters.to);
+  const filtered = !!(
+    filters.q ||
+    filters.unreadOnly ||
+    filters.withAttachments ||
+    filters.from ||
+    filters.to
+  );
 
   if (!threads.length) {
     return (
@@ -522,7 +622,6 @@ function ThreadList({
     );
   }
 
-
   return (
     <div className="space-y-2">
       <div className="overflow-hidden rounded-xl border border-border bg-surface">
@@ -536,10 +635,20 @@ function ThreadList({
             Pagina {page + 1} din {totalPages} · {total} conversații
           </span>
           <div className="flex gap-2">
-            <Button variant="outline" size="sm" disabled={page === 0} onClick={() => setPage(page - 1)}>
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={page === 0}
+              onClick={() => setPage(page - 1)}
+            >
               Anterior
             </Button>
-            <Button variant="outline" size="sm" disabled={page + 1 >= totalPages} onClick={() => setPage(page + 1)}>
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={page + 1 >= totalPages}
+              onClick={() => setPage(page + 1)}
+            >
               Următor
             </Button>
           </div>
@@ -549,9 +658,19 @@ function ThreadList({
   );
 }
 
-function ThreadRow({ thread, first, onOpen }: { thread: MailThreadListItem; first: boolean; onOpen: () => void }) {
+function ThreadRow({
+  thread,
+  first,
+  onOpen,
+}: {
+  thread: MailThreadListItem;
+  first: boolean;
+  onOpen: () => void;
+}) {
   const counterpart =
-    thread.participants.find((p) => !p.endsWith("@mail.habitoo.ro")) ?? thread.participants[0] ?? "—";
+    thread.participants.find((p) => !p.endsWith("@mail.habitoo.ro")) ??
+    thread.participants[0] ??
+    "—";
   const unread = thread.unread_count > 0;
   return (
     <button
@@ -562,21 +681,40 @@ function ThreadRow({ thread, first, onOpen }: { thread: MailThreadListItem; firs
         !first && "border-t border-border",
       )}
     >
-      <span className={cn("flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-xs font-semibold", unread ? "bg-accent/20 text-accent-foreground" : "bg-muted text-muted-foreground")}>
+      <span
+        className={cn(
+          "flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-xs font-semibold",
+          unread ? "bg-accent/20 text-accent-foreground" : "bg-muted text-muted-foreground",
+        )}
+      >
         {counterpart.slice(0, 2).toUpperCase()}
       </span>
       <span className="min-w-0 flex-1">
         <span className="flex items-center gap-2">
-          <span className={cn("truncate text-sm", unread ? "font-semibold text-foreground" : "font-medium text-foreground/90")}>
+          <span
+            className={cn(
+              "truncate text-sm",
+              unread ? "font-semibold text-foreground" : "font-medium text-foreground/90",
+            )}
+          >
             {counterpart}
           </span>
-          {unread && <Badge className="bg-accent text-accent-foreground">{thread.unread_count} noi</Badge>}
+          {unread && (
+            <Badge className="bg-accent text-accent-foreground">{thread.unread_count} noi</Badge>
+          )}
           {thread.has_attachments && <Paperclip className="h-3.5 w-3.5 text-muted-foreground" />}
         </span>
-        <span className={cn("block truncate text-sm", unread ? "font-medium text-foreground" : "text-muted-foreground")}>
+        <span
+          className={cn(
+            "block truncate text-sm",
+            unread ? "font-medium text-foreground" : "text-muted-foreground",
+          )}
+        >
           {thread.subject || "(fără subiect)"}
         </span>
-        {thread.preview && <span className="block truncate text-xs text-muted-foreground">{thread.preview}</span>}
+        {thread.preview && (
+          <span className="block truncate text-xs text-muted-foreground">{thread.preview}</span>
+        )}
       </span>
       <span className="shrink-0 text-xs text-muted-foreground">
         {thread.last_message_at ? formatDateTime(thread.last_message_at) : ""}
@@ -612,7 +750,13 @@ function SentList({
 
   const messages = query.data?.messages ?? [];
   if (!messages.length) {
-    return <EmptyState icon={Send} title="Niciun email trimis" description="Mesajele trimise din această căsuță vor apărea aici." />;
+    return (
+      <EmptyState
+        icon={Send}
+        title="Niciun email trimis"
+        description="Mesajele trimise din această căsuță vor apărea aici."
+      />
+    );
   }
 
   return (
@@ -636,11 +780,15 @@ function SentList({
               <span className="block truncate text-sm font-medium text-foreground">
                 Către: {m.to_emails.join(", ")}
               </span>
-              <span className="block truncate text-sm text-muted-foreground">{m.subject || "(fără subiect)"}</span>
+              <span className="block truncate text-sm text-muted-foreground">
+                {m.subject || "(fără subiect)"}
+              </span>
             </span>
             <span className="flex shrink-0 flex-col items-end gap-1">
               {deliveryBadge(m.delivery_status)}
-              <span className="text-xs text-muted-foreground">{formatDateTime(m.sent_at ?? m.created_at)}</span>
+              <span className="text-xs text-muted-foreground">
+                {formatDateTime(m.sent_at ?? m.created_at)}
+              </span>
             </span>
           </button>
         ))}
@@ -649,7 +797,12 @@ function SentList({
         <Button variant="outline" size="sm" disabled={page === 0} onClick={() => setPage(page - 1)}>
           Anterior
         </Button>
-        <Button variant="outline" size="sm" disabled={messages.length < 50} onClick={() => setPage(page + 1)}>
+        <Button
+          variant="outline"
+          size="sm"
+          disabled={messages.length < 50}
+          onClick={() => setPage(page + 1)}
+        >
           Următor
         </Button>
       </div>
@@ -720,7 +873,11 @@ function DraftsList({
             key={d.id}
             className={cn("flex items-center gap-3 px-4 py-3", i > 0 && "border-t border-border")}
           >
-            <button type="button" className="flex min-w-0 flex-1 items-center gap-3 text-left" onClick={() => onEdit(d)}>
+            <button
+              type="button"
+              className="flex min-w-0 flex-1 items-center gap-3 text-left"
+              onClick={() => onEdit(d)}
+            >
               <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-muted text-muted-foreground">
                 <Mail className="h-4 w-4" />
               </span>
@@ -732,11 +889,15 @@ function DraftsList({
                   {d.subject || "(fără subiect)"}
                 </span>
                 {d.text_body && (
-                  <span className="block truncate text-xs text-muted-foreground">{d.text_body}</span>
+                  <span className="block truncate text-xs text-muted-foreground">
+                    {d.text_body}
+                  </span>
                 )}
               </span>
             </button>
-            <span className="shrink-0 text-xs text-muted-foreground">{formatDateTime(d.created_at)}</span>
+            <span className="shrink-0 text-xs text-muted-foreground">
+              {formatDateTime(d.created_at)}
+            </span>
             <Button variant="outline" size="sm" onClick={() => onEdit(d)}>
               Continuă
             </Button>
@@ -760,7 +921,12 @@ function DraftsList({
         <Button variant="outline" size="sm" disabled={page === 0} onClick={() => setPage(page - 1)}>
           Anterior
         </Button>
-        <Button variant="outline" size="sm" disabled={drafts.length < 50} onClick={() => setPage(page + 1)}>
+        <Button
+          variant="outline"
+          size="sm"
+          disabled={drafts.length < 50}
+          onClick={() => setPage(page + 1)}
+        >
           Următor
         </Button>
       </div>
@@ -768,12 +934,19 @@ function DraftsList({
   );
 }
 
-
 /* ------------------------------------------------------------------ */
 /* Conversație deschisă                                                */
 /* ------------------------------------------------------------------ */
 
-function ThreadView({ threadId, onBack, onChanged }: { threadId: string; onBack: () => void; onChanged: () => void }) {
+function ThreadView({
+  threadId,
+  onBack,
+  onChanged,
+}: {
+  threadId: string;
+  onBack: () => void;
+  onChanged: () => void;
+}) {
   const load = useServerFn(getThread);
   const markRead = useServerFn(setMailThreadRead);
   const setStatus = useServerFn(setMailThreadStatus);
@@ -802,7 +975,13 @@ function ThreadView({ threadId, onBack, onChanged }: { threadId: string; onBack:
     const res = await setStatus({ data: { threadId, status } });
     if (res.error) toast.error(res.error);
     else {
-      toast.success(status === "open" ? "Conversația a fost redeschisă." : status === "archived" ? "Conversația a fost arhivată." : "Conversația a fost mutată în spam.");
+      toast.success(
+        status === "open"
+          ? "Conversația a fost redeschisă."
+          : status === "archived"
+            ? "Conversația a fost arhivată."
+            : "Conversația a fost mutată în spam.",
+      );
       onChanged();
       onBack();
     }
@@ -823,7 +1002,9 @@ function ThreadView({ threadId, onBack, onChanged }: { threadId: string; onBack:
         <Button variant="ghost" size="sm" onClick={onBack}>
           <ArrowLeft className="mr-1.5 h-4 w-4" /> Înapoi
         </Button>
-        <h2 className="min-w-0 flex-1 truncate text-base font-semibold">{thread.subject || "(fără subiect)"}</h2>
+        <h2 className="min-w-0 flex-1 truncate text-base font-semibold">
+          {thread.subject || "(fără subiect)"}
+        </h2>
         {thread.status !== "open" ? (
           <Button variant="outline" size="sm" onClick={() => changeStatus("open")}>
             <ArchiveRestore className="mr-1.5 h-4 w-4" /> Redeschide
@@ -865,7 +1046,13 @@ function ThreadView({ threadId, onBack, onChanged }: { threadId: string; onBack:
         ))}
       </div>
 
-      <ReplyBox threadId={threadId} onSent={() => { void query.refetch(); onChanged(); }} />
+      <ReplyBox
+        threadId={threadId}
+        onSent={() => {
+          void query.refetch();
+          onChanged();
+        }}
+      />
     </div>
   );
 }
@@ -906,7 +1093,9 @@ function MessageCard({
         </span>
         <div className="min-w-0 flex-1">
           <p className="truncate text-sm font-medium text-foreground">
-            {message.from_name ? `${message.from_name} <${message.from_email}>` : message.from_email}
+            {message.from_name
+              ? `${message.from_name} <${message.from_email}>`
+              : message.from_email}
           </p>
           <p className="truncate text-xs text-muted-foreground">
             Către: {message.to_emails.join(", ")}
@@ -930,7 +1119,12 @@ function MessageCard({
                 {rendered!.blocked} imagini externe au fost blocate (pot semnala expeditorului că ai
                 deschis mesajul).
               </span>
-              <Button variant="outline" size="sm" className="h-7" onClick={() => setShowImages(true)}>
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-7"
+                onClick={() => setShowImages(true)}
+              >
                 Afișează imaginile
               </Button>
             </div>
@@ -959,12 +1153,14 @@ function MessageCard({
               variant="outline"
               size="sm"
               disabled={a.status !== "stored"}
-              title={a.status !== "stored" ? a.rejected_reason ?? "Indisponibil" : a.filename}
+              title={a.status !== "stored" ? (a.rejected_reason ?? "Indisponibil") : a.filename}
               onClick={() => onDownload(a.id)}
             >
               <Paperclip className="mr-1.5 h-3.5 w-3.5" />
               <span className="max-w-48 truncate">{a.filename}</span>
-              <span className="ml-1 text-xs text-muted-foreground">({Math.ceil(a.size_bytes / 1024)} KB)</span>
+              <span className="ml-1 text-xs text-muted-foreground">
+                ({Math.ceil(a.size_bytes / 1024)} KB)
+              </span>
             </Button>
           ))}
         </div>
@@ -989,17 +1185,32 @@ function useStagedAttachments() {
       for (const file of Array.from(files)) {
         const dataBase64 = await fileToBase64(file);
         const res = await upload({
-          data: { filename: file.name, contentType: file.type || "application/octet-stream", dataBase64 },
+          data: {
+            filename: file.name,
+            contentType: file.type || "application/octet-stream",
+            dataBase64,
+          },
         });
-        if (res.error || !res.upload) toast.error(res.error ?? `Fișierul ${file.name} nu a putut fi încărcat.`);
-        else setItems((prev) => [...prev, { id: res.upload!.id, filename: file.name, size: file.size }]);
+        if (res.error || !res.upload)
+          toast.error(res.error ?? `Fișierul ${file.name} nu a putut fi încărcat.`);
+        else
+          setItems((prev) => [
+            ...prev,
+            { id: res.upload!.id, filename: file.name, size: file.size },
+          ]);
       }
     } finally {
       setUploading(false);
     }
   };
 
-  return { items, uploading, addFiles, remove: (id: string) => setItems((p) => p.filter((i) => i.id !== id)), reset: () => setItems([]) };
+  return {
+    items,
+    uploading,
+    addFiles,
+    remove: (id: string) => setItems((p) => p.filter((i) => i.id !== id)),
+    reset: () => setItems([]),
+  };
 }
 
 function AttachmentPicker({
@@ -1022,14 +1233,31 @@ function AttachmentPicker({
         }}
       />
       <div className="flex flex-wrap items-center gap-2">
-        <Button type="button" variant="outline" size="sm" disabled={staged.uploading} onClick={() => inputRef.current?.click()}>
-          {staged.uploading ? <Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> : <Paperclip className="mr-1.5 h-4 w-4" />}
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          disabled={staged.uploading}
+          onClick={() => inputRef.current?.click()}
+        >
+          {staged.uploading ? (
+            <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />
+          ) : (
+            <Paperclip className="mr-1.5 h-4 w-4" />
+          )}
           Atașează
         </Button>
         {staged.items.map((i) => (
-          <span key={i.id} className="flex items-center gap-1 rounded-full bg-muted px-2.5 py-1 text-xs">
+          <span
+            key={i.id}
+            className="flex items-center gap-1 rounded-full bg-muted px-2.5 py-1 text-xs"
+          >
             <span className="max-w-40 truncate">{i.filename}</span>
-            <button type="button" aria-label={`Elimină ${i.filename}`} onClick={() => staged.remove(i.id)}>
+            <button
+              type="button"
+              aria-label={`Elimină ${i.filename}`}
+              onClick={() => staged.remove(i.id)}
+            >
               <Trash2 className="h-3 w-3 text-muted-foreground hover:text-destructive" />
             </button>
           </span>
@@ -1090,7 +1318,11 @@ function ReplyBox({ threadId, onSent }: { threadId: string; onSent: () => void }
       <AttachmentPicker staged={staged} inputRef={fileRef} />
       <div className="flex justify-end">
         <Button size="sm" onClick={send} disabled={sending}>
-          {sending ? <Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> : <Send className="mr-1.5 h-4 w-4" />}
+          {sending ? (
+            <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />
+          ) : (
+            <Send className="mr-1.5 h-4 w-4" />
+          )}
           Trimite răspuns
         </Button>
       </div>
@@ -1136,7 +1368,8 @@ function ComposeDialog({
   useEffect(() => {
     if (open) {
       setMailboxId(
-        (mailboxes.find((m) => m.id === (draft?.mailbox_id ?? defaultMailboxId)) ?? mailboxes[0])?.id ?? "",
+        (mailboxes.find((m) => m.id === (draft?.mailbox_id ?? defaultMailboxId)) ?? mailboxes[0])
+          ?.id ?? "",
       );
       setTo(draft?.to_emails.join(", ") ?? "");
       setCc(draft?.cc_emails.join(", ") ?? "");
@@ -1147,14 +1380,30 @@ function ComposeDialog({
     }
   }, [open, mailboxes, defaultMailboxId, draft]);
 
-  const split = (value: string) => value.split(/[;,]/).map((s) => s.trim()).filter(Boolean);
+  const split = (value: string) =>
+    value
+      .split(/[;,]/)
+      .map((s) => s.trim())
+      .filter(Boolean);
 
   const submit = async () => {
     const recipients = split(to);
-    if (!mailboxId) { toast.error("Alege căsuța expeditor."); return; }
-    if (!recipients.length) { toast.error("Adaugă cel puțin un destinatar."); return; }
-    if (!subject.trim()) { toast.error("Adaugă un subiect."); return; }
-    if (!text.trim() && !staged.items.length) { toast.error("Scrie un mesaj sau atașează un fișier."); return; }
+    if (!mailboxId) {
+      toast.error("Alege căsuța expeditor.");
+      return;
+    }
+    if (!recipients.length) {
+      toast.error("Adaugă cel puțin un destinatar.");
+      return;
+    }
+    if (!subject.trim()) {
+      toast.error("Adaugă un subiect.");
+      return;
+    }
+    if (!text.trim() && !staged.items.length) {
+      toast.error("Scrie un mesaj sau atașează un fișier.");
+      return;
+    }
 
     setSending(true);
     try {
@@ -1180,7 +1429,10 @@ function ComposeDialog({
         draftIdRef.current = null;
       }
       toast.success("Email trimis.");
-      setTo(""); setCc(""); setSubject(""); setText("");
+      setTo("");
+      setCc("");
+      setSubject("");
+      setText("");
       staged.reset();
       onSent();
     } finally {
@@ -1189,7 +1441,10 @@ function ComposeDialog({
   };
 
   const keepAsDraft = async () => {
-    if (!mailboxId) { toast.error("Alege căsuța expeditor."); return; }
+    if (!mailboxId) {
+      toast.error("Alege căsuța expeditor.");
+      return;
+    }
     setSavingDraft(true);
     try {
       const res = await saveDraft({
@@ -1226,7 +1481,9 @@ function ComposeDialog({
             <div className="space-y-1.5">
               <Label>De la</Label>
               <Select value={mailboxId} onValueChange={setMailboxId}>
-                <SelectTrigger><SelectValue placeholder="Alege căsuța" /></SelectTrigger>
+                <SelectTrigger>
+                  <SelectValue placeholder="Alege căsuța" />
+                </SelectTrigger>
                 <SelectContent>
                   {mailboxes.map((m) => (
                     <SelectItem key={m.id} value={m.id}>
@@ -1238,35 +1495,68 @@ function ComposeDialog({
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="compose-to">Către</Label>
-              <Input id="compose-to" value={to} onChange={(e) => setTo(e.target.value)} placeholder="client@exemplu.ro, alt@exemplu.ro" />
+              <Input
+                id="compose-to"
+                value={to}
+                onChange={(e) => setTo(e.target.value)}
+                placeholder="client@exemplu.ro, alt@exemplu.ro"
+              />
             </div>
           </div>
           <div className="grid gap-3 sm:grid-cols-2">
             <div className="space-y-1.5">
               <Label htmlFor="compose-cc">CC (opțional)</Label>
-              <Input id="compose-cc" value={cc} onChange={(e) => setCc(e.target.value)} placeholder="coleg@exemplu.ro" />
+              <Input
+                id="compose-cc"
+                value={cc}
+                onChange={(e) => setCc(e.target.value)}
+                placeholder="coleg@exemplu.ro"
+              />
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="compose-subject">Subiect</Label>
-              <Input id="compose-subject" value={subject} onChange={(e) => setSubject(e.target.value)} placeholder="Subiectul emailului" />
+              <Input
+                id="compose-subject"
+                value={subject}
+                onChange={(e) => setSubject(e.target.value)}
+                placeholder="Subiectul emailului"
+              />
             </div>
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="compose-body">Mesaj</Label>
-            <Textarea id="compose-body" value={text} onChange={(e) => setText(e.target.value)} rows={8} placeholder="Scrie mesajul…" />
+            <Textarea
+              id="compose-body"
+              value={text}
+              onChange={(e) => setText(e.target.value)}
+              rows={8}
+              placeholder="Scrie mesajul…"
+            />
           </div>
           <AttachmentPicker staged={staged} inputRef={fileRef} />
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={sending || savingDraft}>
+          <Button
+            variant="outline"
+            onClick={() => onOpenChange(false)}
+            disabled={sending || savingDraft}
+          >
             Renunță
           </Button>
           <Button variant="outline" onClick={keepAsDraft} disabled={sending || savingDraft}>
-            {savingDraft ? <Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> : <Mail className="mr-1.5 h-4 w-4" />}
+            {savingDraft ? (
+              <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />
+            ) : (
+              <Mail className="mr-1.5 h-4 w-4" />
+            )}
             Salvează ciorna
           </Button>
           <Button onClick={submit} disabled={sending || savingDraft}>
-            {sending ? <Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> : <Send className="mr-1.5 h-4 w-4" />}
+            {sending ? (
+              <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />
+            ) : (
+              <Send className="mr-1.5 h-4 w-4" />
+            )}
             Trimite
           </Button>
         </DialogFooter>
@@ -1297,16 +1587,25 @@ function MailboxesDialog({
   const [saving, setSaving] = useState(false);
 
   const add = async () => {
-    if (!address.trim()) { toast.error("Adaugă adresa de email."); return; }
+    if (!address.trim()) {
+      toast.error("Adaugă adresa de email.");
+      return;
+    }
     setSaving(true);
     try {
       const res = await create({
-        data: { address: address.trim(), displayName: displayName.trim() || null, scope: "platform", isActive: true },
+        data: {
+          address: address.trim(),
+          displayName: displayName.trim() || null,
+          scope: "platform",
+          isActive: true,
+        },
       });
       if (res.error) toast.error(res.error);
       else {
         toast.success("Căsuța a fost creată.");
-        setAddress(""); setDisplayName("");
+        setAddress("");
+        setDisplayName("");
         onChanged();
       }
     } finally {
@@ -1329,22 +1628,36 @@ function MailboxesDialog({
         <DialogHeader>
           <DialogTitle>Căsuțe de email</DialogTitle>
           <DialogDescription>
-            Adresele de pe care platforma trimite și primește emailuri. Fiecare adresă trebuie să existe și în Mailgun.
+            Adresele de pe care platforma trimite și primește emailuri. Fiecare adresă trebuie să
+            existe și în Mailgun.
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-2">
           {mailboxes.map((m) => (
-            <div key={m.id} className="flex items-center gap-3 rounded-lg border border-border bg-surface px-3 py-2.5">
+            <div
+              key={m.id}
+              className="flex items-center gap-3 rounded-lg border border-border bg-surface px-3 py-2.5"
+            >
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-medium">{m.address}</p>
-                {m.display_name && <p className="truncate text-xs text-muted-foreground">{m.display_name}</p>}
+                {m.display_name && (
+                  <p className="truncate text-xs text-muted-foreground">{m.display_name}</p>
+                )}
               </div>
-              <Badge variant="outline" className="text-[11px]">{m.scope === "platform" ? "Platformă" : "Agenție"}</Badge>
-              <Switch checked={m.is_active} onCheckedChange={(v) => toggle(m, v)} aria-label={`Activează ${m.address}`} />
+              <Badge variant="outline" className="text-[11px]">
+                {m.scope === "platform" ? "Platformă" : "Agenție"}
+              </Badge>
+              <Switch
+                checked={m.is_active}
+                onCheckedChange={(v) => toggle(m, v)}
+                aria-label={`Activează ${m.address}`}
+              />
             </div>
           ))}
-          {!mailboxes.length && <p className="text-sm text-muted-foreground">Nicio căsuță configurată încă.</p>}
+          {!mailboxes.length && (
+            <p className="text-sm text-muted-foreground">Nicio căsuță configurată încă.</p>
+          )}
         </div>
 
         <div className="space-y-3 rounded-lg border border-dashed border-border p-3">
@@ -1352,15 +1665,29 @@ function MailboxesDialog({
           <div className="grid gap-3 sm:grid-cols-2">
             <div className="space-y-1.5">
               <Label htmlFor="mb-address">Adresă</Label>
-              <Input id="mb-address" value={address} onChange={(e) => setAddress(e.target.value)} placeholder="contact@domeniu.ro" />
+              <Input
+                id="mb-address"
+                value={address}
+                onChange={(e) => setAddress(e.target.value)}
+                placeholder="contact@domeniu.ro"
+              />
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="mb-name">Nume afișat (opțional)</Label>
-              <Input id="mb-name" value={displayName} onChange={(e) => setDisplayName(e.target.value)} placeholder="Habitoo" />
+              <Input
+                id="mb-name"
+                value={displayName}
+                onChange={(e) => setDisplayName(e.target.value)}
+                placeholder="Habitoo"
+              />
             </div>
           </div>
           <Button size="sm" onClick={add} disabled={saving}>
-            {saving ? <Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> : <Plus className="mr-1.5 h-4 w-4" />}
+            {saving ? (
+              <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />
+            ) : (
+              <Plus className="mr-1.5 h-4 w-4" />
+            )}
             Adaugă căsuța
           </Button>
         </div>

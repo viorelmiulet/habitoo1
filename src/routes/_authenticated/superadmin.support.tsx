@@ -13,12 +13,22 @@ import { QueryError } from "@/components/app/QueryError";
 import { EmptyState } from "@/components/app/EmptyState";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { appHead } from "@/components/app/app-head";
 import { SupportStatusBadge, SupportThread } from "@/components/app/SupportThread";
 import { formatDateTime } from "@/lib/format";
 import { cn } from "@/lib/utils";
-import { listAllSupportTickets, SUPPORT_CATEGORIES, SUPPORT_CATEGORY_LABELS } from "@/lib/support.functions";
+import {
+  listAllSupportTickets,
+  SUPPORT_CATEGORIES,
+  SUPPORT_CATEGORY_LABELS,
+} from "@/lib/support.functions";
 
 export const Route = createFileRoute("/_authenticated/superadmin/support")({
   head: () => appHead("Habitoo CRM — suport și tichete"),
@@ -50,10 +60,14 @@ function SuperadminSupportPage() {
   const rows = tickets.data ?? [];
   const organizations = useMemo(() => {
     const map = new Map<string, string>();
-    for (const r of rows) if (r.organizationId) map.set(r.organizationId, r.organizationName ?? r.organizationId);
-    return Array.from(map, ([id, name]) => ({ id, name })).sort((a, b) => a.name.localeCompare(b.name, "ro"));
+    for (const r of rows)
+      if (r.organizationId) map.set(r.organizationId, r.organizationName ?? r.organizationId);
+    return Array.from(map, ([id, name]) => ({ id, name })).sort((a, b) =>
+      a.name.localeCompare(b.name, "ro"),
+    );
   }, [rows]);
-  const visible = organizationId === "all" ? rows : rows.filter((r) => r.organizationId === organizationId);
+  const visible =
+    organizationId === "all" ? rows : rows.filter((r) => r.organizationId === organizationId);
 
   return (
     <>
@@ -61,9 +75,7 @@ function SuperadminSupportPage() {
         title="Suport și tichete"
         description="Toate solicitările primite din agenții, cele nerezolvate primele."
         meta={
-          <span className="text-sm text-muted-foreground">
-            {visible.length} tichete afișate
-          </span>
+          <span className="text-sm text-muted-foreground">{visible.length} tichete afișate</span>
         }
       />
 
@@ -156,7 +168,8 @@ function SuperadminSupportPage() {
                   </div>
                   <p className="mt-0.5 truncate text-xs text-muted-foreground">
                     {t.organizationName ?? "—"} · {t.createdByName ?? "—"} ·{" "}
-                    {SUPPORT_CATEGORY_LABELS[t.category] ?? t.category} · {formatDateTime(t.lastMessageAt)}
+                    {SUPPORT_CATEGORY_LABELS[t.category] ?? t.category} ·{" "}
+                    {formatDateTime(t.lastMessageAt)}
                     {t.lastReplyByStaff ? "" : " · așteaptă răspuns"}
                   </p>
                 </button>
@@ -167,7 +180,11 @@ function SuperadminSupportPage() {
             {selected ? (
               <SupportThread ticketId={selected} staff />
             ) : (
-              <EmptyState icon={LifeBuoy} title="Selectează un tichet" description="Alege un tichet pentru a răspunde." />
+              <EmptyState
+                icon={LifeBuoy}
+                title="Selectează un tichet"
+                description="Alege un tichet pentru a răspunde."
+              />
             )}
           </div>
         </div>

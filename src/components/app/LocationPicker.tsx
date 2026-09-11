@@ -161,7 +161,9 @@ export function LocationPicker({
             </option>
           ))}
         </select>
-        {counties.isLoading && <p className="text-xs text-muted-foreground">Se încarcă nomenclatorul…</p>}
+        {counties.isLoading && (
+          <p className="text-xs text-muted-foreground">Se încarcă nomenclatorul…</p>
+        )}
       </div>
 
       <div className="space-y-2" ref={boxRef}>
@@ -175,10 +177,18 @@ export function LocationPicker({
               <MapPin className="size-4 shrink-0 text-muted-foreground" />
               <span className="truncate">
                 {value.localityName}
-                <span className="ml-1 text-xs text-muted-foreground">SIRUTA {value.localitySirutaCode}</span>
+                <span className="ml-1 text-xs text-muted-foreground">
+                  SIRUTA {value.localitySirutaCode}
+                </span>
               </span>
             </span>
-            <Button type="button" variant="ghost" size="sm" onClick={clearLocality} aria-label="Șterge localitatea">
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={clearLocality}
+              aria-label="Șterge localitatea"
+            >
               <X className="size-4" />
             </Button>
           </div>
@@ -190,7 +200,11 @@ export function LocationPicker({
               className="pl-9"
               autoComplete="off"
               disabled={!value.countySirutaCode}
-              placeholder={value.countySirutaCode ? "Caută localitatea (ex. chiajna)…" : "Alege mai întâi județul"}
+              placeholder={
+                value.countySirutaCode
+                  ? "Caută localitatea (ex. chiajna)…"
+                  : "Alege mai întâi județul"
+              }
               value={term}
               onChange={(e) => {
                 setTerm(e.target.value);
@@ -217,7 +231,8 @@ export function LocationPicker({
                       <span className="min-w-0">
                         <span className="block truncate font-medium">{hit.name}</span>
                         <span className="block truncate text-xs text-muted-foreground">
-                          {LOCALITY_TYPE_LABELS[hit.type] ?? hit.type} · {hit.uatName} · {value.countyName}
+                          {LOCALITY_TYPE_LABELS[hit.type] ?? hit.type} · {hit.uatName} ·{" "}
+                          {value.countyName}
                         </span>
                       </span>
                       <Check className="mt-0.5 size-4 shrink-0 opacity-0" />
@@ -225,7 +240,9 @@ export function LocationPicker({
                   ))
                 ) : (
                   <p className="px-2 py-3 text-sm text-muted-foreground">
-                    {localities.isFetching ? "Se caută…" : "Nicio localitate găsită în acest județ."}
+                    {localities.isFetching
+                      ? "Se caută…"
+                      : "Nicio localitate găsită în acest județ."}
                   </p>
                 )}
               </div>
@@ -233,8 +250,8 @@ export function LocationPicker({
           </div>
         )}
         <p className="text-xs text-muted-foreground">
-          Nomenclator oficial SIRUTA. Cartierele și ansamblurile (ex. Militari Residence) se trec în câmpul „Zonă /
-          cartier”.
+          Nomenclator oficial SIRUTA. Cartierele și ansamblurile (ex. Militari Residence) se trec în
+          câmpul „Zonă / cartier”.
         </p>
       </div>
     </>

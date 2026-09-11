@@ -17,7 +17,13 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { navyButton } from "@/components/marketing/PublicHeader";
 import { PublicLayout } from "@/components/marketing/PublicLayout";
@@ -113,7 +119,10 @@ function ContactPage() {
         data: {
           ...values,
           phone: values.phone?.trim() ? values.phone.trim() : undefined,
-          sourcePath: typeof window !== "undefined" ? window.location.pathname + window.location.search : undefined,
+          sourcePath:
+            typeof window !== "undefined"
+              ? window.location.pathname + window.location.search
+              : undefined,
         },
       });
       setSubmitted(values);
@@ -162,10 +171,12 @@ function ContactPage() {
                       <MessageSquare className="size-5" />
                     </span>
                     <div className="min-w-0 flex-1">
-                      <h2 className="text-lg font-semibold text-navy">Solicitarea ta a fost trimisă</h2>
+                      <h2 className="text-lg font-semibold text-navy">
+                        Solicitarea ta a fost trimisă
+                      </h2>
                       <p className="mt-1 text-sm text-muted-foreground">
-                        Am primit mesajul tău și revenim în cel mai scurt timp la {submitted.email}. Iată ce
-                        ne-ai trimis:
+                        Am primit mesajul tău și revenim în cel mai scurt timp la {submitted.email}.
+                        Iată ce ne-ai trimis:
                       </p>
                       <dl className="mt-4 grid gap-2 text-sm sm:grid-cols-2">
                         <div>
@@ -209,7 +220,6 @@ function ContactPage() {
                   </div>
                 </div>
               ) : (
-
                 <Form {...form}>
                   <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5" noValidate>
                     <div className="grid gap-5 sm:grid-cols-2">
@@ -251,7 +261,12 @@ function ContactPage() {
                           <FormItem>
                             <FormLabel>Telefon (opțional)</FormLabel>
                             <FormControl>
-                              <Input type="tel" placeholder="07xx xxx xxx" autoComplete="tel" {...field} />
+                              <Input
+                                type="tel"
+                                placeholder="07xx xxx xxx"
+                                autoComplete="tel"
+                                {...field}
+                              />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -264,7 +279,11 @@ function ContactPage() {
                           <FormItem>
                             <FormLabel>Agenție</FormLabel>
                             <FormControl>
-                              <Input placeholder="Numele agenției" autoComplete="organization" {...field} />
+                              <Input
+                                placeholder="Numele agenției"
+                                autoComplete="organization"
+                                {...field}
+                              />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -309,7 +328,8 @@ function ContactPage() {
                             />
                           </FormControl>
                           <FormDescription>
-                            Câteva detalii despre agenție ne ajută să pregătim o demonstrație relevantă.
+                            Câteva detalii despre agenție ne ajută să pregătim o demonstrație
+                            relevantă.
                           </FormDescription>
                           <FormMessage />
                         </FormItem>
@@ -321,7 +341,8 @@ function ContactPage() {
                       disabled={form.formState.isSubmitting}
                       className={`${navyButton} h-12 w-full sm:w-auto`}
                     >
-                      {form.formState.isSubmitting ? "Se trimite..." : "Trimite solicitarea"} <ArrowRight />
+                      {form.formState.isSubmitting ? "Se trimite..." : "Trimite solicitarea"}{" "}
+                      <ArrowRight />
                     </Button>
                   </form>
                 </Form>

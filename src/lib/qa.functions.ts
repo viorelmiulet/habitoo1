@@ -7,7 +7,11 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import type { DemoCredential, QaStatus, SeedSummary } from "@/lib/qa-seed.server";
 
 type AuthContext = {
-  supabase: { rpc: (fn: "is_superadmin") => PromiseLike<{ data: boolean | null; error: { message: string } | null }> };
+  supabase: {
+    rpc: (
+      fn: "is_superadmin",
+    ) => PromiseLike<{ data: boolean | null; error: { message: string } | null }>;
+  };
   userId: string;
 };
 
@@ -61,16 +65,28 @@ export const seedQaDemo = createServerFn({ method: "POST" })
 
     if (!org) {
       org = await seed.createQaOrganization(admin, actorId);
-      await seed.writeQaAudit(admin, { actorId, action: "qa.org_created", orgId: org.id, values: { name: org.name, slug: org.slug } });
+      await seed.writeQaAudit(admin, {
+        actorId,
+        action: "qa.org_created",
+        orgId: org.id,
+        values: { name: org.name, slug: org.slug },
+      });
     } else if (org.demo_seeded_at && data.mode !== "reset") {
-      throw new Error("Agenția QA este deja populată. Folosește „Resetare date demo” pentru a o repopula.");
+      throw new Error(
+        "Agenția QA este deja populată. Folosește „Resetare date demo” pentru a o repopula.",
+      );
     } else {
       // Reset explicit sau curățarea resturilor unui seed anterior eșuat (agenția există, dar nu e marcată ca populată).
       // Funcția DB refuză orice organizație fără is_demo = true.
       removed = await seed.resetQaData(admin, org.id);
       const removedTotal = Object.values(removed).reduce((a, b) => a + b, 0);
       if (data.mode === "reset" || removedTotal > 0) {
-        await seed.writeQaAudit(admin, { actorId, action: "qa.reset", orgId: org.id, values: { removed, mode: data.mode } });
+        await seed.writeQaAudit(admin, {
+          actorId,
+          action: "qa.reset",
+          orgId: org.id,
+          values: { removed, mode: data.mode },
+        });
       }
     }
 
@@ -80,7 +96,11 @@ export const seedQaDemo = createServerFn({ method: "POST" })
       actorId,
       action: data.mode === "reset" ? "qa.reseeded" : "qa.seeded",
       orgId: org.id,
-      values: { counts: summary.counts, version: seed.QA_SEED_VERSION, users_created: users.credentials.filter((c) => c.created).length },
+      values: {
+        counts: summary.counts,
+        version: seed.QA_SEED_VERSION,
+        users_created: users.credentials.filter((c) => c.created).length,
+      },
     });
 
     return {
@@ -102,7 +122,12 @@ export const rotateQaPasswords = createServerFn({ method: "POST" })
     const org = await seed.findQaOrganization(admin);
     if (!org) throw new Error("Nu există o agenție QA. Populează mai întâi datele demo.");
     const users = await seed.ensureDemoUsers(admin, org.id, { rotatePasswords: true });
-    await seed.writeQaAudit(admin, { actorId, action: "qa.credentials_rotated", orgId: org.id, values: { users: users.credentials.map((c) => c.email) } });
+    await seed.writeQaAudit(admin, {
+      actorId,
+      action: "qa.credentials_rotated",
+      orgId: org.id,
+      values: { users: users.credentials.map((c) => c.email) },
+    });
     return { credentials: users.credentials };
   });
 

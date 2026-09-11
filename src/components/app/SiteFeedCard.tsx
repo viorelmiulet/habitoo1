@@ -93,8 +93,8 @@ export function SiteFeedCard() {
           <div>
             <h3 className="font-medium">Feed pentru site-ul agenției</h3>
             <p className="text-sm text-muted-foreground">
-              Un token de acces permite site-ului agenției să citească ofertele
-              publicate și să trimită înapoi cereri de contact.
+              Un token de acces permite site-ului agenției să citească ofertele publicate și să
+              trimită înapoi cereri de contact.
             </p>
           </div>
           <StatusBadge tone={data?.token ? "success" : "neutral"}>
@@ -180,7 +180,10 @@ export function SiteFeedCard() {
             ["POST", "/contacts"],
             ["POST", "/visits"],
           ].map(([method, path]) => (
-            <li key={path} className="flex items-center justify-between gap-3 rounded-lg border border-border px-3 py-2">
+            <li
+              key={path}
+              className="flex items-center justify-between gap-3 rounded-lg border border-border px-3 py-2"
+            >
               <span className="truncate">
                 <span className="text-muted-foreground">{method}</span> {base}
                 {path}
@@ -206,7 +209,9 @@ export function SiteFeedCard() {
               <li key={`${log.createdAt}-${i}`} className="flex flex-wrap items-center gap-3 py-2">
                 <span className="font-mono text-xs text-muted-foreground">{log.method}</span>
                 <span className="min-w-0 flex-1 truncate">{log.endpoint}</span>
-                <StatusBadge tone={log.status < 300 ? "success" : log.status < 500 ? "warning" : "danger"}>
+                <StatusBadge
+                  tone={log.status < 300 ? "success" : log.status < 500 ? "warning" : "danger"}
+                >
                   {log.status}
                 </StatusBadge>
                 <span className="text-xs text-muted-foreground">

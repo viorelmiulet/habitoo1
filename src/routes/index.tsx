@@ -32,7 +32,10 @@ import { publicHead, SITE_URL } from "@/components/marketing/public-head";
 import { getCurrentHostname } from "@/lib/current-host";
 import { isCrmHostname } from "@/lib/host";
 import { DashboardMock } from "@/components/marketing/mockups/DashboardMock";
-import { PropertyMatchesMock, RequestMatchesMock } from "@/components/marketing/mockups/MatchingMock";
+import {
+  PropertyMatchesMock,
+  RequestMatchesMock,
+} from "@/components/marketing/mockups/MatchingMock";
 import { PipelineMock } from "@/components/marketing/mockups/PipelineMock";
 import { PropertiesMock } from "@/components/marketing/mockups/PropertiesMock";
 import { ReportsMock } from "@/components/marketing/mockups/ReportsMock";
@@ -103,13 +106,29 @@ const valueStrip = [
 ];
 
 const flow = [
-  { icon: Building2, title: "Proprietate", text: "Adaugi proprietatea cu date, fotografii și status." },
+  {
+    icon: Building2,
+    title: "Proprietate",
+    text: "Adaugi proprietatea cu date, fotografii și status.",
+  },
   { icon: Users, title: "Client", text: "Creezi contactul: proprietar, cumpărător, chiriaș." },
-  { icon: ClipboardList, title: "Cerere", text: "Notezi criteriile: buget, zonă, camere, suprafață." },
+  {
+    icon: ClipboardList,
+    title: "Cerere",
+    text: "Notezi criteriile: buget, zonă, camere, suprafață.",
+  },
   { icon: Sparkles, title: "Matching", text: "Vezi imediat potrivirile cu scor și motive." },
   { icon: Kanban, title: "Lead", text: "Urmărești oportunitatea prin etapele pipeline-ului." },
-  { icon: CalendarDays, title: "Vizionare", text: "Programezi vizionarea direct din proprietate sau lead." },
-  { icon: TrendingUp, title: "Tranzacție", text: "Închizi și vezi rezultatul în obiective și rapoarte." },
+  {
+    icon: CalendarDays,
+    title: "Vizionare",
+    text: "Programezi vizionarea direct din proprietate sau lead.",
+  },
+  {
+    icon: TrendingUp,
+    title: "Tranzacție",
+    text: "Închizi și vezi rezultatul în obiective și rapoarte.",
+  },
 ];
 
 const benefits = [
@@ -196,7 +215,9 @@ function HomePage() {
                   <ArrowRightLeft className="size-4" />
                 </span>
                 <div className="min-w-0">
-                  <p className="truncate text-xs font-semibold">Lead mutat: Contactat → Calificat</p>
+                  <p className="truncate text-xs font-semibold">
+                    Lead mutat: Contactat → Calificat
+                  </p>
                   <p className="text-[11px] text-muted-foreground">Salvat automat în istoric</p>
                 </div>
               </div>
@@ -264,7 +285,9 @@ function HomePage() {
                       </span>
                     </div>
                     <h3 className="mt-4 font-sans text-sm font-semibold text-navy">{step.title}</h3>
-                    <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{step.text}</p>
+                    <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+                      {step.text}
+                    </p>
                   </div>
                 </Reveal>
                 {i < flow.length - 1 ? (
@@ -406,7 +429,9 @@ function HomePage() {
               <li key={f.title}>
                 <Reveal delay={i * 60}>
                   <div className="rounded-2xl border border-navy-foreground/10 bg-navy-foreground/5 p-5">
-                    <h3 className="font-sans text-sm font-semibold text-navy-foreground">{f.title}</h3>
+                    <h3 className="font-sans text-sm font-semibold text-navy-foreground">
+                      {f.title}
+                    </h3>
                     <p className="mt-2 text-sm text-navy-muted">{f.text}</p>
                   </div>
                 </Reveal>
@@ -498,7 +523,9 @@ function HomePage() {
           <div className="mt-14 rounded-3xl border border-border bg-card p-6 sm:p-8">
             <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
               <div className="max-w-md">
-                <h3 className="text-xl font-semibold text-navy">Și tot ce mai are nevoie o echipă</h3>
+                <h3 className="text-xl font-semibold text-navy">
+                  Și tot ce mai are nevoie o echipă
+                </h3>
                 <p className="mt-2 text-sm text-muted-foreground">
                   Module care lucrează împreună cu proprietățile și lead-urile, nu pe lângă ele.
                 </p>

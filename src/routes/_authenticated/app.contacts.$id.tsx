@@ -58,7 +58,10 @@ export const Route = createFileRoute("/_authenticated/app/contacts/$id")({
   component: ContactDetailPage,
 });
 
-type ActivityDefaults = { kind: "call" | "viewing" | "meeting" | "task" | "email" | "followup" | "note"; title?: string };
+type ActivityDefaults = {
+  kind: "call" | "viewing" | "meeting" | "task" | "email" | "followup" | "note";
+  title?: string;
+};
 
 function ContactDetailPage() {
   const { id } = Route.useParams();
@@ -71,20 +74,33 @@ function ContactDetailPage() {
   const { data, isLoading } = useQuery({
     queryKey: ["contact", id],
     queryFn: async () => {
-      const [contact, activities, leads, requests, properties, leadEventsRaw, agents] = await Promise.all([
-        supabase.from("contacts").select("*").eq("id", id).maybeSingle(),
-        supabase.from("activities").select("*").eq("contact_id", id).order("starts_at", { ascending: false }),
-        supabase.from("leads").select("*").eq("contact_id", id),
-        supabase.from("requests").select("*").eq("contact_id", id).order("created_at", { ascending: false }),
-        supabase.from("properties").select("*").eq("owner_contact_id", id),
-        supabase.from("leads").select("id").eq("contact_id", id),
-        supabase.from("profiles").select("id,full_name"),
-      ]);
+      const [contact, activities, leads, requests, properties, leadEventsRaw, agents] =
+        await Promise.all([
+          supabase.from("contacts").select("*").eq("id", id).maybeSingle(),
+          supabase
+            .from("activities")
+            .select("*")
+            .eq("contact_id", id)
+            .order("starts_at", { ascending: false }),
+          supabase.from("leads").select("*").eq("contact_id", id),
+          supabase
+            .from("requests")
+            .select("*")
+            .eq("contact_id", id)
+            .order("created_at", { ascending: false }),
+          supabase.from("properties").select("*").eq("owner_contact_id", id),
+          supabase.from("leads").select("id").eq("contact_id", id),
+          supabase.from("profiles").select("id,full_name"),
+        ]);
       if (contact.error) throw contact.error;
       const leadIds = (leadEventsRaw.data ?? []).map((l) => l.id);
       const leadEvents =
         leadIds.length > 0
-          ? await supabase.from("lead_events").select("*").in("lead_id", leadIds).order("created_at", { ascending: false })
+          ? await supabase
+              .from("lead_events")
+              .select("*")
+              .in("lead_id", leadIds)
+              .order("created_at", { ascending: false })
           : { data: [] as never[] };
       return {
         contact: contact.data,
@@ -99,7 +115,8 @@ function ContactDetailPage() {
   });
 
   const contact = data?.contact;
-  const agentName = (aid: string | null) => data?.agents.find((a) => a.id === aid)?.full_name ?? "Neasignat";
+  const agentName = (aid: string | null) =>
+    data?.agents.find((a) => a.id === aid)?.full_name ?? "Neasignat";
 
   const addNote = useMutation({
     mutationFn: async () => {
@@ -128,7 +145,10 @@ function ContactDetailPage() {
   const [edit, setEdit] = useState<Record<string, string> | null>(null);
   const save = useMutation({
     mutationFn: async (patch: Record<string, unknown>) => {
-      const { error } = await supabase.from("contacts").update(patch as never).eq("id", id);
+      const { error } = await supabase
+        .from("contacts")
+        .update(patch as never)
+        .eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -140,7 +160,12 @@ function ContactDetailPage() {
     onError: (e: Error) => toastError(e),
   });
 
-  const [requestForm, setRequestForm] = useState({ title: "", kind: "buy", budget_min: "", budget_max: "" });
+  const [requestForm, setRequestForm] = useState({
+    title: "",
+    kind: "buy",
+    budget_min: "",
+    budget_max: "",
+  });
   const createRequest = useMutation({
     mutationFn: async () => {
       if (!user?.organization?.id) throw new Error("Agenția nu este configurată.");
@@ -150,7 +175,9 @@ function ContactDetailPage() {
         assigned_to: user.userId,
         created_by: user.userId,
         contact_id: id,
-        title: requestForm.title || `Cerere ${contact?.first_name ?? ""} ${contact?.last_name ?? ""}`.trim(),
+        title:
+          requestForm.title ||
+          `Cerere ${contact?.first_name ?? ""} ${contact?.last_name ?? ""}`.trim(),
         kind: requestForm.kind as never,
         budget_min: num(requestForm.budget_min),
         budget_max: num(requestForm.budget_max),
@@ -172,13 +199,28 @@ function ContactDetailPage() {
     type Item = { at: string; kind: string; label: string; icon: typeof StickyNote };
     const items: Item[] = [];
     for (const a of data.activities) {
-      items.push({ at: a.starts_at, kind: a.kind, label: `${activityKindLabels[a.kind] ?? a.kind}: ${a.title}`, icon: a.kind === "note" ? StickyNote : a.kind === "viewing" ? Eye : CalendarClock });
+      items.push({
+        at: a.starts_at,
+        kind: a.kind,
+        label: `${activityKindLabels[a.kind] ?? a.kind}: ${a.title}`,
+        icon: a.kind === "note" ? StickyNote : a.kind === "viewing" ? Eye : CalendarClock,
+      });
     }
     for (const r of data.requests) {
-      items.push({ at: r.created_at, kind: "request", label: `Cerere creată: ${r.title}`, icon: Target });
+      items.push({
+        at: r.created_at,
+        kind: "request",
+        label: `Cerere creată: ${r.title}`,
+        icon: Target,
+      });
     }
     for (const e of data.leadEvents as { created_at: string; to_stage: string }[]) {
-      items.push({ at: e.created_at, kind: "lead", label: `Lead → ${leadStageLabels[e.to_stage] ?? e.to_stage}`, icon: UserRound });
+      items.push({
+        at: e.created_at,
+        kind: "lead",
+        label: `Lead → ${leadStageLabels[e.to_stage] ?? e.to_stage}`,
+        icon: UserRound,
+      });
     }
     return items.sort((x, y) => new Date(y.at).getTime() - new Date(x.at).getTime());
   }, [data]);
@@ -189,7 +231,11 @@ function ContactDetailPage() {
       <EmptyState
         icon={UserRound}
         title="Contactul nu a fost găsit"
-        action={<Button asChild size="sm"><Link to="/app/contacts">Înapoi la contacte</Link></Button>}
+        action={
+          <Button asChild size="sm">
+            <Link to="/app/contacts">Înapoi la contacte</Link>
+          </Button>
+        }
       />
     );
   }
@@ -229,11 +275,15 @@ function ContactDetailPage() {
           />
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-2">
-              <StatusBadge tone="primary">{contactTypeLabels[contact.type] ?? contact.type}</StatusBadge>
+              <StatusBadge tone="primary">
+                {contactTypeLabels[contact.type] ?? contact.type}
+              </StatusBadge>
               <StatusBadge tone={contact.status === "active" ? "success" : "neutral"}>
                 {contact.status === "active" ? "Activ" : "Inactiv"}
               </StatusBadge>
-              {contact.gdpr_consent ? <StatusBadge tone="success">Consimțământ GDPR</StatusBadge> : null}
+              {contact.gdpr_consent ? (
+                <StatusBadge tone="success">Consimțământ GDPR</StatusBadge>
+              ) : null}
             </div>
             <div className="mt-3 grid gap-x-6 gap-y-2 text-sm sm:grid-cols-2 lg:grid-cols-4">
               <div>
@@ -247,7 +297,10 @@ function ContactDetailPage() {
               <div className="min-w-0">
                 <p className="text-xs text-muted-foreground">Agent</p>
                 <p className="flex items-center gap-1.5">
-                  <UserAvatar name={agentName(contact.assigned_to)} className="size-6 text-[10px]" />
+                  <UserAvatar
+                    name={agentName(contact.assigned_to)}
+                    className="size-6 text-[10px]"
+                  />
                   <span className="truncate">{agentName(contact.assigned_to)}</span>
                 </p>
               </div>
@@ -341,17 +394,30 @@ function ContactDetailPage() {
             ].map(([key, label]) => (
               <div key={key} className="space-y-2">
                 <Label htmlFor={key}>{label}</Label>
-                <Input id={key} value={edit[key] ?? ""} onChange={(e) => setEdit((d) => ({ ...(d ?? {}), [key]: e.target.value }))} />
+                <Input
+                  id={key}
+                  value={edit[key] ?? ""}
+                  onChange={(e) => setEdit((d) => ({ ...(d ?? {}), [key]: e.target.value }))}
+                />
               </div>
             ))}
           </div>
           <div className="space-y-2">
             <Label htmlFor="notes">Note</Label>
-            <Textarea id="notes" rows={3} value={edit.notes ?? ""} onChange={(e) => setEdit((d) => ({ ...(d ?? {}), notes: e.target.value }))} />
+            <Textarea
+              id="notes"
+              rows={3}
+              value={edit.notes ?? ""}
+              onChange={(e) => setEdit((d) => ({ ...(d ?? {}), notes: e.target.value }))}
+            />
           </div>
           <div className="flex justify-end gap-2">
-            <Button type="button" variant="outline" onClick={() => setEdit(null)}>Anulează</Button>
-            <Button type="submit" disabled={save.isPending}>Salvează</Button>
+            <Button type="button" variant="outline" onClick={() => setEdit(null)}>
+              Anulează
+            </Button>
+            <Button type="submit" disabled={save.isPending}>
+              Salvează
+            </Button>
           </div>
         </form>
       ) : null}
@@ -370,10 +436,19 @@ function ContactDetailPage() {
         </TabsList>
 
         <TabsContent value="overview" className="panel space-y-2 p-5 text-sm">
-          <p><span className="text-muted-foreground">Sursă:</span> {contact.source ?? "—"}</p>
-          <p><span className="text-muted-foreground">Companie:</span> {contact.company ?? "—"}</p>
-          <p><span className="text-muted-foreground">Etichete:</span> {(contact.tags ?? []).join(", ") || "—"}</p>
-          <p><span className="text-muted-foreground">Note:</span> {contact.notes ?? "—"}</p>
+          <p>
+            <span className="text-muted-foreground">Sursă:</span> {contact.source ?? "—"}
+          </p>
+          <p>
+            <span className="text-muted-foreground">Companie:</span> {contact.company ?? "—"}
+          </p>
+          <p>
+            <span className="text-muted-foreground">Etichete:</span>{" "}
+            {(contact.tags ?? []).join(", ") || "—"}
+          </p>
+          <p>
+            <span className="text-muted-foreground">Note:</span> {contact.notes ?? "—"}
+          </p>
         </TabsContent>
 
         <TabsContent value="properties">
@@ -384,10 +459,16 @@ function ContactDetailPage() {
               <ul className="divide-y divide-border">
                 {data?.properties.map((p) => (
                   <li key={p.id} className="flex items-center gap-3 px-5 py-3 text-sm">
-                    <Link to="/app/properties/$id" params={{ id: p.id }} className="min-w-0 flex-1 truncate font-medium hover:text-primary">
+                    <Link
+                      to="/app/properties/$id"
+                      params={{ id: p.id }}
+                      className="min-w-0 flex-1 truncate font-medium hover:text-primary"
+                    >
                       {p.title}
                     </Link>
-                    <StatusBadge tone={propertyStatusTone[p.status]}>{propertyStatusLabels[p.status]}</StatusBadge>
+                    <StatusBadge tone={propertyStatusTone[p.status]}>
+                      {propertyStatusLabels[p.status]}
+                    </StatusBadge>
                     <span className="w-28 text-right">{formatMoney(p.price, p.currency)}</span>
                   </li>
                 ))}
@@ -404,13 +485,22 @@ function ContactDetailPage() {
               <ul className="divide-y divide-border">
                 {data?.requests.map((r) => (
                   <li key={r.id} className="flex items-center gap-3 px-5 py-3 text-sm">
-                    <Link to="/app/requests/$id" params={{ id: r.id }} className="min-w-0 flex-1 truncate font-medium hover:text-primary">
+                    <Link
+                      to="/app/requests/$id"
+                      params={{ id: r.id }}
+                      className="min-w-0 flex-1 truncate font-medium hover:text-primary"
+                    >
                       {r.title}
                     </Link>
-                    <span className="text-xs text-muted-foreground">{requestKindLabels[r.kind]}</span>
-                    <StatusBadge tone={requestStatusTone[r.status] ?? "neutral"}>{requestStatusLabels[r.status] ?? r.status}</StatusBadge>
                     <span className="text-xs text-muted-foreground">
-                      {formatMoney(r.budget_min, r.currency)} – {formatMoney(r.budget_max, r.currency)}
+                      {requestKindLabels[r.kind]}
+                    </span>
+                    <StatusBadge tone={requestStatusTone[r.status] ?? "neutral"}>
+                      {requestStatusLabels[r.status] ?? r.status}
+                    </StatusBadge>
+                    <span className="text-xs text-muted-foreground">
+                      {formatMoney(r.budget_min, r.currency)} –{" "}
+                      {formatMoney(r.budget_max, r.currency)}
                     </span>
                   </li>
                 ))}
@@ -444,9 +534,13 @@ function ContactDetailPage() {
               <ul className="divide-y divide-border">
                 {data?.activities.map((a) => (
                   <li key={a.id} className="flex flex-wrap items-center gap-3 px-5 py-3 text-sm">
-                    <StatusBadge tone={activityStatusTone[a.status] ?? "neutral"}>{activityKindLabels[a.kind]}</StatusBadge>
+                    <StatusBadge tone={activityStatusTone[a.status] ?? "neutral"}>
+                      {activityKindLabels[a.kind]}
+                    </StatusBadge>
                     <span className="min-w-0 flex-1">{a.title}</span>
-                    <span className="text-xs text-muted-foreground">{formatDateTime(a.starts_at)}</span>
+                    <span className="text-xs text-muted-foreground">
+                      {formatDateTime(a.starts_at)}
+                    </span>
                   </li>
                 ))}
               </ul>
@@ -460,13 +554,19 @@ function ContactDetailPage() {
               <EmptyState title="Nicio vizionare" />
             ) : (
               <ul className="divide-y divide-border">
-                {data?.activities.filter((a) => a.kind === "viewing").map((a) => (
-                  <li key={a.id} className="flex flex-wrap items-center gap-3 px-5 py-3 text-sm">
-                    <StatusBadge tone={activityStatusTone[a.status] ?? "neutral"}>{a.status}</StatusBadge>
-                    <span className="min-w-0 flex-1">{a.title}</span>
-                    <span className="text-xs text-muted-foreground">{formatDateTime(a.starts_at)}</span>
-                  </li>
-                ))}
+                {data?.activities
+                  .filter((a) => a.kind === "viewing")
+                  .map((a) => (
+                    <li key={a.id} className="flex flex-wrap items-center gap-3 px-5 py-3 text-sm">
+                      <StatusBadge tone={activityStatusTone[a.status] ?? "neutral"}>
+                        {a.status}
+                      </StatusBadge>
+                      <span className="min-w-0 flex-1">{a.title}</span>
+                      <span className="text-xs text-muted-foreground">
+                        {formatDateTime(a.starts_at)}
+                      </span>
+                    </li>
+                  ))}
               </ul>
             )}
           </div>
@@ -481,9 +581,19 @@ function ContactDetailPage() {
         <TabsContent value="notes" className="space-y-4">
           <div className="panel space-y-3 p-5">
             <Label htmlFor="note">Adaugă notă</Label>
-            <Textarea id="note" rows={3} value={note} onChange={(e) => setNote(e.target.value)} placeholder="Ex: discuție telefonică, caută 3 camere în Cluj…" />
+            <Textarea
+              id="note"
+              rows={3}
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+              placeholder="Ex: discuție telefonică, caută 3 camere în Cluj…"
+            />
             <div className="flex justify-end">
-              <Button size="sm" disabled={!note.trim() || addNote.isPending} onClick={() => addNote.mutate()}>
+              <Button
+                size="sm"
+                disabled={!note.trim() || addNote.isPending}
+                onClick={() => addNote.mutate()}
+              >
                 Salvează nota
               </Button>
             </div>
@@ -493,12 +603,14 @@ function ContactDetailPage() {
               <EmptyState icon={FileText} title="Nicio notă" />
             ) : (
               <ul className="divide-y divide-border">
-                {data?.activities.filter((a) => a.kind === "note").map((a) => (
-                  <li key={a.id} className="px-5 py-3 text-sm">
-                    <p>{a.title}</p>
-                    <p className="text-xs text-muted-foreground">{formatDateTime(a.starts_at)}</p>
-                  </li>
-                ))}
+                {data?.activities
+                  .filter((a) => a.kind === "note")
+                  .map((a) => (
+                    <li key={a.id} className="px-5 py-3 text-sm">
+                      <p>{a.title}</p>
+                      <p className="text-xs text-muted-foreground">{formatDateTime(a.starts_at)}</p>
+                    </li>
+                  ))}
               </ul>
             )}
           </div>
@@ -537,7 +649,9 @@ function ContactDetailPage() {
       <Dialog open={requestDialogOpen} onOpenChange={setRequestDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Cerere nouă pentru {contact.first_name} {contact.last_name}</DialogTitle>
+            <DialogTitle>
+              Cerere nouă pentru {contact.first_name} {contact.last_name}
+            </DialogTitle>
           </DialogHeader>
           <form
             className="space-y-4"
@@ -548,16 +662,28 @@ function ContactDetailPage() {
           >
             <div className="space-y-2">
               <Label htmlFor="req_title">Titlu</Label>
-              <Input id="req_title" value={requestForm.title} onChange={(e) => setRequestForm((f) => ({ ...f, title: e.target.value }))} placeholder="Ex: caută 2 camere Centru" />
+              <Input
+                id="req_title"
+                value={requestForm.title}
+                onChange={(e) => setRequestForm((f) => ({ ...f, title: e.target.value }))}
+                placeholder="Ex: caută 2 camere Centru"
+              />
             </div>
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
                 <Label>Tip</Label>
-                <Select value={requestForm.kind} onValueChange={(v) => setRequestForm((f) => ({ ...f, kind: v }))}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
+                <Select
+                  value={requestForm.kind}
+                  onValueChange={(v) => setRequestForm((f) => ({ ...f, kind: v }))}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
                   <SelectContent>
                     {Object.entries(requestKindLabels).map(([k, v]) => (
-                      <SelectItem key={k} value={k}>{v}</SelectItem>
+                      <SelectItem key={k} value={k}>
+                        {v}
+                      </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -565,16 +691,30 @@ function ContactDetailPage() {
               <div />
               <div className="space-y-2">
                 <Label htmlFor="budget_min">Buget minim</Label>
-                <Input id="budget_min" type="number" value={requestForm.budget_min} onChange={(e) => setRequestForm((f) => ({ ...f, budget_min: e.target.value }))} />
+                <Input
+                  id="budget_min"
+                  type="number"
+                  value={requestForm.budget_min}
+                  onChange={(e) => setRequestForm((f) => ({ ...f, budget_min: e.target.value }))}
+                />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="budget_max">Buget maxim</Label>
-                <Input id="budget_max" type="number" value={requestForm.budget_max} onChange={(e) => setRequestForm((f) => ({ ...f, budget_max: e.target.value }))} />
+                <Input
+                  id="budget_max"
+                  type="number"
+                  value={requestForm.budget_max}
+                  onChange={(e) => setRequestForm((f) => ({ ...f, budget_max: e.target.value }))}
+                />
               </div>
             </div>
             <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => setRequestDialogOpen(false)}>Renunță</Button>
-              <Button type="submit" disabled={createRequest.isPending}>Salvează</Button>
+              <Button type="button" variant="outline" onClick={() => setRequestDialogOpen(false)}>
+                Renunță
+              </Button>
+              <Button type="submit" disabled={createRequest.isPending}>
+                Salvează
+              </Button>
             </DialogFooter>
           </form>
         </DialogContent>

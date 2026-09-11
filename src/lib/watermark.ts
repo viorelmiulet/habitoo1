@@ -69,7 +69,9 @@ type OrgWatermarkFields = {
 };
 
 export function watermarkFromOrg(org?: OrgWatermarkFields | null): WatermarkConfig {
-  const position = (WATERMARK_POSITIONS as readonly string[]).includes(org?.watermark_position ?? "")
+  const position = (WATERMARK_POSITIONS as readonly string[]).includes(
+    org?.watermark_position ?? "",
+  )
     ? (org?.watermark_position as WatermarkPosition)
     : "bottom-right";
   return {

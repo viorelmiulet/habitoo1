@@ -61,7 +61,6 @@ export function storiaReactivationPlan(meta: {
   return "none";
 }
 
-
 // ------------------------------------------------ referințe advert per ofertă
 
 export type AdvertRefs = Partial<Record<StoriaTransaction, string>>;
@@ -135,16 +134,17 @@ export function withStoriaAdSlug(externalId: string | null, slug: string): strin
  */
 export function storiaAdSlugFromUrl(url: string | null): string | null {
   if (!url) return null;
-  const patterns = [/-ID([A-Za-z0-9]{2,})\.html/, /\bID([A-Za-z0-9]{4,})\b/, /\/(\d{6,})(?:[-/.?#]|$)/];
+  const patterns = [
+    /-ID([A-Za-z0-9]{2,})\.html/,
+    /\bID([A-Za-z0-9]{4,})\b/,
+    /\/(\d{6,})(?:[-/.?#]|$)/,
+  ];
   for (const re of patterns) {
     const match = re.exec(url);
     if (match?.[1]) return match[1];
   }
   return null;
 }
-
-
-
 
 // --------------------------------------------------------------- erori Storia
 
@@ -162,8 +162,12 @@ function detailOf(body: Record<string, unknown> | null): string | null {
     for (const item of validation.slice(0, 6)) {
       if (item && typeof item === "object") {
         const rec = item as Record<string, unknown>;
-        const field = typeof rec["field"] === "string" ? rec["field"] : (rec["urn"] as string | undefined);
-        const msg = typeof rec["message"] === "string" ? rec["message"] : (rec["detail"] as string | undefined);
+        const field =
+          typeof rec["field"] === "string" ? rec["field"] : (rec["urn"] as string | undefined);
+        const msg =
+          typeof rec["message"] === "string"
+            ? rec["message"]
+            : (rec["detail"] as string | undefined);
         if (field || msg) parts.push([field, msg].filter(Boolean).join(": "));
       } else push(item);
     }
@@ -173,7 +177,8 @@ function detailOf(body: Record<string, unknown> | null): string | null {
 }
 
 function failure(status: number, body: Record<string, unknown> | null): PortalError {
-  const code: PortalErrorCode = status === 400 || status === 409 ? "VALIDATION_ERROR" : codeFromHttpStatus(status);
+  const code: PortalErrorCode =
+    status === 400 || status === 409 ? "VALIDATION_ERROR" : codeFromHttpStatus(status);
   const detail = detailOf(body);
   const message =
     code === "VALIDATION_ERROR"
@@ -245,7 +250,6 @@ export async function waitForAdvertSettled(
   return meta;
 }
 
-
 export async function deactivateAdvert(
   organizationId: string,
   uuid: string,
@@ -284,21 +288,26 @@ export type AdvertMeta = {
   visibleInProfile: boolean | null;
 };
 
-
 /**
  * Statusul real al anunțului. Documentația marchează `/meta` drept soluție
  * temporară față de notificări, așa că îl folosim doar ca lectură best-effort.
  */
-export async function readAdvertMeta(organizationId: string, uuid: string): Promise<AdvertMeta | null> {
+export async function readAdvertMeta(
+  organizationId: string,
+  uuid: string,
+): Promise<AdvertMeta | null> {
   const res = await olxAuthorizedRequest(organizationId, "GET", `/advert/v1/${uuid}/meta`);
   if (res.status < 200 || res.status >= 300) return null;
   const data = res.body?.["data"];
   if (!data || typeof data !== "object") return null;
   const rec = data as Record<string, unknown>;
-  const state = (rec["state"] && typeof rec["state"] === "object" ? rec["state"] : {}) as Record<string, unknown>;
-  const moderation = (state["moderation"] && typeof state["moderation"] === "object"
-    ? state["moderation"]
-    : {}) as Record<string, unknown>;
+  const state = (rec["state"] && typeof rec["state"] === "object" ? rec["state"] : {}) as Record<
+    string,
+    unknown
+  >;
+  const moderation = (
+    state["moderation"] && typeof state["moderation"] === "object" ? state["moderation"] : {}
+  ) as Record<string, unknown>;
   const visible = state["visible_in_profile"];
   return {
     uuid,
@@ -309,7 +318,8 @@ export async function readAdvertMeta(organizationId: string, uuid: string): Prom
           ? visible.toLowerCase() === "true"
           : null,
 
-    lastActionStatus: typeof rec["last_action_status"] === "string" ? rec["last_action_status"] : null,
+    lastActionStatus:
+      typeof rec["last_action_status"] === "string" ? rec["last_action_status"] : null,
     code: typeof state["code"] === "string" ? state["code"] : null,
     url: typeof state["url"] === "string" ? state["url"] : null,
     moderationReason:

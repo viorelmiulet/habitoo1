@@ -195,7 +195,8 @@ function UsersPage() {
   const colleagues = (user: PlatformUser | null) =>
     user
       ? users.filter(
-          (u) => u.id !== user.id && u.organization_id && u.organization_id === user.organization_id,
+          (u) =>
+            u.id !== user.id && u.organization_id && u.organization_id === user.organization_id,
         )
       : [];
 
@@ -300,9 +301,7 @@ function UsersPage() {
       {/* Filtrele active, ca pastile care se pot închide */}
       {q.trim() || orgFilter !== "all" || roleFilter !== "all" || statusFilter !== "all" ? (
         <div className="flex flex-wrap items-center gap-2">
-          {q.trim() ? (
-            <FilterPill label={`Căutare: ${q.trim()}`} onClear={() => setQ("")} />
-          ) : null}
+          {q.trim() ? <FilterPill label={`Căutare: ${q.trim()}`} onClear={() => setQ("")} /> : null}
           {orgFilter !== "all" ? (
             <FilterPill
               label={
@@ -339,7 +338,6 @@ function UsersPage() {
           </button>
         </div>
       ) : null}
-
 
       <div className="panel overflow-hidden">
         {isLoading ? (
@@ -378,9 +376,7 @@ function UsersPage() {
                     size="sm"
                     variant="outline"
                     disabled={toggleActive.isPending}
-                    onClick={() =>
-                      toggleActive.mutate({ userId: u.id, isActive: !u.is_active })
-                    }
+                    onClick={() => toggleActive.mutate({ userId: u.id, isActive: !u.is_active })}
                   >
                     {u.is_active ? "Dezactivează" : "Reactivează"}
                   </Button>
@@ -539,7 +535,11 @@ function UsersPage() {
             </div>
             <div className="grid gap-1.5">
               <Label>Către</Label>
-              <Select value={reassignTo || undefined} onValueChange={setReassignTo} disabled={!reassignFrom}>
+              <Select
+                value={reassignTo || undefined}
+                onValueChange={setReassignTo}
+                disabled={!reassignFrom}
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="Alege utilizatorul destinație" />
                 </SelectTrigger>
@@ -564,16 +564,13 @@ function UsersPage() {
             </Button>
             <Button
               disabled={!reassignFrom || !reassignTo || doReassign.isPending}
-              onClick={() =>
-                doReassign.mutate({ fromUserId: reassignFrom, toUserId: reassignTo })
-              }
+              onClick={() => doReassign.mutate({ fromUserId: reassignFrom, toUserId: reassignTo })}
             >
               Realocă
             </Button>
           </SheetFooter>
         </SheetContent>
       </Sheet>
-
 
       {/* Ștergere definitivă */}
       <Dialog open={deleting !== null} onOpenChange={(o) => !o && setDeleting(null)}>

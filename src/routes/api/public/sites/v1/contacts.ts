@@ -2,7 +2,12 @@
 // Creează/reutilizează contactul și creează un lead în pipeline, cu source website/API.
 import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
-import { withFeedAuth, jsonResponse, errorResponse, FEED_API_VERSION } from "@/lib/site-feed/auth.server";
+import {
+  withFeedAuth,
+  jsonResponse,
+  errorResponse,
+  FEED_API_VERSION,
+} from "@/lib/site-feed/auth.server";
 import { requireFeedScope } from "@/lib/site-feed/handlers.server";
 
 const schema = z.object({
@@ -33,7 +38,10 @@ export const Route = createFileRoute("/api/public/sites/v1/contacts")({
           }
           const input = parsed.data;
           if (!input.telefon && !input.email) {
-            return { response: errorResponse(422, "Either telefon or email is required."), items: 0 };
+            return {
+              response: errorResponse(422, "Either telefon or email is required."),
+              items: 0,
+            };
           }
 
           const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -99,9 +107,10 @@ export const Route = createFileRoute("/api/public/sites/v1/contacts")({
             .eq("contact_id", contactId)
             .not("stage", "in", "(won,lost)")
             .limit(1);
-          const openLead = await (propertyId
-            ? openLeadQuery.eq("property_id", propertyId)
-            : openLeadQuery.is("property_id", null)
+          const openLead = await (
+            propertyId
+              ? openLeadQuery.eq("property_id", propertyId)
+              : openLeadQuery.is("property_id", null)
           ).maybeSingle();
 
           let leadId: string;
@@ -145,7 +154,6 @@ export const Route = createFileRoute("/api/public/sites/v1/contacts")({
             });
           }
 
-
           await supabaseAdmin.from("audit_logs").insert({
             organization_id: auth.organizationId,
             action: "site_feed.contact_received",
@@ -156,7 +164,10 @@ export const Route = createFileRoute("/api/public/sites/v1/contacts")({
 
           return {
             response: jsonResponse(
-              { data: { lead_id: leadId, contact_id: contactId, deduplicated }, api_version: FEED_API_VERSION },
+              {
+                data: { lead_id: leadId, contact_id: contactId, deduplicated },
+                api_version: FEED_API_VERSION,
+              },
               201,
             ),
             items: 1,

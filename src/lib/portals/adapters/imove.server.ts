@@ -34,7 +34,11 @@ async function feedUrl(): Promise<string> {
 
 async function statusOutcome(ctx: PortalContext): Promise<PortalResult<ConnectionStatusOutcome>> {
   const url = await feedUrl();
-  const build = await buildImoveFeed({ organizationId: ctx.organizationId, requestUrl: url, perPage: 500 });
+  const build = await buildImoveFeed({
+    organizationId: ctx.organizationId,
+    requestUrl: url,
+    perPage: 500,
+  });
 
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   // Credențialul este EMIS DE iMOVE și salvat de utilizator; Habitoo nu emite chei.
@@ -71,7 +75,6 @@ async function statusOutcome(ctx: PortalContext): Promise<PortalResult<Connectio
   };
 }
 
-
 export const imoveAdapter: PortalAdapter = {
   id: "imove",
 
@@ -97,7 +100,10 @@ export const imoveAdapter: PortalAdapter = {
     return notSupported("sync");
   },
 
-  async diagnoseListing(ctx: PortalContext, ref: ListingRef): Promise<PortalResult<ListingDiagnostics>> {
+  async diagnoseListing(
+    ctx: PortalContext,
+    ref: ListingRef,
+  ): Promise<PortalResult<ListingDiagnostics>> {
     const url = await feedUrl();
     const result = await imoveFeedContains({
       organizationId: ctx.organizationId,
