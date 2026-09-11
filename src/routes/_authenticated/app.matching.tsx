@@ -327,12 +327,25 @@ ${materialSignature(brandingFromOrg(me?.organization))}`;
       <PageHeader
         title="Matching"
         description="Confruntă cererile clienților cu portofoliul de proprietăți și acționează direct pe potriviri."
+        meta={
+          !isLoading ? (
+            <>
+              <StatusBadge tone="primary" dot>
+                {filteredRows.length} potriviri afișate
+              </StatusBadge>
+              <StatusBadge tone="neutral">
+                {requests.length} cereri · {properties.length} proprietăți
+              </StatusBadge>
+            </>
+          ) : undefined
+        }
         actions={
           <Button variant="outline" size="sm" onClick={handleExport} disabled={filteredRows.length === 0}>
             <Download className="mr-1.5 size-4" /> Export CSV
           </Button>
         }
       />
+
 
       <div className="panel space-y-4 p-4">
         <div className="flex flex-wrap items-center gap-2">
