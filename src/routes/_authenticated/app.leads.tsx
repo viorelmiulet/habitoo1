@@ -277,6 +277,31 @@ function LeadsPage() {
     },
   });
 
+  /** Prezentare: îmbină evenimentele de etapă și activitățile într-un singur fir. */
+  const timelineItems = useMemo(() => {
+    type Item = { id: string; at: string; label: string; note?: string | null; icon: typeof Phone };
+    const items: Item[] = [];
+    for (const ev of detailData?.events ?? []) {
+      items.push({
+        id: `ev-${ev.id}`,
+        at: ev.created_at,
+        label: `${ev.from_stage ? `${leadStageLabels[ev.from_stage]} → ` : ""}${leadStageLabels[ev.to_stage]}`,
+        note: ev.note,
+        icon: ArrowRight,
+      });
+    }
+    for (const a of detailData?.activities ?? []) {
+      items.push({
+        id: `ac-${a.id}`,
+        at: a.starts_at,
+        label: a.title,
+        note: a.description,
+        icon: LEAD_EVENT_ICONS[a.kind] ?? CalendarClock,
+      });
+    }
+    return items.sort((x, y) => new Date(y.at).getTime() - new Date(x.at).getTime());
+  }, [detailData]);
+
   const [form, setForm] = useState(emptyForm());
 
   const openCreate = () => {
