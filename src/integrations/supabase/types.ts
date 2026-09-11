@@ -826,6 +826,11 @@ export type Database = {
           trade_registry_number: string | null
           updated_at: string
           updated_by: string | null
+          watermark_enabled: boolean
+          watermark_margin_percent: number
+          watermark_opacity_percent: number
+          watermark_position: string
+          watermark_scale_percent: number
         }
         Insert: {
           archived_at?: string | null
@@ -859,6 +864,11 @@ export type Database = {
           trade_registry_number?: string | null
           updated_at?: string
           updated_by?: string | null
+          watermark_enabled?: boolean
+          watermark_margin_percent?: number
+          watermark_opacity_percent?: number
+          watermark_position?: string
+          watermark_scale_percent?: number
         }
         Update: {
           archived_at?: string | null
@@ -892,6 +902,11 @@ export type Database = {
           trade_registry_number?: string | null
           updated_at?: string
           updated_by?: string | null
+          watermark_enabled?: boolean
+          watermark_margin_percent?: number
+          watermark_opacity_percent?: number
+          watermark_position?: string
+          watermark_scale_percent?: number
         }
         Relationships: []
       }
