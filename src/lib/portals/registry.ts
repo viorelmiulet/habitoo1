@@ -371,6 +371,55 @@ export const PORTALS: PortalDefinition[] = [
   },
 ];
 
+/**
+ * Perechi de portaluri acoperite de o SINGURĂ integrare (aceeași cheie API):
+ * ce se publică pe portalul principal apare automat și pe cel acoperit.
+ * Se aplică doar zonelor tehnice (configurare, activare, publicare per ofertă);
+ * pagina publică de prezentare rămâne cu fiecare brand afișat separat.
+ */
+export type PortalGroup = { primary: PortalId; covers: PortalId[]; label: string };
+
+export const PORTAL_GROUPS: PortalGroup[] = [
+  { primary: "storia", covers: ["olx"], label: "Storia.ro + OLX.ro" },
+  { primary: "publi24", covers: ["romimo"], label: "Publi24.ro + Romimo.ro" },
+];
+
+const PORTAL_COVERED_BY = new Map<PortalId, PortalId>(
+  PORTAL_GROUPS.flatMap((g) => g.covers.map((id) => [id, g.primary] as const)),
+);
+
+/** Portalul este acoperit de integrarea altui portal, deci nu se configurează separat. */
+export function isPortalCovered(id: PortalId): boolean {
+  return PORTAL_COVERED_BY.has(id);
+}
+
+/** Portalul care acoperă integrarea (sau el însuși, dacă nu face parte din pereche). */
+export function portalIntegrationOwner(id: PortalId): PortalId {
+  return PORTAL_COVERED_BY.get(id) ?? id;
+}
+
+export function portalGroupFor(id: PortalId): PortalGroup | null {
+  return PORTAL_GROUPS.find((g) => g.primary === id) ?? null;
+}
+
+/** Numele afișat în zonele tehnice: eticheta perechii, dacă există. */
+export function portalDisplayName(id: PortalId): string {
+  const group = portalGroupFor(id);
+  if (group) return group.label;
+  return getPortalDefinition(id)?.display_name ?? id;
+}
+
+/** Portalurile ale căror logo-uri se afișează pe rând (perechea întreagă). */
+export function portalLogoIds(id: PortalId): PortalId[] {
+  const group = portalGroupFor(id);
+  return group ? [group.primary, ...group.covers] : [id];
+}
+
+/** Portalurile care se configurează/activează: perechile apar o singură dată. */
+export function configurablePortals(): PortalDefinition[] {
+  return PORTALS.filter((p) => !isPortalCovered(p.id));
+}
+
 export function getPortalDefinition(id: string): PortalDefinition | null {
   return PORTALS.find((p) => p.id === id) ?? null;
 }
