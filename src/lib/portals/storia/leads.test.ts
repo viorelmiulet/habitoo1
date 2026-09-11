@@ -3,7 +3,6 @@ import {
   parseStoriaAdIds,
   parseStoriaAdSlugs,
   storiaAdSlugFromUrl,
-  withStoriaAdId,
   withStoriaAdSlug,
 } from "./adverts.server";
 import { parseStoriaCustomId, readEventShape, readMessagePayload } from "./leads.server";
@@ -25,16 +24,18 @@ const lifecyclePayload = {
   event_type: "advert_posted_success",
 };
 
-/** Payload documentat pentru mesaje (developer.olxgroup.com/docs/incoming-message). */
+/** Payload real anonim pentru mesaje: `ad_id` este slugul alfanumeric din URL. */
 const messagePayload = {
   data: {
-    ad_id: 9846457,
+    ad_id: "IwcT",
     conversation_id: "9846457",
     created_at: "2018-07-16T11:04:50.000+0100",
     from: "storiaro",
     id: 208853314,
-    message: "Sunt interesat de apartament, se poate vedea sâmbătă?",
-    sender_name: "John Doe",
+    message: {
+      name: "John Doe",
+      text: "Sunt interesat de apartament, se poate vedea sâmbătă?",
+    },
     sender_email: "myemail@gmail.com",
     sender_phone: 961231212,
     uuid: "6073df05-2979-4372-a552-4c906a02a5cc",
@@ -60,7 +61,7 @@ describe("readEventShape", () => {
     const shape = readEventShape(messagePayload)!;
     expect(shape.flow).toBe("incoming_message");
     expect(shape.advertUuid).toBeNull();
-    expect(shape.adId).toBe("9846457");
+    expect(shape.adSlug).toBe("IwcT");
   });
 
   it("extrage expeditorul și mesajul", () => {
@@ -88,27 +89,22 @@ describe("identificatori", () => {
     expect(parseStoriaCustomId("altceva")).toBeNull();
   });
 
-  it("memorează id-ul numeric al anunțului fără să piardă uuid-urile", () => {
+  it("memorează slug-ul canonic fără să piardă uuid-urile", () => {
     const external = "SALE:43744f15-9268-4cda-a46e-ffa3c2b7182e";
-    const updated = withStoriaAdId(external, "9846457");
-    expect(updated).toBe(`${external}|AD:9846457`);
-    expect(parseStoriaAdIds(updated)).toEqual(["9846457"]);
-    expect(withStoriaAdId(updated, "9846457")).toBe(updated);
-  });
-
-  it("memorează slug-ul din link separat de id-ul numeric", () => {
-    const external = "SALE:43744f15-9268-4cda-a46e-ffa3c2b7182e";
-    const updated = withStoriaAdSlug(withStoriaAdId(external, "9846457"), "IwcT");
-    expect(updated).toBe(`${external}|AD:9846457|ADSLUG:IwcT`);
+    const updated = withStoriaAdSlug(external, "IwcT");
+    expect(updated).toBe(`${external}|ADSLUG:IwcT`);
     expect(parseStoriaAdSlugs(updated)).toEqual(["IwcT"]);
-    expect(parseStoriaAdIds(updated)).toEqual(["9846457"]);
+    expect(withStoriaAdSlug(updated, "IwcT")).toBe(updated);
   });
 
-  it("separă slug-ul din link de id-ul numeric în notificarea de ciclu de viață", () => {
+  it("citește segmentele AD vechi doar pentru compatibilitate", () => {
+    expect(parseStoriaAdIds("SALE:uuid|AD:9846457")).toEqual(["9846457"]);
+  });
+
+  it("extrage slug-ul din link în notificarea de ciclu de viață", () => {
     const shape = readEventShape(lifecyclePayload)!;
     expect(shape.publicUrl).toBe("https://www.storia.ro/ro/oferta/apartament-IDabc.html");
     expect(shape.adSlug).toBe("abc");
-    expect(shape.adId).toBeNull();
   });
 
   it("citește id-ul alfanumeric din formatul real al linkului Storia", () => {

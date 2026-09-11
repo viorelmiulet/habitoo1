@@ -85,14 +85,9 @@ export function serializeAdvertRefs(refs: AdvertRefs): string | null {
 }
 
 /**
- * Storia expune DOUĂ identificatoare distincte pentru același anunț:
- *   - `AD:<id>` — id-ul numeric intern (`data.ad_id` din notificările de mesaje);
- *   - `ADSLUG:<id>` — id-ul din linkul public (`...-IDIwcT.html`), alfanumeric.
- *
- * Verificat pe date reale: `GET /advert/v1/{uuid}/meta` NU întoarce niciun id
- * numeric (doar `uuid`, `custom_fields.id` și `state.url`), deci id-ul numeric
- * nu poate fi derivat din link. Păstrăm ambele forme în `external_id` și facem
- * potrivirea mesajelor tolerantă la oricare dintre ele.
+ * Identificatorul public Storia este slugul alfanumeric din URL (`...-IDIwcT.html`).
+ * Payloadurile reale de mesaje trimit exact aceeași valoare în `data.ad_id`,
+ * așadar forma canonică salvată în `external_id` este `ADSLUG:<slug>`.
  */
 function parseSegments(externalId: string | null, key: string): string[] {
   const out: string[] = [];
@@ -109,13 +104,9 @@ function withSegment(externalId: string | null, key: string, value: string): str
   return [...existing, `${key}:${value}`].join("|");
 }
 
-/** Id-ul numeric intern al anunțului (`data.ad_id` din notificările de mesaje). */
+/** Compatibilitate la citire pentru înregistrări istorice; nu mai scriem segmente `AD:`. */
 export function parseStoriaAdIds(externalId: string | null): string[] {
   return parseSegments(externalId, "AD");
-}
-
-export function withStoriaAdId(externalId: string | null, adId: string): string {
-  return withSegment(externalId, "AD", adId);
 }
 
 /** Id-ul din linkul public (slug), alfanumeric — util pentru afișare și potrivire. */
@@ -128,9 +119,9 @@ export function withStoriaAdSlug(externalId: string | null, slug: string): strin
 }
 
 /**
- * Id-ul din linkul public Storia. Formatul REAL confirmat pe un anunț live este
+ * Slugul din linkul public Storia. Formatul REAL confirmat pe un anunț live este
  * alfanumeric: `https://www.storia.ro/ro/oferta/apartament-test-IDIwcT.html`
- * → `IwcT`. NU este id-ul numeric folosit în notificările de mesaje.
+ * → `IwcT`. Aceeași valoare vine în `data.ad_id` la mesajele reale.
  */
 export function storiaAdSlugFromUrl(url: string | null): string | null {
   if (!url) return null;
