@@ -1,7 +1,26 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import { ArrowLeft, Mail, MessageCircle, Phone, Sparkles, Target, UserPlus } from "lucide-react";
+import {
+  ArrowLeft,
+  Banknote,
+  BedDouble,
+  CalendarClock,
+  Car,
+  Check,
+  Flame,
+  Mail,
+  MapPin,
+  MessageCircle,
+  Phone,
+  Ruler,
+  Sofa,
+  Sparkles,
+  Target,
+  User,
+  UserPlus,
+  X,
+} from "lucide-react";
 import { toast } from "sonner";
 import { toastError } from "@/lib/errors";
 import { PageHeader } from "@/components/app/PageHeader";
