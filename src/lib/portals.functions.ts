@@ -15,6 +15,7 @@ import {
   PORTALS,
   configurablePortals,
   isPortalCovered,
+  portalDisplayName,
   derivePortalConnectionStatus,
   getPortalDefinition,
   type PortalConnectionStatus,
@@ -1068,7 +1069,7 @@ export const getPropertyPortalStatus = createServerFn({ method: "POST" })
 
         return {
           portalId: portal.id,
-          portalName: portal.display_name,
+          portalName: portalDisplayName(portal.id),
           connected: connection?.status === "connected" || connection?.status === "ready",
           status: listing?.status ?? "not_published",
           externalId: listing?.external_id ?? diagnostics?.externalId ?? null,
@@ -1274,7 +1275,7 @@ export const getPropertiesPortalMatrix = createServerFn({ method: "POST" })
         });
         return {
           portalId: portal.id,
-          portalName: portal.display_name,
+          portalName: portalDisplayName(portal.id),
           logo: portal.logo,
           availability: portal.status,
           selected: pub?.enabled === true,
@@ -1475,7 +1476,7 @@ export const publishPropertyToSelectedPortals = createServerFn({ method: "POST" 
       });
       results.push({
         portalId,
-        portalName: getPortalDefinition(portalId)?.display_name ?? portalId,
+        portalName: portalDisplayName(portalId),
         ok: result.ok,
         message: result.ok ? (result.message ?? result.detail) : result.message,
       });
@@ -1573,7 +1574,7 @@ export const previewPortalFeed = createServerFn({ method: "POST" })
     return {
       ok: true,
       portalId: definition.id,
-      portalName: definition.display_name,
+      portalName: portalDisplayName(definition.id),
       feedUrl,
       selected: build.selected,
       valid: build.listings.length,
@@ -1704,7 +1705,7 @@ export async function applyPortalSelectionForOrg(input: {
           if (wanted.enabled) {
             results.push({
               portalId: definition.id,
-              portalName: definition.display_name,
+              portalName: portalDisplayName(definition.id),
               action: "blocked",
               ok: false,
               message: `${definition.display_name} nu este activat pentru agenția ta.`,
@@ -1883,7 +1884,7 @@ export async function applyPortalSelectionForOrg(input: {
         const reason = error instanceof Error ? error.message : portalError.message;
         results.push({
           portalId: definition.id,
-          portalName: definition.display_name,
+          portalName: portalDisplayName(definition.id),
           action: "blocked",
           ok: false,
           message: `${definition.display_name}: ${reason}`,
