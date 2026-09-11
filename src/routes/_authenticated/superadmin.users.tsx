@@ -558,7 +558,7 @@ function UsersPage() {
               ) : null}
             </div>
           </div>
-          <DialogFooter>
+          <SheetFooter className="mt-auto flex-row justify-end gap-2 p-0">
             <Button variant="outline" onClick={() => setReassignOpen(false)}>
               Renunță
             </Button>
@@ -570,9 +570,10 @@ function UsersPage() {
             >
               Realocă
             </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          </SheetFooter>
+        </SheetContent>
+      </Sheet>
+
 
       {/* Ștergere definitivă */}
       <Dialog open={deleting !== null} onOpenChange={(o) => !o && setDeleting(null)}>
