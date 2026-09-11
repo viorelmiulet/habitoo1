@@ -186,7 +186,7 @@ function SuperadminMailPage() {
         <InlineLoading label="Se încarcă căsuțele de email…" />
       ) : !mailboxes.length ? (
         <EmptyState
-          icon={<Mail className="h-8 w-8" />}
+          icon={Mail}
           title="Nicio căsuță configurată"
           description="Adaugă prima căsuță de email (ex. contact@domeniul-tău) ca să poți primi și trimite mesaje."
           action={
@@ -309,7 +309,7 @@ function ThreadList({
   if (!threads.length) {
     return (
       <EmptyState
-        icon={<Inbox className="h-8 w-8" />}
+        icon={Inbox}
         title="Nicio conversație"
         description={status === "open" ? "Emailurile primite vor apărea aici." : "Nimic în acest dosar."}
       />
@@ -405,7 +405,7 @@ function SentList({
 
   const messages = query.data?.messages ?? [];
   if (!messages.length) {
-    return <EmptyState icon={<Send className="h-8 w-8" />} title="Niciun email trimis" description="Mesajele trimise din această căsuță vor apărea aici." />;
+    return <EmptyState icon={Send} title="Niciun email trimis" description="Mesajele trimise din această căsuță vor apărea aici." />;
   }
 
   return (
