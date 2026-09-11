@@ -141,22 +141,6 @@ function CollaborationPage() {
 
   const incomingPending = (proposals.data?.incoming ?? []).filter((p) => p.status === "pending").length;
 
-  if (!participating) {
-    return (
-      <>
-        <PageHeader
-          title="Colaborare Habitoo"
-          description="Colaborare directă între agențiile care folosesc Habitoo."
-        />
-        <EmptyState
-          icon={Handshake}
-          title="Agenția ta nu participă la Colaborare"
-          description="Activează opțiunea „Participă la Colaborare Habitoo” din Setări → Agenție pentru a vedea ofertele altor agenții și pentru ca ofertele tale marcate pentru colaborare să fie vizibile."
-        />
-      </>
-    );
-  }
-
   return (
     <>
       <PageHeader
@@ -164,9 +148,23 @@ function CollaborationPage() {
         description="Proprietăți deschise spre colaborare de alte agenții Habitoo. Propui un client, comunicați direct, comisionul de colaborare este cel afișat de agenția care deține mandatul."
       />
 
-      <Tabs defaultValue="offers">
+      {/* Agenția a ieșit din rețea: ofertele dispar, dar discuțiile în curs rămân. */}
+      {!participating ? (
+        <div className="panel border-warning/40 bg-warning/10 p-4 text-sm">
+          <p className="font-medium">Agenția ta nu participă la Colaborare Habitoo</p>
+          <p className="mt-1 text-muted-foreground">
+            Ofertele partenere nu sunt disponibile, iar proprietățile tale nu mai apar la celelalte
+            agenții. Propunerile începute rămân aici, ca să poți continua discuțiile. Poți reactiva
+            participarea din Setări → Agenție.
+          </p>
+        </div>
+      ) : null}
+
+      <Tabs defaultValue={participating ? "offers" : "outgoing"}>
         <TabsList className="flex-wrap">
-          <TabsTrigger value="offers">Oferte partenere ({offers.data?.length ?? 0})</TabsTrigger>
+          {participating ? (
+            <TabsTrigger value="offers">Oferte partenere ({offers.data?.length ?? 0})</TabsTrigger>
+          ) : null}
           <TabsTrigger value="outgoing">
             Propunerile mele ({proposals.data?.outgoing.length ?? 0})
           </TabsTrigger>
@@ -181,6 +179,7 @@ function CollaborationPage() {
         </TabsList>
 
         <TabsContent value="offers" className="space-y-4">
+
           <div className="panel grid gap-3 p-4 sm:grid-cols-2 lg:grid-cols-4">
             <div className="relative sm:col-span-2">
               <Search className="pointer-events-none absolute top-2.5 left-3 size-4 text-muted-foreground" />
