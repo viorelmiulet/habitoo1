@@ -515,60 +515,48 @@ ${materialSignature(brandingFromOrg(user?.organization))}`;
               </div>
             </form>
           ) : (
-            <div className="panel p-5">
+            <div className="panel space-y-6 p-5">
+              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                {[
+                  { icon: Banknote, label: "Buget", value: `${formatMoney(request.budget_min, request.currency)} – ${formatMoney(request.budget_max, request.currency)}` },
+                  { icon: MapPin, label: "Localități", value: (request.cities ?? []).join(", ") || "orice oraș" },
+                  { icon: BedDouble, label: "Camere", value: `${request.rooms_min ?? "—"} – ${request.rooms_max ?? "—"}` },
+                  { icon: Ruler, label: "Suprafață minimă", value: request.surface_min ? `${formatNumber(request.surface_min)} m²` : "—" },
+                ].map(({ icon: Icon, label, value }) => (
+                  <div key={label} className="flex items-center gap-3 rounded-xl border border-border bg-surface p-3">
+                    <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-primary/10 text-primary">
+                      <Icon className="size-4" aria-hidden />
+                    </span>
+                    <div className="min-w-0">
+                      <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">{label}</p>
+                      <p className="truncate text-sm font-medium text-foreground">{value}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
               <dl className="grid gap-3 sm:grid-cols-2">
-                <div className="flex items-center justify-between gap-3 text-sm">
-                  <dt className="text-muted-foreground">Buget</dt>
-                  <dd className="font-medium">{formatMoney(request.budget_min, request.currency)} – {formatMoney(request.budget_max, request.currency)}</dd>
-                </div>
-                <div className="flex items-center justify-between gap-3 text-sm">
-                  <dt className="text-muted-foreground">Localități</dt>
-                  <dd className="font-medium">{(request.cities ?? []).join(", ") || "orice oraș"}</dd>
-                </div>
-                <div className="flex items-center justify-between gap-3 text-sm">
-                  <dt className="text-muted-foreground">Zone</dt>
-                  <dd className="font-medium">{(request.areas ?? []).join(", ") || "—"}</dd>
-                </div>
-                <div className="flex items-center justify-between gap-3 text-sm">
-                  <dt className="text-muted-foreground">Camere</dt>
-                  <dd className="font-medium">{request.rooms_min ?? "—"} – {request.rooms_max ?? "—"}</dd>
-                </div>
-                <div className="flex items-center justify-between gap-3 text-sm">
-                  <dt className="text-muted-foreground">Suprafață minimă</dt>
-                  <dd className="font-medium">{request.surface_min ? `${formatNumber(request.surface_min)} m²` : "—"}</dd>
-                </div>
-                <div className="flex items-center justify-between gap-3 text-sm">
-                  <dt className="text-muted-foreground">Etaj preferat</dt>
-                  <dd className="font-medium">{request.floor_preference || "—"}</dd>
-                </div>
-                <div className="flex items-center justify-between gap-3 text-sm">
-                  <dt className="text-muted-foreground">Mobilat</dt>
-                  <dd className="font-medium">{request.furnished ? "Da" : "Nu contează"}</dd>
-                </div>
-                <div className="flex items-center justify-between gap-3 text-sm">
-                  <dt className="text-muted-foreground">Parcare</dt>
-                  <dd className="font-medium">{request.wants_parking ? "Da" : "Nu contează"}</dd>
-                </div>
-                <div className="flex items-center justify-between gap-3 text-sm">
-                  <dt className="text-muted-foreground">Balcon</dt>
-                  <dd className="font-medium">{request.wants_balcony ? "Da" : "Nu contează"}</dd>
-                </div>
-                <div className="flex items-center justify-between gap-3 text-sm">
-                  <dt className="text-muted-foreground">Termen</dt>
-                  <dd className="font-medium">{request.term || "—"}</dd>
-                </div>
-                <div className="flex items-center justify-between gap-3 text-sm">
-                  <dt className="text-muted-foreground">Sursă</dt>
-                  <dd className="font-medium">{request.source || "—"}</dd>
-                </div>
+                {[
+                  { label: "Zone preferate", value: (request.areas ?? []).join(", ") || "—" },
+                  { label: "Etaj preferat", value: request.floor_preference || "—" },
+                  { label: "Mobilat", value: request.furnished ? "Da" : "Nu contează" },
+                  { label: "Parcare", value: request.wants_parking ? "Da" : "Nu contează" },
+                  { label: "Balcon", value: request.wants_balcony ? "Da" : "Nu contează" },
+                  { label: "Termen", value: request.term || "—" },
+                  { label: "Sursă", value: request.source || "—" },
+                ].map(({ label, value }) => (
+                  <div key={label} className="flex items-center justify-between gap-3 text-sm">
+                    <dt className="text-muted-foreground">{label}</dt>
+                    <dd className="font-medium">{value}</dd>
+                  </div>
+                ))}
               </dl>
               {request.features.length > 0 ? (
-                <div className="mt-5 flex flex-wrap gap-2">
+                <div className="flex flex-wrap gap-2 border-t border-border pt-4">
                   {request.features.map((f) => (<StatusBadge key={f}>{f}</StatusBadge>))}
                 </div>
               ) : null}
               {request.notes ? (
-                <div className="mt-5 rounded-xl border border-border bg-muted/40 p-4 text-sm">
+                <div className="rounded-xl border border-border bg-muted/40 p-4 text-sm">
                   <p className="font-medium">Note</p>
                   <p className="mt-1 whitespace-pre-line text-muted-foreground">{request.notes}</p>
                 </div>
