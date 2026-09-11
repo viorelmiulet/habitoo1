@@ -98,19 +98,28 @@ export function SupportWidget({ children }: { children?: ReactNode }) {
             />
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="support-category">Categorie</Label>
-            <Select value={category} onValueChange={(v) => setCategory(v as SupportCategory)}>
-              <SelectTrigger id="support-category">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {SUPPORT_CATEGORIES.map((c) => (
-                  <SelectItem key={c.id} value={c.id}>
-                    {c.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <Label asChild>
+              <span>Categorie</span>
+            </Label>
+            <div className="flex flex-wrap gap-2" role="radiogroup" aria-label="Categorie">
+              {SUPPORT_CATEGORIES.map((c) => (
+                <button
+                  key={c.id}
+                  type="button"
+                  role="radio"
+                  aria-checked={category === c.id}
+                  onClick={() => setCategory(c.id)}
+                  className={cn(
+                    "rounded-full border px-3 py-1.5 text-xs font-medium transition-colors",
+                    category === c.id
+                      ? "border-primary bg-primary/10 text-primary"
+                      : "border-border text-muted-foreground hover:border-primary/40",
+                  )}
+                >
+                  {c.label}
+                </button>
+              ))}
+            </div>
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="support-body">Mesaj</Label>

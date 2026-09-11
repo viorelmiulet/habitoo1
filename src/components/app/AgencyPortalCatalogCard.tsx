@@ -6,7 +6,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { Badge } from "@/components/ui/badge";
+import { StatusBadge } from "@/components/app/StatusBadge";
 import { PortalLogo } from "@/components/app/PortalLogo";
 import { Button } from "@/components/ui/button";
 import { InlineLoading } from "@/components/app/LoadingState";

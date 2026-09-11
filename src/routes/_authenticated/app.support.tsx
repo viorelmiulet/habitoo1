@@ -60,7 +60,7 @@ function MyTicketsPage() {
           }
         />
       ) : (
-        <div className="grid gap-4 lg:grid-cols-[minmax(0,340px)_minmax(0,1fr)]">
+        <div className="grid gap-4 lg:grid-cols-[minmax(0,360px)_minmax(0,1fr)]">
           <ul className="space-y-2">
             {(tickets.data ?? []).map((t) => (
               <li key={t.id}>
@@ -68,18 +68,27 @@ function MyTicketsPage() {
                   type="button"
                   onClick={() => setSelected(t.id)}
                   className={cn(
-                    "w-full rounded-xl border bg-surface px-3 py-2.5 text-left transition-colors hover:border-primary/40",
+                    "w-full rounded-xl border bg-surface px-4 py-3.5 text-left transition-colors hover:border-primary/40",
                     selected === t.id ? "border-primary/60 ring-1 ring-primary/30" : "border-border",
                   )}
                 >
-                  <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-start justify-between gap-2">
                     <span className="truncate text-sm font-semibold">{t.subject}</span>
                     <SupportStatusBadge status={t.status} />
                   </div>
-                  <p className="mt-0.5 truncate text-xs text-muted-foreground">
-                    {SUPPORT_CATEGORY_LABELS[t.category] ?? t.category} · {t.createdByName ?? "—"} ·{" "}
-                    {formatDateTime(t.lastMessageAt)}
-                    {t.lastReplyByStaff ? " · răspuns suport" : ""}
+                  <div className="mt-2 flex flex-wrap items-center gap-2">
+                    <StatusBadge tone="neutral">
+                      {SUPPORT_CATEGORY_LABELS[t.category] ?? t.category}
+                    </StatusBadge>
+                    <span className="text-xs text-muted-foreground">
+                      {formatDateTime(t.lastMessageAt)}
+                    </span>
+                    {t.lastReplyByStaff ? (
+                      <span className="text-xs font-medium text-primary">Răspuns suport</span>
+                    ) : null}
+                  </div>
+                  <p className="mt-1 truncate text-[11px] text-muted-foreground">
+                    Deschis de {t.createdByName ?? "—"}
                   </p>
                 </button>
               </li>
