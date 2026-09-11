@@ -49,14 +49,14 @@ export function LegalPage({
             </ol>
           </div>
         </nav>
-        <article className="max-w-3xl lg:col-span-9">
-          <div className="space-y-10">
+        <article className="max-w-[68ch] lg:col-span-9">
+          <div className="space-y-12">
             {sections.map((s, i) => (
               <section key={s.title} id={`sectiune-${i + 1}`} className="scroll-mt-28">
-                <h2 className="text-xl font-semibold text-navy">
+                <h2 className="border-b border-border pb-2 text-xl font-semibold text-navy sm:text-2xl">
                   {i + 1}. {s.title}
                 </h2>
-                <div className="mt-3 space-y-3 text-base leading-relaxed text-muted-foreground [&_strong]:font-semibold [&_strong]:text-foreground [&_table]:w-full [&_table]:border-collapse [&_td]:border [&_td]:border-border [&_td]:px-3 [&_td]:py-2 [&_td]:align-top [&_th]:border [&_th]:border-border [&_th]:bg-card [&_th]:px-3 [&_th]:py-2 [&_th]:text-left [&_th]:font-semibold [&_th]:text-foreground [&_ul]:list-disc [&_ul]:space-y-1.5 [&_ul]:pl-5">
+                <div className="mt-4 space-y-4 text-[0.975rem] leading-7 text-muted-foreground [&_h3]:mt-6 [&_h3]:font-sans [&_h3]:text-base [&_h3]:font-semibold [&_h3]:text-foreground [&_strong]:font-semibold [&_strong]:text-foreground [&_table]:w-full [&_table]:border-collapse [&_td]:border [&_td]:border-border [&_td]:px-3 [&_td]:py-2 [&_td]:align-top [&_th]:border [&_th]:border-border [&_th]:bg-card [&_th]:px-3 [&_th]:py-2 [&_th]:text-left [&_th]:font-semibold [&_th]:text-foreground [&_ul]:list-disc [&_ul]:space-y-1.5 [&_ul]:pl-5">
                   {s.body}
                 </div>
               </section>
