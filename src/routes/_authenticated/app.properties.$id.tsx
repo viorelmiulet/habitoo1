@@ -149,10 +149,6 @@ function PropertyDetailPage() {
   const [details, setDetails] = useState<PropertyDetailsValue>({});
   // Vânzare / închiriere (pot fi active simultan), fiecare cu preț și monedă.
   const [tx, setTx] = useState<TransactionValue>(emptyTransaction);
-  // Colaborare Habitoo: expunerea anunțului către celelalte agenții din platformă.
-  const [collab, setCollab] = useState(false);
-  // Nudge-ul de colaborare: o singură dată per proprietate, doar dacă agenția participă.
-  const [nudgeOpen, setNudgeOpen] = useState(false);
   // Poziția pe hartă (Leaflet/OpenStreetMap) și precizia locației, în modul editare.
   const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null);
   const [locationPrecise, setLocationPrecise] = useState(false);
@@ -168,13 +164,7 @@ function PropertyDetailPage() {
       address: property.address ?? "",
       description: property.description ?? "",
       internal_notes: property.internal_notes ?? "",
-      collab_commission_percent:
-        property.collab_commission_percent !== null && property.collab_commission_percent !== undefined
-          ? String(property.collab_commission_percent)
-          : "",
-      collab_terms: property.collab_terms ?? "",
     });
-    setCollab(Boolean(property.collaboration));
     setCoords(
       typeof property.lat === "number" && typeof property.lng === "number"
         ? { lat: property.lat, lng: property.lng }
