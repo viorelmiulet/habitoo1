@@ -283,11 +283,19 @@ function QaPanelPage() {
 
           <div className="grid gap-6 lg:grid-cols-2">
             <section className="panel p-5">
-              <h3 className="text-sm font-semibold">Conturi demo</h3>
-              <p className="mt-1 text-xs text-muted-foreground">
-                Conturi reale create prin autentificarea existentă (email confirmat automat). Se autentifică din pagina de login
-                obișnuită.
-              </p>
+              <div className="flex items-start gap-3">
+                <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary">
+                  <Users className="size-4" aria-hidden />
+                </span>
+                <div>
+                  <h3 className="text-sm font-semibold">Conturi demo</h3>
+                  <p className="mt-0.5 text-xs text-muted-foreground">
+                    Conturi reale create prin autentificarea existentă (email confirmat automat). Se autentifică din pagina de
+                    login obișnuită.
+                  </p>
+                </div>
+              </div>
+
               {data?.users.length ? (
                 <ul className="mt-4 divide-y divide-border">
                   {data.users.map((u) => (
