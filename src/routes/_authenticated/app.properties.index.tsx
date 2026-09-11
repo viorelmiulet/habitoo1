@@ -870,16 +870,7 @@ function PropertiesPage() {
             {isLoading ? (
               <ListSkeleton rows={8} />
             ) : rows.length === 0 ? (
-              <EmptyState
-                icon={Building2}
-                title="Nicio proprietate găsită"
-                description="Ajustează filtrele sau adaugă o proprietate nouă în portofoliu."
-                action={
-                  <Button asChild size="sm">
-                    <Link to="/app/properties/new">Adaugă proprietate</Link>
-                  </Button>
-                }
-              />
+              emptyBlock
             ) : (
               <ul className="divide-y divide-border">
                 {rows.map((p) => (
