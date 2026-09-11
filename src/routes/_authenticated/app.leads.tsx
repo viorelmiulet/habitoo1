@@ -951,27 +951,31 @@ function LeadsPage() {
                 </TabsList>
 
                 <TabsContent value="history" className="mt-3">
-                  <ul className="space-y-2 text-sm">
-                    {(detailData?.events ?? []).map((ev) => (
-                      <li key={ev.id} className="rounded-lg border border-border p-2 text-xs">
-                        <p>
-                          {ev.from_stage ? `${leadStageLabels[ev.from_stage]} → ` : ""}
-                          {leadStageLabels[ev.to_stage]}
-                        </p>
-                        <p className="text-muted-foreground">{formatDateTime(ev.created_at)}</p>
-                        {ev.note ? <p className="mt-1 text-muted-foreground">{ev.note}</p> : null}
-                      </li>
-                    ))}
-                    {(detailData?.activities ?? []).map((a) => (
-                      <li key={a.id} className="rounded-lg border border-border p-2 text-xs">
-                        <p className="font-medium">{a.title}</p>
-                        <p className="text-muted-foreground">{formatDateTime(a.starts_at)}</p>
-                      </li>
-                    ))}
-                    {(detailData?.events ?? []).length === 0 && (detailData?.activities ?? []).length === 0 ? (
-                      <p className="text-xs text-muted-foreground">Fără evenimente încă.</p>
-                    ) : null}
-                  </ul>
+                  {timelineItems.length === 0 ? (
+                    <p className="text-xs text-muted-foreground">Fără evenimente încă.</p>
+                  ) : (
+                    <ul className="space-y-3">
+                      {timelineItems.map((item) => {
+                        const Icon = item.icon;
+                        return (
+                          <li key={item.id} className="flex gap-3">
+                            <span className="w-24 shrink-0 pt-0.5 text-xs tabular-nums text-muted-foreground">
+                              {formatDateTime(item.at)}
+                            </span>
+                            <span className="mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                              <Icon className="size-3.5" aria-hidden />
+                            </span>
+                            <span className="min-w-0">
+                              <span className="block text-sm">{item.label}</span>
+                              {item.note ? (
+                                <span className="block text-xs text-muted-foreground">{item.note}</span>
+                              ) : null}
+                            </span>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  )}
                 </TabsContent>
 
                 <TabsContent value="messages" className="mt-3">
