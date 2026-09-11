@@ -879,36 +879,99 @@ function LeadsPage() {
         <SheetContent className="w-full overflow-y-auto sm:max-w-lg">
           {detailLead ? (
             <div className="space-y-5 px-1">
-              <SheetHeader>
+              <SheetHeader className="pb-0">
                 <SheetTitle>{detailLead.name}</SheetTitle>
               </SheetHeader>
-              <div className="flex flex-wrap items-center gap-2">
-                <StatusBadge tone={stageTone[detailLead.stage]}>{leadStageLabels[detailLead.stage]}</StatusBadge>
-                <span className="text-sm text-muted-foreground">{formatMoney(detailLead.value)}</span>
-              </div>
-              <div className="grid grid-cols-2 gap-3 text-sm">
-                <div><p className="text-xs text-muted-foreground">Telefon</p><p>{detailLead.phone ?? "—"}</p></div>
-                <div><p className="text-xs text-muted-foreground">Email</p><p>{detailLead.email ?? "—"}</p></div>
-                <div><p className="text-xs text-muted-foreground">Sursă</p><p>{detailLead.source ?? "—"}</p></div>
-                <div><p className="text-xs text-muted-foreground">Campanie</p><p>{detailLead.campaign ?? "—"}</p></div>
-                <div><p className="text-xs text-muted-foreground">Agent</p><p>{agentById.get(detailLead.assigned_to ?? "") ?? "Neasignat"}</p></div>
-                <div><p className="text-xs text-muted-foreground">Scor</p><p>{detailLead.score}</p></div>
-              </div>
-              {detailLead.notes ? <p className="rounded-lg bg-muted p-3 text-sm">{detailLead.notes}</p> : null}
 
-              <div className="flex flex-wrap gap-2">
-                {detailLead.phone ? (
-                  <Button size="sm" variant="outline" asChild>
-                    <a href={`tel:${detailLead.phone}`}><Phone className="size-4" /> Apel</a>
-                  </Button>
-                ) : null}
-                {detailLead.phone ? (
-                  <Button size="sm" variant="outline" asChild>
-                    <a href={`https://wa.me/${detailLead.phone.replace(/[^0-9]/g, "")}`} target="_blank" rel="noreferrer">
-                      <MessageCircle className="size-4" /> WhatsApp
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div className="flex flex-wrap items-center gap-2">
+                  <StatusBadge tone={stageTone[detailLead.stage]}>{leadStageLabels[detailLead.stage]}</StatusBadge>
+                  <span className="inline-flex max-w-40 items-center gap-1.5 rounded-full bg-muted px-2 py-0.5 text-[11px] text-muted-foreground">
+                    {portalKeyOf(detailLead.source) ? (
+                      <PortalLogo
+                        portalId={portalKeyOf(detailLead.source) as string}
+                        name={detailLead.source ?? ""}
+                        size={14}
+                      />
+                    ) : null}
+                    <span className="truncate">{detailLead.source ?? "sursă necunoscută"}</span>
+                  </span>
+                  {detailLead.value ? (
+                    <span className="text-sm font-medium">{formatMoney(detailLead.value)}</span>
+                  ) : null}
+                </div>
+                <div className="flex items-center gap-1">
+                  {detailLead.phone ? (
+                    <>
+                      <a
+                        href={`tel:${detailLead.phone}`}
+                        className="flex flex-col items-center gap-0.5 rounded-lg px-2 py-1 text-[11px] text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                      >
+                        <Phone className="size-4" aria-hidden /> Sună
+                      </a>
+                      <a
+                        href={`https://wa.me/${detailLead.phone.replace(/[^0-9]/g, "")}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="flex flex-col items-center gap-0.5 rounded-lg px-2 py-1 text-[11px] text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                      >
+                        <MessageCircle className="size-4" aria-hidden /> WhatsApp
+                      </a>
+                    </>
+                  ) : null}
+                  {detailLead.email ? (
+                    <a
+                      href={`mailto:${detailLead.email}`}
+                      className="flex flex-col items-center gap-0.5 rounded-lg px-2 py-1 text-[11px] text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                    >
+                      <Mail className="size-4" aria-hidden /> Email
                     </a>
-                  </Button>
-                ) : null}
+                  ) : null}
+                </div>
+              </div>
+
+              {detailLead.property_id ? (
+                <Link
+                  to="/app/properties/$id"
+                  params={{ id: detailLead.property_id }}
+                  className="flex items-center gap-3 rounded-xl bg-card p-3 ring-1 ring-border/60 transition hover:ring-primary/40"
+                >
+                  <PropertyThumb
+                    propertyId={detailLead.property_id}
+                    title={propertyById.get(detailLead.property_id) ?? "Proprietate"}
+                    cover={coverFor(detailLead.property_id)}
+                    className="size-14 rounded-lg"
+                  />
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate text-sm font-medium">
+                      {propertyById.get(detailLead.property_id) ?? "Proprietate"}
+                    </span>
+                    <span className="block text-xs text-muted-foreground">Proprietatea legată</span>
+                  </span>
+                  <ArrowRight className="size-4 shrink-0 text-muted-foreground" aria-hidden />
+                </Link>
+              ) : null}
+
+              <div className="grid grid-cols-2 gap-3 rounded-xl bg-card p-4 text-sm ring-1 ring-border/60">
+                <div><p className="text-xs text-muted-foreground">Telefon</p><p>{detailLead.phone ?? "—"}</p></div>
+                <div><p className="text-xs text-muted-foreground">Email</p><p className="truncate">{detailLead.email ?? "—"}</p></div>
+                <div><p className="text-xs text-muted-foreground">Campanie</p><p>{detailLead.campaign ?? "—"}</p></div>
+                <div><p className="text-xs text-muted-foreground">Scor</p><p>{detailLead.score}</p></div>
+                <div className="col-span-2">
+                  <p className="text-xs text-muted-foreground">Agent</p>
+                  <p className="flex items-center gap-2">
+                    <UserAvatar
+                      name={agentById.get(detailLead.assigned_to ?? "") ?? null}
+                      className="size-6 text-[10px]"
+                    />
+                    {agentById.get(detailLead.assigned_to ?? "") ?? "Neasignat"}
+                  </p>
+                </div>
+              </div>
+
+              {detailLead.notes ? <p className="rounded-xl bg-muted p-3 text-sm">{detailLead.notes}</p> : null}
+
+              <div className="flex flex-wrap items-center gap-2">
                 <Button size="sm" variant="outline" onClick={() => setActivityOpen(true)}>
                   <Plus className="size-4" /> Adaugă activitate
                 </Button>
