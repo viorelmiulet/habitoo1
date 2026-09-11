@@ -111,7 +111,8 @@ function PropertyDetailPage() {
   // Butonul unic „Publică” din antet declanșează și aplicarea bifelor de portal.
   const portalsRef = useRef<PropertyPortalsHandle | null>(null);
   const duplicatePropertyFn = useServerFn(duplicateProperty);
-  const [deleteOpen, setDeleteOpen] = useState(false);
+  const unarchivePropertyFn = useServerFn(unarchiveProperty);
+  const [archiveOpen, setArchiveOpen] = useState(false);
 
   const { data, isLoading } = useQuery({
     queryKey: ["property", id],
@@ -533,16 +534,15 @@ function PropertyDetailPage() {
                     </DropdownMenuItem>
                   ))}
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={() => archive.mutateAsync()}>
-                    Arhivează
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem
-                    onClick={() => setDeleteOpen(true)}
-                    className="text-destructive focus:text-destructive"
-                  >
-                    Șterge definitiv
-                  </DropdownMenuItem>
+                  {property.status === "archived" ? (
+                    <DropdownMenuItem onClick={() => unarchive.mutate()}>
+                      Dezarhivează
+                    </DropdownMenuItem>
+                  ) : (
+                    <DropdownMenuItem onClick={() => setArchiveOpen(true)}>
+                      Arhivează
+                    </DropdownMenuItem>
+                  )}
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
@@ -550,14 +550,13 @@ function PropertyDetailPage() {
         }
       />
 
-      <DeletePropertyDialog
+      <ArchivePropertyDialog
         propertyId={id}
-        open={deleteOpen}
-        onOpenChange={setDeleteOpen}
-        archived={property.status === "archived"}
-        onArchive={() => archive.mutateAsync()}
-        onDeleted={() => navigate({ to: "/app/properties" })}
+        open={archiveOpen}
+        onOpenChange={setArchiveOpen}
+        onArchived={() => navigate({ to: "/app/properties" })}
       />
+
 
 
       {/* Bandă de metrici: date reale, fără borduri, doar fundal ușor diferit. */}
