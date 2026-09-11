@@ -707,9 +707,9 @@ function ThreadDialog({ id, onClose }: { id: string | null; onClose: () => void 
               </p>
             ) : null}
 
-            <div className="space-y-2">
-              <Label>Status colaborare</Label>
-              <div className="flex flex-wrap gap-2">
+            <div className="rounded-xl border border-border p-3">
+              <Label className="text-xs text-muted-foreground">Status colaborare</Label>
+              <div className="mt-2 flex flex-wrap gap-2">
                 {(["pending", "accepted", "viewing", "declined", "closed"] as CollaborationProposalStatus[]).map(
                   (s) => (
                     <Button
@@ -733,16 +733,20 @@ function ThreadDialog({ id, onClose }: { id: string | null; onClose: () => void 
                   vizionări).
                 </p>
               ) : (
-                <ul className="space-y-3">
+                <ul className="space-y-4">
                   {data.messages.map((m) => (
-                    <li
-                      key={m.id}
-                      className={`rounded-xl border border-border p-3 text-sm ${m.mine ? "bg-muted/50" : ""}`}
-                    >
-                      <p className="text-xs text-muted-foreground">
-                        {m.senderName ?? "Utilizator"} · {m.agencyName} · {formatDateTime(m.createdAt)}
+                    <li key={m.id} className={m.mine ? "flex flex-col items-end" : "flex flex-col items-start"}>
+                      <p className="text-[11px] text-muted-foreground">
+                        {m.mine ? "Tu" : (m.senderName ?? "Utilizator")} · {m.agencyName} ·{" "}
+                        {formatDateTime(m.createdAt)}
                       </p>
-                      <p className="mt-1 whitespace-pre-line">{m.body}</p>
+                      <p
+                        className={`mt-1 max-w-[85%] rounded-xl px-3 py-2 text-sm whitespace-pre-line ${
+                          m.mine ? "bg-primary/8 text-foreground" : "bg-muted"
+                        }`}
+                      >
+                        {m.body}
+                      </p>
                     </li>
                   ))}
                 </ul>
