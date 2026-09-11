@@ -503,8 +503,16 @@ function UsersPage() {
       </Dialog>
 
       {/* Realocare independentă */}
-      <Dialog open={reassignOpen} onOpenChange={setReassignOpen}>
-        <DialogContent>
+      <Sheet open={reassignOpen} onOpenChange={setReassignOpen}>
+        <SheetContent className="flex w-full flex-col gap-4 overflow-y-auto p-6 sm:max-w-md">
+          <SheetHeader className="p-0">
+            <SheetTitle>Realocă proprietăți și lead-uri</SheetTitle>
+            <SheetDescription>
+              Mută tot ce este asignat unui utilizator (proprietăți, lead-uri, activități, cereri,
+              contacte, obiective) către un coleg din aceeași agenție. Nu se șterge nimeni.
+            </SheetDescription>
+          </SheetHeader>
+
           <DialogHeader>
             <DialogTitle>Realocă proprietăți și lead-uri</DialogTitle>
             <DialogDescription>
