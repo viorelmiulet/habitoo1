@@ -146,10 +146,6 @@ function NewPropertyPage() {
           internal_notes: form.internal_notes || null,
           owner_contact_id: form.owner_contact_id || null,
           commission: form.commission || null,
-          collaboration: vars.collaboration,
-          collab_commission_percent: vars.collaboration ? vars.percent : null,
-          collab_terms: vars.collaboration ? collabTerms || null : null,
-          collab_prompted_at: vars.prompted ? new Date().toISOString() : null,
           features,
           ...details,
         })
