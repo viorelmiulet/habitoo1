@@ -81,7 +81,7 @@ export function PropertyCard({
           propertyId={property.id}
           title={property.title}
           cover={cover}
-          className="h-44 w-full rounded-none"
+          className="h-44 w-full rounded-none border-0"
         />
         {badge ? (
           <span
