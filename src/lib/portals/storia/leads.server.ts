@@ -178,7 +178,9 @@ export function readMessagePayload(shape: StoriaEventShape): MessagePayload {
       "phone_number",
     ]),
     email: pick(d, ["sender_email", "sender.email", "user.email", "contact.email", "email"]),
-    body: pick(d, ["message", "message.text", "message.body", "text", "body", "content"]),
+    // Payloadul real folosește obiectul `message: { name, text }`.
+    // Căutăm explicit câmpurile imbricate înaintea variantelor legacy plate.
+    body: pick(d, ["message.text", "message.body", "text", "body", "content", "message"]),
     messageId: pick(d, ["id", "message_id", "message.id", "conversation_id", "conversation.id"]),
     sentAt: pick(d, ["created_at", "message.created_at", "sent_at", "recorded_at"]),
   };
@@ -343,6 +345,53 @@ async function processMessage(admin: Admin, shape: StoriaEventShape): Promise<St
       .maybeSingle();
     if (inserted.error) {
       if (inserted.error.code === "23505") {
+        const { data: savedMessage, error: savedMessageError } = await admin
+          .from("portal_messages")
+          .select("id, lead_id")
+          .eq("organization_id", match.organizationId)
+          .eq("portal", "storia")
+          .eq("external_message_id", externalMessageId)
+          .maybeSingle();
+        if (savedMessageError) throw savedMessageError;
+
+        if (savedMessage) {
+          await admin
+            .from("portal_messages")
+            .update({
+              sender_name: message.senderName,
+              sender_email: message.email,
+              sender_phone: message.phone,
+              body: bodyText,
+              sent_at: sentAt,
+              expires_at: portalMessageExpiry(sentAt),
+            })
+            .eq("id", savedMessage.id);
+
+          if (savedMessage.lead_id) {
+            const { data: savedLead } = await admin
+              .from("leads")
+              .select("notes")
+              .eq("id", savedMessage.lead_id)
+              .maybeSingle();
+            const notes = savedLead?.notes?.includes(noteLine)
+              ? savedLead.notes
+              : [savedLead?.notes, noteLine].filter(Boolean).join("\n---\n").slice(0, 8000);
+            await admin
+              .from("leads")
+              .update({
+                name,
+                phone: message.phone,
+                email: message.email,
+                notes,
+                last_interaction_at: sentAt,
+              })
+              .eq("id", savedMessage.lead_id);
+            return {
+              processed: true,
+              note: `mesaj Storia actualizat pe lead-ul existent ${savedMessage.lead_id}`,
+            };
+          }
+        }
         return {
           processed: true,
           note: `mesaj Storia deja înregistrat (id ${externalMessageId}) — reîncercare ignorată`,

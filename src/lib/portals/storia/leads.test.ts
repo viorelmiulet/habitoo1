@@ -24,21 +24,14 @@ const lifecyclePayload = {
   event_type: "advert_posted_success",
 };
 
-/** Payload real anonim pentru mesaje: `ad_id` este slugul alfanumeric din URL. */
+/** Structura exactă a payloadului real, cu valorile personale anonimizate. */
 const messagePayload = {
   data: {
     ad_id: "IwcT",
-    conversation_id: "9846457",
-    created_at: "2018-07-16T11:04:50.000+0100",
-    from: "storiaro",
-    id: 208853314,
     message: {
       name: "John Doe",
       text: "Sunt interesat de apartament, se poate vedea sâmbătă?",
     },
-    sender_email: "myemail@gmail.com",
-    sender_phone: 961231212,
-    uuid: "6073df05-2979-4372-a552-4c906a02a5cc",
   },
   destination: "https://crm.habitoo.ro/api/public/portal/v1/storia/notifications",
   event_type: "incoming_message_success",
@@ -67,11 +60,11 @@ describe("readEventShape", () => {
   it("extrage expeditorul și mesajul", () => {
     const message = readMessagePayload(readEventShape(messagePayload)!);
     expect(message.senderName).toBe("John Doe");
-    expect(message.email).toBe("myemail@gmail.com");
-    expect(message.phone).toBe("961231212");
-    expect(message.body).toMatch(/apartament/);
-    expect(message.messageId).toBe("208853314");
-    expect(message.sentAt).toBe("2018-07-16T11:04:50.000+0100");
+    expect(message.email).toBeNull();
+    expect(message.phone).toBeNull();
+    expect(message.body).toBe("Sunt interesat de apartament, se poate vedea sâmbătă?");
+    expect(message.messageId).toBeNull();
+    expect(message.sentAt).toBeNull();
   });
 
   it("tratează payload-ul gol fără să arunce", () => {
