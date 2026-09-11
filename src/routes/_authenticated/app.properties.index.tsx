@@ -421,6 +421,68 @@ function PropertiesPage() {
 
   const agentName = (id: string | null) => agents.find((a) => a.id === id)?.full_name ?? "—";
 
+  /**
+   * Filtrele active, ca pastile închizabile individual. Doar prezentare:
+   * fiecare pastilă readuce câmpul la valoarea implicită din `emptyFilters`.
+   */
+  const activePills: { key: keyof Filters; label: string }[] = [
+    filters.q ? { key: "q" as const, label: `„${filters.q}”` } : null,
+    filters.status !== "all"
+      ? { key: "status" as const, label: propertyStatusLabels[filters.status as keyof typeof propertyStatusLabels] ?? filters.status }
+      : null,
+    filters.transaction !== "all"
+      ? { key: "transaction" as const, label: filters.transaction === "sale" ? "Vânzare" : "Închiriere" }
+      : null,
+    filters.type !== "all"
+      ? { key: "type" as const, label: propertyTypeLabels[filters.type] ?? filters.type }
+      : null,
+    filters.city !== "all" ? { key: "city" as const, label: filters.city } : null,
+    filters.district !== "all" ? { key: "district" as const, label: filters.district } : null,
+    filters.source !== "all" ? { key: "source" as const, label: `Sursă: ${filters.source}` } : null,
+    filters.agent !== "all" ? { key: "agent" as const, label: agentName(filters.agent) } : null,
+    filters.mine ? { key: "mine" as const, label: "Doar ale mele" } : null,
+    filters.favoritesOnly ? { key: "favoritesOnly" as const, label: "Doar favorite" } : null,
+    filters.priceMin ? { key: "priceMin" as const, label: `Preț ≥ ${filters.priceMin}` } : null,
+    filters.priceMax ? { key: "priceMax" as const, label: `Preț ≤ ${filters.priceMax}` } : null,
+    filters.surfaceMin ? { key: "surfaceMin" as const, label: `Supr. ≥ ${filters.surfaceMin} m²` } : null,
+    filters.surfaceMax ? { key: "surfaceMax" as const, label: `Supr. ≤ ${filters.surfaceMax} m²` } : null,
+    filters.rooms ? { key: "rooms" as const, label: `${filters.rooms} camere` } : null,
+    filters.bathrooms ? { key: "bathrooms" as const, label: `${filters.bathrooms} băi` } : null,
+    filters.floor ? { key: "floor" as const, label: `Etaj ${filters.floor}` } : null,
+    filters.addedAfter ? { key: "addedAfter" as const, label: `După ${filters.addedAfter}` } : null,
+    filters.addedBefore ? { key: "addedBefore" as const, label: `Înainte de ${filters.addedBefore}` } : null,
+  ].filter(Boolean) as { key: keyof Filters; label: string }[];
+
+  const clearPill = (key: keyof Filters) =>
+    setFilters((f) => ({ ...f, [key]: emptyFilters[key] }) as Filters);
+
+  const filtersActive = activePills.length > 0;
+
+  /** Stare goală utilă: fără portofoliu vs. fără rezultate la filtrare. */
+  const emptyBlock = filtersActive ? (
+    <EmptyState
+      icon={Building2}
+      title="Nicio proprietate pentru filtrele curente"
+      description="Renunță la unul dintre filtrele active sau resetează-le pe toate."
+      action={
+        <Button size="sm" variant="outline" onClick={() => setFilters(emptyFilters)}>
+          <X className="size-4" /> Resetează filtrele
+        </Button>
+      }
+    />
+  ) : (
+    <EmptyState
+      icon={Building2}
+      title="Nicio proprietate în portofoliu"
+      description="Adaugă primul anunț, apoi îl poți publica pe portaluri direct din pagina proprietății."
+      action={
+        <Button asChild size="sm">
+          <Link to="/app/properties/new">Adaugă proprietate</Link>
+        </Button>
+      }
+    />
+  );
+
   const saveFilter = () => {
     setPromptRequest({
       title: "Salvează filtrul curent",
