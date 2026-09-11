@@ -756,6 +756,24 @@ function PropertiesPage() {
           </Button>
         </div>
 
+        {filtersActive ? (
+          <div className="flex flex-wrap items-center gap-2 border-t border-border pt-3">
+            <span className="text-xs text-muted-foreground">Filtre active:</span>
+            {activePills.map((pill) => (
+              <button
+                key={String(pill.key)}
+                type="button"
+                onClick={() => clearPill(pill.key)}
+                aria-label={`Renunță la filtrul ${pill.label}`}
+                className="inline-flex items-center gap-1.5 rounded-full bg-muted px-2.5 py-1 text-xs text-foreground transition-colors hover:bg-secondary"
+              >
+                {pill.label}
+                <X className="size-3 text-muted-foreground" aria-hidden />
+              </button>
+            ))}
+          </div>
+        ) : null}
+
         {savedViews.views.length > 0 ? (
           <div className="flex flex-wrap items-center gap-2 border-t border-border pt-3">
             <span className="text-xs text-muted-foreground">Filtre salvate:</span>
