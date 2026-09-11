@@ -3,14 +3,31 @@ import { supabase } from "@/integrations/supabase/client";
 export const MEDIA_BUCKET = "property-media";
 export const DOCS_BUCKET = "crm-documents";
 export const AVATAR_BUCKET = "avatars";
+export const AGENCY_LOGO_BUCKET = "agency-logos";
 
 /** Tipuri și dimensiune acceptate pentru fotografia de profil. */
 export const AVATAR_TYPES = ["image/jpeg", "image/png", "image/webp"];
 export const AVATAR_MAX_BYTES = 5 * 1024 * 1024;
 
+/** Tipuri și dimensiune acceptate pentru logo-ul agenției. */
+export const AGENCY_LOGO_TYPES = ["image/jpeg", "image/png", "image/svg+xml", "image/webp"];
+export const AGENCY_LOGO_MAX_BYTES = 2 * 1024 * 1024;
+
 export function avatarPath(orgId: string, userId: string) {
   return `${orgId}/${userId}/avatar-${Date.now()}.jpg`;
 }
+
+const LOGO_EXT: Record<string, string> = {
+  "image/jpeg": "jpg",
+  "image/png": "png",
+  "image/svg+xml": "svg",
+  "image/webp": "webp",
+};
+
+export function agencyLogoPath(orgId: string, mimeType: string) {
+  return `${orgId}/logo-${Date.now()}.${LOGO_EXT[mimeType] ?? "png"}`;
+}
+
 
 
 function safeName(name: string) {
