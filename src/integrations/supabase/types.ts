@@ -910,6 +910,8 @@ export type Database = {
       }
       impersonation_requests: {
         Row: {
+          approve_token_hash: string | null
+          approve_token_used_at: string | null
           created_at: string
           expires_at: string
           id: string
@@ -918,6 +920,9 @@ export type Database = {
           reason: string
           requested_at: string
           responded_at: string | null
+          responded_via: string | null
+          revoke_token_hash: string | null
+          revoke_token_used_at: string | null
           revoked_at: string | null
           revoked_by: string | null
           status: string
@@ -926,6 +931,8 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          approve_token_hash?: string | null
+          approve_token_used_at?: string | null
           created_at?: string
           expires_at?: string
           id?: string
@@ -934,6 +941,9 @@ export type Database = {
           reason: string
           requested_at?: string
           responded_at?: string | null
+          responded_via?: string | null
+          revoke_token_hash?: string | null
+          revoke_token_used_at?: string | null
           revoked_at?: string | null
           revoked_by?: string | null
           status?: string
@@ -942,6 +952,8 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          approve_token_hash?: string | null
+          approve_token_used_at?: string | null
           created_at?: string
           expires_at?: string
           id?: string
@@ -950,6 +962,9 @@ export type Database = {
           reason?: string
           requested_at?: string
           responded_at?: string | null
+          responded_via?: string | null
+          revoke_token_hash?: string | null
+          revoke_token_used_at?: string | null
           revoked_at?: string | null
           revoked_by?: string | null
           status?: string
@@ -3330,6 +3345,10 @@ export type Database = {
         Returns: boolean
       }
       impersonation_expire_stale: { Args: never; Returns: undefined }
+      impersonation_preview_by_token: {
+        Args: { _hash: string; _id: string }
+        Returns: Json
+      }
       impersonation_request_create: {
         Args: { _reason: string; _target: string }
         Returns: string
@@ -3338,7 +3357,19 @@ export type Database = {
         Args: { _accept: boolean; _id: string }
         Returns: undefined
       }
+      impersonation_respond_by_token: {
+        Args: { _accept: boolean; _hash: string; _id: string }
+        Returns: Json
+      }
       impersonation_revoke: { Args: { _id: string }; Returns: undefined }
+      impersonation_revoke_by_token: {
+        Args: { _hash: string; _id: string }
+        Returns: Json
+      }
+      impersonation_set_approve_token: {
+        Args: { _hash: string; _id: string }
+        Returns: undefined
+      }
       impersonation_target: { Args: { _id: string }; Returns: string }
       is_org_admin: { Args: never; Returns: boolean }
       is_superadmin: { Args: never; Returns: boolean }

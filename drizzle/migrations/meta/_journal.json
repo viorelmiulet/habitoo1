@@ -85,6 +85,13 @@
       "when": 1789151623364,
       "tag": "0011_impersonation_requests",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1789152080975,
+      "tag": "0012_impersonation_email_approval_tokens",
+      "breakpoints": true
     }
   ]
 }
