@@ -281,7 +281,7 @@ export const listPortalActivationRequests = createServerFn({ method: "POST" })
       organizationId: r.organization_id,
       organizationName: orgName.get(r.organization_id) ?? "Agenție",
       portalId: r.portal,
-      portalName: getPortalDefinition(r.portal)?.display_name ?? r.portal,
+      portalName: portalDisplayName(r.portal),
       status: r.status as "pending" | "approved" | "rejected",
       requestedAt: r.requested_at,
       requestedByName: r.requested_by ? (userName.get(r.requested_by) ?? null) : null,
