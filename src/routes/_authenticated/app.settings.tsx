@@ -29,8 +29,10 @@ import {
 import { currentUserQueryKey, useCurrentUser } from "@/hooks/use-session";
 import { formatDate } from "@/lib/format";
 import { roleLabels } from "@/lib/labels";
+import { appHead } from "@/components/app/app-head";
 
 export const Route = createFileRoute("/_authenticated/app/settings")({
+  head: () => appHead("Habitoo CRM — setări"),
   validateSearch: (
     search: Record<string, unknown>,
   ): { tab?: "profile" | "access" | "agency" | "branding" | "team" | "integrations" | "portals"; request?: string } => {
