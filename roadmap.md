@@ -57,7 +57,7 @@
 
 ## Storia — legarea mesajelor reale
 
-- [ ] Identificator canonic `ADSLUG:` pentru URL și `data.ad_id`, cu fallback de citire pentru `AD:` istoric.
-- [ ] Backfill sluguri din `public_url` pentru anunțurile existente.
-- [ ] Reprocesare notificări nefinalizate și verificare lead pentru `RF-1001`.
+- [x] Identificator canonic `ADSLUG:` pentru URL și `data.ad_id`, cu fallback de citire pentru `AD:` istoric.
+- [x] Backfill sluguri din `public_url` pentru anunțurile existente.
+- [x] Reprocesare notificări nefinalizate și verificare lead pentru `RF-1001`.
 - [ ] Typecheck, teste, build și publicare.
