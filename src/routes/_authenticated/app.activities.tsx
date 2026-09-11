@@ -82,6 +82,10 @@ function startOfWeek(d: Date) {
   return x;
 }
 
+function sameDayAsToday(day: string) {
+  return new Date(day).toDateString() === new Date().toDateString();
+}
+
 function ActivitiesPage() {
   const { new: openNew } = Route.useSearch();
   const { data: user } = useCurrentUser();
