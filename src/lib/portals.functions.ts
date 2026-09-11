@@ -13,6 +13,8 @@ import { z } from "zod";
 import { requireActiveOrgAuth } from "@/lib/org-access";
 import {
   PORTALS,
+  configurablePortals,
+  isPortalCovered,
   derivePortalConnectionStatus,
   getPortalDefinition,
   type PortalConnectionStatus,
@@ -313,7 +315,7 @@ export const getPortalHub = createServerFn({ method: "POST" })
     const storiaTokens = await loadStoriaTokens(organizationId);
     const storiaAppReady = storiaAppConfigured();
 
-    return PORTALS.map((portal) => {
+    return configurablePortals().map((portal) => {
       const row = (connections.data ?? []).find((c) => c.portal === portal.id) ?? null;
       const settings = (row?.settings ?? {}) as Record<string, unknown>;
       const portalKeys = (keys.data ?? []).filter((k) => k.portal === portal.id);
@@ -1025,7 +1027,10 @@ export const getPropertyPortalStatus = createServerFn({ method: "POST" })
 
     const { getPortalAdapter } = await import("@/lib/portals/adapters/index.server");
     const available = PORTALS.filter(
-      (p) => p.status === "available" && (visiblePortals === null || visiblePortals.has(p.id)),
+      (p) =>
+        p.status === "available" &&
+        !isPortalCovered(p.id) &&
+        (visiblePortals === null || visiblePortals.has(p.id)),
     );
 
     return await Promise.all(
@@ -1239,7 +1244,9 @@ export const getPropertiesPortalMatrix = createServerFn({ method: "POST" })
     for (const propertyId of data.propertyIds) {
       const feedEligible = eligibleById.get(propertyId) === true;
       properties[propertyId] = PORTALS.filter(
-        (portal) => visiblePortals === null || visiblePortals.has(portal.id),
+        (portal) =>
+          !isPortalCovered(portal.id) &&
+          (visiblePortals === null || visiblePortals.has(portal.id)),
       ).map((portal) => {
         const pub = (publications ?? []).find(
           (p) => p.property_id === propertyId && p.portal_key === portal.id,

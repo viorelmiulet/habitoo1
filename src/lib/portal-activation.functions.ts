@@ -13,7 +13,12 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireActiveOrgAuth } from "@/lib/org-access";
-import { PORTALS, getPortalDefinition } from "@/lib/portals/registry";
+import {
+  configurablePortals,
+  getPortalDefinition,
+  isPortalCovered,
+  portalDisplayName,
+} from "@/lib/portals/registry";
 
 type AuthContext = {
   supabase: {
@@ -109,11 +114,11 @@ export const getAgencyPortalCatalog = createServerFn({ method: "POST" })
       if (!latest.has(row.portal)) latest.set(row.portal, row);
     }
 
-    return PORTALS.map((p) => {
+    return configurablePortals().map((p) => {
       const req = latest.get(p.id);
       return {
         id: p.id,
-        displayName: p.display_name,
+        displayName: portalDisplayName(p.id),
         description: p.description,
         availability: p.status,
         activated: activated.has(p.id),
@@ -141,6 +146,8 @@ export const requestPortalActivation = createServerFn({ method: "POST" })
     const organizationId = await requireOrgAdminOrg(context as unknown as AuthContext);
     const definition = getPortalDefinition(data.portalId);
     if (!definition) throw new Error("Portal necunoscut.");
+    // Portalurile acoperite de o altă integrare nu se activează separat.
+    if (isPortalCovered(data.portalId)) throw new Error("Portal necunoscut.");
 
     const admin = await loadAdmin();
 
