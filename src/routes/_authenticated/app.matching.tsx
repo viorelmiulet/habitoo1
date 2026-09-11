@@ -467,7 +467,9 @@ ${materialSignature(brandingFromOrg(me?.organization))}`;
       </div>
 
       {isLoading ? (
-        <p className="text-sm text-muted-foreground">Se calculează potrivirile…</p>
+        <div className="panel p-6">
+          <p className="text-sm text-muted-foreground">Se calculează potrivirile…</p>
+        </div>
       ) : filteredRows.length === 0 ? (
         <div className="panel">
           <EmptyState
@@ -477,62 +479,90 @@ ${materialSignature(brandingFromOrg(me?.organization))}`;
           />
         </div>
       ) : (
-        <div className="panel divide-y divide-border overflow-hidden">
+        <div className="grid gap-4 xl:grid-cols-2">
           {filteredRows.map((row) => {
             const contact = row.request.contact_id ? contactById.get(row.request.contact_id) : null;
             const text = shareText(row.request, row.property);
+            const tone = matchTone(row.match.score);
             return (
-              <div key={row.key} className="flex flex-wrap items-start gap-3 px-5 py-4 text-sm">
-                <div className="min-w-0 flex-1 space-y-1">
-                  <div className="flex flex-wrap items-center gap-2">
+              <article key={row.key} className="panel flex flex-col gap-4 p-5">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="min-w-0 flex-1 space-y-1">
                     <Link
                       to="/app/requests/$id"
                       params={{ id: row.request.id }}
-                      className="font-medium hover:text-primary"
+                      className="block truncate text-sm font-semibold hover:text-primary"
                     >
                       {row.request.title}
                     </Link>
-                    <span className="text-muted-foreground">→</span>
-                    <Link
-                      to="/app/properties/$id"
-                      params={{ id: row.property.id }}
-                      className="font-medium hover:text-primary"
-                    >
-                      {row.property.title}
-                    </Link>
-                    <StatusBadge tone={propertyStatusTone[row.property.status]}>
-                      {propertyStatusLabels[row.property.status]}
-                    </StatusBadge>
-                  </div>
-                  <p className="text-xs text-muted-foreground">
-                    {requestKindLabels[row.request.kind]} · {row.property.city ?? "—"} ·{" "}
-                    {formatMoney(row.property.price, row.property.currency)}
-                  </p>
-                  <p className="text-xs text-success">
-                    {row.match.reasons.map((r) => `✓ ${r}`).join("  ")}
-                  </p>
-                  {row.match.misses.length > 0 ? (
-                    <p className="text-xs text-destructive">
-                      {row.match.misses.map((m) => `✕ ${m}`).join("  ")}
+                    <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                      <ArrowRight className="size-3.5 shrink-0" aria-hidden />
+                      <Link
+                        to="/app/properties/$id"
+                        params={{ id: row.property.id }}
+                        className="truncate font-medium text-foreground hover:text-primary"
+                      >
+                        {row.property.title}
+                      </Link>
                     </p>
-                  ) : null}
+                    <div className="flex flex-wrap items-center gap-2 pt-1">
+                      <StatusBadge tone={propertyStatusTone[row.property.status]}>
+                        {propertyStatusLabels[row.property.status]}
+                      </StatusBadge>
+                      <span className="text-xs text-muted-foreground">
+                        {requestKindLabels[row.request.kind]} · {row.property.city ?? "—"} ·{" "}
+                        {formatMoney(row.property.price, row.property.currency)}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div
+                    className={`grid size-16 shrink-0 place-items-center rounded-2xl text-center ${
+                      tone === "success"
+                        ? "bg-success/12 text-success"
+                        : tone === "warning"
+                          ? "bg-warning/18 text-warning-foreground"
+                          : tone === "danger"
+                            ? "bg-destructive/10 text-destructive"
+                            : "bg-primary/10 text-primary"
+                    }`}
+                  >
+                    <div>
+                      <p className="text-lg leading-none font-semibold tabular-nums">{row.match.score}%</p>
+                      <p className="mt-1 text-[10px] leading-none opacity-80">{matchLabel(row.match.score)}</p>
+                    </div>
+                  </div>
                 </div>
 
-                <StatusBadge tone={matchTone(row.match.score)}>
-                  {row.match.score}% · {matchLabel(row.match.score)}
-                </StatusBadge>
+                {row.match.reasons.length > 0 || row.match.misses.length > 0 ? (
+                  <div className="flex flex-wrap gap-1.5">
+                    {row.match.reasons.map((r) => (
+                      <span
+                        key={`ok-${r}`}
+                        className="inline-flex items-center gap-1 rounded-md bg-success/10 px-2 py-0.5 text-[11px] font-medium text-success"
+                      >
+                        <Check className="size-3" aria-hidden /> {r}
+                      </span>
+                    ))}
+                    {row.match.misses.map((m) => (
+                      <span
+                        key={`no-${m}`}
+                        className="inline-flex items-center gap-1 rounded-md bg-destructive/8 px-2 py-0.5 text-[11px] font-medium text-destructive"
+                      >
+                        <X className="size-3" aria-hidden /> {m}
+                      </span>
+                    ))}
+                  </div>
+                ) : null}
 
-                <div className="flex flex-wrap items-center gap-1.5">
-                  <Button size="sm" variant="outline" asChild>
-                    <Link to="/app/properties/$id" params={{ id: row.property.id }}>
-                      <ExternalLink className="mr-1 size-3.5" /> Deschide
-                    </Link>
-                  </Button>
+                <div className="mt-auto flex flex-wrap items-center gap-1.5 border-t border-border pt-3">
                   <Button
                     size="sm"
-                    variant={row.saved ? "secondary" : "outline"}
+                    variant={row.saved ? "secondary" : "default"}
                     disabled={row.saved || saveLead.isPending}
-                    onClick={() => saveLead.mutate({ request: row.request, property: row.property, score: row.match.score })}
+                    onClick={() =>
+                      saveLead.mutate({ request: row.request, property: row.property, score: row.match.score })
+                    }
                   >
                     {row.saved ? (
                       <>
@@ -540,12 +570,17 @@ ${materialSignature(brandingFromOrg(me?.organization))}`;
                       </>
                     ) : (
                       <>
-                        <Bookmark className="mr-1 size-3.5" /> Salvează
+                        <Bookmark className="mr-1 size-3.5" /> Salvează lead
                       </>
                     )}
                   </Button>
+                  <Button size="sm" variant="outline" asChild>
+                    <Link to="/app/properties/$id" params={{ id: row.property.id }}>
+                      <ExternalLink className="mr-1 size-3.5" /> Deschide
+                    </Link>
+                  </Button>
                   {contact?.phone ? (
-                    <Button size="sm" variant="outline" asChild>
+                    <Button size="sm" variant="outline" title="Trimite pe WhatsApp" asChild>
                       <a
                         href={`https://wa.me/${contact.phone.replace(/[^0-9]/g, "")}?text=${encodeURIComponent(text)}`}
                         target="_blank"
@@ -556,7 +591,7 @@ ${materialSignature(brandingFromOrg(me?.organization))}`;
                     </Button>
                   ) : null}
                   {contact?.email ? (
-                    <Button size="sm" variant="outline" asChild>
+                    <Button size="sm" variant="outline" title="Trimite pe email" asChild>
                       <a
                         href={`mailto:${contact.email}?subject=${encodeURIComponent(
                           `Proprietate potrivită: ${row.property.title}`,
@@ -569,6 +604,7 @@ ${materialSignature(brandingFromOrg(me?.organization))}`;
                   <Button
                     size="sm"
                     variant="outline"
+                    title="Programează vizionare"
                     onClick={() =>
                       setActivityFor({
                         propertyId: row.property.id,
@@ -580,15 +616,22 @@ ${materialSignature(brandingFromOrg(me?.organization))}`;
                   >
                     <CalendarPlus className="size-3.5" />
                   </Button>
-                  <Button size="sm" variant="ghost" onClick={() => ignore(row.key)}>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="ml-auto text-muted-foreground"
+                    title="Ascunde potrivirea"
+                    onClick={() => ignore(row.key)}
+                  >
                     <X className="size-3.5" />
                   </Button>
                 </div>
-              </div>
+              </article>
             );
           })}
         </div>
       )}
+
 
       <ActivityDialog
         open={Boolean(activityFor)}
