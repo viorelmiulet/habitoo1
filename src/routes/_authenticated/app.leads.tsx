@@ -89,6 +89,48 @@ const stageTone: Record<string, "neutral" | "success" | "warning" | "info" | "da
   lost: "danger",
 };
 
+/** Prezentare: potrivește o sursă textuală cu un portal care are logo local. */
+const SOURCE_PORTAL_KEYS = [
+  "storia",
+  "olx",
+  "imobiliare_ro",
+  "imobiliare",
+  "publi24",
+  "clickimob",
+  "imospot",
+  "homepitch",
+  "imove",
+];
+
+function portalKeyOf(source: string | null): string | null {
+  if (!source) return null;
+  const s = source.toLowerCase().replace(/[\s.-]/g, "_");
+  for (const key of SOURCE_PORTAL_KEYS) {
+    if (s.includes(key)) {
+      const normalized = key === "imobiliare" ? "imobiliare_ro" : key;
+      return hasPortalLogo(normalized) ? normalized : null;
+    }
+  }
+  return null;
+}
+
+const STALE_MS = 7 * 24 * 60 * 60 * 1000;
+
+/** Lead fără nicio atingere de peste o săptămână. */
+function isStale(lead: Lead) {
+  const last = lead.last_interaction_at ?? lead.created_at;
+  if (!last) return false;
+  return Date.now() - new Date(last).getTime() > STALE_MS;
+}
+
+const LEAD_EVENT_ICONS: Record<string, typeof Phone> = {
+  call: Phone,
+  email: Mail,
+  meeting: Users,
+  viewing: Home,
+  note: StickyNote,
+};
+
 function emptyForm() {
   return {
     id: "",
