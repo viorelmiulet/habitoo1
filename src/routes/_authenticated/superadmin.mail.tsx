@@ -63,11 +63,12 @@ export const Route = createFileRoute("/_authenticated/superadmin/mail")({
   component: SuperadminMailPage,
 });
 
-type Folder = "open" | "archived" | "spam" | "sent";
+type Folder = "open" | "archived" | "spam" | "sent" | "draft";
 
 const FOLDERS: { id: Folder; label: string; icon: typeof Inbox }[] = [
   { id: "open", label: "Primite", icon: Inbox },
   { id: "sent", label: "Trimise", icon: Send },
+  { id: "draft", label: "Ciorne", icon: Mail },
   { id: "archived", label: "Arhivate", icon: Archive },
   { id: "spam", label: "Spam", icon: AlertOctagon },
 ];
