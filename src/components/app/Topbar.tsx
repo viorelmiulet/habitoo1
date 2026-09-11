@@ -1,7 +1,5 @@
-import { Fragment, useMemo } from "react";
-import { Link, useLocation } from "@tanstack/react-router";
+import { Link } from "@tanstack/react-router";
 import {
-  ChevronRight,
   FlaskConical,
   HelpCircle,
   LogOut,
@@ -12,6 +10,7 @@ import {
   ShieldCheck,
   Sun,
   UserRound,
+  ChevronDown,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -28,38 +27,13 @@ import { GlobalSearch } from "@/components/app/GlobalSearch";
 import { QuickAdd } from "@/components/app/QuickAdd";
 import { NotificationsMenu } from "@/components/app/NotificationsMenu";
 import { SupportWidget } from "@/components/app/SupportWidget";
-import { navLabelByPath, type ShellVariant } from "@/components/app/AppSidebar";
+import { type ShellVariant } from "@/components/app/AppSidebar";
 import { BrandLogo } from "@/components/brand/BrandLogo";
 import { useTheme, type ThemePreference } from "@/hooks/use-theme";
-import { initials } from "@/lib/format";
 import { UserAvatar } from "@/components/app/UserAvatar";
 import { roleLabels } from "@/lib/labels";
 import { cn } from "@/lib/utils";
 import type { CurrentUser } from "@/hooks/use-session";
-
-const segmentLabels: Record<string, string> = {
-  new: "Adaugă",
-  edit: "Editare",
-  settings: "Setări",
-  notifications: "Notificări",
-};
-
-function useBreadcrumbs(pathname: string) {
-  return useMemo(() => {
-    const parts = pathname.split("/").filter(Boolean);
-    const crumbs: { to: string; label: string }[] = [];
-    let acc = "";
-    for (const part of parts) {
-      acc += `/${part}`;
-      const label =
-        navLabelByPath[acc] ??
-        segmentLabels[part] ??
-        (/^[0-9a-f-]{20,}$/i.test(part) || /^\d+$/.test(part) ? "Detalii" : decodeURIComponent(part));
-      crumbs.push({ to: acc, label });
-    }
-    return crumbs;
-  }, [pathname]);
-}
 
 export function Topbar({
   user,
@@ -74,8 +48,6 @@ export function Topbar({
   isDemo?: boolean;
   variant?: ShellVariant;
 }) {
-  const { pathname } = useLocation();
-  const crumbs = useBreadcrumbs(pathname);
   const { preference, setPreference } = useTheme();
   const isPlatform = variant === "platform";
   const displayName = user.profile?.full_name || user.email;
@@ -83,7 +55,7 @@ export function Topbar({
   return (
     <header
       className={cn(
-        "sticky top-0 z-30 flex h-14 items-center gap-2 border-b border-border bg-surface/90 px-3 backdrop-blur-md sm:px-4 lg:px-6",
+        "sticky top-0 z-30 flex h-16 items-center gap-2 border-b border-border bg-background/85 px-3 backdrop-blur-md sm:px-4 lg:px-6",
         isPlatform && "shadow-[inset_0_2px_0_0_var(--color-gold)]",
       )}
     >
@@ -99,46 +71,18 @@ export function Topbar({
 
       <Link
         to={isPlatform ? "/superadmin" : "/app"}
-        className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-white shadow-xs ring-1 ring-border lg:hidden"
+        className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-white ring-1 ring-border lg:hidden"
         aria-label="Habitoo CRM — acasă"
       >
         <BrandLogo markOnly className="size-7" priority />
       </Link>
 
-      {/* Breadcrumbs (desktop) */}
-      <nav aria-label="Poziție în aplicație" className="hidden min-w-0 flex-1 items-center lg:flex">
-        <ol className="flex min-w-0 items-center gap-1 text-sm">
-          {crumbs.map((c, i) => {
-            const last = i === crumbs.length - 1;
-            return (
-              <Fragment key={c.to}>
-                {i > 0 ? <ChevronRight className="size-3.5 shrink-0 text-muted-foreground/60" aria-hidden /> : null}
-                <li className="min-w-0">
-                  {last ? (
-                    <span aria-current="page" className="block truncate font-medium text-foreground">
-                      {c.label}
-                    </span>
-                  ) : (
-                    <Link
-                      to={c.to}
-                      className="block truncate text-muted-foreground transition-colors hover:text-foreground"
-                    >
-                      {c.label}
-                    </Link>
-                  )}
-                </li>
-              </Fragment>
-            );
-          })}
-        </ol>
-      </nav>
-
-      {/* Search (tablet+) */}
-      <div className="hidden min-w-0 flex-1 md:block lg:max-w-sm lg:flex-none xl:max-w-md">
+      {/* Căutare globală lată */}
+      <div className="hidden min-w-0 flex-1 md:block md:max-w-xl">
         <GlobalSearch />
       </div>
 
-      <div className="ml-auto flex items-center gap-0.5 sm:gap-1">
+      <div className="ml-auto flex items-center gap-1.5 sm:gap-2">
         <div className="md:hidden">
           <GlobalSearch compact />
         </div>
@@ -146,7 +90,7 @@ export function Topbar({
         {isDemo ? (
           <span
             data-testid="demo-badge"
-            className="mr-1 hidden items-center gap-1 rounded-full border border-warning/40 bg-warning/15 px-2.5 py-1 text-[11px] font-semibold tracking-wide text-warning-foreground uppercase sm:inline-flex"
+            className="mr-1 hidden items-center gap-1 rounded-full border border-warning/40 bg-warning/15 px-2.5 py-1 text-[11px] font-medium tracking-wide text-warning-foreground uppercase sm:inline-flex"
             title="Agenție de test – datele sunt fictive"
           >
             <FlaskConical className="size-3.5" /> Demo / QA
@@ -154,7 +98,7 @@ export function Topbar({
         ) : null}
 
         {isPlatform ? (
-          <span className="mr-1 hidden items-center gap-1 rounded-full border border-gold/40 bg-gold/10 px-2.5 py-1 text-[11px] font-semibold tracking-wide text-gold uppercase sm:inline-flex">
+          <span className="mr-1 hidden items-center gap-1 rounded-full border border-gold/40 bg-gold/10 px-2.5 py-1 text-[11px] font-medium tracking-wide text-gold uppercase sm:inline-flex">
             <ShieldCheck className="size-3.5" /> Platformă
           </span>
         ) : (
@@ -170,15 +114,21 @@ export function Topbar({
             <button
               type="button"
               aria-label="Meniu utilizator"
-              className="ml-0.5 flex h-9 items-center gap-2 rounded-full border border-border bg-surface py-1 pr-1 pl-1 text-sm transition-colors hover:border-primary/40 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none md:pr-3"
+              className="ml-0.5 flex h-11 items-center gap-2.5 rounded-full py-1 pr-2 pl-1 text-sm transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
             >
               <UserAvatar
                 name={displayName}
                 path={user.profile?.avatar_url}
-                className="size-7 bg-primary/10 text-primary"
+                className="size-9 bg-primary/10 text-primary"
               />
 
-              <span className="hidden max-w-32 truncate md:inline">{displayName}</span>
+              <span className="hidden min-w-0 flex-col items-start leading-tight md:flex">
+                <span className="max-w-36 truncate font-medium">{displayName}</span>
+                <span className="max-w-36 truncate text-xs text-muted-foreground">
+                  {roleLabels[user.role]}
+                </span>
+              </span>
+              <ChevronDown className="hidden size-4 shrink-0 text-muted-foreground md:block" />
             </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-60">
