@@ -535,9 +535,9 @@ ${materialSignature(brandingFromOrg(me?.organization))}`;
                         ? "bg-success/12 text-success"
                         : tone === "warning"
                           ? "bg-warning/18 text-warning-foreground"
-                          : tone === "danger"
-                            ? "bg-destructive/10 text-destructive"
-                            : "bg-primary/10 text-primary"
+                          : tone === "info"
+                            ? "bg-info/12 text-info"
+                            : "bg-muted text-muted-foreground"
                     }`}
                   >
                     <div>
