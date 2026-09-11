@@ -14,6 +14,7 @@ import {
 
   Layers,
   LifeBuoy,
+  Mail,
   MapPin,
   ListChecks,
   LogOut,
