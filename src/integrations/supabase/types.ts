@@ -808,7 +808,14 @@ export type Database = {
           id: string
           is_demo: boolean
           legal_name: string | null
+          logo_path: string | null
           logo_url: string | null
+          material_accent_color: string
+          material_address: string | null
+          material_email: string | null
+          material_phone: string | null
+          material_show_habitoo: boolean
+          material_website: string | null
           max_properties: number
           max_users: number
           name: string
@@ -834,7 +841,14 @@ export type Database = {
           id?: string
           is_demo?: boolean
           legal_name?: string | null
+          logo_path?: string | null
           logo_url?: string | null
+          material_accent_color?: string
+          material_address?: string | null
+          material_email?: string | null
+          material_phone?: string | null
+          material_show_habitoo?: boolean
+          material_website?: string | null
           max_properties?: number
           max_users?: number
           name: string
@@ -860,7 +874,14 @@ export type Database = {
           id?: string
           is_demo?: boolean
           legal_name?: string | null
+          logo_path?: string | null
           logo_url?: string | null
+          material_accent_color?: string
+          material_address?: string | null
+          material_email?: string | null
+          material_phone?: string | null
+          material_show_habitoo?: boolean
+          material_website?: string | null
           max_properties?: number
           max_users?: number
           name?: string
