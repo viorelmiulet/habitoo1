@@ -108,6 +108,7 @@ function LeadsPage() {
   const [campaignFilter, setCampaignFilter] = useState("all");
   const [detailLead, setDetailLead] = useState<Lead | null>(null);
   const [dragId, setDragId] = useState<string | null>(null);
+  const [dragOverStage, setDragOverStage] = useState<LeadStage | null>(null);
   const [lostDialog, setLostDialog] = useState<{ lead: Lead } | null>(null);
   const [lostReason, setLostReason] = useState(leadLostReasons[0]);
   const [lostReasonFree, setLostReasonFree] = useState("");
