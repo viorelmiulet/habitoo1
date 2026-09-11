@@ -14,6 +14,8 @@ import { useApplyTheme } from "@/hooks/use-theme";
 import { useSidebarCollapsed } from "@/hooks/use-sidebar-state";
 import { supabase } from "@/integrations/supabase/client";
 import { roleLabels } from "@/lib/labels";
+import { planAgentLimit, planLabel } from "@/lib/plans";
+
 import { cn } from "@/lib/utils";
 import type { CurrentUser } from "@/hooks/use-session";
 
@@ -57,6 +59,29 @@ export function AppShell({
   if (unread.data) badges["/app/notifications"] = unread.data;
   if (supportOpen.data) badges["/superadmin/support"] = supportOpen.data;
 
+  // Cardul de plan din sidebar: locuri ocupate reale din limita planului.
+  const orgId = user.organization?.id ?? null;
+  const seats = useQuery({
+    queryKey: ["org-seats", orgId],
+    enabled: Boolean(orgId) && !isPlatform,
+    queryFn: async () => {
+      const { count } = await supabase
+        .from("profiles")
+        .select("id", { count: "exact", head: true })
+        .eq("organization_id", orgId as string)
+        .eq("is_active", true);
+      return count ?? 0;
+    },
+  });
+  const plan =
+    !isPlatform && user.organization
+      ? {
+          label: planLabel(user.organization.plan),
+          used: seats.data ?? 0,
+          limit: planAgentLimit(user.organization.plan),
+        }
+      : undefined;
+
   const signOut = async () => {
     await supabase.auth.signOut();
     navigate({ to: "/login", replace: true });
@@ -71,7 +96,9 @@ export function AppShell({
     user,
     onSignOut: signOut,
     badges,
+    plan,
   };
+
 
   return (
     <TooltipProvider delayDuration={150}>

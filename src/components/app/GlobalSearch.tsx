@@ -130,13 +130,14 @@ export function GlobalSearch({ compact = false }: { compact?: boolean } = {}) {
           type="button"
           onClick={() => setOpen(true)}
           aria-label="Caută în agenție (⌘K)"
-          className="flex h-9 w-full max-w-md min-w-0 items-center gap-2 rounded-lg border border-border bg-surface px-3 text-sm text-muted-foreground transition-colors hover:border-primary/40 hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+          className="flex h-11 w-full min-w-0 items-center gap-2.5 rounded-2xl border border-border bg-surface px-4 text-sm text-muted-foreground transition-colors hover:border-primary/40 hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
         >
           <Search className="size-4" />
-          <span className="min-w-0 truncate">Caută proprietăți, contacte, telefoane, ID-uri…</span>
-          <kbd className="ml-auto hidden rounded border border-border bg-muted px-1.5 py-0.5 text-[10px] font-medium sm:inline">
+          <span className="min-w-0 truncate">Caută proprietăți, clienți, adrese…</span>
+          <kbd className="ml-auto hidden rounded-md border border-border bg-muted px-1.5 py-0.5 text-[10px] font-medium sm:inline">
             ⌘K
           </kbd>
+
         </button>
       )}
 
