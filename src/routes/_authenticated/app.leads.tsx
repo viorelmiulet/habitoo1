@@ -216,6 +216,7 @@ function LeadsPage() {
   });
   const propertyById = useMemo(() => new Map(properties.map((p) => [p.id, p.title])), [properties]);
   const agentById = useMemo(() => new Map(agents.map((a) => [a.id, a.full_name])), [agents]);
+  const coverFor = usePropertyCovers(propertyIds);
 
   const { data: contacts = [] } = useQuery({
     queryKey: ["contacts", "for-leads", orgId],
