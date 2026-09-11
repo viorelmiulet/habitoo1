@@ -3,8 +3,21 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { Tables } from "@/integrations/supabase/types";
+import { clearImpersonationId, getImpersonationId } from "@/lib/impersonation-client";
+import { getImpersonationSession } from "@/lib/impersonation.functions";
 
 export type AppRole = "superadmin" | "agency_admin" | "agent";
+
+/** Sesiunea de acces temporar în care lucrează un superadmin. */
+export type ImpersonationContext = {
+  id: string;
+  expiresAt: string;
+  mode: "full" | "read_only";
+  reason: string;
+  realUserId: string;
+  realEmail: string | null;
+  realName: string | null;
+};
 
 export type CurrentUser = {
   userId: string;
@@ -18,7 +31,10 @@ export type CurrentUser = {
   orgBlocked: OrgBlockReason | null;
   /** Cererea de înscriere a agenției; organizația se creează abia la aprobare. */
   registration: Tables<"agency_registration_requests"> | null;
+  /** Prezent doar când un superadmin lucrează temporar în contul altcuiva. */
+  impersonation: ImpersonationContext | null;
 };
+
 
 export const currentUserQueryKey = ["current-user"] as const;
 
