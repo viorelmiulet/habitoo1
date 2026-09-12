@@ -212,7 +212,11 @@ const GEMINI_FALLBACK_MODELS = [
   "gemini-flash-latest",
   "gemini-2.5-flash",
 ];
-const GEMINI_TIMEOUT_MS = 45_000;
+const GEMINI_TIMEOUT_MS = 120_000;
+/** Limita practică pentru inline_data (Google acceptă ~20 MB pe request, lăsăm marjă). */
+const MAX_IMAGE_BYTES = 12 * 1024 * 1024;
+const SUPPORTED_MIME = /^image\/(jpeg|png|webp)$/;
+const HEIC_MIME = /^image\/(heic|heif|heic-sequence|heif-sequence)$/;
 
 /** Spune interfeței dacă extragerea automată este configurată (cheie Google prezentă). */
 export const getIdExtractionStatus = createServerFn({ method: "GET" })
@@ -227,10 +231,13 @@ export const extractIdDocument = createServerFn({ method: "POST" })
     z
       .object({
         imageBase64: z.string().min(100),
-        mimeType: z.string().regex(/^image\/(jpeg|png|webp)$/),
+        // Validare permisivă: formatele neacceptate primesc un mesaj clar în handler,
+        // nu o eroare generică de validare.
+        mimeType: z.string().min(3).max(80),
       })
       .parse(data),
   )
+
   .handler(async ({ data, context }) => {
     const ctx = context as unknown as Ctx;
     const { orgId } = await orgContext(ctx);
