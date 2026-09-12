@@ -1125,6 +1125,7 @@ type PortalSelectionState =
   | "published"
   | "in_feed"
   | "error"
+  | "expired"
   | "withdrawn";
 
 export type PropertyPortalCell = {
@@ -1174,6 +1175,7 @@ function deriveState(input: {
   if (input.listingStatus === "error" || input.publicationStatus === "error") return "error";
   if (input.listingStatus === "published" || input.listingStatus === "updated") return "published";
   if (input.listingStatus === "pending") return "syncing";
+  if (input.listingStatus === "expired") return "expired";
   if (input.listingStatus === "withdrawn") return "withdrawn";
   if (!input.configured) return "not_configured";
   return input.selected ? "selected" : "not_selected";

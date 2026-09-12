@@ -76,6 +76,8 @@ function stateSentence(cell: PropertyPortalCell, selected: boolean) {
     const base = cell.state === "in_feed" ? "Activ în feedul portalului" : "Activ pe portal";
     return cell.lastSyncAt ? `${base} · sincronizat ${syncAgo(cell.lastSyncAt)}` : base;
   }
+  if (cell.state === "expired")
+    return "Anunțul a expirat pe portal — apasă „Publică” pentru a-l republica.";
   if (cell.state === "withdrawn") return "Retrasă de pe portal.";
   if (cell.state === "selected") return "Selectat — se trimite la următoarea apăsare pe „Publică”.";
   return "Neselectat.";
