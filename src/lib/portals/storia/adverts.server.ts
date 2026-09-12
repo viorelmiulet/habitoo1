@@ -36,6 +36,9 @@ export function storiaListingStatus(code: string | null): string {
   if (code === "new" || code === "unpaid" || code === "blocked") return "pending";
   // Retragerea (din CRM sau din contul Storia) este o stare normală, nu o eroare.
   if (code === "removed_by_user" || code === "removed_by_parent_ad") return "withdrawn";
+  // Expirarea anunțului este starea normală de final de perioadă, nu o eroare:
+  // agentul o vede ca „expirat” și poate republica (manual sau automat).
+  if (code === "outdated") return "expired";
   return "error";
 }
 
