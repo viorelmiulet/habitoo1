@@ -123,12 +123,11 @@ export const organizationStatusTone: Record<
 };
 
 export const organizationPlanLabels: Record<string, string> = {
-  trial: "Trial",
-  starter: "Starter",
+  basic: "Basic",
   pro: "Pro",
-  business: "Business",
-  enterprise: "Enterprise",
+  unlimited: "Unlimited",
 };
+
 
 // ---- Audit ------------------------------------------------------------------
 

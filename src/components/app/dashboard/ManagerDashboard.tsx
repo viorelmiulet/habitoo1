@@ -407,7 +407,9 @@ export function ManagerDashboard() {
             <div className="space-y-2">
               <div className="flex items-center justify-between text-sm">
                 <span className="font-medium">
-                  {data?.team.activeAgents ?? 0} / {data?.team.limit ?? 0} agenți activi
+                  {data && data.team.limit === null
+                    ? `${data.team.activeAgents} agenți activi · fără limită`
+                    : `${data?.team.activeAgents ?? 0} / ${data?.team.limit ?? 0} agenți activi`}
                 </span>
                 {limitReached ? (
                   <StatusBadge tone="danger">Limita planului atinsă</StatusBadge>
@@ -417,11 +419,14 @@ export function ManagerDashboard() {
               </div>
               <Progress
                 value={
-                  data && data.team.limit > 0
+                  data && data.team.limit !== null && data.team.limit > 0
                     ? Math.min(100, (data.team.activeAgents / data.team.limit) * 100)
-                    : 0
+                    : data && data.team.limit === null
+                      ? 100
+                      : 0
                 }
               />
+
               {limitReached ? (
                 <p className="flex items-center gap-1.5 text-xs text-destructive">
                   <AlertTriangle className="size-3.5" /> Pentru a adăuga agenți noi ai nevoie de un
