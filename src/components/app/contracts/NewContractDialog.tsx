@@ -32,7 +32,13 @@ import {
   type ContractKind,
   type PartyRole,
 } from "@/lib/contracts/templates";
-import { createContract, extractIdDocument, listTemplates } from "@/lib/contracts.functions";
+import {
+  createContract,
+  extractIdDocument,
+  getIdExtractionStatus,
+  listTemplates,
+} from "@/lib/contracts.functions";
+
 
 const defaultRole: Record<ContractKind, PartyRole> = {
   sale_mandate: "seller",
