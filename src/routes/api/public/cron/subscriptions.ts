@@ -72,12 +72,32 @@ async function sendGraceEmails(orgs: GraceOrg[]) {
   return { emailsSent };
 }
 
+/**
+ * Autentificarea apelantului: fie secretul de cron al platformei (Bearer), fie
+ * un jeton de unică folosință emis chiar de jobul din baza de date. Ambele cer
+ * un acces privilegiat pe care un apelant public nu îl are.
+ */
+async function authenticate(request: Request): Promise<Response | null> {
+  const nonce = request.headers.get("x-cron-nonce");
+  if (nonce) {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data } = await supabaseAdmin.rpc("cron_nonce_claim", {
+      _purpose: "subscriptions",
+      _token: nonce,
+    });
+    if (data === true) return null;
+    return new Response("Unauthorized", { status: 401 });
+  }
+  return authenticateCronRequest(request);
+}
+
 export const Route = createFileRoute("/api/public/cron/subscriptions")({
   server: {
     handlers: {
       POST: async ({ request }) => {
-        const unauthorized = await authenticateCronRequest(request);
+        const unauthorized = await authenticate(request);
         if (unauthorized) return unauthorized;
+
 
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
         const { data, error } = await supabaseAdmin.rpc("subscription_enforce_daily");
