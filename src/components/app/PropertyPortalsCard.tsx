@@ -464,6 +464,16 @@ export const PropertyPortalsCard = forwardRef<
                   <ExternalLink className="size-4" aria-hidden />
                 </a>
               ) : null}
+              </div>
+
+              {/* Auto-prelungire, doar pentru Storia și doar când portalul e bifat. */}
+              {cell.portalId === "storia" && value ? (
+                <StoriaAutoRenewControl
+                  propertyId={propertyId}
+                  organizationId={organizationId}
+                  canManage={canManage}
+                />
+              ) : null}
             </li>
           );
         })}
