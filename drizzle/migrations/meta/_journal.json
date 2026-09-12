@@ -127,6 +127,13 @@
       "when": 1789189263850,
       "tag": "0017_registration_plan_choice",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1789189961894,
+      "tag": "0018_trial_period_30_days",
+      "breakpoints": true
     }
   ]
 }

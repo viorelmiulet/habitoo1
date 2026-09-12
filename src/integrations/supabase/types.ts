@@ -1336,6 +1336,7 @@ export type Database = {
           email: string | null
           id: string
           is_demo: boolean
+          is_trial: boolean
           legal_name: string | null
           logo_path: string | null
           logo_url: string | null
@@ -1379,6 +1380,7 @@ export type Database = {
           email?: string | null
           id?: string
           is_demo?: boolean
+          is_trial?: boolean
           legal_name?: string | null
           logo_path?: string | null
           logo_url?: string | null
@@ -1422,6 +1424,7 @@ export type Database = {
           email?: string | null
           id?: string
           is_demo?: boolean
+          is_trial?: boolean
           legal_name?: string | null
           logo_path?: string | null
           logo_url?: string | null
