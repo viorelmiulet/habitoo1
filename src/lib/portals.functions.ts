@@ -1251,8 +1251,7 @@ export const getPropertiesPortalMatrix = createServerFn({ method: "POST" })
       const feedEligible = eligibleById.get(propertyId) === true;
       properties[propertyId] = PORTALS.filter(
         (portal) =>
-          !isPortalCovered(portal.id) &&
-          (visiblePortals === null || visiblePortals.has(portal.id)),
+          !isPortalCovered(portal.id) && (visiblePortals === null || visiblePortals.has(portal.id)),
       ).map((portal) => {
         const pub = (publications ?? []).find(
           (p) => p.property_id === propertyId && p.portal_key === portal.id,

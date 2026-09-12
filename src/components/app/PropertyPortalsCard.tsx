@@ -400,72 +400,72 @@ export const PropertyPortalsCard = forwardRef<
 
           return (
             <li key={cell.portalId} className={cn("px-5 py-4 text-sm", problem && "bg-warning/10")}>
-            <div className="flex flex-wrap items-start gap-3">
-              <Checkbox
-                id={`portal-${cell.portalId}`}
-                checked={value}
-                disabled={disabled}
-                className="mt-0.5"
-                onCheckedChange={(next) => {
-                  if (next === true && cell.availability === "available" && !cell.configured) {
-                    toast.error(
-                      `${cell.portalName} nu este configurat. Configurează portalul în această pagină.`,
-                    );
-                  }
-                  setChecked((prev) => ({ ...prev, [cell.portalId]: next === true }));
-                }}
-              />
-              <StateIcon
-                aria-hidden
-                className={cn(
-                  "mt-0.5 size-4 shrink-0",
-                  problem
-                    ? "text-warning-foreground"
-                    : value
-                      ? "text-success"
-                      : "text-muted-foreground/60",
-                )}
-              />
-              <PortalLogoStack portalId={cell.portalId} name={cell.portalName} size={28} />
-              <div className="min-w-0 flex-1">
-                <label htmlFor={`portal-${cell.portalId}`} className="font-medium">
-                  {cell.portalName}
-                </label>
-                <p
+              <div className="flex flex-wrap items-start gap-3">
+                <Checkbox
+                  id={`portal-${cell.portalId}`}
+                  checked={value}
+                  disabled={disabled}
+                  className="mt-0.5"
+                  onCheckedChange={(next) => {
+                    if (next === true && cell.availability === "available" && !cell.configured) {
+                      toast.error(
+                        `${cell.portalName} nu este configurat. Configurează portalul în această pagină.`,
+                      );
+                    }
+                    setChecked((prev) => ({ ...prev, [cell.portalId]: next === true }));
+                  }}
+                />
+                <StateIcon
+                  aria-hidden
                   className={cn(
-                    "text-xs",
-                    problem ? "text-warning-foreground" : "text-muted-foreground",
+                    "mt-0.5 size-4 shrink-0",
+                    problem
+                      ? "text-warning-foreground"
+                      : value
+                        ? "text-success"
+                        : "text-muted-foreground/60",
                   )}
-                >
-                  {stateSentence(cell, value)}
-                </p>
-              </div>
+                />
+                <PortalLogoStack portalId={cell.portalId} name={cell.portalName} size={28} />
+                <div className="min-w-0 flex-1">
+                  <label htmlFor={`portal-${cell.portalId}`} className="font-medium">
+                    {cell.portalName}
+                  </label>
+                  <p
+                    className={cn(
+                      "text-xs",
+                      problem ? "text-warning-foreground" : "text-muted-foreground",
+                    )}
+                  >
+                    {stateSentence(cell, value)}
+                  </p>
+                </div>
 
-              {problem && canManage && cell.availability === "available" && cell.configured ? (
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="outline"
-                  disabled={apply.isPending}
-                  onClick={() => void applyPending()}
-                >
-                  Retrimite
-                </Button>
-              ) : null}
+                {problem && canManage && cell.availability === "available" && cell.configured ? (
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    disabled={apply.isPending}
+                    onClick={() => void applyPending()}
+                  >
+                    Retrimite
+                  </Button>
+                ) : null}
 
-              {/* Linkul public al anunțului, când portalul îl întoarce. */}
-              {cell.publicUrl ? (
-                <a
-                  href={cell.publicUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  title={`Deschide anunțul pe ${cell.portalName}`}
-                  aria-label={`Deschide anunțul pe ${cell.portalName} într-un tab nou`}
-                  className="mt-1 text-muted-foreground transition-colors hover:text-primary"
-                >
-                  <ExternalLink className="size-4" aria-hidden />
-                </a>
-              ) : null}
+                {/* Linkul public al anunțului, când portalul îl întoarce. */}
+                {cell.publicUrl ? (
+                  <a
+                    href={cell.publicUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    title={`Deschide anunțul pe ${cell.portalName}`}
+                    aria-label={`Deschide anunțul pe ${cell.portalName} într-un tab nou`}
+                    className="mt-1 text-muted-foreground transition-colors hover:text-primary"
+                  >
+                    <ExternalLink className="size-4" aria-hidden />
+                  </a>
+                ) : null}
               </div>
 
               {/* Auto-prelungire, doar pentru Storia și doar când portalul e bifat. */}
@@ -490,7 +490,7 @@ export const PropertyPortalsCard = forwardRef<
               : "Doar administratorul agenției poate modifica publicarea pe portaluri."}
         </p>
         <span className="text-xs text-muted-foreground">
-          Se aplică prin butonul „Publică” din partea de sus a paginii.
+          Se aplică prin butonul „Publică” din rândul de acțiuni al paginii.
         </span>
       </footer>
 
@@ -565,8 +565,7 @@ function StoriaAutoRenewControl({
 
   const state = useQuery({
     queryKey,
-    queryFn: () =>
-      load({ data: { ...(organizationId ? { organizationId } : {}), propertyId } }),
+    queryFn: () => load({ data: { ...(organizationId ? { organizationId } : {}), propertyId } }),
   });
 
   const mutate = useMutation({
