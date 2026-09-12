@@ -203,15 +203,16 @@ Răspunde exclusiv cu json, cu exact aceste chei (string, gol dacă lipsește):
 {"nume":"","prenume":"","cnp":"","serie":"","numar":"","data_eliberarii":"","emitent":"","adresa":"","data_nasterii":""}
 Datele calendaristice se scriu în format ZZ.LL.AAAA. Nu inventa valori: dacă nu poți citi un câmp, lasă-l gol.`;
 
-// Ordine confirmată pe cheia proiectului (GET /v1beta/models): doar modele Flash
-// cu suport de imagine, de la cel mai nou la cel mai vechi.
+// Ordine testată în sandbox pe cheia proiectului cu un act realist:
+// gemini-3.6-flash a răspuns 200 și a citit corect toate câmpurile, în timp ce
+// 3.8-flash / flash-latest răspundeau 503 (supraîncărcare), iar 2.5-flash 404.
 const GEMINI_FALLBACK_MODELS = [
-  "gemini-3.8-flash",
   "gemini-3.6-flash",
-  "gemini-3.5-flash",
+  "gemini-3.8-flash",
   "gemini-flash-latest",
-  "gemini-2.5-flash",
+  "gemini-3.5-flash",
 ];
+
 const GEMINI_TIMEOUT_MS = 120_000;
 /** Limita practică pentru inline_data (Google acceptă ~20 MB pe request, lăsăm marjă). */
 const MAX_IMAGE_BYTES = 12 * 1024 * 1024;
