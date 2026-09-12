@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowRight, Check, MessageCircle } from "lucide-react";
+import { useState } from "react";
 import {
   Accordion,
   AccordionContent,
@@ -13,11 +14,13 @@ import { PublicLayout } from "@/components/marketing/PublicLayout";
 import { Reveal } from "@/components/marketing/Reveal";
 import { Container, Section, SectionHeading } from "@/components/marketing/Section";
 import { publicHead } from "@/components/marketing/public-head";
+import { PLAN_AGENT_LIMITS, PLAN_LABELS, PLAN_PRICES, type PlanKey } from "@/lib/plans";
 import { cn } from "@/lib/utils";
 
 const TITLE = "Prețuri și planuri — Habitoo CRM";
 const DESCRIPTION =
-  "Planurile Habitoo CRM pentru agenții imobiliare de toate dimensiunile. Prețurile finale se publică la lansarea comercială; până atunci, solicită o demonstrație.";
+  "Planurile Habitoo CRM: Basic 10€, Pro 20€ și Unlimited 100€ pe lună, cu 50% reducere la plata anuală. Alege planul potrivit pentru agenția ta imobiliară.";
+
 
 export const Route = createFileRoute("/preturi")({
   head: () =>
@@ -101,6 +104,8 @@ const faq = [
 
 
 function PricingPage() {
+  const [cycle, setCycle] = useState<"monthly" | "annual">("monthly");
+
   return (
     <PublicLayout>
       <section className="mk-hero-bg relative overflow-hidden border-b border-border">
