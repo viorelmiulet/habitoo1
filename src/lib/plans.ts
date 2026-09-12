@@ -54,6 +54,17 @@ export function planAgentLimitLabel(plan?: string | null): string {
   return limit === null ? "fără limită" : `${limit} agenți`;
 }
 
+/**
+ * Eticheta pentru numărul de locuri stocat în `organizations.max_users`. Planul
+ * Unlimited este salvat ca sentinelă foarte mare, deci nu afișăm cifra brută.
+ */
+export const UNLIMITED_SEATS_SENTINEL = 1_000_000;
+
+export function seatLimitLabel(maxUsers?: number | null): string {
+  if (maxUsers == null || maxUsers >= UNLIMITED_SEATS_SENTINEL) return "fără limită";
+  return String(maxUsers);
+}
+
 /** Tariful aplicat în funcție de termenul abonamentului (30 zile = lunar, 12 luni = anual). */
 export function planPriceLabel(plan?: string | null, term?: string | null): string {
   const price = PLAN_PRICES[normalizePlan(plan)];
