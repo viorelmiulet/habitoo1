@@ -29,7 +29,11 @@ import {
 import { currentUserQueryKey, useCurrentUser } from "@/hooks/use-session";
 import { formatDate } from "@/lib/format";
 import { roleLabels } from "@/lib/labels";
+import { PLAN_LABELS, normalizePlan, planAgentLimitLabel } from "@/lib/plans";
+import { getTeamOverview } from "@/lib/agency-team.functions";
+import { useServerFn } from "@tanstack/react-start";
 import { appHead } from "@/components/app/app-head";
+
 
 export const Route = createFileRoute("/_authenticated/app/settings")({
   head: () => appHead("Habitoo CRM — setări"),
