@@ -5,13 +5,15 @@
  * Doar prezentare: refolosește imaginile existente din `property_images`
  * (ordinea reală: is_primary → position) și nu modifică nimic.
  */
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { ImageOff } from "lucide-react";
+import { ChevronLeft, ChevronRight, ImageOff } from "lucide-react";
 
 import { supabase } from "@/integrations/supabase/client";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { MEDIA_BUCKET, signedUrls } from "@/lib/storage";
 import { cn } from "@/lib/utils";
+
 
 type ImageRow = {
   url: string;
