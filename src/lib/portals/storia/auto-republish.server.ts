@@ -41,7 +41,7 @@ export async function handleStoriaExpiry(
       .maybeSingle(),
     admin
       .from("properties")
-      .select("id, title, status, publish_status, deleted_at, archived_at")
+      .select("id, title, status, publish_status, deleted_at, archived_at, storia_auto_renew")
       .eq("id", match.propertyId)
       .maybeSingle(),
     admin
