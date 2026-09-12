@@ -17,6 +17,7 @@ import {
   getAgencyOverview,
   type AgencyHistoryEntry,
   type AgencyOverviewRow,
+  type AuditValues,
 } from "@/lib/superadmin-agency-overview.functions";
 import { cn } from "@/lib/utils";
 
@@ -89,7 +90,7 @@ function SubscriptionCell({ org }: { org: AgencyOverviewRow }) {
   if (!org.subscriptionExpiresAt) {
     return <span className="text-muted-foreground">Fără termen</span>;
   }
-  const state = subscriptionState(org);
+  const state = subscriptionState({ subscription_expires_at: org.subscriptionExpiresAt });
   return (
     <div className="space-y-0.5">
       <p className="text-sm">{subscriptionTermLabel(org.subscriptionTerm)}</p>
