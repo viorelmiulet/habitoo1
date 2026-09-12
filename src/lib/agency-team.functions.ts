@@ -48,7 +48,9 @@ export type TeamOverview = {
   organizationName: string;
   plan: PlanKey;
   planLabel: string;
-  seatLimit: number;
+  /** `null` = fără limită de agenți (planul Unlimited). */
+  seatLimit: number | null;
+
   seatsUsed: number;
   canInvite: boolean;
   upgradeHint: string | null;
