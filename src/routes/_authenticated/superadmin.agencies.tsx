@@ -1,7 +1,17 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import { Archive, ArchiveRestore, Building2, Check, Search, Trash2, X } from "lucide-react";
+import {
+  Archive,
+  ArchiveRestore,
+  Building2,
+  Check,
+  RefreshCw,
+  Search,
+  Trash2,
+  X,
+} from "lucide-react";
+
 import { toast } from "sonner";
 import { toastError } from "@/lib/errors";
 import { PageHeader } from "@/components/app/PageHeader";
@@ -224,7 +234,28 @@ function AgenciesPage() {
     onError: (e: Error) => toastError(e),
   });
 
+  // Termenul abonamentului: RPC superadmin-only care calculează expirarea și scrie auditul.
+  const saveSubscription = useMutation({
+    mutationFn: async ({ id, term }: { id: string; term: SubscriptionTerm | null }) => {
+      const { error } = await supabase.rpc("set_organization_subscription", {
+        _org: id,
+        _term: term,
+      });
+      if (error) throw error;
+    },
+    onSuccess: (_r, vars) => {
+      queryClient.invalidateQueries({ queryKey: ["superadmin"] });
+      toast.success(
+        vars.term
+          ? `Termenul abonamentului a fost setat la ${SUBSCRIPTION_TERM_LABELS[vars.term]}.`
+          : "Agenția rămâne fără termen (acces nelimitat).",
+      );
+    },
+    onError: (e: Error) => toastError(e),
+  });
+
   const savePlan = useMutation({
+
     mutationFn: async ({ id, plan, previous }: { id: string; plan: PlanKey; previous: string }) => {
       const { error } = await supabase.from("organizations").update({ plan }).eq("id", id);
       if (error) throw error;
