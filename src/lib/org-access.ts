@@ -38,6 +38,7 @@ export function parseOrgBlocked(error: unknown): OrgBlockReason | null {
   if (raw.includes(":archived")) return "archived";
   if (raw.includes(":cancelled")) return "cancelled";
   if (raw.includes(":pending_approval")) return "pending_approval";
+  if (raw.includes(":expired")) return "expired";
   return "suspended";
 }
 
@@ -46,17 +47,20 @@ export function orgBlockReason(
     | {
         status?: string | null;
         archived_at?: string | null;
+        suspended_reason?: string | null;
       }
     | null
     | undefined,
 ): OrgBlockReason | null {
   if (!org) return null;
   if (org.archived_at) return "archived";
-  if (org.status === "suspended") return "suspended";
+  if (org.status === "suspended")
+    return org.suspended_reason === "subscription_expired" ? "expired" : "suspended";
   if (org.status === "cancelled") return "cancelled";
   if (org.status === "pending_approval") return "pending_approval";
   return null;
 }
+
 
 export const requireActiveOrgAuth = createMiddleware({ type: "function" })
   .middleware([requireSupabaseAuth])
@@ -81,7 +85,7 @@ export const requireActiveOrgAuth = createMiddleware({ type: "function" })
 
     const { data: org } = await supabaseAdmin
       .from("organizations")
-      .select("status,archived_at")
+      .select("status,archived_at,suspended_reason")
       .eq("id", profile.organization_id)
       .maybeSingle();
 
