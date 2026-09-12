@@ -338,25 +338,29 @@ export const extractIdDocument = createServerFn({ method: "POST" })
     try {
       let res: Response | null = null;
       let usedModel = "";
-      for (const model of models) {
+      // Două treceri peste listă: la 503 (supraîncărcare temporară) merită
+      // reîncercat și primul model după ce toate au fost încercate o dată.
+      const attempts = [...models, ...models];
+      for (let i = 0; i < attempts.length; i += 1) {
+        const model = attempts[i]!;
         usedModel = model;
         const startedAt = Date.now();
         res = await callModel(model);
         console.info("[contracts] id extraction attempt", {
           ...logCtx,
           model,
+          attempt: i + 1,
           status: res.status,
           ms: Date.now() - startedAt,
         });
         // Model indisponibil (404) sau supraîncărcat (429/5xx): încearcă varianta
         // următoare din listă, cu o mică pauză pentru supraîncărcare.
         const retryable = res.status === 404 || res.status === 429 || res.status >= 500;
-        if (retryable && model !== models[models.length - 1]) {
+        if (retryable && i < attempts.length - 1) {
           if (res.status !== 404) await new Promise((r) => setTimeout(r, 800));
           continue;
         }
         break;
-
       }
 
       if (!res) {
@@ -391,35 +395,64 @@ export const extractIdDocument = createServerFn({ method: "POST" })
           failure =
             "Modelul de citire a actelor nu este disponibil pe această cheie. Completează datele manual.";
         } else if (res.status >= 500) {
-          failure = "Serviciul Google este momentan indisponibil. Încearcă din nou în câteva minute.";
+          failure =
+            "Serviciul Google de citire a actelor este momentan supraîncărcat. Încearcă din nou în câteva minute sau completează datele manual.";
         } else {
           failure = `Nu am putut citi documentul (cod ${res.status}). Completează datele manual.`;
         }
       } else {
-        const json = (await res.json()) as {
+        // Citim textul brut: la blocaje de siguranță Google răspunde 200, dar
+        // fără `parts`, iar motivul real este în promptFeedback/finishReason.
+        const raw = await res.text();
+        let json: {
           candidates?: {
             finishReason?: string;
+            safetyRatings?: { category?: string; probability?: string; blocked?: boolean }[];
             content?: { parts?: { text?: string }[] };
           }[];
-          promptFeedback?: { blockReason?: string };
-        };
+          promptFeedback?: { blockReason?: string; blockReasonMessage?: string };
+        } = {};
+        try {
+          json = JSON.parse(raw);
+        } catch {
+          json = {};
+        }
         const candidate = json.candidates?.[0];
+        const blockReason = json.promptFeedback?.blockReason;
+        const finishReason = candidate?.finishReason;
         const content = (candidate?.content?.parts ?? []).map((p) => p.text ?? "").join("");
         const match = content.match(/\{[\s\S]*\}/);
         parsed = match ? (JSON.parse(match[0]) as Record<string, string>) : {};
         if (!match) {
+          // Fără `parts` utilizabile: jurnalizăm răspunsul brut integral (trunchiat),
+          // ca să vedem exact ce a trimis Google.
           console.error("[contracts] id extraction empty response", {
             ...logCtx,
             model: usedModel,
-            finishReason: candidate?.finishReason,
-            blockReason: json.promptFeedback?.blockReason,
-            preview: content.slice(0, 500),
+            finishReason,
+            blockReason,
+            blockReasonMessage: json.promptFeedback?.blockReasonMessage,
+            safetyRatings: candidate?.safetyRatings,
+            rawResponse: raw.slice(0, 2000),
           });
-          failure = json.promptFeedback?.blockReason
-            ? "Google a blocat citirea acestei imagini. Completează datele manual."
-            : "Nu am recunoscut date de act în imagine. Fotografiază actul clar, pe toată suprafața cadrului.";
+          const safetyBlocked =
+            Boolean(blockReason) ||
+            (finishReason
+              ? /SAFETY|PROHIBITED|BLOCK|RECITATION|IMAGE_SAFETY/i.test(finishReason)
+              : false);
+          if (safetyBlocked) {
+            failure =
+              "Serviciul a refuzat procesarea acestui document. Completează datele manual.";
+          } else if (finishReason === "MAX_TOKENS") {
+            failure =
+              "Citirea documentului s-a întrerupt. Fotografiază doar actul, fără alte elemente în cadru.";
+          } else {
+            failure =
+              "Nu am recunoscut date de act în imagine. Fotografiază actul clar, pe toată suprafața cadrului.";
+          }
         }
       }
+
     } catch (e) {
       const aborted = e instanceof Error && e.name === "AbortError";
       console.error("[contracts] id extraction error", {
