@@ -22,6 +22,7 @@ import { Route as PoliticaDeConfidentialitateRouteImport } from './routes/politi
 import { Route as PreturiRouteImport } from './routes/preturi'
 import { Route as RegisterRouteImport } from './routes/register'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
+import { Route as SemnareRouteImport } from './routes/semnare'
 import { Route as TermeniRouteImport } from './routes/termeni'
 import { Route as TermeniSiConditiiRouteImport } from './routes/termeni-si-conditii'
 import { Route as AuthenticatedAppRouteImport } from './routes/_authenticated/app'
@@ -54,6 +55,8 @@ import { Route as AuthenticatedSuperadminSupportRouteImport } from './routes/_au
 import { Route as AuthenticatedSuperadminUsersRouteImport } from './routes/_authenticated/superadmin.users'
 import { Route as AuthenticatedAppContactsIndexRouteImport } from './routes/_authenticated/app.contacts.index'
 import { Route as AuthenticatedAppContactsIdRouteImport } from './routes/_authenticated/app.contacts.$id'
+import { Route as AuthenticatedAppContractsIndexRouteImport } from './routes/_authenticated/app.contracts.index'
+import { Route as AuthenticatedAppContractsIdRouteImport } from './routes/_authenticated/app.contracts.$id'
 import { Route as AuthenticatedAppPropertiesIndexRouteImport } from './routes/_authenticated/app.properties.index'
 import { Route as AuthenticatedAppPropertiesIdRouteImport } from './routes/_authenticated/app.properties.$id'
 import { Route as AuthenticatedAppPropertiesNewRouteImport } from './routes/_authenticated/app.properties.new'
@@ -144,6 +147,11 @@ const RegisterRoute = RegisterRouteImport.update({
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
   id: '/reset-password',
   path: '/reset-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SemnareRoute = SemnareRouteImport.update({
+  id: '/semnare',
+  path: '/semnare',
   getParentRoute: () => rootRouteImport,
 } as any)
 const TermeniRoute = TermeniRouteImport.update({
@@ -325,6 +333,18 @@ const AuthenticatedAppContactsIdRoute =
     path: '/contacts/$id',
     getParentRoute: () => AuthenticatedAppRoute,
   } as any)
+const AuthenticatedAppContractsIndexRoute =
+  AuthenticatedAppContractsIndexRouteImport.update({
+    id: '/contracts/',
+    path: '/contracts/',
+    getParentRoute: () => AuthenticatedAppRoute,
+  } as any)
+const AuthenticatedAppContractsIdRoute =
+  AuthenticatedAppContractsIdRouteImport.update({
+    id: '/contracts/$id',
+    path: '/contracts/$id',
+    getParentRoute: () => AuthenticatedAppRoute,
+  } as any)
 const AuthenticatedAppPropertiesIndexRoute =
   AuthenticatedAppPropertiesIndexRouteImport.update({
     id: '/properties/',
@@ -487,6 +507,7 @@ export interface FileRoutesByFullPath {
   '/preturi': typeof PreturiRoute
   '/register': typeof RegisterRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/semnare': typeof SemnareRoute
   '/termeni': typeof TermeniRoute
   '/termeni-si-conditii': typeof TermeniSiConditiiRoute
   '/app': typeof AuthenticatedAppRouteWithChildren
@@ -518,6 +539,7 @@ export interface FileRoutesByFullPath {
   '/app/': typeof AuthenticatedAppIndexRoute
   '/superadmin/': typeof AuthenticatedSuperadminIndexRoute
   '/app/contacts/$id': typeof AuthenticatedAppContactsIdRoute
+  '/app/contracts/$id': typeof AuthenticatedAppContractsIdRoute
   '/app/properties/$id': typeof AuthenticatedAppPropertiesIdRoute
   '/app/properties/new': typeof AuthenticatedAppPropertiesNewRoute
   '/app/requests/$id': typeof AuthenticatedAppRequestsIdRoute
@@ -527,6 +549,7 @@ export interface FileRoutesByFullPath {
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
   '/app/contacts/': typeof AuthenticatedAppContactsIndexRoute
+  '/app/contracts/': typeof AuthenticatedAppContractsIndexRoute
   '/app/properties/': typeof AuthenticatedAppPropertiesIndexRoute
   '/api/public/homepitch/v1/properties': typeof ApiPublicHomepitchV1PropertiesRouteWithChildren
   '/api/public/portal/v1/agents': typeof ApiPublicPortalV1AgentsRoute
@@ -559,6 +582,7 @@ export interface FileRoutesByTo {
   '/preturi': typeof PreturiRoute
   '/register': typeof RegisterRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/semnare': typeof SemnareRoute
   '/termeni': typeof TermeniRoute
   '/termeni-si-conditii': typeof TermeniSiConditiiRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
@@ -588,6 +612,7 @@ export interface FileRoutesByTo {
   '/app': typeof AuthenticatedAppIndexRoute
   '/superadmin': typeof AuthenticatedSuperadminIndexRoute
   '/app/contacts/$id': typeof AuthenticatedAppContactsIdRoute
+  '/app/contracts/$id': typeof AuthenticatedAppContractsIdRoute
   '/app/properties/$id': typeof AuthenticatedAppPropertiesIdRoute
   '/app/properties/new': typeof AuthenticatedAppPropertiesNewRoute
   '/app/requests/$id': typeof AuthenticatedAppRequestsIdRoute
@@ -597,6 +622,7 @@ export interface FileRoutesByTo {
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
   '/app/contacts': typeof AuthenticatedAppContactsIndexRoute
+  '/app/contracts': typeof AuthenticatedAppContractsIndexRoute
   '/app/properties': typeof AuthenticatedAppPropertiesIndexRoute
   '/api/public/homepitch/v1/properties': typeof ApiPublicHomepitchV1PropertiesRouteWithChildren
   '/api/public/portal/v1/agents': typeof ApiPublicPortalV1AgentsRoute
@@ -631,6 +657,7 @@ export interface FileRoutesById {
   '/preturi': typeof PreturiRoute
   '/register': typeof RegisterRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/semnare': typeof SemnareRoute
   '/termeni': typeof TermeniRoute
   '/termeni-si-conditii': typeof TermeniSiConditiiRoute
   '/_authenticated/app': typeof AuthenticatedAppRouteWithChildren
@@ -662,6 +689,7 @@ export interface FileRoutesById {
   '/_authenticated/app/': typeof AuthenticatedAppIndexRoute
   '/_authenticated/superadmin/': typeof AuthenticatedSuperadminIndexRoute
   '/_authenticated/app/contacts/$id': typeof AuthenticatedAppContactsIdRoute
+  '/_authenticated/app/contracts/$id': typeof AuthenticatedAppContractsIdRoute
   '/_authenticated/app/properties/$id': typeof AuthenticatedAppPropertiesIdRoute
   '/_authenticated/app/properties/new': typeof AuthenticatedAppPropertiesNewRoute
   '/_authenticated/app/requests/$id': typeof AuthenticatedAppRequestsIdRoute
@@ -671,6 +699,7 @@ export interface FileRoutesById {
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
   '/_authenticated/app/contacts/': typeof AuthenticatedAppContactsIndexRoute
+  '/_authenticated/app/contracts/': typeof AuthenticatedAppContractsIndexRoute
   '/_authenticated/app/properties/': typeof AuthenticatedAppPropertiesIndexRoute
   '/api/public/homepitch/v1/properties': typeof ApiPublicHomepitchV1PropertiesRouteWithChildren
   '/api/public/portal/v1/agents': typeof ApiPublicPortalV1AgentsRoute
@@ -705,6 +734,7 @@ export interface FileRouteTypes {
     | '/preturi'
     | '/register'
     | '/reset-password'
+    | '/semnare'
     | '/termeni'
     | '/termeni-si-conditii'
     | '/app'
@@ -736,6 +766,7 @@ export interface FileRouteTypes {
     | '/app/'
     | '/superadmin/'
     | '/app/contacts/$id'
+    | '/app/contracts/$id'
     | '/app/properties/$id'
     | '/app/properties/new'
     | '/app/requests/$id'
@@ -745,6 +776,7 @@ export interface FileRouteTypes {
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
     | '/app/contacts/'
+    | '/app/contracts/'
     | '/app/properties/'
     | '/api/public/homepitch/v1/properties'
     | '/api/public/portal/v1/agents'
@@ -777,6 +809,7 @@ export interface FileRouteTypes {
     | '/preturi'
     | '/register'
     | '/reset-password'
+    | '/semnare'
     | '/termeni'
     | '/termeni-si-conditii'
     | '/onboarding'
@@ -806,6 +839,7 @@ export interface FileRouteTypes {
     | '/app'
     | '/superadmin'
     | '/app/contacts/$id'
+    | '/app/contracts/$id'
     | '/app/properties/$id'
     | '/app/properties/new'
     | '/app/requests/$id'
@@ -815,6 +849,7 @@ export interface FileRouteTypes {
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
     | '/app/contacts'
+    | '/app/contracts'
     | '/app/properties'
     | '/api/public/homepitch/v1/properties'
     | '/api/public/portal/v1/agents'
@@ -848,6 +883,7 @@ export interface FileRouteTypes {
     | '/preturi'
     | '/register'
     | '/reset-password'
+    | '/semnare'
     | '/termeni'
     | '/termeni-si-conditii'
     | '/_authenticated/app'
@@ -879,6 +915,7 @@ export interface FileRouteTypes {
     | '/_authenticated/app/'
     | '/_authenticated/superadmin/'
     | '/_authenticated/app/contacts/$id'
+    | '/_authenticated/app/contracts/$id'
     | '/_authenticated/app/properties/$id'
     | '/_authenticated/app/properties/new'
     | '/_authenticated/app/requests/$id'
@@ -888,6 +925,7 @@ export interface FileRouteTypes {
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
     | '/_authenticated/app/contacts/'
+    | '/_authenticated/app/contracts/'
     | '/_authenticated/app/properties/'
     | '/api/public/homepitch/v1/properties'
     | '/api/public/portal/v1/agents'
@@ -922,6 +960,7 @@ export interface RootRouteChildren {
   PreturiRoute: typeof PreturiRoute
   RegisterRoute: typeof RegisterRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
+  SemnareRoute: typeof SemnareRoute
   TermeniRoute: typeof TermeniRoute
   TermeniSiConditiiRoute: typeof TermeniSiConditiiRoute
   AuthCallbackRoute: typeof AuthCallbackRoute
@@ -1038,6 +1077,13 @@ declare module '@tanstack/react-router' {
       path: '/reset-password'
       fullPath: '/reset-password'
       preLoaderRoute: typeof ResetPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/semnare': {
+      id: '/semnare'
+      path: '/semnare'
+      fullPath: '/semnare'
+      preLoaderRoute: typeof SemnareRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/termeni': {
@@ -1264,6 +1310,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAppContactsIdRouteImport
       parentRoute: typeof AuthenticatedAppRoute
     }
+    '/_authenticated/app/contracts/': {
+      id: '/_authenticated/app/contracts/'
+      path: '/contracts'
+      fullPath: '/app/contracts/'
+      preLoaderRoute: typeof AuthenticatedAppContractsIndexRouteImport
+      parentRoute: typeof AuthenticatedAppRoute
+    }
+    '/_authenticated/app/contracts/$id': {
+      id: '/_authenticated/app/contracts/$id'
+      path: '/contracts/$id'
+      fullPath: '/app/contracts/$id'
+      preLoaderRoute: typeof AuthenticatedAppContractsIdRouteImport
+      parentRoute: typeof AuthenticatedAppRoute
+    }
     '/_authenticated/app/properties/': {
       id: '/_authenticated/app/properties/'
       path: '/properties'
@@ -1478,9 +1538,11 @@ interface AuthenticatedAppRouteChildren {
   AuthenticatedAppTeamRoute: typeof AuthenticatedAppTeamRoute
   AuthenticatedAppIndexRoute: typeof AuthenticatedAppIndexRoute
   AuthenticatedAppContactsIdRoute: typeof AuthenticatedAppContactsIdRoute
+  AuthenticatedAppContractsIdRoute: typeof AuthenticatedAppContractsIdRoute
   AuthenticatedAppPropertiesIdRoute: typeof AuthenticatedAppPropertiesIdRoute
   AuthenticatedAppPropertiesNewRoute: typeof AuthenticatedAppPropertiesNewRoute
   AuthenticatedAppContactsIndexRoute: typeof AuthenticatedAppContactsIndexRoute
+  AuthenticatedAppContractsIndexRoute: typeof AuthenticatedAppContractsIndexRoute
   AuthenticatedAppPropertiesIndexRoute: typeof AuthenticatedAppPropertiesIndexRoute
 }
 
@@ -1499,9 +1561,11 @@ const AuthenticatedAppRouteChildren: AuthenticatedAppRouteChildren = {
   AuthenticatedAppTeamRoute: AuthenticatedAppTeamRoute,
   AuthenticatedAppIndexRoute: AuthenticatedAppIndexRoute,
   AuthenticatedAppContactsIdRoute: AuthenticatedAppContactsIdRoute,
+  AuthenticatedAppContractsIdRoute: AuthenticatedAppContractsIdRoute,
   AuthenticatedAppPropertiesIdRoute: AuthenticatedAppPropertiesIdRoute,
   AuthenticatedAppPropertiesNewRoute: AuthenticatedAppPropertiesNewRoute,
   AuthenticatedAppContactsIndexRoute: AuthenticatedAppContactsIndexRoute,
+  AuthenticatedAppContractsIndexRoute: AuthenticatedAppContractsIndexRoute,
   AuthenticatedAppPropertiesIndexRoute: AuthenticatedAppPropertiesIndexRoute,
 }
 
@@ -1614,6 +1678,7 @@ const rootRouteChildren: RootRouteChildren = {
   PreturiRoute: PreturiRoute,
   RegisterRoute: RegisterRoute,
   ResetPasswordRoute: ResetPasswordRoute,
+  SemnareRoute: SemnareRoute,
   TermeniRoute: TermeniRoute,
   TermeniSiConditiiRoute: TermeniSiConditiiRoute,
   AuthCallbackRoute: AuthCallbackRoute,

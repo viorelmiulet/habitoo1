@@ -65,3 +65,12 @@
 ## Fișă de vizionare
 
 - [x] Selector „Pentru client” / „Pentru alt agent”, cu telefoane afișate doar pentru client și branding Habitoo în subsol.
+
+## Contracte și documente
+
+- [x] Șabloane Habitoo (mandat vânzare, mandat închiriere, proces-verbal de vizionare) + șabloane proprii agenției (admin).
+- [x] Document nou din proprietate/contact, cu completare automată din fotografia actului (imaginea nu se salvează).
+- [x] CNP și seria/numărul actului criptate AES-256-GCM; afișare în clar doar pentru creator/administrator, cu audit.
+- [x] PDF brandat cu logo-ul agenției, atașat automat la proprietate și contact.
+- [x] Semnare la distanță: link personal, valabil 7 zile, consumat o singură dată, semnătură pe canvas, IP + user agent + dată în dovada semnării.
+- [x] Pagini: /app/contracts, /app/contracts/$id, pagina publică /semnare.
