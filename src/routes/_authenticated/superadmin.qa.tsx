@@ -321,7 +321,7 @@ function QaPanelPage() {
               <KpiCard
                 label="Utilizatori"
                 value={counts.users}
-                hint={`din ${org.max_users} permiși`}
+                hint={`din ${seatLimitLabel(org.max_users)} permiși`}
                 icon={Users}
               />
               <KpiCard label="Contacte" value={counts.contacts} icon={UserRound} tone="accent" />
