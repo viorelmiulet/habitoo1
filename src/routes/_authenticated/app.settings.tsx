@@ -134,7 +134,7 @@ function SettingsPage() {
 
   // Locurile ocupate din plan — doar afișare, fără nicio acțiune de schimbare a planului.
   const fetchTeam = useServerFn(getTeamOverview);
-  const { data: team } = useQuery({
+  const { data: seats } = useQuery({
     queryKey: ["team-overview", user?.organization?.id ?? "none"],
     queryFn: () => fetchTeam(),
     enabled: Boolean(user?.organization?.id),
@@ -336,10 +336,10 @@ function SettingsPage() {
                   </StatusBadge>
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  {team
-                    ? team.seatLimit === null
-                      ? `${team.seatsUsed} agenți activi · fără limită de locuri`
-                      : `${team.seatsUsed} din ${team.seatLimit} agenți activi`
+                  {seats
+                    ? seats.seatLimit === null
+                      ? `${seats.seatsUsed} agenți activi · fără limită de locuri`
+                      : `${seats.seatsUsed} din ${seats.seatLimit} agenți activi`
                     : "Se încarcă locurile ocupate…"}
                 </p>
                 <p className="text-xs text-muted-foreground">
