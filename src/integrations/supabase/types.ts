@@ -1353,6 +1353,7 @@ export type Database = {
           plan: string
           slug: string
           status: Database["public"]["Enums"]["org_status"]
+          storia_auto_republish: boolean
           subscription_expires_at: string | null
           subscription_grace_notified_at: string | null
           subscription_started_at: string | null
@@ -1397,6 +1398,7 @@ export type Database = {
           plan?: string
           slug: string
           status?: Database["public"]["Enums"]["org_status"]
+          storia_auto_republish?: boolean
           subscription_expires_at?: string | null
           subscription_grace_notified_at?: string | null
           subscription_started_at?: string | null
@@ -1441,6 +1443,7 @@ export type Database = {
           plan?: string
           slug?: string
           status?: Database["public"]["Enums"]["org_status"]
+          storia_auto_republish?: boolean
           subscription_expires_at?: string | null
           subscription_grace_notified_at?: string | null
           subscription_started_at?: string | null

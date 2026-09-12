@@ -808,12 +808,15 @@ export type ListingActionResult =
  * publicarea per proprietate pe portalurile selectate. Nu conține verificări de
  * permisiuni: apelantul trebuie să valideze deja agenția și rolul.
  */
-async function executeListingAction(input: {
+export async function executeListingAction(input: {
   organizationId: string;
-  actorId: string;
+  /** `null` pentru acțiuni automate (fără actor uman), ex. republicarea la expirare. */
+  actorId: string | null;
   portalId: string;
   propertyId: string;
   action: "publish" | "update" | "withdraw";
+  /** Eticheta din jurnal; implicit acțiunea. Automatizările folosesc alt nume. */
+  operationLabel?: string;
 }): Promise<ListingActionResult> {
   const { organizationId, actorId, portalId, propertyId, action } = input;
   const definition = getPortalDefinition(portalId);
@@ -957,7 +960,7 @@ async function executeListingAction(input: {
   await logOperation({
     organizationId,
     portal: definition.id,
-    operation: action,
+    operation: input.operationLabel ?? action,
     success: result.ok,
     errorCode: result.ok ? null : result.code,
     errorMessage: result.ok ? null : result.message,
@@ -1125,6 +1128,7 @@ type PortalSelectionState =
   | "published"
   | "in_feed"
   | "error"
+  | "expired"
   | "withdrawn";
 
 export type PropertyPortalCell = {
@@ -1174,6 +1178,7 @@ function deriveState(input: {
   if (input.listingStatus === "error" || input.publicationStatus === "error") return "error";
   if (input.listingStatus === "published" || input.listingStatus === "updated") return "published";
   if (input.listingStatus === "pending") return "syncing";
+  if (input.listingStatus === "expired") return "expired";
   if (input.listingStatus === "withdrawn") return "withdrawn";
   if (!input.configured) return "not_configured";
   return input.selected ? "selected" : "not_selected";

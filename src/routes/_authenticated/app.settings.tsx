@@ -67,6 +67,7 @@ function SettingsPage() {
     phone: user?.organization?.phone ?? "",
     email: user?.organization?.email ?? "",
     collaboration_enabled: user?.organization?.collaboration_enabled !== false,
+    storia_auto_republish: user?.organization?.storia_auto_republish === true,
   });
 
   const { data: team = [] } = useQuery({
@@ -152,6 +153,7 @@ function SettingsPage() {
           phone: orgForm.phone || null,
           email: orgForm.email || null,
           collaboration_enabled: orgForm.collaboration_enabled,
+          storia_auto_republish: orgForm.storia_auto_republish,
         })
         .eq("id", user.organization.id);
       if (error) throw error;
@@ -324,6 +326,24 @@ function SettingsPage() {
                   id="collab_enabled"
                   checked={orgForm.collaboration_enabled}
                   onCheckedChange={(v) => setOrgForm((f) => ({ ...f, collaboration_enabled: v }))}
+                />
+              </div>
+              <div className="flex items-start justify-between gap-4 rounded-xl border border-border p-4">
+                <div className="space-y-1">
+                  <Label htmlFor="storia_auto_republish" className="text-sm">
+                    Republică automat anunțurile expirate pe Storia
+                  </Label>
+                  <p className="text-xs text-muted-foreground">
+                    Când un anunț expiră pe Storia, îl retrimitem automat, dacă oferta este încă
+                    activă și publicabilă. Dezactivat, primești doar notificarea de expirare și
+                    republici manual din fila Publicare.
+                  </p>
+                </div>
+                <Switch
+                  id="storia_auto_republish"
+                  disabled={!user?.isAdmin}
+                  checked={orgForm.storia_auto_republish}
+                  onCheckedChange={(v) => setOrgForm((f) => ({ ...f, storia_auto_republish: v }))}
                 />
               </div>
               {/* Planul este doar informativ: se schimbă exclusiv din Superadmin. */}
