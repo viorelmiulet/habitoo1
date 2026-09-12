@@ -55,6 +55,7 @@ import { Route as AuthenticatedAppPropertiesIndexRouteImport } from './routes/_a
 import { Route as AuthenticatedAppPropertiesIdRouteImport } from './routes/_authenticated/app.properties.$id'
 import { Route as AuthenticatedAppPropertiesNewRouteImport } from './routes/_authenticated/app.properties.new'
 import { Route as AuthenticatedAppRequestsIdRouteImport } from './routes/_authenticated/app.requests.$id'
+import { Route as ApiPublicCronSubscriptionsRouteImport } from './routes/api/public/cron/subscriptions'
 import { Route as ApiPublicMailgunEventsRouteImport } from './routes/api/public/mailgun/events'
 import { Route as ApiPublicMailgunInboundRouteImport } from './routes/api/public/mailgun/inbound'
 import { Route as LovableEmailAuthPreviewRouteImport } from './routes/lovable/email/auth/preview'
@@ -328,6 +329,12 @@ const AuthenticatedAppRequestsIdRoute =
     path: '/$id',
     getParentRoute: () => AuthenticatedAppRequestsRoute,
   } as any)
+const ApiPublicCronSubscriptionsRoute =
+  ApiPublicCronSubscriptionsRouteImport.update({
+    id: '/api/public/cron/subscriptions',
+    path: '/api/public/cron/subscriptions',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicMailgunEventsRoute = ApiPublicMailgunEventsRouteImport.update({
   id: '/api/public/mailgun/events',
   path: '/api/public/mailgun/events',
@@ -491,6 +498,7 @@ export interface FileRoutesByFullPath {
   '/app/properties/$id': typeof AuthenticatedAppPropertiesIdRoute
   '/app/properties/new': typeof AuthenticatedAppPropertiesNewRoute
   '/app/requests/$id': typeof AuthenticatedAppRequestsIdRoute
+  '/api/public/cron/subscriptions': typeof ApiPublicCronSubscriptionsRoute
   '/api/public/mailgun/events': typeof ApiPublicMailgunEventsRoute
   '/api/public/mailgun/inbound': typeof ApiPublicMailgunInboundRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
@@ -557,6 +565,7 @@ export interface FileRoutesByTo {
   '/app/properties/$id': typeof AuthenticatedAppPropertiesIdRoute
   '/app/properties/new': typeof AuthenticatedAppPropertiesNewRoute
   '/app/requests/$id': typeof AuthenticatedAppRequestsIdRoute
+  '/api/public/cron/subscriptions': typeof ApiPublicCronSubscriptionsRoute
   '/api/public/mailgun/events': typeof ApiPublicMailgunEventsRoute
   '/api/public/mailgun/inbound': typeof ApiPublicMailgunInboundRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
@@ -627,6 +636,7 @@ export interface FileRoutesById {
   '/_authenticated/app/properties/$id': typeof AuthenticatedAppPropertiesIdRoute
   '/_authenticated/app/properties/new': typeof AuthenticatedAppPropertiesNewRoute
   '/_authenticated/app/requests/$id': typeof AuthenticatedAppRequestsIdRoute
+  '/api/public/cron/subscriptions': typeof ApiPublicCronSubscriptionsRoute
   '/api/public/mailgun/events': typeof ApiPublicMailgunEventsRoute
   '/api/public/mailgun/inbound': typeof ApiPublicMailgunInboundRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
@@ -697,6 +707,7 @@ export interface FileRouteTypes {
     | '/app/properties/$id'
     | '/app/properties/new'
     | '/app/requests/$id'
+    | '/api/public/cron/subscriptions'
     | '/api/public/mailgun/events'
     | '/api/public/mailgun/inbound'
     | '/lovable/email/auth/preview'
@@ -763,6 +774,7 @@ export interface FileRouteTypes {
     | '/app/properties/$id'
     | '/app/properties/new'
     | '/app/requests/$id'
+    | '/api/public/cron/subscriptions'
     | '/api/public/mailgun/events'
     | '/api/public/mailgun/inbound'
     | '/lovable/email/auth/preview'
@@ -832,6 +844,7 @@ export interface FileRouteTypes {
     | '/_authenticated/app/properties/$id'
     | '/_authenticated/app/properties/new'
     | '/_authenticated/app/requests/$id'
+    | '/api/public/cron/subscriptions'
     | '/api/public/mailgun/events'
     | '/api/public/mailgun/inbound'
     | '/lovable/email/auth/preview'
@@ -873,6 +886,7 @@ export interface RootRouteChildren {
   TermeniRoute: typeof TermeniRoute
   AuthCallbackRoute: typeof AuthCallbackRoute
   OfertaIdRoute: typeof OfertaIdRoute
+  ApiPublicCronSubscriptionsRoute: typeof ApiPublicCronSubscriptionsRoute
   ApiPublicMailgunEventsRoute: typeof ApiPublicMailgunEventsRoute
   ApiPublicMailgunInboundRoute: typeof ApiPublicMailgunInboundRoute
   LovableEmailAuthPreviewRoute: typeof LovableEmailAuthPreviewRoute
@@ -1217,6 +1231,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAppRequestsIdRouteImport
       parentRoute: typeof AuthenticatedAppRequestsRoute
     }
+    '/api/public/cron/subscriptions': {
+      id: '/api/public/cron/subscriptions'
+      path: '/api/public/cron/subscriptions'
+      fullPath: '/api/public/cron/subscriptions'
+      preLoaderRoute: typeof ApiPublicCronSubscriptionsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/mailgun/events': {
       id: '/api/public/mailgun/events'
       path: '/api/public/mailgun/events'
@@ -1531,6 +1552,7 @@ const rootRouteChildren: RootRouteChildren = {
   TermeniRoute: TermeniRoute,
   AuthCallbackRoute: AuthCallbackRoute,
   OfertaIdRoute: OfertaIdRoute,
+  ApiPublicCronSubscriptionsRoute: ApiPublicCronSubscriptionsRoute,
   ApiPublicMailgunEventsRoute: ApiPublicMailgunEventsRoute,
   ApiPublicMailgunInboundRoute: ApiPublicMailgunInboundRoute,
   LovableEmailAuthPreviewRoute: LovableEmailAuthPreviewRoute,
