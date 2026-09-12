@@ -88,6 +88,10 @@ export type PresentationData = {
   description: string | null;
   /** URL-uri de fotografii (deja semnate) — prima este imaginea mare. */
   photos?: string[];
+  /** Destinația fișei controlează exclusiv afișarea numerelor de telefon. */
+  audience?: "client" | "agent";
+  /** Agentul care generează fișa; este afișat cu telefon doar în varianta pentru client. */
+  agent?: { name: string | null; phone: string | null };
 };
 
 
@@ -115,11 +119,23 @@ export const samplePresentation: PresentationData = {
  */
 export function buildPresentationHtml(branding: MaterialBranding, data: PresentationData): string {
   const accent = safeAccent(branding.accent);
+  const audience = data.audience ?? "client";
   const header = branding.logoUrl
     ? `<img class="logo" src="${escapeHtml(branding.logoUrl)}" alt="${escapeHtml(branding.agencyName)}" />`
     : `<span class="agency">${escapeHtml(branding.agencyName)}</span>`;
 
-  const contacts = contactLines(branding)
+  const agencyContacts = [
+    audience === "client" && branding.phone ? `Agenție: ${branding.phone}` : null,
+    branding.email,
+    branding.website,
+    branding.address,
+  ].filter((value): value is string => Boolean(value));
+  const agentContact =
+    audience === "client" && data.agent?.phone
+      ? `Agent: ${data.agent.name ? `${data.agent.name} · ` : ""}${data.agent.phone}`
+      : null;
+  const contacts = [...agencyContacts, agentContact]
+    .filter((value): value is string => Boolean(value))
     .map((line) => `<span>${escapeHtml(line)}</span>`)
     .join('<span class="sep">·</span>');
 
@@ -162,7 +178,8 @@ export function buildPresentationHtml(branding: MaterialBranding, data: Presenta
   footer .name{font-weight:600;color:${NAVY}}
   .contacts{margin-top:4px;display:flex;flex-wrap:wrap;gap:6px}
   .sep{color:${LINE}}
-  .habitoo{margin-top:10px;font-size:11px;color:#9AA0A8}
+  .habitoo{margin-top:12px;display:flex;align-items:center;gap:8px;font-size:11px;color:#9AA0A8}
+  .habitoo img{display:block;width:76px;height:auto;object-fit:contain}
   .gallery{margin:20px 0 0;padding:0}
   .gallery .cover{display:block;width:100%;height:340px;object-fit:cover;border-radius:12px;background:${LINE}}
   .gallery .thumbs{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-top:8px}
@@ -186,7 +203,7 @@ ${gallery}
 <footer>
   <div class="name">${escapeHtml(branding.agencyName)}</div>
   ${contacts ? `<div class="contacts">${contacts}</div>` : ""}
-  ${branding.showHabitoo ? `<div class="habitoo">Material generat cu Habitoo CRM</div>` : ""}
+  <div class="habitoo"><img src="/assets/habitoo-logo.png" alt="Habitoo CRM" /><span>Generat cu Habitoo CRM</span></div>
 </footer>
 </div></body></html>`;
 }

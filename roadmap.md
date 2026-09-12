@@ -61,3 +61,7 @@
 - [x] Backfill sluguri din `public_url` pentru anunțurile existente.
 - [x] Reprocesare notificări nefinalizate și verificare lead pentru `RF-1001`.
 - [x] Typecheck, teste și build.
+
+## Fișă de vizionare
+
+- [x] Selector „Pentru client” / „Pentru alt agent”, cu telefoane afișate doar pentru client și branding Habitoo în subsol.
