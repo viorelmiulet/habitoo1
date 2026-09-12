@@ -93,7 +93,9 @@ export function ManagerDashboard() {
   const data = dashboard.data;
   const stages = (data?.stageTotals ?? []).map((s) => s.stage);
   const brandNew = data && data.totals.properties === 0 && data.totals.leads === 0;
-  const limitReached = data ? data.team.activeAgents >= data.team.limit : false;
+  const limitReached =
+    data && data.team.limit !== null ? data.team.activeAgents >= data.team.limit : false;
+
 
   return (
     <>
