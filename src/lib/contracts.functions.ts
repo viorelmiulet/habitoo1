@@ -195,13 +195,23 @@ export const deleteTemplate = createServerFn({ method: "POST" })
   });
 
 /* ------------------------------------------------------------------ */
-/* Extragere date din act (AI)                                         */
+/* Extragere date din act (Google Gemini API direct)                   */
 /* ------------------------------------------------------------------ */
 
 const EXTRACTION_PROMPT = `Ești un asistent care extrage date dintr-un act de identitate românesc sau dintr-un pașaport.
 Răspunde exclusiv cu json, cu exact aceste chei (string, gol dacă lipsește):
 {"nume":"","prenume":"","cnp":"","serie":"","numar":"","data_eliberarii":"","emitent":"","adresa":"","data_nasterii":""}
 Datele calendaristice se scriu în format ZZ.LL.AAAA. Nu inventa valori: dacă nu poți citi un câmp, lasă-l gol.`;
+
+const GEMINI_FALLBACK_MODELS = ["gemini-2.5-flash", "gemini-2.0-flash"];
+const GEMINI_TIMEOUT_MS = 45_000;
+
+/** Spune interfeței dacă extragerea automată este configurată (cheie Google prezentă). */
+export const getIdExtractionStatus = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async () => ({
+    configured: Boolean(process.env["GEMINI_API_KEY"]),
+  }));
 
 export const extractIdDocument = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -216,56 +226,112 @@ export const extractIdDocument = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const ctx = context as unknown as Ctx;
     const { orgId } = await orgContext(ctx);
-    const apiKey = process.env["LOVABLE_API_KEY"];
-    if (!apiKey) throw new Error("Serviciul de extragere automată nu este configurat.");
+    const apiKey = process.env["GEMINI_API_KEY"];
+
+    const empty = {
+      lastName: "",
+      firstName: "",
+      cnp: "",
+      series: "",
+      number: "",
+      issuedOn: "",
+      issuer: "",
+      address: "",
+      birthDate: "",
+    };
+
+    if (!apiKey) {
+      return {
+        ...empty,
+        failure: "Extragerea automată nu este configurată. Completează datele manual.",
+        configured: false,
+      };
+    }
 
     const clean = data.imageBase64.replace(/^data:[^;]+;base64,/, "");
+    const configuredModel = process.env["GEMINI_MODEL"]?.trim();
+    const models = configuredModel ? [configuredModel] : GEMINI_FALLBACK_MODELS;
+
     let parsed: Record<string, string> = {};
     let failure: string | null = null;
 
-    try {
-      const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Lovable-API-Key": apiKey,
-          "X-Lovable-AIG-SDK": "fetch",
-        },
-        body: JSON.stringify({
-          model: "google/gemini-3.8-flash",
-          response_format: { type: "json_object" },
-          messages: [
-            {
-              role: "user",
-              content: [
-                { type: "text", text: EXTRACTION_PROMPT },
+    const callModel = async (model: string) => {
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), GEMINI_TIMEOUT_MS);
+      try {
+        return await fetch(
+          `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "x-goog-api-key": apiKey,
+            },
+            signal: controller.signal,
+            body: JSON.stringify({
+              contents: [
                 {
-                  type: "image_url",
-                  image_url: { url: `data:${data.mimeType};base64,${clean}` },
+                  role: "user",
+                  parts: [
+                    { text: EXTRACTION_PROMPT },
+                    { inline_data: { mime_type: data.mimeType, data: clean } },
+                  ],
                 },
               ],
-            },
-          ],
-        }),
-      });
-      if (!res.ok) {
+              generationConfig: { responseMimeType: "application/json", temperature: 0 },
+            }),
+          },
+        );
+      } finally {
+        clearTimeout(timer);
+      }
+    };
+
+    try {
+      let res: Response | null = null;
+      for (const model of models) {
+        res = await callModel(model);
+        // Model indisponibil pe cheia respectivă: încearcă varianta următoare.
+        if (res.status === 404 && model !== models[models.length - 1]) continue;
+        break;
+      }
+
+      if (!res) {
+        failure = "Nu am putut citi documentul. Completează datele manual.";
+      } else if (!res.ok) {
         const body = await res.text();
-        console.error("[contracts] extraction failed", res.status, body.slice(0, 300));
-        failure =
-          res.status === 402 || res.status === 403
-            ? "Extragerea automată nu este disponibilă momentan. Completează datele manual."
-            : "Nu am putut citi documentul. Completează datele manual.";
+        console.error("[contracts] gemini extraction failed", res.status, body.slice(0, 300));
+        if (res.status === 400 && /API key not valid|API_KEY_INVALID/i.test(body)) {
+          failure =
+            "Cheia Google Gemini nu este validă. Verifică GEMINI_API_KEY sau completează datele manual.";
+        } else if (res.status === 401 || res.status === 403) {
+          failure =
+            "Cheia Google Gemini nu are acces la acest serviciu. Verifică GEMINI_API_KEY sau completează datele manual.";
+        } else if (res.status === 429) {
+          failure =
+            "Limita gratuită Google a fost atinsă pentru moment. Completează datele manual sau încearcă mai târziu.";
+        } else if (res.status === 404) {
+          failure =
+            "Modelul de citire a actelor nu este disponibil pe această cheie. Completează datele manual.";
+        } else {
+          failure = "Nu am putut citi documentul. Completează datele manual.";
+        }
       } else {
         const json = (await res.json()) as {
-          choices?: { message?: { content?: string } }[];
+          candidates?: { content?: { parts?: { text?: string }[] } }[];
         };
-        const content = json.choices?.[0]?.message?.content ?? "{}";
+        const content = (json.candidates?.[0]?.content?.parts ?? [])
+          .map((p) => p.text ?? "")
+          .join("");
         const match = content.match(/\{[\s\S]*\}/);
         parsed = match ? (JSON.parse(match[0]) as Record<string, string>) : {};
       }
     } catch (e) {
-      console.error("[contracts] extraction error", e);
-      failure = "Nu am putut citi documentul. Completează datele manual.";
+      const aborted = e instanceof Error && e.name === "AbortError";
+      console.error("[contracts] gemini extraction error", e);
+      failure = aborted
+        ? "Citirea actului a durat prea mult. Încearcă din nou sau completează datele manual."
+        : "Nu am putut citi documentul. Completează datele manual.";
     }
 
     const field = (key: string) => String(parsed[key] ?? "").trim();
@@ -290,11 +356,13 @@ export const extractIdDocument = createServerFn({ method: "POST" })
         ok: !failure,
         fields_found: Object.entries(result).filter(([, v]) => v !== "").length,
         image_stored: false,
+        provider: "google_gemini",
       },
     });
 
-    return { ...result, failure };
+    return { ...result, failure, configured: true };
   });
+
 
 /* ------------------------------------------------------------------ */
 /* Contracte                                                           */

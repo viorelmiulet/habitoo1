@@ -32,7 +32,13 @@ import {
   type ContractKind,
   type PartyRole,
 } from "@/lib/contracts/templates";
-import { createContract, extractIdDocument, listTemplates } from "@/lib/contracts.functions";
+import {
+  createContract,
+  extractIdDocument,
+  getIdExtractionStatus,
+  listTemplates,
+} from "@/lib/contracts.functions";
+
 
 const defaultRole: Record<ContractKind, PartyRole> = {
   sale_mandate: "seller",
@@ -83,7 +89,17 @@ export function NewContractDialog({
   const fetchTemplates = useServerFn(listTemplates);
   const runCreate = useServerFn(createContract);
   const runExtract = useServerFn(extractIdDocument);
+  const fetchExtractionStatus = useServerFn(getIdExtractionStatus);
   const fileRef = useRef<HTMLInputElement>(null);
+
+  const extractionStatus = useQuery({
+    queryKey: ["contract-id-extraction-status"],
+    queryFn: () => fetchExtractionStatus({}),
+    enabled: open,
+    staleTime: 5 * 60_000,
+  });
+  const extractionEnabled = extractionStatus.data?.configured !== false;
+
 
   const [kind, setKind] = useState<ContractKind>("sale_mandate");
   const [templateId, setTemplateId] = useState<string>("");
@@ -162,8 +178,12 @@ export function NewContractDialog({
         address: result.address || prev.address,
         birthDate: result.birthDate || prev.birthDate,
       }));
-      if (result.failure) toast.error(result.failure);
+      if (result.configured === false) {
+        void extractionStatus.refetch();
+        toast.info(result.failure ?? "Completarea automată nu este configurată.");
+      } else if (result.failure) toast.error(result.failure);
       else toast.success("Date completate din act. Verifică-le înainte de a continua.");
+
     },
     onError: (e: Error) => toastError(e),
   });
@@ -344,7 +364,7 @@ export function NewContractDialog({
               size="sm"
               variant="outline"
               onClick={() => fileRef.current?.click()}
-              disabled={extract.isPending}
+              disabled={extract.isPending || !extractionEnabled}
             >
               {extract.isPending ? (
                 <Loader2 className="size-4 animate-spin" />
@@ -354,11 +374,18 @@ export function NewContractDialog({
               {extract.isPending ? "Se citește actul…" : "Fotografiază actul"}
             </Button>
           </div>
+          {!extractionEnabled && (
+            <p className="mt-2 text-xs text-muted-foreground">
+              Completarea automată din act nu este configurată. Introdu datele manual în câmpurile de
+              mai jos.
+            </p>
+          )}
           <p className="mt-2 flex items-start gap-1.5 text-xs text-muted-foreground">
             <ShieldCheck className="mt-0.5 size-3.5 shrink-0" />
             Fotografia nu este salvată. CNP-ul și seria actului se păstrează criptat și sunt
             vizibile doar agentului care întocmește documentul și administratorului agenției.
           </p>
+
         </div>
 
         <div className="grid gap-4 sm:grid-cols-2">
