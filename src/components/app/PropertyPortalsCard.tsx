@@ -172,10 +172,6 @@ export const PropertyPortalsCard = forwardRef<
     (c) => c.availability === "available" && (checked[c.portalId] ?? c.selected),
   );
   const actionable = [...new Set([...dirty, ...toSync])];
-  /** Portaluri debifate care sunt efectiv publicate → necesită confirmare. */
-  const toWithdraw = dirty.filter(
-    (c) => !(checked[c.portalId] ?? false) && (c.state === "published" || c.state === "in_feed"),
-  );
 
   const apply = useMutation({
     mutationFn: () =>
