@@ -78,6 +78,9 @@ import { PropertyMapClient } from "@/components/app/PropertyMapClient";
 import { APPROX_RADIUS_M, publicCoords } from "@/lib/geo";
 import { useCurrentUser } from "@/hooks/use-session";
 import { brandingFromOrg, buildPresentationHtml } from "@/lib/materials";
+import { printHtmlDocument } from "@/lib/print";
+import { MEDIA_BUCKET, signedUrls } from "@/lib/storage";
+
 import { useAgencyLogoUrl } from "@/components/app/AgencyBrandingCard";
 
 import { formatDate, formatDateTime, formatMoney, formatNumber } from "@/lib/format";
@@ -107,6 +110,9 @@ function PropertyDetailPage() {
   const agencyLogoUrl = useAgencyLogoUrl(user?.organization?.logo_path);
 
   const [editing, setEditing] = useState(false);
+  /** Evită tipăriri suprapuse ale fișei de prezentare. */
+  const printingRef = useRef(false);
+
 
   const [activityDialog, setActivityDialog] = useState<{
     open: boolean;
@@ -435,22 +441,50 @@ function PropertyDetailPage() {
     { label: "Adăugat", value: formatDate(property.created_at) },
   ];
 
-  /** Prezentarea folosește identitatea vizuală configurată de agenție. */
-  const printSummary = () => {
-    const w = window.open("", "_blank", "width=900,height=1000");
-    if (!w) return;
-    w.document.write(
-      buildPresentationHtml(brandingFromOrg(user?.organization, agencyLogoUrl), {
-        title: property.title,
-        location: [property.address, property.district, property.city].filter(Boolean).join(", "),
-        price: formatMoney(property.price, property.currency),
-        specs,
-        description: property.description,
-      }),
-    );
-    w.document.close();
-    w.print();
+  /**
+   * Fișa de prezentare: identitatea vizuală a agenției plus fotografiile
+   * publice ale proprietății (fără cele confidențiale). Tipărirea se face în
+   * iframe, după încărcarea imaginilor.
+   */
+  const printSummary = async () => {
+    if (printingRef.current) return;
+    printingRef.current = true;
+
+    try {
+      const { data: rows, error } = await supabase
+        .from("property_images")
+        .select("url,storage_path,position,is_primary,is_confidential")
+        .eq("property_id", id)
+        .eq("is_confidential", false)
+        .order("position", { ascending: true });
+      if (error) throw error;
+      const sorted = [...(rows ?? [])].sort((a, b) => {
+        if (a.is_primary !== b.is_primary) return a.is_primary ? -1 : 1;
+        return a.position - b.position;
+      });
+      const paths = sorted.map((r) => r.storage_path).filter((v): v is string => Boolean(v));
+      const signed = paths.length ? await signedUrls(MEDIA_BUCKET, paths) : {};
+      const photos = sorted
+        .map((r) => (r.storage_path ? signed[r.storage_path] : null) ?? r.url ?? null)
+        .filter((v): v is string => Boolean(v));
+
+      await printHtmlDocument(
+        buildPresentationHtml(brandingFromOrg(user?.organization, agencyLogoUrl), {
+          title: property.title,
+          location: [property.address, property.district, property.city].filter(Boolean).join(", "),
+          price: formatMoney(property.price, property.currency),
+          specs,
+          description: property.description,
+          photos,
+        }),
+      );
+    } catch (e) {
+      toastError(e as Error);
+    } finally {
+      printingRef.current = false;
+    }
   };
+
 
   // Coordonatele arătate în panoul read-only: exacte sau zona aproximativă.
   const mapCoords = publicCoords(property);
