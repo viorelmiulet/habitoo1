@@ -1,7 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import { toast } from "sonner";
+import { toast } from "@/components/ui/sonner";
 import { AuthShell } from "@/components/auth/AuthShell";
 import { AuthRouteError } from "@/components/auth/AuthRouteError";
 import { Button } from "@/components/ui/button";

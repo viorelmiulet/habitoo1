@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Building2, CalendarPlus, Eye, Flame, Plus, Target, UserRound } from "lucide-react";
-import { toast } from "sonner";
+import { toast } from "@/components/ui/sonner";
 import { toastError } from "@/lib/errors";
 import { Button } from "@/components/ui/button";
 import {

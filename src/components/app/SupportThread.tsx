@@ -31,7 +31,7 @@ import {
   SUPPORT_STATUS_LABELS,
   type SupportStatus,
 } from "@/lib/support.functions";
-import { toast } from "sonner";
+import { toast } from "@/components/ui/sonner";
 
 export function SupportStatusBadge({ status }: { status: SupportStatus }) {
   const tone: Record<SupportStatus, string> = {

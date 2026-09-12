@@ -21,7 +21,7 @@ import {
   UserRound,
   Users,
 } from "lucide-react";
-import { toast } from "sonner";
+import { toast } from "@/components/ui/sonner";
 import { PageHeader } from "@/components/app/PageHeader";
 import { ListSkeleton } from "@/components/app/LoadingState";
 import { KpiCard } from "@/components/app/KpiCard";
