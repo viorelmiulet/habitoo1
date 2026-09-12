@@ -78,6 +78,9 @@ import { PropertyMapClient } from "@/components/app/PropertyMapClient";
 import { APPROX_RADIUS_M, publicCoords } from "@/lib/geo";
 import { useCurrentUser } from "@/hooks/use-session";
 import { brandingFromOrg, buildPresentationHtml } from "@/lib/materials";
+import { printHtmlDocument } from "@/lib/print";
+import { MEDIA_BUCKET, signedUrls } from "@/lib/storage";
+
 import { useAgencyLogoUrl } from "@/components/app/AgencyBrandingCard";
 
 import { formatDate, formatDateTime, formatMoney, formatNumber } from "@/lib/format";
