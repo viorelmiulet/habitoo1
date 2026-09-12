@@ -162,6 +162,13 @@
       "when": 1789214106044,
       "tag": "0022_profile_onboarding_tour_seen",
       "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1789233939664,
+      "tag": "0023_contracts_module_phase1",
+      "breakpoints": true
     }
   ]
 }
