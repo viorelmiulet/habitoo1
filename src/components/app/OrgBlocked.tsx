@@ -30,6 +30,13 @@ const BLOCKED: Record<
     contact: "Pentru reluarea colaborării, scrie-ne la contact@habitoo.ro.",
     icon: XCircle,
   },
+  expired: {
+    title: "Abonamentul agenției a expirat",
+    body: "Abonamentul agenției tale a expirat. Contactează administratorul platformei.",
+    contact:
+      "Pentru reînnoire, discută cu administratorul agenției tale sau scrie-ne la contact@habitoo.ro.",
+    icon: XCircle,
+  },
   archived: {
     title: "Agenția a fost arhivată",
     body: "Contul agenției tale a fost arhivat. Arhivarea oprește accesul, dar nu șterge nimic.",
@@ -38,6 +45,7 @@ const BLOCKED: Record<
     icon: Archive,
   },
 };
+
 
 /** Ecran dedicat pentru membrii unei agenții suspendate, anulate sau arhivate. */
 export function OrgBlocked({ reason }: { reason: OrgBlockReason }) {
