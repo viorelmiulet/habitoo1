@@ -3202,6 +3202,30 @@ export type Database = {
           },
         ]
       }
+      subscription_cron_runs: {
+        Row: {
+          error: string | null
+          id: string
+          ok: boolean
+          ran_at: string
+          result: Json
+        }
+        Insert: {
+          error?: string | null
+          id?: string
+          ok?: boolean
+          ran_at?: string
+          result?: Json
+        }
+        Update: {
+          error?: string | null
+          id?: string
+          ok?: boolean
+          ran_at?: string
+          result?: Json
+        }
+        Relationships: []
+      }
       support_ticket_messages: {
         Row: {
           body: string
