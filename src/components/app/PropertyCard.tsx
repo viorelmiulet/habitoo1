@@ -9,6 +9,7 @@ import { Bath, BedDouble, Building, Ruler, Star } from "lucide-react";
 import { PortalLogo } from "@/components/app/PortalLogo";
 import { StatusBadge } from "@/components/app/StatusBadge";
 import { PropertyThumb, type PropertyCover } from "@/components/app/PropertyThumb";
+import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { formatMoney, formatNumber } from "@/lib/format";
 import {
@@ -83,34 +84,36 @@ export function PropertyCard({
   ].filter(Boolean) as { icon: typeof Ruler; text: string }[];
 
   return (
-    <article className="group flex flex-col overflow-hidden rounded-2xl bg-card ring-1 ring-border/60 transition-shadow hover:shadow-soft">
+    <article className="group flex min-w-0 flex-col overflow-hidden rounded-xl bg-card ring-1 ring-border transition-shadow hover:shadow-soft">
       <div className="relative">
         <PropertyThumb
           propertyId={property.id}
           title={property.title}
           cover={cover}
-          className="h-44 w-full rounded-none border-0"
+          className="aspect-[1.82/1] w-full rounded-none border-0"
         />
         {badge ? (
           <span
             className={cn(
-              "absolute top-3 left-3 rounded-full px-2.5 py-0.5 text-[11px] font-medium",
+              "absolute top-2.5 left-2.5 rounded-full px-2.5 py-0.5 text-[11px] font-medium",
               badge.tone,
             )}
           >
             {badge.label}
           </span>
         ) : null}
-        <button
+        <Button
           type="button"
+          variant="ghost"
+          size="icon"
           onClick={onToggleFavorite}
           title={favorite ? "Scoate din favorite" : "Adaugă la favorite"}
           aria-label={favorite ? "Scoate din favorite" : "Adaugă la favorite"}
-          className="absolute top-3 right-3 flex size-8 items-center justify-center rounded-full bg-card/90 text-muted-foreground backdrop-blur transition-colors hover:text-primary"
+          className="absolute top-2.5 right-2.5 size-8 rounded-full bg-card/90 text-muted-foreground shadow-sm backdrop-blur hover:bg-card hover:text-primary"
         >
           <Star className={cn("size-4", favorite && "fill-primary text-primary")} />
-        </button>
-        <span className="absolute bottom-3 left-3">
+        </Button>
+        <span className="absolute bottom-2.5 left-2.5">
           <Checkbox
             checked={selected}
             onCheckedChange={(c) => onSelectedChange(c === true)}
@@ -120,7 +123,7 @@ export function PropertyCard({
         </span>
       </div>
 
-      <div className="flex flex-1 flex-col gap-3 p-4">
+      <div className="flex flex-1 flex-col gap-2.5 p-3.5">
         <div className="min-w-0">
           <p className="text-xs text-muted-foreground">
             {property.reference ? `${property.reference} · ` : ""}
@@ -129,36 +132,37 @@ export function PropertyCard({
           <Link
             to="/app/properties/$id"
             params={{ id: property.id }}
-            className="mt-0.5 line-clamp-2 font-medium hover:text-primary"
+            className="mt-0.5 line-clamp-1 font-semibold hover:text-primary"
           >
             {property.title}
           </Link>
-          <p className="mt-0.5 truncate text-sm text-muted-foreground">
+          <p className="mt-0.5 truncate text-xs text-muted-foreground">
             {[property.district, property.city].filter(Boolean).join(", ") ||
               "Locație nespecificată"}
           </p>
         </div>
 
-        <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="flex items-center justify-between gap-2">
           <div className="flex flex-wrap items-center gap-1.5">
             <StatusBadge tone={propertyStatusTone[property.status]} dot>
               {propertyStatusLabels[property.status]}
             </StatusBadge>
             <StatusBadge tone="primary">{transactionLabels[property.transaction_kind]}</StatusBadge>
           </div>
-          <p className="text-xl font-medium tracking-tight">
+          <p className="shrink-0 text-lg font-semibold">
             {formatMoney(property.price, property.currency)}
           </p>
         </div>
 
         {facts.length > 0 ? (
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-2 gap-1.5">
             {facts.map((f) => (
               <span
                 key={f.text}
-                className="inline-flex items-center gap-1.5 rounded-xl border border-border/60 px-2.5 py-1.5 text-xs text-muted-foreground"
+                className="inline-flex min-w-0 items-center gap-1.5 rounded-lg border border-border px-2 py-1.5 text-xs text-muted-foreground"
               >
-                <f.icon className="size-3.5 shrink-0" aria-hidden /> {f.text}
+                <f.icon className="size-3.5 shrink-0" aria-hidden />
+                <span className="truncate">{f.text}</span>
               </span>
             ))}
           </div>
@@ -169,7 +173,7 @@ export function PropertyCard({
             {(property.features ?? []).slice(0, 3).map((f) => (
               <span
                 key={f}
-                className="rounded-full bg-secondary/60 px-2.5 py-0.5 text-[11px] text-muted-foreground"
+                className="rounded-full bg-secondary px-2 py-0.5 text-[10px] text-muted-foreground"
               >
                 {f}
               </span>
