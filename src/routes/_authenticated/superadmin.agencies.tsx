@@ -43,6 +43,7 @@ import {
   normalizePlan,
   planAgentLimitLabel,
   planPriceLabel,
+  seatLimitLabel,
   type PlanKey,
 } from "@/lib/plans";
 
