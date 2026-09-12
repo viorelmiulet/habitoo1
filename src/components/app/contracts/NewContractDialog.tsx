@@ -89,7 +89,17 @@ export function NewContractDialog({
   const fetchTemplates = useServerFn(listTemplates);
   const runCreate = useServerFn(createContract);
   const runExtract = useServerFn(extractIdDocument);
+  const fetchExtractionStatus = useServerFn(getIdExtractionStatus);
   const fileRef = useRef<HTMLInputElement>(null);
+
+  const extractionStatus = useQuery({
+    queryKey: ["contract-id-extraction-status"],
+    queryFn: () => fetchExtractionStatus({}),
+    enabled: open,
+    staleTime: 5 * 60_000,
+  });
+  const extractionEnabled = extractionStatus.data?.configured !== false;
+
 
   const [kind, setKind] = useState<ContractKind>("sale_mandate");
   const [templateId, setTemplateId] = useState<string>("");
