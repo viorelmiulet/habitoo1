@@ -245,7 +245,6 @@ export const PropertyPortalsCard = forwardRef<
   }, [
     canManage,
     actionable.length,
-    toWithdraw.length,
     apply,
     collabDirty,
     collabValue,
