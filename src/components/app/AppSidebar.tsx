@@ -267,7 +267,7 @@ export function AppSidebar({
       {/* Navigation */}
       <nav
         aria-label="Navigare principală"
-        className="flex-1 overflow-x-hidden overflow-y-auto px-2 pb-3"
+        className="scrollbar-hidden flex-1 overflow-x-hidden overflow-y-auto px-2 pb-3"
       >
         {groups.map((group, i) => (
           <div key={group.title ?? i} className="mb-3">
