@@ -20,7 +20,6 @@ import { useApplyTheme } from "@/hooks/use-theme";
 import { useSidebarCollapsed } from "@/hooks/use-sidebar-state";
 import { roleLabels } from "@/lib/labels";
 
-
 import { cn } from "@/lib/utils";
 import type { CurrentUser } from "@/hooks/use-session";
 import { clearAuthenticatedSession } from "@/lib/sign-out";
@@ -85,74 +84,74 @@ export function AppShell({
   return (
     <TooltipProvider delayDuration={150}>
       <OnboardingTourProvider user={user}>
-      <div className="min-h-screen bg-background">
-        <a
-          href="#continut"
-          className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-50 focus:rounded-md focus:bg-primary focus:px-3 focus:py-2 focus:text-sm focus:text-primary-foreground"
-        >
-          Sari la conținut
-        </a>
-
-        <aside
-          className={cn(
-            "fixed inset-y-0 left-0 z-40 hidden border-r border-sidebar-border transition-[width] duration-200 lg:block",
-            collapsed ? "w-[72px]" : "w-64",
-          )}
-        >
-          <AppSidebar {...sidebarProps} collapsed={collapsed} onToggleCollapse={toggle} />
-        </aside>
-
-        <Sheet open={menuOpen} onOpenChange={setMenuOpen}>
-          <SheetContent
-            side="left"
-            className="w-[min(85vw,300px)] p-0"
-            aria-describedby={undefined}
+        <div className="min-h-screen bg-background">
+          <a
+            href="#continut"
+            className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-50 focus:rounded-md focus:bg-primary focus:px-3 focus:py-2 focus:text-sm focus:text-primary-foreground"
           >
-            <SheetTitle className="sr-only">Meniu de navigare</SheetTitle>
-            <AppSidebar {...sidebarProps} onNavigate={() => setMenuOpen(false)} />
-          </SheetContent>
-        </Sheet>
+            Sari la conținut
+          </a>
 
-        <div
-          className={cn(
-            "transition-[padding] duration-200",
-            collapsed ? "lg:pl-[72px]" : "lg:pl-64",
-          )}
-        >
-          <Topbar
-            user={user}
-            onOpenMenu={() => setMenuOpen(true)}
-            onSignOut={signOut}
-            isDemo={isDemo}
-            variant={variant}
-          />
-          <ImpersonationBanner user={user} />
-          <SubscriptionBanner user={user} />
-          <ActiveAccessBanner enabled={!user.impersonation} />
+          <aside
+            className={cn(
+              "fixed inset-y-0 left-0 z-40 hidden border-r border-sidebar-border transition-[width] duration-200 lg:block",
+              collapsed ? "w-[72px]" : "w-64",
+            )}
+          >
+            <AppSidebar {...sidebarProps} collapsed={collapsed} onToggleCollapse={toggle} />
+          </aside>
 
-          {isDemo ? (
-            <div
-              role="status"
-              className="flex items-center justify-center gap-2 border-b border-warning/40 bg-warning/15 px-4 py-1.5 text-center text-xs font-medium text-warning-foreground"
+          <Sheet open={menuOpen} onOpenChange={setMenuOpen}>
+            <SheetContent
+              side="left"
+              className="w-[min(85vw,300px)] p-0"
+              aria-describedby={undefined}
             >
-              <FlaskConical className="size-3.5 shrink-0" />
-              <span>
-                Lucrezi în agenția <strong>DEMO / QA</strong> – toate datele sunt fictive și pot fi
-                resetate oricând de un superadmin.
-              </span>
-            </div>
-          ) : null}
-          <main
-            id="continut"
-            tabIndex={-1}
-            className="mx-auto w-full max-w-[1500px] space-y-6 px-4 pt-5 pb-24 outline-none sm:px-6 lg:px-8 lg:pt-6 lg:pb-10"
-          >
-            {children}
-          </main>
-        </div>
+              <SheetTitle className="sr-only">Meniu de navigare</SheetTitle>
+              <AppSidebar {...sidebarProps} onNavigate={() => setMenuOpen(false)} />
+            </SheetContent>
+          </Sheet>
 
-        <MobileNav variant={variant} onOpenMenu={() => setMenuOpen(true)} />
-      </div>
+          <div
+            className={cn(
+              "transition-[padding] duration-200",
+              collapsed ? "lg:pl-[72px]" : "lg:pl-64",
+            )}
+          >
+            <Topbar
+              user={user}
+              onOpenMenu={() => setMenuOpen(true)}
+              onSignOut={signOut}
+              isDemo={isDemo}
+              variant={variant}
+            />
+            <ImpersonationBanner user={user} />
+            <SubscriptionBanner user={user} />
+            <ActiveAccessBanner enabled={!user.impersonation} />
+
+            {isDemo ? (
+              <div
+                role="status"
+                className="flex items-center justify-center gap-2 border-b border-warning/40 bg-warning/15 px-4 py-1.5 text-center text-xs font-medium text-warning-foreground"
+              >
+                <FlaskConical className="size-3.5 shrink-0" />
+                <span>
+                  Lucrezi în agenția <strong>DEMO / QA</strong> – toate datele sunt fictive și pot
+                  fi resetate oricând de un superadmin.
+                </span>
+              </div>
+            ) : null}
+            <main
+              id="continut"
+              tabIndex={-1}
+              className="mx-auto w-full max-w-[1500px] space-y-6 px-4 pt-5 pb-24 outline-none sm:px-6 lg:px-8 lg:pt-6 lg:pb-10"
+            >
+              {children}
+            </main>
+          </div>
+
+          <MobileNav variant={variant} onOpenMenu={() => setMenuOpen(true)} />
+        </div>
       </OnboardingTourProvider>
     </TooltipProvider>
   );
