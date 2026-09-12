@@ -13,6 +13,8 @@ import { useServerFn } from "@tanstack/react-start";
 import { countUnresolvedSupportTickets } from "@/lib/support.functions";
 import { ImpersonationBanner } from "@/components/app/ImpersonationBanner";
 import { ActiveAccessBanner } from "@/components/app/AccountAccessCard";
+import { SubscriptionBanner } from "@/components/app/SubscriptionBanner";
+
 import { useApplyTheme } from "@/hooks/use-theme";
 import { useSidebarCollapsed } from "@/hooks/use-sidebar-state";
 import { supabase } from "@/integrations/supabase/client";
@@ -148,7 +150,9 @@ export function AppShell({
             variant={variant}
           />
           <ImpersonationBanner user={user} />
+          <SubscriptionBanner user={user} />
           <ActiveAccessBanner enabled={!user.impersonation} />
+
           {isDemo ? (
             <div
               role="status"
