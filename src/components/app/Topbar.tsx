@@ -52,6 +52,7 @@ export function Topbar({
   variant?: ShellVariant;
 }) {
   const { preference, setPreference } = useTheme();
+  const tour = useOnboardingTour();
   const isPlatform = variant === "platform";
   const displayName = user.profile?.full_name || user.email;
 
