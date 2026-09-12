@@ -1,7 +1,17 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import { Archive, ArchiveRestore, Building2, Check, Search, Trash2, X } from "lucide-react";
+import {
+  Archive,
+  ArchiveRestore,
+  Building2,
+  Check,
+  RefreshCw,
+  Search,
+  Trash2,
+  X,
+} from "lucide-react";
+
 import { toast } from "sonner";
 import { toastError } from "@/lib/errors";
 import { PageHeader } from "@/components/app/PageHeader";
@@ -32,6 +42,14 @@ import {
   normalizePlan,
   type PlanKey,
 } from "@/lib/plans";
+import {
+  SUBSCRIPTION_TERMS,
+  SUBSCRIPTION_TERM_LABELS,
+  subscriptionState,
+  subscriptionTermLabel,
+  type SubscriptionTerm,
+} from "@/lib/subscription";
+
 
 export const Route = createFileRoute("/_authenticated/superadmin/agencies")({
   component: AgenciesPage,
@@ -81,6 +99,53 @@ function PlanPicker({
     </div>
   );
 }
+
+/**
+ * Termenul abonamentului: 30 de zile, 12 luni sau fără termen. Data de expirare
+ * se calculează în baza de date, din momentul salvării — niciodată introdusă manual.
+ */
+function SubscriptionPicker({
+  term,
+  onSave,
+  saving,
+}: {
+  term: string | null;
+  onSave: (term: SubscriptionTerm | null) => void;
+  saving: boolean;
+}) {
+  const current = term === "30d" || term === "12m" ? term : "none";
+  const [value, setValue] = useState<string>(current);
+  const dirty = value !== current;
+  const asTerm = value === "none" ? null : (value as SubscriptionTerm);
+  return (
+    <div className="flex items-center gap-2">
+      <Select value={value} onValueChange={setValue}>
+        <SelectTrigger className="w-44">
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="none">Fără termen (nelimitat)</SelectItem>
+          {SUBSCRIPTION_TERMS.map((t) => (
+            <SelectItem key={t} value={t}>
+              {SUBSCRIPTION_TERM_LABELS[t]}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+      <Button size="sm" variant="outline" disabled={!dirty || saving} onClick={() => onSave(asTerm)}>
+        Salvează
+      </Button>
+      {asTerm && !dirty ? (
+        <Button size="sm" variant="ghost" disabled={saving} onClick={() => onSave(asTerm)}>
+          <RefreshCw className="mr-1.5 size-4" />
+          Reînnoiește
+        </Button>
+      ) : null}
+    </div>
+  );
+}
+
+
 
 function AgenciesPage() {
   const queryClient = useQueryClient();
@@ -169,7 +234,29 @@ function AgenciesPage() {
     onError: (e: Error) => toastError(e),
   });
 
+  // Termenul abonamentului: RPC superadmin-only care calculează expirarea și scrie auditul.
+  const saveSubscription = useMutation({
+    mutationFn: async ({ id, term }: { id: string; term: SubscriptionTerm | null }) => {
+      const { error } = await supabase.rpc("set_organization_subscription", {
+        _org: id,
+        _term: term as string,
+      });
+
+      if (error) throw error;
+    },
+    onSuccess: (_r, vars) => {
+      queryClient.invalidateQueries({ queryKey: ["superadmin"] });
+      toast.success(
+        vars.term
+          ? `Termenul abonamentului a fost setat la ${SUBSCRIPTION_TERM_LABELS[vars.term]}.`
+          : "Agenția rămâne fără termen (acces nelimitat).",
+      );
+    },
+    onError: (e: Error) => toastError(e),
+  });
+
   const savePlan = useMutation({
+
     mutationFn: async ({ id, plan, previous }: { id: string; plan: PlanKey; previous: string }) => {
       const { error } = await supabase.from("organizations").update({ plan }).eq("id", id);
       if (error) throw error;
@@ -397,6 +484,16 @@ function AgenciesPage() {
                         </StatusBadge>
                         {o.is_demo ? <StatusBadge tone="warning">DEMO / QA</StatusBadge> : null}
                         {o.archived_at ? <StatusBadge tone="danger">Arhivată</StatusBadge> : null}
+                        {(() => {
+                          const s = subscriptionState(o);
+                          if (s.kind === "grace")
+                            return (
+                              <StatusBadge tone="warning">În grație — {s.daysLeft} zile</StatusBadge>
+                            );
+                          if (s.kind === "expired")
+                            return <StatusBadge tone="danger">Expirată</StatusBadge>;
+                          return null;
+                        })()}
                       </p>
                       <p className="truncate text-xs text-muted-foreground">
                         {o.legal_name ?? "fără nume legal"} · CUI {o.cui ?? "—"} · Reg. Com.{" "}
@@ -416,6 +513,12 @@ function AgenciesPage() {
                         {data?.properties.filter((p) => p.organization_id === o.id).length ?? 0}/
                         {o.max_properties} proprietăți
                       </span>
+                      <span className="tabular-nums">
+                        {subscriptionTermLabel(o.subscription_term)}
+                        {o.subscription_expires_at
+                          ? ` · expiră ${formatDate(o.subscription_expires_at)}`
+                          : ""}
+                      </span>
                     </div>
                   </div>
 
@@ -425,6 +528,13 @@ function AgenciesPage() {
                       onSave={(plan) => savePlan.mutate({ id: o.id, plan, previous: o.plan })}
                       saving={savePlan.isPending}
                     />
+                    <SubscriptionPicker
+                      key={`${o.id}-${o.subscription_term ?? "none"}-${o.subscription_expires_at ?? ""}`}
+                      term={o.subscription_term}
+                      onSave={(term) => saveSubscription.mutate({ id: o.id, term })}
+                      saving={saveSubscription.isPending}
+                    />
+
                     <Select
                       value={o.status}
                       onValueChange={(v) => update.mutate({ id: o.id, patch: { status: v } })}

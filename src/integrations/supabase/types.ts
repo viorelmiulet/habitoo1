@@ -479,6 +479,24 @@ export type Database = {
           },
         ]
       }
+      cron_job_nonces: {
+        Row: {
+          created_at: string
+          purpose: string
+          token: string
+        }
+        Insert: {
+          created_at?: string
+          purpose: string
+          token: string
+        }
+        Update: {
+          created_at?: string
+          purpose?: string
+          token?: string
+        }
+        Relationships: []
+      }
       documents: {
         Row: {
           created_at: string
@@ -1328,6 +1346,11 @@ export type Database = {
           plan: string
           slug: string
           status: Database["public"]["Enums"]["org_status"]
+          subscription_expires_at: string | null
+          subscription_grace_notified_at: string | null
+          subscription_started_at: string | null
+          subscription_term: string | null
+          suspended_reason: string | null
           trade_registry_number: string | null
           updated_at: string
           updated_by: string | null
@@ -1366,6 +1389,11 @@ export type Database = {
           plan?: string
           slug: string
           status?: Database["public"]["Enums"]["org_status"]
+          subscription_expires_at?: string | null
+          subscription_grace_notified_at?: string | null
+          subscription_started_at?: string | null
+          subscription_term?: string | null
+          suspended_reason?: string | null
           trade_registry_number?: string | null
           updated_at?: string
           updated_by?: string | null
@@ -1404,6 +1432,11 @@ export type Database = {
           plan?: string
           slug?: string
           status?: Database["public"]["Enums"]["org_status"]
+          subscription_expires_at?: string | null
+          subscription_grace_notified_at?: string | null
+          subscription_started_at?: string | null
+          subscription_term?: string | null
+          suspended_reason?: string | null
           trade_registry_number?: string | null
           updated_at?: string
           updated_by?: string | null
@@ -3312,6 +3345,11 @@ export type Database = {
         Returns: string
       }
       can_access_ticket: { Args: { _ticket_id: string }; Returns: boolean }
+      cron_nonce_claim: {
+        Args: { _purpose: string; _token: string }
+        Returns: boolean
+      }
+      cron_nonce_issue: { Args: { _purpose: string }; Returns: string }
       current_org: { Args: never; Returns: string }
       email_job_finish: {
         Args: { _error?: string; _job_id: string; _ok: boolean }
@@ -3457,6 +3495,10 @@ export type Database = {
         Returns: undefined
       }
       ro_normalize_name: { Args: { _v: string }; Returns: string }
+      set_organization_subscription: {
+        Args: { _org: string; _term: string }
+        Returns: string
+      }
       site_feed_record_visit: {
         Args: {
           _occurred_on: string
@@ -3478,6 +3520,8 @@ export type Database = {
         }
         Returns: string
       }
+      subscription_cron_tick: { Args: never; Returns: Json }
+      subscription_enforce_daily: { Args: never; Returns: Json }
       superadmin_delete_organization: {
         Args: { _actor?: string; _org: string }
         Returns: Json

@@ -4,7 +4,12 @@
 import { createMiddleware } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
-export type OrgBlockReason = "suspended" | "archived" | "cancelled" | "pending_approval";
+export type OrgBlockReason =
+  | "suspended"
+  | "archived"
+  | "cancelled"
+  | "pending_approval"
+  | "expired";
 
 /** Prefix distinct, ca frontendul să poată afișa o pagină dedicată. */
 export const ORG_BLOCKED_CODE = "ORG_ACCESS_BLOCKED";
@@ -13,9 +18,11 @@ export const ORG_BLOCKED_MESSAGES: Record<OrgBlockReason, string> = {
   suspended: "Contul agenției tale este suspendat. Contactează administratorul platformei.",
   archived: "Contul agenției tale a fost arhivat. Contactează administratorul platformei.",
   cancelled: "Contul agenției tale a fost anulat. Contactează administratorul platformei.",
+  expired: "Abonamentul agenției tale a expirat. Contactează administratorul platformei.",
   pending_approval:
     "Contul agenției tale așteaptă aprobare. Vei primi acces imediat ce este validat.",
 };
+
 
 export function orgBlockedError(reason: OrgBlockReason): Error {
   const error = new Error(`${ORG_BLOCKED_CODE}:${reason}: ${ORG_BLOCKED_MESSAGES[reason]}`);
@@ -31,6 +38,7 @@ export function parseOrgBlocked(error: unknown): OrgBlockReason | null {
   if (raw.includes(":archived")) return "archived";
   if (raw.includes(":cancelled")) return "cancelled";
   if (raw.includes(":pending_approval")) return "pending_approval";
+  if (raw.includes(":expired")) return "expired";
   return "suspended";
 }
 
@@ -39,17 +47,20 @@ export function orgBlockReason(
     | {
         status?: string | null;
         archived_at?: string | null;
+        suspended_reason?: string | null;
       }
     | null
     | undefined,
 ): OrgBlockReason | null {
   if (!org) return null;
   if (org.archived_at) return "archived";
-  if (org.status === "suspended") return "suspended";
+  if (org.status === "suspended")
+    return org.suspended_reason === "subscription_expired" ? "expired" : "suspended";
   if (org.status === "cancelled") return "cancelled";
   if (org.status === "pending_approval") return "pending_approval";
   return null;
 }
+
 
 export const requireActiveOrgAuth = createMiddleware({ type: "function" })
   .middleware([requireSupabaseAuth])
@@ -74,7 +85,7 @@ export const requireActiveOrgAuth = createMiddleware({ type: "function" })
 
     const { data: org } = await supabaseAdmin
       .from("organizations")
-      .select("status,archived_at")
+      .select("status,archived_at,suspended_reason")
       .eq("id", profile.organization_id)
       .maybeSingle();
 
