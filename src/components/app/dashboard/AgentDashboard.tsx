@@ -141,6 +141,7 @@ export function AgentDashboard() {
         <>
           {/* Secțiunea 1 — De făcut azi */}
           <SectionCard
+            dataTour="dashboard-today"
             title="De făcut azi"
             description="Programări, follow-up-uri restante și lead-uri necontactate"
             icon={CalendarClock}

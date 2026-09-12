@@ -258,7 +258,7 @@ export function DashboardOverview({
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" data-tour="dashboard-overview">
       <div className="flex flex-wrap items-end justify-between gap-2">
         <div>
           <h1 className="text-2xl font-medium tracking-tight sm:text-3xl">
