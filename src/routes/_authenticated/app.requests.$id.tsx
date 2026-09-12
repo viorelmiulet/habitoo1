@@ -135,6 +135,16 @@ function RequestDetailPage() {
     },
   });
 
+  // Potrivirile se calculează înainte de returnurile timpurii, ca să putem
+  // încăca coverele printr-un hook apelat necondiționat.
+  const matches = request
+    ? properties
+        .map((p) => ({ property: p, match: scoreMatch(request, p) }))
+        .filter((m) => m.match.score >= 40)
+        .sort((a, b) => b.match.score - a.match.score)
+    : [];
+  const coverFor = usePropertyCovers(matches.map((m) => m.property.id));
+
   const contact = data?.contacts.find((c) => c.id === request?.contact_id);
   const agentName = (aid: string | null) =>
     data?.agents.find((a) => a.id === aid)?.full_name ?? "—";
