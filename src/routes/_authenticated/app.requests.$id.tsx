@@ -948,3 +948,34 @@ ${materialSignature(brandingFromOrg(user?.organization))}`;
     </>
   );
 }
+
+/** Inel circular de scor (verde ≥ 80, auriu ≥ 60, gri altfel). */
+function ScoreRing({ score }: { score: number }) {
+  const r = 26;
+  const circumference = 2 * Math.PI * r;
+  const tone =
+    score >= 80 ? "text-success" : score >= 60 ? "text-accent" : "text-muted-foreground";
+  return (
+    <div
+      className={`relative mt-1 grid size-14 shrink-0 place-items-center ${tone}`}
+      role="img"
+      aria-label={`Scor de potrivire ${score} din 100`}
+    >
+      <svg viewBox="0 0 64 64" className="absolute inset-0 -rotate-90" aria-hidden>
+        <circle cx="32" cy="32" r={r} fill="none" strokeWidth="7" className="stroke-muted" />
+        <circle
+          cx="32"
+          cy="32"
+          r={r}
+          fill="none"
+          strokeWidth="7"
+          strokeLinecap="round"
+          stroke="currentColor"
+          strokeDasharray={circumference}
+          strokeDashoffset={circumference * (1 - Math.min(score, 100) / 100)}
+        />
+      </svg>
+      <span className="text-sm font-bold tabular-nums text-foreground">{score}</span>
+    </div>
+  );
+}
