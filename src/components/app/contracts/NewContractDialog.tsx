@@ -32,12 +32,14 @@ import {
   type ContractKind,
   type PartyRole,
 } from "@/lib/contracts/templates";
+import { prepareIdImage } from "@/lib/contracts/image";
 import {
   createContract,
   extractIdDocument,
   getIdExtractionStatus,
   listTemplates,
 } from "@/lib/contracts.functions";
+
 
 
 const defaultRole: Record<ContractKind, PartyRole> = {
