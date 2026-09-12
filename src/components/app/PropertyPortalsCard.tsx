@@ -157,7 +157,6 @@ export const PropertyPortalsCard = forwardRef<
           collabTerms.trim() !== (collabRow?.terms ?? ""))));
 
   const [checked, setChecked] = useState<Record<string, boolean>>({});
-  const [confirming, setConfirming] = useState(false);
 
   useEffect(() => {
     if (cells.length === 0) return;
