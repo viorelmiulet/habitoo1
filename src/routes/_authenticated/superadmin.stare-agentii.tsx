@@ -44,7 +44,7 @@ function statusTone(status: string, archived: boolean) {
 
 /** Eticheta lizibilă a unei acțiuni de audit legate de agenție. */
 function actionLabel(entry: AgencyHistoryEntry): string {
-  const planOf = (v: Record<string, unknown> | null) =>
+  const planOf = (v: AuditValues) =>
     typeof v?.plan === "string" ? PLAN_LABELS[normalizePlan(v.plan)] : null;
   switch (entry.action) {
     case "organization.plan_changed": {
