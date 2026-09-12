@@ -176,7 +176,7 @@ export function AppSidebar({
   /** Contoare afișate lângă itemi (cheie = ruta). */
   badges?: Partial<Record<string, number>>;
   /** Planul agenției și consumul de locuri, pentru cardul din josul meniului. */
-  plan?: { label: string; used: number; limit: number };
+  plan?: { label: string; used: number; limit: number | null };
 }) {
   const isPlatform = variant === "platform";
   const homeTo: LinkProps["to"] = isPlatform ? "/superadmin" : "/app";
@@ -353,17 +353,21 @@ export function AppSidebar({
           <div className="mt-2 flex items-center justify-between text-[11px] text-sidebar-foreground/70">
             <span>Utilizatori</span>
             <span className="tabular-nums">
-              {plan.used}/{plan.limit}
+              {plan.limit === null ? `${plan.used} · fără limită` : `${plan.used}/${plan.limit}`}
             </span>
           </div>
           <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-sidebar-foreground/15">
             <div
               className="h-full rounded-full bg-gold"
               style={{
-                width: `${plan.limit > 0 ? Math.min(100, Math.round((plan.used / plan.limit) * 100)) : 0}%`,
+                width:
+                  plan.limit === null
+                    ? "100%"
+                    : `${plan.limit > 0 ? Math.min(100, Math.round((plan.used / plan.limit) * 100)) : 0}%`,
               }}
             />
           </div>
+
         </div>
       ) : null}
 

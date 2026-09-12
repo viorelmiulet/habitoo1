@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowRight, Check, MessageCircle } from "lucide-react";
+import { useState } from "react";
 import {
   Accordion,
   AccordionContent,
@@ -13,11 +14,13 @@ import { PublicLayout } from "@/components/marketing/PublicLayout";
 import { Reveal } from "@/components/marketing/Reveal";
 import { Container, Section, SectionHeading } from "@/components/marketing/Section";
 import { publicHead } from "@/components/marketing/public-head";
+import { PLAN_AGENT_LIMITS, PLAN_LABELS, PLAN_PRICES, type PlanKey } from "@/lib/plans";
 import { cn } from "@/lib/utils";
 
 const TITLE = "Prețuri și planuri — Habitoo CRM";
 const DESCRIPTION =
-  "Planurile Habitoo CRM pentru agenții imobiliare de toate dimensiunile. Prețurile finale se publică la lansarea comercială; până atunci, solicită o demonstrație.";
+  "Planurile Habitoo CRM: Basic 10€, Pro 20€ și Unlimited 100€ pe lună, cu 50% reducere la plata anuală. Alege planul potrivit pentru agenția ta imobiliară.";
+
 
 export const Route = createFileRoute("/preturi")({
   head: () =>
@@ -31,42 +34,39 @@ export const Route = createFileRoute("/preturi")({
 
 const plans = [
   {
-    name: "Start",
+    key: "basic" as PlanKey,
     audience:
       "Pentru agenții mici sau agenți independenți care vor ordine în portofoliu și în clienți.",
     highlights: [
-      "Toate modulele CRM",
-      "Un administrator și primii agenți",
-      "Proprietăți cu galerie foto",
-      "Matching automat",
+      "Publicare pe portalurile imobiliare",
+      "Colaborare între agenții",
+      "Suport prin tichete în aplicație",
     ],
     featured: false,
   },
   {
-    name: "Agenție",
+    key: "pro" as PlanKey,
     audience:
       "Pentru echipe care lucrează zilnic în CRM și au nevoie de pipeline, obiective și rapoarte.",
     highlights: [
-      "Tot ce include Start",
-      "Roluri pentru admin și agenți",
-      "Obiective pe agent și rapoarte",
-      "Calendar și activități pe toată echipa",
-      "Jurnal de audit",
+      "Toate portalurile activate pentru agenție",
+      "Colaborare și comisioane partajate",
+      "Suport prioritar",
     ],
     featured: true,
   },
   {
-    name: "Rețea",
-    audience: "Pentru agenții cu mai multe birouri sau cerințe specifice de configurare și suport.",
+    key: "unlimited" as PlanKey,
+    audience: "Pentru agenții cu mai multe birouri și echipe care cresc fără plafon de locuri.",
     highlights: [
-      "Tot ce include Agenție",
-      "Configurare asistată",
+      "Portaluri și feeduri fără restricții",
+      "Colaborare la nivel de rețea",
       "Suport dedicat la implementare",
-      "Discuție despre cerințe specifice",
     ],
     featured: false,
   },
 ];
+
 
 const included = [
   "Proprietăți cu media manager, statusuri, filtre și vederi salvate",
@@ -81,24 +81,31 @@ const included = [
 
 const faq = [
   {
-    q: "De ce nu sunt afișate prețurile?",
-    a: "Prețurile finale vor fi publicate odată cu lansarea comercială. Până atunci, prezentăm platforma într-o demonstrație și discutăm împreună varianta potrivită pentru agenția ta.",
+    q: "Cum funcționează reducerea la plata anuală?",
+    a: "La plata anuală tariful lunar este cu 50% mai mic, dar factura se emite o singură dată, pentru 12 luni: 60€/an pentru Basic, 120€/an pentru Pro și 600€/an pentru Unlimited.",
+  },
+  {
+    q: "Ce înseamnă limita de agenți?",
+    a: "Basic include 3 agenți activi, Pro include 10, iar Unlimited nu are nicio limită de agenți. Poți schimba planul oricând, iar locurile se recalculează imediat.",
+  },
+  {
+    q: "Pot plăti online din aplicație?",
+    a: "Nu încă. Planul se activează de echipa Habitoo după ce trimiți cererea de cont, iar plata se face prin factură.",
   },
   {
     q: "Pot crea agenția și testa aplicația acum?",
-    a: "Da. Îți poți crea contul și agenția, poți invita colegi și poți adăuga proprietăți, contacte, cereri și lead-uri. Datele rămân în contul tău.",
+    a: "Da. Trimiți cererea de înscriere a agenției, iar după validare îți poți invita colegii și poți adăuga proprietăți, contacte, cereri și lead-uri.",
   },
   {
     q: "Datele agenției mele sunt separate de ale altor agenții?",
     a: "Da. Fiecare agenție are propriul spațiu de lucru, iar accesul este controlat prin roluri (administrator de agenție și agent). Utilizatorii văd doar datele agenției din care fac parte.",
   },
-  {
-    q: "Există integrare cu portaluri imobiliare sau facturare online?",
-    a: "Nu încă. În această etapă, Habitoo CRM se concentrează pe activitatea internă a agenției: portofoliu, clienți, cereri, lead-uri, matching, activități și rapoarte.",
-  },
 ];
 
+
 function PricingPage() {
+  const [cycle, setCycle] = useState<"monthly" | "annual">("monthly");
+
   return (
     <PublicLayout>
       <section className="mk-hero-bg relative overflow-hidden border-b border-border">
@@ -110,103 +117,156 @@ function PricingPage() {
           <SectionHeading
             as="h1"
             eyebrow="Prețuri"
-            title="Planuri gândite pentru agenții de orice dimensiune"
-            text="Prețurile finale vor fi publicate la lansarea comercială. Până atunci, îți arătăm platforma într-o demonstrație și îți răspundem la toate întrebările."
+            title="Trei planuri simple, cu prețuri clare"
+            text="Alege plata lunară sau anuală. La plata anuală tariful lunar scade cu 50%, iar factura se emite o singură dată pentru 12 luni."
           />
         </Container>
       </section>
 
       <Section className="pt-12 sm:pt-16">
         <Container>
-          <div className="grid gap-6 lg:grid-cols-3">
-            {plans.map((p, i) => (
-              <Reveal key={p.name} delay={i * 70} className="h-full">
-                <div
-                  className={cn(
-                    "relative flex h-full flex-col rounded-3xl border p-7",
-                    p.featured
-                      ? "mk-navy-bg border-navy shadow-float"
-                      : "border-border bg-card shadow-soft",
-                  )}
-                >
-                  {p.featured ? (
-                    <span className="absolute -top-3 left-7 rounded-full bg-gold px-3 py-1 text-xs font-semibold text-gold-foreground">
-                      Recomandat
-                    </span>
-                  ) : null}
-                  <h2
-                    className={cn(
-                      "text-xl font-semibold",
-                      p.featured ? "text-navy-foreground" : "text-navy",
-                    )}
-                  >
-                    {p.name}
-                  </h2>
-                  <p
-                    className={cn(
-                      "mt-2 text-sm",
-                      p.featured ? "text-navy-muted" : "text-muted-foreground",
-                    )}
-                  >
-                    {p.audience}
-                  </p>
-                  <p
-                    className={cn(
-                      "mt-6 text-3xl font-semibold tracking-tight",
-                      p.featured ? "text-navy-foreground" : "text-navy",
-                    )}
-                  >
-                    Preț la cerere
-                  </p>
-                  <ul className="mt-6 space-y-2.5">
-                    {p.highlights.map((h) => (
-                      <li
-                        key={h}
-                        className={cn(
-                          "flex items-start gap-2.5 text-sm",
-                          p.featured ? "text-navy-foreground" : "text-foreground",
-                        )}
-                      >
-                        <Check
-                          className={cn(
-                            "mt-0.5 size-4 shrink-0",
-                            p.featured ? "text-gold" : "text-success",
-                          )}
-                        />
-                        {h}
-                      </li>
-                    ))}
-                  </ul>
-                  <div className="mt-8 flex flex-1 flex-col justify-end gap-2">
-                    <Button
-                      asChild
-                      className={cn(
-                        "h-11",
-                        p.featured ? "bg-gold text-gold-foreground hover:bg-gold/90" : navyButton,
-                      )}
-                    >
-                      <Link to="/contact" search={{ interes: "demo" }}>
-                        Solicită o demonstrație <ArrowRight />
-                      </Link>
-                    </Button>
-                    <Button
-                      asChild
-                      variant="ghost"
-                      className={cn(
-                        "h-10",
-                        p.featured &&
-                          "text-navy-foreground hover:bg-navy-foreground/10 hover:text-navy-foreground",
-                      )}
-                    >
-                      <Link to="/contact" search={{ interes: "preturi" }}>
-                        <MessageCircle /> Vorbește cu noi
-                      </Link>
-                    </Button>
-                  </div>
-                </div>
-              </Reveal>
+          {/* Comutator Lunar / Anual: prețurile din carduri se schimbă împreună cu el. */}
+          <div className="mx-auto mb-10 flex w-fit items-center gap-1 rounded-full border border-border bg-card p-1 shadow-soft">
+            {(["monthly", "annual"] as const).map((c) => (
+              <button
+                key={c}
+                type="button"
+                aria-pressed={cycle === c}
+                onClick={() => setCycle(c)}
+                className={cn(
+                  "rounded-full px-4 py-2 text-sm font-medium transition-colors",
+                  cycle === c
+                    ? "bg-navy text-navy-foreground"
+                    : "text-muted-foreground hover:text-foreground",
+                )}
+              >
+                {c === "monthly" ? "Lunar" : "Anual · -50%"}
+              </button>
             ))}
           </div>
+
+          <div className="grid gap-6 lg:grid-cols-3">
+            {plans.map((p, i) => {
+              const price = PLAN_PRICES[p.key];
+              const monthly = cycle === "annual" ? price.annualMonthly : price.monthly;
+              return (
+                <Reveal key={p.key} delay={i * 70} className="h-full">
+                  <div
+                    className={cn(
+                      "relative flex h-full flex-col rounded-3xl border p-7",
+                      p.featured
+                        ? "mk-navy-bg border-navy shadow-float"
+                        : "border-border bg-card shadow-soft",
+                    )}
+                  >
+                    {p.featured ? (
+                      <span className="absolute -top-3 left-7 rounded-full bg-gold px-3 py-1 text-xs font-semibold text-gold-foreground">
+                        Recomandat
+                      </span>
+                    ) : null}
+                    <h2
+                      className={cn(
+                        "text-xl font-semibold",
+                        p.featured ? "text-navy-foreground" : "text-navy",
+                      )}
+                    >
+                      {PLAN_LABELS[p.key]}
+                    </h2>
+                    <p
+                      className={cn(
+                        "mt-2 text-sm",
+                        p.featured ? "text-navy-muted" : "text-muted-foreground",
+                      )}
+                    >
+                      {p.audience}
+                    </p>
+                    <p
+                      className={cn(
+                        "mt-6 flex items-baseline gap-1.5 text-4xl font-semibold tracking-tight",
+                        p.featured ? "text-navy-foreground" : "text-navy",
+                      )}
+                    >
+                      {monthly}€
+                      <span
+                        className={cn(
+                          "text-base font-medium",
+                          p.featured ? "text-navy-muted" : "text-muted-foreground",
+                        )}
+                      >
+                        /lună
+                      </span>
+                    </p>
+                    <p
+                      className={cn(
+                        "mt-1.5 text-sm",
+                        p.featured ? "text-navy-muted" : "text-muted-foreground",
+                      )}
+                    >
+                      {cycle === "annual"
+                        ? `Facturat anual, ${price.annualMonthly * 12}€/an (în loc de ${price.monthly}€/lună)`
+                        : "Facturat lunar"}
+                    </p>
+                    <p
+                      className={cn(
+                        "mt-5 text-sm font-medium",
+                        p.featured ? "text-navy-foreground" : "text-foreground",
+                      )}
+                    >
+                      {p.key === "unlimited"
+                        ? "Agenți fără limită"
+                        : `Până la ${PLAN_AGENT_LIMITS[p.key]} agenți`}
+                    </p>
+                    <ul className="mt-4 space-y-2.5">
+                      {p.highlights.map((h) => (
+                        <li
+                          key={h}
+                          className={cn(
+                            "flex items-start gap-2.5 text-sm",
+                            p.featured ? "text-navy-foreground" : "text-foreground",
+                          )}
+                        >
+                          <Check
+                            className={cn(
+                              "mt-0.5 size-4 shrink-0",
+                              p.featured ? "text-gold" : "text-success",
+                            )}
+                          />
+                          {h}
+                        </li>
+                      ))}
+                    </ul>
+                    <div className="mt-8 flex flex-1 flex-col justify-end gap-2">
+                      <Button
+                        asChild
+                        className={cn(
+                          "h-11",
+                          p.featured ? "bg-gold text-gold-foreground hover:bg-gold/90" : navyButton,
+                        )}
+                      >
+                        <Link to="/register">
+                          Cere un cont <ArrowRight />
+                        </Link>
+                      </Button>
+                      <Button
+                        asChild
+                        variant="ghost"
+                        className={cn(
+                          "h-10",
+                          p.featured &&
+                            "text-navy-foreground hover:bg-navy-foreground/10 hover:text-navy-foreground",
+                        )}
+                      >
+                        <Link to="/contact" search={{ interes: "preturi" }}>
+                          <MessageCircle /> Vorbește cu noi
+                        </Link>
+                      </Button>
+                    </div>
+                  </div>
+                </Reveal>
+              );
+            })}
+          </div>
+
         </Container>
       </Section>
 

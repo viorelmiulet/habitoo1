@@ -453,7 +453,9 @@ export type ManagerDashboard = {
   };
   portals: PortalUsageRow[];
   conversion: ConversionRow[];
-  team: { activeAgents: number; limit: number; plan: string; planKeyLabel: string };
+  /** `limit: null` = fără limită de agenți (planul Unlimited). */
+  team: { activeAgents: number; limit: number | null; plan: string; planKeyLabel: string };
+
   totals: { properties: number; leads: number };
 };
 
