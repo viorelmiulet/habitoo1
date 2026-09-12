@@ -564,7 +564,7 @@ function PropertiesPage() {
             <Button variant="outline" size="sm" onClick={exportCsv}>
               <Download className="size-4" /> Export CSV
             </Button>
-            <Button size="sm" asChild>
+            <Button size="sm" asChild data-tour="property-add">
               <Link to="/app/properties/new">Adaugă proprietate</Link>
             </Button>
           </>

@@ -595,7 +595,7 @@ function LeadsPage() {
           />
         </div>
       ) : (
-        <div className="flex gap-4 overflow-x-auto pb-4">
+        <div data-tour="leads-pipeline" className="flex gap-4 overflow-x-auto pb-4">
           {columns.map((stage) => {
             const items = visible.filter((l) => l.stage === stage);
             const total = items.reduce((sum, l) => sum + (l.value ?? 0), 0);

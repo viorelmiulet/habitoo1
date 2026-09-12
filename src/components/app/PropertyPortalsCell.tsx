@@ -41,12 +41,21 @@ export function usePropertyPortals(propertyIds: string[]) {
 }
 
 export function PropertyPortalsCell({ cells }: { cells: PropertyPortalCell[] }) {
-  if (cells.length === 0) return <span className="text-xs text-muted-foreground">—</span>;
+  if (cells.length === 0)
+    return (
+      <span data-tour="property-portals" className="text-xs text-muted-foreground">
+        —
+      </span>
+    );
   const active = cells.filter((c) => c.selected);
   if (active.length === 0)
-    return <span className="text-xs text-muted-foreground">Nepublicată</span>;
+    return (
+      <span data-tour="property-portals" className="text-xs text-muted-foreground">
+        Nepublicată
+      </span>
+    );
   return (
-    <span className="flex flex-wrap gap-1">
+    <span data-tour="property-portals" className="flex flex-wrap gap-1">
       {active.map((c) => (
         <StatusBadge key={c.portalId} tone={TONE[c.state]}>
           <PortalLogo
