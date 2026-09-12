@@ -475,7 +475,7 @@ function PropertyDetailPage() {
     } catch (e) {
       toastError(e as Error);
     } finally {
-      setPrinting(false);
+      printingRef.current = false;
     }
   };
 
