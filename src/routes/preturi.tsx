@@ -81,9 +81,14 @@ const included = [
 
 const faq = [
   {
+    q: "Cum funcționează perioada gratuită?",
+    a: "Orice agenție nouă primește 30 de zile de acces gratuit, fără card bancar, indiferent de planul ales. La final, plătești planul dorit pentru a continua.",
+  },
+  {
     q: "Cum funcționează reducerea la plata anuală?",
     a: "La plata anuală tariful lunar este cu 50% mai mic, dar factura se emite o singură dată, pentru 12 luni: 60€/an pentru Basic, 120€/an pentru Pro și 600€/an pentru Unlimited.",
   },
+
   {
     q: "Ce înseamnă limita de agenți?",
     a: "Basic include 3 agenți activi, Pro include 10, iar Unlimited nu are nicio limită de agenți. Poți schimba planul oricând, iar locurile se recalculează imediat.",
