@@ -212,7 +212,11 @@ const GEMINI_FALLBACK_MODELS = [
   "gemini-flash-latest",
   "gemini-2.5-flash",
 ];
-const GEMINI_TIMEOUT_MS = 45_000;
+const GEMINI_TIMEOUT_MS = 120_000;
+/** Limita practică pentru inline_data (Google acceptă ~20 MB pe request, lăsăm marjă). */
+const MAX_IMAGE_BYTES = 12 * 1024 * 1024;
+const SUPPORTED_MIME = /^image\/(jpeg|png|webp)$/;
+const HEIC_MIME = /^image\/(heic|heif|heic-sequence|heif-sequence)$/;
 
 /** Spune interfeței dacă extragerea automată este configurată (cheie Google prezentă). */
 export const getIdExtractionStatus = createServerFn({ method: "GET" })
@@ -227,10 +231,13 @@ export const extractIdDocument = createServerFn({ method: "POST" })
     z
       .object({
         imageBase64: z.string().min(100),
-        mimeType: z.string().regex(/^image\/(jpeg|png|webp)$/),
+        // Validare permisivă: formatele neacceptate primesc un mesaj clar în handler,
+        // nu o eroare generică de validare.
+        mimeType: z.string().min(3).max(80),
       })
       .parse(data),
   )
+
   .handler(async ({ data, context }) => {
     const ctx = context as unknown as Ctx;
     const { orgId } = await orgContext(ctx);
@@ -256,7 +263,39 @@ export const extractIdDocument = createServerFn({ method: "POST" })
       };
     }
 
-    const clean = data.imageBase64.replace(/^data:[^;]+;base64,/, "");
+    const clean = data.imageBase64.replace(/^data:[^;]+;base64,/, "").replace(/\s/g, "");
+    const declaredMime =
+      data.mimeType === "image/jpg" ? "image/jpeg" : data.mimeType.split(";")[0]!.trim();
+    const base64Bytes = clean.length;
+    const imageBytes = Math.floor((base64Bytes * 3) / 4);
+    const logCtx = { mime: declaredMime, imageBytes, base64Bytes };
+
+    if (HEIC_MIME.test(declaredMime)) {
+      console.error("[contracts] id extraction rejected: heic/heif", logCtx);
+      return {
+        ...empty,
+        failure:
+          "Format neacceptat (HEIC de pe iPhone). Setează camera pe „Cea mai compatibilă” sau trimite o poză JPG/PNG.",
+        configured: true,
+      };
+    }
+    if (!SUPPORTED_MIME.test(declaredMime)) {
+      console.error("[contracts] id extraction rejected: unsupported mime", logCtx);
+      return {
+        ...empty,
+        failure: `Format de imagine neacceptat (${declaredMime}). Folosește JPG, PNG sau WEBP.`,
+        configured: true,
+      };
+    }
+    if (imageBytes > MAX_IMAGE_BYTES) {
+      console.error("[contracts] id extraction rejected: too large", logCtx);
+      return {
+        ...empty,
+        failure: `Imaginea este prea mare (${(imageBytes / 1024 / 1024).toFixed(1)} MB). Fotografiază din nou sau trimite o poză mai mică.`,
+        configured: true,
+      };
+    }
+
     const configuredModel = process.env["GEMINI_MODEL"]?.trim();
     const models = configuredModel ? [configuredModel] : GEMINI_FALLBACK_MODELS;
 
@@ -282,7 +321,7 @@ export const extractIdDocument = createServerFn({ method: "POST" })
                   role: "user",
                   parts: [
                     { text: EXTRACTION_PROMPT },
-                    { inline_data: { mime_type: data.mimeType, data: clean } },
+                    { inline_data: { mime_type: declaredMime, data: clean } },
                   ],
                 },
               ],
@@ -297,50 +336,102 @@ export const extractIdDocument = createServerFn({ method: "POST" })
 
     try {
       let res: Response | null = null;
+      let usedModel = "";
       for (const model of models) {
+        usedModel = model;
+        const startedAt = Date.now();
         res = await callModel(model);
-        // Model indisponibil pe cheia respectivă: încearcă varianta următoare.
-        if (res.status === 404 && model !== models[models.length - 1]) continue;
+        console.info("[contracts] id extraction attempt", {
+          ...logCtx,
+          model,
+          status: res.status,
+          ms: Date.now() - startedAt,
+        });
+        // Model indisponibil (404) sau supraîncărcat (429/5xx): încearcă varianta
+        // următoare din listă, cu o mică pauză pentru supraîncărcare.
+        const retryable = res.status === 404 || res.status === 429 || res.status >= 500;
+        if (retryable && model !== models[models.length - 1]) {
+          if (res.status !== 404) await new Promise((r) => setTimeout(r, 800));
+          continue;
+        }
         break;
+
       }
 
       if (!res) {
         failure = "Nu am putut citi documentul. Completează datele manual.";
       } else if (!res.ok) {
         const body = await res.text();
-        console.error("[contracts] gemini extraction failed", res.status, body.slice(0, 300));
+        console.error("[contracts] id extraction failed", {
+          ...logCtx,
+          model: usedModel,
+          status: res.status,
+          body: body.slice(0, 500),
+        });
         if (res.status === 400 && /API key not valid|API_KEY_INVALID/i.test(body)) {
           failure =
             "Cheia Google Gemini nu este validă. Verifică GEMINI_API_KEY sau completează datele manual.";
+        } else if (res.status === 400 && /too large|exceeds|payload/i.test(body)) {
+          failure =
+            "Imaginea este prea mare pentru serviciul de citire. Fotografiază din nou, mai de aproape.";
+        } else if (res.status === 400 && /unsupported|mime|decode|invalid image/i.test(body)) {
+          failure = "Imaginea nu a putut fi decodată. Folosește o poză JPG sau PNG.";
+        } else if (res.status === 400) {
+          failure = `Cererea de citire a fost respinsă de Google (400). Detaliu: ${body.slice(0, 160)}`;
         } else if (res.status === 401 || res.status === 403) {
           failure =
             "Cheia Google Gemini nu are acces la acest serviciu. Verifică GEMINI_API_KEY sau completează datele manual.";
+        } else if (res.status === 413) {
+          failure = "Imaginea depășește dimensiunea maximă acceptată. Trimite o poză mai mică.";
         } else if (res.status === 429) {
           failure =
             "Limita gratuită Google a fost atinsă pentru moment. Completează datele manual sau încearcă mai târziu.";
         } else if (res.status === 404) {
           failure =
             "Modelul de citire a actelor nu este disponibil pe această cheie. Completează datele manual.";
+        } else if (res.status >= 500) {
+          failure = "Serviciul Google este momentan indisponibil. Încearcă din nou în câteva minute.";
         } else {
-          failure = "Nu am putut citi documentul. Completează datele manual.";
+          failure = `Nu am putut citi documentul (cod ${res.status}). Completează datele manual.`;
         }
       } else {
         const json = (await res.json()) as {
-          candidates?: { content?: { parts?: { text?: string }[] } }[];
+          candidates?: {
+            finishReason?: string;
+            content?: { parts?: { text?: string }[] };
+          }[];
+          promptFeedback?: { blockReason?: string };
         };
-        const content = (json.candidates?.[0]?.content?.parts ?? [])
-          .map((p) => p.text ?? "")
-          .join("");
+        const candidate = json.candidates?.[0];
+        const content = (candidate?.content?.parts ?? []).map((p) => p.text ?? "").join("");
         const match = content.match(/\{[\s\S]*\}/);
         parsed = match ? (JSON.parse(match[0]) as Record<string, string>) : {};
+        if (!match) {
+          console.error("[contracts] id extraction empty response", {
+            ...logCtx,
+            model: usedModel,
+            finishReason: candidate?.finishReason,
+            blockReason: json.promptFeedback?.blockReason,
+            preview: content.slice(0, 500),
+          });
+          failure = json.promptFeedback?.blockReason
+            ? "Google a blocat citirea acestei imagini. Completează datele manual."
+            : "Nu am recunoscut date de act în imagine. Fotografiază actul clar, pe toată suprafața cadrului.";
+        }
       }
     } catch (e) {
       const aborted = e instanceof Error && e.name === "AbortError";
-      console.error("[contracts] gemini extraction error", e);
+      console.error("[contracts] id extraction error", {
+        ...logCtx,
+        aborted,
+        name: e instanceof Error ? e.name : "unknown",
+        message: e instanceof Error ? e.message.slice(0, 500) : String(e).slice(0, 500),
+      });
       failure = aborted
         ? "Citirea actului a durat prea mult. Încearcă din nou sau completează datele manual."
-        : "Nu am putut citi documentul. Completează datele manual.";
+        : `Nu am putut citi documentul: ${e instanceof Error ? e.message.slice(0, 160) : "eroare necunoscută"}`;
     }
+
 
     const field = (key: string) => String(parsed[key] ?? "").trim();
     const result = {

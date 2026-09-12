@@ -32,12 +32,14 @@ import {
   type ContractKind,
   type PartyRole,
 } from "@/lib/contracts/templates";
+import { prepareIdImage } from "@/lib/contracts/image";
 import {
   createContract,
   extractIdDocument,
   getIdExtractionStatus,
   listTemplates,
 } from "@/lib/contracts.functions";
+
 
 
 const defaultRole: Record<ContractKind, PartyRole> = {
@@ -152,17 +154,11 @@ export function NewContractDialog({
 
   const extract = useMutation({
     mutationFn: async (file: File) => {
-      const base64 = await new Promise<string>((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => resolve(String(reader.result));
-        reader.onerror = () => reject(new Error("Nu am putut citi imaginea."));
-        reader.readAsDataURL(file);
-      });
+      // Redimensionăm și recomprimăm local: cererea rămâne mică, iar formatele
+      // pe care browserul nu le poate decoda dau un mesaj explicit.
+      const prepared = await prepareIdImage(file);
       return runExtract({
-        data: {
-          imageBase64: base64,
-          mimeType: file.type === "image/jpg" ? "image/jpeg" : file.type,
-        },
+        data: { imageBase64: prepared.base64, mimeType: prepared.mimeType },
       });
     },
     onSuccess: (result) => {
@@ -181,12 +177,12 @@ export function NewContractDialog({
       if (result.configured === false) {
         void extractionStatus.refetch();
         toast.info(result.failure ?? "Completarea automată nu este configurată.");
-      } else if (result.failure) toast.error(result.failure);
+      } else if (result.failure) toast.error(result.failure, { duration: 9000 });
       else toast.success("Date completate din act. Verifică-le înainte de a continua.");
-
     },
-    onError: (e: Error) => toastError(e),
+    onError: (e: Error) => toast.error(e.message, { duration: 9000 }),
   });
+
 
   const create = useMutation({
     mutationFn: async () => {
@@ -350,7 +346,7 @@ export function NewContractDialog({
             <input
               ref={fileRef}
               type="file"
-              accept="image/jpeg,image/png,image/webp"
+              accept="image/*"
               capture="environment"
               className="hidden"
               onChange={(e) => {
