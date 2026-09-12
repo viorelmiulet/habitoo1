@@ -67,13 +67,15 @@ const statusLabels: Record<string, string> = {
 /** Statusurile selectabile din interfață: doar Activă și Suspendată. */
 const selectableStatuses = ["active", "suspended"] as const;
 
-/** Selector de plan cu salvare explicită. */
+/** Selector de plan cu salvare explicită și tariful aplicat, în funcție de termen. */
 function PlanPicker({
   plan,
+  term,
   onSave,
   saving,
 }: {
   plan: string;
+  term: string | null;
   onSave: (plan: PlanKey) => void;
   saving: boolean;
 }) {
@@ -82,17 +84,20 @@ function PlanPicker({
   return (
     <div className="flex items-center gap-2">
       <Select value={value} onValueChange={(v) => setValue(v as PlanKey)}>
-        <SelectTrigger className="w-36">
+        <SelectTrigger className="w-56">
           <SelectValue />
         </SelectTrigger>
         <SelectContent>
           {PLAN_KEYS.map((k) => (
             <SelectItem key={k} value={k}>
-              {PLAN_LABELS[k]} · {PLAN_AGENT_LIMITS[k]} agenți
+              {PLAN_LABELS[k]} · {planAgentLimitLabel(k)} ·{" "}
+              {term === "12m" ? PLAN_PRICES[k].annualMonthly : PLAN_PRICES[k].monthly}€/lună
             </SelectItem>
           ))}
         </SelectContent>
       </Select>
+      <span className="text-xs text-muted-foreground">{planPriceLabel(value, term)}</span>
+
       <Button size="sm" variant="outline" disabled={!dirty || saving} onClick={() => onSave(value)}>
         Salvează
       </Button>
