@@ -239,8 +239,9 @@ function AgenciesPage() {
     mutationFn: async ({ id, term }: { id: string; term: SubscriptionTerm | null }) => {
       const { error } = await supabase.rpc("set_organization_subscription", {
         _org: id,
-        _term: term,
+        _term: term as string,
       });
+
       if (error) throw error;
     },
     onSuccess: (_r, vars) => {
