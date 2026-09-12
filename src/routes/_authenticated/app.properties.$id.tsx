@@ -532,6 +532,58 @@ function PropertyDetailPage() {
         ))}
       </div>
 
+      {/* Rând de acțiuni, sub banda de metrici. */}
+      <div className="flex flex-wrap items-center gap-2">
+        {editing ? (
+          <Button size="sm" variant="outline" onClick={() => setEditing(false)}>
+            Anulează
+          </Button>
+        ) : (
+          <Button size="sm" variant="outline" onClick={startEdit}>
+            <Pencil className="size-4" /> Editează
+          </Button>
+        )}
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={() => duplicate.mutate()}
+          disabled={duplicate.isPending}
+        >
+          Clonează
+        </Button>
+        <Button
+          size="sm"
+          onClick={() => publish.mutate()}
+          disabled={publish.isPending || save.isPending}
+        >
+          {publish.isPending ? "Se publică…" : "Publică"}
+        </Button>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button size="icon" variant="outline" aria-label="Mai multe acțiuni">
+              <MoreHorizontal className="size-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start">
+            <DropdownMenuItem onClick={printSummary}>
+              <Printer className="size-4" /> Generează prezentare
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            {Object.entries(propertyStatusLabels).map(([k, v]) => (
+              <DropdownMenuItem key={k} onClick={() => changeStatus.mutate(k)}>
+                Status: {v}
+              </DropdownMenuItem>
+            ))}
+            <DropdownMenuSeparator />
+            {property.status === "archived" ? (
+              <DropdownMenuItem onClick={() => unarchive.mutate()}>Dezarhivează</DropdownMenuItem>
+            ) : (
+              <DropdownMenuItem onClick={() => setArchiveOpen(true)}>Arhivează</DropdownMenuItem>
+            )}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+
       <div className="flex flex-wrap gap-2">
         {ownerContact?.phone ? (
           <Button size="sm" variant="outline" asChild>
