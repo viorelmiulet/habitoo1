@@ -1,5 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import {
+  Compass,
   FlaskConical,
   HelpCircle,
   LogOut,
@@ -31,6 +32,8 @@ import { type ShellVariant } from "@/components/app/AppSidebar";
 import { BrandLogo } from "@/components/brand/BrandLogo";
 import { useTheme, type ThemePreference } from "@/hooks/use-theme";
 import { UserAvatar } from "@/components/app/UserAvatar";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { useOnboardingTour } from "@/components/app/OnboardingTour";
 import { roleLabels } from "@/lib/labels";
 import { cn } from "@/lib/utils";
 import type { CurrentUser } from "@/hooks/use-session";
@@ -49,6 +52,7 @@ export function Topbar({
   variant?: ShellVariant;
 }) {
   const { preference, setPreference } = useTheme();
+  const tour = useOnboardingTour();
   const isPlatform = variant === "platform";
   const displayName = user.profile?.full_name || user.email;
 
@@ -104,6 +108,24 @@ export function Topbar({
         ) : (
           <QuickAdd />
         )}
+
+        {tour.available ? (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="gap-1.5"
+                onClick={tour.start}
+                aria-label="Pornește ghidul interactiv"
+              >
+                <Compass className="size-4" />
+                <span className="hidden sm:inline">Ghid</span>
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Tur ghidat al aplicației</TooltipContent>
+          </Tooltip>
+        ) : null}
 
         {isPlatform ? null : <SupportWidget />}
 

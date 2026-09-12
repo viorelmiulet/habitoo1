@@ -15,6 +15,7 @@ export function SectionCard({
   className,
   bodyClassName,
   flush = false,
+  dataTour,
 }: {
   title?: ReactNode;
   description?: ReactNode;
@@ -25,9 +26,11 @@ export function SectionCard({
   bodyClassName?: string;
   /** Fără padding în corp (liste / tabele). */
   flush?: boolean;
+  /** Ancoră pentru turul ghidat. */
+  dataTour?: string;
 }) {
   return (
-    <section className={cn("panel overflow-hidden", className)}>
+    <section data-tour={dataTour} className={cn("panel overflow-hidden", className)}>
       {title || action ? (
         <header className="flex flex-wrap items-center gap-3 border-b border-border px-5 py-3.5">
           {Icon ? (

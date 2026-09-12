@@ -119,7 +119,10 @@ function TeamPage() {
         }
       />
 
-      <div className="panel flex flex-wrap items-center justify-between gap-3 p-5">
+      <div
+        data-tour="team-seats"
+        className="panel flex flex-wrap items-center justify-between gap-3 p-5"
+      >
         <div>
           <p className="text-sm font-medium">
             {data

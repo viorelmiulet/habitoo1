@@ -76,7 +76,12 @@ export function SupportWidget({ children }: { children?: ReactNode }) {
         <Tooltip>
           <TooltipTrigger asChild>
             <DialogTrigger asChild>
-              <Button variant="ghost" size="icon" aria-label="Ajutor și suport">
+              <Button
+                variant="ghost"
+                size="icon"
+                aria-label="Ajutor și suport"
+                data-tour="support-button"
+              >
                 <LifeBuoy className="size-5" />
               </Button>
             </DialogTrigger>

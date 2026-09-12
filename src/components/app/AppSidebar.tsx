@@ -288,6 +288,7 @@ export function AppSidebar({
                     <CollapsedTip collapsed={collapsed} label={item.label}>
                       <Link
                         to={item.to}
+                        data-tour={`nav:${String(item.to)}`}
                         activeOptions={{ exact: item.exact }}
                         onClick={onNavigate}
                         className={cn(
