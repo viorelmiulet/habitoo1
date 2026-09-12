@@ -23,6 +23,7 @@ import {
   Users,
 } from "lucide-react";
 import { PageHeader } from "@/components/app/PageHeader";
+import { AgentPortfolioList } from "@/components/app/AgentPortfolioList";
 import { SectionCard } from "@/components/app/SectionCard";
 import { EmptyState } from "@/components/app/EmptyState";
 import { StatusBadge } from "@/components/app/StatusBadge";
@@ -250,6 +251,30 @@ export function AgentDashboard() {
 
           {/* Secțiunea 3 — Anunțuri cu probleme */}
           <SectionCard
+            title="Portofoliul meu"
+            description="Proprietățile active care îți sunt asignate"
+            icon={Building2}
+            flush
+            action={
+              <Button variant="outline" size="sm" asChild>
+                <Link to="/app/properties">Vezi toate proprietățile</Link>
+              </Button>
+            }
+          >
+            <AgentPortfolioList
+              groups={[
+                {
+                  id: user?.userId ?? "portfolio",
+                  name: user?.profile?.full_name ?? "Portofoliul meu",
+                  isActive: true,
+                  properties: data?.portfolio ?? [],
+                },
+              ]}
+            />
+          </SectionCard>
+
+          {/* Secțiunea 4 — Anunțuri cu probleme */}
+          <SectionCard
             title="Anunțurile mele care au nevoie de atenție"
             description="Doar problemele care blochează sau slăbesc publicarea pe portaluri"
             icon={AlertTriangle}
@@ -289,7 +314,7 @@ export function AgentDashboard() {
             )}
           </SectionCard>
 
-          {/* Secțiunea 4 — Colaborare */}
+          {/* Secțiunea 5 — Colaborare */}
           {data?.collaboration.enabled ? (
             <SectionCard
               title="Colaborare"

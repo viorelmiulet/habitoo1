@@ -25,6 +25,12 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
+import {
   Dialog,
   DialogContent,
   DialogFooter,
@@ -147,6 +153,25 @@ function CollaborationPage() {
   const incomingPending = (proposals.data?.incoming ?? []).filter(
     (p) => p.status === "pending",
   ).length;
+  const partnerAgencies = useMemo(() => {
+    const grouped = new Map<
+      string,
+      { id: string; name: string; city: string | null; offers: CollaborationOffer[] }
+    >();
+    for (const offer of offers.data ?? []) {
+      const agency = grouped.get(offer.agencyId) ?? {
+        id: offer.agencyId,
+        name: offer.agencyName,
+        city: offer.agencyCity,
+        offers: [],
+      };
+      agency.offers.push(offer);
+      grouped.set(offer.agencyId, agency);
+    }
+    return [...grouped.values()].sort(
+      (a, b) => b.offers.length - a.offers.length || a.name.localeCompare(b.name, "ro"),
+    );
+  }, [offers.data]);
 
   return (
     <>
@@ -287,13 +312,34 @@ function CollaborationPage() {
               description="Colaborarea înseamnă că o agenție deschide o proprietate din portofoliul ei către celelalte agenții Habitoo și afișează comisionul pe care îl împarte. Momentan nicio ofertă nu corespunde filtrelor tale. Îți poți marca propriile proprietăți pentru colaborare din pagina proprietății, secțiunea Colaborare, unde stabilești comisionul și condițiile."
             />
           ) : (
-            <ul className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-              {(offers.data ?? []).map((offer) => (
-                <li key={offer.id} className="panel flex flex-col overflow-hidden">
+            <div className="panel overflow-hidden">
+              <Accordion type="multiple" className="divide-y divide-border">
+                {partnerAgencies.map((agency) => (
+                  <AccordionItem key={agency.id} value={agency.id} className="border-0 px-4">
+                    <AccordionTrigger className="gap-3 py-4 hover:no-underline">
+                      <span className="flex min-w-0 flex-1 items-center gap-3 text-left">
+                        <span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                          <Building2 className="size-5" aria-hidden />
+                        </span>
+                        <span className="min-w-0 flex-1">
+                          <span className="block truncate text-sm font-semibold">{agency.name}</span>
+                          <span className="block text-xs font-normal text-muted-foreground">
+                            {[agency.city, `${agency.offers.length} ${agency.offers.length === 1 ? "ofertă" : "oferte"}`]
+                              .filter(Boolean)
+                              .join(" · ")}
+                          </span>
+                        </span>
+                        <StatusBadge tone="success">Partener activ</StatusBadge>
+                      </span>
+                    </AccordionTrigger>
+                    <AccordionContent className="pb-4">
+                      <ul className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                        {agency.offers.map((offer) => (
+                          <li key={offer.id} className="flex flex-col overflow-hidden rounded-xl border border-border bg-card">
                   <button
                     type="button"
                     onClick={() => setDetailOffer(offer)}
-                    className="relative block aspect-[4/3] w-full overflow-hidden bg-muted text-left"
+                    className="relative block aspect-[1.82/1] w-full overflow-hidden bg-muted text-left"
                   >
                     {offer.coverUrl ? (
                       <img
@@ -313,7 +359,7 @@ function CollaborationPage() {
                       </span>
                     ) : null}
                   </button>
-                  <div className="flex flex-1 flex-col gap-1.5 p-4">
+                  <div className="flex flex-1 flex-col gap-1.5 p-3.5">
                     <h3 className="line-clamp-2 text-sm font-semibold">{offer.title}</h3>
                     <p className="text-xs text-muted-foreground">
                       {[offer.district, offer.city, offer.county].filter(Boolean).join(", ") ||
@@ -345,16 +391,20 @@ function CollaborationPage() {
                         Propune unui client
                       </Button>
                     </div>
-                    <p className="flex items-center gap-1.5 border-t border-border/70 pt-2 text-[11px] text-muted-foreground">
-                      <Building2 className="size-3" /> Mandat: {offer.agencyName}
+                    <p className="border-t border-border pt-2 text-[11px] text-muted-foreground">
                       {offer.myProposalCount > 0
-                        ? ` · ${offer.myProposalCount} propunere(i) trimise`
-                        : ""}
+                        ? `${offer.myProposalCount} propunere(i) trimise`
+                        : "Nicio propunere trimisă"}
                     </p>
                   </div>
-                </li>
-              ))}
-            </ul>
+                          </li>
+                        ))}
+                      </ul>
+                    </AccordionContent>
+                  </AccordionItem>
+                ))}
+              </Accordion>
+            </div>
           )}
         </TabsContent>
 

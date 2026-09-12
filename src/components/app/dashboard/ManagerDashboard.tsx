@@ -20,6 +20,7 @@ import {
   Users,
 } from "lucide-react";
 import { PageHeader } from "@/components/app/PageHeader";
+import { AgentPortfolioList } from "@/components/app/AgentPortfolioList";
 import { SectionCard } from "@/components/app/SectionCard";
 import { EmptyState } from "@/components/app/EmptyState";
 import { StatusBadge } from "@/components/app/StatusBadge";
@@ -222,6 +223,27 @@ export function ManagerDashboard() {
                 </Table>
               </div>
             )}
+          </SectionCard>
+
+          <SectionCard
+            title="Portofolii pe agent"
+            description="Proprietățile active asignate fiecărui membru al agenției"
+            icon={Building2}
+            flush
+            action={
+              <Button variant="outline" size="sm" asChild>
+                <Link to="/app/properties">Vezi toate proprietățile</Link>
+              </Button>
+            }
+          >
+            <AgentPortfolioList
+              groups={(data?.agents ?? []).map((agent) => ({
+                id: agent.agentId,
+                name: agent.agentName,
+                isActive: agent.isActive,
+                properties: agent.portfolio,
+              }))}
+            />
           </SectionCard>
 
           {/* Secțiunea 2 — Sănătatea portofoliului */}
