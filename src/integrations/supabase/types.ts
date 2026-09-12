@@ -2275,6 +2275,7 @@ export type Database = {
           shutters: string[]
           source: string | null
           status: Database["public"]["Enums"]["property_status"]
+          storia_auto_renew: boolean | null
           street: string | null
           street_arrangement: string[]
           street_number: string | null
@@ -2395,6 +2396,7 @@ export type Database = {
           shutters?: string[]
           source?: string | null
           status?: Database["public"]["Enums"]["property_status"]
+          storia_auto_renew?: boolean | null
           street?: string | null
           street_arrangement?: string[]
           street_number?: string | null
@@ -2515,6 +2517,7 @@ export type Database = {
           shutters?: string[]
           source?: string | null
           status?: Database["public"]["Enums"]["property_status"]
+          storia_auto_renew?: boolean | null
           street?: string | null
           street_arrangement?: string[]
           street_number?: string | null
