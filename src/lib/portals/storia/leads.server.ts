@@ -593,6 +593,22 @@ async function processLifecycle(
     .eq("organization_id", match.organizationId)
     .eq("property_id", match.propertyId);
 
+  // Expirarea anunțului: notificăm agentul întotdeauna și republicăm automat
+  // DOAR dacă agenția a bifat opțiunea și oferta mai este publicabilă.
+  if (status === "expired") {
+    const { handleStoriaExpiry } = await import("./auto-republish.server");
+    const outcome = await handleStoriaExpiry(admin, {
+      organizationId: match.organizationId,
+      propertyId: match.propertyId,
+      propertyTitle: match.propertyTitle,
+      assignedTo: match.assignedTo,
+    });
+    return {
+      processed: true,
+      note: `anunț Storia expirat („${code}”) — ${outcome.note}`,
+    };
+  }
+
   return { processed: true, note: `status anunț Storia „${code}” → ${status}` };
 }
 
