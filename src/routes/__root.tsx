@@ -95,17 +95,8 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Habitoo CRM — Platformă imobiliară pentru agenții" },
-      { name: "description", content: "CRM imobiliar multi-agenție pentru agențiile din România." },
       { name: "author", content: "Habitoo" },
-      {
-        property: "og:title",
-        content: "Habitoo CRM — Platformă imobiliară pentru agenții",
-      },
-      {
-        property: "og:description",
-        content: "CRM imobiliar multi-agenție pentru agențiile din România.",
-      },
+      { property: "og:site_name", content: "Habitoo CRM" },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
