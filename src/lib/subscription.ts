@@ -56,3 +56,9 @@ export function graceBannerText(daysLeft: number): string {
     ? "Contul va fi suspendat mâine"
     : `Contul va fi suspendat în ${daysLeft} zile`;
 }
+
+/** Titlul contextual: perioadă gratuită încheiată vs. abonament plătit expirat. */
+export function graceHeadline(isTrial?: boolean | null): string {
+  return isTrial ? "Perioada ta gratuită s-a încheiat" : "Abonamentul a expirat";
+}
+
