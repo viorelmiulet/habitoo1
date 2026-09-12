@@ -317,11 +317,6 @@ function RequestDetailPage() {
     );
   }
 
-  const matches = properties
-    .map((p) => ({ property: p, match: scoreMatch(request, p) }))
-    .filter((m) => m.match.score >= 40)
-    .sort((a, b) => b.match.score - a.match.score);
-
   const leads = data?.leads ?? [];
   const activities = data?.activities ?? [];
 
