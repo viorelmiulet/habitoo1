@@ -472,52 +472,6 @@ export const PropertyPortalsCard = forwardRef<
         </span>
       </footer>
 
-      <AlertDialog
-        open={confirming}
-        onOpenChange={(open) => {
-          setConfirming(open);
-          if (!open) {
-            confirmResolver.current?.(false);
-            confirmResolver.current = null;
-          }
-        }}
-      >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>
-              {toWithdraw.length === 1
-                ? `Proprietatea va fi retrasă de pe ${toWithdraw[0]?.portalName}`
-                : "Proprietatea va fi retrasă de pe mai multe portaluri"}
-            </AlertDialogTitle>
-            <AlertDialogDescription>
-              {toWithdraw.length > 1 ? (
-                <>
-                  Proprietatea va fi retrasă de pe:
-                  <br />
-                  {toWithdraw.map((c) => `- ${c.portalName}`).join("\n")}
-                  <br />
-                  Celelalte portaluri selectate vor rămâne active.
-                </>
-              ) : (
-                "Celelalte portaluri selectate vor rămâne active."
-              )}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Anulează</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={() => {
-                const resolve = confirmResolver.current;
-                confirmResolver.current = null;
-                setConfirming(false);
-                resolve?.(true);
-              }}
-            >
-              Confirmă retragerea
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </section>
   );
 });
