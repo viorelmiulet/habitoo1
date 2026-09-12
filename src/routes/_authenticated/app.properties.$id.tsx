@@ -11,7 +11,7 @@ import {
   Sparkles,
   UserPlus,
 } from "lucide-react";
-import { toast } from "sonner";
+import { toast } from "@/components/ui/sonner";
 import { useServerFn } from "@tanstack/react-start";
 import { duplicateProperty } from "@/lib/property-duplicate.functions";
 import { ArchivePropertyDialog } from "@/components/app/ArchivePropertyDialog";

@@ -14,7 +14,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useMemo, useState } from "react";
 import { Building2, Handshake, Inbox, MessageCircle, Search, Send, X } from "lucide-react";
-import { toast } from "sonner";
+import { toast } from "@/components/ui/sonner";
 import { PageHeader } from "@/components/app/PageHeader";
 import { CardGridSkeleton } from "@/components/app/LoadingState";
 import { EmptyState } from "@/components/app/EmptyState";

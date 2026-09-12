@@ -13,7 +13,7 @@ import {
   Target,
   UserRound,
 } from "lucide-react";
-import { toast } from "sonner";
+import { toast } from "@/components/ui/sonner";
 import { toastError } from "@/lib/errors";
 import { PageHeader } from "@/components/app/PageHeader";
 import { DetailSkeleton } from "@/components/app/LoadingState";

@@ -29,7 +29,7 @@ import {
   Trash2,
   X,
 } from "lucide-react";
-import { toast } from "sonner";
+import { toast } from "@/components/ui/sonner";
 import { PageHeader } from "@/components/app/PageHeader";
 import { InlineLoading } from "@/components/app/LoadingState";
 import { QueryError } from "@/components/app/QueryError";

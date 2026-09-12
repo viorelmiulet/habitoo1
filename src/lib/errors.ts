@@ -1,4 +1,4 @@
-import { toast } from "sonner";
+import { toast } from "@/components/ui/sonner";
 
 /**
  * Transformă erorile tehnice (Supabase / Postgres / rețea) în mesaje clare

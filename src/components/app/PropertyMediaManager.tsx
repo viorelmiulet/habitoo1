@@ -13,7 +13,7 @@ import {
   Upload,
   X,
 } from "lucide-react";
-import { toast } from "sonner";
+import { toast } from "@/components/ui/sonner";
 import { toastError } from "@/lib/errors";
 import { EmptyState } from "@/components/app/EmptyState";
 import { Button } from "@/components/ui/button";

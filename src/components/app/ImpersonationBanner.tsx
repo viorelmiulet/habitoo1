@@ -3,7 +3,7 @@ import { useNavigate } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { EyeOff, LogOut } from "lucide-react";
-import { toast } from "sonner";
+import { toast } from "@/components/ui/sonner";
 import { Button } from "@/components/ui/button";
 import { revokeImpersonation } from "@/lib/impersonation.functions";
 import { clearImpersonationId, formatRemaining } from "@/lib/impersonation-client";
