@@ -153,7 +153,9 @@ function readColumns(): ColumnKey[] {
 }
 
 /** Grila e vizualizarea implicită; preferința utilizatorului se ține local. */
-const VIEW_KEY = "habitoo.propertyView";
+// Cheie nouă: utilizatorii care aveau vechea listă tabelară memorată primesc
+// noua grilă ca vizualizare implicită, dar își pot alege din nou tabelul.
+const VIEW_KEY = "habitoo.propertyView.v2";
 
 function readView(): "list" | "grid" {
   if (typeof window === "undefined") return "grid";
@@ -1071,7 +1073,7 @@ function PropertiesPage() {
         ) : rows.length === 0 ? (
           emptyBlock
         ) : (
-          <div className="grid grid-cols-1 gap-4 p-4 sm:grid-cols-2 xl:grid-cols-3">
+          <div className="grid grid-cols-1 gap-3 p-3 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
             {rows.map((p) => (
               <PropertyCard
                 key={p.id}
