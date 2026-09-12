@@ -31,42 +31,39 @@ export const Route = createFileRoute("/preturi")({
 
 const plans = [
   {
-    name: "Start",
+    key: "basic" as PlanKey,
     audience:
       "Pentru agenții mici sau agenți independenți care vor ordine în portofoliu și în clienți.",
     highlights: [
-      "Toate modulele CRM",
-      "Un administrator și primii agenți",
-      "Proprietăți cu galerie foto",
-      "Matching automat",
+      "Publicare pe portalurile imobiliare",
+      "Colaborare între agenții",
+      "Suport prin tichete în aplicație",
     ],
     featured: false,
   },
   {
-    name: "Agenție",
+    key: "pro" as PlanKey,
     audience:
       "Pentru echipe care lucrează zilnic în CRM și au nevoie de pipeline, obiective și rapoarte.",
     highlights: [
-      "Tot ce include Start",
-      "Roluri pentru admin și agenți",
-      "Obiective pe agent și rapoarte",
-      "Calendar și activități pe toată echipa",
-      "Jurnal de audit",
+      "Toate portalurile activate pentru agenție",
+      "Colaborare și comisioane partajate",
+      "Suport prioritar",
     ],
     featured: true,
   },
   {
-    name: "Rețea",
-    audience: "Pentru agenții cu mai multe birouri sau cerințe specifice de configurare și suport.",
+    key: "unlimited" as PlanKey,
+    audience: "Pentru agenții cu mai multe birouri și echipe care cresc fără plafon de locuri.",
     highlights: [
-      "Tot ce include Agenție",
-      "Configurare asistată",
+      "Portaluri și feeduri fără restricții",
+      "Colaborare la nivel de rețea",
       "Suport dedicat la implementare",
-      "Discuție despre cerințe specifice",
     ],
     featured: false,
   },
 ];
+
 
 const included = [
   "Proprietăți cu media manager, statusuri, filtre și vederi salvate",
