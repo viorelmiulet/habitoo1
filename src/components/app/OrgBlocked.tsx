@@ -37,6 +37,13 @@ const BLOCKED: Record<
       "Pentru reînnoire, discută cu administratorul agenției tale sau scrie-ne la contact@habitoo.ro.",
     icon: XCircle,
   },
+  trial_expired: {
+    title: "Perioada ta gratuită s-a încheiat",
+    body: "Cele 30 de zile gratuite s-au încheiat, iar accesul la aplicație este oprit. Datele agenției rămân salvate.",
+    contact:
+      "Pentru activarea abonamentului, scrie-ne la contact@habitoo.ro sau contactează administratorul platformei.",
+    icon: XCircle,
+  },
   archived: {
     title: "Agenția a fost arhivată",
     body: "Contul agenției tale a fost arhivat. Arhivarea oprește accesul, dar nu șterge nimic.",

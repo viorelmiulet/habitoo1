@@ -9,7 +9,8 @@ export type OrgBlockReason =
   | "archived"
   | "cancelled"
   | "pending_approval"
-  | "expired";
+  | "expired"
+  | "trial_expired";
 
 /** Prefix distinct, ca frontendul să poată afișa o pagină dedicată. */
 export const ORG_BLOCKED_CODE = "ORG_ACCESS_BLOCKED";
@@ -19,6 +20,8 @@ export const ORG_BLOCKED_MESSAGES: Record<OrgBlockReason, string> = {
   archived: "Contul agenției tale a fost arhivat. Contactează administratorul platformei.",
   cancelled: "Contul agenției tale a fost anulat. Contactează administratorul platformei.",
   expired: "Abonamentul agenției tale a expirat. Contactează administratorul platformei.",
+  trial_expired:
+    "Perioada ta gratuită s-a încheiat. Contactează administratorul platformei pentru activarea abonamentului.",
   pending_approval:
     "Contul agenției tale așteaptă aprobare. Vei primi acces imediat ce este validat.",
 };
@@ -38,6 +41,7 @@ export function parseOrgBlocked(error: unknown): OrgBlockReason | null {
   if (raw.includes(":archived")) return "archived";
   if (raw.includes(":cancelled")) return "cancelled";
   if (raw.includes(":pending_approval")) return "pending_approval";
+  if (raw.includes(":trial_expired")) return "trial_expired";
   if (raw.includes(":expired")) return "expired";
   return "suspended";
 }
@@ -54,8 +58,10 @@ export function orgBlockReason(
 ): OrgBlockReason | null {
   if (!org) return null;
   if (org.archived_at) return "archived";
-  if (org.status === "suspended")
+  if (org.status === "suspended") {
+    if (org.suspended_reason === "trial_expired") return "trial_expired";
     return org.suspended_reason === "subscription_expired" ? "expired" : "suspended";
+  }
   if (org.status === "cancelled") return "cancelled";
   if (org.status === "pending_approval") return "pending_approval";
   return null;

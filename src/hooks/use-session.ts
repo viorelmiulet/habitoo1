@@ -123,6 +123,7 @@ export async function fetchCurrentUser(): Promise<CurrentUser | null> {
       blockedRaw === "archived" ||
       blockedRaw === "cancelled" ||
       blockedRaw === "expired" ||
+      blockedRaw === "trial_expired" ||
       blockedRaw === "pending_approval"
         ? (blockedRaw as OrgBlockReason)
         : null,
