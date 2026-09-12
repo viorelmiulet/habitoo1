@@ -142,7 +142,7 @@ export function CookieConsent() {
 
           <p className="text-xs text-muted-foreground">
             Detalii în{" "}
-            <Link to="/confidentialitate" className="font-medium text-navy underline">
+            <Link to="/politica-de-confidentialitate" className="font-medium text-navy underline">
               Politica de confidențialitate
             </Link>
             .

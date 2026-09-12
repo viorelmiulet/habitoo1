@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AccesContRouteImport } from './routes/acces-cont'
+import { Route as ConfidentialitateRouteImport } from './routes/confidentialitate'
 import { Route as ContactRouteImport } from './routes/contact'
 import { Route as DespreRouteImport } from './routes/despre'
 import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
@@ -91,6 +92,11 @@ const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
 const AccesContRoute = AccesContRouteImport.update({
   id: '/acces-cont',
   path: '/acces-cont',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ConfidentialitateRoute = ConfidentialitateRouteImport.update({
+  id: '/confidentialitate',
+  path: '/confidentialitate',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ContactRoute = ContactRouteImport.update({
@@ -464,6 +470,7 @@ const ApiPublicPortalV1StoriaOauthCallbackRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/acces-cont': typeof AccesContRoute
+  '/confidentialitate': typeof ConfidentialitateRoute
   '/contact': typeof ContactRoute
   '/despre': typeof DespreRoute
   '/forgot-password': typeof ForgotPasswordRoute
@@ -534,6 +541,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/acces-cont': typeof AccesContRoute
+  '/confidentialitate': typeof ConfidentialitateRoute
   '/contact': typeof ContactRoute
   '/despre': typeof DespreRoute
   '/forgot-password': typeof ForgotPasswordRoute
@@ -604,6 +612,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/acces-cont': typeof AccesContRoute
+  '/confidentialitate': typeof ConfidentialitateRoute
   '/contact': typeof ContactRoute
   '/despre': typeof DespreRoute
   '/forgot-password': typeof ForgotPasswordRoute
@@ -676,6 +685,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/acces-cont'
+    | '/confidentialitate'
     | '/contact'
     | '/despre'
     | '/forgot-password'
@@ -746,6 +756,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/acces-cont'
+    | '/confidentialitate'
     | '/contact'
     | '/despre'
     | '/forgot-password'
@@ -815,6 +826,7 @@ export interface FileRouteTypes {
     | '/'
     | '/_authenticated'
     | '/acces-cont'
+    | '/confidentialitate'
     | '/contact'
     | '/despre'
     | '/forgot-password'
@@ -887,6 +899,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AccesContRoute: typeof AccesContRoute
+  ConfidentialitateRoute: typeof ConfidentialitateRoute
   ContactRoute: typeof ContactRoute
   DespreRoute: typeof DespreRoute
   ForgotPasswordRoute: typeof ForgotPasswordRoute
@@ -942,6 +955,13 @@ declare module '@tanstack/react-router' {
       path: '/acces-cont'
       fullPath: '/acces-cont'
       preLoaderRoute: typeof AccesContRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/confidentialitate': {
+      id: '/confidentialitate'
+      path: '/confidentialitate'
+      fullPath: '/confidentialitate'
+      preLoaderRoute: typeof ConfidentialitateRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/contact': {
@@ -1561,6 +1581,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AccesContRoute: AccesContRoute,
+  ConfidentialitateRoute: ConfidentialitateRoute,
   ContactRoute: ContactRoute,
   DespreRoute: DespreRoute,
   ForgotPasswordRoute: ForgotPasswordRoute,
