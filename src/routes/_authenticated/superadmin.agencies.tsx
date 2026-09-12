@@ -90,6 +90,53 @@ function PlanPicker({
   );
 }
 
+/**
+ * Termenul abonamentului: 30 de zile, 12 luni sau fără termen. Data de expirare
+ * se calculează în baza de date, din momentul salvării — niciodată introdusă manual.
+ */
+function SubscriptionPicker({
+  term,
+  onSave,
+  saving,
+}: {
+  term: string | null;
+  onSave: (term: SubscriptionTerm | null) => void;
+  saving: boolean;
+}) {
+  const current = term === "30d" || term === "12m" ? term : "none";
+  const [value, setValue] = useState<string>(current);
+  const dirty = value !== current;
+  const asTerm = value === "none" ? null : (value as SubscriptionTerm);
+  return (
+    <div className="flex items-center gap-2">
+      <Select value={value} onValueChange={setValue}>
+        <SelectTrigger className="w-44">
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="none">Fără termen (nelimitat)</SelectItem>
+          {SUBSCRIPTION_TERMS.map((t) => (
+            <SelectItem key={t} value={t}>
+              {SUBSCRIPTION_TERM_LABELS[t]}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+      <Button size="sm" variant="outline" disabled={!dirty || saving} onClick={() => onSave(asTerm)}>
+        Salvează
+      </Button>
+      {asTerm && !dirty ? (
+        <Button size="sm" variant="ghost" disabled={saving} onClick={() => onSave(asTerm)}>
+          <RefreshCw className="mr-1.5 size-4" />
+          Reînnoiește
+        </Button>
+      ) : null}
+    </div>
+  );
+}
+
+
+
 function AgenciesPage() {
   const queryClient = useQueryClient();
   const { data: me } = useCurrentUser();
