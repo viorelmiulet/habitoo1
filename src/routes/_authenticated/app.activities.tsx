@@ -46,8 +46,10 @@ import { formatDateTime } from "@/lib/format";
 import { activityKindLabels } from "@/lib/labels";
 import { activityStatusLabels, activityStatusTone, downloadCsv, logAudit } from "@/lib/crm";
 import type { Tables } from "@/integrations/supabase/types";
+import { appHead } from "@/components/app/app-head";
 
 export const Route = createFileRoute("/_authenticated/app/activities")({
+  head: () => appHead("Habitoo CRM — activități"),
   validateSearch: (search: Record<string, unknown>): { new?: boolean } =>
     search["new"] === true || search["new"] === "true" ? { new: true } : {},
   component: ActivitiesPage,

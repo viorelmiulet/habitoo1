@@ -18,8 +18,10 @@ import {
   importSiruta,
   type SirutaImportResult,
 } from "@/lib/siruta.functions";
+import { appHead } from "@/components/app/app-head";
 
 export const Route = createFileRoute("/_authenticated/superadmin/nomenclator")({
+  head: () => appHead("Habitoo CRM — nomenclator localități"),
   component: NomenclatorPage,
 });
 

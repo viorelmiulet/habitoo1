@@ -56,8 +56,10 @@ import {
   type CollaborationOffer,
   type CollaborationProposalStatus,
 } from "@/lib/collaboration.functions";
+import { appHead } from "@/components/app/app-head";
 
 export const Route = createFileRoute("/_authenticated/app/collaboration")({
+  head: () => appHead("Habitoo CRM — colaborare"),
   component: CollaborationPage,
 });
 

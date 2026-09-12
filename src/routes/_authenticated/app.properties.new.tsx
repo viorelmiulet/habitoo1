@@ -32,8 +32,10 @@ import { LocationPicker, emptyLocation, type LocationValue } from "@/components/
 import { PropertyLocationMap } from "@/components/app/PropertyLocationMap";
 import { useCurrentUser } from "@/hooks/use-session";
 import { propertyTypeLabels } from "@/lib/labels";
+import { appHead } from "@/components/app/app-head";
 
 export const Route = createFileRoute("/_authenticated/app/properties/new")({
+  head: () => appHead("Habitoo CRM — proprietate nouă"),
   component: NewPropertyPage,
 });
 

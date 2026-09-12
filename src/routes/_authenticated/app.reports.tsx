@@ -40,8 +40,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { downloadCsv } from "@/lib/crm";
 import { formatMoney } from "@/lib/format";
 import { leadStageLabels, propertyStatusLabels, transactionLabels } from "@/lib/labels";
+import { appHead } from "@/components/app/app-head";
 
 export const Route = createFileRoute("/_authenticated/app/reports")({
+  head: () => appHead("Habitoo CRM — rapoarte"),
   component: ReportsPage,
 });
 

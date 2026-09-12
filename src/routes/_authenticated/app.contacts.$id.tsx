@@ -53,8 +53,10 @@ import {
   requestKindLabels,
 } from "@/lib/labels";
 import { requestStatusLabels, requestStatusTone, activityStatusTone } from "@/lib/crm";
+import { appHead } from "@/components/app/app-head";
 
 export const Route = createFileRoute("/_authenticated/app/contacts/$id")({
+  head: () => appHead("Habitoo CRM — detalii contact"),
   component: ContactDetailPage,
 });
 

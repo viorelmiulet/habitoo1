@@ -58,8 +58,10 @@ import { relativeDays } from "@/lib/format";
 import { contactTypeLabels } from "@/lib/labels";
 import { downloadCsv } from "@/lib/crm";
 import { UserAvatar } from "@/components/app/UserAvatar";
+import { appHead } from "@/components/app/app-head";
 
 export const Route = createFileRoute("/_authenticated/app/contacts/")({
+  head: () => appHead("Habitoo CRM — contacte"),
   validateSearch: (search: Record<string, unknown>): { new?: boolean } =>
     search["new"] === true || search["new"] === "true" ? { new: true } : {},
   component: ContactsPage,

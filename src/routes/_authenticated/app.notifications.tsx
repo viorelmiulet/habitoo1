@@ -10,8 +10,10 @@ import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useCurrentUser } from "@/hooks/use-session";
 import { formatDateTime } from "@/lib/format";
+import { appHead } from "@/components/app/app-head";
 
 export const Route = createFileRoute("/_authenticated/app/notifications")({
+  head: () => appHead("Habitoo CRM — notificări"),
   component: NotificationsPage,
 });
 

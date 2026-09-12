@@ -14,8 +14,10 @@ import { useCurrentUser } from "@/hooks/use-session";
 import { AgentDashboard } from "@/components/app/dashboard/AgentDashboard";
 import { ManagerDashboard } from "@/components/app/dashboard/ManagerDashboard";
 import { DashboardOverview } from "@/components/app/dashboard/DashboardOverview";
+import { appHead } from "@/components/app/app-head";
 
 export const Route = createFileRoute("/_authenticated/app/")({
+  head: () => appHead("Habitoo CRM — panou principal"),
   component: DashboardPage,
 });
 

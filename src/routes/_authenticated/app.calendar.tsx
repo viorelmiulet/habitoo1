@@ -38,8 +38,10 @@ import { activityStatusLabels, activityStatusTone, logAudit } from "@/lib/crm";
 import { useCurrentUser } from "@/hooks/use-session";
 import type { Tables } from "@/integrations/supabase/types";
 import { cn } from "@/lib/utils";
+import { appHead } from "@/components/app/app-head";
 
 export const Route = createFileRoute("/_authenticated/app/calendar")({
+  head: () => appHead("Habitoo CRM — calendar"),
   component: CalendarPage,
 });
 

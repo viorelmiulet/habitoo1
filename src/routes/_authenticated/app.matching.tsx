@@ -44,8 +44,10 @@ import {
 import { matchLabel, matchTone, scoreMatch, type MatchScore } from "@/lib/matching";
 import { downloadCsv, notifyOnce } from "@/lib/crm";
 import type { Tables } from "@/integrations/supabase/types";
+import { appHead } from "@/components/app/app-head";
 
 export const Route = createFileRoute("/_authenticated/app/matching")({
+  head: () => appHead("Habitoo CRM — potriviri"),
   component: MatchingPage,
 });
 

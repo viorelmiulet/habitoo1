@@ -40,8 +40,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { useCurrentUser } from "@/hooks/use-session";
 import { goalMetricLabels } from "@/lib/labels";
 import { formatMoney } from "@/lib/format";
+import { appHead } from "@/components/app/app-head";
 
 export const Route = createFileRoute("/_authenticated/app/goals")({
+  head: () => appHead("Habitoo CRM — obiective"),
   component: GoalsPage,
 });
 
