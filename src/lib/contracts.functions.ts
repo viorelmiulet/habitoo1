@@ -203,7 +203,15 @@ Răspunde exclusiv cu json, cu exact aceste chei (string, gol dacă lipsește):
 {"nume":"","prenume":"","cnp":"","serie":"","numar":"","data_eliberarii":"","emitent":"","adresa":"","data_nasterii":""}
 Datele calendaristice se scriu în format ZZ.LL.AAAA. Nu inventa valori: dacă nu poți citi un câmp, lasă-l gol.`;
 
-const GEMINI_FALLBACK_MODELS = ["gemini-2.5-flash", "gemini-2.0-flash"];
+// Ordine confirmată pe cheia proiectului (GET /v1beta/models): doar modele Flash
+// cu suport de imagine, de la cel mai nou la cel mai vechi.
+const GEMINI_FALLBACK_MODELS = [
+  "gemini-3.8-flash",
+  "gemini-3.6-flash",
+  "gemini-3.5-flash",
+  "gemini-flash-latest",
+  "gemini-2.5-flash",
+];
 const GEMINI_TIMEOUT_MS = 45_000;
 
 /** Spune interfeței dacă extragerea automată este configurată (cheie Google prezentă). */
