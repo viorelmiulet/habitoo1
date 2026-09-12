@@ -808,12 +808,15 @@ export type ListingActionResult =
  * publicarea per proprietate pe portalurile selectate. Nu conține verificări de
  * permisiuni: apelantul trebuie să valideze deja agenția și rolul.
  */
-async function executeListingAction(input: {
+export async function executeListingAction(input: {
   organizationId: string;
-  actorId: string;
+  /** `null` pentru acțiuni automate (fără actor uman), ex. republicarea la expirare. */
+  actorId: string | null;
   portalId: string;
   propertyId: string;
   action: "publish" | "update" | "withdraw";
+  /** Eticheta din jurnal; implicit acțiunea. Automatizările folosesc alt nume. */
+  operationLabel?: string;
 }): Promise<ListingActionResult> {
   const { organizationId, actorId, portalId, propertyId, action } = input;
   const definition = getPortalDefinition(portalId);
