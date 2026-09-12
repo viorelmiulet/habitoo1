@@ -47,6 +47,8 @@ import { formatDateTime } from "@/lib/format";
 import {
   applyPropertyPortalSelection,
   getPropertiesPortalMatrix,
+  getPropertyStoriaAutoRenew,
+  setPropertyStoriaAutoRenew,
   type PropertyPortalCell,
 } from "@/lib/portals.functions";
 import { getPropertyCollaboration, setPropertyCollaboration } from "@/lib/collaboration.functions";
@@ -397,77 +399,82 @@ export const PropertyPortalsCard = forwardRef<
           const StateIcon = problem ? AlertTriangle : value ? CheckCircle2 : Circle;
 
           return (
-            <li
-              key={cell.portalId}
-              className={cn(
-                "flex flex-wrap items-start gap-3 px-5 py-4 text-sm",
-                problem && "bg-warning/10",
-              )}
-            >
-              <Checkbox
-                id={`portal-${cell.portalId}`}
-                checked={value}
-                disabled={disabled}
-                className="mt-0.5"
-                onCheckedChange={(next) => {
-                  if (next === true && cell.availability === "available" && !cell.configured) {
-                    toast.error(
-                      `${cell.portalName} nu este configurat. Configurează portalul în această pagină.`,
-                    );
-                  }
-                  setChecked((prev) => ({ ...prev, [cell.portalId]: next === true }));
-                }}
-              />
-              <StateIcon
-                aria-hidden
-                className={cn(
-                  "mt-0.5 size-4 shrink-0",
-                  problem
-                    ? "text-warning-foreground"
-                    : value
-                      ? "text-success"
-                      : "text-muted-foreground/60",
-                )}
-              />
-              <PortalLogoStack portalId={cell.portalId} name={cell.portalName} size={28} />
-              <div className="min-w-0 flex-1">
-                <label htmlFor={`portal-${cell.portalId}`} className="font-medium">
-                  {cell.portalName}
-                </label>
-                <p
+            <li key={cell.portalId} className={cn("px-5 py-4 text-sm", problem && "bg-warning/10")}>
+              <div className="flex flex-wrap items-start gap-3">
+                <Checkbox
+                  id={`portal-${cell.portalId}`}
+                  checked={value}
+                  disabled={disabled}
+                  className="mt-0.5"
+                  onCheckedChange={(next) => {
+                    if (next === true && cell.availability === "available" && !cell.configured) {
+                      toast.error(
+                        `${cell.portalName} nu este configurat. Configurează portalul în această pagină.`,
+                      );
+                    }
+                    setChecked((prev) => ({ ...prev, [cell.portalId]: next === true }));
+                  }}
+                />
+                <StateIcon
+                  aria-hidden
                   className={cn(
-                    "text-xs",
-                    problem ? "text-warning-foreground" : "text-muted-foreground",
+                    "mt-0.5 size-4 shrink-0",
+                    problem
+                      ? "text-warning-foreground"
+                      : value
+                        ? "text-success"
+                        : "text-muted-foreground/60",
                   )}
-                >
-                  {stateSentence(cell, value)}
-                </p>
+                />
+                <PortalLogoStack portalId={cell.portalId} name={cell.portalName} size={28} />
+                <div className="min-w-0 flex-1">
+                  <label htmlFor={`portal-${cell.portalId}`} className="font-medium">
+                    {cell.portalName}
+                  </label>
+                  <p
+                    className={cn(
+                      "text-xs",
+                      problem ? "text-warning-foreground" : "text-muted-foreground",
+                    )}
+                  >
+                    {stateSentence(cell, value)}
+                  </p>
+                </div>
+
+                {problem && canManage && cell.availability === "available" && cell.configured ? (
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    disabled={apply.isPending}
+                    onClick={() => void applyPending()}
+                  >
+                    Retrimite
+                  </Button>
+                ) : null}
+
+                {/* Linkul public al anunțului, când portalul îl întoarce. */}
+                {cell.publicUrl ? (
+                  <a
+                    href={cell.publicUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    title={`Deschide anunțul pe ${cell.portalName}`}
+                    aria-label={`Deschide anunțul pe ${cell.portalName} într-un tab nou`}
+                    className="mt-1 text-muted-foreground transition-colors hover:text-primary"
+                  >
+                    <ExternalLink className="size-4" aria-hidden />
+                  </a>
+                ) : null}
               </div>
 
-              {problem && canManage && cell.availability === "available" && cell.configured ? (
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="outline"
-                  disabled={apply.isPending}
-                  onClick={() => void applyPending()}
-                >
-                  Retrimite
-                </Button>
-              ) : null}
-
-              {/* Linkul public al anunțului, când portalul îl întoarce. */}
-              {cell.publicUrl ? (
-                <a
-                  href={cell.publicUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  title={`Deschide anunțul pe ${cell.portalName}`}
-                  aria-label={`Deschide anunțul pe ${cell.portalName} într-un tab nou`}
-                  className="mt-1 text-muted-foreground transition-colors hover:text-primary"
-                >
-                  <ExternalLink className="size-4" aria-hidden />
-                </a>
+              {/* Auto-prelungire, doar pentru Storia și doar când portalul e bifat. */}
+              {cell.portalId === "storia" && value ? (
+                <StoriaAutoRenewControl
+                  propertyId={propertyId}
+                  organizationId={organizationId}
+                  canManage={canManage}
+                />
               ) : null}
             </li>
           );
@@ -483,7 +490,7 @@ export const PropertyPortalsCard = forwardRef<
               : "Doar administratorul agenției poate modifica publicarea pe portaluri."}
         </p>
         <span className="text-xs text-muted-foreground">
-          Se aplică prin butonul „Publică” din partea de sus a paginii.
+          Se aplică prin butonul „Publică” din rândul de acțiuni al paginii.
         </span>
       </footer>
 
@@ -536,3 +543,90 @@ export const PropertyPortalsCard = forwardRef<
     </section>
   );
 });
+
+/**
+ * Auto-prelungire Storia la nivel de proprietate: comutator segmentat cu trei
+ * poziții — „Setarea agenției” (implicit, moștenire), „Activat”, „Dezactivat”.
+ * Eticheta de dedesubt spune explicit dacă anunțul moștenește sau suprascrie.
+ */
+function StoriaAutoRenewControl({
+  propertyId,
+  organizationId,
+  canManage,
+}: {
+  propertyId: string;
+  organizationId?: string;
+  canManage: boolean;
+}) {
+  const queryClient = useQueryClient();
+  const load = useServerFn(getPropertyStoriaAutoRenew);
+  const save = useServerFn(setPropertyStoriaAutoRenew);
+  const queryKey = ["property-storia-auto-renew", organizationId, propertyId] as const;
+
+  const state = useQuery({
+    queryKey,
+    queryFn: () => load({ data: { ...(organizationId ? { organizationId } : {}), propertyId } }),
+  });
+
+  const mutate = useMutation({
+    mutationFn: (override: boolean | null) =>
+      save({ data: { ...(organizationId ? { organizationId } : {}), propertyId, override } }),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey });
+      toast.success("Auto-prelungirea Storia a fost salvată.");
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  if (!state.data) return null;
+  const { override, agencyDefault, effective } = state.data;
+
+  const options: { value: boolean | null; label: string }[] = [
+    { value: null, label: "Setarea agenției" },
+    { value: true, label: "Activat" },
+    { value: false, label: "Dezactivat" },
+  ];
+
+  const summary =
+    override === null
+      ? `Moștenește setarea agenției (${agencyDefault ? "activată" : "dezactivată"}).`
+      : `Suprascriere: ${override ? "activată" : "dezactivată"} pentru acest anunț.`;
+
+  return (
+    <div className="mt-3 pl-9">
+      <p className="text-xs font-medium">Auto-prelungire la expirare</p>
+      <div
+        role="group"
+        aria-label="Auto-prelungire Storia pentru acest anunț"
+        className="mt-1.5 inline-flex rounded-lg bg-secondary p-0.5"
+      >
+        {options.map((option) => {
+          const active = override === option.value;
+          return (
+            <button
+              key={String(option.value)}
+              type="button"
+              aria-pressed={active}
+              disabled={!canManage || mutate.isPending}
+              onClick={() => mutate.mutate(option.value)}
+              className={cn(
+                "rounded-md px-2.5 py-1 text-xs font-medium transition-colors disabled:opacity-60",
+                active
+                  ? "bg-primary text-primary-foreground shadow-sm"
+                  : "text-muted-foreground hover:text-foreground",
+              )}
+            >
+              {option.label}
+            </button>
+          );
+        })}
+      </div>
+      <p className="mt-1.5 text-xs text-muted-foreground">
+        {summary}
+        {effective
+          ? " Anunțul expirat va fi republicat automat."
+          : " Anunțul expirat rămâne marcat expirat, fără republicare."}
+      </p>
+    </div>
+  );
+}

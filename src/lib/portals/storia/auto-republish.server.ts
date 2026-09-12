@@ -41,7 +41,7 @@ export async function handleStoriaExpiry(
       .maybeSingle(),
     admin
       .from("properties")
-      .select("id, title, status, publish_status, deleted_at, archived_at")
+      .select("id, title, status, publish_status, deleted_at, archived_at, storia_auto_renew")
       .eq("id", match.propertyId)
       .maybeSingle(),
     admin
@@ -53,7 +53,14 @@ export async function handleStoriaExpiry(
       .maybeSingle(),
   ]);
 
-  const autoEnabled = org?.storia_auto_republish === true;
+  /**
+   * Suprascrierea de pe proprietate are prioritate; dacă lipsește (null),
+   * decide setarea agenției.
+   */
+  const override =
+    (property as { storia_auto_renew?: boolean | null } | null)?.storia_auto_renew ?? null;
+  const agencyDefault = org?.storia_auto_republish === true;
+  const autoEnabled = override ?? agencyDefault;
 
   // Motivul pentru care republicarea nu este permisă (independent de comutator).
   let blocked: string | null = null;
@@ -68,7 +75,9 @@ export async function handleStoriaExpiry(
   let republished = false;
   let note = autoEnabled
     ? (blocked ?? "republicare automată nereușită")
-    : "auto-republicare dezactivată pentru agenție";
+    : override === false
+      ? "auto-republicare dezactivată pentru acest anunț"
+      : "auto-republicare dezactivată pentru agenție";
 
   if (autoEnabled && !blocked) {
     const { executeListingAction } = await import("@/lib/portals.functions");
