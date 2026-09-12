@@ -178,8 +178,12 @@ export function NewContractDialog({
         address: result.address || prev.address,
         birthDate: result.birthDate || prev.birthDate,
       }));
-      if (result.failure) toast.error(result.failure);
+      if (result.configured === false) {
+        void extractionStatus.refetch();
+        toast.info(result.failure ?? "Completarea automată nu este configurată.");
+      } else if (result.failure) toast.error(result.failure);
       else toast.success("Date completate din act. Verifică-le înainte de a continua.");
+
     },
     onError: (e: Error) => toastError(e),
   });
