@@ -53,6 +53,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -112,6 +113,7 @@ function PropertyDetailPage() {
   const [editing, setEditing] = useState(false);
   /** Evită tipăriri suprapuse ale fișei de prezentare. */
   const printingRef = useRef(false);
+  const [presentationDialogOpen, setPresentationDialogOpen] = useState(false);
 
 
   const [activityDialog, setActivityDialog] = useState<{
@@ -446,9 +448,10 @@ function PropertyDetailPage() {
    * publice ale proprietății (fără cele confidențiale). Tipărirea se face în
    * iframe, după încărcarea imaginilor.
    */
-  const printSummary = async () => {
+  const printSummary = async (audience: "client" | "agent") => {
     if (printingRef.current) return;
     printingRef.current = true;
+    setPresentationDialogOpen(false);
 
     try {
       const { data: rows, error } = await supabase
@@ -476,6 +479,11 @@ function PropertyDetailPage() {
           specs,
           description: property.description,
           photos,
+          audience,
+          agent: {
+            name: user?.profile?.full_name ?? null,
+            phone: user?.profile?.phone ?? null,
+          },
         }),
       );
     } catch (e) {
@@ -623,8 +631,8 @@ function PropertyDetailPage() {
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="start">
-            <DropdownMenuItem onClick={printSummary}>
-              <Printer className="size-4" /> Generează prezentare
+            <DropdownMenuItem onClick={() => setPresentationDialogOpen(true)}>
+              <Printer className="size-4" /> Generează fișă de vizionare
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             {Object.entries(propertyStatusLabels).map(([k, v]) => (
@@ -1094,6 +1102,42 @@ function PropertyDetailPage() {
         defaults={{ kind: activityDialog.kind === "viewing" ? "viewing" : "call", propertyId: id }}
         onCreated={() => queryClient.invalidateQueries({ queryKey: ["property", id] })}
       />
+
+      <Dialog open={presentationDialogOpen} onOpenChange={setPresentationDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Generează fișa de vizionare</DialogTitle>
+            <DialogDescription>Alege cui îi este destinată fișa.</DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <Button
+              variant="outline"
+              className="h-auto min-h-24 flex-col items-start gap-1 whitespace-normal p-4 text-left"
+              onClick={() => void printSummary("client")}
+            >
+              <span className="font-semibold">Pentru client</span>
+              <span className="text-xs font-normal text-muted-foreground">
+                Include telefoanele agenției și agentului.
+              </span>
+            </Button>
+            <Button
+              variant="outline"
+              className="h-auto min-h-24 flex-col items-start gap-1 whitespace-normal p-4 text-left"
+              onClick={() => void printSummary("agent")}
+            >
+              <span className="font-semibold">Pentru alt agent</span>
+              <span className="text-xs font-normal text-muted-foreground">
+                Nu include niciun număr de telefon.
+              </span>
+            </Button>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setPresentationDialogOpen(false)}>
+              Anulează
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={addClientOpen} onOpenChange={setAddClientOpen}>
         <DialogContent>
