@@ -75,7 +75,9 @@ export async function handleStoriaExpiry(
   let republished = false;
   let note = autoEnabled
     ? (blocked ?? "republicare automată nereușită")
-    : "auto-republicare dezactivată pentru agenție";
+    : override === false
+      ? "auto-republicare dezactivată pentru acest anunț"
+      : "auto-republicare dezactivată pentru agenție";
 
   if (autoEnabled && !blocked) {
     const { executeListingAction } = await import("@/lib/portals.functions");
