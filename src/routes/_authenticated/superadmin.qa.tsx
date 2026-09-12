@@ -51,6 +51,7 @@ import {
 } from "@/lib/qa.functions";
 import type { DemoCredential } from "@/lib/qa-seed.server";
 import { roleLabels } from "@/lib/labels";
+import { seatLimitLabel } from "@/lib/plans";
 import { appHead } from "@/components/app/app-head";
 
 export const Route = createFileRoute("/_authenticated/superadmin/qa")({
@@ -321,7 +322,7 @@ function QaPanelPage() {
               <KpiCard
                 label="Utilizatori"
                 value={counts.users}
-                hint={`din ${org.max_users} permiși`}
+                hint={`din ${seatLimitLabel(org.max_users)} permiși`}
                 icon={Users}
               />
               <KpiCard label="Contacte" value={counts.contacts} icon={UserRound} tone="accent" />
