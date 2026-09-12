@@ -486,8 +486,10 @@ function AgenciesPage() {
                       <p className="flex flex-wrap items-center gap-2">
                         <span className="truncate text-base font-semibold">{o.name}</span>
                         <StatusBadge tone="primary">
-                          {PLAN_LABELS[normalizePlan(o.plan)]}
+                          {PLAN_LABELS[normalizePlan(o.plan)]} ·{" "}
+                          {planPriceLabel(o.plan, o.subscription_term)}
                         </StatusBadge>
+
                         <StatusBadge tone={o.status === "active" ? "success" : "warning"}>
                           {statusLabels[o.status] ?? o.status}
                         </StatusBadge>
@@ -534,9 +536,11 @@ function AgenciesPage() {
                   <div className="flex flex-wrap items-center gap-3">
                     <PlanPicker
                       plan={o.plan}
+                      term={o.subscription_term}
                       onSave={(plan) => savePlan.mutate({ id: o.id, plan, previous: o.plan })}
                       saving={savePlan.isPending}
                     />
+
                     <SubscriptionPicker
                       key={`${o.id}-${o.subscription_term ?? "none"}-${o.subscription_expires_at ?? ""}`}
                       term={o.subscription_term}
