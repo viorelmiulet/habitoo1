@@ -699,7 +699,7 @@ export const getContract = createServerFn({ method: "POST" })
 /* PDF                                                                 */
 /* ------------------------------------------------------------------ */
 
-export async function renderAndStorePdf(contractId: string, actorId: string) {
+export async function renderAndStorePdf(contractId: string, actorId: string | null) {
   const { supabaseAdmin: db } = await import("@/integrations/supabase/client.server");
   const { decryptPii } = await import("@/lib/contracts/crypto.server");
   const { buildContractPdf } = await import("@/lib/contracts/pdf.server");

@@ -143,7 +143,7 @@ export const submitSignature = createServerFn({ method: "POST" })
       .eq("id", contract.id);
 
     // Documentul final se regenerează cu semnăturile aplicate.
-    await renderAndStorePdf(contract.id, contract.created_by ?? "");
+    await renderAndStorePdf(contract.id, contract.created_by);
 
     await db.from("audit_logs").insert({
       organization_id: contract.organization_id,
