@@ -105,6 +105,24 @@ export function Topbar({
           <QuickAdd />
         )}
 
+        {tour.available ? (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="gap-1.5"
+                onClick={tour.start}
+                aria-label="Pornește ghidul interactiv"
+              >
+                <Compass className="size-4" />
+                <span className="hidden sm:inline">Ghid</span>
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Tur ghidat al aplicației</TooltipContent>
+          </Tooltip>
+        ) : null}
+
         {isPlatform ? null : <SupportWidget />}
 
         <NotificationsMenu userId={user.userId} />

@@ -14,6 +14,7 @@ import { countUnresolvedSupportTickets } from "@/lib/support.functions";
 import { ImpersonationBanner } from "@/components/app/ImpersonationBanner";
 import { ActiveAccessBanner } from "@/components/app/AccountAccessCard";
 import { SubscriptionBanner } from "@/components/app/SubscriptionBanner";
+import { OnboardingTourProvider } from "@/components/app/OnboardingTour";
 
 import { useApplyTheme } from "@/hooks/use-theme";
 import { useSidebarCollapsed } from "@/hooks/use-sidebar-state";
@@ -83,6 +84,7 @@ export function AppShell({
 
   return (
     <TooltipProvider delayDuration={150}>
+      <OnboardingTourProvider user={user}>
       <div className="min-h-screen bg-background">
         <a
           href="#continut"
@@ -151,6 +153,7 @@ export function AppShell({
 
         <MobileNav variant={variant} onOpenMenu={() => setMenuOpen(true)} />
       </div>
+      </OnboardingTourProvider>
     </TooltipProvider>
   );
 }
