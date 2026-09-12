@@ -31,6 +31,7 @@ const OFFERABLE_STATUSES = ["active", "reserved", "negotiation"] as const;
 
 export type CollaborationOffer = {
   id: string;
+  agencyId: string;
   reference: string | null;
   title: string;
   description: string | null;
@@ -235,6 +236,7 @@ function mapOffer(
 ): CollaborationOffer {
   return {
     id: row.id,
+    agencyId: row.organization_id,
     reference: row.reference,
     title: row.title,
     description: row.description,
