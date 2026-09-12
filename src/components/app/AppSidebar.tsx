@@ -5,6 +5,7 @@ import {
   Building2,
   CalendarDays,
   ChartBar,
+  FileSignature,
   Flame,
   FlaskConical,
   Gauge,
@@ -52,6 +53,7 @@ export const agencyNav: NavGroup[] = [
       { label: "Contacte", to: "/app/contacts", icon: UserRound },
       { label: "Cereri", to: "/app/requests", icon: Target },
       { label: "Lead-uri", to: "/app/leads", icon: Flame },
+      { label: "Contracte", to: "/app/contracts", icon: FileSignature },
     ],
   },
   {
