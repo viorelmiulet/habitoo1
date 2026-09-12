@@ -328,6 +328,24 @@ function SettingsPage() {
                   onCheckedChange={(v) => setOrgForm((f) => ({ ...f, collaboration_enabled: v }))}
                 />
               </div>
+              <div className="flex items-start justify-between gap-4 rounded-xl border border-border p-4">
+                <div className="space-y-1">
+                  <Label htmlFor="storia_auto_republish" className="text-sm">
+                    Republică automat anunțurile expirate pe Storia
+                  </Label>
+                  <p className="text-xs text-muted-foreground">
+                    Când un anunț expiră pe Storia, îl retrimitem automat, dacă oferta este încă
+                    activă și publicabilă. Dezactivat, primești doar notificarea de expirare și
+                    republici manual din fila Publicare.
+                  </p>
+                </div>
+                <Switch
+                  id="storia_auto_republish"
+                  disabled={!user?.isAdmin}
+                  checked={orgForm.storia_auto_republish}
+                  onCheckedChange={(v) => setOrgForm((f) => ({ ...f, storia_auto_republish: v }))}
+                />
+              </div>
               {/* Planul este doar informativ: se schimbă exclusiv din Superadmin. */}
               <div className="space-y-2 rounded-xl border border-border p-4 text-sm">
                 <div className="flex flex-wrap items-center justify-between gap-3">
