@@ -39,9 +39,13 @@ import {
   PLAN_AGENT_LIMITS,
   PLAN_KEYS,
   PLAN_LABELS,
+  PLAN_PRICES,
   normalizePlan,
+  planAgentLimitLabel,
+  planPriceLabel,
   type PlanKey,
 } from "@/lib/plans";
+
 import {
   SUBSCRIPTION_TERMS,
   SUBSCRIPTION_TERM_LABELS,
