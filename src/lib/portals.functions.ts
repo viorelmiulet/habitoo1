@@ -960,7 +960,7 @@ export async function executeListingAction(input: {
   await logOperation({
     organizationId,
     portal: definition.id,
-    operation: action,
+    operation: input.operationLabel ?? action,
     success: result.ok,
     errorCode: result.ok ? null : result.code,
     errorMessage: result.ok ? null : result.message,
