@@ -102,6 +102,18 @@ export const Route = createFileRoute("/api/public/cron/subscriptions")({
         const unauthorized = await authenticate(request);
         if (unauthorized) return unauthorized;
 
+        // Jobul din bază face deja tranzițiile și notificările în aplicație, apoi
+        // apelează ruta doar pentru emailuri, cu lista agențiilor intrate în grație.
+        const payload = (await request.json().catch(() => ({}))) as {
+          emailsOnly?: boolean;
+          grace?: GraceOrg[];
+        };
+        if (payload.emailsOnly === true) {
+          const { emailsSent } = await sendGraceEmails(payload.grace ?? []);
+          return new Response(JSON.stringify({ ok: true, emailsOnly: true, emailsSent }), {
+            headers: { "Content-Type": "application/json" },
+          });
+        }
 
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
         const { data, error } = await supabaseAdmin.rpc("subscription_enforce_daily");
