@@ -199,20 +199,9 @@ export const PropertyPortalsCard = forwardRef<
     },
   });
 
-  /** Rezolvatorul confirmării de retragere, cât timp dialogul este deschis. */
-  const confirmResolver = useRef<((ok: boolean) => void) | null>(null);
-
   const applyPending = useCallback(async () => {
     const portalsActionable = canManage && actionable.length > 0;
     if (!portalsActionable && !collabDirty) return null;
-
-    if (portalsActionable && toWithdraw.length > 0) {
-      const confirmed = await new Promise<boolean>((resolve) => {
-        confirmResolver.current = resolve;
-        setConfirming(true);
-      });
-      if (!confirmed) return null;
-    }
 
     const results: PortalApplyResult[] = [];
 
