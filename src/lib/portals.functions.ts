@@ -2015,3 +2015,82 @@ export const backfillStoriaPublicUrls = createServerFn({ method: "POST" })
 
     return { checked: (rows ?? []).length, results };
   });
+
+/**
+ * AUTO-PRELUNGIRE STORIA — suprascriere per proprietate.
+ *
+ * `properties.storia_auto_renew`:
+ *   null  = moștenește setarea agenției (`organizations.storia_auto_republish`);
+ *   true  = auto-prelungire activată explicit pentru acest anunț;
+ *   false = auto-prelungire dezactivată explicit pentru acest anunț.
+ *
+ * Setarea globală de agenție rămâne implicitul pentru proprietățile fără
+ * suprascriere; cele două coexistă.
+ */
+export type StoriaAutoRenewRow = {
+  /** null = moștenește; altfel suprascrierea explicită. */
+  override: boolean | null;
+  /** Setarea agenției, folosită când nu există suprascriere. */
+  agencyDefault: boolean;
+  /** Valoarea efectivă rezultată. */
+  effective: boolean;
+};
+
+export const getPropertyStoriaAutoRenew = createServerFn({ method: "POST" })
+  .middleware([requireActiveOrgAuth])
+  .inputValidator((input: unknown) =>
+    z
+      .object({ organizationId: z.string().uuid().optional(), propertyId: z.string().uuid() })
+      .parse(input),
+  )
+  .handler(async ({ data, context }): Promise<StoriaAutoRenewRow> => {
+    const { organizationId } = await resolvePublishingOrg(
+      context as unknown as AuthContext,
+      data.organizationId,
+    );
+    const admin = await loadAdmin();
+    const [{ data: property }, { data: org }] = await Promise.all([
+      admin
+        .from("properties")
+        .select("id, storia_auto_renew")
+        .eq("id", data.propertyId)
+        .eq("organization_id", organizationId)
+        .maybeSingle(),
+      admin
+        .from("organizations")
+        .select("storia_auto_republish")
+        .eq("id", organizationId)
+        .maybeSingle(),
+    ]);
+    if (!property) throw new Error("Proprietatea nu a fost găsită.");
+    const agencyDefault = org?.storia_auto_republish === true;
+    const override = (property as { storia_auto_renew: boolean | null }).storia_auto_renew ?? null;
+    return { override, agencyDefault, effective: override ?? agencyDefault };
+  });
+
+export const setPropertyStoriaAutoRenew = createServerFn({ method: "POST" })
+  .middleware([requireActiveOrgAuth])
+  .inputValidator((input: unknown) =>
+    z
+      .object({
+        organizationId: z.string().uuid().optional(),
+        propertyId: z.string().uuid(),
+        /** null = revine la setarea agenției. */
+        override: z.boolean().nullable(),
+      })
+      .parse(input),
+  )
+  .handler(async ({ data, context }): Promise<{ ok: true }> => {
+    const { organizationId } = await resolvePublishingOrg(
+      context as unknown as AuthContext,
+      data.organizationId,
+    );
+    const admin = await loadAdmin();
+    const { error } = await admin
+      .from("properties")
+      .update({ storia_auto_renew: data.override } as never)
+      .eq("id", data.propertyId)
+      .eq("organization_id", organizationId);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
