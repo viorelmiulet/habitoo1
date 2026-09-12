@@ -51,6 +51,7 @@ import {
 } from "@/lib/qa.functions";
 import type { DemoCredential } from "@/lib/qa-seed.server";
 import { roleLabels } from "@/lib/labels";
+import { seatLimitLabel } from "@/lib/plans";
 import { appHead } from "@/components/app/app-head";
 
 export const Route = createFileRoute("/_authenticated/superadmin/qa")({
