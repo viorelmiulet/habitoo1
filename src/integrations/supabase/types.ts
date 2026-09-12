@@ -479,6 +479,24 @@ export type Database = {
           },
         ]
       }
+      cron_job_nonces: {
+        Row: {
+          created_at: string
+          purpose: string
+          token: string
+        }
+        Insert: {
+          created_at?: string
+          purpose: string
+          token: string
+        }
+        Update: {
+          created_at?: string
+          purpose?: string
+          token?: string
+        }
+        Relationships: []
+      }
       documents: {
         Row: {
           created_at: string
@@ -3327,6 +3345,11 @@ export type Database = {
         Returns: string
       }
       can_access_ticket: { Args: { _ticket_id: string }; Returns: boolean }
+      cron_nonce_claim: {
+        Args: { _purpose: string; _token: string }
+        Returns: boolean
+      }
+      cron_nonce_issue: { Args: { _purpose: string }; Returns: string }
       current_org: { Args: never; Returns: string }
       email_job_finish: {
         Args: { _error?: string; _job_id: string; _ok: boolean }
@@ -3497,6 +3520,7 @@ export type Database = {
         }
         Returns: string
       }
+      subscription_cron_tick: { Args: never; Returns: Json }
       subscription_enforce_daily: { Args: never; Returns: Json }
       superadmin_delete_organization: {
         Args: { _actor?: string; _org: string }
