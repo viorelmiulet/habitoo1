@@ -110,3 +110,16 @@ describe("identificatori", () => {
     expect(storiaAdSlugFromUrl("https://www.storia.ro/ro/rezultate/vanzare")).toBeNull();
   });
 });
+
+describe("statusul anunțului", () => {
+  it("tratează expirarea ca stare distinctă, nu ca eroare", () => {
+    expect(storiaListingStatus("outdated")).toBe("expired");
+  });
+
+  it("păstrează celelalte stări cunoscute", () => {
+    expect(storiaListingStatus("active")).toBe("published");
+    expect(storiaListingStatus("blocked")).toBe("pending");
+    expect(storiaListingStatus("removed_by_user")).toBe("withdrawn");
+    expect(storiaListingStatus("moderated")).toBe("error");
+  });
+});
