@@ -121,14 +121,21 @@ function TeamPage() {
         <div>
           <p className="text-sm font-medium">
             {data
-              ? `${data.seatsUsed} din ${data.seatLimit} agenți folosiți`
+              ? data.seatLimit === null
+                ? `${data.seatsUsed} agenți activi · fără limită`
+                : `${data.seatsUsed} din ${data.seatLimit} agenți folosiți`
               : "Se încarcă locurile…"}
           </p>
           <p className="text-xs text-muted-foreground">{data ? `Plan ${data.planLabel}` : "—"}</p>
         </div>
         {data ? (
           <StatusBadge tone={limitReached ? "warning" : "success"}>
-            {limitReached ? "Limită atinsă" : `${data.seatLimit - data.seatsUsed} locuri libere`}
+            {limitReached
+              ? "Limită atinsă"
+              : data.seatLimit === null
+                ? "Locuri nelimitate"
+                : `${data.seatLimit - data.seatsUsed} locuri libere`}
+
           </StatusBadge>
         ) : null}
       </div>
