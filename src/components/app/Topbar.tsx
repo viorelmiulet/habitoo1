@@ -1,5 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import {
+  Compass,
   FlaskConical,
   HelpCircle,
   LogOut,
@@ -31,6 +32,8 @@ import { type ShellVariant } from "@/components/app/AppSidebar";
 import { BrandLogo } from "@/components/brand/BrandLogo";
 import { useTheme, type ThemePreference } from "@/hooks/use-theme";
 import { UserAvatar } from "@/components/app/UserAvatar";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { useOnboardingTour } from "@/components/app/OnboardingTour";
 import { roleLabels } from "@/lib/labels";
 import { cn } from "@/lib/utils";
 import type { CurrentUser } from "@/hooks/use-session";
