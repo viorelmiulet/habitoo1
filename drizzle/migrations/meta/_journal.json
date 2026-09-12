@@ -120,6 +120,13 @@
       "when": 1789188889810,
       "tag": "0016_plan_unlimited",
       "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1789189263850,
+      "tag": "0017_registration_plan_choice",
+      "breakpoints": true
     }
   ]
 }
