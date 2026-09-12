@@ -108,6 +108,7 @@ export const superadminNav: NavGroup[] = [
     title: "Platformă",
     items: [
       { label: "Agenții", to: "/superadmin/agencies", icon: Building2 },
+      { label: "Stare agenții", to: "/superadmin/stare-agentii", icon: ChartBar },
       { label: "Utilizatori", to: "/superadmin/users", icon: Users },
       { label: "Portaluri", to: "/superadmin/portals", icon: PlugZap },
       { label: "Email", to: "/superadmin/mail", icon: Mail },
