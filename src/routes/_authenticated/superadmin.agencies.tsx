@@ -493,6 +493,9 @@ function AgenciesPage() {
                         <StatusBadge tone={o.status === "active" ? "success" : "warning"}>
                           {statusLabels[o.status] ?? o.status}
                         </StatusBadge>
+                        {o.is_trial ? (
+                          <StatusBadge tone="warning">Perioadă de probă</StatusBadge>
+                        ) : null}
                         {o.is_demo ? <StatusBadge tone="warning">DEMO / QA</StatusBadge> : null}
                         {o.archived_at ? <StatusBadge tone="danger">Arhivată</StatusBadge> : null}
                         {(() => {

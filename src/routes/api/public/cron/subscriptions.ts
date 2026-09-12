@@ -6,7 +6,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { authenticateCronRequest } from "@/integrations/supabase/cron-auth";
 import { GRACE_DAYS } from "@/lib/subscription";
 
-type GraceOrg = { id: string; name: string; expires_at: string };
+type GraceOrg = { id: string; name: string; expires_at: string; is_trial?: boolean };
 
 async function sendGraceEmails(orgs: GraceOrg[]) {
   const apiKey = process.env["LOVABLE_API_KEY"];
@@ -44,6 +44,7 @@ async function sendGraceEmails(orgs: GraceOrg[]) {
         fullName: profile.full_name ?? undefined,
         expiresAt: new Date(org.expires_at).toLocaleDateString("ro-RO"),
         graceDays: GRACE_DAYS,
+        isTrial: org.is_trial === true,
       });
       const [html, text] = await Promise.all([
         render(element),
@@ -55,7 +56,10 @@ async function sendGraceEmails(orgs: GraceOrg[]) {
             to: profile.email,
             from: "Habitoo CRM <noreply@habitoo.ro>",
             sender_domain: "notify.habitoo.ro",
-            subject: `Abonamentul agenției ${org.name} a expirat — ${GRACE_DAYS} zile până la suspendare`,
+            subject:
+              org.is_trial === true
+                ? `Perioada gratuită a agenției ${org.name} s-a încheiat — ${GRACE_DAYS} zile până la suspendare`
+                : `Abonamentul agenției ${org.name} a expirat — ${GRACE_DAYS} zile până la suspendare`,
             html,
             text,
             purpose: "transactional",

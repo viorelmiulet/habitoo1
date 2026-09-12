@@ -1,6 +1,6 @@
 import { AlertTriangle } from "lucide-react";
 import { formatDate } from "@/lib/format";
-import { graceBannerText, subscriptionState } from "@/lib/subscription";
+import { graceBannerText, graceHeadline, subscriptionState } from "@/lib/subscription";
 import type { CurrentUser } from "@/hooks/use-session";
 
 /**
@@ -11,6 +11,7 @@ export function SubscriptionBanner({ user }: { user: CurrentUser }) {
   if (user.isSuperadmin || !user.isAdmin) return null;
   const state = subscriptionState(user.organization);
   if (state.kind !== "grace") return null;
+  const isTrial = user.organization?.is_trial ?? false;
 
   return (
     <div
@@ -20,9 +21,10 @@ export function SubscriptionBanner({ user }: { user: CurrentUser }) {
       <AlertTriangle className="size-4 shrink-0" />
       <span>{graceBannerText(state.daysLeft)}</span>
       <span className="font-normal opacity-90">
-        Abonamentul a expirat pe {formatDate(state.expiresAt)}. Contactează administratorul
-        platformei pentru reînnoire.
+        {graceHeadline(isTrial)} pe {formatDate(state.expiresAt)}. Contactează administratorul
+        platformei pentru {isTrial ? "activarea abonamentului" : "reînnoire"}.
       </span>
     </div>
   );
 }
+

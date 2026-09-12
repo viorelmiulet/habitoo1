@@ -81,9 +81,14 @@ const included = [
 
 const faq = [
   {
+    q: "Cum funcționează perioada gratuită?",
+    a: "Orice agenție nouă primește 30 de zile de acces gratuit, fără card bancar, indiferent de planul ales. La final, plătești planul dorit pentru a continua.",
+  },
+  {
     q: "Cum funcționează reducerea la plata anuală?",
     a: "La plata anuală tariful lunar este cu 50% mai mic, dar factura se emite o singură dată, pentru 12 luni: 60€/an pentru Basic, 120€/an pentru Pro și 600€/an pentru Unlimited.",
   },
+
   {
     q: "Ce înseamnă limita de agenți?",
     a: "Basic include 3 agenți activi, Pro include 10, iar Unlimited nu are nicio limită de agenți. Poți schimba planul oricând, iar locurile se recalculează imediat.",
@@ -103,9 +108,143 @@ const faq = [
 ];
 
 
-function PricingPage() {
+/** Un card de plan cu propriul comutator Lunar / Anual, independent de celelalte. */
+function PlanCard({ plan: p }: { plan: (typeof plans)[number] }) {
   const [cycle, setCycle] = useState<"monthly" | "annual">("monthly");
+  const price = PLAN_PRICES[p.key];
+  const monthly = cycle === "annual" ? price.annualMonthly : price.monthly;
 
+  return (
+    <div
+      className={cn(
+        "relative flex h-full flex-col rounded-3xl border p-7",
+        p.featured ? "mk-navy-bg border-navy shadow-float" : "border-border bg-card shadow-soft",
+      )}
+    >
+      {p.featured ? (
+        <span className="absolute -top-3 left-7 rounded-full bg-gold px-3 py-1 text-xs font-semibold text-gold-foreground">
+          Recomandat
+        </span>
+      ) : null}
+      <h2 className={cn("text-xl font-semibold", p.featured ? "text-navy-foreground" : "text-navy")}>
+        {PLAN_LABELS[p.key]}
+      </h2>
+
+      {/* Comutator propriu, doar pentru acest plan. */}
+      <div
+        className={cn(
+          "mt-4 flex w-fit items-center gap-1 rounded-full border p-1",
+          p.featured ? "border-navy-foreground/25 bg-navy-foreground/10" : "border-border bg-muted",
+        )}
+      >
+        {(["monthly", "annual"] as const).map((c) => (
+          <button
+            key={c}
+            type="button"
+            aria-pressed={cycle === c}
+            onClick={() => setCycle(c)}
+            className={cn(
+              "rounded-full px-3 py-1 text-xs font-medium transition-colors",
+              cycle === c
+                ? p.featured
+                  ? "bg-gold text-gold-foreground"
+                  : "bg-navy text-navy-foreground"
+                : p.featured
+                  ? "text-navy-muted hover:text-navy-foreground"
+                  : "text-muted-foreground hover:text-foreground",
+            )}
+          >
+            {c === "monthly" ? "Lunar" : "Anual · -50%"}
+          </button>
+        ))}
+      </div>
+
+      <p
+        className={cn("mt-3 text-sm", p.featured ? "text-navy-muted" : "text-muted-foreground")}
+      >
+        {p.audience}
+      </p>
+      <p
+        className={cn(
+          "mt-6 flex items-baseline gap-1.5 text-4xl font-semibold tracking-tight",
+          p.featured ? "text-navy-foreground" : "text-navy",
+        )}
+      >
+        {monthly}€
+        <span
+          className={cn(
+            "text-base font-medium",
+            p.featured ? "text-navy-muted" : "text-muted-foreground",
+          )}
+        >
+          /lună
+        </span>
+      </p>
+      <p
+        className={cn("mt-1.5 text-sm", p.featured ? "text-navy-muted" : "text-muted-foreground")}
+      >
+        {cycle === "annual"
+          ? `Facturat anual, ${price.annualMonthly * 12}€/an (în loc de ${price.monthly}€/lună)`
+          : "Facturat lunar"}
+      </p>
+      <p
+        className={cn(
+          "mt-5 text-sm font-medium",
+          p.featured ? "text-navy-foreground" : "text-foreground",
+        )}
+      >
+        {p.key === "unlimited" ? "Agenți fără limită" : `Până la ${PLAN_AGENT_LIMITS[p.key]} agenți`}
+      </p>
+      <ul className="mt-4 space-y-2.5">
+        {p.highlights.map((h) => (
+          <li
+            key={h}
+            className={cn(
+              "flex items-start gap-2.5 text-sm",
+              p.featured ? "text-navy-foreground" : "text-foreground",
+            )}
+          >
+            <Check className={cn("mt-0.5 size-4 shrink-0", p.featured ? "text-gold" : "text-success")} />
+            {h}
+          </li>
+        ))}
+      </ul>
+      <div className="mt-8 flex flex-1 flex-col justify-end gap-2">
+        <Button
+          asChild
+          className={cn("h-11", p.featured ? "bg-gold text-gold-foreground hover:bg-gold/90" : navyButton)}
+        >
+          <Link to="/register">
+            Cere un cont <ArrowRight />
+          </Link>
+        </Button>
+        <p
+          className={cn(
+            "text-center text-xs font-medium",
+            p.featured ? "text-navy-foreground" : "text-success",
+          )}
+        >
+          30 de zile gratuit, fără card bancar
+        </p>
+        <Button
+          asChild
+          variant="ghost"
+          className={cn(
+            "h-10",
+            p.featured &&
+              "text-navy-foreground hover:bg-navy-foreground/10 hover:text-navy-foreground",
+          )}
+        >
+          <Link to="/contact" search={{ interes: "preturi" }}>
+            <MessageCircle /> Vorbește cu noi
+          </Link>
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+function PricingPage() {
   return (
     <PublicLayout>
       <section className="mk-hero-bg relative overflow-hidden border-b border-border">
@@ -118,157 +257,23 @@ function PricingPage() {
             as="h1"
             eyebrow="Prețuri"
             title="Trei planuri simple, cu prețuri clare"
-            text="Alege plata lunară sau anuală. La plata anuală tariful lunar scade cu 50%, iar factura se emite o singură dată pentru 12 luni."
+            text="Alege plata lunară sau anuală pentru fiecare plan. La plata anuală tariful lunar scade cu 50%, iar factura se emite o singură dată pentru 12 luni. Toate planurile încep cu 30 de zile gratuite."
           />
         </Container>
       </section>
 
       <Section className="pt-12 sm:pt-16">
         <Container>
-          {/* Comutator Lunar / Anual: prețurile din carduri se schimbă împreună cu el. */}
-          <div className="mx-auto mb-10 flex w-fit items-center gap-1 rounded-full border border-border bg-card p-1 shadow-soft">
-            {(["monthly", "annual"] as const).map((c) => (
-              <button
-                key={c}
-                type="button"
-                aria-pressed={cycle === c}
-                onClick={() => setCycle(c)}
-                className={cn(
-                  "rounded-full px-4 py-2 text-sm font-medium transition-colors",
-                  cycle === c
-                    ? "bg-navy text-navy-foreground"
-                    : "text-muted-foreground hover:text-foreground",
-                )}
-              >
-                {c === "monthly" ? "Lunar" : "Anual · -50%"}
-              </button>
+          <div className="grid gap-6 lg:grid-cols-3">
+            {plans.map((p, i) => (
+              <Reveal key={p.key} delay={i * 70} className="h-full">
+                <PlanCard plan={p} />
+              </Reveal>
             ))}
           </div>
-
-          <div className="grid gap-6 lg:grid-cols-3">
-            {plans.map((p, i) => {
-              const price = PLAN_PRICES[p.key];
-              const monthly = cycle === "annual" ? price.annualMonthly : price.monthly;
-              return (
-                <Reveal key={p.key} delay={i * 70} className="h-full">
-                  <div
-                    className={cn(
-                      "relative flex h-full flex-col rounded-3xl border p-7",
-                      p.featured
-                        ? "mk-navy-bg border-navy shadow-float"
-                        : "border-border bg-card shadow-soft",
-                    )}
-                  >
-                    {p.featured ? (
-                      <span className="absolute -top-3 left-7 rounded-full bg-gold px-3 py-1 text-xs font-semibold text-gold-foreground">
-                        Recomandat
-                      </span>
-                    ) : null}
-                    <h2
-                      className={cn(
-                        "text-xl font-semibold",
-                        p.featured ? "text-navy-foreground" : "text-navy",
-                      )}
-                    >
-                      {PLAN_LABELS[p.key]}
-                    </h2>
-                    <p
-                      className={cn(
-                        "mt-2 text-sm",
-                        p.featured ? "text-navy-muted" : "text-muted-foreground",
-                      )}
-                    >
-                      {p.audience}
-                    </p>
-                    <p
-                      className={cn(
-                        "mt-6 flex items-baseline gap-1.5 text-4xl font-semibold tracking-tight",
-                        p.featured ? "text-navy-foreground" : "text-navy",
-                      )}
-                    >
-                      {monthly}€
-                      <span
-                        className={cn(
-                          "text-base font-medium",
-                          p.featured ? "text-navy-muted" : "text-muted-foreground",
-                        )}
-                      >
-                        /lună
-                      </span>
-                    </p>
-                    <p
-                      className={cn(
-                        "mt-1.5 text-sm",
-                        p.featured ? "text-navy-muted" : "text-muted-foreground",
-                      )}
-                    >
-                      {cycle === "annual"
-                        ? `Facturat anual, ${price.annualMonthly * 12}€/an (în loc de ${price.monthly}€/lună)`
-                        : "Facturat lunar"}
-                    </p>
-                    <p
-                      className={cn(
-                        "mt-5 text-sm font-medium",
-                        p.featured ? "text-navy-foreground" : "text-foreground",
-                      )}
-                    >
-                      {p.key === "unlimited"
-                        ? "Agenți fără limită"
-                        : `Până la ${PLAN_AGENT_LIMITS[p.key]} agenți`}
-                    </p>
-                    <ul className="mt-4 space-y-2.5">
-                      {p.highlights.map((h) => (
-                        <li
-                          key={h}
-                          className={cn(
-                            "flex items-start gap-2.5 text-sm",
-                            p.featured ? "text-navy-foreground" : "text-foreground",
-                          )}
-                        >
-                          <Check
-                            className={cn(
-                              "mt-0.5 size-4 shrink-0",
-                              p.featured ? "text-gold" : "text-success",
-                            )}
-                          />
-                          {h}
-                        </li>
-                      ))}
-                    </ul>
-                    <div className="mt-8 flex flex-1 flex-col justify-end gap-2">
-                      <Button
-                        asChild
-                        className={cn(
-                          "h-11",
-                          p.featured ? "bg-gold text-gold-foreground hover:bg-gold/90" : navyButton,
-                        )}
-                      >
-                        <Link to="/register">
-                          Cere un cont <ArrowRight />
-                        </Link>
-                      </Button>
-                      <Button
-                        asChild
-                        variant="ghost"
-                        className={cn(
-                          "h-10",
-                          p.featured &&
-                            "text-navy-foreground hover:bg-navy-foreground/10 hover:text-navy-foreground",
-                        )}
-                      >
-                        <Link to="/contact" search={{ interes: "preturi" }}>
-                          <MessageCircle /> Vorbește cu noi
-                        </Link>
-                      </Button>
-                    </div>
-                  </div>
-                </Reveal>
-              );
-            })}
-          </div>
-
         </Container>
       </Section>
+
 
       <Section tone="muted">
         <Container className="grid gap-12 lg:grid-cols-12">
