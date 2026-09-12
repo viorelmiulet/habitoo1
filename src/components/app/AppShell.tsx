@@ -17,9 +17,8 @@ import { SubscriptionBanner } from "@/components/app/SubscriptionBanner";
 
 import { useApplyTheme } from "@/hooks/use-theme";
 import { useSidebarCollapsed } from "@/hooks/use-sidebar-state";
-import { supabase } from "@/integrations/supabase/client";
 import { roleLabels } from "@/lib/labels";
-import { planAgentLimit, planLabel } from "@/lib/plans";
+
 
 import { cn } from "@/lib/utils";
 import type { CurrentUser } from "@/hooks/use-session";
