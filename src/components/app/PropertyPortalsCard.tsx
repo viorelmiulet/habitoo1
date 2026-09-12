@@ -397,13 +397,8 @@ export const PropertyPortalsCard = forwardRef<
           const StateIcon = problem ? AlertTriangle : value ? CheckCircle2 : Circle;
 
           return (
-            <li
-              key={cell.portalId}
-              className={cn(
-                "flex flex-wrap items-start gap-3 px-5 py-4 text-sm",
-                problem && "bg-warning/10",
-              )}
-            >
+            <li key={cell.portalId} className={cn("px-5 py-4 text-sm", problem && "bg-warning/10")}>
+            <div className="flex flex-wrap items-start gap-3">
               <Checkbox
                 id={`portal-${cell.portalId}`}
                 checked={value}
