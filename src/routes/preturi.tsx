@@ -78,22 +78,27 @@ const included = [
 
 const faq = [
   {
-    q: "De ce nu sunt afișate prețurile?",
-    a: "Prețurile finale vor fi publicate odată cu lansarea comercială. Până atunci, prezentăm platforma într-o demonstrație și discutăm împreună varianta potrivită pentru agenția ta.",
+    q: "Cum funcționează reducerea la plata anuală?",
+    a: "La plata anuală tariful lunar este cu 50% mai mic, dar factura se emite o singură dată, pentru 12 luni: 60€/an pentru Basic, 120€/an pentru Pro și 600€/an pentru Unlimited.",
+  },
+  {
+    q: "Ce înseamnă limita de agenți?",
+    a: "Basic include 3 agenți activi, Pro include 10, iar Unlimited nu are nicio limită de agenți. Poți schimba planul oricând, iar locurile se recalculează imediat.",
+  },
+  {
+    q: "Pot plăti online din aplicație?",
+    a: "Nu încă. Planul se activează de echipa Habitoo după ce trimiți cererea de cont, iar plata se face prin factură.",
   },
   {
     q: "Pot crea agenția și testa aplicația acum?",
-    a: "Da. Îți poți crea contul și agenția, poți invita colegi și poți adăuga proprietăți, contacte, cereri și lead-uri. Datele rămân în contul tău.",
+    a: "Da. Trimiți cererea de înscriere a agenției, iar după validare îți poți invita colegii și poți adăuga proprietăți, contacte, cereri și lead-uri.",
   },
   {
     q: "Datele agenției mele sunt separate de ale altor agenții?",
     a: "Da. Fiecare agenție are propriul spațiu de lucru, iar accesul este controlat prin roluri (administrator de agenție și agent). Utilizatorii văd doar datele agenției din care fac parte.",
   },
-  {
-    q: "Există integrare cu portaluri imobiliare sau facturare online?",
-    a: "Nu încă. În această etapă, Habitoo CRM se concentrează pe activitatea internă a agenției: portofoliu, clienți, cereri, lead-uri, matching, activități și rapoarte.",
-  },
 ];
+
 
 function PricingPage() {
   return (
