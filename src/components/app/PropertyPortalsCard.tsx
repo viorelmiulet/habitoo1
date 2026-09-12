@@ -15,7 +15,6 @@ import {
   useEffect,
   useImperativeHandle,
   useMemo,
-  useRef,
   useState,
 } from "react";
 import { AlertTriangle, CheckCircle2, Circle, ExternalLink } from "lucide-react";
