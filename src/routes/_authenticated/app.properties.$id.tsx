@@ -440,10 +440,10 @@ function PropertyDetailPage() {
    * publice ale proprietății (fără cele confidențiale). Tipărirea se face în
    * iframe, după încărcarea imaginilor.
    */
-  const [printing, setPrinting] = useState(false);
   const printSummary = async () => {
-    if (printing) return;
-    setPrinting(true);
+    if (printingRef.current) return;
+    printingRef.current = true;
+
     try {
       const { data: rows, error } = await supabase
         .from("property_images")
