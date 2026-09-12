@@ -9,8 +9,10 @@ import { StatusBadge } from "@/components/app/StatusBadge";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { formatDateTime } from "@/lib/format";
+import { appHead } from "@/components/app/app-head";
 
 export const Route = createFileRoute("/_authenticated/superadmin/audit")({
+  head: () => appHead("Habitoo CRM — jurnal de audit"),
   component: AuditPage,
 });
 

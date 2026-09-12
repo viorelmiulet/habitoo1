@@ -40,8 +40,10 @@ import {
   requestStatusOptions,
   requestStatusTone,
 } from "@/lib/crm";
+import { appHead } from "@/components/app/app-head";
 
 export const Route = createFileRoute("/_authenticated/app/requests")({
+  head: () => appHead("Habitoo CRM — cereri"),
   validateSearch: (search: Record<string, unknown>): { new?: boolean } =>
     search["new"] === true || search["new"] === "true" ? { new: true } : {},
   component: RequestsPage,

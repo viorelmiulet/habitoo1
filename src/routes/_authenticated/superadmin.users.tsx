@@ -52,8 +52,10 @@ import { ImpersonationRequestDialog } from "@/components/app/ImpersonationReques
 import { listMyImpersonationRequests } from "@/lib/impersonation.functions";
 import { setImpersonationId } from "@/lib/impersonation-client";
 import { useNavigate } from "@tanstack/react-router";
+import { appHead } from "@/components/app/app-head";
 
 export const Route = createFileRoute("/_authenticated/superadmin/users")({
+  head: () => appHead("Habitoo CRM — utilizatori"),
   component: UsersPage,
 });
 

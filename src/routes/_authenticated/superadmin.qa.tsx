@@ -51,8 +51,10 @@ import {
 } from "@/lib/qa.functions";
 import type { DemoCredential } from "@/lib/qa-seed.server";
 import { roleLabels } from "@/lib/labels";
+import { appHead } from "@/components/app/app-head";
 
 export const Route = createFileRoute("/_authenticated/superadmin/qa")({
+  head: () => appHead("Habitoo CRM — panou QA"),
   component: QaPanelPage,
 });
 

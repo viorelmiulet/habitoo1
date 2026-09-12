@@ -37,8 +37,10 @@ import {
   type IntegrationHealthRow,
 } from "@/lib/superadmin-dashboard.functions";
 import { cn } from "@/lib/utils";
+import { appHead } from "@/components/app/app-head";
 
 export const Route = createFileRoute("/_authenticated/superadmin/")({
+  head: () => appHead("Habitoo CRM — panou superadmin"),
   component: SuperadminDashboard,
 });
 

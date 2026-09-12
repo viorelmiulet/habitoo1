@@ -53,9 +53,11 @@ import {
   subscriptionTermLabel,
   type SubscriptionTerm,
 } from "@/lib/subscription";
+import { appHead } from "@/components/app/app-head";
 
 
 export const Route = createFileRoute("/_authenticated/superadmin/agencies")({
+  head: () => appHead("Habitoo CRM — agenții"),
   component: AgenciesPage,
 });
 

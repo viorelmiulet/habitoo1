@@ -63,8 +63,10 @@ import {
   propertyTypeLabels,
   transactionLabels,
 } from "@/lib/labels";
+import { appHead } from "@/components/app/app-head";
 
 export const Route = createFileRoute("/_authenticated/app/properties/")({
+  head: () => appHead("Habitoo CRM — proprietăți"),
   component: PropertiesPage,
 });
 

@@ -69,8 +69,10 @@ import {
   requestStatusTone,
 } from "@/lib/crm";
 import { matchLabel, matchTone, scoreMatch } from "@/lib/matching";
+import { appHead } from "@/components/app/app-head";
 
 export const Route = createFileRoute("/_authenticated/app/requests/$id")({
+  head: () => appHead("Habitoo CRM — detalii cerere"),
   component: RequestDetailPage,
 });
 

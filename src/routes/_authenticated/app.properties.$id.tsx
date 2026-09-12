@@ -89,8 +89,10 @@ import {
 } from "@/lib/labels";
 import { activityStatusLabels, activityStatusTone, logAudit } from "@/lib/crm";
 import { matchLabel, matchTone, scoreMatch } from "@/lib/matching";
+import { appHead } from "@/components/app/app-head";
 
 export const Route = createFileRoute("/_authenticated/app/properties/$id")({
+  head: () => appHead("Habitoo CRM — detalii proprietate"),
   component: PropertyDetailPage,
 });
 

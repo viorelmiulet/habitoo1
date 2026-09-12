@@ -32,8 +32,10 @@ import {
   setAgentActive,
   type TeamOverview,
 } from "@/lib/agency-team.functions";
+import { appHead } from "@/components/app/app-head";
 
 export const Route = createFileRoute("/_authenticated/app/team")({
+  head: () => appHead("Habitoo CRM — echipă"),
   component: TeamPage,
 });
 

@@ -53,8 +53,10 @@ import { PortalLogo, hasPortalLogo } from "@/components/app/PortalLogo";
 import { UserAvatar } from "@/components/app/UserAvatar";
 import { PropertyThumb, usePropertyCovers } from "@/components/app/PropertyThumb";
 import { cn } from "@/lib/utils";
+import { appHead } from "@/components/app/app-head";
 
 export const Route = createFileRoute("/_authenticated/app/leads")({
+  head: () => appHead("Habitoo CRM — lead-uri"),
   validateSearch: (search: Record<string, unknown>): { new?: boolean; stage?: string } => {
     const out: { new?: boolean; stage?: string } = {};
     if (search["new"] === true || search["new"] === "true") out.new = true;
