@@ -313,10 +313,28 @@ function SettingsPage() {
                   onCheckedChange={(v) => setOrgForm((f) => ({ ...f, collaboration_enabled: v }))}
                 />
               </div>
-              <div className="flex items-center justify-between gap-3 rounded-xl border border-border p-4 text-sm">
-                <span className="text-muted-foreground">Plan curent</span>
-                <StatusBadge tone="primary">{user?.organization?.plan ?? "—"}</StatusBadge>
+              {/* Planul este doar informativ: se schimbă exclusiv din Superadmin. */}
+              <div className="space-y-2 rounded-xl border border-border p-4 text-sm">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <span className="text-muted-foreground">Plan curent</span>
+                  <StatusBadge tone="primary">
+                    {PLAN_LABELS[normalizePlan(user?.organization?.plan ?? "basic")]} ·{" "}
+                    {planAgentLimitLabel(normalizePlan(user?.organization?.plan ?? "basic"))}
+                  </StatusBadge>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  {team
+                    ? team.seatLimit === null
+                      ? `${team.seatsUsed} agenți activi · fără limită de locuri`
+                      : `${team.seatsUsed} din ${team.seatLimit} agenți activi`
+                    : "Se încarcă locurile ocupate…"}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  Planul nu poate fi schimbat din aplicație. Pentru alt plan, scrie-ne la
+                  contact@habitoo.ro sau deschide un tichet de suport.
+                </p>
               </div>
+
 
               {user?.isAdmin ? (
                 <div className="flex justify-end">
