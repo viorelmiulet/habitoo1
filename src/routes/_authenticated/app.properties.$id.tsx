@@ -509,65 +509,9 @@ function PropertyDetailPage() {
           </>
         }
         actions={
-          <div className="flex flex-col items-end gap-3">
-            <span className="text-2xl font-medium tracking-tight">
-              {formatMoney(property.price, property.currency)}
-            </span>
-            <div className="flex flex-wrap items-center justify-end gap-2">
-              {editing ? (
-                <Button size="sm" variant="ghost" onClick={() => setEditing(false)}>
-                  Anulează
-                </Button>
-              ) : (
-                <Button size="sm" variant="ghost" onClick={startEdit}>
-                  <Pencil className="size-4" /> Editează
-                </Button>
-              )}
-              <Button
-                size="sm"
-                variant="ghost"
-                onClick={() => duplicate.mutate()}
-                disabled={duplicate.isPending}
-              >
-                Duplică
-              </Button>
-              <Button
-                size="sm"
-                onClick={() => publish.mutate()}
-                disabled={publish.isPending || save.isPending}
-              >
-                {publish.isPending ? "Se publică…" : "Publică"}
-              </Button>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button size="icon" variant="ghost" aria-label="Mai multe acțiuni">
-                    <MoreHorizontal className="size-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem onClick={printSummary}>
-                    <Printer className="size-4" /> Generează prezentare
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  {Object.entries(propertyStatusLabels).map(([k, v]) => (
-                    <DropdownMenuItem key={k} onClick={() => changeStatus.mutate(k)}>
-                      Status: {v}
-                    </DropdownMenuItem>
-                  ))}
-                  <DropdownMenuSeparator />
-                  {property.status === "archived" ? (
-                    <DropdownMenuItem onClick={() => unarchive.mutate()}>
-                      Dezarhivează
-                    </DropdownMenuItem>
-                  ) : (
-                    <DropdownMenuItem onClick={() => setArchiveOpen(true)}>
-                      Arhivează
-                    </DropdownMenuItem>
-                  )}
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
-          </div>
+          <span className="text-2xl font-medium tracking-tight">
+            {formatMoney(property.price, property.currency)}
+          </span>
         }
       />
 
