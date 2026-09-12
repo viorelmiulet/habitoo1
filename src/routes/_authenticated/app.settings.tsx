@@ -67,6 +67,7 @@ function SettingsPage() {
     phone: user?.organization?.phone ?? "",
     email: user?.organization?.email ?? "",
     collaboration_enabled: user?.organization?.collaboration_enabled !== false,
+    storia_auto_republish: user?.organization?.storia_auto_republish === true,
   });
 
   const { data: team = [] } = useQuery({
@@ -152,6 +153,7 @@ function SettingsPage() {
           phone: orgForm.phone || null,
           email: orgForm.email || null,
           collaboration_enabled: orgForm.collaboration_enabled,
+          storia_auto_republish: orgForm.storia_auto_republish,
         })
         .eq("id", user.organization.id);
       if (error) throw error;
