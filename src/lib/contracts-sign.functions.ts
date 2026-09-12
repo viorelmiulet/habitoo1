@@ -98,6 +98,7 @@ export const submitSignature = createServerFn({ method: "POST" })
       .select("*")
       .eq("id", row.contract_id)
       .single();
+    if (!contract) throw new Error("Documentul nu există.");
     if (contract.status === "cancelled") throw new Error("Documentul a fost anulat.");
 
     const base64 = data.signaturePngBase64.replace(/^data:image\/png;base64,/, "");
@@ -142,7 +143,7 @@ export const submitSignature = createServerFn({ method: "POST" })
       .eq("id", contract.id);
 
     // Documentul final se regenerează cu semnăturile aplicate.
-    await renderAndStorePdf(contract.id, contract.created_by);
+    await renderAndStorePdf(contract.id, contract.created_by ?? "");
 
     await db.from("audit_logs").insert({
       organization_id: contract.organization_id,

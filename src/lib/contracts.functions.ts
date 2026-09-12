@@ -468,7 +468,7 @@ export const createContract = createServerFn({ method: "POST" })
       "agentie.denumire_legala": org?.legal_name,
       "agentie.cui": org?.cui,
       "agentie.registru": org?.trade_registry_number,
-      "agentie.adresa": org?.address,
+      "agentie.adresa": org?.material_address,
       "agentie.telefon": org?.phone,
       "agentie.email": org?.email,
       "agent.nume": profile?.full_name,
@@ -522,7 +522,7 @@ export const createContract = createServerFn({ method: "POST" })
             legalName: org?.legal_name ?? null,
             cui: org?.cui ?? null,
             registry: org?.trade_registry_number ?? null,
-            address: org?.address ?? null,
+            address: org?.material_address ?? null,
             phone: org?.phone ?? null,
             email: org?.email ?? null,
           },
@@ -705,6 +705,7 @@ export async function renderAndStorePdf(contractId: string, actorId: string) {
   const { buildContractPdf } = await import("@/lib/contracts/pdf.server");
 
   const { data: contract } = await db.from("contracts").select("*").eq("id", contractId).single();
+  if (!contract) throw new Error("Contractul nu există.");
   const { data: parties } = await db
     .from("contract_parties")
     .select("*")
@@ -712,7 +713,7 @@ export async function renderAndStorePdf(contractId: string, actorId: string) {
     .order("sign_order");
   const { data: org } = await db
     .from("organizations")
-    .select("name,legal_name,cui,trade_registry_number,address,phone,email,logo_path")
+    .select("name,legal_name,cui,trade_registry_number,material_address,material_phone,material_email,phone,email,logo_path")
     .eq("id", contract.organization_id)
     .maybeSingle();
 
@@ -773,7 +774,7 @@ export async function renderAndStorePdf(contractId: string, actorId: string) {
       legalName: org?.legal_name ?? null,
       cui: org?.cui ?? null,
       registry: org?.trade_registry_number ?? null,
-      address: org?.address ?? null,
+      address: org?.material_address ?? null,
       phone: org?.phone ?? null,
       email: org?.email ?? null,
     },
