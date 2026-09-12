@@ -13,6 +13,15 @@ import { currentUserQueryKey, useCurrentUser } from "@/hooks/use-session";
 import { clearAuthenticatedSession } from "@/lib/sign-out";
 import { OrgBlocked } from "@/components/app/OrgBlocked";
 import { ShellLoading } from "@/components/app/LoadingState";
+import { cn } from "@/lib/utils";
+import {
+  PLAN_KEYS,
+  PLAN_LABELS,
+  PLAN_PRICES,
+  normalizePlan,
+  planAgentLimitLabel,
+  type PlanKey,
+} from "@/lib/plans";
 
 export const Route = createFileRoute("/_authenticated/onboarding")({
   head: () => ({
@@ -36,6 +45,9 @@ function OnboardingPage() {
     fullName: "",
     phone: "",
   });
+  // Planul se alege o singură dată, aici. Ulterior îl poate schimba doar echipa Habitoo.
+  const [plan, setPlan] = useState<PlanKey>("basic");
+  const [term, setTerm] = useState<"30d" | "12m">("30d");
   const [loading, setLoading] = useState(false);
   // Retrimiterea unei cereri respinse: afișează din nou formularul.
   const [resubmit, setResubmit] = useState(false);
@@ -67,6 +79,8 @@ function OnboardingPage() {
       fullName: f.fullName || request.full_name,
       phone: f.phone || request.phone || "",
     }));
+    setPlan(normalizePlan(request.requested_plan));
+    setTerm(request.requested_term === "12m" ? "12m" : "30d");
   }, [request]);
 
   const set = (key: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement>) =>
@@ -84,6 +98,8 @@ function OnboardingPage() {
       _trade_registry_number: form.tradeRegistry,
       _full_name: form.fullName,
       _phone: form.phone,
+      _requested_plan: plan,
+      _requested_term: term,
     });
     setLoading(false);
     if (error) {
@@ -136,6 +152,13 @@ function OnboardingPage() {
               <div className="flex justify-between gap-3">
                 <dt>Reg. Comerțului</dt>
                 <dd className="text-right text-foreground">{request.trade_registry_number}</dd>
+              </div>
+              <div className="flex justify-between gap-3">
+                <dt>Plan solicitat</dt>
+                <dd className="text-right text-foreground">
+                  {PLAN_LABELS[normalizePlan(request.requested_plan)]} ·{" "}
+                  {request.requested_term === "12m" ? "anual" : "lunar"}
+                </dd>
               </div>
               <div className="flex justify-between gap-3">
                 <dt>Persoană de contact</dt>
@@ -319,6 +342,63 @@ function OnboardingPage() {
                 autoComplete="tel"
               />
             </div>
+          </div>
+        </fieldset>
+
+        <fieldset className="space-y-4">
+          <legend className="text-sm font-semibold">Planul dorit</legend>
+          <p className="text-xs text-muted-foreground">
+            Alege planul cu care pornești. Ulterior poate fi schimbat doar de echipa Habitoo, la
+            cererea ta.
+          </p>
+          <div className="flex w-fit items-center gap-1 rounded-full border border-border p-1">
+            {(["30d", "12m"] as const).map((t) => (
+              <button
+                key={t}
+                type="button"
+                aria-pressed={term === t}
+                onClick={() => setTerm(t)}
+                className={cn(
+                  "rounded-full px-3 py-1.5 text-xs font-medium transition-colors",
+                  term === t
+                    ? "bg-primary text-primary-foreground"
+                    : "text-muted-foreground hover:text-foreground",
+                )}
+              >
+                {t === "30d" ? "Lunar" : "Anual · -50%"}
+              </button>
+            ))}
+          </div>
+          <div className="grid gap-3 sm:grid-cols-3">
+            {PLAN_KEYS.map((k) => {
+              const price = term === "12m" ? PLAN_PRICES[k].annualMonthly : PLAN_PRICES[k].monthly;
+              return (
+                <button
+                  key={k}
+                  type="button"
+                  aria-pressed={plan === k}
+                  onClick={() => setPlan(k)}
+                  className={cn(
+                    "rounded-xl border p-4 text-left transition-colors",
+                    plan === k
+                      ? "border-primary bg-primary/5"
+                      : "border-border hover:border-primary/40",
+                  )}
+                >
+                  <p className="text-sm font-semibold">{PLAN_LABELS[k]}</p>
+                  <p className="mt-1 text-lg font-semibold">
+                    {price}€
+                    <span className="text-xs font-medium text-muted-foreground">/lună</span>
+                  </p>
+                  <p className="mt-1 text-xs text-muted-foreground">{planAgentLimitLabel(k)}</p>
+                  {term === "12m" ? (
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      facturat anual, {PLAN_PRICES[k].annualMonthly * 12}€/an
+                    </p>
+                  ) : null}
+                </button>
+              );
+            })}
           </div>
         </fieldset>
 
