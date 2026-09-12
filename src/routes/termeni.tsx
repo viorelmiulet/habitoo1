@@ -24,7 +24,7 @@ const sections: LegalSection[] = [
           Habitoo este o platformă software (CRM) destinată agențiilor imobiliare, operată de MVA
           PERFECT BUSINESS S.R.L., cu sediul social în jud. Ilfov, sat Dudu, comuna Chiajna, strada
           Tineretului nr. 35BIS, camera 1, bl. 2, scara 2, etaj 2, ap. 26, înregistrată la Registrul
-          Comerțului sub nr. J2024018361001, CUI RO50477503, denumită în continuare „Habitoo" sau
+          Comerțului sub nr. J2024018361001, CUI 50477503, denumită în continuare „Habitoo" sau
           „noi".
         </p>
         <p>Platforma este disponibilă la habitoo.ro și crm.habitoo.ro.</p>
