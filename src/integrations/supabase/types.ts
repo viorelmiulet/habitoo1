@@ -1328,6 +1328,11 @@ export type Database = {
           plan: string
           slug: string
           status: Database["public"]["Enums"]["org_status"]
+          subscription_expires_at: string | null
+          subscription_grace_notified_at: string | null
+          subscription_started_at: string | null
+          subscription_term: string | null
+          suspended_reason: string | null
           trade_registry_number: string | null
           updated_at: string
           updated_by: string | null
@@ -1366,6 +1371,11 @@ export type Database = {
           plan?: string
           slug: string
           status?: Database["public"]["Enums"]["org_status"]
+          subscription_expires_at?: string | null
+          subscription_grace_notified_at?: string | null
+          subscription_started_at?: string | null
+          subscription_term?: string | null
+          suspended_reason?: string | null
           trade_registry_number?: string | null
           updated_at?: string
           updated_by?: string | null
@@ -1404,6 +1414,11 @@ export type Database = {
           plan?: string
           slug?: string
           status?: Database["public"]["Enums"]["org_status"]
+          subscription_expires_at?: string | null
+          subscription_grace_notified_at?: string | null
+          subscription_started_at?: string | null
+          subscription_term?: string | null
+          suspended_reason?: string | null
           trade_registry_number?: string | null
           updated_at?: string
           updated_by?: string | null
@@ -3457,6 +3472,10 @@ export type Database = {
         Returns: undefined
       }
       ro_normalize_name: { Args: { _v: string }; Returns: string }
+      set_organization_subscription: {
+        Args: { _org: string; _term: string }
+        Returns: string
+      }
       site_feed_record_visit: {
         Args: {
           _occurred_on: string
@@ -3478,6 +3497,7 @@ export type Database = {
         }
         Returns: string
       }
+      subscription_enforce_daily: { Args: never; Returns: Json }
       superadmin_delete_organization: {
         Args: { _actor?: string; _org: string }
         Returns: Json
