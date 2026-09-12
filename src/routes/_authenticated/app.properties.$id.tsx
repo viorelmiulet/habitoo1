@@ -522,14 +522,36 @@ function PropertyDetailPage() {
         onArchived={() => navigate({ to: "/app/properties" })}
       />
 
-      {/* Bandă de metrici: date reale, fără borduri, doar fundal ușor diferit. */}
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        {metrics.map((m) => (
-          <div key={m.label} className="rounded-2xl bg-secondary/60 px-4 py-3">
-            <p className="text-xs text-muted-foreground">{m.label}</p>
-            <p className="mt-0.5 text-lg font-medium tracking-tight">{m.value}</p>
+      {/* Galeria proprietății, alături de portofoliul agenției. */}
+      <div className="grid gap-4 lg:grid-cols-3">
+        <div className="space-y-4 lg:col-span-2">
+          <PropertyHeroGallery propertyId={id} title={property.title} />
+
+          {/* Bandă de metrici: date reale, fără borduri, doar fundal ușor diferit. */}
+          <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+            {metrics.map((m) => (
+              <div key={m.label} className="rounded-2xl bg-secondary/60 px-4 py-3">
+                <p className="text-xs text-muted-foreground">{m.label}</p>
+                <p className="mt-0.5 text-lg font-medium tracking-tight">{m.value}</p>
+              </div>
+            ))}
           </div>
-        ))}
+
+          {(property.features ?? []).length > 0 ? (
+            <div className="flex flex-wrap gap-2">
+              {(property.features ?? []).slice(0, 8).map((f) => (
+                <span
+                  key={f}
+                  className="rounded-full bg-secondary/60 px-3 py-1 text-xs text-muted-foreground"
+                >
+                  {f}
+                </span>
+              ))}
+            </div>
+          ) : null}
+        </div>
+
+        <PortfolioPanel orgId={orgId} userId={user?.userId} currentPropertyId={id} />
       </div>
 
       {/* Rând de acțiuni, sub banda de metrici. */}
