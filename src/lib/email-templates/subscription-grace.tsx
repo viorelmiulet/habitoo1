@@ -11,6 +11,7 @@ interface SubscriptionGraceEmailProps {
   fullName?: string;
   expiresAt: string;
   graceDays: number;
+  isTrial?: boolean;
 }
 
 export const SubscriptionGraceEmail = ({
@@ -20,22 +21,29 @@ export const SubscriptionGraceEmail = ({
   fullName,
   expiresAt,
   graceDays,
+  isTrial = false,
 }: SubscriptionGraceEmailProps) => (
   <EmailLayout
-    preview={`Abonamentul agenției ${agencyName} a expirat — ${graceDays} zile până la suspendare`}
-    heading="Abonamentul agenției a expirat"
-    note="Dacă ai reînnoit deja abonamentul, poți ignora acest mesaj."
+    preview={
+      isTrial
+        ? `Perioada gratuită a agenției ${agencyName} s-a încheiat — ${graceDays} zile până la suspendare`
+        : `Abonamentul agenției ${agencyName} a expirat — ${graceDays} zile până la suspendare`
+    }
+    heading={isTrial ? "Perioada ta gratuită s-a încheiat" : "Abonamentul agenției a expirat"}
+    note="Dacă abonamentul este deja activ, poți ignora acest mesaj."
   >
     <Text style={paragraph}>Bună{fullName ? ` ${fullName}` : ""},</Text>
     <Text style={paragraph}>
-      Abonamentul agenției <strong>{agencyName}</strong> a expirat pe {expiresAt}. Contul rămâne
-      funcțional încă {graceDays} zile în {siteName}.
+      {isTrial ? "Perioada gratuită de 30 de zile a agenției " : "Abonamentul agenției "}
+      <strong>{agencyName}</strong> {isTrial ? "s-a încheiat pe " : "a expirat pe "}
+      {expiresAt}. Contul rămâne funcțional încă {graceDays} zile în {siteName}.
     </Text>
     <Text style={strongText}>
-      Dacă abonamentul nu este reînnoit în acest interval, accesul la aplicație va fi suspendat.
+      Dacă abonamentul nu este {isTrial ? "activat" : "reînnoit"} în acest interval, accesul la
+      aplicație va fi suspendat.
     </Text>
     <Text style={paragraph}>
-      Pentru reînnoire, răspunde la acest email sau scrie-ne la contact@habitoo.ro.
+      Pentru activare sau reînnoire, răspunde la acest email sau scrie-ne la contact@habitoo.ro.
     </Text>
     <PrimaryButton href={appUrl}>Intră în Habitoo</PrimaryButton>
   </EmailLayout>
