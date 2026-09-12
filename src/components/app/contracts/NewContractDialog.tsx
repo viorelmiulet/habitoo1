@@ -346,7 +346,7 @@ export function NewContractDialog({
             <input
               ref={fileRef}
               type="file"
-              accept="image/jpeg,image/png,image/webp"
+              accept="image/*"
               capture="environment"
               className="hidden"
               onChange={(e) => {
