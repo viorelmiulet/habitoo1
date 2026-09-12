@@ -347,9 +347,15 @@ export const extractIdDocument = createServerFn({ method: "POST" })
           status: res.status,
           ms: Date.now() - startedAt,
         });
-        // Model indisponibil pe cheia respectivă: încearcă varianta următoare.
-        if (res.status === 404 && model !== models[models.length - 1]) continue;
+        // Model indisponibil (404) sau supraîncărcat (429/5xx): încearcă varianta
+        // următoare din listă, cu o mică pauză pentru supraîncărcare.
+        const retryable = res.status === 404 || res.status === 429 || res.status >= 500;
+        if (retryable && model !== models[models.length - 1]) {
+          if (res.status !== 404) await new Promise((r) => setTimeout(r, 800));
+          continue;
+        }
         break;
+
       }
 
       if (!res) {
