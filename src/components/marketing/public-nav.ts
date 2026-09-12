@@ -26,7 +26,7 @@ export const footerColumns = [
   {
     title: "Legal",
     links: [
-      { to: "/confidentialitate", label: "Politica de confidențialitate" },
+      { to: "/politica-de-confidentialitate", label: "Politica de confidențialitate" },
       { to: "/termeni", label: "Termeni și condiții" },
     ],
   },
