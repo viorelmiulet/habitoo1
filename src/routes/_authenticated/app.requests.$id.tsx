@@ -68,7 +68,8 @@ import {
   requestStatusOptions,
   requestStatusTone,
 } from "@/lib/crm";
-import { matchLabel, matchTone, scoreMatch } from "@/lib/matching";
+import { scoreMatch } from "@/lib/matching";
+import { PropertyThumb, usePropertyCovers } from "@/components/app/PropertyThumb";
 import { appHead } from "@/components/app/app-head";
 
 export const Route = createFileRoute("/_authenticated/app/requests/$id")({
