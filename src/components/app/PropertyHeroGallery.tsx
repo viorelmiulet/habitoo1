@@ -5,13 +5,15 @@
  * Doar prezentare: refolosește imaginile existente din `property_images`
  * (ordinea reală: is_primary → position) și nu modifică nimic.
  */
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { ImageOff } from "lucide-react";
+import { ChevronLeft, ChevronRight, ImageOff } from "lucide-react";
 
 import { supabase } from "@/integrations/supabase/client";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { MEDIA_BUCKET, signedUrls } from "@/lib/storage";
 import { cn } from "@/lib/utils";
+
 
 type ImageRow = {
   url: string;
@@ -90,17 +92,40 @@ export function PropertyHeroGallery({
   const thumbs = rest.slice(0, 2);
   const hidden = Math.max(0, images.length - 1 - thumbs.length);
 
+  // Vizualizator pe ecran complet: click pe orice poză, navigare cu butoane sau taste.
+  const [openAt, setOpenAt] = useState<number | null>(null);
+  const total = images.length;
+  const step = useCallback(
+    (delta: number) => setOpenAt((prev) => (prev === null ? prev : (prev + delta + total) % total)),
+    [total],
+  );
+
+  useEffect(() => {
+    if (openAt === null) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "ArrowRight") step(1);
+      if (e.key === "ArrowLeft") step(-1);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [openAt, step]);
+
+  const active = openAt === null ? null : images[openAt];
+  const activeSrc = active ? srcOf(active) : null;
+
   return (
     <div className="grid grid-cols-3 gap-3">
       <div className="col-span-3 sm:col-span-2">
         {main && srcOf(main) ? (
-          <img
-            src={srcOf(main) as string}
-            alt={main.alt ?? title}
-            loading="lazy"
-            decoding="async"
-            className="h-56 w-full rounded-2xl object-cover sm:h-72"
-          />
+          <button type="button" onClick={() => setOpenAt(0)} className="block w-full">
+            <img
+              src={srcOf(main) as string}
+              alt={main.alt ?? title}
+              loading="lazy"
+              decoding="async"
+              className="h-56 w-full cursor-zoom-in rounded-2xl object-cover transition hover:opacity-95 sm:h-72"
+            />
+          </button>
         ) : (
           <Placeholder className="h-56 w-full sm:h-72" />
         )}
@@ -114,25 +139,77 @@ export function PropertyHeroGallery({
           return (
             <div key={slot} className="relative">
               {img && src ? (
-                <img
-                  src={src}
-                  alt={img.alt ?? title}
-                  loading="lazy"
-                  decoding="async"
-                  className="h-[6.5rem] w-full rounded-2xl object-cover sm:h-[8.5rem]"
-                />
+                <button
+                  type="button"
+                  onClick={() => setOpenAt(slot + 1)}
+                  className="block w-full"
+                  aria-label={`Deschide fotografia ${slot + 2}`}
+                >
+                  <img
+                    src={src}
+                    alt={img.alt ?? title}
+                    loading="lazy"
+                    decoding="async"
+                    className="h-[6.5rem] w-full cursor-zoom-in rounded-2xl object-cover transition hover:opacity-95 sm:h-[8.5rem]"
+                  />
+                </button>
               ) : (
                 <Placeholder className="h-[6.5rem] w-full sm:h-[8.5rem]" />
               )}
               {isLast && hidden > 0 ? (
-                <span className="absolute inset-0 flex items-center justify-center rounded-2xl bg-foreground/55 text-sm font-medium text-background">
+                <button
+                  type="button"
+                  onClick={() => setOpenAt(thumbs.length + 1)}
+                  className="absolute inset-0 flex items-center justify-center rounded-2xl bg-foreground/55 text-sm font-medium text-background"
+                >
                   +{hidden} foto
-                </span>
+                </button>
               ) : null}
             </div>
           );
         })}
       </div>
+
+      <Dialog open={openAt !== null} onOpenChange={(open) => !open && setOpenAt(null)}>
+        <DialogContent className="max-w-5xl border-none bg-transparent p-0 shadow-none">
+          <DialogTitle className="sr-only">{title}</DialogTitle>
+          <div className="relative">
+            {activeSrc ? (
+              <img
+                src={activeSrc}
+                alt={active?.alt ?? title}
+                className="max-h-[80vh] w-full rounded-2xl bg-background object-contain"
+              />
+            ) : (
+              <Placeholder className="h-72 w-full" />
+            )}
+            {total > 1 ? (
+              <>
+                <button
+                  type="button"
+                  onClick={() => step(-1)}
+                  aria-label="Fotografia anterioară"
+                  className="absolute top-1/2 left-2 -translate-y-1/2 rounded-full bg-background/85 p-2 text-foreground shadow hover:bg-background"
+                >
+                  <ChevronLeft className="size-5" aria-hidden />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => step(1)}
+                  aria-label="Fotografia următoare"
+                  className="absolute top-1/2 right-2 -translate-y-1/2 rounded-full bg-background/85 p-2 text-foreground shadow hover:bg-background"
+                >
+                  <ChevronRight className="size-5" aria-hidden />
+                </button>
+                <span className="absolute bottom-3 left-1/2 -translate-x-1/2 rounded-full bg-foreground/70 px-3 py-1 text-xs font-medium text-background">
+                  {(openAt ?? 0) + 1} / {total}
+                </span>
+              </>
+            ) : null}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
+
 }
