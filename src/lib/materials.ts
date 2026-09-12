@@ -163,13 +163,19 @@ export function buildPresentationHtml(branding: MaterialBranding, data: Presenta
   .contacts{margin-top:4px;display:flex;flex-wrap:wrap;gap:6px}
   .sep{color:${LINE}}
   .habitoo{margin-top:10px;font-size:11px;color:#9AA0A8}
-  @media print{body{padding:0}}
+  .gallery{margin:20px 0 0;padding:0}
+  .gallery .cover{display:block;width:100%;height:340px;object-fit:cover;border-radius:12px;background:${LINE}}
+  .gallery .thumbs{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-top:8px}
+  .gallery .thumbs img{width:100%;height:84px;object-fit:cover;border-radius:8px;background:${LINE}}
+  @media print{body{padding:0}.gallery,.gallery img{break-inside:avoid;page-break-inside:avoid}}
 </style></head><body><div class="sheet">
 <header>${header}<div class="ref">${escapeHtml(branding.agencyName)}</div></header>
 <h1>${escapeHtml(data.title)}</h1>
 <p class="loc">${escapeHtml(data.location)}</p>
 <p class="price">${escapeHtml(data.price)}</p>
+${gallery}
 <dl>${data.specs
+
     .map(
       (s) =>
         `<div class="row"><dt>${escapeHtml(s.label)}</dt><dd>${escapeHtml(s.value)}</dd></div>`,
