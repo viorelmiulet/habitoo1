@@ -25,6 +25,8 @@ import { EmptyState } from "@/components/app/EmptyState";
 
 import { ActivityDialog } from "@/components/app/ActivityDialog";
 import { PropertyMediaManager } from "@/components/app/PropertyMediaManager";
+import { PropertyHeroGallery } from "@/components/app/PropertyHeroGallery";
+import { PortfolioPanel } from "@/components/app/PortfolioPanel";
 import {
   PropertyPortalsCard,
   type PropertyPortalsHandle,
