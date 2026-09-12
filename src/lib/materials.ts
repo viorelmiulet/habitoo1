@@ -123,8 +123,24 @@ export function buildPresentationHtml(branding: MaterialBranding, data: Presenta
     .map((line) => `<span>${escapeHtml(line)}</span>`)
     .join('<span class="sep">·</span>');
 
+  const photos = (data.photos ?? []).filter(Boolean).slice(0, 5);
+  const [cover, ...others] = photos;
+  const gallery = cover
+    ? `<figure class="gallery">
+  <img class="cover" src="${escapeHtml(cover)}" alt="${escapeHtml(data.title)}" />
+  ${
+    others.length
+      ? `<div class="thumbs">${others
+          .map((src) => `<img src="${escapeHtml(src)}" alt="" />`)
+          .join("")}</div>`
+      : ""
+  }
+</figure>`
+    : "";
+
   return `<!doctype html><html lang="ro"><head><meta charset="utf-8" />
 <title>${escapeHtml(data.title)}</title>
+
 <style>
   *{box-sizing:border-box}
   body{margin:0;padding:32px;font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;color:${INK};background:#fff}
