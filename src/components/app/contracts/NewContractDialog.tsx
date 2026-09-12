@@ -360,7 +360,7 @@ export function NewContractDialog({
               size="sm"
               variant="outline"
               onClick={() => fileRef.current?.click()}
-              disabled={extract.isPending}
+              disabled={extract.isPending || !extractionEnabled}
             >
               {extract.isPending ? (
                 <Loader2 className="size-4 animate-spin" />
@@ -370,11 +370,18 @@ export function NewContractDialog({
               {extract.isPending ? "Se citește actul…" : "Fotografiază actul"}
             </Button>
           </div>
+          {!extractionEnabled && (
+            <p className="mt-2 text-xs text-muted-foreground">
+              Completarea automată din act nu este configurată. Introdu datele manual în câmpurile de
+              mai jos.
+            </p>
+          )}
           <p className="mt-2 flex items-start gap-1.5 text-xs text-muted-foreground">
             <ShieldCheck className="mt-0.5 size-3.5 shrink-0" />
             Fotografia nu este salvată. CNP-ul și seria actului se păstrează criptat și sunt
             vizibile doar agentului care întocmește documentul și administratorului agenției.
           </p>
+
         </div>
 
         <div className="grid gap-4 sm:grid-cols-2">
