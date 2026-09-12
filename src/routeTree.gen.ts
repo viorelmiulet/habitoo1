@@ -54,6 +54,7 @@ import { Route as AuthenticatedSuperadminSupportRouteImport } from './routes/_au
 import { Route as AuthenticatedSuperadminUsersRouteImport } from './routes/_authenticated/superadmin.users'
 import { Route as AuthenticatedAppContactsIndexRouteImport } from './routes/_authenticated/app.contacts.index'
 import { Route as AuthenticatedAppContactsIdRouteImport } from './routes/_authenticated/app.contacts.$id'
+import { Route as AuthenticatedAppContractsIndexRouteImport } from './routes/_authenticated/app.contracts.index'
 import { Route as AuthenticatedAppPropertiesIndexRouteImport } from './routes/_authenticated/app.properties.index'
 import { Route as AuthenticatedAppPropertiesIdRouteImport } from './routes/_authenticated/app.properties.$id'
 import { Route as AuthenticatedAppPropertiesNewRouteImport } from './routes/_authenticated/app.properties.new'
@@ -325,6 +326,12 @@ const AuthenticatedAppContactsIdRoute =
     path: '/contacts/$id',
     getParentRoute: () => AuthenticatedAppRoute,
   } as any)
+const AuthenticatedAppContractsIndexRoute =
+  AuthenticatedAppContractsIndexRouteImport.update({
+    id: '/contracts/',
+    path: '/contracts/',
+    getParentRoute: () => AuthenticatedAppRoute,
+  } as any)
 const AuthenticatedAppPropertiesIndexRoute =
   AuthenticatedAppPropertiesIndexRouteImport.update({
     id: '/properties/',
@@ -527,6 +534,7 @@ export interface FileRoutesByFullPath {
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
   '/app/contacts/': typeof AuthenticatedAppContactsIndexRoute
+  '/app/contracts/': typeof AuthenticatedAppContractsIndexRoute
   '/app/properties/': typeof AuthenticatedAppPropertiesIndexRoute
   '/api/public/homepitch/v1/properties': typeof ApiPublicHomepitchV1PropertiesRouteWithChildren
   '/api/public/portal/v1/agents': typeof ApiPublicPortalV1AgentsRoute
@@ -597,6 +605,7 @@ export interface FileRoutesByTo {
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
   '/app/contacts': typeof AuthenticatedAppContactsIndexRoute
+  '/app/contracts': typeof AuthenticatedAppContractsIndexRoute
   '/app/properties': typeof AuthenticatedAppPropertiesIndexRoute
   '/api/public/homepitch/v1/properties': typeof ApiPublicHomepitchV1PropertiesRouteWithChildren
   '/api/public/portal/v1/agents': typeof ApiPublicPortalV1AgentsRoute
@@ -671,6 +680,7 @@ export interface FileRoutesById {
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
   '/_authenticated/app/contacts/': typeof AuthenticatedAppContactsIndexRoute
+  '/_authenticated/app/contracts/': typeof AuthenticatedAppContractsIndexRoute
   '/_authenticated/app/properties/': typeof AuthenticatedAppPropertiesIndexRoute
   '/api/public/homepitch/v1/properties': typeof ApiPublicHomepitchV1PropertiesRouteWithChildren
   '/api/public/portal/v1/agents': typeof ApiPublicPortalV1AgentsRoute
@@ -745,6 +755,7 @@ export interface FileRouteTypes {
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
     | '/app/contacts/'
+    | '/app/contracts/'
     | '/app/properties/'
     | '/api/public/homepitch/v1/properties'
     | '/api/public/portal/v1/agents'
@@ -815,6 +826,7 @@ export interface FileRouteTypes {
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
     | '/app/contacts'
+    | '/app/contracts'
     | '/app/properties'
     | '/api/public/homepitch/v1/properties'
     | '/api/public/portal/v1/agents'
@@ -888,6 +900,7 @@ export interface FileRouteTypes {
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
     | '/_authenticated/app/contacts/'
+    | '/_authenticated/app/contracts/'
     | '/_authenticated/app/properties/'
     | '/api/public/homepitch/v1/properties'
     | '/api/public/portal/v1/agents'
@@ -1264,6 +1277,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAppContactsIdRouteImport
       parentRoute: typeof AuthenticatedAppRoute
     }
+    '/_authenticated/app/contracts/': {
+      id: '/_authenticated/app/contracts/'
+      path: '/contracts'
+      fullPath: '/app/contracts/'
+      preLoaderRoute: typeof AuthenticatedAppContractsIndexRouteImport
+      parentRoute: typeof AuthenticatedAppRoute
+    }
     '/_authenticated/app/properties/': {
       id: '/_authenticated/app/properties/'
       path: '/properties'
@@ -1481,6 +1501,7 @@ interface AuthenticatedAppRouteChildren {
   AuthenticatedAppPropertiesIdRoute: typeof AuthenticatedAppPropertiesIdRoute
   AuthenticatedAppPropertiesNewRoute: typeof AuthenticatedAppPropertiesNewRoute
   AuthenticatedAppContactsIndexRoute: typeof AuthenticatedAppContactsIndexRoute
+  AuthenticatedAppContractsIndexRoute: typeof AuthenticatedAppContractsIndexRoute
   AuthenticatedAppPropertiesIndexRoute: typeof AuthenticatedAppPropertiesIndexRoute
 }
 
@@ -1502,6 +1523,7 @@ const AuthenticatedAppRouteChildren: AuthenticatedAppRouteChildren = {
   AuthenticatedAppPropertiesIdRoute: AuthenticatedAppPropertiesIdRoute,
   AuthenticatedAppPropertiesNewRoute: AuthenticatedAppPropertiesNewRoute,
   AuthenticatedAppContactsIndexRoute: AuthenticatedAppContactsIndexRoute,
+  AuthenticatedAppContractsIndexRoute: AuthenticatedAppContractsIndexRoute,
   AuthenticatedAppPropertiesIndexRoute: AuthenticatedAppPropertiesIndexRoute,
 }
 
