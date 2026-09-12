@@ -132,7 +132,16 @@ function SettingsPage() {
     onError: (e: Error) => toastError(e),
   });
 
+  // Locurile ocupate din plan — doar afișare, fără nicio acțiune de schimbare a planului.
+  const fetchTeam = useServerFn(getTeamOverview);
+  const { data: team } = useQuery({
+    queryKey: ["team-overview", user?.organization?.id ?? "none"],
+    queryFn: () => fetchTeam(),
+    enabled: Boolean(user?.organization?.id),
+  });
+
   const saveOrg = useMutation({
+
     mutationFn: async () => {
       if (!user?.organization?.id) throw new Error("Agenția nu este configurată.");
       const { error } = await supabase
