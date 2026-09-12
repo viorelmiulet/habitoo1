@@ -152,14 +152,14 @@ function readColumns(): ColumnKey[] {
   return allColumns.map((c) => c.key);
 }
 
-/** Grila e vizualizarea implicită; preferința utilizatorului se ține local. */
-// Cheie nouă: utilizatorii care aveau vechea listă tabelară memorată primesc
-// noua grilă ca vizualizare implicită, dar își pot alege din nou tabelul.
-const VIEW_KEY = "habitoo.propertyView.v2";
+/** Lista e vizualizarea implicită; preferința utilizatorului se ține local. */
+// Cheie nouă: utilizatorii care aveau vechea grilă memorată primesc
+// noua listă ca vizualizare implicită, dar își pot alege din nou grila.
+const VIEW_KEY = "habitoo.propertyView.v3";
 
 function readView(): "list" | "grid" {
-  if (typeof window === "undefined") return "grid";
-  return window.localStorage.getItem(VIEW_KEY) === "list" ? "list" : "grid";
+  if (typeof window === "undefined") return "list";
+  return window.localStorage.getItem(VIEW_KEY) === "grid" ? "grid" : "list";
 }
 
 const PAGE_SIZE = 25;
