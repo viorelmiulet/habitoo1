@@ -483,6 +483,16 @@ function AgenciesPage() {
                         </StatusBadge>
                         {o.is_demo ? <StatusBadge tone="warning">DEMO / QA</StatusBadge> : null}
                         {o.archived_at ? <StatusBadge tone="danger">Arhivată</StatusBadge> : null}
+                        {(() => {
+                          const s = subscriptionState(o);
+                          if (s.kind === "grace")
+                            return (
+                              <StatusBadge tone="warning">În grație — {s.daysLeft} zile</StatusBadge>
+                            );
+                          if (s.kind === "expired")
+                            return <StatusBadge tone="danger">Expirată</StatusBadge>;
+                          return null;
+                        })()}
                       </p>
                       <p className="truncate text-xs text-muted-foreground">
                         {o.legal_name ?? "fără nume legal"} · CUI {o.cui ?? "—"} · Reg. Com.{" "}
@@ -502,6 +512,12 @@ function AgenciesPage() {
                         {data?.properties.filter((p) => p.organization_id === o.id).length ?? 0}/
                         {o.max_properties} proprietăți
                       </span>
+                      <span className="tabular-nums">
+                        {subscriptionTermLabel(o.subscription_term)}
+                        {o.subscription_expires_at
+                          ? ` · expiră ${formatDate(o.subscription_expires_at)}`
+                          : ""}
+                      </span>
                     </div>
                   </div>
 
@@ -511,6 +527,13 @@ function AgenciesPage() {
                       onSave={(plan) => savePlan.mutate({ id: o.id, plan, previous: o.plan })}
                       saving={savePlan.isPending}
                     />
+                    <SubscriptionPicker
+                      key={`${o.id}-${o.subscription_term ?? "none"}-${o.subscription_expires_at ?? ""}`}
+                      term={o.subscription_term}
+                      onSave={(term) => saveSubscription.mutate({ id: o.id, term })}
+                      saving={saveSubscription.isPending}
+                    />
+
                     <Select
                       value={o.status}
                       onValueChange={(v) => update.mutate({ id: o.id, patch: { status: v } })}
