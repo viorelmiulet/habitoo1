@@ -117,6 +117,8 @@ async function buildOverview(admin: Admin, organizationId: string): Promise<Team
   const seatLimit = planAgentLimit(plan);
   const seatsUsed = members.filter((m) => m.roles.includes("agent") && m.is_active).length;
   const upgrade = nextPlan(plan);
+  // Planul Unlimited nu are limită: nicio comparație numerică nu se aplică.
+  const canInvite = seatLimit === null || seatsUsed < seatLimit;
 
   return {
     organizationId,
@@ -125,16 +127,16 @@ async function buildOverview(admin: Admin, organizationId: string): Promise<Team
     planLabel: planLabel(plan),
     seatLimit,
     seatsUsed,
-    canInvite: seatsUsed < seatLimit,
-    upgradeHint:
-      seatsUsed < seatLimit
-        ? null
-        : upgrade
-          ? `Ai atins limita planului ${planLabel(plan)} de ${seatLimit} agenți — treci la ${planLabel(upgrade)} pentru mai mulți.`
-          : `Ai atins limita planului ${planLabel(plan)} de ${seatLimit} agenți. Contactează-ne pentru un plan personalizat.`,
+    canInvite,
+    upgradeHint: canInvite
+      ? null
+      : upgrade
+        ? `Ai atins limita planului ${planLabel(plan)} de ${seatLimit} agenți — treci la ${planLabel(upgrade)} pentru mai mulți.`
+        : `Ai atins limita planului ${planLabel(plan)} de ${seatLimit} agenți. Contactează-ne pentru un plan personalizat.`,
     members,
   };
 }
+
 
 async function writeAudit(
   admin: Admin,
