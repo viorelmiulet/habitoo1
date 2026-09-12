@@ -68,7 +68,8 @@ import {
   requestStatusOptions,
   requestStatusTone,
 } from "@/lib/crm";
-import { matchLabel, matchTone, scoreMatch } from "@/lib/matching";
+import { scoreMatch } from "@/lib/matching";
+import { PropertyThumb, usePropertyCovers } from "@/components/app/PropertyThumb";
 import { appHead } from "@/components/app/app-head";
 
 export const Route = createFileRoute("/_authenticated/app/requests/$id")({
@@ -134,6 +135,16 @@ function RequestDetailPage() {
       return data;
     },
   });
+
+  // Potrivirile se calculează înainte de returnurile timpurii, ca să putem
+  // încăca coverele printr-un hook apelat necondiționat.
+  const matches = request
+    ? properties
+        .map((p) => ({ property: p, match: scoreMatch(request, p) }))
+        .filter((m) => m.match.score >= 40)
+        .sort((a, b) => b.match.score - a.match.score)
+    : [];
+  const coverFor = usePropertyCovers(matches.map((m) => m.property.id));
 
   const contact = data?.contacts.find((c) => c.id === request?.contact_id);
   const agentName = (aid: string | null) =>
@@ -306,11 +317,6 @@ function RequestDetailPage() {
       />
     );
   }
-
-  const matches = properties
-    .map((p) => ({ property: p, match: scoreMatch(request, p) }))
-    .filter((m) => m.match.score >= 40)
-    .sort((a, b) => b.match.score - a.match.score);
 
   const leads = data?.leads ?? [];
   const activities = data?.activities ?? [];
@@ -731,6 +737,26 @@ ${materialSignature(brandingFromOrg(user?.organization))}`;
 
         <TabsContent value="matching">
           <div className="panel overflow-hidden">
+            <div className="border-b border-border px-5 py-5 sm:px-6">
+              <p className="text-xs font-semibold tracking-[0.14em] text-muted-foreground uppercase">
+                Cerere → Proprietăți potrivite
+              </p>
+              <h2 className="mt-1.5 font-display text-xl font-bold text-foreground">
+                {request.title}
+              </h2>
+              <p className="mt-1 text-sm text-muted-foreground">
+                {[
+                  contact ? `${contact.first_name} ${contact.last_name}`.trim() : null,
+                  request.budget_max
+                    ? `până la ${formatMoney(request.budget_max, request.currency)}`
+                    : null,
+                  request.rooms_min ? `${request.rooms_min}+ camere` : null,
+                  (request.areas ?? []).length > 0 ? (request.areas ?? []).join(", ") : null,
+                ]
+                  .filter(Boolean)
+                  .join(" · ") || "Toate proprietățile compatibile cu această cerere"}
+              </p>
+            </div>
             {matches.length === 0 ? (
               <EmptyState
                 icon={Sparkles}
@@ -742,96 +768,93 @@ ${materialSignature(brandingFromOrg(user?.organization))}`;
                 {matches.map(({ property, match }) => (
                   <li
                     key={property.id}
-                    className="flex flex-wrap items-center gap-4 px-5 py-4 text-sm transition-colors hover:bg-surface"
+                    className="flex items-start gap-4 px-5 py-5 text-sm transition-colors hover:bg-surface sm:px-6"
                   >
-                    <span
-                      className={`grid size-11 shrink-0 place-items-center rounded-full text-xs font-bold tabular-nums ${
-                        match.score >= 80
-                          ? "bg-success/15 text-success"
-                          : match.score >= 60
-                            ? "bg-primary/10 text-primary"
-                            : "bg-muted text-muted-foreground"
-                      }`}
-                      aria-label={`Scor ${match.score}%`}
-                    >
-                      {match.score}%
-                    </span>
+                    <PropertyThumb
+                      propertyId={property.id}
+                      title={property.title}
+                      cover={coverFor(property.id)}
+                      className="size-20 rounded-2xl sm:size-24"
+                    />
                     <div className="min-w-0 flex-1">
-                      <Link
-                        to="/app/properties/$id"
-                        params={{ id: property.id }}
-                        className="truncate font-semibold text-foreground hover:text-primary"
-                      >
-                        {property.title}
-                      </Link>
-                      <p className="truncate text-xs text-muted-foreground">
-                        {formatMoney(property.price, property.currency)} · {property.city ?? "—"} ·{" "}
-                        {matchLabel(match.score)}
-                      </p>
-                      {match.reasons.length > 0 ? (
-                        <div className="mt-1.5 flex flex-wrap gap-1.5">
+                      <div className="flex items-start justify-between gap-4">
+                        <div className="min-w-0">
+                          <Link
+                            to="/app/properties/$id"
+                            params={{ id: property.id }}
+                            className="truncate text-base font-bold text-foreground hover:text-primary"
+                          >
+                            {property.title}
+                          </Link>
+                          <p className="mt-0.5 text-sm text-muted-foreground">
+                            {property.reference ?? "—"}
+                          </p>
+                        </div>
+                        <p className="shrink-0 text-base font-bold whitespace-nowrap text-foreground">
+                          {formatMoney(property.price, property.currency)}
+                        </p>
+                      </div>
+                      {match.reasons.length + match.misses.length > 0 ? (
+                        <div className="mt-2.5 flex flex-wrap gap-1.5">
                           {match.reasons.map((r) => (
                             <span
                               key={r}
-                              className="inline-flex items-center gap-1 rounded-full bg-success/10 px-2 py-0.5 text-[11px] text-success"
+                              className="inline-flex items-center gap-1 rounded-md bg-success/10 px-2.5 py-1 text-xs font-medium text-success"
                             >
-                              <Check className="size-3" aria-hidden /> {r}
+                              <Check className="size-3.5" aria-hidden /> {r}
                             </span>
                           ))}
-                        </div>
-                      ) : null}
-                      {match.misses.length > 0 ? (
-                        <div className="mt-1 flex flex-wrap gap-1.5">
                           {match.misses.map((m) => (
                             <span
                               key={m}
-                              className="inline-flex items-center gap-1 rounded-full bg-destructive/10 px-2 py-0.5 text-[11px] text-destructive"
+                              className="inline-flex items-center gap-1 rounded-md bg-destructive/10 px-2.5 py-1 text-xs font-medium text-destructive"
                             >
-                              <X className="size-3" aria-hidden /> {m}
+                              <X className="size-3.5" aria-hidden /> {m}
                             </span>
                           ))}
                         </div>
                       ) : null}
-                    </div>
-                    <div className="flex flex-wrap gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => createLead.mutate(property.id)}
-                        disabled={createLead.isPending}
-                      >
-                        <UserPlus className="size-4" /> Lead
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setActivityDialog({ open: true, propertyId: property.id })}
-                      >
-                        Vizionare
-                      </Button>
-                      {contact?.phone ? (
-                        <Button variant="outline" size="icon" asChild title="Trimite pe WhatsApp">
-                          <a
-                            href={whatsappHref(contact.whatsapp ?? contact.phone ?? "")}
-                            target="_blank"
-                            rel="noreferrer"
-                            aria-label="Trimite pe WhatsApp"
-                          >
-                            <MessageCircle className="size-4" />
-                          </a>
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => createLead.mutate(property.id)}
+                          disabled={createLead.isPending}
+                        >
+                          <UserPlus className="size-4" /> Lead
                         </Button>
-                      ) : null}
-                      {contact?.email ? (
-                        <Button variant="outline" size="icon" asChild title="Trimite pe email">
-                          <a
-                            href={`mailto:${contact.email}?subject=${encodeURIComponent(property.title)}&body=${encodeURIComponent(propertyMessage(property))}`}
-                            aria-label="Trimite pe email"
-                          >
-                            <Mail className="size-4" />
-                          </a>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setActivityDialog({ open: true, propertyId: property.id })}
+                        >
+                          Vizionare
                         </Button>
-                      ) : null}
+                        {contact?.phone ? (
+                          <Button variant="outline" size="icon" asChild title="Trimite pe WhatsApp">
+                            <a
+                              href={whatsappHref(contact.whatsapp ?? contact.phone ?? "")}
+                              target="_blank"
+                              rel="noreferrer"
+                              aria-label="Trimite pe WhatsApp"
+                            >
+                              <MessageCircle className="size-4" />
+                            </a>
+                          </Button>
+                        ) : null}
+                        {contact?.email ? (
+                          <Button variant="outline" size="icon" asChild title="Trimite pe email">
+                            <a
+                              href={`mailto:${contact.email}?subject=${encodeURIComponent(property.title)}&body=${encodeURIComponent(propertyMessage(property))}`}
+                              aria-label="Trimite pe email"
+                            >
+                              <Mail className="size-4" />
+                            </a>
+                          </Button>
+                        ) : null}
+                      </div>
                     </div>
+                    <ScoreRing score={match.score} />
                   </li>
                 ))}
               </ul>
@@ -923,5 +946,36 @@ ${materialSignature(brandingFromOrg(user?.organization))}`;
         onCreated={() => queryClient.invalidateQueries({ queryKey: ["request", id] })}
       />
     </>
+  );
+}
+
+/** Inel circular de scor (verde ≥ 80, auriu ≥ 60, gri altfel). */
+function ScoreRing({ score }: { score: number }) {
+  const r = 26;
+  const circumference = 2 * Math.PI * r;
+  const tone =
+    score >= 80 ? "text-success" : score >= 60 ? "text-accent" : "text-muted-foreground";
+  return (
+    <div
+      className={`relative mt-1 grid size-14 shrink-0 place-items-center ${tone}`}
+      role="img"
+      aria-label={`Scor de potrivire ${score} din 100`}
+    >
+      <svg viewBox="0 0 64 64" className="absolute inset-0 -rotate-90" aria-hidden>
+        <circle cx="32" cy="32" r={r} fill="none" strokeWidth="7" className="stroke-muted" />
+        <circle
+          cx="32"
+          cy="32"
+          r={r}
+          fill="none"
+          strokeWidth="7"
+          strokeLinecap="round"
+          stroke="currentColor"
+          strokeDasharray={circumference}
+          strokeDashoffset={circumference * (1 - Math.min(score, 100) / 100)}
+        />
+      </svg>
+      <span className="text-sm font-bold tabular-nums text-foreground">{score}</span>
+    </div>
   );
 }
