@@ -18,10 +18,12 @@ import { Route as DespreRouteImport } from './routes/despre'
 import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
 import { Route as FunctionalitatiRouteImport } from './routes/functionalitati'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as PoliticaDeConfidentialitateRouteImport } from './routes/politica-de-confidentialitate'
 import { Route as PreturiRouteImport } from './routes/preturi'
 import { Route as RegisterRouteImport } from './routes/register'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as TermeniRouteImport } from './routes/termeni'
+import { Route as TermeniSiConditiiRouteImport } from './routes/termeni-si-conditii'
 import { Route as AuthenticatedAppRouteImport } from './routes/_authenticated/app'
 import { Route as AuthenticatedOnboardingRouteImport } from './routes/_authenticated/onboarding'
 import { Route as AuthenticatedSuperadminRouteImport } from './routes/_authenticated/superadmin'
@@ -122,6 +124,12 @@ const LoginRoute = LoginRouteImport.update({
   path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PoliticaDeConfidentialitateRoute =
+  PoliticaDeConfidentialitateRouteImport.update({
+    id: '/politica-de-confidentialitate',
+    path: '/politica-de-confidentialitate',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const PreturiRoute = PreturiRouteImport.update({
   id: '/preturi',
   path: '/preturi',
@@ -140,6 +148,11 @@ const ResetPasswordRoute = ResetPasswordRouteImport.update({
 const TermeniRoute = TermeniRouteImport.update({
   id: '/termeni',
   path: '/termeni',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TermeniSiConditiiRoute = TermeniSiConditiiRouteImport.update({
+  id: '/termeni-si-conditii',
+  path: '/termeni-si-conditii',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedAppRoute = AuthenticatedAppRouteImport.update({
@@ -463,10 +476,12 @@ export interface FileRoutesByFullPath {
   '/forgot-password': typeof ForgotPasswordRoute
   '/functionalitati': typeof FunctionalitatiRoute
   '/login': typeof LoginRoute
+  '/politica-de-confidentialitate': typeof PoliticaDeConfidentialitateRoute
   '/preturi': typeof PreturiRoute
   '/register': typeof RegisterRoute
   '/reset-password': typeof ResetPasswordRoute
   '/termeni': typeof TermeniRoute
+  '/termeni-si-conditii': typeof TermeniSiConditiiRoute
   '/app': typeof AuthenticatedAppRouteWithChildren
   '/onboarding': typeof AuthenticatedOnboardingRoute
   '/superadmin': typeof AuthenticatedSuperadminRouteWithChildren
@@ -532,10 +547,12 @@ export interface FileRoutesByTo {
   '/forgot-password': typeof ForgotPasswordRoute
   '/functionalitati': typeof FunctionalitatiRoute
   '/login': typeof LoginRoute
+  '/politica-de-confidentialitate': typeof PoliticaDeConfidentialitateRoute
   '/preturi': typeof PreturiRoute
   '/register': typeof RegisterRoute
   '/reset-password': typeof ResetPasswordRoute
   '/termeni': typeof TermeniRoute
+  '/termeni-si-conditii': typeof TermeniSiConditiiRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/oferta/$id': typeof OfertaIdRoute
@@ -601,10 +618,12 @@ export interface FileRoutesById {
   '/forgot-password': typeof ForgotPasswordRoute
   '/functionalitati': typeof FunctionalitatiRoute
   '/login': typeof LoginRoute
+  '/politica-de-confidentialitate': typeof PoliticaDeConfidentialitateRoute
   '/preturi': typeof PreturiRoute
   '/register': typeof RegisterRoute
   '/reset-password': typeof ResetPasswordRoute
   '/termeni': typeof TermeniRoute
+  '/termeni-si-conditii': typeof TermeniSiConditiiRoute
   '/_authenticated/app': typeof AuthenticatedAppRouteWithChildren
   '/_authenticated/onboarding': typeof AuthenticatedOnboardingRoute
   '/_authenticated/superadmin': typeof AuthenticatedSuperadminRouteWithChildren
@@ -672,10 +691,12 @@ export interface FileRouteTypes {
     | '/forgot-password'
     | '/functionalitati'
     | '/login'
+    | '/politica-de-confidentialitate'
     | '/preturi'
     | '/register'
     | '/reset-password'
     | '/termeni'
+    | '/termeni-si-conditii'
     | '/app'
     | '/onboarding'
     | '/superadmin'
@@ -741,10 +762,12 @@ export interface FileRouteTypes {
     | '/forgot-password'
     | '/functionalitati'
     | '/login'
+    | '/politica-de-confidentialitate'
     | '/preturi'
     | '/register'
     | '/reset-password'
     | '/termeni'
+    | '/termeni-si-conditii'
     | '/onboarding'
     | '/auth/callback'
     | '/oferta/$id'
@@ -809,10 +832,12 @@ export interface FileRouteTypes {
     | '/forgot-password'
     | '/functionalitati'
     | '/login'
+    | '/politica-de-confidentialitate'
     | '/preturi'
     | '/register'
     | '/reset-password'
     | '/termeni'
+    | '/termeni-si-conditii'
     | '/_authenticated/app'
     | '/_authenticated/onboarding'
     | '/_authenticated/superadmin'
@@ -880,10 +905,12 @@ export interface RootRouteChildren {
   ForgotPasswordRoute: typeof ForgotPasswordRoute
   FunctionalitatiRoute: typeof FunctionalitatiRoute
   LoginRoute: typeof LoginRoute
+  PoliticaDeConfidentialitateRoute: typeof PoliticaDeConfidentialitateRoute
   PreturiRoute: typeof PreturiRoute
   RegisterRoute: typeof RegisterRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   TermeniRoute: typeof TermeniRoute
+  TermeniSiConditiiRoute: typeof TermeniSiConditiiRoute
   AuthCallbackRoute: typeof AuthCallbackRoute
   OfertaIdRoute: typeof OfertaIdRoute
   ApiPublicCronSubscriptionsRoute: typeof ApiPublicCronSubscriptionsRoute
@@ -972,6 +999,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/politica-de-confidentialitate': {
+      id: '/politica-de-confidentialitate'
+      path: '/politica-de-confidentialitate'
+      fullPath: '/politica-de-confidentialitate'
+      preLoaderRoute: typeof PoliticaDeConfidentialitateRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/preturi': {
       id: '/preturi'
       path: '/preturi'
@@ -998,6 +1032,13 @@ declare module '@tanstack/react-router' {
       path: '/termeni'
       fullPath: '/termeni'
       preLoaderRoute: typeof TermeniRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/termeni-si-conditii': {
+      id: '/termeni-si-conditii'
+      path: '/termeni-si-conditii'
+      fullPath: '/termeni-si-conditii'
+      preLoaderRoute: typeof TermeniSiConditiiRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/app': {
@@ -1546,10 +1587,12 @@ const rootRouteChildren: RootRouteChildren = {
   ForgotPasswordRoute: ForgotPasswordRoute,
   FunctionalitatiRoute: FunctionalitatiRoute,
   LoginRoute: LoginRoute,
+  PoliticaDeConfidentialitateRoute: PoliticaDeConfidentialitateRoute,
   PreturiRoute: PreturiRoute,
   RegisterRoute: RegisterRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   TermeniRoute: TermeniRoute,
+  TermeniSiConditiiRoute: TermeniSiConditiiRoute,
   AuthCallbackRoute: AuthCallbackRoute,
   OfertaIdRoute: OfertaIdRoute,
   ApiPublicCronSubscriptionsRoute: ApiPublicCronSubscriptionsRoute,
