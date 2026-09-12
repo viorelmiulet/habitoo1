@@ -523,7 +523,7 @@ function AgenciesPage() {
                     <div className="flex flex-wrap items-center gap-4 text-xs text-muted-foreground">
                       <span className="tabular-nums">
                         {data?.profiles.filter((p) => p.organization_id === o.id).length ?? 0}/
-                        {o.max_users} utilizatori
+                        {seatLimitLabel(o.max_users)} utilizatori
                       </span>
                       <span className="tabular-nums">
                         {data?.properties.filter((p) => p.organization_id === o.id).length ?? 0}/
