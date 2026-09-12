@@ -36,13 +36,16 @@ export type AgencyOverviewRow = {
   seatsUsed: number;
 };
 
+/** Valori jurnalizate în audit, restrânse la primitive JSON serializabile. */
+export type AuditValues = Record<string, string | number | boolean | null> | null;
+
 export type AgencyHistoryEntry = {
   id: string;
   action: string;
   createdAt: string;
   actorName: string | null;
-  oldValues: Record<string, unknown> | null;
-  newValues: Record<string, unknown> | null;
+  oldValues: AuditValues;
+  newValues: AuditValues;
 };
 
 export type AgencyOverview = {
@@ -115,8 +118,8 @@ export const getAgencyOverview = createServerFn({ method: "POST" })
         action: a.action,
         createdAt: a.created_at,
         actorName: a.actor_id ? (actorName.get(a.actor_id) ?? null) : null,
-        oldValues: (a.old_values as Record<string, unknown> | null) ?? null,
-        newValues: (a.new_values as Record<string, unknown> | null) ?? null,
+        oldValues: (a.old_values as AuditValues) ?? null,
+        newValues: (a.new_values as AuditValues) ?? null,
       });
       historyByAgency[a.organization_id] = list;
     }
