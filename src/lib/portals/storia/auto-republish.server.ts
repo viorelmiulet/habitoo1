@@ -53,7 +53,14 @@ export async function handleStoriaExpiry(
       .maybeSingle(),
   ]);
 
-  const autoEnabled = org?.storia_auto_republish === true;
+  /**
+   * Suprascrierea de pe proprietate are prioritate; dacă lipsește (null),
+   * decide setarea agenției.
+   */
+  const override =
+    (property as { storia_auto_renew?: boolean | null } | null)?.storia_auto_renew ?? null;
+  const agencyDefault = org?.storia_auto_republish === true;
+  const autoEnabled = override ?? agencyDefault;
 
   // Motivul pentru care republicarea nu este permisă (independent de comutator).
   let blocked: string | null = null;
