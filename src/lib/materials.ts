@@ -86,7 +86,10 @@ export type PresentationData = {
   price: string;
   specs: { label: string; value: string }[];
   description: string | null;
+  /** URL-uri de fotografii (deja semnate) — prima este imaginea mare. */
+  photos?: string[];
 };
+
 
 /** Prezentare de probă pentru previzualizarea din Setări. */
 export const samplePresentation: PresentationData = {
