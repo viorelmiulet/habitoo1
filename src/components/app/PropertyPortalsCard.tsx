@@ -15,7 +15,6 @@ import {
   useEffect,
   useImperativeHandle,
   useMemo,
-  useRef,
   useState,
 } from "react";
 import { AlertTriangle, CheckCircle2, Circle, ExternalLink } from "lucide-react";
@@ -33,16 +32,6 @@ import { PortalLogoStack } from "@/components/app/PortalLogo";
 import { BrandLogo } from "@/components/brand/BrandLogo";
 import { InlineLoading } from "@/components/app/LoadingState";
 import { QueryError } from "@/components/app/QueryError";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
 import { formatDateTime } from "@/lib/format";
 import {
   applyPropertyPortalSelection,
@@ -167,7 +156,6 @@ export const PropertyPortalsCard = forwardRef<
           collabTerms.trim() !== (collabRow?.terms ?? ""))));
 
   const [checked, setChecked] = useState<Record<string, boolean>>({});
-  const [confirming, setConfirming] = useState(false);
 
   useEffect(() => {
     if (cells.length === 0) return;
@@ -184,10 +172,6 @@ export const PropertyPortalsCard = forwardRef<
     (c) => c.availability === "available" && (checked[c.portalId] ?? c.selected),
   );
   const actionable = [...new Set([...dirty, ...toSync])];
-  /** Portaluri debifate care sunt efectiv publicate → necesită confirmare. */
-  const toWithdraw = dirty.filter(
-    (c) => !(checked[c.portalId] ?? false) && (c.state === "published" || c.state === "in_feed"),
-  );
 
   const apply = useMutation({
     mutationFn: () =>
@@ -210,20 +194,9 @@ export const PropertyPortalsCard = forwardRef<
     },
   });
 
-  /** Rezolvatorul confirmării de retragere, cât timp dialogul este deschis. */
-  const confirmResolver = useRef<((ok: boolean) => void) | null>(null);
-
   const applyPending = useCallback(async () => {
     const portalsActionable = canManage && actionable.length > 0;
     if (!portalsActionable && !collabDirty) return null;
-
-    if (portalsActionable && toWithdraw.length > 0) {
-      const confirmed = await new Promise<boolean>((resolve) => {
-        confirmResolver.current = resolve;
-        setConfirming(true);
-      });
-      if (!confirmed) return null;
-    }
 
     const results: PortalApplyResult[] = [];
 
@@ -272,7 +245,6 @@ export const PropertyPortalsCard = forwardRef<
   }, [
     canManage,
     actionable.length,
-    toWithdraw.length,
     apply,
     collabDirty,
     collabValue,
@@ -494,52 +466,6 @@ export const PropertyPortalsCard = forwardRef<
         </span>
       </footer>
 
-      <AlertDialog
-        open={confirming}
-        onOpenChange={(open) => {
-          setConfirming(open);
-          if (!open) {
-            confirmResolver.current?.(false);
-            confirmResolver.current = null;
-          }
-        }}
-      >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>
-              {toWithdraw.length === 1
-                ? `Proprietatea va fi retrasă de pe ${toWithdraw[0]?.portalName}`
-                : "Proprietatea va fi retrasă de pe mai multe portaluri"}
-            </AlertDialogTitle>
-            <AlertDialogDescription>
-              {toWithdraw.length > 1 ? (
-                <>
-                  Proprietatea va fi retrasă de pe:
-                  <br />
-                  {toWithdraw.map((c) => `- ${c.portalName}`).join("\n")}
-                  <br />
-                  Celelalte portaluri selectate vor rămâne active.
-                </>
-              ) : (
-                "Celelalte portaluri selectate vor rămâne active."
-              )}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Anulează</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={() => {
-                const resolve = confirmResolver.current;
-                confirmResolver.current = null;
-                setConfirming(false);
-                resolve?.(true);
-              }}
-            >
-              Confirmă retragerea
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </section>
   );
 });
