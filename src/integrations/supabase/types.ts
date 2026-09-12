@@ -128,6 +128,8 @@ export type Database = {
           organization_id: string | null
           phone: string | null
           rejection_reason: string | null
+          requested_plan: string
+          requested_term: string
           reviewed_at: string | null
           reviewed_by: string | null
           status: string
@@ -146,6 +148,8 @@ export type Database = {
           organization_id?: string | null
           phone?: string | null
           rejection_reason?: string | null
+          requested_plan?: string
+          requested_term?: string
           reviewed_at?: string | null
           reviewed_by?: string | null
           status?: string
@@ -164,6 +168,8 @@ export type Database = {
           organization_id?: string | null
           phone?: string | null
           rejection_reason?: string | null
+          requested_plan?: string
+          requested_term?: string
           reviewed_at?: string | null
           reviewed_by?: string | null
           status?: string
@@ -3509,17 +3515,31 @@ export type Database = {
         }
         Returns: undefined
       }
-      submit_agency_registration_request: {
-        Args: {
-          _agency_name: string
-          _cui: string
-          _full_name: string
-          _legal_name: string
-          _phone?: string
-          _trade_registry_number: string
-        }
-        Returns: string
-      }
+      submit_agency_registration_request:
+        | {
+            Args: {
+              _agency_name: string
+              _cui: string
+              _full_name: string
+              _legal_name: string
+              _phone?: string
+              _trade_registry_number: string
+            }
+            Returns: string
+          }
+        | {
+            Args: {
+              _agency_name: string
+              _cui: string
+              _full_name: string
+              _legal_name: string
+              _phone?: string
+              _requested_plan?: string
+              _requested_term?: string
+              _trade_registry_number: string
+            }
+            Returns: string
+          }
       subscription_cron_tick: { Args: never; Returns: Json }
       subscription_enforce_daily: { Args: never; Returns: Json }
       superadmin_delete_organization: {

@@ -29,7 +29,11 @@ import {
 import { currentUserQueryKey, useCurrentUser } from "@/hooks/use-session";
 import { formatDate } from "@/lib/format";
 import { roleLabels } from "@/lib/labels";
+import { PLAN_LABELS, normalizePlan, planAgentLimitLabel } from "@/lib/plans";
+import { getTeamOverview } from "@/lib/agency-team.functions";
+import { useServerFn } from "@tanstack/react-start";
 import { appHead } from "@/components/app/app-head";
+
 
 export const Route = createFileRoute("/_authenticated/app/settings")({
   head: () => appHead("Habitoo CRM — setări"),
@@ -128,7 +132,16 @@ function SettingsPage() {
     onError: (e: Error) => toastError(e),
   });
 
+  // Locurile ocupate din plan — doar afișare, fără nicio acțiune de schimbare a planului.
+  const fetchTeam = useServerFn(getTeamOverview);
+  const { data: seats } = useQuery({
+    queryKey: ["team-overview", user?.organization?.id ?? "none"],
+    queryFn: () => fetchTeam(),
+    enabled: Boolean(user?.organization?.id),
+  });
+
   const saveOrg = useMutation({
+
     mutationFn: async () => {
       if (!user?.organization?.id) throw new Error("Agenția nu este configurată.");
       const { error } = await supabase
@@ -313,10 +326,28 @@ function SettingsPage() {
                   onCheckedChange={(v) => setOrgForm((f) => ({ ...f, collaboration_enabled: v }))}
                 />
               </div>
-              <div className="flex items-center justify-between gap-3 rounded-xl border border-border p-4 text-sm">
-                <span className="text-muted-foreground">Plan curent</span>
-                <StatusBadge tone="primary">{user?.organization?.plan ?? "—"}</StatusBadge>
+              {/* Planul este doar informativ: se schimbă exclusiv din Superadmin. */}
+              <div className="space-y-2 rounded-xl border border-border p-4 text-sm">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <span className="text-muted-foreground">Plan curent</span>
+                  <StatusBadge tone="primary">
+                    {PLAN_LABELS[normalizePlan(user?.organization?.plan ?? "basic")]} ·{" "}
+                    {planAgentLimitLabel(normalizePlan(user?.organization?.plan ?? "basic"))}
+                  </StatusBadge>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  {seats
+                    ? seats.seatLimit === null
+                      ? `${seats.seatsUsed} agenți activi · fără limită de locuri`
+                      : `${seats.seatsUsed} din ${seats.seatLimit} agenți activi`
+                    : "Se încarcă locurile ocupate…"}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  Planul nu poate fi schimbat din aplicație. Pentru alt plan, scrie-ne la
+                  contact@habitoo.ro sau deschide un tichet de suport.
+                </p>
               </div>
+
 
               {user?.isAdmin ? (
                 <div className="flex justify-end">
