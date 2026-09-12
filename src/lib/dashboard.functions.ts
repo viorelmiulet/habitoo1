@@ -102,6 +102,20 @@ export type ListingIssueRow = {
   issues: PropertyIssue[];
 };
 
+export type DashboardPortfolioProperty = {
+  id: string;
+  title: string;
+  reference: string | null;
+  status: string;
+  price: number | null;
+  currency: string | null;
+  rooms: number | null;
+  surface: number | null;
+  city: string | null;
+  district: string | null;
+  transactionKind: string;
+};
+
 export type ProposalRow = {
   id: string;
   clientLabel: string;
@@ -117,6 +131,7 @@ export type AgentDashboard = {
   coldLeads: ColdLead[];
   pipeline: StageCount[];
   listingIssues: ListingIssueRow[];
+  portfolio: DashboardPortfolioProperty[];
   collaboration: {
     enabled: boolean;
     incoming: ProposalRow[];
@@ -140,6 +155,7 @@ export const getAgentDashboard = createServerFn({ method: "GET" })
       coldLeads: [],
       pipeline: [],
       listingIssues: [],
+      portfolio: [],
       collaboration: { enabled: false, incoming: [], outgoing: [] },
       totals: { properties: 0, leads: 0, activities: 0 },
     };
@@ -168,7 +184,7 @@ export const getAgentDashboard = createServerFn({ method: "GET" })
       supabase
         .from("properties")
         .select(
-          "id,title,status,description,lat,lng,price,sale_price,rent_price,city,address,publish_status,created_at",
+          "id,title,reference,status,description,lat,lng,price,currency,sale_price,rent_price,city,district,address,publish_status,created_at,rooms,surface,transaction_kind",
         )
         .eq("assigned_to", userId)
         .is("deleted_at", null)
@@ -271,6 +287,20 @@ export const getAgentDashboard = createServerFn({ method: "GET" })
       .filter((row) => row.issues.length > 0)
       .sort((a, b) => Number(isBlocking(b.issues)) - Number(isBlocking(a.issues)))
       .slice(0, 20);
+
+    const portfolio: DashboardPortfolioProperty[] = properties.map((property) => ({
+      id: property.id,
+      title: property.title,
+      reference: property.reference,
+      status: property.status,
+      price: property.price === null ? null : Number(property.price),
+      currency: property.currency,
+      rooms: property.rooms,
+      surface: property.surface === null ? null : Number(property.surface),
+      city: property.city,
+      district: property.district,
+      transactionKind: property.transaction_kind,
+    }));
 
     // Colaborare: doar dacă agenția participă.
     let incoming: ProposalRow[] = [];
@@ -376,6 +406,7 @@ export const getAgentDashboard = createServerFn({ method: "GET" })
       coldLeads,
       pipeline,
       listingIssues,
+      portfolio,
       collaboration: {
         enabled: Boolean(org.collaboration_enabled),
         incoming,
@@ -418,6 +449,7 @@ export type AgentPipelineRow = {
   openLeads: number;
   stalledLeads: number;
   properties: number;
+  portfolio: DashboardPortfolioProperty[];
   lastTouchAt: string | null;
 };
 
@@ -500,7 +532,7 @@ export const getManagerDashboard = createServerFn({ method: "GET" })
         supabase
           .from("properties")
           .select(
-            "id,title,status,description,lat,lng,price,sale_price,rent_price,city,address,publish_status,created_at,updated_at,last_activity_at,assigned_to",
+            "id,title,reference,status,description,lat,lng,price,currency,sale_price,rent_price,city,district,address,publish_status,created_at,updated_at,last_activity_at,assigned_to,rooms,surface,transaction_kind",
           )
           .eq("organization_id", org.id)
           .is("deleted_at", null)
@@ -549,6 +581,7 @@ export const getManagerDashboard = createServerFn({ method: "GET" })
           .map((l) => l.last_interaction_at ?? l.updated_at)
           .filter((v): v is string => Boolean(v))
           .sort();
+        const agentProperties = properties.filter((p) => p.assigned_to === profile.id);
         return {
           agentId: profile.id,
           agentName: profile.full_name,
@@ -559,7 +592,20 @@ export const getManagerDashboard = createServerFn({ method: "GET" })
             const touch = new Date(l.last_interaction_at ?? l.updated_at ?? l.created_at).getTime();
             return touch < stalledCutoff;
           }).length,
-          properties: properties.filter((p) => p.assigned_to === profile.id).length,
+          properties: agentProperties.length,
+          portfolio: agentProperties.map((property) => ({
+            id: property.id,
+            title: property.title,
+            reference: property.reference,
+            status: property.status,
+            price: property.price === null ? null : Number(property.price),
+            currency: property.currency,
+            rooms: property.rooms,
+            surface: property.surface === null ? null : Number(property.surface),
+            city: property.city,
+            district: property.district,
+            transactionKind: property.transaction_kind,
+          })),
           lastTouchAt: touches.length ? (touches[touches.length - 1] as string) : null,
         };
       })
