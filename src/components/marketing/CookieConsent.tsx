@@ -64,7 +64,7 @@ export function CookieConsent() {
               Folosim cookie-uri strict necesare pentru funcționarea site-ului. Pentru analiză și
               marketing avem nevoie de acordul tău. Poți refuza sau îți poți retrage acordul
               oricând.{" "}
-              <Link to="/confidentialitate" className="font-medium text-navy underline">
+              <Link to="/politica-de-confidentialitate" className="font-medium text-navy underline">
                 Politica de confidențialitate
               </Link>
             </p>
@@ -142,7 +142,7 @@ export function CookieConsent() {
 
           <p className="text-xs text-muted-foreground">
             Detalii în{" "}
-            <Link to="/confidentialitate" className="font-medium text-navy underline">
+            <Link to="/politica-de-confidentialitate" className="font-medium text-navy underline">
               Politica de confidențialitate
             </Link>
             .
