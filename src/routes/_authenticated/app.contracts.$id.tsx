@@ -20,6 +20,7 @@ import { ListSkeleton } from "@/components/app/LoadingState";
 import { SectionCard } from "@/components/app/SectionCard";
 import { StatusBadge } from "@/components/app/StatusBadge";
 import { ConfirmDialog } from "@/components/app/ConfirmDialog";
+import { InventoryEditor } from "@/components/app/contracts/InventoryEditor";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -35,6 +36,7 @@ import {
   getContract,
   sendForSignature,
   updateContractBody,
+  updateContractInventory,
 } from "@/lib/contracts.functions";
 
 export const Route = createFileRoute("/_authenticated/app/contracts/$id")({
@@ -47,6 +49,7 @@ function ContractDetailPage() {
   const queryClient = useQueryClient();
   const fetchContract = useServerFn(getContract);
   const runUpdate = useServerFn(updateContractBody);
+  const runInventoryUpdate = useServerFn(updateContractInventory);
   const runPdf = useServerFn(generateContractPdf);
   const runSend = useServerFn(sendForSignature);
   const runCancel = useServerFn(cancelContract);
@@ -56,6 +59,8 @@ function ContractDetailPage() {
   const [editing, setEditing] = useState(false);
   const [body, setBody] = useState("");
   const [title, setTitle] = useState("");
+  const [editingInventory, setEditingInventory] = useState(false);
+  const [inventoryDraft, setInventoryDraft] = useState<InventoryItem[]>([]);
   const [selected, setSelected] = useState<string[]>([]);
   const [links, setLinks] = useState<{ fullName: string; email: string | null; url: string }[]>([]);
   const [cancelOpen, setCancelOpen] = useState(false);
@@ -79,6 +84,16 @@ function ContractDetailPage() {
     onSuccess: () => {
       toast.success("Document actualizat.");
       setEditing(false);
+      invalidate();
+    },
+    onError: (e: Error) => toastError(e),
+  });
+
+  const saveInventory = useMutation({
+    mutationFn: () => runInventoryUpdate({ data: { id, items: inventoryDraft } }),
+    onSuccess: () => {
+      toast.success("Inventar actualizat.");
+      setEditingInventory(false);
       invalidate();
     },
     onError: (e: Error) => toastError(e),
@@ -213,8 +228,35 @@ function ContractDetailPage() {
         </SectionCard>
 
           {inventoryData?.["included"] === true ? (
-            <SectionCard title="Anexa 1 — Inventar imobil" description={`${inventoryItems.length} articole inventariate`}>
-              <div className="overflow-x-auto">
+            <SectionCard
+              title="Anexa 1 — Inventar imobil"
+              description={`${inventoryItems.length} articole inventariate`}
+              action={editable ? (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => {
+                    if (editingInventory) {
+                      setEditingInventory(false);
+                    } else {
+                      setInventoryDraft(inventoryItems.map((item) => ({ ...item })));
+                      setEditingInventory(true);
+                    }
+                  }}
+                >
+                  <PenLine className="size-4" /> {editingInventory ? "Renunță" : "Editează"}
+                </Button>
+              ) : null}
+            >
+              {editingInventory ? (
+                <div className="space-y-4">
+                  <InventoryEditor items={inventoryDraft} onChange={setInventoryDraft} />
+                  <Button onClick={() => saveInventory.mutate()} disabled={saveInventory.isPending}>
+                    {saveInventory.isPending ? <Loader2 className="size-4 animate-spin" /> : null}
+                    Salvează inventarul
+                  </Button>
+                </div>
+              ) : <div className="overflow-x-auto">
                 <table className="w-full min-w-[620px] text-left text-xs">
                   <thead className="text-muted-foreground">
                     <tr className="border-b border-border">
@@ -237,7 +279,7 @@ function ContractDetailPage() {
                     ))}
                   </tbody>
                 </table>
-              </div>
+              </div>}
             </SectionCard>
           ) : null}
 

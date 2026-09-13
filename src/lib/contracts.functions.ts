@@ -895,6 +895,46 @@ export const updateContractBody = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
+export const updateContractInventory = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) =>
+    z.object({ id: uuid, items: z.array(inventoryItemInput).max(100) }).parse(data),
+  )
+  .handler(async ({ data, context }) => {
+    const ctx = context as unknown as Ctx;
+    const { contract, orgId, db } = await loadContract(ctx, data.id);
+    if (contract.status !== "draft") {
+      throw new Error("Inventarul nu mai poate fi modificat după trimiterea la semnat.");
+    }
+    const snapshot =
+      contract.data && typeof contract.data === "object" && !Array.isArray(contract.data)
+        ? (contract.data as Record<string, unknown>)
+        : {};
+    const currentInventory =
+      snapshot["inventory"] &&
+      typeof snapshot["inventory"] === "object" &&
+      !Array.isArray(snapshot["inventory"])
+        ? (snapshot["inventory"] as Record<string, unknown>)
+        : {};
+    if (currentInventory["included"] !== true) {
+      throw new Error("Acest document nu include o anexă de inventar.");
+    }
+    const nextData = {
+      ...snapshot,
+      inventory: { ...currentInventory, items: data.items },
+    };
+    const { error } = await db.from("contracts").update({ data: nextData as never }).eq("id", data.id);
+    if (error) throw new Error(error.message);
+    await audit({
+      orgId,
+      actorId: ctx.userId,
+      action: "contract.inventory.updated",
+      entityId: data.id,
+      values: { item_count: data.items.length },
+    });
+    return { ok: true };
+  });
+
 export const cancelContract = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data: unknown) => z.object({ id: uuid }).parse(data))
