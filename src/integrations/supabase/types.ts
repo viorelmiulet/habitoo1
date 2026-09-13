@@ -14,6 +14,262 @@ export type Database = {
   }
   public: {
     Tables: {
+      acp_analyses: {
+        Row: {
+          ai_generated_at: string | null
+          ai_model: string | null
+          ai_summary: string | null
+          analysis_data: Json
+          average_price_per_sqm: number | null
+          comparables_count: number
+          confidence_score: number | null
+          created_at: string
+          created_by: string | null
+          estimated_max: number | null
+          estimated_min: number | null
+          estimated_value: number | null
+          id: string
+          median_price_per_sqm: number | null
+          organization_id: string
+          property_id: string | null
+          recommended_listing_price: number | null
+          sources: Json
+          status: string
+          target_data: Json
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          ai_generated_at?: string | null
+          ai_model?: string | null
+          ai_summary?: string | null
+          analysis_data?: Json
+          average_price_per_sqm?: number | null
+          comparables_count?: number
+          confidence_score?: number | null
+          created_at?: string
+          created_by?: string | null
+          estimated_max?: number | null
+          estimated_min?: number | null
+          estimated_value?: number | null
+          id?: string
+          median_price_per_sqm?: number | null
+          organization_id: string
+          property_id?: string | null
+          recommended_listing_price?: number | null
+          sources?: Json
+          status?: string
+          target_data?: Json
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          ai_generated_at?: string | null
+          ai_model?: string | null
+          ai_summary?: string | null
+          analysis_data?: Json
+          average_price_per_sqm?: number | null
+          comparables_count?: number
+          confidence_score?: number | null
+          created_at?: string
+          created_by?: string | null
+          estimated_max?: number | null
+          estimated_min?: number | null
+          estimated_value?: number | null
+          id?: string
+          median_price_per_sqm?: number | null
+          organization_id?: string
+          property_id?: string | null
+          recommended_listing_price?: number | null
+          sources?: Json
+          status?: string
+          target_data?: Json
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "acp_analyses_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "acp_analyses_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      acp_analysis_sources: {
+        Row: {
+          analysis_id: string
+          created_at: string
+          enabled: boolean
+          id: string
+          items_excluded: number
+          items_found: number
+          items_used: number
+          source_name: string
+          source_type: string
+        }
+        Insert: {
+          analysis_id: string
+          created_at?: string
+          enabled?: boolean
+          id?: string
+          items_excluded?: number
+          items_found?: number
+          items_used?: number
+          source_name: string
+          source_type: string
+        }
+        Update: {
+          analysis_id?: string
+          created_at?: string
+          enabled?: boolean
+          id?: string
+          items_excluded?: number
+          items_found?: number
+          items_used?: number
+          source_name?: string
+          source_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "acp_analysis_sources_analysis_id_fkey"
+            columns: ["analysis_id"]
+            isOneToOne: false
+            referencedRelation: "acp_analyses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      acp_comparables: {
+        Row: {
+          adjusted_price: number | null
+          adjusted_price_per_sqm: number | null
+          adjustment_amount: number | null
+          analysis_id: string
+          area_score: number | null
+          condition_score: number | null
+          created_at: string
+          distance_score: number | null
+          features_score: number | null
+          floor_score: number | null
+          id: string
+          is_outlier: boolean
+          is_selected: boolean
+          location_score: number | null
+          market_listing_id: string | null
+          rooms_score: number | null
+          selection_reason: string | null
+          similarity_score: number | null
+          year_score: number | null
+        }
+        Insert: {
+          adjusted_price?: number | null
+          adjusted_price_per_sqm?: number | null
+          adjustment_amount?: number | null
+          analysis_id: string
+          area_score?: number | null
+          condition_score?: number | null
+          created_at?: string
+          distance_score?: number | null
+          features_score?: number | null
+          floor_score?: number | null
+          id?: string
+          is_outlier?: boolean
+          is_selected?: boolean
+          location_score?: number | null
+          market_listing_id?: string | null
+          rooms_score?: number | null
+          selection_reason?: string | null
+          similarity_score?: number | null
+          year_score?: number | null
+        }
+        Update: {
+          adjusted_price?: number | null
+          adjusted_price_per_sqm?: number | null
+          adjustment_amount?: number | null
+          analysis_id?: string
+          area_score?: number | null
+          condition_score?: number | null
+          created_at?: string
+          distance_score?: number | null
+          features_score?: number | null
+          floor_score?: number | null
+          id?: string
+          is_outlier?: boolean
+          is_selected?: boolean
+          location_score?: number | null
+          market_listing_id?: string | null
+          rooms_score?: number | null
+          selection_reason?: string | null
+          similarity_score?: number | null
+          year_score?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "acp_comparables_analysis_id_fkey"
+            columns: ["analysis_id"]
+            isOneToOne: false
+            referencedRelation: "acp_analyses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "acp_comparables_market_listing_id_fkey"
+            columns: ["market_listing_id"]
+            isOneToOne: false
+            referencedRelation: "market_listings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      acp_reports: {
+        Row: {
+          analysis_id: string
+          created_at: string
+          generated_at: string | null
+          generated_by: string | null
+          id: string
+          pdf_path: string | null
+          report_data: Json
+          version: number
+        }
+        Insert: {
+          analysis_id: string
+          created_at?: string
+          generated_at?: string | null
+          generated_by?: string | null
+          id?: string
+          pdf_path?: string | null
+          report_data?: Json
+          version?: number
+        }
+        Update: {
+          analysis_id?: string
+          created_at?: string
+          generated_at?: string | null
+          generated_by?: string | null
+          id?: string
+          pdf_path?: string | null
+          report_data?: Json
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "acp_reports_analysis_id_fkey"
+            columns: ["analysis_id"]
+            isOneToOne: false
+            referencedRelation: "acp_analyses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       activities: {
         Row: {
           assigned_to: string | null
@@ -1610,6 +1866,261 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      market_entities: {
+        Row: {
+          canonical_market_listing_id: string | null
+          created_at: string
+          floor: number | null
+          id: string
+          identity_hash: string | null
+          latitude: number | null
+          longitude: number | null
+          normalized_address: string | null
+          normalized_city: string | null
+          normalized_neighborhood: string | null
+          rooms: number | null
+          updated_at: string
+          usable_area: number | null
+        }
+        Insert: {
+          canonical_market_listing_id?: string | null
+          created_at?: string
+          floor?: number | null
+          id?: string
+          identity_hash?: string | null
+          latitude?: number | null
+          longitude?: number | null
+          normalized_address?: string | null
+          normalized_city?: string | null
+          normalized_neighborhood?: string | null
+          rooms?: number | null
+          updated_at?: string
+          usable_area?: number | null
+        }
+        Update: {
+          canonical_market_listing_id?: string | null
+          created_at?: string
+          floor?: number | null
+          id?: string
+          identity_hash?: string | null
+          latitude?: number | null
+          longitude?: number | null
+          normalized_address?: string | null
+          normalized_city?: string | null
+          normalized_neighborhood?: string | null
+          rooms?: number | null
+          updated_at?: string
+          usable_area?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "market_entities_canonical_market_listing_id_fkey"
+            columns: ["canonical_market_listing_id"]
+            isOneToOne: false
+            referencedRelation: "market_listings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      market_listing_snapshots: {
+        Row: {
+          captured_at: string
+          created_at: string
+          currency: string | null
+          id: string
+          market_listing_id: string
+          price: number | null
+          price_per_sqm: number | null
+          raw_data: Json
+          status: string | null
+        }
+        Insert: {
+          captured_at?: string
+          created_at?: string
+          currency?: string | null
+          id?: string
+          market_listing_id: string
+          price?: number | null
+          price_per_sqm?: number | null
+          raw_data?: Json
+          status?: string | null
+        }
+        Update: {
+          captured_at?: string
+          created_at?: string
+          currency?: string | null
+          id?: string
+          market_listing_id?: string
+          price?: number | null
+          price_per_sqm?: number | null
+          raw_data?: Json
+          status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "market_listing_snapshots_market_listing_id_fkey"
+            columns: ["market_listing_id"]
+            isOneToOne: false
+            referencedRelation: "market_listings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      market_listing_sources: {
+        Row: {
+          created_at: string
+          first_seen_at: string
+          id: string
+          is_primary: boolean
+          last_seen_at: string
+          market_listing_id: string
+          source: string
+          source_listing_id: string | null
+          url: string | null
+        }
+        Insert: {
+          created_at?: string
+          first_seen_at?: string
+          id?: string
+          is_primary?: boolean
+          last_seen_at?: string
+          market_listing_id: string
+          source: string
+          source_listing_id?: string | null
+          url?: string | null
+        }
+        Update: {
+          created_at?: string
+          first_seen_at?: string
+          id?: string
+          is_primary?: boolean
+          last_seen_at?: string
+          market_listing_id?: string
+          source?: string
+          source_listing_id?: string | null
+          url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "market_listing_sources_market_listing_id_fkey"
+            columns: ["market_listing_id"]
+            isOneToOne: false
+            referencedRelation: "market_listings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      market_listings: {
+        Row: {
+          address: string | null
+          balcony: boolean | null
+          bathrooms: number | null
+          city: string | null
+          condition: string | null
+          construction_year: number | null
+          county: string | null
+          created_at: string
+          currency: string | null
+          district: string | null
+          features: Json
+          first_seen_at: string
+          floor: number | null
+          furnished: boolean | null
+          id: string
+          last_seen_at: string
+          latitude: number | null
+          longitude: number | null
+          neighborhood: string | null
+          parking: boolean | null
+          price: number | null
+          price_per_sqm: number | null
+          property_type: string | null
+          raw_data: Json
+          rooms: number | null
+          source: string
+          source_listing_id: string | null
+          status: string
+          total_area: number | null
+          total_floors: number | null
+          transaction_type: string | null
+          updated_at: string
+          url: string | null
+          usable_area: number | null
+        }
+        Insert: {
+          address?: string | null
+          balcony?: boolean | null
+          bathrooms?: number | null
+          city?: string | null
+          condition?: string | null
+          construction_year?: number | null
+          county?: string | null
+          created_at?: string
+          currency?: string | null
+          district?: string | null
+          features?: Json
+          first_seen_at?: string
+          floor?: number | null
+          furnished?: boolean | null
+          id?: string
+          last_seen_at?: string
+          latitude?: number | null
+          longitude?: number | null
+          neighborhood?: string | null
+          parking?: boolean | null
+          price?: number | null
+          price_per_sqm?: number | null
+          property_type?: string | null
+          raw_data?: Json
+          rooms?: number | null
+          source: string
+          source_listing_id?: string | null
+          status?: string
+          total_area?: number | null
+          total_floors?: number | null
+          transaction_type?: string | null
+          updated_at?: string
+          url?: string | null
+          usable_area?: number | null
+        }
+        Update: {
+          address?: string | null
+          balcony?: boolean | null
+          bathrooms?: number | null
+          city?: string | null
+          condition?: string | null
+          construction_year?: number | null
+          county?: string | null
+          created_at?: string
+          currency?: string | null
+          district?: string | null
+          features?: Json
+          first_seen_at?: string
+          floor?: number | null
+          furnished?: boolean | null
+          id?: string
+          last_seen_at?: string
+          latitude?: number | null
+          longitude?: number | null
+          neighborhood?: string | null
+          parking?: boolean | null
+          price?: number | null
+          price_per_sqm?: number | null
+          property_type?: string | null
+          raw_data?: Json
+          rooms?: number | null
+          source?: string
+          source_listing_id?: string | null
+          status?: string
+          total_area?: number | null
+          total_floors?: number | null
+          transaction_type?: string | null
+          updated_at?: string
+          url?: string | null
+          usable_area?: number | null
+        }
+        Relationships: []
       }
       notifications: {
         Row: {
@@ -3736,6 +4247,10 @@ export type Database = {
           _trade_registry_number?: string
         }
         Returns: string
+      }
+      can_access_acp_analysis: {
+        Args: { _analysis_id: string }
+        Returns: boolean
       }
       can_access_contract: { Args: { _contract_id: string }; Returns: boolean }
       can_access_ticket: { Args: { _ticket_id: string }; Returns: boolean }
