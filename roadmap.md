@@ -74,3 +74,4 @@
 - [x] PDF brandat cu logo-ul agenției, atașat automat la proprietate și contact.
 - [x] Semnare la distanță: link personal, valabil 7 zile, consumat o singură dată, semnătură pe canvas, IP + user agent + dată în dovada semnării.
 - [x] Pagini: /app/contracts, /app/contracts/$id, pagina publică /semnare.
+- [x] Etapa 2: contract real de închiriere cu proprietar și chiriaș, anexă opțională de inventar în același PDF și listă implicită configurabilă per agenție.
