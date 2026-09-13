@@ -1,6 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 import { BarChart3, Building2, Handshake, Layers, PlugZap, Sparkles } from "lucide-react";
 import { PageHeader } from "@/components/app/PageHeader";
 import { SectionCard } from "@/components/app/SectionCard";
@@ -239,8 +240,8 @@ function NewAcpPage() {
               {create.isPending ? "Se creează…" : "Analizează piața"}
             </Button>
             <p className="text-xs text-muted-foreground">
-              În această etapă se salvează analiza și sursele; motorul de comparare rulează în etapa
-              următoare.
+              Motorul rulează imediat: selectează comparabilele, aplică ajustările și calculează
+              statisticile, determinist și fără AI.
             </p>
           </div>
         </div>
