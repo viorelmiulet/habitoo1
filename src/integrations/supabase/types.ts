@@ -3881,6 +3881,14 @@ export type Database = {
       next_contract_number: { Args: never; Returns: string }
       next_property_reference: { Args: never; Returns: string }
       org_access_blocked: { Args: never; Returns: string }
+      org_seat_usage: {
+        Args: { _org: string }
+        Returns: {
+          plan: string
+          seat_limit: number
+          used: number
+        }[]
+      }
       plan_agent_limit: { Args: { _plan: string }; Returns: number }
       purge_expired_portal_messages: { Args: never; Returns: number }
       qa_purge_demo_organization: { Args: { _org: string }; Returns: string[] }
@@ -3947,6 +3955,11 @@ export type Database = {
         Args: { _actor?: string; _user: string }
         Returns: Json
       }
+      team_invite_agent: {
+        Args: { _email: string; _full_name: string; _user_id?: string }
+        Returns: Json
+      }
+      team_remove_agent: { Args: { _user_id: string }; Returns: Json }
     }
     Enums: {
       activity_kind:
