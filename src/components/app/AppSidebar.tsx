@@ -60,6 +60,13 @@ export const agencyNav: NavGroup[] = [
     title: "Rețea",
     items: [{ label: "Colaborare", to: "/app/collaboration", icon: Handshake }],
   },
+  {
+    title: "ACP",
+    items: [
+      { label: "Analiză nouă", to: "/app/acp/new", icon: Sparkles },
+      { label: "Analize salvate", to: "/app/acp", icon: BarChart3, exact: true },
+    ],
+  },
 
   {
     title: "Productivitate",
