@@ -682,6 +682,13 @@ export type AcpAnalysisView = {
   confidence: ReturnType<typeof runAcpAnalysis>["confidence"] | null;
   explanation: string[];
   comparables: AcpComparableView[];
+  aiConfigured: boolean;
+  ai: {
+    provider: string | null;
+    model: string | null;
+    generatedAt: string | null;
+    insight: AcpAiInsight | null;
+  } | null;
 };
 
 /** Detaliul complet al unei analize, cu imagini semnate pentru comparabile. */
