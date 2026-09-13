@@ -12,11 +12,7 @@ import { requireActiveOrgAuth } from "@/lib/org-access";
 import { ACP_AUDIT_ACTIONS, logAcpAudit } from "./audit";
 import { buildAcpAiContext, type AcpAiContextInput } from "./ai/context";
 import { parseAcpAiInsight, type AcpAiInsight } from "./ai/schema";
-import {
-  isAcpAiConfigured,
-  resolveAcpAiProvider,
-  safeAiErrorMessage,
-} from "./ai/provider.server";
+
 
 /** Limite de generare: pe utilizator și pe agenție, pe oră. */
 export const ACP_AI_RATE_LIMITS = {
@@ -40,7 +36,10 @@ async function loadAdmin() {
 /** Starea providerului AI, ca UI-ul să poată explica lipsa configurării. */
 export const getAcpAiStatus = createServerFn({ method: "GET" })
   .middleware([requireActiveOrgAuth])
-  .handler(async (): Promise<{ configured: boolean }> => ({ configured: isAcpAiConfigured() }));
+  .handler(async (): Promise<{ configured: boolean }> => {
+    const { isAcpAiConfigured } = await import("./ai/provider.server");
+    return { configured: isAcpAiConfigured() };
+  });
 
 export const generateAcpAiAnalysis = createServerFn({ method: "POST" })
   .middleware([requireActiveOrgAuth])
@@ -69,6 +68,7 @@ export const generateAcpAiAnalysis = createServerFn({ method: "POST" })
     if (error) throw error;
     if (!analysis) throw new Error("Analiza nu a fost găsită în agenția ta.");
 
+    const { resolveAcpAiProvider, safeAiErrorMessage } = await import("./ai/provider.server");
     const provider = resolveAcpAiProvider();
     if (!provider) {
       return {

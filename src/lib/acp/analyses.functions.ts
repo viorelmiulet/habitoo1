@@ -15,7 +15,6 @@ import type { AcpSubject } from "./scoring";
 import type { AcpComparableResult } from "./engine";
 import { ACP_AUDIT_ACTIONS, logAcpAudit } from "./audit";
 import { parseAcpAiInsight, type AcpAiInsight } from "./ai/schema";
-import { isAcpAiConfigured } from "./ai/provider.server";
 import { dedupeMarketCandidates } from "@/lib/market/acp";
 import { marketSourceName } from "@/lib/market/sources";
 
@@ -789,7 +788,7 @@ export const getAcpAnalysis = createServerFn({ method: "POST" })
       estimate: analysisData.estimate ?? null,
       confidence: analysisData.confidence ?? null,
       explanation: analysisData.explanation ?? [],
-      aiConfigured: isAcpAiConfigured(),
+      aiConfigured: Boolean(process.env["LOVABLE_API_KEY"]),
       ai: analysisData.ai
         ? {
             provider: analysisData.ai.provider ?? null,
