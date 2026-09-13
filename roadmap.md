@@ -75,3 +75,8 @@
 - [x] Semnare la distanță: link personal, valabil 7 zile, consumat o singură dată, semnătură pe canvas, IP + user agent + dată în dovada semnării.
 - [x] Pagini: /app/contracts, /app/contracts/$id, pagina publică /semnare.
 - [x] Etapa 2: contract real de închiriere cu proprietar și chiriaș, anexă opțională de inventar în același PDF și listă implicită configurabilă per agenție.
+## Contract de reprezentare exclusivă
+- [ ] Adaugă setări agenție pentru reprezentant legal și funcție.
+- [ ] Adaugă șablonul real și câmpurile editabile, inclusiv fără proprietate.
+- [ ] Integrează PDF-ul și semnăturile în două coloane.
+- [ ] Rulează typecheck și testele.
