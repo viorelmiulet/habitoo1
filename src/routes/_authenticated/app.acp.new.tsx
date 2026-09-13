@@ -264,7 +264,7 @@ function NewAcpPage() {
             <Button
               size="lg"
               disabled={!selected || create.isPending}
-              onClick={() => create.mutate()}
+              onClick={() => create.mutate(undefined)}
             >
               <Sparkles className="size-4" />
               {create.isPending ? "Se creează…" : "Analizează piața"}
