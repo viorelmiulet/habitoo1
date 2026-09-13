@@ -102,7 +102,7 @@ describe("runAcpAnalysis", () => {
   });
 
   it("respectă includerea manuală a unui comparabil slab", () => {
-    const weak = candidate("weak", { rooms: 1, usableArea: 30, price: 70_000, pricePerSqm: 2333 });
+    const weak = candidate("weak", { rooms: 1, usableArea: 30, price: 60_000, pricePerSqm: 2000 });
     const result = runAcpAnalysis(target, [...similarSet, weak], { weak: "include" });
     const row = result.comparables.find((c) => c.key === "weak")!;
     expect(row.isSelected).toBe(true);

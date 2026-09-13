@@ -309,7 +309,7 @@ function AcpDetailPage() {
       toast.success("Comparabil actualizat", { duration: 2500 });
       invalidate();
     },
-    onError: toastError,
+    onError: (error: unknown) => toastError(error),
   });
 
   const currency = analysis?.target.subject.currency ?? "EUR";
@@ -361,7 +361,7 @@ function AcpDetailPage() {
           <Button
             variant="outline"
             disabled={rerunMutation.isPending}
-            onClick={() => rerunMutation.mutate()}
+            onClick={() => rerunMutation.mutate(undefined)}
           >
             <RefreshCw className={cn("size-4", rerunMutation.isPending && "animate-spin")} />
             {rerunMutation.isPending ? "Se recalculează…" : "Recalculează"}
