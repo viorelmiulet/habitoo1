@@ -218,6 +218,20 @@
       "when": 1789323522419,
       "tag": "0030_acp_engine_phase2",
       "breakpoints": true
+    },
+    {
+      "idx": 31,
+      "version": "7",
+      "when": 1789324450500,
+      "tag": "0031_market_data_phase3",
+      "breakpoints": true
+    },
+    {
+      "idx": 32,
+      "version": "7",
+      "when": 1789324471128,
+      "tag": "0032_market_import_runs_updated_at",
+      "breakpoints": true
     }
   ]
 }

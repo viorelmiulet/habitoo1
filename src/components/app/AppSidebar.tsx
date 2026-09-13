@@ -27,6 +27,7 @@ import {
   UserRound,
   Users,
   PlugZap,
+  Database,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { initials } from "@/lib/format";
@@ -66,6 +67,7 @@ export const agencyNav: NavGroup[] = [
     items: [
       { label: "Analiză nouă", to: "/app/acp/new", icon: Sparkles },
       { label: "Analize salvate", to: "/app/acp", icon: BarChart3, exact: true },
+      { label: "Date piață", to: "/app/acp/date-piata", icon: Database },
     ],
   },
 

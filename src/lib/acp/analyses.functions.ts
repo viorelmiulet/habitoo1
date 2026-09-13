@@ -14,6 +14,8 @@ import { runAcpAnalysis, targetPricePerSqm, type AcpCandidate, type AcpManualOve
 import type { AcpSubject } from "./scoring";
 import type { AcpComparableResult } from "./engine";
 import { ACP_AUDIT_ACTIONS, logAcpAudit } from "./audit";
+import { dedupeMarketCandidates } from "@/lib/market/acp";
+import { marketSourceName } from "@/lib/market/sources";
 
 const MEDIA_BUCKET = "property-media";
 
@@ -215,42 +217,61 @@ async function collectCandidates(params: {
     });
   }
 
-  // 3. Pool comun de oferte normalizate (alimentat separat; fără scraping aici).
+  // 3. Pool comun de oferte normalizate (alimentat prin importurile din faza 3).
+  //    Ofertele active au prioritate, iar anunțurile aceleiași proprietăți
+  //    apărute pe mai multe surse se numără o singură dată (entitate canonică).
   if (sources["portal"]) {
     let query = admin
       .from("market_listings")
       .select("*")
-      .eq("status", "active")
+      .in("status", ["active", "inactive"])
       .order("last_seen_at", { ascending: false })
-      .limit(200);
+      .limit(400);
     if (target.propertyType) query = query.eq("property_type", target.propertyType);
     if (target.transactionType) query = query.eq("transaction_type", target.transactionType);
     if (target.city) query = query.eq("city", target.city);
     const { data, error } = await query;
     if (error) throw error;
     const rows = data ?? [];
-    for (const row of rows) {
+    const deduped = dedupeMarketCandidates(rows as never);
+    for (const item of deduped) {
+      const row = item.row as unknown as Record<string, unknown> & {
+        id: string;
+        source: string;
+        url: string | null;
+        address: string | null;
+        city: string | null;
+        county: string | null;
+        district: string | null;
+        neighborhood: string | null;
+        title: string | null;
+        status: string;
+      };
+      const sourceNames = item.sources.map((s) => marketSourceName(s.source)).join(" + ");
       candidates.push({
-        key: `market:${row.id}`,
+        key: `market:${item.row.market_entity_id ?? row.id}`,
         sourceType: "portal",
-        sourceName: row.source ?? ACP_SOURCE_TYPE_LABELS.portal,
+        sourceName: item.active
+          ? sourceNames || ACP_SOURCE_TYPE_LABELS.portal
+          : `${sourceNames || ACP_SOURCE_TYPE_LABELS.portal} (dispărută din feed)`,
         marketListingId: row.id,
-        title: row.address ?? row.url ?? "Ofertă de piață",
+        title: row.title ?? row.address ?? row.url ?? "Ofertă de piață",
         locationLabel: locationLabel({
           district: row.neighborhood ?? row.district,
           city: row.city,
           county: row.county,
         }),
         url: row.url,
-        subject: marketListingToSubject(row),
+        subject: marketListingToSubject(row as never),
       });
     }
     stats.push({
       sourceType: "portal",
       sourceName: ACP_SOURCE_TYPE_LABELS.portal,
-      itemsFound: rows.length,
+      itemsFound: deduped.length,
     });
   }
+
 
   return { candidates, stats };
 }
