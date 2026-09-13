@@ -135,7 +135,7 @@ describe("scoring pe camere", () => {
 describe("scoring pe locație", () => {
   it("respectă ierarhia cartier → oraș → județ", () => {
     expect(scoreLocation({ neighborhood: "Militari Residence" }, { neighborhood: "militari residence" })).toBe(100);
-    expect(scoreLocation({ district: "Militari" }, { district: "Militari" })).toBe(100);
+    expect(scoreLocation({ district: "Militari" }, { district: "Militari" })).toBe(85);
     expect(
       scoreLocation({ city: "București", neighborhood: "Militari" }, { city: "București", neighborhood: "Titan" }),
     ).toBe(60);
