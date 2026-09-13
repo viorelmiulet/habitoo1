@@ -15,7 +15,10 @@ import {
   CONTRACT_KINDS,
   PARTY_ROLES,
   contractKindLabels,
+  DEFAULT_INVENTORY_ITEMS,
+  INVENTORY_CONDITIONS,
   partyRoleLabels,
+  renderRentalAgreement,
   renderTemplate,
   maskCnp,
 } from "@/lib/contracts/templates";
@@ -34,6 +37,18 @@ type Ctx = {
 };
 
 const uuid = z.string().uuid();
+const inventoryItemInput = z.object({
+  name: z.string().trim().min(1).max(120),
+  quantity: z.number().int().positive().max(999),
+  condition: z.enum(INVENTORY_CONDITIONS),
+  location: z.string().trim().max(120),
+  notes: z.string().trim().max(500),
+});
+
+function inventoryItems(value: unknown) {
+  const parsed = z.array(inventoryItemInput).max(100).safeParse(value);
+  return parsed.success ? parsed.data : DEFAULT_INVENTORY_ITEMS;
+}
 
 async function orgContext(ctx: Ctx) {
   const [{ data: org }, { data: isAdmin }] = await Promise.all([
@@ -102,6 +117,7 @@ export const listTemplates = createServerFn({ method: "GET" })
       .from("contract_templates")
       .select("*")
       .or(`organization_id.is.null,organization_id.eq.${orgId}`)
+      .eq("is_active", true)
       .order("organization_id", { nullsFirst: true })
       .order("kind");
     return (data ?? []).map((t) => ({ ...t, isPlatform: t.organization_id === null }));
@@ -190,6 +206,42 @@ export const deleteTemplate = createServerFn({ method: "POST" })
       actorId: ctx.userId,
       action: "contract_template.deleted",
       entityId: data.id,
+    });
+    return { ok: true };
+  });
+
+export const getContractInventoryDefaults = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const ctx = context as unknown as Ctx;
+    const { orgId, isAdmin } = await orgContext(ctx);
+    const db = await admin();
+    const { data: org } = await db
+      .from("organizations")
+      .select("contract_inventory_defaults")
+      .eq("id", orgId)
+      .maybeSingle();
+    return { items: inventoryItems(org?.contract_inventory_defaults), canEdit: isAdmin };
+  });
+
+export const saveContractInventoryDefaults = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) => z.object({ items: z.array(inventoryItemInput).max(100) }).parse(data))
+  .handler(async ({ data, context }) => {
+    const ctx = context as unknown as Ctx;
+    const { orgId, isAdmin } = await orgContext(ctx);
+    if (!isAdmin) throw new Error("Doar administratorul agenției poate modifica inventarul implicit.");
+    const db = await admin();
+    const { error } = await db
+      .from("organizations")
+      .update({ contract_inventory_defaults: data.items as never })
+      .eq("id", orgId);
+    if (error) throw new Error(error.message);
+    await audit({
+      orgId,
+      actorId: ctx.userId,
+      action: "contract_inventory_defaults.updated",
+      values: { items: data.items.length },
     });
     return { ok: true };
   });
@@ -600,6 +652,7 @@ const partyInput = z.object({
   idIssuer: z.string().trim().max(120).optional(),
   idIssuedOn: z.string().trim().max(20).optional(),
   birthDate: z.string().trim().max(20).optional(),
+  citizenship: z.string().trim().max(80).optional(),
 });
 
 function isoDate(value: string | undefined) {
@@ -626,6 +679,12 @@ export const createContract = createServerFn({ method: "POST" })
         currency: z.string().trim().max(6).optional(),
         commission: z.string().trim().max(60).optional(),
         durationDays: z.number().int().positive().max(3650).optional(),
+        durationMonths: z.number().int().positive().max(1200).optional(),
+        startDate: z.string().trim().max(20).optional(),
+        destination: z.string().trim().max(160).optional(),
+        deposit: z.number().nonnegative().optional(),
+        includeInventory: z.boolean().optional(),
+        inventory: z.array(inventoryItemInput).max(100).optional(),
         parties: z.array(partyInput).min(1).max(6),
       })
       .parse(data),
@@ -659,7 +718,8 @@ export const createContract = createServerFn({ method: "POST" })
         ).data
       : null;
 
-    const client = data.parties.find((p) => p.role !== "agent") ?? data.parties[0]!;
+    const client = data.parties.find((p) => p.role !== "agent") ?? data.parties[0];
+    if (!client) throw new Error("Adaugă cel puțin o parte contractantă.");
     const price = data.price ?? property?.price ?? null;
     const currency = data.currency ?? property?.currency ?? "EUR";
     const commission = data.commission ?? property?.commission ?? null;
@@ -701,6 +761,32 @@ export const createContract = createServerFn({ method: "POST" })
       "contract.durata": data.durationDays ?? "",
     };
 
+    const landlord = data.parties.find((p) => p.role === "landlord");
+    const tenant = data.parties.find((p) => p.role === "tenant");
+    if (data.kind === "rent_agreement" && (!landlord || !tenant)) {
+      throw new Error("Contractul de închiriere necesită proprietar și chiriaș.");
+    }
+    const signingDate = new Date().toLocaleDateString("ro-RO");
+    const propertyAddress = [property?.address, property?.city, property?.county]
+      .filter(Boolean)
+      .join(", ");
+    const body =
+      data.kind === "rent_agreement" && landlord && tenant
+        ? renderRentalAgreement({
+            signingDate,
+            landlord,
+            tenant,
+            rooms: property?.rooms,
+            propertyAddress,
+            destination: data.destination,
+            durationMonths: data.durationMonths,
+            startDate: data.startDate,
+            rent: price,
+            currency,
+            deposit: data.deposit,
+          })
+        : renderTemplate(template.body, vars);
+
     const title =
       data.title ??
       `${contractKindLabels[data.kind] ?? "Contract"}${property?.title ? ` — ${property.title}` : ""}`;
@@ -716,7 +802,7 @@ export const createContract = createServerFn({ method: "POST" })
         property_id: data.propertyId ?? null,
         contact_id: data.contactId ?? null,
         lead_id: data.leadId ?? null,
-        body: renderTemplate(template.body, vars),
+        body,
         data: {
           agency: {
             name: org?.name ?? "",
@@ -726,6 +812,24 @@ export const createContract = createServerFn({ method: "POST" })
             address: org?.material_address ?? null,
             phone: org?.phone ?? null,
             email: org?.email ?? null,
+            website: org?.material_website ?? null,
+          },
+          rental:
+            data.kind === "rent_agreement"
+              ? {
+                  signingDate,
+                  destination: data.destination ?? null,
+                  durationMonths: data.durationMonths ?? null,
+                  startDate: data.startDate ?? null,
+                  deposit: data.deposit ?? null,
+                  propertyAddress,
+                }
+              : null,
+          inventory: {
+            included: data.includeInventory === true,
+            items: data.includeInventory ? (data.inventory ?? []) : [],
+            propertyAddress,
+            handoverDate: data.startDate ?? null,
           },
         } as never,
         price,
@@ -752,6 +856,7 @@ export const createContract = createServerFn({ method: "POST" })
       cnp_enc: encryptPii(p.cnp),
       id_series_enc: encryptPii(p.idSeries),
       id_number_enc: encryptPii(p.idNumber),
+      citizenship: p.citizenship || null,
       sign_order: index + 1,
     }));
     const { error: partyError } = await db.from("contract_parties").insert(rows as never);
@@ -787,6 +892,46 @@ export const updateContractBody = createServerFn({ method: "POST" })
       .eq("id", data.id);
     if (error) throw new Error(error.message);
     await audit({ orgId, actorId: ctx.userId, action: "contract.updated", entityId: data.id });
+    return { ok: true };
+  });
+
+export const updateContractInventory = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) =>
+    z.object({ id: uuid, items: z.array(inventoryItemInput).max(100) }).parse(data),
+  )
+  .handler(async ({ data, context }) => {
+    const ctx = context as unknown as Ctx;
+    const { contract, orgId, db } = await loadContract(ctx, data.id);
+    if (contract.status !== "draft") {
+      throw new Error("Inventarul nu mai poate fi modificat după trimiterea la semnat.");
+    }
+    const snapshot =
+      contract.data && typeof contract.data === "object" && !Array.isArray(contract.data)
+        ? (contract.data as Record<string, unknown>)
+        : {};
+    const currentInventory =
+      snapshot["inventory"] &&
+      typeof snapshot["inventory"] === "object" &&
+      !Array.isArray(snapshot["inventory"])
+        ? (snapshot["inventory"] as Record<string, unknown>)
+        : {};
+    if (currentInventory["included"] !== true) {
+      throw new Error("Acest document nu include o anexă de inventar.");
+    }
+    const nextData = {
+      ...snapshot,
+      inventory: { ...currentInventory, items: data.items },
+    };
+    const { error } = await db.from("contracts").update({ data: nextData as never }).eq("id", data.id);
+    if (error) throw new Error(error.message);
+    await audit({
+      orgId,
+      actorId: ctx.userId,
+      action: "contract.inventory.updated",
+      entityId: data.id,
+      values: { item_count: data.items.length },
+    });
     return { ok: true };
   });
 
@@ -856,6 +1001,7 @@ export const getContract = createServerFn({ method: "POST" })
         idIssuer: p.id_issuer,
         idIssuedOn: p.id_issued_on,
         birthDate: p.birth_date,
+        citizenship: p.citizenship,
         cnp: data.revealIdData ? cnp : maskCnp(cnp),
         idSeries: data.revealIdData ? series : series ? "••" : null,
         idNumber: data.revealIdData ? number : number ? "••••" : null,
@@ -885,6 +1031,7 @@ export const getContract = createServerFn({ method: "POST" })
         leadId: contract.lead_id,
         propertyTitle: property?.title ?? null,
         propertyReference: property?.reference ?? null,
+        data: contract.data,
       },
       parties: mapped,
       documents: (documents ?? []).map((d) => ({
@@ -914,7 +1061,7 @@ export async function renderAndStorePdf(contractId: string, actorId: string | nu
     .order("sign_order");
   const { data: org } = await db
     .from("organizations")
-    .select("name,legal_name,cui,trade_registry_number,material_address,material_phone,material_email,phone,email,logo_path")
+    .select("name,legal_name,cui,trade_registry_number,material_address,material_phone,material_email,material_website,phone,email,logo_path")
     .eq("id", contract.organization_id)
     .maybeSingle();
 
@@ -957,11 +1104,18 @@ export async function renderAndStorePdf(contractId: string, actorId: string | nu
         fullName: p.full_name,
         details: [
           cnp ? `CNP ${cnp}` : "",
-          series || number ? `Act de identitate seria ${series ?? "—"} nr. ${number ?? "—"}` : "",
+          series && number
+            ? `Act de identitate seria ${series} nr. ${number}`
+            : number
+              ? `Act de identitate nr. ${number}`
+              : series
+                ? `Act de identitate seria ${series}`
+                : "",
           p.address ?? "",
           [p.phone, p.email].filter(Boolean).join(" · "),
         ].filter(Boolean),
         signature,
+        citizenship: p.citizenship,
       };
     }),
   );
@@ -978,9 +1132,25 @@ export async function renderAndStorePdf(contractId: string, actorId: string | nu
       address: org?.material_address ?? null,
       phone: org?.phone ?? null,
       email: org?.email ?? null,
+      website: org?.material_website ?? null,
     },
     logo,
     parties: pdfParties,
+    rentalAgreement: contract.kind === "rent_agreement",
+    inventory: (() => {
+      const snapshot = contract.data && typeof contract.data === "object" && !Array.isArray(contract.data)
+        ? contract.data as Record<string, unknown>
+        : {};
+      const rawInventory = snapshot["inventory"];
+      if (!rawInventory || typeof rawInventory !== "object" || Array.isArray(rawInventory)) return null;
+      const record = rawInventory as Record<string, unknown>;
+      if (record["included"] !== true) return null;
+      return {
+        propertyAddress: typeof record["propertyAddress"] === "string" ? record["propertyAddress"] : "",
+        handoverDate: typeof record["handoverDate"] === "string" ? record["handoverDate"] : "",
+        items: inventoryItems(record["items"]),
+      };
+    })(),
   });
 
   const signedCount = (parties ?? []).filter((p) => p.signed_at).length;

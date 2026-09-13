@@ -7,6 +7,7 @@ import { PageHeader } from "@/components/app/PageHeader";
 import { StatusBadge } from "@/components/app/StatusBadge";
 import { AgencyPortalCatalogCard } from "@/components/app/AgencyPortalCatalogCard";
 import { AgencyBrandingCard } from "@/components/app/AgencyBrandingCard";
+import { InventoryDefaultsCard } from "@/components/app/contracts/InventoryDefaultsCard";
 
 import { SiteFeedCard } from "@/components/app/SiteFeedCard";
 import { Button } from "@/components/ui/button";
@@ -268,6 +269,7 @@ function SettingsPage() {
 
         {user?.isAdmin ? (
           <TabsContent value="agency">
+            <div className="max-w-5xl space-y-6">
             <form
               className="panel max-w-xl space-y-4 p-5"
               onSubmit={(e) => {
@@ -381,6 +383,8 @@ function SettingsPage() {
                 </p>
               )}
             </form>
+            <InventoryDefaultsCard />
+            </div>
           </TabsContent>
         ) : null}
 
