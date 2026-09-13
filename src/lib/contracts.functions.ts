@@ -221,7 +221,12 @@ export const deleteTemplate = createServerFn({ method: "POST" })
       .delete()
       .eq("id", data.id)
       .eq("organization_id", orgId);
-    if (error) throw new Error(error.message);
+    if (error) {
+      if (error.message.includes("contracts_org_contract_number_uidx")) {
+        throw new Error("Numărul contractului este deja folosit în agenția ta.");
+      }
+      throw new Error(error.message);
+    }
     await audit({
       orgId,
       actorId: ctx.userId,
