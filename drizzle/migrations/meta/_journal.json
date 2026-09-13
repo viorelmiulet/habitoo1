@@ -197,6 +197,13 @@
       "when": 1789276419643,
       "tag": "0027_remove_generic_contract_templates",
       "breakpoints": true
+    },
+    {
+      "idx": 28,
+      "version": "7",
+      "when": 1789280389254,
+      "tag": "0028_team_agent_rpcs_mobile",
+      "breakpoints": true
     }
   ]
 }
