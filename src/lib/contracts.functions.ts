@@ -117,6 +117,7 @@ export const listTemplates = createServerFn({ method: "GET" })
       .from("contract_templates")
       .select("*")
       .or(`organization_id.is.null,organization_id.eq.${orgId}`)
+      .eq("is_active", true)
       .order("organization_id", { nullsFirst: true })
       .order("kind");
     return (data ?? []).map((t) => ({ ...t, isPlatform: t.organization_id === null }));
