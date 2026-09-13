@@ -35,6 +35,7 @@ export type Database = {
           last_run_at: string | null
           median_price_per_sqm: number | null
           organization_id: string
+          parent_analysis_id: string | null
           price_average: number | null
           price_max: number | null
           price_median: number | null
@@ -43,6 +44,8 @@ export type Database = {
           price_p75: number | null
           property_id: string | null
           recommended_listing_price: number | null
+          root_analysis_id: string | null
+          snapshot_at: string | null
           sources: Json
           status: string
           target_data: Json
@@ -70,6 +73,7 @@ export type Database = {
           last_run_at?: string | null
           median_price_per_sqm?: number | null
           organization_id: string
+          parent_analysis_id?: string | null
           price_average?: number | null
           price_max?: number | null
           price_median?: number | null
@@ -78,6 +82,8 @@ export type Database = {
           price_p75?: number | null
           property_id?: string | null
           recommended_listing_price?: number | null
+          root_analysis_id?: string | null
+          snapshot_at?: string | null
           sources?: Json
           status?: string
           target_data?: Json
@@ -105,6 +111,7 @@ export type Database = {
           last_run_at?: string | null
           median_price_per_sqm?: number | null
           organization_id?: string
+          parent_analysis_id?: string | null
           price_average?: number | null
           price_max?: number | null
           price_median?: number | null
@@ -113,6 +120,8 @@ export type Database = {
           price_p75?: number | null
           property_id?: string | null
           recommended_listing_price?: number | null
+          root_analysis_id?: string | null
+          snapshot_at?: string | null
           sources?: Json
           status?: string
           target_data?: Json
@@ -129,10 +138,24 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "acp_analyses_parent_analysis_id_fkey"
+            columns: ["parent_analysis_id"]
+            isOneToOne: false
+            referencedRelation: "acp_analyses"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "acp_analyses_property_id_fkey"
             columns: ["property_id"]
             isOneToOne: false
             referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "acp_analyses_root_analysis_id_fkey"
+            columns: ["root_analysis_id"]
+            isOneToOne: false
+            referencedRelation: "acp_analyses"
             referencedColumns: ["id"]
           },
         ]
@@ -2422,6 +2445,48 @@ export type Database = {
           },
         ]
       }
+      market_source_state: {
+        Row: {
+          attempts: number
+          auto_sync: boolean
+          created_at: string
+          last_error: string | null
+          last_run_id: string | null
+          last_success_at: string | null
+          last_sync_at: string | null
+          running_since: string | null
+          source: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          attempts?: number
+          auto_sync?: boolean
+          created_at?: string
+          last_error?: string | null
+          last_run_id?: string | null
+          last_success_at?: string | null
+          last_sync_at?: string | null
+          running_since?: string | null
+          source: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          attempts?: number
+          auto_sync?: boolean
+          created_at?: string
+          last_error?: string | null
+          last_run_id?: string | null
+          last_success_at?: string | null
+          last_sync_at?: string | null
+          running_since?: string | null
+          source?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       notifications: {
         Row: {
           body: string | null
@@ -4710,6 +4775,19 @@ export type Database = {
       mail_webhook_nonce_claim: {
         Args: { _bucket: string; _token: string; _ttl_seconds: number }
         Returns: boolean
+      }
+      market_sync_claim: {
+        Args: { _source: string; _stale_seconds?: number }
+        Returns: boolean
+      }
+      market_sync_release: {
+        Args: {
+          _error?: string
+          _ok: boolean
+          _run_id?: string
+          _source: string
+        }
+        Returns: undefined
       }
       next_contract_number: { Args: never; Returns: string }
       next_property_reference: { Args: never; Returns: string }
