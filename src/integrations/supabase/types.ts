@@ -534,6 +534,7 @@ export type Database = {
         Row: {
           address: string | null
           birth_date: string | null
+          citizenship: string | null
           cnp_enc: string | null
           contract_id: string
           created_at: string
@@ -556,6 +557,7 @@ export type Database = {
         Insert: {
           address?: string | null
           birth_date?: string | null
+          citizenship?: string | null
           cnp_enc?: string | null
           contract_id: string
           created_at?: string
@@ -578,6 +580,7 @@ export type Database = {
         Update: {
           address?: string | null
           birth_date?: string | null
+          citizenship?: string | null
           cnp_enc?: string | null
           contract_id?: string
           created_at?: string
@@ -1667,6 +1670,7 @@ export type Database = {
           archived_by: string | null
           city: string | null
           collaboration_enabled: boolean
+          contract_inventory_defaults: Json
           created_at: string
           created_by: string | null
           cui: string | null
@@ -1712,6 +1716,7 @@ export type Database = {
           archived_by?: string | null
           city?: string | null
           collaboration_enabled?: boolean
+          contract_inventory_defaults?: Json
           created_at?: string
           created_by?: string | null
           cui?: string | null
@@ -1757,6 +1762,7 @@ export type Database = {
           archived_by?: string | null
           city?: string | null
           collaboration_enabled?: boolean
+          contract_inventory_defaults?: Json
           created_at?: string
           created_by?: string | null
           cui?: string | null

@@ -169,6 +169,13 @@
       "when": 1789233939664,
       "tag": "0023_contracts_module_phase1",
       "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1789274543919,
+      "tag": "0024_contract_rental_inventory",
+      "breakpoints": true
     }
   ]
 }
