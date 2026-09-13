@@ -2096,6 +2096,7 @@ export type Database = {
           status: string
           status_changes: number
           triggered_by: string | null
+          updated_at: string
         }
         Insert: {
           ambiguous_matches?: number
@@ -2118,6 +2119,7 @@ export type Database = {
           status?: string
           status_changes?: number
           triggered_by?: string | null
+          updated_at?: string
         }
         Update: {
           ambiguous_matches?: number
@@ -2140,6 +2142,7 @@ export type Database = {
           status?: string
           status_changes?: number
           triggered_by?: string | null
+          updated_at?: string
         }
         Relationships: []
       }
