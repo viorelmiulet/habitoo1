@@ -113,10 +113,16 @@ export async function buildContractPdf(input: ContractPdfInput): Promise<Uint8Ar
   ) => {
     const size = opts.size ?? 10.5;
     const font = opts.font ?? regular;
-    for (const line of wrap(value, font, size, contentWidth)) {
-      ensure(size + 4);
-      if (line) page.drawText(line, { x: MARGIN, y: y - size, size, font, color: opts.color ?? INK });
-      y -= size * 1.5;
+    const paragraphs = value.split(/\r?\n/);
+    for (const paragraph of paragraphs) {
+      const lines = paragraph.trim() ? wrap(paragraph, font, size, contentWidth) : [""];
+      const paragraphHeight = lines.length * size * 1.5;
+      if (paragraphHeight <= A4[1] - MARGIN * 2 - 48) ensure(paragraphHeight + 4);
+      for (const line of lines) {
+        ensure(size + 4);
+        if (line) page.drawText(line, { x: MARGIN, y: y - size, size, font, color: opts.color ?? INK });
+        y -= size * 1.5;
+      }
     }
     y -= opts.gap ?? 0;
   };
