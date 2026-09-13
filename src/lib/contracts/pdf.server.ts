@@ -6,6 +6,7 @@
 import { PDFDocument, StandardFonts, rgb, type PDFFont, type PDFPage } from "pdf-lib";
 import fontkit from "@pdf-lib/fontkit";
 import { CONTRACT_FONT_BOLD_B64, CONTRACT_FONT_REGULAR_B64 } from "./fonts";
+import type { InventoryItem } from "./templates";
 
 export type ContractPdfParty = {
   role: string;
@@ -18,6 +19,7 @@ export type ContractPdfParty = {
     ip: string | null;
     userAgent: string | null;
   } | null;
+  citizenship?: string | null;
 };
 
 export type ContractPdfInput = {
@@ -32,9 +34,16 @@ export type ContractPdfInput = {
     address?: string | null;
     phone?: string | null;
     email?: string | null;
+    website?: string | null;
   };
   logo?: { bytes: Uint8Array; mime: string } | null;
   parties: ContractPdfParty[];
+  rentalAgreement?: boolean;
+  inventory?: {
+    propertyAddress: string;
+    handoverDate: string;
+    items: InventoryItem[];
+  } | null;
 };
 
 const A4: [number, number] = [595.28, 841.89];
@@ -87,9 +96,13 @@ export async function buildContractPdf(input: ContractPdfInput): Promise<Uint8Ar
   let page: PDFPage = doc.addPage(A4);
   let y = A4[1] - MARGIN;
 
+  const drawHeader = () => {
+    page.drawRectangle({ x: MARGIN, y: A4[1] - 51, width: contentWidth, height: 1.5, color: GOLD });
+  };
   const newPage = () => {
     page = doc.addPage(A4);
     y = A4[1] - MARGIN;
+    drawHeader();
   };
   const ensure = (needed: number) => {
     if (y - needed < MARGIN + 24) newPage();
@@ -156,62 +169,112 @@ export async function buildContractPdf(input: ContractPdfInput): Promise<Uint8Ar
   y -= 26;
 
   /* Titlu */
-  text(input.title.toUpperCase(), { size: 15, font: bold, color: NAVY, gap: 2 });
-  if (input.subtitle) text(input.subtitle, { size: 9.5, color: MUTED, gap: 8 });
+  text((input.rentalAgreement ? "CONTRACT DE INCHIRIERE" : input.title).toUpperCase(), {
+    size: 15,
+    font: bold,
+    color: NAVY,
+    gap: 2,
+  });
+  if (input.rentalAgreement) text("(Semnat electronic)", { size: 9.5, color: MUTED, gap: 8 });
+  else if (input.subtitle) text(input.subtitle, { size: 9.5, color: MUTED, gap: 8 });
   else y -= 8;
 
   /* Corpul contractului */
   text(input.body, { size: 10.5, gap: 12 });
 
-  /* Semnături */
-  ensure(150);
-  y -= 10;
-  page.drawRectangle({ x: MARGIN, y, width: contentWidth, height: 1, color: GOLD });
-  y -= 22;
-  text("SEMNĂTURI", { size: 11, font: bold, color: NAVY, gap: 6 });
+  if (input.inventory) {
+    newPage();
+    y -= 18;
+    text("ANEXA 1 - INVENTAR IMOBIL", { size: 14, font: bold, color: NAVY, gap: 8 });
+    text(
+      `Inventar al bunurilor aflate in imobilul situat in ${input.inventory.propertyAddress || "__________"}, predate de proprietar chiriasului la data inceperii contractului de inchiriere.`,
+      { size: 10, gap: 12 },
+    );
+    const columns = [180, 38, 72, 85, contentWidth - 375];
+    const labels = ["Denumire", "Cant.", "Stare", "Locatie", "Observatii"];
+    const drawRow = (values: string[], header = false) => {
+      const lineSets = values.map((value, index) =>
+        wrap(value || "—", header ? bold : regular, header ? 8 : 7.7, columns[index]! - 8),
+      );
+      const rowHeight = Math.max(22, ...lineSets.map((lines) => lines.length * 10 + 8));
+      ensure(rowHeight + 2);
+      let x = MARGIN;
+      page.drawRectangle({ x, y: y - rowHeight, width: contentWidth, height: rowHeight, borderColor: MUTED, borderWidth: 0.5 });
+      lineSets.forEach((lines, index) => {
+        lines.forEach((line, lineIndex) => {
+          page.drawText(line, {
+            x: x + 4,
+            y: y - 12 - lineIndex * 10,
+            size: header ? 8 : 7.7,
+            font: header ? bold : regular,
+            color: header ? NAVY : INK,
+          });
+        });
+        x += columns[index]!;
+        if (index < columns.length - 1) {
+          page.drawLine({ start: { x, y }, end: { x, y: y - rowHeight }, thickness: 0.5, color: MUTED });
+        }
+      });
+      y -= rowHeight;
+    };
+    drawRow(labels, true);
+    input.inventory.items.forEach((item) =>
+      drawRow([item.name, String(item.quantity), item.condition, item.location, item.notes]),
+    );
+    y -= 14;
+    text(`Total articole inventariate: ${input.inventory.items.length}`, { size: 9.5, font: bold, gap: 4 });
+    text(
+      "Prezentul inventar a fost intocmit in 2 (doua) exemplare, cate unul pentru fiecare parte, si face parte integranta din contractul de inchiriere.",
+      { size: 9.5, gap: 8 },
+    );
+  }
 
-  for (const party of input.parties) {
-    ensure(120);
-    text(`${party.roleLabel}: ${party.fullName}`, { size: 10, font: bold });
-    for (const detail of party.details.filter(Boolean)) {
-      text(detail, { size: 9, color: MUTED });
-    }
+  /* Semnături pe pagina finală */
+  newPage();
+  y -= 32;
+  text("SEMNĂTURI", { size: 13, font: bold, color: NAVY, gap: 18 });
+
+  const signatureParties = input.rentalAgreement
+    ? input.parties.filter((party) => party.role === "landlord" || party.role === "tenant")
+    : input.parties;
+  const columnWidth = (contentWidth - 32) / 2;
+  const slots = signatureParties.length === 2 ? signatureParties : input.parties;
+
+  for (const [index, party] of slots.entries()) {
+    const x = MARGIN + (index % 2) * (columnWidth + 32);
+    const top = y - Math.floor(index / 2) * 150;
+    const roleTitle = party.role === "landlord" ? "PROPRIETAR" : party.role === "tenant" ? "CHIRIAS" : party.roleLabel.toUpperCase();
+    page.drawText(roleTitle, { x, y: top, size: 10.5, font: bold, color: NAVY });
+    page.drawText(party.fullName, { x, y: top - 18, size: 9, font: regular, color: INK });
 
     if (party.signature) {
       try {
         const clean = party.signature.pngBase64.replace(/^data:image\/\w+;base64,/, "");
         const png = await doc.embedPng(Buffer.from(clean, "base64"));
         const scaled = png.scaleToFit(180, 60);
-        ensure(scaled.height + 30);
         page.drawImage(png, {
-          x: MARGIN,
-          y: y - scaled.height,
+          x,
+          y: top - 32 - scaled.height,
           width: scaled.width,
           height: scaled.height,
         });
-        y -= scaled.height + 4;
       } catch {
         /* semnătură ilizibilă — rămâne dovada text */
       }
-      page.drawRectangle({ x: MARGIN, y, width: 200, height: 0.8, color: MUTED });
-      y -= 12;
+      page.drawRectangle({ x, y: top - 98, width: columnWidth, height: 0.8, color: MUTED });
       const proof = [
         `Semnat electronic olograf la ${new Date(party.signature.signedAt).toLocaleString("ro-RO")}`,
         party.signature.ip ? `IP ${party.signature.ip}` : null,
       ]
         .filter(Boolean)
         .join(" · ");
-      text(proof, { size: 7.5, color: MUTED });
-      if (party.signature.userAgent) {
-        text(`Dispozitiv: ${party.signature.userAgent.slice(0, 120)}`, { size: 7, color: MUTED });
+      for (const [lineIndex, line] of wrap(proof, regular, 7, columnWidth).entries()) {
+        page.drawText(line, { x, y: top - 112 - lineIndex * 9, size: 7, font: regular, color: MUTED });
       }
     } else {
-      y -= 34;
-      page.drawRectangle({ x: MARGIN, y, width: 200, height: 0.8, color: MUTED });
-      y -= 12;
-      text("Semnătura", { size: 7.5, color: MUTED });
+      page.drawRectangle({ x, y: top - 98, width: columnWidth, height: 0.8, color: MUTED });
+      page.drawText("Semnătura", { x, y: top - 112, size: 7.5, font: regular, color: MUTED });
     }
-    y -= 10;
   }
 
   /* Numerotare pagini */
@@ -219,6 +282,15 @@ export async function buildContractPdf(input: ContractPdfInput): Promise<Uint8Ar
   pages.forEach((p, i) => {
     const label = `Pagina ${i + 1} din ${pages.length}`;
     const w = regular.widthOfTextAtSize(label, 8);
+    const agencyFooter = [
+      input.agency.name,
+      input.agency.phone ? `Tel: ${input.agency.phone}` : null,
+      input.agency.email ? `Email: ${input.agency.email}` : null,
+      input.agency.website,
+    ]
+      .filter(Boolean)
+      .join(" | ");
+    p.drawText(agencyFooter, { x: MARGIN, y: MARGIN - 22, size: 7, font: regular, color: MUTED });
     p.drawText(label, {
       x: width - MARGIN - w,
       y: MARGIN - 22,
