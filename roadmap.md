@@ -80,3 +80,10 @@
 - [x] Adaugă șablonul real și câmpurile editabile, inclusiv fără proprietate.
 - [x] Integrează PDF-ul și semnăturile în două coloane.
 - [x] Rulează typecheck și testele.
+
+## ACP – Analiză Comparativă de Piață (etapa 1: infrastructură)
+- [x] Cele 8 tabele de piață și ACP, cu indexuri, RLS și pool comun doar-citire (migrația 0029).
+- [x] Motor determinist: similaritate cu ponderi centralizate, praguri 85/70, outlieri IQR, statistici (min/max/medie/mediană/P25/P75, preț/mp).
+- [x] Adaptoare pentru proprietăți proprii și oferte de piață normalizate; puncte de integrare pentru audit.
+- [x] Pagini iniţiale /app/acp și /app/acp/new, cu surse selectabile și snapshot al proprietății.
+- [ ] Etapa următoare: import portaluri, deduplicare entități, rulare efectivă a analizei, rapoarte PDF și sumar AI.
