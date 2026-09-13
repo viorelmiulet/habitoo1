@@ -1681,6 +1681,8 @@ export type Database = {
           is_demo: boolean
           is_trial: boolean
           legal_name: string | null
+          legal_representative: string | null
+          legal_representative_title: string | null
           logo_path: string | null
           logo_url: string | null
           material_accent_color: string
@@ -1727,6 +1729,8 @@ export type Database = {
           is_demo?: boolean
           is_trial?: boolean
           legal_name?: string | null
+          legal_representative?: string | null
+          legal_representative_title?: string | null
           logo_path?: string | null
           logo_url?: string | null
           material_accent_color?: string
@@ -1773,6 +1777,8 @@ export type Database = {
           is_demo?: boolean
           is_trial?: boolean
           legal_name?: string | null
+          legal_representative?: string | null
+          legal_representative_title?: string | null
           logo_path?: string | null
           logo_url?: string | null
           material_accent_color?: string
@@ -3872,6 +3878,7 @@ export type Database = {
         Args: { _bucket: string; _token: string; _ttl_seconds: number }
         Returns: boolean
       }
+      next_contract_number: { Args: never; Returns: string }
       next_property_reference: { Args: never; Returns: string }
       org_access_blocked: { Args: never; Returns: string }
       plan_agent_limit: { Args: { _plan: string }; Returns: number }
