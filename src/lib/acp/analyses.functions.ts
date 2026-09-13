@@ -14,6 +14,7 @@ import { runAcpAnalysis, targetPricePerSqm, type AcpCandidate, type AcpManualOve
 import type { AcpSubject } from "./scoring";
 import type { AcpComparableResult } from "./engine";
 import { ACP_AUDIT_ACTIONS, logAcpAudit } from "./audit";
+import { parseAcpAiInsight, type AcpAiInsight } from "./ai/schema";
 import { dedupeMarketCandidates } from "@/lib/market/acp";
 import { marketSourceName } from "@/lib/market/sources";
 
@@ -682,6 +683,13 @@ export type AcpAnalysisView = {
   confidence: ReturnType<typeof runAcpAnalysis>["confidence"] | null;
   explanation: string[];
   comparables: AcpComparableView[];
+  aiConfigured: boolean;
+  ai: {
+    provider: string | null;
+    model: string | null;
+    generatedAt: string | null;
+    insight: AcpAiInsight | null;
+  } | null;
 };
 
 /** Detaliul complet al unei analize, cu imagini semnate pentru comparabile. */
@@ -731,7 +739,16 @@ export const getAcpAnalysis = createServerFn({ method: "POST" })
       confidence?: AcpAnalysisView["confidence"];
       explanation?: string[];
       targetPricePerSqm?: number | null;
+      ai?: {
+        provider?: string | null;
+        model?: string | null;
+        generatedAt?: string | null;
+        insight?: unknown;
+      } | null;
     };
+    const storedInsight = parseAcpAiInsight(
+      analysisData.ai?.insight ? JSON.stringify(analysisData.ai.insight) : null,
+    );
     const targetData = (analysis.target_data ?? {}) as {
       title?: string;
       reference?: string | null;
@@ -771,6 +788,15 @@ export const getAcpAnalysis = createServerFn({ method: "POST" })
       estimate: analysisData.estimate ?? null,
       confidence: analysisData.confidence ?? null,
       explanation: analysisData.explanation ?? [],
+      aiConfigured: Boolean(process.env["LOVABLE_API_KEY"]),
+      ai: analysisData.ai
+        ? {
+            provider: analysisData.ai.provider ?? null,
+            model: analysisData.ai.model ?? analysis.ai_model ?? null,
+            generatedAt: analysisData.ai.generatedAt ?? analysis.ai_generated_at ?? null,
+            insight: storedInsight.ok ? storedInsight.insight : null,
+          }
+        : null,
       comparables: (comparables ?? []).map((c) => {
         const snapshot = (c.snapshot ?? {}) as {
           key?: string;
