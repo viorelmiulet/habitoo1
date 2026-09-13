@@ -102,6 +102,8 @@ export type MarketRepository = {
   }): Promise<void>;
   /** Ofertele sursei care nu au fost văzute în rulare (doar la feed complet). */
   findMissingListings(source: string, seenIds: string[]): Promise<ExistingListing[]>;
+  /** Marchează o ofertă dispărută din feed ca inactivă, păstrând istoricul. */
+  markDisappeared(id: string, runId: string | null, now: string): Promise<void>;
 };
 
 export type ImportSummary = {
@@ -302,7 +304,7 @@ export async function ingestListings(
         priceChanges: existing.priceChanges + (priceChanged ? 1 : 0),
         statusChanges: existing.statusChanges + (statusChanged ? 1 : 0),
         initialPrice: existing.initialPrice ?? listing.price,
-        disappearedAt: listing.status === "active" ? null : null,
+        disappearedAt: listing.status === "active" ? null : options.now,
         runId: options.runId,
         now: options.now,
         ...entityPatch,
@@ -342,6 +344,7 @@ export async function ingestListings(
         runId: options.runId,
         capturedAt: options.now,
       });
+      await repo.markDisappeared(listing.id, options.runId, options.now);
       summary.deactivated += 1;
       summary.statusChanges += 1;
     }
