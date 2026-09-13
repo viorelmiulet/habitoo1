@@ -1,6 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 import { BarChart3, Building2, Handshake, Layers, PlugZap, Sparkles } from "lucide-react";
 import { PageHeader } from "@/components/app/PageHeader";
 import { SectionCard } from "@/components/app/SectionCard";
@@ -23,7 +24,8 @@ import { appHead } from "@/components/app/app-head";
 import { formatMoney } from "@/lib/format";
 import { ACP_SCORE_LABELS, ACP_SCORE_WEIGHTS, ACP_THRESHOLDS } from "@/lib/acp/config";
 import { propertyToSubject } from "@/lib/acp/adapters";
-import { ACP_AUDIT_ACTIONS, logAcpAudit } from "@/lib/acp/audit";
+import { createAcpAnalysis } from "@/lib/acp/analyses.functions";
+
 
 export const Route = createFileRoute("/_authenticated/app/acp/new")({
   head: () => appHead("Habitoo CRM — analiză comparativă nouă"),
@@ -91,63 +93,31 @@ function NewAcpPage() {
 
   const subject = useMemo(() => (selected ? propertyToSubject(selected) : null), [selected]);
 
+  const runAnalysis = useServerFn(createAcpAnalysis);
+
   const create = useMutation({
     mutationFn: async () => {
       if (!orgId || !user) throw new Error("Lipsește agenția curentă.");
       if (!selected || !subject) throw new Error("Selectează proprietatea analizată.");
-
-      const analysisTitle = title.trim() || `ACP · ${selected.title}`;
-      const { data, error } = await supabase
-        .from("acp_analyses")
-        .insert({
-          organization_id: orgId,
-          created_by: user.userId,
-          property_id: selected.id,
-          title: analysisTitle,
-          status: "draft",
-          // Snapshot: analiza rămâne reproductibilă chiar dacă proprietatea se schimbă.
-          target_data: {
-            propertyId: selected.id,
-            reference: selected.reference,
-            title: selected.title,
-            capturedAt: new Date().toISOString(),
-            subject,
-          } as never,
-          sources: enabled as never,
-        })
-        .select("id")
-        .single();
-      if (error) throw error;
-
-      const rows = SOURCES.filter((s) => enabled[s.type]).map((s) => ({
-        analysis_id: data.id,
-        source_type: s.type,
-        source_name: s.name,
-        enabled: true,
-      }));
-      if (rows.length > 0) {
-        const { error: sourcesError } = await supabase.from("acp_analysis_sources").insert(rows);
-        if (sourcesError) throw sourcesError;
-      }
-
-      await logAcpAudit({
-        organizationId: orgId,
-        actorId: user.userId,
-        action: ACP_AUDIT_ACTIONS.analysisCreated,
-        analysisId: data.id,
-        details: { propertyId: selected.id, sources: enabled },
+      const result = await runAnalysis({
+        data: {
+          propertyId: selected.id,
+          title: title.trim() || undefined,
+          sources: enabled,
+        },
       });
-
-      return data.id;
+      return result.analysisId;
     },
-    onSuccess: () => {
-      toast.success("Analiză creată", {
-        description: "Motorul de comparare va rula în etapa următoare.",
+    onSuccess: (analysisId) => {
+      toast.success("Analiză finalizată", {
+        description: "Comparabilele au fost selectate și scorurile calculate.",
+        duration: 2500,
       });
-      navigate({ to: "/app/acp" });
+      navigate({ to: "/app/acp/$id", params: { id: analysisId } });
     },
     onError: toastError,
   });
+
 
   return (
     <div className="space-y-6">
@@ -270,8 +240,8 @@ function NewAcpPage() {
               {create.isPending ? "Se creează…" : "Analizează piața"}
             </Button>
             <p className="text-xs text-muted-foreground">
-              În această etapă se salvează analiza și sursele; motorul de comparare rulează în etapa
-              următoare.
+              Motorul rulează imediat: selectează comparabilele, aplică ajustările și calculează
+              statisticile, determinist și fără AI.
             </p>
           </div>
         </div>

@@ -74,27 +74,34 @@ function AcpListPage() {
         <SectionCard title="Analize" icon={BarChart3} flush>
           <ul className="divide-y divide-border">
             {(analyses ?? []).map((a) => (
-              <li key={a.id} className="flex flex-wrap items-center gap-3 px-5 py-3.5">
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-medium">{a.title}</p>
-                  <p className="text-xs text-muted-foreground">
-                    {new Date(a.created_at).toLocaleDateString("ro-RO")} ·{" "}
-                    {a.comparables_count} comparabile
-                    {a.median_price_per_sqm
-                      ? ` · median ${formatMoney(a.median_price_per_sqm, "EUR")}/mp`
-                      : ""}
-                  </p>
-                </div>
-                {a.estimated_value ? (
-                  <span className="text-sm font-semibold">
-                    {formatMoney(a.estimated_value, "EUR")}
-                  </span>
-                ) : null}
-                <StatusBadge tone={a.status === "completed" ? "success" : "neutral"}>
-                  {STATUS_LABELS[a.status] ?? a.status}
-                </StatusBadge>
+              <li key={a.id}>
+                <Link
+                  to="/app/acp/$id"
+                  params={{ id: a.id }}
+                  className="flex flex-wrap items-center gap-3 px-5 py-3.5 transition-colors hover:bg-muted/50"
+                >
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-medium">{a.title}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {new Date(a.created_at).toLocaleDateString("ro-RO")} ·{" "}
+                      {a.comparables_count} comparabile
+                      {a.median_price_per_sqm
+                        ? ` · median ${formatMoney(a.median_price_per_sqm, "EUR")}/mp`
+                        : ""}
+                    </p>
+                  </div>
+                  {a.estimated_value ? (
+                    <span className="text-sm font-semibold">
+                      {formatMoney(a.estimated_value, "EUR")}
+                    </span>
+                  ) : null}
+                  <StatusBadge tone={a.status === "completed" ? "success" : "neutral"}>
+                    {STATUS_LABELS[a.status] ?? a.status}
+                  </StatusBadge>
+                </Link>
               </li>
             ))}
+
           </ul>
         </SectionCard>
       )}

@@ -86,4 +86,11 @@
 - [x] Motor determinist: similaritate cu ponderi centralizate, praguri 85/70, outlieri IQR, statistici (min/max/medie/mediană/P25/P75, preț/mp).
 - [x] Adaptoare pentru proprietăți proprii și oferte de piață normalizate; puncte de integrare pentru audit.
 - [x] Pagini iniţiale /app/acp și /app/acp/new, cu surse selectabile și snapshot al proprietății.
-- [ ] Etapa următoare: import portaluri, deduplicare entități, rulare efectivă a analizei, rapoarte PDF și sumar AI.
+
+## ACP – etapa 2: motor real de analiză (fără AI)
+- [x] Migrația 0030: ajustări, snapshot comparabil, decizii manuale, statistici salvate, versiune și istoric de rulări.
+- [x] Colectare candidați din proprietățile agenției și din Colaborare (portalurile rămân pentru etapa 3).
+- [x] Ajustări explicabile per factor, outlieri IQR, estimare min/valoare/max, preț recomandat și confidence score determinist.
+- [x] Pagina de detaliu: KPI, proprietatea analizată, grafic preț/mp, listă de comparabile cu imagine, include/exclude manual, recalculare și „Cum s-a calculat”.
+- [ ] Etapa următoare: import portaluri, deduplicare entități, rapoarte PDF și sumar AI.
+
