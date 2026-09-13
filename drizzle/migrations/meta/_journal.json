@@ -194,7 +194,7 @@
     {
       "idx": 27,
       "version": "7",
-      "when": 1789276010099,
+      "when": 1789276419643,
       "tag": "0027_remove_generic_contract_templates",
       "breakpoints": true
     }
