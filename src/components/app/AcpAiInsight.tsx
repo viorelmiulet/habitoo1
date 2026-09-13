@@ -70,9 +70,9 @@ export function AcpAiInsight({
   return (
     <SectionCard
       title="Interpretare AI"
-      description="Textul este generat de un model care primește doar cifrele calculate de motorul ACP. Modelul nu poate schimba cifrele și nu adaugă comparabile."
+      description="Model care interpretează exclusiv cifrele motorului ACP, fără să le modifice."
       icon={Sparkles}
-      actions={
+      action={
         analysis.aiConfigured ? (
           <Button
             variant={insight ? "outline" : "default"}

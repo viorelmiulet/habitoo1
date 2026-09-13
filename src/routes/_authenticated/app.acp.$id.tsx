@@ -32,6 +32,7 @@ import {
   type AcpAnalysisView,
   type AcpComparableView,
 } from "@/lib/acp/analyses.functions";
+import { AcpAiInsight } from "@/components/app/AcpAiInsight";
 import { ACP_SCORE_LABELS, ACP_SCORE_WEIGHTS, ACP_THRESHOLDS, ACP_TIER_LABELS } from "@/lib/acp/config";
 
 export const Route = createFileRoute("/_authenticated/app/acp/$id")({
@@ -378,7 +379,7 @@ function AcpDetailPage() {
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <Kpi
-          label="Valoare estimată"
+          label="Valoare estimată · Calcul ACP"
           value={formatMoney(analysis.estimate?.estimatedValue, currency)}
           hint={
             analysis.estimate?.estimatedMin && analysis.estimate?.estimatedMax
@@ -388,12 +389,12 @@ function AcpDetailPage() {
           strong
         />
         <Kpi
-          label="Preț recomandat de listare"
+          label="Preț recomandat · Calcul ACP"
           value={formatMoney(analysis.estimate?.recommendedListingPrice, currency)}
           hint="include marja de negociere"
         />
         <Kpi
-          label="Median preț / mp"
+          label="Median preț / mp · Calcul ACP"
           value={
             analysis.statistics?.medianPricePerSqm
               ? `${formatMoney(analysis.statistics.medianPricePerSqm, currency)}/mp`
@@ -415,6 +416,8 @@ function AcpDetailPage() {
           }
         />
       </div>
+
+      <AcpAiInsight analysis={analysis} onGenerated={invalidate} />
 
       <div className="grid gap-6 xl:grid-cols-3">
         <SectionCard
