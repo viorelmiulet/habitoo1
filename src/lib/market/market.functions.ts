@@ -486,7 +486,7 @@ export const getMarketListingDetail = createServerFn({ method: "GET" })
         lastSeenAt: row.last_seen_at,
       })),
       // `raw_data` conține valorile originale ale sursei: doar pentru superadmin.
-      rawData: superadmin ? ((listing.raw_data ?? {}) as Record<string, unknown>) : null,
+      rawJson: superadmin ? JSON.stringify(listing.raw_data ?? {}, null, 2) : null,
       canSeeRaw: superadmin,
     };
   });

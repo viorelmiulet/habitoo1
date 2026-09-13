@@ -63,7 +63,7 @@ function MarketListingDetailPage() {
   });
 
   if (isLoading || !data) return <CardGridSkeleton />;
-  const { listing, history, sources, snapshots, entity, siblings, rawData, canSeeRaw } = data;
+  const { listing, history, sources, snapshots, entity, siblings, rawJson, canSeeRaw } = data;
   const features = Object.entries(listing.features).filter(([, value]) => value);
 
   return (
@@ -326,13 +326,13 @@ function MarketListingDetailPage() {
             ) : null}
           </SectionCard>
 
-          {canSeeRaw && rawData ? (
+          {canSeeRaw && rawJson ? (
             <SectionCard
               title="Date brute de la sursă"
               description="Valorile originale ale câmpurilor mapate, fără date de contact."
             >
               <pre className="max-h-72 overflow-auto rounded-lg bg-muted p-3 text-xs">
-                {JSON.stringify(rawData, null, 2)}
+                {rawJson}
               </pre>
             </SectionCard>
           ) : null}

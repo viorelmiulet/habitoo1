@@ -28,6 +28,7 @@ import {
   UserRound,
   Users,
   PlugZap,
+  Database,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { initials } from "@/lib/format";
