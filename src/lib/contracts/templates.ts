@@ -6,18 +6,12 @@
 export const CONTRACT_KINDS = [
   "rent_agreement",
   "exclusive_representation",
-  "sale_mandate",
-  "rent_mandate",
-  "viewing_report",
 ] as const;
 export type ContractKind = (typeof CONTRACT_KINDS)[number];
 
 export const contractKindLabels: Record<string, string> = {
   rent_agreement: "Contract de închiriere",
   exclusive_representation: "Contract de reprezentare exclusivă",
-  sale_mandate: "Mandat de vânzare",
-  rent_mandate: "Mandat de închiriere",
-  viewing_report: "Proces-verbal de vizionare",
 };
 
 export const CONTRACT_STATUSES = [

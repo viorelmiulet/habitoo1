@@ -1,7 +1,21 @@
 import { describe, expect, it } from "vitest";
-import { renderExclusiveRepresentation, renderRentalAgreement, renderTemplate } from "./templates";
+import {
+  CONTRACT_KINDS,
+  contractKindLabels,
+  renderExclusiveRepresentation,
+  renderRentalAgreement,
+  renderTemplate,
+} from "./templates";
 
 describe("contract templates", () => {
+  it("exposes only the two real document types", () => {
+    expect(CONTRACT_KINDS).toEqual(["rent_agreement", "exclusive_representation"]);
+    expect(Object.values(contractKindLabels)).toEqual([
+      "Contract de închiriere",
+      "Contract de reprezentare exclusivă",
+    ]);
+  });
+
   it("does not leak null or undefined values", () => {
     const body = renderRentalAgreement({
       signingDate: "13.09.2026",
