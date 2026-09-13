@@ -67,6 +67,8 @@ function SettingsPage() {
     city: user?.organization?.city ?? "",
     phone: user?.organization?.phone ?? "",
     email: user?.organization?.email ?? "",
+    legal_representative: user?.organization?.legal_representative ?? "",
+    legal_representative_title: user?.organization?.legal_representative_title ?? "",
     collaboration_enabled: user?.organization?.collaboration_enabled !== false,
     storia_auto_republish: user?.organization?.storia_auto_republish === true,
   });
@@ -153,6 +155,8 @@ function SettingsPage() {
           city: orgForm.city || null,
           phone: orgForm.phone || null,
           email: orgForm.email || null,
+          legal_representative: orgForm.legal_representative || null,
+          legal_representative_title: orgForm.legal_representative_title || null,
           collaboration_enabled: orgForm.collaboration_enabled,
           storia_auto_republish: orgForm.storia_auto_republish,
         })
@@ -311,6 +315,24 @@ function SettingsPage() {
                   value={orgForm.email}
                   disabled={!user?.isAdmin}
                   onChange={(e) => setOrgForm((f) => ({ ...f, email: e.target.value }))}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="legal_representative">Reprezentant legal</Label>
+                <Input
+                  id="legal_representative"
+                  value={orgForm.legal_representative}
+                  disabled={!user?.isAdmin}
+                  onChange={(e) => setOrgForm((f) => ({ ...f, legal_representative: e.target.value }))}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="legal_representative_title">Funcția reprezentantului</Label>
+                <Input
+                  id="legal_representative_title"
+                  value={orgForm.legal_representative_title}
+                  disabled={!user?.isAdmin}
+                  onChange={(e) => setOrgForm((f) => ({ ...f, legal_representative_title: e.target.value }))}
                 />
               </div>
               <div className="flex items-start justify-between gap-4 rounded-xl border border-border p-4">

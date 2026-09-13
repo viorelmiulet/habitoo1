@@ -35,10 +35,13 @@ export type ContractPdfInput = {
     phone?: string | null;
     email?: string | null;
     website?: string | null;
+    legalRepresentative?: string | null;
+    legalRepresentativeTitle?: string | null;
   };
   logo?: { bytes: Uint8Array; mime: string } | null;
   parties: ContractPdfParty[];
   rentalAgreement?: boolean;
+  exclusiveRepresentation?: boolean;
   inventory?: {
     propertyAddress: string;
     handoverDate: string;
@@ -175,7 +178,7 @@ export async function buildContractPdf(input: ContractPdfInput): Promise<Uint8Ar
   y -= 26;
 
   /* Titlu */
-  text((input.rentalAgreement ? "CONTRACT DE INCHIRIERE" : input.title).toUpperCase(), {
+  text((input.rentalAgreement ? "CONTRACT DE INCHIRIERE" : input.exclusiveRepresentation ? "CONTRACT DE REPREZENTARE EXCLUSIVA" : input.title).toUpperCase(), {
     size: 15,
     font: bold,
     color: NAVY,
@@ -242,6 +245,8 @@ export async function buildContractPdf(input: ContractPdfInput): Promise<Uint8Ar
 
   const signatureParties = input.rentalAgreement
     ? input.parties.filter((party) => party.role === "landlord" || party.role === "tenant")
+    : input.exclusiveRepresentation
+      ? input.parties.filter((party) => party.role === "agent" || party.role === "seller")
     : input.parties;
   const columnWidth = (contentWidth - 32) / 2;
   const slots = signatureParties.length === 2 ? signatureParties : input.parties;
@@ -249,9 +254,13 @@ export async function buildContractPdf(input: ContractPdfInput): Promise<Uint8Ar
   for (const [index, party] of slots.entries()) {
     const x = MARGIN + (index % 2) * (columnWidth + 32);
     const top = y - Math.floor(index / 2) * 150;
-    const roleTitle = party.role === "landlord" ? "PROPRIETAR" : party.role === "tenant" ? "CHIRIAS" : party.roleLabel.toUpperCase();
+    const roleTitle = input.exclusiveRepresentation && party.role === "agent"
+      ? "PRESTATOR"
+      : input.exclusiveRepresentation && party.role === "seller"
+        ? "BENEFICIAR"
+        : party.role === "landlord" ? "PROPRIETAR" : party.role === "tenant" ? "CHIRIAS" : party.roleLabel.toUpperCase();
     page.drawText(roleTitle, { x, y: top, size: 10.5, font: bold, color: NAVY });
-    page.drawText(party.fullName, { x, y: top - 18, size: 9, font: regular, color: INK });
+    page.drawText(input.exclusiveRepresentation && party.role === "agent" ? (input.agency.legalName || input.agency.name) : party.fullName, { x, y: top - 18, size: 9, font: regular, color: INK });
 
     if (party.signature) {
       try {

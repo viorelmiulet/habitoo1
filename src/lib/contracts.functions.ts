@@ -18,6 +18,7 @@ import {
   DEFAULT_INVENTORY_ITEMS,
   INVENTORY_CONDITIONS,
   partyRoleLabels,
+  renderExclusiveRepresentation,
   renderRentalAgreement,
   renderTemplate,
   maskCnp,
@@ -43,6 +44,21 @@ const inventoryItemInput = z.object({
   condition: z.enum(INVENTORY_CONDITIONS),
   location: z.string().trim().max(120),
   notes: z.string().trim().max(500),
+});
+const exclusivePropertyInput = z.object({
+  locality: z.string().trim().max(120).optional(),
+  street: z.string().trim().max(180).optional(),
+  streetNumber: z.string().trim().max(30).optional(),
+  county: z.string().trim().max(120).optional(),
+  rooms: z.string().trim().max(20).optional(),
+  layout: z.string().trim().max(120).optional(),
+  floor: z.string().trim().max(40).optional(),
+  comfort: z.string().trim().max(80).optional(),
+  bathrooms: z.string().trim().max(20).optional(),
+  balconies: z.string().trim().max(20).optional(),
+  usableSurface: z.string().trim().max(30).optional(),
+  price: z.string().trim().max(40).optional(),
+  currency: z.string().trim().max(6).optional(),
 });
 
 function inventoryItems(value: unknown) {
@@ -200,7 +216,12 @@ export const deleteTemplate = createServerFn({ method: "POST" })
       .delete()
       .eq("id", data.id)
       .eq("organization_id", orgId);
-    if (error) throw new Error(error.message);
+    if (error) {
+      if (error.message.includes("contracts_org_contract_number_uidx")) {
+        throw new Error("Numărul contractului este deja folosit în agenția ta.");
+      }
+      throw new Error(error.message);
+    }
     await audit({
       orgId,
       actorId: ctx.userId,
@@ -685,6 +706,9 @@ export const createContract = createServerFn({ method: "POST" })
         deposit: z.number().nonnegative().optional(),
         includeInventory: z.boolean().optional(),
         inventory: z.array(inventoryItemInput).max(100).optional(),
+        contractNumber: z.string().trim().max(60).optional(),
+        negotiable: z.enum(["DA", "NU"]).optional(),
+        exclusiveProperty: exclusivePropertyInput.optional(),
         parties: z.array(partyInput).min(1).max(6),
       })
       .parse(data),
@@ -709,9 +733,7 @@ export const createContract = createServerFn({ method: "POST" })
       ? (
           await db
             .from("properties")
-            .select(
-              "id,title,reference,address,city,county,surface,rooms,price,currency,commission",
-            )
+            .select("id,title,reference,address,city,county,street,street_number,rooms,layout,floor,floor_label,comfort,bathrooms,balconies,usable_surface,surface,price,currency,commission,negotiable")
             .eq("id", data.propertyId)
             .eq("organization_id", orgId)
             .maybeSingle()
@@ -763,15 +785,56 @@ export const createContract = createServerFn({ method: "POST" })
 
     const landlord = data.parties.find((p) => p.role === "landlord");
     const tenant = data.parties.find((p) => p.role === "tenant");
+    const beneficiary = data.parties.find((p) => p.role === "seller");
     if (data.kind === "rent_agreement" && (!landlord || !tenant)) {
       throw new Error("Contractul de închiriere necesită proprietar și chiriaș.");
+    }
+    if (data.kind === "exclusive_representation" && !beneficiary) {
+      throw new Error("Contractul de reprezentare exclusivă necesită beneficiarul.");
+    }
+    let contractNumber = data.contractNumber?.trim() || "";
+    if (data.kind === "exclusive_representation" && !contractNumber) {
+      const { data: generated, error: numberError } = await db.rpc("next_contract_number");
+      if (numberError || typeof generated !== "string") {
+        throw new Error("Numărul contractului nu a putut fi generat.");
+      }
+      contractNumber = generated;
     }
     const signingDate = new Date().toLocaleDateString("ro-RO");
     const propertyAddress = [property?.address, property?.city, property?.county]
       .filter(Boolean)
       .join(", ");
+    const exclusiveProperty = data.exclusiveProperty;
     const body =
-      data.kind === "rent_agreement" && landlord && tenant
+      data.kind === "exclusive_representation" && beneficiary
+        ? renderExclusiveRepresentation({
+            contractNumber,
+            signingDate,
+            agencyLegalName: org?.legal_name,
+            agencyAddress: org?.material_address,
+            tradeRegistryNumber: org?.trade_registry_number,
+            agencyCui: org?.cui,
+            legalRepresentative: org?.legal_representative,
+            legalRepresentativeTitle: org?.legal_representative_title,
+            beneficiary,
+            locality: exclusiveProperty?.locality,
+            street: exclusiveProperty?.street,
+            streetNumber: exclusiveProperty?.streetNumber,
+            county: exclusiveProperty?.county,
+            rooms: exclusiveProperty?.rooms,
+            layout: exclusiveProperty?.layout,
+            floor: exclusiveProperty?.floor,
+            comfort: exclusiveProperty?.comfort,
+            bathrooms: exclusiveProperty?.bathrooms,
+            balconies: exclusiveProperty?.balconies,
+            usableSurface: exclusiveProperty?.usableSurface,
+            price: exclusiveProperty?.price,
+            currency: exclusiveProperty?.currency,
+            negotiable: data.negotiable,
+            commission: data.commission,
+            durationMonths: data.durationMonths,
+          })
+        : data.kind === "rent_agreement" && landlord && tenant
         ? renderRentalAgreement({
             signingDate,
             landlord,
@@ -813,7 +876,13 @@ export const createContract = createServerFn({ method: "POST" })
             phone: org?.phone ?? null,
             email: org?.email ?? null,
             website: org?.material_website ?? null,
+            legalRepresentative: org?.legal_representative ?? null,
+            legalRepresentativeTitle: org?.legal_representative_title ?? null,
           },
+          contractNumber: contractNumber || null,
+          signingDate,
+          exclusiveProperty: data.kind === "exclusive_representation" ? exclusiveProperty ?? {} : null,
+          negotiable: data.kind === "exclusive_representation" ? data.negotiable ?? "NU" : null,
           rental:
             data.kind === "rent_agreement"
               ? {
@@ -840,7 +909,12 @@ export const createContract = createServerFn({ method: "POST" })
       } as never)
       .select("id")
       .single();
-    if (error) throw new Error(error.message);
+    if (error) {
+      if (error.message.includes("contracts_org_contract_number_uidx")) {
+        throw new Error("Numărul contractului este deja folosit în agenția ta.");
+      }
+      throw new Error(error.message);
+    }
 
     const rows = data.parties.map((p, index) => ({
       contract_id: contract.id,
@@ -1061,7 +1135,7 @@ export async function renderAndStorePdf(contractId: string, actorId: string | nu
     .order("sign_order");
   const { data: org } = await db
     .from("organizations")
-    .select("name,legal_name,cui,trade_registry_number,material_address,material_phone,material_email,material_website,phone,email,logo_path")
+    .select("name,legal_name,cui,trade_registry_number,material_address,material_phone,material_email,material_website,phone,email,logo_path,legal_representative,legal_representative_title")
     .eq("id", contract.organization_id)
     .maybeSingle();
 
@@ -1120,9 +1194,14 @@ export async function renderAndStorePdf(contractId: string, actorId: string | nu
     }),
   );
 
+  const snapshot = contract.data && typeof contract.data === "object" && !Array.isArray(contract.data)
+    ? contract.data as Record<string, unknown>
+    : {};
   const bytes = await buildContractPdf({
     title: contract.title,
-    subtitle: `${contractKindLabels[contract.kind] ?? "Contract"} · generat la ${new Date().toLocaleDateString("ro-RO")}`,
+    subtitle: contract.kind === "exclusive_representation"
+      ? `Nr. ${typeof snapshot["contractNumber"] === "string" ? snapshot["contractNumber"] : "__________"} / ${typeof snapshot["signingDate"] === "string" ? snapshot["signingDate"] : "__________"}`
+      : `${contractKindLabels[contract.kind] ?? "Contract"} · generat la ${new Date().toLocaleDateString("ro-RO")}`,
     body: contract.body,
     agency: {
       name: org?.name ?? "Agenție",
@@ -1137,10 +1216,8 @@ export async function renderAndStorePdf(contractId: string, actorId: string | nu
     logo,
     parties: pdfParties,
     rentalAgreement: contract.kind === "rent_agreement",
+    exclusiveRepresentation: contract.kind === "exclusive_representation",
     inventory: (() => {
-      const snapshot = contract.data && typeof contract.data === "object" && !Array.isArray(contract.data)
-        ? contract.data as Record<string, unknown>
-        : {};
       const rawInventory = snapshot["inventory"];
       if (!rawInventory || typeof rawInventory !== "object" || Array.isArray(rawInventory)) return null;
       const record = rawInventory as Record<string, unknown>;
