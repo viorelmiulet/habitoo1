@@ -14,6 +14,8 @@ import { runAcpAnalysis, targetPricePerSqm, type AcpCandidate, type AcpManualOve
 import type { AcpSubject } from "./scoring";
 import type { AcpComparableResult } from "./engine";
 import { ACP_AUDIT_ACTIONS, logAcpAudit } from "./audit";
+import { dedupeMarketCandidates } from "@/lib/market/acp";
+import { marketSourceName } from "@/lib/market/sources";
 
 const MEDIA_BUCKET = "property-media";
 
