@@ -1943,49 +1943,124 @@ export type Database = {
           },
         ]
       }
+      market_dedupe_reviews: {
+        Row: {
+          candidate_entity_id: string | null
+          created_at: string
+          id: string
+          market_listing_id: string
+          reasons: Json
+          resolved_at: string | null
+          resolved_by: string | null
+          score: number | null
+          status: string
+        }
+        Insert: {
+          candidate_entity_id?: string | null
+          created_at?: string
+          id?: string
+          market_listing_id: string
+          reasons?: Json
+          resolved_at?: string | null
+          resolved_by?: string | null
+          score?: number | null
+          status?: string
+        }
+        Update: {
+          candidate_entity_id?: string | null
+          created_at?: string
+          id?: string
+          market_listing_id?: string
+          reasons?: Json
+          resolved_at?: string | null
+          resolved_by?: string | null
+          score?: number | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "market_dedupe_reviews_candidate_entity_id_fkey"
+            columns: ["candidate_entity_id"]
+            isOneToOne: false
+            referencedRelation: "market_entities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "market_dedupe_reviews_market_listing_id_fkey"
+            columns: ["market_listing_id"]
+            isOneToOne: false
+            referencedRelation: "market_listings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       market_entities: {
         Row: {
           canonical_market_listing_id: string | null
+          construction_year: number | null
           created_at: string
           floor: number | null
           id: string
           identity_hash: string | null
+          identity_reasons: Json
           latitude: number | null
+          listing_count: number
           longitude: number | null
           normalized_address: string | null
           normalized_city: string | null
+          normalized_district: string | null
           normalized_neighborhood: string | null
+          property_type: string | null
+          review_required: boolean
           rooms: number | null
+          total_floors: number | null
+          transaction_type: string | null
           updated_at: string
           usable_area: number | null
         }
         Insert: {
           canonical_market_listing_id?: string | null
+          construction_year?: number | null
           created_at?: string
           floor?: number | null
           id?: string
           identity_hash?: string | null
+          identity_reasons?: Json
           latitude?: number | null
+          listing_count?: number
           longitude?: number | null
           normalized_address?: string | null
           normalized_city?: string | null
+          normalized_district?: string | null
           normalized_neighborhood?: string | null
+          property_type?: string | null
+          review_required?: boolean
           rooms?: number | null
+          total_floors?: number | null
+          transaction_type?: string | null
           updated_at?: string
           usable_area?: number | null
         }
         Update: {
           canonical_market_listing_id?: string | null
+          construction_year?: number | null
           created_at?: string
           floor?: number | null
           id?: string
           identity_hash?: string | null
+          identity_reasons?: Json
           latitude?: number | null
+          listing_count?: number
           longitude?: number | null
           normalized_address?: string | null
           normalized_city?: string | null
+          normalized_district?: string | null
           normalized_neighborhood?: string | null
+          property_type?: string | null
+          review_required?: boolean
           rooms?: number | null
+          total_floors?: number | null
+          transaction_type?: string | null
           updated_at?: string
           usable_area?: number | null
         }
@@ -1999,13 +2074,86 @@ export type Database = {
           },
         ]
       }
+      market_import_runs: {
+        Row: {
+          ambiguous_matches: number
+          created_at: string
+          duplicates_detected: number
+          errors: Json
+          finished_at: string | null
+          format: string
+          id: string
+          items_created: number
+          items_deactivated: number
+          items_invalid: number
+          items_received: number
+          items_unchanged: number
+          items_updated: number
+          mode: string
+          price_changes: number
+          source: string
+          started_at: string
+          status: string
+          status_changes: number
+          triggered_by: string | null
+        }
+        Insert: {
+          ambiguous_matches?: number
+          created_at?: string
+          duplicates_detected?: number
+          errors?: Json
+          finished_at?: string | null
+          format?: string
+          id?: string
+          items_created?: number
+          items_deactivated?: number
+          items_invalid?: number
+          items_received?: number
+          items_unchanged?: number
+          items_updated?: number
+          mode?: string
+          price_changes?: number
+          source: string
+          started_at?: string
+          status?: string
+          status_changes?: number
+          triggered_by?: string | null
+        }
+        Update: {
+          ambiguous_matches?: number
+          created_at?: string
+          duplicates_detected?: number
+          errors?: Json
+          finished_at?: string | null
+          format?: string
+          id?: string
+          items_created?: number
+          items_deactivated?: number
+          items_invalid?: number
+          items_received?: number
+          items_unchanged?: number
+          items_updated?: number
+          mode?: string
+          price_changes?: number
+          source?: string
+          started_at?: string
+          status?: string
+          status_changes?: number
+          triggered_by?: string | null
+        }
+        Relationships: []
+      }
       market_listing_snapshots: {
         Row: {
           captured_at: string
+          change_type: string
           created_at: string
           currency: string | null
           id: string
+          import_run_id: string | null
           market_listing_id: string
+          previous_price: number | null
+          previous_status: string | null
           price: number | null
           price_per_sqm: number | null
           raw_data: Json
@@ -2013,10 +2161,14 @@ export type Database = {
         }
         Insert: {
           captured_at?: string
+          change_type?: string
           created_at?: string
           currency?: string | null
           id?: string
+          import_run_id?: string | null
           market_listing_id: string
+          previous_price?: number | null
+          previous_status?: string | null
           price?: number | null
           price_per_sqm?: number | null
           raw_data?: Json
@@ -2024,10 +2176,14 @@ export type Database = {
         }
         Update: {
           captured_at?: string
+          change_type?: string
           created_at?: string
           currency?: string | null
           id?: string
+          import_run_id?: string | null
           market_listing_id?: string
+          previous_price?: number | null
+          previous_status?: string | null
           price?: number | null
           price_per_sqm?: number | null
           raw_data?: Json
@@ -2048,7 +2204,9 @@ export type Database = {
           created_at: string
           first_seen_at: string
           id: string
+          is_active: boolean
           is_primary: boolean
+          last_price: number | null
           last_seen_at: string
           market_listing_id: string
           source: string
@@ -2059,7 +2217,9 @@ export type Database = {
           created_at?: string
           first_seen_at?: string
           id?: string
+          is_active?: boolean
           is_primary?: boolean
+          last_price?: number | null
           last_seen_at?: string
           market_listing_id: string
           source: string
@@ -2070,7 +2230,9 @@ export type Database = {
           created_at?: string
           first_seen_at?: string
           id?: string
+          is_active?: boolean
           is_primary?: boolean
+          last_price?: number | null
           last_seen_at?: string
           market_listing_id?: string
           source?: string
@@ -2098,18 +2260,33 @@ export type Database = {
           county: string | null
           created_at: string
           currency: string | null
+          dedupe_reasons: Json
+          dedupe_score: number | null
+          dedupe_status: string
+          disappeared_at: string | null
           district: string | null
           features: Json
           first_seen_at: string
           floor: number | null
           furnished: boolean | null
           id: string
+          identity_hash: string | null
+          image_url: string | null
+          initial_price: number | null
+          last_import_run_id: string | null
           last_seen_at: string
           latitude: number | null
           longitude: number | null
+          market_entity_id: string | null
           neighborhood: string | null
+          normalized_address: string | null
+          normalized_city: string | null
+          normalized_county: string | null
+          normalized_district: string | null
+          normalized_neighborhood: string | null
           parking: boolean | null
           price: number | null
+          price_changes: number
           price_per_sqm: number | null
           property_type: string | null
           raw_data: Json
@@ -2117,6 +2294,8 @@ export type Database = {
           source: string
           source_listing_id: string | null
           status: string
+          status_changes: number
+          title: string | null
           total_area: number | null
           total_floors: number | null
           transaction_type: string | null
@@ -2134,18 +2313,33 @@ export type Database = {
           county?: string | null
           created_at?: string
           currency?: string | null
+          dedupe_reasons?: Json
+          dedupe_score?: number | null
+          dedupe_status?: string
+          disappeared_at?: string | null
           district?: string | null
           features?: Json
           first_seen_at?: string
           floor?: number | null
           furnished?: boolean | null
           id?: string
+          identity_hash?: string | null
+          image_url?: string | null
+          initial_price?: number | null
+          last_import_run_id?: string | null
           last_seen_at?: string
           latitude?: number | null
           longitude?: number | null
+          market_entity_id?: string | null
           neighborhood?: string | null
+          normalized_address?: string | null
+          normalized_city?: string | null
+          normalized_county?: string | null
+          normalized_district?: string | null
+          normalized_neighborhood?: string | null
           parking?: boolean | null
           price?: number | null
+          price_changes?: number
           price_per_sqm?: number | null
           property_type?: string | null
           raw_data?: Json
@@ -2153,6 +2347,8 @@ export type Database = {
           source: string
           source_listing_id?: string | null
           status?: string
+          status_changes?: number
+          title?: string | null
           total_area?: number | null
           total_floors?: number | null
           transaction_type?: string | null
@@ -2170,18 +2366,33 @@ export type Database = {
           county?: string | null
           created_at?: string
           currency?: string | null
+          dedupe_reasons?: Json
+          dedupe_score?: number | null
+          dedupe_status?: string
+          disappeared_at?: string | null
           district?: string | null
           features?: Json
           first_seen_at?: string
           floor?: number | null
           furnished?: boolean | null
           id?: string
+          identity_hash?: string | null
+          image_url?: string | null
+          initial_price?: number | null
+          last_import_run_id?: string | null
           last_seen_at?: string
           latitude?: number | null
           longitude?: number | null
+          market_entity_id?: string | null
           neighborhood?: string | null
+          normalized_address?: string | null
+          normalized_city?: string | null
+          normalized_county?: string | null
+          normalized_district?: string | null
+          normalized_neighborhood?: string | null
           parking?: boolean | null
           price?: number | null
+          price_changes?: number
           price_per_sqm?: number | null
           property_type?: string | null
           raw_data?: Json
@@ -2189,6 +2400,8 @@ export type Database = {
           source?: string
           source_listing_id?: string | null
           status?: string
+          status_changes?: number
+          title?: string | null
           total_area?: number | null
           total_floors?: number | null
           transaction_type?: string | null
@@ -2196,7 +2409,15 @@ export type Database = {
           url?: string | null
           usable_area?: number | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "market_listings_market_entity_id_fkey"
+            columns: ["market_entity_id"]
+            isOneToOne: false
+            referencedRelation: "market_entities"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       notifications: {
         Row: {
