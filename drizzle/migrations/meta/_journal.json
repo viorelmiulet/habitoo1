@@ -239,6 +239,13 @@
       "when": 1789326038680,
       "tag": "0033_generic_rate_limit",
       "breakpoints": true
+    },
+    {
+      "idx": 34,
+      "version": "7",
+      "when": 1789326836291,
+      "tag": "0034_acp_phase3_versioning_and_market_sync",
+      "breakpoints": true
     }
   ]
 }
