@@ -91,63 +91,31 @@ function NewAcpPage() {
 
   const subject = useMemo(() => (selected ? propertyToSubject(selected) : null), [selected]);
 
+  const runAnalysis = useServerFn(createAcpAnalysis);
+
   const create = useMutation({
     mutationFn: async () => {
       if (!orgId || !user) throw new Error("Lipsește agenția curentă.");
       if (!selected || !subject) throw new Error("Selectează proprietatea analizată.");
-
-      const analysisTitle = title.trim() || `ACP · ${selected.title}`;
-      const { data, error } = await supabase
-        .from("acp_analyses")
-        .insert({
-          organization_id: orgId,
-          created_by: user.userId,
-          property_id: selected.id,
-          title: analysisTitle,
-          status: "draft",
-          // Snapshot: analiza rămâne reproductibilă chiar dacă proprietatea se schimbă.
-          target_data: {
-            propertyId: selected.id,
-            reference: selected.reference,
-            title: selected.title,
-            capturedAt: new Date().toISOString(),
-            subject,
-          } as never,
-          sources: enabled as never,
-        })
-        .select("id")
-        .single();
-      if (error) throw error;
-
-      const rows = SOURCES.filter((s) => enabled[s.type]).map((s) => ({
-        analysis_id: data.id,
-        source_type: s.type,
-        source_name: s.name,
-        enabled: true,
-      }));
-      if (rows.length > 0) {
-        const { error: sourcesError } = await supabase.from("acp_analysis_sources").insert(rows);
-        if (sourcesError) throw sourcesError;
-      }
-
-      await logAcpAudit({
-        organizationId: orgId,
-        actorId: user.userId,
-        action: ACP_AUDIT_ACTIONS.analysisCreated,
-        analysisId: data.id,
-        details: { propertyId: selected.id, sources: enabled },
+      const result = await runAnalysis({
+        data: {
+          propertyId: selected.id,
+          title: title.trim() || undefined,
+          sources: enabled,
+        },
       });
-
-      return data.id;
+      return result.analysisId;
     },
-    onSuccess: () => {
-      toast.success("Analiză creată", {
-        description: "Motorul de comparare va rula în etapa următoare.",
+    onSuccess: (analysisId) => {
+      toast.success("Analiză finalizată", {
+        description: "Comparabilele au fost selectate și scorurile calculate.",
+        duration: 2500,
       });
-      navigate({ to: "/app/acp" });
+      navigate({ to: "/app/acp/$id", params: { id: analysisId } });
     },
     onError: toastError,
   });
+
 
   return (
     <div className="space-y-6">
