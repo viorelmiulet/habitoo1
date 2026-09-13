@@ -232,6 +232,13 @@
       "when": 1789324471128,
       "tag": "0032_market_import_runs_updated_at",
       "breakpoints": true
+    },
+    {
+      "idx": 33,
+      "version": "7",
+      "when": 1789326038680,
+      "tag": "0033_generic_rate_limit",
+      "breakpoints": true
     }
   ]
 }
