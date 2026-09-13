@@ -68,7 +68,7 @@
 
 ## Contracte și documente
 
-- [x] Șabloane Habitoo (mandat vânzare, mandat închiriere, proces-verbal de vizionare) + șabloane proprii agenției (admin).
+- [x] Catalog curățat: exclusiv contractul real de închiriere și contractul real de reprezentare exclusivă; șabloanele generice temporare au fost eliminate.
 - [x] Document nou din proprietate/contact, cu completare automată din fotografia actului (imaginea nu se salvează).
 - [x] CNP și seria/numărul actului criptate AES-256-GCM; afișare în clar doar pentru creator/administrator, cu audit.
 - [x] PDF brandat cu logo-ul agenției, atașat automat la proprietate și contact.
@@ -76,7 +76,7 @@
 - [x] Pagini: /app/contracts, /app/contracts/$id, pagina publică /semnare.
 - [x] Etapa 2: contract real de închiriere cu proprietar și chiriaș, anexă opțională de inventar în același PDF și listă implicită configurabilă per agenție.
 ## Contract de reprezentare exclusivă
-- [ ] Adaugă setări agenție pentru reprezentant legal și funcție.
-- [ ] Adaugă șablonul real și câmpurile editabile, inclusiv fără proprietate.
-- [ ] Integrează PDF-ul și semnăturile în două coloane.
-- [ ] Rulează typecheck și testele.
+- [x] Adaugă setări agenție pentru reprezentant legal și funcție.
+- [x] Adaugă șablonul real și câmpurile editabile, inclusiv fără proprietate.
+- [x] Integrează PDF-ul și semnăturile în două coloane.
+- [x] Rulează typecheck și testele.
