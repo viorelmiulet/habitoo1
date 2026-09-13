@@ -145,27 +145,33 @@ export function parseNumber(value: unknown): number | null {
   if (typeof value === "number") return Number.isFinite(value) ? value : null;
   const text = textValue(value);
   if (text === null) return null;
-  let clean = text.replace(/[^\d.,-]/g, "");
+  let clean = text.replace(/\s/g, "").replace(/[^\d.,-]/g, "");
   if (clean === "" || clean === "-") return null;
-  const lastComma = clean.lastIndexOf(",");
-  const lastDot = clean.lastIndexOf(".");
-  if (lastComma > -1 && lastDot > -1) {
+  const dots = (clean.match(/\./g) ?? []).length;
+  const commas = (clean.match(/,/g) ?? []).length;
+  if (dots > 0 && commas > 0) {
     // separatorul zecimal este ultimul dintre cele două
-    if (lastComma > lastDot) clean = clean.replace(/\./g, "").replace(",", ".");
-    else clean = clean.replace(/,/g, "");
-  } else if (lastComma > -1) {
-    const decimals = clean.length - lastComma - 1;
-    clean = decimals === 3 ? clean.replace(/,/g, "") : clean.replace(",", ".");
-  } else if (lastDot > -1) {
-    const decimals = clean.length - lastDot - 1;
-    if (decimals === 3 && clean.replace(/[^.]/g, "").length >= 1 && !/^\d\.\d{3}$/.test(clean)) {
-      clean = clean.replace(/\./g, "");
-    } else if (decimals === 3 && /^\d{1,3}\.\d{3}$/.test(clean)) {
-      clean = clean.replace(/\./g, "");
+    if (clean.lastIndexOf(",") > clean.lastIndexOf(".")) {
+      clean = clean.replace(/\./g, "").replace(",", ".");
+    } else {
+      clean = clean.replace(/,/g, "");
     }
+  } else if (commas > 0) {
+    clean = isThousandsGrouped(clean, ",") ? clean.replace(/,/g, "") : clean.replace(/,/g, ".");
+  } else if (dots > 0) {
+    if (isThousandsGrouped(clean, ".")) clean = clean.replace(/\./g, "");
   }
   const parsed = Number(clean);
   return Number.isFinite(parsed) ? parsed : null;
+}
+
+/** „120.000” / „1,200,000” = grupare de mii; „85.5” = zecimală. */
+function isThousandsGrouped(clean: string, separator: string): boolean {
+  const parts = clean.replace(/^-/, "").split(separator);
+  if (parts.length < 2) return false;
+  const [first, ...rest] = parts;
+  if (!first || first.length === 0 || first.length > 3) return false;
+  return rest.every((part) => part.length === 3);
 }
 
 export function parseIntegerValue(value: unknown): number | null {
