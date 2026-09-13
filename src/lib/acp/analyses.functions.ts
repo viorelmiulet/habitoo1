@@ -113,16 +113,16 @@ async function collectCandidates(params: {
   const candidates: AcpCandidate[] = [];
   const stats: SourceStat[] = [];
 
-  const applyPropertyFilters = <T>(query: T): T => {
-    let q = query as never as {
-      eq: (c: string, v: unknown) => unknown;
-    };
-    let out: unknown = q;
-    if (target.propertyType) out = (out as typeof q).eq("property_type", target.propertyType);
-    if (target.transactionType) out = (out as typeof q).eq("transaction_kind", target.transactionType);
-    if (target.city) out = (out as typeof q).eq("city", target.city);
-    return out as T;
+  const applyPropertyFilters = <T extends { eq: (column: string, value: never) => T }>(
+    query: T,
+  ): T => {
+    let out = query;
+    if (target.propertyType) out = out.eq("property_type", target.propertyType as never);
+    if (target.transactionType) out = out.eq("transaction_kind", target.transactionType as never);
+    if (target.city) out = out.eq("city", target.city as never);
+    return out;
   };
+
 
   const propertyRows: { row: PropertyRow; sourceType: AcpSourceType; sourceName: string }[] = [];
 
