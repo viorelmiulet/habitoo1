@@ -240,7 +240,7 @@ function MarketListingDetailPage() {
                         ? formatMoney(snapshot.price, snapshot.currency ?? "EUR")
                         : "fără preț"}
                     {snapshot.previousStatus && snapshot.previousStatus !== snapshot.status
-                      ? ` · ${STATUS_LABEL[snapshot.previousStatus] ?? snapshot.previousStatus} → ${STATUS_LABEL[snapshot.status] ?? snapshot.status}`
+                      ? ` · ${STATUS_LABEL[snapshot.previousStatus] ?? snapshot.previousStatus} → ${(snapshot.status ? STATUS_LABEL[snapshot.status] : null) ?? snapshot.status}`
                       : ""}
                   </span>
                   <span className="text-xs text-muted-foreground">

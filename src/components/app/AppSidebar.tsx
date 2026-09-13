@@ -1,5 +1,4 @@
-import {
-  Database, Link, type LinkProps } from "@tanstack/react-router";
+import { Link, type LinkProps } from "@tanstack/react-router";
 import {
   ArrowLeftRight,
   Bell,
