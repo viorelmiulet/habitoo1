@@ -35,6 +35,8 @@ export type ContractPdfInput = {
     phone?: string | null;
     email?: string | null;
     website?: string | null;
+    legalRepresentative?: string | null;
+    legalRepresentativeTitle?: string | null;
   };
   logo?: { bytes: Uint8Array; mime: string } | null;
   parties: ContractPdfParty[];
