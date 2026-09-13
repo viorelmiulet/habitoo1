@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { renderRentalAgreement, renderTemplate } from "./templates";
+import { renderExclusiveRepresentation, renderRentalAgreement, renderTemplate } from "./templates";
 
 describe("contract templates", () => {
   it("does not leak null or undefined values", () => {
@@ -24,5 +24,19 @@ describe("contract templates", () => {
 
   it("renders missing generic variables as blanks", () => {
     expect(renderTemplate("CNP {{client.cnp}}", {})).toBe("CNP __________");
+  });
+
+  it("renders the exclusive agreement and omits a missing ID series", () => {
+    const body = renderExclusiveRepresentation({
+      agencyLegalName: "Agenția Test SRL",
+      beneficiary: { fullName: "Ana Pop", idSeries: null, idNumber: "123456" },
+      commission: 3,
+      durationMonths: 6,
+      negotiable: "DA",
+    });
+    expect(body).toContain("posesor al C.I. nr. 123456");
+    expect(body).toContain("Comisionul perceput de catre Prestator pentru activitatile realizate este de 3%");
+    expect(body).toContain("este valabil pe o durata de 6 luni");
+    expect(body).not.toMatch(/null|undefined/);
   });
 });
