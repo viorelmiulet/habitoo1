@@ -81,10 +81,12 @@ describe("buildAcpAiContext", () => {
     const ctx = buildAcpAiContext({
       ...base,
       comparables: [
-        comparable({
-          // câmpuri suplimentare, ignorate de builder
-          ...({ rawData: { phone: "0722000000" }, url: "https://x.ro" } as never),
-        }),
+        // câmpuri suplimentare, ignorate de builder
+        {
+          ...comparable(),
+          rawData: { phone: "0722000000" },
+          url: "https://x.ro",
+        } as AcpAiContextInput["comparables"][number],
       ],
     });
     const serialized = JSON.stringify(ctx);
