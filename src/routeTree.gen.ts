@@ -69,6 +69,8 @@ import { Route as ApiPublicMailgunEventsRouteImport } from './routes/api/public/
 import { Route as ApiPublicMailgunInboundRouteImport } from './routes/api/public/mailgun/inbound'
 import { Route as LovableEmailAuthPreviewRouteImport } from './routes/lovable/email/auth/preview'
 import { Route as LovableEmailAuthWebhookRouteImport } from './routes/lovable/email/auth/webhook'
+import { Route as AuthenticatedAppAcpDatePiataIndexRouteImport } from './routes/_authenticated/app.acp.date-piata.index'
+import { Route as AuthenticatedAppAcpDatePiataIdRouteImport } from './routes/_authenticated/app.acp.date-piata.$id'
 import { Route as ApiPublicHomepitchV1PropertiesRouteImport } from './routes/api/public/homepitch/v1/properties'
 import { Route as ApiPublicPortalV1AgentsRouteImport } from './routes/api/public/portal/v1/agents'
 import { Route as ApiPublicPortalV1PropertiesRouteImport } from './routes/api/public/portal/v1/properties'
@@ -414,6 +416,18 @@ const LovableEmailAuthWebhookRoute = LovableEmailAuthWebhookRouteImport.update({
   path: '/lovable/email/auth/webhook',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedAppAcpDatePiataIndexRoute =
+  AuthenticatedAppAcpDatePiataIndexRouteImport.update({
+    id: '/acp/date-piata/',
+    path: '/acp/date-piata/',
+    getParentRoute: () => AuthenticatedAppRoute,
+  } as any)
+const AuthenticatedAppAcpDatePiataIdRoute =
+  AuthenticatedAppAcpDatePiataIdRouteImport.update({
+    id: '/acp/date-piata/$id',
+    path: '/acp/date-piata/$id',
+    getParentRoute: () => AuthenticatedAppRoute,
+  } as any)
 const ApiPublicHomepitchV1PropertiesRoute =
   ApiPublicHomepitchV1PropertiesRouteImport.update({
     id: '/api/public/homepitch/v1/properties',
@@ -573,6 +587,7 @@ export interface FileRoutesByFullPath {
   '/app/contacts/': typeof AuthenticatedAppContactsIndexRoute
   '/app/contracts/': typeof AuthenticatedAppContractsIndexRoute
   '/app/properties/': typeof AuthenticatedAppPropertiesIndexRoute
+  '/app/acp/date-piata/$id': typeof AuthenticatedAppAcpDatePiataIdRoute
   '/api/public/homepitch/v1/properties': typeof ApiPublicHomepitchV1PropertiesRouteWithChildren
   '/api/public/portal/v1/agents': typeof ApiPublicPortalV1AgentsRoute
   '/api/public/portal/v1/properties': typeof ApiPublicPortalV1PropertiesRouteWithChildren
@@ -580,6 +595,7 @@ export interface FileRoutesByFullPath {
   '/api/public/sites/v1/contacts': typeof ApiPublicSitesV1ContactsRoute
   '/api/public/sites/v1/properties': typeof ApiPublicSitesV1PropertiesRouteWithChildren
   '/api/public/sites/v1/visits': typeof ApiPublicSitesV1VisitsRoute
+  '/app/acp/date-piata/': typeof AuthenticatedAppAcpDatePiataIndexRoute
   '/api/public/homepitch/v1/agents/me': typeof ApiPublicHomepitchV1AgentsMeRoute
   '/api/public/homepitch/v1/properties/$id': typeof ApiPublicHomepitchV1PropertiesIdRoute
   '/api/public/portal/v1/imove/feed': typeof ApiPublicPortalV1ImoveFeedRoute
@@ -649,6 +665,7 @@ export interface FileRoutesByTo {
   '/app/contacts': typeof AuthenticatedAppContactsIndexRoute
   '/app/contracts': typeof AuthenticatedAppContractsIndexRoute
   '/app/properties': typeof AuthenticatedAppPropertiesIndexRoute
+  '/app/acp/date-piata/$id': typeof AuthenticatedAppAcpDatePiataIdRoute
   '/api/public/homepitch/v1/properties': typeof ApiPublicHomepitchV1PropertiesRouteWithChildren
   '/api/public/portal/v1/agents': typeof ApiPublicPortalV1AgentsRoute
   '/api/public/portal/v1/properties': typeof ApiPublicPortalV1PropertiesRouteWithChildren
@@ -656,6 +673,7 @@ export interface FileRoutesByTo {
   '/api/public/sites/v1/contacts': typeof ApiPublicSitesV1ContactsRoute
   '/api/public/sites/v1/properties': typeof ApiPublicSitesV1PropertiesRouteWithChildren
   '/api/public/sites/v1/visits': typeof ApiPublicSitesV1VisitsRoute
+  '/app/acp/date-piata': typeof AuthenticatedAppAcpDatePiataIndexRoute
   '/api/public/homepitch/v1/agents/me': typeof ApiPublicHomepitchV1AgentsMeRoute
   '/api/public/homepitch/v1/properties/$id': typeof ApiPublicHomepitchV1PropertiesIdRoute
   '/api/public/portal/v1/imove/feed': typeof ApiPublicPortalV1ImoveFeedRoute
@@ -729,6 +747,7 @@ export interface FileRoutesById {
   '/_authenticated/app/contacts/': typeof AuthenticatedAppContactsIndexRoute
   '/_authenticated/app/contracts/': typeof AuthenticatedAppContractsIndexRoute
   '/_authenticated/app/properties/': typeof AuthenticatedAppPropertiesIndexRoute
+  '/_authenticated/app/acp/date-piata/$id': typeof AuthenticatedAppAcpDatePiataIdRoute
   '/api/public/homepitch/v1/properties': typeof ApiPublicHomepitchV1PropertiesRouteWithChildren
   '/api/public/portal/v1/agents': typeof ApiPublicPortalV1AgentsRoute
   '/api/public/portal/v1/properties': typeof ApiPublicPortalV1PropertiesRouteWithChildren
@@ -736,6 +755,7 @@ export interface FileRoutesById {
   '/api/public/sites/v1/contacts': typeof ApiPublicSitesV1ContactsRoute
   '/api/public/sites/v1/properties': typeof ApiPublicSitesV1PropertiesRouteWithChildren
   '/api/public/sites/v1/visits': typeof ApiPublicSitesV1VisitsRoute
+  '/_authenticated/app/acp/date-piata/': typeof AuthenticatedAppAcpDatePiataIndexRoute
   '/api/public/homepitch/v1/agents/me': typeof ApiPublicHomepitchV1AgentsMeRoute
   '/api/public/homepitch/v1/properties/$id': typeof ApiPublicHomepitchV1PropertiesIdRoute
   '/api/public/portal/v1/imove/feed': typeof ApiPublicPortalV1ImoveFeedRoute
@@ -809,6 +829,7 @@ export interface FileRouteTypes {
     | '/app/contacts/'
     | '/app/contracts/'
     | '/app/properties/'
+    | '/app/acp/date-piata/$id'
     | '/api/public/homepitch/v1/properties'
     | '/api/public/portal/v1/agents'
     | '/api/public/portal/v1/properties'
@@ -816,6 +837,7 @@ export interface FileRouteTypes {
     | '/api/public/sites/v1/contacts'
     | '/api/public/sites/v1/properties'
     | '/api/public/sites/v1/visits'
+    | '/app/acp/date-piata/'
     | '/api/public/homepitch/v1/agents/me'
     | '/api/public/homepitch/v1/properties/$id'
     | '/api/public/portal/v1/imove/feed'
@@ -885,6 +907,7 @@ export interface FileRouteTypes {
     | '/app/contacts'
     | '/app/contracts'
     | '/app/properties'
+    | '/app/acp/date-piata/$id'
     | '/api/public/homepitch/v1/properties'
     | '/api/public/portal/v1/agents'
     | '/api/public/portal/v1/properties'
@@ -892,6 +915,7 @@ export interface FileRouteTypes {
     | '/api/public/sites/v1/contacts'
     | '/api/public/sites/v1/properties'
     | '/api/public/sites/v1/visits'
+    | '/app/acp/date-piata'
     | '/api/public/homepitch/v1/agents/me'
     | '/api/public/homepitch/v1/properties/$id'
     | '/api/public/portal/v1/imove/feed'
@@ -964,6 +988,7 @@ export interface FileRouteTypes {
     | '/_authenticated/app/contacts/'
     | '/_authenticated/app/contracts/'
     | '/_authenticated/app/properties/'
+    | '/_authenticated/app/acp/date-piata/$id'
     | '/api/public/homepitch/v1/properties'
     | '/api/public/portal/v1/agents'
     | '/api/public/portal/v1/properties'
@@ -971,6 +996,7 @@ export interface FileRouteTypes {
     | '/api/public/sites/v1/contacts'
     | '/api/public/sites/v1/properties'
     | '/api/public/sites/v1/visits'
+    | '/_authenticated/app/acp/date-piata/'
     | '/api/public/homepitch/v1/agents/me'
     | '/api/public/homepitch/v1/properties/$id'
     | '/api/public/portal/v1/imove/feed'
@@ -1445,6 +1471,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LovableEmailAuthWebhookRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/app/acp/date-piata/': {
+      id: '/_authenticated/app/acp/date-piata/'
+      path: '/acp/date-piata'
+      fullPath: '/app/acp/date-piata/'
+      preLoaderRoute: typeof AuthenticatedAppAcpDatePiataIndexRouteImport
+      parentRoute: typeof AuthenticatedAppRoute
+    }
+    '/_authenticated/app/acp/date-piata/$id': {
+      id: '/_authenticated/app/acp/date-piata/$id'
+      path: '/acp/date-piata/$id'
+      fullPath: '/app/acp/date-piata/$id'
+      preLoaderRoute: typeof AuthenticatedAppAcpDatePiataIdRouteImport
+      parentRoute: typeof AuthenticatedAppRoute
+    }
     '/api/public/homepitch/v1/properties': {
       id: '/api/public/homepitch/v1/properties'
       path: '/api/public/homepitch/v1/properties'
@@ -1605,6 +1645,8 @@ interface AuthenticatedAppRouteChildren {
   AuthenticatedAppContactsIndexRoute: typeof AuthenticatedAppContactsIndexRoute
   AuthenticatedAppContractsIndexRoute: typeof AuthenticatedAppContractsIndexRoute
   AuthenticatedAppPropertiesIndexRoute: typeof AuthenticatedAppPropertiesIndexRoute
+  AuthenticatedAppAcpDatePiataIdRoute: typeof AuthenticatedAppAcpDatePiataIdRoute
+  AuthenticatedAppAcpDatePiataIndexRoute: typeof AuthenticatedAppAcpDatePiataIndexRoute
 }
 
 const AuthenticatedAppRouteChildren: AuthenticatedAppRouteChildren = {
@@ -1631,6 +1673,9 @@ const AuthenticatedAppRouteChildren: AuthenticatedAppRouteChildren = {
   AuthenticatedAppContactsIndexRoute: AuthenticatedAppContactsIndexRoute,
   AuthenticatedAppContractsIndexRoute: AuthenticatedAppContractsIndexRoute,
   AuthenticatedAppPropertiesIndexRoute: AuthenticatedAppPropertiesIndexRoute,
+  AuthenticatedAppAcpDatePiataIdRoute: AuthenticatedAppAcpDatePiataIdRoute,
+  AuthenticatedAppAcpDatePiataIndexRoute:
+    AuthenticatedAppAcpDatePiataIndexRoute,
 }
 
 const AuthenticatedAppRouteWithChildren =
