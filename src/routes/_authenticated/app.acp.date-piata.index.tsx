@@ -30,7 +30,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { formatMoney } from "@/lib/format";
-import { showError, showSuccess } from "@/lib/toast";
+import { toast } from "@/components/ui/sonner";
+import { toastError } from "@/lib/errors";
 import {
   getMarketOverview,
   importMarketListings,
@@ -145,15 +146,13 @@ function MarketDataCenterPage() {
         },
       }),
     onSuccess: (result) => {
-      showSuccess(
-        `Import ${result.sourceName}: ${result.created} noi, ${result.updated} actualizate, ${result.invalid} invalide.`,
-      );
+      toast.success(`Import ${result.sourceName}: ${result.created} noi, ${result.updated} actualizate, ${result.invalid} invalide.`, { duration: 2500 });
       setImportContent("");
       void queryClient.invalidateQueries({ queryKey: ["market-overview"] });
       void queryClient.invalidateQueries({ queryKey: ["market-listings"] });
       void queryClient.invalidateQueries({ queryKey: ["market-dedupe-reviews"] });
     },
-    onError: (error: unknown) => showError(error),
+    onError: (error: unknown) => toastError(error),
   });
 
   const sync = useMutation({
@@ -161,18 +160,18 @@ function MarketDataCenterPage() {
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["market-overview"] });
     },
-    onError: (error: unknown) => showError(error),
+    onError: (error: unknown) => toastError(error),
   });
 
   const resolve = useMutation({
     mutationFn: (input: { id: string; decision: "confirm" | "reject" }) =>
       resolveFn({ data: input }),
     onSuccess: () => {
-      showSuccess("Potrivirea a fost rezolvată.");
+      toast.success("Potrivirea a fost rezolvată.", { duration: 2500 });
       void queryClient.invalidateQueries({ queryKey: ["market-dedupe-reviews"] });
       void queryClient.invalidateQueries({ queryKey: ["market-overview"] });
     },
-    onError: (error: unknown) => showError(error),
+    onError: (error: unknown) => toastError(error),
   });
 
   const totals = overview.data?.totals;

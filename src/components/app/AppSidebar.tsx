@@ -1,4 +1,5 @@
-import { Link, type LinkProps } from "@tanstack/react-router";
+import {
+  Database, Link, type LinkProps } from "@tanstack/react-router";
 import {
   ArrowLeftRight,
   Bell,
@@ -66,6 +67,7 @@ export const agencyNav: NavGroup[] = [
     items: [
       { label: "Analiză nouă", to: "/app/acp/new", icon: Sparkles },
       { label: "Analize salvate", to: "/app/acp", icon: BarChart3, exact: true },
+      { label: "Date piață", to: "/app/acp/date-piata", icon: Database },
     ],
   },
 
