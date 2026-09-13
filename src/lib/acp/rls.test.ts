@@ -34,6 +34,8 @@ describe("RLS – izolarea organizațiilor pentru ACP", () => {
     for (const table of ORG_TABLES) {
       const policies = sql
         .split("CREATE POLICY")
+        .slice(1)
+        .map((chunk) => chunk.slice(0, chunk.indexOf(";")))
         .filter((chunk) => chunk.includes(`ON public.${table} `));
       expect(policies.length).toBeGreaterThan(0);
       for (const policy of policies) {
