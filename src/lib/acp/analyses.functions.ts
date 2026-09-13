@@ -787,6 +787,15 @@ export const getAcpAnalysis = createServerFn({ method: "POST" })
       estimate: analysisData.estimate ?? null,
       confidence: analysisData.confidence ?? null,
       explanation: analysisData.explanation ?? [],
+      aiConfigured: isAcpAiConfigured(),
+      ai: analysisData.ai
+        ? {
+            provider: analysisData.ai.provider ?? null,
+            model: analysisData.ai.model ?? analysis.ai_model ?? null,
+            generatedAt: analysisData.ai.generatedAt ?? analysis.ai_generated_at ?? null,
+            insight: storedInsight.ok ? storedInsight.insight : null,
+          }
+        : null,
       comparables: (comparables ?? []).map((c) => {
         const snapshot = (c.snapshot ?? {}) as {
           key?: string;
