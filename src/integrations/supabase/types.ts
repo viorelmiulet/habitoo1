@@ -22,15 +22,25 @@ export type Database = {
           analysis_data: Json
           average_price_per_sqm: number | null
           comparables_count: number
+          comparables_used: number
           confidence_score: number | null
           created_at: string
           created_by: string | null
+          error_message: string | null
           estimated_max: number | null
           estimated_min: number | null
           estimated_value: number | null
+          history: Json
           id: string
+          last_run_at: string | null
           median_price_per_sqm: number | null
           organization_id: string
+          price_average: number | null
+          price_max: number | null
+          price_median: number | null
+          price_min: number | null
+          price_p25: number | null
+          price_p75: number | null
           property_id: string | null
           recommended_listing_price: number | null
           sources: Json
@@ -38,6 +48,7 @@ export type Database = {
           target_data: Json
           title: string
           updated_at: string
+          version: number
         }
         Insert: {
           ai_generated_at?: string | null
@@ -46,15 +57,25 @@ export type Database = {
           analysis_data?: Json
           average_price_per_sqm?: number | null
           comparables_count?: number
+          comparables_used?: number
           confidence_score?: number | null
           created_at?: string
           created_by?: string | null
+          error_message?: string | null
           estimated_max?: number | null
           estimated_min?: number | null
           estimated_value?: number | null
+          history?: Json
           id?: string
+          last_run_at?: string | null
           median_price_per_sqm?: number | null
           organization_id: string
+          price_average?: number | null
+          price_max?: number | null
+          price_median?: number | null
+          price_min?: number | null
+          price_p25?: number | null
+          price_p75?: number | null
           property_id?: string | null
           recommended_listing_price?: number | null
           sources?: Json
@@ -62,6 +83,7 @@ export type Database = {
           target_data?: Json
           title: string
           updated_at?: string
+          version?: number
         }
         Update: {
           ai_generated_at?: string | null
@@ -70,15 +92,25 @@ export type Database = {
           analysis_data?: Json
           average_price_per_sqm?: number | null
           comparables_count?: number
+          comparables_used?: number
           confidence_score?: number | null
           created_at?: string
           created_by?: string | null
+          error_message?: string | null
           estimated_max?: number | null
           estimated_min?: number | null
           estimated_value?: number | null
+          history?: Json
           id?: string
+          last_run_at?: string | null
           median_price_per_sqm?: number | null
           organization_id?: string
+          price_average?: number | null
+          price_max?: number | null
+          price_median?: number | null
+          price_min?: number | null
+          price_p25?: number | null
+          price_p75?: number | null
           property_id?: string | null
           recommended_listing_price?: number | null
           sources?: Json
@@ -86,6 +118,7 @@ export type Database = {
           target_data?: Json
           title?: string
           updated_at?: string
+          version?: number
         }
         Relationships: [
           {
@@ -153,63 +186,99 @@ export type Database = {
           adjusted_price: number | null
           adjusted_price_per_sqm: number | null
           adjustment_amount: number | null
+          adjustment_percent: number | null
+          adjustments: Json
           analysis_id: string
           area_score: number | null
+          component_scores: Json
           condition_score: number | null
           created_at: string
           distance_score: number | null
           features_score: number | null
           floor_score: number | null
           id: string
+          image_path: string | null
           is_outlier: boolean
           is_selected: boolean
           location_score: number | null
+          manual_override: string | null
           market_listing_id: string | null
+          other_score: number | null
+          outlier_reason: string | null
           rooms_score: number | null
           selection_reason: string | null
           similarity_score: number | null
+          snapshot: Json
+          source_name: string | null
+          source_property_id: string | null
+          source_type: string
+          tier: string | null
           year_score: number | null
         }
         Insert: {
           adjusted_price?: number | null
           adjusted_price_per_sqm?: number | null
           adjustment_amount?: number | null
+          adjustment_percent?: number | null
+          adjustments?: Json
           analysis_id: string
           area_score?: number | null
+          component_scores?: Json
           condition_score?: number | null
           created_at?: string
           distance_score?: number | null
           features_score?: number | null
           floor_score?: number | null
           id?: string
+          image_path?: string | null
           is_outlier?: boolean
           is_selected?: boolean
           location_score?: number | null
+          manual_override?: string | null
           market_listing_id?: string | null
+          other_score?: number | null
+          outlier_reason?: string | null
           rooms_score?: number | null
           selection_reason?: string | null
           similarity_score?: number | null
+          snapshot?: Json
+          source_name?: string | null
+          source_property_id?: string | null
+          source_type?: string
+          tier?: string | null
           year_score?: number | null
         }
         Update: {
           adjusted_price?: number | null
           adjusted_price_per_sqm?: number | null
           adjustment_amount?: number | null
+          adjustment_percent?: number | null
+          adjustments?: Json
           analysis_id?: string
           area_score?: number | null
+          component_scores?: Json
           condition_score?: number | null
           created_at?: string
           distance_score?: number | null
           features_score?: number | null
           floor_score?: number | null
           id?: string
+          image_path?: string | null
           is_outlier?: boolean
           is_selected?: boolean
           location_score?: number | null
+          manual_override?: string | null
           market_listing_id?: string | null
+          other_score?: number | null
+          outlier_reason?: string | null
           rooms_score?: number | null
           selection_reason?: string | null
           similarity_score?: number | null
+          snapshot?: Json
+          source_name?: string | null
+          source_property_id?: string | null
+          source_type?: string
+          tier?: string | null
           year_score?: number | null
         }
         Relationships: [
@@ -225,6 +294,13 @@ export type Database = {
             columns: ["market_listing_id"]
             isOneToOne: false
             referencedRelation: "market_listings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "acp_comparables_source_property_id_fkey"
+            columns: ["source_property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
             referencedColumns: ["id"]
           },
         ]
