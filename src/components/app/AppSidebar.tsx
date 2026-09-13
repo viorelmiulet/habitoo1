@@ -4,6 +4,7 @@ import {
   Bell,
   Building2,
   CalendarDays,
+  BarChart3,
   ChartBar,
   FileSignature,
   Flame,

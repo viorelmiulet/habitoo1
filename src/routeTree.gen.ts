@@ -54,6 +54,7 @@ import { Route as AuthenticatedSuperadminStareAgentiiRouteImport } from './route
 import { Route as AuthenticatedSuperadminSupportRouteImport } from './routes/_authenticated/superadmin.support'
 import { Route as AuthenticatedSuperadminUsersRouteImport } from './routes/_authenticated/superadmin.users'
 import { Route as AuthenticatedAppAcpIndexRouteImport } from './routes/_authenticated/app.acp.index'
+import { Route as AuthenticatedAppAcpNewRouteImport } from './routes/_authenticated/app.acp.new'
 import { Route as AuthenticatedAppContactsIndexRouteImport } from './routes/_authenticated/app.contacts.index'
 import { Route as AuthenticatedAppContactsIdRouteImport } from './routes/_authenticated/app.contacts.$id'
 import { Route as AuthenticatedAppContractsIndexRouteImport } from './routes/_authenticated/app.contracts.index'
@@ -328,6 +329,11 @@ const AuthenticatedAppAcpIndexRoute =
     path: '/acp/',
     getParentRoute: () => AuthenticatedAppRoute,
   } as any)
+const AuthenticatedAppAcpNewRoute = AuthenticatedAppAcpNewRouteImport.update({
+  id: '/acp/new',
+  path: '/acp/new',
+  getParentRoute: () => AuthenticatedAppRoute,
+} as any)
 const AuthenticatedAppContactsIndexRoute =
   AuthenticatedAppContactsIndexRouteImport.update({
     id: '/contacts/',
@@ -545,6 +551,7 @@ export interface FileRoutesByFullPath {
   '/superadmin/users': typeof AuthenticatedSuperadminUsersRoute
   '/app/': typeof AuthenticatedAppIndexRoute
   '/superadmin/': typeof AuthenticatedSuperadminIndexRoute
+  '/app/acp/new': typeof AuthenticatedAppAcpNewRoute
   '/app/contacts/$id': typeof AuthenticatedAppContactsIdRoute
   '/app/contracts/$id': typeof AuthenticatedAppContractsIdRoute
   '/app/properties/$id': typeof AuthenticatedAppPropertiesIdRoute
@@ -619,6 +626,7 @@ export interface FileRoutesByTo {
   '/superadmin/users': typeof AuthenticatedSuperadminUsersRoute
   '/app': typeof AuthenticatedAppIndexRoute
   '/superadmin': typeof AuthenticatedSuperadminIndexRoute
+  '/app/acp/new': typeof AuthenticatedAppAcpNewRoute
   '/app/contacts/$id': typeof AuthenticatedAppContactsIdRoute
   '/app/contracts/$id': typeof AuthenticatedAppContractsIdRoute
   '/app/properties/$id': typeof AuthenticatedAppPropertiesIdRoute
@@ -697,6 +705,7 @@ export interface FileRoutesById {
   '/_authenticated/superadmin/users': typeof AuthenticatedSuperadminUsersRoute
   '/_authenticated/app/': typeof AuthenticatedAppIndexRoute
   '/_authenticated/superadmin/': typeof AuthenticatedSuperadminIndexRoute
+  '/_authenticated/app/acp/new': typeof AuthenticatedAppAcpNewRoute
   '/_authenticated/app/contacts/$id': typeof AuthenticatedAppContactsIdRoute
   '/_authenticated/app/contracts/$id': typeof AuthenticatedAppContractsIdRoute
   '/_authenticated/app/properties/$id': typeof AuthenticatedAppPropertiesIdRoute
@@ -775,6 +784,7 @@ export interface FileRouteTypes {
     | '/superadmin/users'
     | '/app/'
     | '/superadmin/'
+    | '/app/acp/new'
     | '/app/contacts/$id'
     | '/app/contracts/$id'
     | '/app/properties/$id'
@@ -849,6 +859,7 @@ export interface FileRouteTypes {
     | '/superadmin/users'
     | '/app'
     | '/superadmin'
+    | '/app/acp/new'
     | '/app/contacts/$id'
     | '/app/contracts/$id'
     | '/app/properties/$id'
@@ -926,6 +937,7 @@ export interface FileRouteTypes {
     | '/_authenticated/superadmin/users'
     | '/_authenticated/app/'
     | '/_authenticated/superadmin/'
+    | '/_authenticated/app/acp/new'
     | '/_authenticated/app/contacts/$id'
     | '/_authenticated/app/contracts/$id'
     | '/_authenticated/app/properties/$id'
@@ -1316,6 +1328,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAppAcpIndexRouteImport
       parentRoute: typeof AuthenticatedAppRoute
     }
+    '/_authenticated/app/acp/new': {
+      id: '/_authenticated/app/acp/new'
+      path: '/acp/new'
+      fullPath: '/app/acp/new'
+      preLoaderRoute: typeof AuthenticatedAppAcpNewRouteImport
+      parentRoute: typeof AuthenticatedAppRoute
+    }
     '/_authenticated/app/contacts/': {
       id: '/_authenticated/app/contacts/'
       path: '/contacts'
@@ -1557,6 +1576,7 @@ interface AuthenticatedAppRouteChildren {
   AuthenticatedAppSupportRoute: typeof AuthenticatedAppSupportRoute
   AuthenticatedAppTeamRoute: typeof AuthenticatedAppTeamRoute
   AuthenticatedAppIndexRoute: typeof AuthenticatedAppIndexRoute
+  AuthenticatedAppAcpNewRoute: typeof AuthenticatedAppAcpNewRoute
   AuthenticatedAppContactsIdRoute: typeof AuthenticatedAppContactsIdRoute
   AuthenticatedAppContractsIdRoute: typeof AuthenticatedAppContractsIdRoute
   AuthenticatedAppPropertiesIdRoute: typeof AuthenticatedAppPropertiesIdRoute
@@ -1581,6 +1601,7 @@ const AuthenticatedAppRouteChildren: AuthenticatedAppRouteChildren = {
   AuthenticatedAppSupportRoute: AuthenticatedAppSupportRoute,
   AuthenticatedAppTeamRoute: AuthenticatedAppTeamRoute,
   AuthenticatedAppIndexRoute: AuthenticatedAppIndexRoute,
+  AuthenticatedAppAcpNewRoute: AuthenticatedAppAcpNewRoute,
   AuthenticatedAppContactsIdRoute: AuthenticatedAppContactsIdRoute,
   AuthenticatedAppContractsIdRoute: AuthenticatedAppContractsIdRoute,
   AuthenticatedAppPropertiesIdRoute: AuthenticatedAppPropertiesIdRoute,
