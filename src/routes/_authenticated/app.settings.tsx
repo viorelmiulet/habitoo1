@@ -322,6 +322,7 @@ function SettingsPage() {
                 <Input
                   id="legal_representative"
                   value={orgForm.legal_representative}
+                  disabled={!user?.isAdmin}
                   onChange={(e) => setOrgForm((f) => ({ ...f, legal_representative: e.target.value }))}
                 />
               </div>
@@ -330,6 +331,7 @@ function SettingsPage() {
                 <Input
                   id="legal_representative_title"
                   value={orgForm.legal_representative_title}
+                  disabled={!user?.isAdmin}
                   onChange={(e) => setOrgForm((f) => ({ ...f, legal_representative_title: e.target.value }))}
                 />
               </div>

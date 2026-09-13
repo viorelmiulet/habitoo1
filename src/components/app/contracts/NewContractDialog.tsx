@@ -125,8 +125,8 @@ export function NewContractDialog({ open, onOpenChange, propertyId, contactId }:
       ];
       return runCreate({ data: {
         templateId: activeTemplate, kind: documentKind, propertyId: selectedProperty || undefined,
-        contactId: selectedContact || undefined, price: rent ? Number(rent) : undefined, currency,
-        durationMonths: durationMonths ? Number(durationMonths) : undefined, startDate: startDate || undefined,
+        contactId: selectedContact || undefined, price: documentKind === "exclusive_representation" ? (exclusiveProperty.price ? Number(exclusiveProperty.price) : undefined) : (rent ? Number(rent) : undefined), currency: documentKind === "exclusive_representation" ? exclusiveProperty.currency : currency,
+        durationMonths: durationMonths ? Number(durationMonths) : documentKind === "exclusive_representation" ? 6 : undefined, startDate: startDate || undefined,
         destination: destination.trim() || undefined, deposit: deposit ? Number(deposit) : undefined,
         includeInventory: documentKind === "rent_agreement" && includeInventory, inventory: includeInventory ? cleanInventory : undefined,
         contractNumber: documentKind === "exclusive_representation" ? contractNumber || undefined : undefined,
