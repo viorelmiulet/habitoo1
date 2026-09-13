@@ -914,7 +914,12 @@ export const createContract = createServerFn({ method: "POST" })
       } as never)
       .select("id")
       .single();
-    if (error) throw new Error(error.message);
+    if (error) {
+      if (error.message.includes("contracts_org_contract_number_uidx")) {
+        throw new Error("Numărul contractului este deja folosit în agenția ta.");
+      }
+      throw new Error(error.message);
+    }
 
     const rows = data.parties.map((p, index) => ({
       contract_id: contract.id,
