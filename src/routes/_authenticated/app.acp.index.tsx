@@ -13,11 +13,7 @@ import { appHead } from "@/components/app/app-head";
 import { formatMoney } from "@/lib/format";
 
 export const Route = createFileRoute("/_authenticated/app/acp/")({
-  head: () =>
-    appHead(
-      "Habitoo CRM — analize comparative de piață",
-      "Istoricul analizelor comparative de piață (ACP) ale agenției tale.",
-    ),
+  head: () => appHead("Habitoo CRM — analize comparative de piață"),
   component: AcpListPage,
 });
 
@@ -94,10 +90,9 @@ function AcpListPage() {
                     {formatMoney(a.estimated_value, "EUR")}
                   </span>
                 ) : null}
-                <StatusBadge
-                  tone={a.status === "completed" ? "success" : "neutral"}
-                  label={STATUS_LABELS[a.status] ?? a.status}
-                />
+                <StatusBadge tone={a.status === "completed" ? "success" : "neutral"}>
+                  {STATUS_LABELS[a.status] ?? a.status}
+                </StatusBadge>
               </li>
             ))}
           </ul>
