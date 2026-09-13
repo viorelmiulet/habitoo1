@@ -23,7 +23,8 @@ import { appHead } from "@/components/app/app-head";
 import { formatMoney } from "@/lib/format";
 import { ACP_SCORE_LABELS, ACP_SCORE_WEIGHTS, ACP_THRESHOLDS } from "@/lib/acp/config";
 import { propertyToSubject } from "@/lib/acp/adapters";
-import { ACP_AUDIT_ACTIONS, logAcpAudit } from "@/lib/acp/audit";
+import { createAcpAnalysis } from "@/lib/acp/analyses.functions";
+
 
 export const Route = createFileRoute("/_authenticated/app/acp/new")({
   head: () => appHead("Habitoo CRM — analiză comparativă nouă"),
