@@ -738,7 +738,16 @@ export const getAcpAnalysis = createServerFn({ method: "POST" })
       confidence?: AcpAnalysisView["confidence"];
       explanation?: string[];
       targetPricePerSqm?: number | null;
+      ai?: {
+        provider?: string | null;
+        model?: string | null;
+        generatedAt?: string | null;
+        insight?: unknown;
+      } | null;
     };
+    const storedInsight = parseAcpAiInsight(
+      analysisData.ai?.insight ? JSON.stringify(analysisData.ai.insight) : null,
+    );
     const targetData = (analysis.target_data ?? {}) as {
       title?: string;
       reference?: string | null;
