@@ -11,6 +11,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireActiveOrgAuth } from "@/lib/org-access";
 import { ACP_AUDIT_ACTIONS, logAcpAudit } from "./audit";
+import { acpDbError, acpError, acpSafeMessage } from "./safe-error";
 import { readStoredAcpAiInsight } from "./ai/schema";
 import {
   assertReportOrganization,
@@ -47,7 +48,7 @@ async function loadActor(context: AuthContext): Promise<Actor> {
     .maybeSingle();
   const organizationId = profile?.organization_id ?? null;
   if (!organizationId) {
-    throw new Error("Rapoartele ACP sunt disponibile doar utilizatorilor unei agenții.");
+    throw acpError("Rapoartele ACP sunt disponibile doar utilizatorilor unei agenții.");
   }
   return { userId: context.userId, organizationId };
 }
@@ -66,7 +67,7 @@ async function enforceReportRateLimit(
       _window_seconds: config.windowSeconds,
     });
     if (allowed === false) {
-      throw new Error("Prea multe rapoarte generate în ultima oră. Încearcă din nou mai târziu.");
+      throw acpError("Prea multe rapoarte generate în ultima oră. Încearcă din nou mai târziu.");
     }
   }
 }
@@ -464,7 +465,7 @@ export async function generateAcpReportForVersion(
             contentType: "application/pdf",
             upsert: true,
           });
-        if (uploadError) throw new Error(uploadError.message);
+        if (uploadError) throw acpDbError("upload report pdf", uploadError, "Raportul nu a putut fi salvat. Încearcă din nou.");
 
         const { data: updated, error: updateError } = await admin
           .from("acp_reports")
@@ -479,7 +480,7 @@ export async function generateAcpReportForVersion(
           .eq("id", row.id)
           .select("*")
           .single();
-        if (updateError) throw updateError;
+        if (updateError) throw acpDbError("finalize report", updateError, "Raportul nu a putut fi finalizat. Încearcă din nou.");
 
         await logAcpAudit({
           organizationId: actor.organizationId,
@@ -500,12 +501,18 @@ export async function generateAcpReportForVersion(
           errorMessage: null,
         };
       } catch (error) {
-        const errorMessage =
-          error instanceof Error ? error.message : "Raportul nu a putut fi generat.";
+        const errorMessage = acpSafeMessage(error, "Raportul nu a putut fi generat.");
         await admin
           .from("acp_reports")
           .update({ status: "failed", error_message: errorMessage })
           .eq("id", row.id);
+        await logAcpAudit({
+          organizationId: actor.organizationId,
+          actorId: actor.userId,
+          action: ACP_AUDIT_ACTIONS.reportFailed,
+          analysisId: input.analysisId,
+          details: { reportId: row.id, analysisVersion: input.version },
+        });
         return { report: null, ok: false, errorMessage };
       }
     }
@@ -539,14 +546,14 @@ export const acpReportUrl = createServerFn({ method: "POST" })
       .select("id,analysis_id,organization_id,pdf_path,status")
       .eq("id", data.reportId)
       .maybeSingle();
-    if (error) throw error;
-    if (!report) throw new Error("Raportul nu a fost găsit.");
+    if (error) throw acpDbError("load report", error);
+    if (!report) throw acpError("Raportul nu a fost găsit.");
     assertReportOrganization(report.organization_id, actor.organizationId);
     if (!report.pdf_path || report.status !== "ready") {
-      throw new Error("Raportul nu are un fișier disponibil.");
+      throw acpError("Raportul nu are un fișier disponibil.");
     }
     if (!report.pdf_path.startsWith(`${actor.organizationId}/`)) {
-      throw new Error("Raport invalid.");
+      throw acpError("Raport invalid.");
     }
 
     const { data: signed } = await admin.storage

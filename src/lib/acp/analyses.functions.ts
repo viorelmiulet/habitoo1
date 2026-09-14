@@ -14,6 +14,12 @@ import { runAcpAnalysis, targetPricePerSqm, type AcpCandidate, type AcpManualOve
 import type { AcpSubject } from "./scoring";
 import type { AcpComparableResult } from "./engine";
 import { ACP_AUDIT_ACTIONS, logAcpAudit } from "./audit";
+import { acpDbError, acpError, acpSafeMessage } from "./safe-error";
+import {
+  acpSourcesSchema,
+  canRecalculateInPlace,
+  shouldReuseRunningAnalysis,
+} from "./guards";
 import { readStoredAcpAiInsight, type AcpAiInsight } from "./ai/schema";
 import { dedupeMarketCandidates } from "@/lib/market/acp";
 import {
@@ -210,7 +216,7 @@ async function collectCandidates(params: {
     query = applyPropertyFilters(query);
     if (targetPropertyId) query = query.neq("id", targetPropertyId);
     const { data, error } = await query;
-    if (error) throw error;
+    if (error) throw acpDbError("collect own properties", error);
     const rows = (data ?? []) as unknown as PropertyRow[];
     for (const row of rows) {
       propertyRows.push({
@@ -251,7 +257,7 @@ async function collectCandidates(params: {
         .limit(200);
       query = applyPropertyFilters(query);
       const { data, error } = await query;
-      if (error) throw error;
+      if (error) throw acpDbError("collect collaboration properties", error);
       rows = (data ?? []) as unknown as PropertyRow[];
       for (const row of rows) {
         propertyRows.push({
@@ -300,7 +306,7 @@ async function collectCandidates(params: {
     if (target.transactionType) query = query.eq("transaction_type", target.transactionType);
     if (target.city) query = query.eq("city", target.city);
     const { data, error } = await query;
-    if (error) throw error;
+    if (error) throw acpDbError("collect market listings", error);
     const rows = data ?? [];
     const deduped = dedupeMarketCandidates(rows as never);
     for (const item of deduped) {
@@ -454,7 +460,7 @@ async function persistRun(params: {
       } as never,
     }));
     const { error } = await admin.from("acp_comparables").insert(rows);
-    if (error) throw error;
+    if (error) throw acpDbError("insert comparables", error);
   }
 
   await admin.from("acp_analysis_sources").delete().eq("analysis_id", analysisId);
@@ -475,7 +481,7 @@ async function persistRun(params: {
         items_excluded: Math.max(0, s.itemsFound - (usedBySource.get(s.sourceType) ?? 0)),
       })),
     );
-    if (error) throw error;
+    if (error) throw acpDbError("insert analysis sources", error);
   }
 
   const { error: updateError } = await admin
@@ -522,13 +528,38 @@ async function persistRun(params: {
 
     })
     .eq("id", analysisId);
-  if (updateError) throw updateError;
+  if (updateError) throw acpDbError("persist analysis run", updateError);
+}
+
+/** Stage 8: rulările ACP sunt operațiuni scumpe și au limită proprie. */
+export const ACP_RUN_RATE_LIMITS = {
+  perUser: { limit: 20, windowSeconds: 3600 },
+  perOrganization: { limit: 60, windowSeconds: 3600 },
+} as const;
+
+async function enforceRunRateLimit(
+  admin: Awaited<ReturnType<typeof loadAdmin>>,
+  actor: Actor,
+) {
+  for (const [bucket, config] of [
+    [`acp_run:user:${actor.userId}`, ACP_RUN_RATE_LIMITS.perUser],
+    [`acp_run:org:${actor.organizationId}`, ACP_RUN_RATE_LIMITS.perOrganization],
+  ] as const) {
+    const { data: allowed } = await admin.rpc("rate_limit_hit", {
+      _bucket: bucket,
+      _limit: config.limit,
+      _window_seconds: config.windowSeconds,
+    });
+    if (allowed === false) {
+      throw acpError("Prea multe analize pornite în ultima oră. Încearcă din nou mai târziu.");
+    }
+  }
 }
 
 const createSchema = z.object({
   propertyId: z.string().uuid(),
   title: z.string().trim().max(200).optional(),
-  sources: z.record(z.string(), z.boolean()).default({ own_properties: true }),
+  sources: acpSourcesSchema,
 });
 
 /** Creează analiza (snapshot al proprietății) și rulează imediat motorul. */
@@ -545,8 +576,28 @@ export const createAcpAnalysis = createServerFn({ method: "POST" })
       .eq("id", data.propertyId)
       .eq("organization_id", actor.organizationId)
       .maybeSingle();
-    if (propertyError) throw propertyError;
-    if (!property) throw new Error("Proprietatea analizată nu a fost găsită în agenția ta.");
+    if (propertyError) throw acpDbError("load property", propertyError);
+    if (!property) throw acpError("Proprietatea analizată nu a fost găsită în agenția ta.");
+
+    // Protecție la dublu-click / retry: o rulare pornită foarte recent pentru
+    // aceeași proprietate este reutilizată în loc să creăm o analiză duplicat.
+    const { data: runningRows } = await admin
+      .from("acp_analyses")
+      .select("id,status,created_at")
+      .eq("organization_id", actor.organizationId)
+      .eq("property_id", data.propertyId)
+      .eq("status", "running")
+      .order("created_at", { ascending: false })
+      .limit(1);
+    const running = (runningRows ?? [])[0];
+    if (
+      running &&
+      shouldReuseRunningAnalysis({ status: running.status, createdAt: running.created_at })
+    ) {
+      return { analysisId: running.id };
+    }
+
+    await enforceRunRateLimit(admin, actor);
 
     const row = property as unknown as PropertyRow;
     const subject = propertyToSubject(row as never);
@@ -572,7 +623,7 @@ export const createAcpAnalysis = createServerFn({ method: "POST" })
       })
       .select("id")
       .single();
-    if (insertError) throw insertError;
+    if (insertError) throw acpDbError("create analysis", insertError);
 
     // Versiunea 1 este propriul root al liniei de versiuni.
     await admin
@@ -611,7 +662,7 @@ export const createAcpAnalysis = createServerFn({ method: "POST" })
         .from("acp_analyses")
         .update({
           status: "draft",
-          error_message: error instanceof Error ? error.message : "Eroare necunoscută",
+          error_message: acpSafeMessage(error, "Analiza nu a putut fi finalizată."),
         })
         .eq("id", created.id);
       throw error;
@@ -704,8 +755,8 @@ async function loadAnalysis(
     .eq("id", analysisId)
     .eq("organization_id", actor.organizationId)
     .maybeSingle();
-  if (error) throw error;
-  if (!data) throw new Error("Analiza nu a fost găsită în agenția ta.");
+  if (error) throw acpDbError("load analysis", error);
+  if (!data) throw acpError("Analiza nu a fost găsită în agenția ta.");
   return data as unknown as AnalysisRow;
 }
 
@@ -722,8 +773,26 @@ function readOverrides(analysisData: unknown): Record<string, AcpManualOverride>
 
 function readSubject(targetData: unknown): AcpSubject {
   const subject = (targetData as { subject?: AcpSubject } | null)?.subject;
-  if (!subject) throw new Error("Analiza nu conține datele proprietății analizate.");
+  if (!subject) throw acpError("Analiza nu conține datele proprietății analizate.");
   return subject;
+}
+
+/**
+ * Stage 8: verifică dacă versiunea are deja livrabile (raport sau interpretare
+ * AI). Dacă are, rămâne imutabilă și recalcularea se face doar ca versiune nouă.
+ */
+async function versionDeliverables(
+  admin: Awaited<ReturnType<typeof loadAdmin>>,
+  analysisId: string,
+): Promise<{ hasReport: boolean; hasAiInsight: boolean }> {
+  const [reports, insights] = await Promise.all([
+    admin.from("acp_reports").select("id").eq("analysis_id", analysisId).limit(1),
+    admin.from("acp_ai_insights").select("id").eq("analysis_id", analysisId).limit(1),
+  ]);
+  return {
+    hasReport: (reports.data ?? []).length > 0,
+    hasAiInsight: (insights.data ?? []).length > 0,
+  };
 }
 
 async function recalculate(
@@ -733,13 +802,33 @@ async function recalculate(
   overridesInput?: Record<string, AcpManualOverride>,
 ) {
   const analysis = await loadAnalysis(admin, actor, analysisId);
+  const deliverables = await versionDeliverables(admin, analysisId);
+  const verdict = canRecalculateInPlace({
+    status: analysis.status,
+    hasReport: deliverables.hasReport,
+    hasAiInsight: deliverables.hasAiInsight,
+  });
+  if (!verdict.allowed) throw acpError(verdict.message);
+
+  const previousStatus = analysis.status;
   const subject = readSubject(analysis.target_data);
   const sources = (analysis.sources as Record<string, boolean> | null) ?? {
     own_properties: true,
   };
   const overrides = overridesInput ?? readOverrides(analysis.analysis_data);
 
-  await admin.from("acp_analyses").update({ status: "running" }).eq("id", analysisId);
+  // Blocare optimistă: doar un singur request poate marca analiza „running".
+  const { data: claimed, error: claimError } = await admin
+    .from("acp_analyses")
+    .update({ status: "running" })
+    .eq("id", analysisId)
+    .eq("organization_id", actor.organizationId)
+    .neq("status", "running")
+    .select("id");
+  if (claimError) throw acpDbError("claim analysis run", claimError);
+  if ((claimed ?? []).length === 0) {
+    throw acpError("Analiza rulează deja. Așteaptă finalizarea ei.");
+  }
 
   try {
     const { candidates, stats } = await collectCandidates({
@@ -776,11 +865,12 @@ async function recalculate(
       calibration,
     });
   } catch (error) {
+    // Revenim exact la starea anterioară, cu un mesaj sigur pentru utilizator.
     await admin
       .from("acp_analyses")
       .update({
-        status: "completed",
-        error_message: error instanceof Error ? error.message : "Eroare necunoscută",
+        status: previousStatus === "running" ? "draft" : previousStatus,
+        error_message: acpSafeMessage(error, "Recalcularea nu a putut fi finalizată."),
       })
       .eq("id", analysisId);
     throw error;
@@ -1211,7 +1301,7 @@ async function enforceVersionRateLimit(
       _window_seconds: config.windowSeconds,
     });
     if (allowed === false) {
-      throw new Error("Prea multe recalculări în ultima oră. Încearcă din nou mai târziu.");
+      throw acpError("Prea multe recalculări în ultima oră. Încearcă din nou mai târziu.");
     }
   }
 }
@@ -1319,7 +1409,7 @@ async function insertNextVersionRow(
       .select("version")
       .eq("organization_id", actor.organizationId)
       .or(`root_analysis_id.eq.${rootId},id.eq.${rootId}`);
-    if (existingError) throw existingError;
+    if (existingError) throw acpDbError("list versions", existingError);
     const version =
       nextVersionNumber((existing ?? []).map((r) => Number(r.version ?? 1))) + attempt;
 
@@ -1342,9 +1432,9 @@ async function insertNextVersionRow(
 
     if (!error && created) return { id: created.id, version };
     const code = (error as { code?: string } | null)?.code;
-    if (code !== "23505") throw error;
+    if (code !== "23505") throw acpDbError("insert version", error);
   }
-  throw new Error("Nu am putut crea o versiune nouă. Încearcă din nou.");
+  throw acpError("Nu am putut crea o versiune nouă. Încearcă din nou.");
 }
 
 /**
@@ -1416,8 +1506,7 @@ export const recalculateAcpAsNewVersion = createServerFn({ method: "POST" })
           calibration,
         });
       } catch (error) {
-        const errorMessage =
-          error instanceof Error ? error.message : "Recalcularea nu a putut fi finalizată.";
+        const errorMessage = acpSafeMessage(error, "Recalcularea nu a putut fi finalizată.");
         await admin
           .from("acp_analyses")
           .update({ status: "draft", error_message: errorMessage })
