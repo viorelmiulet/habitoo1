@@ -29,7 +29,23 @@ export const Route = createFileRoute("/_authenticated/app/ai")({
   component: AiPage,
 });
 
-type ChatEntry = { role: "user" | "assistant"; content: string; warnings?: string[] };
+type ChatEntry = {
+  role: "user" | "assistant";
+  content: string;
+  warnings?: string[];
+  /** Indicator de context: pe ce categorii de date s-a bazat răspunsul. */
+  contextUsed?: string[];
+  sources?: { label: string }[];
+};
+
+const CONTEXT_LABELS: Record<string, string> = {
+  property: "proprietăți",
+  client: "clienți",
+  lead: "leaduri",
+  acp: "analize ACP",
+  activity: "activități",
+  document: "documente",
+};
 
 function AiPage() {
   const queryClient = useQueryClient();
@@ -62,13 +78,21 @@ function AiPage() {
 
   const mutation = useMutation({
     mutationFn: (message: string) =>
-      send({ data: { message, conversationId, propertyId: null } }) as Promise<AIResponseLike>,
+      send({ data: { message, conversationId, propertyId: null } }) as Promise<
+        AIResponseLike & { contextUsed?: string[]; sources?: { label: string }[] }
+      >,
     onSuccess: (response) => {
       if (response.conversationId) setConversationId(response.conversationId);
       if (response.status === "ok") {
         setEntries((prev) => [
           ...prev,
-          { role: "assistant", content: response.answer, warnings: response.warnings },
+          {
+            role: "assistant",
+            content: response.answer,
+            warnings: response.warnings,
+            contextUsed: response.contextUsed ?? [],
+            sources: response.sources ?? [],
+          },
         ]);
         setError(null);
       } else {
@@ -81,13 +105,21 @@ function AiPage() {
 
   const configured = status.data?.configured ?? false;
   const busy = mutation.isPending;
+  const [lastMessage, setLastMessage] = useState<string | null>(null);
 
   function submit() {
     const message = input.trim();
     if (message === "" || busy) return;
     setEntries((prev) => [...prev, { role: "user", content: message }]);
     setInput("");
+    setLastMessage(message);
     mutation.mutate(message);
+  }
+
+  function retry() {
+    if (!lastMessage || busy) return;
+    setError(null);
+    mutation.mutate(lastMessage);
   }
 
   return (
