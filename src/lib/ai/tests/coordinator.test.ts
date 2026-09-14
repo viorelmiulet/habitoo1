@@ -23,21 +23,23 @@ function tracer() {
   return new AiTracer("trace-x", { organizationId: actor.organizationId, userId: actor.userId });
 }
 
-function provider(steps: Parameters<AIProvider["generate"]> extends never ? never : unknown[]) {
+type FakeStep = {
+  text: string;
+  toolCalls: { name: string; arguments: Record<string, unknown> }[];
+};
+
+function provider(steps: FakeStep[]): AIProvider {
   let call = 0;
   return {
     id: "fake",
     model: "fake-1",
     supportsTools: true,
     generate: vi.fn(async () => {
-      const step = steps[call] as {
-        text: string;
-        toolCalls: { name: string; arguments: Record<string, unknown> }[];
-      };
+      const step = steps[Math.min(call, steps.length - 1)] as FakeStep;
       call += 1;
       return { ...step, inputTokens: 10, outputTokens: 5 };
     }),
-  } as AIProvider;
+  };
 }
 
 describe("habitooCoordinator", () => {
