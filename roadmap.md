@@ -183,7 +183,20 @@
 - [x] Interfață: Setări → AI (stare, furnizor, model, limite, consum) și `/app/ai` (conversație minimă, stări sigure).
 - [x] Documentație: `docs/ai/architecture.md`.
 - [x] Teste: 26 noi (total 524, 47 fișiere), typecheck curat, build de producție reușit.
-- [ ] Limitare deschisă: `GEMINI_API_KEY` nu este configurat, deci interfața afișează „AI nu este configurat.” până la adăugarea cheii.
+- [x] `GEMINI_API_KEY` configurat și verificat cu o cerere reală către provider.
+
+## Habitoo AI – etapa 11: agent, workflow, state, tracing
+- [x] Habitoo AI Coordinator (`agent/coordinator.server.ts`): buclă model → tool autorizat → model → răspuns structurat, independent de provider.
+- [x] Tool-uri READ extinse cu `get_acp_report` și `get_comparables` (org-scoped prin analiza-părinte).
+- [x] `habitooDiagnosticWorkflow`: authenticate → resolve_organization → build_context → agent → approval → read_tool → validate → respond.
+- [x] Aprobare umană: fluxul suspendă la propunerea agentului (doar citiri) și se reia după Aprob / Resping.
+- [x] State persistent în `ai_workflow_runs` — backendul este serverless, deci starea supraviețuiește repornirii.
+- [x] Retry doar pentru erori tranzitorii (`reliability/retry.ts`), fără reîncercarea operațiilor cu risc de duplicare.
+- [x] Memorie de conversație pe termen scurt, separată de starea workflow-ului; fără memorie permanentă.
+- [x] Tracing în `ai_trace_events`: agent, workflow, pas, tool, model, eroare, latență, fără secrete.
+- [x] Interfață `/app/ai`: retry, indicator de context, card de aprobare a fluxului.
+- [x] Arhitectură de scraping pregătită, fără provider activ (fără Bright Data).
+- [x] Migrare aditivă `0041_ai_workflow_state_and_tracing.sql` cu RLS strict pe agenție.
 
 ### Habitoo AI – neimplementat în 11A
 - [ ] Acțiuni (email, WhatsApp, publicare portal, ștergere, modificare preț, contracte).
