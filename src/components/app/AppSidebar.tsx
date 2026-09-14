@@ -68,6 +68,13 @@ export const agencyNav: NavGroup[] = [
     items: [{ label: "Oportunități", to: "/app/prospecting", icon: Radar }],
   },
   {
+    title: "Asistent AI",
+    items: [
+      { label: "AI CRM", to: "/app/ai-crm", icon: BrainCircuit },
+      { label: "Habitoo AI", to: "/app/ai", icon: Bot },
+    ],
+  },
+  {
     title: "ACP",
     items: [
       { label: "Analiză nouă", to: "/app/acp/new", icon: Sparkles },
