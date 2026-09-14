@@ -194,7 +194,7 @@ export function PropertyAcpCard({ propertyId }: { propertyId: string }) {
 
         <div className="mt-4 flex flex-wrap gap-2">
           {!analysis ? (
-            <Button disabled={busy} onClick={() => startMutation.mutate()}>
+            <Button disabled={busy} onClick={() => startMutation.mutate(undefined)}>
               {startMutation.isPending ? (
                 <Loader2 className="size-4 animate-spin" aria-hidden />
               ) : (
