@@ -32,6 +32,11 @@ export function parseGeminiResponse(payload: unknown): AiGenerateResult {
 
   const candidate = Array.isArray(data.candidates) ? data.candidates[0] : undefined;
   const parts = candidate?.content?.parts;
+  // Modelele cu raționament pot consuma tot bugetul de tokeni fără să emită
+  // conținut: mesaj explicit, nu „răspuns invalid”.
+  if (candidate?.finishReason === "MAX_TOKENS" && !Array.isArray(parts)) {
+    throw new AiProviderError("Răspunsul AI a depășit limita de lungime. Reformulează cererea mai scurt.");
+  }
   if (!candidate || !Array.isArray(parts)) {
     throw new AiProviderError("Răspuns AI invalid.");
   }
