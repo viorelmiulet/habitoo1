@@ -102,7 +102,7 @@ describe("Sincronizarea surselor de piață", () => {
     expect(result.updated).toBe(1);
     expect(store.listings.length).toBe(1);
     expect(store.listings[0]!.price).toBe(115000);
-    expect(store.snapshots.some((s) => s.reason === "price")).toBe(true);
+    expect(store.snapshots.some((s) => s.changeType === "price")).toBe(true);
   });
 
   it("D. respinge ofertele fără date minime, fără să inventeze valori", async () => {
