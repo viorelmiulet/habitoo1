@@ -201,7 +201,6 @@ function CrmAgentPage() {
             role: "assistant",
             content: `${prefix}: ${
               execution?.message ??
-              execution?.error ??
               (rejected ? "nicio dată nu a fost modificată." : "acțiunea a fost procesată.")
             }`,
           },
