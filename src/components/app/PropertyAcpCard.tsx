@@ -151,6 +151,7 @@ export function PropertyAcpCard({ propertyId }: { propertyId: string }) {
   const analysis = data.analysis;
   const status = data.status;
   const price = data.price;
+  const archived = data.property.archived;
   const deltaLabel = acpPriceDeltaLabel(price);
 
   return (
