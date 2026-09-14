@@ -183,15 +183,27 @@ function CrmAgentPage() {
       >,
     onSuccess: (result) => {
       if (result.ok) {
+        // Etichetăm explicit rezultatul: aprobată, respinsă, eșuată sau blocată.
+        const rejected = result.run.approved === false;
+        const execution = result.run.execution;
+        const prefix = rejected
+          ? "Acțiune respinsă"
+          : execution?.ok === true
+            ? "Acțiune aprobată"
+            : execution?.code === "denied" || execution?.code === "invalid_input"
+              ? "Acțiune blocată"
+              : execution
+                ? "Acțiune eșuată"
+                : "Acțiune procesată";
         setEntries((prev) => [
           ...prev,
           {
             role: "assistant",
-            content:
-              result.run.execution?.message ??
-              (result.run.approved === false
-                ? "Acțiunea a fost respinsă. Nicio dată nu a fost modificată."
-                : "Acțiunea a fost procesată."),
+            content: `${prefix}: ${
+              execution?.message ??
+              execution?.error ??
+              (rejected ? "nicio dată nu a fost modificată." : "acțiunea a fost procesată.")
+            }`,
           },
         ]);
         setPending(null);
