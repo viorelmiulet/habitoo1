@@ -74,6 +74,7 @@ export function initialCrmState(input: {
     approval: null,
     execution: null,
     notes: [],
+    failure: null,
   };
 }
 
@@ -99,7 +100,19 @@ export function finishWithoutAction(state: CrmWorkflowState): CrmWorkflowState {
   };
 }
 
+/** Cererea de modificare nu a putut fi propusă: fluxul eșuează explicit. */
+export function failCrmState(state: CrmWorkflowState, message: string): CrmWorkflowState {
+  return {
+    ...state,
+    proposal: null,
+    step: "validate",
+    failure: message,
+    notes: [...state.notes, message],
+  };
+}
+
 export function statusOfCrmState(state: CrmWorkflowState): CrmWorkflowStatus {
+  if (state.failure) return "failed";
   if (state.step === "complete" && state.completed.includes("complete")) return "completed";
   if (state.step === "approval" && state.proposal !== null && state.approval === null) {
     return "suspended";

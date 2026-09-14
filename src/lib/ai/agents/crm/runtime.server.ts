@@ -30,6 +30,7 @@ import {
   applyCrmApproval,
   completeCrmStep,
   finishWithoutAction,
+  failCrmState,
   HABITOO_CRM_WORKFLOW,
   initialCrmState,
   isCrmActionAllowed,
@@ -513,6 +514,36 @@ export async function runCrmTurn(
     } else {
       proposalMessage = proposalRequest.message;
     }
+  }
+
+  // Utilizatorul a cerut o modificare, dar nu s-a putut construi o propunere:
+  // fluxul eșuează explicit, ca să nu pară că acțiunea a fost tratată.
+  const actionRequestedButNotProposed = requestsCrmAction(input.question) && state.proposal === null;
+  if (actionRequestedButNotProposed) {
+    const message =
+      proposalMessage ??
+      "Nu am putut pregăti acțiunea cerută. Datele CRM nu au fost modificate.";
+    state = failCrmState(state, message);
+    await persist(admin, actor, created.id, state, message);
+    tracer.record("error", HABITOO_CRM_AGENT, { status: "failed", details: { step: "action_proposal" } });
+    await writeTraceEvents(tracer.list());
+    await logAiAudit({
+      organizationId: actor.organizationId,
+      actorId: actor.userId,
+      action: AI_AUDIT_ACTIONS.crmActionFailed,
+      details: { agent: HABITOO_CRM_AGENT, runId: created.id, traceId },
+    });
+    return {
+      ...base,
+      status: "failed",
+      answer: outcome.answer,
+      toolCalls: outcome.toolCalls,
+      sources: outcome.sources,
+      contextUsed: context.categories,
+      intent: filters.intent,
+      warnings: outcome.warnings,
+      message,
+    };
   }
 
   if (state.proposal === null) {
