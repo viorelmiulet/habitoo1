@@ -34,6 +34,7 @@ import {
 } from "@/lib/acp/analyses.functions";
 import { AcpAiInsight } from "@/components/app/AcpAiInsight";
 import { AcpVersionsCard } from "@/components/app/AcpVersionsCard";
+import { AcpReportCard } from "@/components/app/AcpReportCard";
 
 import { ACP_SCORE_LABELS, ACP_SCORE_WEIGHTS, ACP_THRESHOLDS, ACP_TIER_LABELS } from "@/lib/acp/config";
 
@@ -422,6 +423,8 @@ function AcpDetailPage() {
       <AcpAiInsight analysis={analysis} onGenerated={invalidate} />
 
       <AcpVersionsCard analysisId={analysis.id} />
+
+      <AcpReportCard analysisId={analysis.id} />
 
 
       <div className="grid gap-6 xl:grid-cols-3">

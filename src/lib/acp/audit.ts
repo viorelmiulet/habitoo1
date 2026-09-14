@@ -10,6 +10,7 @@ export const ACP_AUDIT_ACTIONS = {
   analysisRun: "acp.analysis.run",
   analysisUpdated: "acp.analysis.updated",
   reportGenerated: "acp.report.generated",
+  reportAccessed: "acp.report.accessed",
   aiGenerated: "acp.ai.generated",
   versionCreated: "acp.version.created",
   versionFailed: "acp.version.failed",

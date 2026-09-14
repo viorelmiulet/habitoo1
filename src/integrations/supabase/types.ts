@@ -331,32 +331,56 @@ export type Database = {
       acp_reports: {
         Row: {
           analysis_id: string
+          analysis_version: number | null
           created_at: string
+          error_message: string | null
+          file_size_bytes: number | null
           generated_at: string | null
           generated_by: string | null
           id: string
+          organization_id: string | null
           pdf_path: string | null
           report_data: Json
+          root_analysis_id: string | null
+          snapshot_at: string | null
+          status: string
+          title: string | null
           version: number
         }
         Insert: {
           analysis_id: string
+          analysis_version?: number | null
           created_at?: string
+          error_message?: string | null
+          file_size_bytes?: number | null
           generated_at?: string | null
           generated_by?: string | null
           id?: string
+          organization_id?: string | null
           pdf_path?: string | null
           report_data?: Json
+          root_analysis_id?: string | null
+          snapshot_at?: string | null
+          status?: string
+          title?: string | null
           version?: number
         }
         Update: {
           analysis_id?: string
+          analysis_version?: number | null
           created_at?: string
+          error_message?: string | null
+          file_size_bytes?: number | null
           generated_at?: string | null
           generated_by?: string | null
           id?: string
+          organization_id?: string | null
           pdf_path?: string | null
           report_data?: Json
+          root_analysis_id?: string | null
+          snapshot_at?: string | null
+          status?: string
+          title?: string | null
           version?: number
         }
         Relationships: [
@@ -365,6 +389,13 @@ export type Database = {
             columns: ["analysis_id"]
             isOneToOne: false
             referencedRelation: "acp_analyses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "acp_reports_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
         ]
