@@ -168,3 +168,24 @@
 - [ ] Măsurarea acurateței statistice.
 - [ ] Calibrare pe date reale de piață.
 - [ ] Calibrarea scorului de încredere.
+
+## Habitoo AI – etapa 11A: fundația AI (Mastra + Gemini)
+- [x] AI Gateway server-side (`src/lib/ai/gateway/`): singurul punct prin care aplicația cere AI; frontendul nu apelează niciodată providerul.
+- [x] Abstracție de provider (`AIProvider`) cu implementare Gemini; OpenAI și Anthropic se pot adăuga fără a atinge tool-urile sau interfața.
+- [x] Mastra (`@mastra/core`) ca runtime de tool-uri, rulat server-side, fără serviciu cloud plătit.
+- [x] Context builder pur, pe categorii (property, client, lead, acp, activity, document), cu listă albă de câmpuri.
+- [x] Registry de 8 tool-uri READ (proprietăți, clienți, leaduri, ACP + istoric ACP), fiecare org-scoped, validat cu Zod, autorizat și auditat.
+- [x] Strat de permisiuni: modelul cere tool-ul, Habitoo decide execuția (autentificare → agenție → rol → tool → validare → interogare filtrată).
+- [x] Protecție prompt injection: datele CRM sunt date, nu instrucțiuni; prompt separat SYSTEM / SECURITY RULES / TOOL DEFINITIONS / CRM CONTEXT / USER REQUEST.
+- [x] Control de cost: 6/min și 40/oră per utilizator, 200/oră per agenție, 4000 caractere, 4 pași și 6 tool-uri pe cerere, protecție dublu-click.
+- [x] Usage tracking (`ai_usage_events`) și audit (`ai.chat.request`, `ai.chat.failed`, `ai.tool.executed`, `ai.tool.denied`), fără chei sau secrete.
+- [x] Migrare aditivă `0040_ai_foundation.sql`: `ai_conversations`, `ai_messages`, `ai_usage_events` cu GRANT-uri și RLS.
+- [x] Interfață: Setări → AI (stare, furnizor, model, limite, consum) și `/app/ai` (conversație minimă, stări sigure).
+- [x] Documentație: `docs/ai/architecture.md`.
+- [x] Teste: 26 noi (total 524, 47 fișiere), typecheck curat, build de producție reușit.
+- [ ] Limitare deschisă: `GEMINI_API_KEY` nu este configurat, deci interfața afișează „AI nu este configurat.” până la adăugarea cheii.
+
+### Habitoo AI – neimplementat în 11A
+- [ ] Acțiuni (email, WhatsApp, publicare portal, ștergere, modificare preț, contracte).
+- [ ] Agent autonom, agent de fundal, multi-agent, memorie AI permanentă.
+- [ ] Streaming al răspunsului.

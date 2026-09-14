@@ -8,6 +8,8 @@ import { StatusBadge } from "@/components/app/StatusBadge";
 import { AgencyPortalCatalogCard } from "@/components/app/AgencyPortalCatalogCard";
 import { AgencyBrandingCard } from "@/components/app/AgencyBrandingCard";
 import { InventoryDefaultsCard } from "@/components/app/contracts/InventoryDefaultsCard";
+import { AiSettingsCard } from "@/components/app/ai/AiSettingsCard";
+
 
 import { SiteFeedCard } from "@/components/app/SiteFeedCard";
 import { Button } from "@/components/ui/button";
@@ -198,7 +200,13 @@ function SettingsPage() {
           {user?.isAdmin ? <TabsTrigger value="team">Echipă ({team.length})</TabsTrigger> : null}
           {user?.isAdmin ? <TabsTrigger value="integrations">Integrări</TabsTrigger> : null}
           {user?.isAdmin ? <TabsTrigger value="portals">Portaluri</TabsTrigger> : null}
+          <TabsTrigger value="ai">AI</TabsTrigger>
         </TabsList>
+
+        <TabsContent value="ai">
+          <AiSettingsCard />
+        </TabsContent>
+
 
         <TabsContent value="access">
           <AccountAccessCard highlightedRequestId={request} />
