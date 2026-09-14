@@ -14,7 +14,12 @@ import {
 } from "./types";
 import { parseGeminiResponse } from "./gemini.parse";
 
-export const GEMINI_DEFAULT_MODEL = "gemini-2.5-flash";
+/**
+ * Model implicit: `gemini-2.5-flash` a fost retras pentru cheile noi (404 cu
+ * recomandarea explicită de migrare), deci folosim modelul flash actual.
+ * Poate fi suprascris prin `GEMINI_MODEL`.
+ */
+export const GEMINI_DEFAULT_MODEL = "gemini-3.6-flash";
 /** Free tier: răspunsuri scurte, cost minim. */
 export const GEMINI_MAX_OUTPUT_TOKENS = 1024;
 export const GEMINI_TIMEOUT_MS = 60_000;

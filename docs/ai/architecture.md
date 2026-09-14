@@ -8,7 +8,7 @@ Nu descrie funcționalități planificate; ce nu apare aici nu există în cod.
 | Decizie | Stare |
 | --- | --- |
 | Runtime de agent / tool-uri | Mastra (`@mastra/core`), rulat server-side în procesul aplicației |
-| Provider AI inițial | Google Gemini (`GEMINI_API_KEY`, model implicit `gemini-2.5-flash`) |
+| Provider AI inițial | Google Gemini (`GEMINI_API_KEY`, model implicit `gemini-3.6-flash`) |
 | Providere viitoare | OpenAI, Anthropic — se adaugă implementând `AIProvider`, fără a atinge tool-urile sau UI-ul |
 | Lovable AI | NU este runtime pentru utilizatorii Habitoo; este doar mediul de dezvoltare |
 | Cost | fără serviciu cloud plătit suplimentar; Mastra rulează self-hosted, în workerul aplicației |
