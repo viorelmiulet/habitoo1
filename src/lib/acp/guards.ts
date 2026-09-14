@@ -69,7 +69,7 @@ export function canRecalculateInPlace(input: AcpInPlaceRecalcCheck): AcpInPlaceR
       allowed: false,
       reason: "locked",
       message:
-        "Această versiune are deja un livrabil (raport sau interpretare AI) și rămâne neschimbată. Folosește „Recalculează ACP cu date actuale" pentru o versiune nouă.",
+        "Această versiune are deja un livrabil (raport sau interpretare AI) și rămâne neschimbată. Folosește opțiunea de recalculare cu date actuale pentru o versiune nouă.",
     };
   }
   return { allowed: true };
