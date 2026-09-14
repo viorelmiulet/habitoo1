@@ -732,6 +732,24 @@ function readSubject(targetData: unknown): AcpSubject {
   return subject;
 }
 
+/**
+ * Stage 8: verifică dacă versiunea are deja livrabile (raport sau interpretare
+ * AI). Dacă are, rămâne imutabilă și recalcularea se face doar ca versiune nouă.
+ */
+async function versionDeliverables(
+  admin: Awaited<ReturnType<typeof loadAdmin>>,
+  analysisId: string,
+): Promise<{ hasReport: boolean; hasAiInsight: boolean }> {
+  const [reports, insights] = await Promise.all([
+    admin.from("acp_reports").select("id").eq("analysis_id", analysisId).limit(1),
+    admin.from("acp_ai_insights").select("id").eq("analysis_id", analysisId).limit(1),
+  ]);
+  return {
+    hasReport: (reports.data ?? []).length > 0,
+    hasAiInsight: (insights.data ?? []).length > 0,
+  };
+}
+
 async function recalculate(
   admin: Awaited<ReturnType<typeof loadAdmin>>,
   actor: Actor,
@@ -739,13 +757,33 @@ async function recalculate(
   overridesInput?: Record<string, AcpManualOverride>,
 ) {
   const analysis = await loadAnalysis(admin, actor, analysisId);
+  const deliverables = await versionDeliverables(admin, analysisId);
+  const verdict = canRecalculateInPlace({
+    status: analysis.status,
+    hasReport: deliverables.hasReport,
+    hasAiInsight: deliverables.hasAiInsight,
+  });
+  if (!verdict.allowed) throw acpError(verdict.message);
+
+  const previousStatus = analysis.status;
   const subject = readSubject(analysis.target_data);
   const sources = (analysis.sources as Record<string, boolean> | null) ?? {
     own_properties: true,
   };
   const overrides = overridesInput ?? readOverrides(analysis.analysis_data);
 
-  await admin.from("acp_analyses").update({ status: "running" }).eq("id", analysisId);
+  // Blocare optimistă: doar un singur request poate marca analiza „running".
+  const { data: claimed, error: claimError } = await admin
+    .from("acp_analyses")
+    .update({ status: "running" })
+    .eq("id", analysisId)
+    .eq("organization_id", actor.organizationId)
+    .neq("status", "running")
+    .select("id");
+  if (claimError) throw acpDbError("claim analysis run", claimError);
+  if ((claimed ?? []).length === 0) {
+    throw acpError("Analiza rulează deja. Așteaptă finalizarea ei.");
+  }
 
   try {
     const { candidates, stats } = await collectCandidates({
@@ -782,11 +820,12 @@ async function recalculate(
       calibration,
     });
   } catch (error) {
+    // Revenim exact la starea anterioară, cu un mesaj sigur pentru utilizator.
     await admin
       .from("acp_analyses")
       .update({
-        status: "completed",
-        error_message: error instanceof Error ? error.message : "Eroare necunoscută",
+        status: previousStatus === "running" ? "draft" : previousStatus,
+        error_message: acpSafeMessage(error, "Recalcularea nu a putut fi finalizată."),
       })
       .eq("id", analysisId);
     throw error;
