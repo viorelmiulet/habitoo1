@@ -66,7 +66,7 @@ async function seedSuspendedRun(leadId: string, title: string, dueAt: string): P
       current_step: "approval",
       state: state as never,
       pending_approval: proposal as never,
-      trace_id: `e2e-${Date.now()}`,
+      trace_id: crypto.randomUUID(),
     })
     .select("id")
     .single();
