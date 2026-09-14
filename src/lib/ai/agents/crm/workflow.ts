@@ -48,7 +48,10 @@ export type CrmWorkflowState = {
   approval: { approved: boolean; decidedAt: string } | null;
   execution: { ok: boolean; message: string; entityId: string | null; duplicate: boolean } | null;
   notes: string[];
+  /** Eșec explicit: cererea de modificare nu a putut fi transformată în propunere. */
+  failure: string | null;
 };
+
 
 export function initialCrmState(input: {
   question: string;
