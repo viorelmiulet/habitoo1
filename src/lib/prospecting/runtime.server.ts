@@ -79,7 +79,7 @@ function view(
     searchId: state.searchId ?? "",
     searchName,
     status: row.status as ProspectingWorkflowStatus,
-    currentStep: row.current_step,
+    currentStep: state.step ?? row.current_step,
     counters: state.counters ?? {
       itemsFound: 0,
       itemsNormalized: 0,
@@ -544,14 +544,38 @@ export async function startProspectingWorkflow(
     },
   };
   state = completeProspectingStep(state, "persist_candidates");
-  tracer.record("workflow", `${HABITOO_PROSPECTING_WORKFLOW}.suspended`, {
-    details: { step: "human_approval", candidates: candidateIds.length },
-  });
+
+  // Fără candidați noi nu are ce să aprobe nimeni: fluxul se încheie singur,
+  // ca rularea să nu rămână blocată în „așteaptă aprobare".
+  const needsApproval = candidateIds.length > 0;
+  if (!needsApproval) {
+    state = {
+      ...state,
+      notes: [
+        ...state.notes,
+        candidateIds.length === 0 && state.counters.duplicatesFound > 0
+          ? "Toate anunțurile găsite existau deja în agenție, deci nu a mai rămas nimic de aprobat."
+          : "Nu au fost găsite oportunități noi pentru aceste criterii.",
+      ],
+    };
+    state = completeProspectingStep(state, "human_approval");
+    state = completeProspectingStep(state, "crm_import");
+    state = completeProspectingStep(state, "audit");
+    state = completeProspectingStep(state, "complete");
+    tracer.record("workflow", `${HABITOO_PROSPECTING_WORKFLOW}.completed`, {
+      details: { candidates: 0 },
+    });
+  } else {
+    tracer.record("workflow", `${HABITOO_PROSPECTING_WORKFLOW}.suspended`, {
+      details: { step: "human_approval", candidates: candidateIds.length },
+    });
+  }
 
   await admin
     .from("prospecting_runs")
     .update({
-      status: "suspended",
+      status: needsApproval ? "suspended" : "completed",
+      completed_at: needsApproval ? null : new Date().toISOString(),
       items_found: state.counters.itemsFound,
       items_normalized: state.counters.itemsNormalized,
       duplicates_found: state.counters.duplicatesFound,
@@ -561,6 +585,14 @@ export async function startProspectingWorkflow(
     })
     .eq("id", runRow.id)
     .eq("organization_id", actor.organizationId);
+
+  if (!needsApproval) {
+    await admin
+      .from("prospecting_searches")
+      .update({ status: "completed" })
+      .eq("id", searchId)
+      .eq("organization_id", actor.organizationId);
+  }
 
   await persist(admin, actor, workflowRun.id, state);
   await writeTraceEvents(tracer.list());
