@@ -8,6 +8,8 @@ import { AiProviderError, type AiGenerateResult } from "./types";
 type GeminiPart = {
   text?: unknown;
   functionCall?: { name?: unknown; args?: unknown };
+  /** Semnătura de raționament: trebuie retrimisă la turul următor. */
+  thoughtSignature?: unknown;
 };
 
 type GeminiPayload = {
@@ -51,7 +53,11 @@ export function parseGeminiResponse(payload: unknown): AiGenerateResult {
         call.args !== null && typeof call.args === "object" && !Array.isArray(call.args)
           ? (call.args as Record<string, unknown>)
           : {};
-      toolCalls.push({ name: call.name, arguments: args });
+      toolCalls.push({
+        name: call.name,
+        arguments: args,
+        signature: typeof part.thoughtSignature === "string" ? part.thoughtSignature : null,
+      });
     }
   }
 

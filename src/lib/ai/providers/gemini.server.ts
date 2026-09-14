@@ -42,10 +42,12 @@ export function toGeminiContents(messages: AiProviderMessage[]): GeminiContent[]
     } else if (message.role === "assistant") {
       contents.push({ role: "model", parts: [{ text: message.content }] });
     } else if (message.role === "assistant_tool_call") {
-      contents.push({
-        role: "model",
-        parts: [{ functionCall: { name: message.toolName, args: message.arguments } }],
-      });
+      const part: Record<string, unknown> = {
+        functionCall: { name: message.toolName, args: message.arguments },
+      };
+      // Gemini 3 refuză turul următor dacă semnătura nu este retrimisă.
+      if (message.signature) part["thoughtSignature"] = message.signature;
+      contents.push({ role: "model", parts: [part] });
     } else {
       contents.push({
         role: "user",

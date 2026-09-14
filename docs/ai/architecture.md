@@ -126,6 +126,11 @@ memorie permanentă și conversațiile nu devin automat memorie.
 reconstituibil. `scrubTraceDetails` elimină orice câmp care ar putea conține un
 secret.
 
+**Semnătura de raționament**: Gemini 3 cere ca `thoughtSignature` primită într-un
+apel de tool să fie retrimisă la turul următor; `gemini.parse.ts` o păstrează,
+`gemini.server.ts` o retrimite, iar coordinatorul o transportă. Fără ea
+providerul refuză cererea cu 400.
+
 **Scraping**: `scraping/types.ts` definește doar interfața viitoare. Nu există
 provider (nici Bright Data); orice cerere întoarce `SCRAPING_NOT_CONFIGURED`.
 

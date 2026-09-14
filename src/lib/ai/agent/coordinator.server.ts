@@ -125,6 +125,7 @@ export async function runCoordinator(run: CoordinatorRun): Promise<CoordinatorRe
             role: "assistant_tool_call",
             toolName: call.name,
             arguments: call.arguments,
+            signature: call.signature ?? null,
           });
           messages.push({
             role: "tool_result",
@@ -166,6 +167,7 @@ export async function runCoordinator(run: CoordinatorRun): Promise<CoordinatorRe
           role: "assistant_tool_call",
           toolName: call.name,
           arguments: call.arguments,
+          signature: call.signature ?? null,
         });
         messages.push({
           role: "tool_result",
