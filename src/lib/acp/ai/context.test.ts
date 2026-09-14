@@ -22,6 +22,8 @@ function comparable(overrides: Partial<AcpAiContextInput["comparables"][number]>
 }
 
 const base: AcpAiContextInput = {
+  acpVersion: 1,
+  snapshotAt: "2026-02-01T10:00:00.000Z",
   target: {
     title: "Apartament 3 camere",
     locationLabel: "Centru, Cluj-Napoca",
@@ -72,7 +74,13 @@ describe("buildAcpAiContext", () => {
     const ctx = buildAcpAiContext(base);
     expect(ctx.estimate).toEqual(base.estimate);
     expect(ctx.statistics).toEqual(base.statistics);
-    expect(ctx.confidence).toEqual({ score: 72, level: "medium" });
+    expect(ctx.confidence).toEqual({
+      score: 72,
+      level: "medium",
+      quantity: null,
+      quality: null,
+      dispersion: null,
+    });
     expect(ctx.currency).toBe("EUR");
     expect(ctx.comparablesUsed).toBe(2);
   });
@@ -125,6 +133,7 @@ describe("buildAcpAiContext", () => {
 
   it("acceptă date lipsă fără să inventeze valori", () => {
     const ctx = buildAcpAiContext({
+      acpVersion: 1,
       target: { subject: {} },
       statistics: null,
       estimate: null,

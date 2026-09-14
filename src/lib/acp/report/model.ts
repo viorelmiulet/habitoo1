@@ -6,6 +6,7 @@
  * acelei versiuni). Nu se citește niciodată `market_listings` curent, deci un
  * raport istoric rămâne identic chiar dacă piața se schimbă ulterior.
  */
+import type { AcpAiInsight } from "../ai/schema";
 
 export type AcpReportSubject = {
   rooms?: number | null;
@@ -98,7 +99,13 @@ export type AcpReportVersionInput = {
   explanation: string[];
   comparables: AcpReportComparableInput[];
   sources: AcpReportSourceInput[];
-  ai: { summary: string | null; model: string | null; generatedAt: string | null } | null;
+  ai: {
+    summary: string | null;
+    model: string | null;
+    generatedAt: string | null;
+    /** Secțiunile structurate (Stage 5), dacă există o interpretare validă. */
+    sections?: AcpAiInsight | null;
+  } | null;
   /**
    * Snapshot Market Intelligence (Stage 4) salvat la rularea versiunii.
    * Raportul folosește aceste cifre, nu piața live de la momentul generării.
@@ -192,7 +199,13 @@ export type AcpReportModel = {
   statistics: { label: string; value: string }[];
   sources: { name: string; type: string; found: number; used: number; excluded: number }[];
   warnings: string[];
-  ai: { summary: string; model: string | null; generatedAt: string | null } | null;
+  ai: {
+    summary: string;
+    model: string | null;
+    generatedAt: string | null;
+    sections: { title: string; body: string }[];
+    bullets: { title: string; items: string[] }[];
+  } | null;
   /** Piața la momentul analizei — din snapshot-ul versiunii, nu din date live. */
   market: {
     capturedAt: string | null;
@@ -483,16 +496,37 @@ export function buildAcpReportModel(params: {
       excluded: finite(src.itemsExcluded) ?? 0,
     })),
     warnings,
-    ai:
-      version.ai && version.ai.summary && version.ai.summary.trim().length > 0
-        ? {
-            summary: version.ai.summary.trim(),
-            model: version.ai.model,
-            generatedAt: version.ai.generatedAt,
-          }
-        : null,
+    ai: buildAiSection(version.ai ?? null),
     market: buildMarketSection(version.market ?? null, currency),
   };
+}
+
+/**
+ * Secțiunea „Interpretare AI”: opțională, exclusiv text generat, fără nicio
+ * cifră proprie. Lipsa ei nu afectează restul raportului.
+ */
+function buildAiSection(ai: AcpReportVersionInput["ai"]): AcpReportModel["ai"] {
+  if (!ai) return null;
+  const insight = ai.sections ?? null;
+  const summary = (insight?.executive_summary ?? ai.summary ?? "").trim();
+  if (summary === "") return null;
+  const sections = insight
+    ? [
+        { title: "Explicația evaluării", body: insight.valuation_explanation },
+        { title: "Contextul pieței", body: insight.market_context },
+        { title: "Analiza comparabilelor", body: insight.comparable_analysis },
+        { title: "Poziționare recomandată", body: insight.recommended_positioning },
+        { title: "Explicația scorului de încredere", body: insight.confidence_explanation },
+        { title: "Pe scurt, pentru client", body: insight.client_friendly_summary },
+      ].filter((section) => section.body.trim().length > 0)
+    : [];
+  const bullets = insight
+    ? [
+        { title: "Factori determinanți", items: insight.key_drivers },
+        { title: "Riscuri și limitări", items: insight.risks_and_limitations },
+      ].filter((group) => group.items.length > 0)
+    : [];
+  return { summary, model: ai.model, generatedAt: ai.generatedAt, sections, bullets };
 }
 
 const MARKET_FRESHNESS_LABELS: Record<string, string> = {

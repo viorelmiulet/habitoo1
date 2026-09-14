@@ -317,6 +317,14 @@ export async function buildAcpReportPdf(model: AcpReportModel): Promise<Uint8Arr
       { size: 8, color: MUTED, gap: 4 },
     );
     text(model.ai.summary, { size: 9 });
+    for (const section of model.ai.sections) {
+      text(section.title, { size: 8.5, font: bold, gap: 2 });
+      text(section.body, { size: 9 });
+    }
+    for (const group of model.ai.bullets) {
+      text(group.title, { size: 8.5, font: bold, gap: 2 });
+      for (const item of group.items) text(`• ${item}`, { size: 8.5 });
+    }
   }
 
   /* ---------------- Disclaimer ---------------- */

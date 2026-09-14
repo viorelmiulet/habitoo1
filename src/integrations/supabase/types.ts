@@ -14,6 +14,78 @@ export type Database = {
   }
   public: {
     Tables: {
+      acp_ai_insights: {
+        Row: {
+          analysis_id: string
+          analysis_version: number
+          created_at: string
+          created_by: string | null
+          error_reason: string | null
+          id: string
+          input_summary: Json
+          insight: Json | null
+          model: string | null
+          organization_id: string
+          prompt_version: string
+          provider: string | null
+          root_analysis_id: string | null
+          schema_version: string
+          snapshot_at: string | null
+          status: string
+        }
+        Insert: {
+          analysis_id: string
+          analysis_version?: number
+          created_at?: string
+          created_by?: string | null
+          error_reason?: string | null
+          id?: string
+          input_summary?: Json
+          insight?: Json | null
+          model?: string | null
+          organization_id: string
+          prompt_version?: string
+          provider?: string | null
+          root_analysis_id?: string | null
+          schema_version?: string
+          snapshot_at?: string | null
+          status?: string
+        }
+        Update: {
+          analysis_id?: string
+          analysis_version?: number
+          created_at?: string
+          created_by?: string | null
+          error_reason?: string | null
+          id?: string
+          input_summary?: Json
+          insight?: Json | null
+          model?: string | null
+          organization_id?: string
+          prompt_version?: string
+          provider?: string | null
+          root_analysis_id?: string | null
+          schema_version?: string
+          snapshot_at?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "acp_ai_insights_analysis_id_fkey"
+            columns: ["analysis_id"]
+            isOneToOne: false
+            referencedRelation: "acp_analyses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "acp_ai_insights_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       acp_analyses: {
         Row: {
           ai_generated_at: string | null
