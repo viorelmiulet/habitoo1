@@ -197,6 +197,8 @@
 - [x] Interfață `/app/ai`: retry, indicator de context, card de aprobare a fluxului.
 - [x] Arhitectură de scraping pregătită, fără provider activ (fără Bright Data).
 - [x] Migrare aditivă `0041_ai_workflow_state_and_tracing.sql` cu RLS strict pe agenție.
+- [x] Defect reparat în E2E: semnătura de raționament a providerului nu era retrimisă, deci al doilea tur cu tool eșua; acum răspunsurile cu date reale funcționează.
+- [x] Validare: 555 teste, typecheck curat, build de producție reușit, verificare E2E reală în `/app/ai`.
 
 ### Habitoo AI – neimplementat în 11A
 - [ ] Acțiuni (email, WhatsApp, publicare portal, ștergere, modificare preț, contracte).
