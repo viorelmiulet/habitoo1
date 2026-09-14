@@ -107,3 +107,37 @@ describe("regresie: model și buget de tokeni (Gemini 3)", () => {
     expect(message).not.toMatch(/invalid/i);
   });
 });
+
+describe("semnătura de raționament (Gemini 3)", () => {
+  it("păstrează thoughtSignature din apelul de tool", () => {
+    const parsed = parseGeminiResponse({
+      candidates: [
+        {
+          content: {
+            parts: [
+              {
+                functionCall: { name: "search_properties", args: { query: "Cluj" } },
+                thoughtSignature: "sig-abc",
+              },
+            ],
+          },
+        },
+      ],
+    });
+    expect(parsed.toolCalls[0]?.signature).toBe("sig-abc");
+  });
+
+  it("retrimite semnătura în conținutul următorului tur", () => {
+    const contents = toGeminiContents([
+      { role: "user", content: "ce am în Cluj?" },
+      {
+        role: "assistant_tool_call",
+        toolName: "search_properties",
+        arguments: { query: "Cluj" },
+        signature: "sig-abc",
+      },
+      { role: "tool_result", toolName: "search_properties", content: "{}" },
+    ]);
+    expect(contents[1]?.parts[0]).toMatchObject({ thoughtSignature: "sig-abc" });
+  });
+});
