@@ -246,6 +246,13 @@
       "when": 1789326836291,
       "tag": "0034_acp_phase3_versioning_and_market_sync",
       "breakpoints": true
+    },
+    {
+      "idx": 35,
+      "version": "7",
+      "when": 1789389996959,
+      "tag": "0035_acp_version_lineage",
+      "breakpoints": true
     }
   ]
 }
