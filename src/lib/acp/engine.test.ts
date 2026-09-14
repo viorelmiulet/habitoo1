@@ -149,3 +149,81 @@ describe("runAcpAnalysis", () => {
     expect(row.adjustedPrice).toBe(140_000);
   });
 });
+
+/**
+ * Stage 7: indicatorii de precizie și calibrarea. Datele sunt sintetice.
+ */
+describe("runAcpAnalysis – precizie și calibrare (Stage 7)", () => {
+  it("calculează calitatea datelor, prospețimea și relevanța fiecărui comparabil", () => {
+    const result = runAcpAnalysis(target, similarSet, {}, { now: "2026-03-01T00:00:00Z" });
+    for (const row of result.comparables) {
+      expect(row.dataQuality.score).toBeGreaterThan(0);
+      expect(row.relevanceScore).toBeGreaterThan(0);
+      expect(row.freshness.level).toBeDefined();
+    }
+    expect(result.quality.level).toBeDefined();
+    expect(result.quality.factors.length).toBeGreaterThan(0);
+  });
+
+  it("ordonează comparabilele selectate după relevanță", () => {
+    const now = "2026-03-01T00:00:00Z";
+    const fresh: AcpCandidate = {
+      ...candidate("fresh", { price: 140_000 }),
+      meta: {
+        firstSeenAt: "2026-02-20T00:00:00Z",
+        lastSeenAt: "2026-02-28T00:00:00Z",
+        initialPrice: 140_000,
+        currentPrice: 140_000,
+        priceChanges: 0,
+        status: "active",
+        duplicateCount: 1,
+      },
+    };
+    const stale: AcpCandidate = {
+      ...candidate("stale", { price: 140_000 }),
+      meta: {
+        firstSeenAt: "2025-01-01T00:00:00Z",
+        lastSeenAt: "2025-04-01T00:00:00Z",
+        initialPrice: 140_000,
+        currentPrice: 140_000,
+        priceChanges: 0,
+        status: "inactive",
+        duplicateCount: 1,
+      },
+    };
+    const result = runAcpAnalysis(target, [stale, fresh], {}, { now });
+    const used = result.comparables.filter((c) => c.isSelected);
+    expect(used[0]!.freshness.score).toBeGreaterThanOrEqual(used[used.length - 1]!.freshness.score);
+  });
+
+  it("păstrează baseline-ul neschimbat când nu există calibrare", () => {
+    const result = runAcpAnalysis(target, similarSet);
+    expect(result.advanced.applied).toBe(false);
+    expect(result.advanced.calibratedValue).toBe(result.estimate.estimatedValue);
+    expect(result.advanced.baselineValue).toBe(result.estimate.estimatedValue);
+  });
+
+  it("aplică calibrarea fără a modifica estimarea deterministă", () => {
+    const model = {
+      version: 1,
+      status: "ok" as const,
+      factor: 1.05,
+      applied: true,
+      medianRatio: 1.05,
+      medianAbsoluteDeviation: 0.02,
+      sampleSize: 20,
+      confidence: 80,
+      segments: [],
+      algorithmVersion: "acp-calibration-1",
+      createdAt: "2026-03-01T00:00:00Z",
+    };
+    const baseline = runAcpAnalysis(target, similarSet);
+    const calibrated = runAcpAnalysis(target, similarSet, {}, { calibration: model });
+    expect(calibrated.estimate.estimatedValue).toBe(baseline.estimate.estimatedValue);
+    expect(calibrated.advanced.applied).toBe(true);
+    expect(calibrated.advanced.calibratedValue).toBeGreaterThan(
+      calibrated.advanced.baselineValue!,
+    );
+    expect(calibrated.advanced.deltaPercent).toBeCloseTo(5, 1);
+  });
+});

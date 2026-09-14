@@ -111,6 +111,34 @@ export type AcpReportVersionInput = {
    * Raportul folosește aceste cifre, nu piața live de la momentul generării.
    */
   market?: AcpReportMarketInput | null;
+  /**
+   * Calitatea datelor și calibrarea (Stage 7), din snapshot-ul versiunii.
+   * Absent pentru versiunile calculate înainte de introducerea lor.
+   */
+  precision?: AcpReportPrecisionInput | null;
+};
+
+export type AcpReportPrecisionInput = {
+  quality: {
+    score: number;
+    level: string;
+    factors: { label: string; score: number; note: string }[];
+    reasons: string[];
+  } | null;
+  calibration: {
+    applied: boolean;
+    status: string;
+    factor: number;
+    source: string;
+    segmentKey: string | null;
+    sampleSize: number;
+    version: number | null;
+    calibratedAt: string | null;
+    baselineValue: number | null;
+    calibratedValue: number | null;
+    deltaPercent: number | null;
+    reason: string;
+  } | null;
 };
 
 export type AcpReportMarketInput = {
@@ -211,6 +239,11 @@ export type AcpReportModel = {
     capturedAt: string | null;
     rows: { label: string; value: string }[];
     note: string | null;
+  } | null;
+  /** Calibrare și calitatea datelor (Stage 7); null pentru versiunile fără aceste date. */
+  precision: {
+    rows: { label: string; value: string }[];
+    notes: string[];
   } | null;
 };
 
@@ -498,7 +531,78 @@ export function buildAcpReportModel(params: {
     warnings,
     ai: buildAiSection(version.ai ?? null),
     market: buildMarketSection(version.market ?? null, currency),
+    precision: buildPrecisionSection(version.precision ?? null, currency),
   };
+}
+
+const QUALITY_LEVEL_LABELS: Record<string, string> = {
+  high: "Calitate ridicată a datelor",
+  medium: "Calitate medie a datelor",
+  low: "Calitate scăzută a datelor",
+};
+
+const CALIBRATION_STATUS_LABELS: Record<string, string> = {
+  ok: "Calibrare validă",
+  insufficient_data: "Date insuficiente pentru calibrare",
+  unreliable: "Calibrare nefiabilă — nu se aplică",
+  not_configured: "Fără calibrare activă",
+};
+
+/**
+ * Secțiunea „Calibrare și calitatea datelor”: apare doar dacă versiunea are
+ * aceste informații în snapshot. Valoarea deterministă rămâne mereu afișată
+ * separat de cea calibrată.
+ */
+function buildPrecisionSection(
+  precision: AcpReportPrecisionInput | null,
+  currency: string,
+): AcpReportModel["precision"] {
+  if (!precision || (!precision.quality && !precision.calibration)) return null;
+  const rows: { label: string; value: string }[] = [];
+  const notes: string[] = [];
+
+  if (precision.quality) {
+    rows.push({
+      label: "Calitatea datelor",
+      value: `${Math.round(precision.quality.score)}/100 — ${
+        QUALITY_LEVEL_LABELS[precision.quality.level] ?? precision.quality.level
+      }`,
+    });
+    for (const factor of precision.quality.factors) {
+      rows.push({ label: factor.label, value: `${Math.round(factor.score)}/100` });
+    }
+    notes.push(...precision.quality.reasons);
+  }
+
+  const c = precision.calibration;
+  if (c) {
+    rows.push({
+      label: "Stare calibrare",
+      value: CALIBRATION_STATUS_LABELS[c.status] ?? c.status,
+    });
+    rows.push({
+      label: "Valoare estimată deterministă",
+      value: reportMoney(c.baselineValue, currency),
+    });
+    rows.push({
+      label: "Valoare după calibrare",
+      value: c.applied ? reportMoney(c.calibratedValue, currency) : "identică cu cea deterministă",
+    });
+    if (c.applied) {
+      rows.push({ label: "Factor de calibrare", value: `× ${c.factor}` });
+      rows.push({
+        label: "Observații reale folosite",
+        value: `${c.sampleSize}${c.version !== null ? ` (calibrare v${c.version})` : ""}`,
+      });
+      notes.push(c.reason);
+    } else {
+      notes.push(
+        "Calibrarea nu s-a aplicat: estimarea din acest raport este strict cea deterministă.",
+      );
+    }
+  }
+
+  return { rows, notes };
 }
 
 /**

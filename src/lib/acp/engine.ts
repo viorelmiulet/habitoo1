@@ -26,6 +26,23 @@ import {
   type MarketStatistics,
 } from "./statistics";
 import { calculateConfidence, type ConfidenceResult } from "./confidence";
+import {
+  assessAcpDataQuality,
+  calculateDataQuality,
+  calculateFreshness,
+  calculatePriceHistory,
+  comparableRelevance,
+  type AcpDataQuality,
+  type AcpFreshness,
+  type AcpListingMeta,
+  type AcpPriceHistory,
+  type AcpQualityAssessment,
+} from "./precision";
+import {
+  applyCalibration,
+  type AcpAdvancedEstimate,
+  type AcpCalibrationModel,
+} from "./calibration";
 
 /** Marja aplicată valorii estimate pentru prețul recomandat de listare. */
 export const ACP_LISTING_PREMIUM_PERCENT = 3;
@@ -45,6 +62,15 @@ export type AcpCandidate = {
   imagePath?: string | null;
   url?: string | null;
   subject: AcpSubject;
+  /** Metadate reale de piață (prospețime, istoric preț), când există. */
+  meta?: AcpListingMeta | null;
+};
+
+/** Opțiuni Stage 7: calibrare activă și momentul de referință pentru prospețime. */
+export type AcpRunOptions = {
+  calibration?: AcpCalibrationModel | null;
+  /** Momentul de referință (ISO). Implicit „acum”; fixat în teste și snapshot-uri. */
+  now?: string;
 };
 
 /** Decizie manuală a utilizatorului pentru un comparabil. */
@@ -75,6 +101,14 @@ export type AcpComparableResult = {
   isSelected: boolean;
   selectionReason: string;
   manualOverride: AcpManualOverride | null;
+  /** Stage 7: completitudinea datelor comparabilului. */
+  dataQuality: AcpDataQuality;
+  /** Stage 7: prospețimea ofertei, din ultima confirmare reală. */
+  freshness: AcpFreshness;
+  /** Stage 7: istoricul prețului, dedus din snapshot-urile reale. */
+  priceHistory: AcpPriceHistory;
+  /** Stage 7: scor compus folosit pentru ordonarea comparabilelor. */
+  relevanceScore: number;
 };
 
 export type AcpEstimate = {
@@ -97,6 +131,10 @@ export type AcpAnalysisResult = {
   comparablesUsed: number;
   /** Explicația pas cu pas, afișată în secțiunea „Cum s-a calculat”. */
   explanation: string[];
+  /** Stage 7: calitatea datelor, distinctă de încredere. */
+  quality: AcpQualityAssessment;
+  /** Stage 7: baseline vs estimare calibrată. */
+  advanced: AcpAdvancedEstimate;
 };
 
 function round2(value: number): number {
@@ -122,8 +160,10 @@ export function runAcpAnalysis(
   target: AcpSubject,
   candidates: readonly AcpCandidate[],
   overrides: Readonly<Record<string, AcpManualOverride>> = {},
+  options: AcpRunOptions = {},
 ): AcpAnalysisResult {
   const explanation: string[] = [];
+  const now = options.now ?? new Date().toISOString();
 
   // 1. Scoring determinist pentru fiecare candidat.
   const scored = candidates.map((candidate) => {
@@ -189,6 +229,15 @@ export function runAcpAnalysis(
     const outlier = outlierByKey.get(row.candidate.key) ?? { isOutlier: false, reason: null };
     const isSelected = row.eligible && !outlier.isOutlier;
     const reason = outlier.isOutlier ? `${row.reason} ${outlier.reason ?? ""}`.trim() : row.reason;
+    // Stage 7: calitatea datelor, prospețimea și istoricul prețului. Aceste
+    // scoruri sunt descriptive: nu modifică prețul sau ajustările.
+    const meta = row.candidate.meta ?? null;
+    const dataQuality = calculateDataQuality(row.candidate.subject);
+    const freshness = calculateFreshness(meta, now);
+    const priceHistory = calculatePriceHistory(
+      { ...(meta ?? {}), currentPrice: meta?.currentPrice ?? row.candidate.subject.price ?? null },
+      now,
+    );
     return {
       key: row.candidate.key,
       sourceType: row.candidate.sourceType,
@@ -214,7 +263,23 @@ export function runAcpAnalysis(
       isSelected,
       selectionReason: reason,
       manualOverride: row.override,
+      dataQuality,
+      freshness,
+      priceHistory,
+      relevanceScore: comparableRelevance({
+        similarityScore: row.similarity.similarityScore,
+        dataQualityScore: dataQuality.score,
+        freshnessScore: freshness.score,
+      }),
     };
+  });
+
+  // Ordonare Stage 7: comparabilele folosite primele, apoi după relevanță
+  // (similaritate + completitudine + prospețime), nu doar după similaritate.
+  comparables.sort((a, b) => {
+    if (a.isSelected !== b.isSelected) return a.isSelected ? -1 : 1;
+    if (b.relevanceScore !== a.relevanceScore) return b.relevanceScore - a.relevanceScore;
+    return b.similarityScore - a.similarityScore;
   });
 
   // 4. Statistici pe comparabilele efectiv folosite.
@@ -317,6 +382,45 @@ export function runAcpAnalysis(
     `Încredere ${confidence.score}/100: cantitate ${confidence.quantity}, calitate ${confidence.quality}, dispersie ${confidence.dispersion}.`,
   );
 
+  // 7. Stage 7: estimarea calibrată (avansată). Baseline-ul rămâne intact;
+  //    calibrarea se aplică numai dacă modelul activ are date suficiente.
+  const advanced = applyCalibration({
+    baselineValue: estimate.estimatedValue,
+    baselineMin: estimate.estimatedMin,
+    baselineMax: estimate.estimatedMax,
+    baselineRecommended: estimate.recommendedListingPrice,
+    model: options.calibration ?? null,
+    subject: target,
+  });
+  if (advanced.applied) {
+    explanation.push(
+      `Estimare calibrată: baseline × ${advanced.factor} (${advanced.reason}). Baseline-ul determinist rămâne raportat separat.`,
+    );
+  } else {
+    explanation.push(`Fără calibrare aplicată: ${advanced.reason}`);
+  }
+
+  // 8. Stage 7: calitatea datelor, separată de scorul de încredere.
+  const quality = assessAcpDataQuality({
+    usedCount: used.length,
+    similarityScores: used.map((c) => c.similarityScore),
+    dispersionRatio: confidence.dispersionRatio,
+    freshnessScores: used
+      .map((c) => c.freshness.score)
+      .filter((v): v is number => typeof v === "number"),
+    dataQualityScores: used.map((c) => c.dataQuality.score),
+    distinctSources: new Set(used.map((c) => c.sourceName || c.sourceType)).size,
+    outlierCount: outliers.outlierCount,
+    totalEligible: eligible.length,
+    calibrationReliability:
+      options.calibration && options.calibration.status === "ok"
+        ? options.calibration.confidence
+        : null,
+  });
+  explanation.push(
+    `Calitatea datelor ${quality.score}/100 (${quality.level}); indicator distinct de scorul de încredere.`,
+  );
+
   return {
     comparables,
     statistics,
@@ -325,6 +429,8 @@ export function runAcpAnalysis(
     candidatesFound: candidates.length,
     comparablesUsed: used.length,
     explanation,
+    quality,
+    advanced,
   };
 }
 

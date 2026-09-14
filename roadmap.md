@@ -120,3 +120,14 @@
 - [x] „Preț proprietate” vs. „Preț recomandat ACP” cu diferență valorică/procentuală, copiere și aplicare manuală confirmată; fără suprascriere automată.
 - [x] Reutilizare integrală a versionării, raportului PDF, Market Intelligence și interpretării AI existente (AI doar strat explicativ).
 - [x] Teste: 21 noi (total 451), typecheck și build curate; nicio migrare nouă necesară.
+
+## ACP – etapa 7: calibrare, precizie și matching avansat
+- [x] Migrația aditivă 0039: tabelul `acp_calibrations` (versiuni de calibrare, factor, mediană/MAD, bias, eșantion, segmente, metrici, model activ) cu RLS pe organizație și indexuri unice; `organizations.acp_calibration_enabled` + `acp_calibration_min_sample_size`.
+- [x] `calibration.ts`: calibrare versionată pe date reale (raport observat/estimat, mediană + MAD, clamping ±15%, praguri minime 12 global / 8 per segment, segmentare doar cu volum și stabilitate suficiente); baseline determinist păstrat separat de valoarea calibrată.
+- [x] `precision.ts`: prospețime per anunț, calitatea datelor per comparabil, istoric de preț și relevanță; scor de calitate a analizei separat de scorul de încredere, cu motive explicite.
+- [x] Motorul rămâne determinist: `runAcpAnalysis(..., options)` sortează comparabilele după relevanță, iar calibrarea se aplică doar ca strat final, explicabil și reversibil.
+- [x] `calibration.functions.ts`: rulare/aplicare calibrare cu Zod, organizație activă, izolare pe organization_id, audit și rate limiting.
+- [x] UI „Calibrare & Precizie” în pagina analizei + setări de agenție (activare, eșantion minim, recalibrare manuală).
+- [x] Secțiune „Calibrare și calitatea datelor” în raportul PDF, doar pentru versiunile care au aceste date (rapoartele istorice rămân neschimbate).
+- [x] Surse externe: nicio simulare — adaptoarele neconfigurate rămân `NOT_CONFIGURED`.
+- [x] Teste: 29 noi (total 480), typecheck și build curate.

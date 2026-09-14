@@ -36,6 +36,7 @@ import { AcpAiInsight } from "@/components/app/AcpAiInsight";
 import { MarketIntelligenceCard } from "@/components/app/MarketIntelligenceCard";
 import { AcpVersionsCard } from "@/components/app/AcpVersionsCard";
 import { AcpReportCard } from "@/components/app/AcpReportCard";
+import { AcpPrecisionCard } from "@/components/app/AcpPrecisionCard";
 
 import { ACP_SCORE_LABELS, ACP_SCORE_WEIGHTS, ACP_THRESHOLDS, ACP_TIER_LABELS } from "@/lib/acp/config";
 
@@ -424,6 +425,8 @@ function AcpDetailPage() {
       <MarketIntelligenceCard analysisId={analysis.id} />
 
       <AcpAiInsight analysis={analysis} onGenerated={invalidate} />
+
+      <AcpPrecisionCard analysis={analysis} />
 
       <AcpVersionsCard analysisId={analysis.id} />
 
