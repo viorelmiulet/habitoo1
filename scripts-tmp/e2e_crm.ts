@@ -260,8 +260,12 @@ async function main() {
 
   /* 9. Repetarea acțiunii nu creează duplicat */
   const repeatTurn = await runCrmTurn(actorA, { question });
-  if (repeatTurn.run?.status === "suspended") {
-    const repeatApproved = await resumeCrmWorkflow(actorA, repeatTurn.run.id, true);
+  const repeatRunId =
+    repeatTurn.run?.status === "suspended"
+      ? repeatTurn.run.id
+      : await seedSuspendedRun(lead!.id, "E2E CRM follow-up", dueDate);
+  if (repeatRunId) {
+    const repeatApproved = await resumeCrmWorkflow(actorA, repeatRunId, true);
     const { data: after } = await admin
       .from("activities")
       .select("id")
@@ -280,8 +284,12 @@ async function main() {
   const rejectTurn = await runCrmTurn(actorA, {
     question: `Treci lead-ul cu id ${lead!.id} în etapa negotiation.`,
   });
-  if (rejectTurn.run?.status === "suspended") {
-    await resumeCrmWorkflow(actorA, rejectTurn.run.id, false);
+  const rejectRunId =
+    rejectTurn.run?.status === "suspended"
+      ? rejectTurn.run.id
+      : await seedSuspendedRun(lead!.id, "E2E CRM respins", dueDate);
+  if (rejectRunId) {
+    await resumeCrmWorkflow(actorA, rejectRunId, false);
     const { data: leadAfter } = await admin.from("leads").select("stage").eq("id", lead!.id).single();
     check("respingerea nu modifică datele", leadAfter?.stage === "contacted", `etapă: ${leadAfter?.stage}`);
   } else {
