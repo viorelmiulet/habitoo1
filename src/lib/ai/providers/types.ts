@@ -9,7 +9,16 @@
 export type AiProviderMessage =
   | { role: "user"; content: string }
   | { role: "assistant"; content: string }
-  | { role: "assistant_tool_call"; toolName: string; arguments: Record<string, unknown> }
+  | {
+      role: "assistant_tool_call";
+      toolName: string;
+      arguments: Record<string, unknown>;
+      /**
+       * Semnătura de raționament emisă de provider pentru acest apel. Gemini 3
+       * o cere înapoi la turul următor, altfel refuză cererea (400).
+       */
+      signature?: string | null;
+    }
   | { role: "tool_result"; toolName: string; content: string };
 
 export type AiToolDeclaration = {
