@@ -118,3 +118,19 @@ describe("validarea candidaților", () => {
     expect(validateProspectingResult(withFixture).notes.join(" ")).toContain("date de test");
   });
 });
+
+describe("rulare fără candidați noi (regresie)", () => {
+  it("se încheie singură, fără să rămână blocată în așteptare", () => {
+    let current = state();
+    for (const step of PROSPECTING_STEPS) {
+      if (step === "human_approval") break;
+      current = completeProspectingStep(current, step);
+    }
+    // Fără candidați, pașii de aprobare și import se parcurg imediat.
+    for (const step of ["human_approval", "crm_import", "audit", "complete"] as const) {
+      current = completeProspectingStep(current, step);
+    }
+    expect(current.candidateIds).toEqual([]);
+    expect(prospectingStatusOf(current)).toBe("completed");
+  });
+});
