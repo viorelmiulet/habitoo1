@@ -190,6 +190,12 @@ export type AcpReportModel = {
   sources: { name: string; type: string; found: number; used: number; excluded: number }[];
   warnings: string[];
   ai: { summary: string; model: string | null; generatedAt: string | null } | null;
+  /** Piața la momentul analizei — din snapshot-ul versiunii, nu din date live. */
+  market: {
+    capturedAt: string | null;
+    rows: { label: string; value: string }[];
+    note: string | null;
+  } | null;
 };
 
 export const ACP_REPORT_FORMAT_VERSION = "1.0";
@@ -482,5 +488,97 @@ export function buildAcpReportModel(params: {
             generatedAt: version.ai.generatedAt,
           }
         : null,
+    market: buildMarketSection(version.market ?? null, currency),
+  };
+}
+
+const MARKET_FRESHNESS_LABELS: Record<string, string> = {
+  fresh: "date proaspete",
+  aging: "date în curs de învechire",
+  stale: "date învechite",
+  unknown: "prospețime necunoscută",
+};
+
+const MARKET_COVERAGE_LABELS: Record<string, string> = {
+  good: "acoperire bună",
+  partial: "acoperire parțială",
+  poor: "acoperire slabă",
+  unknown: "acoperire necunoscută",
+};
+
+function signedPercent(value: number | null | undefined): string {
+  const v = finite(value ?? null);
+  if (v === null) return "—";
+  return `${v > 0 ? "+" : ""}${v.toFixed(1)}%`;
+}
+
+/** Secțiunea „Piața la momentul analizei”, exclusiv din snapshot. */
+function buildMarketSection(
+  market: AcpReportMarketInput | null,
+  currency: string,
+): AcpReportModel["market"] {
+  if (!market || !market.aggregate) return null;
+  const a = market.aggregate;
+  const perSqm = (value: number | null) =>
+    finite(value) === null ? "—" : `${reportMoney(value, currency)}/mp`;
+
+  const rows: { label: string; value: string }[] = [
+    { label: "Oferte de piață în selecție", value: reportNumberValue(a.totalMatched) },
+    { label: "Oferte folosite în statistici", value: reportNumberValue(a.pricePerSqm.count) },
+    { label: "Mediană € / mp piață", value: perSqm(a.pricePerSqm.median) },
+    { label: "Medie € / mp piață", value: perSqm(a.pricePerSqm.average) },
+    {
+      label: "Interval € / mp piață",
+      value:
+        finite(a.pricePerSqm.min) === null || finite(a.pricePerSqm.max) === null
+          ? "—"
+          : `${perSqm(a.pricePerSqm.min)} – ${perSqm(a.pricePerSqm.max)}`,
+    },
+    {
+      label: "Cuartile € / mp piață (25% / 75%)",
+      value: `${perSqm(a.pricePerSqm.p25)} / ${perSqm(a.pricePerSqm.p75)}`,
+    },
+    {
+      label: "Calitatea datelor de piață",
+      value: `${MARKET_COVERAGE_LABELS[a.coverage.level] ?? a.coverage.level}${
+        a.coverage.completeness === null ? "" : ` (${Math.round(a.coverage.completeness)}%)`
+      }`,
+    },
+    {
+      label: "Prospețimea datelor de piață",
+      value: `${MARKET_FRESHNESS_LABELS[a.freshness.level] ?? a.freshness.level} · ultima observare ${reportDate(a.freshness.lastSeenAt)}`,
+    },
+    {
+      label: "Surse de piață",
+      value:
+        a.sourceMix.length === 0
+          ? "—"
+          : a.sourceMix
+              .map((entry) => `${entry.source}: ${entry.count} (${entry.share.toFixed(1)}%)`)
+              .join(", "),
+    },
+  ];
+
+  if (market.insights) {
+    rows.push(
+      {
+        label: "Poziționarea prețului proprietății",
+        value: `${market.insights.property.label} · ${signedPercent(market.insights.property.deltaVsMedianPercent)} față de mediana pieței`,
+      },
+      {
+        label: "Poziționarea prețului recomandat",
+        value: `${market.insights.recommended.label} · ${signedPercent(market.insights.recommended.deltaVsMedianPercent)} față de mediana pieței`,
+      },
+      {
+        label: "Valoarea estimată față de piață",
+        value: signedPercent(market.insights.estimateVsMarketPercent),
+      },
+    );
+  }
+
+  return {
+    capturedAt: market.capturedAt,
+    rows,
+    note: a.insufficient ? a.insufficientReason : null,
   };
 }
