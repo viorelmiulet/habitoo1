@@ -693,12 +693,14 @@ function PropertyDetailPage() {
           {[
             ["overview", "Overview"],
             ["media", "Media"],
+            ["acp", "ACP"],
             ["leads", `Lead-uri (${data?.leads.length ?? 0})`],
             ["matching", `Cereri compatibile (${matches.length})`],
             ["activities", `Activități (${activities.length})`],
             ["documents", "Documente"],
             ["publishing", "Publicare"],
             ["history", "Istoric"],
+
           ].map(([value, label]) => (
             <TabsTrigger
               key={value}
