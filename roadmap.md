@@ -149,3 +149,22 @@
 - [x] Verificat: cross-org blocat (mesaj „Analiza nu a fost găsită”), raport PDF privat cu URL semnat, versiuni istorice intacte, recalculare simultană fără suprascriere, zero comparabile → „Date insuficiente” fără estimare falsă.
 - [x] Teste: 498 (44 fișiere), typecheck și build curate.
 - [ ] Limitare deschisă: pool-ul extern de anunțuri este gol, deci calibrarea pe volum real de piață nu poate fi validată (rămâne dezactivată implicit).
+
+## ACP – etapa 10: finalizare și release freeze
+- [x] Audit final de arhitectură documentat în `docs/acp.md`: fiecare etapă a fluxului (proprietate → analiză → market data → comparabile → motor determinist → snapshot → versiune → AI opțional → raport PDF → istoric → audit) cu responsabilitate, sursa datelor, validări, organizație, ce se persistă, ce poate eșua și comportamentul la eroare.
+- [x] Freeze al motorului determinist: `engine.ts` rămâne singura sursă a valorilor financiare, funcție pură și reproductibilă; AI nu scrie valori; snapshot-urile păstrează datele de calcul; versiunile livrate sunt imuabile. Nicio modificare de implementare necesară.
+- [x] Contract de versionare documentat (draft recalculabil, versiune livrată imuabilă, recalculare = versiune nouă, raport legat exact de versiune).
+- [x] Security freeze documentat: server-side scoping pe organizație, RLS activ, bucket privat + URL semnat, validare path/ownership, blocarea proprietăților arhivate, rate limiting, Zod, erori sigure. Nicio protecție relaxată.
+- [x] Contract AI documentat: strat de interpretare, nu de evaluare; la timeout/eroare analiza deterministă rămâne validă.
+- [x] Limitarea datelor de piață documentată și afișată în UI: când analiza nu conține oferte externe, secțiunea „Calibrare & Precizie” explică faptul că precizia nu este validată statistic pe piață largă. Calibrarea rămâne dezactivată implicit.
+- [x] Suită finală: 498 teste passed / 0 failed / 0 skipped (44 fișiere), typecheck curat, build de producție reușit — identic cu Stage 9.
+- [x] Release audit: fără TODO critice, fără debug output, fără mock-uri în producție, fără date de test rămase, fără endpoint-uri ACP neprotejate, fără texte tehnice expuse.
+- [x] MIGRATIONS: NONE.
+- [x] **ACP FROZEN FOR PRODUCTION** — modificările viitoare ale motorului determinist se tratează ca schimbări controlate de versiune.
+
+### ACP – viitor (neimplementat)
+- [ ] Ingestie de date de piață externe (portaluri/furnizori suplimentari).
+- [ ] Volum real de piață.
+- [ ] Măsurarea acurateței statistice.
+- [ ] Calibrare pe date reale de piață.
+- [ ] Calibrarea scorului de încredere.
