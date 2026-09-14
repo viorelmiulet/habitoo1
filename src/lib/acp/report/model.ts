@@ -131,6 +131,9 @@ export type AcpReportMarketInput = {
     recommended: { label: string; deltaVsMedianPercent: number | null };
     estimateVsMarketPercent: number | null;
   } | null;
+};
+
+
 
 
 export type AcpReportAgency = {

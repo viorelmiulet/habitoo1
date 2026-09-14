@@ -697,7 +697,7 @@ export function buildSourceQuality(params: {
     duplicates: number;
     itemsInvalidLastRun: number | null;
     lastSeenAt: string | null;
-  }>;
+  }[];
   mix?: readonly MarketSourceMixEntry[];
   now?: number;
 }): MarketSourceQuality[] {
