@@ -821,7 +821,7 @@ export const syncMarketSource = createServerFn({ method: "POST" })
         _source: lockKey,
         _ok: false,
         _error: "Nu s-a putut înregistra rularea.",
-        _run_id: null,
+        _run_id: undefined,
       });
       throw runError;
     }
@@ -860,7 +860,7 @@ export const syncMarketSource = createServerFn({ method: "POST" })
       await admin.rpc("market_sync_release", {
         _source: lockKey,
         _ok: result.success,
-        _error: result.success ? null : (result.errors[0]?.message ?? "Sincronizare eșuată."),
+        _error: result.success ? undefined : (result.errors[0]?.message ?? "Sincronizare eșuată."),
         _run_id: run.id,
       });
 
