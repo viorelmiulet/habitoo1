@@ -10,6 +10,14 @@ export const AI_AUDIT_ACTIONS = {
   workflowStarted: "ai.workflow.started",
   workflowApproved: "ai.workflow.approved",
   workflowRejected: "ai.workflow.rejected",
+  /* CRM Agent (Stage 14) */
+  crmRequest: "ai.crm.request",
+  crmActionProposed: "ai.crm.action.proposed",
+  crmActionApproved: "ai.crm.action.approved",
+  crmActionRejected: "ai.crm.action.rejected",
+  crmActionExecuted: "ai.crm.action.executed",
+  crmActionFailed: "ai.crm.action.failed",
+  crmActionDenied: "ai.crm.action.denied",
 } as const;
 
 export type AiAuditAction = (typeof AI_AUDIT_ACTIONS)[keyof typeof AI_AUDIT_ACTIONS];

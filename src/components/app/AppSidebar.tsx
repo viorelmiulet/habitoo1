@@ -29,6 +29,8 @@ import {
   Users,
   PlugZap,
   Database,
+  Bot,
+  BrainCircuit,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { initials } from "@/lib/format";
@@ -66,6 +68,13 @@ export const agencyNav: NavGroup[] = [
   {
     title: "Prospectare",
     items: [{ label: "Oportunități", to: "/app/prospecting", icon: Radar }],
+  },
+  {
+    title: "Asistent AI",
+    items: [
+      { label: "AI CRM", to: "/app/ai-crm", icon: BrainCircuit },
+      { label: "Habitoo AI", to: "/app/ai", icon: Bot },
+    ],
   },
   {
     title: "ACP",

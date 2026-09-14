@@ -217,3 +217,19 @@
 - [x] Audit, tracing, usage, izolare cross-tenant — validate end-to-end
 - Limitări: nicio sursă externă reală autorizată încă (E2E rulat pe date de test marcate explicit); fără trimitere mesaje/publicare automată.
 - Următor (Stage 14): integrarea unei surse externe autorizate reale + outreach cu aprobare.
+
+## Stage 14 — CRM Agent (finalizat)
+- [x] Modul `src/lib/ai/agents/crm/`: filtre, insight-uri, matching, acțiuni, workflow, instrucțiuni, tool-uri server-side, runtime, server functions, teste
+- [x] 10 tool-uri de citire CRM (proprietăți, clienți, lead-uri, cereri, istoric activitate, priorități, matching client ↔ proprietate)
+- [x] 5 acțiuni cu aprobare umană obligatorie: `create_task`, `create_note`, `update_lead_status`, `assign_lead`, `create_property_match`
+- [x] Fără comunicare automată (email, WhatsApp, SMS, apeluri, publicare) și fără ștergeri
+- [x] Prioritizare și matching deterministe, explicabile; AI doar interpretează
+- [x] Workflow persistent `habitooCrmWorkflow` în `ai_workflow_runs`, suspend/resume, protecție dublu-click
+- [x] Izolare pe agenție în fiecare interogare, ownership pe lead-uri, `assign_lead` doar pentru admin
+- [x] Audit (`ai.crm.*`), tracing, usage (`crm_agent`), erori sigure, protecție prompt injection
+- [x] UI „AI CRM” (`/app/ai-crm`) în română, cu sugestii, istoric și card de aprobare
+- [x] Integrare Prospecting (lead-uri cu sursa `prospecting`); ACP rămâne read-only, neafectat
+- [x] Defect reparat: o cerere de modificare care nu putea fi transformată în propunere încheia fluxul ca „finalizat”; acum eșuează explicit, fără să pară tratată
+- [x] Defect reparat: câmpurile opționale trimise ca „gol” invalidau acțiunea; acum sunt acceptate
+- [x] Validare: 672 teste, typecheck curat, build de producție reușit; E2E real pe agenția de test (citiri, refuzul acțiunii fără aprobare, aprobare → execuție, idempotență, respingere, cross-tenant, audit/tracing/usage)
+- Limitare: cota gratuită zilnică a providerului AI s-a epuizat în timpul E2E, deci propunerea generată de model a fost verificată doar parțial în ziua testului; lanțul aprobare → execuție a fost verificat integral server-side.
