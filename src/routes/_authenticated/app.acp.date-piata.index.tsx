@@ -42,6 +42,7 @@ import {
   testMarketSourceConnection,
 } from "@/lib/market/market.functions";
 import { MARKET_SOURCES } from "@/lib/market/sources";
+import { MarketIntelligenceCard } from "@/components/app/MarketIntelligenceCard";
 
 export const Route = createFileRoute("/_authenticated/app/acp/date-piata/")({
   head: () => appHead("Habitoo CRM — date de piață"),
@@ -232,6 +233,8 @@ function MarketDataCenterPage() {
           hint={`${totals?.updatedLast7Days ?? 0} modificate în 7 zile`}
         />
       </div>
+
+      <MarketIntelligenceCard />
 
       <SectionCard title="Surse configurate" icon={Database}>
         <div className="space-y-3">

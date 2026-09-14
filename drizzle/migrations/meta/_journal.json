@@ -260,6 +260,13 @@
       "when": 1789392765789,
       "tag": "0036_acp_report_metadata",
       "breakpoints": true
+    },
+    {
+      "idx": 37,
+      "version": "7",
+      "when": 1789395568920,
+      "tag": "0037_market_intelligence_indexes",
+      "breakpoints": true
     }
   ]
 }

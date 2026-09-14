@@ -14,6 +14,7 @@ import { ACP_AUDIT_ACTIONS, logAcpAudit } from "./audit";
 import {
   assertReportOrganization,
   buildAcpReportModel,
+  type AcpReportMarketInput,
   reportEligibility,
   type AcpReportAdjustment,
   type AcpReportModel,
@@ -135,6 +136,7 @@ async function loadVersionInput(
     confidence?: AcpReportVersionInput["confidence"];
     explanation?: unknown;
     targetPricePerSqm?: number | null;
+    marketIntelligence?: AcpReportMarketInput | null;
   };
   const subject = (target.subject ?? {}) as AcpReportVersionInput["target"]["subject"];
 
@@ -217,6 +219,8 @@ async function loadVersionInput(
       row.ai_summary || row.ai_model || row.ai_generated_at
         ? { summary: row.ai_summary, model: row.ai_model, generatedAt: row.ai_generated_at }
         : null,
+    // Snapshot-ul de piață al versiunii (Stage 4), dacă a fost salvat la rulare.
+    market: analysisData.marketIntelligence ?? null,
   };
 
   return { input, rootId: input.rootAnalysisId };
