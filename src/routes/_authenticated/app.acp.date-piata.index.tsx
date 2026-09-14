@@ -39,6 +39,7 @@ import {
   resolveDedupeReview,
   listDedupeReviews,
   syncMarketSource,
+  testMarketSourceConnection,
 } from "@/lib/market/market.functions";
 import { MARKET_SOURCES } from "@/lib/market/sources";
 
@@ -80,6 +81,7 @@ function MarketDataCenterPage() {
   const listFn = useServerFn(listMarketListings);
   const importFn = useServerFn(importMarketListings);
   const syncFn = useServerFn(syncMarketSource);
+  const testFn = useServerFn(testMarketSourceConnection);
   const reviewsFn = useServerFn(listDedupeReviews);
   const resolveFn = useServerFn(resolveDedupeReview);
 
@@ -155,12 +157,37 @@ function MarketDataCenterPage() {
     onError: (error: unknown) => toastError(error),
   });
 
+  const [busySource, setBusySource] = useState<string | null>(null);
+
   const sync = useMutation({
-    mutationFn: (source: string) => syncFn({ data: { source } }),
-    onSuccess: () => {
+    mutationFn: (source: string) => {
+      setBusySource(source);
+      return syncFn({ data: { source } });
+    },
+    onSuccess: (result) => {
+      toast.success(
+        `Sincronizare ${result.sourceName}: ${result.inserted} noi, ${result.updated} actualizate, ${result.rejected} respinse.`,
+        { duration: 2500 },
+      );
       void queryClient.invalidateQueries({ queryKey: ["market-overview"] });
+      void queryClient.invalidateQueries({ queryKey: ["market-listings"] });
+      void queryClient.invalidateQueries({ queryKey: ["market-source-counts"] });
     },
     onError: (error: unknown) => toastError(error),
+    onSettled: () => setBusySource(null),
+  });
+
+  const testConnection = useMutation({
+    mutationFn: (source: string) => {
+      setBusySource(source);
+      return testFn({ data: { source } });
+    },
+    onSuccess: (result) => {
+      if (result.ok) toast.success(result.message, { duration: 2500 });
+      else toast.error(result.message, { duration: 4000 });
+    },
+    onError: (error: unknown) => toastError(error),
+    onSettled: () => setBusySource(null),
   });
 
   const resolve = useMutation({
