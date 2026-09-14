@@ -35,14 +35,29 @@ export type AiToolName =
   | "get_acp"
   | "get_acp_history"
   | "get_acp_report"
-  | "get_comparables";
+  | "get_comparables"
+  | "search_crm_properties"
+  | "search_crm_contacts"
+  | "search_crm_leads"
+  | "search_crm_requests"
+  | "get_crm_contact"
+  | "get_crm_lead"
+  | "get_crm_property"
+  | "get_crm_activity_history"
+  | "match_client_to_properties"
+  | "get_crm_priorities"
+  | "create_task"
+  | "create_note"
+  | "update_lead_status"
+  | "assign_lead"
+  | "create_property_match";
 
 export type AiToolDefinition = {
   name: AiToolName;
   description: string;
   capability: AiCapability;
   /** Categoria de context pe care o alimentează rezultatul. */
-  category: "property" | "client" | "lead" | "acp" | "prospect";
+  category: "property" | "client" | "lead" | "acp" | "prospect" | "crm";
   /**
    * `read` = citire pură; `action` = modifică date CRM și cere OBLIGATORIU
    * aprobare umană explicită înainte de execuție.
