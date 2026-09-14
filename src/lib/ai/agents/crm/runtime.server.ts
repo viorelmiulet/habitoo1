@@ -21,6 +21,7 @@ import {
   crmActionIdempotencyKey,
   CRM_ACTION_LABELS,
   LEAD_STAGE_LABELS,
+  isAllowedLeadTransition,
   type CrmActionChange,
   type CrmActionProposal,
   type CrmActionTool,
@@ -149,20 +150,36 @@ async function describeProposal(
 
     if (tool === "update_lead_status") {
       const stage = String(data["stage"]);
+      const current = String(lead.stage);
+      if (!isAllowedLeadTransition(current, stage)) {
+        return {
+          ok: false,
+          message:
+            current === stage
+              ? `Leadul este deja în etapa ${LEAD_STAGE_LABELS[stage] ?? stage}.`
+              : "Tranziția de etapă cerută nu este permisă.",
+        };
+      }
       changes.push({
         field: "stage",
         label: "Etapă",
-        from: LEAD_STAGE_LABELS[lead.stage] ?? lead.stage,
+        from: LEAD_STAGE_LABELS[current] ?? current,
         to: LEAD_STAGE_LABELS[stage] ?? stage,
       });
       return {
         ok: true,
         proposal: buildCrmProposal({
           tool,
-          args: data,
+          // Etapa citită acum devine precondiție: la aprobare se verifică din nou.
+          args: { ...data, expectedStage: current },
           entity: { type: "lead", id: lead.id, label: lead.name },
           changes,
           reason,
+          precondition: {
+            field: "stage",
+            label: "Etapă la momentul propunerii",
+            value: LEAD_STAGE_LABELS[current] ?? current,
+          },
         }),
       };
     }
@@ -233,6 +250,80 @@ async function describeProposal(
       }),
     };
   }
+
+  if (tool === "create_client_property_match") {
+    const [{ data: contact }, { data: property }] = await Promise.all([
+      admin
+        .from("contacts")
+        .select("id,first_name,last_name")
+        .eq("id", String(data["contactId"]))
+        .eq("organization_id", org)
+        .maybeSingle(),
+      admin
+        .from("properties")
+        .select("id,reference,title")
+        .eq("id", String(data["propertyId"]))
+        .eq("organization_id", org)
+        .maybeSingle(),
+    ]);
+    if (!contact) return { ok: false, message: "Clientul nu există în agenția ta." };
+    if (!property) return { ok: false, message: "Proprietatea nu există în agenția ta." };
+    const clientLabel = `${contact.first_name ?? ""} ${contact.last_name ?? ""}`.trim() || "Client";
+    const propertyLabel = property.reference ?? property.title ?? "Proprietate";
+    changes.push({
+      field: "match",
+      label: "Potrivire client ↔ proprietate",
+      from: null,
+      to: `${propertyLabel} → ${clientLabel}`,
+    });
+    return {
+      ok: true,
+      proposal: buildCrmProposal({
+        tool,
+        args: data,
+        entity: { type: "contact", id: contact.id, label: clientLabel },
+        changes,
+        reason,
+        warnings: ["Dacă potrivirea activă există deja, nu se creează un duplicat."],
+      }),
+    };
+  }
+
+  if (tool === "generate_property_description" || tool === "generate_offer_draft") {
+    const { data: property } = await admin
+      .from("properties")
+      .select("id,reference,title,description")
+      .eq("id", String(data["propertyId"]))
+      .eq("organization_id", org)
+      .maybeSingle();
+    if (!property) return { ok: false, message: "Proprietatea nu există în agenția ta." };
+    const propertyLabel = property.reference ?? property.title ?? "Proprietate";
+    const draft = String(data["draft"] ?? "");
+    changes.push({
+      field: "draft",
+      label:
+        tool === "generate_property_description" ? "Ciornă de descriere" : "Ciornă de ofertă",
+      from: null,
+      to: draft.length > 400 ? `${draft.slice(0, 400)}…` : draft,
+    });
+    return {
+      ok: true,
+      proposal: buildCrmProposal({
+        tool,
+        args: data,
+        entity: { type: "property", id: property.id, label: propertyLabel },
+        changes,
+        reason,
+        warnings: [
+          tool === "generate_property_description"
+            ? "Textul se salvează ca ciornă separată. Descrierea publicată a proprietății rămâne neschimbată."
+            : "Ciorna nu se publică pe portaluri și nu modifică valorile din analiza ACP.",
+        ],
+      }),
+    };
+  }
+
+
 
   // create_task / create_note
   const leadId = (data["leadId"] as string | null) ?? null;
@@ -652,6 +743,7 @@ export async function resumeCrmWorkflow(
           ? (((execution.data as { id?: string | null } | null)?.id ?? null) as string | null)
           : null,
         duplicate,
+        code: execution.ok ? null : execution.code,
       },
     };
     state = completeCrmStep(state, "execute_action");

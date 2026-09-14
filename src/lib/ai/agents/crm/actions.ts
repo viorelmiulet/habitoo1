@@ -16,6 +16,9 @@ export const CRM_ACTION_TOOLS = [
   "update_lead_status",
   "assign_lead",
   "create_property_match",
+  "create_client_property_match",
+  "generate_property_description",
+  "generate_offer_draft",
 ] as const;
 
 export type CrmActionTool = (typeof CRM_ACTION_TOOLS)[number];
@@ -38,6 +41,15 @@ export type CrmActionProposal = {
   assigneeLabel: string | null;
   /** Termenul acțiunii, dacă există (ISO). */
   dueAt: string | null;
+  /**
+   * Starea citită în momentul propunerii. La aprobare se citește din nou: dacă
+   * s-a schimbat între timp, acțiunea este BLOCATĂ, nu suprascrie.
+   */
+  precondition?: { field: string; label: string; value: string | null } | null;
+  /** `draft` = produce text (ciornă); `write` = scriere reversibilă. */
+  risk?: "draft" | "write";
+  /** Efecte secundare și avertismente afișate utilizatorului. */
+  warnings?: string[];
 };
 
 const LEAD_STAGES = [
@@ -54,13 +66,17 @@ const LEAD_STAGES = [
 
 const uuid = z.string().uuid();
 
+export const CRM_TASK_PRIORITIES = ["low", "normal", "high"] as const;
+
 export const CRM_ACTION_SCHEMAS: Record<CrmActionTool, z.ZodTypeAny> = {
   create_task: z.object({
     leadId: uuid.nullable().optional(),
     contactId: uuid.nullable().optional(),
     propertyId: uuid.nullable().optional(),
+    assigneeId: uuid.nullable().optional(),
     title: z.string().min(3).max(160),
     dueAt: z.string().min(8).max(40),
+    priority: z.enum(CRM_TASK_PRIORITIES).nullable().optional(),
     description: z.string().max(1000).nullable().optional(),
   }),
   create_note: z.object({
@@ -73,6 +89,8 @@ export const CRM_ACTION_SCHEMAS: Record<CrmActionTool, z.ZodTypeAny> = {
   update_lead_status: z.object({
     leadId: uuid,
     stage: z.enum(LEAD_STAGES),
+    /** Etapa citită la momentul propunerii; protejează împotriva stării învechite. */
+    expectedStage: z.enum(LEAD_STAGES).nullable().optional(),
     reason: z.string().max(400).nullable().optional(),
   }),
   assign_lead: z.object({
@@ -85,10 +103,46 @@ export const CRM_ACTION_SCHEMAS: Record<CrmActionTool, z.ZodTypeAny> = {
     propertyId: uuid,
     note: z.string().max(600).nullable().optional(),
   }),
+  create_client_property_match: z.object({
+    contactId: uuid,
+    propertyId: uuid,
+    reason: z.string().max(600).nullable().optional(),
+  }),
+  generate_property_description: z.object({
+    propertyId: uuid,
+    draft: z.string().min(40).max(4000),
+    title: z.string().min(3).max(160).nullable().optional(),
+  }),
+  generate_offer_draft: z.object({
+    propertyId: uuid,
+    contactId: uuid.nullable().optional(),
+    draft: z.string().min(40).max(4000),
+    title: z.string().min(3).max(160).nullable().optional(),
+  }),
 };
+
+/** Ciornele nu suprascriu nimic publicat: se salvează ca text separat. */
+export const CRM_DRAFT_ACTIONS: readonly CrmActionTool[] = [
+  "generate_property_description",
+  "generate_offer_draft",
+];
+
+export function isCrmDraftAction(tool: CrmActionTool): boolean {
+  return CRM_DRAFT_ACTIONS.includes(tool);
+}
 
 export function isCrmActionTool(name: string): name is CrmActionTool {
   return (CRM_ACTION_TOOLS as readonly string[]).includes(name);
+}
+
+/** Etapele finale nu se redeschid prin agent: tranziția este blocată. */
+const TERMINAL_STAGES = new Set<string>(["won", "lost"]);
+
+export function isAllowedLeadTransition(from: string, to: string): boolean {
+  if (!(LEAD_STAGES as readonly string[]).includes(to)) return false;
+  if (from === to) return false;
+  if (TERMINAL_STAGES.has(from)) return false;
+  return true;
 }
 
 /**
@@ -116,6 +170,11 @@ export function validateCrmAction(
     const due = Date.parse(String(data["dueAt"]));
     if (!Number.isFinite(due)) {
       return { ok: false, message: "Termenul propus nu este o dată validă." };
+    }
+  }
+  if (tool === "update_lead_status" && typeof data["expectedStage"] === "string") {
+    if (!isAllowedLeadTransition(String(data["expectedStage"]), String(data["stage"]))) {
+      return { ok: false, message: "Tranziția de etapă cerută nu este permisă." };
     }
   }
   return { ok: true, tool, data };
@@ -157,7 +216,10 @@ export const CRM_ACTION_LABELS: Record<CrmActionTool, string> = {
   create_note: "Adăugare notă",
   update_lead_status: "Schimbare etapă lead",
   assign_lead: "Alocare lead",
-  create_property_match: "Înregistrare potrivire client ↔ proprietate",
+  create_property_match: "Înregistrare potrivire cerere ↔ proprietate",
+  create_client_property_match: "Înregistrare potrivire client ↔ proprietate",
+  generate_property_description: "Ciornă de descriere pentru proprietate",
+  generate_offer_draft: "Ciornă de ofertă",
 };
 
 export const LEAD_STAGE_LABELS: Record<string, string> = {
@@ -181,6 +243,8 @@ export function buildCrmProposal(input: {
   reason: string;
   assigneeLabel?: string | null;
   dueAt?: string | null;
+  precondition?: CrmActionProposal["precondition"];
+  warnings?: string[];
 }): CrmActionProposal {
   return {
     tool: input.tool,
@@ -190,5 +254,8 @@ export function buildCrmProposal(input: {
     reason: input.reason,
     assigneeLabel: input.assigneeLabel ?? null,
     dueAt: input.dueAt ?? null,
+    precondition: input.precondition ?? null,
+    risk: isCrmDraftAction(input.tool) ? "draft" : "write",
+    warnings: input.warnings ?? [],
   };
 }

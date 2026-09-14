@@ -16,6 +16,7 @@ import { AI_AUDIT_ACTIONS, logAiAudit } from "@/lib/ai/security/audit";
 import {
   crmActionIdempotencyKey,
   validateCrmAction,
+  isAllowedLeadTransition,
   type CrmActionTool,
 } from "./actions";
 import {
@@ -723,7 +724,10 @@ export async function runCrmTool(
     case "create_note":
     case "update_lead_status":
     case "assign_lead":
-    case "create_property_match": {
+    case "create_property_match":
+    case "create_client_property_match":
+    case "generate_property_description":
+    case "generate_offer_draft": {
       if (!options.approvalGranted) {
         return denied(
           actor,
@@ -864,11 +868,25 @@ async function executeCrmAction(
       if (!owned.ok) return owned.execution;
       const current = String(owned.lead["stage"]);
       const stage = String(data["stage"]);
-      if (current === stage) {
-        return finish(true, `Leadul este deja în etapa ${stage}.`, [], {
-          entityId: leadId,
-          duplicate: true,
-        });
+      const expected = data["expectedStage"] as string | null | undefined;
+      // Starea a fost recitită acum: dacă altcineva a schimbat etapa între
+      // propunere și aprobare, blocăm în loc să suprascriem.
+      if (typeof expected === "string" && expected !== "" && expected !== current) {
+        return {
+          ok: false,
+          error:
+            "Etapa leadului s-a schimbat între propunere și aprobare. Cere o propunere nouă, cu starea actuală.",
+          code: "invalid_input",
+        };
+      }
+      if (!isAllowedLeadTransition(current, stage)) {
+        if (current === stage) {
+          return finish(true, `Leadul este deja în etapa ${stage}.`, [], {
+            entityId: leadId,
+            duplicate: true,
+          });
+        }
+        return { ok: false, error: "Tranziția de etapă cerută nu este permisă.", code: "invalid_input" };
       }
       const { error } = await admin
         .from("leads")
@@ -987,6 +1005,134 @@ async function executeCrmAction(
             label: property.reference ?? property.title ?? "Proprietate",
           },
         ],
+        { entityId: result.id, duplicate: result.duplicate },
+      );
+    }
+    case "create_client_property_match": {
+      const contactId = String(data["contactId"]);
+      const propertyId = String(data["propertyId"]);
+      const [{ data: contact }, { data: property }] = await Promise.all([
+        admin
+          .from("contacts")
+          .select("id,first_name,last_name")
+          .eq("id", contactId)
+          .eq("organization_id", org)
+          .maybeSingle(),
+        admin
+          .from("properties")
+          .select("id,reference,title")
+          .eq("id", propertyId)
+          .eq("organization_id", org)
+          .is("deleted_at", null)
+          .maybeSingle(),
+      ]);
+      if (!contact) {
+        return { ok: false, error: "Clientul nu există în agenția ta.", code: "not_found" };
+      }
+      if (!property) {
+        return { ok: false, error: "Proprietatea nu există în agenția ta.", code: "not_found" };
+      }
+      const propertyLabel = property.reference ?? property.title ?? "proprietate";
+      const clientLabel = `${contact.first_name ?? ""} ${contact.last_name ?? ""}`.trim() || "client";
+
+      // O potrivire activă între același client și aceeași proprietate nu se
+      // dublează, indiferent de titlu sau de ziua în care a fost propusă.
+      const { data: existingMatch } = await admin
+        .from("activities")
+        .select("id")
+        .eq("organization_id", org)
+        .eq("contact_id", contactId)
+        .eq("property_id", propertyId)
+        .eq("kind", "task" as never)
+        .eq("done", false)
+        .limit(1);
+      const already = (existingMatch ?? [])[0];
+      if (already?.id) {
+        return finish(true, "Potrivirea activă exista deja: nu am creat un duplicat.", [], {
+          entityId: already.id,
+          duplicate: true,
+        });
+      }
+
+      const result = await insertActivityIdempotent(admin, actor, {
+        kind: "task",
+        title: `Potrivire propusă: ${propertyLabel} → ${clientLabel}`,
+        description:
+          (data["reason"] as string | undefined) ??
+          "Potrivire client ↔ proprietate înregistrată de Habitoo CRM Agent, aprobată de utilizator.",
+        starts_at: new Date().toISOString(),
+        status: "planned",
+        done: false,
+        lead_id: null,
+        contact_id: contactId,
+        property_id: propertyId,
+        request_id: null,
+      });
+      if (!result.ok) return finish(false, result.message, []);
+      return finish(
+        true,
+        result.duplicate ? "Potrivirea era deja înregistrată." : "Potrivirea a fost înregistrată.",
+        [{ type: "property", id: propertyId, label: propertyLabel }],
+        { entityId: result.id, duplicate: result.duplicate },
+      );
+    }
+    /**
+     * CIORNE: textul se salvează ca notă atașată proprietății. Descrierea
+     * publicată a proprietății NU este atinsă și nimic nu se publică.
+     */
+    case "generate_property_description":
+    case "generate_offer_draft": {
+      const propertyId = String(data["propertyId"]);
+      const contactId = (data["contactId"] as string | null) ?? null;
+      const { data: property } = await admin
+        .from("properties")
+        .select("id,reference,title")
+        .eq("id", propertyId)
+        .eq("organization_id", org)
+        .is("deleted_at", null)
+        .maybeSingle();
+      if (!property) {
+        return { ok: false, error: "Proprietatea nu există în agenția ta.", code: "not_found" };
+      }
+      if (contactId) {
+        const { data: contact } = await admin
+          .from("contacts")
+          .select("id")
+          .eq("id", contactId)
+          .eq("organization_id", org)
+          .maybeSingle();
+        if (!contact) {
+          return { ok: false, error: "Clientul nu există în agenția ta.", code: "not_found" };
+        }
+      }
+      const propertyLabel = property.reference ?? property.title ?? "proprietate";
+      const isDescription = tool === "generate_property_description";
+      const title =
+        (data["title"] as string | null) ??
+        (isDescription
+          ? `Ciornă descriere: ${propertyLabel}`
+          : `Ciornă ofertă: ${propertyLabel}`);
+      const result = await insertActivityIdempotent(admin, actor, {
+        kind: "note",
+        title,
+        description: String(data["draft"]),
+        starts_at: new Date().toISOString(),
+        status: "done",
+        done: true,
+        lead_id: null,
+        contact_id: contactId,
+        property_id: propertyId,
+        request_id: null,
+      });
+      if (!result.ok) return finish(false, result.message, []);
+      return finish(
+        true,
+        result.duplicate
+          ? "Ciorna exista deja: nu am creat un duplicat."
+          : isDescription
+            ? "Ciorna de descriere a fost salvată. Descrierea publicată a proprietății a rămas neschimbată."
+            : "Ciorna de ofertă a fost salvată. Nu a fost publicată nicăieri.",
+        [{ type: "property", id: propertyId, label: propertyLabel }],
         { entityId: result.id, duplicate: result.duplicate },
       );
     }
