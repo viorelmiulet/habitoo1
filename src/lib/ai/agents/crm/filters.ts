@@ -154,17 +154,18 @@ function parseAmount(raw: string): number | null {
   return Number.isFinite(value) && value > 0 ? value : null;
 }
 
-function detectCity(text: string): string | null {
+function detectCity(raw: string, lowered: string): string | null {
   for (const city of CITY_HINTS) {
-    if (text.includes(city)) return city;
+    if (lowered.includes(city)) return city;
   }
-  const zone = /(?:în|in|din|zona)\s+([A-ZĂÂÎȘȚ][\wăâîșț-]{2,})/u.exec(text);
+  // Zonele scrise cu majusculă („în Militari”) sunt detectate din textul original.
+  const zone = /(?:în|in|din|zona)\s+([A-ZĂÂÎȘȚ][\p{L}-]{2,})/u.exec(raw);
   return zone?.[1] ? zone[1].toLowerCase() : null;
 }
 
 function detectIntent(text: string): CrmIntent {
   const t = stripDiacritics(text);
-  if (/(follow ?up|followup)/.test(t) && /(fara|nu au|nu a|lipsa)/.test(t)) {
+  if (/follow[ -]?up/.test(t) && /(fara|nu au|nu a|lipsa)/.test(t)) {
     return "leads_without_followup";
   }
   if (/(fara activitate|nu au mai fost contactat|nu a fost contactat|necontactat|stagnant|blocat)/.test(t)) {
@@ -228,7 +229,7 @@ export function parseCrmQuery(raw: string): CrmFilters {
   return {
     intent,
     days: days !== null && days > 0 && days <= 365 ? days : null,
-    city: detectCity(text),
+    city: detectCity(raw ?? "", text),
     roomsMin: roomsMinMatch?.[1]
       ? Number(roomsMinMatch[1])
       : roomsExact?.[1]
