@@ -37,7 +37,7 @@ describe("parseGeminiResponse", () => {
       ],
     });
     expect(result.toolCalls).toEqual([
-      { name: "search_properties", arguments: { query: "Pipera" } },
+      { name: "search_properties", arguments: { query: "Pipera" }, signature: null },
     ]);
   });
 
