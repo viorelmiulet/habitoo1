@@ -33,6 +33,7 @@ import {
   type AcpComparableView,
 } from "@/lib/acp/analyses.functions";
 import { AcpAiInsight } from "@/components/app/AcpAiInsight";
+import { MarketIntelligenceCard } from "@/components/app/MarketIntelligenceCard";
 import { AcpVersionsCard } from "@/components/app/AcpVersionsCard";
 import { AcpReportCard } from "@/components/app/AcpReportCard";
 
@@ -419,6 +420,8 @@ function AcpDetailPage() {
           }
         />
       </div>
+
+      <MarketIntelligenceCard analysisId={analysis.id} />
 
       <AcpAiInsight analysis={analysis} onGenerated={invalidate} />
 
