@@ -8,6 +8,7 @@
 import { z } from "zod";
 import type { AiCapability } from "../security/permissions";
 import type { AiToolDeclaration } from "../providers/types";
+import { CRM_ACTION_SCHEMAS } from "../agents/crm/actions";
 
 const uuid = z.string().uuid("Identificator invalid.");
 
@@ -366,6 +367,295 @@ export const AI_TOOLS: readonly AiToolDefinition[] = [
       "prospectId",
       "contactId",
     ]),
+  },
+  /* ------------------- CRM Agent (Stage 14): tool-uri de CITIRE ------------------- */
+  {
+    name: "search_crm_properties",
+    description:
+      "Caută proprietăți în CRM cu filtre CRM: text, oraș, tip, tranzacție, camere, preț, status și proprietăți adăugate recent.",
+    capability: "read:properties",
+    category: "crm",
+    kind: "read",
+    schema: z.object({
+      query: z.string().max(120).optional(),
+      city: z.string().max(80).optional(),
+      propertyType: z.string().max(40).optional(),
+      transaction: z.enum(["sale", "rent"]).optional(),
+      status: z.string().max(30).optional(),
+      roomsMin: z.number().int().min(1).max(30).optional(),
+      roomsMax: z.number().int().min(1).max(30).optional(),
+      minPrice: z.number().nonnegative().optional(),
+      maxPrice: z.number().nonnegative().optional(),
+      createdWithinDays: z.number().int().min(1).max(365).optional(),
+      limit: searchLimit,
+    }),
+    parameters: objectSchema({
+      query: { type: "string" },
+      city: { type: "string" },
+      propertyType: { type: "string" },
+      transaction: { type: "string", enum: ["sale", "rent"] },
+      status: { type: "string" },
+      roomsMin: { type: "integer" },
+      roomsMax: { type: "integer" },
+      minPrice: { type: "number" },
+      maxPrice: { type: "number" },
+      createdWithinDays: { type: "integer" },
+      limit: { type: "integer" },
+    }),
+  },
+  {
+    name: "search_crm_contacts",
+    description:
+      "Caută clienți în CRM după text, tip, status, responsabil sau clienți cu cereri active.",
+    capability: "read:contacts",
+    category: "crm",
+    kind: "read",
+    schema: z.object({
+      query: z.string().max(120).optional(),
+      type: z.string().max(40).optional(),
+      status: z.string().max(40).optional(),
+      assignedToMe: z.boolean().optional(),
+      withActiveRequests: z.boolean().optional(),
+      limit: searchLimit,
+    }),
+    parameters: objectSchema({
+      query: { type: "string" },
+      type: { type: "string" },
+      status: { type: "string" },
+      assignedToMe: { type: "boolean" },
+      withActiveRequests: { type: "boolean" },
+      limit: { type: "integer" },
+    }),
+  },
+  {
+    name: "search_crm_leads",
+    description:
+      "Caută leaduri în CRM după text, etapă, sursă (inclusiv „prospecting”), responsabil, zile fără activitate sau lipsa follow-up-ului.",
+    capability: "read:leads",
+    category: "crm",
+    kind: "read",
+    schema: z.object({
+      query: z.string().max(120).optional(),
+      stage: z.string().max(40).optional(),
+      source: z.string().max(40).optional(),
+      assignedToMe: z.boolean().optional(),
+      noActivityDays: z.number().int().min(1).max(365).optional(),
+      withoutFollowup: z.boolean().optional(),
+      createdWithinDays: z.number().int().min(1).max(365).optional(),
+      openOnly: z.boolean().optional(),
+      limit: searchLimit,
+    }),
+    parameters: objectSchema({
+      query: { type: "string" },
+      stage: { type: "string" },
+      source: { type: "string", description: "Ex.: prospecting, site, portal" },
+      assignedToMe: { type: "boolean" },
+      noActivityDays: { type: "integer" },
+      withoutFollowup: { type: "boolean" },
+      createdWithinDays: { type: "integer" },
+      openOnly: { type: "boolean" },
+      limit: { type: "integer" },
+    }),
+  },
+  {
+    name: "search_crm_requests",
+    description:
+      "Caută cereri ale clienților (ce caută clientul) după text, tip, oraș, camere, buget sau status.",
+    capability: "read:requests",
+    category: "crm",
+    kind: "read",
+    schema: z.object({
+      query: z.string().max(120).optional(),
+      kind: z.enum(["buy", "rent", "invest"]).optional(),
+      city: z.string().max(80).optional(),
+      contactId: uuid.optional(),
+      roomsMin: z.number().int().min(1).max(30).optional(),
+      maxBudget: z.number().nonnegative().optional(),
+      status: z.string().max(30).optional(),
+      limit: searchLimit,
+    }),
+    parameters: objectSchema({
+      query: { type: "string" },
+      kind: { type: "string", enum: ["buy", "rent", "invest"] },
+      city: { type: "string" },
+      contactId: { type: "string" },
+      roomsMin: { type: "integer" },
+      maxBudget: { type: "number" },
+      status: { type: "string" },
+      limit: { type: "integer" },
+    }),
+  },
+  {
+    name: "get_crm_contact",
+    description:
+      "Returnează un client cu cererile lui active și leadurile asociate, din agenția utilizatorului.",
+    capability: "read:contacts",
+    category: "crm",
+    kind: "read",
+    schema: z.object({ contactId: uuid }),
+    parameters: objectSchema({ contactId: { type: "string" } }, ["contactId"]),
+  },
+  {
+    name: "get_crm_lead",
+    description:
+      "Returnează un lead cu etapa, responsabilul, ultima interacțiune, follow-up-ul planificat și scorul de prioritate calculat determinist.",
+    capability: "read:leads",
+    category: "crm",
+    kind: "read",
+    schema: z.object({ leadId: uuid }),
+    parameters: objectSchema({ leadId: { type: "string" } }, ["leadId"]),
+  },
+  {
+    name: "get_crm_property",
+    description: "Returnează o proprietate cu datele relevante pentru discuția cu clientul.",
+    capability: "read:properties",
+    category: "crm",
+    kind: "read",
+    schema: z.object({ propertyId: uuid }),
+    parameters: objectSchema({ propertyId: { type: "string" } }, ["propertyId"]),
+  },
+  {
+    name: "get_crm_activity_history",
+    description:
+      "Returnează istoricul de activități (apeluri, întâlniri, vizionări, taskuri, note) pentru un lead, client sau proprietate.",
+    capability: "read:activities",
+    category: "crm",
+    kind: "read",
+    schema: z.object({
+      leadId: uuid.optional(),
+      contactId: uuid.optional(),
+      propertyId: uuid.optional(),
+      limit: searchLimit,
+    }),
+    parameters: objectSchema({
+      leadId: { type: "string" },
+      contactId: { type: "string" },
+      propertyId: { type: "string" },
+      limit: { type: "integer" },
+    }),
+  },
+  {
+    name: "match_client_to_properties",
+    description:
+      "Calculează potrivirile dintre cererea unui client și proprietățile agenției, cu scor determinist, criterii îndeplinite și criterii lipsă.",
+    capability: "read:properties",
+    category: "crm",
+    kind: "read",
+    schema: z.object({
+      contactId: uuid.optional(),
+      requestId: uuid.optional(),
+      minScore: z.number().min(0).max(100).optional(),
+      limit: searchLimit,
+    }),
+    parameters: objectSchema({
+      contactId: { type: "string" },
+      requestId: { type: "string" },
+      minScore: { type: "number" },
+      limit: { type: "integer" },
+    }),
+  },
+  {
+    name: "get_crm_priorities",
+    description:
+      "Returnează leadurile prioritare, cele fără follow-up și cele stagnante, cu scor de prioritate explicabil (calculat determinist de Habitoo).",
+    capability: "read:leads",
+    category: "crm",
+    kind: "read",
+    schema: z.object({
+      focus: z.enum(["priority", "without_followup", "stagnant"]).optional(),
+      days: z.number().int().min(1).max(365).optional(),
+      assignedToMe: z.boolean().optional(),
+      limit: searchLimit,
+    }),
+    parameters: objectSchema({
+      focus: { type: "string", enum: ["priority", "without_followup", "stagnant"] },
+      days: { type: "integer" },
+      assignedToMe: { type: "boolean" },
+      limit: { type: "integer" },
+    }),
+  },
+  /* ---------- CRM Agent: tool-uri de ACȚIUNE (numai cu aprobare umană) ---------- */
+  {
+    name: "create_task",
+    description:
+      "Propune o activitate (task/follow-up) legată de un lead, client sau proprietate. Necesită aprobare umană explicită.",
+    capability: "write:crm",
+    category: "crm",
+    kind: "action",
+    schema: CRM_ACTION_SCHEMAS.create_task,
+    parameters: objectSchema(
+      {
+        leadId: { type: "string" },
+        contactId: { type: "string" },
+        propertyId: { type: "string" },
+        title: { type: "string" },
+        dueAt: { type: "string", description: "Data și ora în format ISO" },
+        description: { type: "string" },
+      },
+      ["title", "dueAt"],
+    ),
+  },
+  {
+    name: "create_note",
+    description:
+      "Propune o notă în istoricul unui lead, client sau proprietate. Necesită aprobare umană explicită.",
+    capability: "write:crm",
+    category: "crm",
+    kind: "action",
+    schema: CRM_ACTION_SCHEMAS.create_note,
+    parameters: objectSchema(
+      {
+        leadId: { type: "string" },
+        contactId: { type: "string" },
+        propertyId: { type: "string" },
+        title: { type: "string" },
+        body: { type: "string" },
+      },
+      ["title", "body"],
+    ),
+  },
+  {
+    name: "update_lead_status",
+    description:
+      "Propune schimbarea etapei unui lead, cu motiv. Necesită aprobare umană explicită.",
+    capability: "write:crm",
+    category: "crm",
+    kind: "action",
+    schema: CRM_ACTION_SCHEMAS.update_lead_status,
+    parameters: objectSchema(
+      {
+        leadId: { type: "string" },
+        stage: { type: "string" },
+        reason: { type: "string" },
+      },
+      ["leadId", "stage"],
+    ),
+  },
+  {
+    name: "assign_lead",
+    description:
+      "Propune alocarea unui lead către un membru al agenției. Necesită aprobare umană explicită.",
+    capability: "write:crm",
+    category: "crm",
+    kind: "action",
+    schema: CRM_ACTION_SCHEMAS.assign_lead,
+    parameters: objectSchema(
+      { leadId: { type: "string" }, assigneeId: { type: "string" }, reason: { type: "string" } },
+      ["leadId", "assigneeId"],
+    ),
+  },
+  {
+    name: "create_property_match",
+    description:
+      "Propune înregistrarea unei potriviri între cererea unui client și o proprietate, ca activitate de urmărire. Necesită aprobare umană explicită.",
+    capability: "write:crm",
+    category: "crm",
+    kind: "action",
+    schema: CRM_ACTION_SCHEMAS.create_property_match,
+    parameters: objectSchema(
+      { requestId: { type: "string" }, propertyId: { type: "string" }, note: { type: "string" } },
+      ["requestId", "propertyId"],
+    ),
   },
 ] as const;
 

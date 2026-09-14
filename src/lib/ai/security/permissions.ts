@@ -11,14 +11,21 @@ export const AI_CAPABILITIES = [
   "read:properties",
   "read:contacts",
   "read:leads",
+  "read:requests",
+  "read:activities",
   "read:acp",
   "read:prospecting",
   "write:prospecting",
+  "write:crm",
 ] as const;
 
 export type AiCapability = (typeof AI_CAPABILITIES)[number];
 
-/** Toate rolurile agenției pot prospecta; scrierea rămâne condiționată de aprobare umană. */
+/**
+ * Toate rolurile agenției pot citi datele agenției și pot PROPUNE acțiuni CRM;
+ * scrierea rămâne condiționată de aprobare umană explicită, iar restricțiile
+ * fine (de exemplu alocarea unui lead altcuiva) sunt verificate în executor.
+ */
 const ROLE_CAPABILITIES: Record<AiRole, readonly AiCapability[]> = {
   agent: AI_CAPABILITIES,
   admin: AI_CAPABILITIES,
