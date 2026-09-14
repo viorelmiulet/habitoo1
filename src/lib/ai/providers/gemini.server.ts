@@ -89,6 +89,7 @@ export function createGeminiProvider(apiKey: string, model = GEMINI_DEFAULT_MODE
         generationConfig: {
           temperature: 0.2,
           maxOutputTokens: request.maxOutputTokens ?? GEMINI_MAX_OUTPUT_TOKENS,
+          thinkingConfig: { thinkingLevel: GEMINI_THINKING_LEVEL },
         },
       };
 
