@@ -14,7 +14,7 @@ import { runAcpAnalysis, targetPricePerSqm, type AcpCandidate, type AcpManualOve
 import type { AcpSubject } from "./scoring";
 import type { AcpComparableResult } from "./engine";
 import { ACP_AUDIT_ACTIONS, logAcpAudit } from "./audit";
-import { acpDbError, acpError } from "./safe-error";
+import { acpDbError, acpError, acpSafeMessage } from "./safe-error";
 import {
   acpSourcesSchema,
   canRecalculateInPlace,
@@ -531,6 +531,31 @@ async function persistRun(params: {
   if (updateError) throw acpDbError("persist analysis run", updateError);
 }
 
+/** Stage 8: rulările ACP sunt operațiuni scumpe și au limită proprie. */
+export const ACP_RUN_RATE_LIMITS = {
+  perUser: { limit: 20, windowSeconds: 3600 },
+  perOrganization: { limit: 60, windowSeconds: 3600 },
+} as const;
+
+async function enforceRunRateLimit(
+  admin: Awaited<ReturnType<typeof loadAdmin>>,
+  actor: Actor,
+) {
+  for (const [bucket, config] of [
+    [`acp_run:user:${actor.userId}`, ACP_RUN_RATE_LIMITS.perUser],
+    [`acp_run:org:${actor.organizationId}`, ACP_RUN_RATE_LIMITS.perOrganization],
+  ] as const) {
+    const { data: allowed } = await admin.rpc("rate_limit_hit", {
+      _bucket: bucket,
+      _limit: config.limit,
+      _window_seconds: config.windowSeconds,
+    });
+    if (allowed === false) {
+      throw acpError("Prea multe analize pornite în ultima oră. Încearcă din nou mai târziu.");
+    }
+  }
+}
+
 const createSchema = z.object({
   propertyId: z.string().uuid(),
   title: z.string().trim().max(200).optional(),
@@ -553,6 +578,26 @@ export const createAcpAnalysis = createServerFn({ method: "POST" })
       .maybeSingle();
     if (propertyError) throw acpDbError("load property", propertyError);
     if (!property) throw acpError("Proprietatea analizată nu a fost găsită în agenția ta.");
+
+    // Protecție la dublu-click / retry: o rulare pornită foarte recent pentru
+    // aceeași proprietate este reutilizată în loc să creăm o analiză duplicat.
+    const { data: runningRows } = await admin
+      .from("acp_analyses")
+      .select("id,status,created_at")
+      .eq("organization_id", actor.organizationId)
+      .eq("property_id", data.propertyId)
+      .eq("status", "running")
+      .order("created_at", { ascending: false })
+      .limit(1);
+    const running = (runningRows ?? [])[0];
+    if (
+      running &&
+      shouldReuseRunningAnalysis({ status: running.status, createdAt: running.created_at })
+    ) {
+      return { analysisId: running.id };
+    }
+
+    await enforceRunRateLimit(admin, actor);
 
     const row = property as unknown as PropertyRow;
     const subject = propertyToSubject(row as never);
@@ -617,7 +662,7 @@ export const createAcpAnalysis = createServerFn({ method: "POST" })
         .from("acp_analyses")
         .update({
           status: "draft",
-          error_message: error instanceof Error ? error.message : "Eroare necunoscută",
+          error_message: acpSafeMessage(error, "Analiza nu a putut fi finalizată."),
         })
         .eq("id", created.id);
       throw error;
@@ -1461,8 +1506,7 @@ export const recalculateAcpAsNewVersion = createServerFn({ method: "POST" })
           calibration,
         });
       } catch (error) {
-        const errorMessage =
-          error instanceof Error ? error.message : "Recalcularea nu a putut fi finalizată.";
+        const errorMessage = acpSafeMessage(error, "Recalcularea nu a putut fi finalizată.");
         await admin
           .from("acp_analyses")
           .update({ status: "draft", error_message: errorMessage })

@@ -22,6 +22,8 @@ export type AiProvider = {
 
 const GATEWAY_URL = "https://ai.gateway.lovable.dev/v1/responses";
 const MODEL = "openai/gpt-6-astra";
+/** Stage 8: fără timeout, o generare blocată ar ține requestul deschis la infinit. */
+const REQUEST_TIMEOUT_MS = 60_000;
 
 const STRING_LIST = {
   type: "array",
@@ -113,7 +115,10 @@ function createLovableGatewayProvider(apiKey: string): AiProvider {
     model: MODEL,
     promptVersion: ACP_AI_PROMPT_VERSION,
     async generate(context) {
-      const response = await fetch(GATEWAY_URL, {
+      let response: Response;
+      try {
+        response = await fetch(GATEWAY_URL, {
+        signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -136,6 +141,13 @@ function createLovableGatewayProvider(apiKey: string): AiProvider {
           },
         }),
       });
+      } catch (error) {
+        const name = (error as { name?: string } | null)?.name;
+        if (name === "TimeoutError" || name === "AbortError") {
+          throw new AiProviderError("Providerul AI nu a răspuns în timp util.", 504, true);
+        }
+        throw new AiProviderError("Providerul AI nu a putut fi contactat.", undefined, true);
+      }
 
       if (!response.ok) {
         const detail = await response.text().catch(() => "");
@@ -174,6 +186,9 @@ export function safeAiErrorMessage(error: unknown): string {
     }
     if (error.status === 401 || error.status === 403) {
       return "Analiza AI indisponibilă — providerul nu este configurat corect.";
+    }
+    if (error.status === 504) {
+      return "Serviciul AI nu a răspuns în timp util. Încearcă din nou.";
     }
     if (error.retryable) {
       return "Serviciul AI este temporar indisponibil. Încearcă din nou.";
