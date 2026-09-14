@@ -39,6 +39,8 @@ import {
   getAcpMarketIntelligence,
   getMarketIntelligence,
 } from "@/lib/market/intelligence.functions";
+import type { AcpMarketInsights } from "@/lib/market/intelligence";
+import type { MarketIntelligenceResult } from "@/lib/market/intelligence.server";
 import type {
   MarketDistributionBucket,
   MarketFreshness,
@@ -421,20 +423,27 @@ export function MarketIntelligenceCard({
     return overrides;
   }, [payloadFilters, filters.status]);
 
-  const query = useQuery({
-    queryKey: ["market-intelligence", analysisId ?? "global", analysisId ? acpOverrides : payloadFilters],
-    queryFn: () =>
-      analysisId
-        ? acpFn({ data: { analysisId, filters: acpOverrides } })
-        : globalFn({ data: { filters: payloadFilters } }),
+  const query = useQuery<{
+    result: MarketIntelligenceResult;
+    insights: AcpMarketInsights | null;
+  }>({
+    queryKey: [
+      "market-intelligence",
+      analysisId ?? "global",
+      analysisId ? acpOverrides : payloadFilters,
+    ],
+    queryFn: async () => {
+      if (analysisId) {
+        const data = await acpFn({ data: { analysisId, filters: acpOverrides } });
+        return { result: data.live, insights: data.insights };
+      }
+      const data = await globalFn({ data: { filters: payloadFilters } });
+      return { result: data, insights: null };
+    },
   });
 
-  const result = query.data
-    ? "live" in query.data
-      ? query.data.live
-      : query.data
-    : null;
-  const insights = query.data && "insights" in query.data ? query.data.insights : null;
+  const result = query.data?.result ?? null;
+  const insights = query.data?.insights ?? null;
   const aggregate = result?.aggregate ?? null;
 
   const filterRow = (

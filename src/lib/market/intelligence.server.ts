@@ -25,6 +25,8 @@ import { MARKET_SOURCES, marketSourceName } from "./sources";
 
 type Admin = SupabaseClient<Database>;
 
+type SourceQualityInput = Parameters<typeof buildSourceQuality>[0]["sources"][number];
+
 const ROW_COLUMNS =
   "id,source,status,city,county,district,neighborhood,address,property_type," +
   "transaction_type,rooms,usable_area,total_area,price,currency,price_per_sqm," +
@@ -99,7 +101,7 @@ export async function loadMarketIntelligenceRows(
 
   const { data, count, error } = await query;
   if (error) throw error;
-  const rows = (data ?? []).map((row) => mapRow(row as Record<string, unknown>));
+  const rows = ((data ?? []) as unknown as Record<string, unknown>[]).map(mapRow);
   return { rows, totalMatched: count ?? rows.length };
 }
 
@@ -141,7 +143,7 @@ export async function loadSourceQuality(
       .limit(50),
   ]);
 
-  const entries: Parameters<typeof buildSourceQuality>[0]["sources"] = [];
+  const entries: SourceQualityInput[] = [];
   for (const definition of MARKET_SOURCES) {
     const base = () =>
       admin
