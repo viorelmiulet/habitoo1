@@ -123,6 +123,12 @@ async function runTool(
       approvalGranted: options.approvalGranted === true,
     });
   }
+  if (tool.category === "crm") {
+    const { runCrmTool } = await import("@/lib/ai/agents/crm/tools.server");
+    return runCrmTool(actor, tool.name, args, tool.capability, {
+      approvalGranted: options.approvalGranted === true,
+    });
+  }
   const admin = await loadAdmin();
   const org = actor.organizationId;
   const capability = tool.capability;
