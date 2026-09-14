@@ -688,9 +688,13 @@ function PropertyDetailPage() {
         <Button size="sm" variant="outline" onClick={() => setAddClientOpen(true)}>
           <UserPlus className="size-4" /> Adaugă client
         </Button>
+        <Button size="sm" variant="outline" onClick={() => setTab("acp")}>
+          <BarChart3 className="size-4" /> Analiză comparativă de piață (ACP)
+        </Button>
       </div>
 
-      <Tabs defaultValue="overview">
+      <Tabs value={tab} onValueChange={setTab}>
+
         <TabsList className="h-auto flex-wrap justify-start gap-1 rounded-none border-b border-border bg-transparent p-0">
           {[
             ["overview", "Overview"],
