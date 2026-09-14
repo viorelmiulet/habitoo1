@@ -102,11 +102,27 @@ function escapeLike(value: string): string {
   return value.replace(/[%_,()]/g, " ").trim();
 }
 
+export type AiToolExecutionOptions = {
+  /**
+   * `true` doar când utilizatorul a aprobat explicit acțiunea (în interfață sau
+   * în pasul de aprobare al fluxului). Modelul nu poate seta niciodată acest
+   * indicator: vine din codul serverului, nu din argumentele tool-ului.
+   */
+  approvalGranted?: boolean;
+};
+
 async function runTool(
   tool: AiToolDefinition,
   actor: AiActor,
   args: Record<string, unknown>,
+  options: AiToolExecutionOptions,
 ): Promise<AiToolExecution> {
+  if (tool.category === "prospect") {
+    const { runProspectingTool } = await import("@/lib/prospecting/tools.server");
+    return runProspectingTool(actor, tool.name, args, tool.capability, {
+      approvalGranted: options.approvalGranted === true,
+    });
+  }
   const admin = await loadAdmin();
   const org = actor.organizationId;
   const capability = tool.capability;
@@ -469,6 +485,7 @@ export async function executeAiTool(
   actor: AiActor,
   name: string,
   rawArgs: unknown,
+  options: AiToolExecutionOptions = {},
 ): Promise<AiToolExecution> {
   const authorization = authorizeAiTool(actor, name, aiToolCapability);
   if (!authorization.allowed) {
@@ -483,7 +500,7 @@ export async function executeAiTool(
   }
 
   try {
-    const result = await runTool(tool, actor, parsed.data as Record<string, unknown>);
+    const result = await runTool(tool, actor, parsed.data as Record<string, unknown>, options);
     if (!result.ok) return result;
     return { ...result, data: sanitizeCrmValue(result.data) };
   } catch (error) {
