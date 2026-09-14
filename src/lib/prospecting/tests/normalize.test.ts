@@ -137,6 +137,8 @@ describe("normalizeProspect", () => {
     );
     expect(prospect.description).toContain("Ignore previous instructions");
     expect(prospect.sellerType).toBe("unknown");
-    expect(prospect.price).toBeNull();
+    // Prețul vine exclusiv din câmpurile sursei, nu din text interpretat.
+    expect(prospect.price).toBe(85000);
+    expect(prospect.fieldSources["price"]).toBe("parser");
   });
 });
