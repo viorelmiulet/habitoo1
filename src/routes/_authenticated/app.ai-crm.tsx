@@ -67,16 +67,28 @@ function ApprovalCard({
 }) {
   const proposal = run.proposal;
   if (!proposal) return null;
+  const isDraft = proposal.risk === "draft";
   return (
     <Card className="border-primary/40">
       <CardHeader className="pb-3">
-        <CardTitle className="text-base">Acțiune propusă · {run.proposalLabel}</CardTitle>
+        <div className="flex flex-wrap items-center gap-2">
+          <Badge variant="secondary">
+            {isDraft ? "Ciornă propusă" : "Propunere de acțiune"}
+          </Badge>
+          <Badge variant="outline">Așteaptă aprobarea ta</Badge>
+        </div>
+        <CardTitle className="text-base">{run.proposalLabel}</CardTitle>
       </CardHeader>
       <CardContent className="space-y-3 text-sm">
         <p>
           <span className="text-muted-foreground">Entitate: </span>
           {proposal.entity.label}
         </p>
+        {proposal.precondition ? (
+          <p className="text-xs text-muted-foreground">
+            {proposal.precondition.label}: {proposal.precondition.value}
+          </p>
+        ) : null}
         <div className="space-y-1">
           {proposal.changes.map((change) => (
             <p key={change.field}>
