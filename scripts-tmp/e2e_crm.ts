@@ -34,6 +34,45 @@ async function cleanup() {
   await admin.from("properties").delete().eq("organization_id", ORG_A).ilike("title", "E2E CRM%");
 }
 
+/** Construiește un flux suspendat cu o propunere reală, fără apel la model. */
+async function seedSuspendedRun(leadId: string, title: string, dueAt: string): Promise<string | null> {
+  const { initialCrmState, completeCrmStep } = await import("@/lib/ai/agents/crm/workflow");
+  const { buildCrmProposal } = await import("@/lib/ai/agents/crm/actions");
+  const question = `Creează un follow-up numit „${title}” pentru lead-ul cu id ${leadId}.`;
+  let state = initialCrmState({ question });
+  for (const step of ["authenticate", "resolve_organization", "classify_request", "build_context", "read_tools", "analyze", "respond"] as const) {
+    state = completeCrmStep(state, step);
+  }
+  const proposal = buildCrmProposal({
+    tool: "create_task",
+    args: { leadId, title, dueAt, description: null },
+    entity: { type: "lead", id: leadId, label: "E2E CRM Lead Popescu" },
+    changes: [{ field: "task", label: "Activitate nouă", from: "—", to: title }],
+    reason: "E2E Stage 14",
+  });
+  state = {
+    ...state,
+    answer: "Leadul nu are follow-up programat.",
+    proposal,
+    step: "approval",
+  };
+  const { data } = await admin
+    .from("ai_workflow_runs")
+    .insert({
+      organization_id: ORG_A,
+      user_id: USER_A,
+      workflow: "habitooCrmWorkflow",
+      status: "suspended",
+      current_step: "approval",
+      state: state as never,
+      pending_approval: proposal as never,
+      trace_id: `e2e-${Date.now()}`,
+    })
+    .select("id")
+    .single();
+  return data?.id ?? null;
+}
+
 async function main() {
   await cleanup();
 
@@ -164,7 +203,7 @@ async function main() {
   check("fluxul de citire nu suspendă degeaba", readTurn.run?.status === "completed", readTurn.run?.status ?? "");
 
   /* 4. Cerere de acțiune → propunere + suspend */
-  const dueDate = new Date(Date.now() + 86400000).toISOString();
+  const dueDate: string = new Date(Date.now() + 86400000).toISOString();
   const question = `Creează un follow-up numit „E2E CRM follow-up” pentru lead-ul cu id ${lead!.id} pentru mâine, ${dueDate}.`;
   const actionTurn = await runCrmTurn(actorA, { question });
   check(
@@ -173,11 +212,18 @@ async function main() {
     `${actionTurn.run?.status ?? actionTurn.status} · ${actionTurn.run?.proposal?.tool ?? actionTurn.message ?? actionTurn.warnings.join("; ")}`,
   );
 
-  const runId = actionTurn.run?.id ?? null;
+  let runId = actionTurn.run?.id ?? null;
   if (!runId || actionTurn.run?.status !== "suspended") {
-    console.log("\n".concat(results.join("\n")));
-    console.log("\nE2E oprit: nu s-a produs o propunere de acțiune.");
-    return;
+    // Cota gratuită a providerului este epuizată: verificăm restul lanțului
+    // (aprobare → execuție reală → idempotență → cross-tenant) pe un flux
+    // suspendat identic, construit server-side cu aceleași funcții pure.
+    console.log("… propunere de la model indisponibilă; testez lanțul de aprobare direct");
+    runId = await seedSuspendedRun(lead!.id, "E2E CRM follow-up", dueDate);
+    check("flux suspendat pregătit pentru testul de aprobare", Boolean(runId));
+    if (!runId) {
+      console.log(`\n${results.join("\n")}`);
+      return;
+    }
   }
 
   /* 5. Starea persistă (reload) */
