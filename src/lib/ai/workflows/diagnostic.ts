@@ -30,7 +30,8 @@ export type WorkflowStatus = "running" | "suspended" | "completed" | "failed";
 /** Acțiunea propusă de agent. În Stage 11 poate fi DOAR o citire. */
 export type ProposedAction = {
   tool: string;
-  arguments: Record<string, unknown>;
+  /** Parametrii serializați (JSON), ca propunerea să rămână urmăribilă. */
+  argumentsJson: string;
   /** Explicație în limbaj natural, afișată utilizatorului la aprobare. */
   reason: string;
   readOnly: true;

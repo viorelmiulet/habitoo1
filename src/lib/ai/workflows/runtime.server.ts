@@ -100,7 +100,7 @@ function proposeAction(state: WorkflowState): ProposedAction | null {
   if (state.input.propertyId) {
     return {
       tool: "get_acp",
-      arguments: { propertyId: state.input.propertyId },
+      argumentsJson: JSON.stringify({ propertyId: state.input.propertyId }),
       reason: "Citirea celei mai recente analize comparative de piață a proprietății selectate.",
       readOnly: true,
     };
@@ -108,7 +108,7 @@ function proposeAction(state: WorkflowState): ProposedAction | null {
   const query = state.input.question.slice(0, 80);
   return {
     tool: "search_properties",
-    arguments: { query, limit: 5 },
+    argumentsJson: JSON.stringify({ query, limit: 5 }),
     reason: `Căutarea în portofoliul agenției după „${query}”.`,
     readOnly: true,
   };
@@ -229,8 +229,14 @@ export async function resumeDiagnosticWorkflow(
   if (approved && state.proposal) {
     const { executeAiTool } = await import("../tools/executors.server");
     const proposal = state.proposal;
+    let args: unknown = {};
+    try {
+      args = JSON.parse(proposal.argumentsJson);
+    } catch {
+      args = {};
+    }
     const execution = await tracer.span("tool", proposal.tool, () =>
-      executeAiTool(actor, proposal.tool, proposal.arguments),
+      executeAiTool(actor, proposal.tool, args),
     );
     state = {
       ...state,

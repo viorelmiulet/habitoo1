@@ -23,7 +23,7 @@ function runToApproval() {
     ...completeStep(state, "agent"),
     proposal: {
       tool: "search_properties",
-      arguments: { query: "Cluj" },
+      argumentsJson: JSON.stringify({ query: "Cluj" }),
       reason: "Căutare în portofoliu.",
       readOnly: true,
     },
