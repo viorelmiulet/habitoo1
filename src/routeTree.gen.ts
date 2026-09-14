@@ -39,6 +39,7 @@ import { Route as AuthenticatedAppGoalsRouteImport } from './routes/_authenticat
 import { Route as AuthenticatedAppLeadsRouteImport } from './routes/_authenticated/app.leads'
 import { Route as AuthenticatedAppMatchingRouteImport } from './routes/_authenticated/app.matching'
 import { Route as AuthenticatedAppNotificationsRouteImport } from './routes/_authenticated/app.notifications'
+import { Route as AuthenticatedAppProspectingRouteImport } from './routes/_authenticated/app.prospecting'
 import { Route as AuthenticatedAppReportsRouteImport } from './routes/_authenticated/app.reports'
 import { Route as AuthenticatedAppRequestsRouteImport } from './routes/_authenticated/app.requests'
 import { Route as AuthenticatedAppSettingsRouteImport } from './routes/_authenticated/app.settings'
@@ -243,6 +244,12 @@ const AuthenticatedAppNotificationsRoute =
   AuthenticatedAppNotificationsRouteImport.update({
     id: '/notifications',
     path: '/notifications',
+    getParentRoute: () => AuthenticatedAppRoute,
+  } as any)
+const AuthenticatedAppProspectingRoute =
+  AuthenticatedAppProspectingRouteImport.update({
+    id: '/prospecting',
+    path: '/prospecting',
     getParentRoute: () => AuthenticatedAppRoute,
   } as any)
 const AuthenticatedAppReportsRoute = AuthenticatedAppReportsRouteImport.update({
@@ -562,6 +569,7 @@ export interface FileRoutesByFullPath {
   '/app/leads': typeof AuthenticatedAppLeadsRoute
   '/app/matching': typeof AuthenticatedAppMatchingRoute
   '/app/notifications': typeof AuthenticatedAppNotificationsRoute
+  '/app/prospecting': typeof AuthenticatedAppProspectingRoute
   '/app/reports': typeof AuthenticatedAppReportsRoute
   '/app/requests': typeof AuthenticatedAppRequestsRouteWithChildren
   '/app/settings': typeof AuthenticatedAppSettingsRoute
@@ -641,6 +649,7 @@ export interface FileRoutesByTo {
   '/app/leads': typeof AuthenticatedAppLeadsRoute
   '/app/matching': typeof AuthenticatedAppMatchingRoute
   '/app/notifications': typeof AuthenticatedAppNotificationsRoute
+  '/app/prospecting': typeof AuthenticatedAppProspectingRoute
   '/app/reports': typeof AuthenticatedAppReportsRoute
   '/app/requests': typeof AuthenticatedAppRequestsRouteWithChildren
   '/app/settings': typeof AuthenticatedAppSettingsRoute
@@ -724,6 +733,7 @@ export interface FileRoutesById {
   '/_authenticated/app/leads': typeof AuthenticatedAppLeadsRoute
   '/_authenticated/app/matching': typeof AuthenticatedAppMatchingRoute
   '/_authenticated/app/notifications': typeof AuthenticatedAppNotificationsRoute
+  '/_authenticated/app/prospecting': typeof AuthenticatedAppProspectingRoute
   '/_authenticated/app/reports': typeof AuthenticatedAppReportsRoute
   '/_authenticated/app/requests': typeof AuthenticatedAppRequestsRouteWithChildren
   '/_authenticated/app/settings': typeof AuthenticatedAppSettingsRoute
@@ -807,6 +817,7 @@ export interface FileRouteTypes {
     | '/app/leads'
     | '/app/matching'
     | '/app/notifications'
+    | '/app/prospecting'
     | '/app/reports'
     | '/app/requests'
     | '/app/settings'
@@ -886,6 +897,7 @@ export interface FileRouteTypes {
     | '/app/leads'
     | '/app/matching'
     | '/app/notifications'
+    | '/app/prospecting'
     | '/app/reports'
     | '/app/requests'
     | '/app/settings'
@@ -968,6 +980,7 @@ export interface FileRouteTypes {
     | '/_authenticated/app/leads'
     | '/_authenticated/app/matching'
     | '/_authenticated/app/notifications'
+    | '/_authenticated/app/prospecting'
     | '/_authenticated/app/reports'
     | '/_authenticated/app/requests'
     | '/_authenticated/app/settings'
@@ -1271,6 +1284,13 @@ declare module '@tanstack/react-router' {
       path: '/notifications'
       fullPath: '/app/notifications'
       preLoaderRoute: typeof AuthenticatedAppNotificationsRouteImport
+      parentRoute: typeof AuthenticatedAppRoute
+    }
+    '/_authenticated/app/prospecting': {
+      id: '/_authenticated/app/prospecting'
+      path: '/prospecting'
+      fullPath: '/app/prospecting'
+      preLoaderRoute: typeof AuthenticatedAppProspectingRouteImport
       parentRoute: typeof AuthenticatedAppRoute
     }
     '/_authenticated/app/reports': {
@@ -1649,6 +1669,7 @@ interface AuthenticatedAppRouteChildren {
   AuthenticatedAppLeadsRoute: typeof AuthenticatedAppLeadsRoute
   AuthenticatedAppMatchingRoute: typeof AuthenticatedAppMatchingRoute
   AuthenticatedAppNotificationsRoute: typeof AuthenticatedAppNotificationsRoute
+  AuthenticatedAppProspectingRoute: typeof AuthenticatedAppProspectingRoute
   AuthenticatedAppReportsRoute: typeof AuthenticatedAppReportsRoute
   AuthenticatedAppRequestsRoute: typeof AuthenticatedAppRequestsRouteWithChildren
   AuthenticatedAppSettingsRoute: typeof AuthenticatedAppSettingsRoute
@@ -1678,6 +1699,7 @@ const AuthenticatedAppRouteChildren: AuthenticatedAppRouteChildren = {
   AuthenticatedAppLeadsRoute: AuthenticatedAppLeadsRoute,
   AuthenticatedAppMatchingRoute: AuthenticatedAppMatchingRoute,
   AuthenticatedAppNotificationsRoute: AuthenticatedAppNotificationsRoute,
+  AuthenticatedAppProspectingRoute: AuthenticatedAppProspectingRoute,
   AuthenticatedAppReportsRoute: AuthenticatedAppReportsRoute,
   AuthenticatedAppRequestsRoute: AuthenticatedAppRequestsRouteWithChildren,
   AuthenticatedAppSettingsRoute: AuthenticatedAppSettingsRoute,

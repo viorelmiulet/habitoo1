@@ -41,10 +41,7 @@ import {
 
 export const Route = createFileRoute("/_authenticated/app/prospecting")({
   head: () =>
-    appHead(
-      "Prospectare — oportunități imobiliare",
-      "Descoperă, filtrează și importă oportunități imobiliare în CRM, cu aprobare umană la fiecare pas.",
-    ),
+    appHead("Prospectare — oportunități imobiliare | Habitoo"),
   component: ProspectingPage,
 });
 
