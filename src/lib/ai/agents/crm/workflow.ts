@@ -46,7 +46,14 @@ export type CrmWorkflowState = {
   answer: string | null;
   proposal: CrmActionProposal | null;
   approval: { approved: boolean; decidedAt: string } | null;
-  execution: { ok: boolean; message: string; entityId: string | null; duplicate: boolean } | null;
+  execution: {
+    ok: boolean;
+    message: string;
+    entityId: string | null;
+    duplicate: boolean;
+    /** Motivul tehnic al eșecului: „blocat” (denied/invalid_input) vs „eșuat”. */
+    code?: string | null;
+  } | null;
   notes: string[];
   /** Eșec explicit: cererea de modificare nu a putut fi transformată în propunere. */
   failure: string | null;
