@@ -99,7 +99,39 @@ export type AcpReportVersionInput = {
   comparables: AcpReportComparableInput[];
   sources: AcpReportSourceInput[];
   ai: { summary: string | null; model: string | null; generatedAt: string | null } | null;
+  /**
+   * Snapshot Market Intelligence (Stage 4) salvat la rularea versiunii.
+   * Raportul folosește aceste cifre, nu piața live de la momentul generării.
+   */
+  market?: AcpReportMarketInput | null;
 };
+
+export type AcpReportMarketInput = {
+  capturedAt: string | null;
+  aggregate: {
+    totalMatched: number;
+    sampleSize: number;
+    pricePerSqm: {
+      count: number;
+      min: number | null;
+      max: number | null;
+      average: number | null;
+      median: number | null;
+      p25: number | null;
+      p75: number | null;
+    };
+    freshness: { lastSeenAt: string | null; lastSyncAt: string | null; level: string };
+    coverage: { level: string; completeness: number | null };
+    sourceMix: { source: string; count: number; share: number }[];
+    insufficient: boolean;
+    insufficientReason: string | null;
+  } | null;
+  insights: {
+    property: { label: string; deltaVsMedianPercent: number | null; percentileRank: number | null };
+    recommended: { label: string; deltaVsMedianPercent: number | null };
+    estimateVsMarketPercent: number | null;
+  } | null;
+
 
 export type AcpReportAgency = {
   name: string;
