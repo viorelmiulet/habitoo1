@@ -12,11 +12,13 @@ export const AI_CAPABILITIES = [
   "read:contacts",
   "read:leads",
   "read:acp",
+  "read:prospecting",
+  "write:prospecting",
 ] as const;
 
 export type AiCapability = (typeof AI_CAPABILITIES)[number];
 
-/** În Stage 11A toate rolurile au doar capabilități de citire. */
+/** Toate rolurile agenției pot prospecta; scrierea rămâne condiționată de aprobare umană. */
 const ROLE_CAPABILITIES: Record<AiRole, readonly AiCapability[]> = {
   agent: AI_CAPABILITIES,
   admin: AI_CAPABILITIES,
