@@ -38,7 +38,12 @@ export type AiGenerateRequest = {
 
 export type AiGenerateResult = {
   text: string;
-  toolCalls: { name: string; arguments: Record<string, unknown> }[];
+  toolCalls: {
+    name: string;
+    arguments: Record<string, unknown>;
+    /** Semnătura de raționament a providerului, retrimisă la turul următor. */
+    signature?: string | null;
+  }[];
   inputTokens: number | null;
   outputTokens: number | null;
 };
