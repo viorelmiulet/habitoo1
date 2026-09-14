@@ -557,6 +557,39 @@ async function enforceRunRateLimit(
   }
 }
 
+/**
+ * Stage 9: blochează rulările noi (analiză nouă sau versiune nouă) pentru o
+ * proprietate retrasă din portofoliu. Istoricul existent rămâne accesibil.
+ */
+async function assertTargetRunnable(
+  admin: Awaited<ReturnType<typeof loadAdmin>>,
+  actor: { organizationId: string; userId: string },
+  propertyId: string | null,
+) {
+  if (!propertyId) return;
+  const { data, error } = await admin
+    .from("properties")
+    .select("id,status,archived_at")
+    .eq("id", propertyId)
+    .eq("organization_id", actor.organizationId)
+    .maybeSingle();
+  if (error) throw acpDbError("load target property", error);
+  if (!data) return;
+  const verdict = canRunAcpForTarget({
+    archivedAt: data.archived_at ?? null,
+    status: data.status ?? null,
+  });
+  if (verdict.allowed) return;
+  await logAcpAudit({
+    organizationId: actor.organizationId,
+    actorId: actor.userId,
+    action: ACP_AUDIT_ACTIONS.runBlocked,
+    details: { propertyId, reason: verdict.reason },
+  });
+  throw acpError(verdict.message);
+}
+
+
 const createSchema = z.object({
   propertyId: z.string().uuid(),
   title: z.string().trim().max(200).optional(),
