@@ -70,11 +70,32 @@ async function writeAudit(
   }
 }
 
-const ANALYSIS_COLUMNS =
-  "id,organization_id,property_id,title,status,error_message,version,root_analysis_id," +
-  "snapshot_at,last_run_at,created_at,sources,comparables_count,comparables_used," +
-  "confidence_score,estimated_min,estimated_value,estimated_max,recommended_listing_price," +
-  "median_price_per_sqm,average_price_per_sqm,ai_summary,ai_model,ai_generated_at";
+type AnalysisRow = {
+  id: string;
+  organization_id: string;
+  property_id: string | null;
+  title: string;
+  status: string | null;
+  error_message: string | null;
+  version: number | null;
+  root_analysis_id: string | null;
+  snapshot_at: string | null;
+  last_run_at: string | null;
+  created_at: string;
+  sources: unknown;
+  comparables_count: number | null;
+  comparables_used: number | null;
+  confidence_score: number | null;
+  estimated_min: number | null;
+  estimated_value: number | null;
+  estimated_max: number | null;
+  recommended_listing_price: number | null;
+  median_price_per_sqm: number | null;
+  average_price_per_sqm: number | null;
+  ai_summary: string | null;
+  ai_model: string | null;
+  ai_generated_at: string | null;
+};
 
 export type PropertyAcpWorkflow = {
   property: {
@@ -147,13 +168,13 @@ export const getPropertyAcpWorkflow = createServerFn({ method: "POST" })
 
     const { data: rows, error: analysisError } = await admin
       .from("acp_analyses")
-      .select(ANALYSIS_COLUMNS)
+      .select("*")
       .eq("organization_id", actor.organizationId)
       .eq("property_id", data.propertyId)
       .order("created_at", { ascending: false })
       .limit(1);
     if (analysisError) throw analysisError;
-    const latest = (rows ?? [])[0] ?? null;
+    const latest = ((rows ?? [])[0] ?? null) as AnalysisRow | null;
 
     if (!latest) {
       return {
@@ -287,34 +308,32 @@ export const applyAcpRecommendedPrice = createServerFn({ method: "POST" })
 
       const { data: analysis, error } = await admin
         .from("acp_analyses")
-        .select(
-          "id,organization_id,property_id,version,status,error_message,comparables_used," +
-            "estimated_value,recommended_listing_price,snapshot_at",
-        )
+        .select("*")
         .eq("id", data.analysisId)
         .eq("organization_id", actor.organizationId)
         .maybeSingle();
       if (error) throw error;
       if (!analysis) throw new Error("Analiza nu a fost găsită în agenția ta.");
+      const row = analysis as unknown as AnalysisRow;
 
       const status = acpWorkflowStatus({
-        status: analysis.status,
-        errorMessage: analysis.error_message,
-        comparablesUsed: analysis.comparables_used,
-        estimatedValue: analysis.estimated_value,
+        status: row.status,
+        errorMessage: row.error_message,
+        comparablesUsed: row.comparables_used,
+        estimatedValue: row.estimated_value,
       });
-      const recommended = analysis.recommended_listing_price;
+      const recommended = row.recommended_listing_price;
       if (status !== "completed" || !recommended || !Number.isFinite(Number(recommended))) {
         throw new Error("Analiza nu are un preț recomandat care poate fi aplicat.");
       }
-      if (!analysis.property_id) {
+      if (!row.property_id) {
         throw new Error("Analiza nu este legată de o proprietate.");
       }
 
       const { data: property, error: propertyError } = await admin
         .from("properties")
         .select("id,price,currency,transaction_kind,for_sale,for_rent")
-        .eq("id", analysis.property_id)
+        .eq("id", row.property_id)
         .eq("organization_id", actor.organizationId)
         .maybeSingle();
       if (propertyError) throw propertyError;
@@ -344,9 +363,9 @@ export const applyAcpRecommendedPrice = createServerFn({ method: "POST" })
         newValues: {
           price: newPrice,
           currency,
-          analysisId: analysis.id,
-          analysisVersion: analysis.version ?? 1,
-          snapshotAt: analysis.snapshot_at ?? null,
+          analysisId: row.id,
+          analysisVersion: row.version ?? 1,
+          snapshotAt: row.snapshot_at ?? null,
         },
       });
 
