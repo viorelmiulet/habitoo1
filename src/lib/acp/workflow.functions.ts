@@ -152,7 +152,7 @@ export const getPropertyAcpWorkflow = createServerFn({ method: "POST" })
 
     const { data: property, error: propertyError } = await admin
       .from("properties")
-      .select("id,title,reference,price,currency,transaction_kind,organization_id")
+      .select("id,title,reference,price,currency,transaction_kind,status,archived_at,organization_id")
       .eq("id", data.propertyId)
       .eq("organization_id", actor.organizationId)
       .maybeSingle();
@@ -166,6 +166,7 @@ export const getPropertyAcpWorkflow = createServerFn({ method: "POST" })
       price: property.price ?? null,
       currency: property.currency ?? "EUR",
       transactionKind: property.transaction_kind ?? null,
+      archived: Boolean(property.archived_at) || property.status === "archived",
     };
 
     const { data: rows, error: analysisError } = await admin
