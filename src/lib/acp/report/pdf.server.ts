@@ -276,6 +276,24 @@ export async function buildAcpReportPdf(model: AcpReportModel): Promise<Uint8Arr
     text("Nu au fost înregistrate surse pentru această versiune.", { size: 8.5, color: MUTED });
   }
 
+  /* ---------------- Piața la momentul analizei ---------------- */
+  if (model.market) {
+    heading("Piața la momentul analizei");
+    text(
+      `Cifre din snapshot-ul de piață al versiunii${
+        model.market.capturedAt ? `, capturat la ${reportDate(model.market.capturedAt)}` : ""
+      }. Nu reflectă evoluțiile ulterioare ale pieței.`,
+      { size: 8, color: MUTED, gap: 4 },
+    );
+    for (const row of model.market.rows) {
+      ensure(13);
+      page.drawText(row.label, { x: MARGIN, y: y - 9, size: 8.5, font: regular, color: MUTED });
+      page.drawText(row.value, { x: MARGIN + 260, y: y - 9, size: 8.5, font: bold, color: INK });
+      y -= 13;
+    }
+    if (model.market.note) text(model.market.note, { size: 8, color: MUTED });
+  }
+
   /* ---------------- Limitări ---------------- */
   if (model.warnings.length > 0) {
     heading("Limitări și observații privind datele");
