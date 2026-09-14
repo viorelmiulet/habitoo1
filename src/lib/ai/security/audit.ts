@@ -7,6 +7,9 @@ export const AI_AUDIT_ACTIONS = {
   chatFailed: "ai.chat.failed",
   toolExecuted: "ai.tool.executed",
   toolDenied: "ai.tool.denied",
+  workflowStarted: "ai.workflow.started",
+  workflowApproved: "ai.workflow.approved",
+  workflowRejected: "ai.workflow.rejected",
 } as const;
 
 export type AiAuditAction = (typeof AI_AUDIT_ACTIONS)[keyof typeof AI_AUDIT_ACTIONS];
