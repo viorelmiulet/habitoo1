@@ -83,8 +83,9 @@ export async function buildAcpReportPdf(model: AcpReportModel): Promise<Uint8Arr
     }
     y -= opts.gap ?? 0;
   };
+  /** Un titlu de secțiune nu rămâne niciodată singur la baza paginii. */
   const heading = (label: string) => {
-    ensure(34);
+    ensure(76);
     y -= 10;
     page.drawText(label.toUpperCase(), { x: MARGIN, y: y - 11, size: 10.5, font: bold, color: NAVY });
     y -= 16;
