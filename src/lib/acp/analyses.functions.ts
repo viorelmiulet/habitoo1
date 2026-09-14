@@ -16,7 +16,16 @@ import type { AcpComparableResult } from "./engine";
 import { ACP_AUDIT_ACTIONS, logAcpAudit } from "./audit";
 import { parseAcpAiInsight, type AcpAiInsight } from "./ai/schema";
 import { dedupeMarketCandidates } from "@/lib/market/acp";
+import {
+  buildAcpMarketInsights,
+  marketFiltersFromSubject,
+  type MarketIntelligenceAggregate,
+  type MarketIntelligenceFilters,
+} from "@/lib/market/intelligence";
+
+// `intelligence.server.ts` este server-only: se importă dinamic în handler.
 import { marketSourceName } from "@/lib/market/sources";
+
 import {
   compareAcpVersionSnapshots,
   nextVersionNumber,
@@ -301,7 +310,46 @@ async function persistRun(params: {
 }) {
   const { admin, analysisId, result } = params;
 
+  // Snapshot Market Intelligence (Stage 4): statisticile pieței valabile la
+  // momentul rulării. Raportul unei versiuni istorice folosește acest snapshot,
+  // nu datele live. Eșecul acestui pas nu blochează analiza.
+  let marketIntelligence: {
+    capturedAt: string;
+    filters: MarketIntelligenceFilters;
+    aggregate: MarketIntelligenceAggregate;
+    insights: ReturnType<typeof buildAcpMarketInsights>;
+  } | null = null;
+  try {
+    const { computeMarketIntelligence } = await import("@/lib/market/intelligence.server");
+    const filters = marketFiltersFromSubject(params.target);
+    const market = await computeMarketIntelligence(admin, filters, {
+      includeTrend: false,
+      includeSources: false,
+    });
+
+    marketIntelligence = {
+      capturedAt: market.computedAt,
+      filters,
+      aggregate: market.aggregate,
+      insights: buildAcpMarketInsights({
+        aggregate: market.aggregate,
+        samplePricePerSqm: market.samplePricePerSqm,
+        targetPricePerSqm: targetPricePerSqm(params.target),
+        estimatedValue: result.estimate.estimatedValue,
+        recommendedListingPrice: result.estimate.recommendedListingPrice,
+        usableArea: params.target.usableArea ?? null,
+        comparables: result.comparables.map((c) => ({
+          isSelected: c.isSelected,
+          isOutlier: c.isOutlier,
+        })),
+      }),
+    };
+  } catch {
+    marketIntelligence = null;
+  }
+
   await admin.from("acp_comparables").delete().eq("analysis_id", analysisId);
+
 
   if (result.comparables.length > 0) {
     const rows = result.comparables.map((c) => ({
@@ -401,7 +449,9 @@ async function persistRun(params: {
         overrides: params.overrides,
         candidatesFound: result.candidatesFound,
         targetPricePerSqm: targetPricePerSqm(params.target),
+        marketIntelligence,
       } as never,
+
     })
     .eq("id", analysisId);
   if (updateError) throw updateError;
