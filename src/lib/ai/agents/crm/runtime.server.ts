@@ -743,6 +743,7 @@ export async function resumeCrmWorkflow(
           ? (((execution.data as { id?: string | null } | null)?.id ?? null) as string | null)
           : null,
         duplicate,
+        code: execution.ok ? null : execution.code,
       },
     };
     state = completeCrmStep(state, "execute_action");
