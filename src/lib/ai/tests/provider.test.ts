@@ -83,3 +83,27 @@ describe("mesaje sigure de eroare", () => {
     expect(safeAiProviderMessage(new Error("SQL error at line 12"))).not.toContain("SQL");
   });
 });
+
+describe("regresie: model și buget de tokeni (Gemini 3)", () => {
+  it("modelul implicit nu este cel retras pentru cheile noi", async () => {
+    const { GEMINI_DEFAULT_MODEL, GEMINI_MAX_OUTPUT_TOKENS, GEMINI_THINKING_LEVEL } = await import(
+      "../providers/gemini.server"
+    );
+    expect(GEMINI_DEFAULT_MODEL).not.toBe("gemini-2.5-flash");
+    expect(GEMINI_DEFAULT_MODEL).toMatch(/^gemini-/);
+    // Bugetul acoperă și tokenii de raționament ai modelelor Gemini 3.
+    expect(GEMINI_MAX_OUTPUT_TOKENS).toBeGreaterThanOrEqual(2048);
+    expect(GEMINI_THINKING_LEVEL).toBe("low");
+  });
+
+  it("MAX_TOKENS fără conținut dă un mesaj explicit, nu „răspuns invalid”", () => {
+    let message = "";
+    try {
+      parseGeminiResponse({ candidates: [{ content: {}, finishReason: "MAX_TOKENS" }] });
+    } catch (error) {
+      message = (error as Error).message;
+    }
+    expect(message).toMatch(/limita de lungime/i);
+    expect(message).not.toMatch(/invalid/i);
+  });
+});
