@@ -20,6 +20,7 @@ import {
   PanelLeftClose,
   PanelLeftOpen,
   PlusCircle,
+  Radar,
   Settings,
   ShieldCheck,
   Sparkles,
@@ -61,6 +62,10 @@ export const agencyNav: NavGroup[] = [
   {
     title: "Rețea",
     items: [{ label: "Colaborare", to: "/app/collaboration", icon: Handshake }],
+  },
+  {
+    title: "Prospectare",
+    items: [{ label: "Oportunități", to: "/app/prospecting", icon: Radar }],
   },
   {
     title: "ACP",

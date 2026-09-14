@@ -204,3 +204,16 @@
 - [ ] Acțiuni (email, WhatsApp, publicare portal, ștergere, modificare preț, contracte).
 - [ ] Agent autonom, agent de fundal, multi-agent, memorie AI permanentă.
 - [ ] Streaming al răspunsului.
+
+## Stage 13 — Prospecting Agent (finalizat)
+- [x] Model de date prospectare cu RLS per agenție (migrare 0042)
+- [x] Abstracție surse (`ProspectingSourceProvider`): `http_feed` (surse publice, robots.txt) + `manual_list`
+- [x] Portaluri fără integrare autorizată: rămân neconfigurate; fără Bright Data
+- [x] Normalizare deterministă, deduplicare pe 6 niveluri, scor 0–100 cu breakdown
+- [x] Clasificare Gemini server-side, JSON validat, fără inventarea valorilor
+- [x] Workflow Mastra suspendabil/reluabil, retry doar pentru erori tranzitorii
+- [x] Human approval obligatoriu înainte de import în CRM; import idempotent
+- [x] UI „Prospectare”: căutare nouă, oportunități, rulări, surse, istoric
+- [x] Audit, tracing, usage, izolare cross-tenant — validate end-to-end
+- Limitări: nicio sursă externă reală autorizată încă (E2E rulat pe date de test marcate explicit); fără trimitere mesaje/publicare automată.
+- Următor (Stage 14): integrarea unei surse externe autorizate reale + outreach cu aprobare.

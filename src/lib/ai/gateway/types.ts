@@ -18,7 +18,7 @@ export type AiActor = {
 };
 
 export type AiSource = {
-  type: "property" | "contact" | "lead" | "acp";
+  type: "property" | "contact" | "lead" | "acp" | "prospect";
   id: string;
   label: string;
 };

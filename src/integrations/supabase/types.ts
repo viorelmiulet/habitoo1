@@ -4383,6 +4383,458 @@ export type Database = {
           },
         ]
       }
+      prospect_reviews: {
+        Row: {
+          created_at: string
+          decision: string
+          id: string
+          notes: string | null
+          organization_id: string
+          prospect_id: string
+          reviewer_id: string
+        }
+        Insert: {
+          created_at?: string
+          decision: string
+          id?: string
+          notes?: string | null
+          organization_id: string
+          prospect_id: string
+          reviewer_id: string
+        }
+        Update: {
+          created_at?: string
+          decision?: string
+          id?: string
+          notes?: string | null
+          organization_id?: string
+          prospect_id?: string
+          reviewer_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "prospect_reviews_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "prospect_reviews_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
+            referencedRelation: "prospects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      prospecting_runs: {
+        Row: {
+          candidates_found: number
+          completed_at: string | null
+          created_at: string
+          duplicates_found: number
+          error_summary: string | null
+          errors_count: number
+          id: string
+          items_found: number
+          items_normalized: number
+          organization_id: string
+          search_id: string
+          started_at: string
+          status: string
+          workflow_run_id: string | null
+        }
+        Insert: {
+          candidates_found?: number
+          completed_at?: string | null
+          created_at?: string
+          duplicates_found?: number
+          error_summary?: string | null
+          errors_count?: number
+          id?: string
+          items_found?: number
+          items_normalized?: number
+          organization_id: string
+          search_id: string
+          started_at?: string
+          status?: string
+          workflow_run_id?: string | null
+        }
+        Update: {
+          candidates_found?: number
+          completed_at?: string | null
+          created_at?: string
+          duplicates_found?: number
+          error_summary?: string | null
+          errors_count?: number
+          id?: string
+          items_found?: number
+          items_normalized?: number
+          organization_id?: string
+          search_id?: string
+          started_at?: string
+          status?: string
+          workflow_run_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "prospecting_runs_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "prospecting_runs_search_id_fkey"
+            columns: ["search_id"]
+            isOneToOne: false
+            referencedRelation: "prospecting_searches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "prospecting_runs_workflow_run_id_fkey"
+            columns: ["workflow_run_id"]
+            isOneToOne: false
+            referencedRelation: "ai_workflow_runs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      prospecting_searches: {
+        Row: {
+          city: string | null
+          county: string | null
+          created_at: string
+          created_by: string
+          id: string
+          keywords: string[]
+          name: string
+          organization_id: string
+          price_max: number | null
+          price_min: number | null
+          property_type: string | null
+          rooms_max: number | null
+          rooms_min: number | null
+          source_ids: string[]
+          status: string
+          surface_max: number | null
+          surface_min: number | null
+          transaction_type: string | null
+          updated_at: string
+          workflow_run_id: string | null
+          zone: string | null
+        }
+        Insert: {
+          city?: string | null
+          county?: string | null
+          created_at?: string
+          created_by: string
+          id?: string
+          keywords?: string[]
+          name: string
+          organization_id: string
+          price_max?: number | null
+          price_min?: number | null
+          property_type?: string | null
+          rooms_max?: number | null
+          rooms_min?: number | null
+          source_ids?: string[]
+          status?: string
+          surface_max?: number | null
+          surface_min?: number | null
+          transaction_type?: string | null
+          updated_at?: string
+          workflow_run_id?: string | null
+          zone?: string | null
+        }
+        Update: {
+          city?: string | null
+          county?: string | null
+          created_at?: string
+          created_by?: string
+          id?: string
+          keywords?: string[]
+          name?: string
+          organization_id?: string
+          price_max?: number | null
+          price_min?: number | null
+          property_type?: string | null
+          rooms_max?: number | null
+          rooms_min?: number | null
+          source_ids?: string[]
+          status?: string
+          surface_max?: number | null
+          surface_min?: number | null
+          transaction_type?: string | null
+          updated_at?: string
+          workflow_run_id?: string | null
+          zone?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "prospecting_searches_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "prospecting_searches_workflow_run_id_fkey"
+            columns: ["workflow_run_id"]
+            isOneToOne: false
+            referencedRelation: "ai_workflow_runs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      prospecting_sources: {
+        Row: {
+          base_url: string | null
+          configuration: Json
+          created_at: string
+          enabled: boolean
+          id: string
+          name: string
+          organization_id: string | null
+          provider_key: string
+          source_type: string
+          updated_at: string
+        }
+        Insert: {
+          base_url?: string | null
+          configuration?: Json
+          created_at?: string
+          enabled?: boolean
+          id?: string
+          name: string
+          organization_id?: string | null
+          provider_key: string
+          source_type?: string
+          updated_at?: string
+        }
+        Update: {
+          base_url?: string | null
+          configuration?: Json
+          created_at?: string
+          enabled?: boolean
+          id?: string
+          name?: string
+          organization_id?: string | null
+          provider_key?: string
+          source_type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "prospecting_sources_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      prospects: {
+        Row: {
+          address: string | null
+          canonical_url: string | null
+          city: string | null
+          content_hash: string
+          county: string | null
+          created_at: string
+          currency: string | null
+          description: string | null
+          duplicate_group_id: string | null
+          duplicate_of_id: string | null
+          external_id: string | null
+          extraction_confidence: number | null
+          features: Json
+          first_seen_at: string
+          floor: number | null
+          id: string
+          images: Json
+          imported_contact_id: string | null
+          imported_lead_id: string | null
+          last_seen_at: string
+          normalized_hash: string
+          opportunity_score: number
+          organization_id: string
+          price: number | null
+          property_type: string | null
+          published_at: string | null
+          raw_metadata: Json
+          relevance_score: number
+          rooms: number | null
+          run_id: string | null
+          score_breakdown: Json
+          search_id: string | null
+          seller_confidence: number | null
+          seller_name: string | null
+          seller_phone: string | null
+          seller_type: string
+          source_id: string | null
+          source_url: string | null
+          status: string
+          surface_built: number | null
+          surface_useful: number | null
+          title: string
+          total_floors: number | null
+          transaction_type: string | null
+          updated_at: string
+          year_built: number | null
+          zone: string | null
+        }
+        Insert: {
+          address?: string | null
+          canonical_url?: string | null
+          city?: string | null
+          content_hash: string
+          county?: string | null
+          created_at?: string
+          currency?: string | null
+          description?: string | null
+          duplicate_group_id?: string | null
+          duplicate_of_id?: string | null
+          external_id?: string | null
+          extraction_confidence?: number | null
+          features?: Json
+          first_seen_at?: string
+          floor?: number | null
+          id?: string
+          images?: Json
+          imported_contact_id?: string | null
+          imported_lead_id?: string | null
+          last_seen_at?: string
+          normalized_hash: string
+          opportunity_score?: number
+          organization_id: string
+          price?: number | null
+          property_type?: string | null
+          published_at?: string | null
+          raw_metadata?: Json
+          relevance_score?: number
+          rooms?: number | null
+          run_id?: string | null
+          score_breakdown?: Json
+          search_id?: string | null
+          seller_confidence?: number | null
+          seller_name?: string | null
+          seller_phone?: string | null
+          seller_type?: string
+          source_id?: string | null
+          source_url?: string | null
+          status?: string
+          surface_built?: number | null
+          surface_useful?: number | null
+          title: string
+          total_floors?: number | null
+          transaction_type?: string | null
+          updated_at?: string
+          year_built?: number | null
+          zone?: string | null
+        }
+        Update: {
+          address?: string | null
+          canonical_url?: string | null
+          city?: string | null
+          content_hash?: string
+          county?: string | null
+          created_at?: string
+          currency?: string | null
+          description?: string | null
+          duplicate_group_id?: string | null
+          duplicate_of_id?: string | null
+          external_id?: string | null
+          extraction_confidence?: number | null
+          features?: Json
+          first_seen_at?: string
+          floor?: number | null
+          id?: string
+          images?: Json
+          imported_contact_id?: string | null
+          imported_lead_id?: string | null
+          last_seen_at?: string
+          normalized_hash?: string
+          opportunity_score?: number
+          organization_id?: string
+          price?: number | null
+          property_type?: string | null
+          published_at?: string | null
+          raw_metadata?: Json
+          relevance_score?: number
+          rooms?: number | null
+          run_id?: string | null
+          score_breakdown?: Json
+          search_id?: string | null
+          seller_confidence?: number | null
+          seller_name?: string | null
+          seller_phone?: string | null
+          seller_type?: string
+          source_id?: string | null
+          source_url?: string | null
+          status?: string
+          surface_built?: number | null
+          surface_useful?: number | null
+          title?: string
+          total_floors?: number | null
+          transaction_type?: string | null
+          updated_at?: string
+          year_built?: number | null
+          zone?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "prospects_duplicate_of_id_fkey"
+            columns: ["duplicate_of_id"]
+            isOneToOne: false
+            referencedRelation: "prospects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "prospects_imported_contact_id_fkey"
+            columns: ["imported_contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "prospects_imported_lead_id_fkey"
+            columns: ["imported_lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "prospects_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "prospects_run_id_fkey"
+            columns: ["run_id"]
+            isOneToOne: false
+            referencedRelation: "prospecting_runs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "prospects_search_id_fkey"
+            columns: ["search_id"]
+            isOneToOne: false
+            referencedRelation: "prospecting_searches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "prospects_source_id_fkey"
+            columns: ["source_id"]
+            isOneToOne: false
+            referencedRelation: "prospecting_sources"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       rate_limit_hits: {
         Row: {
           bucket: string

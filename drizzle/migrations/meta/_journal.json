@@ -295,6 +295,13 @@
       "when": 1789410213614,
       "tag": "0041_ai_workflow_state_and_tracing",
       "breakpoints": true
+    },
+    {
+      "idx": 42,
+      "version": "7",
+      "when": 1789411868121,
+      "tag": "0042_prospecting_domain",
+      "breakpoints": true
     }
   ]
 }
