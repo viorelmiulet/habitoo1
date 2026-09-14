@@ -93,6 +93,13 @@ export function AcpPrecisionCard({ analysis }: { analysis: AcpAnalysisView }) {
     return Math.round(used.reduce((sum, c) => sum + (c.freshness?.score ?? 0), 0) / used.length);
   })();
 
+  // Stage 10: limitarea reală de date de piață. Când nicio ofertă externă nu a
+  // intrat în analiză, precizia descrie doar portofoliul propriu/colaborările.
+  const hasExternalComparables = analysis.comparables.some(
+    (c) => c.isSelected && c.sourceType === "portal",
+  );
+
+
   return (
     <SectionCard
       title="Calibrare & Precizie"
@@ -168,7 +175,15 @@ export function AcpPrecisionCard({ analysis }: { analysis: AcpAnalysisView }) {
               Prospețimea medie a comparabilelor folosite: {freshnessAvg}/100.
             </p>
           ) : null}
+          {!hasExternalComparables ? (
+            <p className="mt-2 rounded-md border border-border/60 bg-muted/40 p-3 text-xs text-muted-foreground">
+              Analiza folosește doar oferte din portofoliul propriu și din colaborări: nu există
+              încă anunțuri din surse externe de piață. Indicatorii de precizie descriu aceste date,
+              nu întreaga piață, deci nu sunt validați statistic pe volum larg.
+            </p>
+          ) : null}
         </div>
+
 
         <div>
           <div className="mb-2 flex items-center gap-2">
