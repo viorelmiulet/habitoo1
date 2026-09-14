@@ -102,4 +102,13 @@
 - [x] Card Market Intelligence în /app/acp/$id și în „Date piață”, cu stări insuficient/gol explicite.
 - [x] Snapshot de piață salvat în versiunea ACP și inclus în raportul PDF (istoric reproductibil).
 - [x] Teste: 42 noi, suită completă 410, typecheck și build curate.
-- [ ] Etapa 5+ (AI ACP, workflow, matching avansat) – neînceput.
+- [x] Etapa 5 (AI ACP) – finalizată, vezi mai jos.
+
+## ACP – etapa 5: analist AI
+- [x] Migrația 0038: tabelul `acp_ai_insights` (organizație, analiză, versiune, snapshot, prompt/schema version, status, insight, audit), RLS de citire pe accesul la analiză, scriere doar server-side.
+- [x] Schema de ieșire v2 cu 9 secțiuni + metadata, validare Zod, sanitizare, compatibilitate cu interpretările vechi.
+- [x] Prompt versionat (`acp-ai-prompt-2`), datele anunțurilor tratate strict ca date (anti prompt injection).
+- [x] Context legat de versiunea ACP + snapshot, cu Market Intelligence exclusiv din snapshot.
+- [x] Server functions: status, generare (rate limit 10/oră utilizator, 40/oră agenție, audit reușită/eșec), istoric regenerări.
+- [x] UI „Analiză AI” cu istoric, metadata (model, versiune, snapshot) și disclaimer; PDF cu secțiune AI opțională.
+- [x] Teste: 20 noi (total 430), typecheck și build curate; generare reală validată pe gateway.

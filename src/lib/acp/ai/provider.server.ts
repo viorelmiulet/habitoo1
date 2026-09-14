@@ -7,13 +7,15 @@
  * niciodată în bundle-ul clientului.
  */
 import type { AcpAiContext } from "./context";
-import { ACP_AI_SYSTEM_PROMPT, buildAcpAiUserPrompt } from "./prompt";
+import { ACP_AI_PROMPT_VERSION, ACP_AI_SYSTEM_PROMPT, buildAcpAiUserPrompt } from "./prompt";
 
 export type AiProvider = {
   /** Identificator scurt al providerului, salvat în audit. */
   readonly id: string;
   /** Modelul folosit, salvat în `acp_analyses.ai_model`. */
   readonly model: string;
+  /** Versiunea promptului folosit, salvată pentru reproductibilitate. */
+  readonly promptVersion: string;
   /** Returnează textul brut generat de model. */
   generate(context: AcpAiContext): Promise<string>;
 };
@@ -31,21 +33,25 @@ const RESPONSE_SCHEMA = {
   additionalProperties: false,
   properties: {
     executive_summary: { type: "string" },
-    market_assessment: { type: "string" },
+    valuation_explanation: { type: "string" },
+    market_context: { type: "string" },
     comparable_analysis: { type: "string" },
-    price_recommendation_explanation: { type: "string" },
-    risk_factors: STRING_LIST,
-    data_quality_notes: STRING_LIST,
-    key_observations: STRING_LIST,
+    key_drivers: STRING_LIST,
+    risks_and_limitations: STRING_LIST,
+    recommended_positioning: { type: "string" },
+    confidence_explanation: { type: "string" },
+    client_friendly_summary: { type: "string" },
   },
   required: [
     "executive_summary",
-    "market_assessment",
+    "valuation_explanation",
+    "market_context",
     "comparable_analysis",
-    "price_recommendation_explanation",
-    "risk_factors",
-    "data_quality_notes",
-    "key_observations",
+    "key_drivers",
+    "risks_and_limitations",
+    "recommended_positioning",
+    "confidence_explanation",
+    "client_friendly_summary",
   ],
 } as const;
 
@@ -105,6 +111,7 @@ function createLovableGatewayProvider(apiKey: string): AiProvider {
   return {
     id: "lovable-ai-gateway",
     model: MODEL,
+    promptVersion: ACP_AI_PROMPT_VERSION,
     async generate(context) {
       const response = await fetch(GATEWAY_URL, {
         method: "POST",

@@ -267,6 +267,13 @@
       "when": 1789395568920,
       "tag": "0037_market_intelligence_indexes",
       "breakpoints": true
+    },
+    {
+      "idx": 38,
+      "version": "7",
+      "when": 1789396351087,
+      "tag": "0038_acp_ai_insights",
+      "breakpoints": true
     }
   ]
 }

@@ -3,12 +3,14 @@ import { parseAcpAiInsight, stripCodeFences } from "./schema";
 
 const valid = {
   executive_summary: "Piața este stabilă.",
-  market_assessment: "Cererea este constantă în zonă.",
+  valuation_explanation: "Intervalul reflectă mediana comparabilelor.",
+  market_context: "Cererea este constantă în zonă.",
   comparable_analysis: "Comparabilele au aceeași suprafață.",
-  price_recommendation_explanation: "Intervalul reflectă mediana comparabilelor.",
-  risk_factors: ["Număr redus de comparabile"],
-  data_quality_notes: ["Lipsesc anii de construcție"],
-  key_observations: ["Prețul actual este peste mediană"],
+  key_drivers: ["Suprafața utilă"],
+  risks_and_limitations: ["Număr redus de comparabile"],
+  recommended_positioning: "Listare aproape de prețul recomandat.",
+  confidence_explanation: "Încredere medie, din cauza numărului de comparabile.",
+  client_friendly_summary: "Prețul cerut este apropiat de piață.",
 };
 
 describe("parseAcpAiInsight", () => {
@@ -29,7 +31,7 @@ describe("parseAcpAiInsight", () => {
   });
 
   it("respinge JSON cu câmpuri lipsă", () => {
-    const { risk_factors: _omit, ...partial } = valid;
+    const { risks_and_limitations: _omit, ...partial } = valid;
     const result = parseAcpAiInsight(JSON.stringify(partial));
     expect(result).toEqual({ ok: false, reason: "schema_mismatch" });
   });

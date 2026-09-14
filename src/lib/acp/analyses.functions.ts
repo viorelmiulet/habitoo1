@@ -14,7 +14,7 @@ import { runAcpAnalysis, targetPricePerSqm, type AcpCandidate, type AcpManualOve
 import type { AcpSubject } from "./scoring";
 import type { AcpComparableResult } from "./engine";
 import { ACP_AUDIT_ACTIONS, logAcpAudit } from "./audit";
-import { parseAcpAiInsight, type AcpAiInsight } from "./ai/schema";
+import { readStoredAcpAiInsight, type AcpAiInsight } from "./ai/schema";
 import { dedupeMarketCandidates } from "@/lib/market/acp";
 import {
   buildAcpMarketInsights,
@@ -756,6 +756,11 @@ export type AcpAnalysisView = {
     provider: string | null;
     model: string | null;
     generatedAt: string | null;
+    promptVersion: string | null;
+    schemaVersion: string | null;
+    analysisVersion: number | null;
+    snapshotAt: string | null;
+    legacy: boolean;
     insight: AcpAiInsight | null;
   } | null;
 };
@@ -811,12 +816,15 @@ export const getAcpAnalysis = createServerFn({ method: "POST" })
         provider?: string | null;
         model?: string | null;
         generatedAt?: string | null;
+        promptVersion?: string | null;
+        schemaVersion?: string | null;
+        analysisVersion?: number | null;
+        snapshotAt?: string | null;
         insight?: unknown;
       } | null;
     };
-    const storedInsight = parseAcpAiInsight(
-      analysisData.ai?.insight ? JSON.stringify(analysisData.ai.insight) : null,
-    );
+    // Interpretările generate înainte de Stage 5 sunt aduse la schema actuală.
+    const storedInsight = readStoredAcpAiInsight(analysisData.ai?.insight ?? null);
     const targetData = (analysis.target_data ?? {}) as {
       title?: string;
       reference?: string | null;
@@ -862,7 +870,12 @@ export const getAcpAnalysis = createServerFn({ method: "POST" })
             provider: analysisData.ai.provider ?? null,
             model: analysisData.ai.model ?? analysis.ai_model ?? null,
             generatedAt: analysisData.ai.generatedAt ?? analysis.ai_generated_at ?? null,
-            insight: storedInsight.ok ? storedInsight.insight : null,
+            promptVersion: analysisData.ai.promptVersion ?? null,
+            schemaVersion: analysisData.ai.schemaVersion ?? null,
+            analysisVersion: analysisData.ai.analysisVersion ?? null,
+            snapshotAt: analysisData.ai.snapshotAt ?? null,
+            legacy: storedInsight?.legacy ?? false,
+            insight: storedInsight?.insight ?? null,
           }
         : null,
       comparables: (comparables ?? []).map((c) => {
