@@ -116,6 +116,11 @@ function ApprovalCard({
           </p>
         ) : null}
         <p className="text-muted-foreground">{proposal.reason}</p>
+        {(proposal.warnings ?? []).map((warning) => (
+          <p key={warning} className="text-xs text-muted-foreground">
+            {warning}
+          </p>
+        ))}
         <Separator />
         <div className="flex flex-wrap gap-2">
           <Button variant="outline" size="sm" disabled={busy} onClick={() => onDecision(false)}>
