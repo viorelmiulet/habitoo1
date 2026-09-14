@@ -23,7 +23,7 @@ export const ACP_AI_CONTEXT_VERSION = "acp-ai-context-2";
 const MAX_DATA_TEXT = 160;
 
 const INJECTION_MARKERS =
-  /(ignor[ăa][^.\n]{0,40}(instruc|prompt)|disregard[^.\n]{0,40}(instruction|prompt)|system\s*prompt|prompt\s*de\s*sistem|(^|\s)(system|assistant|developer)\s*:|<\/?(system|assistant|instructions)>)/gi;
+  /(ignor(e|[ăa])[^.\n]{0,60}(instruc|prompt)|disregard[^.\n]{0,60}(instruction|prompt)|system\s*prompt|prompt\s*de\s*sistem|(^|\s)(system|assistant|developer)\s*:|<\/?(system|assistant|instructions)>)/gi;
 
 /**
  * Sanitizează un text venit din date. Nu „corectează” conținutul: elimină doar
