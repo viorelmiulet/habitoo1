@@ -61,7 +61,7 @@ export const CRM_ACTION_SCHEMAS: Record<CrmActionTool, z.ZodTypeAny> = {
     propertyId: uuid.nullable().optional(),
     title: z.string().min(3).max(160),
     dueAt: z.string().min(8).max(40),
-    description: z.string().max(1000).optional(),
+    description: z.string().max(1000).nullable().optional(),
   }),
   create_note: z.object({
     leadId: uuid.nullable().optional(),
@@ -73,13 +73,17 @@ export const CRM_ACTION_SCHEMAS: Record<CrmActionTool, z.ZodTypeAny> = {
   update_lead_status: z.object({
     leadId: uuid,
     stage: z.enum(LEAD_STAGES),
-    reason: z.string().max(400).optional(),
+    reason: z.string().max(400).nullable().optional(),
   }),
-  assign_lead: z.object({ leadId: uuid, assigneeId: uuid, reason: z.string().max(400).optional() }),
+  assign_lead: z.object({
+    leadId: uuid,
+    assigneeId: uuid,
+    reason: z.string().max(400).nullable().optional(),
+  }),
   create_property_match: z.object({
     requestId: uuid,
     propertyId: uuid,
-    note: z.string().max(600).optional(),
+    note: z.string().max(600).nullable().optional(),
   }),
 };
 
