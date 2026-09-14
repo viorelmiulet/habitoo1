@@ -33,6 +33,8 @@ import {
   type AcpComparableView,
 } from "@/lib/acp/analyses.functions";
 import { AcpAiInsight } from "@/components/app/AcpAiInsight";
+import { AcpVersionsCard } from "@/components/app/AcpVersionsCard";
+
 import { ACP_SCORE_LABELS, ACP_SCORE_WEIGHTS, ACP_THRESHOLDS, ACP_TIER_LABELS } from "@/lib/acp/config";
 
 export const Route = createFileRoute("/_authenticated/app/acp/$id")({
@@ -418,6 +420,9 @@ function AcpDetailPage() {
       </div>
 
       <AcpAiInsight analysis={analysis} onGenerated={invalidate} />
+
+      <AcpVersionsCard analysisId={analysis.id} />
+
 
       <div className="grid gap-6 xl:grid-cols-3">
         <SectionCard
