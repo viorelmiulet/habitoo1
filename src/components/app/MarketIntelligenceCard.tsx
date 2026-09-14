@@ -39,8 +39,7 @@ import {
   getAcpMarketIntelligence,
   getMarketIntelligence,
 } from "@/lib/market/intelligence.functions";
-import type { AcpMarketInsights } from "@/lib/market/intelligence";
-import type { MarketIntelligenceResult } from "@/lib/market/intelligence.server";
+import type { AcpMarketInsights, MarketIntelligenceResult } from "@/lib/market/intelligence";
 import type {
   MarketDistributionBucket,
   MarketFreshness,

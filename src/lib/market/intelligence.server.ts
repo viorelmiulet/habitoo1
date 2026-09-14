@@ -17,10 +17,12 @@ import {
   type MarketIntelligenceAggregate,
   type MarketIntelligenceFilters,
   type MarketIntelligenceRow,
+  type MarketIntelligenceResult,
   type MarketSourceQuality,
   type MarketTrend,
   type MarketTrendObservation,
 } from "./intelligence";
+export type { MarketIntelligenceResult };
 import { MARKET_SOURCES, marketSourceName } from "./sources";
 
 type Admin = SupabaseClient<Database>;
@@ -187,17 +189,6 @@ export async function loadSourceQuality(
 
   return buildSourceQuality({ sources: entries, mix });
 }
-
-export type MarketIntelligenceResult = {
-  filters: MarketIntelligenceFilters;
-  aggregate: MarketIntelligenceAggregate;
-  /** Valorile €/mp ale eșantionului — necesare pentru percentila proprietății. */
-  samplePricePerSqm: number[];
-  trend: MarketTrend | null;
-  sources: MarketSourceQuality[];
-  sourceNames: Record<string, string>;
-  computedAt: string;
-};
 
 /** Agregarea completă pentru un set de filtre. */
 export async function computeMarketIntelligence(

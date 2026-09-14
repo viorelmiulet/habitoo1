@@ -833,3 +833,15 @@ export function buildAcpMarketInsights(params: {
     },
   };
 }
+
+/** Rezultatul complet returnat de layerul de date (tip client-safe). */
+export type MarketIntelligenceResult = {
+  filters: MarketIntelligenceFilters;
+  aggregate: MarketIntelligenceAggregate;
+  /** Valorile €/mp ale eșantionului — necesare pentru percentila proprietății. */
+  samplePricePerSqm: number[];
+  trend: MarketTrend | null;
+  sources: MarketSourceQuality[];
+  sourceNames: Record<string, string>;
+  computedAt: string;
+};
