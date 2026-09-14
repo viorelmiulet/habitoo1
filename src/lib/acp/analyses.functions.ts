@@ -1340,6 +1340,7 @@ export const listAcpVersions = createServerFn({ method: "POST" })
       const actor = await loadActor(context as AuthContext);
       const admin = await loadAdmin();
       const current = await loadVersionRow(admin, actor, data.analysisId);
+      await assertTargetRunnable(admin, actor, current.property_id);
       const rootId = current.root_analysis_id ?? current.id;
       const rows = await loadRootVersionRows(admin, actor, rootId);
       const names = await creatorNames(
@@ -1475,6 +1476,7 @@ export const recalculateAcpAsNewVersion = createServerFn({ method: "POST" })
       const actor = await loadActor(context as AuthContext);
       const admin = await loadAdmin();
       const source = await loadVersionRow(admin, actor, data.analysisId);
+      await assertTargetRunnable(admin, actor, source.property_id);
       await enforceVersionRateLimit(admin, actor);
 
       const rootId = source.root_analysis_id ?? source.id;
