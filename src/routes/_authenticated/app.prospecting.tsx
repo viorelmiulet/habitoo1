@@ -45,7 +45,7 @@ export const Route = createFileRoute("/_authenticated/app/prospecting")({
       "Prospectare — oportunități imobiliare",
       "Descoperă, filtrează și importă oportunități imobiliare în CRM, cu aprobare umană la fiecare pas.",
     ),
-  component: ProspectingPage;
+  component: ProspectingPage,
 });
 
 const SELLER_LABELS: Record<string, string> = {
