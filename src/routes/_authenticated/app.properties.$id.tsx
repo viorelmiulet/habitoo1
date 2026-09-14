@@ -2,7 +2,9 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRef, useState } from "react";
 import {
+  BarChart3,
   Building2,
+
   MessageCircle,
   MoreHorizontal,
   Pencil,
@@ -25,6 +27,8 @@ import { EmptyState } from "@/components/app/EmptyState";
 
 import { ActivityDialog } from "@/components/app/ActivityDialog";
 import { PropertyMediaManager } from "@/components/app/PropertyMediaManager";
+import { PropertyAcpCard } from "@/components/app/PropertyAcpCard";
+
 import { PropertyHeroGallery } from "@/components/app/PropertyHeroGallery";
 import { PortfolioPanel } from "@/components/app/PortfolioPanel";
 import {
@@ -111,6 +115,9 @@ function PropertyDetailPage() {
   const agencyLogoUrl = useAgencyLogoUrl(user?.organization?.logo_path);
 
   const [editing, setEditing] = useState(false);
+  /** Fila activă; butonul din antet duce direct la fluxul ACP. */
+  const [tab, setTab] = useState("overview");
+
   /** Evită tipăriri suprapuse ale fișei de prezentare. */
   const printingRef = useRef(false);
   const [presentationDialogOpen, setPresentationDialogOpen] = useState(false);
@@ -686,19 +693,25 @@ function PropertyDetailPage() {
         <Button size="sm" variant="outline" onClick={() => setAddClientOpen(true)}>
           <UserPlus className="size-4" /> Adaugă client
         </Button>
+        <Button size="sm" variant="outline" onClick={() => setTab("acp")}>
+          <BarChart3 className="size-4" /> Analiză comparativă de piață (ACP)
+        </Button>
       </div>
 
-      <Tabs defaultValue="overview">
+      <Tabs value={tab} onValueChange={setTab}>
+
         <TabsList className="h-auto flex-wrap justify-start gap-1 rounded-none border-b border-border bg-transparent p-0">
           {[
             ["overview", "Overview"],
             ["media", "Media"],
+            ["acp", "ACP"],
             ["leads", `Lead-uri (${data?.leads.length ?? 0})`],
             ["matching", `Cereri compatibile (${matches.length})`],
             ["activities", `Activități (${activities.length})`],
             ["documents", "Documente"],
             ["publishing", "Publicare"],
             ["history", "Istoric"],
+
           ].map(([value, label]) => (
             <TabsTrigger
               key={value}
@@ -969,6 +982,11 @@ function PropertyDetailPage() {
         <TabsContent value="media">
           <PropertyMediaManager propertyId={id} orgId={orgId} userId={user?.userId} />
         </TabsContent>
+
+        <TabsContent value="acp">
+          <PropertyAcpCard propertyId={id} />
+        </TabsContent>
+
 
         <TabsContent value="leads">
           <div className="panel overflow-hidden">

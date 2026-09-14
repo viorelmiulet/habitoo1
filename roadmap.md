@@ -112,3 +112,11 @@
 - [x] Server functions: status, generare (rate limit 10/oră utilizator, 40/oră agenție, audit reușită/eșec), istoric regenerări.
 - [x] UI „Analiză AI” cu istoric, metadata (model, versiune, snapshot) și disclaimer; PDF cu secțiune AI opțională.
 - [x] Teste: 20 noi (total 430), typecheck și build curate; generare reală validată pe gateway.
+
+## ACP – etapa 6: ACP integrat în workflow-ul CRM
+- [x] Filă „ACP” și CTA „Analiză comparativă de piață (ACP)” în pagina proprietății, cu status, versiune, surse și data ultimei analize.
+- [x] Statusuri de workflow derivate din datele existente (`workflow.ts`): fără analiză / în pregătire / în curs / finalizată / date insuficiente / eroare — fără statusuri noi în baza de date.
+- [x] `workflow.functions.ts`: `getPropertyAcpWorkflow` (citire fără recalculare, ultima versiune + snapshot) și `applyAcpRecommendedPrice` (confirmare explicită, audit, rate limit).
+- [x] „Preț proprietate” vs. „Preț recomandat ACP” cu diferență valorică/procentuală, copiere și aplicare manuală confirmată; fără suprascriere automată.
+- [x] Reutilizare integrală a versionării, raportului PDF, Market Intelligence și interpretării AI existente (AI doar strat explicativ).
+- [x] Teste: 21 noi (total 451), typecheck și build curate; nicio migrare nouă necesară.
