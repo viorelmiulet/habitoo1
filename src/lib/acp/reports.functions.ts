@@ -16,6 +16,7 @@ import {
   assertReportOrganization,
   buildAcpReportModel,
   type AcpReportMarketInput,
+  type AcpReportPrecisionInput,
   reportEligibility,
   type AcpReportAdjustment,
   type AcpReportModel,
@@ -68,6 +69,56 @@ async function enforceReportRateLimit(
       throw new Error("Prea multe rapoarte generate în ultima oră. Încearcă din nou mai târziu.");
     }
   }
+}
+
+/**
+ * Calitatea datelor și calibrarea salvate în snapshot-ul versiunii (Stage 7).
+ * Versiunile mai vechi nu le au: raportul lor rămâne exact cum era.
+ */
+function precisionFrom(data: {
+  quality?: {
+    score?: number;
+    level?: string;
+    factors?: { label?: string; score?: number; note?: string }[];
+    reasons?: string[];
+  } | null;
+  advanced?: Record<string, unknown> | null;
+}): AcpReportPrecisionInput | null {
+  const q = data.quality ?? null;
+  const a = data.advanced ?? null;
+  if (!q && !a) return null;
+  const numberOr = (value: unknown, fallback: number | null): number | null =>
+    typeof value === "number" && Number.isFinite(value) ? value : fallback;
+  return {
+    quality: q
+      ? {
+          score: numberOr(q.score, 0) ?? 0,
+          level: typeof q.level === "string" ? q.level : "medium",
+          factors: (q.factors ?? []).map((f) => ({
+            label: typeof f.label === "string" ? f.label : "—",
+            score: numberOr(f.score, 0) ?? 0,
+            note: typeof f.note === "string" ? f.note : "",
+          })),
+          reasons: (q.reasons ?? []).filter((r): r is string => typeof r === "string"),
+        }
+      : null,
+    calibration: a
+      ? {
+          applied: a["applied"] === true,
+          status: typeof a["calibrationStatus"] === "string" ? a["calibrationStatus"] : "not_configured",
+          factor: numberOr(a["factor"], 1) ?? 1,
+          source: typeof a["source"] === "string" ? a["source"] : "none",
+          segmentKey: typeof a["segmentKey"] === "string" ? a["segmentKey"] : null,
+          sampleSize: numberOr(a["sampleSize"], 0) ?? 0,
+          version: numberOr(a["calibrationVersion"], null),
+          calibratedAt: typeof a["calibratedAt"] === "string" ? a["calibratedAt"] : null,
+          baselineValue: numberOr(a["baselineValue"], null),
+          calibratedValue: numberOr(a["calibratedValue"], null),
+          deltaPercent: numberOr(a["deltaPercent"], null),
+          reason: typeof a["reason"] === "string" ? a["reason"] : "",
+        }
+      : null,
+  };
 }
 
 function adjustmentsFrom(value: unknown): AcpReportAdjustment[] {
@@ -139,6 +190,13 @@ async function loadVersionInput(
     targetPricePerSqm?: number | null;
     marketIntelligence?: AcpReportMarketInput | null;
     ai?: { insight?: unknown } | null;
+    quality?: {
+      score?: number;
+      level?: string;
+      factors?: { label?: string; score?: number; note?: string }[];
+      reasons?: string[];
+    } | null;
+    advanced?: Record<string, unknown> | null;
   };
   const subject = (target.subject ?? {}) as AcpReportVersionInput["target"]["subject"];
 
@@ -229,6 +287,8 @@ async function loadVersionInput(
         : null,
     // Snapshot-ul de piață al versiunii (Stage 4), dacă a fost salvat la rulare.
     market: analysisData.marketIntelligence ?? null,
+    // Calitatea datelor și calibrarea versiunii (Stage 7), dacă au fost salvate.
+    precision: precisionFrom(analysisData),
   };
 
   return { input, rootId: input.rootAnalysisId };

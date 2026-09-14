@@ -17,6 +17,15 @@ import { ACP_AUDIT_ACTIONS, logAcpAudit } from "./audit";
 import { readStoredAcpAiInsight, type AcpAiInsight } from "./ai/schema";
 import { dedupeMarketCandidates } from "@/lib/market/acp";
 import {
+  calculateDataQuality,
+  calculateFreshness,
+  calculatePriceHistory,
+  comparableRelevance,
+  type AcpListingMeta,
+} from "./precision";
+// `calibration.server.ts` este server-only: se importă dinamic în handler.
+import type { AcpCalibrationModel } from "./calibration";
+import {
   buildAcpMarketInsights,
   marketFiltersFromSubject,
   type MarketIntelligenceAggregate,
@@ -84,6 +93,48 @@ async function loadActor(context: AuthContext): Promise<Actor> {
     collaborationEnabled: org?.collaboration_enabled !== false,
   };
 }
+
+/** Metadate reale de prospețime/istoric pentru o ofertă de piață. */
+function marketListingMeta(
+  row: Record<string, unknown>,
+  extra: { status: string; duplicateCount: number },
+): AcpListingMeta {
+  const numeric = (value: unknown): number | null =>
+    typeof value === "number" && Number.isFinite(value)
+      ? value
+      : typeof value === "string" && value.trim() !== "" && Number.isFinite(Number(value))
+        ? Number(value)
+        : null;
+  const text = (value: unknown): string | null => (typeof value === "string" ? value : null);
+  return {
+    firstSeenAt: text(row["first_seen_at"]),
+    lastSeenAt: text(row["last_seen_at"]),
+    initialPrice: numeric(row["initial_price"]),
+    currentPrice: numeric(row["price"]),
+    priceChanges: numeric(row["price_changes"]),
+    status: extra.status,
+    duplicateCount: extra.duplicateCount,
+  };
+}
+
+
+/**
+ * Stage 7: modelul de calibrare activ al agenției. Dacă agenția nu a activat
+ * calibrarea sau nu există date suficiente, rezultatul este `null` și motorul
+ * rulează exact ca înainte (baseline determinist).
+ */
+async function loadCalibration(
+  admin: Awaited<ReturnType<typeof loadAdmin>>,
+  organizationId: string,
+): Promise<AcpCalibrationModel | null> {
+  try {
+    const { loadActiveCalibrationModel } = await import("./calibration.server");
+    return await loadActiveCalibrationModel(admin as never, organizationId);
+  } catch {
+    return null;
+  }
+}
+
 
 function locationLabel(row: { district?: string | null; city?: string | null; county?: string | null }) {
   return [row.district, row.city, row.county].filter(Boolean).join(", ") || null;
@@ -281,6 +332,11 @@ async function collectCandidates(params: {
         }),
         url: row.url,
         subject: marketListingToSubject(row as never),
+        // Stage 7: prospețime și istoric de preț din datele reale ale ofertei.
+        meta: marketListingMeta(item.row as unknown as Record<string, unknown>, {
+          status: row.status,
+          duplicateCount: item.duplicateCount,
+        }),
       });
     }
     stats.push({
@@ -307,6 +363,8 @@ async function persistRun(params: {
   result: ReturnType<typeof runAcpAnalysis>;
   version: number;
   history: unknown[];
+  /** Stage 7: modelul de calibrare folosit la rulare (null = fără calibrare). */
+  calibration?: AcpCalibrationModel | null;
 }) {
   const { admin, analysisId, result } = params;
 
@@ -388,6 +446,11 @@ async function persistRun(params: {
         url: c.url,
         subject: c.subject,
         skippedAdjustments: c.skippedAdjustments,
+        // Stage 7: indicatorii de precizie fac parte din snapshot-ul versiunii.
+        dataQuality: c.dataQuality,
+        freshness: c.freshness,
+        priceHistory: c.priceHistory,
+        relevanceScore: c.relevanceScore,
       } as never,
     }));
     const { error } = await admin.from("acp_comparables").insert(rows);
@@ -450,6 +513,11 @@ async function persistRun(params: {
         candidatesFound: result.candidatesFound,
         targetPricePerSqm: targetPricePerSqm(params.target),
         marketIntelligence,
+        // Stage 7: calitatea datelor, estimarea calibrată și modelul folosit
+        // intră în snapshot-ul versiunii, ca raportul istoric să fie reproductibil.
+        quality: result.quality,
+        advanced: result.advanced,
+        calibration: params.calibration ?? null,
       } as never,
 
     })
@@ -522,7 +590,8 @@ export const createAcpAnalysis = createServerFn({ method: "POST" })
         targetPropertyId: row.id,
         sources: data.sources,
       });
-      const result = runAcpAnalysis(subject, candidates, {});
+      const calibration = await loadCalibration(admin, actor.organizationId);
+      const result = runAcpAnalysis(subject, candidates, {}, { calibration });
       await persistRun({
         admin,
         analysisId: created.id,
@@ -535,6 +604,7 @@ export const createAcpAnalysis = createServerFn({ method: "POST" })
         result,
         version: 1,
         history: [],
+        calibration,
       });
     } catch (error) {
       await admin
@@ -679,7 +749,8 @@ async function recalculate(
       targetPropertyId: analysis.property_id,
       sources,
     });
-    const result = runAcpAnalysis(subject, candidates, overrides);
+    const calibration = await loadCalibration(admin, actor.organizationId);
+    const result = runAcpAnalysis(subject, candidates, overrides, { calibration });
     const previousHistory = Array.isArray(analysis.history) ? analysis.history : [];
     const history = [
       ...previousHistory.slice(-19),
@@ -702,6 +773,7 @@ async function recalculate(
       result,
       version: (analysis.version ?? 1) + 1,
       history,
+      calibration,
     });
   } catch (error) {
     await admin
@@ -750,6 +822,10 @@ export type AcpAnalysisView = {
   estimate: ReturnType<typeof runAcpAnalysis>["estimate"] | null;
   confidence: ReturnType<typeof runAcpAnalysis>["confidence"] | null;
   explanation: string[];
+  /** Stage 7: calitatea datelor și estimarea calibrată (null pentru analize vechi). */
+  quality: ReturnType<typeof runAcpAnalysis>["quality"] | null;
+  advanced: ReturnType<typeof runAcpAnalysis>["advanced"] | null;
+  calibration: AcpCalibrationModel | null;
   comparables: AcpComparableView[];
   aiConfigured: boolean;
   ai: {
@@ -812,6 +888,9 @@ export const getAcpAnalysis = createServerFn({ method: "POST" })
       confidence?: AcpAnalysisView["confidence"];
       explanation?: string[];
       targetPricePerSqm?: number | null;
+      quality?: AcpAnalysisView["quality"];
+      advanced?: AcpAnalysisView["advanced"];
+      calibration?: AcpCalibrationModel | null;
       ai?: {
         provider?: string | null;
         model?: string | null;
@@ -864,6 +943,9 @@ export const getAcpAnalysis = createServerFn({ method: "POST" })
       estimate: analysisData.estimate ?? null,
       confidence: analysisData.confidence ?? null,
       explanation: analysisData.explanation ?? [],
+      quality: analysisData.quality ?? null,
+      advanced: analysisData.advanced ?? null,
+      calibration: analysisData.calibration ?? null,
       aiConfigured: Boolean(process.env["LOVABLE_API_KEY"]),
       ai: analysisData.ai
         ? {
@@ -886,7 +968,19 @@ export const getAcpAnalysis = createServerFn({ method: "POST" })
           url?: string | null;
           subject?: AcpSubject;
           skippedAdjustments?: string[];
+          dataQuality?: AcpComparableResult["dataQuality"];
+          freshness?: AcpComparableResult["freshness"];
+          priceHistory?: AcpComparableResult["priceHistory"];
+          relevanceScore?: number;
         };
+        const subject = snapshot.subject ?? {};
+        // Comparabilele salvate înainte de Stage 7 nu au indicatorii de precizie:
+        // se recalculează determinist din snapshot, fără a inventa metadate.
+        const dataQuality = snapshot.dataQuality ?? calculateDataQuality(subject);
+        const freshness = snapshot.freshness ?? calculateFreshness(null, analysis.snapshot_at ?? undefined);
+        const priceHistory =
+          snapshot.priceHistory ?? calculatePriceHistory({ currentPrice: subject.price ?? null });
+        const similarityScore = Number(c.similarity_score ?? 0);
         return {
           id: c.id,
           key: snapshot.key ?? c.id,
@@ -899,8 +993,8 @@ export const getAcpAnalysis = createServerFn({ method: "POST" })
           imagePath: c.image_path,
           imageUrl: c.image_path ? (signedByPath.get(c.image_path) ?? null) : null,
           url: snapshot.url ?? null,
-          subject: snapshot.subject ?? {},
-          similarityScore: Number(c.similarity_score ?? 0),
+          subject,
+          similarityScore,
           components: (c.component_scores ?? {}) as Record<string, number>,
           tier: (c.tier ?? "excluded") as AcpComparableResult["tier"],
           adjustments: (c.adjustments ?? []) as AcpComparableResult["adjustments"],
@@ -915,6 +1009,16 @@ export const getAcpAnalysis = createServerFn({ method: "POST" })
           isSelected: Boolean(c.is_selected),
           selectionReason: c.selection_reason ?? "",
           manualOverride: (c.manual_override ?? null) as AcpManualOverride | null,
+          dataQuality,
+          freshness,
+          priceHistory,
+          relevanceScore:
+            snapshot.relevanceScore ??
+            comparableRelevance({
+              similarityScore,
+              dataQualityScore: dataQuality.score,
+              freshnessScore: freshness.score,
+            }),
         };
       }),
     };
@@ -1288,7 +1392,8 @@ export const recalculateAcpAsNewVersion = createServerFn({ method: "POST" })
           targetPropertyId: source.property_id,
           sources,
         });
-        const result = runAcpAnalysis(subject, candidates, overrides);
+        const calibration = await loadCalibration(admin, actor.organizationId);
+        const result = runAcpAnalysis(subject, candidates, overrides, { calibration });
         await persistRun({
           admin,
           analysisId: created.id,
@@ -1308,6 +1413,7 @@ export const recalculateAcpAsNewVersion = createServerFn({ method: "POST" })
               recordedAt: new Date().toISOString(),
             },
           ],
+          calibration,
         });
       } catch (error) {
         const errorMessage =

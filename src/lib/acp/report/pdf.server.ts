@@ -301,6 +301,25 @@ export async function buildAcpReportPdf(model: AcpReportModel): Promise<Uint8Arr
     if (model.market.note) text(model.market.note, { size: 8, color: MUTED });
   }
 
+  /* ---------------- Calibrare și calitatea datelor ---------------- */
+  if (model.precision) {
+    heading("Calibrare și calitatea datelor");
+    for (const row of model.precision.rows) {
+      if (row.value.length > 46) {
+        text(`${row.label}:`, { size: 8.5, color: MUTED, gap: 1 });
+        text(row.value, { size: 8.5 });
+        continue;
+      }
+      ensure(13);
+      page.drawText(row.label, { x: MARGIN, y: y - 9, size: 8.5, font: regular, color: MUTED });
+      page.drawText(row.value, { x: MARGIN + 260, y: y - 9, size: 8.5, font: bold, color: INK });
+      y -= 13;
+    }
+    for (const note of model.precision.notes) text(`• ${note}`, { size: 8, color: MUTED });
+  }
+
+
+
   /* ---------------- Limitări ---------------- */
   if (model.warnings.length > 0) {
     heading("Limitări și observații privind datele");

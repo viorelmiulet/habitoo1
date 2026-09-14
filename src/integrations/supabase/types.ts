@@ -276,6 +276,83 @@ export type Database = {
           },
         ]
       }
+      acp_calibrations: {
+        Row: {
+          algorithm_version: string
+          applied: boolean
+          bias_percent: number | null
+          confidence: number
+          created_at: string
+          created_by: string | null
+          factor: number
+          id: string
+          is_active: boolean
+          median_absolute_deviation: number | null
+          median_ratio: number | null
+          metrics: Json
+          min_sample_size: number
+          notes: Json
+          observations_received: number
+          organization_id: string
+          sample_size: number
+          segments: Json
+          status: string
+          version: number
+        }
+        Insert: {
+          algorithm_version?: string
+          applied?: boolean
+          bias_percent?: number | null
+          confidence?: number
+          created_at?: string
+          created_by?: string | null
+          factor?: number
+          id?: string
+          is_active?: boolean
+          median_absolute_deviation?: number | null
+          median_ratio?: number | null
+          metrics?: Json
+          min_sample_size?: number
+          notes?: Json
+          observations_received?: number
+          organization_id: string
+          sample_size?: number
+          segments?: Json
+          status?: string
+          version: number
+        }
+        Update: {
+          algorithm_version?: string
+          applied?: boolean
+          bias_percent?: number | null
+          confidence?: number
+          created_at?: string
+          created_by?: string | null
+          factor?: number
+          id?: string
+          is_active?: boolean
+          median_absolute_deviation?: number | null
+          median_ratio?: number | null
+          metrics?: Json
+          min_sample_size?: number
+          notes?: Json
+          observations_received?: number
+          organization_id?: string
+          sample_size?: number
+          segments?: Json
+          status?: string
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "acp_calibrations_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       acp_comparables: {
         Row: {
           adjusted_price: number | null
@@ -2645,6 +2722,8 @@ export type Database = {
       }
       organizations: {
         Row: {
+          acp_calibration_enabled: boolean
+          acp_calibration_min_sample_size: number
           archived_at: string | null
           archived_by: string | null
           city: string | null
@@ -2693,6 +2772,8 @@ export type Database = {
           watermark_scale_percent: number
         }
         Insert: {
+          acp_calibration_enabled?: boolean
+          acp_calibration_min_sample_size?: number
           archived_at?: string | null
           archived_by?: string | null
           city?: string | null
@@ -2741,6 +2822,8 @@ export type Database = {
           watermark_scale_percent?: number
         }
         Update: {
+          acp_calibration_enabled?: boolean
+          acp_calibration_min_sample_size?: number
           archived_at?: string | null
           archived_by?: string | null
           city?: string | null
