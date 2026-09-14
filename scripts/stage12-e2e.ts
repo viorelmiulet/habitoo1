@@ -32,12 +32,18 @@ async function main() {
     .is("deleted_at", null)
     .limit(1)
     .maybeSingle();
+  // Agenția de test nu are clienți; creăm unul temporar și îl ștergem la final.
   const { data: contact } = await supabaseAdmin
     .from("contacts")
+    .insert({
+      organization_id: ORG_A,
+      created_by: USER_A,
+      first_name: "E2E",
+      last_name: `Stage12 ${Date.now()}`,
+      type: "buyer",
+    } as never)
     .select("id")
-    .eq("organization_id", ORG_A)
-    .limit(1)
-    .maybeSingle();
+    .single();
   if (!lead || !property || !contact) {
     console.log("Date de test insuficiente în ORG_A.");
     return;
