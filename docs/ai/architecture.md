@@ -190,3 +190,29 @@ server-side). Nicio tabelă existentă nu a fost modificată.
 - Fără streaming; răspunsul se afișează la final.
 - Categoriile de context `activity` și `document` sunt definite, dar nu au încă
   tool-uri care să le alimenteze.
+
+## 10. CRM Agent (Stage 14)
+
+`src/lib/ai/agents/crm/` adaugă un agent specializat pe CRM, peste aceeași
+infrastructură: interfață → server function autentificată → AI Gateway → Mastra
+→ agent → tool registry → executori server-side → Supabase.
+
+- **Module pure**: `filters.ts` (întrebare în română → filtre deterministe),
+  `insights.ts` (scor de prioritate 0–100 explicabil), `matching.ts` (reutilizează
+  `@/lib/matching`), `actions.ts` (scheme Zod + propunere cu diff), `workflow.ts`
+  (`habitooCrmWorkflow`), `instructions.ts` (prompt CRM anti-injection).
+- **Server-side**: `tools.server.ts` (10 tool-uri de citire + 5 acțiuni),
+  `agent.server.ts`, `runtime.server.ts` (stare persistentă în `ai_workflow_runs`,
+  suspend/resume), `crm.functions.ts`, `crm-client.ts`.
+- **Acțiuni**: `create_task`, `create_note`, `update_lead_status`, `assign_lead`,
+  `create_property_match`. Fiecare rulează numai cu `approvalGranted: true`, după
+  aprobarea explicită a utilizatorului. Nu există comunicare automată sau ștergeri.
+- **Securitate**: fiecare interogare filtrează `organization_id`; agentul poate
+  modifica doar lead-uri nealocate sau alocate lui; `assign_lead` este rezervat
+  administratorilor; activitățile sunt deduplicate pe zi/entitate/titlu, deci
+  aprobarea repetată nu creează duplicate; audit `ai.crm.*`, tracing și usage
+  `crm_agent`.
+- **Interfață**: `/app/ai-crm`, în română, cu sugestii, istoric al rulărilor și
+  card de aprobare care arată valoarea actuală → valoarea nouă.
+- **Limitări**: fără outreach, fără modificări ACP, fără streaming; ACP rămâne
+  sursa deterministă de adevăr și nu este atins de agent.
