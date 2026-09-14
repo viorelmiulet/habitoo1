@@ -18,6 +18,7 @@ import { acpDbError, acpError, acpSafeMessage } from "./safe-error";
 import {
   acpSourcesSchema,
   canRecalculateInPlace,
+  canRunAcpForTarget,
   shouldReuseRunningAnalysis,
 } from "./guards";
 import { readStoredAcpAiInsight, type AcpAiInsight } from "./ai/schema";
@@ -578,6 +579,21 @@ export const createAcpAnalysis = createServerFn({ method: "POST" })
       .maybeSingle();
     if (propertyError) throw acpDbError("load property", propertyError);
     if (!property) throw acpError("Proprietatea analizată nu a fost găsită în agenția ta.");
+
+    // Stage 9: o proprietate retrasă din portofoliu nu mai poate porni rulări noi.
+    const targetVerdict = canRunAcpForTarget({
+      archivedAt: (property as { archived_at?: string | null }).archived_at ?? null,
+      status: (property as { status?: string | null }).status ?? null,
+    });
+    if (!targetVerdict.allowed) {
+      await logAcpAudit({
+        organizationId: actor.organizationId,
+        actorId: actor.userId,
+        action: ACP_AUDIT_ACTIONS.runBlocked,
+        details: { propertyId: data.propertyId, reason: targetVerdict.reason },
+      });
+      throw acpError(targetVerdict.message);
+    }
 
     // Protecție la dublu-click / retry: o rulare pornită foarte recent pentru
     // aceeași proprietate este reutilizată în loc să creăm o analiză duplicat.
