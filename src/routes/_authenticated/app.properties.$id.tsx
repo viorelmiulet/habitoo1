@@ -972,6 +972,11 @@ function PropertyDetailPage() {
           <PropertyMediaManager propertyId={id} orgId={orgId} userId={user?.userId} />
         </TabsContent>
 
+        <TabsContent value="acp">
+          <PropertyAcpCard propertyId={id} />
+        </TabsContent>
+
+
         <TabsContent value="leads">
           <div className="panel overflow-hidden">
             {(data?.leads.length ?? 0) === 0 ? (
