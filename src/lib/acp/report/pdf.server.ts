@@ -286,6 +286,13 @@ export async function buildAcpReportPdf(model: AcpReportModel): Promise<Uint8Arr
       { size: 8, color: MUTED, gap: 4 },
     );
     for (const row of model.market.rows) {
+      // Valorile lungi (mixul surselor, poziționarea) se scriu pe rânduri
+      // separate, cu wrap, ca să nu iasă din pagină.
+      if (row.value.length > 46) {
+        text(`${row.label}:`, { size: 8.5, color: MUTED, gap: 1 });
+        text(row.value, { size: 8.5 });
+        continue;
+      }
       ensure(13);
       page.drawText(row.label, { x: MARGIN, y: y - 9, size: 8.5, font: regular, color: MUTED });
       page.drawText(row.value, { x: MARGIN + 260, y: y - 9, size: 8.5, font: bold, color: INK });
