@@ -248,7 +248,7 @@ export function AcpVersionsCard({ analysisId }: { analysisId: string }) {
               variant="outline"
               size="sm"
               disabled={selected.length !== 2 || compareMutation.isPending}
-              onClick={() => compareMutation.mutate()}
+              onClick={() => compareMutation.mutate(undefined)}
             >
               <GitCompareArrows className="size-4" />
               Compară versiuni
@@ -256,7 +256,7 @@ export function AcpVersionsCard({ analysisId }: { analysisId: string }) {
             <Button
               size="sm"
               disabled={recalculateMutation.isPending}
-              onClick={() => recalculateMutation.mutate()}
+              onClick={() => recalculateMutation.mutate(undefined)}
             >
               <RefreshCw
                 className={cn("size-4", recalculateMutation.isPending && "animate-spin")}
