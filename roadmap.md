@@ -94,3 +94,12 @@
 - [x] Pagina de detaliu: KPI, proprietatea analizată, grafic preț/mp, listă de comparabile cu imagine, include/exclude manual, recalculare și „Cum s-a calculat”.
 - [ ] Etapa următoare: import portaluri, deduplicare entități, rapoarte PDF și sumar AI.
 
+
+## ACP – faza 3, etapa 4: Market Intelligence
+- [x] Strat determinist reutilizabil (`market/intelligence.ts`): filtre, agregări, percentile/distribuții, prospețime, acoperire, poziționare, trenduri lunare.
+- [x] Agregări server-side pe baza de date (`intelligence.server.ts`) + indexuri aditive (migrația 0037).
+- [x] Server functions cu Zod, organizație activă, izolare pe organization_id și rate limiting.
+- [x] Card Market Intelligence în /app/acp/$id și în „Date piață”, cu stări insuficient/gol explicite.
+- [x] Snapshot de piață salvat în versiunea ACP și inclus în raportul PDF (istoric reproductibil).
+- [x] Teste: 42 noi, suită completă 410, typecheck și build curate.
+- [ ] Etapa 5+ (AI ACP, workflow, matching avansat) – neînceput.
