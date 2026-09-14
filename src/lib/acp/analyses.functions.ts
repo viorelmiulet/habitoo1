@@ -18,6 +18,7 @@ import { acpDbError, acpError, acpSafeMessage } from "./safe-error";
 import {
   acpSourcesSchema,
   canRecalculateInPlace,
+  canRunAcpForTarget,
   shouldReuseRunningAnalysis,
 } from "./guards";
 import { readStoredAcpAiInsight, type AcpAiInsight } from "./ai/schema";
@@ -56,7 +57,7 @@ const MEDIA_BUCKET = "property-media";
 const CANDIDATE_STATUSES = ["active", "reserved", "negotiation", "sold", "rented"] as const;
 
 const PROPERTY_COLUMNS =
-  "id,organization_id,title,reference,property_type,transaction_kind,status,city,county,district,lat,lng,rooms,usable_surface,surface,floor,building_floors,build_year,finish_state,parking,parking_spaces,balcony,furnishing,price,currency";
+  "id,organization_id,title,reference,property_type,transaction_kind,status,archived_at,city,county,district,lat,lng,rooms,usable_surface,surface,floor,building_floors,build_year,finish_state,parking,parking_spaces,balcony,furnishing,price,currency";
 
 type PropertyRow = {
   id: string;
@@ -556,6 +557,39 @@ async function enforceRunRateLimit(
   }
 }
 
+/**
+ * Stage 9: blochează rulările noi (analiză nouă sau versiune nouă) pentru o
+ * proprietate retrasă din portofoliu. Istoricul existent rămâne accesibil.
+ */
+async function assertTargetRunnable(
+  admin: Awaited<ReturnType<typeof loadAdmin>>,
+  actor: { organizationId: string; userId: string },
+  propertyId: string | null,
+) {
+  if (!propertyId) return;
+  const { data, error } = await admin
+    .from("properties")
+    .select("id,status,archived_at")
+    .eq("id", propertyId)
+    .eq("organization_id", actor.organizationId)
+    .maybeSingle();
+  if (error) throw acpDbError("load target property", error);
+  if (!data) return;
+  const verdict = canRunAcpForTarget({
+    archivedAt: data.archived_at ?? null,
+    status: data.status ?? null,
+  });
+  if (verdict.allowed) return;
+  await logAcpAudit({
+    organizationId: actor.organizationId,
+    actorId: actor.userId,
+    action: ACP_AUDIT_ACTIONS.runBlocked,
+    details: { propertyId, reason: verdict.reason },
+  });
+  throw acpError(verdict.message);
+}
+
+
 const createSchema = z.object({
   propertyId: z.string().uuid(),
   title: z.string().trim().max(200).optional(),
@@ -578,6 +612,21 @@ export const createAcpAnalysis = createServerFn({ method: "POST" })
       .maybeSingle();
     if (propertyError) throw acpDbError("load property", propertyError);
     if (!property) throw acpError("Proprietatea analizată nu a fost găsită în agenția ta.");
+
+    // Stage 9: o proprietate retrasă din portofoliu nu mai poate porni rulări noi.
+    const targetVerdict = canRunAcpForTarget({
+      archivedAt: (property as { archived_at?: string | null }).archived_at ?? null,
+      status: (property as { status?: string | null }).status ?? null,
+    });
+    if (!targetVerdict.allowed) {
+      await logAcpAudit({
+        organizationId: actor.organizationId,
+        actorId: actor.userId,
+        action: ACP_AUDIT_ACTIONS.runBlocked,
+        details: { propertyId: data.propertyId, reason: targetVerdict.reason },
+      });
+      throw acpError(targetVerdict.message);
+    }
 
     // Protecție la dublu-click / retry: o rulare pornită foarte recent pentru
     // aceeași proprietate este reutilizată în loc să creăm o analiză duplicat.
@@ -1324,6 +1373,7 @@ export const listAcpVersions = createServerFn({ method: "POST" })
       const actor = await loadActor(context as AuthContext);
       const admin = await loadAdmin();
       const current = await loadVersionRow(admin, actor, data.analysisId);
+      await assertTargetRunnable(admin, actor, current.property_id);
       const rootId = current.root_analysis_id ?? current.id;
       const rows = await loadRootVersionRows(admin, actor, rootId);
       const names = await creatorNames(
@@ -1459,6 +1509,7 @@ export const recalculateAcpAsNewVersion = createServerFn({ method: "POST" })
       const actor = await loadActor(context as AuthContext);
       const admin = await loadAdmin();
       const source = await loadVersionRow(admin, actor, data.analysisId);
+      await assertTargetRunnable(admin, actor, source.property_id);
       await enforceVersionRateLimit(admin, actor);
 
       const rootId = source.root_analysis_id ?? source.id;

@@ -141,3 +141,11 @@
 - [x] Timeout de 60s pentru providerul AI, cu mesaj dedicat; motorul determinist rămâne valid dacă AI eșuează.
 - [x] Audit nou `acp.report.failed` la eșecul generării raportului; refacerea statusului anterior la recalculări eșuate.
 - [x] Teste: 11 noi (total 491), typecheck și build curate.
+
+## ACP – etapa 9: test end-to-end
+- [x] E2E real în aplicație (utilizator autentificat, două agenții): flux complet proprietate → analiză → comparabile → versiune → raport PDF → istoric.
+- [x] Defect reparat: auditul ACP scria prin clientul public (RLS respingea inserarea); `audit.ts` folosește acum clientul server-side, cu teste dedicate.
+- [x] Defect reparat: proprietățile arhivate puteau porni rulări noi; `canRunAcpForTarget` blochează crearea și recalcularea, cu audit `acp.run.blocked` și mesaj clar în interfață.
+- [x] Verificat: cross-org blocat (mesaj „Analiza nu a fost găsită”), raport PDF privat cu URL semnat, versiuni istorice intacte, recalculare simultană fără suprascriere, zero comparabile → „Date insuficiente” fără estimare falsă.
+- [x] Teste: 498 (44 fișiere), typecheck și build curate.
+- [ ] Limitare deschisă: pool-ul extern de anunțuri este gol, deci calibrarea pe volum real de piață nu poate fi validată (rămâne dezactivată implicit).

@@ -74,3 +74,31 @@ export function canRecalculateInPlace(input: AcpInPlaceRecalcCheck): AcpInPlaceR
   }
   return { allowed: true };
 }
+
+export type AcpTargetCheck = {
+  /** Momentul retragerii din portofoliu, dacă proprietatea a fost arhivată. */
+  archivedAt: string | null;
+  status: string | null;
+};
+
+export type AcpTargetVerdict =
+  | { allowed: true }
+  | { allowed: false; reason: "archived"; message: string };
+
+/**
+ * Stage 9: o proprietate retrasă din portofoliu nu mai poate porni o rulare
+ * nouă (nici analiză nouă, nici versiune nouă). Analizele deja existente rămân
+ * accesibile ca istoric, dar nu producem evaluări noi pentru o ofertă retrasă.
+ */
+export function canRunAcpForTarget(input: AcpTargetCheck): AcpTargetVerdict {
+  const archived = Boolean(input.archivedAt) || input.status === "archived";
+  if (archived) {
+    return {
+      allowed: false,
+      reason: "archived",
+      message:
+        "Proprietatea este arhivată. Reactivează-o în portofoliu pentru a porni o analiză comparativă nouă.",
+    };
+  }
+  return { allowed: true };
+}

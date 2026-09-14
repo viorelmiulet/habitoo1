@@ -6,6 +6,7 @@ import {
   ACP_DUPLICATE_RUN_WINDOW_SECONDS,
   acpSourcesSchema,
   canRecalculateInPlace,
+  canRunAcpForTarget,
   shouldReuseRunningAnalysis,
 } from "./guards";
 import { acpDbError, acpError, acpSafeMessage, isAcpSafeError } from "./safe-error";
@@ -111,5 +112,25 @@ describe("erori sigure pentru client", () => {
     expect(acpSafeMessage(new Error("SELECT * FROM acp_analyses failed: 42501"))).not.toContain(
       "SELECT",
     );
+  });
+});
+
+describe("Stage 9 – proprietate arhivată", () => {
+  it("permite rularea pentru o proprietate activă", () => {
+    expect(canRunAcpForTarget({ archivedAt: null, status: "active" })).toEqual({ allowed: true });
+  });
+
+  it("blochează rularea când proprietatea are archived_at", () => {
+    const verdict = canRunAcpForTarget({ archivedAt: "2026-09-14T10:00:00Z", status: "active" });
+    expect(verdict.allowed).toBe(false);
+    if (!verdict.allowed) {
+      expect(verdict.reason).toBe("archived");
+      expect(verdict.message).toContain("arhivată");
+    }
+  });
+
+  it("blochează rularea când statusul este archived", () => {
+    const verdict = canRunAcpForTarget({ archivedAt: null, status: "archived" });
+    expect(verdict.allowed).toBe(false);
   });
 });

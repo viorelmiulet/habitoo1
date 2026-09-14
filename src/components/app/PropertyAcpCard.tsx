@@ -151,6 +151,7 @@ export function PropertyAcpCard({ propertyId }: { propertyId: string }) {
   const analysis = data.analysis;
   const status = data.status;
   const price = data.price;
+  const archived = data.property.archived;
   const deltaLabel = acpPriceDeltaLabel(price);
 
   return (
@@ -194,7 +195,10 @@ export function PropertyAcpCard({ propertyId }: { propertyId: string }) {
 
         <div className="mt-4 flex flex-wrap gap-2">
           {!analysis ? (
-            <Button disabled={busy} onClick={() => startMutation.mutate(undefined)}>
+            <Button
+              disabled={busy || archived}
+              onClick={() => startMutation.mutate(undefined)}
+            >
               {startMutation.isPending ? (
                 <Loader2 className="size-4 animate-spin" aria-hidden />
               ) : (
@@ -211,7 +215,7 @@ export function PropertyAcpCard({ propertyId }: { propertyId: string }) {
               </Button>
               <Button
                 variant="outline"
-                disabled={busy}
+                disabled={busy || archived}
                 onClick={() => recalcMutation.mutate(analysis.id)}
               >
                 <RefreshCw
@@ -230,6 +234,13 @@ export function PropertyAcpCard({ propertyId }: { propertyId: string }) {
             </>
           )}
         </div>
+
+        {archived ? (
+          <p className="mt-4 rounded-lg border border-border bg-muted/40 p-3 text-sm text-muted-foreground">
+            Proprietatea este arhivată: analizele existente rămân vizibile, dar nu se mai pot porni
+            rulări noi. Reactivează proprietatea pentru a recalcula.
+          </p>
+        ) : null}
 
         {status === "insufficient_data" ? (
           <p className="mt-4 rounded-lg border border-border bg-muted/40 p-3 text-sm text-muted-foreground">
