@@ -51,7 +51,10 @@ export type AiToolName =
   | "create_note"
   | "update_lead_status"
   | "assign_lead"
-  | "create_property_match";
+  | "create_property_match"
+  | "create_client_property_match"
+  | "generate_property_description"
+  | "generate_offer_draft";
 
 export type AiToolDefinition = {
   name: AiToolName;
@@ -588,8 +591,10 @@ export const AI_TOOLS: readonly AiToolDefinition[] = [
         leadId: { type: "string" },
         contactId: { type: "string" },
         propertyId: { type: "string" },
+        assigneeId: { type: "string" },
         title: { type: "string" },
         dueAt: { type: "string", description: "Data și ora în format ISO" },
+        priority: { type: "string", enum: ["low", "normal", "high"] },
         description: { type: "string" },
       },
       ["title", "dueAt"],
@@ -657,7 +662,56 @@ export const AI_TOOLS: readonly AiToolDefinition[] = [
       ["requestId", "propertyId"],
     ),
   },
+  {
+    name: "create_client_property_match",
+    description:
+      "Propune înregistrarea unei potriviri între un client și o proprietate, cu motiv. Nu creează o potrivire duplicată. Necesită aprobare umană explicită.",
+    capability: "write:crm",
+    category: "crm",
+    kind: "action",
+    schema: CRM_ACTION_SCHEMAS.create_client_property_match,
+    parameters: objectSchema(
+      { contactId: { type: "string" }, propertyId: { type: "string" }, reason: { type: "string" } },
+      ["contactId", "propertyId"],
+    ),
+  },
+  {
+    name: "generate_property_description",
+    description:
+      "Propune o CIORNĂ de descriere pentru o proprietate, scrisă doar din câmpurile proprietății. Nu înlocuiește descrierea publicată și nu publică nimic. Necesită aprobare umană explicită.",
+    capability: "write:crm",
+    category: "crm",
+    kind: "action",
+    schema: CRM_ACTION_SCHEMAS.generate_property_description,
+    parameters: objectSchema(
+      {
+        propertyId: { type: "string" },
+        draft: { type: "string", description: "Textul ciornei, în română" },
+        title: { type: "string" },
+      },
+      ["propertyId", "draft"],
+    ),
+  },
+  {
+    name: "generate_offer_draft",
+    description:
+      "Propune o CIORNĂ de ofertă/anunț pentru o proprietate, opțional pentru un client. Nu publică pe portaluri și nu modifică valorile ACP. Necesită aprobare umană explicită.",
+    capability: "write:crm",
+    category: "crm",
+    kind: "action",
+    schema: CRM_ACTION_SCHEMAS.generate_offer_draft,
+    parameters: objectSchema(
+      {
+        propertyId: { type: "string" },
+        contactId: { type: "string" },
+        draft: { type: "string", description: "Textul ciornei, în română" },
+        title: { type: "string" },
+      },
+      ["propertyId", "draft"],
+    ),
+  },
 ] as const;
+
 
 const BY_NAME = new Map<string, AiToolDefinition>(AI_TOOLS.map((tool) => [tool.name, tool]));
 

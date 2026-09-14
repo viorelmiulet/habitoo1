@@ -11,6 +11,7 @@
  */
 import type { AiActor, AiSource } from "../gateway/types";
 import { authorizeAiTool } from "../security/permissions";
+import { checkActionPolicy } from "../security/policy";
 import { aiToolCapability, findAiTool, type AiToolDefinition } from "./registry";
 import { sanitizeCrmValue } from "../security/injection";
 
@@ -499,6 +500,20 @@ export async function executeAiTool(
   }
   const tool = findAiTool(name);
   if (!tool) return { ok: false, error: "Instrumentul cerut nu există.", code: "denied" };
+
+  // Politica centrală: doar READ, DRAFT și acțiunile reversibile activate pot
+  // rula. HIGH_RISK rămâne blocat, indiferent ce cere modelul.
+  const policy = checkActionPolicy(tool.name, tool.kind);
+  if (!policy.allowed) {
+    return { ok: false, error: policy.message, code: "denied" };
+  }
+  if (policy.requiresApproval && options.approvalGranted !== true) {
+    return {
+      ok: false,
+      error: "Această acțiune are nevoie de aprobarea ta explicită înainte de execuție.",
+      code: "denied",
+    };
+  }
 
   const parsed = tool.schema.safeParse(rawArgs ?? {});
   if (!parsed.success) {
