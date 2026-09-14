@@ -21,7 +21,9 @@ export type AiToolName =
   | "search_leads"
   | "get_lead"
   | "get_acp"
-  | "get_acp_history";
+  | "get_acp_history"
+  | "get_acp_report"
+  | "get_comparables";
 
 export type AiToolDefinition = {
   name: AiToolName;
@@ -139,6 +141,28 @@ export const AI_TOOLS: readonly AiToolDefinition[] = [
     schema: z.object({ propertyId: uuid, limit: searchLimit }),
     parameters: objectSchema({ propertyId: { type: "string" }, limit: { type: "integer" } }, [
       "propertyId",
+    ]),
+  },
+  {
+    name: "get_acp_report",
+    description:
+      "Returnează metadatele rapoartelor PDF ale unei analize ACP (versiune, dată, stare). Nu returnează fișierul.",
+    capability: "read:acp",
+    category: "acp",
+    schema: z.object({ analysisId: uuid, limit: searchLimit }),
+    parameters: objectSchema({ analysisId: { type: "string" }, limit: { type: "integer" } }, [
+      "analysisId",
+    ]),
+  },
+  {
+    name: "get_comparables",
+    description:
+      "Returnează comparabilele selectate ale unei analize ACP, cu scor de similaritate și preț ajustat.",
+    capability: "read:acp",
+    category: "acp",
+    schema: z.object({ analysisId: uuid, limit: searchLimit }),
+    parameters: objectSchema({ analysisId: { type: "string" }, limit: { type: "integer" } }, [
+      "analysisId",
     ]),
   },
 ] as const;

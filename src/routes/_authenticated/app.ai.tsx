@@ -15,6 +15,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
+import { AiWorkflowCard } from "@/components/app/ai/AiWorkflowCard";
 import {
   getAiConversation,
   getAiStatus,
@@ -28,7 +29,23 @@ export const Route = createFileRoute("/_authenticated/app/ai")({
   component: AiPage,
 });
 
-type ChatEntry = { role: "user" | "assistant"; content: string; warnings?: string[] };
+type ChatEntry = {
+  role: "user" | "assistant";
+  content: string;
+  warnings?: string[];
+  /** Indicator de context: pe ce categorii de date s-a bazat răspunsul. */
+  contextUsed?: string[];
+  sources?: { label: string }[];
+};
+
+const CONTEXT_LABELS: Record<string, string> = {
+  property: "proprietăți",
+  client: "clienți",
+  lead: "leaduri",
+  acp: "analize ACP",
+  activity: "activități",
+  document: "documente",
+};
 
 function AiPage() {
   const queryClient = useQueryClient();
@@ -61,13 +78,21 @@ function AiPage() {
 
   const mutation = useMutation({
     mutationFn: (message: string) =>
-      send({ data: { message, conversationId, propertyId: null } }) as Promise<AIResponseLike>,
+      send({ data: { message, conversationId, propertyId: null } }) as Promise<
+        AIResponseLike & { contextUsed?: string[]; sources?: { label: string }[] }
+      >,
     onSuccess: (response) => {
       if (response.conversationId) setConversationId(response.conversationId);
       if (response.status === "ok") {
         setEntries((prev) => [
           ...prev,
-          { role: "assistant", content: response.answer, warnings: response.warnings },
+          {
+            role: "assistant",
+            content: response.answer,
+            warnings: response.warnings,
+            contextUsed: response.contextUsed ?? [],
+            sources: response.sources ?? [],
+          },
         ]);
         setError(null);
       } else {
@@ -80,13 +105,21 @@ function AiPage() {
 
   const configured = status.data?.configured ?? false;
   const busy = mutation.isPending;
+  const [lastMessage, setLastMessage] = useState<string | null>(null);
 
   function submit() {
     const message = input.trim();
     if (message === "" || busy) return;
     setEntries((prev) => [...prev, { role: "user", content: message }]);
     setInput("");
+    setLastMessage(message);
     mutation.mutate(message);
+  }
+
+  function retry() {
+    if (!lastMessage || busy) return;
+    setError(null);
+    mutation.mutate(lastMessage);
   }
 
   return (
@@ -160,6 +193,17 @@ function AiPage() {
                         {entry.role === "user" ? "Tu" : "Habitoo AI"}
                       </p>
                       <p className="whitespace-pre-wrap">{entry.content}</p>
+                      {(entry.contextUsed ?? []).length > 0 ? (
+                        <p className="mt-2 text-xs text-muted-foreground">
+                          Date folosite:{" "}
+                          {(entry.contextUsed ?? [])
+                            .map((category) => CONTEXT_LABELS[category] ?? category)
+                            .join(", ")}
+                          {(entry.sources ?? []).length > 0
+                            ? ` · ${(entry.sources ?? []).length} surse`
+                            : ""}
+                        </p>
+                      ) : null}
                       {(entry.warnings ?? []).map((warning) => (
                         <Badge key={warning} variant="secondary" className="mt-2 mr-2">
                           {warning}
@@ -171,7 +215,16 @@ function AiPage() {
                 {busy ? (
                   <p className="text-sm text-muted-foreground">Habitoo AI analizează datele…</p>
                 ) : null}
-                {error ? <p className="text-sm text-destructive">{error}</p> : null}
+                {error ? (
+                  <div className="flex flex-wrap items-center gap-3">
+                    <p className="text-sm text-destructive">{error}</p>
+                    {lastMessage ? (
+                      <Button size="sm" variant="outline" onClick={retry} disabled={busy}>
+                        Încearcă din nou
+                      </Button>
+                    ) : null}
+                  </div>
+                ) : null}
               </div>
 
               <div className="space-y-2">
@@ -196,6 +249,10 @@ function AiPage() {
               </div>
             </CardContent>
           </Card>
+
+          <div className="lg:col-start-2">
+            <AiWorkflowCard />
+          </div>
         </div>
       )}
     </div>

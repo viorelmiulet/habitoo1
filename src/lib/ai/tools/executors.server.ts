@@ -358,6 +358,104 @@ async function runTool(
         })),
       };
     }
+    case "get_acp_report": {
+      const analysisId = String(args["analysisId"]);
+      // Proprietatea analizei este verificată prin `organization_id`: un ID din
+      // altă agenție nu poate ajunge la rapoartele ei.
+      const { data: analysis } = await admin
+        .from("acp_analyses")
+        .select("id,version,property_id")
+        .eq("id", analysisId)
+        .eq("organization_id", org)
+        .maybeSingle();
+      if (!analysis) {
+        return { ok: false, error: "Analiza ACP nu există în agenția ta.", code: "not_found" };
+      }
+      const { data, error } = await admin
+        .from("acp_reports")
+        .select("id,version,analysis_version,status,generated_at,created_at,title,file_size_bytes")
+        .eq("analysis_id", analysisId)
+        .eq("organization_id", org)
+        .order("created_at", { ascending: false })
+        .limit(limitOf(args, 5));
+      if (error) {
+        console.error("[ai] get_acp_report failed", error.message);
+        return { ok: false, error: "Rapoartele ACP nu au putut fi citite.", code: "failed" };
+      }
+      const rows = (data ?? []) as unknown as Record<string, unknown>[];
+      if (rows.length === 0) {
+        return {
+          ok: false,
+          error: "Nu există rapoarte generate pentru această analiză.",
+          code: "not_found",
+        };
+      }
+      return {
+        ok: true,
+        capability,
+        data: rows.map((row) => ({
+          id: row["id"],
+          reportVersion: row["version"],
+          analysisVersion: row["analysis_version"],
+          status: row["status"],
+          title: row["title"],
+          generatedAt: row["generated_at"] ?? row["created_at"],
+          fileSizeBytes: row["file_size_bytes"],
+        })),
+        summary: `${rows.length} rapoarte ACP`,
+        sources: [{ type: "acp", id: analysisId, label: `ACP v${analysis.version}` }],
+      };
+    }
+    case "get_comparables": {
+      const analysisId = String(args["analysisId"]);
+      const { data: analysis } = await admin
+        .from("acp_analyses")
+        .select("id,version")
+        .eq("id", analysisId)
+        .eq("organization_id", org)
+        .maybeSingle();
+      if (!analysis) {
+        return { ok: false, error: "Analiza ACP nu există în agenția ta.", code: "not_found" };
+      }
+      const { data, error } = await admin
+        .from("acp_comparables")
+        .select(
+          "id,source_type,source_name,similarity_score,adjusted_price,adjusted_price_per_sqm,adjustment_percent,is_selected,is_outlier,tier",
+        )
+        .eq("analysis_id", analysisId)
+        .eq("is_selected", true)
+        .order("similarity_score", { ascending: false })
+        .limit(limitOf(args, 10));
+      if (error) {
+        console.error("[ai] get_comparables failed", error.message);
+        return { ok: false, error: "Comparabilele nu au putut fi citite.", code: "failed" };
+      }
+      const rows = (data ?? []) as unknown as Record<string, unknown>[];
+      if (rows.length === 0) {
+        return {
+          ok: false,
+          error: "Analiza nu are comparabile selectate.",
+          code: "not_found",
+        };
+      }
+      return {
+        ok: true,
+        capability,
+        data: rows.map((row) => ({
+          id: row["id"],
+          sourceType: row["source_type"],
+          sourceName: row["source_name"],
+          similarityScore: row["similarity_score"],
+          adjustedPrice: row["adjusted_price"],
+          adjustedPricePerSqm: row["adjusted_price_per_sqm"],
+          adjustmentPercent: row["adjustment_percent"],
+          outlier: row["is_outlier"],
+          tier: row["tier"],
+        })),
+        summary: `${rows.length} comparabile`,
+        sources: [{ type: "acp", id: analysisId, label: `ACP v${analysis.version}` }],
+      };
+    }
     default:
       return { ok: false, error: "Instrumentul cerut nu există.", code: "denied" };
   }

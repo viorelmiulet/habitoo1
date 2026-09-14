@@ -8,9 +8,14 @@ export {
   sendAiMessage,
   listAiConversations,
   getAiConversation,
+  startAiWorkflow,
+  resumeAiWorkflow,
+  listAiWorkflows,
   type AiStatus,
   type AiConversationSummary,
   type AiConversationMessage,
+  type AiWorkflowRun,
+  type AiWorkflowResult,
 } from "./ai.functions";
 
 export type AIResponseLike = {

@@ -1,4 +1,4 @@
-# Habitoo AI — arhitectură (Stage 11A: fundație)
+# Habitoo AI — arhitectură (Stage 11: agent, workflow, tracing)
 
 Acest document descrie implementarea REALĂ a fundației AI din `src/lib/ai/`.
 Nu descrie funcționalități planificate; ce nu apare aici nu există în cod.
@@ -28,7 +28,13 @@ src/lib/ai/
   prompts/      system.ts (SYSTEM + SECURITY RULES + TOOL DEFINITIONS / CRM CONTEXT + USER REQUEST)
   security/     permissions.ts, injection.ts, audit.ts
   usage/        limits.ts, tracking.server.ts
-  tests/        provider, security, cost-control
+  agent/        coordinator.server.ts (Habitoo AI Coordinator)
+  workflows/    diagnostic.ts (pași puri), runtime.server.ts (persistență, suspend/resume)
+  reliability/  retry.ts (clasificare erori + reîncercare doar tranzitorie)
+  tracing/      trace.ts (AiTracer), trace.server.ts (scriere evenimente)
+  memory/       conversation.server.ts (memorie de conversație pe termen scurt)
+  scraping/     types.ts (interfață pentru viitor; niciun provider activ)
+  tests/        provider, security, cost-control, retry, workflow, tracing, coordinator
   ai.functions.ts  server functions apelate de interfață
   ai-client.ts     singurul import permis din UI
 ```
@@ -83,6 +89,46 @@ modelul nu le poate cere nici după nume.
 Lanțul obligatoriu: autentificare → apartenență la agenție → permisiune de rol →
 autorizare tool → validare parametri → interogare filtrată.
 
+## 4b. Agent, workflow, state, retry, memorie, tracing
+
+**Habitoo AI Coordinator** (`agent/coordinator.server.ts`): buclă model → tool
+autorizat → model → răspuns structurat. Agentul primește un `AIProvider` gata
+construit, deci nu depinde de Gemini. Tool-urile rulează pe runtime-ul Mastra
+(`tools/mastra.server.ts`) cu actorul verificat capturat în closure — modelul nu
+poate trimite altă agenție prin argumente.
+
+**Workflow** `habitooDiagnosticWorkflow` (`workflows/diagnostic.ts`, pași puri):
+`authenticate → resolve_organization → build_context → agent → approval →
+read_tool → validate → respond`. Pasul `approval` suspendă fluxul: agentul
+propune o acțiune (în Stage 11 exclusiv de citire, `readOnly: true`, parametri
+serializați în `argumentsJson`), utilizatorul aprobă sau respinge, iar fluxul se
+reia din același pas.
+
+**State**: backendul rulează serverless, fără proces Node permanent, deci starea
+este persistată în `ai_workflow_runs` (status, `current_step`, `state` jsonb,
+`pending_approval`, rezultat, `trace_id`). Un flux suspendat rămâne valid după
+repornire sau după reîncărcarea paginii; `runtime.server.ts` expune
+`startDiagnosticWorkflow`, `resumeDiagnosticWorkflow`, `getDiagnosticWorkflow`,
+`listDiagnosticWorkflows`.
+
+**Retry** (`reliability/retry.ts`): `classifyAiError` separă erorile tranzitorii
+(timeout provider, 429, 5xx, rețea, eșec temporar de bază de date) de cele
+terminale (configurare, validare). Se reîncearcă doar apelul modelului și
+citirile — niciodată o operație care poate crea duplicate.
+
+**Memorie** (`memory/conversation.server.ts`): doar istoricul recent al
+conversației (`AI_HISTORY_MESSAGES`), separat de starea workflow-ului. Nu există
+memorie permanentă și conversațiile nu devin automat memorie.
+
+**Tracing** (`tracing/trace.ts` + `ai_trace_events`): fiecare cerere are un
+`trace_id`; se înregistrează agent, workflow, pas, tool, cerere de model, eroare
+și latență, deci traseul utilizator → agent → tool → bază de date → răspuns este
+reconstituibil. `scrubTraceDetails` elimină orice câmp care ar putea conține un
+secret.
+
+**Scraping**: `scraping/types.ts` definește doar interfața viitoare. Nu există
+provider (nici Bright Data); orice cerere întoarce `SCRAPING_NOT_CONFIGURED`.
+
 ## 5. Securitate
 
 - **Multi-tenancy**: fiecare interogare adaugă `organization_id = actor.organizationId`
@@ -111,20 +157,29 @@ estimări), latența, succesul și numărul de tool-uri.
 ## 7. Baza de date
 
 Migrarea `0040_ai_foundation.sql` (aditivă): `ai_conversations`, `ai_messages`,
-`ai_usage_events`, cu GRANT-uri și politici RLS. Nicio tabelă existentă nu a
-fost modificată.
+`ai_usage_events`, cu GRANT-uri și politici RLS.
+
+Migrarea `0041_ai_workflow_state_and_tracing.sql` (aditivă): `ai_workflow_runs`
+(starea fluxurilor, necesară pentru suspend/resume pe un backend serverless) și
+`ai_trace_events` (observabilitate). Ambele cu GRANT-uri, indexuri și RLS strict
+pe agenție (citire: propriile rânduri sau administratorul agenției; scriere doar
+server-side). Nicio tabelă existentă nu a fost modificată.
 
 ## 8. Setări și interfață
 
 - Setări → **AI**: stare (Configurat / Neconfigurat), furnizor, model, conexiune,
   limite, consum pe 30 de zile, lista instrumentelor de citire. Fără billing.
 - `/app/ai`: conversație minimă, cu stări pentru încărcare, răspuns, eroare
-  sigură și „AI nu este configurat.".
+  sigură, „Încearcă din nou", indicator de context („Date folosite: …") și
+  „AI nu este configurat.".
+- `/app/ai`: cardul „Flux cu aprobare" pornește `habitooDiagnosticWorkflow`,
+  afișează pasul curent, propunerea agentului și butoanele Aprob / Resping.
 
-## 9. Limitări cunoscute (Stage 11A)
+## 9. Limitări cunoscute (Stage 11)
 
-- `GEMINI_API_KEY` nu este configurat în acest mediu: interfața afișează „AI nu
-  este configurat." și nu se face nicio cerere către provider.
+- `GEMINI_API_KEY` este configurat și verificat cu o cerere reală; free tier.
+- Workflow-ul demonstrativ propune doar citiri; nu există acțiuni care modifică date.
+- Fără scraping: interfața de scraping există, dar niciun provider nu este activ.
 - Fără acțiuni: email, WhatsApp, publicare pe portaluri, ștergere, modificare
   preț, contracte, agenți autonomi, multi-agent, memorie AI permanentă.
 - Fără streaming; răspunsul se afișează la final.

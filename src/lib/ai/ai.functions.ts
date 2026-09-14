@@ -239,3 +239,62 @@ export const getAiConversation = createServerFn({ method: "GET" })
         : [],
     }));
   });
+
+/* ------------------------------------------------------------------ *
+ * Workflow-uri (habitooDiagnosticWorkflow): start, suspend, resume.  *
+ * ------------------------------------------------------------------ */
+
+export type AiWorkflowRun = import("./workflows/runtime.server").WorkflowRunView;
+
+export type AiWorkflowResult =
+  | { ok: true; run: AiWorkflowRun }
+  | { ok: false; message: string };
+
+const startWorkflowSchema = z.object({
+  question: z.string().min(1).max(AI_MAX_MESSAGE_CHARS),
+  propertyId: z.string().uuid().nullable().optional(),
+});
+
+/** Pornește fluxul de diagnostic; se oprește la pasul de aprobare umană. */
+export const startAiWorkflow = createServerFn({ method: "POST" })
+  .middleware([requireActiveOrgAuth])
+  .inputValidator((data: unknown) => startWorkflowSchema.parse(data))
+  .handler(async ({ data, context }): Promise<AiWorkflowResult> => {
+    const { userId } = context as AuthContext;
+    const actor = await resolveActor(userId);
+    if (!actor) {
+      return { ok: false, message: "Habitoo AI este disponibil doar utilizatorilor unei agenții." };
+    }
+    const { startDiagnosticWorkflow } = await import("./workflows/runtime.server");
+    return startDiagnosticWorkflow(actor, {
+      question: data.question,
+      propertyId: data.propertyId ?? null,
+    });
+  });
+
+/** Reia fluxul suspendat după decizia utilizatorului (aprobat/respins). */
+export const resumeAiWorkflow = createServerFn({ method: "POST" })
+  .middleware([requireActiveOrgAuth])
+  .inputValidator((data: unknown) =>
+    z.object({ runId: z.string().uuid(), approved: z.boolean() }).parse(data),
+  )
+  .handler(async ({ data, context }): Promise<AiWorkflowResult> => {
+    const { userId } = context as AuthContext;
+    const actor = await resolveActor(userId);
+    if (!actor) {
+      return { ok: false, message: "Habitoo AI este disponibil doar utilizatorilor unei agenții." };
+    }
+    const { resumeDiagnosticWorkflow } = await import("./workflows/runtime.server");
+    return resumeDiagnosticWorkflow(actor, data.runId, data.approved);
+  });
+
+/** Rulările proprii, cu starea persistată (supraviețuiesc restartului). */
+export const listAiWorkflows = createServerFn({ method: "GET" })
+  .middleware([requireActiveOrgAuth])
+  .handler(async ({ context }): Promise<AiWorkflowRun[]> => {
+    const { userId } = context as AuthContext;
+    const actor = await resolveActor(userId);
+    if (!actor) return [];
+    const { listDiagnosticWorkflows } = await import("./workflows/runtime.server");
+    return listDiagnosticWorkflows(actor);
+  });

@@ -288,6 +288,13 @@
       "when": 1789407912407,
       "tag": "0040_ai_foundation",
       "breakpoints": true
+    },
+    {
+      "idx": 41,
+      "version": "7",
+      "when": 1789410213614,
+      "tag": "0041_ai_workflow_state_and_tracing",
+      "breakpoints": true
     }
   ]
 }
