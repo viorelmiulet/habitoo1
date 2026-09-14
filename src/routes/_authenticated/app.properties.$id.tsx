@@ -115,6 +115,9 @@ function PropertyDetailPage() {
   const agencyLogoUrl = useAgencyLogoUrl(user?.organization?.logo_path);
 
   const [editing, setEditing] = useState(false);
+  /** Fila activă; butonul din antet duce direct la fluxul ACP. */
+  const [tab, setTab] = useState("overview");
+
   /** Evită tipăriri suprapuse ale fișei de prezentare. */
   const printingRef = useRef(false);
   const [presentationDialogOpen, setPresentationDialogOpen] = useState(false);
