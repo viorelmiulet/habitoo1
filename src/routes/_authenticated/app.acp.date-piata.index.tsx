@@ -39,6 +39,7 @@ import {
   resolveDedupeReview,
   listDedupeReviews,
   syncMarketSource,
+  testMarketSourceConnection,
 } from "@/lib/market/market.functions";
 import { MARKET_SOURCES } from "@/lib/market/sources";
 
@@ -80,6 +81,7 @@ function MarketDataCenterPage() {
   const listFn = useServerFn(listMarketListings);
   const importFn = useServerFn(importMarketListings);
   const syncFn = useServerFn(syncMarketSource);
+  const testFn = useServerFn(testMarketSourceConnection);
   const reviewsFn = useServerFn(listDedupeReviews);
   const resolveFn = useServerFn(resolveDedupeReview);
 
@@ -155,12 +157,37 @@ function MarketDataCenterPage() {
     onError: (error: unknown) => toastError(error),
   });
 
+  const [busySource, setBusySource] = useState<string | null>(null);
+
   const sync = useMutation({
-    mutationFn: (source: string) => syncFn({ data: { source } }),
-    onSuccess: () => {
+    mutationFn: (source: string) => {
+      setBusySource(source);
+      return syncFn({ data: { source } });
+    },
+    onSuccess: (result) => {
+      toast.success(
+        `Sincronizare ${result.sourceName}: ${result.inserted} noi, ${result.updated} actualizate, ${result.rejected} respinse.`,
+        { duration: 2500 },
+      );
       void queryClient.invalidateQueries({ queryKey: ["market-overview"] });
+      void queryClient.invalidateQueries({ queryKey: ["market-listings"] });
+      void queryClient.invalidateQueries({ queryKey: ["market-source-counts"] });
     },
     onError: (error: unknown) => toastError(error),
+    onSettled: () => setBusySource(null),
+  });
+
+  const testConnection = useMutation({
+    mutationFn: (source: string) => {
+      setBusySource(source);
+      return testFn({ data: { source } });
+    },
+    onSuccess: (result) => {
+      if (result.ok) toast.success(result.message, { duration: 2500 });
+      else toast.error(result.message, { duration: 4000 });
+    },
+    onError: (error: unknown) => toastError(error),
+    onSettled: () => setBusySource(null),
   });
 
   const resolve = useMutation({
@@ -217,15 +244,24 @@ function MarketDataCenterPage() {
                 <div className="flex flex-wrap items-center gap-2">
                   <p className="font-medium text-foreground">{source.name}</p>
                   <Badge variant="outline">{source.formats.join(" / ").toUpperCase()}</Badge>
-                  {source.pull ? (
+                  {source.configured ? (
                     <Badge variant="secondary">Import automat</Badge>
                   ) : (
-                    <Badge variant="outline">Import din fișier</Badge>
+                    <Badge variant="outline">Neconfigurat · import din fișier</Badge>
                   )}
+                  {source.syncing ? <Badge variant="secondary">Sincronizare în curs…</Badge> : null}
+                  {source.syncStatus === "error" ? (
+                    <Badge variant="destructive">Sincronizare eșuată</Badge>
+                  ) : null}
                 </div>
                 <p className="mt-1 text-sm text-muted-foreground">{source.description}</p>
                 {source.notes ? (
                   <p className="mt-1 text-xs text-muted-foreground">{source.notes}</p>
+                ) : null}
+                {source.lastSyncError ? (
+                  <p className="mt-1 text-xs text-destructive">
+                    Ultima eroare: {source.lastSyncError}
+                  </p>
                 ) : null}
               </div>
               <div className="flex flex-wrap items-center gap-4 text-sm">
@@ -233,18 +269,38 @@ function MarketDataCenterPage() {
                   {source.total} oferte · {source.active} active
                 </span>
                 <span className="text-muted-foreground">
-                  Ultima sincronizare: {dateLabel(source.lastImportAt ?? source.lastSeenAt)}
+                  Ultima sincronizare:{" "}
+                  {dateLabel(source.lastSyncAt ?? source.lastImportAt ?? source.lastSeenAt)}
                 </span>
-                {isSuperadmin ? (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    disabled={sync.isPending}
-                    onClick={() => sync.mutate(source.id)}
-                  >
-                    <RefreshCw className="size-4" /> Sincronizează
-                  </Button>
-                ) : null}
+                {source.configured ? (
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      disabled={busySource === source.id || source.syncing}
+                      onClick={() => sync.mutate(source.id)}
+                    >
+                      <RefreshCw
+                        className={`size-4 ${busySource === source.id && sync.isPending ? "animate-spin" : ""}`}
+                      />
+                      {busySource === source.id && sync.isPending
+                        ? "Sincronizare în curs…"
+                        : "Sincronizează"}
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      disabled={busySource === source.id}
+                      onClick={() => testConnection.mutate(source.id)}
+                    >
+                      Testează conexiunea
+                    </Button>
+                  </div>
+                ) : (
+                  <span className="text-xs text-muted-foreground">
+                    Fără feed autorizat configurat
+                  </span>
+                )}
               </div>
             </div>
           ))}
