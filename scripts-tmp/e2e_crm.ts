@@ -56,7 +56,7 @@ async function seedSuspendedRun(leadId: string, title: string, dueAt: string): P
     proposal,
     step: "approval",
   };
-  const { data } = await admin
+  const { data, error } = await admin
     .from("ai_workflow_runs")
     .insert({
       organization_id: ORG_A,
@@ -70,6 +70,7 @@ async function seedSuspendedRun(leadId: string, title: string, dueAt: string): P
     })
     .select("id")
     .single();
+  if (error) console.log("seedSuspendedRun error:", error.message);
   return data?.id ?? null;
 }
 
