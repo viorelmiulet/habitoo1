@@ -105,6 +105,8 @@ export type PropertyAcpWorkflow = {
     price: number | null;
     currency: string;
     transactionKind: string | null;
+    /** Proprietatea a fost retrasă din portofoliu: nu mai pornim rulări noi. */
+    archived: boolean;
   };
   status: AcpWorkflowStatus;
   analysis: {
