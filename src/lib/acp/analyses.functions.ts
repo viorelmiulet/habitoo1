@@ -14,6 +14,12 @@ import { runAcpAnalysis, targetPricePerSqm, type AcpCandidate, type AcpManualOve
 import type { AcpSubject } from "./scoring";
 import type { AcpComparableResult } from "./engine";
 import { ACP_AUDIT_ACTIONS, logAcpAudit } from "./audit";
+import { acpDbError, acpError } from "./safe-error";
+import {
+  acpSourcesSchema,
+  canRecalculateInPlace,
+  shouldReuseRunningAnalysis,
+} from "./guards";
 import { readStoredAcpAiInsight, type AcpAiInsight } from "./ai/schema";
 import { dedupeMarketCandidates } from "@/lib/market/acp";
 import {
@@ -210,7 +216,7 @@ async function collectCandidates(params: {
     query = applyPropertyFilters(query);
     if (targetPropertyId) query = query.neq("id", targetPropertyId);
     const { data, error } = await query;
-    if (error) throw error;
+    if (error) throw acpDbError("collect own properties", error);
     const rows = (data ?? []) as unknown as PropertyRow[];
     for (const row of rows) {
       propertyRows.push({
@@ -251,7 +257,7 @@ async function collectCandidates(params: {
         .limit(200);
       query = applyPropertyFilters(query);
       const { data, error } = await query;
-      if (error) throw error;
+      if (error) throw acpDbError("collect collaboration properties", error);
       rows = (data ?? []) as unknown as PropertyRow[];
       for (const row of rows) {
         propertyRows.push({
@@ -300,7 +306,7 @@ async function collectCandidates(params: {
     if (target.transactionType) query = query.eq("transaction_type", target.transactionType);
     if (target.city) query = query.eq("city", target.city);
     const { data, error } = await query;
-    if (error) throw error;
+    if (error) throw acpDbError("collect market listings", error);
     const rows = data ?? [];
     const deduped = dedupeMarketCandidates(rows as never);
     for (const item of deduped) {
@@ -454,7 +460,7 @@ async function persistRun(params: {
       } as never,
     }));
     const { error } = await admin.from("acp_comparables").insert(rows);
-    if (error) throw error;
+    if (error) throw acpDbError("insert comparables", error);
   }
 
   await admin.from("acp_analysis_sources").delete().eq("analysis_id", analysisId);
@@ -475,7 +481,7 @@ async function persistRun(params: {
         items_excluded: Math.max(0, s.itemsFound - (usedBySource.get(s.sourceType) ?? 0)),
       })),
     );
-    if (error) throw error;
+    if (error) throw acpDbError("insert analysis sources", error);
   }
 
   const { error: updateError } = await admin
@@ -522,13 +528,13 @@ async function persistRun(params: {
 
     })
     .eq("id", analysisId);
-  if (updateError) throw updateError;
+  if (updateError) throw acpDbError("persist analysis run", updateError);
 }
 
 const createSchema = z.object({
   propertyId: z.string().uuid(),
   title: z.string().trim().max(200).optional(),
-  sources: z.record(z.string(), z.boolean()).default({ own_properties: true }),
+  sources: acpSourcesSchema,
 });
 
 /** Creează analiza (snapshot al proprietății) și rulează imediat motorul. */
@@ -545,8 +551,8 @@ export const createAcpAnalysis = createServerFn({ method: "POST" })
       .eq("id", data.propertyId)
       .eq("organization_id", actor.organizationId)
       .maybeSingle();
-    if (propertyError) throw propertyError;
-    if (!property) throw new Error("Proprietatea analizată nu a fost găsită în agenția ta.");
+    if (propertyError) throw acpDbError("load property", propertyError);
+    if (!property) throw acpError("Proprietatea analizată nu a fost găsită în agenția ta.");
 
     const row = property as unknown as PropertyRow;
     const subject = propertyToSubject(row as never);
@@ -572,7 +578,7 @@ export const createAcpAnalysis = createServerFn({ method: "POST" })
       })
       .select("id")
       .single();
-    if (insertError) throw insertError;
+    if (insertError) throw acpDbError("create analysis", insertError);
 
     // Versiunea 1 este propriul root al liniei de versiuni.
     await admin
@@ -704,8 +710,8 @@ async function loadAnalysis(
     .eq("id", analysisId)
     .eq("organization_id", actor.organizationId)
     .maybeSingle();
-  if (error) throw error;
-  if (!data) throw new Error("Analiza nu a fost găsită în agenția ta.");
+  if (error) throw acpDbError("load analysis", error);
+  if (!data) throw acpError("Analiza nu a fost găsită în agenția ta.");
   return data as unknown as AnalysisRow;
 }
 
@@ -722,7 +728,7 @@ function readOverrides(analysisData: unknown): Record<string, AcpManualOverride>
 
 function readSubject(targetData: unknown): AcpSubject {
   const subject = (targetData as { subject?: AcpSubject } | null)?.subject;
-  if (!subject) throw new Error("Analiza nu conține datele proprietății analizate.");
+  if (!subject) throw acpError("Analiza nu conține datele proprietății analizate.");
   return subject;
 }
 
@@ -1211,7 +1217,7 @@ async function enforceVersionRateLimit(
       _window_seconds: config.windowSeconds,
     });
     if (allowed === false) {
-      throw new Error("Prea multe recalculări în ultima oră. Încearcă din nou mai târziu.");
+      throw acpError("Prea multe recalculări în ultima oră. Încearcă din nou mai târziu.");
     }
   }
 }
@@ -1319,7 +1325,7 @@ async function insertNextVersionRow(
       .select("version")
       .eq("organization_id", actor.organizationId)
       .or(`root_analysis_id.eq.${rootId},id.eq.${rootId}`);
-    if (existingError) throw existingError;
+    if (existingError) throw acpDbError("list versions", existingError);
     const version =
       nextVersionNumber((existing ?? []).map((r) => Number(r.version ?? 1))) + attempt;
 
@@ -1342,9 +1348,9 @@ async function insertNextVersionRow(
 
     if (!error && created) return { id: created.id, version };
     const code = (error as { code?: string } | null)?.code;
-    if (code !== "23505") throw error;
+    if (code !== "23505") throw acpDbError("insert version", error);
   }
-  throw new Error("Nu am putut crea o versiune nouă. Încearcă din nou.");
+  throw acpError("Nu am putut crea o versiune nouă. Încearcă din nou.");
 }
 
 /**
