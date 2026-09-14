@@ -131,3 +131,13 @@
 - [x] Secțiune „Calibrare și calitatea datelor” în raportul PDF, doar pentru versiunile care au aceste date (rapoartele istorice rămân neschimbate).
 - [x] Surse externe: nicio simulare — adaptoarele neconfigurate rămân `NOT_CONFIGURED`.
 - [x] Teste: 29 noi (total 480), typecheck și build curate.
+
+## ACP – etapa 8: production hardening
+- [x] Audit tehnic al server functions ACP (analize, versiuni, rapoarte, AI, calibrare, workflow, market data): izolarea pe organizație, validările Zod, rate limiting și auditul existente au fost confirmate; nicio migrare nouă necesară.
+- [x] Erori sigure pentru client: `safe-error.ts` (`acpError`, `acpDbError`, `acpSafeMessage`) — detaliile de bază de date/storage rămân doar în logurile serverului.
+- [x] Protecție la rulări duplicate: `guards.ts` (fereastră de 120s pentru reutilizarea unei analize în curs) + blocare optimistă prin update condiționat pe status la recalculare.
+- [x] Imutabilitatea versiunilor livrate: o versiune cu raport sau interpretare AI nu mai poate fi recalculată în loc, ci doar ca versiune nouă.
+- [x] Rate limiting pe pornirea analizei (20/utilizator, 60/agenție pe oră) și validare strictă a surselor (doar tipurile cunoscute).
+- [x] Timeout de 60s pentru providerul AI, cu mesaj dedicat; motorul determinist rămâne valid dacă AI eșuează.
+- [x] Audit nou `acp.report.failed` la eșecul generării raportului; refacerea statusului anterior la recalculări eșuate.
+- [x] Teste: 11 noi (total 491), typecheck și build curate.
