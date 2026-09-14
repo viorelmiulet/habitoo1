@@ -13,6 +13,14 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { requireActiveOrgAuth } from "@/lib/org-access";
 import { parseCsv } from "./csv";
+import {
+  NOT_CONFIGURED_MESSAGE,
+  runAdapterSync,
+  sourceScopeKey,
+  type SyncRunResult,
+} from "./adapter";
+import { HABITOO_ELIGIBLE_STATUSES, type HabitooPropertyRow } from "./adapters/habitoo";
+import { createMarketAdapter, type RegistryDeps } from "./registry";
 import { ingestListings, summarizeHistory, type ImportSummary } from "./ingest";
 import {
   normalizeRecord,
@@ -81,6 +89,8 @@ export type MarketSourceStats = {
   formats: string[];
   pull: boolean;
   notes: string | null;
+  /** Sursa are un feed/API autorizat configurat în Habitoo. */
+  configured: boolean;
   total: number;
   active: number;
   inactive: number;
@@ -90,6 +100,12 @@ export type MarketSourceStats = {
   lastSeenAt: string | null;
   lastImportAt: string | null;
   lastImportStatus: string | null;
+  /** Starea sincronizării, din `market_source_state`. */
+  syncStatus: string | null;
+  syncing: boolean;
+  lastSyncAt: string | null;
+  lastSyncSuccessAt: string | null;
+  lastSyncError: string | null;
 };
 
 export type MarketOverview = {
@@ -165,6 +181,8 @@ export const getMarketOverview = createServerFn({ method: "GET" })
       .order("started_at", { ascending: false })
       .limit(20);
 
+    const { data: states } = await admin.from("market_source_state").select("*");
+
     const runList = runs ?? [];
     const sources: MarketSourceStats[] = [];
     for (const definition of MARKET_SOURCES) {
@@ -186,13 +204,18 @@ export const getMarketOverview = createServerFn({ method: "GET" })
         .limit(1)
         .maybeSingle();
       const lastRun = runList.find((run) => run.source === definition.id) ?? null;
+      const state =
+        (states ?? []).find(
+          (row) => row.source === definition.id || row.source.startsWith(`${definition.id}:`),
+        ) ?? null;
       sources.push({
         id: definition.id,
         name: definition.name,
         description: definition.description,
         formats: definition.formats,
-        pull: definition.pull,
+        pull: definition.id === "habitoo_internal" ? true : definition.pull,
         notes: definition.notes ?? null,
+        configured: definition.id === "habitoo_internal",
         total: sTotal,
         active: sActive,
         inactive: sInactive,
@@ -202,6 +225,11 @@ export const getMarketOverview = createServerFn({ method: "GET" })
         lastSeenAt: latest?.last_seen_at ?? null,
         lastImportAt: lastRun?.started_at ?? null,
         lastImportStatus: lastRun?.status ?? null,
+        syncStatus: state?.status ?? null,
+        syncing: state?.status === "running",
+        lastSyncAt: state?.last_sync_at ?? null,
+        lastSyncSuccessAt: state?.last_success_at ?? null,
+        lastSyncError: state?.last_error ?? null,
       });
     }
 
@@ -651,26 +679,286 @@ export const importMarketListings = createServerFn({ method: "POST" })
     }
   });
 
-/**
- * Sincronizare manuală. Nicio sursă autorizată nu expune încă un import
- * automat în Habitoo, deci funcția spune explicit ce trebuie făcut, în loc să
- * simuleze o integrare inexistentă.
- */
-export const syncMarketSource = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+/* ------------------------------------------------------------------ */
+/* Sincronizarea surselor (adaptoare + lock server-side)               */
+/* ------------------------------------------------------------------ */
+
+/** Adaptoarele au nevoie de acces la proprietățile agenției. */
+function habitooDeps(admin: Awaited<ReturnType<typeof loadAdmin>>): RegistryDeps["habitoo"] {
+  const eligible = () =>
+    admin
+      .from("properties")
+      .select(PROPERTY_SYNC_COLUMNS)
+      .is("archived_at", null)
+      .in("status", [...HABITOO_ELIGIBLE_STATUSES]);
+  return {
+    async countProperties(organizationId) {
+      const { count } = await admin
+        .from("properties")
+        .select("id", { count: "exact", head: true })
+        .eq("organization_id", organizationId)
+        .is("archived_at", null)
+        .in("status", [...HABITOO_ELIGIBLE_STATUSES]);
+      return count ?? 0;
+    },
+    async loadProperties(organizationId) {
+      const { data, error } = await eligible()
+        .eq("organization_id", organizationId)
+        .order("updated_at", { ascending: false })
+        .limit(5000);
+      if (error) throw error;
+      return (data ?? []) as unknown as HabitooPropertyRow[];
+    },
+  };
+}
+
+const PROPERTY_SYNC_COLUMNS =
+  "id,title,reference,property_type,transaction_kind,status,city,county,district,street,lat,lng,rooms,bathrooms,usable_surface,surface,floor,building_floors,build_year,price,currency,finish_state,furnishing,parking,balcony,updated_at";
+
+/** Cine poate porni o sincronizare: sursa internă = admin agenției; restul = superadmin. */
+async function requireSyncPermission(
+  context: AuthContext,
+  source: string,
+): Promise<{ userId: string; organizationId: string | null; superadmin: boolean }> {
+  const userId = (context as unknown as { userId: string }).userId;
+  const superadmin = await isSuperadmin(context);
+  const admin = await loadAdmin();
+  const { data: profile } = await admin
+    .from("profiles")
+    .select("organization_id")
+    .eq("id", userId)
+    .maybeSingle();
+  const organizationId = profile?.organization_id ?? null;
+
+  if (superadmin) return { userId, organizationId, superadmin };
+  if (source !== "habitoo_internal") {
+    throw new Error("Această sursă poate fi sincronizată doar de administratorii platformei.");
+  }
+  const { data: isAdmin } = await context.supabase.rpc("is_org_admin");
+  if (isAdmin !== true) {
+    throw new Error("Doar administratorul agenției poate sincroniza sursa internă.");
+  }
+  if (!organizationId) throw new Error("Lipsește agenția curentă.");
+  return { userId, organizationId, superadmin };
+}
+
+export const testMarketSourceConnection = createServerFn({ method: "POST" })
+  .middleware([requireActiveOrgAuth])
   .inputValidator((data: unknown) => z.object({ source: z.string().min(1) }).parse(data))
   .handler(async ({ data, context }) => {
-    await requireSuperadmin(context as unknown as AuthContext);
-    const definition = findMarketSource(data.source);
-    if (!definition) throw new Error("Sursă de date necunoscută.");
-    if (!definition.pull) {
+    const ctx = context as unknown as AuthContext;
+    const { organizationId } = await requireSyncPermission(ctx, data.source);
+    const admin = await loadAdmin();
+    const adapter = createMarketAdapter(data.source, { habitoo: habitooDeps(admin) });
+    if (!adapter) throw new Error("Sursă de date necunoscută.");
+    const info = adapter.getSourceInfo();
+    if (!info.configured) {
+      return { ok: false, configured: false, message: NOT_CONFIGURED_MESSAGE };
+    }
+    const result = await adapter.testConnection({
+      organizationId: info.orgScoped ? organizationId : null,
+      runId: null,
+      now: new Date().toISOString(),
+    });
+    return { ok: result.ok, configured: true, message: result.message };
+  });
+
+export const syncMarketSource = createServerFn({ method: "POST" })
+  .middleware([requireActiveOrgAuth])
+  .inputValidator((data: unknown) => z.object({ source: z.string().min(1) }).parse(data))
+  .handler(async ({ data, context }): Promise<SyncRunResult> => {
+    const ctx = context as unknown as AuthContext;
+    const { userId, organizationId } = await requireSyncPermission(ctx, data.source);
+    const admin = await loadAdmin();
+    const adapter = createMarketAdapter(data.source, { habitoo: habitooDeps(admin) });
+    if (!adapter) throw new Error("Sursă de date necunoscută.");
+
+    const info = adapter.getSourceInfo();
+    const scopedOrg = info.orgScoped ? organizationId : null;
+    if (!info.configured) {
       throw new Error(
-        `${definition.name} nu are import automat în Habitoo. Încarcă fișierul ${definition.formats
-          .map((f) => f.toUpperCase())
-          .join(" sau ")} primit de la sursă.`,
+        `${info.name} nu are un feed sau API autorizat configurat. Încarcă exportul primit de la sursă.`,
       );
     }
-    throw new Error("Importul automat pentru această sursă nu este încă disponibil.");
+
+    // Rate limit: sincronizările manuale nu pot fi apelate în buclă.
+    const { data: allowed } = await admin.rpc("rate_limit_hit", {
+      _bucket: `market_sync:${userId}`,
+      _limit: 20,
+      _window_seconds: 3600,
+    });
+    if (allowed === false) {
+      throw new Error("Prea multe sincronizări în ultima oră. Încearcă din nou mai târziu.");
+    }
+
+    // Lock server-side: o singură sincronizare activă per sursă (și per agenție
+    // la sursele izolate). Lock-ul abandonat expiră automat.
+    const lockKey = sourceScopeKey(info.id, scopedOrg);
+    const { data: claimed, error: claimError } = await admin.rpc("market_sync_claim", {
+      _source: lockKey,
+      _stale_seconds: 900,
+    });
+    if (claimError) throw claimError;
+    if (claimed !== true) {
+      throw new Error("O sincronizare este deja în curs pentru această sursă.");
+    }
+
+    const startedAt = new Date().toISOString();
+    const { data: run, error: runError } = await admin
+      .from("market_import_runs")
+      .insert({
+        source: info.id,
+        format: "json",
+        mode: "partial",
+        status: "running",
+        triggered_by: userId,
+        started_at: startedAt,
+      })
+      .select("id")
+      .single();
+    if (runError) {
+      await admin.rpc("market_sync_release", {
+        _source: lockKey,
+        _ok: false,
+        _error: "Nu s-a putut înregistra rularea.",
+        _run_id: null,
+      });
+      throw runError;
+    }
+
+    await logMarketAudit({
+      actorId: userId,
+      action: "market.sync.started",
+      entityId: run.id,
+      details: { source: info.id, organizationId: scopedOrg, startedAt },
+    });
+
+    try {
+      const result = await runAdapterSync(
+        adapter,
+        { organizationId: scopedOrg, runId: run.id, now: startedAt },
+        createMarketRepository(admin),
+      );
+
+      await admin
+        .from("market_import_runs")
+        .update({
+          status: result.success ? "completed" : "failed",
+          finished_at: result.finishedAt,
+          items_received: result.fetched,
+          items_created: result.inserted,
+          items_updated: result.updated,
+          items_unchanged: result.unchanged,
+          items_invalid: result.rejected,
+          items_deactivated: result.deactivated,
+          duplicates_detected: result.duplicates,
+          ambiguous_matches: result.ambiguous,
+          errors: result.errors as never,
+        })
+        .eq("id", run.id);
+
+      await admin.rpc("market_sync_release", {
+        _source: lockKey,
+        _ok: result.success,
+        _error: result.success ? null : (result.errors[0]?.message ?? "Sincronizare eșuată."),
+        _run_id: run.id,
+      });
+
+      await logMarketAudit({
+        actorId: userId,
+        action: result.success ? "market.sync.completed" : "market.sync.failed",
+        entityId: run.id,
+        details: {
+          source: info.id,
+          organizationId: scopedOrg,
+          startedAt: result.startedAt,
+          finishedAt: result.finishedAt,
+          fetched: result.fetched,
+          inserted: result.inserted,
+          updated: result.updated,
+          skipped: result.skipped,
+          rejected: result.rejected,
+          errors: result.errors.length,
+        },
+      });
+
+      return result;
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Eroare necunoscută la sincronizare.";
+      await admin
+        .from("market_import_runs")
+        .update({
+          status: "failed",
+          finished_at: new Date().toISOString(),
+          errors: [{ reference: info.id, message }] as never,
+        })
+        .eq("id", run.id);
+      // Lock-ul se eliberează și la eroare.
+      await admin.rpc("market_sync_release", {
+        _source: lockKey,
+        _ok: false,
+        _error: message,
+        _run_id: run.id,
+      });
+      await logMarketAudit({
+        actorId: userId,
+        action: "market.sync.failed",
+        entityId: run.id,
+        details: { source: info.id, organizationId: scopedOrg, message },
+      });
+      throw new Error("Sincronizarea a eșuat. Verifică configurația sursei și încearcă din nou.");
+    }
+  });
+
+/**
+ * Numărul de oferte disponibile per sursă, pentru selecția din „Analiză nouă".
+ * Numerele vin din baza de date, nu sunt hardcodate.
+ */
+export type MarketSourceCount = {
+  id: string;
+  name: string;
+  configured: boolean;
+  active: number;
+  status: "never_synced" | "ok" | "error" | "running" | "not_configured";
+  lastSyncAt: string | null;
+};
+
+export const getMarketSourceCounts = createServerFn({ method: "GET" })
+  .middleware([requireActiveOrgAuth])
+  .handler(async (): Promise<MarketSourceCount[]> => {
+    const admin = await loadAdmin();
+    const { data: states } = await admin.from("market_source_state").select("*");
+    const stateFor = (source: string) =>
+      (states ?? []).find((row) => row.source === source || row.source.startsWith(`${source}:`)) ??
+      null;
+
+    const out: MarketSourceCount[] = [];
+    for (const definition of MARKET_SOURCES) {
+      const { count } = await admin
+        .from("market_listings")
+        .select("id", { count: "exact", head: true })
+        .eq("source", definition.id)
+        .eq("status", "active");
+      const state = stateFor(definition.id);
+      const configured = definition.id === "habitoo_internal";
+      out.push({
+        id: definition.id,
+        name: definition.name,
+        configured,
+        active: count ?? 0,
+        status: !configured
+          ? "not_configured"
+          : state?.status === "running"
+            ? "running"
+            : state?.status === "error"
+              ? "error"
+              : state?.last_success_at
+                ? "ok"
+                : "never_synced",
+        lastSyncAt: state?.last_sync_at ?? null,
+      });
+    }
+    return out;
   });
 
 /* ------------------------------------------------------------------ */
