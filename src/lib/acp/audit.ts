@@ -11,7 +11,11 @@ export const ACP_AUDIT_ACTIONS = {
   analysisUpdated: "acp.analysis.updated",
   reportGenerated: "acp.report.generated",
   aiGenerated: "acp.ai.generated",
+  versionCreated: "acp.version.created",
+  versionFailed: "acp.version.failed",
+  versionsCompared: "acp.versions.compared",
 } as const;
+
 
 export type AcpAuditAction = (typeof ACP_AUDIT_ACTIONS)[keyof typeof ACP_AUDIT_ACTIONS];
 

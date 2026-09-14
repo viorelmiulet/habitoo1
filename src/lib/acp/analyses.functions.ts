@@ -17,6 +17,14 @@ import { ACP_AUDIT_ACTIONS, logAcpAudit } from "./audit";
 import { parseAcpAiInsight, type AcpAiInsight } from "./ai/schema";
 import { dedupeMarketCandidates } from "@/lib/market/acp";
 import { marketSourceName } from "@/lib/market/sources";
+import {
+  compareAcpVersionSnapshots,
+  nextVersionNumber,
+  type AcpVersionComparison,
+  type AcpVersionListItem,
+  type AcpVersionSnapshot,
+} from "./versioning";
+
 
 const MEDIA_BUCKET = "property-media";
 
@@ -383,6 +391,8 @@ async function persistRun(params: {
       version: params.version,
       history: params.history as never,
       last_run_at: new Date().toISOString(),
+      snapshot_at: new Date().toISOString(),
+
       analysis_data: {
         statistics: result.statistics,
         estimate: result.estimate,
@@ -445,6 +455,14 @@ export const createAcpAnalysis = createServerFn({ method: "POST" })
       .select("id")
       .single();
     if (insertError) throw insertError;
+
+    // Versiunea 1 este propriul root al liniei de versiuni.
+    await admin
+      .from("acp_analyses")
+      .update({ root_analysis_id: created.id, parent_analysis_id: null })
+      .eq("id", created.id);
+
+
 
     try {
       const { candidates, stats } = await collectCandidates({
@@ -838,3 +856,437 @@ export const getAcpAnalysis = createServerFn({ method: "POST" })
       }),
     };
   });
+
+// ==================== Faza 3, Etapa 2: versionare + comparație ====================
+
+/** Limită rezonabilă pentru recalculări (versiuni noi). */
+export const ACP_VERSION_RATE_LIMITS = {
+  perUser: { limit: 12, windowSeconds: 3600 },
+  perOrganization: { limit: 40, windowSeconds: 3600 },
+} as const;
+
+const VERSION_COLUMNS =
+  "id,organization_id,created_by,property_id,title,status,error_message,version," +
+  "parent_analysis_id,root_analysis_id,snapshot_at,created_at,target_data,sources,analysis_data," +
+  "estimated_value,estimated_min,estimated_max,recommended_listing_price," +
+  "median_price_per_sqm,average_price_per_sqm,confidence_score," +
+  "comparables_count,comparables_used,ai_summary,ai_model,ai_generated_at";
+
+type VersionRow = {
+  id: string;
+  organization_id: string;
+  created_by: string | null;
+  property_id: string | null;
+  title: string;
+  status: string;
+  error_message: string | null;
+  version: number | null;
+  parent_analysis_id: string | null;
+  root_analysis_id: string | null;
+  snapshot_at: string | null;
+  created_at: string;
+  target_data: unknown;
+  sources: unknown;
+  analysis_data: unknown;
+  estimated_value: number | null;
+  estimated_min: number | null;
+  estimated_max: number | null;
+  recommended_listing_price: number | null;
+  median_price_per_sqm: number | null;
+  average_price_per_sqm: number | null;
+  confidence_score: number | null;
+  comparables_count: number | null;
+  comparables_used: number | null;
+  ai_summary: string | null;
+  ai_model: string | null;
+  ai_generated_at: string | null;
+};
+
+async function loadVersionRow(
+  admin: Awaited<ReturnType<typeof loadAdmin>>,
+  actor: Actor,
+  analysisId: string,
+): Promise<VersionRow> {
+  const { data, error } = await admin
+    .from("acp_analyses")
+    .select(VERSION_COLUMNS)
+    .eq("id", analysisId)
+    .eq("organization_id", actor.organizationId)
+    .maybeSingle();
+  if (error) throw error;
+  if (!data) throw new Error("Analiza nu a fost găsită în agenția ta.");
+  return data as unknown as VersionRow;
+}
+
+async function loadRootVersionRows(
+  admin: Awaited<ReturnType<typeof loadAdmin>>,
+  actor: Actor,
+  rootId: string,
+): Promise<VersionRow[]> {
+  const { data, error } = await admin
+    .from("acp_analyses")
+    .select(VERSION_COLUMNS)
+    .eq("organization_id", actor.organizationId)
+    .or(`root_analysis_id.eq.${rootId},id.eq.${rootId}`)
+    .order("version", { ascending: false });
+  if (error) throw error;
+  return (data ?? []) as unknown as VersionRow[];
+}
+
+async function creatorNames(
+  admin: Awaited<ReturnType<typeof loadAdmin>>,
+  ids: (string | null)[],
+): Promise<Map<string, string>> {
+  const unique = [...new Set(ids.filter((id): id is string => Boolean(id)))];
+  const out = new Map<string, string>();
+  if (unique.length === 0) return out;
+  const { data } = await admin.from("profiles").select("id,full_name").in("id", unique);
+  for (const row of data ?? []) {
+    if (row.full_name) out.set(row.id, row.full_name);
+  }
+  return out;
+}
+
+function rowCurrency(row: VersionRow): string | null {
+  const subject = (row.target_data as { subject?: { currency?: string | null } } | null)?.subject;
+  return subject?.currency ?? null;
+}
+
+function rowToVersionItem(row: VersionRow, createdByName: string | null): AcpVersionListItem {
+  return {
+    id: row.id,
+    version: row.version ?? 1,
+    status: row.status,
+    errorMessage: row.error_message ?? null,
+    createdAt: row.created_at,
+    snapshotAt: row.snapshot_at ?? null,
+    createdByName,
+    estimatedValue: row.estimated_value,
+    estimatedMin: row.estimated_min,
+    estimatedMax: row.estimated_max,
+    recommendedListingPrice: row.recommended_listing_price,
+    medianPricePerSqm: row.median_price_per_sqm,
+    averagePricePerSqm: row.average_price_per_sqm,
+    confidenceScore: row.confidence_score,
+    comparablesCount: row.comparables_count ?? 0,
+    comparablesUsed: row.comparables_used ?? 0,
+    currency: rowCurrency(row),
+    sources: [],
+    ai: row.ai_model || row.ai_generated_at || row.ai_summary
+      ? { model: row.ai_model, generatedAt: row.ai_generated_at, summary: row.ai_summary }
+      : null,
+  };
+}
+
+async function buildVersionSnapshot(
+  admin: Awaited<ReturnType<typeof loadAdmin>>,
+  row: VersionRow,
+  createdByName: string | null,
+): Promise<AcpVersionSnapshot> {
+  const [{ data: comparables }, { data: sourceRows }] = await Promise.all([
+    admin
+      .from("acp_comparables")
+      .select(
+        "id,source_type,source_name,snapshot,similarity_score,tier,adjustment_amount,adjusted_price,adjusted_price_per_sqm,is_outlier,is_selected",
+      )
+      .eq("analysis_id", row.id)
+      .order("similarity_score", { ascending: false }),
+    admin
+      .from("acp_analysis_sources")
+      .select("source_type,source_name,items_found,items_used,items_excluded")
+      .eq("analysis_id", row.id),
+  ]);
+
+  const item = rowToVersionItem(row, createdByName);
+  return {
+    ...item,
+    sources: (sourceRows ?? []).map((s) => ({
+      sourceType: s.source_type,
+      sourceName: s.source_name ?? "",
+      itemsFound: s.items_found ?? 0,
+      itemsUsed: s.items_used ?? 0,
+      itemsExcluded: s.items_excluded ?? 0,
+    })),
+    comparables: (comparables ?? []).map((c) => {
+      const snapshot = (c.snapshot ?? {}) as {
+        key?: string;
+        title?: string;
+        subject?: { price?: number | null };
+      };
+      return {
+        key: snapshot.key ?? c.id,
+        title: snapshot.title ?? "Comparabil",
+        sourceName: c.source_name ?? "",
+        price: snapshot.subject?.price ?? null,
+        adjustedPrice: c.adjusted_price,
+        adjustedPricePerSqm: c.adjusted_price_per_sqm,
+        similarityScore: Number(c.similarity_score ?? 0),
+        tier: (c.tier ?? "excluded") as string,
+        adjustmentAmount: c.adjustment_amount,
+        isOutlier: Boolean(c.is_outlier),
+        isSelected: Boolean(c.is_selected),
+      };
+    }),
+  };
+}
+
+async function enforceVersionRateLimit(
+  admin: Awaited<ReturnType<typeof loadAdmin>>,
+  actor: Actor,
+) {
+  for (const [bucket, config] of [
+    [`acp_version:user:${actor.userId}`, ACP_VERSION_RATE_LIMITS.perUser],
+    [`acp_version:org:${actor.organizationId}`, ACP_VERSION_RATE_LIMITS.perOrganization],
+  ] as const) {
+    const { data: allowed } = await admin.rpc("rate_limit_hit", {
+      _bucket: bucket,
+      _limit: config.limit,
+      _window_seconds: config.windowSeconds,
+    });
+    if (allowed === false) {
+      throw new Error("Prea multe recalculări în ultima oră. Încearcă din nou mai târziu.");
+    }
+  }
+}
+
+/** Lista versiunilor unei analize (root + toate versiunile derivate). */
+export const listAcpVersions = createServerFn({ method: "POST" })
+  .middleware([requireActiveOrgAuth])
+  .inputValidator((data: unknown) => z.object({ analysisId: z.string().uuid() }).parse(data))
+  .handler(
+    async ({
+      context,
+      data,
+    }): Promise<{
+      rootAnalysisId: string;
+      currentId: string;
+      currentVersion: number;
+      latestVersionId: string;
+      versions: AcpVersionListItem[];
+    }> => {
+      const actor = await loadActor(context as AuthContext);
+      const admin = await loadAdmin();
+      const current = await loadVersionRow(admin, actor, data.analysisId);
+      const rootId = current.root_analysis_id ?? current.id;
+      const rows = await loadRootVersionRows(admin, actor, rootId);
+      const names = await creatorNames(
+        admin,
+        rows.map((r) => r.created_by),
+      );
+      const versions = rows.map((r) =>
+        rowToVersionItem(r, r.created_by ? (names.get(r.created_by) ?? null) : null),
+      );
+      return {
+        rootAnalysisId: rootId,
+        currentId: current.id,
+        currentVersion: current.version ?? 1,
+        latestVersionId: versions[0]?.id ?? current.id,
+        versions,
+      };
+    },
+  );
+
+/** Comparație deterministă între două versiuni ale aceleiași analize. */
+export const compareAcpVersions = createServerFn({ method: "POST" })
+  .middleware([requireActiveOrgAuth])
+  .inputValidator((data: unknown) =>
+    z
+      .object({ versionAId: z.string().uuid(), versionBId: z.string().uuid() })
+      .refine((v) => v.versionAId !== v.versionBId, {
+        message: "Alege două versiuni diferite.",
+      })
+      .parse(data),
+  )
+  .handler(async ({ context, data }): Promise<AcpVersionComparison> => {
+    const actor = await loadActor(context as AuthContext);
+    const admin = await loadAdmin();
+    const [rowA, rowB] = await Promise.all([
+      loadVersionRow(admin, actor, data.versionAId),
+      loadVersionRow(admin, actor, data.versionBId),
+    ]);
+    const rootA = rowA.root_analysis_id ?? rowA.id;
+    const rootB = rowB.root_analysis_id ?? rowB.id;
+    if (rootA !== rootB) {
+      throw new Error("Cele două versiuni nu aparțin aceleiași analize.");
+    }
+
+    const names = await creatorNames(admin, [rowA.created_by, rowB.created_by]);
+    const [snapshotA, snapshotB] = await Promise.all([
+      buildVersionSnapshot(
+        admin,
+        rowA,
+        rowA.created_by ? (names.get(rowA.created_by) ?? null) : null,
+      ),
+      buildVersionSnapshot(
+        admin,
+        rowB,
+        rowB.created_by ? (names.get(rowB.created_by) ?? null) : null,
+      ),
+    ]);
+
+    await logAcpAudit({
+      organizationId: actor.organizationId,
+      actorId: actor.userId,
+      action: ACP_AUDIT_ACTIONS.versionsCompared,
+      analysisId: rootA,
+      details: { versionA: snapshotA.version, versionB: snapshotB.version },
+    });
+
+    return compareAcpVersionSnapshots(snapshotA, snapshotB);
+  });
+
+/**
+ * Inserează rândul noii versiuni. Indexul unic (root_analysis_id, version)
+ * garantează la nivel de bază de date că două recalculări simultane nu obțin
+ * același număr de versiune; la conflict reîncercăm cu următorul număr.
+ */
+async function insertNextVersionRow(
+  admin: Awaited<ReturnType<typeof loadAdmin>>,
+  actor: Actor,
+  source: VersionRow,
+  rootId: string,
+): Promise<{ id: string; version: number }> {
+  for (let attempt = 0; attempt < 6; attempt += 1) {
+    const { data: existing, error: existingError } = await admin
+      .from("acp_analyses")
+      .select("version")
+      .eq("organization_id", actor.organizationId)
+      .or(`root_analysis_id.eq.${rootId},id.eq.${rootId}`);
+    if (existingError) throw existingError;
+    const version =
+      nextVersionNumber((existing ?? []).map((r) => Number(r.version ?? 1))) + attempt;
+
+    const { data: created, error } = await admin
+      .from("acp_analyses")
+      .insert({
+        organization_id: actor.organizationId,
+        created_by: actor.userId,
+        property_id: source.property_id,
+        title: source.title,
+        status: "running",
+        target_data: source.target_data as never,
+        sources: source.sources as never,
+        version,
+        parent_analysis_id: source.id,
+        root_analysis_id: rootId,
+      })
+      .select("id")
+      .single();
+
+    if (!error && created) return { id: created.id, version };
+    const code = (error as { code?: string } | null)?.code;
+    if (code !== "23505") throw error;
+  }
+  throw new Error("Nu am putut crea o versiune nouă. Încearcă din nou.");
+}
+
+/**
+ * „Recalculează cu date actuale": creează o versiune NOUĂ a analizei, folosind
+ * aceeași proprietate țintă, aceleași surse și aceleași decizii manuale.
+ * Versiunea anterioară rămâne intactă (snapshot istoric).
+ */
+export const recalculateAcpAsNewVersion = createServerFn({ method: "POST" })
+  .middleware([requireActiveOrgAuth])
+  .inputValidator((data: unknown) => z.object({ analysisId: z.string().uuid() }).parse(data))
+  .handler(
+    async ({
+      context,
+      data,
+    }): Promise<{
+      analysisId: string;
+      version: number;
+      rootAnalysisId: string;
+      ok: boolean;
+      errorMessage: string | null;
+    }> => {
+      const actor = await loadActor(context as AuthContext);
+      const admin = await loadAdmin();
+      const source = await loadVersionRow(admin, actor, data.analysisId);
+      await enforceVersionRateLimit(admin, actor);
+
+      const rootId = source.root_analysis_id ?? source.id;
+      if (!source.root_analysis_id) {
+        await admin.from("acp_analyses").update({ root_analysis_id: rootId }).eq("id", source.id);
+      }
+
+      const subject = readSubject(source.target_data);
+      const sources = (source.sources as Record<string, boolean> | null) ?? {
+        own_properties: true,
+      };
+      const overrides = readOverrides(source.analysis_data);
+
+      const created = await insertNextVersionRow(admin, actor, source, rootId);
+
+      try {
+        const { candidates, stats } = await collectCandidates({
+          admin,
+          actor,
+          target: subject,
+          targetPropertyId: source.property_id,
+          sources,
+        });
+        const result = runAcpAnalysis(subject, candidates, overrides);
+        await persistRun({
+          admin,
+          analysisId: created.id,
+          organizationId: actor.organizationId,
+          actorId: actor.userId,
+          target: subject,
+          sources,
+          overrides,
+          stats,
+          result,
+          version: created.version,
+          history: [
+            {
+              version: source.version ?? 1,
+              estimatedValue: source.estimated_value,
+              confidenceScore: source.confidence_score,
+              recordedAt: new Date().toISOString(),
+            },
+          ],
+        });
+      } catch (error) {
+        const errorMessage =
+          error instanceof Error ? error.message : "Recalcularea nu a putut fi finalizată.";
+        await admin
+          .from("acp_analyses")
+          .update({ status: "draft", error_message: errorMessage })
+          .eq("id", created.id);
+        await logAcpAudit({
+          organizationId: actor.organizationId,
+          actorId: actor.userId,
+          action: ACP_AUDIT_ACTIONS.versionFailed,
+          analysisId: created.id,
+          details: { rootAnalysisId: rootId, version: created.version },
+        });
+        return {
+          analysisId: created.id,
+          version: created.version,
+          rootAnalysisId: rootId,
+          ok: false,
+          errorMessage,
+        };
+      }
+
+      await logAcpAudit({
+        organizationId: actor.organizationId,
+        actorId: actor.userId,
+        action: ACP_AUDIT_ACTIONS.versionCreated,
+        analysisId: created.id,
+        details: {
+          rootAnalysisId: rootId,
+          parentAnalysisId: source.id,
+          version: created.version,
+        },
+      });
+
+      return {
+        analysisId: created.id,
+        version: created.version,
+        rootAnalysisId: rootId,
+        ok: true,
+        errorMessage: null,
+      };
+    },
+  );
