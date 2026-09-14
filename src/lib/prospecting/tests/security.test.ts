@@ -73,7 +73,7 @@ describe("autorizarea tool-urilor de prospecting", () => {
 
   it("respinge utilizatorii fără agenție", () => {
     const result = authorizeAiTool(
-      { userId: "user-x", organizationId: null, role: "agent" },
+      { userId: "user-x", role: "agent" },
       "search_prospects",
       aiToolCapability,
     );
@@ -99,7 +99,7 @@ describe("autorizarea tool-urilor de prospecting", () => {
     );
     expect(result.allowed).toBe(true);
     const foreign = authorizeAiTool(
-      { userId: "user-a", organizationId: null, role: "agent" },
+      { userId: "user-a", role: "agent" },
       "get_prospect",
       aiToolCapability,
     );

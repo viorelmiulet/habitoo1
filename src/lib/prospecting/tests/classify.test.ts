@@ -88,8 +88,11 @@ describe("applyClassification", () => {
       sellerType: "private",
       sellerConfidence: 0.5,
       // câmpuri „inventate" trimise de model, ignorate de contract
-      ...({ price: 1, surfaceUseful: 999, rooms: 9, sellerPhone: "+40700000000" } as never),
-    });
+      price: 1,
+      surfaceUseful: 999,
+      rooms: 9,
+      sellerPhone: "+40700000000",
+    } as never);
     for (const field of AI_PROTECTED_FIELDS) {
       expect(result[field]).toEqual(base[field]);
     }
