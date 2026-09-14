@@ -32,6 +32,7 @@ import { Route as AuthCallbackRouteImport } from './routes/auth.callback'
 import { Route as OfertaIdRouteImport } from './routes/oferta.$id'
 import { Route as AuthenticatedAppIndexRouteImport } from './routes/_authenticated/app.index'
 import { Route as AuthenticatedAppActivitiesRouteImport } from './routes/_authenticated/app.activities'
+import { Route as AuthenticatedAppAiRouteImport } from './routes/_authenticated/app.ai'
 import { Route as AuthenticatedAppCalendarRouteImport } from './routes/_authenticated/app.calendar'
 import { Route as AuthenticatedAppCollaborationRouteImport } from './routes/_authenticated/app.collaboration'
 import { Route as AuthenticatedAppGoalsRouteImport } from './routes/_authenticated/app.goals'
@@ -205,6 +206,11 @@ const AuthenticatedAppActivitiesRoute =
     path: '/activities',
     getParentRoute: () => AuthenticatedAppRoute,
   } as any)
+const AuthenticatedAppAiRoute = AuthenticatedAppAiRouteImport.update({
+  id: '/ai',
+  path: '/ai',
+  getParentRoute: () => AuthenticatedAppRoute,
+} as any)
 const AuthenticatedAppCalendarRoute =
   AuthenticatedAppCalendarRouteImport.update({
     id: '/calendar',
@@ -549,6 +555,7 @@ export interface FileRoutesByFullPath {
   '/auth/callback': typeof AuthCallbackRoute
   '/oferta/$id': typeof OfertaIdRoute
   '/app/activities': typeof AuthenticatedAppActivitiesRoute
+  '/app/ai': typeof AuthenticatedAppAiRoute
   '/app/calendar': typeof AuthenticatedAppCalendarRoute
   '/app/collaboration': typeof AuthenticatedAppCollaborationRoute
   '/app/goals': typeof AuthenticatedAppGoalsRoute
@@ -627,6 +634,7 @@ export interface FileRoutesByTo {
   '/auth/callback': typeof AuthCallbackRoute
   '/oferta/$id': typeof OfertaIdRoute
   '/app/activities': typeof AuthenticatedAppActivitiesRoute
+  '/app/ai': typeof AuthenticatedAppAiRoute
   '/app/calendar': typeof AuthenticatedAppCalendarRoute
   '/app/collaboration': typeof AuthenticatedAppCollaborationRoute
   '/app/goals': typeof AuthenticatedAppGoalsRoute
@@ -709,6 +717,7 @@ export interface FileRoutesById {
   '/auth/callback': typeof AuthCallbackRoute
   '/oferta/$id': typeof OfertaIdRoute
   '/_authenticated/app/activities': typeof AuthenticatedAppActivitiesRoute
+  '/_authenticated/app/ai': typeof AuthenticatedAppAiRoute
   '/_authenticated/app/calendar': typeof AuthenticatedAppCalendarRoute
   '/_authenticated/app/collaboration': typeof AuthenticatedAppCollaborationRoute
   '/_authenticated/app/goals': typeof AuthenticatedAppGoalsRoute
@@ -791,6 +800,7 @@ export interface FileRouteTypes {
     | '/auth/callback'
     | '/oferta/$id'
     | '/app/activities'
+    | '/app/ai'
     | '/app/calendar'
     | '/app/collaboration'
     | '/app/goals'
@@ -869,6 +879,7 @@ export interface FileRouteTypes {
     | '/auth/callback'
     | '/oferta/$id'
     | '/app/activities'
+    | '/app/ai'
     | '/app/calendar'
     | '/app/collaboration'
     | '/app/goals'
@@ -950,6 +961,7 @@ export interface FileRouteTypes {
     | '/auth/callback'
     | '/oferta/$id'
     | '/_authenticated/app/activities'
+    | '/_authenticated/app/ai'
     | '/_authenticated/app/calendar'
     | '/_authenticated/app/collaboration'
     | '/_authenticated/app/goals'
@@ -1210,6 +1222,13 @@ declare module '@tanstack/react-router' {
       path: '/activities'
       fullPath: '/app/activities'
       preLoaderRoute: typeof AuthenticatedAppActivitiesRouteImport
+      parentRoute: typeof AuthenticatedAppRoute
+    }
+    '/_authenticated/app/ai': {
+      id: '/_authenticated/app/ai'
+      path: '/ai'
+      fullPath: '/app/ai'
+      preLoaderRoute: typeof AuthenticatedAppAiRouteImport
       parentRoute: typeof AuthenticatedAppRoute
     }
     '/_authenticated/app/calendar': {
@@ -1623,6 +1642,7 @@ const AuthenticatedAppRequestsRouteWithChildren =
 
 interface AuthenticatedAppRouteChildren {
   AuthenticatedAppActivitiesRoute: typeof AuthenticatedAppActivitiesRoute
+  AuthenticatedAppAiRoute: typeof AuthenticatedAppAiRoute
   AuthenticatedAppCalendarRoute: typeof AuthenticatedAppCalendarRoute
   AuthenticatedAppCollaborationRoute: typeof AuthenticatedAppCollaborationRoute
   AuthenticatedAppGoalsRoute: typeof AuthenticatedAppGoalsRoute
@@ -1651,6 +1671,7 @@ interface AuthenticatedAppRouteChildren {
 
 const AuthenticatedAppRouteChildren: AuthenticatedAppRouteChildren = {
   AuthenticatedAppActivitiesRoute: AuthenticatedAppActivitiesRoute,
+  AuthenticatedAppAiRoute: AuthenticatedAppAiRoute,
   AuthenticatedAppCalendarRoute: AuthenticatedAppCalendarRoute,
   AuthenticatedAppCollaborationRoute: AuthenticatedAppCollaborationRoute,
   AuthenticatedAppGoalsRoute: AuthenticatedAppGoalsRoute,

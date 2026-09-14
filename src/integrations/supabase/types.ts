@@ -722,6 +722,163 @@ export type Database = {
           },
         ]
       }
+      ai_conversations: {
+        Row: {
+          created_at: string
+          id: string
+          organization_id: string
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          organization_id: string
+          title?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          organization_id?: string
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_conversations_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ai_messages: {
+        Row: {
+          content: string
+          context_used: Json
+          conversation_id: string
+          created_at: string
+          id: string
+          input_tokens: number | null
+          latency_ms: number | null
+          model: string | null
+          organization_id: string
+          output_tokens: number | null
+          provider: string | null
+          role: string
+          sources: Json
+          tool_calls: Json
+          user_id: string | null
+        }
+        Insert: {
+          content?: string
+          context_used?: Json
+          conversation_id: string
+          created_at?: string
+          id?: string
+          input_tokens?: number | null
+          latency_ms?: number | null
+          model?: string | null
+          organization_id: string
+          output_tokens?: number | null
+          provider?: string | null
+          role: string
+          sources?: Json
+          tool_calls?: Json
+          user_id?: string | null
+        }
+        Update: {
+          content?: string
+          context_used?: Json
+          conversation_id?: string
+          created_at?: string
+          id?: string
+          input_tokens?: number | null
+          latency_ms?: number | null
+          model?: string | null
+          organization_id?: string
+          output_tokens?: number | null
+          provider?: string | null
+          role?: string
+          sources?: Json
+          tool_calls?: Json
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_messages_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "ai_conversations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_messages_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ai_usage_events: {
+        Row: {
+          capability: string
+          created_at: string
+          id: string
+          input_tokens: number | null
+          latency_ms: number
+          model: string
+          organization_id: string
+          output_tokens: number | null
+          provider: string
+          success: boolean
+          tool_calls: number
+          user_id: string
+        }
+        Insert: {
+          capability?: string
+          created_at?: string
+          id?: string
+          input_tokens?: number | null
+          latency_ms?: number
+          model: string
+          organization_id: string
+          output_tokens?: number | null
+          provider: string
+          success?: boolean
+          tool_calls?: number
+          user_id: string
+        }
+        Update: {
+          capability?: string
+          created_at?: string
+          id?: string
+          input_tokens?: number | null
+          latency_ms?: number
+          model?: string
+          organization_id?: string
+          output_tokens?: number | null
+          provider?: string
+          success?: boolean
+          tool_calls?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_usage_events_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       audit_logs: {
         Row: {
           action: string

@@ -281,6 +281,13 @@
       "when": 1789400013156,
       "tag": "0039_acp_calibration",
       "breakpoints": true
+    },
+    {
+      "idx": 40,
+      "version": "7",
+      "when": 1789407912407,
+      "tag": "0040_ai_foundation",
+      "breakpoints": true
     }
   ]
 }
