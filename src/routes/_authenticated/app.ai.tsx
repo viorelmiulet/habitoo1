@@ -193,6 +193,17 @@ function AiPage() {
                         {entry.role === "user" ? "Tu" : "Habitoo AI"}
                       </p>
                       <p className="whitespace-pre-wrap">{entry.content}</p>
+                      {(entry.contextUsed ?? []).length > 0 ? (
+                        <p className="mt-2 text-xs text-muted-foreground">
+                          Date folosite:{" "}
+                          {(entry.contextUsed ?? [])
+                            .map((category) => CONTEXT_LABELS[category] ?? category)
+                            .join(", ")}
+                          {(entry.sources ?? []).length > 0
+                            ? ` · ${(entry.sources ?? []).length} surse`
+                            : ""}
+                        </p>
+                      ) : null}
                       {(entry.warnings ?? []).map((warning) => (
                         <Badge key={warning} variant="secondary" className="mt-2 mr-2">
                           {warning}
@@ -204,7 +215,16 @@ function AiPage() {
                 {busy ? (
                   <p className="text-sm text-muted-foreground">Habitoo AI analizează datele…</p>
                 ) : null}
-                {error ? <p className="text-sm text-destructive">{error}</p> : null}
+                {error ? (
+                  <div className="flex flex-wrap items-center gap-3">
+                    <p className="text-sm text-destructive">{error}</p>
+                    {lastMessage ? (
+                      <Button size="sm" variant="outline" onClick={retry} disabled={busy}>
+                        Încearcă din nou
+                      </Button>
+                    ) : null}
+                  </div>
+                ) : null}
               </div>
 
               <div className="space-y-2">
