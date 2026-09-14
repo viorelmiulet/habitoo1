@@ -25,6 +25,7 @@ import { formatMoney } from "@/lib/format";
 import { ACP_SCORE_LABELS, ACP_SCORE_WEIGHTS, ACP_THRESHOLDS } from "@/lib/acp/config";
 import { propertyToSubject } from "@/lib/acp/adapters";
 import { createAcpAnalysis } from "@/lib/acp/analyses.functions";
+import { getMarketSourceCounts } from "@/lib/market/market.functions";
 
 
 export const Route = createFileRoute("/_authenticated/app/acp/new")({
@@ -68,6 +69,14 @@ function NewAcpPage() {
     collaboration: true,
     portal: false,
   });
+
+  const countsFn = useServerFn(getMarketSourceCounts);
+  const counts = useQuery({
+    queryKey: ["market-source-counts"],
+    queryFn: () => countsFn({}),
+  });
+
+
 
   const { data: properties } = useQuery({
     queryKey: ["acp-properties", orgId],
@@ -228,6 +237,30 @@ function NewAcpPage() {
                 </li>
               ))}
             </ul>
+
+            <div className="mt-4 rounded-xl border border-border bg-muted/40 p-4">
+              <p className="text-sm font-medium">Oferte disponibile în pool-ul de piață</p>
+              <ul className="mt-2 space-y-1.5 text-xs">
+                {(counts.data ?? []).map((source) => (
+                  <li key={source.id} className="flex items-center justify-between gap-3">
+                    <span className="truncate">{source.name}</span>
+                    <span className="shrink-0 text-muted-foreground">
+                      {source.status === "not_configured"
+                        ? "Neconfigurată"
+                        : source.status === "never_synced"
+                          ? "Nesincronizată"
+                          : source.status === "error"
+                            ? "Sincronizare eșuată"
+                            : source.status === "running"
+                              ? "Sincronizare în curs…"
+                              : null}
+                      {source.status === "not_configured" ? " · " : " · "}
+                      {source.active.toLocaleString("ro-RO")} oferte
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
           </SectionCard>
 
           <div className="flex flex-wrap items-center gap-3">
