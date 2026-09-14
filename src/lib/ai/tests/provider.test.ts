@@ -4,6 +4,7 @@
  */
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { parseGeminiResponse } from "../providers/gemini.parse";
+import { toGeminiContents } from "../providers/gemini.server";
 import { AiProviderError, safeAiProviderMessage } from "../providers/types";
 
 const ORIGINAL = { ...process.env };
