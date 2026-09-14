@@ -244,7 +244,7 @@ export async function runAiChat(actor: AiActor, request: AiChatRequest): Promise
         if (!authorization.allowed) {
           toolCalls.push({
             name: call.name,
-            arguments: call.arguments,
+            arguments: JSON.stringify(call.arguments),
             ok: false,
             durationMs: Date.now() - toolStart,
             summary: authorization.message,
@@ -278,7 +278,7 @@ export async function runAiChat(actor: AiActor, request: AiChatRequest): Promise
 
         toolCalls.push({
           name: call.name,
-          arguments: call.arguments,
+          arguments: JSON.stringify(call.arguments),
           ok: execution.ok,
           durationMs,
           summary: summarizeToolResult(execution),

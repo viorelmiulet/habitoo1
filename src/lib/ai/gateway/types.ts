@@ -25,7 +25,8 @@ export type AiSource = {
 
 export type AiToolCallRecord = {
   name: string;
-  arguments: Record<string, unknown>;
+  /** Parametrii serializați (JSON), ca răspunsul să rămână urmăribil. */
+  arguments: string;
   ok: boolean;
   durationMs: number;
   /** Rezumat scurt al rezultatului; nu conține date sensibile brute. */

@@ -24,11 +24,7 @@ import {
 } from "@/lib/ai/ai-client";
 
 export const Route = createFileRoute("/_authenticated/app/ai")({
-  head: () =>
-    appHead(
-      "Habitoo AI — asistentul agenției",
-      "Întreabă Habitoo AI despre proprietățile, clienții și analizele agenției tale.",
-    ),
+  head: () => appHead("Habitoo AI — asistentul agenției"),
   component: AiPage,
 });
 
