@@ -152,6 +152,8 @@ async function main() {
 
   // curățenie
   await supabaseAdmin.from("activities").delete().eq("organization_id", ORG_A).eq("title", title);
+  await supabaseAdmin.from("activities").delete().eq("organization_id", ORG_A).eq("contact_id", contact.id);
+  await supabaseAdmin.from("contacts").delete().eq("id", contact.id);
 
   console.log(results.join("\n"));
 }
