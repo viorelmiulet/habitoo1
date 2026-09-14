@@ -75,3 +75,16 @@ describe("habitooCrmWorkflow", () => {
     expect(validateCrmResult(state).notes.join(" ")).toContain("duplicat");
   });
 });
+
+describe("eșec explicit la propunere", () => {
+  it("o cerere de modificare care nu poate fi propusă marchează fluxul ca eșuat", async () => {
+    const { failCrmState } = await import("../workflow");
+    let state = initialCrmState({ question: "Treci leadul în negotiation" });
+    state = { ...state, answer: "Leadul este în etapa Nou." };
+    state = failCrmState(state, "Serviciul AI este momentan aglomerat.");
+    expect(statusOfCrmState(state)).toBe("failed");
+    expect(state.proposal).toBeNull();
+    expect(isCrmActionAllowed(state)).toBe(false);
+    expect(state.notes.join(" ")).toContain("aglomerat");
+  });
+});
