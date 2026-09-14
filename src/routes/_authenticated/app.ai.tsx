@@ -249,6 +249,10 @@ function AiPage() {
               </div>
             </CardContent>
           </Card>
+
+          <div className="lg:col-start-2">
+            <AiWorkflowCard />
+          </div>
         </div>
       )}
     </div>
