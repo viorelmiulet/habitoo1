@@ -826,6 +826,63 @@ export type Database = {
           },
         ]
       }
+      ai_trace_events: {
+        Row: {
+          created_at: string
+          details: Json
+          id: string
+          kind: string
+          latency_ms: number | null
+          name: string
+          organization_id: string
+          run_id: string | null
+          status: string
+          trace_id: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          details?: Json
+          id?: string
+          kind: string
+          latency_ms?: number | null
+          name: string
+          organization_id: string
+          run_id?: string | null
+          status?: string
+          trace_id: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          details?: Json
+          id?: string
+          kind?: string
+          latency_ms?: number | null
+          name?: string
+          organization_id?: string
+          run_id?: string | null
+          status?: string
+          trace_id?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_trace_events_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_trace_events_run_id_fkey"
+            columns: ["run_id"]
+            isOneToOne: false
+            referencedRelation: "ai_workflow_runs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ai_usage_events: {
         Row: {
           capability: string
@@ -872,6 +929,72 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "ai_usage_events_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ai_workflow_runs: {
+        Row: {
+          conversation_id: string | null
+          created_at: string
+          current_step: string
+          error_message: string | null
+          id: string
+          organization_id: string
+          pending_approval: Json | null
+          result: Json | null
+          state: Json
+          status: string
+          trace_id: string | null
+          updated_at: string
+          user_id: string
+          workflow: string
+        }
+        Insert: {
+          conversation_id?: string | null
+          created_at?: string
+          current_step?: string
+          error_message?: string | null
+          id?: string
+          organization_id: string
+          pending_approval?: Json | null
+          result?: Json | null
+          state?: Json
+          status?: string
+          trace_id?: string | null
+          updated_at?: string
+          user_id: string
+          workflow: string
+        }
+        Update: {
+          conversation_id?: string | null
+          created_at?: string
+          current_step?: string
+          error_message?: string | null
+          id?: string
+          organization_id?: string
+          pending_approval?: Json | null
+          result?: Json | null
+          state?: Json
+          status?: string
+          trace_id?: string | null
+          updated_at?: string
+          user_id?: string
+          workflow?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_workflow_runs_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "ai_conversations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_workflow_runs_organization_id_fkey"
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
