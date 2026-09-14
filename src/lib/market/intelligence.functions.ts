@@ -14,8 +14,9 @@ import {
   marketFiltersFromSubject,
   type AcpMarketInsights,
   type MarketIntelligenceFilters,
+  type MarketIntelligenceResult,
 } from "./intelligence";
-import { computeMarketIntelligence, type MarketIntelligenceResult } from "./intelligence.server";
+// `intelligence.server.ts` este server-only: se importă dinamic în handlere.
 
 /** Citirile agregate sunt ieftine, dar nu nelimitate. */
 export const MARKET_INTELLIGENCE_RATE_LIMITS = {
@@ -90,6 +91,7 @@ export const getMarketIntelligence = createServerFn({ method: "POST" })
     await loadOrganizationId(context as AuthContext);
     await enforceRateLimit((context as AuthContext).userId);
     const admin = await loadAdmin();
+    const { computeMarketIntelligence } = await import("./intelligence.server");
     const filters = (data.filters ?? { status: "active" }) as MarketIntelligenceFilters;
     return computeMarketIntelligence(admin, filters, { includeTrend: data.includeTrend !== false });
   });
@@ -129,6 +131,7 @@ export const getAcpMarketIntelligence = createServerFn({ method: "POST" })
     const organizationId = await loadOrganizationId(context as AuthContext);
     await enforceRateLimit((context as AuthContext).userId);
     const admin = await loadAdmin();
+    const { computeMarketIntelligence } = await import("./intelligence.server");
 
     const { data: analysis, error } = await admin
       .from("acp_analyses")
