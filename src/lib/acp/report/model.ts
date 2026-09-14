@@ -279,7 +279,9 @@ export function buildAcpReportModel(params: {
   if (!eligibility.ok && eligibility.reason) warnings.push(eligibility.reason);
   if (used.length > 0 && used.length < 3) {
     warnings.push(
-      `Estimarea se bazează pe doar ${used.length} comparabile folosite; interpretează rezultatul cu prudență.`,
+      used.length === 1
+        ? "Estimarea se bazează pe un singur comparabil folosit; interpretează rezultatul cu prudență."
+        : `Estimarea se bazează pe doar ${used.length} comparabile folosite; interpretează rezultatul cu prudență.`,
     );
   }
   if (version.comparables.some((c) => c.isOutlier)) {
