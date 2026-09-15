@@ -988,6 +988,10 @@ function PropertyDetailPage() {
           <PropertyAcpCard propertyId={id} />
         </TabsContent>
 
+        <TabsContent value="marketing">
+          <MarketingAgentPanel propertyId={id} />
+        </TabsContent>
+
 
         <TabsContent value="leads">
           <div className="panel overflow-hidden">
