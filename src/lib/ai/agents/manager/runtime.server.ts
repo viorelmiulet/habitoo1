@@ -323,7 +323,7 @@ async function executePlan(
 
     state = startStep(state, step.id) as ManagerState;
     tracer.record("step", `${MANAGER_WORKFLOW}.${step.kind}`, { details: { stepId: step.id } });
-    const result = await runStep(admin, actor, tracer, state, step, turn);
+    const result = await runStep(admin, actor, tracer, runId, state, step, turn);
     state = result.state;
     if (result.stop) break;
   }
@@ -348,6 +348,7 @@ async function runStep(
   admin: Admin,
   actor: AiActor,
   tracer: AiTracer,
+  runId: string,
   input: ManagerState,
   step: ManagerStep,
   turn: ManagerTurnInput,
