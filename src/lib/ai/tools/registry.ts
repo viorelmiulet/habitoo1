@@ -54,14 +54,22 @@ export type AiToolName =
   | "create_property_match"
   | "create_client_property_match"
   | "generate_property_description"
-  | "generate_offer_draft";
+  | "generate_offer_draft"
+  | "get_property_marketing_context"
+  | "get_property_media_context"
+  | "get_existing_listing_text"
+  | "get_agency_branding_context"
+  | "validate_marketing_facts"
+  | "save_marketing_draft"
+  | "apply_marketing_draft";
 
 export type AiToolDefinition = {
   name: AiToolName;
   description: string;
   capability: AiCapability;
   /** Categoria de context pe care o alimentează rezultatul. */
-  category: "property" | "client" | "lead" | "acp" | "prospect" | "crm";
+  category: "property" | "client" | "lead" | "acp" | "prospect" | "crm" | "marketing";
+
   /**
    * `read` = citire pură; `action` = modifică date CRM și cere OBLIGATORIU
    * aprobare umană explicită înainte de execuție.
