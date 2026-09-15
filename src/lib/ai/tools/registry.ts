@@ -9,10 +9,44 @@ import { z } from "zod";
 import type { AiCapability } from "../security/permissions";
 import type { AiToolDeclaration } from "../providers/types";
 import { CRM_ACTION_SCHEMAS } from "../agents/crm/actions";
+import {
+  MARKETING_CHANNELS,
+  MARKETING_CONTENT_TYPES,
+  MARKETING_LENGTHS,
+  MARKETING_TONES,
+} from "../agents/marketing/channels";
 
 const uuid = z.string().uuid("Identificator invalid.");
 
 const searchLimit = z.number().int().min(1).max(20).optional();
+
+/**
+ * Ciorna de marketing salvată după aprobare. Câmpurile de validare și de
+ * context sunt completate de server (nu de model): leagă ciorna de datele
+ * exacte folosite la generare.
+ */
+export const MARKETING_DRAFT_SCHEMA = z.object({
+  propertyId: uuid,
+  channel: z.enum(MARKETING_CHANNELS),
+  contentType: z.enum(MARKETING_CONTENT_TYPES),
+  tone: z.enum(MARKETING_TONES),
+  length: z.enum(MARKETING_LENGTHS),
+  title: z.string().max(300).nullable().optional(),
+  body: z.string().min(1).max(8000),
+  shortVariants: z.array(z.string().max(1000)).max(4).optional(),
+  cta: z.string().max(300).nullable().optional(),
+  hashtags: z.array(z.string().max(60)).max(10).optional(),
+  missingData: z.array(z.object({ field: z.string(), question: z.string() })).max(20).optional(),
+  validationStatus: z.enum(["valid", "warning", "invalid"]),
+  validationIssues: z.array(z.record(z.string(), z.unknown())).max(50).optional(),
+  contextVersion: z.string().max(40),
+  contextHash: z.string().max(80),
+  contextSnapshot: z.record(z.string(), z.unknown()).optional(),
+  provider: z.string().max(40).nullable().optional(),
+  model: z.string().max(80).nullable().optional(),
+  runId: z.string().uuid().nullable().optional(),
+});
+
 
 export type AiToolName =
   | "search_prospects"
@@ -54,14 +88,22 @@ export type AiToolName =
   | "create_property_match"
   | "create_client_property_match"
   | "generate_property_description"
-  | "generate_offer_draft";
+  | "generate_offer_draft"
+  | "get_property_marketing_context"
+  | "get_property_media_context"
+  | "get_existing_listing_text"
+  | "get_agency_branding_context"
+  | "validate_marketing_facts"
+  | "save_marketing_draft"
+  | "apply_marketing_draft";
 
 export type AiToolDefinition = {
   name: AiToolName;
   description: string;
   capability: AiCapability;
   /** Categoria de context pe care o alimentează rezultatul. */
-  category: "property" | "client" | "lead" | "acp" | "prospect" | "crm";
+  category: "property" | "client" | "lead" | "acp" | "prospect" | "crm" | "marketing";
+
   /**
    * `read` = citire pură; `action` = modifică date CRM și cere OBLIGATORIU
    * aprobare umană explicită înainte de execuție.
@@ -710,7 +752,96 @@ export const AI_TOOLS: readonly AiToolDefinition[] = [
       ["propertyId", "draft"],
     ),
   },
+  /* ---------------- Marketing Agent (Stage 16): citiri + ciorne ---------------- */
+  {
+    name: "get_property_marketing_context",
+    description:
+      "Întoarce fișa de fapte a unei proprietăți (suprafețe, camere, etaj, an, preț, zonă, dotări) plus lista datelor care lipsesc. Singura sursă permisă pentru conținutul de marketing.",
+    capability: "read:properties",
+    category: "marketing",
+    kind: "read",
+    schema: z.object({ propertyId: uuid }),
+    parameters: objectSchema({ propertyId: { type: "string" } }, ["propertyId"]),
+  },
+  {
+    name: "get_property_media_context",
+    description:
+      "Întoarce numărul de imagini publicabile și textele alternative ale unei proprietăți. Nu întoarce imagini confidențiale.",
+    capability: "read:properties",
+    category: "marketing",
+    kind: "read",
+    schema: z.object({ propertyId: uuid }),
+    parameters: objectSchema({ propertyId: { type: "string" } }, ["propertyId"]),
+  },
+  {
+    name: "get_existing_listing_text",
+    description:
+      "Întoarce titlul și descrierea existente ale proprietății, plus ultimele ciorne de marketing.",
+    capability: "read:properties",
+    category: "marketing",
+    kind: "read",
+    schema: z.object({ propertyId: uuid }),
+    parameters: objectSchema({ propertyId: { type: "string" } }, ["propertyId"]),
+  },
+  {
+    name: "get_agency_branding_context",
+    description:
+      "Întoarce datele publice de brand ale agenției (nume, oraș, website, contact de marketing), folosite pentru ton și semnătură.",
+    capability: "read:properties",
+    category: "marketing",
+    kind: "read",
+    schema: z.object({}),
+    parameters: objectSchema({}),
+  },
+  {
+    name: "validate_marketing_facts",
+    description:
+      "Verifică determinist un text de marketing împotriva datelor reale ale proprietății și întoarce afirmațiile care nu pot fi susținute.",
+    capability: "read:properties",
+    category: "marketing",
+    kind: "read",
+    schema: z.object({ propertyId: uuid, text: z.string().min(1).max(8000) }),
+    parameters: objectSchema({ propertyId: { type: "string" }, text: { type: "string" } }, [
+      "propertyId",
+      "text",
+    ]),
+  },
+  {
+    name: "save_marketing_draft",
+    description:
+      "Salvează o CIORNĂ de marketing versionată pentru o proprietate. Nu publică nimic și nu modifică anunțul existent. Necesită aprobare umană explicită.",
+    capability: "write:crm",
+    category: "marketing",
+    kind: "action",
+    schema: MARKETING_DRAFT_SCHEMA,
+    parameters: objectSchema(
+      {
+        propertyId: { type: "string" },
+        channel: { type: "string" },
+        contentType: { type: "string" },
+        tone: { type: "string" },
+        length: { type: "string" },
+        title: { type: "string" },
+        body: { type: "string" },
+      },
+      ["propertyId", "channel", "contentType", "tone", "length", "body"],
+    ),
+  },
+  {
+    name: "apply_marketing_draft",
+    description:
+      "Aplică o ciornă validată peste titlul și descrierea proprietății. Nu publică pe portaluri. Necesită aprobare umană explicită.",
+    capability: "write:crm",
+    category: "marketing",
+    kind: "action",
+    schema: z.object({ propertyId: uuid, draftId: uuid }),
+    parameters: objectSchema({ propertyId: { type: "string" }, draftId: { type: "string" } }, [
+      "propertyId",
+      "draftId",
+    ]),
+  },
 ] as const;
+
 
 
 const BY_NAME = new Map<string, AiToolDefinition>(AI_TOOLS.map((tool) => [tool.name, tool]));

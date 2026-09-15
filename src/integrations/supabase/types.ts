@@ -2947,6 +2947,118 @@ export type Database = {
         }
         Relationships: []
       }
+      marketing_drafts: {
+        Row: {
+          applied_at: string | null
+          applied_by: string | null
+          body: string
+          channel: string
+          content_type: string
+          context_hash: string
+          context_snapshot: Json
+          context_version: string
+          created_at: string
+          created_by: string
+          cta: string | null
+          hashtags: Json
+          id: string
+          length: string
+          missing_data: Json
+          model: string | null
+          organization_id: string
+          property_id: string
+          provider: string | null
+          short_variants: Json
+          title: string | null
+          tone: string
+          updated_at: string
+          validation_issues: Json
+          validation_status: string
+          version: number
+          workflow_run_id: string | null
+        }
+        Insert: {
+          applied_at?: string | null
+          applied_by?: string | null
+          body: string
+          channel: string
+          content_type: string
+          context_hash: string
+          context_snapshot?: Json
+          context_version: string
+          created_at?: string
+          created_by: string
+          cta?: string | null
+          hashtags?: Json
+          id?: string
+          length: string
+          missing_data?: Json
+          model?: string | null
+          organization_id: string
+          property_id: string
+          provider?: string | null
+          short_variants?: Json
+          title?: string | null
+          tone: string
+          updated_at?: string
+          validation_issues?: Json
+          validation_status?: string
+          version: number
+          workflow_run_id?: string | null
+        }
+        Update: {
+          applied_at?: string | null
+          applied_by?: string | null
+          body?: string
+          channel?: string
+          content_type?: string
+          context_hash?: string
+          context_snapshot?: Json
+          context_version?: string
+          created_at?: string
+          created_by?: string
+          cta?: string | null
+          hashtags?: Json
+          id?: string
+          length?: string
+          missing_data?: Json
+          model?: string | null
+          organization_id?: string
+          property_id?: string
+          provider?: string | null
+          short_variants?: Json
+          title?: string | null
+          tone?: string
+          updated_at?: string
+          validation_issues?: Json
+          validation_status?: string
+          version?: number
+          workflow_run_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "marketing_drafts_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "marketing_drafts_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "marketing_drafts_workflow_run_id_fkey"
+            columns: ["workflow_run_id"]
+            isOneToOne: false
+            referencedRelation: "ai_workflow_runs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       notifications: {
         Row: {
           body: string | null
