@@ -307,19 +307,27 @@ async function push(
   if (!ready.ok) return ready.result;
 
   const db = await admin();
-  const catalog = await readLaCheieCatalog(db, {
+  let catalog = await readLaCheieCatalog(db, {
     organizationId: ctx.organizationId,
     environment: ready.settings.environment,
   });
   if (!catalog) {
-    return {
-      ok: false,
-      code: "CONFIG_ERROR",
-      message:
-        "Catalogul La Cheie nu este sincronizat. Rulează „Reîmprospătează catalogul” înainte de publicare.",
-      detail: "missing_catalog",
-    };
+    // Catalogul lipsește: îl sincronizăm automat (doar citiri GET, fără scrieri).
+    const refreshed = await refreshLaCheieCatalog(db, ready.config, {
+      organizationId: ctx.organizationId,
+      environment: ready.settings.environment,
+      actorId: ctx.actorId ?? null,
+    });
+    if (refreshed.ok) catalog = refreshed.catalog;
+    else
+      return {
+        ok: false,
+        code: "CONFIG_ERROR",
+        message: `Catalogul La Cheie nu a putut fi sincronizat automat: ${refreshed.message}`,
+        detail: "missing_catalog",
+      };
   }
+
 
   const build = await buildLaCheiePayload({
     organizationId: ctx.organizationId,
