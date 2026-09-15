@@ -248,12 +248,26 @@ function itemsOf(payload: unknown, source: ProspectSource): Record<string, unkno
     : [];
 }
 
-async function fetchJson(url: URL): Promise<ProspectFetchResult | unknown> {
+async function fetchJson(
+  url: URL,
+  source: ProspectSource,
+): Promise<ProspectFetchResult | unknown> {
+  if (!feedRateLimitAllows(`${source.id}:${url.origin}`)) {
+    return {
+      ok: false as const,
+      code: "blocked" as const,
+      message: "Prea multe colectări pentru această sursă. Încearcă din nou într-un minut.",
+    };
+  }
   let response: Response;
   try {
     response = await fetch(url, {
       signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
-      headers: { Accept: "application/json", "User-Agent": USER_AGENT },
+      headers: {
+        Accept: "application/json",
+        "User-Agent": USER_AGENT,
+        ...feedAuthHeaders(source),
+      },
     });
   } catch {
     return {
@@ -291,48 +305,90 @@ function isFailure(value: unknown): value is Extract<ProspectFetchResult, { ok: 
   return typeof value === "object" && value !== null && (value as { ok?: unknown }).ok === false;
 }
 
+/** Paginare opțională: se activează doar dacă sursa o declară în configurație. */
+function paginationOf(source: ProspectSource): { param: string; sizeParam: string | null; size: number; start: number } | null {
+  const config = source.configuration["pagination"];
+  if (!config || typeof config !== "object") return null;
+  const raw = config as Record<string, unknown>;
+  const param = typeof raw["pageParam"] === "string" ? String(raw["pageParam"]) : "page";
+  const sizeParam = typeof raw["sizeParam"] === "string" ? String(raw["sizeParam"]) : null;
+  const size = Number(raw["pageSize"]);
+  const start = Number(raw["startPage"]);
+  return {
+    param,
+    sizeParam,
+    size: Number.isFinite(size) && size > 0 ? Math.min(Math.trunc(size), MAX_ITEMS) : 25,
+    start: Number.isFinite(start) ? Math.trunc(start) : 1,
+  };
+}
+
 export const httpFeedProvider: ProspectingSourceProvider = {
   key: HTTP_FEED_PROVIDER_KEY,
   label: "Feed public HTTPS",
   live: true,
+  availability: "live",
+  capabilities: ["search", "fetch_listing", "pagination", "health_check"],
   normalize: normalizeProspect,
 
   async search(criteria, source) {
     if (!source.enabled) {
       return { ok: false, code: "not_configured", message: PROSPECTING_NOT_CONFIGURED_MESSAGE };
     }
-    const url = safeUrl(source.baseUrl, criteriaParams(criteria));
-    if (!url) {
+    const baseParams = criteriaParams(criteria);
+    const firstUrl = safeUrl(source.baseUrl, baseParams, source);
+    if (!firstUrl) {
       return { ok: false, code: "not_configured", message: PROSPECTING_NOT_CONFIGURED_MESSAGE };
     }
-    if (source.sourceType === "website" && !(await checkRobots(url))) {
+    if (source.sourceType === "website" && !(await checkRobots(firstUrl))) {
       return {
         ok: false,
         code: "blocked",
         message: "Sursa interzice colectarea automată prin robots.txt.",
       };
     }
-    const payload = await fetchJson(url);
-    if (isFailure(payload)) return payload;
-    const items = itemsOf(payload, source)
-      .slice(0, MAX_ITEMS)
-      .map((item) => mapFeedItem(item, source))
-      .filter((item): item is RawProspect => item !== null);
-    return { ok: true, items, fixture: source.configuration["fixture"] === true };
+
+    const pagination = paginationOf(source);
+    const fixture = source.configuration["fixture"] === true;
+    const collected: RawProspect[] = [];
+    let pagesFetched = 0;
+
+    for (let index = 0; index < (pagination ? MAX_PAGES : 1); index += 1) {
+      const params = { ...baseParams };
+      if (pagination) {
+        params[pagination.param] = String(pagination.start + index);
+        if (pagination.sizeParam) params[pagination.sizeParam] = String(pagination.size);
+      }
+      const url = safeUrl(source.baseUrl, params, source);
+      if (!url) break;
+      const payload = await fetchJson(url, source);
+      if (isFailure(payload)) {
+        if (collected.length > 0) break;
+        return payload;
+      }
+      pagesFetched += 1;
+      const pageItems = itemsOf(payload, source)
+        .map((item) => mapFeedItem(item, source))
+        .filter((item): item is RawProspect => item !== null);
+      collected.push(...pageItems);
+      if (!pagination || pageItems.length === 0 || collected.length >= MAX_ITEMS) break;
+    }
+
+    return { ok: true, items: collected.slice(0, MAX_ITEMS), fixture, pagesFetched };
   },
 
   async fetchListing(reference, source) {
-    const url = safeUrl(reference.startsWith("https://") ? reference : source.baseUrl, {});
+    const url = safeUrl(reference.startsWith("https://") ? reference : source.baseUrl, {}, source);
     if (!url) {
       return { ok: false, code: "not_configured", message: PROSPECTING_NOT_CONFIGURED_MESSAGE };
     }
-    const payload = await fetchJson(url);
+    const payload = await fetchJson(url, source);
     if (isFailure(payload)) return payload;
     const single = mapFeedItem(payload as Record<string, unknown>, source);
     return single
       ? { ok: true, items: [single], fixture: source.configuration["fixture"] === true }
       : { ok: false, code: "failed", message: "Anunțul nu a putut fi interpretat." };
   },
+
 
   async healthCheck(source) {
     const checkedAt = new Date().toISOString();
