@@ -190,6 +190,60 @@ export const PORTALS: PortalDefinition[] = [
   // metode de autentificare sau capabilități pe care nu le-am verificat.
 
   {
+    id: "lacheie",
+    display_name: "La Cheie",
+    description:
+      "La Cheie expune un API REST de publicare: Habitoo trimite starea completă a anunțului (creare, actualizare, retragere) cu cheia API a agenției, separat pentru mediul de test și cel de producție.",
+    logo: "LC",
+    status: "available",
+    directions: ["habitoo_to_portal"],
+    // Cheia este EMISĂ DE LA CHEIE pentru contul agenției; Habitoo doar o salvează criptat.
+    authentication: ["portal_api_key"],
+    capabilities: [
+      "test_connection",
+      "publish_listing",
+      "update_listing",
+      "withdraw_listing",
+      "sync",
+    ],
+    configuration_schema: {
+      fields: [
+        {
+          key: "api_key",
+          label: "Cheie API La Cheie",
+          help: "Cheia primită de agenție de la La Cheie. Se salvează criptat, se trimite ca Bearer token și nu se afișează niciodată după salvare.",
+          secret: true,
+          target: "credentials",
+        },
+        {
+          key: "lacheie_test_base_url",
+          label: "Adresă API — mediu de test",
+          help: "Adresa de test comunicată de La Cheie la configurarea conexiunii (ex. https://test.lacheie.ro/api/v1). Obligatorie: nu presupunem nicio adresă.",
+          placeholder: "https://…/api/v1",
+          target: "settings",
+        },
+        {
+          key: "lacheie_production_base_url",
+          label: "Adresă API — producție",
+          help: "Se completează abia după ce La Cheie confirmă activarea producției pentru agenție.",
+          placeholder: "https://…/api/v1",
+          optional: true,
+          target: "settings",
+        },
+        {
+          key: "lacheie_offers_path",
+          label: "Cale anunțuri",
+          help: "Calea endpointului de anunțuri, dacă La Cheie o comunică diferit. Implicit /offers.",
+          placeholder: "/offers",
+          optional: true,
+          target: "settings",
+        },
+      ],
+    },
+    notes:
+      "Integrarea este strict de publicare: fără import de lead-uri, fără import în masă, fără pull periodic și fără webhook-uri. Scrierile trimit starea COMPLETĂ a ofertei (nu există PATCH) cu antetul X-Source-Version, o versiune separată per external_id, păstrată ca text pentru a nu pierde precizia. Retry-ul pentru timeout, 5xx sau 429 reia exact aceeași versiune și aceleași date; un conflict 409 nu incrementează orb, ci reconciliază versiunea acceptată de portal. Tipul de proprietate, județul și localitatea se trimit ca id-uri din catalogul portalului (/options, /counties, /cities), sincronizat per agenție și mediu. Maximum 30 imagini publice HTTP(S), deduplicate; câmpurile refuzate de portal (agency, agency_id, user_id, promoted_until, listing_type, location, phone la nivel principal) nu sunt trimise niciodată — telefonul stă în agent.phone, camerele în number_of_rooms. Mediul de test este implicit, iar producția rămâne blocată până la confirmarea activării de către La Cheie.",
+  },
+  {
     id: "imospot",
     display_name: "Imospot.ro",
     description:

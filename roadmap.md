@@ -233,3 +233,14 @@
 - [x] Defect reparat: câmpurile opționale trimise ca „gol” invalidau acțiunea; acum sunt acceptate
 - [x] Validare: 672 teste, typecheck curat, build de producție reușit; E2E real pe agenția de test (citiri, refuzul acțiunii fără aprobare, aprobare → execuție, idempotență, respingere, cross-tenant, audit/tracing/usage)
 - Limitare: cota gratuită zilnică a providerului AI s-a epuizat în timpul E2E, deci propunerea generată de model a fost verificată doar parțial în ziua testului; lanțul aprobare → execuție a fost verificat integral server-side.
+
+## Stage 18 — Portalul La Cheie (finalizat)
+- [x] Conector server-side multi-tenant: `src/lib/portals/lacheie/` (config, catalog, mapper, versiuni, client HTTP, payload) + `src/lib/portals/adapters/lacheie.server.ts`
+- [x] Catalog real din portal (`/options`, `/counties`, `/cities`), cache per agenție + mediu, refresh manual; zero id-uri hardcodate
+- [x] Payload strict allowlist: câmpuri interzise și necunoscute eliminate; telefon în `agent.phone`, camere în `number_of_rooms`; max 30 imagini publice, deduplicate; corp ≤ 1 MiB
+- [x] `external_id` stabil per ofertă + tranzacție; `X-Source-Version` ca text zecimal (BigInt), retry cu aceeași versiune, 409 cu reconciliere, scrieri serializate
+- [x] Mediu TEST implicit; producția blocată până la confirmarea activării de către La Cheie; teste create/update/withdraw urmărite în UI
+- [x] Migrație `portal_listing_versions` (RLS + org isolation) și metadate în `portal_operation_logs` (mediu, external_id, versiune, status HTTP, durată) — fără secrete
+- [x] Card Superadmin „La Cheie”: stare, mediu, catalog, teste CRUD, activare producție, versiuni, jurnal
+- [x] 76 teste noi; suită completă 824 teste, typecheck curat, build OK
+- Limitare: adresele API (test/producție) se completează după primirea lor de la La Cheie; fără lead import, bulk, pull periodic, webhook-uri sau publicare automată.

@@ -3532,6 +3532,72 @@ export type Database = {
           },
         ]
       }
+      portal_listing_versions: {
+        Row: {
+          accepted_version: string | null
+          conflict: boolean
+          created_at: string
+          environment: string
+          external_id: string
+          id: string
+          last_error: string | null
+          last_operation: string | null
+          last_status: string | null
+          organization_id: string
+          portal: string
+          property_id: string
+          source_version: string
+          updated_at: string
+        }
+        Insert: {
+          accepted_version?: string | null
+          conflict?: boolean
+          created_at?: string
+          environment?: string
+          external_id: string
+          id?: string
+          last_error?: string | null
+          last_operation?: string | null
+          last_status?: string | null
+          organization_id: string
+          portal: string
+          property_id: string
+          source_version?: string
+          updated_at?: string
+        }
+        Update: {
+          accepted_version?: string | null
+          conflict?: boolean
+          created_at?: string
+          environment?: string
+          external_id?: string
+          id?: string
+          last_error?: string | null
+          last_operation?: string | null
+          last_status?: string | null
+          organization_id?: string
+          portal?: string
+          property_id?: string
+          source_version?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "portal_listing_versions_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "portal_listing_versions_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       portal_listings: {
         Row: {
           created_at: string
@@ -3716,37 +3782,52 @@ export type Database = {
         Row: {
           actor_id: string | null
           created_at: string
+          duration_ms: number | null
+          environment: string | null
           error_code: string | null
           error_message: string | null
+          external_id: string | null
+          http_status: number | null
           id: string
           operation: string
           organization_id: string
           portal: string
           property_id: string | null
+          source_version: string | null
           success: boolean
         }
         Insert: {
           actor_id?: string | null
           created_at?: string
+          duration_ms?: number | null
+          environment?: string | null
           error_code?: string | null
           error_message?: string | null
+          external_id?: string | null
+          http_status?: number | null
           id?: string
           operation: string
           organization_id: string
           portal: string
           property_id?: string | null
+          source_version?: string | null
           success: boolean
         }
         Update: {
           actor_id?: string | null
           created_at?: string
+          duration_ms?: number | null
+          environment?: string | null
           error_code?: string | null
           error_message?: string | null
+          external_id?: string | null
+          http_status?: number | null
           id?: string
           operation?: string
           organization_id?: string
           portal?: string
           property_id?: string | null
+          source_version?: string | null
           success?: boolean
         }
         Relationships: [
