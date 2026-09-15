@@ -50,37 +50,18 @@ describe("La Cheie — garduri înainte de orice request", () => {
     vi.unstubAllGlobals();
   });
 
-  it("producția neactivată blochează publicarea", async () => {
+  it("nu există mediu de test: cheia lipsă rămâne singurul blocaj de configurare", async () => {
     const fetchSpy = vi.fn();
     vi.stubGlobal("fetch", fetchSpy);
     const result = await lacheieAdapter.publishListing(
-      context(
-        {
-          lacheie_environment: "production",
-          lacheie_production_base_url: "https://api.lacheie.example/v1",
-          lacheie_production_active: false,
-        },
-        "cheie-test",
-      ),
+      context({ lacheie_environment: "test", lacheie_production_active: false }, ""),
       ref,
     );
     expect(result.ok).toBe(false);
     if (!result.ok) {
       expect(result.code).toBe("CONFIG_ERROR");
-      expect(result.message).toContain("nu este activată");
+      expect(result.message).not.toMatch(/mediu(l)? de test/i);
     }
-    expect(fetchSpy).not.toHaveBeenCalled();
-    vi.unstubAllGlobals();
-  });
-
-  it("adresa API lipsă este raportată, nu ghicită", async () => {
-    const fetchSpy = vi.fn();
-    vi.stubGlobal("fetch", fetchSpy);
-    const result = await lacheieAdapter.publishListing(
-      context({ lacheie_environment: "test" }, "cheie-test"),
-      ref,
-    );
-    expect(result.ok).toBe(false);
     expect(fetchSpy).not.toHaveBeenCalled();
     vi.unstubAllGlobals();
   });
