@@ -120,9 +120,11 @@ describe("La Cheie — reguli verificabile în cod", () => {
     expect(code).not.toMatch(/payload|authorization|apiKey|portalCredential/i);
   });
 
-  it("agenția vine din parametrul validat, iar mediul de test este implicit", () => {
-    expect(adapterSource).toContain("environmentBlockReason");
+  it("adaptorul folosește adresa production fixată central, fără mediu de test", () => {
+    expect(adapterSource).toContain("activeBaseUrl");
+    expect(adapterSource).not.toContain("environmentBlockReason");
     expect(adapterSource).not.toMatch(/console\.log/);
+    // Adresa nu este hardcodată în adaptor: vine din config.
     expect(adapterSource).not.toMatch(/https:\/\/[a-z.]*lacheie/i);
   });
 });
