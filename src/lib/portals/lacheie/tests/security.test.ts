@@ -151,4 +151,13 @@ describe("La Cheie — reguli verificabile în cod", () => {
     ].join("\n");
     expect(sources).not.toContain(obsoleteMessage);
   });
+
+  it("catalogul lipsă se sincronizează prin GET chiar dacă scrierile live sunt oprite", () => {
+    expect(adapterSource).toContain("if (!catalog) {");
+    expect(adapterSource).not.toContain("if (!catalog && ctx.allowLiveRequests)");
+    expect(adapterSource).toContain("refreshLaCheieCatalog");
+    expect(adapterSource).not.toContain(
+      "Catalogul La Cheie nu este sincronizat. Rulează „Reîmprospătează catalogul” înainte de publicare.",
+    );
+  });
 });

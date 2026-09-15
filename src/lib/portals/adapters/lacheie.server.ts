@@ -311,8 +311,9 @@ async function push(
     organizationId: ctx.organizationId,
     environment: ready.settings.environment,
   });
-  if (!catalog && ctx.allowLiveRequests) {
-    // Catalogul lipsește: îl sincronizăm automat (doar citiri GET, fără scrieri).
+  if (!catalog) {
+    // Catalogul lipsește: îl sincronizăm automat prin GET-uri read-only.
+    // Acest pas nu depinde de comutatorul pentru POST/PUT/DELETE reale.
     const refreshed = await refreshLaCheieCatalog(db, ready.config, {
       organizationId: ctx.organizationId,
       environment: ready.settings.environment,
@@ -327,16 +328,6 @@ async function push(
         detail: "missing_catalog",
       };
   }
-  if (!catalog) {
-    return {
-      ok: false,
-      code: "CONFIG_ERROR",
-      message:
-        "Catalogul La Cheie nu este sincronizat. Rulează „Reîmprospătează catalogul” înainte de publicare.",
-      detail: "missing_catalog",
-    };
-  }
-
   const build = await buildLaCheiePayload({
     organizationId: ctx.organizationId,
     propertyId: ref.propertyId,
