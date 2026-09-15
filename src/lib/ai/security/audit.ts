@@ -26,6 +26,14 @@ export const AI_AUDIT_ACTIONS = {
   marketingActionApproved: "ai.marketing.action.approved",
   marketingActionRejected: "ai.marketing.action.rejected",
   marketingActionFailed: "ai.marketing.action.failed",
+  /* Habitoo Manager Agent (Stage 17) */
+  managerRunStarted: "ai.manager.run.started",
+  managerRunFinished: "ai.manager.run.finished",
+  managerRunFailed: "ai.manager.run.failed",
+  managerApprovalRequested: "ai.manager.approval.requested",
+  managerApprovalGranted: "ai.manager.approval.granted",
+  managerApprovalRejected: "ai.manager.approval.rejected",
+  managerActionFailed: "ai.manager.action.failed",
 } as const;
 
 export type AiAuditAction = (typeof AI_AUDIT_ACTIONS)[keyof typeof AI_AUDIT_ACTIONS];
