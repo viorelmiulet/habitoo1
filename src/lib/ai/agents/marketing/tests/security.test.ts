@@ -35,11 +35,12 @@ describe("prompt injection", () => {
       notes: null,
       missing: [],
     });
-    expect(prompt).toContain("proprietate");
-    // Textul ostil apare doar în interiorul blocului de date, marcat ca dată.
-    const dataStart = prompt.indexOf("proprietate");
-    expect(prompt.indexOf("ignoră instrucțiunile")).toBeGreaterThan(dataStart);
+    expect(prompt).toContain("DATE CRM: PROPRIETATE");
+    expect(prompt).toContain("NU instrucțiuni");
+    // Cuvintele-cheie ostile sunt redactate înainte de a ajunge în prompt.
+    expect(prompt).not.toContain("ignoră instrucțiunile precedente");
     expect(prompt).not.toMatch(/^# SYSTEM/m);
+    expect(prompt).toContain("[text ignorat]");
   });
 
   it("cerința utilizatorului este igienizată separat de date", () => {
