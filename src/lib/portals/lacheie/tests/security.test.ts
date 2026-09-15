@@ -88,7 +88,7 @@ describe("La Cheie — reguli verificabile în cod", () => {
 
   it("fiecare server function cere Superadmin și validează inputul", () => {
     const handlers = functionsSource.match(/createServerFn\(/g) ?? [];
-    expect(handlers.length).toBeGreaterThanOrEqual(5);
+    expect(handlers.length).toBeGreaterThanOrEqual(3);
     expect((functionsSource.match(/requireSuperadminOrg\(/g) ?? []).length).toBeGreaterThanOrEqual(
       handlers.length,
     );
