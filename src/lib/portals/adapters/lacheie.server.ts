@@ -37,7 +37,7 @@ import {
 } from "../lacheie/config";
 import { laCheieRequest, withLaCheieWriteLock } from "../lacheie/client.server";
 import type { LaCheieRequestConfig } from "../lacheie/client.server";
-import { readLaCheieCatalog } from "../lacheie/catalog.server";
+import { readLaCheieCatalog, refreshLaCheieCatalog } from "../lacheie/catalog.server";
 import { buildLaCheiePayload } from "../lacheie/payload.server";
 import { laCheieExternalId, type LaCheieOffer, type LaCheieTransaction } from "../lacheie/mapper";
 import {
@@ -311,12 +311,12 @@ async function push(
     organizationId: ctx.organizationId,
     environment: ready.settings.environment,
   });
-  if (!catalog) {
+  if (!catalog && ctx.allowLiveRequests) {
     // Catalogul lipsește: îl sincronizăm automat (doar citiri GET, fără scrieri).
     const refreshed = await refreshLaCheieCatalog(db, ready.config, {
       organizationId: ctx.organizationId,
       environment: ready.settings.environment,
-      actorId: ctx.actorId ?? null,
+      actorId: null,
     });
     if (refreshed.ok) catalog = refreshed.catalog;
     else
@@ -327,6 +327,17 @@ async function push(
         detail: "missing_catalog",
       };
   }
+  if (!catalog) {
+    return {
+      ok: false,
+      code: "CONFIG_ERROR",
+      message:
+        "Catalogul La Cheie nu este sincronizat. Rulează „Reîmprospătează catalogul” înainte de publicare.",
+      detail: "missing_catalog",
+    };
+  }
+
+
 
 
   const build = await buildLaCheiePayload({
