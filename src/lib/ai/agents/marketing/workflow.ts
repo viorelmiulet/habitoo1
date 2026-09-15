@@ -185,6 +185,8 @@ export function applyMarketingApproval(
   approved: boolean,
 ): MarketingWorkflowState {
   if (state.proposal === null) return state;
+  // O decizie este definitivă: o a doua cerere nu rescrie starea.
+  if (state.approval) return state;
   return {
     ...state,
     approval: { approved, decidedAt: new Date().toISOString() },

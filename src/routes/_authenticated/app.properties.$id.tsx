@@ -28,6 +28,7 @@ import { EmptyState } from "@/components/app/EmptyState";
 import { ActivityDialog } from "@/components/app/ActivityDialog";
 import { PropertyMediaManager } from "@/components/app/PropertyMediaManager";
 import { PropertyAcpCard } from "@/components/app/PropertyAcpCard";
+import { MarketingAgentPanel } from "@/components/app/MarketingAgentPanel";
 
 import { PropertyHeroGallery } from "@/components/app/PropertyHeroGallery";
 import { PortfolioPanel } from "@/components/app/PortfolioPanel";
@@ -705,6 +706,7 @@ function PropertyDetailPage() {
             ["overview", "Overview"],
             ["media", "Media"],
             ["acp", "ACP"],
+            ["marketing", "Marketing AI"],
             ["leads", `Lead-uri (${data?.leads.length ?? 0})`],
             ["matching", `Cereri compatibile (${matches.length})`],
             ["activities", `Activități (${activities.length})`],
@@ -985,6 +987,10 @@ function PropertyDetailPage() {
 
         <TabsContent value="acp">
           <PropertyAcpCard propertyId={id} />
+        </TabsContent>
+
+        <TabsContent value="marketing">
+          <MarketingAgentPanel propertyId={id} />
         </TabsContent>
 
 
