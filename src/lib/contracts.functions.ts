@@ -1367,6 +1367,7 @@ export const sendForSignature = createServerFn({ method: "POST" })
                 subject: `Semnează documentul: ${contract.title}`,
                 html: `<p>Bună, ${party.full_name},</p><p>Ai primit un document de semnat: <strong>${contract.title}</strong>.</p><p><a href="${url}" style="background:#16233f;color:#fff;padding:12px 20px;border-radius:8px;text-decoration:none">Deschide și semnează</a></p><p>Linkul este valabil 7 zile și poate fi folosit o singură dată.</p>`,
                 text: `Bună, ${party.full_name}. Ai primit un document de semnat: ${contract.title}. Deschide linkul (valabil 7 zile, o singură utilizare): ${url}`,
+                purpose: "transactional",
                 idempotency_key: `contract-sign-${party.id}-${Date.now()}`,
               },
               { apiKey, sendUrl: process.env["LOVABLE_SEND_URL"] },

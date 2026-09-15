@@ -78,6 +78,7 @@ export const approveRegistrationRequest = createServerFn({ method: "POST" })
             subject: `Agenția ${request.agency_name} a fost aprobată — bine ai venit în Habitoo`,
             html,
             text,
+            purpose: "transactional",
             idempotency_key: `registration-approved-${data.requestId}`,
           },
           { apiKey, sendUrl: process.env["LOVABLE_SEND_URL"] },

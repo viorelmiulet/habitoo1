@@ -74,6 +74,7 @@ export async function generateMarketingContent(
         input.provider.generate({
           system,
           messages: [{ role: "user", content: buildMarketingUserPrompt(promptInput) }],
+          tools: [],
         }),
       );
       inputTokens = result.inputTokens ?? inputTokens;

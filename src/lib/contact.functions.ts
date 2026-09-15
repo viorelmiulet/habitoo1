@@ -85,6 +85,7 @@ export const submitContactRequest = createServerFn({ method: "POST" })
             subject: `Solicitare ${interestLabels[data.interest]} — ${data.agency}`,
             html,
             text,
+            purpose: "transactional",
             idempotency_key: `contact-${inserted.id}`,
           },
           { apiKey, sendUrl: process.env["LOVABLE_SEND_URL"] },
