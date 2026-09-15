@@ -9,7 +9,7 @@ import { assertSafeLaCheieUrl, laCheieRequest, withLaCheieWriteLock } from "../c
 const CONFIG = {
   baseUrl: "https://test.lacheie.example/api/v1",
   apiKey: "secret-key-123",
-  environment: "test" as const,
+  environment: "production" as const,
   connectionKey: "org-1:test",
 };
 
