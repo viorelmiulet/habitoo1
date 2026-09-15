@@ -4,6 +4,7 @@ import {
   LACHEIE_DEFAULT_PROPERTIES_PATH,
   LACHEIE_ENVIRONMENT,
   LACHEIE_PRODUCTION_BASE_URL,
+  laCheiePropertiesPath,
   laCheieReadiness,
   readLaCheieSettings,
 } from "../config";
@@ -21,6 +22,11 @@ describe("La Cheie — mediu unic (production) și stare", () => {
     expect(activeBaseUrl()).toBe(LACHEIE_PRODUCTION_BASE_URL);
     expect(LACHEIE_PRODUCTION_BASE_URL).toBe("https://api.lacheie.ro/api/partners/v1");
     expect(LACHEIE_PRODUCTION_BASE_URL.endsWith("/")).toBe(false);
+  });
+
+  it("construiește doar endpointurile documentate pentru proprietăți", () => {
+    expect(laCheiePropertiesPath()).toBe("/properties");
+    expect(laCheiePropertiesPath("HBT 1/SALE")).toBe("/properties/HBT%201%2FSALE");
   });
 
   it("setările vechi de mediu de test sunt ignorate", () => {

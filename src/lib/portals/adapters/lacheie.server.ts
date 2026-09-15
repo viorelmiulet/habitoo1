@@ -29,7 +29,12 @@ import type {
   PortalResult,
 } from "../adapter";
 import { toPortalError } from "../errors";
-import { activeBaseUrl, readLaCheieSettings, type LaCheieSettings } from "../lacheie/config";
+import {
+  activeBaseUrl,
+  laCheiePropertiesPath,
+  readLaCheieSettings,
+  type LaCheieSettings,
+} from "../lacheie/config";
 import { laCheieRequest, withLaCheieWriteLock } from "../lacheie/client.server";
 import type { LaCheieRequestConfig } from "../lacheie/client.server";
 import { readLaCheieCatalog } from "../lacheie/catalog.server";
@@ -177,7 +182,7 @@ async function sendOffer(input: {
 > {
   const { ctx, config, settings, offer, propertyId, mode } = input;
   const db = await admin();
-  const path = settings.propertiesPath;
+  const path = laCheiePropertiesPath();
 
   // O operație NOUĂ primește o versiune nouă; retry-urile din client refolosesc
   // exact aceeași versiune și același corp.
@@ -194,7 +199,7 @@ async function sendOffer(input: {
       ? laCheieRequest(config, { method: "POST", path, body: offer, sourceVersion })
       : laCheieRequest(config, {
           method: "PUT",
-          path: `${path}/${encodeURIComponent(offer.external_id)}`,
+          path: laCheiePropertiesPath(offer.external_id),
           body: offer,
           sourceVersion,
         });
@@ -414,7 +419,6 @@ async function withdraw(
   }
 
   const db = await admin();
-  const path = ready.settings.propertiesPath;
   const removed: string[] = [];
   const missing: string[] = [];
 
@@ -430,7 +434,7 @@ async function withdraw(
         });
         return laCheieRequest(ready.config, {
           method: "DELETE",
-          path: `${path}/${encodeURIComponent(id)}`,
+          path: laCheiePropertiesPath(id),
           sourceVersion: version,
         });
       });

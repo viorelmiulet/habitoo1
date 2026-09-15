@@ -48,6 +48,13 @@ export function activeBaseUrl(_settings?: LaCheieSettings): string {
   return LACHEIE_PRODUCTION_BASE_URL.replace(/\/+$/, "");
 }
 
+/** Construiește exclusiv endpointurile documentate `/properties`. */
+export function laCheiePropertiesPath(externalId?: string): string {
+  return externalId
+    ? `${LACHEIE_DEFAULT_PROPERTIES_PATH}/${encodeURIComponent(externalId)}`
+    : LACHEIE_DEFAULT_PROPERTIES_PATH;
+}
+
 export type LaCheieReadiness = "not_configured" | "connected" | "error";
 
 /** Starea afișată în UI, derivată din configurare + ultimul rezultat. */

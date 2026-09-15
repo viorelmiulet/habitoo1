@@ -131,6 +131,9 @@ describe("La Cheie — reguli verificabile în cod", () => {
     // Adresa nu este hardcodată în adaptor: vine din config.
     expect(adapterSource).not.toMatch(/https:\/\/[a-z.]*lacheie/i);
     expect(adapterSource).toContain('path: "/account"');
+    expect(adapterSource).toContain("laCheiePropertiesPath()");
+    expect(adapterSource).toContain("laCheiePropertiesPath(offer.external_id)");
+    expect(adapterSource).toContain("laCheiePropertiesPath(id)");
     expect(adapterSource).toContain('method: "POST"');
     expect(adapterSource).toContain('method: "PUT"');
     expect(adapterSource).toContain('method: "DELETE"');
@@ -138,6 +141,10 @@ describe("La Cheie — reguli verificabile în cod", () => {
   });
 
   it("mesajul vechi de configurare TEST nu mai poate fi produs", () => {
+    const obsoleteMessage = [
+      "Adresa API pentru mediul",
+      "de test nu este configurată",
+    ].join(" ");
     const sources = [
       functionsSource,
       adapterSource,
@@ -145,6 +152,6 @@ describe("La Cheie — reguli verificabile în cod", () => {
       readFileSync("src/lib/portals/lacheie/http.ts", "utf8"),
       readFileSync("src/lib/portals/registry.ts", "utf8"),
     ].join("\n");
-    expect(sources).not.toContain("Adresa API pentru mediul de test nu este configurată");
+    expect(sources).not.toContain(obsoleteMessage);
   });
 });
