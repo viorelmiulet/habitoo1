@@ -19,8 +19,13 @@ import { applyClassification, buildClassificationPrompt, parseClassificationResp
 import { dedupeProspects, type DedupeItem } from "./dedupe";
 import { normalizeProspect } from "./normalize";
 import { scoreProspect } from "./scoring";
-import { resolveProspectingProvider } from "./providers/registry.server";
 import {
+  hasLiveProspectingSource,
+  providerAvailability,
+  resolveProspectingProvider,
+} from "./providers/registry.server";
+import {
+  PROSPECTING_NO_LIVE_SOURCE_NOTE,
   applyProspectingApproval,
   completeProspectingStep,
   HABITOO_PROSPECTING_WORKFLOW,
@@ -32,6 +37,7 @@ import {
 } from "./workflow";
 import type {
   NormalizedProspect,
+  ProspectingProviderAvailability,
   ProspectSearchCriteria,
   ProspectSource,
   RawProspect,
@@ -54,6 +60,7 @@ export type ProspectingRunView = {
   counters: ProspectingWorkflowState["counters"];
   candidateIds: string[];
   sourcesUsed: ProspectingWorkflowState["sourcesUsed"];
+  sourceAvailability: ProspectingProviderAvailability;
   notes: string[];
   warnings: string[];
   fixtureUsed: boolean;
@@ -89,6 +96,7 @@ function view(
     },
     candidateIds: state.candidateIds ?? [],
     sourcesUsed: state.sourcesUsed ?? [],
+    sourceAvailability: state.sourceAvailability ?? "unavailable",
     notes: state.notes ?? [],
     warnings: state.warnings ?? [],
     fixtureUsed: state.fixtureUsed === true,

@@ -13,6 +13,10 @@
  */
 import type { ProspectSearchCriteria, ProspectingProviderAvailability } from "./types";
 
+/** Mesaj onest când nicio sursă externă autorizată nu este conectată. */
+export const PROSPECTING_NO_LIVE_SOURCE_NOTE =
+  "Nu există momentan nicio sursă externă de anunțuri conectată, deci nu am căutat proprietăți noi în afara CRM-ului.";
+
 export const HABITOO_PROSPECTING_WORKFLOW = "habitooProspectingWorkflow";
 
 export const PROSPECTING_STEPS = [
