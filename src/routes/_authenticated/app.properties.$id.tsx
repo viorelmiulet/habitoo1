@@ -348,20 +348,21 @@ function PropertyDetailPage() {
       const base = saved
         ? "Modificările au fost salvate și proprietatea a fost publicată."
         : "Proprietatea a fost publicată.";
-      const done = (portals?.results ?? []).filter((r) => r.ok && r.message);
-      const failed = (portals?.results ?? []).filter((r) => !r.ok);
+      const results = portals?.results ?? [];
+      const done = results.filter((r) => r.ok && r.message);
+      const failed = results.filter((r) => !r.ok);
 
       // Dacă o operație cerută pe un portal a eșuat, rezultatul este PARȚIAL:
       // nu raportăm succes global ambiguu lângă eroarea portalului.
       if (failed.length > 0 || portalsError) {
         const okPart = done.length
           ? `Publicată pe ${done.length} ${done.length === 1 ? "portal" : "portaluri"}`
-          : "Niciun portal actualizat";
+          : "Niciun portal nu a fost actualizat";
         const failPart = failed
-          .map((r) => `${r.portalName}: ${r.message ?? "eroare"}`)
+          .map((r) => r.message ?? "eroare portal")
           .concat(portalsError ? [portalsError] : [])
           .join(" · ");
-        toast.warning(`${base} ${okPart}; ${failPart}`);
+        toast.warning(`${saved ? "Modificările au fost salvate. " : ""}${okPart}; ${failPart}`);
       } else if (done.length > 0) {
         toast.success(`${base} ${done.map((r) => r.message).join(" · ")}`);
       } else {
