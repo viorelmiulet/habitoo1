@@ -15,6 +15,7 @@ import {
   LifeBuoy,
   Mail,
   Megaphone,
+  Workflow,
   MapPin,
   ListChecks,
   LogOut,
@@ -73,6 +74,7 @@ export const agencyNav: NavGroup[] = [
   {
     title: "Asistent AI",
     items: [
+      { label: "Habitoo Manager", to: "/app/ai-manager", icon: Workflow },
       { label: "AI CRM", to: "/app/ai-crm", icon: BrainCircuit },
       { label: "AI Marketing", to: "/app/ai-marketing", icon: Megaphone },
       { label: "Habitoo AI", to: "/app/ai", icon: Bot },
