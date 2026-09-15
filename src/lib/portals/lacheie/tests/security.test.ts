@@ -133,7 +133,11 @@ describe("La Cheie — reguli verificabile în cod", () => {
       functionsSource.indexOf("async function logLaCheie"),
       functionsSource.indexOf("export type LaCheieState"),
     );
-    expect(logBlock).not.toMatch(/payload|authorization|apiKey|portalCredential/i);
+    const code = logBlock
+      .split("\n")
+      .filter((line) => !line.trim().startsWith("//") && !line.trim().startsWith("*"))
+      .join("\n");
+    expect(code).not.toMatch(/payload|authorization|apiKey|portalCredential/i);
   });
 
   it("agenția vine din parametrul validat, iar mediul de test este implicit", () => {
