@@ -705,6 +705,7 @@ function PropertyDetailPage() {
             ["overview", "Overview"],
             ["media", "Media"],
             ["acp", "ACP"],
+            ["marketing", "Marketing AI"],
             ["leads", `Lead-uri (${data?.leads.length ?? 0})`],
             ["matching", `Cereri compatibile (${matches.length})`],
             ["activities", `Activități (${activities.length})`],
