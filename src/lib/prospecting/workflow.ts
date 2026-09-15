@@ -11,7 +11,7 @@
  * tranzițiile și starea, ca suspend/resume să poată fi testat determinist.
  * Persistența trăiește în `runtime.server.ts`, pe `ai_workflow_runs`.
  */
-import type { ProspectSearchCriteria } from "./types";
+import type { ProspectSearchCriteria, ProspectingProviderAvailability } from "./types";
 
 export const HABITOO_PROSPECTING_WORKFLOW = "habitooProspectingWorkflow";
 
