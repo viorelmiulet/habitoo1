@@ -46,6 +46,8 @@ export const manualListProvider: ProspectingSourceProvider = {
   key: MANUAL_LIST_PROVIDER_KEY,
   label: "Listă proprie",
   live: false,
+  availability: "manual",
+  capabilities: ["search", "fetch_listing", "health_check"],
   normalize: normalizeProspect,
 
   async search(_criteria, source): Promise<ProspectFetchResult> {
