@@ -176,6 +176,7 @@ export const requestImpersonation = createServerFn({ method: "POST" })
             subject: "Cerere de acces temporar la contul tău Habitoo",
             html,
             text,
+            purpose: "transactional",
             idempotency_key: `impersonation-request-${String(id)}`,
           },
           { apiKey, sendUrl: process.env["LOVABLE_SEND_URL"] },
