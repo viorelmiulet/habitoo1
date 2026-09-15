@@ -9,10 +9,44 @@ import { z } from "zod";
 import type { AiCapability } from "../security/permissions";
 import type { AiToolDeclaration } from "../providers/types";
 import { CRM_ACTION_SCHEMAS } from "../agents/crm/actions";
+import {
+  MARKETING_CHANNELS,
+  MARKETING_CONTENT_TYPES,
+  MARKETING_LENGTHS,
+  MARKETING_TONES,
+} from "../agents/marketing/channels";
 
 const uuid = z.string().uuid("Identificator invalid.");
 
 const searchLimit = z.number().int().min(1).max(20).optional();
+
+/**
+ * Ciorna de marketing salvată după aprobare. Câmpurile de validare și de
+ * context sunt completate de server (nu de model): leagă ciorna de datele
+ * exacte folosite la generare.
+ */
+export const MARKETING_DRAFT_SCHEMA = z.object({
+  propertyId: uuid,
+  channel: z.enum(MARKETING_CHANNELS),
+  contentType: z.enum(MARKETING_CONTENT_TYPES),
+  tone: z.enum(MARKETING_TONES),
+  length: z.enum(MARKETING_LENGTHS),
+  title: z.string().max(300).nullable().optional(),
+  body: z.string().min(1).max(8000),
+  shortVariants: z.array(z.string().max(1000)).max(4).optional(),
+  cta: z.string().max(300).nullable().optional(),
+  hashtags: z.array(z.string().max(60)).max(10).optional(),
+  missingData: z.array(z.object({ field: z.string(), question: z.string() })).max(20).optional(),
+  validationStatus: z.enum(["valid", "warning", "invalid"]),
+  validationIssues: z.array(z.record(z.string(), z.unknown())).max(50).optional(),
+  contextVersion: z.string().max(40),
+  contextHash: z.string().max(80),
+  contextSnapshot: z.record(z.string(), z.unknown()).optional(),
+  provider: z.string().max(40).nullable().optional(),
+  model: z.string().max(80).nullable().optional(),
+  runId: z.string().uuid().nullable().optional(),
+});
+
 
 export type AiToolName =
   | "search_prospects"
