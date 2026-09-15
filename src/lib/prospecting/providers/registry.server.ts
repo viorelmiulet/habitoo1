@@ -67,9 +67,13 @@ export function providerAvailability(providerKey: string): ProspectingProviderAv
   return resolveProspectingProvider(providerKey)?.availability ?? "unavailable";
 }
 
-/** Sursa este utilizabilă doar dacă e activă și are un provider implementat. */
+/**
+ * Sursa este utilizabilă doar dacă e activă și providerul poate livra date.
+ * Providerii `unavailable` există doar ca să raporteze onest lipsa integrării.
+ */
 export function sourceUsable(source: ProspectSource): boolean {
-  return source.enabled && resolveProspectingProvider(source.providerKey) !== null;
+  const provider = resolveProspectingProvider(source.providerKey);
+  return source.enabled && provider !== null && provider.availability !== "unavailable";
 }
 
 /**
