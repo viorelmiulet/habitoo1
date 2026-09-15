@@ -337,9 +337,6 @@ async function push(
     };
   }
 
-
-
-
   const build = await buildLaCheiePayload({
     organizationId: ctx.organizationId,
     propertyId: ref.propertyId,
