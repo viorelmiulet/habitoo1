@@ -220,7 +220,7 @@ export async function runManagerTurn(
     channel: input.channel ?? "olx",
     contentType: input.contentType ?? "listing",
     tone: input.tone ?? "professional",
-    length: input.length ?? "medium",
+    length: input.length ?? "standard",
   });
   let state: ManagerState = { ...plan, links: { marketingRunId: null, marketingResultIndex: 0 } };
 
@@ -483,7 +483,7 @@ async function runStep(
         channel: (turn.channel ?? "olx") as never,
         contentType: (turn.contentType ?? "listing") as never,
         tone: (turn.tone ?? "professional") as never,
-        length: (turn.length ?? "medium") as never,
+        length: (turn.length ?? "standard") as never,
         notes: null,
       });
       if (marketing.status !== "ok" || !marketing.run) {
