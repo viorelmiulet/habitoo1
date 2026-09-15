@@ -144,19 +144,6 @@ function criteriaParams(criteria: ProspectSearchCriteria): Record<string, string
   return params;
 }
 
-/** Acceptăm doar HTTPS: fără protocoale locale sau nesecurizate. */
-function safeUrl(base: string | null, params: Record<string, string> = {}): URL | null {
-  if (!base) return null;
-  let url: URL;
-  try {
-    url = new URL(base);
-  } catch {
-    return null;
-  }
-  if (url.protocol !== "https:") return null;
-  for (const [key, value] of Object.entries(params)) url.searchParams.set(key, value);
-  return url;
-}
 
 /** Verificare robots.txt: dacă „Disallow: /" apare pentru toți, nu colectăm. */
 export function robotsAllows(robotsTxt: string, path: string): boolean {
