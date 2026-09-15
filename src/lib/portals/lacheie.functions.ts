@@ -1,19 +1,22 @@
 /**
- * Server functions specifice La Cheie: mediu (test/producție), catalog,
- * testele CRUD cerute de portal înainte de activarea producției și jurnalul.
+ * Server functions specifice La Cheie: testarea conexiunii de producție,
+ * catalogul și jurnalul operațiilor.
  *
- * Reguli: configurarea integrărilor rămâne exclusiv la Superadmin, cheia API nu
- * este niciodată returnată către frontend, iar în producție nu pleacă nicio
- * cerere până la confirmarea activării de către La Cheie.
+ * La Cheie are un singur mediu real (production), cu adresa API fixată
+ * server-side. Configurarea rămâne exclusiv la Superadmin, iar cheia API nu
+ * este niciodată returnată către frontend. Scrierile reale (creare,
+ * actualizare, retragere) se fac doar prin fluxul normal de publicare din
+ * pagina proprietății, niciodată automat la încărcarea UI.
  */
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireActiveOrgAuth } from "@/lib/org-access";
 import { getPortalDefinition } from "@/lib/portals/registry";
 import {
+  LACHEIE_ENVIRONMENT,
   LACHEIE_PORTAL_KEY,
+  LACHEIE_PRODUCTION_BASE_URL,
   activeBaseUrl,
-  crudTestsPassed,
   laCheieReadiness,
   readLaCheieSettings,
   type LaCheieEnvironment,
@@ -131,13 +134,9 @@ async function logLaCheie(input: {
 export type LaCheieState = {
   hasApiKey: boolean;
   environment: LaCheieEnvironment;
-  testBaseUrlSet: boolean;
-  productionBaseUrlSet: boolean;
-  productionActive: boolean;
-  productionConfirmedAt: string | null;
+  /** Adresa API documentată, fixată server-side (production-only). */
+  baseUrl: string;
   offersPath: string;
-  crudTests: { create: string | null; update: string | null; withdraw: string | null };
-  crudTestsPassed: boolean;
   readiness: LaCheieReadiness;
   catalog: {
     fetchedAt: string | null;
@@ -214,16 +213,10 @@ export const getLaCheieState = createServerFn({ method: "POST" })
     return {
       hasApiKey,
       environment: settings.environment,
-      testBaseUrlSet: Boolean(settings.testBaseUrl),
-      productionBaseUrlSet: Boolean(settings.productionBaseUrl),
-      productionActive: settings.productionActive,
-      productionConfirmedAt: settings.productionConfirmedAt,
+      baseUrl: LACHEIE_PRODUCTION_BASE_URL,
       offersPath: settings.offersPath,
-      crudTests: settings.crudTests,
-      crudTestsPassed: crudTestsPassed(settings.crudTests),
       readiness: laCheieReadiness({
         hasApiKey,
-        settings,
         lastError: row?.last_sync_error ?? null,
       }),
       catalog: {
@@ -261,77 +254,58 @@ export const getLaCheieState = createServerFn({ method: "POST" })
     };
   });
 
-export const setLaCheieEnvironment = createServerFn({ method: "POST" })
+/**
+ * Testarea conexiunii de producție: GET `/account` cu cheia API a agenției.
+ * Read-only — nu creează, nu modifică și nu retrage niciun anunț.
+ */
+export const testLaCheieConnection = createServerFn({ method: "POST" })
   .middleware([requireActiveOrgAuth])
-  .inputValidator((input: unknown) =>
-    z
-      .object({
-        organizationId: z.string().uuid(),
-        environment: z.enum(["test", "production"]),
-      })
-      .parse(input),
-  )
+  .inputValidator((input: unknown) => z.object({ organizationId: z.string().uuid() }).parse(input))
   .handler(async ({ data, context }) => {
     const auth = context as unknown as AuthContext;
     const organizationId = await requireSuperadminOrg(auth, data.organizationId);
-    const { settings } = await buildLaCheieContext(organizationId);
-    const current = readLaCheieSettings(settings);
+    const { row, ctx } = await buildLaCheieContext(organizationId);
 
-    if (data.environment === "production") {
-      if (!current.productionActive) {
-        throw new Error(
-          "Producția La Cheie nu este confirmată pentru această agenție. Bifează activarea după confirmarea primită de la La Cheie.",
-        );
-      }
-      if (!current.productionBaseUrl) {
-        throw new Error("Completează adresa API de producție înainte de a comuta mediul.");
-      }
-      if (!crudTestsPassed(current.crudTests)) {
-        throw new Error(
-          "Testele de creare, actualizare și retragere din mediul de test nu sunt trecute.",
-        );
-      }
+    const { portalRateLimited } = await import("@/lib/portals/rate-limit.server");
+    if (portalRateLimited("test", `${organizationId}|${LACHEIE_PORTAL_KEY}`)) {
+      throw new Error("Prea multe testări consecutive. Reia în câteva momente.");
     }
 
-    await mergeSettings(organizationId, { lacheie_environment: data.environment }, auth.userId);
-    await logLaCheie({
-      organizationId,
-      operation: "environment",
-      success: true,
-      actorId: auth.userId,
-      environment: data.environment,
-    });
-    return { environment: data.environment };
-  });
+    const { getPortalAdapter } = await import("@/lib/portals/adapters/index.server");
+    const adapter = getPortalAdapter(LACHEIE_PORTAL_KEY);
+    if (!adapter) throw new Error("Adaptorul La Cheie nu este disponibil.");
 
-/**
- * Confirmarea manuală a activării producției. Documentația La Cheie nu descrie
- * niciun endpoint de auto-activare, deci nu inventăm unul: bifa se pune de
- * Superadmin după confirmarea primită de la portal.
- */
-export const confirmLaCheieProduction = createServerFn({ method: "POST" })
-  .middleware([requireActiveOrgAuth])
-  .inputValidator((input: unknown) =>
-    z.object({ organizationId: z.string().uuid(), active: z.boolean() }).parse(input),
-  )
-  .handler(async ({ data, context }) => {
-    const auth = context as unknown as AuthContext;
-    const organizationId = await requireSuperadminOrg(auth, data.organizationId);
-    const patch: Record<string, unknown> = {
-      lacheie_production_active: data.active,
-      lacheie_production_confirmed_at: data.active ? new Date().toISOString() : null,
-    };
-    // Dezactivarea producției readuce imediat integrarea în mediul de test.
-    if (!data.active) patch["lacheie_environment"] = "test";
-    await mergeSettings(organizationId, patch, auth.userId);
+    const started = Date.now();
+    const result = await adapter.testConnection(ctx);
+    const duration = Date.now() - started;
+    const ok = result.ok && result.data.live;
+    const message = result.ok ? result.data.detail : result.message;
+
+    const admin = await loadAdmin();
+    if (row) {
+      await admin
+        .from("portal_connections")
+        .update({
+          status: ok ? "connected" : "error",
+          last_sync_status: ok ? "ok" : "error",
+          last_sync_error: ok ? null : message,
+          last_sync_at: new Date().toISOString(),
+        })
+        .eq("id", row.id);
+    }
+
     await logLaCheie({
       organizationId,
-      operation: "production_activation",
-      success: true,
+      operation: "test_connection",
+      success: ok,
+      errorMessage: ok ? null : message,
       actorId: auth.userId,
-      environment: data.active ? "production" : "test",
+      environment: LACHEIE_ENVIRONMENT,
+      durationMs: duration,
     });
-    return { productionActive: data.active };
+
+    if (!ok) throw new Error(message ?? "La Cheie nu a confirmat conexiunea.");
+    return { detail: message };
   });
 
 export const refreshLaCheieCatalog = createServerFn({ method: "POST" })
@@ -344,12 +318,10 @@ export const refreshLaCheieCatalog = createServerFn({ method: "POST" })
     const settings = readLaCheieSettings(ctx.settings as Record<string, unknown>);
     const base = activeBaseUrl(settings);
     const credential = (ctx.portalCredential ?? "").trim();
-    if (!credential || !base) {
-      throw new Error("Salvează cheia API și adresa mediului activ înainte de sincronizare.");
+    if (!credential) {
+      throw new Error("Salvează cheia API La Cheie înainte de sincronizarea catalogului.");
     }
-    if (settings.environment === "production" && !settings.productionActive) {
-      throw new Error("Producția La Cheie nu este activată pentru această agenție.");
-    }
+
 
     const admin = await loadAdmin();
     const { refreshLaCheieCatalog: refresh } = await import(
@@ -390,66 +362,3 @@ export const refreshLaCheieCatalog = createServerFn({ method: "POST" })
     return { fetchedAt: result.catalog.fetchedAt, counts: result.counts };
   });
 
-/**
- * Testele CRUD cerute de La Cheie înainte de activarea producției: creare,
- * actualizare și retragere, rulate pe o ofertă reală, EXCLUSIV în mediul de test.
- */
-export const runLaCheieCrudCheck = createServerFn({ method: "POST" })
-  .middleware([requireActiveOrgAuth])
-  .inputValidator((input: unknown) =>
-    z
-      .object({ organizationId: z.string().uuid(), propertyId: z.string().uuid() })
-      .parse(input),
-  )
-  .handler(async ({ data, context }) => {
-    const auth = context as unknown as AuthContext;
-    const organizationId = await requireSuperadminOrg(auth, data.organizationId);
-    const { ctx } = await buildLaCheieContext(organizationId);
-    const settings = readLaCheieSettings(ctx.settings as Record<string, unknown>);
-    if (settings.environment !== "test") {
-      throw new Error("Testele CRUD se rulează numai în mediul de test.");
-    }
-
-    const { getPortalAdapter } = await import("@/lib/portals/adapters/index.server");
-    const adapter = getPortalAdapter(LACHEIE_PORTAL_KEY);
-    if (!adapter) throw new Error("Adaptorul La Cheie nu este disponibil.");
-
-    const ref = { propertyId: data.propertyId, externalId: null };
-    const steps: { operation: "create" | "update" | "withdraw"; ok: boolean; message: string }[] =
-      [];
-    const passed: Record<string, string> = {};
-
-    for (const operation of ["create", "update", "withdraw"] as const) {
-      const result =
-        operation === "create"
-          ? await adapter.publishListing(ctx, ref)
-          : operation === "update"
-            ? await adapter.updateListing(ctx, ref)
-            : await adapter.withdrawListing(ctx, ref);
-      const ok = result.ok;
-      const message = ok ? (result.data.message ?? "OK") : result.message;
-      steps.push({ operation, ok, message });
-      await logLaCheie({
-        organizationId,
-        operation: `crud_test_${operation}`,
-        success: ok,
-        errorMessage: ok ? null : message,
-        propertyId: data.propertyId,
-        actorId: auth.userId,
-        environment: "test",
-        externalId: ok ? result.data.externalId : null,
-      });
-      if (!ok) break;
-      passed[operation] = new Date().toISOString();
-    }
-
-    if (Object.keys(passed).length) {
-      await mergeSettings(
-        organizationId,
-        { lacheie_tests: { ...settings.crudTests, ...passed } },
-        auth.userId,
-      );
-    }
-
-    return { steps, allPassed: steps.length === 3 && steps.every((step) => step.ok) };
-  });

@@ -351,11 +351,22 @@ function PropertyDetailPage() {
       const done = (portals?.results ?? []).filter((r) => r.ok && r.message);
       const failed = (portals?.results ?? []).filter((r) => !r.ok);
 
-      if (done.length > 0) toast.success(`${base} ${done.map((r) => r.message).join(" · ")}`);
-      else toast.success(base);
-      if (failed.length > 0)
-        toast.error(`Portaluri cu erori: ${failed.map((r) => r.message).join(" · ")}`);
-      if (portalsError) toast.error(portalsError);
+      // Dacă o operație cerută pe un portal a eșuat, rezultatul este PARȚIAL:
+      // nu raportăm succes global ambiguu lângă eroarea portalului.
+      if (failed.length > 0 || portalsError) {
+        const okPart = done.length
+          ? `Publicată pe ${done.length} ${done.length === 1 ? "portal" : "portaluri"}`
+          : "Niciun portal actualizat";
+        const failPart = failed
+          .map((r) => `${r.portalName}: ${r.message ?? "eroare"}`)
+          .concat(portalsError ? [portalsError] : [])
+          .join(" · ");
+        toast.warning(`${base} ${okPart}; ${failPart}`);
+      } else if (done.length > 0) {
+        toast.success(`${base} ${done.map((r) => r.message).join(" · ")}`);
+      } else {
+        toast.success(base);
+      }
     },
     onError: (e: Error) => toastError(e),
   });
