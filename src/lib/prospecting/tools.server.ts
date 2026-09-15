@@ -14,7 +14,7 @@ import type { AiToolExecution } from "@/lib/ai/tools/executors.server";
 import { PROSPECTING_AUDIT_ACTIONS, logProspectingAudit } from "./audit";
 import { importProspectToCrm } from "./import.server";
 import { normalizePhone, normalizeProspect } from "./normalize";
-import { resolveProspectingProvider } from "./providers/registry.server";
+import { providerAvailability, resolveProspectingProvider } from "./providers/registry.server";
 import { scoreProspect } from "./scoring";
 import { emptyCriteria } from "./types";
 
@@ -164,6 +164,7 @@ export async function runProspectingTool(
           enabled: row.enabled,
           global: row.organization_id === null,
           implemented: resolveProspectingProvider(row.provider_key) !== null,
+          availability: providerAvailability(row.provider_key),
         })),
         summary: `${rows.length} surse`,
         sources: [],
