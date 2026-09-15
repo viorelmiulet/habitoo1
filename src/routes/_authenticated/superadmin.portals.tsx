@@ -135,6 +135,7 @@ function SuperadminPortalsPage() {
             }}
           />
           <PortalsCard organizationId={organizationId} />
+          <LaCheieCard organizationId={organizationId} />
 
           <section className="panel">
             <header className="space-y-3 border-b border-border px-5 py-4">
