@@ -11,7 +11,11 @@ import { requireActiveOrgAuth } from "@/lib/org-access";
 import type { AiActor, AiRole } from "@/lib/ai/gateway/types";
 import { PROSPECTING_AUDIT_ACTIONS, logProspectingAudit } from "./audit";
 import { listProspectingProviders, resolveProspectingProvider } from "./providers/registry.server";
-import type { ProspectSellerType, ProspectStatus } from "./types";
+import type {
+  ProspectSellerType,
+  ProspectStatus,
+  ProspectingProviderAvailability,
+} from "./types";
 
 type AuthContext = { userId: string };
 
