@@ -309,6 +309,13 @@
       "when": 1789444348985,
       "tag": "0043_marketing_agent_drafts",
       "breakpoints": true
+    },
+    {
+      "idx": 44,
+      "version": "7",
+      "when": 1789501915588,
+      "tag": "0044_lacheie_portal_versions",
+      "breakpoints": true
     }
   ]
 }
