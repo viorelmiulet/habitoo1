@@ -208,7 +208,12 @@ async function sendOffer(input: {
 
   // PUT pe un external_id necunoscut: creăm anunțul, păstrând aceeași versiune.
   if (mode === "update" && response.status === 404) {
-    response = await laCheieRequest(config, { method: "POST", path, body: offer, sourceVersion: version });
+    response = await laCheieRequest(config, {
+      method: "POST",
+      path,
+      body: offer,
+      sourceVersion: version,
+    });
   }
 
   // 409: nu incrementăm orb. Marcăm conflictul, reconciliem versiunea acceptată
@@ -548,7 +553,9 @@ export const lacheieAdapter: PortalAdapter = {
       ok: true,
       data: {
         feedVisible: build.ok,
-        externalId: build.ok ? build.offers.map((entry) => entry.offer.external_id).join(",") : null,
+        externalId: build.ok
+          ? build.offers.map((entry) => entry.offer.external_id).join(",")
+          : null,
         offerUrl: null,
         agentId: first?.agent.external_id ?? null,
         agentName: first?.agent.full_name ?? null,

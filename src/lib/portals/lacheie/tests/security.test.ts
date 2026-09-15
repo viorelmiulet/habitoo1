@@ -141,10 +141,7 @@ describe("La Cheie — reguli verificabile în cod", () => {
   });
 
   it("mesajul vechi de configurare TEST nu mai poate fi produs", () => {
-    const obsoleteMessage = [
-      "Adresa API pentru mediul",
-      "de test nu este configurată",
-    ].join(" ");
+    const obsoleteMessage = ["Adresa API pentru mediul", "de test nu este configurată"].join(" ");
     const sources = [
       functionsSource,
       adapterSource,

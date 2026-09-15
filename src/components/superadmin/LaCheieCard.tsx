@@ -169,8 +169,9 @@ export function LaCheieCard({ organizationId }: { organizationId: string }) {
                   <span className="font-mono">{version.externalId}</span>
                   <span className="text-muted-foreground">
                     v{version.sourceVersion}
-                    {version.acceptedVersion ? ` (acceptată v${version.acceptedVersion})` : ""} •{" "}
-                    {version.lastOperation ?? "—"} • {version.lastStatus ?? "—"}
+                    {version.acceptedVersion
+                      ? ` (acceptată v${version.acceptedVersion})`
+                      : ""} • {version.lastOperation ?? "—"} • {version.lastStatus ?? "—"}
                   </span>
                   {version.conflict ? <StatusBadge tone="danger">Conflict</StatusBadge> : null}
                 </li>

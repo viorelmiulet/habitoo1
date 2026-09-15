@@ -77,27 +77,31 @@
 - [x] Semnare la distanță: link personal, valabil 7 zile, consumat o singură dată, semnătură pe canvas, IP + user agent + dată în dovada semnării.
 - [x] Pagini: /app/contracts, /app/contracts/$id, pagina publică /semnare.
 - [x] Etapa 2: contract real de închiriere cu proprietar și chiriaș, anexă opțională de inventar în același PDF și listă implicită configurabilă per agenție.
+
 ## Contract de reprezentare exclusivă
+
 - [x] Adaugă setări agenție pentru reprezentant legal și funcție.
 - [x] Adaugă șablonul real și câmpurile editabile, inclusiv fără proprietate.
 - [x] Integrează PDF-ul și semnăturile în două coloane.
 - [x] Rulează typecheck și testele.
 
 ## ACP – Analiză Comparativă de Piață (etapa 1: infrastructură)
+
 - [x] Cele 8 tabele de piață și ACP, cu indexuri, RLS și pool comun doar-citire (migrația 0029).
 - [x] Motor determinist: similaritate cu ponderi centralizate, praguri 85/70, outlieri IQR, statistici (min/max/medie/mediană/P25/P75, preț/mp).
 - [x] Adaptoare pentru proprietăți proprii și oferte de piață normalizate; puncte de integrare pentru audit.
 - [x] Pagini iniţiale /app/acp și /app/acp/new, cu surse selectabile și snapshot al proprietății.
 
 ## ACP – etapa 2: motor real de analiză (fără AI)
+
 - [x] Migrația 0030: ajustări, snapshot comparabil, decizii manuale, statistici salvate, versiune și istoric de rulări.
 - [x] Colectare candidați din proprietățile agenției și din Colaborare (portalurile rămân pentru etapa 3).
 - [x] Ajustări explicabile per factor, outlieri IQR, estimare min/valoare/max, preț recomandat și confidence score determinist.
 - [x] Pagina de detaliu: KPI, proprietatea analizată, grafic preț/mp, listă de comparabile cu imagine, include/exclude manual, recalculare și „Cum s-a calculat”.
 - [ ] Etapa următoare: import portaluri, deduplicare entități, rapoarte PDF și sumar AI.
 
-
 ## ACP – faza 3, etapa 4: Market Intelligence
+
 - [x] Strat determinist reutilizabil (`market/intelligence.ts`): filtre, agregări, percentile/distribuții, prospețime, acoperire, poziționare, trenduri lunare.
 - [x] Agregări server-side pe baza de date (`intelligence.server.ts`) + indexuri aditive (migrația 0037).
 - [x] Server functions cu Zod, organizație activă, izolare pe organization_id și rate limiting.
@@ -107,6 +111,7 @@
 - [x] Etapa 5 (AI ACP) – finalizată, vezi mai jos.
 
 ## ACP – etapa 5: analist AI
+
 - [x] Migrația 0038: tabelul `acp_ai_insights` (organizație, analiză, versiune, snapshot, prompt/schema version, status, insight, audit), RLS de citire pe accesul la analiză, scriere doar server-side.
 - [x] Schema de ieșire v2 cu 9 secțiuni + metadata, validare Zod, sanitizare, compatibilitate cu interpretările vechi.
 - [x] Prompt versionat (`acp-ai-prompt-2`), datele anunțurilor tratate strict ca date (anti prompt injection).
@@ -116,6 +121,7 @@
 - [x] Teste: 20 noi (total 430), typecheck și build curate; generare reală validată pe gateway.
 
 ## ACP – etapa 6: ACP integrat în workflow-ul CRM
+
 - [x] Filă „ACP” și CTA „Analiză comparativă de piață (ACP)” în pagina proprietății, cu status, versiune, surse și data ultimei analize.
 - [x] Statusuri de workflow derivate din datele existente (`workflow.ts`): fără analiză / în pregătire / în curs / finalizată / date insuficiente / eroare — fără statusuri noi în baza de date.
 - [x] `workflow.functions.ts`: `getPropertyAcpWorkflow` (citire fără recalculare, ultima versiune + snapshot) și `applyAcpRecommendedPrice` (confirmare explicită, audit, rate limit).
@@ -124,6 +130,7 @@
 - [x] Teste: 21 noi (total 451), typecheck și build curate; nicio migrare nouă necesară.
 
 ## ACP – etapa 7: calibrare, precizie și matching avansat
+
 - [x] Migrația aditivă 0039: tabelul `acp_calibrations` (versiuni de calibrare, factor, mediană/MAD, bias, eșantion, segmente, metrici, model activ) cu RLS pe organizație și indexuri unice; `organizations.acp_calibration_enabled` + `acp_calibration_min_sample_size`.
 - [x] `calibration.ts`: calibrare versionată pe date reale (raport observat/estimat, mediană + MAD, clamping ±15%, praguri minime 12 global / 8 per segment, segmentare doar cu volum și stabilitate suficiente); baseline determinist păstrat separat de valoarea calibrată.
 - [x] `precision.ts`: prospețime per anunț, calitatea datelor per comparabil, istoric de preț și relevanță; scor de calitate a analizei separat de scorul de încredere, cu motive explicite.
@@ -135,6 +142,7 @@
 - [x] Teste: 29 noi (total 480), typecheck și build curate.
 
 ## ACP – etapa 8: production hardening
+
 - [x] Audit tehnic al server functions ACP (analize, versiuni, rapoarte, AI, calibrare, workflow, market data): izolarea pe organizație, validările Zod, rate limiting și auditul existente au fost confirmate; nicio migrare nouă necesară.
 - [x] Erori sigure pentru client: `safe-error.ts` (`acpError`, `acpDbError`, `acpSafeMessage`) — detaliile de bază de date/storage rămân doar în logurile serverului.
 - [x] Protecție la rulări duplicate: `guards.ts` (fereastră de 120s pentru reutilizarea unei analize în curs) + blocare optimistă prin update condiționat pe status la recalculare.
@@ -145,6 +153,7 @@
 - [x] Teste: 11 noi (total 491), typecheck și build curate.
 
 ## ACP – etapa 9: test end-to-end
+
 - [x] E2E real în aplicație (utilizator autentificat, două agenții): flux complet proprietate → analiză → comparabile → versiune → raport PDF → istoric.
 - [x] Defect reparat: auditul ACP scria prin clientul public (RLS respingea inserarea); `audit.ts` folosește acum clientul server-side, cu teste dedicate.
 - [x] Defect reparat: proprietățile arhivate puteau porni rulări noi; `canRunAcpForTarget` blochează crearea și recalcularea, cu audit `acp.run.blocked` și mesaj clar în interfață.
@@ -153,6 +162,7 @@
 - [ ] Limitare deschisă: pool-ul extern de anunțuri este gol, deci calibrarea pe volum real de piață nu poate fi validată (rămâne dezactivată implicit).
 
 ## ACP – etapa 10: finalizare și release freeze
+
 - [x] Audit final de arhitectură documentat în `docs/acp.md`: fiecare etapă a fluxului (proprietate → analiză → market data → comparabile → motor determinist → snapshot → versiune → AI opțional → raport PDF → istoric → audit) cu responsabilitate, sursa datelor, validări, organizație, ce se persistă, ce poate eșua și comportamentul la eroare.
 - [x] Freeze al motorului determinist: `engine.ts` rămâne singura sursă a valorilor financiare, funcție pură și reproductibilă; AI nu scrie valori; snapshot-urile păstrează datele de calcul; versiunile livrate sunt imuabile. Nicio modificare de implementare necesară.
 - [x] Contract de versionare documentat (draft recalculabil, versiune livrată imuabilă, recalculare = versiune nouă, raport legat exact de versiune).
@@ -165,6 +175,7 @@
 - [x] **ACP FROZEN FOR PRODUCTION** — modificările viitoare ale motorului determinist se tratează ca schimbări controlate de versiune.
 
 ### ACP – viitor (neimplementat)
+
 - [ ] Ingestie de date de piață externe (portaluri/furnizori suplimentari).
 - [ ] Volum real de piață.
 - [ ] Măsurarea acurateței statistice.
@@ -172,6 +183,7 @@
 - [ ] Calibrarea scorului de încredere.
 
 ## Habitoo AI – etapa 11A: fundația AI (Mastra + Gemini)
+
 - [x] AI Gateway server-side (`src/lib/ai/gateway/`): singurul punct prin care aplicația cere AI; frontendul nu apelează niciodată providerul.
 - [x] Abstracție de provider (`AIProvider`) cu implementare Gemini; OpenAI și Anthropic se pot adăuga fără a atinge tool-urile sau interfața.
 - [x] Mastra (`@mastra/core`) ca runtime de tool-uri, rulat server-side, fără serviciu cloud plătit.
@@ -188,6 +200,7 @@
 - [x] `GEMINI_API_KEY` configurat și verificat cu o cerere reală către provider.
 
 ## Habitoo AI – etapa 11: agent, workflow, state, tracing
+
 - [x] Habitoo AI Coordinator (`agent/coordinator.server.ts`): buclă model → tool autorizat → model → răspuns structurat, independent de provider.
 - [x] Tool-uri READ extinse cu `get_acp_report` și `get_comparables` (org-scoped prin analiza-părinte).
 - [x] `habitooDiagnosticWorkflow`: authenticate → resolve_organization → build_context → agent → approval → read_tool → validate → respond.
@@ -203,11 +216,13 @@
 - [x] Validare: 555 teste, typecheck curat, build de producție reușit, verificare E2E reală în `/app/ai`.
 
 ### Habitoo AI – neimplementat în 11A
+
 - [ ] Acțiuni (email, WhatsApp, publicare portal, ștergere, modificare preț, contracte).
 - [ ] Agent autonom, agent de fundal, multi-agent, memorie AI permanentă.
 - [ ] Streaming al răspunsului.
 
 ## Stage 13 — Prospecting Agent (finalizat)
+
 - [x] Model de date prospectare cu RLS per agenție (migrare 0042)
 - [x] Abstracție surse (`ProspectingSourceProvider`): `http_feed` (surse publice, robots.txt) + `manual_list`
 - [x] Portaluri fără integrare autorizată: rămân neconfigurate; fără Bright Data
@@ -221,6 +236,7 @@
 - Următor (Stage 14): integrarea unei surse externe autorizate reale + outreach cu aprobare.
 
 ## Stage 14 — CRM Agent (finalizat)
+
 - [x] Modul `src/lib/ai/agents/crm/`: filtre, insight-uri, matching, acțiuni, workflow, instrucțiuni, tool-uri server-side, runtime, server functions, teste
 - [x] 10 tool-uri de citire CRM (proprietăți, clienți, lead-uri, cereri, istoric activitate, priorități, matching client ↔ proprietate)
 - [x] 5 acțiuni cu aprobare umană obligatorie: `create_task`, `create_note`, `update_lead_status`, `assign_lead`, `create_property_match`
@@ -237,6 +253,7 @@
 - Limitare: cota gratuită zilnică a providerului AI s-a epuizat în timpul E2E, deci propunerea generată de model a fost verificată doar parțial în ziua testului; lanțul aprobare → execuție a fost verificat integral server-side.
 
 ## Stage 18 — Portalul La Cheie (finalizat)
+
 - [x] Conector server-side multi-tenant: `src/lib/portals/lacheie/` (config, catalog, mapper, versiuni, client HTTP, payload) + `src/lib/portals/adapters/lacheie.server.ts`
 - [x] Catalog real din portal (`/options`, `/counties`, `/cities`), cache per agenție + mediu, refresh manual; zero id-uri hardcodate
 - [x] Payload strict allowlist: câmpuri interzise și necunoscute eliminate; telefon în `agent.phone`, camere în `number_of_rooms`; max 30 imagini publice, deduplicate; corp ≤ 1 MiB

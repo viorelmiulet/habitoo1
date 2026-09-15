@@ -103,7 +103,12 @@ describe("La Cheie — client HTTP", () => {
       respond([{ status: 429, headers: { "retry-after": "1" } }, { status: 200 }]),
     );
     const response = await run(
-      laCheieRequest(config(), { method: "POST", path: "/properties", body: {}, sourceVersion: "1" }),
+      laCheieRequest(config(), {
+        method: "POST",
+        path: "/properties",
+        body: {},
+        sourceVersion: "1",
+      }),
     );
     expect(response.ok).toBe(true);
     expect(calls).toHaveLength(2);
@@ -112,7 +117,12 @@ describe("La Cheie — client HTTP", () => {
   it("409 NU se reia automat: se raportează versiunea acceptată", async () => {
     vi.stubGlobal("fetch", respond([{ status: 409, body: { accepted_version: "12" } }]));
     const response = await run(
-      laCheieRequest(config(), { method: "PUT", path: "/properties/x", body: {}, sourceVersion: "5" }),
+      laCheieRequest(config(), {
+        method: "PUT",
+        path: "/properties/x",
+        body: {},
+        sourceVersion: "5",
+      }),
     );
     expect(response.ok).toBe(false);
     expect(response.status).toBe(409);
@@ -123,7 +133,12 @@ describe("La Cheie — client HTTP", () => {
   it("400 nu se reia", async () => {
     vi.stubGlobal("fetch", respond([{ status: 400, body: { message: "invalid" } }]));
     const response = await run(
-      laCheieRequest(config(), { method: "POST", path: "/properties", body: {}, sourceVersion: "1" }),
+      laCheieRequest(config(), {
+        method: "POST",
+        path: "/properties",
+        body: {},
+        sourceVersion: "1",
+      }),
     );
     expect(response.ok).toBe(false);
     expect(calls).toHaveLength(1);

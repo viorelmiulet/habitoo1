@@ -322,11 +322,8 @@ export const refreshLaCheieCatalog = createServerFn({ method: "POST" })
       throw new Error("Salvează cheia API La Cheie înainte de sincronizarea catalogului.");
     }
 
-
     const admin = await loadAdmin();
-    const { refreshLaCheieCatalog: refresh } = await import(
-      "@/lib/portals/lacheie/catalog.server"
-    );
+    const { refreshLaCheieCatalog: refresh } = await import("@/lib/portals/lacheie/catalog.server");
     const result = await refresh(
       admin,
       {
@@ -361,4 +358,3 @@ export const refreshLaCheieCatalog = createServerFn({ method: "POST" })
     if (!result.ok) throw new Error(result.message);
     return { fetchedAt: result.catalog.fetchedAt, counts: result.counts };
   });
-
