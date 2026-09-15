@@ -51,7 +51,7 @@ describe("politica de acțiuni", () => {
     ];
     for (const state of states) {
       for (const step of state.steps) {
-        if (step.tool) expect(names.has(step.tool)).toBe(true);
+        if (step.tool) expect(names.has(step.tool as never)).toBe(true);
       }
     }
   });

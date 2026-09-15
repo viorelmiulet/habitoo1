@@ -41,6 +41,7 @@ import {
   suspendForApproval,
   type ManagerPlanState,
   type ManagerRunStatus,
+  type ManagerJson,
   type ManagerStep,
 } from "./plan";
 
@@ -315,7 +316,7 @@ async function executePlan(
     guard += 1;
     const budget = budgetExceeded(state);
     if (budget) {
-      state = skipRemainingSteps(failPlan(state, budget), budget);
+      state = skipRemainingSteps(failPlan(state, budget), budget) as ManagerState;
       break;
     }
     const step = nextPendingStep(state);
@@ -358,7 +359,7 @@ async function runStep(
   switch (step.kind) {
     case "unavailable": {
       const reason =
-        (step.input["reason"] as string | null) ??
+        (step.input["reason"] as string | null | undefined) ??
         "Această capabilitate nu există încă în Habitoo.";
       state = failStep(state, step.id, reason, "blocked") as ManagerState;
       state = { ...state, summary: reason };
@@ -378,7 +379,7 @@ async function runStep(
       state = completeStep(
         state,
         step.id,
-        { sources: rows.length, configured: active },
+        { sources: rows.length, configured: active } as Record<string, ManagerJson>,
         "Prospecting Agent",
       ) as ManagerState;
       if (active === 0) {
@@ -421,11 +422,11 @@ async function runStep(
         step.id,
         {
           properties: found.map((row) => ({
-            id: row["id"],
-            reference: row["reference"] ?? null,
-            city: row["city"] ?? null,
+            id: String(row["id"] ?? ""),
+            reference: (row["reference"] as string | null) ?? null,
+            city: (row["city"] as string | null) ?? null,
           })),
-        },
+        } as Record<string, ManagerJson>,
         "CRM Habitoo",
       ) as ManagerState;
       return { state, stop: false };
@@ -441,7 +442,7 @@ async function runStep(
       state = completeStep(
         state,
         step.id,
-        { answer: turnResult.answer, intent: turnResult.intent },
+        { answer: turnResult.answer, intent: turnResult.intent } as Record<string, ManagerJson>,
         "CRM Agent",
       ) as ManagerState;
       state = { ...state, summary: turnResult.answer };
@@ -470,7 +471,7 @@ async function runStep(
       state = completeStep(
         state,
         step.id,
-        { analyses },
+        { analyses } as unknown as Record<string, ManagerJson>,
         "Motor ACP determinist",
       ) as ManagerState;
       return { state, stop: false };
@@ -512,7 +513,7 @@ async function runStep(
             validationStatus: item.validationStatus,
             missingData: item.missingData,
           })),
-        },
+        } as unknown as Record<string, ManagerJson>,
         "Marketing Agent",
       ) as ManagerState;
       if (results.every((item) => item.validationStatus === "invalid")) {

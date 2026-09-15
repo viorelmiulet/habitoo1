@@ -24,6 +24,15 @@ export const MANAGER_STEP_STATUSES = [
   "skipped",
 ] as const;
 
+/** Valori serializabile: starea planului traversează granița client/server. */
+export type ManagerJson =
+  | string
+  | number
+  | boolean
+  | null
+  | ManagerJson[]
+  | { [key: string]: ManagerJson };
+
 export type ManagerStepStatus = (typeof MANAGER_STEP_STATUSES)[number];
 
 /** Tipul de execuție al unui pas. Managerul nu are alt mod de a atinge date. */
@@ -46,9 +55,9 @@ export type ManagerStep = {
   tool: string | null;
   status: ManagerStepStatus;
   /** Intrarea controlată a pasului: doar câmpuri pe listă albă. */
-  input: Record<string, unknown>;
+  input: Record<string, ManagerJson>;
   /** Rezumat sigur al rezultatului, fără secrete și fără prompturi interne. */
-  output: Record<string, unknown> | null;
+  output: Record<string, ManagerJson> | null;
   /** Sursa rezultatului: motorul ACP determinist, CRM-ul, agentul de marketing. */
   source: string | null;
   retryCount: number;
@@ -124,7 +133,7 @@ function step(
   agent: ManagerAgent | "manager",
   title: string,
   tool: string | null,
-  input: Record<string, unknown> = {},
+  input: Record<string, ManagerJson> = {},
 ): ManagerStep {
   return {
     id: `s${index + 1}`,
@@ -165,7 +174,7 @@ export function buildManagerPlan(input: ManagerPlanInput): ManagerPlanState {
     agent: ManagerAgent | "manager",
     title: string,
     tool: string | null,
-    stepInput: Record<string, unknown> = {},
+    stepInput: Record<string, ManagerJson> = {},
   ) => {
     if (steps.length >= MANAGER_MAX_STEPS) return;
     steps.push(step(steps.length, kind, agent, title, tool, stepInput));
@@ -262,7 +271,7 @@ export function startStep(state: ManagerPlanState, stepId: string): ManagerPlanS
 export function completeStep(
   state: ManagerPlanState,
   stepId: string,
-  output: Record<string, unknown>,
+  output: Record<string, ManagerJson>,
   source: string | null,
 ): ManagerPlanState {
   const current = findStep(state, stepId);
