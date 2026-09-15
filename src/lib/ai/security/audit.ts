@@ -18,6 +18,14 @@ export const AI_AUDIT_ACTIONS = {
   crmActionExecuted: "ai.crm.action.executed",
   crmActionFailed: "ai.crm.action.failed",
   crmActionDenied: "ai.crm.action.denied",
+  /* Marketing Agent (Stage 16) */
+  marketingRequest: "ai.marketing.request",
+  marketingFailed: "ai.marketing.failed",
+  marketingValidationFailed: "ai.marketing.validation.failed",
+  marketingActionProposed: "ai.marketing.action.proposed",
+  marketingActionApproved: "ai.marketing.action.approved",
+  marketingActionRejected: "ai.marketing.action.rejected",
+  marketingActionFailed: "ai.marketing.action.failed",
 } as const;
 
 export type AiAuditAction = (typeof AI_AUDIT_ACTIONS)[keyof typeof AI_AUDIT_ACTIONS];

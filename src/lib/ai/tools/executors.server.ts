@@ -130,6 +130,12 @@ async function runTool(
       approvalGranted: options.approvalGranted === true,
     });
   }
+  if (tool.category === "marketing") {
+    const { runMarketingTool } = await import("@/lib/ai/agents/marketing/tools.server");
+    return runMarketingTool(actor, tool.name, args, tool.capability, {
+      approvalGranted: options.approvalGranted === true,
+    });
+  }
   const admin = await loadAdmin();
   const org = actor.organizationId;
   const capability = tool.capability;

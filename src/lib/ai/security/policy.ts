@@ -29,6 +29,9 @@ export const ENABLED_REVERSIBLE_ACTIONS = [
   "reject_prospect",
   "import_prospect_to_crm",
   "link_prospect_to_existing_contact",
+  /* Marketing Agent (Stage 16): ciorne versionate și aplicarea textului. */
+  "save_marketing_draft",
+  "apply_marketing_draft",
 ] as const;
 
 /** Acțiunile de tip ciornă: produc text, nu modifică date publicate. */
