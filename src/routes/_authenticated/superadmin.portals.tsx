@@ -25,6 +25,7 @@ import {
 } from "@/components/ui/select";
 import { appHead } from "@/components/app/app-head";
 import { PortalsCard } from "@/components/superadmin/PortalsCard";
+import { LaCheieCard } from "@/components/superadmin/LaCheieCard";
 import { PortalActivationRequestsCard } from "@/components/superadmin/PortalActivationRequestsCard";
 import { PropertyPortalsCard } from "@/components/app/PropertyPortalsCard";
 import { listOrgPropertiesForPortals, listPortalOrganizations } from "@/lib/portals.functions";
