@@ -195,12 +195,13 @@ async function sendOffer(input: {
   config: LaCheieRequestConfig;
   settings: LaCheieSettings;
   offer: LaCheieOffer;
+  propertyId: string;
   mode: WriteMode;
 }): Promise<
   | { ok: true; publicUrl: string | null; portalStatus: string | null; version: string }
   | { ok: false; fail: PortalFailShape }
 > {
-  const { ctx, config, settings, offer, mode } = input;
+  const { ctx, config, settings, offer, propertyId, mode } = input;
   const db = await admin();
   const path = offersPath(settings);
 
@@ -208,9 +209,7 @@ async function sendOffer(input: {
   // exact aceeași versiune și același corp.
   let version = await reserveNextVersion(db, {
     organizationId: ctx.organizationId,
-    propertyId: (offer["external_id"] as string).includes("-")
-      ? (ctx.settings["__property_id"] as string) || ""
-      : "",
+    propertyId,
     externalId: offer.external_id,
     environment: settings.environment,
     operation: mode,
@@ -260,7 +259,7 @@ async function sendOffer(input: {
     }
     const current = await readVersionRecord(db, {
       organizationId: ctx.organizationId,
-      propertyId: "",
+      propertyId,
       externalId: offer.external_id,
       environment: settings.environment,
     });
@@ -378,10 +377,11 @@ async function push(
         `${ctx.organizationId}:${entry.offer.external_id}`,
         () =>
           sendOffer({
-            ctx: { ...ctx, settings: { ...ctx.settings, __property_id: ref.propertyId } },
+            ctx,
             config: ready.config,
             settings: ready.settings,
             offer: entry.offer,
+            propertyId: ref.propertyId,
             mode,
           }),
       );
