@@ -401,7 +401,7 @@ export const httpFeedProvider: ProspectingSourceProvider = {
         checkedAt,
       };
     }
-    const payload = await fetchJson(url);
+    const payload = await fetchJson(url, source);
     if (isFailure(payload)) {
       return {
         ok: false,
