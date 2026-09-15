@@ -155,7 +155,7 @@ async function readTool(
       if (!retryable) return { ok: false, message: lastMessage, retryable: false };
     } catch (error) {
       const classified = classifyAiError(error);
-      lastMessage = classified.message;
+      lastMessage = "Instrumentul nu a putut fi folosit acum.";
       retryable = classified.retryable;
       if (!retryable) return { ok: false, message: lastMessage, retryable: false };
     }
