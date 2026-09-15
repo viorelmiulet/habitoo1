@@ -22,7 +22,112 @@ export const HTTP_FEED_PROVIDER_KEY = "http_feed";
 
 const FETCH_TIMEOUT_MS = 20_000;
 const MAX_ITEMS = 50;
+const MAX_PAGES = 5;
+const RATE_LIMIT_PER_MINUTE = 30;
 const USER_AGENT = "HabitooProspecting/1.0 (+https://habitoo.ro)";
+
+/** Prefix obligatoriu pentru secretele de sursă: nicio altă variabilă nu poate fi citită. */
+export const PROSPECTING_SECRET_PREFIX = "PROSPECTING_";
+
+/**
+ * Autentificarea sursei, dacă feed-ul o cere. Configurația păstrează DOAR
+ * numele secretului, niciodată valoarea; valoarea este citită server-side și
+ * nu ajunge în interfață, în audit sau în loguri.
+ */
+export function feedAuthHeaders(
+  source: ProspectSource,
+  env: Record<string, string | undefined> = process.env,
+): Record<string, string> {
+  const name = source.configuration["authSecretName"];
+  if (typeof name !== "string" || !name.startsWith(PROSPECTING_SECRET_PREFIX)) return {};
+  const value = env[name];
+  if (!value) return {};
+  const scheme =
+    typeof source.configuration["authScheme"] === "string"
+      ? String(source.configuration["authScheme"])
+      : "bearer";
+  if (scheme === "header") {
+    const header =
+      typeof source.configuration["authHeader"] === "string"
+        ? String(source.configuration["authHeader"])
+        : "X-Api-Key";
+    return { [header]: value };
+  }
+  return { Authorization: `Bearer ${value}` };
+}
+
+/** Rate limit per sursă: protejează atât Habitoo, cât și sursa externă. */
+const rateWindows = new Map<string, number[]>();
+
+export function feedRateLimitAllows(
+  key: string,
+  now: number = Date.now(),
+  limit: number = RATE_LIMIT_PER_MINUTE,
+): boolean {
+  const hits = (rateWindows.get(key) ?? []).filter((time) => now - time < 60_000);
+  if (hits.length >= limit) {
+    rateWindows.set(key, hits);
+    return false;
+  }
+  hits.push(now);
+  rateWindows.set(key, hits);
+  return true;
+}
+
+export function resetFeedRateLimit(): void {
+  rateWindows.clear();
+}
+
+/** Host-uri interne: blocate explicit ca protecție SSRF. */
+export function isPrivateHost(hostname: string): boolean {
+  const host = hostname.toLowerCase().replace(/^\[|\]$/g, "");
+  if (host === "localhost" || host.endsWith(".localhost") || host.endsWith(".internal")) return true;
+  if (host === "::1" || host.startsWith("fc") || host.startsWith("fd")) return true;
+  if (/^127\./.test(host) || /^10\./.test(host) || /^192\.168\./.test(host)) return true;
+  if (/^172\.(1[6-9]|2\d|3[01])\./.test(host)) return true;
+  if (/^169\.254\./.test(host)) return true;
+  if (host === "0.0.0.0" || host === "metadata.google.internal") return true;
+  return false;
+}
+
+/**
+ * Acceptăm doar HTTPS, host-uri publice și — dacă sursa are `allowedHosts` —
+ * doar host-urile din allowlist. Astfel un URL din configurație nu poate ținti
+ * rețeaua internă (SSRF).
+ */
+export function safeFeedUrl(
+  base: string | null,
+  params: Record<string, string> = {},
+  allowedHosts: string[] = [],
+): URL | null {
+  if (!base) return null;
+  let url: URL;
+  try {
+    url = new URL(base);
+  } catch {
+    return null;
+  }
+  if (url.protocol !== "https:") return null;
+  if (isPrivateHost(url.hostname)) return null;
+  if (allowedHosts.length > 0 && !allowedHosts.includes(url.hostname.toLowerCase())) return null;
+  for (const [key, value] of Object.entries(params)) url.searchParams.set(key, value);
+  return url;
+}
+
+function allowedHostsOf(source: ProspectSource): string[] {
+  const raw = source.configuration["allowedHosts"];
+  if (!Array.isArray(raw)) return [];
+  return raw.filter((item): item is string => typeof item === "string").map((item) => item.toLowerCase());
+}
+
+function safeUrl(
+  base: string | null,
+  params: Record<string, string> = {},
+  source?: ProspectSource,
+): URL | null {
+  return safeFeedUrl(base, params, source ? allowedHostsOf(source) : []);
+}
+
 
 function criteriaParams(criteria: ProspectSearchCriteria): Record<string, string> {
   const params: Record<string, string> = {};
