@@ -548,6 +548,18 @@ function ProspectingPage() {
 
         {/* -------------------------------- Surse ----------------------------- */}
         <TabsContent value="sources" className="mt-4 space-y-3">
+          {!hasLiveSource ? (
+            <Card className="border-amber-300/60 bg-amber-50/60 dark:bg-amber-950/20">
+              <CardContent className="py-4 text-sm">
+                <p className="font-medium">Nicio sursă externă de anunțuri nu este conectată.</p>
+                <p className="mt-1 text-muted-foreground">
+                  Prospectarea funcționează doar cu surse autorizate. Până când o sursă reală este
+                  conectată, rezultatele pot veni exclusiv din listele proprii ale agenției, iar
+                  Habitoo nu prezintă niciodată date inventate ca anunțuri reale.
+                </p>
+              </CardContent>
+            </Card>
+          ) : null}
           {(sources.data ?? []).length === 0 ? (
             <Card>
               <CardContent className="py-8 text-sm text-muted-foreground">
@@ -558,20 +570,36 @@ function ProspectingPage() {
           ) : (
             (sources.data ?? []).map((source) => (
               <Card key={source.id}>
-                <CardContent className="flex flex-wrap items-center gap-2 py-4 text-sm">
-                  <span className="font-medium">{source.name}</span>
-                  <Badge variant="secondary">{source.sourceType}</Badge>
-                  {source.global ? <Badge variant="outline">globală</Badge> : null}
-                  {source.fixture ? <Badge variant="outline">date de test</Badge> : null}
-                  <span className="ml-auto text-muted-foreground">
-                    {!source.implemented
-                      ? "integrare indisponibilă"
-                      : source.enabled
-                        ? source.live
-                          ? "activă"
-                          : "activă (listă proprie)"
-                        : "inactivă"}
-                  </span>
+                <CardContent className="space-y-2 py-4 text-sm">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="font-medium">{source.name}</span>
+                    <Badge variant="secondary">{source.sourceType}</Badge>
+                    {source.global ? <Badge variant="outline">globală</Badge> : null}
+                    {source.fixture ? <Badge variant="outline">date de test</Badge> : null}
+                    <Badge
+                      variant={
+                        source.availability === "live" && source.enabled ? "default" : "outline"
+                      }
+                      className="ml-auto"
+                    >
+                      {!source.enabled
+                        ? "dezactivată"
+                        : source.availability === "live"
+                          ? "conectată"
+                          : source.availability === "manual"
+                            ? "listă proprie"
+                            : "indisponibilă"}
+                    </Badge>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Ultima colectare:{" "}
+                    {source.lastRunAt
+                      ? `${new Date(source.lastRunAt).toLocaleString("ro-RO")} · ${source.lastItemsFound ?? 0} rezultate`
+                      : "niciodată"}
+                    {source.capabilities.length > 0
+                      ? ` · capabilități: ${source.capabilities.join(", ")}`
+                      : ""}
+                  </p>
                 </CardContent>
               </Card>
             ))
