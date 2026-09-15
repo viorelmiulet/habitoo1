@@ -102,6 +102,10 @@ function ProspectingPage() {
   const [selected, setSelected] = useState<string[]>([]);
 
   const sources = useQuery({ queryKey: ["prospecting", "sources"], queryFn: () => fetchSources() });
+  /** Sursă externă reală = activă și cu provider `live`; listele proprii nu contează. */
+  const hasLiveSource = (sources.data ?? []).some(
+    (source) => source.enabled && source.availability === "live",
+  );
   const searches = useQuery({
     queryKey: ["prospecting", "searches"],
     queryFn: () => fetchSearches(),
