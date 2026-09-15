@@ -392,7 +392,7 @@ export const httpFeedProvider: ProspectingSourceProvider = {
 
   async healthCheck(source) {
     const checkedAt = new Date().toISOString();
-    const url = safeUrl(source.baseUrl, {});
+    const url = safeUrl(source.baseUrl, {}, source);
     if (!source.enabled || !url) {
       return {
         ok: false,
