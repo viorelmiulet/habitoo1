@@ -1,6 +1,7 @@
 ## Faza 2 – de finalizat
 
 - [x] Corecție critică La Cheie: eliminare completă TEST, endpointuri `/properties`, teste și verificare deployment.
+- [ ] Corecție La Cheie: sincronizare automată a catalogului read-only, independent de activarea scrierilor reale.
 
 - [x] Erorile de typecheck rezolvate (typecheck curat).
 - [x] Faza 2: proprietăți, media, contacte, cereri, potriviri, lead-uri, activități, calendar, dashboard-uri, rapoarte, obiective, search global, quick add.
