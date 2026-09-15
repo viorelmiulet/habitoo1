@@ -4,9 +4,11 @@
  * Contract implementat conform documentației La Cheie v1:
  *   GET    {base}/account                    verificarea cheii (test connection)
  *   GET    {base}/options|/counties|/cities  catalogul de id-uri
- *   POST   {base}/offers                     creare (stare completă)
- *   PUT    {base}/offers/{external_id}       actualizare (stare completă, fără PATCH)
- *   DELETE {base}/offers/{external_id}       retragere
+ *   GET    {base}/properties                 listare
+ *   GET    {base}/properties/{external_id}   citire
+ *   POST   {base}/properties                 creare (stare completă)
+ *   PUT    {base}/properties/{external_id}   actualizare (stare completă, fără PATCH)
+ *   DELETE {base}/properties/{external_id}   retragere
  *
  * Autentificare: `Authorization: Bearer <cheie API a agenției>`, salvată
  * criptat. Scrierile trimit `Content-Type: application/json` și
@@ -49,11 +51,6 @@ async function admin(): Promise<Admin> {
 
 function settingsOf(ctx: PortalContext): LaCheieSettings {
   return readLaCheieSettings(ctx.settings as Record<string, unknown>);
-}
-
-function offersPath(settings: LaCheieSettings): string {
-  const raw = settings.offersPath.trim();
-  return raw.startsWith("/") ? raw.replace(/\/+$/, "") : `/${raw.replace(/\/+$/, "")}`;
 }
 
 type Ready =
@@ -180,7 +177,7 @@ async function sendOffer(input: {
 > {
   const { ctx, config, settings, offer, propertyId, mode } = input;
   const db = await admin();
-  const path = offersPath(settings);
+  const path = settings.propertiesPath;
 
   // O operație NOUĂ primește o versiune nouă; retry-urile din client refolosesc
   // exact aceeași versiune și același corp.
@@ -417,7 +414,7 @@ async function withdraw(
   }
 
   const db = await admin();
-  const path = offersPath(ready.settings);
+  const path = ready.settings.propertiesPath;
   const removed: string[] = [];
   const missing: string[] = [];
 

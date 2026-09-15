@@ -1,6 +1,6 @@
 /**
- * Garduri de securitate și de mediu pentru La Cheie:
- *  - fără cheie API sau fără producție activată nu pleacă nicio cerere;
+ * Garduri de securitate și configurare pentru La Cheie:
+ *  - fără cheie API nu pleacă nicio cerere;
  *  - cheia API nu este niciodată returnată către frontend;
  *  - jurnalul nu conține secrete sau payload brut;
  *  - fiecare server function cere rol de Superadmin și validează inputul.
@@ -25,7 +25,7 @@ function context(settings: Record<string, unknown>, credential: string | null) {
 }
 
 const TEST_SETTINGS = {
-  lacheie_environment: "production",
+  allow_live: true,
 };
 
 const ref = { propertyId: "22222222-2222-2222-2222-222222222222", externalId: null };
@@ -38,6 +38,10 @@ describe("La Cheie — garduri înainte de orice request", () => {
     // Etapa nu include import de lead-uri, bulk sau webhook-uri.
     expect(definition?.capabilities).not.toContain("fetch_leads");
     expect(definition?.capabilities).not.toContain("webhook_receive");
+    expect(definition?.authentication).toEqual(["portal_api_key"]);
+    expect(definition?.configuration_schema.fields.map((field) => field.key)).toEqual(["api_key"]);
+    expect(`${definition?.description} ${definition?.notes}`).toContain("production-only");
+    expect(`${definition?.description} ${definition?.notes}`).not.toMatch(/mediu(l)? de test/i);
   });
 
   it("fără cheie API nu se trimite nimic", async () => {
@@ -126,5 +130,21 @@ describe("La Cheie — reguli verificabile în cod", () => {
     expect(adapterSource).not.toMatch(/console\.log/);
     // Adresa nu este hardcodată în adaptor: vine din config.
     expect(adapterSource).not.toMatch(/https:\/\/[a-z.]*lacheie/i);
+    expect(adapterSource).toContain('path: "/account"');
+    expect(adapterSource).toContain('method: "POST"');
+    expect(adapterSource).toContain('method: "PUT"');
+    expect(adapterSource).toContain('method: "DELETE"');
+    expect(adapterSource).not.toContain("/offers");
+  });
+
+  it("mesajul vechi de configurare TEST nu mai poate fi produs", () => {
+    const sources = [
+      functionsSource,
+      adapterSource,
+      readFileSync("src/lib/portals/lacheie/config.ts", "utf8"),
+      readFileSync("src/lib/portals/lacheie/http.ts", "utf8"),
+      readFileSync("src/lib/portals/registry.ts", "utf8"),
+    ].join("\n");
+    expect(sources).not.toContain("Adresa API pentru mediul de test nu este configurată");
   });
 });

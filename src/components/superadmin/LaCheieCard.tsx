@@ -112,7 +112,7 @@ export function LaCheieCard({ organizationId }: { organizationId: string }) {
           <ul className="space-y-1 text-xs text-muted-foreground">
             <li>Cheie API salvată: {data.hasApiKey ? "da" : "nu"}</li>
             <li className="font-mono break-all">{data.baseUrl}</li>
-            <li>Cale anunțuri: {data.offersPath}</li>
+            <li>Cale anunțuri: {data.propertiesPath}</li>
             {data.lastError ? (
               <li className="text-destructive">Ultima eroare: {data.lastError}</li>
             ) : null}

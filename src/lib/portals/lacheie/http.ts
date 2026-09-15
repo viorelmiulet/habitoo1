@@ -95,7 +95,7 @@ export function classifyLaCheieStatus(input: {
     return {
       action: "stop",
       code: "AUTH_ERROR",
-      message: "La Cheie a refuzat cheia API. Verifică cheia salvată și mediul (test/producție).",
+      message: "La Cheie a refuzat cheia API. Verifică cheia salvată pentru conexiunea Production.",
       waitMs: 0,
     };
   }

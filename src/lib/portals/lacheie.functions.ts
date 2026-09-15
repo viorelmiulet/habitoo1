@@ -136,7 +136,7 @@ export type LaCheieState = {
   environment: LaCheieEnvironment;
   /** Adresa API documentată, fixată server-side (production-only). */
   baseUrl: string;
-  offersPath: string;
+  propertiesPath: string;
   readiness: LaCheieReadiness;
   catalog: {
     fetchedAt: string | null;
@@ -214,7 +214,7 @@ export const getLaCheieState = createServerFn({ method: "POST" })
       hasApiKey,
       environment: settings.environment,
       baseUrl: LACHEIE_PRODUCTION_BASE_URL,
-      offersPath: settings.offersPath,
+      propertiesPath: settings.propertiesPath,
       readiness: laCheieReadiness({
         hasApiKey,
         lastError: row?.last_sync_error ?? null,
