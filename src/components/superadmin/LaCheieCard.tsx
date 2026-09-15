@@ -18,6 +18,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { StatusBadge } from "@/components/app/StatusBadge";
+import { PortalLogo } from "@/components/app/PortalLogo";
 import { InlineLoading } from "@/components/app/LoadingState";
 import { QueryError } from "@/components/app/QueryError";
 import { LACHEIE_READINESS_LABEL } from "@/lib/portals/lacheie/config";
