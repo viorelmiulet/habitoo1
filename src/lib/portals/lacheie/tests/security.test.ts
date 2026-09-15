@@ -25,8 +25,7 @@ function context(settings: Record<string, unknown>, credential: string | null) {
 }
 
 const TEST_SETTINGS = {
-  lacheie_environment: "test",
-  lacheie_test_base_url: "https://test.lacheie.example/api/v1",
+  lacheie_environment: "production",
 };
 
 const ref = { propertyId: "22222222-2222-2222-2222-222222222222", externalId: null };
