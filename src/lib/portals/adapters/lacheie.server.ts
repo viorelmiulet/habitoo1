@@ -4,9 +4,11 @@
  * Contract implementat conform documentației La Cheie v1:
  *   GET    {base}/account                    verificarea cheii (test connection)
  *   GET    {base}/options|/counties|/cities  catalogul de id-uri
- *   POST   {base}/offers                     creare (stare completă)
- *   PUT    {base}/offers/{external_id}       actualizare (stare completă, fără PATCH)
- *   DELETE {base}/offers/{external_id}       retragere
+ *   GET    {base}/properties                 listare
+ *   GET    {base}/properties/{external_id}   citire
+ *   POST   {base}/properties                 creare (stare completă)
+ *   PUT    {base}/properties/{external_id}   actualizare (stare completă, fără PATCH)
+ *   DELETE {base}/properties/{external_id}   retragere
  *
  * Autentificare: `Authorization: Bearer <cheie API a agenției>`, salvată
  * criptat. Scrierile trimit `Content-Type: application/json` și
@@ -27,7 +29,12 @@ import type {
   PortalResult,
 } from "../adapter";
 import { toPortalError } from "../errors";
-import { activeBaseUrl, readLaCheieSettings, type LaCheieSettings } from "../lacheie/config";
+import {
+  activeBaseUrl,
+  laCheiePropertiesPath,
+  readLaCheieSettings,
+  type LaCheieSettings,
+} from "../lacheie/config";
 import { laCheieRequest, withLaCheieWriteLock } from "../lacheie/client.server";
 import type { LaCheieRequestConfig } from "../lacheie/client.server";
 import { readLaCheieCatalog } from "../lacheie/catalog.server";
@@ -49,11 +56,6 @@ async function admin(): Promise<Admin> {
 
 function settingsOf(ctx: PortalContext): LaCheieSettings {
   return readLaCheieSettings(ctx.settings as Record<string, unknown>);
-}
-
-function offersPath(settings: LaCheieSettings): string {
-  const raw = settings.offersPath.trim();
-  return raw.startsWith("/") ? raw.replace(/\/+$/, "") : `/${raw.replace(/\/+$/, "")}`;
 }
 
 type Ready =
@@ -180,7 +182,7 @@ async function sendOffer(input: {
 > {
   const { ctx, config, settings, offer, propertyId, mode } = input;
   const db = await admin();
-  const path = offersPath(settings);
+  const path = laCheiePropertiesPath();
 
   // O operație NOUĂ primește o versiune nouă; retry-urile din client refolosesc
   // exact aceeași versiune și același corp.
@@ -197,7 +199,7 @@ async function sendOffer(input: {
       ? laCheieRequest(config, { method: "POST", path, body: offer, sourceVersion })
       : laCheieRequest(config, {
           method: "PUT",
-          path: `${path}/${encodeURIComponent(offer.external_id)}`,
+          path: laCheiePropertiesPath(offer.external_id),
           body: offer,
           sourceVersion,
         });
@@ -206,7 +208,12 @@ async function sendOffer(input: {
 
   // PUT pe un external_id necunoscut: creăm anunțul, păstrând aceeași versiune.
   if (mode === "update" && response.status === 404) {
-    response = await laCheieRequest(config, { method: "POST", path, body: offer, sourceVersion: version });
+    response = await laCheieRequest(config, {
+      method: "POST",
+      path,
+      body: offer,
+      sourceVersion: version,
+    });
   }
 
   // 409: nu incrementăm orb. Marcăm conflictul, reconciliem versiunea acceptată
@@ -417,7 +424,6 @@ async function withdraw(
   }
 
   const db = await admin();
-  const path = offersPath(ready.settings);
   const removed: string[] = [];
   const missing: string[] = [];
 
@@ -433,7 +439,7 @@ async function withdraw(
         });
         return laCheieRequest(ready.config, {
           method: "DELETE",
-          path: `${path}/${encodeURIComponent(id)}`,
+          path: laCheiePropertiesPath(id),
           sourceVersion: version,
         });
       });
@@ -547,7 +553,9 @@ export const lacheieAdapter: PortalAdapter = {
       ok: true,
       data: {
         feedVisible: build.ok,
-        externalId: build.ok ? build.offers.map((entry) => entry.offer.external_id).join(",") : null,
+        externalId: build.ok
+          ? build.offers.map((entry) => entry.offer.external_id).join(",")
+          : null,
         offerUrl: null,
         agentId: first?.agent.external_id ?? null,
         agentName: first?.agent.full_name ?? null,

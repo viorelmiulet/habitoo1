@@ -10,7 +10,8 @@
 export const LACHEIE_PORTAL_KEY = "lacheie";
 /** Singurul endpoint documentat de La Cheie (production-only). */
 export const LACHEIE_PRODUCTION_BASE_URL = "https://api.lacheie.ro/api/partners/v1";
-export const LACHEIE_DEFAULT_OFFERS_PATH = "/offers";
+/** Endpointul documentat pentru operațiile CRUD pe anunțuri. */
+export const LACHEIE_DEFAULT_PROPERTIES_PATH = "/properties";
 export const LACHEIE_SOURCE_VERSION_HEADER = "X-Source-Version";
 /** Limitele documentate de La Cheie, aplicate și local ca protecție. */
 export const LACHEIE_WRITE_LIMIT_PER_MINUTE = 60;
@@ -22,7 +23,7 @@ export const LACHEIE_ENVIRONMENT: LaCheieEnvironment = "production";
 
 export type LaCheieSettings = {
   environment: LaCheieEnvironment;
-  offersPath: string;
+  propertiesPath: typeof LACHEIE_DEFAULT_PROPERTIES_PATH;
   catalogFetchedAt: string | null;
   catalogError: string | null;
 };
@@ -35,7 +36,8 @@ export function readLaCheieSettings(settings: Record<string, unknown> | null): L
   const raw = settings ?? {};
   return {
     environment: LACHEIE_ENVIRONMENT,
-    offersPath: text(raw["lacheie_offers_path"]) ?? LACHEIE_DEFAULT_OFFERS_PATH,
+    // Toate setările istorice de mediu, URL și cale sunt ignorate intenționat.
+    propertiesPath: LACHEIE_DEFAULT_PROPERTIES_PATH,
     catalogFetchedAt: text(raw["lacheie_catalog_fetched_at"]),
     catalogError: text(raw["lacheie_catalog_error"]),
   };
@@ -44,6 +46,13 @@ export function readLaCheieSettings(settings: Record<string, unknown> | null): L
 /** Adresa API a integrării: constantă, nu editabilă de utilizator. */
 export function activeBaseUrl(_settings?: LaCheieSettings): string {
   return LACHEIE_PRODUCTION_BASE_URL.replace(/\/+$/, "");
+}
+
+/** Construiește exclusiv endpointurile documentate `/properties`. */
+export function laCheiePropertiesPath(externalId?: string): string {
+  return externalId
+    ? `${LACHEIE_DEFAULT_PROPERTIES_PATH}/${encodeURIComponent(externalId)}`
+    : LACHEIE_DEFAULT_PROPERTIES_PATH;
 }
 
 export type LaCheieReadiness = "not_configured" | "connected" | "error";

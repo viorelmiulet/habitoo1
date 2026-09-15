@@ -95,7 +95,7 @@ export function classifyLaCheieStatus(input: {
     return {
       action: "stop",
       code: "AUTH_ERROR",
-      message: "La Cheie a refuzat cheia API. Verifică cheia salvată și mediul (test/producție).",
+      message: "La Cheie a refuzat cheia API. Verifică cheia salvată pentru conexiunea Production.",
       waitMs: 0,
     };
   }
@@ -111,7 +111,8 @@ export function classifyLaCheieStatus(input: {
     return {
       action: "stop",
       code: "INVALID_REQUEST",
-      message: "Anunțul depășește limita de 1 MiB acceptată de La Cheie. Reduce textul sau imaginile.",
+      message:
+        "Anunțul depășește limita de 1 MiB acceptată de La Cheie. Reduce textul sau imaginile.",
       waitMs: 0,
     };
   }
@@ -119,7 +120,8 @@ export function classifyLaCheieStatus(input: {
     return {
       action: canRetry ? "retry_same" : "stop",
       code: "PORTAL_ERROR",
-      message: "La Cheie a returnat o eroare temporară. Se reia aceeași operație, fără versiune nouă.",
+      message:
+        "La Cheie a returnat o eroare temporară. Se reia aceeași operație, fără versiune nouă.",
       waitMs: backoffMs(attempt),
     };
   }

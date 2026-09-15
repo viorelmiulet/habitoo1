@@ -46,7 +46,10 @@ describe("La Cheie — politica de erori și retry", () => {
   });
 
   it("401 este eroare de credențiale", () => {
-    expect(classifyLaCheieStatus({ status: 401, attempt: 1 }).code).toBe("AUTH_ERROR");
+    const result = classifyLaCheieStatus({ status: 401, attempt: 1 });
+    expect(result.code).toBe("AUTH_ERROR");
+    expect(result.message).toContain("Production");
+    expect(result.message).not.toMatch(/test\s*\/\s*producție|mediu de test/i);
   });
 
   it("404 și 413 au mesaje proprii, sigure", () => {

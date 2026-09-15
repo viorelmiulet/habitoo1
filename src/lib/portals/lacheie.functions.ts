@@ -136,7 +136,7 @@ export type LaCheieState = {
   environment: LaCheieEnvironment;
   /** Adresa API documentată, fixată server-side (production-only). */
   baseUrl: string;
-  offersPath: string;
+  propertiesPath: string;
   readiness: LaCheieReadiness;
   catalog: {
     fetchedAt: string | null;
@@ -214,7 +214,7 @@ export const getLaCheieState = createServerFn({ method: "POST" })
       hasApiKey,
       environment: settings.environment,
       baseUrl: LACHEIE_PRODUCTION_BASE_URL,
-      offersPath: settings.offersPath,
+      propertiesPath: settings.propertiesPath,
       readiness: laCheieReadiness({
         hasApiKey,
         lastError: row?.last_sync_error ?? null,
@@ -322,11 +322,8 @@ export const refreshLaCheieCatalog = createServerFn({ method: "POST" })
       throw new Error("Salvează cheia API La Cheie înainte de sincronizarea catalogului.");
     }
 
-
     const admin = await loadAdmin();
-    const { refreshLaCheieCatalog: refresh } = await import(
-      "@/lib/portals/lacheie/catalog.server"
-    );
+    const { refreshLaCheieCatalog: refresh } = await import("@/lib/portals/lacheie/catalog.server");
     const result = await refresh(
       admin,
       {
@@ -361,4 +358,3 @@ export const refreshLaCheieCatalog = createServerFn({ method: "POST" })
     if (!result.ok) throw new Error(result.message);
     return { fetchedAt: result.catalog.fetchedAt, counts: result.counts };
   });
-
