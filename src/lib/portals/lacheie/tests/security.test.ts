@@ -25,8 +25,7 @@ function context(settings: Record<string, unknown>, credential: string | null) {
 }
 
 const TEST_SETTINGS = {
-  lacheie_environment: "test",
-  lacheie_test_base_url: "https://test.lacheie.example/api/v1",
+  lacheie_environment: "production",
 };
 
 const ref = { propertyId: "22222222-2222-2222-2222-222222222222", externalId: null };
@@ -51,37 +50,18 @@ describe("La Cheie — garduri înainte de orice request", () => {
     vi.unstubAllGlobals();
   });
 
-  it("producția neactivată blochează publicarea", async () => {
+  it("nu există mediu de test: cheia lipsă rămâne singurul blocaj de configurare", async () => {
     const fetchSpy = vi.fn();
     vi.stubGlobal("fetch", fetchSpy);
     const result = await lacheieAdapter.publishListing(
-      context(
-        {
-          lacheie_environment: "production",
-          lacheie_production_base_url: "https://api.lacheie.example/v1",
-          lacheie_production_active: false,
-        },
-        "cheie-test",
-      ),
+      context({ lacheie_environment: "test", lacheie_production_active: false }, ""),
       ref,
     );
     expect(result.ok).toBe(false);
     if (!result.ok) {
       expect(result.code).toBe("CONFIG_ERROR");
-      expect(result.message).toContain("nu este activată");
+      expect(result.message).not.toMatch(/mediu(l)? de test/i);
     }
-    expect(fetchSpy).not.toHaveBeenCalled();
-    vi.unstubAllGlobals();
-  });
-
-  it("adresa API lipsă este raportată, nu ghicită", async () => {
-    const fetchSpy = vi.fn();
-    vi.stubGlobal("fetch", fetchSpy);
-    const result = await lacheieAdapter.publishListing(
-      context({ lacheie_environment: "test" }, "cheie-test"),
-      ref,
-    );
-    expect(result.ok).toBe(false);
     expect(fetchSpy).not.toHaveBeenCalled();
     vi.unstubAllGlobals();
   });
@@ -108,7 +88,7 @@ describe("La Cheie — reguli verificabile în cod", () => {
 
   it("fiecare server function cere Superadmin și validează inputul", () => {
     const handlers = functionsSource.match(/createServerFn\(/g) ?? [];
-    expect(handlers.length).toBeGreaterThanOrEqual(5);
+    expect(handlers.length).toBeGreaterThanOrEqual(3);
     expect((functionsSource.match(/requireSuperadminOrg\(/g) ?? []).length).toBeGreaterThanOrEqual(
       handlers.length,
     );
@@ -140,9 +120,11 @@ describe("La Cheie — reguli verificabile în cod", () => {
     expect(code).not.toMatch(/payload|authorization|apiKey|portalCredential/i);
   });
 
-  it("agenția vine din parametrul validat, iar mediul de test este implicit", () => {
-    expect(adapterSource).toContain("environmentBlockReason");
+  it("adaptorul folosește adresa production fixată central, fără mediu de test", () => {
+    expect(adapterSource).toContain("activeBaseUrl");
+    expect(adapterSource).not.toContain("environmentBlockReason");
     expect(adapterSource).not.toMatch(/console\.log/);
+    // Adresa nu este hardcodată în adaptor: vine din config.
     expect(adapterSource).not.toMatch(/https:\/\/[a-z.]*lacheie/i);
   });
 });

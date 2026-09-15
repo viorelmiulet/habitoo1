@@ -12,9 +12,10 @@
  * criptat. Scrierile trimit `Content-Type: application/json` și
  * `X-Source-Version` (text zecimal, separat per external_id).
  *
- * Mediul TEST este implicit; producția rămâne blocată până la confirmarea
- * activării de către La Cheie. Nu există lead import, bulk import, pull
- * periodic sau webhook-uri în această etapă.
+ * La Cheie are un singur mediu real: production. Adresa API este fixată
+ * server-side; scrierile reale rămân în spatele fluxului normal de publicare
+ * cu aprobare. Nu există lead import, bulk import, pull periodic sau
+ * webhook-uri în această etapă.
  */
 import type {
   ConnectionStatusOutcome,
@@ -26,12 +27,7 @@ import type {
   PortalResult,
 } from "../adapter";
 import { toPortalError } from "../errors";
-import {
-  activeBaseUrl,
-  environmentBlockReason,
-  readLaCheieSettings,
-  type LaCheieSettings,
-} from "../lacheie/config";
+import { activeBaseUrl, readLaCheieSettings, type LaCheieSettings } from "../lacheie/config";
 import { laCheieRequest, withLaCheieWriteLock } from "../lacheie/client.server";
 import type { LaCheieRequestConfig } from "../lacheie/client.server";
 import { readLaCheieCatalog } from "../lacheie/catalog.server";
@@ -81,25 +77,8 @@ function prepare(ctx: PortalContext): Ready {
       },
     };
   }
-  const blocked = environmentBlockReason(settings);
-  if (blocked) {
-    return {
-      ok: false,
-      result: { ok: false, code: "CONFIG_ERROR", message: blocked, detail: settings.environment },
-    };
-  }
+  // Un singur mediu real (production), cu adresa API fixată server-side.
   const base = activeBaseUrl(settings);
-  if (!base) {
-    return {
-      ok: false,
-      result: {
-        ok: false,
-        code: "CONFIG_ERROR",
-        message: "Adresa API La Cheie nu este configurată pentru mediul activ.",
-        detail: settings.environment,
-      },
-    };
-  }
   return {
     ok: true,
     settings,
@@ -139,17 +118,15 @@ async function status(
       data: { configured: false, live: false, detail: "Cheia API La Cheie lipsește." },
     };
   }
-  const blocked = environmentBlockReason(settings);
-  if (blocked) {
-    return { ok: true, data: { configured: true, live: false, detail: blocked } };
-  }
-  if (!live || !ctx.allowLiveRequests) {
+  // GET /account este read-only: testarea explicită a conexiunii de producție
+  // nu depinde de comutatorul care permite scrierile reale.
+  if (!live) {
     return {
       ok: true,
       data: {
         configured: true,
         live: false,
-        detail: `Cheie salvată, mediu ${settings.environment === "test" ? "de test" : "de producție"}; testează conexiunea pentru confirmare.`,
+        detail: "Cheie salvată (mediu production); testează conexiunea pentru confirmare.",
       },
     };
   }
@@ -169,7 +146,7 @@ async function status(
         configured: true,
         live: true,
         detail:
-          `Cheie validă${name ? ` — cont ${name}` : ""}, mediu ${ready.settings.environment === "test" ? "de test" : "de producție"}.` +
+          `Cheie validă${name ? ` — cont ${name}` : ""}, mediu production.` +
           (ready.settings.catalogFetchedAt
             ? ` Catalog sincronizat la ${ready.settings.catalogFetchedAt}.`
             : " Catalogul nu este încă sincronizat."),
@@ -408,7 +385,7 @@ async function push(
       processed,
       detail: `${mode} ok offers=${processed} env=${ready.settings.environment}`,
       message:
-        `La Cheie a acceptat ${processed} anunț(uri) în mediul ${ready.settings.environment === "test" ? "de test" : "de producție"}.` +
+        `La Cheie a acceptat ${processed} anunț(uri).` +
         (build.warnings.length ? ` ${build.warnings.join(" ")}` : ""),
       ...(urls[0] ? { publicUrl: urls[0] } : {}),
       ...(states[0] ? { portalStatus: states[0] } : {}),

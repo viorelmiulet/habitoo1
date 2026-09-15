@@ -1,81 +1,45 @@
 import { describe, expect, it } from "vitest";
 import {
   activeBaseUrl,
-  crudTestsPassed,
-  environmentBlockReason,
+  LACHEIE_ENVIRONMENT,
+  LACHEIE_PRODUCTION_BASE_URL,
   laCheieReadiness,
   readLaCheieSettings,
 } from "../config";
 
-const FULL = {
-  lacheie_environment: "production",
-  lacheie_test_base_url: "https://test.lacheie.example/api/v1",
-  lacheie_production_base_url: "https://api.lacheie.example/v1",
-  lacheie_production_active: true,
-  lacheie_production_confirmed_at: "2026-01-01T10:00:00.000Z",
-  lacheie_tests: { create: "t1", update: "t2", withdraw: "t3" },
-};
-
-describe("La Cheie — mediu și stare", () => {
-  it("mediul implicit este test", () => {
+describe("La Cheie — mediu unic (production) și stare", () => {
+  it("singurul mediu este production", () => {
     const settings = readLaCheieSettings({});
-    expect(settings.environment).toBe("test");
-    expect(settings.productionActive).toBe(false);
+    expect(settings.environment).toBe("production");
+    expect(LACHEIE_ENVIRONMENT).toBe("production");
     expect(settings.offersPath).toBe("/offers");
   });
 
-  it("producția este blocată până la confirmarea activării", () => {
-    const settings = readLaCheieSettings({
-      ...FULL,
-      lacheie_production_active: false,
-    });
-    expect(environmentBlockReason(settings)).toContain("nu este activată");
-    expect(laCheieReadiness({ hasApiKey: true, settings, lastError: null })).toBe(
-      "production_blocked",
-    );
+  it("adresa API este cea documentată, fixată server-side", () => {
+    expect(activeBaseUrl()).toBe(LACHEIE_PRODUCTION_BASE_URL);
+    expect(LACHEIE_PRODUCTION_BASE_URL).toBe("https://api.lacheie.ro/api/partners/v1");
+    expect(LACHEIE_PRODUCTION_BASE_URL.endsWith("/")).toBe(false);
   });
 
-  it("producția confirmată permite cereri", () => {
-    const settings = readLaCheieSettings(FULL);
-    expect(environmentBlockReason(settings)).toBeNull();
-    expect(activeBaseUrl(settings)).toBe("https://api.lacheie.example/v1");
-    expect(laCheieReadiness({ hasApiKey: true, settings, lastError: null })).toBe("connected");
-  });
-
-  it("adresa lipsă înseamnă neconfigurat, nu presupunem un endpoint", () => {
-    const settings = readLaCheieSettings({ lacheie_environment: "test" });
-    expect(activeBaseUrl(settings)).toBeNull();
-    expect(environmentBlockReason(settings)).toContain("test");
-    expect(laCheieReadiness({ hasApiKey: true, settings, lastError: null })).toBe("not_configured");
-  });
-
-  it("fără cheie API starea este neconfigurat", () => {
-    const settings = readLaCheieSettings(FULL);
-    expect(laCheieReadiness({ hasApiKey: false, settings, lastError: null })).toBe(
-      "not_configured",
-    );
-  });
-
-  it("mediul de test fără toate testele CRUD apare ca „Testare”", () => {
+  it("setările vechi de mediu de test sunt ignorate", () => {
     const settings = readLaCheieSettings({
       lacheie_environment: "test",
       lacheie_test_base_url: "https://test.lacheie.example/api/v1",
-      lacheie_tests: { create: "t1" },
+      lacheie_production_active: false,
     });
-    expect(crudTestsPassed(settings.crudTests)).toBe(false);
-    expect(laCheieReadiness({ hasApiKey: true, settings, lastError: null })).toBe("testing");
+    expect(settings.environment).toBe("production");
+    expect(activeBaseUrl()).toBe(LACHEIE_PRODUCTION_BASE_URL);
+  });
+
+  it("cheia salvată fără eroare înseamnă production conectat", () => {
+    expect(laCheieReadiness({ hasApiKey: true, lastError: null })).toBe("connected");
+  });
+
+  it("fără cheie API starea este neconfigurat", () => {
+    expect(laCheieReadiness({ hasApiKey: false, lastError: null })).toBe("not_configured");
   });
 
   it("o eroare recentă apare ca stare de eroare", () => {
-    const settings = readLaCheieSettings(FULL);
-    expect(laCheieReadiness({ hasApiKey: true, settings, lastError: "HTTP 500" })).toBe("error");
-  });
-
-  it("adresele se normalizează fără slash final", () => {
-    const settings = readLaCheieSettings({
-      lacheie_environment: "test",
-      lacheie_test_base_url: "https://test.lacheie.example/api/v1/",
-    });
-    expect(activeBaseUrl(settings)).toBe("https://test.lacheie.example/api/v1");
+    expect(laCheieReadiness({ hasApiKey: true, lastError: "HTTP 500" })).toBe("error");
   });
 });
