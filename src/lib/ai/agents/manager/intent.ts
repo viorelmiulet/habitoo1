@@ -76,7 +76,7 @@ const MARKETING = ["descriere", "anunt", "text", "titlu", "postare", "social", "
 const ACP = ["acp", "evaluare", "analiza comparativa", "comparabil", "pret corect", "cat valoreaza", "valoare"];
 const FOLLOWUP = ["follow", "urmarire", "revenire", "de contactat", "restant", "neatins"];
 const CRM = ["lead", "client", "cerere", "activitate", "task", "portofoliu", "proprietat"];
-const PROSPECTING = ["prospect", "gaseste anunturi", "surse externe", "anunturi noi", "proprietati noi", "piata externa"];
+const PROSPECTING = ["prospect", "gaseste anunturi", "surse externe", "anunturi noi", "proprietati noi", "proprietatile noi", "anunturile noi", "piata externa"];
 const PREVIEW = ["nu aplica", "fara sa aplici", "nu modifica", "doar previzualizare", "nu salva", "nu persista", "fara modificari"];
 
 /** Capabilități cerute frecvent, dar care NU există în Habitoo la Stage 17. */
