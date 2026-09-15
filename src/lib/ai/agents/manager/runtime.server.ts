@@ -151,7 +151,7 @@ async function readTool(
       const execution = await tracer.span("tool", tool, () => executeAiTool(actor, tool, args));
       if (execution.ok) return { ok: true, data: execution.data, summary: execution.summary };
       lastMessage = execution.error;
-      retryable = execution.code === "provider_error";
+      retryable = execution.code === "failed";
       if (!retryable) return { ok: false, message: lastMessage, retryable: false };
     } catch (error) {
       const classified = classifyAiError(error);
