@@ -8,6 +8,7 @@
  * Starea trăiește în `ai_workflow_runs`, deci un plan suspendat supraviețuiește
  * reîncărcării paginii și repornirii serverului.
  */
+import { PROSPECTING_NO_LIVE_SOURCE_NOTE } from "@/lib/prospecting/workflow";
 import type { AiActor } from "../../gateway/types";
 import { AI_AUDIT_ACTIONS, logAiAudit } from "../../security/audit";
 import { sanitizeUserRequest } from "../../security/injection";
