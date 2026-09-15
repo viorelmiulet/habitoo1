@@ -104,6 +104,7 @@ export function initialProspectingState(input: {
     criteria: input.criteria,
     sourceIds: input.sourceIds,
     sourcesUsed: [],
+    sourceAvailability: "unavailable",
     counters: emptyCounters(),
     candidateIds: [],
     approval: null,
