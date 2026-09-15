@@ -15,9 +15,10 @@ describe("La Cheie — X-Source-Version", () => {
   });
 
   it("păstrează precizia la valori peste 2^53 (nu folosește Number)", () => {
-    const huge = "9007199254740993"; // 2^53 + 1
-    expect(nextSourceVersion({ current: huge })).toBe("9007199254740994");
-    expect(Number(nextSourceVersion({ current: huge }))).not.toBe(9007199254740994);
+    const huge = "12345678901234567890"; // depășește cu mult 2^53
+    expect(nextSourceVersion({ current: huge })).toBe("12345678901234567891");
+    // Prin Number, aceeași incrementare ar da un rezultat greșit.
+    expect(String(Number(huge) + 1)).not.toBe("12345678901234567891");
   });
 
   it("versiunea rămâne text zecimal valid", () => {

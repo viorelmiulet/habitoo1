@@ -149,7 +149,7 @@ describe("La Cheie — client HTTP", () => {
     }
     await expect(
       laCheieRequest(shared, { method: "POST", path: "/offers", body: {} }),
-    ).rejects.toThrow(/60 scrieri/);
+    ).rejects.toMatchObject({ code: "RATE_LIMIT" });
   });
 
   it("gardul de adresă respinge HTTP și gazde nevalide", () => {
