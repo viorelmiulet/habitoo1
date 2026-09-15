@@ -64,7 +64,19 @@ export type ProspectingWorkflowState = {
   criteria: ProspectSearchCriteria;
   sourceIds: string[];
   /** Sursele efectiv folosite, cu marcarea explicită a datelor de test. */
-  sourcesUsed: { id: string; name: string; providerKey: string; fixture: boolean }[];
+  sourcesUsed: {
+    id: string;
+    name: string;
+    providerKey: string;
+    fixture: boolean;
+    availability?: ProspectingProviderAvailability;
+  }[];
+  /**
+   * Disponibilitatea reală a surselor rulării. `unavailable` înseamnă că nicio
+   * sursă externă autorizată nu este conectată, deci rularea NU raportează
+   * date de piață.
+   */
+  sourceAvailability: ProspectingProviderAvailability;
   counters: ProspectingCounters;
   /** Candidații propuși spre aprobare (ID-uri de prospecte deja persistate). */
   candidateIds: string[];
