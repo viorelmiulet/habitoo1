@@ -23,6 +23,7 @@ import { cn } from "@/lib/utils";
 const PORTAL_LOGOS: Record<string, string> = {
   clickimob: clickimobLogo,
   imove: imoveLogo,
+  lacheie: lacheieLogo,
   imospot: imospotLogo,
   homepitch: homepitchLogo,
   oferteimobiliare: oferteImobiliareLogo,
