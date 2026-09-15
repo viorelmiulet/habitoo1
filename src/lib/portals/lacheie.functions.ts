@@ -91,7 +91,7 @@ async function mergeSettings(
   const settings = { ...((row.settings ?? {}) as Record<string, unknown>), ...patch };
   await admin
     .from("portal_connections")
-    .update({ settings, updated_by: actorId })
+    .update({ settings: settings as never, updated_by: actorId })
     .eq("id", row.id);
 }
 

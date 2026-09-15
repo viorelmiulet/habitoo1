@@ -113,7 +113,7 @@ export async function refreshLaCheieCatalog(
       portal: LACHEIE_PORTAL_KEY,
       site_urn: cacheKey(input.organizationId, input.environment),
       organization_id: input.organizationId,
-      categories: catalog as unknown as Record<string, unknown>,
+      categories: catalog as unknown as never,
       discrepancies: {},
       fetched_at: catalog.fetchedAt,
       fetched_by: input.actorId,
