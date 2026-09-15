@@ -264,3 +264,9 @@
 - [x] Card Superadmin „La Cheie”: stare, mediu, catalog, teste CRUD, activare producție, versiuni, jurnal
 - [x] 76 teste noi; suită completă 824 teste, typecheck curat, build OK
 - Limitare: adresele API (test/producție) se completează după primirea lor de la La Cheie; fără lead import, bulk, pull periodic, webhook-uri sau publicare automată.
+
+## Stage 19 — Prospectare cu sursă reală
+- [x] Contract provider cu availability/capabilities + provider onest `unavailable`.
+- [x] Feed real: auth prin secret server-side, paginare, allowlist host/SSRF, rate limit.
+- [x] Runtime + Manager: fără sursă externă conectată, rezultatul este onest, nu date inventate.
+- [ ] Sursă externă autorizată reală: neconectată (așteaptă acces/contract).

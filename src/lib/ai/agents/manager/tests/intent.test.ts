@@ -33,6 +33,16 @@ describe("routeManagerRequest", () => {
     expect(routing.agents[0]).toBe("prospecting");
   });
 
+  it("rutează spre prospectare formulările uzuale pentru proprietari noi (Stage 19)", () => {
+    for (const text of [
+      "Găsește proprietăți în Cluj",
+      "Vreau leaduri noi de la proprietari care vând",
+      "Caută anunțuri noi de la proprietari",
+    ]) {
+      expect(routeManagerRequest(text).intent).toBe("prospecting_discovery");
+    }
+  });
+
   it("marchează indisponibil ce nu există: publicare automată", () => {
     const routing = routeManagerRequest("Publică anunțul pe OLX automat");
     expect(routing.intent).toBe("unavailable");

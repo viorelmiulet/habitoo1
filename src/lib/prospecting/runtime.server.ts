@@ -19,8 +19,13 @@ import { applyClassification, buildClassificationPrompt, parseClassificationResp
 import { dedupeProspects, type DedupeItem } from "./dedupe";
 import { normalizeProspect } from "./normalize";
 import { scoreProspect } from "./scoring";
-import { resolveProspectingProvider } from "./providers/registry.server";
 import {
+  hasLiveProspectingSource,
+  providerAvailability,
+  resolveProspectingProvider,
+} from "./providers/registry.server";
+import {
+  PROSPECTING_NO_LIVE_SOURCE_NOTE,
   applyProspectingApproval,
   completeProspectingStep,
   HABITOO_PROSPECTING_WORKFLOW,
@@ -32,6 +37,7 @@ import {
 } from "./workflow";
 import type {
   NormalizedProspect,
+  ProspectingProviderAvailability,
   ProspectSearchCriteria,
   ProspectSource,
   RawProspect,
@@ -54,6 +60,7 @@ export type ProspectingRunView = {
   counters: ProspectingWorkflowState["counters"];
   candidateIds: string[];
   sourcesUsed: ProspectingWorkflowState["sourcesUsed"];
+  sourceAvailability: ProspectingProviderAvailability;
   notes: string[];
   warnings: string[];
   fixtureUsed: boolean;
@@ -89,6 +96,7 @@ function view(
     },
     candidateIds: state.candidateIds ?? [],
     sourcesUsed: state.sourcesUsed ?? [],
+    sourceAvailability: state.sourceAvailability ?? "unavailable",
     notes: state.notes ?? [],
     warnings: state.warnings ?? [],
     fixtureUsed: state.fixtureUsed === true,
@@ -345,19 +353,33 @@ export async function startProspectingWorkflow(
   if (sourceIds.length > 0) sourceQuery = sourceQuery.in("id", sourceIds);
   const { data: sourceRows } = await sourceQuery;
   const sources = ((sourceRows ?? []) as unknown as Record<string, unknown>[]).map(toSource);
+  // Disponibilitatea reală: `live` doar dacă există o sursă externă autorizată.
+  const availability: ProspectingProviderAvailability = hasLiveProspectingSource(sources)
+    ? "live"
+    : sources.some((source) => providerAvailability(source.providerKey) === "manual")
+      ? "manual"
+      : "unavailable";
+  state = { ...state, sourceAvailability: availability };
   state = completeProspectingStep(state, "resolve_sources");
 
   // fetch_source_data: fiecare sursă separat, cu erori izolate.
   const raws: RawProspect[] = [];
   const warnings: string[] = [];
+  const notes: string[] = [];
   let errors = 0;
   let fixtureUsed = false;
   const sourcesUsed: ProspectingWorkflowState["sourcesUsed"] = [];
 
+  if (availability === "unavailable") {
+    notes.push(PROSPECTING_NO_LIVE_SOURCE_NOTE);
+  }
+
   for (const source of sources) {
     const provider = resolveProspectingProvider(source.providerKey);
-    if (!provider) {
-      warnings.push(`Sursa „${source.name}” nu are încă o integrare disponibilă.`);
+    if (!provider || provider.availability === "unavailable") {
+      warnings.push(
+        `Sursa „${source.name}” nu are încă o integrare autorizată, deci nu a fost interogată.`,
+      );
       continue;
     }
     const result = await tracer.span("step", `fetch_source_data:${source.providerKey}`, () =>
@@ -374,6 +396,7 @@ export async function startProspectingWorkflow(
       name: source.name,
       providerKey: source.providerKey,
       fixture: result.fixture,
+      availability: provider.availability,
     });
     for (const item of result.items) raws.push({ ...item, sourceKey: source.id });
   }
@@ -381,6 +404,7 @@ export async function startProspectingWorkflow(
     ...state,
     sourcesUsed,
     fixtureUsed,
+    notes: [...state.notes, ...notes],
     counters: { ...state.counters, itemsFound: raws.length, errorsCount: errors },
   };
   state = completeProspectingStep(state, "fetch_source_data");

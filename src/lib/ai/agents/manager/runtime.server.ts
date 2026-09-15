@@ -8,6 +8,7 @@
  * Starea trăiește în `ai_workflow_runs`, deci un plan suspendat supraviețuiește
  * reîncărcării paginii și repornirii serverului.
  */
+import { PROSPECTING_NO_LIVE_SOURCE_NOTE } from "@/lib/prospecting/workflow";
 import type { AiActor } from "../../gateway/types";
 import { AI_AUDIT_ACTIONS, logAiAudit } from "../../security/audit";
 import { sanitizeUserRequest } from "../../security/injection";
@@ -373,24 +374,24 @@ async function runStep(
         return { state, stop: false };
       }
       const rows = Array.isArray(read.data) ? read.data : [];
-      const active = rows.filter(
-        (row) => (row as { status?: string }).status !== "not_configured",
+      // Doar o sursă activă cu provider `live` înseamnă sursă externă reală.
+      const liveSources = rows.filter(
+        (row) =>
+          (row as { enabled?: boolean }).enabled === true &&
+          (row as { availability?: string }).availability === "live",
       ).length;
       state = completeStep(
         state,
         step.id,
-        { sources: rows.length, configured: active } as Record<string, ManagerJson>,
+        { sources: rows.length, liveSources } as Record<string, ManagerJson>,
         "Prospecting Agent",
       ) as ManagerState;
-      if (active === 0) {
-        // Onest: fără sursă reală configurată nu pretindem că am găsit anunțuri.
-        state = {
-          ...state,
-          notes: [
-            ...state.notes,
-            "Nu există nicio sursă externă de anunțuri configurată, deci nu am căutat proprietăți noi în afara CRM-ului.",
-          ],
-        };
+      if (liveSources === 0) {
+        // Onest: fără sursă reală conectată nu pretindem că am găsit anunțuri.
+        const reason = PROSPECTING_NO_LIVE_SOURCE_NOTE;
+        state = failStep(state, step.id, reason, "blocked") as ManagerState;
+        state = { ...state, notes: [...state.notes, reason], summary: reason };
+        return { state, stop: true };
       }
       return { state, stop: false };
     }

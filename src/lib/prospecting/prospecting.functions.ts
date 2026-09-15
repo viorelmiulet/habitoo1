@@ -11,7 +11,11 @@ import { requireActiveOrgAuth } from "@/lib/org-access";
 import type { AiActor, AiRole } from "@/lib/ai/gateway/types";
 import { PROSPECTING_AUDIT_ACTIONS, logProspectingAudit } from "./audit";
 import { listProspectingProviders, resolveProspectingProvider } from "./providers/registry.server";
-import type { ProspectSellerType, ProspectStatus } from "./types";
+import type {
+  ProspectSellerType,
+  ProspectStatus,
+  ProspectingProviderAvailability,
+} from "./types";
 
 type AuthContext = { userId: string };
 
@@ -47,7 +51,11 @@ export type ProspectingSourceView = {
   global: boolean;
   implemented: boolean;
   live: boolean;
+  availability: ProspectingProviderAvailability;
+  capabilities: string[];
   fixture: boolean;
+  lastRunAt: string | null;
+  lastItemsFound: number | null;
 };
 
 /** Sursele agenției plus sursele globale, cu starea reală a integrării. */
@@ -63,6 +71,13 @@ export const listProspectingSources = createServerFn({ method: "GET" })
       .or(`organization_id.eq.${actor.organizationId},organization_id.is.null`)
       .order("name");
     const providers = new Map(listProspectingProviders().map((item) => [item.key, item]));
+    const { data: lastRun } = await admin
+      .from("prospecting_runs")
+      .select("created_at,items_found")
+      .eq("organization_id", actor.organizationId)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
     return (data ?? []).map((row) => ({
       id: row.id,
       name: row.name,
@@ -72,6 +87,10 @@ export const listProspectingSources = createServerFn({ method: "GET" })
       global: row.organization_id === null,
       implemented: resolveProspectingProvider(row.provider_key) !== null,
       live: providers.get(row.provider_key)?.live ?? false,
+      availability: providers.get(row.provider_key)?.availability ?? "unavailable",
+      capabilities: [...(providers.get(row.provider_key)?.capabilities ?? [])],
+      lastRunAt: lastRun?.created_at ?? null,
+      lastItemsFound: lastRun?.items_found ?? null,
       fixture:
         typeof row.configuration === "object" &&
         row.configuration !== null &&

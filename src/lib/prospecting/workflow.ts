@@ -11,7 +11,11 @@
  * tranzițiile și starea, ca suspend/resume să poată fi testat determinist.
  * Persistența trăiește în `runtime.server.ts`, pe `ai_workflow_runs`.
  */
-import type { ProspectSearchCriteria } from "./types";
+import type { ProspectSearchCriteria, ProspectingProviderAvailability } from "./types";
+
+/** Mesaj onest când nicio sursă externă autorizată nu este conectată. */
+export const PROSPECTING_NO_LIVE_SOURCE_NOTE =
+  "Nu există momentan nicio sursă externă de anunțuri conectată, deci nu am căutat proprietăți noi în afara CRM-ului.";
 
 export const HABITOO_PROSPECTING_WORKFLOW = "habitooProspectingWorkflow";
 
@@ -64,7 +68,19 @@ export type ProspectingWorkflowState = {
   criteria: ProspectSearchCriteria;
   sourceIds: string[];
   /** Sursele efectiv folosite, cu marcarea explicită a datelor de test. */
-  sourcesUsed: { id: string; name: string; providerKey: string; fixture: boolean }[];
+  sourcesUsed: {
+    id: string;
+    name: string;
+    providerKey: string;
+    fixture: boolean;
+    availability?: ProspectingProviderAvailability;
+  }[];
+  /**
+   * Disponibilitatea reală a surselor rulării. `unavailable` înseamnă că nicio
+   * sursă externă autorizată nu este conectată, deci rularea NU raportează
+   * date de piață.
+   */
+  sourceAvailability: ProspectingProviderAvailability;
   counters: ProspectingCounters;
   /** Candidații propuși spre aprobare (ID-uri de prospecte deja persistate). */
   candidateIds: string[];
@@ -92,6 +108,7 @@ export function initialProspectingState(input: {
     criteria: input.criteria,
     sourceIds: input.sourceIds,
     sourcesUsed: [],
+    sourceAvailability: "unavailable",
     counters: emptyCounters(),
     candidateIds: [],
     approval: null,

@@ -154,11 +154,23 @@ describe("providerii de surse", () => {
     const keys = listProspectingProviders().map((provider) => provider.key);
     expect(keys).not.toContain("brightdata");
     expect(keys).not.toContain("bright_data");
-    expect(keys.sort()).toEqual(["http_feed", "manual_list"]);
+    // Sursele fără integrare autorizată există doar ca provideri „unavailable".
+    expect(keys.sort()).toEqual([
+      "http_feed",
+      "imobiliare_ro",
+      "manual_list",
+      "olx",
+      "publi24",
+      "storia",
+    ]);
+    for (const provider of listProspectingProviders()) {
+      expect(["live", "manual", "unavailable"]).toContain(provider.availability);
+    }
   });
 
   it("marchează sursele fără integrare ca inutilizabile", () => {
-    expect(resolveProspectingProvider("olx")).toBeNull();
+    // OLX are un provider onest „indisponibil", care nu livrează niciodată date.
+    expect(resolveProspectingProvider("olx")?.availability).toBe("unavailable");
     expect(sourceUsable(source({ providerKey: "olx", enabled: true }))).toBe(false);
     expect(sourceUsable(source({ enabled: false }))).toBe(false);
   });

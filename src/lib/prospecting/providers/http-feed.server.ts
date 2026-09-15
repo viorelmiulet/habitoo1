@@ -22,7 +22,112 @@ export const HTTP_FEED_PROVIDER_KEY = "http_feed";
 
 const FETCH_TIMEOUT_MS = 20_000;
 const MAX_ITEMS = 50;
+const MAX_PAGES = 5;
+const RATE_LIMIT_PER_MINUTE = 30;
 const USER_AGENT = "HabitooProspecting/1.0 (+https://habitoo.ro)";
+
+/** Prefix obligatoriu pentru secretele de sursă: nicio altă variabilă nu poate fi citită. */
+export const PROSPECTING_SECRET_PREFIX = "PROSPECTING_";
+
+/**
+ * Autentificarea sursei, dacă feed-ul o cere. Configurația păstrează DOAR
+ * numele secretului, niciodată valoarea; valoarea este citită server-side și
+ * nu ajunge în interfață, în audit sau în loguri.
+ */
+export function feedAuthHeaders(
+  source: ProspectSource,
+  env: Record<string, string | undefined> = process.env,
+): Record<string, string> {
+  const name = source.configuration["authSecretName"];
+  if (typeof name !== "string" || !name.startsWith(PROSPECTING_SECRET_PREFIX)) return {};
+  const value = env[name];
+  if (!value) return {};
+  const scheme =
+    typeof source.configuration["authScheme"] === "string"
+      ? String(source.configuration["authScheme"])
+      : "bearer";
+  if (scheme === "header") {
+    const header =
+      typeof source.configuration["authHeader"] === "string"
+        ? String(source.configuration["authHeader"])
+        : "X-Api-Key";
+    return { [header]: value };
+  }
+  return { Authorization: `Bearer ${value}` };
+}
+
+/** Rate limit per sursă: protejează atât Habitoo, cât și sursa externă. */
+const rateWindows = new Map<string, number[]>();
+
+export function feedRateLimitAllows(
+  key: string,
+  now: number = Date.now(),
+  limit: number = RATE_LIMIT_PER_MINUTE,
+): boolean {
+  const hits = (rateWindows.get(key) ?? []).filter((time) => now - time < 60_000);
+  if (hits.length >= limit) {
+    rateWindows.set(key, hits);
+    return false;
+  }
+  hits.push(now);
+  rateWindows.set(key, hits);
+  return true;
+}
+
+export function resetFeedRateLimit(): void {
+  rateWindows.clear();
+}
+
+/** Host-uri interne: blocate explicit ca protecție SSRF. */
+export function isPrivateHost(hostname: string): boolean {
+  const host = hostname.toLowerCase().replace(/^\[|\]$/g, "");
+  if (host === "localhost" || host.endsWith(".localhost") || host.endsWith(".internal")) return true;
+  if (host === "::1" || host.startsWith("fc") || host.startsWith("fd")) return true;
+  if (/^127\./.test(host) || /^10\./.test(host) || /^192\.168\./.test(host)) return true;
+  if (/^172\.(1[6-9]|2\d|3[01])\./.test(host)) return true;
+  if (/^169\.254\./.test(host)) return true;
+  if (host === "0.0.0.0" || host === "metadata.google.internal") return true;
+  return false;
+}
+
+/**
+ * Acceptăm doar HTTPS, host-uri publice și — dacă sursa are `allowedHosts` —
+ * doar host-urile din allowlist. Astfel un URL din configurație nu poate ținti
+ * rețeaua internă (SSRF).
+ */
+export function safeFeedUrl(
+  base: string | null,
+  params: Record<string, string> = {},
+  allowedHosts: string[] = [],
+): URL | null {
+  if (!base) return null;
+  let url: URL;
+  try {
+    url = new URL(base);
+  } catch {
+    return null;
+  }
+  if (url.protocol !== "https:") return null;
+  if (isPrivateHost(url.hostname)) return null;
+  if (allowedHosts.length > 0 && !allowedHosts.includes(url.hostname.toLowerCase())) return null;
+  for (const [key, value] of Object.entries(params)) url.searchParams.set(key, value);
+  return url;
+}
+
+function allowedHostsOf(source: ProspectSource): string[] {
+  const raw = source.configuration["allowedHosts"];
+  if (!Array.isArray(raw)) return [];
+  return raw.filter((item): item is string => typeof item === "string").map((item) => item.toLowerCase());
+}
+
+function safeUrl(
+  base: string | null,
+  params: Record<string, string> = {},
+  source?: ProspectSource,
+): URL | null {
+  return safeFeedUrl(base, params, source ? allowedHostsOf(source) : []);
+}
+
 
 function criteriaParams(criteria: ProspectSearchCriteria): Record<string, string> {
   const params: Record<string, string> = {};
@@ -39,19 +144,6 @@ function criteriaParams(criteria: ProspectSearchCriteria): Record<string, string
   return params;
 }
 
-/** Acceptăm doar HTTPS: fără protocoale locale sau nesecurizate. */
-function safeUrl(base: string | null, params: Record<string, string> = {}): URL | null {
-  if (!base) return null;
-  let url: URL;
-  try {
-    url = new URL(base);
-  } catch {
-    return null;
-  }
-  if (url.protocol !== "https:") return null;
-  for (const [key, value] of Object.entries(params)) url.searchParams.set(key, value);
-  return url;
-}
 
 /** Verificare robots.txt: dacă „Disallow: /" apare pentru toți, nu colectăm. */
 export function robotsAllows(robotsTxt: string, path: string): boolean {
@@ -156,12 +248,26 @@ function itemsOf(payload: unknown, source: ProspectSource): Record<string, unkno
     : [];
 }
 
-async function fetchJson(url: URL): Promise<ProspectFetchResult | unknown> {
+async function fetchJson(
+  url: URL,
+  source: ProspectSource,
+): Promise<ProspectFetchResult | unknown> {
+  if (!feedRateLimitAllows(`${source.id}:${url.origin}`)) {
+    return {
+      ok: false as const,
+      code: "blocked" as const,
+      message: "Prea multe colectări pentru această sursă. Încearcă din nou într-un minut.",
+    };
+  }
   let response: Response;
   try {
     response = await fetch(url, {
       signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
-      headers: { Accept: "application/json", "User-Agent": USER_AGENT },
+      headers: {
+        Accept: "application/json",
+        "User-Agent": USER_AGENT,
+        ...feedAuthHeaders(source),
+      },
     });
   } catch {
     return {
@@ -199,42 +305,83 @@ function isFailure(value: unknown): value is Extract<ProspectFetchResult, { ok: 
   return typeof value === "object" && value !== null && (value as { ok?: unknown }).ok === false;
 }
 
+/** Paginare opțională: se activează doar dacă sursa o declară în configurație. */
+function paginationOf(source: ProspectSource): { param: string; sizeParam: string | null; size: number; start: number } | null {
+  const config = source.configuration["pagination"];
+  if (!config || typeof config !== "object") return null;
+  const raw = config as Record<string, unknown>;
+  const param = typeof raw["pageParam"] === "string" ? String(raw["pageParam"]) : "page";
+  const sizeParam = typeof raw["sizeParam"] === "string" ? String(raw["sizeParam"]) : null;
+  const size = Number(raw["pageSize"]);
+  const start = Number(raw["startPage"]);
+  return {
+    param,
+    sizeParam,
+    size: Number.isFinite(size) && size > 0 ? Math.min(Math.trunc(size), MAX_ITEMS) : 25,
+    start: Number.isFinite(start) ? Math.trunc(start) : 1,
+  };
+}
+
 export const httpFeedProvider: ProspectingSourceProvider = {
   key: HTTP_FEED_PROVIDER_KEY,
   label: "Feed public HTTPS",
   live: true,
+  availability: "live",
+  capabilities: ["search", "fetch_listing", "pagination", "health_check"],
   normalize: normalizeProspect,
 
   async search(criteria, source) {
     if (!source.enabled) {
       return { ok: false, code: "not_configured", message: PROSPECTING_NOT_CONFIGURED_MESSAGE };
     }
-    const url = safeUrl(source.baseUrl, criteriaParams(criteria));
-    if (!url) {
+    const baseParams = criteriaParams(criteria);
+    const firstUrl = safeUrl(source.baseUrl, baseParams, source);
+    if (!firstUrl) {
       return { ok: false, code: "not_configured", message: PROSPECTING_NOT_CONFIGURED_MESSAGE };
     }
-    if (source.sourceType === "website" && !(await checkRobots(url))) {
+    if (source.sourceType === "website" && !(await checkRobots(firstUrl))) {
       return {
         ok: false,
         code: "blocked",
         message: "Sursa interzice colectarea automată prin robots.txt.",
       };
     }
-    const payload = await fetchJson(url);
-    if (isFailure(payload)) return payload;
-    const items = itemsOf(payload, source)
-      .slice(0, MAX_ITEMS)
-      .map((item) => mapFeedItem(item, source))
-      .filter((item): item is RawProspect => item !== null);
-    return { ok: true, items, fixture: source.configuration["fixture"] === true };
+
+    const pagination = paginationOf(source);
+    const fixture = source.configuration["fixture"] === true;
+    const collected: RawProspect[] = [];
+    let pagesFetched = 0;
+
+    for (let index = 0; index < (pagination ? MAX_PAGES : 1); index += 1) {
+      const params = { ...baseParams };
+      if (pagination) {
+        params[pagination.param] = String(pagination.start + index);
+        if (pagination.sizeParam) params[pagination.sizeParam] = String(pagination.size);
+      }
+      const url = safeUrl(source.baseUrl, params, source);
+      if (!url) break;
+      const payload = await fetchJson(url, source);
+      if (isFailure(payload)) {
+        if (collected.length > 0) break;
+        return payload;
+      }
+      pagesFetched += 1;
+      const pageItems = itemsOf(payload, source)
+        .map((item) => mapFeedItem(item, source))
+        .filter((item): item is RawProspect => item !== null);
+      collected.push(...pageItems);
+      if (!pagination || pageItems.length === 0 || collected.length >= MAX_ITEMS) break;
+    }
+
+    return { ok: true, items: collected.slice(0, MAX_ITEMS), fixture, pagesFetched };
   },
 
   async fetchListing(reference, source) {
-    const url = safeUrl(reference.startsWith("https://") ? reference : source.baseUrl, {});
+    const url = safeUrl(reference.startsWith("https://") ? reference : source.baseUrl, {}, source);
     if (!url) {
       return { ok: false, code: "not_configured", message: PROSPECTING_NOT_CONFIGURED_MESSAGE };
     }
-    const payload = await fetchJson(url);
+    const payload = await fetchJson(url, source);
     if (isFailure(payload)) return payload;
     const single = mapFeedItem(payload as Record<string, unknown>, source);
     return single
@@ -242,9 +389,10 @@ export const httpFeedProvider: ProspectingSourceProvider = {
       : { ok: false, code: "failed", message: "Anunțul nu a putut fi interpretat." };
   },
 
+
   async healthCheck(source) {
     const checkedAt = new Date().toISOString();
-    const url = safeUrl(source.baseUrl, {});
+    const url = safeUrl(source.baseUrl, {}, source);
     if (!source.enabled || !url) {
       return {
         ok: false,
@@ -253,7 +401,7 @@ export const httpFeedProvider: ProspectingSourceProvider = {
         checkedAt,
       };
     }
-    const payload = await fetchJson(url);
+    const payload = await fetchJson(url, source);
     if (isFailure(payload)) {
       return {
         ok: false,

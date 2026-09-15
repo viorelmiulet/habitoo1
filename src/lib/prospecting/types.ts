@@ -131,26 +131,50 @@ export type NormalizedProspect = {
   fixture: boolean;
 };
 
+/** Codul de eșec al unei colectări. `source_unavailable` = sursa nu există încă. */
+export type ProspectFetchFailureCode =
+  | "not_configured"
+  | "source_unavailable"
+  | "failed"
+  | "blocked";
+
 export type ProspectFetchResult =
-  | { ok: true; items: RawProspect[]; fixture: boolean }
-  | { ok: false; code: "not_configured" | "failed" | "blocked"; message: string };
+  | { ok: true; items: RawProspect[]; fixture: boolean; pagesFetched?: number }
+  | { ok: false; code: ProspectFetchFailureCode; message: string };
 
 export type SourceHealthResult = {
   ok: boolean;
-  code: "ok" | "not_configured" | "unreachable" | "blocked";
+  code: "ok" | "not_configured" | "source_unavailable" | "unreachable" | "blocked";
   message: string;
   checkedAt: string;
 };
 
 /**
+ * Disponibilitatea reală a unui provider:
+ * - `live` — poate returna date reale de piață dintr-o sursă autorizată;
+ * - `manual` — lucrează doar cu liste introduse de agenție (sau fixture);
+ * - `unavailable` — sursa nu are încă integrare autorizată; nu returnează date.
+ */
+export type ProspectingProviderAvailability = "live" | "manual" | "unavailable";
+
+export type ProspectingProviderCapability =
+  | "search"
+  | "fetch_listing"
+  | "pagination"
+  | "health_check";
+
+/**
  * Contractul unei surse de prospecting. Orice sursă viitoare (feed autorizat,
- * scraper intern, provider extern) implementează exact această interfață.
+ * scraper intern, provider extern) implementează exact această interfață:
+ * discover/fetch → normalize → (classify/dedupe/score în runtime) → audit.
  */
 export type ProspectingSourceProvider = {
   readonly key: string;
   readonly label: string;
   /** `true` doar dacă sursa poate returna date reale de piață. */
   readonly live: boolean;
+  readonly availability: ProspectingProviderAvailability;
+  readonly capabilities: readonly ProspectingProviderCapability[];
   search(criteria: ProspectSearchCriteria, source: ProspectSource): Promise<ProspectFetchResult>;
   fetchListing(reference: string, source: ProspectSource): Promise<ProspectFetchResult>;
   normalize(raw: RawProspect): NormalizedProspect;
@@ -159,3 +183,6 @@ export type ProspectingSourceProvider = {
 
 export const PROSPECTING_NOT_CONFIGURED_MESSAGE =
   "Sursa nu este configurată pentru colectare automată. Configurează un feed autorizat sau folosește o listă proprie.";
+
+export const PROSPECTING_SOURCE_UNAVAILABLE_MESSAGE =
+  "Această sursă nu are momentan o integrare autorizată în Habitoo, deci nu poate livra anunțuri reale.";
