@@ -15,7 +15,12 @@ import { housingTypeFor } from "./taxonomy";
 
 type Admin = SupabaseClient<Database>;
 
-export type ImobiliareCategory = { id: number; name: string };
+export type ImobiliareCategory = {
+  id: number;
+  name: string;
+  /** Tranzacția declarată de portal (`offer_type`), când o expune. */
+  offerType?: "sale" | "rent" | null;
+};
 
 export type CategoryCatalog = {
   categories: ImobiliareCategory[];
