@@ -1,12 +1,13 @@
 /**
- * Server functions specifice La Cheie: testarea conexiunii de producție,
+ * Server functions specifice La Cheie: activarea agenției, testarea conexiunii,
  * catalogul și jurnalul operațiilor.
  *
- * La Cheie are un singur mediu real (production), cu adresa API fixată
- * server-side. Configurarea rămâne exclusiv la Superadmin, iar cheia API nu
- * este niciodată returnată către frontend. Scrierile reale (creare,
- * actualizare, retragere) se fac doar prin fluxul normal de publicare din
- * pagina proprietății, niciodată automat la încărcarea UI.
+ * Model real de furnizor CRM: o singură cheie `lc_crm_…` păstrată exclusiv în
+ * secretele de server, iar fiecare agenție are `external_id`, status și
+ * versiune proprii. Cheia nu este niciodată returnată către frontend, logată
+ * sau salvată în audit. Scrierile pe oferte (creare, actualizare, retragere) se
+ * fac doar prin fluxul normal de publicare din pagina proprietății, niciodată
+ * automat la încărcarea UI.
  */
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
@@ -24,6 +25,16 @@ import {
   type LaCheieEnvironment,
   type LaCheieReadiness,
 } from "@/lib/portals/lacheie/config";
+import {
+  LACHEIE_AGENCY_FIELD_LABEL,
+  LACHEIE_AGENCY_STATUS_LABEL,
+  buildLaCheieAgencyPayload,
+  canActivateLaCheieAgency,
+  laCheieAgencyExternalId,
+  nextLaCheieAgencyVersion,
+  readLaCheieAgencyState,
+  type LaCheieAgencyStatus,
+} from "@/lib/portals/lacheie/agency";
 
 type AuthContext = {
   supabase: {
@@ -63,10 +74,32 @@ async function connectionRow(organizationId: string) {
   return data;
 }
 
+/** Conexiunea există chiar dacă agenția nu deține nicio cheie: cheia e a CRM-ului. */
+async function ensureConnectionRow(organizationId: string, actorId: string | null) {
+  const existing = await connectionRow(organizationId);
+  if (existing) return existing;
+  const admin = await loadAdmin();
+  const { data } = await admin
+    .from("portal_connections")
+    .insert({
+      organization_id: organizationId,
+      portal: LACHEIE_PORTAL_KEY,
+      direction: "habitoo_to_portal",
+      authentication_mode: "portal_api_key",
+      status: "pending",
+      settings: {} as never,
+      created_by: actorId,
+      updated_by: actorId,
+    })
+    .select("*")
+    .maybeSingle();
+  if (!data) throw new Error("Conexiunea La Cheie nu a putut fi creată.");
+  return data;
+}
+
 async function buildLaCheieContext(organizationId: string) {
   const definition = getPortalDefinition(LACHEIE_PORTAL_KEY);
   if (!definition) throw new Error("Portalul La Cheie nu este definit.");
-  const { decryptPortalCredential } = await import("@/lib/portals/crypto.server");
   const row = await connectionRow(organizationId);
   const settings = normalizeLaCheiePortalSettings(
     (row?.settings ?? {}) as Record<string, unknown>,
@@ -80,7 +113,8 @@ async function buildLaCheieContext(organizationId: string) {
       direction: (row?.direction ?? "habitoo_to_portal") as never,
       authenticationMode: (row?.authentication_mode ?? "portal_api_key") as never,
       externalAccountId: row?.external_account_id ?? null,
-      portalCredential: row ? decryptPortalCredential(row.portal_credentials_encrypted) : null,
+      // Cheia de furnizor este citită server-side din secret, nu din conexiune.
+      portalCredential: null,
       settings,
       allowLiveRequests: settings["allow_live"] === true,
     },
@@ -93,8 +127,7 @@ async function mergeSettings(
   actorId: string | null,
 ): Promise<void> {
   const admin = await loadAdmin();
-  const row = await connectionRow(organizationId);
-  if (!row) throw new Error("Conexiunea La Cheie nu este creată. Salvează mai întâi cheia API.");
+  const row = await ensureConnectionRow(organizationId, actorId);
   const settings = { ...((row.settings ?? {}) as Record<string, unknown>), ...patch };
   await admin
     .from("portal_connections")
@@ -115,6 +148,8 @@ async function logLaCheie(input: {
   sourceVersion?: string | null;
   httpStatus?: number | null;
   durationMs?: number | null;
+  requestId?: string | null;
+  portalResponse?: unknown;
 }) {
   const admin = await loadAdmin();
   await admin.from("portal_operation_logs").insert({
@@ -123,7 +158,7 @@ async function logLaCheie(input: {
     operation: input.operation,
     success: input.success,
     error_code: input.errorCode ?? null,
-    // Doar mesaje pregătite pentru utilizator: fără cheie API, fără payload brut.
+    // Doar mesaje pregătite pentru utilizator: fără cheie de furnizor, fără antete.
     error_message: input.errorMessage ?? null,
     property_id: input.propertyId ?? null,
     actor_id: input.actorId,
@@ -132,16 +167,40 @@ async function logLaCheie(input: {
     source_version: input.sourceVersion ?? null,
     http_status: input.httpStatus ?? null,
     duration_ms: input.durationMs ?? null,
+    portal_response:
+      input.portalResponse === undefined && !input.requestId
+        ? null
+        : ({
+            ...(input.requestId ? { request_id: input.requestId } : {}),
+            ...(input.portalResponse === undefined ? {} : { body: input.portalResponse }),
+          } as never),
   });
 }
 
+/* ------------------------------ stare pentru UI ---------------------------- */
+
+export type LaCheieAgencyView = {
+  externalId: string | null;
+  status: LaCheieAgencyStatus;
+  statusLabel: string;
+  version: string | null;
+  acceptedVersion: string | null;
+  syncedAt: string | null;
+  error: string | null;
+  /** Câmpuri reale lipsă în Habitoo, necesare la înregistrare. */
+  missingFields: string[];
+  canActivate: boolean;
+};
+
 export type LaCheieState = {
-  hasApiKey: boolean;
+  /** Cheia de furnizor CRM este configurată pe server (valoarea nu se expune). */
+  hasProviderKey: boolean;
   environment: LaCheieEnvironment;
   /** Adresa API documentată, fixată server-side (production-only). */
   baseUrl: string;
   propertiesPath: string;
   readiness: LaCheieReadiness;
+  agency: LaCheieAgencyView;
   catalog: {
     fetchedAt: string | null;
     optionGroups: number;
@@ -174,6 +233,40 @@ export type LaCheieState = {
   }[];
 };
 
+async function agencyView(organizationId: string): Promise<LaCheieAgencyView> {
+  const admin = await loadAdmin();
+  const row = await connectionRow(organizationId);
+  const state = readLaCheieAgencyState((row?.settings ?? {}) as Record<string, unknown>);
+  const { data: org } = await admin
+    .from("organizations")
+    .select("name, legal_name, email, material_email, phone, material_phone, material_address, city")
+    .eq("id", organizationId)
+    .maybeSingle();
+  const payload = buildLaCheieAgencyPayload({
+    name: org?.name ?? null,
+    legalName: org?.legal_name ?? null,
+    email: org?.email ?? null,
+    materialEmail: org?.material_email ?? null,
+    phone: org?.phone ?? null,
+    materialPhone: org?.material_phone ?? null,
+    address: org?.material_address ?? null,
+    city: org?.city ?? null,
+  });
+  return {
+    externalId: state.externalId ?? laCheieAgencyExternalId(organizationId),
+    status: state.status,
+    statusLabel: LACHEIE_AGENCY_STATUS_LABEL[state.status],
+    version: state.version,
+    acceptedVersion: state.acceptedVersion,
+    syncedAt: state.syncedAt,
+    error: state.error,
+    missingFields: payload.ok
+      ? []
+      : payload.missing.map((field) => LACHEIE_AGENCY_FIELD_LABEL[field] ?? field),
+    canActivate: canActivateLaCheieAgency(state.status) && payload.ok,
+  };
+}
+
 export const getLaCheieState = createServerFn({ method: "POST" })
   .middleware([requireActiveOrgAuth])
   .inputValidator((input: unknown) => z.object({ organizationId: z.string().uuid() }).parse(input))
@@ -185,16 +278,17 @@ export const getLaCheieState = createServerFn({ method: "POST" })
     const admin = await loadAdmin();
     const row = await connectionRow(organizationId);
     const settings = readLaCheieSettings((row?.settings ?? {}) as Record<string, unknown>);
-    const hasApiKey = Boolean(row?.portal_credentials_encrypted);
+    const { hasLaCheieCrmApiKey } = await import("@/lib/portals/lacheie/credentials.server");
+    const hasProviderKey = hasLaCheieCrmApiKey();
     const lastError = isLegacyLaCheieTestEnvironmentError(row?.last_sync_error)
       ? null
       : (row?.last_sync_error ?? null);
 
     const { readLaCheieCatalog } = await import("@/lib/portals/lacheie/catalog.server");
-    const catalog = await readLaCheieCatalog(admin, {
-      organizationId,
-      environment: settings.environment,
-    });
+    const [catalog, agency] = await Promise.all([
+      readLaCheieCatalog(admin, { organizationId, environment: settings.environment }),
+      agencyView(organizationId),
+    ]);
 
     const [{ data: logs }, { data: versions }] = await Promise.all([
       admin
@@ -218,14 +312,15 @@ export const getLaCheieState = createServerFn({ method: "POST" })
     ]);
 
     return {
-      hasApiKey,
+      hasProviderKey,
       environment: settings.environment,
       baseUrl: LACHEIE_PRODUCTION_BASE_URL,
       propertiesPath: settings.propertiesPath,
       readiness: laCheieReadiness({
-        hasApiKey,
+        hasApiKey: hasProviderKey && agency.status === "active",
         lastError,
       }),
+      agency,
       catalog: {
         fetchedAt: catalog?.fetchedAt ?? settings.catalogFetchedAt,
         optionGroups: catalog ? Object.keys(catalog.options).length : 0,
@@ -261,9 +356,263 @@ export const getLaCheieState = createServerFn({ method: "POST" })
     };
   });
 
+/* --------------------------- activarea agenției --------------------------- */
+
+async function crmConfig(organizationId: string, agencyExternalId: string | null) {
+  const { laCheieCrmApiKey } = await import("@/lib/portals/lacheie/credentials.server");
+  return {
+    baseUrl: activeBaseUrl(),
+    apiKey: laCheieCrmApiKey(),
+    environment: LACHEIE_ENVIRONMENT,
+    agencyExternalId,
+    connectionKey: `${organizationId}:${LACHEIE_ENVIRONMENT}`,
+  };
+}
+
 /**
- * Testarea conexiunii de producție: GET `/account` cu cheia API a agenției.
- * Read-only — nu creează, nu modifică și nu retrage niciun anunț.
+ * `PUT /agencies/{external_id}` — înregistrarea inițială (versiune 1) sau
+ * reactivarea (versiune mai mare). Payload-ul folosește exclusiv date reale ale
+ * agenției din Habitoo; ce lipsește este cerut în UI, nu inventat.
+ */
+export const activateLaCheieAgency = createServerFn({ method: "POST" })
+  .middleware([requireActiveOrgAuth])
+  .inputValidator((input: unknown) => z.object({ organizationId: z.string().uuid() }).parse(input))
+  .handler(async ({ data, context }) => {
+    const auth = context as unknown as AuthContext;
+    const organizationId = await requireSuperadminOrg(auth, data.organizationId);
+    const admin = await loadAdmin();
+
+    const row = await ensureConnectionRow(organizationId, auth.userId);
+    const state = readLaCheieAgencyState((row.settings ?? {}) as Record<string, unknown>);
+    if (!canActivateLaCheieAgency(state.status)) {
+      throw new Error(
+        "Conexiunea agenției este suspendată administrativ de La Cheie și nu poate fi reactivată din CRM.",
+      );
+    }
+
+    const { data: org } = await admin
+      .from("organizations")
+      .select(
+        "name, legal_name, email, material_email, phone, material_phone, material_address, city",
+      )
+      .eq("id", organizationId)
+      .maybeSingle();
+    const built = buildLaCheieAgencyPayload({
+      name: org?.name ?? null,
+      legalName: org?.legal_name ?? null,
+      email: org?.email ?? null,
+      materialEmail: org?.material_email ?? null,
+      phone: org?.phone ?? null,
+      materialPhone: org?.material_phone ?? null,
+      address: org?.material_address ?? null,
+      city: org?.city ?? null,
+    });
+    if (!built.ok) {
+      const labels = built.missing.map((field) => LACHEIE_AGENCY_FIELD_LABEL[field] ?? field);
+      throw new Error(
+        `Completează datele agenției înainte de activare: ${labels.join(", ")}. La Cheie cere denumire, email, telefon și adresă reale.`,
+      );
+    }
+
+    const externalId = state.externalId ?? laCheieAgencyExternalId(organizationId);
+    const version = nextLaCheieAgencyVersion(state);
+    const isReactivation = Boolean(state.version);
+
+    const { putLaCheieAgency } = await import("@/lib/portals/lacheie/agency.server");
+    const call = await putLaCheieAgency(await crmConfig(organizationId, externalId), {
+      externalId,
+      payload: built.payload,
+      version,
+    });
+
+    const ok = call.response.ok;
+    const message = ok
+      ? null
+      : (call.response.classification?.message ??
+        `La Cheie a răspuns HTTP ${call.response.status}.`);
+    const status: LaCheieAgencyStatus = ok
+      ? call.agency.status === "not_registered"
+        ? "active"
+        : call.agency.status
+      : state.status === "not_registered"
+        ? "error"
+        : state.status;
+
+    await mergeSettings(
+      organizationId,
+      {
+        lacheie_agency_external_id: externalId,
+        lacheie_agency_status: status,
+        lacheie_agency_version: version,
+        lacheie_agency_accepted_version: call.agency.acceptedVersion ?? version,
+        lacheie_agency_synced_at: new Date().toISOString(),
+        lacheie_agency_error: message,
+      },
+      auth.userId,
+    );
+    if (ok) {
+      await admin
+        .from("portal_connections")
+        .update({
+          status: "connected",
+          activated: true,
+          last_sync_status: "ok",
+          last_sync_error: null,
+          last_sync_at: new Date().toISOString(),
+          updated_by: auth.userId,
+        })
+        .eq("id", row.id);
+    }
+
+    await logLaCheie({
+      organizationId,
+      operation: isReactivation ? "agency_reactivate" : "agency_register",
+      success: ok,
+      errorMessage: message,
+      errorCode: ok ? null : (call.response.classification?.code ?? null),
+      actorId: auth.userId,
+      environment: LACHEIE_ENVIRONMENT,
+      externalId,
+      sourceVersion: version,
+      httpStatus: call.response.status,
+      durationMs: call.response.durationMs,
+      requestId: call.response.requestId,
+      portalResponse: call.response.body,
+    });
+
+    if (!ok) throw new Error(message ?? "Activarea agenției la La Cheie a eșuat.");
+    return {
+      externalId,
+      status,
+      version,
+      reactivated: isReactivation,
+      /** După reactivare, ofertele trebuie retrimise complet, cu versiuni mai mari. */
+      requiresResend: isReactivation,
+    };
+  });
+
+/** `GET /agencies/{external_id}` — statusul real raportat de portal. */
+export const refreshLaCheieAgencyStatus = createServerFn({ method: "POST" })
+  .middleware([requireActiveOrgAuth])
+  .inputValidator((input: unknown) => z.object({ organizationId: z.string().uuid() }).parse(input))
+  .handler(async ({ data, context }) => {
+    const auth = context as unknown as AuthContext;
+    const organizationId = await requireSuperadminOrg(auth, data.organizationId);
+    const row = await connectionRow(organizationId);
+    const state = readLaCheieAgencyState((row?.settings ?? {}) as Record<string, unknown>);
+    if (!state.externalId) throw new Error("Agenția nu este încă înregistrată la La Cheie.");
+
+    const { getLaCheieAgency } = await import("@/lib/portals/lacheie/agency.server");
+    const call = await getLaCheieAgency(await crmConfig(organizationId, state.externalId), {
+      externalId: state.externalId,
+    });
+    const ok = call.response.ok;
+    const message = ok
+      ? null
+      : (call.response.classification?.message ??
+        `La Cheie a răspuns HTTP ${call.response.status}.`);
+
+    await mergeSettings(
+      organizationId,
+      {
+        lacheie_agency_status: ok ? call.agency.status : state.status,
+        lacheie_agency_accepted_version: call.agency.acceptedVersion ?? state.acceptedVersion,
+        lacheie_agency_synced_at: new Date().toISOString(),
+        lacheie_agency_error: message,
+      },
+      auth.userId,
+    );
+    await logLaCheie({
+      organizationId,
+      operation: "agency_status",
+      success: ok,
+      errorMessage: message,
+      errorCode: ok ? null : (call.response.classification?.code ?? null),
+      actorId: auth.userId,
+      environment: LACHEIE_ENVIRONMENT,
+      externalId: state.externalId,
+      httpStatus: call.response.status,
+      durationMs: call.response.durationMs,
+      requestId: call.response.requestId,
+      portalResponse: call.response.body,
+    });
+
+    if (!ok) throw new Error(message ?? "Statusul agenției nu a putut fi citit.");
+    return {
+      status: call.agency.status,
+      statusLabel: LACHEIE_AGENCY_STATUS_LABEL[call.agency.status],
+      acceptedVersion: call.agency.acceptedVersion,
+    };
+  });
+
+/**
+ * `DELETE /agencies/{external_id}` — oprește sincronizarea și retrage ofertele
+ * acestei conexiuni. Necesită confirmare explicită din UI.
+ */
+export const deactivateLaCheieAgency = createServerFn({ method: "POST" })
+  .middleware([requireActiveOrgAuth])
+  .inputValidator((input: unknown) =>
+    z.object({ organizationId: z.string().uuid(), confirm: z.literal(true) }).parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    const auth = context as unknown as AuthContext;
+    const organizationId = await requireSuperadminOrg(auth, data.organizationId);
+    const admin = await loadAdmin();
+    const row = await connectionRow(organizationId);
+    const state = readLaCheieAgencyState((row?.settings ?? {}) as Record<string, unknown>);
+    if (!state.externalId) throw new Error("Agenția nu este înregistrată la La Cheie.");
+
+    const version = nextLaCheieAgencyVersion(state);
+    const { deleteLaCheieAgency: remove } = await import("@/lib/portals/lacheie/agency.server");
+    const call = await remove(await crmConfig(organizationId, state.externalId), {
+      externalId: state.externalId,
+      version,
+    });
+    const ok = call.response.ok || call.response.status === 404;
+    const message = ok
+      ? null
+      : (call.response.classification?.message ??
+        `La Cheie a răspuns HTTP ${call.response.status}.`);
+
+    await mergeSettings(
+      organizationId,
+      {
+        lacheie_agency_status: ok ? "inactive" : state.status,
+        lacheie_agency_version: version,
+        lacheie_agency_synced_at: new Date().toISOString(),
+        lacheie_agency_error: message,
+      },
+      auth.userId,
+    );
+    if (ok && row) {
+      await admin
+        .from("portal_connections")
+        .update({ status: "disabled", activated: false, updated_by: auth.userId })
+        .eq("id", row.id);
+    }
+    await logLaCheie({
+      organizationId,
+      operation: "agency_deactivate",
+      success: ok,
+      errorMessage: message,
+      errorCode: ok ? null : (call.response.classification?.code ?? null),
+      actorId: auth.userId,
+      environment: LACHEIE_ENVIRONMENT,
+      externalId: state.externalId,
+      sourceVersion: version,
+      httpStatus: call.response.status,
+      durationMs: call.response.durationMs,
+      requestId: call.response.requestId,
+      portalResponse: call.response.body,
+    });
+
+    if (!ok) throw new Error(message ?? "Dezactivarea conexiunii La Cheie a eșuat.");
+    return { status: "inactive" as const, version };
+  });
+
+/**
+ * Testarea conexiunii: GET `/account` cu cheia de furnizor și
+ * `X-Agency-External-ID`. Read-only — nu creează, nu modifică, nu retrage.
  */
 export const testLaCheieConnection = createServerFn({ method: "POST" })
   .middleware([requireActiveOrgAuth])
@@ -315,6 +664,7 @@ export const testLaCheieConnection = createServerFn({ method: "POST" })
     return { detail: message };
   });
 
+/** Catalogul (`/options`, `/counties`, `/cities`) folosește doar cheia CRM. */
 export const refreshLaCheieCatalog = createServerFn({ method: "POST" })
   .middleware([requireActiveOrgAuth])
   .inputValidator((input: unknown) => z.object({ organizationId: z.string().uuid() }).parse(input))
@@ -323,22 +673,12 @@ export const refreshLaCheieCatalog = createServerFn({ method: "POST" })
     const organizationId = await requireSuperadminOrg(auth, data.organizationId);
     const { ctx } = await buildLaCheieContext(organizationId);
     const settings = readLaCheieSettings(ctx.settings as Record<string, unknown>);
-    const base = activeBaseUrl(settings);
-    const credential = (ctx.portalCredential ?? "").trim();
-    if (!credential) {
-      throw new Error("Salvează cheia API La Cheie înainte de sincronizarea catalogului.");
-    }
 
     const admin = await loadAdmin();
     const { refreshLaCheieCatalog: refresh } = await import("@/lib/portals/lacheie/catalog.server");
     const result = await refresh(
       admin,
-      {
-        baseUrl: base,
-        apiKey: credential,
-        environment: settings.environment,
-        connectionKey: `${organizationId}:${settings.environment}`,
-      },
+      await crmConfig(organizationId, null),
       { organizationId, environment: settings.environment, actorId: auth.userId },
     );
 
