@@ -291,6 +291,8 @@ describe("construcția anunțului", () => {
     expect(built.listing.price_currency).toBe("EUR");
     expect(built.listing.location_id).toBe(3);
     expect(built.listing["agents"]).toEqual([5]);
+    expect(built.listing["phones"]).toEqual(["0700000001"]);
+    expect(built.listing["whatsapp_number"]).toBe("0700000001");
     expect(built.listing.data_properties["pets_allowed"]).toBe(true);
     expect(built.listing.data_properties["collaboration_commission_percentage"]).toBe(1.5);
     // Fără date reale de energie, câmpurile nu sunt trimise.
@@ -320,5 +322,17 @@ describe("construcția anunțului", () => {
       const result = buildImobiliareListing({ ...BASE_INPUT, ...patch });
       expect(result.ok).toBe(false);
     }
+  });
+
+  it("normalizează telefonul internațional și îl folosește și pentru WhatsApp", () => {
+    const built = buildImobiliareListing({
+      ...BASE_INPUT,
+      phone: "+40 700 000 001",
+      whatsappNumber: null,
+    });
+    expect(built.ok).toBe(true);
+    if (!built.ok) return;
+    expect(built.listing["phones"]).toEqual(["0700000001"]);
+    expect(built.listing["whatsapp_number"]).toBe("0700000001");
   });
 });
