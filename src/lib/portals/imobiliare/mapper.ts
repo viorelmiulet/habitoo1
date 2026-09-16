@@ -207,7 +207,9 @@ export function buildImobiliareListing(input: ImobiliareListingInput): Imobiliar
 
   put(data, "bathroom_count", positiveInt(input.bathrooms));
   put(data, "bedroom_count", positiveInt(input.bedrooms));
-  put(data, "floor_number", nonNegativeInt(input.floor));
+  // Portalul cere `floor_number` ca șir („Etaj trebuie să fie un șir”).
+  const floor = nonNegativeInt(input.floor);
+  put(data, "floor_number", floor === null ? null : String(floor));
   put(data, "number_of_floors", positiveInt(input.buildingFloors));
   put(data, "year_built", positiveInt(input.buildYear));
   put(data, "usable_surface", positiveNumber(input.usableSurface));
