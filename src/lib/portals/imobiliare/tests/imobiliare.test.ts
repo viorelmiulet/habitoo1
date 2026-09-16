@@ -385,6 +385,13 @@ describe("construcția anunțului", () => {
     expect(built.listing["whatsapp_number"]).toBe("0700000001");
   });
 
+  it("trimite etajul ca șir, cum cere portalul", () => {
+    const built = buildImobiliareListing({ ...BASE_INPUT, floor: 1 });
+    expect(built.ok).toBe(true);
+    if (!built.ok) return;
+    expect(built.listing.data_properties["floor_number"]).toBe("1");
+  });
+
   it("respinge lipsa unui număr mobil WhatsApp", () => {
     const built = buildImobiliareListing({
       ...BASE_INPUT,
