@@ -54,6 +54,7 @@ import {
   windowOptions,
 } from "@/lib/property-taxonomy";
 import { propertyTypeLabels } from "@/lib/labels";
+import { useMemo, useRef } from "react";
 
 export type PropertyDetailsValue = Record<string, unknown>;
 
@@ -82,7 +83,7 @@ type FieldCtx = {
   toggleInArray: (key: string, option: string, checked: boolean) => void;
 };
 
-const SelectField = memo(function SelectField({
+function SelectField({
   ctx,
   field,
   label,
@@ -114,9 +115,9 @@ const SelectField = memo(function SelectField({
       </Select>
     </div>
   );
-});
+}
 
-const NumberField = memo(function NumberField({
+function NumberField({
   ctx,
   field,
   label,
@@ -138,9 +139,9 @@ const NumberField = memo(function NumberField({
       />
     </div>
   );
-});
+}
 
-const BoolField = memo(function BoolField({
+function BoolField({
   ctx,
   field,
   label,
@@ -161,9 +162,9 @@ const BoolField = memo(function BoolField({
       </Label>
     </div>
   );
-});
+}
 
-const CheckGroup = memo(function CheckGroup({
+function CheckGroup({
   ctx,
   field,
   label,
@@ -197,9 +198,9 @@ const CheckGroup = memo(function CheckGroup({
       </div>
     </fieldset>
   );
-});
+}
 
-const RadioField = memo(function RadioField({
+function RadioField({
   ctx,
   field,
   label,
@@ -239,7 +240,7 @@ const RadioField = memo(function RadioField({
       ) : null}
     </fieldset>
   );
-});
+}
 
 export function PropertyDetailsFields({ idPrefix = "det", value, onChange }: Props) {
   const valueRef = useRef(value);
