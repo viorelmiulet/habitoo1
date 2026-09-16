@@ -406,3 +406,25 @@ describe("construcția anunțului", () => {
     if (!built.ok) expect(built.reasons.join(" ")).toContain("WhatsApp");
   });
 });
+
+describe("linkul public al anunțului", () => {
+  it("construiește URL-ul public din data.path returnat de portal", () => {
+    const body = {
+      data: {
+        id: 275991125,
+        path: "/oferta/garsoniera-de-vanzare-sector-6-militari-50mp-275991125",
+        state: "online",
+      },
+    };
+    expect(imobiliarePublicUrlFromBody(body)).toBe(
+      "https://www.imobiliare.ro/oferta/garsoniera-de-vanzare-sector-6-militari-50mp-275991125",
+    );
+  });
+
+  it("returnează null când portalul nu trimite path valid", () => {
+    expect(imobiliarePublicUrlFromBody(null)).toBeNull();
+    expect(imobiliarePublicUrlFromBody({})).toBeNull();
+    expect(imobiliarePublicUrlFromBody({ data: { path: null } })).toBeNull();
+    expect(imobiliarePublicUrlFromBody({ data: { path: "/altceva/x" } })).toBeNull();
+  });
+});
