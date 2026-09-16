@@ -262,6 +262,7 @@ export async function laCheieRequest(
         body: null,
         attempts: attempt,
         durationMs: Date.now() - startedAt,
+        requestId: null,
         classification,
       };
       if (classification.action === "stop") return last;
@@ -278,9 +279,11 @@ export async function laCheieRequest(
       body: null,
       attempts: attempt,
       durationMs: Date.now() - startedAt,
+      requestId: null,
       classification: classifyLaCheieNetworkError({ attempt, timeout: true }),
     }
   );
+
 }
 
 function sleep(ms: number): Promise<void> {
