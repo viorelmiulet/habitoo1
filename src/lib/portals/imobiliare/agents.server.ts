@@ -9,7 +9,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/integrations/supabase/types";
 import { IMOBILIARE_PATHS } from "./config";
 import { imobiliareAuthedRequest, type ImobiliareSession } from "./auth.server";
-import { normalizeImobiliarePhone } from "./contact";
+import { normalizeImobiliareMobile, normalizeImobiliarePhone } from "./contact";
 
 type Admin = SupabaseClient<Database>;
 
@@ -64,10 +64,19 @@ export async function ensureImobiliareAgent(input: {
   session: ImobiliareSession;
   organizationId: string;
   profile: { id: string; full_name: string | null; email: string | null; phone: string | null };
+  /** Telefon de rezervă (agenție) când agentul nu are unul valid. */
+  fallbackPhone?: string | null;
+  /** Mobil de rezervă (agenție) pentru WhatsApp. */
+  fallbackWhatsapp?: string | null;
 }): Promise<AgentSyncResult> {
   const { admin, session, organizationId, profile } = input;
   const email = profile.email?.trim().toLowerCase() ?? "";
-  const phone = normalizeImobiliarePhone(profile.phone);
+  // Portalul cere pentru agent `phones` și `whatsapp_number`, nu un `phone` simplu.
+  const phone =
+    normalizeImobiliarePhone(profile.phone) ?? normalizeImobiliarePhone(input.fallbackPhone ?? null);
+  const whatsapp =
+    normalizeImobiliareMobile(profile.phone) ??
+    normalizeImobiliareMobile(input.fallbackWhatsapp ?? null);
 
   const { data: existing } = await admin
     .from("imobiliare_agents")
@@ -108,6 +117,14 @@ export async function ensureImobiliareAgent(input: {
     return { ok: true, agentId: match.id, created: false };
   }
 
+  if (!phone || !whatsapp) {
+    return {
+      ok: false,
+      message:
+        "Agentul nu are un telefon mobil românesc valid (nici agenția): Imobiliare.ro cere telefon și număr WhatsApp pentru agent.",
+    };
+  }
+
   const created = await imobiliareAuthedRequest(session, {
     method: "POST",
     path: IMOBILIARE_PATHS.agents,
@@ -115,7 +132,8 @@ export async function ensureImobiliareAgent(input: {
     body: {
       name: profile.full_name?.trim() || email,
       email,
-      ...(phone ? { phone } : {}),
+      phones: [{ value: phone, type: "phone_number" }],
+      whatsapp_number: whatsapp,
     },
   });
   if (!created.ok) {

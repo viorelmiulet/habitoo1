@@ -206,6 +206,8 @@ async function logOperation(input: {
   httpStatus?: number | null;
   /** Corpul brut al răspunsului portalului (sanitizat de secrete). */
   portalResponse?: unknown;
+  /** Referința anunțului la portal, când există. */
+  externalId?: string | null;
 }) {
   const admin = await loadAdmin();
   const { portalResponseLog } = await import("@/lib/portals/errors");
@@ -219,6 +221,7 @@ async function logOperation(input: {
       ? {}
       : { http_status: input.httpStatus }),
     ...(response ? { portal_response: response as never } : {}),
+    ...(input.externalId ? { external_id: input.externalId } : {}),
     portal: input.portal,
     operation: input.operation,
     success: input.success,
@@ -965,10 +968,20 @@ export async function executeListingAction(input: {
   const now = new Date().toISOString();
   // Portalurile asincrone (Storia) raportează starea reală a anunțului: un
   // anunț acceptat, dar aflat în validare, nu trebuie marcat „publicat”.
+  const fallbackStatus =
+    action === "withdraw" ? "withdrawn" : action === "update" ? "updated" : "published";
+  /**
+   * `portal_listings.status` are un vocabular fix în baza de date: o valoare
+   * proprie portalului (ex. „online”) ar respinge salvarea și starea reală a
+   * anunțului s-ar pierde în silence.
+   */
+  const ALLOWED_STATUS = ["pending", "published", "updated", "withdrawn", "error"];
+  const reported = result.ok ? (result.data.portalStatus ?? null) : null;
   const status = !result.ok
     ? "error"
-    : (result.data.portalStatus ??
-      (action === "withdraw" ? "withdrawn" : action === "update" ? "updated" : "published"));
+    : reported && ALLOWED_STATUS.includes(reported)
+      ? reported
+      : fallbackStatus;
   /**
    * Explicația arătată agentului. O operațiune poate reuși tehnic, dar
    * portalul să raporteze o stare problematică (ex. anunț respins la
@@ -1030,6 +1043,7 @@ export async function executeListingAction(input: {
     errorMessage: result.ok ? null : result.message,
     ...(result.ok ? {} : { httpStatus: result.httpStatus ?? null }),
     ...(result.ok ? {} : { portalResponse: result.portalResponse ?? null }),
+    ...(result.ok && result.data.externalId ? { externalId: result.data.externalId } : {}),
     propertyId,
     actorId,
   });

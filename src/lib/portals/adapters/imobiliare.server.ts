@@ -206,6 +206,16 @@ async function sendImages(
   return { ok: true, sent };
 }
 
+/** Anunțul există deja la portal cu aceeași referință (creare reluată). */
+function isDuplicateReference(body: unknown): boolean {
+  if (!body || typeof body !== "object") return false;
+  const errors = (body as Record<string, unknown>)["errors"];
+  if (!errors || typeof errors !== "object") return false;
+  const entry = (errors as Record<string, unknown>)["custom_reference"];
+  const text = Array.isArray(entry) ? entry.join(" ") : String(entry ?? "");
+  return /unique/i.test(text);
+}
+
 async function publishPlan(input: {
   ctx: PortalContext;
   session: ImobiliareSession;
@@ -213,15 +223,26 @@ async function publishPlan(input: {
   images: { dataUrl: string; bytes: number }[];
   mode: WriteMode;
 }): Promise<{ ok: true; steps: string[] } | { ok: false; fail: PortalFailShape }> {
-  const { ctx, session, plan, images, mode } = input;
+  const { ctx, session, plan, images } = input;
+  let mode = input.mode;
   const steps: string[] = [];
 
-  const created = await imobiliareAuthedRequest(session, {
+  let created = await imobiliareAuthedRequest(session, {
     method: mode === "create" ? "POST" : "PUT",
     path: mode === "create" ? listingPath() : listingPath(plan.customReference),
     connectionKey: ctx.organizationId,
     body: plan.listing,
   });
+  // Referința există deja (o creare anterioară a reușit parțial): continuăm cu update.
+  if (!created.ok && mode === "create" && isDuplicateReference(created.body)) {
+    mode = "update";
+    created = await imobiliareAuthedRequest(session, {
+      method: "PUT",
+      path: listingPath(plan.customReference),
+      connectionKey: ctx.organizationId,
+      body: plan.listing,
+    });
+  }
   if (!created.ok) return { ok: false, fail: failFrom(created, mode === "create" ? "create" : "update") };
   steps.push(mode === "create" ? "anunț creat (draft)" : "anunț actualizat");
 
@@ -341,7 +362,8 @@ async function write(
         externalId: serializeImobiliareReferences(resolvedPlans.map((plan) => plan.customReference)),
         live: true,
         detail: steps.join("; "),
-        portalStatus: IMOBILIARE_STATUS_ONLINE,
+        // „online” la portal = „published” în starea locală (constrângere DB).
+        portalStatus: mode === "update" ? "updated" : "published",
         processed: payload.plans.length,
         message: warnings.length ? warnings.join(" ") : undefined,
       },
@@ -405,7 +427,8 @@ async function withdraw(
         externalId: serializeImobiliareReferences(externalIds),
         live: true,
         detail: "Anunțul a fost trecut în draft la Imobiliare.ro (retras din public).",
-        portalStatus: IMOBILIARE_STATUS_DRAFT,
+        // Starea salvată local folosește vocabularul CRM, nu al portalului.
+        portalStatus: "withdrawn",
       },
     };
   } catch (error) {
