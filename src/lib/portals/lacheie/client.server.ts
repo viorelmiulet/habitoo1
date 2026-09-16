@@ -209,6 +209,9 @@ export async function laCheieRequest(
         Authorization: `Bearer ${config.apiKey}`,
         Accept: "application/json",
       };
+      if (scope === "agency" && config.agencyExternalId) {
+        headers[LACHEIE_AGENCY_HEADER] = config.agencyExternalId;
+      }
       if (isWrite) {
         headers["Content-Type"] = "application/json";
         if (input.sourceVersion) headers[LACHEIE_SOURCE_VERSION_HEADER] = input.sourceVersion;
@@ -236,11 +239,14 @@ export async function laCheieRequest(
         body,
         attempts: attempt,
         durationMs: Date.now() - startedAt,
+        requestId:
+          response.headers.get("x-request-id") ?? response.headers.get("request-id") ?? null,
         classification,
         ...(response.status === 409
           ? { conflict: { acceptedVersion: acceptedVersionFromConflict(body) } }
           : {}),
       };
+
       if (classification.action === "ok") return last;
       if (classification.action === "retry_same" || classification.action === "retry_after") {
         if (classification.waitMs > 0) await sleep(classification.waitMs);
