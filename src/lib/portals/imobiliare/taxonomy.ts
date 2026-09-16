@@ -11,8 +11,19 @@ function key(value: string | null | undefined): string {
   return value ? normalizeRoName(value) : "";
 }
 
-/** Tip de proprietate → `housing_type`. */
+/**
+ * Tip de proprietate → `housing_type`.
+ * Habitoo stochează slugurile în engleză (`apartment`, `house`, `commercial`…),
+ * dar acceptăm și denumirile românești introduse manual.
+ */
 const HOUSING_TYPE: Record<string, string> = {
+  apartment: "apartment",
+  studio: "studio",
+  house: "house",
+  land: "land",
+  commercial: "commercial_space",
+  office: "office_space",
+  industrial: "industrial_space",
   apartament: "apartment",
   garsoniera: "studio",
   casa: "house",
