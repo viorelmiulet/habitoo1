@@ -15,6 +15,8 @@ export type ImobiliareLocationRow = {
   parentId: number | null;
   depth: number;
   name: string;
+  /** `is_hidden` din dumpul lor: zonele ascunse rămân valabile, dar nu sunt preferate. */
+  hidden?: boolean;
 };
 
 export type ImobiliareLocationParse = {
@@ -27,6 +29,29 @@ const ID_KEYS = ["id", "location_id", "idlocatie", "id_locatie"];
 const PARENT_KEYS = ["parent_id", "parentid", "id_parinte", "parent"];
 const DEPTH_KEYS = ["depth", "level", "nivel"];
 const NAME_KEYS = ["name", "nume", "denumire", "title", "label"];
+const RO_NAME_KEYS = ["translatable_title", "titles", "titluri"];
+const HIDDEN_KEYS = ["is_hidden", "hidden", "ascuns"];
+const DELETED_KEYS = ["deleted_at", "sters_la"];
+
+/** Extrage denumirea românească din JSON-ul lor (`{"en": ..., "ro": ...}`). */
+export function romanianTitle(raw: string | undefined): string | null {
+  if (!raw) return null;
+  const cleaned = raw
+    .trim()
+    .replace(/^'(.*)'$/s, "$1")
+    .replace(/\\"/g, '"')
+    .replace(/\\'/g, "'");
+  const match = /"ro"\s*:\s*"((?:[^"\\]|\\.)*)"/.exec(cleaned);
+  if (!match) return null;
+  const value = (match[1] as string).replace(/\\"/g, '"');
+  // Dumpul folosește entități HTML numerice pentru diacritice (ex. `Jude&#539;ul`).
+  const decoded = value
+    .replace(/&#(\d+);/g, (_all, code: string) => String.fromCodePoint(Number(code)))
+    .replace(/&#x([0-9a-f]+);/gi, (_all, code: string) => String.fromCodePoint(parseInt(code, 16)))
+    .replace(/&amp;/g, "&");
+  return decoded.trim() || null;
+}
+
 
 function pick(header: string[], keys: string[]): number {
   for (const key of keys) {
