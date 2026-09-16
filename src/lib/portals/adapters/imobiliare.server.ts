@@ -291,7 +291,8 @@ async function publishPlan(input: {
     };
   }
   steps.push("promovat online");
-  return { ok: true, steps };
+  const publicUrl = await fetchImobiliarePublicUrl(session, ctx, plan.customReference);
+  return { ok: true, steps, publicUrl };
 }
 
 async function write(
