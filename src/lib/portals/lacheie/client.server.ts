@@ -185,11 +185,16 @@ export async function laCheieRequest(
         signal: controller.signal,
       });
       const body = await readBody(response);
-      const classification = classifyLaCheieStatus({
+      const baseClassification = classifyLaCheieStatus({
         status: response.status,
         attempt,
         retryAfter: response.headers.get("retry-after"),
       });
+      const details =
+        baseClassification.code === "INVALID_REQUEST" ? describeLaCheieValidation(body) : null;
+      const classification = details
+        ? { ...baseClassification, message: `${baseClassification.message} (${details})` }
+        : baseClassification;
       last = {
         ok: classification.action === "ok",
         status: response.status,
