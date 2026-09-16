@@ -71,6 +71,8 @@ const REQUEST_TIMEOUT_MS = 15_000;
 type Counter = { count: number; resetAt: number };
 const readCounters = new Map<string, Counter>();
 const writeCounters = new Map<string, Counter>();
+const agencyCounters = new Map<string, Counter>();
+
 
 function hitCounter(store: Map<string, Counter>, key: string, limit: number): boolean {
   const now = Date.now();
