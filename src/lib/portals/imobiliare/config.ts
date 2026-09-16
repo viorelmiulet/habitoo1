@@ -17,7 +17,20 @@ export const IMOBILIARE_PATHS = {
   agents: "/api/v3/agents",
   /** Endpointuri candidate pentru catalogul de categorii (`category_api`). */
   categories: ["/api/v3/categories", "/api/v3/listings/categories"] as const,
+  /** Inventarul serviciilor de promovare, pe `slot_type`. */
+  promotionSlots: "/api/v3/promotions/slots",
+  /** Anunțurile care consumă sloturile unui `slot_type`. */
+  promotionListings: "/api/v3/promotions/listings",
 } as const;
+
+export function promotionSlotsPath(slotType: string): string {
+  return `${IMOBILIARE_PATHS.promotionSlots}/${encodeURIComponent(slotType)}`;
+}
+
+export function promotionListingsPath(slotType: string): string {
+  return `${IMOBILIARE_PATHS.promotionListings}/${encodeURIComponent(slotType)}`;
+}
+
 
 export function listingPath(customReference?: string): string {
   return customReference
