@@ -31,6 +31,7 @@ import {
   IMOBILIARE_PATHS,
   IMOBILIARE_STATUS_DRAFT,
   IMOBILIARE_STATUS_ONLINE,
+  imobiliarePublicUrlFromBody,
   listingPath,
   mediasPath,
   promotionsPath,
