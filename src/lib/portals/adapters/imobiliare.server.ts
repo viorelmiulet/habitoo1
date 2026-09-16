@@ -31,6 +31,7 @@ import {
   IMOBILIARE_PATHS,
   IMOBILIARE_STATUS_DRAFT,
   IMOBILIARE_STATUS_ONLINE,
+  imobiliarePublicUrlFromBody,
   listingPath,
   mediasPath,
   promotionsPath,
@@ -216,13 +217,28 @@ function isDuplicateReference(body: unknown): boolean {
   return /unique/i.test(text);
 }
 
+/** Linkul public al anunțului, din câmpul `path` returnat de GET listing. */
+async function fetchImobiliarePublicUrl(
+  session: ImobiliareSession,
+  ctx: PortalContext,
+  customReference: string,
+): Promise<string | null> {
+  const response = await imobiliareAuthedRequest(session, {
+    method: "GET",
+    path: listingPath(customReference),
+    connectionKey: ctx.organizationId,
+  });
+  if (!response.ok) return null;
+  return imobiliarePublicUrlFromBody(response.body);
+}
+
 async function publishPlan(input: {
   ctx: PortalContext;
   session: ImobiliareSession;
   plan: ImobiliareListingPlan;
   images: { dataUrl: string; bytes: number }[];
   mode: WriteMode;
-}): Promise<{ ok: true; steps: string[] } | { ok: false; fail: PortalFailShape }> {
+}): Promise<{ ok: true; steps: string[]; publicUrl: string | null } | { ok: false; fail: PortalFailShape }> {
   const { ctx, session, plan, images } = input;
   let mode = input.mode;
   const steps: string[] = [];
@@ -270,7 +286,8 @@ async function publishPlan(input: {
     };
   }
   steps.push("promovat online");
-  return { ok: true, steps };
+  const publicUrl = await fetchImobiliarePublicUrl(session, ctx, plan.customReference);
+  return { ok: true, steps, publicUrl };
 }
 
 async function write(
@@ -335,6 +352,7 @@ async function write(
       };
     });
     const steps: string[] = [];
+    const publicUrls: string[] = [];
     for (const plan of resolvedPlans) {
       const planMode: WriteMode = storedReferences.includes(plan.customReference) ? "update" : mode;
       const result = await withDurableImobiliareLock({
@@ -354,6 +372,7 @@ async function write(
       });
       if (!result.ok) return result.fail;
       steps.push(`${plan.customReference}: ${result.steps.join(" → ")}`);
+      if (result.publicUrl) publicUrls.push(result.publicUrl);
     }
 
     return {
@@ -365,6 +384,7 @@ async function write(
         // „online” la portal = „published” în starea locală (constrângere DB).
         portalStatus: mode === "update" ? "updated" : "published",
         processed: payload.plans.length,
+        publicUrl: publicUrls[0] ?? null,
         message: warnings.length ? warnings.join(" ") : undefined,
       },
     };

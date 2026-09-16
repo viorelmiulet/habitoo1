@@ -82,3 +82,17 @@ export function imobiliareCustomReference(reference: string | null, propertyId: 
 export function isValidCustomReference(value: string): boolean {
   return /^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$/.test(value);
 }
+
+/**
+ * Linkul public al anunțului, construit din câmpul `data.path` returnat de
+ * GET /api/v3/listings/{ref} (ex. `/oferta/...-275991125`). `null` dacă
+ * portalul nu îl trimite sau forma nu e cea așteptată.
+ */
+export function imobiliarePublicUrlFromBody(body: unknown): string | null {
+  if (!body || typeof body !== "object") return null;
+  const data = (body as Record<string, unknown>)["data"];
+  if (!data || typeof data !== "object") return null;
+  const path = (data as Record<string, unknown>)["path"];
+  if (typeof path !== "string" || !path.startsWith("/oferta/")) return null;
+  return `${IMOBILIARE_BASE_URL}${path}`;
+}
