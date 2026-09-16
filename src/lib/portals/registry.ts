@@ -326,16 +326,41 @@ export const PORTALS: PortalDefinition[] = [
   },
   {
     id: "imobiliare_ro",
-
     display_name: "Imobiliare.ro",
-    description: "Integrare de publicare anunțuri. Necesită acord și documentație de la portal.",
+    description:
+      "Publicare anunțuri prin API-ul v3 Imobiliare.ro. Agenția își conectează contul o singură dată (utilizator + parolă); ulterior folosim doar tokenul, reînnoit automat.",
     logo: "IR",
-    status: "coming_soon",
-    directions: [],
-    authentication: [],
-    capabilities: [],
-    configuration_schema: { fields: [] },
+    status: "available",
+    directions: ["habitoo_to_portal"],
+    authentication: ["portal_api_key"],
+    capabilities: [
+      "test_connection",
+      "publish_listing",
+      "update_listing",
+      "withdraw_listing",
+      "sync",
+      "fetch_agents",
+    ],
+    configuration_schema: {
+      fields: [
+        {
+          key: "external_account_id",
+          label: "Utilizator Imobiliare.ro",
+          help: "Utilizatorul contului de agenție de la Imobiliare.ro.",
+          target: "external_account_id",
+        },
+        {
+          key: "password",
+          label: "Parola contului Imobiliare.ro",
+          help: "Folosită o singură dată, la conectare. Ulterior păstrăm doar tokenul, criptat.",
+          secret: true,
+          target: "credentials",
+        },
+      ],
+    },
     website: "https://www.imobiliare.ro",
+    notes:
+      "Publicarea are doi pași la portal (creare draft + promovare online), tratați ca o singură acțiune „Publică”: dacă promovarea eșuează, operațiunea nu este raportată ca succes. Imaginile se trimit codificate în payload, în loturi, cu watermark-ul agenției dacă este activ. Agenții se sincronizează automat la prima publicare. Locațiile vin din nomenclatorul importat în Superadmin (este obligatorie o zonă de nivel 3); fără nomenclator, publicarea este blocată explicit. Retragerea trece anunțul în draft (reversibil), ștergerea definitivă se face doar la ștergerea proprietății. Nu implementăm promovări plătite, documente sau open house.",
   },
   {
     id: "storia",
