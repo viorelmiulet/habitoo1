@@ -86,13 +86,26 @@ export function isValidCustomReference(value: string): boolean {
 /**
  * Linkul public al anunțului, construit din câmpul `data.path` returnat de
  * GET /api/v3/listings/{ref} (ex. `/oferta/...-275991125`). `null` dacă
- * portalul nu îl trimite sau forma nu e cea așteptată.
+ * portalul nu îl trimite, forma nu e cea așteptată sau anunțul nu este încă
+ * `online` (un anunț în ciornă redirectează către prima pagină a portalului).
  */
 export function imobiliarePublicUrlFromBody(body: unknown): string | null {
   if (!body || typeof body !== "object") return null;
   const data = (body as Record<string, unknown>)["data"];
   if (!data || typeof data !== "object") return null;
-  const path = (data as Record<string, unknown>)["path"];
+  const record = data as Record<string, unknown>;
+  const state = typeof record["state"] === "string" ? record["state"] : null;
+  if (state !== null && state !== IMOBILIARE_STATUS_ONLINE) return null;
+  const path = record["path"];
   if (typeof path !== "string" || !path.startsWith("/oferta/")) return null;
   return `${IMOBILIARE_BASE_URL}${path}`;
+}
+
+/** Starea raportată de portal pentru anunț (`online`, `draft`, ...). */
+export function imobiliareStateFromBody(body: unknown): string | null {
+  if (!body || typeof body !== "object") return null;
+  const data = (body as Record<string, unknown>)["data"];
+  if (!data || typeof data !== "object") return null;
+  const state = (data as Record<string, unknown>)["state"];
+  return typeof state === "string" && state.trim() ? state.trim() : null;
 }

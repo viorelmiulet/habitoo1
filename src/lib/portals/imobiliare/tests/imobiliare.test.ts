@@ -13,6 +13,7 @@ import {
 import {
   imobiliareCustomReference,
   imobiliarePublicUrlFromBody,
+  imobiliareStateFromBody,
   isValidCustomReference,
 } from "../config";
 import { describeImobiliareValidation, classifyImobiliareStatus } from "../http";
@@ -426,5 +427,13 @@ describe("linkul public al anunțului", () => {
     expect(imobiliarePublicUrlFromBody({})).toBeNull();
     expect(imobiliarePublicUrlFromBody({ data: { path: null } })).toBeNull();
     expect(imobiliarePublicUrlFromBody({ data: { path: "/altceva/x" } })).toBeNull();
+  });
+
+  it("nu întoarce link când anunțul nu este online la portal", () => {
+    expect(
+      imobiliarePublicUrlFromBody({ data: { path: "/oferta/test-1", state: "draft" } }),
+    ).toBeNull();
+    expect(imobiliareStateFromBody({ data: { state: "draft" } })).toBe("draft");
+    expect(imobiliareStateFromBody({ data: {} })).toBeNull();
   });
 });
