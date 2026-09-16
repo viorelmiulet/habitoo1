@@ -124,11 +124,14 @@ export function categoryApiFor(
       const name = normalizeRoName(category.name);
       const typeHit = hints.some((hint) => name.includes(normalizeRoName(hint)));
       if (!typeHit) return null;
-      const transactionHit = wanted.some((word) => name.includes(word));
+      // `offer_type` declarat de portal are prioritate față de ghicirea din nume.
+      if (category.offerType && category.offerType !== transaction) return null;
+      const transactionHit =
+        category.offerType === transaction || wanted.some((word) => name.includes(word));
       const transactionMiss = (transaction === "sale" ? ["inchiriere"] : ["vanzare"]).some((word) =>
         name.includes(word),
       );
-      if (transactionMiss) return null;
+      if (!category.offerType && transactionMiss) return null;
       return { id: category.id, score: transactionHit ? 2 : 1 };
     })
     .filter((entry): entry is { id: number; score: number } => entry !== null)
