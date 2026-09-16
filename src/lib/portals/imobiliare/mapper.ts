@@ -188,6 +188,14 @@ export function buildImobiliareListing(input: ImobiliareListingInput): Imobiliar
     reasons.push("Oferta nu are coordonate reale pe hartă.");
   }
   if (input.imageCount < 1) reasons.push("Oferta nu are nicio imagine publicabilă.");
+  const phone = normalizeRoPhone(input.phone);
+  if (!phone) {
+    reasons.push(
+      "Lipsește un telefon de contact valid (agent sau agenție), obligatoriu pentru Imobiliare.ro.",
+    );
+  }
+  const whatsapp = normalizeRoPhone(input.whatsappNumber) ?? phone;
+
   if (input.agentIds.length === 0) {
     reasons.push("Agentul ofertei nu este încă sincronizat cu Imobiliare.ro.");
   }
