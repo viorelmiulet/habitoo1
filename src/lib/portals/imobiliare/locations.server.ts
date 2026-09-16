@@ -9,6 +9,7 @@ import {
   denormalizeLocations,
   matchImobiliareLocation,
   parseImobiliareLocations,
+  imobiliareCityAliases,
   type LocationCandidate,
   type LocationMatch,
 } from "./locations";
@@ -92,14 +93,15 @@ export async function resolveImobiliareLocation(
   if (!city) {
     return { ok: false, reason: "Oferta nu are orașul completat." };
   }
-  const cityNormalized = normalizeRoName(city);
+  const cityAliases = imobiliareCityAliases(city);
   const countyNormalized = input.county ? normalizeRoName(input.county) : null;
 
   let query = admin
     .from("imobiliare_locations")
     .select("id, name, depth, city_normalized, county_normalized")
     .eq("depth", 3)
-    .eq("city_normalized", cityNormalized)
+    .in("city_normalized", cityAliases)
+    .order("is_hidden", { ascending: true })
     .order("name", { ascending: true })
     .limit(500);
   if (countyNormalized) query = query.eq("county_normalized", countyNormalized);
@@ -110,8 +112,9 @@ export async function resolveImobiliareLocation(
       .from("imobiliare_locations")
       .select("id, name, depth, city_normalized, county_normalized")
       .eq("depth", 3)
-      .eq("city_normalized", cityNormalized)
-      .order("name", { ascending: true })
+      .in("city_normalized", cityAliases)
+      .order("is_hidden", { ascending: true })
+    .order("name", { ascending: true })
       .limit(500);
     data = retry.data;
   }
