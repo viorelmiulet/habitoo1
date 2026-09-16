@@ -37,6 +37,10 @@ export type ImobiliareListingInput = {
   latitude: number | null;
   longitude: number | null;
   imageCount: number;
+  /** Portalul cere obligatoriu telefon de contact și număr WhatsApp. */
+  phone: string | null;
+  whatsappNumber: string | null;
+
 
   propertyType: string | null;
   layout: string | null;
