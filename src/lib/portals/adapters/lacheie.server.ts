@@ -1,24 +1,27 @@
 /**
  * Adaptor La Cheie — API de publicare a ofertelor (portal publication only).
  *
- * Contract implementat conform documentației La Cheie v1:
- *   GET    {base}/account                    verificarea cheii (test connection)
- *   GET    {base}/options|/counties|/cities  catalogul de id-uri
+ * Contract implementat conform documentației La Cheie v1 pentru furnizori CRM:
+ *   GET    {base}/account                    verificarea conexiunii agenției
+ *   GET    {base}/options|/counties|/cities  catalogul de id-uri (cheia CRM)
  *   GET    {base}/properties                 listare
  *   GET    {base}/properties/{external_id}   citire
  *   POST   {base}/properties                 creare (stare completă)
  *   PUT    {base}/properties/{external_id}   actualizare (stare completă, fără PATCH)
  *   DELETE {base}/properties/{external_id}   retragere
  *
- * Autentificare: `Authorization: Bearer <cheie API a agenției>`, salvată
- * criptat. Scrierile trimit `Content-Type: application/json` și
- * `X-Source-Version` (text zecimal, separat per external_id).
+ * Autentificare: `Authorization: Bearer <cheia unică de furnizor CRM>`, citită
+ * din secretul de server. Agențiile nu primesc și nu văd această cheie; ele
+ * sunt identificate prin `X-Agency-External-ID`, după activarea conexiunii.
+ * Scrierile trimit `Content-Type: application/json` și `X-Source-Version`
+ * (text zecimal, separat per external_id de ofertă).
  *
  * La Cheie are un singur mediu real: production. Adresa API este fixată
  * server-side; scrierile reale rămân în spatele fluxului normal de publicare
  * cu aprobare. Nu există lead import, bulk import, pull periodic sau
  * webhook-uri în această etapă.
  */
+
 import type {
   ConnectionStatusOutcome,
   ListingDiagnostics,
