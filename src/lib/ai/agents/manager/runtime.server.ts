@@ -374,7 +374,14 @@ function summarize(state: ManagerState): string {
   return `Am rulat ${done} pași din planul „${MANAGER_INTENT_LABELS[state.intent]}”.`;
 }
 
-type StepOutcome = { state: ManagerState; stop: boolean };
+type StepOutcome = {
+  state: ManagerState;
+  stop: boolean;
+  /** `true` cere reluarea ACELUIAȘI pas (eroare tranzitorie). */
+  retry?: boolean;
+  retryMessage?: string;
+};
+
 
 async function runStep(
   admin: Admin,
