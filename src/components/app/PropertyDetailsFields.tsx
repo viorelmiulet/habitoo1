@@ -65,35 +65,42 @@ type Props = {
 
 const NONE = "__none__";
 
-export function PropertyDetailsFields({ idPrefix = "det", value, onChange }: Props) {
-  const str = (key: string) => (value[key] == null ? "" : String(value[key]));
-  const arr = (key: string) => (Array.isArray(value[key]) ? (value[key] as string[]) : []);
-  const bool = (key: string) => value[key] === true;
+/**
+ * IMPORTANT: câmpurile sunt componente definite la nivel de modul, NU în corpul
+ * `PropertyDetailsFields`. Definite în interior, React ar primi un tip nou de
+ * componentă la fiecare randare, ar demonta și remonta toate câmpurile
+ * (pierderea focusului la tastare și saltul poziției de derulare la bifare).
+ */
 
-  const setField = (key: string, v: unknown) => onChange({ [key]: v });
+type FieldCtx = {
+  idPrefix: string;
+  /** Citește valorile ca text / listă / boolean. */
+  str: (key: string) => string;
+  arr: (key: string) => string[];
+  bool: (key: string) => boolean;
+  setField: (key: string, v: unknown) => void;
+  toggleInArray: (key: string, option: string, checked: boolean) => void;
+};
 
-  const toggleInArray = (key: string, option: string, checked: boolean) => {
-    const current = arr(key);
-    const next = checked ? [...new Set([...current, option])] : current.filter((x) => x !== option);
-    onChange({ [key]: next });
-  };
-
-  const SelectField = ({
-    field,
-    label,
-    options,
-  }: {
-    field: string;
-    label: string;
-    options: readonly string[];
-  }) => (
+const SelectField = memo(function SelectField({
+  ctx,
+  field,
+  label,
+  options,
+}: {
+  ctx: FieldCtx;
+  field: string;
+  label: string;
+  options: readonly string[];
+}) {
+  return (
     <div className="space-y-2">
-      <Label htmlFor={`${idPrefix}-${field}`}>{label}</Label>
+      <Label htmlFor={`${ctx.idPrefix}-${field}`}>{label}</Label>
       <Select
-        value={str(field) || NONE}
-        onValueChange={(v) => setField(field, v === NONE ? null : v)}
+        value={ctx.str(field) || NONE}
+        onValueChange={(v) => ctx.setField(field, v === NONE ? null : v)}
       >
-        <SelectTrigger id={`${idPrefix}-${field}`}>
+        <SelectTrigger id={`${ctx.idPrefix}-${field}`}>
           <SelectValue placeholder="Selectează" />
         </SelectTrigger>
         <SelectContent>
@@ -107,55 +114,80 @@ export function PropertyDetailsFields({ idPrefix = "det", value, onChange }: Pro
       </Select>
     </div>
   );
+});
 
-  const NumberField = ({ field, label }: { field: string; label: string }) => (
+const NumberField = memo(function NumberField({
+  ctx,
+  field,
+  label,
+}: {
+  ctx: FieldCtx;
+  field: string;
+  label: string;
+}) {
+  return (
     <div className="space-y-2">
-      <Label htmlFor={`${idPrefix}-${field}`}>{label}</Label>
+      <Label htmlFor={`${ctx.idPrefix}-${field}`}>{label}</Label>
       <Input
-        id={`${idPrefix}-${field}`}
+        id={`${ctx.idPrefix}-${field}`}
         type="number"
         inputMode="decimal"
         min={0}
-        value={str(field)}
-        onChange={(e) => setField(field, e.target.value === "" ? null : Number(e.target.value))}
+        value={ctx.str(field)}
+        onChange={(e) => ctx.setField(field, e.target.value === "" ? null : Number(e.target.value))}
       />
     </div>
   );
+});
 
-  const BoolField = ({ field, label }: { field: string; label: string }) => (
+const BoolField = memo(function BoolField({
+  ctx,
+  field,
+  label,
+}: {
+  ctx: FieldCtx;
+  field: string;
+  label: string;
+}) {
+  return (
     <div className="flex items-center gap-2 text-sm">
       <Checkbox
-        id={`${idPrefix}-${field}`}
-        checked={bool(field)}
-        onCheckedChange={(c) => setField(field, c === true)}
+        id={`${ctx.idPrefix}-${field}`}
+        checked={ctx.bool(field)}
+        onCheckedChange={(c) => ctx.setField(field, c === true)}
       />
-      <Label htmlFor={`${idPrefix}-${field}`} className="cursor-pointer font-normal">
+      <Label htmlFor={`${ctx.idPrefix}-${field}`} className="cursor-pointer font-normal">
         {label}
       </Label>
     </div>
   );
+});
 
-  const CheckGroup = ({
-    field,
-    label,
-    options,
-  }: {
-    field: string;
-    label: string;
-    options: readonly string[];
-  }) => (
+const CheckGroup = memo(function CheckGroup({
+  ctx,
+  field,
+  label,
+  options,
+}: {
+  ctx: FieldCtx;
+  field: string;
+  label: string;
+  options: readonly string[];
+}) {
+  const selected = ctx.arr(field);
+  return (
     <fieldset className="space-y-3">
       <legend className="text-sm font-medium">{label}</legend>
       <div className="grid items-start gap-x-6 gap-y-2.5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         {options.map((o) => (
           <div key={o} className="flex items-center gap-2 text-sm">
             <Checkbox
-              id={`${idPrefix}-${field}-${o}`}
-              checked={arr(field).includes(o)}
-              onCheckedChange={(c) => toggleInArray(field, o, c === true)}
+              id={`${ctx.idPrefix}-${field}-${o}`}
+              checked={selected.includes(o)}
+              onCheckedChange={(c) => ctx.toggleInArray(field, o, c === true)}
             />
             <Label
-              htmlFor={`${idPrefix}-${field}-${o}`}
+              htmlFor={`${ctx.idPrefix}-${field}-${o}`}
               className="min-w-0 cursor-pointer font-normal break-words"
             >
               {o}
@@ -165,43 +197,79 @@ export function PropertyDetailsFields({ idPrefix = "det", value, onChange }: Pro
       </div>
     </fieldset>
   );
+});
 
-  const RadioField = ({
-    field,
-    label,
-    options,
-  }: {
-    field: string;
-    label: string;
-    options: readonly string[];
-  }) => (
+const RadioField = memo(function RadioField({
+  ctx,
+  field,
+  label,
+  options,
+}: {
+  ctx: FieldCtx;
+  field: string;
+  label: string;
+  options: readonly string[];
+}) {
+  const current = ctx.str(field);
+  return (
     <fieldset className="space-y-3">
       <legend className="text-sm font-medium">{label}</legend>
       <RadioGroup
-        value={str(field)}
-        onValueChange={(v) => setField(field, v || null)}
+        value={current}
+        onValueChange={(v) => ctx.setField(field, v || null)}
         className="grid items-start gap-x-6 gap-y-2.5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
       >
         {options.map((o) => (
           <div key={o} className="flex items-center gap-2 text-sm">
-            <RadioGroupItem value={o} id={`${idPrefix}-${field}-${o}`} />
-            <Label htmlFor={`${idPrefix}-${field}-${o}`} className="cursor-pointer font-normal">
+            <RadioGroupItem value={o} id={`${ctx.idPrefix}-${field}-${o}`} />
+            <Label htmlFor={`${ctx.idPrefix}-${field}-${o}`} className="cursor-pointer font-normal">
               {o}
             </Label>
           </div>
         ))}
       </RadioGroup>
-      {str(field) ? (
+      {current ? (
         <button
           type="button"
           className="text-xs text-muted-foreground underline"
-          onClick={() => setField(field, null)}
+          onClick={() => ctx.setField(field, null)}
         >
           Șterge selecția
         </button>
       ) : null}
     </fieldset>
   );
+});
+
+export function PropertyDetailsFields({ idPrefix = "det", value, onChange }: Props) {
+  const valueRef = useRef(value);
+  valueRef.current = value;
+  const changeRef = useRef(onChange);
+  changeRef.current = onChange;
+
+  // Contextul este stabil între randări: doar câmpurile atinse se re-randează.
+  const ctx = useMemo<FieldCtx>(() => {
+    const str = (key: string) =>
+      valueRef.current[key] == null ? "" : String(valueRef.current[key]);
+    const arr = (key: string) =>
+      Array.isArray(valueRef.current[key]) ? (valueRef.current[key] as string[]) : [];
+    return {
+      idPrefix,
+      str,
+      arr,
+      bool: (key: string) => valueRef.current[key] === true,
+      setField: (key: string, v: unknown) => changeRef.current({ [key]: v }),
+      toggleInArray: (key: string, option: string, checked: boolean) => {
+        const current = arr(key);
+        const next = checked
+          ? [...new Set([...current, option])]
+          : current.filter((x) => x !== option);
+        changeRef.current({ [key]: next });
+      },
+    };
+  }, [idPrefix]);
+
+  const setField = ctx.setField;
 
   return (
     <Accordion type="multiple" className="w-full">
