@@ -102,11 +102,34 @@ const UNAVAILABLE: { words: string[]; reason: string }[] = [
 
 const REFERENCE = /\b([A-Z]{2,4}-\d{2,6})\b/;
 
+/**
+ * Agenții permiși pentru o intenție. Mapping determinist: nici modelul, nici
+ * textul utilizatorului nu pot adăuga un agent sau o permisiune.
+ */
+export function agentsForIntent(intent: ManagerIntent, wantsMarketing = false): ManagerAgent[] {
+  switch (intent) {
+    case "property_promotion":
+      return ["crm", "acp", "marketing"];
+    case "acp_analysis":
+      return ["crm", "acp"];
+    case "marketing_content":
+      return ["crm", "marketing"];
+    case "crm_followup":
+    case "crm_question":
+      return ["crm"];
+    case "prospecting_discovery":
+      return wantsMarketing ? ["prospecting", "crm", "marketing"] : ["prospecting", "crm"];
+    default:
+      return [];
+  }
+}
+
 /** Detectează referința de proprietate exact cum apare (fără normalizare). */
 export function detectPropertyReference(text: string): string | null {
   const match = REFERENCE.exec(text.toUpperCase());
   return match ? match[1]! : null;
 }
+
 
 /**
  * Rutarea deterministă a cererii. Rezultatul decide planul; modelul nu poate

@@ -28,11 +28,13 @@ import {
   applyApproval,
   budgetExceeded,
   buildManagerPlan,
+  canRetryStep,
   completeStep,
   failPlan,
   failStep,
   findStep,
   isApprovedForExecution,
+  MANAGER_MAX_RETRIES,
   MANAGER_WORKFLOW,
   nextPendingStep,
   retryStep,
@@ -45,6 +47,7 @@ import {
   type ManagerJson,
   type ManagerStep,
 } from "./plan";
+
 
 async function loadAdmin() {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -206,12 +209,24 @@ export async function runManagerTurn(
     };
   }
 
-  const routing: ManagerRouting = routeManagerRequest(request);
+  // Rutare: reguli deterministe + clasificare semantică (allowlist de intenții).
+  const keywordRouting: ManagerRouting = routeManagerRequest(request);
+  const { routeManagerRequestSemantic } = await import("./semantic.server");
+  const routed = await routeManagerRequestSemantic(provider, request, keywordRouting);
+  const routing: ManagerRouting = routed.routing;
   const traceId = newTraceId();
   const tracer = new AiTracer(traceId, {
     organizationId: actor.organizationId,
     userId: actor.userId,
   });
+  tracer.record("workflow", `${MANAGER_WORKFLOW}.routing`, {
+    details: {
+      intent: routing.intent,
+      keywordIntent: keywordRouting.intent,
+      semantic: routed.semantic,
+    },
+  });
+
 
   const propertyIds = [...new Set(input.propertyIds ?? [])].slice(0, 5);
   const plan = buildManagerPlan({
@@ -312,8 +327,10 @@ async function executePlan(
 ): Promise<ManagerState> {
   let state = input;
   let guard = 0;
+  // Bucla permite reluarea aceluiași pas de câte ori îngăduie bugetul de retry.
+  const maxIterations = state.steps.length * (MANAGER_MAX_RETRIES + 1) + 2;
 
-  while (guard < state.steps.length + 1) {
+  while (guard < maxIterations) {
     guard += 1;
     const budget = budgetExceeded(state);
     if (budget) {
@@ -324,14 +341,39 @@ async function executePlan(
     if (!step) break;
 
     state = startStep(state, step.id) as ManagerState;
-    tracer.record("step", `${MANAGER_WORKFLOW}.${step.kind}`, { details: { stepId: step.id } });
+    tracer.record("step", `${MANAGER_WORKFLOW}.${step.kind}`, {
+      details: { stepId: step.id, attempt: step.retryCount + 1 },
+    });
     const result = await runStep(admin, actor, tracer, runId, state, step, turn);
     state = result.state;
+
+    if (result.retry) {
+      if (canRetryStep(state, step.id)) {
+        // RETRY REAL: același pas, același input, contor persistat.
+        state = retryStep(state, step.id, result.retryMessage ?? null) as ManagerState;
+        tracer.record("step", `${MANAGER_WORKFLOW}.retry`, {
+          details: { stepId: step.id, attempt: (findStep(state, step.id)?.retryCount ?? 0) + 1 },
+        });
+        await persist(admin, actor, runId, state, null);
+        continue;
+      }
+      const reason =
+        result.retryMessage ??
+        "Pasul a eșuat repetat. Planul s-a oprit și necesită atenție.";
+      state = failStep(state, step.id, reason) as ManagerState;
+      state = skipRemainingSteps(failPlan(state, reason), reason) as ManagerState;
+      await persist(admin, actor, runId, state, reason);
+      break;
+    }
+
+    // Persistăm după fiecare pas: o întrerupere nu pierde progresul.
+    await persist(admin, actor, runId, state, state.failure);
     if (result.stop) break;
   }
 
   return { ...state, summary: state.summary ?? summarize(state) };
 }
+
 
 function summarize(state: ManagerState): string {
   const done = state.steps.filter((item) => item.status === "completed").length;
@@ -344,7 +386,14 @@ function summarize(state: ManagerState): string {
   return `Am rulat ${done} pași din planul „${MANAGER_INTENT_LABELS[state.intent]}”.`;
 }
 
-type StepOutcome = { state: ManagerState; stop: boolean };
+type StepOutcome = {
+  state: ManagerState;
+  stop: boolean;
+  /** `true` cere reluarea ACELUIAȘI pas (eroare tranzitorie). */
+  retry?: boolean;
+  retryMessage?: string;
+};
+
 
 async function runStep(
   admin: Admin,
@@ -370,9 +419,13 @@ async function runStep(
     case "prospecting_check": {
       const read = await readTool(actor, tracer, "list_prospecting_sources", { limit: 10 });
       if (!read.ok) {
+        if (read.retryable) {
+          return { state, stop: false, retry: true, retryMessage: read.message };
+        }
         state = failStep(state, step.id, read.message, "blocked") as ManagerState;
         return { state, stop: false };
       }
+
       const rows = Array.isArray(read.data) ? read.data : [];
       // Doar o sursă activă cu provider `live` înseamnă sursă externă reală.
       const liveSources = rows.filter(
@@ -399,14 +452,19 @@ async function runStep(
     case "crm_context": {
       const ids = (step.input["propertyIds"] as string[] | undefined) ?? [];
       const found: Record<string, unknown>[] = [];
+      let transient: string | null = null;
       for (const propertyId of ids) {
         const read = await readTool(actor, tracer, "get_property", { propertyId });
         if (!read.ok) {
-          state = retryStep(state, step.id) as ManagerState;
+          if (read.retryable) transient = read.message;
           continue;
         }
         const row = (read.data ?? null) as Record<string, unknown> | null;
         if (row) found.push(row);
+      }
+      if (found.length === 0 && transient) {
+        // Eroare tranzitorie: pasul se reia identic, nu sărim la pasul următor.
+        return { state, stop: false, retry: true, retryMessage: transient };
       }
       if (found.length === 0) {
         state = failStep(
@@ -418,6 +476,7 @@ async function runStep(
         state = { ...state, summary: "Nu am găsit proprietăți pe care le pot folosi." };
         return { state, stop: true };
       }
+
       state = completeStep(
         state,
         step.id,
@@ -680,9 +739,18 @@ export async function decideManagerAction(
     });
   }
 
-  state = skipRemainingSteps(state, "Plan finalizat.") as ManagerState;
+  // RESUME: pașii deja finalizați nu se reexecută; planul continuă de unde a
+  // rămas. Doar dacă nu mai există pași rămași se închide.
   state = { ...state, approval: null, currentStepId: null };
+  if (state.execution?.ok === true && nextPendingStep(state)) {
+    state = await executePlan(admin, actor, tracer, row.id, state, {
+      request: state.request,
+    });
+  } else {
+    state = skipRemainingSteps(state, "Plan finalizat.") as ManagerState;
+  }
   state = { ...state, summary: state.execution?.message ?? summarize(state) };
+
 
   await persist(admin, actor, row.id, state, state.failure);
   await writeTraceEvents(tracer.list());

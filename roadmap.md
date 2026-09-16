@@ -270,3 +270,12 @@
 - [x] Feed real: auth prin secret server-side, paginare, allowlist host/SSRF, rate limit.
 - [x] Runtime + Manager: fără sursă externă conectată, rezultatul este onest, nu date inventate.
 - [ ] Sursă externă autorizată reală: neconectată (așteaptă acces/contract).
+
+## Stage 20 — validare finală AI + hardening
+
+- [x] Retry real în Manager (același pas reluat, contor persistat, oprire cu motiv după epuizare).
+- [x] Rutare semantică (provider, allowlist de intenții) cu fallback determinist.
+- [x] Resume după aprobare continuă pașii rămași, fără reexecutarea celor finalizați.
+- [x] Test E2E pe runtime real: CRM → ACP → Marketing → aprobare → resume/reject → audit/trace.
+- [x] Suită completă 851 teste, typecheck și build OK; bundle client fără secrete.
+- [ ] Prospecting: nicio sursă externă autorizată conectată (rămâne `source_unavailable`).
