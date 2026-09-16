@@ -49,6 +49,9 @@ import {
   reserveNextVersion,
 } from "../lacheie/version.server";
 import { nextSourceVersion } from "../lacheie/version";
+import { laCheieAgencyBlockReason, readLaCheieAgencyState } from "../lacheie/agency";
+import { hasLaCheieCrmApiKey, laCheieCrmApiKey } from "../lacheie/credentials.server";
+
 
 type Admin = Awaited<typeof import("@/integrations/supabase/client.server")>["supabaseAdmin"];
 
