@@ -64,7 +64,7 @@ export async function refreshLaCheieCatalog(
     actorId: string | null;
   },
 ): Promise<CatalogRefresh> {
-  const options = await laCheieRequest(config, { method: "GET", path: "/options" });
+  const options = await laCheieRequest(config, { method: "GET", path: "/options", scope: "provider" });
   if (!options.ok) {
     return {
       ok: false,
@@ -72,7 +72,7 @@ export async function refreshLaCheieCatalog(
       message: options.classification?.message ?? "Catalogul La Cheie nu a putut fi descărcat.",
     };
   }
-  const counties = await laCheieRequest(config, { method: "GET", path: "/counties" });
+  const counties = await laCheieRequest(config, { method: "GET", path: "/counties", scope: "provider" });
   if (!counties.ok) {
     return {
       ok: false,
@@ -87,6 +87,7 @@ export async function refreshLaCheieCatalog(
     const response = await laCheieRequest(config, {
       method: "GET",
       path: "/cities",
+      scope: "provider",
       query: { county_id: county.id },
     });
     if (!response.ok) {
