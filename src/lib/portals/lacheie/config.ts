@@ -44,7 +44,11 @@ export function isLegacyLaCheieTestEnvironmentError(value: unknown): boolean {
   return message.includes("api") && message.includes("mediul de test") && message.includes("configurat");
 }
 
-/** Curăță setările persistate înainte să intre în adaptorul generic. */
+/**
+ * Curăță setările persistate înainte să intre în adaptorul generic.
+ * Setările de agenție (external_id, status, versiune) sunt păstrate: ele fac
+ * parte din modelul de furnizor CRM, nu din vechiul model cu mediu TEST.
+ */
 export function normalizeLaCheiePortalSettings(
   settings: Record<string, unknown> | null,
 ): Record<string, unknown> {
@@ -52,14 +56,28 @@ export function normalizeLaCheiePortalSettings(
   const catalogError = isLegacyLaCheieTestEnvironmentError(raw["lacheie_catalog_error"])
     ? null
     : text(raw["lacheie_catalog_error"]);
+  const agency: Record<string, unknown> = {};
+  for (const key of [
+    "lacheie_agency_external_id",
+    "lacheie_agency_status",
+    "lacheie_agency_version",
+    "lacheie_agency_accepted_version",
+    "lacheie_agency_synced_at",
+    "lacheie_agency_error",
+  ]) {
+    const value = text(raw[key]);
+    if (value) agency[key] = value;
+  }
   return {
     allow_live: raw["allow_live"] === true,
+    ...agency,
     ...(text(raw["lacheie_catalog_fetched_at"])
       ? { lacheie_catalog_fetched_at: text(raw["lacheie_catalog_fetched_at"]) }
       : {}),
     ...(catalogError ? { lacheie_catalog_error: catalogError } : {}),
   };
 }
+
 
 export function readLaCheieSettings(settings: Record<string, unknown> | null): LaCheieSettings {
   const raw = normalizeLaCheiePortalSettings(settings);
