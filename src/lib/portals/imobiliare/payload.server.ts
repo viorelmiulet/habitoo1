@@ -173,6 +173,9 @@ export async function buildImobiliarePayload(input: {
       latitude: coords?.lat ?? null,
       longitude: coords?.lng ?? null,
       imageCount: input.imageCount,
+      phone: contactPhone,
+      whatsappNumber: contactPhone,
+
 
       propertyType: row.property_type,
       layout: row.layout,
