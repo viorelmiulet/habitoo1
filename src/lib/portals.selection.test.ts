@@ -85,6 +85,7 @@ function chain(table: string) {
         phone: null,
       };
     }
+    if (table === "organizations") return { phone: "0700000001", material_phone: null };
     if (table === "portal_connections") {
       return {
         portal: "x",
@@ -119,7 +120,12 @@ function chain(table: string) {
     writes.push({ table, op: "upsert", row });
     return { data: null, error: null };
   };
-  q["then"] = (resolve: (v: unknown) => unknown) => resolve({ data: listFor(), error: null });
+  q["then"] = (resolve: (v: unknown) => unknown) =>
+    resolve(
+      table === "property_images"
+        ? { data: [], count: 8, error: null }
+        : { data: listFor(), error: null },
+    );
   return q;
 }
 
