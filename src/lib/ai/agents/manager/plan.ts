@@ -13,6 +13,9 @@ export const MANAGER_WORKFLOW = "habitooManagerWorkflow";
 export const MANAGER_MAX_STEPS = 10;
 export const MANAGER_MAX_DEPTH = 2;
 export const MANAGER_TIME_BUDGET_MS = 90_000;
+/** Reîncercări per pas pentru erori tranzitorii (după care planul se oprește). */
+export const MANAGER_MAX_RETRIES = 2;
+
 
 export const MANAGER_STEP_STATUSES = [
   "pending",
@@ -305,11 +308,33 @@ export function failStep(
   });
 }
 
-export function retryStep(state: ManagerPlanState, stepId: string): ManagerPlanState {
+/**
+ * Reprogramează EXACT același pas pentru o nouă execuție (retry real).
+ * Pasul revine în `pending`, deci bucla de execuție îl reia; contorul de
+ * încercări este păstrat în stare și persistat împreună cu ea.
+ */
+export function retryStep(
+  state: ManagerPlanState,
+  stepId: string,
+  message: string | null = null,
+): ManagerPlanState {
   const current = findStep(state, stepId);
   if (!current) return state;
-  return replaceStep(state, { ...current, retryCount: current.retryCount + 1 });
+  return replaceStep(state, {
+    ...current,
+    status: "pending",
+    retryCount: current.retryCount + 1,
+    errorMessage: message ?? current.errorMessage,
+    finishedAt: null,
+  });
 }
+
+/** `true` cât timp pasul mai are încercări disponibile. */
+export function canRetryStep(state: ManagerPlanState, stepId: string): boolean {
+  const current = findStep(state, stepId);
+  return current ? current.retryCount < MANAGER_MAX_RETRIES : false;
+}
+
 
 export function skipRemainingSteps(state: ManagerPlanState, note: string): ManagerPlanState {
   return {
