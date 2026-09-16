@@ -57,6 +57,8 @@ export type ImobiliareListingInput = {
   buildingFloors: number | null;
   usableSurface: number | null;
   builtSurface: number | null;
+  /** Suprafața terenului — obligatorie la case și terenuri (`land_area`). */
+  landSurface: number | null;
   totalUsableSurface: number | null;
   balconies: number | null;
   terraces: number | null;
@@ -201,6 +203,17 @@ export function buildImobiliareListing(input: ImobiliareListingInput): Imobiliar
     );
   }
 
+  const housingForValidation = housingTypeFor(input.propertyType);
+  if (
+    (housingForValidation === "house" || housingForValidation === "land") &&
+    positiveNumber(input.landSurface) === null &&
+    !(housingForValidation === "land" && positiveNumber(input.usableSurface) !== null)
+  ) {
+    reasons.push(
+      "Completează „Suprafață teren”: Imobiliare.ro o cere obligatoriu pentru case și terenuri.",
+    );
+  }
+
   if (reasons.length > 0) return { ok: false, reasons, warnings };
 
   const data: Record<string, unknown> = {};
@@ -214,6 +227,13 @@ export function buildImobiliareListing(input: ImobiliareListingInput): Imobiliar
   put(data, "year_built", positiveInt(input.buildYear));
   put(data, "usable_surface", positiveNumber(input.usableSurface));
   put(data, "built_area", positiveNumber(input.builtSurface));
+  // La case și terenuri portalul cere `land_area`; pentru terenuri, suprafața
+  // ofertei ESTE suprafața terenului.
+  const housing = housingTypeFor(input.propertyType);
+  const landArea =
+    positiveNumber(input.landSurface) ??
+    (housing === "land" ? positiveNumber(input.usableSurface) : null);
+  put(data, "land_area", landArea);
   put(data, "total_usable_surface", positiveNumber(input.totalUsableSurface));
   put(data, "balcony_count", positiveInt(input.balconies));
   put(data, "closed_balcony_count", positiveInt(input.terraces));

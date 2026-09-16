@@ -298,6 +298,7 @@ const BASE_INPUT = {
   floor: 3,
   buildingFloors: 10,
   usableSurface: 52,
+  landSurface: null,
   builtSurface: null,
   totalUsableSurface: null,
   balconies: 1,
@@ -435,5 +436,46 @@ describe("linkul public al anunțului", () => {
     ).toBeNull();
     expect(imobiliareStateFromBody({ data: { state: "draft" } })).toBe("draft");
     expect(imobiliareStateFromBody({ data: {} })).toBeNull();
+  });
+});
+
+/* ------------------------------ suprafață teren ---------------------------- */
+
+describe("suprafața terenului (land_area)", () => {
+  it("trimite land_area pentru case, din câmpul completat", () => {
+    const built = buildImobiliareListing({
+      ...BASE_INPUT,
+      propertyType: "house",
+      landSurface: 750,
+    });
+    expect(built.ok).toBe(true);
+    expect(built.ok && built.listing.data_properties["land_area"]).toBe(750);
+  });
+
+  it("blochează publicarea unei case fără suprafața terenului", () => {
+    const built = buildImobiliareListing({
+      ...BASE_INPUT,
+      propertyType: "house",
+      landSurface: null,
+    });
+    expect(built.ok).toBe(false);
+    expect(built.ok === false && built.reasons.join(" ")).toContain("Suprafață teren");
+  });
+
+  it("la teren, suprafața ofertei este suprafața terenului", () => {
+    const built = buildImobiliareListing({
+      ...BASE_INPUT,
+      propertyType: "teren",
+      landSurface: null,
+      usableSurface: 900,
+    });
+    expect(built.ok).toBe(true);
+    expect(built.ok && built.listing.data_properties["land_area"]).toBe(900);
+  });
+
+  it("apartamentele nu trimit land_area și nu sunt blocate", () => {
+    const built = buildImobiliareListing({ ...BASE_INPUT, propertyType: "apartment" });
+    expect(built.ok).toBe(true);
+    expect(built.ok && built.listing.data_properties).not.toHaveProperty("land_area");
   });
 });
