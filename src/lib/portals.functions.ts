@@ -202,10 +202,23 @@ async function logOperation(input: {
   errorMessage?: string | null;
   propertyId?: string | null;
   actorId?: string | null;
+  /** Statusul HTTP real al portalului, când operațiunea a ajuns la el. */
+  httpStatus?: number | null;
+  /** Corpul brut al răspunsului portalului (sanitizat de secrete). */
+  portalResponse?: unknown;
 }) {
   const admin = await loadAdmin();
+  const { portalResponseLog } = await import("@/lib/portals/errors");
+  const response = portalResponseLog({
+    status: input.httpStatus ?? null,
+    body: input.portalResponse ?? null,
+  });
   await admin.from("portal_operation_logs").insert({
     organization_id: input.organizationId,
+    ...(input.httpStatus === null || input.httpStatus === undefined
+      ? {}
+      : { http_status: input.httpStatus }),
+    ...(response ? { portal_response: response } : {}),
     portal: input.portal,
     operation: input.operation,
     success: input.success,
