@@ -148,3 +148,28 @@ export function classifyLaCheieNetworkError(input: {
     waitMs: backoffMs(input.attempt),
   };
 }
+
+/**
+ * Extrage câmpurile refuzate din corpul unui răspuns de validare La Cheie
+ * (`error.fields`), ca text scurt afișabil agenției. Fără corp valid → `null`.
+ */
+export function describeLaCheieValidation(body: unknown): string | null {
+  const root = body && typeof body === "object" ? (body as Record<string, unknown>) : null;
+  const error = root?.["error"];
+  const fields =
+    error && typeof error === "object"
+      ? (error as Record<string, unknown>)["fields"]
+      : root?.["fields"];
+  if (!fields || typeof fields !== "object") return null;
+  const parts: string[] = [];
+  for (const [field, detail] of Object.entries(fields as Record<string, unknown>)) {
+    const text = Array.isArray(detail)
+      ? detail.filter((entry) => typeof entry === "string").join(" ")
+      : typeof detail === "string"
+        ? detail
+        : JSON.stringify(detail);
+    parts.push(text ? `${field}: ${text}` : field);
+    if (parts.length >= 8) break;
+  }
+  return parts.length ? parts.join("; ") : null;
+}
