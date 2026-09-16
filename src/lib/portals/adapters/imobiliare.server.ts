@@ -377,6 +377,7 @@ async function write(
       });
       if (!result.ok) return result.fail;
       steps.push(`${plan.customReference}: ${result.steps.join(" → ")}`);
+      if (result.publicUrl) publicUrls.push(result.publicUrl);
     }
 
     return {
@@ -388,6 +389,7 @@ async function write(
         // „online” la portal = „published” în starea locală (constrângere DB).
         portalStatus: mode === "update" ? "updated" : "published",
         processed: payload.plans.length,
+        publicUrl: publicUrls[0] ?? null,
         message: warnings.length ? warnings.join(" ") : undefined,
       },
     };
