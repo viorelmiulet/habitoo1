@@ -17,7 +17,9 @@ import {
   LACHEIE_PORTAL_KEY,
   LACHEIE_PRODUCTION_BASE_URL,
   activeBaseUrl,
+  isLegacyLaCheieTestEnvironmentError,
   laCheieReadiness,
+  normalizeLaCheiePortalSettings,
   readLaCheieSettings,
   type LaCheieEnvironment,
   type LaCheieReadiness,
@@ -66,7 +68,9 @@ async function buildLaCheieContext(organizationId: string) {
   if (!definition) throw new Error("Portalul La Cheie nu este definit.");
   const { decryptPortalCredential } = await import("@/lib/portals/crypto.server");
   const row = await connectionRow(organizationId);
-  const settings = (row?.settings ?? {}) as Record<string, unknown>;
+  const settings = normalizeLaCheiePortalSettings(
+    (row?.settings ?? {}) as Record<string, unknown>,
+  );
   return {
     row,
     settings,
@@ -182,6 +186,9 @@ export const getLaCheieState = createServerFn({ method: "POST" })
     const row = await connectionRow(organizationId);
     const settings = readLaCheieSettings((row?.settings ?? {}) as Record<string, unknown>);
     const hasApiKey = Boolean(row?.portal_credentials_encrypted);
+    const lastError = isLegacyLaCheieTestEnvironmentError(row?.last_sync_error)
+      ? null
+      : (row?.last_sync_error ?? null);
 
     const { readLaCheieCatalog } = await import("@/lib/portals/lacheie/catalog.server");
     const catalog = await readLaCheieCatalog(admin, {
@@ -217,7 +224,7 @@ export const getLaCheieState = createServerFn({ method: "POST" })
       propertiesPath: settings.propertiesPath,
       readiness: laCheieReadiness({
         hasApiKey,
-        lastError: row?.last_sync_error ?? null,
+        lastError,
       }),
       catalog: {
         fetchedAt: catalog?.fetchedAt ?? settings.catalogFetchedAt,
@@ -228,7 +235,7 @@ export const getLaCheieState = createServerFn({ method: "POST" })
           : 0,
         error: settings.catalogError,
       },
-      lastError: row?.last_sync_error ?? null,
+      lastError,
       logs: (logs ?? []).map((log) => ({
         id: log.id,
         operation: log.operation,

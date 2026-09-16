@@ -32,8 +32,31 @@ function text(value: unknown): string | null {
   return typeof value === "string" && value.trim() ? value.trim() : null;
 }
 
-export function readLaCheieSettings(settings: Record<string, unknown> | null): LaCheieSettings {
+/** Recunoaște exclusiv eroarea istorică produsă de vechiul model cu mediu TEST. */
+export function isLegacyLaCheieTestEnvironmentError(value: unknown): boolean {
+  const message = text(value)?.toLocaleLowerCase("ro-RO") ?? "";
+  return message.includes("api") && message.includes("mediul de test") && message.includes("configurat");
+}
+
+/** Curăță setările persistate înainte să intre în adaptorul generic. */
+export function normalizeLaCheiePortalSettings(
+  settings: Record<string, unknown> | null,
+): Record<string, unknown> {
   const raw = settings ?? {};
+  const catalogError = isLegacyLaCheieTestEnvironmentError(raw["lacheie_catalog_error"])
+    ? null
+    : text(raw["lacheie_catalog_error"]);
+  return {
+    allow_live: raw["allow_live"] === true,
+    ...(text(raw["lacheie_catalog_fetched_at"])
+      ? { lacheie_catalog_fetched_at: text(raw["lacheie_catalog_fetched_at"]) }
+      : {}),
+    ...(catalogError ? { lacheie_catalog_error: catalogError } : {}),
+  };
+}
+
+export function readLaCheieSettings(settings: Record<string, unknown> | null): LaCheieSettings {
+  const raw = normalizeLaCheiePortalSettings(settings);
   return {
     environment: LACHEIE_ENVIRONMENT,
     // Toate setările istorice de mediu, URL și cale sunt ignorate intenționat.

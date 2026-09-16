@@ -31,6 +31,7 @@ vi.mock("@tanstack/react-start", () => {
 vi.mock("@/lib/org-access", () => ({ requireActiveOrgAuth: {} }));
 
 const writes: { table: string; op: string; row: unknown }[] = [];
+const adapterContexts: { portal: string; settings: Record<string, unknown> }[] = [];
 
 function chain(table: string) {
   const q: Record<string, unknown> = {};
@@ -39,6 +40,7 @@ function chain(table: string) {
       return [
         { portal_key: "clickimob", enabled: false },
         { portal_key: "storia", enabled: false },
+        { portal_key: "lacheie", enabled: false },
       ];
     }
     if (table === "portal_listings") return [];
@@ -46,6 +48,7 @@ function chain(table: string) {
       return [
         { portal: "clickimob", activated: true, status: "connected" },
         { portal: "storia", activated: true, status: "connected" },
+        { portal: "lacheie", activated: true, status: "connected" },
       ];
     }
     return [];
@@ -61,7 +64,12 @@ function chain(table: string) {
         authentication_mode: null,
         external_account_id: null,
         portal_credentials_encrypted: null,
-        settings: { allow_live: true },
+        settings: {
+          allow_live: true,
+          lacheie_environment: "test",
+          lacheie_test_base_url: "https://test.invalid/v1",
+          lacheie_production_active: false,
+        },
         activated: true,
         status: "connected",
       };
@@ -114,10 +122,13 @@ vi.mock("@/lib/portals/adapters/index.server", () => ({
       };
     }
     return {
-      publishListing: async () => ({
-        ok: true,
-        data: { live: true, detail: null, externalId: "CI-1", message: null },
-      }),
+      publishListing: async (ctx: { settings: Record<string, unknown> }) => {
+        adapterContexts.push({ portal: id, settings: ctx.settings });
+        return {
+          ok: true,
+          data: { live: true, detail: null, externalId: "CI-1", message: null },
+        };
+      },
       updateListing: async () => ({
         ok: true,
         data: { live: true, detail: null, externalId: "CI-1", message: null },
@@ -147,6 +158,37 @@ const context = {
 describe("applyPropertyPortalSelection", () => {
   beforeEach(() => {
     writes.length = 0;
+    adapterContexts.length = 0;
+  });
+
+  it("normalizează La Cheie la production-only în fluxul real, fără să schimbe alte portaluri", async () => {
+    const { applyPortalSelectionForOrg } = await import("@/lib/portals.functions");
+
+    const out = await applyPortalSelectionForOrg({
+      organizationId: "org-1",
+      superadmin: false,
+      actorId: "user-1",
+      data: {
+        propertyId: "11111111-1111-1111-1111-111111111111",
+        selections: [
+          { portalId: "lacheie", enabled: true },
+          { portalId: "clickimob", enabled: true },
+        ],
+        syncExisting: true,
+      },
+    });
+
+    expect(out.ok).toBe(true);
+    expect(out.results.find((result) => result.portalId === "lacheie")?.message).not.toMatch(
+      /mediul de test/i,
+    );
+    expect(adapterContexts.find((entry) => entry.portal === "lacheie")?.settings).toEqual({
+      allow_live: true,
+    });
+    expect(adapterContexts.find((entry) => entry.portal === "clickimob")?.settings).toMatchObject({
+      lacheie_environment: "test",
+      lacheie_test_base_url: "https://test.invalid/v1",
+    });
   });
 
   it("continuă publicarea pe celelalte portaluri când unul aruncă o excepție", async () => {
