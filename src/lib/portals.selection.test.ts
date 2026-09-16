@@ -81,10 +81,12 @@ function chain(table: string) {
         bathrooms: 1,
         build_year: 2020,
         usable_surface: 72,
-        assigned_to: null,
+        assigned_to: "agent-1",
         phone: null,
       };
     }
+    if (table === "profiles")
+      return { full_name: "Agent Test", email: "agent@example.com", phone: "0700000001" };
     if (table === "organizations") return { phone: "0700000001", material_phone: null };
     if (table === "portal_connections") {
       return {
