@@ -12,10 +12,16 @@ export const LACHEIE_PORTAL_KEY = "lacheie";
 export const LACHEIE_PRODUCTION_BASE_URL = "https://api.lacheie.ro/api/partners/v1";
 /** Endpointul documentat pentru operațiile CRUD pe anunțuri. */
 export const LACHEIE_DEFAULT_PROPERTIES_PATH = "/properties";
+/** Endpointul documentat pentru înregistrarea/administrarea agențiilor. */
+export const LACHEIE_AGENCIES_PATH = "/agencies";
 export const LACHEIE_SOURCE_VERSION_HEADER = "X-Source-Version";
+/** Headerul care leagă o cerere de agenția conectată. */
+export const LACHEIE_AGENCY_HEADER = "X-Agency-External-ID";
 /** Limitele documentate de La Cheie, aplicate și local ca protecție. */
 export const LACHEIE_WRITE_LIMIT_PER_MINUTE = 60;
 export const LACHEIE_READ_LIMIT_PER_MINUTE = 120;
+export const LACHEIE_AGENCY_LIMIT_PER_MINUTE = 60;
+
 
 /** Un singur mediu real: producție. */
 export type LaCheieEnvironment = "production";
@@ -38,7 +44,11 @@ export function isLegacyLaCheieTestEnvironmentError(value: unknown): boolean {
   return message.includes("api") && message.includes("mediul de test") && message.includes("configurat");
 }
 
-/** Curăță setările persistate înainte să intre în adaptorul generic. */
+/**
+ * Curăță setările persistate înainte să intre în adaptorul generic.
+ * Setările de agenție (external_id, status, versiune) sunt păstrate: ele fac
+ * parte din modelul de furnizor CRM, nu din vechiul model cu mediu TEST.
+ */
 export function normalizeLaCheiePortalSettings(
   settings: Record<string, unknown> | null,
 ): Record<string, unknown> {
@@ -46,14 +56,28 @@ export function normalizeLaCheiePortalSettings(
   const catalogError = isLegacyLaCheieTestEnvironmentError(raw["lacheie_catalog_error"])
     ? null
     : text(raw["lacheie_catalog_error"]);
+  const agency: Record<string, unknown> = {};
+  for (const key of [
+    "lacheie_agency_external_id",
+    "lacheie_agency_status",
+    "lacheie_agency_version",
+    "lacheie_agency_accepted_version",
+    "lacheie_agency_synced_at",
+    "lacheie_agency_error",
+  ]) {
+    const value = text(raw[key]);
+    if (value) agency[key] = value;
+  }
   return {
     allow_live: raw["allow_live"] === true,
+    ...agency,
     ...(text(raw["lacheie_catalog_fetched_at"])
       ? { lacheie_catalog_fetched_at: text(raw["lacheie_catalog_fetched_at"]) }
       : {}),
     ...(catalogError ? { lacheie_catalog_error: catalogError } : {}),
   };
 }
+
 
 export function readLaCheieSettings(settings: Record<string, unknown> | null): LaCheieSettings {
   const raw = normalizeLaCheiePortalSettings(settings);
@@ -77,6 +101,12 @@ export function laCheiePropertiesPath(externalId?: string): string {
     ? `${LACHEIE_DEFAULT_PROPERTIES_PATH}/${encodeURIComponent(externalId)}`
     : LACHEIE_DEFAULT_PROPERTIES_PATH;
 }
+
+/** Endpointul de agenție: `/agencies/{external_id}`. */
+export function laCheieAgenciesPath(externalId: string): string {
+  return `${LACHEIE_AGENCIES_PATH}/${encodeURIComponent(externalId)}`;
+}
+
 
 export type LaCheieReadiness = "not_configured" | "connected" | "error";
 

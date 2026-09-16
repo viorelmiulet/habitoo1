@@ -1,24 +1,27 @@
 /**
  * Adaptor La Cheie — API de publicare a ofertelor (portal publication only).
  *
- * Contract implementat conform documentației La Cheie v1:
- *   GET    {base}/account                    verificarea cheii (test connection)
- *   GET    {base}/options|/counties|/cities  catalogul de id-uri
+ * Contract implementat conform documentației La Cheie v1 pentru furnizori CRM:
+ *   GET    {base}/account                    verificarea conexiunii agenției
+ *   GET    {base}/options|/counties|/cities  catalogul de id-uri (cheia CRM)
  *   GET    {base}/properties                 listare
  *   GET    {base}/properties/{external_id}   citire
  *   POST   {base}/properties                 creare (stare completă)
  *   PUT    {base}/properties/{external_id}   actualizare (stare completă, fără PATCH)
  *   DELETE {base}/properties/{external_id}   retragere
  *
- * Autentificare: `Authorization: Bearer <cheie API a agenției>`, salvată
- * criptat. Scrierile trimit `Content-Type: application/json` și
- * `X-Source-Version` (text zecimal, separat per external_id).
+ * Autentificare: `Authorization: Bearer <cheia unică de furnizor CRM>`, citită
+ * din secretul de server. Agențiile nu primesc și nu văd această cheie; ele
+ * sunt identificate prin `X-Agency-External-ID`, după activarea conexiunii.
+ * Scrierile trimit `Content-Type: application/json` și `X-Source-Version`
+ * (text zecimal, separat per external_id de ofertă).
  *
  * La Cheie are un singur mediu real: production. Adresa API este fixată
  * server-side; scrierile reale rămân în spatele fluxului normal de publicare
  * cu aprobare. Nu există lead import, bulk import, pull periodic sau
  * webhook-uri în această etapă.
  */
+
 import type {
   ConnectionStatusOutcome,
   ListingDiagnostics,
@@ -46,6 +49,9 @@ import {
   reserveNextVersion,
 } from "../lacheie/version.server";
 import { nextSourceVersion } from "../lacheie/version";
+import { laCheieAgencyBlockReason, readLaCheieAgencyState } from "../lacheie/agency";
+import { hasLaCheieCrmApiKey, laCheieCrmApiKey } from "../lacheie/credentials.server";
+
 
 type Admin = Awaited<typeof import("@/integrations/supabase/client.server")>["supabaseAdmin"];
 
@@ -64,18 +70,37 @@ type Ready =
 
 type PortalFailShape = Extract<PortalResult<never>, { ok: false }>;
 
-/** Verifică o singură dată: cheie salvată, adresă configurată, mediu permis. */
+/**
+ * Verifică o singură dată: cheia de furnizor CRM există server-side și agenția
+ * are o conexiune activă (`external_id` + status `active`).
+ */
 function prepare(ctx: PortalContext): Ready {
   const settings = settingsOf(ctx);
-  const credential = (ctx.portalCredential ?? "").trim();
-  if (!credential) {
+  const agency = readLaCheieAgencyState(ctx.settings as Record<string, unknown>);
+  let apiKey: string;
+  try {
+    apiKey = laCheieCrmApiKey();
+  } catch (error) {
+    const normalized = toPortalError(error);
     return {
       ok: false,
       result: {
         ok: false,
         code: "CONFIG_ERROR",
-        message: "Cheia API La Cheie nu este salvată pentru această agenție.",
-        detail: "missing_credential",
+        message: normalized.message,
+        detail: "missing_crm_api_key",
+      },
+    };
+  }
+  const blocked = laCheieAgencyBlockReason(agency);
+  if (blocked || !agency.externalId) {
+    return {
+      ok: false,
+      result: {
+        ok: false,
+        code: "CONFIG_ERROR",
+        message: blocked ?? "Conexiunea agenției la La Cheie nu este activă.",
+        detail: `agency_${agency.status}`,
       },
     };
   }
@@ -86,12 +111,14 @@ function prepare(ctx: PortalContext): Ready {
     settings,
     config: {
       baseUrl: base,
-      apiKey: credential,
+      apiKey,
       environment: settings.environment,
+      agencyExternalId: agency.externalId,
       connectionKey: `${ctx.organizationId}:${settings.environment}`,
     },
   };
 }
+
 
 function failFrom(
   response: {
@@ -118,13 +145,22 @@ async function status(
   ctx: PortalContext,
   live: boolean,
 ): Promise<PortalResult<ConnectionStatusOutcome>> {
-  const settings = settingsOf(ctx);
-  const credential = (ctx.portalCredential ?? "").trim();
-  if (!credential) {
+  const agencyExternalId = readLaCheieAgencyState(ctx.settings as Record<string, unknown>).externalId;
+
+  const agency = readLaCheieAgencyState(ctx.settings as Record<string, unknown>);
+  if (!hasLaCheieCrmApiKey()) {
     return {
       ok: true,
-      data: { configured: false, live: false, detail: "Cheia API La Cheie lipsește." },
+      data: {
+        configured: false,
+        live: false,
+        detail: "Cheia de furnizor La Cheie nu este configurată pe server.",
+      },
     };
+  }
+  const blocked = laCheieAgencyBlockReason(agency);
+  if (blocked) {
+    return { ok: true, data: { configured: false, live: false, detail: blocked } };
   }
   // GET /account este read-only: testarea explicită a conexiunii de producție
   // nu depinde de comutatorul care permite scrierile reale.
@@ -134,10 +170,11 @@ async function status(
       data: {
         configured: true,
         live: false,
-        detail: "Cheie salvată (mediu production); testează conexiunea pentru confirmare.",
+        detail: "Agenție activată la La Cheie; testează conexiunea pentru confirmare.",
       },
     };
   }
+
 
   const ready = prepare(ctx);
   if (!ready.ok) return ready.result;
@@ -154,10 +191,11 @@ async function status(
         configured: true,
         live: true,
         detail:
-          `Cheie validă${name ? ` — cont ${name}` : ""}, mediu production.` +
+          `Conexiune validă${name ? ` — agenția ${name}` : ""} (agency ${agencyExternalId ?? "?"}), mediu production.` +
           (ready.settings.catalogFetchedAt
             ? ` Catalog sincronizat la ${ready.settings.catalogFetchedAt}.`
             : " Catalogul nu este încă sincronizat."),
+
       },
     };
   } catch (error) {

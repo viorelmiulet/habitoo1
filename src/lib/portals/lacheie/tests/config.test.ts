@@ -65,11 +65,11 @@ describe("La Cheie — mediu unic (production) și stare", () => {
     ).toEqual({ allow_live: true });
   });
 
-  it("cheia salvată fără eroare înseamnă production conectat", () => {
+  it("agenția activă fără eroare înseamnă production conectat", () => {
     expect(laCheieReadiness({ hasApiKey: true, lastError: null })).toBe("connected");
   });
 
-  it("fără cheie API starea este neconfigurat", () => {
+  it("fără agenție activă starea este neconfigurat", () => {
     expect(laCheieReadiness({ hasApiKey: false, lastError: null })).toBe("not_configured");
   });
 

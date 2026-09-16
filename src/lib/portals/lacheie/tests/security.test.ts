@@ -39,12 +39,13 @@ describe("La Cheie — garduri înainte de orice request", () => {
     expect(definition?.capabilities).not.toContain("fetch_leads");
     expect(definition?.capabilities).not.toContain("webhook_receive");
     expect(definition?.authentication).toEqual(["portal_api_key"]);
-    expect(definition?.configuration_schema.fields.map((field) => field.key)).toEqual(["api_key"]);
+    // Agențiile NU introduc nicio cheie: cheia de furnizor stă în secretele de server.
+    expect(definition?.configuration_schema.fields).toEqual([]);
     expect(`${definition?.description} ${definition?.notes}`).toContain("production-only");
     expect(`${definition?.description} ${definition?.notes}`).not.toMatch(/mediu(l)? de test/i);
   });
 
-  it("fără cheie API nu se trimite nimic", async () => {
+  it("fără agenție activată nu se trimite nimic", async () => {
     const fetchSpy = vi.fn();
     vi.stubGlobal("fetch", fetchSpy);
     const result = await lacheieAdapter.publishListing(context(TEST_SETTINGS, null), ref);
@@ -54,7 +55,7 @@ describe("La Cheie — garduri înainte de orice request", () => {
     vi.unstubAllGlobals();
   });
 
-  it("nu există mediu de test: cheia lipsă rămâne singurul blocaj de configurare", async () => {
+  it("nu există mediu de test: activarea agenției rămâne singurul blocaj de configurare", async () => {
     const fetchSpy = vi.fn();
     vi.stubGlobal("fetch", fetchSpy);
     const result = await lacheieAdapter.publishListing(
@@ -70,8 +71,10 @@ describe("La Cheie — garduri înainte de orice request", () => {
     vi.unstubAllGlobals();
   });
 
-  it("starea conexiunii nu conține niciodată cheia API", async () => {
+  it("starea conexiunii nu conține niciodată cheia de furnizor", async () => {
+    process.env["LACHEIE_CRM_API_KEY"] = "lc_crm_cheie-foarte-secreta";
     const result = await lacheieAdapter.getStatus(context(TEST_SETTINGS, "cheie-foarte-secreta"));
+    delete process.env["LACHEIE_CRM_API_KEY"];
     expect(result.ok).toBe(true);
     if (result.ok) expect(JSON.stringify(result.data)).not.toContain("cheie-foarte-secreta");
   });
@@ -92,7 +95,7 @@ describe("La Cheie — reguli verificabile în cod", () => {
 
   it("fiecare server function cere Superadmin și validează inputul", () => {
     const handlers = functionsSource.match(/createServerFn\(/g) ?? [];
-    expect(handlers.length).toBeGreaterThanOrEqual(3);
+    expect(handlers.length).toBeGreaterThanOrEqual(6);
     expect((functionsSource.match(/requireSuperadminOrg\(/g) ?? []).length).toBeGreaterThanOrEqual(
       handlers.length,
     );
@@ -109,7 +112,7 @@ describe("La Cheie — reguli verificabile în cod", () => {
     );
     expect(stateType).not.toMatch(/apiKey\s*:\s*string/);
     expect(stateType).not.toMatch(/credential|secret|token/i);
-    expect(stateType).toContain("hasApiKey: boolean");
+    expect(stateType).toContain("hasProviderKey: boolean");
   });
 
   it("jurnalul nu salvează payload sau antete", () => {

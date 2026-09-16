@@ -10,6 +10,7 @@ const CONFIG = {
   baseUrl: "https://api.lacheie.ro/api/partners/v1",
   apiKey: "secret-key-123",
   environment: "production" as const,
+  agencyExternalId: "hbt-org-1",
   connectionKey: "org-1:production",
 };
 
