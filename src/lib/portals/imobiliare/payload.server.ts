@@ -197,6 +197,7 @@ export async function buildImobiliarePayload(input: {
       buildingFloors: row.building_floors,
       usableSurface: row.usable_surface ?? row.surface,
       builtSurface: row.built_surface,
+      landSurface: row.land_surface,
       totalUsableSurface: row.total_usable_surface,
       balconies: row.balconies,
       terraces: row.terraces,
