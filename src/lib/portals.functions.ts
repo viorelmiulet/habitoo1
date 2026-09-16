@@ -1153,6 +1153,42 @@ export const getPropertyPortalStatus = createServerFn({ method: "POST" })
     );
   });
 
+/**
+ * Validare pre-publicare pentru toate portalurile vizibile agenției: lista
+ * câmpurilor obligatorii, ce lipsește acum și ce câmpuri suplimentare se
+ * trimit dacă există date. Aceleași reguli blochează publicarea.
+ */
+export const getPropertyPortalRequirements = createServerFn({ method: "POST" })
+  .middleware([requireActiveOrgAuth])
+  .inputValidator((input: unknown) =>
+    z
+      .object({ organizationId: z.string().uuid().optional(), propertyId: z.string().uuid() })
+      .parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    const { organizationId, superadmin } = await resolvePublishingOrg(
+      context as unknown as AuthContext,
+      data.organizationId,
+    );
+    const visiblePortals = superadmin ? null : await activatedPortalIds(organizationId);
+    const admin = await loadAdmin();
+    const { loadRequirementSubject } = await import("@/lib/portals/requirements.server");
+    const { validatePortalRequirements } = await import("@/lib/portals/requirements");
+    const subject = await loadRequirementSubject(admin, organizationId, data.propertyId);
+    if (!subject) throw new Error("Proprietatea nu a fost găsită.");
+
+    return PORTALS.filter(
+      (p) =>
+        p.status === "available" &&
+        !isPortalCovered(p.id) &&
+        (visiblePortals === null || visiblePortals.has(p.id)),
+    ).map((portal) => ({
+      portalName: portalDisplayName(portal.id),
+      ...validatePortalRequirements(portal.id, subject),
+    }));
+  });
+
+
 export const getPortalLogs = createServerFn({ method: "POST" })
   .middleware([requireActiveOrgAuth])
   .inputValidator((input: unknown) => z.object({ organizationId: z.string().uuid() }).parse(input))
