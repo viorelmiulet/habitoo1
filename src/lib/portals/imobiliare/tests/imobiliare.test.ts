@@ -207,6 +207,23 @@ describe("category_api", () => {
     expect(categoryApiFor(catalog, "apartament", "rent")).toBe(12);
     expect(categoryApiFor(catalog, "casa", "sale")).toBe(20);
   });
+
+  it("citește obiectul cheiat returnat de portal și respectă offer_type", () => {
+    const catalog = {
+      categories: parseCategories({
+        "102": { category_id: 2, offer_type: "sell", name: "Apartament de vanzare" },
+        "202": { category_id: 2, offer_type: "rent", name: "Apartament de inchiriat" },
+        "120": { category_id: 3, offer_type: "sell", name: "Casa de vanzare" },
+      }),
+      fetchedAt: null,
+      error: null,
+    };
+    expect(catalog.categories).toHaveLength(3);
+    // Tipurile Habitoo sunt sluguri în engleză.
+    expect(categoryApiFor(catalog, "apartment", "sale")).toBe(102);
+    expect(categoryApiFor(catalog, "apartment", "rent")).toBe(202);
+    expect(categoryApiFor(catalog, "house", "sale")).toBe(120);
+  });
 });
 
 /* --------------------------------- agenți --------------------------------- */
