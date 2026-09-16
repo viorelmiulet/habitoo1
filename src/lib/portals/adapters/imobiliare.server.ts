@@ -216,8 +216,6 @@ function isDuplicateReference(body: unknown): boolean {
   return /unique/i.test(text);
 }
 
-const IMOBILIARE_PUBLIC_ORIGIN = "https://www.imobiliare.ro";
-
 /** Linkul public al anunțului, din câmpul `path` returnat de GET listing. */
 async function fetchImobiliarePublicUrl(
   session: ImobiliareSession,
@@ -230,11 +228,7 @@ async function fetchImobiliarePublicUrl(
     connectionKey: ctx.organizationId,
   });
   if (!response.ok) return null;
-  const data = (response.body as Record<string, unknown> | null)?.data;
-  const path =
-    data && typeof data === "object" ? (data as Record<string, unknown>)["path"] : null;
-  if (typeof path !== "string" || !path.startsWith("/oferta/")) return null;
-  return `${IMOBILIARE_PUBLIC_ORIGIN}${path}`;
+  return imobiliarePublicUrlFromBody(response.body);
 }
 
 async function publishPlan(input: {
