@@ -426,7 +426,8 @@ async function withdraw(
         externalId: serializeImobiliareReferences(externalIds),
         live: true,
         detail: "Anunțul a fost trecut în draft la Imobiliare.ro (retras din public).",
-        portalStatus: IMOBILIARE_STATUS_DRAFT,
+        // Starea salvată local folosește vocabularul CRM, nu al portalului.
+        portalStatus: "withdrawn",
       },
     };
   } catch (error) {
