@@ -10,7 +10,11 @@ import {
   parseImobiliareCredential,
   tokensFromResponse,
 } from "../auth";
-import { imobiliareCustomReference, isValidCustomReference } from "../config";
+import {
+  imobiliareCustomReference,
+  imobiliarePublicUrlFromBody,
+  isValidCustomReference,
+} from "../config";
 import { describeImobiliareValidation, classifyImobiliareStatus } from "../http";
 import {
   denormalizeLocations,
