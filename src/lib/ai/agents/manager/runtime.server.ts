@@ -209,12 +209,24 @@ export async function runManagerTurn(
     };
   }
 
-  const routing: ManagerRouting = routeManagerRequest(request);
+  // Rutare: reguli deterministe + clasificare semantică (allowlist de intenții).
+  const keywordRouting: ManagerRouting = routeManagerRequest(request);
+  const { routeManagerRequestSemantic } = await import("./semantic.server");
+  const routed = await routeManagerRequestSemantic(provider, request, keywordRouting);
+  const routing: ManagerRouting = routed.routing;
   const traceId = newTraceId();
   const tracer = new AiTracer(traceId, {
     organizationId: actor.organizationId,
     userId: actor.userId,
   });
+  tracer.record("workflow", `${MANAGER_WORKFLOW}.routing`, {
+    details: {
+      intent: routing.intent,
+      keywordIntent: keywordRouting.intent,
+      semantic: routed.semantic,
+    },
+  });
+
 
   const propertyIds = [...new Set(input.propertyIds ?? [])].slice(0, 5);
   const plan = buildManagerPlan({
