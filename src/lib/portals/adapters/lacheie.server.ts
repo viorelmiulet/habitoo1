@@ -145,7 +145,8 @@ async function status(
   ctx: PortalContext,
   live: boolean,
 ): Promise<PortalResult<ConnectionStatusOutcome>> {
-  const settings = settingsOf(ctx);
+  const agencyExternalId = readLaCheieAgencyState(ctx.settings as Record<string, unknown>).externalId;
+
   const agency = readLaCheieAgencyState(ctx.settings as Record<string, unknown>);
   if (!hasLaCheieCrmApiKey()) {
     return {
