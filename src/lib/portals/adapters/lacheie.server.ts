@@ -200,13 +200,22 @@ async function sendOffer(input: {
     operation: mode,
   });
 
+  // La PUT, `external_id` face parte din URL, iar corpul îl respinge explicit
+  // („external_id: Unknown field."). Îl trimitem doar la POST (creare).
+  const updateBody = (() => {
+    const { external_id: _omit, ...rest } = offer as Record<string, unknown> & {
+      external_id: string;
+    };
+    return rest;
+  })();
+
   const attemptSend = async (sourceVersion: string) =>
     mode === "create"
       ? laCheieRequest(config, { method: "POST", path, body: offer, sourceVersion })
       : laCheieRequest(config, {
           method: "PUT",
           path: laCheiePropertiesPath(offer.external_id),
-          body: offer,
+          body: updateBody,
           sourceVersion,
         });
 
