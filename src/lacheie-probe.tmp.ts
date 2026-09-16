@@ -1,33 +1,33 @@
 import { decryptPortalCredential } from "@/lib/portals/crypto.server";
-import { readLaCheieCatalog, refreshLaCheieCatalog } from "@/lib/portals/lacheie/catalog.server";
+import { readLaCheieCatalog } from "@/lib/portals/lacheie/catalog.server";
 import { buildLaCheiePayload } from "@/lib/portals/lacheie/payload.server";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { LACHEIE_PRODUCTION_BASE_URL } from "@/lib/portals/lacheie/config";
 
 const ORG = process.env["ORG"]!;
-const { data: conn } = await supabaseAdmin
-  .from("portal_connections").select("*").eq("organization_id", ORG).eq("portal", "lacheie").maybeSingle();
-const apiKey = decryptPortalCredential((conn as any).portal_credentials_encrypted)!;
-const base = LACHEIE_PRODUCTION_BASE_URL;
-console.log("base:", base, "key len:", apiKey.length);
-
-const config = { baseUrl: base, apiKey, environment: "production" as const, connectionKey: `${ORG}:production` };
-let catalog = await readLaCheieCatalog(supabaseAdmin as any, { organizationId: ORG, environment: "production" });
-if (!catalog) {
-  const r = await refreshLaCheieCatalog(supabaseAdmin as any, config as any, { organizationId: ORG, environment: "production", actorId: null });
-  console.log("catalog refresh:", r.ok ? "ok" : r.message);
-  if (r.ok) catalog = r.catalog;
-}
-const propertyId = process.env["PROP"]!;
-const build = await buildLaCheiePayload({ organizationId: ORG, propertyId, catalog: catalog! });
+const { data: conn } = await supabaseAdmin.from("portal_connections").select("*").eq("organization_id", ORG).eq("portal","lacheie").maybeSingle();
+const key = decryptPortalCredential((conn as any).portal_credentials_encrypted)!;
+const base = "https://api.lacheie.ro/api/partners/v1";
+const catalog = await readLaCheieCatalog(supabaseAdmin as any, { organizationId: ORG, environment: "production" });
+const build = await buildLaCheiePayload({ organizationId: ORG, propertyId: process.env["PROP"]!, catalog: catalog! });
 if (!build.ok) { console.log("BUILD FAILED", build.reasons); process.exit(0); }
-const offer = build.offers[0]!.offer;
-console.log("PAYLOAD:", JSON.stringify(offer, null, 2).slice(0, 4000));
+const offer: Record<string, unknown> = { ...(build.offers[0]!.offer as any) };
 
-const res = await fetch(`${base}/properties`, {
-  method: "POST",
-  headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json", Accept: "application/json", "X-Source-Version": "1" },
-  body: JSON.stringify(offer),
-});
-console.log("STATUS", res.status);
-console.log("BODY", (await res.text()).slice(0, 4000));
+for (let round = 1; round <= 10; round += 1) {
+  const res = await fetch(`${base}/properties`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json", Accept: "application/json", "X-Source-Version": String(round) },
+    body: JSON.stringify(offer),
+  });
+  const text = await res.text();
+  console.log(`--- round ${round}: HTTP ${res.status}`);
+  console.log(text.slice(0, 1500));
+  if (res.status !== 400 && res.status !== 422) break;
+  let fields: Record<string, unknown> = {};
+  try { fields = JSON.parse(text).error?.fields ?? {}; } catch { break; }
+  const unknown = Object.entries(fields)
+    .filter(([, v]) => JSON.stringify(v).includes("Unknown field"))
+    .map(([k]) => k);
+  if (unknown.length === 0) break;
+  console.log("elimin câmpurile necunoscute:", unknown.join(", "));
+  for (const field of unknown) delete offer[field.split(".")[0]!];
+}
