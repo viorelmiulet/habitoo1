@@ -146,12 +146,20 @@ async function status(
   live: boolean,
 ): Promise<PortalResult<ConnectionStatusOutcome>> {
   const settings = settingsOf(ctx);
-  const credential = (ctx.portalCredential ?? "").trim();
-  if (!credential) {
+  const agency = readLaCheieAgencyState(ctx.settings as Record<string, unknown>);
+  if (!hasLaCheieCrmApiKey()) {
     return {
       ok: true,
-      data: { configured: false, live: false, detail: "Cheia API La Cheie lipsește." },
+      data: {
+        configured: false,
+        live: false,
+        detail: "Cheia de furnizor La Cheie nu este configurată pe server.",
+      },
     };
+  }
+  const blocked = laCheieAgencyBlockReason(agency);
+  if (blocked) {
+    return { ok: true, data: { configured: false, live: false, detail: blocked } };
   }
   // GET /account este read-only: testarea explicită a conexiunii de producție
   // nu depinde de comutatorul care permite scrierile reale.
@@ -161,10 +169,11 @@ async function status(
       data: {
         configured: true,
         live: false,
-        detail: "Cheie salvată (mediu production); testează conexiunea pentru confirmare.",
+        detail: "Agenție activată la La Cheie; testează conexiunea pentru confirmare.",
       },
     };
   }
+
 
   const ready = prepare(ctx);
   if (!ready.ok) return ready.result;
