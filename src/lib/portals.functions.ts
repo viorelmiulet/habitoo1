@@ -23,6 +23,10 @@ import {
 } from "@/lib/portals/registry";
 import { PORTAL_ERROR_MESSAGE } from "@/lib/portals/errors";
 import type { ImoveListing } from "@/lib/portals/imove/mapper";
+import {
+  isLegacyLaCheieTestEnvironmentError,
+  normalizeLaCheiePortalSettings,
+} from "@/lib/portals/lacheie/config";
 
 export type PortalHubItem = {
   portal: PortalDefinition;
@@ -231,7 +235,11 @@ async function buildContext(organizationId: string, definition: PortalDefinition
     .eq("portal", definition.id)
     .maybeSingle();
 
-  const settings = (row?.settings ?? {}) as Record<string, unknown>;
+  const storedSettings = (row?.settings ?? {}) as Record<string, unknown>;
+  const settings =
+    definition.id === "lacheie"
+      ? normalizeLaCheiePortalSettings(storedSettings)
+      : storedSettings;
   return {
     row,
     ctx: {
@@ -318,7 +326,16 @@ export const getPortalHub = createServerFn({ method: "POST" })
 
     return configurablePortals().map((portal) => {
       const row = (connections.data ?? []).find((c) => c.portal === portal.id) ?? null;
-      const settings = (row?.settings ?? {}) as Record<string, unknown>;
+      const storedSettings = (row?.settings ?? {}) as Record<string, unknown>;
+      const settings =
+        portal.id === "lacheie"
+          ? normalizeLaCheiePortalSettings(storedSettings)
+          : storedSettings;
+      const storedLastError = row?.last_sync_error ?? null;
+      const lastError =
+        portal.id === "lacheie" && isLegacyLaCheieTestEnvironmentError(storedLastError)
+          ? null
+          : storedLastError;
       const portalKeys = (keys.data ?? []).filter((k) => k.portal === portal.id);
       const portalListings = (listings.data ?? []).filter((l) => l.portal === portal.id);
       const oauthMeta = portal.authentication.includes("oauth")
@@ -335,7 +352,7 @@ export const getPortalHub = createServerFn({ method: "POST" })
             externalAccountId: row?.external_account_id ?? null,
             hasPortalCredential: Boolean(row?.portal_credentials_encrypted),
             hasHabitooKey: portalKeys.some((k) => k.status === "active"),
-            lastError: row?.last_sync_error ?? null,
+            lastError,
             testedOk: row?.status === "connected",
             hasOAuthTokens: Boolean(row?.portal_credentials_encrypted),
           }),
@@ -350,7 +367,7 @@ export const getPortalHub = createServerFn({ method: "POST" })
           activated: row?.activated === true,
           lastSyncAt: row?.last_sync_at ?? null,
           lastSyncStatus: row?.last_sync_status ?? null,
-          lastSyncError: row?.last_sync_error ?? null,
+          lastSyncError: lastError,
         },
         keys: portalKeys.map((k) => ({
           id: k.id,
