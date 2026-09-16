@@ -102,6 +102,12 @@ export function laCheiePropertiesPath(externalId?: string): string {
     : LACHEIE_DEFAULT_PROPERTIES_PATH;
 }
 
+/** Endpointul de agenție: `/agencies/{external_id}`. */
+export function laCheieAgenciesPath(externalId: string): string {
+  return `${LACHEIE_AGENCIES_PATH}/${encodeURIComponent(externalId)}`;
+}
+
+
 export type LaCheieReadiness = "not_configured" | "connected" | "error";
 
 /** Starea afișată în UI, derivată din configurare + ultimul rezultat. */
