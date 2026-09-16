@@ -994,6 +994,8 @@ export async function executeListingAction(input: {
     success: result.ok,
     errorCode: result.ok ? null : result.code,
     errorMessage: result.ok ? null : result.message,
+    ...(result.ok ? {} : { httpStatus: result.httpStatus ?? null }),
+    ...(result.ok ? {} : { portalResponse: result.portalResponse ?? null }),
     propertyId,
     actorId,
   });
