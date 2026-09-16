@@ -407,9 +407,13 @@ async function runStep(
     case "prospecting_check": {
       const read = await readTool(actor, tracer, "list_prospecting_sources", { limit: 10 });
       if (!read.ok) {
+        if (read.retryable) {
+          return { state, stop: false, retry: true, retryMessage: read.message };
+        }
         state = failStep(state, step.id, read.message, "blocked") as ManagerState;
         return { state, stop: false };
       }
+
       const rows = Array.isArray(read.data) ? read.data : [];
       // Doar o sursă activă cu provider `live` înseamnă sursă externă reală.
       const liveSources = rows.filter(
