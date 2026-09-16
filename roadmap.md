@@ -1,5 +1,7 @@
 ## Faza 2 – de finalizat
 
+- [x] Remediere Imobiliare.ro: telefon/WhatsApp coerente, catalog reîmprospătat, referințe multiple stabile și retragere/ștergere completă.
+
 - [x] Corecție critică La Cheie: eliminare completă TEST, endpointuri `/properties`, teste și verificare deployment.
 - [x] Corecție La Cheie: sincronizare automată a catalogului read-only, independent de activarea scrierilor reale.
 
