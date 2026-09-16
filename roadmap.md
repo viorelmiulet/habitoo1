@@ -281,3 +281,7 @@
 - [x] Test E2E pe runtime real: CRM → ACP → Marketing → aprobare → resume/reject → audit/trace.
 - [x] Suită completă 851 teste, typecheck și build OK; bundle client fără secrete.
 - [ ] Prospecting: nicio sursă externă autorizată conectată (rămâne `source_unavailable`).
+
+## Promovare Imobiliare.ro
+
+- [x] Inventar sloturi, listă anunțuri pe slot și activare/dezactivare per ofertă (registry configurabil, Energy numeric, audit, teste).

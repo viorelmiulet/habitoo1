@@ -29,6 +29,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { PortalLogoStack } from "@/components/app/PortalLogo";
+import { PropertyImobiliarePromotionsCard } from "@/components/app/PropertyImobiliarePromotionsCard";
 import { BrandLogo } from "@/components/brand/BrandLogo";
 import { InlineLoading } from "@/components/app/LoadingState";
 import { QueryError } from "@/components/app/QueryError";
@@ -474,6 +475,15 @@ export const PropertyPortalsCard = forwardRef<
                     ))}
                   </ul>
                 </div>
+              ) : null}
+
+              {/* Promovare, doar pentru Imobiliare.ro și doar când portalul e bifat. */}
+              {cell.portalId === "imobiliare_ro" && value ? (
+                <PropertyImobiliarePromotionsCard
+                  propertyId={propertyId}
+                  organizationId={organizationId}
+                  canManage={canManage}
+                />
               ) : null}
 
               {/* Auto-prelungire, doar pentru Storia și doar când portalul e bifat. */}

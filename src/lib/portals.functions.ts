@@ -99,7 +99,7 @@ export type PortalLogItem = {
   createdAt: string;
 };
 
-type AuthContext = {
+export type AuthContext = {
   supabase: {
     rpc: (
       fn: "is_superadmin" | "is_org_admin",
@@ -148,7 +148,7 @@ async function requireSuperadminOrg(context: AuthContext, organizationId: string
  * suport), iar administratorul de agenție doar pe agenția din SESIUNE —
  * niciodată pe una primită din input.
  */
-async function resolvePublishingOrg(
+export async function resolvePublishingOrg(
   context: AuthContext,
   requestedOrganizationId?: string,
 ): Promise<{ organizationId: string; superadmin: boolean }> {
@@ -193,7 +193,7 @@ async function loadAdmin() {
   return supabaseAdmin;
 }
 
-async function logOperation(input: {
+export async function logOperation(input: {
   organizationId: string;
   portal: string;
   operation: string;
@@ -241,7 +241,7 @@ async function feedUrlForOrg(portalId?: string): Promise<string> {
 }
 
 /** Context complet pentru adaptor, cu credențialul decriptat. */
-async function buildContext(organizationId: string, definition: PortalDefinition) {
+export async function buildContext(organizationId: string, definition: PortalDefinition) {
   const admin = await loadAdmin();
   const { decryptPortalCredential } = await import("@/lib/portals/crypto.server");
   const { data: row } = await admin
