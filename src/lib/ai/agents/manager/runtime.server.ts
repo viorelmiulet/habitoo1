@@ -28,11 +28,13 @@ import {
   applyApproval,
   budgetExceeded,
   buildManagerPlan,
+  canRetryStep,
   completeStep,
   failPlan,
   failStep,
   findStep,
   isApprovedForExecution,
+  MANAGER_MAX_RETRIES,
   MANAGER_WORKFLOW,
   nextPendingStep,
   retryStep,
@@ -45,6 +47,7 @@ import {
   type ManagerJson,
   type ManagerStep,
 } from "./plan";
+
 
 async function loadAdmin() {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -312,8 +315,10 @@ async function executePlan(
 ): Promise<ManagerState> {
   let state = input;
   let guard = 0;
+  // Bucla permite reluarea aceluiași pas de câte ori îngăduie bugetul de retry.
+  const maxIterations = state.steps.length * (MANAGER_MAX_RETRIES + 1) + 2;
 
-  while (guard < state.steps.length + 1) {
+  while (guard < maxIterations) {
     guard += 1;
     const budget = budgetExceeded(state);
     if (budget) {
@@ -324,14 +329,39 @@ async function executePlan(
     if (!step) break;
 
     state = startStep(state, step.id) as ManagerState;
-    tracer.record("step", `${MANAGER_WORKFLOW}.${step.kind}`, { details: { stepId: step.id } });
+    tracer.record("step", `${MANAGER_WORKFLOW}.${step.kind}`, {
+      details: { stepId: step.id, attempt: step.retryCount + 1 },
+    });
     const result = await runStep(admin, actor, tracer, runId, state, step, turn);
     state = result.state;
+
+    if (result.retry) {
+      if (canRetryStep(state, step.id)) {
+        // RETRY REAL: același pas, același input, contor persistat.
+        state = retryStep(state, step.id, result.retryMessage ?? null) as ManagerState;
+        tracer.record("step", `${MANAGER_WORKFLOW}.retry`, {
+          details: { stepId: step.id, attempt: (findStep(state, step.id)?.retryCount ?? 0) + 1 },
+        });
+        await persist(admin, actor, runId, state, null);
+        continue;
+      }
+      const reason =
+        result.retryMessage ??
+        "Pasul a eșuat repetat. Planul s-a oprit și necesită atenție.";
+      state = failStep(state, step.id, reason) as ManagerState;
+      state = skipRemainingSteps(failPlan(state, reason), reason) as ManagerState;
+      await persist(admin, actor, runId, state, reason);
+      break;
+    }
+
+    // Persistăm după fiecare pas: o întrerupere nu pierde progresul.
+    await persist(admin, actor, runId, state, state.failure);
     if (result.stop) break;
   }
 
   return { ...state, summary: state.summary ?? summarize(state) };
 }
+
 
 function summarize(state: ManagerState): string {
   const done = state.steps.filter((item) => item.status === "completed").length;
