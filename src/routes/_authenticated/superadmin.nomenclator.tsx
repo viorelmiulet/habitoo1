@@ -18,6 +18,10 @@ import {
   importSiruta,
   type SirutaImportResult,
 } from "@/lib/siruta.functions";
+import {
+  getImobiliareLocationStats,
+  importImobiliareLocationsFile,
+} from "@/lib/imobiliare-locations.functions";
 import { appHead } from "@/components/app/app-head";
 
 export const Route = createFileRoute("/_authenticated/superadmin/nomenclator")({
