@@ -48,6 +48,9 @@ export function LaCheieCard({ organizationId }: { organizationId: string }) {
   const loadState = useServerFn(getLaCheieState);
   const refreshCatalog = useServerFn(refreshLaCheieCatalog);
   const testConnection = useServerFn(testLaCheieConnection);
+  const activateAgency = useServerFn(activateLaCheieAgency);
+  const refreshAgency = useServerFn(refreshLaCheieAgencyStatus);
+  const deactivateAgency = useServerFn(deactivateLaCheieAgency);
 
   const state = useQuery({
     queryKey: ["lacheie-state", organizationId],
@@ -56,6 +59,47 @@ export function LaCheieCard({ organizationId }: { organizationId: string }) {
 
   const invalidate = () =>
     void queryClient.invalidateQueries({ queryKey: ["lacheie-state", organizationId] });
+
+  const activateMutation = useMutation({
+    mutationFn: () => activateAgency({ data: { organizationId } }),
+    onSuccess: (result) => {
+      toast.success(
+        result.requiresResend
+          ? `Agenția a fost reactivată (v${result.version}). Retrimite ofertele complete, cu versiuni mai mari.`
+          : `Agenția a fost înregistrată la La Cheie (${result.externalId}).`,
+      );
+      invalidate();
+    },
+    onError: (error: Error) => {
+      toast.error(error.message);
+      invalidate();
+    },
+  });
+
+  const agencyStatusMutation = useMutation({
+    mutationFn: () => refreshAgency({ data: { organizationId } }),
+    onSuccess: (result) => {
+      toast.success(`Status agenție la La Cheie: ${result.statusLabel}.`);
+      invalidate();
+    },
+    onError: (error: Error) => {
+      toast.error(error.message);
+      invalidate();
+    },
+  });
+
+  const deactivateMutation = useMutation({
+    mutationFn: () => deactivateAgency({ data: { organizationId, confirm: true as const } }),
+    onSuccess: () => {
+      toast.success("Sincronizarea La Cheie a fost oprită; ofertele acestei conexiuni au fost retrase.");
+      invalidate();
+    },
+    onError: (error: Error) => {
+      toast.error(error.message);
+      invalidate();
+    },
+  });
+
 
   const testMutation = useMutation({
     mutationFn: () => testConnection({ data: { organizationId } }),
