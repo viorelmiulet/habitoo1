@@ -70,18 +70,37 @@ type Ready =
 
 type PortalFailShape = Extract<PortalResult<never>, { ok: false }>;
 
-/** Verifică o singură dată: cheie salvată, adresă configurată, mediu permis. */
+/**
+ * Verifică o singură dată: cheia de furnizor CRM există server-side și agenția
+ * are o conexiune activă (`external_id` + status `active`).
+ */
 function prepare(ctx: PortalContext): Ready {
   const settings = settingsOf(ctx);
-  const credential = (ctx.portalCredential ?? "").trim();
-  if (!credential) {
+  const agency = readLaCheieAgencyState(ctx.settings as Record<string, unknown>);
+  let apiKey: string;
+  try {
+    apiKey = laCheieCrmApiKey();
+  } catch (error) {
+    const normalized = toPortalError(error);
     return {
       ok: false,
       result: {
         ok: false,
         code: "CONFIG_ERROR",
-        message: "Cheia API La Cheie nu este salvată pentru această agenție.",
-        detail: "missing_credential",
+        message: normalized.message,
+        detail: "missing_crm_api_key",
+      },
+    };
+  }
+  const blocked = laCheieAgencyBlockReason(agency);
+  if (blocked || !agency.externalId) {
+    return {
+      ok: false,
+      result: {
+        ok: false,
+        code: "CONFIG_ERROR",
+        message: blocked ?? "Conexiunea agenției la La Cheie nu este activă.",
+        detail: `agency_${agency.status}`,
       },
     };
   }
@@ -92,12 +111,14 @@ function prepare(ctx: PortalContext): Ready {
     settings,
     config: {
       baseUrl: base,
-      apiKey: credential,
+      apiKey,
       environment: settings.environment,
+      agencyExternalId: agency.externalId,
       connectionKey: `${ctx.organizationId}:${settings.environment}`,
     },
   };
 }
+
 
 function failFrom(
   response: {
