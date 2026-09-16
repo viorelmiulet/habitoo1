@@ -138,8 +138,11 @@ export type LaCheieRequestInput = {
   body?: unknown;
   /** Text zecimal; se trimite identic la fiecare retry al aceleiași operații. */
   sourceVersion?: string | null;
+  /** Implicit `agency`: cere `X-Agency-External-ID`. */
+  scope?: LaCheieRequestScope;
   timeoutMs?: number;
 };
+
 
 async function readBody(response: Response): Promise<unknown> {
   const text = await response.text().catch(() => "");
