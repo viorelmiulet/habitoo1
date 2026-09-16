@@ -26,7 +26,7 @@ console.log("PAYLOAD:", JSON.stringify(offer, null, 2).slice(0, 4000));
 
 const res = await fetch(`${base}/properties`, {
   method: "POST",
-  headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json", Accept: "application/json" },
+  headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json", Accept: "application/json", "X-Source-Version": "1" },
   body: JSON.stringify(offer),
 });
 console.log("STATUS", res.status);
