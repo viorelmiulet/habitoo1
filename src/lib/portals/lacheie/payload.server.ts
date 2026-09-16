@@ -14,7 +14,16 @@ import {
   type PropertyImageRow,
   type PropertyRow,
 } from "@/lib/site-feed/mapper";
-import { laCheieCategory, resolveLaCheieIds, type LaCheieCatalog } from "./catalog";
+import {
+  constructionStageFor,
+  laCheieCategory,
+  petFriendlyFor,
+  resolveLaCheieIds,
+  resolveOptionId,
+  resolveOptionPk,
+  resolveOptionPks,
+  type LaCheieCatalog,
+} from "./catalog";
 import {
   buildLaCheieOffer,
   type LaCheieOffer,
@@ -153,22 +162,28 @@ export async function buildLaCheiePayload(input: {
         yearBuilt: row.build_year,
         numberOfRooms: row.rooms,
         floor: row.floor,
-        comfort: row.comfort,
-        partitioning: row.layout,
-        constructionStage: row.construction_stage,
+        comfort: resolveOptionId(input.catalog, "comfort", row.comfort),
+        partitioning: resolveOptionId(input.catalog, "partitioning", row.layout),
+        constructionStage:
+          resolveOptionId(input.catalog, "construction_stage", row.construction_stage) ??
+          constructionStageFor(input.catalog, row.build_year),
         neighbourhood: row.district,
         streetName: row.street,
         streetNumber: row.street_number,
         lat: coords?.lat ?? null,
         lng: coords?.lng ?? null,
-        petFriendly: row.pet_friendly,
+        petFriendly: petFriendlyFor(input.catalog, row.pet_friendly),
         strengths: textList(row.tags),
-        facilities: textList(row.building_amenities),
-        utilities: textList(row.utilities),
-        nearby: textList(row.views),
-        heating: row.heating ?? textList(row.heating_systems)[0] ?? null,
-        cooling: textList(row.cooling_systems)[0] ?? null,
-        parking: row.parking,
+        facilities: resolveOptionPks(input.catalog, "facilities", textList(row.building_amenities)),
+        utilities: resolveOptionPks(input.catalog, "utilities", textList(row.utilities)),
+        nearby: resolveOptionPks(input.catalog, "nearby", textList(row.views)),
+        heating: resolveOptionPk(
+          input.catalog,
+          "heating",
+          row.heating ?? textList(row.heating_systems)[0] ?? null,
+        ),
+        cooling: resolveOptionPk(input.catalog, "cooling", textList(row.cooling_systems)[0] ?? null),
+        parking: resolveOptionPk(input.catalog, "parking", row.parking),
         images: imageUrls,
       },
       {
