@@ -879,6 +879,38 @@ export async function executeListingAction(input: {
     };
   }
 
+  /**
+   * Validare pre-publicare: câmpurile obligatorii declarate de portal sunt
+   * verificate pe datele reale ÎNAINTE de orice apel către portal. Fără ele,
+   * portalul ar răspunde oricum cu eroare de validare, iar agentul nu ar ști
+   * ce lipsește.
+   */
+  if (action !== "withdraw") {
+    const { portalRequirementReport } = await import("@/lib/portals/requirements.server");
+    const { requirementBlockMessage } = await import("@/lib/portals/requirements");
+    const report = await portalRequirementReport(
+      admin,
+      organizationId,
+      propertyId,
+      definition.id,
+    );
+    if (report && !report.ok) {
+      const message = requirementBlockMessage(definition.display_name, report);
+      await logOperation({
+        organizationId,
+        portal: definition.id,
+        operation: input.operationLabel ?? action,
+        success: false,
+        errorCode: "VALIDATION_ERROR",
+        errorMessage: message,
+        propertyId,
+        actorId,
+      });
+      return { ok: false as const, code: "VALIDATION_ERROR", message };
+    }
+  }
+
+
   const { portalRateLimited } = await import("@/lib/portals/rate-limit.server");
   if (portalRateLimited(action, `${organizationId}|${portalId}`)) {
     return { ok: false as const, code: "RATE_LIMIT", message: PORTAL_ERROR_MESSAGE.RATE_LIMIT };
