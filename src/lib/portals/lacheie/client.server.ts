@@ -14,6 +14,8 @@
  */
 import { PortalError } from "../errors";
 import {
+  LACHEIE_AGENCY_HEADER,
+  LACHEIE_AGENCY_LIMIT_PER_MINUTE,
   LACHEIE_READ_LIMIT_PER_MINUTE,
   LACHEIE_SOURCE_VERSION_HEADER,
   LACHEIE_WRITE_LIMIT_PER_MINUTE,
@@ -31,11 +33,22 @@ import { acceptedVersionFromConflict } from "./version";
 
 export type LaCheieRequestConfig = {
   baseUrl: string;
+  /** Cheia unică de furnizor CRM (`lc_crm_…`), niciodată logată. */
   apiKey: string;
   environment: LaCheieEnvironment;
-  /** Cheia de limitare locală: o conexiune = o agenție + un mediu. */
+  /** `external_id` al agenției; obligatoriu pentru `/account` și `/properties`. */
+  agencyExternalId?: string | null;
+  /** Cheia de limitare locală: o conexiune = o agenție. */
   connectionKey: string;
 };
+
+/**
+ * Contextul cererii:
+ *  - `agency`   → `/account`, `/properties…` (trimite `X-Agency-External-ID`);
+ *  - `provider` → `/options`, `/counties`, `/cities` (doar cheia CRM);
+ *  - `agencies` → `/agencies/{external_id}` (administrare, limită 60/min).
+ */
+export type LaCheieRequestScope = "agency" | "provider" | "agencies";
 
 export type LaCheieResponse = {
   ok: boolean;
@@ -43,10 +56,13 @@ export type LaCheieResponse = {
   body: unknown;
   attempts: number;
   durationMs: number;
+  /** Identificatorul cererii raportat de portal, util în jurnal. */
+  requestId: string | null;
   /** Setat doar pentru 409. */
   conflict?: { acceptedVersion: string | null };
   classification: LaCheieClassification | null;
 };
+
 
 const REQUEST_TIMEOUT_MS = 15_000;
 
