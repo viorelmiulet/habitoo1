@@ -21,6 +21,13 @@ import { buildImobiliareListing, hasRealCoordinates } from "../mapper";
 import { categoryApiFor, parseCategories } from "../categories.server";
 import { parseAgents, agentIdFromCreate } from "../agents.server";
 import { batchEncodedImages } from "../media.server";
+import { normalizeImobiliarePhone, resolveImobiliareContactPhone } from "../contact";
+import {
+  parseImobiliareReferences,
+  referenceForTransaction,
+  serializeImobiliareReferences,
+} from "../references";
+import { categoryCatalogIsFresh } from "../categories.server";
 
 /* --------------------------------- tokenuri -------------------------------- */
 
@@ -84,6 +91,13 @@ describe("custom_reference", () => {
     expect(isValidCustomReference(imobiliareCustomReference("  HB 10/06 ", "abc"))).toBe(true);
     expect(isValidCustomReference(imobiliareCustomReference(null, "1564cc61-17be-4"))).toBe(true);
     expect(isValidCustomReference("-nu-incepe-bine")).toBe(false);
+  });
+
+  it("păstrează și selectează toate referințele externe", () => {
+    expect(parseImobiliareReferences("HB-1-V,HB-1-C,HB-1-V")).toEqual(["HB-1-V", "HB-1-C"]);
+    expect(serializeImobiliareReferences(["HB-1-V", "HB-1-C"])).toBe("HB-1-V,HB-1-C");
+    expect(referenceForTransaction(["HB-1-V", "HB-1-C"], "rent", "nou-C", 2)).toBe("HB-1-C");
+    expect(referenceForTransaction(["HB-VECHI"], "sale", "nou", 1)).toBe("HB-VECHI");
   });
 });
 
@@ -161,6 +175,11 @@ describe("nomenclatorul de locații", () => {
 /* -------------------------------- categorii ------------------------------- */
 
 describe("category_api", () => {
+  it("consideră catalogul expirat după 24 de ore", () => {
+    const now = Date.UTC(2026, 8, 16, 7, 0, 0);
+    expect(categoryCatalogIsFresh({ categories: [{ id: 1, name: "Apartamente" }], fetchedAt: new Date(now - 60_000).toISOString(), error: null }, now)).toBe(true);
+    expect(categoryCatalogIsFresh({ categories: [{ id: 1, name: "Apartamente" }], fetchedAt: new Date(now - 25 * 3_600_000).toISOString(), error: null }, now)).toBe(false);
+  });
   it("nu inventează valori când catalogul lipsește", () => {
     expect(
       categoryApiFor({ categories: [], fetchedAt: null, error: null }, "apartament", "sale"),
@@ -194,6 +213,12 @@ describe("agenți", () => {
     ]);
     expect(agentIdFromCreate({ data: { id: 9 } })).toBe(9);
     expect(agentIdFromCreate({})).toBeNull();
+  });
+
+  it("alege primul telefon valid și normalizează formatul internațional", () => {
+    expect(normalizeImobiliarePhone("+40 700 000 001")).toBe("0700000001");
+    expect(resolveImobiliareContactPhone("invalid", "0712 345 678")).toBe("0712345678");
+    expect(resolveImobiliareContactPhone("123", null)).toBeNull();
   });
 });
 

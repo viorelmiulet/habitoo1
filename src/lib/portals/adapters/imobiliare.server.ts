@@ -44,12 +44,18 @@ import { withImobiliareWriteLock } from "../imobiliare/client.server";
 import {
   readCategoryCatalog,
   refreshCategoryCatalog,
+  categoryCatalogIsFresh,
   type CategoryCatalog,
 } from "../imobiliare/categories.server";
 import { imobiliareLocationStats } from "../imobiliare/locations.server";
 import { batchEncodedImages, encodeImobiliareImages } from "../imobiliare/media.server";
 import { buildImobiliarePayload, type ImobiliareListingPlan } from "../imobiliare/payload.server";
 import { parseAgents } from "../imobiliare/agents.server";
+import {
+  parseImobiliareReferences,
+  referenceForTransaction,
+  serializeImobiliareReferences,
+} from "../imobiliare/references";
 
 type PortalFailShape = Extract<PortalResult<never>, { ok: false }>;
 type Admin = Awaited<typeof import("@/integrations/supabase/client.server")>["supabaseAdmin"];
@@ -97,10 +103,15 @@ async function prepare(ctx: PortalContext): Promise<Ready> {
       },
     };
   }
+  let catalog = readCategoryCatalog(ctx.settings as Record<string, unknown>);
+  if (!categoryCatalogIsFresh(catalog)) {
+    const refreshed = await refreshCategoryCatalog(db, session.session, ctx.organizationId);
+    catalog = refreshed.catalog;
+  }
   return {
     ok: true,
     session: session.session,
-    catalog: readCategoryCatalog(ctx.settings as Record<string, unknown>),
+    catalog,
   };
 }
 
@@ -287,8 +298,23 @@ async function write(
       };
     }
 
+    const storedReferences = parseImobiliareReferences(ref.externalId);
+    const resolvedPlans = payload.plans.map((plan) => {
+      const customReference = referenceForTransaction(
+        storedReferences,
+        plan.transaction,
+        plan.customReference,
+        payload.plans.length,
+      );
+      return {
+        ...plan,
+        customReference,
+        listing: { ...plan.listing, custom_reference: customReference },
+      };
+    });
     const steps: string[] = [];
-    for (const plan of payload.plans) {
+    for (const plan of resolvedPlans) {
+      const planMode: WriteMode = storedReferences.includes(plan.customReference) ? "update" : mode;
       const result = await withImobiliareWriteLock(
         `${ctx.organizationId}:${plan.customReference}`,
         () =>
@@ -297,7 +323,7 @@ async function write(
             session: ready.session,
             plan,
             images: media.images,
-            mode,
+            mode: planMode,
           }),
       );
       if (!result.ok) return result.fail;
@@ -307,7 +333,7 @@ async function write(
     return {
       ok: true,
       data: {
-        externalId: payload.plans[0]?.customReference ?? null,
+        externalId: serializeImobiliareReferences(resolvedPlans.map((plan) => plan.customReference)),
         live: true,
         detail: steps.join("; "),
         portalStatus: IMOBILIARE_STATUS_ONLINE,
@@ -334,8 +360,8 @@ async function withdraw(
 ): Promise<PortalResult<ListingOutcome>> {
   const ready = await prepare(ctx);
   if (!ready.ok) return ready.result;
-  const externalId = (ref.externalId ?? "").trim();
-  if (!externalId) {
+  const externalIds = parseImobiliareReferences(ref.externalId);
+  if (externalIds.length === 0) {
     return {
       ok: true,
       data: { externalId: null, live: false, detail: "Anunțul nu a fost publicat pe Imobiliare.ro." },
@@ -344,25 +370,27 @@ async function withdraw(
   if (!ctx.allowLiveRequests) {
     return {
       ok: true,
-      data: { externalId, live: false, detail: "Scrierile reale sunt oprite." },
+      data: { externalId: serializeImobiliareReferences(externalIds), live: false, detail: "Scrierile reale sunt oprite." },
     };
   }
 
   try {
     // Retragere = trecerea în draft: reversibilă, fără pierderea anunțului.
-    const response = await withImobiliareWriteLock(`${ctx.organizationId}:${externalId}`, () =>
-      imobiliareAuthedRequest(ready.session, {
-        method: "POST",
-        path: promotionsPath(externalId),
-        connectionKey: ctx.organizationId,
-        body: { status: IMOBILIARE_STATUS_DRAFT },
-      }),
-    );
-    if (!response.ok) return failFrom(response, "withdraw");
+    for (const externalId of externalIds) {
+      const response = await withImobiliareWriteLock(`${ctx.organizationId}:${externalId}`, () =>
+        imobiliareAuthedRequest(ready.session, {
+          method: "POST",
+          path: promotionsPath(externalId),
+          connectionKey: ctx.organizationId,
+          body: { status: IMOBILIARE_STATUS_DRAFT },
+        }),
+      );
+      if (!response.ok) return failFrom(response, `withdraw:${externalId}`);
+    }
     return {
       ok: true,
       data: {
-        externalId,
+        externalId: serializeImobiliareReferences(externalIds),
         live: true,
         detail: "Anunțul a fost trecut în draft la Imobiliare.ro (retras din public).",
         portalStatus: IMOBILIARE_STATUS_DRAFT,
@@ -381,15 +409,24 @@ export async function deleteImobiliareListing(
 ): Promise<PortalResult<ListingOutcome>> {
   const ready = await prepare(ctx);
   if (!ready.ok) return ready.result;
-  const response = await imobiliareAuthedRequest(ready.session, {
-    method: "DELETE",
-    path: listingPath(externalId),
-    connectionKey: ctx.organizationId,
-  });
-  if (!response.ok) return failFrom(response, "delete");
+  const externalIds = parseImobiliareReferences(externalId);
+  for (const reference of externalIds) {
+    const response = await withImobiliareWriteLock(`${ctx.organizationId}:${reference}`, () =>
+      imobiliareAuthedRequest(ready.session, {
+        method: "DELETE",
+        path: listingPath(reference),
+        connectionKey: ctx.organizationId,
+      }),
+    );
+    if (!response.ok) return failFrom(response, `delete:${reference}`);
+  }
   return {
     ok: true,
-    data: { externalId, live: true, detail: "Anunțul a fost șters definitiv de la Imobiliare.ro." },
+    data: {
+      externalId: serializeImobiliareReferences(externalIds),
+      live: true,
+      detail: `${externalIds.length} anunț(uri) au fost șterse definitiv de la Imobiliare.ro.`,
+    },
   };
 }
 

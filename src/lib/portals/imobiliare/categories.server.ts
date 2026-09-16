@@ -23,6 +23,17 @@ export type CategoryCatalog = {
   error: string | null;
 };
 
+export const IMOBILIARE_CATEGORY_MAX_AGE_MS = 24 * 60 * 60 * 1000;
+
+export function categoryCatalogIsFresh(
+  catalog: CategoryCatalog,
+  now = Date.now(),
+): boolean {
+  if (catalog.categories.length === 0 || !catalog.fetchedAt) return false;
+  const fetchedAt = Date.parse(catalog.fetchedAt);
+  return Number.isFinite(fetchedAt) && now - fetchedAt < IMOBILIARE_CATEGORY_MAX_AGE_MS;
+}
+
 /** Normalizează orice formă de listă returnată de portal. */
 export function parseCategories(body: unknown): ImobiliareCategory[] {
   const source = Array.isArray(body)

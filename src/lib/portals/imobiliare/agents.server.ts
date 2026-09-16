@@ -9,6 +9,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/integrations/supabase/types";
 import { IMOBILIARE_PATHS } from "./config";
 import { imobiliareAuthedRequest, type ImobiliareSession } from "./auth.server";
+import { normalizeImobiliarePhone } from "./contact";
 
 type Admin = SupabaseClient<Database>;
 
@@ -66,6 +67,7 @@ export async function ensureImobiliareAgent(input: {
 }): Promise<AgentSyncResult> {
   const { admin, session, organizationId, profile } = input;
   const email = profile.email?.trim().toLowerCase() ?? "";
+  const phone = normalizeImobiliarePhone(profile.phone);
 
   const { data: existing } = await admin
     .from("imobiliare_agents")
@@ -113,7 +115,7 @@ export async function ensureImobiliareAgent(input: {
     body: {
       name: profile.full_name?.trim() || email,
       email,
-      ...(profile.phone?.trim() ? { phone: profile.phone.trim() } : {}),
+      ...(phone ? { phone } : {}),
     },
   });
   if (!created.ok) {
