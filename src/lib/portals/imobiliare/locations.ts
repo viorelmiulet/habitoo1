@@ -375,3 +375,19 @@ export function matchImobiliareLocation(input: {
       : `Zonă aproximativă: oferta nu are cartier completat; s-a folosit „${fallback.name}”.`,
   };
 }
+
+/**
+ * Aliasuri de oraș între Habitoo și nomenclatorul lor.
+ * Ei folosesc „Sector 6” acolo unde noi scriem „București Sectorul 6”.
+ */
+export function imobiliareCityAliases(city: string): string[] {
+  const base = normalizeRoName(city);
+  const out = [base];
+  const sector = /sector(?:ul)?\s*(\d)/.exec(base);
+  if (sector) {
+    out.push(`sector ${sector[1]}`);
+    out.push(`sectorul ${sector[1]}`);
+  }
+  if (/^bucuresti/.test(base)) out.push("bucuresti");
+  return [...new Set(out)];
+}
