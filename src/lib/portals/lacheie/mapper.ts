@@ -66,8 +66,8 @@ export const LACHEIE_ALLOWED_FIELDS = [
   "neighbourhood",
   "street_name",
   "number",
-  "lat",
-  "lng",
+  "latitude",
+  "longitude",
   "apartment_type",
   "house_type",
   "land_type",
@@ -242,14 +242,16 @@ export type LaCheiePropertyInput = {
   streetNumber?: string | null;
   lat?: number | null;
   lng?: number | null;
-  petFriendly?: boolean | null;
+  /** Valoare de catalog (`allowed`/`not_allowed`/`any`), nu boolean. */
+  petFriendly?: string | null;
   strengths?: string[];
-  facilities?: string[];
-  utilities?: string[];
-  nearby?: string[];
-  heating?: string | null;
-  cooling?: string | null;
-  parking?: string | null;
+  /** Id-uri numerice din catalog (pk), nu denumiri. */
+  facilities?: number[];
+  utilities?: number[];
+  nearby?: number[];
+  heating?: number | null;
+  cooling?: number | null;
+  parking?: number | null;
   images?: (string | null | undefined)[];
 };
 
