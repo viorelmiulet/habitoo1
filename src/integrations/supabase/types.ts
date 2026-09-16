@@ -3792,6 +3792,7 @@ export type Database = {
           operation: string
           organization_id: string
           portal: string
+          portal_response: Json | null
           property_id: string | null
           source_version: string | null
           success: boolean
@@ -3809,6 +3810,7 @@ export type Database = {
           operation: string
           organization_id: string
           portal: string
+          portal_response?: Json | null
           property_id?: string | null
           source_version?: string | null
           success: boolean
@@ -3826,6 +3828,7 @@ export type Database = {
           operation?: string
           organization_id?: string
           portal?: string
+          portal_response?: Json | null
           property_id?: string | null
           source_version?: string | null
           success?: boolean
