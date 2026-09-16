@@ -356,15 +356,25 @@ describe("construcția anunțului", () => {
     }
   });
 
-  it("normalizează telefonul internațional și îl folosește și pentru WhatsApp", () => {
+  it("normalizează separat telefonul internațional și numărul WhatsApp", () => {
     const built = buildImobiliareListing({
       ...BASE_INPUT,
       phone: "+40 700 000 001",
-      whatsappNumber: null,
+      whatsappNumber: "+40 700 000 001",
     });
     expect(built.ok).toBe(true);
     if (!built.ok) return;
     expect(built.listing["phones"]).toEqual(["0700000001"]);
     expect(built.listing["whatsapp_number"]).toBe("0700000001");
+  });
+
+  it("respinge lipsa unui număr mobil WhatsApp", () => {
+    const built = buildImobiliareListing({
+      ...BASE_INPUT,
+      phone: "0212345678",
+      whatsappNumber: "0212345678",
+    });
+    expect(built.ok).toBe(false);
+    if (!built.ok) expect(built.reasons.join(" ")).toContain("WhatsApp");
   });
 });

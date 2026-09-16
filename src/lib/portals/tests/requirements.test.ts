@@ -117,6 +117,6 @@ describe("validare pre-publicare portaluri", () => {
     });
     const message = requirementBlockMessage("Imobiliare.ro", report);
     expect(message).toContain("Imobiliare.ro");
-    expect(message).toContain("Telefon de contact");
+    expect(message).toContain("Telefon și WhatsApp");
   });
 });

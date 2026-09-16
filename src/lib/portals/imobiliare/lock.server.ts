@@ -27,7 +27,7 @@ export async function withDurableImobiliareLock<T>(input: {
   }
   if (data !== true) {
     throw new PortalError(
-      "CONFLICT",
+      "RATE_LIMIT",
       "O altă operație pentru acest anunț este în curs. Reîncearcă după finalizarea ei.",
     );
   }
