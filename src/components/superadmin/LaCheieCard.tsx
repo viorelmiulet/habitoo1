@@ -1,7 +1,9 @@
 /**
- * Card Superadmin pentru integrarea La Cheie: mediu (production-only),
- * testarea conexiunii, catalogul, versiunile trimise și jurnalul operațiilor.
- * Cheia API nu este niciodată afișată: se salvează din cardul de conexiuni.
+ * Card Superadmin pentru integrarea La Cheie (furnizor CRM, production-only):
+ * conexiunea furnizorului, agenția conectată (external_id, status, versiune,
+ * ultima sincronizare, erori), testarea conexiunii, catalogul, versiunile
+ * trimise și jurnalul operațiilor. Cheia de furnizor nu este niciodată afișată
+ * și nu se introduce în interfață: se citește din secretele de server.
  *
  * Testarea conexiunii și sincronizarea catalogului sunt read-only. Publicarea
  * reală (creare/actualizare/retragere) se face doar din pagina proprietății,
@@ -18,10 +20,22 @@ import { InlineLoading } from "@/components/app/LoadingState";
 import { QueryError } from "@/components/app/QueryError";
 import { LACHEIE_READINESS_LABEL } from "@/lib/portals/lacheie/config";
 import {
+  activateLaCheieAgency,
+  deactivateLaCheieAgency,
   getLaCheieState,
+  refreshLaCheieAgencyStatus,
   refreshLaCheieCatalog,
   testLaCheieConnection,
 } from "@/lib/portals/lacheie.functions";
+
+const AGENCY_TONE: Record<string, "success" | "warning" | "danger" | "neutral"> = {
+  active: "success",
+  inactive: "warning",
+  suspended: "danger",
+  error: "danger",
+  not_registered: "neutral",
+};
+
 
 const READINESS_TONE: Record<string, "success" | "warning" | "danger" | "neutral"> = {
   connected: "success",
