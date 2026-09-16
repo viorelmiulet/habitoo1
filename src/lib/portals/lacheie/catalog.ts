@@ -237,3 +237,82 @@ export function resolveLaCheieIds(input: {
     category: category as LaCheieCategory,
   };
 }
+
+/**
+ * Rezolvă o valoare Habitoo într-o opțiune de catalog (`/options`).
+ * Acceptă fie id-ul exact al opțiunii, fie denumirea; altfel `null`
+ * (câmpul se omite, nu se trimite text liber pe care portalul îl refuză).
+ */
+export function resolveOptionId(
+  catalog: LaCheieCatalog,
+  group: string,
+  value: string | null,
+): string | null {
+  const options = catalog.options[group] ?? [];
+  if (!options.length || !value || !value.trim()) return null;
+  const raw = value.trim();
+  const direct = options.find((option) => option.id === raw);
+  if (direct) return direct.id;
+  return findCatalogOption(options, raw)?.id ?? null;
+}
+
+/** Id-uri numerice (pk) pentru grupurile care cer pk: heating, utilities etc. */
+export function resolveOptionPk(
+  catalog: LaCheieCatalog,
+  group: string,
+  value: string | null,
+): number | null {
+  const id = resolveOptionId(catalog, group, value);
+  if (!id || !/^[0-9]+$/.test(id)) return null;
+  const pk = Number(id);
+  return Number.isSafeInteger(pk) && pk > 0 ? pk : null;
+}
+
+export function resolveOptionPks(
+  catalog: LaCheieCatalog,
+  group: string,
+  values: (string | null)[],
+): number[] {
+  const out: number[] = [];
+  for (const value of values) {
+    const pk = resolveOptionPk(catalog, group, value);
+    if (pk !== null && !out.includes(pk)) out.push(pk);
+  }
+  return out;
+}
+
+/** `construction_stage` este un interval de ani, derivat din anul construcției. */
+export function constructionStageFor(
+  catalog: LaCheieCatalog,
+  yearBuilt: number | null | undefined,
+): string | null {
+  if (typeof yearBuilt !== "number" || !Number.isFinite(yearBuilt) || yearBuilt <= 0) return null;
+  const year = Math.round(yearBuilt);
+  const slug =
+    year < 1941
+      ? "pre_1941"
+      : year <= 1977
+        ? "1941_1977"
+        : year <= 1990
+          ? "1978_1990"
+          : year <= 2000
+            ? "1991_2000"
+            : year <= 2010
+              ? "2001_2010"
+              : year <= 2019
+                ? "2011_2019"
+                : "new_after_2020";
+  const options = catalog.options["construction_stage"] ?? [];
+  return options.some((option) => option.id === slug) ? slug : null;
+}
+
+/** `pet_friendly` este o alegere de catalog, nu un boolean. */
+export function petFriendlyFor(
+  catalog: LaCheieCatalog,
+  petFriendly: boolean | null | undefined,
+): string | null {
+  if (typeof petFriendly !== "boolean") return null;
+  const slug = petFriendly ? "allowed" : "not_allowed";
+  const options = catalog.options["pet_friendly"] ?? [];
+  return options.some((option) => option.id === slug) ? slug : null;
+}
