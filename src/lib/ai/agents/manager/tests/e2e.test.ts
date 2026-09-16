@@ -52,7 +52,9 @@ function builder(table: string) {
     eq(column: string, value: unknown) {
       filters[column] = value;
       if (pending && table === "ai_workflow_runs") {
-        const target = db.runs.find((row) => row["id"] === filters["id"]);
+        const target = db.runs.find((row) =>
+          Object.entries(filters).every(([key, expected]) => row[key] === expected),
+        );
         if (target) Object.assign(target, pending);
       }
       return api;
@@ -68,10 +70,14 @@ function builder(table: string) {
       return { data: row, error: null };
     },
     async maybeSingle() {
-      const row = db.runs.find((item) => item["id"] === filters["id"]) ?? null;
+      const row =
+        db.runs.find((item) =>
+          Object.entries(filters).every(([key, expected]) => item[key] === expected),
+        ) ?? null;
       filters = {};
       return { data: row, error: null };
     },
+
     then(resolve: (value: { data: Row[]; error: null }) => unknown) {
       return Promise.resolve({ data: db.runs, error: null }).then(resolve);
     },
