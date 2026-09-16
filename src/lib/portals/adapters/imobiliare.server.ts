@@ -1,0 +1,427 @@
+/**
+ * Adaptor Imobiliare.ro — API v3 de publicare (production only).
+ *
+ * Contract implementat:
+ *   POST /api/v1/auth/oauth/token                        autorizare + refresh
+ *   GET  /api/v3/agents                                  test conexiune + agenți
+ *   POST /api/v3/agents                                  creare agent
+ *   POST /api/v3/listings                                creare anunț (draft)
+ *   POST /api/v3/listings/{ref}/medias                   imagini base64, în loturi
+ *   POST /api/v3/listings/{ref}/promotions {online}      publicare efectivă
+ *   PUT  /api/v3/listings/{ref}                          actualizare completă
+ *   POST /api/v3/listings/{ref}/promotions {draft}       retragere temporară
+ *   DELETE /api/v3/listings/{ref}                        ștergere definitivă
+ *
+ * Publicarea este UN SINGUR act din perspectiva utilizatorului: draft →
+ * imagini → promovare online. Dacă promovarea nu reușește, operațiunea NU e
+ * raportată ca succes: anunțul rămâne draft la portal, cu eroarea reală, iar
+ * reîncercarea reia doar pașii lipsă.
+ */
+import type {
+  ConnectionStatusOutcome,
+  ListingOutcome,
+  ListingRef,
+  PortalAdapter,
+  PortalContext,
+  PortalResult,
+} from "../adapter";
+import { notSupported } from "../adapter";
+import { toPortalError } from "../errors";
+import {
+  IMOBILIARE_PATHS,
+  IMOBILIARE_STATUS_DRAFT,
+  IMOBILIARE_STATUS_ONLINE,
+  listingPath,
+  mediasPath,
+  promotionsPath,
+} from "../imobiliare/config";
+import {
+  getImobiliareSession,
+  imobiliareAuthedRequest,
+  type ImobiliareSession,
+} from "../imobiliare/auth.server";
+import { withImobiliareWriteLock } from "../imobiliare/client.server";
+import {
+  readCategoryCatalog,
+  refreshCategoryCatalog,
+  type CategoryCatalog,
+} from "../imobiliare/categories.server";
+import { imobiliareLocationStats } from "../imobiliare/locations.server";
+import { batchEncodedImages, encodeImobiliareImages } from "../imobiliare/media.server";
+import { buildImobiliarePayload, type ImobiliareListingPlan } from "../imobiliare/payload.server";
+import { parseAgents } from "../imobiliare/agents.server";
+
+type PortalFailShape = Extract<PortalResult<never>, { ok: false }>;
+type Admin = Awaited<typeof import("@/integrations/supabase/client.server")>["supabaseAdmin"];
+
+async function admin(): Promise<Admin> {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  return supabaseAdmin;
+}
+
+function failFrom(
+  response: { status: number; body?: unknown; classification: { code: string; message: string } | null },
+  operation: string,
+): PortalFailShape {
+  const code = (response.classification?.code ?? "PORTAL_ERROR") as PortalFailShape["code"];
+  return {
+    ok: false,
+    code,
+    message: response.classification?.message ?? `Imobiliare.ro a răspuns HTTP ${response.status}.`,
+    detail: `${operation} http_${response.status}`,
+    httpStatus: response.status,
+    portalResponse: response.body ?? null,
+  };
+}
+
+type Ready =
+  | { ok: true; session: ImobiliareSession; catalog: CategoryCatalog }
+  | { ok: false; result: PortalFailShape };
+
+async function prepare(ctx: PortalContext): Promise<Ready> {
+  const db = await admin();
+  const session = await getImobiliareSession({
+    admin: db,
+    organizationId: ctx.organizationId,
+    username: ctx.externalAccountId,
+    credential: ctx.portalCredential,
+  });
+  if (!session.ok) {
+    return {
+      ok: false,
+      result: {
+        ok: false,
+        code: "CONFIG_ERROR",
+        message: session.message,
+        detail: session.detail,
+      },
+    };
+  }
+  return {
+    ok: true,
+    session: session.session,
+    catalog: readCategoryCatalog(ctx.settings as Record<string, unknown>),
+  };
+}
+
+/* ------------------------------ test connection --------------------------- */
+
+async function status(
+  ctx: PortalContext,
+  live: boolean,
+): Promise<PortalResult<ConnectionStatusOutcome>> {
+  if (!(ctx.portalCredential ?? "").trim()) {
+    return {
+      ok: true,
+      data: {
+        configured: false,
+        live: false,
+        detail: "Utilizatorul și parola contului Imobiliare.ro nu sunt salvate.",
+      },
+    };
+  }
+  if (!live) {
+    return {
+      ok: true,
+      data: {
+        configured: true,
+        live: false,
+        detail: "Credențiale salvate; testează conexiunea pentru confirmare.",
+      },
+    };
+  }
+
+  const ready = await prepare(ctx);
+  if (!ready.ok) return ready.result;
+
+  try {
+    const db = await admin();
+    const response = await imobiliareAuthedRequest(ready.session, {
+      method: "GET",
+      path: IMOBILIARE_PATHS.agents,
+      connectionKey: ctx.organizationId,
+    });
+    if (!response.ok) return failFrom(response, "test_connection");
+
+    const agents = parseAgents(response.body).length;
+    const categories = await refreshCategoryCatalog(db, ready.session, ctx.organizationId);
+    const locations = await imobiliareLocationStats(db);
+
+    const notes = [
+      `Autorizare validă (${agents} agenți în contul portalului).`,
+      categories.message,
+      locations.zones > 0
+        ? `Nomenclator de locații încărcat (${locations.zones} zone).`
+        : "Nomenclatorul de locații Imobiliare.ro nu este încărcat: publicarea rămâne blocată până la import.",
+    ];
+    return {
+      ok: true,
+      data: { configured: true, live: true, detail: notes.join(" ") },
+    };
+  } catch (error) {
+    const normalized = toPortalError(error);
+    return {
+      ok: false,
+      code: normalized.code,
+      message: normalized.message,
+      detail: normalized.detail,
+    };
+  }
+}
+
+/* --------------------------------- scriere -------------------------------- */
+
+type WriteMode = "create" | "update";
+
+async function sendImages(
+  session: ImobiliareSession,
+  ctx: PortalContext,
+  customReference: string,
+  images: { dataUrl: string; bytes: number }[],
+): Promise<{ ok: true; sent: number } | { ok: false; fail: PortalFailShape }> {
+  let sent = 0;
+  for (const batch of batchEncodedImages(images as never)) {
+    const response = await imobiliareAuthedRequest(session, {
+      method: "POST",
+      path: mediasPath(customReference),
+      connectionKey: ctx.organizationId,
+      body: { images: batch.map((image) => image.dataUrl) },
+      timeoutMs: 60_000,
+    });
+    if (!response.ok) return { ok: false, fail: failFrom(response, "medias") };
+    sent += batch.length;
+  }
+  return { ok: true, sent };
+}
+
+async function publishPlan(input: {
+  ctx: PortalContext;
+  session: ImobiliareSession;
+  plan: ImobiliareListingPlan;
+  images: { dataUrl: string; bytes: number }[];
+  mode: WriteMode;
+}): Promise<{ ok: true; steps: string[] } | { ok: false; fail: PortalFailShape }> {
+  const { ctx, session, plan, images, mode } = input;
+  const steps: string[] = [];
+
+  const created = await imobiliareAuthedRequest(session, {
+    method: mode === "create" ? "POST" : "PUT",
+    path: mode === "create" ? listingPath() : listingPath(plan.customReference),
+    connectionKey: ctx.organizationId,
+    body: plan.listing,
+  });
+  if (!created.ok) return { ok: false, fail: failFrom(created, mode === "create" ? "create" : "update") };
+  steps.push(mode === "create" ? "anunț creat (draft)" : "anunț actualizat");
+
+  if (images.length > 0) {
+    const media = await sendImages(session, ctx, plan.customReference, images);
+    if (!media.ok) return { ok: false, fail: media.fail };
+    steps.push(`${media.sent} imagini trimise`);
+  }
+
+  // Fără acest pas anunțul rămâne invizibil, deși API-ul nu semnalează eroare.
+  const promoted = await imobiliareAuthedRequest(session, {
+    method: "POST",
+    path: promotionsPath(plan.customReference),
+    connectionKey: ctx.organizationId,
+    body: { status: IMOBILIARE_STATUS_ONLINE },
+  });
+  if (!promoted.ok) {
+    const fail = failFrom(promoted, "promotions_online");
+    return {
+      ok: false,
+      fail: {
+        ...fail,
+        message: `${fail.message} Anunțul a rămas în starea draft la portal; reîncearcă publicarea.`,
+      },
+    };
+  }
+  steps.push("promovat online");
+  return { ok: true, steps };
+}
+
+async function write(
+  ctx: PortalContext,
+  ref: ListingRef,
+  mode: WriteMode,
+): Promise<PortalResult<ListingOutcome>> {
+  const ready = await prepare(ctx);
+  if (!ready.ok) return ready.result;
+
+  try {
+    const db = await admin();
+    const media = await encodeImobiliareImages({
+      admin: db,
+      organizationId: ctx.organizationId,
+      propertyId: ref.propertyId,
+    });
+
+    const payload = await buildImobiliarePayload({
+      admin: db,
+      session: ready.session,
+      organizationId: ctx.organizationId,
+      propertyId: ref.propertyId,
+      catalog: ready.catalog,
+      imageCount: media.images.length,
+    });
+    if (!payload.ok) {
+      return {
+        ok: false,
+        code: "VALIDATION_ERROR",
+        message: payload.reasons.join(" "),
+        detail: "eligibility",
+      };
+    }
+
+    const warnings = [...media.warnings, ...payload.warnings];
+
+    if (!ctx.allowLiveRequests) {
+      return {
+        ok: true,
+        data: {
+          externalId: payload.plans[0]?.customReference ?? null,
+          live: false,
+          detail: `Validare locală reușită pentru ${payload.plans.length} anunț(uri); scrierile reale sunt oprite.`,
+          message: warnings.join(" "),
+        },
+      };
+    }
+
+    const steps: string[] = [];
+    for (const plan of payload.plans) {
+      const result = await withImobiliareWriteLock(
+        `${ctx.organizationId}:${plan.customReference}`,
+        () =>
+          publishPlan({
+            ctx,
+            session: ready.session,
+            plan,
+            images: media.images,
+            mode,
+          }),
+      );
+      if (!result.ok) return result.fail;
+      steps.push(`${plan.customReference}: ${result.steps.join(" → ")}`);
+    }
+
+    return {
+      ok: true,
+      data: {
+        externalId: payload.plans[0]?.customReference ?? null,
+        live: true,
+        detail: steps.join("; "),
+        portalStatus: IMOBILIARE_STATUS_ONLINE,
+        processed: payload.plans.length,
+        message: warnings.length ? warnings.join(" ") : undefined,
+      },
+    };
+  } catch (error) {
+    const normalized = toPortalError(error);
+    return {
+      ok: false,
+      code: normalized.code,
+      message: normalized.message,
+      detail: normalized.detail,
+    };
+  }
+}
+
+/* -------------------------------- retragere ------------------------------- */
+
+async function withdraw(
+  ctx: PortalContext,
+  ref: ListingRef,
+): Promise<PortalResult<ListingOutcome>> {
+  const ready = await prepare(ctx);
+  if (!ready.ok) return ready.result;
+  const externalId = (ref.externalId ?? "").trim();
+  if (!externalId) {
+    return {
+      ok: true,
+      data: { externalId: null, live: false, detail: "Anunțul nu a fost publicat pe Imobiliare.ro." },
+    };
+  }
+  if (!ctx.allowLiveRequests) {
+    return {
+      ok: true,
+      data: { externalId, live: false, detail: "Scrierile reale sunt oprite." },
+    };
+  }
+
+  try {
+    // Retragere = trecerea în draft: reversibilă, fără pierderea anunțului.
+    const response = await withImobiliareWriteLock(`${ctx.organizationId}:${externalId}`, () =>
+      imobiliareAuthedRequest(ready.session, {
+        method: "POST",
+        path: promotionsPath(externalId),
+        connectionKey: ctx.organizationId,
+        body: { status: IMOBILIARE_STATUS_DRAFT },
+      }),
+    );
+    if (!response.ok) return failFrom(response, "withdraw");
+    return {
+      ok: true,
+      data: {
+        externalId,
+        live: true,
+        detail: "Anunțul a fost trecut în draft la Imobiliare.ro (retras din public).",
+        portalStatus: IMOBILIARE_STATUS_DRAFT,
+      },
+    };
+  } catch (error) {
+    const normalized = toPortalError(error);
+    return { ok: false, code: normalized.code, message: normalized.message, detail: normalized.detail };
+  }
+}
+
+/** Ștergere definitivă: doar când proprietatea este ștearsă din CRM. */
+export async function deleteImobiliareListing(
+  ctx: PortalContext,
+  externalId: string,
+): Promise<PortalResult<ListingOutcome>> {
+  const ready = await prepare(ctx);
+  if (!ready.ok) return ready.result;
+  const response = await imobiliareAuthedRequest(ready.session, {
+    method: "DELETE",
+    path: listingPath(externalId),
+    connectionKey: ctx.organizationId,
+  });
+  if (!response.ok) return failFrom(response, "delete");
+  return {
+    ok: true,
+    data: { externalId, live: true, detail: "Anunțul a fost șters definitiv de la Imobiliare.ro." },
+  };
+}
+
+export const imobiliareAdapter: PortalAdapter = {
+  id: "imobiliare_ro",
+  testConnection: (ctx) => status(ctx, true),
+  getStatus: (ctx) => status(ctx, false),
+  publishListing: (ctx, ref) => write(ctx, ref, "create"),
+  updateListing: (ctx, ref) => write(ctx, ref, "update"),
+  withdrawListing: (ctx, ref) => withdraw(ctx, ref),
+  async sync(ctx, refs) {
+    let processed = 0;
+    let failed = 0;
+    for (const ref of refs) {
+      const result = await write(ctx, ref, "update");
+      if (result.ok) processed += 1;
+      else failed += 1;
+    }
+    return { ok: true, data: { processed, failed } };
+  },
+  async fetchAgents(ctx) {
+    const ready = await prepare(ctx);
+    if (!ready.ok) return ready.result;
+    const response = await imobiliareAuthedRequest(ready.session, {
+      method: "GET",
+      path: IMOBILIARE_PATHS.agents,
+      connectionKey: ctx.organizationId,
+    });
+    if (!response.ok) return failFrom(response, "fetch_agents");
+    return { ok: true, data: parseAgents(response.body) };
+  },
+  async fetchListings() {
+    return notSupported("fetch_listings");
+  },
+};

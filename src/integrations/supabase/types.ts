@@ -2089,6 +2089,80 @@ export type Database = {
           },
         ]
       }
+      imobiliare_agents: {
+        Row: {
+          created_at: string
+          email: string | null
+          external_agent_id: string
+          organization_id: string
+          profile_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          email?: string | null
+          external_agent_id: string
+          organization_id: string
+          profile_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          email?: string | null
+          external_agent_id?: string
+          organization_id?: string
+          profile_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "imobiliare_agents_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      imobiliare_locations: {
+        Row: {
+          city_name: string | null
+          city_normalized: string | null
+          county_name: string | null
+          county_normalized: string | null
+          depth: number
+          id: number
+          name: string
+          name_normalized: string
+          parent_id: number | null
+          synced_at: string
+        }
+        Insert: {
+          city_name?: string | null
+          city_normalized?: string | null
+          county_name?: string | null
+          county_normalized?: string | null
+          depth: number
+          id: number
+          name: string
+          name_normalized: string
+          parent_id?: number | null
+          synced_at?: string
+        }
+        Update: {
+          city_name?: string | null
+          city_normalized?: string | null
+          county_name?: string | null
+          county_normalized?: string | null
+          depth?: number
+          id?: number
+          name?: string
+          name_normalized?: string
+          parent_id?: number | null
+          synced_at?: string
+        }
+        Relationships: []
+      }
       impersonation_requests: {
         Row: {
           approve_token_hash: string | null
