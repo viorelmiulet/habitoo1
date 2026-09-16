@@ -264,6 +264,7 @@ export function denormalizeLocations(rows: ImobiliareLocationRow[]): {
   city_name: string | null;
   county_normalized: string | null;
   city_normalized: string | null;
+  is_hidden: boolean;
 }[] {
   const byId = new Map(rows.map((row) => [row.id, row]));
   return rows.map((row) => {
@@ -288,8 +289,10 @@ export function denormalizeLocations(rows: ImobiliareLocationRow[]): {
       city_name: city?.name ?? null,
       county_normalized: county ? normalizeRoName(county.name) : null,
       city_normalized: city ? normalizeRoName(city.name) : null,
+      is_hidden: row.hidden === true,
     };
   });
+
 }
 
 export type LocationCandidate = {
