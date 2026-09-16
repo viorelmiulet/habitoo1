@@ -12,10 +12,16 @@ export const LACHEIE_PORTAL_KEY = "lacheie";
 export const LACHEIE_PRODUCTION_BASE_URL = "https://api.lacheie.ro/api/partners/v1";
 /** Endpointul documentat pentru operațiile CRUD pe anunțuri. */
 export const LACHEIE_DEFAULT_PROPERTIES_PATH = "/properties";
+/** Endpointul documentat pentru înregistrarea/administrarea agențiilor. */
+export const LACHEIE_AGENCIES_PATH = "/agencies";
 export const LACHEIE_SOURCE_VERSION_HEADER = "X-Source-Version";
+/** Headerul care leagă o cerere de agenția conectată. */
+export const LACHEIE_AGENCY_HEADER = "X-Agency-External-ID";
 /** Limitele documentate de La Cheie, aplicate și local ca protecție. */
 export const LACHEIE_WRITE_LIMIT_PER_MINUTE = 60;
 export const LACHEIE_READ_LIMIT_PER_MINUTE = 120;
+export const LACHEIE_AGENCY_LIMIT_PER_MINUTE = 60;
+
 
 /** Un singur mediu real: producție. */
 export type LaCheieEnvironment = "production";
