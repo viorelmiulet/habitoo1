@@ -72,3 +72,46 @@ export function toPortalError(error: unknown): PortalError {
 export function portalErrorMessage(code: PortalErrorCode): string {
   return PORTAL_ERROR_MESSAGE[code];
 }
+
+/**
+ * Pregătește pentru jurnalizare corpul BRUT al răspunsului primit de la portal.
+ * Se păstrează integral (până la o limită de dimensiune), ca să putem vedea
+ * exact `error.code`, `error.message` și `error.fields`, dar cheile care pot
+ * conține secrete sunt înlocuite cu `[redacted]`.
+ */
+const SECRET_KEY_PATTERN = /(token|secret|password|apikey|api_key|authorization|bearer|cookie)/i;
+const MAX_LOGGED_RESPONSE_BYTES = 16 * 1024;
+
+export function sanitizePortalResponse(body: unknown, depth = 0): unknown {
+  if (body === null || body === undefined) return null;
+  if (depth > 8) return "[truncated]";
+  if (typeof body === "string") {
+    return body.length > MAX_LOGGED_RESPONSE_BYTES
+      ? `${body.slice(0, MAX_LOGGED_RESPONSE_BYTES)}…[truncated]`
+      : body;
+  }
+  if (typeof body === "number" || typeof body === "boolean") return body;
+  if (Array.isArray(body)) {
+    return body.slice(0, 200).map((entry) => sanitizePortalResponse(entry, depth + 1));
+  }
+  if (typeof body === "object") {
+    const out: Record<string, unknown> = {};
+    for (const [key, value] of Object.entries(body as Record<string, unknown>)) {
+      out[key] = SECRET_KEY_PATTERN.test(key)
+        ? "[redacted]"
+        : sanitizePortalResponse(value, depth + 1);
+    }
+    return out;
+  }
+  return null;
+}
+
+/** Împachetează răspunsul portalului pentru coloana `portal_response`. */
+export function portalResponseLog(input: {
+  status?: number | null;
+  body: unknown;
+}): Record<string, unknown> | null {
+  const body = sanitizePortalResponse(input.body);
+  if (body === null && (input.status === null || input.status === undefined)) return null;
+  return { http_status: input.status ?? null, body };
+}
