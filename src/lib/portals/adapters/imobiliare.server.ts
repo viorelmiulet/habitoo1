@@ -20,6 +20,7 @@
 import type {
   ConnectionStatusOutcome,
   ListingOutcome,
+  ListingDiagnostics,
   ListingRef,
   PortalAdapter,
   PortalContext,
@@ -32,6 +33,7 @@ import {
   IMOBILIARE_STATUS_DRAFT,
   IMOBILIARE_STATUS_ONLINE,
   imobiliarePublicUrlFromBody,
+  imobiliareStateFromBody,
   listingPath,
   mediasPath,
   promotionsPath,
@@ -558,6 +560,7 @@ export const imobiliareAdapter: PortalAdapter = {
   publishListing: (ctx, ref) => write(ctx, ref, "create"),
   updateListing: (ctx, ref) => write(ctx, ref, "update"),
   withdrawListing: (ctx, ref) => withdraw(ctx, ref),
+  diagnoseListing: (ctx, ref) => diagnose(ctx, ref),
   async sync(ctx, refs) {
     let processed = 0;
     let failed = 0;

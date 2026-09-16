@@ -1156,7 +1156,9 @@ export const getPropertyPortalStatus = createServerFn({ method: "POST" })
           connected: connection?.status === "connected" || connection?.status === "ready",
           status: listing?.status ?? "not_published",
           externalId: listing?.external_id ?? diagnostics?.externalId ?? null,
-          publicUrl: listing?.public_url ?? diagnostics?.offerUrl ?? null,
+          // Linkul confirmat acum de portal are prioritate față de cel salvat:
+          // un anunț retras în ciornă nu mai are pagină publică.
+          publicUrl: diagnostics ? diagnostics.offerUrl : (listing?.public_url ?? null),
 
           publishedAt: listing?.published_at ?? null,
           lastSyncAt: listing?.last_sync_at ?? null,
