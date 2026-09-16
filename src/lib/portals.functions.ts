@@ -879,6 +879,38 @@ export async function executeListingAction(input: {
     };
   }
 
+  /**
+   * Validare pre-publicare: câmpurile obligatorii declarate de portal sunt
+   * verificate pe datele reale ÎNAINTE de orice apel către portal. Fără ele,
+   * portalul ar răspunde oricum cu eroare de validare, iar agentul nu ar ști
+   * ce lipsește.
+   */
+  if (action !== "withdraw") {
+    const { portalRequirementReport } = await import("@/lib/portals/requirements.server");
+    const { requirementBlockMessage } = await import("@/lib/portals/requirements");
+    const report = await portalRequirementReport(
+      admin,
+      organizationId,
+      propertyId,
+      definition.id,
+    );
+    if (report && !report.ok) {
+      const message = requirementBlockMessage(definition.display_name, report);
+      await logOperation({
+        organizationId,
+        portal: definition.id,
+        operation: input.operationLabel ?? action,
+        success: false,
+        errorCode: "VALIDATION_ERROR",
+        errorMessage: message,
+        propertyId,
+        actorId,
+      });
+      return { ok: false as const, code: "VALIDATION_ERROR", message };
+    }
+  }
+
+
   const { portalRateLimited } = await import("@/lib/portals/rate-limit.server");
   if (portalRateLimited(action, `${organizationId}|${portalId}`)) {
     return { ok: false as const, code: "RATE_LIMIT", message: PORTAL_ERROR_MESSAGE.RATE_LIMIT };
@@ -1120,6 +1152,42 @@ export const getPropertyPortalStatus = createServerFn({ method: "POST" })
       }),
     );
   });
+
+/**
+ * Validare pre-publicare pentru toate portalurile vizibile agenției: lista
+ * câmpurilor obligatorii, ce lipsește acum și ce câmpuri suplimentare se
+ * trimit dacă există date. Aceleași reguli blochează publicarea.
+ */
+export const getPropertyPortalRequirements = createServerFn({ method: "POST" })
+  .middleware([requireActiveOrgAuth])
+  .inputValidator((input: unknown) =>
+    z
+      .object({ organizationId: z.string().uuid().optional(), propertyId: z.string().uuid() })
+      .parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    const { organizationId, superadmin } = await resolvePublishingOrg(
+      context as unknown as AuthContext,
+      data.organizationId,
+    );
+    const visiblePortals = superadmin ? null : await activatedPortalIds(organizationId);
+    const admin = await loadAdmin();
+    const { loadRequirementSubject } = await import("@/lib/portals/requirements.server");
+    const { validatePortalRequirements } = await import("@/lib/portals/requirements");
+    const subject = await loadRequirementSubject(admin, organizationId, data.propertyId);
+    if (!subject) throw new Error("Proprietatea nu a fost găsită.");
+
+    return PORTALS.filter(
+      (p) =>
+        p.status === "available" &&
+        !isPortalCovered(p.id) &&
+        (visiblePortals === null || visiblePortals.has(p.id)),
+    ).map((portal) => ({
+      portalName: portalDisplayName(portal.id),
+      ...validatePortalRequirements(portal.id, subject),
+    }));
+  });
+
 
 export const getPortalLogs = createServerFn({ method: "POST" })
   .middleware([requireActiveOrgAuth])

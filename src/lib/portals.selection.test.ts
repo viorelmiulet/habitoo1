@@ -55,8 +55,39 @@ function chain(table: string) {
   };
   const singleFor = (): unknown => {
     if (table === "properties") {
-      return { id: "prop-1", publish_status: "published", status: "active", deleted_at: null };
+      /** Ofertă completă: trece validarea pre-publicare a fiecărui portal. */
+      return {
+        id: "prop-1",
+        publish_status: "published",
+        status: "active",
+        deleted_at: null,
+        title: "Apartament 3 camere Militari",
+        description:
+          "Apartament spațios cu trei camere, balcon și parcare, finisaje moderne, aproape de metrou.",
+        property_type: "apartament",
+        for_sale: true,
+        for_rent: false,
+        price: 95000,
+        sale_price: 95000,
+        currency: "EUR",
+        sale_currency: "EUR",
+        city: "București Sectorul 6",
+        county: "București",
+        address: "Strada Apusului 12",
+        lat: 44.434727,
+        lng: 25.987173,
+        rooms: 3,
+        bedrooms: 2,
+        bathrooms: 1,
+        build_year: 2020,
+        usable_surface: 72,
+        assigned_to: "agent-1",
+        phone: null,
+      };
     }
+    if (table === "profiles")
+      return { full_name: "Agent Test", email: "agent@example.com", phone: "0700000001" };
+    if (table === "organizations") return { phone: "0700000001", material_phone: null };
     if (table === "portal_connections") {
       return {
         portal: "x",
@@ -91,7 +122,12 @@ function chain(table: string) {
     writes.push({ table, op: "upsert", row });
     return { data: null, error: null };
   };
-  q["then"] = (resolve: (v: unknown) => unknown) => resolve({ data: listFor(), error: null });
+  q["then"] = (resolve: (v: unknown) => unknown) =>
+    resolve(
+      table === "property_images"
+        ? { data: [], count: 8, error: null }
+        : { data: listFor(), error: null },
+    );
   return q;
 }
 

@@ -36,6 +36,7 @@ import { formatDateTime } from "@/lib/format";
 import {
   applyPropertyPortalSelection,
   getPropertiesPortalMatrix,
+  getPropertyPortalRequirements,
   getPropertyStoriaAutoRenew,
   setPropertyStoriaAutoRenew,
   type PropertyPortalCell,
@@ -109,6 +110,25 @@ export const PropertyPortalsCard = forwardRef<
         data: { ...(organizationId ? { organizationId } : {}), propertyIds: [propertyId] },
       }),
   });
+
+  /**
+   * Validare pre-publicare: aceleași reguli care blochează publicarea
+   * server-side, arătate agentului înainte să apese „Publică”.
+   */
+  const loadRequirements = useServerFn(getPropertyPortalRequirements);
+  const requirements = useQuery({
+    queryKey: ["property-portal-requirements", organizationId, propertyId] as const,
+    queryFn: () =>
+      loadRequirements({
+        data: { ...(organizationId ? { organizationId } : {}), propertyId },
+      }),
+  });
+  const requirementByPortal = useMemo(() => {
+    type Report = NonNullable<typeof requirements.data>[number];
+    const map = new Map<string, Report>();
+    for (const item of requirements.data ?? []) map.set(item.portalId, item);
+    return map;
+  }, [requirements.data]);
 
   const cells = useMemo<PropertyPortalCell[]>(
     () => matrix.data?.properties[propertyId] ?? [],
@@ -439,6 +459,22 @@ export const PropertyPortalsCard = forwardRef<
                   </a>
                 ) : null}
               </div>
+
+              {/* Validare pre-publicare: ce lipsește, în cuvinte, pe acest portal. */}
+              {value && (requirementByPortal.get(cell.portalId)?.missing.length ?? 0) > 0 ? (
+                <div className="mt-3 rounded-md border border-warning/40 bg-warning/10 px-3 py-2 pl-3 text-xs">
+                  <p className="font-medium text-warning-foreground">
+                    Publicarea este blocată până completezi:
+                  </p>
+                  <ul className="mt-1 list-disc space-y-0.5 pl-4 text-warning-foreground">
+                    {requirementByPortal.get(cell.portalId)?.missing.map((m) => (
+                      <li key={m.key}>
+                        {m.label} — {m.requirement}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ) : null}
 
               {/* Auto-prelungire, doar pentru Storia și doar când portalul e bifat. */}
               {cell.portalId === "storia" && value ? (
