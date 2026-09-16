@@ -191,10 +191,11 @@ async function status(
         configured: true,
         live: true,
         detail:
-          `Cheie validă${name ? ` — cont ${name}` : ""}, mediu production.` +
+          `Conexiune validă${name ? ` — agenția ${name}` : ""} (agency ${agencyExternalId ?? "?"}), mediu production.` +
           (ready.settings.catalogFetchedAt
             ? ` Catalog sincronizat la ${ready.settings.catalogFetchedAt}.`
             : " Catalogul nu este încă sincronizat."),
+
       },
     };
   } catch (error) {
