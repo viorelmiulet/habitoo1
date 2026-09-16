@@ -492,6 +492,65 @@ export async function deleteImobiliareListing(
   };
 }
 
+/**
+ * Diagnoză pentru fila Publicare: citește anunțul de la portal și întoarce
+ * linkul public REAL, doar dacă portalul îl raportează `online`. Astfel nu mai
+ * afișăm un link salvat care redirectează către prima pagină a portalului.
+ */
+async function diagnose(
+  ctx: PortalContext,
+  ref: ListingRef,
+): Promise<PortalResult<ListingDiagnostics>> {
+  const references = parseImobiliareReferences(ref.externalId);
+  const empty: ListingDiagnostics = {
+    feedVisible: false,
+    externalId: ref.externalId ?? null,
+    offerUrl: null,
+    agentId: null,
+    agentName: null,
+    images: { total: 0, resolvable: 0, broken: 0, primary: false },
+    updatedAt: null,
+    notes: [],
+  };
+  if (references.length === 0 || !ctx.allowLiveRequests) return { ok: true, data: empty };
+
+  const ready = await prepare(ctx);
+  if (!ready.ok) return { ok: true, data: empty };
+
+  const reference = references[0]!;
+  const response = await imobiliareAuthedRequest(ready.session, {
+    method: "GET",
+    path: listingPath(reference),
+    connectionKey: ctx.organizationId,
+  });
+  if (!response.ok) {
+    return {
+      ok: true,
+      data: {
+        ...empty,
+        notes: [`Imobiliare.ro nu a putut confirma starea anunțului (HTTP ${response.status}).`],
+      },
+    };
+  }
+  const state = imobiliareStateFromBody(response.body);
+  const offerUrl = imobiliarePublicUrlFromBody(response.body);
+  const notes: string[] = [];
+  if (state && state !== IMOBILIARE_STATUS_ONLINE) {
+    notes.push(`Anunțul este în starea „${state}” la Imobiliare.ro, deci nu are pagină publică.`);
+  } else if (!offerUrl) {
+    notes.push("Imobiliare.ro nu a trimis încă adresa publică a anunțului.");
+  }
+  return {
+    ok: true,
+    data: {
+      ...empty,
+      feedVisible: state === IMOBILIARE_STATUS_ONLINE,
+      offerUrl,
+      notes,
+    },
+  };
+}
+
 export const imobiliareAdapter: PortalAdapter = {
   id: "imobiliare_ro",
   testConnection: (ctx) => status(ctx, true),
