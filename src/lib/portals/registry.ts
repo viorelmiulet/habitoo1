@@ -193,11 +193,12 @@ export const PORTALS: PortalDefinition[] = [
     id: "lacheie",
     display_name: "La Cheie",
     description:
-      "La Cheie expune un API REST production-only: Habitoo trimite starea completă a anunțului pentru creare, actualizare și retragere, folosind cheia API a agenției.",
+      "La Cheie expune un API REST production-only pentru furnizori CRM: Habitoo se autentifică cu o singură cheie de furnizor păstrată pe server, iar fiecare agenție este identificată prin external_id după activarea conexiunii.",
     logo: "LC",
     status: "available",
     directions: ["habitoo_to_portal"],
-    // Cheia este EMISĂ DE LA CHEIE pentru contul agenției; Habitoo doar o salvează criptat.
+    // Cheia este a FURNIZORULUI CRM (lc_crm_…), stocată în secretele de server.
+    // Agențiile nu primesc și nu introduc nicio cheie La Cheie.
     authentication: ["portal_api_key"],
     capabilities: [
       "test_connection",
@@ -207,19 +208,14 @@ export const PORTALS: PortalDefinition[] = [
       "sync",
     ],
     configuration_schema: {
-      fields: [
-        {
-          key: "api_key",
-          label: "Cheie API La Cheie",
-          help: "Cheia primită de agenție de la La Cheie. Se salvează criptat, se trimite ca Bearer token și nu se afișează niciodată după salvare.",
-          secret: true,
-          target: "credentials",
-        },
-      ],
+      // Nimic de completat de agenție: activarea se cere din Habitoo, iar
+      // înregistrarea se face server-side prin PUT /agencies/{external_id}.
+      fields: [],
     },
     notes:
-      "Integrarea este strict production-only, la endpointul documentat https://api.lacheie.ro/api/partners/v1: fără import de lead-uri, fără import în masă, fără pull periodic și fără webhook-uri. Scrierile folosesc /properties și trimit starea COMPLETĂ a ofertei (nu există PATCH) cu antetul X-Source-Version, o versiune separată per external_id, păstrată ca text pentru a nu pierde precizia. Retry-ul pentru timeout, 5xx sau 429 reia exact aceeași versiune și aceleași date; un conflict 409 nu incrementează orb, ci reconciliază versiunea acceptată de portal. Tipul de proprietate, județul și localitatea se trimit ca id-uri din catalogul portalului (/options, /counties, /cities), sincronizat per agenție. Maximum 30 imagini publice HTTP(S), deduplicate; câmpurile refuzate de portal (agency, agency_id, user_id, promoted_until, listing_type, location, phone la nivel principal) nu sunt trimise niciodată — telefonul stă în agent.phone, camerele în number_of_rooms.",
+      "Integrarea este strict production-only, la endpointul documentat https://api.lacheie.ro/api/partners/v1: fără import de lead-uri, fără import în masă, fără pull periodic și fără webhook-uri. Autentificarea folosește o singură cheie de furnizor CRM (lc_crm_…) din secretele de server; agenția se înregistrează prin PUT /agencies/{external_id} cu datele reale ale agenției (name, email, phone, address) și X-Source-Version propriu, independent de versiunile ofertelor. După status active, /account și /properties trimit suplimentar X-Agency-External-ID, iar /options, /counties și /cities folosesc doar cheia de furnizor. Reactivarea cere o versiune de agenție mai mare, urmată de retrimiterea ofertelor complete cu versiuni mai mari; suspendarea administrativă nu poate fi ocolită din CRM. Scrierile folosesc /properties și trimit starea COMPLETĂ a ofertei (nu există PATCH) cu antetul X-Source-Version, o versiune separată per external_id, păstrată ca text pentru a nu pierde precizia. Retry-ul pentru timeout, 5xx sau 429 reia exact aceeași versiune și aceleași date; un conflict 409 nu incrementează orb, ci reconciliază versiunea acceptată de portal. Tipul de proprietate, județul și localitatea se trimit ca id-uri din catalogul portalului (/options, /counties, /cities). Maximum 30 imagini publice HTTP(S), deduplicate; câmpurile refuzate de portal (agency, agency_id, user_id, promoted_until, listing_type, location, phone la nivel principal) nu sunt trimise niciodată — telefonul stă în agent.phone, camerele în number_of_rooms.",
   },
+
   {
     id: "imospot",
     display_name: "Imospot.ro",
