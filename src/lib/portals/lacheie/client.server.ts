@@ -164,24 +164,37 @@ export async function laCheieRequest(
     url.searchParams.set(key, value);
   }
 
+  const scope: LaCheieRequestScope = input.scope ?? "agency";
   const isWrite = input.method !== "GET";
+  if (scope === "agency" && !config.agencyExternalId) {
+    throw new PortalError(
+      "CONFIG_ERROR",
+      "Cererea către La Cheie are nevoie de identificatorul agenției (X-Agency-External-ID). Activează conexiunea agenției.",
+    );
+  }
   if (isWrite && input.body !== undefined && exceedsLaCheieBodyLimit(input.body)) {
     throw new PortalError(
       "INVALID_REQUEST",
       "Corpul cererii depășește limita de 1 MiB acceptată de La Cheie.",
     );
   }
-  const limited = isWrite
-    ? hitCounter(writeCounters, config.connectionKey, LACHEIE_WRITE_LIMIT_PER_MINUTE)
-    : hitCounter(readCounters, config.connectionKey, LACHEIE_READ_LIMIT_PER_MINUTE);
+  const limited =
+    scope === "agencies"
+      ? hitCounter(agencyCounters, config.connectionKey, LACHEIE_AGENCY_LIMIT_PER_MINUTE)
+      : isWrite
+        ? hitCounter(writeCounters, config.connectionKey, LACHEIE_WRITE_LIMIT_PER_MINUTE)
+        : hitCounter(readCounters, config.connectionKey, LACHEIE_READ_LIMIT_PER_MINUTE);
   if (limited) {
     throw new PortalError(
       "RATE_LIMIT",
-      isWrite
-        ? `S-a atins limita de ${LACHEIE_WRITE_LIMIT_PER_MINUTE} scrieri pe minut către La Cheie. Reia în scurt timp.`
-        : `S-a atins limita de ${LACHEIE_READ_LIMIT_PER_MINUTE} citiri pe minut către La Cheie. Reia în scurt timp.`,
+      scope === "agencies"
+        ? `S-a atins limita de ${LACHEIE_AGENCY_LIMIT_PER_MINUTE} cereri pe minut pentru administrarea agențiilor La Cheie. Reia în scurt timp.`
+        : isWrite
+          ? `S-a atins limita de ${LACHEIE_WRITE_LIMIT_PER_MINUTE} scrieri pe minut către La Cheie. Reia în scurt timp.`
+          : `S-a atins limita de ${LACHEIE_READ_LIMIT_PER_MINUTE} citiri pe minut către La Cheie. Reia în scurt timp.`,
     );
   }
+
 
   const startedAt = Date.now();
   let attempt = 0;
