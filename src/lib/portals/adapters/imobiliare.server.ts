@@ -216,13 +216,34 @@ function isDuplicateReference(body: unknown): boolean {
   return /unique/i.test(text);
 }
 
+const IMOBILIARE_PUBLIC_ORIGIN = "https://www.imobiliare.ro";
+
+/** Linkul public al anunțului, din câmpul `path` returnat de GET listing. */
+async function fetchImobiliarePublicUrl(
+  session: ImobiliareSession,
+  ctx: PortalContext,
+  customReference: string,
+): Promise<string | null> {
+  const response = await imobiliareAuthedRequest(session, {
+    method: "GET",
+    path: listingPath(customReference),
+    connectionKey: ctx.organizationId,
+  });
+  if (!response.ok) return null;
+  const data = (response.body as Record<string, unknown> | null)?.data;
+  const path =
+    data && typeof data === "object" ? (data as Record<string, unknown>)["path"] : null;
+  if (typeof path !== "string" || !path.startsWith("/oferta/")) return null;
+  return `${IMOBILIARE_PUBLIC_ORIGIN}${path}`;
+}
+
 async function publishPlan(input: {
   ctx: PortalContext;
   session: ImobiliareSession;
   plan: ImobiliareListingPlan;
   images: { dataUrl: string; bytes: number }[];
   mode: WriteMode;
-}): Promise<{ ok: true; steps: string[] } | { ok: false; fail: PortalFailShape }> {
+}): Promise<{ ok: true; steps: string[]; publicUrl: string | null } | { ok: false; fail: PortalFailShape }> {
   const { ctx, session, plan, images } = input;
   let mode = input.mode;
   const steps: string[] = [];
