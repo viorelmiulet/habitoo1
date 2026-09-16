@@ -700,6 +700,8 @@ export const testPortalConnection = createServerFn({ method: "POST" })
       success: result.ok,
       errorCode: result.ok ? null : result.code,
       errorMessage: result.ok ? null : result.message,
+      ...(result.ok ? {} : { httpStatus: result.httpStatus ?? null }),
+      ...(result.ok ? {} : { portalResponse: result.portalResponse ?? null }),
       actorId: context.userId,
     });
 
