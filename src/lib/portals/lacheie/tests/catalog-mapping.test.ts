@@ -103,3 +103,26 @@ describe("erori de validare La Cheie", () => {
     expect(describeLaCheieValidation(null)).toBeNull();
   });
 });
+
+describe("jurnalizarea răspunsului portalului", () => {
+  it("H. păstrează integral error.code/message/fields, dar ascunde secretele", async () => {
+    const { portalResponseLog, sanitizePortalResponse } = await import("../../errors");
+    const body = {
+      error: {
+        code: "validation_error",
+        message: "Datele trimise nu sunt valide.",
+        fields: { heating: ["Incorrect type. Expected pk value, received str."] },
+      },
+      request_id: "abc",
+      access_token: "secret-value",
+    };
+    const logged = portalResponseLog({ status: 400, body }) as Record<string, unknown>;
+    expect(logged["http_status"]).toBe(400);
+    const saved = logged["body"] as Record<string, unknown>;
+    expect(saved["error"]).toEqual(body.error);
+    expect(saved["request_id"]).toBe("abc");
+    expect(saved["access_token"]).toBe("[redacted]");
+    expect(sanitizePortalResponse(null)).toBeNull();
+    expect(portalResponseLog({ status: null, body: null })).toBeNull();
+  });
+});
