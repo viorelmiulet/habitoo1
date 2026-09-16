@@ -36,6 +36,7 @@ import { formatDateTime } from "@/lib/format";
 import {
   applyPropertyPortalSelection,
   getPropertiesPortalMatrix,
+  getPropertyPortalRequirements,
   getPropertyStoriaAutoRenew,
   setPropertyStoriaAutoRenew,
   type PropertyPortalCell,
@@ -109,6 +110,24 @@ export const PropertyPortalsCard = forwardRef<
         data: { ...(organizationId ? { organizationId } : {}), propertyIds: [propertyId] },
       }),
   });
+
+  /**
+   * Validare pre-publicare: aceleași reguli care blochează publicarea
+   * server-side, arătate agentului înainte să apese „Publică”.
+   */
+  const loadRequirements = useServerFn(getPropertyPortalRequirements);
+  const requirements = useQuery({
+    queryKey: ["property-portal-requirements", organizationId, propertyId] as const,
+    queryFn: () =>
+      loadRequirements({
+        data: { ...(organizationId ? { organizationId } : {}), propertyId },
+      }),
+  });
+  const requirementByPortal = useMemo(() => {
+    const map = new Map<string, (typeof requirements.data)[number]>();
+    for (const item of requirements.data ?? []) map.set(item.portalId, item);
+    return map;
+  }, [requirements.data]);
 
   const cells = useMemo<PropertyPortalCell[]>(
     () => matrix.data?.properties[propertyId] ?? [],
