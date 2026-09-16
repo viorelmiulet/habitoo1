@@ -122,20 +122,80 @@ export function splitValues(line: string): string[] {
   return out;
 }
 
-function rowFrom(
-  values: string[],
-  idx: { id: number; parent: number; depth: number; name: number },
-): ImobiliareLocationRow | null {
+type Idx = {
+  id: number;
+  parent: number;
+  depth: number;
+  name: number;
+  roName: number;
+  hidden: number;
+  deleted: number;
+};
+
+function idxFrom(header: string[]): Idx {
+  return {
+    id: pick(header, ID_KEYS),
+    parent: pick(header, PARENT_KEYS),
+    depth: pick(header, DEPTH_KEYS),
+    name: pick(header, NAME_KEYS),
+    roName: pick(header, RO_NAME_KEYS),
+    hidden: pick(header, HIDDEN_KEYS),
+    deleted: pick(header, DELETED_KEYS),
+  };
+}
+
+function isNullish(value: string | undefined): boolean {
+  const raw = (value ?? "").trim().replace(/^['"]|['"]$/g, "");
+  return !raw || /^null$/i.test(raw);
+}
+
+function rowFrom(values: string[], idx: Idx): ImobiliareLocationRow | null {
+  // Locațiile șterse la ei nu se importă.
+  if (idx.deleted >= 0 && !isNullish(values[idx.deleted])) return null;
   const id = toInt(values[idx.id]);
   const depth = toInt(values[idx.depth]);
-  const name = unquote(values[idx.name]);
+  const name =
+    (idx.roName >= 0 ? romanianTitle(values[idx.roName]) : null) ?? unquote(values[idx.name]);
   if (id === null || depth === null || !name) return null;
-  return { id, parentId: idx.parent >= 0 ? toInt(values[idx.parent]) : null, depth, name };
+  const hidden = idx.hidden >= 0 ? toInt(values[idx.hidden]) === 1 : false;
+  return {
+    id,
+    parentId: idx.parent >= 0 ? toInt(values[idx.parent]) : null,
+    depth,
+    name,
+    hidden,
+  };
+}
+
+/** Extrage tuplele `values(...)` dintr-un dump, ignorând parantezele din JSON-uri. */
+function sqlTuples(content: string): string[] {
+  const tuples: string[] = [];
+  const re = /values\s*\(/gi;
+  let match: RegExpExecArray | null;
+  while ((match = re.exec(content))) {
+    let depth = 1;
+    let quote = false;
+    let index = match.index + match[0].length;
+    const start = index;
+    while (index < content.length && depth > 0) {
+      const char = content[index] as string;
+      if (quote) {
+        if (char === "\\") index += 1;
+        else if (char === "'") quote = false;
+      } else if (char === "'") quote = true;
+      else if (char === "(") depth += 1;
+      else if (char === ")") depth -= 1;
+      index += 1;
+    }
+    tuples.push(content.slice(start, index - 1));
+    re.lastIndex = index;
+  }
+  return tuples;
 }
 
 /**
- * Acceptă atât CSV cu antet, cât și dump SQL (`INSERT INTO ... (cols) VALUES (...),(...);`).
- * Rândurile fără id / depth / nume sunt numărate ca respinse, nu ghicite.
+ * Acceptă atât CSV cu antet, cât și dump SQL (`INSERT INTO ... (cols) VALUES (...);`).
+ * Rândurile fără id / depth / nume și cele șterse la portal sunt numărate ca respinse.
  */
 export function parseImobiliareLocations(content: string): ImobiliareLocationParse {
   const rows: ImobiliareLocationRow[] = [];
@@ -148,18 +208,11 @@ export function parseImobiliareLocations(content: string): ImobiliareLocationPar
     const header = splitValues(insertMatch[1] as string).map((column) =>
       column.trim().replace(/[`"'\[\]]/g, "").toLowerCase(),
     );
-    const idx = {
-      id: pick(header, ID_KEYS),
-      parent: pick(header, PARENT_KEYS),
-      depth: pick(header, DEPTH_KEYS),
-      name: pick(header, NAME_KEYS),
-    };
+    const idx = idxFrom(header);
     if (idx.id < 0 || idx.depth < 0 || idx.name < 0) {
       return { rows: [], read: 0, skipped: 0 };
     }
-    const tuples = content.match(/\(([^()]*)\)/g) ?? [];
-    for (const tuple of tuples) {
-      const inner = tuple.slice(1, -1);
+    for (const inner of sqlTuples(content)) {
       const values = splitValues(inner);
       if (values.length < header.length) continue;
       read += 1;
@@ -182,12 +235,7 @@ export function parseImobiliareLocations(content: string): ImobiliareLocationPar
   const header = (lines[0] as string)
     .split(delimiter)
     .map((column) => column.trim().replace(/^["']|["']$/g, "").toLowerCase());
-  const idx = {
-    id: pick(header, ID_KEYS),
-    parent: pick(header, PARENT_KEYS),
-    depth: pick(header, DEPTH_KEYS),
-    name: pick(header, NAME_KEYS),
-  };
+  const idx = idxFrom(header);
   if (idx.id < 0 || idx.depth < 0 || idx.name < 0) return { rows: [], read: 0, skipped: 0 };
 
   for (const line of lines.slice(1)) {
@@ -203,6 +251,7 @@ export function parseImobiliareLocations(content: string): ImobiliareLocationPar
   }
   return { rows, read, skipped };
 }
+
 
 /** Denormalizează județul și orașul pentru fiecare zonă, urcând prin `parent_id`. */
 export function denormalizeLocations(rows: ImobiliareLocationRow[]): {
