@@ -218,7 +218,7 @@ async function logOperation(input: {
     ...(input.httpStatus === null || input.httpStatus === undefined
       ? {}
       : { http_status: input.httpStatus }),
-    ...(response ? { portal_response: response } : {}),
+    ...(response ? { portal_response: response as never } : {}),
     portal: input.portal,
     operation: input.operation,
     success: input.success,
