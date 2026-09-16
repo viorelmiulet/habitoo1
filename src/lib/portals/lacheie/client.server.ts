@@ -22,6 +22,7 @@ import {
 import {
   classifyLaCheieNetworkError,
   classifyLaCheieStatus,
+  describeLaCheieValidation,
   LACHEIE_MAX_ATTEMPTS,
   type LaCheieClassification,
 } from "./http";
