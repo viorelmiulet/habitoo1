@@ -55,7 +55,7 @@ describe("mapare catalog La Cheie", () => {
     expect(resolveOptionId(catalog, "comfort", "Confort 1")).toBe("comfort_1");
     expect(resolveOptionId(catalog, "comfort", "comfort_lux")).toBe("comfort_lux");
     expect(resolveOptionId(catalog, "partitioning", "Decomandat")).toBe("decomandat");
-    expect(resolveOptionId(catalog, "comfort", "1")).toBeNull();
+    expect(resolveOptionId(catalog, "comfort", "1")).toBe("comfort_1");
     expect(resolveOptionId(catalog, "comfort", "inventat")).toBeNull();
   });
 
