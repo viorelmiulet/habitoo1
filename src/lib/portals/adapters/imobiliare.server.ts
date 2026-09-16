@@ -362,7 +362,8 @@ async function write(
         externalId: serializeImobiliareReferences(resolvedPlans.map((plan) => plan.customReference)),
         live: true,
         detail: steps.join("; "),
-        portalStatus: IMOBILIARE_STATUS_ONLINE,
+        // „online” la portal = „published” în starea locală (constrângere DB).
+        portalStatus: mode === "update" ? "updated" : "published",
         processed: payload.plans.length,
         message: warnings.length ? warnings.join(" ") : undefined,
       },
