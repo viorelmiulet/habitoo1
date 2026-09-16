@@ -281,7 +281,7 @@ export function PropertyDetailsFields({ idPrefix = "det", value, onChange }: Pro
             <div className="space-y-2">
               <Label htmlFor={`${idPrefix}-property_type`}>Tip apartament / imobil</Label>
               <Select
-                value={str("property_type")}
+                value={ctx.str("property_type")}
                 onValueChange={(v) => setField("property_type", v)}
               >
                 <SelectTrigger id={`${idPrefix}-property_type`}>
