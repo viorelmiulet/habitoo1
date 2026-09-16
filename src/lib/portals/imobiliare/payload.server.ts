@@ -115,6 +115,7 @@ export async function buildImobiliarePayload(input: {
   warnings.push(location.note);
 
   const agentIds: number[] = [];
+  let agentPhone: string | null = null;
   if (row.assigned_to) {
     const { data: profile } = await input.admin
       .from("profiles")
@@ -130,6 +131,7 @@ export async function buildImobiliarePayload(input: {
       });
       if (!sync.ok) return { ok: false, reasons: [sync.message], warnings };
       agentIds.push(sync.agentId);
+      agentPhone = profile.phone ?? null;
       if (sync.created) warnings.push("Agentul a fost creat acum în contul Imobiliare.ro.");
     }
   }
@@ -140,6 +142,15 @@ export async function buildImobiliarePayload(input: {
       reasons: ["Oferta nu are un agent asignat cu email, necesar pentru Imobiliare.ro."],
     };
   }
+
+  // Portalul cere telefon și WhatsApp obligatoriu: agentul, altfel agenția.
+  const { data: org } = await input.admin
+    .from("organizations")
+    .select("phone, material_phone")
+    .eq("id", input.organizationId)
+    .maybeSingle();
+  const contactPhone = agentPhone ?? org?.phone ?? org?.material_phone ?? null;
+
 
   const coords = publicCoords(row);
   const plans: ImobiliareListingPlan[] = [];
@@ -162,6 +173,9 @@ export async function buildImobiliarePayload(input: {
       latitude: coords?.lat ?? null,
       longitude: coords?.lng ?? null,
       imageCount: input.imageCount,
+      phone: contactPhone,
+      whatsappNumber: contactPhone,
+
 
       propertyType: row.property_type,
       layout: row.layout,

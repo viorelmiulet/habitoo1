@@ -37,6 +37,10 @@ export type ImobiliareListingInput = {
   latitude: number | null;
   longitude: number | null;
   imageCount: number;
+  /** Portalul cere obligatoriu telefon de contact și număr WhatsApp. */
+  phone: string | null;
+  whatsappNumber: string | null;
+
 
   propertyType: string | null;
   layout: string | null;
@@ -142,6 +146,18 @@ export function hasRealCoordinates(lat: number | null, lng: number | null): bool
   );
 }
 
+/** Telefon în format românesc local (07xxxxxxxx), cum îl acceptă portalul. */
+export function normalizeRoPhone(value: string | null | undefined): string | null {
+  const digits = (value ?? "").replace(/[^\d]/g, "");
+  if (!digits) return null;
+  let local = digits;
+  if (local.startsWith("0040")) local = local.slice(4);
+  else if (local.startsWith("40") && local.length >= 11) local = local.slice(2);
+  if (!local.startsWith("0")) local = `0${local}`;
+  return /^0\d{9}$/.test(local) ? local : null;
+}
+
+
 export function buildImobiliareListing(input: ImobiliareListingInput): ImobiliareListingBuild {
   const reasons: string[] = [];
   const warnings: string[] = [];
@@ -172,6 +188,14 @@ export function buildImobiliareListing(input: ImobiliareListingInput): Imobiliar
     reasons.push("Oferta nu are coordonate reale pe hartă.");
   }
   if (input.imageCount < 1) reasons.push("Oferta nu are nicio imagine publicabilă.");
+  const phone = normalizeRoPhone(input.phone);
+  if (!phone) {
+    reasons.push(
+      "Lipsește un telefon de contact valid (agent sau agenție), obligatoriu pentru Imobiliare.ro.",
+    );
+  }
+  const whatsapp = normalizeRoPhone(input.whatsappNumber) ?? phone;
+
   if (input.agentIds.length === 0) {
     reasons.push("Agentul ofertei nu este încă sincronizat cu Imobiliare.ro.");
   }
@@ -273,8 +297,11 @@ export function buildImobiliareListing(input: ImobiliareListingInput): Imobiliar
     price_currency: (input.currency ?? "EUR").toUpperCase(),
     latitude: input.latitude as number,
     longitude: input.longitude as number,
+    phones: [phone as string],
+    whatsapp_number: whatsapp as string,
     data_properties: data,
   };
+
   const address = text(input.address);
   if (address) listing["address"] = address;
 
