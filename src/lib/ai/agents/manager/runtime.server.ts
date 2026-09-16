@@ -739,9 +739,18 @@ export async function decideManagerAction(
     });
   }
 
-  state = skipRemainingSteps(state, "Plan finalizat.") as ManagerState;
+  // RESUME: pașii deja finalizați nu se reexecută; planul continuă de unde a
+  // rămas. Doar dacă nu mai există pași rămași se închide.
   state = { ...state, approval: null, currentStepId: null };
+  if (state.execution?.ok === true && nextPendingStep(state)) {
+    state = await executePlan(admin, actor, tracer, row.id, state, {
+      request: state.request,
+    });
+  } else {
+    state = skipRemainingSteps(state, "Plan finalizat.") as ManagerState;
+  }
   state = { ...state, summary: state.execution?.message ?? summarize(state) };
+
 
   await persist(admin, actor, row.id, state, state.failure);
   await writeTraceEvents(tracer.list());
