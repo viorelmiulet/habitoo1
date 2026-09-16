@@ -32,6 +32,13 @@ async function mount() {
   await act(async () => {
     root.render(<Host />);
   });
+  // Secțiunile sunt un acordeon: îl deschidem ca un utilizator real.
+  const trigger = Array.from(container.querySelectorAll("button")).find(
+    (b) => b.textContent?.trim() === "Detalii",
+  ) as HTMLButtonElement;
+  await act(async () => {
+    trigger.click();
+  });
   return { container, root };
 }
 
