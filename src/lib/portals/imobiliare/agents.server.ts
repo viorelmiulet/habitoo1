@@ -117,6 +117,14 @@ export async function ensureImobiliareAgent(input: {
     return { ok: true, agentId: match.id, created: false };
   }
 
+  if (!phone || !whatsapp) {
+    return {
+      ok: false,
+      message:
+        "Agentul nu are un telefon mobil românesc valid (nici agenția): Imobiliare.ro cere telefon și număr WhatsApp pentru agent.",
+    };
+  }
+
   const created = await imobiliareAuthedRequest(session, {
     method: "POST",
     path: IMOBILIARE_PATHS.agents,
@@ -124,7 +132,8 @@ export async function ensureImobiliareAgent(input: {
     body: {
       name: profile.full_name?.trim() || email,
       email,
-      ...(phone ? { phone } : {}),
+      phones: [{ value: phone, type: "phone_number" }],
+      whatsapp_number: whatsapp,
     },
   });
   if (!created.ok) {
