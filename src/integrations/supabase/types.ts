@@ -2132,6 +2132,7 @@ export type Database = {
           county_normalized: string | null
           depth: number
           id: number
+          is_hidden: boolean
           name: string
           name_normalized: string
           parent_id: number | null
@@ -2144,6 +2145,7 @@ export type Database = {
           county_normalized?: string | null
           depth: number
           id: number
+          is_hidden?: boolean
           name: string
           name_normalized: string
           parent_id?: number | null
@@ -2156,6 +2158,7 @@ export type Database = {
           county_normalized?: string | null
           depth?: number
           id?: number
+          is_hidden?: boolean
           name?: string
           name_normalized?: string
           parent_id?: number | null
