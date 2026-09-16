@@ -100,6 +100,7 @@ export async function resolveImobiliareLocation(
     .select("id, name, depth, city_normalized, county_normalized")
     .eq("depth", 3)
     .eq("city_normalized", cityNormalized)
+    .order("is_hidden", { ascending: true })
     .order("name", { ascending: true })
     .limit(500);
   if (countyNormalized) query = query.eq("county_normalized", countyNormalized);
@@ -111,7 +112,8 @@ export async function resolveImobiliareLocation(
       .select("id, name, depth, city_normalized, county_normalized")
       .eq("depth", 3)
       .eq("city_normalized", cityNormalized)
-      .order("name", { ascending: true })
+      .order("is_hidden", { ascending: true })
+    .order("name", { ascending: true })
       .limit(500);
     data = retry.data;
   }
