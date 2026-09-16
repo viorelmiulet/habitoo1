@@ -87,3 +87,19 @@ describe("mapare catalog La Cheie", () => {
     expect(resolveOptionPks(EMPTY_LACHEIE_CATALOG, "utilities", ["Apa"])).toEqual([]);
   });
 });
+
+describe("erori de validare La Cheie", () => {
+  it("G. expune câmpurile exacte refuzate de portal", async () => {
+    const { describeLaCheieValidation } = await import("../http");
+    expect(
+      describeLaCheieValidation({
+        error: {
+          code: "validation_error",
+          fields: { lat: ["Unknown field."], comfort: ['"1" is not a valid choice.'] },
+        },
+      }),
+    ).toBe('lat: Unknown field.; comfort: "1" is not a valid choice.');
+    expect(describeLaCheieValidation({ error: { code: "validation_error" } })).toBeNull();
+    expect(describeLaCheieValidation(null)).toBeNull();
+  });
+});
