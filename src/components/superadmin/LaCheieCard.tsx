@@ -161,14 +161,17 @@ export function LaCheieCard({ organizationId }: { organizationId: string }) {
       </header>
 
       <div className="grid gap-5 p-5 lg:grid-cols-2">
-        {/* Conexiune */}
+        {/* Conexiunea furnizorului CRM */}
         <div className="space-y-3 rounded-xl border border-border bg-surface p-4">
           <div className="flex items-center justify-between gap-2">
-            <Label>Conexiune</Label>
+            <Label>Conexiune furnizor CRM</Label>
             <StatusBadge tone="neutral">Production</StatusBadge>
           </div>
           <ul className="space-y-1 text-xs text-muted-foreground">
-            <li>Cheie API salvată: {data.hasApiKey ? "da" : "nu"}</li>
+            <li>
+              Cheie de furnizor configurată pe server: {data.hasProviderKey ? "da" : "nu"}
+              {data.hasProviderKey ? "" : " (adaugă secretul LACHEIE_CRM_API_KEY)"}
+            </li>
             <li className="font-mono break-all">{data.baseUrl}</li>
             <li>Cale anunțuri: {data.propertiesPath}</li>
             {data.lastError ? (
@@ -177,15 +180,105 @@ export function LaCheieCard({ organizationId }: { organizationId: string }) {
           </ul>
           <Button
             size="sm"
-            disabled={!data.hasApiKey || testMutation.isPending}
+            disabled={
+              !data.hasProviderKey || data.agency.status !== "active" || testMutation.isPending
+            }
             onClick={() => testMutation.mutate()}
           >
             {testMutation.isPending ? "Se testează…" : "Testează conexiunea"}
           </Button>
           <p className="text-xs text-muted-foreground">
-            Testarea folosește GET /account: nu creează, nu modifică și nu retrage anunțuri.
+            Testarea folosește GET /account în contextul agenției (X-Agency-External-ID): nu creează,
+            nu modifică și nu retrage anunțuri.
           </p>
         </div>
+
+        {/* Agenția conectată */}
+        <div className="space-y-3 rounded-xl border border-border bg-surface p-4">
+          <div className="flex items-center justify-between gap-2">
+            <Label>Agenție conectată</Label>
+            <StatusBadge tone={AGENCY_TONE[data.agency.status] ?? "neutral"} dot>
+              {data.agency.statusLabel}
+            </StatusBadge>
+          </div>
+          <ul className="space-y-1 text-xs text-muted-foreground">
+            <li className="font-mono break-all">external_id: {data.agency.externalId ?? "—"}</li>
+            <li>
+              Versiune agenție: {data.agency.version ?? "—"}
+              {data.agency.acceptedVersion ? ` (acceptată ${data.agency.acceptedVersion})` : ""}
+            </li>
+            <li>
+              Ultima sincronizare:{" "}
+              {data.agency.syncedAt
+                ? new Date(data.agency.syncedAt).toLocaleString("ro-RO")
+                : "niciodată"}
+            </li>
+            {data.agency.error ? (
+              <li className="text-destructive">{data.agency.error}</li>
+            ) : null}
+            {data.agency.missingFields.length ? (
+              <li className="text-destructive">
+                Completează în profilul agenției: {data.agency.missingFields.join(", ")}.
+              </li>
+            ) : null}
+          </ul>
+          <div className="flex flex-wrap gap-2">
+            <Button
+              size="sm"
+              disabled={
+                !data.hasProviderKey ||
+                !data.agency.canActivate ||
+                data.agency.status === "active" ||
+                activateMutation.isPending
+              }
+              onClick={() => activateMutation.mutate()}
+            >
+              {activateMutation.isPending
+                ? "Se activează…"
+                : data.agency.status === "inactive"
+                  ? "Reactivează agenția"
+                  : "Activează agenția"}
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              disabled={
+                !data.hasProviderKey ||
+                data.agency.status === "not_registered" ||
+                agencyStatusMutation.isPending
+              }
+              onClick={() => agencyStatusMutation.mutate()}
+            >
+              {agencyStatusMutation.isPending ? "Se verifică…" : "Verifică statusul"}
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              disabled={
+                !data.hasProviderKey ||
+                data.agency.status === "not_registered" ||
+                deactivateMutation.isPending
+              }
+              onClick={() => {
+                if (
+                  window.confirm(
+                    "Oprești sincronizarea La Cheie pentru această agenție? Ofertele publicate prin această conexiune vor fi retrase.",
+                  )
+                ) {
+                  deactivateMutation.mutate();
+                }
+              }}
+            >
+              {deactivateMutation.isPending ? "Se dezactivează…" : "Dezactivează"}
+            </Button>
+          </div>
+          {data.agency.status === "suspended" ? (
+            <p className="text-xs text-destructive">
+              Suspendarea este administrativă la La Cheie și nu poate fi ocolită din CRM.
+            </p>
+          ) : null}
+        </div>
+
 
         {/* Catalog */}
         <div className="space-y-3 rounded-xl border border-border bg-surface p-4">
