@@ -39,24 +39,44 @@ export function categoryCatalogIsFresh(
   return Number.isFinite(fetchedAt) && now - fetchedAt < IMOBILIARE_CATEGORY_MAX_AGE_MS;
 }
 
-/** Normalizează orice formă de listă returnată de portal. */
+function offerTypeOf(value: unknown): "sale" | "rent" | null {
+  const raw = String(value ?? "")
+    .trim()
+    .toLowerCase();
+  if (raw === "sell" || raw === "sale" || raw === "vanzare") return "sale";
+  if (raw === "rent" || raw === "inchiriere") return "rent";
+  return null;
+}
+
+/**
+ * Normalizează orice formă returnată de portal: listă sau, cum răspunde
+ * `/api/v3/categories`, un obiect cheie → categorie, unde CHEIA este chiar
+ * `category_api` (`category_id` din valoare este alt identificator).
+ */
 export function parseCategories(body: unknown): ImobiliareCategory[] {
-  const source = Array.isArray(body)
-    ? body
-    : body && typeof body === "object"
-      ? ((body as Record<string, unknown>)["data"] ??
+  const container =
+    Array.isArray(body) || !body || typeof body !== "object"
+      ? body
+      : ((body as Record<string, unknown>)["data"] ??
         (body as Record<string, unknown>)["categories"] ??
-        (body as Record<string, unknown>)["items"])
-      : null;
-  if (!Array.isArray(source)) return [];
+        (body as Record<string, unknown>)["items"] ??
+        body);
+
+  const entries: [string | null, unknown][] = Array.isArray(container)
+    ? container.map((entry) => [null, entry])
+    : container && typeof container === "object"
+      ? Object.entries(container as Record<string, unknown>)
+      : [];
+
   const out: ImobiliareCategory[] = [];
-  for (const entry of source) {
+  for (const [key, entry] of entries) {
     if (!entry || typeof entry !== "object") continue;
     const row = entry as Record<string, unknown>;
-    const rawId = row["id"] ?? row["category_api"] ?? row["value"];
+    const rawId = key ?? row["id"] ?? row["category_api"] ?? row["value"];
     const id = typeof rawId === "number" ? rawId : Number.parseInt(String(rawId ?? ""), 10);
     const name = String(row["name"] ?? row["label"] ?? row["title"] ?? "").trim();
-    if (Number.isFinite(id) && id > 0 && name) out.push({ id, name });
+    if (!Number.isFinite(id) || id <= 0 || !name) continue;
+    out.push({ id, name, offerType: offerTypeOf(row["offer_type"]) });
   }
   return out;
 }
