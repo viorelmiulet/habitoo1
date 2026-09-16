@@ -13,6 +13,10 @@ export type PortalFail = {
   code: PortalErrorCode;
   message: string;
   detail?: string | null;
+  /** Statusul HTTP real returnat de portal, când există. */
+  httpStatus?: number | null;
+  /** Corpul BRUT al răspunsului portalului, pentru jurnalizare completă. */
+  portalResponse?: unknown;
 };
 export type PortalResult<T> = PortalOk<T> | PortalFail;
 
