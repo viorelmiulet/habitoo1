@@ -11,7 +11,7 @@
 
 import { HOMEPITCH_MAX_TITLE } from "./homepitch/mapper";
 import { IMOBILIARE_DESCRIPTION_MIN, IMOBILIARE_TITLE_MAX } from "./imobiliare/config";
-import { normalizeImobiliarePhone } from "./imobiliare/contact";
+import { normalizeImobiliareMobile } from "./imobiliare/contact";
 import { LACHEIE_MIN_DESCRIPTION, LACHEIE_MIN_TITLE } from "./lacheie/mapper";
 import { IMOSPOT_MIN_DESCRIPTION, IMOSPOT_MIN_TITLE } from "./imospot/mapper";
 import { OI_MIN_DESCRIPTION, OI_MIN_TITLE } from "./oferteimobiliare/mapper";
@@ -149,7 +149,7 @@ const RULE = {
     key: "phone",
     label: "Telefon și WhatsApp",
     requirement: "număr românesc valid, trimis pentru ambele câmpuri",
-    ok: (s) => normalizeImobiliarePhone(s.contactPhone) !== null,
+    ok: (s) => normalizeImobiliareMobile(s.contactPhone) !== null,
   }),
   bathrooms: (): PortalRequirementRule => ({
     key: "bathrooms",
@@ -255,7 +255,7 @@ export const PORTAL_REQUIREMENTS: Record<string, PortalRequirementSpec> = {
       RULE.propertyType(),
       RULE.location(),
       RULE.agentName(),
-      RULE.imobiliarePhone(),
+      RULE.phone(),
       RULE.surface(),
       RULE.bedrooms(),
       RULE.bathrooms(),
@@ -275,7 +275,7 @@ export const PORTAL_REQUIREMENTS: Record<string, PortalRequirementSpec> = {
       RULE.coords(),
       RULE.images(1),
       RULE.agentEmail(),
-      RULE.phone(),
+      RULE.imobiliarePhone(),
     ],
     allowed: COMMON_ALLOWED,
   },

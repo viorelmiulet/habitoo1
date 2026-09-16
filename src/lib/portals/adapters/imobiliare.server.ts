@@ -41,6 +41,7 @@ import {
   type ImobiliareSession,
 } from "../imobiliare/auth.server";
 import { withImobiliareWriteLock } from "../imobiliare/client.server";
+import { withDurableImobiliareLock } from "../imobiliare/lock.server";
 import {
   readCategoryCatalog,
   refreshCategoryCatalog,
@@ -290,7 +291,7 @@ async function write(
       return {
         ok: true,
         data: {
-          externalId: payload.plans[0]?.customReference ?? null,
+          externalId: serializeImobiliareReferences(payload.plans.map((plan) => plan.customReference)),
           live: false,
           detail: `Validare locală reușită pentru ${payload.plans.length} anunț(uri); scrierile reale sunt oprite.`,
           message: warnings.join(" "),
@@ -315,17 +316,21 @@ async function write(
     const steps: string[] = [];
     for (const plan of resolvedPlans) {
       const planMode: WriteMode = storedReferences.includes(plan.customReference) ? "update" : mode;
-      const result = await withImobiliareWriteLock(
-        `${ctx.organizationId}:${plan.customReference}`,
-        () =>
-          publishPlan({
-            ctx,
-            session: ready.session,
-            plan,
-            images: media.images,
-            mode: planMode,
-          }),
-      );
+      const result = await withDurableImobiliareLock({
+        admin: db,
+        organizationId: ctx.organizationId,
+        reference: plan.customReference,
+        run: () =>
+          withImobiliareWriteLock(`${ctx.organizationId}:${plan.customReference}`, () =>
+            publishPlan({
+              ctx,
+              session: ready.session,
+              plan,
+              images: media.images,
+              mode: planMode,
+            }),
+          ),
+      });
       if (!result.ok) return result.fail;
       steps.push(`${plan.customReference}: ${result.steps.join(" → ")}`);
     }
@@ -377,14 +382,21 @@ async function withdraw(
   try {
     // Retragere = trecerea în draft: reversibilă, fără pierderea anunțului.
     for (const externalId of externalIds) {
-      const response = await withImobiliareWriteLock(`${ctx.organizationId}:${externalId}`, () =>
-        imobiliareAuthedRequest(ready.session, {
-          method: "POST",
-          path: promotionsPath(externalId),
-          connectionKey: ctx.organizationId,
-          body: { status: IMOBILIARE_STATUS_DRAFT },
-        }),
-      );
+      const db = await admin();
+      const response = await withDurableImobiliareLock({
+        admin: db,
+        organizationId: ctx.organizationId,
+        reference: externalId,
+        run: () =>
+          withImobiliareWriteLock(`${ctx.organizationId}:${externalId}`, () =>
+            imobiliareAuthedRequest(ready.session, {
+              method: "POST",
+              path: promotionsPath(externalId),
+              connectionKey: ctx.organizationId,
+              body: { status: IMOBILIARE_STATUS_DRAFT },
+            }),
+          ),
+      });
       if (!response.ok) return failFrom(response, `withdraw:${externalId}`);
     }
     return {
@@ -409,15 +421,22 @@ export async function deleteImobiliareListing(
 ): Promise<PortalResult<ListingOutcome>> {
   const ready = await prepare(ctx);
   if (!ready.ok) return ready.result;
+  const db = await admin();
   const externalIds = parseImobiliareReferences(externalId);
   for (const reference of externalIds) {
-    const response = await withImobiliareWriteLock(`${ctx.organizationId}:${reference}`, () =>
-      imobiliareAuthedRequest(ready.session, {
-        method: "DELETE",
-        path: listingPath(reference),
-        connectionKey: ctx.organizationId,
-      }),
-    );
+    const response = await withDurableImobiliareLock({
+      admin: db,
+      organizationId: ctx.organizationId,
+      reference,
+      run: () =>
+        withImobiliareWriteLock(`${ctx.organizationId}:${reference}`, () =>
+          imobiliareAuthedRequest(ready.session, {
+            method: "DELETE",
+            path: listingPath(reference),
+            connectionKey: ctx.organizationId,
+          }),
+        ),
+    });
     if (!response.ok) return failFrom(response, `delete:${reference}`);
   }
   return {

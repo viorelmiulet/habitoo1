@@ -23,7 +23,7 @@ import {
   mapAmenities,
   type AmenityGroup,
 } from "./taxonomy";
-import { normalizeImobiliarePhone } from "./contact";
+import { normalizeImobiliareMobile, normalizeImobiliarePhone } from "./contact";
 
 export type ImobiliareListingInput = {
   customReference: string;
@@ -187,7 +187,10 @@ export function buildImobiliareListing(input: ImobiliareListingInput): Imobiliar
       "Lipsește un telefon de contact valid (agent sau agenție), obligatoriu pentru Imobiliare.ro.",
     );
   }
-  const whatsapp = normalizeImobiliarePhone(input.whatsappNumber) ?? phone;
+  const whatsapp = normalizeImobiliareMobile(input.whatsappNumber);
+  if (!whatsapp) {
+    reasons.push("Lipsește un număr mobil românesc valid pentru WhatsApp.");
+  }
 
   if (input.agentIds.length === 0) {
     reasons.push("Agentul ofertei nu este încă sincronizat cu Imobiliare.ro.");

@@ -9,11 +9,26 @@ export function normalizeImobiliarePhone(value: string | null | undefined): stri
   return /^0\d{9}$/.test(local) ? local : null;
 }
 
+export function normalizeImobiliareMobile(value: string | null | undefined): string | null {
+  const phone = normalizeImobiliarePhone(value);
+  return phone && /^07\d{8}$/.test(phone) ? phone : null;
+}
+
 export function resolveImobiliareContactPhone(
   ...candidates: (string | null | undefined)[]
 ): string | null {
   for (const candidate of candidates) {
     const normalized = normalizeImobiliarePhone(candidate);
+    if (normalized) return normalized;
+  }
+  return null;
+}
+
+export function resolveImobiliareWhatsapp(
+  ...candidates: (string | null | undefined)[]
+): string | null {
+  for (const candidate of candidates) {
+    const normalized = normalizeImobiliareMobile(candidate);
     if (normalized) return normalized;
   }
   return null;

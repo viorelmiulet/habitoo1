@@ -12,7 +12,7 @@ import {
   type PortalRequirementReport,
   type PortalRequirementSubject,
 } from "./requirements";
-import { resolveImobiliareContactPhone } from "./imobiliare/contact";
+import { resolveImobiliareContactPhone, resolveImobiliareWhatsapp } from "./imobiliare/contact";
 
 type Admin = SupabaseClient<any, any, any>;
 
@@ -88,11 +88,9 @@ export async function loadRequirementSubject(
     landSurface: row.land_surface ?? null,
     agentName,
     agentEmail,
-    contactPhone: resolveImobiliareContactPhone(
-      agentPhone,
-      (org as any)?.phone,
-      (org as any)?.material_phone,
-    ),
+    contactPhone:
+      resolveImobiliareWhatsapp(agentPhone, (org as any)?.phone, (org as any)?.material_phone) ??
+      resolveImobiliareContactPhone(agentPhone, (org as any)?.phone, (org as any)?.material_phone),
   };
 }
 

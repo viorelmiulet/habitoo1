@@ -21,7 +21,12 @@ import { buildImobiliareListing, hasRealCoordinates } from "../mapper";
 import { categoryApiFor, parseCategories } from "../categories.server";
 import { parseAgents, agentIdFromCreate } from "../agents.server";
 import { batchEncodedImages } from "../media.server";
-import { normalizeImobiliarePhone, resolveImobiliareContactPhone } from "../contact";
+import {
+  normalizeImobiliareMobile,
+  normalizeImobiliarePhone,
+  resolveImobiliareContactPhone,
+  resolveImobiliareWhatsapp,
+} from "../contact";
 import {
   parseImobiliareReferences,
   referenceForTransaction,
@@ -219,6 +224,8 @@ describe("agenți", () => {
     expect(normalizeImobiliarePhone("+40 700 000 001")).toBe("0700000001");
     expect(resolveImobiliareContactPhone("invalid", "0712 345 678")).toBe("0712345678");
     expect(resolveImobiliareContactPhone("123", null)).toBeNull();
+    expect(normalizeImobiliareMobile("021 234 56 78")).toBeNull();
+    expect(resolveImobiliareWhatsapp("0212345678", "+40 712 345 678")).toBe("0712345678");
   });
 });
 

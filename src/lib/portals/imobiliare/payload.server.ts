@@ -16,7 +16,7 @@ import { resolveImobiliareLocation } from "./locations.server";
 import { ensureImobiliareAgent } from "./agents.server";
 import type { ImobiliareSession } from "./auth.server";
 import { buildImobiliareListing, type ImobiliareListing } from "./mapper";
-import { resolveImobiliareContactPhone } from "./contact";
+import { resolveImobiliareContactPhone, resolveImobiliareWhatsapp } from "./contact";
 
 type Admin = SupabaseClient<Database>;
 
@@ -151,6 +151,7 @@ export async function buildImobiliarePayload(input: {
     .eq("id", input.organizationId)
     .maybeSingle();
   const contactPhone = resolveImobiliareContactPhone(agentPhone, org?.phone, org?.material_phone);
+  const whatsappNumber = resolveImobiliareWhatsapp(agentPhone, org?.phone, org?.material_phone);
 
 
   const coords = publicCoords(row);
@@ -175,7 +176,7 @@ export async function buildImobiliarePayload(input: {
       longitude: coords?.lng ?? null,
       imageCount: input.imageCount,
       phone: contactPhone,
-      whatsappNumber: contactPhone,
+      whatsappNumber,
 
 
       propertyType: row.property_type,

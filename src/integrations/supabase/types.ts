@@ -3855,6 +3855,41 @@ export type Database = {
           },
         ]
       }
+      portal_operation_locks: {
+        Row: {
+          created_at: string
+          expires_at: string
+          lock_key: string
+          organization_id: string
+          owner_token: string
+          portal: string
+        }
+        Insert: {
+          created_at?: string
+          expires_at: string
+          lock_key: string
+          organization_id: string
+          owner_token: string
+          portal: string
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string
+          lock_key?: string
+          organization_id?: string
+          owner_token?: string
+          portal?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "portal_operation_locks_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       portal_operation_logs: {
         Row: {
           actor_id: string | null
@@ -5802,6 +5837,16 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      acquire_portal_operation_lock: {
+        Args: {
+          _lock_key: string
+          _organization_id: string
+          _owner_token: string
+          _portal: string
+          _ttl_seconds?: number
+        }
+        Returns: boolean
+      }
       admin_change_user_organization: {
         Args: { _new_org: string; _user_id: string }
         Returns: undefined
@@ -6001,6 +6046,15 @@ export type Database = {
       }
       reject_registration_request: {
         Args: { _reason?: string; _request_id: string }
+        Returns: undefined
+      }
+      release_portal_operation_lock: {
+        Args: {
+          _lock_key: string
+          _organization_id: string
+          _owner_token: string
+          _portal: string
+        }
         Returns: undefined
       }
       ro_normalize_name: { Args: { _v: string }; Returns: string }
