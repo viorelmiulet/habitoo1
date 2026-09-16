@@ -228,6 +228,9 @@ const BASE_INPUT = {
   latitude: 44.434727,
   longitude: 25.987173,
   imageCount: 8,
+  phone: "0700000001",
+  whatsappNumber: "0700000001",
+
   propertyType: "apartament",
   layout: null,
   comfort: null,
