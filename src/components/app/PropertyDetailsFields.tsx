@@ -296,29 +296,29 @@ export function PropertyDetailsFields({ idPrefix = "det", value, onChange }: Pro
                 </SelectContent>
               </Select>
             </div>
-            <SelectField field="layout" label="Compartimentare" options={layoutOptions} />
-            <SelectField field="comfort" label="Confort" options={comfortOptions} />
-            <SelectField field="destination" label="Destinație" options={destinationOptions} />
-            <NumberField field="rooms" label="Camere" />
-            <NumberField field="bedrooms" label="Dormitoare" />
-            <NumberField field="kitchens" label="Bucătării" />
-            <NumberField field="bathrooms" label="Băi" />
-            <NumberField field="balconies" label="Balcoane" />
-            <NumberField field="terraces" label="Terase" />
-            <SelectField field="floor_label" label="Etaj" options={floorLabelOptions} />
-            <SelectField field="orientation" label="Orientare" options={orientationOptions} />
-            <NumberField field="build_year" label="An construcție" />
-            <NumberField field="renovation_year" label="Anul renovării" />
-            <NumberField field="parking_spaces" label="Parcări" />
-            <NumberField field="garages" label="Garaje" />
-            <SelectField field="parking" label="Tip parcare" options={parkingOptions} />
+            <SelectField ctx={ctx} field="layout" label="Compartimentare" options={layoutOptions} />
+            <SelectField ctx={ctx} field="comfort" label="Confort" options={comfortOptions} />
+            <SelectField ctx={ctx} field="destination" label="Destinație" options={destinationOptions} />
+            <NumberField ctx={ctx} field="rooms" label="Camere" />
+            <NumberField ctx={ctx} field="bedrooms" label="Dormitoare" />
+            <NumberField ctx={ctx} field="kitchens" label="Bucătării" />
+            <NumberField ctx={ctx} field="bathrooms" label="Băi" />
+            <NumberField ctx={ctx} field="balconies" label="Balcoane" />
+            <NumberField ctx={ctx} field="terraces" label="Terase" />
+            <SelectField ctx={ctx} field="floor_label" label="Etaj" options={floorLabelOptions} />
+            <SelectField ctx={ctx} field="orientation" label="Orientare" options={orientationOptions} />
+            <NumberField ctx={ctx} field="build_year" label="An construcție" />
+            <NumberField ctx={ctx} field="renovation_year" label="Anul renovării" />
+            <NumberField ctx={ctx} field="parking_spaces" label="Parcări" />
+            <NumberField ctx={ctx} field="garages" label="Garaje" />
+            <SelectField ctx={ctx} field="parking" label="Tip parcare" options={parkingOptions} />
           </div>
           <div className="grid items-start gap-x-6 gap-y-2.5 sm:grid-cols-2 lg:grid-cols-4">
-            <BoolField field="bathroom_window" label="Geam la baie" />
-            <BoolField field="open_kitchen" label="Bucătărie deschisă" />
-            <BoolField field="pet_friendly" label="Pet friendly" />
-            <BoolField field="key_in_agency" label="Cheia în agenție" />
-            <BoolField field="balcony" label="Balcon" />
+            <BoolField ctx={ctx} field="bathroom_window" label="Geam la baie" />
+            <BoolField ctx={ctx} field="open_kitchen" label="Bucătărie deschisă" />
+            <BoolField ctx={ctx} field="pet_friendly" label="Pet friendly" />
+            <BoolField ctx={ctx} field="key_in_agency" label="Cheia în agenție" />
+            <BoolField ctx={ctx} field="balcony" label="Balcon" />
           </div>
         </AccordionContent>
       </AccordionItem>
@@ -327,13 +327,13 @@ export function PropertyDetailsFields({ idPrefix = "det", value, onChange }: Pro
         <AccordionTrigger className="text-sm font-medium">Suprafețe</AccordionTrigger>
         <AccordionContent>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            <NumberField field="usable_surface" label="Utilă (m²)" />
-            <NumberField field="built_surface" label="Construită (m²)" />
-            <NumberField field="total_usable_surface" label="Utilă totală (m²)" />
-            <NumberField field="balcony_surface" label="Balcoane (m²)" />
-            <NumberField field="terrace_surface" label="Terase (m²)" />
-            <NumberField field="garden_surface" label="Suprafață grădină (m²)" />
-            <NumberField field="land_surface" label="Teren (m²)" />
+            <NumberField ctx={ctx} field="usable_surface" label="Utilă (m²)" />
+            <NumberField ctx={ctx} field="built_surface" label="Construită (m²)" />
+            <NumberField ctx={ctx} field="total_usable_surface" label="Utilă totală (m²)" />
+            <NumberField ctx={ctx} field="balcony_surface" label="Balcoane (m²)" />
+            <NumberField ctx={ctx} field="terrace_surface" label="Terase (m²)" />
+            <NumberField ctx={ctx} field="garden_surface" label="Suprafață grădină (m²)" />
+            <NumberField ctx={ctx} field="land_surface" label="Teren (m²)" />
           </div>
         </AccordionContent>
       </AccordionItem>
@@ -343,28 +343,30 @@ export function PropertyDetailsFields({ idPrefix = "det", value, onChange }: Pro
         <AccordionContent className="space-y-6 pt-2">
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             <SelectField
+              ctx={ctx}
               field="construction_stage"
               label="Stadiu construcție"
               options={constructionStageOptions}
             />
-            <SelectField field="building_type" label="Tip" options={buildingTypeOptions} />
+            <SelectField ctx={ctx} field="building_type" label="Tip" options={buildingTypeOptions} />
             <SelectField
+              ctx={ctx}
               field="building_structure"
               label="Structură"
               options={buildingStructureOptions}
             />
-            <SelectField field="seismic_risk" label="Risc seismic" options={seismicRiskOptions} />
-            <NumberField field="building_floors" label="Etaje" />
-            <NumberField field="recessed_floors" label="Etaje retrase" />
+            <SelectField ctx={ctx} field="seismic_risk" label="Risc seismic" options={seismicRiskOptions} />
+            <NumberField ctx={ctx} field="building_floors" label="Etaje" />
+            <NumberField ctx={ctx} field="recessed_floors" label="Etaje retrase" />
           </div>
           <fieldset className="space-y-2">
             <legend className="text-sm font-medium">Înălțime</legend>
             <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-5">
-              <BoolField field="has_basement" label="S+ (subsol)" />
-              <BoolField field="has_semi_basement" label="D+ (demisol)" />
-              <BoolField field="has_ground_floor" label="P+ (parter)" />
-              <BoolField field="has_attic" label="M (mansardă)" />
-              <BoolField field="has_loft" label="Pod" />
+              <BoolField ctx={ctx} field="has_basement" label="S+ (subsol)" />
+              <BoolField ctx={ctx} field="has_semi_basement" label="D+ (demisol)" />
+              <BoolField ctx={ctx} field="has_ground_floor" label="P+ (parter)" />
+              <BoolField ctx={ctx} field="has_attic" label="M (mansardă)" />
+              <BoolField ctx={ctx} field="has_loft" label="Pod" />
             </div>
           </fieldset>
         </AccordionContent>
@@ -373,47 +375,49 @@ export function PropertyDetailsFields({ idPrefix = "det", value, onChange }: Pro
       <AccordionItem value="utilitati">
         <AccordionTrigger className="text-sm font-medium">Utilități</AccordionTrigger>
         <AccordionContent className="space-y-6 pt-2">
-          <CheckGroup field="utilities" label="Generale" options={utilityOptions} />
-          <CheckGroup field="heating_systems" label="Sistem încălzire" options={heatingOptions} />
-          <CheckGroup field="cooling_systems" label="Climatizare" options={coolingOptions} />
+          <CheckGroup ctx={ctx} field="utilities" label="Generale" options={utilityOptions} />
+          <CheckGroup ctx={ctx} field="heating_systems" label="Sistem încălzire" options={heatingOptions} />
+          <CheckGroup ctx={ctx} field="cooling_systems" label="Climatizare" options={coolingOptions} />
         </AccordionContent>
       </AccordionItem>
 
       <AccordionItem value="finisaje">
         <AccordionTrigger className="text-sm font-medium">Finisaje</AccordionTrigger>
         <AccordionContent className="space-y-6 pt-2">
-          <RadioField field="finish_state" label="Stare" options={finishStateOptions} />
-          <CheckGroup field="insulation" label="Izolații" options={insulationOptions} />
-          <CheckGroup field="wall_finishes" label="Pereți" options={wallFinishOptions} />
-          <CheckGroup field="floor_finishes" label="Podele" options={floorFinishOptions} />
-          <CheckGroup field="windows" label="Ferestre" options={windowOptions} />
-          <CheckGroup field="blinds" label="Jaluzele" options={blindOptions} />
-          <CheckGroup field="shutters" label="Rulouri" options={shutterOptions} />
-          <CheckGroup field="entry_door" label="Ușă intrare" options={entryDoorOptions} />
-          <CheckGroup field="interior_doors" label="Uși interior" options={interiorDoorOptions} />
+          <RadioField ctx={ctx} field="finish_state" label="Stare" options={finishStateOptions} />
+          <CheckGroup ctx={ctx} field="insulation" label="Izolații" options={insulationOptions} />
+          <CheckGroup ctx={ctx} field="wall_finishes" label="Pereți" options={wallFinishOptions} />
+          <CheckGroup ctx={ctx} field="floor_finishes" label="Podele" options={floorFinishOptions} />
+          <CheckGroup ctx={ctx} field="windows" label="Ferestre" options={windowOptions} />
+          <CheckGroup ctx={ctx} field="blinds" label="Jaluzele" options={blindOptions} />
+          <CheckGroup ctx={ctx} field="shutters" label="Rulouri" options={shutterOptions} />
+          <CheckGroup ctx={ctx} field="entry_door" label="Ușă intrare" options={entryDoorOptions} />
+          <CheckGroup ctx={ctx} field="interior_doors" label="Uși interior" options={interiorDoorOptions} />
         </AccordionContent>
       </AccordionItem>
 
       <AccordionItem value="dotari">
         <AccordionTrigger className="text-sm font-medium">Dotări</AccordionTrigger>
         <AccordionContent className="space-y-6 pt-2">
-          <RadioField field="furnishing" label="Mobilat" options={furnishingOptions} />
+          <RadioField ctx={ctx} field="furnishing" label="Mobilat" options={furnishingOptions} />
           <CheckGroup
+              ctx={ctx}
             field="additional_spaces"
             label="Spații adiționale"
             options={additionalSpaceOptions}
           />
-          <CheckGroup field="kitchen_features" label="Bucătărie" options={kitchenOptions} />
-          <CheckGroup field="metering" label="Contorizare" options={meteringOptions} />
-          <CheckGroup field="appliances" label="Electrocasnice" options={applianceOptions} />
-          <CheckGroup field="building_amenities" label="Imobil" options={buildingAmenityOptions} />
+          <CheckGroup ctx={ctx} field="kitchen_features" label="Bucătărie" options={kitchenOptions} />
+          <CheckGroup ctx={ctx} field="metering" label="Contorizare" options={meteringOptions} />
+          <CheckGroup ctx={ctx} field="appliances" label="Electrocasnice" options={applianceOptions} />
+          <CheckGroup ctx={ctx} field="building_amenities" label="Imobil" options={buildingAmenityOptions} />
           <CheckGroup
+              ctx={ctx}
             field="street_arrangement"
             label="Amenajare străzi"
             options={streetArrangementOptions}
           />
-          <CheckGroup field="views" label="Priveliște" options={viewOptions} />
-          <CheckGroup field="misc_features" label="Diverse" options={miscFeatureOptions} />
+          <CheckGroup ctx={ctx} field="views" label="Priveliște" options={viewOptions} />
+          <CheckGroup ctx={ctx} field="misc_features" label="Diverse" options={miscFeatureOptions} />
         </AccordionContent>
       </AccordionItem>
     </Accordion>
