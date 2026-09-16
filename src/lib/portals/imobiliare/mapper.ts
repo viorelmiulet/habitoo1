@@ -297,8 +297,11 @@ export function buildImobiliareListing(input: ImobiliareListingInput): Imobiliar
     price_currency: (input.currency ?? "EUR").toUpperCase(),
     latitude: input.latitude as number,
     longitude: input.longitude as number,
+    phones: [phone as string],
+    whatsapp_number: whatsapp as string,
     data_properties: data,
   };
+
   const address = text(input.address);
   if (address) listing["address"] = address;
 
