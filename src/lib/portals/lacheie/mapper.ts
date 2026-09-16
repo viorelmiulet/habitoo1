@@ -269,6 +269,18 @@ function nonNegativeInt(value: unknown): number | null {
   return Math.round(value);
 }
 
+/** Id-uri de catalog (pk): întregi pozitivi, unici, în ordinea primită. */
+function cleanIdList(values: number[] | undefined, limit = 30): number[] {
+  const out: number[] = [];
+  for (const value of values ?? []) {
+    if (typeof value !== "number" || !Number.isFinite(value) || value <= 0) continue;
+    const id = Math.round(value);
+    if (!out.includes(id)) out.push(id);
+    if (out.length >= limit) break;
+  }
+  return out;
+}
+
 function cleanTextList(values: string[] | undefined, limit = 30): string[] {
   if (!values?.length) return [];
   const out: string[] = [];
@@ -407,20 +419,20 @@ export function buildLaCheieOffer(
   put("neighbourhood", input.neighbourhood?.trim());
   put("street_name", input.streetName?.trim());
   put("number", input.streetNumber?.trim());
-  put("lat", typeof input.lat === "number" && Number.isFinite(input.lat) ? input.lat : null);
-  put("lng", typeof input.lng === "number" && Number.isFinite(input.lng) ? input.lng : null);
+  put("latitude", typeof input.lat === "number" && Number.isFinite(input.lat) ? input.lat : null);
+  put("longitude", typeof input.lng === "number" && Number.isFinite(input.lng) ? input.lng : null);
   put("floor", nonNegativeInt(input.floor));
   put("comfort", input.comfort?.trim());
   put("partitioning", input.partitioning?.trim());
   put("construction_stage", input.constructionStage?.trim());
-  put("heating", input.heating?.trim());
-  put("cooling", input.cooling?.trim());
-  put("parking", input.parking?.trim());
+  put("heating", positiveInt(input.heating));
+  put("cooling", positiveInt(input.cooling));
+  put("parking", positiveInt(input.parking));
   put("strengths", cleanTextList(input.strengths));
-  put("facilities", cleanTextList(input.facilities));
-  put("utilities", cleanTextList(input.utilities));
-  put("nearby", cleanTextList(input.nearby));
-  if (typeof input.petFriendly === "boolean") put("pet_friendly", input.petFriendly);
+  put("facilities", cleanIdList(input.facilities));
+  put("utilities", cleanIdList(input.utilities));
+  put("nearby", cleanIdList(input.nearby));
+  put("pet_friendly", input.petFriendly?.trim());
   // Imaginile: `[]` cere explicit eliminarea celor existente la portal.
   draft["images"] = imageResult.images;
 
