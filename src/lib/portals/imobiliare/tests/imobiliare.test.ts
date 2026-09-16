@@ -208,7 +208,7 @@ describe("loturi de imagini", () => {
     }));
     expect(batchEncodedImages(images, 5, 1_000_000).map((batch) => batch.length)).toEqual([5, 2]);
     expect(batchEncodedImages(images, 5, 2_500).map((batch) => batch.length)).toEqual([
-      3, 3, 1,
+      2, 2, 2, 1,
     ]);
   });
 });

@@ -65,7 +65,7 @@ export function readCategoryCatalog(settings: Record<string, unknown> | null): C
 const NAME_HINTS: Record<string, string[]> = {
   apartment: ["apartament"],
   studio: ["garsoniera", "apartament"],
-  house: ["casa", "vila"],
+  house: ["casa", "case", "vila", "vile"],
   land: ["teren"],
   commercial_space: ["spatiu comercial", "comercial"],
   office_space: ["birou", "spatiu birou"],
