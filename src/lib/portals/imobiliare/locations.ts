@@ -167,31 +167,42 @@ function rowFrom(values: string[], idx: Idx): ImobiliareLocationRow | null {
   };
 }
 
-/** Extrage tuplele `values(...)` dintr-un dump, ignorând parantezele din JSON-uri. */
+/** Extrage tuplele `values(...),(...)` dintr-un dump, ignorând parantezele din JSON-uri. */
 function sqlTuples(content: string): string[] {
   const tuples: string[] = [];
   const re = /values\s*\(/gi;
   let match: RegExpExecArray | null;
   while ((match = re.exec(content))) {
-    let depth = 1;
-    let quote = false;
     let index = match.index + match[0].length;
-    const start = index;
-    while (index < content.length && depth > 0) {
-      const char = content[index] as string;
-      if (quote) {
-        if (char === "\\") index += 1;
-        else if (char === "'") quote = false;
-      } else if (char === "'") quote = true;
-      else if (char === "(") depth += 1;
-      else if (char === ")") depth -= 1;
-      index += 1;
+    // Un INSERT poate conține mai multe tuple separate prin virgulă.
+    for (;;) {
+      let depth = 1;
+      let quote = false;
+      const start = index;
+      while (index < content.length && depth > 0) {
+        const char = content[index] as string;
+        if (quote) {
+          if (char === "\\") index += 1;
+          else if (char === "'") quote = false;
+        } else if (char === "'") quote = true;
+        else if (char === "(") depth += 1;
+        else if (char === ")") depth -= 1;
+        index += 1;
+      }
+      tuples.push(content.slice(start, index - 1));
+      let next = index;
+      while (next < content.length && /\s/.test(content[next] as string)) next += 1;
+      if (content[next] !== ",") break;
+      next += 1;
+      while (next < content.length && /\s/.test(content[next] as string)) next += 1;
+      if (content[next] !== "(") break;
+      index = next + 1;
     }
-    tuples.push(content.slice(start, index - 1));
     re.lastIndex = index;
   }
   return tuples;
 }
+
 
 /**
  * Acceptă atât CSV cu antet, cât și dump SQL (`INSERT INTO ... (cols) VALUES (...);`).
