@@ -94,7 +94,11 @@ function prepare(ctx: PortalContext): Ready {
 }
 
 function failFrom(
-  response: { status: number; classification: { code: string; message: string } | null },
+  response: {
+    status: number;
+    body?: unknown;
+    classification: { code: string; message: string } | null;
+  },
   operation: string,
 ): PortalFailShape {
   const code = (response.classification?.code ?? "PORTAL_ERROR") as PortalFailShape["code"];
@@ -103,6 +107,8 @@ function failFrom(
     code,
     message: response.classification?.message ?? `La Cheie a răspuns HTTP ${response.status}.`,
     detail: `${operation} http_${response.status}`,
+    httpStatus: response.status,
+    portalResponse: response.body ?? null,
   };
 }
 
