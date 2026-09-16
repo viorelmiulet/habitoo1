@@ -436,14 +436,19 @@ async function runStep(
     case "crm_context": {
       const ids = (step.input["propertyIds"] as string[] | undefined) ?? [];
       const found: Record<string, unknown>[] = [];
+      let transient: string | null = null;
       for (const propertyId of ids) {
         const read = await readTool(actor, tracer, "get_property", { propertyId });
         if (!read.ok) {
-          state = retryStep(state, step.id) as ManagerState;
+          if (read.retryable) transient = read.message;
           continue;
         }
         const row = (read.data ?? null) as Record<string, unknown> | null;
         if (row) found.push(row);
+      }
+      if (found.length === 0 && transient) {
+        // Eroare tranzitorie: pasul se reia identic, nu sărim la pasul următor.
+        return { state, stop: false, retry: true, retryMessage: transient };
       }
       if (found.length === 0) {
         state = failStep(
@@ -455,6 +460,7 @@ async function runStep(
         state = { ...state, summary: "Nu am găsit proprietăți pe care le pot folosi." };
         return { state, stop: true };
       }
+
       state = completeStep(
         state,
         step.id,
