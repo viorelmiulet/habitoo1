@@ -224,9 +224,10 @@ export async function laCheieRequest(
       const response = await fetch(url.toString(), {
         method: input.method,
         headers,
-        ...(input.body === undefined ? {} : { body: JSON.stringify(input.body) }),
+        ...(serializedBody === undefined ? {} : { body: serializedBody }),
         signal: controller.signal,
       });
+
       const body = await readBody(response);
       const baseClassification = classifyLaCheieStatus({
         status: response.status,
