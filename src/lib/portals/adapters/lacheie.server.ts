@@ -48,7 +48,9 @@ import {
   recordVersionOutcome,
   reserveNextVersion,
 } from "../lacheie/version.server";
-import { nextSourceVersion } from "../lacheie/version";
+import { laCheieOfferVersionFromBody, nextSourceVersion } from "../lacheie/version";
+import { isLaCheieAssociationConflict } from "../lacheie/http";
+
 import { laCheieAgencyBlockReason, readLaCheieAgencyState } from "../lacheie/agency";
 import { hasLaCheieCrmApiKey, laCheieCrmApiKey } from "../lacheie/credentials.server";
 
