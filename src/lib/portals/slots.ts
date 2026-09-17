@@ -146,3 +146,75 @@ export function humanizeSlotGuardError(
   if (keys.length === 0) return null;
   return reassignRefusalMessage({ agentName: null, portalNames: keys.map(portalName) });
 }
+
+/* ------------------- retragerea automată la reducerea locurilor ------------------- */
+
+/**
+ * Motivul retragerii când locurile de publicare au fost reduse sub consum.
+ * Aceste retrageri NU se retrimit de retrimiterea portofoliului La Cheie.
+ */
+export const SLOT_LIMIT_WITHDRAW_REASON = "slot_limit";
+
+export type SlotListing = {
+  propertyId: string;
+  agentId: string | null;
+  /** Momentul publicării reale, dacă există; altfel momentul selecției. */
+  publishedAt: string | null;
+  createdAt: string | null;
+};
+
+function listingTime(listing: SlotListing): number {
+  const raw = listing.publishedAt ?? listing.createdAt;
+  const parsed = raw ? Date.parse(raw) : Number.NaN;
+  return Number.isFinite(parsed) ? parsed : 0;
+}
+
+/** Cele mai recent publicate primele — ele se retrag primele. */
+export function sortListingsNewestFirst(listings: SlotListing[]): SlotListing[] {
+  return [...listings].sort((a, b) => {
+    const diff = listingTime(b) - listingTime(a);
+    return diff !== 0 ? diff : a.propertyId.localeCompare(b.propertyId);
+  });
+}
+
+/**
+ * Ce anunțuri trebuie retrase ca să încapă consumul în noile limite.
+ * Se retrag cele mai RECENT publicate, mai întâi pentru agentul depășit, apoi
+ * pentru totalul agenției, până când consumul se potrivește.
+ */
+export function planSlotWithdrawals(input: {
+  listings: SlotListing[];
+  /** `null` = nelimitat. */
+  agencyTotal: number | null;
+  /** Alocările per agent; cheia lipsă sau `null` = nelimitat. */
+  allocations: Map<string, number | null>;
+}): string[] {
+  const ordered = sortListingsNewestFirst(input.listings);
+  const withdraw: string[] = [];
+
+  // 1) Limita fiecărui agent: păstrează cele mai vechi, retrage surplusul recent.
+  const seenByAgent = new Map<string, number>();
+  for (const listing of ordered) {
+    const agentId = listing.agentId;
+    if (!agentId) continue;
+    if (!input.allocations.has(agentId)) continue;
+    const limit = input.allocations.get(agentId) ?? null;
+    if (limit === null) continue;
+    const count = (seenByAgent.get(agentId) ?? 0) + 1;
+    seenByAgent.set(agentId, count);
+    // Cele mai recente depășesc limita: primele `n - limit` din ordinea recentă.
+    const total = ordered.filter((row) => row.agentId === agentId).length;
+    if (count <= Math.max(0, total - limit)) withdraw.push(listing.propertyId);
+  }
+
+  // 2) Totalul agenției, calculat pe ce a rămas după pasul 1.
+  if (input.agencyTotal !== null) {
+    const remaining = ordered.filter((row) => !withdraw.includes(row.propertyId));
+    const excess = remaining.length - input.agencyTotal;
+    for (let index = 0; index < excess && index < remaining.length; index += 1) {
+      withdraw.push(remaining[index]!.propertyId);
+    }
+  }
+
+  return withdraw;
+}

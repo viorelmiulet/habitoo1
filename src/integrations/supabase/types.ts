@@ -4236,6 +4236,135 @@ export type Database = {
           },
         ]
       }
+      portal_slot_withdraw_items: {
+        Row: {
+          attempts: number
+          created_at: string
+          error: string | null
+          id: string
+          job_id: string
+          organization_id: string
+          portal_key: string
+          position: number
+          processed_at: string | null
+          property_id: string
+          status: string
+        }
+        Insert: {
+          attempts?: number
+          created_at?: string
+          error?: string | null
+          id?: string
+          job_id: string
+          organization_id: string
+          portal_key: string
+          position?: number
+          processed_at?: string | null
+          property_id: string
+          status?: string
+        }
+        Update: {
+          attempts?: number
+          created_at?: string
+          error?: string | null
+          id?: string
+          job_id?: string
+          organization_id?: string
+          portal_key?: string
+          position?: number
+          processed_at?: string | null
+          property_id?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "portal_slot_withdraw_items_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "portal_slot_withdraw_jobs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "portal_slot_withdraw_items_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "portal_slot_withdraw_items_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      portal_slot_withdraw_jobs: {
+        Row: {
+          cancel_requested: boolean
+          created_at: string
+          done: number
+          failed: number
+          finished_at: string | null
+          id: string
+          last_error: string | null
+          locked_until: string | null
+          next_attempt_at: string | null
+          organization_id: string
+          portal_key: string
+          reason: string
+          started_at: string | null
+          started_by: string | null
+          status: string
+          total: number
+        }
+        Insert: {
+          cancel_requested?: boolean
+          created_at?: string
+          done?: number
+          failed?: number
+          finished_at?: string | null
+          id?: string
+          last_error?: string | null
+          locked_until?: string | null
+          next_attempt_at?: string | null
+          organization_id: string
+          portal_key: string
+          reason?: string
+          started_at?: string | null
+          started_by?: string | null
+          status?: string
+          total?: number
+        }
+        Update: {
+          cancel_requested?: boolean
+          created_at?: string
+          done?: number
+          failed?: number
+          finished_at?: string | null
+          id?: string
+          last_error?: string | null
+          locked_until?: string | null
+          next_attempt_at?: string | null
+          organization_id?: string
+          portal_key?: string
+          reason?: string
+          started_at?: string | null
+          started_by?: string | null
+          status?: string
+          total?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "portal_slot_withdraw_jobs_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       portal_taxonomy_cache: {
         Row: {
           categories: Json
@@ -6111,6 +6240,33 @@ export type Database = {
           isSetofReturn: true
         }
       }
+      claim_portal_slot_withdraw_job: {
+        Args: { _job_id: string; _ttl_seconds: number }
+        Returns: {
+          cancel_requested: boolean
+          created_at: string
+          done: number
+          failed: number
+          finished_at: string | null
+          id: string
+          last_error: string | null
+          locked_until: string | null
+          next_attempt_at: string | null
+          organization_id: string
+          portal_key: string
+          reason: string
+          started_at: string | null
+          started_by: string | null
+          status: string
+          total: number
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "portal_slot_withdraw_jobs"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
       cron_nonce_claim: {
         Args: { _purpose: string; _token: string }
         Returns: boolean
@@ -6277,6 +6433,8 @@ export type Database = {
         }[]
       }
       plan_agent_limit: { Args: { _plan: string }; Returns: number }
+      portal_slot_withdraw_arm: { Args: never; Returns: undefined }
+      portal_slot_withdraw_tick: { Args: never; Returns: undefined }
       purge_expired_portal_messages: { Args: never; Returns: number }
       qa_purge_demo_organization: { Args: { _org: string }; Returns: string[] }
       qa_reset_demo_organization: { Args: { _org: string }; Returns: Json }
@@ -6299,6 +6457,10 @@ export type Database = {
           _owner_token: string
           _portal: string
         }
+        Returns: undefined
+      }
+      release_portal_slot_withdraw_job: {
+        Args: { _job_id: string }
         Returns: undefined
       }
       ro_normalize_name: { Args: { _v: string }; Returns: string }

@@ -863,6 +863,13 @@ export async function executeListingAction(input: {
    * NU consumă locuri noi: oferta era deja selectată, deci locul e deja ocupat.
    */
   skipSlotCheck?: boolean;
+  /**
+   * Motivul salvat la o retragere reușită. Implicit „user” (cerută de un om).
+   * Retragerile provocate de reducerea locurilor folosesc „slot_limit” și nu se
+   * retrimit niciodată automat.
+   */
+  withdrawReason?: string;
+
 }): Promise<ListingActionResult> {
   const { organizationId, actorId, portalId, propertyId, action } = input;
   const definition = getPortalDefinition(portalId);
@@ -1044,12 +1051,14 @@ export async function executeListingAction(input: {
   /**
    * Motivul retragerii: o retragere cerută de un om rămâne „user” și nu se
    * retrimite automat niciodată; o publicare/actualizare reușită îl șterge.
+   * Automatizările pot cere alt motiv (ex. reducerea locurilor de publicare).
    */
   const withdrawReasonPatch = !result.ok
     ? {}
     : action === "withdraw"
-      ? { withdraw_reason: "user" }
+      ? { withdraw_reason: input.withdrawReason ?? "user" }
       : { withdraw_reason: null };
+
   const patch: Record<string, unknown> = {
     organization_id: organizationId,
     portal: definition.id,
