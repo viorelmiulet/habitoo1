@@ -44,70 +44,16 @@ import {
   type LaCheieAgencyStatus,
 } from "@/lib/portals/lacheie/agency";
 
-type AuthContext = {
-  supabase: {
-    rpc: (fn: "is_superadmin") => PromiseLike<{ data: boolean | null; error: unknown }>;
-  };
-  userId: string;
-};
+type AuthContext = LaCheieAuthContext;
 
 async function loadAdmin() {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   return supabaseAdmin;
 }
 
-async function existingOrg(organizationId: string): Promise<string> {
-  const admin = await loadAdmin();
-  const { data: org } = await admin
-    .from("organizations")
-    .select("id")
-    .eq("id", organizationId)
-    .maybeSingle();
-  if (!org) throw new Error("Agenția nu a fost găsită.");
-  return org.id;
-}
-
-/**
- * Administrarea integrării (jurnal, versiuni, catalog, testare, dezactivare)
- * rămâne strict la Superadmin.
- */
+/** Administrarea integrării rămâne strict la Superadmin. */
 async function requireSuperadmin(context: AuthContext, organizationId: string): Promise<string> {
-  const { data: superadmin } = await context.supabase.rpc("is_superadmin");
-  if (superadmin !== true) {
-    throw new Error("Acces refuzat: integrarea La Cheie se administrează de Superadmin.");
-  }
-  return existingOrg(organizationId);
-}
-
-/**
- * Activarea (și citirea stării proprii) o poate declanșa Superadminul sau un
- * `agency_admin`. Pentru non-superadmini agenția vine EXCLUSIV din sesiune,
- * niciodată din datele trimise de client.
- */
-async function requireLaCheieActivator(
-  context: AuthContext,
-  requestedOrganizationId?: string | null,
-): Promise<string> {
-  const admin = await loadAdmin();
-  const { data: superadmin } = await context.supabase.rpc("is_superadmin");
-  if (superadmin === true) {
-    if (!requestedOrganizationId) throw new Error("Selectează agenția.");
-    return existingOrg(requestedOrganizationId);
-  }
-
-  const { data: role } = await admin
-    .from("user_roles")
-    .select("organization_id")
-    .eq("user_id", context.userId)
-    .eq("role", "agency_admin")
-    .not("organization_id", "is", null)
-    .maybeSingle();
-  if (!role?.organization_id) {
-    throw new Error(
-      "Acces refuzat: activarea La Cheie se solicită de administratorul agenției sau de Superadmin.",
-    );
-  }
-  return existingOrg(role.organization_id);
+  return requireLaCheieSuperadmin(context, organizationId);
 }
 
 
