@@ -653,7 +653,11 @@ describe("La Cheie — răspunsurile PUT/DELETE /agencies", () => {
     expect(calls).toEqual([
       {
         table: "portal_listings",
-        patch: { status: "withdrawn", updated_by: "actor-1" },
+        patch: {
+          status: "withdrawn",
+          withdraw_reason: "agency_deactivated",
+          updated_by: "actor-1",
+        },
         filters: [
           ["organization_id", ORG],
           ["portal", "lacheie"],
@@ -661,7 +665,11 @@ describe("La Cheie — răspunsurile PUT/DELETE /agencies", () => {
       },
       {
         table: "portal_publications",
-        patch: { status: "withdrawn", updated_by: "actor-1" },
+        patch: {
+          status: "withdrawn",
+          withdraw_reason: "agency_deactivated",
+          updated_by: "actor-1",
+        },
         filters: [
           ["organization_id", ORG],
           ["portal_key", "lacheie"],
