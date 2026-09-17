@@ -123,3 +123,26 @@ export function reassignRefusalMessage(input: {
   const agent = input.agentName?.trim() ? input.agentName.trim() : "agentul ales";
   return `Nu poți muta proprietatea către ${agent}: nu are locuri libere de publicare pe ${input.portalNames.join(", ")}. Eliberează locuri sau mărește alocarea înainte de reasignare.`;
 }
+
+/** Prefixul ridicat de plasa de siguranță din baza de date. */
+export const SLOT_DB_GUARD_PREFIX = "Agentul nu are locuri libere de publicare pe:";
+
+/**
+ * Traduce eroarea brută a bazei de date într-un mesaj citibil, cu numele
+ * portalurilor. Orice ecran care schimbă agentul responsabil o folosește, ca
+ * utilizatorul să nu vadă un mesaj tehnic de Postgres.
+ */
+export function humanizeSlotGuardError(
+  message: string,
+  portalName: (portalKey: string) => string,
+): string | null {
+  const index = message.indexOf(SLOT_DB_GUARD_PREFIX);
+  if (index === -1) return null;
+  const keys = message
+    .slice(index + SLOT_DB_GUARD_PREFIX.length)
+    .split(",")
+    .map((part) => part.trim())
+    .filter(Boolean);
+  if (keys.length === 0) return null;
+  return reassignRefusalMessage({ agentName: null, portalNames: keys.map(portalName) });
+}
