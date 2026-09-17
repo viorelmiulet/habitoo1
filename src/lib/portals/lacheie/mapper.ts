@@ -405,8 +405,8 @@ export function buildLaCheieOffer(
   }
 
 
-  const area = positiveInt(input.area);
-  const landArea = positiveInt(input.landArea);
+  const area = positiveNumber(input.area);
+  const landArea = positiveNumber(input.landArea);
   const bedrooms = nonNegativeInt(input.bedrooms);
   const bathrooms = nonNegativeInt(input.bathrooms);
   const yearBuilt = nonNegativeInt(input.yearBuilt);
