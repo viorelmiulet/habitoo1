@@ -22,6 +22,7 @@ import { PropertyPortalsCell, usePropertyPortals } from "@/components/app/Proper
 import { PropertyCard, type PropertyCardRow } from "@/components/app/PropertyCard";
 import { useServerFn } from "@tanstack/react-start";
 import { archiveProperty, unarchiveProperty } from "@/lib/property-archive.functions";
+import { reassignPropertyAgent } from "@/lib/property-agent.functions";
 import { PropertyThumb, usePropertyCovers } from "@/components/app/PropertyThumb";
 import { StatusBadge } from "@/components/app/StatusBadge";
 import { EmptyState } from "@/components/app/EmptyState";
@@ -334,19 +335,28 @@ function PropertiesPage() {
 
   const assignAgent = useMutation({
     mutationFn: async ({ ids, agentId }: { ids: string[]; agentId: string }) => {
-      const { error } = await supabase
-        .from("properties")
-        .update({ assigned_to: agentId } as never)
-        .in("id", ids);
-      if (error) throw error;
+      /**
+       * Reasignarea trece prin server: acolo se verifică locurile de publicare
+       * ale noului agent, iar refuzul vine ca mesaj clar, nu ca eroare tehnică.
+       */
+      const blocked: string[] = [];
+      for (const id of ids) {
+        const result = await reassignPropertyAgent({ data: { propertyId: id, agentId } });
+        if (!result.ok) blocked.push(result.message);
+      }
+      if (blocked.length > 0) throw new Error(blocked[0]);
     },
     onSuccess: () => {
       invalidateList();
       setSelected([]);
       toast.success("Agent asignat.");
     },
-    onError: (e: Error) => toastError(e),
+    onError: (e: Error) => {
+      invalidateList();
+      toastError(e);
+    },
   });
+
 
   /**
    * Arhivarea trece prin server: acolo se verifică drepturile și condiția de
