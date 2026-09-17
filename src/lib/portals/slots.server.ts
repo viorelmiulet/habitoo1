@@ -19,6 +19,67 @@ type Admin = SupabaseClient<any, any, any>;
 const LIMIT_TABLE = "portal_slot_limits";
 const ALLOCATION_TABLE = "portal_slot_allocations";
 
+export const SLOT_ADMIN_ONLY =
+  "Acces refuzat: locurile de publicare se administrează de administratorul agenției sau de Superadmin.";
+
+/**
+ * Garda de acces pentru administrarea locurilor. REFOLOSEȘTE garda existentă de
+ * administrator de agenție (`requireLaCheieActivator`): superadminul lucrează pe
+ * agenția primită explicit, iar un `agency_admin` DOAR pe agenția din sesiune,
+ * cu rolul verificat pentru acea agenție. Un agent simplu este refuzat, inclusiv
+ * când trimite `organizationId`-ul altei agenții.
+ */
+export async function requireSlotAdminOrg(
+  context: Parameters<
+    typeof import("@/lib/portals/lacheie/access.server").requireLaCheieActivator
+  >[0],
+  requestedOrganizationId?: string | null,
+  deps?: Parameters<
+    typeof import("@/lib/portals/lacheie/access.server").requireLaCheieActivator
+  >[2],
+): Promise<string> {
+  const { requireLaCheieActivator, LACHEIE_ACCESS_ACTIVATOR_ONLY } = await import(
+    "@/lib/portals/lacheie/access.server"
+  );
+  try {
+    return await requireLaCheieActivator(context, requestedOrganizationId ?? null, deps);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "";
+    if (message === LACHEIE_ACCESS_ACTIVATOR_ONLY) throw new Error(SLOT_ADMIN_ONLY);
+    throw error;
+  }
+}
+
+/**
+ * Cifrele PROPRII ale utilizatorului pe un portal: alocarea lui, cât a consumat
+ * și cât i-a rămas. Nu întoarce alte persoane și nu dă drept de modificare.
+ * Totalul agenției nu este citit direct de agent (tabelul rămâne al
+ * administratorilor); serverul îi spune doar dacă agenția mai are locuri.
+ */
+export async function loadMyPortalSlot(
+  admin: Admin,
+  input: { organizationId: string; userId: string; portalKey: string },
+): Promise<{
+  portalKey: string;
+  allocated: number | null;
+  used: number;
+  remaining: number | null;
+  agencyExhausted: boolean;
+}> {
+  const { allocationFor, remainingSlots } = await import("./slots");
+  const state = await loadPortalSlotState(admin, input.organizationId, input.portalKey);
+  const allocated = allocationFor(state, input.userId);
+  const used = state.usedByAgent.get(input.userId) ?? 0;
+  return {
+    portalKey: input.portalKey,
+    allocated,
+    used,
+    remaining: remainingSlots(allocated, used),
+    agencyExhausted: state.agencyTotal !== null && state.usedByAgency >= state.agencyTotal,
+  };
+}
+
+
 /** Starea locurilor pe un portal, citită din datele reale ale agenției. */
 export async function loadPortalSlotState(
   admin: Admin,
