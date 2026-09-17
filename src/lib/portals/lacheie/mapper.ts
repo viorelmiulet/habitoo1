@@ -19,10 +19,18 @@
 import type { LaCheieCategory } from "./catalog";
 
 export const LACHEIE_MAX_IMAGES = 30;
+/** Fiecare URL de imagine: maximum 500 de caractere (documentație, secțiunea 3). */
+export const LACHEIE_MAX_IMAGE_URL_LENGTH = 500;
 export const LACHEIE_MAX_BODY_BYTES = 1024 * 1024;
 export const LACHEIE_MIN_TITLE = 8;
 export const LACHEIE_MIN_DESCRIPTION = 40;
 export const LACHEIE_EXTERNAL_ID_MAX = 64;
+/** `agent.full_name` maximum 255 caractere; `agent.phone` 7–15 cifre, ≤30 caractere. */
+export const LACHEIE_AGENT_NAME_MAX = 255;
+export const LACHEIE_AGENT_PHONE_MAX = 30;
+export const LACHEIE_AGENT_PHONE_MIN_DIGITS = 7;
+export const LACHEIE_AGENT_PHONE_MAX_DIGITS = 15;
+
 
 export type LaCheieCurrency = "EUR" | "RON" | "USD";
 export type LaCheieTransaction = "sale" | "rent";
