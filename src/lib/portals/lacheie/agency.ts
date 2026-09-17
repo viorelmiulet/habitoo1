@@ -291,3 +291,235 @@ export function parseLaCheieAgencyBody(body: unknown): LaCheieAgencyResponse {
     name: text(scope["name"]),
   };
 }
+
+/* ------------------- operații idempotente pe agenție ---------------------- */
+
+export type LaCheieAgencyOperation = "register" | "reactivate" | "deactivate";
+
+/**
+ * Operația de agenție pornită și neconfirmată încă de portal.
+ * Un retry al ACELEIAȘI operații refolosește EXACT aceeași versiune și același
+ * corp; o versiune nouă se alocă doar după un răspuns definitiv.
+ */
+export type LaCheieAgencyPending = {
+  operation: LaCheieAgencyOperation;
+  version: string;
+  /** SHA-256 al corpului JSON exact trimis (plus operația). */
+  bodyHash: string;
+  startedAt: string | null;
+};
+
+function operationOf(value: unknown): LaCheieAgencyOperation | null {
+  const raw = text(value);
+  return raw === "register" || raw === "reactivate" || raw === "deactivate" ? raw : null;
+}
+
+export function readLaCheieAgencyPending(
+  settings: Record<string, unknown> | null,
+): LaCheieAgencyPending | null {
+  const raw = (settings ?? {})[LACHEIE_AGENCY_PENDING_KEY];
+  if (!raw || typeof raw !== "object") return null;
+  const record = raw as Record<string, unknown>;
+  const operation = operationOf(record["operation"]);
+  const version = normalizeSourceVersion(record["version"]);
+  const bodyHash = text(record["body_hash"] ?? record["bodyHash"]);
+  if (!operation || !version || !bodyHash) return null;
+  return {
+    operation,
+    version,
+    bodyHash,
+    startedAt: text(record["started_at"] ?? record["startedAt"]),
+  };
+}
+
+const HEX = "0123456789abcdef";
+
+/** SHA-256 hex al corpului exact (operație + JSON), fără dependențe de Node. */
+export async function laCheieAgencyBodyHash(
+  operation: LaCheieAgencyOperation,
+  body: unknown,
+): Promise<string> {
+  const payload = JSON.stringify({ operation, body: body ?? null });
+  const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(payload));
+  let out = "";
+  for (const byte of new Uint8Array(digest)) {
+    out += HEX[byte >> 4]! + HEX[byte & 15]!;
+  }
+  return out;
+}
+
+/**
+ * Reactivare = există o înregistrare ACCEPTATĂ anterior de portal.
+ * O primă înregistrare eșuată rămâne o înregistrare: versiunea rezervată local
+ * nu transformă următoarea încercare în reactivare.
+ */
+export function isLaCheieAgencyReactivation(state: LaCheieAgencyState): boolean {
+  return Boolean(state.acceptedVersion);
+}
+
+export type LaCheieAgencyPlan = {
+  operation: LaCheieAgencyOperation;
+  version: string;
+  /** `true` = retry identic al operației în curs (aceeași versiune, același corp). */
+  reused: boolean;
+};
+
+/** Decide versiunea folosită: retry identic → aceeași versiune; altfel una nouă. */
+export function planLaCheieAgencyOperation(input: {
+  state: LaCheieAgencyState;
+  pending: LaCheieAgencyPending | null;
+  operation: LaCheieAgencyOperation;
+  bodyHash: string;
+}): LaCheieAgencyPlan {
+  const { pending } = input;
+  if (pending && pending.operation === input.operation && pending.bodyHash === input.bodyHash) {
+    return { operation: input.operation, version: pending.version, reused: true };
+  }
+  return {
+    operation: input.operation,
+    version: nextLaCheieAgencyVersion(input.state),
+    reused: false,
+  };
+}
+
+export function laCheieAgencyPendingPatch(
+  plan: LaCheieAgencyPlan,
+  bodyHash: string,
+  startedAt: string,
+): Record<string, unknown> {
+  return {
+    [LACHEIE_AGENCY_PENDING_KEY]: {
+      operation: plan.operation,
+      version: plan.version,
+      body_hash: bodyHash,
+      started_at: startedAt,
+    },
+  };
+}
+
+export function laCheieAgencyPendingCleared(): Record<string, unknown> {
+  return { [LACHEIE_AGENCY_PENDING_KEY]: null };
+}
+
+/* ------------------ interpretarea răspunsurilor /agencies ----------------- */
+
+export const LACHEIE_AGENCY_SUSPENDED_MESSAGE =
+  "Agenția este suspendată administrativ de La Cheie; reactivarea nu este posibilă din CRM. Contactați La Cheie.";
+export const LACHEIE_AGENCY_ASSOCIATION_CONFLICT_MESSAGE =
+  "Emailul administratorului este folosit la La Cheie de un cont personal/de agent sau agenția are deja o conexiune individuală. Contactați La Cheie.";
+
+export type LaCheieAgencyOutcome = {
+  status: LaCheieAgencyStatus;
+  message: string | null;
+  acceptedVersion: string | null;
+  /** Răspuns definitiv (2xx, 400, 403, 409) → se poate aloca o versiune nouă. */
+  definitive: boolean;
+  /** Timeout, rețea, 429 sau 5xx → operația rămâne pending, cu aceeași versiune. */
+  keepPending: boolean;
+  /** 409 pe versiune: se citește versiunea acceptată prin GET, apoi retry mai mare. */
+  versionConflict: boolean;
+};
+
+function mentionsVersion(body: unknown): boolean {
+  const serialized = (() => {
+    try {
+      return typeof body === "string" ? body : JSON.stringify(body ?? "");
+    } catch {
+      return "";
+    }
+  })().toLowerCase();
+  return serialized.includes("version") || serialized.includes("versiun");
+}
+
+/** Interpretează `PUT /agencies/{external_id}` conform contractului v1. */
+export function classifyLaCheieAgencyPut(input: {
+  httpStatus: number;
+  body: unknown;
+  conflictAcceptedVersion?: string | null;
+  previousStatus: LaCheieAgencyStatus;
+  fallbackMessage?: string | null;
+}): LaCheieAgencyOutcome {
+  const { httpStatus, body } = input;
+  const parsed = parseLaCheieAgencyBody(body);
+
+  if (httpStatus >= 200 && httpStatus < 300) {
+    return {
+      // 201 asociere nouă / 200 reactivare sau retry identic: statusul vine din rădăcină.
+      status: parsed.status === "not_registered" ? "active" : parsed.status,
+      message: null,
+      acceptedVersion: parsed.acceptedVersion,
+      definitive: true,
+      keepPending: false,
+      versionConflict: false,
+    };
+  }
+
+  if (httpStatus === 403) {
+    return {
+      status: "suspended",
+      message: LACHEIE_AGENCY_SUSPENDED_MESSAGE,
+      acceptedVersion: parsed.acceptedVersion,
+      definitive: true,
+      keepPending: false,
+      versionConflict: false,
+    };
+  }
+
+  if (httpStatus === 409) {
+    const accepted = normalizeSourceVersion(input.conflictAcceptedVersion) ?? parsed.acceptedVersion;
+    const isVersionConflict = Boolean(accepted) || mentionsVersion(body);
+    return {
+      status: isVersionConflict ? input.previousStatus : "error",
+      message: isVersionConflict
+        ? "Versiunea agenției nu este acceptată de La Cheie. Se citește versiunea acceptată și se reia cu o versiune mai mare."
+        : LACHEIE_AGENCY_ASSOCIATION_CONFLICT_MESSAGE,
+      acceptedVersion: accepted,
+      definitive: true,
+      keepPending: false,
+      versionConflict: isVersionConflict,
+    };
+  }
+
+  const transient = httpStatus === 0 || httpStatus === 408 || httpStatus === 429 || httpStatus >= 500;
+  return {
+    status: transient ? input.previousStatus : "error",
+    message:
+      input.fallbackMessage ??
+      (httpStatus === 0
+        ? "La Cheie nu a putut fi contactat. Operația rămâne în curs și se reia identic."
+        : `La Cheie a răspuns HTTP ${httpStatus}.`),
+    acceptedVersion: parsed.acceptedVersion,
+    definitive: !transient,
+    keepPending: transient,
+    versionConflict: false,
+  };
+}
+
+/**
+ * `DELETE /agencies/{external_id}`: statusul se citește din răspuns.
+ * O suspendare administrativă rămâne „suspended”, nu devine „inactive”.
+ * `404` = deja inactivă.
+ */
+export function laCheieAgencyStatusAfterDelete(input: {
+  httpStatus: number;
+  body: unknown;
+  previousStatus: LaCheieAgencyStatus;
+}): { ok: boolean; status: LaCheieAgencyStatus; keepPending: boolean } {
+  const { httpStatus } = input;
+  if (httpStatus === 404) {
+    return {
+      ok: true,
+      status: input.previousStatus === "suspended" ? "suspended" : "inactive",
+      keepPending: false,
+    };
+  }
+  if (httpStatus >= 200 && httpStatus < 300) {
+    const reported = parseLaCheieAgencyBody(input.body).status;
+    if (reported === "suspended" || input.previousStatus === "suspended") {
+      return { ok: true, status: "suspended", keepPending: false };
+    }
+    return { ok: true, status: "inactive", keepPending: false };
+  }
+  const transient = httpStatus === 0 || httpStatus === 408 || httpStatus === 429 || httpStatus >= 500;
+  return { ok: false, status: input.previousStatus, keepPending: transient };
+}
