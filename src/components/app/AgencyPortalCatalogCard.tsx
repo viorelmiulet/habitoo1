@@ -27,6 +27,8 @@ export function AgencyPortalCatalogCard() {
    * (Setări → Agenție), nu o activare aprobată de echipa Habitoo.
    */
   const collaborating = currentUser?.organization?.collaboration_enabled === true;
+  /** Agenția din context: fără ea (Superadmin fără agenție) nu putem activa nimic. */
+  const organizationId = currentUser?.organization?.id ?? null;
 
   const catalog = useQuery({
     queryKey: ["agency-portal-catalog"],
