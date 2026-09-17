@@ -167,6 +167,9 @@ export async function startLaCheieResendJob(
     })),
   );
   if (itemsError) throw new Error(itemsError.message);
+  // Worker-ul se armează abia acum și se dezarmează singur când coada se golește:
+  // nimic nu rulează periodic fără o retrimitere cerută de un om.
+  await admin.rpc("lacheie_resend_arm", {});
   return { jobId: job.id as string, total: propertyIds.length };
 }
 
