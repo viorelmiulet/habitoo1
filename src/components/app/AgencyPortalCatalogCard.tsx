@@ -27,6 +27,8 @@ export function AgencyPortalCatalogCard() {
    * (Setări → Agenție), nu o activare aprobată de echipa Habitoo.
    */
   const collaborating = currentUser?.organization?.collaboration_enabled === true;
+  /** Agenția din context: fără ea (Superadmin fără agenție) nu putem activa nimic. */
+  const organizationId = currentUser?.organization?.id ?? null;
 
   const catalog = useQuery({
     queryKey: ["agency-portal-catalog"],
@@ -144,8 +146,11 @@ export function AgencyPortalCatalogCard() {
                 <div className="mt-auto pt-1">
                   {item.id === LACHEIE_PORTAL_KEY ? (
                     // La Cheie aprobă automat cererile valide: activare directă,
-                    // fără coada de aprobare a Superadminului.
-                    <LaCheieActivationPanel />
+                    // fără coada de aprobare a Superadminului. Fără o agenție în
+                    // context (ex. Superadmin fără agenție selectată) nu afișăm panoul.
+                    organizationId ? (
+                      <LaCheieActivationPanel organizationId={organizationId} />
+                    ) : null
                   ) : item.activated ? (
                     <span className="text-xs text-muted-foreground">Disponibil în publicare</span>
                   ) : (

@@ -26,18 +26,18 @@ const STATUS_TONE = {
   not_registered: "neutral",
 } as const;
 
-export function LaCheieActivationPanel() {
+export function LaCheieActivationPanel({ organizationId }: { organizationId: string }) {
   const queryClient = useQueryClient();
   const loadStatus = useServerFn(getLaCheieAgencyStatusForAgency);
   const activate = useServerFn(activateLaCheieAgency);
 
   const status = useQuery({
-    queryKey: ["lacheie-agency-self"],
-    queryFn: () => loadStatus({ data: {} }),
+    queryKey: ["lacheie-agency-self", organizationId],
+    queryFn: () => loadStatus({ data: { organizationId } }),
   });
 
   const request = useMutation({
-    mutationFn: () => activate({ data: {} }),
+    mutationFn: () => activate({ data: { organizationId } }),
     onSuccess: (result) => {
       toast.success(
         result.reactivated

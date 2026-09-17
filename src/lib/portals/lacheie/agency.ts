@@ -246,9 +246,36 @@ export function nextLaCheieAgencyVersion(state: LaCheieAgencyState): string {
   return nextSourceVersion({ current: state.version, accepted: state.acceptedVersion });
 }
 
-/** Suspendarea administrativă NU poate fi ocolită din CRM. */
+/**
+ * Suspendarea administrativă NU poate fi ocolită din CRM, iar o agenție deja
+ * activă nu se „reactivează” din greșeală: activarea are sens doar din
+ * `not_registered`, `inactive` sau `error`.
+ */
+export const LACHEIE_AGENCY_ACTIVATABLE_STATUSES = [
+  "not_registered",
+  "inactive",
+  "error",
+] as const satisfies readonly LaCheieAgencyStatus[];
+
 export function canActivateLaCheieAgency(status: LaCheieAgencyStatus): boolean {
-  return status !== "suspended";
+  return (LACHEIE_AGENCY_ACTIVATABLE_STATUSES as readonly LaCheieAgencyStatus[]).includes(status);
+}
+
+export const LACHEIE_AGENCY_ALREADY_ACTIVE_MESSAGE = "Agenția este deja activă la La Cheie.";
+
+/**
+ * Motivul refuzului înainte de orice apel HTTP. O operație pending (reluare
+ * după timeout/429/5xx) rămâne permisă, ca reluarea idempotentă să funcționeze.
+ */
+export function laCheieActivationBlockReason(input: {
+  status: LaCheieAgencyStatus;
+  hasPending: boolean;
+}): string | null {
+  if (input.status === "suspended") return LACHEIE_AGENCY_SUSPENDED_MESSAGE;
+  if (input.status === "active" && !input.hasPending) {
+    return LACHEIE_AGENCY_ALREADY_ACTIVE_MESSAGE;
+  }
+  return null;
 }
 
 export function laCheieAgencyBlockReason(state: LaCheieAgencyState): string | null {
