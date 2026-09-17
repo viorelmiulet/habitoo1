@@ -469,9 +469,10 @@ export const getLaCheieState = createServerFn({ method: "POST" })
       : (row?.last_sync_error ?? null);
 
     const { readLaCheieCatalog } = await import("@/lib/portals/lacheie/catalog.server");
-    const [catalog, agency] = await Promise.all([
+    const [catalog, agency, activationRequest] = await Promise.all([
       readLaCheieCatalog(admin, { organizationId, environment: settings.environment }),
       agencyView(organizationId, (context as unknown as AuthContext).userId),
+      lastActivationRequest(organizationId),
     ]);
 
     const [{ data: logs }, { data: versions }] = await Promise.all([
@@ -505,6 +506,7 @@ export const getLaCheieState = createServerFn({ method: "POST" })
         lastError,
       }),
       agency,
+      activationRequest,
       catalog: {
         fetchedAt: catalog?.fetchedAt ?? settings.catalogFetchedAt,
         optionGroups: catalog ? Object.keys(catalog.options).length : 0,
