@@ -842,7 +842,10 @@ export type ListingActionResult =
       message: string;
       /** Retry-After propagat mai departe (retrimiterea portofoliului îl folosește). */
       retryAfterMs?: number | null;
+      /** Statusul HTTP real întors de portal, când există (404 = ofertă necunoscută). */
+      httpStatus?: number | null;
     };
+
 
 /**
  * Nucleul unei operațiuni pe o ofertă. Refolosit de acțiunea individuală și de
@@ -1132,8 +1135,105 @@ export async function executeListingAction(input: {
         code: result.code,
         message: result.message,
         retryAfterMs: result.retryAfterMs ?? null,
+        httpStatus: result.httpStatus ?? null,
       };
 }
+
+/**
+ * Retragerea reală a unei oferte de pe un portal, folosită de TOATE căile de
+ * deselectare (lista de proprietăți, formularul proprietății, arhivarea).
+ *
+ * Regula: dacă portalul suportă trimiteri (push) ȘI există o listare cu
+ * `external_id`, se apelează efectiv portalul, indiferent de statusul local
+ * („pending", „error" etc. nu mai sunt motive să sărim apelul). O retragere
+ * sărită NU este raportată niciodată ca succes de retragere.
+ */
+export async function performPortalWithdraw(input: {
+  organizationId: string;
+  actorId: string | null;
+  portalId: string;
+  propertyId: string;
+  /** Listarea deja citită, dacă apelantul o are (evită un query în plus). */
+  externalId?: string | null;
+}): Promise<{
+  ok: boolean;
+  /** Portalul a fost apelat efectiv. */
+  attempted: boolean;
+  /** Portalul nu cunoștea oferta (404): nu era nimic de retras. */
+  alreadyWithdrawn: boolean;
+  message: string;
+}> {
+  const definition = getPortalDefinition(input.portalId);
+  if (!definition) throw new Error("Portal necunoscut.");
+  const name = definition.display_name;
+  const pushSupported = definition.capabilities.includes("publish_listing");
+
+  if (!pushSupported) {
+    return {
+      ok: true,
+      attempted: false,
+      alreadyWithdrawn: false,
+      message: `${name}: oferta nu mai apare în feed și portalul o arhivează.`,
+    };
+  }
+
+  let externalId = input.externalId ?? null;
+  if (externalId === undefined || input.externalId === undefined) {
+    const admin = await loadAdmin();
+    const { data: listing } = await admin
+      .from("portal_listings")
+      .select("external_id")
+      .eq("organization_id", input.organizationId)
+      .eq("portal", definition.id)
+      .eq("property_id", input.propertyId)
+      .maybeSingle();
+    externalId = listing?.external_id ?? null;
+  }
+
+  if (!externalId) {
+    return {
+      ok: true,
+      attempted: false,
+      alreadyWithdrawn: true,
+      message: `${name}: oferta nu a fost niciodată trimisă, deci nu era nimic de retras.`,
+    };
+  }
+
+  const res = await executeListingAction({
+    organizationId: input.organizationId,
+    actorId: input.actorId,
+    portalId: definition.id,
+    propertyId: input.propertyId,
+    action: "withdraw",
+  });
+
+  if (res.ok) {
+    return {
+      ok: true,
+      attempted: true,
+      alreadyWithdrawn: false,
+      message: `${name}: oferta a fost retrasă.`,
+    };
+  }
+
+  // 404 = portalul nu cunoaște oferta: o considerăm deja retrasă.
+  if (res.httpStatus === 404 || res.code === "NOT_FOUND") {
+    return {
+      ok: true,
+      attempted: true,
+      alreadyWithdrawn: true,
+      message: `${name}: oferta nu mai există la portal, deci era deja retrasă.`,
+    };
+  }
+
+  return {
+    ok: false,
+    attempted: true,
+    alreadyWithdrawn: false,
+    message: res.message.startsWith(name) ? res.message : `${name}: ${res.message}`,
+  };
+}
+
 
 export const runPortalListingAction = createServerFn({ method: "POST" })
   .middleware([requireActiveOrgAuth])
