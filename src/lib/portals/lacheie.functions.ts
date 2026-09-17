@@ -328,7 +328,7 @@ export const getLaCheieState = createServerFn({ method: "POST" })
     const { readLaCheieCatalog } = await import("@/lib/portals/lacheie/catalog.server");
     const [catalog, agency] = await Promise.all([
       readLaCheieCatalog(admin, { organizationId, environment: settings.environment }),
-      agencyView(organizationId),
+      agencyView(organizationId, (context as unknown as AuthContext).userId),
     ]);
 
     const [{ data: logs }, { data: versions }] = await Promise.all([
