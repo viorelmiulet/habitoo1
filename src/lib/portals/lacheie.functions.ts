@@ -636,16 +636,36 @@ export const deactivateLaCheieAgency = createServerFn({ method: "POST" })
     const organizationId = await requireSuperadminOrg(auth, data.organizationId);
     const admin = await loadAdmin();
     const row = await connectionRow(organizationId);
-    const state = readLaCheieAgencyState((row?.settings ?? {}) as Record<string, unknown>);
+    const settings = (row?.settings ?? {}) as Record<string, unknown>;
+    const state = readLaCheieAgencyState(settings);
+    const pending = readLaCheieAgencyPending(settings);
     if (!state.externalId) throw new Error("Agenția nu este înregistrată la La Cheie.");
 
-    const version = nextLaCheieAgencyVersion(state);
+    const bodyHash = await laCheieAgencyBodyHash("deactivate", null);
+    const plan = planLaCheieAgencyOperation({
+      state,
+      pending,
+      operation: "deactivate",
+      bodyHash,
+    });
+    const version = plan.version;
+    await mergeSettings(
+      organizationId,
+      laCheieAgencyPendingPatch(plan, bodyHash, new Date().toISOString()),
+      auth.userId,
+    );
+
     const { deleteLaCheieAgency: remove } = await import("@/lib/portals/lacheie/agency.server");
     const call = await remove(await crmConfig(organizationId, state.externalId), {
       externalId: state.externalId,
       version,
     });
-    const ok = call.response.ok || call.response.status === 404;
+    const result = laCheieAgencyStatusAfterDelete({
+      httpStatus: call.response.status,
+      body: call.response.body,
+      previousStatus: state.status,
+    });
+    const ok = result.ok;
     const message = ok
       ? null
       : (call.response.classification?.message ??
@@ -654,10 +674,13 @@ export const deactivateLaCheieAgency = createServerFn({ method: "POST" })
     await mergeSettings(
       organizationId,
       {
-        lacheie_agency_status: ok ? "inactive" : state.status,
+        lacheie_agency_status: result.status,
         lacheie_agency_version: version,
         lacheie_agency_synced_at: new Date().toISOString(),
         lacheie_agency_error: message,
+        ...(result.keepPending
+          ? laCheieAgencyPendingPatch(plan, bodyHash, new Date().toISOString())
+          : laCheieAgencyPendingCleared()),
       },
       auth.userId,
     );
@@ -666,6 +689,19 @@ export const deactivateLaCheieAgency = createServerFn({ method: "POST" })
         .from("portal_connections")
         .update({ status: "disabled", activated: false, updated_by: auth.userId })
         .eq("id", row.id);
+      // Starea locală: ofertele acestei conexiuni sunt retrase, fără apeluri extra.
+      await Promise.all([
+        admin
+          .from("portal_listings")
+          .update({ status: "withdrawn", updated_by: auth.userId })
+          .eq("organization_id", organizationId)
+          .eq("portal", LACHEIE_PORTAL_KEY),
+        admin
+          .from("portal_publications")
+          .update({ status: "withdrawn", updated_by: auth.userId })
+          .eq("organization_id", organizationId)
+          .eq("portal_key", LACHEIE_PORTAL_KEY),
+      ]);
     }
     await logLaCheie({
       organizationId,
@@ -682,6 +718,8 @@ export const deactivateLaCheieAgency = createServerFn({ method: "POST" })
       requestId: call.response.requestId,
       portalResponse: call.response.body,
     });
+
+
 
     if (!ok) throw new Error(message ?? "Dezactivarea conexiunii La Cheie a eșuat.");
     return { status: "inactive" as const, version };
