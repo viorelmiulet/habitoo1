@@ -144,8 +144,11 @@ export function AgencyPortalCatalogCard() {
                 <div className="mt-auto pt-1">
                   {item.id === LACHEIE_PORTAL_KEY ? (
                     // La Cheie aprobă automat cererile valide: activare directă,
-                    // fără coada de aprobare a Superadminului.
-                    <LaCheieActivationPanel />
+                    // fără coada de aprobare a Superadminului. Fără o agenție în
+                    // context (ex. Superadmin fără agenție selectată) nu afișăm panoul.
+                    organizationId ? (
+                      <LaCheieActivationPanel organizationId={organizationId} />
+                    ) : null
                   ) : item.activated ? (
                     <span className="text-xs text-muted-foreground">Disponibil în publicare</span>
                   ) : (
