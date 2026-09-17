@@ -245,7 +245,7 @@ async function sendOffer(input: {
   // `PUT /properties/{external_id}` creează SAU actualizează oferta (secțiunea 2),
   // deci nu există un pas POST separat. `external_id` rămâne exclusiv în cale:
   // corpul îl respinge explicit („external_id: Unknown field.”).
-  const body = (() => {
+  const offerBody = (() => {
     const { external_id: _omit, ...rest } = offer as Record<string, unknown> & {
       external_id: string;
     };
