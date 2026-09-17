@@ -95,7 +95,7 @@ describe("La Cheie — identificatorul și datele agenției", () => {
   it("payload-ul cere date reale: nimic nu este inventat", () => {
     const missing = buildLaCheieAgencyPayload({
       name: "Agenția Exemplu",
-      email: null,
+      adminEmail: null,
       phone: null,
       address: null,
     });
@@ -104,7 +104,7 @@ describe("La Cheie — identificatorul și datele agenției", () => {
 
     const built = buildLaCheieAgencyPayload({
       name: PROFILE.name,
-      email: PROFILE.email,
+      adminEmail: PROFILE.email,
       phone: PROFILE.phone,
       address: PROFILE.address,
     });
@@ -115,13 +115,44 @@ describe("La Cheie — identificatorul și datele agenției", () => {
   it("emailul invalid este raportat, nu corectat", () => {
     const result = buildLaCheieAgencyPayload({
       name: "A",
-      email: "fara-arond",
-      phone: "0722",
+      adminEmail: "fara-arond",
+      phone: "0722000111",
       address: "Str. 1",
     });
     expect(result.ok).toBe(false);
     if (!result.ok) expect(result.missing).toEqual(["email"]);
   });
+
+  it("respectă limitele de lungime și regulile de telefon ale portalului", () => {
+    const tooLong = buildLaCheieAgencyPayload({
+      name: "x".repeat(256),
+      adminEmail: `${"a".repeat(250)}@exemplu.ro`,
+      phone: "0722",
+      address: "y".repeat(256),
+    });
+    expect(tooLong.ok).toBe(false);
+    if (!tooLong.ok) {
+      expect(tooLong.missing).toEqual(["name", "email", "phone", "address"]);
+      expect(tooLong.issues.join(" ")).toMatch(/255|254|7–15/);
+    }
+    expect(isValidLaCheieAgencyPhone("+40 722 000 111")).toBe(true);
+    expect(isValidLaCheieAgencyPhone("0722")).toBe(false);
+    expect(isValidLaCheieAgencyPhone("0".repeat(31))).toBe(false);
+    expect(isValidLaCheieAgencyPhone("0722 abc 111")).toBe(false);
+  });
+
+  it("adresa lipsă NU mai este înlocuită cu orașul", () => {
+    const result = buildLaCheieAgencyPayload({
+      name: PROFILE.name,
+      adminEmail: PROFILE.email,
+      phone: PROFILE.phone,
+      address: null,
+    });
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.missing).toEqual(["address"]);
+    expect(LACHEIE_AGENCY_FIELD_LABEL["address"]).toBe("Adresa agenției");
+  });
+
 
   it("setările de agenție supraviețuiesc normalizării, cele de TEST nu", () => {
     const normalized = normalizeLaCheiePortalSettings({
