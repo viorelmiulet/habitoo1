@@ -8,7 +8,14 @@ import {
   remainingSlots,
   slotRefusalMessage,
 } from "@/lib/portals/slots";
-import { ensurePortalSlotAvailable, ensureReassignSlots } from "@/lib/portals/slots.server";
+import { humanizeSlotGuardError } from "@/lib/portals/slots";
+import {
+  ensurePortalSlotAvailable,
+  ensureReassignSlots,
+  loadMyPortalSlot,
+  requireSlotAdminOrg,
+  SLOT_ADMIN_ONLY,
+} from "@/lib/portals/slots.server";
 
 /* ------------------------------- fake Supabase ------------------------------ */
 
@@ -254,5 +261,105 @@ describe("locuri de publicare — verificarea din fluxul de publicare", () => {
       portalName: () => "La Cheie",
     });
     expect(result.ok).toBe(true);
+  });
+});
+
+/* ------------------------- acces la administrare -------------------------- */
+
+describe("locuri de publicare — acces la administrare", () => {
+  const ORG_B = "org-2";
+
+  function context(userId: string, superadmin: boolean) {
+    return {
+      userId,
+      supabase: { rpc: async () => ({ data: superadmin, error: null }) },
+    } as never;
+  }
+
+  function accessAdmin() {
+    return fakeAdmin({
+      organizations: [{ id: ORG }, { id: ORG_B }],
+      profiles: [
+        { id: "admin-1", organization_id: ORG },
+        { id: "agent-1", organization_id: ORG },
+        { id: "super-1", organization_id: null },
+      ],
+      user_roles: [{ user_id: "admin-1", organization_id: ORG, role: "agency_admin" }],
+    }).admin;
+  }
+
+  it("agentul este refuzat, inclusiv cu organizația altcuiva", async () => {
+    const admin = accessAdmin();
+    await expect(
+      requireSlotAdminOrg(context("agent-1", false), null, { admin }),
+    ).rejects.toThrow(SLOT_ADMIN_ONLY);
+    await expect(
+      requireSlotAdminOrg(context("agent-1", false), ORG_B, { admin }),
+    ).rejects.toThrow(SLOT_ADMIN_ONLY);
+    await expect(
+      requireSlotAdminOrg(context("agent-1", false), ORG, { admin }),
+    ).rejects.toThrow(SLOT_ADMIN_ONLY);
+  });
+
+  it("administratorul agenției lucrează doar pe agenția lui", async () => {
+    const admin = accessAdmin();
+    await expect(requireSlotAdminOrg(context("admin-1", false), null, { admin })).resolves.toBe(
+      ORG,
+    );
+    await expect(requireSlotAdminOrg(context("admin-1", false), ORG, { admin })).resolves.toBe(ORG);
+    await expect(
+      requireSlotAdminOrg(context("admin-1", false), ORG_B, { admin }),
+    ).rejects.toThrow(SLOT_ADMIN_ONLY);
+  });
+
+  it("superadminul lucrează pe agenția primită explicit", async () => {
+    const admin = accessAdmin();
+    await expect(requireSlotAdminOrg(context("super-1", true), ORG_B, { admin })).resolves.toBe(
+      ORG_B,
+    );
+    await expect(requireSlotAdminOrg(context("super-1", true), null, { admin })).rejects.toThrow();
+  });
+
+  it("agentul își vede doar propriile cifre", async () => {
+    const { admin } = fakeAdmin({
+      properties: [
+        { id: "p-1", organization_id: ORG, assigned_to: "agent-1" },
+        { id: "p-2", organization_id: ORG, assigned_to: "agent-2" },
+      ],
+      portal_slot_limits: [{ organization_id: ORG, portal_key: PORTAL, total_slots: 5 }],
+      portal_slot_allocations: [
+        { organization_id: ORG, portal_key: PORTAL, user_id: "agent-1", slots: 3 },
+        { organization_id: ORG, portal_key: PORTAL, user_id: "agent-2", slots: 9 },
+      ],
+      portal_publications: [
+        { organization_id: ORG, portal_key: PORTAL, property_id: "p-1", enabled: true },
+        { organization_id: ORG, portal_key: PORTAL, property_id: "p-2", enabled: true },
+      ],
+    });
+    const mine = await loadMyPortalSlot(admin, {
+      organizationId: ORG,
+      userId: "agent-1",
+      portalKey: PORTAL,
+    });
+    expect(mine).toEqual({
+      portalKey: PORTAL,
+      allocated: 3,
+      used: 1,
+      remaining: 2,
+      agencyExhausted: false,
+    });
+    expect(JSON.stringify(mine)).not.toContain("agent-2");
+  });
+});
+
+describe("mesajul plasei de siguranță din baza de date", () => {
+  it("înlocuiește eroarea brută cu numele portalurilor", () => {
+    const message = humanizeSlotGuardError(
+      'new row violates: Agentul nu are locuri libere de publicare pe: lacheie, storia',
+      (key) => (key === "lacheie" ? "La Cheie" : "Storia"),
+    );
+    expect(message).toContain("La Cheie");
+    expect(message).toContain("Storia");
+    expect(humanizeSlotGuardError("duplicate key", () => "x")).toBeNull();
   });
 });
