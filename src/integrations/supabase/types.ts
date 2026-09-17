@@ -2301,6 +2301,8 @@ export type Database = {
           finished_at: string | null
           id: string
           last_error: string | null
+          locked_until: string | null
+          next_attempt_at: string | null
           organization_id: string
           sent: number
           started_at: string | null
@@ -2317,6 +2319,8 @@ export type Database = {
           finished_at?: string | null
           id?: string
           last_error?: string | null
+          locked_until?: string | null
+          next_attempt_at?: string | null
           organization_id: string
           sent?: number
           started_at?: string | null
@@ -2333,6 +2337,8 @@ export type Database = {
           finished_at?: string | null
           id?: string
           last_error?: string | null
+          locked_until?: string | null
+          next_attempt_at?: string | null
           organization_id?: string
           sent?: number
           started_at?: string | null
@@ -5999,6 +6005,33 @@ export type Database = {
       }
       can_access_contract: { Args: { _contract_id: string }; Returns: boolean }
       can_access_ticket: { Args: { _ticket_id: string }; Returns: boolean }
+      claim_lacheie_resend_job: {
+        Args: { _job_id: string; _ttl_seconds: number }
+        Returns: {
+          cancel_requested: boolean
+          created_at: string
+          failed: number
+          finished_at: string | null
+          id: string
+          last_error: string | null
+          locked_until: string | null
+          next_attempt_at: string | null
+          organization_id: string
+          sent: number
+          started_at: string | null
+          started_by: string | null
+          status: string
+          total: number
+          updated_at: string
+          write_rate: number
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "lacheie_resend_jobs"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
       cron_nonce_claim: {
         Args: { _purpose: string; _token: string }
         Returns: boolean
@@ -6172,6 +6205,10 @@ export type Database = {
       }
       reject_registration_request: {
         Args: { _reason?: string; _request_id: string }
+        Returns: undefined
+      }
+      release_lacheie_resend_job: {
+        Args: { _job_id: string }
         Returns: undefined
       }
       release_portal_operation_lock: {
