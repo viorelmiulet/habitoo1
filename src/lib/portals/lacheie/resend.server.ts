@@ -411,3 +411,26 @@ export async function processLaCheieResendJob(
   await finish(admin, jobId, resolved, stopped);
   return { status: resolved, sent, failed, processed, stopped };
 }
+
+/* ------------------------- limita reală de scrieri ------------------------ */
+
+/**
+ * `GET /account` raportează limitele agenției. Ritmul retrimiterii îl respectă;
+ * dacă apelul nu reușește, rămâne limita din documentație (60 scrieri/min).
+ */
+export async function fetchLaCheieWriteRate(config: {
+  baseUrl: string;
+  apiKey: string;
+  environment: any;
+  agencyExternalId?: string | null;
+  connectionKey: string;
+}): Promise<number> {
+  try {
+    const { laCheieRequest } = await import("@/lib/portals/lacheie/client.server");
+    const response = await laCheieRequest(config as never, { method: "GET", path: "/account" });
+    if (!response.ok) return LACHEIE_DEFAULT_WRITE_RATE;
+    return parseLaCheieAccountWriteRate(response.body);
+  } catch {
+    return LACHEIE_DEFAULT_WRITE_RATE;
+  }
+}
