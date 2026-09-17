@@ -478,7 +478,7 @@ export function classifyLaCheieAgencyPut(input: {
 
   if (httpStatus === 409) {
     const accepted = normalizeSourceVersion(input.conflictAcceptedVersion) ?? parsed.acceptedVersion;
-    const isVersionConflict = Boolean(accepted) || mentionsVersion(body);
+    const isVersionConflict = Boolean(accepted) || versionConflictCode(body);
     return {
       status: isVersionConflict ? input.previousStatus : "error",
       message: isVersionConflict
