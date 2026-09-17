@@ -2141,40 +2141,30 @@ export async function applyPortalSelectionForOrg(input: {
           });
         }
 
-        // D. true → false: retragere reală.
+        /**
+         * D. true → false: retragere reală. Se apelează portalul de fiecare dată
+         * când portalul suportă push ȘI există o listare cu `external_id`,
+         * indiferent de statusul local („pending", „error" nu mai sar apelul).
+         */
         if (!wanted.enabled) {
-          if (pushSupported && published) {
-            const res = await executeListingAction({
-              organizationId,
-              actorId,
-              portalId: definition.id,
-              propertyId: data.propertyId,
-              action: "withdraw",
-            });
-            results.push({
-              portalId: definition.id,
-              portalName: name,
-              action: res.ok ? "withdrawn" : "blocked",
-              ok: res.ok,
-              message: res.ok
-                ? `${name}: oferta a fost retrasă.`
-                : res.message.startsWith(name)
-                  ? res.message
-                  : `${name}: ${res.message}`,
-            });
-          } else {
-            results.push({
-              portalId: definition.id,
-              portalName: name,
-              action: "withdrawn",
-              ok: true,
-              message: pushSupported
-                ? `${name}: oferta nu mai este trimisă.`
-                : `${name}: oferta nu mai apare în feed și portalul o arhivează.`,
-            });
-          }
+          const listingRow = (listings ?? []).find((l) => l.portal === definition.id);
+          const withdrawal = await performPortalWithdraw({
+            organizationId,
+            actorId,
+            portalId: definition.id,
+            propertyId: data.propertyId,
+            externalId: (listingRow as { external_id?: string | null } | undefined)?.external_id ?? null,
+          });
+          results.push({
+            portalId: definition.id,
+            portalName: name,
+            action: withdrawal.ok ? "withdrawn" : "blocked",
+            ok: withdrawal.ok,
+            message: withdrawal.message,
+          });
           continue;
         }
+
 
         // Portal neconfigurat: intenția rămâne salvată, statusul rămâne nepublicat.
         if (!configured) {
