@@ -103,7 +103,9 @@ export function classifyLaCheieStatus(input: {
     return {
       action: "stop",
       code: "NOT_FOUND",
-      message: "La Cheie nu a găsit resursa cerută. Verifică conexiunea agenției și anunțul.",
+      message:
+        "La Cheie nu a găsit oferta sau agenția în contextul acestei conexiuni. Verifică activarea agenției și identificatorul ofertei; cererea nu se reia automat.",
+
       waitMs: 0,
     };
   }
@@ -172,4 +174,23 @@ export function describeLaCheieValidation(body: unknown): string | null {
     if (parts.length >= 8) break;
   }
   return parts.length ? parts.join("; ") : null;
+}
+
+/**
+ * 409 pe o ofertă: distinge conflictul de versiune de un conflict de ASOCIERE
+ * (ofertă/agent care necesită verificare la La Cheie). Documentația cere ca al
+ * doilea caz să NU fie reluat: furnizorul contactează La Cheie.
+ */
+export function isLaCheieAssociationConflict(body: unknown): boolean {
+  const root = body && typeof body === "object" ? (body as Record<string, unknown>) : null;
+  if (!root) return false;
+  const error = (root["error"] ?? {}) as Record<string, unknown>;
+  const code = String(error["code"] ?? root["code"] ?? "").toLowerCase();
+  const message = String(error["message"] ?? root["message"] ?? root["detail"] ?? "").toLowerCase();
+  if (/version/.test(code)) return false;
+  const associationCode = /(association|associat|conflict_agent|agent|offer_conflict|account)/.test(
+    code,
+  );
+  const associationMessage = /(asocier|associat|agent|cont |account)/.test(message);
+  return associationCode || associationMessage;
 }

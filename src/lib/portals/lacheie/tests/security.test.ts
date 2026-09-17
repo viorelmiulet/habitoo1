@@ -135,10 +135,11 @@ describe("La Cheie — reguli verificabile în cod", () => {
     // Adresa nu este hardcodată în adaptor: vine din config.
     expect(adapterSource).not.toMatch(/https:\/\/[a-z.]*lacheie/i);
     expect(adapterSource).toContain('path: "/account"');
-    expect(adapterSource).toContain("laCheiePropertiesPath()");
     expect(adapterSource).toContain("laCheiePropertiesPath(offer.external_id)");
     expect(adapterSource).toContain("laCheiePropertiesPath(id)");
-    expect(adapterSource).toContain('method: "POST"');
+    // Ofertele se scriu exclusiv prin PUT /properties/{external_id}.
+    expect(adapterSource).not.toContain('method: "POST"');
+
     expect(adapterSource).toContain('method: "PUT"');
     expect(adapterSource).toContain('method: "DELETE"');
     expect(adapterSource).not.toContain("/offers");

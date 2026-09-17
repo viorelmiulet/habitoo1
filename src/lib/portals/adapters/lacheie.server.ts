@@ -48,7 +48,9 @@ import {
   recordVersionOutcome,
   reserveNextVersion,
 } from "../lacheie/version.server";
-import { nextSourceVersion } from "../lacheie/version";
+import { laCheieOfferVersionFromBody, nextSourceVersion } from "../lacheie/version";
+import { isLaCheieAssociationConflict } from "../lacheie/http";
+
 import { laCheieAgencyBlockReason, readLaCheieAgencyState } from "../lacheie/agency";
 import { hasLaCheieCrmApiKey, laCheieCrmApiKey } from "../lacheie/credentials.server";
 
@@ -228,7 +230,7 @@ async function sendOffer(input: {
 > {
   const { ctx, config, settings, offer, propertyId, mode } = input;
   const db = await admin();
-  const path = laCheiePropertiesPath();
+  const path = laCheiePropertiesPath(offer.external_id);
 
   // O operație NOUĂ primește o versiune nouă; retry-urile din client refolosesc
   // exact aceeași versiune și același corp.
@@ -240,9 +242,10 @@ async function sendOffer(input: {
     operation: mode,
   });
 
-  // La PUT, `external_id` face parte din URL, iar corpul îl respinge explicit
-  // („external_id: Unknown field."). Îl trimitem doar la POST (creare).
-  const updateBody = (() => {
+  // `PUT /properties/{external_id}` creează SAU actualizează oferta (secțiunea 2),
+  // deci nu există un pas POST separat. `external_id` rămâne exclusiv în cale:
+  // corpul îl respinge explicit („external_id: Unknown field.”).
+  const offerBody = (() => {
     const { external_id: _omit, ...rest } = offer as Record<string, unknown> & {
       external_id: string;
     };
@@ -250,31 +253,41 @@ async function sendOffer(input: {
   })();
 
   const attemptSend = async (sourceVersion: string) =>
-    mode === "create"
-      ? laCheieRequest(config, { method: "POST", path, body: offer, sourceVersion })
-      : laCheieRequest(config, {
-          method: "PUT",
-          path: laCheiePropertiesPath(offer.external_id),
-          body: updateBody,
-          sourceVersion,
-        });
+    laCheieRequest(config, { method: "PUT", path, body, sourceVersion });
 
   let response = await attemptSend(version);
 
-  // PUT pe un external_id necunoscut: creăm anunțul, păstrând aceeași versiune.
-  if (mode === "update" && response.status === 404) {
-    response = await laCheieRequest(config, {
-      method: "POST",
-      path,
-      body: offer,
-      sourceVersion: version,
-    });
-  }
-
-  // 409: nu incrementăm orb. Marcăm conflictul, reconciliem versiunea acceptată
-  // și abia apoi generăm următoarea versiune, o singură dată.
+  // 409: nu incrementăm orb. Un conflict de ASOCIERE ofertă/agent se oprește aici;
+  // un conflict de versiune se reconciliază (din corp sau prin GET) și se retrimite
+  // O SINGURĂ dată, cu o versiune mai mare.
   if (response.status === 409) {
-    const accepted = response.conflict?.acceptedVersion ?? null;
+    if (isLaCheieAssociationConflict(response.body)) {
+      await recordVersionOutcome(db, {
+        organizationId: ctx.organizationId,
+        externalId: offer.external_id,
+        environment: settings.environment,
+        status: "error",
+        error: "Conflict de asociere ofertă/agent la La Cheie.",
+      });
+      return {
+        ok: false,
+        fail: {
+          ok: false,
+          code: "PORTAL_ERROR",
+          message: `La Cheie a raportat un conflict de asociere pentru această ofertă sau pentru agentul responsabil. Contactați La Cheie${response.requestId ? ` (request_id: ${response.requestId})` : ""}.`,
+          detail: `${mode} http_409 association`,
+          httpStatus: 409,
+          portalResponse: response.body ?? null,
+        },
+      };
+    }
+
+    let accepted = response.conflict?.acceptedVersion ?? null;
+    if (!accepted) {
+      // Portalul nu a indicat versiunea acceptată: o citim de la sursă.
+      const read = await laCheieRequest(config, { method: "GET", path });
+      if (read.ok) accepted = laCheieOfferVersionFromBody(read.body);
+    }
     await recordVersionOutcome(db, {
       organizationId: ctx.organizationId,
       externalId: offer.external_id,
@@ -291,8 +304,10 @@ async function sendOffer(input: {
           ok: false,
           code: "PORTAL_ERROR",
           message:
-            "La Cheie a raportat un conflict de versiune fără să indice versiunea acceptată. Reia operația după verificarea anunțului pe portal.",
+            "La Cheie a raportat un conflict de versiune, iar versiunea acceptată nu a putut fi citită nici din răspuns, nici din oferta de la portal. Reia operația după verificarea anunțului.",
           detail: `${mode} http_409`,
+          httpStatus: 409,
+          portalResponse: response.body ?? null,
         },
       };
     }
@@ -315,6 +330,7 @@ async function sendOffer(input: {
       .eq("environment", settings.environment);
     response = await attemptSend(version);
   }
+
 
   if (!response.ok) {
     await recordVersionOutcome(db, {
@@ -611,14 +627,49 @@ export const lacheieAdapter: PortalAdapter = {
     });
     const first = build.ok ? build.offers[0]?.offer : null;
     const images = first?.images ?? [];
+    const notes = build.ok ? [...build.warnings] : [...build.reasons];
+
+    // Stare reală de la portal, ca la diagnoza Imobiliare.ro: status, link și
+    // versiunea acceptată, peste notele de validare locală.
+    let offerUrl: string | null = null;
+    let updatedAt: string | null = null;
+    const externalId = ref.externalId ?? first?.external_id ?? null;
+    const ready = prepare(ctx);
+    if (ready.ok && externalId) {
+      const live = await laCheieRequest(ready.config, {
+        method: "GET",
+        path: laCheiePropertiesPath(externalId),
+      }).catch(() => null);
+      if (live?.ok) {
+        const root = (live.body ?? {}) as Record<string, unknown>;
+        const scope = ((root["offer"] ?? root["data"] ?? root) ?? {}) as Record<string, unknown>;
+        const status = typeof scope["status"] === "string" ? (scope["status"] as string) : null;
+        const url = typeof scope["url"] === "string" ? (scope["url"] as string) : null;
+        const version = laCheieOfferVersionFromBody(live.body);
+        const updated = scope["updated_at"];
+        offerUrl = url;
+        updatedAt = typeof updated === "string" ? updated : null;
+        notes.push(`Stare la La Cheie: ${status ?? "necunoscută"}.`);
+        if (version) notes.push(`Versiune acceptată de portal: ${version}.`);
+      } else if (live) {
+        notes.push(
+          live.status === 404
+            ? "Oferta nu există în contextul acestei conexiuni La Cheie."
+            : `La Cheie nu a putut fi interogat (HTTP ${live.status}).`,
+        );
+      }
+    } else if (!ready.ok) {
+      notes.push(ready.result.message);
+    }
+
     return {
       ok: true,
       data: {
         feedVisible: build.ok,
         externalId: build.ok
           ? build.offers.map((entry) => entry.offer.external_id).join(",")
-          : null,
-        offerUrl: null,
+          : externalId,
+        offerUrl,
         agentId: first?.agent.external_id ?? null,
         agentName: first?.agent.full_name ?? null,
         images: {
@@ -627,9 +678,10 @@ export const lacheieAdapter: PortalAdapter = {
           broken: 0,
           primary: images.length > 0,
         },
-        updatedAt: null,
-        notes: build.ok ? build.warnings : build.reasons,
+        updatedAt,
+        notes,
       },
     };
   },
 };
+

@@ -79,3 +79,23 @@ export function acceptedVersionFromConflict(body: unknown): string | null {
   }
   return null;
 }
+
+/**
+ * Versiunea acceptată raportată de `GET /properties/{external_id}`.
+ * Portalul o trimite la rădăcină sau în `offer`/`data`.
+ */
+export function laCheieOfferVersionFromBody(body: unknown): string | null {
+  if (!body || typeof body !== "object") return null;
+  const root = body as Record<string, unknown>;
+  const scopes = [root, root["offer"], root["data"], root["property"]];
+  for (const scope of scopes) {
+    if (!scope || typeof scope !== "object") continue;
+    const record = scope as Record<string, unknown>;
+    const version =
+      normalizeSourceVersion(record["source_version"]) ??
+      normalizeSourceVersion(record["accepted_version"]) ??
+      normalizeSourceVersion(record["version"]);
+    if (version) return version;
+  }
+  return null;
+}

@@ -158,6 +158,7 @@ describe("La Cheie — câmpuri interzise și necunoscute", () => {
       listing_type: "premium",
       location: "Bucuresti",
       phone: "+40700000000",
+      numberOfRooms: 3,
     });
     for (const field of LACHEIE_FORBIDDEN_FIELDS) {
       expect(payload[field]).toBeUndefined();

@@ -19,10 +19,18 @@
 import type { LaCheieCategory } from "./catalog";
 
 export const LACHEIE_MAX_IMAGES = 30;
+/** Fiecare URL de imagine: maximum 500 de caractere (documentație, secțiunea 3). */
+export const LACHEIE_MAX_IMAGE_URL_LENGTH = 500;
 export const LACHEIE_MAX_BODY_BYTES = 1024 * 1024;
 export const LACHEIE_MIN_TITLE = 8;
 export const LACHEIE_MIN_DESCRIPTION = 40;
 export const LACHEIE_EXTERNAL_ID_MAX = 64;
+/** `agent.full_name` maximum 255 caractere; `agent.phone` 7–15 cifre, ≤30 caractere. */
+export const LACHEIE_AGENT_NAME_MAX = 255;
+export const LACHEIE_AGENT_PHONE_MAX = 30;
+export const LACHEIE_AGENT_PHONE_MIN_DIGITS = 7;
+export const LACHEIE_AGENT_PHONE_MAX_DIGITS = 15;
+
 
 export type LaCheieCurrency = "EUR" | "RON" | "USD";
 export type LaCheieTransaction = "sale" | "rent";
@@ -39,7 +47,10 @@ export const LACHEIE_FORBIDDEN_FIELDS = [
   "listing_type",
   "location",
   "phone",
+  // Aliasul respins explicit de portal: se trimite `number_of_rooms`.
+  "numberOfRooms",
 ] as const;
+
 
 /** Singurele câmpuri acceptate în payload. Restul se elimină. */
 export const LACHEIE_ALLOWED_FIELDS = [
@@ -106,7 +117,14 @@ export type LaCheieOffer = {
   external_id: string;
   title: string;
   description: string;
-  price: number;
+  /**
+   * Preț ca ȘIR zecimal cu exact 2 zecimale („125000.00”).
+   * Formatarea este fixă, ca retrimiterea identică (timeout/5xx/429) să producă
+   * EXACT aceiași octeți: portalul compară `125000` și `"125000.00"` ca corpuri
+   * diferite pentru același `X-Source-Version`.
+   */
+  price: string;
+
   currency: LaCheieCurrency;
   transaction_type: LaCheieTransaction;
   /** Id din `/options`, păstrat ca text pentru precizie. */
@@ -131,11 +149,24 @@ export function laCheieExternalId(propertyId: string, transaction: LaCheieTransa
   return ascii.slice(0, LACHEIE_EXTERNAL_ID_MAX);
 }
 
+/**
+ * Format documentat: 1–64 caractere ASCII, litere/cifre/punct/underscore/cratimă,
+ * primul caracter literă sau cifră.
+ */
 export function isValidExternalId(value: string): boolean {
-  return (
-    value.length >= 1 && value.length <= LACHEIE_EXTERNAL_ID_MAX && /^[\x21-\x7e]+$/.test(value)
-  );
+  return value.length <= LACHEIE_EXTERNAL_ID_MAX && /^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$/.test(value);
 }
+
+/** Valoare zecimală stabilă, cu exact 2 zecimale (preț, suprafețe). */
+export function laCheieDecimal(value: number): string {
+  return value.toFixed(2);
+}
+
+/** Cifrele unui telefon, pentru validarea 7–15 cifre. */
+export function phoneDigitCount(value: string): number {
+  return (value.match(/\d/g) ?? []).length;
+}
+
 
 /** Elimină câmpurile necunoscute și cele interzise, raportând ce a scos. */
 export function stripUnknownFields(input: Record<string, unknown>): {
@@ -183,6 +214,14 @@ export function sanitizeLaCheieImages(urls: (string | null | undefined)[]): Imag
       rejected.push({ url: value, reason: "conține fragment (#)" });
       continue;
     }
+    if (value.length > LACHEIE_MAX_IMAGE_URL_LENGTH) {
+      rejected.push({
+        url: value,
+        reason: `depășește ${LACHEIE_MAX_IMAGE_URL_LENGTH} de caractere`,
+      });
+      continue;
+    }
+
     let parsed: URL;
     try {
       parsed = new URL(value);
@@ -312,8 +351,12 @@ export function buildLaCheieOffer(
     reasons.push(`Descrierea trebuie să aibă minimum ${LACHEIE_MIN_DESCRIPTION} caractere.`);
   }
 
-  const price = positiveInt(input.price);
-  if (price === null) reasons.push("Lipsește prețul sau nu este un număr pozitiv.");
+  const priceValue =
+    typeof input.price === "number" && Number.isFinite(input.price) && input.price > 0
+      ? input.price
+      : null;
+  if (priceValue === null) reasons.push("Lipsește prețul sau nu este un număr pozitiv.");
+
 
   const currency = (input.currency ?? "EUR").trim().toUpperCase() as LaCheieCurrency;
   if (!LACHEIE_CURRENCIES.includes(currency)) {
@@ -333,8 +376,24 @@ export function buildLaCheieOffer(
   const agentName = (agent?.full_name ?? "").trim();
   const agentPhone = (agent?.phone ?? "").trim();
   if (!agentExternalId) reasons.push("Agentul responsabil nu are identificator.");
+  else if (!isValidExternalId(agentExternalId)) {
+    reasons.push("Identificatorul agentului nu respectă formatul cerut de La Cheie.");
+  }
   if (!agentName) reasons.push("Agentul responsabil nu are nume complet.");
+  else if (agentName.length > LACHEIE_AGENT_NAME_MAX) {
+    reasons.push(`Numele agentului depășește ${LACHEIE_AGENT_NAME_MAX} de caractere.`);
+  }
   if (!agentPhone) reasons.push("Agentul responsabil nu are telefon (obligatoriu la La Cheie).");
+  else if (
+    agentPhone.length > LACHEIE_AGENT_PHONE_MAX ||
+    phoneDigitCount(agentPhone) < LACHEIE_AGENT_PHONE_MIN_DIGITS ||
+    phoneDigitCount(agentPhone) > LACHEIE_AGENT_PHONE_MAX_DIGITS
+  ) {
+    reasons.push(
+      `Telefonul agentului trebuie să aibă între ${LACHEIE_AGENT_PHONE_MIN_DIGITS} și ${LACHEIE_AGENT_PHONE_MAX_DIGITS} cifre și maximum ${LACHEIE_AGENT_PHONE_MAX} de caractere.`,
+    );
+  }
+
 
   const area = positiveInt(input.area);
   const landArea = positiveInt(input.landArea);
@@ -378,7 +437,9 @@ export function buildLaCheieOffer(
     external_id: externalId,
     title,
     description,
-    price,
+    // Preț ca șir cu 2 zecimale: corp identic la fiecare retrimitere.
+    price: laCheieDecimal(priceValue as number),
+
     currency,
     transaction_type: input.transaction,
     property_type: input.propertyTypeId,
