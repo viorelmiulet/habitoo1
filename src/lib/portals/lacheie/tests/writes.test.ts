@@ -9,6 +9,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   LACHEIE_FORBIDDEN_FIELDS,
   LACHEIE_MAX_IMAGE_URL_LENGTH,
+  buildLaCheieOffer,
   isValidExternalId,
   laCheieDecimal,
   sanitizeLaCheieImages,
@@ -135,5 +136,39 @@ describe("La Cheie — payload și imagini", () => {
     expect(isValidExternalId("-HBT")).toBe(false);
     expect(isValidExternalId("HBT 1")).toBe(false);
     expect(isValidExternalId("a".repeat(65))).toBe(false);
+  });
+});
+
+describe("La Cheie — suprafețe ca șir zecimal", () => {
+  it("area și land_area au 2 zecimale, întregii rămân întregi", () => {
+    const result = buildLaCheieOffer(
+      {
+        id: "11111111-2222-3333-4444-555555555555",
+        title: "Apartament 3 camere Militari",
+        description:
+          "Apartament spațios, complet renovat, situat aproape de mijloacele de transport în comun.",
+        price: 125000,
+        currency: "EUR",
+        transaction: "sale",
+        category: "apartment",
+        propertyTypeId: "1",
+        countyId: "2",
+        cityId: "3",
+        area: 72.5,
+        landArea: 500,
+        bedrooms: 2,
+        bathrooms: 1,
+        yearBuilt: 2018,
+      },
+      { external_id: "AG-1", full_name: "Ana Pop", phone: "+40721000111" },
+    );
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.offer.area).toBe("72.50");
+    expect(result.offer.land_area).toBe("500.00");
+    expect(result.offer.price).toBe("125000.00");
+    expect(result.offer["bedrooms"]).toBe(2);
+    expect(result.offer["bathrooms"]).toBe(1);
+    expect(result.offer["year_built"]).toBe(2018);
   });
 });
