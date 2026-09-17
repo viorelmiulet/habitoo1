@@ -1689,12 +1689,37 @@ export const setPropertyPortalSelection = createServerFn({ method: "POST" })
       actorId: context.userId,
     });
 
+    /**
+     * Deselectarea RETRAGE efectiv oferta de pe portal. Înainte, serverul doar
+     * schimba bifa și întorcea `needsWithdraw`, iar anunțul rămânea live.
+     */
+    if (!data.enabled) {
+      const withdrawal = await performPortalWithdraw({
+        organizationId,
+        actorId: context.userId,
+        portalId: definition.id,
+        propertyId: data.propertyId,
+        externalId: listing?.external_id ?? null,
+      });
+      return {
+        ok: withdrawal.ok,
+        enabled: false as const,
+        withdrawn: withdrawal.ok,
+        attempted: withdrawal.attempted,
+        alreadyWithdrawn: withdrawal.alreadyWithdrawn,
+        message: withdrawal.message,
+      };
+    }
+
     return {
       ok: true as const,
-      enabled: data.enabled,
-      // Dezactivarea selecției nu retrage automat oferta deja publicată.
-      needsWithdraw: !data.enabled && stillPublished,
+      enabled: true as const,
+      withdrawn: false,
+      attempted: false,
+      alreadyWithdrawn: false,
+      message: null,
     };
+
   });
 
 /**
