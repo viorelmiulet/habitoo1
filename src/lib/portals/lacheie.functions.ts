@@ -871,7 +871,7 @@ export const deactivateLaCheieAgency = createServerFn({ method: "POST" })
       organizationId,
       operation: "agency_deactivate",
       success: ok,
-      errorMessage: message,
+      errorMessage: message ?? localWithdrawError,
       errorCode: ok ? null : (call.response.classification?.code ?? null),
       actorId: auth.userId,
       environment: LACHEIE_ENVIRONMENT,
@@ -883,10 +883,9 @@ export const deactivateLaCheieAgency = createServerFn({ method: "POST" })
       portalResponse: call.response.body,
     });
 
-
-
     if (!ok) throw new Error(message ?? "Dezactivarea conexiunii La Cheie a eșuat.");
-    return { status: result.status, version };
+    return { status: result.status, version, localWithdrawError };
+
 
   });
 
