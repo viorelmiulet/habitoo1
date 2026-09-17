@@ -332,6 +332,121 @@ async function agencyView(
   };
 }
 
+const LACHEIE_ACTIVATION_OPERATIONS = ["agency_register", "agency_reactivate"] as const;
+
+/** Limită durabilă: o cerere de activare la 30 s pe agenție, citită din jurnal. */
+async function activationTooSoon(organizationId: string): Promise<boolean> {
+  const admin = await loadAdmin();
+  const since = new Date(Date.now() - 30_000).toISOString();
+  const { data } = await admin
+    .from("portal_operation_logs")
+    .select("id")
+    .eq("organization_id", organizationId)
+    .eq("portal", LACHEIE_PORTAL_KEY)
+    .in("operation", LACHEIE_ACTIVATION_OPERATIONS as unknown as string[])
+    .gte("created_at", since)
+    .limit(1);
+  return (data ?? []).length > 0;
+}
+
+export type LaCheieActivationRequest = {
+  operation: string;
+  requestedAt: string;
+  success: boolean;
+  actorName: string | null;
+  actorEmail: string | null;
+};
+
+/** Cine a cerut activarea și când (actorul din jurnalul operațiilor). */
+async function lastActivationRequest(
+  organizationId: string,
+): Promise<LaCheieActivationRequest | null> {
+  const admin = await loadAdmin();
+  const { data } = await admin
+    .from("portal_operation_logs")
+    .select("operation, success, actor_id, created_at")
+    .eq("organization_id", organizationId)
+    .eq("portal", LACHEIE_PORTAL_KEY)
+    .in("operation", LACHEIE_ACTIVATION_OPERATIONS as unknown as string[])
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (!data) return null;
+  let actorName: string | null = null;
+  let actorEmail: string | null = null;
+  if (data.actor_id) {
+    const { data: profile } = await admin
+      .from("profiles")
+      .select("full_name, email")
+      .eq("id", data.actor_id)
+      .maybeSingle();
+    actorName = profile?.full_name ?? null;
+    actorEmail = profile?.email ?? null;
+  }
+  return {
+    operation: data.operation,
+    requestedAt: data.created_at,
+    success: data.success,
+    actorName,
+    actorEmail,
+  };
+}
+
+/**
+ * Vedere READ-ONLY pentru administratorul agenției: statusul, eroarea afișabilă
+ * și datele care vor fi trimise. Fără jurnal, versiuni, corpuri de cerere sau chei.
+ */
+export type LaCheieAgencySelfView = {
+  status: LaCheieAgencyStatus;
+  statusLabel: string;
+  error: string | null;
+  canActivate: boolean;
+  suspended: boolean;
+  data: { name: string | null; adminEmail: string | null; phone: string | null; address: string | null };
+  missingFields: string[];
+  issues: string[];
+};
+
+export const getLaCheieAgencyStatusForAgency = createServerFn({ method: "POST" })
+  .middleware([requireActiveOrgAuth])
+  .inputValidator((input: unknown) =>
+    z.object({ organizationId: z.string().uuid().optional() }).parse(input ?? {}),
+  )
+  .handler(async ({ data, context }): Promise<LaCheieAgencySelfView> => {
+    const auth = context as unknown as AuthContext;
+    const organizationId = await requireLaCheieActivator(auth, data.organizationId ?? null);
+    const row = await connectionRow(organizationId);
+    const state = readLaCheieAgencyState((row?.settings ?? {}) as Record<string, unknown>);
+    const { built, adminEmail, issues } = await buildAgencyRegistration(
+      organizationId,
+      auth.userId,
+    );
+    const admin = await loadAdmin();
+    const { data: org } = await admin
+      .from("organizations")
+      .select("name, legal_name, phone, material_phone, material_address")
+      .eq("id", organizationId)
+      .maybeSingle();
+
+    return {
+      status: state.status,
+      statusLabel: LACHEIE_AGENCY_STATUS_LABEL[state.status],
+      error: state.error,
+      canActivate: canActivateLaCheieAgency(state.status) && built.ok,
+      suspended: state.status === "suspended",
+      data: {
+        name: org?.name ?? org?.legal_name ?? null,
+        adminEmail: adminEmail.ok ? adminEmail.email : null,
+        phone: org?.phone ?? org?.material_phone ?? null,
+        address: org?.material_address ?? null,
+      },
+      missingFields: built.ok
+        ? []
+        : built.missing.map((field) => LACHEIE_AGENCY_FIELD_LABEL[field] ?? field),
+      issues,
+    };
+  });
+
 
 export const getLaCheieState = createServerFn({ method: "POST" })
   .middleware([requireActiveOrgAuth])
