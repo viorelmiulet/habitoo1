@@ -17,6 +17,8 @@ export type PortalFail = {
   httpStatus?: number | null;
   /** Corpul BRUT al răspunsului portalului, pentru jurnalizare completă. */
   portalResponse?: unknown;
+  /** Cât cere portalul să așteptăm (Retry-After la 429), în milisecunde. */
+  retryAfterMs?: number | null;
 };
 export type PortalResult<T> = PortalOk<T> | PortalFail;
 
