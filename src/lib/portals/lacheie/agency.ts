@@ -169,13 +169,17 @@ export type LaCheieAgencyResponse = {
 export function parseLaCheieAgencyBody(body: unknown): LaCheieAgencyResponse {
   const root = body && typeof body === "object" ? (body as Record<string, unknown>) : {};
   const scope = (root["agency"] ?? root["data"] ?? root) as Record<string, unknown>;
+  // Portalul v1 trimite `status` și `source_version` la rădăcină, iar `agency`
+  // conține doar { id, name } — citim întâi scope-ul, apoi rădăcina.
   const accepted =
     normalizeSourceVersion(scope["accepted_version"]) ??
     normalizeSourceVersion(scope["source_version"]) ??
     normalizeSourceVersion(scope["version"]) ??
-    normalizeSourceVersion(root["accepted_version"]);
+    normalizeSourceVersion(root["accepted_version"]) ??
+    normalizeSourceVersion(root["source_version"]) ??
+    normalizeSourceVersion(root["version"]);
   return {
-    status: statusOf(scope["status"] ?? scope["state"]),
+    status: statusOf(scope["status"] ?? scope["state"] ?? root["status"] ?? root["state"]),
     acceptedVersion: accepted,
     name: text(scope["name"]),
   };
