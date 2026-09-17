@@ -13,6 +13,7 @@ import { toast } from "@/components/ui/sonner";
 import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/app/StatusBadge";
 import { InlineLoading } from "@/components/app/LoadingState";
+import { LaCheieResendPanel } from "@/components/app/LaCheieResendPanel";
 import {
   activateLaCheieAgency,
   getLaCheieAgencyStatusForAgency,
@@ -111,6 +112,11 @@ export function LaCheieActivationPanel({ organizationId }: { organizationId: str
             ? "Se trimite…"
             : "Solicită activarea LaCheie.ro"}
       </Button>
+
+      {/* Reactivarea nu republică ofertele: retrimiterea se cere explicit. */}
+      {view.status === "active" ? (
+        <LaCheieResendPanel organizationId={organizationId} agencyActive />
+      ) : null}
     </div>
   );
 }

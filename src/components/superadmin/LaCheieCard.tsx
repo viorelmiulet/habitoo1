@@ -18,6 +18,7 @@ import { StatusBadge } from "@/components/app/StatusBadge";
 import { PortalLogo } from "@/components/app/PortalLogo";
 import { InlineLoading } from "@/components/app/LoadingState";
 import { QueryError } from "@/components/app/QueryError";
+import { LaCheieResendPanel } from "@/components/app/LaCheieResendPanel";
 import { LACHEIE_READINESS_LABEL } from "@/lib/portals/lacheie/config";
 import {
   activateLaCheieAgency,
@@ -288,8 +289,13 @@ export function LaCheieCard({ organizationId }: { organizationId: string }) {
               Suspendarea este administrativă la La Cheie și nu poate fi ocolită din CRM.
             </p>
           ) : null}
-        </div>
 
+          {/* Reactivarea nu republică ofertele: retrimiterea se cere explicit. */}
+          <LaCheieResendPanel
+            organizationId={organizationId}
+            agencyActive={data.agency.status === "active"}
+          />
+        </div>
 
         {/* Catalog */}
         <div className="space-y-3 rounded-xl border border-border bg-surface p-4">
