@@ -420,15 +420,38 @@ export type LaCheieAgencyOutcome = {
   versionConflict: boolean;
 };
 
-function mentionsVersion(body: unknown): boolean {
-  const serialized = (() => {
-    try {
-      return typeof body === "string" ? body : JSON.stringify(body ?? "");
-    } catch {
-      return "";
-    }
-  })().toLowerCase();
-  return serialized.includes("version") || serialized.includes("versiun");
+/**
+ * Codurile prin care La Cheie semnalează un conflict de VERSIUNE. Nu se caută
+ * cuvântul „version” în corp: un conflict de asociere poate conține `source_version`
+ * fără să fie un conflict de versiune.
+ */
+const LACHEIE_VERSION_CONFLICT_CODES = new Set([
+  "version_conflict",
+  "source_version_conflict",
+  "stale_version",
+  "outdated_version",
+  "invalid_source_version",
+]);
+
+function versionConflictCode(body: unknown): boolean {
+  if (!body || typeof body !== "object") return false;
+  const error = (body as { error?: unknown }).error;
+  const code =
+    error && typeof error === "object" ? (error as { code?: unknown }).code : undefined;
+  return typeof code === "string" && LACHEIE_VERSION_CONFLICT_CODES.has(code.toLowerCase());
+}
+
+
+/** Versiunea acceptată raportată explicit într-un conflict de versiune. */
+function conflictAcceptedVersion(body: unknown): string | null {
+  if (!body || typeof body !== "object") return null;
+  const error = (body as { error?: unknown }).error;
+  const scope = error && typeof error === "object" ? (error as Record<string, unknown>) : {};
+  for (const key of ["accepted_version", "acceptedVersion", "accepted_source_version"]) {
+    const value = normalizeSourceVersion(scope[key] ?? (body as Record<string, unknown>)[key]);
+    if (value) return value;
+  }
+  return null;
 }
 
 /** Interpretează `PUT /agencies/{external_id}` conform contractului v1. */
@@ -466,8 +489,12 @@ export function classifyLaCheieAgencyPut(input: {
   }
 
   if (httpStatus === 409) {
-    const accepted = normalizeSourceVersion(input.conflictAcceptedVersion) ?? parsed.acceptedVersion;
-    const isVersionConflict = Boolean(accepted) || mentionsVersion(body);
+    // Doar o versiune acceptată raportată EXPLICIT pentru conflict (sau un cod de
+    // conflict de versiune) califică drept conflict de versiune. Un `source_version`
+    // oarecare din corp aparține unui conflict de asociere și nu se reia automat.
+    const accepted =
+      normalizeSourceVersion(input.conflictAcceptedVersion) ?? conflictAcceptedVersion(body);
+    const isVersionConflict = Boolean(accepted) || versionConflictCode(body);
     return {
       status: isVersionConflict ? input.previousStatus : "error",
       message: isVersionConflict

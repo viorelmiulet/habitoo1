@@ -56,27 +56,8 @@ async function loadAdmin() {
   return supabaseAdmin;
 }
 
-/**
- * Integrarea se administrează de Superadmin sau de un `agency_admin` al agenției
- * respective (acesta declanșează „Solicită activarea LaCheie.ro”).
- */
-async function requireSuperadminOrg(context: AuthContext, organizationId: string): Promise<string> {
+async function existingOrg(organizationId: string): Promise<string> {
   const admin = await loadAdmin();
-  const { data: superadmin } = await context.supabase.rpc("is_superadmin");
-  if (superadmin !== true) {
-    const { data: role } = await admin
-      .from("user_roles")
-      .select("id")
-      .eq("organization_id", organizationId)
-      .eq("user_id", context.userId)
-      .eq("role", "agency_admin")
-      .maybeSingle();
-    if (!role) {
-      throw new Error(
-        "Acces refuzat: integrarea La Cheie se gestionează de Superadmin sau de administratorul agenției.",
-      );
-    }
-  }
   const { data: org } = await admin
     .from("organizations")
     .select("id")
@@ -85,6 +66,50 @@ async function requireSuperadminOrg(context: AuthContext, organizationId: string
   if (!org) throw new Error("Agenția nu a fost găsită.");
   return org.id;
 }
+
+/**
+ * Administrarea integrării (jurnal, versiuni, catalog, testare, dezactivare)
+ * rămâne strict la Superadmin.
+ */
+async function requireSuperadmin(context: AuthContext, organizationId: string): Promise<string> {
+  const { data: superadmin } = await context.supabase.rpc("is_superadmin");
+  if (superadmin !== true) {
+    throw new Error("Acces refuzat: integrarea La Cheie se administrează de Superadmin.");
+  }
+  return existingOrg(organizationId);
+}
+
+/**
+ * Activarea (și citirea stării proprii) o poate declanșa Superadminul sau un
+ * `agency_admin`. Pentru non-superadmini agenția vine EXCLUSIV din sesiune,
+ * niciodată din datele trimise de client.
+ */
+async function requireLaCheieActivator(
+  context: AuthContext,
+  requestedOrganizationId?: string | null,
+): Promise<string> {
+  const admin = await loadAdmin();
+  const { data: superadmin } = await context.supabase.rpc("is_superadmin");
+  if (superadmin === true) {
+    if (!requestedOrganizationId) throw new Error("Selectează agenția.");
+    return existingOrg(requestedOrganizationId);
+  }
+
+  const { data: role } = await admin
+    .from("user_roles")
+    .select("organization_id")
+    .eq("user_id", context.userId)
+    .eq("role", "agency_admin")
+    .not("organization_id", "is", null)
+    .maybeSingle();
+  if (!role?.organization_id) {
+    throw new Error(
+      "Acces refuzat: activarea La Cheie se solicită de administratorul agenției sau de Superadmin.",
+    );
+  }
+  return existingOrg(role.organization_id);
+}
+
 
 
 async function connectionRow(organizationId: string) {
@@ -225,6 +250,9 @@ export type LaCheieState = {
   propertiesPath: string;
   readiness: LaCheieReadiness;
   agency: LaCheieAgencyView;
+  /** Cine a cerut activarea și când. */
+  activationRequest: LaCheieActivationRequest | null;
+
   catalog: {
     fetchedAt: string | null;
     optionGroups: number;
@@ -307,12 +335,127 @@ async function agencyView(
   };
 }
 
+const LACHEIE_ACTIVATION_OPERATIONS = ["agency_register", "agency_reactivate"] as const;
+
+/** Limită durabilă: o cerere de activare la 30 s pe agenție, citită din jurnal. */
+async function activationTooSoon(organizationId: string): Promise<boolean> {
+  const admin = await loadAdmin();
+  const since = new Date(Date.now() - 30_000).toISOString();
+  const { data } = await admin
+    .from("portal_operation_logs")
+    .select("id")
+    .eq("organization_id", organizationId)
+    .eq("portal", LACHEIE_PORTAL_KEY)
+    .in("operation", LACHEIE_ACTIVATION_OPERATIONS as unknown as string[])
+    .gte("created_at", since)
+    .limit(1);
+  return (data ?? []).length > 0;
+}
+
+export type LaCheieActivationRequest = {
+  operation: string;
+  requestedAt: string;
+  success: boolean;
+  actorName: string | null;
+  actorEmail: string | null;
+};
+
+/** Cine a cerut activarea și când (actorul din jurnalul operațiilor). */
+async function lastActivationRequest(
+  organizationId: string,
+): Promise<LaCheieActivationRequest | null> {
+  const admin = await loadAdmin();
+  const { data } = await admin
+    .from("portal_operation_logs")
+    .select("operation, success, actor_id, created_at")
+    .eq("organization_id", organizationId)
+    .eq("portal", LACHEIE_PORTAL_KEY)
+    .in("operation", LACHEIE_ACTIVATION_OPERATIONS as unknown as string[])
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (!data) return null;
+  let actorName: string | null = null;
+  let actorEmail: string | null = null;
+  if (data.actor_id) {
+    const { data: profile } = await admin
+      .from("profiles")
+      .select("full_name, email")
+      .eq("id", data.actor_id)
+      .maybeSingle();
+    actorName = profile?.full_name ?? null;
+    actorEmail = profile?.email ?? null;
+  }
+  return {
+    operation: data.operation,
+    requestedAt: data.created_at,
+    success: data.success,
+    actorName,
+    actorEmail,
+  };
+}
+
+/**
+ * Vedere READ-ONLY pentru administratorul agenției: statusul, eroarea afișabilă
+ * și datele care vor fi trimise. Fără jurnal, versiuni, corpuri de cerere sau chei.
+ */
+export type LaCheieAgencySelfView = {
+  status: LaCheieAgencyStatus;
+  statusLabel: string;
+  error: string | null;
+  canActivate: boolean;
+  suspended: boolean;
+  data: { name: string | null; adminEmail: string | null; phone: string | null; address: string | null };
+  missingFields: string[];
+  issues: string[];
+};
+
+export const getLaCheieAgencyStatusForAgency = createServerFn({ method: "POST" })
+  .middleware([requireActiveOrgAuth])
+  .inputValidator((input: unknown) =>
+    z.object({ organizationId: z.string().uuid().optional() }).parse(input ?? {}),
+  )
+  .handler(async ({ data, context }): Promise<LaCheieAgencySelfView> => {
+    const auth = context as unknown as AuthContext;
+    const organizationId = await requireLaCheieActivator(auth, data.organizationId ?? null);
+    const row = await connectionRow(organizationId);
+    const state = readLaCheieAgencyState((row?.settings ?? {}) as Record<string, unknown>);
+    const { built, adminEmail, issues } = await buildAgencyRegistration(
+      organizationId,
+      auth.userId,
+    );
+    const admin = await loadAdmin();
+    const { data: org } = await admin
+      .from("organizations")
+      .select("name, legal_name, phone, material_phone, material_address")
+      .eq("id", organizationId)
+      .maybeSingle();
+
+    return {
+      status: state.status,
+      statusLabel: LACHEIE_AGENCY_STATUS_LABEL[state.status],
+      error: state.error,
+      canActivate: canActivateLaCheieAgency(state.status) && built.ok,
+      suspended: state.status === "suspended",
+      data: {
+        name: org?.name ?? org?.legal_name ?? null,
+        adminEmail: adminEmail.ok ? adminEmail.email : null,
+        phone: org?.phone ?? org?.material_phone ?? null,
+        address: org?.material_address ?? null,
+      },
+      missingFields: built.ok
+        ? []
+        : built.missing.map((field) => LACHEIE_AGENCY_FIELD_LABEL[field] ?? field),
+      issues,
+    };
+  });
+
 
 export const getLaCheieState = createServerFn({ method: "POST" })
   .middleware([requireActiveOrgAuth])
   .inputValidator((input: unknown) => z.object({ organizationId: z.string().uuid() }).parse(input))
   .handler(async ({ data, context }): Promise<LaCheieState> => {
-    const organizationId = await requireSuperadminOrg(
+    const organizationId = await requireSuperadmin(
       context as unknown as AuthContext,
       data.organizationId,
     );
@@ -326,9 +469,10 @@ export const getLaCheieState = createServerFn({ method: "POST" })
       : (row?.last_sync_error ?? null);
 
     const { readLaCheieCatalog } = await import("@/lib/portals/lacheie/catalog.server");
-    const [catalog, agency] = await Promise.all([
+    const [catalog, agency, activationRequest] = await Promise.all([
       readLaCheieCatalog(admin, { organizationId, environment: settings.environment }),
       agencyView(organizationId, (context as unknown as AuthContext).userId),
+      lastActivationRequest(organizationId),
     ]);
 
     const [{ data: logs }, { data: versions }] = await Promise.all([
@@ -362,6 +506,7 @@ export const getLaCheieState = createServerFn({ method: "POST" })
         lastError,
       }),
       agency,
+      activationRequest,
       catalog: {
         fetchedAt: catalog?.fetchedAt ?? settings.catalogFetchedAt,
         optionGroups: catalog ? Object.keys(catalog.options).length : 0,
@@ -424,17 +569,27 @@ async function crmConfig(organizationId: string, agencyExternalId: string | null
  */
 export const activateLaCheieAgency = createServerFn({ method: "POST" })
   .middleware([requireActiveOrgAuth])
-  .inputValidator((input: unknown) => z.object({ organizationId: z.string().uuid() }).parse(input))
+  .inputValidator((input: unknown) =>
+    z
+      .object({ organizationId: z.string().uuid().optional() })
+      .parse(input ?? {}),
+  )
   .handler(async ({ data, context }) => {
     const auth = context as unknown as AuthContext;
-    const organizationId = await requireSuperadminOrg(auth, data.organizationId);
+    const organizationId = await requireLaCheieActivator(auth, data.organizationId ?? null);
     const admin = await loadAdmin();
+
+    // O cerere de activare la 30 secunde pe agenție (limită durabilă, din jurnal).
+    if (await activationTooSoon(organizationId)) {
+      throw new Error("O cerere de activare a fost trimisă acum. Reia în câteva secunde.");
+    }
 
     const row = await ensureConnectionRow(organizationId, auth.userId);
     const settings = (row.settings ?? {}) as Record<string, unknown>;
     const state = readLaCheieAgencyState(settings);
     const pending = readLaCheieAgencyPending(settings);
     if (!canActivateLaCheieAgency(state.status)) {
+
       throw new Error(
         "Agenția este suspendată administrativ de La Cheie; reactivarea nu este posibilă din CRM. Contactați La Cheie.",
       );
@@ -574,7 +729,7 @@ export const refreshLaCheieAgencyStatus = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => z.object({ organizationId: z.string().uuid() }).parse(input))
   .handler(async ({ data, context }) => {
     const auth = context as unknown as AuthContext;
-    const organizationId = await requireSuperadminOrg(auth, data.organizationId);
+    const organizationId = await requireSuperadmin(auth, data.organizationId);
     const row = await connectionRow(organizationId);
     const state = readLaCheieAgencyState((row?.settings ?? {}) as Record<string, unknown>);
     if (!state.externalId) throw new Error("Agenția nu este încă înregistrată la La Cheie.");
@@ -633,7 +788,7 @@ export const deactivateLaCheieAgency = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     const auth = context as unknown as AuthContext;
-    const organizationId = await requireSuperadminOrg(auth, data.organizationId);
+    const organizationId = await requireSuperadmin(auth, data.organizationId);
     const admin = await loadAdmin();
     const row = await connectionRow(organizationId);
     const settings = (row?.settings ?? {}) as Record<string, unknown>;
@@ -684,30 +839,29 @@ export const deactivateLaCheieAgency = createServerFn({ method: "POST" })
       },
       auth.userId,
     );
+    let localWithdrawError: string | null = null;
     if (ok && row) {
       await admin
         .from("portal_connections")
         .update({ status: "disabled", activated: false, updated_by: auth.userId })
         .eq("id", row.id);
       // Starea locală: ofertele acestei conexiuni sunt retrase, fără apeluri extra.
-      await Promise.all([
-        admin
-          .from("portal_listings")
-          .update({ status: "withdrawn", updated_by: auth.userId })
-          .eq("organization_id", organizationId)
-          .eq("portal", LACHEIE_PORTAL_KEY),
-        admin
-          .from("portal_publications")
-          .update({ status: "withdrawn", updated_by: auth.userId })
-          .eq("organization_id", organizationId)
-          .eq("portal_key", LACHEIE_PORTAL_KEY),
-      ]);
+      const { markLaCheieListingsWithdrawn } = await import(
+        "@/lib/portals/lacheie/withdraw.server"
+      );
+      const local = await markLaCheieListingsWithdrawn(
+        admin as never,
+        organizationId,
+        auth.userId,
+      );
+      localWithdrawError = local.error;
     }
+
     await logLaCheie({
       organizationId,
       operation: "agency_deactivate",
       success: ok,
-      errorMessage: message,
+      errorMessage: message ?? localWithdrawError,
       errorCode: ok ? null : (call.response.classification?.code ?? null),
       actorId: auth.userId,
       environment: LACHEIE_ENVIRONMENT,
@@ -719,10 +873,9 @@ export const deactivateLaCheieAgency = createServerFn({ method: "POST" })
       portalResponse: call.response.body,
     });
 
-
-
     if (!ok) throw new Error(message ?? "Dezactivarea conexiunii La Cheie a eșuat.");
-    return { status: result.status, version };
+    return { status: result.status, version, localWithdrawError };
+
 
   });
 
@@ -735,7 +888,7 @@ export const testLaCheieConnection = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => z.object({ organizationId: z.string().uuid() }).parse(input))
   .handler(async ({ data, context }) => {
     const auth = context as unknown as AuthContext;
-    const organizationId = await requireSuperadminOrg(auth, data.organizationId);
+    const organizationId = await requireSuperadmin(auth, data.organizationId);
     const { row, ctx } = await buildLaCheieContext(organizationId);
 
     const { portalRateLimited } = await import("@/lib/portals/rate-limit.server");
@@ -786,7 +939,7 @@ export const refreshLaCheieCatalog = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => z.object({ organizationId: z.string().uuid() }).parse(input))
   .handler(async ({ data, context }) => {
     const auth = context as unknown as AuthContext;
-    const organizationId = await requireSuperadminOrg(auth, data.organizationId);
+    const organizationId = await requireSuperadmin(auth, data.organizationId);
     const { ctx } = await buildLaCheieContext(organizationId);
     const settings = readLaCheieSettings(ctx.settings as Record<string, unknown>);
 

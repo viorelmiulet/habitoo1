@@ -5,6 +5,7 @@
  * și regresia „fără mediu de test”.
  */
 import { readFileSync } from "node:fs";
+import { markLaCheieListingsWithdrawn } from "@/lib/portals/lacheie/withdraw.server";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { PortalError } from "../../errors";
 import {
@@ -613,10 +614,170 @@ describe("La Cheie — răspunsurile PUT/DELETE /agencies", () => {
     ).toEqual({ ok: false, status: "active", keepPending: true });
   });
 
-  it("dezactivarea marchează local ofertele La Cheie ca retrase", () => {
-    const code = readFileSync("src/lib/portals/lacheie.functions.ts", "utf8");
-    expect(code).toContain('.from("portal_listings")');
-    expect(code).toContain('.from("portal_publications")');
-    expect(code).toContain('status: "withdrawn"');
+  it("dezactivarea marchează local ofertele La Cheie ca retrase (client simulat)", async () => {
+    const calls: { table: string; patch: Record<string, unknown>; filters: [string, unknown][] }[] =
+      [];
+    const client = {
+      from(table: string) {
+        const filters: [string, unknown][] = [];
+        let patch: Record<string, unknown> = {};
+        const chain = {
+          eq(column: string, value: unknown) {
+            filters.push([column, value]);
+            if (filters.length === 2) {
+              calls.push({ table, patch, filters });
+              return Promise.resolve({ error: null });
+            }
+            return chain;
+          },
+        };
+        return {
+          update(next: Record<string, unknown>) {
+            patch = next;
+            return chain as never;
+          },
+        };
+      },
+    };
+
+    const result = await markLaCheieListingsWithdrawn(client as never, ORG, "actor-1");
+    expect(result).toEqual({ ok: true, error: null });
+    expect(calls).toEqual([
+      {
+        table: "portal_listings",
+        patch: { status: "withdrawn", updated_by: "actor-1" },
+        filters: [
+          ["organization_id", ORG],
+          ["portal", "lacheie"],
+        ],
+      },
+      {
+        table: "portal_publications",
+        patch: { status: "withdrawn", updated_by: "actor-1" },
+        filters: [
+          ["organization_id", ORG],
+          ["portal_key", "lacheie"],
+        ],
+      },
+    ]);
+  });
+
+  it("erorile de la baza de date NU sunt ignorate", async () => {
+    const failing = {
+      from(table: string) {
+        const chain = {
+          eq(_column: string, _value: unknown) {
+            return table === "portal_listings"
+              ? Promise.resolve({ error: { message: "permission denied" } })
+              : chain;
+          },
+        };
+        return { update: () => ({ eq: () => chain as never }) };
+      },
+    };
+    const result = await markLaCheieListingsWithdrawn(failing as never, ORG, null);
+    expect(result.ok).toBe(false);
+    expect(result.error).toContain("permission denied");
+  });
+});
+
+
+describe("La Cheie — 409: conflict de versiune vs. conflict de asociere", () => {
+  it("un 409 de asociere care conține source_version NU este tratat ca versiune", () => {
+    const outcome = classifyLaCheieAgencyPut({
+      httpStatus: 409,
+      body: {
+        error: {
+          code: "agency_already_connected",
+          message: "Agenția are deja o conexiune individuală.",
+        },
+        source_version: 3,
+      },
+      previousStatus: "not_registered",
+    });
+    expect(outcome.versionConflict).toBe(false);
+    expect(outcome.status).toBe("error");
+    expect(outcome.message).toBe(LACHEIE_AGENCY_ASSOCIATION_CONFLICT_MESSAGE);
+  });
+
+  it("doar un cod de conflict de versiune (sau versiunea acceptată) permite reluarea", () => {
+    const byCode = classifyLaCheieAgencyPut({
+      httpStatus: 409,
+      body: { error: { code: "version_conflict" } },
+      previousStatus: "active",
+    });
+    expect(byCode.versionConflict).toBe(true);
+
+    const byAccepted = classifyLaCheieAgencyPut({
+      httpStatus: 409,
+      body: {},
+      conflictAcceptedVersion: "7",
+      previousStatus: "active",
+    });
+    expect(byAccepted.versionConflict).toBe(true);
+    expect(byAccepted.acceptedVersion).toBe("7");
+  });
+});
+
+describe("La Cheie — separarea drepturilor de acces", () => {
+  const code = readFileSync("src/lib/portals/lacheie.functions.ts", "utf8");
+  const fn = (name: string) => {
+    const start = code.indexOf(`export const ${name} = createServerFn`);
+    expect(start, name).toBeGreaterThan(-1);
+    const next = code.indexOf("export const ", start + 10);
+    return code.slice(start, next === -1 ? code.length : next);
+  };
+
+  it("activarea și starea proprie sunt permise administratorului agenției", () => {
+    for (const name of ["activateLaCheieAgency", "getLaCheieAgencyStatusForAgency"]) {
+      expect(fn(name), name).toContain("requireLaCheieActivator");
+      expect(fn(name), name).not.toContain("await requireSuperadmin(");
+    }
+  });
+
+  it("administrarea rămâne strict la Superadmin", () => {
+    for (const name of [
+      "getLaCheieState",
+      "refreshLaCheieAgencyStatus",
+      "deactivateLaCheieAgency",
+      "testLaCheieConnection",
+      "refreshLaCheieCatalog",
+    ]) {
+      expect(fn(name), name).toContain("requireSuperadmin(");
+      expect(fn(name), name).not.toContain("requireLaCheieActivator");
+    }
+  });
+
+  it("pentru non-superadmini agenția vine din sesiune, nu din datele clientului", () => {
+    const helper = code.slice(
+      code.indexOf("async function requireLaCheieActivator"),
+      code.indexOf("async function connectionRow"),
+    );
+    // Ramura non-superadmin folosește doar user_id-ul din sesiune.
+    const nonSuperadmin = helper.slice(helper.indexOf('.from("user_roles")'));
+    expect(nonSuperadmin).toContain('.eq("user_id", context.userId)');
+    expect(nonSuperadmin).toContain('.eq("role", "agency_admin")');
+    expect(nonSuperadmin).not.toContain("requestedOrganizationId");
+    // Un agent (fără rol de agency_admin) este refuzat explicit.
+    expect(helper).toContain("Acces refuzat");
+  });
+
+  it("starea pentru agenție nu expune jurnal, versiuni, corpuri sau chei", () => {
+    const self = fn("getLaCheieAgencyStatusForAgency");
+    for (const forbidden of [
+      "portal_operation_logs",
+      "portal_listing_versions",
+      "apiKey",
+      "credentials.server",
+      "bodyHash",
+      "acceptedVersion",
+    ]) {
+      expect(self, forbidden).not.toContain(forbidden);
+    }
+  });
+
+  it("activarea are limită de o cerere la 30 de secunde pe agenție", () => {
+    expect(fn("activateLaCheieAgency")).toContain("activationTooSoon");
+    expect(code).toContain("Date.now() - 30_000");
   });
 });
