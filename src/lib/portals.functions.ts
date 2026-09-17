@@ -1076,7 +1076,12 @@ export async function executeListingAction(input: {
         processed: result.data.processed ?? null,
         message: result.data.message ?? null,
       }
-    : { ok: false as const, code: result.code, message: result.message };
+    : {
+        ok: false as const,
+        code: result.code,
+        message: result.message,
+        retryAfterMs: result.retryAfterMs ?? null,
+      };
 }
 
 export const runPortalListingAction = createServerFn({ method: "POST" })
