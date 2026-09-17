@@ -103,7 +103,9 @@ export function classifyLaCheieStatus(input: {
     return {
       action: "stop",
       code: "NOT_FOUND",
-      message: "La Cheie nu a găsit resursa cerută. Verifică conexiunea agenției și anunțul.",
+      message:
+        "La Cheie nu a găsit oferta sau agenția în contextul acestei conexiuni. Verifică activarea agenției și identificatorul ofertei; cererea nu se reia automat.",
+
       waitMs: 0,
     };
   }
