@@ -39,17 +39,21 @@ async function runResend(maxItems: number) {
   const { executeListingAction } = await import("@/lib/portals.functions");
   const { readLaCheieAgencyState } = await import("@/lib/portals/lacheie/agency");
 
+  const nowIso = new Date().toISOString();
   const { data: jobs } = await supabaseAdmin
     .from("lacheie_resend_jobs")
     .select("id")
     .in("status", ["queued", "running"])
+    // Un job amânat după 429 nu se atinge până la momentul cerut de portal.
+    .or(`next_attempt_at.is.null,next_attempt_at.lte.${nowIso}`)
     .order("created_at", { ascending: true })
     .limit(MAX_JOBS_PER_TICK);
 
   const results: { jobId: string; status: string; sent: number; failed: number }[] = [];
   for (const job of jobs ?? []) {
-    const outcome = await processLaCheieResendJob(supabaseAdmin as never, job.id, {
+    const outcome = await processLaCheieResendJob(supabaseAdmin, job.id, {
       maxItems,
+      budgetMs: TICK_BUDGET_MS,
       agencyStatus: async (organizationId: string) => {
         const { data: row } = await supabaseAdmin
           .from("portal_connections")
