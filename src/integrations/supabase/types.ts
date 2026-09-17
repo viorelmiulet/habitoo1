@@ -6098,6 +6098,8 @@ export type Database = {
       impersonation_target: { Args: { _id: string }; Returns: string }
       is_org_admin: { Args: never; Returns: boolean }
       is_superadmin: { Args: never; Returns: boolean }
+      lacheie_resend_arm: { Args: never; Returns: undefined }
+      lacheie_resend_tick: { Args: never; Returns: undefined }
       mail_rate_limit_hit: {
         Args: { _bucket: string; _limit: number; _window_seconds: number }
         Returns: boolean
