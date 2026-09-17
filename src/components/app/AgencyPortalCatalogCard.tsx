@@ -14,6 +14,8 @@ import { InlineLoading } from "@/components/app/LoadingState";
 import { QueryError } from "@/components/app/QueryError";
 import { useCurrentUser } from "@/hooks/use-session";
 import { getAgencyPortalCatalog, requestPortalActivation } from "@/lib/portal-activation.functions";
+import { LaCheieActivationPanel } from "@/components/app/LaCheieActivationPanel";
+import { LACHEIE_PORTAL_KEY } from "@/lib/portals/lacheie/config";
 
 export function AgencyPortalCatalogCard() {
   const queryClient = useQueryClient();
@@ -140,7 +142,11 @@ export function AgencyPortalCatalogCard() {
                 ) : null}
 
                 <div className="mt-auto pt-1">
-                  {item.activated ? (
+                  {item.id === LACHEIE_PORTAL_KEY ? (
+                    // La Cheie aprobă automat cererile valide: activare directă,
+                    // fără coada de aprobare a Superadminului.
+                    <LaCheieActivationPanel />
+                  ) : item.activated ? (
                     <span className="text-xs text-muted-foreground">Disponibil în publicare</span>
                   ) : (
                     <Button
