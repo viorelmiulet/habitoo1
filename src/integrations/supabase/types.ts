@@ -2232,6 +2232,126 @@ export type Database = {
         }
         Relationships: []
       }
+      lacheie_resend_items: {
+        Row: {
+          attempts: number
+          created_at: string
+          error: string | null
+          external_id: string | null
+          id: string
+          job_id: string
+          organization_id: string
+          processed_at: string | null
+          property_id: string
+          status: string
+        }
+        Insert: {
+          attempts?: number
+          created_at?: string
+          error?: string | null
+          external_id?: string | null
+          id?: string
+          job_id: string
+          organization_id: string
+          processed_at?: string | null
+          property_id: string
+          status?: string
+        }
+        Update: {
+          attempts?: number
+          created_at?: string
+          error?: string | null
+          external_id?: string | null
+          id?: string
+          job_id?: string
+          organization_id?: string
+          processed_at?: string | null
+          property_id?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lacheie_resend_items_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "lacheie_resend_jobs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lacheie_resend_items_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lacheie_resend_items_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      lacheie_resend_jobs: {
+        Row: {
+          cancel_requested: boolean
+          created_at: string
+          failed: number
+          finished_at: string | null
+          id: string
+          last_error: string | null
+          organization_id: string
+          sent: number
+          started_at: string | null
+          started_by: string | null
+          status: string
+          total: number
+          updated_at: string
+          write_rate: number
+        }
+        Insert: {
+          cancel_requested?: boolean
+          created_at?: string
+          failed?: number
+          finished_at?: string | null
+          id?: string
+          last_error?: string | null
+          organization_id: string
+          sent?: number
+          started_at?: string | null
+          started_by?: string | null
+          status?: string
+          total?: number
+          updated_at?: string
+          write_rate?: number
+        }
+        Update: {
+          cancel_requested?: boolean
+          created_at?: string
+          failed?: number
+          finished_at?: string | null
+          id?: string
+          last_error?: string | null
+          organization_id?: string
+          sent?: number
+          started_at?: string | null
+          started_by?: string | null
+          status?: string
+          total?: number
+          updated_at?: string
+          write_rate?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lacheie_resend_jobs_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       lead_events: {
         Row: {
           actor_id: string | null
@@ -3691,6 +3811,7 @@ export type Database = {
           status: string
           updated_at: string
           updated_by: string | null
+          withdraw_reason: string | null
         }
         Insert: {
           created_at?: string
@@ -3707,6 +3828,7 @@ export type Database = {
           status?: string
           updated_at?: string
           updated_by?: string | null
+          withdraw_reason?: string | null
         }
         Update: {
           created_at?: string
@@ -3723,6 +3845,7 @@ export type Database = {
           status?: string
           updated_at?: string
           updated_by?: string | null
+          withdraw_reason?: string | null
         }
         Relationships: [
           {
@@ -3977,6 +4100,7 @@ export type Database = {
           status: string
           updated_at: string
           updated_by: string | null
+          withdraw_reason: string | null
         }
         Insert: {
           created_at?: string
@@ -3992,6 +4116,7 @@ export type Database = {
           status?: string
           updated_at?: string
           updated_by?: string | null
+          withdraw_reason?: string | null
         }
         Update: {
           created_at?: string
@@ -4007,6 +4132,7 @@ export type Database = {
           status?: string
           updated_at?: string
           updated_by?: string | null
+          withdraw_reason?: string | null
         }
         Relationships: [
           {

@@ -6,6 +6,7 @@
  * ambele tabele au `updated_by`. Erorile sunt returnate, nu ignorate.
  */
 import { LACHEIE_PORTAL_KEY } from "@/lib/portals/lacheie/config";
+import { LACHEIE_WITHDRAW_REASON } from "@/lib/portals/lacheie/resend";
 
 type UpdateResult = { error: { message: string } | null };
 
@@ -24,7 +25,15 @@ export async function markLaCheieListingsWithdrawn(
   organizationId: string,
   actorId: string | null,
 ): Promise<{ ok: boolean; error: string | null }> {
-  const patch = { status: "withdrawn", updated_by: actorId };
+  /**
+   * Motivul retragerii este esențial: doar ofertele retrase de dezactivare se
+   * retrimit la reactivare; cele retrase de un om rămân retrase.
+   */
+  const patch = {
+    status: "withdrawn",
+    withdraw_reason: LACHEIE_WITHDRAW_REASON.agencyDeactivated,
+    updated_by: actorId,
+  };
   const [listings, publications] = await Promise.all([
     client
       .from("portal_listings")

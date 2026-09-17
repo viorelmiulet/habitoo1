@@ -929,3 +929,85 @@ export const refreshLaCheieCatalog = createServerFn({ method: "POST" })
     if (!result.ok) throw new Error(result.message);
     return { fetchedAt: result.catalog.fetchedAt, counts: result.counts };
   });
+
+/* ---------------- retrimiterea portofoliului după reactivare --------------- */
+
+/**
+ * Reactivarea agenției NU republică ofertele: fiecare ofertă trebuie retrimisă
+ * ca stare completă, cu o versiune mai mare. Retrimiterea este declanșată
+ * EXPLICIT de un om (Superadmin sau administratorul agenției, pentru agenția
+ * lui) și se execută în worker, nu în browser.
+ */
+export const startLaCheieResend = createServerFn({ method: "POST" })
+  .middleware([requireActiveOrgAuth])
+  .inputValidator((input: unknown) =>
+    z.object({ organizationId: z.string().uuid().optional() }).parse(input ?? {}),
+  )
+  .handler(async ({ data, context }) => {
+    const auth = context as unknown as AuthContext;
+    const organizationId = await requireLaCheieActivator(auth, data.organizationId ?? null);
+    const row = await connectionRow(organizationId);
+    const state = readLaCheieAgencyState((row?.settings ?? {}) as Record<string, unknown>);
+    if (state.status !== "active") {
+      throw new Error(
+        "Agenția trebuie să fie activă la La Cheie înainte de retrimiterea portofoliului.",
+      );
+    }
+
+    const admin = await loadAdmin();
+    const { startLaCheieResendJob, fetchLaCheieWriteRate } = await import(
+      "@/lib/portals/lacheie/resend.server"
+    );
+    const writeRate = await fetchLaCheieWriteRate(
+      await crmConfig(organizationId, state.externalId),
+    );
+    const job = await startLaCheieResendJob(admin as never, {
+      organizationId,
+      startedBy: auth.userId,
+      writeRate,
+    });
+    await logLaCheie({
+      organizationId,
+      operation: "agency_resend_start",
+      success: true,
+      actorId: auth.userId,
+      environment: LACHEIE_ENVIRONMENT,
+      externalId: state.externalId,
+    });
+    return { jobId: job.jobId, total: job.total, writeRate };
+  });
+
+/** Progresul retrimiterii; supraviețuiește reîncărcărilor de pagină. */
+export const getLaCheieResendStatus = createServerFn({ method: "POST" })
+  .middleware([requireActiveOrgAuth])
+  .inputValidator((input: unknown) =>
+    z.object({ organizationId: z.string().uuid().optional() }).parse(input ?? {}),
+  )
+  .handler(async ({ data, context }) => {
+    const auth = context as unknown as AuthContext;
+    const organizationId = await requireLaCheieActivator(auth, data.organizationId ?? null);
+    const admin = await loadAdmin();
+    const { readLaCheieResendProgress } = await import("@/lib/portals/lacheie/resend.server");
+    return await readLaCheieResendProgress(admin as never, organizationId);
+  });
+
+export const cancelLaCheieResend = createServerFn({ method: "POST" })
+  .middleware([requireActiveOrgAuth])
+  .inputValidator((input: unknown) =>
+    z.object({ organizationId: z.string().uuid().optional() }).parse(input ?? {}),
+  )
+  .handler(async ({ data, context }) => {
+    const auth = context as unknown as AuthContext;
+    const organizationId = await requireLaCheieActivator(auth, data.organizationId ?? null);
+    const admin = await loadAdmin();
+    const { requestLaCheieResendCancel } = await import("@/lib/portals/lacheie/resend.server");
+    const result = await requestLaCheieResendCancel(admin as never, organizationId);
+    await logLaCheie({
+      organizationId,
+      operation: "agency_resend_cancel",
+      success: true,
+      actorId: auth.userId,
+      environment: LACHEIE_ENVIRONMENT,
+    });
+    return result;
+  });
