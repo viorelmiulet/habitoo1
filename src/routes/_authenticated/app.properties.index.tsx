@@ -22,6 +22,7 @@ import { PropertyPortalsCell, usePropertyPortals } from "@/components/app/Proper
 import { PropertyCard, type PropertyCardRow } from "@/components/app/PropertyCard";
 import { useServerFn } from "@tanstack/react-start";
 import { archiveProperty, unarchiveProperty } from "@/lib/property-archive.functions";
+import { reassignPropertyAgent } from "@/lib/property-agent.functions";
 import { PropertyThumb, usePropertyCovers } from "@/components/app/PropertyThumb";
 import { StatusBadge } from "@/components/app/StatusBadge";
 import { EmptyState } from "@/components/app/EmptyState";

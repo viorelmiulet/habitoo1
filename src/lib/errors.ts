@@ -1,4 +1,6 @@
 import { toast } from "@/components/ui/sonner";
+import { humanizeSlotGuardError } from "@/lib/portals/slots";
+import { portalDisplayName } from "@/lib/portals/registry";
 
 /**
  * Transformă erorile tehnice (Supabase / Postgres / rețea) în mesaje clare
