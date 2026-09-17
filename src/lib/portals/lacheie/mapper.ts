@@ -312,6 +312,12 @@ function nonNegativeInt(value: unknown): number | null {
   return Math.round(value);
 }
 
+/** Suprafață pozitivă, păstrată cu zecimale (se trimite ca șir „72.00”). */
+function positiveNumber(value: unknown): number | null {
+  if (typeof value !== "number" || !Number.isFinite(value) || value <= 0) return null;
+  return value;
+}
+
 /** Id-uri de catalog (pk): întregi pozitivi, unici, în ordinea primită. */
 function cleanIdList(values: number[] | undefined, limit = 30): number[] {
   const out: number[] = [];
