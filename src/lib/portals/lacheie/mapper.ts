@@ -214,6 +214,14 @@ export function sanitizeLaCheieImages(urls: (string | null | undefined)[]): Imag
       rejected.push({ url: value, reason: "conține fragment (#)" });
       continue;
     }
+    if (value.length > LACHEIE_MAX_IMAGE_URL_LENGTH) {
+      rejected.push({
+        url: value,
+        reason: `depășește ${LACHEIE_MAX_IMAGE_URL_LENGTH} de caractere`,
+      });
+      continue;
+    }
+
     let parsed: URL;
     try {
       parsed = new URL(value);
