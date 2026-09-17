@@ -37,7 +37,7 @@ export function LaCheieActivationPanel({ organizationId }: { organizationId: str
   });
 
   const request = useMutation({
-    mutationFn: () => activate({ data: {} }),
+    mutationFn: () => activate({ data: { organizationId } }),
     onSuccess: (result) => {
       toast.success(
         result.reactivated
