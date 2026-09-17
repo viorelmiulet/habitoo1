@@ -237,6 +237,24 @@ export type ResendActionResult =
   | { ok: true }
   | { ok: false; code: string; message: string; retryAfterMs?: number | null };
 
+/**
+ * Traduce rezultatul fluxului normal de publicare în rezultatul retrimiterii,
+ * păstrând Retry-After raportat de portal (worker-ul amână jobul exact atât).
+ */
+export function resendActionFromListingResult(
+  result:
+    | { ok: true }
+    | { ok: false; code: string; message: string; retryAfterMs?: number | null },
+): ResendActionResult {
+  if (result.ok) return { ok: true };
+  return {
+    ok: false,
+    code: result.code,
+    message: result.message,
+    retryAfterMs: result.retryAfterMs ?? null,
+  };
+}
+
 export type ProcessResendDeps = {
   /** Retrimiterea reală: fluxul normal de actualizare al portalului. */
   executeAction: (input: {
