@@ -74,15 +74,8 @@ async function runResend(maxItems: number) {
           action: "update",
           operationLabel: "agency_resend",
         });
-        return result.ok
-          ? { ok: true as const }
-          : {
-              ok: false as const,
-              code: result.code,
-              message: result.message,
-              // Retry-After raportat de portal, ca amânarea să fie exactă.
-              retryAfterMs: result.retryAfterMs ?? null,
-            };
+        // Retry-After raportat de portal ajunge la worker, ca amânarea să fie exactă.
+        return resendActionFromListingResult(result);
       },
     });
     results.push({
