@@ -362,6 +362,11 @@ export async function processLaCheieResendJob(
   let finalStatus: LaCheieResendJobStatus | null = null;
 
   while (processed < maxItems) {
+    if (remaining() <= 0) {
+      // Bugetul rulării s-a epuizat: jobul rămâne în lucru, blocarea se eliberează.
+      stopped = LACHEIE_RESEND_BUDGET_MESSAGE;
+      break;
+    }
     // Anularea este citită la fiecare pas: se opreșteodată cerută.
     const { data: fresh } = await admin
       .from(JOB_TABLE)
