@@ -993,6 +993,15 @@ export async function executeListingAction(input: {
     : status === "error"
       ? (result.data.message ?? "Portalul a raportat o problemă la acest anunț.")
       : null;
+  /**
+   * Motivul retragerii: o retragere cerută de un om rămâne „user” și nu se
+   * retrimite automat niciodată; o publicare/actualizare reușită îl șterge.
+   */
+  const withdrawReasonPatch = !result.ok
+    ? {}
+    : action === "withdraw"
+      ? { withdraw_reason: "user" }
+      : { withdraw_reason: null };
   const patch: Record<string, unknown> = {
     organization_id: organizationId,
     portal: definition.id,
@@ -1005,6 +1014,7 @@ export async function executeListingAction(input: {
     ...(result.ok && result.data.publicUrl ? { public_url: result.data.publicUrl } : {}),
 
     ...(result.ok && action === "publish" ? { published_at: now } : {}),
+    ...withdrawReasonPatch,
     updated_by: actorId,
   };
   if (listing)
