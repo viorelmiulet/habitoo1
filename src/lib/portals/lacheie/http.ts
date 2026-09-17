@@ -173,3 +173,22 @@ export function describeLaCheieValidation(body: unknown): string | null {
   }
   return parts.length ? parts.join("; ") : null;
 }
+
+/**
+ * 409 pe o ofertă: distinge conflictul de versiune de un conflict de ASOCIERE
+ * (ofertă/agent care necesită verificare la La Cheie). Documentația cere ca al
+ * doilea caz să NU fie reluat: furnizorul contactează La Cheie.
+ */
+export function isLaCheieAssociationConflict(body: unknown): boolean {
+  const root = body && typeof body === "object" ? (body as Record<string, unknown>) : null;
+  if (!root) return false;
+  const error = (root["error"] ?? {}) as Record<string, unknown>;
+  const code = String(error["code"] ?? root["code"] ?? "").toLowerCase();
+  const message = String(error["message"] ?? root["message"] ?? root["detail"] ?? "").toLowerCase();
+  if (/version/.test(code)) return false;
+  const associationCode = /(association|associat|conflict_agent|agent|offer_conflict|account)/.test(
+    code,
+  );
+  const associationMessage = /(asocier|associat|agent|cont |account)/.test(message);
+  return associationCode || associationMessage;
+}
