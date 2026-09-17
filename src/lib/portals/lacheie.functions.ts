@@ -961,7 +961,7 @@ export const startLaCheieResend = createServerFn({ method: "POST" })
     const writeRate = await fetchLaCheieWriteRate(
       await crmConfig(organizationId, state.externalId),
     );
-    const job = await startLaCheieResendJob(admin as never, {
+    const job = await startLaCheieResendJob(admin, {
       organizationId,
       startedBy: auth.userId,
       writeRate,
@@ -988,7 +988,7 @@ export const getLaCheieResendStatus = createServerFn({ method: "POST" })
     const organizationId = await requireLaCheieActivator(auth, data.organizationId ?? null);
     const admin = await loadAdmin();
     const { readLaCheieResendProgress } = await import("@/lib/portals/lacheie/resend.server");
-    return await readLaCheieResendProgress(admin as never, organizationId);
+    return await readLaCheieResendProgress(admin, organizationId);
   });
 
 export const cancelLaCheieResend = createServerFn({ method: "POST" })
@@ -1001,7 +1001,7 @@ export const cancelLaCheieResend = createServerFn({ method: "POST" })
     const organizationId = await requireLaCheieActivator(auth, data.organizationId ?? null);
     const admin = await loadAdmin();
     const { requestLaCheieResendCancel } = await import("@/lib/portals/lacheie/resend.server");
-    const result = await requestLaCheieResendCancel(admin as never, organizationId);
+    const result = await requestLaCheieResendCancel(admin, organizationId);
     await logLaCheie({
       organizationId,
       operation: "agency_resend_cancel",
