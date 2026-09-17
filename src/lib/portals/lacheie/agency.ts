@@ -420,16 +420,27 @@ export type LaCheieAgencyOutcome = {
   versionConflict: boolean;
 };
 
-function mentionsVersion(body: unknown): boolean {
-  const serialized = (() => {
-    try {
-      return typeof body === "string" ? body : JSON.stringify(body ?? "");
-    } catch {
-      return "";
-    }
-  })().toLowerCase();
-  return serialized.includes("version") || serialized.includes("versiun");
+/**
+ * Codurile prin care La Cheie semnalează un conflict de VERSIUNE. Nu se caută
+ * cuvântul „version” în corp: un conflict de asociere poate conține `source_version`
+ * fără să fie un conflict de versiune.
+ */
+const LACHEIE_VERSION_CONFLICT_CODES = new Set([
+  "version_conflict",
+  "source_version_conflict",
+  "stale_version",
+  "outdated_version",
+  "invalid_source_version",
+]);
+
+function versionConflictCode(body: unknown): boolean {
+  if (!body || typeof body !== "object") return false;
+  const error = (body as { error?: unknown }).error;
+  const code =
+    error && typeof error === "object" ? (error as { code?: unknown }).code : undefined;
+  return typeof code === "string" && LACHEIE_VERSION_CONFLICT_CODES.has(code.toLowerCase());
 }
+
 
 /** Interpretează `PUT /agencies/{external_id}` conform contractului v1. */
 export function classifyLaCheieAgencyPut(input: {
