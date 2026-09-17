@@ -30,8 +30,16 @@ import {
   LACHEIE_AGENCY_STATUS_LABEL,
   buildLaCheieAgencyPayload,
   canActivateLaCheieAgency,
+  classifyLaCheieAgencyPut,
+  isLaCheieAgencyReactivation,
+  laCheieAgencyBodyHash,
   laCheieAgencyExternalId,
+  laCheieAgencyPendingCleared,
+  laCheieAgencyPendingPatch,
+  laCheieAgencyStatusAfterDelete,
   nextLaCheieAgencyVersion,
+  planLaCheieAgencyOperation,
+  readLaCheieAgencyPending,
   readLaCheieAgencyState,
   type LaCheieAgencyStatus,
 } from "@/lib/portals/lacheie/agency";
@@ -48,12 +56,27 @@ async function loadAdmin() {
   return supabaseAdmin;
 }
 
+/**
+ * Integrarea se administrează de Superadmin sau de un `agency_admin` al agenției
+ * respective (acesta declanșează „Solicită activarea LaCheie.ro”).
+ */
 async function requireSuperadminOrg(context: AuthContext, organizationId: string): Promise<string> {
-  const { data } = await context.supabase.rpc("is_superadmin");
-  if (data !== true) {
-    throw new Error("Acces refuzat: integrarea La Cheie se gestionează doar de Superadmin.");
-  }
   const admin = await loadAdmin();
+  const { data: superadmin } = await context.supabase.rpc("is_superadmin");
+  if (superadmin !== true) {
+    const { data: role } = await admin
+      .from("user_roles")
+      .select("id")
+      .eq("organization_id", organizationId)
+      .eq("user_id", context.userId)
+      .eq("role", "agency_admin")
+      .maybeSingle();
+    if (!role) {
+      throw new Error(
+        "Acces refuzat: integrarea La Cheie se gestionează de Superadmin sau de administratorul agenției.",
+      );
+    }
+  }
   const { data: org } = await admin
     .from("organizations")
     .select("id")
@@ -62,6 +85,7 @@ async function requireSuperadminOrg(context: AuthContext, organizationId: string
   if (!org) throw new Error("Agenția nu a fost găsită.");
   return org.id;
 }
+
 
 async function connectionRow(organizationId: string) {
   const admin = await loadAdmin();
