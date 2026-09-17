@@ -24,7 +24,9 @@ import {
 } from "@/lib/portals/lacheie/resend";
 import { markLaCheieListingsWithdrawn } from "@/lib/portals/lacheie/withdraw.server";
 import {
+  LACHEIE_RESEND_ARM_FAILED_MESSAGE,
   LACHEIE_RESEND_DEFERRED_MESSAGE,
+
   LACHEIE_RESEND_LOCKED_MESSAGE,
   collectLaCheieResendCandidates,
   processLaCheieResendJob,
@@ -221,6 +223,26 @@ function jobDb(properties: string[]) {
 }
 
 describe("La Cheie — jobul de retrimitere", () => {
+  it("dacă worker-ul nu poate fi programat, jobul este marcat eșuat și eroarea se vede", async () => {
+    const { admin, db } = jobDb(["p1"]);
+    const client = admin as unknown as {
+      rpc: (name: string, params: Record<string, unknown>) => Promise<unknown>;
+    };
+    const originalRpc = client.rpc.bind(client);
+    client.rpc = async (name, params) =>
+      name === "lacheie_resend_arm"
+        ? { data: null, error: { message: "cron indisponibil" } }
+        : originalRpc(name, params);
+
+    await expect(
+      startLaCheieResendJob(admin, { organizationId: ORG, startedBy: "u" }),
+    ).rejects.toThrow(LACHEIE_RESEND_ARM_FAILED_MESSAGE);
+    const job = db["lacheie_resend_jobs"]![0]!;
+    expect(job["status"]).toBe("failed");
+    expect(job["last_error"]).toBe(LACHEIE_RESEND_ARM_FAILED_MESSAGE);
+  });
+
+
   it("un singur job activ pe agenție", async () => {
     const { admin } = jobDb(["p1", "p2"]);
     const first = await startLaCheieResendJob(admin, { organizationId: ORG, startedBy: "u" });
