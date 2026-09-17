@@ -12,6 +12,8 @@ export const LACHEIE_WITHDRAW_REASON = {
   user: "user",
   /** Retragere provocată de dezactivarea conexiunii — se retrimite la reactivare. */
   agencyDeactivated: "agency_deactivated",
+  /** Retragere provocată de reducerea locurilor de publicare — NU se retrimite. */
+  slotLimit: "slot_limit",
 } as const;
 
 export type LaCheieWithdrawReason =
@@ -29,6 +31,8 @@ export type LaCheieResendCandidate = {
  */
 export function shouldResendLaCheiePublication(candidate: LaCheieResendCandidate): boolean {
   if (candidate.withdrawReason === LACHEIE_WITHDRAW_REASON.user) return false;
+  // Locurile reduse au retras oferta intenționat: retrimiterea nu o readuce.
+  if (candidate.withdrawReason === LACHEIE_WITHDRAW_REASON.slotLimit) return false;
   if (candidate.withdrawReason === LACHEIE_WITHDRAW_REASON.agencyDeactivated) return true;
   return candidate.enabled === true;
 }
