@@ -836,7 +836,13 @@ export type ListingActionResult =
       processed: number | null;
       message: string | null;
     }
-  | { ok: false; code: string; message: string };
+  | {
+      ok: false;
+      code: string;
+      message: string;
+      /** Retry-After propagat mai departe (retrimiterea portofoliului îl folosește). */
+      retryAfterMs?: number | null;
+    };
 
 /**
  * Nucleul unei operațiuni pe o ofertă. Refolosit de acțiunea individuală și de
