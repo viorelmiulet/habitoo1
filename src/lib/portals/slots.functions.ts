@@ -7,9 +7,14 @@ import { z } from "zod";
 
 import { requireActiveOrgAuth } from "@/lib/org-access";
 import { portalDisplayName, getPortalDefinition } from "@/lib/portals/registry";
-import { resolvePublishingOrg, type AuthContext } from "@/lib/portals.functions";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { allocationFor, remainingSlots } from "@/lib/portals/slots";
-import { loadPortalSlotState, logSlotAllocationChange } from "@/lib/portals/slots.server";
+import {
+  loadMyPortalSlot,
+  loadPortalSlotState,
+  logSlotAllocationChange,
+  requireSlotAdminOrg,
+} from "@/lib/portals/slots.server";
 
 async function loadAdmin() {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -28,10 +33,8 @@ export const getPortalSlotOverview = createServerFn({ method: "POST" })
       .parse(input),
   )
   .handler(async ({ data, context }) => {
-    const { organizationId } = await resolvePublishingOrg(
-      context as unknown as AuthContext,
-      data.organizationId,
-    );
+    // Doar Superadmin sau administratorul acestei agenții; agenții sunt refuzați.
+    const organizationId = await requireSlotAdminOrg(context as never, data.organizationId ?? null);
     const definition = getPortalDefinition(data.portalId);
     if (!definition) throw new Error("Portal necunoscut.");
 
@@ -76,10 +79,8 @@ export const setPortalSlotTotal = createServerFn({ method: "POST" })
       .parse(input),
   )
   .handler(async ({ data, context }) => {
-    const { organizationId } = await resolvePublishingOrg(
-      context as unknown as AuthContext,
-      data.organizationId,
-    );
+    // Doar Superadmin sau administratorul acestei agenții; agenții sunt refuzați.
+    const organizationId = await requireSlotAdminOrg(context as never, data.organizationId ?? null);
     const definition = getPortalDefinition(data.portalId);
     if (!definition) throw new Error("Portal necunoscut.");
 
@@ -125,10 +126,8 @@ export const setPortalSlotAllocation = createServerFn({ method: "POST" })
       .parse(input),
   )
   .handler(async ({ data, context }) => {
-    const { organizationId } = await resolvePublishingOrg(
-      context as unknown as AuthContext,
-      data.organizationId,
-    );
+    // Doar Superadmin sau administratorul acestei agenții; agenții sunt refuzați.
+    const organizationId = await requireSlotAdminOrg(context as never, data.organizationId ?? null);
     const definition = getPortalDefinition(data.portalId);
     if (!definition) throw new Error("Portal necunoscut.");
 
@@ -170,4 +169,32 @@ export const setPortalSlotAllocation = createServerFn({ method: "POST" })
       next: data.slots,
     });
     return { ok: true as const, slots: data.slots };
+  });
+
+/**
+ * Cifrele PROPRII ale utilizatorului pe un portal — doar citire, doar rândul lui.
+ * Orice utilizator autentificat al agenției poate cere acest răspuns.
+ */
+export const getMyPortalSlot = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) => z.object({ portalId: portalKeySchema }).parse(input))
+  .handler(async ({ data, context }) => {
+    const definition = getPortalDefinition(data.portalId);
+    if (!definition) throw new Error("Portal necunoscut.");
+
+    // Agenția vine din profilul sesiunii, niciodată din input.
+    const { data: profile } = await context.supabase
+      .from("profiles")
+      .select("organization_id")
+      .eq("id", context.userId)
+      .maybeSingle();
+    if (!profile?.organization_id) throw new Error("Contul nu este asociat unei agenții.");
+
+    const admin = await loadAdmin();
+    const mine = await loadMyPortalSlot(admin, {
+      organizationId: profile.organization_id,
+      userId: context.userId,
+      portalKey: definition.id,
+    });
+    return { ...mine, portalName: portalDisplayName(definition.id as never) };
   });
