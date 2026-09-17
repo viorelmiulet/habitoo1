@@ -205,6 +205,8 @@ export type LaCheieAgencyState = {
   error: string | null;
 };
 
+export const LACHEIE_AGENCY_PENDING_KEY = "lacheie_agency_pending";
+
 export const LACHEIE_AGENCY_SETTINGS_KEYS = [
   "lacheie_agency_external_id",
   "lacheie_agency_status",
@@ -212,7 +214,9 @@ export const LACHEIE_AGENCY_SETTINGS_KEYS = [
   "lacheie_agency_accepted_version",
   "lacheie_agency_synced_at",
   "lacheie_agency_error",
+  LACHEIE_AGENCY_PENDING_KEY,
 ] as const;
+
 
 function statusOf(value: unknown): LaCheieAgencyStatus {
   const raw = text(value)?.toLowerCase();
