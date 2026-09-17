@@ -24,7 +24,11 @@ import {
 } from "@/lib/portals/lacheie/resend";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
-export type ResendAdmin = { from: (table: string) => any };
+export type ResendAdmin = {
+  from: (table: string) => any;
+  /** Preluarea/eliberarea atomică a jobului (funcții din bază, service_role). */
+  rpc: (name: string, params?: Record<string, unknown>) => any;
+};
 
 export type LaCheieResendJobRow = {
   id: string;
