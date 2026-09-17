@@ -449,17 +449,27 @@ async function crmConfig(organizationId: string, agencyExternalId: string | null
  */
 export const activateLaCheieAgency = createServerFn({ method: "POST" })
   .middleware([requireActiveOrgAuth])
-  .inputValidator((input: unknown) => z.object({ organizationId: z.string().uuid() }).parse(input))
+  .inputValidator((input: unknown) =>
+    z
+      .object({ organizationId: z.string().uuid().optional() })
+      .parse(input ?? {}),
+  )
   .handler(async ({ data, context }) => {
     const auth = context as unknown as AuthContext;
-    const organizationId = await requireLaCheieActivator(auth, data.organizationId);
+    const organizationId = await requireLaCheieActivator(auth, data.organizationId ?? null);
     const admin = await loadAdmin();
+
+    // O cerere de activare la 30 secunde pe agenție (limită durabilă, din jurnal).
+    if (await activationTooSoon(organizationId)) {
+      throw new Error("O cerere de activare a fost trimisă acum. Reia în câteva secunde.");
+    }
 
     const row = await ensureConnectionRow(organizationId, auth.userId);
     const settings = (row.settings ?? {}) as Record<string, unknown>;
     const state = readLaCheieAgencyState(settings);
     const pending = readLaCheieAgencyPending(settings);
     if (!canActivateLaCheieAgency(state.status)) {
+
       throw new Error(
         "Agenția este suspendată administrativ de La Cheie; reactivarea nu este posibilă din CRM. Contactați La Cheie.",
       );
