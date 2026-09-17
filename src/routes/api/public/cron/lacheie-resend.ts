@@ -35,7 +35,9 @@ async function authenticate(request: Request): Promise<Response | null> {
 
 async function runResend(maxItems: number) {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-  const { processLaCheieResendJob } = await import("@/lib/portals/lacheie/resend.server");
+  const { processLaCheieResendJob, resendActionFromListingResult } = await import(
+    "@/lib/portals/lacheie/resend.server"
+  );
   const { executeListingAction } = await import("@/lib/portals.functions");
   const { readLaCheieAgencyState } = await import("@/lib/portals/lacheie/agency");
 
