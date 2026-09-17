@@ -60,6 +60,11 @@ export type LaCheieResendItemRow = {
 const JOB_TABLE = "lacheie_resend_jobs";
 const ITEM_TABLE = "lacheie_resend_items";
 
+/** Mesajul arătat când worker-ul nu a putut fi programat. */
+export const LACHEIE_RESEND_ARM_FAILED_MESSAGE =
+  "Retrimiterea nu a putut fi programată. Încearcă din nou.";
+
+
 /* ----------------------------- ce se retrimite ---------------------------- */
 
 export async function collectLaCheieResendCandidates(
@@ -169,8 +174,21 @@ export async function startLaCheieResendJob(
   if (itemsError) throw new Error(itemsError.message);
   // Worker-ul se armează abia acum și se dezarmează singur când coada se golește:
   // nimic nu rulează periodic fără o retrimitere cerută de un om.
-  await admin.rpc("lacheie_resend_arm", {});
+  const { error: armError } = await admin.rpc("lacheie_resend_arm", {});
+  if (armError) {
+    // Fără worker programat, jobul ar rămâne în coadă pentru totdeauna.
+    await admin
+      .from(JOB_TABLE)
+      .update({
+        status: "failed",
+        last_error: LACHEIE_RESEND_ARM_FAILED_MESSAGE,
+        finished_at: new Date().toISOString(),
+      })
+      .eq("id", job.id);
+    throw new Error(LACHEIE_RESEND_ARM_FAILED_MESSAGE);
+  }
   return { jobId: job.id as string, total: propertyIds.length };
+
 }
 
 export async function requestLaCheieResendCancel(
