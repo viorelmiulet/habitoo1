@@ -196,9 +196,14 @@ export async function laCheieRequest(
   }
 
 
+  // Corpul este serializat O SINGURĂ dată: fiecare reîncercare trimite EXACT
+  // aceiași octeți (portalul compară `125000` și `"125000.00"` ca corpuri diferite).
+  const serializedBody = input.body === undefined ? undefined : JSON.stringify(input.body);
+
   const startedAt = Date.now();
   let attempt = 0;
   let last: LaCheieResponse | null = null;
+
 
   while (attempt < LACHEIE_MAX_ATTEMPTS) {
     attempt += 1;
