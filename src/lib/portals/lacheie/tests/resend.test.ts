@@ -254,29 +254,84 @@ describe("La Cheie — jobul de retrimitere", () => {
     expect(db["portal_publications"]!.every((row) => row["withdraw_reason"] === null)).toBe(true);
   });
 
-  it("la 429 așteaptă Retry-After și păstrează oferta în coadă", async () => {
-    const { admin } = jobDb(["p1"]);
+  it("la 429 amână jobul până la Retry-After și încheie rularea, fără să doarmă", async () => {
+    const { admin, db } = jobDb(["p1", "p2"]);
     const job = await startLaCheieResendJob(admin, { organizationId: ORG, startedBy: "u" });
     const waits: number[] = [];
-    let attempt = 0;
+    let calls = 0;
+    const now = Date.parse("2026-09-17T12:00:00.000Z");
     const outcome = await processLaCheieResendJob(admin, job.jobId, {
       executeAction: async () => {
-        attempt += 1;
-        return attempt === 1
-          ? {
-              ok: false as const,
-              code: "RATE_LIMIT",
-              message: "prea multe cereri",
-              retryAfterMs: 12_000,
-            }
-          : { ok: true as const };
+        calls += 1;
+        return {
+          ok: false as const,
+          code: "RATE_LIMIT",
+          message: "prea multe cereri",
+          retryAfterMs: 12_000,
+        };
       },
       agencyStatus: async () => "active",
       sleep: async (ms) => void waits.push(ms),
+      now: () => now,
     });
-    expect(waits).toContain(12_000);
-    expect(outcome.sent).toBe(1);
-    expect(outcome.status).toBe("done");
+    expect(calls).toBe(1);
+    expect(waits).toEqual([]);
+    expect(outcome.status).toBe("running");
+    expect(outcome.stopped).toBe(LACHEIE_RESEND_DEFERRED_MESSAGE);
+    const row = db["lacheie_resend_jobs"]![0]!;
+    expect(row["next_attempt_at"]).toBe(new Date(now + 12_000).toISOString());
+    expect(row["locked_until"]).toBeNull();
+    // Amânarea ține: o rulare imediată a worker-ului nu atinge jobul.
+    const skipped = await processLaCheieResendJob(admin, job.jobId, {
+      executeAction: async () => {
+        throw new Error("nu trebuie apelat");
+      },
+      agencyStatus: async () => "active",
+      sleep: async () => {},
+    });
+    expect(skipped.processed).toBe(0);
+  });
+
+  it("blocarea jobului împiedică procesarea dublă", async () => {
+    const { admin, db } = jobDb(["p1", "p2"]);
+    const job = await startLaCheieResendJob(admin, { organizationId: ORG, startedBy: "u" });
+    // Prima rulare ține jobul (blocare încă valabilă).
+    db["lacheie_resend_jobs"]![0]!["locked_until"] = new Date(Date.now() + 60_000).toISOString();
+    let calls = 0;
+    const outcome = await processLaCheieResendJob(admin, job.jobId, {
+      executeAction: async () => {
+        calls += 1;
+        return { ok: true as const };
+      },
+      agencyStatus: async () => "active",
+      sleep: async () => {},
+    });
+    expect(calls).toBe(0);
+    expect(outcome.processed).toBe(0);
+    expect(outcome.stopped).toBe(LACHEIE_RESEND_LOCKED_MESSAGE);
+  });
+
+  it("bugetul rulării se respectă: jobul rămâne în lucru, blocarea se eliberează", async () => {
+    const { admin, db } = jobDb(["p1", "p2", "p3"]);
+    const job = await startLaCheieResendJob(admin, {
+      organizationId: ORG,
+      startedBy: "u",
+      writeRate: 60,
+    });
+    let clock = 0;
+    const outcome = await processLaCheieResendJob(admin, job.jobId, {
+      executeAction: async () => {
+        clock += 900;
+        return { ok: true as const };
+      },
+      agencyStatus: async () => "active",
+      sleep: async () => {},
+      budgetMs: 1_500,
+      now: () => clock,
+    });
+    expect(outcome.status).toBe("running");
+    expect(outcome.sent).toBe(2);
+    expect(db["lacheie_resend_jobs"]![0]!["locked_until"]).toBeNull();
   });
 
   it("o ofertă respinsă nu oprește restul, iar jobul se încheie „done”", async () => {
