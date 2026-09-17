@@ -28,6 +28,7 @@ import { PortalsCard } from "@/components/superadmin/PortalsCard";
 import { LaCheieCard } from "@/components/superadmin/LaCheieCard";
 import { PortalActivationRequestsCard } from "@/components/superadmin/PortalActivationRequestsCard";
 import { PropertyPortalsCard } from "@/components/app/PropertyPortalsCard";
+import { PortalSlotsCard } from "@/components/app/PortalSlotsCard";
 import { listOrgPropertiesForPortals, listPortalOrganizations } from "@/lib/portals.functions";
 
 export const Route = createFileRoute("/_authenticated/superadmin/portals")({
@@ -136,6 +137,7 @@ function SuperadminPortalsPage() {
           />
           <PortalsCard organizationId={organizationId} />
           <LaCheieCard organizationId={organizationId} />
+          <PortalSlotsCard organizationId={organizationId} />
 
           <section className="panel">
             <header className="space-y-3 border-b border-border px-5 py-4">
