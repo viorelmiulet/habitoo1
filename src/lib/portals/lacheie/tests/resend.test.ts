@@ -19,6 +19,8 @@ import {
 } from "@/lib/portals/lacheie/resend";
 import { markLaCheieListingsWithdrawn } from "@/lib/portals/lacheie/withdraw.server";
 import {
+  LACHEIE_RESEND_DEFERRED_MESSAGE,
+  LACHEIE_RESEND_LOCKED_MESSAGE,
   collectLaCheieResendCandidates,
   processLaCheieResendJob,
   requestLaCheieResendCancel,
