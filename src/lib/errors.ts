@@ -14,6 +14,18 @@ export function friendlyError(
 
   if (!raw && !code) return fallback;
 
+  /**
+   * Plasa de siguranță din baza de date pentru locurile de publicare aruncă o
+   * excepție Postgres. Orice ecran care schimbă agentul responsabil (inclusiv
+   * scrierile directe) afișează în locul ei un mesaj clar, cu numele portalurilor.
+   */
+  const slotGuard = humanizeSlotGuardError(raw, (portalKey) =>
+    portalDisplayName(portalKey as never),
+  );
+  if (slotGuard) return slotGuard;
+
+
+
   if (code === "23505" || lower.includes("duplicate key")) {
     return "Există deja o înregistrare cu aceste date.";
   }
