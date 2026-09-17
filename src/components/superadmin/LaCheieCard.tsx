@@ -213,6 +213,17 @@ export function LaCheieCard({ organizationId }: { organizationId: string }) {
                 ? new Date(data.agency.syncedAt).toLocaleString("ro-RO")
                 : "niciodată"}
             </li>
+            {data.activationRequest ? (
+              <li>
+                Activare cerută de{" "}
+                {data.activationRequest.actorName ??
+                  data.activationRequest.actorEmail ??
+                  "utilizator necunoscut"}{" "}
+                la {new Date(data.activationRequest.requestedAt).toLocaleString("ro-RO")}
+                {data.activationRequest.success ? "" : " (eșuată)"}
+              </li>
+            ) : null}
+
             {data.agency.error ? (
               <li className="text-destructive">{data.agency.error}</li>
             ) : null}
