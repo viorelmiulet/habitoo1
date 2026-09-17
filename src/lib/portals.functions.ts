@@ -2009,7 +2009,8 @@ export async function applyPortalSelectionForOrg(input: {
         .eq("property_id", data.propertyId),
       admin
         .from("portal_listings")
-        .select("portal, status")
+        .select("portal, status, external_id")
+
         .eq("organization_id", organizationId)
         .eq("property_id", data.propertyId),
       admin
