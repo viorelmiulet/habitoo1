@@ -337,7 +337,7 @@ export const getLaCheieState = createServerFn({ method: "POST" })
   .middleware([requireActiveOrgAuth])
   .inputValidator((input: unknown) => z.object({ organizationId: z.string().uuid() }).parse(input))
   .handler(async ({ data, context }): Promise<LaCheieState> => {
-    const organizationId = await requireSuperadminOrg(
+    const organizationId = await requireSuperadmin(
       context as unknown as AuthContext,
       data.organizationId,
     );
@@ -452,7 +452,7 @@ export const activateLaCheieAgency = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => z.object({ organizationId: z.string().uuid() }).parse(input))
   .handler(async ({ data, context }) => {
     const auth = context as unknown as AuthContext;
-    const organizationId = await requireSuperadminOrg(auth, data.organizationId);
+    const organizationId = await requireLaCheieActivator(auth, data.organizationId);
     const admin = await loadAdmin();
 
     const row = await ensureConnectionRow(organizationId, auth.userId);
@@ -599,7 +599,7 @@ export const refreshLaCheieAgencyStatus = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => z.object({ organizationId: z.string().uuid() }).parse(input))
   .handler(async ({ data, context }) => {
     const auth = context as unknown as AuthContext;
-    const organizationId = await requireSuperadminOrg(auth, data.organizationId);
+    const organizationId = await requireSuperadmin(auth, data.organizationId);
     const row = await connectionRow(organizationId);
     const state = readLaCheieAgencyState((row?.settings ?? {}) as Record<string, unknown>);
     if (!state.externalId) throw new Error("Agenția nu este încă înregistrată la La Cheie.");
@@ -658,7 +658,7 @@ export const deactivateLaCheieAgency = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     const auth = context as unknown as AuthContext;
-    const organizationId = await requireSuperadminOrg(auth, data.organizationId);
+    const organizationId = await requireSuperadmin(auth, data.organizationId);
     const admin = await loadAdmin();
     const row = await connectionRow(organizationId);
     const settings = (row?.settings ?? {}) as Record<string, unknown>;
@@ -760,7 +760,7 @@ export const testLaCheieConnection = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => z.object({ organizationId: z.string().uuid() }).parse(input))
   .handler(async ({ data, context }) => {
     const auth = context as unknown as AuthContext;
-    const organizationId = await requireSuperadminOrg(auth, data.organizationId);
+    const organizationId = await requireSuperadmin(auth, data.organizationId);
     const { row, ctx } = await buildLaCheieContext(organizationId);
 
     const { portalRateLimited } = await import("@/lib/portals/rate-limit.server");
@@ -811,7 +811,7 @@ export const refreshLaCheieCatalog = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => z.object({ organizationId: z.string().uuid() }).parse(input))
   .handler(async ({ data, context }) => {
     const auth = context as unknown as AuthContext;
-    const organizationId = await requireSuperadminOrg(auth, data.organizationId);
+    const organizationId = await requireSuperadmin(auth, data.organizationId);
     const { ctx } = await buildLaCheieContext(organizationId);
     const settings = readLaCheieSettings(ctx.settings as Record<string, unknown>);
 
