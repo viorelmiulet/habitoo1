@@ -38,6 +38,25 @@ function fakeDb(tables: Record<string, Row[]>) {
   for (const [table, rows] of Object.entries(tables)) db[table] = rows.map((row) => ({ ...row }));
 
   const admin = {
+    /** Preluarea/eliberarea jobului, exact ca funcțiile din bază. */
+    async rpc(name: string, params: Record<string, unknown>) {
+      const job = db["lacheie_resend_jobs"]?.find((row) => row["id"] === params["_job_id"]);
+      if (name === "release_lacheie_resend_job") {
+        if (job) job["locked_until"] = null;
+        return { data: null, error: null };
+      }
+      if (!job) return { data: [], error: null };
+      const now = Date.now();
+      const locked =
+        typeof job["locked_until"] === "string" && Date.parse(job["locked_until"]) > now;
+      const deferred =
+        typeof job["next_attempt_at"] === "string" && Date.parse(job["next_attempt_at"]) > now;
+      const active = ["queued", "running"].includes(String(job["status"]));
+      if (locked || deferred || !active) return { data: [], error: null };
+      const ttl = Number(params["_ttl_seconds"] ?? 60);
+      job["locked_until"] = new Date(now + ttl * 1000).toISOString();
+      return { data: [{ ...job }], error: null };
+    },
     from(table: string) {
       db[table] ??= [];
       const eqs: [string, unknown][] = [];
