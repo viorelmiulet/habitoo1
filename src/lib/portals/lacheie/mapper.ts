@@ -149,11 +149,24 @@ export function laCheieExternalId(propertyId: string, transaction: LaCheieTransa
   return ascii.slice(0, LACHEIE_EXTERNAL_ID_MAX);
 }
 
+/**
+ * Format documentat: 1–64 caractere ASCII, litere/cifre/punct/underscore/cratimă,
+ * primul caracter literă sau cifră.
+ */
 export function isValidExternalId(value: string): boolean {
-  return (
-    value.length >= 1 && value.length <= LACHEIE_EXTERNAL_ID_MAX && /^[\x21-\x7e]+$/.test(value)
-  );
+  return value.length <= LACHEIE_EXTERNAL_ID_MAX && /^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$/.test(value);
 }
+
+/** Valoare zecimală stabilă, cu exact 2 zecimale (preț, suprafețe). */
+export function laCheieDecimal(value: number): string {
+  return value.toFixed(2);
+}
+
+/** Cifrele unui telefon, pentru validarea 7–15 cifre. */
+export function phoneDigitCount(value: string): number {
+  return (value.match(/\d/g) ?? []).length;
+}
+
 
 /** Elimină câmpurile necunoscute și cele interzise, raportând ce a scos. */
 export function stripUnknownFields(input: Record<string, unknown>): {
