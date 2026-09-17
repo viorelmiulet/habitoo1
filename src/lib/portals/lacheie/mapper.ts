@@ -351,8 +351,12 @@ export function buildLaCheieOffer(
     reasons.push(`Descrierea trebuie să aibă minimum ${LACHEIE_MIN_DESCRIPTION} caractere.`);
   }
 
-  const price = positiveInt(input.price);
-  if (price === null) reasons.push("Lipsește prețul sau nu este un număr pozitiv.");
+  const priceValue =
+    typeof input.price === "number" && Number.isFinite(input.price) && input.price > 0
+      ? input.price
+      : null;
+  if (priceValue === null) reasons.push("Lipsește prețul sau nu este un număr pozitiv.");
+
 
   const currency = (input.currency ?? "EUR").trim().toUpperCase() as LaCheieCurrency;
   if (!LACHEIE_CURRENCIES.includes(currency)) {
