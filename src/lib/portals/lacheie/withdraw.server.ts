@@ -24,7 +24,15 @@ export async function markLaCheieListingsWithdrawn(
   organizationId: string,
   actorId: string | null,
 ): Promise<{ ok: boolean; error: string | null }> {
-  const patch = { status: "withdrawn", updated_by: actorId };
+  /**
+   * Motivul retragerii este esențial: doar ofertele retrase de dezactivare se
+   * retrimit la reactivare; cele retrase de un om rămân retrase.
+   */
+  const patch = {
+    status: "withdrawn",
+    withdraw_reason: LACHEIE_WITHDRAW_REASON.agencyDeactivated,
+    updated_by: actorId,
+  };
   const [listings, publications] = await Promise.all([
     client
       .from("portal_listings")
