@@ -437,7 +437,9 @@ export function buildLaCheieOffer(
     external_id: externalId,
     title,
     description,
-    price,
+    // Preț ca șir cu 2 zecimale: corp identic la fiecare retrimitere.
+    price: laCheieDecimal(priceValue as number),
+
     currency,
     transaction_type: input.transaction,
     property_type: input.propertyTypeId,
