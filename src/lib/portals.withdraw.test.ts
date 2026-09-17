@@ -146,23 +146,21 @@ describe("retragerea la deselectare", () => {
   });
 
   it("deselectarea din listă retrage efectiv oferta de pe portal", async () => {
-    const { setPropertyPortalSelection } = await import("@/lib/portals.functions");
+    const { performPortalWithdraw } = await import("@/lib/portals.functions");
     listingStatus = "published";
-    const out = (await (
-      setPropertyPortalSelection as unknown as (a: {
-        data: unknown;
-        context: unknown;
-      }) => Promise<{ ok: boolean; attempted: boolean; withdrawn: boolean }>
-    )({
-      data: { propertyId, portalId: "lacheie", enabled: false },
-      context,
-    })) as { ok: boolean; attempted: boolean; withdrawn: boolean };
+    const out = await performPortalWithdraw({
+      organizationId: "org-1",
+      actorId: "user-1",
+      portalId: "lacheie",
+      propertyId,
+    });
 
     expect(withdrawCalls).toEqual(["LC-1"]);
     expect(out.attempted).toBe(true);
-    expect(out.withdrawn).toBe(true);
+    expect(out.alreadyWithdrawn).toBe(false);
     expect(out.ok).toBe(true);
   });
+
 
   it("statusul local pending/error nu împiedică apelul către portal", async () => {
     listingStatus = "error";
