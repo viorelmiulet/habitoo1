@@ -30,7 +30,7 @@ import {
   setPortalSlotAllocation,
   setPortalSlotTotal,
 } from "@/lib/portals/slots.functions";
-import { extractErrorMessage } from "@/lib/errors";
+import { toastError } from "@/lib/errors";
 
 type PlannedWithdrawal = {
   propertyId: string;
@@ -148,7 +148,7 @@ export function PortalSlotsCard({ organizationId }: { organizationId?: string })
       if (result.queueError) toast.error(result.queueError);
       refresh();
     } catch (error) {
-      toast.error(extractErrorMessage(error));
+      toastError(error);
     } finally {
       setBusy(false);
     }
@@ -172,7 +172,7 @@ export function PortalSlotsCard({ organizationId }: { organizationId?: string })
         return;
       }
     } catch (error) {
-      toast.error(extractErrorMessage(error));
+      toastError(error);
       setBusy(false);
       return;
     }

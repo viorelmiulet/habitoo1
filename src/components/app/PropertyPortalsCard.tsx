@@ -619,7 +619,7 @@ function MyPortalSlotLine({ portalId }: { portalId: string }) {
     retry: false,
   });
   if (!mine.data) return null;
-  const total = mine.data.total;
+  const total = mine.data.allocated;
   return (
     <p className="mt-2 text-xs text-muted-foreground">
       Locurile tale pe acest portal: {mine.data.used}
