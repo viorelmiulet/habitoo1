@@ -465,19 +465,21 @@ export function buildLaCheieOffer(
 
   if (input.category === "land") {
     // Documentația permite `area` = `land_area`, iar camere/băi/an pot fi 0.
-    draft["land_area"] = landArea;
-    draft["area"] = area ?? landArea;
+    // Suprafețele merg ca șir zecimal cu 2 zecimale, exact ca prețul.
+    draft["land_area"] = landArea === null ? null : laCheieDecimal(landArea);
+    const landDisplay = area ?? landArea;
+    draft["area"] = landDisplay === null ? null : laCheieDecimal(landDisplay);
     draft["bedrooms"] = bedrooms ?? 0;
     draft["bathrooms"] = bathrooms ?? 0;
     draft["year_built"] = yearBuilt ?? 0;
     draft["number_of_rooms"] = numberOfRooms ?? 0;
   } else {
-    draft["area"] = area;
+    draft["area"] = area === null ? null : laCheieDecimal(area);
     draft["bedrooms"] = bedrooms ?? 0;
     draft["bathrooms"] = bathrooms;
     draft["year_built"] = yearBuilt;
     draft["number_of_rooms"] = numberOfRooms ?? bedrooms ?? 0;
-    if (landArea !== null) draft["land_area"] = landArea;
+    if (landArea !== null) draft["land_area"] = laCheieDecimal(landArea);
   }
 
   const put = (key: string, value: unknown) => {
