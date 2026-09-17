@@ -457,11 +457,12 @@ export async function processLaCheieResendJob(
       })
       .eq("id", item.id);
     await admin.from(JOB_TABLE).update({ sent, failed }).eq("id", jobId);
-    await sleep(delay);
+    await sleep(Math.max(0, Math.min(delay, remaining())));
   }
 
   if (finalStatus === null) {
     // Bugetul rulării s-a epuizat: jobul rămâne „running”, worker-ul continuă.
+    await release();
     return { status: "running", sent, failed, processed, stopped };
   }
 
