@@ -839,13 +839,15 @@ export const deactivateLaCheieAgency = createServerFn({ method: "POST" })
       },
       auth.userId,
     );
+    let localWithdrawError: string | null = null;
     if (ok && row) {
       await admin
         .from("portal_connections")
         .update({ status: "disabled", activated: false, updated_by: auth.userId })
         .eq("id", row.id);
       // Starea locală: ofertele acestei conexiuni sunt retrase, fără apeluri extra.
-      await Promise.all([
+      // Coloane reale: `portal_listings.portal`, `portal_publications.portal_key`.
+      const [listings, publications] = await Promise.all([
         admin
           .from("portal_listings")
           .update({ status: "withdrawn", updated_by: auth.userId })
@@ -857,7 +859,14 @@ export const deactivateLaCheieAgency = createServerFn({ method: "POST" })
           .eq("organization_id", organizationId)
           .eq("portal_key", LACHEIE_PORTAL_KEY),
       ]);
+      const failures = [listings.error, publications.error]
+        .filter((error): error is { message: string } => Boolean(error))
+        .map((error) => error.message);
+      if (failures.length > 0) {
+        localWithdrawError = `Conexiunea a fost dezactivată la La Cheie, dar ofertele nu au putut fi marcate local ca retrase: ${failures.join("; ")}`;
+      }
     }
+
     await logLaCheie({
       organizationId,
       operation: "agency_deactivate",
