@@ -1038,6 +1038,7 @@ export async function executeListingAction(input: {
       last_synced_at: now,
       last_error: errorMessage,
       external_ref: result.ok && result.data.externalId ? result.data.externalId : null,
+      ...withdrawReasonPatch,
       updated_by: actorId,
     } as never)
     .eq("organization_id", organizationId)
