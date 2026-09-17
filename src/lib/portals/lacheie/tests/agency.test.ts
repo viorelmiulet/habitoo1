@@ -9,9 +9,17 @@ import { markLaCheieListingsWithdrawn } from "@/lib/portals/lacheie/withdraw.ser
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { PortalError } from "../../errors";
 import {
+  LACHEIE_ACCESS_ACTIVATOR_ONLY,
+  LACHEIE_ACCESS_SUPERADMIN_ONLY,
+  requireLaCheieActivator,
+  requireLaCheieSuperadmin,
+} from "../access.server";
+import {
+  LACHEIE_AGENCY_ALREADY_ACTIVE_MESSAGE,
   LACHEIE_AGENCY_ASSOCIATION_CONFLICT_MESSAGE,
   LACHEIE_AGENCY_FIELD_LABEL,
   LACHEIE_AGENCY_SUSPENDED_MESSAGE,
+  laCheieActivationBlockReason,
   buildLaCheieAgencyPayload,
   canActivateLaCheieAgency,
   classifyLaCheieAgencyPut,
