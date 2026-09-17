@@ -29,6 +29,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { PortalLogoStack } from "@/components/app/PortalLogo";
+import { getMyPortalSlot } from "@/lib/portals/slots.functions";
 import { PropertyImobiliarePromotionsCard } from "@/components/app/PropertyImobiliarePromotionsCard";
 import { BrandLogo } from "@/components/brand/BrandLogo";
 import { InlineLoading } from "@/components/app/LoadingState";
@@ -477,6 +478,9 @@ export const PropertyPortalsCard = forwardRef<
                 </div>
               ) : null}
 
+              {/* Cifrele proprii ale agentului pe acest portal — doar informativ. */}
+              <MyPortalSlotLine portalId={cell.portalId} />
+
               {/* Promovare, doar pentru Imobiliare.ro și doar când portalul e bifat. */}
               {cell.portalId === "imobiliare_ro" && value ? (
                 <PropertyImobiliarePromotionsCard
@@ -600,5 +604,27 @@ function StoriaAutoRenewControl({
           : " Anunțul expirat rămâne marcat expirat, fără republicare."}
       </p>
     </div>
+  );
+}
+
+/**
+ * Câte locuri de publicare are utilizatorul curent pe un portal: doar citire,
+ * doar rândul lui (fără totalul agenției și fără alți utilizatori).
+ */
+function MyPortalSlotLine({ portalId }: { portalId: string }) {
+  const loadMine = useServerFn(getMyPortalSlot);
+  const mine = useQuery({
+    queryKey: ["my-portal-slot", portalId],
+    queryFn: () => loadMine({ data: { portalId } }),
+    retry: false,
+  });
+  if (!mine.data) return null;
+  const total = mine.data.total;
+  return (
+    <p className="mt-2 text-xs text-muted-foreground">
+      Locurile tale pe acest portal: {mine.data.used}
+      {total === null ? " (nelimitat)" : ` / ${total}`}
+      {mine.data.agencyExhausted ? " — agenția nu mai are locuri libere." : ""}
+    </p>
   );
 }
