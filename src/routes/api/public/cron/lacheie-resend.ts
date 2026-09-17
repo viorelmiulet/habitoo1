@@ -97,7 +97,7 @@ export const Route = createFileRoute("/api/public/cron/lacheie-resend")({
   server: {
     handlers: {
       POST: async ({ request }) => {
-        const unauthorized = await authenticateCronRequest(request);
+        const unauthorized = await authenticate(request);
         if (unauthorized) return unauthorized;
         const payload = (await request.json().catch(() => ({}))) as { maxItems?: number };
         const maxItems = Math.max(1, Math.min(payload.maxItems ?? 25, 200));
