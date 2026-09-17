@@ -28,7 +28,7 @@ export type ResendAdmin = {
   from: (table: string) => any;
   /** Preluarea/eliberarea atomică a jobului (funcții din bază, service_role). */
   rpc: (
-    name: "claim_lacheie_resend_job" | "release_lacheie_resend_job",
+    name: "claim_lacheie_resend_job" | "release_lacheie_resend_job" | "lacheie_resend_arm",
     params: any,
   ) => any;
 };
