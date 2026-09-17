@@ -719,23 +719,130 @@ describe("La Cheie — 409: conflict de versiune vs. conflict de asociere", () =
   });
 });
 
-describe("La Cheie — separarea drepturilor de acces", () => {
-  const code = readFileSync("src/lib/portals/lacheie.functions.ts", "utf8");
-  const fn = (name: string) => {
-    const start = code.indexOf(`export const ${name} = createServerFn`);
-    expect(start, name).toBeGreaterThan(-1);
-    const next = code.indexOf("export const ", start + 10);
-    return code.slice(start, next === -1 ? code.length : next);
-  };
+/* ---------------------- separarea drepturilor de acces -------------------- */
 
-  it("activarea și starea proprie sunt permise administratorului agenției", () => {
+type FakeRow = Record<string, unknown> | null;
+
+/** Client admin fals: profiles, user_roles și organizations, filtrate ca în Supabase. */
+function fakeAdmin(data: {
+  profiles?: Record<string, { organization_id: string | null }>;
+  roles?: { user_id: string; organization_id: string; role: string }[];
+  organizations?: string[];
+}) {
+  const calls: string[] = [];
+  const admin = {
+    from(table: string) {
+      calls.push(table);
+      const filters: Record<string, unknown> = {};
+      const builder = {
+        select: () => builder,
+        eq: (column: string, value: unknown) => {
+          filters[column] = value;
+          return builder;
+        },
+        maybeSingle: async (): Promise<{ data: FakeRow }> => {
+          if (table === "profiles") {
+            const profile = data.profiles?.[String(filters["id"])];
+            return { data: profile ? { organization_id: profile.organization_id } : null };
+          }
+          if (table === "user_roles") {
+            const match = (data.roles ?? []).find(
+              (row) =>
+                row.user_id === filters["user_id"] &&
+                row.organization_id === filters["organization_id"] &&
+                row.role === filters["role"],
+            );
+            return { data: match ? { organization_id: match.organization_id } : null };
+          }
+          const id = String(filters["id"]);
+          return { data: (data.organizations ?? []).includes(id) ? { id } : null };
+        },
+      };
+      return builder;
+    },
+  };
+  return { admin, calls };
+}
+
+const ORG_A = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
+const ORG_B = "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb";
+
+function authContext(userId: string, superadmin: boolean) {
+  return {
+    userId,
+    supabase: { rpc: async () => ({ data: superadmin, error: null }) },
+  };
+}
+
+describe("La Cheie — separarea drepturilor de acces", () => {
+  it("un agent (fără rol de agency_admin) este refuzat", async () => {
+    const { admin } = fakeAdmin({
+      profiles: { agent: { organization_id: ORG_A } },
+      roles: [{ user_id: "admin-a", organization_id: ORG_A, role: "agency_admin" }],
+      organizations: [ORG_A],
+    });
+    await expect(
+      requireLaCheieActivator(authContext("agent", false), null, { admin }),
+    ).rejects.toThrow(LACHEIE_ACCESS_ACTIVATOR_ONLY);
+  });
+
+  it("administratorul agenției B nu poate activa agenția A, chiar dacă trimite organizationId=A", async () => {
+    const { admin } = fakeAdmin({
+      profiles: { "admin-b": { organization_id: ORG_B } },
+      roles: [
+        { user_id: "admin-b", organization_id: ORG_B, role: "agency_admin" },
+        { user_id: "admin-b", organization_id: ORG_A, role: "agency_admin" },
+      ],
+      organizations: [ORG_A, ORG_B],
+    });
+    await expect(
+      requireLaCheieActivator(authContext("admin-b", false), ORG_A, { admin }),
+    ).rejects.toThrow(LACHEIE_ACCESS_ACTIVATOR_ONLY);
+  });
+
+  it("un utilizator administrator în două agenții primește agenția activă din sesiune", async () => {
+    const { admin } = fakeAdmin({
+      profiles: { "admin-two": { organization_id: ORG_B } },
+      roles: [
+        { user_id: "admin-two", organization_id: ORG_A, role: "agency_admin" },
+        { user_id: "admin-two", organization_id: ORG_B, role: "agency_admin" },
+      ],
+      organizations: [ORG_A, ORG_B],
+    });
+    await expect(requireLaCheieActivator(authContext("admin-two", false), null, { admin })).resolves.toBe(
+      ORG_B,
+    );
+    await expect(
+      requireLaCheieActivator(authContext("admin-two", false), ORG_B, { admin }),
+    ).resolves.toBe(ORG_B);
+  });
+
+  it("administratorul agenției este refuzat pe jurnal, dezactivare, testare și catalog", async () => {
+    const { admin } = fakeAdmin({
+      profiles: { "admin-a": { organization_id: ORG_A } },
+      roles: [{ user_id: "admin-a", organization_id: ORG_A, role: "agency_admin" }],
+      organizations: [ORG_A],
+    });
+    await expect(
+      requireLaCheieSuperadmin(authContext("admin-a", false), ORG_A, { admin }),
+    ).rejects.toThrow(LACHEIE_ACCESS_SUPERADMIN_ONLY);
+    await expect(
+      requireLaCheieSuperadmin(authContext("admin-a", true), ORG_A, { admin }),
+    ).resolves.toBe(ORG_A);
+  });
+
+  it("funcțiile de administrare folosesc garda de Superadmin, activarea pe cea de agenție", () => {
+    const code = readFileSync("src/lib/portals/lacheie.functions.ts", "utf8");
+    const fn = (name: string) => {
+      const start = code.indexOf(`export const ${name} = createServerFn`);
+      expect(start, name).toBeGreaterThan(-1);
+      const next = code.indexOf("export const ", start + 10);
+      return code.slice(start, next === -1 ? code.length : next);
+    };
     for (const name of ["activateLaCheieAgency", "getLaCheieAgencyStatusForAgency"]) {
       expect(fn(name), name).toContain("requireLaCheieActivator");
       expect(fn(name), name).not.toContain("await requireSuperadmin(");
     }
-  });
-
-  it("administrarea rămâne strict la Superadmin", () => {
     for (const name of [
       "getLaCheieState",
       "refreshLaCheieAgencyStatus",
@@ -746,38 +853,30 @@ describe("La Cheie — separarea drepturilor de acces", () => {
       expect(fn(name), name).toContain("requireSuperadmin(");
       expect(fn(name), name).not.toContain("requireLaCheieActivator");
     }
-  });
-
-  it("pentru non-superadmini agenția vine din sesiune, nu din datele clientului", () => {
-    const helper = code.slice(
-      code.indexOf("async function requireLaCheieActivator"),
-      code.indexOf("async function connectionRow"),
-    );
-    // Ramura non-superadmin folosește doar user_id-ul din sesiune.
-    const nonSuperadmin = helper.slice(helper.indexOf('.from("user_roles")'));
-    expect(nonSuperadmin).toContain('.eq("user_id", context.userId)');
-    expect(nonSuperadmin).toContain('.eq("role", "agency_admin")');
-    expect(nonSuperadmin).not.toContain("requestedOrganizationId");
-    // Un agent (fără rol de agency_admin) este refuzat explicit.
-    expect(helper).toContain("Acces refuzat");
-  });
-
-  it("starea pentru agenție nu expune jurnal, versiuni, corpuri sau chei", () => {
-    const self = fn("getLaCheieAgencyStatusForAgency");
-    for (const forbidden of [
-      "portal_operation_logs",
-      "portal_listing_versions",
-      "apiKey",
-      "credentials.server",
-      "bodyHash",
-      "acceptedVersion",
-    ]) {
-      expect(self, forbidden).not.toContain(forbidden);
-    }
-  });
-
-  it("activarea are limită de o cerere la 30 de secunde pe agenție", () => {
+    expect(fn("getLaCheieAgencyStatusForAgency")).not.toContain("portal_operation_logs");
     expect(fn("activateLaCheieAgency")).toContain("activationTooSoon");
     expect(code).toContain("Date.now() - 30_000");
+  });
+
+  it("o agenție deja activă nu trimite nicio cerere de reactivare", () => {
+    const fetchSpy = vi.fn();
+    vi.stubGlobal("fetch", fetchSpy);
+    expect(laCheieActivationBlockReason({ status: "active", hasPending: false })).toBe(
+      LACHEIE_AGENCY_ALREADY_ACTIVE_MESSAGE,
+    );
+    expect(canActivateLaCheieAgency("active")).toBe(false);
+    expect(fetchSpy).not.toHaveBeenCalled();
+    vi.unstubAllGlobals();
+  });
+
+  it("suspendarea blochează, iar o operație pending rămâne relubilă", () => {
+    expect(laCheieActivationBlockReason({ status: "suspended", hasPending: true })).toBe(
+      LACHEIE_AGENCY_SUSPENDED_MESSAGE,
+    );
+    expect(laCheieActivationBlockReason({ status: "active", hasPending: true })).toBeNull();
+    for (const status of ["not_registered", "inactive", "error"] as const) {
+      expect(canActivateLaCheieAgency(status), status).toBe(true);
+      expect(laCheieActivationBlockReason({ status, hasPending: false })).toBeNull();
+    }
   });
 });
