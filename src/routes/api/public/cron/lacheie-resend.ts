@@ -12,6 +12,26 @@ import { authenticateCronRequest } from "@/integrations/supabase/cron-auth";
 import { LACHEIE_PORTAL_KEY } from "@/lib/portals/lacheie/config";
 
 const MAX_JOBS_PER_TICK = 3;
+/** Bugetul unei rulări: sub timpul unei cereri, ca nimic să nu fie retezat. */
+const TICK_BUDGET_MS = 40_000;
+
+/**
+ * Apelantul: fie secretul de cron al platformei (Bearer), fie un jeton de
+ * unică folosință emis chiar de jobul din baza de date, ca la abonamente.
+ */
+async function authenticate(request: Request): Promise<Response | null> {
+  const nonce = request.headers.get("x-cron-nonce");
+  if (nonce) {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data } = await supabaseAdmin.rpc("cron_nonce_claim", {
+      _purpose: "lacheie_resend",
+      _token: nonce,
+    });
+    if (data === true) return null;
+    return new Response("Unauthorized", { status: 401 });
+  }
+  return authenticateCronRequest(request);
+}
 
 async function runResend(maxItems: number) {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
