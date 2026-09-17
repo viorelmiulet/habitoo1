@@ -292,6 +292,7 @@ describe("excluderea de la retrimiterea portofoliului La Cheie", () => {
   it("ofertele retrase din lipsă de locuri nu se retrimit", () => {
     expect(
       shouldResendLaCheiePublication({
+        propertyId: "p2",
         enabled: false,
         withdrawReason: LACHEIE_WITHDRAW_REASON.slotLimit,
       }),
