@@ -24,7 +24,14 @@ import {
 } from "@/lib/portals/lacheie/resend";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
-export type ResendAdmin = { from: (table: string) => any };
+export type ResendAdmin = {
+  from: (table: string) => any;
+  /** Preluarea/eliberarea atomică a jobului (funcții din bază, service_role). */
+  rpc: (
+    name: "claim_lacheie_resend_job" | "release_lacheie_resend_job" | "lacheie_resend_arm",
+    params: any,
+  ) => any;
+};
 
 export type LaCheieResendJobRow = {
   id: string;
@@ -160,6 +167,9 @@ export async function startLaCheieResendJob(
     })),
   );
   if (itemsError) throw new Error(itemsError.message);
+  // Worker-ul se armează abia acum și se dezarmează singur când coada se golește:
+  // nimic nu rulează periodic fără o retrimitere cerută de un om.
+  await admin.rpc("lacheie_resend_arm", {});
   return { jobId: job.id as string, total: propertyIds.length };
 }
 
@@ -230,6 +240,24 @@ export type ResendActionResult =
   | { ok: true }
   | { ok: false; code: string; message: string; retryAfterMs?: number | null };
 
+/**
+ * Traduce rezultatul fluxului normal de publicare în rezultatul retrimiterii,
+ * păstrând Retry-After raportat de portal (worker-ul amână jobul exact atât).
+ */
+export function resendActionFromListingResult(
+  result:
+    | { ok: true }
+    | { ok: false; code: string; message: string; retryAfterMs?: number | null },
+): ResendActionResult {
+  if (result.ok) return { ok: true };
+  return {
+    ok: false,
+    code: result.code,
+    message: result.message,
+    retryAfterMs: result.retryAfterMs ?? null,
+  };
+}
+
 export type ProcessResendDeps = {
   /** Retrimiterea reală: fluxul normal de actualizare al portalului. */
   executeAction: (input: {
@@ -242,7 +270,20 @@ export type ProcessResendDeps = {
   sleep?: (ms: number) => Promise<void>;
   /** Câte oferte procesează o rulare de worker. */
   maxItems?: number;
+  /** Bugetul de timp al unei rulări: nimic nu doarme peste el. */
+  budgetMs?: number;
+  /** Ceasul, injectabil în teste. */
+  now?: () => number;
+  /** Cât timp rămâne blocat jobul preluat de această rulare. */
+  lockSeconds?: number;
 };
+
+/** Mesajul intern când jobul este deja procesat de altă rulare. */
+export const LACHEIE_RESEND_LOCKED_MESSAGE = "locked";
+/** Mesajul intern când rulările s-au oprit din cauza limitării portalului. */
+export const LACHEIE_RESEND_DEFERRED_MESSAGE = "rate_limited";
+/** Mesajul intern când bugetul de timp al rulării s-a epuizat. */
+export const LACHEIE_RESEND_BUDGET_MESSAGE = "budget_exhausted";
 
 async function finish(
   admin: ResendAdmin,
@@ -252,7 +293,12 @@ async function finish(
 ) {
   await admin
     .from(JOB_TABLE)
-    .update({ status, last_error: lastError, finished_at: new Date().toISOString() })
+    .update({
+      status,
+      last_error: lastError,
+      finished_at: new Date().toISOString(),
+      locked_until: null,
+    })
     .eq("id", jobId);
 }
 
@@ -269,18 +315,44 @@ export async function processLaCheieResendJob(
 }> {
   const sleep = deps.sleep ?? ((ms: number) => new Promise<void>((r) => setTimeout(r, ms)));
   const maxItems = deps.maxItems ?? 50;
+  const budgetMs = deps.budgetMs ?? 40_000;
+  const clock = deps.now ?? (() => Date.now());
+  const startedAt = clock();
+  const remaining = () => budgetMs - (clock() - startedAt);
 
-  const { data: jobData } = await admin.from(JOB_TABLE).select("*").eq("id", jobId).maybeSingle();
-  const job = (jobData ?? null) as LaCheieResendJobRow | null;
+  /**
+   * Preluarea atomică: dacă altă rulare a worker-ului ține deja jobul (sau
+   * jobul este amânat după un 429), această rulare nu procesează nimic.
+   */
+  const { data: claimed } = await admin.rpc("claim_lacheie_resend_job", {
+    _job_id: jobId,
+    _ttl_seconds: deps.lockSeconds ?? Math.ceil(budgetMs / 1000) + 20,
+  });
+  const claimedRow = (Array.isArray(claimed) ? claimed[0] : claimed) ?? null;
+  const job = claimedRow as LaCheieResendJobRow | null;
   if (!job || !(LACHEIE_RESEND_ACTIVE_STATUSES as readonly string[]).includes(job.status)) {
+    const { data: existing } = await admin
+      .from(JOB_TABLE)
+      .select("status, sent, failed")
+      .eq("id", jobId)
+      .maybeSingle();
+    const row = (existing ?? null) as Pick<
+      LaCheieResendJobRow,
+      "status" | "sent" | "failed"
+    > | null;
     return {
-      status: (job?.status ?? "done") as LaCheieResendJobStatus,
-      sent: job?.sent ?? 0,
-      failed: job?.failed ?? 0,
+      status: (row?.status ?? "done") as LaCheieResendJobStatus,
+      sent: row?.sent ?? 0,
+      failed: row?.failed ?? 0,
       processed: 0,
-      stopped: null,
+      stopped: job ? null : LACHEIE_RESEND_LOCKED_MESSAGE,
     };
   }
+
+  /** Eliberarea blocării: orice ieșire fără încheierea jobului o șterge. */
+  const release = async () => {
+    await admin.rpc("release_lacheie_resend_job", { _job_id: jobId });
+  };
 
   if (job.cancel_requested) {
     await finish(admin, jobId, "cancelled", job.last_error);
@@ -314,6 +386,11 @@ export async function processLaCheieResendJob(
   let finalStatus: LaCheieResendJobStatus | null = null;
 
   while (processed < maxItems) {
+    if (remaining() <= 0) {
+      // Bugetul rulării s-a epuizat: jobul rămâne în lucru, blocarea se eliberează.
+      stopped = LACHEIE_RESEND_BUDGET_MESSAGE;
+      break;
+    }
     // Anularea este citită la fiecare pas: se opreșteodată cerută.
     const { data: fresh } = await admin
       .from(JOB_TABLE)
@@ -366,19 +443,31 @@ export async function processLaCheieResendJob(
         .eq("portal", LACHEIE_PORTAL_KEY)
         .eq("property_id", item.property_id);
       await admin.from(JOB_TABLE).update({ sent, failed }).eq("id", jobId);
-      await sleep(delay);
+      // Ritmul se respectă în interiorul bugetului rulării, nu peste el.
+      await sleep(Math.max(0, Math.min(delay, remaining())));
       continue;
     }
 
     if (result.code === "RATE_LIMIT" && item.attempts + 1 < LACHEIE_RESEND_MAX_RATE_LIMIT_RETRIES) {
-      // 429 / limită locală: se așteaptă (Retry-After când portalul îl trimite)
-      // și oferta rămâne în coadă, cu aceeași versiune și același corp.
+      // 429 / limită locală: oferta rămâne în coadă (aceeași versiune, același
+      // corp), iar jobul se amână până la momentul cerut de portal. Rularea se
+      // încheie aici — nimic nu doarme minute întregi în interiorul cererii.
+      const waitMs = result.retryAfterMs ?? 60_000;
       await admin
         .from(ITEM_TABLE)
         .update({ attempts: item.attempts + 1, error: result.message })
         .eq("id", item.id);
-      await sleep(result.retryAfterMs ?? 60_000);
-      continue;
+      await admin
+        .from(JOB_TABLE)
+        .update({
+          sent,
+          failed,
+          last_error: result.message,
+          next_attempt_at: new Date(clock() + waitMs).toISOString(),
+          locked_until: null,
+        })
+        .eq("id", jobId);
+      return { status: "running", sent, failed, processed, stopped: LACHEIE_RESEND_DEFERRED_MESSAGE };
     }
 
     failed += 1;
@@ -392,11 +481,12 @@ export async function processLaCheieResendJob(
       })
       .eq("id", item.id);
     await admin.from(JOB_TABLE).update({ sent, failed }).eq("id", jobId);
-    await sleep(delay);
+    await sleep(Math.max(0, Math.min(delay, remaining())));
   }
 
   if (finalStatus === null) {
     // Bugetul rulării s-a epuizat: jobul rămâne „running”, worker-ul continuă.
+    await release();
     return { status: "running", sent, failed, processed, stopped };
   }
 

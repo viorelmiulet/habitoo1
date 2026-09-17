@@ -124,7 +124,7 @@ function failFrom(
   response: {
     status: number;
     body?: unknown;
-    classification: { code: string; message: string } | null;
+    classification: { code: string; message: string; waitMs?: number } | null;
   },
   operation: string,
 ): PortalFailShape {
@@ -136,6 +136,8 @@ function failFrom(
     detail: `${operation} http_${response.status}`,
     httpStatus: response.status,
     portalResponse: response.body ?? null,
+    // La 429 portalul spune cât să așteptăm; retrimiterea amână jobul exact atât.
+    retryAfterMs: response.classification?.waitMs ?? null,
   };
 }
 

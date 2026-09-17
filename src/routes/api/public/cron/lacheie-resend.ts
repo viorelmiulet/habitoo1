@@ -12,24 +12,50 @@ import { authenticateCronRequest } from "@/integrations/supabase/cron-auth";
 import { LACHEIE_PORTAL_KEY } from "@/lib/portals/lacheie/config";
 
 const MAX_JOBS_PER_TICK = 3;
+/** Bugetul unei rulări: sub timpul unei cereri, ca nimic să nu fie retezat. */
+const TICK_BUDGET_MS = 40_000;
+
+/**
+ * Apelantul: fie secretul de cron al platformei (Bearer), fie un jeton de
+ * unică folosință emis chiar de jobul din baza de date, ca la abonamente.
+ */
+async function authenticate(request: Request): Promise<Response | null> {
+  const nonce = request.headers.get("x-cron-nonce");
+  if (nonce) {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data } = await supabaseAdmin.rpc("cron_nonce_claim", {
+      _purpose: "lacheie_resend",
+      _token: nonce,
+    });
+    if (data === true) return null;
+    return new Response("Unauthorized", { status: 401 });
+  }
+  return authenticateCronRequest(request);
+}
 
 async function runResend(maxItems: number) {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-  const { processLaCheieResendJob } = await import("@/lib/portals/lacheie/resend.server");
+  const { processLaCheieResendJob, resendActionFromListingResult } = await import(
+    "@/lib/portals/lacheie/resend.server"
+  );
   const { executeListingAction } = await import("@/lib/portals.functions");
   const { readLaCheieAgencyState } = await import("@/lib/portals/lacheie/agency");
 
+  const nowIso = new Date().toISOString();
   const { data: jobs } = await supabaseAdmin
     .from("lacheie_resend_jobs")
     .select("id")
     .in("status", ["queued", "running"])
+    // Un job amânat după 429 nu se atinge până la momentul cerut de portal.
+    .or(`next_attempt_at.is.null,next_attempt_at.lte.${nowIso}`)
     .order("created_at", { ascending: true })
     .limit(MAX_JOBS_PER_TICK);
 
   const results: { jobId: string; status: string; sent: number; failed: number }[] = [];
   for (const job of jobs ?? []) {
-    const outcome = await processLaCheieResendJob(supabaseAdmin as never, job.id, {
+    const outcome = await processLaCheieResendJob(supabaseAdmin, job.id, {
       maxItems,
+      budgetMs: TICK_BUDGET_MS,
       agencyStatus: async (organizationId: string) => {
         const { data: row } = await supabaseAdmin
           .from("portal_connections")
@@ -48,9 +74,8 @@ async function runResend(maxItems: number) {
           action: "update",
           operationLabel: "agency_resend",
         });
-        return result.ok
-          ? { ok: true as const }
-          : { ok: false as const, code: result.code, message: result.message };
+        // Retry-After raportat de portal ajunge la worker, ca amânarea să fie exactă.
+        return resendActionFromListingResult(result);
       },
     });
     results.push({
@@ -67,7 +92,7 @@ export const Route = createFileRoute("/api/public/cron/lacheie-resend")({
   server: {
     handlers: {
       POST: async ({ request }) => {
-        const unauthorized = await authenticateCronRequest(request);
+        const unauthorized = await authenticate(request);
         if (unauthorized) return unauthorized;
         const payload = (await request.json().catch(() => ({}))) as { maxItems?: number };
         const maxItems = Math.max(1, Math.min(payload.maxItems ?? 25, 200));

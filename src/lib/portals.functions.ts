@@ -836,7 +836,13 @@ export type ListingActionResult =
       processed: number | null;
       message: string | null;
     }
-  | { ok: false; code: string; message: string };
+  | {
+      ok: false;
+      code: string;
+      message: string;
+      /** Retry-After propagat mai departe (retrimiterea portofoliului îl folosește). */
+      retryAfterMs?: number | null;
+    };
 
 /**
  * Nucleul unei operațiuni pe o ofertă. Refolosit de acțiunea individuală și de
@@ -916,7 +922,13 @@ export async function executeListingAction(input: {
 
   const { portalRateLimited } = await import("@/lib/portals/rate-limit.server");
   if (portalRateLimited(action, `${organizationId}|${portalId}`)) {
-    return { ok: false as const, code: "RATE_LIMIT", message: PORTAL_ERROR_MESSAGE.RATE_LIMIT };
+    // Limita noastră locală se resetează la un minut: retrimiterea amână atât.
+    return {
+      ok: false as const,
+      code: "RATE_LIMIT",
+      message: PORTAL_ERROR_MESSAGE.RATE_LIMIT,
+      retryAfterMs: 60_000,
+    };
   }
 
   const { getPortalAdapter } = await import("@/lib/portals/adapters/index.server");
@@ -1070,7 +1082,12 @@ export async function executeListingAction(input: {
         processed: result.data.processed ?? null,
         message: result.data.message ?? null,
       }
-    : { ok: false as const, code: result.code, message: result.message };
+    : {
+        ok: false as const,
+        code: result.code,
+        message: result.message,
+        retryAfterMs: result.retryAfterMs ?? null,
+      };
 }
 
 export const runPortalListingAction = createServerFn({ method: "POST" })
