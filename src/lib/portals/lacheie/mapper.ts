@@ -376,8 +376,24 @@ export function buildLaCheieOffer(
   const agentName = (agent?.full_name ?? "").trim();
   const agentPhone = (agent?.phone ?? "").trim();
   if (!agentExternalId) reasons.push("Agentul responsabil nu are identificator.");
+  else if (!isValidExternalId(agentExternalId)) {
+    reasons.push("Identificatorul agentului nu respectă formatul cerut de La Cheie.");
+  }
   if (!agentName) reasons.push("Agentul responsabil nu are nume complet.");
+  else if (agentName.length > LACHEIE_AGENT_NAME_MAX) {
+    reasons.push(`Numele agentului depășește ${LACHEIE_AGENT_NAME_MAX} de caractere.`);
+  }
   if (!agentPhone) reasons.push("Agentul responsabil nu are telefon (obligatoriu la La Cheie).");
+  else if (
+    agentPhone.length > LACHEIE_AGENT_PHONE_MAX ||
+    phoneDigitCount(agentPhone) < LACHEIE_AGENT_PHONE_MIN_DIGITS ||
+    phoneDigitCount(agentPhone) > LACHEIE_AGENT_PHONE_MAX_DIGITS
+  ) {
+    reasons.push(
+      `Telefonul agentului trebuie să aibă între ${LACHEIE_AGENT_PHONE_MIN_DIGITS} și ${LACHEIE_AGENT_PHONE_MAX_DIGITS} cifre și maximum ${LACHEIE_AGENT_PHONE_MAX} de caractere.`,
+    );
+  }
+
 
   const area = positiveInt(input.area);
   const landArea = positiveInt(input.landArea);
