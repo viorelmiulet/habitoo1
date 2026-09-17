@@ -1178,7 +1178,7 @@ export async function performPortalWithdraw(input: {
   }
 
   let externalId = input.externalId ?? null;
-  if (externalId === undefined || input.externalId === undefined) {
+  if (input.externalId === undefined) {
     const admin = await loadAdmin();
     const { data: listing } = await admin
       .from("portal_listings")
@@ -1633,12 +1633,12 @@ export const setPropertyPortalSelection = createServerFn({ method: "POST" })
 
     const { data: listing } = await admin
       .from("portal_listings")
-      .select("status")
+      .select("status, external_id")
       .eq("organization_id", organizationId)
       .eq("portal", definition.id)
       .eq("property_id", data.propertyId)
       .maybeSingle();
-    const stillPublished = listing?.status === "published" || listing?.status === "updated";
+
 
     // Selectarea consumă un loc de publicare al agentului responsabil.
     if (data.enabled) {
