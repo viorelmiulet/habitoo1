@@ -860,8 +860,8 @@ export const deactivateLaCheieAgency = createServerFn({ method: "POST" })
           .eq("portal_key", LACHEIE_PORTAL_KEY),
       ]);
       const failures = [listings.error, publications.error]
-        .filter((error): error is { message: string } => Boolean(error))
-        .map((error) => error.message);
+        .filter((error) => error !== null)
+        .map((error) => error?.message ?? "eroare necunoscută");
       if (failures.length > 0) {
         localWithdrawError = `Conexiunea a fost dezactivată la La Cheie, dar ofertele nu au putut fi marcate local ca retrase: ${failures.join("; ")}`;
       }
