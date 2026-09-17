@@ -132,8 +132,12 @@ export type LaCheieOffer = {
   county: string;
   city: string;
   agent: LaCheieAgent;
-  area?: number;
-  land_area?: number;
+  /**
+   * Suprafețe ca ȘIR zecimal cu 2 zecimale („72.00”), exact ca exemplele
+   * oficiale. Formatarea fixă păstrează corpul identic la retrimitere.
+   */
+  area?: string;
+  land_area?: string;
   bedrooms?: number;
   bathrooms?: number;
   year_built?: number;
