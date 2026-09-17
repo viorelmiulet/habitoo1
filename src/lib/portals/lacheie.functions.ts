@@ -257,25 +257,41 @@ export type LaCheieState = {
   }[];
 };
 
-async function agencyView(organizationId: string): Promise<LaCheieAgencyView> {
+/**
+ * Payload-ul de agenție construit din date REALE: numele/telefonul/adresa
+ * agenției din Habitoo și emailul VERIFICAT al unui `agency_admin`.
+ */
+async function buildAgencyRegistration(organizationId: string, actorUserId: string | null) {
   const admin = await loadAdmin();
-  const row = await connectionRow(organizationId);
-  const state = readLaCheieAgencyState((row?.settings ?? {}) as Record<string, unknown>);
-  const { data: org } = await admin
-    .from("organizations")
-    .select("name, legal_name, email, material_email, phone, material_phone, material_address, city")
-    .eq("id", organizationId)
-    .maybeSingle();
-  const payload = buildLaCheieAgencyPayload({
+  const { resolveLaCheieAdminEmail } = await import("@/lib/portals/lacheie/agency.server");
+  const [{ data: org }, adminEmail] = await Promise.all([
+    admin
+      .from("organizations")
+      .select("name, legal_name, phone, material_phone, material_address")
+      .eq("id", organizationId)
+      .maybeSingle(),
+    resolveLaCheieAdminEmail(admin as never, { organizationId, actorUserId }),
+  ]);
+  const built = buildLaCheieAgencyPayload({
     name: org?.name ?? null,
     legalName: org?.legal_name ?? null,
-    email: org?.email ?? null,
-    materialEmail: org?.material_email ?? null,
+    adminEmail: adminEmail.ok ? adminEmail.email : null,
     phone: org?.phone ?? null,
     materialPhone: org?.material_phone ?? null,
+    // Fără substituire cu orașul: adresa lipsă se raportează ca lipsă.
     address: org?.material_address ?? null,
-    city: org?.city ?? null,
   });
+  const issues = built.ok ? [] : [...built.issues, ...(adminEmail.ok ? [] : [adminEmail.reason])];
+  return { built, adminEmail, issues };
+}
+
+async function agencyView(
+  organizationId: string,
+  actorUserId: string | null,
+): Promise<LaCheieAgencyView> {
+  const row = await connectionRow(organizationId);
+  const state = readLaCheieAgencyState((row?.settings ?? {}) as Record<string, unknown>);
+  const { built } = await buildAgencyRegistration(organizationId, actorUserId);
   return {
     externalId: state.externalId ?? laCheieAgencyExternalId(organizationId),
     status: state.status,
@@ -284,12 +300,13 @@ async function agencyView(organizationId: string): Promise<LaCheieAgencyView> {
     acceptedVersion: state.acceptedVersion,
     syncedAt: state.syncedAt,
     error: state.error,
-    missingFields: payload.ok
+    missingFields: built.ok
       ? []
-      : payload.missing.map((field) => LACHEIE_AGENCY_FIELD_LABEL[field] ?? field),
-    canActivate: canActivateLaCheieAgency(state.status) && payload.ok,
+      : built.missing.map((field) => LACHEIE_AGENCY_FIELD_LABEL[field] ?? field),
+    canActivate: canActivateLaCheieAgency(state.status) && built.ok,
   };
 }
+
 
 export const getLaCheieState = createServerFn({ method: "POST" })
   .middleware([requireActiveOrgAuth])
