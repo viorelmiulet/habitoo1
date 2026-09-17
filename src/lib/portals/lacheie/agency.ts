@@ -442,6 +442,18 @@ function versionConflictCode(body: unknown): boolean {
 }
 
 
+/** Versiunea acceptată raportată explicit într-un conflict de versiune. */
+function conflictAcceptedVersion(body: unknown): string | null {
+  if (!body || typeof body !== "object") return null;
+  const error = (body as { error?: unknown }).error;
+  const scope = error && typeof error === "object" ? (error as Record<string, unknown>) : {};
+  for (const key of ["accepted_version", "acceptedVersion", "accepted_source_version"]) {
+    const value = normalizeSourceVersion(scope[key] ?? (body as Record<string, unknown>)[key]);
+    if (value) return value;
+  }
+  return null;
+}
+
 /** Interpretează `PUT /agencies/{external_id}` conform contractului v1. */
 export function classifyLaCheieAgencyPut(input: {
   httpStatus: number;
@@ -477,7 +489,11 @@ export function classifyLaCheieAgencyPut(input: {
   }
 
   if (httpStatus === 409) {
-    const accepted = normalizeSourceVersion(input.conflictAcceptedVersion) ?? parsed.acceptedVersion;
+    // Doar o versiune acceptată raportată EXPLICIT pentru conflict (sau un cod de
+    // conflict de versiune) califică drept conflict de versiune. Un `source_version`
+    // oarecare din corp aparține unui conflict de asociere și nu se reia automat.
+    const accepted =
+      normalizeSourceVersion(input.conflictAcceptedVersion) ?? conflictAcceptedVersion(body);
     const isVersionConflict = Boolean(accepted) || versionConflictCode(body);
     return {
       status: isVersionConflict ? input.previousStatus : "error",
