@@ -117,7 +117,14 @@ export type LaCheieOffer = {
   external_id: string;
   title: string;
   description: string;
-  price: number;
+  /**
+   * Preț ca ȘIR zecimal cu exact 2 zecimale („125000.00”).
+   * Formatarea este fixă, ca retrimiterea identică (timeout/5xx/429) să producă
+   * EXACT aceiași octeți: portalul compară `125000` și `"125000.00"` ca corpuri
+   * diferite pentru același `X-Source-Version`.
+   */
+  price: string;
+
   currency: LaCheieCurrency;
   transaction_type: LaCheieTransaction;
   /** Id din `/options`, păstrat ca text pentru precizie. */
