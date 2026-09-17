@@ -722,7 +722,8 @@ export const deactivateLaCheieAgency = createServerFn({ method: "POST" })
 
 
     if (!ok) throw new Error(message ?? "Dezactivarea conexiunii La Cheie a eșuat.");
-    return { status: "inactive" as const, version };
+    return { status: result.status, version };
+
   });
 
 /**
