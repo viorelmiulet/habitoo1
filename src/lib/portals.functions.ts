@@ -858,6 +858,11 @@ export async function executeListingAction(input: {
   action: "publish" | "update" | "withdraw";
   /** Eticheta din jurnal; implicit acțiunea. Automatizările folosesc alt nume. */
   operationLabel?: string;
+  /**
+   * Automatizările (republicare la expirare, retrimiterea portofoliului La Cheie)
+   * NU consumă locuri noi: oferta era deja selectată, deci locul e deja ocupat.
+   */
+  skipSlotCheck?: boolean;
 }): Promise<ListingActionResult> {
   const { organizationId, actorId, portalId, propertyId, action } = input;
   const definition = getPortalDefinition(portalId);
@@ -918,6 +923,37 @@ export async function executeListingAction(input: {
       return { ok: false as const, code: "VALIDATION_ERROR", message };
     }
   }
+
+  /**
+   * Locuri de publicare: doar trecerea „neselectat → selectat” consumă un loc.
+   * Locul este al AGENTULUI RESPONSABIL, nu al celui care apasă butonul, deci
+   * verificarea se aplică și pentru administratorul agenției sau superadmin.
+   */
+  if (action === "publish" && !input.skipSlotCheck) {
+    const { ensurePortalSlotAvailable } = await import("@/lib/portals/slots.server");
+    const guard = await ensurePortalSlotAvailable(admin, {
+      organizationId,
+      portalKey: definition.id,
+      portalName: definition.display_name,
+      propertyId,
+      actorId,
+    });
+    if (!guard.ok) {
+      await logOperation({
+        organizationId,
+        portal: definition.id,
+        operation: input.operationLabel ?? action,
+        success: false,
+        errorCode: "SLOT_LIMIT",
+        errorMessage: guard.message,
+        propertyId,
+        actorId,
+      });
+      return { ok: false as const, code: "VALIDATION_ERROR", message: guard.message };
+    }
+  }
+
+
 
 
   const { portalRateLimited } = await import("@/lib/portals/rate-limit.server");
@@ -1495,6 +1531,22 @@ export const setPropertyPortalSelection = createServerFn({ method: "POST" })
       .maybeSingle();
     const stillPublished = listing?.status === "published" || listing?.status === "updated";
 
+    // Selectarea consumă un loc de publicare al agentului responsabil.
+    if (data.enabled) {
+      const { ensurePortalSlotAvailable } = await import("@/lib/portals/slots.server");
+      const guard = await ensurePortalSlotAvailable(admin, {
+        organizationId,
+        portalKey: definition.id,
+        portalName: definition.display_name,
+        propertyId: data.propertyId,
+        actorId: context.userId,
+      });
+      if (!guard.ok) {
+        return { ok: false as const, code: "SLOT_LIMIT", message: guard.message };
+      }
+    }
+
+
     const { error } = await admin.from("portal_publications").upsert(
       {
         organization_id: organizationId,
@@ -1895,6 +1947,28 @@ export async function applyPortalSelectionForOrg(input: {
 
         // A. false → false: nimic.
         if (!wanted.enabled && !previous) continue;
+
+        // Locuri de publicare: doar trecerea neselectat → selectat consumă un loc.
+        if (wanted.enabled && !previous) {
+          const { ensurePortalSlotAvailable } = await import("@/lib/portals/slots.server");
+          const guard = await ensurePortalSlotAvailable(admin, {
+            organizationId,
+            portalKey: definition.id,
+            portalName: name,
+            propertyId: data.propertyId,
+            actorId,
+          });
+          if (!guard.ok) {
+            results.push({
+              portalId: definition.id,
+              portalName: name,
+              action: "blocked",
+              ok: false,
+              message: guard.message,
+            });
+            continue;
+          }
+        }
 
         // Intenția se salvează întotdeauna când se schimbă.
         if (wanted.enabled !== previous) {

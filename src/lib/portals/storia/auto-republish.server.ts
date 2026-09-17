@@ -88,6 +88,8 @@ export async function handleStoriaExpiry(
       propertyId: match.propertyId,
       action: "publish",
       operationLabel: "auto_republish",
+      // Oferta era deja selectată: republicarea automată nu consumă un loc nou.
+      skipSlotCheck: true,
     });
     republished = result.ok;
     note = result.ok
