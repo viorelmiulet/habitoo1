@@ -74,7 +74,13 @@ async function runResend(maxItems: number) {
         });
         return result.ok
           ? { ok: true as const }
-          : { ok: false as const, code: result.code, message: result.message };
+          : {
+              ok: false as const,
+              code: result.code,
+              message: result.message,
+              // Retry-After raportat de portal, ca amânarea să fie exactă.
+              retryAfterMs: result.retryAfterMs ?? null,
+            };
       },
     });
     results.push({
