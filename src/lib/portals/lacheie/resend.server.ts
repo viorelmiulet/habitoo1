@@ -419,19 +419,31 @@ export async function processLaCheieResendJob(
         .eq("portal", LACHEIE_PORTAL_KEY)
         .eq("property_id", item.property_id);
       await admin.from(JOB_TABLE).update({ sent, failed }).eq("id", jobId);
-      await sleep(delay);
+      // Ritmul se respectă în interiorul bugetului rulării, nu peste el.
+      await sleep(Math.max(0, Math.min(delay, remaining())));
       continue;
     }
 
     if (result.code === "RATE_LIMIT" && item.attempts + 1 < LACHEIE_RESEND_MAX_RATE_LIMIT_RETRIES) {
-      // 429 / limită locală: se așteaptă (Retry-After când portalul îl trimite)
-      // și oferta rămâne în coadă, cu aceeași versiune și același corp.
+      // 429 / limită locală: oferta rămâne în coadă (aceeași versiune, același
+      // corp), iar jobul se amână până la momentul cerut de portal. Rularea se
+      // încheie aici — nimic nu doarme minute întregi în interiorul cererii.
+      const waitMs = result.retryAfterMs ?? 60_000;
       await admin
         .from(ITEM_TABLE)
         .update({ attempts: item.attempts + 1, error: result.message })
         .eq("id", item.id);
-      await sleep(result.retryAfterMs ?? 60_000);
-      continue;
+      await admin
+        .from(JOB_TABLE)
+        .update({
+          sent,
+          failed,
+          last_error: result.message,
+          next_attempt_at: new Date(clock() + waitMs).toISOString(),
+          locked_until: null,
+        })
+        .eq("id", jobId);
+      return { status: "running", sent, failed, processed, stopped: LACHEIE_RESEND_DEFERRED_MESSAGE };
     }
 
     failed += 1;
