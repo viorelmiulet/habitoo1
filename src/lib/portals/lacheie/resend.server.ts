@@ -246,7 +246,20 @@ export type ProcessResendDeps = {
   sleep?: (ms: number) => Promise<void>;
   /** Câte oferte procesează o rulare de worker. */
   maxItems?: number;
+  /** Bugetul de timp al unei rulări: nimic nu doarme peste el. */
+  budgetMs?: number;
+  /** Ceasul, injectabil în teste. */
+  now?: () => number;
+  /** Cât timp rămâne blocat jobul preluat de această rulare. */
+  lockSeconds?: number;
 };
+
+/** Mesajul intern când jobul este deja procesat de altă rulare. */
+export const LACHEIE_RESEND_LOCKED_MESSAGE = "locked";
+/** Mesajul intern când rulările s-au oprit din cauza limitării portalului. */
+export const LACHEIE_RESEND_DEFERRED_MESSAGE = "rate_limited";
+/** Mesajul intern când bugetul de timp al rulării s-a epuizat. */
+export const LACHEIE_RESEND_BUDGET_MESSAGE = "budget_exhausted";
 
 async function finish(
   admin: ResendAdmin,
@@ -256,7 +269,12 @@ async function finish(
 ) {
   await admin
     .from(JOB_TABLE)
-    .update({ status, last_error: lastError, finished_at: new Date().toISOString() })
+    .update({
+      status,
+      last_error: lastError,
+      finished_at: new Date().toISOString(),
+      locked_until: null,
+    })
     .eq("id", jobId);
 }
 
@@ -273,18 +291,44 @@ export async function processLaCheieResendJob(
 }> {
   const sleep = deps.sleep ?? ((ms: number) => new Promise<void>((r) => setTimeout(r, ms)));
   const maxItems = deps.maxItems ?? 50;
+  const budgetMs = deps.budgetMs ?? 40_000;
+  const clock = deps.now ?? (() => Date.now());
+  const startedAt = clock();
+  const remaining = () => budgetMs - (clock() - startedAt);
 
-  const { data: jobData } = await admin.from(JOB_TABLE).select("*").eq("id", jobId).maybeSingle();
-  const job = (jobData ?? null) as LaCheieResendJobRow | null;
+  /**
+   * Preluarea atomică: dacă altă rulare a worker-ului ține deja jobul (sau
+   * jobul este amânat după un 429), această rulare nu procesează nimic.
+   */
+  const { data: claimed } = await admin.rpc("claim_lacheie_resend_job", {
+    _job_id: jobId,
+    _ttl_seconds: deps.lockSeconds ?? Math.ceil(budgetMs / 1000) + 20,
+  });
+  const claimedRow = (Array.isArray(claimed) ? claimed[0] : claimed) ?? null;
+  const job = claimedRow as LaCheieResendJobRow | null;
   if (!job || !(LACHEIE_RESEND_ACTIVE_STATUSES as readonly string[]).includes(job.status)) {
+    const { data: existing } = await admin
+      .from(JOB_TABLE)
+      .select("status, sent, failed")
+      .eq("id", jobId)
+      .maybeSingle();
+    const row = (existing ?? null) as Pick<
+      LaCheieResendJobRow,
+      "status" | "sent" | "failed"
+    > | null;
     return {
-      status: (job?.status ?? "done") as LaCheieResendJobStatus,
-      sent: job?.sent ?? 0,
-      failed: job?.failed ?? 0,
+      status: (row?.status ?? "done") as LaCheieResendJobStatus,
+      sent: row?.sent ?? 0,
+      failed: row?.failed ?? 0,
       processed: 0,
-      stopped: null,
+      stopped: job ? null : LACHEIE_RESEND_LOCKED_MESSAGE,
     };
   }
+
+  /** Eliberarea blocării: orice ieșire fără încheierea jobului o șterge. */
+  const release = async () => {
+    await admin.rpc("release_lacheie_resend_job", { _job_id: jobId });
+  };
 
   if (job.cancel_requested) {
     await finish(admin, jobId, "cancelled", job.last_error);
