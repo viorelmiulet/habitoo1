@@ -412,8 +412,15 @@ async function crmConfig(organizationId: string, agencyExternalId: string | null
 
 /**
  * `PUT /agencies/{external_id}` — înregistrarea inițială (versiune 1) sau
- * reactivarea (versiune mai mare). Payload-ul folosește exclusiv date reale ale
- * agenției din Habitoo; ce lipsește este cerut în UI, nu inventat.
+ * reactivarea (versiune mai mare, doar dacă portalul a acceptat deja o
+ * înregistrare). Payload-ul folosește exclusiv date reale ale agenției din
+ * Habitoo și emailul VERIFICAT al unui administrator; ce lipsește este cerut în
+ * UI, nu inventat.
+ *
+ * Idempotență: operația se persistă înainte de apel (operație, versiune, SHA-256
+ * al corpului exact). La timeout, eroare de rețea, 429 sau 5xx rămâne pending și
+ * următoarea încercare refolosește aceeași versiune și același corp; o versiune
+ * nouă se alocă numai după un răspuns definitiv (2xx, 400, 403, 409).
  */
 export const activateLaCheieAgency = createServerFn({ method: "POST" })
   .middleware([requireActiveOrgAuth])
@@ -424,60 +431,83 @@ export const activateLaCheieAgency = createServerFn({ method: "POST" })
     const admin = await loadAdmin();
 
     const row = await ensureConnectionRow(organizationId, auth.userId);
-    const state = readLaCheieAgencyState((row.settings ?? {}) as Record<string, unknown>);
+    const settings = (row.settings ?? {}) as Record<string, unknown>;
+    const state = readLaCheieAgencyState(settings);
+    const pending = readLaCheieAgencyPending(settings);
     if (!canActivateLaCheieAgency(state.status)) {
       throw new Error(
-        "Conexiunea agenției este suspendată administrativ de La Cheie și nu poate fi reactivată din CRM.",
+        "Agenția este suspendată administrativ de La Cheie; reactivarea nu este posibilă din CRM. Contactați La Cheie.",
       );
     }
 
-    const { data: org } = await admin
-      .from("organizations")
-      .select(
-        "name, legal_name, email, material_email, phone, material_phone, material_address, city",
-      )
-      .eq("id", organizationId)
-      .maybeSingle();
-    const built = buildLaCheieAgencyPayload({
-      name: org?.name ?? null,
-      legalName: org?.legal_name ?? null,
-      email: org?.email ?? null,
-      materialEmail: org?.material_email ?? null,
-      phone: org?.phone ?? null,
-      materialPhone: org?.material_phone ?? null,
-      address: org?.material_address ?? null,
-      city: org?.city ?? null,
-    });
+    const { built, issues } = await buildAgencyRegistration(organizationId, auth.userId);
     if (!built.ok) {
       const labels = built.missing.map((field) => LACHEIE_AGENCY_FIELD_LABEL[field] ?? field);
       throw new Error(
-        `Completează datele agenției înainte de activare: ${labels.join(", ")}. La Cheie cere denumire, email, telefon și adresă reale.`,
+        `Completează datele agenției înainte de activare: ${labels.join(", ")}. ${issues.join(" ")}`,
       );
     }
 
     const externalId = state.externalId ?? laCheieAgencyExternalId(organizationId);
-    const version = nextLaCheieAgencyVersion(state);
-    const isReactivation = Boolean(state.version);
+    const isReactivation = isLaCheieAgencyReactivation(state);
+    const operation = isReactivation ? "reactivate" : "register";
+    const bodyHash = await laCheieAgencyBodyHash(operation, built.payload);
+    const plan = planLaCheieAgencyOperation({ state, pending, operation, bodyHash });
+    const version = plan.version;
 
-    const { putLaCheieAgency } = await import("@/lib/portals/lacheie/agency.server");
+    // Operația se persistă ÎNAINTE de apel, ca un retry să o poată refolosi identic.
+    await mergeSettings(
+      organizationId,
+      laCheieAgencyPendingPatch(plan, bodyHash, new Date().toISOString()),
+      auth.userId,
+    );
+
+    const { putLaCheieAgency, getLaCheieAgency: readAgency } = await import(
+      "@/lib/portals/lacheie/agency.server"
+    );
     const call = await putLaCheieAgency(await crmConfig(organizationId, externalId), {
       externalId,
       payload: built.payload,
       version,
     });
 
+    const outcome = classifyLaCheieAgencyPut({
+      httpStatus: call.response.status,
+      body: call.response.body,
+      conflictAcceptedVersion: call.response.conflict?.acceptedVersion ?? null,
+      previousStatus: state.status,
+      fallbackMessage: call.response.classification?.message ?? null,
+    });
     const ok = call.response.ok;
-    const message = ok
-      ? null
-      : (call.response.classification?.message ??
-        `La Cheie a răspuns HTTP ${call.response.status}.`);
-    const status: LaCheieAgencyStatus = ok
-      ? call.agency.status === "not_registered"
-        ? "active"
-        : call.agency.status
-      : state.status === "not_registered"
-        ? "error"
-        : state.status;
+    let acceptedVersion = outcome.acceptedVersion ?? (ok ? version : state.acceptedVersion);
+    let status: LaCheieAgencyStatus = outcome.status;
+
+    // 409 pe versiune: citim versiunea acceptată de portal, ca reluarea să poată
+    // folosi o versiune mai mare. Nu reîncercăm automat.
+    if (outcome.versionConflict) {
+      const refreshed = await readAgency(await crmConfig(organizationId, externalId), {
+        externalId,
+      });
+      if (refreshed.response.ok) {
+        acceptedVersion = refreshed.agency.acceptedVersion ?? acceptedVersion;
+        status = refreshed.agency.status;
+      }
+      await logLaCheie({
+        organizationId,
+        operation: "agency_status",
+        success: refreshed.response.ok,
+        errorMessage: refreshed.response.ok
+          ? null
+          : (refreshed.response.classification?.message ?? null),
+        actorId: auth.userId,
+        environment: LACHEIE_ENVIRONMENT,
+        externalId,
+        httpStatus: refreshed.response.status,
+        durationMs: refreshed.response.durationMs,
+        requestId: refreshed.response.requestId,
+        portalResponse: refreshed.response.body,
+      });
+    }
 
     await mergeSettings(
       organizationId,
@@ -485,9 +515,13 @@ export const activateLaCheieAgency = createServerFn({ method: "POST" })
         lacheie_agency_external_id: externalId,
         lacheie_agency_status: status,
         lacheie_agency_version: version,
-        lacheie_agency_accepted_version: call.agency.acceptedVersion ?? version,
+        ...(acceptedVersion ? { lacheie_agency_accepted_version: acceptedVersion } : {}),
         lacheie_agency_synced_at: new Date().toISOString(),
-        lacheie_agency_error: message,
+        lacheie_agency_error: outcome.message,
+        // Pending se păstrează doar pentru erorile reluabile identic.
+        ...(outcome.keepPending
+          ? laCheieAgencyPendingPatch(plan, bodyHash, new Date().toISOString())
+          : laCheieAgencyPendingCleared()),
       },
       auth.userId,
     );
@@ -509,7 +543,7 @@ export const activateLaCheieAgency = createServerFn({ method: "POST" })
       organizationId,
       operation: isReactivation ? "agency_reactivate" : "agency_register",
       success: ok,
-      errorMessage: message,
+      errorMessage: outcome.message,
       errorCode: ok ? null : (call.response.classification?.code ?? null),
       actorId: auth.userId,
       environment: LACHEIE_ENVIRONMENT,
@@ -521,16 +555,18 @@ export const activateLaCheieAgency = createServerFn({ method: "POST" })
       portalResponse: call.response.body,
     });
 
-    if (!ok) throw new Error(message ?? "Activarea agenției la La Cheie a eșuat.");
+    if (!ok) throw new Error(outcome.message ?? "Activarea agenției la La Cheie a eșuat.");
     return {
       externalId,
       status,
       version,
       reactivated: isReactivation,
+      retriedSameVersion: plan.reused,
       /** După reactivare, ofertele trebuie retrimise complet, cu versiuni mai mari. */
       requiresResend: isReactivation,
     };
   });
+
 
 /** `GET /agencies/{external_id}` — statusul real raportat de portal. */
 export const refreshLaCheieAgencyStatus = createServerFn({ method: "POST" })
