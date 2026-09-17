@@ -48,7 +48,7 @@ describe("La Cheie — payload valid pe categorii", () => {
     expect(result.ok).toBe(true);
     if (!result.ok) return;
     expect(result.offer.property_type).toBe("101");
-    expect(result.offer.area).toBe(78);
+    expect(result.offer.area).toBe("78.00");
     expect(result.offer.number_of_rooms).toBe(3);
     expect(result.offer.agent.phone).toBe("+40721000111");
   });
@@ -56,7 +56,7 @@ describe("La Cheie — payload valid pe categorii", () => {
   it("casă", () => {
     const result = buildLaCheieOffer(base({ category: "house", landArea: 400 }), AGENT);
     expect(result.ok).toBe(true);
-    if (result.ok) expect(result.offer.land_area).toBe(400);
+    if (result.ok) expect(result.offer.land_area).toBe("400.00");
   });
 
   it("teren: land_area obligatoriu, camere/băi/an pot fi 0", () => {
@@ -74,8 +74,8 @@ describe("La Cheie — payload valid pe categorii", () => {
     );
     expect(result.ok).toBe(true);
     if (!result.ok) return;
-    expect(result.offer.land_area).toBe(1200);
-    expect(result.offer.area).toBe(1200);
+    expect(result.offer.land_area).toBe("1200.00");
+    expect(result.offer.area).toBe("1200.00");
     expect(result.offer.bedrooms).toBe(0);
     expect(result.offer.year_built).toBe(0);
   });

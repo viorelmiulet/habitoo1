@@ -132,8 +132,12 @@ export type LaCheieOffer = {
   county: string;
   city: string;
   agent: LaCheieAgent;
-  area?: number;
-  land_area?: number;
+  /**
+   * Suprafețe ca ȘIR zecimal cu 2 zecimale („72.00”), exact ca exemplele
+   * oficiale. Formatarea fixă păstrează corpul identic la retrimitere.
+   */
+  area?: string;
+  land_area?: string;
   bedrooms?: number;
   bathrooms?: number;
   year_built?: number;
@@ -308,6 +312,12 @@ function nonNegativeInt(value: unknown): number | null {
   return Math.round(value);
 }
 
+/** Suprafață pozitivă, păstrată cu zecimale (se trimite ca șir „72.00”). */
+function positiveNumber(value: unknown): number | null {
+  if (typeof value !== "number" || !Number.isFinite(value) || value <= 0) return null;
+  return value;
+}
+
 /** Id-uri de catalog (pk): întregi pozitivi, unici, în ordinea primită. */
 function cleanIdList(values: number[] | undefined, limit = 30): number[] {
   const out: number[] = [];
@@ -395,8 +405,8 @@ export function buildLaCheieOffer(
   }
 
 
-  const area = positiveInt(input.area);
-  const landArea = positiveInt(input.landArea);
+  const area = positiveNumber(input.area);
+  const landArea = positiveNumber(input.landArea);
   const bedrooms = nonNegativeInt(input.bedrooms);
   const bathrooms = nonNegativeInt(input.bathrooms);
   const yearBuilt = nonNegativeInt(input.yearBuilt);
@@ -455,19 +465,21 @@ export function buildLaCheieOffer(
 
   if (input.category === "land") {
     // Documentația permite `area` = `land_area`, iar camere/băi/an pot fi 0.
-    draft["land_area"] = landArea;
-    draft["area"] = area ?? landArea;
+    // Suprafețele merg ca șir zecimal cu 2 zecimale, exact ca prețul.
+    draft["land_area"] = landArea === null ? null : laCheieDecimal(landArea);
+    const landDisplay = area ?? landArea;
+    draft["area"] = landDisplay === null ? null : laCheieDecimal(landDisplay);
     draft["bedrooms"] = bedrooms ?? 0;
     draft["bathrooms"] = bathrooms ?? 0;
     draft["year_built"] = yearBuilt ?? 0;
     draft["number_of_rooms"] = numberOfRooms ?? 0;
   } else {
-    draft["area"] = area;
+    draft["area"] = area === null ? null : laCheieDecimal(area);
     draft["bedrooms"] = bedrooms ?? 0;
     draft["bathrooms"] = bathrooms;
     draft["year_built"] = yearBuilt;
     draft["number_of_rooms"] = numberOfRooms ?? bedrooms ?? 0;
-    if (landArea !== null) draft["land_area"] = landArea;
+    if (landArea !== null) draft["land_area"] = laCheieDecimal(landArea);
   }
 
   const put = (key: string, value: unknown) => {
