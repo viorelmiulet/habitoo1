@@ -250,6 +250,9 @@ export type LaCheieState = {
   propertiesPath: string;
   readiness: LaCheieReadiness;
   agency: LaCheieAgencyView;
+  /** Cine a cerut activarea și când. */
+  activationRequest: LaCheieActivationRequest | null;
+
   catalog: {
     fetchedAt: string | null;
     optionGroups: number;
