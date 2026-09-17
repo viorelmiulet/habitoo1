@@ -47,7 +47,10 @@ export const LACHEIE_FORBIDDEN_FIELDS = [
   "listing_type",
   "location",
   "phone",
+  // Aliasul respins explicit de portal: se trimite `number_of_rooms`.
+  "numberOfRooms",
 ] as const;
+
 
 /** Singurele câmpuri acceptate în payload. Restul se elimină. */
 export const LACHEIE_ALLOWED_FIELDS = [
