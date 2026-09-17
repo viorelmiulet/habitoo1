@@ -68,6 +68,10 @@ export function normalizeLaCheiePortalSettings(
     const value = text(raw[key]);
     if (value) agency[key] = value;
   }
+  // Operația de agenție în curs (idempotență la retry) este un obiect, nu text.
+  const pending = raw["lacheie_agency_pending"];
+  if (pending && typeof pending === "object") agency["lacheie_agency_pending"] = pending;
+
   return {
     allow_live: raw["allow_live"] === true,
     ...agency,

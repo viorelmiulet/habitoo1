@@ -8,8 +8,20 @@ import { readFileSync } from "node:fs";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { PortalError } from "../../errors";
 import {
+  LACHEIE_AGENCY_ASSOCIATION_CONFLICT_MESSAGE,
+  LACHEIE_AGENCY_FIELD_LABEL,
+  LACHEIE_AGENCY_SUSPENDED_MESSAGE,
   buildLaCheieAgencyPayload,
   canActivateLaCheieAgency,
+  classifyLaCheieAgencyPut,
+  isLaCheieAgencyReactivation,
+  isValidLaCheieAgencyPhone,
+  laCheieAgencyBodyHash,
+  laCheieAgencyPendingPatch,
+  laCheieAgencyStatusAfterDelete,
+  planLaCheieAgencyOperation,
+  readLaCheieAgencyPending,
+  selectLaCheieAdminEmail,
   isValidLaCheieAgencyExternalId,
   laCheieAgencyBlockReason,
   laCheieAgencyExternalId,
@@ -95,7 +107,7 @@ describe("La Cheie — identificatorul și datele agenției", () => {
   it("payload-ul cere date reale: nimic nu este inventat", () => {
     const missing = buildLaCheieAgencyPayload({
       name: "Agenția Exemplu",
-      email: null,
+      adminEmail: null,
       phone: null,
       address: null,
     });
@@ -104,7 +116,7 @@ describe("La Cheie — identificatorul și datele agenției", () => {
 
     const built = buildLaCheieAgencyPayload({
       name: PROFILE.name,
-      email: PROFILE.email,
+      adminEmail: PROFILE.email,
       phone: PROFILE.phone,
       address: PROFILE.address,
     });
@@ -115,13 +127,44 @@ describe("La Cheie — identificatorul și datele agenției", () => {
   it("emailul invalid este raportat, nu corectat", () => {
     const result = buildLaCheieAgencyPayload({
       name: "A",
-      email: "fara-arond",
-      phone: "0722",
+      adminEmail: "fara-arond",
+      phone: "0722000111",
       address: "Str. 1",
     });
     expect(result.ok).toBe(false);
     if (!result.ok) expect(result.missing).toEqual(["email"]);
   });
+
+  it("respectă limitele de lungime și regulile de telefon ale portalului", () => {
+    const tooLong = buildLaCheieAgencyPayload({
+      name: "x".repeat(256),
+      adminEmail: `${"a".repeat(250)}@exemplu.ro`,
+      phone: "0722",
+      address: "y".repeat(256),
+    });
+    expect(tooLong.ok).toBe(false);
+    if (!tooLong.ok) {
+      expect(tooLong.missing).toEqual(["name", "email", "phone", "address"]);
+      expect(tooLong.issues.join(" ")).toMatch(/255|254|7–15/);
+    }
+    expect(isValidLaCheieAgencyPhone("+40 722 000 111")).toBe(true);
+    expect(isValidLaCheieAgencyPhone("0722")).toBe(false);
+    expect(isValidLaCheieAgencyPhone("0".repeat(31))).toBe(false);
+    expect(isValidLaCheieAgencyPhone("0722 abc 111")).toBe(false);
+  });
+
+  it("adresa lipsă NU mai este înlocuită cu orașul", () => {
+    const result = buildLaCheieAgencyPayload({
+      name: PROFILE.name,
+      adminEmail: PROFILE.email,
+      phone: PROFILE.phone,
+      address: null,
+    });
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.missing).toEqual(["address"]);
+    expect(LACHEIE_AGENCY_FIELD_LABEL["address"]).toBe("Adresa agenției");
+  });
+
 
   it("setările de agenție supraviețuiesc normalizării, cele de TEST nu", () => {
     const normalized = normalizeLaCheiePortalSettings({
@@ -365,5 +408,215 @@ describe("La Cheie — protecția cheii de furnizor și regresii", () => {
     expect(functions).toContain("request_id");
     expect(functions).toContain("portal_response");
     expect(functions).toContain("http_status");
+  });
+});
+
+describe("La Cheie — emailul verificat al administratorului", () => {
+  const base = { emailConfirmedAt: "2026-01-01T00:00:00Z" };
+
+  it("folosește emailul propriu al agency_admin-ului care declanșează activarea", () => {
+    const selection = selectLaCheieAdminEmail([
+      { userId: "owner", email: "owner@agentie.ro", ...base, isOwner: true },
+      { userId: "actor", email: "actor@agentie.ro", ...base, isActor: true },
+    ]);
+    expect(selection).toEqual({
+      ok: true,
+      email: "actor@agentie.ro",
+      userId: "actor",
+      source: "actor",
+    });
+  });
+
+  it("superadmin → emailul verificat al owner-ului, apoi primul agency_admin", () => {
+    const withOwner = selectLaCheieAdminEmail([
+      { userId: "a", email: "a@agentie.ro", ...base, roleGrantedAt: "2026-02-01T00:00:00Z" },
+      { userId: "owner", email: "owner@agentie.ro", ...base, isOwner: true },
+    ]);
+    expect(withOwner.ok && withOwner.source).toBe("owner");
+
+    const withoutOwner = selectLaCheieAdminEmail([
+      { userId: "b", email: "b@agentie.ro", ...base, roleGrantedAt: "2026-03-01T00:00:00Z" },
+      { userId: "a", email: "a@agentie.ro", ...base, roleGrantedAt: "2026-01-05T00:00:00Z" },
+    ]);
+    expect(withoutOwner.ok && withoutOwner.userId).toBe("a");
+    expect(withoutOwner.ok && withoutOwner.source).toBe("first_admin");
+  });
+
+  it("niciun email verificat → blocaj cu mesaj clar, fără substituiri", () => {
+    const neverConfirmed = selectLaCheieAdminEmail([
+      { userId: "a", email: "a@agentie.ro", emailConfirmedAt: null },
+      { userId: "b", email: null, emailConfirmedAt: "2026-01-01T00:00:00Z" },
+    ]);
+    expect(neverConfirmed.ok).toBe(false);
+    if (!neverConfirmed.ok) expect(neverConfirmed.reason).toMatch(/VERIFICAT/);
+    expect(selectLaCheieAdminEmail([]).ok).toBe(false);
+  });
+
+  it("emailul agenției nu mai este sursa: doar adminEmail ajunge în payload", () => {
+    const code = readFileSync("src/lib/portals/lacheie.functions.ts", "utf8");
+    expect(code).not.toMatch(/material_email/);
+    expect(code).toContain("resolveLaCheieAdminEmail");
+    const model = readFileSync("src/lib/portals/lacheie/agency.ts", "utf8");
+    expect(model).not.toMatch(/materialEmail/);
+  });
+});
+
+describe("La Cheie — operații idempotente pe agenție", () => {
+  const state = readLaCheieAgencyState({
+    lacheie_agency_external_id: "hbt-1",
+    lacheie_agency_status: "active",
+    lacheie_agency_version: "4",
+    lacheie_agency_accepted_version: "4",
+  });
+
+  it("reactivarea se decide din versiunea ACCEPTATĂ, nu din cea rezervată local", () => {
+    const failedFirstRegistration = readLaCheieAgencyState({
+      lacheie_agency_external_id: "hbt-1",
+      lacheie_agency_status: "error",
+      lacheie_agency_version: "1",
+    });
+    expect(isLaCheieAgencyReactivation(failedFirstRegistration)).toBe(false);
+    expect(isLaCheieAgencyReactivation(state)).toBe(true);
+  });
+
+  it("un retry al aceleiași operații refolosește versiunea și corpul", async () => {
+    const hash = await laCheieAgencyBodyHash("register", PROFILE);
+    const first = planLaCheieAgencyOperation({
+      state: readLaCheieAgencyState({}),
+      pending: null,
+      operation: "register",
+      bodyHash: hash,
+    });
+    expect(first).toEqual({ operation: "register", version: "1", reused: false });
+
+    const pending = readLaCheieAgencyPending(laCheieAgencyPendingPatch(first, hash, "now"));
+    expect(pending).toMatchObject({ operation: "register", version: "1", bodyHash: hash });
+    const retry = planLaCheieAgencyOperation({
+      state: readLaCheieAgencyState({}),
+      pending,
+      operation: "register",
+      bodyHash: hash,
+    });
+    expect(retry).toEqual({ operation: "register", version: "1", reused: true });
+  });
+
+  it("un corp sau o operație diferită alocă o versiune nouă", async () => {
+    const hash = await laCheieAgencyBodyHash("reactivate", PROFILE);
+    const other = await laCheieAgencyBodyHash("reactivate", { ...PROFILE, phone: "0722000112" });
+    expect(other).not.toBe(hash);
+    const pending = readLaCheieAgencyPending(
+      laCheieAgencyPendingPatch({ operation: "reactivate", version: "5", reused: false }, hash, "n"),
+    );
+    expect(
+      planLaCheieAgencyOperation({ state, pending, operation: "reactivate", bodyHash: other }),
+    ).toEqual({ operation: "reactivate", version: "5", reused: false });
+    expect(
+      planLaCheieAgencyOperation({ state, pending, operation: "deactivate", bodyHash: hash }),
+    ).toEqual({ operation: "deactivate", version: "5", reused: false });
+  });
+
+  it("timeout/5xx/429 păstrează operația pending; răspunsul definitiv o închide", () => {
+    for (const httpStatus of [0, 429, 500, 503]) {
+      const outcome = classifyLaCheieAgencyPut({
+        httpStatus,
+        body: null,
+        previousStatus: "inactive",
+      });
+      expect(outcome.keepPending, String(httpStatus)).toBe(true);
+      expect(outcome.definitive, String(httpStatus)).toBe(false);
+      expect(outcome.status, String(httpStatus)).toBe("inactive");
+    }
+    for (const httpStatus of [200, 201, 400, 403, 409]) {
+      const outcome = classifyLaCheieAgencyPut({
+        httpStatus,
+        body: httpStatus === 409 ? { error: { code: "conflict" } } : { status: "active" },
+        previousStatus: "inactive",
+      });
+      expect(outcome.definitive, String(httpStatus)).toBe(true);
+      expect(outcome.keepPending, String(httpStatus)).toBe(false);
+    }
+  });
+});
+
+describe("La Cheie — răspunsurile PUT/DELETE /agencies", () => {
+  it("201/200 citesc status și source_version din rădăcina corpului", () => {
+    const created = classifyLaCheieAgencyPut({
+      httpStatus: 201,
+      body: { external_id: "hbt-1", agency: { id: 211, name: "Test" }, status: "active", source_version: 1 },
+      previousStatus: "not_registered",
+    });
+    expect(created.status).toBe("active");
+    expect(created.acceptedVersion).toBe("1");
+
+    const reactivated = classifyLaCheieAgencyPut({
+      httpStatus: 200,
+      body: { status: "active", source_version: 6 },
+      previousStatus: "inactive",
+    });
+    expect(reactivated.status).toBe("active");
+    expect(reactivated.acceptedVersion).toBe("6");
+  });
+
+  it("403 → suspendare administrativă, cu mesajul cerut", () => {
+    const outcome = classifyLaCheieAgencyPut({
+      httpStatus: 403,
+      body: { error: { code: "suspended" } },
+      previousStatus: "inactive",
+    });
+    expect(outcome.status).toBe("suspended");
+    expect(outcome.message).toBe(LACHEIE_AGENCY_SUSPENDED_MESSAGE);
+    expect(outcome.versionConflict).toBe(false);
+  });
+
+  it("409 pe versiune permite reluarea; 409 pe asociere nu", () => {
+    const versionConflict = classifyLaCheieAgencyPut({
+      httpStatus: 409,
+      body: {},
+      conflictAcceptedVersion: "9",
+      previousStatus: "active",
+    });
+    expect(versionConflict.versionConflict).toBe(true);
+    expect(versionConflict.acceptedVersion).toBe("9");
+    expect(versionConflict.status).toBe("active");
+
+    const association = classifyLaCheieAgencyPut({
+      httpStatus: 409,
+      body: { error: { code: "email_in_use", message: "Contul aparține unui agent." } },
+      previousStatus: "not_registered",
+    });
+    expect(association.versionConflict).toBe(false);
+    expect(association.status).toBe("error");
+    expect(association.message).toBe(LACHEIE_AGENCY_ASSOCIATION_CONFLICT_MESSAGE);
+  });
+
+  it("DELETE citește statusul din răspuns și păstrează suspendarea", () => {
+    expect(
+      laCheieAgencyStatusAfterDelete({
+        httpStatus: 200,
+        body: { status: "suspended" },
+        previousStatus: "suspended",
+      }),
+    ).toEqual({ ok: true, status: "suspended", keepPending: false });
+    expect(
+      laCheieAgencyStatusAfterDelete({
+        httpStatus: 200,
+        body: { status: "inactive" },
+        previousStatus: "active",
+      }),
+    ).toEqual({ ok: true, status: "inactive", keepPending: false });
+    // 404 = deja inactivă.
+    expect(
+      laCheieAgencyStatusAfterDelete({ httpStatus: 404, body: null, previousStatus: "active" }),
+    ).toEqual({ ok: true, status: "inactive", keepPending: false });
+    expect(
+      laCheieAgencyStatusAfterDelete({ httpStatus: 503, body: null, previousStatus: "active" }),
+    ).toEqual({ ok: false, status: "active", keepPending: true });
+  });
+
+  it("dezactivarea marchează local ofertele La Cheie ca retrase", () => {
+    const code = readFileSync("src/lib/portals/lacheie.functions.ts", "utf8");
+    expect(code).toContain('.from("portal_listings")');
+    expect(code).toContain('.from("portal_publications")');
+    expect(code).toContain('status: "withdrawn"');
   });
 });
