@@ -627,14 +627,49 @@ export const lacheieAdapter: PortalAdapter = {
     });
     const first = build.ok ? build.offers[0]?.offer : null;
     const images = first?.images ?? [];
+    const notes = build.ok ? [...build.warnings] : [...build.reasons];
+
+    // Stare reală de la portal, ca la diagnoza Imobiliare.ro: status, link și
+    // versiunea acceptată, peste notele de validare locală.
+    let offerUrl: string | null = null;
+    let updatedAt: string | null = null;
+    const externalId = ref.externalId ?? first?.external_id ?? null;
+    const ready = prepare(ctx);
+    if (ready.ok && externalId) {
+      const live = await laCheieRequest(ready.config, {
+        method: "GET",
+        path: laCheiePropertiesPath(externalId),
+      }).catch(() => null);
+      if (live?.ok) {
+        const root = (live.body ?? {}) as Record<string, unknown>;
+        const scope = ((root["offer"] ?? root["data"] ?? root) ?? {}) as Record<string, unknown>;
+        const status = typeof scope["status"] === "string" ? (scope["status"] as string) : null;
+        const url = typeof scope["url"] === "string" ? (scope["url"] as string) : null;
+        const version = laCheieOfferVersionFromBody(live.body);
+        const updated = scope["updated_at"];
+        offerUrl = url;
+        updatedAt = typeof updated === "string" ? updated : null;
+        notes.push(`Stare la La Cheie: ${status ?? "necunoscută"}.`);
+        if (version) notes.push(`Versiune acceptată de portal: ${version}.`);
+      } else if (live) {
+        notes.push(
+          live.status === 404
+            ? "Oferta nu există în contextul acestei conexiuni La Cheie."
+            : `La Cheie nu a putut fi interogat (HTTP ${live.status}).`,
+        );
+      }
+    } else if (!ready.ok) {
+      notes.push(ready.result.message);
+    }
+
     return {
       ok: true,
       data: {
         feedVisible: build.ok,
         externalId: build.ok
           ? build.offers.map((entry) => entry.offer.external_id).join(",")
-          : null,
-        offerUrl: null,
+          : externalId,
+        offerUrl,
         agentId: first?.agent.external_id ?? null,
         agentName: first?.agent.full_name ?? null,
         images: {
@@ -643,9 +678,10 @@ export const lacheieAdapter: PortalAdapter = {
           broken: 0,
           primary: images.length > 0,
         },
-        updatedAt: null,
-        notes: build.ok ? build.warnings : build.reasons,
+        updatedAt,
+        notes,
       },
     };
   },
 };
+
