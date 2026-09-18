@@ -42,8 +42,25 @@ async function loadAdmin() {
 
 type Admin = Awaited<ReturnType<typeof loadAdmin>>;
 
+export type AiQuotaDecision = { allowed: true } | { allowed: false; message: string };
+
+export const AI_RATE_LIMIT_MESSAGE =
+  "Ai atins limita de cereri AI. Încearcă din nou în câteva minute.";
+
+type RateLimitClient = {
+  rpc: (
+    fn: "rate_limit_hit",
+    args: { _bucket: string; _limit: number; _window_seconds: number },
+  ) => Promise<{ data: unknown; error: { message: string } | null }>;
+};
+
+/**
+ * Limitele de rată, aplicate „fail closed": orice eroare de bază de date sau
+ * rezultat non-boolean refuză cererea, ca o defecțiune să nu dezactiveze
+ * limitele.
+ */
 export async function checkAiRateLimits(
-  admin: Admin,
+  admin: RateLimitClient,
   actor: AiActor,
   scope: "chat" | "workflow" = "chat",
 ): Promise<boolean> {
@@ -52,15 +69,95 @@ export async function checkAiRateLimits(
     [`ai_${scope}:user:hour:${actor.userId}`, AI_RATE_LIMITS.perUserHour],
     [`ai_${scope}:org:hour:${actor.organizationId}`, AI_RATE_LIMITS.perOrganizationHour],
   ] as const) {
-    const { data: allowed } = await admin.rpc("rate_limit_hit", {
-      _bucket: bucket,
-      _limit: config.limit,
-      _window_seconds: config.windowSeconds,
-    });
+    let allowed: unknown;
+    let failure: string | null = null;
+    try {
+      const result = await admin.rpc("rate_limit_hit", {
+        _bucket: bucket,
+        _limit: config.limit,
+        _window_seconds: config.windowSeconds,
+      });
+      allowed = result.data;
+      failure = result.error?.message ?? null;
+    } catch (error) {
+      failure = error instanceof Error ? error.message : "unknown";
+    }
+    if (failure !== null || typeof allowed !== "boolean") {
+      console.error("[ai] rate limit check failed closed", bucket, failure);
+      return false;
+    }
     if (allowed === false) return false;
   }
   return true;
 }
+
+type UsageReader = {
+  from: (table: "ai_usage_events") => {
+    select: (columns: string) => {
+      eq: (
+        column: "organization_id",
+        value: string,
+      ) => {
+        gte: (
+          column: "created_at",
+          value: string,
+        ) => Promise<{
+          data:
+            | { input_tokens: number | null; output_tokens: number | null }[]
+            | null;
+          error: { message: string } | null;
+        }>;
+      };
+    };
+  };
+};
+
+/** Consumul agenției pe fereastra glisantă. `null` = nu am putut citi. */
+export async function readAiOrgUsage(
+  admin: UsageReader,
+  organizationId: string,
+  now: Date = new Date(),
+): Promise<AiOrgUsageSnapshot | null> {
+  const since = new Date(now.getTime() - AI_ORG_USAGE_CEILING.windowSeconds * 1000).toISOString();
+  try {
+    const { data, error } = await admin
+      .from("ai_usage_events")
+      .select("input_tokens, output_tokens")
+      .eq("organization_id", organizationId)
+      .gte("created_at", since);
+    if (error || !data) return null;
+    let tokens = 0;
+    let unknownTokenRequests = 0;
+    for (const row of data) {
+      if (row.input_tokens === null && row.output_tokens === null) unknownTokenRequests += 1;
+      tokens += (row.input_tokens ?? 0) + (row.output_tokens ?? 0);
+    }
+    return { requests: data.length, tokens, unknownTokenRequests };
+  } catch (error) {
+    console.error("[ai] usage ceiling read failed", error);
+    return null;
+  }
+}
+
+/**
+ * Poarta unică de consum: limite de rată (fail closed) + plafonul agenției,
+ * verificate înainte de orice apel către provider.
+ */
+export async function checkAiQuota(
+  admin: RateLimitClient & UsageReader,
+  actor: AiActor,
+  scope: "chat" | "workflow" = "chat",
+): Promise<AiQuotaDecision> {
+  if (!(await checkAiRateLimits(admin, actor, scope))) {
+    return { allowed: false, message: AI_RATE_LIMIT_MESSAGE };
+  }
+  const usage = await readAiOrgUsage(admin, actor.organizationId);
+  if (usage === null) return { allowed: true };
+  const ceiling = evaluateAiOrgCeiling(usage);
+  if (ceiling.exceeded) return { allowed: false, message: ceiling.message };
+  return { allowed: true };
+}
+
 
 /** Conversația curentă, creată dacă lipsește. Mereu legată de user + agenție. */
 async function ensureConversation(
