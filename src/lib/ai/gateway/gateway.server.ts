@@ -249,12 +249,11 @@ export async function runAiChat(actor: AiActor, request: AiChatRequest): Promise
 
   const admin = await loadAdmin();
 
-  if (!(await checkAiRateLimits(admin, actor, "chat"))) {
-    return emptyAiResponse(
-      "rate_limited",
-      "Ai atins limita de cereri AI. Încearcă din nou în câteva minute.",
-    );
+  const quota = await checkAiQuota(admin as never, actor, "chat");
+  if (!quota.allowed) {
+    return emptyAiResponse("rate_limited", quota.message);
   }
+
 
   const conversationId = await ensureConversation(admin, actor, request.conversationId, message);
   if (!conversationId) {
