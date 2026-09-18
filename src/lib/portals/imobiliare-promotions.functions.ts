@@ -17,6 +17,7 @@ import {
   buildContext,
   logOperation,
   resolvePublishingOrg,
+  assertPortalPropertyAccess,
   type AuthContext,
 } from "@/lib/portals.functions";
 import { IMOBILIARE_PORTAL_KEY } from "@/lib/portals/imobiliare/config";
@@ -151,10 +152,16 @@ export const getImobiliarePromotions = createServerFn({ method: "POST" })
       .parse(input),
   )
   .handler(async ({ data, context }): Promise<ImobiliarePromotionsView> => {
-    const { organizationId } = await resolvePublishingOrg(
+    const { organizationId, agentOnly } = await resolvePublishingOrg(
       context as unknown as AuthContext,
       data.organizationId,
     );
+    await assertPortalPropertyAccess({
+      organizationId,
+      propertyId: data.propertyId,
+      agentOnly,
+      userId: context.userId,
+    });
     const prepared = await prepare(organizationId, data.propertyId);
     if (!prepared.ok) return prepared.view;
 
@@ -233,10 +240,16 @@ export const setImobiliarePromotion = createServerFn({ method: "POST" })
       .parse(input),
   )
   .handler(async ({ data, context }): Promise<ImobiliarePromotionActionResult> => {
-    const { organizationId } = await resolvePublishingOrg(
+    const { organizationId, agentOnly } = await resolvePublishingOrg(
       context as unknown as AuthContext,
       data.organizationId,
     );
+    await assertPortalPropertyAccess({
+      organizationId,
+      propertyId: data.propertyId,
+      agentOnly,
+      userId: context.userId,
+    });
     const definition = imobiliarePromotion(data.promotionId);
     if (!definition) return { ok: false, message: "Serviciu de promovare necunoscut." };
 
@@ -323,10 +336,16 @@ export const getImobiliareSlotListings = createServerFn({ method: "POST" })
       data,
       context,
     }): Promise<{ ok: boolean; message: string | null; listings: ImobiliareSlotListingRow[] }> => {
-      const { organizationId } = await resolvePublishingOrg(
+      const { organizationId, agentOnly } = await resolvePublishingOrg(
         context as unknown as AuthContext,
         data.organizationId,
       );
+      await assertPortalPropertyAccess({
+        organizationId,
+        propertyId: data.propertyId,
+        agentOnly,
+        userId: context.userId,
+      });
       const definition = imobiliarePromotion(data.promotionId);
       if (!definition?.slotType) {
         return {
