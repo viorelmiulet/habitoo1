@@ -500,12 +500,21 @@ export async function executeAiTool(
   rawArgs: unknown,
   options: AiToolExecutionOptions = {},
 ): Promise<AiToolExecution> {
+  // Bariera absolută: numele interzise sunt refuzate înainte de orice altceva.
+  if (isForbiddenAiTool(name)) {
+    return {
+      ok: false,
+      error: "Această operațiune nu este disponibilă în Habitoo AI.",
+      code: "denied",
+    };
+  }
   const authorization = authorizeAiTool(actor, name, aiToolCapability);
   if (!authorization.allowed) {
     return { ok: false, error: authorization.message, code: "denied" };
   }
   const tool = findAiTool(name);
   if (!tool) return { ok: false, error: "Instrumentul cerut nu există.", code: "denied" };
+
 
   // Politica centrală: doar READ, DRAFT și acțiunile reversibile activate pot
   // rula. HIGH_RISK rămâne blocat, indiferent ce cere modelul.

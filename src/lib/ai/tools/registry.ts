@@ -871,12 +871,9 @@ export function aiToolDeclarations(includeActions = false): AiToolDeclaration[] 
   }));
 }
 
-/** Tool-uri interzise în această etapă: prezența lor în registry ar fi un bug. */
-export const AI_FORBIDDEN_TOOL_NAMES = [
-  "send_email",
-  "send_whatsapp",
-  "publish_portal",
-  "delete_property",
-  "change_price",
-  "create_contract",
-] as const;
+/**
+ * Tool-uri interzise: sursa unică este `security/policy.ts`, aplicată la
+ * execuție în `executeAiTool`. Reexportul păstrează importurile existente.
+ */
+export { AI_FORBIDDEN_TOOL_NAMES } from "../security/policy";
+
