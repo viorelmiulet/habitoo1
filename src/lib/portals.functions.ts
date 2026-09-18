@@ -274,6 +274,10 @@ export type PortalListingDiagnosticsView = {
   stateKnown: boolean;
   portalState: string | null;
   urlConfirmed: boolean;
+  /** Anunțul e online, dar pagina publică nu funcționează (cont fără abonament). */
+  offerUrlSuppressed: boolean;
+  /** Abonamentul contului portalului, când portalul o spune. */
+  subscriptionActive: boolean | null;
 };
 
 /**
@@ -1511,6 +1515,8 @@ export const getPropertyPortalStatus = createServerFn({ method: "POST" })
                 stateKnown: result.data.stateKnown ?? false,
                 portalState: result.data.portalState ?? null,
                 urlConfirmed: result.data.urlConfirmed ?? result.data.offerUrl !== null,
+                offerUrlSuppressed: result.data.offerUrlSuppressed === true,
+                subscriptionActive: result.data.subscriptionActive ?? null,
               };
             },
           });
@@ -1522,14 +1528,17 @@ export const getPropertyPortalStatus = createServerFn({ method: "POST" })
          * este în altă stare decât `online`.
          */
         const offline = portalSaysOffline(diagnostics);
-        const publicUrl = resolveListingPublicUrl(diagnostics, listing?.public_url ?? null);
+        const storedUrl = resolveListingPublicUrl(diagnostics, listing?.public_url ?? null);
+        // Ce se AFIȘEAZĂ poate fi mai puțin decât ce se PĂSTREAZĂ: un cont fără
+        // abonament ascunde linkul, dar nu îl șterge din bază.
+        const publicUrl = displayListingPublicUrl(diagnostics, listing?.public_url ?? null);
         if (listing) {
           await syncListingPublicUrl({
             organizationId,
             portalId: portal.id,
             propertyId: data.propertyId,
             stored: listing.public_url ?? null,
-            resolved: publicUrl,
+            resolved: storedUrl,
             portalSaysOffline: offline,
           });
         }
