@@ -14,6 +14,7 @@ import {
   type AIResponse,
   type AiActor,
   type AiSource,
+  truncateAiToolCall,
   type AiToolCallRecord,
 } from "./types";
 import { buildAiContext, type AiContext } from "../context/builder";
@@ -386,7 +387,7 @@ export async function runAiChat(actor: AiActor, request: AiChatRequest): Promise
       content: answer,
       provider: provider.id,
       model: provider.model,
-      tool_calls: toolCalls as never,
+      tool_calls: toolCalls.map(truncateAiToolCall) as never,
       context_used: contextUsed as never,
       sources: uniqueSources as never,
       input_tokens: inputTokens,
