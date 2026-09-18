@@ -1634,10 +1634,16 @@ export const setPropertyPortalSelection = createServerFn({ method: "POST" })
       .parse(input),
   )
   .handler(async ({ data, context }) => {
-    const { organizationId, superadmin } = await resolvePublishingOrg(
+    const { organizationId, superadmin, agentOnly } = await resolvePublishingOrg(
       context as unknown as AuthContext,
       data.organizationId,
     );
+    await assertPortalPropertyAccess({
+      organizationId,
+      propertyId: data.propertyId,
+      agentOnly,
+      userId: context.userId,
+    });
     const definition = getPortalDefinition(data.portalId);
     if (!definition) throw new Error("Portal necunoscut.");
     if (!superadmin && !(await activatedPortalIds(organizationId)).has(definition.id)) {
