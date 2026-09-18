@@ -1736,6 +1736,26 @@ export async function imobiliareAccountForOrg(
   }
 }
 
+/** Starea abonamentului Imobiliare.ro, pentru panoul de portaluri. */
+export const getImobiliareAccountStatus = createServerFn({ method: "POST" })
+  .middleware([requireActiveOrgAuth])
+  .inputValidator((input: unknown) =>
+    z.object({ organizationId: z.string().uuid().optional() }).parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    const { organizationId } = await resolvePublishingOrg(
+      context as unknown as AuthContext,
+      data.organizationId,
+    );
+    const account = await imobiliareAccountForOrg(organizationId);
+    return {
+      isSubscriptionActive: account?.isSubscriptionActive ?? null,
+      subscriptionStatus: account?.subscriptionStatus ?? null,
+      subscriptionType: account?.subscriptionType ?? null,
+      listingOnlineCount: account?.listingOnlineCount ?? null,
+    };
+  });
+
 export const getPropertiesPortalMatrix = createServerFn({ method: "POST" })
   .middleware([requireActiveOrgAuth])
   .inputValidator((input: unknown) =>
