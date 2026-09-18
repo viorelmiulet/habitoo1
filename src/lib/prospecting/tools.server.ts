@@ -370,6 +370,10 @@ export async function runProspectingTool(
           ok: false,
           error: result.message,
           code: result.code === "not_found" ? "not_found" : "failed",
+          details: {
+            reason: result.code,
+            ...(result.existingContact ? { existingContact: result.existingContact } : {}),
+          },
         };
       }
       await logProspectingAudit({

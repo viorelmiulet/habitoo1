@@ -11,6 +11,7 @@
 import { PROSPECTING_NO_LIVE_SOURCE_NOTE } from "@/lib/prospecting/workflow";
 import type { AiActor } from "../../gateway/types";
 import { AI_AUDIT_ACTIONS, logAiAudit } from "../../security/audit";
+import { APPROVAL_ALREADY_APPLIED, claimSuspendedRun } from "../../security/approval";
 import { sanitizeUserRequest } from "../../security/injection";
 import { checkActionPolicy } from "../../security/policy";
 import { AiTracer, newTraceId } from "../../tracing/trace";
@@ -664,11 +665,24 @@ export async function decideManagerAction(
   approved: boolean,
 ): Promise<ManagerDecision> {
   const admin = await loadAdmin();
-  const row = await loadRun(admin, actor, runId);
-  if (!row) return { ok: false, message: "Planul nu a fost găsit." };
-  if (row.status !== "suspended") {
-    return { ok: false, message: "Această acțiune a fost deja procesată." };
-  }
+  // Aprobarea se consumă atomic: două cereri paralele nu pot executa de două ori.
+  const row = await claimSuspendedRun<{
+    id: string;
+    workflow: string;
+    status: string;
+    current_step: string;
+    state: unknown;
+    trace_id: string | null;
+    error_message: string | null;
+    updated_at: string;
+  }>(admin, {
+    runId,
+    organizationId: actor.organizationId,
+    userId: actor.userId,
+    workflow: MANAGER_WORKFLOW,
+    columns: "id,workflow,status,current_step,state,trace_id,error_message,updated_at",
+  });
+  if (!row) return { ok: false, message: APPROVAL_ALREADY_APPLIED };
 
   let state = row.state as unknown as ManagerState;
   const approval = state.approval;

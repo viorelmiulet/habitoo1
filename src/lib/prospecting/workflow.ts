@@ -84,6 +84,8 @@ export type ProspectingWorkflowState = {
   counters: ProspectingCounters;
   /** Candidații propuși spre aprobare (ID-uri de prospecte deja persistate). */
   candidateIds: string[];
+  /** Amprenta candidaților la suspendare, verificată la reluare. */
+  candidatesHash?: string;
   approval: {
     decidedAt: string;
     approvedIds: string[];

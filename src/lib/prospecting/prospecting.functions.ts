@@ -391,8 +391,24 @@ export type ProspectImportOutcome = {
 };
 
 /**
- * Import individual în CRM. Rulează prin tool-ul de acțiune, cu aprobarea
- * explicită a utilizatorului (apăsarea butonului de import este aprobarea).
+ * Verifică server-side că oportunitatea aparține agenției actorului. Aprobarea
+ * din interfață contează doar dacă cel care apasă are dreptul să decidă.
+ */
+async function prospectInOrg(actor: AiActor, prospectId: string): Promise<boolean> {
+  const admin = await loadAdmin();
+  const { data } = await admin
+    .from("prospects")
+    .select("id")
+    .eq("id", prospectId)
+    .eq("organization_id", actor.organizationId)
+    .maybeSingle();
+  return Boolean(data);
+}
+
+/**
+ * Import individual în CRM. Rulează prin `executeAiTool` (allowlist, permisiuni,
+ * audit), cu aprobarea explicită a utilizatorului: apăsarea butonului de import
+ * este aprobarea umană.
  */
 export const importProspect = createServerFn({ method: "POST" })
   .middleware([requireActiveOrgAuth])
@@ -409,29 +425,32 @@ export const importProspect = createServerFn({ method: "POST" })
     if (!actor) {
       return { ok: false, message: "Prospectarea este disponibilă doar utilizatorilor unei agenții." };
     }
-    const { importProspectToCrm } = await import("./import.server");
-    const result = await importProspectToCrm(actor, data.prospectId, {
-      linkContactId: data.linkContactId ?? null,
-    });
+    if (!(await prospectInOrg(actor, data.prospectId))) {
+      return { ok: false, message: "Oportunitatea nu există în agenția ta." };
+    }
+    const { executeAiTool } = await import("@/lib/ai/tools/executors.server");
+    const result = await executeAiTool(
+      actor,
+      data.linkContactId ? "link_prospect_to_existing_contact" : "import_prospect_to_crm",
+      data.linkContactId
+        ? { prospectId: data.prospectId, contactId: data.linkContactId }
+        : { prospectId: data.prospectId },
+      // Apăsarea butonului în interfață ESTE aprobarea umană explicită.
+      { approvalGranted: true },
+    );
     if (!result.ok) {
+      const existing = (result.details?.["existingContact"] ?? null) as {
+        id: string;
+        name: string;
+      } | null;
       return {
         ok: false,
-        message: result.message,
-        needsLink: result.existingContact
-          ? { id: result.existingContact.id, name: result.existingContact.name }
-          : null,
+        message: result.error,
+        needsLink: existing ? { id: existing.id, name: existing.name } : null,
       };
     }
-    await logProspectingAudit({
-      organizationId: actor.organizationId,
-      actorId: actor.userId,
-      action: data.linkContactId
-        ? PROSPECTING_AUDIT_ACTIONS.prospectLinked
-        : PROSPECTING_AUDIT_ACTIONS.prospectImported,
-      entityId: data.prospectId,
-      details: { leadId: result.leadId, status: result.status },
-    });
-    return { ok: true, message: result.message, leadId: result.leadId };
+    const payload = result.data as { leadId?: string | null } | null;
+    return { ok: true, message: result.summary, leadId: payload?.leadId ?? null };
   });
 
 /** Decizie individuală de aprobare/respingere, direct din listă. */
@@ -451,6 +470,18 @@ export const reviewProspect = createServerFn({ method: "POST" })
     if (!actor) {
       return { ok: false, message: "Prospectarea este disponibilă doar utilizatorilor unei agenții." };
     }
+    // Aprobarea poartă și autorizare: doar un membru al agenției care deține
+    // oportunitatea poate decide asupra ei.
+    if (!(await prospectInOrg(actor, data.prospectId))) {
+      await logProspectingAudit({
+        organizationId: actor.organizationId,
+        actorId: actor.userId,
+        action: PROSPECTING_AUDIT_ACTIONS.actionDenied,
+        entityId: data.prospectId,
+        details: { decision: data.decision, reason: "outside_organization" },
+      });
+      return { ok: false, message: "Oportunitatea nu există în agenția ta." };
+    }
     const { executeAiTool } = await import("@/lib/ai/tools/executors.server");
     const result = await executeAiTool(
       actor,
@@ -459,6 +490,17 @@ export const reviewProspect = createServerFn({ method: "POST" })
       // Apăsarea butonului în interfață ESTE aprobarea umană explicită.
       { approvalGranted: true },
     );
+    await logProspectingAudit({
+      organizationId: actor.organizationId,
+      actorId: actor.userId,
+      action: result.ok
+        ? data.decision === "approved"
+          ? PROSPECTING_AUDIT_ACTIONS.prospectApproved
+          : PROSPECTING_AUDIT_ACTIONS.prospectRejected
+        : PROSPECTING_AUDIT_ACTIONS.actionDenied,
+      entityId: data.prospectId,
+      details: { decision: data.decision, actorRole: actor.role },
+    });
     return result.ok
       ? { ok: true, message: result.summary }
       : { ok: false, message: result.error };

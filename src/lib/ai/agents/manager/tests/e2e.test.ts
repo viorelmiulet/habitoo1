@@ -51,12 +51,6 @@ function builder(table: string) {
     },
     eq(column: string, value: unknown) {
       filters[column] = value;
-      if (pending && table === "ai_workflow_runs") {
-        const target = db.runs.find((row) =>
-          Object.entries(filters).every(([key, expected]) => row[key] === expected),
-        );
-        if (target) Object.assign(target, pending);
-      }
       return api;
     },
     order() {
@@ -70,15 +64,31 @@ function builder(table: string) {
       return { data: row, error: null };
     },
     async maybeSingle() {
-      const row =
-        db.runs.find((item) =>
-          Object.entries(filters).every(([key, expected]) => item[key] === expected),
-        ) ?? null;
+      // Update-ul se aplică la finalul lanțului: rândurile sunt selectate cu
+      // filtrele DE DINAINTE de mutație, exact ca un `update … returning *`.
+      const match = db.runs.find((item) =>
+        Object.entries(filters).every(([key, expected]) => item[key] === expected),
+      );
+      let row = match ?? null;
+      if (pending && table === "ai_workflow_runs") {
+        if (match) Object.assign(match, pending);
+        row = match ?? null;
+        pending = null;
+      }
       filters = {};
-      return { data: row, error: null };
+      return { data: row ? { ...row } : null, error: null };
     },
 
     then(resolve: (value: { data: Row[]; error: null }) => unknown) {
+      if (pending && table === "ai_workflow_runs") {
+        for (const row of db.runs) {
+          if (Object.entries(filters).every(([key, expected]) => row[key] === expected)) {
+            Object.assign(row, pending);
+          }
+        }
+        pending = null;
+      }
+      filters = {};
       return Promise.resolve({ data: db.runs, error: null }).then(resolve);
     },
   };

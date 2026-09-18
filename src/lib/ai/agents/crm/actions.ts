@@ -9,6 +9,7 @@
  * publicare): lista de mai jos este completă și închisă.
  */
 import { z } from "zod";
+import { argumentsFingerprint } from "../../security/approval";
 
 export const CRM_ACTION_TOOLS = [
   "create_task",
@@ -34,6 +35,8 @@ export type CrmActionProposal = {
   tool: CrmActionTool;
   /** Parametrii serializați, ca propunerea să rămână urmăribilă în audit. */
   argumentsJson: string;
+  /** Amprenta argumentelor la suspendare, verificată la aprobare. */
+  argumentsHash?: string;
   entity: { type: "lead" | "contact" | "property" | "request"; id: string; label: string };
   changes: CrmActionChange[];
   reason: string;
@@ -246,9 +249,11 @@ export function buildCrmProposal(input: {
   precondition?: CrmActionProposal["precondition"];
   warnings?: string[];
 }): CrmActionProposal {
+  const argumentsJson = JSON.stringify(input.args);
   return {
     tool: input.tool,
-    argumentsJson: JSON.stringify(input.args),
+    argumentsJson,
+    argumentsHash: argumentsFingerprint(argumentsJson),
     entity: input.entity,
     changes: input.changes,
     reason: input.reason,

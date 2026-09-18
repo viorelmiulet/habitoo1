@@ -13,6 +13,13 @@ import type { AiActor } from "@/lib/ai/gateway/types";
 import { AiTracer, newTraceId } from "@/lib/ai/tracing/trace";
 import { writeTraceEvents } from "@/lib/ai/tracing/trace.server";
 import { withRetry } from "@/lib/ai/reliability/retry";
+import {
+  APPROVAL_ALREADY_APPLIED,
+  APPROVAL_TAMPERED,
+  argumentsFingerprint,
+  claimSuspendedRun,
+  fingerprintMatches,
+} from "@/lib/ai/security/approval";
 import { writeAiUsage } from "@/lib/ai/usage/tracking.server";
 import { PROSPECTING_AUDIT_ACTIONS, logProspectingAudit } from "./audit";
 import { applyClassification, buildClassificationPrompt, parseClassificationResponse } from "./classify";
@@ -559,6 +566,9 @@ export async function startProspectingWorkflow(
   state = {
     ...state,
     candidateIds,
+    // Amprenta candidaților aprobabili: verificată la reluare, deci o scriere
+    // ulterioară în stare nu poate strecura alte oportunități la import.
+    candidatesHash: argumentsFingerprint(JSON.stringify({ candidateIds })),
     warnings,
     counters: {
       ...state.counters,
@@ -652,17 +662,31 @@ export async function resumeProspectingWorkflow(
   decision: { approvedIds: string[]; rejectedIds: string[]; importApproved: boolean },
 ): Promise<{ ok: true; run: ProspectingRunView; imported: number } | { ok: false; message: string }> {
   const admin = await loadAdmin();
-  const { data: row } = await admin
-    .from("ai_workflow_runs")
-    .select("id,status,current_step,state,trace_id,updated_at")
-    .eq("id", workflowRunId)
-    .eq("organization_id", actor.organizationId)
-    .eq("user_id", actor.userId)
-    .eq("workflow", HABITOO_PROSPECTING_WORKFLOW)
-    .maybeSingle();
-  if (!row) return { ok: false, message: "Rularea nu a fost găsită." };
-  if (row.status !== "suspended") {
-    return { ok: false, message: "Rularea nu așteaptă o decizie." };
+  // Decizia se consumă atomic: o a doua cerere paralelă nu importă nimic.
+  const row = await claimSuspendedRun<{
+    id: string;
+    status: string;
+    current_step: string;
+    state: unknown;
+    trace_id: string | null;
+    updated_at: string;
+  }>(admin, {
+    runId: workflowRunId,
+    organizationId: actor.organizationId,
+    userId: actor.userId,
+    workflow: HABITOO_PROSPECTING_WORKFLOW,
+    columns: "id,status,current_step,state,trace_id,updated_at",
+  });
+  if (!row) return { ok: false, message: APPROVAL_ALREADY_APPLIED };
+
+  const stored = row.state as unknown as ProspectingWorkflowState;
+  if (
+    !fingerprintMatches(
+      stored.candidatesHash,
+      JSON.stringify({ candidateIds: stored.candidateIds ?? [] }),
+    )
+  ) {
+    return { ok: false, message: APPROVAL_TAMPERED };
   }
 
   const traceId = row.trace_id ?? newTraceId();
