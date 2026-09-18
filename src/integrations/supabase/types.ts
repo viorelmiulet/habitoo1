@@ -3111,6 +3111,57 @@ export type Database = {
           },
         ]
       }
+      market_price_indices: {
+        Row: {
+          base_label: string | null
+          created_at: string
+          dataset: string
+          id: string
+          import_run_id: string | null
+          index_value: number
+          period_quarter: number
+          period_year: number
+          published_at: string | null
+          region: string
+          series: string
+          source: string
+          unit: string
+          updated_at: string
+        }
+        Insert: {
+          base_label?: string | null
+          created_at?: string
+          dataset: string
+          id?: string
+          import_run_id?: string | null
+          index_value: number
+          period_quarter: number
+          period_year: number
+          published_at?: string | null
+          region?: string
+          series: string
+          source?: string
+          unit: string
+          updated_at?: string
+        }
+        Update: {
+          base_label?: string | null
+          created_at?: string
+          dataset?: string
+          id?: string
+          import_run_id?: string | null
+          index_value?: number
+          period_quarter?: number
+          period_year?: number
+          published_at?: string | null
+          region?: string
+          series?: string
+          source?: string
+          unit?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       market_source_state: {
         Row: {
           attempts: number
