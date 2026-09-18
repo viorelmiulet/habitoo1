@@ -41,8 +41,12 @@ export const ENABLED_DRAFT_ACTIONS = [
 ] as const;
 
 /**
- * Acțiuni interzise. Nu există în registry, deci modelul nu le poate cere nici
- * pe nume; lista rămâne aici ca barieră explicită și testabilă.
+ * Acțiuni interzise — SURSA UNICĂ de adevăr. Lista reunește fostele
+ * `HIGH_RISK_ACTIONS` și `AI_FORBIDDEN_TOOL_NAMES` din registry, inclusiv
+ * denumirile divergente (`publish_portal`/`publish_to_portal`,
+ * `create_contract`/`sign_contract`). Nu există în registry, deci modelul nu le
+ * poate cere nici pe nume; lista rămâne bariera explicită și testabilă,
+ * aplicată la execuție în `executeAiTool`.
  */
 export const HIGH_RISK_ACTIONS = [
   "delete_property",
@@ -50,9 +54,12 @@ export const HIGH_RISK_ACTIONS = [
   "delete_lead",
   "bulk_delete",
   "update_property_price",
+  "change_price",
   "update_acp_valuation",
   "sign_contract",
+  "create_contract",
   "publish_to_portal",
+  "publish_portal",
   "withdraw_from_portal",
   "send_email",
   "send_whatsapp",
@@ -60,9 +67,18 @@ export const HIGH_RISK_ACTIONS = [
   "call_owner",
 ] as const;
 
+/** Alias istoric: aceeași listă, un singur loc de întreținere. */
+export const AI_FORBIDDEN_TOOL_NAMES = HIGH_RISK_ACTIONS;
+
 const REVERSIBLE = new Set<string>(ENABLED_REVERSIBLE_ACTIONS);
 const DRAFT = new Set<string>(ENABLED_DRAFT_ACTIONS);
 const HIGH_RISK = new Set<string>(HIGH_RISK_ACTIONS);
+
+/** `true` dacă numele apare pe lista interzisă, oricare ar fi contextul. */
+export function isForbiddenAiTool(name: string): boolean {
+  return HIGH_RISK.has(name);
+}
+
 
 /** Categoria unui tool: `null` dacă nu este cunoscut ca acțiune. */
 export function actionCategory(tool: string, kind: "read" | "action" = "action"): AiActionCategory | null {

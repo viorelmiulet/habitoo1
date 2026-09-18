@@ -13,6 +13,8 @@ export type AiUsageRow = {
   latency_ms: number;
   success: boolean;
   tool_calls: number;
+  /** Marcaj explicit: providerul nu a raportat tokeni pentru această cerere. */
+  tokens_unknown?: boolean;
 };
 
 type UsageWriter = {
@@ -23,8 +25,13 @@ type UsageWriter = {
 
 /** Scrie un eveniment de utilizare (best-effort: nu blochează răspunsul). */
 export async function writeAiUsage(client: UsageWriter, row: AiUsageRow): Promise<boolean> {
+  const marked: AiUsageRow = {
+    ...row,
+    tokens_unknown:
+      row.tokens_unknown ?? (row.input_tokens === null && row.output_tokens === null),
+  };
   try {
-    const { error } = await client.from("ai_usage_events").insert(row);
+    const { error } = await client.from("ai_usage_events").insert(marked);
     if (error) {
       console.error("[ai] usage insert failed", error.message);
       return false;
@@ -35,3 +42,4 @@ export async function writeAiUsage(client: UsageWriter, row: AiUsageRow): Promis
     return false;
   }
 }
+

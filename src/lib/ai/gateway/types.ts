@@ -34,6 +34,24 @@ export type AiToolCallRecord = {
   error?: string;
 };
 
+/** Limite de mărime pentru ce se persistă în `ai_messages.tool_calls`. */
+export const AI_TOOL_ARGUMENTS_MAX_CHARS = 1000;
+export const AI_TOOL_SUMMARY_MAX_CHARS = 500;
+
+export function truncateAiToolText(value: string, max: number): string {
+  return value.length > max ? `${value.slice(0, max)}…` : value;
+}
+
+/** Scurtează argumentele și rezultatul înainte de persistare. */
+export function truncateAiToolCall(record: AiToolCallRecord): AiToolCallRecord {
+  return {
+    ...record,
+    arguments: truncateAiToolText(record.arguments, AI_TOOL_ARGUMENTS_MAX_CHARS),
+    summary: truncateAiToolText(record.summary, AI_TOOL_SUMMARY_MAX_CHARS),
+    ...(record.error ? { error: truncateAiToolText(record.error, AI_TOOL_SUMMARY_MAX_CHARS) } : {}),
+  };
+}
+
 export type AiUsage = {
   inputTokens: number | null;
   outputTokens: number | null;
