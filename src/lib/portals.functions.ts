@@ -1989,10 +1989,16 @@ export const applyPropertyPortalSelection = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => applySelectionSchema.parse(input))
   .handler(
     async ({ data, context }): Promise<{ ok: boolean; results: PortalSelectionOutcome[] }> => {
-      const { organizationId, superadmin } = await resolvePublishingOrg(
+      const { organizationId, superadmin, agentOnly } = await resolvePublishingOrg(
         context as unknown as AuthContext,
         data.organizationId,
       );
+      await assertPortalPropertyAccess({
+        organizationId,
+        propertyId: data.propertyId,
+        agentOnly,
+        userId: context.userId,
+      });
       return await applyPortalSelectionForOrg({
         organizationId,
         superadmin,
