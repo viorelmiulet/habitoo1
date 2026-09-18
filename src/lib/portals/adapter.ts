@@ -118,6 +118,13 @@ export type ListingDiagnostics = {
   portalState?: string | null;
   /** `true` dacă linkul din `offerUrl` a fost confirmat acum de portal. */
   urlConfirmed?: boolean;
+  /**
+   * Anunțul e `online`, dar pagina publică nu funcționează din motive de cont
+   * (ex. abonament inactiv). Linkul nu se afișează, dar nu se șterge din bază.
+   */
+  offerUrlSuppressed?: boolean;
+  /** Abonamentul contului portalului este activ, când portalul o spune. */
+  subscriptionActive?: boolean | null;
 };
 
 export interface PortalAdapter {

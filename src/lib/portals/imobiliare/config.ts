@@ -15,6 +15,8 @@ export const IMOBILIARE_PATHS = {
   logout: "/api/v3/logout",
   listings: "/api/v3/listings",
   agents: "/api/v3/agents",
+  /** Contul conectat: abonament, tip, număr de anunțuri online. */
+  me: "/api/v3/me",
   /** Endpointuri candidate pentru catalogul de categorii (`category_api`). */
   categories: ["/api/v3/categories", "/api/v3/listings/categories"] as const,
   /** Inventarul serviciilor de promovare, pe `slot_type`. */

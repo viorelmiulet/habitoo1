@@ -22,7 +22,17 @@ import {
   type PortalDefinition,
 } from "@/lib/portals/registry";
 import { PORTAL_ERROR_MESSAGE } from "@/lib/portals/errors";
-import { portalSaysOffline, resolveListingPublicUrl, shouldSaveBackfilledUrl } from "@/lib/portals/link";
+import {
+  displayListingPublicUrl,
+  portalSaysOffline,
+  resolveListingPublicUrl,
+  shouldSaveBackfilledUrl,
+} from "@/lib/portals/link";
+import {
+  IMOBILIARE_NO_SUBSCRIPTION_MESSAGE,
+  subscriptionInactive,
+  type ImobiliareAccountState,
+} from "@/lib/portals/imobiliare/account";
 import type { ImoveListing } from "@/lib/portals/imove/mapper";
 import {
   isLegacyLaCheieTestEnvironmentError,
@@ -274,6 +284,10 @@ export type PortalListingDiagnosticsView = {
   stateKnown: boolean;
   portalState: string | null;
   urlConfirmed: boolean;
+  /** Anunțul e online, dar pagina publică nu funcționează (cont fără abonament). */
+  offerUrlSuppressed: boolean;
+  /** Abonamentul contului portalului, când portalul o spune. */
+  subscriptionActive: boolean | null;
 };
 
 /**
@@ -1511,6 +1525,8 @@ export const getPropertyPortalStatus = createServerFn({ method: "POST" })
                 stateKnown: result.data.stateKnown ?? false,
                 portalState: result.data.portalState ?? null,
                 urlConfirmed: result.data.urlConfirmed ?? result.data.offerUrl !== null,
+                offerUrlSuppressed: result.data.offerUrlSuppressed === true,
+                subscriptionActive: result.data.subscriptionActive ?? null,
               };
             },
           });
@@ -1522,14 +1538,17 @@ export const getPropertyPortalStatus = createServerFn({ method: "POST" })
          * este în altă stare decât `online`.
          */
         const offline = portalSaysOffline(diagnostics);
-        const publicUrl = resolveListingPublicUrl(diagnostics, listing?.public_url ?? null);
+        const storedUrl = resolveListingPublicUrl(diagnostics, listing?.public_url ?? null);
+        // Ce se AFIȘEAZĂ poate fi mai puțin decât ce se PĂSTREAZĂ: un cont fără
+        // abonament ascunde linkul, dar nu îl șterge din bază.
+        const publicUrl = displayListingPublicUrl(diagnostics, listing?.public_url ?? null);
         if (listing) {
           await syncListingPublicUrl({
             organizationId,
             portalId: portal.id,
             propertyId: data.propertyId,
             stored: listing.public_url ?? null,
-            resolved: publicUrl,
+            resolved: storedUrl,
             portalSaysOffline: offline,
           });
         }
@@ -1657,6 +1676,12 @@ export type PropertyPortalCell = {
   externalId: string | null;
   /** Linkul public al anunțului pe portal, dacă portalul îl întoarce. */
   publicUrl: string | null;
+  /**
+   * Anunțul este trimis la portal, dar pagina publică nu funcționează din
+   * motive de cont (ex. Imobiliare.ro fără abonament activ). Se afișează
+   * avertismentul, nu linkul.
+   */
+  publicWarning: string | null;
 };
 
 export type PropertyPortalMatrix = {
@@ -1690,6 +1715,46 @@ function deriveState(input: {
   if (!input.configured) return "not_configured";
   return input.selected ? "selected" : "not_selected";
 }
+
+/**
+ * Starea contului Imobiliare.ro pentru agenție (abonament). Memorată 10 minute
+ * în adaptor; orice eroare înseamnă „nu știm”, niciodată „inactiv”.
+ */
+export async function imobiliareAccountForOrg(
+  organizationId: string,
+): Promise<ImobiliareAccountState | null> {
+  const portal = PORTALS.find((p) => p.id === "imobiliare_ro");
+  if (!portal) return null;
+  try {
+    const { ctx } = await buildContext(organizationId, portal);
+    const { readImobiliareAccountState } = await import(
+      "@/lib/portals/adapters/imobiliare.server"
+    );
+    return await readImobiliareAccountState(ctx);
+  } catch {
+    return null;
+  }
+}
+
+/** Starea abonamentului Imobiliare.ro, pentru panoul de portaluri. */
+export const getImobiliareAccountStatus = createServerFn({ method: "POST" })
+  .middleware([requireActiveOrgAuth])
+  .inputValidator((input: unknown) =>
+    z.object({ organizationId: z.string().uuid().optional() }).parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    const { organizationId } = await resolvePublishingOrg(
+      context as unknown as AuthContext,
+      data.organizationId,
+    );
+    const account = await imobiliareAccountForOrg(organizationId);
+    return {
+      isSubscriptionActive: account?.isSubscriptionActive ?? null,
+      subscriptionStatus: account?.subscriptionStatus ?? null,
+      subscriptionType: account?.subscriptionType ?? null,
+      listingOnlineCount: account?.listingOnlineCount ?? null,
+    };
+  });
 
 export const getPropertiesPortalMatrix = createServerFn({ method: "POST" })
   .middleware([requireActiveOrgAuth])
@@ -1748,6 +1813,18 @@ export const getPropertiesPortalMatrix = createServerFn({ method: "POST" })
     // când există o cheie Habitoo activă cu care pot citi feedul.
     const keyedPortals = new Set((activeKeys ?? []).map((k) => k.portal));
 
+    const imobiliareVisible =
+      visiblePortals === null || visiblePortals.has("imobiliare_ro");
+    const imobiliareConnected = (connections ?? []).some(
+      (c) =>
+        c.portal === "imobiliare_ro" && (c.status === "connected" || c.status === "ready"),
+    );
+    const imobiliareAccount =
+      imobiliareVisible && imobiliareConnected
+        ? await imobiliareAccountForOrg(organizationId)
+        : null;
+    const imobiliareNoSubscription = subscriptionInactive(imobiliareAccount);
+
     const { isPropertyFeedEligible } = await import("@/lib/site-feed/mapper");
     const eligibleById = new Map(
       (propertyRows ?? []).map((row) => [row.id, isPropertyFeedEligible(row as never)]),
@@ -1801,6 +1878,10 @@ export const getPropertiesPortalMatrix = createServerFn({ method: "POST" })
               : (listing?.last_error ?? pub?.last_error ?? null),
           externalId: listing?.external_id ?? pub?.external_ref ?? null,
           publicUrl: listing?.public_url ?? null,
+          publicWarning:
+            portal.id === "imobiliare_ro" && imobiliareNoSubscription && listing?.public_url
+              ? IMOBILIARE_NO_SUBSCRIPTION_MESSAGE
+              : null,
         };
       });
     }

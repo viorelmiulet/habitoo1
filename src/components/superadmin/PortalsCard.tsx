@@ -31,6 +31,7 @@ import { toastError } from "@/lib/errors";
 import { formatDateTime } from "@/lib/format";
 import {
   disconnectPortal,
+  getImobiliareAccountStatus,
   getPortalHub,
   getPortalLogs,
   issuePortalApiKey,
@@ -59,6 +60,33 @@ import {
   type PortalAuthenticationMode,
   type PortalDirection,
 } from "@/lib/portals/registry";
+
+/**
+ * Starea abonamentului Imobiliare.ro, lângă starea conexiunii. Fără abonament
+ * activ, anunțurile rămân „online” în cont, dar nu sunt publice pe site.
+ */
+function ImobiliareSubscriptionBadge({ organizationId }: { organizationId: string }) {
+  const load = useServerFn(getImobiliareAccountStatus);
+  const account = useQuery({
+    queryKey: ["imobiliare-account", organizationId] as const,
+    queryFn: () => load({ data: { organizationId } }),
+    staleTime: 10 * 60 * 1000,
+  });
+  const data = account.data;
+  if (!data || data.isSubscriptionActive === null) return null;
+  const details = [
+    data.subscriptionType ? `tip ${data.subscriptionType}` : null,
+    data.listingOnlineCount !== null ? `${data.listingOnlineCount} anunțuri online` : null,
+  ]
+    .filter(Boolean)
+    .join(", ");
+  return (
+    <StatusBadge tone={data.isSubscriptionActive ? "success" : "warning"}>
+      {data.isSubscriptionActive ? "Abonament activ" : "Fără abonament activ"}
+      {details ? ` · ${details}` : ""}
+    </StatusBadge>
+  );
+}
 
 export function PortalsCard({ organizationId }: { organizationId: string }) {
   const hubKey = ["portal-hub", organizationId] as const;
@@ -362,6 +390,10 @@ export function PortalsCard({ organizationId }: { organizationId: string }) {
                     <StatusBadge tone={item.connection.activated ? "success" : "neutral"}>
                       {item.connection.activated ? "Activat pentru agenție" : "Neactivat"}
                     </StatusBadge>
+                    {item.portal.id === "imobiliare_ro" &&
+                    item.connection.hasPortalCredential ? (
+                      <ImobiliareSubscriptionBadge organizationId={organizationId} />
+                    ) : null}
                   </>
                 )}
                 {dirty ? <StatusBadge tone="warning">Modificări nesalvate</StatusBadge> : null}
