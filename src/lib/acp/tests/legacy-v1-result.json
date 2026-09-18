@@ -1,0 +1,550 @@
+{
+  "comparables": [
+    {
+      "key": "a",
+      "sourceType": "portal",
+      "sourceName": "Portaluri",
+      "propertyId": null,
+      "marketListingId": "a",
+      "title": "Comparabil a",
+      "locationLabel": null,
+      "imagePath": null,
+      "url": null,
+      "subject": {
+        "propertyType": "apartament",
+        "transactionType": "sale",
+        "city": "Bucuresti",
+        "county": "Bucuresti",
+        "district": "Titan",
+        "neighborhood": "Titan",
+        "latitude": 44.42,
+        "longitude": 26.14,
+        "rooms": 3,
+        "usableArea": 70,
+        "floor": 3,
+        "totalFloors": 8,
+        "constructionYear": 2010,
+        "condition": "buna",
+        "parking": true,
+        "balcony": true,
+        "furnished": false,
+        "price": 130000,
+        "currency": "EUR",
+        "pricePerSqm": 1857.14
+      },
+      "similarityScore": 100,
+      "components": {
+        "location": 100,
+        "area": 100,
+        "rooms": 100,
+        "distance": 100,
+        "floor": 100,
+        "year": 100,
+        "condition": 100,
+        "features": 100,
+        "other": 100
+      },
+      "tier": "direct",
+      "adjustments": [],
+      "adjustmentAmount": 0,
+      "adjustmentPercent": 0,
+      "skippedAdjustments": [
+        "area"
+      ],
+      "adjustedPrice": 130000,
+      "adjustedPricePerSqm": 1857.14,
+      "isOutlier": false,
+      "outlierReason": null,
+      "isSelected": true,
+      "selectionReason": "Comparabil direct (scor 100 ≥ 85).",
+      "manualOverride": null,
+      "dataQuality": {
+        "score": 100,
+        "presentFields": 10,
+        "totalFields": 10,
+        "missing": []
+      },
+      "freshness": {
+        "ageDays": 1110,
+        "score": 0,
+        "level": "stale",
+        "label": "Ofertă învechită"
+      },
+      "priceHistory": {
+        "initialPrice": 130000,
+        "currentPrice": 130000,
+        "changeAmount": 0,
+        "changePercent": 0,
+        "priceChanges": 0,
+        "direction": "stable",
+        "stabilityScore": 100,
+        "listedForDays": 1110,
+        "note": "Prețul a rămas practic neschimbat de la prima apariție."
+      },
+      "relevanceScore": 85
+    },
+    {
+      "key": "b",
+      "sourceType": "portal",
+      "sourceName": "Portaluri",
+      "propertyId": null,
+      "marketListingId": "b",
+      "title": "Comparabil b",
+      "locationLabel": null,
+      "imagePath": null,
+      "url": null,
+      "subject": {
+        "propertyType": "apartament",
+        "transactionType": "sale",
+        "city": "Bucuresti",
+        "county": "Bucuresti",
+        "district": "Titan",
+        "neighborhood": "Titan",
+        "latitude": 44.42,
+        "longitude": 26.14,
+        "rooms": 3,
+        "usableArea": 70,
+        "floor": 3,
+        "totalFloors": 8,
+        "constructionYear": 2010,
+        "condition": "buna",
+        "parking": true,
+        "balcony": true,
+        "furnished": false,
+        "price": 134000,
+        "currency": "EUR",
+        "pricePerSqm": 1914.29
+      },
+      "similarityScore": 100,
+      "components": {
+        "location": 100,
+        "area": 100,
+        "rooms": 100,
+        "distance": 100,
+        "floor": 100,
+        "year": 100,
+        "condition": 100,
+        "features": 100,
+        "other": 100
+      },
+      "tier": "direct",
+      "adjustments": [],
+      "adjustmentAmount": 0,
+      "adjustmentPercent": 0,
+      "skippedAdjustments": [
+        "area"
+      ],
+      "adjustedPrice": 134000,
+      "adjustedPricePerSqm": 1914.29,
+      "isOutlier": false,
+      "outlierReason": null,
+      "isSelected": true,
+      "selectionReason": "Comparabil direct (scor 100 ≥ 85).",
+      "manualOverride": null,
+      "dataQuality": {
+        "score": 100,
+        "presentFields": 10,
+        "totalFields": 10,
+        "missing": []
+      },
+      "freshness": {
+        "ageDays": 1026,
+        "score": 0,
+        "level": "stale",
+        "label": "Ofertă învechită"
+      },
+      "priceHistory": {
+        "initialPrice": 134000,
+        "currentPrice": 134000,
+        "changeAmount": 0,
+        "changePercent": 0,
+        "priceChanges": 0,
+        "direction": "stable",
+        "stabilityScore": 100,
+        "listedForDays": 1026,
+        "note": "Prețul a rămas practic neschimbat de la prima apariție."
+      },
+      "relevanceScore": 85
+    },
+    {
+      "key": "c",
+      "sourceType": "portal",
+      "sourceName": "Portaluri",
+      "propertyId": null,
+      "marketListingId": "c",
+      "title": "Comparabil c",
+      "locationLabel": null,
+      "imagePath": null,
+      "url": null,
+      "subject": {
+        "propertyType": "apartament",
+        "transactionType": "sale",
+        "city": "Bucuresti",
+        "county": "Bucuresti",
+        "district": "Titan",
+        "neighborhood": "Titan",
+        "latitude": 44.42,
+        "longitude": 26.14,
+        "rooms": 3,
+        "usableArea": 70,
+        "floor": 3,
+        "totalFloors": 8,
+        "constructionYear": 2010,
+        "condition": "buna",
+        "parking": true,
+        "balcony": true,
+        "furnished": false,
+        "price": 138000,
+        "currency": "EUR",
+        "pricePerSqm": 1971.43
+      },
+      "similarityScore": 100,
+      "components": {
+        "location": 100,
+        "area": 100,
+        "rooms": 100,
+        "distance": 100,
+        "floor": 100,
+        "year": 100,
+        "condition": 100,
+        "features": 100,
+        "other": 100
+      },
+      "tier": "direct",
+      "adjustments": [],
+      "adjustmentAmount": 0,
+      "adjustmentPercent": 0,
+      "skippedAdjustments": [
+        "area"
+      ],
+      "adjustedPrice": 138000,
+      "adjustedPricePerSqm": 1971.43,
+      "isOutlier": false,
+      "outlierReason": null,
+      "isSelected": true,
+      "selectionReason": "Comparabil direct (scor 100 ≥ 85).",
+      "manualOverride": null,
+      "dataQuality": {
+        "score": 100,
+        "presentFields": 10,
+        "totalFields": 10,
+        "missing": []
+      },
+      "freshness": {
+        "ageDays": 577,
+        "score": 0,
+        "level": "stale",
+        "label": "Ofertă învechită"
+      },
+      "priceHistory": {
+        "initialPrice": 138000,
+        "currentPrice": 138000,
+        "changeAmount": 0,
+        "changePercent": 0,
+        "priceChanges": 0,
+        "direction": "stable",
+        "stabilityScore": 100,
+        "listedForDays": 577,
+        "note": "Prețul a rămas practic neschimbat de la prima apariție."
+      },
+      "relevanceScore": 85
+    },
+    {
+      "key": "d",
+      "sourceType": "portal",
+      "sourceName": "Portaluri",
+      "propertyId": null,
+      "marketListingId": "d",
+      "title": "Comparabil d",
+      "locationLabel": null,
+      "imagePath": null,
+      "url": null,
+      "subject": {
+        "propertyType": "apartament",
+        "transactionType": "sale",
+        "city": "Bucuresti",
+        "county": "Bucuresti",
+        "district": "Titan",
+        "neighborhood": "Titan",
+        "latitude": 44.42,
+        "longitude": 26.14,
+        "rooms": 3,
+        "usableArea": 70,
+        "floor": 3,
+        "totalFloors": 8,
+        "constructionYear": 2010,
+        "condition": "buna",
+        "parking": true,
+        "balcony": true,
+        "furnished": false,
+        "price": 142000,
+        "currency": "EUR",
+        "pricePerSqm": 2028.57
+      },
+      "similarityScore": 100,
+      "components": {
+        "location": 100,
+        "area": 100,
+        "rooms": 100,
+        "distance": 100,
+        "floor": 100,
+        "year": 100,
+        "condition": 100,
+        "features": 100,
+        "other": 100
+      },
+      "tier": "direct",
+      "adjustments": [],
+      "adjustmentAmount": 0,
+      "adjustmentPercent": 0,
+      "skippedAdjustments": [
+        "area"
+      ],
+      "adjustedPrice": 142000,
+      "adjustedPricePerSqm": 2028.57,
+      "isOutlier": false,
+      "outlierReason": null,
+      "isSelected": true,
+      "selectionReason": "Comparabil direct (scor 100 ≥ 85).",
+      "manualOverride": null,
+      "dataQuality": {
+        "score": 100,
+        "presentFields": 10,
+        "totalFields": 10,
+        "missing": []
+      },
+      "freshness": {
+        "ageDays": 405,
+        "score": 0,
+        "level": "stale",
+        "label": "Ofertă învechită"
+      },
+      "priceHistory": {
+        "initialPrice": 142000,
+        "currentPrice": 142000,
+        "changeAmount": 0,
+        "changePercent": 0,
+        "priceChanges": 0,
+        "direction": "stable",
+        "stabilityScore": 100,
+        "listedForDays": 405,
+        "note": "Prețul a rămas practic neschimbat de la prima apariție."
+      },
+      "relevanceScore": 85
+    },
+    {
+      "key": "e",
+      "sourceType": "portal",
+      "sourceName": "Portaluri",
+      "propertyId": null,
+      "marketListingId": "e",
+      "title": "Comparabil e",
+      "locationLabel": null,
+      "imagePath": null,
+      "url": null,
+      "subject": {
+        "propertyType": "apartament",
+        "transactionType": "sale",
+        "city": "Bucuresti",
+        "county": "Bucuresti",
+        "district": "Titan",
+        "neighborhood": "Titan",
+        "latitude": 44.42,
+        "longitude": 26.14,
+        "rooms": 3,
+        "usableArea": 70,
+        "floor": 3,
+        "totalFloors": 8,
+        "constructionYear": 2010,
+        "condition": "buna",
+        "parking": true,
+        "balcony": true,
+        "furnished": false,
+        "price": 136000,
+        "currency": "EUR",
+        "pricePerSqm": 1942.86
+      },
+      "similarityScore": 100,
+      "components": {
+        "location": 100,
+        "area": 100,
+        "rooms": 100,
+        "distance": 100,
+        "floor": 100,
+        "year": 100,
+        "condition": 100,
+        "features": 100,
+        "other": 100
+      },
+      "tier": "direct",
+      "adjustments": [],
+      "adjustmentAmount": 0,
+      "adjustmentPercent": 0,
+      "skippedAdjustments": [
+        "area"
+      ],
+      "adjustedPrice": 136000,
+      "adjustedPricePerSqm": 1942.86,
+      "isOutlier": false,
+      "outlierReason": null,
+      "isSelected": true,
+      "selectionReason": "Comparabil direct (scor 100 ≥ 85).",
+      "manualOverride": null,
+      "dataQuality": {
+        "score": 100,
+        "presentFields": 10,
+        "totalFields": 10,
+        "missing": []
+      },
+      "freshness": {
+        "ageDays": 755,
+        "score": 0,
+        "level": "stale",
+        "label": "Ofertă învechită"
+      },
+      "priceHistory": {
+        "initialPrice": 136000,
+        "currentPrice": 136000,
+        "changeAmount": 0,
+        "changePercent": 0,
+        "priceChanges": 0,
+        "direction": "stable",
+        "stabilityScore": 100,
+        "listedForDays": 755,
+        "note": "Prețul a rămas practic neschimbat de la prima apariție."
+      },
+      "relevanceScore": 85
+    }
+  ],
+  "statistics": {
+    "count": 5,
+    "usedCount": 5,
+    "outlierCount": 0,
+    "minimum": 130000,
+    "maximum": 142000,
+    "average": 136000,
+    "median": 136000,
+    "p25": 134000,
+    "p75": 138000,
+    "averagePricePerSqm": 1942.86,
+    "medianPricePerSqm": 1942.86
+  },
+  "estimate": {
+    "estimatedValue": 136000.2,
+    "estimatedMin": 130560.19,
+    "estimatedMax": 141440.21,
+    "recommendedListingPrice": 140080.21,
+    "basis": "price_per_sqm"
+  },
+  "confidence": {
+    "score": 82.86,
+    "quantity": 25,
+    "quality": 35,
+    "dispersion": 22.86,
+    "dispersionRatio": 0.03,
+    "capped": false,
+    "notes": [
+      "5 comparabile folosite din 8 ideale.",
+      "Similaritate medie 100 din 100.",
+      "Dispersia prețului pe mp (IQR / mediană): 0.03."
+    ]
+  },
+  "candidatesFound": 5,
+  "comparablesUsed": 5,
+  "explanation": [
+    "Au fost evaluați 5 candidați din sursele selectate, cu aceleași ponderi pentru toate analizele.",
+    "Statistica folosește 5 comparabile. Se raportează mediana (valoare robustă) alături de medie, P25 și P75.",
+    "Valoarea estimată = mediana prețului ajustat pe mp (1942.86) × suprafața utilă a proprietății (70 mp).",
+    "Prețul recomandat de listare adaugă o marjă de negociere de 3% peste valoarea estimată.",
+    "Încredere 82.86/100: cantitate 25, calitate 35, dispersie 22.86.",
+    "Fără calibrare aplicată: Nu există o calibrare activă.",
+    "Calitatea datelor 68.3/100 (medium); indicator distinct de scorul de încredere."
+  ],
+  "quality": {
+    "score": 68.3,
+    "level": "medium",
+    "factors": [
+      {
+        "key": "count",
+        "label": "Număr comparabile",
+        "score": 62.5,
+        "weight": 20,
+        "note": "5 comparabile folosite din 8 ideale."
+      },
+      {
+        "key": "similarity",
+        "label": "Similaritate medie",
+        "score": 100,
+        "weight": 20,
+        "note": "Similaritate medie 100 din 100."
+      },
+      {
+        "key": "dispersion",
+        "label": "Dispersia prețului pe mp",
+        "score": 91.43,
+        "weight": 12,
+        "note": "IQR / mediană = 0.03."
+      },
+      {
+        "key": "freshness",
+        "label": "Prospețimea ofertelor",
+        "score": 0,
+        "weight": 13,
+        "note": "Prospețime medie 0 din 100."
+      },
+      {
+        "key": "diversity",
+        "label": "Diversitatea surselor",
+        "score": 33.33,
+        "weight": 10,
+        "note": "1 surse distincte."
+      },
+      {
+        "key": "completeness",
+        "label": "Completitudinea datelor",
+        "score": 100,
+        "weight": 10,
+        "note": "Completitudine medie 100%."
+      },
+      {
+        "key": "outliers",
+        "label": "Proporția valorilor atipice",
+        "score": 100,
+        "weight": 8,
+        "note": "0 valori atipice din 5 eligibile."
+      },
+      {
+        "key": "calibration",
+        "label": "Fiabilitatea calibrării",
+        "score": 50,
+        "weight": 7,
+        "note": "Fără calibrare validă disponibilă."
+      }
+    ],
+    "reasons": [
+      "Majoritatea comparabilelor sunt oferte învechite.",
+      "Toate comparabilele provin dintr-o singură sursă."
+    ]
+  },
+  "advanced": {
+    "baselineValue": 136000.2,
+    "baselineMin": 130560.19,
+    "baselineMax": 141440.21,
+    "baselineRecommended": 140080.21,
+    "calibratedValue": 136000.2,
+    "calibratedMin": 130560.19,
+    "calibratedMax": 141440.21,
+    "calibratedRecommended": 140080.21,
+    "factor": 1,
+    "source": "none",
+    "segmentKey": null,
+    "sampleSize": 0,
+    "calibrationVersion": null,
+    "calibrationStatus": "not_configured",
+    "calibrationConfidence": 0,
+    "calibratedAt": null,
+    "applied": false,
+    "deltaPercent": 0,
+    "reason": "Nu există o calibrare activă."
+  }
+}

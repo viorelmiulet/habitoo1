@@ -45,6 +45,39 @@ export type AcpReportComparableInput = {
   isSelected: boolean;
   manualOverride?: string | null;
   subject: AcpReportSubject;
+  /** Motor v2: aducerea prețului la trimestrul analizei. Absent la versiunile v1. */
+  timeAdjustment?: AcpReportTimeAdjustmentInput | null;
+};
+
+/** Ajustarea în timp a unui comparabil, așa cum a fost salvată în snapshot. */
+export type AcpReportTimeAdjustmentInput = {
+  applied: boolean;
+  reason: string;
+  originalPrice: number | null;
+  comparableQuarter: string | null;
+  usedQuarter: string | null;
+  ratio: number | null;
+  adjustedPrice: number | null;
+  clamped?: boolean;
+};
+
+/** Nota de nivel analiză despre indicele folosit la ajustarea în timp. */
+export type AcpReportTimeAdjustmentSummaryInput = {
+  applied: boolean;
+  note: string;
+  analysisQuarter: string;
+  clampedTo: string | null;
+  appliedCount: number;
+  skippedCount: number;
+  index: {
+    source: string;
+    dataset: string;
+    series: string;
+    unit: string;
+    baseLabel: string;
+    region: string;
+    newestQuarter: string | null;
+  } | null;
 };
 
 export type AcpReportSourceInput = {
@@ -116,6 +149,10 @@ export type AcpReportVersionInput = {
    * Absent pentru versiunile calculate înainte de introducerea lor.
    */
   precision?: AcpReportPrecisionInput | null;
+  /** Motor v2: ajustarea în timp la nivel de analiză. Absentă la versiunile v1. */
+  timeAdjustment?: AcpReportTimeAdjustmentSummaryInput | null;
+  /** Versiunea motorului cu care a fost calculată versiunea analizei. */
+  engineVersion?: number | null;
 };
 
 export type AcpReportPrecisionInput = {
@@ -223,6 +260,16 @@ export type AcpReportModel = {
     used: boolean;
     outlier: boolean;
     adjustments: { label: string; basis: string; amount: string }[];
+    /** Ajustarea în timp, formatată: preț original, trimestru, raport, preț ajustat. */
+    timeAdjustment: {
+      applied: boolean;
+      reason: string;
+      originalPrice: string;
+      comparableQuarter: string;
+      usedQuarter: string;
+      ratio: string;
+      adjustedPrice: string;
+    } | null;
   }[];
   statistics: { label: string; value: string }[];
   sources: { name: string; type: string; found: number; used: number; excluded: number }[];
@@ -245,6 +292,13 @@ export type AcpReportModel = {
     rows: { label: string; value: string }[];
     notes: string[];
   } | null;
+  /** Ajustarea în timp cu indicele național; null pentru versiunile motorului v1. */
+  timeAdjustment: {
+    note: string;
+    rows: { label: string; value: string }[];
+  } | null;
+  /** Versiunea motorului determinist folosit la calcul. */
+  engineVersion: number;
 };
 
 export const ACP_REPORT_FORMAT_VERSION = "1.0";
@@ -504,6 +558,23 @@ export function buildAcpReportModel(params: {
           basis: a.basis,
           amount: `${a.amount >= 0 ? "+" : ""}${reportMoney(a.amount, c.subject.currency || currency)}`,
         })),
+        timeAdjustment: c.timeAdjustment
+          ? {
+              applied: c.timeAdjustment.applied,
+              reason: c.timeAdjustment.reason,
+              originalPrice: reportMoney(
+                c.timeAdjustment.originalPrice,
+                c.subject.currency || currency,
+              ),
+              comparableQuarter: c.timeAdjustment.comparableQuarter ?? "—",
+              usedQuarter: c.timeAdjustment.usedQuarter ?? "—",
+              ratio: reportNumberValue(c.timeAdjustment.ratio),
+              adjustedPrice: reportMoney(
+                c.timeAdjustment.adjustedPrice,
+                c.subject.currency || currency,
+              ),
+            }
+          : null,
       })),
     statistics: [
       { label: "Preț minim comparabile", value: reportMoney(version.statistics?.minimum ?? null, currency) },
@@ -532,8 +603,41 @@ export function buildAcpReportModel(params: {
     ai: buildAiSection(version.ai ?? null),
     market: buildMarketSection(version.market ?? null, currency),
     precision: buildPrecisionSection(version.precision ?? null, currency),
+    timeAdjustment: buildTimeAdjustmentSection(version.timeAdjustment ?? null),
+    engineVersion: finite(version.engineVersion ?? null) ?? 1,
   };
 }
+
+/**
+ * Secțiunea „Ajustarea în timp” a raportului. Indicele este NAȚIONAL și acest
+ * lucru este spus explicit acolo unde ajustarea este arătată.
+ */
+function buildTimeAdjustmentSection(
+  summary: AcpReportTimeAdjustmentSummaryInput | null,
+): AcpReportModel["timeAdjustment"] {
+  if (!summary) return null;
+  const rows: { label: string; value: string }[] = [
+    { label: "Trimestrul analizei", value: summary.analysisQuarter },
+  ];
+  if (summary.index) {
+    rows.push(
+      { label: "Indice", value: `${summary.index.series} · ${summary.index.unit}` },
+      { label: "Sursa indicelui", value: `${summary.index.source} (${summary.index.dataset})` },
+      { label: "Baza indicelui", value: summary.index.baseLabel },
+      { label: "Acoperire teritorială", value: `${summary.index.region} — indice național` },
+      { label: "Ultimul trimestru publicat", value: summary.index.newestQuarter ?? "—" },
+    );
+  }
+  if (summary.clampedTo) {
+    rows.push({ label: "Ajustarea se oprește la", value: summary.clampedTo });
+  }
+  rows.push({
+    label: "Comparabile ajustate / neajustate",
+    value: `${summary.appliedCount} / ${summary.skippedCount}`,
+  });
+  return { note: summary.note, rows };
+}
+
 
 const QUALITY_LEVEL_LABELS: Record<string, string> = {
   high: "Calitate ridicată a datelor",

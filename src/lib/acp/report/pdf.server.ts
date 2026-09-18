@@ -242,6 +242,32 @@ export async function buildAcpReportPdf(model: AcpReportModel): Promise<Uint8Arr
     ]);
   }
 
+  /* ---------------- Ajustarea în timp (motor v2) ---------------- */
+  if (model.timeAdjustment) {
+    heading("Ajustarea în timp a comparabilelor");
+    text(model.timeAdjustment.note, { size: 8, color: MUTED, gap: 4 });
+    for (const row of model.timeAdjustment.rows) {
+      ensure(13);
+      page.drawText(row.label, { x: MARGIN, y: y - 9, size: 8.5, font: regular, color: MUTED });
+      page.drawText(row.value, { x: MARGIN + 260, y: y - 9, size: 8.5, font: bold, color: INK });
+      y -= 13;
+    }
+    y -= 4;
+    const withTime = model.comparables.filter((c) => c.timeAdjustment);
+    for (const c of withTime) {
+      const t = c.timeAdjustment!;
+      text(c.title, { size: 8.8, font: bold, color: NAVY });
+      text(
+        t.applied
+          ? `   ${t.originalPrice} (${t.comparableQuarter}) × ${t.ratio} → ${t.adjustedPrice} (${t.usedQuarter})`
+          : `   ${t.originalPrice} — fără ajustare`,
+        { size: 8, color: INK },
+      );
+      text(`   ${t.reason}`, { size: 7.6, color: MUTED });
+      y -= 2;
+    }
+  }
+
   /* ---------------- Ajustări detaliate ---------------- */
   const withAdjustments = model.comparables.filter((c) => c.adjustments.length > 0);
   if (withAdjustments.length > 0) {
@@ -254,6 +280,7 @@ export async function buildAcpReportPdf(model: AcpReportModel): Promise<Uint8Arr
       y -= 2;
     }
   }
+
 
   /* ---------------- Statistici ---------------- */
   heading("Indicatori statistici");

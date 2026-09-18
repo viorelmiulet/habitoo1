@@ -11,6 +11,9 @@ import { requireActiveOrgAuth } from "@/lib/org-access";
 import { ACP_SOURCE_TYPE_LABELS, type AcpSourceType } from "./config";
 import { marketListingToSubject, propertyToSubject } from "./adapters";
 import { runAcpAnalysis, targetPricePerSqm, type AcpCandidate, type AcpManualOverride } from "./engine";
+import { ACP_CURRENT_ENGINE_VERSION, normalizeAcpEngineVersion } from "./engine-version";
+// `time-adjustment.server.ts` este server-only: se importă dinamic în handler.
+import type { AcpPriceIndexSnapshot } from "./time-adjustment";
 import type { AcpSubject } from "./scoring";
 import type { AcpComparableResult } from "./engine";
 import { ACP_AUDIT_ACTIONS, logAcpAudit } from "./audit";
@@ -130,6 +133,15 @@ function marketListingMeta(
  * calibrarea sau nu există date suficiente, rezultatul este `null` și motorul
  * rulează exact ca înainte (baseline determinist).
  */
+/**
+ * Indicele trimestrial pentru ajustarea în timp, citit doar din baza de date.
+ * Tabel gol ⇒ `null` ⇒ motorul nu aplică nicio ajustare în timp.
+ */
+async function loadPriceIndex(admin: unknown): Promise<AcpPriceIndexSnapshot | null> {
+  const { loadAcpPriceIndex } = await import("./time-adjustment.server");
+  return loadAcpPriceIndex(admin as never);
+}
+
 async function loadCalibration(
   admin: Awaited<ReturnType<typeof loadAdmin>>,
   organizationId: string,
@@ -369,6 +381,8 @@ async function persistRun(params: {
   stats: SourceStat[];
   result: ReturnType<typeof runAcpAnalysis>;
   version: number;
+  /** Versiunea motorului cu care a fost calculat rezultatul. */
+  engineVersion: number;
   history: unknown[];
   /** Stage 7: modelul de calibrare folosit la rulare (null = fără calibrare). */
   calibration?: AcpCalibrationModel | null;
@@ -458,6 +472,7 @@ async function persistRun(params: {
         freshness: c.freshness,
         priceHistory: c.priceHistory,
         relevanceScore: c.relevanceScore,
+        timeAdjustment: c.timeAdjustment ?? null,
       } as never,
     }));
     const { error } = await admin.from("acp_comparables").insert(rows);
@@ -507,6 +522,7 @@ async function persistRun(params: {
       price_p75: result.statistics.p75,
       error_message: null,
       version: params.version,
+      engine_version: params.engineVersion,
       history: params.history as never,
       last_run_at: new Date().toISOString(),
       snapshot_at: new Date().toISOString(),
@@ -525,6 +541,9 @@ async function persistRun(params: {
         quality: result.quality,
         advanced: result.advanced,
         calibration: params.calibration ?? null,
+        // Motor v2: ajustarea în timp face parte din snapshot-ul versiunii.
+        engineVersion: params.engineVersion,
+        timeAdjustment: result.timeAdjustment ?? null,
       } as never,
 
     })
@@ -691,7 +710,12 @@ export const createAcpAnalysis = createServerFn({ method: "POST" })
         sources: data.sources,
       });
       const calibration = await loadCalibration(admin, actor.organizationId);
-      const result = runAcpAnalysis(subject, candidates, {}, { calibration });
+      const priceIndex = await loadPriceIndex(admin);
+      const result = runAcpAnalysis(subject, candidates, {}, {
+        calibration,
+        priceIndex,
+        engineVersion: ACP_CURRENT_ENGINE_VERSION,
+      });
       await persistRun({
         admin,
         analysisId: created.id,
@@ -703,6 +727,7 @@ export const createAcpAnalysis = createServerFn({ method: "POST" })
         stats,
         result,
         version: 1,
+        engineVersion: ACP_CURRENT_ENGINE_VERSION,
         history: [],
         calibration,
       });
@@ -778,6 +803,7 @@ export const setAcpComparableOverride = createServerFn({ method: "POST" })
   });
 
 type AnalysisRow = {
+  engine_version?: number | null;
   id: string;
   organization_id: string;
   property_id: string | null;
@@ -888,7 +914,15 @@ async function recalculate(
       sources,
     });
     const calibration = await loadCalibration(admin, actor.organizationId);
-    const result = runAcpAnalysis(subject, candidates, overrides, { calibration });
+    // Recalcularea în loc păstrează versiunea motorului a analizei: metodologia
+    // unei analize existente nu se schimbă în spatele utilizatorului.
+    const engineVersion = normalizeAcpEngineVersion(analysis.engine_version);
+    const priceIndex = await loadPriceIndex(admin);
+    const result = runAcpAnalysis(subject, candidates, overrides, {
+      calibration,
+      priceIndex,
+      engineVersion,
+    });
     const previousHistory = Array.isArray(analysis.history) ? analysis.history : [];
     const history = [
       ...previousHistory.slice(-19),
@@ -910,6 +944,7 @@ async function recalculate(
       stats,
       result,
       version: (analysis.version ?? 1) + 1,
+      engineVersion,
       history,
       calibration,
     });
@@ -1534,7 +1569,12 @@ export const recalculateAcpAsNewVersion = createServerFn({ method: "POST" })
           sources,
         });
         const calibration = await loadCalibration(admin, actor.organizationId);
-        const result = runAcpAnalysis(subject, candidates, overrides, { calibration });
+        const priceIndex = await loadPriceIndex(admin);
+        const result = runAcpAnalysis(subject, candidates, overrides, {
+          calibration,
+          priceIndex,
+          engineVersion: ACP_CURRENT_ENGINE_VERSION,
+        });
         await persistRun({
           admin,
           analysisId: created.id,
@@ -1546,6 +1586,7 @@ export const recalculateAcpAsNewVersion = createServerFn({ method: "POST" })
           stats,
           result,
           version: created.version,
+          engineVersion: ACP_CURRENT_ENGINE_VERSION,
           history: [
             {
               version: source.version ?? 1,
