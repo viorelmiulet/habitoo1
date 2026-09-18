@@ -2712,7 +2712,7 @@ export const backfillImobiliarePublicUrls = createServerFn({ method: "POST" })
         });
         continue;
       }
-      if (state.url === row.public_url) {
+      if (!shouldSaveBackfilledUrl(state.state, state.url, row.public_url ?? null)) {
         results.push({
           propertyId: row.property_id,
           externalId: row.external_id,
