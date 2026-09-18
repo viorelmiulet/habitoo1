@@ -262,6 +262,80 @@ export async function logOperation(input: {
   });
 }
 
+export type PortalListingDiagnosticsView = {
+  feedVisible: boolean;
+  externalId: string | null;
+  offerUrl: string | null;
+  agentName: string | null;
+  images: { total: number; resolvable: number; broken: number; primary: boolean };
+  notes: string[];
+  /** Portalul a spus efectiv în ce stare este anunțul. */
+  stateKnown: boolean;
+  portalState: string | null;
+  urlConfirmed: boolean;
+};
+
+/**
+ * Diagnoza costă un request către portal la fiecare încărcare de pagină. O
+ * păstrăm scurt în memoria procesului: destul ca reîncărcările rapide să nu
+ * mai lovească portalul, prea puțin ca să ascundă o schimbare reală.
+ */
+export const PORTAL_DIAGNOSTICS_TTL_MS = 60_000;
+const diagnosticsCache = new Map<
+  string,
+  { at: number; value: PortalListingDiagnosticsView | null }
+>();
+
+export function clearPortalDiagnosticsCache() {
+  diagnosticsCache.clear();
+}
+
+export async function cachedListingDiagnostics(input: {
+  organizationId: string;
+  portal: { id: string };
+  propertyId: string;
+  externalId: string | null;
+  run: () => Promise<PortalListingDiagnosticsView | null>;
+  now?: number;
+}): Promise<PortalListingDiagnosticsView | null> {
+  const now = input.now ?? Date.now();
+  const key = [input.organizationId, input.portal.id, input.propertyId, input.externalId ?? ""].join(
+    "|",
+  );
+  const hit = diagnosticsCache.get(key);
+  if (hit && now - hit.at < PORTAL_DIAGNOSTICS_TTL_MS) return hit.value;
+  const value = await input.run();
+  diagnosticsCache.set(key, { at: now, value });
+  return value;
+}
+
+/**
+ * Persistă ce a aflat diagnoza: linkul confirmat de portal se salvează, iar
+ * cel salvat se șterge DOAR când portalul raportează explicit o stare
+ * non-`online`.
+ */
+export async function syncListingPublicUrl(input: {
+  organizationId: string;
+  portalId: string;
+  propertyId: string;
+  stored: string | null;
+  resolved: string | null;
+  portalSaysOffline: boolean;
+  admin?: { from: (table: "portal_listings") => never };
+}): Promise<"saved" | "cleared" | "unchanged"> {
+  const next = input.resolved;
+  if (next === input.stored) return "unchanged";
+  if (next === null && !input.portalSaysOffline) return "unchanged";
+  const db = (input.admin ?? (await loadAdmin())) as Awaited<ReturnType<typeof loadAdmin>>;
+  await db
+    .from("portal_listings")
+    .update({ public_url: next } as never)
+    .eq("organization_id", input.organizationId)
+    .eq("portal", input.portalId)
+    .eq("property_id", input.propertyId);
+  return next === null ? "cleared" : "saved";
+}
+
 /** URL-ul feedului pe care îl citește portalul (specific unde portalul cere altul). */
 async function feedUrlForOrg(portalId?: string): Promise<string> {
   const { CRM_URL } = await import("@/lib/host");
