@@ -37,6 +37,11 @@ import { MarketIntelligenceCard } from "@/components/app/MarketIntelligenceCard"
 import { AcpVersionsCard } from "@/components/app/AcpVersionsCard";
 import { AcpReportCard } from "@/components/app/AcpReportCard";
 import { AcpPrecisionCard } from "@/components/app/AcpPrecisionCard";
+import { AcpTimeAdjustmentCard } from "@/components/app/AcpTimeAdjustmentCard";
+import {
+  acpEngineVersionLabel,
+  buildAcpComparableTimeAdjustmentView,
+} from "@/lib/acp/time-adjustment-view";
 
 import { ACP_SCORE_LABELS, ACP_SCORE_WEIGHTS, ACP_THRESHOLDS, ACP_TIER_LABELS } from "@/lib/acp/config";
 
@@ -85,16 +90,23 @@ function tierTone(tier: string) {
 function ComparableRow({
   comparable,
   currency,
+  engineVersion,
   onOverride,
   pending,
 }: {
   comparable: AcpComparableView;
   currency: string;
+  engineVersion: number;
   onOverride: (override: "include" | "exclude" | "auto") => void;
   pending: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const s = comparable.subject;
+  // Nimic pentru analizele calculate cu motorul v1: rândul rămâne ca înainte.
+  const time = buildAcpComparableTimeAdjustmentView({
+    engineVersion,
+    timeAdjustment: comparable.timeAdjustment,
+  });
   return (
     <li className={cn("px-5 py-4", !comparable.isSelected && "bg-muted/30")}>
       <div className="flex flex-wrap items-start gap-4">
@@ -143,6 +155,13 @@ function ComparableRow({
               .join(" · ") || "Date parțiale"}
           </p>
           <p className="mt-1 text-xs text-muted-foreground">{comparable.selectionReason}</p>
+          {time ? (
+            <p className="mt-1 text-xs text-muted-foreground">
+              {time.applied
+                ? `Ajustare în timp: ${formatMoney(time.originalPrice, s.currency ?? currency)} din ${time.comparableQuarter} × ${time.ratio} = ${formatMoney(time.adjustedPrice, s.currency ?? currency)} la ${time.usedQuarter} (indice național).`
+                : time.reason}
+            </p>
+          ) : null}
         </div>
 
         <div className="w-40 shrink-0 text-right">
@@ -356,6 +375,7 @@ function AcpDetailPage() {
               {status.label}
             </StatusBadge>
             <StatusBadge tone="neutral">{selectedCount} comparabile folosite</StatusBadge>
+            <StatusBadge tone="neutral">{acpEngineVersionLabel(analysis.engineVersion)}</StatusBadge>
             {analysis.confidence ? (
               <StatusBadge tone={analysis.confidence.score >= 60 ? "success" : "warning"}>
                 Încredere {analysis.confidence.score}/100
@@ -427,6 +447,8 @@ function AcpDetailPage() {
       <AcpAiInsight analysis={analysis} onGenerated={invalidate} />
 
       <AcpPrecisionCard analysis={analysis} />
+
+      <AcpTimeAdjustmentCard analysis={analysis} />
 
       <AcpVersionsCard analysisId={analysis.id} />
 
@@ -509,6 +531,7 @@ function AcpDetailPage() {
                 key={c.id}
                 comparable={c}
                 currency={currency}
+                engineVersion={analysis.engineVersion}
                 pending={overrideMutation.isPending}
                 onOverride={(override) =>
                   overrideMutation.mutate({ comparableKey: c.key, override })

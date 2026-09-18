@@ -40,6 +40,8 @@ export type AcpVersionAi = {
 export type AcpVersionSnapshot = {
   id: string;
   version: number;
+  /** Versiunea motorului (metodologia) care a produs cifrele. */
+  engineVersion?: number;
   status: string;
   errorMessage: string | null;
   createdAt: string;

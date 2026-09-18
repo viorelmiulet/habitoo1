@@ -13,7 +13,11 @@ import { marketListingToSubject, propertyToSubject } from "./adapters";
 import { runAcpAnalysis, targetPricePerSqm, type AcpCandidate, type AcpManualOverride } from "./engine";
 import { ACP_CURRENT_ENGINE_VERSION, normalizeAcpEngineVersion } from "./engine-version";
 // `time-adjustment.server.ts` este server-only: se importă dinamic în handler.
-import type { AcpPriceIndexSnapshot } from "./time-adjustment";
+import type {
+  AcpPriceIndexSnapshot,
+  AcpTimeAdjustment,
+  AcpTimeAdjustmentSummary,
+} from "./time-adjustment";
 import type { AcpSubject } from "./scoring";
 import type { AcpComparableResult } from "./engine";
 import { ACP_AUDIT_ACTIONS, logAcpAudit } from "./audit";
@@ -992,6 +996,10 @@ export type AcpAnalysisView = {
     itemsUsed: number;
     itemsExcluded: number;
   }[];
+  /** Versiunea motorului care a produs cifrele acestei analize. */
+  engineVersion: number;
+  /** Rezumatul ajustării în timp (doar motor v2; null pentru analizele v1). */
+  timeAdjustment: AcpTimeAdjustmentSummary | null;
   statistics: ReturnType<typeof runAcpAnalysis>["statistics"] | null;
   estimate: ReturnType<typeof runAcpAnalysis>["estimate"] | null;
   confidence: ReturnType<typeof runAcpAnalysis>["confidence"] | null;
@@ -1062,6 +1070,8 @@ export const getAcpAnalysis = createServerFn({ method: "POST" })
       confidence?: AcpAnalysisView["confidence"];
       explanation?: string[];
       targetPricePerSqm?: number | null;
+      engineVersion?: number | null;
+      timeAdjustment?: AcpTimeAdjustmentSummary | null;
       quality?: AcpAnalysisView["quality"];
       advanced?: AcpAnalysisView["advanced"];
       calibration?: AcpCalibrationModel | null;
@@ -1113,6 +1123,10 @@ export const getAcpAnalysis = createServerFn({ method: "POST" })
         itemsUsed: s.items_used ?? 0,
         itemsExcluded: s.items_excluded ?? 0,
       })),
+      engineVersion: normalizeAcpEngineVersion(
+        analysis.engine_version ?? analysisData.engineVersion ?? null,
+      ),
+      timeAdjustment: analysisData.timeAdjustment ?? null,
       statistics: analysisData.statistics ?? null,
       estimate: analysisData.estimate ?? null,
       confidence: analysisData.confidence ?? null,
@@ -1146,6 +1160,7 @@ export const getAcpAnalysis = createServerFn({ method: "POST" })
           freshness?: AcpComparableResult["freshness"];
           priceHistory?: AcpComparableResult["priceHistory"];
           relevanceScore?: number;
+          timeAdjustment?: AcpTimeAdjustment | null;
         };
         const subject = snapshot.subject ?? {};
         // Comparabilele salvate înainte de Stage 7 nu au indicatorii de precizie:
@@ -1186,6 +1201,7 @@ export const getAcpAnalysis = createServerFn({ method: "POST" })
           dataQuality,
           freshness,
           priceHistory,
+          ...(snapshot.timeAdjustment ? { timeAdjustment: snapshot.timeAdjustment } : {}),
           relevanceScore:
             snapshot.relevanceScore ??
             comparableRelevance({
@@ -1241,6 +1257,7 @@ type VersionRow = {
   ai_summary: string | null;
   ai_model: string | null;
   ai_generated_at: string | null;
+  engine_version?: number | null;
 };
 
 async function loadVersionRow(
@@ -1297,6 +1314,7 @@ function rowToVersionItem(row: VersionRow, createdByName: string | null): AcpVer
   return {
     id: row.id,
     version: row.version ?? 1,
+    engineVersion: normalizeAcpEngineVersion(row.engine_version ?? null),
     status: row.status,
     errorMessage: row.error_message ?? null,
     createdAt: row.created_at,
