@@ -9,6 +9,50 @@ export const AI_RATE_LIMITS = {
   perOrganizationHour: { limit: 200, windowSeconds: 3600 },
 } as const;
 
+/**
+ * Plafon de consum pe agenție, verificat ÎNAINTE de apelul către provider.
+ * Fereastra este glisantă și se calculează din `ai_usage_events`.
+ * Tokenurile necunoscute nu se socotesc zero: cererea se numără oricum, iar
+ * rândul de utilizare este marcat (`tokens_unknown`) ca lipsa să fie vizibilă.
+ */
+export const AI_ORG_USAGE_CEILING = {
+  windowSeconds: 3600,
+  maxRequests: 250,
+  maxTokens: 400_000,
+} as const;
+
+export type AiOrgUsageSnapshot = {
+  requests: number;
+  tokens: number;
+  /** Cereri fără tokeni raportați de provider — vizibile, nu tratate ca zero. */
+  unknownTokenRequests: number;
+};
+
+export type AiOrgCeilingDecision =
+  | { exceeded: false }
+  | { exceeded: true; reason: "requests" | "tokens"; message: string };
+
+/** Evaluează plafonul agenției pe fereastra glisantă (regulă pură). */
+export function evaluateAiOrgCeiling(usage: AiOrgUsageSnapshot): AiOrgCeilingDecision {
+  const minutes = Math.round(AI_ORG_USAGE_CEILING.windowSeconds / 60);
+  if (usage.requests >= AI_ORG_USAGE_CEILING.maxRequests) {
+    return {
+      exceeded: true,
+      reason: "requests",
+      message: `Agenția a atins limita de consum AI (${AI_ORG_USAGE_CEILING.maxRequests} cereri în ${minutes} de minute). Încearcă din nou mai târziu.`,
+    };
+  }
+  if (usage.tokens >= AI_ORG_USAGE_CEILING.maxTokens) {
+    return {
+      exceeded: true,
+      reason: "tokens",
+      message: `Agenția a atins limita de consum AI (${AI_ORG_USAGE_CEILING.maxTokens} de unități de text în ${minutes} de minute). Încearcă din nou mai târziu.`,
+    };
+  }
+  return { exceeded: false };
+}
+
+
 /** Lungimea maximă a mesajului utilizatorului. */
 export const AI_MAX_MESSAGE_CHARS = 4000;
 /** Numărul de mesaje din istoric trimise providerului. */
