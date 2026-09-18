@@ -17,7 +17,8 @@ import type { IndexSeriesCoverage, IndexRunRecord } from "./eurostat.server";
 
 type AuthContext = { userId: string; supabase: { rpc: (fn: string) => Promise<{ data: unknown }> } };
 
-async function requireSuperadmin(context: AuthContext): Promise<void> {
+/** Garda de acces, exportată pentru a fi testată comportamental. */
+export async function requireMarketIndexSuperadmin(context: AuthContext): Promise<void> {
   const { data } = await context.supabase.rpc("is_superadmin");
   if (data !== true) {
     throw new Error("Această operațiune este rezervată administratorilor platformei.");
@@ -40,7 +41,7 @@ export type MarketPriceIndexOverview = {
 export const getMarketPriceIndexOverview = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }): Promise<MarketPriceIndexOverview> => {
-    await requireSuperadmin(context as unknown as AuthContext);
+    await requireMarketIndexSuperadmin(context as unknown as AuthContext);
     const repository = await loadRepository();
     const [series, runs] = await Promise.all([repository.coverage(), repository.lastRuns(5)]);
     return { dataset: EUROSTAT_HPI_DATASET, unit: EUROSTAT_HPI_UNIT, series, runs };
@@ -50,7 +51,7 @@ export const syncMarketPriceIndicesNow = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data: unknown) => z.object({ force: z.boolean().optional() }).parse(data ?? {}))
   .handler(async ({ context, data }) => {
-    await requireSuperadmin(context as unknown as AuthContext);
+    await requireMarketIndexSuperadmin(context as unknown as AuthContext);
     const repository = await loadRepository();
     const { syncMarketPriceIndices } = await import("./eurostat.server");
     const outcome = await syncMarketPriceIndices(repository, {

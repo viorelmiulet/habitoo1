@@ -338,10 +338,19 @@ describe("Eurostat — acces și izolare", () => {
     );
   });
 
-  it("funcțiile de server cer superadmin", async () => {
+  it("garda refuză pe oricine nu e superadmin și acceptă superadminul", async () => {
+    const { requireMarketIndexSuperadmin } = await import("../indices.functions");
+    const context = (value: unknown) => ({ userId: "u1", supabase: { rpc: async () => ({ data: value }) } });
+    await expect(requireMarketIndexSuperadmin(context(false) as never)).rejects.toThrow(
+      /administratorilor platformei/,
+    );
+    await expect(requireMarketIndexSuperadmin(context(null) as never)).rejects.toThrow();
+    await expect(requireMarketIndexSuperadmin(context(true) as never)).resolves.toBeUndefined();
+  });
+
+  it("ambele funcții de server trec prin gardă", () => {
     const source = readFileSync("src/lib/market/indices/indices.functions.ts", "utf8");
-    expect(source).toContain("requireSuperadmin");
-    expect(source.match(/requireSuperadmin\(context/g)?.length).toBe(2);
+    expect(source.match(/await requireMarketIndexSuperadmin\(context/g)?.length).toBe(2);
   });
 
   it("niciun cod de analiză ACP nu citește încă tabelul", () => {
