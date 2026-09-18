@@ -447,8 +447,8 @@ export const PropertyPortalsCard = forwardRef<
                   </Button>
                 ) : null}
 
-                {/* Linkul public al anunțului, când portalul îl întoarce. */}
-                {cell.publicUrl ? (
+                {/* Linkul public al anunțului, când chiar duce la o pagină publică. */}
+                {cell.publicUrl && !cell.publicWarning ? (
                   <a
                     href={cell.publicUrl}
                     target="_blank"
@@ -461,6 +461,13 @@ export const PropertyPortalsCard = forwardRef<
                   </a>
                 ) : null}
               </div>
+
+              {/* Anunț trimis, dar pagina publică nu funcționează (cont fără abonament). */}
+              {cell.publicWarning ? (
+                <p className="mt-3 rounded-md border border-warning/40 bg-warning/10 px-3 py-2 text-xs text-warning-foreground">
+                  {cell.publicWarning}
+                </p>
+              ) : null}
 
               {/* Validare pre-publicare: ce lipsește, în cuvinte, pe acest portal. */}
               {value && (requirementByPortal.get(cell.portalId)?.missing.length ?? 0) > 0 ? (
