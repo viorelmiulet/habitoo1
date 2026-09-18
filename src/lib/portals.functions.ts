@@ -1410,30 +1410,52 @@ export const getPropertyPortalStatus = createServerFn({ method: "POST" })
         const adapter = getPortalAdapter(portal.id);
 
         // Statusul REAL: pe lângă ce am salvat noi, ce vede efectiv portalul.
-        let diagnostics: {
-          feedVisible: boolean;
-          externalId: string | null;
-          offerUrl: string | null;
-          agentName: string | null;
-          images: { total: number; resolvable: number; broken: number; primary: boolean };
-          notes: string[];
-        } | null = null;
+        let diagnostics: PortalListingDiagnosticsView | null = null;
         if (adapter?.diagnoseListing) {
-          const { ctx } = await buildContext(organizationId, portal);
-          const result = await adapter.diagnoseListing(ctx, {
+          diagnostics = await cachedListingDiagnostics({
+            organizationId,
+            portal,
             propertyId: data.propertyId,
             externalId: listing?.external_id ?? null,
+            run: async () => {
+              const { ctx } = await buildContext(organizationId, portal);
+              const result = await adapter.diagnoseListing!(ctx, {
+                propertyId: data.propertyId,
+                externalId: listing?.external_id ?? null,
+              });
+              if (!result.ok) return null;
+              return {
+                feedVisible: result.data.feedVisible,
+                externalId: result.data.externalId,
+                offerUrl: result.data.offerUrl,
+                agentName: result.data.agentName,
+                images: result.data.images,
+                notes: result.data.notes,
+                stateKnown: result.data.stateKnown ?? false,
+                portalState: result.data.portalState ?? null,
+                urlConfirmed: result.data.urlConfirmed ?? result.data.offerUrl !== null,
+              };
+            },
           });
-          if (result.ok) {
-            diagnostics = {
-              feedVisible: result.data.feedVisible,
-              externalId: result.data.externalId,
-              offerUrl: result.data.offerUrl,
-              agentName: result.data.agentName,
-              images: result.data.images,
-              notes: result.data.notes,
-            };
-          }
+        }
+
+        /**
+         * Linkul salvat NU se pierde din cauza unei verificări care n-a reușit.
+         * Îl considerăm dispărut doar când portalul spune explicit că anunțul
+         * este în altă stare decât `online`.
+         */
+        const portalSaysOffline =
+          diagnostics?.stateKnown === true && diagnostics.portalState !== "online";
+        const publicUrl = diagnostics?.offerUrl ?? (portalSaysOffline ? null : (listing?.public_url ?? null));
+        if (listing) {
+          await syncListingPublicUrl({
+            organizationId,
+            portalId: portal.id,
+            propertyId: data.propertyId,
+            stored: listing.public_url ?? null,
+            resolved: publicUrl,
+            portalSaysOffline,
+          });
         }
 
         return {
@@ -1442,9 +1464,8 @@ export const getPropertyPortalStatus = createServerFn({ method: "POST" })
           connected: connection?.status === "connected" || connection?.status === "ready",
           status: listing?.status ?? "not_published",
           externalId: listing?.external_id ?? diagnostics?.externalId ?? null,
-          // Linkul confirmat acum de portal are prioritate față de cel salvat:
-          // un anunț retras în ciornă nu mai are pagină publică.
-          publicUrl: diagnostics ? diagnostics.offerUrl : (listing?.public_url ?? null),
+          publicUrl,
+
 
           publishedAt: listing?.published_at ?? null,
           lastSyncAt: listing?.last_sync_at ?? null,
