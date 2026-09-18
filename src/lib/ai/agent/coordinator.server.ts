@@ -12,7 +12,7 @@
  */
 import type { AIProvider, AiProviderMessage, AiToolDeclaration } from "../providers/types";
 import { safeAiProviderMessage } from "../providers/types";
-import type { AiActor, AiSource, AiToolCallRecord } from "../gateway/types";
+import { truncateAiToolCall, type AiActor, type AiSource, type AiToolCallRecord } from "../gateway/types";
 import { authorizeAiTool } from "../security/permissions";
 import { aiToolCapability } from "../tools/registry";
 import { buildMastraTools, MASTRA_RUNTIME, type HabitooMastraTool } from "../tools/mastra.server";
@@ -109,14 +109,17 @@ export async function runCoordinator(run: CoordinatorRun): Promise<CoordinatorRe
         const authorization = authorizeAiTool(actor, call.name, aiToolCapability);
         const toolStart = Date.now();
         if (!authorization.allowed) {
-          toolCalls.push({
-            name: call.name,
-            arguments: JSON.stringify(call.arguments),
-            ok: false,
-            durationMs: Date.now() - toolStart,
-            summary: authorization.message,
-            error: authorization.reason,
-          });
+          toolCalls.push(
+            truncateAiToolCall({
+              name: call.name,
+              arguments: JSON.stringify(call.arguments),
+              ok: false,
+              durationMs: Date.now() - toolStart,
+              summary: authorization.message,
+              error: authorization.reason,
+            }),
+          );
+
           tracer.record("tool", call.name, {
             status: "failed",
             details: { denied: authorization.reason },
@@ -148,14 +151,17 @@ export async function runCoordinator(run: CoordinatorRun): Promise<CoordinatorRe
           : ({ ok: false, error: "Instrumentul cerut nu există.", code: "denied" } as const);
         const durationMs = Date.now() - toolStart;
 
-        toolCalls.push({
-          name: call.name,
-          arguments: JSON.stringify(call.arguments),
-          ok: execution.ok,
-          durationMs,
-          summary: summarize(execution),
-          ...(execution.ok ? {} : { error: execution.code }),
-        });
+        toolCalls.push(
+          truncateAiToolCall({
+            name: call.name,
+            arguments: JSON.stringify(call.arguments),
+            ok: execution.ok,
+            durationMs,
+            summary: summarize(execution),
+            ...(execution.ok ? {} : { error: execution.code }),
+          }),
+        );
+
         tracer.record("tool", call.name, {
           status: execution.ok ? "ok" : "failed",
           latencyMs: durationMs,
