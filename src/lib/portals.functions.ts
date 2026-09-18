@@ -22,7 +22,7 @@ import {
   type PortalDefinition,
 } from "@/lib/portals/registry";
 import { PORTAL_ERROR_MESSAGE } from "@/lib/portals/errors";
-import { portalSaysOffline, resolveListingPublicUrl } from "@/lib/portals/link";
+import { portalSaysOffline, resolveListingPublicUrl, shouldSaveBackfilledUrl } from "@/lib/portals/link";
 import type { ImoveListing } from "@/lib/portals/imove/mapper";
 import {
   isLegacyLaCheieTestEnvironmentError,
