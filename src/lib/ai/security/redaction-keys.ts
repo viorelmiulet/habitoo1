@@ -38,6 +38,12 @@ const IDENTITY_PART = [
   "image_data",
   "idimage",
   "documentimage",
+  "sex",
+  "nationality",
+  "nationalitate",
+  "expirydate",
+  "expiry_date",
+  "dataexpirarii",
 ].join("|");
 
 /** Orice cheie care se potrivește este eliminată din detaliile trimise la audit/tracing. */
