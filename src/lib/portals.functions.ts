@@ -145,13 +145,14 @@ async function requireSuperadminOrg(context: AuthContext, organizationId: string
 /**
  * Publicarea ofertelor pe portaluri (bifarea per proprietate) este fluxul
  * zilnic al agenției. Superadminul poate lucra pe orice agenție (panou de
- * suport), iar administratorul de agenție doar pe agenția din SESIUNE —
- * niciodată pe una primită din input.
+ * suport); administratorul de agenție și AGENTUL lucrează doar pe agenția din
+ * SESIUNE, niciodată pe una primită din input. Agentul este limitat la
+ * ofertele unde este agentul responsabil (`agentOnly`).
  */
 export async function resolvePublishingOrg(
   context: AuthContext,
   requestedOrganizationId?: string,
-): Promise<{ organizationId: string; superadmin: boolean }> {
+): Promise<{ organizationId: string; superadmin: boolean; agentOnly: boolean }> {
   const { data: isSuper } = await context.supabase.rpc("is_superadmin");
   if (isSuper === true) {
     const admin = await loadAdmin();
@@ -162,20 +163,48 @@ export async function resolvePublishingOrg(
       .eq("id", requestedOrganizationId)
       .maybeSingle();
     if (!org) throw new Error("Agenția nu a fost găsită.");
-    return { organizationId: org.id, superadmin: true };
+    return { organizationId: org.id, superadmin: true, agentOnly: false };
   }
 
   const { data: isOrgAdmin } = await context.supabase.rpc("is_org_admin");
-  if (isOrgAdmin !== true) {
-    throw new Error("Acces refuzat: doar administratorul agenției poate publica pe portaluri.");
-  }
   const { data: profile } = await context.supabase
     .from("profiles")
     .select("organization_id")
     .eq("id", context.userId)
     .maybeSingle();
-  if (!profile?.organization_id) throw new Error("Contul nu este asociat unei agenții.");
-  return { organizationId: profile.organization_id, superadmin: false };
+  if (!profile?.organization_id) throw new Error("Contul nu este asociat unei agenției.");
+  return {
+    organizationId: profile.organization_id,
+    superadmin: false,
+    agentOnly: isOrgAdmin !== true,
+  };
+}
+
+export const PORTAL_AGENT_NOT_RESPONSIBLE =
+  "Acces refuzat: poți publica pe portaluri doar ofertele unde ești agentul responsabil.";
+
+/**
+ * Un agent poate opera pe portaluri numai ofertele lui. Administratorul
+ * agenției și Superadminul trec neatinși.
+ */
+export async function assertPortalPropertyAccess(input: {
+  organizationId: string;
+  propertyId: string;
+  agentOnly: boolean;
+  userId: string;
+}): Promise<void> {
+  if (!input.agentOnly) return;
+  const admin = await loadAdmin();
+  const { data: property } = await admin
+    .from("properties")
+    .select("id, assigned_to")
+    .eq("id", input.propertyId)
+    .eq("organization_id", input.organizationId)
+    .maybeSingle();
+  if (!property) throw new Error("Proprietatea nu a fost găsită.");
+  if ((property as { assigned_to: string | null }).assigned_to !== input.userId) {
+    throw new Error(PORTAL_AGENT_NOT_RESPONSIBLE);
+  }
 }
 
 /** Portalurile activate explicit de Superadmin pentru agenție. */
