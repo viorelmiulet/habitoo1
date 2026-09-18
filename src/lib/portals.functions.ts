@@ -172,7 +172,7 @@ export async function resolvePublishingOrg(
     .select("organization_id")
     .eq("id", context.userId)
     .maybeSingle();
-  if (!profile?.organization_id) throw new Error("Contul nu este asociat unei agenției.");
+  if (!profile?.organization_id) throw new Error("Contul nu este asociat unei agenții.");
   return {
     organizationId: profile.organization_id,
     superadmin: false,
