@@ -548,9 +548,10 @@ export async function deleteImobiliareListing(
 }
 
 /**
- * Diagnoză pentru fila Publicare: citește anunțul de la portal și întoarce
- * linkul public REAL, doar dacă portalul îl raportează `online`. Astfel nu mai
- * afișăm un link salvat care redirectează către prima pagină a portalului.
+ * Diagnoză pentru fila Publicare: citește anunțul de la portal și raportează
+ * starea reală. `stateKnown` distinge „portalul spune că e ciornă” de „nu am
+ * putut verifica”; apelantul păstrează linkul salvat în al doilea caz.
+ * NU reîmprospătează catalogul de categorii.
  */
 async function diagnose(
   ctx: PortalContext,
@@ -566,11 +567,22 @@ async function diagnose(
     images: { total: 0, resolvable: 0, broken: 0, primary: false },
     updatedAt: null,
     notes: [],
+    stateKnown: false,
+    portalState: null,
+    urlConfirmed: false,
   };
   if (references.length === 0 || !ctx.allowLiveRequests) return { ok: true, data: empty };
 
-  const ready = await prepare(ctx);
-  if (!ready.ok) return { ok: true, data: empty };
+  const ready = await prepare(ctx, { refreshCatalog: false });
+  if (!ready.ok) {
+    return {
+      ok: true,
+      data: {
+        ...empty,
+        notes: ["Imobiliare.ro nu a putut fi interogat: autorizarea contului nu este validă acum."],
+      },
+    };
+  }
 
   const reference = references[0]!;
   const response = await imobiliareAuthedRequest(ready.session, {
@@ -601,6 +613,10 @@ async function diagnose(
       ...empty,
       feedVisible: state === IMOBILIARE_STATUS_ONLINE,
       offerUrl,
+      // Starea e cunoscută doar dacă portalul a trimis efectiv câmpul `state`.
+      stateKnown: state !== null,
+      portalState: state,
+      urlConfirmed: offerUrl !== null,
       notes,
     },
   };
