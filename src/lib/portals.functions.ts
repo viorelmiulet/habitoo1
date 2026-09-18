@@ -1520,9 +1520,8 @@ export const getPropertyPortalStatus = createServerFn({ method: "POST" })
          * Îl considerăm dispărut doar când portalul spune explicit că anunțul
          * este în altă stare decât `online`.
          */
-        const portalSaysOffline =
-          diagnostics?.stateKnown === true && diagnostics.portalState !== "online";
-        const publicUrl = diagnostics?.offerUrl ?? (portalSaysOffline ? null : (listing?.public_url ?? null));
+        const offline = portalSaysOffline(diagnostics);
+        const publicUrl = resolveListingPublicUrl(diagnostics, listing?.public_url ?? null);
         if (listing) {
           await syncListingPublicUrl({
             organizationId,
@@ -1530,7 +1529,7 @@ export const getPropertyPortalStatus = createServerFn({ method: "POST" })
             propertyId: data.propertyId,
             stored: listing.public_url ?? null,
             resolved: publicUrl,
-            portalSaysOffline,
+            portalSaysOffline: offline,
           });
         }
 
