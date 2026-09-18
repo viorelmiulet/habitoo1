@@ -992,6 +992,10 @@ export type AcpAnalysisView = {
     itemsUsed: number;
     itemsExcluded: number;
   }[];
+  /** Versiunea motorului care a produs cifrele acestei analize. */
+  engineVersion: number;
+  /** Rezumatul ajustării în timp (doar motor v2; null pentru analizele v1). */
+  timeAdjustment: AcpTimeAdjustmentSummary | null;
   statistics: ReturnType<typeof runAcpAnalysis>["statistics"] | null;
   estimate: ReturnType<typeof runAcpAnalysis>["estimate"] | null;
   confidence: ReturnType<typeof runAcpAnalysis>["confidence"] | null;
