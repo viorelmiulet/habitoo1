@@ -877,6 +877,48 @@ export type ListingActionResult =
 
 
 /**
+ * Salvează motivul EXACT al unui eșec (eroarea portalului, limita de locuri,
+ * conflictul de versiune, validarea locală) pe rândurile citite de matricea
+ * din interfață. Fără aceasta, blocările dinaintea apelului către portal erau
+ * vizibile doar în notificarea temporară, iar după reîmprospătare agentul
+ * vedea doar o stare generică, fără motiv.
+ */
+export async function persistListingFailure(
+  admin: Awaited<ReturnType<typeof loadAdmin>>,
+  input: {
+    organizationId: string;
+    portalKey: string;
+    propertyId: string;
+    actorId: string | null;
+    message: string;
+  },
+): Promise<void> {
+  const now = new Date().toISOString();
+  await admin
+    .from("portal_publications")
+    .update({
+      status: "error",
+      last_error: input.message,
+      last_synced_at: now,
+      updated_by: input.actorId,
+    } as never)
+    .eq("organization_id", input.organizationId)
+    .eq("property_id", input.propertyId)
+    .eq("portal_key", input.portalKey);
+  await admin
+    .from("portal_listings")
+    .update({
+      status: "error",
+      last_error: input.message,
+      last_sync_at: now,
+      updated_by: input.actorId,
+    } as never)
+    .eq("organization_id", input.organizationId)
+    .eq("portal", input.portalKey)
+    .eq("property_id", input.propertyId);
+}
+
+/**
  * Nucleul unei operațiuni pe o ofertă. Refolosit de acțiunea individuală și de
  * publicarea per proprietate pe portalurile selectate. Nu conține verificări de
  * permisiuni: apelantul trebuie să valideze deja agenția și rolul.
