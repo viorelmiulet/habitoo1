@@ -143,13 +143,28 @@ describe("gardă: fiecare apel de producție al motorului primește indicele", (
   it("runAcpAnalysis este apelat mereu cu priceIndex și engineVersion", () => {
     const files = sourceFiles("src");
     const callSites: { file: string; call: string }[] = [];
+
     for (const file of files) {
       const code = readFileSync(file, "utf8");
-      if (!code.includes("runAcpAnalysis(")) continue;
-      const regex = /runAcpAnalysis\(([\s\S]*?)\n\s*\}\);/g;
-      let match: RegExpExecArray | null;
-      while ((match = regex.exec(code)) !== null) {
-        callSites.push({ file, call: match[1] ?? "" });
+      if (file.endsWith(join("acp", "engine.ts"))) continue;
+      let from = 0;
+      for (;;) {
+        const at = code.indexOf("runAcpAnalysis(", from);
+        if (at === -1) break;
+        // Extragem argumentele apelului cu numărare de paranteze, ca un apel
+        // scurt fără obiect de opțiuni să nu poată trece nedetectat.
+        let depth = 0;
+        let end = at + "runAcpAnalysis".length;
+        for (; end < code.length; end += 1) {
+          const ch = code[end];
+          if (ch === "(") depth += 1;
+          else if (ch === ")") {
+            depth -= 1;
+            if (depth === 0) break;
+          }
+        }
+        callSites.push({ file, call: code.slice(at, end + 1) });
+        from = end + 1;
       }
     }
 
