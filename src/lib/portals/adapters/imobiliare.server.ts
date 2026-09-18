@@ -242,6 +242,30 @@ async function fetchImobiliarePublicUrl(
   return imobiliarePublicUrlFromBody(response.body);
 }
 
+/** Întârzierile dintre reîncercările de citire a linkului public, în ms. */
+export const IMOBILIARE_PUBLIC_URL_RETRY_DELAYS = [2_000, 5_000] as const;
+
+/**
+ * Imediat după promovarea online, portalul întoarce uneori anunțul fără `path`
+ * (sau încă în `draft`). Reîncercăm scurt înainte de a renunța; lipsa linkului
+ * NU transformă publicarea în eșec.
+ */
+export async function fetchImobiliarePublicUrlWithRetries(
+  session: ImobiliareSession,
+  ctx: PortalContext,
+  customReference: string,
+  delaysMs: readonly number[] = IMOBILIARE_PUBLIC_URL_RETRY_DELAYS,
+): Promise<string | null> {
+  const first = await fetchImobiliarePublicUrl(session, ctx, customReference);
+  if (first) return first;
+  for (const delay of delaysMs) {
+    if (delay > 0) await new Promise((resolve) => setTimeout(resolve, delay));
+    const url = await fetchImobiliarePublicUrl(session, ctx, customReference);
+    if (url) return url;
+  }
+  return null;
+}
+
 async function publishPlan(input: {
   ctx: PortalContext;
   session: ImobiliareSession;
