@@ -23,6 +23,8 @@ import {
   importImobiliareLocationsFile,
 } from "@/lib/imobiliare-locations.functions";
 import { appHead } from "@/components/app/app-head";
+import { MarketPriceIndexCard } from "@/components/superadmin/MarketPriceIndexCard";
+
 
 export const Route = createFileRoute("/_authenticated/superadmin/nomenclator")({
   head: () => appHead("Habitoo CRM — nomenclator localități"),
@@ -143,6 +145,9 @@ function NomenclatorPage() {
           </SectionCard>
 
           <ImobiliareLocationsCard />
+
+          <MarketPriceIndexCard />
+
         </>
       )}
     </div>

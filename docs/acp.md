@@ -131,3 +131,39 @@ UI: `src/components/app/PropertyAcpCard.tsx`, `AcpPrecisionCard.tsx`,
 Migrații: `0029`–`0035` (infrastructură + market data), `0036` (raport),
 `0037` (indexuri market intelligence), `0038` (AI insights),
 `0039` (calibrare). Stage 10: **MIGRATIONS: NONE**.
+
+## 10. Indice de preț al locuințelor (Eurostat) — strat de date
+
+Stare: **doar date**. Nimic din motorul determinist, scoring, ajustări, analize
+sau rapoarte nu citește acest indice; există un test care verifică asta.
+
+Sursa (verificată pe API-ul live):
+
+- endpoint: `https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/prc_hpi_q`
+- set de date: `prc_hpi_q` („House price index - quarterly data")
+- parametri: `format=JSON`, `lang=EN`, `freq=Q`, `geo=RO`, `unit=I15_Q`
+  („Quarterly index, 2015=100" — formă de indice, NU rată de variație),
+  `purchase=TOTAL | DW_NEW | DW_EXST`; opțional `lastTimePeriod=1` pentru
+  verificarea ieftină „este deja la zi?".
+
+Se stochează în `market_price_indices`: `source`, `dataset`, `series`
+(`total`, `new_dwellings`, `existing_dwellings`), `region`, `unit`,
+`period_year`, `period_quarter`, `index_value`, `base_label` (`2015=100`),
+`published_at` (`updated` raportat de Eurostat), `import_run_id`,
+`created_at`, `updated_at`. Cheia unică:
+`(source, dataset, series, region, unit, period_year, period_quarter)`.
+Citirea este rezervată superadminului (RLS), scrierea doar rolului de serviciu.
+
+Revizuiri: Eurostat corectează trimestre trecute. Sincronizarea aduce întreg
+istoricul publicat și face upsert pe cheia unică — o valoare schimbată
+actualizează rândul existent și se numără `updated`, niciodată duplicat.
+Fiecare rulare (automată săptămânală sau „Sincronizează acum" din
+Superadmin → Nomenclator) se jurnalizează în `market_import_runs` cu sursa
+`eurostat` și contoarele primite/noi/revizuite/neschimbate/invalide plus erori.
+Când cel mai nou trimestru publicat este deja stocat și publicarea Eurostat nu
+este mai nouă, rularea se încheie cu statusul `skipped` și nu scrie nimic.
+
+Limitare declarată: indicele este **național** (România, fără defalcare pe
+orașe sau zone) și, când va fi folosit, se aplică exclusiv ca **ajustare în
+timp** între două trimestre. O perioadă lipsă înseamnă lipsa ajustării,
+niciodată o valoare inventată.
