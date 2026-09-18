@@ -895,6 +895,7 @@ export type Database = {
           output_tokens: number | null
           provider: string
           success: boolean
+          tokens_unknown: boolean
           tool_calls: number
           user_id: string
         }
@@ -909,6 +910,7 @@ export type Database = {
           output_tokens?: number | null
           provider: string
           success?: boolean
+          tokens_unknown?: boolean
           tool_calls?: number
           user_id: string
         }
@@ -923,6 +925,7 @@ export type Database = {
           output_tokens?: number | null
           provider?: string
           success?: boolean
+          tokens_unknown?: boolean
           tool_calls?: number
           user_id?: string
         }
