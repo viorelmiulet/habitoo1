@@ -402,6 +402,8 @@ async function write(
     });
     const steps: string[] = [];
     const publicUrls: string[] = [];
+    let lastHttpStatus: number | null = null;
+    let lastPortalResponse: unknown = null;
     for (const plan of resolvedPlans) {
       const planMode: WriteMode = storedReferences.includes(plan.customReference) ? "update" : mode;
       const result = await withDurableImobiliareLock({
