@@ -74,6 +74,10 @@ export type ListingOutcome = {
    * din fila Publicare.
    */
   publicUrl?: string | null;
+  /** Statusul HTTP al ultimului răspuns al portalului, pentru jurnalizare. */
+  httpStatus?: number | null;
+  /** Corpul răspunsului portalului la succes (sanitizat la jurnalizare). */
+  portalResponse?: unknown;
 };
 
 export type ConnectionStatusOutcome = {
