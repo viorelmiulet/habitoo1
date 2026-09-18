@@ -160,14 +160,16 @@ export async function runMarketingTurn(
   }
 
   const admin = await loadAdmin();
-  const { checkAiRateLimits } = await import("../../gateway/gateway.server");
-  if (!(await checkAiRateLimits(admin, actor, "chat"))) {
+  const { checkAiQuota } = await import("../../gateway/gateway.server");
+  const quota = await checkAiQuota(admin as never, actor, "chat");
+  if (!quota.allowed) {
     return {
       status: "rate_limited",
       run: null,
-      message: "Ai atins limita de cereri AI. Încearcă din nou în câteva minute.",
+      message: quota.message,
     };
   }
+
 
   const traceId = newTraceId();
   const tracer = new AiTracer(traceId, {

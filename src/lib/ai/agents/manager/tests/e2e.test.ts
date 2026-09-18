@@ -108,7 +108,11 @@ vi.mock("../../../providers/registry.server", () => ({
   isAiConfigured: () => true,
   aiProviderStatus: () => ({ configured: true, provider: "gemini", model: "fake-1", plannedProviders: [] }),
 }));
-vi.mock("../../../gateway/gateway.server", () => ({ checkAiRateLimits: async () => true }));
+vi.mock("../../../gateway/gateway.server", () => ({
+  checkAiRateLimits: async () => true,
+  checkAiQuota: async () => ({ allowed: true }),
+}));
+
 
 /** Tool-uri: `get_property` poate eșua tranzitoriu de N ori (test de retry). */
 const tools = { failures: 0, calls: [] as string[] };

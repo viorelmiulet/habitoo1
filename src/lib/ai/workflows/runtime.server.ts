@@ -123,13 +123,12 @@ export async function startDiagnosticWorkflow(
   input: { question: string; propertyId?: string | null },
 ): Promise<{ ok: true; run: WorkflowRunView } | { ok: false; message: string }> {
   const admin = await loadAdmin();
-  const { checkAiRateLimits } = await import("../gateway/gateway.server");
-  if (!(await checkAiRateLimits(admin, actor, "workflow"))) {
-    return {
-      ok: false,
-      message: "Ai atins limita de fluxuri AI pornite. Încearcă din nou în câteva minute.",
-    };
+  const { checkAiQuota } = await import("../gateway/gateway.server");
+  const quota = await checkAiQuota(admin as never, actor, "workflow");
+  if (!quota.allowed) {
+    return { ok: false, message: quota.message };
   }
+
 
   const traceId = newTraceId();
   const { data: created, error } = await admin
