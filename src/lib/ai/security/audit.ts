@@ -2,6 +2,8 @@
  * Audit pentru cererile AI. Înregistrăm cine a cerut ce, cu ce provider și cu
  * ce rezultat — niciodată chei, secrete sau conținutul integral al promptului.
  */
+import { REDACTED_DETAIL_KEY } from "./redaction-keys";
+
 export const AI_AUDIT_ACTIONS = {
   chatRequest: "ai.chat.request",
   chatFailed: "ai.chat.failed",
