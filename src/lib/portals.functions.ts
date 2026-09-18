@@ -1287,8 +1287,10 @@ export async function executeListingAction(input: {
     success: result.ok,
     errorCode: result.ok ? null : result.code,
     errorMessage: result.ok ? null : result.message,
-    ...(result.ok ? {} : { httpStatus: result.httpStatus ?? null }),
-    ...(result.ok ? {} : { portalResponse: result.portalResponse ?? null }),
+    // Și la succes: statusul HTTP și corpul răspunsului (sanitizate), ca
+    // jurnalul să dovedească ce a confirmat portalul, nu doar ce a refuzat.
+    httpStatus: result.ok ? (result.data.httpStatus ?? null) : (result.httpStatus ?? null),
+    portalResponse: result.ok ? (result.data.portalResponse ?? null) : (result.portalResponse ?? null),
     ...(result.ok && result.data.externalId ? { externalId: result.data.externalId } : {}),
     propertyId,
     actorId,
