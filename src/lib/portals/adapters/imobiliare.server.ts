@@ -116,7 +116,7 @@ async function prepare(
     };
   }
   let catalog = readCategoryCatalog(ctx.settings as Record<string, unknown>);
-  if (!categoryCatalogIsFresh(catalog)) {
+  if (options?.refreshCatalog !== false && !categoryCatalogIsFresh(catalog)) {
     const refreshed = await refreshCategoryCatalog(db, session.session, ctx.organizationId);
     catalog = refreshed.catalog;
   }
