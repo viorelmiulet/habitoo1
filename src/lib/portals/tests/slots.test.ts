@@ -90,6 +90,29 @@ describe("locuri de publicare — logică", () => {
     ).toEqual({ ok: true, alreadyCounted: false });
   });
 
+  it("agentul poate publica pe orice portal: limita se aplică separat pe fiecare portal", () => {
+    // Pe La Cheie agentul are 1 loc și l-a ocupat; pe Imobiliare.ro nu are
+    // nicio limitare, deci aceeași ofertă trece fără restricție.
+    const lacheie = state({
+      allocations: [{ userId: "agent-1", slots: 1 }],
+      selections: ["p-1"],
+      properties: [{ id: "p-1", assignedTo: "agent-1" }],
+    });
+    expect(checkPortalSlot(lacheie, { propertyId: "p-2", agentId: "agent-1" }).ok).toBe(false);
+
+    const imobiliare = computePortalSlotState({
+      portalKey: "imobiliare",
+      agencyTotal: null,
+      allocations: [],
+      selections: [],
+      properties: [],
+    });
+    expect(checkPortalSlot(imobiliare, { propertyId: "p-2", agentId: "agent-1" })).toEqual({
+      ok: true,
+      alreadyCounted: false,
+    });
+  });
+
   it("limita per agent blochează", () => {
     const s = state({
       allocations: [{ userId: "agent-1", slots: 1 }],
