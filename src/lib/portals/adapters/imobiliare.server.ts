@@ -424,6 +424,8 @@ async function write(
       if (!result.ok) return result.fail;
       steps.push(`${plan.customReference}: ${result.steps.join(" → ")}`);
       if (result.publicUrl) publicUrls.push(result.publicUrl);
+      lastHttpStatus = result.httpStatus;
+      lastPortalResponse = result.portalResponse;
     }
 
     return {
