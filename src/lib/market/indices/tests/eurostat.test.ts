@@ -5,8 +5,8 @@
  * real, cu formă JSON-stat 2.0.
  */
 import { describe, expect, it, vi } from "vitest";
-import { readFileSync } from "node:fs";
-import { globSync } from "node:fs";
+import { readFileSync, readdirSync } from "node:fs";
+import { join } from "node:path";
 import {
   EUROSTAT_HPI_DATASET,
   EUROSTAT_HPI_UNIT,
@@ -345,7 +345,9 @@ describe("Eurostat — acces și izolare", () => {
   });
 
   it("niciun cod de analiză ACP nu citește încă tabelul", () => {
-    const files = globSync("src/lib/acp/**/*.ts");
+    const files = readdirSync("src/lib/acp", { recursive: true, encoding: "utf8" })
+      .filter((entry) => entry.endsWith(".ts"))
+      .map((entry) => join("src/lib/acp", entry));
     expect(files.length).toBeGreaterThan(5);
     for (const file of files) {
       const source = readFileSync(file, "utf8");
