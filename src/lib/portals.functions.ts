@@ -1062,10 +1062,18 @@ export async function executeListingAction(input: {
   const { portalRateLimited } = await import("@/lib/portals/rate-limit.server");
   if (portalRateLimited(action, `${organizationId}|${portalId}`)) {
     // Limita noastră locală se resetează la un minut: retrimiterea amână atât.
+    const message = `${definition.display_name}: ${PORTAL_ERROR_MESSAGE.RATE_LIMIT}`;
+    await persistListingFailure(admin, {
+      organizationId,
+      portalKey: definition.id,
+      propertyId,
+      actorId,
+      message,
+    });
     return {
       ok: false as const,
       code: "RATE_LIMIT",
-      message: PORTAL_ERROR_MESSAGE.RATE_LIMIT,
+      message,
       retryAfterMs: 60_000,
     };
   }
