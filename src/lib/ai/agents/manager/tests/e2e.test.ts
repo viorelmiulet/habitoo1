@@ -80,6 +80,15 @@ function builder(table: string) {
     },
 
     then(resolve: (value: { data: Row[]; error: null }) => unknown) {
+      if (pending && table === "ai_workflow_runs") {
+        for (const row of db.runs) {
+          if (Object.entries(filters).every(([key, expected]) => row[key] === expected)) {
+            Object.assign(row, pending);
+          }
+        }
+        pending = null;
+      }
+      filters = {};
       return Promise.resolve({ data: db.runs, error: null }).then(resolve);
     },
   };
