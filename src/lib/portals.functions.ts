@@ -1009,6 +1009,13 @@ export async function executeListingAction(input: {
         propertyId,
         actorId,
       });
+      await persistListingFailure(admin, {
+        organizationId,
+        portalKey: definition.id,
+        propertyId,
+        actorId,
+        message,
+      });
       return { ok: false as const, code: "VALIDATION_ERROR", message };
     }
   }
@@ -1037,6 +1044,13 @@ export async function executeListingAction(input: {
         errorMessage: guard.message,
         propertyId,
         actorId,
+      });
+      await persistListingFailure(admin, {
+        organizationId,
+        portalKey: definition.id,
+        propertyId,
+        actorId,
+        message: guard.message,
       });
       return { ok: false as const, code: "VALIDATION_ERROR", message: guard.message };
     }
