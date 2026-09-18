@@ -21,31 +21,38 @@ export type AiTraceEvent = {
 };
 
 const SECRET_KEY = /(key|secret|token|password|apikey|authorization)/i;
+const MAX_STRING = 300;
+const MAX_DEPTH = 6;
+const MAX_ITEMS = 20;
 
-/** Scoate orice câmp care ar putea conține un secret și scurtează textele. */
+function scrubValue(value: unknown, depth: number): unknown {
+  if (typeof value === "string") {
+    return value.length > MAX_STRING ? `${value.slice(0, MAX_STRING)}…` : value;
+  }
+  if (value === null || ["number", "boolean"].includes(typeof value)) return value;
+  if (depth >= MAX_DEPTH) return "[prea adânc]";
+  if (Array.isArray(value)) {
+    return value.slice(0, MAX_ITEMS).map((item) => scrubValue(item, depth + 1));
+  }
+  if (typeof value === "object") {
+    const out: Record<string, unknown> = {};
+    for (const [key, item] of Object.entries(value as Record<string, unknown>)) {
+      if (SECRET_KEY.test(key)) continue;
+      out[key] = scrubValue(item, depth + 1);
+    }
+    return out;
+  }
+  return undefined;
+}
+
+/** Scoate recursiv orice câmp care ar putea conține un secret și scurtează textele. */
 export function scrubTraceDetails(
   details: Record<string, unknown> | null | undefined,
 ): Record<string, unknown> {
   if (!details) return {};
-  const out: Record<string, unknown> = {};
-  for (const [key, value] of Object.entries(details)) {
-    if (SECRET_KEY.test(key)) continue;
-    if (typeof value === "string") {
-      out[key] = value.length > 300 ? `${value.slice(0, 300)}…` : value;
-      continue;
-    }
-    if (value === null || ["number", "boolean"].includes(typeof value)) {
-      out[key] = value;
-      continue;
-    }
-    if (Array.isArray(value)) {
-      out[key] = value.slice(0, 20).map((item) => (typeof item === "string" ? item : item));
-      continue;
-    }
-    out[key] = value;
-  }
-  return out;
+  return (scrubValue(details, 0) ?? {}) as Record<string, unknown>;
 }
+
 
 /** Colector de pași: acumulează în memorie, apoi se scrie o singură dată. */
 export class AiTracer {
