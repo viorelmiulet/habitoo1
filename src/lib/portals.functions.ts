@@ -2700,6 +2700,7 @@ export const backfillImobiliarePublicUrls = createServerFn({ method: "POST" })
         continue;
       }
       if (state.state !== "online" || !state.url) {
+        // Ciornă sau lipsă adresă: nu scriem nimic, nici ștergere.
         results.push({
           propertyId: row.property_id,
           externalId: row.external_id,
