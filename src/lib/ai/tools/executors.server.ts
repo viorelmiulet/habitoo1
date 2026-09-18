@@ -17,7 +17,13 @@ import { sanitizeCrmValue } from "../security/injection";
 
 export type AiToolExecution =
   | { ok: true; data: unknown; sources: AiSource[]; summary: string; capability: string }
-  | { ok: false; error: string; code: "denied" | "invalid_input" | "not_found" | "failed" };
+  | {
+      ok: false;
+      error: string;
+      code: "denied" | "invalid_input" | "not_found" | "failed";
+      /** Context afișabil al eșecului (de ex. contactul existent propus spre asociere). */
+      details?: Record<string, unknown>;
+    };
 
 async function loadAdmin() {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");

@@ -8,6 +8,13 @@
  */
 import type { AiActor } from "../../gateway/types";
 import { AI_AUDIT_ACTIONS, logAiAudit } from "../../security/audit";
+import {
+  APPROVAL_ALREADY_APPLIED,
+  APPROVAL_TAMPERED,
+  argumentsFingerprint,
+  claimSuspendedRun,
+  fingerprintMatches,
+} from "../../security/approval";
 import { AiTracer, newTraceId } from "../../tracing/trace";
 import { writeTraceEvents } from "../../tracing/trace.server";
 import { writeAiUsage } from "../../usage/tracking.server";
@@ -412,11 +419,20 @@ export async function proposeMarketingWrite(
     ];
     warnings = ["Ciorna se salvează versionat. Anunțul publicat rămâne neschimbat."];
   } else {
-    const draftId = input.draftId ?? result.draftId;
+    // Ciorna aplicată este cea generată în această rulare: un `draftId` trimis
+    // de client NU poate alege alt text.
+    const draftId = result.draftId;
     if (!draftId) {
       return { ok: false, message: "Salvează mai întâi ciorna, apoi o poți aplica." };
     }
-    args = { propertyId: result.propertyId, draftId };
+    // Se aprobă textul exact, nu un identificator: titlul și corpul intră în
+    // argumente și sunt verificate la execuție față de ciorna salvată.
+    args = {
+      propertyId: result.propertyId,
+      draftId,
+      title: result.content.title ?? null,
+      body: result.content.body,
+    };
     const { data: property } = await admin
       .from("properties")
       .select("title,description")
@@ -440,13 +456,15 @@ export async function proposeMarketingWrite(
     ];
   }
 
+  const argumentsJson = JSON.stringify(args);
   const next = suspendForMarketingApproval(state, {
     mode: input.mode,
     tool: input.mode === "save_draft" ? "save_marketing_draft" : "apply_marketing_draft",
     resultIndex: input.resultIndex,
     propertyId: result.propertyId,
     propertyLabel: result.propertyLabel,
-    argumentsJson: JSON.stringify(args),
+    argumentsJson,
+    argumentsHash: argumentsFingerprint(argumentsJson),
     changes,
     warnings,
   });
@@ -475,12 +493,25 @@ export async function decideMarketingWrite(
   approved: boolean,
 ): Promise<MarketingDecision> {
   const admin = await loadAdmin();
-  const row = await loadRun(admin, actor, runId);
-  if (!row) return { ok: false, message: "Cererea nu a fost găsită." };
-  // Protecție la dublu-click: o propunere deja decisă nu se execută a doua oară.
-  if (row.status !== "suspended") {
-    return { ok: false, message: "Această acțiune a fost deja procesată." };
-  }
+  // Protecție la dublu-click: aprobarea se consumă atomic, deci o a doua cerere
+  // paralelă nu mai execută nimic.
+  const row = await claimSuspendedRun<{
+    id: string;
+    workflow: string;
+    status: string;
+    current_step: string;
+    state: unknown;
+    trace_id: string | null;
+    error_message: string | null;
+    updated_at: string;
+  }>(admin, {
+    runId,
+    organizationId: actor.organizationId,
+    userId: actor.userId,
+    workflow: HABITOO_MARKETING_WORKFLOW,
+    columns: "id,workflow,status,current_step,state,trace_id,error_message,updated_at",
+  });
+  if (!row) return { ok: false, message: APPROVAL_ALREADY_APPLIED };
 
   const tracer = new AiTracer(row.trace_id ?? newTraceId(), {
     organizationId: actor.organizationId,
@@ -492,6 +523,22 @@ export async function decideMarketingWrite(
   let state = applyMarketingApproval(row.state as unknown as MarketingWorkflowState, approved);
   if (state.approval === null) {
     return { ok: false, message: "Această acțiune nu mai așteaptă o aprobare." };
+  }
+
+  // Amprenta argumentelor: dacă starea a fost modificată după suspendare, nu se execută nimic.
+  if (
+    state.proposal &&
+    !fingerprintMatches(state.proposal.argumentsHash, state.proposal.argumentsJson)
+  ) {
+    const failed = failMarketingState(state, APPROVAL_TAMPERED);
+    await persist(admin, actor, row.id, failed, APPROVAL_TAMPERED);
+    await logAiAudit({
+      organizationId: actor.organizationId,
+      actorId: actor.userId,
+      action: AI_AUDIT_ACTIONS.marketingActionFailed,
+      details: { runId: row.id, reason: "arguments_tampered" },
+    });
+    return { ok: false, message: APPROVAL_TAMPERED };
   }
 
   if (isMarketingActionAllowed(state) && state.proposal) {

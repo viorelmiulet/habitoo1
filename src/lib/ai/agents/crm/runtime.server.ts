@@ -11,6 +11,12 @@
  */
 import type { AiActor, AiSource, AiToolCallRecord } from "../../gateway/types";
 import { AI_AUDIT_ACTIONS, logAiAudit } from "../../security/audit";
+import {
+  APPROVAL_ALREADY_APPLIED,
+  APPROVAL_TAMPERED,
+  claimSuspendedRun,
+  fingerprintMatches,
+} from "../../security/approval";
 import { AiTracer, newTraceId } from "../../tracing/trace";
 import { writeTraceEvents } from "../../tracing/trace.server";
 import { writeAiUsage } from "../../usage/tracking.server";
@@ -692,19 +698,25 @@ export async function resumeCrmWorkflow(
   approved: boolean,
 ): Promise<{ ok: true; run: CrmRunView } | { ok: false; message: string }> {
   const admin = await loadAdmin();
-  const { data: row } = await admin
-    .from("ai_workflow_runs")
-    .select("id,workflow,status,current_step,state,trace_id,updated_at")
-    .eq("id", runId)
-    .eq("organization_id", actor.organizationId)
-    .eq("user_id", actor.userId)
-    .maybeSingle();
-  if (!row || row.workflow !== HABITOO_CRM_WORKFLOW) {
-    return { ok: false, message: "Cererea nu a fost găsită." };
-  }
-  // Protecție la dublu-click: un flux deja decis nu se execută a doua oară.
-  if (row.status !== "suspended") {
-    return { ok: false, message: "Această acțiune a fost deja procesată." };
+  // Protecție la dublu-click: aprobarea se consumă atomic (update condiționat),
+  // deci o a doua cerere paralelă nu execută nimic.
+  const row = await claimSuspendedRun<{
+    id: string;
+    workflow: string;
+    status: string;
+    current_step: string;
+    state: unknown;
+    trace_id: string | null;
+    updated_at: string;
+  }>(admin, {
+    runId,
+    organizationId: actor.organizationId,
+    userId: actor.userId,
+    workflow: HABITOO_CRM_WORKFLOW,
+    columns: "id,workflow,status,current_step,state,trace_id,updated_at",
+  });
+  if (!row) {
+    return { ok: false, message: APPROVAL_ALREADY_APPLIED };
   }
 
   const tracer = new AiTracer(row.trace_id ?? newTraceId(), {
@@ -717,6 +729,22 @@ export async function resumeCrmWorkflow(
   let state = applyCrmApproval(row.state as unknown as CrmWorkflowState, approved);
   if (state.approval === null) {
     return { ok: false, message: "Această acțiune nu mai așteaptă o aprobare." };
+  }
+
+  // Amprenta argumentelor: orice modificare a stării după suspendare oprește execuția.
+  if (
+    state.proposal &&
+    !fingerprintMatches(state.proposal.argumentsHash, state.proposal.argumentsJson)
+  ) {
+    const failed = failCrmState(state, APPROVAL_TAMPERED);
+    await persist(admin, actor, row.id, failed, APPROVAL_TAMPERED);
+    await logAiAudit({
+      organizationId: actor.organizationId,
+      actorId: actor.userId,
+      action: AI_AUDIT_ACTIONS.crmActionFailed,
+      details: { runId: row.id, reason: "arguments_tampered" },
+    });
+    return { ok: false, message: APPROVAL_TAMPERED };
   }
 
   if (isCrmActionAllowed(state) && state.proposal) {

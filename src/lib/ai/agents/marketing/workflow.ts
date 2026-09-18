@@ -70,6 +70,8 @@ export type MarketingProposal = {
   propertyId: string;
   propertyLabel: string;
   argumentsJson: string;
+  /** Amprenta argumentelor la suspendare, verificată la aprobare. */
+  argumentsHash?: string;
   changes: { label: string; from: string | null; to: string }[];
   warnings: string[];
 };

@@ -371,6 +371,22 @@ export async function runMarketingTool(
           code: "denied",
         };
       }
+      // Se aplică exact textul aprobat: dacă ciorna salvată diferă de titlul și
+      // corpul aprobate, nu scriem nimic.
+      const approvedTitle = (args["title"] as string | null | undefined) ?? null;
+      const approvedBody = args["body"] === undefined ? null : String(args["body"]);
+      if (approvedBody !== null) {
+        const sameBody = approvedBody === draft.body;
+        const sameTitle = (approvedTitle ?? null) === (draft.title ?? null);
+        if (!sameBody || !sameTitle) {
+          return {
+            ok: false,
+            error:
+              "Textul aprobat nu mai corespunde ciornei salvate, așa că nu l-am aplicat. Generează și aprobă textul din nou.",
+            code: "denied",
+          };
+        }
+      }
       const { error } = await admin
         .from("properties")
         .update({
