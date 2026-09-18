@@ -438,6 +438,8 @@ async function write(
         portalStatus: mode === "update" ? "updated" : "published",
         processed: payload.plans.length,
         publicUrl: publicUrls[0] ?? null,
+        httpStatus: lastHttpStatus,
+        portalResponse: lastPortalResponse,
         message: warnings.length ? warnings.join(" ") : undefined,
       },
     };
