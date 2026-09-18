@@ -204,3 +204,19 @@ comparabilelor".
 
 Recalcularea în loc a unei analize păstrează versiunea motorului a analizei;
 versiunile noi (`recalculateAcpAsNewVersion`) folosesc versiunea curentă.
+
+### 11.1 Afișarea în interfață
+
+- Ecranul analizei arată versiunea metodologiei (badge) și, pentru v2, un card
+  „Ajustarea în timp a comparabilelor": trimestrul analizei, indicele (sursă, set
+  de date, serie, bază), avertismentul că indicele este NAȚIONAL, trimestrul la
+  care se oprește ajustarea când este plafonată și câte comparabile au fost
+  ajustate față de câte nu.
+- Fiecare comparabil arată prețul original, trimestrul din care provine,
+  raportul și prețul ajustat; dacă nu a fost ajustat, motivul în română simplă.
+- Analizele v1 nu afișează nimic din acest bloc: arată exact ca înainte.
+- Istoricul de versiuni afișează metodologia fiecărei versiuni.
+- Toate apelurile de producție ale motorului încarcă indicele cu `loadPriceIndex`
+  și transmit versiunea corectă a motorului; un test de regresie
+  (`time-adjustment-view.test.ts`) cade dacă un apel nou omite `priceIndex` sau
+  `engineVersion`.
