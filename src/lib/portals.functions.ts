@@ -877,6 +877,48 @@ export type ListingActionResult =
 
 
 /**
+ * Salvează motivul EXACT al unui eșec (eroarea portalului, limita de locuri,
+ * conflictul de versiune, validarea locală) pe rândurile citite de matricea
+ * din interfață. Fără aceasta, blocările dinaintea apelului către portal erau
+ * vizibile doar în notificarea temporară, iar după reîmprospătare agentul
+ * vedea doar o stare generică, fără motiv.
+ */
+export async function persistListingFailure(
+  admin: Awaited<ReturnType<typeof loadAdmin>>,
+  input: {
+    organizationId: string;
+    portalKey: string;
+    propertyId: string;
+    actorId: string | null;
+    message: string;
+  },
+): Promise<void> {
+  const now = new Date().toISOString();
+  await admin
+    .from("portal_publications")
+    .update({
+      status: "error",
+      last_error: input.message,
+      last_synced_at: now,
+      updated_by: input.actorId,
+    } as never)
+    .eq("organization_id", input.organizationId)
+    .eq("property_id", input.propertyId)
+    .eq("portal_key", input.portalKey);
+  await admin
+    .from("portal_listings")
+    .update({
+      status: "error",
+      last_error: input.message,
+      last_sync_at: now,
+      updated_by: input.actorId,
+    } as never)
+    .eq("organization_id", input.organizationId)
+    .eq("portal", input.portalKey)
+    .eq("property_id", input.propertyId);
+}
+
+/**
  * Nucleul unei operațiuni pe o ofertă. Refolosit de acțiunea individuală și de
  * publicarea per proprietate pe portalurile selectate. Nu conține verificări de
  * permisiuni: apelantul trebuie să valideze deja agenția și rolul.
@@ -925,10 +967,18 @@ export async function executeListingAction(input: {
 
   const { isPropertyFeedEligible } = await import("@/lib/site-feed/mapper");
   if (action !== "withdraw" && !isPropertyFeedEligible(property as never)) {
+    const message = "Oferta nu este publicabilă: verifică statusul și publicarea pe site.";
+    await persistListingFailure(admin, {
+      organizationId,
+      portalKey: definition.id,
+      propertyId,
+      actorId,
+      message: `${definition.display_name}: ${message}`,
+    });
     return {
       ok: false as const,
       code: "VALIDATION_ERROR",
-      message: "Oferta nu este publicabilă: verifică statusul și publicarea pe site.",
+      message,
     };
   }
 
@@ -959,6 +1009,13 @@ export async function executeListingAction(input: {
         propertyId,
         actorId,
       });
+      await persistListingFailure(admin, {
+        organizationId,
+        portalKey: definition.id,
+        propertyId,
+        actorId,
+        message,
+      });
       return { ok: false as const, code: "VALIDATION_ERROR", message };
     }
   }
@@ -988,6 +1045,13 @@ export async function executeListingAction(input: {
         propertyId,
         actorId,
       });
+      await persistListingFailure(admin, {
+        organizationId,
+        portalKey: definition.id,
+        propertyId,
+        actorId,
+        message: guard.message,
+      });
       return { ok: false as const, code: "VALIDATION_ERROR", message: guard.message };
     }
   }
@@ -998,10 +1062,18 @@ export async function executeListingAction(input: {
   const { portalRateLimited } = await import("@/lib/portals/rate-limit.server");
   if (portalRateLimited(action, `${organizationId}|${portalId}`)) {
     // Limita noastră locală se resetează la un minut: retrimiterea amână atât.
+    const message = `${definition.display_name}: ${PORTAL_ERROR_MESSAGE.RATE_LIMIT}`;
+    await persistListingFailure(admin, {
+      organizationId,
+      portalKey: definition.id,
+      propertyId,
+      actorId,
+      message,
+    });
     return {
       ok: false as const,
       code: "RATE_LIMIT",
-      message: PORTAL_ERROR_MESSAGE.RATE_LIMIT,
+      message,
       retryAfterMs: 60_000,
     };
   }
@@ -2105,12 +2177,20 @@ export async function applyPortalSelectionForOrg(input: {
         // Portalurile neactivate pentru agenție sunt respinse, nu ignorate silențios.
         if (allowedPortals !== null && !allowedPortals.has(definition.id)) {
           if (wanted.enabled) {
+            const message = `${definition.display_name} nu este activat pentru agenția ta.`;
+            await persistListingFailure(admin, {
+              organizationId,
+              portalKey: definition.id,
+              propertyId: data.propertyId,
+              actorId,
+              message,
+            });
             results.push({
               portalId: definition.id,
               portalName: portalDisplayName(definition.id),
               action: "blocked",
               ok: false,
-              message: `${definition.display_name} nu este activat pentru agenția ta.`,
+              message,
             });
           }
           continue;
@@ -2159,6 +2239,13 @@ export async function applyPortalSelectionForOrg(input: {
             actorId,
           });
           if (!guard.ok) {
+            await persistListingFailure(admin, {
+              organizationId,
+              portalKey: definition.id,
+              propertyId: data.propertyId,
+              actorId,
+              message: guard.message,
+            });
             results.push({
               portalId: definition.id,
               portalName: name,
@@ -2233,14 +2320,22 @@ export async function applyPortalSelectionForOrg(input: {
 
         // Portal neconfigurat: intenția rămâne salvată, statusul rămâne nepublicat.
         if (!configured) {
+          const message = superadmin
+            ? `${name} nu este configurat. Configurează portalul din Superadmin → Portaluri.`
+            : `${name} nu este încă pregătit de administratorul platformei.`;
+          await persistListingFailure(admin, {
+            organizationId,
+            portalKey: definition.id,
+            propertyId: data.propertyId,
+            actorId,
+            message,
+          });
           results.push({
             portalId: definition.id,
             portalName: name,
             action: "blocked",
             ok: false,
-            message: superadmin
-              ? `${name} nu este configurat. Configurează portalul din Superadmin → Portaluri.`
-              : `${name} nu este încă pregătit de administratorul platformei.`,
+            message,
           });
           continue;
         }
