@@ -272,7 +272,16 @@ async function publishPlan(input: {
   plan: ImobiliareListingPlan;
   images: { dataUrl: string; bytes: number }[];
   mode: WriteMode;
-}): Promise<{ ok: true; steps: string[]; publicUrl: string | null } | { ok: false; fail: PortalFailShape }> {
+}): Promise<
+  | {
+      ok: true;
+      steps: string[];
+      publicUrl: string | null;
+      httpStatus: number | null;
+      portalResponse: unknown;
+    }
+  | { ok: false; fail: PortalFailShape }
+> {
   const { ctx, session, plan, images } = input;
   let mode = input.mode;
   const steps: string[] = [];
