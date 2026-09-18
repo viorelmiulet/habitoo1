@@ -944,6 +944,7 @@ export type Database = {
       }
       ai_workflow_runs: {
         Row: {
+          claimed_at: string | null
           conversation_id: string | null
           created_at: string
           current_step: string
@@ -960,6 +961,7 @@ export type Database = {
           workflow: string
         }
         Insert: {
+          claimed_at?: string | null
           conversation_id?: string | null
           created_at?: string
           current_step?: string
@@ -976,6 +978,7 @@ export type Database = {
           workflow: string
         }
         Update: {
+          claimed_at?: string | null
           conversation_id?: string | null
           created_at?: string
           current_step?: string
@@ -3229,6 +3232,7 @@ export type Database = {
           property_id: string
           provider: string | null
           short_variants: Json
+          source: string
           title: string | null
           tone: string
           updated_at: string
@@ -3258,6 +3262,7 @@ export type Database = {
           property_id: string
           provider?: string | null
           short_variants?: Json
+          source?: string
           title?: string | null
           tone: string
           updated_at?: string
@@ -3287,6 +3292,7 @@ export type Database = {
           property_id?: string
           provider?: string | null
           short_variants?: Json
+          source?: string
           title?: string | null
           tone?: string
           updated_at?: string
@@ -6492,6 +6498,16 @@ export type Database = {
       plan_agent_limit: { Args: { _plan: string }; Returns: number }
       portal_slot_withdraw_arm: { Args: never; Returns: undefined }
       portal_slot_withdraw_tick: { Args: never; Returns: undefined }
+      prospect_import_to_crm: {
+        Args: {
+          _actor: string
+          _link_contact?: string
+          _org: string
+          _phone?: string
+          _prospect: string
+        }
+        Returns: Json
+      }
       purge_expired_portal_messages: { Args: never; Returns: number }
       qa_purge_demo_organization: { Args: { _org: string }; Returns: string[] }
       qa_reset_demo_organization: { Args: { _org: string }; Returns: Json }

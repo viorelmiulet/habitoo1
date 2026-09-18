@@ -57,6 +57,20 @@ function builder(table: string) {
       filters.push([column, value]);
       return api;
     },
+    /** Rezervarea expirată: în test nicio rulare nu are `claimed_at` mai vechi. */
+    lt() {
+      filters.push(["__never", Symbol("never")]);
+      return api;
+    },
+    is() {
+      return api;
+    },
+    gte() {
+      return api;
+    },
+    lte() {
+      return api;
+    },
     order() {
       return api;
     },

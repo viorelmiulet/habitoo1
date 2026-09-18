@@ -16,7 +16,9 @@ import {
   APPROVAL_TAMPERED,
   claimSuspendedRun,
   fingerprintMatches,
+  releaseClaimedRun,
 } from "../../security/approval";
+
 import { AiTracer, newTraceId } from "../../tracing/trace";
 import { writeTraceEvents } from "../../tracing/trace.server";
 import { writeAiUsage } from "../../usage/tracking.server";
@@ -691,12 +693,39 @@ export async function runCrmTurn(
 /**
  * RESUME după decizia umană. Fără aprobare explicită nu se execută nimic:
  * `approvalGranted` este stabilit aici, în cod, nu de model.
+ *
+ * Orice eroare neașteptată readuce rularea în `suspended`, ca utilizatorul să
+ * nu rămână cu o rulare pe care nu o mai poate decide.
  */
 export async function resumeCrmWorkflow(
   actor: AiActor,
   runId: string,
   approved: boolean,
 ): Promise<{ ok: true; run: CrmRunView } | { ok: false; message: string }> {
+  try {
+    return await resumeCrmWorkflowClaimed(actor, runId, approved);
+  } catch (error) {
+    console.error("[ai-crm] resume failed", error);
+    const admin = await loadAdmin();
+    await releaseClaimedRun(admin, {
+      runId,
+      organizationId: actor.organizationId,
+      userId: actor.userId,
+    });
+    return {
+      ok: false,
+      message:
+        "Decizia nu a putut fi procesată. Propunerea a rămas în așteptare, poți încerca din nou.",
+    };
+  }
+}
+
+async function resumeCrmWorkflowClaimed(
+  actor: AiActor,
+  runId: string,
+  approved: boolean,
+): Promise<{ ok: true; run: CrmRunView } | { ok: false; message: string }> {
+
   const admin = await loadAdmin();
   // Protecție la dublu-click: aprobarea se consumă atomic (update condiționat),
   // deci o a doua cerere paralelă nu execută nimic.
