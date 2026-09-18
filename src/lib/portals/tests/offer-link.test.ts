@@ -1,10 +1,8 @@
 import { describe, expect, it, vi } from "vitest";
 
 import { portalSaysOffline, resolveListingPublicUrl } from "@/lib/portals/link";
-import {
-  fetchImobiliarePublicUrlWithRetries,
-  readImobiliareListingState,
-} from "@/lib/portals/adapters/imobiliare.server";
+import { shouldSaveBackfilledUrl } from "@/lib/portals/link";
+import { fetchImobiliarePublicUrlWithRetries } from "@/lib/portals/adapters/imobiliare.server";
 
 describe("linkul public al ofertei", () => {
   it("păstrează linkul salvat când verificarea nu a reușit", () => {
@@ -69,5 +67,14 @@ describe("reîncercarea linkului după publicare", () => {
     } finally {
       globalThis.fetch = original;
     }
+  });
+});
+
+describe("backfill linkuri Imobiliare.ro", () => {
+  it("scrie doar pentru anunțuri online", () => {
+    expect(shouldSaveBackfilledUrl("online", "/oferta/a-1", null)).toBe(true);
+    expect(shouldSaveBackfilledUrl("draft", "/oferta/a-1", null)).toBe(false);
+    expect(shouldSaveBackfilledUrl(null, null, "/oferta/a-1")).toBe(false);
+    expect(shouldSaveBackfilledUrl("online", "/oferta/a-1", "/oferta/a-1")).toBe(false);
   });
 });

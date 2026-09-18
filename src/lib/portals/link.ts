@@ -23,3 +23,16 @@ export function resolveListingPublicUrl(
   if (portalSaysOffline(diagnostics)) return null;
   return stored;
 }
+
+/**
+ * Backfill: scriem `public_url` DOAR când portalul raportează `online` și
+ * trimite efectiv adresa, iar aceasta diferă de cea salvată. O ciornă nu
+ * produce nicio scriere (nu ștergem, nu inventăm).
+ */
+export function shouldSaveBackfilledUrl(
+  state: string | null,
+  url: string | null,
+  stored: string | null,
+): boolean {
+  return state === "online" && url !== null && url !== stored;
+}
