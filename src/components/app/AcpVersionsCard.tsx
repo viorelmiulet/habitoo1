@@ -17,6 +17,7 @@ import { toast } from "@/components/ui/sonner";
 import { toastError } from "@/lib/errors";
 import { cn } from "@/lib/utils";
 import { formatDateTime, formatMoney } from "@/lib/format";
+import { acpEngineVersionLabel } from "@/lib/acp/time-adjustment-view";
 import {
   compareAcpVersions,
   listAcpVersions,
@@ -82,6 +83,7 @@ function ComparisonBody({ comparison }: { comparison: AcpVersionComparison }) {
               {index === 0 ? "Versiunea A" : "Versiunea B"}
             </p>
             <p className="mt-0.5 text-sm font-semibold">Versiunea {v.version}</p>
+            <p className="text-xs text-muted-foreground">{acpEngineVersionLabel(v.engineVersion)}</p>
             <p className="text-xs text-muted-foreground">
               Date piață la data de{" "}
               {v.snapshotAt ? formatDateTime(v.snapshotAt) : formatDateTime(v.createdAt)}
@@ -301,6 +303,9 @@ export function AcpVersionsCard({ analysisId }: { analysisId: string }) {
                   <div className="flex flex-wrap items-center gap-2">
                     <p className="text-sm font-semibold">Versiunea {v.version}</p>
                     {isCurrent ? <StatusBadge tone="info">Afișată</StatusBadge> : null}
+                    <StatusBadge tone="neutral">
+                      {acpEngineVersionLabel(v.engineVersion)}
+                    </StatusBadge>
                     {v.errorMessage ? <StatusBadge tone="warning">Eșuată</StatusBadge> : null}
                   </div>
                   <p className="text-xs text-muted-foreground">
