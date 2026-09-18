@@ -20,7 +20,7 @@ export type AiTraceEvent = {
   details: Record<string, unknown>;
 };
 
-const SECRET_KEY = /(key|secret|token|password|apikey|authorization)/i;
+const SECRET_KEY = REDACTED_DETAIL_KEY;
 const MAX_STRING = 300;
 const MAX_DEPTH = 6;
 const MAX_ITEMS = 20;
