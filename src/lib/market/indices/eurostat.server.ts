@@ -267,6 +267,21 @@ export type IndexSyncOutcome = {
   series: { series: MarketIndexSeries; counts: IndexSyncCounts; newest: QuarterPeriod | null }[];
 };
 
+/** Momentele de publicare se compară ca timp, nu ca text (fusuri diferite). */
+export function timestampMs(value: string | null): number | null {
+  if (!value) return null;
+  const parsed = Date.parse(value);
+  return Number.isNaN(parsed) ? null : parsed;
+}
+
+export function maxTimestamp(values: readonly (string | null)[]): number | null {
+  return values.reduce<number | null>((best, value) => {
+    const parsed = timestampMs(value);
+    if (parsed === null) return best;
+    return best === null || parsed > best ? parsed : best;
+  }, null);
+}
+
 /**
  * Verificare ieftină: cel mai nou trimestru publicat este deja stocat și
  * publicarea Eurostat nu este mai nouă decât ce avem? Atunci nu se face nimic.
@@ -289,13 +304,10 @@ async function isUpToDate(
       })),
     );
     if (!local || comparePeriods(remote, local) > 0) return false;
-    const storedPublished = stored.reduce<string | null>(
-      (best, point) =>
-        point.publishedAt && (best === null || point.publishedAt > best) ? point.publishedAt : best,
-      null,
-    );
+    const storedPublished = maxTimestamp(stored.map((point) => point.publishedAt));
+    const remotePublished = timestampMs(probe.publishedAt);
     // O republicare Eurostat mai nouă poate conține revizuiri pe trimestre trecute.
-    if (probe.publishedAt && (!storedPublished || probe.publishedAt > storedPublished)) {
+    if (remotePublished !== null && (storedPublished === null || remotePublished > storedPublished)) {
       return false;
     }
   }
@@ -418,13 +430,8 @@ export function createIndicesRepository(admin: AdminClient): IndicesRepository {
       for (const series of MARKET_INDEX_SERIES_LIST) {
         const points = await this.listPoints(series);
         const sorted = [...points].sort(comparePeriods);
-        const publishedAt = points.reduce<string | null>(
-          (best, point) =>
-            point.publishedAt && (best === null || point.publishedAt > best)
-              ? point.publishedAt
-              : best,
-          null,
-        );
+        const newestPublished = maxTimestamp(points.map((point) => point.publishedAt));
+        const publishedAt = newestPublished === null ? null : new Date(newestPublished).toISOString();
         result.push({
           series,
           rows: points.length,
