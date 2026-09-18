@@ -2417,10 +2417,16 @@ export const getPropertyStoriaAutoRenew = createServerFn({ method: "POST" })
       .parse(input),
   )
   .handler(async ({ data, context }): Promise<StoriaAutoRenewRow> => {
-    const { organizationId } = await resolvePublishingOrg(
+    const { organizationId, agentOnly } = await resolvePublishingOrg(
       context as unknown as AuthContext,
       data.organizationId,
     );
+    await assertPortalPropertyAccess({
+      organizationId,
+      propertyId: data.propertyId,
+      agentOnly,
+      userId: context.userId,
+    });
     const admin = await loadAdmin();
     const [{ data: property }, { data: org }] = await Promise.all([
       admin
