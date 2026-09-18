@@ -21,7 +21,15 @@ import { buildAiSystemPrompt, buildAiUserPrompt } from "../prompts/system";
 import { aiToolDeclarations } from "../tools/registry";
 import { AI_AUDIT_ACTIONS, logAiAudit } from "../security/audit";
 import { writeAiUsage } from "../usage/tracking.server";
-import { AI_RATE_LIMITS, isDuplicateAiRequest, validateAiRequestSize } from "../usage/limits";
+import {
+  AI_ORG_USAGE_CEILING,
+  AI_RATE_LIMITS,
+  evaluateAiOrgCeiling,
+  isDuplicateAiRequest,
+  validateAiRequestSize,
+  type AiOrgUsageSnapshot,
+} from "../usage/limits";
+
 import { loadConversationMemory } from "../memory/conversation.server";
 import { AiTracer, newTraceId } from "../tracing/trace";
 import { writeTraceEvents } from "../tracing/trace.server";
