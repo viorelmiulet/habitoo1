@@ -322,7 +322,7 @@ export async function syncMarketPriceIndices(
       }
     } catch (error) {
       // Verificarea ieftină a eșuat: continuăm cu sincronizarea completă.
-      console.error("[market-indices] verificarea „e la zi?" a eșuat", error);
+      console.error("[market-indices] verificarea de actualitate a eșuat", error);
     }
   }
 
