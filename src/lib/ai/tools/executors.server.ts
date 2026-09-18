@@ -11,7 +11,7 @@
  */
 import type { AiActor, AiSource } from "../gateway/types";
 import { authorizeAiTool } from "../security/permissions";
-import { checkActionPolicy } from "../security/policy";
+import { checkActionPolicy, isForbiddenAiTool } from "../security/policy";
 import { aiToolCapability, findAiTool, type AiToolDefinition } from "./registry";
 import { sanitizeCrmValue } from "../security/injection";
 
