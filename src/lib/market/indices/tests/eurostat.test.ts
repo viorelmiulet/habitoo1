@@ -353,15 +353,21 @@ describe("Eurostat — acces și izolare", () => {
     expect(source.match(/await requireMarketIndexSuperadmin\(context/g)?.length).toBe(2);
   });
 
-  it("niciun cod de analiză ACP nu citește încă tabelul", () => {
+  it("ACP citește tabelul doar prin readerul server-only, niciodată prin HTTP", () => {
     const files = readdirSync("src/lib/acp", { recursive: true, encoding: "utf8" })
       .filter((entry) => entry.endsWith(".ts"))
       .map((entry) => join("src/lib/acp", entry));
     expect(files.length).toBeGreaterThan(5);
+    const readers = files.filter((file) =>
+      readFileSync(file, "utf8").includes('.from("market_price_indices")'),
+    );
+    // Un singur punct de citire: modulul server-only al ajustării în timp.
+    expect(readers).toEqual(["src/lib/acp/time-adjustment.server.ts"]);
+    // La momentul analizei nu se face niciun apel de rețea către indice.
     for (const file of files) {
       const source = readFileSync(file, "utf8");
-      expect(source).not.toContain("market_price_indices");
-      expect(source).not.toContain("market/indices");
+      expect(source).not.toContain("ec.europa.eu");
+      expect(source).not.toContain("fetchEurostat");
     }
   });
 });

@@ -22,6 +22,8 @@ import {
   type AcpReportAdjustment,
   type AcpReportModel,
   type AcpReportVersionInput,
+  type AcpReportComparableInput,
+
 } from "./report/model";
 
 export const ACP_REPORTS_BUCKET = "acp-reports";
@@ -198,6 +200,8 @@ async function loadVersionInput(
       reasons?: string[];
     } | null;
     advanced?: Record<string, unknown> | null;
+    engineVersion?: number | null;
+    timeAdjustment?: AcpReportVersionInput["timeAdjustment"];
   };
   const subject = (target.subject ?? {}) as AcpReportVersionInput["target"]["subject"];
 
@@ -208,6 +212,9 @@ async function loadVersionInput(
     status: row.status,
     errorMessage: row.error_message ?? null,
     version: row.version ?? 1,
+    engineVersion: row.engine_version ?? analysisData.engineVersion ?? 1,
+    // Motor v2: nota de ajustare în timp, din snapshot-ul versiunii.
+    timeAdjustment: analysisData.timeAdjustment ?? null,
     createdAt: row.created_at,
     snapshotAt: row.snapshot_at ?? row.last_run_at ?? row.created_at,
     authorName,
@@ -246,6 +253,7 @@ async function loadVersionInput(
         title?: string;
         locationLabel?: string | null;
         subject?: Record<string, unknown>;
+        timeAdjustment?: unknown;
       };
       const compSubject = (snapshot.subject ?? {}) as AcpReportVersionInput["target"]["subject"];
       return {
@@ -267,6 +275,8 @@ async function loadVersionInput(
         isSelected: Boolean(c.is_selected),
         manualOverride: c.manual_override,
         subject: compSubject,
+        timeAdjustment:
+          (snapshot.timeAdjustment as AcpReportComparableInput["timeAdjustment"]) ?? null,
       };
     }),
     sources: (sources ?? []).map((s) => ({

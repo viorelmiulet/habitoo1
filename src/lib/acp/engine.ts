@@ -43,12 +43,26 @@ import {
   type AcpAdvancedEstimate,
   type AcpCalibrationModel,
 } from "./calibration";
+import {
+  ACP_CURRENT_ENGINE_VERSION,
+  engineSupportsTimeAdjustment,
+  normalizeAcpEngineVersion,
+  type AcpEngineVersion,
+} from "./engine-version";
+import {
+  buildAcpTimeAdjustmentSummary,
+  computeAcpTimeAdjustment,
+  type AcpPriceIndexSnapshot,
+  type AcpTimeAdjustment,
+  type AcpTimeAdjustmentSummary,
+} from "./time-adjustment";
 
 /** Marja aplicată valorii estimate pentru prețul recomandat de listare. */
 export const ACP_LISTING_PREMIUM_PERCENT = 3;
 
 /** Intervalul minim de valoare (±%) când comparabilele sunt foarte apropiate. */
 export const ACP_MIN_RANGE_PERCENT = 4;
+
 
 export type AcpCandidate = {
   /** Cheie stabilă (id-ul sursei), folosită pentru păstrarea deciziilor manuale. */
@@ -71,7 +85,19 @@ export type AcpRunOptions = {
   calibration?: AcpCalibrationModel | null;
   /** Momentul de referință (ISO). Implicit „acum”; fixat în teste și snapshot-uri. */
   now?: string;
+  /**
+   * Versiunea motorului. Analizele deja salvate se recalculează cu versiunea lor
+   * și produc exact același rezultat; implicit se folosește versiunea curentă.
+   */
+  engineVersion?: number;
+  /**
+   * Indicele trimestrial al prețurilor locuințelor, citit din baza de date.
+   * Fără el (sau cu tabelul gol) motorul se comportă ca versiunea 1: nicio
+   * ajustare în timp, doar o notă explicativă.
+   */
+  priceIndex?: AcpPriceIndexSnapshot | null;
 };
+
 
 /** Decizie manuală a utilizatorului pentru un comparabil. */
 export type AcpManualOverride = "include" | "exclude";
@@ -109,7 +135,13 @@ export type AcpComparableResult = {
   priceHistory: AcpPriceHistory;
   /** Stage 7: scor compus folosit pentru ordonarea comparabilelor. */
   relevanceScore: number;
+  /**
+   * Motor v2: aducerea prețului la trimestrul analizei. Absent pentru versiunea
+   * 1, ca rezultatele istorice să se reproducă identic.
+   */
+  timeAdjustment?: AcpTimeAdjustment;
 };
+
 
 export type AcpEstimate = {
   estimatedValue: number | null;
@@ -135,7 +167,12 @@ export type AcpAnalysisResult = {
   quality: AcpQualityAssessment;
   /** Stage 7: baseline vs estimare calibrată. */
   advanced: AcpAdvancedEstimate;
+  /** Motor v2: versiunea folosită. Absentă pentru versiunea 1 (compatibilitate). */
+  engineVersion?: AcpEngineVersion;
+  /** Motor v2: nota de nivel analiză despre ajustarea în timp. */
+  timeAdjustment?: AcpTimeAdjustmentSummary;
 };
+
 
 function round2(value: number): number {
   return Math.round(value * 100) / 100;
@@ -164,6 +201,10 @@ export function runAcpAnalysis(
 ): AcpAnalysisResult {
   const explanation: string[] = [];
   const now = options.now ?? new Date().toISOString();
+  const engineVersion = normalizeAcpEngineVersion(
+    options.engineVersion ?? ACP_CURRENT_ENGINE_VERSION,
+  );
+  const timeEnabled = engineSupportsTimeAdjustment(engineVersion);
 
   // 1. Scoring determinist pentru fiecare candidat.
   const scored = candidates.map((candidate) => {
@@ -193,11 +234,45 @@ export function runAcpAnalysis(
       eligible = true;
       reason = `Inclus manual de utilizator (scor ${row.similarity.similarityScore}).`;
     }
-    const adjustment = hasPrice
-      ? calculateAdjustments(target, row.candidate.subject)
+    // Motor v2: prețul comparabilului este adus la trimestrul analizei ÎNAINTE
+    // de ajustările de caracteristici, cu indicele național citit din baza de
+    // date. Versiunea 1 rămâne neatinsă.
+    const meta = row.candidate.meta ?? null;
+    const timeAdjustment = timeEnabled
+      ? computeAcpTimeAdjustment({
+          index: options.priceIndex ?? null,
+          price: row.price,
+          observedAt: meta?.lastSeenAt ?? meta?.firstSeenAt ?? null,
+          analysisAt: now,
+        })
       : null;
-    return { ...row, tier, eligible, reason, adjustment };
+    const subjectForAdjustments =
+      timeAdjustment?.applied && timeAdjustment.adjustedPrice !== null
+        ? {
+            ...row.candidate.subject,
+            price: timeAdjustment.adjustedPrice,
+            pricePerSqm: pricePerSqm(
+              timeAdjustment.adjustedPrice,
+              num(row.candidate.subject.usableArea),
+            ),
+          }
+        : row.candidate.subject;
+    const adjustment = hasPrice ? calculateAdjustments(target, subjectForAdjustments) : null;
+    return { ...row, tier, eligible, reason, adjustment, timeAdjustment };
   });
+
+  // 2b. Motor v2: nota de nivel analiză despre ajustarea în timp.
+  const timeSummary = timeEnabled
+    ? buildAcpTimeAdjustmentSummary({
+        index: options.priceIndex ?? null,
+        analysisAt: now,
+        adjustments: prepared
+          .map((row) => row.timeAdjustment)
+          .filter((value): value is NonNullable<typeof value> => value !== null),
+      })
+    : null;
+  if (timeSummary) explanation.push(timeSummary.note);
+
 
   // 3. Outlieri pe prețul ajustat pe mp (sau pe prețul ajustat, când lipsește
   //    suprafața). Datele nu se șterg niciodată, doar se marchează.
@@ -271,7 +346,9 @@ export function runAcpAnalysis(
         dataQualityScore: dataQuality.score,
         freshnessScore: freshness.score,
       }),
+      ...(row.timeAdjustment ? { timeAdjustment: row.timeAdjustment } : {}),
     };
+
   });
 
   // Ordonare Stage 7: comparabilele folosite primele, apoi după relevanță
@@ -431,8 +508,10 @@ export function runAcpAnalysis(
     explanation,
     quality,
     advanced,
+    ...(timeEnabled ? { engineVersion, timeAdjustment: timeSummary ?? undefined } : {}),
   };
 }
+
 
 /** Preț pe mp al proprietății analizate, pentru comparație în interfață. */
 export function targetPricePerSqm(target: AcpSubject): number | null {

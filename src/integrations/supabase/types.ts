@@ -98,6 +98,7 @@ export type Database = {
           confidence_score: number | null
           created_at: string
           created_by: string | null
+          engine_version: number
           error_message: string | null
           estimated_max: number | null
           estimated_min: number | null
@@ -136,6 +137,7 @@ export type Database = {
           confidence_score?: number | null
           created_at?: string
           created_by?: string | null
+          engine_version?: number
           error_message?: string | null
           estimated_max?: number | null
           estimated_min?: number | null
@@ -174,6 +176,7 @@ export type Database = {
           confidence_score?: number | null
           created_at?: string
           created_by?: string | null
+          engine_version?: number
           error_message?: string | null
           estimated_max?: number | null
           estimated_min?: number | null
