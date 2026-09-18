@@ -622,6 +622,40 @@ async function diagnose(
   };
 }
 
+/**
+ * Citire brută a stării unui anunț (folosită de backfill-ul de linkuri).
+ * Fără reîmprospătarea catalogului și fără nicio scriere.
+ */
+export async function readImobiliareListingState(
+  ctx: PortalContext,
+  reference: string,
+): Promise<
+  | { ok: true; httpStatus: number; state: string | null; url: string | null }
+  | { ok: false; httpStatus: number | null; message: string }
+> {
+  const ready = await prepare(ctx, { refreshCatalog: false });
+  if (!ready.ok) return { ok: false, httpStatus: null, message: ready.result.message };
+  const response = await imobiliareAuthedRequest(ready.session, {
+    method: "GET",
+    path: listingPath(reference),
+    connectionKey: ctx.organizationId,
+  });
+  if (!response.ok) {
+    return {
+      ok: false,
+      httpStatus: response.status,
+      message:
+        response.classification?.message ?? `Imobiliare.ro a răspuns HTTP ${response.status}.`,
+    };
+  }
+  return {
+    ok: true,
+    httpStatus: response.status,
+    state: imobiliareStateFromBody(response.body),
+    url: imobiliarePublicUrlFromBody(response.body),
+  };
+}
+
 export const imobiliareAdapter: PortalAdapter = {
   id: "imobiliare_ro",
   testConnection: (ctx) => status(ctx, true),
