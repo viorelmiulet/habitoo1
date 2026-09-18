@@ -88,7 +88,15 @@ type Ready =
   | { ok: true; session: ImobiliareSession; catalog: CategoryCatalog }
   | { ok: false; result: PortalFailShape };
 
-async function prepare(ctx: PortalContext): Promise<Ready> {
+/**
+ * `refreshCatalog: false` — diagnoza NU reîmprospătează niciodată catalogul de
+ * categorii: era un request suplimentar la portal la fiecare încărcare de
+ * pagină, fără nicio legătură cu starea anunțului.
+ */
+async function prepare(
+  ctx: PortalContext,
+  options?: { refreshCatalog?: boolean },
+): Promise<Ready> {
   const db = await admin();
   const session = await getImobiliareSession({
     admin: db,
@@ -108,7 +116,7 @@ async function prepare(ctx: PortalContext): Promise<Ready> {
     };
   }
   let catalog = readCategoryCatalog(ctx.settings as Record<string, unknown>);
-  if (!categoryCatalogIsFresh(catalog)) {
+  if (options?.refreshCatalog !== false && !categoryCatalogIsFresh(catalog)) {
     const refreshed = await refreshCategoryCatalog(db, session.session, ctx.organizationId);
     catalog = refreshed.catalog;
   }
@@ -234,13 +242,46 @@ async function fetchImobiliarePublicUrl(
   return imobiliarePublicUrlFromBody(response.body);
 }
 
+/** Întârzierile dintre reîncercările de citire a linkului public, în ms. */
+export const IMOBILIARE_PUBLIC_URL_RETRY_DELAYS = [2_000, 5_000] as const;
+
+/**
+ * Imediat după promovarea online, portalul întoarce uneori anunțul fără `path`
+ * (sau încă în `draft`). Reîncercăm scurt înainte de a renunța; lipsa linkului
+ * NU transformă publicarea în eșec.
+ */
+export async function fetchImobiliarePublicUrlWithRetries(
+  session: ImobiliareSession,
+  ctx: PortalContext,
+  customReference: string,
+  delaysMs: readonly number[] = IMOBILIARE_PUBLIC_URL_RETRY_DELAYS,
+): Promise<string | null> {
+  const first = await fetchImobiliarePublicUrl(session, ctx, customReference);
+  if (first) return first;
+  for (const delay of delaysMs) {
+    if (delay > 0) await new Promise((resolve) => setTimeout(resolve, delay));
+    const url = await fetchImobiliarePublicUrl(session, ctx, customReference);
+    if (url) return url;
+  }
+  return null;
+}
+
 async function publishPlan(input: {
   ctx: PortalContext;
   session: ImobiliareSession;
   plan: ImobiliareListingPlan;
   images: { dataUrl: string; bytes: number }[];
   mode: WriteMode;
-}): Promise<{ ok: true; steps: string[]; publicUrl: string | null } | { ok: false; fail: PortalFailShape }> {
+}): Promise<
+  | {
+      ok: true;
+      steps: string[];
+      publicUrl: string | null;
+      httpStatus: number | null;
+      portalResponse: unknown;
+    }
+  | { ok: false; fail: PortalFailShape }
+> {
   const { ctx, session, plan, images } = input;
   let mode = input.mode;
   const steps: string[] = [];
@@ -288,8 +329,14 @@ async function publishPlan(input: {
     };
   }
   steps.push("promovat online");
-  const publicUrl = await fetchImobiliarePublicUrl(session, ctx, plan.customReference);
-  return { ok: true, steps, publicUrl };
+  const publicUrl = await fetchImobiliarePublicUrlWithRetries(session, ctx, plan.customReference);
+  return {
+    ok: true,
+    steps,
+    publicUrl,
+    httpStatus: promoted.status,
+    portalResponse: promoted.body ?? null,
+  };
 }
 
 async function write(
@@ -355,6 +402,8 @@ async function write(
     });
     const steps: string[] = [];
     const publicUrls: string[] = [];
+    let lastHttpStatus: number | null = null;
+    let lastPortalResponse: unknown = null;
     for (const plan of resolvedPlans) {
       const planMode: WriteMode = storedReferences.includes(plan.customReference) ? "update" : mode;
       const result = await withDurableImobiliareLock({
@@ -375,6 +424,8 @@ async function write(
       if (!result.ok) return result.fail;
       steps.push(`${plan.customReference}: ${result.steps.join(" → ")}`);
       if (result.publicUrl) publicUrls.push(result.publicUrl);
+      lastHttpStatus = result.httpStatus;
+      lastPortalResponse = result.portalResponse;
     }
 
     return {
@@ -387,6 +438,8 @@ async function write(
         portalStatus: mode === "update" ? "updated" : "published",
         processed: payload.plans.length,
         publicUrl: publicUrls[0] ?? null,
+        httpStatus: lastHttpStatus,
+        portalResponse: lastPortalResponse,
         message: warnings.length ? warnings.join(" ") : undefined,
       },
     };
@@ -495,9 +548,10 @@ export async function deleteImobiliareListing(
 }
 
 /**
- * Diagnoză pentru fila Publicare: citește anunțul de la portal și întoarce
- * linkul public REAL, doar dacă portalul îl raportează `online`. Astfel nu mai
- * afișăm un link salvat care redirectează către prima pagină a portalului.
+ * Diagnoză pentru fila Publicare: citește anunțul de la portal și raportează
+ * starea reală. `stateKnown` distinge „portalul spune că e ciornă” de „nu am
+ * putut verifica”; apelantul păstrează linkul salvat în al doilea caz.
+ * NU reîmprospătează catalogul de categorii.
  */
 async function diagnose(
   ctx: PortalContext,
@@ -513,11 +567,22 @@ async function diagnose(
     images: { total: 0, resolvable: 0, broken: 0, primary: false },
     updatedAt: null,
     notes: [],
+    stateKnown: false,
+    portalState: null,
+    urlConfirmed: false,
   };
   if (references.length === 0 || !ctx.allowLiveRequests) return { ok: true, data: empty };
 
-  const ready = await prepare(ctx);
-  if (!ready.ok) return { ok: true, data: empty };
+  const ready = await prepare(ctx, { refreshCatalog: false });
+  if (!ready.ok) {
+    return {
+      ok: true,
+      data: {
+        ...empty,
+        notes: ["Imobiliare.ro nu a putut fi interogat: autorizarea contului nu este validă acum."],
+      },
+    };
+  }
 
   const reference = references[0]!;
   const response = await imobiliareAuthedRequest(ready.session, {
@@ -548,8 +613,46 @@ async function diagnose(
       ...empty,
       feedVisible: state === IMOBILIARE_STATUS_ONLINE,
       offerUrl,
+      // Starea e cunoscută doar dacă portalul a trimis efectiv câmpul `state`.
+      stateKnown: state !== null,
+      portalState: state,
+      urlConfirmed: offerUrl !== null,
       notes,
     },
+  };
+}
+
+/**
+ * Citire brută a stării unui anunț (folosită de backfill-ul de linkuri).
+ * Fără reîmprospătarea catalogului și fără nicio scriere.
+ */
+export async function readImobiliareListingState(
+  ctx: PortalContext,
+  reference: string,
+): Promise<
+  | { ok: true; httpStatus: number; state: string | null; url: string | null }
+  | { ok: false; httpStatus: number | null; message: string }
+> {
+  const ready = await prepare(ctx, { refreshCatalog: false });
+  if (!ready.ok) return { ok: false, httpStatus: null, message: ready.result.message };
+  const response = await imobiliareAuthedRequest(ready.session, {
+    method: "GET",
+    path: listingPath(reference),
+    connectionKey: ctx.organizationId,
+  });
+  if (!response.ok) {
+    return {
+      ok: false,
+      httpStatus: response.status,
+      message:
+        response.classification?.message ?? `Imobiliare.ro a răspuns HTTP ${response.status}.`,
+    };
+  }
+  return {
+    ok: true,
+    httpStatus: response.status,
+    state: imobiliareStateFromBody(response.body),
+    url: imobiliarePublicUrlFromBody(response.body),
   };
 }
 

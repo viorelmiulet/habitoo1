@@ -74,6 +74,10 @@ export type ListingOutcome = {
    * din fila Publicare.
    */
   publicUrl?: string | null;
+  /** Statusul HTTP al ultimului răspuns al portalului, pentru jurnalizare. */
+  httpStatus?: number | null;
+  /** Corpul răspunsului portalului la succes (sanitizat la jurnalizare). */
+  portalResponse?: unknown;
 };
 
 export type ConnectionStatusOutcome = {
@@ -104,6 +108,16 @@ export type ListingDiagnostics = {
   images: { total: number; resolvable: number; broken: number; primary: boolean };
   updatedAt: string | null;
   notes: string[];
+  /**
+   * `true` doar dacă portalul a răspuns și a spus efectiv în ce stare este
+   * anunțul. `false` înseamnă „nu am putut verifica” (GET eșuat, sesiune
+   * invalidă, scrieri live oprite, câmp absent) — NU „anunțul nu e public”.
+   */
+  stateKnown?: boolean;
+  /** Starea brută raportată de portal (ex. `online`, `draft`), când o știm. */
+  portalState?: string | null;
+  /** `true` dacă linkul din `offerUrl` a fost confirmat acum de portal. */
+  urlConfirmed?: boolean;
 };
 
 export interface PortalAdapter {

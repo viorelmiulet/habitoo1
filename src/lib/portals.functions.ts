@@ -22,6 +22,7 @@ import {
   type PortalDefinition,
 } from "@/lib/portals/registry";
 import { PORTAL_ERROR_MESSAGE } from "@/lib/portals/errors";
+import { portalSaysOffline, resolveListingPublicUrl, shouldSaveBackfilledUrl } from "@/lib/portals/link";
 import type { ImoveListing } from "@/lib/portals/imove/mapper";
 import {
   isLegacyLaCheieTestEnvironmentError,
@@ -260,6 +261,80 @@ export async function logOperation(input: {
     property_id: input.propertyId ?? null,
     actor_id: input.actorId ?? null,
   });
+}
+
+export type PortalListingDiagnosticsView = {
+  feedVisible: boolean;
+  externalId: string | null;
+  offerUrl: string | null;
+  agentName: string | null;
+  images: { total: number; resolvable: number; broken: number; primary: boolean };
+  notes: string[];
+  /** Portalul a spus efectiv în ce stare este anunțul. */
+  stateKnown: boolean;
+  portalState: string | null;
+  urlConfirmed: boolean;
+};
+
+/**
+ * Diagnoza costă un request către portal la fiecare încărcare de pagină. O
+ * păstrăm scurt în memoria procesului: destul ca reîncărcările rapide să nu
+ * mai lovească portalul, prea puțin ca să ascundă o schimbare reală.
+ */
+export const PORTAL_DIAGNOSTICS_TTL_MS = 60_000;
+const diagnosticsCache = new Map<
+  string,
+  { at: number; value: PortalListingDiagnosticsView | null }
+>();
+
+export function clearPortalDiagnosticsCache() {
+  diagnosticsCache.clear();
+}
+
+export async function cachedListingDiagnostics(input: {
+  organizationId: string;
+  portal: { id: string };
+  propertyId: string;
+  externalId: string | null;
+  run: () => Promise<PortalListingDiagnosticsView | null>;
+  now?: number;
+}): Promise<PortalListingDiagnosticsView | null> {
+  const now = input.now ?? Date.now();
+  const key = [input.organizationId, input.portal.id, input.propertyId, input.externalId ?? ""].join(
+    "|",
+  );
+  const hit = diagnosticsCache.get(key);
+  if (hit && now - hit.at < PORTAL_DIAGNOSTICS_TTL_MS) return hit.value;
+  const value = await input.run();
+  diagnosticsCache.set(key, { at: now, value });
+  return value;
+}
+
+/**
+ * Persistă ce a aflat diagnoza: linkul confirmat de portal se salvează, iar
+ * cel salvat se șterge DOAR când portalul raportează explicit o stare
+ * non-`online`.
+ */
+export async function syncListingPublicUrl(input: {
+  organizationId: string;
+  portalId: string;
+  propertyId: string;
+  stored: string | null;
+  resolved: string | null;
+  portalSaysOffline: boolean;
+  admin?: { from: (table: "portal_listings") => never };
+}): Promise<"saved" | "cleared" | "unchanged"> {
+  const next = input.resolved;
+  if (next === input.stored) return "unchanged";
+  if (next === null && !input.portalSaysOffline) return "unchanged";
+  const db = (input.admin ?? (await loadAdmin())) as Awaited<ReturnType<typeof loadAdmin>>;
+  await db
+    .from("portal_listings")
+    .update({ public_url: next } as never)
+    .eq("organization_id", input.organizationId)
+    .eq("portal", input.portalId)
+    .eq("property_id", input.propertyId);
+  return next === null ? "cleared" : "saved";
 }
 
 /** URL-ul feedului pe care îl citește portalul (specific unde portalul cere altul). */
@@ -1213,8 +1288,10 @@ export async function executeListingAction(input: {
     success: result.ok,
     errorCode: result.ok ? null : result.code,
     errorMessage: result.ok ? null : result.message,
-    ...(result.ok ? {} : { httpStatus: result.httpStatus ?? null }),
-    ...(result.ok ? {} : { portalResponse: result.portalResponse ?? null }),
+    // Și la succes: statusul HTTP și corpul răspunsului (sanitizate), ca
+    // jurnalul să dovedească ce a confirmat portalul, nu doar ce a refuzat.
+    httpStatus: result.ok ? (result.data.httpStatus ?? null) : (result.httpStatus ?? null),
+    portalResponse: result.ok ? (result.data.portalResponse ?? null) : (result.portalResponse ?? null),
     ...(result.ok && result.data.externalId ? { externalId: result.data.externalId } : {}),
     propertyId,
     actorId,
@@ -1410,30 +1487,51 @@ export const getPropertyPortalStatus = createServerFn({ method: "POST" })
         const adapter = getPortalAdapter(portal.id);
 
         // Statusul REAL: pe lângă ce am salvat noi, ce vede efectiv portalul.
-        let diagnostics: {
-          feedVisible: boolean;
-          externalId: string | null;
-          offerUrl: string | null;
-          agentName: string | null;
-          images: { total: number; resolvable: number; broken: number; primary: boolean };
-          notes: string[];
-        } | null = null;
+        let diagnostics: PortalListingDiagnosticsView | null = null;
         if (adapter?.diagnoseListing) {
-          const { ctx } = await buildContext(organizationId, portal);
-          const result = await adapter.diagnoseListing(ctx, {
+          diagnostics = await cachedListingDiagnostics({
+            organizationId,
+            portal,
             propertyId: data.propertyId,
             externalId: listing?.external_id ?? null,
+            run: async () => {
+              const { ctx } = await buildContext(organizationId, portal);
+              const result = await adapter.diagnoseListing!(ctx, {
+                propertyId: data.propertyId,
+                externalId: listing?.external_id ?? null,
+              });
+              if (!result.ok) return null;
+              return {
+                feedVisible: result.data.feedVisible,
+                externalId: result.data.externalId,
+                offerUrl: result.data.offerUrl,
+                agentName: result.data.agentName,
+                images: result.data.images,
+                notes: result.data.notes,
+                stateKnown: result.data.stateKnown ?? false,
+                portalState: result.data.portalState ?? null,
+                urlConfirmed: result.data.urlConfirmed ?? result.data.offerUrl !== null,
+              };
+            },
           });
-          if (result.ok) {
-            diagnostics = {
-              feedVisible: result.data.feedVisible,
-              externalId: result.data.externalId,
-              offerUrl: result.data.offerUrl,
-              agentName: result.data.agentName,
-              images: result.data.images,
-              notes: result.data.notes,
-            };
-          }
+        }
+
+        /**
+         * Linkul salvat NU se pierde din cauza unei verificări care n-a reușit.
+         * Îl considerăm dispărut doar când portalul spune explicit că anunțul
+         * este în altă stare decât `online`.
+         */
+        const offline = portalSaysOffline(diagnostics);
+        const publicUrl = resolveListingPublicUrl(diagnostics, listing?.public_url ?? null);
+        if (listing) {
+          await syncListingPublicUrl({
+            organizationId,
+            portalId: portal.id,
+            propertyId: data.propertyId,
+            stored: listing.public_url ?? null,
+            resolved: publicUrl,
+            portalSaysOffline: offline,
+          });
         }
 
         return {
@@ -1442,9 +1540,8 @@ export const getPropertyPortalStatus = createServerFn({ method: "POST" })
           connected: connection?.status === "connected" || connection?.status === "ready",
           status: listing?.status ?? "not_published",
           externalId: listing?.external_id ?? diagnostics?.externalId ?? null,
-          // Linkul confirmat acum de portal are prioritate față de cel salvat:
-          // un anunț retras în ciornă nu mai are pagină publică.
-          publicUrl: diagnostics ? diagnostics.offerUrl : (listing?.public_url ?? null),
+          publicUrl,
+
 
           publishedAt: listing?.published_at ?? null,
           lastSyncAt: listing?.last_sync_at ?? null,
@@ -2519,6 +2616,138 @@ export const backfillStoriaPublicUrls = createServerFn({ method: "POST" })
 
     return { checked: (rows ?? []).length, results };
   });
+
+/* ------------------------------------------------------------------------- */
+/* Backfill linkuri publice Imobiliare.ro                                    */
+/* ------------------------------------------------------------------------- */
+
+export type ImobiliareBackfillRow = {
+  propertyId: string;
+  externalId: string | null;
+  reference: string | null;
+  state: string | null;
+  url: string | null;
+  /** Ce s-a întâmplat cu rândul: salvat, neschimbat sau motivul refuzului. */
+  outcome: "saved" | "unchanged" | "draft" | "no_reference" | "error";
+  message: string | null;
+};
+
+/**
+ * Citește la portal fiecare anunț Imobiliare.ro cu referință salvată și scrie
+ * `public_url` DOAR când portalul raportează `state = "online"`. Un anunț în
+ * ciornă nu produce nicio scriere: nu ștergem și nu inventăm linkuri.
+ *
+ * `data.id` (id-ul numeric al anunțului la portal) NU are coloană în
+ * `portal_listings`; nu adăugăm una, doar îl raportăm ca lipsă.
+ * Superadmin-only.
+ */
+export const backfillImobiliarePublicUrls = createServerFn({ method: "POST" })
+  .middleware([requireActiveOrgAuth])
+  .inputValidator((input: unknown) =>
+    z.object({ organizationId: z.string().uuid().optional() }).parse(input ?? {}),
+  )
+  .handler(async ({ data, context }) => {
+    await requireSuperadmin(context as unknown as AuthContext);
+    const admin = await loadAdmin();
+    const { parseImobiliareReferences } = await import("@/lib/portals/imobiliare/references");
+    const { readImobiliareListingState } = await import(
+      "@/lib/portals/adapters/imobiliare.server"
+    );
+    const definition = getPortalDefinition("imobiliare_ro");
+    if (!definition) throw new Error("Portal necunoscut.");
+
+    let query = admin
+      .from("portal_listings")
+      .select("id, organization_id, property_id, external_id, public_url")
+      .eq("portal", "imobiliare_ro")
+      .not("external_id", "is", null);
+    if (data.organizationId) query = query.eq("organization_id", data.organizationId);
+    const { data: rows } = await query;
+
+    const contexts = new Map<string, Awaited<ReturnType<typeof buildContext>>["ctx"]>();
+    const results: ImobiliareBackfillRow[] = [];
+
+    for (const row of rows ?? []) {
+      const reference = parseImobiliareReferences(row.external_id)[0] ?? null;
+      if (!reference) {
+        results.push({
+          propertyId: row.property_id,
+          externalId: row.external_id,
+          reference: null,
+          state: null,
+          url: null,
+          outcome: "no_reference",
+          message: "Rândul nu are o referință utilizabilă la portal.",
+        });
+        continue;
+      }
+      let ctx = contexts.get(row.organization_id);
+      if (!ctx) {
+        ctx = (await buildContext(row.organization_id, definition)).ctx;
+        contexts.set(row.organization_id, ctx);
+      }
+      const state = await readImobiliareListingState(ctx, reference);
+      if (!state.ok) {
+        results.push({
+          propertyId: row.property_id,
+          externalId: row.external_id,
+          reference,
+          state: null,
+          url: null,
+          outcome: "error",
+          message: state.message,
+        });
+        continue;
+      }
+      if (state.state !== "online" || !state.url) {
+        // Ciornă sau lipsă adresă: nu scriem nimic, nici ștergere.
+        results.push({
+          propertyId: row.property_id,
+          externalId: row.external_id,
+          reference,
+          state: state.state,
+          url: state.url,
+          outcome: "draft",
+          message: `Portalul raportează starea „${state.state ?? "necunoscută"}”: nu s-a scris nimic.`,
+        });
+        continue;
+      }
+      if (!shouldSaveBackfilledUrl(state.state, state.url, row.public_url ?? null)) {
+        results.push({
+          propertyId: row.property_id,
+          externalId: row.external_id,
+          reference,
+          state: state.state,
+          url: state.url,
+          outcome: "unchanged",
+          message: null,
+        });
+        continue;
+      }
+      await admin
+        .from("portal_listings")
+        .update({ public_url: state.url } as never)
+        .eq("id", row.id);
+      results.push({
+        propertyId: row.property_id,
+        externalId: row.external_id,
+        reference,
+        state: state.state,
+        url: state.url,
+        outcome: "saved",
+        message: null,
+      });
+    }
+
+    return {
+      checked: (rows ?? []).length,
+      saved: results.filter((r) => r.outcome === "saved").length,
+      /** Nu există coloană pentru id-ul numeric al anunțului la portal. */
+      numericPortalIdColumn: null as null,
+      results,
+    };
+  });
+
 
 /**
  * AUTO-PRELUNGIRE STORIA — suprascriere per proprietate.
