@@ -75,7 +75,7 @@ describe("MRZ TD1", () => {
     expect(parsed.birthDate.status).toBe("verified");
   });
 
-  it("nimic nu este „verified" fără cifră de control proprie", () => {
+  it("nimic nu este verificat fără cifră de control proprie", () => {
     const parsed = parseTd1(buildTd1({}));
     if (!parsed.ok) throw new Error("mrz invalid");
     expect(parsed.surname.status).toBe("unverified");
