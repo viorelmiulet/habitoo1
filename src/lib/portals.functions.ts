@@ -2617,6 +2617,137 @@ export const backfillStoriaPublicUrls = createServerFn({ method: "POST" })
     return { checked: (rows ?? []).length, results };
   });
 
+/* ------------------------------------------------------------------------- */
+/* Backfill linkuri publice Imobiliare.ro                                    */
+/* ------------------------------------------------------------------------- */
+
+export type ImobiliareBackfillRow = {
+  propertyId: string;
+  externalId: string | null;
+  reference: string | null;
+  state: string | null;
+  url: string | null;
+  /** Ce s-a întâmplat cu rândul: salvat, neschimbat sau motivul refuzului. */
+  outcome: "saved" | "unchanged" | "draft" | "no_reference" | "error";
+  message: string | null;
+};
+
+/**
+ * Citește la portal fiecare anunț Imobiliare.ro cu referință salvată și scrie
+ * `public_url` DOAR când portalul raportează `state = "online"`. Un anunț în
+ * ciornă nu produce nicio scriere: nu ștergem și nu inventăm linkuri.
+ *
+ * `data.id` (id-ul numeric al anunțului la portal) NU are coloană în
+ * `portal_listings`; nu adăugăm una, doar îl raportăm ca lipsă.
+ * Superadmin-only.
+ */
+export const backfillImobiliarePublicUrls = createServerFn({ method: "POST" })
+  .middleware([requireActiveOrgAuth])
+  .inputValidator((input: unknown) =>
+    z.object({ organizationId: z.string().uuid().optional() }).parse(input ?? {}),
+  )
+  .handler(async ({ data, context }) => {
+    await requireSuperadmin(context as unknown as AuthContext);
+    const admin = await loadAdmin();
+    const { parseImobiliareReferences } = await import("@/lib/portals/imobiliare/references");
+    const { readImobiliareListingState } = await import(
+      "@/lib/portals/adapters/imobiliare.server"
+    );
+    const definition = getPortalDefinition("imobiliare_ro");
+    if (!definition) throw new Error("Portal necunoscut.");
+
+    let query = admin
+      .from("portal_listings")
+      .select("id, organization_id, property_id, external_id, public_url")
+      .eq("portal", "imobiliare_ro")
+      .not("external_id", "is", null);
+    if (data.organizationId) query = query.eq("organization_id", data.organizationId);
+    const { data: rows } = await query;
+
+    const contexts = new Map<string, Awaited<ReturnType<typeof buildContext>>["ctx"]>();
+    const results: ImobiliareBackfillRow[] = [];
+
+    for (const row of rows ?? []) {
+      const reference = parseImobiliareReferences(row.external_id)[0] ?? null;
+      if (!reference) {
+        results.push({
+          propertyId: row.property_id,
+          externalId: row.external_id,
+          reference: null,
+          state: null,
+          url: null,
+          outcome: "no_reference",
+          message: "Rândul nu are o referință utilizabilă la portal.",
+        });
+        continue;
+      }
+      let ctx = contexts.get(row.organization_id);
+      if (!ctx) {
+        ctx = (await buildContext(row.organization_id, definition)).ctx;
+        contexts.set(row.organization_id, ctx);
+      }
+      const state = await readImobiliareListingState(ctx, reference);
+      if (!state.ok) {
+        results.push({
+          propertyId: row.property_id,
+          externalId: row.external_id,
+          reference,
+          state: null,
+          url: null,
+          outcome: "error",
+          message: state.message,
+        });
+        continue;
+      }
+      if (state.state !== "online" || !state.url) {
+        results.push({
+          propertyId: row.property_id,
+          externalId: row.external_id,
+          reference,
+          state: state.state,
+          url: state.url,
+          outcome: "draft",
+          message: `Portalul raportează starea „${state.state ?? "necunoscută"}”: nu s-a scris nimic.`,
+        });
+        continue;
+      }
+      if (state.url === row.public_url) {
+        results.push({
+          propertyId: row.property_id,
+          externalId: row.external_id,
+          reference,
+          state: state.state,
+          url: state.url,
+          outcome: "unchanged",
+          message: null,
+        });
+        continue;
+      }
+      await admin
+        .from("portal_listings")
+        .update({ public_url: state.url } as never)
+        .eq("id", row.id);
+      results.push({
+        propertyId: row.property_id,
+        externalId: row.external_id,
+        reference,
+        state: state.state,
+        url: state.url,
+        outcome: "saved",
+        message: null,
+      });
+    }
+
+    return {
+      checked: (rows ?? []).length,
+      saved: results.filter((r) => r.outcome === "saved").length,
+      /** Nu există coloană pentru id-ul numeric al anunțului la portal. */
+      numericPortalIdColumn: null as null,
+      results,
+    };
+  });
+
+
 /**
  * AUTO-PRELUNGIRE STORIA — suprascriere per proprietate.
  *
