@@ -1767,10 +1767,16 @@ export const publishPropertyToSelectedPortals = createServerFn({ method: "POST" 
       .parse(input),
   )
   .handler(async ({ data, context }) => {
-    const { organizationId, superadmin } = await resolvePublishingOrg(
+    const { organizationId, superadmin, agentOnly } = await resolvePublishingOrg(
       context as unknown as AuthContext,
       data.organizationId,
     );
+    await assertPortalPropertyAccess({
+      organizationId,
+      propertyId: data.propertyId,
+      agentOnly,
+      userId: context.userId,
+    });
     const allowedPortals = superadmin ? null : await activatedPortalIds(organizationId);
     const admin = await loadAdmin();
 
