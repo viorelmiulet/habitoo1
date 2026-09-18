@@ -1268,10 +1268,16 @@ export const runPortalListingAction = createServerFn({ method: "POST" })
   .middleware([requireActiveOrgAuth])
   .inputValidator((input: unknown) => listingSchema.parse(input))
   .handler(async ({ data, context }) => {
-    const { organizationId, superadmin } = await resolvePublishingOrg(
+    const { organizationId, superadmin, agentOnly } = await resolvePublishingOrg(
       context as unknown as AuthContext,
       data.organizationId,
     );
+    await assertPortalPropertyAccess({
+      organizationId,
+      propertyId: data.propertyId,
+      agentOnly,
+      userId: context.userId,
+    });
     if (!superadmin && !(await activatedPortalIds(organizationId)).has(data.portalId)) {
       throw new Error("Acest portal nu este activat pentru agenția ta.");
     }
