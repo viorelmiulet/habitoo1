@@ -56,6 +56,13 @@ import { batchEncodedImages, encodeImobiliareImages } from "../imobiliare/media.
 import { buildImobiliarePayload, type ImobiliareListingPlan } from "../imobiliare/payload.server";
 import { parseAgents } from "../imobiliare/agents.server";
 import {
+  describeImobiliareAccount,
+  subscriptionInactive,
+  IMOBILIARE_NO_SUBSCRIPTION_MESSAGE,
+  type ImobiliareAccountState,
+} from "../imobiliare/account";
+import { fetchImobiliareAccount } from "../imobiliare/account.server";
+import {
   parseImobiliareReferences,
   referenceForTransaction,
   serializeImobiliareReferences,
@@ -170,8 +177,10 @@ async function status(
     const categories = await refreshCategoryCatalog(db, ready.session, ctx.organizationId);
     const locations = await imobiliareLocationStats(db);
 
+    const account = await fetchImobiliareAccount(ready.session, ctx.organizationId);
     const notes = [
       `Autorizare validă (${agents} agenți în contul portalului).`,
+      describeImobiliareAccount(account),
       categories.message,
       locations.zones > 0
         ? `Nomenclator de locații încărcat (${locations.zones} zone).`
@@ -570,6 +579,8 @@ async function diagnose(
     stateKnown: false,
     portalState: null,
     urlConfirmed: false,
+    offerUrlSuppressed: false,
+    subscriptionActive: null,
   };
   if (references.length === 0 || !ctx.allowLiveRequests) return { ok: true, data: empty };
 
@@ -600,19 +611,27 @@ async function diagnose(
     };
   }
   const state = imobiliareStateFromBody(response.body);
-  const offerUrl = imobiliarePublicUrlFromBody(response.body);
+  const account = await fetchImobiliareAccount(ready.session, ctx.organizationId);
+  const noSubscription = subscriptionInactive(account);
+  // Abonament inactiv: anunțul e „online” în cont, dar pagina publică duce în
+  // prima pagină a portalului. Nu arătăm linkul, dar nu îl ștergem nici din
+  // bază: nu este o ciornă confirmată de portal.
+  const offerUrl = noSubscription ? null : imobiliarePublicUrlFromBody(response.body);
   const notes: string[] = [];
+  if (noSubscription) notes.push(IMOBILIARE_NO_SUBSCRIPTION_MESSAGE);
   if (state && state !== IMOBILIARE_STATUS_ONLINE) {
     notes.push(`Anunțul este în starea „${state}” la Imobiliare.ro, deci nu are pagină publică.`);
-  } else if (!offerUrl) {
+  } else if (!offerUrl && !noSubscription) {
     notes.push("Imobiliare.ro nu a trimis încă adresa publică a anunțului.");
   }
   return {
     ok: true,
     data: {
       ...empty,
-      feedVisible: state === IMOBILIARE_STATUS_ONLINE,
+      feedVisible: state === IMOBILIARE_STATUS_ONLINE && !noSubscription,
       offerUrl,
+      offerUrlSuppressed: noSubscription,
+      subscriptionActive: account?.isSubscriptionActive ?? null,
       // Starea e cunoscută doar dacă portalul a trimis efectiv câmpul `state`.
       stateKnown: state !== null,
       portalState: state,
@@ -654,6 +673,16 @@ export async function readImobiliareListingState(
     state: imobiliareStateFromBody(response.body),
     url: imobiliarePublicUrlFromBody(response.body),
   };
+}
+
+/** Starea contului (abonament) pentru UI, memorată 10 minute per agenție. */
+export async function readImobiliareAccountState(
+  ctx: PortalContext,
+): Promise<ImobiliareAccountState | null> {
+  if (!(ctx.portalCredential ?? "").trim() || !ctx.allowLiveRequests) return null;
+  const ready = await prepare(ctx, { refreshCatalog: false });
+  if (!ready.ok) return null;
+  return await fetchImobiliareAccount(ready.session, ctx.organizationId);
 }
 
 export const imobiliareAdapter: PortalAdapter = {
