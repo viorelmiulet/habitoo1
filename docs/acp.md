@@ -167,3 +167,40 @@ Limitare declarată: indicele este **național** (România, fără defalcare pe
 orașe sau zone) și, când va fi folosit, se aplică exclusiv ca **ajustare în
 timp** între două trimestre. O perioadă lipsă înseamnă lipsa ajustării,
 niciodată o valoare inventată.
+
+## 11. Ajustarea în timp a comparabilelor (motor v2)
+
+Motorul determinist este versionat. O schimbare de metodologie nu modifică
+niciodată o versiune existentă: analizele salvate păstrează `engine_version` și
+se recalculează identic cu versiunea lor.
+
+- **v1** — motorul original: scoring + ajustări de caracteristici.
+- **v2** (curent, `ACP_CURRENT_ENGINE_VERSION`) — în plus, prețul fiecărui
+  comparabil este adus la trimestrul analizei cu
+  `index(trimestrul analizei) / index(trimestrul comparabilului)`, seria `total`
+  a indicelui trimestrial al prețurilor locuințelor.
+
+Reguli (`src/lib/acp/time-adjustment.ts`, funcții pure):
+
+- indicele se citește **exclusiv** din `market_price_indices`
+  (`src/lib/acp/time-adjustment.server.ts`); la momentul analizei nu se face
+  niciun apel HTTP. Tabel gol ⇒ comportamentul v1 plus o notă explicativă;
+- trimestrul comparabilului vine din ultima observare reală a ofertei; fără el,
+  fără ajustare și motivul este consemnat;
+- când trimestrul analizei depășește ultimul trimestru publicat, raportul se
+  **plafonează** la ultimul trimestru publicat, iar acest lucru este consemnat;
+- lipsa indicelui pentru trimestrul comparabilului ⇒ fără ajustare, cu motiv;
+- un raport în afara intervalului `0.5 – 2.0` este **refuzat** (fallback fără
+  ajustare, cu motiv), ca un import greșit al indicelui să nu poată deforma o
+  evaluare;
+- indicele este **național** (România) — raportul spune explicit acest lucru
+  acolo unde ajustarea este arătată.
+
+Rezultatul este explicit: pe fiecare comparabil se salvează prețul original,
+trimestrul folosit, raportul aplicat și prețul ajustat; la nivel de analiză se
+salvează indicele, sursa, baza, plafonarea și câte comparabile au rămas
+neajustate. Toate apar și în PDF, în secțiunea „Ajustarea în timp a
+comparabilelor".
+
+Recalcularea în loc a unei analize păstrează versiunea motorului a analizei;
+versiunile noi (`recalculateAcpAsNewVersion`) folosesc versiunea curentă.
