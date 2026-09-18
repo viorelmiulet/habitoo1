@@ -1,7 +1,10 @@
 import { describe, expect, it, vi } from "vitest";
 
 import { portalSaysOffline, resolveListingPublicUrl } from "@/lib/portals/link";
-import { fetchImobiliarePublicUrlWithRetries } from "@/lib/portals/adapters/imobiliare.server";
+import {
+  fetchImobiliarePublicUrlWithRetries,
+  readImobiliareListingState,
+} from "@/lib/portals/adapters/imobiliare.server";
 
 describe("linkul public al ofertei", () => {
   it("păstrează linkul salvat când verificarea nu a reușit", () => {
