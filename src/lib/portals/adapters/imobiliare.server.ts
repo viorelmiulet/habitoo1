@@ -88,7 +88,15 @@ type Ready =
   | { ok: true; session: ImobiliareSession; catalog: CategoryCatalog }
   | { ok: false; result: PortalFailShape };
 
-async function prepare(ctx: PortalContext): Promise<Ready> {
+/**
+ * `refreshCatalog: false` — diagnoza NU reîmprospătează niciodată catalogul de
+ * categorii: era un request suplimentar la portal la fiecare încărcare de
+ * pagină, fără nicio legătură cu starea anunțului.
+ */
+async function prepare(
+  ctx: PortalContext,
+  options?: { refreshCatalog?: boolean },
+): Promise<Ready> {
   const db = await admin();
   const session = await getImobiliareSession({
     admin: db,
