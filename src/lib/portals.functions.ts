@@ -967,10 +967,18 @@ export async function executeListingAction(input: {
 
   const { isPropertyFeedEligible } = await import("@/lib/site-feed/mapper");
   if (action !== "withdraw" && !isPropertyFeedEligible(property as never)) {
+    const message = "Oferta nu este publicabilă: verifică statusul și publicarea pe site.";
+    await persistListingFailure(admin, {
+      organizationId,
+      portalKey: definition.id,
+      propertyId,
+      actorId,
+      message: `${definition.display_name}: ${message}`,
+    });
     return {
       ok: false as const,
       code: "VALIDATION_ERROR",
-      message: "Oferta nu este publicabilă: verifică statusul și publicarea pe site.",
+      message,
     };
   }
 
