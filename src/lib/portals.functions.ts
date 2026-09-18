@@ -2177,12 +2177,20 @@ export async function applyPortalSelectionForOrg(input: {
         // Portalurile neactivate pentru agenție sunt respinse, nu ignorate silențios.
         if (allowedPortals !== null && !allowedPortals.has(definition.id)) {
           if (wanted.enabled) {
+            const message = `${definition.display_name} nu este activat pentru agenția ta.`;
+            await persistListingFailure(admin, {
+              organizationId,
+              portalKey: definition.id,
+              propertyId: data.propertyId,
+              actorId,
+              message,
+            });
             results.push({
               portalId: definition.id,
               portalName: portalDisplayName(definition.id),
               action: "blocked",
               ok: false,
-              message: `${definition.display_name} nu este activat pentru agenția ta.`,
+              message,
             });
           }
           continue;
@@ -2231,6 +2239,13 @@ export async function applyPortalSelectionForOrg(input: {
             actorId,
           });
           if (!guard.ok) {
+            await persistListingFailure(admin, {
+              organizationId,
+              portalKey: definition.id,
+              propertyId: data.propertyId,
+              actorId,
+              message: guard.message,
+            });
             results.push({
               portalId: definition.id,
               portalName: name,
@@ -2305,14 +2320,22 @@ export async function applyPortalSelectionForOrg(input: {
 
         // Portal neconfigurat: intenția rămâne salvată, statusul rămâne nepublicat.
         if (!configured) {
+          const message = superadmin
+            ? `${name} nu este configurat. Configurează portalul din Superadmin → Portaluri.`
+            : `${name} nu este încă pregătit de administratorul platformei.`;
+          await persistListingFailure(admin, {
+            organizationId,
+            portalKey: definition.id,
+            propertyId: data.propertyId,
+            actorId,
+            message,
+          });
           results.push({
             portalId: definition.id,
             portalName: name,
             action: "blocked",
             ok: false,
-            message: superadmin
-              ? `${name} nu este configurat. Configurează portalul din Superadmin → Portaluri.`
-              : `${name} nu este încă pregătit de administratorul platformei.`,
+            message,
           });
           continue;
         }
