@@ -3,7 +3,7 @@
  * limite fail-closed, plafon pe agenție, nume interzise la execuție,
  * redactare recursivă.
  */
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
 import {
   checkAiQuota,
   checkAiRateLimits,
@@ -117,8 +117,6 @@ describe("nume interzise la execuție", () => {
   });
 
   it("refuză înainte de orice interogare", async () => {
-    const client = await import("@/integrations/supabase/client.server").catch(() => null);
-    void client;
     for (const name of AI_FORBIDDEN_TOOL_NAMES) {
       const result = await executeAiTool(actor, name, {});
       expect(result.ok).toBe(false);
@@ -184,5 +182,3 @@ describe("scurtarea apelurilor de instrumente", () => {
     expect(record.summary.length).toBeLessThanOrEqual(501);
   });
 });
-
-vi.restoreAllMocks();
