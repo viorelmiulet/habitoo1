@@ -6,6 +6,8 @@
  * răspuns, cu latență și status, fără date sensibile și fără secrete.
  */
 
+import { REDACTED_DETAIL_KEY } from "../security/redaction-keys";
+
 export type AiTraceKind = "agent" | "workflow" | "step" | "tool" | "model" | "error";
 
 export type AiTraceEvent = {
