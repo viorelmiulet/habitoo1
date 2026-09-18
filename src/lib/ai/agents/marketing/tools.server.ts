@@ -136,6 +136,27 @@ async function imageCount(admin: Admin, actor: AiActor, propertyId: string): Pro
   return count ?? 0;
 }
 
+/** Următoarea versiune liberă pentru istoricul de ciorne al unei proprietăți. */
+async function nextDraftVersion(
+  admin: Admin,
+  organizationId: string,
+  propertyId: string,
+  channel: string,
+  contentType: string,
+): Promise<number> {
+  const { data } = await admin
+    .from("marketing_drafts")
+    .select("version")
+    .eq("organization_id", organizationId)
+    .eq("property_id", propertyId)
+    .eq("channel", channel)
+    .eq("content_type", contentType)
+    .order("version", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  return (data?.version ?? 0) + 1;
+}
+
 /** Fișa de fapte a unei proprietăți: singura sursă pentru conținutul generat. */
 export async function marketingContextFor(
   admin: Admin,
@@ -297,17 +318,13 @@ export async function runMarketingTool(
       if (!loaded.ok) return { ok: false, error: loaded.error, code: loaded.code };
 
       // Versionare: nu suprascriem niciodată o ciornă existentă.
-      const { data: last } = await admin
-        .from("marketing_drafts")
-        .select("version")
-        .eq("organization_id", org)
-        .eq("property_id", loaded.row.id)
-        .eq("channel", String(args["channel"]))
-        .eq("content_type", String(args["contentType"]))
-        .order("version", { ascending: false })
-        .limit(1)
-        .maybeSingle();
-      const version = (last?.version ?? 0) + 1;
+      const version = await nextDraftVersion(
+        admin,
+        org,
+        String(loaded.row.id),
+        String(args["channel"]),
+        String(args["contentType"]),
+      );
 
       const { data: inserted, error } = await admin
         .from("marketing_drafts")
@@ -319,6 +336,7 @@ export async function runMarketingTool(
           content_type: String(args["contentType"]),
           tone: String(args["tone"]),
           length: String(args["length"]),
+          source: "ai_generated",
           title: (args["title"] as string | null) ?? null,
           body: String(args["body"] ?? ""),
           short_variants: (args["shortVariants"] ?? []) as never,
@@ -335,6 +353,7 @@ export async function runMarketingTool(
           workflow_run_id: (args["runId"] as string | null) ?? null,
           created_by: actor.userId,
         })
+
         .select("id,version")
         .single();
       if (error || !inserted) {
@@ -357,7 +376,7 @@ export async function runMarketingTool(
       if (!loaded.ok) return { ok: false, error: loaded.error, code: loaded.code };
       const { data: draft } = await admin
         .from("marketing_drafts")
-        .select("id,title,body,validation_status,property_id")
+        .select("id,title,body,validation_status,property_id,channel,content_type,tone,length")
         .eq("id", String(args["draftId"]))
         .eq("organization_id", org)
         .maybeSingle();
@@ -387,6 +406,48 @@ export async function runMarketingTool(
           };
         }
       }
+
+      // Textul anterior al proprietății devine o versiune în istoric, ca
+      // revenirea la el să fie posibilă după aplicare.
+      const previousTitle = (loaded.row["title"] as string | null) ?? null;
+      const previousBody = (loaded.row["description"] as string | null) ?? null;
+      let previousVersion: number | null = null;
+      if (previousTitle !== null || previousBody !== null) {
+        const snapshotVersion = await nextDraftVersion(
+          admin,
+          org,
+          String(loaded.row.id),
+          String(draft.channel),
+          String(draft.content_type),
+        );
+        const { error: snapshotError } = await admin.from("marketing_drafts").insert({
+          organization_id: org,
+          property_id: loaded.row.id,
+          version: snapshotVersion,
+          channel: String(draft.channel),
+          content_type: String(draft.content_type),
+          tone: String(draft.tone),
+          length: String(draft.length),
+          source: "previous_property_text",
+          title: previousTitle,
+          body: previousBody ?? "",
+          validation_status: "valid",
+          context_version: "1",
+          context_hash: "",
+          created_by: actor.userId,
+        });
+        if (snapshotError) {
+          console.error("[ai-marketing] snapshot insert failed", snapshotError.message);
+          return {
+            ok: false,
+            error:
+              "Nu am putut salva textul actual al proprietății ca versiune de rezervă, așa că nu am aplicat nimic.",
+            code: "failed",
+          };
+        }
+        previousVersion = snapshotVersion;
+      }
+
       const { error } = await admin
         .from("properties")
         .update({
@@ -402,13 +463,18 @@ export async function runMarketingTool(
         .update({ applied_at: new Date().toISOString(), applied_by: actor.userId })
         .eq("id", draft.id)
         .eq("organization_id", org);
+
       return {
         ok: true,
-        data: { id: draft.id },
+        data: { id: draft.id, previousVersion },
         sources: [source(loaded.row)],
-        summary: `Textul a fost aplicat pe ${propertyLabel(loaded.row)}.`,
+        summary:
+          previousVersion === null
+            ? `Textul a fost aplicat pe ${propertyLabel(loaded.row)}.`
+            : `Textul a fost aplicat pe ${propertyLabel(loaded.row)}. Textul anterior este salvat ca versiunea ${previousVersion} în istoric.`,
         capability,
       };
+
     }
 
     default:

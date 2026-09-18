@@ -842,13 +842,23 @@ async function executeCrmAction(
       });
       if (!result.ok) return finish(false, result.message, []);
 
-      // Un follow-up planificat se reflectă și în lead, ca CRM-ul să rămână coerent.
+      // Un follow-up planificat se reflectă și în lead, ca CRM-ul să rămână
+      // coerent. Dacă această a doua scriere eșuează, NU raportăm succes:
+      // utilizatorul trebuie să știe că leadul nu are data de follow-up.
       if (isTask && leadId) {
-        await admin
+        const { error: followupError } = await admin
           .from("leads")
           .update({ next_followup_at: startsAt, updated_by: actor.userId } as never)
           .eq("id", leadId)
           .eq("organization_id", org);
+        if (followupError) {
+          console.error("[ai-crm] lead followup update failed", followupError.message);
+          return finish(
+            false,
+            "Activitatea a fost creată, dar data de follow-up a leadului nu a putut fi salvată. Setează-o manual pe lead.",
+            [],
+          );
+        }
       }
 
       return finish(
@@ -862,6 +872,7 @@ async function executeCrmAction(
         { entityId: result.id, duplicate: result.duplicate },
       );
     }
+
     case "update_lead_status": {
       const leadId = String(data["leadId"]);
       const owned = await loadOwnedLead(admin, actor, leadId);
@@ -897,7 +908,8 @@ async function executeCrmAction(
         console.error("[ai-crm] update_lead_status failed", error.message);
         return finish(false, "Etapa leadului nu a putut fi modificată.", []);
       }
-      await admin.from("lead_events").insert({
+      // Istoricul etapelor este parte din rezultat: fără el nu raportăm succes.
+      const { error: eventError } = await admin.from("lead_events").insert({
         organization_id: org,
         lead_id: leadId,
         from_stage: current,
@@ -905,6 +917,15 @@ async function executeCrmAction(
         actor_id: actor.userId,
         note: (data["reason"] as string | undefined) ?? "Modificat prin Habitoo CRM Agent (aprobat)",
       } as never);
+      if (eventError) {
+        console.error("[ai-crm] lead_events insert failed", eventError.message);
+        return finish(
+          false,
+          `Etapa leadului a trecut din ${current} în ${stage}, dar înregistrarea în istoricul leadului nu a reușit.`,
+          [],
+        );
+      }
+
       return finish(
         true,
         `Etapa leadului a trecut din ${current} în ${stage}.`,

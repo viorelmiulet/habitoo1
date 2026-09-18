@@ -19,7 +19,9 @@ import {
   argumentsFingerprint,
   claimSuspendedRun,
   fingerprintMatches,
+  releaseClaimedRun,
 } from "@/lib/ai/security/approval";
+
 import { writeAiUsage } from "@/lib/ai/usage/tracking.server";
 import { PROSPECTING_AUDIT_ACTIONS, logProspectingAudit } from "./audit";
 import { applyClassification, buildClassificationPrompt, parseClassificationResponse } from "./classify";
@@ -661,6 +663,30 @@ export async function resumeProspectingWorkflow(
   workflowRunId: string,
   decision: { approvedIds: string[]; rejectedIds: string[]; importApproved: boolean },
 ): Promise<{ ok: true; run: ProspectingRunView; imported: number } | { ok: false; message: string }> {
+  try {
+    return await resumeProspectingWorkflowClaimed(actor, workflowRunId, decision);
+  } catch (error) {
+    console.error("[prospecting] resume failed", error);
+    const admin = await loadAdmin();
+    await releaseClaimedRun(admin, {
+      runId: workflowRunId,
+      organizationId: actor.organizationId,
+      userId: actor.userId,
+    });
+    return {
+      ok: false,
+      message:
+        "Decizia nu a putut fi procesată. Propunerea a rămas în așteptare, poți încerca din nou.",
+    };
+  }
+}
+
+async function resumeProspectingWorkflowClaimed(
+  actor: AiActor,
+  workflowRunId: string,
+  decision: { approvedIds: string[]; rejectedIds: string[]; importApproved: boolean },
+): Promise<{ ok: true; run: ProspectingRunView; imported: number } | { ok: false; message: string }> {
+
   const admin = await loadAdmin();
   // Decizia se consumă atomic: o a doua cerere paralelă nu importă nimic.
   const row = await claimSuspendedRun<{

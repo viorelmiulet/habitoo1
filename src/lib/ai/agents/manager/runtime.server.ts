@@ -11,7 +11,12 @@
 import { PROSPECTING_NO_LIVE_SOURCE_NOTE } from "@/lib/prospecting/workflow";
 import type { AiActor } from "../../gateway/types";
 import { AI_AUDIT_ACTIONS, logAiAudit } from "../../security/audit";
-import { APPROVAL_ALREADY_APPLIED, claimSuspendedRun } from "../../security/approval";
+import {
+  APPROVAL_ALREADY_APPLIED,
+  claimSuspendedRun,
+  releaseClaimedRun,
+} from "../../security/approval";
+
 import { sanitizeUserRequest } from "../../security/injection";
 import { checkActionPolicy } from "../../security/policy";
 import { AiTracer, newTraceId } from "../../tracing/trace";
@@ -664,6 +669,30 @@ export async function decideManagerAction(
   runId: string,
   approved: boolean,
 ): Promise<ManagerDecision> {
+  try {
+    return await decideManagerActionClaimed(actor, runId, approved);
+  } catch (error) {
+    console.error("[ai-manager] decide failed", error);
+    const admin = await loadAdmin();
+    await releaseClaimedRun(admin, {
+      runId,
+      organizationId: actor.organizationId,
+      userId: actor.userId,
+    });
+    return {
+      ok: false,
+      message:
+        "Decizia nu a putut fi procesată. Propunerea a rămas în așteptare, poți încerca din nou.",
+    };
+  }
+}
+
+async function decideManagerActionClaimed(
+  actor: AiActor,
+  runId: string,
+  approved: boolean,
+): Promise<ManagerDecision> {
+
   const admin = await loadAdmin();
   // Aprobarea se consumă atomic: două cereri paralele nu pot executa de două ori.
   const row = await claimSuspendedRun<{

@@ -27,6 +27,7 @@ import {
   decideMarketingAction,
   generateMarketing,
   listMarketingProperties,
+  listPropertyMarketingDrafts,
   proposeMarketingAction,
   MARKETING_CHANNELS,
   MARKETING_CHANNEL_SPECS,
@@ -63,6 +64,7 @@ export function MarketingAgentPanel({
   const propose = useServerFn(proposeMarketingAction);
   const decide = useServerFn(decideMarketingAction);
   const fetchProperties = useServerFn(listMarketingProperties);
+  const fetchDrafts = useServerFn(listPropertyMarketingDrafts);
 
   const [channel, setChannel] = useState<MarketingChannel>("olx");
   const [contentType, setContentType] = useState<MarketingContentType>("listing");
@@ -78,6 +80,13 @@ export function MarketingAgentPanel({
     queryFn: () => fetchProperties(),
     enabled: allowPropertyPicker,
   });
+
+  const drafts = useQuery({
+    queryKey: ["marketing", "drafts", propertyId],
+    queryFn: () => fetchDrafts({ data: { propertyId: propertyId! } }),
+    enabled: Boolean(propertyId),
+  });
+
 
   const ids = propertyId ? [propertyId] : selected;
 
@@ -493,6 +502,32 @@ export function MarketingAgentPanel({
           </CardContent>
         </Card>
       ))}
+
+      {propertyId && drafts.data && drafts.data.length > 0 ? (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Istoricul textelor</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {drafts.data.map((draft) => (
+              <div key={draft.id} className="rounded-md border p-3 text-sm">
+                <div className="flex flex-wrap items-center gap-2">
+                  <Badge variant="outline">Versiunea {draft.version}</Badge>
+                  <Badge variant={draft.source === "previous_property_text" ? "default" : "secondary"}>
+                    {draft.source === "previous_property_text"
+                      ? "Textul anterior al proprietății"
+                      : "Generat de AI"}
+                  </Badge>
+                  {draft.appliedAt ? <Badge variant="secondary">Aplicat</Badge> : null}
+                </div>
+                {draft.title ? <p className="mt-2 font-medium">{draft.title}</p> : null}
+                <p className="mt-1 whitespace-pre-wrap text-muted-foreground">{draft.body}</p>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+      ) : null}
     </div>
   );
 }
+

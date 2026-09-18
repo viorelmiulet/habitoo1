@@ -6,13 +6,25 @@
  *     `suspended` în `running` printr-un update condiționat, deci două cereri
  *     paralele nu pot executa aceeași acțiune de două ori;
  *  2. argumentele aprobate sunt AMPRENTATE la suspendare și verificate la
- *     reluare, deci o scriere ulterioară în `ai_workflow_runs.state` nu poate
- *     schimba pe furiș ce se execută.
+ *     reluare.
+ *
+ * Cât valoare are amprenta, exact: ea detectează o modificare accidentală sau
+ * parțială a stării (o scriere care schimbă argumentele fără să recalculeze
+ * amprenta, o stare veche reluată, o serializare stricată). NU este o
+ * semnătură: cine poate scrie în `ai_workflow_runs.state` poate recalcula
+ * amprenta cu aceeași funcție pură și deci o poate potrivi. Garanția reală
+ * împotriva unui astfel de scriitor rămâne RLS plus faptul că
+ * `approvalGranted` se stabilește doar în codul serverului.
+ *
+ * `claimedRunIsStale` / `releaseClaimedRun` împiedică a doua problemă a
+ * preluării atomice: o rulare preluată care eșuează înainte de a fi persistată
+ * ar rămâne „running" pentru totdeauna, iar utilizatorul nu ar mai putea decide.
  */
 
 export const APPROVAL_ALREADY_APPLIED = "Această decizie a fost deja aplicată.";
 export const APPROVAL_TAMPERED =
   "Propunerea aprobată a fost modificată între timp, așa că nu am executat nimic. Cere aprobarea din nou.";
+
 
 function stableStringify(value: unknown): string {
   if (value === null || typeof value !== "object") return JSON.stringify(value) ?? "null";
@@ -57,33 +69,78 @@ export function fingerprintMatches(
 type QueryLike = {
   update: (values: Record<string, unknown>) => QueryLike;
   eq: (column: string, value: unknown) => QueryLike;
+  lt: (column: string, value: unknown) => QueryLike;
   select: (columns: string) => QueryLike;
   maybeSingle: () => Promise<{ data: unknown; error?: unknown }>;
 };
 
 type AdminLike = { from: (table: string) => unknown };
 
+/** Lease-ul unei rulări preluate: după atât timp poate fi preluată din nou. */
+export const RUN_CLAIM_LEASE_MS = 10 * 60 * 1000;
+
+type ClaimParams = {
+  runId: string;
+  organizationId: string;
+  userId: string;
+  workflow?: string;
+  columns: string;
+};
+
+function claimQuery(admin: AdminLike, params: ClaimParams, claimedAt: string): QueryLike {
+  let query = (admin.from("ai_workflow_runs") as QueryLike)
+    .update({ status: "running", claimed_at: claimedAt, updated_at: claimedAt })
+    .eq("id", params.runId)
+    .eq("organization_id", params.organizationId)
+    .eq("user_id", params.userId);
+  if (params.workflow) query = query.eq("workflow", params.workflow);
+  return query;
+}
+
 /**
  * Consumă aprobarea atomic: `update … where status='suspended' returning *`.
  * Întoarce rândul doar dacă exact această cerere a preluat rularea suspendată.
+ *
+ * Al doilea update recuperează o rulare rămasă blocată: dacă a fost preluată
+ * acum mai mult de `RUN_CLAIM_LEASE_MS` și nu a fost persistată niciodată,
+ * lease-ul a expirat și decizia poate fi luată din nou.
  */
 export async function claimSuspendedRun<T = Record<string, unknown>>(
   admin: AdminLike,
-  params: {
-    runId: string;
-    organizationId: string;
-    userId: string;
-    workflow?: string;
-    columns: string;
-  },
+  params: ClaimParams,
 ): Promise<T | null> {
-  let query = (admin.from("ai_workflow_runs") as QueryLike)
-    .update({ status: "running", updated_at: new Date().toISOString() })
+  const now = new Date();
+  const claimedAt = now.toISOString();
+  const { data } = await claimQuery(admin, params, claimedAt)
+    .eq("status", "suspended")
+    .select(params.columns)
+    .maybeSingle();
+  if (data) return data as T;
+
+  const cutoff = new Date(now.getTime() - RUN_CLAIM_LEASE_MS).toISOString();
+  const { data: stale } = await claimQuery(admin, params, claimedAt)
+    .eq("status", "running")
+    .lt("claimed_at", cutoff)
+    .select(params.columns)
+    .maybeSingle();
+  return (stale as T | null) ?? null;
+}
+
+/**
+ * Eliberează o rulare preluată: o readuce în `suspended` ca utilizatorul să
+ * poată decide din nou. Se apelează când reluarea eșuează neaștepatat.
+ */
+export async function releaseClaimedRun(
+  admin: AdminLike,
+  params: { runId: string; organizationId: string; userId: string },
+): Promise<void> {
+  await (admin.from("ai_workflow_runs") as QueryLike)
+    .update({ status: "suspended", claimed_at: null, updated_at: new Date().toISOString() })
     .eq("id", params.runId)
     .eq("organization_id", params.organizationId)
     .eq("user_id", params.userId)
-    .eq("status", "suspended");
-  if (params.workflow) query = query.eq("workflow", params.workflow);
-  const { data } = await query.select(params.columns).maybeSingle();
-  return (data as T | null) ?? null;
+    .eq("status", "running")
+    .select("id")
+    .maybeSingle();
 }
+

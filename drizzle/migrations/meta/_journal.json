@@ -414,6 +414,13 @@
       "when": 1789714133165,
       "tag": "0058_acp_engine_version",
       "breakpoints": true
+    },
+    {
+      "idx": 59,
+      "version": "7",
+      "when": 1789731025128,
+      "tag": "0059_group2_partial_writes",
+      "breakpoints": true
     }
   ]
 }

@@ -14,7 +14,9 @@ import {
   argumentsFingerprint,
   claimSuspendedRun,
   fingerprintMatches,
+  releaseClaimedRun,
 } from "../../security/approval";
+
 import { AiTracer, newTraceId } from "../../tracing/trace";
 import { writeTraceEvents } from "../../tracing/trace.server";
 import { writeAiUsage } from "../../usage/tracking.server";
@@ -492,6 +494,30 @@ export async function decideMarketingWrite(
   runId: string,
   approved: boolean,
 ): Promise<MarketingDecision> {
+  try {
+    return await decideMarketingWriteClaimed(actor, runId, approved);
+  } catch (error) {
+    console.error("[ai-marketing] decide failed", error);
+    const admin = await loadAdmin();
+    await releaseClaimedRun(admin, {
+      runId,
+      organizationId: actor.organizationId,
+      userId: actor.userId,
+    });
+    return {
+      ok: false,
+      message:
+        "Decizia nu a putut fi procesată. Propunerea a rămas în așteptare, poți încerca din nou.",
+    };
+  }
+}
+
+async function decideMarketingWriteClaimed(
+  actor: AiActor,
+  runId: string,
+  approved: boolean,
+): Promise<MarketingDecision> {
+
   const admin = await loadAdmin();
   // Protecție la dublu-click: aprobarea se consumă atomic, deci o a doua cerere
   // paralelă nu mai execută nimic.
@@ -627,6 +653,7 @@ export async function listMarketingRuns(actor: AiActor, limit = 10): Promise<Mar
 export type MarketingDraftView = {
   id: string;
   version: number;
+  source: string;
   channel: string;
   contentType: string;
   tone: string;
@@ -647,7 +674,7 @@ export async function listMarketingDrafts(
   const { data } = await admin
     .from("marketing_drafts")
     .select(
-      "id,version,channel,content_type,tone,title,body,validation_status,applied_at,created_at",
+      "id,version,source,channel,content_type,tone,title,body,validation_status,applied_at,created_at",
     )
     .eq("organization_id", actor.organizationId)
     .eq("property_id", propertyId)
@@ -656,6 +683,7 @@ export async function listMarketingDrafts(
   return (data ?? []).map((row) => ({
     id: row.id,
     version: row.version,
+    source: row.source,
     channel: row.channel,
     contentType: row.content_type,
     tone: row.tone,
