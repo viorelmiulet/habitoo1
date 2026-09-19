@@ -9,8 +9,10 @@
  * Pentru un portal nou este suficient: definiție aici + adaptor + mapper.
  * Nu se modifică baza de date, UI-ul sau managementul de secrete.
  */
+import { CRM_URL } from "@/lib/host";
 
 export type PortalId = string;
+
 
 /** Disponibilitatea integrării în Habitoo (nu starea conexiunii agenției). */
 export type PortalAvailability = "available" | "coming_soon" | "disabled";
