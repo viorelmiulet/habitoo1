@@ -65,11 +65,8 @@ export function NewContractDialog({ open, onOpenChange, propertyId, contactId }:
   const fetchTemplates = useServerFn(listTemplates);
   const fetchInventory = useServerFn(getContractInventoryDefaults);
   const runCreate = useServerFn(createContract);
-  const runExtract = useServerFn(extractIdDocument);
-  const fetchExtractionStatus = useServerFn(getIdExtractionStatus);
-  const landlordFileRef = useRef<HTMLInputElement>(null);
-  const tenantFileRef = useRef<HTMLInputElement>(null);
-  const beneficiaryFileRef = useRef<HTMLInputElement>(null);
+  const runRead = useServerFn(readIdDocument);
+  const fetchExtractionStatus = useServerFn(getIdReadingStatus);
   const [documentKind, setDocumentKind] = useState<"rent_agreement" | "exclusive_representation">("rent_agreement");
   const [templateId, setTemplateId] = useState("");
   const [selectedProperty, setSelectedProperty] = useState(propertyId ?? "");
@@ -77,7 +74,9 @@ export function NewContractDialog({ open, onOpenChange, propertyId, contactId }:
   const [landlord, setLandlord] = useState<PartyForm>(emptyParty("landlord"));
   const [tenant, setTenant] = useState<PartyForm>(emptyParty("tenant"));
   const [beneficiary, setBeneficiary] = useState<PartyForm>(emptyParty("seller"));
-  const [extractTarget, setExtractTarget] = useState<"landlord" | "tenant" | "beneficiary">("landlord");
+  const [idStates, setIdStates] = useState<Record<PartyTarget, PartyIdState>>({ landlord: emptyPartyIdState, tenant: emptyPartyIdState, beneficiary: emptyPartyIdState });
+  const [backDone, setBackDone] = useState<Record<PartyTarget, boolean>>({ landlord: false, tenant: false, beneficiary: false });
+  const [reading, setReading] = useState<{ target: PartyTarget; side: CaptureSide } | null>(null);
   const [destination, setDestination] = useState("locuinta");
   const [durationMonths, setDurationMonths] = useState("");
   const [startDate, setStartDate] = useState("");
