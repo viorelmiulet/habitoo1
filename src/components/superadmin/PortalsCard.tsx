@@ -841,16 +841,41 @@ export function PortalsCard({ organizationId }: { organizationId: string }) {
                                   >
                                     <Copy className="size-3.5" />
                                   </Button>
-                                  <Button
-                                    type="button"
-                                    size="sm"
-                                    variant="ghost"
-                                    onClick={() => setFreshKey(null)}
-                                  >
-                                    Am salvat-o
-                                  </Button>
-                                </div>
-                              </div>
+                                 </div>
+                                 {freshKey.feedUrl ? (
+                                   <div className="space-y-1.5 border-t border-primary/30 pt-2">
+                                     <p className="text-sm font-medium">
+                                       Link pentru portal — copiază acum, nu se mai afișează
+                                     </p>
+                                     <div className="flex items-center gap-2">
+                                       <code className="min-w-0 flex-1 truncate text-xs">
+                                         {freshKey.feedUrl}
+                                       </code>
+                                       <Button
+                                         type="button"
+                                         size="sm"
+                                         onClick={() =>
+                                           copy(freshKey.feedUrl!, "Link copiat.")
+                                         }
+                                       >
+                                         <Copy className="size-3.5" />
+                                       </Button>
+                                     </div>
+                                     <p className="text-xs text-muted-foreground">
+                                       Acesta este linkul complet pe care îl trimiți portalului.
+                                     </p>
+                                   </div>
+                                 ) : null}
+                                 <Button
+                                   type="button"
+                                   size="sm"
+                                   variant="ghost"
+                                   onClick={() => setFreshKey(null)}
+                                 >
+                                   Am salvat-o
+                                 </Button>
+                               </div>
+
                             ) : null}
                           </>
                         )}
