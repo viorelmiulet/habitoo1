@@ -24,6 +24,7 @@ import {
 } from "@/lib/imobiliare-locations.functions";
 import { appHead } from "@/components/app/app-head";
 import { MarketPriceIndexCard } from "@/components/superadmin/MarketPriceIndexCard";
+import { PostalCodeBackfillCard } from "@/components/superadmin/PostalCodeBackfillCard";
 
 
 export const Route = createFileRoute("/_authenticated/superadmin/nomenclator")({
