@@ -1,53 +1,58 @@
 /**
- * Lista unică de chei redactate recursiv în tracing și audit.
+ * Regulile de redactare recursivă folosite în tracing și audit.
  *
- * Conține atât secretele tehnice (chei, tokenuri, parole), cât și câmpurile de
- * identitate citite din actul de identitate (CNP, serie, număr, data nașterii,
- * nume, adresă, MRZ, imaginea actului). Nici una dintre aceste valori nu are
- * voie să ajungă în `ai_trace_events`, `audit_logs` sau în vreun mesaj de
- * eroare.
+ * Două liste distincte, cu semantici diferite:
+ * - `SECRET_PATTERN`: potrivire pe subșir, pentru secrete tehnice (chei, tokenuri,
+ *   parole). O cheie ca `stripeApiKey` trebuie prinsă oriunde apare.
+ * - `IDENTITY_KEYS`: potrivire exactă pe cheia normalizată (fără `_`/`-`, case
+ *   insensitive), pentru câmpurile de identitate din actul de identitate.
+ *   Potrivirea exactă este obligatorie ca să nu ascundem date operaționale:
+ *   `address`, `adresa`, `propertyAddress` NU se redactează (adresele
+ *   proprietăților trebuie să rămână vizibile în audit și tracing), iar
+ *   `enumeratedValues` nu trebuie prins din cauza subșirului „nume”.
  */
-const SECRET_PART = "key|secret|token|password|apikey|authorization";
+export const SECRET_PATTERN = /(key|secret|token|password|apikey|authorization)/i;
 
-const IDENTITY_PART = [
+/** Chei de identitate redactate prin potrivire exactă (după normalizare). */
+export const IDENTITY_KEYS: ReadonlySet<string> = new Set([
   "cnp",
   "mrz",
   "serie",
   "series",
   "documentnumber",
-  "document_number",
-  "documentnr",
   "birthdate",
-  "birth_date",
   "dateofbirth",
-  "date_of_birth",
   "datanasterii",
-  "data_nasterii",
   "surname",
   "givennames",
-  "given_names",
   "fullname",
   "holdername",
   "nume",
   "prenume",
-  "address",
-  "adresa",
-  "imagebase64",
-  "image_base64",
-  "imagedata",
-  "image_data",
-  "idimage",
-  "documentimage",
   "sex",
   "nationality",
   "nationalitate",
   "expirydate",
-  "expiry_date",
   "dataexpirarii",
-].join("|");
+  "imagebase64",
+  "imagedata",
+  "idimage",
+  "documentimage",
+  /* Adresa din actul de identitate — cheie dedicată, distinctă de `address`. */
+  "idaddress",
+  "adresaact",
+]);
 
-/** Orice cheie care se potrivește este eliminată din detaliile trimise la audit/tracing. */
-export const REDACTED_DETAIL_KEY = new RegExp(`(${SECRET_PART}|${IDENTITY_PART})`, "i");
+/** `documentNumber`, `document_number`, `DOCUMENT-NUMBER` → `documentnumber`. */
+export function normalizeRedactionKey(key: string): string {
+  return key.replace(/[_-]/g, "").toLowerCase();
+}
+
+/** Cheia se redactează dacă este un secret tehnic (subșir) sau un câmp de identitate (exact). */
+export function isRedactedDetailKey(key: string): boolean {
+  if (SECRET_PATTERN.test(key)) return true;
+  return IDENTITY_KEYS.has(normalizeRedactionKey(key));
+}
 
 /** Numele câmpurilor returnate de modulul de citire a actului, pentru verificări. */
 export const ID_DOCUMENT_FIELD_NAMES = [
@@ -60,5 +65,5 @@ export const ID_DOCUMENT_FIELD_NAMES = [
   "givenNames",
   "cnp",
   "series",
-  "address",
+  "idAddress",
 ] as const;

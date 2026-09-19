@@ -24,7 +24,7 @@ export function mrzTextFromCandidates(lines: string[]): string | null {
 }
 
 export type IdFrontFieldName =
-  | "address"
+  | "idAddress"
   | "issuingAuthority"
   | "issuedOn"
   | "validUntil"
@@ -34,7 +34,7 @@ export type IdFrontFieldName =
   | "documentNumber";
 
 export const ID_FRONT_FIELD_NAMES: IdFrontFieldName[] = [
-  "address",
+  "idAddress",
   "issuingAuthority",
   "issuedOn",
   "validUntil",

@@ -198,7 +198,7 @@ describe("citirea zonei automate cu modelul", () => {
 describe("fața actului", () => {
   it("toate câmpurile sunt „de confirmat”, cu datele normalizate", async () => {
     const provider = fakeProvider([
-      '{"address":"Str. Exemplu 1, București","issuingAuthority":"SPCLEP Exemplu","issuedOn":"12.03.2020","validUntil":"2030-03-12","series":"RX","surname":"POPESCU","givenNames":"ION MARIN","documentNumber":"RX123456"}',
+      '{"idAddress":"Str. Exemplu 1, București","issuingAuthority":"SPCLEP Exemplu","issuedOn":"12.03.2020","validUntil":"2030-03-12","series":"RX","surname":"POPESCU","givenNames":"ION MARIN","documentNumber":"RX123456"}',
     ]);
     const prepared = await prepareIdUpload({ contentType: "image/jpeg", base64: jpegBase64(900, 600) });
     if (!prepared.ok) throw new Error("pregătire");
@@ -214,7 +214,7 @@ describe("fața actului", () => {
   it("răspuns nefolositor → motiv de recapturare, nu eroare generică", () => {
     const parsed = parseFrontVision("nu pot citi");
     expect(parsed.unreadable).toBe(true);
-    expect(parsed.fields.address.value).toBeNull();
+    expect(parsed.fields.idAddress.value).toBeNull();
   });
 
   it("datele scrise altfel sunt normalizate sau refuzate", () => {
