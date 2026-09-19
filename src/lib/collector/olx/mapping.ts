@@ -23,7 +23,7 @@ function fold(value: string | null | undefined): string {
     .toLowerCase()
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
-    .replace(/\s+/g, " ")
+    .replace(/[^a-z0-9+]+/g, " ")
     .trim();
 }
 
@@ -38,7 +38,7 @@ export function mapOlxPropertyType(
   if (/garsonier/.test(haystack)) return "garsonieră";
   if (/teren|lot de casa|parcela/.test(haystack)) return "teren";
   if (/birou|spatiu comercial|comercial|hala|depozit/.test(haystack)) return "spațiu comercial";
-  if (/casa|vila|duplex/.test(haystack)) return "casă/vilă";
+  if (/\bcas[ae]\b|\bvile?\b|duplex/.test(haystack)) return "casă/vilă";
 
   if (/apartament/.test(haystack)) {
     if (rooms === 1) return "garsonieră";

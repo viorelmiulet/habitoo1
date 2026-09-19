@@ -201,7 +201,7 @@ export function parseOlxRooms(params: string[]): number | null {
 
 export function parseOlxArea(params: string[]): number | null {
   for (const param of params) {
-    const match = /(\d+(?:[.,]\d+)?)\s*m(?:²|p|2)\b/i.exec(param);
+    const match = /(\d+(?:[.,]\d+)?)\s*m(?:²|p|2)(?![a-z])/i.exec(param);
     if (match?.[1]) {
       const value = Number.parseFloat(match[1].replace(",", "."));
       if (Number.isFinite(value)) return value;
