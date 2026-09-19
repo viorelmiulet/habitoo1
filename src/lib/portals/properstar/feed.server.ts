@@ -52,8 +52,10 @@ export type ProperstarFeedBuild = {
 };
 
 export function properstarFeedPath(agencyKey: string): string {
-  return `${PROPERSTAR_FEED_PATH_PREFIX}/${agencyKey}.xml`;
+  // Sursa unică a căii este definiția portalului din registry.
+  return getPortalDefinition(PROPERSTAR_PORTAL_ID)!.public_feed_path!(agencyKey);
 }
+
 
 function splitName(fullName: string | null | undefined): {
   firstName: string | null;
