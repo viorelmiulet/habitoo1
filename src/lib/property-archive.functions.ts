@@ -221,7 +221,7 @@ export const archiveProperty = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
 
     // Statusul ofertei schimbă feedul Properstar: golim cache-ul agenției.
-    const { clearProperstarCache } = await import("@/lib/portals/properstar/feed.server");
+    const { clearProperstarCache } = await import("@/lib/portals/properstar/cache");
     clearProperstarCache(property.organization_id);
 
     await admin.from("audit_logs").insert({
@@ -268,7 +268,7 @@ export const unarchiveProperty = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
 
     // Statusul ofertei schimbă feedul Properstar: golim cache-ul agenției.
-    const { clearProperstarCache } = await import("@/lib/portals/properstar/feed.server");
+    const { clearProperstarCache } = await import("@/lib/portals/properstar/cache");
     clearProperstarCache(property.organization_id);
 
     await admin.from("audit_logs").insert({

@@ -9,6 +9,10 @@ import {
   sanitizeProperstarHtml,
   properstarPhone,
   properstarPhotoDateSuffix,
+  properstarEntityId,
+  properstarIsoDate,
+  properstarPublicPhoto,
+  PROPERSTAR_ID_MAX_LENGTH,
 } from "./mapper";
 
 /* ------------------------------ fixtures in-memory ------------------------------ */
@@ -386,5 +390,88 @@ describe("cache-ul feedului", () => {
     const { PROPERSTAR_FEED_HEADERS } = await import("./feed.server");
     expect(PROPERSTAR_FEED_HEADERS["cache-control"]).toContain("no-cache");
     expect(PROPERSTAR_FEED_HEADERS["cache-control"]).not.toContain("max-age=300");
+  });
+});
+
+describe("conformitatea cu specificația", () => {
+  const ORG_UUID = "04041622-b3d2-4cbe-a214-2ae9bfa34492";
+
+  it("OfficeId respectă limita de 20 de caractere și setul permis", () => {
+    const id = properstarEntityId("hb", ORG_UUID);
+    expect(id.length).toBeLessThanOrEqual(PROPERSTAR_ID_MAX_LENGTH);
+    expect(id).toMatch(/^[A-Za-z0-9_-]+$/);
+  });
+
+  it("OfficeId este stabil pentru aceeași agenție și diferit între agenții", () => {
+    expect(properstarEntityId("hb", ORG_UUID)).toBe(properstarEntityId("hb", ORG_UUID));
+    expect(properstarEntityId("hb", ORG_UUID)).not.toBe(
+      properstarEntityId("hb", "1564cc61-17be-45e4-947f-944bbef56164"),
+    );
+  });
+
+  it("un identificator deja scurt și permis rămâne neschimbat", () => {
+    expect(properstarEntityId("hb", "AG-1001")).toBe("AG-1001");
+  });
+
+  it("fotografia agentului este adresă https sau lipsește complet", async () => {
+    db.profiles = [
+      {
+        id: "agent-1",
+        full_name: "Ana Pop",
+        email: "ana@habitoo.ro",
+        phone: "0733111222",
+        avatar_url: "org-1/agent-1/avatar-123.jpg",
+      },
+    ];
+    const { xml } = await build();
+    expect(xml).not.toContain("avatar-123.jpg");
+    expect(xml).not.toContain("<Photo>org-1/");
+
+    db.profiles = [
+      {
+        id: "agent-1",
+        full_name: "Ana Pop",
+        email: "ana@habitoo.ro",
+        phone: "0733111222",
+        avatar_url: "https://cdn.habitoo.ro/ana.jpg",
+      },
+    ];
+    const withUrl = await build();
+    expect(withUrl.xml).toContain("<Photo>https://cdn.habitoo.ro/ana.jpg</Photo>");
+    expect(properstarPublicPhoto("org/agent/avatar.jpg")).toBeNull();
+  });
+
+  it("toate elementele Photo sunt adrese absolute https", async () => {
+    const { xml } = await build();
+    for (const match of xml.matchAll(/<Photo>([^<]+)<\/Photo>/g)) {
+      expect(match[1]).toMatch(/^https:\/\//);
+    }
+  });
+
+  it("PublicationDate este ISO 8601 în UTC", async () => {
+    const { adverts, xml } = await build();
+    expect(adverts[0]!.publicationDate).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$/);
+    expect(xml).toMatch(/<PublicationDate>\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z<\/PublicationDate>/);
+    expect(properstarIsoDate("nu e o dată")).toBeNull();
+  });
+
+  it("OfficeId și AgentId din XML respectă limita chiar și pornind de la UUID-uri", async () => {
+    const { adverts } = await build();
+    const advert = adverts[0]!;
+    const { advertToXml } = await import("./mapper");
+    const xml = advertToXml({
+      ...advert,
+      office: { ...advert.office, officeId: properstarEntityId("hb", ORG_UUID) },
+      agent: {
+        ...advert.agent,
+        agentId: properstarEntityId("ag", "9f1d2c3b-4a5e-4f60-8b71-2c3d4e5f6071"),
+      },
+    });
+    for (const tag of ["OfficeId", "AgentId"]) {
+      const value = new RegExp(`<${tag}>([^<]+)</${tag}>`).exec(xml)?.[1] ?? "";
+      expect(value.length).toBeGreaterThan(0);
+      expect(value.length).toBeLessThanOrEqual(PROPERSTAR_ID_MAX_LENGTH);
+      expect(value).toMatch(/^[A-Za-z0-9_-]+$/);
+    }
   });
 });

@@ -12,6 +12,7 @@
  * sunt excluse și raportate în UI („De completat pentru Properstar").
  */
 import { CRM_URL } from "@/lib/host";
+import { clearProperstarCache, readProperstarCache, writeProperstarCache } from "./cache";
 import { portalPublicFeedUrl } from "@/lib/portals/registry";
 import { feedUrlsForRequest } from "@/lib/site-feed/config";
 
@@ -59,7 +60,6 @@ export function properstarFeedPath(agencyKey: string): string {
   return portalPublicFeedUrl(PROPERSTAR_PORTAL_ID, agencyKey)!.slice(CRM_URL.length);
 }
 
-
 function splitName(fullName: string | null | undefined): {
   firstName: string | null;
   lastName: string | null;
@@ -69,8 +69,6 @@ function splitName(fullName: string | null | undefined): {
   if (parts.length === 1) return { firstName: parts[0] ?? null, lastName: null };
   return { firstName: parts[0] ?? null, lastName: parts.slice(1).join(" ") };
 }
-
-const cache = new Map<string, { expiresAt: number; build: ProperstarFeedBuild }>();
 
 /**
  * Antetele răspunsului public. Nu lăsăm clientul să păstreze feedul: o ofertă
@@ -82,17 +80,11 @@ export const PROPERSTAR_FEED_HEADERS: Record<string, string> = {
   "cache-control": "no-cache, must-revalidate",
 };
 
-export function clearProperstarCache(organizationId?: string): void {
-  if (organizationId) cache.delete(organizationId);
-  else cache.clear();
-}
-
 /** Un feed gol nu se memorează: altfel o corecție s-ar vedea abia după expirare. */
 function rememberBuild(organizationId: string, now: Date, build: ProperstarFeedBuild): void {
   if (!build.adverts.length) return;
-  cache.set(organizationId, { expiresAt: now.getTime() + PROPERSTAR_CACHE_MS, build });
+  writeProperstarCache(organizationId, now.getTime() + PROPERSTAR_CACHE_MS, build);
 }
-
 
 export async function buildProperstarFeed(input: {
   organizationId: string;
@@ -102,8 +94,8 @@ export async function buildProperstarFeed(input: {
 }): Promise<ProperstarFeedBuild> {
   const now = input.now ?? new Date();
   if (input.useCache) {
-    const hit = cache.get(input.organizationId);
-    if (hit && hit.expiresAt > now.getTime()) return hit.build;
+    const hit = readProperstarCache<ProperstarFeedBuild>(input.organizationId, now.getTime());
+    if (hit) return hit;
   }
 
   const url = typeof input.requestUrl === "string" ? new URL(input.requestUrl) : input.requestUrl;
@@ -309,3 +301,5 @@ export async function buildProperstarFeed(input: {
   rememberBuild(input.organizationId, now, build);
   return build;
 }
+
+export { clearProperstarCache };

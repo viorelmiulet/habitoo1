@@ -19,7 +19,6 @@ import {
   derivePortalConnectionStatus,
   getPortalDefinition,
   portalPublicFeedUrl,
-
   type PortalConnectionStatus,
   type PortalDefinition,
 } from "@/lib/portals/registry";
@@ -316,9 +315,12 @@ export async function cachedListingDiagnostics(input: {
   now?: number;
 }): Promise<PortalListingDiagnosticsView | null> {
   const now = input.now ?? Date.now();
-  const key = [input.organizationId, input.portal.id, input.propertyId, input.externalId ?? ""].join(
-    "|",
-  );
+  const key = [
+    input.organizationId,
+    input.portal.id,
+    input.propertyId,
+    input.externalId ?? "",
+  ].join("|");
   const hit = diagnosticsCache.get(key);
   if (hit && now - hit.at < PORTAL_DIAGNOSTICS_TTL_MS) return hit.value;
   const value = await input.run();
@@ -373,9 +375,7 @@ export async function buildContext(organizationId: string, definition: PortalDef
 
   const storedSettings = (row?.settings ?? {}) as Record<string, unknown>;
   const settings =
-    definition.id === "lacheie"
-      ? normalizeLaCheiePortalSettings(storedSettings)
-      : storedSettings;
+    definition.id === "lacheie" ? normalizeLaCheiePortalSettings(storedSettings) : storedSettings;
   return {
     row,
     ctx: {
@@ -464,9 +464,7 @@ export const getPortalHub = createServerFn({ method: "POST" })
       const row = (connections.data ?? []).find((c) => c.portal === portal.id) ?? null;
       const storedSettings = (row?.settings ?? {}) as Record<string, unknown>;
       const settings =
-        portal.id === "lacheie"
-          ? normalizeLaCheiePortalSettings(storedSettings)
-          : storedSettings;
+        portal.id === "lacheie" ? normalizeLaCheiePortalSettings(storedSettings) : storedSettings;
       const storedLastError = row?.last_sync_error ?? null;
       const lastError =
         portal.id === "lacheie" && isLegacyLaCheieTestEnvironmentError(storedLastError)
@@ -686,7 +684,6 @@ export const setPortalActivation = createServerFn({ method: "POST" })
     });
   });
 
-
 export const savePortalConnection = createServerFn({ method: "POST" })
   .middleware([requireActiveOrgAuth])
   .inputValidator((input: unknown) => saveSchema.parse(input))
@@ -710,7 +707,6 @@ export const savePortalConnection = createServerFn({ method: "POST" })
     }
     // Trimiterile reale nu au comutator separat: urmează mereu activarea.
     settings["allow_live"] = row?.activated === true;
-
 
     const patch: Record<string, unknown> = {
       organization_id: organizationId,
@@ -936,7 +932,6 @@ export const issuePortalApiKey = createServerFn({ method: "POST" })
     };
   });
 
-
 export const revokePortalApiKey = createServerFn({ method: "POST" })
   .middleware([requireActiveOrgAuth])
   .inputValidator((input: unknown) =>
@@ -1003,7 +998,6 @@ export type ListingActionResult =
       /** Statusul HTTP real întors de portal, când există (404 = ofertă necunoscută). */
       httpStatus?: number | null;
     };
-
 
 /**
  * Salvează motivul EXACT al unui eșec (eroarea portalului, limita de locuri,
@@ -1072,7 +1066,6 @@ export async function executeListingAction(input: {
    * retrimit niciodată automat.
    */
   withdrawReason?: string;
-
 }): Promise<ListingActionResult> {
   const { organizationId, actorId, portalId, propertyId, action } = input;
   const definition = getPortalDefinition(portalId);
@@ -1120,12 +1113,7 @@ export async function executeListingAction(input: {
   if (action !== "withdraw") {
     const { portalRequirementReport } = await import("@/lib/portals/requirements.server");
     const { requirementBlockMessage } = await import("@/lib/portals/requirements");
-    const report = await portalRequirementReport(
-      admin,
-      organizationId,
-      propertyId,
-      definition.id,
-    );
+    const report = await portalRequirementReport(admin, organizationId, propertyId, definition.id);
     if (report && !report.ok) {
       const message = requirementBlockMessage(definition.display_name, report);
       await logOperation({
@@ -1184,9 +1172,6 @@ export async function executeListingAction(input: {
       return { ok: false as const, code: "VALIDATION_ERROR", message: guard.message };
     }
   }
-
-
-
 
   const { portalRateLimited } = await import("@/lib/portals/rate-limit.server");
   if (portalRateLimited(action, `${organizationId}|${portalId}`)) {
@@ -1251,7 +1236,6 @@ export async function executeListingAction(input: {
       message: PORTAL_ERROR_MESSAGE.NOT_SUPPORTED,
     };
   }
-
 
   const { data: listing } = await admin
     .from("portal_listings")
@@ -1386,7 +1370,9 @@ export async function executeListingAction(input: {
     // Și la succes: statusul HTTP și corpul răspunsului (sanitizate), ca
     // jurnalul să dovedească ce a confirmat portalul, nu doar ce a refuzat.
     httpStatus: result.ok ? (result.data.httpStatus ?? null) : (result.httpStatus ?? null),
-    portalResponse: result.ok ? (result.data.portalResponse ?? null) : (result.portalResponse ?? null),
+    portalResponse: result.ok
+      ? (result.data.portalResponse ?? null)
+      : (result.portalResponse ?? null),
     ...(result.ok && result.data.externalId ? { externalId: result.data.externalId } : {}),
     propertyId,
     actorId,
@@ -1506,7 +1492,6 @@ export async function performPortalWithdraw(input: {
     message: res.message.startsWith(name) ? res.message : `${name}: ${res.message}`,
   };
 }
-
 
 export const runPortalListingAction = createServerFn({ method: "POST" })
   .middleware([requireActiveOrgAuth])
@@ -1642,7 +1627,6 @@ export const getPropertyPortalStatus = createServerFn({ method: "POST" })
           externalId: listing?.external_id ?? diagnostics?.externalId ?? null,
           publicUrl,
 
-
           publishedAt: listing?.published_at ?? null,
           lastSyncAt: listing?.last_sync_at ?? null,
           lastError: listing?.last_error ?? null,
@@ -1692,7 +1676,6 @@ export const getPropertyPortalRequirements = createServerFn({ method: "POST" })
       ...validatePortalRequirements(portal.id, subject),
     }));
   });
-
 
 export const getPortalLogs = createServerFn({ method: "POST" })
   .middleware([requireActiveOrgAuth])
@@ -1808,9 +1791,7 @@ export async function imobiliareAccountForOrg(
   if (!portal) return null;
   try {
     const { ctx } = await buildContext(organizationId, portal);
-    const { readImobiliareAccountState } = await import(
-      "@/lib/portals/adapters/imobiliare.server"
-    );
+    const { readImobiliareAccountState } = await import("@/lib/portals/adapters/imobiliare.server");
     return await readImobiliareAccountState(ctx);
   } catch {
     return null;
@@ -1894,11 +1875,9 @@ export const getPropertiesPortalMatrix = createServerFn({ method: "POST" })
     // când există o cheie Habitoo activă cu care pot citi feedul.
     const keyedPortals = new Set((activeKeys ?? []).map((k) => k.portal));
 
-    const imobiliareVisible =
-      visiblePortals === null || visiblePortals.has("imobiliare_ro");
+    const imobiliareVisible = visiblePortals === null || visiblePortals.has("imobiliare_ro");
     const imobiliareConnected = (connections ?? []).some(
-      (c) =>
-        c.portal === "imobiliare_ro" && (c.status === "connected" || c.status === "ready"),
+      (c) => c.portal === "imobiliare_ro" && (c.status === "connected" || c.status === "ready"),
     );
     const imobiliareAccount =
       imobiliareVisible && imobiliareConnected
@@ -2023,7 +2002,6 @@ export const setPropertyPortalSelection = createServerFn({ method: "POST" })
       .eq("property_id", data.propertyId)
       .maybeSingle();
 
-
     // Selectarea consumă un loc de publicare al agentului responsabil.
     if (data.enabled) {
       const { ensurePortalSlotAvailable } = await import("@/lib/portals/slots.server");
@@ -2038,7 +2016,6 @@ export const setPropertyPortalSelection = createServerFn({ method: "POST" })
         return { ok: false as const, code: "SLOT_LIMIT", message: guard.message };
       }
     }
-
 
     const { error } = await admin.from("portal_publications").upsert(
       {
@@ -2060,8 +2037,10 @@ export const setPropertyPortalSelection = createServerFn({ method: "POST" })
 
     // Feedul Properstar se citește dintr-un cache per agenție: îl golim imediat,
     // altfel portalul ar mai vedea câteva minute selecția veche.
-    const { clearProperstarCache } = await import("@/lib/portals/properstar/feed.server");
-    clearProperstarCache(organizationId);
+    if (definition.id === "properstar") {
+      const { clearProperstarCache } = await import("@/lib/portals/properstar/cache");
+      clearProperstarCache(organizationId);
+    }
 
     await admin.from("audit_logs").insert({
       organization_id: organizationId,
@@ -2112,7 +2091,6 @@ export const setPropertyPortalSelection = createServerFn({ method: "POST" })
       alreadyWithdrawn: false,
       message: null,
     };
-
   });
 
 /**
@@ -2543,10 +2521,12 @@ export async function applyPortalSelectionForOrg(input: {
           );
           if (error) throw new Error(error.message);
 
-      // Feedul Properstar se citește dintr-un cache per agenție: îl golim imediat,
-    // altfel portalul ar mai vedea câteva minute selecția veche.
-    const { clearProperstarCache } = await import("@/lib/portals/properstar/feed.server");
-    clearProperstarCache(organizationId);
+          // Feedul Properstar se citește dintr-un cache per agenție: îl golim imediat,
+          // altfel portalul ar mai vedea câteva minute selecția veche.
+          if (definition.id === "properstar") {
+            const { clearProperstarCache } = await import("@/lib/portals/properstar/cache");
+            clearProperstarCache(organizationId);
+          }
 
           await admin.from("audit_logs").insert({
             organization_id: organizationId,
@@ -2580,7 +2560,8 @@ export async function applyPortalSelectionForOrg(input: {
             actorId,
             portalId: definition.id,
             propertyId: data.propertyId,
-            externalId: (listingRow as { external_id?: string | null } | undefined)?.external_id ?? null,
+            externalId:
+              (listingRow as { external_id?: string | null } | undefined)?.external_id ?? null,
           });
           results.push({
             portalId: definition.id,
@@ -2591,7 +2572,6 @@ export async function applyPortalSelectionForOrg(input: {
           });
           continue;
         }
-
 
         // Portal neconfigurat: intenția rămâne salvată, statusul rămâne nepublicat.
         if (!configured) {
@@ -2828,9 +2808,7 @@ export const backfillImobiliarePublicUrls = createServerFn({ method: "POST" })
     await requireSuperadmin(context as unknown as AuthContext);
     const admin = await loadAdmin();
     const { parseImobiliareReferences } = await import("@/lib/portals/imobiliare/references");
-    const { readImobiliareListingState } = await import(
-      "@/lib/portals/adapters/imobiliare.server"
-    );
+    const { readImobiliareListingState } = await import("@/lib/portals/adapters/imobiliare.server");
     const definition = getPortalDefinition("imobiliare_ro");
     if (!definition) throw new Error("Portal necunoscut.");
 
@@ -2925,7 +2903,6 @@ export const backfillImobiliarePublicUrls = createServerFn({ method: "POST" })
       results,
     };
   });
-
 
 /**
  * AUTO-PRELUNGIRE STORIA — suprascriere per proprietate.
