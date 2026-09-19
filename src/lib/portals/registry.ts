@@ -186,6 +186,25 @@ export const PORTALS: PortalDefinition[] = [
     notes:
       "iMove nu documentează un API de creare/editare/ștergere anunț pentru CRM-uri. Publicarea se face exclusiv prin feedul Habitoo: selectezi oferta, iMove o importă la următoarea sincronizare; dacă o deselectezi, dispare din feed și iMove o arhivează. Cheia API o emite iMove, nu Habitoo.",
   },
+  {
+    id: "properstar",
+    display_name: "Properstar",
+    description:
+      "Properstar citește periodic feedul XML Habitoo al agenției și importă ofertele selectate. Retragerea se anunță în feed (Status=Deleted) și apoi oferta dispare.",
+    logo: "PS",
+    status: "available",
+    // Un singur sens: Habitoo expune feedul XML, Properstar îl consumă.
+    directions: ["habitoo_to_portal"],
+    // Cheia este emisă de Habitoo per agenție și pusă direct în URL-ul feedului,
+    // pentru că Properstar consumă un simplu link, fără headere.
+    authentication: ["habitoo_api_key", "query_parameter"],
+    capabilities: ["feed_pull"],
+    configuration_schema: { fields: [] },
+    website: "https://www.properstar.com",
+    notes:
+      "Properstar nu expune un API de creare/editare anunț: integrarea este exclusiv prin feed XML. Selectarea unei oferte înseamnă „inclusă în feedul Properstar” și consumă un loc de publicare. Cheia de acces o generezi în Habitoo și o dai Properstar.",
+  },
+
   // Portalurile de mai jos NU au încă integrare implementată. Nu declarăm
   // metode de autentificare sau capabilități pe care nu le-am verificat.
 
