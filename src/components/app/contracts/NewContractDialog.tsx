@@ -2,7 +2,7 @@ import { useMemo, useRef, useState } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useNavigate } from "@tanstack/react-router";
-import { Camera, Loader2, ScanLine, ShieldCheck } from "lucide-react";
+import { AlertTriangle, Camera, CheckCircle2, Loader2, RotateCcw, ShieldCheck } from "lucide-react";
 import { toast } from "@/components/ui/sonner";
 import { toastError } from "@/lib/errors";
 import { Button } from "@/components/ui/button";
@@ -13,10 +13,26 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { isValidCnp, type InventoryItem, type PartyRole } from "@/lib/contracts/templates";
-import { prepareIdImage } from "@/lib/contracts/image";
-import { createContract, extractIdDocument, getContractInventoryDefaults, getIdExtractionStatus, listTemplates } from "@/lib/contracts.functions";
+import { prepareIdCapture } from "@/lib/contracts/image";
+import { createContract, getContractInventoryDefaults, listTemplates } from "@/lib/contracts.functions";
+import { getIdReadingStatus, readIdDocument } from "@/lib/contracts/id-document.functions";
+import {
+  applyIdReading,
+  confirmPendingFields,
+  conflictLabel,
+  emptyPartyIdState,
+  idGenerationBlockers,
+  idWarningMessage,
+  resolveConflict,
+  type IdFormKey,
+  type PartyIdState,
+} from "@/lib/contracts/id/form-state";
+import type { IdFieldConflict } from "@/lib/contracts/id/vision.parse";
 import { useCurrentUser } from "@/hooks/use-session";
 import { InventoryEditor } from "./InventoryEditor";
+
+type PartyTarget = "landlord" | "tenant" | "beneficiary";
+type CaptureSide = "back" | "front";
 
 type PartyForm = {
   role: PartyRole;
