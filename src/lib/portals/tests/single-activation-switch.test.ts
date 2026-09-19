@@ -69,32 +69,22 @@ vi.mock("@/integrations/supabase/client.server", () => ({
   supabaseAdmin: { from: (table: string) => chain(table) },
 }));
 
-const context = {
-  userId: "user-1",
-  supabase: {
-    rpc: async (fn: string) => ({ data: fn === "is_superadmin", error: null }),
-    from: () => ({
-      select: () => ({
-        eq: () => ({
-          maybeSingle: async () => ({ data: { organization_id: "org-1" }, error: null }),
-        }),
-      }),
-    }),
-  },
-};
-
 const ORG = "11111111-1111-4111-8111-111111111111";
 
 async function toggle(activated: boolean) {
-  const { setPortalActivation } = await import("@/lib/portals.functions");
-  await (
-    setPortalActivation as unknown as (a: {
-      data: unknown;
-      context: unknown;
-    }) => Promise<unknown>
-  )({ data: { organizationId: ORG, portalId: "clickimob", activated }, context });
-  return writes.find((w) => w.table === "portal_connections" && w.op === "upsert")!.row;
+  const { applyPortalActivationForOrg } = await import("@/lib/portals.functions");
+  await applyPortalActivationForOrg({
+    organizationId: ORG,
+    portalId: "clickimob",
+    activated,
+    actorId: "user-1",
+  });
+  const upserts = writes.filter((w) => w.table === "portal_connections" && w.op === "upsert");
+  // Un singur apel de scriere pentru ambele stări.
+  expect(upserts).toHaveLength(1);
+  return upserts[0]!.row;
 }
+
 
 describe("un singur comutator de activare a portalului", () => {
   beforeEach(() => {
