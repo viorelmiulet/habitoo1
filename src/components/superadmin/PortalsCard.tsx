@@ -280,7 +280,8 @@ export function PortalsCard({ organizationId }: { organizationId: string }) {
       }),
     onSuccess: (res, portalId) => {
       setKeyLabel((prev) => ({ ...prev, [portalId]: "" }));
-      setFreshKey({ portalId, key: res.key });
+      setFreshKey({ portalId, key: res.key, feedUrl: res.feedUrl ?? null });
+
       invalidate();
     },
     onError: (e: Error) => toastError(e),
