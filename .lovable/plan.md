@@ -1,51 +1,50 @@
-# Promovare Imobiliare.ro, direct din CRM
+# Contracte — citirea actului, etapa 2: poză și extragere vizuală
 
-Adaug administrarea reală a serviciilor de promovare Imobiliare.ro pe pagina proprietății: câte locuri are agenția, câte sunt folosite, care anunțuri le consumă și activarea/dezactivarea per ofertă — totul citit și scris live la portal, fără valori inventate.
+Poza actului nu este salvată nicăieri: nici în bucket, nici în tabel, nici în fișier temporar, nici în loguri sau mesaje de eroare. Există doar în memorie, pe durata cererii.
 
-## Ce vede utilizatorul
+## Ce va putea face utilizatorul
 
-O secțiune nouă „Promovare Imobiliare.ro”, sub rândul portalului, activă doar când oferta este publicată acolo:
-
-```text
-Promovat            [ ]     2 / 5     disponibile 3
-Top Listing         [x]     8 / 8     ocupat — poate fi doar dezactivat
-Top Listing S       [ ]     1 / 1     fără locuri libere
-Bonus               [ ]     1 / 3     disponibile 2
-Pole Position       [ ]     0 / 2
-imoradar24          [ ]     —
-Puncte Energy       [ 5 ]   5 / 5
-```
-
-- click pe contor → lista reală a anunțurilor care consumă locurile respective;
-- „Sincronizează” reîncarcă cifrele; se arată momentul ultimei citiri;
-- dacă un serviciu nu poate fi citit, restul rămân funcționale, iar acela arată eroarea lui;
-- fără locuri libere, activarea este blocată cu explicație; dezactivarea rămâne mereu posibilă;
-- Energy are câmp numeric, nu bifă, limitat la locurile disponibile plus valoarea curentă;
-- „Vizionare prin apel video” NU intră aici (este caracteristică a ofertei, nu serviciu de promovare).
+- Trimite spatele actului (zona citibilă automat) și, opțional, fața — fie ca fișier, fie ca fotografie făcută pe loc.
+- Formate acceptate: JPG, PNG, WEBP, HEIC și PDF (din PDF se citește doar prima pagină).
+- Dacă poza nu e bună, primește un motiv concret („imaginea este prea neclară", „zona citibilă automat nu a fost găsită", „documentul pare tăiat"), nu o eroare generică.
+- Datele citite din zona automată sunt verificate matematic; cele citite de pe fața actului (domiciliu, autoritate emitentă, valabilitate, serie) rămân marcate „de confirmat" și trebuie confirmate manual înainte de generarea unui contract.
+- Când fața și zona automată spun altceva la același câmp (nume, număr document), se raportează conflictul; nu se alege în silence o variantă.
 
 ## Implementare
 
-Endpointuri noi folosite (host existent, sesiune OAuth existentă, strict server-side):
-- `GET /api/v3/promotions/slots/{slot_type}` — inventar (`data.total`, `data.used`);
-- `GET /api/v3/promotions/listings/{slot_type}` — anunțurile care consumă locurile;
-- `POST /api/v3/listings/{CUSTOM_REFERENCE}/promotions` — scriere parțială, doar câmpurile schimbate.
+### 1. Pregătirea imaginii pe server (`src/lib/contracts/id/prepare.server.ts`)
+Tot în memorie, fără scriere pe disc, cu pachetele deja instalate (`jpeg-js`, `fast-png`, `pdf-lib`):
+- verificare semnătură de fișier vs. tipul declarat, plafon de octeți la intrare și după reducere;
+- JPEG: citirea orientării din EXIF, rotire/oglindire, reducere la latura maximă 1600 px, recodare JPEG;
+- PNG: decodare, reducere, recodare JPEG;
+- PDF: extragerea primei pagini într-un PDF nou de o pagină, trimis ca atare;
+- WEBP/HEIC: nu există decodor pur-JS compatibil cu mediul de rulare al serverului (fără biblioteci native). Acestea sunt trimise așa cum sunt (modelul le acceptă), cu plafon de mărime; pentru ele reîncercarea cu decupaj nu este posibilă și se cere o poză JPG. Aceasta este singura limitare față de cerință și o marchez explicit.
+- decupajul treimii inferioare (pentru reîncercare) se face pe pixelii deja decodați, doar pentru JPEG/PNG.
 
-Fișiere:
-- `src/lib/portals/imobiliare/promotions.ts` (nou, pur) — registrul unic de mapări: `promo→promo`, `tl→top_listing`, `tls→top_listing_s`, `energy→energy` (numeric), `bonus→bonus`, `pole_position→pole_position`, `promote_imoradar→promote_imoradar` (fără inventar), `similar→similar_properties`, `month→properties_of_the_month`; `starter` și `rotatii` doar inventar, fără câmp de scriere. Plus normalizarea `total/used/available` și parsarea listelor.
-- `src/lib/portals/imobiliare/promotions.server.ts` (nou) — citirea inventarului pe fiecare slot în paralel cu izolarea erorilor, citirea listelor și scrierea parțială cu revalidare a inventarului înainte de activare.
-- `src/lib/portals/imobiliare-promotions.functions.ts` (nou) — trei funcții de server: inventar + starea ofertei, activare/dezactivare, lista pe slot. Aceleași verificări de acces și izolare pe agenție ca la restul portalului; fiecare scriere intră în jurnalul de operațiuni.
-- `src/lib/portals.functions.ts` — expun (fără schimbare de comportament) cele trei ajutoare interne deja folosite: resolvarea agenției, construirea contextului portalului, jurnalizarea.
-- `src/components/app/PropertyImobiliarePromotionsCard.tsx` (nou) — secțiunea de UI.
-- `src/components/app/PropertyPortalsCard.tsx` — o randează pentru rândul Imobiliare.ro, exact ca blocul Storia existent.
-- `src/lib/portals/imobiliare/tests/promotions.test.ts` (nou) — mapări per serviciu, inventar total/folosit/disponibil, inventar indisponibil, zero locuri, serviciu activ cu locuri epuizate (dezactivare permisă), scriere parțială, listă pe slot, reînnoire token la 401, fără scurgeri de secrete, izolare pe agenții.
+### 2. Citirea zonei automate (`src/lib/contracts/id/vision.server.ts`)
+- prompt strict: modelul întoarce exclusiv cele trei linii brute, fără interpretare, fără JSON;
+- liniile intră în parserul determinist din etapa 1 — modelul nu decide niciodată dacă un câmp e valid, cifrele de control decid;
+- dacă cifrele de control cad: o singură reîncercare cu decupaj mărit al treimii inferioare; apoi mesaj clar de recapturare;
+- calitate: motive concrete derivate din ce lipsește (lipsă linii, linii scurte/tăiate, text nelizibil).
 
-## Limite asumate
+### 3. Fața actului (`vision.server.ts`)
+- prompt separat cu schemă strictă pentru domiciliu, autoritate emitentă, date de valabilitate, serie;
+- fiecare câmp întors cu `source: "vision"` și `status: "unverified"`;
+- conflictele pe câmpurile comune (nume, număr document) se întorc într-o listă `conflicts`, fără fuziune.
 
-- Starea curentă a serviciilor pentru ofertă se deduce din listele reale pe slot; dacă un slot nu poate fi citit, starea lui apare „necunoscută”, nu „inactivă”.
-- Cifrele nu se stochează local: sursa de adevăr rămâne portalul. În baza de date păstrez doar legătura ofertă ↔ referință Imobiliare.ro (deja existentă) și jurnalul operațiunilor.
-- Nicio modificare reală de promovare nu se declanșează automat sau din teste — doar la acțiunea explicită a utilizatorului.
-- Nu ating Stage 19, AI/ACP/Manager/Prospecting, La Cheie sau celelalte portaluri; nu adaug promovări plătite ca produs nou, doar administrarea serviciilor din contul agenției.
+### 4. Provider vizual (`src/lib/ai/providers/`)
+- extindere minimă: mesajul de utilizator poate purta atașamente `{ mimeType, base64 }`, trimise ca `inlineData` către Gemini;
+- tokenii reali raportați de provider sunt păstrați ca până acum (necunoscut rămâne necunoscut).
 
-## Validare
+### 5. Cost și abuz (`src/lib/contracts/id-document.functions.ts`)
+- poarta existentă `checkAiQuota` (limite per utilizator și plafon per agenție) înainte de orice apel;
+- limită separată de încercări pe utilizator pe oră pentru citirea actului;
+- fiecare apel vizual scris în `ai_usage_events` cu `capability: "id_document_vision"`.
 
-Teste complete, verificare de tipuri și build.
+### 6. Forma rezultatului
+Neschimbată față de etapa 1: `value`, `source` („mrz" | „vision"), `status`, `reason`. Se adaugă `confidence` per câmp doar dacă providerul întoarce una reală — altfel rămâne absentă.
+
+### 7. Teste
+Pregătire (rotire EXIF, reducere, prima pagină din PDF), calea zonei automate care alimentează parserul determinist, reîncercarea la cifre de control greșite, conflict față/zonă raportat și nefuzionat, câmpurile vizuale mereu „de confirmat", consumul numărat, plus o verificare automată care cade dacă vreun modul din această cale apelează stocare, scriere pe disc sau pune octeți de imagine în loguri/audit.
+
+Rulez apoi suita completă, verificarea de tipuri și build-ul.
