@@ -78,3 +78,23 @@ export async function prepareIdImage(file: File): Promise<PreparedImage> {
     bytes: Math.floor((base64.length * 3) / 4),
   };
 }
+
+/**
+ * Pregătirea unei capturi pentru citirea actului pe server.
+ *
+ * Imaginile pe care browserul le poate decoda sunt micșorate aici (cerere mai
+ * mică, MRZ încă lizibil); HEIC și PDF sunt trimise așa cum sunt, pentru că
+ * serverul le tratează. Octeții nu sunt salvați nicăieri, nici local.
+ */
+export async function prepareIdCapture(file: File): Promise<{ contentType: string; base64: string }> {
+  const isPdf = file.type === "application/pdf" || /\.pdf$/i.test(file.name);
+  if (isPdf || isHeic(file)) {
+    const buffer = await file.arrayBuffer();
+    const bytes = new Uint8Array(buffer);
+    let binary = "";
+    for (let i = 0; i < bytes.length; i += 1) binary += String.fromCharCode(bytes[i] as number);
+    return { contentType: isPdf ? "application/pdf" : file.type || "image/heic", base64: btoa(binary) };
+  }
+  const prepared = await prepareIdImage(file);
+  return { contentType: prepared.mimeType, base64: prepared.base64 };
+}
