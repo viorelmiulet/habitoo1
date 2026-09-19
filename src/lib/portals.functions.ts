@@ -574,6 +574,92 @@ const saveSchema = z.object({
  * (`settings.allow_live`), iar dezactivarea le oprește. Nu există stare în care
  * portalul este activat dar nu trimite.
  */
+export async function applyPortalActivationForOrg(input: {
+  organizationId: string;
+  portalId: string;
+  activated: boolean;
+  actorId: string;
+}) {
+  const { organizationId, activated, actorId } = input;
+  const definition = getPortalDefinition(input.portalId);
+  if (!definition) throw new Error("Portal necunoscut.");
+
+  const admin = await loadAdmin();
+  const { data: existing } = await admin
+    .from("portal_connections")
+    .select("settings")
+    .eq("organization_id", organizationId)
+    .eq("portal", definition.id)
+    .maybeSingle();
+  const settings = {
+    ...((existing?.settings ?? {}) as Record<string, unknown>),
+    allow_live: activated,
+  };
+  const { error } = await admin.from("portal_connections").upsert(
+    {
+      organization_id: organizationId,
+      portal: definition.id,
+      activated,
+      settings: settings as never,
+      updated_by: actorId,
+      created_by: actorId,
+    } as never,
+    { onConflict: "organization_id,portal" },
+  );
+  if (error) throw new Error(error.message);
+
+  await admin.from("audit_logs").insert({
+    organization_id: organizationId,
+    actor_id: actorId,
+    action: activated ? "portal.activated_for_org" : "portal.deactivated_for_org",
+    entity: "portal_connections",
+    new_values: { portal: definition.id, activated, allow_live: activated },
+    created_by: actorId,
+  } as never);
+
+  // Activarea directă rezolvă automat o cerere în așteptare a agenției,
+  // ca să nu rămână orfană în lista Superadminului.
+  if (activated) {
+    const { data: pending } = await admin
+      .from("portal_activation_requests")
+      .select("id")
+      .eq("organization_id", organizationId)
+      .eq("portal", definition.id)
+      .eq("status", "pending")
+      .maybeSingle();
+    if (pending) {
+      await admin
+        .from("portal_activation_requests")
+        .update({
+          status: "approved",
+          resolved_by: actorId,
+          resolved_at: new Date().toISOString(),
+        } as never)
+        .eq("id", pending.id);
+      await admin.from("audit_logs").insert({
+        organization_id: organizationId,
+        actor_id: actorId,
+        action: "portal.activation_request_approved",
+        entity: "portal_activation_requests",
+        entity_id: pending.id,
+        old_values: { status: "pending" },
+        new_values: { status: "approved", portal: definition.id, via: "portal_activation" },
+        created_by: actorId,
+      } as never);
+    }
+  }
+
+  await logOperation({
+    organizationId,
+    portal: definition.id,
+    operation: activated ? "activate_org" : "deactivate_org",
+    success: true,
+    actorId,
+  });
+
+  return { ok: true as const, activated };
+}
+
 export const setPortalActivation = createServerFn({ method: "POST" })
   .middleware([requireActiveOrgAuth])
   .inputValidator((input: unknown) =>
@@ -590,85 +676,14 @@ export const setPortalActivation = createServerFn({ method: "POST" })
       context as unknown as AuthContext,
       data.organizationId,
     );
-    const definition = getPortalDefinition(data.portalId);
-    if (!definition) throw new Error("Portal necunoscut.");
-
-    const admin = await loadAdmin();
-    const { data: existing } = await admin
-      .from("portal_connections")
-      .select("settings")
-      .eq("organization_id", organizationId)
-      .eq("portal", definition.id)
-      .maybeSingle();
-    const settings = {
-      ...((existing?.settings ?? {}) as Record<string, unknown>),
-      allow_live: data.activated,
-    };
-    const { error } = await admin.from("portal_connections").upsert(
-      {
-        organization_id: organizationId,
-        portal: definition.id,
-        activated: data.activated,
-        settings: settings as never,
-        updated_by: context.userId,
-        created_by: context.userId,
-      } as never,
-      { onConflict: "organization_id,portal" },
-    );
-    if (error) throw new Error(error.message);
-
-
-    await admin.from("audit_logs").insert({
-      organization_id: organizationId,
-      actor_id: context.userId,
-      action: data.activated ? "portal.activated_for_org" : "portal.deactivated_for_org",
-      entity: "portal_connections",
-      new_values: { portal: definition.id, activated: data.activated },
-      created_by: context.userId,
-    } as never);
-
-    // Activarea directă rezolvă automat o cerere în așteptare a agenției,
-    // ca să nu rămână orfană în lista Superadminului.
-    if (data.activated) {
-      const { data: pending } = await admin
-        .from("portal_activation_requests")
-        .select("id")
-        .eq("organization_id", organizationId)
-        .eq("portal", definition.id)
-        .eq("status", "pending")
-        .maybeSingle();
-      if (pending) {
-        await admin
-          .from("portal_activation_requests")
-          .update({
-            status: "approved",
-            resolved_by: context.userId,
-            resolved_at: new Date().toISOString(),
-          } as never)
-          .eq("id", pending.id);
-        await admin.from("audit_logs").insert({
-          organization_id: organizationId,
-          actor_id: context.userId,
-          action: "portal.activation_request_approved",
-          entity: "portal_activation_requests",
-          entity_id: pending.id,
-          old_values: { status: "pending" },
-          new_values: { status: "approved", portal: definition.id, via: "portal_activation" },
-          created_by: context.userId,
-        } as never);
-      }
-    }
-
-    await logOperation({
+    return applyPortalActivationForOrg({
       organizationId,
-      portal: definition.id,
-      operation: data.activated ? "activate_org" : "deactivate_org",
-      success: true,
+      portalId: data.portalId,
+      activated: data.activated,
       actorId: context.userId,
     });
-
-    return { ok: true as const, activated: data.activated };
   });
+
 
 export const savePortalConnection = createServerFn({ method: "POST" })
   .middleware([requireActiveOrgAuth])
