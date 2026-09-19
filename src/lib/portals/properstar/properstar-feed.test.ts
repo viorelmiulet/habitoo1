@@ -223,6 +223,14 @@ describe("Properstar feed", () => {
     expect(contact).toContain("<PostalCode>300001</PostalCode>");
   });
 
+  it("include oferta al cărei cod poștal e aproximativ (nivel localitate)", async () => {
+    seedAll({}, { postal_code: "077040", postal_code_source: "approximate" });
+    const result = await build();
+    expect(result.excluded).toHaveLength(0);
+    expect(result.adverts).toHaveLength(1);
+    expect(result.xml).toContain("<PostalCode>077040</PostalCode>");
+  });
+
   it("pune sufixul de dată pe fiecare fotografie", async () => {
     const { xml } = await build();
     expect(xml).toMatch(/\?date=03\/02\/2026/);
