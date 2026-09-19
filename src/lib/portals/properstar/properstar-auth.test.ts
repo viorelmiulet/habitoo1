@@ -3,9 +3,8 @@
  * agenția rezultă exclusiv din cheie.
  */
 import { describe, expect, it, vi } from "vitest";
-import { hashFeedToken } from "@/lib/site-feed/tokens";
-
 const VALID = "properstar_portal_a1b2c3d4.secret-value";
+const { hashFeedToken } = await import("@/lib/site-feed/auth.server");
 const validHash = hashFeedToken(VALID);
 
 function table(name: string, hashCol: string, row: Record<string, unknown> | null) {
