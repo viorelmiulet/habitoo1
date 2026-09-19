@@ -207,6 +207,8 @@ export const PORTALS: PortalDefinition[] = [
     authentication: ["habitoo_api_key", "query_parameter"],
     capabilities: ["feed_pull"],
     configuration_schema: { fields: [] },
+    public_feed_path: (agencyKey) => `/api/public/feed/properstar/${agencyKey}.xml`,
+
     website: "https://www.properstar.com",
     notes:
       "Properstar nu expune un API de creare/editare anunț: integrarea este exclusiv prin feed XML. Selectarea unei oferte înseamnă „inclusă în feedul Properstar” și consumă un loc de publicare. Cheia de acces o generezi în Habitoo și o dai Properstar.",
