@@ -6,7 +6,7 @@
  * inițialele definite în `registry.ts`.
  */
 import { useState } from "react";
-import clickimobLogo from "@/assets/portals/clickimob.png";
+import clickimobLogo from "@/assets/portals/clickimob-logo.webp.asset.json";
 import homepitchLogo from "@/assets/portals/homepitch.png";
 import imobiliareRoLogo from "@/assets/portals/imobiliare_ro.png";
 import imospotLogo from "@/assets/portals/imospot.png";
@@ -22,7 +22,7 @@ import { portalLogoIds } from "@/lib/portals/registry";
 import { cn } from "@/lib/utils";
 
 const PORTAL_LOGOS: Record<string, string> = {
-  clickimob: clickimobLogo,
+  clickimob: clickimobLogo.url,
   imove: imoveLogo,
   lacheie: lacheieLogo,
   imospot: imospotLogo,
