@@ -187,11 +187,14 @@ async function persistItem(
       declaredAgency: item.declaredAgency ?? null,
       declaredOwner: item.declaredOwner ?? null,
     });
-    const inferred = inferSellerType({
-      itemsCount,
-      declaredAgency: item.declaredAgency ?? null,
-      declaredOwner: item.declaredOwner ?? null,
-    });
+    const inferred =
+      item.inferredType && item.inferredType !== "unknown"
+        ? item.inferredType
+        : inferSellerType({
+            itemsCount,
+            declaredAgency: item.declaredAgency ?? null,
+            declaredOwner: item.declaredOwner ?? null,
+          });
     if (known) {
       await admin
         .from("collector_seller_fingerprints")
