@@ -160,6 +160,8 @@ function SettingsPage() {
         .update({
           name: orgForm.name,
           city: orgForm.city || null,
+          postal_code: orgForm.postal_code || null,
+
           phone: orgForm.phone || null,
           email: orgForm.email || null,
           legal_representative: orgForm.legal_representative || null,
