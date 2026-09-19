@@ -1169,6 +1169,41 @@ export async function executeListingAction(input: {
 
   const { getPortalAdapter } = await import("@/lib/portals/adapters/index.server");
   const adapter = getPortalAdapter(definition.id);
+  /**
+   * Portalurile care primesc datele DOAR prin feed (ex. Properstar) nu au
+   * operații de scriere: retragerea reală înseamnă scoaterea ofertei din feed.
+   * O marcăm aici, ca retragerea automată la reducerea locurilor să se încheie
+   * definitiv, în loc să eșueze la infinit cu „operație nesuportată”.
+   */
+  const feedOnlyPortal =
+    definition.capabilities.includes("feed_pull") &&
+    !definition.capabilities.includes("publish_listing");
+  if (!adapter && feedOnlyPortal && action === "withdraw") {
+    const nowIso = new Date().toISOString();
+    await admin
+      .from("portal_publications")
+      .update({
+        enabled: false,
+        status: "disabled",
+        withdrawn_at: nowIso,
+        withdraw_reason: input.withdrawReason ?? "user",
+        last_synced_at: nowIso,
+        last_error: null,
+        updated_by: actorId,
+      } as never)
+      .eq("organization_id", organizationId)
+      .eq("property_id", propertyId)
+      .eq("portal_key", definition.id);
+    await logOperation({
+      organizationId,
+      portal: definition.id,
+      operation: input.operationLabel ?? action,
+      success: true,
+      propertyId,
+      actorId,
+    });
+    return { ok: true as const, code: null, message: null, data: { externalId: null } } as never;
+  }
   if (!adapter) {
     return {
       ok: false as const,
@@ -1176,6 +1211,7 @@ export async function executeListingAction(input: {
       message: PORTAL_ERROR_MESSAGE.NOT_SUPPORTED,
     };
   }
+
 
   const { data: listing } = await admin
     .from("portal_listings")
