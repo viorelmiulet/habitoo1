@@ -6,7 +6,13 @@
  * și nu salvează niciodată un număr de telefon în clar. Porturile (fetch,
  * sleep, now) sunt injectabile, ca să poată fi testat fără rețea.
  */
-import { collectorAdapter, type CollectorAdapter, type CollectorParsedItem } from "./adapters";
+import {
+  collectorAdapter,
+  normalizeParseResult,
+  type CollectorAdapter,
+  type CollectorParsedItem,
+} from "./adapters";
+import "./adapters.register";
 import { collectorFetch, type CollectorFetchResult } from "./fetch.server";
 import { listingHash, sellerFingerprint } from "./fingerprint.server";
 import {
@@ -187,11 +193,14 @@ async function persistItem(
       declaredAgency: item.declaredAgency ?? null,
       declaredOwner: item.declaredOwner ?? null,
     });
-    const inferred = inferSellerType({
-      itemsCount,
-      declaredAgency: item.declaredAgency ?? null,
-      declaredOwner: item.declaredOwner ?? null,
-    });
+    const inferred =
+      item.inferredType && item.inferredType !== "unknown"
+        ? item.inferredType
+        : inferSellerType({
+            itemsCount,
+            declaredAgency: item.declaredAgency ?? null,
+            declaredOwner: item.declaredOwner ?? null,
+          });
     if (known) {
       await admin
         .from("collector_seller_fingerprints")
@@ -275,6 +284,8 @@ export async function runCollectorSource(
       const rules = parseRobotsTxt(robots.body);
       const delayMs = effectiveCrawlDelayMs(source.crawl_delay_ms, robots.crawlDelayMs);
       const cap = pageCap(source.max_pages_per_run);
+      const config = (source as { config?: unknown }).config ?? {};
+      const prepared = adapter.prepare ? await adapter.prepare({ admin, config }) : undefined;
 
       for (let page = 1; page <= cap; page += 1) {
         if (now() - startedAt > budgetMs) {
@@ -282,7 +293,7 @@ export async function runCollectorSource(
           status = "stopped";
           break;
         }
-        const url = adapter.pageUrl({ baseUrl: source.base_url, page });
+        const url = adapter.pageUrl({ baseUrl: source.base_url, config, prepared, page });
         if (!url) {
           stopReason = "no_more_pages";
           break;
@@ -320,8 +331,15 @@ export async function runCollectorSource(
         }
         consecutiveErrors = 0;
 
-        const items = adapter.parsePage({ url, body: result.body });
-        for (const item of items) {
+        const parsed = normalizeParseResult(
+          adapter.parsePage({ url, body: result.body, baseUrl: source.base_url, config, prepared }),
+        );
+        // Markup schimbat: eșecul se consemnează pe item, rularea continuă,
+        // dar nu se salvează rânduri incomplete.
+        for (const failure of parsed.failures) {
+          errors.push(`${failure.url ?? url}: ${failure.reason}`);
+        }
+        for (const item of parsed.items) {
           found += 1;
           try {
             const outcome = await persistItem(admin, source, item, {

@@ -1343,6 +1343,7 @@ export type Database = {
       collector_sources: {
         Row: {
           base_url: string
+          config: Json
           crawl_delay_ms: number
           created_at: string
           enabled: boolean
@@ -1359,6 +1360,7 @@ export type Database = {
         }
         Insert: {
           base_url: string
+          config?: Json
           crawl_delay_ms?: number
           created_at?: string
           enabled?: boolean
@@ -1375,6 +1377,7 @@ export type Database = {
         }
         Update: {
           base_url?: string
+          config?: Json
           crawl_delay_ms?: number
           created_at?: string
           enabled?: boolean
@@ -6571,6 +6574,7 @@ export type Database = {
         Args: { _key: string; _ttl_seconds: number }
         Returns: {
           base_url: string
+          config: Json
           crawl_delay_ms: number
           created_at: string
           enabled: boolean

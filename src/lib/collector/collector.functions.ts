@@ -9,6 +9,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { COLLECTOR_STOP_LABEL, type CollectorStopReason } from "./politeness";
+import "./adapters.register";
 
 type AuthContext = {
   userId: string;
