@@ -32,9 +32,12 @@ export const Route = createFileRoute("/api/public/feed/properstar/$agencyKey")({
           request,
           "portal.properstar.feed",
           async (auth) => {
-            if (auth.portal !== "properstar") {
+            // Cheia trebuie emisă pentru Properstar (sau să fie cheia generală
+            // de feed a agenției); o cheie a altui portal nu deschide feedul.
+            if (auth.source === "portal_key" && auth.portal !== "properstar") {
               return { response: errorResponse(403, "Key not issued for Properstar."), items: 0 };
             }
+
             if (!auth.scopes.includes("feed:read")) {
               return { response: errorResponse(403, "Missing scope: feed:read"), items: 0 };
             }
