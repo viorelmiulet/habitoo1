@@ -113,7 +113,12 @@ export function PortalsCard({ organizationId }: { organizationId: string }) {
   const [revealed, setRevealed] = useState<Record<string, boolean>>({});
 
   const [keyLabel, setKeyLabel] = useState<Record<string, string>>({});
-  const [freshKey, setFreshKey] = useState<{ portalId: string; key: string } | null>(null);
+  const [freshKey, setFreshKey] = useState<{
+    portalId: string;
+    key: string;
+    feedUrl: string | null;
+  } | null>(null);
+
   const [confirmDisconnect, setConfirmDisconnect] = useState<string | null>(null);
   // Carduri restrânse implicit; starea se păstrează la navigare înapoi (per agenție).
   const expandedStorageKey = `habitoo:portals-expanded:${organizationId}`;
@@ -275,7 +280,8 @@ export function PortalsCard({ organizationId }: { organizationId: string }) {
       }),
     onSuccess: (res, portalId) => {
       setKeyLabel((prev) => ({ ...prev, [portalId]: "" }));
-      setFreshKey({ portalId, key: res.key });
+      setFreshKey({ portalId, key: res.key, feedUrl: res.feedUrl ?? null });
+
       invalidate();
     },
     onError: (e: Error) => toastError(e),
@@ -835,16 +841,41 @@ export function PortalsCard({ organizationId }: { organizationId: string }) {
                                   >
                                     <Copy className="size-3.5" />
                                   </Button>
-                                  <Button
-                                    type="button"
-                                    size="sm"
-                                    variant="ghost"
-                                    onClick={() => setFreshKey(null)}
-                                  >
-                                    Am salvat-o
-                                  </Button>
-                                </div>
-                              </div>
+                                 </div>
+                                 {freshKey.feedUrl ? (
+                                   <div className="space-y-1.5 border-t border-primary/30 pt-2">
+                                     <p className="text-sm font-medium">
+                                       Link pentru portal — copiază acum, nu se mai afișează
+                                     </p>
+                                     <div className="flex items-center gap-2">
+                                       <code className="min-w-0 flex-1 truncate text-xs">
+                                         {freshKey.feedUrl}
+                                       </code>
+                                       <Button
+                                         type="button"
+                                         size="sm"
+                                         onClick={() =>
+                                           copy(freshKey.feedUrl!, "Link copiat.")
+                                         }
+                                       >
+                                         <Copy className="size-3.5" />
+                                       </Button>
+                                     </div>
+                                     <p className="text-xs text-muted-foreground">
+                                       Acesta este linkul complet pe care îl trimiți portalului.
+                                     </p>
+                                   </div>
+                                 ) : null}
+                                 <Button
+                                   type="button"
+                                   size="sm"
+                                   variant="ghost"
+                                   onClick={() => setFreshKey(null)}
+                                 >
+                                   Am salvat-o
+                                 </Button>
+                               </div>
+
                             ) : null}
                           </>
                         )}

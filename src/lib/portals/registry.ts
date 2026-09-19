@@ -9,8 +9,10 @@
  * Pentru un portal nou este suficient: definiție aici + adaptor + mapper.
  * Nu se modifică baza de date, UI-ul sau managementul de secrete.
  */
+import { CRM_URL } from "@/lib/host";
 
 export type PortalId = string;
+
 
 /** Disponibilitatea integrării în Habitoo (nu starea conexiunii agenției). */
 export type PortalAvailability = "available" | "coming_soon" | "disabled";
@@ -67,9 +69,17 @@ export type PortalDefinition = {
   configuration_schema: { fields: PortalConfigField[] };
   website?: string;
   docs?: string;
+  /**
+   * Portal de tip „pull”: șablonul căii publice a feedului, cu `{key}` în locul
+   * cheii agenției. Șablon (nu funcție) ca definiția să rămână serializabilă
+   * către UI. Orice portal nou de acest tip primește automat linkul complet la
+   * generarea cheii, fără cod de UI nou.
+   */
+  public_feed_path_template?: string;
   /** Limitări reale, afișate în UI ca să nu promitem funcții inexistente. */
   notes?: string;
 };
+
 
 export const PORTAL_DIRECTION_LABEL: Record<PortalDirection, string> = {
   habitoo_to_portal: "Habitoo → portal",
@@ -200,6 +210,8 @@ export const PORTALS: PortalDefinition[] = [
     authentication: ["habitoo_api_key", "query_parameter"],
     capabilities: ["feed_pull"],
     configuration_schema: { fields: [] },
+    public_feed_path_template: "/api/public/feed/properstar/{key}.xml",
+
     website: "https://www.properstar.com",
     notes:
       "Properstar nu expune un API de creare/editare anunț: integrarea este exclusiv prin feed XML. Selectarea unei oferte înseamnă „inclusă în feedul Properstar” și consumă un loc de publicare. Cheia de acces o generezi în Habitoo și o dai Properstar.",
@@ -494,6 +506,18 @@ export function configurablePortals(): PortalDefinition[] {
 export function getPortalDefinition(id: string): PortalDefinition | null {
   return PORTALS.find((p) => p.id === id) ?? null;
 }
+
+/**
+ * Linkul complet de feed pentru un portal de tip „pull”, cu cheia agenției
+ * în URL. `null` pentru portalurile fără feed public. Construit exclusiv din
+ * definiția portalului, ca UI-ul să nu asambleze niciodată URL-uri.
+ */
+export function portalPublicFeedUrl(portalId: string, agencyKey: string): string | null {
+  const template = getPortalDefinition(portalId)?.public_feed_path_template;
+  if (!template) return null;
+  return `${CRM_URL}${template.replace("{key}", agencyKey)}`;
+}
+
 
 export function portalSupports(
   definition: PortalDefinition,

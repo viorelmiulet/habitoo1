@@ -11,7 +11,10 @@
  * Nicio ofertă nu este trimisă cu noduri obligatorii goale: cele incomplete
  * sunt excluse și raportate în UI („De completat pentru Properstar").
  */
+import { CRM_URL } from "@/lib/host";
+import { portalPublicFeedUrl } from "@/lib/portals/registry";
 import { feedUrlsForRequest } from "@/lib/site-feed/config";
+
 import {
   FEED_PUBLIC_STATUSES,
   type PropertyImageRow,
@@ -52,8 +55,10 @@ export type ProperstarFeedBuild = {
 };
 
 export function properstarFeedPath(agencyKey: string): string {
-  return `${PROPERSTAR_FEED_PATH_PREFIX}/${agencyKey}.xml`;
+  // Sursa unică a căii este definiția portalului din registry.
+  return portalPublicFeedUrl(PROPERSTAR_PORTAL_ID, agencyKey)!.slice(CRM_URL.length);
 }
+
 
 function splitName(fullName: string | null | undefined): {
   firstName: string | null;

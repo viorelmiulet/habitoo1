@@ -18,6 +18,8 @@ import {
   portalDisplayName,
   derivePortalConnectionStatus,
   getPortalDefinition,
+  portalPublicFeedUrl,
+
   type PortalConnectionStatus,
   type PortalDefinition,
 } from "@/lib/portals/registry";
@@ -922,9 +924,18 @@ export const issuePortalApiKey = createServerFn({ method: "POST" })
       actorId: context.userId,
     });
 
-    // Singura dată când cheia în clar părăsește serverul.
-    return { ok: true as const, key: generated.key, prefix: generated.prefix };
+    // Singura dată când cheia în clar părăsește serverul. Pentru portalurile
+    // de tip „pull” trimitem și linkul complet de feed, construit server-side
+    // din definiția portalului; el nu mai poate fi reconstituit ulterior,
+    // fiindcă în DB rămân doar hash-ul și prefixul.
+    return {
+      ok: true as const,
+      key: generated.key,
+      prefix: generated.prefix,
+      feedUrl: portalPublicFeedUrl(definition.id, generated.key),
+    };
   });
+
 
 export const revokePortalApiKey = createServerFn({ method: "POST" })
   .middleware([requireActiveOrgAuth])
