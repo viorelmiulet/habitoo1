@@ -1193,6 +1193,204 @@ export type Database = {
           },
         ]
       }
+      collector_items: {
+        Row: {
+          etag: string | null
+          first_seen_at: string
+          id: string
+          last_modified: string | null
+          last_seen_at: string
+          listing_hash: string
+          normalized: Json
+          raw: Json
+          seller_fingerprint: string | null
+          source: string
+          source_item_id: string | null
+          status: string
+          url: string
+        }
+        Insert: {
+          etag?: string | null
+          first_seen_at?: string
+          id?: string
+          last_modified?: string | null
+          last_seen_at?: string
+          listing_hash: string
+          normalized?: Json
+          raw?: Json
+          seller_fingerprint?: string | null
+          source: string
+          source_item_id?: string | null
+          status?: string
+          url: string
+        }
+        Update: {
+          etag?: string | null
+          first_seen_at?: string
+          id?: string
+          last_modified?: string | null
+          last_seen_at?: string
+          listing_hash?: string
+          normalized?: Json
+          raw?: Json
+          seller_fingerprint?: string | null
+          source?: string
+          source_item_id?: string | null
+          status?: string
+          url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "collector_items_source_fkey"
+            columns: ["source"]
+            isOneToOne: false
+            referencedRelation: "collector_sources"
+            referencedColumns: ["key"]
+          },
+        ]
+      }
+      collector_runs: {
+        Row: {
+          errors: Json
+          finished_at: string | null
+          id: string
+          items_found: number
+          items_new: number
+          items_updated: number
+          pages_fetched: number
+          source: string
+          started_at: string
+          started_by: string | null
+          status: string
+          stop_reason: string | null
+        }
+        Insert: {
+          errors?: Json
+          finished_at?: string | null
+          id?: string
+          items_found?: number
+          items_new?: number
+          items_updated?: number
+          pages_fetched?: number
+          source: string
+          started_at?: string
+          started_by?: string | null
+          status?: string
+          stop_reason?: string | null
+        }
+        Update: {
+          errors?: Json
+          finished_at?: string | null
+          id?: string
+          items_found?: number
+          items_new?: number
+          items_updated?: number
+          pages_fetched?: number
+          source?: string
+          started_at?: string
+          started_by?: string | null
+          status?: string
+          stop_reason?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "collector_runs_source_fkey"
+            columns: ["source"]
+            isOneToOne: false
+            referencedRelation: "collector_sources"
+            referencedColumns: ["key"]
+          },
+        ]
+      }
+      collector_seller_fingerprints: {
+        Row: {
+          fingerprint: string
+          first_seen_at: string
+          inferred_type: string
+          items_count: number
+          last_seen_at: string
+          signals: Json
+          source: string
+        }
+        Insert: {
+          fingerprint: string
+          first_seen_at?: string
+          inferred_type?: string
+          items_count?: number
+          last_seen_at?: string
+          signals?: Json
+          source: string
+        }
+        Update: {
+          fingerprint?: string
+          first_seen_at?: string
+          inferred_type?: string
+          items_count?: number
+          last_seen_at?: string
+          signals?: Json
+          source?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "collector_seller_fingerprints_source_fkey"
+            columns: ["source"]
+            isOneToOne: false
+            referencedRelation: "collector_sources"
+            referencedColumns: ["key"]
+          },
+        ]
+      }
+      collector_sources: {
+        Row: {
+          base_url: string
+          crawl_delay_ms: number
+          created_at: string
+          enabled: boolean
+          id: string
+          key: string
+          label: string
+          last_run_id: string | null
+          locked_until: string | null
+          max_pages_per_run: number
+          notes: string | null
+          robots_body: string | null
+          robots_checked_at: string | null
+          updated_at: string
+        }
+        Insert: {
+          base_url: string
+          crawl_delay_ms?: number
+          created_at?: string
+          enabled?: boolean
+          id?: string
+          key: string
+          label: string
+          last_run_id?: string | null
+          locked_until?: string | null
+          max_pages_per_run?: number
+          notes?: string | null
+          robots_body?: string | null
+          robots_checked_at?: string | null
+          updated_at?: string
+        }
+        Update: {
+          base_url?: string
+          crawl_delay_ms?: number
+          created_at?: string
+          enabled?: boolean
+          id?: string
+          key?: string
+          label?: string
+          last_run_id?: string | null
+          locked_until?: string | null
+          max_pages_per_run?: number
+          notes?: string | null
+          robots_body?: string | null
+          robots_checked_at?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       contact_requests: {
         Row: {
           agency: string
@@ -6369,6 +6567,31 @@ export type Database = {
       }
       can_access_contract: { Args: { _contract_id: string }; Returns: boolean }
       can_access_ticket: { Args: { _ticket_id: string }; Returns: boolean }
+      claim_collector_source: {
+        Args: { _key: string; _ttl_seconds: number }
+        Returns: {
+          base_url: string
+          crawl_delay_ms: number
+          created_at: string
+          enabled: boolean
+          id: string
+          key: string
+          label: string
+          last_run_id: string | null
+          locked_until: string | null
+          max_pages_per_run: number
+          notes: string | null
+          robots_body: string | null
+          robots_checked_at: string | null
+          updated_at: string
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "collector_sources"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
       claim_lacheie_resend_job: {
         Args: { _job_id: string; _ttl_seconds: number }
         Returns: {
@@ -6423,6 +6646,8 @@ export type Database = {
           isSetofReturn: true
         }
       }
+      collector_arm: { Args: never; Returns: undefined }
+      collector_tick: { Args: never; Returns: undefined }
       cron_nonce_claim: {
         Args: { _purpose: string; _token: string }
         Returns: boolean
@@ -6612,6 +6837,7 @@ export type Database = {
         Args: { _reason?: string; _request_id: string }
         Returns: undefined
       }
+      release_collector_source: { Args: { _key: string }; Returns: undefined }
       release_lacheie_resend_job: {
         Args: { _job_id: string }
         Returns: undefined
