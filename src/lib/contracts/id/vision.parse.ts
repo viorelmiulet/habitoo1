@@ -67,7 +67,12 @@ export function normalizeFrontDate(raw: string): string | null {
 
 function visionField(value: string | null, reason: string | null = null): IdField {
   /* Nimic de pe față nu are cifră de control: statusul rămâne „de confirmat”. */
-  return { value, source: "vision", status: "unverified", reason: reason ?? "needs_user_confirmation" };
+  return {
+    value,
+    source: "vision",
+    status: "unverified",
+    reason: reason ?? "needs_user_confirmation",
+  };
 }
 
 function emptyFront(reason: string): Record<IdFrontFieldName, IdField> {
@@ -123,6 +128,27 @@ function comparable(value: string): string {
 }
 
 /**
+ * Compararea seriei: pe fața actului scrie „SERIA RX NR 123456”, deci modelul
+ * întoarce de obicei numai perechea de litere. Comparăm literele cu primele două
+ * caractere ale seriei din MRZ, iar cifrele numai dacă au fost și ele citite.
+ * Un act corect nu produce niciodată conflict pe serie.
+ */
+export function seriesDiffers(mrzSeries: string, visionSeries: string): boolean {
+  const mrz = comparable(mrzSeries);
+  const mrzLetters = mrz.slice(0, 2);
+  const mrzDigits = mrz.slice(2);
+  /* Scoatem cuvintele tipărite pe card ca să nu confundăm „SE” din „SERIA”. */
+  const vision = comparable(
+    visionSeries.replace(/\b(seria|serie|serial|nr|no|numar|numarul)\b/gi, " "),
+  );
+  const letters = /[A-Z]{2}/.exec(vision)?.[0] ?? "";
+  const digits = /[0-9]{6}/.exec(vision)?.[0] ?? "";
+  if (letters && mrzLetters && letters !== mrzLetters) return true;
+  if (digits && mrzDigits && digits !== mrzDigits) return true;
+  return false;
+}
+
+/**
  * Conflictele dintre față și zona citibilă automat pe câmpurile comune.
  * Nu fuzionăm niciodată în silence: valoarea din MRZ rămâne cea returnată, iar
  * divergența este raportată explicit.
@@ -137,7 +163,9 @@ export function detectFrontConflicts(
     const mrzValue = mrzFields[field]?.value;
     const visionValue = frontFields[field]?.value;
     if (!mrzValue || !visionValue) continue;
-    if (comparable(mrzValue) === comparable(visionValue)) continue;
+    if (field === "series" || field === "documentNumber") {
+      if (!seriesDiffers(mrzValue, visionValue)) continue;
+    } else if (comparable(mrzValue) === comparable(visionValue)) continue;
     conflicts.push({ field, mrz: mrzValue, vision: visionValue });
   }
   return conflicts;

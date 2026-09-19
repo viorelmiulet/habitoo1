@@ -28,7 +28,12 @@ const SIGNATURES: { kind: IdImageKind; test: (bytes: Uint8Array) => boolean }[] 
   {
     kind: "webp",
     test: (b) =>
-      b[0] === 0x52 && b[1] === 0x49 && b[2] === 0x46 && b[3] === 0x46 && b[8] === 0x57 && b[9] === 0x45,
+      b[0] === 0x52 &&
+      b[1] === 0x49 &&
+      b[2] === 0x46 &&
+      b[3] === 0x46 &&
+      b[8] === 0x57 &&
+      b[9] === 0x45,
   },
   { kind: "pdf", test: (b) => b[0] === 0x25 && b[1] === 0x50 && b[2] === 0x44 && b[3] === 0x46 },
   {
@@ -62,7 +67,10 @@ export function readJpegOrientation(bytes: Uint8Array): number {
     if (marker === 0xe1 && size > 8) {
       const start = offset + 4;
       const isExif =
-        bytes[start] === 0x45 && bytes[start + 1] === 0x78 && bytes[start + 2] === 0x69 && bytes[start + 3] === 0x66;
+        bytes[start] === 0x45 &&
+        bytes[start + 1] === 0x78 &&
+        bytes[start + 2] === 0x69 &&
+        bytes[start + 3] === 0x66;
       if (isExif) {
         const tiff = start + 6;
         const little = bytes[tiff] === 0x49;
@@ -185,7 +193,7 @@ export function cropBottom(raster: Raster, fraction: number): Raster {
   const top = raster.height - keep;
   const out = new Uint8Array(raster.width * keep * 4);
   for (let y = 0; y < keep; y += 1) {
-    const from = ((top + y) * raster.width) * 4;
+    const from = (top + y) * raster.width * 4;
     out.set(raster.data.subarray(from, from + raster.width * 4), y * raster.width * 4);
   }
   return { data: out, width: raster.width, height: keep };

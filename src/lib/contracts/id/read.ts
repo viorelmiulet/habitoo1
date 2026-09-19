@@ -16,7 +16,6 @@ export type IdField<T = string> = {
   confidence?: number;
 };
 
-
 export type IdDocumentReading = {
   ok: boolean;
   fields: {
@@ -104,7 +103,12 @@ export function readMrz(raw: string, today = new Date()): IdDocumentReading {
   let county: string | null = series.county;
   let seriesField: IdField;
   if (!series.valid) {
-    seriesField = { value: series.value || null, source: "mrz", status: "failed", reason: "series_format" };
+    seriesField = {
+      value: series.value || null,
+      source: "mrz",
+      status: "failed",
+      reason: "series_format",
+    };
     failures.push("series_format");
     county = null;
   } else {
@@ -126,7 +130,12 @@ export function readMrz(raw: string, today = new Date()): IdDocumentReading {
     cnpField = { value: cnpRaw || null, source: "mrz", status: "failed", reason: decoded.reason };
     failures.push(decoded.reason);
   } else if (!decoded.value.checkDigitOk) {
-    cnpField = { value: decoded.value.cnp, source: "mrz", status: "failed", reason: "cnp_check_digit" };
+    cnpField = {
+      value: decoded.value.cnp,
+      source: "mrz",
+      status: "failed",
+      reason: "cnp_check_digit",
+    };
     failures.push("cnp_check_digit");
   } else {
     const consistency = checkCnpAgainstMrz(decoded.value, {
@@ -167,7 +176,11 @@ export function readMrz(raw: string, today = new Date()): IdDocumentReading {
         value: birthIso,
         source: "mrz",
         status: parsed.checkDigits.birthDate && birthIso ? "verified" : "failed",
-        reason: parsed.checkDigits.birthDate ? (birthIso ? null : "birth_date_invalid") : "check_digit_birth_date",
+        reason: parsed.checkDigits.birthDate
+          ? birthIso
+            ? null
+            : "birth_date_invalid"
+          : "check_digit_birth_date",
       },
       sex: toField(parsed.sex),
       expiryDate: {

@@ -38,7 +38,8 @@ function syntheticMrz(options: { documentNumber?: string } = {}): string {
   const cnp = `${cnpBase}${cnpCheckDigit(cnpBase)}`;
   const l1 = `IDROU${docNumber}${checkDigit(docNumber)}${pad(cnp, 15)}`;
   const l2Head = `900101${checkDigit("900101")}M350101${checkDigit("350101")}ROU${pad("", 11)}`;
-  const composite = l1.slice(5, 30) + l2Head.slice(0, 7) + l2Head.slice(8, 15) + l2Head.slice(18, 29);
+  const composite =
+    l1.slice(5, 30) + l2Head.slice(0, 7) + l2Head.slice(8, 15) + l2Head.slice(18, 29);
   const l2 = `${l2Head}${checkDigit(composite)}`;
   const l3 = pad("POPESCU<<ION<MARIN", 30);
   return [l1, l2, l3].join("\n");
@@ -57,7 +58,9 @@ function jpegBase64(width: number, height: number): string {
   return Buffer.from(encoded.data).toString("base64");
 }
 
-function fakeProvider(answers: string[]): AIProvider & { attachments: string[]; prompts: string[] } {
+function fakeProvider(
+  answers: string[],
+): AIProvider & { attachments: string[]; prompts: string[] } {
   const attachments: string[] = [];
   const prompts: string[] = [];
   let call = 0;
@@ -84,7 +87,9 @@ describe("pregătirea imaginii", () => {
   it("recunoaște formatul din semnătura fișierului", () => {
     const jpeg = decodeBase64(jpegBase64(20, 20));
     expect(sniffIdImageKind(jpeg)).toBe("jpeg");
-    expect(sniffIdImageKind(new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0, 0, 0, 0, 0, 0, 0, 0]))).toBe("png");
+    expect(sniffIdImageKind(new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0, 0, 0, 0, 0, 0, 0, 0]))).toBe(
+      "png",
+    );
     expect(sniffIdImageKind(new Uint8Array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]))).toBeNull();
   });
 
@@ -109,7 +114,10 @@ describe("pregătirea imaginii", () => {
   });
 
   it("pregătește un JPEG mare: redus, recodat, tot în memorie", async () => {
-    const prepared = await prepareIdUpload({ contentType: "image/jpeg", base64: jpegBase64(3000, 2000) });
+    const prepared = await prepareIdUpload({
+      contentType: "image/jpeg",
+      base64: jpegBase64(3000, 2000),
+    });
     expect(prepared.ok).toBe(true);
     if (!prepared.ok) return;
     expect(prepared.attachment.mimeType).toBe("image/jpeg");
@@ -151,7 +159,10 @@ describe("pregătirea imaginii", () => {
 describe("citirea zonei automate cu modelul", () => {
   it("liniile brute intră în parserul determinist", async () => {
     const provider = fakeProvider([syntheticMrz()]);
-    const prepared = await prepareIdUpload({ contentType: "image/jpeg", base64: jpegBase64(900, 600) });
+    const prepared = await prepareIdUpload({
+      contentType: "image/jpeg",
+      base64: jpegBase64(900, 600),
+    });
     if (!prepared.ok) throw new Error("pregătire");
     const outcome = await readMrzFromImage(provider, prepared);
     expect(outcome.reading?.ok).toBe(true);
@@ -165,7 +176,10 @@ describe("citirea zonei automate cu modelul", () => {
     const broken = syntheticMrz().split("\n");
     broken[0] = `${(broken[0] as string).slice(0, 6)}9${(broken[0] as string).slice(7)}`;
     const provider = fakeProvider([broken.join("\n"), broken.join("\n")]);
-    const prepared = await prepareIdUpload({ contentType: "image/jpeg", base64: jpegBase64(900, 600) });
+    const prepared = await prepareIdUpload({
+      contentType: "image/jpeg",
+      base64: jpegBase64(900, 600),
+    });
     if (!prepared.ok) throw new Error("pregătire");
     const outcome = await readMrzFromImage(provider, prepared);
     expect(outcome.attempts).toBe(2);
@@ -176,7 +190,10 @@ describe("citirea zonei automate cu modelul", () => {
 
   it("fără zona MRZ în răspuns cere o fotografie mai bună", async () => {
     const provider = fakeProvider(["NONE"]);
-    const prepared = await prepareIdUpload({ contentType: "image/jpeg", base64: jpegBase64(900, 600) });
+    const prepared = await prepareIdUpload({
+      contentType: "image/jpeg",
+      base64: jpegBase64(900, 600),
+    });
     if (!prepared.ok) throw new Error("pregătire");
     const outcome = await readMrzFromImage(provider, prepared);
     expect(outcome.reading).toBeNull();
@@ -192,7 +209,6 @@ describe("citirea zonei automate cu modelul", () => {
     expect(mrzTextFromCandidates(candidates)).toBeNull();
     expect(assessMrzCandidates(candidates)).toEqual(["mrz_lines_incomplete"]);
   });
-
 });
 
 describe("fața actului", () => {
@@ -200,7 +216,10 @@ describe("fața actului", () => {
     const provider = fakeProvider([
       '{"idAddress":"Str. Exemplu 1, București","issuingAuthority":"SPCLEP Exemplu","issuedOn":"12.03.2020","validUntil":"2030-03-12","series":"RX","surname":"POPESCU","givenNames":"ION MARIN","documentNumber":"RX123456"}',
     ]);
-    const prepared = await prepareIdUpload({ contentType: "image/jpeg", base64: jpegBase64(900, 600) });
+    const prepared = await prepareIdUpload({
+      contentType: "image/jpeg",
+      base64: jpegBase64(900, 600),
+    });
     if (!prepared.ok) throw new Error("pregătire");
     const outcome = await readFrontFromImage(provider, prepared);
     for (const field of Object.values(outcome.front.fields)) {

@@ -32,7 +32,11 @@ const FRONT_PROMPT = [
   "Nu adăuga explicații, comentarii sau text în afara obiectului JSON.",
 ].join(" ");
 
-export type VisionUsage = { inputTokens: number | null; outputTokens: number | null; calls: number };
+export type VisionUsage = {
+  inputTokens: number | null;
+  outputTokens: number | null;
+  calls: number;
+};
 
 export type MrzVisionOutcome = {
   reading: IdDocumentReading | null;
@@ -108,7 +112,11 @@ export async function readMrzFromImage(
   return { reading: null, quality, usage, attempts: attachments.length };
 }
 
-export type FrontVisionOutcome = { front: IdFrontReading; quality: IdQualityReason[]; usage: VisionUsage };
+export type FrontVisionOutcome = {
+  front: IdFrontReading;
+  quality: IdQualityReason[];
+  usage: VisionUsage;
+};
 
 /** Citește fața actului pentru câmpurile fără cifră de control. */
 export async function readFrontFromImage(
@@ -121,7 +129,9 @@ export async function readFrontFromImage(
       {
         role: "user",
         content: "Câmpurile vizibile pe fața actului, în JSON.",
-        attachments: [{ mimeType: prepared.attachment.mimeType, base64: prepared.attachment.base64 }],
+        attachments: [
+          { mimeType: prepared.attachment.mimeType, base64: prepared.attachment.base64 },
+        ],
       },
     ],
     tools: [],
@@ -130,7 +140,11 @@ export async function readFrontFromImage(
   return {
     front,
     quality: front.unreadable ? ["front_unreadable"] : [],
-    usage: addUsage({ inputTokens: null, outputTokens: null, calls: 0 }, result.inputTokens, result.outputTokens),
+    usage: addUsage(
+      { inputTokens: null, outputTokens: null, calls: 0 },
+      result.inputTokens,
+      result.outputTokens,
+    ),
   };
 }
 

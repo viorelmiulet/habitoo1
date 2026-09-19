@@ -104,6 +104,13 @@ function sumUsage(...parts: (VisionUsage | null)[]): VisionUsage {
   );
 }
 
+/** Spune interfeței dacă citirea automată a actului este configurată. */
+export const getIdReadingStatus = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async () => ({ configured: Boolean(process.env["GEMINI_API_KEY"]) }));
+
+
+
 export const readIdDocument = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data: unknown) => inputSchema.parse(data))
