@@ -43,13 +43,7 @@ export function decodeCnp(raw: string): CnpResult {
   const mm = Number(cnp.slice(3, 5));
   const dd = Number(cnp.slice(5, 7));
   const date = new Date(Date.UTC(century + yy, mm - 1, dd));
-  if (
-    mm < 1 ||
-    mm > 12 ||
-    dd < 1 ||
-    date.getUTCMonth() !== mm - 1 ||
-    date.getUTCDate() !== dd
-  ) {
+  if (mm < 1 || mm > 12 || dd < 1 || date.getUTCMonth() !== mm - 1 || date.getUTCDate() !== dd) {
     return { ok: false, reason: "cnp_birth_date_invalid" };
   }
 

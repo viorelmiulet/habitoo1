@@ -150,7 +150,10 @@ export function confirmPendingFields(state: PartyIdState): PartyIdState {
 }
 
 /** Alegerea unei valori pentru un conflict îl elimină din listă. */
-export function resolveConflict(state: PartyIdState, field: IdFieldConflict["field"]): PartyIdState {
+export function resolveConflict(
+  state: PartyIdState,
+  field: IdFieldConflict["field"],
+): PartyIdState {
   return { ...state, conflicts: state.conflicts.filter((item) => item.field !== field) };
 }
 

@@ -191,7 +191,15 @@ describe("redactare", () => {
   });
 
   it("redactează identitatea doar pe potrivire exactă", () => {
-    for (const name of ["cnp", "CNP", "birth_date", "givenNames", "idAddress", "adresa_act", "mrz"]) {
+    for (const name of [
+      "cnp",
+      "CNP",
+      "birth_date",
+      "givenNames",
+      "idAddress",
+      "adresa_act",
+      "mrz",
+    ]) {
       expect(isRedactedDetailKey(name), name).toBe(true);
     }
     for (const name of [

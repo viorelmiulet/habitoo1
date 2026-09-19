@@ -67,7 +67,12 @@ export function normalizeFrontDate(raw: string): string | null {
 
 function visionField(value: string | null, reason: string | null = null): IdField {
   /* Nimic de pe față nu are cifră de control: statusul rămâne „de confirmat”. */
-  return { value, source: "vision", status: "unverified", reason: reason ?? "needs_user_confirmation" };
+  return {
+    value,
+    source: "vision",
+    status: "unverified",
+    reason: reason ?? "needs_user_confirmation",
+  };
 }
 
 function emptyFront(reason: string): Record<IdFrontFieldName, IdField> {
@@ -133,7 +138,9 @@ export function seriesDiffers(mrzSeries: string, visionSeries: string): boolean 
   const mrzLetters = mrz.slice(0, 2);
   const mrzDigits = mrz.slice(2);
   /* Scoatem cuvintele tipărite pe card ca să nu confundăm „SE” din „SERIA”. */
-  const vision = comparable(visionSeries.replace(/\b(seria|serie|serial|nr|no|numar|numarul)\b/gi, " "));
+  const vision = comparable(
+    visionSeries.replace(/\b(seria|serie|serial|nr|no|numar|numarul)\b/gi, " "),
+  );
   const letters = /[A-Z]{2}/.exec(vision)?.[0] ?? "";
   const digits = /[0-9]{6}/.exec(vision)?.[0] ?? "";
   if (letters && mrzLetters && letters !== mrzLetters) return true;

@@ -140,8 +140,7 @@ export function parseTd1(raw: string): MrzParseResult {
   const birthOk = verify(birthRaw, birthCheck);
   const expiryOk = verify(expiryRaw, expiryCheck);
 
-  const compositeInput =
-    l1.slice(5, 30) + l2.slice(0, 7) + l2.slice(8, 15) + l2.slice(18, 29);
+  const compositeInput = l1.slice(5, 30) + l2.slice(0, 7) + l2.slice(8, 15) + l2.slice(18, 29);
   const compositeOk = verify(compositeInput, compositeCheck);
 
   const [surnamePart, givenPart = ""] = l3.split("<<");
@@ -164,7 +163,11 @@ export function parseTd1(raw: string): MrzParseResult {
       ? field(birthRaw, "verified")
       : field(birthRaw, "failed", "check_digit_birth_date"),
     sex: compositeOk
-      ? field(sexValue, sexValue === "X" ? "unverified" : "verified", sexValue === "X" ? "sex_unknown" : null)
+      ? field(
+          sexValue,
+          sexValue === "X" ? "unverified" : "verified",
+          sexValue === "X" ? "sex_unknown" : null,
+        )
       : field(sexValue, "unverified", "check_digit_composite"),
     expiryDate: expiryOk
       ? field(expiryRaw, "verified")
@@ -203,7 +206,8 @@ export function mrzDateToIso(
   if (mm < 1 || mm > 12 || dd < 1 || dd > 31) return null;
   const currentYy = today.getUTCFullYear() % 100;
   const century = today.getUTCFullYear() - currentYy;
-  const year = kind === "birth" ? (yy > currentYy ? century - 100 + yy : century + yy) : century + yy;
+  const year =
+    kind === "birth" ? (yy > currentYy ? century - 100 + yy : century + yy) : century + yy;
   const date = new Date(Date.UTC(year, mm - 1, dd));
   if (date.getUTCMonth() !== mm - 1 || date.getUTCDate() !== dd) return null;
   return date.toISOString().slice(0, 10);

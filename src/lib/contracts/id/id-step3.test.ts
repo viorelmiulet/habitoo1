@@ -21,7 +21,9 @@ function mrzField(value: string | null): IdField {
   return { value, source: "mrz", status: value ? "verified" : "failed", reason: null };
 }
 
-function frontFields(overrides: Partial<Record<IdFrontFieldName, string | null>>): Record<IdFrontFieldName, IdField> {
+function frontFields(
+  overrides: Partial<Record<IdFrontFieldName, string | null>>,
+): Record<IdFrontFieldName, IdField> {
   const names: IdFrontFieldName[] = [
     "idAddress",
     "issuingAuthority",
@@ -34,7 +36,12 @@ function frontFields(overrides: Partial<Record<IdFrontFieldName, string | null>>
   ];
   const fields = {} as Record<IdFrontFieldName, IdField>;
   for (const name of names) {
-    fields[name] = { value: overrides[name] ?? null, source: "vision", status: "unverified", reason: null };
+    fields[name] = {
+      value: overrides[name] ?? null,
+      source: "vision",
+      status: "unverified",
+      reason: null,
+    };
   }
   return fields;
 }
@@ -51,7 +58,8 @@ function buildTd1(): string {
   const expiry = "350101";
   const l1 = `IDROU${docNumber}${checkDigit(docNumber)}${pad(cnp, 15)}`;
   const l2Head = `${birth}${checkDigit(birth)}M${expiry}${checkDigit(expiry)}ROU${pad("", 11)}`;
-  const composite = l1.slice(5, 30) + l2Head.slice(0, 7) + l2Head.slice(8, 15) + l2Head.slice(18, 29);
+  const composite =
+    l1.slice(5, 30) + l2Head.slice(0, 7) + l2Head.slice(8, 15) + l2Head.slice(18, 29);
   const l2 = `${l2Head}${checkDigit(composite)}`;
   return [l1, l2, pad("POPESCU<<ION<MARIN", 30)].join("\n");
 }
@@ -73,8 +81,18 @@ describe("serie față vs MRZ", () => {
     expect(seriesDiffers("RX123456", "SERIA RX NR 123456")).toBe(false);
     expect(seriesDiffers("RX123456", "RX 123456")).toBe(false);
     const conflicts = detectFrontConflicts(
-      { surname: mrzField("POPESCU"), givenNames: mrzField("ION MARIN"), documentNumber: mrzField("RX123456"), series: mrzField("RX123456") },
-      frontFields({ series: "SERIA RX NR 123456", documentNumber: "RX", surname: "POPESCU", givenNames: "ION MARIN" }),
+      {
+        surname: mrzField("POPESCU"),
+        givenNames: mrzField("ION MARIN"),
+        documentNumber: mrzField("RX123456"),
+        series: mrzField("RX123456"),
+      },
+      frontFields({
+        series: "SERIA RX NR 123456",
+        documentNumber: "RX",
+        surname: "POPESCU",
+        givenNames: "ION MARIN",
+      }),
     );
     expect(conflicts).toEqual([]);
   });
@@ -88,7 +106,11 @@ describe("serie față vs MRZ", () => {
 describe("blocarea generării", () => {
   it("câmpurile de pe față blochează până la confirmare", () => {
     const reading = readMrz(buildTd1(), new Date("2030-01-01T00:00:00Z"));
-    const applied = applyIdReading(reading, { fields: frontFields({ idAddress: "Str. Lalelelor 3" }), unreadable: false }, []);
+    const applied = applyIdReading(
+      reading,
+      { fields: frontFields({ idAddress: "Str. Lalelelor 3" }), unreadable: false },
+      [],
+    );
     expect(applied.values.address).toBe("Str. Lalelelor 3");
     expect(applied.state.pending).toContain("address");
     expect(idGenerationBlockers([{ label: "Proprietar", state: applied.state }])).toHaveLength(1);
@@ -97,9 +119,14 @@ describe("blocarea generării", () => {
   });
 
   it("un conflict blochează până la alegerea unei valori", () => {
-    const state = { ...emptyPartyIdState, conflicts: [{ field: "surname" as const, mrz: "POPESCU", vision: "POPESCO" }] };
+    const state = {
+      ...emptyPartyIdState,
+      conflicts: [{ field: "surname" as const, mrz: "POPESCU", vision: "POPESCO" }],
+    };
     expect(idGenerationBlockers([{ label: "Chiriaș", state }])).toHaveLength(1);
-    expect(idGenerationBlockers([{ label: "Chiriaș", state: resolveConflict(state, "surname") }])).toEqual([]);
+    expect(
+      idGenerationBlockers([{ label: "Chiriaș", state: resolveConflict(state, "surname") }]),
+    ).toEqual([]);
   });
 
   it("actul expirat este avertisment, nu blocaj", () => {

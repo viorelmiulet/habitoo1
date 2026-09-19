@@ -76,7 +76,10 @@ function toRaster(png: ReturnType<typeof decodePng>): Raster | null {
 }
 
 function jpegAttachment(raster: Raster): IdAttachment {
-  const encoded = encodeJpeg({ data: raster.data, width: raster.width, height: raster.height }, JPEG_QUALITY);
+  const encoded = encodeJpeg(
+    { data: raster.data, width: raster.width, height: raster.height },
+    JPEG_QUALITY,
+  );
   const bytes = new Uint8Array(encoded.data);
   return { mimeType: "image/jpeg", base64: encodeBase64(bytes), bytes: bytes.length };
 }
@@ -92,7 +95,10 @@ async function firstPdfPage(bytes: Uint8Array): Promise<Uint8Array | null> {
 }
 
 /** Pregătește o imagine sau un PDF pentru trimiterea la citirea automată. */
-export async function prepareIdUpload(input: { contentType: string; base64: string }): Promise<PreparedIdImage> {
+export async function prepareIdUpload(input: {
+  contentType: string;
+  base64: string;
+}): Promise<PreparedIdImage> {
   const bytes = decodeBase64(input.base64);
   if (bytes.length === 0) return { ok: false, reason: "image_empty" };
   if (bytes.length > MAX_ID_INPUT_BYTES) return { ok: false, reason: "image_too_large" };
@@ -142,7 +148,8 @@ export async function prepareIdUpload(input: { contentType: string; base64: stri
   } catch {
     return { ok: false, reason: "image_corrupt" };
   }
-  if (!raster || raster.width === 0 || raster.height === 0) return { ok: false, reason: "image_corrupt" };
+  if (!raster || raster.width === 0 || raster.height === 0)
+    return { ok: false, reason: "image_corrupt" };
 
   const reduced = downscale(raster, MAX_ID_EDGE);
   const attachment = jpegAttachment(reduced);

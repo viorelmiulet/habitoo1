@@ -7,15 +7,20 @@
  */
 
 export const ID_QUALITY_REASONS = {
-  image_unsupported_format: "Formatul imaginii nu este acceptat. Folosește JPG, PNG, WEBP, HEIC sau PDF.",
+  image_unsupported_format:
+    "Formatul imaginii nu este acceptat. Folosește JPG, PNG, WEBP, HEIC sau PDF.",
   image_too_large: "Fișierul este prea mare. Fotografiază actul din nou, cu o rezoluție mai mică.",
   image_corrupt: "Imaginea nu a putut fi deschisă. Fotografiază actul din nou.",
   image_empty: "Fișierul pare gol. Încarcă din nou fotografia actului.",
   pdf_no_pages: "PDF-ul nu are nicio pagină. Încarcă un fișier cu prima pagină a actului.",
-  image_blurry: "Imaginea este prea neclară. Șterge obiectivul și fotografiază din nou, cu lumină bună.",
-  mrz_not_found: "Zona citibilă automat (cele trei rânduri de pe spatele actului) nu a fost găsită.",
-  mrz_lines_incomplete: "Zona citibilă automat pare tăiată. Fotografiază spatele actului în întregime.",
-  mrz_unreadable: "Rândurile de pe spatele actului nu au putut fi citite corect. Fotografiază din nou, mai aproape și fără reflexii.",
+  image_blurry:
+    "Imaginea este prea neclară. Șterge obiectivul și fotografiază din nou, cu lumină bună.",
+  mrz_not_found:
+    "Zona citibilă automat (cele trei rânduri de pe spatele actului) nu a fost găsită.",
+  mrz_lines_incomplete:
+    "Zona citibilă automat pare tăiată. Fotografiază spatele actului în întregime.",
+  mrz_unreadable:
+    "Rândurile de pe spatele actului nu au putut fi citite corect. Fotografiază din nou, mai aproape și fără reflexii.",
   document_cropped: "Documentul pare tăiat. Încadrează întregul act în fotografie.",
   front_unreadable: "Fața actului nu a putut fi citită. Fotografiază din nou, fără reflexii.",
 } as const;
