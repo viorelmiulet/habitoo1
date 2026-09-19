@@ -116,16 +116,66 @@ export function NewContractDialog({ open, onOpenChange, propertyId, contactId }:
     },
   });
 
+  const setterFor = (target: PartyTarget) => (target === "landlord" ? setLandlord : target === "tenant" ? setTenant : setBeneficiary);
+  const patchIdState = (target: PartyTarget, next: (state: PartyIdState) => PartyIdState) =>
+    setIdStates((current) => ({ ...current, [target]: next(current[target]) }));
+
+  /* Poza există doar în memorie pe durata cererii: nu o punem în state și nu o arătăm. */
   const extract = useMutation({
-    mutationFn: async ({ file, target }: { file: File; target: "landlord" | "tenant" | "beneficiary" }) => ({ target, result: await runExtract({ data: await prepareIdImage(file).then((prepared) => ({ imageBase64: prepared.base64, mimeType: prepared.mimeType })) }) }),
-    onSuccess: ({ target, result }) => {
-      const setter = target === "landlord" ? setLandlord : target === "tenant" ? setTenant : setBeneficiary;
-      setter((previous) => ({ ...previous, fullName: [result.lastName, result.firstName].filter(Boolean).join(" ").trim() || previous.fullName, cnp: result.cnp || previous.cnp, idSeries: result.series || previous.idSeries, idNumber: result.number || previous.idNumber, idIssuer: result.issuer || previous.idIssuer, idIssuedOn: result.issuedOn || previous.idIssuedOn, address: result.address || previous.address, birthDate: result.birthDate || previous.birthDate }));
-      if (result.failure) toast.error(result.failure, { duration: 9000 });
-      else toast.success("Date completate din act. Verifică-le înainte de a continua.");
+    mutationFn: async ({ file, target, side }: { file: File; target: PartyTarget; side: CaptureSide }) => {
+      const capture = await prepareIdCapture(file);
+      const payload = side === "back" ? { back: capture } : { front: capture };
+      return { target, side, result: await runRead({ data: payload }) };
+    },
+    onSuccess: ({ target, side, result }) => {
+      if (result.state === "read") {
+        const applied = applyIdReading(result.reading, result.front, result.conflicts, idStates[target]);
+        setterFor(target)((previous) => ({ ...previous, ...applied.values }));
+        patchIdState(target, (state) => ({
+          ...applied.state,
+          verified: [...new Set([...state.verified, ...applied.state.verified])],
+          pending: [...new Set([...state.pending, ...applied.state.pending])],
+          conflicts: [...state.conflicts.filter((item) => !applied.state.conflicts.some((next) => next.field === item.field)), ...applied.state.conflicts],
+          quality: result.messages,
+        }));
+        if (side === "back") setBackDone((current) => ({ ...current, [target]: true }));
+        if (result.conflicts.length > 0) toast.warning("Fața actului și zona citibilă nu spun același lucru. Alege valoarea corectă.");
+        else toast.success(side === "back" ? "Datele verificate au fost completate." : "Datele de pe față au fost completate. Confirmă-le.");
+        return;
+      }
+      if (result.state === "needs_better_photo") {
+        patchIdState(target, (state) => ({ ...state, quality: result.messages }));
+        return;
+      }
+      patchIdState(target, (state) => ({ ...state, quality: [result.message] }));
     },
     onError: (error: Error) => toast.error(error.message, { duration: 9000 }),
   });
+
+  const chooseConflict = (target: PartyTarget, conflict: IdFieldConflict, source: "mrz" | "vision") => {
+    if (source === "vision") {
+      const value = conflict.vision;
+      setterFor(target)((previous) => {
+        if (conflict.field === "series" || conflict.field === "documentNumber") {
+          const clean = value.replace(/[^A-Za-z0-9]/g, "").toUpperCase();
+          const letters = /[A-Z]{2}/.exec(clean)?.[0] ?? previous.idSeries;
+          const digits = /[0-9]{6}/.exec(clean)?.[0] ?? previous.idNumber;
+          return { ...previous, idSeries: letters, idNumber: digits };
+        }
+        return { ...previous, fullName: value };
+      });
+    }
+    patchIdState(target, (state) => resolveConflict(state, conflict.field));
+  };
+
+  const activeParties: { label: string; target: PartyTarget; state: PartyIdState }[] =
+    documentKind === "rent_agreement"
+      ? [
+          { label: "Proprietar", target: "landlord", state: idStates.landlord },
+          { label: "Chiriaș", target: "tenant", state: idStates.tenant },
+        ]
+      : [{ label: "Beneficiar", target: "beneficiary", state: idStates.beneficiary }];
+  const blockers = idGenerationBlockers(activeParties);
 
   const create = useMutation({
     mutationFn: async () => {
