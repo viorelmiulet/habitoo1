@@ -2448,9 +2448,11 @@ export async function applyPortalSelectionForOrg(input: {
               portal_key: definition.id,
               enabled: wanted.enabled,
               status: wanted.enabled ? "pending" : "disabled",
+              withdrawn_at: wanted.enabled ? null : new Date().toISOString(),
               updated_by: actorId,
               created_by: actorId,
             } as never,
+
             { onConflict: "organization_id,property_id,portal_key" },
           );
           if (error) throw new Error(error.message);
