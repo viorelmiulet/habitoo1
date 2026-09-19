@@ -79,7 +79,7 @@ async function realPorts(organizationId: string, property: PropertyRow): Promise
       return count ?? 0;
     },
     logAttempt: async (entry) => {
-      await supabaseAdmin.from("postal_code_resolution_attempts").insert({
+      const { error } = await supabaseAdmin.from("postal_code_resolution_attempts").insert({
         organization_id: organizationId,
         property_id: property.id,
         outcome: entry.outcome,
@@ -88,9 +88,12 @@ async function realPorts(organizationId: string, property: PropertyRow): Promise
         used_provider: entry.usedProvider,
         detail: entry.detail,
       });
+      // Nu înghițim eroarea: dacă nici jurnalul nu se poate scrie, rezolvarea
+      // se raportează ca eșuată, nu ca reușită în silence.
+      if (error) throw new Error(error.message);
     },
     save: async (value) => {
-      await supabaseAdmin
+      const { error } = await supabaseAdmin
         .from("properties")
         .update({
           postal_code: value.postalCode,
@@ -102,9 +105,11 @@ async function realPorts(organizationId: string, property: PropertyRow): Promise
         // Garanție suplimentară: o valoare manuală nu poate fi atinsă nici
         // dacă între citire și scriere cineva a completat câmpul.
         .neq("postal_code_source", "manual");
+      if (error) throw new Error(error.message);
     },
   };
 }
+
 
 export type PostalCodeReport = PostalResolution & {
   reference: string | null;
@@ -144,9 +149,36 @@ export const resolvePropertyPostalCode = createServerFn({ method: "POST" })
 
     const row = property as unknown as PropertyRow;
     const { resolvePostalCodeFor } = await import("./postal-code.server");
-    const result = await resolvePostalCodeFor(row.id, row, await realPorts(organizationId, row));
-    return report(result, row);
+    try {
+      const result = await resolvePostalCodeFor(row.id, row, await realPorts(organizationId, row));
+      return report(result, row);
+    } catch (error) {
+      // Salvarea ofertei a reușit deja: eșecul se consemnează și se întoarce ca
+      // notificare, niciodată înghițit în silence.
+      const message = error instanceof Error ? error.message : String(error);
+      await supabaseAdmin.from("postal_code_resolution_attempts").insert({
+        organization_id: organizationId,
+        property_id: row.id,
+        outcome: "failed",
+        postal_code: null,
+        source: null,
+        used_provider: false,
+        detail: message.slice(0, 500),
+      });
+      return report(
+        {
+          propertyId: row.id,
+          status: "failed",
+          postalCode: (row.postal_code ?? "").trim() || null,
+          source: null,
+          reason: "failed",
+          usedProvider: false,
+        },
+        row,
+      );
+    }
   });
+
 
 export const backfillPostalCodes = createServerFn({ method: "POST" })
   .middleware([requireActiveOrgAuth])

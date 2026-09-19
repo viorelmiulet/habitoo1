@@ -104,3 +104,16 @@ export const getProperstarFeedReport = createServerFn({ method: "GET" })
       lastFetchItems: log?.items ?? null,
     };
   });
+
+/**
+ * Golește cache-ul feedului pentru agenția din sesiune. Se apelează din orice
+ * ecran care schimbă ceva ce apare în feed; agenția nu vine niciodată din input.
+ */
+export const properstarFeedChanged = createServerFn({ method: "POST" })
+  .middleware([requireActiveOrgAuth])
+  .handler(async ({ context }): Promise<{ ok: true }> => {
+    const organizationId = await organizationOf(context as unknown as AuthContext);
+    const { clearProperstarCache } = await import("./properstar/feed.server");
+    clearProperstarCache(organizationId);
+    return { ok: true };
+  });

@@ -10,17 +10,13 @@
  */
 import { createFileRoute } from "@tanstack/react-router";
 import { errorResponse, withFeedAuth } from "@/lib/site-feed/auth.server";
-import { buildProperstarFeed } from "@/lib/portals/properstar/feed.server";
+import { buildProperstarFeed, PROPERSTAR_FEED_HEADERS } from "@/lib/portals/properstar/feed.server";
 
 function xmlResponse(xml: string): Response {
-  return new Response(xml, {
-    status: 200,
-    headers: {
-      "content-type": "application/xml; charset=utf-8",
-      "cache-control": "private, max-age=300",
-    },
-  });
+  // Fără păstrare în client: sursa unică de antete este definiția feedului.
+  return new Response(xml, { status: 200, headers: { ...PROPERSTAR_FEED_HEADERS } });
 }
+
 
 export const Route = createFileRoute("/api/public/feed/properstar/$agencyKey")({
   server: {

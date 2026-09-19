@@ -353,3 +353,38 @@ describe("helperi Properstar", () => {
     if (!result.ok) expect(result.missing.length).toBeGreaterThan(0);
   });
 });
+
+describe("cache-ul feedului", () => {
+  it("nu memorează un feed gol: corecția se vede la următoarea citire", async () => {
+    const { clearProperstarCache } = await import("./feed.server");
+    clearProperstarCache();
+    // Fără cod poștal oferta e exclusă, deci feedul iese gol.
+    seedAll({}, { postal_code: null });
+    const empty = await build({ useCache: true });
+    expect(empty.adverts).toHaveLength(0);
+
+    // Codul poștal completat trebuie să apară imediat, nu după expirare.
+    seedAll({}, { postal_code: "077040" });
+    const after = await build({ useCache: true });
+    expect(after.adverts).toHaveLength(1);
+  });
+
+  it("golirea cache-ului agenției face ca modificarea să fie vizibilă imediat", async () => {
+    const { clearProperstarCache } = await import("./feed.server");
+    clearProperstarCache();
+    const first = await build({ useCache: true });
+    expect(first.adverts).toHaveLength(1);
+
+    // Oferta este deselectată; fără golire, cache-ul ar servi versiunea veche.
+    db.portal_publications = [];
+    clearProperstarCache(ORG);
+    const second = await build({ useCache: true });
+    expect(second.adverts).toHaveLength(0);
+  });
+
+  it("antetele nu permit păstrarea unui feed învechit în client", async () => {
+    const { PROPERSTAR_FEED_HEADERS } = await import("./feed.server");
+    expect(PROPERSTAR_FEED_HEADERS["cache-control"]).toContain("no-cache");
+    expect(PROPERSTAR_FEED_HEADERS["cache-control"]).not.toContain("max-age=300");
+  });
+});

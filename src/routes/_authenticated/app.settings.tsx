@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "@/components/ui/sonner";
 import { toastError } from "@/lib/errors";
+import { notifyProperstarFeedChanged } from "@/lib/portals/properstar-cache";
 import { PageHeader } from "@/components/app/PageHeader";
 import { StatusBadge } from "@/components/app/StatusBadge";
 import { AgencyPortalCatalogCard } from "@/components/app/AgencyPortalCatalogCard";
@@ -118,6 +119,8 @@ function SettingsPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: currentUserQueryKey });
       queryClient.invalidateQueries({ queryKey: ["team"] });
+      // Datele agentului apar în feedul Properstar.
+      notifyProperstarFeedChanged();
       toast.success("Fotografia de profil a fost actualizată.");
     },
     onError: (e: Error) => toastError(e),
@@ -138,6 +141,7 @@ function SettingsPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: currentUserQueryKey });
+      notifyProperstarFeedChanged();
       toast.success("Profilul a fost actualizat.");
     },
     onError: (e: Error) => toastError(e),

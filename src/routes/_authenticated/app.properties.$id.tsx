@@ -79,6 +79,7 @@ import {
 } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { resolvePropertyPostalCode } from "@/lib/geo/postal-code.functions";
+import { notifyProperstarFeedChanged } from "@/lib/portals/properstar-cache";
 import { postalCodeHint } from "@/lib/geo/postal-code";
 import { LocationPicker, emptyLocation, type LocationValue } from "@/components/app/LocationPicker";
 import { PropertyLocationMap } from "@/components/app/PropertyLocationMap";
@@ -103,6 +104,16 @@ import {
 import { activityStatusLabels, activityStatusTone, logAudit } from "@/lib/crm";
 import { matchLabel, matchTone, scoreMatch } from "@/lib/matching";
 import { appHead } from "@/components/app/app-head";
+
+/** Notificare neblocantă despre codul poștal dedus la salvare. */
+function postalNotice(report: { status: string; reasonLabel: string } | null): void {
+  if (!report) return;
+  if (report.status === "failed") {
+    toast.warning(`Codul poștal nu a putut fi completat automat: ${report.reasonLabel}`);
+  } else if (report.status === "not_found" || report.status === "capped") {
+    toast.warning(`Codul poștal a rămas necompletat: ${report.reasonLabel}`);
+  }
+}
 
 export const Route = createFileRoute("/_authenticated/app/properties/$id")({
   head: () => appHead("Habitoo CRM — detalii proprietate"),
@@ -233,16 +244,22 @@ function PropertyDetailPage() {
         .eq("id", id);
       if (error) throw error;
       // Codul poștal lipsă se deduce din adresă, pe server; un cod scris de om
-      // rămâne neatins (sursa devine „manual” la salvare).
+      // rămâne neatins (sursa devine „manual” la salvare). Eșecul nu anulează
+      // salvarea, dar se arată ca notificare.
       try {
-        await resolvePostalCode({ data: { propertyId: id } });
-      } catch {
-        // Ignorat intenționat: modificările sunt deja salvate.
+        return (await resolvePostalCode({ data: { propertyId: id } })) ?? null;
+      } catch (error) {
+        return {
+          status: "failed",
+          reasonLabel: error instanceof Error ? error.message : "eroare necunoscută",
+        };
       }
     },
-    onSuccess: async () => {
+    onSuccess: async (postal) => {
       queryClient.invalidateQueries({ queryKey: ["property", id] });
       queryClient.invalidateQueries({ queryKey: ["properties"] });
+      notifyProperstarFeedChanged();
+      postalNotice(postal);
       setEditing(false);
       toast.success("Modificările au fost salvate.");
     },

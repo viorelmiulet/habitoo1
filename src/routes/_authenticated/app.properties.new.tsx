@@ -30,11 +30,22 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { useServerFn } from "@tanstack/react-start";
 import { resolvePropertyPostalCode } from "@/lib/geo/postal-code.functions";
+import { notifyProperstarFeedChanged } from "@/lib/portals/properstar-cache";
 import { LocationPicker, emptyLocation, type LocationValue } from "@/components/app/LocationPicker";
 import { PropertyLocationMap } from "@/components/app/PropertyLocationMap";
 import { useCurrentUser } from "@/hooks/use-session";
 import { propertyTypeLabels } from "@/lib/labels";
 import { appHead } from "@/components/app/app-head";
+
+/** Notificare neblocantă despre codul poștal dedus la salvare. */
+function postalNotice(report: { status: string; reasonLabel: string } | null): void {
+  if (!report) return;
+  if (report.status === "failed") {
+    toast.warning(`Codul poștal nu a putut fi completat automat: ${report.reasonLabel}`);
+  } else if (report.status === "not_found" || report.status === "capped") {
+    toast.warning(`Codul poștal a rămas necompletat: ${report.reasonLabel}`);
+  }
+}
 
 export const Route = createFileRoute("/_authenticated/app/properties/new")({
   head: () => appHead("Habitoo CRM — proprietate nouă"),
@@ -153,17 +164,24 @@ function NewPropertyPage() {
         .select("id")
         .single();
       if (error) throw error;
-      // Codul poștal se deduce din adresă pe server; lipsa lui nu blochează nimic.
+      // Codul poștal se deduce din adresă pe server; lipsa lui nu blochează
+      // salvarea, dar rezultatul (inclusiv eșecul) se arată utilizatorului.
+      let postal: { status: string; reasonLabel: string } | null = null;
       try {
-        await resolvePostalCode({ data: { propertyId: data.id } });
-      } catch {
-        // Ignorat intenționat: oferta este deja salvată.
+        postal = (await resolvePostalCode({ data: { propertyId: data.id } })) ?? null;
+      } catch (error) {
+        postal = {
+          status: "failed",
+          reasonLabel: error instanceof Error ? error.message : "eroare necunoscută",
+        };
       }
-      return data;
+      return { ...data, postal };
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["properties"] });
+      notifyProperstarFeedChanged();
       toast.success("Proprietatea a fost adăugată.");
+      postalNotice(data.postal);
       navigate({ to: "/app/properties/$id", params: { id: data.id } });
     },
     onError: (e: Error) => toastError(e),
