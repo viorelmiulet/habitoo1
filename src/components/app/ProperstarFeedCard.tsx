@@ -44,8 +44,8 @@ export function ProperstarFeedCard() {
               </code>
               <p className="text-xs text-muted-foreground">
                 {report.data.hasActiveKey
-                  ? "Cheia agenției este activă. Dacă nu o mai ai, cere echipei Habitoo una nouă."
-                  : "Cheia de acces se generează de echipa Habitoo; fără ea linkul nu răspunde."}
+                  ? "Cheia agenției este activă. Linkul de mai sus arată doar începutul cheii; partea secretă se afișează o singură dată, la generarea cheii. Dacă nu o mai ai, cere echipei Habitoo una nouă."
+                  : "Cheia de acces se generează de echipa Habitoo și se afișează o singură dată, la generare; fără ea linkul nu răspunde."}
               </p>
               {report.data.lastFetchAt ? (
                 <p className="text-xs text-muted-foreground">
