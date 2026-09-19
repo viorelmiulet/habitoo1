@@ -70,6 +70,7 @@ import { Route as AuthenticatedAppPropertiesIdRouteImport } from './routes/_auth
 import { Route as AuthenticatedAppPropertiesNewRouteImport } from './routes/_authenticated/app.properties.new'
 import { Route as AuthenticatedAppRequestsIdRouteImport } from './routes/_authenticated/app.requests.$id'
 import { Route as ApiPublicCronLacheieResendRouteImport } from './routes/api/public/cron/lacheie-resend'
+import { Route as ApiPublicCronListingCollectorRouteImport } from './routes/api/public/cron/listing-collector'
 import { Route as ApiPublicCronMarketPriceIndicesRouteImport } from './routes/api/public/cron/market-price-indices'
 import { Route as ApiPublicCronPortalSlotWithdrawRouteImport } from './routes/api/public/cron/portal-slot-withdraw'
 import { Route as ApiPublicCronSubscriptionsRouteImport } from './routes/api/public/cron/subscriptions'
@@ -433,6 +434,12 @@ const ApiPublicCronLacheieResendRoute =
     path: '/api/public/cron/lacheie-resend',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicCronListingCollectorRoute =
+  ApiPublicCronListingCollectorRouteImport.update({
+    id: '/api/public/cron/listing-collector',
+    path: '/api/public/cron/listing-collector',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicCronMarketPriceIndicesRoute =
   ApiPublicCronMarketPriceIndicesRouteImport.update({
     id: '/api/public/cron/market-price-indices',
@@ -645,6 +652,7 @@ export interface FileRoutesByFullPath {
   '/app/properties/new': typeof AuthenticatedAppPropertiesNewRoute
   '/app/requests/$id': typeof AuthenticatedAppRequestsIdRoute
   '/api/public/cron/lacheie-resend': typeof ApiPublicCronLacheieResendRoute
+  '/api/public/cron/listing-collector': typeof ApiPublicCronListingCollectorRoute
   '/api/public/cron/market-price-indices': typeof ApiPublicCronMarketPriceIndicesRoute
   '/api/public/cron/portal-slot-withdraw': typeof ApiPublicCronPortalSlotWithdrawRoute
   '/api/public/cron/subscriptions': typeof ApiPublicCronSubscriptionsRoute
@@ -732,6 +740,7 @@ export interface FileRoutesByTo {
   '/app/properties/new': typeof AuthenticatedAppPropertiesNewRoute
   '/app/requests/$id': typeof AuthenticatedAppRequestsIdRoute
   '/api/public/cron/lacheie-resend': typeof ApiPublicCronLacheieResendRoute
+  '/api/public/cron/listing-collector': typeof ApiPublicCronListingCollectorRoute
   '/api/public/cron/market-price-indices': typeof ApiPublicCronMarketPriceIndicesRoute
   '/api/public/cron/portal-slot-withdraw': typeof ApiPublicCronPortalSlotWithdrawRoute
   '/api/public/cron/subscriptions': typeof ApiPublicCronSubscriptionsRoute
@@ -823,6 +832,7 @@ export interface FileRoutesById {
   '/_authenticated/app/properties/new': typeof AuthenticatedAppPropertiesNewRoute
   '/_authenticated/app/requests/$id': typeof AuthenticatedAppRequestsIdRoute
   '/api/public/cron/lacheie-resend': typeof ApiPublicCronLacheieResendRoute
+  '/api/public/cron/listing-collector': typeof ApiPublicCronListingCollectorRoute
   '/api/public/cron/market-price-indices': typeof ApiPublicCronMarketPriceIndicesRoute
   '/api/public/cron/portal-slot-withdraw': typeof ApiPublicCronPortalSlotWithdrawRoute
   '/api/public/cron/subscriptions': typeof ApiPublicCronSubscriptionsRoute
@@ -914,6 +924,7 @@ export interface FileRouteTypes {
     | '/app/properties/new'
     | '/app/requests/$id'
     | '/api/public/cron/lacheie-resend'
+    | '/api/public/cron/listing-collector'
     | '/api/public/cron/market-price-indices'
     | '/api/public/cron/portal-slot-withdraw'
     | '/api/public/cron/subscriptions'
@@ -1001,6 +1012,7 @@ export interface FileRouteTypes {
     | '/app/properties/new'
     | '/app/requests/$id'
     | '/api/public/cron/lacheie-resend'
+    | '/api/public/cron/listing-collector'
     | '/api/public/cron/market-price-indices'
     | '/api/public/cron/portal-slot-withdraw'
     | '/api/public/cron/subscriptions'
@@ -1091,6 +1103,7 @@ export interface FileRouteTypes {
     | '/_authenticated/app/properties/new'
     | '/_authenticated/app/requests/$id'
     | '/api/public/cron/lacheie-resend'
+    | '/api/public/cron/listing-collector'
     | '/api/public/cron/market-price-indices'
     | '/api/public/cron/portal-slot-withdraw'
     | '/api/public/cron/subscriptions'
@@ -1144,6 +1157,7 @@ export interface RootRouteChildren {
   AuthCallbackRoute: typeof AuthCallbackRoute
   OfertaIdRoute: typeof OfertaIdRoute
   ApiPublicCronLacheieResendRoute: typeof ApiPublicCronLacheieResendRoute
+  ApiPublicCronListingCollectorRoute: typeof ApiPublicCronListingCollectorRoute
   ApiPublicCronMarketPriceIndicesRoute: typeof ApiPublicCronMarketPriceIndicesRoute
   ApiPublicCronPortalSlotWithdrawRoute: typeof ApiPublicCronPortalSlotWithdrawRoute
   ApiPublicCronSubscriptionsRoute: typeof ApiPublicCronSubscriptionsRoute
@@ -1597,6 +1611,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicCronLacheieResendRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/cron/listing-collector': {
+      id: '/api/public/cron/listing-collector'
+      path: '/api/public/cron/listing-collector'
+      fullPath: '/api/public/cron/listing-collector'
+      preLoaderRoute: typeof ApiPublicCronListingCollectorRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/cron/market-price-indices': {
       id: '/api/public/cron/market-price-indices'
       path: '/api/public/cron/market-price-indices'
@@ -1985,6 +2006,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthCallbackRoute: AuthCallbackRoute,
   OfertaIdRoute: OfertaIdRoute,
   ApiPublicCronLacheieResendRoute: ApiPublicCronLacheieResendRoute,
+  ApiPublicCronListingCollectorRoute: ApiPublicCronListingCollectorRoute,
   ApiPublicCronMarketPriceIndicesRoute: ApiPublicCronMarketPriceIndicesRoute,
   ApiPublicCronPortalSlotWithdrawRoute: ApiPublicCronPortalSlotWithdrawRoute,
   ApiPublicCronSubscriptionsRoute: ApiPublicCronSubscriptionsRoute,
