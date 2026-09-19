@@ -795,6 +795,23 @@ function PropertyDetailPage() {
                       />
                     </div>
                   ))}
+                  <div className="space-y-2">
+                    <Label htmlFor="postal_code">Cod poștal</Label>
+                    <Input
+                      id="postal_code"
+                      inputMode="numeric"
+                      value={draft.postal_code ?? ""}
+                      onChange={(e) =>
+                        setDraft((d) => ({ ...d, postal_code: e.target.value }))
+                      }
+                    />
+                    {(draft.postal_code ?? "").trim() === (property.postal_code ?? "").trim() &&
+                    postalCodeHint(property.postal_code_source) ? (
+                      <p className="text-xs text-muted-foreground">
+                        {postalCodeHint(property.postal_code_source)}
+                      </p>
+                    ) : null}
+                  </div>
                 </div>
                 <PropertyLocationMap
                   idPrefix="edit"
