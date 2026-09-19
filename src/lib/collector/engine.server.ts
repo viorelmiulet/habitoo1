@@ -6,7 +6,13 @@
  * și nu salvează niciodată un număr de telefon în clar. Porturile (fetch,
  * sleep, now) sunt injectabile, ca să poată fi testat fără rețea.
  */
-import { collectorAdapter, type CollectorAdapter, type CollectorParsedItem } from "./adapters";
+import {
+  collectorAdapter,
+  normalizeParseResult,
+  type CollectorAdapter,
+  type CollectorParsedItem,
+} from "./adapters";
+import "./adapters.register";
 import { collectorFetch, type CollectorFetchResult } from "./fetch.server";
 import { listingHash, sellerFingerprint } from "./fingerprint.server";
 import {
