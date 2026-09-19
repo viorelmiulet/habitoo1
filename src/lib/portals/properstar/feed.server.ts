@@ -11,7 +11,9 @@
  * Nicio ofertă nu este trimisă cu noduri obligatorii goale: cele incomplete
  * sunt excluse și raportate în UI („De completat pentru Properstar").
  */
+import { getPortalDefinition } from "@/lib/portals/registry";
 import { feedUrlsForRequest } from "@/lib/site-feed/config";
+
 import {
   FEED_PUBLIC_STATUSES,
   type PropertyImageRow,
