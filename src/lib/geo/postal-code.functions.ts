@@ -159,8 +159,13 @@ export const backfillPostalCodes = createServerFn({ method: "POST" })
       .parse(data ?? {}),
   )
   .handler(async ({ data, context }): Promise<{ processed: number; items: PostalCodeReport[] }> => {
-    const { requireSuperadmin } = await import("@/lib/org-access");
-    await requireSuperadmin(context as never);
+    // Acțiune rezervată administratorilor platformei, verificată pe server.
+    const { data: isSuperadmin } = await (
+      context as unknown as { supabase: { rpc: (fn: string) => Promise<{ data: unknown }> } }
+    ).supabase.rpc("is_superadmin");
+    if (isSuperadmin !== true) {
+      throw new Error("Această operațiune este rezervată administratorilor platformei.");
+    }
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { resolvePostalCodeFor } = await import("./postal-code.server");
