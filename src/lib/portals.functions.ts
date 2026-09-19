@@ -1283,7 +1283,12 @@ export async function executeListingAction(input: {
   await admin
     .from("portal_publications")
     .update({
-      ...(result.ok && action === "withdraw" ? { enabled: false } : {}),
+      ...(result.ok && action === "withdraw"
+        ? { enabled: false, withdrawn_at: now }
+        : action === "publish" || action === "update"
+          ? { withdrawn_at: null }
+          : {}),
+
       status: status === "error" ? "error" : action === "withdraw" ? "disabled" : "synced",
       last_synced_at: now,
       last_error: errorMessage,
