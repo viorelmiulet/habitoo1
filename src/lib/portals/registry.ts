@@ -504,6 +504,18 @@ export function getPortalDefinition(id: string): PortalDefinition | null {
   return PORTALS.find((p) => p.id === id) ?? null;
 }
 
+/**
+ * Linkul complet de feed pentru un portal de tip „pull”, cu cheia agenției
+ * în URL. `null` pentru portalurile fără feed public. Construit exclusiv din
+ * definiția portalului, ca UI-ul să nu asambleze niciodată URL-uri.
+ */
+export function portalPublicFeedUrl(portalId: string, agencyKey: string): string | null {
+  const definition = getPortalDefinition(portalId);
+  if (!definition?.public_feed_path) return null;
+  return `${CRM_URL}${definition.public_feed_path(agencyKey)}`;
+}
+
+
 export function portalSupports(
   definition: PortalDefinition,
   capability: PortalCapability,
