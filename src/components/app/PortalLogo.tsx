@@ -15,6 +15,7 @@ import lacheieLogo from "@/assets/portals/lacheie.png";
 import oferteImobiliareLogo from "@/assets/portals/oferteimobiliare.png";
 import olxLogo from "@/assets/portals/olx.png";
 import publi24Logo from "@/assets/portals/publi24.png";
+import properstarLogo from "@/assets/portals/properstar.png.asset.json";
 import romimoLogo from "@/assets/portals/romimo.png";
 import storiaLogo from "@/assets/portals/storia.png";
 import { portalLogoIds } from "@/lib/portals/registry";
@@ -31,6 +32,7 @@ const PORTAL_LOGOS: Record<string, string> = {
   storia: storiaLogo,
   olx: olxLogo,
   publi24: publi24Logo,
+  properstar: properstarLogo.url,
   romimo: romimoLogo,
 };
 
