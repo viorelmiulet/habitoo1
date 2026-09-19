@@ -6,8 +6,12 @@
  * fără să atingem tool-urile, contextul sau componentele CRM.
  */
 
+/** Atașament trimis modelului (imagine sau PDF), doar în memorie. */
+export type AiProviderAttachment = { mimeType: string; base64: string };
+
 export type AiProviderMessage =
-  | { role: "user"; content: string }
+  | { role: "user"; content: string; attachments?: AiProviderAttachment[] }
+
   | { role: "assistant"; content: string }
   | {
       role: "assistant_tool_call";

@@ -38,7 +38,13 @@ export function toGeminiContents(messages: AiProviderMessage[]): GeminiContent[]
   const contents: GeminiContent[] = [];
   for (const message of messages) {
     if (message.role === "user") {
-      contents.push({ role: "user", parts: [{ text: message.content }] });
+      const parts: Record<string, unknown>[] = [{ text: message.content }];
+      /* Atașamentele merg inline: nu sunt salvate nicăieri și nu apar în loguri. */
+      for (const attachment of message.attachments ?? []) {
+        parts.push({ inlineData: { mimeType: attachment.mimeType, data: attachment.base64 } });
+      }
+      contents.push({ role: "user", parts });
+
     } else if (message.role === "assistant") {
       contents.push({ role: "model", parts: [{ text: message.content }] });
     } else if (message.role === "assistant_tool_call") {
