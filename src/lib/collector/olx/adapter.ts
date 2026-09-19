@@ -1,119 +1,106 @@
 /**
- * Adaptorul OLX — DOAR pagini publice.
+ * Adaptorul OLX — DOAR pagini publice, citite din JSON-ul încorporat.
  *
  * Fără autentificare, fără cookie-uri păstrate, fără proxy, fără mascarea
- * identității. Nu citește, nu salvează și nu hash-uiește NICIUN număr de
- * telefon: nu există nicio referire la telefon în acest modul.
+ * identității și fără selectori de HTML: sursa de adevăr este
+ * `window.__PRERENDERED_STATE__`. Nu citește, nu salvează și nu hash-uiește
+ * NICIUN număr de telefon — nu există nicio referire la telefon aici.
  *
- * Tot ce ține de markup stă în `selectors.ts`; maparea și clasificarea în
- * `mapping.ts`. Când markup-ul se schimbă, itemul e raportat ca eșec de
- * citire și rularea continuă, fără rânduri incomplete.
+ * Proprietar vs agenție vine exclusiv din `isBusiness` al anunțului. Tipul de
+ * proprietate vine din categoria de căutare. Coordonatele au raza declarată de
+ * OLX și nu sunt prezentate niciodată ca poziție exactă.
  */
 import type { CollectorAdapter, CollectorParsedItem, CollectorParseFailure } from "../adapters";
+import { readOlxAd } from "./ads";
+import { mapOlxCategoryId } from "./mapping";
+import { adsFromState, extractPrerenderedState } from "./prerendered";
 import {
-  classifyOlxSeller,
-  localityKey,
-  mapOlxPropertyType,
+  olxNarrowingReason,
+  olxNeedsNarrowing,
   olxPageUrl,
+  olxTargetForUrl,
   parseOlxConfig,
-  resolveZone,
-  type LocalityIndexEntry,
-} from "./mapping";
-import { olxFieldsFromCard, readOlxCard, splitOlxCards } from "./selectors";
+} from "./targets";
 
 export const OLX_SOURCE_KEY = "olx";
-
-/* eslint-disable @typescript-eslint/no-explicit-any */
-type PreparedIndex = { localities: Map<string, LocalityIndexEntry> };
-
-/** Nomenclatorul propriu: potrivire exactă pe numele orașelor configurate. */
-async function prepareLocalities(admin: any, config: unknown): Promise<PreparedIndex> {
-  const index = new Map<string, LocalityIndexEntry>();
-  const parsed = parseOlxConfig(config);
-  if (parsed.cities.length === 0 || !admin?.from) return { localities: index };
-
-  const keys = parsed.cities.map((city) => localityKey(city.label));
-  const { data: localities } = await admin
-    .from("ro_localities")
-    .select("id, name, normalized_name, county_id")
-    .in("normalized_name", keys);
-  const countyIds = [
-    ...new Set(((localities ?? []) as any[]).map((row) => row.county_id).filter(Boolean)),
-  ];
-  const countyNames = new Map<string, string>();
-  if (countyIds.length > 0) {
-    const { data: counties } = await admin.from("ro_counties").select("id, name").in("id", countyIds);
-    for (const county of (counties ?? []) as any[]) countyNames.set(county.id, county.name);
-  }
-  for (const row of (localities ?? []) as any[]) {
-    index.set(localityKey(row.normalized_name ?? row.name), {
-      locality: row.name,
-      county: countyNames.get(row.county_id) ?? "",
-      localityId: row.id ?? null,
-    });
-  }
-  return { localities: index };
-}
 
 export const olxAdapter: CollectorAdapter = {
   key: OLX_SOURCE_KEY,
 
-  prepare: async ({ admin, config }) => prepareLocalities(admin, config),
-
   pageUrl: ({ baseUrl, config, page }) => olxPageUrl(baseUrl, parseOlxConfig(config), page),
 
-  parsePage: ({ url, body, baseUrl, config, prepared }) => {
-    void config;
-    const index = (prepared as PreparedIndex | undefined)?.localities ?? new Map();
+  parsePage: ({ url, body, config }) => {
+    const parsedConfig = parseOlxConfig(config);
     const items: CollectorParsedItem[] = [];
     const failures: CollectorParseFailure[] = [];
 
-    for (const card of splitOlxCards(body)) {
-      const raw = readOlxCard(card, baseUrl || url);
-      const outcome = olxFieldsFromCard(raw);
-      if ("failure" in outcome) {
-        failures.push({ url: raw.url ?? url, reason: outcome.failure.reason });
+    const state = extractPrerenderedState(body);
+    if (!state.ok) return { items, failures: [{ url, reason: state.reason }] };
+
+    const ads = adsFromState(state.state);
+    if (!ads.ok) return { items, failures: [{ url, reason: ads.reason }] };
+
+    const target = olxTargetForUrl(parsedConfig, url);
+    if (target && olxNeedsNarrowing(ads.totalCount)) {
+      // Peste plafonul OLX: raportăm ca „de îngustat”, nu pierdem anunțuri tacit.
+      failures.push({ url, reason: olxNarrowingReason(target, ads.totalCount as number) });
+    }
+
+    for (const ad of ads.ads) {
+      const outcome = readOlxAd(ad, { categoryTypes: parsedConfig.categoryTypes });
+      if (!outcome.ok) {
+        failures.push({ url, reason: outcome.reason });
         continue;
       }
       const fields = outcome.fields;
-      const seller = classifyOlxSeller(fields.sellerBadgeText);
-      const zone = resolveZone(fields.cityText, index);
-      const propertyType = mapOlxPropertyType(fields.categoryText, fields.rooms, fields.title);
+      // Categoria de căutare este sursa tipului: harta de categorii mai întâi,
+      // altfel tipul declarat al țintei, altfel „necunoscut”.
+      const mapped = mapOlxCategoryId(fields.categoryId, parsedConfig.categoryTypes);
+      const propertyType = mapped !== "necunoscut" ? mapped : (target?.type ?? "necunoscut");
 
       items.push({
         url: fields.url,
         sourceItemId: fields.sourceItemId,
-        inferredType: seller.inferredType,
-        imageUrls: fields.imageUrls,
-        signals: seller.signals,
-        declaredAgency: seller.inferredType === "agency" ? true : null,
-        declaredOwner: seller.inferredType === "owner" ? true : null,
+        inferredType: fields.sellerType,
+        imageUrls: fields.photos,
+        // Semnalul păstrat este exact steagul declarat de OLX.
+        signals: { source: "olx", isBusiness: fields.isBusiness },
+        declaredAgency: fields.isBusiness === true ? true : null,
+        declaredOwner: fields.isBusiness === false ? true : null,
         normalized: {
           title: fields.title,
+          description: fields.description,
           price: fields.price,
           currency: fields.currency,
-          area: fields.area,
-          rooms: fields.rooms,
-          // Orașul și cartierul, exact cum sunt publicate.
-          city: fields.cityText,
-          neighbourhood: fields.neighbourhood,
-          // Nomenclator: doar potrivire exactă, altfel gol (zona nu se inventează).
-          county: zone.county,
-          locality: zone.locality,
-          localityId: zone.localityId,
+          area: fields.params.area,
+          city: fields.location.cityName,
+          county: fields.location.regionName,
+          neighbourhood: fields.location.districtName,
           propertyType,
-          publishedAt: fields.publishedAt,
-          publishedText: fields.publishedText,
-          sellerType: seller.inferredType,
-          sellerSignals: seller.signals,
+          categoryId: fields.categoryId,
+          publishedAt: fields.createdTime,
+          refreshedAt: fields.lastRefreshTime,
+          status: fields.status,
+          isPromoted: fields.isPromoted,
+          sellerType: fields.sellerType,
+          floor: fields.params.floor,
+          construction: fields.params.construction,
+          layout: fields.params.layout,
+          // Poziția are rază declarată de OLX: aproximativă, niciodată exactă.
+          lat: fields.point.lat,
+          lng: fields.point.lon,
+          locationRadiusMeters: fields.point.radiusMeters,
+          locationPrecise: false,
           // Doar adrese de imagini: nimic nu se descarcă.
-          imageUrls: fields.imageUrls,
+          imageUrls: fields.photos,
         },
         raw: {
-          categoryText: fields.categoryText,
+          categoryId: fields.categoryId,
+          isBusiness: fields.isBusiness,
+          location: fields.location,
+          map: fields.point,
           params: fields.params,
-          sellerBadgeText: fields.sellerBadgeText,
-          locationDateText: `${fields.cityText ?? ""}${fields.neighbourhood ? `, ${fields.neighbourhood}` : ""}`,
+          searchTargetType: target?.type ?? null,
         },
       });
     }
