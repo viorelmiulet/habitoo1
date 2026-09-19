@@ -181,10 +181,16 @@ describe("citirea zonei automate cu modelul", () => {
     expect(outcome.quality).toContain("mrz_not_found");
   });
 
-  it("rândurile tăiate sunt raportate ca atare", () => {
-    const candidates = extractMrzCandidates("IDROU<<<<<<<<\nA<<<<<<<");
-    expect(candidates.length).toBe(2);
+  it("rândurile tăiate sunt raportate ca tăiate, nu ca lipsă", () => {
+    const lines = syntheticMrz()
+      .split("\n")
+      .map((line) => line.slice(0, 25));
+    const candidates = extractMrzCandidates(lines.join("\n"));
+    expect(candidates.length).toBe(3);
+    expect(mrzTextFromCandidates(candidates)).toBeNull();
+    expect(assessMrzCandidates(candidates)).toEqual(["mrz_lines_incomplete"]);
   });
+
 });
 
 describe("fața actului", () => {
