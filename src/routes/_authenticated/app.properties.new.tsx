@@ -102,6 +102,8 @@ function NewPropertyPage() {
   const set = (key: keyof typeof form, value: string | boolean) =>
     setForm((f) => ({ ...f, [key]: value }));
 
+  const resolvePostalCode = useServerFn(resolvePropertyPostalCode);
+
   const create = useMutation({
     mutationFn: async () => {
       if (!user?.organization?.id) throw new Error("Agenția nu este configurată.");
