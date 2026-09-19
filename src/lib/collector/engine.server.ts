@@ -325,8 +325,15 @@ export async function runCollectorSource(
         }
         consecutiveErrors = 0;
 
-        const items = adapter.parsePage({ url, body: result.body });
-        for (const item of items) {
+        const parsed = normalizeParseResult(
+          adapter.parsePage({ url, body: result.body, baseUrl: source.base_url, config, prepared }),
+        );
+        // Markup schimbat: eșecul se consemnează pe item, rularea continuă,
+        // dar nu se salvează rânduri incomplete.
+        for (const failure of parsed.failures) {
+          errors.push(`${failure.url ?? url}: ${failure.reason}`);
+        }
+        for (const item of parsed.items) {
           found += 1;
           try {
             const outcome = await persistItem(admin, source, item, {
