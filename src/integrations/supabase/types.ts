@@ -3412,6 +3412,7 @@ export type Database = {
           name: string
           phone: string | null
           plan: string
+          postal_code: string | null
           slug: string
           status: Database["public"]["Enums"]["org_status"]
           storia_auto_republish: boolean
@@ -3462,6 +3463,7 @@ export type Database = {
           name: string
           phone?: string | null
           plan?: string
+          postal_code?: string | null
           slug: string
           status?: Database["public"]["Enums"]["org_status"]
           storia_auto_republish?: boolean
@@ -3512,6 +3514,7 @@ export type Database = {
           name?: string
           phone?: string | null
           plan?: string
+          postal_code?: string | null
           slug?: string
           status?: Database["public"]["Enums"]["org_status"]
           storia_auto_republish?: boolean
@@ -4170,6 +4173,7 @@ export type Database = {
           updated_at: string
           updated_by: string | null
           withdraw_reason: string | null
+          withdrawn_at: string | null
         }
         Insert: {
           created_at?: string
@@ -4186,6 +4190,7 @@ export type Database = {
           updated_at?: string
           updated_by?: string | null
           withdraw_reason?: string | null
+          withdrawn_at?: string | null
         }
         Update: {
           created_at?: string
@@ -4202,6 +4207,7 @@ export type Database = {
           updated_at?: string
           updated_by?: string | null
           withdraw_reason?: string | null
+          withdrawn_at?: string | null
         }
         Relationships: [
           {
@@ -4663,6 +4669,7 @@ export type Database = {
           parking: string | null
           parking_spaces: number | null
           pet_friendly: boolean
+          postal_code: string | null
           pre_archive_status:
             | Database["public"]["Enums"]["property_status"]
             | null
@@ -4784,6 +4791,7 @@ export type Database = {
           parking?: string | null
           parking_spaces?: number | null
           pet_friendly?: boolean
+          postal_code?: string | null
           pre_archive_status?:
             | Database["public"]["Enums"]["property_status"]
             | null
@@ -4905,6 +4913,7 @@ export type Database = {
           parking?: string | null
           parking_spaces?: number | null
           pet_friendly?: boolean
+          postal_code?: string | null
           pre_archive_status?:
             | Database["public"]["Enums"]["property_status"]
             | null
