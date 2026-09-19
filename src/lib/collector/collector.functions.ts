@@ -66,17 +66,7 @@ export const listCollectorSources = createServerFn({ method: "GET" })
       .order("label", { ascending: true });
 
     const views: CollectorSourceView[] = [];
-    for (const source of (sources ?? []) as Record<string, never>[]) {
-      const row = source as unknown as {
-        key: string;
-        label: string;
-        base_url: string;
-        enabled: boolean;
-        crawl_delay_ms: number;
-        max_pages_per_run: number;
-        notes: string | null;
-        robots_checked_at: string | null;
-      };
+    for (const row of sources ?? []) {
       const { data: run } = await admin
         .from("collector_runs")
         .select("*")
