@@ -237,23 +237,89 @@ export function NewContractDialog({ open, onOpenChange, propertyId, contactId }:
         </div>
 
         {documentKind === "rent_agreement" ? <div className="grid gap-4 lg:grid-cols-2">
-          <PartySection title="1. Proprietar (locator)" party={landlord} onChange={setLandlord} fileRef={landlordFileRef} extractionEnabled={extractionEnabled} extracting={extract.isPending && extractTarget === "landlord"} onFile={(file) => { setExtractTarget("landlord"); extract.mutate({ file, target: "landlord" }); }} />
-          <PartySection title="2. Chiriaș (locatar)" party={tenant} onChange={setTenant} fileRef={tenantFileRef} extractionEnabled={extractionEnabled} extracting={extract.isPending && extractTarget === "tenant"} onFile={(file) => { setExtractTarget("tenant"); extract.mutate({ file, target: "tenant" }); }} />
-        </div> : <><div className="grid gap-3 rounded-md border border-border p-4 sm:grid-cols-3"><h3 className="sm:col-span-3 text-sm font-semibold">Date proprietate (editabile)</h3>{Object.entries(exclusiveProperty).map(([key, value]) => <Field key={key} label={({ locality: "Localitate", street: "Stradă", streetNumber: "Număr", county: "Județ", rooms: "Camere", layout: "Compartimentare", floor: "Etaj", comfort: "Confort", bathrooms: "Băi", balconies: "Balcoane", usableSurface: "Suprafață utilă", price: "Preț", currency: "Monedă" } as Record<string,string>)[key] ?? key} value={value} onChange={(next) => setExclusiveProperty((current) => ({ ...current, [key]: next }))} />)}</div><PartySection title="Beneficiar" party={beneficiary} onChange={setBeneficiary} fileRef={beneficiaryFileRef} extractionEnabled={extractionEnabled} extracting={extract.isPending && extractTarget === "beneficiary"} onFile={(file) => { setExtractTarget("beneficiary"); extract.mutate({ file, target: "beneficiary" }); }} /></>}
+          <PartySection title="1. Proprietar (locator)" party={landlord} onChange={setLandlord} idState={idStates.landlord} backDone={backDone.landlord} extractionEnabled={extractionEnabled} reading={extract.isPending && reading?.target === "landlord" ? reading.side : null} onCapture={(file, side) => { setReading({ target: "landlord", side }); extract.mutate({ file, target: "landlord", side }); }} onConfirm={() => patchIdState("landlord", confirmPendingFields)} onChoose={(conflict, source) => chooseConflict("landlord", conflict, source)} />
+          <PartySection title="2. Chiriaș (locatar)" party={tenant} onChange={setTenant} idState={idStates.tenant} backDone={backDone.tenant} extractionEnabled={extractionEnabled} reading={extract.isPending && reading?.target === "tenant" ? reading.side : null} onCapture={(file, side) => { setReading({ target: "tenant", side }); extract.mutate({ file, target: "tenant", side }); }} onConfirm={() => patchIdState("tenant", confirmPendingFields)} onChoose={(conflict, source) => chooseConflict("tenant", conflict, source)} />
+        </div> : <><div className="grid gap-3 rounded-md border border-border p-4 sm:grid-cols-3"><h3 className="sm:col-span-3 text-sm font-semibold">Date proprietate (editabile)</h3>{Object.entries(exclusiveProperty).map(([key, value]) => <Field key={key} label={({ locality: "Localitate", street: "Stradă", streetNumber: "Număr", county: "Județ", rooms: "Camere", layout: "Compartimentare", floor: "Etaj", comfort: "Confort", bathrooms: "Băi", balconies: "Balcoane", usableSurface: "Suprafață utilă", price: "Preț", currency: "Monedă" } as Record<string,string>)[key] ?? key} value={value} onChange={(next) => setExclusiveProperty((current) => ({ ...current, [key]: next }))} />)}</div><PartySection title="Beneficiar" party={beneficiary} onChange={setBeneficiary} idState={idStates.beneficiary} backDone={backDone.beneficiary} extractionEnabled={extractionEnabled} reading={extract.isPending && reading?.target === "beneficiary" ? reading.side : null} onCapture={(file, side) => { setReading({ target: "beneficiary", side }); extract.mutate({ file, target: "beneficiary", side }); }} onConfirm={() => patchIdState("beneficiary", confirmPendingFields)} onChoose={(conflict, source) => chooseConflict("beneficiary", conflict, source)} /></>}
 
         {documentKind === "rent_agreement" ? <div className="space-y-4 rounded-md border border-border p-4">
           <div className="flex items-start gap-3"><Checkbox id="include-inventory" checked={includeInventory} onCheckedChange={(checked) => { const next = checked === true; setIncludeInventory(next); if (next && inventory === null) setInventory(defaults.data?.items ?? []); }} /><div><Label htmlFor="include-inventory">Include proces-verbal de predare-primire</Label><p className="text-xs text-muted-foreground">Anexa se include în același PDF și se semnează împreună cu contractul.</p></div></div>
           {includeInventory ? <InventoryEditor items={inventory ?? defaults.data?.items ?? []} onChange={setInventory} /> : null}
         </div> : null}
-        <DialogFooter><Button variant="outline" onClick={() => onOpenChange(false)}>Anulează</Button><Button onClick={() => create.mutate()} disabled={create.isPending}>{create.isPending ? <Loader2 className="size-4 animate-spin" /> : null} Creează contractul</Button></DialogFooter>
+        {blockers.length > 0 ? <ul className="space-y-1 rounded-md border border-amber-500/40 bg-amber-500/10 p-3 text-xs text-foreground">{blockers.map((item) => <li key={item} className="flex items-start gap-1.5"><AlertTriangle className="mt-0.5 size-3.5 shrink-0" />{item}</li>)}</ul> : null}
+        <DialogFooter><Button variant="outline" onClick={() => onOpenChange(false)}>Anulează</Button><Button onClick={() => create.mutate()} disabled={create.isPending || blockers.length > 0}>{create.isPending ? <Loader2 className="size-4 animate-spin" /> : null} Creează contractul</Button></DialogFooter>
       </DialogContent>
     </Dialog>
   );
 }
 
-function PartySection({ title, party, onChange, fileRef, extractionEnabled, extracting, onFile }: { title: string; party: PartyForm; onChange: (party: PartyForm) => void; fileRef: React.RefObject<HTMLInputElement | null>; extractionEnabled: boolean; extracting: boolean; onFile: (file: File) => void }) {
+const FRAMING_HINT: Record<CaptureSide, string> = {
+  back: "Fotografiază spatele actului: cele trei rânduri de jos trebuie să intre complet în cadru, drept, fără reflexii.",
+  front: "Fotografiază fața actului: tot cardul în cadru, cu textul lizibil.",
+};
+
+function PartySection({ title, party, onChange, idState, backDone, extractionEnabled, reading, onCapture, onConfirm, onChoose }: {
+  title: string;
+  party: PartyForm;
+  onChange: (party: PartyForm) => void;
+  idState: PartyIdState;
+  backDone: boolean;
+  extractionEnabled: boolean;
+  reading: CaptureSide | null;
+  onCapture: (file: File, side: CaptureSide) => void;
+  onConfirm: () => void;
+  onChoose: (conflict: IdFieldConflict, source: "mrz" | "vision") => void;
+}) {
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [side, setSide] = useState<CaptureSide>("back");
   const set = (key: keyof PartyForm, value: string) => onChange({ ...party, [key]: value });
-  return <section className="space-y-4 rounded-md border border-border p-4"><div className="flex flex-wrap items-center justify-between gap-2"><h3 className="text-sm font-semibold">{title}</h3><input ref={fileRef} type="file" accept="image/*" capture="environment" className="hidden" onChange={(event) => { const file = event.target.files?.[0]; if (file) onFile(file); event.target.value = ""; }} /><Button type="button" size="sm" variant="outline" onClick={() => fileRef.current?.click()} disabled={extracting || !extractionEnabled}>{extracting ? <Loader2 className="size-4 animate-spin" /> : <Camera className="size-4" />} Citește actul</Button></div><p className="flex items-start gap-1.5 text-xs text-muted-foreground"><ShieldCheck className="mt-0.5 size-3.5 shrink-0" />Fotografia nu este salvată. Verifică toate datele completate.</p><div className="grid gap-3 sm:grid-cols-2"><Field label="Nume complet" value={party.fullName} onChange={(value) => set("fullName", value)} className="sm:col-span-2" /><Field label="CNP" value={party.cnp} onChange={(value) => set("cnp", value.replace(/\D/g, "").slice(0, 13))} /><Field label="Cetățenie" value={party.citizenship} onChange={(value) => set("citizenship", value)} /><Field label="Serie act" value={party.idSeries} onChange={(value) => set("idSeries", value)} /><Field label="Număr act" value={party.idNumber} onChange={(value) => set("idNumber", value)} /><Field label="Eliberat de" value={party.idIssuer} onChange={(value) => set("idIssuer", value)} /><Field label="Data eliberării" value={party.idIssuedOn} onChange={(value) => set("idIssuedOn", value)} placeholder="ZZ.LL.AAAA" /><Field label="Domiciliu" value={party.address} onChange={(value) => set("address", value)} className="sm:col-span-2" /><Field label="Email" value={party.email} onChange={(value) => set("email", value)} /><Field label="Telefon" value={party.phone} onChange={(value) => set("phone", value)} /></div></section>;
+  const pick = (next: CaptureSide) => { setSide(next); inputRef.current?.click(); };
+  const badge = (key: IdFormKey) => (idState.verified.includes(key) ? "verified" : idState.pending.includes(key) ? "pending" : null);
+  const warningFor = (key: IdFormKey) => {
+    if (key === "idSeries" && idState.warnings.includes("series_pair_unknown")) return idWarningMessage("series_pair_unknown");
+    if (key === "idIssuedOn" && idState.warnings.includes("document_expired")) return idWarningMessage("document_expired");
+    return undefined;
+  };
+  return <section className="space-y-4 rounded-md border border-border p-4">
+    <div className="flex flex-wrap items-center justify-between gap-2">
+      <h3 className="text-sm font-semibold">{title}</h3>
+      <input ref={inputRef} type="file" accept="image/*,application/pdf" capture="environment" className="hidden" onChange={(event) => { const file = event.target.files?.[0]; if (file) onCapture(file, side); event.target.value = ""; }} />
+      <div className="flex flex-wrap gap-2">
+        <Button type="button" size="sm" variant={backDone ? "outline" : "default"} onClick={() => pick("back")} disabled={reading !== null || !extractionEnabled}>{reading === "back" ? <Loader2 className="size-4 animate-spin" /> : <Camera className="size-4" />} {backDone ? "Refotografiază spatele" : "1. Spatele actului"}</Button>
+        <Button type="button" size="sm" variant="outline" onClick={() => pick("front")} disabled={reading !== null || !extractionEnabled}>{reading === "front" ? <Loader2 className="size-4 animate-spin" /> : <Camera className="size-4" />} 2. Fața actului (opțional)</Button>
+      </div>
+    </div>
+    <p className="text-xs text-muted-foreground">{FRAMING_HINT[reading ?? (backDone ? "front" : "back")]}</p>
+    <p className="flex items-start gap-1.5 text-xs text-muted-foreground"><ShieldCheck className="mt-0.5 size-3.5 shrink-0" />Fotografia nu este salvată nicăieri. Verifică datele completate.</p>
+    {idState.quality.length > 0 ? <div className="space-y-2 rounded-md border border-destructive/40 bg-destructive/10 p-3 text-xs">
+      <ul className="space-y-1">{idState.quality.map((message) => <li key={message}>{message}</li>)}</ul>
+      <Button type="button" size="sm" variant="outline" onClick={() => pick(backDone ? "front" : "back")} disabled={reading !== null}><RotateCcw className="size-3.5" /> Încearcă din nou</Button>
+    </div> : null}
+    {idState.conflicts.length > 0 ? <div className="space-y-2 rounded-md border border-amber-500/50 bg-amber-500/10 p-3 text-xs">
+      <p className="font-medium">Fața actului și zona citibilă spun altceva. Alege valoarea corectă:</p>
+      {idState.conflicts.map((conflict) => <div key={conflict.field} className="flex flex-wrap items-center gap-2">
+        <span className="font-medium">{conflictLabel(conflict.field)}:</span>
+        <Button type="button" size="sm" variant="outline" onClick={() => onChoose(conflict, "mrz")}>Zona citibilă: {conflict.mrz}</Button>
+        <Button type="button" size="sm" variant="outline" onClick={() => onChoose(conflict, "vision")}>Fața actului: {conflict.vision}</Button>
+      </div>)}
+    </div> : null}
+    {idState.pending.length > 0 ? <div className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-border bg-muted/40 p-3 text-xs">
+      <span>Datele citite de pe fața actului nu au cifră de control. Verifică-le, apoi confirmă.</span>
+      <Button type="button" size="sm" onClick={onConfirm}><CheckCircle2 className="size-3.5" /> Confirm datele de pe față</Button>
+    </div> : null}
+    <div className="grid gap-3 sm:grid-cols-2">
+      <Field label="Nume complet" value={party.fullName} onChange={(value) => set("fullName", value)} className="sm:col-span-2" badge={badge("fullName")} />
+      <Field label="CNP" value={party.cnp} onChange={(value) => set("cnp", value.replace(/\D/g, "").slice(0, 13))} badge={badge("cnp")} />
+      <Field label="Cetățenie" value={party.citizenship} onChange={(value) => set("citizenship", value)} />
+      <Field label="Serie act" value={party.idSeries} onChange={(value) => set("idSeries", value)} badge={badge("idSeries")} warning={warningFor("idSeries")} />
+      <Field label="Număr act" value={party.idNumber} onChange={(value) => set("idNumber", value)} badge={badge("idNumber")} />
+      <Field label="Eliberat de" value={party.idIssuer} onChange={(value) => set("idIssuer", value)} badge={badge("idIssuer")} />
+      <Field label="Data eliberării" value={party.idIssuedOn} onChange={(value) => set("idIssuedOn", value)} placeholder="ZZ.LL.AAAA" badge={badge("idIssuedOn")} warning={warningFor("idIssuedOn")} />
+      <Field label="Data nașterii" value={party.birthDate} onChange={(value) => set("birthDate", value)} placeholder="ZZ.LL.AAAA" badge={badge("birthDate")} />
+      <Field label="Domiciliu" value={party.address} onChange={(value) => set("address", value)} className="sm:col-span-2" badge={badge("address")} />
+      <Field label="Email" value={party.email} onChange={(value) => set("email", value)} />
+      <Field label="Telefon" value={party.phone} onChange={(value) => set("phone", value)} />
+    </div>
+  </section>;
 }
 
 function Field({ label, value, onChange, placeholder, className }: { label: string; value: string; onChange: (value: string) => void; placeholder?: string; className?: string }) {
