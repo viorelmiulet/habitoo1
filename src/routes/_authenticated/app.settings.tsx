@@ -70,6 +70,8 @@ function SettingsPage() {
   const [orgForm, setOrgForm] = useState({
     name: user?.organization?.name ?? "",
     city: user?.organization?.city ?? "",
+    postal_code: user?.organization?.postal_code ?? "",
+
     phone: user?.organization?.phone ?? "",
     email: user?.organization?.email ?? "",
     legal_representative: user?.organization?.legal_representative ?? "",
