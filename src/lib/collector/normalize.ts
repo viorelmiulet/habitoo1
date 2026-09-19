@@ -98,12 +98,13 @@ export type SellerTypeSignals = {
   declaredOwner?: boolean | null;
 };
 
-/** Proprietar / agenție doar din semnale explicite sau volum; altfel necunoscut. */
+/**
+ * Proprietar / agenție DOAR din semnalul declarat de sursă. Nu există nicio
+ * regulă după numărul de anunțuri: „cinci sau mai multe anunțuri = agenție” a
+ * fost eliminată, pentru că nu e o dovadă, ci o presupunere.
+ */
 export function inferSellerType(signals: SellerTypeSignals): "owner" | "agency" | "unknown" {
   if (signals.declaredAgency) return "agency";
   if (signals.declaredOwner) return "owner";
-  const count = signals.itemsCount ?? 0;
-  if (count >= 5) return "agency";
-  if (count === 1) return "unknown";
   return "unknown";
 }
