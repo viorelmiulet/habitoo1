@@ -476,6 +476,8 @@ function SettingsPage() {
             <div className="space-y-6">
               <AgencyPortalCatalogCard />
               <PortalSlotsCard />
+              <ProperstarFeedCard />
+
             </div>
           </TabsContent>
         ) : null}
