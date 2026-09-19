@@ -137,6 +137,7 @@ function PropertyDetailPage() {
   const portalsRef = useRef<PropertyPortalsHandle | null>(null);
   const duplicatePropertyFn = useServerFn(duplicateProperty);
   const unarchivePropertyFn = useServerFn(unarchiveProperty);
+  const resolvePostalCode = useServerFn(resolvePropertyPostalCode);
   const [archiveOpen, setArchiveOpen] = useState(false);
 
   const { data, isLoading } = useQuery({
