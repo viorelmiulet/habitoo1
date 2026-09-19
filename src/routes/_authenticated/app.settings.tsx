@@ -311,6 +311,17 @@ function SettingsPage() {
                 />
               </div>
               <div className="space-y-2">
+                <Label htmlFor="org_postal_code">Cod poștal</Label>
+                <Input
+                  id="org_postal_code"
+                  value={orgForm.postal_code}
+                  disabled={!user?.isAdmin}
+                  placeholder="ex. 300001"
+                  onChange={(e) => setOrgForm((f) => ({ ...f, postal_code: e.target.value }))}
+                />
+              </div>
+
+              <div className="space-y-2">
                 <Label htmlFor="org_phone">Telefon</Label>
                 <Input
                   id="org_phone"
