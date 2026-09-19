@@ -69,7 +69,7 @@ function seedProperty(overrides: Row = {}): Row {
     description: "Apartament luminos <script>alert(1)</script><b>renovat</b>",
     transaction_kind: "sale",
     property_type: "apartment",
-    status: "available",
+    status: "active",
     publish_status: "published",
     deleted_at: null,
     price: 85000,
