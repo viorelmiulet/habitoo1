@@ -2048,6 +2048,30 @@ export type Database = {
           },
         ]
       }
+      geocode_postal_cache: {
+        Row: {
+          coord_key: string
+          created_at: string
+          postal_code: string | null
+          source: string
+          updated_at: string
+        }
+        Insert: {
+          coord_key: string
+          created_at?: string
+          postal_code?: string | null
+          source: string
+          updated_at?: string
+        }
+        Update: {
+          coord_key?: string
+          created_at?: string
+          postal_code?: string | null
+          source?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       goals: {
         Row: {
           created_at: string
@@ -4537,6 +4561,57 @@ export type Database = {
           },
         ]
       }
+      postal_code_resolution_attempts: {
+        Row: {
+          created_at: string
+          detail: string | null
+          id: string
+          organization_id: string
+          outcome: string
+          postal_code: string | null
+          property_id: string | null
+          source: string | null
+          used_provider: boolean
+        }
+        Insert: {
+          created_at?: string
+          detail?: string | null
+          id?: string
+          organization_id: string
+          outcome: string
+          postal_code?: string | null
+          property_id?: string | null
+          source?: string | null
+          used_provider?: boolean
+        }
+        Update: {
+          created_at?: string
+          detail?: string | null
+          id?: string
+          organization_id?: string
+          outcome?: string
+          postal_code?: string | null
+          property_id?: string | null
+          source?: string | null
+          used_provider?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "postal_code_resolution_attempts_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "postal_code_resolution_attempts_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -4670,6 +4745,9 @@ export type Database = {
           parking_spaces: number | null
           pet_friendly: boolean
           postal_code: string | null
+          postal_code_resolved_at: string | null
+          postal_code_resolved_from: string | null
+          postal_code_source: string | null
           pre_archive_status:
             | Database["public"]["Enums"]["property_status"]
             | null
@@ -4792,6 +4870,9 @@ export type Database = {
           parking_spaces?: number | null
           pet_friendly?: boolean
           postal_code?: string | null
+          postal_code_resolved_at?: string | null
+          postal_code_resolved_from?: string | null
+          postal_code_source?: string | null
           pre_archive_status?:
             | Database["public"]["Enums"]["property_status"]
             | null
@@ -4914,6 +4995,9 @@ export type Database = {
           parking_spaces?: number | null
           pet_friendly?: boolean
           postal_code?: string | null
+          postal_code_resolved_at?: string | null
+          postal_code_resolved_from?: string | null
+          postal_code_source?: string | null
           pre_archive_status?:
             | Database["public"]["Enums"]["property_status"]
             | null
