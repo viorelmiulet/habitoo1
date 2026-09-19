@@ -223,7 +223,8 @@ export function mapPropertyToProperstar(
   const description = sanitizeProperstarHtml((p.description ?? "").trim());
   if (!description) missing.push("Descriere");
 
-  const postalCode = (p.postal_code ?? options.office.postalCode ?? "").trim();
+  // Codul poștal al agenției NU substituie codul ofertei: apare doar în <Contact>.
+  const postalCode = (p.postal_code ?? "").trim();
   if (!postalCode) missing.push("Cod poștal");
 
   const city = (p.city ?? "").trim();
