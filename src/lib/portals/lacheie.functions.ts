@@ -636,6 +636,8 @@ export const activateLaCheieAgency = createServerFn({ method: "POST" })
       auth.userId,
     );
     if (ok) {
+      // Un singur comutator: activarea pornește și trimiterile reale.
+      await mergeSettings(organizationId, { allow_live: true }, auth.userId);
       await admin
         .from("portal_connections")
         .update({
@@ -648,6 +650,7 @@ export const activateLaCheieAgency = createServerFn({ method: "POST" })
         })
         .eq("id", row.id);
     }
+
 
     await logLaCheie({
       organizationId,

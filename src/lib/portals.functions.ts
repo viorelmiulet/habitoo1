@@ -691,7 +691,9 @@ export const savePortalConnection = createServerFn({ method: "POST" })
       if (data.endpointUrl) settings["endpoint_url"] = data.endpointUrl;
       else delete settings["endpoint_url"];
     }
-    if (data.allowLiveRequests !== undefined) settings["allow_live"] = data.allowLiveRequests;
+    // Trimiterile reale nu au comutator separat: urmează mereu activarea.
+    settings["allow_live"] = row?.activated === true;
+
 
     const patch: Record<string, unknown> = {
       organization_id: organizationId,
