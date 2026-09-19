@@ -7,7 +7,9 @@ import { checkDigit, parseTd1, transliterateForMrz, mrzDateToIso } from "./mrz";
 import { cnpCheckDigit, decodeCnp } from "./cnp";
 import { checkIdSeries } from "./series";
 import { readMrz } from "./read";
-import { ID_DOCUMENT_FIELD_NAMES, REDACTED_DETAIL_KEY } from "@/lib/ai/security/redaction-keys";
+import { ID_DOCUMENT_FIELD_NAMES, isRedactedDetailKey } from "@/lib/ai/security/redaction-keys";
+import { scrubAuditDetails } from "@/lib/ai/security/audit";
+import { scrubTraceDetails } from "@/lib/ai/tracing/trace";
 
 function pad(value: string, length: number): string {
   return value.padEnd(length, "<").slice(0, length);
