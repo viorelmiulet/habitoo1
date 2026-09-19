@@ -566,13 +566,13 @@ const saveSchema = z.object({
   externalAccountId: z.string().trim().max(200).optional(),
   credential: z.string().trim().min(1).max(500).optional(),
   endpointUrl: z.string().trim().max(300).optional(),
-  allowLiveRequests: z.boolean().optional(),
 });
 
 /**
  * Superadmin decide explicit dacă portalul este ACTIVAT pentru agenție.
- * Separat de starea tehnică a conexiunii: un portal poate fi configurat corect
- * și totuși dezactivat pentru o agenție (ex. relație comercială neîncheiată).
+ * Un singur comutator: activarea pornește și trimiterile reale către portal
+ * (`settings.allow_live`), iar dezactivarea le oprește. Nu există stare în care
+ * portalul este activat dar nu trimite.
  */
 export const setPortalActivation = createServerFn({ method: "POST" })
   .middleware([requireActiveOrgAuth])
@@ -594,17 +594,29 @@ export const setPortalActivation = createServerFn({ method: "POST" })
     if (!definition) throw new Error("Portal necunoscut.");
 
     const admin = await loadAdmin();
+    const { data: existing } = await admin
+      .from("portal_connections")
+      .select("settings")
+      .eq("organization_id", organizationId)
+      .eq("portal", definition.id)
+      .maybeSingle();
+    const settings = {
+      ...((existing?.settings ?? {}) as Record<string, unknown>),
+      allow_live: data.activated,
+    };
     const { error } = await admin.from("portal_connections").upsert(
       {
         organization_id: organizationId,
         portal: definition.id,
         activated: data.activated,
+        settings: settings as never,
         updated_by: context.userId,
         created_by: context.userId,
       } as never,
       { onConflict: "organization_id,portal" },
     );
     if (error) throw new Error(error.message);
+
 
     await admin.from("audit_logs").insert({
       organization_id: organizationId,
