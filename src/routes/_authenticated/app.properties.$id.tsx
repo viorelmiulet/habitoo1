@@ -196,6 +196,7 @@ function PropertyDetailPage() {
       city: property.city ?? "",
       district: property.district ?? "",
       address: property.address ?? "",
+      postal_code: property.postal_code ?? "",
       description: property.description ?? "",
       internal_notes: property.internal_notes ?? "",
     });
