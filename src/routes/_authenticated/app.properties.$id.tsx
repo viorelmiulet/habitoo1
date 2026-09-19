@@ -78,6 +78,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
+import { resolvePropertyPostalCode } from "@/lib/geo/postal-code.functions";
+import { postalCodeHint } from "@/lib/geo/postal-code";
 import { LocationPicker, emptyLocation, type LocationValue } from "@/components/app/LocationPicker";
 import { PropertyLocationMap } from "@/components/app/PropertyLocationMap";
 import { PropertyMapClient } from "@/components/app/PropertyMapClient";
@@ -137,6 +139,7 @@ function PropertyDetailPage() {
   const portalsRef = useRef<PropertyPortalsHandle | null>(null);
   const duplicatePropertyFn = useServerFn(duplicateProperty);
   const unarchivePropertyFn = useServerFn(unarchiveProperty);
+  const resolvePostalCode = useServerFn(resolvePropertyPostalCode);
   const [archiveOpen, setArchiveOpen] = useState(false);
 
   const { data, isLoading } = useQuery({
@@ -193,6 +196,7 @@ function PropertyDetailPage() {
       city: property.city ?? "",
       district: property.district ?? "",
       address: property.address ?? "",
+      postal_code: property.postal_code ?? "",
       description: property.description ?? "",
       internal_notes: property.internal_notes ?? "",
     });
@@ -228,6 +232,13 @@ function PropertyDetailPage() {
         .update({ ...patch, updated_by: user?.userId ?? null } as never)
         .eq("id", id);
       if (error) throw error;
+      // Codul poștal lipsă se deduce din adresă, pe server; un cod scris de om
+      // rămâne neatins (sursa devine „manual” la salvare).
+      try {
+        await resolvePostalCode({ data: { propertyId: id } });
+      } catch {
+        // Ignorat intenționat: modificările sunt deja salvate.
+      }
     },
     onSuccess: async () => {
       queryClient.invalidateQueries({ queryKey: ["property", id] });
@@ -239,24 +250,37 @@ function PropertyDetailPage() {
   });
 
   /** Datele formularului de editare, folosite atât la „Salvează”, cât și la „Publică”. */
-  const buildEditPatch = (): Record<string, unknown> => ({
-    title: draft.title,
-    ...transactionPayload(tx),
-    surface: draft.surface ? Number(draft.surface) : null,
-    city: location.localityName || draft.city || null,
-    county: location.countyName || null,
-    county_siruta_code: location.countySirutaCode,
-    uat_siruta_code: location.uatSirutaCode,
-    locality_siruta_code: location.localitySirutaCode,
-    district: draft.district || null,
-    address: draft.address || null,
-    lat: coords?.lat ?? null,
-    lng: coords?.lng ?? null,
-    location_precise: locationPrecise,
-    description: draft.description || null,
-    internal_notes: draft.internal_notes || null,
-    ...details,
-  });
+  const buildEditPatch = (): Record<string, unknown> => {
+    // Un cod poștal scris de om are prioritate: îl marcăm „manual” ca să nu fie
+    // niciodată înlocuit de valoarea dedusă din adresă.
+    const typedPostal = (draft.postal_code ?? "").trim();
+    const storedPostal = (property?.postal_code ?? "").trim();
+    const postalPatch: Record<string, unknown> =
+      typedPostal === storedPostal
+        ? {}
+        : typedPostal === ""
+          ? { postal_code: null, postal_code_source: null, postal_code_resolved_from: null }
+          : { postal_code: typedPostal, postal_code_source: "manual" };
+    return {
+      title: draft.title,
+      ...transactionPayload(tx),
+      surface: draft.surface ? Number(draft.surface) : null,
+      city: location.localityName || draft.city || null,
+      county: location.countyName || null,
+      county_siruta_code: location.countySirutaCode,
+      uat_siruta_code: location.uatSirutaCode,
+      locality_siruta_code: location.localitySirutaCode,
+      district: draft.district || null,
+      address: draft.address || null,
+      ...postalPatch,
+      lat: coords?.lat ?? null,
+      lng: coords?.lng ?? null,
+      location_precise: locationPrecise,
+      description: draft.description || null,
+      internal_notes: draft.internal_notes || null,
+      ...details,
+    };
+  };
 
   const changeStatus = useMutation({
     mutationFn: async (status: string) => {
@@ -771,6 +795,23 @@ function PropertyDetailPage() {
                       />
                     </div>
                   ))}
+                  <div className="space-y-2">
+                    <Label htmlFor="postal_code">Cod poștal</Label>
+                    <Input
+                      id="postal_code"
+                      inputMode="numeric"
+                      value={draft.postal_code ?? ""}
+                      onChange={(e) =>
+                        setDraft((d) => ({ ...d, postal_code: e.target.value }))
+                      }
+                    />
+                    {(draft.postal_code ?? "").trim() === (property.postal_code ?? "").trim() &&
+                    postalCodeHint(property.postal_code_source) ? (
+                      <p className="text-xs text-muted-foreground">
+                        {postalCodeHint(property.postal_code_source)}
+                      </p>
+                    ) : null}
+                  </div>
                 </div>
                 <PropertyLocationMap
                   idPrefix="edit"

@@ -28,6 +28,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
+import { useServerFn } from "@tanstack/react-start";
+import { resolvePropertyPostalCode } from "@/lib/geo/postal-code.functions";
 import { LocationPicker, emptyLocation, type LocationValue } from "@/components/app/LocationPicker";
 import { PropertyLocationMap } from "@/components/app/PropertyLocationMap";
 import { useCurrentUser } from "@/hooks/use-session";
@@ -101,6 +103,8 @@ function NewPropertyPage() {
   const set = (key: keyof typeof form, value: string | boolean) =>
     setForm((f) => ({ ...f, [key]: value }));
 
+  const resolvePostalCode = useServerFn(resolvePropertyPostalCode);
+
   const create = useMutation({
     mutationFn: async () => {
       if (!user?.organization?.id) throw new Error("Agenția nu este configurată.");
@@ -149,6 +153,12 @@ function NewPropertyPage() {
         .select("id")
         .single();
       if (error) throw error;
+      // Codul poștal se deduce din adresă pe server; lipsa lui nu blochează nimic.
+      try {
+        await resolvePostalCode({ data: { propertyId: data.id } });
+      } catch {
+        // Ignorat intenționat: oferta este deja salvată.
+      }
       return data;
     },
     onSuccess: (data) => {

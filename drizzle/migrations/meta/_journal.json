@@ -435,6 +435,13 @@
       "when": 1789814205302,
       "tag": "0061_portal_single_activation_switch",
       "breakpoints": true
+    },
+    {
+      "idx": 62,
+      "version": "7",
+      "when": 1789831251962,
+      "tag": "0062_postal_code_resolution",
+      "breakpoints": true
     }
   ]
 }
