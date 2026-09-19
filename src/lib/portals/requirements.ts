@@ -207,6 +207,22 @@ export const PORTAL_REQUIREMENTS: Record<string, PortalRequirementSpec> = {
     required: BASE_REQUIRED,
     allowed: COMMON_ALLOWED,
   },
+  /**
+   * Properstar preia ofertele din feed. Cerințele de aici sunt exact nodurile
+   * obligatorii din feed: o ofertă fără ele este exclusă, nu trimisă goală.
+   */
+  properstar: {
+    required: [
+      RULE.description(1),
+      RULE.transaction(),
+      RULE.price(),
+      RULE.propertyType(),
+      RULE.location(),
+      RULE.agentEmail(),
+    ],
+    allowed: COMMON_ALLOWED,
+  },
+
   imospot: {
     required: [
       RULE.title(IMOSPOT_MIN_TITLE),
