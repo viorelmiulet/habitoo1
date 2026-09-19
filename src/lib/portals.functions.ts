@@ -1966,11 +1966,15 @@ export const setPropertyPortalSelection = createServerFn({ method: "POST" })
         portal_key: definition.id,
         enabled: data.enabled,
         status: data.enabled ? "pending" : "disabled",
+        // Momentul retragerii: portalurile de tip feed (ex. Properstar) trebuie
+        // să anunțe oferta retrasă câteva zile înainte să dispară din feed.
+        withdrawn_at: data.enabled ? null : new Date().toISOString(),
         updated_by: context.userId,
         created_by: context.userId,
       } as never,
       { onConflict: "organization_id,property_id,portal_key" },
     );
+
     if (error) throw new Error(error.message);
 
     await admin.from("audit_logs").insert({
