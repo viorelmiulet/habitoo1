@@ -67,9 +67,16 @@ export type PortalDefinition = {
   configuration_schema: { fields: PortalConfigField[] };
   website?: string;
   docs?: string;
+  /**
+   * Portal de tip „pull”: calea publică a feedului, construită din cheia
+   * agenției. Definit lângă portal, ca orice portal nou de acest tip să
+   * primească automat linkul complet la generarea cheii, fără cod de UI nou.
+   */
+  public_feed_path?: (agencyKey: string) => string;
   /** Limitări reale, afișate în UI ca să nu promitem funcții inexistente. */
   notes?: string;
 };
+
 
 export const PORTAL_DIRECTION_LABEL: Record<PortalDirection, string> = {
   habitoo_to_portal: "Habitoo → portal",
