@@ -195,9 +195,13 @@ describe("adaptorul OLX — telefoane", () => {
       "src/lib/collector/olx/mapping.ts",
     ];
     for (const file of files) {
-      const source = readFileSync(join(process.cwd(), file), "utf8").toLowerCase();
+      const source = readFileSync(join(process.cwd(), file), "utf8")
+        // comentariile pot menționa telefonul; contează codul
+        .replace(/\/\*[\s\S]*?\*\//g, "")
+        .replace(/\/\/.*$/gm, "")
+        .toLowerCase();
       expect(source).not.toContain("phone");
-      expect(source).not.toMatch(/telefon(?!e: nu)/);
+      expect(source).not.toContain("telefon");
     }
   });
 });
