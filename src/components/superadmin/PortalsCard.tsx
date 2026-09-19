@@ -113,7 +113,12 @@ export function PortalsCard({ organizationId }: { organizationId: string }) {
   const [revealed, setRevealed] = useState<Record<string, boolean>>({});
 
   const [keyLabel, setKeyLabel] = useState<Record<string, string>>({});
-  const [freshKey, setFreshKey] = useState<{ portalId: string; key: string } | null>(null);
+  const [freshKey, setFreshKey] = useState<{
+    portalId: string;
+    key: string;
+    feedUrl: string | null;
+  } | null>(null);
+
   const [confirmDisconnect, setConfirmDisconnect] = useState<string | null>(null);
   // Carduri restrânse implicit; starea se păstrează la navigare înapoi (per agenție).
   const expandedStorageKey = `habitoo:portals-expanded:${organizationId}`;
