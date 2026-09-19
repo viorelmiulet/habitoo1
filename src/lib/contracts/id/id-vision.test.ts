@@ -18,9 +18,11 @@ import { readFrontFromImage, readMrzFromImage } from "./vision.server";
 import {
   detectFrontConflicts,
   extractMrzCandidates,
+  mrzTextFromCandidates,
   normalizeFrontDate,
   parseFrontVision,
 } from "./vision.parse";
+import { assessMrzCandidates } from "./quality";
 import { checkDigit } from "./mrz";
 import { cnpCheckDigit } from "./cnp";
 import { readMrz } from "./read";
