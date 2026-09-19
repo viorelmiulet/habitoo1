@@ -118,6 +118,60 @@ export function properstarPhotoDateSuffix(updatedAt: string | null | undefined):
   return `?date=${dd}/${mm}/${valid.getUTCFullYear()}`;
 }
 
+/** Lungimea maximă documentată pentru identificatorii Properstar (OfficeId, AgentId). */
+export const PROPERSTAR_ID_MAX_LENGTH = 20;
+const PROPERSTAR_ID_PATTERN = /^[A-Za-z0-9_-]+$/;
+
+/** Amprentă scurtă, stabilă și deterministă (FNV-1a în base36). */
+function shortFingerprint(value: string): string {
+  let hash = 0x811c9dc5;
+  for (let i = 0; i < value.length; i += 1) {
+    hash ^= value.charCodeAt(i);
+    hash = Math.imul(hash, 0x01000193) >>> 0;
+  }
+  return hash.toString(36);
+}
+
+/**
+ * Identificator conform cu limita Properstar: maximum 20 de caractere ASCII
+ * (litere, cifre, `_`, `-`). Un UUID (36 de caractere) este scurtat la prefix +
+ * primele cifre hexazecimale, deci rămâne STABIL pentru totdeauna pentru
+ * aceeași agenție/agent și unic între ele. Properstar leagă contul agenției de
+ * acest identificator, așa că nu poate fi recalculat altfel mai târziu.
+ */
+export function properstarEntityId(prefix: string, value: string): string {
+  const raw = (value ?? "").trim();
+  if (!raw) return "";
+  const safePrefix = prefix.replace(/[^A-Za-z0-9]/g, "").slice(0, 4) || "id";
+  const hex = raw.replace(/-/g, "");
+  if (/^[0-9a-fA-F]{32}$/.test(hex)) {
+    // UUID: primele cifre hexazecimale sunt deja unice pentru orice agenție reală.
+    return `${safePrefix}${hex.slice(0, PROPERSTAR_ID_MAX_LENGTH - safePrefix.length)}`;
+  }
+  if (PROPERSTAR_ID_PATTERN.test(raw) && raw.length <= PROPERSTAR_ID_MAX_LENGTH) return raw;
+  const cleaned = raw.replace(/[^A-Za-z0-9_-]/g, "");
+  const fingerprint = shortFingerprint(raw);
+  const room = PROPERSTAR_ID_MAX_LENGTH - safePrefix.length - fingerprint.length - 1;
+  return `${safePrefix}${cleaned.slice(0, Math.max(room, 0))}-${fingerprint}`;
+}
+
+/**
+ * Fotografia agentului: doar o adresă publică https. O cale de stocare internă
+ * nu se trimite NICIODATĂ — elementul lipsește cu totul în acest caz.
+ */
+export function properstarPublicPhoto(value: string | null | undefined): string | null {
+  const raw = (value ?? "").trim();
+  if (!raw) return null;
+  return /^https:\/\//i.test(raw) ? raw : null;
+}
+
+/** Dată ISO 8601 în UTC, exact ca în documentație: aaaa-ll-zzTHH:MM:SSZ. */
+export function properstarIsoDate(value: string | null | undefined): string | null {
+  const date = value ? new Date(value) : null;
+  if (!date || Number.isNaN(date.getTime())) return null;
+  return `${date.toISOString().slice(0, 19)}Z`;
+}
+
 export type ProperstarOffice = {
   officeId: string;
   officeName: string | null;
@@ -280,7 +334,7 @@ export function mapPropertyToProperstar(
       originalUrl: offerUrl(options.publicSiteUrl, p.id),
       advertType: advertType as ProperstarAdvertType,
       subType: subType as string,
-      publicationDate: (p.published_at ?? p.created_at).slice(0, 10),
+      publicationDate: properstarIsoDate(p.published_at ?? p.created_at) ?? "",
       rooms: p.rooms ?? null,
       bedrooms: p.bedrooms ?? null,
       bathrooms: p.bathrooms ?? null,
@@ -306,8 +360,18 @@ export function mapPropertyToProperstar(
       videos: [],
       virtualTours: [],
       status: options.status,
-      office: options.office,
-      agent: agent as ProperstarAgent,
+      // Identificatorii respectă limita de 20 de caractere a Properstar, iar
+      // fotografia agentului pleacă doar ca adresă publică https.
+      office: {
+        ...options.office,
+        officeId: properstarEntityId("hb", options.office.officeId),
+        logo: properstarPublicPhoto(options.office.logo),
+      },
+      agent: {
+        ...(agent as ProperstarAgent),
+        agentId: properstarEntityId("ag", (agent as ProperstarAgent).agentId),
+        photo: properstarPublicPhoto((agent as ProperstarAgent).photo),
+      },
     },
   };
 }

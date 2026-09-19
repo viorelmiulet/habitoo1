@@ -113,7 +113,7 @@ export const properstarFeedChanged = createServerFn({ method: "POST" })
   .middleware([requireActiveOrgAuth])
   .handler(async ({ context }): Promise<{ ok: true }> => {
     const organizationId = await organizationOf(context as unknown as AuthContext);
-    const { clearProperstarCache } = await import("./properstar/feed.server");
+    const { clearProperstarCache } = await import("./properstar/cache");
     clearProperstarCache(organizationId);
     return { ok: true };
   });
