@@ -161,7 +161,7 @@ export function PortalsCard({ organizationId }: { organizationId: string }) {
   };
 
   const save = useMutation({
-    mutationFn: (input: { portalId: string; allowLiveRequests?: boolean }) =>
+    mutationFn: (input: { portalId: string }) =>
       runSave({
         data: {
           organizationId,
@@ -169,11 +169,9 @@ export function PortalsCard({ organizationId }: { organizationId: string }) {
           externalAccountId: accountId[input.portalId]?.trim(),
           credential: credential[input.portalId]?.trim() || undefined,
           endpointUrl: endpoint[input.portalId]?.trim(),
-          ...(input.allowLiveRequests === undefined
-            ? {}
-            : { allowLiveRequests: input.allowLiveRequests }),
         },
       }),
+
     onSuccess: (_r, input) => {
       setCredential((prev) => ({ ...prev, [input.portalId]: "" }));
       invalidate();
@@ -717,9 +715,10 @@ export function PortalsCard({ organizationId }: { organizationId: string }) {
                       <div className="text-sm">
                         <p className="font-medium">Activat pentru agenție</p>
                         <p className="text-xs text-muted-foreground">
-                          Când este activat, agenția vede portalul și își bifează singură ofertele
-                          pentru publicare.
+                          Când este activat, agenția vede portalul, își bifează singură ofertele și
+                          trimiterile către portal se fac efectiv.
                         </p>
+
                       </div>
                       <Switch
                         checked={item.connection.activated}
@@ -731,25 +730,6 @@ export function PortalsCard({ organizationId }: { organizationId: string }) {
                       />
                     </div>
 
-                    {item.feedOnly ? null : (
-                      <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border p-3">
-                        <div className="text-sm">
-                          <p className="font-medium">Trimiteri reale către portal</p>
-                          <p className="text-xs text-muted-foreground">
-                            Cât timp este oprit, Habitoo doar verifică local și îți arată ce ar
-                            trimite.
-                          </p>
-                        </div>
-                        <Switch
-                          checked={item.connection.allowLiveRequests}
-                          disabled={save.isPending || !item.connection.hasPortalCredential}
-                          onCheckedChange={(checked) =>
-                            save.mutate({ portalId: item.portal.id, allowLiveRequests: checked })
-                          }
-                          aria-label="Trimiteri reale către portal"
-                        />
-                      </div>
-                    )}
 
                     {item.oauth ? null : (
                       <div className="space-y-2 rounded-lg border border-border p-3">

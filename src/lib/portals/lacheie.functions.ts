@@ -636,6 +636,8 @@ export const activateLaCheieAgency = createServerFn({ method: "POST" })
       auth.userId,
     );
     if (ok) {
+      // Un singur comutator: activarea pornește și trimiterile reale.
+      await mergeSettings(organizationId, { allow_live: true }, auth.userId);
       await admin
         .from("portal_connections")
         .update({
@@ -648,6 +650,7 @@ export const activateLaCheieAgency = createServerFn({ method: "POST" })
         })
         .eq("id", row.id);
     }
+
 
     await logLaCheie({
       organizationId,
@@ -796,10 +799,13 @@ export const deactivateLaCheieAgency = createServerFn({ method: "POST" })
     );
     let localWithdrawError: string | null = null;
     if (ok && row) {
+      // Dezactivarea oprește și trimiterile reale, în aceeași operațiune.
+      await mergeSettings(organizationId, { allow_live: false }, auth.userId);
       await admin
         .from("portal_connections")
         .update({ status: "disabled", activated: false, updated_by: auth.userId })
         .eq("id", row.id);
+
       // Starea locală: ofertele acestei conexiuni sunt retrase, fără apeluri extra.
       const { markLaCheieListingsWithdrawn } = await import(
         "@/lib/portals/lacheie/withdraw.server"
