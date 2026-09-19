@@ -206,6 +206,23 @@ describe("Properstar feed", () => {
     expect(result.xml).not.toContain("<Advert>");
   });
 
+  it("exclude oferta fără cod poștal propriu, fără să împrumute codul agenției", async () => {
+    seedAll({}, { postal_code: null });
+    const result = await build();
+    expect(result.adverts).toHaveLength(0);
+    expect(result.excluded).toHaveLength(1);
+    expect(result.excluded[0]!.missing).toContain("Cod poștal");
+    expect(result.xml).not.toContain("<Advert>");
+  });
+
+  it("trimite codul poștal al ofertei, iar cel al agenției rămâne în blocul de contact", async () => {
+    seedAll({}, { postal_code: "300777" });
+    const { xml } = await build();
+    expect(xml).toContain("<PostalCode>300777</PostalCode>");
+    const contact = xml.slice(xml.indexOf("<Contact>"));
+    expect(contact).toContain("<PostalCode>300001</PostalCode>");
+  });
+
   it("pune sufixul de dată pe fiecare fotografie", async () => {
     const { xml } = await build();
     expect(xml).toMatch(/\?date=03\/02\/2026/);

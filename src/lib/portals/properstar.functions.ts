@@ -93,7 +93,7 @@ export const getProperstarFeedReport = createServerFn({ method: "GET" })
 
     return {
       organizationId,
-      feedUrlTemplate: `${CRM_URL}${properstarFeedPath(key?.key_prefix ? "<cheia-agenției>" : "<cheia-agenției>")}`,
+      feedUrlTemplate: `${CRM_URL}${properstarFeedPath(key?.key_prefix ? `${key.key_prefix}…` : "<cheia-agenției>")}`,
       hasActiveKey: Boolean(key),
       keyPrefix: key?.key_prefix ?? null,
       selected: build.selected,
