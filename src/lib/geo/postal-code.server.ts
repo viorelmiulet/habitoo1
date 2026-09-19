@@ -53,7 +53,7 @@ export type PostalPorts = {
 
 export type PostalResolution = {
   propertyId: string;
-  status: "resolved" | "skipped" | "not_found" | "capped";
+  status: "resolved" | "skipped" | "not_found" | "capped" | "failed";
   postalCode: string | null;
   source: PostalCodeSource | null;
   reason: string;
@@ -69,6 +69,7 @@ export const POSTAL_REASON_LABELS: Record<string, string> = {
   location_changed: "Adresa sau poziția s-au schimbat",
   provider_cap: "Plafonul zilnic de căutări a fost atins",
   no_result: "Nici furnizorul, nici nomenclatorul nu au un cod",
+  failed: "Căutarea codului poștal a eșuat",
 };
 
 /** Reverse geocoding real (Nominatim), cu limitarea de rată din politica lor. */
@@ -112,6 +113,15 @@ export async function resolvePostalCodeFor(
 ): Promise<PostalResolution> {
   const decision = decidePostalResolution(row);
   if (!decision.resolve) {
+    // Consemnăm și rulările fără efect: altfel jurnalul pare gol și nu se vede
+    // niciodată că rezolvarea a fost cerută.
+    await ports.logAttempt({
+      outcome: "skipped",
+      postalCode: (row.postal_code ?? "").trim() || null,
+      source: (row.postal_code_source as PostalCodeSource | null) ?? null,
+      usedProvider: false,
+      detail: POSTAL_REASON_LABELS[decision.reason] ?? decision.reason,
+    });
     return {
       propertyId,
       status: "skipped",

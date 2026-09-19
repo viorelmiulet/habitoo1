@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { toast } from "@/components/ui/sonner";
 import { toastError } from "@/lib/errors";
+import { notifyProperstarFeedChanged } from "@/lib/portals/properstar-cache";
 import { EmptyState } from "@/components/app/EmptyState";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
@@ -95,7 +96,11 @@ export function PropertyMediaManager({
     signedUrls(MEDIA_BUCKET, paths).then(setSigned);
   }, [images]);
 
-  const invalidate = () => queryClient.invalidateQueries({ queryKey });
+  const invalidate = () => {
+    queryClient.invalidateQueries({ queryKey });
+    // Fotografiile apar în feedul Properstar: cache-ul agenției se golește.
+    notifyProperstarFeedChanged();
+  };
 
   const upload = useMutation({
     mutationFn: async (files: File[]) => {

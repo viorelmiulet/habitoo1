@@ -72,10 +72,27 @@ function splitName(fullName: string | null | undefined): {
 
 const cache = new Map<string, { expiresAt: number; build: ProperstarFeedBuild }>();
 
+/**
+ * Antetele răspunsului public. Nu lăsăm clientul să păstreze feedul: o ofertă
+ * corectată trebuie să apară la următoarea citire, nu după cinci minute.
+ * Baza de date rămâne protejată de cache-ul de pe server.
+ */
+export const PROPERSTAR_FEED_HEADERS: Record<string, string> = {
+  "content-type": "application/xml; charset=utf-8",
+  "cache-control": "no-cache, must-revalidate",
+};
+
 export function clearProperstarCache(organizationId?: string): void {
   if (organizationId) cache.delete(organizationId);
   else cache.clear();
 }
+
+/** Un feed gol nu se memorează: altfel o corecție s-ar vedea abia după expirare. */
+function rememberBuild(organizationId: string, now: Date, build: ProperstarFeedBuild): void {
+  if (!build.adverts.length) return;
+  cache.set(organizationId, { expiresAt: now.getTime() + PROPERSTAR_CACHE_MS, build });
+}
+
 
 export async function buildProperstarFeed(input: {
   organizationId: string;
@@ -132,7 +149,7 @@ export async function buildProperstarFeed(input: {
     capped: false,
   };
   if (!candidateIds.length) {
-    cache.set(input.organizationId, { expiresAt: now.getTime() + PROPERSTAR_CACHE_MS, build: empty });
+    rememberBuild(input.organizationId, now, empty);
     return empty;
   }
 
@@ -289,6 +306,6 @@ export async function buildProperstarFeed(input: {
     excluded,
     capped,
   };
-  cache.set(input.organizationId, { expiresAt: now.getTime() + PROPERSTAR_CACHE_MS, build });
+  rememberBuild(input.organizationId, now, build);
   return build;
 }

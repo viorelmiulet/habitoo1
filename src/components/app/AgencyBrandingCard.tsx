@@ -3,6 +3,7 @@ import { useMemo, useState } from "react";
 import { toast } from "@/components/ui/sonner";
 import { Image as ImageIcon, Trash2 } from "lucide-react";
 import { toastError } from "@/lib/errors";
+import { notifyProperstarFeedChanged } from "@/lib/portals/properstar-cache";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -105,7 +106,11 @@ export function AgencyBrandingCard() {
   });
   const photoUrl = previewPhoto ?? samplePhoto;
 
-  const invalidate = () => queryClient.invalidateQueries({ queryKey: currentUserQueryKey });
+  const invalidate = () => {
+    queryClient.invalidateQueries({ queryKey: currentUserQueryKey });
+    // Datele agenției apar în blocul de contact din feedul Properstar.
+    notifyProperstarFeedChanged();
+  };
 
   const uploadLogo = useMutation({
     mutationFn: async (file: File) => {

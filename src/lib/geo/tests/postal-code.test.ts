@@ -178,3 +178,35 @@ describe("rezolvarea propriu-zisă", () => {
     expect(result.status).toBe("capped");
   });
 });
+
+describe("consemnarea încercărilor", () => {
+  it("consemnează și rularea fără efect (cod manual)", async () => {
+    const rec = makePorts({ reverse: { street: "077041", locality: null } });
+    const result = await resolvePostalCodeFor(
+      "p1",
+      row({ postal_code: "077040", postal_code_source: "manual" }),
+      rec.ports,
+    );
+    expect(result.status).toBe("skipped");
+    expect(rec.attempts).toHaveLength(1);
+    expect(rec.attempts[0]).toMatchObject({ outcome: "skipped" });
+  });
+
+  it("consemnează rularea reușită a unei oferte fără cod poștal", async () => {
+    const rec = makePorts({ reverse: { street: null, locality: null }, locality: "077040" });
+    const result = await resolvePostalCodeFor("p1", row(), rec.ports);
+    expect(result.status).toBe("resolved");
+    expect(rec.attempts[0]).toMatchObject({ outcome: "resolved", source: "approximate" });
+  });
+
+  it("un eșec al furnizorului iese la suprafață, nu este înghițit", async () => {
+    const rec = makePorts({ reverse: { street: null, locality: null }, locality: "077040" });
+    const ports: PostalPorts = {
+      ...rec.ports,
+      save: async () => {
+        throw new Error("permission denied for table properties");
+      },
+    };
+    await expect(resolvePostalCodeFor("p1", row(), ports)).rejects.toThrow("permission denied");
+  });
+});

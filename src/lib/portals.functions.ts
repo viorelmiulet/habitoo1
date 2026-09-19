@@ -2058,6 +2058,11 @@ export const setPropertyPortalSelection = createServerFn({ method: "POST" })
 
     if (error) throw new Error(error.message);
 
+    // Feedul Properstar se citește dintr-un cache per agenție: îl golim imediat,
+    // altfel portalul ar mai vedea câteva minute selecția veche.
+    const { clearProperstarCache } = await import("@/lib/portals/properstar/feed.server");
+    clearProperstarCache(organizationId);
+
     await admin.from("audit_logs").insert({
       organization_id: organizationId,
       actor_id: context.userId,
@@ -2537,6 +2542,11 @@ export async function applyPortalSelectionForOrg(input: {
             { onConflict: "organization_id,property_id,portal_key" },
           );
           if (error) throw new Error(error.message);
+
+      // Feedul Properstar se citește dintr-un cache per agenție: îl golim imediat,
+    // altfel portalul ar mai vedea câteva minute selecția veche.
+    const { clearProperstarCache } = await import("@/lib/portals/properstar/feed.server");
+    clearProperstarCache(organizationId);
 
           await admin.from("audit_logs").insert({
             organization_id: organizationId,
