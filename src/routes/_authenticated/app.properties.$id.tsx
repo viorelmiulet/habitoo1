@@ -232,6 +232,13 @@ function PropertyDetailPage() {
         .update({ ...patch, updated_by: user?.userId ?? null } as never)
         .eq("id", id);
       if (error) throw error;
+      // Codul poștal lipsă se deduce din adresă, pe server; un cod scris de om
+      // rămâne neatins (sursa devine „manual” la salvare).
+      try {
+        await resolvePostalCode({ data: { propertyId: id } });
+      } catch {
+        // Ignorat intenționat: modificările sunt deja salvate.
+      }
     },
     onSuccess: async () => {
       queryClient.invalidateQueries({ queryKey: ["property", id] });
