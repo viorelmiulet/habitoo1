@@ -277,7 +277,7 @@ export function mapPropertyToProperstar(
       advertId,
       reference: p.reference?.trim() || null,
       originalUrl: offerUrl(options.publicSiteUrl, p.id),
-      advertType,
+      advertType: advertType as ProperstarAdvertType,
       subType: subType as string,
       publicationDate: (p.published_at ?? p.created_at).slice(0, 10),
       rooms: p.rooms ?? null,
