@@ -27,7 +27,7 @@ const MRZ_PROMPT = [
 
 const FRONT_PROMPT = [
   "În imagine este fața unei cărți de identitate românești.",
-  'Întoarce un singur obiect JSON cu cheile: "address", "issuingAuthority", "issuedOn", "validUntil", "series", "surname", "givenNames", "documentNumber".',
+  'Întoarce un singur obiect JSON cu cheile: "idAddress", "issuingAuthority", "issuedOn", "validUntil", "series", "surname", "givenNames", "documentNumber".',
   "Datele se scriu în format AAAA-LL-ZZ. Pentru orice câmp care nu se vede clar pune null.",
   "Nu adăuga explicații, comentarii sau text în afara obiectului JSON.",
 ].join(" ");

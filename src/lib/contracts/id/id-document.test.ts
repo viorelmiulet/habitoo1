@@ -7,7 +7,9 @@ import { checkDigit, parseTd1, transliterateForMrz, mrzDateToIso } from "./mrz";
 import { cnpCheckDigit, decodeCnp } from "./cnp";
 import { checkIdSeries } from "./series";
 import { readMrz } from "./read";
-import { ID_DOCUMENT_FIELD_NAMES, REDACTED_DETAIL_KEY } from "@/lib/ai/security/redaction-keys";
+import { ID_DOCUMENT_FIELD_NAMES, isRedactedDetailKey } from "@/lib/ai/security/redaction-keys";
+import { scrubAuditDetails } from "@/lib/ai/security/audit";
+import { scrubTraceDetails } from "@/lib/ai/tracing/trace";
 
 function pad(value: string, length: number): string {
   return value.padEnd(length, "<").slice(0, length);
@@ -174,16 +176,49 @@ describe("redactare", () => {
   it("lista de redactare acoperă fiecare câmp returnat de modul", () => {
     const reading = readMrz(buildTd1({}));
     for (const name of Object.keys(reading.fields)) {
-      expect(REDACTED_DETAIL_KEY.test(name), name).toBe(true);
+      expect(isRedactedDetailKey(name), name).toBe(true);
     }
     for (const name of ID_DOCUMENT_FIELD_NAMES) {
-      expect(REDACTED_DETAIL_KEY.test(name), name).toBe(true);
+      expect(isRedactedDetailKey(name), name).toBe(true);
     }
   });
 
   it("păstrează redactarea secretelor tehnice", () => {
-    expect(REDACTED_DETAIL_KEY.test("apiKey")).toBe(true);
-    expect(REDACTED_DETAIL_KEY.test("authorization")).toBe(true);
-    expect(REDACTED_DETAIL_KEY.test("propertyId")).toBe(false);
+    expect(isRedactedDetailKey("apiKey")).toBe(true);
+    expect(isRedactedDetailKey("authorization")).toBe(true);
+    expect(isRedactedDetailKey("accessToken")).toBe(true);
+    expect(isRedactedDetailKey("propertyId")).toBe(false);
+  });
+
+  it("redactează identitatea doar pe potrivire exactă", () => {
+    for (const name of ["cnp", "CNP", "birth_date", "givenNames", "idAddress", "adresa_act", "mrz"]) {
+      expect(isRedactedDetailKey(name), name).toBe(true);
+    }
+    for (const name of [
+      "address",
+      "adresa",
+      "propertyAddress",
+      "enumeratedValues",
+      "numericScore",
+      "seriesCount",
+      "documentNumbers",
+    ]) {
+      expect(isRedactedDetailKey(name), name).toBe(false);
+    }
+  });
+
+  it("scrubberii de audit și tracing păstrează adresa proprietății", () => {
+    const details = {
+      propertyAddress: "Str. Exemplu 1",
+      address: "Str. Exemplu 2",
+      nested: { cnp: "1234567890123", idAddress: "Str. Act 3", apiKey: "x" },
+    };
+    for (const scrub of [scrubAuditDetails, scrubTraceDetails]) {
+      const out = scrub(details) as Record<string, unknown>;
+      expect(out.propertyAddress).toBe("Str. Exemplu 1");
+      expect(out.address).toBe("Str. Exemplu 2");
+      const nested = out.nested as Record<string, unknown>;
+      expect(nested).toEqual({});
+    }
   });
 });

@@ -6,7 +6,7 @@
  * răspuns, cu latență și status, fără date sensibile și fără secrete.
  */
 
-import { REDACTED_DETAIL_KEY } from "../security/redaction-keys";
+import { isRedactedDetailKey } from "../security/redaction-keys";
 
 export type AiTraceKind = "agent" | "workflow" | "step" | "tool" | "model" | "error";
 
@@ -22,7 +22,7 @@ export type AiTraceEvent = {
   details: Record<string, unknown>;
 };
 
-const SECRET_KEY = REDACTED_DETAIL_KEY;
+const isSecretKey = isRedactedDetailKey;
 const MAX_STRING = 300;
 const MAX_DEPTH = 6;
 const MAX_ITEMS = 20;
@@ -39,7 +39,7 @@ function scrubValue(value: unknown, depth: number): unknown {
   if (typeof value === "object") {
     const out: Record<string, unknown> = {};
     for (const [key, item] of Object.entries(value as Record<string, unknown>)) {
-      if (SECRET_KEY.test(key)) continue;
+      if (isSecretKey(key)) continue;
       out[key] = scrubValue(item, depth + 1);
     }
     return out;

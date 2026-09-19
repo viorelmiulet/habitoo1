@@ -2,7 +2,7 @@
  * Audit pentru cererile AI. Înregistrăm cine a cerut ce, cu ce provider și cu
  * ce rezultat — niciodată chei, secrete sau conținutul integral al promptului.
  */
-import { REDACTED_DETAIL_KEY } from "./redaction-keys";
+import { isRedactedDetailKey } from "./redaction-keys";
 
 export const AI_AUDIT_ACTIONS = {
   chatRequest: "ai.chat.request",
@@ -57,7 +57,7 @@ export type AiAuditRow = {
   new_values: Record<string, unknown> | null;
 };
 
-const SECRET_KEY = REDACTED_DETAIL_KEY;
+const isSecretKey = isRedactedDetailKey;
 const MAX_STRING = 200;
 const MAX_DEPTH = 6;
 const MAX_ITEMS = 20;
@@ -74,7 +74,7 @@ function scrubValue(value: unknown, depth: number): unknown {
   if (typeof value === "object") {
     const out: Record<string, unknown> = {};
     for (const [key, item] of Object.entries(value as Record<string, unknown>)) {
-      if (SECRET_KEY.test(key)) continue;
+      if (isSecretKey(key)) continue;
       out[key] = scrubValue(item, depth + 1);
     }
     return out;

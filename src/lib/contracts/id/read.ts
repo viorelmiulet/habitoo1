@@ -29,7 +29,7 @@ export type IdDocumentReading = {
     givenNames: IdField;
     cnp: IdField;
     series: IdField;
-    address: IdField;
+    idAddress: IdField;
   };
   county: string | null;
   warnings: string[];
@@ -65,7 +65,7 @@ export function emptyReading(reason: string): IdDocumentReading {
       givenNames: blank,
       cnp: blank,
       series: blank,
-      address: { value: null, source: "mrz", status: "unverified", reason: "not_in_mrz" },
+      idAddress: { value: null, source: "mrz", status: "unverified", reason: "not_in_mrz" },
     },
     county: null,
     warnings: [],
@@ -184,7 +184,7 @@ export function readMrz(raw: string, today = new Date()): IdDocumentReading {
       givenNames: toField(parsed.givenNames),
       cnp: cnpField,
       series: seriesField,
-      address: { value: null, source: "mrz", status: "unverified", reason: "not_in_mrz" },
+      idAddress: { value: null, source: "mrz", status: "unverified", reason: "not_in_mrz" },
     },
     county,
     warnings,
