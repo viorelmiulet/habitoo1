@@ -51,7 +51,7 @@ function attr(html: string, attribute: string): string | null {
 
 function byTestId(html: string, testId: string): string | null {
   const pattern = new RegExp(
-    `<([a-z]+)[^>]+data-testid=["']${testId}["'][^>]*>([\\s\\S]*?)<\\/\\1>`,
+    `<([a-z0-9]+)[^>]+data-testid=["']${testId}["'][^>]*>([\\s\\S]*?)<\\/\\1>`,
     "i",
   );
   return text(pattern.exec(html)?.[2] ?? null);
