@@ -148,6 +148,7 @@ function NomenclatorPage() {
           <ImobiliareLocationsCard />
 
           <MarketPriceIndexCard />
+          <PostalCodeBackfillCard />
 
         </>
       )}
