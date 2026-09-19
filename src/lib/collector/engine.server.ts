@@ -278,6 +278,8 @@ export async function runCollectorSource(
       const rules = parseRobotsTxt(robots.body);
       const delayMs = effectiveCrawlDelayMs(source.crawl_delay_ms, robots.crawlDelayMs);
       const cap = pageCap(source.max_pages_per_run);
+      const config = (source as { config?: unknown }).config ?? {};
+      const prepared = adapter.prepare ? await adapter.prepare({ admin, config }) : undefined;
 
       for (let page = 1; page <= cap; page += 1) {
         if (now() - startedAt > budgetMs) {
@@ -285,7 +287,7 @@ export async function runCollectorSource(
           status = "stopped";
           break;
         }
-        const url = adapter.pageUrl({ baseUrl: source.base_url, page });
+        const url = adapter.pageUrl({ baseUrl: source.base_url, config, prepared, page });
         if (!url) {
           stopReason = "no_more_pages";
           break;
