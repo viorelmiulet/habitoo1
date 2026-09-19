@@ -150,6 +150,12 @@ function NewPropertyPage() {
         .select("id")
         .single();
       if (error) throw error;
+      // Codul poștal se deduce din adresă pe server; lipsa lui nu blochează nimic.
+      try {
+        await resolvePostalCode({ data: { propertyId: data.id } });
+      } catch {
+        // Ignorat intenționat: oferta este deja salvată.
+      }
       return data;
     },
     onSuccess: (data) => {
