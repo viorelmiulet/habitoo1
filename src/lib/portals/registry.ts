@@ -70,11 +70,12 @@ export type PortalDefinition = {
   website?: string;
   docs?: string;
   /**
-   * Portal de tip „pull”: calea publică a feedului, construită din cheia
-   * agenției. Definit lângă portal, ca orice portal nou de acest tip să
-   * primească automat linkul complet la generarea cheii, fără cod de UI nou.
+   * Portal de tip „pull”: șablonul căii publice a feedului, cu `{key}` în locul
+   * cheii agenției. Șablon (nu funcție) ca definiția să rămână serializabilă
+   * către UI. Orice portal nou de acest tip primește automat linkul complet la
+   * generarea cheii, fără cod de UI nou.
    */
-  public_feed_path?: (agencyKey: string) => string;
+  public_feed_path_template?: string;
   /** Limitări reale, afișate în UI ca să nu promitem funcții inexistente. */
   notes?: string;
 };
@@ -209,7 +210,7 @@ export const PORTALS: PortalDefinition[] = [
     authentication: ["habitoo_api_key", "query_parameter"],
     capabilities: ["feed_pull"],
     configuration_schema: { fields: [] },
-    public_feed_path: (agencyKey) => `/api/public/feed/properstar/${agencyKey}.xml`,
+    public_feed_path_template: "/api/public/feed/properstar/{key}.xml",
 
     website: "https://www.properstar.com",
     notes:
@@ -512,9 +513,9 @@ export function getPortalDefinition(id: string): PortalDefinition | null {
  * definiția portalului, ca UI-ul să nu asambleze niciodată URL-uri.
  */
 export function portalPublicFeedUrl(portalId: string, agencyKey: string): string | null {
-  const definition = getPortalDefinition(portalId);
-  if (!definition?.public_feed_path) return null;
-  return `${CRM_URL}${definition.public_feed_path(agencyKey)}`;
+  const template = getPortalDefinition(portalId)?.public_feed_path_template;
+  if (!template) return null;
+  return `${CRM_URL}${template.replace("{key}", agencyKey)}`;
 }
 
 

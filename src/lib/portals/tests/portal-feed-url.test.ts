@@ -20,7 +20,7 @@ describe("linkul de feed la generarea cheii", () => {
   it("un portal fără feed public nu primește URL", () => {
     expect(portalPublicFeedUrl("imobiliare_ro", "oarecare")).toBeNull();
     expect(portalPublicFeedUrl("portal-inexistent", "oarecare")).toBeNull();
-    expect(getPortalDefinition("imobiliare_ro")?.public_feed_path).toBeUndefined();
+    expect(getPortalDefinition("imobiliare_ro")?.public_feed_path_template).toBeUndefined();
   });
 
   it("din rândul stocat (hash + prefix) URL-ul complet nu poate fi reconstituit", () => {

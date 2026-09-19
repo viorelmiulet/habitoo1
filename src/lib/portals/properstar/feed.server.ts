@@ -11,7 +11,7 @@
  * Nicio ofertă nu este trimisă cu noduri obligatorii goale: cele incomplete
  * sunt excluse și raportate în UI („De completat pentru Properstar").
  */
-import { getPortalDefinition } from "@/lib/portals/registry";
+import { portalPublicFeedUrl } from "@/lib/portals/registry";
 import { feedUrlsForRequest } from "@/lib/site-feed/config";
 
 import {
@@ -55,7 +55,7 @@ export type ProperstarFeedBuild = {
 
 export function properstarFeedPath(agencyKey: string): string {
   // Sursa unică a căii este definiția portalului din registry.
-  return getPortalDefinition(PROPERSTAR_PORTAL_ID)!.public_feed_path!(agencyKey);
+  return new URL(portalPublicFeedUrl(PROPERSTAR_PORTAL_ID, agencyKey)!).pathname;
 }
 
 
