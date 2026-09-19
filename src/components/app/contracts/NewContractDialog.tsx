@@ -322,6 +322,14 @@ function PartySection({ title, party, onChange, idState, backDone, extractionEna
   </section>;
 }
 
-function Field({ label, value, onChange, placeholder, className }: { label: string; value: string; onChange: (value: string) => void; placeholder?: string; className?: string }) {
-  return <div className={`space-y-1.5 ${className ?? ""}`}><Label>{label}</Label><Input value={value} placeholder={placeholder} onChange={(event) => onChange(event.target.value)} /></div>;
+function Field({ label, value, onChange, placeholder, className, badge, warning }: { label: string; value: string; onChange: (value: string) => void; placeholder?: string; className?: string; badge?: "verified" | "pending" | null; warning?: string }) {
+  return <div className={`space-y-1.5 ${className ?? ""}`}>
+    <div className="flex flex-wrap items-center gap-2">
+      <Label>{label}</Label>
+      {badge === "verified" ? <span className="rounded-full bg-emerald-500/15 px-2 py-0.5 text-[10px] font-medium text-emerald-700 dark:text-emerald-400">verificat</span> : null}
+      {badge === "pending" ? <span className="rounded-full bg-amber-500/15 px-2 py-0.5 text-[10px] font-medium text-amber-700 dark:text-amber-400">de confirmat</span> : null}
+    </div>
+    <Input value={value} placeholder={placeholder} onChange={(event) => onChange(event.target.value)} />
+    {warning ? <p className="flex items-start gap-1.5 text-[11px] text-amber-700 dark:text-amber-400"><AlertTriangle className="mt-0.5 size-3 shrink-0" />{warning}</p> : null}
+  </div>;
 }
