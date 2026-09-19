@@ -78,6 +78,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
+import { resolvePropertyPostalCode } from "@/lib/geo/postal-code.functions";
+import { postalCodeHint } from "@/lib/geo/postal-code";
 import { LocationPicker, emptyLocation, type LocationValue } from "@/components/app/LocationPicker";
 import { PropertyLocationMap } from "@/components/app/PropertyLocationMap";
 import { PropertyMapClient } from "@/components/app/PropertyMapClient";
