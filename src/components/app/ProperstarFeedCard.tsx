@@ -6,6 +6,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { InlineLoading } from "@/components/app/LoadingState";
+import { PortalLogo } from "@/components/app/PortalLogo";
 import { QueryError } from "@/components/app/QueryError";
 import { getProperstarFeedReport } from "@/lib/portals/properstar.functions";
 
@@ -19,11 +20,16 @@ export function ProperstarFeedCard() {
   return (
     <section className="panel">
       <header className="border-b border-border px-5 py-4">
-        <h2 className="text-sm font-semibold tracking-wide uppercase">Feed Properstar</h2>
-        <p className="text-xs text-muted-foreground">
-          Properstar preia singur ofertele bifate pentru el, din linkul de mai jos. Ofertele
-          debifate sau vândute rămân 7 zile în feed, marcate ca retrase, ca să dispară și la ei.
-        </p>
+        <div className="flex items-start gap-3">
+          <PortalLogo portalId="properstar" name="Properstar" size={40} />
+          <div className="min-w-0">
+            <h2 className="text-sm font-semibold tracking-wide uppercase">Feed Properstar</h2>
+            <p className="text-xs text-muted-foreground">
+              Properstar preia singur ofertele bifate pentru el, din linkul de mai jos. Ofertele
+              debifate sau vândute rămân 7 zile în feed, marcate ca retrase, ca să dispară și la ei.
+            </p>
+          </div>
+        </div>
       </header>
 
       <div className="space-y-4 px-5 py-4">
