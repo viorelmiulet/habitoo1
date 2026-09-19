@@ -250,24 +250,37 @@ function PropertyDetailPage() {
   });
 
   /** Datele formularului de editare, folosite atât la „Salvează”, cât și la „Publică”. */
-  const buildEditPatch = (): Record<string, unknown> => ({
-    title: draft.title,
-    ...transactionPayload(tx),
-    surface: draft.surface ? Number(draft.surface) : null,
-    city: location.localityName || draft.city || null,
-    county: location.countyName || null,
-    county_siruta_code: location.countySirutaCode,
-    uat_siruta_code: location.uatSirutaCode,
-    locality_siruta_code: location.localitySirutaCode,
-    district: draft.district || null,
-    address: draft.address || null,
-    lat: coords?.lat ?? null,
-    lng: coords?.lng ?? null,
-    location_precise: locationPrecise,
-    description: draft.description || null,
-    internal_notes: draft.internal_notes || null,
-    ...details,
-  });
+  const buildEditPatch = (): Record<string, unknown> => {
+    // Un cod poștal scris de om are prioritate: îl marcăm „manual” ca să nu fie
+    // niciodată înlocuit de valoarea dedusă din adresă.
+    const typedPostal = (draft.postal_code ?? "").trim();
+    const storedPostal = (property?.postal_code ?? "").trim();
+    const postalPatch: Record<string, unknown> =
+      typedPostal === storedPostal
+        ? {}
+        : typedPostal === ""
+          ? { postal_code: null, postal_code_source: null, postal_code_resolved_from: null }
+          : { postal_code: typedPostal, postal_code_source: "manual" };
+    return {
+      title: draft.title,
+      ...transactionPayload(tx),
+      surface: draft.surface ? Number(draft.surface) : null,
+      city: location.localityName || draft.city || null,
+      county: location.countyName || null,
+      county_siruta_code: location.countySirutaCode,
+      uat_siruta_code: location.uatSirutaCode,
+      locality_siruta_code: location.localitySirutaCode,
+      district: draft.district || null,
+      address: draft.address || null,
+      ...postalPatch,
+      lat: coords?.lat ?? null,
+      lng: coords?.lng ?? null,
+      location_precise: locationPrecise,
+      description: draft.description || null,
+      internal_notes: draft.internal_notes || null,
+      ...details,
+    };
+  };
 
   const changeStatus = useMutation({
     mutationFn: async (status: string) => {
