@@ -113,13 +113,20 @@ export type FeedAuthOptions = {
    * credențialul este emis de portal, nu de Habitoo.
    */
   portalCredential?: string;
+  /**
+   * Cheia citită din calea rutei, pentru portalurile care consumă un simplu
+   * URL cu cheia în path (ex. Properstar: /feed/properstar/<cheie>.xml).
+   * Are prioritate față de headere și query; restul verificării este identică.
+   */
+  explicitToken?: string | null;
 };
 
 export async function authenticateFeedRequest(
   request: Request,
   options: FeedAuthOptions = {},
 ): Promise<FeedAuth> {
-  let token = readTokenFromRequest(request);
+  let token = options.explicitToken?.trim() || readTokenFromRequest(request);
+
   if (!token && options.allowQueryToken) {
     const url = new URL(request.url);
     // Sync-urile generice de URL (ex. iMove) nu pot trimite headere: acceptăm

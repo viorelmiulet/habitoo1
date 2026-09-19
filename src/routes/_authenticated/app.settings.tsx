@@ -18,6 +18,8 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PortalSlotsCard } from "@/components/app/PortalSlotsCard";
+import { ProperstarFeedCard } from "@/components/app/ProperstarFeedCard";
+
 import { AccountAccessCard } from "@/components/app/AccountAccessCard";
 import { supabase } from "@/integrations/supabase/client";
 import { UserAvatar } from "@/components/app/UserAvatar";
@@ -68,6 +70,8 @@ function SettingsPage() {
   const [orgForm, setOrgForm] = useState({
     name: user?.organization?.name ?? "",
     city: user?.organization?.city ?? "",
+    postal_code: user?.organization?.postal_code ?? "",
+
     phone: user?.organization?.phone ?? "",
     email: user?.organization?.email ?? "",
     legal_representative: user?.organization?.legal_representative ?? "",
@@ -156,6 +160,8 @@ function SettingsPage() {
         .update({
           name: orgForm.name,
           city: orgForm.city || null,
+          postal_code: orgForm.postal_code || null,
+
           phone: orgForm.phone || null,
           email: orgForm.email || null,
           legal_representative: orgForm.legal_representative || null,
@@ -308,6 +314,17 @@ function SettingsPage() {
                   onChange={(e) => setOrgForm((f) => ({ ...f, city: e.target.value }))}
                 />
               </div>
+              <div className="space-y-2">
+                <Label htmlFor="org_postal_code">Cod poștal</Label>
+                <Input
+                  id="org_postal_code"
+                  value={orgForm.postal_code}
+                  disabled={!user?.isAdmin}
+                  placeholder="ex. 300001"
+                  onChange={(e) => setOrgForm((f) => ({ ...f, postal_code: e.target.value }))}
+                />
+              </div>
+
               <div className="space-y-2">
                 <Label htmlFor="org_phone">Telefon</Label>
                 <Input
@@ -476,6 +493,8 @@ function SettingsPage() {
             <div className="space-y-6">
               <AgencyPortalCatalogCard />
               <PortalSlotsCard />
+              <ProperstarFeedCard />
+
             </div>
           </TabsContent>
         ) : null}
