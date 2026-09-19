@@ -9,10 +9,13 @@ import { checkIdSeries } from "./series";
 
 export type IdField<T = string> = {
   value: T | null;
-  source: "mrz";
+  source: "mrz" | "vision";
   status: FieldStatus;
   reason: string | null;
+  /** Doar dacă providerul întoarce o încredere reală — niciodată inventată. */
+  confidence?: number;
 };
+
 
 export type IdDocumentReading = {
   ok: boolean;
