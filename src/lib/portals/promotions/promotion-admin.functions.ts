@@ -34,7 +34,8 @@ export type PromotionAdminUserCell = {
   name: string;
   /** `null` = nelimitat în limita agenției. */
   allocated: number | null;
-  used: number;
+  /** `null` = consumul acestui coleg nu a putut fi calculat acum. */
+  used: number | null;
   remaining: number | null;
 };
 
