@@ -297,18 +297,27 @@ export const setImobiliarePromotionCap = createServerFn({ method: "POST" })
       if (!check.ok) return { ok: false, message: check.message };
     }
 
+    const actorId = (context as unknown as { userId: string }).userId;
     await upsertSetting({
       organizationId,
       serviceKey: definition.id,
-      actorId: (context as unknown as { userId: string }).userId,
+      actorId,
       patch: { agency_cap: data.cap },
     });
+    const withdrawn = data.withdraw
+      ? await enqueueAfterSave({
+          organizationId,
+          serviceKey: definition.id,
+          actorId,
+          cap: data.cap,
+        })
+      : "";
     return {
       ok: true,
       message:
-        data.cap === null
+        (data.cap === null
           ? `${definition.label}: plafonul agenției a fost eliminat (limita este rezerva de la portal).`
-          : `${definition.label}: plafonul agenției este ${data.cap}.`,
+          : `${definition.label}: plafonul agenției este ${data.cap}.`) + withdrawn,
     };
   });
 
