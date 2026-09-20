@@ -4,36 +4,11 @@ import globals from "globals";
 import reactHooks from "eslint-plugin-react-hooks";
 import reactRefresh from "eslint-plugin-react-refresh";
 import tseslint from "typescript-eslint";
+import { readFileSync } from "node:fs";
 
+const tokenSource = readFileSync(new URL("./src/styles.css", import.meta.url), "utf8");
 const paletteHexes = new Set(
-  [
-    "F7F4EE",
-    "FFFFFF",
-    "E4DED2",
-    "FBF9F5",
-    "14171C",
-    "5E6570",
-    "8A9099",
-    "C08A3E",
-    "8A5D1C",
-    "F6EFE2",
-    "1F5138",
-    "E3EFE7",
-    "8A2F24",
-    "F6E4E1",
-    "4A5059",
-    "EFEBE2",
-    "171B21",
-    "262C35",
-    "D5D1C8",
-    "1A1206",
-    "D9D2C5",
-    "5C3E10",
-    "D8B9B3",
-    "F3F0EA",
-    "9BA2AC",
-    "C08880",
-  ].map((value) => `#${value}`),
+  (tokenSource.match(/#[0-9a-f]{6}\b/gi) ?? []).map((value) => value.toUpperCase()),
 );
 
 const designTokensPlugin = {
