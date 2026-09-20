@@ -26,6 +26,131 @@ export const DEDUPE_THRESHOLDS = {
   maxDistanceKm: 0.15,
 } as const;
 
+/**
+ * Praguri pentru deduplicarea între portaluri.
+ *
+ * Aceeași proprietate apare pe mai multe portaluri, cu adrese web diferite.
+ * O ofertă nouă care se potrivește pe zonă normalizată + camere + suprafață
+ * (±2%) + preț (±1%), într-o fereastră recentă, este aceeași proprietate:
+ * păstrăm prima văzută și înregistrăm sursa suplimentară.
+ */
+export const CROSS_PORTAL_THRESHOLDS = {
+  areaTolerance: 0.02,
+  priceTolerance: 0.01,
+  windowDays: 45,
+} as const;
+
+export type CrossPortalCandidate = {
+  id: string;
+  source: string;
+  normalizedCity: string | null;
+  normalizedDistrict: string | null;
+  normalizedNeighborhood: string | null;
+  propertyType: string | null;
+  transactionType: string | null;
+  rooms: number | null;
+  usableArea: number | null;
+  totalArea: number | null;
+  price: number | null;
+  lastSeenAt: string;
+};
+
+/** Zona normalizată folosită la potrivirea între portaluri. */
+export function crossPortalZone(input: {
+  normalizedNeighborhood: string | null;
+  normalizedDistrict: string | null;
+  normalizedCity: string | null;
+}): string | null {
+  return (
+    input.normalizedNeighborhood?.trim() ||
+    input.normalizedDistrict?.trim() ||
+    input.normalizedCity?.trim() ||
+    null
+  );
+}
+
+function withinRatio(a: number, b: number, tolerance: number): boolean {
+  const max = Math.max(a, b);
+  if (max <= 0) return false;
+  return Math.abs(a - b) / max <= tolerance;
+}
+
+export type CrossPortalMatch = { match: boolean; reason: string };
+
+/**
+ * Decide dacă o ofertă nouă este același imobil ca o ofertă deja în bazin,
+ * publicată pe alt portal. Fără suprafață sau fără camere nu unim niciodată.
+ */
+export function isCrossPortalDuplicate(
+  listing: NormalizedListing,
+  candidate: CrossPortalCandidate,
+  options: { now: string },
+): CrossPortalMatch {
+  if (candidate.source === listing.source) {
+    return { match: false, reason: "Aceeași sursă: nu este duplicat între portaluri." };
+  }
+  const area = listing.usableArea ?? listing.totalArea;
+  const candidateArea = candidate.usableArea ?? candidate.totalArea;
+  if (!area || !candidateArea) return { match: false, reason: "Suprafață necunoscută." };
+  if (listing.rooms === null || candidate.rooms === null) {
+    return { match: false, reason: "Număr de camere necunoscut." };
+  }
+  if (Number(listing.rooms) !== Number(candidate.rooms)) {
+    return { match: false, reason: "Număr de camere diferit." };
+  }
+  if (!listing.price || !candidate.price) return { match: false, reason: "Preț necunoscut." };
+  if (
+    listing.propertyType &&
+    candidate.propertyType &&
+    listing.propertyType !== candidate.propertyType
+  ) {
+    return { match: false, reason: "Tip de proprietate diferit." };
+  }
+  if (
+    listing.transactionType &&
+    candidate.transactionType &&
+    listing.transactionType !== candidate.transactionType
+  ) {
+    return { match: false, reason: "Tip de tranzacție diferit." };
+  }
+  const zone = crossPortalZone(listing);
+  const candidateZone = crossPortalZone(candidate);
+  if (!zone || !candidateZone || zone !== candidateZone) {
+    return { match: false, reason: "Zonă normalizată diferită sau necunoscută." };
+  }
+  if (!withinRatio(area, candidateArea, CROSS_PORTAL_THRESHOLDS.areaTolerance)) {
+    return { match: false, reason: "Suprafață diferită cu mai mult de 2%." };
+  }
+  if (!withinRatio(listing.price, candidate.price, CROSS_PORTAL_THRESHOLDS.priceTolerance)) {
+    return { match: false, reason: "Preț diferit cu mai mult de 1%." };
+  }
+  const seen = Date.parse(candidate.lastSeenAt);
+  const now = Date.parse(options.now);
+  if (Number.isFinite(seen) && Number.isFinite(now)) {
+    const days = (now - seen) / 86_400_000;
+    if (days > CROSS_PORTAL_THRESHOLDS.windowDays) {
+      return { match: false, reason: "Oferta existentă este în afara ferestrei recente." };
+    }
+  }
+  return {
+    match: true,
+    reason: `Aceeași proprietate publicată și pe ${candidate.source}: zonă, camere, suprafață (±2%) și preț (±1%) identice.`,
+  };
+}
+
+/** Prima potrivire între portaluri, în ordinea candidaților primiți. */
+export function findCrossPortalDuplicate(
+  listing: NormalizedListing,
+  candidates: readonly CrossPortalCandidate[],
+  options: { now: string },
+): { candidate: CrossPortalCandidate; reason: string } | null {
+  for (const candidate of candidates) {
+    const result = isCrossPortalDuplicate(listing, candidate, options);
+    if (result.match) return { candidate, reason: result.reason };
+  }
+  return null;
+}
+
 export type MarketEntityCandidate = {
   id: string;
   normalizedAddress: string | null;
