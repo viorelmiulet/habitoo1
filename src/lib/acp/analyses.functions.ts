@@ -975,7 +975,10 @@ async function recalculate(
     throw acpError("Analiza rulează deja. Așteaptă finalizarea ei.");
   }
 
+  const storedEngineVersion = normalizeAcpEngineVersion(analysis.engine_version);
+
   try {
+
     const { candidates, stats } = await collectCandidates({
       admin,
       actor,
