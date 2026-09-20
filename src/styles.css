@@ -13,6 +13,14 @@
 @theme inline {
   --font-sans: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
   --font-display: "Sora", ui-sans-serif, system-ui, sans-serif;
+  /*
+   * Layering scale (z-index):
+   *   base overlays (popover, dialog, dropdown, select…) — Tailwind/shadcn default: 50
+   *   Leaflet map panes — 200–700, map controls — up to 1000 (library-internal)
+   *   --z-floating — anything that must float above an embedded map: 1100
+   * Use as `z-(--z-floating)`.
+   */
+  --z-floating: 1100;
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
