@@ -356,7 +356,7 @@ describe("consumul serviciilor numerice", () => {
     const many = Array.from({ length: 40 }, (_, index) => ({
       reference: `HB-${index}`,
       listingId: String(index),
-      title: null,
+      title: "A",
       url: null,
     }));
     slotListings.mockImplementationOnce(async () => ({ ok: true as const, listings: many }));

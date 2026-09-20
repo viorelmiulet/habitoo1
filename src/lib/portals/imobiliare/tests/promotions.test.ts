@@ -124,14 +124,17 @@ describe("registrul de promovări Imobiliare.ro", () => {
     });
   }
 
-  it("păstrează starter și rotatii DOAR ca inventar, fără câmp de scriere", () => {
-    for (const id of ["starter", "rotatii"]) {
-      const definition = imobiliarePromotion(id);
-      expect(definition?.slotType).toBe(id);
-      expect(definition?.writeField).toBeNull();
-    }
+  it("păstrează starter DOAR ca inventar, fără câmp de scriere", () => {
+    const definition = imobiliarePromotion("starter");
+    expect(definition?.slotType).toBe("starter");
+    expect(definition?.writeField).toBeNull();
     expect(manageableImobiliarePromotions().map((p) => p.id)).not.toContain("starter");
-    expect(manageableImobiliarePromotions().map((p) => p.id)).not.toContain("rotatii");
+  });
+
+  it("nu tratează Rotații ca promovare", () => {
+    expect(imobiliarePromotion("rotatii")).toBeNull();
+    expect(IMOBILIARE_PROMOTIONS.some((p) => p.id === "rotatii")).toBe(false);
+    expect(IMOBILIARE_SLOT_TYPES).not.toContain("rotatii");
   });
 
   it("nu tratează video_viewing ca promovare", () => {
@@ -141,7 +144,7 @@ describe("registrul de promovări Imobiliare.ro", () => {
 
   it("expune exact sloturile din Swagger", () => {
     expect(IMOBILIARE_SLOT_TYPES.sort()).toEqual(
-      ["bonus", "energy", "month", "pole_position", "promo", "rotatii", "similar", "starter", "tl", "tls"].sort(),
+      ["bonus", "energy", "month", "pole_position", "promo", "similar", "starter", "tl", "tls"].sort(),
     );
     expect(imobiliarePromotionBySlot("tls")?.writeField).toBe("top_listing_s");
   });
@@ -393,8 +396,8 @@ describe("poarta de activare/dezactivare", () => {
   it("refuză comanda serviciilor fără câmp confirmat", () => {
     expect(
       guardImobiliarePromotionChange({
-        definition: imobiliarePromotion("rotatii")!,
-        inventory: { slotType: "rotatii", total: 5, used: 0, available: 5 },
+        definition: imobiliarePromotion("starter")!,
+        inventory: { slotType: "starter", total: 5, used: 0, available: 5 },
         current: false,
         next: true,
       }).allowed,
