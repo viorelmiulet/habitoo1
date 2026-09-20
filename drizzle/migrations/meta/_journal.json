@@ -505,6 +505,13 @@
       "when": 1789886145119,
       "tag": "0071_apify_targets_cross_portal",
       "breakpoints": true
+    },
+    {
+      "idx": 72,
+      "version": "7",
+      "when": 1789886910751,
+      "tag": "0072_seed_apify_sources",
+      "breakpoints": true
     }
   ]
 }
