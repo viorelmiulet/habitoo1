@@ -211,7 +211,7 @@ function parseCard(articleTag: string, card: string, now: Date): ImospotParsedLi
       if (roomsText) rooms = roNumber(roomsText);
     }
     if (area === null) {
-      const areaText = firstMatch(fact.text, /([\d.,]+)\s*(?:m²|mp)\b/i);
+      const areaText = firstMatch(fact.text, /([\d.,]+)\s*(?:m²|m2|mp)(?![a-z])/i);
       if (areaText) area = roNumber(areaText);
     }
   }
