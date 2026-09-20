@@ -79,6 +79,7 @@ function emptyView(message: string): ImobiliarePromotionsView {
     listingError: null,
     promotions: [],
     syncedAt: null,
+    stateUnreported: false,
   };
 }
 
