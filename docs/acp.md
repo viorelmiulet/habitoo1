@@ -251,3 +251,40 @@ programate; nu se descarcă imagini și nu se citesc date de contact.
   salvare).
 - Analizele v1/v2 nu declanșează niciodată o interogare live: recalcularea în loc
   folosește versiunea stocată a motorului.
+
+## 13. Interogare live — sursa Imospot.ro
+
+Primul adaptor al portului `market_query`. Doar interogare, în momentul
+analizei; nimic nu se stochează în afara analizei salvate.
+
+- Cheia sursei: `imospot`, livrată **dezactivată** (`market_query_sources`).
+- Adresă publică: `https://www.imospot.ro/toate-ofertele-din-{slug}` cu
+  parametrii sursei: `tranzactie` (`vanzari` | `inchirieri`), `categorie`,
+  `rooms` (1–5), `price_min`, `price_max`, `area_min`, `area_max`, `sort`
+  (`-cele-mai-noi`), `page`. `city_id` / `neighborhood_id` se trimit doar când
+  îi cunoaștem cu certitudine. Se construiesc numai parametrii pe care noi
+  chiar îi restrângem.
+- Categorii — vânzare: `apartamente-de-vanzare` (apartament, garsonieră),
+  `case-vile-de-vanzare`, `terenuri-de-vanzare`,
+  `birouri-si-spatii-comerciale-de-vanzare` (spațiu comercial, birou),
+  `hale-si-depozite-de-vanzare` (industrial).
+- Categorii — închiriere: `apartamente-de-inchiriat`, `case-vile-de-inchiriat`,
+  `terenuri-de-inchiriat`, `birouri-si-spatii-comerciale-de-inchiriat`,
+  `hale-si-depozite-de-inchiriat`.
+- Localități: hartă explicită (`imospot/locations.ts`) — București, cele șase
+  sectoare (`sectorul-N-bucuresti`) și cartierele confirmate
+  (`/bucuresti/militari`, `/domenii`, `/rahova`). Zonă fără corespondent →
+  nivelul orașului. Localitate fără corespondent → nicio cerere; niciun slug nu
+  se ghicește.
+- Cel mult 2 pagini (24 de rezultate) per interogare, cu oprire mai devreme la
+  12 comparabile. Cereri politicoase și identificate, robots.txt respectat, o
+  cerere pe rând, fără autentificare, cookie-uri sau mascarea identității.
+- Per rezultat: adresă, titlu, preț și monedă, camere, suprafață,
+  localitate/sector afișat, agenție și vechimea relativă convertită în dată.
+  Fără preț sau fără suprafață → rezultatul se aruncă. Imaginile și datele de
+  contact nu sunt citite.
+- Cifrele agregate publicate de sursă (mediane, chirie mediană, timp mediu pe
+  piață, distribuții) se citesc separat, ca bloc „Cifre publicate de Imospot",
+  etichetat cu data citirii, și nu intră în niciun calcul al analizei.
+- Status 403/429 sau lipsa corpului → eroare consemnată per sursă; analiza
+  continuă cu rezultate parțiale. Timeout-ul este consemnat, nu fatal.
