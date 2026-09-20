@@ -164,7 +164,7 @@ async function loadVersionInput(
       .order("similarity_score", { ascending: false }),
     admin
       .from("acp_analysis_sources")
-      .select("source_type,source_name,items_found,items_used,items_excluded")
+      .select("source_type,source_name,items_found,items_used,items_excluded,outcome,outcome_detail")
       .eq("analysis_id", analysisId),
   ]);
 
@@ -285,6 +285,8 @@ async function loadVersionInput(
       itemsFound: s.items_found ?? 0,
       itemsUsed: s.items_used ?? 0,
       itemsExcluded: s.items_excluded ?? 0,
+      outcome: s.outcome ?? null,
+      outcomeDetail: s.outcome_detail ?? null,
     })),
     // Interpretarea AI a versiunii, dacă există. Nicio cifră nu depinde de ea.
     ai:

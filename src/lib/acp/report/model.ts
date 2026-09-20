@@ -86,6 +86,9 @@ export type AcpReportSourceInput = {
   itemsFound: number;
   itemsUsed: number;
   itemsExcluded: number;
+  /** Doar pentru sursele interogate live: cum a răspuns sursa. */
+  outcome?: string | null;
+  outcomeDetail?: string | null;
 };
 
 export type AcpReportVersionInput = {
@@ -272,7 +275,16 @@ export type AcpReportModel = {
     } | null;
   }[];
   statistics: { label: string; value: string }[];
-  sources: { name: string; type: string; found: number; used: number; excluded: number }[];
+  sources: {
+    name: string;
+    type: string;
+    found: number;
+    used: number;
+    excluded: number;
+    /** Starea sursei interogate live, în română, sau `null`. */
+    outcomeLabel: string | null;
+    outcomeDetail: string | null;
+  }[];
   warnings: string[];
   ai: {
     summary: string;
@@ -598,6 +610,8 @@ export function buildAcpReportModel(params: {
       found: finite(src.itemsFound) ?? 0,
       used: finite(src.itemsUsed) ?? 0,
       excluded: finite(src.itemsExcluded) ?? 0,
+      outcomeLabel: acpSourceOutcomeLabel(src.outcome ?? null),
+      outcomeDetail: src.outcomeDetail ?? null,
     })),
     warnings,
     ai: buildAiSection(version.ai ?? null),

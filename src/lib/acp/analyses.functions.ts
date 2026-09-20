@@ -9,6 +9,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireActiveOrgAuth } from "@/lib/org-access";
 import { ACP_SOURCE_TYPE_LABELS, type AcpSourceType } from "./config";
+import { acpSourceOutcomeLabel } from "./source-outcome";
 import { marketListingToSubject, propertyToSubject } from "./adapters";
 import { runAcpAnalysis, targetPricePerSqm, type AcpCandidate, type AcpManualOverride } from "./engine";
 import {
@@ -1066,6 +1067,9 @@ export type AcpAnalysisView = {
     itemsFound: number;
     itemsUsed: number;
     itemsExcluded: number;
+    /** Starea sursei interogate live, în română, sau `null`. */
+    outcomeLabel: string | null;
+    outcomeDetail: string | null;
   }[];
   /** Versiunea motorului care a produs cifrele acestei analize. */
   engineVersion: number;
@@ -1119,7 +1123,7 @@ export const getAcpAnalysis = createServerFn({ method: "POST" })
 
     const { data: sourceRows } = await admin
       .from("acp_analysis_sources")
-      .select("source_type,source_name,items_found,items_used,items_excluded")
+      .select("source_type,source_name,items_found,items_used,items_excluded,outcome,outcome_detail")
       .eq("analysis_id", data.analysisId);
 
     const paths = (comparables ?? [])
@@ -1193,6 +1197,8 @@ export const getAcpAnalysis = createServerFn({ method: "POST" })
         itemsFound: s.items_found ?? 0,
         itemsUsed: s.items_used ?? 0,
         itemsExcluded: s.items_excluded ?? 0,
+        outcomeLabel: acpSourceOutcomeLabel(s.outcome ?? null),
+        outcomeDetail: s.outcome_detail ?? null,
       })),
       engineVersion: normalizeAcpEngineVersion(
         analysis.engine_version ?? analysisData.engineVersion ?? null,
@@ -1423,7 +1429,7 @@ async function buildVersionSnapshot(
       .order("similarity_score", { ascending: false }),
     admin
       .from("acp_analysis_sources")
-      .select("source_type,source_name,items_found,items_used,items_excluded")
+      .select("source_type,source_name,items_found,items_used,items_excluded,outcome,outcome_detail")
       .eq("analysis_id", row.id),
   ]);
 
