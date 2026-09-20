@@ -49,7 +49,7 @@ function SuperadminAiFeaturesPage() {
       void queryClient.invalidateQueries({ queryKey: ["ai-features"] });
       toast.success(input.enabled ? "Funcția a fost activată." : "Funcția a fost oprită.");
     },
-    onError: toastError,
+    onError: (error: unknown) => toastError(error),
   });
 
   const organizations = useMemo(() => {
@@ -87,7 +87,7 @@ function SuperadminAiFeaturesPage() {
       {query.isLoading ? (
         <InlineLoading label="Se încarcă agențiile…" />
       ) : query.isError ? (
-        <QueryError onRetry={() => void query.refetch()} />
+        <QueryError error={query.error} onRetry={() => void query.refetch()} />
       ) : organizations.length === 0 ? (
         <EmptyState icon={Sparkles} title="Nicio agenție" description="Nu am găsit agenții." />
       ) : (
