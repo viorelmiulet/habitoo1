@@ -67,6 +67,8 @@ export type ImobiliarePromotionsView = {
   listingError: string | null;
   promotions: ImobiliarePromotionRow[];
   syncedAt: string | null;
+  /** `true` = portalul nu a raportat starea NICIUNUI serviciu pe această ofertă. */
+  stateUnreported: boolean;
 };
 
 function emptyView(message: string): ImobiliarePromotionsView {
