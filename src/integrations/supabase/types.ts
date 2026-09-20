@@ -766,6 +766,62 @@ export type Database = {
           },
         ]
       }
+      ai_media_generations: {
+        Row: {
+          created_at: string
+          created_by: string
+          error: string | null
+          id: string
+          kind: string
+          model: string
+          organization_id: string
+          output_url: string | null
+          prediction_id: string | null
+          prompt: string
+          source_url: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          error?: string | null
+          id?: string
+          kind: string
+          model: string
+          organization_id: string
+          output_url?: string | null
+          prediction_id?: string | null
+          prompt?: string
+          source_url?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          error?: string | null
+          id?: string
+          kind?: string
+          model?: string
+          organization_id?: string
+          output_url?: string | null
+          prediction_id?: string | null
+          prompt?: string
+          source_url?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_media_generations_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ai_messages: {
         Row: {
           content: string
