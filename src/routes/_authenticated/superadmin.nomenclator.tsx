@@ -25,6 +25,7 @@ import {
 import { appHead } from "@/components/app/app-head";
 import { MarketPriceIndexCard } from "@/components/superadmin/MarketPriceIndexCard";
 import { PostalCodeBackfillCard } from "@/components/superadmin/PostalCodeBackfillCard";
+import { ApifySourcesCard } from "@/components/superadmin/ApifySourcesCard";
 import { CollectorSourcesCard } from "@/components/superadmin/CollectorSourcesCard";
 import { MarketQuerySourcesCard } from "@/components/superadmin/MarketQuerySourcesCard";
 
