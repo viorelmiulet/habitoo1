@@ -169,18 +169,20 @@ export const getImobiliarePromotionAdmin = createServerFn({ method: "POST" })
         poolUsed: slot?.inventory?.used ?? null,
         poolAvailable: slot?.inventory?.available ?? null,
         poolError: slot?.error ?? null,
-        agencyUsed: serviceUsage?.total ?? 0,
-        usagePartial: serviceUsage?.partial ?? false,
+        agencyUsed: serviceUsage?.total ?? null,
+        usageFromPortal: serviceUsage?.totalFromPortal ?? false,
+        unknownUsers: serviceUsage?.unknownUsers ?? [],
         usageError: serviceUsage?.error ?? null,
         cells: users.map((user) => {
           const allocated = promotionAllocationFor(serviceAllocations, user.userId);
-          const used = serviceUsage?.byUser.get(user.userId) ?? 0;
+          const unknown = serviceUsage?.unknownUsers.includes(user.userId) ?? false;
+          const used = unknown ? null : (serviceUsage?.byUser.get(user.userId) ?? 0);
           return {
             userId: user.userId,
             name: user.name,
             allocated,
             used,
-            remaining: promotionRemaining(allocated, used),
+            remaining: used === null ? null : promotionRemaining(allocated, used),
           };
         }),
       };
