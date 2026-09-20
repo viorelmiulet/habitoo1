@@ -82,14 +82,65 @@ export type MarketQuerySourceOutcome = {
   detail: string | null;
 };
 
+/**
+ * Cifrele agregate publicate de o sursă (mediane, timp pe piață, distribuții).
+ * Sunt statistica sursei, cu data la care au fost citite, ținute separat de
+ * comparabilele noastre: nu intră în niciun calcul al analizei.
+ */
+export type MarketQueryMarketContextData = {
+  /** Titlul blocului, în română, așa cum îl arătăm utilizatorului. */
+  title: string;
+  /** Rânduri „etichetă: valoare", deja formatate pentru afișare. */
+  lines: { label: string; value: string }[];
+  /** Nota explicativă publicată de sursă, dacă există. */
+  note: string | null;
+  /** Adresa publică de la care au fost citite cifrele. */
+  url: string | null;
+  /** Data citirii (ISO). */
+  capturedAt: string;
+};
+
+export type MarketQueryMarketContext = MarketQueryMarketContextData & {
+  sourceKey: string;
+  sourceLabel: string;
+};
+
+/**
+ * Rezultatul unui adaptor: doar comparabile brute, sau comparabile plus blocul
+ * de cifre publicate și adresele efectiv cerute.
+ */
+export type MarketQueryAdapterResult =
+  | MarketQueryRawComparable[]
+  | {
+      items: MarketQueryRawComparable[];
+      marketContext?: MarketQueryMarketContextData | null;
+      requestedUrls?: string[];
+    };
+
 export type MarketQueryAdapter = {
   key: string;
   query: (input: {
     criteria: MarketQueryCriteria;
     source: MarketQuerySourceConfig;
     signal: AbortSignal;
-  }) => Promise<MarketQueryRawComparable[]>;
+  }) => Promise<MarketQueryAdapterResult>;
 };
+
+/** Forma unificată a rezultatului unui adaptor. */
+export function marketQueryAdapterResult(result: MarketQueryAdapterResult): {
+  items: MarketQueryRawComparable[];
+  marketContext: MarketQueryMarketContextData | null;
+  requestedUrls: string[];
+} {
+  if (Array.isArray(result)) {
+    return { items: result, marketContext: null, requestedUrls: [] };
+  }
+  return {
+    items: result.items ?? [],
+    marketContext: result.marketContext ?? null,
+    requestedUrls: result.requestedUrls ?? [],
+  };
+}
 
 const registry = new Map<string, MarketQueryAdapter>();
 
