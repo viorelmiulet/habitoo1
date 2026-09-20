@@ -115,7 +115,7 @@ function RunDetails({ run }: { run: ApifyRunView }) {
       <div>
         <p className="mb-2 text-sm font-medium">Parametri</p>
         <dl className="grid gap-2 text-sm sm:grid-cols-2">
-          {Object.entries(criteria).map(([key, value]) => (
+          {Object.entries(criteria ?? {}).map(([key, value]) => (
             <div key={key} className="flex justify-between gap-3 border-b border-border py-2">
               <dt className="text-muted-foreground">{key}</dt>
               <dd className="text-right font-medium">
@@ -167,7 +167,10 @@ export function ApifySourcesCard() {
   const startRun = useServerFn(runApifySource);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const overview = useQuery({ queryKey: QUERY_KEY, queryFn: () => loadOverview({}) });
+  const overview = useQuery({
+    queryKey: QUERY_KEY,
+    queryFn: () => loadOverview({}) as Promise<import("@/lib/market/apify/apify.functions").ApifyOverview>,
+  });
   const runs = overview.data?.runs ?? [];
   const selected = runs.find((run) => run.id === selectedId) ?? runs[0] ?? null;
   useEffect(() => {

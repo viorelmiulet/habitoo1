@@ -448,7 +448,7 @@ export const runApifySource = createServerFn({ method: "POST" })
         field_mapping_snapshot: effectiveMapping as never,
         max_items: data.criteria.maxItems,
         estimated_cost_usd: estimateApifyCost(data.criteria.maxItems, definition.unitCostUsd),
-      })
+      } as never)
       .select("id")
       .single();
     if (runRowError) throw runRowError;
