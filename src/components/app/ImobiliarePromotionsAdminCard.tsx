@@ -19,12 +19,36 @@ import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
 import { formatDateTime } from "@/lib/format";
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
   getImobiliarePromotionAdmin,
+  previewImobiliarePromotionWithdrawals,
   setImobiliarePromotionAllocation,
   setImobiliarePromotionCap,
   setImobiliarePromotionService,
   type PromotionAdminService,
+  type PromotionWithdrawPreviewRow,
 } from "@/lib/portals/promotions/promotion-admin.functions";
+
+/** Modificarea cerută de administrator, ținută până la confirmare. */
+type PendingChange =
+  | { kind: "cap"; serviceKey: string; serviceLabel: string; cap: number | null }
+  | {
+      kind: "allocation";
+      serviceKey: string;
+      serviceLabel: string;
+      userId: string;
+      userName: string;
+      amount: number | null;
+    };
 
 function poolLabel(service: PromotionAdminService): string {
   if (service.poolTotal === null || service.poolUsed === null) return "fără contor";
