@@ -89,7 +89,10 @@ function runView(row: Record<string, unknown> | null): ApifyRunView | null {
     discardReasons: (row["discard_reasons"] as ApifyRunView["discardReasons"] | null) ?? [],
     costUsd: row["cost_usd"] === null ? null : Number(row["cost_usd"]),
     errors: (row["errors"] as ApifyRunView["errors"] | null) ?? [],
-    firstItem: row["first_item"] ?? null,
+    firstItemJson:
+      row["first_item"] === null || row["first_item"] === undefined
+        ? null
+        : JSON.stringify(row["first_item"], null, 2).slice(0, 8000),
   };
 }
 
