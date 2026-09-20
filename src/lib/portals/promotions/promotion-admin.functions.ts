@@ -330,6 +330,8 @@ export const setImobiliarePromotionAllocation = createServerFn({ method: "POST" 
         serviceKey: z.string().min(1).max(64),
         userId: z.string().uuid(),
         amount: z.number().int().min(0).max(100_000).nullable(),
+        /** `true` = retrage surplusul confirmat în dialog. */
+        withdraw: z.boolean().optional(),
       })
       .parse(input),
   )
