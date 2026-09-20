@@ -1695,6 +1695,7 @@ export const recalculateAcpAsNewVersion = createServerFn({ method: "POST" })
           sources,
           overrides,
           stats,
+          marketQueryContexts,
           result,
           version: created.version,
           engineVersion: ACP_CURRENT_ENGINE_VERSION,
