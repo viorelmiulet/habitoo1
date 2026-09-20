@@ -219,6 +219,17 @@ export function ApifySourcesCard() {
                       <Button
                         size="sm"
                         variant="outline"
+                        onClick={() => {
+                          setEditing(source);
+                          setDialogOpen(true);
+                        }}
+                      >
+                        <Pencil className="mr-1.5 size-3.5" />
+                        Editează
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
                         disabled={!source.enabled || run.isPending}
                         onClick={() => run.mutate(source.key)}
                       >
@@ -231,8 +242,18 @@ export function ApifySourcesCard() {
               ))}
             </ul>
           )}
+
+          <ApifySourceDialog
+            open={dialogOpen}
+            onOpenChange={setDialogOpen}
+            source={editing}
+            organizations={organizations}
+            saving={saveSource.isPending}
+            onSave={(payload) => saveSource.mutate(payload)}
+          />
         </>
       )}
     </SectionCard>
   );
+
 }
