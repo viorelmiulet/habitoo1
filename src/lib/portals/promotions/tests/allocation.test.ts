@@ -138,7 +138,7 @@ describe("alocări", () => {
       enabled: true,
       agencyCap: null,
       allocation: 2,
-      usage: { byUser: new Map([[AGENT, 2]]), total: 2, partial: false, error: null },
+      usage: { byUser: new Map([[AGENT, 2]]), total: 2, totalFromPortal: false, unknownUsers: [], error: null },
       userId: AGENT,
       current: false,
       next: true,
@@ -154,7 +154,7 @@ describe("alocări", () => {
       enabled: true,
       agencyCap: 4,
       allocation: 10,
-      usage: { byUser: new Map([[AGENT, 1]]), total: 4, partial: false, error: null },
+      usage: { byUser: new Map([[AGENT, 1]]), total: 4, totalFromPortal: false, unknownUsers: [], error: null },
       userId: AGENT,
       current: false,
       next: true,
@@ -163,14 +163,14 @@ describe("alocări", () => {
     expect(result.ok === false && result.message).toContain("4/4");
   });
 
-  it("nu verifică plafoanele când consumul citit este incomplet", () => {
+  it("nu verifică plafoanele când consumul agentului nu a putut fi calculat", () => {
     const result = checkPromotionAllocation({
       label: "Top Listing",
       kind: "boolean",
       enabled: true,
       agencyCap: 4,
       allocation: null,
-      usage: { byUser: new Map(), total: 0, partial: true, error: null },
+      usage: { byUser: new Map(), total: 0, totalFromPortal: false, unknownUsers: [AGENT], error: null },
       userId: AGENT,
       current: false,
       next: true,
