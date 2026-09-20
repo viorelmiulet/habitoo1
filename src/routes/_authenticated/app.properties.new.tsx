@@ -34,7 +34,6 @@ import { notifyProperstarFeedChanged } from "@/lib/portals/properstar-cache";
 import { LocationPicker, emptyLocation, type LocationValue } from "@/components/app/LocationPicker";
 import { PropertyLocationMap } from "@/components/app/PropertyLocationMap";
 import { useCurrentUser } from "@/hooks/use-session";
-import { propertyTypeLabels } from "@/lib/labels";
 import { appHead } from "@/components/app/app-head";
 
 /** Notificare neblocantă despre codul poștal dedus la salvare. */
@@ -51,18 +50,6 @@ export const Route = createFileRoute("/_authenticated/app/properties/new")({
   head: () => appHead("Habitoo CRM — proprietate nouă"),
   component: NewPropertyPage,
 });
-
-const featureOptions = [
-  "Balcon",
-  "Parcare",
-  "Lift",
-  "Terasă",
-  "Aer condiționat",
-  "Mobilat",
-  "Boxă",
-  "Grădină",
-  "Centrală proprie",
-];
 
 function NewPropertyPage() {
   const navigate = useNavigate();
@@ -82,13 +69,7 @@ function NewPropertyPage() {
 
   const [form, setForm] = useState({
     title: "",
-    property_type: "apartment",
     status: "draft",
-    surface: "",
-    rooms: "",
-    bathrooms: "",
-    floor: "",
-    build_year: "",
     city: "",
     county: "",
     district: "",
@@ -98,9 +79,12 @@ function NewPropertyPage() {
     owner_contact_id: "",
     commission: "",
   });
-  const [features, setFeatures] = useState<string[]>([]);
   // Secțiunile de detalii (Detalii / Suprafețe / Clădire / Utilități / Finisaje / Dotări).
-  const [details, setDetails] = useState<PropertyDetailsValue>({});
+  // Toate caracteristicile proprietății se completează aici, o singură dată:
+  // tip, camere, băi, etaj, suprafețe, an construcție, facilități.
+  const [details, setDetails] = useState<PropertyDetailsValue>({
+    property_type: "apartment",
+  });
   // Vânzare / închiriere (pot fi active simultan), fiecare cu preț și monedă.
   const [tx, setTx] = useState<TransactionValue>(emptyTransaction);
   // Localizarea oficială (nomenclator SIRUTA); textul din `city`/`county` rămâne sincronizat cu selecția.
@@ -121,7 +105,6 @@ function NewPropertyPage() {
       if (!user?.organization?.id) throw new Error("Agenția nu este configurată.");
       if (!hasTransactionSelection(tx))
         throw new Error("Alege tipul tranzacției: de vânzare, de închiriere sau ambele.");
-      const num = (v: string) => (v.trim() === "" ? null : Number(v));
       // Referință unică pe toată platforma: o secvență în baza de date, nu
       // „max + 1” per agenție (doi agenți care salvau simultan puteau primi
       // același număr, iar numerele se dublau între agenții).
@@ -136,14 +119,8 @@ function NewPropertyPage() {
           created_by: user.userId,
           reference,
           title: form.title,
-          property_type: form.property_type,
           status: form.status as never,
           ...transactionPayload(tx),
-          surface: num(form.surface),
-          rooms: num(form.rooms),
-          bathrooms: num(form.bathrooms),
-          floor: num(form.floor),
-          build_year: num(form.build_year),
           city: location.localityName || form.city || null,
           county: location.countyName || form.county || null,
           county_siruta_code: location.countySirutaCode,
@@ -158,7 +135,6 @@ function NewPropertyPage() {
           internal_notes: form.internal_notes || null,
           owner_contact_id: form.owner_contact_id || null,
           commission: form.commission || null,
-          features,
           ...details,
         })
         .select("id")
@@ -222,21 +198,6 @@ function NewPropertyPage() {
               />
             </div>
             <div className="space-y-2">
-              <Label>Tip proprietate</Label>
-              <Select value={form.property_type} onValueChange={(v) => set("property_type", v)}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {Object.entries(propertyTypeLabels).map(([k, v]) => (
-                    <SelectItem key={k} value={k}>
-                      {v}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
               <Label>Status</Label>
               <Select value={form.status} onValueChange={(v) => set("status", v)}>
                 <SelectTrigger>
@@ -271,7 +232,7 @@ function NewPropertyPage() {
           </div>
         </FormSection>
 
-        <FormSection title="Tranzacție, preț și caracteristici">
+        <FormSection title="Tranzacție și preț" description="Alege vânzare, închiriere sau ambele.">
           <PropertyTransactionFields idPrefix="new" value={tx} onChange={setTx} />
 
           <div className="grid gap-4 md:grid-cols-3">
@@ -284,80 +245,13 @@ function NewPropertyPage() {
                 placeholder="2%"
               />
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="surface">Suprafață utilă (m²)</Label>
-              <Input
-                id="surface"
-                type="number"
-                min="0"
-                value={form.surface}
-                onChange={(e) => set("surface", e.target.value)}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="rooms">Camere</Label>
-              <Input
-                id="rooms"
-                type="number"
-                min="0"
-                value={form.rooms}
-                onChange={(e) => set("rooms", e.target.value)}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="bathrooms">Băi</Label>
-              <Input
-                id="bathrooms"
-                type="number"
-                min="0"
-                value={form.bathrooms}
-                onChange={(e) => set("bathrooms", e.target.value)}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="floor">Etaj</Label>
-              <Input
-                id="floor"
-                type="number"
-                value={form.floor}
-                onChange={(e) => set("floor", e.target.value)}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="build_year">An construcție</Label>
-              <Input
-                id="build_year"
-                type="number"
-                value={form.build_year}
-                onChange={(e) => set("build_year", e.target.value)}
-              />
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <Label>Facilități</Label>
-            <div className="flex flex-wrap gap-2">
-              {featureOptions.map((f) => {
-                const active = features.includes(f);
-                return (
-                  <Button
-                    key={f}
-                    type="button"
-                    size="sm"
-                    variant={active ? "default" : "outline"}
-                    onClick={() =>
-                      setFeatures((prev) => (active ? prev.filter((x) => x !== f) : [...prev, f]))
-                    }
-                  >
-                    {f}
-                  </Button>
-                );
-              })}
-            </div>
           </div>
         </FormSection>
 
-        <FormSection title="Detalii complete">
+        <FormSection
+          title="Detalii complete"
+          description="Tip, camere, băi, etaj, suprafețe, an construcție și facilități."
+        >
           <PropertyDetailsFields
             idPrefix="new"
             value={details}
