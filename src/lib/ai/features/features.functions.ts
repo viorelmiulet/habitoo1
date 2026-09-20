@@ -7,12 +7,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import {
-  AI_FEATURE_KEYS,
-  emptyAiFeatureMap,
-  isAiFeatureKey,
-  type AiFeatureMap,
-} from "./keys";
+import { AI_FEATURE_KEYS, emptyAiFeatureMap, isAiFeatureKey, type AiFeatureMap } from "./keys";
 
 /** Harta funcțiilor AI pentru agenția utilizatorului curent. */
 export const listMyAiFeatures = createServerFn({ method: "GET" })

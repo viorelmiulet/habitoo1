@@ -4,12 +4,7 @@
  * Fail-closed: lipsa rândului sau orice eroare de citire înseamnă „oprit”, deci
  * o problemă de bază de date nu poate deschide accidental o funcție AI.
  */
-import {
-  emptyAiFeatureMap,
-  isAiFeatureKey,
-  type AiFeatureKey,
-  type AiFeatureMap,
-} from "./keys";
+import { emptyAiFeatureMap, isAiFeatureKey, type AiFeatureKey, type AiFeatureMap } from "./keys";
 
 /** Harta completă a funcțiilor pentru o agenție. */
 export async function loadAiFeatures(organizationId: string | null): Promise<AiFeatureMap> {

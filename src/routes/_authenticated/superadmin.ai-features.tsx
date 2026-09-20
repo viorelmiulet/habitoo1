@@ -55,9 +55,7 @@ function SuperadminAiFeaturesPage() {
   const organizations = useMemo(() => {
     const term = search.trim().toLowerCase();
     const rows = query.data ?? [];
-    return term
-      ? rows.filter((row) => row.organizationName.toLowerCase().includes(term))
-      : rows;
+    return term ? rows.filter((row) => row.organizationName.toLowerCase().includes(term)) : rows;
   }, [query.data, search]);
 
   return (
