@@ -470,6 +470,13 @@
       "when": 1789878239626,
       "tag": "0066_acp_market_query",
       "breakpoints": true
+    },
+    {
+      "idx": 67,
+      "version": "7",
+      "when": 1789879470364,
+      "tag": "0067_market_query_source_imospot",
+      "breakpoints": true
     }
   ]
 }
