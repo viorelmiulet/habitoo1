@@ -526,6 +526,13 @@
       "when": 1789919717629,
       "tag": "0074_ai_media_generations",
       "breakpoints": true
+    },
+    {
+      "idx": 75,
+      "version": "7",
+      "when": 1789919764125,
+      "tag": "0075_ai_media_storage_policies",
+      "breakpoints": true
     }
   ]
 }
