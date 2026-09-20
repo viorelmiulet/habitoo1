@@ -248,21 +248,41 @@ export function LocationPicker({
                 setOpen(true);
               }}
               onFocus={() => setOpen(true)}
+              onKeyDown={onSearchKeyDown}
+              role="combobox"
+              aria-expanded={open && results.length > 0}
+              aria-controls={`${idPrefix}-locality-list`}
+              aria-activedescendant={
+                activeIndex >= 0 && results[activeIndex]
+                  ? `${idPrefix}-locality-option-${results[activeIndex].sirutaCode}`
+                  : undefined
+              }
             />
             {localities.isFetching && (
               <Loader2 className="absolute right-3 top-1/2 size-4 -translate-y-1/2 animate-spin text-muted-foreground" />
             )}
 
             {open && value.countySirutaCode && normalized.length >= 2 && (
-              <div className="absolute z-50 mt-1 max-h-72 w-full overflow-auto rounded-md border bg-popover p-1 shadow-lg">
-                {localities.data && localities.data.length > 0 ? (
-                  localities.data.map((hit) => (
+              <div
+                ref={listRef}
+                id={`${idPrefix}-locality-list`}
+                role="listbox"
+                className="absolute z-(--z-floating) mt-1 max-h-72 w-full overflow-auto rounded-md border bg-popover p-1 shadow-lg"
+              >
+                {results.length > 0 ? (
+                  results.map((hit, index) => (
                     <button
                       key={hit.sirutaCode}
+                      id={`${idPrefix}-locality-option-${hit.sirutaCode}`}
                       type="button"
+                      role="option"
+                      aria-selected={index === activeIndex}
+                      data-index={index}
                       onClick={() => selectLocality(hit)}
+                      onMouseEnter={() => setActiveIndex(index)}
                       className={cn(
                         "flex w-full items-start justify-between gap-2 rounded-sm px-2 py-2 text-left text-sm hover:bg-accent",
+                        index === activeIndex && "bg-accent",
                       )}
                     >
                       <span className="min-w-0">
