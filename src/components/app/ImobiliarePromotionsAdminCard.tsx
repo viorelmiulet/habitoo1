@@ -345,11 +345,14 @@ export function ImobiliarePromotionsAdminCard({ organizationId }: { organization
                                   size="sm"
                                   variant="outline"
                                   className="h-8 px-2 text-xs"
-                                  disabled={allocation.isPending}
+                                  disabled={allocation.isPending || request.isPending}
                                   onClick={() =>
-                                    allocation.mutate({
+                                    request.mutate({
+                                      kind: "allocation",
                                       serviceKey: service.serviceKey,
+                                      serviceLabel: service.label,
                                       userId: cell.userId,
+                                      userName: cell.name,
                                       amount: numberOrNull(text),
                                     })
                                   }
