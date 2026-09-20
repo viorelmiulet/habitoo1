@@ -272,7 +272,25 @@ async function push(
   };
 }
 
-/** Retragerea acoperă ambele variante posibile de tranzacție ale ofertei. */
+/**
+ * Retragerea folosește ÎN PRIMUL RÂND identificatorii pe care ni i-a întors
+ * Imospot la publicare (`portal_listings.external_id`, ex. `21785`). DELETE pe
+ * referința noastră `HBT-<uuid>-SALE` întoarce 404 și anunțul rămânea live, iar
+ * retragerea era raportată greșit ca „nu era publicată”. Referințele noastre
+ * rămân doar ca rezervă, pentru anunțuri publicate înainte de această corecție.
+ */
+function withdrawCandidates(ref: ListingRef): { stored: string[]; fallback: string[] } {
+  const stored = (ref.externalId ?? "")
+    .split(",")
+    .map((value) => value.trim())
+    .filter((value) => value.length > 0);
+  const transactions: ImospotTransaction[] = ["sale", "rent"];
+  const fallback = transactions
+    .map((t) => imospotExternalId({ id: ref.propertyId }, t))
+    .filter((id) => !stored.includes(id));
+  return { stored, fallback };
+}
+
 async function withdraw(
   ctx: PortalContext,
   ref: ListingRef,
@@ -286,17 +304,16 @@ async function withdraw(
     };
   }
 
-  const transactions: ImospotTransaction[] = ["sale", "rent"];
-  const ids = transactions.map((t) => imospotExternalId({ id: ref.propertyId }, t));
+  const { stored, fallback } = withdrawCandidates(ref);
 
   if (!ctx.allowLiveRequests) {
     return {
       ok: true,
       data: {
-        externalId: ids.join(","),
+        externalId: [...stored, ...fallback].join(","),
         live: false,
-        processed: ids.length,
-        detail: `dry_run withdraw ${ids.join(",")}`,
+        processed: stored.length || fallback.length,
+        detail: `dry_run withdraw ${[...stored, ...fallback].join(",")}`,
         message: "Verificat local: retragerea ar arhiva anunțurile la Imospot.",
       },
     };
@@ -305,19 +322,36 @@ async function withdraw(
   const archived: string[] = [];
   const missing: string[] = [];
   try {
-    for (const id of ids) {
+    for (const id of stored) {
       const res = await request(ctx, "DELETE", `/listings/${encodeURIComponent(id)}`);
       if (res.status === 200 || res.status === 204) {
         archived.push(id);
         continue;
       }
-      // 404 = anunțul nu există la portal, deci nu e nimic de retras.
       if (res.status === 404) {
         missing.push(id);
         continue;
       }
       const f = failure(res, "withdraw");
       return { ok: false, code: f.code, message: f.message, detail: f.detail };
+    }
+
+    // Rezerva pe referințele noastre se încearcă doar dacă portalul nu a
+    // confirmat nicio arhivare pe identificatorii lui.
+    if (!archived.length) {
+      for (const id of fallback) {
+        const res = await request(ctx, "DELETE", `/listings/${encodeURIComponent(id)}`);
+        if (res.status === 200 || res.status === 204) {
+          archived.push(id);
+          continue;
+        }
+        if (res.status === 404) {
+          missing.push(id);
+          continue;
+        }
+        const f = failure(res, "withdraw");
+        return { ok: false, code: f.code, message: f.message, detail: f.detail };
+      }
     }
   } catch (error) {
     if ((error as { portalCode?: string }).portalCode === "CONFIG_ERROR") {
@@ -340,16 +374,19 @@ async function withdraw(
   return {
     ok: true,
     data: {
-      externalId: (archived.length ? archived : ids).join(","),
+      // Nu suprascriem identificatorul portalului cu referințele noastre:
+      // la o retragere fără arhivare păstrăm ce știam deja.
+      externalId: archived.length ? archived.join(",") : (ref.externalId ?? null),
       live: true,
       processed: archived.length,
       detail: `withdraw archived=${archived.length} missing=${missing.length}`,
       message: archived.length
         ? `Imospot a arhivat ${archived.length} anunț(uri). Revin live la o nouă publicare.`
-        : "Oferta nu era publicată la Imospot; nu a fost nimic de retras.",
+        : "Imospot nu a găsit anunțul (deja retras sau șters din portal); nu a fost nimic de retras.",
     },
   };
 }
+
 
 /** Statusul real al conexiunii: GET /account confirmă cheia și soldul. */
 async function status(
