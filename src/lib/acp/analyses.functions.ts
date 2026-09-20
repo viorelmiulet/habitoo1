@@ -414,6 +414,10 @@ async function collectCandidates(params: {
           rooms: item.rooms,
           usableArea: item.area,
           price: item.price,
+          // Coordonate la nivel de zonă: servesc la ordonarea după apropiere
+          // atunci când subiectul are coordonate, nu la o adresă exactă.
+          latitude: item.latitude,
+          longitude: item.longitude,
         },
       });
     }
