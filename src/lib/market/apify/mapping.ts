@@ -198,14 +198,7 @@ export function mapApifyItems(
 
     const record = item as Record<string, unknown>;
     const seller = classifySellerType(
-      readExtra(record, custom, "sellerType", [
-        "sellerType",
-        "seller_type",
-        "isBusiness",
-        "is_agency",
-        "advertiserType",
-        "tip_vanzator",
-      ]),
+      readExtra(record, custom, "sellerType", APIFY_SELLER_KEYS),
     );
     if (seller === "owner") listing.features["vanzator proprietar"] = true;
     if (seller === "agency") listing.features["vanzator agentie"] = true;
