@@ -364,13 +364,13 @@ export const PropertyPortalsCard = forwardRef<
 
           <ul className="space-y-3">
         {collabVisible ? (
-          <Card as-child="true"
-            className={cn(
-              "p-5 text-sm",
-              collabValue && collabPercent.trim() === "" && "bg-warning/10",
-            )}
-          >
-            <li>
+          <li>
+            <Card
+              className={cn(
+                "p-5 text-sm",
+                collabValue && collabPercent.trim() === "" && "bg-warning/10",
+              )}
+            >
             <div className="flex flex-wrap items-start gap-3">
               <Checkbox
                 id="portal-habitoo-collaboration"
@@ -440,8 +440,8 @@ export const PropertyPortalsCard = forwardRef<
                 </div>
               </div>
             ) : null}
-            </li>
-          </Card>
+            </Card>
+          </li>
         ) : null}
 
         {cells.map((cell) => {
@@ -456,8 +456,8 @@ export const PropertyPortalsCard = forwardRef<
           const detail = stateSentence(cell, value);
 
           return (
-            <Card key={cell.portalId} as-child="true" className="p-5 text-sm">
-              <li>
+            <li key={cell.portalId}>
+              <Card className="p-5 text-sm">
               <div className="grid gap-4 sm:grid-cols-[auto_minmax(0,1fr)_auto] sm:items-center">
                 <PortalLogoStack portalId={cell.portalId} name={cell.portalName} size={40} />
                 <div className="min-w-0">
@@ -539,8 +539,8 @@ export const PropertyPortalsCard = forwardRef<
                   canManage={canManage}
                 />
               ) : null}
-              </li>
-            </Card>
+              </Card>
+            </li>
           );
         })}
           </ul>
