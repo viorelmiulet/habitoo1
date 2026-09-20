@@ -12,7 +12,9 @@
  */
 import {
   buildIdentityHash,
+  findCrossPortalDuplicate,
   matchListingToEntities,
+  type CrossPortalCandidate,
   type DedupeDecision,
   type MarketEntityCandidate,
 } from "./dedupe";
