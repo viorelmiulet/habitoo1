@@ -52,8 +52,12 @@ export type PromotionAdminService = {
   poolUsed: number | null;
   poolAvailable: number | null;
   poolError: string | null;
-  agencyUsed: number;
-  usagePartial: boolean;
+  /** Consumul agenției, din contorul serviciului; `null` = neraportat. */
+  agencyUsed: number | null;
+  /** `true` = totalul vine direct de la portal, nu din citiri individuale. */
+  usageFromPortal: boolean;
+  /** Colegii pentru care consumul nu a putut fi calculat acum. */
+  unknownUsers: string[];
   usageError: string | null;
   cells: PromotionAdminUserCell[];
 };
