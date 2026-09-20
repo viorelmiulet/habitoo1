@@ -63,7 +63,21 @@ export const IMOSPOT_CITIES: ImospotCity[] = [
   sector(4),
   sector(5),
   sector(6),
+  // Orașele publicate chiar de sursă pe pagina principală (linkuri
+  // `/toate-ofertele-din-<slug>`); niciun slug nu este ghicit.
+  { slug: "cluj-napoca", label: "Cluj-Napoca", cityId: null, aliases: ["cluj", "cluj napoca"] },
+  { slug: "timisoara", label: "Timișoara", cityId: null, aliases: ["timisoara"] },
+  { slug: "brasov", label: "Brașov", cityId: null, aliases: ["brasov"] },
+  { slug: "iasi", label: "Iași", cityId: null, aliases: ["iasi"] },
+  { slug: "constanta", label: "Constanța", cityId: null, aliases: ["constanta"] },
+  { slug: "sibiu", label: "Sibiu", cityId: null, aliases: ["sibiu"] },
+  { slug: "oradea", label: "Oradea", cityId: null, aliases: ["oradea"] },
+  { slug: "arad", label: "Arad", cityId: null, aliases: ["arad"] },
+  { slug: "targu-mures", label: "Târgu Mureș", cityId: null, aliases: ["targu mures", "tirgu mures"] },
+  { slug: "satu-mare", label: "Satu Mare", cityId: null, aliases: ["satu mare"] },
+  { slug: "selimbar", label: "Șelimbăr", cityId: null, aliases: ["selimbar"] },
 ];
+
 
 export type ImospotLocation = {
   /** Calea completă, fără parametri: `/toate-ofertele-din-...`. */
