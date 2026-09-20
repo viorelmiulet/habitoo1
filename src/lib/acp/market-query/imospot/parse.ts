@@ -163,7 +163,9 @@ export function parseImospotListings(
   html: string,
   now: Date = new Date(),
 ): ImospotParsedListing[] {
-  const cards = html.split(/(?=<article\s+data-listing-id=)/).slice(1);
+  const cards = html
+    .split(/(?=<article\s+data-listing-id=)/)
+    .filter((part) => /^<article\s+data-listing-id=/.test(part));
   const out: ImospotParsedListing[] = [];
   for (const raw of cards) {
     const end = raw.indexOf("</article>");
