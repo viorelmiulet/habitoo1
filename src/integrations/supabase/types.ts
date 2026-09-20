@@ -1017,6 +1017,152 @@ export type Database = {
           },
         ]
       }
+      apify_runs: {
+        Row: {
+          apify_dataset_id: string | null
+          apify_run_id: string | null
+          cost_usd: number | null
+          created_at: string
+          discard_reasons: Json
+          errors: Json
+          finished_at: string | null
+          first_item: Json | null
+          id: string
+          items_created: number
+          items_discarded: number
+          items_received: number
+          items_unchanged: number
+          items_updated: number
+          market_import_run_id: string | null
+          source_key: string
+          started_at: string
+          status: string
+          triggered_by: string | null
+          usage: Json | null
+        }
+        Insert: {
+          apify_dataset_id?: string | null
+          apify_run_id?: string | null
+          cost_usd?: number | null
+          created_at?: string
+          discard_reasons?: Json
+          errors?: Json
+          finished_at?: string | null
+          first_item?: Json | null
+          id?: string
+          items_created?: number
+          items_discarded?: number
+          items_received?: number
+          items_unchanged?: number
+          items_updated?: number
+          market_import_run_id?: string | null
+          source_key: string
+          started_at?: string
+          status?: string
+          triggered_by?: string | null
+          usage?: Json | null
+        }
+        Update: {
+          apify_dataset_id?: string | null
+          apify_run_id?: string | null
+          cost_usd?: number | null
+          created_at?: string
+          discard_reasons?: Json
+          errors?: Json
+          finished_at?: string | null
+          first_item?: Json | null
+          id?: string
+          items_created?: number
+          items_discarded?: number
+          items_received?: number
+          items_unchanged?: number
+          items_updated?: number
+          market_import_run_id?: string | null
+          source_key?: string
+          started_at?: string
+          status?: string
+          triggered_by?: string | null
+          usage?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "apify_runs_market_import_run_id_fkey"
+            columns: ["market_import_run_id"]
+            isOneToOne: false
+            referencedRelation: "market_import_runs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "apify_runs_source_key_fkey"
+            columns: ["source_key"]
+            isOneToOne: false
+            referencedRelation: "apify_sources"
+            referencedColumns: ["key"]
+          },
+        ]
+      }
+      apify_sources: {
+        Row: {
+          actor_id: string
+          cost_note: string | null
+          created_at: string
+          enabled: boolean
+          field_mapping: Json
+          input: Json
+          key: string
+          label: string
+          last_run_id: string | null
+          max_items: number
+          notes: string | null
+          spend_total_usd: number
+          target: string
+          unit_cost_usd: number | null
+          updated_at: string
+        }
+        Insert: {
+          actor_id: string
+          cost_note?: string | null
+          created_at?: string
+          enabled?: boolean
+          field_mapping?: Json
+          input?: Json
+          key: string
+          label: string
+          last_run_id?: string | null
+          max_items?: number
+          notes?: string | null
+          spend_total_usd?: number
+          target?: string
+          unit_cost_usd?: number | null
+          updated_at?: string
+        }
+        Update: {
+          actor_id?: string
+          cost_note?: string | null
+          created_at?: string
+          enabled?: boolean
+          field_mapping?: Json
+          input?: Json
+          key?: string
+          label?: string
+          last_run_id?: string | null
+          max_items?: number
+          notes?: string | null
+          spend_total_usd?: number
+          target?: string
+          unit_cost_usd?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "apify_sources_last_run_fk"
+            columns: ["last_run_id"]
+            isOneToOne: false
+            referencedRelation: "apify_runs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       audit_logs: {
         Row: {
           action: string
