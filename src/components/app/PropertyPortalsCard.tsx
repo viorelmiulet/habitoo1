@@ -17,15 +17,17 @@ import {
   useMemo,
   useState,
 } from "react";
-import { AlertTriangle, CheckCircle2, Circle, ExternalLink } from "lucide-react";
+import { AlertTriangle, Check, CheckCircle2, Circle, ExternalLink } from "lucide-react";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "@/components/ui/sonner";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
+import { Card, Panel } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { StatusPill, type StatusPillState } from "@/components/ui/status-pill";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { PortalLogoStack } from "@/components/app/PortalLogo";
@@ -38,6 +40,7 @@ import { formatDateTime } from "@/lib/format";
 import {
   applyPropertyPortalSelection,
   getPropertiesPortalMatrix,
+  getPropertyPortalJournal,
   getPropertyPortalRequirements,
   getPropertyStoriaAutoRenew,
   setPropertyStoriaAutoRenew,
@@ -77,6 +80,29 @@ function stateSentence(cell: PropertyPortalCell, selected: boolean) {
   return "Neselectat.";
 }
 
+const STATE_VIEW: Record<PropertyPortalCell["state"], { label: string; pill: StatusPillState }> = {
+  coming_soon: { label: "Inactiv", pill: "inactive" },
+  not_configured: { label: "Neconfigurat", pill: "inactive" },
+  not_selected: { label: "Inactiv", pill: "inactive" },
+  selected: { label: "Selectat", pill: "pending" },
+  syncing: { label: "Se sincronizează", pill: "pending" },
+  published: { label: "Publicat", pill: "published" },
+  in_feed: { label: "Activ în feed", pill: "published" },
+  error: { label: "Refuzat", pill: "error" },
+  expired: { label: "Expirat", pill: "pending" },
+  withdrawn: { label: "Retras", pill: "inactive" },
+};
+
+function operationLabel(operation: string): string {
+  const labels: Record<string, string> = {
+    publish: "Publicare",
+    update: "Actualizare",
+    withdraw: "Retragere",
+    status: "Verificare",
+  };
+  return labels[operation] ?? operation.replaceAll("_", " ");
+}
+
 export type PortalApplyResult = {
   portalId: string;
   portalName: string;
@@ -98,8 +124,9 @@ export const PropertyPortalsCard = forwardRef<
     /** Doar Superadmin trimite agenția explicit; agenția o ia din sesiune. */
     organizationId?: string;
     propertyId: string;
+    onCompleteMissing?: () => void;
   }
->(function PropertyPortalsCard({ organizationId, propertyId }, ref) {
+>(function PropertyPortalsCard({ organizationId, propertyId, onCompleteMissing }, ref) {
   const queryClient = useQueryClient();
   const loadMatrix = useServerFn(getPropertiesPortalMatrix);
   const applyFn = useServerFn(applyPropertyPortalSelection);
@@ -124,6 +151,12 @@ export const PropertyPortalsCard = forwardRef<
       loadRequirements({
         data: { ...(organizationId ? { organizationId } : {}), propertyId },
       }),
+  });
+  const loadJournal = useServerFn(getPropertyPortalJournal);
+  const journal = useQuery({
+    queryKey: ["property-portal-journal", organizationId, propertyId] as const,
+    queryFn: () =>
+      loadJournal({ data: { ...(organizationId ? { organizationId } : {}), propertyId } }),
   });
   const requirementByPortal = useMemo(() => {
     type Report = NonNullable<typeof requirements.data>[number];
@@ -291,29 +324,53 @@ export const PropertyPortalsCard = forwardRef<
   const totalRows = cells.length + (collabVisible ? 1 : 0);
   const pendingCount = (canManage ? actionable.length : 0) + (collabDirty ? 1 : 0);
 
-  return (
-    <section className="panel">
-      <header className="flex flex-wrap items-end justify-between gap-3 border-b border-border px-5 py-4">
-        <div>
-          <h2 className="text-sm font-medium">Publicare pe portaluri</h2>
-          <p className="mt-0.5 text-xs text-muted-foreground">
-            Bifează portalurile pe care vrei oferta publicată. Debifarea unui portal retrage oferta
-            doar de pe acel portal.
-          </p>
-        </div>
-        <span className="text-xs text-muted-foreground">
-          {activeCount} din {totalRows} active
-        </span>
-      </header>
+  const allRequired = Array.from(
+    new Map(
+      (requirements.data ?? [])
+        .flatMap((report) => report.required)
+        .map((item) => [item.key, item] as const),
+    ).values(),
+  );
+  const missingRequired = allRequired.filter((item) => !item.ok);
+  const lastSync = cells
+    .map((cell) => cell.lastSyncAt)
+    .filter((value): value is string => Boolean(value))
+    .sort()
+    .at(-1);
+  const latestFailureByPortal = new Map(
+    (journal.data ?? []).filter((item) => !item.success).map((item) => [item.portal, item] as const),
+  );
 
-      <ul className="divide-y divide-border">
+  return (
+    <div className="grid items-start gap-6 min-[1100px]:grid-cols-[minmax(0,1fr)_340px]">
+      <div className="min-w-0 space-y-6">
+        <section aria-labelledby="portal-publication-title">
+          <header className="mb-4 flex flex-wrap items-end justify-between gap-3">
+            <div>
+              <h2 id="portal-publication-title" className="text-xl font-semibold">
+                Unde este publicat
+              </h2>
+              <p className="mt-1 text-sm text-muted-foreground">
+                {activeCount} din {totalRows} portaluri
+                {lastSync ? ` · ultima sincronizare ${syncAgo(lastSync)}` : ""}
+              </p>
+            </div>
+            {pendingCount > 0 ? (
+              <span className="text-xs text-muted-foreground">
+                {pendingCount} {pendingCount === 1 ? "modificare" : "modificări"} de aplicat
+              </span>
+            ) : null}
+          </header>
+
+          <ul className="space-y-3">
         {collabVisible ? (
-          <li
+          <Card as-child="true"
             className={cn(
-              "px-5 py-4 text-sm",
+              "p-5 text-sm",
               collabValue && collabPercent.trim() === "" && "bg-warning/10",
             )}
           >
+            <li>
             <div className="flex flex-wrap items-start gap-3">
               <Checkbox
                 id="portal-habitoo-collaboration"
@@ -326,13 +383,16 @@ export const PropertyPortalsCard = forwardRef<
               ) : (
                 <Circle aria-hidden className="mt-0.5 size-4 shrink-0 text-muted-foreground/60" />
               )}
-              <span className="inline-flex size-7 shrink-0 items-center justify-center overflow-hidden rounded-md border border-border bg-white">
+              <span className="inline-flex size-10 shrink-0 items-center justify-center overflow-hidden rounded-control border border-border bg-surface">
                 <BrandLogo markOnly className="size-5" />
               </span>
               <div className="min-w-0 flex-1">
-                <label htmlFor="portal-habitoo-collaboration" className="font-medium">
-                  Colaborare Habitoo
-                </label>
+                <div className="flex flex-wrap items-center gap-2">
+                  <label htmlFor="portal-habitoo-collaboration" className="font-semibold">Colaborare Habitoo</label>
+                  <StatusPill state={collabValue ? "published" : "inactive"} dot>
+                    {collabValue ? "Activ" : "Inactiv"}
+                  </StatusPill>
+                </div>
                 <p className="text-xs text-muted-foreground">
                   {!collabRow?.offerable && collabValue
                     ? "Oferta ajunge la celelalte agenții doar când proprietatea este activă."
@@ -380,7 +440,8 @@ export const PropertyPortalsCard = forwardRef<
                 </div>
               </div>
             ) : null}
-          </li>
+            </li>
+          </Card>
         ) : null}
 
         {cells.map((cell) => {
@@ -390,76 +451,61 @@ export const PropertyPortalsCard = forwardRef<
             cell.state === "error" ||
             Boolean(cell.lastError) ||
             (cell.availability === "available" && value && !cell.configured);
-          const StateIcon = problem ? AlertTriangle : value ? CheckCircle2 : Circle;
+          const stateView = STATE_VIEW[cell.state];
+          const failure = latestFailureByPortal.get(cell.portalId);
+          const detail = stateSentence(cell, value);
 
           return (
-            <li key={cell.portalId} className={cn("px-5 py-4 text-sm", problem && "bg-warning/10")}>
-              <div className="flex flex-wrap items-start gap-3">
-                <Checkbox
-                  id={`portal-${cell.portalId}`}
-                  checked={value}
-                  disabled={disabled}
-                  className="mt-0.5"
-                  onCheckedChange={(next) => {
-                    if (next === true && cell.availability === "available" && !cell.configured) {
-                      toast.error(
-                        `${cell.portalName} nu este configurat. Configurează portalul în această pagină.`,
-                      );
-                    }
-                    setChecked((prev) => ({ ...prev, [cell.portalId]: next === true }));
-                  }}
-                />
-                <StateIcon
-                  aria-hidden
-                  className={cn(
-                    "mt-0.5 size-4 shrink-0",
-                    problem
-                      ? "text-warning-foreground"
-                      : value
-                        ? "text-success"
-                        : "text-muted-foreground/60",
-                  )}
-                />
-                <PortalLogoStack portalId={cell.portalId} name={cell.portalName} size={28} />
-                <div className="min-w-0 flex-1">
-                  <label htmlFor={`portal-${cell.portalId}`} className="font-medium">
-                    {cell.portalName}
-                  </label>
-                  <p
-                    className={cn(
-                      "text-xs",
-                      problem ? "text-warning-foreground" : "text-muted-foreground",
-                    )}
-                  >
-                    {stateSentence(cell, value)}
+            <Card key={cell.portalId} as-child="true" className="p-5 text-sm">
+              <li>
+              <div className="grid gap-4 sm:grid-cols-[auto_minmax(0,1fr)_auto] sm:items-center">
+                <PortalLogoStack portalId={cell.portalId} name={cell.portalName} size={40} />
+                <div className="min-w-0">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <label htmlFor={`portal-${cell.portalId}`} className="font-semibold">{cell.portalName}</label>
+                    <StatusPill state={stateView.pill} dot>{stateView.label}</StatusPill>
+                  </div>
+                  <p className={cn("mt-1 text-xs", problem ? "text-destructive" : "text-muted-foreground")}>
+                    {detail}
+                    {problem && failure?.requestId ? ` · Cerere ${failure.requestId}` : ""}
                   </p>
+                  <MyPortalSlotLine portalId={cell.portalId} />
                 </div>
-
-                {problem && canManage && cell.availability === "available" && cell.configured ? (
+                <div className="flex min-w-0 flex-wrap items-center gap-3 sm:justify-end">
+                  {cell.publicUrl && !cell.publicWarning ? (
+                    <Button variant="link" size="compact" asChild>
+                      <a href={cell.publicUrl} target="_blank" rel="noopener noreferrer">
+                        Vezi anunțul <ExternalLink aria-hidden />
+                      </a>
+                    </Button>
+                  ) : problem ? (
+                    <span className="text-xs font-semibold text-destructive">Detalii eroare</span>
+                  ) : !cell.configured ? (
+                    <span className="text-xs font-semibold text-gold-dark">Cere activarea</span>
+                  ) : null}
+                  {problem && canManage && cell.availability === "available" && cell.configured ? (
                   <Button
                     type="button"
-                    size="sm"
-                    variant="outline"
+                    variant="secondary"
                     disabled={apply.isPending}
                     onClick={() => void applyPending()}
                   >
-                    Retrimite
+                    {cell.lastSyncAt ? "Retrimite" : "Reîncearcă"}
                   </Button>
-                ) : null}
-
-                {/* Linkul public al anunțului, când chiar duce la o pagină publică. */}
-                {cell.publicUrl && !cell.publicWarning ? (
-                  <a
-                    href={cell.publicUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    title={`Deschide anunțul pe ${cell.portalName}`}
-                    aria-label={`Deschide anunțul pe ${cell.portalName} într-un tab nou`}
-                    className="mt-1 text-muted-foreground transition-colors hover:text-primary"
-                  >
-                    <ExternalLink className="size-4" aria-hidden />
-                  </a>
-                ) : null}
+                  ) : null}
+                  <Checkbox
+                    id={`portal-${cell.portalId}`}
+                    checked={value}
+                    disabled={disabled}
+                    aria-label={`${value ? "Dezactivează" : "Activează"} ${cell.portalName}`}
+                    onCheckedChange={(next) => {
+                      if (next === true && cell.availability === "available" && !cell.configured) {
+                        toast.error(`${cell.portalName} nu este configurat. Configurează portalul în Setări.`);
+                      }
+                      setChecked((prev) => ({ ...prev, [cell.portalId]: next === true }));
+                    }}
+                  />
+                </div>
               </div>
 
               {/* Anunț trimis, dar pagina publică nu funcționează (cont fără abonament). */}
@@ -485,18 +531,6 @@ export const PropertyPortalsCard = forwardRef<
                 </div>
               ) : null}
 
-              {/* Cifrele proprii ale agentului pe acest portal — doar informativ. */}
-              <MyPortalSlotLine portalId={cell.portalId} />
-
-              {/* Promovare, doar pentru Imobiliare.ro și doar când portalul e bifat. */}
-              {cell.portalId === "imobiliare_ro" && value ? (
-                <PropertyImobiliarePromotionsCard
-                  propertyId={propertyId}
-                  organizationId={organizationId}
-                  canManage={canManage}
-                />
-              ) : null}
-
               {/* Auto-prelungire, doar pentru Storia și doar când portalul e bifat. */}
               {cell.portalId === "storia" && value ? (
                 <StoriaAutoRenewControl
@@ -505,27 +539,84 @@ export const PropertyPortalsCard = forwardRef<
                   canManage={canManage}
                 />
               ) : null}
-            </li>
+              </li>
+            </Card>
           );
         })}
-      </ul>
+          </ul>
+        </section>
 
-      <footer className="flex flex-wrap items-center justify-between gap-3 border-t border-border px-5 py-4">
-        <p className="text-xs text-muted-foreground">
-          {pendingCount > 0
-            ? `${pendingCount} ${pendingCount === 1 ? "modificare" : "modificări"} de aplicat.`
-            : canManage
-              ? "Nicio modificare de salvat."
-              : "Doar administratorul agenției poate modifica publicarea pe portaluri."}
-        </p>
-        <span className="text-xs text-muted-foreground">
-          Se aplică prin butonul „Publică” din rândul de acțiuni al paginii.
-        </span>
-      </footer>
+        {cells.some((cell) => cell.portalId === "imobiliare_ro" && (checked[cell.portalId] ?? cell.selected)) ? (
+          <Panel className="p-5">
+            <PropertyImobiliarePromotionsCard
+              propertyId={propertyId}
+              organizationId={organizationId}
+              canManage={canManage}
+            />
+          </Panel>
+        ) : null}
+      </div>
 
-    </section>
+      <aside className="space-y-4">
+        <Panel className="p-5">
+          <h2 className="text-lg font-semibold">Pregătire pentru publicare</h2>
+          {allRequired.length === 0 ? (
+            <p className="mt-3 text-sm text-muted-foreground">Nu există verificări suplimentare pentru portalurile active.</p>
+          ) : (
+            <ul className="mt-4 space-y-3">
+              {allRequired.map((item) => (
+                <li key={item.key} className="flex items-start gap-2 text-sm">
+                  {item.ok ? (
+                    <Check className="mt-0.5 size-4 shrink-0 text-success" aria-hidden />
+                  ) : (
+                    <AlertTriangle className="mt-0.5 size-4 shrink-0 text-destructive" aria-hidden />
+                  )}
+                  <span>
+                    <span className="font-semibold">{item.label}</span>
+                    <span className="block text-xs text-muted-foreground">{item.requirement}</span>
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
+          {missingRequired.length > 0 && onCompleteMissing ? (
+            <Button type="button" variant="soft" className="mt-5 w-full" onClick={onCompleteMissing}>
+              Completează ce lipsește
+            </Button>
+          ) : null}
+        </Panel>
+
+        <Panel className="p-5">
+          <h2 className="text-lg font-semibold">Jurnal portal</h2>
+          {(journal.data?.length ?? 0) === 0 ? (
+            <p className="mt-3 text-sm text-muted-foreground">Nicio operație înregistrată pentru această proprietate.</p>
+          ) : (
+            <ul className="mt-4 space-y-4">
+              {journal.data?.map((item) => (
+                <li key={item.id} className="border-b border-border pb-4 last:border-0 last:pb-0">
+                  <div className="flex items-center justify-between gap-3 text-sm">
+                    <span className="font-semibold">{portalDisplayLabel(cells, item.portal)}</span>
+                    <span className={item.success ? "text-success" : "text-destructive"}>
+                      {item.success ? "Reușit" : "Eșuat"}
+                    </span>
+                  </div>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    {syncAgo(item.createdAt)} · {operationLabel(item.operation)}
+                  </p>
+                  {item.errorMessage ? <p className="mt-1 text-xs text-destructive">{item.errorMessage}</p> : null}
+                </li>
+              ))}
+            </ul>
+          )}
+        </Panel>
+      </aside>
+    </div>
   );
 });
+
+function portalDisplayLabel(cells: PropertyPortalCell[], portalId: string): string {
+  return cells.find((cell) => cell.portalId === portalId)?.portalName ?? portalId;
+}
 
 /**
  * Auto-prelungire Storia la nivel de proprietate: comutator segmentat cu trei
