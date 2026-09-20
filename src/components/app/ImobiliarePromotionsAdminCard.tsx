@@ -103,11 +103,54 @@ export function ImobiliarePromotionsAdminCard({ organizationId }: { organization
   });
 
   const allocation = useMutation({
-    mutationFn: (input: { serviceKey: string; userId: string; amount: number | null }) =>
-      saveAllocation({ data: { ...org, ...input } }),
+    mutationFn: (input: {
+      serviceKey: string;
+      userId: string;
+      amount: number | null;
+      withdraw?: boolean;
+    }) => saveAllocation({ data: { ...org, ...input } }),
     onSuccess: (result) => {
       result.ok ? toast.success(result.message) : toast.error(result.message);
       refresh();
+    },
+    onError: (error: Error) => toast.error(error.message),
+  });
+
+  /** Salvează, retrăgând surplusul doar dacă a fost confirmat în dialog. */
+  const commit = (change: PendingChange, withdraw: boolean) => {
+    setPending(null);
+    if (change.kind === "cap") {
+      cap.mutate({ serviceKey: change.serviceKey, cap: change.cap, withdraw });
+      return;
+    }
+    allocation.mutate({
+      serviceKey: change.serviceKey,
+      userId: change.userId,
+      amount: change.amount,
+      withdraw,
+    });
+  };
+
+  // Înainte de salvare întrebăm portalul ce s-ar retrage; fără surplus, salvăm direct.
+  const request = useMutation({
+    mutationFn: async (change: PendingChange) => {
+      const result = await preview({
+        data: {
+          ...org,
+          serviceKey: change.serviceKey,
+          ...(change.kind === "cap"
+            ? { cap: change.cap }
+            : { allocation: { userId: change.userId, amount: change.amount } }),
+        },
+      });
+      return { change, result };
+    },
+    onSuccess: ({ change, result }) => {
+      if (!result.ok || result.items.length === 0) {
+        commit(change, false);
+        return;
+      }
+      setPending({ change, items: result.items, skipped: result.skipped });
     },
     onError: (error: Error) => toast.error(error.message),
   });
