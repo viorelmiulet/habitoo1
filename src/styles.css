@@ -11,8 +11,8 @@
  */
 
 @theme inline {
-  --font-sans: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
-  --font-display: "Sora", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "Manrope", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-display: "Fraunces", Georgia, "Times New Roman", serif;
   /*
    * Layering scale (z-index):
    *   base overlays (popover, dialog, dropdown, select…) — Tailwind/shadcn default: 50
@@ -21,12 +21,16 @@
    * Use as `z-(--z-floating)`.
    */
   --z-floating: 1100;
-  --radius-sm: calc(var(--radius) - 4px);
-  --radius-md: calc(var(--radius) - 2px);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) + 4px);
-  --radius-2xl: calc(var(--radius) + 8px);
-  --radius-3xl: calc(var(--radius) + 12px);
+  --radius-sm: 8px;
+  --radius-md: var(--radius-control);
+  --radius-lg: var(--radius-card);
+  --radius-xl: var(--radius-panel);
+  --radius-2xl: var(--radius-panel);
+  --radius-3xl: var(--radius-panel);
+  --radius-control: var(--control-radius);
+  --radius-card: var(--card-radius);
+  --radius-panel: var(--panel-radius);
+  --radius-pill: var(--pill-radius);
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-surface: var(--surface);
@@ -41,6 +45,7 @@
   --color-secondary-foreground: var(--secondary-foreground);
   --color-muted: var(--muted);
   --color-muted-foreground: var(--muted-foreground);
+  --color-faint: var(--faint);
   --color-accent: var(--accent);
   --color-accent-foreground: var(--accent-foreground);
   --color-destructive: var(--destructive);
@@ -73,106 +78,81 @@
   --color-navy-muted: var(--navy-muted);
   --color-gold: var(--gold);
   --color-gold-foreground: var(--gold-foreground);
-  --shadow-soft: 0 1px 2px oklch(0.24 0.03 250 / 0.03), 0 6px 18px oklch(0.24 0.03 250 / 0.04);
-  --shadow-raised: 0 2px 4px oklch(0.24 0.03 250 / 0.04), 0 12px 32px oklch(0.24 0.03 250 / 0.07);
-  --shadow-float:
-    0 1px 1px oklch(0.24 0.03 250 / 0.03), 0 24px 60px -12px oklch(0.24 0.03 250 / 0.18);
+  --color-gold-dark: var(--gold-dark);
+  --color-gold-tint: var(--gold-tint);
+  --color-neutral: var(--neutral);
+  --color-neutral-foreground: var(--neutral-foreground);
+  --color-danger-border: var(--danger-border);
+  --color-danger-tint: var(--danger-tint);
+  --color-control-disabled: var(--control-disabled);
+  --color-control-disabled-foreground: var(--control-disabled-foreground);
+  --color-input-error: var(--input-error);
+  --shadow-soft: none;
+  --shadow-raised: none;
+  --shadow-float: none;
 }
 
 :root {
-  --radius: 1rem;
-  /* Fundal cald, aproape alb; carduri albe curate. */
-  --background: oklch(0.982 0.006 85);
-  --foreground: oklch(0.24 0.025 250);
-  --surface: oklch(1 0 0);
-  --surface-foreground: oklch(0.24 0.025 250);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.24 0.025 250);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.24 0.025 250);
-  /* Accentul principal: auriu / bronz. */
-  --primary: oklch(0.66 0.105 72);
-  --primary-foreground: oklch(0.99 0.008 85);
-  --secondary: oklch(0.96 0.008 85);
-  --secondary-foreground: oklch(0.3 0.025 250);
-  --muted: oklch(0.965 0.007 85);
-  --muted-foreground: oklch(0.55 0.018 255);
-  --accent: oklch(0.66 0.105 72);
-  --accent-foreground: oklch(0.99 0.008 85);
-  --destructive: oklch(0.58 0.2 22);
-  --destructive-foreground: oklch(0.99 0.005 20);
-  --success: oklch(0.6 0.13 155);
-  --success-foreground: oklch(0.99 0.005 155);
-  --warning: oklch(0.79 0.13 76);
-  --warning-foreground: oklch(0.26 0.05 60);
-  --info: oklch(0.6 0.11 235);
-  --info-foreground: oklch(0.99 0.005 235);
-  --border: oklch(0.925 0.006 85);
-  --input: oklch(0.915 0.006 85);
-  --ring: oklch(0.66 0.105 72);
+  --radius: 10px;
+  --control-radius: 10px;
+  --card-radius: 14px;
+  --panel-radius: 16px;
+  --pill-radius: 999px;
+  --background: #f7f4ee;
+  --foreground: #14171c;
+  --surface: #ffffff;
+  --surface-foreground: #14171c;
+  --card: #ffffff;
+  --card-foreground: #14171c;
+  --popover: #ffffff;
+  --popover-foreground: #14171c;
+  --primary: #c08a3e;
+  --primary-foreground: #1a1206;
+  --secondary: #ffffff;
+  --secondary-foreground: #14171c;
+  --muted: #fbf9f5;
+  --muted-foreground: #5e6570;
+  --faint: #8a9099;
+  --accent: #f6efe2;
+  --accent-foreground: #5c3e10;
+  --destructive: #8a2f24;
+  --destructive-foreground: #ffffff;
+  --danger-border: #d8b9b3;
+  --danger-tint: #f6e4e1;
+  --success: #1f5138;
+  --success-foreground: #e3efe7;
+  --warning: #c08a3e;
+  --warning-foreground: #5c3e10;
+  --info: #4a5059;
+  --info-foreground: #efebe2;
+  --neutral: #4a5059;
+  --neutral-foreground: #efebe2;
+  --border: #e4ded2;
+  --input: #d9d2c5;
+  --input-error: #c08880;
+  --ring: #c08a3e;
+  --control-disabled: #f3f0ea;
+  --control-disabled-foreground: #9ba2ac;
   --chart-1: oklch(0.26 0.03 250);
   --chart-2: oklch(0.66 0.105 72);
   --chart-3: oklch(0.62 0.13 245);
   --chart-4: oklch(0.7 0.12 165);
   --chart-5: oklch(0.72 0.015 255);
-  --sidebar: oklch(0.215 0.033 250);
-  --sidebar-foreground: oklch(0.88 0.012 250);
-  --sidebar-primary: oklch(0.68 0.11 72);
-  --sidebar-primary-foreground: oklch(0.21 0.03 250);
-  --sidebar-accent: oklch(0.28 0.032 250);
-  --sidebar-accent-foreground: oklch(0.97 0.005 250);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.68 0.11 72);
-  /* Brand navy / gold — sampled from the Habitoo logo; used by the public site. */
-  --navy: oklch(0.215 0.033 250);
-  --navy-foreground: oklch(0.97 0.006 240);
-  --navy-muted: oklch(0.72 0.02 240);
-  --gold: oklch(0.66 0.105 72);
-  --gold-foreground: oklch(0.99 0.005 80);
-}
-
-.dark {
-  --navy: oklch(0.17 0.03 245);
-  --navy-foreground: oklch(0.97 0.006 240);
-  --navy-muted: oklch(0.72 0.02 240);
-  --gold: oklch(0.72 0.12 76);
-  --gold-foreground: oklch(0.2 0.04 70);
-  --background: oklch(0.19 0.022 248);
-  --foreground: oklch(0.95 0.006 245);
-  --surface: oklch(0.235 0.024 248);
-  --surface-foreground: oklch(0.95 0.006 245);
-  --card: oklch(0.235 0.024 248);
-  --card-foreground: oklch(0.95 0.006 245);
-  --popover: oklch(0.235 0.024 248);
-  --popover-foreground: oklch(0.95 0.006 245);
-  --primary: oklch(0.72 0.12 76);
-  --primary-foreground: oklch(0.2 0.04 70);
-
-  --secondary: oklch(0.28 0.026 248);
-  --secondary-foreground: oklch(0.95 0.006 245);
-  --muted: oklch(0.28 0.026 248);
-  --muted-foreground: oklch(0.68 0.015 245);
-  --accent: oklch(0.79 0.13 76);
-  --accent-foreground: oklch(0.22 0.04 60);
-  --destructive: oklch(0.65 0.19 22);
-  --destructive-foreground: oklch(0.99 0.005 20);
-  --success: oklch(0.68 0.13 155);
-  --success-foreground: oklch(0.18 0.03 155);
-  --warning: oklch(0.79 0.13 76);
-  --warning-foreground: oklch(0.22 0.04 60);
-  --info: oklch(0.68 0.11 235);
-  --info-foreground: oklch(0.18 0.03 235);
-  --border: oklch(1 0 0 / 12%);
-  --input: oklch(1 0 0 / 16%);
-  --ring: oklch(0.72 0.12 76);
-  --sidebar: oklch(0.17 0.025 250);
-  --sidebar-foreground: oklch(0.88 0.01 250);
-  --sidebar-primary: oklch(0.72 0.12 76);
-  --sidebar-primary-foreground: oklch(0.2 0.03 250);
-  --sidebar-accent: oklch(0.26 0.026 250);
-  --sidebar-accent-foreground: oklch(0.97 0.005 250);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.72 0.12 76);
+  --sidebar: #171b21;
+  --sidebar-foreground: #d5d1c8;
+  --sidebar-primary: #c08a3e;
+  --sidebar-primary-foreground: #1a1206;
+  --sidebar-accent: #262c35;
+  --sidebar-accent-foreground: #d5d1c8;
+  --sidebar-border: #262c35;
+  --sidebar-ring: #c08a3e;
+  --navy: #171b21;
+  --navy-foreground: #d5d1c8;
+  --navy-muted: #8a9099;
+  --gold: #c08a3e;
+  --gold-dark: #8a5d1c;
+  --gold-tint: #f6efe2;
+  --gold-foreground: #1a1206;
 }
 
 @layer base {
@@ -191,15 +171,16 @@
   h2,
   h3 {
     font-family: var(--font-display);
-    letter-spacing: -0.015em;
+    font-weight: 600;
+    letter-spacing: 0;
   }
 }
 
 @utility panel {
   background-color: var(--color-card);
   border: 1px solid var(--color-border);
-  border-radius: var(--radius-xl);
-  box-shadow: var(--shadow-soft);
+  border-radius: var(--panel-radius);
+  box-shadow: none;
 }
 
 @utility hero-gradient {
