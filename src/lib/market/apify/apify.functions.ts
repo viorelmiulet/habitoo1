@@ -17,6 +17,7 @@ import {
   apifyCriteriaSummary,
   buildPredefinedApifyInput,
   getPredefinedApifySource,
+  type ApifyJobCriteria,
 } from "./predefined-sources";
 
 type AuthContext = {
@@ -71,7 +72,7 @@ export type ApifyRunView = {
   sourceKey: string;
   sourceLabel: string;
   criteriaSummary: string;
-  criteria: Record<string, unknown>;
+  criteria: ApifyJobCriteria | null;
   inputJson: string;
   mappingJson: string;
   maxItems: number;
@@ -110,6 +111,10 @@ export type ApifyOverview = {
 
 function runView(row: Record<string, unknown> | null): ApifyRunView | null {
   if (!row) return null;
+  const criteria =
+    row["criteria"] && typeof row["criteria"] === "object"
+      ? (row["criteria"] as ApifyJobCriteria)
+      : null;
   return {
     id: String(row["id"]),
     status: String(row["status"] ?? "running"),
@@ -135,11 +140,8 @@ function runView(row: Record<string, unknown> | null): ApifyRunView | null {
     sourceLabel:
       getPredefinedApifySource(String(row["source_key"] ?? ""))?.label ??
       String(row["source_key"] ?? "Sursă"),
-    criteriaSummary:
-      row["criteria"] && typeof row["criteria"] === "object"
-        ? apifyCriteriaSummary(row["criteria"] as never)
-        : "Rulare fără criterii salvate",
-    criteria: (row["criteria"] as Record<string, unknown> | null) ?? {},
+    criteriaSummary: criteria ? apifyCriteriaSummary(criteria) : "Rulare fără criterii salvate",
+    criteria,
     inputJson: JSON.stringify(row["input_snapshot"] ?? {}, null, 2).slice(0, 8000),
     mappingJson: JSON.stringify(row["field_mapping_snapshot"] ?? {}, null, 2).slice(0, 8000),
     maxItems: Number(row["max_items"] ?? 0),
@@ -427,11 +429,6 @@ export const runApifySource = createServerFn({ method: "POST" })
         mode: "partial",
         status: "running",
         triggered_by: userId,
-        criteria: data.criteria as never,
-        input_snapshot: effectiveInput as never,
-        field_mapping_snapshot: effectiveMapping as never,
-        max_items: data.criteria.maxItems,
-        estimated_cost_usd: estimateApifyCost(data.criteria.maxItems, definition.unitCostUsd),
         started_at: now,
       })
       .select("id")
@@ -446,6 +443,11 @@ export const runApifySource = createServerFn({ method: "POST" })
         started_at: now,
         market_import_run_id: importRun.id,
         triggered_by: userId,
+        criteria: data.criteria as never,
+        input_snapshot: effectiveInput as never,
+        field_mapping_snapshot: effectiveMapping as never,
+        max_items: data.criteria.maxItems,
+        estimated_cost_usd: estimateApifyCost(data.criteria.maxItems, definition.unitCostUsd),
       })
       .select("id")
       .single();
