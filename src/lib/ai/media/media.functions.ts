@@ -11,9 +11,31 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { aiFeatureDisabledMessage, type AiFeatureKey } from "@/lib/ai/features/keys";
 
 export const AI_MEDIA_BUCKET = "ai-media";
 const SIGNED_URL_TTL_SECONDS = 60 * 60;
+
+
+const AI_FEATURE: AiFeatureKey = "ai_media";
+
+/** Agenția utilizatorului, doar dacă Studio AI este activat pentru ea. */
+async function resolveMediaOrganization(
+  context: { supabase: { from: (t: string) => any }; userId: string },
+): Promise<{ organizationId: string } | { message: string }> {
+  const { data: profile } = await context.supabase
+    .from("profiles")
+    .select("organization_id")
+    .eq("id", context.userId)
+    .maybeSingle();
+  const organizationId = (profile as { organization_id: string | null } | null)?.organization_id;
+  if (!organizationId) return { message: "Contul tău nu este legat de o agenție." };
+  const { isAiFeatureEnabled } = await import("@/lib/ai/features/features.server");
+  if (!(await isAiFeatureEnabled(organizationId, AI_FEATURE))) {
+    return { message: aiFeatureDisabledMessage(AI_FEATURE) };
+  }
+  return { organizationId };
+}
 
 const kindSchema = z.enum(["photo_enhance", "photo_video", "marketing_image"]);
 
@@ -71,15 +93,19 @@ const ROW_COLUMNS =
 /** Starea conexiunii Replicate, fără să expună vreodată cheia. */
 export const getAiMediaStatus = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .handler(async () => {
+  .handler(async ({ context }) => {
+    const resolved = await resolveMediaOrganization(context);
+    if ("message" in resolved) return { configured: false, featureEnabled: false };
     const { replicateConfigured } = await import("@/lib/ai/media/replicate.server");
-    return { configured: replicateConfigured() };
+    return { configured: replicateConfigured(), featureEnabled: true };
   });
 
 /** Istoricul generărilor agenției (cele mai recente primele). */
 export const listAiMedia = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
+    const resolved = await resolveMediaOrganization(context);
+    if ("message" in resolved) return { items: [] as AiMediaItem[] };
     const { data, error } = await context.supabase
       .from("ai_media_generations")
       .select(ROW_COLUMNS)
@@ -111,16 +137,9 @@ export const startAiMedia = createServerFn({ method: "POST" })
       return { ok: false as const, message: "Încarcă o fotografie înainte de a genera." };
     }
 
-    const { data: profile, error: profileError } = await context.supabase
-      .from("profiles")
-      .select("organization_id")
-      .eq("id", context.userId)
-      .maybeSingle();
-    if (profileError) throw new Error(profileError.message);
-    const organizationId = profile?.organization_id ?? null;
-    if (!organizationId) {
-      return { ok: false as const, message: "Contul tău nu este legat de o agenție." };
-    }
+    const resolved = await resolveMediaOrganization(context);
+    if ("message" in resolved) return { ok: false as const, message: resolved.message };
+    const organizationId = resolved.organizationId;
 
     const { startAiMediaPrediction, replicateConfigured, REPLICATE_KEY_MISSING } =
       await import("@/lib/ai/media/replicate.server");
@@ -169,6 +188,8 @@ export const refreshAiMedia = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => z.object({ id: z.string().uuid() }).parse(input))
   .handler(async ({ data, context }) => {
+    const resolved = await resolveMediaOrganization(context);
+    if ("message" in resolved) return { ok: false as const, message: resolved.message };
     const { data: row, error: readError } = await context.supabase
       .from("ai_media_generations")
       .select("id, organization_id, kind, prediction_id, status")
@@ -234,6 +255,8 @@ export const deleteAiMedia = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => z.object({ id: z.string().uuid() }).parse(input))
   .handler(async ({ data, context }) => {
+    const resolved = await resolveMediaOrganization(context);
+    if ("message" in resolved) return { ok: true as const };
     const { data: row } = await context.supabase
       .from("ai_media_generations")
       .select("id, output_url, source_url")
