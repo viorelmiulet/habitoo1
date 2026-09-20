@@ -82,6 +82,10 @@ export type MarketRepository = {
     sourceListingId: string,
   ): Promise<ExistingListing | null>;
   findEntityCandidates(listing: NormalizedListing): Promise<MarketEntityCandidate[]>;
+  /** Oferte recente din alte surse, candidate la unirea între portaluri. */
+  findCrossPortalCandidates(listing: NormalizedListing): Promise<CrossPortalCandidate[]>;
+  /** Actualizează doar momentul ultimei vizualizări (fără a rescrie datele). */
+  touchListingSeen(id: string, runId: string | null, now: string): Promise<void>;
   createEntity(listing: NormalizedListing, reasons: string[]): Promise<string>;
   touchEntity(entityId: string, listing: NormalizedListing): Promise<void>;
   insertListing(row: ListingWriteRow): Promise<string>;
