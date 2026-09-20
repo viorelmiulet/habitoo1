@@ -98,7 +98,7 @@ export function ImobiliarePromotionsAdminCard({ organizationId }: { organization
   });
 
   const cap = useMutation({
-    mutationFn: (input: { serviceKey: string; cap: number | null }) =>
+    mutationFn: (input: { serviceKey: string; cap: number | null; withdraw?: boolean }) =>
       saveCap({ data: { ...org, ...input } }),
     onSuccess: (result) => {
       result.ok ? toast.success(result.message) : toast.error(result.message);
