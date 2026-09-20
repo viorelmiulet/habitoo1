@@ -366,6 +366,11 @@ export const setImobiliarePromotion = createServerFn({ method: "POST" })
     });
 
     if (!result.ok) return { ok: false, message: result.message };
+    // Consumul citit se invalidează după fiecare scriere reușită.
+    const { invalidatePromotionUsageCache } = await import(
+      "@/lib/portals/promotions/allocation.server"
+    );
+    invalidatePromotionUsageCache(organizationId, definition.id);
     return {
       ok: true,
       message:
