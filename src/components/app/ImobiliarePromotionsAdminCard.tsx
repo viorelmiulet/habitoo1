@@ -69,6 +69,7 @@ export function ImobiliarePromotionsAdminCard({ organizationId }: { organization
   const saveService = useServerFn(setImobiliarePromotionService);
   const saveCap = useServerFn(setImobiliarePromotionCap);
   const saveAllocation = useServerFn(setImobiliarePromotionAllocation);
+  const preview = useServerFn(previewImobiliarePromotionWithdrawals);
   const queryKey = ["imobiliare-promotion-admin", organizationId ?? null] as const;
 
   const view = useQuery({
