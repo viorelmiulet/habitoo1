@@ -281,6 +281,19 @@ export const parkingOptions = [
   "Parcare supraterană",
 ] as const;
 
+/** Facilitățile generale ale anunțului (coloana `features`). */
+export const generalFeatureOptions = [
+  "Balcon",
+  "Parcare",
+  "Lift",
+  "Terasă",
+  "Aer condiționat",
+  "Mobilat",
+  "Boxă",
+  "Grădină",
+  "Centrală proprie",
+] as const;
+
 /** Toate coloanele de tip listă (checkbox multiplu) din formularul de detalii. */
 export const PROPERTY_ARRAY_FIELDS = [
   "utilities",

@@ -36,6 +36,7 @@ import {
   floorFinishOptions,
   floorLabelOptions,
   furnishingOptions,
+  generalFeatureOptions,
   heatingOptions,
   insulationOptions,
   interiorDoorOptions,
@@ -121,10 +122,13 @@ function NumberField({
   ctx,
   field,
   label,
+  min = 0,
 }: {
   ctx: FieldCtx;
   field: string;
   label: string;
+  /** Etajul poate fi negativ (demisol / subsol), restul câmpurilor nu. */
+  min?: number;
 }) {
   return (
     <div className="space-y-2">
@@ -133,7 +137,7 @@ function NumberField({
         id={`${ctx.idPrefix}-${field}`}
         type="number"
         inputMode="decimal"
-        min={0}
+        min={min}
         value={ctx.str(field)}
         onChange={(e) => ctx.setField(field, e.target.value === "" ? null : Number(e.target.value))}
       />
@@ -306,6 +310,7 @@ export function PropertyDetailsFields({ idPrefix = "det", value, onChange }: Pro
             <NumberField ctx={ctx} field="balconies" label="Balcoane" />
             <NumberField ctx={ctx} field="terraces" label="Terase" />
             <SelectField ctx={ctx} field="floor_label" label="Etaj" options={floorLabelOptions} />
+            <NumberField ctx={ctx} field="floor" label="Etaj (număr)" min={-5} />
             <SelectField ctx={ctx} field="orientation" label="Orientare" options={orientationOptions} />
             <NumberField ctx={ctx} field="build_year" label="An construcție" />
             <NumberField ctx={ctx} field="renovation_year" label="Anul renovării" />
@@ -327,6 +332,7 @@ export function PropertyDetailsFields({ idPrefix = "det", value, onChange }: Pro
         <AccordionTrigger className="text-sm font-medium">Suprafețe</AccordionTrigger>
         <AccordionContent>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <NumberField ctx={ctx} field="surface" label="Suprafață utilă (m²)" />
             <NumberField ctx={ctx} field="usable_surface" label="Utilă (m²)" />
             <NumberField ctx={ctx} field="built_surface" label="Construită (m²)" />
             <NumberField ctx={ctx} field="total_usable_surface" label="Utilă totală (m²)" />
@@ -418,6 +424,12 @@ export function PropertyDetailsFields({ idPrefix = "det", value, onChange }: Pro
           />
           <CheckGroup ctx={ctx} field="views" label="Priveliște" options={viewOptions} />
           <CheckGroup ctx={ctx} field="misc_features" label="Diverse" options={miscFeatureOptions} />
+          <CheckGroup
+            ctx={ctx}
+            field="features"
+            label="Facilități"
+            options={generalFeatureOptions}
+          />
         </AccordionContent>
       </AccordionItem>
     </Accordion>
