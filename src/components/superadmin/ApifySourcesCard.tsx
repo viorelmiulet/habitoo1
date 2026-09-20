@@ -74,6 +74,9 @@ export function ApifySourcesCard() {
   });
 
   const sources = overview.data?.sources ?? [];
+  const organizations = overview.data?.organizations ?? [];
+  const orgName = (id: string | null) =>
+    id === null ? null : (organizations.find((org) => org.id === id)?.name ?? null);
 
   return (
     <SectionCard
