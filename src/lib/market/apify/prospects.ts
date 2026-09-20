@@ -34,6 +34,16 @@ function mappedText(
   return textValue(readMappedField(record, mapping, field));
 }
 
+const DESCRIPTION_KEYS = ["description", "descriere", "text", "body"] as const;
+
+function descriptionText(record: Record<string, unknown>): string | null {
+  for (const key of DESCRIPTION_KEYS) {
+    const value = textValue(record[key]);
+    if (value !== null) return value;
+  }
+  return null;
+}
+
 /** Transformă rezultatele Apify în prospecți normalizați (doar persoane fizice). */
 export function buildApifyProspects(
   sourceKey: string,
@@ -79,7 +89,7 @@ export function buildApifyProspects(
       externalId: mappedText(record, mapping, "sourceListingId"),
       url,
       title,
-      description: mappedText(record, mapping, "description"),
+      description: descriptionText(record),
       fields: record,
       fetchedAt,
     });
