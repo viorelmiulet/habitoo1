@@ -1,7 +1,7 @@
 /**
  * Clientul Apify — server-only.
  *
- * Tokenul se citește din `process.env['APIFY_TOKEN']` în interiorul apelurilor
+ * Conexiunea se citește din mediul server în interiorul apelurilor
  * și nu ajunge niciodată în browser: server functions returnează doar cifre și
  * texte, niciodată configurația de autentificare.
  *
@@ -11,7 +11,7 @@
  *  - GET  /v2/datasets/{datasetId}/items        — rezultatele, paginat
  */
 
-const APIFY_BASE = "https://api.apify.com/v2";
+const APIFY_BASE = "https://connector-gateway.lovable.dev/apify";
 
 /** Buget de așteptare pentru o rulare pornită manual. */
 export const APIFY_POLL_BUDGET_MS = 240_000;
@@ -19,8 +19,8 @@ export const APIFY_POLL_MIN_MS = 2_000;
 export const APIFY_POLL_MAX_MS = 10_000;
 export const APIFY_PAGE_SIZE = 250;
 
-export const APIFY_TOKEN_MISSING =
-  "Tokenul Apify nu este configurat. Adaugă-l în Setări proiect → Secrets, ca APIFY_TOKEN.";
+export { APIFY_TOKEN_MISSING } from "./token-message";
+import { APIFY_TOKEN_MISSING } from "./token-message";
 
 export type ApifyRunStatus =
   | "READY"
@@ -44,25 +44,28 @@ export type ApifyRunInfo = {
 };
 
 export function apifyTokenConfigured(): boolean {
-  const token = process.env["APIFY_TOKEN"];
-  return typeof token === "string" && token.trim() !== "";
+  const connectionKey = process.env["APIFY_API_KEY"];
+  const lovableKey = process.env["LOVABLE_API_KEY"];
+  return Boolean(connectionKey?.trim() && lovableKey?.trim());
 }
 
-function requireToken(): string {
-  const token = process.env["APIFY_TOKEN"];
-  if (typeof token !== "string" || token.trim() === "") throw new Error(APIFY_TOKEN_MISSING);
-  return token.trim();
+function requireCredentials(): { connectionKey: string; lovableKey: string } {
+  const connectionKey = process.env["APIFY_API_KEY"]?.trim();
+  const lovableKey = process.env["LOVABLE_API_KEY"]?.trim();
+  if (!connectionKey || !lovableKey) throw new Error(APIFY_TOKEN_MISSING);
+  return { connectionKey, lovableKey };
 }
 
 async function apifyFetch(
   path: string,
   init: { method: "GET" | "POST"; body?: unknown } = { method: "GET" },
 ): Promise<unknown> {
-  const token = requireToken();
+  const { connectionKey, lovableKey } = requireCredentials();
   const response = await fetch(`${APIFY_BASE}${path}`, {
     method: init.method,
     headers: {
-      Authorization: `Bearer ${token}`,
+      Authorization: `Bearer ${lovableKey}`,
+      "X-Connection-Api-Key": connectionKey,
       Accept: "application/json",
       ...(init.body === undefined ? {} : { "Content-Type": "application/json" }),
     },
