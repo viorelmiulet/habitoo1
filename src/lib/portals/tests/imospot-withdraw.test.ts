@@ -26,7 +26,7 @@ function mockFetch(handler: (url: string, init: RequestInit) => { status: number
     const url = String(input);
     calls.push(`${init?.method ?? "GET"} ${url}`);
     const res = handler(url, init ?? {});
-    return new Response(res.body ?? "", { status: res.status });
+    return new Response(res.status === 204 ? null : (res.body ?? ""), { status: res.status });
   }) as never);
   return { calls, spy };
 }
