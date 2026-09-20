@@ -197,14 +197,21 @@ function CollapsedTip({
   );
 }
 
-function itemIsActive(pathname: string, item: NavItem) {
+export function itemIsActive(pathname: string, item: NavItem) {
   const target = String(item.to);
   return item.exact
     ? pathname === target
     : pathname === target || pathname.startsWith(`${target}/`);
 }
 
-function openStateKey(userId?: string) {
+export function activeNavigationPath(pathname: string, groups: NavGroup[]) {
+  return groups
+    .flatMap((group) => group.items)
+    .filter((item) => itemIsActive(pathname, item))
+    .sort((left, right) => String(right.to).length - String(left.to).length)[0]?.to;
+}
+
+export function openStateKey(userId?: string) {
   return `habitoo.sidebar.groups.${userId ?? "anonymous"}`;
 }
 
@@ -346,6 +353,7 @@ export function AppSidebar({
   const pathname = useRouterState({ select: (state) => state.location.pathname });
   const isPlatform = variant === "platform";
   const homeTo: LinkProps["to"] = isPlatform ? "/superadmin" : "/app";
+  const activePath = activeNavigationPath(pathname, groups);
   const expandableGroups = useMemo(
     () => groups.filter((group) => group.title && group.items.length > 1),
     [groups],
@@ -353,9 +361,9 @@ export function AppSidebar({
   const activeGroupTitles = useMemo(
     () =>
       expandableGroups
-        .filter((group) => group.items.some((item) => itemIsActive(pathname, item)))
+        .filter((group) => group.items.some((item) => item.to === activePath))
         .map((group) => group.title ?? ""),
-    [expandableGroups, pathname],
+    [activePath, expandableGroups],
   );
   const [openGroups, setOpenGroups] = useState<Set<string>>(new Set());
 
@@ -389,7 +397,7 @@ export function AppSidebar({
 
   const renderItem = (item: NavItem, child = false) => {
     const badge = badges?.[String(item.to)];
-    const active = itemIsActive(pathname, item);
+    const active = item.to === activePath;
     return (
       <li key={String(item.to)}>
         <CollapsedTip collapsed={collapsed} label={item.label}>
@@ -474,7 +482,7 @@ export function AppSidebar({
           const title = group.title;
           const expandable = Boolean(title && group.items.length > 1);
           const open = title ? openGroups.has(title) : true;
-          const active = group.items.some((item) => itemIsActive(pathname, item));
+          const active = group.items.some((item) => item.to === activePath);
           const GroupIcon = group.items[0]?.icon;
 
           if (expandable && title && !collapsed && GroupIcon) {
