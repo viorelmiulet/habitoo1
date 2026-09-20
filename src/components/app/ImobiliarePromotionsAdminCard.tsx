@@ -320,7 +320,7 @@ export function ImobiliarePromotionsAdminCard({ organizationId }: { organization
                             <tr key={cell.userId} className="border-t border-border/60">
                               <td className="py-1.5">{cell.name}</td>
                               <td className="py-1.5">
-                                {cell.used}
+                                {cell.used === null ? "necalculat" : cell.used}
                                 {cell.allocated !== null ? ` / ${cell.allocated}` : ""}
                               </td>
                               <td className="py-1.5">
