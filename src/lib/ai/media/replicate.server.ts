@@ -33,15 +33,16 @@ export type ReplicateModel = {
 export const AI_MEDIA_MODELS: Record<AiMediaKind, ReplicateModel> = {
   photo_enhance: {
     id: "black-forest-labs/flux-kontext-pro",
-    extension: "webp",
-    contentType: "image/webp",
+    extension: "png",
+    contentType: "image/png",
     buildInput: ({ prompt, sourceUrl }) => ({
       prompt:
         prompt.trim() === ""
           ? "Improve this real estate photo: natural daylight, balanced exposure, clean colours, straight vertical lines. Keep the room exactly as it is; do not add or remove objects."
           : prompt.trim(),
       input_image: sourceUrl,
-      output_format: "webp",
+      // Modelul acceptă doar "jpg" sau "png"; png păstrează detaliile.
+      output_format: "png",
       safety_tolerance: 2,
     }),
   },
@@ -59,12 +60,12 @@ export const AI_MEDIA_MODELS: Record<AiMediaKind, ReplicateModel> = {
   },
   marketing_image: {
     id: "black-forest-labs/flux-1.1-pro",
-    extension: "webp",
-    contentType: "image/webp",
+    extension: "png",
+    contentType: "image/png",
     buildInput: ({ prompt }) => ({
       prompt: prompt.trim(),
       aspect_ratio: "1:1",
-      output_format: "webp",
+      output_format: "png",
       safety_tolerance: 2,
     }),
   },
