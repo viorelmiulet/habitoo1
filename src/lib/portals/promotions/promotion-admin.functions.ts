@@ -137,18 +137,19 @@ export const getImobiliarePromotionAdmin = createServerFn({ method: "POST" })
     const { fetchImobiliareSlotInventories } = await import(
       "@/lib/portals/imobiliare/promotions.server"
     );
-    const [users, settings, allocations, inventories, usage] = await Promise.all([
+    const [users, settings, allocations, inventories] = await Promise.all([
       loadAgencyUsers(prepared.admin, organizationId),
       loadPromotionSettings(prepared.admin, { organizationId }),
       loadPromotionAllocations(prepared.admin, { organizationId }),
       fetchImobiliareSlotInventories({ session: prepared.session, organizationId }),
-      loadImobiliarePromotionUsage({
-        admin: prepared.admin,
-        session: prepared.session,
-        organizationId,
-        definitions: IMOBILIARE_PROMOTIONS.filter((item) => item.slotType !== null),
-      }),
     ]);
+    const usage = await loadImobiliarePromotionUsage({
+      admin: prepared.admin,
+      session: prepared.session,
+      organizationId,
+      definitions: IMOBILIARE_PROMOTIONS.filter((item) => item.slotType !== null),
+      userIds: users.map((user) => user.userId),
+    });
 
     const services: PromotionAdminService[] = IMOBILIARE_PROMOTIONS.map((definition) => {
       const setting = settings.get(definition.id) ?? { enabled: false, agencyCap: null };
