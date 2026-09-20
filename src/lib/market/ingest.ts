@@ -119,6 +119,8 @@ export type ImportSummary = {
   unchanged: number;
   deactivated: number;
   duplicates: number;
+  /** Rânduri unite cu o ofertă existentă publicată pe alt portal. */
+  crossPortalMerges: number;
   ambiguous: number;
   priceChanges: number;
   statusChanges: number;
