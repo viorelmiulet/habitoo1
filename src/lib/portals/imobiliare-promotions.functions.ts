@@ -275,7 +275,9 @@ export const setImobiliarePromotion = createServerFn({ method: "POST" })
       definition,
       value: data.value,
       current: state.states.get(definition.id) ?? null,
+      allocation: { propertyId: data.propertyId },
     });
+
 
     const operation = `promotion:${definition.id}:${
       typeof data.value === "number" ? data.value : data.value ? "on" : "off"
