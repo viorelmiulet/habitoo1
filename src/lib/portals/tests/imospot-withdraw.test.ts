@@ -58,6 +58,7 @@ describe("retragerea de la Imospot", () => {
     expect(calls).toEqual([
       "DELETE https://www.imospot.ro/api/v1/listings/21785",
       `DELETE https://www.imospot.ro/api/v1/listings/HBT-${PROPERTY_ID}-SALE`,
+      `DELETE https://www.imospot.ro/api/v1/listings/HBT-${PROPERTY_ID}-RENT`,
     ]);
     if (result.ok) expect(result.data.externalId).toBe(`HBT-${PROPERTY_ID}-SALE`);
   });
