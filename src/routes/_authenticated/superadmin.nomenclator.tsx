@@ -152,6 +152,7 @@ function NomenclatorPage() {
           <MarketPriceIndexCard />
           <PostalCodeBackfillCard />
           <CollectorSourcesCard />
+          <ApifySourcesCard />
           <MarketQuerySourcesCard />
 
         </>
