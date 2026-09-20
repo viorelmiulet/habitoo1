@@ -5,7 +5,12 @@
  */
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/integrations/supabase/types";
-import type { MarketEntityCandidate } from "./dedupe";
+import {
+  CROSS_PORTAL_THRESHOLDS,
+  crossPortalZone,
+  type CrossPortalCandidate,
+  type MarketEntityCandidate,
+} from "./dedupe";
 import type {
   ExistingListing,
   ListingPatch,
@@ -18,6 +23,7 @@ import type { NormalizedListing } from "./normalize";
 type Admin = SupabaseClient<Database>;
 
 const ENTITY_CANDIDATE_LIMIT = 200;
+const CROSS_PORTAL_CANDIDATE_LIMIT = 100;
 
 function listingRow(listing: NormalizedListing) {
   return {

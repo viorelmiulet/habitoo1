@@ -2,7 +2,12 @@
  * Depozit în memorie pentru testarea pipeline-ului de import, fără bază de date.
  * Reproduce exact contractul `MarketRepository`.
  */
-import { matchListingToEntities, type MarketEntityCandidate } from "../dedupe";
+import {
+  crossPortalZone,
+  matchListingToEntities,
+  type CrossPortalCandidate,
+  type MarketEntityCandidate,
+} from "../dedupe";
 import type {
   ExistingListing,
   ListingPatch,
@@ -68,6 +73,29 @@ export function createFakeRepository(): { repo: MarketRepository; store: FakeSto
           !entity.normalizedCity ||
           entity.normalizedCity === listing.normalizedCity,
       );
+    },
+    async findCrossPortalCandidates(listing) {
+      if (!crossPortalZone(listing)) return [];
+      return store.listings
+        .filter((row) => row.status === "active" && row.source !== listing.source)
+        .map<CrossPortalCandidate>((row) => ({
+          id: row.id,
+          source: row.source,
+          normalizedCity: row.listing.normalizedCity,
+          normalizedDistrict: row.listing.normalizedDistrict,
+          normalizedNeighborhood: row.listing.normalizedNeighborhood,
+          propertyType: row.listing.propertyType,
+          transactionType: row.listing.transactionType,
+          rooms: row.listing.rooms,
+          usableArea: row.listing.usableArea,
+          totalArea: row.listing.totalArea,
+          price: row.price,
+          lastSeenAt: row.lastSeenAt,
+        }));
+    },
+    async touchListingSeen(id, _runId, now) {
+      const existing = store.listings.find((row) => row.id === id);
+      if (existing) existing.lastSeenAt = now;
     },
     async createEntity(listing) {
       const id = nextId("entity");
