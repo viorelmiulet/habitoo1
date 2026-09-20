@@ -235,6 +235,14 @@ export function PropertyImobiliarePromotionsCard({
                   </span>
                 ) : null}
 
+                {row.allocated !== null ? (
+                  <span className="text-xs text-muted-foreground">
+                    {row.remaining === null
+                      ? `alocare ${row.allocated}`
+                      : `îți rămân ${row.remaining} din ${row.allocated}`}
+                  </span>
+                ) : null}
+
                 {busy ? <Loader2 className="size-3 animate-spin" aria-hidden /> : null}
               </div>
 
