@@ -145,13 +145,13 @@ export function ApifySourcesCard() {
                           {source.lastRun.errors.slice(0, 2).map((e) => e.message).join(" · ")}
                         </p>
                       ) : null}
-                      {source.lastRun?.firstItem ? (
+                      {source.lastRun?.firstItemJson ? (
                         <details className="mt-2">
                           <summary className="cursor-pointer text-xs text-muted-foreground">
                             Primul rezultat brut al ultimei rulări
                           </summary>
                           <pre className="mt-1 max-h-60 overflow-auto rounded-md bg-muted p-2 text-[11px] leading-relaxed">
-                            {JSON.stringify(source.lastRun.firstItem, null, 2)}
+                            {source.lastRun.firstItemJson}
                           </pre>
                         </details>
                       ) : null}
