@@ -566,6 +566,35 @@ function AcpDetailPage() {
               ))}
             </ul>
           )}
+
+          {/* Cifrele publicate de sursele interogate live. Sunt statistica lor,
+              cu data citirii, și nu intră în calculul nostru. */}
+          {analysis.marketQueryContexts.map((context) => (
+            <div
+              key={`${context.sourceKey}-${context.capturedAt}`}
+              className="mt-4 rounded-xl border border-border bg-muted/40 p-4"
+            >
+              <p className="text-xs font-semibold uppercase text-muted-foreground">
+                {context.title}
+              </p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Statistici publicate de {context.sourceLabel}, citite la{" "}
+                {new Date(context.capturedAt).toLocaleDateString("ro-RO")}. Sunt informative: nu
+                intră în estimarea noastră.
+              </p>
+              <ul className="mt-2 space-y-1 text-xs">
+                {context.lines.map((line) => (
+                  <li key={line.label} className="flex justify-between gap-2">
+                    <span className="text-muted-foreground">{line.label}</span>
+                    <span className="font-medium">{line.value}</span>
+                  </li>
+                ))}
+              </ul>
+              {context.note ? (
+                <p className="mt-2 text-xs text-muted-foreground">{context.note}</p>
+              ) : null}
+            </div>
+          ))}
         </SectionCard>
 
 
