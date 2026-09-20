@@ -32,10 +32,7 @@ async function requireSuperadmin(context: AuthContext): Promise<void> {
 }
 
 /** Destinațiile sursei, cu compatibilitate pentru rândurile vechi. */
-function readTargets(
-  targets: unknown,
-  legacy: unknown,
-): ("market_pool" | "prospects")[] {
+function readTargets(targets: unknown, legacy: unknown): ("market_pool" | "prospects")[] {
   const allowed = ["market_pool", "prospects"] as const;
   const list = Array.isArray(targets)
     ? targets.filter((value): value is "market_pool" | "prospects" =>
@@ -247,11 +244,12 @@ const sourceInput = z.object({
   label: z.string().trim().min(1).max(160),
   actorId: z.string().trim().min(1).max(160),
   input: z.record(z.string(), z.unknown()).default({}),
-  fieldMapping: z
-    .record(z.string(), z.union([z.string(), z.array(z.string())]))
-    .default({}),
+  fieldMapping: z.record(z.string(), z.union([z.string(), z.array(z.string())])).default({}),
   maxItems: z.number().int().min(1).max(10000),
-  targets: z.array(z.enum(["market_pool", "prospects"])).min(1).max(2),
+  targets: z
+    .array(z.enum(["market_pool", "prospects"]))
+    .min(1)
+    .max(2),
   prospectOrganizationId: z.string().uuid().nullable().optional(),
   unitCostUsd: z.number().finite().min(0).max(1000).nullable().optional(),
   costNote: z.string().trim().max(400).nullable().optional(),
@@ -336,7 +334,15 @@ const jobInput = z.object({
   sourceKey: z.string().trim().min(1).max(60),
   criteria: z.object({
     transactionType: z.enum(["sale", "rent"]),
-    propertyType: z.enum(["apartment", "studio", "house", "land", "commercial", "office", "industrial"]),
+    propertyType: z.enum([
+      "apartment",
+      "studio",
+      "house",
+      "land",
+      "commercial",
+      "office",
+      "industrial",
+    ]),
     county: z.string().trim().min(1).max(120),
     locality: z.string().trim().min(1).max(120),
     localitySirutaCode: z.number().int().positive(),
@@ -357,12 +363,8 @@ export const runApifySource = createServerFn({ method: "POST" })
     await requireSuperadmin(ctx);
     const userId = (context as unknown as { userId: string }).userId;
     const admin = await loadAdmin();
-    const {
-      apifyTokenConfigured,
-      startApifyRun,
-      waitForApifyRun,
-      readApifyDataset,
-    } = await import("./client.server");
+    const { apifyTokenConfigured, startApifyRun, waitForApifyRun, readApifyDataset } =
+      await import("./client.server");
 
     const definition = getPredefinedApifySource(data.sourceKey);
     if (!definition) throw new Error("Sursa predefinită nu a fost găsită.");
@@ -382,20 +384,23 @@ export const runApifySource = createServerFn({ method: "POST" })
       .eq("key", definition.key)
       .maybeSingle();
 
-    const { error: sourceError } = await admin.from("apify_sources").upsert({
-      key: definition.key,
-      label: definition.label,
-      actor_id: definition.actorId,
-      input: definition.inputTemplate as never,
-      field_mapping: definition.fieldMapping as never,
-      enabled: true,
-      max_items: data.criteria.maxItems,
-      targets: definition.targets,
-      target: definition.targets[0],
-      prospect_organization_id: data.prospectOrganizationId,
-      unit_cost_usd: definition.unitCostUsd,
-      notes: definition.description,
-    } as never, { onConflict: "key" });
+    const { error: sourceError } = await admin.from("apify_sources").upsert(
+      {
+        key: definition.key,
+        label: definition.label,
+        actor_id: definition.actorId,
+        input: definition.inputTemplate as never,
+        field_mapping: definition.fieldMapping as never,
+        enabled: true,
+        max_items: data.criteria.maxItems,
+        targets: definition.targets,
+        target: definition.targets[0],
+        prospect_organization_id: data.prospectOrganizationId,
+        unit_cost_usd: definition.unitCostUsd,
+        notes: definition.description,
+      } as never,
+      { onConflict: "key" },
+    );
     if (sourceError) throw sourceError;
 
     const source: ApifySourceConfig = {

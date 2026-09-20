@@ -1,273 +1,263 @@
-/**
- * Superadmin: sursele Apify pentru bazinul de date de piață.
- *
- * Colectarea rulează la Apify, pe contul clientului. Aici doar pornim manual o
- * rulare: nu există programare, cron sau execuție automată. Costul estimat și
- * costul real raportat de Apify sunt mereu vizibile lângă buton.
- */
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { Database, Pencil, Play, Plus } from "lucide-react";
-import { useState } from "react";
+import { AlertTriangle, CheckCircle2, Clock3, Database, FileSearch, Plus } from "lucide-react";
+import { useEffect, useState } from "react";
 import { SectionCard } from "@/components/app/SectionCard";
 import { InlineLoading } from "@/components/app/LoadingState";
-import { ApifySourceDialog } from "./ApifySourceDialog";
+import { ApifySourceDialog, type ApifyJobPayload } from "./ApifySourceDialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Switch } from "@/components/ui/switch";
+import { Panel } from "@/components/ui/card";
 import { toast } from "@/components/ui/sonner";
 import { toastError } from "@/lib/errors";
+import { cn } from "@/lib/utils";
 import {
   getApifyOverview,
   runApifySource,
-  saveApifySource,
-  setApifySourceEnabled,
-  type ApifySourceView,
+  type ApifyRunView,
 } from "@/lib/market/apify/apify.functions";
-import type { ApifySourcePayload } from "@/lib/market/apify/source-form";
 
-const QUERY_KEY = ["superadmin", "apify-sources"] as const;
-
+const QUERY_KEY = ["superadmin", "apify-jobs"] as const;
 
 function usd(value: number | null): string {
   if (value === null) return "—";
   return `${value.toFixed(value < 1 ? 4 : 2)} USD`;
 }
-
 function dateLabel(value: string | null): string {
   if (!value) return "—";
   return new Date(value).toLocaleString("ro-RO", { dateStyle: "medium", timeStyle: "short" });
 }
-
 const STATUS_LABEL: Record<string, string> = {
   running: "În curs",
-  completed: "Finalizată",
-  failed: "Eșuată",
-  refused: "Refuzată",
+  completed: "Finalizat",
+  failed: "Eșuat",
+  refused: "Refuzat",
 };
+
+function RunState({ status }: { status: string }) {
+  const failed = status === "failed" || status === "refused";
+  const Icon = failed ? AlertTriangle : status === "running" ? Clock3 : CheckCircle2;
+  return (
+    <Badge variant={failed ? "destructive" : status === "running" ? "secondary" : "outline"}>
+      <Icon className="mr-1 size-3" />
+      {STATUS_LABEL[status] ?? status}
+    </Badge>
+  );
+}
+
+export function ApifyEmptyState({ onNew }: { onNew: () => void }) {
+  return (
+    <div className="flex min-h-72 flex-col items-center justify-center gap-4 px-6 text-center">
+      <span className="flex size-12 items-center justify-center rounded-full bg-muted">
+        <FileSearch className="size-6 text-muted-foreground" />
+      </span>
+      <div>
+        <p className="font-medium">Niciun job</p>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Pornește prima colectare dintr-o sursă predefinită.
+        </p>
+      </div>
+      <Button className="min-h-11" onClick={onNew}>
+        <Plus className="size-4" />
+        Job nou
+      </Button>
+    </div>
+  );
+}
+
+function RunDetails({ run }: { run: ApifyRunView }) {
+  const criteria = run.criteria;
+  const progress =
+    run.status === "running"
+      ? "Jobul rulează la sursă."
+      : `${run.received} rezultate citite, ${run.created + run.updated + run.unchanged + run.merged} procesate.`;
+  return (
+    <div className="space-y-6 p-4 sm:p-6">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <p className="text-lg font-semibold">{run.sourceLabel}</p>
+          <p className="mt-1 text-sm text-muted-foreground">{run.criteriaSummary}</p>
+        </div>
+        <RunState status={run.status} />
+      </div>
+      <dl className="grid gap-4 sm:grid-cols-2">
+        <div>
+          <dt className="text-xs text-muted-foreground">Pornit</dt>
+          <dd className="mt-1 text-sm font-medium">{dateLabel(run.startedAt)}</dd>
+        </div>
+        <div>
+          <dt className="text-xs text-muted-foreground">Finalizat</dt>
+          <dd className="mt-1 text-sm font-medium">{dateLabel(run.finishedAt)}</dd>
+        </div>
+        <div>
+          <dt className="text-xs text-muted-foreground">Limită</dt>
+          <dd className="mt-1 text-sm font-medium">{run.maxItems} rezultate</dd>
+        </div>
+        <div>
+          <dt className="text-xs text-muted-foreground">Cost</dt>
+          <dd className="mt-1 text-sm font-medium">
+            {usd(run.costUsd)} real · {usd(run.estimatedCostUsd)} estimat
+          </dd>
+        </div>
+      </dl>
+      <div className="space-y-2">
+        <p className="text-sm font-medium">Progres</p>
+        <div className="h-2 overflow-hidden rounded-full bg-muted">
+          <div
+            className={cn(
+              "h-full bg-primary transition-all",
+              run.status === "running" ? "w-2/3 animate-pulse" : "w-full",
+            )}
+          />
+        </div>
+        <p className="text-xs text-muted-foreground">{progress}</p>
+      </div>
+      <div>
+        <p className="mb-2 text-sm font-medium">Parametri</p>
+        <dl className="grid gap-2 text-sm sm:grid-cols-2">
+          {Object.entries(criteria).map(([key, value]) => (
+            <div key={key} className="flex justify-between gap-3 border-b border-border py-2">
+              <dt className="text-muted-foreground">{key}</dt>
+              <dd className="text-right font-medium">
+                {value === null || value === "" ? "—" : String(value)}
+              </dd>
+            </div>
+          ))}
+        </dl>
+      </div>
+      <div>
+        <p className="mb-2 text-sm font-medium">Rezultate</p>
+        <p className="text-sm text-muted-foreground">
+          {run.received} citite · {run.created} noi · {run.updated} actualizate · {run.unchanged}{" "}
+          neschimbate · {run.merged} unite · {run.discarded} respinse
+        </p>
+      </div>
+      {run.errors.length > 0 ? (
+        <div>
+          <p className="mb-2 text-sm font-medium text-destructive">Erori pe elemente</p>
+          <ul className="space-y-2">
+            {run.errors.map((error, index) => (
+              <li
+                key={`${error.reference}-${index}`}
+                className="rounded-md border border-destructive/30 bg-destructive/5 p-3 text-sm"
+              >
+                <span className="font-medium">{error.reference}</span> · {error.message}
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
+      {run.firstItemJson ? (
+        <details>
+          <summary className="cursor-pointer text-sm font-medium">Primul rezultat brut</summary>
+          <pre className="mt-3 max-h-80 overflow-auto rounded-md bg-muted p-3 text-xs leading-relaxed">
+            {run.firstItemJson}
+          </pre>
+        </details>
+      ) : (
+        <p className="text-sm text-muted-foreground">Primul rezultat brut nu este disponibil.</p>
+      )}
+    </div>
+  );
+}
 
 export function ApifySourcesCard() {
   const queryClient = useQueryClient();
   const loadOverview = useServerFn(getApifyOverview);
-  const toggleSource = useServerFn(setApifySourceEnabled);
   const startRun = useServerFn(runApifySource);
-  const persistSource = useServerFn(saveApifySource);
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [editing, setEditing] = useState<ApifySourceView | null>(null);
-
+  const [selectedId, setSelectedId] = useState<string | null>(null);
   const overview = useQuery({ queryKey: QUERY_KEY, queryFn: () => loadOverview({}) });
+  const runs = overview.data?.runs ?? [];
+  const selected = runs.find((run) => run.id === selectedId) ?? runs[0] ?? null;
+  useEffect(() => {
+    if (!selectedId && runs[0]) setSelectedId(runs[0].id);
+  }, [runs, selectedId]);
 
-  const saveSource = useMutation({
-    mutationFn: (payload: ApifySourcePayload) => persistSource({ data: payload }),
-    onSuccess: () => {
-      toast.success("Sursa a fost salvată.");
+  const run = useMutation({
+    mutationFn: (payload: ApifyJobPayload) => startRun({ data: payload }),
+    onSuccess: (result) => {
+      toast.success(`Job finalizat: ${result.received} rezultate, cost ${usd(result.costUsd)}.`);
+      setSelectedId(result.runId);
       setDialogOpen(false);
       void queryClient.invalidateQueries({ queryKey: QUERY_KEY });
     },
     onError: (error) => toastError(error),
   });
 
-
-  const save = useMutation({
-    mutationFn: (input: { key: string; enabled?: boolean; maxItems?: number }) =>
-      toggleSource({ data: input }),
-    onSuccess: () => {
-      toast.success("Sursa a fost actualizată.");
-      void queryClient.invalidateQueries({ queryKey: QUERY_KEY });
-    },
-    onError: (error) => toastError(error),
-  });
-
-  const run = useMutation({
-    mutationFn: (key: string) => startRun({ data: { key } }),
-    onSuccess: (result) => {
-      toast.success(
-        `Rulare ${STATUS_LABEL[result.status] ?? result.status}: ${result.received} rezultate citite, ${result.created} noi, ${result.updated} actualizate, ${result.unchanged} neschimbate, ${result.discarded} respinse. Cost: ${usd(result.costUsd)}.`,
-      );
-      if (result.errors.length > 0) {
-        toast.error(result.errors.slice(0, 3).map((e) => e.message).join(" · "));
-      }
-      void queryClient.invalidateQueries({ queryKey: QUERY_KEY });
-    },
-    onError: (error) => toastError(error),
-  });
-
-  const sources = overview.data?.sources ?? [];
-  const organizations = overview.data?.organizations ?? [];
-  const orgName = (id: string | null) =>
-    id === null ? null : (organizations.find((org) => org.id === id)?.name ?? null);
-
   return (
     <SectionCard
-      title="Surse Apify (bazin de date de piață)"
+      title="Joburi Apify"
       icon={Database}
-      description="Colectarea rulează la Apify, pe contul tău. Rulările se pornesc manual de aici; nu există programare automată. Rezultatele intră în bazinul de piață existent, cu deduplicare și istoric de preț."
+      description="Colectările se pornesc numai manual. Rezultatele folosesc aceleași reguli de import, deduplicare și istoric."
     >
       {overview.isLoading ? (
         <InlineLoading />
       ) : (
         <>
           {overview.data && !overview.data.tokenConfigured ? (
-            <p className="mb-3 rounded-md border border-destructive/40 bg-destructive/5 p-3 text-xs text-destructive">
-              Tokenul Apify nu este configurat. Adaugă-l în Setări proiect → Secrets, ca
-              APIFY_TOKEN. Până atunci rulările sunt refuzate.
+            <p className="mb-4 rounded-md border border-destructive/40 bg-destructive/5 p-3 text-sm text-destructive">
+              Conexiunea Apify nu este configurată; joburile nu pot porni.
             </p>
           ) : null}
-
-          <div className="mb-3 flex justify-end">
-            <Button
-              size="sm"
-              onClick={() => {
-                setEditing(null);
-                setDialogOpen(true);
-              }}
-            >
-              <Plus className="mr-1.5 size-3.5" />
-              Adaugă sursă
+          <div className="mb-4 flex justify-end">
+            <Button className="min-h-11" onClick={() => setDialogOpen(true)}>
+              <Plus className="size-4" />
+              Job nou
             </Button>
           </div>
-
-          {sources.length === 0 ? (
-            <p className="text-sm text-muted-foreground">
-              Nu există încă surse configurate. O sursă nouă este doar configurație: actorul,
-              inputul lui și maparea câmpurilor.
-            </p>
-
+          {runs.length === 0 ? (
+            <Panel>
+              <ApifyEmptyState onNew={() => setDialogOpen(true)} />
+            </Panel>
           ) : (
-            <ul className="divide-y divide-border">
-              {sources.map((source) => (
-                <li key={source.key} className="py-3 first:pt-0">
-                  <div className="flex flex-wrap items-start gap-3">
-                    <div className="min-w-0 flex-1">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <p className="font-medium">{source.label}</p>
-                        <Badge variant={source.enabled ? "default" : "secondary"}>
-                          {source.enabled ? "Activată" : "Oprită"}
-                        </Badge>
-                        {source.targets.includes("market_pool") ? (
-                          <Badge variant="outline">Bazin de piață</Badge>
-                        ) : null}
-                        {source.targets.includes("prospects") ? (
-                          <Badge variant="outline">
-                            Prospecți
-                            {orgName(source.prospectOrganizationId)
-                              ? ` · ${orgName(source.prospectOrganizationId)}`
-                              : " · fără agenție"}
-                          </Badge>
-                        ) : null}
-                      </div>
-                      <p className="mt-1 truncate text-xs text-muted-foreground">
-                        Actor {source.actorId} · sursă în bazin {source.marketSourceId} ·{" "}
-                        {source.poolListings} oferte
-                      </p>
-                      <p className="mt-1 text-xs text-muted-foreground">
-                        Cost estimat pe rulare {usd(source.estimatedCostUsd)} · cheltuit luna asta{" "}
-                        {usd(source.spendThisMonthUsd)} · total {usd(source.spendTotalUsd)}
-                        {source.costNote ? ` · ${source.costNote}` : ""}
-                      </p>
-                      {source.lastRun ? (
-                        <p className="mt-1 text-xs text-muted-foreground">
-                          Ultima rulare {dateLabel(source.lastRun.startedAt)} ·{" "}
-                          {STATUS_LABEL[source.lastRun.status] ?? source.lastRun.status} ·{" "}
-                          {source.lastRun.received} citite · {source.lastRun.created} noi ·{" "}
-                          {source.lastRun.updated} actualizate · {source.lastRun.merged} unite între
-                          portaluri · {source.lastRun.discarded} respinse · cost real{" "}
-                          {usd(source.lastRun.costUsd)}
-                          {source.targets.includes("prospects")
-                            ? ` · prospecți: ${source.lastRun.prospectsCreated} noi, ${source.lastRun.prospectsUpdated} actualizați, ${source.lastRun.prospectsSkipped} ignorați`
-                            : ""}
-                        </p>
-                      ) : (
-                        <p className="mt-1 text-xs text-muted-foreground">Nu a rulat încă.</p>
+            <div className="grid min-h-[34rem] overflow-hidden rounded-panel border border-border lg:grid-cols-[minmax(17rem,0.72fr)_minmax(0,1.5fr)]">
+              <div className="border-b border-border bg-muted/20 lg:border-b-0 lg:border-r">
+                <div className="border-b border-border px-4 py-3">
+                  <p className="text-sm font-semibold">Rulări</p>
+                  <p className="text-xs text-muted-foreground">{runs.length} joburi recente</p>
+                </div>
+                <div className="max-h-[32rem] overflow-y-auto p-2">
+                  {runs.map((item) => (
+                    <button
+                      key={item.id}
+                      type="button"
+                      onClick={() => setSelectedId(item.id)}
+                      className={cn(
+                        "mb-1 min-h-11 w-full rounded-md border border-transparent p-3 text-left transition-colors hover:bg-accent",
+                        selected?.id === item.id && "border-border bg-surface",
                       )}
-                      {source.lastRun && source.lastRun.discardReasons.length > 0 ? (
-                        <p className="mt-1 text-xs text-muted-foreground">
-                          Motive respingere:{" "}
-                          {source.lastRun.discardReasons
-                            .map((reason) => `${reason.reason} (${reason.count})`)
-                            .join(" · ")}
-                        </p>
-                      ) : null}
-                      {source.lastRun && source.lastRun.errors.length > 0 ? (
-                        <p className="mt-1 text-xs text-destructive">
-                          {source.lastRun.errors.slice(0, 2).map((e) => e.message).join(" · ")}
-                        </p>
-                      ) : null}
-                      {source.lastRun?.firstItemJson ? (
-                        <details className="mt-2">
-                          <summary className="cursor-pointer text-xs text-muted-foreground">
-                            Primul rezultat brut al ultimei rulări
-                          </summary>
-                          <pre className="mt-1 max-h-60 overflow-auto rounded-md bg-muted p-2 text-[11px] leading-relaxed">
-                            {source.lastRun.firstItemJson}
-                          </pre>
-                        </details>
-                      ) : null}
-                    </div>
-                    <div className="flex flex-wrap items-center gap-3">
-                      <label className="flex items-center gap-2 text-xs text-muted-foreground">
-                        Maxim rezultate
-                        <Input
-                          className="h-8 w-24"
-                          type="number"
-                          min={1}
-                          max={10000}
-                          defaultValue={source.maxItems}
-                          disabled={save.isPending}
-                          onBlur={(event) => {
-                            const value = Number(event.currentTarget.value);
-                            if (!Number.isFinite(value) || value === source.maxItems) return;
-                            save.mutate({ key: source.key, maxItems: Math.round(value) });
-                          }}
-                        />
-                      </label>
-                      <Switch
-                        checked={source.enabled}
-                        disabled={save.isPending}
-                        aria-label={`Activează ${source.label}`}
-                        onCheckedChange={(checked) =>
-                          save.mutate({ key: source.key, enabled: checked })
-                        }
-                      />
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => {
-                          setEditing(source);
-                          setDialogOpen(true);
-                        }}
-                      >
-                        <Pencil className="mr-1.5 size-3.5" />
-                        Editează
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        disabled={!source.enabled || run.isPending}
-                        onClick={() => run.mutate(source.key)}
-                      >
-                        <Play className="mr-1.5 size-3.5" />
-                        Rulează acum
-                      </Button>
-                    </div>
-                  </div>
-                </li>
-              ))}
-            </ul>
+                      aria-current={selected?.id === item.id ? "true" : undefined}
+                    >
+                      <div className="flex items-start justify-between gap-2">
+                        <p className="truncate text-sm font-medium">{item.sourceLabel}</p>
+                        <RunState status={item.status} />
+                      </div>
+                      <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">
+                        {item.criteriaSummary}
+                      </p>
+                      <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-xs text-muted-foreground">
+                        <span>{item.received} rezultate</span>
+                        <span>{usd(item.costUsd)}</span>
+                        <span>{dateLabel(item.startedAt)}</span>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div>{selected ? <RunDetails run={selected} /> : null}</div>
+            </div>
           )}
-
           <ApifySourceDialog
             open={dialogOpen}
             onOpenChange={setDialogOpen}
-            source={editing}
-            organizations={organizations}
-            saving={saveSource.isPending}
-            onSave={(payload) => saveSource.mutate(payload)}
+            organizations={overview.data?.organizations ?? []}
+            saving={run.isPending}
+            isSuperadmin
+            onRun={(payload) => run.mutate(payload)}
           />
         </>
       )}
     </SectionCard>
   );
-
 }

@@ -52,7 +52,8 @@ export const PREDEFINED_APIFY_SOURCES: readonly PredefinedApifySource[] = [
     fieldMapping: COMMON_MAPPING,
     targets: ["market_pool"],
     inputTemplate: {
-      searchUrl: "https://www.imobiliare.ro/{{transactionSlug}}-{{propertySlug}}/{{localitySlug}}{{zonePath}}",
+      searchUrl:
+        "https://www.imobiliare.ro/{{transactionSlug}}-{{propertySlug}}/{{localitySlug}}{{zonePath}}",
       maxItems: "{{maxItems}}",
     },
     unitCostUsd: 0.005,
@@ -146,7 +147,12 @@ export function buildPredefinedApifyInput(
 }
 
 export function apifyCriteriaSummary(criteria: ApifyJobCriteria): string {
-  return [criteria.transactionType === "sale" ? "Vânzare" : "Închiriere", criteria.propertyType, criteria.locality, criteria.zone]
+  return [
+    criteria.transactionType === "sale" ? "Vânzare" : "Închiriere",
+    criteria.propertyType,
+    criteria.locality,
+    criteria.zone,
+  ]
     .filter(Boolean)
     .join(" · ");
 }
