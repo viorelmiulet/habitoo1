@@ -580,42 +580,70 @@ function PropertyDetailPage() {
 
   return (
     <>
-      <PageHeader
-        backTo="/app/properties"
-        backLabel="Proprietăți"
-        eyebrow={
-          [property.reference, [property.district, property.city].filter(Boolean).join(", ")]
+      {tab === "publishing" ? (
+        <PageHeader
+          backTo="/app/properties"
+          backLabel="Proprietăți"
+          title={<span className="font-display">{property.title}</span>}
+          description={[
+            property.reference ? `Ref. ${property.reference}` : null,
+            [property.district, property.city].filter(Boolean).join(", ") || null,
+            formatMoney(property.price, property.currency),
+          ]
             .filter(Boolean)
-            .join(" · ") || "Proprietate"
-        }
-        title={property.title}
-        description={[property.address, property.district, property.city]
-          .filter(Boolean)
-          .join(", ")}
-        meta={
-          <>
-            <StatusBadge tone={propertyStatusTone[property.status]} dot>
-              {propertyStatusLabels[property.status]}
-            </StatusBadge>
-            <StatusBadge tone={property.publish_status === "published" ? "success" : "neutral"} dot>
-              {property.publish_status === "published" ? "Publicat" : "Nepublicat"}
-            </StatusBadge>
-            {property.negotiable ? <StatusBadge tone="info">Negociabil</StatusBadge> : null}
-            {property.collaboration ? (
-              <StatusBadge tone="primary">
-                {property.collab_commission_percent
-                  ? `Colaborare · ${property.collab_commission_percent}%`
-                  : "Colaborare"}
+            .join(" · ")}
+          actions={
+            <>
+              <Button variant="secondary" onClick={startEdit}>
+                <Pencil /> Editează
+              </Button>
+              <Button
+                onClick={() => publish.mutate()}
+                disabled={publish.isPending || save.isPending}
+              >
+                {publish.isPending ? "Se publică…" : "Publică pe portaluri"}
+              </Button>
+            </>
+          }
+        />
+      ) : (
+        <PageHeader
+          backTo="/app/properties"
+          backLabel="Proprietăți"
+          eyebrow={
+            [property.reference, [property.district, property.city].filter(Boolean).join(", ")]
+              .filter(Boolean)
+              .join(" · ") || "Proprietate"
+          }
+          title={property.title}
+          description={[property.address, property.district, property.city]
+            .filter(Boolean)
+            .join(", ")}
+          meta={
+            <>
+              <StatusBadge tone={propertyStatusTone[property.status]} dot>
+                {propertyStatusLabels[property.status]}
               </StatusBadge>
-            ) : null}
-          </>
-        }
-        actions={
-          <span className="text-2xl font-medium tracking-tight">
-            {formatMoney(property.price, property.currency)}
-          </span>
-        }
-      />
+              <StatusBadge tone={property.publish_status === "published" ? "success" : "neutral"} dot>
+                {property.publish_status === "published" ? "Publicat" : "Nepublicat"}
+              </StatusBadge>
+              {property.negotiable ? <StatusBadge tone="info">Negociabil</StatusBadge> : null}
+              {property.collaboration ? (
+                <StatusBadge tone="primary">
+                  {property.collab_commission_percent
+                    ? `Colaborare · ${property.collab_commission_percent}%`
+                    : "Colaborare"}
+                </StatusBadge>
+              ) : null}
+            </>
+          }
+          actions={
+            <span className="text-2xl font-medium tracking-tight">
+              {formatMoney(property.price, property.currency)}
+            </span>
+          }
+        />
+      )}
 
       <ArchivePropertyDialog
         propertyId={id}
@@ -625,7 +653,7 @@ function PropertyDetailPage() {
       />
 
       {/* Galeria proprietății, alături de portofoliul agenției. */}
-      <div className="grid gap-4 lg:grid-cols-3">
+      <div className={tab === "publishing" ? "hidden" : "grid gap-4 lg:grid-cols-3"}>
         <div className="space-y-4 lg:col-span-2">
           <PropertyHeroGallery propertyId={id} title={property.title} />
 
@@ -657,7 +685,7 @@ function PropertyDetailPage() {
       </div>
 
       {/* Rând de acțiuni, sub banda de metrici. */}
-      <div className="flex flex-wrap items-center gap-2">
+      <div className={tab === "publishing" ? "hidden" : "flex flex-wrap items-center gap-2"}>
         {editing ? (
           <Button size="sm" variant="outline" onClick={() => setEditing(false)}>
             Anulează
@@ -708,7 +736,7 @@ function PropertyDetailPage() {
         </DropdownMenu>
       </div>
 
-      <div className="flex flex-wrap gap-2">
+      <div className={tab === "publishing" ? "hidden" : "flex flex-wrap gap-2"}>
         {ownerContact?.phone ? (
           <Button size="sm" variant="outline" asChild>
             <a href={`tel:${ownerContact.phone}`}>
@@ -753,22 +781,16 @@ function PropertyDetailPage() {
 
         <TabsList className="h-auto flex-wrap justify-start gap-1 rounded-none border-b border-border bg-transparent p-0">
           {[
-            ["overview", "Overview"],
-            ["media", "Media"],
-            ["acp", "ACP"],
-            ["marketing", "Marketing AI"],
-            ["leads", `Lead-uri (${data?.leads.length ?? 0})`],
-            ["matching", `Cereri compatibile (${matches.length})`],
-            ["activities", `Activități (${activities.length})`],
-            ["documents", "Documente"],
+            ["overview", "Detalii"],
+            ["media", "Fotografii"],
             ["publishing", "Publicare"],
-            ["history", "Istoric"],
-
+            ["activities", "Activitate"],
+            ["documents", "Contracte"],
           ].map(([value, label]) => (
             <TabsTrigger
               key={value}
               value={value as string}
-              className="rounded-none border-b-2 border-transparent bg-transparent px-3 py-2.5 font-normal shadow-none data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:font-medium data-[state=active]:shadow-none"
+              className="rounded-none border-b-[3px] border-transparent bg-transparent px-3 py-2.5 font-normal shadow-none data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:font-semibold data-[state=active]:shadow-none"
             >
               {label}
             </TabsTrigger>
@@ -778,6 +800,7 @@ function PropertyDetailPage() {
         <TabsContent value="overview" className="space-y-6">
           {editing ? (
             <form
+              id="property-details-form"
               className="space-y-8"
               onSubmit={(e) => {
                 e.preventDefault();
@@ -1146,27 +1169,17 @@ function PropertyDetailPage() {
           value="publishing"
           className="space-y-4 data-[state=inactive]:hidden"
         >
-          <div className="panel space-y-4 p-5">
-            <div className="flex items-center justify-between">
-              <div>
-                <h2 className="text-sm font-semibold">Status publicare</h2>
-                <p className="text-sm text-muted-foreground">
-                  {property.publish_status === "published"
-                    ? `Publicat pe ${formatDateTime(property.published_at)}`
-                    : "Proprietatea nu este publicată încă."}
-                </p>
-              </div>
-            </div>
-            {property.tags.length > 0 ? (
-              <div className="flex flex-wrap gap-2">
-                {property.tags.map((t) => (
-                  <StatusBadge key={t}>{t}</StatusBadge>
-                ))}
-              </div>
-            ) : null}
-          </div>
-
-          <PropertyPortalsCard ref={portalsRef} propertyId={id} />
+          <PropertyPortalsCard
+            ref={portalsRef}
+            propertyId={id}
+            onCompleteMissing={() => {
+              setEditing(true);
+              setTab("overview");
+              requestAnimationFrame(() =>
+                document.getElementById("property-details-form")?.scrollIntoView({ behavior: "smooth" }),
+              );
+            }}
+          />
         </TabsContent>
 
         <TabsContent value="history">
