@@ -59,6 +59,11 @@ import {
 import type { CurrentUser } from "@/hooks/use-session";
 import { useTheme, type ThemePreference } from "@/hooks/use-theme";
 import { planAgentLimitLabel, planLabel } from "@/lib/plans";
+import {
+  activeNavigationPath,
+  itemIsActive,
+  sidebarOpenStateKey,
+} from "@/components/app/sidebar-navigation";
 
 export type NavItem = { label: string; to: LinkProps["to"]; icon: typeof Gauge; exact?: boolean };
 export type NavGroup = { title?: string; items: NavItem[] };
@@ -195,24 +200,6 @@ function CollapsedTip({
       </TooltipContent>
     </Tooltip>
   );
-}
-
-export function itemIsActive(pathname: string, item: NavItem) {
-  const target = String(item.to);
-  return item.exact
-    ? pathname === target
-    : pathname === target || pathname.startsWith(`${target}/`);
-}
-
-export function activeNavigationPath(pathname: string, groups: NavGroup[]) {
-  return groups
-    .flatMap((group) => group.items)
-    .filter((item) => itemIsActive(pathname, item))
-    .sort((left, right) => String(right.to).length - String(left.to).length)[0]?.to;
-}
-
-export function openStateKey(userId?: string) {
-  return `habitoo.sidebar.groups.${userId ?? "anonymous"}`;
 }
 
 function AccountMenu({
@@ -370,7 +357,7 @@ export function AppSidebar({
   useEffect(() => {
     let stored: string[] = [];
     try {
-      const raw = window.localStorage.getItem(openStateKey(user?.userId));
+      const raw = window.localStorage.getItem(sidebarOpenStateKey(user?.userId));
       const parsed: unknown = raw ? JSON.parse(raw) : [];
       stored = Array.isArray(parsed)
         ? parsed.filter((value): value is string => typeof value === "string")
@@ -387,7 +374,7 @@ export function AppSidebar({
       if (next.has(title)) next.delete(title);
       else next.add(title);
       try {
-        window.localStorage.setItem(openStateKey(user?.userId), JSON.stringify([...next]));
+        window.localStorage.setItem(sidebarOpenStateKey(user?.userId), JSON.stringify([...next]));
       } catch {
         // Stocarea poate fi indisponibilă; meniul rămâne funcțional în sesiunea curentă.
       }

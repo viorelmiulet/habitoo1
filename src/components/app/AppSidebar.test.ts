@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import source from "./AppSidebar?raw";
-import { activeNavigationPath, agencyNav, openStateKey } from "./AppSidebar";
+import { agencyNav } from "./AppSidebar";
+import { activeNavigationPath, sidebarOpenStateKey } from "./sidebar-navigation";
 
 describe("navigarea laterală", () => {
   it("alege un singur rând activ, inclusiv pentru rutele imbricate", () => {
@@ -9,14 +10,14 @@ describe("navigarea laterală", () => {
   });
 
   it("separă starea grupurilor pentru fiecare utilizator", () => {
-    expect(openStateKey("user-a")).toBe("habitoo.sidebar.groups.user-a");
-    expect(openStateKey("user-b")).not.toBe(openStateKey("user-a"));
+    expect(sidebarOpenStateKey("user-a")).toBe("habitoo.sidebar.groups.user-a");
+    expect(sidebarOpenStateKey("user-b")).not.toBe(sidebarOpenStateKey("user-a"));
   });
 
   it("păstrează accesibilitatea, persistența și ținta tactilă de 44px", () => {
     expect(source).toContain('aria-current={active ? "page" : undefined}');
     expect(source).toContain("aria-expanded={open}");
     expect(source).toContain("min-h-11");
-    expect(source).toContain("window.localStorage.setItem(openStateKey(user?.userId)");
+    expect(source).toContain("window.localStorage.setItem(sidebarOpenStateKey(user?.userId)");
   });
 });

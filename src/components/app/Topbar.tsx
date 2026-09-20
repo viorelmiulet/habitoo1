@@ -49,7 +49,7 @@ export function Topbar({
 
       <Link
         to={isPlatform ? "/superadmin" : "/app"}
-        className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-white ring-1 ring-border lg:hidden"
+        className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-surface ring-1 ring-border lg:hidden"
         aria-label="Habitoo CRM — acasă"
       >
         <BrandLogo markOnly className="size-7" priority />
