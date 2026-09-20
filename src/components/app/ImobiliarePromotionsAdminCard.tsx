@@ -282,10 +282,11 @@ export function ImobiliarePromotionsAdminCard({ organizationId }: { organization
                 ) : null}
                 {service.usageError ? (
                   <p className="mt-2 text-xs text-destructive">{service.usageError}</p>
-                ) : service.usagePartial ? (
+                ) : service.unknownUsers.length > 0 ? (
                   <p className="mt-2 text-xs text-muted-foreground">
-                    Consumul citit este incomplet, deci cifrele de mai jos pot fi mai mici decât cele
-                    reale.
+                    Consumul nu a putut fi calculat pentru {service.unknownUsers.length}{" "}
+                    {service.unknownUsers.length === 1 ? "coleg" : "colegi"} (prea multe oferte de
+                    citit). Ceilalți nu sunt afectați.
                   </p>
                 ) : null}
                 {!service.manageable ? (
