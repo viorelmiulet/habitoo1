@@ -121,15 +121,6 @@ export const IMOBILIARE_PROMOTIONS: ImobiliarePromotionDefinition[] = [
     source: "configurable",
     note: "Portalul expune doar disponibilitatea; activarea nu este confirmată de API.",
   },
-  {
-    id: "rotatii",
-    label: "Rotații",
-    slotType: "rotatii",
-    writeField: null,
-    kind: "boolean",
-    source: "configurable",
-    note: "Portalul expune doar disponibilitatea; activarea nu este confirmată de API.",
-  },
 ];
 
 /** Toate valorile `slot_type` pe care le interogăm pentru inventar. */
