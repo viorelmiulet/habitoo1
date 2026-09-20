@@ -498,6 +498,13 @@
       "when": 1789885373835,
       "tag": "0070_apify_sources",
       "breakpoints": true
+    },
+    {
+      "idx": 71,
+      "version": "7",
+      "when": 1789886145119,
+      "tag": "0071_apify_targets_cross_portal",
+      "breakpoints": true
     }
   ]
 }
