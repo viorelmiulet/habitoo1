@@ -266,6 +266,8 @@ export const setImobiliarePromotionCap = createServerFn({ method: "POST" })
         organizationId: z.string().uuid().optional(),
         serviceKey: z.string().min(1).max(64),
         cap: z.number().int().min(0).max(100_000).nullable(),
+        /** `true` = retrage surplusul confirmat în dialog. */
+        withdraw: z.boolean().optional(),
       })
       .parse(input),
   )
