@@ -1,11 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import type { RefObject } from "react";
-import {
-  Compass,
-  FlaskConical,
-  Menu,
-  ShieldCheck,
-} from "lucide-react";
+import { Compass, FlaskConical, Menu, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { GlobalSearch } from "@/components/app/GlobalSearch";
 import { QuickAdd } from "@/components/app/QuickAdd";
@@ -109,7 +104,6 @@ export function Topbar({
         {isPlatform ? null : <SupportWidget />}
 
         <NotificationsMenu userId={user.userId} />
-
       </div>
     </header>
   );
