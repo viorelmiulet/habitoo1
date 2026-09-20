@@ -202,8 +202,6 @@ function PropertyDetailPage() {
     setDraft({
       title: property.title,
       price: property.price ? String(property.price) : "",
-      surface: property.surface ? String(property.surface) : "",
-      rooms: property.rooms ? String(property.rooms) : "",
       city: property.city ?? "",
       district: property.district ?? "",
       address: property.address ?? "",
@@ -281,7 +279,6 @@ function PropertyDetailPage() {
     return {
       title: draft.title,
       ...transactionPayload(tx),
-      surface: draft.surface ? Number(draft.surface) : null,
       city: location.localityName || draft.city || null,
       county: location.countyName || null,
       county_siruta_code: location.countySirutaCode,
@@ -796,7 +793,6 @@ function PropertyDetailPage() {
                   <LocationPicker idPrefix="edit" value={location} onChange={setLocation} />
                   {[
                     ["title", "Titlu"],
-                    ["surface", "Suprafață (m²)"],
                     ["district", "Zonă"],
                     ["address", "Adresă"],
                   ].map(([key, label]) => (
@@ -866,7 +862,10 @@ function PropertyDetailPage() {
                 </div>
               </FormSection>
 
-              <FormSection title="Detalii complete">
+              <FormSection
+                title="Detalii complete"
+                description="Tip, camere, băi, etaj, suprafețe, an construcție și facilități."
+              >
                 <PropertyDetailsFields
                   idPrefix="edit"
                   value={details}

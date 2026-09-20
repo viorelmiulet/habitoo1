@@ -15,6 +15,7 @@ export const PROPERTY_DETAIL_FIELDS = [
   "balconies",
   "terraces",
   "floor_label",
+  "floor",
   "orientation",
   "build_year",
   "renovation_year",
@@ -27,6 +28,7 @@ export const PROPERTY_DETAIL_FIELDS = [
   "key_in_agency",
   "balcony",
   // Suprafețe
+  "surface",
   "usable_surface",
   "built_surface",
   "total_usable_surface",
@@ -70,6 +72,7 @@ export const PROPERTY_DETAIL_FIELDS = [
   "street_arrangement",
   "views",
   "misc_features",
+  "features",
 ] as const;
 
 export type PropertyDetailField = (typeof PROPERTY_DETAIL_FIELDS)[number];
