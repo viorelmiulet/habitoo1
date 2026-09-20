@@ -1030,10 +1030,14 @@ export type Database = {
           id: string
           items_created: number
           items_discarded: number
+          items_merged: number
           items_received: number
           items_unchanged: number
           items_updated: number
           market_import_run_id: string | null
+          prospects_created: number
+          prospects_skipped: number
+          prospects_updated: number
           source_key: string
           started_at: string
           status: string
@@ -1052,10 +1056,14 @@ export type Database = {
           id?: string
           items_created?: number
           items_discarded?: number
+          items_merged?: number
           items_received?: number
           items_unchanged?: number
           items_updated?: number
           market_import_run_id?: string | null
+          prospects_created?: number
+          prospects_skipped?: number
+          prospects_updated?: number
           source_key: string
           started_at?: string
           status?: string
@@ -1074,10 +1082,14 @@ export type Database = {
           id?: string
           items_created?: number
           items_discarded?: number
+          items_merged?: number
           items_received?: number
           items_unchanged?: number
           items_updated?: number
           market_import_run_id?: string | null
+          prospects_created?: number
+          prospects_skipped?: number
+          prospects_updated?: number
           source_key?: string
           started_at?: string
           status?: string
@@ -1114,8 +1126,10 @@ export type Database = {
           last_run_id: string | null
           max_items: number
           notes: string | null
+          prospect_organization_id: string | null
           spend_total_usd: number
           target: string
+          targets: string[]
           unit_cost_usd: number | null
           updated_at: string
         }
@@ -1131,8 +1145,10 @@ export type Database = {
           last_run_id?: string | null
           max_items?: number
           notes?: string | null
+          prospect_organization_id?: string | null
           spend_total_usd?: number
           target?: string
+          targets?: string[]
           unit_cost_usd?: number | null
           updated_at?: string
         }
@@ -1148,8 +1164,10 @@ export type Database = {
           last_run_id?: string | null
           max_items?: number
           notes?: string | null
+          prospect_organization_id?: string | null
           spend_total_usd?: number
           target?: string
+          targets?: string[]
           unit_cost_usd?: number | null
           updated_at?: string
         }
@@ -1159,6 +1177,13 @@ export type Database = {
             columns: ["last_run_id"]
             isOneToOne: false
             referencedRelation: "apify_runs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "apify_sources_prospect_organization_id_fkey"
+            columns: ["prospect_organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
         ]
@@ -3150,6 +3175,7 @@ export type Database = {
         Row: {
           ambiguous_matches: number
           created_at: string
+          cross_portal_merges: number
           duplicates_detected: number
           errors: Json
           finished_at: string | null
@@ -3173,6 +3199,7 @@ export type Database = {
         Insert: {
           ambiguous_matches?: number
           created_at?: string
+          cross_portal_merges?: number
           duplicates_detected?: number
           errors?: Json
           finished_at?: string | null
@@ -3196,6 +3223,7 @@ export type Database = {
         Update: {
           ambiguous_matches?: number
           created_at?: string
+          cross_portal_merges?: number
           duplicates_detected?: number
           errors?: Json
           finished_at?: string | null

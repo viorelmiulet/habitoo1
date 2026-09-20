@@ -74,6 +74,9 @@ export function ApifySourcesCard() {
   });
 
   const sources = overview.data?.sources ?? [];
+  const organizations = overview.data?.organizations ?? [];
+  const orgName = (id: string | null) =>
+    id === null ? null : (organizations.find((org) => org.id === id)?.name ?? null);
 
   return (
     <SectionCard
@@ -108,8 +111,16 @@ export function ApifySourcesCard() {
                         <Badge variant={source.enabled ? "default" : "secondary"}>
                           {source.enabled ? "Activată" : "Oprită"}
                         </Badge>
-                        {source.target === "prospects" ? (
-                          <Badge variant="outline">Destinație neimplementată</Badge>
+                        {source.targets.includes("market_pool") ? (
+                          <Badge variant="outline">Bazin de piață</Badge>
+                        ) : null}
+                        {source.targets.includes("prospects") ? (
+                          <Badge variant="outline">
+                            Prospecți
+                            {orgName(source.prospectOrganizationId)
+                              ? ` · ${orgName(source.prospectOrganizationId)}`
+                              : " · fără agenție"}
+                          </Badge>
                         ) : null}
                       </div>
                       <p className="mt-1 truncate text-xs text-muted-foreground">
@@ -126,8 +137,12 @@ export function ApifySourcesCard() {
                           Ultima rulare {dateLabel(source.lastRun.startedAt)} ·{" "}
                           {STATUS_LABEL[source.lastRun.status] ?? source.lastRun.status} ·{" "}
                           {source.lastRun.received} citite · {source.lastRun.created} noi ·{" "}
-                          {source.lastRun.updated} actualizate · {source.lastRun.discarded} respinse
-                          · cost real {usd(source.lastRun.costUsd)}
+                          {source.lastRun.updated} actualizate · {source.lastRun.merged} unite între
+                          portaluri · {source.lastRun.discarded} respinse · cost real{" "}
+                          {usd(source.lastRun.costUsd)}
+                          {source.targets.includes("prospects")
+                            ? ` · prospecți: ${source.lastRun.prospectsCreated} noi, ${source.lastRun.prospectsUpdated} actualizați, ${source.lastRun.prospectsSkipped} ignorați`
+                            : ""}
                         </p>
                       ) : (
                         <p className="mt-1 text-xs text-muted-foreground">Nu a rulat încă.</p>

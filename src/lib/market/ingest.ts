@@ -12,7 +12,9 @@
  */
 import {
   buildIdentityHash,
+  findCrossPortalDuplicate,
   matchListingToEntities,
+  type CrossPortalCandidate,
   type DedupeDecision,
   type MarketEntityCandidate,
 } from "./dedupe";
@@ -80,6 +82,10 @@ export type MarketRepository = {
     sourceListingId: string,
   ): Promise<ExistingListing | null>;
   findEntityCandidates(listing: NormalizedListing): Promise<MarketEntityCandidate[]>;
+  /** Oferte recente din alte surse, candidate la unirea între portaluri. */
+  findCrossPortalCandidates(listing: NormalizedListing): Promise<CrossPortalCandidate[]>;
+  /** Actualizează doar momentul ultimei vizualizări (fără a rescrie datele). */
+  touchListingSeen(id: string, runId: string | null, now: string): Promise<void>;
   createEntity(listing: NormalizedListing, reasons: string[]): Promise<string>;
   touchEntity(entityId: string, listing: NormalizedListing): Promise<void>;
   insertListing(row: ListingWriteRow): Promise<string>;
@@ -113,6 +119,8 @@ export type ImportSummary = {
   unchanged: number;
   deactivated: number;
   duplicates: number;
+  /** Rânduri unite cu o ofertă existentă publicată pe alt portal. */
+  crossPortalMerges: number;
   ambiguous: number;
   priceChanges: number;
   statusChanges: number;
@@ -135,6 +143,7 @@ export function emptySummary(): ImportSummary {
     unchanged: 0,
     deactivated: 0,
     duplicates: 0,
+    crossPortalMerges: 0,
     ambiguous: 0,
     priceChanges: 0,
     statusChanges: 0,
@@ -191,6 +200,29 @@ export async function ingestListings(
       const identityHash = buildIdentityHash(listing);
 
       if (!existing) {
+        // Duplicat între portaluri: același imobil publicat pe altă sursă.
+        // Păstrăm oferta văzută prima și adăugăm doar sursa suplimentară.
+        const crossPortal = findCrossPortalDuplicate(
+          listing,
+          await repo.findCrossPortalCandidates(listing),
+          { now: options.now },
+        );
+        if (crossPortal) {
+          await repo.upsertListingSource({
+            marketListingId: crossPortal.candidate.id,
+            source: listing.source,
+            sourceListingId: listing.sourceListingId,
+            url: listing.url,
+            price: listing.price,
+            isPrimary: false,
+            now: options.now,
+          });
+          await repo.touchListingSeen(crossPortal.candidate.id, options.runId, options.now);
+          summary.crossPortalMerges += 1;
+          summary.duplicates += 1;
+          continue;
+        }
+
         const { decision, entityId } = await resolveEntity(repo, listing);
         const dedupeStatus =
           decision.decision === "match"

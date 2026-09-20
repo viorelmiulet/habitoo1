@@ -65,6 +65,41 @@ function readPath(record: Record<string, unknown>, key: string): unknown {
   return undefined;
 }
 
+/** Citirea unui câmp cu coloană proprie, prin maparea sursei. */
+export function readMappedField(
+  record: Record<string, unknown>,
+  mapping: MarketFieldMapping,
+  field: MarketField,
+): unknown {
+  const configured = mapping[field];
+  if (!configured) return undefined;
+  const keys = Array.isArray(configured) ? configured : [configured];
+  for (const key of keys) {
+    const value = readPath(record, key);
+    if (value !== undefined && value !== null && value !== "") return value;
+  }
+  return undefined;
+}
+
+/** Cheile implicite pentru tipul vânzătorului, așa cum le publică actorii. */
+export const APIFY_SELLER_KEYS = [
+  "sellerType",
+  "seller_type",
+  "isBusiness",
+  "is_agency",
+  "advertiserType",
+  "tip_vanzator",
+] as const;
+
+export function readApifyExtra(
+  record: Record<string, unknown>,
+  custom: ApifyFieldMapping | null,
+  field: ApifyExtraField,
+  fallbacks: readonly string[],
+): unknown {
+  return readExtra(record, custom, field, fallbacks);
+}
+
 function readExtra(
   record: Record<string, unknown>,
   custom: ApifyFieldMapping | null,
@@ -163,14 +198,7 @@ export function mapApifyItems(
 
     const record = item as Record<string, unknown>;
     const seller = classifySellerType(
-      readExtra(record, custom, "sellerType", [
-        "sellerType",
-        "seller_type",
-        "isBusiness",
-        "is_agency",
-        "advertiserType",
-        "tip_vanzator",
-      ]),
+      readExtra(record, custom, "sellerType", APIFY_SELLER_KEYS),
     );
     if (seller === "owner") listing.features["vanzator proprietar"] = true;
     if (seller === "agency") listing.features["vanzator agentie"] = true;

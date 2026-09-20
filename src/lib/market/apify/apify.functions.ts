@@ -25,6 +25,21 @@ async function requireSuperadmin(context: AuthContext): Promise<void> {
   }
 }
 
+/** Destinațiile sursei, cu compatibilitate pentru rândurile vechi. */
+function readTargets(
+  targets: unknown,
+  legacy: unknown,
+): ("market_pool" | "prospects")[] {
+  const allowed = ["market_pool", "prospects"] as const;
+  const list = Array.isArray(targets)
+    ? targets.filter((value): value is "market_pool" | "prospects" =>
+        allowed.includes(value as (typeof allowed)[number]),
+      )
+    : [];
+  if (list.length > 0) return [...new Set(list)];
+  return legacy === "prospects" ? ["prospects"] : ["market_pool"];
+}
+
 async function loadAdmin() {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   return supabaseAdmin;
@@ -41,6 +56,10 @@ export type ApifyRunView = {
   unchanged: number;
   discarded: number;
   discardReasons: { reason: string; count: number }[];
+  merged: number;
+  prospectsCreated: number;
+  prospectsUpdated: number;
+  prospectsSkipped: number;
   costUsd: number | null;
   errors: { reference: string; message: string }[];
   /** Primul element brut, ca o greșeală de mapare să se vadă imediat. */
@@ -56,7 +75,8 @@ export type ApifySourceView = {
   fieldMappingJson: string;
   enabled: boolean;
   maxItems: number;
-  target: "market_pool" | "prospects";
+  targets: ("market_pool" | "prospects")[];
+  prospectOrganizationId: string | null;
   unitCostUsd: number | null;
   costNote: string | null;
   notes: string | null;
@@ -72,6 +92,8 @@ export type ApifySourceView = {
 export type ApifyOverview = {
   tokenConfigured: boolean;
   sources: ApifySourceView[];
+  /** Agențiile care pot primi prospecți de la o sursă Apify. */
+  organizations: { id: string; name: string }[];
 };
 
 function runView(row: Record<string, unknown> | null): ApifyRunView | null {
@@ -87,6 +109,10 @@ function runView(row: Record<string, unknown> | null): ApifyRunView | null {
     unchanged: Number(row["items_unchanged"] ?? 0),
     discarded: Number(row["items_discarded"] ?? 0),
     discardReasons: (row["discard_reasons"] as ApifyRunView["discardReasons"] | null) ?? [],
+    merged: Number(row["items_merged"] ?? 0),
+    prospectsCreated: Number(row["prospects_created"] ?? 0),
+    prospectsUpdated: Number(row["prospects_updated"] ?? 0),
+    prospectsSkipped: Number(row["prospects_skipped"] ?? 0),
     costUsd: row["cost_usd"] === null ? null : Number(row["cost_usd"]),
     errors: (row["errors"] as ApifyRunView["errors"] | null) ?? [],
     firstItemJson:
@@ -141,7 +167,8 @@ export const getApifyOverview = createServerFn({ method: "GET" })
         fieldMappingJson: JSON.stringify(row.field_mapping ?? {}, null, 2),
         enabled: Boolean(row.enabled),
         maxItems,
-        target: (row.target as "market_pool" | "prospects") ?? "market_pool",
+        targets: readTargets(row.targets, row.target),
+        prospectOrganizationId: row.prospect_organization_id ?? null,
         unitCostUsd: unitCost,
         costNote: row.cost_note ?? null,
         notes: row.notes ?? null,
@@ -156,7 +183,16 @@ export const getApifyOverview = createServerFn({ method: "GET" })
       });
     }
 
-    return { tokenConfigured: apifyTokenConfigured(), sources };
+    const { data: orgRows } = await admin
+      .from("organizations")
+      .select("id,name")
+      .order("name", { ascending: true });
+
+    return {
+      tokenConfigured: apifyTokenConfigured(),
+      sources,
+      organizations: (orgRows ?? []).map((org) => ({ id: org.id, name: org.name })),
+    };
   });
 
 const sourceInput = z.object({
@@ -173,7 +209,8 @@ const sourceInput = z.object({
     .record(z.string(), z.union([z.string(), z.array(z.string())]))
     .default({}),
   maxItems: z.number().int().min(1).max(10000),
-  target: z.enum(["market_pool", "prospects"]),
+  targets: z.array(z.enum(["market_pool", "prospects"])).min(1).max(2),
+  prospectOrganizationId: z.string().uuid().nullable().optional(),
   unitCostUsd: z.number().finite().min(0).max(1000).nullable().optional(),
   costNote: z.string().trim().max(400).nullable().optional(),
   notes: z.string().trim().max(2000).nullable().optional(),
@@ -195,7 +232,10 @@ export const saveApifySource = createServerFn({ method: "POST" })
         input: data.input as never,
         field_mapping: data.fieldMapping as never,
         max_items: data.maxItems,
-        target: data.target,
+        targets: data.targets,
+        // `target` rămâne sincronizat cu prima destinație pentru compatibilitate.
+        target: data.targets[0],
+        prospect_organization_id: data.prospectOrganizationId ?? null,
         unit_cost_usd: data.unitCostUsd ?? null,
         cost_note: data.costNote ?? null,
         notes: data.notes ?? null,
@@ -241,6 +281,10 @@ export type ApifyRunResult = {
   unchanged: number;
   discarded: number;
   discardReasons: { reason: string; count: number }[];
+  merged: number;
+  prospectsCreated: number;
+  prospectsUpdated: number;
+  prospectsSkipped: number;
   costUsd: number | null;
   errors: { reference: string; message: string }[];
 };
@@ -279,7 +323,8 @@ export const runApifySource = createServerFn({ method: "POST" })
       fieldMapping: (row.field_mapping as ApifyFieldMapping | null) ?? {},
       enabled: Boolean(row.enabled),
       maxItems: Number(row.max_items ?? 100),
-      target: (row.target as "market_pool" | "prospects") ?? "market_pool",
+      targets: readTargets(row.targets, row.target),
+      prospectOrganizationId: row.prospect_organization_id ?? null,
     };
 
     const sourceId = apifyMarketSourceId(source.key);
@@ -352,6 +397,10 @@ export const runApifySource = createServerFn({ method: "POST" })
           };
         },
         readDataset: (input) => readApifyDataset(input),
+        writeProspects: async ({ organizationId, prospects }) => {
+          const { writeApifyProspects } = await import("./prospects.server");
+          return writeApifyProspects(admin, organizationId, prospects, now);
+        },
       });
     } catch (policyError) {
       const message =
@@ -388,6 +437,10 @@ export const runApifySource = createServerFn({ method: "POST" })
         items_unchanged: outcome.unchanged,
         items_discarded: outcome.discarded,
         discard_reasons: outcome.discardReasons as never,
+        items_merged: outcome.merged,
+        prospects_created: outcome.prospectsCreated,
+        prospects_updated: outcome.prospectsUpdated,
+        prospects_skipped: outcome.prospectsSkipped,
         cost_usd: outcome.costUsd,
         usage: (outcome.usage ?? null) as never,
         first_item: (outcome.firstItem ?? null) as never,
@@ -405,6 +458,7 @@ export const runApifySource = createServerFn({ method: "POST" })
         items_updated: outcome.updated,
         items_unchanged: outcome.unchanged,
         items_invalid: outcome.discarded,
+        cross_portal_merges: outcome.merged,
         errors: outcome.errors.slice(0, 100) as never,
       })
       .eq("id", importRun.id);
@@ -425,6 +479,10 @@ export const runApifySource = createServerFn({ method: "POST" })
       unchanged: outcome.unchanged,
       discarded: outcome.discarded,
       discardReasons: outcome.discardReasons,
+      merged: outcome.merged,
+      prospectsCreated: outcome.prospectsCreated,
+      prospectsUpdated: outcome.prospectsUpdated,
+      prospectsSkipped: outcome.prospectsSkipped,
       costUsd: outcome.costUsd,
       errors: outcome.errors,
     };

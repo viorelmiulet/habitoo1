@@ -15,7 +15,7 @@ import {
 import {
   APIFY_RUN_IN_PROGRESS,
   APIFY_SOURCE_DISABLED,
-  APIFY_TARGET_NOT_IMPLEMENTED,
+  APIFY_PROSPECT_ORG_MISSING,
   runApifySourceImport,
   type ApifyRunDeps,
   type ApifySourceConfig,
@@ -58,7 +58,8 @@ function source(overrides: Partial<ApifySourceConfig> = {}): ApifySourceConfig {
     fieldMapping: {},
     enabled: true,
     maxItems: 100,
-    target: "market_pool",
+    targets: ["market_pool"],
+    prospectOrganizationId: null,
     ...overrides,
   };
 }
@@ -173,10 +174,10 @@ describe("rularea unei surse Apify", () => {
     );
   });
 
-  it("refuză o destinație fără traseu de scriere", async () => {
+  it("refuză destinația „prospecți” fără agenție destinatară", async () => {
     await expect(
-      runApifySourceImport(deps({ source: source({ target: "prospects" }) })),
-    ).rejects.toThrow(APIFY_TARGET_NOT_IMPLEMENTED);
+      runApifySourceImport(deps({ source: source({ targets: ["prospects"] }) })),
+    ).rejects.toThrow(APIFY_PROSPECT_ORG_MISSING);
   });
 
   it("refuză rularea fără token configurat, fără să pornească nimic", async () => {
@@ -303,5 +304,33 @@ describe("costurile", () => {
     expect(estimateApifyCost(1000, 0.004)).toBe(4);
     expect(estimateApifyCost(1000, null)).toBeNull();
     expect(sumCosts([0.5, null, 1.25])).toBe(1.75);
+  });
+});
+
+describe("Apify: destinații și duplicate între portaluri", () => {
+  const PRIVATE_ITEM = { ...SAMPLE_ITEM, id: "ap-2002", url: "https://example.ro/a/2002", isBusiness: false };
+
+  it("o sursă cu ambele destinații umple bazinul și creează prospecți doar pentru persoane fizice", async () => {
+    const written: { organizationId: string; count: number }[] = [];
+    const outcome = await runApifySourceImport(
+      deps({
+        source: source({
+          targets: ["market_pool", "prospects"],
+          prospectOrganizationId: "00000000-0000-4000-8000-000000000001",
+        }),
+        readDataset: async () => [SAMPLE_ITEM, PRIVATE_ITEM],
+        writeProspects: async ({ organizationId, prospects }) => {
+          written.push({ organizationId, count: prospects.length });
+          return { created: prospects.length, updated: 0 };
+        },
+      }),
+    );
+
+    expect(outcome.created).toBe(2);
+    expect(written).toEqual([
+      { organizationId: "00000000-0000-4000-8000-000000000001", count: 1 },
+    ]);
+    expect(outcome.prospectsCreated).toBe(1);
+    expect(outcome.prospectsSkipped).toBe(1);
   });
 });

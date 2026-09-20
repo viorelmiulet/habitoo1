@@ -163,7 +163,7 @@ describe("importul ofertelor de piață", () => {
     expect(store.listings.every((row) => row.status === "active")).toBe(true);
   });
 
-  it("leagă aceeași proprietate publicată pe două surse la o singură entitate", async () => {
+  it("aceeași proprietate publicată pe două surse rămâne un singur rând, cu ambele surse", async () => {
     const { repo, store } = createFakeRepository();
     await ingestListings(repo, { source: "imobiliare_ro", mode: "partial", runId: null, now: T1 }, [
       listing("imobiliare_ro", { id: "A-1" }),
@@ -173,11 +173,58 @@ describe("importul ofertelor de piață", () => {
       { source: "storia", mode: "partial", runId: null, now: T1 },
       [listing("storia", { id: "S-9" })],
     );
-    expect(summary.created).toBe(1);
+    // Unirea între portaluri intervine înaintea legării pe entitate: păstrăm
+    // oferta văzută prima și adăugăm doar sursa suplimentară.
+    expect(summary.created).toBe(0);
+    expect(summary.crossPortalMerges).toBe(1);
     expect(summary.duplicates).toBe(1);
-    expect(store.entities).toHaveLength(1);
-    const entityIds = new Set(store.listings.map((row) => row.marketEntityId));
-    expect(entityIds.size).toBe(1);
-    expect(store.listings[1]?.dedupeStatus).toBe("merged");
+    expect(store.listings).toHaveLength(1);
+    expect(store.sources.map((row) => row.source).sort()).toEqual(["imobiliare_ro", "storia"]);
+  });
+});
+
+describe("duplicate între portaluri", () => {
+  const BASE = { id: "L-9", cartier: "Militari", pret: 100000, suprafata_utila: 60, camere: 2 };
+
+  async function importFrom(repo: Parameters<typeof ingestListings>[0], src: string, over: Record<string, unknown>) {
+    return ingestListings(
+      repo,
+      { source: src, mode: "partial", runId: `run-${src}`, now: T1 },
+      [listing(src, { ...BASE, ...over })],
+    );
+  }
+
+  it("aceeași proprietate de pe două portaluri produce o singură ofertă cu două surse", async () => {
+    const { repo, store } = createFakeRepository();
+    await importFrom(repo, "imobiliare_ro", {});
+    const second = await importFrom(repo, "storia_ro", { id: "L-9-b", pret: 100500 });
+
+    expect(second.created).toBe(0);
+    expect(second.crossPortalMerges).toBe(1);
+    expect(store.listings).toHaveLength(1);
+    expect(store.sources.map((s) => s.source).sort()).toEqual(["imobiliare_ro", "storia_ro"]);
+  });
+
+  it("nu unește oferte care diferă la camere sau la suprafață", async () => {
+    const { repo, store } = createFakeRepository();
+    await importFrom(repo, "imobiliare_ro", {});
+    const rooms = await importFrom(repo, "storia_ro", { id: "L-9-c", camere: 3 });
+    expect(rooms.crossPortalMerges).toBe(0);
+
+    const area = await importFrom(repo, "olx_ro", { id: "L-9-d", suprafata_utila: 75 });
+    expect(area.crossPortalMerges).toBe(0);
+    expect(store.listings).toHaveLength(3);
+  });
+
+  it("o ofertă fără suprafață nu este niciodată unită", async () => {
+    const { repo, store } = createFakeRepository();
+    await importFrom(repo, "imobiliare_ro", {});
+    const noArea = await importFrom(repo, "storia_ro", {
+      id: "L-9-e",
+      suprafata_utila: null,
+      suprafata_construita: null,
+    });
+    expect(noArea.crossPortalMerges).toBe(0);
+    expect(store.listings).toHaveLength(2);
   });
 });

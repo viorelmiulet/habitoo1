@@ -11,7 +11,11 @@
  */
 import { ingestListings, type ImportSummary, type MarketRepository } from "../ingest";
 import { mapApifyItems, summarizeDiscards, type ApifyFieldMapping } from "./mapping";
+import { buildApifyProspects } from "./prospects";
 import { apifyMarketSourceId } from "./source";
+import type { NormalizedProspect } from "@/lib/prospecting/types";
+
+export type ApifyTarget = "market_pool" | "prospects";
 
 export type ApifySourceConfig = {
   key: string;
@@ -21,7 +25,10 @@ export type ApifySourceConfig = {
   fieldMapping: ApifyFieldMapping | null;
   enabled: boolean;
   maxItems: number;
-  target: "market_pool" | "prospects";
+  /** Destinațiile sursei: bazinul de piață, lista de prospecți sau ambele. */
+  targets: ApifyTarget[];
+  /** Agenția care primește prospecții (obligatorie pentru destinația „prospecți”). */
+  prospectOrganizationId: string | null;
 };
 
 export type ApifyRunOutcome = {
@@ -35,6 +42,12 @@ export type ApifyRunOutcome = {
   unchanged: number;
   discarded: number;
   discardReasons: { reason: string; count: number }[];
+  /** Rânduri unite cu o ofertă existentă publicată pe alt portal. */
+  merged: number;
+  prospectsCreated: number;
+  prospectsUpdated: number;
+  prospectsSkipped: number;
+  prospectSkipReasons: { reason: string; count: number }[];
   costUsd: number | null;
   usage: Record<string, unknown> | null;
   firstItem: unknown;
@@ -65,13 +78,19 @@ export type ApifyRunDeps = {
     timedOut: boolean;
   }>;
   readDataset: (input: { datasetId: string; maxItems: number }) => Promise<unknown[]>;
+  /** Scrierea prospecților; cerută doar când sursa are destinația „prospecți”. */
+  writeProspects?: (input: {
+    organizationId: string;
+    prospects: NormalizedProspect[];
+  }) => Promise<{ created: number; updated: number }>;
 };
 
 export const APIFY_SOURCE_DISABLED =
   "Sursa este oprită. Pornește-o din ecranul de administrare înainte de a rula.";
 export const APIFY_RUN_IN_PROGRESS = "O rulare este deja în curs pentru această sursă.";
-export const APIFY_TARGET_NOT_IMPLEMENTED =
-  "Destinația „prospecți” nu are încă traseu de scriere implementat.";
+export const APIFY_TARGET_MISSING = "Sursa nu are nicio destinație configurată.";
+export const APIFY_PROSPECT_ORG_MISSING =
+  "Sursa trimite prospecți, dar nu are agenția destinatară configurată.";
 
 function emptyOutcome(deps: ApifyRunDeps): ApifyRunOutcome {
   return {
@@ -85,6 +104,11 @@ function emptyOutcome(deps: ApifyRunDeps): ApifyRunOutcome {
     unchanged: 0,
     discarded: 0,
     discardReasons: [],
+    merged: 0,
+    prospectsCreated: 0,
+    prospectsUpdated: 0,
+    prospectsSkipped: 0,
+    prospectSkipReasons: [],
     costUsd: null,
     usage: null,
     firstItem: null,
@@ -97,7 +121,11 @@ function emptyOutcome(deps: ApifyRunDeps): ApifyRunOutcome {
 /** Pornește, așteaptă, mapează și importă. Aruncă doar la refuzuri de politică. */
 export async function runApifySourceImport(deps: ApifyRunDeps): Promise<ApifyRunOutcome> {
   if (!deps.source.enabled) throw new Error(APIFY_SOURCE_DISABLED);
-  if (deps.source.target !== "market_pool") throw new Error(APIFY_TARGET_NOT_IMPLEMENTED);
+  const targets = deps.source.targets;
+  if (targets.length === 0) throw new Error(APIFY_TARGET_MISSING);
+  if (targets.includes("prospects") && !deps.source.prospectOrganizationId) {
+    throw new Error(APIFY_PROSPECT_ORG_MISSING);
+  }
   if (!deps.tokenConfigured()) {
     const { APIFY_TOKEN_MISSING } = await import("./token-message");
     throw new Error(APIFY_TOKEN_MISSING);
@@ -145,23 +173,54 @@ export async function runApifySourceImport(deps: ApifyRunDeps): Promise<ApifyRun
     outcome.firstItem = items[0] ?? null;
 
     const sourceId = apifyMarketSourceId(deps.source.key);
-    const { listings, discarded } = mapApifyItems(sourceId, items, deps.source.fieldMapping);
-    outcome.discarded = discarded.length;
-    outcome.discardReasons = summarizeDiscards(discarded);
+    let written = 0;
 
-    const summary: ImportSummary = await ingestListings(
-      deps.repo,
-      { source: sourceId, mode: "partial", runId: deps.runId, now: deps.now },
-      listings,
-    );
-    outcome.created = summary.created;
-    outcome.updated = summary.updated;
-    outcome.unchanged = summary.unchanged;
-    outcome.errors.push(...summary.errors);
-    outcome.status =
-      outcome.errors.length === 0 || summary.created + summary.updated + summary.unchanged > 0
-        ? "completed"
-        : "failed";
+    // Destinația „bazin de piață”: toate anunțurile trec prin pipeline-ul existent.
+    if (targets.includes("market_pool")) {
+      const { listings, discarded } = mapApifyItems(sourceId, items, deps.source.fieldMapping);
+      outcome.discarded = discarded.length;
+      outcome.discardReasons = summarizeDiscards(discarded);
+
+      const summary: ImportSummary = await ingestListings(
+        deps.repo,
+        { source: sourceId, mode: "partial", runId: deps.runId, now: deps.now },
+        listings,
+      );
+      outcome.created = summary.created;
+      outcome.updated = summary.updated;
+      outcome.unchanged = summary.unchanged;
+      outcome.merged = summary.crossPortalMerges;
+      outcome.errors.push(...summary.errors);
+      written += summary.created + summary.updated + summary.unchanged + summary.crossPortalMerges;
+    }
+
+    // Destinația „prospecți”: numai anunțurile marcate ca persoane fizice.
+    if (targets.includes("prospects")) {
+      const built = buildApifyProspects(
+        deps.source.key,
+        items,
+        deps.source.fieldMapping,
+        deps.now,
+      );
+      outcome.prospectsSkipped = built.skipped;
+      outcome.prospectSkipReasons = built.skipReasons;
+      if (!deps.writeProspects) {
+        outcome.errors.push({
+          reference: deps.source.key,
+          message: "Scrierea prospecților nu este disponibilă în acest context.",
+        });
+      } else if (built.prospects.length > 0) {
+        const result = await deps.writeProspects({
+          organizationId: deps.source.prospectOrganizationId!,
+          prospects: built.prospects,
+        });
+        outcome.prospectsCreated = result.created;
+        outcome.prospectsUpdated = result.updated;
+        written += result.created + result.updated;
+      }
+    }
+
+    outcome.status = outcome.errors.length === 0 || written > 0 ? "completed" : "failed";
     outcome.finishedAt = new Date().toISOString();
     await deps.releaseLock(
       outcome.status === "completed",
