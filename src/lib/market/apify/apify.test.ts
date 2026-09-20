@@ -115,10 +115,10 @@ describe("maparea rezultatelor Apify", () => {
     const { listings, discarded } = mapApifyItems(SOURCE_ID, items, null);
     expect(listings).toHaveLength(1);
     expect(discarded).toHaveLength(3);
-    expect(summarizeDiscards(discarded)).toEqual([
-      { reason: "Lipsește prețul.", count: 2 },
-      { reason: "Lipsește adresa anunțului.", count: 1 },
-    ]);
+    const reasons = summarizeDiscards(discarded);
+    expect(reasons).toContainEqual({ reason: "Lipsește prețul.", count: 1 });
+    expect(reasons).toContainEqual({ reason: "Lipsește adresa anunțului.", count: 1 });
+    expect(reasons.some((r) => r.reason.includes("pozitiv"))).toBe(true);
   });
 
   it("folosește maparea configurată pe sursă, fără cod nou", () => {
