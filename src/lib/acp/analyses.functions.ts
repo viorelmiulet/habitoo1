@@ -1091,6 +1091,8 @@ export type AcpAnalysisView = {
   engineVersion: number;
   /** Rezumatul ajustării în timp (doar motor v2; null pentru analizele v1). */
   timeAdjustment: AcpTimeAdjustmentSummary | null;
+  /** Cifrele publicate de sursele interogate live, separat de calculul nostru. */
+  marketQueryContexts: MarketQueryMarketContext[];
   statistics: ReturnType<typeof runAcpAnalysis>["statistics"] | null;
   estimate: ReturnType<typeof runAcpAnalysis>["estimate"] | null;
   confidence: ReturnType<typeof runAcpAnalysis>["confidence"] | null;
@@ -1163,6 +1165,7 @@ export const getAcpAnalysis = createServerFn({ method: "POST" })
       targetPricePerSqm?: number | null;
       engineVersion?: number | null;
       timeAdjustment?: AcpTimeAdjustmentSummary | null;
+      marketQueryContexts?: MarketQueryMarketContext[] | null;
       quality?: AcpAnalysisView["quality"];
       advanced?: AcpAnalysisView["advanced"];
       calibration?: AcpCalibrationModel | null;
@@ -1220,6 +1223,7 @@ export const getAcpAnalysis = createServerFn({ method: "POST" })
         analysis.engine_version ?? analysisData.engineVersion ?? null,
       ),
       timeAdjustment: analysisData.timeAdjustment ?? null,
+      marketQueryContexts: analysisData.marketQueryContexts ?? [],
       statistics: analysisData.statistics ?? null,
       estimate: analysisData.estimate ?? null,
       confidence: analysisData.confidence ?? null,
