@@ -2,6 +2,9 @@
  * Setări → AI: starea Habitoo AI, providerul activ, limitele și consumul.
  * Nu afișează niciodată chei, prompturi interne sau erori tehnice brute, iar
  * providerul este citit de la server (nu hardcodat în interfață).
+ *
+ * Funcțiile AI se activează exclusiv de administratorul platformei, per agenție;
+ * aici sunt doar afișate.
  */
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -11,6 +14,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getAiStatus } from "@/lib/ai/ai.functions";
+import { useAiFeatures } from "@/hooks/use-ai-features";
+import { AI_FEATURES } from "@/lib/ai/features/keys";
 
 export function AiSettingsCard() {
   const fetchStatus = useServerFn(getAiStatus);
@@ -18,6 +23,7 @@ export function AiSettingsCard() {
     queryKey: ["ai", "status"],
     queryFn: () => fetchStatus(),
   });
+  const { features } = useAiFeatures();
 
   return (
     <Card>
@@ -49,6 +55,23 @@ export function AiSettingsCard() {
         ) : (
           <>
             <p className="text-sm text-muted-foreground">{data.message}</p>
+
+            <div className="rounded-md border p-3 text-sm">
+              <p className="font-medium">Funcții AI disponibile agenției</p>
+              <ul className="mt-2 space-y-1">
+                {AI_FEATURES.map((feature) => (
+                  <li key={feature.key} className="flex items-center justify-between gap-3">
+                    <span>{feature.label}</span>
+                    <Badge variant={features[feature.key] ? "default" : "secondary"}>
+                      {features[feature.key] ? "Activată" : "Neactivată"}
+                    </Badge>
+                  </li>
+                ))}
+              </ul>
+              <p className="mt-2 text-xs text-muted-foreground">
+                Activarea se face de administratorul platformei, pentru fiecare agenție.
+              </p>
+            </div>
 
             <dl className="grid gap-3 sm:grid-cols-2">
               <div>
@@ -107,7 +130,7 @@ export function AiSettingsCard() {
               </ul>
             </div>
 
-            <Button asChild variant="outline" disabled={!data.configured}>
+            <Button asChild variant="outline" disabled={!data.configured || !data.featureEnabled}>
               <Link to="/app/ai">Deschide Habitoo AI</Link>
             </Button>
           </>

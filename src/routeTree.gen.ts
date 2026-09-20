@@ -51,6 +51,7 @@ import { Route as AuthenticatedAppSupportRouteImport } from './routes/_authentic
 import { Route as AuthenticatedAppTeamRouteImport } from './routes/_authenticated/app.team'
 import { Route as AuthenticatedSuperadminIndexRouteImport } from './routes/_authenticated/superadmin.index'
 import { Route as AuthenticatedSuperadminAgenciesRouteImport } from './routes/_authenticated/superadmin.agencies'
+import { Route as AuthenticatedSuperadminAiFeaturesRouteImport } from './routes/_authenticated/superadmin.ai-features'
 import { Route as AuthenticatedSuperadminAuditRouteImport } from './routes/_authenticated/superadmin.audit'
 import { Route as AuthenticatedSuperadminMailRouteImport } from './routes/_authenticated/superadmin.mail'
 import { Route as AuthenticatedSuperadminNomenclatorRouteImport } from './routes/_authenticated/superadmin.nomenclator'
@@ -321,6 +322,12 @@ const AuthenticatedSuperadminAgenciesRoute =
   AuthenticatedSuperadminAgenciesRouteImport.update({
     id: '/agencies',
     path: '/agencies',
+    getParentRoute: () => AuthenticatedSuperadminRoute,
+  } as any)
+const AuthenticatedSuperadminAiFeaturesRoute =
+  AuthenticatedSuperadminAiFeaturesRouteImport.update({
+    id: '/ai-features',
+    path: '/ai-features',
     getParentRoute: () => AuthenticatedSuperadminRoute,
   } as any)
 const AuthenticatedSuperadminAuditRoute =
@@ -648,6 +655,7 @@ export interface FileRoutesByFullPath {
   '/app/support': typeof AuthenticatedAppSupportRoute
   '/app/team': typeof AuthenticatedAppTeamRoute
   '/superadmin/agencies': typeof AuthenticatedSuperadminAgenciesRoute
+  '/superadmin/ai-features': typeof AuthenticatedSuperadminAiFeaturesRoute
   '/superadmin/audit': typeof AuthenticatedSuperadminAuditRoute
   '/superadmin/mail': typeof AuthenticatedSuperadminMailRoute
   '/superadmin/nomenclator': typeof AuthenticatedSuperadminNomenclatorRoute
@@ -738,6 +746,7 @@ export interface FileRoutesByTo {
   '/app/support': typeof AuthenticatedAppSupportRoute
   '/app/team': typeof AuthenticatedAppTeamRoute
   '/superadmin/agencies': typeof AuthenticatedSuperadminAgenciesRoute
+  '/superadmin/ai-features': typeof AuthenticatedSuperadminAiFeaturesRoute
   '/superadmin/audit': typeof AuthenticatedSuperadminAuditRoute
   '/superadmin/mail': typeof AuthenticatedSuperadminMailRoute
   '/superadmin/nomenclator': typeof AuthenticatedSuperadminNomenclatorRoute
@@ -832,6 +841,7 @@ export interface FileRoutesById {
   '/_authenticated/app/support': typeof AuthenticatedAppSupportRoute
   '/_authenticated/app/team': typeof AuthenticatedAppTeamRoute
   '/_authenticated/superadmin/agencies': typeof AuthenticatedSuperadminAgenciesRoute
+  '/_authenticated/superadmin/ai-features': typeof AuthenticatedSuperadminAiFeaturesRoute
   '/_authenticated/superadmin/audit': typeof AuthenticatedSuperadminAuditRoute
   '/_authenticated/superadmin/mail': typeof AuthenticatedSuperadminMailRoute
   '/_authenticated/superadmin/nomenclator': typeof AuthenticatedSuperadminNomenclatorRoute
@@ -926,6 +936,7 @@ export interface FileRouteTypes {
     | '/app/support'
     | '/app/team'
     | '/superadmin/agencies'
+    | '/superadmin/ai-features'
     | '/superadmin/audit'
     | '/superadmin/mail'
     | '/superadmin/nomenclator'
@@ -1016,6 +1027,7 @@ export interface FileRouteTypes {
     | '/app/support'
     | '/app/team'
     | '/superadmin/agencies'
+    | '/superadmin/ai-features'
     | '/superadmin/audit'
     | '/superadmin/mail'
     | '/superadmin/nomenclator'
@@ -1109,6 +1121,7 @@ export interface FileRouteTypes {
     | '/_authenticated/app/support'
     | '/_authenticated/app/team'
     | '/_authenticated/superadmin/agencies'
+    | '/_authenticated/superadmin/ai-features'
     | '/_authenticated/superadmin/audit'
     | '/_authenticated/superadmin/mail'
     | '/_authenticated/superadmin/nomenclator'
@@ -1502,6 +1515,13 @@ declare module '@tanstack/react-router' {
       path: '/agencies'
       fullPath: '/superadmin/agencies'
       preLoaderRoute: typeof AuthenticatedSuperadminAgenciesRouteImport
+      parentRoute: typeof AuthenticatedSuperadminRoute
+    }
+    '/_authenticated/superadmin/ai-features': {
+      id: '/_authenticated/superadmin/ai-features'
+      path: '/ai-features'
+      fullPath: '/superadmin/ai-features'
+      preLoaderRoute: typeof AuthenticatedSuperadminAiFeaturesRouteImport
       parentRoute: typeof AuthenticatedSuperadminRoute
     }
     '/_authenticated/superadmin/audit': {
@@ -1938,6 +1958,7 @@ const AuthenticatedAppRouteWithChildren =
 
 interface AuthenticatedSuperadminRouteChildren {
   AuthenticatedSuperadminAgenciesRoute: typeof AuthenticatedSuperadminAgenciesRoute
+  AuthenticatedSuperadminAiFeaturesRoute: typeof AuthenticatedSuperadminAiFeaturesRoute
   AuthenticatedSuperadminAuditRoute: typeof AuthenticatedSuperadminAuditRoute
   AuthenticatedSuperadminMailRoute: typeof AuthenticatedSuperadminMailRoute
   AuthenticatedSuperadminNomenclatorRoute: typeof AuthenticatedSuperadminNomenclatorRoute
@@ -1952,6 +1973,8 @@ interface AuthenticatedSuperadminRouteChildren {
 const AuthenticatedSuperadminRouteChildren: AuthenticatedSuperadminRouteChildren =
   {
     AuthenticatedSuperadminAgenciesRoute: AuthenticatedSuperadminAgenciesRoute,
+    AuthenticatedSuperadminAiFeaturesRoute:
+      AuthenticatedSuperadminAiFeaturesRoute,
     AuthenticatedSuperadminAuditRoute: AuthenticatedSuperadminAuditRoute,
     AuthenticatedSuperadminMailRoute: AuthenticatedSuperadminMailRoute,
     AuthenticatedSuperadminNomenclatorRoute:
