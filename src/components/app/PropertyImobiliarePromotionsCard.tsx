@@ -261,7 +261,7 @@ export function PropertyImobiliarePromotionsCard({
                 <p className="mt-1 text-xs text-muted-foreground">
                   Activ pe acest anunț; locurile sunt epuizate, dar dezactivarea rămâne posibilă.
                 </p>
-              ) : row.value === null && row.manageable ? (
+              ) : row.value === null && row.manageable && !view.data.stateUnreported ? (
                 <p className="mt-1 text-xs text-muted-foreground">
                   Starea pe acest anunț nu a fost raportată de portal.
                 </p>
