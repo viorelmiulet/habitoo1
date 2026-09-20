@@ -145,6 +145,54 @@ export function createMarketRepository(admin: Admin): MarketRepository {
       }));
     },
 
+    async findCrossPortalCandidates(listing) {
+      const area = listing.usableArea ?? listing.totalArea;
+      if (listing.rooms === null || !area || !listing.price) return [];
+      const zone = crossPortalZone(listing);
+      if (!zone) return [];
+      const since = new Date(
+        Date.now() - CROSS_PORTAL_THRESHOLDS.windowDays * 86_400_000,
+      ).toISOString();
+      let query = admin
+        .from("market_listings")
+        .select(
+          "id,source,normalized_city,normalized_district,normalized_neighborhood,property_type,transaction_type,rooms,usable_area,total_area,price,last_seen_at",
+        )
+        .eq("status", "active")
+        .eq("rooms", listing.rooms)
+        .neq("source", listing.source)
+        .gte("last_seen_at", since)
+        .order("first_seen_at", { ascending: true })
+        .limit(CROSS_PORTAL_CANDIDATE_LIMIT);
+      if (listing.normalizedCity) query = query.eq("normalized_city", listing.normalizedCity);
+      if (listing.propertyType) query = query.eq("property_type", listing.propertyType);
+      if (listing.transactionType) query = query.eq("transaction_type", listing.transactionType);
+      const { data, error } = await query;
+      if (error) throw error;
+      return (data ?? []).map<CrossPortalCandidate>((row) => ({
+        id: row.id,
+        source: row.source,
+        normalizedCity: row.normalized_city,
+        normalizedDistrict: row.normalized_district,
+        normalizedNeighborhood: row.normalized_neighborhood,
+        propertyType: row.property_type,
+        transactionType: row.transaction_type,
+        rooms: row.rooms,
+        usableArea: row.usable_area,
+        totalArea: row.total_area,
+        price: row.price,
+        lastSeenAt: row.last_seen_at,
+      }));
+    },
+
+    async touchListingSeen(id, runId, now) {
+      const { error } = await admin
+        .from("market_listings")
+        .update({ last_seen_at: now, last_import_run_id: runId, updated_at: now })
+        .eq("id", id);
+      if (error) throw error;
+    },
+
     async createEntity(listing, reasons) {
       const { data, error } = await admin
         .from("market_entities")
