@@ -44,15 +44,16 @@ export type ApifyRunView = {
   costUsd: number | null;
   errors: { reference: string; message: string }[];
   /** Primul element brut, ca o greșeală de mapare să se vadă imediat. */
-  firstItem: unknown;
+  /** JSON text, ca o greșeală de mapare să fie vizibilă imediat. */
+  firstItemJson: string | null;
 };
 
 export type ApifySourceView = {
   key: string;
   label: string;
   actorId: string;
-  input: Record<string, unknown>;
-  fieldMapping: ApifyFieldMapping;
+  inputJson: string;
+  fieldMappingJson: string;
   enabled: boolean;
   maxItems: number;
   target: "market_pool" | "prospects";
