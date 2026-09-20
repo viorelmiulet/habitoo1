@@ -372,12 +372,21 @@ export const setImobiliarePromotionAllocation = createServerFn({ method: "POST" 
       await admin.from(PROMOTION_ALLOCATIONS_TABLE).insert(row);
     }
 
+    const withdrawn = data.withdraw
+      ? await enqueueAfterSave({
+          organizationId,
+          serviceKey: definition.id,
+          actorId: (context as unknown as { userId: string }).userId,
+          allocation: { userId: data.userId, amount: data.amount },
+        })
+      : "";
+
     return {
       ok: true,
       message:
-        data.amount === null
+        (data.amount === null
           ? `${definition.label}: alocare nelimitată în limita agenției.`
-          : `${definition.label}: alocare de ${data.amount}.`,
+          : `${definition.label}: alocare de ${data.amount}.`) + withdrawn,
     };
   });
 
