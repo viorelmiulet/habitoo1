@@ -136,6 +136,16 @@ export function PropertyImobiliarePromotionsCard({
           <AlertTriangle className="mt-0.5 size-3 shrink-0" aria-hidden />
           Starea serviciilor pentru acest anunț nu a putut fi citită: {view.data.listingError}
         </p>
+      ) : view.data.stateUnreported ? (
+        <p className="mt-2 text-xs text-muted-foreground">
+          Starea pe acest anunț nu a fost raportată de portal.
+        </p>
+      ) : null}
+
+      {rows.length === 0 ? (
+        <p className="mt-2 text-xs text-muted-foreground">
+          Agenția nu folosește niciun serviciu de promovare Imobiliare.ro.
+        </p>
       ) : null}
 
       <ul className="mt-2 divide-y divide-border/60">
