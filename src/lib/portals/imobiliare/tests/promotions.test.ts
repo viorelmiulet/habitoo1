@@ -418,6 +418,7 @@ describe("comanda unui serviciu pe ofertă", () => {
       definition: imobiliarePromotion("tl")!,
       value: true,
       current: false,
+      allocation: null,
     });
     expect(result.ok).toBe(true);
     expect(calls[0]?.path).toBe("/api/v3/promotions/slots/tl");
@@ -439,6 +440,7 @@ describe("comanda unui serviciu pe ofertă", () => {
       definition: imobiliarePromotion("bonus")!,
       value: false,
       current: true,
+      allocation: null,
     });
     expect(result.ok).toBe(true);
     expect(calls.every((call) => !call.path.includes("/promotions/slots/"))).toBe(true);
@@ -457,6 +459,7 @@ describe("comanda unui serviciu pe ofertă", () => {
       definition: imobiliarePromotion("tls")!,
       value: true,
       current: false,
+      allocation: null,
     });
     expect(result.ok).toBe(false);
     // Nu s-a trimis nicio scriere către portal.
@@ -476,6 +479,7 @@ describe("comanda unui serviciu pe ofertă", () => {
       definition: imobiliarePromotion("energy")!,
       value: 4,
       current: 0,
+      allocation: null,
     });
     expect(result.ok).toBe(true);
     expect(calls.at(-1)?.body).toEqual({ promotions: { energy: 4 } });
@@ -498,6 +502,7 @@ describe("comanda unui serviciu pe ofertă", () => {
       definition: imobiliarePromotion("promo")!,
       value: true,
       current: false,
+      allocation: null,
     });
     expect(result.ok).toBe(true);
     expect(calls.at(-1)?.accessToken).toBe("refreshed-token-secret");
@@ -521,6 +526,7 @@ describe("comanda unui serviciu pe ofertă", () => {
       definition: imobiliarePromotion("tl")!,
       value: true,
       current: false,
+      allocation: null,
     });
     const serialized = JSON.stringify(result);
     expect(serialized).not.toContain("access-token-secret");
@@ -538,6 +544,7 @@ describe("comanda unui serviciu pe ofertă", () => {
       definition: imobiliarePromotion("bonus")!,
       value: false,
       current: true,
+      allocation: null,
     });
     expect(JSON.stringify(lockCalls[0])).toContain("org-A");
     expect(JSON.stringify(lockCalls[0])).not.toContain("org-B");
