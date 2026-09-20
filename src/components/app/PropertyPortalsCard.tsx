@@ -153,7 +153,7 @@ export const PropertyPortalsCard = forwardRef<
       loadJournal({ data: { ...(organizationId ? { organizationId } : {}), propertyId } }),
   });
   const requirementByPortal = useMemo(() => {
-    type Report = NonNullable<typeof requirements.data>[number];
+    type Report = NonNullable<typeof requirementRows>[number];
     const map = new Map<string, Report>();
     for (const item of requirementRows ?? []) map.set(item.portalId, item);
     return map;
