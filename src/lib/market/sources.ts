@@ -141,5 +141,9 @@ export function findMarketSource(id: string): MarketSourceDefinition | null {
 }
 
 export function marketSourceName(id: string): string {
-  return findMarketSource(id)?.name ?? id;
+  const known = findMarketSource(id);
+  if (known) return known.name;
+  // Sursele Apify sunt configurate, nu declarate în cod: le etichetăm generic.
+  if (id.startsWith("apify:")) return `Apify · ${id.slice("apify:".length)}`;
+  return id;
 }
