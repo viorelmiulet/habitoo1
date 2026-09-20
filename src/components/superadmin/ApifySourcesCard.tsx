@@ -52,8 +52,22 @@ export function ApifySourcesCard() {
   const loadOverview = useServerFn(getApifyOverview);
   const toggleSource = useServerFn(setApifySourceEnabled);
   const startRun = useServerFn(runApifySource);
+  const persistSource = useServerFn(saveApifySource);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [editing, setEditing] = useState<ApifySourceView | null>(null);
 
   const overview = useQuery({ queryKey: QUERY_KEY, queryFn: () => loadOverview({}) });
+
+  const saveSource = useMutation({
+    mutationFn: (payload: ApifySourcePayload) => persistSource({ data: payload }),
+    onSuccess: () => {
+      toast.success("Sursa a fost salvată.");
+      setDialogOpen(false);
+      void queryClient.invalidateQueries({ queryKey: QUERY_KEY });
+    },
+    onError: (error) => toastError(error),
+  });
+
 
   const save = useMutation({
     mutationFn: (input: { key: string; enabled?: boolean; maxItems?: number }) =>
