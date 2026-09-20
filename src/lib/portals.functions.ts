@@ -111,6 +111,10 @@ export type PortalLogItem = {
   createdAt: string;
 };
 
+export type PropertyPortalJournalItem = PortalLogItem & {
+  requestId: string | null;
+};
+
 export type AuthContext = {
   supabase: {
     rpc: (
@@ -1675,6 +1679,58 @@ export const getPropertyPortalRequirements = createServerFn({ method: "POST" })
       portalName: portalDisplayName(portal.id),
       ...validatePortalRequirements(portal.id, subject),
     }));
+  });
+
+/** Ultimele operații de portal pentru o proprietate accesibilă utilizatorului curent. */
+export const getPropertyPortalJournal = createServerFn({ method: "POST" })
+  .middleware([requireActiveOrgAuth])
+  .inputValidator((input: unknown) =>
+    z
+      .object({ organizationId: z.string().uuid().optional(), propertyId: z.string().uuid() })
+      .parse(input),
+  )
+  .handler(async ({ data, context }): Promise<PropertyPortalJournalItem[]> => {
+    const { organizationId, agentOnly } = await resolvePublishingOrg(
+      context as unknown as AuthContext,
+      data.organizationId,
+    );
+    await assertPortalPropertyAccess({
+      organizationId,
+      propertyId: data.propertyId,
+      agentOnly,
+      userId: context.userId,
+    });
+    const admin = await loadAdmin();
+    const { data: rows } = await admin
+      .from("portal_operation_logs")
+      .select(
+        "id, portal, operation, success, error_code, error_message, property_id, created_at, portal_response",
+      )
+      .eq("organization_id", organizationId)
+      .eq("property_id", data.propertyId)
+      .order("created_at", { ascending: false })
+      .limit(8);
+
+    return (rows ?? []).map((row) => {
+      const response =
+        row.portal_response &&
+        typeof row.portal_response === "object" &&
+        !Array.isArray(row.portal_response)
+          ? (row.portal_response as Record<string, unknown>)
+          : null;
+      const rawRequestId = response?.request_id ?? response?.requestId;
+      return {
+        id: row.id,
+        portal: row.portal,
+        operation: row.operation,
+        success: row.success,
+        errorCode: row.error_code,
+        errorMessage: row.error_message,
+        propertyId: row.property_id,
+        createdAt: row.created_at,
+        requestId: typeof rawRequestId === "string" ? rawRequestId : null,
+      };
+    });
   });
 
 export const getPortalLogs = createServerFn({ method: "POST" })

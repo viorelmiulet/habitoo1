@@ -102,15 +102,21 @@ export function PropertyImobiliarePromotionsCard({
   if (!view.data?.available) {
     return (
       <p className="mt-3 pl-9 text-xs text-muted-foreground">
-        {view.data?.message ?? "Promovarea Imobiliare.ro nu este disponibilă pentru această ofertă."}
+        {view.data?.message ??
+          "Promovarea Imobiliare.ro nu este disponibilă pentru această ofertă."}
       </p>
     );
   }
 
   return (
-    <div className="mt-3 rounded-lg border border-border bg-muted/30 p-3 pl-3 sm:ml-9">
+    <div>
       <header className="flex flex-wrap items-center justify-between gap-2">
-        <p className="text-xs font-medium">Promovare Imobiliare.ro</p>
+        <div>
+          <h2 className="text-lg font-semibold">Promovări Imobiliare.ro</h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Sunt afișate numai serviciile activate de agenție pentru acest cont.
+          </p>
+        </div>
         <div className="flex items-center gap-2">
           <span className="text-xs text-muted-foreground">
             {view.data.syncedAt
@@ -119,13 +125,15 @@ export function PropertyImobiliarePromotionsCard({
           </span>
           <Button
             type="button"
-            size="sm"
-            variant="ghost"
-            className="h-7 px-2 text-xs"
+            size="compact"
+            variant="secondary"
             disabled={view.isFetching}
             onClick={() => void view.refetch()}
           >
-            <RefreshCw className={cn("mr-1 size-3", view.isFetching && "animate-spin")} aria-hidden />
+            <RefreshCw
+              className={cn("mr-1 size-3", view.isFetching && "animate-spin")}
+              aria-hidden
+            />
             Sincronizează
           </Button>
         </div>
@@ -148,7 +156,7 @@ export function PropertyImobiliarePromotionsCard({
         </p>
       ) : null}
 
-      <ul className="mt-2 divide-y divide-border/60">
+      <ul className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
         {rows.map((row) => {
           const active = row.value === true || (typeof row.value === "number" && row.value > 0);
           const noSlots = row.available !== null && row.available <= 0;
@@ -159,8 +167,8 @@ export function PropertyImobiliarePromotionsCard({
             draft !== undefined ? draft : typeof row.value === "number" ? String(row.value) : "";
 
           return (
-            <li key={row.id} className="py-2">
-              <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
+            <li key={row.id} className="rounded-card border border-border bg-muted p-4">
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
                 {row.kind === "numeric" ? (
                   <div className="flex items-center gap-2">
                     <Input
@@ -170,16 +178,15 @@ export function PropertyImobiliarePromotionsCard({
                       value={energyValue}
                       disabled={!canManage || !row.manageable || busy}
                       aria-label={`${row.label} pentru acest anunț`}
-                      className="h-7 w-20 text-xs"
+                      className="w-24"
                       onChange={(event) =>
                         setEnergyDraft((current) => ({ ...current, [row.id]: event.target.value }))
                       }
                     />
                     <Button
                       type="button"
-                      size="sm"
-                      variant="outline"
-                      className="h-7 px-2 text-xs"
+                      size="compact"
+                      variant="secondary"
                       disabled={
                         !canManage ||
                         !row.manageable ||
@@ -210,7 +217,7 @@ export function PropertyImobiliarePromotionsCard({
                   />
                 )}
 
-                <span className="text-xs font-medium">{row.label}</span>
+                <span className="text-sm font-semibold">{row.label}</span>
 
                 {row.slotType ? (
                   <button
@@ -221,7 +228,10 @@ export function PropertyImobiliarePromotionsCard({
                   >
                     {counter(row)}
                     <ChevronRight
-                      className={cn("size-3 transition-transform", openSlot === row.id && "rotate-90")}
+                      className={cn(
+                        "size-3 transition-transform",
+                        openSlot === row.id && "rotate-90",
+                      )}
                       aria-hidden
                     />
                   </button>
@@ -235,13 +245,13 @@ export function PropertyImobiliarePromotionsCard({
                   </span>
                 ) : null}
 
-                {row.allocated !== null ? (
-                  <span className="text-xs text-muted-foreground">
-                    {row.remaining === null
-                      ? `alocare ${row.allocated}`
-                      : `îți rămân ${row.remaining} din ${row.allocated}`}
-                  </span>
-                ) : null}
+                <span className="basis-full text-xs text-muted-foreground">
+                  {row.remaining !== null
+                    ? `Alocarea ta: ${row.remaining} rămase${row.allocated !== null ? ` din ${row.allocated}` : ""}`
+                    : row.allocated !== null
+                      ? `Alocarea ta: ${row.allocated}`
+                      : "Alocarea ta: nelimitat în limita agenției"}
+                </span>
 
                 {busy ? <Loader2 className="size-3 animate-spin" aria-hidden /> : null}
               </div>
@@ -268,7 +278,7 @@ export function PropertyImobiliarePromotionsCard({
               ) : null}
 
               {openSlot === row.id ? (
-                <div className="mt-2 rounded-md border border-border bg-background p-2">
+                <div className="mt-3 rounded-control border border-border bg-surface p-3">
                   {listings.isFetching ? (
                     <p className="text-xs text-muted-foreground">
                       <Loader2 className="mr-1.5 inline size-3 animate-spin" aria-hidden />
