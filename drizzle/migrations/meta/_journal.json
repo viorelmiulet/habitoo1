@@ -512,6 +512,13 @@
       "when": 1789886910751,
       "tag": "0072_seed_apify_sources",
       "breakpoints": true
+    },
+    {
+      "idx": 73,
+      "version": "7",
+      "when": 1789918198805,
+      "tag": "0073_apify_guided_jobs",
+      "breakpoints": true
     }
   ]
 }
