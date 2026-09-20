@@ -200,6 +200,29 @@ export async function ingestListings(
       const identityHash = buildIdentityHash(listing);
 
       if (!existing) {
+        // Duplicat între portaluri: același imobil publicat pe altă sursă.
+        // Păstrăm oferta văzută prima și adăugăm doar sursa suplimentară.
+        const crossPortal = findCrossPortalDuplicate(
+          listing,
+          await repo.findCrossPortalCandidates(listing),
+          { now: options.now },
+        );
+        if (crossPortal) {
+          await repo.upsertListingSource({
+            marketListingId: crossPortal.candidate.id,
+            source: listing.source,
+            sourceListingId: listing.sourceListingId,
+            url: listing.url,
+            price: listing.price,
+            isPrimary: false,
+            now: options.now,
+          });
+          await repo.touchListingSeen(crossPortal.candidate.id, options.runId, options.now);
+          summary.crossPortalMerges += 1;
+          summary.duplicates += 1;
+          continue;
+        }
+
         const { decision, entityId } = await resolveEntity(repo, listing);
         const dedupeStatus =
           decision.decision === "match"
