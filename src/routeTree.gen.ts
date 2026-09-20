@@ -36,6 +36,7 @@ import { Route as AuthenticatedAppAiRouteImport } from './routes/_authenticated/
 import { Route as AuthenticatedAppAiCrmRouteImport } from './routes/_authenticated/app.ai-crm'
 import { Route as AuthenticatedAppAiManagerRouteImport } from './routes/_authenticated/app.ai-manager'
 import { Route as AuthenticatedAppAiMarketingRouteImport } from './routes/_authenticated/app.ai-marketing'
+import { Route as AuthenticatedAppAiMediaRouteImport } from './routes/_authenticated/app.ai-media'
 import { Route as AuthenticatedAppCalendarRouteImport } from './routes/_authenticated/app.calendar'
 import { Route as AuthenticatedAppCollaborationRouteImport } from './routes/_authenticated/app.collaboration'
 import { Route as AuthenticatedAppGoalsRouteImport } from './routes/_authenticated/app.goals'
@@ -238,6 +239,11 @@ const AuthenticatedAppAiMarketingRoute =
     path: '/ai-marketing',
     getParentRoute: () => AuthenticatedAppRoute,
   } as any)
+const AuthenticatedAppAiMediaRoute = AuthenticatedAppAiMediaRouteImport.update({
+  id: '/ai-media',
+  path: '/ai-media',
+  getParentRoute: () => AuthenticatedAppRoute,
+} as any)
 const AuthenticatedAppCalendarRoute =
   AuthenticatedAppCalendarRouteImport.update({
     id: '/calendar',
@@ -628,6 +634,7 @@ export interface FileRoutesByFullPath {
   '/app/ai-crm': typeof AuthenticatedAppAiCrmRoute
   '/app/ai-manager': typeof AuthenticatedAppAiManagerRoute
   '/app/ai-marketing': typeof AuthenticatedAppAiMarketingRoute
+  '/app/ai-media': typeof AuthenticatedAppAiMediaRoute
   '/app/calendar': typeof AuthenticatedAppCalendarRoute
   '/app/collaboration': typeof AuthenticatedAppCollaborationRoute
   '/app/goals': typeof AuthenticatedAppGoalsRoute
@@ -717,6 +724,7 @@ export interface FileRoutesByTo {
   '/app/ai-crm': typeof AuthenticatedAppAiCrmRoute
   '/app/ai-manager': typeof AuthenticatedAppAiManagerRoute
   '/app/ai-marketing': typeof AuthenticatedAppAiMarketingRoute
+  '/app/ai-media': typeof AuthenticatedAppAiMediaRoute
   '/app/calendar': typeof AuthenticatedAppCalendarRoute
   '/app/collaboration': typeof AuthenticatedAppCollaborationRoute
   '/app/goals': typeof AuthenticatedAppGoalsRoute
@@ -810,6 +818,7 @@ export interface FileRoutesById {
   '/_authenticated/app/ai-crm': typeof AuthenticatedAppAiCrmRoute
   '/_authenticated/app/ai-manager': typeof AuthenticatedAppAiManagerRoute
   '/_authenticated/app/ai-marketing': typeof AuthenticatedAppAiMarketingRoute
+  '/_authenticated/app/ai-media': typeof AuthenticatedAppAiMediaRoute
   '/_authenticated/app/calendar': typeof AuthenticatedAppCalendarRoute
   '/_authenticated/app/collaboration': typeof AuthenticatedAppCollaborationRoute
   '/_authenticated/app/goals': typeof AuthenticatedAppGoalsRoute
@@ -903,6 +912,7 @@ export interface FileRouteTypes {
     | '/app/ai-crm'
     | '/app/ai-manager'
     | '/app/ai-marketing'
+    | '/app/ai-media'
     | '/app/calendar'
     | '/app/collaboration'
     | '/app/goals'
@@ -992,6 +1002,7 @@ export interface FileRouteTypes {
     | '/app/ai-crm'
     | '/app/ai-manager'
     | '/app/ai-marketing'
+    | '/app/ai-media'
     | '/app/calendar'
     | '/app/collaboration'
     | '/app/goals'
@@ -1084,6 +1095,7 @@ export interface FileRouteTypes {
     | '/_authenticated/app/ai-crm'
     | '/_authenticated/app/ai-manager'
     | '/_authenticated/app/ai-marketing'
+    | '/_authenticated/app/ai-media'
     | '/_authenticated/app/calendar'
     | '/_authenticated/app/collaboration'
     | '/_authenticated/app/goals'
@@ -1385,6 +1397,13 @@ declare module '@tanstack/react-router' {
       path: '/ai-marketing'
       fullPath: '/app/ai-marketing'
       preLoaderRoute: typeof AuthenticatedAppAiMarketingRouteImport
+      parentRoute: typeof AuthenticatedAppRoute
+    }
+    '/_authenticated/app/ai-media': {
+      id: '/_authenticated/app/ai-media'
+      path: '/ai-media'
+      fullPath: '/app/ai-media'
+      preLoaderRoute: typeof AuthenticatedAppAiMediaRouteImport
       parentRoute: typeof AuthenticatedAppRoute
     }
     '/_authenticated/app/calendar': {
@@ -1851,6 +1870,7 @@ interface AuthenticatedAppRouteChildren {
   AuthenticatedAppAiCrmRoute: typeof AuthenticatedAppAiCrmRoute
   AuthenticatedAppAiManagerRoute: typeof AuthenticatedAppAiManagerRoute
   AuthenticatedAppAiMarketingRoute: typeof AuthenticatedAppAiMarketingRoute
+  AuthenticatedAppAiMediaRoute: typeof AuthenticatedAppAiMediaRoute
   AuthenticatedAppCalendarRoute: typeof AuthenticatedAppCalendarRoute
   AuthenticatedAppCollaborationRoute: typeof AuthenticatedAppCollaborationRoute
   AuthenticatedAppGoalsRoute: typeof AuthenticatedAppGoalsRoute
@@ -1884,6 +1904,7 @@ const AuthenticatedAppRouteChildren: AuthenticatedAppRouteChildren = {
   AuthenticatedAppAiCrmRoute: AuthenticatedAppAiCrmRoute,
   AuthenticatedAppAiManagerRoute: AuthenticatedAppAiManagerRoute,
   AuthenticatedAppAiMarketingRoute: AuthenticatedAppAiMarketingRoute,
+  AuthenticatedAppAiMediaRoute: AuthenticatedAppAiMediaRoute,
   AuthenticatedAppCalendarRoute: AuthenticatedAppCalendarRoute,
   AuthenticatedAppCollaborationRoute: AuthenticatedAppCollaborationRoute,
   AuthenticatedAppGoalsRoute: AuthenticatedAppGoalsRoute,
