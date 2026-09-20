@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import type { LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Panel } from "@/components/ui/card";
 
 /**
  * Card de secțiune standard pentru paginile CRM: antet (titlu, descriere,
@@ -30,7 +31,7 @@ export function SectionCard({
   dataTour?: string;
 }) {
   return (
-    <section data-tour={dataTour} className={cn("panel overflow-hidden", className)}>
+    <Panel asChild={undefined} data-tour={dataTour} className={cn("overflow-hidden", className)}>
       {title || action ? (
         <header className="flex flex-wrap items-center gap-3 border-b border-border px-5 py-3.5">
           {Icon ? (
@@ -48,6 +49,6 @@ export function SectionCard({
         </header>
       ) : null}
       <div className={cn(!flush && "p-5", bodyClassName)}>{children}</div>
-    </section>
+    </Panel>
   );
 }
