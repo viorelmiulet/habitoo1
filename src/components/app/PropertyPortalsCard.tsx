@@ -333,11 +333,15 @@ export const PropertyPortalsCard = forwardRef<
     .filter((value): value is string => Boolean(value))
     .sort()
     .at(-1);
-  const latestFailureByPortal = new Map(
-    (journal.data ?? [])
-      .filter((item) => !item.success)
-      .map((item) => [item.portal, item] as const),
-  );
+  const latestFailureByPortal = new Map<
+    string,
+    NonNullable<typeof journal.data>[number]
+  >();
+  for (const item of journal.data ?? []) {
+    if (!item.success && !latestFailureByPortal.has(item.portal)) {
+      latestFailureByPortal.set(item.portal, item);
+    }
+  }
 
   return (
     <div className="grid items-start gap-6 min-[1100px]:grid-cols-[minmax(0,1fr)_340px]">

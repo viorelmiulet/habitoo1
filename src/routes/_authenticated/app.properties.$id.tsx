@@ -605,7 +605,13 @@ function PropertyDetailPage() {
             .join(" · ")}
           actions={
             <>
-              <Button variant="secondary" onClick={startEdit}>
+              <Button
+                variant="secondary"
+                onClick={() => {
+                  startEdit();
+                  setTab("overview");
+                }}
+              >
                 <Pencil /> Editează
               </Button>
               <Button
@@ -793,13 +799,27 @@ function PropertyDetailPage() {
 
       <Tabs value={tab} onValueChange={setTab}>
         <TabsList className="h-auto flex-wrap justify-start gap-1 rounded-none border-b border-border bg-transparent p-0">
-          {[
-            ["overview", "Detalii"],
-            ["media", "Fotografii"],
-            ["publishing", "Publicare"],
-            ["activities", "Activitate"],
-            ["documents", "Contracte"],
-          ].map(([value, label]) => (
+          {(tab === "publishing"
+            ? [
+                ["overview", "Detalii"],
+                ["media", "Fotografii"],
+                ["publishing", "Publicare"],
+                ["activities", "Activitate"],
+                ["documents", "Contracte"],
+              ]
+            : [
+                ["overview", "Overview"],
+                ["media", "Media"],
+                ["acp", "ACP"],
+                ["marketing", "Marketing AI"],
+                ["leads", `Lead-uri (${data?.leads.length ?? 0})`],
+                ["matching", `Cereri compatibile (${matches.length})`],
+                ["activities", `Activități (${activities.length})`],
+                ["documents", "Documente"],
+                ["publishing", "Publicare"],
+                ["history", "Istoric"],
+              ]
+          ).map(([value, label]) => (
             <TabsTrigger
               key={value}
               value={value as string}
