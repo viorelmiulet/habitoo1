@@ -102,7 +102,9 @@ async function ensure(rows: Rows, value: boolean | number, current: boolean | nu
   });
 }
 
-beforeEach(() => {
+beforeEach(async () => {
+  const { clearPromotionUsageCache } = await import("../allocation.server");
+  clearPromotionUsageCache();
   slotListings.mockClear();
   listingPromotions.mockClear();
 });
@@ -163,19 +165,41 @@ describe("alocări", () => {
     expect(result.ok === false && result.message).toContain("4/4");
   });
 
-  it("nu verifică plafoanele când consumul agentului nu a putut fi calculat", () => {
-    const result = checkPromotionAllocation({
+  it("nu blochează pe nimeni când consumul agenției este cunoscut, chiar dacă un coleg nu a putut fi calculat", () => {
+    const usage = {
+      byUser: new Map<string, number>(),
+      total: 0,
+      totalFromPortal: true,
+      unknownUsers: [AGENT],
+      error: null,
+    };
+    expect(
+      checkPromotionAllocation({
+        label: "Top Listing",
+        kind: "boolean",
+        enabled: true,
+        agencyCap: 4,
+        allocation: null,
+        usage,
+        userId: AGENT,
+        current: false,
+        next: true,
+      }),
+    ).toEqual({ ok: true, consumes: 1 });
+
+    // Cu alocare proprie nu putem decide fără consumul agentului, deci refuzăm explicit.
+    const refused = checkPromotionAllocation({
       label: "Top Listing",
       kind: "boolean",
       enabled: true,
       agencyCap: 4,
-      allocation: null,
-      usage: { byUser: new Map(), total: 0, totalFromPortal: false, unknownUsers: [AGENT], error: null },
+      allocation: 2,
+      usage,
       userId: AGENT,
       current: false,
       next: true,
     });
-    expect(result.ok).toBe(false);
+    expect(refused.ok).toBe(false);
   });
 
   it("permite dezactivarea chiar dacă serviciul nu mai este activat", () => {
@@ -280,11 +304,12 @@ describe("poarta server-side", () => {
         },
       ],
     });
-    // Un anunț consumă deja 3 puncte; o cerere de +2 depășește plafonul de 4.
-    const refused = await ensure(rows, 2, 0, "energy");
+    // Consumul agenției vine din inventarul portalului (1 punct folosit), nu din citirea anunțurilor.
+    const allowed = await ensure(rows, 3, 0, "energy");
+    expect(allowed).toEqual({ ok: true, consumes: 3 });
+    expect(listingPromotions).not.toHaveBeenCalled();
+    const refused = await ensure(rows, 4, 0, "energy");
     expect(refused.ok).toBe(false);
-    const allowed = await ensure(rows, 1, 0, "energy");
-    expect(allowed).toEqual({ ok: true, consumes: 1 });
   });
 });
 
