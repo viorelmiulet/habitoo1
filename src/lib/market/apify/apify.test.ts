@@ -291,8 +291,8 @@ describe("clientul Apify", () => {
 
   it("tokenul nu apare în codul livrat clientului", () => {
     const card = readFileSync("src/components/superadmin/ApifySourcesCard.tsx", "utf8");
-    expect(card).not.toContain("APIFY_TOKEN");
     expect(card).not.toContain("client.server");
+    expect(card).not.toContain("process.env");
     const runModule = readFileSync("src/lib/market/apify/run.ts", "utf8");
     expect(runModule).not.toContain("process.env");
   });
