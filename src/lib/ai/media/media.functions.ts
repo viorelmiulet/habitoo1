@@ -122,9 +122,8 @@ export const startAiMedia = createServerFn({ method: "POST" })
       return { ok: false as const, message: "Contul tău nu este legat de o agenție." };
     }
 
-    const { startAiMediaPrediction, replicateConfigured, REPLICATE_KEY_MISSING } = await import(
-      "@/lib/ai/media/replicate.server"
-    );
+    const { startAiMediaPrediction, replicateConfigured, REPLICATE_KEY_MISSING } =
+      await import("@/lib/ai/media/replicate.server");
     if (!replicateConfigured()) return { ok: false as const, message: REPLICATE_KEY_MISSING };
 
     // Replicate are nevoie de un link citibil: semnăm temporar fișierul sursă.
@@ -189,9 +188,8 @@ export const refreshAiMedia = createServerFn({ method: "POST" })
       return { ok: false as const, message: "Generarea nu are o referință la Replicate." };
     }
 
-    const { readAiMediaPrediction, AI_MEDIA_MODELS } = await import(
-      "@/lib/ai/media/replicate.server"
-    );
+    const { readAiMediaPrediction, AI_MEDIA_MODELS } =
+      await import("@/lib/ai/media/replicate.server");
     const prediction = await readAiMediaPrediction(row.prediction_id);
 
     let update: Record<string, unknown> | null = null;

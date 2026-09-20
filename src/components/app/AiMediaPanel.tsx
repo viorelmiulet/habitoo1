@@ -226,7 +226,11 @@ export function AiMediaPanel() {
             disabled={busy || status.data?.configured === false}
             onClick={() => generate.mutate()}
           >
-            {busy ? <Loader2 className="mr-2 size-4 animate-spin" /> : <Sparkles className="mr-2 size-4" />}
+            {busy ? (
+              <Loader2 className="mr-2 size-4 animate-spin" />
+            ) : (
+              <Sparkles className="mr-2 size-4" />
+            )}
             Generează
           </Button>
           <p className="text-xs text-muted-foreground">

@@ -39,6 +39,7 @@ import {
   Database,
   Bot,
   BrainCircuit,
+  Wand2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { initials } from "@/lib/format";
@@ -102,6 +103,7 @@ export const agencyNav: NavGroup[] = [
       { label: "AI CRM", to: "/app/ai-crm", icon: BrainCircuit },
       { label: "AI Marketing", to: "/app/ai-marketing", icon: Megaphone },
       { label: "Habitoo AI", to: "/app/ai", icon: Bot },
+      { label: "Studio AI", to: "/app/ai-media", icon: Wand2 },
     ],
   },
   {
