@@ -271,11 +271,16 @@ analizei; nimic nu se stochează în afara analizei salvate.
 - Categorii — închiriere: `apartamente-de-inchiriat`, `case-vile-de-inchiriat`,
   `terenuri-de-inchiriat`, `birouri-si-spatii-comerciale-de-inchiriat`,
   `hale-si-depozite-de-inchiriat`.
-- Localități: hartă explicită (`imospot/locations.ts`) — București, cele șase
-  sectoare (`sectorul-N-bucuresti`) și cartierele confirmate
-  (`/bucuresti/militari`, `/domenii`, `/rahova`). Zonă fără corespondent →
-  nivelul orașului. Localitate fără corespondent → nicio cerere; niciun slug nu
-  se ghicește.
+- Localități: hartă explicită (`imospot/locations.ts`) — București și cele șase
+  sectoare (`sectorul-N-bucuresti`). Cartierele nu sunt scrise de mână: se
+  învață din linkurile publicate de pagină (`/toate-ofertele-din-<oraș>/<cartier>`).
+  Zonă fără corespondent → nivelul orașului. Localitate fără corespondent →
+  nicio cerere; niciun slug nu se ghicește.
+- Fiecare anunț este citit din `<article data-listing-id data-lat data-lon>`.
+  Identificatorul previne dublurile între pagini, iar coordonatele se păstrează
+  cu comparabilul și ordonează după apropiere când proprietatea evaluată are
+  coordonate. Sunt coordonate la nivel de zonă (mai multe anunțuri împart
+  aceeași pereche): nu indică o adresă exactă.
 - Cel mult 2 pagini (24 de rezultate) per interogare, cu oprire mai devreme la
   12 comparabile. Cereri politicoase și identificate, robots.txt respectat, o
   cerere pe rând, fără autentificare, cookie-uri sau mascarea identității.
