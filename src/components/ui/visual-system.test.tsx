@@ -24,7 +24,7 @@ describe("componentele de bază ale sistemului vizual", () => {
     );
     expect(html).toContain("h-[38px]");
     expect(html).toContain("disabled:bg-control-disabled");
-    expect(html).toContain("disabled=\"\"");
+    expect(html).toContain('disabled=""');
   });
 
   it("randează inputul cu label, hint și eroare", () => {

@@ -20,11 +20,11 @@ const Panel = React.forwardRef<HTMLDivElement, PanelProps>(
   ({ className, asChild = false, ...props }, ref) => {
     const Comp = asChild ? Slot : "div";
     return (
-    <Comp
-      ref={ref}
-      className={cn("rounded-panel border border-border bg-surface text-foreground", className)}
-      {...props}
-    />
+      <Comp
+        ref={ref}
+        className={cn("rounded-panel border border-border bg-surface text-foreground", className)}
+        {...props}
+      />
     );
   },
 );

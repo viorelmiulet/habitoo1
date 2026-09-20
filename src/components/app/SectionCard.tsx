@@ -34,21 +34,21 @@ export function SectionCard({
     <Panel asChild>
       <section data-tour={dataTour} className={cn("overflow-hidden", className)}>
         {title || action ? (
-        <header className="flex flex-wrap items-center gap-3 border-b border-border px-5 py-3.5">
-          {Icon ? (
-            <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
-              <Icon className="size-4" />
-            </span>
-          ) : null}
-          <div className="min-w-0 flex-1">
-            {title ? <h2 className="truncate text-sm font-semibold">{title}</h2> : null}
-            {description ? (
-              <p className="truncate text-xs text-muted-foreground">{description}</p>
+          <header className="flex flex-wrap items-center gap-3 border-b border-border px-5 py-3.5">
+            {Icon ? (
+              <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                <Icon className="size-4" />
+              </span>
             ) : null}
-          </div>
-          {action ? <div className="flex shrink-0 items-center gap-2">{action}</div> : null}
-        </header>
-      ) : null}
+            <div className="min-w-0 flex-1">
+              {title ? <h2 className="truncate text-sm font-semibold">{title}</h2> : null}
+              {description ? (
+                <p className="truncate text-xs text-muted-foreground">{description}</p>
+              ) : null}
+            </div>
+            {action ? <div className="flex shrink-0 items-center gap-2">{action}</div> : null}
+          </header>
+        ) : null}
         <div className={cn(!flush && "p-5", bodyClassName)}>{children}</div>
       </section>
     </Panel>

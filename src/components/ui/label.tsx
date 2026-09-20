@@ -26,6 +26,10 @@ export function FieldHint(props: React.HTMLAttributes<HTMLParagraphElement>) {
 
 export function FieldError(props: React.HTMLAttributes<HTMLParagraphElement>) {
   return (
-    <p role="alert" {...props} className={cn("text-xs font-semibold text-destructive", props.className)} />
+    <p
+      role="alert"
+      {...props}
+      className={cn("text-xs font-semibold text-destructive", props.className)}
+    />
   );
 }
