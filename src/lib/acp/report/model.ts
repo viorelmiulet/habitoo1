@@ -6,6 +6,7 @@
  * acelei versiuni). Nu se citește niciodată `market_listings` curent, deci un
  * raport istoric rămâne identic chiar dacă piața se schimbă ulterior.
  */
+import { acpSourceOutcomeLabel } from "../source-outcome";
 import type { AcpAiInsight } from "../ai/schema";
 
 export type AcpReportSubject = {
