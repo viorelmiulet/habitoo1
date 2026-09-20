@@ -626,6 +626,7 @@ export const importMarketListings = createServerFn({ method: "POST" })
           items_invalid: invalid.length,
           items_deactivated: summary.deactivated,
           duplicates_detected: summary.duplicates,
+          cross_portal_merges: summary.crossPortalMerges,
           ambiguous_matches: summary.ambiguous,
           price_changes: summary.priceChanges,
           status_changes: summary.statusChanges,
@@ -852,6 +853,7 @@ export const syncMarketSource = createServerFn({ method: "POST" })
           items_invalid: result.rejected,
           items_deactivated: result.deactivated,
           duplicates_detected: result.duplicates,
+          cross_portal_merges: result.crossPortalMerges,
           ambiguous_matches: result.ambiguous,
           errors: result.errors as never,
         })

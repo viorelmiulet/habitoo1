@@ -35,6 +35,8 @@ export type SyncRunResult = {
   rejected: number;
   deactivated: number;
   duplicates: number;
+  /** Rânduri unite cu o ofertă existentă de pe alt portal. */
+  crossPortalMerges: number;
   ambiguous: number;
   errors: { reference: string; message: string }[];
 };
@@ -145,6 +147,7 @@ function emptyResult(
     rejected: 0,
     deactivated: 0,
     duplicates: 0,
+    crossPortalMerges: 0,
     ambiguous: 0,
     errors,
   };
@@ -203,6 +206,7 @@ export async function runAdapterSync(
     rejected: rejected.length,
     deactivated: summary.deactivated,
     duplicates: summary.duplicates,
+    crossPortalMerges: summary.crossPortalMerges,
     ambiguous: summary.ambiguous,
     errors: [...rejected, ...summary.errors].slice(0, 200),
   };
