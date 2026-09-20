@@ -49,6 +49,12 @@ export type ImobiliarePromotionRow = {
   error: string | null;
   syncedAt: string | null;
   note: string | null;
+  /** Alocarea agentului responsabil; `null` = nelimitat în limita agenției. */
+  allocated: number | null;
+  /** Cât a folosit deja; `null` = nu a putut fi calculat acum. */
+  usedByAgent: number | null;
+  /** Cât i-a mai rămas; `null` = nelimitat sau necunoscut. */
+  remaining: number | null;
 };
 
 export type ImobiliarePromotionsView = {
