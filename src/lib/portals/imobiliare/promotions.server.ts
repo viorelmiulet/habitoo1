@@ -191,6 +191,11 @@ export async function setImobiliareListingPromotion(input: {
   value: boolean | number;
   /** Valoarea curentă cunoscută (din citirea anunțului), pentru poarta de acces. */
   current: boolean | number | null;
+  /**
+   * Repartizarea agenției: oferta pentru care se comandă serviciul. `null` doar
+   * acolo unde nu există o ofertă locală (teste de contract cu portalul).
+   */
+  allocation: { propertyId: string } | null;
 }): Promise<PromotionWriteResult> {
   const { definition } = input;
   if (!definition.writeField) {
@@ -209,6 +214,26 @@ export async function setImobiliareListingPromotion(input: {
         (typeof input.current === "number" ? input.current : 0)
       : input.value === true && input.current !== true;
 
+  // Regulile agenției (serviciu activat, alocarea agentului, plafonul agenției)
+  // se aplică AICI, în locul unic care comandă o promovare.
+  if (input.allocation) {
+    const { ensureImobiliarePromotionAllowed } = await import(
+      "@/lib/portals/promotions/allocation.server"
+    );
+    const allowed = await ensureImobiliarePromotionAllowed({
+      admin: input.admin,
+      session: input.session,
+      organizationId: input.organizationId,
+      propertyId: input.allocation.propertyId,
+      definition,
+      current: input.current,
+      next: input.value,
+    });
+    if (!allowed.ok) {
+      return { ok: false, code: "ALLOCATION_ERROR", message: allowed.message };
+    }
+  }
+
   let inventory: ImobiliareSlotInventory | null = null;
   if (activating && definition.slotType) {
     // Revalidare la momentul acțiunii: contoarele se schimbă între afișări.
@@ -222,6 +247,7 @@ export async function setImobiliareListingPromotion(input: {
       return { ok: false, code: "PORTAL_ERROR", message: fresh.error };
     }
   }
+
 
   const guard = guardImobiliarePromotionChange({
     definition,
