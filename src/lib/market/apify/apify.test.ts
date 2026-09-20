@@ -306,3 +306,31 @@ describe("costurile", () => {
     expect(sumCosts([0.5, null, 1.25])).toBe(1.75);
   });
 });
+
+describe("Apify: destinații și duplicate între portaluri", () => {
+  const PRIVATE_ITEM = { ...SAMPLE_ITEM, id: "ap-2002", url: "https://example.ro/a/2002", isBusiness: false };
+
+  it("o sursă cu ambele destinații umple bazinul și creează prospecți doar pentru persoane fizice", async () => {
+    const written: { organizationId: string; count: number }[] = [];
+    const outcome = await runApifySourceImport(
+      deps({
+        source: source({
+          targets: ["market_pool", "prospects"],
+          prospectOrganizationId: "00000000-0000-4000-8000-000000000001",
+        }),
+        readDataset: async () => [SAMPLE_ITEM, PRIVATE_ITEM],
+        writeProspects: async ({ organizationId, prospects }) => {
+          written.push({ organizationId, count: prospects.length });
+          return { created: prospects.length, updated: 0 };
+        },
+      }),
+    );
+
+    expect(outcome.created).toBe(2);
+    expect(written).toEqual([
+      { organizationId: "00000000-0000-4000-8000-000000000001", count: 1 },
+    ]);
+    expect(outcome.prospectsCreated).toBe(1);
+    expect(outcome.prospectsSkipped).toBe(1);
+  });
+});
