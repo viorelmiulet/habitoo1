@@ -189,12 +189,63 @@ export const getImobiliarePromotions = createServerFn({ method: "POST" })
       }),
     ]);
 
-    const promotions: ImobiliarePromotionRow[] = IMOBILIARE_PROMOTIONS.map((definition) => {
+    // Agentul vede DOAR serviciile pe care agenția le folosește, iar serviciile
+    // pe care contul nu le are (portalul nu raportează locuri) nu sunt erori:
+    // pur și simplu nu apar.
+    const {
+      loadPromotionSettings,
+      loadPromotionAllocations,
+      loadPromotionUsage,
+    } = await import("@/lib/portals/promotions/allocation.server");
+    const { promotionAllocationFor, promotionRemaining } = await import(
+      "@/lib/portals/promotions/allocation"
+    );
+    const [settings, allocationsByService, property] = await Promise.all([
+      loadPromotionSettings(prepared.admin, { organizationId }),
+      loadPromotionAllocations(prepared.admin, { organizationId }),
+      prepared.admin
+        .from("properties")
+        .select("assigned_to")
+        .eq("id", data.propertyId)
+        .eq("organization_id", organizationId)
+        .maybeSingle(),
+    ]);
+    const agentId = (property.data?.assigned_to ?? null) as string | null;
+
+    const visible = IMOBILIARE_PROMOTIONS.filter((definition) => {
+      if (settings.get(definition.id)?.enabled !== true) return false;
+      if (!definition.slotType) return true;
+      return (inventories.get(definition.slotType)?.inventory ?? null) !== null;
+    });
+
+    const promotions: ImobiliarePromotionRow[] = [];
+    for (const definition of visible) {
       const slot = definition.slotType ? inventories.get(definition.slotType) : undefined;
       const inventory = slot?.inventory ?? null;
       const value = listingState.states.get(definition.id) ?? null;
       const current = typeof value === "number" ? value : 0;
-      return {
+      const allocated = agentId
+        ? promotionAllocationFor(
+            allocationsByService.get(definition.id) ?? new Map<string, number | null>(),
+            agentId,
+          )
+        : null;
+      // Consumul agentului se citește numai când există o alocare de arătat.
+      const usage =
+        allocated !== null && agentId
+          ? await loadPromotionUsage({
+              admin: prepared.admin,
+              session: prepared.session,
+              organizationId,
+              definition,
+              userIds: [agentId],
+            })
+          : null;
+      const usedByAgent =
+        usage && agentId && !usage.unknownUsers.includes(agentId)
+          ? (usage.byUser.get(agentId) ?? 0)
+          : null;
+      promotions.push({
         id: definition.id,
         label: definition.label,
         kind: definition.kind,
@@ -205,19 +256,22 @@ export const getImobiliarePromotions = createServerFn({ method: "POST" })
         used: inventory?.used ?? null,
         available: inventory?.available ?? null,
         value,
-        max:
-          definition.kind === "numeric" ? imobiliareEnergyCeiling(inventory, current) : null,
+        max: definition.kind === "numeric" ? imobiliareEnergyCeiling(inventory, current) : null,
         error: slot?.error ?? null,
         syncedAt: slot?.syncedAt ?? null,
         note: definition.note ?? null,
-      };
-    });
+        allocated,
+        usedByAgent,
+        remaining: usedByAgent === null ? null : promotionRemaining(allocated, usedByAgent),
+      });
+    }
 
-    const syncedAt = promotions
-      .map((row) => row.syncedAt)
-      .filter((value): value is string => value !== null)
-      .sort()
-      .at(-1) ?? null;
+    const syncedAt =
+      promotions
+        .map((row) => row.syncedAt)
+        .filter((value): value is string => value !== null)
+        .sort()
+        .at(-1) ?? null;
 
     return {
       available: true,
@@ -226,6 +280,8 @@ export const getImobiliarePromotions = createServerFn({ method: "POST" })
       listingError: listingState.error,
       promotions,
       syncedAt,
+      // Mesajul „starea nu a fost raportată” se arată o singură dată, sus.
+      stateUnreported: promotions.length > 0 && promotions.every((row) => row.value === null),
     };
   });
 
