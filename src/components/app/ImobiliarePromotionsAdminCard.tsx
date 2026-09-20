@@ -78,6 +78,11 @@ export function ImobiliarePromotionsAdminCard({ organizationId }: { organization
 
   const [capDraft, setCapDraft] = useState<Record<string, string>>({});
   const [allocationDraft, setAllocationDraft] = useState<Record<string, string>>({});
+  const [pending, setPending] = useState<{
+    change: PendingChange;
+    items: PromotionWithdrawPreviewRow[];
+    skipped: number;
+  } | null>(null);
 
   const refresh = () => void queryClient.invalidateQueries({ queryKey });
   const org = organizationId ? { organizationId } : {};
