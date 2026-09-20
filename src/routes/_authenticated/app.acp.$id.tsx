@@ -308,6 +308,8 @@ function AcpDetailPage() {
   const fetchAnalysis = useServerFn(getAcpAnalysis);
   const rerun = useServerFn(rerunAcpAnalysis);
   const setOverride = useServerFn(setAcpComparableOverride);
+  const aiFeatures = useAiFeatures();
+
 
   const { data: analysis, isLoading } = useQuery({
     queryKey: ["acp-analysis", id],
