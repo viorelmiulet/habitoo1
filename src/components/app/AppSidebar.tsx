@@ -442,7 +442,11 @@ export function AppSidebar({
             collapsed ? "size-11 items-center justify-center" : "min-h-14 items-center gap-3 px-3",
           )}
         >
-          <BrandLogo markOnly className="size-8 shrink-0" priority />
+          <BrandLogo
+            markOnly={collapsed}
+            className={cn(collapsed ? "size-8 shrink-0" : "h-7 w-auto max-w-24 shrink-0")}
+            priority
+          />
           {collapsed ? null : (
             <span className="min-w-0 leading-tight">
               <span className="block font-display text-base font-semibold text-foreground">
