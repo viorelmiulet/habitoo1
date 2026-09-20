@@ -56,7 +56,8 @@ export type ApifySourceView = {
   fieldMappingJson: string;
   enabled: boolean;
   maxItems: number;
-  target: "market_pool" | "prospects";
+  targets: ("market_pool" | "prospects")[];
+  prospectOrganizationId: string | null;
   unitCostUsd: number | null;
   costNote: string | null;
   notes: string | null;
@@ -141,7 +142,8 @@ export const getApifyOverview = createServerFn({ method: "GET" })
         fieldMappingJson: JSON.stringify(row.field_mapping ?? {}, null, 2),
         enabled: Boolean(row.enabled),
         maxItems,
-        target: (row.target as "market_pool" | "prospects") ?? "market_pool",
+        targets: readTargets(row.targets, row.target),
+        prospectOrganizationId: row.prospect_organization_id ?? null,
         unitCostUsd: unitCost,
         costNote: row.cost_note ?? null,
         notes: row.notes ?? null,
@@ -173,7 +175,8 @@ const sourceInput = z.object({
     .record(z.string(), z.union([z.string(), z.array(z.string())]))
     .default({}),
   maxItems: z.number().int().min(1).max(10000),
-  target: z.enum(["market_pool", "prospects"]),
+  targets: z.array(z.enum(["market_pool", "prospects"])).min(1).max(2),
+  prospectOrganizationId: z.string().uuid().nullable().optional(),
   unitCostUsd: z.number().finite().min(0).max(1000).nullable().optional(),
   costNote: z.string().trim().max(400).nullable().optional(),
   notes: z.string().trim().max(2000).nullable().optional(),
@@ -195,7 +198,10 @@ export const saveApifySource = createServerFn({ method: "POST" })
         input: data.input as never,
         field_mapping: data.fieldMapping as never,
         max_items: data.maxItems,
-        target: data.target,
+        targets: data.targets,
+        // `target` rămâne sincronizat cu prima destinație pentru compatibilitate.
+        target: data.targets[0],
+        prospect_organization_id: data.prospectOrganizationId ?? null,
         unit_cost_usd: data.unitCostUsd ?? null,
         cost_note: data.costNote ?? null,
         notes: data.notes ?? null,
@@ -279,7 +285,8 @@ export const runApifySource = createServerFn({ method: "POST" })
       fieldMapping: (row.field_mapping as ApifyFieldMapping | null) ?? {},
       enabled: Boolean(row.enabled),
       maxItems: Number(row.max_items ?? 100),
-      target: (row.target as "market_pool" | "prospects") ?? "market_pool",
+      targets: readTargets(row.targets, row.target),
+      prospectOrganizationId: row.prospect_organization_id ?? null,
     };
 
     const sourceId = apifyMarketSourceId(source.key);

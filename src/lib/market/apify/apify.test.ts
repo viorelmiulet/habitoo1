@@ -15,7 +15,7 @@ import {
 import {
   APIFY_RUN_IN_PROGRESS,
   APIFY_SOURCE_DISABLED,
-  APIFY_TARGET_NOT_IMPLEMENTED,
+  APIFY_PROSPECT_ORG_MISSING,
   runApifySourceImport,
   type ApifyRunDeps,
   type ApifySourceConfig,
@@ -58,7 +58,8 @@ function source(overrides: Partial<ApifySourceConfig> = {}): ApifySourceConfig {
     fieldMapping: {},
     enabled: true,
     maxItems: 100,
-    target: "market_pool",
+    targets: ["market_pool"],
+    prospectOrganizationId: null,
     ...overrides,
   };
 }
@@ -173,10 +174,10 @@ describe("rularea unei surse Apify", () => {
     );
   });
 
-  it("refuză o destinație fără traseu de scriere", async () => {
+  it("refuză destinația „prospecți” fără agenție destinatară", async () => {
     await expect(
-      runApifySourceImport(deps({ source: source({ target: "prospects" }) })),
-    ).rejects.toThrow(APIFY_TARGET_NOT_IMPLEMENTED);
+      runApifySourceImport(deps({ source: source({ targets: ["prospects"] }) })),
+    ).rejects.toThrow(APIFY_PROSPECT_ORG_MISSING);
   });
 
   it("refuză rularea fără token configurat, fără să pornească nimic", async () => {
