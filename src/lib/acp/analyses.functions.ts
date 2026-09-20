@@ -12,6 +12,7 @@ import { ACP_SOURCE_TYPE_LABELS, type AcpSourceType } from "./config";
 import { acpSourceOutcomeLabel } from "./source-outcome";
 import { marketListingToSubject, propertyToSubject } from "./adapters";
 import { runAcpAnalysis, targetPricePerSqm, type AcpCandidate, type AcpManualOverride } from "./engine";
+import type { MarketQueryMarketContext } from "./market-query/port";
 import {
   ACP_CURRENT_ENGINE_VERSION,
   engineSupportsLiveMarketQuery,
