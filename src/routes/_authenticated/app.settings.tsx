@@ -497,10 +497,12 @@ function SettingsPage() {
             <div className="space-y-6">
               <AgencyPortalCatalogCard />
               <PortalSlotsCard />
+              <ImobiliarePromotionsAdminCard />
               <ProperstarFeedCard />
 
             </div>
           </TabsContent>
+
         ) : null}
       </Tabs>
     </>
