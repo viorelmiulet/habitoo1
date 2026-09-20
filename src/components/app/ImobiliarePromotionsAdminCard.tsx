@@ -396,9 +396,15 @@ export function ImobiliarePromotionsAdminCard({ organizationId }: { organization
 
           <ul className="max-h-60 space-y-1 overflow-y-auto text-sm">
             {(pending?.items ?? []).map((item) => (
-              <li key={`${item.propertyId}:${item.serviceKey}`} className="flex justify-between gap-3">
-                <span className="truncate">{item.propertyTitle}</span>
-                <span className="shrink-0 text-muted-foreground">{item.serviceLabel}</span>
+              <li key={item.propertyId} className="flex justify-between gap-3">
+                <span className="truncate">
+                  {item.title ?? item.reference ?? "Ofertă fără titlu"}
+                  {item.agentName ? ` · ${item.agentName}` : ""}
+                </span>
+                <span className="shrink-0 text-muted-foreground">
+                  {item.serviceLabel}
+                  {item.targetAmount === null ? " · se oprește" : ` · rămâne ${item.targetAmount}`}
+                </span>
               </li>
             ))}
           </ul>
