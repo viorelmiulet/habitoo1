@@ -38,10 +38,7 @@ const SAMPLE_ITEM = {
   district: "Sectorul 6",
   isBusiness: true,
   publishedAt: "2026-02-14T10:00:00.000Z",
-  images: [
-    { url: "https://example.ro/img/1.jpg" },
-    { url: "https://example.ro/img/2.jpg" },
-  ],
+  images: [{ url: "https://example.ro/img/1.jpg" }, { url: "https://example.ro/img/2.jpg" }],
   propertyType: "apartament",
   transactionType: "vanzare",
   phone: "0722000000",
@@ -169,9 +166,9 @@ describe("rularea unei surse Apify", () => {
   });
 
   it("refuză o sursă oprită", async () => {
-    await expect(runApifySourceImport(deps({ source: source({ enabled: false }) }))).rejects.toThrow(
-      APIFY_SOURCE_DISABLED,
-    );
+    await expect(
+      runApifySourceImport(deps({ source: source({ enabled: false }) })),
+    ).rejects.toThrow(APIFY_SOURCE_DISABLED);
   });
 
   it("refuză destinația „prospecți” fără agenție destinatară", async () => {
@@ -308,7 +305,12 @@ describe("costurile", () => {
 });
 
 describe("Apify: destinații și duplicate între portaluri", () => {
-  const PRIVATE_ITEM = { ...SAMPLE_ITEM, id: "ap-2002", url: "https://example.ro/a/2002", isBusiness: false };
+  const PRIVATE_ITEM = {
+    ...SAMPLE_ITEM,
+    id: "ap-2002",
+    url: "https://example.ro/a/2002",
+    isBusiness: false,
+  };
 
   it("o sursă cu ambele destinații umple bazinul și creează prospecți doar pentru persoane fizice", async () => {
     const written: { organizationId: string; count: number }[] = [];
@@ -327,10 +329,51 @@ describe("Apify: destinații și duplicate între portaluri", () => {
     );
 
     expect(outcome.created).toBe(2);
-    expect(written).toEqual([
-      { organizationId: "00000000-0000-4000-8000-000000000001", count: 1 },
-    ]);
+    expect(written).toEqual([{ organizationId: "00000000-0000-4000-8000-000000000001", count: 1 }]);
     expect(outcome.prospectsCreated).toBe(1);
     expect(outcome.prospectsSkipped).toBe(1);
+  });
+});
+
+import {
+  PREDEFINED_APIFY_SOURCES,
+  buildPredefinedApifyInput,
+  canShowApifyAdvanced,
+} from "./predefined-sources";
+
+describe("joburile ghidate Apify", () => {
+  it("construiește inputul actorului din criteriile noastre", () => {
+    const source = PREDEFINED_APIFY_SOURCES.find((item) => item.key === "imobiliare_ro");
+    expect(source).toBeDefined();
+    const input = buildPredefinedApifyInput(source!, {
+      transactionType: "rent",
+      propertyType: "apartment",
+      county: "București",
+      locality: "București",
+      localitySirutaCode: 179132,
+      zone: "Militari",
+      maxItems: 240,
+    });
+    expect(input).toEqual({
+      searchUrl: "https://www.imobiliare.ro/inchiriere-apartamente/bucuresti/militari",
+      maxItems: 240,
+    });
+  });
+
+  it("ține avansatul ascuns pentru utilizatorii care nu sunt superadmin", () => {
+    expect(canShowApifyAdvanced(false)).toBe(false);
+    expect(canShowApifyAdvanced(true)).toBe(true);
+  });
+
+  it("estimează costul catalogului după limita jobului", () => {
+    const source = PREDEFINED_APIFY_SOURCES[0]!;
+    expect(estimateApifyCost(200, source.unitCostUsd)).toBe(1);
+  });
+
+  it("ecranul definește starea goală și acțiunea primară", () => {
+    const card = readFileSync("src/components/superadmin/ApifySourcesCard.tsx", "utf8");
+    expect(card).toContain("Niciun job");
+    expect(card).toContain("Job nou");
+    expect(card).not.toContain("Adaugă sursă");
   });
 });

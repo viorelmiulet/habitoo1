@@ -1023,11 +1023,15 @@ export type Database = {
           apify_run_id: string | null
           cost_usd: number | null
           created_at: string
+          criteria: Json
           discard_reasons: Json
           errors: Json
+          estimated_cost_usd: number | null
+          field_mapping_snapshot: Json
           finished_at: string | null
           first_item: Json | null
           id: string
+          input_snapshot: Json
           items_created: number
           items_discarded: number
           items_merged: number
@@ -1035,6 +1039,7 @@ export type Database = {
           items_unchanged: number
           items_updated: number
           market_import_run_id: string | null
+          max_items: number
           prospects_created: number
           prospects_skipped: number
           prospects_updated: number
@@ -1049,11 +1054,15 @@ export type Database = {
           apify_run_id?: string | null
           cost_usd?: number | null
           created_at?: string
+          criteria?: Json
           discard_reasons?: Json
           errors?: Json
+          estimated_cost_usd?: number | null
+          field_mapping_snapshot?: Json
           finished_at?: string | null
           first_item?: Json | null
           id?: string
+          input_snapshot?: Json
           items_created?: number
           items_discarded?: number
           items_merged?: number
@@ -1061,6 +1070,7 @@ export type Database = {
           items_unchanged?: number
           items_updated?: number
           market_import_run_id?: string | null
+          max_items?: number
           prospects_created?: number
           prospects_skipped?: number
           prospects_updated?: number
@@ -1075,11 +1085,15 @@ export type Database = {
           apify_run_id?: string | null
           cost_usd?: number | null
           created_at?: string
+          criteria?: Json
           discard_reasons?: Json
           errors?: Json
+          estimated_cost_usd?: number | null
+          field_mapping_snapshot?: Json
           finished_at?: string | null
           first_item?: Json | null
           id?: string
+          input_snapshot?: Json
           items_created?: number
           items_discarded?: number
           items_merged?: number
@@ -1087,6 +1101,7 @@ export type Database = {
           items_unchanged?: number
           items_updated?: number
           market_import_run_id?: string | null
+          max_items?: number
           prospects_created?: number
           prospects_skipped?: number
           prospects_updated?: number

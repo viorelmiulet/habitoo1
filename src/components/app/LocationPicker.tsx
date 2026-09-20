@@ -186,7 +186,7 @@ export function LocationPicker({
         </Label>
         <select
           id={`${idPrefix}-county`}
-          className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
+          className="h-11 w-full rounded-md border border-input bg-background px-3 text-sm"
           value={value.countySirutaCode ? String(value.countySirutaCode) : ""}
           onChange={(e) => selectCounty(e.target.value)}
           required={required}

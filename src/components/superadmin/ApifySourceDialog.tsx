@@ -1,13 +1,8 @@
-/**
- * Dialogul de adăugare / editare a unei surse Apify.
- *
- * O sursă nouă este doar configurație: actorul, inputul lui (exact schema
- * documentată de actor) și maparea câmpurilor lui în câmpurile Habitoo.
- * JSON-ul este validat în timp ce se scrie; nimic invalid nu se salvează.
- */
 import { useEffect, useMemo, useState } from "react";
+import { ChevronDown } from "lucide-react";
+import { LocationPicker, emptyLocation, type LocationValue } from "@/components/app/LocationPicker";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import {
   Dialog,
   DialogContent,
@@ -26,195 +21,288 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { supabase } from "@/integrations/supabase/client";
+import { propertyTypeLabels, transactionLabels } from "@/lib/labels";
 import {
-  APIFY_TARGET_FIELD_LABELS,
-  emptyApifySourceForm,
-  firstItemKeys,
-  parseJsonObject,
-  validateApifySourceForm,
-  type ApifyFormErrors,
-  type ApifySourceFormValues,
-  type ApifySourcePayload,
-} from "@/lib/market/apify/source-form";
-import type { ApifySourceView } from "@/lib/market/apify/apify.functions";
+  PREDEFINED_APIFY_SOURCES,
+  buildPredefinedApifyInput,
+  canShowApifyAdvanced,
+  getPredefinedApifySource,
+  type ApifyJobCriteria,
+} from "@/lib/market/apify/predefined-sources";
+import { estimateApifyCost } from "@/lib/market/apify/source";
+
+type JobPayload = {
+  sourceKey: string;
+  criteria: ApifyJobCriteria;
+  prospectOrganizationId: string | null;
+  advancedInput: Record<string, unknown> | null;
+  advancedMapping: Record<string, unknown> | null;
+};
 
 type Props = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  source: ApifySourceView | null;
   organizations: { id: string; name: string }[];
   saving: boolean;
-  onSave: (payload: ApifySourcePayload) => void;
+  isSuperadmin: boolean;
+  onRun: (payload: JobPayload) => void;
 };
 
-function formFromSource(source: ApifySourceView): ApifySourceFormValues {
-  return {
-    key: source.key,
-    label: source.label,
-    actorId: source.actorId,
-    maxItems: String(source.maxItems),
-    targets: source.targets,
-    prospectOrganizationId: source.prospectOrganizationId,
-    unitCostUsd: source.unitCostUsd === null ? "" : String(source.unitCostUsd),
-    notes: source.notes ?? "",
-    inputJson: source.inputJson,
-    fieldMappingJson: source.fieldMappingJson,
-  };
+function parseObject(value: string): Record<string, unknown> | null {
+  try {
+    const parsed: unknown = JSON.parse(value);
+    return parsed !== null && typeof parsed === "object" && !Array.isArray(parsed)
+      ? (parsed as Record<string, unknown>)
+      : null;
+  } catch {
+    return null;
+  }
 }
 
 export function ApifySourceDialog({
   open,
   onOpenChange,
-  source,
   organizations,
   saving,
-  onSave,
+  isSuperadmin,
+  onRun,
 }: Props) {
-  const [values, setValues] = useState<ApifySourceFormValues>(() =>
-    source ? formFromSource(source) : emptyApifySourceForm(),
-  );
-  const [errors, setErrors] = useState<ApifyFormErrors>({});
+  const [sourceKey, setSourceKey] = useState(PREDEFINED_APIFY_SOURCES[0]?.key ?? "");
+  const [transactionType, setTransactionType] = useState<"sale" | "rent">("sale");
+  const [propertyType, setPropertyType] = useState<ApifyJobCriteria["propertyType"]>("apartment");
+  const [location, setLocation] = useState<LocationValue>(emptyLocation);
+  const [zone, setZone] = useState("");
+  const [zones, setZones] = useState<string[]>([]);
+  const [maxItems, setMaxItems] = useState("100");
+  const [organizationId, setOrganizationId] = useState("");
+  const [advancedOpen, setAdvancedOpen] = useState(false);
+  const [inputJson, setInputJson] = useState("{}");
+  const [mappingJson, setMappingJson] = useState("{}");
+  const [advancedEdited, setAdvancedEdited] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const source = getPredefinedApifySource(sourceKey);
+  const max = Math.max(1, Math.min(Number(maxItems) || 0, source?.maxResults ?? 1000));
+
+  const criteria = useMemo<ApifyJobCriteria | null>(() => {
+    if (!location.localitySirutaCode || !location.localityName || !source) return null;
+    return {
+      transactionType,
+      propertyType,
+      county: location.countyName,
+      locality: location.localityName,
+      localitySirutaCode: location.localitySirutaCode,
+      zone: zone || null,
+      maxItems: max,
+    };
+  }, [location, max, propertyType, source, transactionType, zone]);
 
   useEffect(() => {
     if (!open) return;
-    setValues(source ? formFromSource(source) : emptyApifySourceForm());
-    setErrors({});
-  }, [open, source]);
+    setError(null);
+    setAdvancedOpen(false);
+    setAdvancedEdited(false);
+  }, [open]);
 
-  const set = <K extends keyof ApifySourceFormValues>(key: K, value: ApifySourceFormValues[K]) =>
-    setValues((prev) => ({ ...prev, [key]: value }));
+  useEffect(() => {
+    if (!criteria || !source || advancedEdited) return;
+    setInputJson(JSON.stringify(buildPredefinedApifyInput(source, criteria), null, 2));
+    setMappingJson(JSON.stringify(source.fieldMapping, null, 2));
+  }, [advancedEdited, criteria, source]);
 
-  const inputError = useMemo(() => {
-    const parsed = parseJsonObject(values.inputJson);
-    return parsed.ok ? null : parsed.message;
-  }, [values.inputJson]);
+  useEffect(() => {
+    let active = true;
+    setZone("");
+    if (!location.localityName) {
+      setZones([]);
+      return () => {
+        active = false;
+      };
+    }
+    void supabase
+      .from("imobiliare_locations")
+      .select("name")
+      .eq("depth", 3)
+      .eq(
+        "city_normalized",
+        location.localityName
+          .normalize("NFD")
+          .replace(/[\u0300-\u036f]/g, "")
+          .toLowerCase(),
+      )
+      .eq("is_hidden", false)
+      .order("name")
+      .limit(500)
+      .then(({ data }) => {
+        if (active) setZones([...new Set((data ?? []).map((row) => row.name))]);
+      });
+    return () => {
+      active = false;
+    };
+  }, [location.localityName]);
 
-  const mappingError = useMemo(() => {
-    const parsed = parseJsonObject(values.fieldMappingJson);
-    return parsed.ok ? null : parsed.message;
-  }, [values.fieldMappingJson]);
-
-  const rawKeys = useMemo(
-    () => firstItemKeys(source?.lastRun?.firstItemJson ?? null),
-    [source?.lastRun?.firstItemJson],
-  );
-
+  const estimated = source ? estimateApifyCost(max, source.unitCostUsd) : null;
   const submit = () => {
-    const result = validateApifySourceForm(values);
-    if (!result.ok) {
-      setErrors(result.errors);
+    if (!source || !criteria) {
+      setError("Alege sursa și o localitate din nomenclator.");
       return;
     }
-    setErrors({});
-    onSave(result.payload);
+    if (Number(maxItems) < 1 || Number(maxItems) > source.maxResults) {
+      setError(`Numărul maxim este între 1 și ${source.maxResults}.`);
+      return;
+    }
+    if (source.prospectOrganizationRequired && !organizationId) {
+      setError("Alege agenția care primește prospecții.");
+      return;
+    }
+    const advancedInput = advancedEdited ? parseObject(inputJson) : null;
+    const advancedMapping = advancedEdited ? parseObject(mappingJson) : null;
+    if (advancedEdited && (!advancedInput || !advancedMapping)) {
+      setError("Inputul și maparea avansată trebuie să fie obiecte JSON valide.");
+      return;
+    }
+    setError(null);
+    onRun({
+      sourceKey,
+      criteria,
+      prospectOrganizationId: organizationId || null,
+      advancedInput,
+      advancedMapping,
+    });
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[90vh] max-w-3xl overflow-y-auto">
+      <DialogContent className="max-h-[92vh] w-[calc(100vw-1rem)] max-w-2xl overflow-y-auto p-4 sm:p-6">
         <DialogHeader>
-          <DialogTitle>{source ? "Editează sursa" : "Adaugă sursă"}</DialogTitle>
+          <DialogTitle>Job nou</DialogTitle>
           <DialogDescription>
-            Inputul actorului trebuie să respecte exact schema documentată de acel actor pe Apify.
-            Maparea traduce numele câmpurilor returnate de actor în câmpurile Habitoo.
+            Alege ce date dorești. Jobul pornește o singură dată, după confirmare.
           </DialogDescription>
         </DialogHeader>
+        <div className="space-y-5">
+          <div className="space-y-2">
+            <Label>Sursă</Label>
+            <Select
+              value={sourceKey}
+              onValueChange={(value) => {
+                setSourceKey(value);
+                setAdvancedEdited(false);
+              }}
+            >
+              <SelectTrigger className="min-h-11">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {PREDEFINED_APIFY_SOURCES.map((item) => (
+                  <SelectItem key={item.key} value={item.key}>
+                    {item.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-muted-foreground">{source?.description}</p>
+          </div>
 
-        <div className="grid gap-4 sm:grid-cols-2">
-          <div className="space-y-1.5">
-            <Label htmlFor="apify-key">Cheie</Label>
+          <fieldset className="space-y-3">
+            <legend className="text-sm font-medium">Ce cauți</legend>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="space-y-2">
+                <Label>Tranzacție</Label>
+                <Select
+                  value={transactionType}
+                  onValueChange={(value) => setTransactionType(value as "sale" | "rent")}
+                >
+                  <SelectTrigger className="min-h-11">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {Object.entries(transactionLabels).map(([key, label]) => (
+                      <SelectItem key={key} value={key}>
+                        {label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground">Vânzare sau închiriere.</p>
+              </div>
+              <div className="space-y-2">
+                <Label>Tip proprietate</Label>
+                <Select
+                  value={propertyType}
+                  onValueChange={(value) =>
+                    setPropertyType(value as ApifyJobCriteria["propertyType"])
+                  }
+                >
+                  <SelectTrigger className="min-h-11">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {Object.entries(propertyTypeLabels).map(([key, label]) => (
+                      <SelectItem key={key} value={key}>
+                        {label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground">
+                  Folosește clasificarea proprietăților din Habitoo.
+                </p>
+              </div>
+              <LocationPicker
+                idPrefix="apify-job"
+                value={location}
+                onChange={setLocation}
+                required
+              />
+              <div className="space-y-2 sm:col-span-2">
+                <Label>Zonă / cartier</Label>
+                <Select
+                  value={zone || "__all__"}
+                  onValueChange={(value) => setZone(value === "__all__" ? "" : value)}
+                  disabled={!location.localityName || zones.length === 0}
+                >
+                  <SelectTrigger className="min-h-11">
+                    <SelectValue placeholder="Toate zonele" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__all__">Toate zonele</SelectItem>
+                    {zones.map((item) => (
+                      <SelectItem key={item} value={item}>
+                        {item}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground">
+                  Opțional; lista folosește nomenclatorul de zone deja încărcat.
+                </p>
+              </div>
+            </div>
+          </fieldset>
+
+          <div className="space-y-2">
+            <Label htmlFor="apify-job-max">Rezultate maxime</Label>
             <Input
-              id="apify-key"
-              value={values.key}
-              disabled={source !== null}
-              placeholder="olx_imobiliare"
-              onChange={(event) => set("key", event.currentTarget.value)}
-            />
-            {source ? (
-              <p className="text-xs text-muted-foreground">Cheia nu se mai poate schimba.</p>
-            ) : null}
-            {errors.key ? <p className="text-xs text-destructive">{errors.key}</p> : null}
-          </div>
-          <div className="space-y-1.5">
-            <Label htmlFor="apify-label">Denumire</Label>
-            <Input
-              id="apify-label"
-              value={values.label}
-              onChange={(event) => set("label", event.currentTarget.value)}
-            />
-            {errors.label ? <p className="text-xs text-destructive">{errors.label}</p> : null}
-          </div>
-          <div className="space-y-1.5">
-            <Label htmlFor="apify-actor">Identificator actor</Label>
-            <Input
-              id="apify-actor"
-              value={values.actorId}
-              placeholder="sian.agency/olx-property-scraper"
-              onChange={(event) => set("actorId", event.currentTarget.value)}
-            />
-            {errors.actorId ? <p className="text-xs text-destructive">{errors.actorId}</p> : null}
-          </div>
-          <div className="space-y-1.5">
-            <Label htmlFor="apify-max">Maxim rezultate pe rulare</Label>
-            <Input
-              id="apify-max"
+              id="apify-job-max"
+              className="min-h-11"
               type="number"
               min={1}
-              max={10000}
-              value={values.maxItems}
-              onChange={(event) => set("maxItems", event.currentTarget.value)}
+              max={source?.maxResults ?? 1000}
+              value={maxItems}
+              onChange={(event) => setMaxItems(event.currentTarget.value)}
             />
-            {errors.maxItems ? <p className="text-xs text-destructive">{errors.maxItems}</p> : null}
+            <p className="text-xs text-muted-foreground">
+              Maximum {source?.maxResults ?? 1000}. Cost estimat:{" "}
+              {estimated === null ? "indisponibil" : `${estimated.toFixed(4)} USD`}.
+            </p>
           </div>
-          <div className="space-y-1.5">
-            <Label htmlFor="apify-cost">Cost pe rezultat (USD)</Label>
-            <Input
-              id="apify-cost"
-              inputMode="decimal"
-              value={values.unitCostUsd}
-              placeholder="0.005"
-              onChange={(event) => set("unitCostUsd", event.currentTarget.value)}
-            />
-            <p className="text-xs text-muted-foreground">Folosit doar pentru costul estimat.</p>
-            {errors.unitCostUsd ? (
-              <p className="text-xs text-destructive">{errors.unitCostUsd}</p>
-            ) : null}
-          </div>
-          <div className="space-y-1.5">
-            <Label>Destinație</Label>
-            <div className="flex flex-col gap-2">
-              {(
-                [
-                  { value: "market_pool", label: "Bazin de piață" },
-                  { value: "prospects", label: "Prospecți" },
-                ] as const
-              ).map((option) => (
-                <label key={option.value} className="flex items-center gap-2 text-sm">
-                  <Checkbox
-                    checked={values.targets.includes(option.value)}
-                    onCheckedChange={(checked) =>
-                      set(
-                        "targets",
-                        checked === true
-                          ? [...values.targets, option.value]
-                          : values.targets.filter((target) => target !== option.value),
-                      )
-                    }
-                  />
-                  {option.label}
-                </label>
-              ))}
-            </div>
-            {errors.targets ? <p className="text-xs text-destructive">{errors.targets}</p> : null}
-          </div>
-          {values.targets.includes("prospects") ? (
-            <div className="space-y-1.5 sm:col-span-2">
+
+          {source?.prospectOrganizationRequired ? (
+            <div className="space-y-2">
               <Label>Agenția care primește prospecții</Label>
-              <Select
-                value={values.prospectOrganizationId ?? ""}
-                onValueChange={(value) => set("prospectOrganizationId", value)}
-              >
-                <SelectTrigger>
+              <Select value={organizationId} onValueChange={setOrganizationId}>
+                <SelectTrigger className="min-h-11">
                   <SelectValue placeholder="Alege agenția" />
                 </SelectTrigger>
                 <SelectContent>
@@ -225,85 +313,77 @@ export function ApifySourceDialog({
                   ))}
                 </SelectContent>
               </Select>
-              {errors.prospectOrganizationId ? (
-                <p className="text-xs text-destructive">{errors.prospectOrganizationId}</p>
-              ) : null}
-            </div>
-          ) : null}
-          <div className="space-y-1.5 sm:col-span-2">
-            <Label htmlFor="apify-notes">Note</Label>
-            <Textarea
-              id="apify-notes"
-              rows={2}
-              value={values.notes}
-              onChange={(event) => set("notes", event.currentTarget.value)}
-            />
-          </div>
-          <div className="space-y-1.5 sm:col-span-2">
-            <Label htmlFor="apify-input">Inputul actorului (JSON)</Label>
-            <Textarea
-              id="apify-input"
-              rows={8}
-              className="font-mono text-xs"
-              value={values.inputJson}
-              onChange={(event) => set("inputJson", event.currentTarget.value)}
-            />
-            <p className="text-xs text-muted-foreground">
-              Se trimite actorului exact așa. Respectă schema documentată de actor.
-            </p>
-            {inputError ?? errors.inputJson ? (
-              <p className="text-xs text-destructive">{inputError ?? errors.inputJson}</p>
-            ) : null}
-          </div>
-          <div className="space-y-1.5 sm:col-span-2">
-            <Label htmlFor="apify-mapping">Maparea câmpurilor (JSON)</Label>
-            <Textarea
-              id="apify-mapping"
-              rows={8}
-              className="font-mono text-xs"
-              value={values.fieldMappingJson}
-              onChange={(event) => set("fieldMappingJson", event.currentTarget.value)}
-            />
-            <p className="text-xs text-muted-foreground">
-              Forma: câmpul nostru → cheia actorului (text sau listă de chei, prima găsită
-              câștigă).
-            </p>
-            <div className="rounded-md border border-border bg-muted/40 p-2 text-xs text-muted-foreground">
-              <p className="mb-1 font-medium text-foreground">Câmpurile noastre</p>
-              <p>
-                {APIFY_TARGET_FIELD_LABELS.map((item) => `${item.field} (${item.label})`).join(
-                  " · ",
-                )}
+              <p className="text-xs text-muted-foreground">
+                Numai anunțurile marcate public ca persoane fizice sunt eligibile.
               </p>
             </div>
-            {rawKeys.length > 0 ? (
-              <Button
-                type="button"
-                size="sm"
-                variant="outline"
-                onClick={() => {
-                  const skeleton = Object.fromEntries(rawKeys.map((key) => [key, key]));
-                  set("fieldMappingJson", JSON.stringify(skeleton, null, 2));
-                }}
-              >
-                Copiază cheile din primul rezultat
-              </Button>
-            ) : null}
-            {mappingError ?? errors.fieldMappingJson ? (
-              <p className="text-xs text-destructive">{mappingError ?? errors.fieldMappingJson}</p>
-            ) : null}
-          </div>
-        </div>
+          ) : null}
 
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={saving}>
+          {canShowApifyAdvanced(isSuperadmin) ? (
+            <Collapsible open={advancedOpen} onOpenChange={setAdvancedOpen}>
+              <CollapsibleTrigger asChild>
+                <Button type="button" variant="ghost" className="min-h-11 w-full justify-between">
+                  Avansat{" "}
+                  <ChevronDown
+                    className={`size-4 transition-transform ${advancedOpen ? "rotate-180" : ""}`}
+                  />
+                </Button>
+              </CollapsibleTrigger>
+              <CollapsibleContent className="space-y-4 pt-3">
+                <div className="space-y-2">
+                  <Label htmlFor="apify-job-input">Input brut</Label>
+                  <Textarea
+                    id="apify-job-input"
+                    className="font-mono text-xs"
+                    rows={7}
+                    value={inputJson}
+                    onChange={(event) => {
+                      setInputJson(event.currentTarget.value);
+                      setAdvancedEdited(true);
+                    }}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Doar pentru depanarea configurației predefinite.
+                  </p>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="apify-job-mapping">Mapare brută</Label>
+                  <Textarea
+                    id="apify-job-mapping"
+                    className="font-mono text-xs"
+                    rows={7}
+                    value={mappingJson}
+                    onChange={(event) => {
+                      setMappingJson(event.currentTarget.value);
+                      setAdvancedEdited(true);
+                    }}
+                  />
+                </div>
+              </CollapsibleContent>
+            </Collapsible>
+          ) : null}
+          {error ? (
+            <p role="alert" className="text-sm text-destructive">
+              {error}
+            </p>
+          ) : null}
+        </div>
+        <DialogFooter className="gap-2">
+          <Button
+            variant="outline"
+            className="min-h-11"
+            onClick={() => onOpenChange(false)}
+            disabled={saving}
+          >
             Renunță
           </Button>
-          <Button onClick={submit} disabled={saving}>
-            Salvează
+          <Button className="min-h-11" onClick={submit} disabled={saving}>
+            {saving ? "Se rulează…" : "Pornește jobul"}
           </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
   );
 }
+
+export type { JobPayload as ApifyJobPayload };

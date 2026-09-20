@@ -12,6 +12,13 @@ import { createMarketRepository } from "../repository.server";
 import { apifyMarketSourceId, estimateApifyCost, monthStartIso, sumCosts } from "./source";
 import { runApifySourceImport, type ApifyRunOutcome, type ApifySourceConfig } from "./run";
 import type { ApifyFieldMapping } from "./mapping";
+import {
+  PREDEFINED_APIFY_SOURCES,
+  apifyCriteriaSummary,
+  buildPredefinedApifyInput,
+  getPredefinedApifySource,
+  type ApifyJobCriteria,
+} from "./predefined-sources";
 
 type AuthContext = {
   userId: string;
@@ -26,10 +33,7 @@ async function requireSuperadmin(context: AuthContext): Promise<void> {
 }
 
 /** Destinațiile sursei, cu compatibilitate pentru rândurile vechi. */
-function readTargets(
-  targets: unknown,
-  legacy: unknown,
-): ("market_pool" | "prospects")[] {
+function readTargets(targets: unknown, legacy: unknown): ("market_pool" | "prospects")[] {
   const allowed = ["market_pool", "prospects"] as const;
   const list = Array.isArray(targets)
     ? targets.filter((value): value is "market_pool" | "prospects" =>
@@ -65,6 +69,14 @@ export type ApifyRunView = {
   /** Primul element brut, ca o greșeală de mapare să se vadă imediat. */
   /** JSON text, ca o greșeală de mapare să fie vizibilă imediat. */
   firstItemJson: string | null;
+  sourceKey: string;
+  sourceLabel: string;
+  criteriaSummary: string;
+  criteria: ApifyJobCriteria | null;
+  inputJson: string;
+  mappingJson: string;
+  maxItems: number;
+  estimatedCostUsd: number | null;
 };
 
 export type ApifySourceView = {
@@ -94,10 +106,15 @@ export type ApifyOverview = {
   sources: ApifySourceView[];
   /** Agențiile care pot primi prospecți de la o sursă Apify. */
   organizations: { id: string; name: string }[];
+  runs: ApifyRunView[];
 };
 
 function runView(row: Record<string, unknown> | null): ApifyRunView | null {
   if (!row) return null;
+  const criteria =
+    row["criteria"] && typeof row["criteria"] === "object"
+      ? (row["criteria"] as ApifyJobCriteria)
+      : null;
   return {
     id: String(row["id"]),
     status: String(row["status"] ?? "running"),
@@ -119,6 +136,19 @@ function runView(row: Record<string, unknown> | null): ApifyRunView | null {
       row["first_item"] === null || row["first_item"] === undefined
         ? null
         : JSON.stringify(row["first_item"], null, 2).slice(0, 8000),
+    sourceKey: String(row["source_key"] ?? ""),
+    sourceLabel:
+      getPredefinedApifySource(String(row["source_key"] ?? ""))?.label ??
+      String(row["source_key"] ?? "Sursă"),
+    criteriaSummary: criteria ? apifyCriteriaSummary(criteria) : "Rulare fără criterii salvate",
+    criteria,
+    inputJson: JSON.stringify(row["input_snapshot"] ?? {}, null, 2).slice(0, 8000),
+    mappingJson: JSON.stringify(row["field_mapping_snapshot"] ?? {}, null, 2).slice(0, 8000),
+    maxItems: Number(row["max_items"] ?? 0),
+    estimatedCostUsd:
+      row["estimated_cost_usd"] === null || row["estimated_cost_usd"] === undefined
+        ? null
+        : Number(row["estimated_cost_usd"]),
   };
 }
 
@@ -136,48 +166,50 @@ export const getApifyOverview = createServerFn({ method: "GET" })
     if (error) throw error;
 
     const monthStart = monthStartIso();
+    const configured = new Map((rows ?? []).map((row) => [row.key, row]));
     const sources: ApifySourceView[] = [];
-    for (const row of rows ?? []) {
-      const maxItems = Number(row.max_items ?? 100);
-      const unitCost = row.unit_cost_usd === null ? null : Number(row.unit_cost_usd);
+    for (const definition of PREDEFINED_APIFY_SOURCES) {
+      const row = configured.get(definition.key);
+      const maxItems = Number(row?.max_items ?? 100);
+      const unitCost = definition.unitCostUsd;
       const [{ data: lastRun }, { data: monthRuns }, { count }] = await Promise.all([
         admin
           .from("apify_runs")
           .select("*")
-          .eq("source_key", row.key)
+          .eq("source_key", definition.key)
           .order("started_at", { ascending: false })
           .limit(1)
           .maybeSingle(),
         admin
           .from("apify_runs")
           .select("cost_usd")
-          .eq("source_key", row.key)
+          .eq("source_key", definition.key)
           .gte("started_at", monthStart),
         admin
           .from("market_listings")
           .select("id", { count: "exact", head: true })
-          .eq("source", apifyMarketSourceId(row.key)),
+          .eq("source", apifyMarketSourceId(definition.key)),
       ]);
 
       sources.push({
-        key: row.key,
-        label: row.label,
-        actorId: row.actor_id,
-        inputJson: JSON.stringify(row.input ?? {}, null, 2),
-        fieldMappingJson: JSON.stringify(row.field_mapping ?? {}, null, 2),
-        enabled: Boolean(row.enabled),
+        key: definition.key,
+        label: definition.label,
+        actorId: definition.actorId,
+        inputJson: JSON.stringify(definition.inputTemplate, null, 2),
+        fieldMappingJson: JSON.stringify(definition.fieldMapping, null, 2),
+        enabled: true,
         maxItems,
-        targets: readTargets(row.targets, row.target),
-        prospectOrganizationId: row.prospect_organization_id ?? null,
+        targets: definition.targets,
+        prospectOrganizationId: row?.prospect_organization_id ?? null,
         unitCostUsd: unitCost,
-        costNote: row.cost_note ?? null,
-        notes: row.notes ?? null,
+        costNote: row?.cost_note ?? null,
+        notes: definition.description,
         estimatedCostUsd: estimateApifyCost(maxItems, unitCost),
-        spendTotalUsd: Number(row.spend_total_usd ?? 0),
+        spendTotalUsd: Number(row?.spend_total_usd ?? 0),
         spendThisMonthUsd: sumCosts(
           (monthRuns ?? []).map((r) => (r.cost_usd === null ? null : Number(r.cost_usd))),
         ),
-        marketSourceId: apifyMarketSourceId(row.key),
+        marketSourceId: apifyMarketSourceId(definition.key),
         poolListings: count ?? 0,
         lastRun: runView((lastRun as Record<string, unknown> | null) ?? null),
       });
@@ -188,10 +220,19 @@ export const getApifyOverview = createServerFn({ method: "GET" })
       .select("id,name")
       .order("name", { ascending: true });
 
+    const { data: runRows } = await admin
+      .from("apify_runs")
+      .select("*")
+      .order("started_at", { ascending: false })
+      .limit(100);
+
     return {
       tokenConfigured: apifyTokenConfigured(),
       sources,
       organizations: (orgRows ?? []).map((org) => ({ id: org.id, name: org.name })),
+      runs: (runRows ?? [])
+        .map((row) => runView(row as unknown as Record<string, unknown>))
+        .filter((row): row is ApifyRunView => row !== null),
     };
   });
 
@@ -205,11 +246,12 @@ const sourceInput = z.object({
   label: z.string().trim().min(1).max(160),
   actorId: z.string().trim().min(1).max(160),
   input: z.record(z.string(), z.unknown()).default({}),
-  fieldMapping: z
-    .record(z.string(), z.union([z.string(), z.array(z.string())]))
-    .default({}),
+  fieldMapping: z.record(z.string(), z.union([z.string(), z.array(z.string())])).default({}),
   maxItems: z.number().int().min(1).max(10000),
-  targets: z.array(z.enum(["market_pool", "prospects"])).min(1).max(2),
+  targets: z
+    .array(z.enum(["market_pool", "prospects"]))
+    .min(1)
+    .max(2),
   prospectOrganizationId: z.string().uuid().nullable().optional(),
   unitCostUsd: z.number().finite().min(0).max(1000).nullable().optional(),
   costNote: z.string().trim().max(400).nullable().optional(),
@@ -274,6 +316,7 @@ export const setApifySourceEnabled = createServerFn({ method: "POST" })
   });
 
 export type ApifyRunResult = {
+  runId: string;
   status: ApifyRunOutcome["status"];
   received: number;
   created: number;
@@ -289,42 +332,89 @@ export type ApifyRunResult = {
   errors: { reference: string; message: string }[];
 };
 
+const jobInput = z.object({
+  sourceKey: z.string().trim().min(1).max(60),
+  criteria: z.object({
+    transactionType: z.enum(["sale", "rent"]),
+    propertyType: z.enum([
+      "apartment",
+      "studio",
+      "house",
+      "land",
+      "commercial",
+      "office",
+      "industrial",
+    ]),
+    county: z.string().trim().min(1).max(120),
+    locality: z.string().trim().min(1).max(120),
+    localitySirutaCode: z.number().int().positive(),
+    zone: z.string().trim().max(160).nullable(),
+    maxItems: z.number().int().min(1).max(10000),
+  }),
+  prospectOrganizationId: z.string().uuid().nullable(),
+  advancedInput: z.record(z.string(), z.unknown()).nullable(),
+  advancedMapping: z.record(z.string(), z.unknown()).nullable(),
+});
+
 /** Rulare manuală: pornită doar de un superadmin, niciodată automat. */
 export const runApifySource = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((data: unknown) =>
-    z.object({ key: z.string().trim().min(1).max(60) }).parse(data),
-  )
+  .inputValidator((data: unknown) => jobInput.parse(data))
   .handler(async ({ context, data }): Promise<ApifyRunResult> => {
     const ctx = context as unknown as AuthContext;
     await requireSuperadmin(ctx);
     const userId = (context as unknown as { userId: string }).userId;
     const admin = await loadAdmin();
-    const {
-      apifyTokenConfigured,
-      startApifyRun,
-      waitForApifyRun,
-      readApifyDataset,
-    } = await import("./client.server");
+    const { apifyTokenConfigured, startApifyRun, waitForApifyRun, readApifyDataset } =
+      await import("./client.server");
 
-    const { data: row, error } = await admin
+    const definition = getPredefinedApifySource(data.sourceKey);
+    if (!definition) throw new Error("Sursa predefinită nu a fost găsită.");
+    if (data.criteria.maxItems > definition.maxResults) {
+      throw new Error(`Sursa permite maximum ${definition.maxResults} rezultate per job.`);
+    }
+    if (definition.prospectOrganizationRequired && !data.prospectOrganizationId) {
+      throw new Error("Alege agenția care primește prospecții.");
+    }
+    const generatedInput = buildPredefinedApifyInput(definition, data.criteria);
+    const effectiveInput = data.advancedInput ?? generatedInput;
+    const effectiveMapping = (data.advancedMapping ?? definition.fieldMapping) as ApifyFieldMapping;
+
+    const { data: existingRow } = await admin
       .from("apify_sources")
-      .select("*")
-      .eq("key", data.key)
+      .select("spend_total_usd")
+      .eq("key", definition.key)
       .maybeSingle();
-    if (error) throw error;
-    if (!row) throw new Error("Sursa Apify nu a fost găsită.");
+
+    const { error: sourceError } = await admin.from("apify_sources").upsert(
+      {
+        key: definition.key,
+        label: definition.label,
+        actor_id: definition.actorId,
+        input: definition.inputTemplate as never,
+        field_mapping: definition.fieldMapping as never,
+        enabled: true,
+        max_items: data.criteria.maxItems,
+        targets: definition.targets,
+        target: definition.targets[0],
+        prospect_organization_id: data.prospectOrganizationId,
+        unit_cost_usd: definition.unitCostUsd,
+        notes: definition.description,
+      } as never,
+      { onConflict: "key" },
+    );
+    if (sourceError) throw sourceError;
 
     const source: ApifySourceConfig = {
-      key: row.key,
-      label: row.label,
-      actorId: row.actor_id,
-      input: (row.input as Record<string, unknown> | null) ?? {},
-      fieldMapping: (row.field_mapping as ApifyFieldMapping | null) ?? {},
-      enabled: Boolean(row.enabled),
-      maxItems: Number(row.max_items ?? 100),
-      targets: readTargets(row.targets, row.target),
-      prospectOrganizationId: row.prospect_organization_id ?? null,
+      key: definition.key,
+      label: definition.label,
+      actorId: definition.actorId,
+      input: effectiveInput,
+      fieldMapping: effectiveMapping,
+      enabled: true,
+      maxItems: data.criteria.maxItems,
+      targets: definition.targets,
+      prospectOrganizationId: data.prospectOrganizationId,
     };
 
     const sourceId = apifyMarketSourceId(source.key);
@@ -353,7 +443,12 @@ export const runApifySource = createServerFn({ method: "POST" })
         started_at: now,
         market_import_run_id: importRun.id,
         triggered_by: userId,
-      })
+        criteria: data.criteria as never,
+        input_snapshot: effectiveInput as never,
+        field_mapping_snapshot: effectiveMapping as never,
+        max_items: data.criteria.maxItems,
+        estimated_cost_usd: estimateApifyCost(data.criteria.maxItems, definition.unitCostUsd),
+      } as never)
       .select("id")
       .single();
     if (runRowError) throw runRowError;
@@ -467,11 +562,12 @@ export const runApifySource = createServerFn({ method: "POST" })
       .from("apify_sources")
       .update({
         last_run_id: runRow.id,
-        spend_total_usd: Number(row.spend_total_usd ?? 0) + (outcome.costUsd ?? 0),
+        spend_total_usd: Number(existingRow?.spend_total_usd ?? 0) + (outcome.costUsd ?? 0),
       })
       .eq("key", source.key);
 
     return {
+      runId: runRow.id,
       status: outcome.status,
       received: outcome.received,
       created: outcome.created,
