@@ -343,6 +343,21 @@ async function collectCandidates(params: {
     if (error) throw acpDbError("collect market listings", error);
     const rows = data ?? [];
     const deduped = dedupeMarketCandidates(rows as never);
+    // Portalurile suplimentare ale unei oferte unite între portaluri: fără ele,
+    // cititorul analizei nu ar vedea de unde provine de fapt comparabilul.
+    const extraSources = new Map<string, string[]>();
+    const listingIds = rows.map((row) => (row as { id: string }).id);
+    if (listingIds.length > 0) {
+      const { data: sourceRows } = await admin
+        .from("market_listing_sources")
+        .select("market_listing_id,source")
+        .in("market_listing_id", listingIds);
+      for (const row of sourceRows ?? []) {
+        const list = extraSources.get(row.market_listing_id) ?? [];
+        list.push(row.source);
+        extraSources.set(row.market_listing_id, list);
+      }
+    }
     for (const item of deduped) {
       const row = item.row as unknown as Record<string, unknown> & {
         id: string;
@@ -356,7 +371,11 @@ async function collectCandidates(params: {
         title: string | null;
         status: string;
       };
-      const sourceNames = item.sources.map((s) => marketSourceName(s.source)).join(" + ");
+      const sourceKeys = new Set<string>([
+        ...item.sources.map((s) => s.source),
+        ...(extraSources.get(row.id) ?? []),
+      ]);
+      const sourceNames = [...sourceKeys].map((key) => marketSourceName(key)).join(" + ");
       candidates.push({
         key: `market:${item.row.market_entity_id ?? row.id}`,
         sourceType: "portal",
