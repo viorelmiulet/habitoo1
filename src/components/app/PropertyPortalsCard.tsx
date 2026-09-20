@@ -239,6 +239,9 @@ export const PropertyPortalsCard = forwardRef<
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey });
       queryClient.invalidateQueries({ queryKey: ["property-portals-matrix"] });
+      queryClient.invalidateQueries({
+        queryKey: ["property-portal-journal", organizationId, propertyId],
+      });
     },
   });
 
