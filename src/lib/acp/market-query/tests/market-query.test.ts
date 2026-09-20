@@ -51,7 +51,7 @@ function fakeAdmin(rows: Row[]) {
           return builder;
         },
         order() {
-          return Promise.resolve({ data: filtered, error: null }) as never;
+          return builder;
         },
         eq(column: string, value: unknown) {
           filtered = filtered.filter((r) => (r as never as Record<string, unknown>)[column] === value);
