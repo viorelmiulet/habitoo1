@@ -8,26 +8,9 @@
  */
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { scoreProspect } from "@/lib/prospecting/scoring";
-import type { NormalizedProspect, ProspectSearchCriteria } from "@/lib/prospecting/types";
+import { emptyCriteria, type NormalizedProspect, type ProspectSearchCriteria } from "@/lib/prospecting/types";
 
-const NEUTRAL_CRITERIA: ProspectSearchCriteria = {
-  transactionType: null,
-  propertyTypes: [],
-  counties: [],
-  cities: [],
-  zones: [],
-  priceMin: null,
-  priceMax: null,
-  currency: null,
-  roomsMin: null,
-  roomsMax: null,
-  surfaceMin: null,
-  surfaceMax: null,
-  keywords: [],
-  excludeKeywords: [],
-  sellerTypes: ["private"],
-  maxAgeDays: null,
-};
+const NEUTRAL_CRITERIA: ProspectSearchCriteria = emptyCriteria();
 
 export async function writeApifyProspects(
   admin: SupabaseClient,
@@ -39,7 +22,7 @@ export async function writeApifyProspects(
   let updated = 0;
 
   for (const prospect of prospects) {
-    const score = scoreProspect(prospect, { criteria: NEUTRAL_CRITERIA });
+    const score = scoreProspect(prospect, NEUTRAL_CRITERIA);
     const { data: existing } = await admin
       .from("prospects")
       .select("id")
