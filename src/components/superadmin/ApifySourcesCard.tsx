@@ -115,11 +115,25 @@ export function ApifySourcesCard() {
             </p>
           ) : null}
 
+          <div className="mb-3 flex justify-end">
+            <Button
+              size="sm"
+              onClick={() => {
+                setEditing(null);
+                setDialogOpen(true);
+              }}
+            >
+              <Plus className="mr-1.5 size-3.5" />
+              Adaugă sursă
+            </Button>
+          </div>
+
           {sources.length === 0 ? (
             <p className="text-sm text-muted-foreground">
               Nu există încă surse configurate. O sursă nouă este doar configurație: actorul,
               inputul lui și maparea câmpurilor.
             </p>
+
           ) : (
             <ul className="divide-y divide-border">
               {sources.map((source) => (
