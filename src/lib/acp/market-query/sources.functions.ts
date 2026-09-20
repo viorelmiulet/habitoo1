@@ -8,6 +8,7 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import type { AcpSubject } from "../scoring";
 import { MARKET_QUERY_OUTCOME_LABELS, type MarketQuerySourceOutcome } from "./port";
+import type { MarketQueryMarketContext } from "./port";
 import type { MarketQueryComparable } from "./port";
 
 type AuthContext = {
@@ -118,6 +119,10 @@ export type MarketQueryTestResult = {
   outcome: MarketQuerySourceOutcome;
   outcomeLabel: string;
   comparables: MarketQueryComparable[];
+  /** Cifrele publicate de sursă, dacă le publică. */
+  marketContext: MarketQueryMarketContext | null;
+  /** Adresele publice cerute, exact cum au fost construite. */
+  requestedUrls: string[];
 };
 
 /** Test manual: o interogare, rezultat normalizat, fără nicio salvare. */
@@ -129,6 +134,7 @@ export const testMarketQuerySource = createServerFn({ method: "POST" })
         key: z.string().trim().min(1).max(60),
         city: z.string().trim().max(120).nullable().optional(),
         county: z.string().trim().max(120).nullable().optional(),
+        neighborhood: z.string().trim().max(120).nullable().optional(),
         propertyType: z.string().trim().max(60).nullable().optional(),
         transactionType: z.string().trim().max(60).nullable().optional(),
         rooms: z.number().int().min(1).max(30).nullable().optional(),
@@ -150,6 +156,7 @@ export const testMarketQuerySource = createServerFn({ method: "POST" })
     const subject: AcpSubject = {
       city: data.city ?? null,
       county: data.county ?? null,
+      neighborhood: data.neighborhood ?? null,
       propertyType: data.propertyType ?? null,
       transactionType: data.transactionType ?? null,
       rooms: data.rooms ?? null,
@@ -162,5 +169,7 @@ export const testMarketQuerySource = createServerFn({ method: "POST" })
       outcome: result.outcome,
       outcomeLabel: MARKET_QUERY_OUTCOME_LABELS[result.outcome.outcome],
       comparables: result.comparables.map(({ sourceKey: _k, sourceLabel: _l, ...rest }) => rest),
+      marketContext: result.marketContext,
+      requestedUrls: result.requestedUrls,
     };
   });
