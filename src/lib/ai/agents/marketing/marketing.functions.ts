@@ -11,6 +11,7 @@ import { z } from "zod";
 import { requireActiveOrgAuth } from "@/lib/org-access";
 import { AI_MAX_MESSAGE_CHARS } from "../../usage/limits";
 import type { AiActor, AiRole } from "../../gateway/types";
+import { aiFeatureDisabledMessage, type AiFeatureKey } from "@/lib/ai/features/keys";
 import {
   MARKETING_CHANNELS,
   MARKETING_CONTENT_TYPES,
@@ -48,6 +49,16 @@ export type MarketingTurn = import("./runtime.server").MarketingTurnResult;
 export type MarketingRun = import("./runtime.server").MarketingRunView;
 export type MarketingDecisionResult = import("./runtime.server").MarketingDecision;
 export type MarketingDraft = import("./runtime.server").MarketingDraftView;
+const AI_FEATURE: AiFeatureKey = "ai_marketing";
+
+/** Mesajul de indisponibilitate când agenția nu are funcția activată. */
+async function aiFeatureBlocked(organizationId: string): Promise<string | null> {
+  const { isAiFeatureEnabled } = await import("@/lib/ai/features/features.server");
+  return (await isAiFeatureEnabled(organizationId, AI_FEATURE))
+    ? null
+    : aiFeatureDisabledMessage(AI_FEATURE);
+}
+
 
 const generateSchema = z.object({
   propertyIds: z.array(z.string().uuid()).min(1).max(5),
@@ -72,6 +83,8 @@ export const generateMarketing = createServerFn({ method: "POST" })
         message: "Marketing Agent este disponibil doar utilizatorilor unei agenții.",
       };
     }
+    const blocked = await aiFeatureBlocked(actor.organizationId);
+    if (blocked) return { status: "failed", run: null, message: blocked };
     const { runMarketingTurn } = await import("./runtime.server");
     return runMarketingTurn(actor, {
       propertyIds: data.propertyIds,
@@ -102,6 +115,8 @@ export const proposeMarketingAction = createServerFn({ method: "POST" })
     if (!actor) {
       return { ok: false, message: "Marketing Agent este disponibil doar unei agenții." };
     }
+    const blocked = await aiFeatureBlocked(actor.organizationId);
+    if (blocked) return { ok: false, message: blocked };
     const { proposeMarketingWrite } = await import("./runtime.server");
     return proposeMarketingWrite(actor, data.runId, {
       resultIndex: data.resultIndex,
@@ -122,6 +137,8 @@ export const decideMarketingAction = createServerFn({ method: "POST" })
     if (!actor) {
       return { ok: false, message: "Marketing Agent este disponibil doar unei agenții." };
     }
+    const blocked = await aiFeatureBlocked(actor.organizationId);
+    if (blocked) return { ok: false, message: blocked };
     const { decideMarketingWrite } = await import("./runtime.server");
     return decideMarketingWrite(actor, data.runId, data.approved);
   });
@@ -133,6 +150,7 @@ export const listMarketingAgentRuns = createServerFn({ method: "GET" })
     const { userId } = context as AuthContext;
     const actor = await resolveActor(userId);
     if (!actor) return [];
+    if (await aiFeatureBlocked(actor.organizationId)) return [];
     const { listMarketingRuns } = await import("./runtime.server");
     return listMarketingRuns(actor);
   });
@@ -147,6 +165,7 @@ export const listPropertyMarketingDrafts = createServerFn({ method: "POST" })
     const { userId } = context as AuthContext;
     const actor = await resolveActor(userId);
     if (!actor) return [];
+    if (await aiFeatureBlocked(actor.organizationId)) return [];
     const { listMarketingDrafts } = await import("./runtime.server");
     return listMarketingDrafts(actor, data.propertyId);
   });
@@ -164,6 +183,7 @@ export const listMarketingProperties = createServerFn({ method: "GET" })
     const { userId } = context as AuthContext;
     const actor = await resolveActor(userId);
     if (!actor) return [];
+    if (await aiFeatureBlocked(actor.organizationId)) return [];
     const admin = await loadAdmin();
     const { data } = await admin
       .from("properties")

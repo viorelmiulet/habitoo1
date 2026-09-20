@@ -7,11 +7,12 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { PageHeader } from "@/components/app/PageHeader";
 import { appHead } from "@/components/app/app-head";
+import { AiFeatureGate } from "@/components/app/ai/AiFeatureGate";
 import { MarketingAgentPanel } from "@/components/app/MarketingAgentPanel";
 
 export const Route = createFileRoute("/_authenticated/app/ai-marketing")({
   head: () => appHead("AI Marketing — texte pentru anunțuri și social media"),
-  component: MarketingAgentPage,
+  component: GatedMarketingAgentPage,
 });
 
 function MarketingAgentPage() {
@@ -23,5 +24,14 @@ function MarketingAgentPage() {
       />
       <MarketingAgentPanel allowPropertyPicker />
     </div>
+  );
+}
+
+/** Funcțiile AI sunt activate individual per agenție de administratorul platformei. */
+function GatedMarketingAgentPage() {
+  return (
+    <AiFeatureGate feature="ai_marketing">
+      <MarketingAgentPage />
+    </AiFeatureGate>
   );
 }

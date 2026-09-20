@@ -10,6 +10,7 @@ import { z } from "zod";
 import { requireActiveOrgAuth } from "@/lib/org-access";
 import { AI_MAX_MESSAGE_CHARS } from "../../usage/limits";
 import type { AiActor, AiRole } from "../../gateway/types";
+import { aiFeatureDisabledMessage, type AiFeatureKey } from "@/lib/ai/features/keys";
 import {
   MARKETING_CHANNELS,
   MARKETING_CONTENT_TYPES,
@@ -46,6 +47,16 @@ async function resolveActor(userId: string): Promise<AiActor | null> {
 export type ManagerTurn = import("./runtime.server").ManagerTurnResult;
 export type ManagerRun = import("./runtime.server").ManagerRunView;
 export type ManagerDecisionResult = import("./runtime.server").ManagerDecision;
+const AI_FEATURE: AiFeatureKey = "ai_manager";
+
+/** Mesajul de indisponibilitate când agenția nu are funcția activată. */
+async function aiFeatureBlocked(organizationId: string): Promise<string | null> {
+  const { isAiFeatureEnabled } = await import("@/lib/ai/features/features.server");
+  return (await isAiFeatureEnabled(organizationId, AI_FEATURE))
+    ? null
+    : aiFeatureDisabledMessage(AI_FEATURE);
+}
+
 
 const runSchema = z.object({
   request: z.string().min(1).max(AI_MAX_MESSAGE_CHARS),
@@ -70,6 +81,8 @@ export const runManagerPlan = createServerFn({ method: "POST" })
         message: "Habitoo Manager este disponibil doar utilizatorilor unei agenții.",
       };
     }
+    const blocked = await aiFeatureBlocked(actor.organizationId);
+    if (blocked) return { status: "failed", run: null, message: blocked };
     const { runManagerTurn } = await import("./runtime.server");
     return runManagerTurn(actor, {
       request: data.request,
@@ -91,6 +104,8 @@ export const decideManagerPlan = createServerFn({ method: "POST" })
     const { userId } = context as AuthContext;
     const actor = await resolveActor(userId);
     if (!actor) return { ok: false, message: "Habitoo Manager este disponibil doar unei agenții." };
+    const blocked = await aiFeatureBlocked(actor.organizationId);
+    if (blocked) return { ok: false, message: blocked };
     const { decideManagerAction } = await import("./runtime.server");
     return decideManagerAction(actor, data.runId, data.approved);
   });
@@ -102,6 +117,7 @@ export const listManagerPlans = createServerFn({ method: "GET" })
     const { userId } = context as AuthContext;
     const actor = await resolveActor(userId);
     if (!actor) return [];
+    if (await aiFeatureBlocked(actor.organizationId)) return [];
     const { listManagerRuns } = await import("./runtime.server");
     return listManagerRuns(actor);
   });
@@ -114,6 +130,7 @@ export const getManagerPlan = createServerFn({ method: "POST" })
     const { userId } = context as AuthContext;
     const actor = await resolveActor(userId);
     if (!actor) return null;
+    if (await aiFeatureBlocked(actor.organizationId)) return null;
     const { getManagerRun } = await import("./runtime.server");
     return getManagerRun(actor, data.runId);
   });

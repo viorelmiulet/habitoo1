@@ -14,6 +14,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireActiveOrgAuth } from "@/lib/org-access";
+import { aiFeatureDisabledMessage } from "@/lib/ai/features/keys";
 import { ACP_AUDIT_ACTIONS, logAcpAudit } from "./audit";
 import { buildAcpAiContext, type AcpAiContextInput } from "./ai/context";
 import {
@@ -87,11 +88,21 @@ async function loadOrganizationId(
 /** Starea providerului AI, ca UI-ul să poată explica lipsa configurării. */
 export const getAcpAiStatus = createServerFn({ method: "GET" })
   .middleware([requireActiveOrgAuth])
-  .handler(async (): Promise<{ configured: boolean; code?: typeof AI_NOT_CONFIGURED }> => {
-    const { isAcpAiConfigured } = await import("./ai/provider.server");
-    const configured = isAcpAiConfigured();
-    return configured ? { configured } : { configured, code: AI_NOT_CONFIGURED };
-  });
+  .handler(
+    async ({
+      context,
+    }): Promise<{ configured: boolean; code?: typeof AI_NOT_CONFIGURED }> => {
+      const admin = await loadAdmin();
+      const organizationId = await loadOrganizationId(admin, (context as AuthContext).userId);
+      const { isAiFeatureEnabled } = await import("@/lib/ai/features/features.server");
+      if (!(await isAiFeatureEnabled(organizationId, "acp_ai"))) {
+        return { configured: false, code: AI_NOT_CONFIGURED };
+      }
+      const { isAcpAiConfigured } = await import("./ai/provider.server");
+      const configured = isAcpAiConfigured();
+      return configured ? { configured } : { configured, code: AI_NOT_CONFIGURED };
+    },
+  );
 
 /** Istoricul interpretărilor AI ale unei versiuni ACP (regenerările se păstrează). */
 export const listAcpAiInsights = createServerFn({ method: "POST" })
@@ -101,6 +112,9 @@ export const listAcpAiInsights = createServerFn({ method: "POST" })
     const userId = (context as AuthContext).userId;
     const admin = await loadAdmin();
     const organizationId = await loadOrganizationId(admin, userId);
+
+    const { isAiFeatureEnabled } = await import("@/lib/ai/features/features.server");
+    if (!(await isAiFeatureEnabled(organizationId, "acp_ai"))) return [];
 
     const { data: rows, error } = await admin
       .from("acp_ai_insights")
@@ -141,6 +155,11 @@ export const generateAcpAiAnalysis = createServerFn({ method: "POST" })
     const userId = (context as AuthContext).userId;
     const admin = await loadAdmin();
     const organizationId = await loadOrganizationId(admin, userId);
+
+    const { isAiFeatureEnabled } = await import("@/lib/ai/features/features.server");
+    if (!(await isAiFeatureEnabled(organizationId, "acp_ai"))) {
+      return { status: "failed", message: aiFeatureDisabledMessage("acp_ai") };
+    }
 
     // RLS/multi-tenancy: analiza trebuie să aparțină agenției utilizatorului.
     const { data: analysis, error } = await admin

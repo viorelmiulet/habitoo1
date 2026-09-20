@@ -7,11 +7,12 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { PageHeader } from "@/components/app/PageHeader";
 import { appHead } from "@/components/app/app-head";
+import { AiFeatureGate } from "@/components/app/ai/AiFeatureGate";
 import { ManagerAgentPanel } from "@/components/app/ManagerAgentPanel";
 
 export const Route = createFileRoute("/_authenticated/app/ai-manager")({
   head: () => appHead("Habitoo Manager — orchestrare agenți AI pentru agenția ta"),
-  component: ManagerAgentPage,
+  component: GatedManagerAgentPage,
 });
 
 function ManagerAgentPage() {
@@ -23,5 +24,14 @@ function ManagerAgentPage() {
       />
       <ManagerAgentPanel />
     </div>
+  );
+}
+
+/** Funcțiile AI sunt activate individual per agenție de administratorul platformei. */
+function GatedManagerAgentPage() {
+  return (
+    <AiFeatureGate feature="ai_manager">
+      <ManagerAgentPage />
+    </AiFeatureGate>
   );
 }

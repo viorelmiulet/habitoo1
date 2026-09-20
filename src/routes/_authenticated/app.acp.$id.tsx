@@ -33,6 +33,7 @@ import {
   type AcpComparableView,
 } from "@/lib/acp/analyses.functions";
 import { AcpAiInsight } from "@/components/app/AcpAiInsight";
+import { useAiFeatures } from "@/hooks/use-ai-features";
 import { MarketIntelligenceCard } from "@/components/app/MarketIntelligenceCard";
 import { AcpVersionsCard } from "@/components/app/AcpVersionsCard";
 import { AcpReportCard } from "@/components/app/AcpReportCard";
@@ -307,6 +308,8 @@ function AcpDetailPage() {
   const fetchAnalysis = useServerFn(getAcpAnalysis);
   const rerun = useServerFn(rerunAcpAnalysis);
   const setOverride = useServerFn(setAcpComparableOverride);
+  const aiFeatures = useAiFeatures();
+
 
   const { data: analysis, isLoading } = useQuery({
     queryKey: ["acp-analysis", id],
@@ -444,7 +447,10 @@ function AcpDetailPage() {
 
       <MarketIntelligenceCard analysisId={analysis.id} />
 
-      <AcpAiInsight analysis={analysis} onGenerated={invalidate} />
+      {/* Analiza AI apare doar dacă funcția este activată pentru agenție. */}
+      {aiFeatures.isEnabled("acp_ai") ? (
+        <AcpAiInsight analysis={analysis} onGenerated={invalidate} />
+      ) : null}
 
       <AcpPrecisionCard analysis={analysis} />
 

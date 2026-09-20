@@ -18,6 +18,7 @@ import {
   type AiActor,
   type AiRole,
 } from "./gateway/types";
+import { aiFeatureDisabledMessage, type AiFeatureKey } from "./features/keys";
 
 type AuthContext = { userId: string };
 
@@ -47,6 +48,17 @@ async function resolveActor(userId: string): Promise<AiActor | null> {
   return { userId, organizationId: profile.organization_id, role };
 }
 
+
+const AI_FEATURE: AiFeatureKey = "ai_assistant";
+
+/** Mesajul de indisponibilitate când agenția nu are funcția activată. */
+async function aiFeatureBlocked(organizationId: string): Promise<string | null> {
+  const { isAiFeatureEnabled } = await import("./features/features.server");
+  return (await isAiFeatureEnabled(organizationId, AI_FEATURE))
+    ? null
+    : aiFeatureDisabledMessage(AI_FEATURE);
+}
+
 export type AiStatus = {
   configured: boolean;
   provider: string;
@@ -54,6 +66,8 @@ export type AiStatus = {
   model: string | null;
   runtime: string;
   plannedProviders: string[];
+  /** Funcția este activată de administratorul platformei pentru agenția ta. */
+  featureEnabled: boolean;
   message: string;
   tools: { name: string; description: string }[];
   limits: {
@@ -85,6 +99,7 @@ export const getAiStatus = createServerFn({ method: "GET" })
     const { aiProviderStatus } = await import("./providers/registry.server");
     const status = aiProviderStatus();
     const actor = await resolveActor(userId);
+    const featureEnabled = actor ? !(await aiFeatureBlocked(actor.organizationId)) : false;
 
     const base: AiStatus = {
       configured: status.configured,
@@ -93,9 +108,12 @@ export const getAiStatus = createServerFn({ method: "GET" })
       model: status.configured ? status.model : null,
       runtime: "mastra",
       plannedProviders: status.plannedProviders.map((id) => PROVIDER_LABELS[id] ?? id),
-      message: status.configured
-        ? "Habitoo AI este configurat."
-        : AI_NOT_CONFIGURED_MESSAGE,
+      featureEnabled,
+      message: !featureEnabled
+        ? aiFeatureDisabledMessage(AI_FEATURE)
+        : status.configured
+          ? "Habitoo AI este configurat."
+          : AI_NOT_CONFIGURED_MESSAGE,
       tools: AI_TOOLS.map((tool) => ({ name: tool.name, description: tool.description })),
       limits: {
         perUserMinute: AI_RATE_LIMITS.perUserMinute.limit,
@@ -151,6 +169,9 @@ export const sendAiMessage = createServerFn({ method: "POST" })
       );
     }
 
+    const blocked = await aiFeatureBlocked(actor.organizationId);
+    if (blocked) return emptyAiResponse("failed", blocked);
+
     const { isAiConfigured } = await import("./providers/registry.server");
     if (!isAiConfigured()) {
       return {
@@ -180,6 +201,7 @@ export const listAiConversations = createServerFn({ method: "GET" })
     const { userId } = context as AuthContext;
     const actor = await resolveActor(userId);
     if (!actor) return [];
+    if (await aiFeatureBlocked(actor.organizationId)) return [];
     const admin = await loadAdmin();
     const { data } = await admin
       .from("ai_conversations")
@@ -211,6 +233,7 @@ export const getAiConversation = createServerFn({ method: "GET" })
     const { userId } = context as AuthContext;
     const actor = await resolveActor(userId);
     if (!actor) return [];
+    if (await aiFeatureBlocked(actor.organizationId)) return [];
     const admin = await loadAdmin();
     const { data: conversation } = await admin
       .from("ai_conversations")
@@ -265,6 +288,8 @@ export const startAiWorkflow = createServerFn({ method: "POST" })
     if (!actor) {
       return { ok: false, message: "Habitoo AI este disponibil doar utilizatorilor unei agenții." };
     }
+    const blocked = await aiFeatureBlocked(actor.organizationId);
+    if (blocked) return { ok: false, message: blocked };
     const { startDiagnosticWorkflow } = await import("./workflows/runtime.server");
     return startDiagnosticWorkflow(actor, {
       question: data.question,
@@ -284,6 +309,8 @@ export const resumeAiWorkflow = createServerFn({ method: "POST" })
     if (!actor) {
       return { ok: false, message: "Habitoo AI este disponibil doar utilizatorilor unei agenții." };
     }
+    const blocked = await aiFeatureBlocked(actor.organizationId);
+    if (blocked) return { ok: false, message: blocked };
     const { resumeDiagnosticWorkflow } = await import("./workflows/runtime.server");
     return resumeDiagnosticWorkflow(actor, data.runId, data.approved);
   });
@@ -295,6 +322,7 @@ export const listAiWorkflows = createServerFn({ method: "GET" })
     const { userId } = context as AuthContext;
     const actor = await resolveActor(userId);
     if (!actor) return [];
+    if (await aiFeatureBlocked(actor.organizationId)) return [];
     const { listDiagnosticWorkflows } = await import("./workflows/runtime.server");
     return listDiagnosticWorkflows(actor);
   });
