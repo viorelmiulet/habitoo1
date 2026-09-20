@@ -7,9 +7,11 @@
  */
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { Database, Play } from "lucide-react";
+import { Database, Pencil, Play, Plus } from "lucide-react";
+import { useState } from "react";
 import { SectionCard } from "@/components/app/SectionCard";
 import { InlineLoading } from "@/components/app/LoadingState";
+import { ApifySourceDialog } from "./ApifySourceDialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,10 +21,14 @@ import { toastError } from "@/lib/errors";
 import {
   getApifyOverview,
   runApifySource,
+  saveApifySource,
   setApifySourceEnabled,
+  type ApifySourceView,
 } from "@/lib/market/apify/apify.functions";
+import type { ApifySourcePayload } from "@/lib/market/apify/source-form";
 
 const QUERY_KEY = ["superadmin", "apify-sources"] as const;
+
 
 function usd(value: number | null): string {
   if (value === null) return "—";
