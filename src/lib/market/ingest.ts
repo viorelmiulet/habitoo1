@@ -143,6 +143,7 @@ export function emptySummary(): ImportSummary {
     unchanged: 0,
     deactivated: 0,
     duplicates: 0,
+    crossPortalMerges: 0,
     ambiguous: 0,
     priceChanges: 0,
     statusChanges: 0,
