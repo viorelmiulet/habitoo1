@@ -333,10 +333,7 @@ export const PropertyPortalsCard = forwardRef<
     .filter((value): value is string => Boolean(value))
     .sort()
     .at(-1);
-  const latestFailureByPortal = new Map<
-    string,
-    NonNullable<typeof journal.data>[number]
-  >();
+  const latestFailureByPortal = new Map<string, NonNullable<typeof journal.data>[number]>();
   for (const item of journal.data ?? []) {
     if (!item.success && !latestFailureByPortal.has(item.portal)) {
       latestFailureByPortal.set(item.portal, item);
