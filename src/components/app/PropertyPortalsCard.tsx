@@ -145,6 +145,7 @@ export const PropertyPortalsCard = forwardRef<
         data: { ...(organizationId ? { organizationId } : {}), propertyId },
       }),
   });
+  const requirementRows = requirements.data;
   const loadJournal = useServerFn(getPropertyPortalJournal);
   const journal = useQuery({
     queryKey: ["property-portal-journal", organizationId, propertyId] as const,
@@ -154,9 +155,9 @@ export const PropertyPortalsCard = forwardRef<
   const requirementByPortal = useMemo(() => {
     type Report = NonNullable<typeof requirements.data>[number];
     const map = new Map<string, Report>();
-    for (const item of requirements.data ?? []) map.set(item.portalId, item);
+    for (const item of requirementRows ?? []) map.set(item.portalId, item);
     return map;
-  }, [requirements.data]);
+  }, [requirementRows]);
 
   const cells = useMemo<PropertyPortalCell[]>(
     () => matrix.data?.properties[propertyId] ?? [],
@@ -283,7 +284,7 @@ export const PropertyPortalsCard = forwardRef<
           message: e instanceof Error ? e.message : "Colaborare Habitoo: salvarea a eșuat.",
         });
       }
-      void queryClient.invalidateQueries({ queryKey: collabKey });
+      void queryClient.invalidateQueries({ queryKey: ["property-collaboration", propertyId] });
       void queryClient.invalidateQueries({ queryKey: ["collaboration-offers"] });
     }
 
@@ -322,7 +323,7 @@ export const PropertyPortalsCard = forwardRef<
 
   const allRequired = Array.from(
     new Map(
-      (requirements.data ?? [])
+      (requirementRows ?? [])
         .flatMap((report) => report.required)
         .map((item) => [item.key, item] as const),
     ).values(),
