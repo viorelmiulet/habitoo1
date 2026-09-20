@@ -259,10 +259,12 @@ export function ImobiliarePromotionsAdminCard({ organizationId }: { organization
                       size="sm"
                       variant="outline"
                       className="h-8 px-2 text-xs"
-                      disabled={!service.manageable || cap.isPending}
+                      disabled={!service.manageable || cap.isPending || request.isPending}
                       onClick={() =>
-                        cap.mutate({
+                        request.mutate({
+                          kind: "cap",
                           serviceKey: service.serviceKey,
+                          serviceLabel: service.label,
                           cap: numberOrNull(capText),
                         })
                       }
