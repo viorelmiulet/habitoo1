@@ -16,7 +16,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { StatusPill } from "@/components/ui/status-pill";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
-import { useSession } from "@/hooks/use-session";
+import { useCurrentUser } from "@/hooks/use-session";
 import {
   AI_MEDIA_BUCKET,
   deleteAiMedia,
@@ -63,12 +63,14 @@ const KINDS: {
   },
 ];
 
-const STATUS: Record<AiMediaItem["status"], { label: string; tone: "info" | "success" | "danger" }> =
-  {
-    running: { label: "În lucru", tone: "info" },
-    succeeded: { label: "Gata", tone: "success" },
-    failed: { label: "Eșuat", tone: "danger" },
-  };
+const STATUS: Record<
+  AiMediaItem["status"],
+  { label: string; state: "pending" | "published" | "error" }
+> = {
+  running: { label: "În lucru", state: "pending" },
+  succeeded: { label: "Gata", state: "published" },
+  failed: { label: "Eșuat", state: "error" },
+};
 
 const KIND_LABEL: Record<Kind, string> = {
   photo_enhance: "Îmbunătățire poză",
@@ -77,7 +79,7 @@ const KIND_LABEL: Record<Kind, string> = {
 };
 
 export function AiMediaPanel() {
-  const { data: session } = useSession();
+  const { data: session } = useCurrentUser();
   const queryClient = useQueryClient();
   const [kind, setKind] = useState<Kind>("photo_enhance");
   const [prompt, setPrompt] = useState("");
@@ -254,7 +256,7 @@ export function AiMediaPanel() {
                 <li key={item.id} className="space-y-2 rounded-xl border border-border p-3">
                   <div className="flex items-center justify-between gap-2">
                     <span className="text-sm font-semibold">{KIND_LABEL[item.kind]}</span>
-                    <StatusPill tone={STATUS[item.status].tone}>
+                    <StatusPill state={STATUS[item.status].state}>
                       {STATUS[item.status].label}
                     </StatusPill>
                   </div>
