@@ -366,9 +366,11 @@ export function ImobiliarePromotionsAdminCard({ organizationId }: { organization
                       </tbody>
                     </table>
                     <p className="mt-2 text-xs text-muted-foreground">
-                      Agenția a folosit {service.agencyUsed}
+                      Agenția a folosit{" "}
+                      {service.agencyUsed === null ? "necunoscut" : service.agencyUsed}
                       {service.agencyCap !== null ? ` / ${service.agencyCap}` : ""}
-                      {service.kind === "numeric" ? " puncte" : " locuri"}.
+                      {service.kind === "numeric" ? " puncte" : " locuri"}
+                      {service.usageFromPortal ? " (cifra raportată de portal)" : ""}.
                     </p>
                   </div>
                 ) : null}
