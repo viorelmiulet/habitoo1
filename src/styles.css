@@ -82,6 +82,11 @@
   --color-gold-tint: var(--gold-tint);
   --color-neutral: var(--neutral);
   --color-neutral-foreground: var(--neutral-foreground);
+  --color-danger-border: var(--danger-border);
+  --color-danger-tint: var(--danger-tint);
+  --color-control-disabled: var(--control-disabled);
+  --color-control-disabled-foreground: var(--control-disabled-foreground);
+  --color-input-error: var(--input-error);
   --shadow-soft: none;
   --shadow-raised: none;
   --shadow-float: none;
@@ -112,6 +117,8 @@
   --accent-foreground: #5C3E10;
   --destructive: #8A2F24;
   --destructive-foreground: #FFFFFF;
+  --danger-border: #D8B9B3;
+  --danger-tint: #F6E4E1;
   --success: #1F5138;
   --success-foreground: #E3EFE7;
   --warning: #C08A3E;
@@ -122,7 +129,10 @@
   --neutral-foreground: #EFEBE2;
   --border: #E4DED2;
   --input: #D9D2C5;
+  --input-error: #C08880;
   --ring: #C08A3E;
+  --control-disabled: #F3F0EA;
+  --control-disabled-foreground: #9BA2AC;
   --chart-1: oklch(0.26 0.03 250);
   --chart-2: oklch(0.66 0.105 72);
   --chart-3: oklch(0.62 0.13 245);

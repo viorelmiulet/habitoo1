@@ -1,4 +1,5 @@
 import * as React from "react";
+import { Slot } from "@radix-ui/react-slot";
 
 import { cn } from "@/lib/utils";
 
@@ -13,14 +14,19 @@ const Card = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElemen
 );
 Card.displayName = "Card";
 
-const Panel = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(
-  ({ className, ...props }, ref) => (
-    <div
+type PanelProps = React.HTMLAttributes<HTMLDivElement> & { asChild?: boolean };
+
+const Panel = React.forwardRef<HTMLDivElement, PanelProps>(
+  ({ className, asChild = false, ...props }, ref) => {
+    const Comp = asChild ? Slot : "div";
+    return (
+    <Comp
       ref={ref}
       className={cn("rounded-panel border border-border bg-surface text-foreground", className)}
       {...props}
     />
-  ),
+    );
+  },
 );
 Panel.displayName = "Panel";
 

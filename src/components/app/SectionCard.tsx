@@ -31,8 +31,9 @@ export function SectionCard({
   dataTour?: string;
 }) {
   return (
-    <Panel asChild={undefined} data-tour={dataTour} className={cn("overflow-hidden", className)}>
-      {title || action ? (
+    <Panel asChild>
+      <section data-tour={dataTour} className={cn("overflow-hidden", className)}>
+        {title || action ? (
         <header className="flex flex-wrap items-center gap-3 border-b border-border px-5 py-3.5">
           {Icon ? (
             <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
@@ -48,7 +49,8 @@ export function SectionCard({
           {action ? <div className="flex shrink-0 items-center gap-2">{action}</div> : null}
         </header>
       ) : null}
-      <div className={cn(!flush && "p-5", bodyClassName)}>{children}</div>
+        <div className={cn(!flush && "p-5", bodyClassName)}>{children}</div>
+      </section>
     </Panel>
   );
 }
