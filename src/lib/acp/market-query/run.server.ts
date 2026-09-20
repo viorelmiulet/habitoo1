@@ -13,8 +13,10 @@ import { marketQueryCriteriaForSource, marketQueryCriteriaKey } from "./criteria
 import { normalizeMarketQueryComparables } from "./normalize";
 import {
   marketQueryAdapter,
+  marketQueryAdapterResult,
   type MarketQueryComparable,
   type MarketQueryCriteria,
+  type MarketQueryMarketContext,
   type MarketQuerySourceConfig,
   type MarketQuerySourceOutcome,
 } from "./port";
@@ -31,11 +33,18 @@ export type MarketQueryLiveComparable = MarketQueryComparable & {
 export type MarketQueryRunResult = {
   comparables: MarketQueryLiveComparable[];
   outcomes: MarketQuerySourceOutcome[];
+  /** Cifrele publicate de surse, separat de comparabilele noastre. */
+  marketContexts: MarketQueryMarketContext[];
   /** `true` când rezultatul a venit din cache-ul de sesiune. */
   fromCache: boolean;
 };
 
-const EMPTY_RESULT: MarketQueryRunResult = { comparables: [], outcomes: [], fromCache: false };
+const EMPTY_RESULT: MarketQueryRunResult = {
+  comparables: [],
+  outcomes: [],
+  marketContexts: [],
+  fromCache: false,
+};
 
 export async function loadMarketQuerySources(
   admin: Admin,
@@ -88,17 +97,27 @@ async function recordOutcome(
     .eq("key", source.key);
 }
 
+export type MarketQuerySingleResult = {
+  outcome: MarketQuerySourceOutcome;
+  comparables: MarketQueryLiveComparable[];
+  marketContext: MarketQueryMarketContext | null;
+  /** Adresele publice efectiv cerute, pentru butonul de test din Superadmin. */
+  requestedUrls: string[];
+};
+
 /** O interogare a unei singure surse, cu timeout propriu. Nu aruncă niciodată. */
 export async function querySingleSource(input: {
   source: MarketQuerySourceConfig;
   criteria: MarketQueryCriteria;
-}): Promise<{ outcome: MarketQuerySourceOutcome; comparables: MarketQueryLiveComparable[] }> {
+}): Promise<MarketQuerySingleResult> {
   const { source, criteria } = input;
   const adapter = marketQueryAdapter(source.key);
   const base = { sourceKey: source.key, sourceLabel: source.label };
   if (!adapter) {
     return {
       comparables: [],
+      marketContext: null,
+      requestedUrls: [],
       outcome: {
         ...base,
         outcome: "error",
@@ -116,15 +135,23 @@ export async function querySingleSource(input: {
   }, source.timeoutMs);
   try {
     const raw = await adapter.query({ criteria, source, signal: controller.signal });
-    const normalized = normalizeMarketQueryComparables(raw ?? []);
+    const { items, marketContext, requestedUrls } = marketQueryAdapterResult(raw ?? []);
+    const context: MarketQueryMarketContext | null = marketContext
+      ? { ...marketContext, ...base }
+      : null;
+    const normalized = normalizeMarketQueryComparables(items);
     if (normalized.length === 0) {
       return {
         comparables: [],
+        marketContext: context,
+        requestedUrls,
         outcome: { ...base, outcome: "empty", comparables: 0, detail: null },
       };
     }
     return {
       comparables: normalized.map((c) => ({ ...c, ...base })),
+      marketContext: context,
+      requestedUrls,
       outcome: {
         ...base,
         outcome: "answered",
@@ -136,6 +163,8 @@ export async function querySingleSource(input: {
     if (timedOut) {
       return {
         comparables: [],
+        marketContext: null,
+        requestedUrls: [],
         outcome: {
           ...base,
           outcome: "timeout",
@@ -146,6 +175,8 @@ export async function querySingleSource(input: {
     }
     return {
       comparables: [],
+      marketContext: null,
+      requestedUrls: [],
       outcome: {
         ...base,
         outcome: "error",
@@ -190,14 +221,21 @@ export async function runMarketQuery(
 
   const comparables: MarketQueryLiveComparable[] = [];
   const outcomes: MarketQuerySourceOutcome[] = [];
+  const marketContexts: MarketQueryMarketContext[] = [];
   for (let i = 0; i < results.length; i += 1) {
     const result = results[i]!;
     outcomes.push(result.outcome);
     comparables.push(...result.comparables);
+    if (result.marketContext) marketContexts.push(result.marketContext);
     await recordOutcome(admin, sources[i]!, result.outcome);
   }
 
-  const payload: MarketQueryRunResult = { comparables, outcomes, fromCache: false };
+  const payload: MarketQueryRunResult = {
+    comparables,
+    outcomes,
+    marketContexts,
+    fromCache: false,
+  };
   marketQueryCacheSet(cacheKey, payload);
   return payload;
 }
