@@ -212,10 +212,16 @@ async function collectCandidates(params: {
   sources: Record<string, boolean>;
   /** Interogarea live rulează doar de la versiunea 3 a motorului. */
   engineVersion: number;
-}): Promise<{ candidates: AcpCandidate[]; stats: SourceStat[] }> {
+}): Promise<{
+  candidates: AcpCandidate[];
+  stats: SourceStat[];
+  /** Cifrele publicate de surse, ținute separat de calculul nostru. */
+  marketQueryContexts: MarketQueryMarketContext[];
+}> {
   const { admin, actor, target, targetPropertyId, sources } = params;
   const candidates: AcpCandidate[] = [];
   const stats: SourceStat[] = [];
+  const marketQueryContexts: MarketQueryMarketContext[] = [];
 
   const applyPropertyFilters = <T extends { eq: (column: string, value: never) => T }>(
     query: T,
@@ -419,9 +425,12 @@ async function collectCandidates(params: {
         outcomeDetail: outcome.detail,
       });
     }
+    // Cifrele agregate ale surselor nu intră în nicio medie a noastră: se
+    // păstrează ca bloc separat, etichetat, cu data citirii.
+    marketQueryContexts.push(...live.marketContexts);
   }
 
-  return { candidates, stats };
+  return { candidates, stats, marketQueryContexts };
 }
 
 /** Salvează rezultatul motorului: comparabile, surse, statistici, estimare. */
@@ -439,6 +448,8 @@ async function persistRun(params: {
   /** Versiunea motorului cu care a fost calculat rezultatul. */
   engineVersion: number;
   history: unknown[];
+  /** Cifrele publicate de surse, doar pentru afișare. */
+  marketQueryContexts?: MarketQueryMarketContext[];
   /** Stage 7: modelul de calibrare folosit la rulare (null = fără calibrare). */
   calibration?: AcpCalibrationModel | null;
 }) {
@@ -614,6 +625,8 @@ async function persistRun(params: {
         // Motor v2: ajustarea în timp face parte din snapshot-ul versiunii.
         engineVersion: params.engineVersion,
         timeAdjustment: result.timeAdjustment ?? null,
+        // Motor v3: cifrele publicate de sursele interogate live, separat.
+        marketQueryContexts: params.marketQueryContexts ?? [],
       } as never,
 
     })
@@ -772,7 +785,7 @@ export const createAcpAnalysis = createServerFn({ method: "POST" })
 
 
     try {
-      const { candidates, stats } = await collectCandidates({
+      const { candidates, stats, marketQueryContexts } = await collectCandidates({
         admin,
         actor,
         target: subject,
@@ -796,6 +809,7 @@ export const createAcpAnalysis = createServerFn({ method: "POST" })
         sources: data.sources,
         overrides: {},
         stats,
+        marketQueryContexts,
         result,
         version: 1,
         engineVersion: ACP_CURRENT_ENGINE_VERSION,
@@ -980,7 +994,7 @@ async function recalculate(
 
   try {
 
-    const { candidates, stats } = await collectCandidates({
+    const { candidates, stats, marketQueryContexts } = await collectCandidates({
       admin,
       actor,
       target: subject,
@@ -1018,6 +1032,7 @@ async function recalculate(
       sources,
       overrides,
       stats,
+      marketQueryContexts,
       result,
       version: (analysis.version ?? 1) + 1,
       engineVersion,
@@ -1656,7 +1671,7 @@ export const recalculateAcpAsNewVersion = createServerFn({ method: "POST" })
       const created = await insertNextVersionRow(admin, actor, source, rootId);
 
       try {
-        const { candidates, stats } = await collectCandidates({
+        const { candidates, stats, marketQueryContexts } = await collectCandidates({
           admin,
           actor,
           target: subject,
