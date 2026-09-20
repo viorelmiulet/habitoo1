@@ -8,9 +8,11 @@
  *                   `POST /api/v3/listings/{CUSTOM_REFERENCE}/promotions`.
  *
  * Reguli respectate:
- *   - `starter` și `rotatii` există în Swagger ca slot types, dar schema ofertei
- *     NU confirmă un câmp de scriere → rămân DOAR inventar (`writeField: null`).
- *     Nu inventăm câmpuri de scriere.
+ *   - `starter` există în Swagger ca slot type, dar schema ofertei NU confirmă un
+ *     câmp de scriere → rămâne DOAR inventar (`writeField: null`). Nu inventăm
+ *     câmpuri de scriere.
+ *   - „Rotații” NU este promovare (este mod de afișare al contului) și nu apare
+ *     nici în inventar, nici în UI.
  *   - `promote_imoradar` are câmp de scriere confirmat, dar NU are slot type →
  *     se administrează fără contor (`slotType: null`).
  *   - `similar` → `similar_properties` și `month` → `properties_of_the_month`
@@ -116,15 +118,6 @@ export const IMOBILIARE_PROMOTIONS: ImobiliarePromotionDefinition[] = [
     id: "starter",
     label: "Starter",
     slotType: "starter",
-    writeField: null,
-    kind: "boolean",
-    source: "configurable",
-    note: "Portalul expune doar disponibilitatea; activarea nu este confirmată de API.",
-  },
-  {
-    id: "rotatii",
-    label: "Rotații",
-    slotType: "rotatii",
     writeField: null,
     kind: "boolean",
     source: "configurable",

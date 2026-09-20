@@ -73,6 +73,7 @@ import { Route as ApiPublicCronLacheieResendRouteImport } from './routes/api/pub
 import { Route as ApiPublicCronListingCollectorRouteImport } from './routes/api/public/cron/listing-collector'
 import { Route as ApiPublicCronMarketPriceIndicesRouteImport } from './routes/api/public/cron/market-price-indices'
 import { Route as ApiPublicCronPortalSlotWithdrawRouteImport } from './routes/api/public/cron/portal-slot-withdraw'
+import { Route as ApiPublicCronPromotionWithdrawRouteImport } from './routes/api/public/cron/promotion-withdraw'
 import { Route as ApiPublicCronSubscriptionsRouteImport } from './routes/api/public/cron/subscriptions'
 import { Route as ApiPublicMailgunEventsRouteImport } from './routes/api/public/mailgun/events'
 import { Route as ApiPublicMailgunInboundRouteImport } from './routes/api/public/mailgun/inbound'
@@ -452,6 +453,12 @@ const ApiPublicCronPortalSlotWithdrawRoute =
     path: '/api/public/cron/portal-slot-withdraw',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicCronPromotionWithdrawRoute =
+  ApiPublicCronPromotionWithdrawRouteImport.update({
+    id: '/api/public/cron/promotion-withdraw',
+    path: '/api/public/cron/promotion-withdraw',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicCronSubscriptionsRoute =
   ApiPublicCronSubscriptionsRouteImport.update({
     id: '/api/public/cron/subscriptions',
@@ -655,6 +662,7 @@ export interface FileRoutesByFullPath {
   '/api/public/cron/listing-collector': typeof ApiPublicCronListingCollectorRoute
   '/api/public/cron/market-price-indices': typeof ApiPublicCronMarketPriceIndicesRoute
   '/api/public/cron/portal-slot-withdraw': typeof ApiPublicCronPortalSlotWithdrawRoute
+  '/api/public/cron/promotion-withdraw': typeof ApiPublicCronPromotionWithdrawRoute
   '/api/public/cron/subscriptions': typeof ApiPublicCronSubscriptionsRoute
   '/api/public/mailgun/events': typeof ApiPublicMailgunEventsRoute
   '/api/public/mailgun/inbound': typeof ApiPublicMailgunInboundRoute
@@ -743,6 +751,7 @@ export interface FileRoutesByTo {
   '/api/public/cron/listing-collector': typeof ApiPublicCronListingCollectorRoute
   '/api/public/cron/market-price-indices': typeof ApiPublicCronMarketPriceIndicesRoute
   '/api/public/cron/portal-slot-withdraw': typeof ApiPublicCronPortalSlotWithdrawRoute
+  '/api/public/cron/promotion-withdraw': typeof ApiPublicCronPromotionWithdrawRoute
   '/api/public/cron/subscriptions': typeof ApiPublicCronSubscriptionsRoute
   '/api/public/mailgun/events': typeof ApiPublicMailgunEventsRoute
   '/api/public/mailgun/inbound': typeof ApiPublicMailgunInboundRoute
@@ -835,6 +844,7 @@ export interface FileRoutesById {
   '/api/public/cron/listing-collector': typeof ApiPublicCronListingCollectorRoute
   '/api/public/cron/market-price-indices': typeof ApiPublicCronMarketPriceIndicesRoute
   '/api/public/cron/portal-slot-withdraw': typeof ApiPublicCronPortalSlotWithdrawRoute
+  '/api/public/cron/promotion-withdraw': typeof ApiPublicCronPromotionWithdrawRoute
   '/api/public/cron/subscriptions': typeof ApiPublicCronSubscriptionsRoute
   '/api/public/mailgun/events': typeof ApiPublicMailgunEventsRoute
   '/api/public/mailgun/inbound': typeof ApiPublicMailgunInboundRoute
@@ -927,6 +937,7 @@ export interface FileRouteTypes {
     | '/api/public/cron/listing-collector'
     | '/api/public/cron/market-price-indices'
     | '/api/public/cron/portal-slot-withdraw'
+    | '/api/public/cron/promotion-withdraw'
     | '/api/public/cron/subscriptions'
     | '/api/public/mailgun/events'
     | '/api/public/mailgun/inbound'
@@ -1015,6 +1026,7 @@ export interface FileRouteTypes {
     | '/api/public/cron/listing-collector'
     | '/api/public/cron/market-price-indices'
     | '/api/public/cron/portal-slot-withdraw'
+    | '/api/public/cron/promotion-withdraw'
     | '/api/public/cron/subscriptions'
     | '/api/public/mailgun/events'
     | '/api/public/mailgun/inbound'
@@ -1106,6 +1118,7 @@ export interface FileRouteTypes {
     | '/api/public/cron/listing-collector'
     | '/api/public/cron/market-price-indices'
     | '/api/public/cron/portal-slot-withdraw'
+    | '/api/public/cron/promotion-withdraw'
     | '/api/public/cron/subscriptions'
     | '/api/public/mailgun/events'
     | '/api/public/mailgun/inbound'
@@ -1160,6 +1173,7 @@ export interface RootRouteChildren {
   ApiPublicCronListingCollectorRoute: typeof ApiPublicCronListingCollectorRoute
   ApiPublicCronMarketPriceIndicesRoute: typeof ApiPublicCronMarketPriceIndicesRoute
   ApiPublicCronPortalSlotWithdrawRoute: typeof ApiPublicCronPortalSlotWithdrawRoute
+  ApiPublicCronPromotionWithdrawRoute: typeof ApiPublicCronPromotionWithdrawRoute
   ApiPublicCronSubscriptionsRoute: typeof ApiPublicCronSubscriptionsRoute
   ApiPublicMailgunEventsRoute: typeof ApiPublicMailgunEventsRoute
   ApiPublicMailgunInboundRoute: typeof ApiPublicMailgunInboundRoute
@@ -1632,6 +1646,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicCronPortalSlotWithdrawRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/cron/promotion-withdraw': {
+      id: '/api/public/cron/promotion-withdraw'
+      path: '/api/public/cron/promotion-withdraw'
+      fullPath: '/api/public/cron/promotion-withdraw'
+      preLoaderRoute: typeof ApiPublicCronPromotionWithdrawRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/cron/subscriptions': {
       id: '/api/public/cron/subscriptions'
       path: '/api/public/cron/subscriptions'
@@ -2009,6 +2030,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicCronListingCollectorRoute: ApiPublicCronListingCollectorRoute,
   ApiPublicCronMarketPriceIndicesRoute: ApiPublicCronMarketPriceIndicesRoute,
   ApiPublicCronPortalSlotWithdrawRoute: ApiPublicCronPortalSlotWithdrawRoute,
+  ApiPublicCronPromotionWithdrawRoute: ApiPublicCronPromotionWithdrawRoute,
   ApiPublicCronSubscriptionsRoute: ApiPublicCronSubscriptionsRoute,
   ApiPublicMailgunEventsRoute: ApiPublicMailgunEventsRoute,
   ApiPublicMailgunInboundRoute: ApiPublicMailgunInboundRoute,

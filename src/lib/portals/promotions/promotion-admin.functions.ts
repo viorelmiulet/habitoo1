@@ -34,7 +34,8 @@ export type PromotionAdminUserCell = {
   name: string;
   /** `null` = nelimitat în limita agenției. */
   allocated: number | null;
-  used: number;
+  /** `null` = consumul acestui coleg nu a putut fi calculat acum. */
+  used: number | null;
   remaining: number | null;
 };
 
@@ -51,8 +52,12 @@ export type PromotionAdminService = {
   poolUsed: number | null;
   poolAvailable: number | null;
   poolError: string | null;
-  agencyUsed: number;
-  usagePartial: boolean;
+  /** Consumul agenției, din contorul serviciului; `null` = neraportat. */
+  agencyUsed: number | null;
+  /** `true` = totalul vine direct de la portal, nu din citiri individuale. */
+  usageFromPortal: boolean;
+  /** Colegii pentru care consumul nu a putut fi calculat acum. */
+  unknownUsers: string[];
   usageError: string | null;
   cells: PromotionAdminUserCell[];
 };
@@ -132,18 +137,19 @@ export const getImobiliarePromotionAdmin = createServerFn({ method: "POST" })
     const { fetchImobiliareSlotInventories } = await import(
       "@/lib/portals/imobiliare/promotions.server"
     );
-    const [users, settings, allocations, inventories, usage] = await Promise.all([
+    const [users, settings, allocations, inventories] = await Promise.all([
       loadAgencyUsers(prepared.admin, organizationId),
       loadPromotionSettings(prepared.admin, { organizationId }),
       loadPromotionAllocations(prepared.admin, { organizationId }),
       fetchImobiliareSlotInventories({ session: prepared.session, organizationId }),
-      loadImobiliarePromotionUsage({
-        admin: prepared.admin,
-        session: prepared.session,
-        organizationId,
-        definitions: IMOBILIARE_PROMOTIONS.filter((item) => item.slotType !== null),
-      }),
     ]);
+    const usage = await loadImobiliarePromotionUsage({
+      admin: prepared.admin,
+      session: prepared.session,
+      organizationId,
+      definitions: IMOBILIARE_PROMOTIONS.filter((item) => item.slotType !== null),
+      userIds: users.map((user) => user.userId),
+    });
 
     const services: PromotionAdminService[] = IMOBILIARE_PROMOTIONS.map((definition) => {
       const setting = settings.get(definition.id) ?? { enabled: false, agencyCap: null };
@@ -163,18 +169,20 @@ export const getImobiliarePromotionAdmin = createServerFn({ method: "POST" })
         poolUsed: slot?.inventory?.used ?? null,
         poolAvailable: slot?.inventory?.available ?? null,
         poolError: slot?.error ?? null,
-        agencyUsed: serviceUsage?.total ?? 0,
-        usagePartial: serviceUsage?.partial ?? false,
+        agencyUsed: serviceUsage?.total ?? null,
+        usageFromPortal: serviceUsage?.totalFromPortal ?? false,
+        unknownUsers: serviceUsage?.unknownUsers ?? [],
         usageError: serviceUsage?.error ?? null,
         cells: users.map((user) => {
           const allocated = promotionAllocationFor(serviceAllocations, user.userId);
-          const used = serviceUsage?.byUser.get(user.userId) ?? 0;
+          const unknown = serviceUsage?.unknownUsers.includes(user.userId) ?? false;
+          const used = unknown ? null : (serviceUsage?.byUser.get(user.userId) ?? 0);
           return {
             userId: user.userId,
             name: user.name,
             allocated,
             used,
-            remaining: promotionRemaining(allocated, used),
+            remaining: used === null ? null : promotionRemaining(allocated, used),
           };
         }),
       };
@@ -258,6 +266,8 @@ export const setImobiliarePromotionCap = createServerFn({ method: "POST" })
         organizationId: z.string().uuid().optional(),
         serviceKey: z.string().min(1).max(64),
         cap: z.number().int().min(0).max(100_000).nullable(),
+        /** `true` = retrage surplusul confirmat în dialog. */
+        withdraw: z.boolean().optional(),
       })
       .parse(input),
   )
@@ -287,18 +297,27 @@ export const setImobiliarePromotionCap = createServerFn({ method: "POST" })
       if (!check.ok) return { ok: false, message: check.message };
     }
 
+    const actorId = (context as unknown as { userId: string }).userId;
     await upsertSetting({
       organizationId,
       serviceKey: definition.id,
-      actorId: (context as unknown as { userId: string }).userId,
+      actorId,
       patch: { agency_cap: data.cap },
     });
+    const withdrawn = data.withdraw
+      ? await enqueueAfterSave({
+          organizationId,
+          serviceKey: definition.id,
+          actorId,
+          cap: data.cap,
+        })
+      : "";
     return {
       ok: true,
       message:
-        data.cap === null
+        (data.cap === null
           ? `${definition.label}: plafonul agenției a fost eliminat (limita este rezerva de la portal).`
-          : `${definition.label}: plafonul agenției este ${data.cap}.`,
+          : `${definition.label}: plafonul agenției este ${data.cap}.`) + withdrawn,
     };
   });
 
@@ -311,6 +330,8 @@ export const setImobiliarePromotionAllocation = createServerFn({ method: "POST" 
         serviceKey: z.string().min(1).max(64),
         userId: z.string().uuid(),
         amount: z.number().int().min(0).max(100_000).nullable(),
+        /** `true` = retrage surplusul confirmat în dialog. */
+        withdraw: z.boolean().optional(),
       })
       .parse(input),
   )
@@ -351,11 +372,136 @@ export const setImobiliarePromotionAllocation = createServerFn({ method: "POST" 
       await admin.from(PROMOTION_ALLOCATIONS_TABLE).insert(row);
     }
 
+    const withdrawn = data.withdraw
+      ? await enqueueAfterSave({
+          organizationId,
+          serviceKey: definition.id,
+          actorId: (context as unknown as { userId: string }).userId,
+          allocation: { userId: data.userId, amount: data.amount },
+        })
+      : "";
+
     return {
       ok: true,
       message:
-        data.amount === null
+        (data.amount === null
           ? `${definition.label}: alocare nelimitată în limita agenției.`
-          : `${definition.label}: alocare de ${data.amount}.`,
+          : `${definition.label}: alocare de ${data.amount}.`) + withdrawn,
     };
   });
+
+/* ----------------------- retragerea surplusului la reducere ----------------- */
+
+export type PromotionWithdrawPreviewRow = {
+  propertyId: string;
+  reference: string | null;
+  title: string | null;
+  agentName: string | null;
+  serviceLabel: string;
+  /** Cât se eliberează de pe ofertă. */
+  amount: number;
+  /** `null` = serviciul se oprește complet. */
+  targetAmount: number | null;
+};
+
+export type PromotionWithdrawPreview = {
+  ok: boolean;
+  message: string | null;
+  items: PromotionWithdrawPreviewRow[];
+  /** Oferte al căror consum nu a putut fi citit, deci nu intră în plan. */
+  skipped: number;
+};
+
+const withdrawInput = z.object({
+  organizationId: z.string().uuid().optional(),
+  serviceKey: z.string().min(1).max(64),
+  cap: z.number().int().min(0).max(100_000).nullable().optional(),
+  allocation: z
+    .object({
+      userId: z.string().uuid(),
+      amount: z.number().int().min(0).max(100_000).nullable(),
+    })
+    .optional(),
+});
+
+async function planWithdrawals(input: {
+  organizationId: string;
+  serviceKey: string;
+  cap?: number | null;
+  allocation?: { userId: string; amount: number | null };
+}): Promise<PromotionWithdrawPreview> {
+  const definition = imobiliarePromotion(input.serviceKey);
+  if (!definition) return { ok: false, message: "Serviciu de promovare necunoscut.", items: [], skipped: 0 };
+  const prepared = await imobiliareSession(input.organizationId);
+  if (!prepared.ok) return { ok: false, message: prepared.message, items: [], skipped: 0 };
+
+  const { planPromotionServiceWithdrawals } = await import("./withdraw.server");
+  const plan = await planPromotionServiceWithdrawals({
+    admin: prepared.admin,
+    session: prepared.session,
+    organizationId: input.organizationId,
+    definition: { id: definition.id, label: definition.label, kind: definition.kind },
+    ...(input.cap !== undefined ? { agencyCap: input.cap } : {}),
+    ...(input.allocation ? { allocation: input.allocation } : {}),
+  });
+
+  return {
+    ok: true,
+    message: null,
+    skipped: plan.skipped,
+    items: plan.items.map((item) => ({
+      propertyId: item.propertyId,
+      reference: item.reference,
+      title: item.title,
+      agentName: item.agentName,
+      serviceLabel: item.serviceLabel,
+      amount: item.amount,
+      targetAmount: item.targetAmount,
+    })),
+  };
+}
+
+/** Ce s-ar retrage dacă limita propusă s-ar salva acum. Nu salvează nimic. */
+export const previewImobiliarePromotionWithdrawals = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) => withdrawInput.parse(input))
+  .handler(async ({ data, context }): Promise<PromotionWithdrawPreview> => {
+    const organizationId = await requireSlotAdminOrg(context as never, data.organizationId ?? null);
+    return planWithdrawals({
+      organizationId,
+      serviceKey: data.serviceKey,
+      ...(data.cap !== undefined ? { cap: data.cap } : {}),
+      ...(data.allocation ? { allocation: data.allocation } : {}),
+    });
+  });
+
+/** Pune în coadă retragerile cerute de noua limită, după salvare. */
+async function enqueueAfterSave(input: {
+  organizationId: string;
+  serviceKey: string;
+  actorId: string;
+  cap?: number | null;
+  allocation?: { userId: string; amount: number | null };
+}): Promise<string> {
+  const plan = await planWithdrawals({
+    organizationId: input.organizationId,
+    serviceKey: input.serviceKey,
+    ...(input.cap !== undefined ? { cap: input.cap } : {}),
+    ...(input.allocation ? { allocation: input.allocation } : {}),
+  });
+  if (!plan.ok || plan.items.length === 0) return "";
+  const admin = await loadAdmin();
+  const { enqueuePromotionWithdrawals } = await import("./withdraw.server");
+  const queued = await enqueuePromotionWithdrawals(admin as never, {
+    organizationId: input.organizationId,
+    portalKey: IMOBILIARE_PORTAL_KEY,
+    items: plan.items.map((item) => ({
+      propertyId: item.propertyId,
+      serviceKey: input.serviceKey,
+      targetAmount: item.targetAmount,
+    })),
+    startedBy: input.actorId,
+  });
+  if (queued.error) return ` ${queued.error}`;
+  return ` Surplusul de pe ${plan.items.length} ${plan.items.length === 1 ? "ofertă" : "oferte"} se retrage în fundal.`;
+}

@@ -136,6 +136,16 @@ export function PropertyImobiliarePromotionsCard({
           <AlertTriangle className="mt-0.5 size-3 shrink-0" aria-hidden />
           Starea serviciilor pentru acest anunț nu a putut fi citită: {view.data.listingError}
         </p>
+      ) : view.data.stateUnreported ? (
+        <p className="mt-2 text-xs text-muted-foreground">
+          Starea pe acest anunț nu a fost raportată de portal.
+        </p>
+      ) : null}
+
+      {rows.length === 0 ? (
+        <p className="mt-2 text-xs text-muted-foreground">
+          Agenția nu folosește niciun serviciu de promovare Imobiliare.ro.
+        </p>
       ) : null}
 
       <ul className="mt-2 divide-y divide-border/60">
@@ -225,6 +235,14 @@ export function PropertyImobiliarePromotionsCard({
                   </span>
                 ) : null}
 
+                {row.allocated !== null ? (
+                  <span className="text-xs text-muted-foreground">
+                    {row.remaining === null
+                      ? `alocare ${row.allocated}`
+                      : `îți rămân ${row.remaining} din ${row.allocated}`}
+                  </span>
+                ) : null}
+
                 {busy ? <Loader2 className="size-3 animate-spin" aria-hidden /> : null}
               </div>
 
@@ -243,7 +261,7 @@ export function PropertyImobiliarePromotionsCard({
                 <p className="mt-1 text-xs text-muted-foreground">
                   Activ pe acest anunț; locurile sunt epuizate, dar dezactivarea rămâne posibilă.
                 </p>
-              ) : row.value === null && row.manageable ? (
+              ) : row.value === null && row.manageable && !view.data.stateUnreported ? (
                 <p className="mt-1 text-xs text-muted-foreground">
                   Starea pe acest anunț nu a fost raportată de portal.
                 </p>

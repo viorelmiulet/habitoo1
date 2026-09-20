@@ -19,12 +19,36 @@ import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
 import { formatDateTime } from "@/lib/format";
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
   getImobiliarePromotionAdmin,
+  previewImobiliarePromotionWithdrawals,
   setImobiliarePromotionAllocation,
   setImobiliarePromotionCap,
   setImobiliarePromotionService,
   type PromotionAdminService,
+  type PromotionWithdrawPreviewRow,
 } from "@/lib/portals/promotions/promotion-admin.functions";
+
+/** Modificarea cerută de administrator, ținută până la confirmare. */
+type PendingChange =
+  | { kind: "cap"; serviceKey: string; serviceLabel: string; cap: number | null }
+  | {
+      kind: "allocation";
+      serviceKey: string;
+      serviceLabel: string;
+      userId: string;
+      userName: string;
+      amount: number | null;
+    };
 
 function poolLabel(service: PromotionAdminService): string {
   if (service.poolTotal === null || service.poolUsed === null) return "fără contor";
@@ -45,6 +69,7 @@ export function ImobiliarePromotionsAdminCard({ organizationId }: { organization
   const saveService = useServerFn(setImobiliarePromotionService);
   const saveCap = useServerFn(setImobiliarePromotionCap);
   const saveAllocation = useServerFn(setImobiliarePromotionAllocation);
+  const preview = useServerFn(previewImobiliarePromotionWithdrawals);
   const queryKey = ["imobiliare-promotion-admin", organizationId ?? null] as const;
 
   const view = useQuery({
@@ -54,6 +79,11 @@ export function ImobiliarePromotionsAdminCard({ organizationId }: { organization
 
   const [capDraft, setCapDraft] = useState<Record<string, string>>({});
   const [allocationDraft, setAllocationDraft] = useState<Record<string, string>>({});
+  const [pending, setPending] = useState<{
+    change: PendingChange;
+    items: PromotionWithdrawPreviewRow[];
+    skipped: number;
+  } | null>(null);
 
   const refresh = () => void queryClient.invalidateQueries({ queryKey });
   const org = organizationId ? { organizationId } : {};
@@ -69,7 +99,7 @@ export function ImobiliarePromotionsAdminCard({ organizationId }: { organization
   });
 
   const cap = useMutation({
-    mutationFn: (input: { serviceKey: string; cap: number | null }) =>
+    mutationFn: (input: { serviceKey: string; cap: number | null; withdraw?: boolean }) =>
       saveCap({ data: { ...org, ...input } }),
     onSuccess: (result) => {
       result.ok ? toast.success(result.message) : toast.error(result.message);
@@ -79,11 +109,54 @@ export function ImobiliarePromotionsAdminCard({ organizationId }: { organization
   });
 
   const allocation = useMutation({
-    mutationFn: (input: { serviceKey: string; userId: string; amount: number | null }) =>
-      saveAllocation({ data: { ...org, ...input } }),
+    mutationFn: (input: {
+      serviceKey: string;
+      userId: string;
+      amount: number | null;
+      withdraw?: boolean;
+    }) => saveAllocation({ data: { ...org, ...input } }),
     onSuccess: (result) => {
       result.ok ? toast.success(result.message) : toast.error(result.message);
       refresh();
+    },
+    onError: (error: Error) => toast.error(error.message),
+  });
+
+  /** Salvează, retrăgând surplusul doar dacă a fost confirmat în dialog. */
+  const commit = (change: PendingChange, withdraw: boolean) => {
+    setPending(null);
+    if (change.kind === "cap") {
+      cap.mutate({ serviceKey: change.serviceKey, cap: change.cap, withdraw });
+      return;
+    }
+    allocation.mutate({
+      serviceKey: change.serviceKey,
+      userId: change.userId,
+      amount: change.amount,
+      withdraw,
+    });
+  };
+
+  // Înainte de salvare întrebăm portalul ce s-ar retrage; fără surplus, salvăm direct.
+  const request = useMutation({
+    mutationFn: async (change: PendingChange) => {
+      const result = await preview({
+        data: {
+          ...org,
+          serviceKey: change.serviceKey,
+          ...(change.kind === "cap"
+            ? { cap: change.cap }
+            : { allocation: { userId: change.userId, amount: change.amount } }),
+        },
+      });
+      return { change, result };
+    },
+    onSuccess: ({ change, result }) => {
+      if (!result.ok || result.items.length === 0) {
+        commit(change, false);
+        return;
+      }
+      setPending({ change, items: result.items, skipped: result.skipped });
     },
     onError: (error: Error) => toast.error(error.message),
   });
@@ -186,10 +259,12 @@ export function ImobiliarePromotionsAdminCard({ organizationId }: { organization
                       size="sm"
                       variant="outline"
                       className="h-8 px-2 text-xs"
-                      disabled={!service.manageable || cap.isPending}
+                      disabled={!service.manageable || cap.isPending || request.isPending}
                       onClick={() =>
-                        cap.mutate({
+                        request.mutate({
+                          kind: "cap",
                           serviceKey: service.serviceKey,
+                          serviceLabel: service.label,
                           cap: numberOrNull(capText),
                         })
                       }
@@ -207,10 +282,11 @@ export function ImobiliarePromotionsAdminCard({ organizationId }: { organization
                 ) : null}
                 {service.usageError ? (
                   <p className="mt-2 text-xs text-destructive">{service.usageError}</p>
-                ) : service.usagePartial ? (
+                ) : service.unknownUsers.length > 0 ? (
                   <p className="mt-2 text-xs text-muted-foreground">
-                    Consumul citit este incomplet, deci cifrele de mai jos pot fi mai mici decât cele
-                    reale.
+                    Consumul nu a putut fi calculat pentru {service.unknownUsers.length}{" "}
+                    {service.unknownUsers.length === 1 ? "coleg" : "colegi"} (prea multe oferte de
+                    citit). Ceilalți nu sunt afectați.
                   </p>
                 ) : null}
                 {!service.manageable ? (
@@ -244,7 +320,7 @@ export function ImobiliarePromotionsAdminCard({ organizationId }: { organization
                             <tr key={cell.userId} className="border-t border-border/60">
                               <td className="py-1.5">{cell.name}</td>
                               <td className="py-1.5">
-                                {cell.used}
+                                {cell.used === null ? "necalculat" : cell.used}
                                 {cell.allocated !== null ? ` / ${cell.allocated}` : ""}
                               </td>
                               <td className="py-1.5">
@@ -269,11 +345,14 @@ export function ImobiliarePromotionsAdminCard({ organizationId }: { organization
                                   size="sm"
                                   variant="outline"
                                   className="h-8 px-2 text-xs"
-                                  disabled={allocation.isPending}
+                                  disabled={allocation.isPending || request.isPending}
                                   onClick={() =>
-                                    allocation.mutate({
+                                    request.mutate({
+                                      kind: "allocation",
                                       serviceKey: service.serviceKey,
+                                      serviceLabel: service.label,
                                       userId: cell.userId,
+                                      userName: cell.name,
                                       amount: numberOrNull(text),
                                     })
                                   }
@@ -287,9 +366,11 @@ export function ImobiliarePromotionsAdminCard({ organizationId }: { organization
                       </tbody>
                     </table>
                     <p className="mt-2 text-xs text-muted-foreground">
-                      Agenția a folosit {service.agencyUsed}
+                      Agenția a folosit{" "}
+                      {service.agencyUsed === null ? "necunoscut" : service.agencyUsed}
                       {service.agencyCap !== null ? ` / ${service.agencyCap}` : ""}
-                      {service.kind === "numeric" ? " puncte" : " locuri"}.
+                      {service.kind === "numeric" ? " puncte" : " locuri"}
+                      {service.usageFromPortal ? " (cifra raportată de portal)" : ""}.
                     </p>
                   </div>
                 ) : null}
@@ -298,6 +379,51 @@ export function ImobiliarePromotionsAdminCard({ organizationId }: { organization
           })
         )}
       </CardContent>
+
+      {/* Confirmarea retragerii: anularea nu schimbă nimic. */}
+      <AlertDialog open={pending !== null} onOpenChange={(open) => !open && setPending(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Noua limită nu încape în ce este activ acum</AlertDialogTitle>
+            <AlertDialogDescription>
+              {pending
+                ? pending.change.kind === "cap"
+                  ? `Plafonul agenției pentru ${pending.change.serviceLabel} coboară sub consumul actual. Dacă salvezi, se opresc următoarele oferte, cele mai recente primele:`
+                  : `Alocarea colegului ${pending.change.userName} pentru ${pending.change.serviceLabel} coboară sub consumul actual. Dacă salvezi, se opresc următoarele oferte, cele mai recente primele:`
+                : null}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+
+          <ul className="max-h-60 space-y-1 overflow-y-auto text-sm">
+            {(pending?.items ?? []).map((item) => (
+              <li key={item.propertyId} className="flex justify-between gap-3">
+                <span className="truncate">
+                  {item.title ?? item.reference ?? "Ofertă fără titlu"}
+                  {item.agentName ? ` · ${item.agentName}` : ""}
+                </span>
+                <span className="shrink-0 text-muted-foreground">
+                  {item.serviceLabel}
+                  {item.targetAmount === null ? " · se oprește" : ` · rămâne ${item.targetAmount}`}
+                </span>
+              </li>
+            ))}
+          </ul>
+          {pending && pending.skipped > 0 ? (
+            <p className="text-xs text-muted-foreground">
+              <AlertTriangle className="mr-1 inline size-3" aria-hidden />
+              Pentru {pending.skipped} oferte nu am putut citi starea la portal, deci nu apar în
+              listă.
+            </p>
+          ) : null}
+
+          <AlertDialogFooter>
+            <AlertDialogCancel>Renunță</AlertDialogCancel>
+            <AlertDialogAction onClick={() => pending && commit(pending.change, true)}>
+              Salvează și oprește
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Card>
   );
 }

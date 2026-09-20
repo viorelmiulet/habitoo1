@@ -102,7 +102,9 @@ async function ensure(rows: Rows, value: boolean | number, current: boolean | nu
   });
 }
 
-beforeEach(() => {
+beforeEach(async () => {
+  const { clearPromotionUsageCache } = await import("../allocation.server");
+  clearPromotionUsageCache();
   slotListings.mockClear();
   listingPromotions.mockClear();
 });
@@ -138,7 +140,7 @@ describe("alocări", () => {
       enabled: true,
       agencyCap: null,
       allocation: 2,
-      usage: { byUser: new Map([[AGENT, 2]]), total: 2, partial: false, error: null },
+      usage: { byUser: new Map([[AGENT, 2]]), total: 2, totalFromPortal: false, unknownUsers: [], error: null },
       userId: AGENT,
       current: false,
       next: true,
@@ -154,7 +156,7 @@ describe("alocări", () => {
       enabled: true,
       agencyCap: 4,
       allocation: 10,
-      usage: { byUser: new Map([[AGENT, 1]]), total: 4, partial: false, error: null },
+      usage: { byUser: new Map([[AGENT, 1]]), total: 4, totalFromPortal: false, unknownUsers: [], error: null },
       userId: AGENT,
       current: false,
       next: true,
@@ -163,19 +165,41 @@ describe("alocări", () => {
     expect(result.ok === false && result.message).toContain("4/4");
   });
 
-  it("nu verifică plafoanele când consumul citit este incomplet", () => {
-    const result = checkPromotionAllocation({
+  it("nu blochează pe nimeni când consumul agenției este cunoscut, chiar dacă un coleg nu a putut fi calculat", () => {
+    const usage = {
+      byUser: new Map<string, number>(),
+      total: 0,
+      totalFromPortal: true,
+      unknownUsers: [AGENT],
+      error: null,
+    };
+    expect(
+      checkPromotionAllocation({
+        label: "Top Listing",
+        kind: "boolean",
+        enabled: true,
+        agencyCap: 4,
+        allocation: null,
+        usage,
+        userId: AGENT,
+        current: false,
+        next: true,
+      }),
+    ).toEqual({ ok: true, consumes: 1 });
+
+    // Cu alocare proprie nu putem decide fără consumul agentului, deci refuzăm explicit.
+    const refused = checkPromotionAllocation({
       label: "Top Listing",
       kind: "boolean",
       enabled: true,
       agencyCap: 4,
-      allocation: null,
-      usage: { byUser: new Map(), total: 0, partial: true, error: null },
+      allocation: 2,
+      usage,
       userId: AGENT,
       current: false,
       next: true,
     });
-    expect(result.ok).toBe(false);
+    expect(refused.ok).toBe(false);
   });
 
   it("permite dezactivarea chiar dacă serviciul nu mai este activat", () => {
@@ -280,11 +304,12 @@ describe("poarta server-side", () => {
         },
       ],
     });
-    // Un anunț consumă deja 3 puncte; o cerere de +2 depășește plafonul de 4.
-    const refused = await ensure(rows, 2, 0, "energy");
+    // Consumul agenției vine din inventarul portalului (1 punct folosit), nu din citirea anunțurilor.
+    const allowed = await ensure(rows, 3, 0, "energy");
+    expect(allowed).toEqual({ ok: true, consumes: 3 });
+    expect(listingPromotions).not.toHaveBeenCalled();
+    const refused = await ensure(rows, 4, 0, "energy");
     expect(refused.ok).toBe(false);
-    const allowed = await ensure(rows, 1, 0, "energy");
-    expect(allowed).toEqual({ ok: true, consumes: 1 });
   });
 });
 
@@ -306,5 +331,136 @@ describe("permisiuni – tabelele de promovare", () => {
     // Scrierea rămâne la superadmin și la administratorul propriei agenții.
     expect(sql).toContain("public.is_org_admin() AND organization_id = public.current_org()");
     expect(sql).toContain("public.is_superadmin()");
+  });
+});
+
+describe("consumul serviciilor numerice", () => {
+  it("ia totalul agenției din inventarul portalului, fără să citească fiecare anunț", async () => {
+    const { loadPromotionUsage, clearPromotionUsageCache } = await import("../allocation.server");
+    clearPromotionUsageCache();
+    const usage = await loadPromotionUsage({
+      admin: fakeAdmin(baseRows()),
+      session,
+      organizationId: ORG,
+      definition: imobiliarePromotion("energy")!,
+      userIds: [],
+    });
+    expect(usage.totalFromPortal).toBe(true);
+    expect(usage.total).toBe(1);
+    expect(listingPromotions).not.toHaveBeenCalled();
+  });
+
+  it("un agent cu prea multe oferte nu blochează ceilalți agenți", async () => {
+    const { loadPromotionUsage, clearPromotionUsageCache } = await import("../allocation.server");
+    clearPromotionUsageCache();
+    const many = Array.from({ length: 40 }, (_, index) => ({
+      reference: `HB-${index}`,
+      listingId: String(index),
+      title: "A",
+      url: null,
+    }));
+    slotListings.mockImplementationOnce(async () => ({ ok: true as const, listings: many }));
+    const rows = baseRows({
+      properties: [
+        { id: "prop-1", organization_id: ORG, assigned_to: AGENT },
+        { id: "prop-2", organization_id: ORG, assigned_to: "agent-2" },
+      ],
+      portal_listings: [
+        ...many.map((listing, index) => ({
+          organization_id: ORG,
+          portal: "imobiliare_ro",
+          property_id: index === 0 ? "prop-2" : "prop-1",
+          external_id: listing.reference,
+        })),
+      ],
+    });
+    const usage = await loadPromotionUsage({
+      admin: fakeAdmin(rows),
+      session,
+      organizationId: ORG,
+      definition: imobiliarePromotion("energy")!,
+      userIds: [AGENT, "agent-2"],
+    });
+    expect(usage.unknownUsers).toContain(AGENT);
+    expect(usage.unknownUsers).not.toContain("agent-2");
+  });
+
+  it("memorează consumul citit, deci a doua verificare nu mai întreabă portalul", async () => {
+    const { loadPromotionUsage, clearPromotionUsageCache, invalidatePromotionUsageCache } =
+      await import("../allocation.server");
+    clearPromotionUsageCache();
+    const args = {
+      admin: fakeAdmin(baseRows()),
+      session,
+      organizationId: ORG,
+      definition: imobiliarePromotion("energy")!,
+      userIds: [] as string[],
+    };
+    await loadPromotionUsage(args);
+    const calls = slotListings.mock.calls.length;
+    await loadPromotionUsage(args);
+    expect(slotListings.mock.calls.length).toBe(calls);
+    invalidatePromotionUsageCache(ORG, "energy");
+    await loadPromotionUsage(args);
+    expect(slotListings.mock.calls.length).toBeGreaterThan(calls);
+  });
+
+  it("nu refuză activarea când portalul dă totalul agenției", () => {
+    const result = checkPromotionAllocation({
+      label: "Puncte Energy",
+      kind: "numeric",
+      enabled: true,
+      agencyCap: 5000,
+      allocation: null,
+      usage: {
+        byUser: new Map(),
+        total: 844,
+        totalFromPortal: true,
+        unknownUsers: [],
+        error: null,
+      },
+      userId: AGENT,
+      current: 0,
+      next: 10,
+    });
+    expect(result).toEqual({ ok: true, consumes: 10 });
+  });
+});
+
+describe("retragerea surplusului", () => {
+  const holdings = [
+    { propertyId: "p1", userId: AGENT, amount: 1, activatedAt: "2026-01-01T00:00:00Z" },
+    { propertyId: "p2", userId: AGENT, amount: 1, activatedAt: "2026-03-01T00:00:00Z" },
+    { propertyId: "p3", userId: AGENT, amount: 1, activatedAt: "2026-02-01T00:00:00Z" },
+  ];
+
+  it("retrage cele mai recente activări până încape în alocare", async () => {
+    const { planPromotionWithdrawals } = await import("../allocation");
+    const plan = planPromotionWithdrawals({
+      kind: "boolean",
+      holdings,
+      agencyCap: null,
+      allocations: new Map([[AGENT, 1]]),
+    });
+    expect(plan.map((item) => item.propertyId)).toEqual(["p2", "p3"]);
+  });
+
+  it("nu planifică nimic când noua limită încape", async () => {
+    const { planPromotionWithdrawals } = await import("../allocation");
+    expect(
+      planPromotionWithdrawals({
+        kind: "boolean",
+        holdings,
+        agencyCap: 3,
+        allocations: new Map([[AGENT, 3]]),
+      }),
+    ).toEqual([]);
+  });
+});
+
+describe("serviciile afișate pe ofertă", () => {
+  it("nu mai expune „Rotații” ca promovare", async () => {
+    const { IMOBILIARE_PROMOTIONS } = await import("@/lib/portals/imobiliare/promotions");
+    expect(IMOBILIARE_PROMOTIONS.some((definition) => definition.id === "rotatii")).toBe(false);
   });
 });

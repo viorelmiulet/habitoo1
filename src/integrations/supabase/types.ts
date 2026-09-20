@@ -5014,6 +5014,141 @@ export type Database = {
           },
         ]
       }
+      promotion_withdraw_items: {
+        Row: {
+          attempts: number
+          created_at: string
+          error: string | null
+          id: string
+          job_id: string
+          organization_id: string
+          portal_key: string
+          position: number
+          processed_at: string | null
+          property_id: string
+          service_key: string
+          status: string
+          target_amount: number | null
+        }
+        Insert: {
+          attempts?: number
+          created_at?: string
+          error?: string | null
+          id?: string
+          job_id: string
+          organization_id: string
+          portal_key: string
+          position?: number
+          processed_at?: string | null
+          property_id: string
+          service_key: string
+          status?: string
+          target_amount?: number | null
+        }
+        Update: {
+          attempts?: number
+          created_at?: string
+          error?: string | null
+          id?: string
+          job_id?: string
+          organization_id?: string
+          portal_key?: string
+          position?: number
+          processed_at?: string | null
+          property_id?: string
+          service_key?: string
+          status?: string
+          target_amount?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "promotion_withdraw_items_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "promotion_withdraw_jobs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "promotion_withdraw_items_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "promotion_withdraw_items_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      promotion_withdraw_jobs: {
+        Row: {
+          cancel_requested: boolean
+          created_at: string
+          done: number
+          failed: number
+          finished_at: string | null
+          id: string
+          last_error: string | null
+          locked_until: string | null
+          next_attempt_at: string | null
+          organization_id: string
+          portal_key: string
+          reason: string
+          started_at: string | null
+          started_by: string | null
+          status: string
+          total: number
+        }
+        Insert: {
+          cancel_requested?: boolean
+          created_at?: string
+          done?: number
+          failed?: number
+          finished_at?: string | null
+          id?: string
+          last_error?: string | null
+          locked_until?: string | null
+          next_attempt_at?: string | null
+          organization_id: string
+          portal_key: string
+          reason?: string
+          started_at?: string | null
+          started_by?: string | null
+          status?: string
+          total?: number
+        }
+        Update: {
+          cancel_requested?: boolean
+          created_at?: string
+          done?: number
+          failed?: number
+          finished_at?: string | null
+          id?: string
+          last_error?: string | null
+          locked_until?: string | null
+          next_attempt_at?: string | null
+          organization_id?: string
+          portal_key?: string
+          reason?: string
+          started_at?: string | null
+          started_by?: string | null
+          status?: string
+          total?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "promotion_withdraw_jobs_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       properties: {
         Row: {
           additional_spaces: string[]
@@ -6801,6 +6936,33 @@ export type Database = {
           isSetofReturn: true
         }
       }
+      claim_promotion_withdraw_job: {
+        Args: { _job_id: string; _ttl_seconds: number }
+        Returns: {
+          cancel_requested: boolean
+          created_at: string
+          done: number
+          failed: number
+          finished_at: string | null
+          id: string
+          last_error: string | null
+          locked_until: string | null
+          next_attempt_at: string | null
+          organization_id: string
+          portal_key: string
+          reason: string
+          started_at: string | null
+          started_by: string | null
+          status: string
+          total: number
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "promotion_withdraw_jobs"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
       collector_arm: { Args: never; Returns: undefined }
       collector_tick: { Args: never; Returns: undefined }
       cron_nonce_claim: {
@@ -6971,6 +7133,8 @@ export type Database = {
       plan_agent_limit: { Args: { _plan: string }; Returns: number }
       portal_slot_withdraw_arm: { Args: never; Returns: undefined }
       portal_slot_withdraw_tick: { Args: never; Returns: undefined }
+      promotion_withdraw_arm: { Args: never; Returns: undefined }
+      promotion_withdraw_tick: { Args: never; Returns: undefined }
       prospect_import_to_crm: {
         Args: {
           _actor: string
@@ -7007,6 +7171,10 @@ export type Database = {
         Returns: undefined
       }
       release_portal_slot_withdraw_job: {
+        Args: { _job_id: string }
+        Returns: undefined
+      }
+      release_promotion_withdraw_job: {
         Args: { _job_id: string }
         Returns: undefined
       }
