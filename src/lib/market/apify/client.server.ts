@@ -19,8 +19,8 @@ export const APIFY_POLL_MIN_MS = 2_000;
 export const APIFY_POLL_MAX_MS = 10_000;
 export const APIFY_PAGE_SIZE = 250;
 
-export const APIFY_TOKEN_MISSING =
-  "Conexiunea Apify nu este configurată pentru acest proiect.";
+export { APIFY_TOKEN_MISSING } from "./token-message";
+import { APIFY_TOKEN_MISSING } from "./token-message";
 
 export type ApifyRunStatus =
   | "READY"
