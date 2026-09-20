@@ -13,8 +13,10 @@ import { marketQueryCriteriaForSource, marketQueryCriteriaKey } from "./criteria
 import { normalizeMarketQueryComparables } from "./normalize";
 import {
   marketQueryAdapter,
+  marketQueryAdapterResult,
   type MarketQueryComparable,
   type MarketQueryCriteria,
+  type MarketQueryMarketContext,
   type MarketQuerySourceConfig,
   type MarketQuerySourceOutcome,
 } from "./port";
@@ -31,11 +33,18 @@ export type MarketQueryLiveComparable = MarketQueryComparable & {
 export type MarketQueryRunResult = {
   comparables: MarketQueryLiveComparable[];
   outcomes: MarketQuerySourceOutcome[];
+  /** Cifrele publicate de surse, separat de comparabilele noastre. */
+  marketContexts: MarketQueryMarketContext[];
   /** `true` când rezultatul a venit din cache-ul de sesiune. */
   fromCache: boolean;
 };
 
-const EMPTY_RESULT: MarketQueryRunResult = { comparables: [], outcomes: [], fromCache: false };
+const EMPTY_RESULT: MarketQueryRunResult = {
+  comparables: [],
+  outcomes: [],
+  marketContexts: [],
+  fromCache: false,
+};
 
 export async function loadMarketQuerySources(
   admin: Admin,
