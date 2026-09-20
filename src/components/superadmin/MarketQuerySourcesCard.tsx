@@ -197,6 +197,38 @@ export function MarketQuerySourcesCard() {
                       </li>
                     ))}
                   </ul>
+
+                  {lastTest.result.marketContext ? (
+                    <div className="mt-3 border-t border-border pt-2">
+                      <p className="font-medium">{lastTest.result.marketContext.title}</p>
+                      <ul className="mt-1 space-y-0.5">
+                        {lastTest.result.marketContext.lines.map((line) => (
+                          <li key={line.label} className="text-muted-foreground">
+                            {line.label}: {line.value}
+                          </li>
+                        ))}
+                      </ul>
+                      {lastTest.result.marketContext.note ? (
+                        <p className="mt-1 text-muted-foreground">
+                          {lastTest.result.marketContext.note}
+                        </p>
+                      ) : null}
+                    </div>
+                  ) : null}
+
+                  {lastTest.result.requestedUrls.length > 0 ? (
+                    <div className="mt-3 border-t border-border pt-2">
+                      <p className="font-medium">Adrese cerute</p>
+                      <ul className="mt-1 space-y-0.5">
+                        {lastTest.result.requestedUrls.map((requested) => (
+                          <li key={requested} className="break-all text-muted-foreground">
+                            {requested}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  ) : null}
+
                   <p className="mt-2 text-muted-foreground">Rezultatul testului nu este salvat.</p>
                 </div>
               ) : null}
