@@ -9,6 +9,7 @@
  * nu se trimit.
  */
 import { normalizeRoName } from "@/lib/ro-normalize";
+import type { ImospotParsedNeighborhood } from "./parse";
 
 export type ImospotNeighborhood = {
   /** Ultimul segment al adresei: `/toate-ofertele-din-<oraș>/<cartier>`. */
@@ -52,12 +53,9 @@ export const IMOSPOT_CITIES: ImospotCity[] = [
     label: "București",
     cityId: null,
     aliases: ["bucuresti", "bucurest", "municipiul bucuresti"],
-    // Doar cartierele confirmate pe paginile publice ale sursei.
-    neighborhoods: [
-      { slug: "militari", label: "Militari", neighborhoodId: null },
-      { slug: "domenii", label: "Domenii", neighborhoodId: null },
-      { slug: "rahova", label: "Rahova", neighborhoodId: null },
-    ],
+    // Cartierele nu sunt scrise aici: se învață din linkurile publicate de
+    // pagina sursei (`learnImospotNeighborhoods`), niciodată ghicite.
+    neighborhoods: [],
   },
   sector(1),
   sector(2),
@@ -81,6 +79,31 @@ export type ImospotLocation = {
   /** `true` când zona cerută nu a fost găsită în hartă. */
   zoneFallback: boolean;
 };
+
+/**
+ * Cartierele învățate din paginile sursei, pe durata procesului. Nu se
+ * inventează niciun slug: intră doar ce a publicat pagina ca link
+ * `/toate-ofertele-din-<oraș>/<cartier>`.
+ */
+export function learnImospotNeighborhoods(
+  entries: readonly ImospotParsedNeighborhood[],
+): number {
+  let added = 0;
+  for (const entry of entries) {
+    const city = IMOSPOT_CITIES.find((c) => c.slug === entry.citySlug);
+    if (!city) continue;
+    const list = (city.neighborhoods ??= []);
+    if (list.some((n) => n.slug === entry.slug)) continue;
+    list.push({ slug: entry.slug, label: entry.label, neighborhoodId: null });
+    added += 1;
+  }
+  return added;
+}
+
+/** Doar pentru teste: harta revine la starea livrată, fără cartiere învățate. */
+export function resetImospotNeighborhoods(): void {
+  for (const city of IMOSPOT_CITIES) city.neighborhoods = [];
+}
 
 function cityByName(value: string | null): ImospotCity | null {
   if (!value) return null;

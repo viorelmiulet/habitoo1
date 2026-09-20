@@ -47,6 +47,9 @@ export type MarketQueryRawComparable = {
   rooms?: unknown;
   locality?: unknown;
   zone?: unknown;
+  /** Coordonată la nivel de zonă, folosită doar pentru apropiere. */
+  latitude?: unknown;
+  longitude?: unknown;
   listedAt?: unknown;
   url?: unknown;
 };
@@ -59,6 +62,13 @@ export type MarketQueryComparable = {
   rooms: number | null;
   locality: string | null;
   zone: string | null;
+  /**
+   * Coordonate la nivel de zonă, nu de clădire: mai multe anunțuri pot împărți
+   * aceeași pereche. Se folosesc pentru apropiere, niciodată pentru a pretinde
+   * o adresă exactă.
+   */
+  latitude: number | null;
+  longitude: number | null;
   listedAt: string | null;
   url: string | null;
 };

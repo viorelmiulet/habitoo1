@@ -17,10 +17,11 @@ import type {
   MarketQueryMarketContextData,
   MarketQueryRawComparable,
 } from "../port";
-import { resolveImospotLocation } from "./locations";
+import { learnImospotNeighborhoods, resolveImospotLocation } from "./locations";
 import {
   parseImospotListings,
   parseImospotMarketContext,
+  parseImospotNeighborhoods,
   type ImospotMarketContext,
 } from "./parse";
 import { buildImospotSearchUrl, IMOSPOT_MAX_PAGES } from "./url";
@@ -115,6 +116,8 @@ function toRaw(
     rooms: listing.rooms,
     locality: listing.locality,
     zone: listing.zone,
+    latitude: listing.latitude,
+    longitude: listing.longitude,
     listedAt: listing.listedAt,
     url,
   };
@@ -133,6 +136,7 @@ export function createImospotAdapter(deps: { fetchPage?: FetchPage } = {}): Mark
       }
 
       const items: MarketQueryRawComparable[] = [];
+      const seenIds = new Set<string>();
       const requestedUrls: string[] = [];
       let marketContext: MarketQueryMarketContextData | null = null;
       const now = new Date();
@@ -166,7 +170,14 @@ export function createImospotAdapter(deps: { fetchPage?: FetchPage } = {}): Mark
         }
 
         const listings = parseImospotListings(result.body, now);
-        for (const listing of listings) items.push(toRaw(listing, source.baseUrl));
+        for (const listing of listings) {
+          if (seenIds.has(listing.listingId)) continue;
+          seenIds.add(listing.listingId);
+          items.push(toRaw(listing, source.baseUrl));
+        }
+
+        // Cartierele publicate de pagină intră în hartă; nu se ghicește nimic.
+        learnImospotNeighborhoods(parseImospotNeighborhoods(result.body));
 
         if (page === 1) {
           const context = parseImospotMarketContext(result.body);

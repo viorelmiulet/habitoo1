@@ -16,6 +16,8 @@ export const MARKET_QUERY_PERSISTED_FIELDS = [
   "rooms",
   "locality",
   "zone",
+  "latitude",
+  "longitude",
   "listedAt",
   "url",
 ] as const;
@@ -40,6 +42,13 @@ function text(value: unknown): string | null {
 function currency(value: unknown): string | null {
   const raw = text(value);
   return raw ? raw.toUpperCase().slice(0, 8) : null;
+}
+
+/** Coordonată validă, altfel gol. Zero este tratat ca lipsă. */
+function coordinate(value: unknown, limit: number): number | null {
+  const parsed = num(value);
+  if (parsed === null || parsed === 0) return null;
+  return Math.abs(parsed) <= limit ? parsed : null;
 }
 
 function isoDate(value: unknown): string | null {
@@ -77,6 +86,8 @@ export function normalizeMarketQueryComparable(
     rooms: rooms !== null && rooms > 0 ? Math.round(rooms) : null,
     locality: text(raw.locality),
     zone: text(raw.zone),
+    latitude: coordinate(raw.latitude, 90),
+    longitude: coordinate(raw.longitude, 180),
     listedAt: isoDate(raw.listedAt),
     url: url(raw.url),
   };

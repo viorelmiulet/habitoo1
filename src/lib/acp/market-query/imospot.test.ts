@@ -1,16 +1,26 @@
 /**
- * Teste pentru adaptorul Imospot: construirea adresei, citirea unei pagini
- * reale salvate ca fixture, eliminarea rezultatelor fără preț sau suprafață,
- * blocul de cifre publicate, plafonul de două pagini și timeout-ul consemnat
- * fără a opri analiza.
+ * Teste pentru adaptorul Imospot: construirea adresei, citirea structurii reale
+ * a paginii (`<article data-listing-id data-lat data-lon>`), eliminarea
+ * rezultatelor fără preț sau suprafață, cartierele învățate din linkurile
+ * paginii, blocul de cifre publicate, plafonul de două pagini și timeout-ul
+ * consemnat fără a opri analiza.
  */
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it, beforeEach } from "vitest";
 import { marketQueryCriteria } from "./criteria";
 import { createImospotAdapter, IMOSPOT_SOURCE_KEY } from "./imospot/adapter.server";
-import { resolveImospotLocation } from "./imospot/locations";
-import { parseImospotListings, parseImospotMarketContext, imospotRelativeDate } from "./imospot/parse";
+import {
+  learnImospotNeighborhoods,
+  resetImospotNeighborhoods,
+  resolveImospotLocation,
+} from "./imospot/locations";
+import {
+  parseImospotListings,
+  parseImospotMarketContext,
+  parseImospotNeighborhoods,
+  imospotRelativeDate,
+} from "./imospot/parse";
 import { buildImospotSearchUrl } from "./imospot/url";
 import {
   registerMarketQueryAdapter,
@@ -96,16 +106,6 @@ describe("Imospot — adresa de căutare", () => {
     expect(built).toContain("/toate-ofertele-din-sectorul-6-bucuresti");
   });
 
-  it("folosește calea de cartier pentru un cartier confirmat", () => {
-    const built = url({
-      city: "București",
-      neighborhood: "Militari",
-      propertyType: "apartment",
-      transactionType: "sale",
-    });
-    expect(built).toContain("/toate-ofertele-din-bucuresti/militari");
-  });
-
   it("coboară la nivelul orașului pentru o zonă necunoscută, fără a ghici slug-ul", () => {
     const criteria = criteriaFor({ city: "București", neighborhood: "Zonă inventată" });
     const location = resolveImospotLocation({ city: criteria.city, zone: criteria.zone });
@@ -130,69 +130,128 @@ describe("Imospot — adresa de căutare", () => {
   });
 });
 
+describe("Imospot — cartierele publicate de pagină", () => {
+  beforeEach(() => {
+    resetImospotNeighborhoods();
+  });
+
+  it("colectează slug-urile de cartier din linkurile paginii", () => {
+    const found = parseImospotNeighborhoods(FIXTURE);
+    expect(found.map((n) => n.slug)).toEqual(["militari", "domenii", "rahova", "berceni"]);
+    expect(found.every((n) => n.citySlug === "bucuresti")).toBe(true);
+    expect(found[0]!.label).toBe("Militari");
+  });
+
+  it("fără cartiere învățate nu se ghicește nicio cale de cartier", () => {
+    const criteria = criteriaFor({ city: "București", neighborhood: "Militari" });
+    const before = resolveImospotLocation({ city: criteria.city, zone: criteria.zone });
+    expect(before?.path).toBe("/toate-ofertele-din-bucuresti");
+    expect(before?.zoneFallback).toBe(true);
+  });
+
+  it("folosește calea de cartier după ce a învățat-o din pagină", () => {
+    learnImospotNeighborhoods(parseImospotNeighborhoods(FIXTURE));
+    const criteria = criteriaFor({ city: "București", neighborhood: "Militari" });
+    const after = resolveImospotLocation({ city: criteria.city, zone: criteria.zone });
+    expect(after?.path).toBe("/toate-ofertele-din-bucuresti/militari");
+    expect(after?.level).toBe("neighborhood");
+    expect(after?.zoneFallback).toBe(false);
+    expect(after?.neighborhoodId).toBeNull();
+  });
+});
+
 describe("Imospot — citirea paginii", () => {
-  it("citește camerele, suprafața, prețul, agenția și vechimea din fixture-ul real", () => {
-    const now = new Date("2026-09-20T12:00:00.000Z");
+  const now = new Date("2026-09-20T12:00:00.000Z");
+
+  it("citește identificatorul, coordonatele și câmpurile fiecărui card", () => {
     const listings = parseImospotListings(FIXTURE, now);
-    expect(listings.length).toBe(12);
+    // Două carduri sunt aruncate: unul fără preț, unul fără suprafață.
+    expect(listings).toHaveLength(4);
+
     const first = listings[0]!;
-    expect(first.url).toContain("https://www.imospot.ro/anunturi/");
-    expect(first.price).toBeGreaterThan(1000);
+    expect(first.listingId).toBe("21765");
+    expect(first.latitude).toBeCloseTo(44.4267674, 6);
+    expect(first.longitude).toBeCloseTo(26.1025384, 6);
+    expect(first.url).toBe(
+      "https://www.imospot.ro/anunturi/vanzari/apartamente-de-vanzare/sector-1/apartament-2-camere-domenii-21765",
+    );
+    expect(first.title).toBe("Apartament 2 camere, Domenii, bloc reabilitat");
+    expect(first.price).toBe(99000);
     expect(first.currency).toBe("EUR");
-    expect(first.area).toBeGreaterThan(10);
-    expect(first.rooms).toBeGreaterThan(0);
-    expect(first.agency).toBeTruthy();
-    expect(first.ageText).toBeTruthy();
-    expect(first.listedAt).toBeTruthy();
-    const sector = listings.find((l) => l.zone?.toLowerCase().startsWith("sector"));
-    expect(sector?.locality).toBeTruthy();
+    expect(first.monthly).toBe(false);
+    expect(first.rooms).toBe(2);
+    expect(first.area).toBe(50);
+    expect(first.zone).toBe("Sector 1");
+    expect(first.locality).toBe("București");
+    expect(first.agency).toBe("Imobiliare Domenii SRL");
+    expect(first.ageText).toBe("azi");
+    expect(first.listedAt).toBe("2026-09-20T12:00:00.000Z");
+
+    const second = listings[1]!;
+    expect(second.area).toBe(82.5);
+    expect(second.listedAt).toBe("2026-09-19T12:00:00.000Z");
+
+    const rent = listings.find((l) => l.listingId === "20911")!;
+    expect(rent.monthly).toBe(true);
+    expect(rent.price).toBe(450);
+    expect(rent.ageText).toBe("o lună");
+    expect(rent.listedAt).toBe("2026-08-21T12:00:00.000Z");
+  });
+
+  it("tratează coordonatele ca fiind la nivel de zonă, nu de clădire", () => {
+    const listings = parseImospotListings(FIXTURE, now);
+    const shared = listings.filter((l) => l.latitude === 44.4267674);
+    expect(shared.length).toBeGreaterThan(1);
   });
 
   it("transformă vechimea relativă în dată", () => {
-    const now = new Date("2026-09-20T12:00:00.000Z");
     expect(imospotRelativeDate("azi", now)).toBe("2026-09-20T12:00:00.000Z");
     expect(imospotRelativeDate("ieri", now)).toBe("2026-09-19T12:00:00.000Z");
     expect(imospotRelativeDate("2 zile", now)).toBe("2026-09-18T12:00:00.000Z");
+    expect(imospotRelativeDate("o lună", now)).toBe("2026-08-21T12:00:00.000Z");
     expect(imospotRelativeDate("acum ceva vreme", now)).toBeNull();
   });
 
   it("aruncă rezultatele fără preț sau fără suprafață", () => {
-    const card = (body: string) => `<article data-listing-id="1">${body}</article>`;
-    const withoutPrice = card(
-      `<h3>Fără preț</h3><div class="mt-3 flex items-center gap-4 text-sm"><span>3 camere</span><span>70 m²</span></div>`,
-    );
-    const withoutArea = card(
-      `<h3>Fără suprafață</h3><p class="leading-none">99.000 €</p><div class="mt-3 flex items-center gap-4 text-sm"><span>3 camere</span></div>`,
-    );
-    expect(parseImospotListings(withoutPrice)).toHaveLength(0);
-    expect(parseImospotListings(withoutArea)).toHaveLength(0);
+    const listings = parseImospotListings(FIXTURE, now);
+    const ids = listings.map((l) => l.listingId);
+    // 19003 nu are preț („Preț la cerere"), 18740 nu are suprafață.
+    expect(ids).not.toContain("19003");
+    expect(ids).not.toContain("18740");
   });
 
   it("citește blocul de cifre publicate separat de comparabile", () => {
     const context = parseImospotMarketContext(FIXTURE);
     expect(context).not.toBeNull();
-    expect(context!.medianPricePerSqm).toBeGreaterThan(0);
-    expect(context!.medianPrice).toBeGreaterThan(0);
-    expect(context!.medianRent).toBeGreaterThan(0);
-    expect(context!.timeOnMarketText).toBeTruthy();
+    expect(context!.cityLabel).toBe("București");
+    expect(context!.activeListings).toBe(18402);
+    expect(context!.medianPricePerSqm).toBe(2350);
+    expect(context!.medianPrice).toBe(115000);
+    expect(context!.medianRent).toBe(520);
+    expect(context!.rentListings).toBe(3184);
+    expect(context!.timeOnMarketText).toBe("4 luni");
     expect(context!.byRooms.length).toBeGreaterThan(0);
     expect(context!.byType.length).toBeGreaterThan(0);
+    expect(context!.note).toContain("nu din tranzacții încheiate");
     // Cifrele sursei nu apar între comparabilele citite.
-    expect(parseImospotListings(FIXTURE).some((l) => l.price === context!.medianPrice)).toBe(false);
+    expect(parseImospotListings(FIXTURE, now).some((l) => l.price === context!.medianPrice)).toBe(
+      false,
+    );
   });
 });
 
 describe("Imospot — interogarea", () => {
   beforeEach(() => {
     resetMarketQueryAdapters();
+    resetImospotNeighborhoods();
     marketQueryCacheClear();
   });
 
-  const page = (count: number) =>
+  const page = (count: number, offset = 0) =>
     Array.from({ length: count })
       .map(
         (_, i) =>
-          `<article data-listing-id="${i}"><a href="/anunturi/vanzari/apartamente-de-vanzare/bucuresti/x-${i}"></a><h3>Ofertă</h3><p class="leading-none">100.000 €</p><div class="mt-3 flex items-center gap-4 text-sm"><span>2 camere</span><span>55 m²</span></div><span class="truncate">Bucuresti</span><span class="shrink-0">azi</span></article>`,
+          `<article data-listing-id="${offset + i}" data-lat="44.43" data-lon="26.04"><a href="/anunturi/vanzari/apartamente-de-vanzare/bucuresti/x-${offset + i}"></a><h3>Ofertă</h3><p class="leading-none">100.000 €</p><span class="truncate">Sector 6, București</span><span class="inline-flex items-center gap-1.5">2 camere</span><span class="inline-flex items-center gap-1.5">55 m²</span><span class="truncate font-medium">Agenție</span><span class="shrink-0">azi</span></article>`,
       )
       .join("");
 
@@ -201,7 +260,7 @@ describe("Imospot — interogarea", () => {
     const adapter = createImospotAdapter({
       fetchPage: async (u) => {
         urls.push(u);
-        return { url: u, status: 200, body: page(1), error: null };
+        return { url: u, status: 200, body: page(1, urls.length * 10), error: null };
       },
     });
     const result = await adapter.query({
@@ -262,7 +321,7 @@ describe("Imospot — interogarea", () => {
     expect(result.outcome.detail).toContain("429");
   });
 
-  it("întoarce blocul de cifre publicate alături de comparabile", async () => {
+  it("întoarce comparabile cu coordonate, cifrele publicate și adresele cerute", async () => {
     registerMarketQueryAdapter(
       createImospotAdapter({
         fetchPage: async (u) => ({ url: u, status: 200, body: FIXTURE, error: null }),
@@ -274,8 +333,24 @@ describe("Imospot — interogarea", () => {
     });
     expect(result.outcome.outcome).toBe("answered");
     expect(result.comparables.length).toBeGreaterThan(0);
+    expect(result.comparables[0]!.latitude).toBeCloseTo(44.4267674, 6);
+    expect(result.comparables[0]!.longitude).toBeCloseTo(26.1025384, 6);
     expect(result.marketContext?.title).toContain("Imospot");
     expect(result.marketContext?.lines.length).toBeGreaterThan(0);
     expect(result.requestedUrls[0]).toContain("/toate-ofertele-din-bucuresti");
+  });
+
+  it("învață cartierele din pagina interogată", async () => {
+    const adapter = createImospotAdapter({
+      fetchPage: async (u) => ({ url: u, status: 200, body: FIXTURE, error: null }),
+    });
+    await adapter.query({
+      criteria: criteriaFor({ city: "București", propertyType: "apartment", transactionType: "sale" }),
+      source,
+      signal: new AbortController().signal,
+    });
+    expect(resolveImospotLocation({ city: "București", zone: "Berceni" })?.path).toBe(
+      "/toate-ofertele-din-bucuresti/berceni",
+    );
   });
 });
