@@ -9,18 +9,22 @@
  *  - versiunea 2: în plus, aducerea prețului fiecărui comparabil la trimestrul
  *    analizei cu indicele trimestrial național al prețurilor locuințelor
  *    (Eurostat), citit exclusiv din baza de date.
+ *  - versiunea 3: în plus, comparabilele pot fi cerute live surselor partenere
+ *    activate, în momentul rulării. Versiunile 1 și 2 nu fac niciodată cereri
+ *    de rețea, deci analizele lor se reproduc identic.
  */
 
-export const ACP_ENGINE_VERSIONS = [1, 2] as const;
+export const ACP_ENGINE_VERSIONS = [1, 2, 3] as const;
 
 export type AcpEngineVersion = (typeof ACP_ENGINE_VERSIONS)[number];
 
 /** Versiunea folosită pentru analizele și versiunile noi. */
-export const ACP_CURRENT_ENGINE_VERSION: AcpEngineVersion = 2;
+export const ACP_CURRENT_ENGINE_VERSION: AcpEngineVersion = 3;
 
 export const ACP_ENGINE_VERSION_LABELS: Record<AcpEngineVersion, string> = {
   1: "Motor v1 — fără ajustare în timp",
   2: "Motor v2 — ajustare în timp cu indicele național",
+  3: "Motor v3 — comparabile cerute live de la surse partenere",
 };
 
 /** Normalizează o valoare stocată la o versiune cunoscută (implicit 1). */
@@ -37,3 +41,9 @@ export function normalizeAcpEngineVersion(value: unknown): AcpEngineVersion {
 export function engineSupportsTimeAdjustment(version: AcpEngineVersion): boolean {
   return version >= 2;
 }
+
+/** Doar de la versiunea 3 se cer comparabile live surselor partenere. */
+export function engineSupportsLiveMarketQuery(version: number): boolean {
+  return version >= 3;
+}
+

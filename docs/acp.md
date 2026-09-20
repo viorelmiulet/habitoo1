@@ -175,10 +175,12 @@ niciodată o versiune existentă: analizele salvate păstrează `engine_version`
 se recalculează identic cu versiunea lor.
 
 - **v1** — motorul original: scoring + ajustări de caracteristici.
-- **v2** (curent, `ACP_CURRENT_ENGINE_VERSION`) — în plus, prețul fiecărui
+- **v2** — în plus, prețul fiecărui
   comparabil este adus la trimestrul analizei cu
   `index(trimestrul analizei) / index(trimestrul comparabilului)`, seria `total`
   a indicelui trimestrial al prețurilor locuințelor.
+- **v3** (curent, `ACP_CURRENT_ENGINE_VERSION`) — în plus, comparabilele pot fi
+  cerute **live** surselor partenere activate, în momentul rulării.
 
 Reguli (`src/lib/acp/time-adjustment.ts`, funcții pure):
 
@@ -220,3 +222,32 @@ versiunile noi (`recalculateAcpAsNewVersion`) folosesc versiunea curentă.
   și transmit versiunea corectă a motorului; un test de regresie
   (`time-adjustment-view.test.ts`) cade dacă un apel nou omite `priceIndex` sau
   `engineVersion`.
+
+## 12. Comparabile cerute live de la surse partenere (motor v3)
+
+Sursele activate sunt întrebate **doar** în momentul rulării analizei. Nu există
+pool de piață alimentat de acest modul, nu există crawling, nici rulări
+programate; nu se descarcă imagini și nu se citesc date de contact.
+
+- `src/lib/acp/market-query/` — portul și registrul (`port.ts`), criteriile pure
+  (`criteria.ts`), normalizarea comună (`normalize.ts`), cache-ul doar de
+  sesiune (`session-cache.ts`, TTL 3 minute), cererile politicoase
+  (`fetch.server.ts`) și rularea (`run.server.ts`).
+- Modulul este livrat **fără nicio sursă activată**: `adapters.register.ts` este
+  gol, iar adaptoarele se adaugă pe rând.
+- Cereri politicoase: User-Agent descriptiv cu contact, robots.txt respectat, o
+  cerere pe rând per domeniu, fără autentificare, fără proxy, fără mascare.
+- Fiecare sursă are propriul timp maxim de așteptare (implicit 4000 ms);
+  interogările rulează în paralel. O sursă care expiră sau dă eroare este
+  consemnată, iar analiza continuă cu rezultatele parțiale.
+- Se păstrează din răspuns **exclusiv** câmpurile folosite de analiză: preț,
+  monedă, suprafață, camere, localitate, zonă, data anunțului și linkul. Un
+  comparabil fără preț sau fără suprafață este eliminat.
+- `acp_analysis_sources.outcome` / `outcome_detail` țin dovada per sursă a
+  analizei salvate; ecranul analizei („Baza de dovezi") și PDF-ul arată aceeași
+  informație.
+- Superadmin → Nomenclator → „Interogare live a portalurilor": activare, timp
+  maxim, rază, bandă de preț, contoare și „testează sursa" (o interogare, fără
+  salvare).
+- Analizele v1/v2 nu declanșează niciodată o interogare live: recalcularea în loc
+  folosește versiunea stocată a motorului.

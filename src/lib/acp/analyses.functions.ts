@@ -9,9 +9,14 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireActiveOrgAuth } from "@/lib/org-access";
 import { ACP_SOURCE_TYPE_LABELS, type AcpSourceType } from "./config";
+import { acpSourceOutcomeLabel } from "./source-outcome";
 import { marketListingToSubject, propertyToSubject } from "./adapters";
 import { runAcpAnalysis, targetPricePerSqm, type AcpCandidate, type AcpManualOverride } from "./engine";
-import { ACP_CURRENT_ENGINE_VERSION, normalizeAcpEngineVersion } from "./engine-version";
+import {
+  ACP_CURRENT_ENGINE_VERSION,
+  engineSupportsLiveMarketQuery,
+  normalizeAcpEngineVersion,
+} from "./engine-version";
 // `time-adjustment.server.ts` este server-only: se importă dinamic în handler.
 import type {
   AcpPriceIndexSnapshot,
@@ -189,6 +194,9 @@ type SourceStat = {
   sourceType: AcpSourceType;
   sourceName: string;
   itemsFound: number;
+  /** Doar pentru sursele interogate live: cum a răspuns sursa. */
+  outcome?: string | null;
+  outcomeDetail?: string | null;
 };
 
 /**
@@ -202,6 +210,8 @@ async function collectCandidates(params: {
   target: AcpSubject;
   targetPropertyId: string | null;
   sources: Record<string, boolean>;
+  /** Interogarea live rulează doar de la versiunea 3 a motorului. */
+  engineVersion: number;
 }): Promise<{ candidates: AcpCandidate[]; stats: SourceStat[] }> {
   const { admin, actor, target, targetPropertyId, sources } = params;
   const candidates: AcpCandidate[] = [];
@@ -370,6 +380,47 @@ async function collectCandidates(params: {
   }
 
 
+  // 4. Surse partenere întrebate live, în momentul rulării. Nimic nu se
+  //    colectează în fundal: doar analiza curentă folosește răspunsul, iar din
+  //    el se păstrează exclusiv câmpurile de mai jos.
+  if (sources["market_query"] && engineSupportsLiveMarketQuery(params.engineVersion)) {
+    const { runMarketQuery } = await import("./market-query/run.server");
+    const live = await runMarketQuery(admin as never, target);
+    for (const item of live.comparables) {
+      candidates.push({
+        key: `market_query:${item.sourceKey}:${item.url ?? `${item.price}-${item.area}`}`,
+        sourceType: "market_query",
+        sourceName: item.sourceLabel,
+        title: item.url ?? `Ofertă ${item.sourceLabel}`,
+        locationLabel: locationLabel({
+          district: item.zone,
+          city: item.locality,
+          county: target.county ?? null,
+        }),
+        url: item.url,
+        subject: {
+          propertyType: target.propertyType ?? null,
+          transactionType: target.transactionType ?? null,
+          city: item.locality,
+          county: target.county ?? null,
+          neighborhood: item.zone,
+          rooms: item.rooms,
+          usableArea: item.area,
+          price: item.price,
+        },
+      });
+    }
+    for (const outcome of live.outcomes) {
+      stats.push({
+        sourceType: "market_query",
+        sourceName: outcome.sourceLabel,
+        itemsFound: outcome.comparables,
+        outcome: outcome.outcome,
+        outcomeDetail: outcome.detail,
+      });
+    }
+  }
+
   return { candidates, stats };
 }
 
@@ -490,16 +541,31 @@ async function persistRun(params: {
       if (!c.isSelected) continue;
       usedBySource.set(c.sourceType, (usedBySource.get(c.sourceType) ?? 0) + 1);
     }
+    const usedByName = new Map<string, number>();
+    for (const c of result.comparables) {
+      if (!c.isSelected) continue;
+      const key = `${c.sourceType}|${c.sourceName}`;
+      usedByName.set(key, (usedByName.get(key) ?? 0) + 1);
+    }
     const { error } = await admin.from("acp_analysis_sources").insert(
-      params.stats.map((s) => ({
-        analysis_id: analysisId,
-        source_type: s.sourceType,
-        source_name: s.sourceName,
-        enabled: true,
-        items_found: s.itemsFound,
-        items_used: usedBySource.get(s.sourceType) ?? 0,
-        items_excluded: Math.max(0, s.itemsFound - (usedBySource.get(s.sourceType) ?? 0)),
-      })),
+      params.stats.map((s) => {
+        // Sursele live sunt raportate pe numele sursei (fiecare portal separat).
+        const used =
+          s.sourceType === "market_query"
+            ? (usedByName.get(`market_query|${s.sourceName}`) ?? 0)
+            : (usedBySource.get(s.sourceType) ?? 0);
+        return {
+          analysis_id: analysisId,
+          source_type: s.sourceType,
+          source_name: s.sourceName,
+          enabled: true,
+          items_found: s.itemsFound,
+          items_used: used,
+          items_excluded: Math.max(0, s.itemsFound - used),
+          outcome: s.outcome ?? null,
+          outcome_detail: s.outcomeDetail ?? null,
+        };
+      }),
     );
     if (error) throw acpDbError("insert analysis sources", error);
   }
@@ -712,6 +778,7 @@ export const createAcpAnalysis = createServerFn({ method: "POST" })
         target: subject,
         targetPropertyId: row.id,
         sources: data.sources,
+        engineVersion: ACP_CURRENT_ENGINE_VERSION,
       });
       const calibration = await loadCalibration(admin, actor.organizationId);
       const priceIndex = await loadPriceIndex(admin);
@@ -909,18 +976,23 @@ async function recalculate(
     throw acpError("Analiza rulează deja. Așteaptă finalizarea ei.");
   }
 
+  const storedEngineVersion = normalizeAcpEngineVersion(analysis.engine_version);
+
   try {
+
     const { candidates, stats } = await collectCandidates({
       admin,
       actor,
       target: subject,
       targetPropertyId: analysis.property_id,
       sources,
+      // Recalcularea în loc păstrează versiunea motorului a analizei:
+      // metodologia nu se schimbă în spatele utilizatorului, iar o analiză v1/v2
+      // nu face nicio cerere de rețea.
+      engineVersion: storedEngineVersion,
     });
     const calibration = await loadCalibration(admin, actor.organizationId);
-    // Recalcularea în loc păstrează versiunea motorului a analizei: metodologia
-    // unei analize existente nu se schimbă în spatele utilizatorului.
-    const engineVersion = normalizeAcpEngineVersion(analysis.engine_version);
+    const engineVersion = storedEngineVersion;
     const priceIndex = await loadPriceIndex(admin);
     const result = runAcpAnalysis(subject, candidates, overrides, {
       calibration,
@@ -995,6 +1067,9 @@ export type AcpAnalysisView = {
     itemsFound: number;
     itemsUsed: number;
     itemsExcluded: number;
+    /** Starea sursei interogate live, în română, sau `null`. */
+    outcomeLabel: string | null;
+    outcomeDetail: string | null;
   }[];
   /** Versiunea motorului care a produs cifrele acestei analize. */
   engineVersion: number;
@@ -1048,7 +1123,7 @@ export const getAcpAnalysis = createServerFn({ method: "POST" })
 
     const { data: sourceRows } = await admin
       .from("acp_analysis_sources")
-      .select("source_type,source_name,items_found,items_used,items_excluded")
+      .select("source_type,source_name,items_found,items_used,items_excluded,outcome,outcome_detail")
       .eq("analysis_id", data.analysisId);
 
     const paths = (comparables ?? [])
@@ -1122,6 +1197,8 @@ export const getAcpAnalysis = createServerFn({ method: "POST" })
         itemsFound: s.items_found ?? 0,
         itemsUsed: s.items_used ?? 0,
         itemsExcluded: s.items_excluded ?? 0,
+        outcomeLabel: acpSourceOutcomeLabel(s.outcome ?? null),
+        outcomeDetail: s.outcome_detail ?? null,
       })),
       engineVersion: normalizeAcpEngineVersion(
         analysis.engine_version ?? analysisData.engineVersion ?? null,
@@ -1352,7 +1429,7 @@ async function buildVersionSnapshot(
       .order("similarity_score", { ascending: false }),
     admin
       .from("acp_analysis_sources")
-      .select("source_type,source_name,items_found,items_used,items_excluded")
+      .select("source_type,source_name,items_found,items_used,items_excluded,outcome,outcome_detail")
       .eq("analysis_id", row.id),
   ]);
 
@@ -1585,6 +1662,7 @@ export const recalculateAcpAsNewVersion = createServerFn({ method: "POST" })
           target: subject,
           targetPropertyId: source.property_id,
           sources,
+          engineVersion: ACP_CURRENT_ENGINE_VERSION,
         });
         const calibration = await loadCalibration(admin, actor.organizationId);
         const priceIndex = await loadPriceIndex(admin);

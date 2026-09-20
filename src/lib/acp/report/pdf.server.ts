@@ -294,10 +294,12 @@ export async function buildAcpReportPdf(model: AcpReportModel): Promise<Uint8Arr
   /* ---------------- Surse ---------------- */
   heading("Surse de date folosite");
   for (const src of model.sources) {
+    const outcome = src.outcomeLabel ? ` — ${src.outcomeLabel}` : "";
     text(
-      `• ${src.name} — găsite ${src.found}, folosite ${src.used}, excluse ${src.excluded}`,
+      `• ${src.name}${outcome} — găsite ${src.found}, folosite ${src.used}, excluse ${src.excluded}`,
       { size: 8.5 },
     );
+    if (src.outcomeDetail) text(`   ${src.outcomeDetail}`, { size: 8, color: MUTED });
   }
   if (model.sources.length === 0) {
     text("Nu au fost înregistrate surse pentru această versiune.", { size: 8.5, color: MUTED });

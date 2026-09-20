@@ -88,12 +88,19 @@ export const ACP_TOLERANCES = {
 export const ACP_OUTLIER_IQR_MULTIPLIER = 1.5;
 
 /** Tipuri de surse acceptate într-o analiză (nu hardcodăm portalurile). */
-export const ACP_SOURCE_TYPES = ["own_properties", "collaboration", "portal", "manual"] as const;
+export const ACP_SOURCE_TYPES = [
+  "own_properties",
+  "collaboration",
+  "portal",
+  "market_query",
+  "manual",
+] as const;
 export type AcpSourceType = (typeof ACP_SOURCE_TYPES)[number];
 
 export const ACP_SOURCE_TYPE_LABELS: Record<AcpSourceType, string> = {
   own_properties: "Proprietățile mele",
   collaboration: "Colaborare",
   portal: "Portaluri",
+  market_query: "Surse partenere (live)",
   manual: "Adăugate manual",
 };

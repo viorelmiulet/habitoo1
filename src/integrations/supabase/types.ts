@@ -244,6 +244,8 @@ export type Database = {
           items_excluded: number
           items_found: number
           items_used: number
+          outcome: string | null
+          outcome_detail: string | null
           source_name: string
           source_type: string
         }
@@ -255,6 +257,8 @@ export type Database = {
           items_excluded?: number
           items_found?: number
           items_used?: number
+          outcome?: string | null
+          outcome_detail?: string | null
           source_name: string
           source_type: string
         }
@@ -266,6 +270,8 @@ export type Database = {
           items_excluded?: number
           items_found?: number
           items_used?: number
+          outcome?: string | null
+          outcome_detail?: string | null
           source_name?: string
           source_type?: string
         }
@@ -3389,6 +3395,63 @@ export type Database = {
           series?: string
           source?: string
           unit?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      market_query_sources: {
+        Row: {
+          answered_count: number
+          base_url: string
+          created_at: string
+          empty_count: number
+          enabled: boolean
+          error_count: number
+          key: string
+          label: string
+          last_outcome: string | null
+          last_query_at: string | null
+          notes: string | null
+          price_band_percent: number
+          radius_km: number
+          timeout_count: number
+          timeout_ms: number
+          updated_at: string
+        }
+        Insert: {
+          answered_count?: number
+          base_url: string
+          created_at?: string
+          empty_count?: number
+          enabled?: boolean
+          error_count?: number
+          key: string
+          label: string
+          last_outcome?: string | null
+          last_query_at?: string | null
+          notes?: string | null
+          price_band_percent?: number
+          radius_km?: number
+          timeout_count?: number
+          timeout_ms?: number
+          updated_at?: string
+        }
+        Update: {
+          answered_count?: number
+          base_url?: string
+          created_at?: string
+          empty_count?: number
+          enabled?: boolean
+          error_count?: number
+          key?: string
+          label?: string
+          last_outcome?: string | null
+          last_query_at?: string | null
+          notes?: string | null
+          price_band_percent?: number
+          radius_km?: number
+          timeout_count?: number
+          timeout_ms?: number
           updated_at?: string
         }
         Relationships: []

@@ -543,22 +543,31 @@ function AcpDetailPage() {
       </SectionCard>
 
       <div className="grid gap-6 lg:grid-cols-2">
-        <SectionCard title="Surse folosite" icon={Layers}>
+        <SectionCard title="Baza de dovezi" icon={Layers}>
           {analysis.sourceStats.length === 0 ? (
             <p className="text-sm text-muted-foreground">Nicio sursă înregistrată.</p>
           ) : (
-            <ul className="space-y-2 text-sm">
+            <ul className="space-y-3 text-sm">
               {analysis.sourceStats.map((s2) => (
-                <li key={`${s2.sourceType}-${s2.sourceName}`} className="flex items-center justify-between gap-3">
-                  <span className="text-muted-foreground">{s2.sourceName}</span>
-                  <span className="font-medium">
-                    {s2.itemsUsed} folosite din {s2.itemsFound}
-                  </span>
+                <li key={`${s2.sourceType}-${s2.sourceName}`} className="space-y-1">
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="text-muted-foreground">{s2.sourceName}</span>
+                    <span className="font-medium">
+                      {s2.itemsUsed} folosite din {s2.itemsFound}
+                    </span>
+                  </div>
+                  {s2.outcomeLabel ? (
+                    <p className="text-xs text-muted-foreground">
+                      {s2.outcomeLabel}
+                      {s2.outcomeDetail ? ` — ${s2.outcomeDetail}` : ""}
+                    </p>
+                  ) : null}
                 </li>
               ))}
             </ul>
           )}
         </SectionCard>
+
 
         <SectionCard
           title="Cum s-a calculat"
