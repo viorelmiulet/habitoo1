@@ -19,6 +19,8 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PortalSlotsCard } from "@/components/app/PortalSlotsCard";
+import { ImobiliarePromotionsAdminCard } from "@/components/app/ImobiliarePromotionsAdminCard";
+
 import { ProperstarFeedCard } from "@/components/app/ProperstarFeedCard";
 
 import { AccountAccessCard } from "@/components/app/AccountAccessCard";
