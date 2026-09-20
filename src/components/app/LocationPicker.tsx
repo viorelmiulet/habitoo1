@@ -73,7 +73,9 @@ export function LocationPicker({
   const counties = useCounties();
   const [term, setTerm] = useState("");
   const [open, setOpen] = useState(false);
+  const [activeIndex, setActiveIndex] = useState(-1);
   const boxRef = useRef<HTMLDivElement>(null);
+  const listRef = useRef<HTMLDivElement>(null);
 
   const normalized = useMemo(() => normalizeRoName(term), [term]);
 
