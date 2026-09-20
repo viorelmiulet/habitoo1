@@ -6,11 +6,12 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { PageHeader } from "@/components/app/PageHeader";
 import { appHead } from "@/components/app/app-head";
+import { AiFeatureGate } from "@/components/app/ai/AiFeatureGate";
 import { AiMediaPanel } from "@/components/app/AiMediaPanel";
 
 export const Route = createFileRoute("/_authenticated/app/ai-media")({
   head: () => appHead("Studio AI — imagini și video pentru proprietăți"),
-  component: AiMediaPage,
+  component: GatedAiMediaPage,
 });
 
 function AiMediaPage() {
@@ -22,5 +23,14 @@ function AiMediaPage() {
       />
       <AiMediaPanel />
     </div>
+  );
+}
+
+/** Funcțiile AI sunt activate individual per agenție de administratorul platformei. */
+function GatedAiMediaPage() {
+  return (
+    <AiFeatureGate feature="ai_media">
+      <AiMediaPage />
+    </AiFeatureGate>
   );
 }

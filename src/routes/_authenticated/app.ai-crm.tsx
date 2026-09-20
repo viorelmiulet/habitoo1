@@ -12,6 +12,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { PageHeader } from "@/components/app/PageHeader";
 import { appHead } from "@/components/app/app-head";
+import { AiFeatureGate } from "@/components/app/ai/AiFeatureGate";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
@@ -27,7 +28,7 @@ import {
 
 export const Route = createFileRoute("/_authenticated/app/ai-crm")({
   head: () => appHead("AI CRM — asistentul pentru clienți și lead-uri"),
-  component: CrmAgentPage,
+  component: GatedCrmAgentPage,
 });
 
 const SUGGESTIONS = [
@@ -378,5 +379,14 @@ function CrmAgentPage() {
         </Card>
       </div>
     </div>
+  );
+}
+
+/** Funcțiile AI sunt activate individual per agenție de administratorul platformei. */
+function GatedCrmAgentPage() {
+  return (
+    <AiFeatureGate feature="ai_crm">
+      <CrmAgentPage />
+    </AiFeatureGate>
   );
 }

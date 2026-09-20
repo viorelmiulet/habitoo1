@@ -11,6 +11,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { PageHeader } from "@/components/app/PageHeader";
 import { appHead } from "@/components/app/app-head";
+import { AiFeatureGate } from "@/components/app/ai/AiFeatureGate";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
@@ -26,7 +27,7 @@ import {
 
 export const Route = createFileRoute("/_authenticated/app/ai")({
   head: () => appHead("Habitoo AI — asistentul agenției"),
-  component: AiPage,
+  component: GatedAiPage,
 });
 
 type ChatEntry = {
@@ -256,5 +257,14 @@ function AiPage() {
         </div>
       )}
     </div>
+  );
+}
+
+/** Funcțiile AI sunt activate individual per agenție de administratorul platformei. */
+function GatedAiPage() {
+  return (
+    <AiFeatureGate feature="ai_assistant">
+      <AiPage />
+    </AiFeatureGate>
   );
 }
