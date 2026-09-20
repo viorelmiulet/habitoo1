@@ -4926,6 +4926,94 @@ export type Database = {
           },
         ]
       }
+      promotion_allocations: {
+        Row: {
+          amount: number | null
+          created_at: string
+          id: string
+          organization_id: string
+          portal_key: string
+          service_key: string
+          updated_at: string
+          updated_by: string | null
+          user_id: string
+        }
+        Insert: {
+          amount?: number | null
+          created_at?: string
+          id?: string
+          organization_id: string
+          portal_key: string
+          service_key: string
+          updated_at?: string
+          updated_by?: string | null
+          user_id: string
+        }
+        Update: {
+          amount?: number | null
+          created_at?: string
+          id?: string
+          organization_id?: string
+          portal_key?: string
+          service_key?: string
+          updated_at?: string
+          updated_by?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "promotion_allocations_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      promotion_service_settings: {
+        Row: {
+          agency_cap: number | null
+          created_at: string
+          enabled: boolean
+          id: string
+          organization_id: string
+          portal_key: string
+          service_key: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          agency_cap?: number | null
+          created_at?: string
+          enabled?: boolean
+          id?: string
+          organization_id: string
+          portal_key: string
+          service_key: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          agency_cap?: number | null
+          created_at?: string
+          enabled?: boolean
+          id?: string
+          organization_id?: string
+          portal_key?: string
+          service_key?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "promotion_service_settings_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       properties: {
         Row: {
           additional_spaces: string[]
