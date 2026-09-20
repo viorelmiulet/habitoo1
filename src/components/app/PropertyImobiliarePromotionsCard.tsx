@@ -102,7 +102,8 @@ export function PropertyImobiliarePromotionsCard({
   if (!view.data?.available) {
     return (
       <p className="mt-3 pl-9 text-xs text-muted-foreground">
-        {view.data?.message ?? "Promovarea Imobiliare.ro nu este disponibilă pentru această ofertă."}
+        {view.data?.message ??
+          "Promovarea Imobiliare.ro nu este disponibilă pentru această ofertă."}
       </p>
     );
   }
@@ -129,7 +130,10 @@ export function PropertyImobiliarePromotionsCard({
             disabled={view.isFetching}
             onClick={() => void view.refetch()}
           >
-            <RefreshCw className={cn("mr-1 size-3", view.isFetching && "animate-spin")} aria-hidden />
+            <RefreshCw
+              className={cn("mr-1 size-3", view.isFetching && "animate-spin")}
+              aria-hidden
+            />
             Sincronizează
           </Button>
         </div>
@@ -224,7 +228,10 @@ export function PropertyImobiliarePromotionsCard({
                   >
                     {counter(row)}
                     <ChevronRight
-                      className={cn("size-3 transition-transform", openSlot === row.id && "rotate-90")}
+                      className={cn(
+                        "size-3 transition-transform",
+                        openSlot === row.id && "rotate-90",
+                      )}
                       aria-hidden
                     />
                   </button>

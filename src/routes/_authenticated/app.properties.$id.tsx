@@ -4,7 +4,6 @@ import { useRef, useState } from "react";
 import {
   BarChart3,
   Building2,
-
   MessageCircle,
   MoreHorizontal,
   Pencil,
@@ -135,7 +134,6 @@ function PropertyDetailPage() {
   /** Evită tipăriri suprapuse ale fișei de prezentare. */
   const printingRef = useRef(false);
   const [presentationDialogOpen, setPresentationDialogOpen] = useState(false);
-
 
   const [activityDialog, setActivityDialog] = useState<{
     open: boolean;
@@ -551,7 +549,6 @@ function PropertyDetailPage() {
     }
   };
 
-
   // Coordonatele arătate în panoul read-only: exacte sau zona aproximativă.
   const mapCoords = publicCoords(property);
 
@@ -624,7 +621,10 @@ function PropertyDetailPage() {
               <StatusBadge tone={propertyStatusTone[property.status]} dot>
                 {propertyStatusLabels[property.status]}
               </StatusBadge>
-              <StatusBadge tone={property.publish_status === "published" ? "success" : "neutral"} dot>
+              <StatusBadge
+                tone={property.publish_status === "published" ? "success" : "neutral"}
+                dot
+              >
                 {property.publish_status === "published" ? "Publicat" : "Nepublicat"}
               </StatusBadge>
               {property.negotiable ? <StatusBadge tone="info">Negociabil</StatusBadge> : null}
@@ -778,7 +778,6 @@ function PropertyDetailPage() {
       </div>
 
       <Tabs value={tab} onValueChange={setTab}>
-
         <TabsList className="h-auto flex-wrap justify-start gap-1 rounded-none border-b border-border bg-transparent p-0">
           {[
             ["overview", "Detalii"],
@@ -837,9 +836,7 @@ function PropertyDetailPage() {
                       id="postal_code"
                       inputMode="numeric"
                       value={draft.postal_code ?? ""}
-                      onChange={(e) =>
-                        setDraft((d) => ({ ...d, postal_code: e.target.value }))
-                      }
+                      onChange={(e) => setDraft((d) => ({ ...d, postal_code: e.target.value }))}
                     />
                     {(draft.postal_code ?? "").trim() === (property.postal_code ?? "").trim() &&
                     postalCodeHint(property.postal_code_source) ? (
@@ -1085,7 +1082,6 @@ function PropertyDetailPage() {
           <MarketingAgentPanel propertyId={id} />
         </TabsContent>
 
-
         <TabsContent value="leads">
           <div className="panel overflow-hidden">
             {(data?.leads.length ?? 0) === 0 ? (
@@ -1176,7 +1172,9 @@ function PropertyDetailPage() {
               setEditing(true);
               setTab("overview");
               requestAnimationFrame(() =>
-                document.getElementById("property-details-form")?.scrollIntoView({ behavior: "smooth" }),
+                document
+                  .getElementById("property-details-form")
+                  ?.scrollIntoView({ behavior: "smooth" }),
               );
             }}
           />

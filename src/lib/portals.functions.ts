@@ -1713,7 +1713,9 @@ export const getPropertyPortalJournal = createServerFn({ method: "POST" })
 
     return (rows ?? []).map((row) => {
       const response =
-        row.portal_response && typeof row.portal_response === "object" && !Array.isArray(row.portal_response)
+        row.portal_response &&
+        typeof row.portal_response === "object" &&
+        !Array.isArray(row.portal_response)
           ? (row.portal_response as Record<string, unknown>)
           : null;
       const rawRequestId = response?.request_id ?? response?.requestId;

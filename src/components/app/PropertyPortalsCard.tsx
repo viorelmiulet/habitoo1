@@ -9,14 +9,7 @@
  * Separă intenția (checkbox) de starea reală a integrării (status), fără să
  * introducă o a doua sursă de adevăr.
  */
-import {
-  forwardRef,
-  useCallback,
-  useEffect,
-  useImperativeHandle,
-  useMemo,
-  useState,
-} from "react";
+import { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useState } from "react";
 import { AlertTriangle, Check, CheckCircle2, Circle, ExternalLink } from "lucide-react";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -338,7 +331,9 @@ export const PropertyPortalsCard = forwardRef<
     .sort()
     .at(-1);
   const latestFailureByPortal = new Map(
-    (journal.data ?? []).filter((item) => !item.success).map((item) => [item.portal, item] as const),
+    (journal.data ?? [])
+      .filter((item) => !item.success)
+      .map((item) => [item.portal, item] as const),
   );
 
   return (
@@ -363,190 +358,219 @@ export const PropertyPortalsCard = forwardRef<
           </header>
 
           <ul className="space-y-3">
-        {collabVisible ? (
-          <li>
-            <Card
-              className={cn(
-                "p-5 text-sm",
-                collabValue && collabPercent.trim() === "" && "bg-warning/10",
-              )}
-            >
-            <div className="flex flex-wrap items-start gap-3">
-              <Checkbox
-                id="portal-habitoo-collaboration"
-                checked={collabValue}
-                className="mt-0.5"
-                onCheckedChange={(next) => setCollabChecked(next === true)}
-              />
-              {collabValue ? (
-                <CheckCircle2 aria-hidden className="mt-0.5 size-4 shrink-0 text-success" />
-              ) : (
-                <Circle aria-hidden className="mt-0.5 size-4 shrink-0 text-muted-foreground/60" />
-              )}
-              <span className="inline-flex size-10 shrink-0 items-center justify-center overflow-hidden rounded-control border border-border bg-surface">
-                <BrandLogo markOnly className="size-5" />
-              </span>
-              <div className="min-w-0 flex-1">
-                <div className="flex flex-wrap items-center gap-2">
-                  <label htmlFor="portal-habitoo-collaboration" className="font-semibold">Colaborare Habitoo</label>
-                  <StatusPill state={collabValue ? "published" : "inactive"} dot>
-                    {collabValue ? "Activ" : "Inactiv"}
-                  </StatusPill>
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  {!collabRow?.offerable && collabValue
-                    ? "Oferta ajunge la celelalte agenții doar când proprietatea este activă."
-                    : collabValue
-                      ? collabRow?.enabled
-                        ? "Vizibilă altor agenții Habitoo, fără datele proprietarului."
-                        : "Selectat — se trimite la următoarea apăsare pe „Publică”."
-                      : collabRow?.enabled
-                        ? "Se retrage din rețeaua de colaborare la următoarea publicare."
-                        : "Neselectat."}
-                </p>
-              </div>
-            </div>
-
-            {collabValue ? (
-              <div className="mt-3 grid gap-3 pl-9 sm:grid-cols-2">
-                <div className="space-y-1.5">
-                  <Label htmlFor="collab-percent" className="text-xs">
-                    Comision oferit (%)
-                  </Label>
-                  <Input
-                    id="collab-percent"
-                    inputMode="decimal"
-                    placeholder="Ex. 1.5"
-                    value={collabPercent}
-                    onChange={(e) => setCollabPercent(e.target.value)}
-                  />
-                  {collabPercent.trim() === "" ? (
-                    <p className="text-xs text-warning-foreground">
-                      Obligatoriu cât timp colaborarea este activă.
-                    </p>
-                  ) : null}
-                </div>
-                <div className="space-y-1.5">
-                  <Label htmlFor="collab-terms" className="text-xs">
-                    Condiții (opțional)
-                  </Label>
-                  <Textarea
-                    id="collab-terms"
-                    rows={2}
-                    placeholder="Ex. vizionări doar cu agentul proprietății"
-                    value={collabTerms}
-                    onChange={(e) => setCollabTerms(e.target.value)}
-                  />
-                </div>
-              </div>
-            ) : null}
-            </Card>
-          </li>
-        ) : null}
-
-        {cells.map((cell) => {
-          const value = checked[cell.portalId] ?? cell.selected;
-          const disabled = !canManage || cell.availability !== "available" || apply.isPending;
-          const problem =
-            cell.state === "error" ||
-            Boolean(cell.lastError) ||
-            (cell.availability === "available" && value && !cell.configured);
-          const stateView = STATE_VIEW[cell.state];
-          const failure = latestFailureByPortal.get(cell.portalId);
-          const detail = stateSentence(cell, value);
-
-          return (
-            <li key={cell.portalId}>
-              <Card className="p-5 text-sm">
-              <div className="grid gap-4 sm:grid-cols-[auto_minmax(0,1fr)_auto] sm:items-center">
-                <PortalLogoStack portalId={cell.portalId} name={cell.portalName} size={40} />
-                <div className="min-w-0">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <label htmlFor={`portal-${cell.portalId}`} className="font-semibold">{cell.portalName}</label>
-                    <StatusPill state={stateView.pill} dot>{stateView.label}</StatusPill>
+            {collabVisible ? (
+              <li>
+                <Card
+                  className={cn(
+                    "p-5 text-sm",
+                    collabValue && collabPercent.trim() === "" && "bg-warning/10",
+                  )}
+                >
+                  <div className="flex flex-wrap items-start gap-3">
+                    <Checkbox
+                      id="portal-habitoo-collaboration"
+                      checked={collabValue}
+                      className="mt-0.5"
+                      onCheckedChange={(next) => setCollabChecked(next === true)}
+                    />
+                    {collabValue ? (
+                      <CheckCircle2 aria-hidden className="mt-0.5 size-4 shrink-0 text-success" />
+                    ) : (
+                      <Circle
+                        aria-hidden
+                        className="mt-0.5 size-4 shrink-0 text-muted-foreground/60"
+                      />
+                    )}
+                    <span className="inline-flex size-10 shrink-0 items-center justify-center overflow-hidden rounded-control border border-border bg-surface">
+                      <BrandLogo markOnly className="size-5" />
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <label htmlFor="portal-habitoo-collaboration" className="font-semibold">
+                          Colaborare Habitoo
+                        </label>
+                        <StatusPill state={collabValue ? "published" : "inactive"} dot>
+                          {collabValue ? "Activ" : "Inactiv"}
+                        </StatusPill>
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        {!collabRow?.offerable && collabValue
+                          ? "Oferta ajunge la celelalte agenții doar când proprietatea este activă."
+                          : collabValue
+                            ? collabRow?.enabled
+                              ? "Vizibilă altor agenții Habitoo, fără datele proprietarului."
+                              : "Selectat — se trimite la următoarea apăsare pe „Publică”."
+                            : collabRow?.enabled
+                              ? "Se retrage din rețeaua de colaborare la următoarea publicare."
+                              : "Neselectat."}
+                      </p>
+                    </div>
                   </div>
-                  <p className={cn("mt-1 text-xs", problem ? "text-destructive" : "text-muted-foreground")}>
-                    {detail}
-                    {problem && failure?.requestId ? ` · Cerere ${failure.requestId}` : ""}
-                  </p>
-                  <MyPortalSlotLine portalId={cell.portalId} />
-                </div>
-                <div className="flex min-w-0 flex-wrap items-center gap-3 sm:justify-end">
-                  {cell.publicUrl && !cell.publicWarning ? (
-                    <Button variant="link" size="compact" asChild>
-                      <a href={cell.publicUrl} target="_blank" rel="noopener noreferrer">
-                        Vezi anunțul <ExternalLink aria-hidden />
-                      </a>
-                    </Button>
-                  ) : problem ? (
-                    <span className="text-xs font-semibold text-destructive">Detalii eroare</span>
-                  ) : !cell.configured ? (
-                    <span className="text-xs font-semibold text-gold-dark">Cere activarea</span>
+
+                  {collabValue ? (
+                    <div className="mt-3 grid gap-3 pl-9 sm:grid-cols-2">
+                      <div className="space-y-1.5">
+                        <Label htmlFor="collab-percent" className="text-xs">
+                          Comision oferit (%)
+                        </Label>
+                        <Input
+                          id="collab-percent"
+                          inputMode="decimal"
+                          placeholder="Ex. 1.5"
+                          value={collabPercent}
+                          onChange={(e) => setCollabPercent(e.target.value)}
+                        />
+                        {collabPercent.trim() === "" ? (
+                          <p className="text-xs text-warning-foreground">
+                            Obligatoriu cât timp colaborarea este activă.
+                          </p>
+                        ) : null}
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label htmlFor="collab-terms" className="text-xs">
+                          Condiții (opțional)
+                        </Label>
+                        <Textarea
+                          id="collab-terms"
+                          rows={2}
+                          placeholder="Ex. vizionări doar cu agentul proprietății"
+                          value={collabTerms}
+                          onChange={(e) => setCollabTerms(e.target.value)}
+                        />
+                      </div>
+                    </div>
                   ) : null}
-                  {problem && canManage && cell.availability === "available" && cell.configured ? (
-                  <Button
-                    type="button"
-                    variant="secondary"
-                    disabled={apply.isPending}
-                    onClick={() => void applyPending()}
-                  >
-                    {cell.lastSyncAt ? "Retrimite" : "Reîncearcă"}
-                  </Button>
-                  ) : null}
-                  <Checkbox
-                    id={`portal-${cell.portalId}`}
-                    checked={value}
-                    disabled={disabled}
-                    aria-label={`${value ? "Dezactivează" : "Activează"} ${cell.portalName}`}
-                    onCheckedChange={(next) => {
-                      if (next === true && cell.availability === "available" && !cell.configured) {
-                        toast.error(`${cell.portalName} nu este configurat. Configurează portalul în Setări.`);
-                      }
-                      setChecked((prev) => ({ ...prev, [cell.portalId]: next === true }));
-                    }}
-                  />
-                </div>
-              </div>
+                </Card>
+              </li>
+            ) : null}
 
-              {/* Anunț trimis, dar pagina publică nu funcționează (cont fără abonament). */}
-              {cell.publicWarning ? (
-                <p className="mt-3 rounded-md border border-warning/40 bg-warning/10 px-3 py-2 text-xs text-warning-foreground">
-                  {cell.publicWarning}
-                </p>
-              ) : null}
+            {cells.map((cell) => {
+              const value = checked[cell.portalId] ?? cell.selected;
+              const disabled = !canManage || cell.availability !== "available" || apply.isPending;
+              const problem =
+                cell.state === "error" ||
+                Boolean(cell.lastError) ||
+                (cell.availability === "available" && value && !cell.configured);
+              const stateView = STATE_VIEW[cell.state];
+              const failure = latestFailureByPortal.get(cell.portalId);
+              const detail = stateSentence(cell, value);
 
-              {/* Validare pre-publicare: ce lipsește, în cuvinte, pe acest portal. */}
-              {value && (requirementByPortal.get(cell.portalId)?.missing.length ?? 0) > 0 ? (
-                <div className="mt-3 rounded-md border border-warning/40 bg-warning/10 px-3 py-2 pl-3 text-xs">
-                  <p className="font-medium text-warning-foreground">
-                    Publicarea este blocată până completezi:
-                  </p>
-                  <ul className="mt-1 list-disc space-y-0.5 pl-4 text-warning-foreground">
-                    {requirementByPortal.get(cell.portalId)?.missing.map((m) => (
-                      <li key={m.key}>
-                        {m.label} — {m.requirement}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              ) : null}
+              return (
+                <li key={cell.portalId}>
+                  <Card className="p-5 text-sm">
+                    <div className="grid gap-4 sm:grid-cols-[auto_minmax(0,1fr)_auto] sm:items-center">
+                      <PortalLogoStack portalId={cell.portalId} name={cell.portalName} size={40} />
+                      <div className="min-w-0">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <label htmlFor={`portal-${cell.portalId}`} className="font-semibold">
+                            {cell.portalName}
+                          </label>
+                          <StatusPill state={stateView.pill} dot>
+                            {stateView.label}
+                          </StatusPill>
+                        </div>
+                        <p
+                          className={cn(
+                            "mt-1 text-xs",
+                            problem ? "text-destructive" : "text-muted-foreground",
+                          )}
+                        >
+                          {detail}
+                          {problem && failure?.requestId ? ` · Cerere ${failure.requestId}` : ""}
+                        </p>
+                        <MyPortalSlotLine portalId={cell.portalId} />
+                      </div>
+                      <div className="flex min-w-0 flex-wrap items-center gap-3 sm:justify-end">
+                        {cell.publicUrl && !cell.publicWarning ? (
+                          <Button variant="link" size="compact" asChild>
+                            <a href={cell.publicUrl} target="_blank" rel="noopener noreferrer">
+                              Vezi anunțul <ExternalLink aria-hidden />
+                            </a>
+                          </Button>
+                        ) : problem ? (
+                          <span className="text-xs font-semibold text-destructive">
+                            Detalii eroare
+                          </span>
+                        ) : !cell.configured ? (
+                          <span className="text-xs font-semibold text-gold-dark">
+                            Cere activarea
+                          </span>
+                        ) : null}
+                        {problem &&
+                        canManage &&
+                        cell.availability === "available" &&
+                        cell.configured ? (
+                          <Button
+                            type="button"
+                            variant="secondary"
+                            disabled={apply.isPending}
+                            onClick={() => void applyPending()}
+                          >
+                            {cell.lastSyncAt ? "Retrimite" : "Reîncearcă"}
+                          </Button>
+                        ) : null}
+                        <Checkbox
+                          id={`portal-${cell.portalId}`}
+                          checked={value}
+                          disabled={disabled}
+                          aria-label={`${value ? "Dezactivează" : "Activează"} ${cell.portalName}`}
+                          onCheckedChange={(next) => {
+                            if (
+                              next === true &&
+                              cell.availability === "available" &&
+                              !cell.configured
+                            ) {
+                              toast.error(
+                                `${cell.portalName} nu este configurat. Configurează portalul în Setări.`,
+                              );
+                            }
+                            setChecked((prev) => ({ ...prev, [cell.portalId]: next === true }));
+                          }}
+                        />
+                      </div>
+                    </div>
 
-              {/* Auto-prelungire, doar pentru Storia și doar când portalul e bifat. */}
-              {cell.portalId === "storia" && value ? (
-                <StoriaAutoRenewControl
-                  propertyId={propertyId}
-                  organizationId={organizationId}
-                  canManage={canManage}
-                />
-              ) : null}
-              </Card>
-            </li>
-          );
-        })}
+                    {/* Anunț trimis, dar pagina publică nu funcționează (cont fără abonament). */}
+                    {cell.publicWarning ? (
+                      <p className="mt-3 rounded-md border border-warning/40 bg-warning/10 px-3 py-2 text-xs text-warning-foreground">
+                        {cell.publicWarning}
+                      </p>
+                    ) : null}
+
+                    {/* Validare pre-publicare: ce lipsește, în cuvinte, pe acest portal. */}
+                    {value && (requirementByPortal.get(cell.portalId)?.missing.length ?? 0) > 0 ? (
+                      <div className="mt-3 rounded-md border border-warning/40 bg-warning/10 px-3 py-2 pl-3 text-xs">
+                        <p className="font-medium text-warning-foreground">
+                          Publicarea este blocată până completezi:
+                        </p>
+                        <ul className="mt-1 list-disc space-y-0.5 pl-4 text-warning-foreground">
+                          {requirementByPortal.get(cell.portalId)?.missing.map((m) => (
+                            <li key={m.key}>
+                              {m.label} — {m.requirement}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    ) : null}
+
+                    {/* Auto-prelungire, doar pentru Storia și doar când portalul e bifat. */}
+                    {cell.portalId === "storia" && value ? (
+                      <StoriaAutoRenewControl
+                        propertyId={propertyId}
+                        organizationId={organizationId}
+                        canManage={canManage}
+                      />
+                    ) : null}
+                  </Card>
+                </li>
+              );
+            })}
           </ul>
         </section>
 
-        {cells.some((cell) => cell.portalId === "imobiliare_ro" && (checked[cell.portalId] ?? cell.selected)) ? (
+        {cells.some(
+          (cell) => cell.portalId === "imobiliare_ro" && (checked[cell.portalId] ?? cell.selected),
+        ) ? (
           <Panel className="p-5">
             <PropertyImobiliarePromotionsCard
               propertyId={propertyId}
@@ -561,7 +585,9 @@ export const PropertyPortalsCard = forwardRef<
         <Panel className="p-5">
           <h2 className="text-lg font-semibold">Pregătire pentru publicare</h2>
           {allRequired.length === 0 ? (
-            <p className="mt-3 text-sm text-muted-foreground">Nu există verificări suplimentare pentru portalurile active.</p>
+            <p className="mt-3 text-sm text-muted-foreground">
+              Nu există verificări suplimentare pentru portalurile active.
+            </p>
           ) : (
             <ul className="mt-4 space-y-3">
               {allRequired.map((item) => (
@@ -569,7 +595,10 @@ export const PropertyPortalsCard = forwardRef<
                   {item.ok ? (
                     <Check className="mt-0.5 size-4 shrink-0 text-success" aria-hidden />
                   ) : (
-                    <AlertTriangle className="mt-0.5 size-4 shrink-0 text-destructive" aria-hidden />
+                    <AlertTriangle
+                      className="mt-0.5 size-4 shrink-0 text-destructive"
+                      aria-hidden
+                    />
                   )}
                   <span>
                     <span className="font-semibold">{item.label}</span>
@@ -580,7 +609,12 @@ export const PropertyPortalsCard = forwardRef<
             </ul>
           )}
           {missingRequired.length > 0 && onCompleteMissing ? (
-            <Button type="button" variant="soft" className="mt-5 w-full" onClick={onCompleteMissing}>
+            <Button
+              type="button"
+              variant="soft"
+              className="mt-5 w-full"
+              onClick={onCompleteMissing}
+            >
               Completează ce lipsește
             </Button>
           ) : null}
@@ -589,7 +623,9 @@ export const PropertyPortalsCard = forwardRef<
         <Panel className="p-5">
           <h2 className="text-lg font-semibold">Jurnal portal</h2>
           {(journal.data?.length ?? 0) === 0 ? (
-            <p className="mt-3 text-sm text-muted-foreground">Nicio operație înregistrată pentru această proprietate.</p>
+            <p className="mt-3 text-sm text-muted-foreground">
+              Nicio operație înregistrată pentru această proprietate.
+            </p>
           ) : (
             <ul className="mt-4 space-y-4">
               {journal.data?.map((item) => (
@@ -603,7 +639,9 @@ export const PropertyPortalsCard = forwardRef<
                   <p className="mt-1 text-xs text-muted-foreground">
                     {syncAgo(item.createdAt)} · {operationLabel(item.operation)}
                   </p>
-                  {item.errorMessage ? <p className="mt-1 text-xs text-destructive">{item.errorMessage}</p> : null}
+                  {item.errorMessage ? (
+                    <p className="mt-1 text-xs text-destructive">{item.errorMessage}</p>
+                  ) : null}
                 </li>
               ))}
             </ul>
