@@ -526,7 +526,7 @@ export function AppSidebar({
 
         {isPlatform ? (
           <div className="mt-2 border-t border-sidebar-border pt-2">
-            {renderItem({ label: "Înapoi la CRM", to: "/app", icon: ArrowLeftRight })}
+            <ul>{renderItem({ label: "Înapoi la CRM", to: "/app", icon: ArrowLeftRight })}</ul>
           </div>
         ) : null}
       </nav>

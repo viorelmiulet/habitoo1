@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { FlaskConical } from "lucide-react";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
@@ -41,6 +41,7 @@ export function AppShell({
   children: React.ReactNode;
 }) {
   const [menuOpen, setMenuOpen] = useState(false);
+  const menuTriggerRef = useRef<HTMLButtonElement>(null);
   const { collapsed, toggle } = useSidebarCollapsed();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -106,6 +107,11 @@ export function AppShell({
               side="left"
               className="w-[min(85vw,300px)] p-0"
               aria-describedby={undefined}
+              overlayClassName="bg-sidebar/70"
+              onCloseAutoFocus={(event) => {
+                event.preventDefault();
+                menuTriggerRef.current?.focus();
+              }}
             >
               <SheetTitle className="sr-only">Meniu de navigare</SheetTitle>
               <AppSidebar {...sidebarProps} onNavigate={() => setMenuOpen(false)} />
@@ -121,7 +127,7 @@ export function AppShell({
             <Topbar
               user={user}
               onOpenMenu={() => setMenuOpen(true)}
-              onSignOut={signOut}
+              menuTriggerRef={menuTriggerRef}
               isDemo={isDemo}
               variant={variant}
             />
