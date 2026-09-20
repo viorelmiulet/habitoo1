@@ -184,6 +184,19 @@ function PropertyDetailPage() {
   });
 
   const property = data?.property;
+  const { data: responsibleAgent } = useQuery({
+    queryKey: ["property-responsible-agent", property?.assigned_to],
+    enabled: Boolean(property?.assigned_to),
+    queryFn: async () => {
+      const { data: profile, error } = await supabase
+        .from("profiles")
+        .select("full_name")
+        .eq("id", property?.assigned_to ?? "")
+        .maybeSingle();
+      if (error) throw error;
+      return profile;
+    },
+  });
 
   const [draft, setDraft] = useState<Record<string, string>>({});
   // Localizarea oficială SIRUTA a anunțului (județ + localitate).
@@ -586,6 +599,7 @@ function PropertyDetailPage() {
             property.reference ? `Ref. ${property.reference}` : null,
             [property.district, property.city].filter(Boolean).join(", ") || null,
             formatMoney(property.price, property.currency),
+            responsibleAgent?.full_name ? `Responsabil: ${responsibleAgent.full_name}` : null,
           ]
             .filter(Boolean)
             .join(" · ")}

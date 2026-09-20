@@ -167,7 +167,7 @@ export function PropertyImobiliarePromotionsCard({
             draft !== undefined ? draft : typeof row.value === "number" ? String(row.value) : "";
 
           return (
-            <li key={row.id} className="rounded-card border border-border bg-subtle p-4">
+            <li key={row.id} className="rounded-card border border-border bg-muted p-4">
               <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
                 {row.kind === "numeric" ? (
                   <div className="flex items-center gap-2">
