@@ -127,6 +127,21 @@ export function LocationPicker({
     });
   };
 
+  const results = localities.data ?? [];
+
+  // Reset keyboard highlight whenever the result set changes.
+  useEffect(() => {
+    setActiveIndex(results.length > 0 ? 0 : -1);
+  }, [localities.data]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Keep the highlighted option visible inside the scrollable list.
+  useEffect(() => {
+    if (activeIndex < 0 || !listRef.current) return;
+    listRef.current
+      .querySelector(`[data-index="${activeIndex}"]`)
+      ?.scrollIntoView({ block: "nearest" });
+  }, [activeIndex]);
+
   const selectLocality = (hit: LocalityHit) => {
     onChange({
       ...value,
@@ -136,6 +151,26 @@ export function LocationPicker({
     });
     setTerm("");
     setOpen(false);
+    setActiveIndex(-1);
+  };
+
+  const onSearchKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Escape") {
+      setOpen(false);
+      setActiveIndex(-1);
+      return;
+    }
+    if (!open || results.length === 0) return;
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      setActiveIndex((i) => (i + 1) % results.length);
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      setActiveIndex((i) => (i <= 0 ? results.length - 1 : i - 1));
+    } else if (e.key === "Enter" && activeIndex >= 0) {
+      e.preventDefault();
+      selectLocality(results[activeIndex]);
+    }
   };
 
   const clearLocality = () => {
