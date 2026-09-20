@@ -37,9 +37,9 @@ export function monthStartIso(now: Date = new Date()): string {
 }
 
 export function sumCosts(values: readonly (number | null)[]): number {
-  return (
-    Math.round(
-      values.reduce((total, value) => total + (typeof value === "number" ? value : 0), 0) * 10000,
-    ) / 10000
-  );
+  let total = 0;
+  for (const value of values) {
+    if (typeof value === "number" && Number.isFinite(value)) total += value;
+  }
+  return Math.round(total * 10000) / 10000;
 }
