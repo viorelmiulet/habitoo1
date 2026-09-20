@@ -7,9 +7,11 @@
  */
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { Database, Play } from "lucide-react";
+import { Database, Pencil, Play, Plus } from "lucide-react";
+import { useState } from "react";
 import { SectionCard } from "@/components/app/SectionCard";
 import { InlineLoading } from "@/components/app/LoadingState";
+import { ApifySourceDialog } from "./ApifySourceDialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,10 +21,14 @@ import { toastError } from "@/lib/errors";
 import {
   getApifyOverview,
   runApifySource,
+  saveApifySource,
   setApifySourceEnabled,
+  type ApifySourceView,
 } from "@/lib/market/apify/apify.functions";
+import type { ApifySourcePayload } from "@/lib/market/apify/source-form";
 
 const QUERY_KEY = ["superadmin", "apify-sources"] as const;
+
 
 function usd(value: number | null): string {
   if (value === null) return "—";
@@ -46,8 +52,22 @@ export function ApifySourcesCard() {
   const loadOverview = useServerFn(getApifyOverview);
   const toggleSource = useServerFn(setApifySourceEnabled);
   const startRun = useServerFn(runApifySource);
+  const persistSource = useServerFn(saveApifySource);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [editing, setEditing] = useState<ApifySourceView | null>(null);
 
   const overview = useQuery({ queryKey: QUERY_KEY, queryFn: () => loadOverview({}) });
+
+  const saveSource = useMutation({
+    mutationFn: (payload: ApifySourcePayload) => persistSource({ data: payload }),
+    onSuccess: () => {
+      toast.success("Sursa a fost salvată.");
+      setDialogOpen(false);
+      void queryClient.invalidateQueries({ queryKey: QUERY_KEY });
+    },
+    onError: (error) => toastError(error),
+  });
+
 
   const save = useMutation({
     mutationFn: (input: { key: string; enabled?: boolean; maxItems?: number }) =>
@@ -95,11 +115,25 @@ export function ApifySourcesCard() {
             </p>
           ) : null}
 
+          <div className="mb-3 flex justify-end">
+            <Button
+              size="sm"
+              onClick={() => {
+                setEditing(null);
+                setDialogOpen(true);
+              }}
+            >
+              <Plus className="mr-1.5 size-3.5" />
+              Adaugă sursă
+            </Button>
+          </div>
+
           {sources.length === 0 ? (
             <p className="text-sm text-muted-foreground">
               Nu există încă surse configurate. O sursă nouă este doar configurație: actorul,
               inputul lui și maparea câmpurilor.
             </p>
+
           ) : (
             <ul className="divide-y divide-border">
               {sources.map((source) => (
@@ -199,6 +233,17 @@ export function ApifySourcesCard() {
                       <Button
                         size="sm"
                         variant="outline"
+                        onClick={() => {
+                          setEditing(source);
+                          setDialogOpen(true);
+                        }}
+                      >
+                        <Pencil className="mr-1.5 size-3.5" />
+                        Editează
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
                         disabled={!source.enabled || run.isPending}
                         onClick={() => run.mutate(source.key)}
                       >
@@ -211,8 +256,18 @@ export function ApifySourcesCard() {
               ))}
             </ul>
           )}
+
+          <ApifySourceDialog
+            open={dialogOpen}
+            onOpenChange={setDialogOpen}
+            source={editing}
+            organizations={organizations}
+            saving={saveSource.isPending}
+            onSave={(payload) => saveSource.mutate(payload)}
+          />
         </>
       )}
     </SectionCard>
   );
+
 }
