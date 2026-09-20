@@ -379,6 +379,45 @@ export function ImobiliarePromotionsAdminCard({ organizationId }: { organization
           })
         )}
       </CardContent>
+
+      {/* Confirmarea retragerii: anularea nu schimbă nimic. */}
+      <AlertDialog open={pending !== null} onOpenChange={(open) => !open && setPending(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Noua limită nu încape în ce este activ acum</AlertDialogTitle>
+            <AlertDialogDescription>
+              {pending
+                ? pending.change.kind === "cap"
+                  ? `Plafonul agenției pentru ${pending.change.serviceLabel} coboară sub consumul actual. Dacă salvezi, se opresc următoarele oferte, cele mai recente primele:`
+                  : `Alocarea colegului ${pending.change.userName} pentru ${pending.change.serviceLabel} coboară sub consumul actual. Dacă salvezi, se opresc următoarele oferte, cele mai recente primele:`
+                : null}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+
+          <ul className="max-h-60 space-y-1 overflow-y-auto text-sm">
+            {(pending?.items ?? []).map((item) => (
+              <li key={`${item.propertyId}:${item.serviceKey}`} className="flex justify-between gap-3">
+                <span className="truncate">{item.propertyTitle}</span>
+                <span className="shrink-0 text-muted-foreground">{item.serviceLabel}</span>
+              </li>
+            ))}
+          </ul>
+          {pending && pending.skipped > 0 ? (
+            <p className="text-xs text-muted-foreground">
+              <AlertTriangle className="mr-1 inline size-3" aria-hidden />
+              Pentru {pending.skipped} oferte nu am putut citi starea la portal, deci nu apar în
+              listă.
+            </p>
+          ) : null}
+
+          <AlertDialogFooter>
+            <AlertDialogCancel>Renunță</AlertDialogCancel>
+            <AlertDialogAction onClick={() => pending && commit(pending.change, true)}>
+              Salvează și oprește
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Card>
   );
 }
