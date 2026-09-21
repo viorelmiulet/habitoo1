@@ -6,11 +6,12 @@ import {
   ArchiveRestore,
   Building2,
   Check,
-  RefreshCw,
   Search,
   Trash2,
   X,
 } from "lucide-react";
+
+import { SubscriptionPicker } from "@/components/superadmin/SubscriptionPicker";
 
 import { toast } from "@/components/ui/sonner";
 import { toastError } from "@/lib/errors";
