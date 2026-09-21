@@ -7,6 +7,7 @@ import { imospotAdapter } from "./imospot.server";
 import { lacheieAdapter } from "./lacheie.server";
 import { oferteImobiliareAdapter } from "./oferteimobiliare.server";
 import { homepitchAdapter } from "./homepitch.server";
+import { romimoAdapter } from "./romimo.server";
 import { storiaAdapter } from "./storia.server";
 
 const ADAPTERS: Record<string, PortalAdapter> = {
@@ -17,6 +18,7 @@ const ADAPTERS: Record<string, PortalAdapter> = {
   lacheie: lacheieAdapter,
   oferteimobiliare: oferteImobiliareAdapter,
   homepitch: homepitchAdapter,
+  romimo: romimoAdapter,
   storia: storiaAdapter,
 };
 
