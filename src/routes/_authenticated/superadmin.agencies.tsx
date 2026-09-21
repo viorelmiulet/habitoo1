@@ -1,16 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import {
-  Archive,
-  ArchiveRestore,
-  Building2,
-  Check,
-  RefreshCw,
-  Search,
-  Trash2,
-  X,
-} from "lucide-react";
+import { Archive, ArchiveRestore, Building2, Check, Search, Trash2, X } from "lucide-react";
+
+import { SubscriptionPicker } from "@/components/superadmin/SubscriptionPicker";
 
 import { toast } from "@/components/ui/sonner";
 import { toastError } from "@/lib/errors";
@@ -48,14 +41,12 @@ import {
 } from "@/lib/plans";
 
 import {
-  SUBSCRIPTION_TERMS,
   SUBSCRIPTION_TERM_LABELS,
   subscriptionState,
   subscriptionTermLabel,
   type SubscriptionTerm,
 } from "@/lib/subscription";
 import { appHead } from "@/components/app/app-head";
-
 
 export const Route = createFileRoute("/_authenticated/superadmin/agencies")({
   head: () => appHead("Habitoo CRM — agenții"),
@@ -111,53 +102,6 @@ function PlanPicker({
     </div>
   );
 }
-
-/**
- * Termenul abonamentului: 30 de zile, 12 luni sau fără termen. Data de expirare
- * se calculează în baza de date, din momentul salvării — niciodată introdusă manual.
- */
-function SubscriptionPicker({
-  term,
-  onSave,
-  saving,
-}: {
-  term: string | null;
-  onSave: (term: SubscriptionTerm | null) => void;
-  saving: boolean;
-}) {
-  const current = term === "30d" || term === "12m" ? term : "none";
-  const [value, setValue] = useState<string>(current);
-  const dirty = value !== current;
-  const asTerm = value === "none" ? null : (value as SubscriptionTerm);
-  return (
-    <div className="flex items-center gap-2">
-      <Select value={value} onValueChange={setValue}>
-        <SelectTrigger className="w-44">
-          <SelectValue />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="none">Fără termen (nelimitat)</SelectItem>
-          {SUBSCRIPTION_TERMS.map((t) => (
-            <SelectItem key={t} value={t}>
-              {SUBSCRIPTION_TERM_LABELS[t]}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
-      <Button size="sm" variant="outline" disabled={!dirty || saving} onClick={() => onSave(asTerm)}>
-        Salvează
-      </Button>
-      {asTerm && !dirty ? (
-        <Button size="sm" variant="ghost" disabled={saving} onClick={() => onSave(asTerm)}>
-          <RefreshCw className="mr-1.5 size-4" />
-          Reînnoiește
-        </Button>
-      ) : null}
-    </div>
-  );
-}
-
-
 
 function AgenciesPage() {
   const queryClient = useQueryClient();
@@ -268,7 +212,6 @@ function AgenciesPage() {
   });
 
   const savePlan = useMutation({
-
     mutationFn: async ({ id, plan, previous }: { id: string; plan: PlanKey; previous: string }) => {
       const { error } = await supabase.from("organizations").update({ plan }).eq("id", id);
       if (error) throw error;
@@ -505,7 +448,9 @@ function AgenciesPage() {
                           const s = subscriptionState(o);
                           if (s.kind === "grace")
                             return (
-                              <StatusBadge tone="warning">În grație — {s.daysLeft} zile</StatusBadge>
+                              <StatusBadge tone="warning">
+                                În grație — {s.daysLeft} zile
+                              </StatusBadge>
                             );
                           if (s.kind === "expired")
                             return <StatusBadge tone="danger">Expirată</StatusBadge>;

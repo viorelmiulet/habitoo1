@@ -1,9 +1,21 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
-import { Building2, ChevronDown, History, Search, Users } from "lucide-react";
+import { Building2, CalendarClock, ChevronDown, History, Search, Users } from "lucide-react";
 
+import { toast } from "@/components/ui/sonner";
+import { toastError } from "@/lib/errors";
+import { supabase } from "@/integrations/supabase/client";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { SubscriptionPicker } from "@/components/superadmin/SubscriptionPicker";
 import { PageHeader } from "@/components/app/PageHeader";
 import { ListSkeleton } from "@/components/app/LoadingState";
 import { StatusBadge } from "@/components/app/StatusBadge";
@@ -12,7 +24,12 @@ import { Input } from "@/components/ui/input";
 import { appHead } from "@/components/app/app-head";
 import { formatDate, formatDateTime } from "@/lib/format";
 import { PLAN_LABELS, normalizePlan, planAgentLimit, seatLimitLabel } from "@/lib/plans";
-import { subscriptionState, subscriptionTermLabel } from "@/lib/subscription";
+import {
+  SUBSCRIPTION_TERM_LABELS,
+  subscriptionState,
+  subscriptionTermLabel,
+  type SubscriptionTerm,
+} from "@/lib/subscription";
 import {
   getAgencyOverview,
   type AgencyHistoryEntry,
@@ -96,7 +113,8 @@ function SubscriptionCell({ org }: { org: AgencyOverviewRow }) {
       <p className="text-sm">{subscriptionTermLabel(org.subscriptionTerm)}</p>
       <p className="text-xs text-muted-foreground">
         {org.isTrial ? "Perioadă gratuită · " : ""}
-        {state.kind === "active" && `expiră ${formatDate(state.expiresAt)} (${state.daysLeft} zile)`}
+        {state.kind === "active" &&
+          `expiră ${formatDate(state.expiresAt)} (${state.daysLeft} zile)`}
         {state.kind === "grace" && `în grație, ${state.daysLeft} zile rămase`}
         {state.kind === "expired" && `expirat la ${formatDate(state.expiresAt)}`}
       </p>
@@ -105,13 +123,38 @@ function SubscriptionCell({ org }: { org: AgencyOverviewRow }) {
 }
 
 function AgencyOverviewPage() {
+  const queryClient = useQueryClient();
   const fetchOverview = useServerFn(getAgencyOverview);
   const [q, setQ] = useState("");
   const [expanded, setExpanded] = useState<string | null>(null);
+  // Agenția pentru care este deschis dialogul de termen al abonamentului.
+  const [subEditFor, setSubEditFor] = useState<string | null>(null);
 
   const { data, isLoading } = useQuery({
     queryKey: ["superadmin", "agency-overview"],
     queryFn: () => fetchOverview({}),
+  });
+
+  // Termenul abonamentului: același RPC superadmin-only ca în pagina „Agenții”.
+  const saveSubscription = useMutation({
+    mutationFn: async ({ id, term }: { id: string; term: SubscriptionTerm | null }) => {
+      const { error } = await supabase.rpc("set_organization_subscription", {
+        _org: id,
+        _term: term as string,
+      });
+      if (error) throw error;
+    },
+    onSuccess: (_r, vars) => {
+      queryClient.invalidateQueries({ queryKey: ["superadmin", "agency-overview"] });
+      queryClient.invalidateQueries({ queryKey: ["superadmin"] });
+      setSubEditFor(null);
+      toast.success(
+        vars.term
+          ? `Termenul abonamentului a fost setat la ${SUBSCRIPTION_TERM_LABELS[vars.term]}.`
+          : "Agenția rămâne fără termen (acces nelimitat).",
+      );
+    },
+    onError: (e: Error) => toastError(e),
   });
 
   const rows = (data?.agencies ?? []).filter((o) =>
@@ -150,11 +193,18 @@ function AgencyOverviewPage() {
               const isOpen = expanded === org.id;
               return (
                 <li key={org.id}>
-                  <button
-                    type="button"
+                  <div
+                    role="button"
+                    tabIndex={0}
                     onClick={() => setExpanded(isOpen ? null : org.id)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        setExpanded(isOpen ? null : org.id);
+                      }
+                    }}
                     aria-expanded={isOpen}
-                    className="grid w-full grid-cols-1 items-center gap-3 px-4 py-4 text-left transition-colors hover:bg-muted/40 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none sm:grid-cols-[minmax(0,1.4fr)_auto_minmax(0,1fr)_auto_auto]"
+                    className="grid w-full cursor-pointer grid-cols-1 items-center gap-3 px-4 py-4 text-left transition-colors hover:bg-muted/40 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none sm:grid-cols-[minmax(0,1.4fr)_auto_minmax(0,1fr)_auto_auto]"
                   >
                     <div className="min-w-0">
                       <p className="flex items-center gap-2 font-medium">
@@ -170,9 +220,7 @@ function AgencyOverviewPage() {
                     </div>
 
                     <div className="text-sm">
-                      <p className="font-medium">
-                        Plan {PLAN_LABELS[normalizePlan(org.plan)]}
-                      </p>
+                      <p className="font-medium">Plan {PLAN_LABELS[normalizePlan(org.plan)]}</p>
                       <p className="flex items-center gap-1 text-xs text-muted-foreground">
                         <Users className="size-3" aria-hidden />
                         {limit === null
@@ -181,7 +229,20 @@ function AgencyOverviewPage() {
                       </p>
                     </div>
 
-                    <SubscriptionCell org={org} />
+                    <div className="flex flex-wrap items-center gap-2">
+                      <SubscriptionCell org={org} />
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSubEditFor(org.id);
+                        }}
+                      >
+                        <CalendarClock className="mr-1.5 size-4" />
+                        Setează perioada
+                      </Button>
+                    </div>
 
                     <span className="hidden items-center gap-1 text-xs text-muted-foreground sm:flex">
                       <History className="size-3.5" aria-hidden />
@@ -195,7 +256,26 @@ function AgencyOverviewPage() {
                       )}
                       aria-hidden
                     />
-                  </button>
+                  </div>
+
+                  <Dialog
+                    open={subEditFor === org.id}
+                    onOpenChange={(open) => setSubEditFor(open ? org.id : null)}
+                  >
+                    <DialogContent className="sm:max-w-md">
+                      <DialogHeader>
+                        <DialogTitle>Termenul abonamentului — {org.name}</DialogTitle>
+                        <DialogDescription>
+                          Data de expirare se calculează automat din momentul salvării.
+                        </DialogDescription>
+                      </DialogHeader>
+                      <SubscriptionPicker
+                        term={org.subscriptionTerm}
+                        saving={saveSubscription.isPending}
+                        onSave={(term) => saveSubscription.mutate({ id: org.id, term })}
+                      />
+                    </DialogContent>
+                  </Dialog>
 
                   {isOpen ? (
                     <div className="border-t border-border bg-muted/30 px-4 py-3">
@@ -206,7 +286,10 @@ function AgencyOverviewPage() {
                       ) : (
                         <ol className="space-y-2.5">
                           {history.map((h) => (
-                            <li key={h.id} className="flex flex-wrap items-baseline gap-x-3 gap-y-0.5 text-sm">
+                            <li
+                              key={h.id}
+                              className="flex flex-wrap items-baseline gap-x-3 gap-y-0.5 text-sm"
+                            >
                               <span className="shrink-0 text-xs text-muted-foreground tabular-nums">
                                 {formatDateTime(h.createdAt)}
                               </span>
