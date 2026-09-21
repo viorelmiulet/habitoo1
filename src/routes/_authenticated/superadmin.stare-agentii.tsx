@@ -192,11 +192,18 @@ function AgencyOverviewPage() {
               const isOpen = expanded === org.id;
               return (
                 <li key={org.id}>
-                  <button
-                    type="button"
+                  <div
+                    role="button"
+                    tabIndex={0}
                     onClick={() => setExpanded(isOpen ? null : org.id)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        setExpanded(isOpen ? null : org.id);
+                      }
+                    }}
                     aria-expanded={isOpen}
-                    className="grid w-full grid-cols-1 items-center gap-3 px-4 py-4 text-left transition-colors hover:bg-muted/40 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none sm:grid-cols-[minmax(0,1.4fr)_auto_minmax(0,1fr)_auto_auto]"
+                    className="grid w-full cursor-pointer grid-cols-1 items-center gap-3 px-4 py-4 text-left transition-colors hover:bg-muted/40 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none sm:grid-cols-[minmax(0,1.4fr)_auto_minmax(0,1fr)_auto_auto]"
                   >
                     <div className="min-w-0">
                       <p className="flex items-center gap-2 font-medium">
@@ -223,7 +230,20 @@ function AgencyOverviewPage() {
                       </p>
                     </div>
 
-                    <SubscriptionCell org={org} />
+                    <div className="flex flex-wrap items-center gap-2">
+                      <SubscriptionCell org={org} />
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSubEditFor(org.id);
+                        }}
+                      >
+                        <CalendarClock className="mr-1.5 size-4" />
+                        Setează perioada
+                      </Button>
+                    </div>
 
                     <span className="hidden items-center gap-1 text-xs text-muted-foreground sm:flex">
                       <History className="size-3.5" aria-hidden />
@@ -237,7 +257,26 @@ function AgencyOverviewPage() {
                       )}
                       aria-hidden
                     />
-                  </button>
+                  </div>
+
+                  <Dialog
+                    open={subEditFor === org.id}
+                    onOpenChange={(open) => setSubEditFor(open ? org.id : null)}
+                  >
+                    <DialogContent className="sm:max-w-md">
+                      <DialogHeader>
+                        <DialogTitle>Termenul abonamentului — {org.name}</DialogTitle>
+                        <DialogDescription>
+                          Data de expirare se calculează automat din momentul salvării.
+                        </DialogDescription>
+                      </DialogHeader>
+                      <SubscriptionPicker
+                        term={org.subscriptionTerm}
+                        saving={saveSubscription.isPending}
+                        onSave={(term) => saveSubscription.mutate({ id: org.id, term })}
+                      />
+                    </DialogContent>
+                  </Dialog>
 
                   {isOpen ? (
                     <div className="border-t border-border bg-muted/30 px-4 py-3">
