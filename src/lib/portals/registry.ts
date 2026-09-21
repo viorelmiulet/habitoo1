@@ -52,6 +52,8 @@ export type PortalConfigField = {
   /** Valoare secretă: se trimite doar server-side, nu se afișează niciodată. */
   secret?: boolean;
   optional?: boolean;
+  /** Validare suplimentară de format, aplicată în UI și server-side. */
+  validate?: "email";
   /** Unde se persistă: identificatorul contului, credențialul criptat sau setările. */
   target: "external_account_id" | "credentials" | "settings";
 };
@@ -443,13 +445,36 @@ export const PORTALS: PortalDefinition[] = [
   {
     id: "romimo",
     display_name: "Romimo.ro",
-    description: "Integrare de publicare anunțuri. Necesită acord și documentație de la portal.",
+    description:
+      "Habitoo trimite direct anunțul (publicare, actualizare, retragere) cu ApiKey-ul agenției. Anunțurile publicate apar pe Romimo.ro și Publi24.ro.",
     logo: "RI",
-    status: "coming_soon",
-    directions: [],
-    authentication: [],
-    capabilities: [],
-    configuration_schema: { fields: [] },
+    status: "available",
+    directions: ["habitoo_to_portal"],
+    authentication: ["portal_api_key"],
+    capabilities: [
+      "test_connection",
+      "publish_listing",
+      "update_listing",
+      "withdraw_listing",
+    ],
+    configuration_schema: {
+      fields: [
+        {
+          key: "api_key",
+          label: "ApiKey Romimo",
+          help: "ApiKey-ul primit de la Romimo pentru contul agenției. Se salvează criptat și nu se mai afișează.",
+          secret: true,
+          target: "credentials",
+        },
+        {
+          key: "account_email",
+          label: "Email cont Romimo",
+          help: "Emailul contului Romimo al agenției (trimis ca user.email în API). Contul trebuie să aibă pachet Romimo activ.",
+          validate: "email",
+          target: "external_account_id",
+        },
+      ],
+    },
     website: "https://www.romimo.ro",
   },
 ];
@@ -464,7 +489,7 @@ export type PortalGroup = { primary: PortalId; covers: PortalId[]; label: string
 
 export const PORTAL_GROUPS: PortalGroup[] = [
   { primary: "storia", covers: ["olx"], label: "Storia.ro + OLX.ro" },
-  { primary: "publi24", covers: ["romimo"], label: "Publi24.ro + Romimo.ro" },
+  { primary: "romimo", covers: ["publi24"], label: "Publi24.ro + Romimo.ro" },
 ];
 
 const PORTAL_COVERED_BY = new Map<PortalId, PortalId>(
