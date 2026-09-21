@@ -49,7 +49,6 @@ import {
 } from "@/lib/plans";
 
 import {
-  SUBSCRIPTION_TERMS,
   SUBSCRIPTION_TERM_LABELS,
   subscriptionState,
   subscriptionTermLabel,
