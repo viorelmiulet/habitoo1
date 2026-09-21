@@ -52,6 +52,8 @@ export type PortalConfigField = {
   /** Valoare secretă: se trimite doar server-side, nu se afișează niciodată. */
   secret?: boolean;
   optional?: boolean;
+  /** Validare suplimentară de format, aplicată în UI și server-side. */
+  validate?: "email";
   /** Unde se persistă: identificatorul contului, credențialul criptat sau setările. */
   target: "external_account_id" | "credentials" | "settings";
 };
