@@ -489,7 +489,7 @@ export type PortalGroup = { primary: PortalId; covers: PortalId[]; label: string
 
 export const PORTAL_GROUPS: PortalGroup[] = [
   { primary: "storia", covers: ["olx"], label: "Storia.ro + OLX.ro" },
-  { primary: "publi24", covers: ["romimo"], label: "Publi24.ro + Romimo.ro" },
+  { primary: "romimo", covers: ["publi24"], label: "Publi24.ro + Romimo.ro" },
 ];
 
 const PORTAL_COVERED_BY = new Map<PortalId, PortalId>(
