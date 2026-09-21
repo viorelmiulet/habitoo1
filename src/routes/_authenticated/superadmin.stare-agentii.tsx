@@ -122,13 +122,38 @@ function SubscriptionCell({ org }: { org: AgencyOverviewRow }) {
 }
 
 function AgencyOverviewPage() {
+  const queryClient = useQueryClient();
   const fetchOverview = useServerFn(getAgencyOverview);
   const [q, setQ] = useState("");
   const [expanded, setExpanded] = useState<string | null>(null);
+  // Agenția pentru care este deschis dialogul de termen al abonamentului.
+  const [subEditFor, setSubEditFor] = useState<string | null>(null);
 
   const { data, isLoading } = useQuery({
     queryKey: ["superadmin", "agency-overview"],
     queryFn: () => fetchOverview({}),
+  });
+
+  // Termenul abonamentului: același RPC superadmin-only ca în pagina „Agenții”.
+  const saveSubscription = useMutation({
+    mutationFn: async ({ id, term }: { id: string; term: SubscriptionTerm | null }) => {
+      const { error } = await supabase.rpc("set_organization_subscription", {
+        _org: id,
+        _term: term as string,
+      });
+      if (error) throw error;
+    },
+    onSuccess: (_r, vars) => {
+      queryClient.invalidateQueries({ queryKey: ["superadmin", "agency-overview"] });
+      queryClient.invalidateQueries({ queryKey: ["superadmin"] });
+      setSubEditFor(null);
+      toast.success(
+        vars.term
+          ? `Termenul abonamentului a fost setat la ${SUBSCRIPTION_TERM_LABELS[vars.term]}.`
+          : "Agenția rămâne fără termen (acces nelimitat).",
+      );
+    },
+    onError: (e: Error) => toastError(e),
   });
 
   const rows = (data?.agencies ?? []).filter((o) =>
