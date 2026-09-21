@@ -48,7 +48,12 @@ export function SubscriptionPicker({
           ))}
         </SelectContent>
       </Select>
-      <Button size="sm" variant="outline" disabled={!dirty || saving} onClick={() => onSave(asTerm)}>
+      <Button
+        size="sm"
+        variant="outline"
+        disabled={!dirty || saving}
+        onClick={() => onSave(asTerm)}
+      >
         Salvează
       </Button>
       {asTerm && !dirty ? (

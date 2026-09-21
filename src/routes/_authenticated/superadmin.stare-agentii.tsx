@@ -113,7 +113,8 @@ function SubscriptionCell({ org }: { org: AgencyOverviewRow }) {
       <p className="text-sm">{subscriptionTermLabel(org.subscriptionTerm)}</p>
       <p className="text-xs text-muted-foreground">
         {org.isTrial ? "Perioadă gratuită · " : ""}
-        {state.kind === "active" && `expiră ${formatDate(state.expiresAt)} (${state.daysLeft} zile)`}
+        {state.kind === "active" &&
+          `expiră ${formatDate(state.expiresAt)} (${state.daysLeft} zile)`}
         {state.kind === "grace" && `în grație, ${state.daysLeft} zile rămase`}
         {state.kind === "expired" && `expirat la ${formatDate(state.expiresAt)}`}
       </p>
@@ -219,9 +220,7 @@ function AgencyOverviewPage() {
                     </div>
 
                     <div className="text-sm">
-                      <p className="font-medium">
-                        Plan {PLAN_LABELS[normalizePlan(org.plan)]}
-                      </p>
+                      <p className="font-medium">Plan {PLAN_LABELS[normalizePlan(org.plan)]}</p>
                       <p className="flex items-center gap-1 text-xs text-muted-foreground">
                         <Users className="size-3" aria-hidden />
                         {limit === null
@@ -287,7 +286,10 @@ function AgencyOverviewPage() {
                       ) : (
                         <ol className="space-y-2.5">
                           {history.map((h) => (
-                            <li key={h.id} className="flex flex-wrap items-baseline gap-x-3 gap-y-0.5 text-sm">
+                            <li
+                              key={h.id}
+                              className="flex flex-wrap items-baseline gap-x-3 gap-y-0.5 text-sm"
+                            >
                               <span className="shrink-0 text-xs text-muted-foreground tabular-nums">
                                 {formatDateTime(h.createdAt)}
                               </span>
