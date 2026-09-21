@@ -309,6 +309,13 @@ export const PORTAL_REQUIREMENTS: Record<string, PortalRequirementSpec> = {
     ],
     allowed: COMMON_ALLOWED,
   },
+  // Romimo: set minim, fără limite inventate. Lungimile de text, moneda și
+  // numărul de imagini se completează în pasul adaptorului, exact din
+  // documentația oficială Romimo API v2.
+  romimo: {
+    required: [RULE.transaction(), RULE.price(), RULE.propertyType(), RULE.location()],
+    allowed: COMMON_ALLOWED,
+  },
 };
 
 export type PortalRequirementReport = {
