@@ -443,13 +443,36 @@ export const PORTALS: PortalDefinition[] = [
   {
     id: "romimo",
     display_name: "Romimo.ro",
-    description: "Integrare de publicare anunțuri. Necesită acord și documentație de la portal.",
+    description:
+      "Habitoo trimite direct anunțul (publicare, actualizare, retragere) cu ApiKey-ul agenției. Anunțurile publicate apar pe Romimo.ro și Publi24.ro.",
     logo: "RI",
-    status: "coming_soon",
-    directions: [],
-    authentication: [],
-    capabilities: [],
-    configuration_schema: { fields: [] },
+    status: "available",
+    directions: ["habitoo_to_portal"],
+    authentication: ["portal_api_key"],
+    capabilities: [
+      "test_connection",
+      "publish_listing",
+      "update_listing",
+      "withdraw_listing",
+    ],
+    configuration_schema: {
+      fields: [
+        {
+          key: "api_key",
+          label: "ApiKey Romimo",
+          help: "ApiKey-ul primit de la Romimo pentru contul agenției. Se salvează criptat și nu se mai afișează.",
+          secret: true,
+          target: "credentials",
+        },
+        {
+          key: "account_email",
+          label: "Email cont Romimo",
+          help: "Emailul contului Romimo al agenției (trimis ca user.email în API). Contul trebuie să aibă pachet Romimo activ.",
+          validate: "email",
+          target: "external_account_id",
+        },
+      ],
+    },
     website: "https://www.romimo.ro",
   },
 ];
