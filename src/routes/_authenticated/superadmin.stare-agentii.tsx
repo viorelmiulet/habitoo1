@@ -1,9 +1,21 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
-import { Building2, ChevronDown, History, Search, Users } from "lucide-react";
+import { Building2, CalendarClock, ChevronDown, History, Search, Users } from "lucide-react";
 
+import { toast } from "@/components/ui/sonner";
+import { toastError } from "@/lib/errors";
+import { supabase } from "@/integrations/supabase/client";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { SubscriptionPicker } from "@/components/superadmin/SubscriptionPicker";
 import { PageHeader } from "@/components/app/PageHeader";
 import { ListSkeleton } from "@/components/app/LoadingState";
 import { StatusBadge } from "@/components/app/StatusBadge";
@@ -12,7 +24,12 @@ import { Input } from "@/components/ui/input";
 import { appHead } from "@/components/app/app-head";
 import { formatDate, formatDateTime } from "@/lib/format";
 import { PLAN_LABELS, normalizePlan, planAgentLimit, seatLimitLabel } from "@/lib/plans";
-import { subscriptionState, subscriptionTermLabel } from "@/lib/subscription";
+import {
+  SUBSCRIPTION_TERM_LABELS,
+  subscriptionState,
+  subscriptionTermLabel,
+  type SubscriptionTerm,
+} from "@/lib/subscription";
 import {
   getAgencyOverview,
   type AgencyHistoryEntry,
