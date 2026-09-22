@@ -476,11 +476,10 @@ function AgenciesPage() {
                         {o.max_properties} proprietăți
                       </span>
                       <span className="tabular-nums">
-                        {subscriptionTermLabel(o.subscription_term)}
-                        {o.subscription_expires_at
-                          ? ` · expiră ${formatDate(o.subscription_expires_at)}`
-                          : ""}
+                        {subscriptionTermLabel(o.subscription_term)} ·{" "}
+                        {subscriptionSummary(o).label}
                       </span>
+
                     </div>
                   </div>
 
