@@ -517,6 +517,40 @@ export function portalDisplayName(id: PortalId): string {
   return getPortalDefinition(id)?.display_name ?? id;
 }
 
+/**
+ * Validarea formatelor declarate în `configuration_schema.fields` (ex. email).
+ * Pură și partajată: aceeași verificare rulează în formular și la salvare, deci
+ * orice portal nou care declară `validate` o primește automat.
+ */
+export function validatePortalConfigValues(
+  portalId: PortalId,
+  values: {
+    externalAccountId?: string | null;
+    credential?: string | null;
+    endpointUrl?: string | null;
+  },
+): string | null {
+  const definition = getPortalDefinition(portalId);
+  if (!definition) return null;
+  const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  for (const field of definition.configuration_schema.fields) {
+    if (field.validate !== "email") continue;
+    const raw =
+      field.target === "external_account_id"
+        ? values.externalAccountId
+        : field.target === "credentials"
+          ? values.credential
+          : values.endpointUrl;
+    const value = (raw ?? "").trim();
+    // Câmpul necompletat nu e validat aici: lipsa lui e semnalată la conectare.
+    if (value.length === 0) continue;
+    if (!emailPattern.test(value)) {
+      return `„${field.label}" trebuie să fie o adresă de email validă.`;
+    }
+  }
+  return null;
+}
+
 /** Portalurile ale căror logo-uri se afișează pe rând (perechea întreagă). */
 export function portalLogoIds(id: PortalId): PortalId[] {
   const group = portalGroupFor(id);
