@@ -2,13 +2,21 @@
  * Abonamentul agenției: termen fix (30 de zile / 12 luni) și fereastră de grație
  * de 5 zile după expirare, în care contul rămâne funcțional.
  */
-export const SUBSCRIPTION_TERMS = ["30d", "12m"] as const;
+export const SUBSCRIPTION_TERMS = ["trial_14d", "trial_30d", "30d", "12m"] as const;
 export type SubscriptionTerm = (typeof SUBSCRIPTION_TERMS)[number];
 
 export const SUBSCRIPTION_TERM_LABELS: Record<SubscriptionTerm, string> = {
+  trial_14d: "Trial 14 zile",
+  trial_30d: "Trial 30 zile",
   "30d": "30 de zile",
   "12m": "12 luni",
 };
+
+/** Termenele care reprezintă o perioadă gratuită, nu un abonament plătit. */
+export function isTrialTerm(term?: string | null): boolean {
+  return term === "trial_14d" || term === "trial_30d";
+}
+
 
 /** Numărul de zile de grație după expirarea termenului. */
 export const GRACE_DAYS = 5;
