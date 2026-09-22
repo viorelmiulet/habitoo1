@@ -30,7 +30,7 @@ export function TrialBanner({ user }: { user: CurrentUser }) {
 
   return (
     <div
-      role="status"
+      role="alert"
       className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 border-b border-info/30 bg-info/10 px-4 py-2 text-center text-sm text-foreground"
     >
       <Sparkles className="size-4 shrink-0" />
@@ -38,7 +38,7 @@ export function TrialBanner({ user }: { user: CurrentUser }) {
       <span className="opacity-90">se încheie pe {formatDate(state.expiresAt)}</span>
       {state.canActivate ? (
         <Link
-          to="/app/support"
+          to="/preturi"
           className="rounded-md bg-info px-2.5 py-1 text-xs font-semibold text-info-foreground underline-offset-2 hover:underline"
         >
           Activează acum
