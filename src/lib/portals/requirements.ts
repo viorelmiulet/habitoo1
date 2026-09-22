@@ -351,8 +351,28 @@ export const PORTAL_REQUIREMENTS: Record<string, PortalRequirementSpec> = {
   // Romimo: set minim, fără limite inventate. Lungimile de text, moneda și
   // numărul de imagini se completează în pasul adaptorului, exact din
   // documentația oficială Romimo API v2.
+  /**
+   * Romimo: exact ce cere mapper-ul (documentația oficială API v2), ca agentul
+   * să vadă lipsurile ÎNAINTE de a apăsa „Publică".
+   */
   romimo: {
-    required: [RULE.transaction(), RULE.price(), RULE.propertyType(), RULE.location()],
+    required: [
+      RULE.title(ROMIMO_TITLE_MIN, ROMIMO_TITLE_MAX),
+      RULE.description(ROMIMO_TEXT_MIN),
+      RULE.transaction(),
+      RULE.price(),
+      RULE.propertyType(),
+      RULE.location(),
+      RULE.agentName(),
+      RULE.agentEmail(),
+      RULE.phone(),
+      RULE.surface(),
+      RULE.rooms(),
+      RULE.buildYear(),
+      RULE.layoutIn(ROMIMO_LAYOUTS),
+      RULE.houseSpace(),
+      RULE.houseHeating(),
+    ],
     allowed: COMMON_ALLOWED,
   },
 };
