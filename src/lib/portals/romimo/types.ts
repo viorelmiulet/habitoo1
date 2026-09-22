@@ -46,7 +46,8 @@ export type RomimoAd = {
   promoted?: boolean | null;
   /** Identificatorul nostru stabil al anunțului, cheia de upsert la Romimo. */
   externalid: string;
-  category?: string | null;
+  /** Codul numeric de categorie Romimo (ex. 338 = apartament 2 camere, vânzare). */
+  category?: number | null;
   price?: number | null;
   currency?: string | null;
   title?: string | null;
