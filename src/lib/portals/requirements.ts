@@ -16,6 +16,12 @@ import { LACHEIE_MIN_DESCRIPTION, LACHEIE_MIN_TITLE } from "./lacheie/mapper";
 import { IMOSPOT_MIN_DESCRIPTION, IMOSPOT_MIN_TITLE } from "./imospot/mapper";
 import { OI_MIN_DESCRIPTION, OI_MIN_TITLE } from "./oferteimobiliare/mapper";
 import {
+  ROMIMO_LAYOUTS,
+  ROMIMO_TEXT_MIN,
+  ROMIMO_TITLE_MAX,
+  ROMIMO_TITLE_MIN,
+} from "./romimo/mapper";
+import {
   STORIA_MAX_TITLE,
   STORIA_MIN_DESCRIPTION,
   STORIA_MIN_TITLE,
