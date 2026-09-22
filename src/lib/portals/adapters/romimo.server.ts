@@ -109,16 +109,17 @@ export function createRomimoAdapter(buildArticle: RomimoArticleBuilder): PortalA
     }
 
     const dto: SaveArticleDto = { ...built.dto, user: { email: creds.email } };
-    if (!ctx.allowLiveRequests) return dryRun(dto.externalid, action);
+    const externalId = dto.ad.externalid;
+    if (!ctx.allowLiveRequests) return dryRun(externalId, action);
 
     const result = await withRomimoToken(creds.apiKey, (token) => saveArticle(token, dto));
     if (!result.ok) return toPortalFail(result);
     return {
       ok: true,
       data: {
-        externalId: dto.externalid,
+        externalId,
         live: true,
-        detail: `romimo_${action} external_id=${dto.externalid}`,
+        detail: `romimo_${action} external_id=${externalId}`,
         message:
           action === "publish"
             ? "Anunțul a fost trimis la Romimo. Apare pe Romimo.ro și Publi24.ro."

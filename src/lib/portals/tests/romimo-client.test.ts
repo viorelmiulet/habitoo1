@@ -58,8 +58,7 @@ function ctx(overrides: Partial<PortalContext> = {}): PortalContext {
 
 const DTO: SaveArticleDto = {
   user: { email: "placeholder@example.ro" },
-  externalid: "HBT-1",
-  title: "Apartament 2 camere",
+  ad: { externalid: "HBT-1", title: "Apartament 2 camere" },
 };
 
 beforeEach(() => {
