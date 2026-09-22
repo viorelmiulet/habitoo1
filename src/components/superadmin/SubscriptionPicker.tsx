@@ -20,6 +20,16 @@ import {
   type SubscriptionTerm,
 } from "@/lib/subscription";
 
+/**
+ * Valoarea preselectată în casetă: orice perioadă validă (inclusiv cele
+ * gratuite) se recunoaște; „none” doar când agenția chiar nu are termen.
+ */
+export function subscriptionPickerValue(term: string | null): SubscriptionTerm | "none" {
+  return SUBSCRIPTION_TERMS.includes(term as SubscriptionTerm)
+    ? (term as SubscriptionTerm)
+    : "none";
+}
+
 export function SubscriptionPicker({
   term,
   onSave,

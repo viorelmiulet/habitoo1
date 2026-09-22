@@ -1,18 +1,20 @@
-import { render, screen } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
 
-import { SubscriptionPicker } from "../SubscriptionPicker";
+import { subscriptionPickerValue } from "../SubscriptionPicker";
 
-describe("SubscriptionPicker", () => {
-  it("preselectează perioada gratuită de 14 zile, nu „Fără termen”", () => {
-    render(<SubscriptionPicker term="trial_14d" saving={false} onSave={vi.fn()} />);
-    expect(screen.getByRole("combobox").textContent).toContain("Trial 14 zile");
-    // Fără modificare, butonul de salvare rămâne inactiv.
-    expect(screen.getByRole("button", { name: "Salvează" })).toBeDisabled();
+describe("caseta de perioadă a abonamentului", () => {
+  it("preselectează perioadele gratuite, nu „Fără termen”", () => {
+    expect(subscriptionPickerValue("trial_14d")).toBe("trial_14d");
+    expect(subscriptionPickerValue("trial_30d")).toBe("trial_30d");
   });
 
-  it("afișează „Fără termen” doar când agenția nu are termen", () => {
-    render(<SubscriptionPicker term={null} saving={false} onSave={vi.fn()} />);
-    expect(screen.getByRole("combobox").textContent).toContain("Fără termen");
+  it("păstrează perioadele plătite", () => {
+    expect(subscriptionPickerValue("30d")).toBe("30d");
+    expect(subscriptionPickerValue("12m")).toBe("12m");
+  });
+
+  it("cade pe „Fără termen” doar fără termen sau la valori necunoscute", () => {
+    expect(subscriptionPickerValue(null)).toBe("none");
+    expect(subscriptionPickerValue("altceva")).toBe("none");
   });
 });
