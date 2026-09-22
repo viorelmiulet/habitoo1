@@ -57,6 +57,7 @@ import {
   PORTAL_CONNECTION_LABEL,
   PORTAL_DIRECTION_LABEL,
   portalDisplayName,
+  validatePortalConfigValues,
   type PortalAuthenticationMode,
   type PortalDirection,
 } from "@/lib/portals/registry";
@@ -166,16 +167,18 @@ export function PortalsCard({ organizationId }: { organizationId: string }) {
   };
 
   const save = useMutation({
-    mutationFn: (input: { portalId: string }) =>
-      runSave({
-        data: {
-          organizationId,
-          portalId: input.portalId,
-          externalAccountId: accountId[input.portalId]?.trim(),
-          credential: credential[input.portalId]?.trim() || undefined,
-          endpointUrl: endpoint[input.portalId]?.trim(),
-        },
-      }),
+    mutationFn: (input: { portalId: string }) => {
+      const values = {
+        externalAccountId: accountId[input.portalId]?.trim(),
+        credential: credential[input.portalId]?.trim() || undefined,
+        endpointUrl: endpoint[input.portalId]?.trim(),
+      };
+      // Formatele cerute de portal (ex. email) se semnalează înainte de salvare.
+      const formatError = validatePortalConfigValues(input.portalId, values);
+      if (formatError) throw new Error(formatError);
+      return runSave({ data: { organizationId, portalId: input.portalId, ...values } });
+    },
+
 
     onSuccess: (_r, input) => {
       setCredential((prev) => ({ ...prev, [input.portalId]: "" }));

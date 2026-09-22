@@ -19,6 +19,7 @@ import {
   derivePortalConnectionStatus,
   getPortalDefinition,
   portalPublicFeedUrl,
+  validatePortalConfigValues,
   type PortalConnectionStatus,
   type PortalDefinition,
 } from "@/lib/portals/registry";
@@ -700,6 +701,15 @@ export const savePortalConnection = createServerFn({ method: "POST" })
     if (!definition) throw new Error("Portal necunoscut.");
     if (definition.status !== "available")
       throw new Error("Integrarea cu acest portal nu este încă disponibilă.");
+    // Formatele declarate de portal (ex. email) se verifică și server-side.
+    const formatError = validatePortalConfigValues(definition.id, {
+      ...(data.externalAccountId !== undefined
+        ? { externalAccountId: data.externalAccountId }
+        : {}),
+      ...(data.credential !== undefined ? { credential: data.credential } : {}),
+      ...(data.endpointUrl !== undefined ? { endpointUrl: data.endpointUrl } : {}),
+    });
+    if (formatError) throw new Error(formatError);
 
     const admin = await loadAdmin();
     const { encryptPortalCredential } = await import("@/lib/portals/crypto.server");

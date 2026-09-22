@@ -30,6 +30,9 @@ const complete: PortalRequirementSubject = {
   buildYear: 2020,
   usableSurface: 72,
   landSurface: null,
+  builtSurface: 78,
+  layout: "Decomandat",
+  heatingSystems: ["Centrala proprie"],
   agentName: "MVA Perfect Business",
   agentEmail: "mvaperfectbusiness@gmail.com",
   contactPhone: "0700000001",
@@ -118,5 +121,52 @@ describe("validare pre-publicare portaluri", () => {
     const message = requirementBlockMessage("Imobiliare.ro", report);
     expect(message).toContain("Imobiliare.ro");
     expect(message).toContain("Telefon și WhatsApp");
+  });
+
+  it("Romimo cere exact ce cere mapper-ul: titlu, descriere, suprafață, camere, an", () => {
+    const report = validatePortalRequirements("romimo", {
+      ...complete,
+      title: "abc",
+      description: "scurt",
+      usableSurface: null,
+      rooms: null,
+      buildYear: null,
+    });
+    expect(report.missing.map((m) => m.key).sort()).toEqual([
+      "build_year",
+      "description",
+      "rooms",
+      "surface",
+      "title",
+    ]);
+  });
+
+  it("Romimo respinge o compartimentare neacceptată, dar acceptă lipsa ei", () => {
+    expect(
+      validatePortalRequirements("romimo", { ...complete, layout: "Open space" }).missing.map(
+        (m) => m.key,
+      ),
+    ).toEqual(["layout"]);
+    expect(validatePortalRequirements("romimo", { ...complete, layout: null }).ok).toBe(true);
+  });
+
+  it("Romimo cere suprafață și încălzire doar pentru case", () => {
+    const house = {
+      ...complete,
+      propertyType: "house",
+      builtSurface: null,
+      landSurface: null,
+      usableSurface: null,
+      heatingSystems: [],
+    };
+    expect(validatePortalRequirements("romimo", house).missing.map((m) => m.key).sort()).toEqual([
+      "house_heating",
+      "house_space",
+      "surface",
+    ]);
+    const apartment = { ...house, propertyType: "apartment" };
+    expect(
+      validatePortalRequirements("romimo", apartment).missing.map((m) => m.key).sort(),
+    ).toEqual(["surface"]);
   });
 });
