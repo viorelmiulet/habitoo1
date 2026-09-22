@@ -28,9 +28,11 @@ export type SubscriptionState =
   | { kind: "expired"; expiresAt: string };
 
 export function subscriptionTermLabel(term?: string | null): string {
-  if (term === "30d" || term === "12m") return SUBSCRIPTION_TERM_LABELS[term];
-  return "Fără termen";
+  return SUBSCRIPTION_TERMS.includes(term as SubscriptionTerm)
+    ? SUBSCRIPTION_TERM_LABELS[term as SubscriptionTerm]
+    : "Fără termen";
 }
+
 
 const DAY = 24 * 60 * 60 * 1000;
 
