@@ -145,6 +145,58 @@ function categoryFor(
   return null;
 }
 
+function numeric(value: number | null | undefined): number | null {
+  return typeof value === "number" && Number.isFinite(value) ? value : null;
+}
+
+/** Text fără diacritice, minuscule — folosit doar la potrivirea încălzirii. */
+function fold(value: string): string {
+  return value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[șş]/g, "s")
+    .replace(/[țţ]/g, "t")
+    .toLowerCase()
+    .trim();
+}
+
+/** `roomno`: textul cerut de Romimo, dedus din numărul de camere. */
+export function romimoRoomNo(rooms: number | null): string | null {
+  const count = numeric(rooms);
+  if (count === null) return null;
+  const rounded = Math.round(count);
+  if (rounded <= 1) return "1 cameră";
+  if (rounded >= 6) return "6 camere sau mai multe";
+  return `${rounded} camere`;
+}
+
+/** `storey`: calculat exclusiv din `floor` (numeric); `floor_label` e ignorat. */
+export function romimoStorey(floor: number | null): string | null {
+  const value = numeric(floor);
+  if (value === null) return null;
+  const rounded = Math.round(value);
+  if (rounded < 0) return "Demisol";
+  if (rounded === 0) return "Parter";
+  if (rounded <= 20) return `Etaj ${rounded}`;
+  return "Ultimul etaj";
+}
+
+/** `heating`: primul element potrivit din `heating_systems`, altfel „Altele". */
+export function romimoHeating(systems: string[] | null): string | null {
+  const values = (systems ?? []).map((item) => text(item)).filter((item): item is string => !!item);
+  if (values.length === 0) return null;
+  for (const value of values) {
+    const folded = fold(value);
+    const match = ROMIMO_HEATING.find((option) => {
+      const optionFolded = fold(option);
+      return folded.includes(optionFolded) || optionFolded.includes(folded);
+    });
+    if (match) return match;
+  }
+  return "Altele";
+}
+
+
 function addMonths(date: Date, months: number): Date {
   const copy = new Date(date.getTime());
   copy.setMonth(copy.getMonth() + months);
