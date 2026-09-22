@@ -14,6 +14,7 @@ import imoveLogo from "@/assets/portals/imove.png";
 import lacheieLogo from "@/assets/portals/lacheie.png";
 import oferteImobiliareLogo from "@/assets/portals/oferteimobiliare.png";
 import olxLogo from "@/assets/portals/olx.png";
+import primulanuntLogo from "@/assets/portals/primulanunt.png";
 import publi24Logo from "@/assets/portals/publi24.png";
 import properstarLogo from "@/assets/portals/properstar.png.asset.json";
 import romimoLogo from "@/assets/portals/romimo.png";
@@ -34,6 +35,7 @@ const PORTAL_LOGOS: Record<string, string> = {
   publi24: publi24Logo,
   properstar: properstarLogo.url,
   romimo: romimoLogo,
+  primulanunt: primulanuntLogo,
 };
 
 /** Există logo local pentru portalul dat? */
