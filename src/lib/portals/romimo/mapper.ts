@@ -4,11 +4,9 @@
  * Scris de la zero, strict pe structura Swagger Romimo API v2. Funcții pure,
  * fără rețea și fără DB: generatorul de referință CRM (`next_property_reference`)
  * este injectat prin context, ca mapperul să rămână testabil.
- *
- * În acest pas NU se construiesc `properties[]` și `pictures[]` — vin într-un
- * pas ulterior.
  */
-import type { SaveArticleDto } from "./types";
+import type { RomimoPicture, RomimoProperty, SaveArticleDto } from "./types";
+
 
 export const ROMIMO_TITLE_MIN = 5;
 export const ROMIMO_TITLE_MAX = 100;
