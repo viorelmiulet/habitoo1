@@ -23,6 +23,42 @@ const CATEGORY_STUDIO_RENT = 318;
 const CATEGORY_HOUSE_SALE = 347;
 const CATEGORY_HOUSE_RENT = 44;
 
+const APARTMENT_CATEGORIES = new Set<number>([
+  337, 338, 339, 340, 341, 342, 343, 312, 313, 314, 315, 316, 317, 318,
+]);
+const HOUSE_CATEGORIES = new Set<number>([CATEGORY_HOUSE_SALE, CATEGORY_HOUSE_RENT]);
+
+/** Compartimentările acceptate de Romimo (`resfeatures`), exact ca text. */
+export const ROMIMO_LAYOUTS = [
+  "Decomandat",
+  "Semidecomandat",
+  "Nedecomandat",
+  "Circular",
+  "Vagon",
+] as const;
+
+/** Tipurile de încălzire acceptate de Romimo (`heating`), plus „Altele". */
+export const ROMIMO_HEATING = [
+  "Gaz",
+  "Lemn",
+  "Centrala proprie",
+  "Cazan",
+  "Convector",
+  "Centrala bloc",
+  "Incalzire centralizata",
+  "Panouri solare",
+] as const;
+
+/** Numărul maxim de poze trimise într-un anunț Romimo. */
+export const ROMIMO_MAX_PICTURES = 20;
+
+export type RomimoMapperImage = {
+  id: string;
+  includeInPublish: boolean;
+  isConfidential: boolean;
+  rank: number | null;
+};
+
 export type RomimoMapperProperty = {
   id: string;
   reference: string | null;
@@ -41,6 +77,17 @@ export type RomimoMapperProperty = {
   lat: number | null;
   lng: number | null;
   assignedTo: string | null;
+  /** Caracteristici fizice folosite în `properties[]`. */
+  usableSurface: number | null;
+  builtSurface: number | null;
+  landSurface: number | null;
+  surface: number | null;
+  floor: number | null;
+  layout: string | null;
+  buildYear: number | null;
+  heatingSystems: string[] | null;
+  /** Pozele proprietății, în ordinea existentă de afișare. */
+  images: RomimoMapperImage[];
 };
 
 export type RomimoMapperContext = {
@@ -51,9 +98,12 @@ export type RomimoMapperContext = {
    * când proprietatea nu are încă `reference`.
    */
   generateReference?: () => Promise<string>;
+  /** Domeniul public al platformei, fără slash final (ex. `https://crm.habitoo.ro`). */
+  publicBaseUrl: string;
   /** Injectabil în teste; implicit `new Date()`. */
   now?: Date;
 };
+
 
 export type RomimoMapperResult =
   | { ok: true; dto: Partial<SaveArticleDto>; warnings: string[] }
