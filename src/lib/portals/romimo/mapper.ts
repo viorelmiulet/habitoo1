@@ -4,11 +4,9 @@
  * Scris de la zero, strict pe structura Swagger Romimo API v2. Funcții pure,
  * fără rețea și fără DB: generatorul de referință CRM (`next_property_reference`)
  * este injectat prin context, ca mapperul să rămână testabil.
- *
- * În acest pas NU se construiesc `properties[]` și `pictures[]` — vin într-un
- * pas ulterior.
  */
-import type { SaveArticleDto } from "./types";
+import type { RomimoPicture, RomimoProperty, SaveArticleDto } from "./types";
+
 
 export const ROMIMO_TITLE_MIN = 5;
 export const ROMIMO_TITLE_MAX = 100;
@@ -24,6 +22,42 @@ const CATEGORY_STUDIO_SALE = 343;
 const CATEGORY_STUDIO_RENT = 318;
 const CATEGORY_HOUSE_SALE = 347;
 const CATEGORY_HOUSE_RENT = 44;
+
+const APARTMENT_CATEGORIES = new Set<number>([
+  337, 338, 339, 340, 341, 342, 343, 312, 313, 314, 315, 316, 317, 318,
+]);
+const HOUSE_CATEGORIES = new Set<number>([CATEGORY_HOUSE_SALE, CATEGORY_HOUSE_RENT]);
+
+/** Compartimentările acceptate de Romimo (`resfeatures`), exact ca text. */
+export const ROMIMO_LAYOUTS = [
+  "Decomandat",
+  "Semidecomandat",
+  "Nedecomandat",
+  "Circular",
+  "Vagon",
+] as const;
+
+/** Tipurile de încălzire acceptate de Romimo (`heating`), plus „Altele". */
+export const ROMIMO_HEATING = [
+  "Gaz",
+  "Lemn",
+  "Centrala proprie",
+  "Cazan",
+  "Convector",
+  "Centrala bloc",
+  "Incalzire centralizata",
+  "Panouri solare",
+] as const;
+
+/** Numărul maxim de poze trimise într-un anunț Romimo. */
+export const ROMIMO_MAX_PICTURES = 20;
+
+export type RomimoMapperImage = {
+  id: string;
+  includeInPublish: boolean;
+  isConfidential: boolean;
+  rank: number | null;
+};
 
 export type RomimoMapperProperty = {
   id: string;
@@ -43,6 +77,17 @@ export type RomimoMapperProperty = {
   lat: number | null;
   lng: number | null;
   assignedTo: string | null;
+  /** Caracteristici fizice folosite în `properties[]`. */
+  usableSurface: number | null;
+  builtSurface: number | null;
+  landSurface: number | null;
+  surface: number | null;
+  floor: number | null;
+  layout: string | null;
+  buildYear: number | null;
+  heatingSystems: string[] | null;
+  /** Pozele proprietății, în ordinea existentă de afișare. */
+  images: RomimoMapperImage[];
 };
 
 export type RomimoMapperContext = {
@@ -53,9 +98,12 @@ export type RomimoMapperContext = {
    * când proprietatea nu are încă `reference`.
    */
   generateReference?: () => Promise<string>;
+  /** Domeniul public al platformei, fără slash final (ex. `https://crm.habitoo.ro`). */
+  publicBaseUrl: string;
   /** Injectabil în teste; implicit `new Date()`. */
   now?: Date;
 };
+
 
 export type RomimoMapperResult =
   | { ok: true; dto: Partial<SaveArticleDto>; warnings: string[] }
@@ -96,6 +144,58 @@ function categoryFor(
   if (type === "house" && kind === "rent") return CATEGORY_HOUSE_RENT;
   return null;
 }
+
+function numeric(value: number | null | undefined): number | null {
+  return typeof value === "number" && Number.isFinite(value) ? value : null;
+}
+
+/** Text fără diacritice, minuscule — folosit doar la potrivirea încălzirii. */
+function fold(value: string): string {
+  return value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[șş]/g, "s")
+    .replace(/[țţ]/g, "t")
+    .toLowerCase()
+    .trim();
+}
+
+/** `roomno`: textul cerut de Romimo, dedus din numărul de camere. */
+export function romimoRoomNo(rooms: number | null): string | null {
+  const count = numeric(rooms);
+  if (count === null) return null;
+  const rounded = Math.round(count);
+  if (rounded <= 1) return "1 cameră";
+  if (rounded >= 6) return "6 camere sau mai multe";
+  return `${rounded} camere`;
+}
+
+/** `storey`: calculat exclusiv din `floor` (numeric); `floor_label` e ignorat. */
+export function romimoStorey(floor: number | null): string | null {
+  const value = numeric(floor);
+  if (value === null) return null;
+  const rounded = Math.round(value);
+  if (rounded < 0) return "Demisol";
+  if (rounded === 0) return "Parter";
+  if (rounded <= 20) return `Etaj ${rounded}`;
+  return "Ultimul etaj";
+}
+
+/** `heating`: primul element potrivit din `heating_systems`, altfel „Altele". */
+export function romimoHeating(systems: string[] | null): string | null {
+  const values = (systems ?? []).map((item) => text(item)).filter((item): item is string => !!item);
+  if (values.length === 0) return null;
+  for (const value of values) {
+    const folded = fold(value);
+    const match = ROMIMO_HEATING.find((option) => {
+      const optionFolded = fold(option);
+      return folded.includes(optionFolded) || optionFolded.includes(folded);
+    });
+    if (match) return match;
+  }
+  return "Altele";
+}
+
 
 function addMonths(date: Date, months: number): Date {
   const copy = new Date(date.getTime());
@@ -203,7 +303,86 @@ export async function mapPropertyToRomimo(
     reasons.push("Lipsește telefonul de contact (agent sau agenție).");
   }
 
+  // properties[]: caracteristicile cerute de categoria calculată.
+  const characteristics: RomimoProperty[] = [];
+  if (category !== null) {
+    const usable = numeric(property.usableSurface);
+    if (usable === null) {
+      reasons.push("Lipsește suprafața utilă.");
+    } else {
+      characteristics.push({ key: "livingspace", value: String(usable) });
+    }
+
+    const roomNo = romimoRoomNo(property.rooms);
+    if (!roomNo) {
+      reasons.push("Lipsește numărul de camere.");
+    } else {
+      characteristics.push({ key: "roomno", value: roomNo });
+    }
+
+    const buildYear = numeric(property.buildYear);
+    if (buildYear === null) {
+      reasons.push("Lipsește anul construcției.");
+    } else {
+      characteristics.push({ key: "yearofbuilding", value: String(Math.round(buildYear)) });
+    }
+
+    if (APARTMENT_CATEGORIES.has(category)) {
+      const storey = romimoStorey(property.floor);
+      if (storey) characteristics.push({ key: "storey", value: storey });
+
+      const layout = text(property.layout);
+      if (layout) {
+        const match = ROMIMO_LAYOUTS.find((option) => option === layout);
+        if (!match) {
+          reasons.push(
+            `Compartimentarea „${layout}" nu este acceptată de Romimo (acceptate: ${ROMIMO_LAYOUTS.join(", ")}).`,
+          );
+        } else {
+          characteristics.push({ key: "resfeatures", value: match });
+        }
+      }
+    }
+
+    if (HOUSE_CATEGORIES.has(category)) {
+      const propertySpace =
+        numeric(property.builtSurface) ?? numeric(property.landSurface) ?? numeric(property.surface);
+      if (propertySpace === null) {
+        reasons.push("Lipsește suprafața construită sau a terenului.");
+      } else {
+        characteristics.push({ key: "propertyspace", value: String(propertySpace) });
+      }
+
+      const heating = romimoHeating(property.heatingSystems);
+      if (!heating) {
+        reasons.push("Lipsește tipul de încălzire.");
+      } else {
+        characteristics.push({ key: "heating", value: heating });
+      }
+    }
+  }
+
+  // pictures[]: doar pozele publicabile, în ordinea existentă, maximum 20.
+  const eligible = property.images.filter(
+    (image) => image.includeInPublish && !image.isConfidential,
+  );
+  const base = context.publicBaseUrl.replace(/\/+$/, "");
+  const pictures: RomimoPicture[] = eligible
+    .slice(0, ROMIMO_MAX_PICTURES)
+    .map((image, index) => ({
+      url: `${base}/api/public/sites/v1/media/${image.id}`,
+      rank: index + 1,
+    }));
+  if (pictures.length === 0) {
+    warnings.push("Oferta nu are nicio poză eligibilă pentru publicare.");
+  } else if (eligible.length > ROMIMO_MAX_PICTURES) {
+    warnings.push(
+      `Oferta are ${eligible.length} poze eligibile; Romimo acceptă maximum ${ROMIMO_MAX_PICTURES}, restul nu au fost trimise.`,
+    );
+  }
+
   if (reasons.length > 0) return { ok: false, reasons };
+
 
   const now = context.now ?? new Date();
   const dto: Partial<SaveArticleDto> = {
@@ -235,7 +414,10 @@ export async function mapPropertyToRomimo(
         ? { longitude: property.lng }
         : {}),
     },
+    properties: characteristics,
+    pictures,
   };
+
 
   return { ok: true, dto, warnings };
 }
