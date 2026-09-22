@@ -43,9 +43,11 @@ import {
 import {
   SUBSCRIPTION_TERM_LABELS,
   subscriptionState,
+  subscriptionSummary,
   subscriptionTermLabel,
   type SubscriptionTerm,
 } from "@/lib/subscription";
+
 import { appHead } from "@/components/app/app-head";
 
 export const Route = createFileRoute("/_authenticated/superadmin/agencies")({
@@ -476,11 +478,10 @@ function AgenciesPage() {
                         {o.max_properties} proprietăți
                       </span>
                       <span className="tabular-nums">
-                        {subscriptionTermLabel(o.subscription_term)}
-                        {o.subscription_expires_at
-                          ? ` · expiră ${formatDate(o.subscription_expires_at)}`
-                          : ""}
+                        {subscriptionTermLabel(o.subscription_term)} ·{" "}
+                        {subscriptionSummary(o).label}
                       </span>
+
                     </div>
                   </div>
 

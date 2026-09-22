@@ -26,10 +26,11 @@ import { formatDate, formatDateTime } from "@/lib/format";
 import { PLAN_LABELS, normalizePlan, planAgentLimit, seatLimitLabel } from "@/lib/plans";
 import {
   SUBSCRIPTION_TERM_LABELS,
-  subscriptionState,
+  subscriptionSummary,
   subscriptionTermLabel,
   type SubscriptionTerm,
 } from "@/lib/subscription";
+
 import {
   getAgencyOverview,
   type AgencyHistoryEntry,
@@ -97,30 +98,35 @@ function actionDetails(entry: AgencyHistoryEntry): string | null {
   const v = entry.newValues;
   if (!v) return null;
   const parts: string[] = [];
-  if (typeof v.term === "string") parts.push(`termen ${subscriptionTermLabel(v.term)}`);
-  if (typeof v.expires_at === "string") parts.push(`expiră la ${formatDate(v.expires_at)}`);
+  const term = typeof v.term === "string" ? v.term : v.subscription_term;
+  if (typeof term === "string") parts.push(`termen ${subscriptionTermLabel(term)}`);
+  const expires = typeof v.expires_at === "string" ? v.expires_at : v.subscription_expires_at;
+  if (typeof expires === "string") parts.push(`expiră la ${formatDate(expires)}`);
   if (typeof v.reason === "string" && v.reason) parts.push(`motiv: ${v.reason}`);
   return parts.length > 0 ? parts.join(" · ") : null;
 }
 
+
 function SubscriptionCell({ org }: { org: AgencyOverviewRow }) {
-  if (!org.subscriptionExpiresAt) {
-    return <span className="text-muted-foreground">Fără termen</span>;
-  }
-  const state = subscriptionState({ subscription_expires_at: org.subscriptionExpiresAt });
+  const summary = subscriptionSummary({
+    subscription_expires_at: org.subscriptionExpiresAt,
+    subscription_term: org.subscriptionTerm,
+    is_trial: org.isTrial,
+  });
   return (
     <div className="space-y-0.5">
-      <p className="text-sm">{subscriptionTermLabel(org.subscriptionTerm)}</p>
-      <p className="text-xs text-muted-foreground">
-        {org.isTrial ? "Perioadă gratuită · " : ""}
-        {state.kind === "active" &&
-          `expiră ${formatDate(state.expiresAt)} (${state.daysLeft} zile)`}
-        {state.kind === "grace" && `în grație, ${state.daysLeft} zile rămase`}
-        {state.kind === "expired" && `expirat la ${formatDate(state.expiresAt)}`}
-      </p>
+      {summary.status === "unlimited" ? (
+        <p className="text-sm text-muted-foreground">{summary.label}</p>
+      ) : (
+        <StatusBadge tone={summary.tone}>{summary.label}</StatusBadge>
+      )}
+      {summary.detail ? (
+        <p className="text-xs text-muted-foreground">{summary.detail}</p>
+      ) : null}
     </div>
   );
 }
+
 
 function AgencyOverviewPage() {
   const queryClient = useQueryClient();
