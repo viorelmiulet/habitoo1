@@ -77,7 +77,7 @@ describe("mapPropertyToRomimo", () => {
     if (result.ok) expect(result.dto.ad?.externalid).toBe("HB-1010");
   });
 
-  it("extrage sectorul din „Bucureşti Sectorul 6" tolerant la diacritice", async () => {
+  it("extrage sectorul din „Bucureşti Sectorul 6“, tolerant la diacritice", async () => {
     for (const city of ["Bucureşti Sectorul 6", "Bucuresti sector 5", "București Sectorul 3"]) {
       const result = await mapPropertyToRomimo({ ...baseProperty, city }, baseContext);
       expect(result.ok).toBe(true);
