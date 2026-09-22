@@ -540,6 +540,13 @@
       "when": 1789934902481,
       "tag": "0076_organization_ai_features",
       "breakpoints": true
+    },
+    {
+      "idx": 77,
+      "version": "7",
+      "when": 1790077368853,
+      "tag": "0077_trial_subscription_terms",
+      "breakpoints": true
     }
   ]
 }
