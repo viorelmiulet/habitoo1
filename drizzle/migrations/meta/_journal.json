@@ -547,6 +547,13 @@
       "when": 1790077368853,
       "tag": "0077_trial_subscription_terms",
       "breakpoints": true
+    },
+    {
+      "idx": 78,
+      "version": "7",
+      "when": 1790078877784,
+      "tag": "0078_fix_trial_notification_wording",
+      "breakpoints": true
     }
   ]
 }
