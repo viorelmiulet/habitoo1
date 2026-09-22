@@ -20,6 +20,16 @@ import {
   type SubscriptionTerm,
 } from "@/lib/subscription";
 
+/**
+ * Valoarea preselectată în casetă: orice perioadă validă (inclusiv cele
+ * gratuite) se recunoaște; „none” doar când agenția chiar nu are termen.
+ */
+export function subscriptionPickerValue(term: string | null): SubscriptionTerm | "none" {
+  return SUBSCRIPTION_TERMS.includes(term as SubscriptionTerm)
+    ? (term as SubscriptionTerm)
+    : "none";
+}
+
 export function SubscriptionPicker({
   term,
   onSave,
@@ -29,7 +39,11 @@ export function SubscriptionPicker({
   onSave: (term: SubscriptionTerm | null) => void;
   saving: boolean;
 }) {
-  const current = term === "30d" || term === "12m" ? term : "none";
+  // Recunoaște toate perioadele valide (inclusiv cele gratuite); „none” doar
+  // când agenția chiar nu are termen.
+  const current = SUBSCRIPTION_TERMS.includes(term as SubscriptionTerm)
+    ? (term as SubscriptionTerm)
+    : "none";
   const [value, setValue] = useState<string>(current);
   const dirty = value !== current;
   const asTerm = value === "none" ? null : (value as SubscriptionTerm);
