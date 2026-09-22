@@ -237,7 +237,7 @@ describe("adaptor Romimo", () => {
     const article = calls.find((c) => c.url.endsWith("/api/Article"))!;
     expect(headerOf(article.init, "content-type")).toBe("application/json");
     expect(JSON.parse(String(article.init.body))).toMatchObject({
-      externalid: "HBT-1",
+      ad: { externalid: "HBT-1" },
       user: { email: EMAIL },
     });
   });
