@@ -414,7 +414,10 @@ export async function mapPropertyToRomimo(
         ? { longitude: property.lng }
         : {}),
     },
+    properties: characteristics,
+    pictures,
   };
+
 
   return { ok: true, dto, warnings };
 }
