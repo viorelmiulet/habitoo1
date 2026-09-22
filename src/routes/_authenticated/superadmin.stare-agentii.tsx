@@ -115,11 +115,14 @@ function SubscriptionCell({ org }: { org: AgencyOverviewRow }) {
   });
   return (
     <div className="space-y-0.5">
-      {summary.status === "unlimited" ? (
-        <p className="text-sm text-muted-foreground">{summary.label}</p>
-      ) : (
-        <StatusBadge tone={summary.tone}>{summary.label}</StatusBadge>
-      )}
+      <div className="flex flex-wrap items-center gap-1">
+        {summary.status === "unlimited" ? (
+          <p className="text-sm text-muted-foreground">{summary.label}</p>
+        ) : (
+          <StatusBadge tone={summary.tone}>{summary.label}</StatusBadge>
+        )}
+        {org.isTrial ? <StatusBadge tone="warning">Perioadă de probă</StatusBadge> : null}
+      </div>
       {summary.detail ? (
         <p className="text-xs text-muted-foreground">{summary.detail}</p>
       ) : null}
