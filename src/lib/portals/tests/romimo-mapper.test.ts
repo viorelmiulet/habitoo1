@@ -85,8 +85,19 @@ describe("mapPropertyToRomimo", () => {
       contactEmail: "marius@example.com",
       contactPhone: "+40727151461",
     });
-    expect(result.dto.properties).toBeUndefined();
-    expect(result.dto.pictures).toBeUndefined();
+    expect(result.dto.properties).toEqual([
+      { key: "livingspace", value: "52" },
+      { key: "roomno", value: "2 camere" },
+      { key: "yearofbuilding", value: "1985" },
+      { key: "storey", value: "Etaj 1" },
+      { key: "resfeatures", value: "Decomandat" },
+    ]);
+    expect(result.dto.pictures).toEqual([
+      { url: "https://crm.habitoo.ro/api/public/sites/v1/media/img-1", rank: 1 },
+      { url: "https://crm.habitoo.ro/api/public/sites/v1/media/img-2", rank: 2 },
+      { url: "https://crm.habitoo.ro/api/public/sites/v1/media/img-3", rank: 3 },
+    ]);
+
   });
 
   it("generează referința când lipsește, fără să respingă oferta", async () => {
