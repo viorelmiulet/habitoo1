@@ -86,6 +86,11 @@ export async function loadRequirementSubject(
     buildYear: row.build_year ?? null,
     usableSurface: row.usable_surface ?? row.surface ?? null,
     landSurface: row.land_surface ?? null,
+    builtSurface: row.built_surface ?? null,
+    layout: row.layout ?? null,
+    heatingSystems: Array.isArray(row.heating_systems)
+      ? (row.heating_systems as unknown[]).map((item) => String(item))
+      : null,
     agentName,
     agentEmail,
     contactPhone:
