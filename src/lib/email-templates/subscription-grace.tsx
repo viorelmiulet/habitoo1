@@ -34,7 +34,7 @@ export const SubscriptionGraceEmail = ({
   >
     <Text style={paragraph}>Bună{fullName ? ` ${fullName}` : ""},</Text>
     <Text style={paragraph}>
-      {isTrial ? "Perioada gratuită de 30 de zile a agenției " : "Abonamentul agenției "}
+      {isTrial ? "Perioada gratuită a agenției " : "Abonamentul agenției "}
       <strong>{agencyName}</strong> {isTrial ? "s-a încheiat pe " : "a expirat pe "}
       {expiresAt}. Contul rămâne funcțional încă {graceDays} zile în {siteName}.
     </Text>
