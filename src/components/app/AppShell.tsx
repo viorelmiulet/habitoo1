@@ -134,6 +134,7 @@ export function AppShell({
             />
             <ImpersonationBanner user={user} />
             <SubscriptionBanner user={user} />
+            <TrialBanner user={user} />
             <ActiveAccessBanner enabled={!user.impersonation} />
 
             {isDemo ? (
