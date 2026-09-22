@@ -42,6 +42,12 @@ export type PortalRequirementSubject = {
   buildYear: number | null;
   usableSurface: number | null;
   landSurface: number | null;
+  /** Suprafața construită, folosită de portalurile care cer suprafața proprietății. */
+  builtSurface: number | null;
+  /** Compartimentarea, ca text, exact cum e salvată pe ofertă. */
+  layout: string | null;
+  /** Tipurile de încălzire salvate pe ofertă. */
+  heatingSystems: string[] | null;
   agentName: string | null;
   agentEmail: string | null;
   /** Telefonul de contact efectiv trimis: agentul, altfel agenția. */
