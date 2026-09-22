@@ -206,6 +206,130 @@ describe("mapPropertyToRomimo", () => {
     if (!result.ok) expect(result.reasons.length).toBeGreaterThanOrEqual(3);
   });
 
+  it("folosește floor pentru storey, ignorând floor_label (HB-1009: Etaj 1)", async () => {
+    const result = await mapPropertyToRomimo({ ...baseProperty, floor: 1 }, baseContext);
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.dto.properties).toContainEqual({ key: "storey", value: "Etaj 1" });
+      expect(result.dto.properties).not.toContainEqual({ key: "storey", value: "Etaj 2" });
+    }
+  });
+
+  it("calculează storey pentru demisol, parter și peste etajul 20", async () => {
+    const cases: [number, string][] = [
+      [-1, "Demisol"],
+      [0, "Parter"],
+      [20, "Etaj 20"],
+      [23, "Ultimul etaj"],
+    ];
+    for (const [floor, expected] of cases) {
+      const result = await mapPropertyToRomimo({ ...baseProperty, floor }, baseContext);
+      expect(result.ok).toBe(true);
+      if (result.ok) expect(result.dto.properties).toContainEqual({ key: "storey", value: expected });
+    }
+  });
+
+  it("respinge o compartimentare nepotrivită (Open space)", async () => {
+    const result = await mapPropertyToRomimo(
+      { ...baseProperty, layout: "Open space" },
+      baseContext,
+    );
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.reasons.join(" ")).toContain("Compartimentarea");
+  });
+
+  it("casă: propertyspace din suprafața construită și încălzire potrivită", async () => {
+    const result = await mapPropertyToRomimo(
+      { ...baseProperty, propertyType: "house", heatingSystems: ["Centrală proprie"] },
+      baseContext,
+    );
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.dto.properties).toContainEqual({ key: "propertyspace", value: "120" });
+      expect(result.dto.properties).toContainEqual({ key: "heating", value: "Centrala proprie" });
+      expect(result.dto.properties).not.toContainEqual({ key: "resfeatures", value: "Decomandat" });
+    }
+  });
+
+  it("casă: încălzire necunoscută dar array ne-gol → Altele", async () => {
+    const result = await mapPropertyToRomimo(
+      { ...baseProperty, propertyType: "house", heatingSystems: ["Pompă de căldură"] },
+      baseContext,
+    );
+    expect(result.ok).toBe(true);
+    if (result.ok) expect(result.dto.properties).toContainEqual({ key: "heating", value: "Altele" });
+  });
+
+  it("casă: respinge când heating_systems e gol", async () => {
+    const result = await mapPropertyToRomimo(
+      { ...baseProperty, propertyType: "house", heatingSystems: [] },
+      baseContext,
+    );
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.reasons.join(" ")).toContain("încălzire");
+  });
+
+  it("casă: respinge când nu există nicio suprafață de proprietate", async () => {
+    const result = await mapPropertyToRomimo(
+      {
+        ...baseProperty,
+        propertyType: "house",
+        builtSurface: null,
+        landSurface: null,
+        surface: null,
+      },
+      baseContext,
+    );
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.reasons.join(" ")).toContain("suprafața construită");
+  });
+
+  it("respinge oferta fără suprafață utilă", async () => {
+    const result = await mapPropertyToRomimo({ ...baseProperty, usableSurface: null }, baseContext);
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.reasons.join(" ")).toContain("suprafața utilă");
+  });
+
+  it("respinge oferta fără an de construcție", async () => {
+    const result = await mapPropertyToRomimo({ ...baseProperty, buildYear: null }, baseContext);
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.reasons.join(" ")).toContain("anul construcției");
+  });
+
+  it("trimite doar primele 20 de poze, cu rank corect", async () => {
+    const result = await mapPropertyToRomimo({ ...baseProperty, images: images(25) }, baseContext);
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.dto.pictures).toHaveLength(20);
+    expect(result.dto.pictures?.[0]).toEqual({
+      url: "https://crm.habitoo.ro/api/public/sites/v1/media/img-1",
+      rank: 1,
+    });
+    expect(result.dto.pictures?.[19]).toEqual({
+      url: "https://crm.habitoo.ro/api/public/sites/v1/media/img-20",
+      rank: 20,
+    });
+    expect(result.warnings.join(" ")).toContain("maximum 20");
+  });
+
+  it("acceptă oferta fără poze eligibile, doar cu avertisment", async () => {
+    const result = await mapPropertyToRomimo(
+      {
+        ...baseProperty,
+        images: [
+          ...images(2, { includeInPublish: false }),
+          ...images(1, { isConfidential: true }),
+        ],
+      },
+      baseContext,
+    );
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.dto.pictures).toEqual([]);
+      expect(result.warnings).toContain("Oferta nu are nicio poză eligibilă pentru publicare.");
+    }
+  });
+
   it("preferă sale_price/sale_currency când există", async () => {
     const result = await mapPropertyToRomimo(
       { ...baseProperty, price: 50_000, salePrice: 55_500.4, saleCurrency: "eur" },
