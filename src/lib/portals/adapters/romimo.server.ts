@@ -36,7 +36,10 @@ import type { RomimoCallFail, SaveArticleDto } from "../romimo/types";
 export type RomimoArticleBuilder = (
   ctx: PortalContext,
   ref: ListingRef,
-) => Promise<{ ok: true; dto: SaveArticleDto } | { ok: false; reasons: string[] }>;
+) => Promise<
+  | { ok: true; dto: Omit<SaveArticleDto, "user">; warnings?: string[] }
+  | { ok: false; reasons: string[] }
+>;
 
 const FAIL_CODE: Record<RomimoCallFail["kind"], PortalErrorCode> = {
   invalid_request: "INVALID_REQUEST",
@@ -110,20 +113,24 @@ export function createRomimoAdapter(buildArticle: RomimoArticleBuilder): PortalA
 
     const dto: SaveArticleDto = { ...built.dto, user: { email: creds.email } };
     const externalId = dto.ad.externalid;
+    const warnings = built.warnings ?? [];
     if (!ctx.allowLiveRequests) return dryRun(externalId, action);
 
     const result = await withRomimoToken(creds.apiKey, (token) => saveArticle(token, dto));
     if (!result.ok) return toPortalFail(result);
+    const base =
+      action === "publish"
+        ? "Anunțul a fost trimis la Romimo. Apare pe Romimo.ro și Publi24.ro."
+        : "Anunțul a fost actualizat pe Romimo.";
     return {
       ok: true,
       data: {
         externalId,
         live: true,
-        detail: `romimo_${action} external_id=${externalId}`,
-        message:
-          action === "publish"
-            ? "Anunțul a fost trimis la Romimo. Apare pe Romimo.ro și Publi24.ro."
-            : "Anunțul a fost actualizat pe Romimo.",
+        detail:
+          `romimo_${action} external_id=${externalId}` +
+          (warnings.length > 0 ? ` warnings=${warnings.length}` : ""),
+        message: warnings.length > 0 ? `${base} ${warnings.join(" ")}` : base,
         httpStatus: result.status,
         portalResponse: result.data,
       },
@@ -263,10 +270,37 @@ export function createRomimoAdapter(buildArticle: RomimoArticleBuilder): PortalA
 }
 
 /**
- * Adaptorul înregistrat. Payload-ul anunțului vine din pasul de mapare, care nu
- * există încă: până atunci publicarea este refuzată explicit, fără presupuneri.
+ * Builder-ul real: citește proprietatea din DB și o trece prin mapper-ul Romimo.
+ * Nicio regulă de business aici — doar legătura dintre date și mapper.
  */
-export const romimoAdapter: PortalAdapter = createRomimoAdapter(async () => ({
-  ok: false,
-  reasons: ["maparea câmpurilor Romimo nu este încă implementată"],
-}));
+export const buildRomimoArticle: RomimoArticleBuilder = async (ctx, ref) => {
+  const [{ loadRomimoMapperInput }, { mapPropertyToRomimo }] = await Promise.all([
+    import("../romimo/loadProperty.server"),
+    import("../romimo/mapper"),
+  ]);
+
+  const loaded = await loadRomimoMapperInput(ref.propertyId, {
+    organizationId: ctx.organizationId,
+  });
+  if (!loaded.ok) return { ok: false, reasons: loaded.reasons };
+
+  const mapped = await mapPropertyToRomimo(loaded.property, loaded.context);
+  if (!mapped.ok) return { ok: false, reasons: mapped.reasons };
+
+  const { ad, contact, location, properties, pictures } = mapped.dto;
+  if (!ad) return { ok: false, reasons: ["Mapper-ul Romimo nu a produs datele anunțului."] };
+  return {
+    ok: true,
+    dto: {
+      ad,
+      ...(contact ? { contact } : {}),
+      ...(location ? { location } : {}),
+      ...(properties ? { properties } : {}),
+      ...(pictures ? { pictures } : {}),
+    },
+    warnings: mapped.warnings,
+  };
+};
+
+/** Adaptorul înregistrat, alimentat cu date reale din baza de date. */
+export const romimoAdapter: PortalAdapter = createRomimoAdapter(buildRomimoArticle);
