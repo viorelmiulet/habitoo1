@@ -29,7 +29,11 @@ export function SubscriptionPicker({
   onSave: (term: SubscriptionTerm | null) => void;
   saving: boolean;
 }) {
-  const current = term === "30d" || term === "12m" ? term : "none";
+  // Recunoaște toate perioadele valide (inclusiv cele gratuite); „none” doar
+  // când agenția chiar nu are termen.
+  const current = SUBSCRIPTION_TERMS.includes(term as SubscriptionTerm)
+    ? (term as SubscriptionTerm)
+    : "none";
   const [value, setValue] = useState<string>(current);
   const dirty = value !== current;
   const asTerm = value === "none" ? null : (value as SubscriptionTerm);
