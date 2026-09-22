@@ -303,7 +303,86 @@ export async function mapPropertyToRomimo(
     reasons.push("Lipsește telefonul de contact (agent sau agenție).");
   }
 
+  // properties[]: caracteristicile cerute de categoria calculată.
+  const characteristics: RomimoProperty[] = [];
+  if (category !== null) {
+    const usable = numeric(property.usableSurface);
+    if (usable === null) {
+      reasons.push("Lipsește suprafața utilă.");
+    } else {
+      characteristics.push({ key: "livingspace", value: String(usable) });
+    }
+
+    const roomNo = romimoRoomNo(property.rooms);
+    if (!roomNo) {
+      reasons.push("Lipsește numărul de camere.");
+    } else {
+      characteristics.push({ key: "roomno", value: roomNo });
+    }
+
+    const buildYear = numeric(property.buildYear);
+    if (buildYear === null) {
+      reasons.push("Lipsește anul construcției.");
+    } else {
+      characteristics.push({ key: "yearofbuilding", value: String(Math.round(buildYear)) });
+    }
+
+    if (APARTMENT_CATEGORIES.has(category)) {
+      const storey = romimoStorey(property.floor);
+      if (storey) characteristics.push({ key: "storey", value: storey });
+
+      const layout = text(property.layout);
+      if (layout) {
+        const match = ROMIMO_LAYOUTS.find((option) => option === layout);
+        if (!match) {
+          reasons.push(
+            `Compartimentarea „${layout}" nu este acceptată de Romimo (acceptate: ${ROMIMO_LAYOUTS.join(", ")}).`,
+          );
+        } else {
+          characteristics.push({ key: "resfeatures", value: match });
+        }
+      }
+    }
+
+    if (HOUSE_CATEGORIES.has(category)) {
+      const propertySpace =
+        numeric(property.builtSurface) ?? numeric(property.landSurface) ?? numeric(property.surface);
+      if (propertySpace === null) {
+        reasons.push("Lipsește suprafața construită sau a terenului.");
+      } else {
+        characteristics.push({ key: "propertyspace", value: String(propertySpace) });
+      }
+
+      const heating = romimoHeating(property.heatingSystems);
+      if (!heating) {
+        reasons.push("Lipsește tipul de încălzire.");
+      } else {
+        characteristics.push({ key: "heating", value: heating });
+      }
+    }
+  }
+
+  // pictures[]: doar pozele publicabile, în ordinea existentă, maximum 20.
+  const eligible = property.images.filter(
+    (image) => image.includeInPublish && !image.isConfidential,
+  );
+  const base = context.publicBaseUrl.replace(/\/+$/, "");
+  const pictures: RomimoPicture[] = eligible
+    .slice(0, ROMIMO_MAX_PICTURES)
+    .map((image, index) => ({
+      url: `${base}/api/public/sites/v1/media/${image.id}`,
+      rank: index + 1,
+    }));
+  if (pictures.length === 0) {
+    warnings.push("Oferta nu are nicio poză eligibilă pentru publicare.");
+  } else if (eligible.length > ROMIMO_MAX_PICTURES) {
+    warnings.push(
+      `Oferta are ${eligible.length} poze eligibile; Romimo acceptă maximum ${ROMIMO_MAX_PICTURES}, restul nu au fost trimise.`,
+    );
+  }
+
   if (reasons.length > 0) return { ok: false, reasons };
+
 
   const now = context.now ?? new Date();
   const dto: Partial<SaveArticleDto> = {
