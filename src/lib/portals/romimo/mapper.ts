@@ -68,12 +68,8 @@ function text(value: string | null | undefined): string | null {
 
 /** Sectorul București din `city`, tolerant la diacritice și la „Sectorul"/„Sector". */
 export function extractBucharestSector(city: string | null): number | null {
-  const raw = (city ?? "")
-    .normalize("NFD")
-    .replace(/[̧̆̈̇]/g, "")
-    .replace(/[ăâîșşțţ]/gi, (c) => c)
-    .toLowerCase();
-  const match = /sector(?:ul)?\s*([1-6])\b/.exec(raw);
+  // „Sector"/„Sectorul" nu conțin diacritice, deci potrivirea e directă.
+  const match = /sector(?:ul)?\s*([1-6])\b/.exec((city ?? "").toLowerCase());
   return match ? Number.parseInt(match[1] as string, 10) : null;
 }
 
