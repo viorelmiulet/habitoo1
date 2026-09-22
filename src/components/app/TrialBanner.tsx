@@ -31,7 +31,7 @@ export function TrialBanner({ user }: { user: CurrentUser }) {
   return (
     <div
       role="status"
-      className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 border-b border-info/40 bg-info/15 px-4 py-2 text-center text-sm text-info-foreground"
+      className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 border-b border-info/30 bg-info/10 px-4 py-2 text-center text-sm text-foreground"
     >
       <Sparkles className="size-4 shrink-0" />
       <span className="font-semibold">Perioadă de testare · {zile}</span>
