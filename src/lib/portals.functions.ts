@@ -19,6 +19,7 @@ import {
   derivePortalConnectionStatus,
   getPortalDefinition,
   portalPublicFeedUrl,
+  validatePortalConfigValues,
   type PortalConnectionStatus,
   type PortalDefinition,
 } from "@/lib/portals/registry";
