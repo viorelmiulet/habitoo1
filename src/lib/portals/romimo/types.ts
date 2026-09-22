@@ -12,15 +12,61 @@ export type RomimoUser = {
   email: string;
 };
 
+/** Blocul de contact al anunțului (agentul/agentia responsabilă). */
+export type RomimoContact = {
+  contactName?: string | null;
+  contactEmail?: string | null;
+  contactPhone?: string | null;
+} & Record<string, unknown>;
+
+/** Localizarea anunțului, cu nume de județ/oraș/zonă și coordonate opționale. */
+export type RomimoLocation = {
+  countyName?: string | null;
+  cityName?: string | null;
+  areaName?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
+} & Record<string, unknown>;
+
+/** O caracteristică a proprietății, sub formă de pereche cheie/valoare. */
+export type RomimoProperty = {
+  key: string;
+  value: unknown;
+};
+
+/** O poză a anunțului: URL public accesibil portalului + ordinea de afișare. */
+export type RomimoPicture = {
+  url: string;
+  rank?: number | null;
+} & Record<string, unknown>;
+
+/** Anunțul propriu-zis: `externalid` este cheia de upsert la Romimo. */
+export type RomimoAd = {
+  active?: boolean | null;
+  promoted?: boolean | null;
+  /** Identificatorul nostru stabil al anunțului, cheia de upsert la Romimo. */
+  externalid: string;
+  category?: string | null;
+  price?: number | null;
+  currency?: string | null;
+  title?: string | null;
+  text?: string | null;
+  validFrom?: string | null;
+  validTo?: string | null;
+} & Record<string, unknown>;
+
 /**
- * Payload-ul acceptat de `POST /api/Article` (upsert după `externalid`).
+ * Payload-ul acceptat de `POST /api/Article` (upsert după `ad.externalid`).
  * Adaptorul primește DTO-ul deja construit și completează doar `user.email`.
  */
 export type SaveArticleDto = {
   user: RomimoUser;
-  /** Identificatorul nostru stabil al anunțului, cheia de upsert la Romimo. */
-  externalid: string;
-} & Record<string, unknown>;
+  ad: RomimoAd;
+  contact?: RomimoContact | null;
+  location?: RomimoLocation | null;
+  properties?: RomimoProperty[];
+  pictures?: RomimoPicture[];
+};
 
 /** `GET /api/User/Package` — pachetul contului Romimo. */
 export type RomimoPackage = {

@@ -58,8 +58,7 @@ function ctx(overrides: Partial<PortalContext> = {}): PortalContext {
 
 const DTO: SaveArticleDto = {
   user: { email: "placeholder@example.ro" },
-  externalid: "HBT-1",
-  title: "Apartament 2 camere",
+  ad: { externalid: "HBT-1", title: "Apartament 2 camere" },
 };
 
 beforeEach(() => {
@@ -238,7 +237,7 @@ describe("adaptor Romimo", () => {
     const article = calls.find((c) => c.url.endsWith("/api/Article"))!;
     expect(headerOf(article.init, "content-type")).toBe("application/json");
     expect(JSON.parse(String(article.init.body))).toMatchObject({
-      externalid: "HBT-1",
+      ad: { externalid: "HBT-1" },
       user: { email: EMAIL },
     });
   });
