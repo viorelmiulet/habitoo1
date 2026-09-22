@@ -36,7 +36,10 @@ import type { RomimoCallFail, SaveArticleDto } from "../romimo/types";
 export type RomimoArticleBuilder = (
   ctx: PortalContext,
   ref: ListingRef,
-) => Promise<{ ok: true; dto: SaveArticleDto } | { ok: false; reasons: string[] }>;
+) => Promise<
+  | { ok: true; dto: Omit<SaveArticleDto, "user">; warnings?: string[] }
+  | { ok: false; reasons: string[] }
+>;
 
 const FAIL_CODE: Record<RomimoCallFail["kind"], PortalErrorCode> = {
   invalid_request: "INVALID_REQUEST",
