@@ -39,7 +39,7 @@ const BLOCKED: Record<
   },
   trial_expired: {
     title: "Perioada ta gratuită s-a încheiat",
-    body: "Cele 30 de zile gratuite s-au încheiat, iar accesul la aplicație este oprit. Datele agenției rămân salvate.",
+    body: "Perioada gratuită s-a încheiat, iar accesul la aplicație este oprit. Datele agenției rămân salvate.",
     contact:
       "Pentru activarea abonamentului, scrie-ne la contact@habitoo.ro sau contactează administratorul platformei.",
     icon: XCircle,
