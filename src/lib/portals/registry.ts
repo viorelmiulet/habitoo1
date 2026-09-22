@@ -42,7 +42,8 @@ export type PortalCapability =
   | "webhook_receive"
   | "fetch_listings"
   | "fetch_agents"
-  | "publish_bulk";
+  | "publish_bulk"
+  | "manage_media";
 
 export type PortalConfigField = {
   key: string;
@@ -111,6 +112,7 @@ export const PORTAL_CAPABILITY_LABEL: Record<PortalCapability, string> = {
   fetch_listings: "Import anunțuri",
   fetch_agents: "Import agenți",
   publish_bulk: "Publicare în masă",
+  manage_media: "Încărcare și gestionare poze",
 };
 
 export const PORTAL_AVAILABILITY_LABEL: Record<PortalAvailability, string> = {
@@ -476,6 +478,41 @@ export const PORTALS: PortalDefinition[] = [
       ],
     },
     website: "https://www.romimo.ro",
+  },
+  {
+    id: "primulanunt",
+    display_name: "PrimulAnunț.ro",
+    description:
+      "Habitoo trimite direct anunțul (publicare, actualizare, retragere) cu cheia API a agenției, iar pozele se încarcă automat la anunț. Conturile de agenție neverificate trec prin moderare înainte ca anunțul să apară public.",
+    logo: "PA",
+    status: "available",
+    directions: ["habitoo_to_portal"],
+    // Cheia statică Bearer (pa_live_…) este EMISĂ DE PORTAL din contul
+    // agenției, secțiunea „Integrare CRM”; nu expiră, doar poate fi revocată.
+    authentication: ["portal_api_key"],
+    capabilities: [
+      "test_connection",
+      "publish_listing",
+      "update_listing",
+      "withdraw_listing",
+      "manage_media",
+    ],
+    configuration_schema: {
+      fields: [
+        {
+          key: "api_key",
+          label: "Cheie API PrimulAnunț.ro",
+          help: "Cheia generată din contul tău PrimulAnunț.ro, secțiunea „Integrare CRM” (format pa_live_…). Se afișează o singură dată, se salvează criptat și poate fi revocată oricând din contul PrimulAnunț.ro.",
+          placeholder: "pa_live_…",
+          secret: true,
+          target: "credentials",
+        },
+      ],
+    },
+    website: "https://www.primulanunt.ro",
+    docs: "https://www.primulanunt.ro/api-agentii",
+    notes:
+      "Publicare PUSH pe POST /api/public/v1/listings, idempotentă după external_id (a doua trimitere actualizează același anunț). Actualizarea este parțială (PATCH modifică doar câmpurile trimise), iar retragerea arhivează anunțul (DELETE), nu îl șterge definitiv. Testul conexiunii folosește GET /api/public/v1/ping. Pozele se încarcă separat, multipart/form-data, maximum 20 de imagini și 10 MB fiecare, prima devine automat coperta; cu ?replace=true se înlocuiește tot setul dintr-un apel. Anunțul publicat primește de la portal linkul public complet. Conturile de agenție neverificate trec prin moderare (eventual anunțată prin webhook — nu implementat în această etapă). Promovarea plătită în timp real (boost cu credite) nu este implementată din Habitoo. Portalul nu impune o limită fixă pe cheie; pentru sincronizări mari recomandă maximum 2–3 cereri pe secundă.",
   },
 ];
 
