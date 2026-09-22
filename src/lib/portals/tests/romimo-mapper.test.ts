@@ -134,9 +134,9 @@ describe("mapPropertyToRomimo", () => {
 
   it("respinge când nu există niciun telefon de contact", async () => {
     const result = await mapPropertyToRomimo(baseProperty, {
+      ...baseContext,
       agent: { fullName: "Marius Grigore", email: "marius@example.com", phone: null },
       organization: { phone: null, materialPhone: null },
-      now: NOW,
     });
     expect(result.ok).toBe(false);
     if (!result.ok) expect(result.reasons.join(" ")).toContain("telefon");
@@ -144,9 +144,9 @@ describe("mapPropertyToRomimo", () => {
 
   it("folosește telefonul agenției ca fallback", async () => {
     const result = await mapPropertyToRomimo(baseProperty, {
+      ...baseContext,
       agent: { fullName: "Marius Grigore", email: "marius@example.com", phone: null },
       organization: { phone: "0212345678", materialPhone: null },
-      now: NOW,
     });
     expect(result.ok).toBe(true);
     if (result.ok) expect(result.dto.contact?.contactPhone).toBe("0212345678");
