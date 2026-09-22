@@ -381,6 +381,19 @@ export const PORTAL_REQUIREMENTS: Record<string, PortalRequirementSpec> = {
     ],
     allowed: COMMON_ALLOWED,
   },
+  // PrimulAnunț.ro: setul minim, fără limite inventate — documentația oficială
+  // (https://www.primulanunt.ro/api-agentii) respinge cererile invalide cu 422 și
+  // lista de câmpuri, dar nu fixează un minim de caractere pentru titlu/descriere.
+  // Limitele reale se completează în pasul adaptorului/mapper-ului.
+  primulanunt: {
+    required: [
+      RULE.transaction(),
+      RULE.price(),
+      RULE.propertyType(),
+      RULE.location(),
+    ],
+    allowed: COMMON_ALLOWED,
+  },
 };
 
 export type PortalRequirementReport = {
