@@ -14,6 +14,7 @@ import { countUnresolvedSupportTickets } from "@/lib/support.functions";
 import { ImpersonationBanner } from "@/components/app/ImpersonationBanner";
 import { ActiveAccessBanner } from "@/components/app/AccountAccessCard";
 import { SubscriptionBanner } from "@/components/app/SubscriptionBanner";
+import { TrialBanner } from "@/components/app/TrialBanner";
 import { OnboardingTourProvider } from "@/components/app/OnboardingTour";
 
 import { useApplyTheme } from "@/hooks/use-theme";
@@ -133,6 +134,7 @@ export function AppShell({
             />
             <ImpersonationBanner user={user} />
             <SubscriptionBanner user={user} />
+            <TrialBanner user={user} />
             <ActiveAccessBanner enabled={!user.impersonation} />
 
             {isDemo ? (
