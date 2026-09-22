@@ -8,6 +8,16 @@ import {
 
 const NOW = new Date("2026-09-22T05:36:00.000Z");
 
+function images(count: number, patch: Partial<RomimoMapperProperty["images"][number]> = {}) {
+  return Array.from({ length: count }, (_, index) => ({
+    id: `img-${index + 1}`,
+    includeInPublish: true,
+    isConfidential: false,
+    rank: index + 1,
+    ...patch,
+  }));
+}
+
 const baseProperty: RomimoMapperProperty = {
   id: "p-1",
   reference: "HB-1009",
@@ -27,13 +37,24 @@ const baseProperty: RomimoMapperProperty = {
   lat: 44.435,
   lng: 26.02,
   assignedTo: "agent-1",
+  usableSurface: 52,
+  builtSurface: 120,
+  landSurface: 300,
+  surface: 58,
+  floor: 1,
+  layout: "Decomandat",
+  buildYear: 1985,
+  heatingSystems: ["Centrală proprie", "Încălzire pardoseală"],
+  images: images(3),
 };
 
 const baseContext: RomimoMapperContext = {
   agent: { fullName: "Marius Grigore", email: "marius@example.com", phone: "+40727151461" },
   organization: { phone: "0212345678", materialPhone: "0700000001" },
+  publicBaseUrl: "https://crm.habitoo.ro",
   now: NOW,
 };
+
 
 describe("mapPropertyToRomimo", () => {
   it("mapează o ofertă completă într-un DTO corect", async () => {
