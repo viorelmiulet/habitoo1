@@ -181,6 +181,39 @@ const RULE = {
     requirement: "completată",
     ok: (s) => typeof s.usableSurface === "number" && s.usableSurface > 0,
   }),
+  rooms: (): PortalRequirementRule => ({
+    key: "rooms",
+    label: "Număr camere",
+    requirement: "completat",
+    ok: (s) => s.rooms !== null,
+  }),
+  /** Doar pentru case: portalul cere suprafața proprietății (construită sau teren). */
+  houseSpace: (): PortalRequirementRule => ({
+    key: "house_space",
+    label: "Suprafață construită sau teren (case)",
+    requirement: "completată pentru case",
+    ok: (s) =>
+      text(s.propertyType).toLowerCase() !== "house" ||
+      [s.builtSurface, s.landSurface, s.usableSurface].some(
+        (value) => typeof value === "number" && value > 0,
+      ),
+  }),
+  /** Doar pentru case: portalul cere tipul de încălzire. */
+  houseHeating: (): PortalRequirementRule => ({
+    key: "house_heating",
+    label: "Tip încălzire (case)",
+    requirement: "completat pentru case",
+    ok: (s) =>
+      text(s.propertyType).toLowerCase() !== "house" ||
+      (s.heatingSystems ?? []).some((item) => text(item).length > 0),
+  }),
+  /** Compartimentarea contează doar dacă e completată: trebuie să fie una acceptată. */
+  layoutIn: (allowed: readonly string[]): PortalRequirementRule => ({
+    key: "layout",
+    label: "Compartimentare",
+    requirement: `una dintre: ${allowed.join(", ")}`,
+    ok: (s) => len(s.layout) === 0 || allowed.includes(text(s.layout)),
+  }),
 } as const;
 
 const COMMON_ALLOWED = [
