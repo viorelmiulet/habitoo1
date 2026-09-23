@@ -240,6 +240,11 @@ export const importImmofluxProperties = createServerFn({ method: "POST" })
     }
 
     const done = counts.images === 0;
+    // Pozele în coadă armează worker-ul; se dezarmează singur când coada se golește.
+    if (!done) {
+      const { error: armError } = await supabaseAdmin.rpc("property_import_images_arm");
+      if (armError) console.error("[property-import] arm failed", armError.message);
+    }
     await supabaseAdmin
       .from("property_import_jobs")
       .update({
