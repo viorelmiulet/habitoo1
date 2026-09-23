@@ -5433,6 +5433,9 @@ export type Database = {
         Row: {
           additional_spaces: string[]
           address: string | null
+          address_apartment: string | null
+          address_building: string | null
+          address_staircase: string | null
           appliances: string[]
           archived_at: string | null
           archived_by: string | null
@@ -5468,6 +5471,7 @@ export type Database = {
           description: string | null
           destination: string | null
           district: string | null
+          energy_class: string | null
           entry_door: string[]
           external_id: string | null
           features: string[]
@@ -5491,6 +5495,7 @@ export type Database = {
           insulation: string[]
           interior_doors: string[]
           internal_notes: string | null
+          is_exclusive: boolean | null
           key_in_agency: boolean
           kitchen_features: string[]
           kitchens: number | null
@@ -5558,6 +5563,9 @@ export type Database = {
         Insert: {
           additional_spaces?: string[]
           address?: string | null
+          address_apartment?: string | null
+          address_building?: string | null
+          address_staircase?: string | null
           appliances?: string[]
           archived_at?: string | null
           archived_by?: string | null
@@ -5593,6 +5601,7 @@ export type Database = {
           description?: string | null
           destination?: string | null
           district?: string | null
+          energy_class?: string | null
           entry_door?: string[]
           external_id?: string | null
           features?: string[]
@@ -5616,6 +5625,7 @@ export type Database = {
           insulation?: string[]
           interior_doors?: string[]
           internal_notes?: string | null
+          is_exclusive?: boolean | null
           key_in_agency?: boolean
           kitchen_features?: string[]
           kitchens?: number | null
@@ -5683,6 +5693,9 @@ export type Database = {
         Update: {
           additional_spaces?: string[]
           address?: string | null
+          address_apartment?: string | null
+          address_building?: string | null
+          address_staircase?: string | null
           appliances?: string[]
           archived_at?: string | null
           archived_by?: string | null
@@ -5718,6 +5731,7 @@ export type Database = {
           description?: string | null
           destination?: string | null
           district?: string | null
+          energy_class?: string | null
           entry_door?: string[]
           external_id?: string | null
           features?: string[]
@@ -5741,6 +5755,7 @@ export type Database = {
           insulation?: string[]
           interior_doors?: string[]
           internal_notes?: string | null
+          is_exclusive?: boolean | null
           key_in_agency?: boolean
           kitchen_features?: string[]
           kitchens?: number | null
@@ -5895,6 +5910,7 @@ export type Database = {
           organization_id: string
           position: number
           property_id: string
+          source_url: string | null
           storage_path: string | null
           updated_at: string
           updated_by: string | null
@@ -5913,6 +5929,7 @@ export type Database = {
           organization_id: string
           position?: number
           property_id: string
+          source_url?: string | null
           storage_path?: string | null
           updated_at?: string
           updated_by?: string | null
@@ -5931,6 +5948,7 @@ export type Database = {
           organization_id?: string
           position?: number
           property_id?: string
+          source_url?: string | null
           storage_path?: string | null
           updated_at?: string
           updated_by?: string | null
@@ -5950,6 +5968,125 @@ export type Database = {
             columns: ["property_id"]
             isOneToOne: false
             referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      property_import_images: {
+        Row: {
+          attempts: number
+          created_at: string
+          id: string
+          job_id: string
+          last_error: string | null
+          locked_until: string | null
+          ordering: number
+          property_id: string
+          source_url: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          attempts?: number
+          created_at?: string
+          id?: string
+          job_id: string
+          last_error?: string | null
+          locked_until?: string | null
+          ordering?: number
+          property_id: string
+          source_url: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          attempts?: number
+          created_at?: string
+          id?: string
+          job_id?: string
+          last_error?: string | null
+          locked_until?: string | null
+          ordering?: number
+          property_id?: string
+          source_url?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "property_import_images_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "property_import_jobs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "property_import_images_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      property_import_jobs: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          created_count: number
+          file_name: string | null
+          finished_at: string | null
+          id: string
+          images_done: number
+          images_failed: number
+          images_total: number
+          organization_id: string
+          report: Json
+          skipped_count: number
+          source: string
+          status: string
+          updated_count: number
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          created_count?: number
+          file_name?: string | null
+          finished_at?: string | null
+          id?: string
+          images_done?: number
+          images_failed?: number
+          images_total?: number
+          organization_id: string
+          report?: Json
+          skipped_count?: number
+          source: string
+          status?: string
+          updated_count?: number
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          created_count?: number
+          file_name?: string | null
+          finished_at?: string | null
+          id?: string
+          images_done?: number
+          images_failed?: number
+          images_total?: number
+          organization_id?: string
+          report?: Json
+          skipped_count?: number
+          source?: string
+          status?: string
+          updated_count?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "property_import_jobs_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
         ]

@@ -554,6 +554,13 @@
       "when": 1790078877784,
       "tag": "0078_fix_trial_notification_wording",
       "breakpoints": true
+    },
+    {
+      "idx": 79,
+      "version": "7",
+      "when": 1790191487751,
+      "tag": "0079_property_import_schema",
+      "breakpoints": true
     }
   ]
 }
