@@ -1,9 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import { Archive, ArchiveRestore, Building2, Check, Search, Trash2, X } from "lucide-react";
+import { Archive, ArchiveRestore, Building2, Check, FileUp, Search, Trash2, X } from "lucide-react";
 
 import { SubscriptionPicker } from "@/components/superadmin/SubscriptionPicker";
+import { PropertyImportDialog } from "@/components/superadmin/PropertyImportDialog";
 
 import { toast } from "@/components/ui/sonner";
 import { toastError } from "@/lib/errors";
@@ -113,6 +114,7 @@ function AgenciesPage() {
   const [tab, setTab] = useState<"pending" | "all">("pending");
   const [pendingArchive, setPendingArchive] = useState<{ id: string; name: string } | null>(null);
   const [pendingDelete, setPendingDelete] = useState<{ id: string; name: string } | null>(null);
+  const [importOrg, setImportOrg] = useState<{ id: string; name: string } | null>(null);
   // Respingerea unei cereri de înscriere, cu motiv opțional.
   const [rejecting, setRejecting] = useState<string | null>(null);
   const [rejectReason, setRejectReason] = useState("");
@@ -530,6 +532,15 @@ function AgenciesPage() {
                         Aprobă
                       </Button>
                     ) : null}
+
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => setImportOrg({ id: o.id, name: o.name })}
+                    >
+                      <FileUp className="mr-1.5 size-4" />
+                      Importă proprietăți
+                    </Button>
 
                     {/* Acțiuni distructive, separate vizual de restul */}
                     <div className="ml-auto flex items-center gap-2 border-l border-border pl-3">
