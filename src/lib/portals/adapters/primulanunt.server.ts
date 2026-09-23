@@ -9,9 +9,13 @@
  *   PATCH  /api/public/v1/listings/{id}       modificare parțială
  *   DELETE /api/public/v1/listings/{id}       arhivare (retragere)
  *
- * Adaptorul NU construiește payload-ul anunțului: îl primește gata făcut de la
- * sursa injectată la construire. Pozele (multipart), webhook-ul de moderare și
- * promovarea cu credite nu sunt implementate în această etapă.
+ * Pozele merg separat, DUPĂ ce anunțul există pe portal:
+ *   POST /api/public/v1/listings/{id}/media   multipart/form-data, câmpul `file`
+ *   (max. 20 imagini, 10 MB fiecare; prima devine coperta; `?replace=true`
+ *   înlocuiește tot setul).
+ *
+ * Adaptorul NU construiește payload-ul anunțului și nu citește pozele din baza
+ * de date: primește ambele de la sursele injectate la construire.
  */
 import type {
   ConnectionStatusOutcome,
@@ -29,11 +33,13 @@ import {
   createOrUpdateListing,
   deleteListing,
   ping,
+  uploadListingMedia,
 } from "../primulanunt/client.server";
 import type {
   PrimulAnuntCallFail,
   PrimulAnuntListing,
   PrimulAnuntListingDto,
+  PrimulAnuntMediaFile,
 } from "../primulanunt/types";
 
 /** Sursa payload-ului: se injectează la construirea adaptorului (pasul de mapare). */
@@ -43,6 +49,13 @@ export type PrimulAnuntListingBuilder = (
 ) => Promise<
   { ok: true; dto: PrimulAnuntListingDto; warnings?: string[] } | { ok: false; reasons: string[] }
 >;
+
+/** Sursa pozelor: fișierele deja filtrate, ordonate și cu watermark aplicat. */
+export type PrimulAnuntMediaSource = (
+  ctx: PortalContext,
+  ref: ListingRef,
+) => Promise<{ files: PrimulAnuntMediaFile[]; warnings: string[] }>;
+
 
 const FAIL_CODE: Record<PrimulAnuntCallFail["kind"], PortalErrorCode> = {
   invalid_api_key: "AUTH_ERROR",
