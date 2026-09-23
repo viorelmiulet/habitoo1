@@ -123,6 +123,18 @@ export function placement(existing: { position: number | null; is_primary: boole
   return { position: max + 1, isPrimary: !existing.some((i) => i.is_primary) };
 }
 
+/**
+ * Oglinda regulii din `property_import_images_close_dead()`: rând `pending`
+ * care și-a consumat toate încercările și nu mai e blocat → se închide `failed`.
+ */
+export function isDeadRow(
+  row: { status: string; attempts: number; locked_until: string | null },
+  now: Date = new Date(),
+): boolean {
+  if (row.status !== "pending" || row.attempts < MAX_ATTEMPTS) return false;
+  return row.locked_until === null || Date.parse(row.locked_until) < now.getTime();
+}
+
 export function isUniqueConflict(error: { code?: string | null } | null | undefined): boolean {
   return error?.code === "23505";
 }
@@ -267,6 +279,14 @@ export async function runPropertyImportImages(options: { fetchImpl?: typeof fetc
     }
   }
 
+  // Include și joburile ale căror rânduri moarte au fost închise la revendicare
+  // (fără să fi fost procesate în această rulare).
+  const { data: open } = await admin
+    .from("property_import_jobs")
+    .select("id")
+    .eq("status", "processing")
+    .limit(50);
+  for (const job of (open ?? []) as { id: string }[]) touchedJobs.add(job.id);
   for (const jobId of touchedJobs) await refreshJob(admin, jobId);
   return { ...totals, jobs: touchedJobs.size };
 }

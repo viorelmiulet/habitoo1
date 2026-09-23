@@ -95,3 +95,18 @@ describe("decizii de stare", () => {
     expect(isUniqueConflict(null)).toBe(false);
   });
 });
+
+import { isDeadRow } from "../images.server";
+
+describe("rânduri moarte", () => {
+  const now = new Date("2026-09-23T20:00:00Z");
+  it("pending cu 3 încercări și lock expirat/nul → închis", () => {
+    expect(isDeadRow({ status: "pending", attempts: 3, locked_until: "2026-09-23T19:59:00Z" }, now)).toBe(true);
+    expect(isDeadRow({ status: "pending", attempts: 3, locked_until: null }, now)).toBe(true);
+  });
+  it("încă blocat, încercări rămase sau alt status → neatins", () => {
+    expect(isDeadRow({ status: "pending", attempts: 3, locked_until: "2026-09-23T20:01:00Z" }, now)).toBe(false);
+    expect(isDeadRow({ status: "pending", attempts: 2, locked_until: null }, now)).toBe(false);
+    expect(isDeadRow({ status: "failed", attempts: 3, locked_until: null }, now)).toBe(false);
+  });
+});
