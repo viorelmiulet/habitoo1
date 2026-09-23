@@ -201,7 +201,9 @@ export async function mapPropertyToPrimulAnunt(
   const lat = numeric(property.lat);
   const lng = numeric(property.lng);
   const postalCode = text(property.postalCode);
-  const floor = integer(property.floor);
+  // Portalul validează etajul ca text, nu ca număr.
+  const floorNumber = integer(property.floor);
+  const floor = floorNumber === null ? null : String(floorNumber);
   const floorsTotal = integer(property.buildingFloors);
 
   const dto: PrimulAnuntListingDto = {
