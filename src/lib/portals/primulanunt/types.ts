@@ -68,6 +68,34 @@ export type PrimulAnuntPing = {
   status?: string;
 };
 
+/**
+ * O poză pregătită pentru `POST /api/public/v1/listings/{id}/media`
+ * (`multipart/form-data`, câmpul `file`). Portalul acceptă maximum 20 de
+ * imagini, fiecare sub 10 MB; prima devine automat coperta.
+ */
+export type PrimulAnuntMediaFile = {
+  /** Identificatorul imaginii din CRM, doar pentru jurnal. */
+  imageId: string;
+  filename: string;
+  contentType: string;
+  bytes: Uint8Array;
+};
+
+/** O fotografie, așa cum o întoarce portalul după încărcare sau la listare. */
+export type PrimulAnuntMediaItem = {
+  id?: string;
+  url?: string | null;
+  position?: number | null;
+};
+
+/** Răspunsul la încărcarea pozelor. */
+export type PrimulAnuntMediaUpload = {
+  uploaded: number;
+  media: PrimulAnuntMediaItem[];
+};
+
+
+
 /** Clasificarea erorilor documentate de portal. */
 export type PrimulAnuntFailKind =
   | "invalid_api_key"
