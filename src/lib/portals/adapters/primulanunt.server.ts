@@ -336,5 +336,22 @@ export const buildPrimulAnuntListing: PrimulAnuntListingBuilder = async (ctx, re
   return { ok: true, dto: mapped.dto, warnings: mapped.warnings };
 };
 
+/** Pozele reale: citite din storage-ul propriu, cu watermark-ul agenției. */
+export const loadPrimulAnuntMediaFiles: PrimulAnuntMediaSource = async (ctx, ref) => {
+  const [{ supabaseAdmin }, { loadPrimulAnuntMedia }] = await Promise.all([
+    import("@/integrations/supabase/client.server"),
+    import("../primulanunt/media.server"),
+  ]);
+  return loadPrimulAnuntMedia({
+    admin: supabaseAdmin,
+    organizationId: ctx.organizationId,
+    propertyId: ref.propertyId,
+  });
+};
+
 /** Adaptorul înregistrat, alimentat cu date reale din baza de date. */
-export const primulanuntAdapter: PortalAdapter = createPrimulAnuntAdapter(buildPrimulAnuntListing);
+export const primulanuntAdapter: PortalAdapter = createPrimulAnuntAdapter(
+  buildPrimulAnuntListing,
+  loadPrimulAnuntMediaFiles,
+);
+
