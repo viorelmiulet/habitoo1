@@ -112,7 +112,33 @@ describe("client PrimulAnunț.ro", () => {
     if (result.ok) return;
     expect(result.kind).toBe("invalid_data");
     expect(result.fields).toEqual(["title", "price"]);
-    expect(result.message).toBe("PrimulAnunț.ro a respins datele: title, price.");
+    expect(result.message).toBe(
+      "PrimulAnunț.ro a respins datele: title: prea scurt | price: obligatoriu.",
+    );
+  });
+
+  it("422 în forma reală a portalului (details.fieldErrors) este citit complet", async () => {
+    mockFetch(() =>
+      json(
+        {
+          error: "Date invalide.",
+          details: {
+            formErrors: [],
+            fieldErrors: {
+              floor: ["Expected string, received number"],
+              property_type: ["Invalid enum value. Expected 'apartament' | 'casa'"],
+            },
+          },
+        },
+        422,
+      ),
+    );
+    const result = await createOrUpdateListing(API_KEY, DTO);
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.fields).toEqual(["floor", "property_type"]);
+    expect(result.message).toContain("floor: Expected string, received number");
+    expect(result.message).toContain("property_type: Invalid enum value");
   });
 
   it("400 preia mesajul explicit al portalului", async () => {

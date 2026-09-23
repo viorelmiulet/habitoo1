@@ -60,6 +60,59 @@ function integer(value: number | null | undefined): number | null {
   return n === null ? null : Math.round(n);
 }
 
+/**
+ * Valorile acceptate de portal pentru `property_type` (enum strict, în română
+ * fără diacritice), confirmate de validatorul portalului:
+ * `apartament | casa | teren | spatiu_comercial | birou | garaj | hala`.
+ */
+const PRIMULANUNT_PROPERTY_TYPES = [
+  "apartament",
+  "casa",
+  "teren",
+  "spatiu_comercial",
+  "birou",
+  "garaj",
+  "hala",
+] as const;
+
+const PROPERTY_TYPE_MAP: Record<string, (typeof PRIMULANUNT_PROPERTY_TYPES)[number]> = {
+  apartment: "apartament",
+  apartament: "apartament",
+  studio: "apartament",
+  garsoniera: "apartament",
+  duplex: "apartament",
+  penthouse: "apartament",
+  house: "casa",
+  casa: "casa",
+  villa: "casa",
+  vila: "casa",
+  land: "teren",
+  teren: "teren",
+  commercial: "spatiu_comercial",
+  spatiu_comercial: "spatiu_comercial",
+  office: "birou",
+  birou: "birou",
+  garage: "garaj",
+  garaj: "garaj",
+  parking: "garaj",
+  industrial: "hala",
+  hala: "hala",
+  warehouse: "hala",
+};
+
+/** Tipul CRM → valoarea din enumerarea portalului; `null` dacă nu are corespondent. */
+export function primulAnuntPropertyType(
+  propertyType: string | null,
+): (typeof PRIMULANUNT_PROPERTY_TYPES)[number] | null {
+  const key = (propertyType ?? "")
+    .trim()
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[\s-]+/g, "_");
+  return PROPERTY_TYPE_MAP[key] ?? null;
+}
+
 /** `purpose`: doar „sale" și „rent" sunt acceptate de portal. */
 export function primulAnuntPurpose(transactionKind: string | null): PrimulAnuntPurpose | null {
   const kind = (transactionKind ?? "").trim().toLowerCase();
@@ -93,8 +146,14 @@ export async function mapPropertyToPrimulAnunt(
     );
   }
 
-  const propertyType = text(property.propertyType);
-  if (!propertyType) reasons.push("Oferta nu are tipul proprietății completat.");
+  const rawPropertyType = text(property.propertyType);
+  const propertyType = primulAnuntPropertyType(rawPropertyType);
+  if (!rawPropertyType) reasons.push("Oferta nu are tipul proprietății completat.");
+  else if (!propertyType) {
+    reasons.push(
+      `Tipul proprietății „${rawPropertyType}" nu este acceptat de PrimulAnunț.ro (acceptate: apartament, casă, teren, spațiu comercial, birou, garaj, hală).`,
+    );
+  }
 
   const title = text(property.title);
   if (!title) reasons.push("Oferta nu are titlu.");
@@ -142,7 +201,9 @@ export async function mapPropertyToPrimulAnunt(
   const lat = numeric(property.lat);
   const lng = numeric(property.lng);
   const postalCode = text(property.postalCode);
-  const floor = integer(property.floor);
+  // Portalul validează etajul ca text, nu ca număr.
+  const floorNumber = integer(property.floor);
+  const floor = floorNumber === null ? null : String(floorNumber);
   const floorsTotal = integer(property.buildingFloors);
 
   const dto: PrimulAnuntListingDto = {

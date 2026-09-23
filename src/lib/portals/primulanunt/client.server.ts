@@ -84,14 +84,23 @@ function asRecord(value: unknown): Record<string, unknown> | null {
 }
 
 /**
- * Lista câmpurilor invalide dintr-un răspuns 422. Documentația spune doar
- * „primești lista câmpurilor”, deci acceptăm formele uzuale: un array de nume,
- * un obiect `{ câmp: [mesaje] }` sau ambele sub `errors` / `fields`.
+ * Lista câmpurilor invalide dintr-un răspuns 422. Forma reală a portalului este
+ * `{ error: "Date invalide.", details: { fieldErrors: { câmp: [mesaje] }, formErrors: [] } }`,
+ * dar acceptăm și formele uzuale: array de nume, obiect `{ câmp: [mesaje] }`
+ * sub `fields` / `errors` / `error.fields`.
  */
 export function invalidFieldsFrom(body: unknown): string[] {
   const root = asRecord(body);
   if (!root) return [];
-  const candidates = [root["fields"], root["errors"], asRecord(root["error"])?.["fields"]];
+  const details = asRecord(root["details"]);
+  const candidates = [
+    root["fields"],
+    root["errors"],
+    asRecord(root["error"])?.["fields"],
+    details?.["fieldErrors"],
+    details?.["errors"],
+    details?.["fields"],
+  ];
   const out: string[] = [];
   for (const candidate of candidates) {
     if (Array.isArray(candidate)) {
@@ -109,6 +118,34 @@ export function invalidFieldsFrom(body: unknown): string[] {
     }
   }
   return [...new Set(out.filter((name) => name.trim().length > 0))];
+}
+
+/**
+ * Explicațiile portalului pe câmp, ex. `property_type: Invalid enum value…`.
+ * Se adaugă la mesajul afișat agentului, ca să vadă imediat cauza respingerii.
+ */
+export function invalidFieldDetailsFrom(body: unknown): string[] {
+  const root = asRecord(body);
+  if (!root) return [];
+  const details = asRecord(root["details"]);
+  const out: string[] = [];
+  for (const source of [details?.["fieldErrors"], root["errors"], root["fields"]]) {
+    const record = asRecord(source);
+    if (!record) continue;
+    for (const [field, value] of Object.entries(record)) {
+      const messages = Array.isArray(value)
+        ? value.filter((item): item is string => typeof item === "string")
+        : typeof value === "string"
+          ? [value]
+          : [];
+      if (messages.length > 0) out.push(`${field}: ${messages.join("; ")}`);
+    }
+  }
+  const formErrors = Array.isArray(details?.["formErrors"])
+    ? (details!["formErrors"] as unknown[]).filter((item): item is string => typeof item === "string")
+    : [];
+  out.push(...formErrors);
+  return [...new Set(out)].slice(0, 10);
 }
 
 /** Mesajul explicit în română pe care portalul îl trimite la 400. */
@@ -136,7 +173,13 @@ function classify(status: number, body: unknown): PrimulAnuntCallFail {
   if (status === 404) return fail("not_found", status, body);
   if (status === 422) {
     const fields = invalidFieldsFrom(body);
-    const list = fields.length > 0 ? fields.join(", ") : (messageFrom(body) ?? "câmpuri invalide");
+    const explanations = invalidFieldDetailsFrom(body);
+    const list =
+      explanations.length > 0
+        ? explanations.join(" | ")
+        : fields.length > 0
+          ? fields.join(", ")
+          : (messageFrom(body) ?? "câmpuri invalide");
     return fail("invalid_data", status, body, {
       message: `PrimulAnunț.ro a respins datele: ${list}.`,
       fields,

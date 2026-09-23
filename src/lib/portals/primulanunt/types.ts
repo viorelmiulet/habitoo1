@@ -40,7 +40,8 @@ export type PrimulAnuntListingDto = {
   lng?: number;
   location_precision?: PrimulAnuntLocationPrecision;
   postal_code?: string;
-  floor?: number;
+  /** Portalul validează etajul ca text (ex. „1"). */
+  floor?: string;
   floors_total?: number;
   video_url?: string;
   /** Anunț nelistat public; pentru anunțurile de agenție se trimite `false`. */
