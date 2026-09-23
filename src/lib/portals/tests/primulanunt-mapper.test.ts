@@ -65,7 +65,7 @@ describe("mapPropertyToPrimulAnunt", () => {
       lng: 26.02,
       location_precision: "exact",
       postal_code: "060001",
-      floor: 1,
+      floor: "1",
       floors_total: 10,
     });
     expect(result.warnings).toEqual([]);
@@ -225,5 +225,51 @@ describe("primulAnuntPurpose", () => {
     expect(primulAnuntPurpose("RENT")).toBe("rent");
     expect(primulAnuntPurpose(null)).toBeNull();
     expect(primulAnuntPurpose("teren")).toBeNull();
+  });
+});
+
+describe("tipul proprietății și etajul", () => {
+  it("traduce codurile CRM în enumerarea portalului", async () => {
+    const cases: [string, string][] = [
+      ["apartment", "apartament"],
+      ["studio", "apartament"],
+      ["house", "casa"],
+      ["land", "teren"],
+      ["commercial", "spatiu_comercial"],
+      ["office", "birou"],
+      ["industrial", "hala"],
+      ["Garaj", "garaj"],
+      ["Casă", "casa"],
+    ];
+    for (const [input, expected] of cases) {
+      const result = await mapPropertyToPrimulAnunt(
+        { ...baseProperty, propertyType: input },
+        baseContext,
+      );
+      expect(result.ok).toBe(true);
+      if (!result.ok) return;
+      expect(result.dto.property_type).toBe(expected);
+    }
+  });
+
+  it("respinge un tip de proprietate fără corespondent", async () => {
+    const result = await mapPropertyToPrimulAnunt(
+      { ...baseProperty, propertyType: "castel" },
+      baseContext,
+    );
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.reasons.join(" ")).toContain("nu este acceptat de PrimulAnunț.ro");
+  });
+
+  it("trimite etajul ca text, iar numărul de etaje ca număr", async () => {
+    const result = await mapPropertyToPrimulAnunt(
+      { ...baseProperty, floor: 0, buildingFloors: 4 },
+      baseContext,
+    );
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.dto.floor).toBe("0");
+    expect(result.dto.floors_total).toBe(4);
   });
 });
