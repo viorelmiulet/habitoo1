@@ -17,6 +17,9 @@ import type {
   PrimulAnuntListing,
   PrimulAnuntListingDto,
   PrimulAnuntListingPatch,
+  PrimulAnuntMediaFile,
+  PrimulAnuntMediaItem,
+  PrimulAnuntMediaUpload,
   PrimulAnuntPing,
 } from "./types";
 
