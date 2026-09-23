@@ -146,8 +146,14 @@ export async function mapPropertyToPrimulAnunt(
     );
   }
 
-  const propertyType = text(property.propertyType);
-  if (!propertyType) reasons.push("Oferta nu are tipul proprietății completat.");
+  const rawPropertyType = text(property.propertyType);
+  const propertyType = primulAnuntPropertyType(rawPropertyType);
+  if (!rawPropertyType) reasons.push("Oferta nu are tipul proprietății completat.");
+  else if (!propertyType) {
+    reasons.push(
+      `Tipul proprietății „${rawPropertyType}" nu este acceptat de PrimulAnunț.ro (acceptate: apartament, casă, teren, spațiu comercial, birou, garaj, hală).`,
+    );
+  }
 
   const title = text(property.title);
   if (!title) reasons.push("Oferta nu are titlu.");
