@@ -169,7 +169,13 @@ function networkFailure(error: unknown): PrimulAnuntCallFail {
 async function call<T>(
   method: "GET" | "POST" | "PATCH" | "DELETE",
   path: string,
-  options: { apiKey: string; jsonBody?: unknown; parse: (body: unknown) => T },
+  options: {
+    apiKey: string;
+    jsonBody?: unknown;
+    /** Corp `multipart/form-data`; `Content-Type` îl pune runtime-ul, cu boundary. */
+    formBody?: FormData;
+    parse: (body: unknown) => T;
+  },
 ): Promise<PrimulAnuntCall<T>> {
   let url: URL;
   try {
@@ -184,6 +190,10 @@ async function call<T>(
   };
   if (options.jsonBody !== undefined) headers["Content-Type"] = "application/json";
 
+  const requestBody =
+    options.formBody ??
+    (options.jsonBody === undefined ? undefined : JSON.stringify(options.jsonBody));
+
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), PRIMULANUNT_TIMEOUT_MS);
   let response: Response;
@@ -193,7 +203,7 @@ async function call<T>(
       method,
       headers,
       redirect: "manual",
-      ...(options.jsonBody === undefined ? {} : { body: JSON.stringify(options.jsonBody) }),
+      ...(requestBody === undefined ? {} : { body: requestBody }),
       signal: controller.signal,
     });
     body = await readBody(response);
