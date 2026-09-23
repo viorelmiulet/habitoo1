@@ -17,6 +17,9 @@ import type {
   PrimulAnuntListing,
   PrimulAnuntListingDto,
   PrimulAnuntListingPatch,
+  PrimulAnuntMediaFile,
+  PrimulAnuntMediaItem,
+  PrimulAnuntMediaUpload,
   PrimulAnuntPing,
 } from "./types";
 
@@ -166,7 +169,13 @@ function networkFailure(error: unknown): PrimulAnuntCallFail {
 async function call<T>(
   method: "GET" | "POST" | "PATCH" | "DELETE",
   path: string,
-  options: { apiKey: string; jsonBody?: unknown; parse: (body: unknown) => T },
+  options: {
+    apiKey: string;
+    jsonBody?: unknown;
+    /** Corp `multipart/form-data`; `Content-Type` îl pune runtime-ul, cu boundary. */
+    formBody?: FormData;
+    parse: (body: unknown) => T;
+  },
 ): Promise<PrimulAnuntCall<T>> {
   let url: URL;
   try {
@@ -181,6 +190,10 @@ async function call<T>(
   };
   if (options.jsonBody !== undefined) headers["Content-Type"] = "application/json";
 
+  const requestBody =
+    options.formBody ??
+    (options.jsonBody === undefined ? undefined : JSON.stringify(options.jsonBody));
+
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), PRIMULANUNT_TIMEOUT_MS);
   let response: Response;
@@ -190,7 +203,7 @@ async function call<T>(
       method,
       headers,
       redirect: "manual",
-      ...(options.jsonBody === undefined ? {} : { body: JSON.stringify(options.jsonBody) }),
+      ...(requestBody === undefined ? {} : { body: requestBody }),
       signal: controller.signal,
     });
     body = await readBody(response);
@@ -277,4 +290,53 @@ export function deleteListing(
     apiKey,
     parse: parseListing,
   });
+}
+
+/** Fotografiile întoarse de portal, indiferent de învelișul răspunsului. */
+function parseMediaUpload(body: unknown): PrimulAnuntMediaUpload {
+  const root = asRecord(body);
+  const raw = Array.isArray(body)
+    ? body
+    : Array.isArray(root?.["media"])
+      ? (root!["media"] as unknown[])
+      : Array.isArray(root?.["data"])
+        ? (root!["data"] as unknown[])
+        : [];
+  const media: PrimulAnuntMediaItem[] = [];
+  for (const entry of raw) {
+    const item = asRecord(entry);
+    if (!item) continue;
+    const id = typeof item["id"] === "string" ? item["id"] : null;
+    const url = typeof item["url"] === "string" ? item["url"] : null;
+    const position = typeof item["position"] === "number" ? item["position"] : null;
+    media.push({ ...(id ? { id } : {}), url, position });
+  }
+  const uploaded =
+    typeof root?.["uploaded"] === "number" ? (root["uploaded"] as number) : media.length;
+  return { uploaded, media };
+}
+
+/**
+ * `POST /api/public/v1/listings/{id}/media` — încărcare directă de fișiere,
+ * `multipart/form-data`, câmpul `file` repetat pentru fiecare imagine. Prima
+ * imagine devine automat coperta anunțului. Cu `?replace=true` tot setul de
+ * poze de pe portal este înlocuit dintr-un singur apel.
+ */
+export function uploadListingMedia(
+  apiKey: string,
+  listingId: string,
+  files: PrimulAnuntMediaFile[],
+  options: { replace?: boolean } = {},
+): Promise<PrimulAnuntCall<PrimulAnuntMediaUpload>> {
+  const form = new FormData();
+  for (const file of files) {
+    const blob = new Blob([file.bytes as BlobPart], { type: file.contentType });
+    form.append("file", blob, file.filename);
+  }
+  const query = options.replace ? "?replace=true" : "";
+  return call(
+    "POST",
+    `/api/public/v1/listings/${encodeURIComponent(listingId)}/media${query}`,
+    { apiKey, formBody: form, parse: parseMediaUpload },
+  );
 }

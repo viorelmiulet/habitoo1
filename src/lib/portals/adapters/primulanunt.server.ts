@@ -9,9 +9,13 @@
  *   PATCH  /api/public/v1/listings/{id}       modificare parțială
  *   DELETE /api/public/v1/listings/{id}       arhivare (retragere)
  *
- * Adaptorul NU construiește payload-ul anunțului: îl primește gata făcut de la
- * sursa injectată la construire. Pozele (multipart), webhook-ul de moderare și
- * promovarea cu credite nu sunt implementate în această etapă.
+ * Pozele merg separat, DUPĂ ce anunțul există pe portal:
+ *   POST /api/public/v1/listings/{id}/media   multipart/form-data, câmpul `file`
+ *   (max. 20 imagini, 10 MB fiecare; prima devine coperta; `?replace=true`
+ *   înlocuiește tot setul).
+ *
+ * Adaptorul NU construiește payload-ul anunțului și nu citește pozele din baza
+ * de date: primește ambele de la sursele injectate la construire.
  */
 import type {
   ConnectionStatusOutcome,
@@ -29,11 +33,13 @@ import {
   createOrUpdateListing,
   deleteListing,
   ping,
+  uploadListingMedia,
 } from "../primulanunt/client.server";
 import type {
   PrimulAnuntCallFail,
   PrimulAnuntListing,
   PrimulAnuntListingDto,
+  PrimulAnuntMediaFile,
 } from "../primulanunt/types";
 
 /** Sursa payload-ului: se injectează la construirea adaptorului (pasul de mapare). */
@@ -43,6 +49,13 @@ export type PrimulAnuntListingBuilder = (
 ) => Promise<
   { ok: true; dto: PrimulAnuntListingDto; warnings?: string[] } | { ok: false; reasons: string[] }
 >;
+
+/** Sursa pozelor: fișierele deja filtrate, ordonate și cu watermark aplicat. */
+export type PrimulAnuntMediaSource = (
+  ctx: PortalContext,
+  ref: ListingRef,
+) => Promise<{ files: PrimulAnuntMediaFile[]; warnings: string[] }>;
+
 
 const FAIL_CODE: Record<PrimulAnuntCallFail["kind"], PortalErrorCode> = {
   invalid_api_key: "AUTH_ERROR",
@@ -106,7 +119,44 @@ function statusMessage(listing: PrimulAnuntListing, base: string): string {
   return base;
 }
 
-export function createPrimulAnuntAdapter(build: PrimulAnuntListingBuilder): PortalAdapter {
+export function createPrimulAnuntAdapter(
+  build: PrimulAnuntListingBuilder,
+  loadMedia?: PrimulAnuntMediaSource,
+): PortalAdapter {
+  /**
+   * Pasul de poze: rulează doar după ce anunțul există pe portal. Orice eșec
+   * rămâne avertisment — anunțul publicat NU se retrage din cauza pozelor.
+   */
+  async function sendMedia(
+    apiKey: string,
+    ctx: PortalContext,
+    ref: ListingRef,
+    listingId: string,
+    action: "publish" | "update",
+  ): Promise<{ warnings: string[]; uploaded: number }> {
+    if (!loadMedia) return { warnings: [], uploaded: 0 };
+    const media = await loadMedia(ctx, ref);
+    const warnings = [...media.warnings];
+    if (media.files.length === 0) return { warnings, uploaded: 0 };
+
+    const result = await uploadListingMedia(apiKey, listingId, media.files, {
+      replace: action === "update",
+    });
+    if (!result.ok) {
+      warnings.push(
+        `Anunțul a rămas publicat, dar pozele nu au putut fi încărcate: ${result.message}`,
+      );
+      return { warnings, uploaded: 0 };
+    }
+    const uploaded = result.data.uploaded || media.files.length;
+    if (uploaded < media.files.length) {
+      warnings.push(
+        `PrimulAnunț.ro a preluat doar ${uploaded} din ${media.files.length} poze trimise.`,
+      );
+    }
+    return { warnings, uploaded };
+  }
+
   async function upsert(
     ctx: PortalContext,
     ref: ListingRef,
@@ -133,6 +183,10 @@ export function createPrimulAnuntAdapter(build: PrimulAnuntListingBuilder): Port
     const result = await createOrUpdateListing(apiKey, dto);
     if (!result.ok) return toPortalFail(result);
 
+    const listingId = result.data.id ?? result.data.external_id ?? dto.external_id;
+    const media = await sendMedia(apiKey, ctx, ref, listingId, action);
+    warnings.push(...media.warnings);
+
     const base =
       action === "publish"
         ? "Anunțul a fost trimis pe PrimulAnunț.ro."
@@ -144,7 +198,7 @@ export function createPrimulAnuntAdapter(build: PrimulAnuntListingBuilder): Port
         externalId: result.data.external_id ?? dto.external_id,
         live: true,
         detail:
-          `primulanunt_${action} external_id=${dto.external_id}` +
+          `primulanunt_${action} external_id=${dto.external_id} media=${media.uploaded}` +
           (warnings.length > 0 ? ` warnings=${warnings.length}` : ""),
         message: warnings.length > 0 ? `${message} ${warnings.join(" ")}` : message,
         portalStatus: result.data.status ?? null,
@@ -154,6 +208,7 @@ export function createPrimulAnuntAdapter(build: PrimulAnuntListingBuilder): Port
       },
     };
   }
+
 
   return {
     id: "primulanunt",
@@ -281,5 +336,22 @@ export const buildPrimulAnuntListing: PrimulAnuntListingBuilder = async (ctx, re
   return { ok: true, dto: mapped.dto, warnings: mapped.warnings };
 };
 
+/** Pozele reale: citite din storage-ul propriu, cu watermark-ul agenției. */
+export const loadPrimulAnuntMediaFiles: PrimulAnuntMediaSource = async (ctx, ref) => {
+  const [{ supabaseAdmin }, { loadPrimulAnuntMedia }] = await Promise.all([
+    import("@/integrations/supabase/client.server"),
+    import("../primulanunt/media.server"),
+  ]);
+  return loadPrimulAnuntMedia({
+    admin: supabaseAdmin,
+    organizationId: ctx.organizationId,
+    propertyId: ref.propertyId,
+  });
+};
+
 /** Adaptorul înregistrat, alimentat cu date reale din baza de date. */
-export const primulanuntAdapter: PortalAdapter = createPrimulAnuntAdapter(buildPrimulAnuntListing);
+export const primulanuntAdapter: PortalAdapter = createPrimulAnuntAdapter(
+  buildPrimulAnuntListing,
+  loadPrimulAnuntMediaFiles,
+);
+
