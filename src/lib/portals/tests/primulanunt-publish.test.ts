@@ -200,7 +200,8 @@ describe("publicarea PrimulAnunț.ro cu date reale", () => {
     expect(dto["bathrooms"]).toBe(1);
     expect(dto["surface_m2"]).toBe(52);
     expect(dto["postal_code"]).toBe("400123");
-    expect(dto["floor"]).toBe(1);
+    expect(dto["floor"]).toBe("1");
+    expect(dto["property_type"]).toBe("apartament");
     expect(dto["floors_total"]).toBe(4);
     expect(dto["features"]).toEqual(["Balcon", "Parcare"]);
     expect(dto["agent_phone"]).toBe("+40727151461");
