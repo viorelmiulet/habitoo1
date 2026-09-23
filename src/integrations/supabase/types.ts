@@ -7380,6 +7380,28 @@ export type Database = {
           isSetofReturn: true
         }
       }
+      claim_property_import_images: {
+        Args: { _batch_size: number; _lease_seconds: number }
+        Returns: {
+          attempts: number
+          created_at: string
+          id: string
+          job_id: string
+          last_error: string | null
+          locked_until: string | null
+          ordering: number
+          property_id: string
+          source_url: string
+          status: string
+          updated_at: string
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "property_import_images"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
       collector_arm: { Args: never; Returns: undefined }
       collector_tick: { Args: never; Returns: undefined }
       cron_nonce_claim: {
@@ -7552,6 +7574,8 @@ export type Database = {
       portal_slot_withdraw_tick: { Args: never; Returns: undefined }
       promotion_withdraw_arm: { Args: never; Returns: undefined }
       promotion_withdraw_tick: { Args: never; Returns: undefined }
+      property_import_images_arm: { Args: never; Returns: undefined }
+      property_import_images_tick: { Args: never; Returns: undefined }
       prospect_import_to_crm: {
         Args: {
           _actor: string

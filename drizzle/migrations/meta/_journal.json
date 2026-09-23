@@ -561,6 +561,13 @@
       "when": 1790191487751,
       "tag": "0079_property_import_schema",
       "breakpoints": true
+    },
+    {
+      "idx": 80,
+      "version": "7",
+      "when": 1790192293949,
+      "tag": "0080_property_import_images_worker",
+      "breakpoints": true
     }
   ]
 }
