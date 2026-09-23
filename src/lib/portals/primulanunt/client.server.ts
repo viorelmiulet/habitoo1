@@ -173,7 +173,13 @@ function classify(status: number, body: unknown): PrimulAnuntCallFail {
   if (status === 404) return fail("not_found", status, body);
   if (status === 422) {
     const fields = invalidFieldsFrom(body);
-    const list = fields.length > 0 ? fields.join(", ") : (messageFrom(body) ?? "câmpuri invalide");
+    const explanations = invalidFieldDetailsFrom(body);
+    const list =
+      explanations.length > 0
+        ? explanations.join(" | ")
+        : fields.length > 0
+          ? fields.join(", ")
+          : (messageFrom(body) ?? "câmpuri invalide");
     return fail("invalid_data", status, body, {
       message: `PrimulAnunț.ro a respins datele: ${list}.`,
       fields,
