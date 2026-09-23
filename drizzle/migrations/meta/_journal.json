@@ -575,6 +575,13 @@
       "when": 1790192942639,
       "tag": "0081_property_import_images_dead_rows",
       "breakpoints": true
+    },
+    {
+      "idx": 82,
+      "version": "7",
+      "when": 1790197202942,
+      "tag": "0082_fix_cron_nonce_issue_gen_random_bytes",
+      "breakpoints": true
     }
   ]
 }
