@@ -260,13 +260,26 @@ export function createPrimulAnuntAdapter(build: PrimulAnuntListingBuilder): Port
 }
 
 /**
- * Sursa de payload reală (maparea proprietăților Habitoo → PrimulAnunț.ro) vine
- * într-un pas următor. Până atunci publicarea raportează clar ce lipsește, fără
- * să trimită nimic la portal.
+ * Builder-ul real: citește proprietatea din DB și o trece prin mapper-ul
+ * PrimulAnunț.ro. Nicio regulă de business aici — doar legătura dintre date și
+ * mapper.
  */
-const builderNotReady: PrimulAnuntListingBuilder = async () => ({
-  ok: false,
-  reasons: ["maparea proprietăților pentru PrimulAnunț.ro nu este încă disponibilă"],
-});
+export const buildPrimulAnuntListing: PrimulAnuntListingBuilder = async (ctx, ref) => {
+  const [{ loadPrimulAnuntMapperInput }, { mapPropertyToPrimulAnunt }] = await Promise.all([
+    import("../primulanunt/loadProperty.server"),
+    import("../primulanunt/mapper"),
+  ]);
 
-export const primulanuntAdapter: PortalAdapter = createPrimulAnuntAdapter(builderNotReady);
+  const loaded = await loadPrimulAnuntMapperInput(ref.propertyId, {
+    organizationId: ctx.organizationId,
+  });
+  if (!loaded.ok) return { ok: false, reasons: loaded.reasons };
+
+  const mapped = await mapPropertyToPrimulAnunt(loaded.property, loaded.context);
+  if (!mapped.ok) return { ok: false, reasons: mapped.reasons };
+
+  return { ok: true, dto: mapped.dto, warnings: mapped.warnings };
+};
+
+/** Adaptorul înregistrat, alimentat cu date reale din baza de date. */
+export const primulanuntAdapter: PortalAdapter = createPrimulAnuntAdapter(buildPrimulAnuntListing);
