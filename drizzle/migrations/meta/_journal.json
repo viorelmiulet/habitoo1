@@ -589,6 +589,13 @@
       "when": 1790228057736,
       "tag": "0083_properties_floor_surface_sync",
       "breakpoints": true
+    },
+    {
+      "idx": 84,
+      "version": "7",
+      "when": 1790278505934,
+      "tag": "0084_email_thread_reopen_and_resolve",
+      "breakpoints": true
     }
   ]
 }
