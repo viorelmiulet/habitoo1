@@ -12,6 +12,7 @@
  *     instead of racing a SELECT-then-INSERT.
  */
 import { deriveThreadKey, normalizeSubject, safeLogFields } from "@/lib/mailgun";
+import { SUBJECT_FALLBACK_MAX_AGE_DAYS } from "@/lib/mail-thread-rules";
 
 type Db = Awaited<typeof import("@/integrations/supabase/client.server")>["supabaseAdmin"];
 
@@ -74,11 +75,15 @@ export async function resolveThread(
     counterpart: input.counterpart,
   });
 
-  const { data, error } = await db.rpc("email_thread_upsert", {
+  // Subject fallback (see `pickThread` in mail-thread-rules.ts): only when the
+  // counterpart already participates and the thread is younger than 30 days.
+  const { data, error } = await db.rpc("email_thread_resolve", {
     _mailbox_id: input.mailboxId,
     _participants: Array.from(new Set(input.participants.filter((v) => !!v))),
     _subject: normalizeSubject(input.subject),
     _subject_key: subjectKey,
+    _counterpart: input.counterpart ?? "",
+    _max_age_days: SUBJECT_FALLBACK_MAX_AGE_DAYS,
   });
 
   if (error || !data) {
