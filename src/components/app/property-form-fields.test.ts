@@ -39,6 +39,12 @@ describe("caracteristicile proprietății", () => {
         expect(detailsFields).toContain('setField("property_type", v)');
         continue;
       }
+      // Etajul are o componentă dedicată (listă + „Număr etaj” la nevoie).
+      if (column === "floor_label") {
+        expect(detailsFields).toContain("<FloorField ctx={ctx} />");
+        expect(detailsFields.match(/<FloorField /g) ?? []).toHaveLength(1);
+        continue;
+      }
       expect(occurrences).toHaveLength(1);
     }
   });
