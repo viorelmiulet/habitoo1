@@ -7425,6 +7425,17 @@ export type Database = {
         }[]
       }
       email_thread_refresh: { Args: { _thread_id: string }; Returns: undefined }
+      email_thread_resolve: {
+        Args: {
+          _counterpart: string
+          _mailbox_id: string
+          _max_age_days?: number
+          _participants: string[]
+          _subject: string
+          _subject_key: string
+        }
+        Returns: string
+      }
       email_thread_upsert: {
         Args: {
           _mailbox_id: string

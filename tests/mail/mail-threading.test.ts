@@ -36,7 +36,7 @@ describe("outbound threading", () => {
       participants: ["contact@clickimob.ro", "someone@example.com"],
     });
     expect(threadId).toBe("thread-1");
-    expect(fake.rpcCalls[0]?.name).toBe("email_thread_upsert");
+    expect(fake.rpcCalls[0]?.name).toBe("email_thread_resolve");
   });
 
   test("the derived key is deterministic — same conversation, same key", async () => {

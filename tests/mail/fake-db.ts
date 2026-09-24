@@ -64,7 +64,7 @@ export function makeFakeDb(options: {
       if (options.rpc) return options.rpc(name, args);
       // Threading is resolved through this RPC on every send; the default
       // answer keeps unrelated tests focused on what they assert.
-      if (name === "email_thread_upsert") return { data: "thread-default", error: null };
+      if (name === "email_thread_resolve") return { data: "thread-default", error: null };
       return { data: null, error: null };
     },
     storage: {
