@@ -215,9 +215,32 @@ async function status(
 
 /* --------------------------------- scriere -------------------------------- */
 
+/** Eroare aruncată de codul nostru, nu de portal: HTTP, timeout și rețea rămân generice. */
+function isInternalFailure(error: unknown, code: string): boolean {
+  if (code !== "PORTAL_ERROR") return false;
+  if (error && typeof error === "object" && (error as { name?: string }).name === "PortalError") {
+    return false;
+  }
+  return true;
+}
+
+/** Mesaj intern pentru jurnal: fără chei, tokenuri sau antete de autorizare. */
+export function sanitizeInternalError(error: unknown): string {
+  const raw =
+    error instanceof Error
+      ? `${error.name}: ${error.message}`
+      : typeof error === "string"
+        ? error
+        : "Unknown error";
+  return raw
+    .replace(/Bearer\s+[A-Za-z0-9._~+/=-]+/gi, "Bearer [redacted]")
+    .replace(/(api[_-]?key|token|secret|password|authorization)\s*[:=]\s*\S+/gi, "$1=[redacted]")
+    .slice(0, 500);
+}
+
 type WriteMode = "create" | "update";
 
-async function sendOffer(input: {
+export async function sendOffer(input: {
   ctx: PortalContext;
   config: LaCheieRequestConfig;
   settings: LaCheieSettings;
@@ -253,7 +276,7 @@ async function sendOffer(input: {
   })();
 
   const attemptSend = async (sourceVersion: string) =>
-    laCheieRequest(config, { method: "PUT", path, body, sourceVersion });
+    laCheieRequest(config, { method: "PUT", path, body: offerBody, sourceVersion });
 
   let response = await attemptSend(version);
 
@@ -352,8 +375,11 @@ async function sendOffer(input: {
     acceptedVersion: version,
   });
 
-  const body = (response.body ?? {}) as Record<string, unknown>;
-  const echo = (body["offer"] ?? body["data"] ?? body) as Record<string, unknown>;
+  const responseBody = (response.body ?? {}) as Record<string, unknown>;
+  const echo = (responseBody["offer"] ?? responseBody["data"] ?? responseBody) as Record<
+    string,
+    unknown
+  >;
   const publicUrl =
     typeof echo["url"] === "string"
       ? echo["url"]
@@ -459,6 +485,11 @@ async function push(
       code: normalized.code,
       message: normalized.message,
       detail: normalized.detail,
+      // O eroare internă (nu HTTP/timeout/rețea) ajunge în jurnal cu mesajul
+      // ei real, sanitizat; utilizatorul vede în continuare mesajul generic.
+      ...(isInternalFailure(error, normalized.code)
+        ? { portalResponse: { internal_error: sanitizeInternalError(error) } }
+        : {}),
     };
   }
 
