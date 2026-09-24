@@ -55,6 +55,7 @@ import {
   windowOptions,
 } from "@/lib/property-taxonomy";
 import { propertyTypeLabels } from "@/lib/labels";
+import { floorNumberRequired, syncFloor } from "@/lib/property-floor";
 import { useMemo, useRef } from "react";
 
 export type PropertyDetailsValue = Record<string, unknown>;
@@ -81,6 +82,7 @@ type FieldCtx = {
   arr: (key: string) => string[];
   bool: (key: string) => boolean;
   setField: (key: string, v: unknown) => void;
+  setFields: (patch: PropertyDetailsValue) => void;
   toggleInArray: (key: string, option: string, checked: boolean) => void;
 };
 
@@ -141,6 +143,57 @@ function NumberField({
         value={ctx.str(field)}
         onChange={(e) => ctx.setField(field, e.target.value === "" ? null : Number(e.target.value))}
       />
+    </div>
+  );
+}
+
+/**
+ * Etajul: doar lista de etichete. `floor` se calculează imediat cu `syncFloor`
+ * (la fel ca triggerul); numărul se cere doar pentru etichetele fără număr fix.
+ */
+function FloorField({ ctx }: { ctx: FieldCtx }) {
+  const label = ctx.str("floor_label");
+  const needsNumber = floorNumberRequired(label || null);
+  return (
+    <div className="space-y-2">
+      <Label htmlFor={`${ctx.idPrefix}-floor_label`}>Etaj</Label>
+      <Select
+        value={label || NONE}
+        onValueChange={(v) => {
+          const next = v === NONE ? null : v;
+          const current = ctx.str("floor");
+          const synced = syncFloor(next, current === "" ? null : Number(current));
+          ctx.setFields({ floor_label: next, floor: next ? synced.floor : null });
+        }}
+      >
+        <SelectTrigger id={`${ctx.idPrefix}-floor_label`}>
+          <SelectValue placeholder="Selectează" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value={NONE}>Nespecificat</SelectItem>
+          {floorLabelOptions.map((o) => (
+            <SelectItem key={o} value={o}>
+              {o}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+      {needsNumber ? (
+        <div className="space-y-1 pt-1">
+          <Label htmlFor={`${ctx.idPrefix}-floor`}>Număr etaj</Label>
+          <Input
+            id={`${ctx.idPrefix}-floor`}
+            type="number"
+            inputMode="numeric"
+            min={-5}
+            required
+            value={ctx.str("floor")}
+            onChange={(e) =>
+              ctx.setField("floor", e.target.value === "" ? null : Number(e.target.value))
+            }
+          />
+        </div>
+      ) : null}
     </div>
   );
 }
@@ -264,6 +317,7 @@ export function PropertyDetailsFields({ idPrefix = "det", value, onChange }: Pro
       arr,
       bool: (key: string) => valueRef.current[key] === true,
       setField: (key: string, v: unknown) => changeRef.current({ [key]: v }),
+      setFields: (patch: PropertyDetailsValue) => changeRef.current(patch),
       toggleInArray: (key: string, option: string, checked: boolean) => {
         const current = arr(key);
         const next = checked
@@ -309,8 +363,7 @@ export function PropertyDetailsFields({ idPrefix = "det", value, onChange }: Pro
             <NumberField ctx={ctx} field="bathrooms" label="Băi" />
             <NumberField ctx={ctx} field="balconies" label="Balcoane" />
             <NumberField ctx={ctx} field="terraces" label="Terase" />
-            <SelectField ctx={ctx} field="floor_label" label="Etaj" options={floorLabelOptions} />
-            <NumberField ctx={ctx} field="floor" label="Etaj (număr)" min={-5} />
+            <FloorField ctx={ctx} />
             <SelectField ctx={ctx} field="orientation" label="Orientare" options={orientationOptions} />
             <NumberField ctx={ctx} field="build_year" label="An construcție" />
             <NumberField ctx={ctx} field="renovation_year" label="Anul renovării" />
@@ -332,8 +385,7 @@ export function PropertyDetailsFields({ idPrefix = "det", value, onChange }: Pro
         <AccordionTrigger className="text-sm font-medium">Suprafețe</AccordionTrigger>
         <AccordionContent>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            <NumberField ctx={ctx} field="surface" label="Suprafață utilă (m²)" />
-            <NumberField ctx={ctx} field="usable_surface" label="Utilă (m²)" />
+            <NumberField ctx={ctx} field="usable_surface" label="Suprafață utilă (m²)" />
             <NumberField ctx={ctx} field="built_surface" label="Construită (m²)" />
             <NumberField ctx={ctx} field="total_usable_surface" label="Utilă totală (m²)" />
             <NumberField ctx={ctx} field="balcony_surface" label="Balcoane (m²)" />

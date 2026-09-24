@@ -50,3 +50,10 @@ export function syncSurface(p: {
 }): number | null {
   return p.usable_surface ?? p.built_surface ?? p.land_surface ?? p.surface;
 }
+
+/** „Număr etaj” apare (și e obligatoriu) doar pentru etichete fără număr fix. */
+export function floorNumberRequired(label: string | null): boolean {
+  const l = label?.trim();
+  if (!l) return false;
+  return (FLOOR_LABEL_NUMBER as Record<string, number | null | undefined>)[l] === null;
+}
