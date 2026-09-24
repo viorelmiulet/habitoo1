@@ -16,10 +16,10 @@ const detailsFields = readFileSync("src/components/app/PropertyDetailsFields.tsx
 /** Coloanele mutate din secțiunea de tranzacție în „Detalii complete”. */
 const movedColumns = [
   "property_type",
-  "surface",
+  "usable_surface",
   "rooms",
   "bathrooms",
-  "floor",
+  "floor_label",
   "build_year",
   "features",
 ] as const;
@@ -37,6 +37,12 @@ describe("caracteristicile proprietății", () => {
       // `property_type` este un Select scris explicit, nu prin `field="..."`.
       if (column === "property_type") {
         expect(detailsFields).toContain('setField("property_type", v)');
+        continue;
+      }
+      // Etajul are o componentă dedicată (listă + „Număr etaj” la nevoie).
+      if (column === "floor_label") {
+        expect(detailsFields).toContain("<FloorField ctx={ctx} />");
+        expect(detailsFields.match(/<FloorField /g) ?? []).toHaveLength(1);
         continue;
       }
       expect(occurrences).toHaveLength(1);
