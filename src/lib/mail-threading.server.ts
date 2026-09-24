@@ -7,7 +7,7 @@
  *     `email_messages.provider_message_id` (and `message_id_header`), so a reply
  *     always lands on the thread of the message it answers;
  *  2. deterministic key fallback — `deriveThreadKey()` (subject + counterpart),
- *     resolved through `email_thread_upsert()`, whose `ON CONFLICT
+ *     resolved through `email_thread_resolve()` (participant + 30-day guard), serialized by an advisory lock `ON CONFLICT
  *     (mailbox_id, subject_key)` makes concurrent callers converge on ONE row
  *     instead of racing a SELECT-then-INSERT.
  */
