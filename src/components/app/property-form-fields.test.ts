@@ -16,10 +16,10 @@ const detailsFields = readFileSync("src/components/app/PropertyDetailsFields.tsx
 /** Coloanele mutate din secțiunea de tranzacție în „Detalii complete”. */
 const movedColumns = [
   "property_type",
-  "surface",
+  "usable_surface",
   "rooms",
   "bathrooms",
-  "floor",
+  "floor_label",
   "build_year",
   "features",
 ] as const;
