@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AccesContRouteImport } from './routes/acces-cont'
+import { Route as AnunturiProprietariRouteImport } from './routes/anunturi-proprietari'
 import { Route as ConfidentialitateRouteImport } from './routes/confidentialitate'
 import { Route as ContactRouteImport } from './routes/contact'
 import { Route as DespreRouteImport } from './routes/despre'
@@ -115,6 +116,11 @@ const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
 const AccesContRoute = AccesContRouteImport.update({
   id: '/acces-cont',
   path: '/acces-cont',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AnunturiProprietariRoute = AnunturiProprietariRouteImport.update({
+  id: '/anunturi-proprietari',
+  path: '/anunturi-proprietari',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ConfidentialitateRoute = ConfidentialitateRouteImport.update({
@@ -625,6 +631,7 @@ const ApiPublicPortalV1StoriaOauthCallbackRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/acces-cont': typeof AccesContRoute
+  '/anunturi-proprietari': typeof AnunturiProprietariRoute
   '/confidentialitate': typeof ConfidentialitateRoute
   '/contact': typeof ContactRoute
   '/despre': typeof DespreRoute
@@ -719,6 +726,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/acces-cont': typeof AccesContRoute
+  '/anunturi-proprietari': typeof AnunturiProprietariRoute
   '/confidentialitate': typeof ConfidentialitateRoute
   '/contact': typeof ContactRoute
   '/despre': typeof DespreRoute
@@ -813,6 +821,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/acces-cont': typeof AccesContRoute
+  '/anunturi-proprietari': typeof AnunturiProprietariRoute
   '/confidentialitate': typeof ConfidentialitateRoute
   '/contact': typeof ContactRoute
   '/despre': typeof DespreRoute
@@ -909,6 +918,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/acces-cont'
+    | '/anunturi-proprietari'
     | '/confidentialitate'
     | '/contact'
     | '/despre'
@@ -1003,6 +1013,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/acces-cont'
+    | '/anunturi-proprietari'
     | '/confidentialitate'
     | '/contact'
     | '/despre'
@@ -1096,6 +1107,7 @@ export interface FileRouteTypes {
     | '/'
     | '/_authenticated'
     | '/acces-cont'
+    | '/anunturi-proprietari'
     | '/confidentialitate'
     | '/contact'
     | '/despre'
@@ -1192,6 +1204,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AccesContRoute: typeof AccesContRoute
+  AnunturiProprietariRoute: typeof AnunturiProprietariRoute
   ConfidentialitateRoute: typeof ConfidentialitateRoute
   ContactRoute: typeof ContactRoute
   DespreRoute: typeof DespreRoute
@@ -1256,6 +1269,13 @@ declare module '@tanstack/react-router' {
       path: '/acces-cont'
       fullPath: '/acces-cont'
       preLoaderRoute: typeof AccesContRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/anunturi-proprietari': {
+      id: '/anunturi-proprietari'
+      path: '/anunturi-proprietari'
+      fullPath: '/anunturi-proprietari'
+      preLoaderRoute: typeof AnunturiProprietariRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/confidentialitate': {
@@ -2076,6 +2096,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AccesContRoute: AccesContRoute,
+  AnunturiProprietariRoute: AnunturiProprietariRoute,
   ConfidentialitateRoute: ConfidentialitateRoute,
   ContactRoute: ContactRoute,
   DespreRoute: DespreRoute,
