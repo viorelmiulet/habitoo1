@@ -1,11 +1,20 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ExternalLink, MapPin, Phone } from "lucide-react";
+import { useMemo, useState } from "react";
+import { ExternalLink, MapPin, Phone, Search } from "lucide-react";
 import { PublicLayout } from "@/components/marketing/PublicLayout";
 import { Container, Section } from "@/components/marketing/Section";
 import { publicHead } from "@/components/marketing/public-head";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { getOwnerListings, type OwnerListing } from "@/lib/listings.functions";
 
 const TITLE = "Anunțuri Proprietari — Habitoo CRM";
