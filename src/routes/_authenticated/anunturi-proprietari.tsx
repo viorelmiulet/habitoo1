@@ -454,6 +454,7 @@ function applyFilters(listings: OwnerListing[], filters: Filters): OwnerListing[
 function ListingsPage() {
   const listings = Route.useLoaderData();
   const [filters, setFilters] = useState<Filters>(EMPTY_FILTERS);
+  const [selected, setSelected] = useState<OwnerListing | null>(null);
   const filtered = useMemo(() => applyFilters(listings, filters), [listings, filters]);
   const hasActiveFilters =
     filters.q !== "" ||
@@ -588,12 +589,14 @@ function ListingsPage() {
           ) : (
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
               {filtered.map((listing) => (
-                <ListingCard key={listing.id} listing={listing} />
+                <ListingCard key={listing.id} listing={listing} onSelect={setSelected} />
               ))}
             </div>
           )}
         </Container>
       </Section>
+
+      <ListingDetailsDialog listing={selected} onClose={() => setSelected(null)} />
     </PublicLayout>
   );
 }
