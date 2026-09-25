@@ -59,6 +59,16 @@ import { appHead } from "@/components/app/app-head";
 import { formatDateTime } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import {
+  AlertDialog,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
   createMailbox,
   deleteMailDraft,
   getAttachmentUrl,
@@ -66,11 +76,15 @@ import {
   getMailMessages,
   getThread,
   getThreads,
+  previewMailPurge,
+  purgeMailThreads,
   replyMail,
+  restoreMailThreads,
   saveMailDraft,
   sendMail,
   setMailThreadRead,
   setMailThreadStatus,
+  trashMailThreads,
   updateMailbox,
   uploadMailAttachment,
 } from "@/lib/mail-center.functions";
@@ -86,7 +100,8 @@ export const Route = createFileRoute("/_authenticated/superadmin/mail")({
   component: SuperadminMailPage,
 });
 
-type Folder = "open" | "archived" | "spam" | "sent" | "draft";
+type Folder = "open" | "archived" | "spam" | "trash" | "sent" | "draft";
+type ThreadFolder = "open" | "archived" | "spam" | "trash";
 
 const FOLDERS: { id: Folder; label: string; icon: typeof Inbox }[] = [
   { id: "open", label: "Primite", icon: Inbox },
@@ -94,7 +109,85 @@ const FOLDERS: { id: Folder; label: string; icon: typeof Inbox }[] = [
   { id: "draft", label: "Ciorne", icon: Mail },
   { id: "archived", label: "Arhivate", icon: Archive },
   { id: "spam", label: "Spam", icon: AlertOctagon },
+  { id: "trash", label: "Coș", icon: Trash2 },
 ];
+
+type PurgeRequest = { threadIds: string[] } | { all: true };
+
+/** Confirmation with exact counts, computed on the server, before any deletion. */
+function PurgeDialog({
+  request,
+  mailboxId,
+  onClose,
+  onDone,
+}: {
+  request: PurgeRequest | null;
+  mailboxId: string | null;
+  onClose: () => void;
+  onDone: () => void;
+}) {
+  const preview = useServerFn(previewMailPurge);
+  const purge = useServerFn(purgeMailThreads);
+  const [busy, setBusy] = useState(false);
+  const query = useQuery({
+    queryKey: ["mail", "purge-preview", request, mailboxId],
+    queryFn: () =>
+      preview({
+        data: "all" in (request ?? {}) ? { all: true, mailboxId } : { ...(request as object) },
+      }),
+    enabled: !!request,
+    staleTime: 0,
+    gcTime: 0,
+  });
+  const info = query.data;
+
+  const confirm = async () => {
+    if (!info?.ok || !info.threadIds.length) return;
+    setBusy(true);
+    try {
+      const res = await purge({ data: { threadIds: info.threadIds } });
+      if (!res.ok) toast.error(res.error ?? "Ștergerea a eșuat. Nimic nu a fost șters.");
+      else {
+        toast.success(
+          `Șterse definitiv: ${res.threads} conversații, ${res.messages} mesaje.`,
+        );
+        onDone();
+      }
+    } finally {
+      setBusy(false);
+      onClose();
+    }
+  };
+
+  return (
+    <AlertDialog open={!!request} onOpenChange={(open) => !open && !busy && onClose()}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Ștergere definitivă</AlertDialogTitle>
+          <AlertDialogDescription>
+            {query.isLoading
+              ? "Se numără conversațiile…"
+              : !info?.ok
+                ? (info?.error ?? "Nu se poate calcula ce va fi șters.")
+                : !info.threads
+                  ? "Coșul este gol."
+                  : `Vor fi șterse definitiv ${info.threads} conversații și ${info.messages} mesaje, împreună cu atașamentele lor. Acțiunea nu poate fi anulată.`}
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel disabled={busy}>Anulează</AlertDialogCancel>
+          <Button
+            variant="destructive"
+            disabled={busy || !info?.ok || !info.threads}
+            onClick={confirm}
+          >
+            {busy && <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />} Șterge definitiv
+          </Button>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  );
+}
 
 const DELIVERY_LABELS: Record<string, string> = {
   queued: "În coadă",
