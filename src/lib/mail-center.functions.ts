@@ -31,6 +31,14 @@ import {
   updateMailbox as updateMailboxMutation,
 } from "@/lib/mail-center-admin.server";
 import { stageOutboundAttachment } from "@/lib/mail-outbound.server";
+import {
+  PURGE_MAX_THREADS,
+  previewPurge,
+  purgeThreads,
+  restoreThreads,
+  trashThreads,
+  trashedThreadIds,
+} from "@/lib/mail-trash.server";
 
 const DENIED = "Acces refuzat: acțiunea este permisă exclusiv superadminului.";
 
@@ -115,7 +123,7 @@ export const getThreads = createServerFn({ method: "POST" })
     z
       .object({
         mailboxId: uuid.nullable().optional(),
-        status: z.enum(THREAD_STATUSES).default("open"),
+        status: z.enum([...THREAD_STATUSES, "trash"]).default("open"),
         page: z.number().int().min(0).max(500).default(0),
         unreadOnly: z.boolean().optional(),
         hasAttachments: z.boolean().nullable().optional(),
@@ -241,6 +249,59 @@ export const setMailThreadStatus = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const db = await admin(context as never);
     return setThreadStatus(db, data.threadId, data.status);
+  });
+
+/* ------------------------------------------------------------------ */
+/* Trash (Coș)                                                         */
+/* ------------------------------------------------------------------ */
+
+const threadIdList = z.array(uuid).min(1).max(PURGE_MAX_THREADS);
+
+export const trashMailThreads = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) => z.object({ threadIds: threadIdList }).parse(input))
+  .handler(async ({ data, context }) => {
+    const db = await admin(context as never);
+    return trashThreads(db, data.threadIds);
+  });
+
+export const restoreMailThreads = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) => z.object({ threadIds: threadIdList }).parse(input))
+  .handler(async ({ data, context }) => {
+    const db = await admin(context as never);
+    return restoreThreads(db, data.threadIds);
+  });
+
+/** Counts for the confirmation dialog; `all` = the whole trash (Golește coșul). */
+export const previewMailPurge = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) =>
+    z
+      .object({
+        threadIds: z.array(uuid).max(PURGE_MAX_THREADS).optional(),
+        all: z.boolean().optional(),
+        mailboxId: uuid.nullable().optional(),
+      })
+      .parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    const db = await admin(context as never);
+    const ids = data.all
+      ? await trashedThreadIds(db, data.mailboxId ?? null)
+      : (data.threadIds ?? []);
+    if (data.all && !ids.length) {
+      return { ok: true, threads: 0, messages: 0, threadIds: [], error: null };
+    }
+    return previewPurge(db, ids);
+  });
+
+export const purgeMailThreads = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) => z.object({ threadIds: threadIdList }).parse(input))
+  .handler(async ({ data, context }) => {
+    const db = await admin(context as never);
+    return purgeThreads(db, data.threadIds, context.userId);
   });
 
 export const setMailThreadRead = createServerFn({ method: "POST" })
