@@ -160,8 +160,76 @@ function ListingCard({ listing }: { listing: OwnerListing }) {
   );
 }
 
+const TRANSACTION_FILTERS: Record<string, string[] | null> = {
+  all: null,
+  sale: ["sale", "vânzare", "vanzare"],
+  rent: ["rent", "închiriere", "inchiriere"],
+};
+
+type Filters = {
+  q: string;
+  source: string;
+  transaction: string;
+  priceMin: string;
+  priceMax: string;
+  rooms: string;
+};
+
+const EMPTY_FILTERS: Filters = {
+  q: "",
+  source: "all",
+  transaction: "all",
+  priceMin: "",
+  priceMax: "",
+  rooms: "all",
+};
+
+function applyFilters(listings: OwnerListing[], filters: Filters): OwnerListing[] {
+  const q = filters.q.trim().toLowerCase();
+  const min = filters.priceMin.trim() === "" ? null : Number(filters.priceMin);
+  const max = filters.priceMax.trim() === "" ? null : Number(filters.priceMax);
+  const transactionValues = TRANSACTION_FILTERS[filters.transaction] ?? null;
+  const roomsMin = filters.rooms === "all" || filters.rooms === "" ? null : Number(filters.rooms);
+
+  return listings.filter((listing) => {
+    if (q) {
+      const haystack = `${listing.title ?? ""} ${listing.location ?? ""}`.toLowerCase();
+      if (!haystack.includes(q)) return false;
+    }
+    if (filters.source !== "all" && listing.source !== filters.source) return false;
+    if (transactionValues) {
+      if (!listing.transactionType || !transactionValues.includes(listing.transactionType)) {
+        return false;
+      }
+    }
+    if (listing.price !== null) {
+      if (min !== null && !Number.isNaN(min) && listing.price < min) return false;
+      if (max !== null && !Number.isNaN(max) && listing.price > max) return false;
+    }
+    if (roomsMin !== null) {
+      if (listing.rooms === null) return false;
+      if (filters.rooms === "4+") {
+        if (listing.rooms < 4) return false;
+      } else if (listing.rooms !== roomsMin) {
+        return false;
+      }
+    }
+    return true;
+  });
+}
+
 function ListingsPage() {
   const listings = Route.useLoaderData();
+  const [filters, setFilters] = useState<Filters>(EMPTY_FILTERS);
+  const filtered = useMemo(() => applyFilters(listings, filters), [listings, filters]);
+  const hasActiveFilters = filters !== EMPTY_FILTERS && applyFilters(listings, filters).length !== listings.length
+    ? true
+    : filters.q !== "" ||
+      filters.source !== "all" ||
+      filters.transaction !== "all" ||
+      filters.priceMin !== "" ||
+      filters.priceMax !== "" ||
+      filters.rooms !== "all";
 
   return (
     <PublicLayout>
@@ -183,13 +251,111 @@ function ListingsPage() {
 
       <Section>
         <Container>
+          <div className="mb-6 grid grid-cols-1 gap-3 rounded-lg border border-border bg-card p-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+            <div className="relative xl:col-span-2">
+              <Search
+                className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
+                aria-hidden
+              />
+              <Input
+                value={filters.q}
+                onChange={(event) => setFilters((f) => ({ ...f, q: event.target.value }))}
+                placeholder="Caută după titlu sau locație…"
+                className="pl-9"
+                maxLength={200}
+                aria-label="Căutare text"
+              />
+            </div>
+            <Select
+              value={filters.source}
+              onValueChange={(value) => setFilters((f) => ({ ...f, source: value }))}
+            >
+              <SelectTrigger aria-label="Sursă">
+                <SelectValue placeholder="Sursă" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Toate sursele</SelectItem>
+                <SelectItem value="storia">Storia</SelectItem>
+                <SelectItem value="imobiliare">Imobiliare</SelectItem>
+                <SelectItem value="olx">OLX</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select
+              value={filters.transaction}
+              onValueChange={(value) => setFilters((f) => ({ ...f, transaction: value }))}
+            >
+              <SelectTrigger aria-label="Tip tranzacție">
+                <SelectValue placeholder="Tip tranzacție" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Toate tranzacțiile</SelectItem>
+                <SelectItem value="sale">Vânzare</SelectItem>
+                <SelectItem value="rent">Închiriere</SelectItem>
+              </SelectContent>
+            </Select>
+            <div className="flex items-center gap-2">
+              <Input
+                type="number"
+                min={0}
+                value={filters.priceMin}
+                onChange={(event) => setFilters((f) => ({ ...f, priceMin: event.target.value }))}
+                placeholder="Preț min"
+                aria-label="Preț minim"
+              />
+              <Input
+                type="number"
+                min={0}
+                value={filters.priceMax}
+                onChange={(event) => setFilters((f) => ({ ...f, priceMax: event.target.value }))}
+                placeholder="Preț max"
+                aria-label="Preț maxim"
+              />
+            </div>
+            <div className="flex items-center gap-2">
+              <Select
+                value={filters.rooms}
+                onValueChange={(value) => setFilters((f) => ({ ...f, rooms: value }))}
+              >
+                <SelectTrigger aria-label="Camere" className="flex-1">
+                  <SelectValue placeholder="Camere" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Toate camerele</SelectItem>
+                  <SelectItem value="1">1 cameră</SelectItem>
+                  <SelectItem value="2">2 camere</SelectItem>
+                  <SelectItem value="3">3 camere</SelectItem>
+                  <SelectItem value="4+">4+ camere</SelectItem>
+                </SelectContent>
+              </Select>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setFilters(EMPTY_FILTERS)}
+                disabled={!hasActiveFilters}
+              >
+                Resetează filtrele
+              </Button>
+            </div>
+          </div>
+
+          <p className="mb-4 text-sm text-muted-foreground" aria-live="polite">
+            {filtered.length === listings.length
+              ? `${listings.length} ${listings.length === 1 ? "anunț" : "anunțuri"}`
+              : `${filtered.length} din ${listings.length} ${listings.length === 1 ? "anunț" : "anunțuri"} găsite`}
+          </p>
+
           {listings.length === 0 ? (
             <p className="text-muted-foreground">
               Deocamdată nu există anunțuri de la proprietari. Revino curând.
             </p>
+          ) : filtered.length === 0 ? (
+            <p className="text-muted-foreground">
+              Niciun anunț nu corespunde filtrelor curente. Încearcă să le relaxezi sau apasă
+              „Resetează filtrele”.
+            </p>
           ) : (
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-              {listings.map((listing) => (
+              {filtered.map((listing) => (
                 <ListingCard key={listing.id} listing={listing} />
               ))}
             </div>
