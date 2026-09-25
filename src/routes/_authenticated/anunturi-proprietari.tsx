@@ -239,6 +239,160 @@ function ListingCard({
   );
 }
 
+function StatBox({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-lg border border-border bg-muted/40 px-3 py-2">
+      <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+        {label}
+      </p>
+      <p className="mt-0.5 text-sm font-semibold">{value}</p>
+    </div>
+  );
+}
+
+function ListingDetailContent({ listing }: { listing: OwnerListing }) {
+  const title = listing.title?.trim() || "Anunț fără titlu";
+  const location = [listing.location, listing.county].filter(Boolean).join(", ");
+  const transaction = listing.transactionType
+    ? TRANSACTION_LABELS[listing.transactionType] ?? listing.transactionType
+    : null;
+  const type = propertyTypeLabel(listing.propertyType);
+  const description = listing.description?.trim() || null;
+  const pricePerM2 =
+    listing.pricePerM2 !== null && listing.surface !== null
+      ? `${formatMoney(listing.pricePerM2, listing.currency)}/m²`
+      : null;
+
+  return (
+    <div className="space-y-5">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <Badge variant="secondary">{sourceLabel(listing.source)}</Badge>
+        <span className="text-xs text-muted-foreground" suppressHydrationWarning>
+          Scrapat {formatRelative(listing.scrapedAt)}
+        </span>
+      </div>
+
+      <div className="space-y-1.5">
+        <h2 className="text-lg font-semibold leading-snug">{title}</h2>
+        <p className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-muted-foreground">
+          {transaction ? <span>{transaction}</span> : null}
+          {transaction && type ? <span aria-hidden>·</span> : null}
+          {type ? <span>{type}</span> : null}
+          {listing.ownerType === "persoana_fizica" ? (
+            <>
+              {(transaction || type) && <span aria-hidden>·</span>}
+              <span>Proprietar</span>
+            </>
+          ) : null}
+        </p>
+      </div>
+
+      <div>
+        <p className="text-2xl font-bold tracking-tight text-primary">
+          {formatMoney(listing.price, listing.currency)}
+        </p>
+        {pricePerM2 ? (
+          <p className="mt-0.5 text-xs text-muted-foreground">{pricePerM2}</p>
+        ) : null}
+      </div>
+
+      <div className="grid grid-cols-3 gap-2">
+        <StatBox label="Camere" value={listing.rooms === null ? "—" : String(listing.rooms)} />
+        <StatBox
+          label="Suprafață"
+          value={listing.surface === null ? "—" : `${listing.surface} m²`}
+        />
+        <StatBox label="Etaj" value={listing.floor?.trim() || "—"} />
+      </div>
+
+      {location ? (
+        <p className="flex items-start gap-1.5 text-sm">
+          <MapPin className="mt-0.5 size-4 shrink-0 text-muted-foreground" aria-hidden />
+          <span>{location}</span>
+        </p>
+      ) : null}
+
+      {description ? (
+        <div className="space-y-1.5">
+          <h3 className="text-sm font-semibold">Descriere</h3>
+          <p className="whitespace-pre-line text-sm leading-relaxed text-foreground/90">
+            {description}
+          </p>
+        </div>
+      ) : null}
+
+      {listing.phone ? (
+        <div className="flex flex-wrap items-center gap-3 rounded-lg border border-border bg-muted/40 px-3 py-2.5">
+          <p className="flex min-w-0 items-center gap-2 text-sm">
+            <Phone className="size-4 shrink-0 text-muted-foreground" aria-hidden />
+            <span className="truncate font-medium">{listing.phone}</span>
+          </p>
+          <Button asChild size="sm" className="ml-auto shrink-0">
+            <a href={`tel:${listing.phone}`}>
+              <Phone className="size-4" aria-hidden />
+              Sună
+            </a>
+          </Button>
+        </div>
+      ) : null}
+
+      {listing.url ? (
+        <Button asChild className="w-full">
+          <a href={listing.url} target="_blank" rel="noopener noreferrer">
+            Deschide anunțul original
+            <ExternalLink className="size-4" aria-hidden />
+          </a>
+        </Button>
+      ) : (
+        <Button variant="outline" disabled className="w-full">
+          Link anunț indisponibil
+        </Button>
+      )}
+    </div>
+  );
+}
+
+function ListingDetailsDialog({
+  listing,
+  onClose,
+}: {
+  listing: OwnerListing | null;
+  onClose: () => void;
+}) {
+  const isMobile = useIsMobile();
+  const open = listing !== null;
+
+  if (isMobile) {
+    return (
+      <Sheet open={open} onOpenChange={(next) => !next && onClose()}>
+        <SheetContent side="bottom" className="max-h-[88vh] overflow-y-auto rounded-t-2xl">
+          <SheetHeader className="sr-only">
+            <SheetTitle>Detalii anunț</SheetTitle>
+            <SheetDescription>Informațiile complete ale anunțului selectat</SheetDescription>
+          </SheetHeader>
+          {listing ? (
+            <div className="px-1 pb-4">
+              <ListingDetailContent listing={listing} />
+            </div>
+          ) : null}
+        </SheetContent>
+      </Sheet>
+    );
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={(next) => !next && onClose()}>
+      <DialogContent className="max-h-[85vh] max-w-lg overflow-y-auto">
+        <DialogHeader className="sr-only">
+          <DialogTitle>Detalii anunț</DialogTitle>
+          <DialogDescription>Informațiile complete ale anunțului selectat</DialogDescription>
+        </DialogHeader>
+        {listing ? <ListingDetailContent listing={listing} /> : null}
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 const TRANSACTION_FILTERS: Record<string, string[] | null> = {
   all: null,
   sale: ["sale", "vânzare", "vanzare"],
