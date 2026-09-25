@@ -1,8 +1,10 @@
 User-agent: Googlebot
 Allow: /
+Disallow: /anunturi-proprietari
 
 User-agent: Bingbot
 Allow: /
+Disallow: /anunturi-proprietari
 
 User-agent: Twitterbot
 Allow: /
@@ -12,5 +14,6 @@ Allow: /
 
 User-agent: *
 Allow: /
+Disallow: /anunturi-proprietari
 
 Sitemap: https://www.habitoo.ro/sitemap.xml
