@@ -133,7 +133,10 @@ function PurgeDialog({
     queryKey: ["mail", "purge-preview", request, mailboxId],
     queryFn: () =>
       preview({
-        data: "all" in (request ?? {}) ? { all: true, mailboxId } : { ...(request as object) },
+        data:
+          request && "all" in request
+            ? { all: true, mailboxId }
+            : { threadIds: request?.threadIds ?? [] },
       }),
     enabled: !!request,
     staleTime: 0,
@@ -674,15 +677,22 @@ function ThreadList({
   page,
   setPage,
   onOpen,
+  onChanged,
 }: {
   mailboxId: string | null;
-  status: "open" | "archived" | "spam";
+  status: ThreadFolder;
   filters: MailFilters;
   page: number;
   setPage: (p: number) => void;
   onOpen: (threadId: string) => void;
+  onChanged: () => void;
 }) {
   const load = useServerFn(getThreads);
+  const trash = useServerFn(trashMailThreads);
+  const restore = useServerFn(restoreMailThreads);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [purgeRequest, setPurgeRequest] = useState<PurgeRequest | null>(null);
+  const [busy, setBusy] = useState(false);
   const args = {
     mailboxId,
     status,
@@ -699,6 +709,10 @@ function ThreadList({
     enabled: !!mailboxId,
   });
 
+  // Selecția nu supraviețuiește schimbării de dosar, pagină sau filtre.
+  const argsKey = JSON.stringify(args);
+  useEffect(() => setSelected(new Set()), [argsKey]);
+
   if (query.isError) return <QueryError error={query.error} onRetry={() => query.refetch()} />;
   if (query.isLoading) return <InlineLoading label="Se încarcă conversațiile…" />;
 
@@ -712,18 +726,109 @@ function ThreadList({
     filters.from ||
     filters.to
   );
+  const ids = [...selected];
+  const allSelected = threads.length > 0 && threads.every((t) => selected.has(t.id));
+
+  const run = async (action: "trash" | "restore") => {
+    setBusy(true);
+    try {
+      const fn = action === "trash" ? trash : restore;
+      const res = await fn({ data: { threadIds: ids } });
+      if (!res.ok) toast.error(res.error ?? "Acțiunea a eșuat.");
+      else {
+        toast.success(
+          action === "trash"
+            ? `${res.count} conversații mutate în Coș.`
+            : `${res.count} conversații restaurate.`,
+        );
+        setSelected(new Set());
+        onChanged();
+      }
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const toolbar = (
+    <div className="flex flex-wrap items-center gap-2">
+      {threads.length > 0 && (
+        <label className="flex items-center gap-2 px-1 text-sm text-muted-foreground">
+          <Checkbox
+            checked={allSelected}
+            onCheckedChange={(v) =>
+              setSelected(v ? new Set(threads.map((t) => t.id)) : new Set())
+            }
+            aria-label="Selectează toate"
+          />
+          {ids.length ? `${ids.length} selectate` : "Selectează"}
+        </label>
+      )}
+      {status !== "trash" ? (
+        <Button
+          variant="outline"
+          size="sm"
+          disabled={!ids.length || busy}
+          onClick={() => run("trash")}
+        >
+          <Trash2 className="mr-1.5 h-4 w-4" /> Șterge
+        </Button>
+      ) : (
+        <>
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={!ids.length || busy}
+            onClick={() => run("restore")}
+          >
+            <ArchiveRestore className="mr-1.5 h-4 w-4" /> Restaurează
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={!ids.length || busy}
+            onClick={() => setPurgeRequest({ threadIds: ids })}
+          >
+            <Trash2 className="mr-1.5 h-4 w-4" /> Șterge definitiv
+          </Button>
+          <Button
+            variant="destructive"
+            size="sm"
+            className="ml-auto"
+            disabled={!total || busy}
+            onClick={() => setPurgeRequest({ all: true })}
+          >
+            Golește coșul
+          </Button>
+        </>
+      )}
+    </div>
+  );
+
+  const dialog = (
+    <PurgeDialog
+      request={purgeRequest}
+      mailboxId={mailboxId}
+      onClose={() => setPurgeRequest(null)}
+      onDone={() => {
+        setSelected(new Set());
+        onChanged();
+      }}
+    />
+  );
 
   if (!threads.length) {
     return (
       <EmptyState
-        icon={Inbox}
+        icon={status === "trash" ? Trash2 : Inbox}
         title={filtered ? "Nicio conversație găsită" : "Nicio conversație"}
         description={
           filtered
             ? "Încearcă alt text de căutare sau golește filtrele."
             : status === "open"
               ? "Emailurile primite vor apărea aici."
-              : "Nimic în acest dosar."
+              : status === "trash"
+                ? "Coșul este gol."
+                : "Nimic în acest dosar."
         }
       />
     );
@@ -731,9 +836,22 @@ function ThreadList({
 
   return (
     <div className="space-y-2">
+      {toolbar}
       <div className="overflow-hidden rounded-xl border border-border bg-surface">
         {threads.map((t, i) => (
-          <ThreadRow key={t.id} thread={t} first={i === 0} onOpen={() => onOpen(t.id)} />
+          <ThreadRow
+            key={t.id}
+            thread={t}
+            first={i === 0}
+            onOpen={() => onOpen(t.id)}
+            selected={selected.has(t.id)}
+            onSelect={(on) => {
+              const next = new Set(selected);
+              if (on) next.add(t.id);
+              else next.delete(t.id);
+              setSelected(next);
+            }}
+          />
         ))}
       </div>
       {totalPages > 1 && (
@@ -761,6 +879,7 @@ function ThreadList({
           </div>
         </div>
       )}
+      {dialog}
     </div>
   );
 }
@@ -769,10 +888,14 @@ function ThreadRow({
   thread,
   first,
   onOpen,
+  selected,
+  onSelect,
 }: {
   thread: MailThreadListItem;
   first: boolean;
   onOpen: () => void;
+  selected: boolean;
+  onSelect: (on: boolean) => void;
 }) {
   const counterpart =
     thread.participants.find((p) => !p.endsWith("@mail.habitoo.ro")) ??
@@ -780,53 +903,65 @@ function ThreadRow({
     "—";
   const unread = thread.unread_count > 0;
   return (
-    <button
-      type="button"
-      onClick={onOpen}
+    <div
       className={cn(
-        "flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-muted/60",
+        "flex w-full items-center gap-3 px-4 py-3 transition-colors hover:bg-muted/60",
         !first && "border-t border-border",
       )}
     >
-      <span
-        className={cn(
-          "flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-xs font-semibold",
-          unread ? "bg-accent/20 text-accent-foreground" : "bg-muted text-muted-foreground",
-        )}
+      <Checkbox
+        checked={selected}
+        onCheckedChange={(v) => onSelect(v === true)}
+        aria-label="Selectează conversația"
+      />
+      <button
+        type="button"
+        onClick={onOpen}
+        className="flex min-w-0 flex-1 items-center gap-3 text-left"
       >
-        {counterpart.slice(0, 2).toUpperCase()}
-      </span>
-      <span className="min-w-0 flex-1">
-        <span className="flex items-center gap-2">
-          <span
-            className={cn(
-              "truncate text-sm",
-              unread ? "font-semibold text-foreground" : "font-medium text-foreground/90",
-            )}
-          >
-            {counterpart}
-          </span>
-          {unread && (
-            <Badge className="bg-accent text-accent-foreground">{thread.unread_count} noi</Badge>
-          )}
-          {thread.has_attachments && <Paperclip className="h-3.5 w-3.5 text-muted-foreground" />}
-        </span>
         <span
           className={cn(
-            "block truncate text-sm",
-            unread ? "font-medium text-foreground" : "text-muted-foreground",
+            "flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-xs font-semibold",
+            unread ? "bg-accent/20 text-accent-foreground" : "bg-muted text-muted-foreground",
           )}
         >
-          {thread.subject || "(fără subiect)"}
+          {counterpart.slice(0, 2).toUpperCase()}
         </span>
-        {thread.preview && (
-          <span className="block truncate text-xs text-muted-foreground">{thread.preview}</span>
-        )}
-      </span>
-      <span className="shrink-0 text-xs text-muted-foreground">
-        {thread.last_message_at ? formatDateTime(thread.last_message_at) : ""}
-      </span>
-    </button>
+        <span className="min-w-0 flex-1">
+          <span className="flex items-center gap-2">
+            <span
+              className={cn(
+                "truncate text-sm",
+                unread ? "font-semibold text-foreground" : "font-medium text-foreground/90",
+              )}
+            >
+              {counterpart}
+            </span>
+            {unread && (
+              <Badge className="bg-accent text-accent-foreground">{thread.unread_count} noi</Badge>
+            )}
+            {thread.has_attachments && <Paperclip className="h-3.5 w-3.5 text-muted-foreground" />}
+          </span>
+          <span
+            className={cn(
+              "block truncate text-sm",
+              unread ? "font-medium text-foreground" : "text-muted-foreground",
+            )}
+          >
+            {thread.subject || "(fără subiect)"}
+          </span>
+          {thread.preview && (
+            <span className="block truncate text-xs text-muted-foreground">{thread.preview}</span>
+          )}
+        </span>
+        <span className="shrink-0 text-right text-xs text-muted-foreground">
+          {thread.last_message_at ? formatDateTime(thread.last_message_at) : ""}
+          {thread.trashed_at && (
+            <span className="block">Mutată în Coș: {formatDateTime(thread.trashed_at)}</span>
+          )}
+        </span>
+      </button>
+    </div>
   );
 }
 
