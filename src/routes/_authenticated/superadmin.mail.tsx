@@ -59,6 +59,16 @@ import { appHead } from "@/components/app/app-head";
 import { formatDateTime } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import {
+  AlertDialog,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
   createMailbox,
   deleteMailDraft,
   getAttachmentUrl,
@@ -66,11 +76,15 @@ import {
   getMailMessages,
   getThread,
   getThreads,
+  previewMailPurge,
+  purgeMailThreads,
   replyMail,
+  restoreMailThreads,
   saveMailDraft,
   sendMail,
   setMailThreadRead,
   setMailThreadStatus,
+  trashMailThreads,
   updateMailbox,
   uploadMailAttachment,
 } from "@/lib/mail-center.functions";
@@ -86,7 +100,8 @@ export const Route = createFileRoute("/_authenticated/superadmin/mail")({
   component: SuperadminMailPage,
 });
 
-type Folder = "open" | "archived" | "spam" | "sent" | "draft";
+type Folder = "open" | "archived" | "spam" | "trash" | "sent" | "draft";
+type ThreadFolder = "open" | "archived" | "spam" | "trash";
 
 const FOLDERS: { id: Folder; label: string; icon: typeof Inbox }[] = [
   { id: "open", label: "Primite", icon: Inbox },
@@ -94,7 +109,88 @@ const FOLDERS: { id: Folder; label: string; icon: typeof Inbox }[] = [
   { id: "draft", label: "Ciorne", icon: Mail },
   { id: "archived", label: "Arhivate", icon: Archive },
   { id: "spam", label: "Spam", icon: AlertOctagon },
+  { id: "trash", label: "Coș", icon: Trash2 },
 ];
+
+type PurgeRequest = { threadIds: string[] } | { all: true };
+
+/** Confirmation with exact counts, computed on the server, before any deletion. */
+function PurgeDialog({
+  request,
+  mailboxId,
+  onClose,
+  onDone,
+}: {
+  request: PurgeRequest | null;
+  mailboxId: string | null;
+  onClose: () => void;
+  onDone: () => void;
+}) {
+  const preview = useServerFn(previewMailPurge);
+  const purge = useServerFn(purgeMailThreads);
+  const [busy, setBusy] = useState(false);
+  const query = useQuery({
+    queryKey: ["mail", "purge-preview", request, mailboxId],
+    queryFn: () =>
+      preview({
+        data:
+          request && "all" in request
+            ? { all: true, mailboxId }
+            : { threadIds: request?.threadIds ?? [] },
+      }),
+    enabled: !!request,
+    staleTime: 0,
+    gcTime: 0,
+  });
+  const info = query.data;
+
+  const confirm = async () => {
+    if (!info?.ok || !info.threadIds.length) return;
+    setBusy(true);
+    try {
+      const res = await purge({ data: { threadIds: info.threadIds } });
+      if (!res.ok) toast.error(res.error ?? "Ștergerea a eșuat. Nimic nu a fost șters.");
+      else {
+        toast.success(
+          `Șterse definitiv: ${res.threads} conversații, ${res.messages} mesaje.`,
+        );
+        onDone();
+      }
+    } finally {
+      setBusy(false);
+      onClose();
+    }
+  };
+
+  return (
+    <AlertDialog open={!!request} onOpenChange={(open) => !open && !busy && onClose()}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Ștergere definitivă</AlertDialogTitle>
+          <AlertDialogDescription>
+            {query.isLoading
+              ? "Se numără conversațiile…"
+              : !info?.ok
+                ? (info?.error ?? "Nu se poate calcula ce va fi șters.")
+                : !info.threads
+                  ? "Coșul este gol."
+                  : `Vor fi șterse definitiv ${info.threads} conversații și ${info.messages} mesaje, împreună cu atașamentele lor. Acțiunea nu poate fi anulată.`}
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel disabled={busy}>Anulează</AlertDialogCancel>
+          <Button
+            variant="destructive"
+            disabled={busy || !info?.ok || !info.threads}
+            onClick={confirm}
+          >
+            {busy && <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />} Șterge definitiv
+          </Button>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  );
+}
 
 const DELIVERY_LABELS: Record<string, string> = {
   queued: "În coadă",
@@ -539,6 +635,7 @@ function SuperadminMailPage() {
                 page={page}
                 setPage={setPage}
                 onOpen={(id) => setSelectedThread(id)}
+                onChanged={refreshAll}
               />
             )}
           </div>
@@ -581,15 +678,22 @@ function ThreadList({
   page,
   setPage,
   onOpen,
+  onChanged,
 }: {
   mailboxId: string | null;
-  status: "open" | "archived" | "spam";
+  status: ThreadFolder;
   filters: MailFilters;
   page: number;
   setPage: (p: number) => void;
   onOpen: (threadId: string) => void;
+  onChanged: () => void;
 }) {
   const load = useServerFn(getThreads);
+  const trash = useServerFn(trashMailThreads);
+  const restore = useServerFn(restoreMailThreads);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [purgeRequest, setPurgeRequest] = useState<PurgeRequest | null>(null);
+  const [busy, setBusy] = useState(false);
   const args = {
     mailboxId,
     status,
@@ -606,6 +710,10 @@ function ThreadList({
     enabled: !!mailboxId,
   });
 
+  // Selecția nu supraviețuiește schimbării de dosar, pagină sau filtre.
+  const argsKey = JSON.stringify(args);
+  useEffect(() => setSelected(new Set()), [argsKey]);
+
   if (query.isError) return <QueryError error={query.error} onRetry={() => query.refetch()} />;
   if (query.isLoading) return <InlineLoading label="Se încarcă conversațiile…" />;
 
@@ -619,18 +727,109 @@ function ThreadList({
     filters.from ||
     filters.to
   );
+  const ids = [...selected];
+  const allSelected = threads.length > 0 && threads.every((t) => selected.has(t.id));
+
+  const run = async (action: "trash" | "restore") => {
+    setBusy(true);
+    try {
+      const fn = action === "trash" ? trash : restore;
+      const res = await fn({ data: { threadIds: ids } });
+      if (!res.ok) toast.error(res.error ?? "Acțiunea a eșuat.");
+      else {
+        toast.success(
+          action === "trash"
+            ? `${res.count} conversații mutate în Coș.`
+            : `${res.count} conversații restaurate.`,
+        );
+        setSelected(new Set());
+        onChanged();
+      }
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const toolbar = (
+    <div className="flex flex-wrap items-center gap-2">
+      {threads.length > 0 && (
+        <label className="flex items-center gap-2 px-1 text-sm text-muted-foreground">
+          <Checkbox
+            checked={allSelected}
+            onCheckedChange={(v) =>
+              setSelected(v ? new Set(threads.map((t) => t.id)) : new Set())
+            }
+            aria-label="Selectează toate"
+          />
+          {ids.length ? `${ids.length} selectate` : "Selectează"}
+        </label>
+      )}
+      {status !== "trash" ? (
+        <Button
+          variant="outline"
+          size="sm"
+          disabled={!ids.length || busy}
+          onClick={() => run("trash")}
+        >
+          <Trash2 className="mr-1.5 h-4 w-4" /> Șterge
+        </Button>
+      ) : (
+        <>
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={!ids.length || busy}
+            onClick={() => run("restore")}
+          >
+            <ArchiveRestore className="mr-1.5 h-4 w-4" /> Restaurează
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={!ids.length || busy}
+            onClick={() => setPurgeRequest({ threadIds: ids })}
+          >
+            <Trash2 className="mr-1.5 h-4 w-4" /> Șterge definitiv
+          </Button>
+          <Button
+            variant="destructive"
+            size="sm"
+            className="ml-auto"
+            disabled={!total || busy}
+            onClick={() => setPurgeRequest({ all: true })}
+          >
+            Golește coșul
+          </Button>
+        </>
+      )}
+    </div>
+  );
+
+  const dialog = (
+    <PurgeDialog
+      request={purgeRequest}
+      mailboxId={mailboxId}
+      onClose={() => setPurgeRequest(null)}
+      onDone={() => {
+        setSelected(new Set());
+        onChanged();
+      }}
+    />
+  );
 
   if (!threads.length) {
     return (
       <EmptyState
-        icon={Inbox}
+        icon={status === "trash" ? Trash2 : Inbox}
         title={filtered ? "Nicio conversație găsită" : "Nicio conversație"}
         description={
           filtered
             ? "Încearcă alt text de căutare sau golește filtrele."
             : status === "open"
               ? "Emailurile primite vor apărea aici."
-              : "Nimic în acest dosar."
+              : status === "trash"
+                ? "Coșul este gol."
+                : "Nimic în acest dosar."
         }
       />
     );
@@ -638,9 +837,22 @@ function ThreadList({
 
   return (
     <div className="space-y-2">
+      {toolbar}
       <div className="overflow-hidden rounded-xl border border-border bg-surface">
         {threads.map((t, i) => (
-          <ThreadRow key={t.id} thread={t} first={i === 0} onOpen={() => onOpen(t.id)} />
+          <ThreadRow
+            key={t.id}
+            thread={t}
+            first={i === 0}
+            onOpen={() => onOpen(t.id)}
+            selected={selected.has(t.id)}
+            onSelect={(on) => {
+              const next = new Set(selected);
+              if (on) next.add(t.id);
+              else next.delete(t.id);
+              setSelected(next);
+            }}
+          />
         ))}
       </div>
       {totalPages > 1 && (
@@ -668,6 +880,7 @@ function ThreadList({
           </div>
         </div>
       )}
+      {dialog}
     </div>
   );
 }
@@ -676,10 +889,14 @@ function ThreadRow({
   thread,
   first,
   onOpen,
+  selected,
+  onSelect,
 }: {
   thread: MailThreadListItem;
   first: boolean;
   onOpen: () => void;
+  selected: boolean;
+  onSelect: (on: boolean) => void;
 }) {
   const counterpart =
     thread.participants.find((p) => !p.endsWith("@mail.habitoo.ro")) ??
@@ -687,53 +904,65 @@ function ThreadRow({
     "—";
   const unread = thread.unread_count > 0;
   return (
-    <button
-      type="button"
-      onClick={onOpen}
+    <div
       className={cn(
-        "flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-muted/60",
+        "flex w-full items-center gap-3 px-4 py-3 transition-colors hover:bg-muted/60",
         !first && "border-t border-border",
       )}
     >
-      <span
-        className={cn(
-          "flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-xs font-semibold",
-          unread ? "bg-accent/20 text-accent-foreground" : "bg-muted text-muted-foreground",
-        )}
+      <Checkbox
+        checked={selected}
+        onCheckedChange={(v) => onSelect(v === true)}
+        aria-label="Selectează conversația"
+      />
+      <button
+        type="button"
+        onClick={onOpen}
+        className="flex min-w-0 flex-1 items-center gap-3 text-left"
       >
-        {counterpart.slice(0, 2).toUpperCase()}
-      </span>
-      <span className="min-w-0 flex-1">
-        <span className="flex items-center gap-2">
-          <span
-            className={cn(
-              "truncate text-sm",
-              unread ? "font-semibold text-foreground" : "font-medium text-foreground/90",
-            )}
-          >
-            {counterpart}
-          </span>
-          {unread && (
-            <Badge className="bg-accent text-accent-foreground">{thread.unread_count} noi</Badge>
-          )}
-          {thread.has_attachments && <Paperclip className="h-3.5 w-3.5 text-muted-foreground" />}
-        </span>
         <span
           className={cn(
-            "block truncate text-sm",
-            unread ? "font-medium text-foreground" : "text-muted-foreground",
+            "flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-xs font-semibold",
+            unread ? "bg-accent/20 text-accent-foreground" : "bg-muted text-muted-foreground",
           )}
         >
-          {thread.subject || "(fără subiect)"}
+          {counterpart.slice(0, 2).toUpperCase()}
         </span>
-        {thread.preview && (
-          <span className="block truncate text-xs text-muted-foreground">{thread.preview}</span>
-        )}
-      </span>
-      <span className="shrink-0 text-xs text-muted-foreground">
-        {thread.last_message_at ? formatDateTime(thread.last_message_at) : ""}
-      </span>
-    </button>
+        <span className="min-w-0 flex-1">
+          <span className="flex items-center gap-2">
+            <span
+              className={cn(
+                "truncate text-sm",
+                unread ? "font-semibold text-foreground" : "font-medium text-foreground/90",
+              )}
+            >
+              {counterpart}
+            </span>
+            {unread && (
+              <Badge className="bg-accent text-accent-foreground">{thread.unread_count} noi</Badge>
+            )}
+            {thread.has_attachments && <Paperclip className="h-3.5 w-3.5 text-muted-foreground" />}
+          </span>
+          <span
+            className={cn(
+              "block truncate text-sm",
+              unread ? "font-medium text-foreground" : "text-muted-foreground",
+            )}
+          >
+            {thread.subject || "(fără subiect)"}
+          </span>
+          {thread.preview && (
+            <span className="block truncate text-xs text-muted-foreground">{thread.preview}</span>
+          )}
+        </span>
+        <span className="shrink-0 text-right text-xs text-muted-foreground">
+          {thread.last_message_at ? formatDateTime(thread.last_message_at) : ""}
+          {thread.trashed_at && (
+            <span className="block">Mutată în Coș: {formatDateTime(thread.trashed_at)}</span>
+          )}
+        </span>
+      </button>
+    </div>
   );
 }
 
@@ -1001,6 +1230,22 @@ function ThreadView({
     }
   };
 
+  const trashFn = useServerFn(trashMailThreads);
+  const restoreFn = useServerFn(restoreMailThreads);
+  const [purgeOpen, setPurgeOpen] = useState(false);
+  const trashAction = async (action: "trash" | "restore") => {
+    const fn = action === "trash" ? trashFn : restoreFn;
+    const res = await fn({ data: { threadIds: [threadId] } });
+    if (!res.ok) toast.error(res.error ?? "Acțiunea a eșuat.");
+    else {
+      toast.success(
+        action === "trash" ? "Conversația a fost mutată în Coș." : "Conversația a fost restaurată.",
+      );
+      onChanged();
+      onBack();
+    }
+  };
+
   const downloadAttachment = async (attachmentId: string) => {
     const res = await getUrl({ data: { attachmentId } });
     if (res.error || !res.url) toast.error(res.error ?? "Linkul nu a putut fi generat.");
@@ -1019,7 +1264,16 @@ function ThreadView({
         <h2 className="min-w-0 flex-1 truncate text-base font-semibold">
           {thread.subject || "(fără subiect)"}
         </h2>
-        {thread.status !== "open" ? (
+        {thread.status === "trash" ? (
+          <>
+            <Button variant="outline" size="sm" onClick={() => trashAction("restore")}>
+              <ArchiveRestore className="mr-1.5 h-4 w-4" /> Restaurează
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => setPurgeOpen(true)}>
+              <Trash2 className="mr-1.5 h-4 w-4" /> Șterge definitiv
+            </Button>
+          </>
+        ) : thread.status !== "open" ? (
           <Button variant="outline" size="sm" onClick={() => changeStatus("open")}>
             <ArchiveRestore className="mr-1.5 h-4 w-4" /> Redeschide
           </Button>
@@ -1033,6 +1287,20 @@ function ThreadView({
             </Button>
           </>
         )}
+        {thread.status !== "trash" && (
+          <Button variant="outline" size="sm" onClick={() => trashAction("trash")}>
+            <Trash2 className="mr-1.5 h-4 w-4" /> Șterge
+          </Button>
+        )}
+        <PurgeDialog
+          request={purgeOpen ? { threadIds: [threadId] } : null}
+          mailboxId={thread.mailbox_id}
+          onClose={() => setPurgeOpen(false)}
+          onDone={() => {
+            onChanged();
+            onBack();
+          }}
+        />
         <Button
           variant="outline"
           size="sm"

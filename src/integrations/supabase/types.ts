@@ -2453,9 +2453,11 @@ export type Database = {
           mailbox_id: string
           message_count: number
           participants: string[]
+          previous_status: string | null
           status: string
           subject: string | null
           subject_key: string
+          trashed_at: string | null
           unread_count: number
           updated_at: string
         }
@@ -2467,9 +2469,11 @@ export type Database = {
           mailbox_id: string
           message_count?: number
           participants?: string[]
+          previous_status?: string | null
           status?: string
           subject?: string | null
           subject_key: string
+          trashed_at?: string | null
           unread_count?: number
           updated_at?: string
         }
@@ -2481,9 +2485,11 @@ export type Database = {
           mailbox_id?: string
           message_count?: number
           participants?: string[]
+          previous_status?: string | null
           status?: string
           subject?: string | null
           subject_key?: string
+          trashed_at?: string | null
           unread_count?: number
           updated_at?: string
         }
@@ -7445,6 +7451,15 @@ export type Database = {
         }
         Returns: string
       }
+      email_threads_purge: {
+        Args: { _actor: string; _thread_ids: string[] }
+        Returns: Json
+      }
+      email_threads_restore: {
+        Args: { _thread_ids: string[] }
+        Returns: number
+      }
+      email_threads_trash: { Args: { _thread_ids: string[] }; Returns: number }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]

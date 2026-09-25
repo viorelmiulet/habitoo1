@@ -138,10 +138,12 @@ export async function setThreadStatus(
   threadId: string,
   status: ThreadStatus,
 ): Promise<{ ok: boolean; error: string | null }> {
+  // Trash has its own path (remembers the previous status); never bypass it.
   const { data, error } = await db
     .from("email_threads")
     .update({ status })
     .eq("id", threadId)
+    .neq("status", "trash")
     .select("id")
     .maybeSingle();
   if (error) {

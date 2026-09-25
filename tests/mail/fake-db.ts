@@ -21,6 +21,7 @@ export function makeFakeDb(options: {
   upload?: () => { error: unknown | null };
   download?: (path: string) => { data: unknown; error: unknown | null };
   move?: (from: string, to: string) => { error: unknown | null };
+  remove?: (paths: string[]) => { data: unknown; error: unknown | null };
 }): FakeDb {
   const calls: { table: string; ops: FakeOp[] }[] = [];
   const rpcCalls: { name: string; args: unknown }[] = [];
@@ -83,7 +84,7 @@ export function makeFakeDb(options: {
         },
         remove: async (paths: string[]) => {
           removals.push(paths);
-          return { data: null, error: null };
+          return options.remove ? options.remove(paths) : { data: null, error: null };
         },
         createSignedUrl: async (path: string) => ({
           data: { signedUrl: `https://signed.test/${path}` },
