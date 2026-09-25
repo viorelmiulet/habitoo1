@@ -1,6 +1,7 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { ExternalLink, MapPin, Phone, Search } from "lucide-react";
+import { ExternalLink, MapPin, Phone, RefreshCw, Search, SearchX, Sparkles } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 import { PublicLayout } from "@/components/marketing/PublicLayout";
 import { Container, Section } from "@/components/marketing/Section";
 import { publicHead } from "@/components/marketing/public-head";
@@ -47,6 +48,7 @@ export const Route = createFileRoute("/_authenticated/anunturi-proprietari")({
       noindex: true,
     }),
   loader: () => getOwnerListings(),
+  pendingComponent: ListingsSkeleton,
   errorComponent: ListingsError,
   notFoundComponent: ListingsError,
   component: ListingsPage,
@@ -121,6 +123,63 @@ function formatMoney(value: number | null, currency: string | null): string {
 
 function sourceLabel(source: string): string {
   return SOURCE_LABELS[source] ?? source;
+}
+
+function ListingsSkeletonGrid() {
+  return (
+    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+      {Array.from({ length: 8 }).map((_, index) => (
+        <Card key={index} className="flex h-full flex-col gap-0">
+          <CardHeader className="flex flex-row items-center justify-between gap-2 pb-3">
+            <Skeleton className="h-5 w-20" />
+            <Skeleton className="h-3 w-16" />
+          </CardHeader>
+          <CardContent className="flex flex-1 flex-col gap-3">
+            <div className="space-y-2">
+              <Skeleton className="h-5 w-11/12" />
+              <Skeleton className="h-5 w-2/3" />
+              <Skeleton className="h-3 w-16" />
+            </div>
+            <Skeleton className="h-7 w-28" />
+            <Skeleton className="h-4 w-24" />
+            <Skeleton className="h-4 w-full" />
+            <Skeleton className="h-4 w-3/4" />
+          </CardContent>
+          <CardFooter className="pt-3">
+            <Skeleton className="h-9 w-full" />
+          </CardFooter>
+        </Card>
+      ))}
+    </div>
+  );
+}
+
+function ListingsSkeleton() {
+  return (
+    <PublicLayout>
+      <section className="mk-hero-bg relative overflow-hidden border-b border-border">
+        <div
+          aria-hidden
+          className="mk-dots pointer-events-none absolute inset-0 [mask-image:radial-gradient(60%_60%_at_50%_0%,black,transparent)]"
+        />
+        <Container className="relative py-12 sm:py-16">
+          <Skeleton className="h-9 w-72 max-w-full" />
+          <Skeleton className="mt-3 h-4 w-full max-w-xl" />
+        </Container>
+      </section>
+      <Section>
+        <Container>
+          <div className="mb-6 grid grid-cols-1 gap-3 rounded-lg border border-border bg-card p-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+            {Array.from({ length: 5 }).map((_, index) => (
+              <Skeleton key={index} className="h-9 w-full" />
+            ))}
+          </div>
+          <Skeleton className="mb-4 h-4 w-32" />
+          <ListingsSkeletonGrid />
+        </Container>
+      </Section>
+    </PublicLayout>
+  );
 }
 
 function ListingsError() {
@@ -452,6 +511,7 @@ function applyFilters(listings: OwnerListing[], filters: Filters): OwnerListing[
 }
 
 function ListingsPage() {
+  const router = useRouter();
   const listings = Route.useLoaderData();
   const [filters, setFilters] = useState<Filters>(EMPTY_FILTERS);
   const [selected, setSelected] = useState<OwnerListing | null>(null);
@@ -578,14 +638,46 @@ function ListingsPage() {
           </p>
 
           {listings.length === 0 ? (
-            <p className="text-muted-foreground">
-              Deocamdată nu există anunțuri de la proprietari. Revino curând.
-            </p>
+            <div className="flex flex-col items-center gap-4 rounded-xl border border-dashed border-border bg-muted/30 px-6 py-14 text-center">
+              <div className="flex size-12 items-center justify-center rounded-full bg-muted">
+                <Sparkles className="size-6 text-muted-foreground" aria-hidden />
+              </div>
+              <div className="max-w-md space-y-1.5">
+                <h2 className="text-base font-semibold">
+                  Nu există anunțuri de proprietari încă
+                </h2>
+                <p className="text-sm text-muted-foreground">
+                  Rulează scraper-ul pentru a aduce primele anunțuri. Datele apar aici imediat după
+                  colectare.
+                </p>
+              </div>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => void router.invalidate()}
+                className="gap-2"
+              >
+                <RefreshCw className="size-4" aria-hidden />
+                Reîncearcă
+              </Button>
+            </div>
           ) : filtered.length === 0 ? (
-            <p className="text-muted-foreground">
-              Niciun anunț nu corespunde filtrelor curente. Încearcă să le relaxezi sau apasă
-              „Resetează filtrele”.
-            </p>
+            <div className="flex flex-col items-center gap-4 rounded-xl border border-dashed border-border bg-muted/30 px-6 py-14 text-center">
+              <div className="flex size-12 items-center justify-center rounded-full bg-muted">
+                <SearchX className="size-6 text-muted-foreground" aria-hidden />
+              </div>
+              <div className="max-w-md space-y-1.5">
+                <h2 className="text-base font-semibold">Niciun anunț nu corespunde filtrelor</h2>
+                <p className="text-sm text-muted-foreground">
+                  Încearcă să relaxezi filtrele sau șterge-le pe toate ca să vezi din nou lista
+                  completă.
+                </p>
+              </div>
+              <Button type="button" onClick={() => setFilters(EMPTY_FILTERS)} className="gap-2">
+                <RefreshCw className="size-4" aria-hidden />
+                Resetează filtrele
+              </Button>
+            </div>
           ) : (
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
               {filtered.map((listing) => (
