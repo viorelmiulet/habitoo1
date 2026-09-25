@@ -3004,6 +3004,87 @@ export type Database = {
           },
         ]
       }
+      listings: {
+        Row: {
+          county: string | null
+          currency: string | null
+          description: string | null
+          external_id: string
+          fingerprint: string | null
+          floor: string | null
+          id: string
+          images: string[] | null
+          is_owner: boolean | null
+          location: string | null
+          owner_type: string | null
+          phone: string | null
+          price: number | null
+          price_per_m2: number | null
+          property_type: string | null
+          published_at: string | null
+          raw_data: Json | null
+          rooms: number | null
+          scraped_at: string | null
+          source: string
+          surface: number | null
+          title: string | null
+          transaction_type: string | null
+          url: string | null
+        }
+        Insert: {
+          county?: string | null
+          currency?: string | null
+          description?: string | null
+          external_id: string
+          fingerprint?: string | null
+          floor?: string | null
+          id?: string
+          images?: string[] | null
+          is_owner?: boolean | null
+          location?: string | null
+          owner_type?: string | null
+          phone?: string | null
+          price?: number | null
+          price_per_m2?: number | null
+          property_type?: string | null
+          published_at?: string | null
+          raw_data?: Json | null
+          rooms?: number | null
+          scraped_at?: string | null
+          source: string
+          surface?: number | null
+          title?: string | null
+          transaction_type?: string | null
+          url?: string | null
+        }
+        Update: {
+          county?: string | null
+          currency?: string | null
+          description?: string | null
+          external_id?: string
+          fingerprint?: string | null
+          floor?: string | null
+          id?: string
+          images?: string[] | null
+          is_owner?: boolean | null
+          location?: string | null
+          owner_type?: string | null
+          phone?: string | null
+          price?: number | null
+          price_per_m2?: number | null
+          property_type?: string | null
+          published_at?: string | null
+          raw_data?: Json | null
+          rooms?: number | null
+          scraped_at?: string | null
+          source?: string
+          surface?: number | null
+          title?: string | null
+          transaction_type?: string | null
+          url?: string | null
+        }
+        Relationships: []
+      }
       mail_outbound_uploads: {
         Row: {
           consumed_at: string | null

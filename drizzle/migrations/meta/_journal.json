@@ -603,6 +603,13 @@
       "when": 1790305964246,
       "tag": "0085_email_threads_trash",
       "breakpoints": true
+    },
+    {
+      "idx": 86,
+      "version": "7",
+      "when": 1790362677884,
+      "tag": "0086_create_listings_table",
+      "breakpoints": true
     }
   ]
 }
