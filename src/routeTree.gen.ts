@@ -12,7 +12,6 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AccesContRouteImport } from './routes/acces-cont'
-import { Route as AnunturiProprietariRouteImport } from './routes/anunturi-proprietari'
 import { Route as ConfidentialitateRouteImport } from './routes/confidentialitate'
 import { Route as ContactRouteImport } from './routes/contact'
 import { Route as DespreRouteImport } from './routes/despre'
@@ -26,6 +25,7 @@ import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as SemnareRouteImport } from './routes/semnare'
 import { Route as TermeniRouteImport } from './routes/termeni'
 import { Route as TermeniSiConditiiRouteImport } from './routes/termeni-si-conditii'
+import { Route as AuthenticatedAnunturiProprietariRouteImport } from './routes/_authenticated/anunturi-proprietari'
 import { Route as AuthenticatedAppRouteImport } from './routes/_authenticated/app'
 import { Route as AuthenticatedOnboardingRouteImport } from './routes/_authenticated/onboarding'
 import { Route as AuthenticatedSuperadminRouteImport } from './routes/_authenticated/superadmin'
@@ -118,11 +118,6 @@ const AccesContRoute = AccesContRouteImport.update({
   path: '/acces-cont',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AnunturiProprietariRoute = AnunturiProprietariRouteImport.update({
-  id: '/anunturi-proprietari',
-  path: '/anunturi-proprietari',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const ConfidentialitateRoute = ConfidentialitateRouteImport.update({
   id: '/confidentialitate',
   path: '/confidentialitate',
@@ -189,6 +184,12 @@ const TermeniSiConditiiRoute = TermeniSiConditiiRouteImport.update({
   path: '/termeni-si-conditii',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedAnunturiProprietariRoute =
+  AuthenticatedAnunturiProprietariRouteImport.update({
+    id: '/anunturi-proprietari',
+    path: '/anunturi-proprietari',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedAppRoute = AuthenticatedAppRouteImport.update({
   id: '/app',
   path: '/app',
@@ -631,7 +632,6 @@ const ApiPublicPortalV1StoriaOauthCallbackRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/acces-cont': typeof AccesContRoute
-  '/anunturi-proprietari': typeof AnunturiProprietariRoute
   '/confidentialitate': typeof ConfidentialitateRoute
   '/contact': typeof ContactRoute
   '/despre': typeof DespreRoute
@@ -645,6 +645,7 @@ export interface FileRoutesByFullPath {
   '/semnare': typeof SemnareRoute
   '/termeni': typeof TermeniRoute
   '/termeni-si-conditii': typeof TermeniSiConditiiRoute
+  '/anunturi-proprietari': typeof AuthenticatedAnunturiProprietariRoute
   '/app': typeof AuthenticatedAppRouteWithChildren
   '/onboarding': typeof AuthenticatedOnboardingRoute
   '/superadmin': typeof AuthenticatedSuperadminRouteWithChildren
@@ -726,7 +727,6 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/acces-cont': typeof AccesContRoute
-  '/anunturi-proprietari': typeof AnunturiProprietariRoute
   '/confidentialitate': typeof ConfidentialitateRoute
   '/contact': typeof ContactRoute
   '/despre': typeof DespreRoute
@@ -740,6 +740,7 @@ export interface FileRoutesByTo {
   '/semnare': typeof SemnareRoute
   '/termeni': typeof TermeniRoute
   '/termeni-si-conditii': typeof TermeniSiConditiiRoute
+  '/anunturi-proprietari': typeof AuthenticatedAnunturiProprietariRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/oferta/$id': typeof OfertaIdRoute
@@ -821,7 +822,6 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/acces-cont': typeof AccesContRoute
-  '/anunturi-proprietari': typeof AnunturiProprietariRoute
   '/confidentialitate': typeof ConfidentialitateRoute
   '/contact': typeof ContactRoute
   '/despre': typeof DespreRoute
@@ -835,6 +835,7 @@ export interface FileRoutesById {
   '/semnare': typeof SemnareRoute
   '/termeni': typeof TermeniRoute
   '/termeni-si-conditii': typeof TermeniSiConditiiRoute
+  '/_authenticated/anunturi-proprietari': typeof AuthenticatedAnunturiProprietariRoute
   '/_authenticated/app': typeof AuthenticatedAppRouteWithChildren
   '/_authenticated/onboarding': typeof AuthenticatedOnboardingRoute
   '/_authenticated/superadmin': typeof AuthenticatedSuperadminRouteWithChildren
@@ -918,7 +919,6 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/acces-cont'
-    | '/anunturi-proprietari'
     | '/confidentialitate'
     | '/contact'
     | '/despre'
@@ -932,6 +932,7 @@ export interface FileRouteTypes {
     | '/semnare'
     | '/termeni'
     | '/termeni-si-conditii'
+    | '/anunturi-proprietari'
     | '/app'
     | '/onboarding'
     | '/superadmin'
@@ -1013,7 +1014,6 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/acces-cont'
-    | '/anunturi-proprietari'
     | '/confidentialitate'
     | '/contact'
     | '/despre'
@@ -1027,6 +1027,7 @@ export interface FileRouteTypes {
     | '/semnare'
     | '/termeni'
     | '/termeni-si-conditii'
+    | '/anunturi-proprietari'
     | '/onboarding'
     | '/auth/callback'
     | '/oferta/$id'
@@ -1107,7 +1108,6 @@ export interface FileRouteTypes {
     | '/'
     | '/_authenticated'
     | '/acces-cont'
-    | '/anunturi-proprietari'
     | '/confidentialitate'
     | '/contact'
     | '/despre'
@@ -1121,6 +1121,7 @@ export interface FileRouteTypes {
     | '/semnare'
     | '/termeni'
     | '/termeni-si-conditii'
+    | '/_authenticated/anunturi-proprietari'
     | '/_authenticated/app'
     | '/_authenticated/onboarding'
     | '/_authenticated/superadmin'
@@ -1204,7 +1205,6 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AccesContRoute: typeof AccesContRoute
-  AnunturiProprietariRoute: typeof AnunturiProprietariRoute
   ConfidentialitateRoute: typeof ConfidentialitateRoute
   ContactRoute: typeof ContactRoute
   DespreRoute: typeof DespreRoute
@@ -1269,13 +1269,6 @@ declare module '@tanstack/react-router' {
       path: '/acces-cont'
       fullPath: '/acces-cont'
       preLoaderRoute: typeof AccesContRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/anunturi-proprietari': {
-      id: '/anunturi-proprietari'
-      path: '/anunturi-proprietari'
-      fullPath: '/anunturi-proprietari'
-      preLoaderRoute: typeof AnunturiProprietariRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/confidentialitate': {
@@ -1368,6 +1361,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/termeni-si-conditii'
       preLoaderRoute: typeof TermeniSiConditiiRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/anunturi-proprietari': {
+      id: '/_authenticated/anunturi-proprietari'
+      path: '/anunturi-proprietari'
+      fullPath: '/anunturi-proprietari'
+      preLoaderRoute: typeof AuthenticatedAnunturiProprietariRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/app': {
       id: '/_authenticated/app'
@@ -2035,12 +2035,14 @@ const AuthenticatedSuperadminRouteWithChildren =
   )
 
 interface AuthenticatedRouteRouteChildren {
+  AuthenticatedAnunturiProprietariRoute: typeof AuthenticatedAnunturiProprietariRoute
   AuthenticatedAppRoute: typeof AuthenticatedAppRouteWithChildren
   AuthenticatedOnboardingRoute: typeof AuthenticatedOnboardingRoute
   AuthenticatedSuperadminRoute: typeof AuthenticatedSuperadminRouteWithChildren
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedAnunturiProprietariRoute: AuthenticatedAnunturiProprietariRoute,
   AuthenticatedAppRoute: AuthenticatedAppRouteWithChildren,
   AuthenticatedOnboardingRoute: AuthenticatedOnboardingRoute,
   AuthenticatedSuperadminRoute: AuthenticatedSuperadminRouteWithChildren,
@@ -2096,7 +2098,6 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AccesContRoute: AccesContRoute,
-  AnunturiProprietariRoute: AnunturiProprietariRoute,
   ConfidentialitateRoute: ConfidentialitateRoute,
   ContactRoute: ContactRoute,
   DespreRoute: DespreRoute,
