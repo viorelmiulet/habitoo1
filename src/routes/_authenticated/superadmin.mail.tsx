@@ -635,6 +635,7 @@ function SuperadminMailPage() {
                 page={page}
                 setPage={setPage}
                 onOpen={(id) => setSelectedThread(id)}
+                onChanged={refreshAll}
               />
             )}
           </div>
