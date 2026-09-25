@@ -7,6 +7,13 @@ import { publicHead } from "@/components/marketing/public-head";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -15,6 +22,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { getOwnerListings, type OwnerListing } from "@/lib/listings.functions";
 
 const TITLE = "Anunțuri Proprietari — Habitoo CRM";
@@ -49,6 +64,32 @@ const TRANSACTION_LABELS: Record<string, string> = {
   vânzare: "Vânzare",
   închiriere: "Închiriere",
 };
+
+const PROPERTY_TYPE_LABELS: Record<string, string> = {
+  apartament: "Apartament",
+  apartament2camere: "Apartament",
+  casa: "Casă",
+  casa_vila: "Casă / Vila",
+  vila: "Vilă",
+  teren: "Teren",
+  teren_intravilan: "Teren intravilan",
+  teren_extravilan: "Teren extravilan",
+  spatiu_comercial: "Spațiu comercial",
+  birou: "Birou",
+  garaj: "Garaj",
+  hala: "Hală",
+  duplex: "Duplex",
+  penthouse: "Penthouse",
+  studio: "Garsonieră",
+};
+
+function propertyTypeLabel(value: string | null): string | null {
+  if (!value) return null;
+  const mapped = PROPERTY_TYPE_LABELS[value.toLowerCase()];
+  if (mapped) return mapped;
+  const humanized = value.replace(/[_-]+/g, " ").trim();
+  return humanized ? humanized.charAt(0).toUpperCase() + humanized.slice(1) : null;
+}
 
 function formatRelative(iso: string | null): string {
   if (!iso) return "—";
