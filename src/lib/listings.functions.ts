@@ -13,6 +13,7 @@ export type OwnerListing = {
   pricePerM2: number | null;
   rooms: number | null;
   surface: number | null;
+  floor: string | null;
   location: string | null;
   county: string | null;
   propertyType: string | null;
@@ -20,6 +21,7 @@ export type OwnerListing = {
   ownerType: string | null;
   phone: string | null;
   url: string | null;
+  description: string | null;
   scrapedAt: string | null;
 };
 
@@ -29,7 +31,7 @@ export const getOwnerListings = createServerFn({ method: "GET" })
     const { data, error } = await context.supabase
       .from("listings")
       .select(
-        "id, source, title, price, currency, price_per_m2, rooms, surface, location, county, property_type, transaction_type, owner_type, phone, url, scraped_at",
+        "id, source, title, price, currency, price_per_m2, rooms, surface, floor, location, county, property_type, transaction_type, owner_type, phone, url, description, scraped_at",
       )
       .eq("is_owner", true)
       .order("scraped_at", { ascending: false })
@@ -46,6 +48,7 @@ export const getOwnerListings = createServerFn({ method: "GET" })
       pricePerM2: row.price_per_m2 === null ? null : Number(row.price_per_m2),
       rooms: row.rooms,
       surface: row.surface === null ? null : Number(row.surface),
+      floor: row.floor,
       location: row.location,
       county: row.county,
       propertyType: row.property_type,
@@ -53,6 +56,7 @@ export const getOwnerListings = createServerFn({ method: "GET" })
       ownerType: row.owner_type,
       phone: row.phone,
       url: row.url,
+      description: row.description,
       scrapedAt: row.scraped_at,
     }));
   });

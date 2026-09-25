@@ -7,6 +7,13 @@ import { publicHead } from "@/components/marketing/public-head";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -15,6 +22,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { getOwnerListings, type OwnerListing } from "@/lib/listings.functions";
 
 const TITLE = "Anunțuri Proprietari — Habitoo CRM";
@@ -49,6 +64,32 @@ const TRANSACTION_LABELS: Record<string, string> = {
   vânzare: "Vânzare",
   închiriere: "Închiriere",
 };
+
+const PROPERTY_TYPE_LABELS: Record<string, string> = {
+  apartament: "Apartament",
+  apartament2camere: "Apartament",
+  casa: "Casă",
+  casa_vila: "Casă / Vila",
+  vila: "Vilă",
+  teren: "Teren",
+  teren_intravilan: "Teren intravilan",
+  teren_extravilan: "Teren extravilan",
+  spatiu_comercial: "Spațiu comercial",
+  birou: "Birou",
+  garaj: "Garaj",
+  hala: "Hală",
+  duplex: "Duplex",
+  penthouse: "Penthouse",
+  studio: "Garsonieră",
+};
+
+function propertyTypeLabel(value: string | null): string | null {
+  if (!value) return null;
+  const mapped = PROPERTY_TYPE_LABELS[value.toLowerCase()];
+  if (mapped) return mapped;
+  const humanized = value.replace(/[_-]+/g, " ").trim();
+  return humanized ? humanized.charAt(0).toUpperCase() + humanized.slice(1) : null;
+}
 
 function formatRelative(iso: string | null): string {
   if (!iso) return "—";
@@ -100,7 +141,13 @@ function ListingsError() {
   );
 }
 
-function ListingCard({ listing }: { listing: OwnerListing }) {
+function ListingCard({
+  listing,
+  onSelect,
+}: {
+  listing: OwnerListing;
+  onSelect: (listing: OwnerListing) => void;
+}) {
   const title = listing.title?.trim() || "Anunț fără titlu";
   const location = [listing.location, listing.county].filter(Boolean).join(", ");
   const specs: string[] = [];
@@ -114,8 +161,22 @@ function ListingCard({ listing }: { listing: OwnerListing }) {
       ? `${formatMoney(listing.pricePerM2, listing.currency)}/m²`
       : null;
 
+  const openDetails = () => onSelect(listing);
+
   return (
-    <Card className="flex h-full flex-col gap-0 transition-shadow hover:shadow-md">
+    <Card
+      role="button"
+      tabIndex={0}
+      aria-label={`Deschide detaliile: ${title}`}
+      onClick={openDetails}
+      onKeyDown={(event) => {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          openDetails();
+        }
+      }}
+      className="flex h-full cursor-pointer flex-col gap-0 text-left transition-shadow hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+    >
       <CardHeader className="flex flex-row items-center justify-between gap-2 pb-3">
         <Badge variant="secondary">{sourceLabel(listing.source)}</Badge>
         <span className="text-xs text-muted-foreground" suppressHydrationWarning>
@@ -145,7 +206,11 @@ function ListingCard({ listing }: { listing: OwnerListing }) {
         {listing.phone ? (
           <p className="flex items-center gap-1.5 text-sm">
             <Phone className="size-4 shrink-0 text-muted-foreground" aria-hidden />
-            <a href={`tel:${listing.phone}`} className="text-primary underline-offset-2 hover:underline">
+            <a
+              href={`tel:${listing.phone}`}
+              onClick={(event) => event.stopPropagation()}
+              className="text-primary underline-offset-2 hover:underline"
+            >
               {listing.phone}
             </a>
           </p>
@@ -154,7 +219,12 @@ function ListingCard({ listing }: { listing: OwnerListing }) {
       <CardFooter className="pt-3">
         {listing.url ? (
           <Button asChild className="w-full">
-            <a href={listing.url} target="_blank" rel="noopener noreferrer">
+            <a
+              href={listing.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={(event) => event.stopPropagation()}
+            >
               Vezi anunțul
               <ExternalLink className="size-4" aria-hidden />
             </a>
@@ -166,6 +236,160 @@ function ListingCard({ listing }: { listing: OwnerListing }) {
         )}
       </CardFooter>
     </Card>
+  );
+}
+
+function StatBox({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-lg border border-border bg-muted/40 px-3 py-2">
+      <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+        {label}
+      </p>
+      <p className="mt-0.5 text-sm font-semibold">{value}</p>
+    </div>
+  );
+}
+
+function ListingDetailContent({ listing }: { listing: OwnerListing }) {
+  const title = listing.title?.trim() || "Anunț fără titlu";
+  const location = [listing.location, listing.county].filter(Boolean).join(", ");
+  const transaction = listing.transactionType
+    ? TRANSACTION_LABELS[listing.transactionType] ?? listing.transactionType
+    : null;
+  const type = propertyTypeLabel(listing.propertyType);
+  const description = listing.description?.trim() || null;
+  const pricePerM2 =
+    listing.pricePerM2 !== null && listing.surface !== null
+      ? `${formatMoney(listing.pricePerM2, listing.currency)}/m²`
+      : null;
+
+  return (
+    <div className="space-y-5">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <Badge variant="secondary">{sourceLabel(listing.source)}</Badge>
+        <span className="text-xs text-muted-foreground" suppressHydrationWarning>
+          Scrapat {formatRelative(listing.scrapedAt)}
+        </span>
+      </div>
+
+      <div className="space-y-1.5">
+        <h2 className="text-lg font-semibold leading-snug">{title}</h2>
+        <p className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-muted-foreground">
+          {transaction ? <span>{transaction}</span> : null}
+          {transaction && type ? <span aria-hidden>·</span> : null}
+          {type ? <span>{type}</span> : null}
+          {listing.ownerType === "persoana_fizica" ? (
+            <>
+              {(transaction || type) && <span aria-hidden>·</span>}
+              <span>Proprietar</span>
+            </>
+          ) : null}
+        </p>
+      </div>
+
+      <div>
+        <p className="text-2xl font-bold tracking-tight text-primary">
+          {formatMoney(listing.price, listing.currency)}
+        </p>
+        {pricePerM2 ? (
+          <p className="mt-0.5 text-xs text-muted-foreground">{pricePerM2}</p>
+        ) : null}
+      </div>
+
+      <div className="grid grid-cols-3 gap-2">
+        <StatBox label="Camere" value={listing.rooms === null ? "—" : String(listing.rooms)} />
+        <StatBox
+          label="Suprafață"
+          value={listing.surface === null ? "—" : `${listing.surface} m²`}
+        />
+        <StatBox label="Etaj" value={listing.floor?.trim() || "—"} />
+      </div>
+
+      {location ? (
+        <p className="flex items-start gap-1.5 text-sm">
+          <MapPin className="mt-0.5 size-4 shrink-0 text-muted-foreground" aria-hidden />
+          <span>{location}</span>
+        </p>
+      ) : null}
+
+      {description ? (
+        <div className="space-y-1.5">
+          <h3 className="text-sm font-semibold">Descriere</h3>
+          <p className="whitespace-pre-line text-sm leading-relaxed text-foreground/90">
+            {description}
+          </p>
+        </div>
+      ) : null}
+
+      {listing.phone ? (
+        <div className="flex flex-wrap items-center gap-3 rounded-lg border border-border bg-muted/40 px-3 py-2.5">
+          <p className="flex min-w-0 items-center gap-2 text-sm">
+            <Phone className="size-4 shrink-0 text-muted-foreground" aria-hidden />
+            <span className="truncate font-medium">{listing.phone}</span>
+          </p>
+          <Button asChild size="sm" className="ml-auto shrink-0">
+            <a href={`tel:${listing.phone}`}>
+              <Phone className="size-4" aria-hidden />
+              Sună
+            </a>
+          </Button>
+        </div>
+      ) : null}
+
+      {listing.url ? (
+        <Button asChild className="w-full">
+          <a href={listing.url} target="_blank" rel="noopener noreferrer">
+            Deschide anunțul original
+            <ExternalLink className="size-4" aria-hidden />
+          </a>
+        </Button>
+      ) : (
+        <Button variant="outline" disabled className="w-full">
+          Link anunț indisponibil
+        </Button>
+      )}
+    </div>
+  );
+}
+
+function ListingDetailsDialog({
+  listing,
+  onClose,
+}: {
+  listing: OwnerListing | null;
+  onClose: () => void;
+}) {
+  const isMobile = useIsMobile();
+  const open = listing !== null;
+
+  if (isMobile) {
+    return (
+      <Sheet open={open} onOpenChange={(next) => !next && onClose()}>
+        <SheetContent side="bottom" className="max-h-[88vh] overflow-y-auto rounded-t-2xl">
+          <SheetHeader className="sr-only">
+            <SheetTitle>Detalii anunț</SheetTitle>
+            <SheetDescription>Informațiile complete ale anunțului selectat</SheetDescription>
+          </SheetHeader>
+          {listing ? (
+            <div className="px-1 pb-4">
+              <ListingDetailContent listing={listing} />
+            </div>
+          ) : null}
+        </SheetContent>
+      </Sheet>
+    );
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={(next) => !next && onClose()}>
+      <DialogContent className="max-h-[85vh] max-w-lg overflow-y-auto">
+        <DialogHeader className="sr-only">
+          <DialogTitle>Detalii anunț</DialogTitle>
+          <DialogDescription>Informațiile complete ale anunțului selectat</DialogDescription>
+        </DialogHeader>
+        {listing ? <ListingDetailContent listing={listing} /> : null}
+      </DialogContent>
+    </Dialog>
   );
 }
 
@@ -230,6 +454,7 @@ function applyFilters(listings: OwnerListing[], filters: Filters): OwnerListing[
 function ListingsPage() {
   const listings = Route.useLoaderData();
   const [filters, setFilters] = useState<Filters>(EMPTY_FILTERS);
+  const [selected, setSelected] = useState<OwnerListing | null>(null);
   const filtered = useMemo(() => applyFilters(listings, filters), [listings, filters]);
   const hasActiveFilters =
     filters.q !== "" ||
@@ -364,12 +589,14 @@ function ListingsPage() {
           ) : (
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
               {filtered.map((listing) => (
-                <ListingCard key={listing.id} listing={listing} />
+                <ListingCard key={listing.id} listing={listing} onSelect={setSelected} />
               ))}
             </div>
           )}
         </Container>
       </Section>
+
+      <ListingDetailsDialog listing={selected} onClose={() => setSelected(null)} />
     </PublicLayout>
   );
 }
