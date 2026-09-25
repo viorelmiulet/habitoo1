@@ -638,14 +638,46 @@ function ListingsPage() {
           </p>
 
           {listings.length === 0 ? (
-            <p className="text-muted-foreground">
-              Deocamdată nu există anunțuri de la proprietari. Revino curând.
-            </p>
+            <div className="flex flex-col items-center gap-4 rounded-xl border border-dashed border-border bg-muted/30 px-6 py-14 text-center">
+              <div className="flex size-12 items-center justify-center rounded-full bg-muted">
+                <Sparkles className="size-6 text-muted-foreground" aria-hidden />
+              </div>
+              <div className="max-w-md space-y-1.5">
+                <h2 className="text-base font-semibold">
+                  Nu există anunțuri de proprietari încă
+                </h2>
+                <p className="text-sm text-muted-foreground">
+                  Rulează scraper-ul pentru a aduce primele anunțuri. Datele apar aici imediat după
+                  colectare.
+                </p>
+              </div>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => void router.invalidate()}
+                className="gap-2"
+              >
+                <RefreshCw className="size-4" aria-hidden />
+                Reîncearcă
+              </Button>
+            </div>
           ) : filtered.length === 0 ? (
-            <p className="text-muted-foreground">
-              Niciun anunț nu corespunde filtrelor curente. Încearcă să le relaxezi sau apasă
-              „Resetează filtrele”.
-            </p>
+            <div className="flex flex-col items-center gap-4 rounded-xl border border-dashed border-border bg-muted/30 px-6 py-14 text-center">
+              <div className="flex size-12 items-center justify-center rounded-full bg-muted">
+                <SearchX className="size-6 text-muted-foreground" aria-hidden />
+              </div>
+              <div className="max-w-md space-y-1.5">
+                <h2 className="text-base font-semibold">Niciun anunț nu corespunde filtrelor</h2>
+                <p className="text-sm text-muted-foreground">
+                  Încearcă să relaxezi filtrele sau șterge-le pe toate ca să vezi din nou lista
+                  completă.
+                </p>
+              </div>
+              <Button type="button" onClick={() => setFilters(EMPTY_FILTERS)} className="gap-2">
+                <RefreshCw className="size-4" aria-hidden />
+                Resetează filtrele
+              </Button>
+            </div>
           ) : (
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
               {filtered.map((listing) => (
