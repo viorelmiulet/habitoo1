@@ -96,6 +96,20 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
       { name: "author", content: "Habitoo" },
+      // Sitewide default — folosit doar de paginile fără titlu propriu.
+      // Paginile publice își definesc titlul prin publicHead().
+      { title: "Habitoo CRM — CRM imobiliar pentru agenții din România" },
+      {
+        name: "description",
+        content:
+          "Habitoo CRM organizează proprietățile, clienții, cererile și lead-urile agenției tale, cu matching automat, pipeline vizual, calendar și rapoarte. Creează agenția în câteva minute.",
+      },
+      { property: "og:title", content: "Habitoo CRM — CRM imobiliar pentru agenții din România" },
+      {
+        property: "og:description",
+        content:
+          "Habitoo CRM organizează proprietățile, clienții, cererile și lead-urile agenției tale, cu matching automat, pipeline vizual, calendar și rapoarte. Creează agenția în câteva minute.",
+      },
     ],
     links: [
       {
