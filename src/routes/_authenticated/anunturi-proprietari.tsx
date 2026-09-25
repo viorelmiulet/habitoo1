@@ -125,6 +125,63 @@ function sourceLabel(source: string): string {
   return SOURCE_LABELS[source] ?? source;
 }
 
+function ListingsSkeletonGrid() {
+  return (
+    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+      {Array.from({ length: 8 }).map((_, index) => (
+        <Card key={index} className="flex h-full flex-col gap-0">
+          <CardHeader className="flex flex-row items-center justify-between gap-2 pb-3">
+            <Skeleton className="h-5 w-20" />
+            <Skeleton className="h-3 w-16" />
+          </CardHeader>
+          <CardContent className="flex flex-1 flex-col gap-3">
+            <div className="space-y-2">
+              <Skeleton className="h-5 w-11/12" />
+              <Skeleton className="h-5 w-2/3" />
+              <Skeleton className="h-3 w-16" />
+            </div>
+            <Skeleton className="h-7 w-28" />
+            <Skeleton className="h-4 w-24" />
+            <Skeleton className="h-4 w-full" />
+            <Skeleton className="h-4 w-3/4" />
+          </CardContent>
+          <CardFooter className="pt-3">
+            <Skeleton className="h-9 w-full" />
+          </CardFooter>
+        </Card>
+      ))}
+    </div>
+  );
+}
+
+function ListingsSkeleton() {
+  return (
+    <PublicLayout>
+      <section className="mk-hero-bg relative overflow-hidden border-b border-border">
+        <div
+          aria-hidden
+          className="mk-dots pointer-events-none absolute inset-0 [mask-image:radial-gradient(60%_60%_at_50%_0%,black,transparent)]"
+        />
+        <Container className="relative py-12 sm:py-16">
+          <Skeleton className="h-9 w-72 max-w-full" />
+          <Skeleton className="mt-3 h-4 w-full max-w-xl" />
+        </Container>
+      </section>
+      <Section>
+        <Container>
+          <div className="mb-6 grid grid-cols-1 gap-3 rounded-lg border border-border bg-card p-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+            {Array.from({ length: 5 }).map((_, index) => (
+              <Skeleton key={index} className="h-9 w-full" />
+            ))}
+          </div>
+          <Skeleton className="mb-4 h-4 w-32" />
+          <ListingsSkeletonGrid />
+        </Container>
+      </Section>
+    </PublicLayout>
+  );
+}
+
 function ListingsError() {
   return (
     <PublicLayout>
