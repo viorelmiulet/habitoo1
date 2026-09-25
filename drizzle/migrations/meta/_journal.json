@@ -596,6 +596,13 @@
       "when": 1790278505934,
       "tag": "0084_email_thread_reopen_and_resolve",
       "breakpoints": true
+    },
+    {
+      "idx": 85,
+      "version": "7",
+      "when": 1790305964246,
+      "tag": "0085_email_threads_trash",
+      "breakpoints": true
     }
   ]
 }
