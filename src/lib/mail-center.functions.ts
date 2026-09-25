@@ -31,6 +31,7 @@ import {
   updateMailbox as updateMailboxMutation,
 } from "@/lib/mail-center-admin.server";
 import { stageOutboundAttachment } from "@/lib/mail-outbound.server";
+import { requireMailSuperadmin } from "@/lib/mail-authz.server";
 import {
   PURGE_MAX_THREADS,
   previewPurge,
@@ -40,17 +41,7 @@ import {
   trashedThreadIds,
 } from "@/lib/mail-trash.server";
 
-const DENIED = "Acces refuzat: acțiunea este permisă exclusiv superadminului.";
-
-/** Authorization first, privileged client second — never the other way round. */
-async function admin(context: {
-  supabase: { rpc: (fn: string) => Promise<{ data: unknown; error: unknown }> };
-}) {
-  const { data, error } = await context.supabase.rpc("is_superadmin");
-  if (error || data !== true) throw new Error(DENIED);
-  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-  return supabaseAdmin;
-}
+const admin = requireMailSuperadmin;
 
 const uuid = z.string().uuid();
 
