@@ -98,25 +98,39 @@ const FOLDERS: { id: Folder; label: string; icon: typeof Inbox }[] = [
 
 const DELIVERY_LABELS: Record<string, string> = {
   queued: "În coadă",
+  accepted: "Trimis",
   sent: "Trimis",
   delivered: "Livrat",
   received: "Primit",
+  temporary_fail: "Eșuat temporar",
+  permanent_fail: "Eșuat",
   failed: "Eșuat",
   bounced: "Respins",
-  complained: "Reclamat",
+  complained: "Reclamație",
+  unsubscribed: "Dezabonat",
 };
 
-function deliveryBadge(status: string) {
+function deliveryBadge(status: string, reason?: string | null) {
+  const failed = status === "permanent_fail" || status === "failed" || status === "bounced";
   const tone =
     status === "delivered" || status === "received"
       ? "bg-success/10 text-success border-success/30"
-      : status === "failed" || status === "bounced" || status === "complained"
+      : failed || status === "complained"
         ? "bg-destructive/10 text-destructive border-destructive/30"
-        : "bg-muted text-muted-foreground border-border";
+        : status === "temporary_fail"
+          ? "bg-warning/10 text-warning border-warning/30"
+          : "bg-muted text-muted-foreground border-border";
   return (
-    <Badge variant="outline" className={cn("text-[11px] font-medium", tone)}>
-      {DELIVERY_LABELS[status] ?? status}
-    </Badge>
+    <span className="flex flex-col items-end gap-0.5">
+      <Badge variant="outline" className={cn("text-[11px] font-medium", tone)}>
+        {DELIVERY_LABELS[status] ?? status}
+      </Badge>
+      {failed && reason ? (
+        <span className="max-w-[16rem] truncate text-[11px] text-destructive" title={reason}>
+          {reason}
+        </span>
+      ) : null}
+    </span>
   );
 }
 

@@ -485,7 +485,15 @@ export function normalizeEvent(eventData: unknown): NormalizedEvent | null {
 
   const rawType = String(data["event"] ?? "").toLowerCase();
   if (!(MAILGUN_EVENT_TYPES as readonly string[]).includes(rawType)) return null;
-  const type = rawType as MailgunEventType;
+  // Mailgun webhooks report failures as `failed` + `severity`.
+  const sev = String(data["severity"] ?? "").toLowerCase();
+  const type = (
+    rawType === "failed" && sev === "temporary"
+      ? "temporary_fail"
+      : rawType === "failed" && sev === "permanent"
+        ? "permanent_fail"
+        : rawType
+  ) as MailgunEventType;
 
   const rawId = data["id"];
   const eventKey = typeof rawId === "string" && rawId.trim() ? rawId.trim() : null;
