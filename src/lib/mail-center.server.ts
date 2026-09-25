@@ -39,6 +39,8 @@ export type MailThread = {
 export type MailThreadListItem = MailThread & {
   preview: string;
   has_attachments: boolean;
+  /** Only set in the Trash folder: when the conversation was moved there. */
+  trashed_at?: string | null;
 };
 
 export type MailMessage = {
@@ -145,7 +147,7 @@ export async function listThreads(
     return [];
   }
 
-  return ((data ?? []) as unknown as ThreadListRow[]).map((row) => ({
+  const items: MailThreadListItem[] = ((data ?? []) as unknown as ThreadListRow[]).map((row) => ({
     id: row.id,
     mailbox_id: row.mailbox_id,
     subject: row.subject,
@@ -162,6 +164,24 @@ export async function listThreads(
     }),
     has_attachments: row.has_attachments === true,
   }));
+
+  if (input.status === "trash" && items.length) {
+    const { data: stamps } = await db
+      .from("email_threads")
+      .select("id, trashed_at")
+      .in(
+        "id",
+        items.map((i) => i.id),
+      );
+    const byId = new Map(
+      ((stamps ?? []) as { id: string; trashed_at: string | null }[]).map((s) => [
+        s.id,
+        s.trashed_at,
+      ]),
+    );
+    for (const item of items) item.trashed_at = byId.get(item.id) ?? null;
+  }
+  return items;
 }
 
 const MESSAGE_COLUMNS =
