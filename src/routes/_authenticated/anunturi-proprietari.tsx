@@ -12,12 +12,15 @@ const TITLE = "Anunțuri Proprietari — Habitoo CRM";
 const DESCRIPTION =
   "Anunțuri imobiliare direct de la proprietari: apartamente, case și terenuri din toată România, cu preț, suprafață și date de contact.";
 
-export const Route = createFileRoute("/anunturi-proprietari")({
+// Pagină disponibilă doar utilizatorilor autentificați (sub layout-ul `_authenticated`).
+// Nu e indexată de motoarele de căutare și nu apare în sitemap.
+export const Route = createFileRoute("/_authenticated/anunturi-proprietari")({
   head: () =>
     publicHead({
       path: "/anunturi-proprietari",
       title: TITLE,
       description: DESCRIPTION,
+      noindex: true,
     }),
   loader: () => getOwnerListings(),
   errorComponent: ListingsError,
