@@ -48,6 +48,7 @@ export const Route = createFileRoute("/_authenticated/anunturi-proprietari")({
       noindex: true,
     }),
   loader: () => getOwnerListings(),
+  pendingComponent: ListingsSkeleton,
   errorComponent: ListingsError,
   notFoundComponent: ListingsError,
   component: ListingsPage,
