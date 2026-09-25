@@ -1,9 +1,8 @@
-// Server function publică pentru pagina „Anunțuri Proprietari”.
-// Fără token și fără sesiune: citește strict anunțurile cu is_owner = true
-// din tabelul `listings`, prin clientul public (RLS permite SELECT pentru toți).
+// Server function pentru pagina „Anunțuri Proprietari", disponibilă doar
+// utilizatorilor autentificați: citește anunțurile cu is_owner = true din
+// tabelul `listings` ca utilizatorul conectat (RLS permite SELECT public).
 import { createServerFn } from "@tanstack/react-start";
-import { createClient } from "@supabase/supabase-js";
-import type { Database } from "@/integrations/supabase/types";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 export type OwnerListing = {
   id: string;
@@ -24,15 +23,10 @@ export type OwnerListing = {
   scrapedAt: string | null;
 };
 
-export const getOwnerListings = createServerFn({ method: "GET" }).handler(
-  async (): Promise<OwnerListing[]> => {
-    const supabase = createClient<Database>(
-      process.env["SUPABASE_URL"]!,
-      process.env["SUPABASE_PUBLISHABLE_KEY"]!,
-      { auth: { persistSession: false, autoRefreshToken: false, storage: undefined } },
-    );
-
-    const { data, error } = await supabase
+export const getOwnerListings = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }): Promise<OwnerListing[]> => {
+    const { data, error } = await context.supabase
       .from("listings")
       .select(
         "id, source, title, price, currency, price_per_m2, rooms, surface, location, county, property_type, transaction_type, owner_type, phone, url, scraped_at",
@@ -61,5 +55,4 @@ export const getOwnerListings = createServerFn({ method: "GET" }).handler(
       url: row.url,
       scrapedAt: row.scraped_at,
     }));
-  },
-);
+  });
