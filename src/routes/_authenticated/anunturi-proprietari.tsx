@@ -141,7 +141,13 @@ function ListingsError() {
   );
 }
 
-function ListingCard({ listing }: { listing: OwnerListing }) {
+function ListingCard({
+  listing,
+  onSelect,
+}: {
+  listing: OwnerListing;
+  onSelect: (listing: OwnerListing) => void;
+}) {
   const title = listing.title?.trim() || "Anunț fără titlu";
   const location = [listing.location, listing.county].filter(Boolean).join(", ");
   const specs: string[] = [];
@@ -155,8 +161,22 @@ function ListingCard({ listing }: { listing: OwnerListing }) {
       ? `${formatMoney(listing.pricePerM2, listing.currency)}/m²`
       : null;
 
+  const openDetails = () => onSelect(listing);
+
   return (
-    <Card className="flex h-full flex-col gap-0 transition-shadow hover:shadow-md">
+    <Card
+      role="button"
+      tabIndex={0}
+      aria-label={`Deschide detaliile: ${title}`}
+      onClick={openDetails}
+      onKeyDown={(event) => {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          openDetails();
+        }
+      }}
+      className="flex h-full cursor-pointer flex-col gap-0 text-left transition-shadow hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+    >
       <CardHeader className="flex flex-row items-center justify-between gap-2 pb-3">
         <Badge variant="secondary">{sourceLabel(listing.source)}</Badge>
         <span className="text-xs text-muted-foreground" suppressHydrationWarning>
@@ -186,7 +206,11 @@ function ListingCard({ listing }: { listing: OwnerListing }) {
         {listing.phone ? (
           <p className="flex items-center gap-1.5 text-sm">
             <Phone className="size-4 shrink-0 text-muted-foreground" aria-hidden />
-            <a href={`tel:${listing.phone}`} className="text-primary underline-offset-2 hover:underline">
+            <a
+              href={`tel:${listing.phone}`}
+              onClick={(event) => event.stopPropagation()}
+              className="text-primary underline-offset-2 hover:underline"
+            >
               {listing.phone}
             </a>
           </p>
@@ -195,7 +219,12 @@ function ListingCard({ listing }: { listing: OwnerListing }) {
       <CardFooter className="pt-3">
         {listing.url ? (
           <Button asChild className="w-full">
-            <a href={listing.url} target="_blank" rel="noopener noreferrer">
+            <a
+              href={listing.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={(event) => event.stopPropagation()}
+            >
               Vezi anunțul
               <ExternalLink className="size-4" aria-hidden />
             </a>
