@@ -231,14 +231,13 @@ function ListingsPage() {
   const listings = Route.useLoaderData();
   const [filters, setFilters] = useState<Filters>(EMPTY_FILTERS);
   const filtered = useMemo(() => applyFilters(listings, filters), [listings, filters]);
-  const hasActiveFilters = filters !== EMPTY_FILTERS && applyFilters(listings, filters).length !== listings.length
-    ? true
-    : filters.q !== "" ||
-      filters.source !== "all" ||
-      filters.transaction !== "all" ||
-      filters.priceMin !== "" ||
-      filters.priceMax !== "" ||
-      filters.rooms !== "all";
+  const hasActiveFilters =
+    filters.q !== "" ||
+    filters.source !== "all" ||
+    filters.transaction !== "all" ||
+    filters.priceMin !== "" ||
+    filters.priceMax !== "" ||
+    filters.rooms !== "all";
 
   return (
     <PublicLayout>
