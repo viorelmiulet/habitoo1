@@ -13,6 +13,7 @@ export type OwnerListing = {
   pricePerM2: number | null;
   rooms: number | null;
   surface: number | null;
+  floor: string | null;
   location: string | null;
   county: string | null;
   propertyType: string | null;
@@ -20,6 +21,7 @@ export type OwnerListing = {
   ownerType: string | null;
   phone: string | null;
   url: string | null;
+  description: string | null;
   scrapedAt: string | null;
 };
 
