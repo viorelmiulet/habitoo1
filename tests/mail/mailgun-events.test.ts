@@ -61,7 +61,7 @@ const writes = (db: ReturnType<typeof setup>) =>
 describe("POST /api/public/mailgun/events", () => {
   it("semnătură invalidă → 401, nimic citit sau scris", async () => {
     const db = setup("accepted");
-    const bad = { ...sign("t1"), signature: "0".repeat(64) };
+    const bad = { ...sign("t1".replace("t","a").padEnd(50,"0")), signature: "0".repeat(64) };
     const res = await run(db, { signature: bad, "event-data": evt("delivered") });
     expect(res.status).toBe(401);
     expect(db.calls).toHaveLength(0);
@@ -76,7 +76,7 @@ describe("POST /api/public/mailgun/events", () => {
 
   it("delivered → Livrat, cu ora evenimentului", async () => {
     const db = setup("accepted");
-    const res = await run(db, { signature: sign("t2"), "event-data": evt("delivered") });
+    const res = await run(db, { signature: sign("t2".replace("t","a").padEnd(50,"0")), "event-data": evt("delivered") });
     expect(res.status).toBe(200);
     const [u] = updates(db);
     const patch = u!.ops.find((o) => o.method === "update")!.args[0] as Record<string, unknown>;
@@ -87,7 +87,7 @@ describe("POST /api/public/mailgun/events", () => {
   it("permanent_fail după delivered → Eșuat (mai puternic), cu cod și motiv", async () => {
     const db = setup("delivered");
     await run(db, {
-      signature: sign("t3"),
+      signature: sign("t3".replace("t","a").padEnd(50,"0")),
       "event-data": evt("failed", {
         severity: "permanent",
         reason: "bounce",
@@ -106,7 +106,7 @@ describe("POST /api/public/mailgun/events", () => {
 
   it("delivered târziu după permanent_fail → nu suprascrie", async () => {
     const db = setup("permanent_fail");
-    const res = await run(db, { signature: sign("t4"), "event-data": evt("delivered") });
+    const res = await run(db, { signature: sign("t4".replace("t","a").padEnd(50,"0")), "event-data": evt("delivered") });
     expect(res.status).toBe(200);
     expect(updates(db)).toHaveLength(0);
   });
@@ -114,7 +114,7 @@ describe("POST /api/public/mailgun/events", () => {
   it("temporary_fail după delivered → nu suprascrie", async () => {
     const db = setup("delivered");
     await run(db, {
-      signature: sign("t5"),
+      signature: sign("t5".replace("t","a").padEnd(50,"0")),
       "event-data": evt("failed", { severity: "temporary" }),
     });
     expect(updates(db)).toHaveLength(0);
@@ -122,7 +122,7 @@ describe("POST /api/public/mailgun/events", () => {
 
   it("eveniment duplicat (același token) → ignorat", async () => {
     const db = setup("accepted", { replay: true });
-    const res = await run(db, { signature: sign("t6"), "event-data": evt("delivered") });
+    const res = await run(db, { signature: sign("t6".replace("t","a").padEnd(50,"0")), "event-data": evt("delivered") });
     expect(res.status).toBe(200);
     expect(await res.json()).toMatchObject({ replay: true });
     expect(writes(db)).toHaveLength(0);
@@ -130,7 +130,7 @@ describe("POST /api/public/mailgun/events", () => {
 
   it("mesaj necunoscut → 200 fără modificări", async () => {
     const db = setup(null, { known: false });
-    const res = await run(db, { signature: sign("t7"), "event-data": evt("delivered") });
+    const res = await run(db, { signature: sign("t7".replace("t","a").padEnd(50,"0")), "event-data": evt("delivered") });
     expect(res.status).toBe(200);
     expect(await res.json()).toMatchObject({ matched: false });
     expect(writes(db)).toHaveLength(0);
@@ -138,7 +138,7 @@ describe("POST /api/public/mailgun/events", () => {
 
   it("opened/clicked → salvate ca eveniment, starea neschimbată", async () => {
     const db = setup("delivered");
-    const res = await run(db, { signature: sign("t8"), "event-data": evt("opened") });
+    const res = await run(db, { signature: sign("t8".replace("t","a").padEnd(50,"0")), "event-data": evt("opened") });
     expect(res.status).toBe(200);
     expect(updates(db)).toHaveLength(0);
   });
