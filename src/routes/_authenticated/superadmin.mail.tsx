@@ -1230,6 +1230,22 @@ function ThreadView({
     }
   };
 
+  const trashFn = useServerFn(trashMailThreads);
+  const restoreFn = useServerFn(restoreMailThreads);
+  const [purgeOpen, setPurgeOpen] = useState(false);
+  const trashAction = async (action: "trash" | "restore") => {
+    const fn = action === "trash" ? trashFn : restoreFn;
+    const res = await fn({ data: { threadIds: [threadId] } });
+    if (!res.ok) toast.error(res.error ?? "Acțiunea a eșuat.");
+    else {
+      toast.success(
+        action === "trash" ? "Conversația a fost mutată în Coș." : "Conversația a fost restaurată.",
+      );
+      onChanged();
+      onBack();
+    }
+  };
+
   const downloadAttachment = async (attachmentId: string) => {
     const res = await getUrl({ data: { attachmentId } });
     if (res.error || !res.url) toast.error(res.error ?? "Linkul nu a putut fi generat.");
@@ -1248,7 +1264,16 @@ function ThreadView({
         <h2 className="min-w-0 flex-1 truncate text-base font-semibold">
           {thread.subject || "(fără subiect)"}
         </h2>
-        {thread.status !== "open" ? (
+        {thread.status === "trash" ? (
+          <>
+            <Button variant="outline" size="sm" onClick={() => trashAction("restore")}>
+              <ArchiveRestore className="mr-1.5 h-4 w-4" /> Restaurează
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => setPurgeOpen(true)}>
+              <Trash2 className="mr-1.5 h-4 w-4" /> Șterge definitiv
+            </Button>
+          </>
+        ) : thread.status !== "open" ? (
           <Button variant="outline" size="sm" onClick={() => changeStatus("open")}>
             <ArchiveRestore className="mr-1.5 h-4 w-4" /> Redeschide
           </Button>
@@ -1262,6 +1287,20 @@ function ThreadView({
             </Button>
           </>
         )}
+        {thread.status !== "trash" && (
+          <Button variant="outline" size="sm" onClick={() => trashAction("trash")}>
+            <Trash2 className="mr-1.5 h-4 w-4" /> Șterge
+          </Button>
+        )}
+        <PurgeDialog
+          request={purgeOpen ? { threadIds: [threadId] } : null}
+          mailboxId={thread.mailbox_id}
+          onClose={() => setPurgeOpen(false)}
+          onDone={() => {
+            onChanged();
+            onBack();
+          }}
+        />
         <Button
           variant="outline"
           size="sm"
