@@ -511,6 +511,7 @@ function applyFilters(listings: OwnerListing[], filters: Filters): OwnerListing[
 }
 
 function ListingsPage() {
+  const router = useRouter();
   const listings = Route.useLoaderData();
   const [filters, setFilters] = useState<Filters>(EMPTY_FILTERS);
   const [selected, setSelected] = useState<OwnerListing | null>(null);
