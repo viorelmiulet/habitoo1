@@ -79,6 +79,7 @@ import { Route as ApiPublicCronPortalSlotWithdrawRouteImport } from './routes/ap
 import { Route as ApiPublicCronPromotionWithdrawRouteImport } from './routes/api/public/cron/promotion-withdraw'
 import { Route as ApiPublicCronPropertyImportImagesRouteImport } from './routes/api/public/cron/property-import-images'
 import { Route as ApiPublicCronSubscriptionsRouteImport } from './routes/api/public/cron/subscriptions'
+import { Route as ApiPublicListingsUpsertRouteImport } from './routes/api/public/listings/upsert'
 import { Route as ApiPublicMailgunEventsRouteImport } from './routes/api/public/mailgun/events'
 import { Route as ApiPublicMailgunInboundRouteImport } from './routes/api/public/mailgun/inbound'
 import { Route as LovableEmailAuthPreviewRouteImport } from './routes/lovable/email/auth/preview'
@@ -492,6 +493,11 @@ const ApiPublicCronSubscriptionsRoute =
     path: '/api/public/cron/subscriptions',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicListingsUpsertRoute = ApiPublicListingsUpsertRouteImport.update({
+  id: '/api/public/listings/upsert',
+  path: '/api/public/listings/upsert',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicMailgunEventsRoute = ApiPublicMailgunEventsRouteImport.update({
   id: '/api/public/mailgun/events',
   path: '/api/public/mailgun/events',
@@ -695,6 +701,7 @@ export interface FileRoutesByFullPath {
   '/api/public/cron/promotion-withdraw': typeof ApiPublicCronPromotionWithdrawRoute
   '/api/public/cron/property-import-images': typeof ApiPublicCronPropertyImportImagesRoute
   '/api/public/cron/subscriptions': typeof ApiPublicCronSubscriptionsRoute
+  '/api/public/listings/upsert': typeof ApiPublicListingsUpsertRoute
   '/api/public/mailgun/events': typeof ApiPublicMailgunEventsRoute
   '/api/public/mailgun/inbound': typeof ApiPublicMailgunInboundRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
@@ -788,6 +795,7 @@ export interface FileRoutesByTo {
   '/api/public/cron/promotion-withdraw': typeof ApiPublicCronPromotionWithdrawRoute
   '/api/public/cron/property-import-images': typeof ApiPublicCronPropertyImportImagesRoute
   '/api/public/cron/subscriptions': typeof ApiPublicCronSubscriptionsRoute
+  '/api/public/listings/upsert': typeof ApiPublicListingsUpsertRoute
   '/api/public/mailgun/events': typeof ApiPublicMailgunEventsRoute
   '/api/public/mailgun/inbound': typeof ApiPublicMailgunInboundRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
@@ -885,6 +893,7 @@ export interface FileRoutesById {
   '/api/public/cron/promotion-withdraw': typeof ApiPublicCronPromotionWithdrawRoute
   '/api/public/cron/property-import-images': typeof ApiPublicCronPropertyImportImagesRoute
   '/api/public/cron/subscriptions': typeof ApiPublicCronSubscriptionsRoute
+  '/api/public/listings/upsert': typeof ApiPublicListingsUpsertRoute
   '/api/public/mailgun/events': typeof ApiPublicMailgunEventsRoute
   '/api/public/mailgun/inbound': typeof ApiPublicMailgunInboundRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
@@ -982,6 +991,7 @@ export interface FileRouteTypes {
     | '/api/public/cron/promotion-withdraw'
     | '/api/public/cron/property-import-images'
     | '/api/public/cron/subscriptions'
+    | '/api/public/listings/upsert'
     | '/api/public/mailgun/events'
     | '/api/public/mailgun/inbound'
     | '/lovable/email/auth/preview'
@@ -1075,6 +1085,7 @@ export interface FileRouteTypes {
     | '/api/public/cron/promotion-withdraw'
     | '/api/public/cron/property-import-images'
     | '/api/public/cron/subscriptions'
+    | '/api/public/listings/upsert'
     | '/api/public/mailgun/events'
     | '/api/public/mailgun/inbound'
     | '/lovable/email/auth/preview'
@@ -1171,6 +1182,7 @@ export interface FileRouteTypes {
     | '/api/public/cron/promotion-withdraw'
     | '/api/public/cron/property-import-images'
     | '/api/public/cron/subscriptions'
+    | '/api/public/listings/upsert'
     | '/api/public/mailgun/events'
     | '/api/public/mailgun/inbound'
     | '/lovable/email/auth/preview'
@@ -1227,6 +1239,7 @@ export interface RootRouteChildren {
   ApiPublicCronPromotionWithdrawRoute: typeof ApiPublicCronPromotionWithdrawRoute
   ApiPublicCronPropertyImportImagesRoute: typeof ApiPublicCronPropertyImportImagesRoute
   ApiPublicCronSubscriptionsRoute: typeof ApiPublicCronSubscriptionsRoute
+  ApiPublicListingsUpsertRoute: typeof ApiPublicListingsUpsertRoute
   ApiPublicMailgunEventsRoute: typeof ApiPublicMailgunEventsRoute
   ApiPublicMailgunInboundRoute: typeof ApiPublicMailgunInboundRoute
   LovableEmailAuthPreviewRoute: typeof LovableEmailAuthPreviewRoute
@@ -1740,6 +1753,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicCronSubscriptionsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/listings/upsert': {
+      id: '/api/public/listings/upsert'
+      path: '/api/public/listings/upsert'
+      fullPath: '/api/public/listings/upsert'
+      preLoaderRoute: typeof ApiPublicListingsUpsertRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/mailgun/events': {
       id: '/api/public/mailgun/events'
       path: '/api/public/mailgun/events'
@@ -2121,6 +2141,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicCronPropertyImportImagesRoute:
     ApiPublicCronPropertyImportImagesRoute,
   ApiPublicCronSubscriptionsRoute: ApiPublicCronSubscriptionsRoute,
+  ApiPublicListingsUpsertRoute: ApiPublicListingsUpsertRoute,
   ApiPublicMailgunEventsRoute: ApiPublicMailgunEventsRoute,
   ApiPublicMailgunInboundRoute: ApiPublicMailgunInboundRoute,
   LovableEmailAuthPreviewRoute: LovableEmailAuthPreviewRoute,
