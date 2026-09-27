@@ -6,6 +6,10 @@ export const ORG_ID = `${SITE_URL}/#organization`;
 export const WEBSITE_ID = `${SITE_URL}/#website`;
 export const SOFTWARE_ID = `${SITE_URL}/#software`;
 export const CONTACT_EMAIL = "contact@habitoo.ro";
+export const CONTACT_PHONE = "+40767941512";
+export const CONTACT_PHONE_DISPLAY = "0767 941 512";
+export const WHATSAPP_URL = "https://wa.me/40767941512";
+export const FACEBOOK_URL = "https://www.facebook.com/profile.php?id=61594347749722";
 
 const CTX = "https://schema.org";
 type Ld = Record<string, unknown>;
@@ -19,10 +23,12 @@ export function homeIdentityJsonLd(description: string): Ld[] {
       name: SITE_NAME,
       url: `${SITE_URL}/`,
       logo: `${SITE_URL}/assets/habitoo-logo.png`,
+      sameAs: [FACEBOOK_URL],
       contactPoint: {
         "@type": "ContactPoint",
         contactType: "customer support",
         email: CONTACT_EMAIL,
+        telephone: CONTACT_PHONE,
         availableLanguage: "ro",
       },
     },
