@@ -23,6 +23,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { CollaborationSection } from "@/components/marketing/CollaborationSection";
 import { CtaBand } from "@/components/marketing/CtaBand";
+import { FaqSection, faqPageJsonLd, type FaqItem } from "@/components/marketing/FaqSection";
 import { PortalsSection } from "@/components/marketing/PortalsSection";
 import { navyButton } from "@/components/marketing/PublicHeader";
 import { PublicLayout } from "@/components/marketing/PublicLayout";
@@ -45,6 +46,49 @@ import { CrmLink } from "@/components/marketing/CrmLink";
 const TITLE = "Habitoo CRM — CRM imobiliar pentru agenții din România";
 const DESCRIPTION =
   "Habitoo CRM organizează proprietățile, clienții, cererile și lead-urile agenției tale, cu matching automat, pipeline vizual, calendar și rapoarte. Creează agenția în câteva minute.";
+
+const faq: FaqItem[] = [
+  {
+    q: "Ce este Habitoo CRM?",
+    a: "Habitoo CRM este un CRM imobiliar pentru agențiile din România. Ține într-un singur loc proprietățile, clienții, cererile și lead-urile, face automat potrivirea între cereri și proprietăți și publică anunțurile pe portalurile imobiliare direct din aplicație.",
+  },
+  {
+    q: "Ce este un CRM imobiliar și de ce are nevoie o agenție de el?",
+    a: "Un CRM imobiliar este un program în care agenția își gestionează portofoliul, clienții și tranzacțiile. Fără el, informația stă în telefoane, foi de calcul și conversații separate, iar oportunitățile se pierd între agenți. Cu un CRM, fiecare cerere, vizionare și ofertă rămâne înregistrată și vizibilă pentru echipă.",
+  },
+  {
+    q: "Pe ce portaluri imobiliare pot publica anunțurile din Habitoo?",
+    a: "Din Habitoo poți publica pe Imobiliare.ro, Storia, Publi24 (prin Romimo), iMove, Imospot, HomePitch, PrimulAnunț, OferteImobiliare, LaCheie și ClickImob, iar internațional pe Properstar. Alegi pentru fiecare anunț pe ce portaluri apare, iar modificările și retragerile se trimit automat.",
+  },
+  {
+    q: "Cum funcționează potrivirea automată dintre cereri și proprietăți?",
+    a: "Habitoo compară criteriile fiecărei cereri (tip de tranzacție, buget, oraș și zonă, număr de camere, suprafață, tip de proprietate și facilități) cu proprietățile din portofoliu și calculează un scor. Fiecare potrivire vine cu motivele ei, iar lista se actualizează automat când se schimbă o cerere sau o proprietate.",
+  },
+  {
+    q: "Pot aduce în Habitoo proprietățile dintr-un alt CRM?",
+    a: "Da. Habitoo are infrastructura necesară pentru import din orice CRM imobiliar, inclusiv fotografiile. Proprietățile tale ajung în Habitoo fără să le introduci din nou de mână.",
+  },
+  {
+    q: "Cât costă Habitoo CRM?",
+    a: "Habitoo are trei planuri: Basic la 10 €/lună, pentru până la 3 agenți; Pro la 20 €/lună, pentru până la 10 agenți; Unlimited la 100 €/lună, fără limită de agenți. La plata anuală prețul lunar scade cu 50%. Toate planurile încep cu 30 de zile gratuite, fără card bancar.",
+  },
+  {
+    q: "Pot testa Habitoo gratuit?",
+    a: "Da. Orice agenție poate folosi Habitoo gratuit 30 de zile, fără card bancar. Îți creezi agenția, inviți colegii și adaugi proprietăți, iar la final alegi planul potrivit.",
+  },
+  {
+    q: "Datele agenției mele sunt separate de ale altor agenții?",
+    a: "Da. Fiecare agenție are propriul spațiu de lucru, iar utilizatorii văd doar datele agenției lor, în funcție de rol: administratorul vede toată agenția, iar agentul vede ce i-a fost atribuit. Modificările importante rămân înregistrate într-un jurnal de audit.",
+  },
+  {
+    q: "Pot colabora cu alte agenții din Habitoo?",
+    a: "Da. Habitoo are un modul de colaborare de tip MLS: o agenție marchează proprietăți ca disponibile pentru colaborare, cu un comision stabilit, iar celelalte agenții din Habitoo le pot propune propriilor clienți. Discuția despre fiecare propunere are loc direct în aplicație.",
+  },
+  {
+    q: "Există aplicație mobilă pentru Habitoo?",
+    a: "Aplicația mobilă Habitoo pentru iOS și Android va fi disponibilă în curând. Până atunci, Habitoo funcționează în browser pe telefon, tabletă și calculator, fără instalare.",
+  },
+];
 
 export const Route = createFileRoute("/")({
   // Pe subdomeniul aplicației (crm.habitoo.ro) rădăcina deschide direct CRM-ul,
@@ -77,6 +121,7 @@ export const Route = createFileRoute("/")({
           url: SITE_URL,
           description: DESCRIPTION,
         },
+        faqPageJsonLd(faq),
       ],
     }),
   component: HomePage,
@@ -550,6 +595,8 @@ function HomePage() {
           </div>
         </Container>
       </Section>
+
+      <FaqSection items={faq} />
 
       <CtaBand />
     </PublicLayout>
