@@ -262,8 +262,19 @@ export function properstarAgentFullName(agent: ProperstarAgent | null): string |
   return joined || null;
 }
 
+/** Mesajul din raport când lipsește codul poștal și la ofertă, și la agenție. */
+export const PROPERSTAR_MISSING_POSTAL =
+  "Cod poștal (completează codul poștal al agenției, folosit ca rezervă în feed)";
+/** Mențiunea din raport când feedul a folosit codul agenției. */
+export const PROPERSTAR_AGENCY_POSTAL_USED = "cod poștal al agenției folosit";
+
 export type ProperstarMapResult =
-  | { ok: true; advert: ProperstarAdvert }
+  | {
+      ok: true;
+      advert: ProperstarAdvert;
+      /** Oferta nu are cod poștal propriu: în feed a plecat codul agenției. */
+      agencyPostalCodeUsed: boolean;
+    }
   | { ok: false; missing: string[] };
 
 function amenitiesOf(p: PropertyRow): string[] {
@@ -302,9 +313,13 @@ export function mapPropertyToProperstar(
   const description = sanitizeProperstarHtml((p.description ?? "").trim());
   if (!description) missing.push("Descriere");
 
-  // Codul poștal al agenției NU substituie codul ofertei: apare doar în <Contact>.
-  const postalCode = (p.postal_code ?? "").trim();
-  if (!postalCode) missing.push("Cod poștal");
+  // Rezervă doar în feed: fără cod propriu, oferta folosește codul agenției.
+  // Fișa ofertei nu se modifică. Fără niciunul dintre ele, oferta rămâne exclusă.
+  const ownPostalCode = (p.postal_code ?? "").trim();
+  const agencyPostalCode = (options.office.postalCode ?? "").trim();
+  const postalCode = ownPostalCode || agencyPostalCode;
+  const agencyPostalCodeUsed = !ownPostalCode && Boolean(agencyPostalCode);
+  if (!postalCode) missing.push(PROPERSTAR_MISSING_POSTAL);
 
   const city = (p.city ?? "").trim();
   if (!city) missing.push("Localitate");
@@ -355,6 +370,7 @@ export function mapPropertyToProperstar(
 
   return {
     ok: true,
+    agencyPostalCodeUsed,
     advert: {
       advertId,
       reference: p.reference?.trim() || null,
