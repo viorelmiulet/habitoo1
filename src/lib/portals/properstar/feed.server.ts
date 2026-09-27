@@ -225,6 +225,7 @@ export async function buildProperstarFeed(input: {
   const adverts: ProperstarAdvert[] = [];
   const excluded: ProperstarExcluded[] = [];
   const seen = new Set<string>();
+  let lastModifiedMs = 0;
   let active = 0;
   let deleted = 0;
 
