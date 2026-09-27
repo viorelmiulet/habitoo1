@@ -82,7 +82,7 @@ export async function realPorts(organizationId: string, property: PropertyRow): 
       if (error) throw new Error(error.message);
     },
     save: async (value) => {
-      const { error } = await supabaseAdmin
+      const { data: updated, error } = await supabaseAdmin
         .from("properties")
         .update({
           postal_code: value.postalCode,
@@ -93,8 +93,9 @@ export async function realPorts(organizationId: string, property: PropertyRow): 
         .eq("id", property.id)
         // Garanție suplimentară: o valoare manuală nu poate fi atinsă nici
         // dacă între citire și scriere cineva a completat câmpul.
-        // `neq` singur exclude și rândurile cu sursă NULL (NULL <> x e NULL în SQL).
-        .or("postal_code_source.is.null,postal_code_source.neq.manual")
+        // Scriem doar peste un cod gol sau dedus; `neq("manual")` singur rata
+        // rândurile cu sursă NULL (în SQL, NULL <> x nu este adevărat).
+        .or("postal_code.is.null,postal_code.eq.,postal_code_source.in.(geocoded,approximate)")
         .select("id");
       if (!error && (!updated || updated.length === 0)) {
         throw new Error("Codul poștal nu a fost salvat (oferta are cod manual sau nu mai există).");
