@@ -93,7 +93,12 @@ export async function realPorts(organizationId: string, property: PropertyRow): 
         .eq("id", property.id)
         // Garanție suplimentară: o valoare manuală nu poate fi atinsă nici
         // dacă între citire și scriere cineva a completat câmpul.
-        .neq("postal_code_source", "manual");
+        // `neq` singur exclude și rândurile cu sursă NULL (NULL <> x e NULL în SQL).
+        .or("postal_code_source.is.null,postal_code_source.neq.manual")
+        .select("id");
+      if (!error && (!updated || updated.length === 0)) {
+        throw new Error("Codul poștal nu a fost salvat (oferta are cod manual sau nu mai există).");
+      }
       if (error) throw new Error(error.message);
     },
   };
