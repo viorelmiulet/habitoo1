@@ -475,3 +475,52 @@ describe("conformitatea cu specificația", () => {
     }
   });
 });
+
+describe("specificația Properstar 2025", () => {
+  it("trimite FullName pentru agentul cu nume complet", async () => {
+    const { xml } = await build();
+    expect(xml).toContain("<FullName>Ana Pop</FullName>");
+    expect(xml).toContain("<FirstName>Ana</FirstName>");
+  });
+
+  it("exclude și raportează oferta al cărei agent nu are nume", async () => {
+    db.profiles[0]!.full_name = "  ";
+    const result = await build({ useCache: false });
+    expect(result.adverts).toHaveLength(0);
+    expect(result.excluded[0]!.missing.join(" ")).toMatch(/Nume complet agent/);
+  });
+
+  it("chiria are RentalPeriod și PricePeriod Monthly", async () => {
+    seedAll({}, { transaction_kind: "rent" });
+    const { xml } = await build({ useCache: false });
+    expect(xml).toContain("<AdvertType>Rent</AdvertType>");
+    expect(xml).toContain("<RentalPeriod>Monthly</RentalPeriod>");
+    expect(xml).toContain("<PricePeriod>Monthly</PricePeriod>");
+  });
+
+  it("vânzarea nu are perioadă", async () => {
+    const { xml } = await build({ useCache: false });
+    expect(xml).toContain("<AdvertType>Sale</AdvertType>");
+    expect(xml).not.toContain("RentalPeriod");
+    expect(xml).not.toContain("PricePeriod");
+  });
+
+  it.each(["HB 1001", "HB-1001-ț", "A".repeat(51)])(
+    "exclude AdvertId invalid %s, fără să-l transforme",
+    async (reference) => {
+      seedAll({}, { reference });
+      const result = await build({ useCache: false });
+      expect(result.adverts).toHaveLength(0);
+      expect(result.excluded[0]!.missing.join(" ")).toMatch(/Referință invalidă/);
+    },
+  );
+
+  it("HideAddress este opusul lui ShowAddress", async () => {
+    seedAll({}, { location_precise: true });
+    let { xml } = await build({ useCache: false });
+    expect(xml).toContain("<ShowAddress>true</ShowAddress><HideAddress>false</HideAddress>");
+    seedAll({}, { location_precise: false });
+    ({ xml } = await build({ useCache: false }));
+    expect(xml).toContain("<ShowAddress>false</ShowAddress><HideAddress>true</HideAddress>");
+  });
+});
