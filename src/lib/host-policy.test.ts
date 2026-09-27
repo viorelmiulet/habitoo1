@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { CRM_ROBOTS_TXT, PUBLIC_ROBOTS_TXT, decideEdge, shouldTagNoindex } from "./host-policy";
+import { CRM_ROBOTS_TXT, LLMS_TXT, PUBLIC_ROBOTS_TXT, decideEdge, shouldTagNoindex } from "./host-policy";
 
 const req = (url: string, method = "GET") => new Request(url, { method });
 const html = new Response("x", { headers: { "content-type": "text/html; charset=utf-8" } });
