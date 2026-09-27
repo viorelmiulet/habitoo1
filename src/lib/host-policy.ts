@@ -100,6 +100,12 @@ export function decideEdge(request: Request): EdgeDecision {
   if (url.pathname === "/robots.txt" && isRead) {
     return { kind: "robots", body: isCrmHostname(host) ? CRM_ROBOTS_TXT : PUBLIC_ROBOTS_TXT };
   }
+  if (url.pathname === "/llms.txt" && isRead) {
+    if (isCrmHostname(host)) {
+      return { kind: "redirect", location: `${PUBLIC_SITE_URL}/llms.txt` };
+    }
+    return { kind: "llms", body: LLMS_TXT };
+  }
   if (isCrmHostname(host) && isRead && MARKETING_PATHS.has(normalizePath(url.pathname))) {
     return { kind: "redirect", location: `${PUBLIC_SITE_URL}${url.pathname}${url.search}` };
   }
