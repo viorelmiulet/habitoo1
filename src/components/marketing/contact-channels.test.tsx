@@ -15,9 +15,10 @@ vi.mock("@tanstack/react-router", () => ({
 
 
 describe("ContactChannels", () => {
-  it("expune telefonul și WhatsApp în HTML", () => {
+  it("expune telefonul, emailul și WhatsApp în HTML", () => {
     const html = renderToStaticMarkup(<ContactChannels />);
     expect(html).toContain(`tel:${CONTACT_PHONE}`);
+    expect(html).toContain(`mailto:${CONTACT_EMAIL}`);
     expect(html).toContain(WHATSAPP_URL);
     expect(html).toContain(FACEBOOK_URL);
     expect(html).toContain("Scrie-ne pe WhatsApp");

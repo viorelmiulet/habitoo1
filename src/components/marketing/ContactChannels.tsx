@@ -1,4 +1,4 @@
-import { Facebook, MessageCircle, Phone } from "lucide-react";
+import { Facebook, Mail, MessageCircle, Phone } from "lucide-react";
 import {
   CONTACT_PHONE,
   CONTACT_PHONE_DISPLAY,
