@@ -66,12 +66,14 @@ export async function listIndexedAgencies(now: Date): Promise<IndexedAgency[]> {
     const active = isProperstarActive(org, connection);
     const hints = [org.archived_at, connection && !connection.activated ? connection.updated_at : null];
     const next = nextIndexState(previous, active, now, hints);
-    if (next && (!previous || previous.active !== next.active || next.active)) {
-      // Starea activă își reîmprospătează `last_active_at`; tranziția se salvează o dată.
-      if (!previous || previous.active !== next.active || previous.inactive_since !== next.inactive_since || next.active) {
-        changes.push({ organization_id: org.id, ...next, updated_at: now.toISOString() });
-      }
-    }
+    // Activă → `last_active_at` reîmprospătat; inactivă → salvăm doar tranziția.
+    const changed =
+      next &&
+      (next.active ||
+        !previous ||
+        previous.active !== next.active ||
+        previous.inactive_since !== next.inactive_since);
+    if (next && changed) changes.push({ organization_id: org.id, ...next, updated_at: now.toISOString() });
     const presence = indexPresence(next, now);
     if (presence === "gone") continue;
     result.push({
