@@ -30,6 +30,7 @@ import {
   type ProperstarAdvert,
   type ProperstarAgent,
   type ProperstarOffice,
+  PROPERSTAR_AGENCY_POSTAL_USED,
 } from "./mapper";
 
 export const PROPERSTAR_PORTAL_ID = "properstar";
@@ -52,6 +53,8 @@ export type ProperstarFeedBuild = {
   active: number;
   deleted: number;
   excluded: ProperstarExcluded[];
+  /** Incluse în feed cu codul poștal al agenției (fișa ofertei rămâne fără cod). */
+  agencyPostalUsed: ProperstarExcluded[];
   capped: boolean;
   /** Cea mai recentă modificare (ofertă sau selecție) dintre ofertele incluse; nu apare în XML. */
   lastModified: string | null;
@@ -140,6 +143,7 @@ export async function buildProperstarFeed(input: {
     active: 0,
     deleted: 0,
     excluded: [],
+    agencyPostalUsed: [],
     capped: false,
     lastModified: null,
   };
@@ -224,6 +228,7 @@ export async function buildProperstarFeed(input: {
 
   const adverts: ProperstarAdvert[] = [];
   const excluded: ProperstarExcluded[] = [];
+  const agencyPostalUsed: ProperstarExcluded[] = [];
   const seen = new Set<string>();
   let lastModifiedMs = 0;
   let active = 0;
@@ -290,6 +295,14 @@ export async function buildProperstarFeed(input: {
     }
     seen.add(result.advert.advertId);
     adverts.push(result.advert);
+    if (result.agencyPostalCodeUsed && status === "Active") {
+      agencyPostalUsed.push({
+        propertyId: row.id,
+        reference: row.reference ?? null,
+        title: row.title ?? null,
+        missing: [PROPERSTAR_AGENCY_POSTAL_USED],
+      });
+    }
     for (const stamp of [row.updated_at, publication.updatedAt]) {
       const t = stamp ? new Date(stamp).getTime() : NaN;
       if (Number.isFinite(t) && t > lastModifiedMs) lastModifiedMs = t;
@@ -305,6 +318,7 @@ export async function buildProperstarFeed(input: {
     active,
     deleted,
     excluded,
+    agencyPostalUsed,
     capped,
     lastModified: lastModifiedMs > 0 ? new Date(lastModifiedMs).toISOString() : null,
   };

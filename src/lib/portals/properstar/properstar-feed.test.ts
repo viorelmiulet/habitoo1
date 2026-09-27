@@ -210,12 +210,25 @@ describe("Properstar feed", () => {
     expect(result.xml).not.toContain("<Advert>");
   });
 
-  it("exclude oferta fără cod poștal propriu, fără să împrumute codul agenției", async () => {
+  it("geocodarea a eșuat și agenția are cod: feedul folosește codul agenției, fișa rămâne fără cod", async () => {
     seedAll({}, { postal_code: null });
     const result = await build();
+    expect(result.excluded).toHaveLength(0);
+    expect(result.adverts).toHaveLength(1);
+    expect(result.adverts[0]!.postalCode).toBe("300001");
+    expect(result.agencyPostalUsed).toHaveLength(1);
+    expect(result.agencyPostalUsed[0]!.missing).toEqual(["cod poștal al agenției folosit"]);
+    // Fișa ofertei nu se atinge.
+    expect(db.properties![0]!.postal_code).toBeNull();
+  });
+
+  it("fără cod nici la ofertă, nici la agenție: oferta rămâne exclusă", async () => {
+    seedAll({}, { postal_code: null });
+    db.organizations![0]!.postal_code = null;
+    const result = await build();
     expect(result.adverts).toHaveLength(0);
-    expect(result.excluded).toHaveLength(1);
-    expect(result.excluded[0]!.missing).toContain("Cod poștal");
+    expect(result.agencyPostalUsed).toHaveLength(0);
+    expect(result.excluded[0]!.missing.join(" ")).toMatch(/codul poștal al agenției/);
     expect(result.xml).not.toContain("<Advert>");
   });
 
@@ -362,8 +375,9 @@ describe("cache-ul feedului", () => {
   it("nu memorează un feed gol: corecția se vede la următoarea citire", async () => {
     const { clearProperstarCache } = await import("./feed.server");
     clearProperstarCache();
-    // Fără cod poștal oferta e exclusă, deci feedul iese gol.
+    // Fără cod poștal (nici la agenție) oferta e exclusă, deci feedul iese gol.
     seedAll({}, { postal_code: null });
+    db.organizations![0]!.postal_code = null;
     const empty = await build({ useCache: true });
     expect(empty.adverts).toHaveLength(0);
 
