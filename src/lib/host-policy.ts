@@ -27,6 +27,31 @@ export const MARKETING_PATHS = new Set([
 
 export const CRM_ROBOTS_TXT = "User-agent: *\nDisallow: /\nAllow: /api/public/\n";
 
+/** Fișierul llms.txt — servit DOAR pe www.habitoo.ro. */
+export const LLMS_TXT = `# Habitoo CRM
+
+> Habitoo CRM este un CRM imobiliar pentru agențiile din România. Gestionează proprietăți, clienți, cereri și lead-uri, face potrivirea automată între cereri și proprietăți și publică anunțurile pe portalurile imobiliare direct din aplicație.
+
+Informații esențiale:
+- Portaluri: Imobiliare.ro, Storia, Publi24 (prin Romimo), iMove, Imospot, HomePitch, PrimulAnunț, OferteImobiliare, LaCheie, ClickImob și, internațional, Properstar.
+- Prețuri: Basic 10 €/lună (până la 3 agenți), Pro 20 €/lună (până la 10 agenți), Unlimited 100 €/lună (agenți nelimitați). -50% la plata anuală. 30 de zile gratuite, fără card bancar.
+- Colaborare între agenții de tip MLS, import din orice CRM imobiliar, date izolate pentru fiecare agenție.
+- Interfață în limba română, în browser, fără instalare. Aplicația mobilă pentru iOS și Android va fi disponibilă în curând.
+- Contact: contact@habitoo.ro, telefon/WhatsApp +40 767 941 512.
+
+## Pagini
+
+- [Funcționalități](https://www.habitoo.ro/functionalitati): toate modulele CRM-ului
+- [Prețuri](https://www.habitoo.ro/preturi): planuri, perioada gratuită, întrebări frecvente
+- [Despre](https://www.habitoo.ro/despre): misiunea și principiile Habitoo
+- [Contact](https://www.habitoo.ro/contact): demonstrație, telefon, WhatsApp
+
+## Opțional
+
+- [Termeni și condiții](https://www.habitoo.ro/termeni)
+- [Politica de confidențialitate](https://www.habitoo.ro/politica-de-confidentialitate)
+`;
+
 export const PUBLIC_ROBOTS_TXT = `User-agent: Googlebot
 Allow: /
 Disallow: /anunturi-proprietari
