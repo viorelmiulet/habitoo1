@@ -20,6 +20,18 @@ export function ContactChannels() {
           </a>
         </span>
       </p>
+      <p className="mt-2 flex items-center gap-2 text-sm text-muted-foreground">
+        <Mail className="size-4 shrink-0 text-navy" aria-hidden />
+        <span>
+          Email:{" "}
+          <a
+            href={`mailto:${CONTACT_EMAIL}`}
+            className="break-all font-medium text-navy hover:underline"
+          >
+            {CONTACT_EMAIL}
+          </a>
+        </span>
+      </p>
       <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:flex-wrap">
         <a
           href={WHATSAPP_URL}

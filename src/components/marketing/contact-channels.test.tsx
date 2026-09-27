@@ -2,7 +2,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it, vi } from "vitest";
 import { ContactChannels } from "./ContactChannels";
 import { PublicFooter } from "./PublicFooter";
-import { CONTACT_PHONE, FACEBOOK_URL, WHATSAPP_URL } from "./structured-data";
+import { CONTACT_EMAIL, CONTACT_PHONE, FACEBOOK_URL, WHATSAPP_URL } from "./structured-data";
 
 // Footerul folosește <Link>, care are nevoie de contextul routerului.
 vi.mock("@tanstack/react-router", () => ({
