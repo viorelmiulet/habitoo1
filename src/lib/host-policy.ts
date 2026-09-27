@@ -85,6 +85,7 @@ function normalizePath(p: string): string {
 export type EdgeDecision =
   | { kind: "redirect"; location: string }
   | { kind: "robots"; body: string }
+  | { kind: "llms"; body: string }
   | { kind: "pass" };
 
 export function decideEdge(request: Request): EdgeDecision {
