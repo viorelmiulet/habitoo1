@@ -1,6 +1,14 @@
 import { describe, expect, it, vi } from "vitest";
 
 vi.mock("@/integrations/supabase/client.server", () => ({ supabaseAdmin: {} }));
+// Ofertele de test sunt minimale: serializarea reală e testată în properstar-feed.test.ts.
+vi.mock("./mapper", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("./mapper")>()),
+  buildProperstarXml: (ads: { advertId: string; status: string }[]) =>
+    `<?xml version="1.0" encoding="UTF-8"?><Adverts>${ads
+      .map((a) => `<Advert><AdvertId>${a.advertId}</AdvertId><Status>${a.status}</Status></Advert>`)
+      .join("")}</Adverts>`,
+}));
 
 import {
   handleProperstarIndex,
@@ -128,8 +136,9 @@ describe("feedul semnat al agenției", () => {
     const b = build([advert("HB-1"), advert("HB-2")]);
     const d = deps([{ ...A, presence: "grace" }], { "org-a": b });
     const xml = await (await handleProperstarSignedFeed(url(signOfficeId("hbA", KEY)), "hbA.xml", d, NOW)).text();
-    const expected = buildProperstarXml(b.adverts.map((a) => ({ ...a, status: "Deleted" as const })));
-    expect(xml).toBe(expected);
+    expect(xml).toBe(buildProperstarXml(b.adverts.map((a) => ({ ...a, status: "Deleted" as const }))));
+    expect(xml.match(/<Status>Deleted<\/Status>/g)).toHaveLength(2);
+    expect(xml).not.toContain("<Status>Active</Status>");
   });
 
   it("agenție ieșită din index → 404", async () => {
