@@ -39,7 +39,11 @@ describe("JSON-LD public", () => {
     const org = n.find((x) => x["@type"] === "Organization")!;
     expect(org["@id"]).toBe(ORG_ID);
     expect(String(org.logo)).toMatch(/^https:\/\/www\.habitoo\.ro\//);
-    expect((org.contactPoint as Node).email).toBe("contact@habitoo.ro");
+    expect(org.sameAs).toEqual(["https://www.facebook.com/profile.php?id=61594347749722"]);
+    const contactPoint = org.contactPoint as Node;
+    expect(contactPoint.email).toBe("contact@habitoo.ro");
+    expect(contactPoint.telephone).toBe("+40767941512");
+    expect(contactPoint.contactType).toBe("customer support");
     const site = n.find((x) => x["@type"] === "WebSite")!;
     expect(site["@id"]).toBe(WEBSITE_ID);
     expect(site.potentialAction).toBeUndefined();
