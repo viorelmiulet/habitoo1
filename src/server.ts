@@ -2,6 +2,7 @@ import "./lib/error-capture";
 
 import { consumeLastCapturedError } from "./lib/error-capture";
 import { renderErrorPage } from "./lib/error-page";
+import { decideEdge, shouldTagNoindex } from "./lib/host-policy";
 
 type ServerEntry = {
   fetch: (request: Request, env: unknown, ctx: unknown) => Promise<Response> | Response;
@@ -66,18 +67,41 @@ function isH3SwallowedErrorBody(body: string): boolean {
   }
 }
 
+function withNoindexHeader(response: Response, request: Request): Response {
+  if (!shouldTagNoindex(request, response)) return response;
+  const headers = new Headers(response.headers);
+  headers.set("x-robots-tag", "noindex, nofollow");
+  return new Response(response.body, { status: response.status, statusText: response.statusText, headers });
+}
+
 export default {
   async fetch(request: Request, env: unknown, ctx: unknown) {
+    const decision = decideEdge(request);
+    if (decision.kind === "redirect") {
+      return new Response(null, { status: 301, headers: { location: decision.location } });
+    }
+    if (decision.kind === "robots") {
+      return withNoindexHeader(
+        new Response(decision.body, { headers: { "content-type": "text/plain; charset=utf-8" } }),
+        request,
+      );
+    }
     try {
       const handler = await getServerEntry();
       const response = await handler.fetch(request, env, ctx);
-      return withPrivateDocumentCache(await normalizeCatastrophicSsrResponse(response), request);
+      return withNoindexHeader(
+        withPrivateDocumentCache(await normalizeCatastrophicSsrResponse(response), request),
+        request,
+      );
     } catch (error) {
       console.error(error);
-      return new Response(renderErrorPage(), {
-        status: 500,
-        headers: { "content-type": "text/html; charset=utf-8" },
-      });
+      return withNoindexHeader(
+        new Response(renderErrorPage(), {
+          status: 500,
+          headers: { "content-type": "text/html; charset=utf-8" },
+        }),
+        request,
+      );
     }
   },
 };
