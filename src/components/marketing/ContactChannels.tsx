@@ -1,5 +1,6 @@
-import { Facebook, MessageCircle, Phone } from "lucide-react";
+import { Facebook, Mail, MessageCircle, Phone } from "lucide-react";
 import {
+  CONTACT_EMAIL,
   CONTACT_PHONE,
   CONTACT_PHONE_DISPLAY,
   FACEBOOK_URL,
@@ -17,6 +18,18 @@ export function ContactChannels() {
           Telefon / WhatsApp:{" "}
           <a href={`tel:${CONTACT_PHONE}`} className="font-medium text-navy hover:underline">
             {CONTACT_PHONE_DISPLAY}
+          </a>
+        </span>
+      </p>
+      <p className="mt-2 flex items-center gap-2 text-sm text-muted-foreground">
+        <Mail className="size-4 shrink-0 text-navy" aria-hidden />
+        <span>
+          Email:{" "}
+          <a
+            href={`mailto:${CONTACT_EMAIL}`}
+            className="break-all font-medium text-navy hover:underline"
+          >
+            {CONTACT_EMAIL}
           </a>
         </span>
       </p>
