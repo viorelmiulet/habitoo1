@@ -29,6 +29,7 @@ import { navyButton } from "@/components/marketing/PublicHeader";
 import { PublicLayout } from "@/components/marketing/PublicLayout";
 import { Reveal } from "@/components/marketing/Reveal";
 import { Container, Eyebrow, Section, SectionHeading } from "@/components/marketing/Section";
+import { homeIdentityJsonLd } from "@/components/marketing/structured-data";
 import { publicHead, SITE_URL } from "@/components/marketing/public-head";
 import { getCurrentHostname } from "@/lib/current-host";
 import { isCrmHostname } from "@/lib/host";
