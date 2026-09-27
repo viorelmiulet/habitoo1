@@ -53,6 +53,8 @@ export type ProperstarFeedBuild = {
   deleted: number;
   excluded: ProperstarExcluded[];
   capped: boolean;
+  /** Cea mai recentă modificare (ofertă sau selecție) dintre ofertele incluse; nu apare în XML. */
+  lastModified: string | null;
 };
 
 export function properstarFeedPath(agencyKey: string): string {
@@ -139,6 +141,7 @@ export async function buildProperstarFeed(input: {
     deleted: 0,
     excluded: [],
     capped: false,
+    lastModified: null,
   };
   if (!candidateIds.length) {
     rememberBuild(input.organizationId, now, empty);
@@ -222,6 +225,7 @@ export async function buildProperstarFeed(input: {
   const adverts: ProperstarAdvert[] = [];
   const excluded: ProperstarExcluded[] = [];
   const seen = new Set<string>();
+  let lastModifiedMs = 0;
   let active = 0;
   let deleted = 0;
 
@@ -286,6 +290,10 @@ export async function buildProperstarFeed(input: {
     }
     seen.add(result.advert.advertId);
     adverts.push(result.advert);
+    for (const stamp of [row.updated_at, publication.updatedAt]) {
+      const t = stamp ? new Date(stamp).getTime() : NaN;
+      if (Number.isFinite(t) && t > lastModifiedMs) lastModifiedMs = t;
+    }
     if (status === "Active") active += 1;
     else deleted += 1;
   }
@@ -298,6 +306,7 @@ export async function buildProperstarFeed(input: {
     deleted,
     excluded,
     capped,
+    lastModified: lastModifiedMs > 0 ? new Date(lastModifiedMs).toISOString() : null,
   };
   rememberBuild(input.organizationId, now, build);
   return build;

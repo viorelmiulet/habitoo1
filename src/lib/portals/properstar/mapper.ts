@@ -104,7 +104,7 @@ function xmlEscape(value: string): string {
     .replace(/"/g, "&quot;");
 }
 
-function cdata(value: string): string {
+export function cdata(value: string): string {
   // `]]>` a fost deja neutralizat în sanitizeProperstarHtml.
   return `<![CDATA[${value.replace(/\]\]>/g, "]]&gt;")}]]>`;
 }

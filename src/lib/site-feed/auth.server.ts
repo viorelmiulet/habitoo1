@@ -97,6 +97,18 @@ function rateLimited(key: string): boolean {
   return bucket.count > RATE_MAX;
 }
 
+/**
+ * Aceeași limită de cereri ca feedurile existente, pentru rutele care nu trec
+ * prin `authenticateFeedRequest` (ex. indexul Properstar). IP-ul nu se salvează.
+ */
+export function feedRequestRateLimited(prefix: string, request: Request): boolean {
+  const ip =
+    request.headers.get("cf-connecting-ip") ??
+    request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
+    "unknown";
+  return rateLimited(`${prefix}|${ip}`);
+}
+
 /** Opțiuni de autentificare. Comportamentul implicit rămâne neschimbat. */
 export type FeedAuthOptions = {
   /**
