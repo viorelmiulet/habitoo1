@@ -8,7 +8,12 @@ import { useServerFn } from "@tanstack/react-start";
 import { InlineLoading } from "@/components/app/LoadingState";
 import { PortalLogo } from "@/components/app/PortalLogo";
 import { QueryError } from "@/components/app/QueryError";
+import { StatusBadge } from "@/components/app/StatusBadge";
 import { getProperstarFeedReport } from "@/lib/portals/properstar.functions";
+import {
+  properstarFeedStatus,
+  type ProperstarFeedStatus,
+} from "@/lib/portals/properstar/feed-status";
 
 export function ProperstarFeedCard() {
   const load = useServerFn(getProperstarFeedReport);
@@ -25,8 +30,8 @@ export function ProperstarFeedCard() {
           <div className="min-w-0">
             <h2 className="text-sm font-semibold tracking-wide uppercase">Feed Properstar</h2>
             <p className="text-xs text-muted-foreground">
-              Properstar preia singur ofertele bifate pentru el, din linkul de mai jos. Ofertele
-              debifate sau vândute rămân 7 zile în feed, marcate ca retrase, ca să dispară și la ei.
+              După activarea portalului, ofertele bifate pentru Properstar intră automat în feed.
+              Ofertele debifate sau vândute rămân 7 zile marcate ca retrase, ca să dispară și la ei.
             </p>
           </div>
         </div>
@@ -37,6 +42,13 @@ export function ProperstarFeedCard() {
         {report.error ? <QueryError error={report.error as Error} /> : null}
         {report.data ? (
           <>
+            <ProperstarStatusLine
+              status={properstarFeedStatus({
+                activated: report.data.activated,
+                selected: report.data.selected,
+                active: report.data.active,
+              })}
+            />
             <div className="grid gap-3 sm:grid-cols-3">
               <Stat label="Oferte bifate" value={report.data.selected} />
               <Stat label="Trimise acum" value={report.data.active} />
@@ -44,15 +56,6 @@ export function ProperstarFeedCard() {
             </div>
 
             <div className="space-y-1">
-              <p className="text-xs font-medium">Linkul pentru Properstar</p>
-              <code className="block overflow-x-auto rounded border border-border bg-muted/40 px-3 py-2 text-xs">
-                {report.data.feedUrlTemplate}
-              </code>
-              <p className="text-xs text-muted-foreground">
-                {report.data.hasActiveKey
-                  ? "Cheia agenției este activă. Linkul de mai sus arată doar începutul cheii; partea secretă se afișează o singură dată, la generarea cheii. Dacă nu o mai ai, cere echipei Habitoo una nouă."
-                  : "Cheia de acces se generează de echipa Habitoo și se afișează o singură dată, la generare; fără ea linkul nu răspunde."}
-              </p>
               {report.data.lastFetchAt ? (
                 <p className="text-xs text-muted-foreground">
                   Ultima preluare: {new Date(report.data.lastFetchAt).toLocaleString("ro-RO")}
@@ -104,6 +107,18 @@ function Stat({ label, value }: { label: string; value: number }) {
     <div className="rounded border border-border px-3 py-2">
       <p className="text-xs text-muted-foreground">{label}</p>
       <p className="text-lg font-semibold">{value}</p>
+    </div>
+  );
+}
+
+export function ProperstarStatusLine({ status }: { status: ProperstarFeedStatus }) {
+  const tone =
+    status.kind === "included" ? "success" : status.kind === "no_selection" ? "warning" : "neutral";
+  return (
+    <div data-testid="properstar-status" data-kind={status.kind}>
+      <StatusBadge tone={tone} dot>
+        {status.label}
+      </StatusBadge>
     </div>
   );
 }
