@@ -1,14 +1,9 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowRight, Check, MessageCircle } from "lucide-react";
 import { useState } from "react";
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
 import { CtaBand } from "@/components/marketing/CtaBand";
+import { FaqSection, faqPageJsonLd, type FaqItem } from "@/components/marketing/FaqSection";
 import { navyButton } from "@/components/marketing/PublicHeader";
 import { PublicLayout } from "@/components/marketing/PublicLayout";
 import { Reveal } from "@/components/marketing/Reveal";
@@ -28,6 +23,7 @@ export const Route = createFileRoute("/preturi")({
       path: "/preturi",
       title: TITLE,
       description: DESCRIPTION,
+      jsonLd: faqPageJsonLd(faq),
     }),
   component: PricingPage,
 });
@@ -79,7 +75,7 @@ const included = [
   "Căutare globală și adăugare rapidă",
 ];
 
-const faq = [
+const faq: FaqItem[] = [
   {
     q: "Cum funcționează perioada gratuită?",
     a: "Orice agenție nouă primește 30 de zile de acces gratuit, fără card bancar, indiferent de planul ales. La final, plătești planul dorit pentru a continua.",
@@ -299,26 +295,7 @@ function PricingPage() {
         </Container>
       </Section>
 
-      <Section>
-        <Container className="max-w-3xl">
-          <SectionHeading
-            eyebrow="Întrebări frecvente"
-            title="Ce ne întreabă de obicei agențiile"
-          />
-          <Accordion type="single" collapsible className="mt-10">
-            {faq.map((f, i) => (
-              <AccordionItem key={f.q} value={`item-${i}`}>
-                <AccordionTrigger className="text-left text-base font-semibold text-navy">
-                  {f.q}
-                </AccordionTrigger>
-                <AccordionContent className="text-base text-muted-foreground">
-                  {f.a}
-                </AccordionContent>
-              </AccordionItem>
-            ))}
-          </Accordion>
-        </Container>
-      </Section>
+      <FaqSection items={faq} />
 
       <CtaBand
         title="Hai să găsim împreună planul potrivit pentru agenția ta."
