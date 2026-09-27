@@ -36,6 +36,7 @@ import {
   type ImobiliareAccountState,
 } from "@/lib/portals/imobiliare/account";
 import type { ImoveListing } from "@/lib/portals/imove/mapper";
+import { assertPortalKeyAllowed } from "@/lib/portals/key-policy";
 import {
   isLegacyLaCheieTestEnvironmentError,
   normalizeLaCheiePortalSettings,
