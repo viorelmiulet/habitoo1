@@ -243,6 +243,7 @@ export async function buildProperstarFeed(input: {
     const agent: ProperstarAgent | null = agentRow
       ? {
           agentId: agentRow.id,
+          fullName: agentRow.full_name?.trim() || null,
           firstName: names.firstName,
           lastName: names.lastName,
           email: agentRow.email ?? null,

@@ -186,6 +186,8 @@ export type ProperstarOffice = {
 
 export type ProperstarAgent = {
   agentId: string;
+  /** Numele complet (obligatoriu în specificația 2025). Lipsă → se compune din prenume + nume. */
+  fullName?: string | null;
   firstName: string | null;
   lastName: string | null;
   email: string | null;
@@ -229,6 +231,8 @@ export type ProperstarAdvert = {
   state: string | null;
   country: string;
   showAddress: boolean;
+  /** Doar la chirii: Habitoo nu are câmp de perioadă, deci mereu `Monthly`. */
+  rentalPeriod: ProperstarRentalPeriod | null;
   latitude: number | null;
   longitude: number | null;
   floor: number | null;
@@ -240,6 +244,23 @@ export type ProperstarAdvert = {
   office: ProperstarOffice;
   agent: ProperstarAgent;
 };
+
+export type ProperstarRentalPeriod = "Daily" | "Weekly" | "Fortnightly" | "Monthly";
+
+/** AdvertId: maximum 50 de caractere, doar litere ASCII, cifre, `_` și `-`. */
+export const PROPERSTAR_ADVERT_ID_PATTERN = /^[A-Za-z0-9_-]{1,50}$/;
+
+/** Numele complet al agentului, din câmpul dedicat sau din prenume + nume. */
+export function properstarAgentFullName(agent: ProperstarAgent | null): string | null {
+  if (!agent) return null;
+  const full = (agent.fullName ?? "").trim();
+  if (full) return full;
+  const joined = [agent.firstName, agent.lastName]
+    .map((v) => (v ?? "").trim())
+    .filter(Boolean)
+    .join(" ");
+  return joined || null;
+}
 
 export type ProperstarMapResult =
   | { ok: true; advert: ProperstarAdvert }
@@ -267,6 +288,10 @@ export function mapPropertyToProperstar(
 
   const advertId = (p.reference ?? "").trim() || p.id;
   if (!advertId) missing.push("Identificator ofertă (AdvertId)");
+  else if (!PROPERSTAR_ADVERT_ID_PATTERN.test(advertId))
+    missing.push(
+      `Referință invalidă pentru Properstar („${advertId}”): maximum 50 de caractere, doar litere fără diacritice, cifre, _ și -`,
+    );
 
   const advertType = properstarAdvertType(p.transaction_kind);
   if (!advertType) missing.push("Tip tranzacție (vânzare sau închiriere)");
@@ -292,6 +317,8 @@ export function mapPropertyToProperstar(
   const agent = options.agent;
   if (!agent?.agentId) missing.push("Agent responsabil");
   if (!agent?.email?.trim()) missing.push("Email agent responsabil");
+  const agentFullName = properstarAgentFullName(agent);
+  if (agent?.agentId && !agentFullName) missing.push("Nume complet agent responsabil");
 
   if (missing.length) return { ok: false, missing };
 
@@ -352,6 +379,7 @@ export function mapPropertyToProperstar(
       state: p.county?.trim() || null,
       country: PROPERSTAR_COUNTRY,
       showAddress,
+      rentalPeriod: advertType === "Rent" ? "Monthly" : null,
       latitude: coords?.lat ?? null,
       longitude: coords?.lng ?? null,
       floor: p.floor ?? null,
@@ -370,6 +398,7 @@ export function mapPropertyToProperstar(
       agent: {
         ...(agent as ProperstarAgent),
         agentId: properstarEntityId("ag", (agent as ProperstarAgent).agentId),
+        fullName: agentFullName,
         photo: properstarPublicPhoto((agent as ProperstarAgent).photo),
       },
     },
@@ -401,6 +430,7 @@ function contactBlock(advert: ProperstarAdvert): string {
     node("Country", PROPERSTAR_COUNTRY),
     node("Logo", o.logo),
     node("AgentId", a.agentId),
+    node("FullName", properstarAgentFullName(a)),
     node("FirstName", a.firstName),
     node("LastName", a.lastName),
     node("AgentEmail", a.email),
@@ -448,6 +478,8 @@ export function advertToXml(advert: ProperstarAdvert): string {
     listBlock("Photos", "Photo", advert.photos),
     node("Price", advert.price),
     node("PriceCurrency", advert.priceCurrency),
+    node("PricePeriod", advert.rentalPeriod),
+    node("RentalPeriod", advert.rentalPeriod),
     boolNode("ShowPrice", advert.showPrice),
     node("Address", advert.address),
     node("PostalCode", advert.postalCode),
@@ -455,6 +487,7 @@ export function advertToXml(advert: ProperstarAdvert): string {
     node("State", advert.state),
     node("Country", advert.country),
     boolNode("ShowAddress", advert.showAddress),
+    boolNode("HideAddress", !advert.showAddress),
     geo,
     node("Floor", advert.floor),
     node("ConstructionYear", advert.constructionYear),
