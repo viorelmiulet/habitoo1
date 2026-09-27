@@ -1,5 +1,6 @@
 import { Facebook, Mail, MessageCircle, Phone } from "lucide-react";
 import {
+  CONTACT_EMAIL,
   CONTACT_PHONE,
   CONTACT_PHONE_DISPLAY,
   FACEBOOK_URL,
