@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { LegalPage, type LegalSection } from "@/components/marketing/LegalPage";
+import { pageJsonLd } from "@/components/marketing/structured-data";
 import { publicHead } from "@/components/marketing/public-head";
 
 const TITLE = "Termeni și condiții — Habitoo CRM";
@@ -8,7 +9,7 @@ const DESCRIPTION =
 
 export const Route = createFileRoute("/termeni")({
   head: () => {
-    const h = publicHead({ path: "/termeni", title: TITLE, description: DESCRIPTION });
+    const h = publicHead({ path: "/termeni", title: TITLE, description: DESCRIPTION, jsonLd: pageJsonLd({ path: "/termeni", name: "Termeni și condiții", description: DESCRIPTION, about: "organization" }) });
     h.meta.push({ name: "robots", content: "index, follow" });
     return h;
   },

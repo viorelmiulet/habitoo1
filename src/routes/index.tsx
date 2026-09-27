@@ -29,6 +29,7 @@ import { navyButton } from "@/components/marketing/PublicHeader";
 import { PublicLayout } from "@/components/marketing/PublicLayout";
 import { Reveal } from "@/components/marketing/Reveal";
 import { Container, Eyebrow, Section, SectionHeading } from "@/components/marketing/Section";
+import { homeIdentityJsonLd } from "@/components/marketing/structured-data";
 import { publicHead, SITE_URL } from "@/components/marketing/public-head";
 import { getCurrentHostname } from "@/lib/current-host";
 import { isCrmHostname } from "@/lib/host";
@@ -104,23 +105,7 @@ export const Route = createFileRoute("/")({
       title: TITLE,
       description: DESCRIPTION,
       jsonLd: [
-        {
-          "@context": "https://schema.org",
-          "@type": "Organization",
-          name: "Habitoo CRM",
-          url: SITE_URL,
-          logo: `${SITE_URL}/favicon.png`,
-        },
-        {
-          "@context": "https://schema.org",
-          "@type": "SoftwareApplication",
-          name: "Habitoo CRM",
-          applicationCategory: "BusinessApplication",
-          operatingSystem: "Web",
-          inLanguage: "ro",
-          url: SITE_URL,
-          description: DESCRIPTION,
-        },
+        ...homeIdentityJsonLd(DESCRIPTION),
         faqPageJsonLd(faq),
       ],
     }),

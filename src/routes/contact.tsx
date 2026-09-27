@@ -28,6 +28,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { navyButton } from "@/components/marketing/PublicHeader";
 import { PublicLayout } from "@/components/marketing/PublicLayout";
 import { Container, Section, SectionHeading } from "@/components/marketing/Section";
+import { pageJsonLd } from "@/components/marketing/structured-data";
 import { publicHead } from "@/components/marketing/public-head";
 import { CrmLink } from "@/components/marketing/CrmLink";
 import { submitContactRequest } from "@/lib/contact.functions";
@@ -57,6 +58,7 @@ export const Route = createFileRoute("/contact")({
       path: "/contact",
       title: TITLE,
       description: DESCRIPTION,
+      jsonLd: pageJsonLd({ path: "/contact", name: "Contact", description: DESCRIPTION, type: "ContactPage", about: "organization" }),
     }),
   component: ContactPage,
 });
