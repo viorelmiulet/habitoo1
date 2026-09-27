@@ -23,6 +23,8 @@ export type ProperstarFeedReport = {
   active: number;
   deleted: number;
   excluded: ProperstarReportItem[];
+  /** Incluse cu codul poștal al agenției; fișa ofertei rămâne fără cod. */
+  agencyPostalUsed: ProperstarReportItem[];
   lastFetchAt: string | null;
   lastFetchItems: number | null;
 };
@@ -94,6 +96,7 @@ export const getProperstarFeedReport = createServerFn({ method: "GET" })
       active: build.active,
       deleted: build.deleted,
       excluded: build.excluded,
+      agencyPostalUsed: build.agencyPostalUsed,
       lastFetchAt: log?.created_at ?? null,
       lastFetchItems: log?.items ?? null,
     };

@@ -70,7 +70,7 @@ export function ProperstarFeedCard() {
 
             <div className="space-y-2">
               <p className="text-xs font-medium">De completat pentru Properstar</p>
-              {report.data.excluded.length === 0 ? (
+              {report.data.excluded.length === 0 && report.data.agencyPostalUsed.length === 0 ? (
                 <p className="text-xs text-muted-foreground">
                   Toate ofertele bifate au datele necesare.
                 </p>
@@ -89,6 +89,23 @@ export function ProperstarFeedCard() {
                       ) : null}
                       <p className="mt-1 text-muted-foreground">
                         Lipsește: {item.missing.join(", ")}
+                      </p>
+                    </li>
+                  ))}
+                  {report.data.agencyPostalUsed.map((item) => (
+                    <li
+                      key={`agency-${item.propertyId}`}
+                      className="rounded border border-border px-3 py-2 text-xs"
+                    >
+                      <span className="font-medium">
+                        {item.title ?? item.reference ?? "Ofertă fără titlu"}
+                      </span>
+                      {item.reference ? (
+                        <span className="text-muted-foreground"> · {item.reference}</span>
+                      ) : null}
+                      <p className="mt-1 text-muted-foreground">
+                        Inclusă în feed — {item.missing.join(", ")}. Completează codul poștal al
+                        ofertei.
                       </p>
                     </li>
                   ))}
