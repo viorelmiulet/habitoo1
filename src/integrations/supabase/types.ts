@@ -5516,6 +5516,38 @@ export type Database = {
           },
         ]
       }
+      properstar_index_state: {
+        Row: {
+          active: boolean
+          inactive_since: string | null
+          last_active_at: string | null
+          organization_id: string
+          updated_at: string
+        }
+        Insert: {
+          active: boolean
+          inactive_since?: string | null
+          last_active_at?: string | null
+          organization_id: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          inactive_since?: string | null
+          last_active_at?: string | null
+          organization_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "properstar_index_state_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: true
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       properties: {
         Row: {
           additional_spaces: string[]

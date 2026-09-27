@@ -610,6 +610,13 @@
       "when": 1790362677884,
       "tag": "0086_create_listings_table",
       "breakpoints": true
+    },
+    {
+      "idx": 87,
+      "version": "7",
+      "when": 1790499481816,
+      "tag": "0087_properstar_index_state",
+      "breakpoints": true
     }
   ]
 }
