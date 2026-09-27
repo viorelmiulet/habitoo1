@@ -28,6 +28,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { navyButton } from "@/components/marketing/PublicHeader";
 import { PublicLayout } from "@/components/marketing/PublicLayout";
 import { Container, Section, SectionHeading } from "@/components/marketing/Section";
+import { ContactChannels } from "@/components/marketing/ContactChannels";
 import { pageJsonLd } from "@/components/marketing/structured-data";
 import { publicHead } from "@/components/marketing/public-head";
 import { CrmLink } from "@/components/marketing/CrmLink";
@@ -370,7 +371,8 @@ function ContactPage() {
                   </li>
                 ))}
               </ol>
-              <div className="mt-8 rounded-2xl border border-border bg-card p-5">
+              <ContactChannels />
+              <div className="mt-6 rounded-2xl border border-border bg-card p-5">
                 <p className="text-sm font-semibold text-navy">Preferi să începi singur?</p>
                 <p className="mt-1 text-sm text-muted-foreground">
                   Poți crea agenția chiar acum și poți explora toate modulele cu datele tale.

@@ -1,6 +1,8 @@
 import { Link } from "@tanstack/react-router";
+import { Facebook } from "lucide-react";
 import { BrandLogo } from "@/components/brand/BrandLogo";
 import { openCookiePreferences } from "@/lib/cookie-consent";
+import { FACEBOOK_URL } from "./structured-data";
 import { footerColumns } from "./public-nav";
 
 export function PublicFooter() {
@@ -51,6 +53,15 @@ export function PublicFooter() {
               Preferințe cookie-uri
             </button>
             <p>Platformă multi-agenție, cu date izolate pentru fiecare agenție.</p>
+            <a
+              href={FACEBOOK_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Habitoo pe Facebook"
+              className="text-muted-foreground transition-colors hover:text-foreground"
+            >
+              <Facebook className="size-4" aria-hidden />
+            </a>
           </div>
         </div>
       </div>
