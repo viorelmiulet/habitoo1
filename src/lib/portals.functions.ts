@@ -36,6 +36,7 @@ import {
   type ImobiliareAccountState,
 } from "@/lib/portals/imobiliare/account";
 import type { ImoveListing } from "@/lib/portals/imove/mapper";
+import { assertPortalKeyAllowed } from "@/lib/portals/key-policy";
 import {
   isLegacyLaCheieTestEnvironmentError,
   normalizeLaCheiePortalSettings,
@@ -899,6 +900,7 @@ export const issuePortalApiKey = createServerFn({ method: "POST" })
     );
     const definition = getPortalDefinition(data.portalId);
     if (!definition) throw new Error("Portal necunoscut.");
+    assertPortalKeyAllowed(definition);
     // Habitoo emite chei DOAR pentru portalurile care declară acest model.
     // Ex. iMove emite propria cheie API, pe care utilizatorul o salvează la noi.
     if (!definition.authentication.includes("habitoo_api_key")) {

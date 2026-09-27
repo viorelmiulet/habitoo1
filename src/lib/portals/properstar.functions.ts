@@ -17,10 +17,8 @@ export type ProperstarReportItem = {
 
 export type ProperstarFeedReport = {
   organizationId: string;
-  /** URL-ul pe care îl dai Properstar (cheia se generează separat). */
-  feedUrlTemplate: string;
-  hasActiveKey: boolean;
-  keyPrefix: string | null;
+  /** Portalul Properstar e activat pentru agenție (singura condiție de intrare în feed). */
+  activated: boolean;
   selected: number;
   active: number;
   deleted: number;
@@ -70,32 +68,28 @@ export const getProperstarFeedReport = createServerFn({ method: "GET" })
       requestUrl: `${CRM_URL}${properstarFeedPath("preview")}`,
     });
 
-    const [{ data: keys }, { data: logs }] = await Promise.all([
+    const [{ data: connection }, { data: logs }] = await Promise.all([
       supabaseAdmin
-        .from("portal_api_keys")
-        .select("key_prefix, status, last_used_at")
+        .from("portal_connections")
+        .select("activated")
         .eq("organization_id", organizationId)
         .eq("portal", "properstar")
-        .eq("status", "active")
-        .order("created_at", { ascending: false })
-        .limit(1),
+        .maybeSingle(),
       supabaseAdmin
         .from("site_feed_access_logs")
         .select("created_at, items, status")
         .eq("organization_id", organizationId)
-        .eq("endpoint", "portal.properstar.feed")
+        .eq("endpoint", "portal.properstar.agency_feed")
+        .eq("status", 200)
         .order("created_at", { ascending: false })
         .limit(1),
     ]);
 
-    const key = keys?.[0] ?? null;
     const log = logs?.[0] ?? null;
 
     return {
       organizationId,
-      feedUrlTemplate: `${CRM_URL}${properstarFeedPath(key?.key_prefix ? `${key.key_prefix}…` : "<cheia-agenției>")}`,
-      hasActiveKey: Boolean(key),
-      keyPrefix: key?.key_prefix ?? null,
+      activated: connection?.activated === true,
       selected: build.selected,
       active: build.active,
       deleted: build.deleted,
