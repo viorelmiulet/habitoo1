@@ -15,7 +15,6 @@ describe("ContactChannels", () => {
       "href",
       WHATSAPP_URL,
     );
-ecpect: ;
   });
 });
 
