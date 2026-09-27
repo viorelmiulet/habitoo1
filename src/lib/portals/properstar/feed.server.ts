@@ -30,6 +30,7 @@ import {
   type ProperstarAdvert,
   type ProperstarAgent,
   type ProperstarOffice,
+  PROPERSTAR_AGENCY_POSTAL_USED,
 } from "./mapper";
 
 export const PROPERSTAR_PORTAL_ID = "properstar";
@@ -142,6 +143,7 @@ export async function buildProperstarFeed(input: {
     active: 0,
     deleted: 0,
     excluded: [],
+    agencyPostalUsed: [],
     capped: false,
     lastModified: null,
   };
