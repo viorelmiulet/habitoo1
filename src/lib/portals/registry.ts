@@ -209,16 +209,15 @@ export const PORTALS: PortalDefinition[] = [
     status: "available",
     // Un singur sens: Habitoo expune feedul XML, Properstar îl consumă.
     directions: ["habitoo_to_portal"],
-    // Cheia este emisă de Habitoo per agenție și pusă direct în URL-ul feedului,
-    // pentru că Properstar consumă un simplu link, fără headere.
-    authentication: ["habitoo_api_key", "query_parameter"],
+    // Fără chei pe agenție: agenția intră în feed doar prin activarea portalului,
+    // iar feedul se distribuie numai prin indexul protejat (PROPERSTAR_INDEX_KEY).
+    authentication: ["none"],
     capabilities: ["feed_pull"],
     configuration_schema: { fields: [] },
-    public_feed_path_template: "/api/public/feed/properstar/{key}.xml",
 
     website: "https://www.properstar.com",
     notes:
-      "Properstar nu expune un API de creare/editare anunț: integrarea este exclusiv prin feed XML. Selectarea unei oferte înseamnă „inclusă în feedul Properstar” și consumă un loc de publicare. Cheia de acces o generezi în Habitoo și o dai Properstar.",
+      "Properstar nu expune un API de creare/editare anunț: integrarea este exclusiv prin feed XML. Selectarea unei oferte înseamnă „inclusă în feedul Properstar” și consumă un loc de publicare. Agenția intră automat în feed după activarea portalului; nu se emit chei pe agenție.",
   },
 
   // Portalurile de mai jos NU au încă integrare implementată. Nu declarăm
