@@ -24,6 +24,7 @@ import { CtaBand } from "@/components/marketing/CtaBand";
 import { PublicLayout } from "@/components/marketing/PublicLayout";
 import { Reveal } from "@/components/marketing/Reveal";
 import { Container, Eyebrow, Section, SectionHeading } from "@/components/marketing/Section";
+import { pageJsonLd } from "@/components/marketing/structured-data";
 import { publicHead } from "@/components/marketing/public-head";
 import { DashboardMock } from "@/components/marketing/mockups/DashboardMock";
 import {
@@ -55,6 +56,7 @@ export const Route = createFileRoute("/functionalitati")({
       path: "/functionalitati",
       title: TITLE,
       description: DESCRIPTION,
+      jsonLd: pageJsonLd({ path: "/functionalitati", name: "Funcționalități", description: DESCRIPTION, type: "WebPage", about: "software" }),
     }),
   component: FeaturesPage,
 });

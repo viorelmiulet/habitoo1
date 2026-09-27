@@ -8,6 +8,7 @@ import { navyButton } from "@/components/marketing/PublicHeader";
 import { PublicLayout } from "@/components/marketing/PublicLayout";
 import { Reveal } from "@/components/marketing/Reveal";
 import { Container, Section, SectionHeading } from "@/components/marketing/Section";
+import { pageJsonLd, planOffersJsonLd } from "@/components/marketing/structured-data";
 import { publicHead } from "@/components/marketing/public-head";
 import { PLAN_AGENT_LIMITS, PLAN_LABELS, PLAN_PRICES, type PlanKey } from "@/lib/plans";
 import { cn } from "@/lib/utils";
@@ -23,7 +24,11 @@ export const Route = createFileRoute("/preturi")({
       path: "/preturi",
       title: TITLE,
       description: DESCRIPTION,
-      jsonLd: faqPageJsonLd(faq),
+      jsonLd: [
+        ...pageJsonLd({ path: "/preturi", name: "Prețuri", description: DESCRIPTION }),
+        planOffersJsonLd(),
+        faqPageJsonLd(faq),
+      ],
     }),
   component: PricingPage,
 });

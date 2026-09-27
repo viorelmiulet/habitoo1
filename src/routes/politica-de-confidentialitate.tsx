@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { LegalPage, type LegalSection } from "@/components/marketing/LegalPage";
+import { pageJsonLd } from "@/components/marketing/structured-data";
 import { publicHead } from "@/components/marketing/public-head";
 
 const TITLE = "Politica de confidențialitate — Habitoo CRM";
@@ -8,7 +9,7 @@ const DESCRIPTION =
 
 export const Route = createFileRoute("/politica-de-confidentialitate")({
   head: () => {
-    const h = publicHead({ path: "/politica-de-confidentialitate", title: TITLE, description: DESCRIPTION });
+    const h = publicHead({ path: "/politica-de-confidentialitate", title: TITLE, description: DESCRIPTION, jsonLd: pageJsonLd({ path: "/politica-de-confidentialitate", name: "Politica de confidențialitate", description: DESCRIPTION, about: "organization" }) });
     h.meta.push({ name: "robots", content: "index, follow" });
     return h;
   },

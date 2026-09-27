@@ -14,6 +14,7 @@ import { CtaBand } from "@/components/marketing/CtaBand";
 import { PublicLayout } from "@/components/marketing/PublicLayout";
 import { Reveal } from "@/components/marketing/Reveal";
 import { Container, Section, SectionHeading } from "@/components/marketing/Section";
+import { pageJsonLd } from "@/components/marketing/structured-data";
 import { publicHead } from "@/components/marketing/public-head";
 import { PipelineMock } from "@/components/marketing/mockups/PipelineMock";
 
@@ -27,6 +28,7 @@ export const Route = createFileRoute("/despre")({
       path: "/despre",
       title: TITLE,
       description: DESCRIPTION,
+      jsonLd: pageJsonLd({ path: "/despre", name: "Despre", description: DESCRIPTION, type: "AboutPage", about: "organization" }),
     }),
   component: AboutPage,
 });
