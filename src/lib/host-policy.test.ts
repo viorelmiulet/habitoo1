@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { CRM_ROBOTS_TXT, PUBLIC_ROBOTS_TXT, decideEdge, shouldTagNoindex } from "./host-policy";
+import { CRM_ROBOTS_TXT, LLMS_TXT, PUBLIC_ROBOTS_TXT, decideEdge, shouldTagNoindex } from "./host-policy";
 
 const req = (url: string, method = "GET") => new Request(url, { method });
 const html = new Response("x", { headers: { "content-type": "text/html; charset=utf-8" } });
@@ -35,6 +35,23 @@ describe("host policy", () => {
   it("robots diferit pe crm, neschimbat pe www", () => {
     expect(decideEdge(req("https://crm.habitoo.ro/robots.txt"))).toEqual({ kind: "robots", body: CRM_ROBOTS_TXT });
     expect(decideEdge(req("https://www.habitoo.ro/robots.txt"))).toEqual({ kind: "robots", body: PUBLIC_ROBOTS_TXT });
+  });
+  it("llms.txt: www servește conținutul, apex → 301 www, crm → 301 www", () => {
+    expect(decideEdge(req("https://www.habitoo.ro/llms.txt"))).toEqual({ kind: "llms", body: LLMS_TXT });
+    expect(decideEdge(req("https://habitoo.ro/llms.txt"))).toEqual({
+      kind: "redirect",
+      location: "https://www.habitoo.ro/llms.txt",
+    });
+    expect(decideEdge(req("https://crm.habitoo.ro/llms.txt"))).toEqual({
+      kind: "redirect",
+      location: "https://www.habitoo.ro/llms.txt",
+    });
+  });
+  it("llms.txt începe cu titlul și se termină cu politica de confidențialitate", () => {
+    expect(LLMS_TXT.startsWith("# Habitoo CRM\n")).toBe(true);
+    expect(LLMS_TXT).toContain("- [Politica de confidențialitate](https://www.habitoo.ro/politica-de-confidentialitate)\n");
+    expect(LLMS_TXT).toContain("contact@habitoo.ro");
+    expect(LLMS_TXT).toContain("+40 767 941 512");
   });
   it("X-Robots-Tag doar pe HTML crm, nu pe api/public sau non-HTML", () => {
     expect(shouldTagNoindex(req("https://crm.habitoo.ro/app"), html)).toBe(true);
