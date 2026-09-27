@@ -42,6 +42,7 @@ function build(adverts: ProperstarAdvert[]): ProperstarFeedBuild {
     active: adverts.length,
     deleted: 0,
     excluded: [],
+    agencyPostalUsed: [],
     capped: false,
     lastModified: adverts.length ? "2026-09-26T10:11:12.000Z" : null,
   };
