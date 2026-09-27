@@ -59,7 +59,7 @@ const faq: FaqItem[] = [
   },
   {
     q: "Pe ce portaluri imobiliare pot publica anunțurile din Habitoo?",
-    a: "Din Habitoo poți publica pe Imobiliare.ro, Storia, Publi24 (prin Romimo), iMove, Imospot, HomePitch, PrimulAnunț, OferteImobiliare, LaCheie și ClickImob, iar internațional pe Properstar. Alegi pentru fiecare anunț pe ce portaluri apare, iar modificările și retragerile se trimit automat.",
+    a: "Din Habitoo poți publica pe Imobiliare.ro, Storia, Publi24 (prin Romimo), iMove, Imospot, HomePitch, PrimulAnunț, OferteImobiliare, LaCheie și ClickImob, iar internațional pe Properstar. Alegi pentru fiecare anunț pe ce portaluri apare. Modificările se trimit când apeși „Publică”, iar portalurile care preiau anunțurile prin feed le actualizează la următoarea sincronizare.",
   },
   {
     q: "Cum funcționează potrivirea automată dintre cereri și proprietăți?",
