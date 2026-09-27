@@ -7,7 +7,7 @@ vi.mock("@/integrations/supabase/client.server", () => ({ supabaseAdmin: {} }));
 import { decidePostalResolution, resolutionKey, type PostalCodeRow } from "../postal-code";
 import { resolvePostalCodeFor, type PostalPorts } from "../postal-code.server";
 import { PROPERTY_COLUMNS } from "../postal-code.ports.server";
-import { publicCoords } from "@/lib/geo/public-coords";
+import { publicCoords } from "@/lib/geo";
 
 const EXACT = { lat: 44.447245, lng: 25.986806 };
 
