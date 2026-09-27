@@ -9,9 +9,12 @@ import { PUBLIC_SITE_URL, isCrmHostname } from "./host";
 
 export const APEX_HOST = "habitoo.ro";
 
-/** Paginile site-ului de prezentare (servite doar pe www). */
+/**
+ * Paginile site-ului de prezentare (servite doar pe www).
+ * `/` NU e în listă: pe crm.* rămâne pe loc (redirecționează către /app),
+ * iar pe apex e acoperită de redirectul general către www.
+ */
 export const MARKETING_PATHS = new Set([
-  "/",
   "/functionalitati",
   "/preturi",
   "/despre",

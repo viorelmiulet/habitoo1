@@ -13,13 +13,16 @@ describe("host policy", () => {
     });
     expect(decideEdge(req("https://habitoo.ro/api/public/x", "POST")).kind).toBe("redirect");
   });
-  it("paginile de prezentare pe crm → 301 www", () => {
-    for (const p of ["/", "/functionalitati", "/preturi", "/despre", "/contact", "/termeni", "/politica-de-confidentialitate"]) {
+  it("paginile de prezentare pe crm → 301 www, dar nu și `/`", () => {
+    for (const p of ["/functionalitati", "/preturi", "/despre", "/contact", "/termeni", "/politica-de-confidentialitate"]) {
       expect(decideEdge(req(`https://crm.habitoo.ro${p}?q=1`))).toEqual({
         kind: "redirect",
         location: `https://www.habitoo.ro${p}?q=1`,
       });
     }
+  });
+  it("`/` pe crm trece mai departe (route-ul index redirectează către /app)", () => {
+    expect(decideEdge(req("https://crm.habitoo.ro/")).kind).toBe("pass");
   });
   it("app, auth, api, media rămân pe crm", () => {
     for (const p of ["/app", "/app/properties", "/login", "/auth/callback", "/api/public/feed/properstar/index/k.xml", "/api/public/mailgun/events", "/assets/a.webp", "/oferta/1"]) {
