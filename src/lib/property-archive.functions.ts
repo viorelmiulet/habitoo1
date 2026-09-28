@@ -4,8 +4,8 @@
  * Regula de siguranță: o proprietate publicată pe portaluri sau oferită în
  * Colaborare NU poate fi arhivată cât timp e activă acolo. Altfel ar dispărea
  * din CRM, dar ar rămâne vizibilă public, fără ca agentul să mai aibă unde s-o
- * gestioneze. Retragerea nu este automatizată aici: utilizatorul o confirmă
- * separat, prin fluxul de retragere existent.
+ * gestioneze. Portalurile NU blochează: la arhivare se pune în coadă retragerea
+ * automată (motiv `archived`), pe calea debifării. Colaborarea blochează în continuare.
  */
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
@@ -167,7 +167,8 @@ export const getPropertyArchiveState = createServerFn({ method: "POST" })
       title: property.title,
       status: String(property.status),
       archived,
-      canArchive: !archived && blockers.length === 0,
+      // Portalurile nu mai blochează: se retrag automat, în fundal, la arhivare.
+      canArchive: !archived && !blockers.some((b) => b.kind === "collaboration"),
       blockers,
     };
   });
@@ -202,9 +203,10 @@ export const archiveProperty = createServerFn({ method: "POST" })
       property.id,
       property.collaboration,
     );
-    if (blockers.length > 0) {
+    const collab = blockers.filter((b) => b.kind === "collaboration");
+    if (collab.length > 0) {
       throw new Error(
-        `Proprietatea este încă activă pe: ${blockers.map((b) => b.name).join(", ")}. Retrage-o de acolo înainte de arhivare.`,
+        `Proprietatea este încă activă pe: ${collab.map((b) => b.name).join(", ")}. Retrage-o de acolo înainte de arhivare.`,
       );
     }
 
@@ -233,6 +235,24 @@ export const archiveProperty = createServerFn({ method: "POST" })
       old_values: { status: property.status } as never,
       new_values: { status: "archived", archived_at: archivedAt } as never,
     } as never);
+
+    // Retragerea automată de pe portaluri, în fundal (nu blochează arhivarea).
+    try {
+      const { enqueueStatusWithdrawals } = await import("@/lib/portals/status-withdraw.server");
+      const { logOperation } = await import("@/lib/portals.functions");
+      await enqueueStatusWithdrawals(
+        admin as never,
+        {
+          organizationId: property.organization_id,
+          propertyIds: [property.id],
+          reason: "archived",
+          actorId: actor.userId,
+        },
+        { logOperation: async (i) => void (await logOperation(i)) },
+      );
+    } catch (e) {
+      console.error("archive withdraw enqueue failed", e);
+    }
 
     return { ok: true, archived: true, reference: property.reference ?? null, status: "archived" };
   });
