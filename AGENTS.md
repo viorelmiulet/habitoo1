@@ -12,3 +12,5 @@
 <!-- LOVABLE:END -->
 
 - Properstar index: agency presence tracked in `properstar_index_state` (7-day Deleted grace after deactivation); agency links signed HMAC-SHA256(OfficeId, PROPERSTAR_INDEX_KEY). Why: Properstar pulls one index URL, deactivation has no reliable timestamp elsewhere.
+
+- Property status sold/rented/archived enqueues `portal_status_withdraw_items` (cron worker armed on enqueue) that withdraws via `applyPortalSelectionForOrg` enabled:false with reason status_sold/status_rented/archived; no auto-republish. Why: same path as manual deselect, non-blocking with retries.

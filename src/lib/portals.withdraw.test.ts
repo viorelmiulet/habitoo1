@@ -204,4 +204,17 @@ describe("retragerea la deselectare", () => {
     expect(withdrawCalls).toEqual([]);
     expect(out.results[0]?.message).toMatch(/nu a fost niciodată trimisă/i);
   });
+
+  it("OferteImobiliare (fără retragere în API) → manual, fără apel", async () => {
+    const { performPortalWithdraw } = await import("@/lib/portals.functions");
+    const out = await performPortalWithdraw({
+      organizationId: "org-1",
+      actorId: "user-1",
+      portalId: "oferteimobiliare",
+      propertyId,
+    });
+    expect(withdrawCalls).toEqual([]);
+    expect(out.manual).toBe(true);
+    expect(out.message).toMatch(/retras manual din contul portalului/);
+  });
 });

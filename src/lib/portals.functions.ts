@@ -1430,8 +1430,12 @@ export async function performPortalWithdraw(input: {
   propertyId: string;
   /** Listarea deja citită, dacă apelantul o are (evită un query în plus). */
   externalId?: string | null;
+  /** Motivul salvat pe listare; implicit „user” (debifare manuală). */
+  withdrawReason?: string;
 }): Promise<{
   ok: boolean;
+  /** Portalul nu are retragere în API: trebuie retrasă manual din contul portalului. */
+  manual?: boolean;
   /** Portalul a fost apelat efectiv. */
   attempted: boolean;
   /** Portalul nu cunoștea oferta (404): nu era nimic de retras. */
@@ -1449,6 +1453,20 @@ export async function performPortalWithdraw(input: {
       attempted: false,
       alreadyWithdrawn: false,
       message: `${name}: oferta nu mai apare în feed și portalul o arhivează.`,
+    };
+  }
+
+  // Portal cu publicare, dar fără retragere în API (ex. OferteImobiliare): nu apelăm.
+  if (
+    !definition.capabilities.includes("withdraw_listing") &&
+    !definition.capabilities.includes("feed_pull")
+  ) {
+    return {
+      ok: false,
+      manual: true,
+      attempted: false,
+      alreadyWithdrawn: false,
+      message: `${name}: trebuie retras manual din contul portalului.`,
     };
   }
 
@@ -1480,6 +1498,7 @@ export async function performPortalWithdraw(input: {
     portalId: definition.id,
     propertyId: input.propertyId,
     action: "withdraw",
+    ...(input.withdrawReason ? { withdrawReason: input.withdrawReason, operationLabel: "auto_withdraw" } : {}),
   });
 
   if (res.ok) {
@@ -2433,6 +2452,8 @@ export async function applyPortalSelectionForOrg(input: {
   superadmin: boolean;
   actorId: string;
   data: z.infer<typeof applySelectionSchema>;
+  /** Motivul retragerii (automatizări: status_sold, status_rented, archived). */
+  withdrawReason?: string;
 }): Promise<{ ok: boolean; results: PortalSelectionOutcome[] }> {
   {
     const { organizationId, superadmin, actorId, data } = input;
@@ -2581,6 +2602,11 @@ export async function applyPortalSelectionForOrg(input: {
               enabled: wanted.enabled,
               status: wanted.enabled ? "pending" : "disabled",
               withdrawn_at: wanted.enabled ? null : new Date().toISOString(),
+              ...(wanted.enabled
+                ? { withdraw_reason: null }
+                : input.withdrawReason
+                  ? { withdraw_reason: input.withdrawReason }
+                  : {}),
               updated_by: actorId,
               created_by: actorId,
             } as never,
@@ -2630,6 +2656,7 @@ export async function applyPortalSelectionForOrg(input: {
             propertyId: data.propertyId,
             externalId:
               (listingRow as { external_id?: string | null } | undefined)?.external_id ?? null,
+            ...(input.withdrawReason ? { withdrawReason: input.withdrawReason } : {}),
           });
           results.push({
             portalId: definition.id,

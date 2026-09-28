@@ -76,6 +76,7 @@ import { Route as ApiPublicCronLacheieResendRouteImport } from './routes/api/pub
 import { Route as ApiPublicCronListingCollectorRouteImport } from './routes/api/public/cron/listing-collector'
 import { Route as ApiPublicCronMarketPriceIndicesRouteImport } from './routes/api/public/cron/market-price-indices'
 import { Route as ApiPublicCronPortalSlotWithdrawRouteImport } from './routes/api/public/cron/portal-slot-withdraw'
+import { Route as ApiPublicCronPortalStatusWithdrawRouteImport } from './routes/api/public/cron/portal-status-withdraw'
 import { Route as ApiPublicCronPromotionWithdrawRouteImport } from './routes/api/public/cron/promotion-withdraw'
 import { Route as ApiPublicCronPropertyImportImagesRouteImport } from './routes/api/public/cron/property-import-images'
 import { Route as ApiPublicCronSubscriptionsRouteImport } from './routes/api/public/cron/subscriptions'
@@ -477,6 +478,12 @@ const ApiPublicCronPortalSlotWithdrawRoute =
     path: '/api/public/cron/portal-slot-withdraw',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicCronPortalStatusWithdrawRoute =
+  ApiPublicCronPortalStatusWithdrawRouteImport.update({
+    id: '/api/public/cron/portal-status-withdraw',
+    path: '/api/public/cron/portal-status-withdraw',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicCronPromotionWithdrawRoute =
   ApiPublicCronPromotionWithdrawRouteImport.update({
     id: '/api/public/cron/promotion-withdraw',
@@ -712,6 +719,7 @@ export interface FileRoutesByFullPath {
   '/api/public/cron/listing-collector': typeof ApiPublicCronListingCollectorRoute
   '/api/public/cron/market-price-indices': typeof ApiPublicCronMarketPriceIndicesRoute
   '/api/public/cron/portal-slot-withdraw': typeof ApiPublicCronPortalSlotWithdrawRoute
+  '/api/public/cron/portal-status-withdraw': typeof ApiPublicCronPortalStatusWithdrawRoute
   '/api/public/cron/promotion-withdraw': typeof ApiPublicCronPromotionWithdrawRoute
   '/api/public/cron/property-import-images': typeof ApiPublicCronPropertyImportImagesRoute
   '/api/public/cron/subscriptions': typeof ApiPublicCronSubscriptionsRoute
@@ -808,6 +816,7 @@ export interface FileRoutesByTo {
   '/api/public/cron/listing-collector': typeof ApiPublicCronListingCollectorRoute
   '/api/public/cron/market-price-indices': typeof ApiPublicCronMarketPriceIndicesRoute
   '/api/public/cron/portal-slot-withdraw': typeof ApiPublicCronPortalSlotWithdrawRoute
+  '/api/public/cron/portal-status-withdraw': typeof ApiPublicCronPortalStatusWithdrawRoute
   '/api/public/cron/promotion-withdraw': typeof ApiPublicCronPromotionWithdrawRoute
   '/api/public/cron/property-import-images': typeof ApiPublicCronPropertyImportImagesRoute
   '/api/public/cron/subscriptions': typeof ApiPublicCronSubscriptionsRoute
@@ -908,6 +917,7 @@ export interface FileRoutesById {
   '/api/public/cron/listing-collector': typeof ApiPublicCronListingCollectorRoute
   '/api/public/cron/market-price-indices': typeof ApiPublicCronMarketPriceIndicesRoute
   '/api/public/cron/portal-slot-withdraw': typeof ApiPublicCronPortalSlotWithdrawRoute
+  '/api/public/cron/portal-status-withdraw': typeof ApiPublicCronPortalStatusWithdrawRoute
   '/api/public/cron/promotion-withdraw': typeof ApiPublicCronPromotionWithdrawRoute
   '/api/public/cron/property-import-images': typeof ApiPublicCronPropertyImportImagesRoute
   '/api/public/cron/subscriptions': typeof ApiPublicCronSubscriptionsRoute
@@ -1008,6 +1018,7 @@ export interface FileRouteTypes {
     | '/api/public/cron/listing-collector'
     | '/api/public/cron/market-price-indices'
     | '/api/public/cron/portal-slot-withdraw'
+    | '/api/public/cron/portal-status-withdraw'
     | '/api/public/cron/promotion-withdraw'
     | '/api/public/cron/property-import-images'
     | '/api/public/cron/subscriptions'
@@ -1104,6 +1115,7 @@ export interface FileRouteTypes {
     | '/api/public/cron/listing-collector'
     | '/api/public/cron/market-price-indices'
     | '/api/public/cron/portal-slot-withdraw'
+    | '/api/public/cron/portal-status-withdraw'
     | '/api/public/cron/promotion-withdraw'
     | '/api/public/cron/property-import-images'
     | '/api/public/cron/subscriptions'
@@ -1203,6 +1215,7 @@ export interface FileRouteTypes {
     | '/api/public/cron/listing-collector'
     | '/api/public/cron/market-price-indices'
     | '/api/public/cron/portal-slot-withdraw'
+    | '/api/public/cron/portal-status-withdraw'
     | '/api/public/cron/promotion-withdraw'
     | '/api/public/cron/property-import-images'
     | '/api/public/cron/subscriptions'
@@ -1262,6 +1275,7 @@ export interface RootRouteChildren {
   ApiPublicCronListingCollectorRoute: typeof ApiPublicCronListingCollectorRoute
   ApiPublicCronMarketPriceIndicesRoute: typeof ApiPublicCronMarketPriceIndicesRoute
   ApiPublicCronPortalSlotWithdrawRoute: typeof ApiPublicCronPortalSlotWithdrawRoute
+  ApiPublicCronPortalStatusWithdrawRoute: typeof ApiPublicCronPortalStatusWithdrawRoute
   ApiPublicCronPromotionWithdrawRoute: typeof ApiPublicCronPromotionWithdrawRoute
   ApiPublicCronPropertyImportImagesRoute: typeof ApiPublicCronPropertyImportImagesRoute
   ApiPublicCronSubscriptionsRoute: typeof ApiPublicCronSubscriptionsRoute
@@ -1760,6 +1774,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicCronPortalSlotWithdrawRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/cron/portal-status-withdraw': {
+      id: '/api/public/cron/portal-status-withdraw'
+      path: '/api/public/cron/portal-status-withdraw'
+      fullPath: '/api/public/cron/portal-status-withdraw'
+      preLoaderRoute: typeof ApiPublicCronPortalStatusWithdrawRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/cron/promotion-withdraw': {
       id: '/api/public/cron/promotion-withdraw'
       path: '/api/public/cron/promotion-withdraw'
@@ -2179,6 +2200,8 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicCronListingCollectorRoute: ApiPublicCronListingCollectorRoute,
   ApiPublicCronMarketPriceIndicesRoute: ApiPublicCronMarketPriceIndicesRoute,
   ApiPublicCronPortalSlotWithdrawRoute: ApiPublicCronPortalSlotWithdrawRoute,
+  ApiPublicCronPortalStatusWithdrawRoute:
+    ApiPublicCronPortalStatusWithdrawRoute,
   ApiPublicCronPromotionWithdrawRoute: ApiPublicCronPromotionWithdrawRoute,
   ApiPublicCronPropertyImportImagesRoute:
     ApiPublicCronPropertyImportImagesRoute,

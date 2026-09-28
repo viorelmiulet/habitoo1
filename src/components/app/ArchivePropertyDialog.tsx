@@ -16,6 +16,7 @@ import { toastError } from "@/lib/errors";
 import { archiveProperty, getPropertyArchiveState } from "@/lib/property-archive.functions";
 import { applyPropertyPortalSelection } from "@/lib/portals.functions";
 import { setPropertyCollaboration } from "@/lib/collaboration.functions";
+import { StatusWithdrawPreview } from "@/components/app/StatusWithdrawPreview";
 
 /**
  * Confirmarea arhivării. Arhivarea e reversibilă, deci confirmarea e simplă.
@@ -94,7 +95,9 @@ export function ArchivePropertyDialog({
   });
 
   const busy = withdrawAll.isPending || archive.isPending;
-  const blocked = Boolean(state && !state.canArchive && state.blockers.length > 0);
+  // Doar Colaborarea mai blochează; portalurile se retrag automat la arhivare.
+  const blocked = Boolean(state && !state.canArchive);
+  const portalBlockers = (state?.blockers ?? []).filter((b) => b.kind === "portal");
 
   return (
     <Dialog open={open} onOpenChange={(v) => (busy ? undefined : onOpenChange(v))}>
@@ -125,7 +128,7 @@ export function ArchivePropertyDialog({
               </p>
             </div>
             <ul className="space-y-2">
-              {state!.blockers.map((b) => (
+              {state!.blockers.filter((b) => b.kind === "collaboration").map((b) => (
                 <li
                   key={b.id}
                   className="flex items-center justify-between gap-3 rounded-xl bg-secondary/60 px-3 py-2 text-sm"
@@ -160,11 +163,16 @@ export function ArchivePropertyDialog({
             </Button>
           </div>
         ) : (
+          <>
+          {portalBlockers.length > 0 ? (
+            <StatusWithdrawPreview propertyIds={[propertyId]} status="archived" enabled={open} />
+          ) : null}
           <p className="rounded-2xl bg-secondary/60 p-4 text-sm text-muted-foreground">
             Proprietatea nu va mai apărea în lista de proprietăți, în căutare sau în matching.
             Fotografiile, documentele, lead-urile legate și istoricul rămân intacte, iar oricând o
             poți readuce în circulație din filtrul „Arată și arhivate”.
           </p>
+          </>
         )}
 
         <DialogFooter>

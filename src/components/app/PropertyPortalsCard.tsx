@@ -9,6 +9,7 @@
  * Separă intenția (checkbox) de starea reală a integrării (status), fără să
  * introducă o a doua sursă de adevăr.
  */
+import { getPropertyAutoWithdrawals, type AutoWithdrawView } from "@/lib/property-status.functions";
 import { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useState } from "react";
 import { AlertTriangle, Check, CheckCircle2, Circle, ExternalLink } from "lucide-react";
 
@@ -124,6 +125,14 @@ export const PropertyPortalsCard = forwardRef<
   const loadMatrix = useServerFn(getPropertiesPortalMatrix);
   const applyFn = useServerFn(applyPropertyPortalSelection);
   const queryKey = ["property-portals-selection", organizationId, propertyId] as const;
+
+  const loadAutoWithdrawals = useServerFn(getPropertyAutoWithdrawals);
+  const autoWithdrawals = useQuery({
+    queryKey: ["property-auto-withdrawals", propertyId],
+    queryFn: () => loadAutoWithdrawals({ data: { propertyId } }),
+    refetchInterval: (q) =>
+      q.state.data?.some((w) => w.status === "queued" || w.status === "running") ? 15_000 : false,
+  });
 
   const matrix = useQuery({
     queryKey,
@@ -484,6 +493,9 @@ export const PropertyPortalsCard = forwardRef<
                           {problem && failure?.requestId ? ` · Cerere ${failure.requestId}` : ""}
                         </p>
                         <MyPortalSlotLine portalId={cell.portalId} />
+                        <AutoWithdrawLine
+                          view={autoWithdrawals.data?.find((w) => w.portalId === cell.portalId)}
+                        />
                       </div>
                       <div className="flex min-w-0 flex-wrap items-center gap-3 sm:justify-end">
                         {cell.publicUrl && !cell.publicWarning ? (
@@ -766,6 +778,48 @@ function MyPortalSlotLine({ portalId }: { portalId: string }) {
       Locurile tale pe acest portal: {mine.data.used}
       {total === null ? " (nelimitat)" : ` / ${total}`}
       {mine.data.agencyExhausted ? " — agenția nu mai are locuri libere." : ""}
+    </p>
+  );
+}
+
+const AUTO_REASON_LABEL: Record<AutoWithdrawView["reason"], string> = {
+  status_sold: "Vândut",
+  status_rented: "Închiriat",
+  archived: "Arhivat",
+};
+
+/** Starea retragerii automate (Vândut / Închiriat / Arhivat) pe acest portal. */
+function AutoWithdrawLine({ view }: { view: AutoWithdrawView | undefined }) {
+  if (!view || view.status === "cancelled") return null;
+  const reason = AUTO_REASON_LABEL[view.reason];
+  const date = new Date(view.finishedAt ?? view.createdAt).toLocaleString("ro-RO", {
+    dateStyle: "medium",
+    timeStyle: "short",
+  });
+  if (view.status === "queued" || view.status === "running")
+    return (
+      <p className="mt-1 text-xs text-warning-foreground">
+        Retragere automată în curs (motiv: {reason})
+        {view.attempts > 0 ? ` · încercarea ${view.attempts + 1}` : ""}
+        {view.lastError ? ` · ultima eroare: ${view.lastError}` : ""}
+      </p>
+    );
+  if (view.status === "done")
+    return (
+      <p className="mt-1 text-xs text-muted-foreground">
+        Retras automat la {date}, motiv: {reason}
+      </p>
+    );
+  if (view.status === "manual_required")
+    return (
+      <p className="mt-1 text-xs font-medium text-warning-foreground">
+        Motiv: {reason} — trebuie retras manual din contul portalului
+      </p>
+    );
+  return (
+    <p className="mt-1 text-xs text-destructive">
+      Retragere automată eșuată la {date} (motiv: {reason}): {view.lastError ?? "eroare"}.
+      Retrage manual oferta.
     </p>
   );
 }

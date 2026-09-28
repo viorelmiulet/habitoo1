@@ -5089,6 +5089,75 @@ export type Database = {
           },
         ]
       }
+      portal_status_withdraw_items: {
+        Row: {
+          attempts: number
+          created_at: string
+          finished_at: string | null
+          id: string
+          last_error: string | null
+          locked_until: string | null
+          max_attempts: number
+          message: string | null
+          next_attempt_at: string | null
+          organization_id: string
+          portal_key: string
+          property_id: string
+          reason: string
+          requested_by: string | null
+          status: string
+        }
+        Insert: {
+          attempts?: number
+          created_at?: string
+          finished_at?: string | null
+          id?: string
+          last_error?: string | null
+          locked_until?: string | null
+          max_attempts?: number
+          message?: string | null
+          next_attempt_at?: string | null
+          organization_id: string
+          portal_key: string
+          property_id: string
+          reason: string
+          requested_by?: string | null
+          status?: string
+        }
+        Update: {
+          attempts?: number
+          created_at?: string
+          finished_at?: string | null
+          id?: string
+          last_error?: string | null
+          locked_until?: string | null
+          max_attempts?: number
+          message?: string | null
+          next_attempt_at?: string | null
+          organization_id?: string
+          portal_key?: string
+          property_id?: string
+          reason?: string
+          requested_by?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "portal_status_withdraw_items_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "portal_status_withdraw_items_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       portal_taxonomy_cache: {
         Row: {
           categories: Json
@@ -7472,6 +7541,32 @@ export type Database = {
           isSetofReturn: true
         }
       }
+      claim_portal_status_withdraw_item: {
+        Args: { _item_id: string; _ttl_seconds: number }
+        Returns: {
+          attempts: number
+          created_at: string
+          finished_at: string | null
+          id: string
+          last_error: string | null
+          locked_until: string | null
+          max_attempts: number
+          message: string | null
+          next_attempt_at: string | null
+          organization_id: string
+          portal_key: string
+          property_id: string
+          reason: string
+          requested_by: string | null
+          status: string
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "portal_status_withdraw_items"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
       claim_promotion_withdraw_job: {
         Args: { _job_id: string; _ttl_seconds: number }
         Returns: {
@@ -7711,6 +7806,8 @@ export type Database = {
       plan_agent_limit: { Args: { _plan: string }; Returns: number }
       portal_slot_withdraw_arm: { Args: never; Returns: undefined }
       portal_slot_withdraw_tick: { Args: never; Returns: undefined }
+      portal_status_withdraw_arm: { Args: never; Returns: undefined }
+      portal_status_withdraw_tick: { Args: never; Returns: undefined }
       promotion_withdraw_arm: { Args: never; Returns: undefined }
       promotion_withdraw_tick: { Args: never; Returns: undefined }
       property_import_images_arm: { Args: never; Returns: undefined }
