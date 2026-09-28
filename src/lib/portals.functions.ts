@@ -1,3 +1,4 @@
+import { mergePortalOffers, parsePortalOffers } from "@/lib/portals/imobiliare/offer-links";
 /**
  * Server functions pentru modulul de portaluri imobiliare.
  *
@@ -1255,7 +1256,7 @@ export async function executeListingAction(input: {
 
   const { data: listing } = await admin
     .from("portal_listings")
-    .select("id, external_id")
+    .select("id, external_id, portal_offers")
     .eq("organization_id", organizationId)
     .eq("portal", definition.id)
     .eq("property_id", propertyId)
@@ -1338,6 +1339,9 @@ export async function executeListingAction(input: {
     ...(result.ok && result.data.externalId ? { external_id: result.data.externalId } : {}),
     // Linkul public al anunțului, când portalul îl întoarce (generic, nu doar Storia).
     ...(result.ok && result.data.publicUrl ? { public_url: result.data.publicUrl } : {}),
+    ...(result.ok && result.data.offers && result.data.offers.length > 0
+      ? { portal_offers: mergePortalOffers(listing?.portal_offers ?? [], result.data.offers) }
+      : {}),
 
     ...(result.ok && action === "publish" ? { published_at: now } : {}),
     ...withdrawReasonPatch,
@@ -1833,6 +1837,7 @@ export type PropertyPortalCell = {
    * avertismentul, nu linkul.
    */
   publicWarning: string | null;
+  offerLinks: { transaction: string | null; url: string }[];
 };
 
 export type PropertyPortalMatrix = {
@@ -1940,7 +1945,7 @@ export const getPropertiesPortalMatrix = createServerFn({ method: "POST" })
         .in("property_id", data.propertyIds),
       admin
         .from("portal_listings")
-        .select("property_id, portal, status, last_sync_at, last_error, external_id, public_url")
+        .select("property_id, portal, status, last_sync_at, last_error, external_id, public_url, portal_offers")
         .eq("organization_id", organizationId)
         .in("property_id", data.propertyIds),
       admin
@@ -2024,7 +2029,15 @@ export const getPropertiesPortalMatrix = createServerFn({ method: "POST" })
               ? "Oferta este selectată, dar nu intră în feed: verifică statusul și publicarea pe site."
               : (listing?.last_error ?? pub?.last_error ?? null),
           externalId: listing?.external_id ?? pub?.external_ref ?? null,
-          publicUrl: listing?.public_url ?? null,
+          // Imobiliare.ro: linkul se afișează doar din ID-ul real salvat.
+          publicUrl:
+            portal.id === "imobiliare_ro"
+              ? (parsePortalOffers(listing?.portal_offers)[0]?.url ?? null)
+              : (listing?.public_url ?? null),
+          offerLinks: parsePortalOffers(listing?.portal_offers).map((o) => ({
+            transaction: o.transaction,
+            url: o.url,
+          })),
           publicWarning:
             portal.id === "imobiliare_ro" && imobiliareNoSubscription && listing?.public_url
               ? IMOBILIARE_NO_SUBSCRIPTION_MESSAGE
