@@ -46,7 +46,10 @@ export function isManualWithdrawPortal(portalKey: string): boolean {
   const def = getPortalDefinition(portalKey);
   if (!def) return false;
   return (
-    def.capabilities.includes("publish_listing") && !def.capabilities.includes("withdraw_listing")
+    def.capabilities.includes("publish_listing") &&
+    !def.capabilities.includes("withdraw_listing") &&
+    // Portalurile cu feed (ex. HomePitch) retrag prin dispariția din feed.
+    !def.capabilities.includes("feed_pull")
   );
 }
 

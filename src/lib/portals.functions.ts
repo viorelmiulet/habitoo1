@@ -1457,7 +1457,10 @@ export async function performPortalWithdraw(input: {
   }
 
   // Portal cu publicare, dar fără retragere în API (ex. OferteImobiliare): nu apelăm.
-  if (!definition.capabilities.includes("withdraw_listing")) {
+  if (
+    !definition.capabilities.includes("withdraw_listing") &&
+    !definition.capabilities.includes("feed_pull")
+  ) {
     return {
       ok: false,
       manual: true,

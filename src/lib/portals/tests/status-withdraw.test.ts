@@ -94,6 +94,8 @@ describe("retragerea automată la schimbarea statusului", () => {
     expect(withdrawReasonForStatus("active")).toBeNull();
     expect(isManualWithdrawPortal("oferteimobiliare")).toBe(true);
     expect(isManualWithdrawPortal("imobiliare_ro")).toBe(false);
+    for (const feed of ["homepitch", "imove", "clickimob", "properstar"])
+      expect(isManualWithdrawPortal(feed)).toBe(false);
   });
 
   it("Vândut → câte o retragere pentru fiecare portal publicat; OferteImobiliare manual, fără apel", async () => {
