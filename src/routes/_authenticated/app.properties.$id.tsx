@@ -16,6 +16,9 @@ import { toast } from "@/components/ui/sonner";
 import { useServerFn } from "@tanstack/react-start";
 import { duplicateProperty } from "@/lib/property-duplicate.functions";
 import { ArchivePropertyDialog } from "@/components/app/ArchivePropertyDialog";
+import { StatusChangeDialog } from "@/components/app/StatusChangeDialog";
+import { isWithdrawStatus } from "@/components/app/StatusWithdrawPreview";
+import { changePropertyStatus } from "@/lib/property-status.functions";
 import { unarchiveProperty } from "@/lib/property-archive.functions";
 import { toastError } from "@/lib/errors";
 import { PageHeader } from "@/components/app/PageHeader";
@@ -307,21 +310,24 @@ function PropertyDetailPage() {
     };
   };
 
+  const changeStatusFn = useServerFn(changePropertyStatus);
+  const [pendingStatus, setPendingStatus] = useState<"sold" | "rented" | "archived" | null>(null);
   const changeStatus = useMutation({
-    mutationFn: async (status: string) => {
-      const { error } = await supabase
-        .from("properties")
-        .update({ status: status as never })
-        .eq("id", id);
-      if (error) throw error;
-      await logAudit({
-        organizationId: orgId,
-        actorId: user?.userId,
-        action: "property_status_changed",
-        entity: "property",
-        entityId: id,
-        newValues: { status },
-      });
+    mutationFn: async (status: string) =>
+      await changeStatusFn({ data: { propertyIds: [id], status: status as never } }),
+    onSuccess: (res) => {
+      setPendingStatus(null);
+      queryClient.invalidateQueries({ queryKey: ["property", id] });
+      queryClient.invalidateQueries({ queryKey: ["properties"] });
+      queryClient.invalidateQueries({ queryKey: ["property-auto-withdrawals", id] });
+      queryClient.invalidateQueries({ queryKey: ["property-portals-selection"] });
+      toast.success(
+        res.queued > 0
+          ? `Status actualizat. Retragerea de pe ${res.queued} portal(uri) rulează în fundal.`
+          : "Status actualizat.",
+      );
+    },
+  });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["property", id] });
@@ -665,6 +671,14 @@ function PropertyDetailPage() {
         />
       )}
 
+      <StatusChangeDialog
+        propertyIds={[id]}
+        status={pendingStatus}
+        statusLabel={pendingStatus ? (propertyStatusLabels[pendingStatus] ?? pendingStatus) : ""}
+        pending={changeStatus.isPending}
+        onCancel={() => setPendingStatus(null)}
+        onConfirm={() => pendingStatus && changeStatus.mutate(pendingStatus)}
+      />
       <ArchivePropertyDialog
         propertyId={id}
         open={archiveOpen}
@@ -742,7 +756,9 @@ function PropertyDetailPage() {
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             {Object.entries(propertyStatusLabels).map(([k, v]) => (
-              <DropdownMenuItem key={k} onClick={() => changeStatus.mutate(k)}>
+              <DropdownMenuItem key={k} onClick={() =>
+                  isWithdrawStatus(k) ? setPendingStatus(k) : changeStatus.mutate(k)
+                }>
                 Status: {v}
               </DropdownMenuItem>
             ))}

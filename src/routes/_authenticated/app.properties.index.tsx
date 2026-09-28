@@ -1,4 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { StatusChangeDialog } from "@/components/app/StatusChangeDialog";
+import { isWithdrawStatus } from "@/components/app/StatusWithdrawPreview";
+import { changePropertyStatus } from "@/lib/property-status.functions";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
 import {
@@ -317,18 +320,21 @@ function PropertiesPage() {
 
   const invalidateList = () => queryClient.invalidateQueries({ queryKey: ["properties"] });
 
+  const changeStatusFn = useServerFn(changePropertyStatus);
+  const [bulkStatus, setBulkStatus] = useState<"sold" | "rented" | "archived" | null>(null);
   const updateStatus = useMutation({
-    mutationFn: async ({ ids, status }: { ids: string[]; status: string }) => {
-      const { error } = await supabase
-        .from("properties")
-        .update({ status: status as never })
-        .in("id", ids);
-      if (error) throw error;
-    },
-    onSuccess: () => {
+    mutationFn: async ({ ids, status }: { ids: string[]; status: string }) =>
+      await changeStatusFn({ data: { propertyIds: ids, status: status as never } }),
+    onSuccess: (res) => {
       invalidateList();
       setSelected([]);
-      toast.success("Statusul a fost actualizat.");
+      setBulkStatus(null);
+      queryClient.invalidateQueries({ queryKey: ["property-portals-matrix"] });
+      toast.success(
+        res.queued > 0
+          ? `Statusul a fost actualizat. ${res.queued} retrageri de pe portaluri rulează în fundal.`
+          : "Statusul a fost actualizat.",
+      );
     },
     onError: (e: Error) => toastError(e),
   });
@@ -895,7 +901,12 @@ function PropertiesPage() {
         {selected.length > 0 ? (
           <div className="flex flex-wrap items-center gap-3 rounded-xl border border-primary/30 bg-primary/5 px-4 py-3">
             <span className="text-sm font-medium">{selected.length} selectate</span>
-            <Select onValueChange={(v) => updateStatus.mutate({ ids: selected, status: v })}>
+            <Select
+              value=""
+              onValueChange={(v) =>
+                isWithdrawStatus(v) ? setBulkStatus(v) : updateStatus.mutate({ ids: selected, status: v })
+              }
+            >
               <SelectTrigger className="w-48">
                 <SelectValue placeholder="Schimbă statusul" />
               </SelectTrigger>
@@ -1133,6 +1144,14 @@ function PropertiesPage() {
         </div>
       </div>
 
+      <StatusChangeDialog
+        propertyIds={selected}
+        status={bulkStatus}
+        statusLabel={bulkStatus ? (propertyStatusLabels[bulkStatus] ?? bulkStatus) : ""}
+        pending={updateStatus.isPending}
+        onCancel={() => setBulkStatus(null)}
+        onConfirm={() => bulkStatus && updateStatus.mutate({ ids: selected, status: bulkStatus })}
+      />
       <AlertDialog open={archiveTarget !== null} onOpenChange={(o) => !o && setArchiveTarget(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
