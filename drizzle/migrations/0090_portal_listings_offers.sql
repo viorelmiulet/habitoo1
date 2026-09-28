@@ -1,0 +1,2 @@
+ALTER TABLE public.portal_listings ADD COLUMN IF NOT EXISTS portal_offers jsonb NOT NULL DEFAULT '[]'::jsonb;
+COMMENT ON COLUMN public.portal_listings.portal_offers IS 'Anunțurile reale la portal, per tranzacție: [{transaction, reference, id, url}]. Referința (HB-xxxx) rămâne cheia pentru actualizare/retragere.';

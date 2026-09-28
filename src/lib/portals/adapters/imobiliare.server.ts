@@ -67,6 +67,7 @@ import {
   referenceForTransaction,
   serializeImobiliareReferences,
 } from "../imobiliare/references";
+import { buildImobiliareOffer, type PortalOffer } from "../imobiliare/offer-links";
 
 type PortalFailShape = Extract<PortalResult<never>, { ok: false }>;
 type Admin = Awaited<typeof import("@/integrations/supabase/client.server")>["supabaseAdmin"];
@@ -286,6 +287,7 @@ async function publishPlan(input: {
       ok: true;
       steps: string[];
       publicUrl: string | null;
+      offer: PortalOffer | null;
       httpStatus: number | null;
       portalResponse: unknown;
     }
@@ -343,6 +345,7 @@ async function publishPlan(input: {
     ok: true,
     steps,
     publicUrl,
+    offer: buildImobiliareOffer(plan.customReference, plan.transaction, created.body, promoted.body),
     httpStatus: promoted.status,
     portalResponse: promoted.body ?? null,
   };
@@ -411,6 +414,7 @@ async function write(
     });
     const steps: string[] = [];
     const publicUrls: string[] = [];
+    const offers: PortalOffer[] = [];
     let lastHttpStatus: number | null = null;
     let lastPortalResponse: unknown = null;
     for (const plan of resolvedPlans) {
@@ -433,6 +437,7 @@ async function write(
       if (!result.ok) return result.fail;
       steps.push(`${plan.customReference}: ${result.steps.join(" → ")}`);
       if (result.publicUrl) publicUrls.push(result.publicUrl);
+      if (result.offer) offers.push(result.offer);
       lastHttpStatus = result.httpStatus;
       lastPortalResponse = result.portalResponse;
     }
@@ -447,6 +452,7 @@ async function write(
         portalStatus: mode === "update" ? "updated" : "published",
         processed: payload.plans.length,
         publicUrl: publicUrls[0] ?? null,
+        offers,
         httpStatus: lastHttpStatus,
         portalResponse: lastPortalResponse,
         message: warnings.length ? warnings.join(" ") : undefined,

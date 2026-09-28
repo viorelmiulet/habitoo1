@@ -74,6 +74,8 @@ export type ListingOutcome = {
    * din fila Publicare.
    */
   publicUrl?: string | null;
+  /** Anunțurile reale la portal, per tranzacție (ID + link public). */
+  offers?: import("./imobiliare/offer-links").PortalOffer[];
   /** Statusul HTTP al ultimului răspuns al portalului, pentru jurnalizare. */
   httpStatus?: number | null;
   /** Corpul răspunsului portalului la succes (sanitizat la jurnalizare). */

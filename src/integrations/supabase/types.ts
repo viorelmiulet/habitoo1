@@ -4532,6 +4532,7 @@ export type Database = {
           last_sync_at: string | null
           organization_id: string
           portal: string
+          portal_offers: Json
           property_id: string
           public_url: string | null
           published_at: string | null
@@ -4549,6 +4550,7 @@ export type Database = {
           last_sync_at?: string | null
           organization_id: string
           portal: string
+          portal_offers?: Json
           property_id: string
           public_url?: string | null
           published_at?: string | null
@@ -4566,6 +4568,7 @@ export type Database = {
           last_sync_at?: string | null
           organization_id?: string
           portal?: string
+          portal_offers?: Json
           property_id?: string
           public_url?: string | null
           published_at?: string | null
