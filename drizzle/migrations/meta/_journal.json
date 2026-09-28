@@ -631,6 +631,13 @@
       "when": 1790621240393,
       "tag": "0089_portal_status_withdraw_items",
       "breakpoints": true
+    },
+    {
+      "idx": 90,
+      "version": "7",
+      "when": 1790622119471,
+      "tag": "0090_portal_listings_offers",
+      "breakpoints": true
     }
   ]
 }
