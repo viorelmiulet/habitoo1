@@ -327,13 +327,6 @@ function PropertyDetailPage() {
           : "Status actualizat.",
       );
     },
-  });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["property", id] });
-      queryClient.invalidateQueries({ queryKey: ["properties"] });
-      toast.success("Status actualizat.");
-    },
     onError: (e: Error) => toastError(e),
   });
 
