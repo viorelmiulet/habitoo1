@@ -212,6 +212,7 @@ async function push(
   const echoes: string[] = [];
   const urls: string[] = [];
   const states: string[] = [];
+  const linkEchoes: Parameters<typeof buildImospotOffers>[0] = [];
   try {
     for (const listing of build.listings) {
       let res =
@@ -236,6 +237,12 @@ async function push(
       const echo = readListing(res);
       if (echo.id) echoes.push(echo.id);
       if (echo.url) urls.push(echo.url);
+      linkEchoes.push({
+        externalId: listing.external_id,
+        transaction: listing.transaction,
+        id: echo.id,
+        url: echo.url,
+      });
       if (echo.state) states.push(echo.state);
     }
   } catch (error) {
@@ -257,12 +264,15 @@ async function push(
   }
 
   const stateText = states.length ? ` Stare: ${[...new Set(states)].join(", ")}.` : "";
+  const links = buildImospotOffers(linkEchoes);
   return {
     ok: true,
     data: {
       externalId: echoes.join(",") || build.listings.map((l) => l.external_id).join(","),
       live: true,
       processed: build.listings.length,
+      ...(links.publicUrl ? { publicUrl: links.publicUrl } : {}),
+      ...(links.offers.length > 0 ? { offers: links.offers } : {}),
       detail: `${mode} ok listings=${build.listings.length}${echoes.length ? ` ids=${echoes.join(",")}` : ""}`,
       message:
         `Imospot a acceptat ${build.listings.length} anunț(uri).${stateText}` +
