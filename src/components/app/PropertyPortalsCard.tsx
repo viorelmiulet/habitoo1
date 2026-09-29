@@ -585,6 +585,11 @@ export const PropertyPortalsCard = forwardRef<
                           }}
                         />
                         {cell.promotionFlag ? (
+                          <label htmlFor={`portal-${cell.portalId}`} className="text-xs">
+                            Publicat
+                          </label>
+                        ) : null}
+                        {cell.promotionFlag ? (
                           <label
                             htmlFor={`portal-${cell.portalId}-promoted`}
                             className={cn(
