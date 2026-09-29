@@ -26,6 +26,7 @@ import { ProperstarFeedCard } from "@/components/app/ProperstarFeedCard";
 import { AccountAccessCard } from "@/components/app/AccountAccessCard";
 import { supabase } from "@/integrations/supabase/client";
 import { UserAvatar } from "@/components/app/UserAvatar";
+import { AGENCY_FIELD_LABELS, validateRequiredAgencyField } from "@/lib/agency-public-data";
 import {
   AVATAR_BUCKET,
   AVATAR_MAX_BYTES,
