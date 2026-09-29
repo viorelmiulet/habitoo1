@@ -12,7 +12,7 @@
  *  - linkul fiecărei agenții e semnat HMAC-SHA256(OfficeId, PROPERSTAR_INDEX_KEY).
  */
 import { createHmac, timingSafeEqual } from "node:crypto";
-import { buildProperstarXml, cdata, properstarIsoDate, type ProperstarAdvert } from "./mapper";
+import { buildProperstarXml, type ProperstarAdvert } from "./mapper";
 
 export const PROPERSTAR_INDEX_GRACE_DAYS = 7;
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -113,8 +113,14 @@ export function properstarAgencyFeedUrl(baseUrl: string, officeId: string, key: 
   return `${baseUrl}/api/public/feed/properstar/agency/${officeId}.xml?sig=${signOfficeId(officeId, key)}`;
 }
 
-function escapeXml(value: string): string {
-  return value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+/** Escape complet pentru valori de atribute XML, în ordinea cerută. */
+function escapeXmlAttribute(value: string): string {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&apos;");
 }
 
 export type ProperstarIndexEntry = {
@@ -128,12 +134,10 @@ export function buildProperstarIndexXml(entries: ProperstarIndexEntry[]): string
   const feeds = entries
     .map(
       (e) =>
-        `  <Feed>\n    <OfficeId>${escapeXml(e.officeId)}</OfficeId>\n    <OfficeName>${cdata(
+        `\t<feed id="${escapeXmlAttribute(e.officeId)}" name="${escapeXmlAttribute(
           e.officeName,
-        )}</OfficeName>\n    <Url>${escapeXml(e.url)}</Url>\n    <LastUpdate>${
-          properstarIsoDate(e.lastUpdate) ?? ""
-        }</LastUpdate>\n  </Feed>\n`,
+        )}" url="${escapeXmlAttribute(e.url)}"/>\n`,
     )
     .join("");
-  return `<?xml version="1.0" encoding="UTF-8"?>\n<Feeds>\n${feeds}</Feeds>\n`;
+  return `<?xml version="1.0" encoding="utf-8"?>\n<Feeds>\n${feeds}</Feeds>\n`;
 }

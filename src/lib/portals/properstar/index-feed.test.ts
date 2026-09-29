@@ -17,6 +17,7 @@ import {
   type IndexedAgency,
 } from "./index-feed.server";
 import {
+  buildProperstarIndexXml,
   indexPresence,
   isProperstarActive,
   nextIndexState,
@@ -62,16 +63,16 @@ const A: IndexedAgency = { organizationId: "org-a", officeId: "hbA", officeName:
 const req = (path: string) => new Request(`http://localhost:8080${path}`);
 
 describe("indexul Properstar", () => {
-  it("cheie corectă → 200 și XML cu Feed", async () => {
+  it("cheie corectă → 200 și XML cu feed în formatul Properstar", async () => {
     const d = deps([A], { "org-a": build([advert("HB-1")]) });
     const res = await handleProperstarIndex(req(`/x/${KEY}.xml`), `${KEY}.xml`, d, NOW);
     expect(res.status).toBe(200);
     const xml = await res.text();
-    expect(xml).toMatch(/^<\?xml version="1.0" encoding="UTF-8"\?>/);
-    expect(xml).toContain("<OfficeId>hbA</OfficeId>");
-    expect(xml).toContain("<OfficeName><![CDATA[Agenția A & Co]]></OfficeName>");
-    expect(xml).toContain(`agency/hbA.xml?sig=${signOfficeId("hbA", KEY)}`);
-    expect(xml).toContain("<LastUpdate>2026-09-26T10:11:12Z</LastUpdate>");
+    expect(xml).toMatch(/^<\?xml version="1.0" encoding="utf-8"\?>/);
+    expect(xml).toContain(
+      `<feed id="hbA" name="Agenția A &amp; Co" url="http://localhost:8080/api/public/feed/properstar/agency/hbA.xml?sig=${signOfficeId("hbA", KEY)}"/>`,
+    );
+    expect(xml).not.toContain("<OfficeId>");
     expect(d.log).toHaveBeenCalledWith(expect.objectContaining({ status: 200, endpoint: "portal.properstar.index" }));
   });
 
@@ -81,6 +82,23 @@ describe("indexul Properstar", () => {
     expect(res.status).toBe(401);
     expect(await res.text()).toBe("");
     expect(d.log).toHaveBeenCalledWith(expect.objectContaining({ status: 401 }));
+  });
+
+  it("nume cu &, \" și < → atribute escapeate complet, care se decodează înapoi la numele original", () => {
+    const name = `Agenția "Anunțuri & Imobiliare" <Sud>`;
+    const xml = buildProperstarIndexXml([
+      { officeId: "hbX", officeName: name, url: "http://x/agency/hbX.xml?sig=ab", lastUpdate: null },
+    ]);
+    expect(xml).toContain(
+      `<feed id="hbX" name="Agenția &quot;Anunțuri &amp; Imobiliare&quot; &lt;Sud&gt;" url="http://x/agency/hbX.xml?sig=ab"/>`,
+    );
+    const decoded = xml
+      .replace(/&quot;/g, '"')
+      .replace(/&apos;/g, "'")
+      .replace(/&lt;/g, "<")
+      .replace(/&gt;/g, ">")
+      .replace(/&amp;/g, "&");
+    expect(decoded).toContain(`name="${name}"`);
   });
 
   it("agenție activă fără oferte → absentă", async () => {
