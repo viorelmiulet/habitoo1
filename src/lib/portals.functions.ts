@@ -77,6 +77,10 @@ export type PortalHubItem = {
   feedUrlCsv: string | null;
   /** Portalul primește ofertele doar prin feed, fără operații de scriere. */
   feedOnly: boolean;
+  /** Există adaptor pentru „Testează conexiunea” / „Verifică feedul”. */
+  supportsConnectionTest: boolean;
+  /** Portalul are previzualizare de feed. */
+  supportsFeedPreview: boolean;
   /** Diagnoză reală a feedului pe care îl citește portalul. */
   feed: {
     ok: boolean;
@@ -466,6 +470,8 @@ export const getPortalHub = createServerFn({ method: "POST" })
       await import("@/lib/portals/storia/oauth.server");
     const storiaTokens = await loadStoriaTokens(organizationId);
     const storiaAppReady = storiaAppConfigured();
+    const { getPortalAdapter } = await import("@/lib/portals/adapters/index.server");
+    const hasPortalAdapter = (id: string) => Boolean(getPortalAdapter(id));
 
     return configurablePortals().map((portal) => {
       const row = (connections.data ?? []).find((c) => c.portal === portal.id) ?? null;
@@ -534,6 +540,9 @@ export const getPortalHub = createServerFn({ method: "POST" })
         feedOnly:
           portal.capabilities.includes("feed_pull") &&
           !portal.capabilities.includes("publish_listing"),
+        // Aceleași condiții ca în testPortalConnection / previewPortalFeed.
+        supportsConnectionTest: hasPortalAdapter(portal.id),
+        supportsFeedPreview: portal.id === "imove",
         feed:
           portal.id === "imove"
             ? {
@@ -602,12 +611,17 @@ export async function applyPortalActivationForOrg(input: {
     ...((existing?.settings ?? {}) as Record<string, unknown>),
     allow_live: activated,
   };
+  // Portalurile fără credențiale (ex. Properstar) sunt gata de folosit imediat
+  // ce sunt activate; nu există un pas separat de configurare.
+  const credentialless =
+    definition.authentication.length > 0 && definition.authentication.every((a) => a === "none");
   const { error } = await admin.from("portal_connections").upsert(
     {
       organization_id: organizationId,
       portal: definition.id,
       activated,
       settings: settings as never,
+      ...(credentialless ? { status: activated ? "ready" : "not_configured" } : {}),
       updated_by: actorId,
       created_by: actorId,
     } as never,
