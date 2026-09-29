@@ -29,6 +29,7 @@ import {
   uploadToBucket,
 } from "@/lib/storage";
 
+import { agencyWebsiteSchema, validateRequiredAgencyField } from "@/lib/agency-public-data";
 import samplePhoto from "@/assets/mock/living.jpg";
 import {
   WATERMARK_POSITIONS,
@@ -156,6 +157,11 @@ export function AgencyBrandingCard() {
   const save = useMutation({
     mutationFn: async () => {
       if (!org?.id) throw new Error("Agenția nu este configurată.");
+      const addressError = validateRequiredAgencyField("material_address", form.address);
+      if (addressError) throw new Error(`Adresa biroului: ${addressError}`);
+      if (form.website.trim() && !agencyWebsiteSchema.safeParse(form.website).success) {
+        throw new Error("Website-ul trebuie să înceapă cu https://.");
+      }
       const { error } = await supabase
         .from("organizations")
         .update({
