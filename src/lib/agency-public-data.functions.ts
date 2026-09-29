@@ -37,7 +37,7 @@ export const completeAgencyPublicData = createServerFn({ method: "POST" })
 
     const patch = buildCompletionPatch(org, data);
     if (Object.keys(patch).length) {
-      const { error: updError } = await supabase.from("organizations").update(patch).eq("id", orgId);
+      const { error: updError } = await supabase.from("organizations").update(patch as never).eq("id", orgId);
       if (updError) throw new Error(updError.message);
       await supabase.from("audit_logs").insert({
         organization_id: orgId,
@@ -45,7 +45,7 @@ export const completeAgencyPublicData = createServerFn({ method: "POST" })
         action: "organization.public_data_completed",
         entity: "organizations",
         entity_id: orgId,
-        old_values: Object.fromEntries(Object.keys(patch).map((k) => [k, (org as Record<string, unknown>)[k] ?? null])),
+        old_values: Object.fromEntries(Object.keys(patch).map((k) => [k, ((org as Record<string, unknown>)[k] as string | null) ?? null])) as never,
         new_values: patch,
         created_by: userId,
       });

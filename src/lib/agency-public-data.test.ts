@@ -46,3 +46,14 @@ describe("datele publice obligatorii ale agenției", () => {
     expect(completeAgencyDataSchema.safeParse({ material_website: "https://x.ro" }).success).toBe(true);
   });
 });
+
+describe("aprobarea cererii de înregistrare", () => {
+  it("copiază emailul și telefonul din cerere în organizație", async () => {
+    const { readFileSync } = await import("node:fs");
+    const sql = readFileSync("drizzle/migrations/0094_agency_required_public_data.sql", "utf8");
+    const insert = sql.slice(sql.indexOf("INSERT INTO public.organizations"), sql.indexOf("RETURNING id INTO _org"));
+    expect(insert).toMatch(/is_trial, created_by, updated_by,\s*email, phone\)/);
+    expect(insert).toContain("nullif(btrim(_r.phone),'')");
+    expect(insert).toContain("_r.email");
+  });
+});
