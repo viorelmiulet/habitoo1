@@ -14,6 +14,7 @@
  * Limitare reală: documentația NU are endpoint de ștergere sau retragere, deci
  * `withdrawListing` întoarce `NOT_SUPPORTED` cu explicație — nu inventăm o rută.
  */
+import { safePortalUrl } from "../public-links";
 import {
   notSupported,
   type ConnectionStatusOutcome,
@@ -318,7 +319,7 @@ async function push(
       externalId: accepted.join(","),
       live: true,
       processed: build.listings.length,
-      publicUrl: urls[0] ?? null,
+      publicUrl: urls.map((u) => safePortalUrl(u, "oferteimobiliare.ro")).find(Boolean) ?? null,
       detail: `${mode} ok listings=${build.listings.length} auth=${authMode}`,
       message:
         `OferteImobiliare a acceptat ${build.listings.length} anunț(uri).` +

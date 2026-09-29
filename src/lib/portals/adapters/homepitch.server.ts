@@ -11,6 +11,7 @@
  * Retragerea nu are un endpoint la HomePitch: oferta debifată dispare din feed
  * și portalul o arhivează la următoarea sincronizare.
  */
+import { safePortalUrl } from "../public-links";
 import type {
   ConnectionStatusOutcome,
   ListingDiagnostics,
@@ -165,7 +166,7 @@ async function pushProperty(
     }
 
     if (response.ok) {
-      const propertyUrl = typeof body["property_url"] === "string" ? body["property_url"] : null;
+      const propertyUrl = safePortalUrl(body["property_url"], "homepitch.ro");
       return {
         ok: true,
         data: {
@@ -255,6 +256,7 @@ async function listingOutcome(
       live: result.data.live,
       detail: result.data.propertyUrl ?? "feed HomePitch",
       feedVisible: true,
+      ...(result.data.propertyUrl ? { publicUrl: result.data.propertyUrl } : {}),
       message: result.data.message,
     },
   };
