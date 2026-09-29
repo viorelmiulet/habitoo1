@@ -3,6 +3,12 @@
 // folosește `requireActiveOrgAuth` în loc de `requireSupabaseAuth`.
 import { createMiddleware } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import {
+  AGENCY_DATA_INCOMPLETE_CODE,
+  AGENCY_FIELD_LABELS,
+  missingAgencyPublicFields,
+  mustCompleteAgencyData,
+} from "@/lib/agency-public-data";
 
 export type OrgBlockReason =
   | "suspended"
@@ -91,12 +97,27 @@ export const requireActiveOrgAuth = createMiddleware({ type: "function" })
 
     const { data: org } = await supabaseAdmin
       .from("organizations")
-      .select("status,archived_at,suspended_reason")
+      .select("status,archived_at,suspended_reason,email,phone,material_address,city,postal_code")
       .eq("id", profile.organization_id)
       .maybeSingle();
 
     const reason = orgBlockReason(org);
     if (reason) throw orgBlockedError(reason);
+
+    // Datele publice obligatorii: adminul agenției le completează înainte să poată lucra.
+    if (
+      mustCompleteAgencyData({
+        roles: (roles ?? []).map((r) => r.role as string),
+        impersonating: false,
+        org,
+      })
+    ) {
+      throw new Error(
+        `${AGENCY_DATA_INCOMPLETE_CODE}: Completează datele agenției (${missingAgencyPublicFields(org)
+          .map((f) => AGENCY_FIELD_LABELS[f])
+          .join(", ")}) înainte să continui.`,
+      );
+    }
 
     return next();
   });

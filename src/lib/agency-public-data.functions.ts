@@ -25,7 +25,7 @@ export const completeAgencyPublicData = createServerFn({ method: "POST" })
       .maybeSingle();
     const orgId = profile?.organization_id;
     if (!orgId) throw new Error("Nu aparții unei agenții.");
-    const { data: isAdmin } = await supabase.rpc("is_org_admin", { _org: orgId } as never);
+    const { data: isAdmin } = await supabase.rpc("is_org_admin");
     if (!isAdmin) throw new Error("Doar adminul agenției poate completa datele agenției.");
 
     const { data: org, error } = await supabase
