@@ -4,6 +4,10 @@ import { useRef, useState } from "react";
 import {
   BarChart3,
   Building2,
+  CalendarPlus,
+  ChevronLeft,
+  ChevronRight,
+  MapPin,
   MessageCircle,
   MoreHorizontal,
   Pencil,
@@ -21,7 +25,6 @@ import { isWithdrawStatus } from "@/components/app/StatusWithdrawPreview";
 import { changePropertyStatus } from "@/lib/property-status.functions";
 import { unarchiveProperty } from "@/lib/property-archive.functions";
 import { toastError } from "@/lib/errors";
-import { PageHeader } from "@/components/app/PageHeader";
 import { FormSection, RequiredMark } from "@/components/app/FormSection";
 import { DetailSkeleton } from "@/components/app/LoadingState";
 import { StatusBadge } from "@/components/app/StatusBadge";
@@ -33,7 +36,6 @@ import { PropertyAcpCard } from "@/components/app/PropertyAcpCard";
 import { MarketingAgentPanel } from "@/components/app/MarketingAgentPanel";
 
 import { PropertyHeroGallery } from "@/components/app/PropertyHeroGallery";
-import { PortfolioPanel } from "@/components/app/PortfolioPanel";
 import {
   PropertyPortalsCard,
   type PropertyPortalsHandle,
@@ -70,6 +72,9 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
@@ -93,6 +98,8 @@ import { printHtmlDocument } from "@/lib/print";
 import { MEDIA_BUCKET, signedUrls } from "@/lib/storage";
 
 import { useAgencyLogoUrl } from "@/components/app/AgencyBrandingCard";
+import { UserAvatar } from "@/components/app/UserAvatar";
+import { getPropertiesPortalMatrix, type PropertyPortalCell } from "@/lib/portals.functions";
 
 import { formatDate, formatDateTime, formatMoney, formatNumber } from "@/lib/format";
 import {
@@ -106,6 +113,21 @@ import {
 import { activityStatusLabels, activityStatusTone, logAudit } from "@/lib/crm";
 import { matchLabel, matchTone, scoreMatch } from "@/lib/matching";
 import { appHead } from "@/components/app/app-head";
+
+function cleanLocation(district: string | null, city: string | null): string {
+  const normalizedCity = (city ?? "")
+    .replace(/Bucure(?:ș|ş)ti\s+Sectorul\s+(\d)/i, "Sector $1, București")
+    .replace(/Bucuresti\s+Sectorul\s+(\d)/i, "Sector $1, București");
+  if (/^Sector \d, București$/i.test(normalizedCity)) return normalizedCity;
+  return [district, normalizedCity].filter(Boolean).join(", ");
+}
+
+function portalState(cell: PropertyPortalCell) {
+  if (cell.state === "published" || cell.state === "in_feed") return { label: "Publicat", tone: "success" as const };
+  if (cell.state === "syncing" || cell.state === "selected") return { label: "În lucru", tone: "warning" as const };
+  if (cell.state === "error" || cell.state === "expired") return { label: "Eroare", tone: "danger" as const };
+  return { label: "Nepublicat", tone: "neutral" as const };
+}
 
 /** Notificare neblocantă despre codul poștal dedus la salvare. */
 function postalNotice(report: { status: string; reasonLabel: string } | null): void {
