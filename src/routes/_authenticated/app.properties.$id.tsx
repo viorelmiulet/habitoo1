@@ -551,17 +551,66 @@ function PropertyDetailPage() {
 
   const specs: { label: string; value: string }[] = [
     { label: "Tip", value: propertyTypeLabels[property.property_type] ?? property.property_type },
-    { label: "Tranzacție", value: transactionLabels[property.transaction_kind] },
-    { label: "Suprafață", value: property.surface ? `${formatNumber(property.surface)} m²` : "—" },
-    { label: "Camere", value: property.rooms ? String(property.rooms) : "—" },
-    { label: "Băi", value: property.bathrooms ? String(property.bathrooms) : "—" },
-    { label: "Etaj", value: property.floor !== null ? String(property.floor) : "—" },
-    { label: "An construcție", value: property.build_year ? String(property.build_year) : "—" },
-    { label: "Comision", value: property.commission ?? "—" },
-    { label: "Referință", value: property.reference ?? "—" },
-    { label: "Sursă", value: property.source ?? "—" },
+    { label: "Compartimentare", value: property.layout ?? "" },
+    { label: "Confort", value: property.comfort ?? "" },
+    { label: "Destinație", value: property.destination ?? "" },
+    { label: "Suprafață construită", value: property.built_surface ? `${formatNumber(property.built_surface)} m²` : "" },
+    { label: "Suprafață teren", value: property.land_surface ? `${formatNumber(property.land_surface)} m²` : "" },
+    { label: "Balcoane", value: property.balconies ? String(property.balconies) : "" },
+    { label: "Terase", value: property.terraces ? String(property.terraces) : "" },
+    { label: "Orientare", value: property.orientation ?? "" },
+    { label: "Tip clădire", value: property.building_type ?? "" },
+    { label: "Structură", value: property.building_structure ?? "" },
+    { label: "Stare construcție", value: property.construction_stage ?? "" },
+    { label: "Renovat în", value: property.renovation_year ? String(property.renovation_year) : "" },
+    { label: "Mobilare", value: property.furnishing ?? "" },
+    { label: "Parcare", value: property.parking ?? "" },
+    { label: "Comision", value: property.commission ?? "" },
+    { label: "Sursă", value: property.source ?? "" },
     { label: "Adăugat", value: formatDate(property.created_at) },
-  ];
+  ].filter((item) => item.value);
+
+  const amenityGroups = [
+    ...(property.features ?? []),
+    ...(property.utilities ?? []),
+    ...(property.heating_systems ?? []),
+    ...(property.cooling_systems ?? []),
+    ...(property.appliances ?? []),
+    ...(property.building_amenities ?? []),
+    ...(property.kitchen_features ?? []),
+    ...(property.misc_features ?? []),
+  ].filter(Boolean);
+
+  const usableSurface = property.usable_surface ?? property.total_usable_surface ?? property.surface;
+  const isHouse = property.property_type === "house";
+  const primaryFacts = [
+    { label: "Suprafață utilă", value: usableSurface ? `${formatNumber(usableSurface)} m²` : "" },
+    { label: "Camere", value: property.rooms ? String(property.rooms) : "" },
+    { label: "Băi", value: property.bathrooms ? String(property.bathrooms) : "" },
+    {
+      label: isHouse ? "Suprafață teren" : "Etaj",
+      value: isHouse
+        ? property.land_surface ? `${formatNumber(property.land_surface)} m²` : ""
+        : property.floor_label || (property.floor !== null ? `${property.floor}${property.building_floors ? ` din ${property.building_floors}` : ""}` : ""),
+    },
+    { label: "Compartimentare", value: property.layout ?? "" },
+    { label: "An construcție", value: property.build_year ? String(property.build_year) : "" },
+  ].filter((item) => item.value);
+
+  const transactionLabel = property.for_sale && property.for_rent
+    ? "Vânzare și închiriere"
+    : property.for_rent || property.transaction_kind === "rent"
+      ? "Închiriere"
+      : "Vânzare";
+  const salePrice = property.sale_price ?? (property.for_sale ? property.price : null);
+  const rentPrice = property.rent_price ?? (property.for_rent || property.transaction_kind === "rent" ? property.price : null);
+  const pricePerSqm = usableSurface && salePrice ? Math.round(salePrice / usableSurface) : null;
+  const locationLabel = cleanLocation(property.district, property.city);
+  const portalCells = portalMatrix.data?.properties[id] ?? [];
+  const publishedPortals = portalCells.filter((cell) => cell.state === "published" || cell.state === "in_feed").length;
+  const currentNeighborIndex = neighbors.findIndex((row) => row.id === id);
+  const previousProperty = currentNeighborIndex > 0 ? neighbors[currentNeighborIndex - 1] : null;
+  const nextProperty = currentNeighborIndex >= 0 ? neighbors[currentNeighborIndex + 1] : null;
 
   /**
    * Fișa de prezentare: identitatea vizuală a agenției plus fotografiile
@@ -616,105 +665,80 @@ function PropertyDetailPage() {
   // Coordonatele arătate în panoul read-only: exacte sau zona aproximativă.
   const mapCoords = publicCoords(property);
 
-  /**
-   * Banda de metrici: doar date reale existente în CRM (nu avem contor de
-   * vizualizări, deci folosim activitățile planificate).
-   */
-  const metrics: { label: string; value: string }[] = [
-    { label: "Suprafață", value: property.surface ? `${formatNumber(property.surface)} m²` : "—" },
-    {
-      label: "Camere / etaj",
-      value:
-        [
-          property.rooms ? `${property.rooms} cam.` : null,
-          property.floor !== null && property.floor !== undefined ? `etaj ${property.floor}` : null,
-        ]
-          .filter(Boolean)
-          .join(" · ") || "—",
-    },
-    { label: "Lead-uri active", value: String(activeLeads.length) },
-    {
-      label: "Activități planificate",
-      value: String(activities.filter((a) => a.status === "planned").length),
-    },
-  ];
-
   return (
     <>
-      {tab === "publishing" ? (
-        <PageHeader
-          backTo="/app/properties"
-          backLabel="Proprietăți"
-          title={<span className="font-display">{property.title}</span>}
-          description={[
-            property.reference ? `Ref. ${property.reference}` : null,
-            [property.district, property.city].filter(Boolean).join(", ") || null,
-            formatMoney(property.price, property.currency),
-            responsibleAgent?.full_name ? `Responsabil: ${responsibleAgent.full_name}` : null,
-          ]
-            .filter(Boolean)
-            .join(" · ")}
-          actions={
-            <>
-              <Button
-                variant="secondary"
-                onClick={() => {
-                  startEdit();
-                  setTab("overview");
-                }}
-              >
-                <Pencil /> Editează
-              </Button>
-              <Button
-                onClick={() => publish.mutate()}
-                disabled={publish.isPending || save.isPending}
-              >
-                {publish.isPending ? "Se publică…" : "Publică pe portaluri"}
-              </Button>
-            </>
-          }
-        />
-      ) : (
-        <PageHeader
-          backTo="/app/properties"
-          backLabel="Proprietăți"
-          eyebrow={
-            [property.reference, [property.district, property.city].filter(Boolean).join(", ")]
-              .filter(Boolean)
-              .join(" · ") || "Proprietate"
-          }
-          title={property.title}
-          description={[property.address, property.district, property.city]
-            .filter(Boolean)
-            .join(", ")}
-          meta={
-            <>
-              <StatusBadge tone={propertyStatusTone[property.status]} dot>
-                {propertyStatusLabels[property.status]}
-              </StatusBadge>
-              <StatusBadge
-                tone={property.publish_status === "published" ? "success" : "neutral"}
-                dot
-              >
-                {property.publish_status === "published" ? "Publicat" : "Nepublicat"}
-              </StatusBadge>
+      <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-4">
+        <nav aria-label="Breadcrumb" className="min-w-0 text-sm text-muted-foreground">
+          <Link to="/app/properties" className="hover:text-foreground">Proprietăți</Link>
+          <span aria-hidden className="mx-2">/</span>
+          <span className="truncate text-foreground">{property.reference ?? "Fără referință"}</span>
+        </nav>
+        <div className="flex shrink-0 gap-2">
+          {previousProperty ? (
+            <Button variant="outline" size="compact" asChild>
+              <Link to="/app/properties/$id" params={{ id: previousProperty.id }}>
+                <ChevronLeft aria-hidden /> {previousProperty.reference ?? "Anterior"}
+              </Link>
+            </Button>
+          ) : null}
+          {nextProperty ? (
+            <Button variant="outline" size="compact" asChild>
+              <Link to="/app/properties/$id" params={{ id: nextProperty.id }}>
+                {nextProperty.reference ?? "Următor"} <ChevronRight aria-hidden />
+              </Link>
+            </Button>
+          ) : null}
+        </div>
+      </div>
+
+      <header className="panel overflow-hidden px-6 py-6 sm:px-7">
+        <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-6 max-md:grid-cols-1">
+          <div className="min-w-0">
+            <div className="flex flex-wrap gap-2">
+              <StatusBadge tone={propertyStatusTone[property.status]} dot>{propertyStatusLabels[property.status]}</StatusBadge>
+              <StatusBadge tone="warning">{transactionLabel}</StatusBadge>
+              <StatusBadge tone="neutral">{publishedPortals ? `Publicat pe ${publishedPortals} portaluri` : "Nepublicat"}</StatusBadge>
               {property.negotiable ? <StatusBadge tone="info">Negociabil</StatusBadge> : null}
-              {property.collaboration ? (
-                <StatusBadge tone="primary">
-                  {property.collab_commission_percent
-                    ? `Colaborare · ${property.collab_commission_percent}%`
-                    : "Colaborare"}
-                </StatusBadge>
-              ) : null}
-            </>
-          }
-          actions={
-            <span className="text-2xl font-medium tracking-tight">
-              {formatMoney(property.price, property.currency)}
-            </span>
-          }
-        />
-      )}
+              {property.collaboration ? <StatusBadge tone="primary">{property.collab_commission_percent ? `Colaborare · ${property.collab_commission_percent}%` : "Colaborare"}</StatusBadge> : null}
+            </div>
+            <h1 className="mt-4 text-[34px] leading-[1.15] font-semibold">{property.title}</h1>
+            <div className="mt-3 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-muted-foreground">
+              {locationLabel ? <span className="inline-flex items-center gap-1"><MapPin className="size-4" aria-hidden />{locationLabel}</span> : null}
+              {property.reference ? <><span aria-hidden>·</span><span>{property.reference}</span></> : null}
+              {responsibleAgent?.full_name ? <><span aria-hidden>·</span><span>Agent: {responsibleAgent.full_name}</span></> : null}
+            </div>
+          </div>
+          <div className="text-right max-md:text-left">
+            {salePrice ? <p className="font-display text-[38px] leading-none font-semibold">{formatMoney(salePrice, property.sale_currency ?? property.currency)}</p> : null}
+            {rentPrice ? <p className={salePrice ? "mt-2 font-display text-xl font-semibold" : "font-display text-[38px] leading-none font-semibold"}>{formatMoney(rentPrice, property.rent_currency ?? property.currency)} <span className="font-sans text-base font-normal text-muted-foreground">/ lună</span></p> : null}
+            {usableSurface ? <p className="mt-3 text-sm text-muted-foreground">{pricePerSqm ? `${formatNumber(pricePerSqm)} €/m² · ` : ""}{formatNumber(usableSurface)} m² utili</p> : null}
+          </div>
+        </div>
+        <div className="mt-6 flex flex-wrap items-center gap-2 border-t border-border pt-5">
+          <Button onClick={() => setTab("publishing")}>Publică pe portaluri</Button>
+          {editing ? <Button variant="outline" onClick={() => setEditing(false)}>Anulează</Button> : <Button variant="outline" onClick={() => { startEdit(); setTab("overview"); }}><Pencil /> Editează</Button>}
+          <Button variant="outline" onClick={() => setActivityDialog({ open: true, kind: "viewing" })}><CalendarPlus /> Programează vizionare</Button>
+          <Button variant="outline" onClick={() => setActivityDialog({ open: true, kind: "call" })}>Adaugă activitate</Button>
+          <Button variant="outline" onClick={() => setTab("acp")}><BarChart3 /> Analiză de piață (ACP)</Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild><Button size="icon" variant="outline" aria-label="Mai multe acțiuni"><MoreHorizontal /></Button></DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => duplicate.mutate()} disabled={duplicate.isPending}>Clonează</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setPresentationDialogOpen(true)}><Printer /> Generează fișă de vizionare</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setAddClientOpen(true)}><UserPlus /> Adaugă client</DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuSub>
+                <DropdownMenuSubTrigger>Status</DropdownMenuSubTrigger>
+                <DropdownMenuSubContent>
+                  {Object.entries(propertyStatusLabels).map(([key, label]) => <DropdownMenuItem key={key} onClick={() => isWithdrawStatus(key) ? setPendingStatus(key as "sold" | "rented" | "archived") : changeStatus.mutate(key)}>{label}</DropdownMenuItem>)}
+                </DropdownMenuSubContent>
+              </DropdownMenuSub>
+              <DropdownMenuSeparator />
+              {property.status === "archived" ? <DropdownMenuItem onClick={() => unarchive.mutate()}>Dezarhivează</DropdownMenuItem> : <DropdownMenuItem onClick={() => setArchiveOpen(true)}>Arhivează</DropdownMenuItem>}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      </header>
 
       <StatusChangeDialog
         propertyIds={[id]}
@@ -731,156 +755,21 @@ function PropertyDetailPage() {
         onArchived={() => navigate({ to: "/app/properties" })}
       />
 
-      {/* Galeria proprietății, alături de portofoliul agenției. */}
-      <div className={tab === "publishing" ? "hidden" : "grid gap-4 lg:grid-cols-3"}>
-        <div className="space-y-4 lg:col-span-2">
-          <PropertyHeroGallery propertyId={id} title={property.title} />
-
-          {/* Bandă de metrici: date reale, fără borduri, doar fundal ușor diferit. */}
-          <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-            {metrics.map((m) => (
-              <div key={m.label} className="rounded-2xl bg-secondary/60 px-4 py-3">
-                <p className="text-xs text-muted-foreground">{m.label}</p>
-                <p className="mt-0.5 text-lg font-medium tracking-tight">{m.value}</p>
-              </div>
-            ))}
-          </div>
-
-          {(property.features ?? []).length > 0 ? (
-            <div className="flex flex-wrap gap-2">
-              {(property.features ?? []).slice(0, 8).map((f) => (
-                <span
-                  key={f}
-                  className="rounded-full bg-secondary/60 px-3 py-1 text-xs text-muted-foreground"
-                >
-                  {f}
-                </span>
-              ))}
-            </div>
-          ) : null}
-        </div>
-
-        <PortfolioPanel orgId={orgId} userId={user?.userId} currentPropertyId={id} />
-      </div>
-
-      {/* Rând de acțiuni, sub banda de metrici. */}
-      <div className={tab === "publishing" ? "hidden" : "flex flex-wrap items-center gap-2"}>
-        {editing ? (
-          <Button size="sm" variant="outline" onClick={() => setEditing(false)}>
-            Anulează
-          </Button>
-        ) : (
-          <Button size="sm" variant="outline" onClick={startEdit}>
-            <Pencil className="size-4" /> Editează
-          </Button>
-        )}
-        <Button
-          size="sm"
-          variant="outline"
-          onClick={() => duplicate.mutate()}
-          disabled={duplicate.isPending}
-        >
-          Clonează
-        </Button>
-        <Button
-          size="sm"
-          onClick={() => publish.mutate()}
-          disabled={publish.isPending || save.isPending}
-        >
-          {publish.isPending ? "Se publică…" : "Publică"}
-        </Button>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button size="icon" variant="outline" aria-label="Mai multe acțiuni">
-              <MoreHorizontal className="size-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="start">
-            <DropdownMenuItem onClick={() => setPresentationDialogOpen(true)}>
-              <Printer className="size-4" /> Generează fișă de vizionare
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            {Object.entries(propertyStatusLabels).map(([k, v]) => (
-              <DropdownMenuItem key={k} onClick={() =>
-                  isWithdrawStatus(k) ? setPendingStatus(k) : changeStatus.mutate(k)
-                }>
-                Status: {v}
-              </DropdownMenuItem>
-            ))}
-            <DropdownMenuSeparator />
-            {property.status === "archived" ? (
-              <DropdownMenuItem onClick={() => unarchive.mutate()}>Dezarhivează</DropdownMenuItem>
-            ) : (
-              <DropdownMenuItem onClick={() => setArchiveOpen(true)}>Arhivează</DropdownMenuItem>
-            )}
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </div>
-
-      <div className={tab === "publishing" ? "hidden" : "flex flex-wrap gap-2"}>
-        {ownerContact?.phone ? (
-          <Button size="sm" variant="outline" asChild>
-            <a href={`tel:${ownerContact.phone}`}>
-              <Phone className="size-4" /> Sună proprietarul
-            </a>
-          </Button>
-        ) : null}
-        {(ownerContact?.whatsapp ?? ownerContact?.phone) ? (
-          <Button size="sm" variant="outline" asChild>
-            <a
-              href={`https://wa.me/${(ownerContact?.whatsapp ?? ownerContact?.phone ?? "").replace(/[^\d]/g, "")}`}
-              target="_blank"
-              rel="noreferrer"
-            >
-              <MessageCircle className="size-4" /> WhatsApp
-            </a>
-          </Button>
-        ) : null}
-        <Button
-          size="sm"
-          variant="outline"
-          onClick={() => setActivityDialog({ open: true, kind: "call" })}
-        >
-          Adaugă activitate
-        </Button>
-        <Button
-          size="sm"
-          variant="outline"
-          onClick={() => setActivityDialog({ open: true, kind: "viewing" })}
-        >
-          Creează vizionare
-        </Button>
-        <Button size="sm" variant="outline" onClick={() => setAddClientOpen(true)}>
-          <UserPlus className="size-4" /> Adaugă client
-        </Button>
-        <Button size="sm" variant="outline" onClick={() => setTab("acp")}>
-          <BarChart3 className="size-4" /> Analiză comparativă de piață (ACP)
-        </Button>
-      </div>
-
       <Tabs value={tab} onValueChange={setTab}>
-        <TabsList className="h-auto flex-wrap justify-start gap-1 rounded-none border-b border-border bg-transparent p-0">
-          {(tab === "publishing"
-            ? [
-                ["overview", "Detalii"],
-                ["media", "Fotografii"],
-                ["publishing", "Publicare"],
-                ["activities", "Activitate"],
-                ["documents", "Contracte"],
-              ]
-            : [
-                ["overview", "Overview"],
-                ["media", "Media"],
-                ["acp", "ACP"],
-                ["marketing", "Marketing AI"],
-                ["leads", `Lead-uri (${data?.leads.length ?? 0})`],
-                ["matching", `Cereri compatibile (${matches.length})`],
-                ["activities", `Activități (${activities.length})`],
-                ["documents", "Documente"],
-                ["publishing", "Publicare"],
-                ["history", "Istoric"],
-              ]
-          ).map(([value, label]) => (
+        <div className="sticky top-0 z-40 -mx-1 overflow-x-auto bg-background px-1">
+        <TabsList className="h-auto w-max min-w-full justify-start gap-1 rounded-none border-b border-border bg-transparent p-0" aria-label="Secțiunile proprietății">
+          {[
+            ["overview", "Prezentare"],
+            ["media", `Poze (${data?.imageCount ?? 0})`],
+            ["publishing", `Publicare (${publishedPortals}/${portalCells.length})`],
+            ["leads", `Lead-uri (${data?.leads.length ?? 0})`],
+            ["matching", `Cereri compatibile (${matches.length})`],
+            ["activities", `Activități (${activities.length})`],
+            ["documents", "Documente"],
+            ["acp", "ACP"],
+            ["marketing", "Marketing AI"],
+            ["history", "Istoric"],
+          ].map(([value, label]) => (
             <TabsTrigger
               key={value}
               value={value as string}
@@ -890,6 +779,7 @@ function PropertyDetailPage() {
             </TabsTrigger>
           ))}
         </TabsList>
+        </div>
 
         <TabsContent value="overview" className="space-y-6">
           {editing ? (
