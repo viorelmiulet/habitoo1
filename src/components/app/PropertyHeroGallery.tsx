@@ -133,10 +133,11 @@ export function PropertyHeroGallery({
   return (
     <div className="space-y-3">
       <div className="relative">
-          <button
+          <Button
             type="button"
+            variant="ghost"
             onClick={() => setOpenAt(0)}
-            className="block w-full overflow-hidden rounded-panel"
+            className="block h-auto w-full overflow-hidden rounded-panel p-0"
             aria-label="Deschide galeria foto"
           >
             <img
@@ -146,7 +147,7 @@ export function PropertyHeroGallery({
               decoding="async"
               className="h-[300px] w-full cursor-zoom-in object-cover transition hover:opacity-95 xl:h-[360px]"
             />
-          </button>
+          </Button>
           <Button
             type="button"
             variant="secondary"
@@ -166,10 +167,11 @@ export function PropertyHeroGallery({
           return (
             <div key={slot} className="relative">
               {img && src ? (
-                <button
+                <Button
                   type="button"
+                  variant="ghost"
                   onClick={() => setOpenAt(slot + 1)}
-                  className="block w-full"
+                  className="block h-auto w-full p-0"
                   aria-label={`Deschide fotografia ${slot + 2}`}
                 >
                   <img
@@ -179,19 +181,20 @@ export function PropertyHeroGallery({
                     decoding="async"
                     className="h-24 w-full cursor-zoom-in rounded-xl object-cover transition hover:opacity-95"
                   />
-                </button>
+                </Button>
               ) : (
                 <Placeholder className="h-24 w-full rounded-xl" />
               )}
               {isLast && hidden > 0 ? (
-                <button
+                <Button
                   type="button"
+                  variant="ghost"
                   onClick={() => setOpenAt(slot + 1)}
                   aria-label={`Vezi încă ${hidden} fotografii`}
-                  className="absolute inset-0 flex items-center justify-center rounded-xl bg-foreground/70 text-lg font-semibold text-background"
+                  className="absolute inset-0 flex h-full items-center justify-center rounded-xl bg-foreground/70 text-lg font-semibold text-background hover:bg-foreground/80 hover:text-background"
                 >
                   +{hidden}
-                </button>
+                </Button>
               ) : null}
             </div>
           );
@@ -214,22 +217,26 @@ export function PropertyHeroGallery({
             )}
             {total > 1 ? (
               <>
-                <button
+                <Button
                   type="button"
+                  variant="secondary"
+                  size="icon"
                   onClick={() => step(-1)}
                   aria-label="Fotografia anterioară"
-                  className="absolute top-1/2 left-2 -translate-y-1/2 rounded-full bg-background/85 p-2 text-foreground shadow hover:bg-background"
+                  className="absolute top-1/2 left-2 -translate-y-1/2 rounded-full bg-background/85 text-foreground hover:bg-background"
                 >
                   <ChevronLeft className="size-5" aria-hidden />
-                </button>
-                <button
+                </Button>
+                <Button
                   type="button"
+                  variant="secondary"
+                  size="icon"
                   onClick={() => step(1)}
                   aria-label="Fotografia următoare"
-                  className="absolute top-1/2 right-2 -translate-y-1/2 rounded-full bg-background/85 p-2 text-foreground shadow hover:bg-background"
+                  className="absolute top-1/2 right-2 -translate-y-1/2 rounded-full bg-background/85 text-foreground hover:bg-background"
                 >
                   <ChevronRight className="size-5" aria-hidden />
-                </button>
+                </Button>
                 <span className="absolute bottom-3 left-1/2 -translate-x-1/2 rounded-full bg-foreground/70 px-3 py-1 text-xs font-medium text-background">
                   {(openAt ?? 0) + 1} / {total}
                 </span>
