@@ -591,6 +591,13 @@ function AgenciesPage() {
         </div>
       )}
 
+      {editingOrgId && data?.orgs.find((x) => x.id === editingOrgId) ? (
+        <AgencyDetailsDialog
+          org={data.orgs.find((x) => x.id === editingOrgId) as never}
+          onClose={() => setEditingOrgId(null)}
+        />
+      ) : null}
+
       <ConfirmDialog
         open={pendingArchive !== null}
         onOpenChange={(v) => {
