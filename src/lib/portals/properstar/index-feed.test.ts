@@ -17,6 +17,7 @@ import {
   type IndexedAgency,
 } from "./index-feed.server";
 import {
+  buildProperstarIndexXml,
   indexPresence,
   isProperstarActive,
   nextIndexState,
