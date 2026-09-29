@@ -17,4 +17,3 @@
 
 - ClickImob index: JSON index at /api/public/feed/clickimob/index/{CLICKIMOB_INDEX_KEY}.json reuses Properstar index rules; state in `portal_index_state` (portal column), agencies with per-agency ClickImob connection excluded. Why: parallel to per-agency keys without duplicate listings, Properstar untouched.
 
-- Property detail keeps one shared header and tab strip across all tabs; publication stays force-mounted for the shared publish action. Why: preserve portal selection state while keeping navigation consistent.
