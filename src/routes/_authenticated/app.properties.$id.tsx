@@ -905,152 +905,92 @@ function PropertyDetailPage() {
           ) : null}
 
           {!editing ? (
-            <div className="grid gap-6 lg:grid-cols-3">
-              <div className="space-y-6 lg:col-span-2">
-                <div className="panel p-5">
-                  <h2 className="text-sm font-semibold">Descriere</h2>
-                  <p className="mt-3 text-sm whitespace-pre-line text-muted-foreground">
-                    {property.description || "Nu există descriere."}
-                  </p>
-                  {property.features.length > 0 ? (
-                    <div className="mt-5 flex flex-wrap gap-2">
-                      {property.features.map((f) => (
-                        <StatusBadge key={f}>{f}</StatusBadge>
-                      ))}
-                    </div>
-                  ) : null}
-                  {property.internal_notes ? (
-                    <div className="mt-5 rounded-xl border border-warning/30 bg-warning/10 p-4 text-sm">
-                      <p className="font-medium">Note interne</p>
-                      <p className="mt-1 text-muted-foreground">{property.internal_notes}</p>
-                    </div>
-                  ) : null}
-                </div>
+            <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_352px]">
+              <div className="min-w-0 space-y-5">
+                <PropertyHeroGallery propertyId={id} title={property.title} onAddPhotos={() => setTab("media")} />
 
-                <div className="panel p-5">
-                  <h2 className="text-sm font-semibold">Hartă</h2>
-                  {mapCoords ? (
-                    <div className="mt-3 space-y-2">
-                      <PropertyMapClient
-                        lat={mapCoords.lat}
-                        lng={mapCoords.lng}
-                        precise={mapCoords.precise}
-                        seed={property.id}
-                        className="h-64 w-full overflow-hidden rounded-xl border border-border"
-                      />
-                      <p className="text-xs text-muted-foreground">
-                        {mapCoords.precise
-                          ? "Locație exactă."
-                          : `Hartă estimativă — zonă de aproximativ ${APPROX_RADIUS_M} m.`}
-                      </p>
-                    </div>
-                  ) : (
-                    <p className="mt-3 text-sm text-muted-foreground">
-                      Nu există coordonate GPS pentru această proprietate.
-                    </p>
-                  )}
-                </div>
-
-                <div className="panel p-5">
-                  <h2 className="text-sm font-semibold">Specificații</h2>
-                  <dl className="mt-3 grid gap-2 sm:grid-cols-2">
-                    {specs.map((s) => (
-                      <div
-                        key={s.label}
-                        className="flex items-center justify-between gap-3 text-sm"
-                      >
-                        <dt className="text-muted-foreground">{s.label}</dt>
-                        <dd className="text-right font-medium">{s.value}</dd>
+                {primaryFacts.length > 0 ? (
+                  <section className="panel grid grid-cols-2 overflow-hidden md:grid-cols-3 xl:grid-cols-6" aria-label="Date principale">
+                    {primaryFacts.map((fact, index) => (
+                      <div key={fact.label} className={`px-4 py-4 ${index > 0 ? "border-l border-border" : ""}`}>
+                        <p className="text-xs text-muted-foreground">{fact.label}</p>
+                        <p className="mt-1 text-lg font-bold">{fact.value}</p>
                       </div>
                     ))}
-                  </dl>
-                </div>
+                  </section>
+                ) : null}
 
-                <div className="panel p-5">
-                  <h2 className="text-sm font-semibold">Proprietar</h2>
-                  {ownerContact ? (
-                    <div className="mt-3 space-y-1 text-sm">
-                      <Link
-                        to="/app/contacts/$id"
-                        params={{ id: ownerContact.id }}
-                        className="font-medium hover:text-primary"
-                      >
-                        {ownerContact.first_name} {ownerContact.last_name}
-                      </Link>
-                      <p className="text-muted-foreground">{ownerContact.phone ?? "—"}</p>
-                      <p className="text-muted-foreground">{ownerContact.email ?? "—"}</p>
+                <section className="panel p-5 sm:p-6">
+                  <h2 className="text-[21px] leading-tight">Descriere</h2>
+                  <p className={`mt-4 text-sm leading-6 whitespace-pre-line text-muted-foreground ${descriptionExpanded ? "" : "line-clamp-8"}`}>
+                    {property.description || "Nu există descriere."}
+                  </p>
+                  {property.description ? <button type="button" className="mt-3 text-sm font-bold text-gold-dark hover:underline" onClick={() => setDescriptionExpanded((value) => !value)}>{descriptionExpanded ? "Restrânge descrierea" : "Citește toată descrierea"}</button> : null}
+                  {property.internal_notes ? (
+                    <div className="mt-5 rounded-xl bg-muted p-4 text-sm">
+                      <p className="font-bold">Note interne (vizibile doar în CRM)</p>
+                      <p className="mt-1 whitespace-pre-line text-muted-foreground">{property.internal_notes}</p>
                     </div>
-                  ) : (
-                    <p className="mt-3 text-sm text-muted-foreground">Niciun proprietar asociat.</p>
-                  )}
-                </div>
+                  ) : null}
+                </section>
+
+                {(specs.length > 0 || amenityGroups.length > 0) ? (
+                  <section className="panel p-5 sm:p-6">
+                    <h2 className="text-[21px] leading-tight">Specificații</h2>
+                    <dl className="mt-4 grid gap-x-6 sm:grid-cols-2">
+                      {(specsExpanded ? specs : specs.slice(0, 8)).map((spec) => (
+                        <div key={spec.label} className="flex items-center justify-between gap-4 border-b border-border py-3 text-sm">
+                          <dt className="text-muted-foreground">{spec.label}</dt>
+                          <dd className="text-right font-bold">{spec.value}</dd>
+                        </div>
+                      ))}
+                    </dl>
+                    {specsExpanded && amenityGroups.length > 0 ? <div className="mt-5 flex flex-wrap gap-2">{amenityGroups.map((item, index) => <span key={`${item}-${index}`} className="rounded-full border border-border bg-muted px-3 py-1 text-xs">{item}</span>)}</div> : null}
+                    {(specs.length > 8 || amenityGroups.length > 0) ? <button type="button" className="mt-4 text-sm font-bold text-gold-dark hover:underline" onClick={() => setSpecsExpanded((value) => !value)}>{specsExpanded ? "Restrânge caracteristicile" : "Vezi toate caracteristicile"}</button> : null}
+                  </section>
+                ) : null}
+
+                <section className="panel p-5 sm:p-6">
+                  <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-4">
+                    <h2 className="text-[21px] leading-tight">Locație</h2>
+                    <p className="max-w-md text-right text-sm text-muted-foreground">{[property.address, locationLabel].filter(Boolean).join(", ")}</p>
+                  </div>
+                  {mapCoords ? <PropertyMapClient lat={mapCoords.lat} lng={mapCoords.lng} precise={mapCoords.precise} seed={property.id} className="mt-4 h-[220px] w-full overflow-hidden rounded-xl border border-border" /> : <div className="mt-4 flex h-[220px] items-center justify-center rounded-xl border border-border bg-muted text-sm text-muted-foreground">Nu există coordonate GPS pentru această proprietate.</div>}
+                  {mapCoords && !mapCoords.precise ? <p className="mt-2 text-xs text-muted-foreground">Hartă estimativă — zonă de aproximativ {APPROX_RADIUS_M} m.</p> : null}
+                </section>
               </div>
 
-              <div className="space-y-6">
-                <div className="panel p-5">
-                  <h2 className="text-sm font-semibold">Următoarea activitate</h2>
-                  {upcoming ? (
-                    <div className="mt-3 text-sm">
-                      <p className="font-medium">{upcoming.title}</p>
-                      <p className="text-muted-foreground">{formatDateTime(upcoming.starts_at)}</p>
-                    </div>
-                  ) : (
-                    <p className="mt-3 text-sm text-muted-foreground">
-                      Nicio activitate planificată.
-                    </p>
-                  )}
-                </div>
+              <aside className="space-y-4">
+                <section className="panel px-5 py-[18px]">
+                  <div className="flex items-center justify-between gap-3"><h2 className="font-sans text-base font-bold">Pe portaluri</h2><span className="text-sm text-muted-foreground">{publishedPortals} din {portalCells.length} activate</span></div>
+                  {portalCells.length > 0 ? <ul className="mt-4 space-y-3">{portalCells.map((cell) => { const state = portalState(cell); return <li key={cell.portalId} className="flex items-center justify-between gap-3 text-sm"><span className="min-w-0 truncate font-medium">{cell.portalName}</span><span className="flex shrink-0 items-center gap-2"><StatusBadge tone={state.tone} dot>{state.label}</StatusBadge>{cell.promoted ? <StatusBadge tone="warning">Promovat</StatusBadge> : null}</span></li>; })}</ul> : <p className="mt-3 text-sm text-muted-foreground">Niciun portal activat pentru agenție.</p>}
+                  <Button variant="outline" className="mt-4 w-full" onClick={() => setTab("publishing")}>Gestionează publicarea</Button>
+                </section>
 
-                <div className="panel p-5">
-                  <h2 className="text-sm font-semibold">Activități recente</h2>
-                  {recentActivities.length === 0 ? (
-                    <p className="mt-3 text-sm text-muted-foreground">Nicio activitate.</p>
-                  ) : (
-                    <ul className="mt-3 space-y-2 text-sm">
-                      {recentActivities.map((a) => (
-                        <li key={a.id} className="flex items-center justify-between gap-2">
-                          <span className="truncate">{a.title}</span>
-                          <StatusBadge tone={activityStatusTone[a.status]}>
-                            {activityStatusLabels[a.status]}
-                          </StatusBadge>
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                </div>
+                <section className="panel px-5 py-[18px]">
+                  <h2 className="font-sans text-base font-bold">Următorul pas</h2>
+                  {upcoming ? <div className="mt-3 text-sm"><p className="font-bold">{upcoming.title}</p><p className="mt-1 text-muted-foreground">{formatDateTime(upcoming.starts_at)}</p></div> : <p className="mt-3 text-sm text-muted-foreground">Nicio activitate programată pentru această proprietate.</p>}
+                  <div className="mt-4 grid gap-2"><Button variant="soft" onClick={() => setActivityDialog({ open: true, kind: "viewing" })}>Programează vizionare</Button><Button variant="outline" onClick={() => setActivityDialog({ open: true, kind: "call" })}>Adaugă activitate</Button></div>
+                </section>
 
-                <div className="panel p-5">
-                  <h2 className="text-sm font-semibold">Lead-uri active</h2>
-                  {activeLeads.length === 0 ? (
-                    <p className="mt-3 text-sm text-muted-foreground">Niciun lead activ.</p>
-                  ) : (
-                    <ul className="mt-3 space-y-2 text-sm">
-                      {activeLeads.map((l) => (
-                        <li key={l.id} className="flex items-center justify-between gap-2">
-                          <span className="truncate">{l.name}</span>
-                          <StatusBadge tone="info">{leadStageLabels[l.stage]}</StatusBadge>
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                </div>
+                <section className="panel px-5 py-[18px]">
+                  <h2 className="font-sans text-base font-bold">Interes</h2>
+                  <div className="mt-3 grid grid-cols-2 gap-2">
+                    <button type="button" onClick={() => setTab("leads")} className="rounded-card border border-border p-3 text-left hover:bg-muted"><span className="block text-[22px] font-bold">{activeLeads.length}</span><span className="text-xs text-muted-foreground">Lead-uri active</span></button>
+                    <button type="button" onClick={() => setTab("matching")} className="rounded-card border border-border p-3 text-left hover:bg-muted"><span className="block text-[22px] font-bold">{matches.length}</span><span className="text-xs text-muted-foreground">Cereri compatibile</span></button>
+                  </div>
+                  {matches.length > 0 ? <div className="mt-4"><p className="text-sm font-bold">Top potriviri</p><ul className="mt-2 space-y-2">{matches.slice(0, 3).map(({ request, match }) => <li key={request.id} className="flex items-center justify-between gap-2 text-sm"><span className="truncate">{request.title}</span><StatusBadge tone={matchTone(match.score)}>{match.score}%</StatusBadge></li>)}</ul></div> : null}
+                </section>
 
-                <div className="panel p-5">
-                  <h2 className="text-sm font-semibold">Top potriviri</h2>
-                  {matches.length === 0 ? (
-                    <p className="mt-3 text-sm text-muted-foreground">Nicio potrivire momentan.</p>
-                  ) : (
-                    <ul className="mt-3 space-y-2 text-sm">
-                      {matches.slice(0, 3).map(({ request, match }) => (
-                        <li key={request.id} className="flex items-center justify-between gap-2">
-                          <span className="truncate">{request.title}</span>
-                          <StatusBadge tone={matchTone(match.score)}>{match.score}%</StatusBadge>
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                </div>
-              </div>
+                {responsibleAgent ? <section className="panel px-5 py-[18px]"><h2 className="font-sans text-base font-bold">Agent responsabil</h2><div className="mt-4 flex items-center gap-3"><UserAvatar name={responsibleAgent.full_name} path={responsibleAgent.avatar_url} className="size-11" /><div className="min-w-0"><p className="truncate text-sm font-bold">{responsibleAgent.full_name}</p><p className="truncate text-xs text-muted-foreground">{[responsibleAgent.job_title, responsibleAgent.phone].filter(Boolean).join(" · ") || "Agent"}</p></div></div></section> : null}
+
+                <section className="panel px-5 py-[18px]">
+                  <h2 className="font-sans text-base font-bold">Proprietar</h2>
+                  {ownerContact ? <><div className="mt-3 text-sm"><Link to="/app/contacts/$id" params={{ id: ownerContact.id }} className="font-bold hover:text-primary">{ownerContact.first_name} {ownerContact.last_name}</Link><p className="mt-1 text-muted-foreground">{ownerContact.phone ?? "Fără telefon"}</p></div><div className="mt-4 grid grid-cols-2 gap-2">{ownerContact.phone ? <Button variant="outline" asChild><a href={`tel:${ownerContact.phone}`}><Phone /> Sună</a></Button> : null}{(ownerContact.whatsapp ?? ownerContact.phone) ? <Button variant="outline" asChild><a href={`https://wa.me/${(ownerContact.whatsapp ?? ownerContact.phone ?? "").replace(/[^\d]/g, "")}`} target="_blank" rel="noreferrer"><MessageCircle /> WhatsApp</a></Button> : null}</div></> : <><p className="mt-3 text-sm text-muted-foreground">Niciun proprietar asociat</p><Button variant="outline" className="mt-4 w-full" onClick={() => { startEdit(); setTab("overview"); }}>Adaugă proprietar</Button></>}
+                </section>
+
+                {recentActivities.length > 0 ? <section className="panel px-5 py-[18px]"><h2 className="font-sans text-base font-bold">Activități recente</h2><ul className="mt-3 space-y-3">{recentActivities.map((activity) => <li key={activity.id} className="flex items-center justify-between gap-2 text-sm"><span className="truncate">{activity.title}</span><StatusBadge tone={activityStatusTone[activity.status]}>{activityStatusLabels[activity.status]}</StatusBadge></li>)}</ul></section> : null}
+              </aside>
             </div>
           ) : null}
         </TabsContent>
