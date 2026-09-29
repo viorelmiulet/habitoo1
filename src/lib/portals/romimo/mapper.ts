@@ -114,6 +114,31 @@ function text(value: string | null | undefined): string | null {
   return raw.length > 0 ? raw : null;
 }
 
+/**
+ * Forma acceptată de Romimo pentru denumiri de locații, conform
+ * `GET /api/Resources/County` și `/City`: litere mici, fără diacritice
+ * (ex. „bucuresti", „bistrita-nasaud", „sector 1"). `ValidateCounty`
+ * respinge „București" (ș virgulă) și „Bucureşti" (ş sedilă).
+ * Transformă întâi ş/ţ cu sedilă în ș/ț, apoi elimină diacriticele.
+ */
+export function romimoLocationName(value: string): string {
+  return value
+    .replace(/ş/g, "ș")
+    .replace(/Ş/g, "Ș")
+    .replace(/ţ/g, "ț")
+    .replace(/Ţ/g, "Ț")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+/** Județul în forma Romimo, fără prefixul administrativ („Județul", „Municipiul"). */
+export function romimoCountyName(value: string): string {
+  return romimoLocationName(value).replace(/^(judetul|jud\.?|municipiul)\s+/, "").trim();
+}
+
 /** Sectorul București din `city`, tolerant la diacritice și la „Sectorul"/„Sector". */
 export function extractBucharestSector(city: string | null): number | null {
   // „Sector"/„Sectorul" nu conțin diacritice, deci potrivirea e directă.
@@ -261,14 +286,12 @@ export async function mapPropertyToRomimo(
   }
 
   // Locație: județ + oraș, cu sector pentru București.
-  const countyName = text(property.county);
+  const rawCounty = text(property.county);
+  const countyName = rawCounty ? romimoCountyName(rawCounty) : null;
   if (!countyName) reasons.push("Oferta nu are județ completat.");
   let cityName: string | null = null;
   if (countyName) {
-    const isBucharest = countyName
-      .normalize("NFD")
-      .toLowerCase()
-      .includes("bucure");
+    const isBucharest = countyName === "bucuresti";
     if (isBucharest) {
       const sector = extractBucharestSector(property.city);
       if (sector === null) {
@@ -279,7 +302,8 @@ export async function mapPropertyToRomimo(
         cityName = `sector ${sector}`;
       }
     } else {
-      cityName = text(property.city);
+      const rawCity = text(property.city);
+      cityName = rawCity ? romimoLocationName(rawCity) : null;
       if (!cityName) reasons.push("Oferta nu are oraș completat.");
     }
   }
