@@ -7,10 +7,11 @@
  */
 import { useCallback, useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { ChevronLeft, ChevronRight, ImageOff } from "lucide-react";
+import { ChevronLeft, ChevronRight, Image, ImageOff } from "lucide-react";
 
 import { supabase } from "@/integrations/supabase/client";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 import { MEDIA_BUCKET, signedUrls } from "@/lib/storage";
 import { cn } from "@/lib/utils";
 
@@ -49,9 +50,11 @@ function Placeholder({ className }: { className?: string }) {
 export function PropertyHeroGallery({
   propertyId,
   title,
+  onAddPhotos,
 }: {
   propertyId: string;
   title: string;
+  onAddPhotos?: () => void;
 }) {
   const [signed, setSigned] = useState<Record<string, string>>({});
 
@@ -89,7 +92,7 @@ export function PropertyHeroGallery({
     (img.storage_path ? signed[img.storage_path] : null) ?? img.url ?? null;
 
   const [main, ...rest] = images;
-  const thumbs = rest.slice(0, 2);
+  const thumbs = rest.slice(0, 4);
   const hidden = Math.max(0, images.length - 1 - thumbs.length);
 
   // Vizualizator pe ecran complet: click pe orice poză, navigare cu butoane sau taste.
@@ -113,29 +116,53 @@ export function PropertyHeroGallery({
   const active = openAt === null ? null : images[openAt];
   const activeSrc = active ? srcOf(active) : null;
 
+  if (!main || !srcOf(main)) {
+    return (
+      <div className="flex h-40 flex-col items-center justify-center gap-3 rounded-panel border border-border bg-muted text-center">
+        <ImageOff className="size-6 text-muted-foreground" aria-hidden />
+        <p className="text-sm font-semibold">Nicio poză încă</p>
+        {onAddPhotos ? (
+          <Button type="button" variant="outline" onClick={onAddPhotos}>
+            <Image aria-hidden /> Adaugă poze
+          </Button>
+        ) : null}
+      </div>
+    );
+  }
+
   return (
-    <div className="grid grid-cols-3 gap-3">
-      <div className="col-span-3 sm:col-span-2">
-        {main && srcOf(main) ? (
-          <button type="button" onClick={() => setOpenAt(0)} className="block w-full">
+    <div className="space-y-3">
+      <div className="relative">
+          <button
+            type="button"
+            onClick={() => setOpenAt(0)}
+            className="block w-full overflow-hidden rounded-panel"
+            aria-label="Deschide galeria foto"
+          >
             <img
               src={srcOf(main) as string}
               alt={main.alt ?? title}
-              loading="lazy"
+              loading="eager"
               decoding="async"
-              className="h-56 w-full cursor-zoom-in rounded-2xl object-cover transition hover:opacity-95 sm:h-72"
+              className="h-[300px] w-full cursor-zoom-in object-cover transition hover:opacity-95 xl:h-[360px]"
             />
           </button>
-        ) : (
-          <Placeholder className="h-56 w-full sm:h-72" />
-        )}
+          <Button
+            type="button"
+            variant="secondary"
+            className="absolute right-4 bottom-4"
+            onClick={() => setOpenAt(0)}
+          >
+            <Image aria-hidden /> Vezi toate cele {total} {total === 1 ? "poză" : "poze"}
+          </Button>
       </div>
 
-      <div className="col-span-3 grid grid-cols-2 gap-3 sm:col-span-1 sm:grid-cols-1">
-        {[0, 1].map((slot) => {
+      {rest.length > 0 ? (
+      <div className="grid grid-cols-4 gap-3">
+        {[0, 1, 2, 3].map((slot) => {
           const img = thumbs[slot];
           const src = img ? srcOf(img) : null;
-          const isLast = slot === 1;
+          const isLast = slot === 3;
           return (
             <div key={slot} className="relative">
               {img && src ? (
@@ -150,25 +177,27 @@ export function PropertyHeroGallery({
                     alt={img.alt ?? title}
                     loading="lazy"
                     decoding="async"
-                    className="h-[6.5rem] w-full cursor-zoom-in rounded-2xl object-cover transition hover:opacity-95 sm:h-[8.5rem]"
+                    className="h-24 w-full cursor-zoom-in rounded-xl object-cover transition hover:opacity-95"
                   />
                 </button>
               ) : (
-                <Placeholder className="h-[6.5rem] w-full sm:h-[8.5rem]" />
+                <Placeholder className="h-24 w-full rounded-xl" />
               )}
               {isLast && hidden > 0 ? (
                 <button
                   type="button"
-                  onClick={() => setOpenAt(thumbs.length + 1)}
-                  className="absolute inset-0 flex items-center justify-center rounded-2xl bg-foreground/55 text-sm font-medium text-background"
+                  onClick={() => setOpenAt(slot + 1)}
+                  aria-label={`Vezi încă ${hidden} fotografii`}
+                  className="absolute inset-0 flex items-center justify-center rounded-xl bg-foreground/70 text-lg font-semibold text-background"
                 >
-                  +{hidden} foto
+                  +{hidden}
                 </button>
               ) : null}
             </div>
           );
         })}
       </div>
+      ) : null}
 
       <Dialog open={openAt !== null} onOpenChange={(open) => !open && setOpenAt(null)}>
         <DialogContent className="max-w-5xl border-none bg-transparent p-0 shadow-none">
