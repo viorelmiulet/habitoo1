@@ -10,6 +10,7 @@ import { ListSkeleton } from "@/components/app/LoadingState";
 import { StatusBadge } from "@/components/app/StatusBadge";
 import { EmptyState } from "@/components/app/EmptyState";
 import { UserAvatar } from "@/components/app/UserAvatar";
+import { UserAvatarEditor } from "@/components/superadmin/UserAvatarEditor";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -466,6 +467,14 @@ function UsersPage() {
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-3">
+            {editing ? (
+              <UserAvatarEditor
+                key={editing.id}
+                userId={editing.id}
+                name={editing.full_name}
+                initialPath={editing.avatar_url}
+              />
+            ) : null}
             <div className="grid gap-1.5">
               <Label htmlFor="u-name">Nume complet</Label>
               <Input

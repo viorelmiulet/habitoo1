@@ -5,6 +5,11 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { assertNoActiveImpersonation } from "@/lib/impersonation.functions";
+import {
+  AVATAR_UPLOAD_MAX_BYTES,
+  applyProfileUpdateEmailFirst,
+  emailChanged,
+} from "@/lib/superadmin-user-profile";
 
 type AuthContext = {
   supabase: {
@@ -131,28 +136,29 @@ export const updatePlatformUser = createServerFn({ method: "POST" })
     const roleList = (rolesBefore ?? []).map((r) => r.role as string);
     const isSuperadmin = roleList.includes("superadmin");
 
-    // 1. Câmpurile de profil.
-    const { error: updateError } = await supabaseAdmin
-      .from("profiles")
-      .update({
-        full_name: data.full_name,
-        email: data.email,
-        phone: data.phone,
-        job_title: data.job_title,
-      })
-      .eq("id", data.userId);
-    if (updateError) throw new Error(updateError.message);
-
-    // 2. Emailul de autentificare, dacă s-a schimbat.
-    if (data.email && data.email.toLowerCase() !== (before.email ?? "").toLowerCase()) {
-      const { error: authError } = await supabaseAdmin.auth.admin.updateUserById(data.userId, {
-        email: data.email,
-        email_confirm: true,
-      });
-      if (authError) {
-        throw new Error(`Emailul de autentificare nu a putut fi schimbat: ${authError.message}`);
-      }
-    }
+    // 1–2. Întâi emailul de login; profilul se actualizează doar dacă acesta a reușit.
+    await applyProfileUpdateEmailFirst({
+      emailChanged: emailChanged(data.email, before.email),
+      updateAuthEmail: async () => {
+        const { error } = await supabaseAdmin.auth.admin.updateUserById(data.userId, {
+          email: data.email as string,
+          email_confirm: true,
+        });
+        return { error };
+      },
+      updateProfile: async () => {
+        const { error } = await supabaseAdmin
+          .from("profiles")
+          .update({
+            full_name: data.full_name,
+            email: data.email,
+            phone: data.phone,
+            job_title: data.job_title,
+          })
+          .eq("id", data.userId);
+        return { error };
+      },
+    });
 
     // 3. Agenția (funcție dedicată, cu audit propriu).
     if (data.organizationId !== before.organization_id) {
@@ -316,4 +322,67 @@ export const deletePlatformUser = createServerFn({ method: "POST" })
       authDeleted: !authError,
       authError: authError?.message ?? null,
     };
+  });
+
+/** Poza de profil a oricărui utilizator: încărcare (JPEG deja comprimat la 512px) sau ștergere. */
+export const setPlatformUserAvatar = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .validator((data: unknown) =>
+    z
+      .object({
+        userId: z.string().uuid(),
+        // null = ștergere
+        jpegBase64: z.string().max(7_000_000).nullable(),
+      })
+      .parse(data),
+  )
+  .handler(async ({ data, context }): Promise<{ avatarUrl: string | null }> => {
+    const actorId = await assertSuperadmin(context as AuthContext);
+    await assertNoActiveImpersonation(actorId);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    const { data: before, error: beforeError } = await supabaseAdmin
+      .from("profiles")
+      .select("id,avatar_url,organization_id")
+      .eq("id", data.userId)
+      .maybeSingle();
+    if (beforeError) throw new Error(beforeError.message);
+    if (!before) throw new Error("Utilizatorul nu există.");
+
+    let path: string | null = null;
+    if (data.jpegBase64 !== null) {
+      const bytes = Buffer.from(data.jpegBase64, "base64");
+      if (bytes.byteLength === 0) throw new Error("Imaginea este goală.");
+      if (bytes.byteLength > AVATAR_UPLOAD_MAX_BYTES) throw new Error("Imaginea depășește 5 MB.");
+      path = `${before.organization_id ?? "platform"}/${data.userId}/avatar-${Date.now()}.jpg`;
+      const { error: upError } = await supabaseAdmin.storage
+        .from("avatars")
+        .upload(path, bytes, { contentType: "image/jpeg", upsert: false });
+      if (upError) throw new Error("Fotografia nu a putut fi încărcată.");
+    }
+
+    const { error: updError } = await supabaseAdmin
+      .from("profiles")
+      .update({ avatar_url: path })
+      .eq("id", data.userId);
+    if (updError) {
+      if (path) await supabaseAdmin.storage.from("avatars").remove([path]);
+      throw new Error(updError.message);
+    }
+    if (before.avatar_url && before.avatar_url !== path) {
+      await supabaseAdmin.storage.from("avatars").remove([before.avatar_url]);
+    }
+
+    await supabaseAdmin.from("audit_logs").insert({
+      organization_id: before.organization_id,
+      actor_id: actorId,
+      action: path ? "user.avatar_updated" : "user.avatar_removed",
+      entity: "profiles",
+      entity_id: data.userId,
+      old_values: { avatar_url: before.avatar_url },
+      new_values: { avatar_url: path },
+      created_by: actorId,
+    });
+
+    return { avatarUrl: path };
   });
