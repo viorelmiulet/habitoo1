@@ -896,16 +896,18 @@ export function PortalsCard({ organizationId }: { organizationId: string }) {
                           Salvează
                         </Button>
                       ) : null}
-                      <Button
-                        type="button"
-                        variant="outline"
-                        onClick={() => test.mutate(item.portal.id)}
-                        disabled={test.isPending}
-                      >
-                        <PlugZap className="mr-2 size-4" />
-                        {item.feedOnly ? "Verifică feedul" : "Testează conexiunea"}
-                      </Button>
-                      {item.feedOnly ? (
+                      {item.supportsConnectionTest ? (
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => test.mutate(item.portal.id)}
+                          disabled={test.isPending}
+                        >
+                          <PlugZap className="mr-2 size-4" />
+                          {item.feedOnly ? "Verifică feedul" : "Testează conexiunea"}
+                        </Button>
+                      ) : null}
+                      {item.supportsFeedPreview ? (
                         <Button
                           type="button"
                           variant="outline"
