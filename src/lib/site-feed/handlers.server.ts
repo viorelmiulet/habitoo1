@@ -103,7 +103,10 @@ export async function handlePropertiesList(
 
   const from = (page - 1) * perPage;
   // Cheie de portal → feed restrâns la ofertele bifate pentru acel portal.
-  const selectedIds = auth.portal
+  // Agenție ClickImob în grație: listă goală, ca ClickImob să retragă ofertele.
+  const selectedIds = auth.indexStatus === "grace"
+    ? []
+    : auth.portal
     ? await selectedPropertyIdsForPortal(auth.organizationId, auth.portal)
     : null;
   if (selectedIds !== null && selectedIds.length === 0) {
@@ -204,6 +207,9 @@ export async function handlePropertyDetail(
   const id = rawId.trim();
   if (!id || id.length > 64) {
     return { response: errorResponse(400, "Invalid property id."), items: 0 };
+  }
+  if (auth.indexStatus === "grace") {
+    return { response: errorResponse(404, "Property not found."), items: 0 };
   }
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
