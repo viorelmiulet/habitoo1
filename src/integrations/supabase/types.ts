@@ -4385,6 +4385,41 @@ export type Database = {
           },
         ]
       }
+      portal_index_state: {
+        Row: {
+          active: boolean
+          inactive_since: string | null
+          last_active_at: string | null
+          organization_id: string
+          portal: string
+          updated_at: string
+        }
+        Insert: {
+          active: boolean
+          inactive_since?: string | null
+          last_active_at?: string | null
+          organization_id: string
+          portal: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          inactive_since?: string | null
+          last_active_at?: string | null
+          organization_id?: string
+          portal?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "portal_index_state_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       portal_integrations: {
         Row: {
           config: Json
