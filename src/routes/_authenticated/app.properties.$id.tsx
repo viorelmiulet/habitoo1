@@ -719,7 +719,7 @@ function PropertyDetailPage() {
           {editing ? <Button variant="outline" onClick={() => setEditing(false)}>Anulează</Button> : <Button variant="outline" onClick={() => { startEdit(); setTab("overview"); }}><Pencil /> Editează</Button>}
           <Button variant="outline" onClick={() => setActivityDialog({ open: true, kind: "viewing" })}><CalendarPlus /> Programează vizionare</Button>
           <Button variant="outline" onClick={() => setActivityDialog({ open: true, kind: "call" })}>Adaugă activitate</Button>
-          <Button variant="outline" onClick={() => setTab("acp")}><BarChart3 /> Analiză de piață (ACP)</Button>
+          <Button variant="outline" onClick={() => setTab("acp")}><BarChart3 /> Analiză comparativă de piață (ACP)</Button>
           <DropdownMenu>
             <DropdownMenuTrigger asChild><Button size="icon" variant="outline" aria-label="Mai multe acțiuni"><MoreHorizontal /></Button></DropdownMenuTrigger>
             <DropdownMenuContent align="end">
@@ -925,7 +925,7 @@ function PropertyDetailPage() {
                   <p className={`mt-4 text-sm leading-6 whitespace-pre-line text-muted-foreground ${descriptionExpanded ? "" : "line-clamp-8"}`}>
                     {property.description || "Nu există descriere."}
                   </p>
-                  {property.description ? <button type="button" className="mt-3 text-sm font-bold text-gold-dark hover:underline" onClick={() => setDescriptionExpanded((value) => !value)}>{descriptionExpanded ? "Restrânge descrierea" : "Citește toată descrierea"}</button> : null}
+                  {property.description ? <Button type="button" variant="link" className="mt-3 p-0" onClick={() => setDescriptionExpanded((value) => !value)}>{descriptionExpanded ? "Restrânge descrierea" : "Citește toată descrierea"}</Button> : null}
                   {property.internal_notes ? (
                     <div className="mt-5 rounded-xl bg-muted p-4 text-sm">
                       <p className="font-bold">Note interne (vizibile doar în CRM)</p>
@@ -946,7 +946,7 @@ function PropertyDetailPage() {
                       ))}
                     </dl>
                     {specsExpanded && amenityGroups.length > 0 ? <div className="mt-5 flex flex-wrap gap-2">{amenityGroups.map((item, index) => <span key={`${item}-${index}`} className="rounded-full border border-border bg-muted px-3 py-1 text-xs">{item}</span>)}</div> : null}
-                    {(specs.length > 8 || amenityGroups.length > 0) ? <button type="button" className="mt-4 text-sm font-bold text-gold-dark hover:underline" onClick={() => setSpecsExpanded((value) => !value)}>{specsExpanded ? "Restrânge caracteristicile" : "Vezi toate caracteristicile"}</button> : null}
+                    {(specs.length > 8 || amenityGroups.length > 0) ? <Button type="button" variant="link" className="mt-4 p-0" onClick={() => setSpecsExpanded((value) => !value)}>{specsExpanded ? "Restrânge caracteristicile" : "Vezi toate caracteristicile"}</Button> : null}
                   </section>
                 ) : null}
 
@@ -976,8 +976,8 @@ function PropertyDetailPage() {
                 <section className="panel px-5 py-[18px]">
                   <h2 className="font-sans text-base font-bold">Interes</h2>
                   <div className="mt-3 grid grid-cols-2 gap-2">
-                    <button type="button" onClick={() => setTab("leads")} className="rounded-card border border-border p-3 text-left hover:bg-muted"><span className="block text-[22px] font-bold">{activeLeads.length}</span><span className="text-xs text-muted-foreground">Lead-uri active</span></button>
-                    <button type="button" onClick={() => setTab("matching")} className="rounded-card border border-border p-3 text-left hover:bg-muted"><span className="block text-[22px] font-bold">{matches.length}</span><span className="text-xs text-muted-foreground">Cereri compatibile</span></button>
+                    <Button type="button" variant="outline" onClick={() => setTab("leads")} className="h-auto items-start p-3 text-left"><span><span className="block text-[22px] font-bold">{activeLeads.length}</span><span className="text-xs font-normal text-muted-foreground">Lead-uri active</span></span></Button>
+                    <Button type="button" variant="outline" onClick={() => setTab("matching")} className="h-auto items-start p-3 text-left"><span><span className="block text-[22px] font-bold">{matches.length}</span><span className="text-xs font-normal text-muted-foreground">Cereri compatibile</span></span></Button>
                   </div>
                   {matches.length > 0 ? <div className="mt-4"><p className="text-sm font-bold">Top potriviri</p><ul className="mt-2 space-y-2">{matches.slice(0, 3).map(({ request, match }) => <li key={request.id} className="flex items-center justify-between gap-2 text-sm"><span className="truncate">{request.title}</span><StatusBadge tone={matchTone(match.score)}>{match.score}%</StatusBadge></li>)}</ul></div> : null}
                 </section>
