@@ -11,6 +11,7 @@
  *    ofertele `Status=Deleted`, apoi dispare;
  *  - linkul fiecărei agenții e semnat HMAC-SHA256(OfficeId, PROPERSTAR_INDEX_KEY).
  */
+import { createHmac, timingSafeEqual } from "node:crypto";
 import { buildProperstarXml, type ProperstarAdvert } from "./mapper";
 
 export const PROPERSTAR_INDEX_GRACE_DAYS = 7;
