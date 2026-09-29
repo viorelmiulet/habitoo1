@@ -134,13 +134,19 @@ async function sendOnce(url: URL, init: RequestInit): Promise<RawAttempt> {
 
 function classify(status: number, body: unknown): RomimoCallFail {
   if (status === 400) {
+    // Motivele exacte din `errors` (ex. „Invalid county!”) vin înaintea
+    // textului generic, ca agentul să vadă imediat ce e greșit.
+    const errors = errorTexts(body);
     const extra = problemText(body);
-    return fail(
-      "invalid_request",
-      status,
-      body,
-      extra ? `${ROMIMO_MESSAGE.invalidRequest} ${extra}` : ROMIMO_MESSAGE.invalidRequest,
-    );
+    const generic = ROMIMO_MESSAGE.invalidRequest;
+    const suffix = extra ? ` ${extra}` : "";
+    const message =
+      errors.length > 0
+        ? `${errors.join("; ")}; ${generic}${suffix}`
+        : extra
+          ? `${generic} ${extra}`
+          : generic;
+    return fail("invalid_request", status, body, message);
   }
   if (status === 401 || status === 403) return fail("invalid_api_key", status, body);
   if (status === 402) return fail("token_expired", status, body);
