@@ -12,7 +12,7 @@ export type FeedAuthOk = {
   tokenId: string;
   tokenPrefix: string;
   /** Din ce credențial a venit cererea: tokenul de site sau o cheie de portal. */
-  source: "site_token" | "portal_key";
+  source: "site_token" | "portal_key" | "clickimob_index";
   /**
    * Portalul care citește feedul, când cererea vine cu o cheie de portal.
    * `null` = token de site (feedul propriu al agenției, fără filtrare pe portal).
@@ -21,6 +21,11 @@ export type FeedAuthOk = {
    */
   portal: string | null;
   scopes: string[];
+  /**
+   * Doar pentru tokenul din indexul ClickImob: `grace` = agenție dezactivată,
+   * încă în index; feedul de oferte e gol, ca ClickImob să le retragă.
+   */
+  indexStatus?: "active" | "grace";
 };
 
 export type FeedAuthErr = {
@@ -75,6 +80,8 @@ function tokenPrefixOf(token: string | null): string | null {
   if (!token) return null;
   const prefix = token.split(".")[0] ?? "";
   if (prefix.startsWith("hbt_")) return prefix;
+  // Token din indexul ClickImob: doar `hbci_<id>`, niciodată semnătura.
+  if (prefix.startsWith("hbci_")) return /^hbci_[A-Za-z0-9]{1,40}$/.test(prefix) ? prefix : null;
   // Cheile emise pentru portaluri: <portal>_portal_<8 hex>
   return /_portal_[0-9a-f]{8}$/.test(prefix) ? prefix : null;
 }
@@ -163,6 +170,24 @@ export async function authenticateFeedRequest(
     "unknown";
   if (rateLimited(`${prefix ?? "anonymous"}|${ip}`)) {
     return { ok: false, status: 429, message: "Too many requests.", tokenPrefix: prefix };
+  }
+
+  if (token.startsWith("hbci_")) {
+    const { resolveClickimobFeedToken } = await import("@/lib/site-feed/clickimob-token.server");
+    const match = await resolveClickimobFeedToken(token);
+    if (!match) {
+      return { ok: false, status: 401, message: "Invalid or revoked API token.", tokenPrefix: prefix };
+    }
+    return {
+      ok: true,
+      organizationId: match.organizationId,
+      tokenId: `clickimob_index:${match.officeId}`,
+      tokenPrefix: prefix ?? "hbci_",
+      source: "clickimob_index",
+      portal: "clickimob",
+      scopes: ["feed:read", "agents:read", "leads:write"],
+      indexStatus: match.status,
+    };
   }
 
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
