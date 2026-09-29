@@ -31,6 +31,7 @@ import {
   withRomimoToken,
 } from "../romimo/client.server";
 import type { RomimoCallFail, SaveArticleDto } from "../romimo/types";
+import { extractRomimoLinks } from "../romimo/offer-links";
 
 /** Sursa payload-ului: se injectează la construirea adaptorului (pasul de mapare). */
 export type RomimoArticleBuilder = (
@@ -122,6 +123,7 @@ export function createRomimoAdapter(buildArticle: RomimoArticleBuilder): PortalA
       action === "publish"
         ? "Anunțul a fost trimis la Romimo. Apare pe Romimo.ro și Publi24.ro."
         : "Anunțul a fost actualizat pe Romimo.";
+    const links = extractRomimoLinks(result.data, externalId);
     return {
       ok: true,
       data: {
@@ -131,6 +133,8 @@ export function createRomimoAdapter(buildArticle: RomimoArticleBuilder): PortalA
           `romimo_${action} external_id=${externalId}` +
           (warnings.length > 0 ? ` warnings=${warnings.length}` : ""),
         message: warnings.length > 0 ? `${base} ${warnings.join(" ")}` : base,
+        ...(links.publicUrl ? { publicUrl: links.publicUrl } : {}),
+        ...(links.offers.length > 0 ? { offers: links.offers } : {}),
         httpStatus: result.status,
         portalResponse: result.data,
       },

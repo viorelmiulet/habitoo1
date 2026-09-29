@@ -498,16 +498,20 @@ export const PropertyPortalsCard = forwardRef<
                         />
                       </div>
                       <div className="flex min-w-0 flex-wrap items-center gap-3 sm:justify-end">
-                        {cell.portalId === "imobiliare_ro" && cell.offerLinks.length > 0 && !cell.publicWarning ? (
+                        {(cell.portalId === "imobiliare_ro" || cell.portalId === "romimo") &&
+                        cell.offerLinks.length > 0 &&
+                        !cell.publicWarning ? (
                           cell.offerLinks.map((link) => (
                             <Button key={link.url} variant="link" size="compact" asChild>
                               <a href={link.url} target="_blank" rel="noopener noreferrer">
                                 Vezi anunțul
-                                {cell.offerLinks.length > 1
-                                  ? link.transaction === "rent"
-                                    ? " (închiriere)"
-                                    : " (vânzare)"
-                                  : ""}{" "}
+                                {link.label
+                                  ? ` (${link.label})`
+                                  : cell.offerLinks.length > 1
+                                    ? link.transaction === "rent"
+                                      ? " (închiriere)"
+                                      : " (vânzare)"
+                                    : ""}{" "}
                                 <ExternalLink aria-hidden />
                               </a>
                             </Button>

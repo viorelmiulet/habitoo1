@@ -8,6 +8,8 @@ export type PortalOffer = {
   reference: string;
   id: string;
   url: string;
+  /** Eticheta site-ului, când un portal are mai multe site-uri (ex. Romimo/Publi24). */
+  label?: string;
 };
 
 export function imobiliareOfferUrl(id: string): string {
