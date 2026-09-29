@@ -157,6 +157,10 @@ function categoryFor(
   const kind = (transactionKind ?? "").toLowerCase();
   const roomCount = typeof rooms === "number" && Number.isFinite(rooms) ? Math.round(rooms) : 0;
 
+  // Garsoniera: tip propriu, confirmat cu GET /api/Resources/Categories
+  // (343 = „garsoniera / de vanzare", 318 = „garsoniera / de inchiriat").
+  if (type === "studio" && kind === "sale") return CATEGORY_STUDIO_SALE;
+  if (type === "studio" && kind === "rent") return CATEGORY_STUDIO_RENT;
   if (type === "apartment" && kind === "sale") {
     if (roomCount <= 0) return CATEGORY_STUDIO_SALE;
     if (roomCount >= 6) return CATEGORY_APARTMENT_SALE_6PLUS;
@@ -339,7 +343,9 @@ export async function mapPropertyToRomimo(
       characteristics.push({ key: "livingspace", value: String(usable) });
     }
 
-    const roomNo = romimoRoomNo(property.rooms);
+    // Garsoniera are mereu „1 cameră", chiar dacă numărul de camere lipsește.
+    const isStudio = category === CATEGORY_STUDIO_SALE || category === CATEGORY_STUDIO_RENT;
+    const roomNo = romimoRoomNo(property.rooms) ?? (isStudio ? "1 cameră" : null);
     if (!roomNo) {
       reasons.push("Lipsește numărul de camere.");
     } else {
