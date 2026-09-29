@@ -9,6 +9,7 @@ import { mergePortalOffers, parsePortalOffers } from "@/lib/portals/imobiliare/o
  *  - cheile emise de Habitoo se afișează o singură dată, la generare;
  *  - fiecare operație este jurnalizată sanitizat în `portal_operation_logs`.
  */
+import { isClickimobIndexMode, portalConnectionReady } from "@/lib/portals/clickimob/index-feed";
 import { promotedAfterAction, promotionOperation, promotionPlan } from "@/lib/portals/promotion-flag";
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
@@ -374,6 +375,24 @@ async function feedUrlForOrg(portalId?: string): Promise<string> {
   return `${CRM_URL}/api/public/portal/v1/properties`;
 }
 
+async function clickimobIndexModeFor(
+  admin: Awaited<ReturnType<typeof loadAdmin>>,
+  organizationId: string,
+  row: { activated?: boolean | null; external_account_id?: string | null } | null,
+): Promise<boolean> {
+  const { count } = await admin
+    .from("portal_api_keys")
+    .select("id", { count: "exact", head: true })
+    .eq("organization_id", organizationId)
+    .eq("portal", "clickimob")
+    .eq("status", "active");
+  return isClickimobIndexMode({
+    activated: row?.activated,
+    externalAccountId: row?.external_account_id,
+    activeKeys: count ?? 0,
+  });
+}
+
 /** Context complet pentru adaptor, cu credențialul decriptat. */
 export async function buildContext(organizationId: string, definition: PortalDefinition) {
   const admin = await loadAdmin();
@@ -401,6 +420,7 @@ export async function buildContext(organizationId: string, definition: PortalDef
       portalCredential: row ? decryptPortalCredential(row.portal_credentials_encrypted) : null,
       settings,
       allowLiveRequests: settings["allow_live"] === true,
+      indexMode: definition.id === "clickimob" ? await clickimobIndexModeFor(admin, organizationId, row) : false,
     },
   };
 }
@@ -2016,7 +2036,7 @@ export const getPropertiesPortalMatrix = createServerFn({ method: "POST" })
         .in("property_id", data.propertyIds),
       admin
         .from("portal_connections")
-        .select("portal, status")
+        .select("portal, status, activated, external_account_id")
         .eq("organization_id", organizationId),
       admin
         .from("properties")
@@ -2063,8 +2083,7 @@ export const getPropertiesPortalMatrix = createServerFn({ method: "POST" })
         );
         const connection = (connections ?? []).find((c) => c.portal === portal.id);
         const pushSupported = portal.capabilities.includes("publish_listing");
-        const connectionReady =
-          connection?.status === "connected" || connection?.status === "ready";
+        const connectionReady = portalConnectionReady(portal.id, connection, keyedPortals);
         const configured =
           portal.status === "available" &&
           (pushSupported ? connectionReady : keyedPortals.has(portal.id) || connectionReady);
@@ -2576,7 +2595,7 @@ export async function applyPortalSelectionForOrg(input: {
         .eq("property_id", data.propertyId),
       admin
         .from("portal_connections")
-        .select("portal, status")
+        .select("portal, status, activated, external_account_id")
         .eq("organization_id", organizationId),
       admin
         .from("portal_api_keys")
@@ -2637,8 +2656,11 @@ export async function applyPortalSelectionForOrg(input: {
         }
 
         const pushSupported = definition.capabilities.includes("publish_listing");
-        const connStatus = (connections ?? []).find((c) => c.portal === definition.id)?.status;
-        const connectionReady = connStatus === "connected" || connStatus === "ready";
+        const connectionReady = portalConnectionReady(
+          definition.id,
+          (connections ?? []).find((c) => c.portal === definition.id),
+          keyedPortals,
+        );
         // Portalurile de tip feed sunt „configurate” fie prin cheia Habitoo activă,
         // fie prin cheia API a portalului salvată pe conexiune (ex. iMove).
         const configured = pushSupported
