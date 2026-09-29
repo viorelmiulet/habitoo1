@@ -1,3 +1,4 @@
+import { pickAgencyLogoUrl, signAgencyLogos } from "@/lib/portals/agency-logo";
 /**
  * Indexul ClickImob (server-only):
  *   GET /api/public/feed/clickimob/index/{CLICKIMOB_INDEX_KEY}.json
@@ -96,7 +97,7 @@ export async function listClickimobIndexedAgencies(now: Date): Promise<Clickimob
     supabaseAdmin
       .from("organizations")
       .select(
-        "id, status, archived_at, name, legal_name, cui, email, phone, city, logo_url, material_address, material_email, material_phone, material_website, updated_at",
+        "id, status, archived_at, name, legal_name, cui, email, phone, city, logo_url, logo_path, material_address, material_email, material_phone, material_website, updated_at",
       ),
     supabaseAdmin
       .from("portal_connections")
@@ -115,9 +116,14 @@ export async function listClickimobIndexedAgencies(now: Date): Promise<Clickimob
   const firstError = [orgs, connections, pubs, states].find((r) => r.error)?.error;
   if (firstError) throw new Error(firstError.message);
 
+  const orgRows = orgs.data ?? [];
+  const signedLogos = await signAgencyLogos(
+    supabaseAdmin as never,
+    orgRows.map((o) => o.logo_path),
+  );
   const { agencies, changes } = selectClickimobAgencies(
     {
-      orgs: orgs.data ?? [],
+      orgs: orgRows.map((o) => ({ ...o, logo_url: pickAgencyLogoUrl(o, signedLogos) })),
       connections: connections.data ?? [],
       selectedOrgs: (pubs.data ?? []).map((p) => p.organization_id),
       states: states.data ?? [],

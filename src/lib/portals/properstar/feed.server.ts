@@ -1,3 +1,4 @@
+import { pickAgencyLogoUrl, signAgencyLogos } from "@/lib/portals/agency-logo";
 /**
  * Construcția feedului XML Properstar (server-only).
  *
@@ -166,7 +167,7 @@ export async function buildProperstarFeed(input: {
     supabaseAdmin
       .from("organizations")
       .select(
-        "id, name, email, phone, city, postal_code, logo_url, material_address, material_email, material_phone, material_website",
+        "id, name, email, phone, city, postal_code, logo_url, logo_path, material_address, material_email, material_phone, material_website",
       )
       .eq("id", input.organizationId)
       .maybeSingle(),
@@ -176,6 +177,7 @@ export async function buildProperstarFeed(input: {
   const capped = allRows.length > PROPERSTAR_MAX_ADVERTS;
   const rows = allRows.slice(0, PROPERSTAR_MAX_ADVERTS);
 
+  const signedLogos = await signAgencyLogos(supabaseAdmin as never, [organization?.logo_path]);
   const office: ProperstarOffice = {
     officeId: organization?.id ?? input.organizationId,
     officeName: organization?.name ?? null,
@@ -185,7 +187,7 @@ export async function buildProperstarFeed(input: {
     address: organization?.material_address ?? null,
     postalCode: organization?.postal_code ?? null,
     city: organization?.city ?? null,
-    logo: organization?.logo_url ?? null,
+    logo: organization ? pickAgencyLogoUrl(organization, signedLogos) : null,
   };
 
   const ids = rows.map((r) => r.id);
