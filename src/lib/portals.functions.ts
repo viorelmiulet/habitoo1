@@ -83,6 +83,12 @@ export type PortalHubItem = {
   supportsConnectionTest: boolean;
   /** Portalul are previzualizare de feed. */
   supportsFeedPreview: boolean;
+  /** Habitoo poate emite chei pentru acest portal (`assertPortalKeyAllowed`). */
+  keysAllowed: boolean;
+  /** Portalul are câmpuri manuale de conexiune. */
+  hasConnectionFields: boolean;
+  /** Doar ClickImob: starea agenției în indexul ClickImob; altfel null. */
+  indexStatus: string | null;
   /** Diagnoză reală a feedului pe care îl citește portalul. */
   feed: {
     ok: boolean;
@@ -375,6 +381,40 @@ async function feedUrlForOrg(portalId?: string): Promise<string> {
   return `${CRM_URL}/api/public/portal/v1/properties`;
 }
 
+/** Starea agenției în indexul ClickImob, calculată cu funcția indexului. */
+async function clickimobIndexStatusFor(
+  admin: Awaited<ReturnType<typeof loadAdmin>>,
+  organizationId: string,
+  activated: boolean,
+): Promise<string> {
+  const [{ listClickimobIndexedAgencies }, { clickimobIndexStatusLabel }, ps, mapper] =
+    await Promise.all([
+      import("@/lib/portals/clickimob/index-feed.server"),
+      import("@/lib/portals/clickimob/index-feed"),
+      import("@/lib/portals/properstar/index-feed"),
+      import("@/lib/portals/properstar/mapper"),
+    ]);
+  const officeId = mapper.properstarEntityId("hb", organizationId);
+  const [agencies, org, selected] = await Promise.all([
+    listClickimobIndexedAgencies(new Date()),
+    admin.from("organizations").select("status, archived_at").eq("id", organizationId).maybeSingle(),
+    admin
+      .from("portal_publications")
+      .select("id", { count: "exact", head: true })
+      .eq("organization_id", organizationId)
+      .eq("portal_key", "clickimob")
+      .eq("enabled", true),
+  ]);
+  const entry = agencies.find((a) => a.id === officeId) ?? null;
+  return clickimobIndexStatusLabel({
+    entry: entry ? { status: entry.status, inactive_since: entry.inactive_since } : null,
+    orgOpen: org.data ? ps.isOrganizationOpen(org.data as never) : false,
+    activated,
+    selected: selected.count ?? 0,
+    graceDays: ps.PROPERSTAR_INDEX_GRACE_DAYS,
+  });
+}
+
 /** Context complet pentru adaptor, cu credențialul decriptat. */
 export async function buildContext(organizationId: string, definition: PortalDefinition) {
   const admin = await loadAdmin();
@@ -474,6 +514,19 @@ export const getPortalHub = createServerFn({ method: "POST" })
     const storiaAppReady = storiaAppConfigured();
     const { getPortalAdapter } = await import("@/lib/portals/adapters/index.server");
     const hasPortalAdapter = (id: string) => Boolean(getPortalAdapter(id));
+    const clickimobIndexStatus = await clickimobIndexStatusFor(
+      admin,
+      organizationId,
+      (connections.data ?? []).find((c) => c.portal === "clickimob")?.activated === true,
+    );
+    const keysAllowed = (p: PortalDefinition) => {
+      try {
+        assertPortalKeyAllowed(p);
+        return true;
+      } catch {
+        return false;
+      }
+    };
 
     return configurablePortals().map((portal) => {
       const row = (connections.data ?? []).find((c) => c.portal === portal.id) ?? null;
@@ -543,8 +596,12 @@ export const getPortalHub = createServerFn({ method: "POST" })
           portal.capabilities.includes("feed_pull") &&
           !portal.capabilities.includes("publish_listing"),
         // Aceleași condiții ca în testPortalConnection / previewPortalFeed.
-        supportsConnectionTest: hasPortalAdapter(portal.id),
+        supportsConnectionTest:
+          hasPortalAdapter(portal.id) && portal.capabilities.includes("test_connection"),
         supportsFeedPreview: portal.id === "imove",
+        keysAllowed: keysAllowed(portal),
+        hasConnectionFields: portal.configuration_schema.fields.length > 0,
+        indexStatus: portal.id === "clickimob" ? clickimobIndexStatus : null,
         feed:
           portal.id === "imove"
             ? {
