@@ -116,7 +116,7 @@ async function notify(
   operation: string,
   options: NotifyOptions,
 ): Promise<PortalResult<ListingOutcome>> {
-  if (!configured(ctx)) {
+  if (!ctx.indexMode && !configured(ctx)) {
     return {
       ok: false,
       code: "CONFIG_ERROR",
@@ -145,6 +145,23 @@ async function notify(
       : null;
 
   const externalId = diagnostics.externalId ?? ref.externalId;
+
+  // Mod index: nicio cerere către ClickImob; portalul citește feedul periodic.
+  if (ctx.indexMode) {
+    return {
+      ok: true,
+      data: {
+        externalId,
+        live: false,
+        feedVisible: diagnostics.feedVisible,
+        processed: null,
+        detail: `index_mode ${operation}`,
+        message:
+          "ClickImob preia modificarea din feed în cel mult 15 minute." +
+          (withdrawWarning ? ` ${withdrawWarning}` : ""),
+      },
+    };
+  }
 
   if (!ctx.allowLiveRequests) {
     return {

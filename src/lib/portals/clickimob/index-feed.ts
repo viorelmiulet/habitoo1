@@ -117,3 +117,33 @@ export function clickimobAgencyContact(org: ClickimobOrgRow) {
     logo_url: clean(org.logo_url),
   };
 }
+
+/**
+ * „Mod index”: ClickImob activat, fără conexiune pe agenție. Exact regula de
+ * includere din indexul ClickImob (refolosește `hasPerAgencyClickimob`).
+ */
+export function isClickimobIndexMode(input: {
+  activated: boolean | null | undefined;
+  externalAccountId: string | null | undefined;
+  activeKeys: number;
+}): boolean {
+  return input.activated === true && !hasPerAgencyClickimob(input);
+}
+
+/** Conexiune pregătită: status connected/ready sau ClickImob în mod index. */
+export function portalConnectionReady(
+  portalId: string,
+  connection:
+    | { status?: string | null; activated?: boolean | null; external_account_id?: string | null }
+    | null
+    | undefined,
+  activeKeyPortals: Set<string>,
+): boolean {
+  if (connection?.status === "connected" || connection?.status === "ready") return true;
+  if (portalId !== "clickimob") return false;
+  return isClickimobIndexMode({
+    activated: connection?.activated,
+    externalAccountId: connection?.external_account_id,
+    activeKeys: activeKeyPortals.has("clickimob") ? 1 : 0,
+  });
+}
