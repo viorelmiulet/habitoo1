@@ -749,7 +749,7 @@ export function PortalsCard({ organizationId }: { organizationId: string }) {
                     ) : null}
 
 
-                    {item.oauth || !item.keysAllowed ? null : (
+                    {item.oauth || item.indexOnly ? null : (
                       <div className="space-y-2 rounded-lg border border-border p-3">
                         <p className="text-sm font-medium">Acces al portalului la ofertele tale</p>
                         <div className="flex items-center justify-between gap-3 text-xs">

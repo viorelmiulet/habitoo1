@@ -85,6 +85,8 @@ export type PortalHubItem = {
   supportsFeedPreview: boolean;
   /** Habitoo poate emite chei pentru acest portal (`assertPortalKeyAllowed`). */
   keysAllowed: boolean;
+  /** Portal distribuit doar prin index (Properstar, ClickImob): fără chei/date pe agenție. */
+  indexOnly: boolean;
   /** Portalul are câmpuri manuale de conexiune. */
   hasConnectionFields: boolean;
   /** Doar ClickImob: starea agenției în indexul ClickImob; altfel null. */
@@ -381,6 +383,14 @@ async function feedUrlForOrg(portalId?: string): Promise<string> {
   return `${CRM_URL}/api/public/portal/v1/properties`;
 }
 
+export function isIndexOnlyPortal(p: Pick<PortalDefinition, "authentication" | "capabilities">) {
+  return (
+    p.authentication.length > 0 &&
+    p.authentication.every((a) => a === "none") &&
+    p.capabilities.includes("feed_pull")
+  );
+}
+
 /** Starea agenției în indexul ClickImob, calculată cu funcția indexului. */
 async function clickimobIndexStatusFor(
   admin: Awaited<ReturnType<typeof loadAdmin>>,
@@ -601,6 +611,7 @@ export const getPortalHub = createServerFn({ method: "POST" })
         supportsFeedPreview: portal.id === "imove",
         keysAllowed: keysAllowed(portal),
         hasConnectionFields: portal.configuration_schema.fields.length > 0,
+        indexOnly: isIndexOnlyPortal(portal),
         indexStatus: portal.id === "clickimob" ? clickimobIndexStatus : null,
         feed:
           portal.id === "imove"
