@@ -352,3 +352,50 @@ describe("extractBucharestSector", () => {
     expect(extractBucharestSector(null)).toBeNull();
   });
 });
+
+describe("mapPropertyToRomimo — garsonieră (studio)", () => {
+  const studioBase: RomimoMapperProperty = {
+    ...baseProperty,
+    propertyType: "studio",
+    rooms: null,
+    title: "Garsonieră modernă Militari",
+  };
+
+  it("garsonieră la vânzare → categoria 343, roomno „1 cameră" chiar fără număr de camere", async () => {
+    const result = await mapPropertyToRomimo(
+      { ...studioBase, transactionKind: "sale" },
+      baseContext,
+    );
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.dto.ad?.category).toBe(343);
+    expect(result.dto.properties).toContainEqual({ key: "roomno", value: "1 cameră" });
+    // Restul caracteristicilor se aplică ca la apartamente.
+    expect(result.dto.properties).toContainEqual({ key: "livingspace", value: "52" });
+    expect(result.dto.properties).toContainEqual({ key: "storey", value: "Etaj 1" });
+    expect(result.dto.properties).toContainEqual({ key: "resfeatures", value: "Decomandat" });
+    expect(result.dto.properties).toContainEqual({ key: "yearofbuilding", value: "1985" });
+  });
+
+  it("garsonieră la închiriere → categoria 318, roomno „1 cameră"", async () => {
+    const result = await mapPropertyToRomimo(
+      { ...studioBase, transactionKind: "rent" },
+      baseContext,
+    );
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.dto.ad?.category).toBe(318);
+    expect(result.dto.properties).toContainEqual({ key: "roomno", value: "1 cameră" });
+  });
+
+  it("garsonieră cu rooms = 1 păstrează „1 cameră"", async () => {
+    const result = await mapPropertyToRomimo(
+      { ...studioBase, transactionKind: "sale", rooms: 1 },
+      baseContext,
+    );
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.dto.ad?.category).toBe(343);
+    expect(result.dto.properties).toContainEqual({ key: "roomno", value: "1 cameră" });
+  });
+});
