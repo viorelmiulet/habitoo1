@@ -40,8 +40,7 @@ function org(id: string, over: Partial<ClickimobSourceData["orgs"][number]> = {}
 function src(over: Partial<ClickimobSourceData> = {}): ClickimobSourceData {
   return {
     orgs: [org(ORG_A)],
-    connections: [{ organization_id: ORG_A, activated: true, external_account_id: null, updated_at: null }],
-    activeKeyOrgs: [],
+    connections: [{ organization_id: ORG_A, activated: true, updated_at: null }],
     selectedOrgs: [ORG_A],
     states: [],
     ...over,
@@ -93,12 +92,13 @@ describe("indexul ClickImob", () => {
     expect(verifyClickimobFeedToken(a.feed.token, KEY)).toBe(a.id);
   });
 
-  it("agenție cu conexiune pe agenție (agency_id sau cheie activă) → nu apare", () => {
-    const withAccount = src({
-      connections: [{ organization_id: ORG_A, activated: true, external_account_id: "uuid-ci", updated_at: null }],
+  it("agenție activată cu oferte, chiar cu date vechi de conexiune → apare", () => {
+    const legacy = src({
+      connections: [
+        { organization_id: ORG_A, activated: true, updated_at: null, external_account_id: "uuid-ci" } as never,
+      ],
     });
-    expect(selectClickimobAgencies(withAccount, NOW).agencies).toHaveLength(0);
-    expect(selectClickimobAgencies(src({ activeKeyOrgs: [ORG_A] }), NOW).agencies).toHaveLength(0);
+    expect(selectClickimobAgencies(legacy, NOW).agencies).toHaveLength(1);
   });
 
   it("agenție fără oferte bifate → nu apare", () => {
@@ -108,7 +108,7 @@ describe("indexul ClickImob", () => {
   it("agenție neactivată sau suspendată → nu apare", () => {
     expect(
       selectClickimobAgencies(
-        src({ connections: [{ organization_id: ORG_A, activated: false, external_account_id: null, updated_at: null }] }),
+        src({ connections: [{ organization_id: ORG_A, activated: false, updated_at: null }] }),
         NOW,
       ).agencies,
     ).toHaveLength(0);
@@ -121,7 +121,7 @@ describe("indexul ClickImob", () => {
     const deactivatedAt = new Date(NOW.getTime() + DAY);
     const off = src({
       connections: [
-        { organization_id: ORG_A, activated: false, external_account_id: null, updated_at: deactivatedAt.toISOString() },
+        { organization_id: ORG_A, activated: false, updated_at: deactivatedAt.toISOString() },
       ],
       states: [state],
     });
@@ -148,8 +148,8 @@ describe("indexul ClickImob", () => {
     const two = src({
       orgs: [org(ORG_A), org(ORG_B)],
       connections: [
-        { organization_id: ORG_A, activated: true, external_account_id: null, updated_at: null },
-        { organization_id: ORG_B, activated: true, external_account_id: null, updated_at: null },
+        { organization_id: ORG_A, activated: true, updated_at: null },
+        { organization_id: ORG_B, activated: true, updated_at: null },
       ],
       selectedOrgs: [ORG_A, ORG_B],
     });

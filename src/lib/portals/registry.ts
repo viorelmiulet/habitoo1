@@ -131,50 +131,19 @@ export const PORTALS: PortalDefinition[] = [
     id: "clickimob",
     display_name: "ClickImob",
     description:
-      "ClickImob importă ofertele din feedul Habitoo și primește notificări la fiecare modificare a unei proprietăți.",
+      "ClickImob citește ofertele agenției din feedul Habitoo, prin indexul ClickImob. Agenția intră automat în index după activarea portalului.",
     logo: "CI",
     status: "available",
-    // Bidirecțional prin construcție: Habitoo notifică portalul (webhook) și
-    // portalul citește feedul Habitoo cu o cheie emisă de noi.
-    directions: ["habitoo_to_portal", "portal_to_habitoo"],
-    authentication: ["portal_api_key", "habitoo_api_key"],
-    capabilities: [
-      "test_connection",
-      "publish_listing",
-      "update_listing",
-      "withdraw_listing",
-      "sync",
-      "webhook_send",
-      "feed_pull",
-    ],
-    configuration_schema: {
-      fields: [
-        {
-          key: "external_account_id",
-          label: "Identificator agenție la ClickImob",
-          help: "UUID-ul agenției, primit de la ClickImob.",
-          target: "external_account_id",
-        },
-        {
-          key: "webhook_token",
-          label: "Token webhook ClickImob",
-          help: "Token primit de la ClickImob pentru notificări.",
-          secret: true,
-          target: "credentials",
-        },
-        {
-          key: "endpoint_url",
-          label: "Adresa webhook (opțional)",
-          placeholder: "https://www.clickimob.ro/api/public/crm-webhook",
-          optional: true,
-          target: "settings",
-        },
-      ],
-    },
+    // Doar feed: ClickImob preia agențiile din indexul Habitoo (CLICKIMOB_INDEX_KEY).
+    directions: ["habitoo_to_portal"],
+    // Fără conexiune pe agenție: fără ID agenție, token webhook sau chei Habitoo.
+    authentication: ["none"],
+    capabilities: ["publish_listing", "update_listing", "withdraw_listing", "feed_pull"],
+    configuration_schema: { fields: [] },
     website: "https://www.clickimob.ro",
     docs: "https://www.clickimob.ro",
     notes:
-      "ClickImob nu expune un API general de creare/editare anunțuri. Publicarea se face prin notificare + citirea feedului Habitoo. Importul de anunțuri sau agenți din ClickImob nu este suportat.",
+      "Integrare exclusiv prin feed: ClickImob preia modificările din feedul Habitoo în cel mult 15 minute. Nu se emit chei pe agenție și nu se salvează date de conexiune pe agenție.",
   },
   {
     id: "imove",

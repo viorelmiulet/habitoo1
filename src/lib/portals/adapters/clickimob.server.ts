@@ -1,23 +1,10 @@
 /**
- * Adaptor ClickImob — implementează STRICT ce există în ClickImob azi.
+ * Adaptor ClickImob — exclusiv prin index (feed), ca Properstar.
  *
- * Modelul real (verificat în proiectul ClickImob):
- *  - ClickImob nu are API de creare/editare/ștergere directă a anunțurilor.
- *  - CRM-ul notifică portalul că o proprietate s-a modificat:
- *      POST https://www.clickimob.ro/api/public/crm-webhook
- *           ?agency=<agency_id>&token=<webhook_token>&provider=habitoo
- *      body: { "id": "<property_id>" }
- *  - ClickImob citește apoi datele (ofertă, imagini, agent) din feedul Habitoo,
- *    folosind o cheie emisă de Habitoo.
- *
- * De aceea fiecare operație are DOUĂ jumătăți reale, ambele implementate aici:
- *  1. partea Habitoo — ce va găsi portalul în feed (ofertă, imagini, agent);
- *  2. notificarea către portal — cu răspunsul lui, afișat exact.
- *
- * publish/update/withdraw folosesc același webhook, dar cu preflight diferit:
- *  - publish/update cer ca oferta să fie VIZIBILĂ în feed;
- *  - withdraw cere ca oferta să NU mai fie vizibilă (altfel portalul o
- *    re-importă imediat), iar ClickImob o dezactivează la re-citire.
+ * ClickImob preia agențiile din indexul Habitoo și citește ofertele din feed.
+ * Nu există conexiune pe agenție (ID agenție, token webhook, chei Habitoo) și
+ * nu trimitem nicio cerere către ClickImob: publish/update/withdraw fac doar
+ * verificarea feedului. Notificarea instant la nivel de platformă vine separat.
  */
 import {
   notSupported,
@@ -29,47 +16,7 @@ import {
   type PortalContext,
   type PortalResult,
 } from "../adapter";
-import { PORTAL_ERROR_MESSAGE, codeFromHttpStatus, toPortalError } from "../errors";
-
-const DEFAULT_ENDPOINT = "https://www.clickimob.ro/api/public/crm-webhook";
-/** SSRF guard: nu contactăm niciodată un host nedeclarat. */
-const ALLOWED_HOSTS = new Set(["clickimob.ro", "www.clickimob.ro"]);
-const TIMEOUT_MS = 10_000;
-
-function endpointOf(ctx: PortalContext): string {
-  const raw =
-    typeof ctx.settings["endpoint_url"] === "string" ? String(ctx.settings["endpoint_url"]) : "";
-  return raw.trim() || DEFAULT_ENDPOINT;
-}
-
-function buildRequestUrl(ctx: PortalContext): URL {
-  const url = new URL(endpointOf(ctx));
-  if (url.protocol !== "https:" || !ALLOWED_HOSTS.has(url.hostname)) {
-    throw Object.assign(new Error("blocked_host"), { portalCode: "CONFIG_ERROR" as const });
-  }
-  // Query parameter impus explicit de API-ul public ClickImob.
-  url.searchParams.set("agency", ctx.externalAccountId ?? "");
-  url.searchParams.set("token", ctx.portalCredential ?? "");
-  url.searchParams.set("provider", "habitoo");
-  return url;
-}
-
-/** URL sigur pentru afișare/logare: tokenul este mascat. */
-function safeUrl(ctx: PortalContext): string {
-  try {
-    const url = new URL(endpointOf(ctx));
-    url.searchParams.set("agency", ctx.externalAccountId ?? "");
-    url.searchParams.set("token", "***");
-    url.searchParams.set("provider", "habitoo");
-    return url.toString();
-  } catch {
-    return endpointOf(ctx);
-  }
-}
-
-function configured(ctx: PortalContext): boolean {
-  return Boolean(ctx.externalAccountId && ctx.portalCredential);
-}
+import { toPortalError } from "../errors";
 
 /** Diagnoza feedului pentru o ofertă: ce va citi portalul, în realitate. */
 async function diagnose(ctx: PortalContext, ref: ListingRef): Promise<ListingDiagnostics> {
@@ -116,144 +63,32 @@ async function notify(
   operation: string,
   options: NotifyOptions,
 ): Promise<PortalResult<ListingOutcome>> {
-  if (!ctx.indexMode && !configured(ctx)) {
-    return {
-      ok: false,
-      code: "CONFIG_ERROR",
-      message: PORTAL_ERROR_MESSAGE.CONFIG_ERROR,
-      detail: operation,
-    };
-  }
-
-  // Preflight real: verificăm ce va găsi portalul, nu ce presupunem noi.
+  // Preflight real: verificăm ce va găsi portalul în feed.
   const diagnostics = await diagnose(ctx, ref);
   if (options.expect === "visible" && !diagnostics.feedVisible) {
     return {
       ok: false,
       code: "VALIDATION_ERROR",
       message:
-        "Oferta nu este vizibilă în feedul citit de portal, deci notificarea nu ar avea ce importa. " +
-        diagnostics.notes.join(" "),
+        "Oferta nu este vizibilă în feedul citit de ClickImob. " + diagnostics.notes.join(" "),
       detail: `${operation} feed_not_visible`,
     };
   }
-  // La retragere nu blocăm operațiunea: notificăm portalul oricum, dar avertizăm
-  // dacă oferta e încă în feed, pentru că atunci portalul o va reimporta.
   const withdrawWarning =
     options.expect === "absent" && diagnostics.feedVisible
-      ? "Atenție: oferta este încă publicată în feed, deci portalul o poate reimporta. Oprește publicarea pe site pentru retragere definitivă."
-      : null;
-
-  const externalId = diagnostics.externalId ?? ref.externalId;
-
-  // Mod index: nicio cerere către ClickImob; portalul citește feedul periodic.
-  if (ctx.indexMode) {
-    return {
-      ok: true,
-      data: {
-        externalId,
-        live: false,
-        feedVisible: diagnostics.feedVisible,
-        processed: null,
-        detail: `index_mode ${operation}`,
-        message:
-          "ClickImob preia modificarea din feed în cel mult 15 minute." +
-          (withdrawWarning ? ` ${withdrawWarning}` : ""),
-      },
-    };
-  }
-
-  if (!ctx.allowLiveRequests) {
-    return {
-      ok: true,
-      data: {
-        externalId,
-        live: false,
-        feedVisible: diagnostics.feedVisible,
-        processed: null,
-        detail: `dry_run ${operation} → ${safeUrl(ctx)}`,
-        message: `Verificat local: feed ${diagnostics.feedVisible ? "OK" : "indisponibil"}, ${diagnostics.images.resolvable}/${diagnostics.images.total} imagini, agent ${diagnostics.agentName ?? "lipsă"}.${withdrawWarning ? ` ${withdrawWarning}` : ""}`,
-      },
-    };
-  }
-
-  try {
-    const url = buildRequestUrl(ctx);
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
-    let response: Response;
-    try {
-      response = await fetch(url.toString(), {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ id: ref.propertyId }),
-        signal: controller.signal,
-      });
-    } finally {
-      clearTimeout(timer);
-    }
-
-    let raw = "";
-    try {
-      raw = (await response.text()).slice(0, 600);
-    } catch {
-      raw = "";
-    }
-    const compact = raw.replace(/\s+/g, " ").trim().slice(0, 300);
-
-    if (!response.ok) {
-      const code = codeFromHttpStatus(response.status);
-      // Răspunsul brut al portalului, trunchiat, ca administratorul să vadă
-      // eroarea EXACTĂ. Nu conține credențiale (tokenul e doar în URL).
-      const message = `${PORTAL_ERROR_MESSAGE[code]} Răspuns portal: HTTP ${response.status}${compact ? ` — ${compact}` : ""}`;
-      return {
-        ok: false,
-        code,
-        message,
-        detail: `${operation} http_${response.status} ${compact}`.trim(),
-      };
-    }
-
-    let processed: number | null = null;
-    try {
-      const body = JSON.parse(raw) as Record<string, unknown>;
-      if (typeof body["processed"] === "number") processed = body["processed"];
-    } catch {
-      processed = null;
-    }
-
-    return {
-      ok: true,
-      data: {
-        externalId,
-        live: true,
-        feedVisible: diagnostics.feedVisible,
-        processed,
-        detail: `${operation} http_${response.status}${processed === null ? "" : ` processed=${processed}`}`,
-        message:
-          (processed === null
-            ? `Portalul a confirmat notificarea (HTTP ${response.status}).`
-            : `Portalul a procesat ${processed} anunț(uri).`) +
-          (withdrawWarning ? ` ${withdrawWarning}` : ""),
-      },
-    };
-  } catch (error) {
-    if ((error as { portalCode?: string }).portalCode === "CONFIG_ERROR") {
-      return {
-        ok: false,
-        code: "CONFIG_ERROR",
-        message: "Adresa webhook nu este permisă.",
-        detail: "blocked_host",
-      };
-    }
-    const normalized = toPortalError(error);
-    return {
-      ok: false,
-      code: normalized.code,
-      message: normalized.message,
-      detail: normalized.detail,
-    };
-  }
+      ? " Atenție: oferta este încă publicată în feed, deci ClickImob o poate reimporta. Oprește publicarea pe site pentru retragere definitivă."
+      : "";
+  return {
+    ok: true,
+    data: {
+      externalId: diagnostics.externalId ?? ref.externalId,
+      live: false,
+      feedVisible: diagnostics.feedVisible,
+      processed: null,
+      detail: `index ${operation}`,
+      message: `ClickImob preia modificarea din feed în cel mult 15 minute.${withdrawWarning}`,
+    },
+  };
 }
 
 /** Statusul real: feedul pe care îl citește portalul + configurarea locală. */
@@ -262,31 +97,24 @@ async function status(ctx: PortalContext): Promise<PortalResult<ConnectionStatus
   const feedUrl = `${CRM_URL}/api/public/portal/v1/properties`;
   try {
     const { inspectFeedAgents, inspectFeedProperties } = await import("../feed-inspect.server");
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const [properties, agents, keys] = await Promise.all([
+    const [properties, agents] = await Promise.all([
       inspectFeedProperties(ctx.organizationId, 1, "clickimob"),
       inspectFeedAgents(ctx.organizationId),
-      supabaseAdmin
-        .from("portal_api_keys")
-        .select("id", { count: "exact", head: true })
-        .eq("organization_id", ctx.organizationId)
-        .eq("portal", "clickimob")
-        .eq("status", "active"),
     ]);
 
     const feedOk = properties.status === 200 && agents.status === 200;
     return {
       ok: true,
       data: {
-        configured: configured(ctx),
+        configured: true,
         live: false,
-        detail: configured(ctx) ? `configurat → ${safeUrl(ctx)}` : "credențiale incomplete",
+        detail: "index ClickImob",
         feed: {
           ok: feedOk,
           apiVersion: properties.apiVersion,
           properties: properties.total,
           agents: agents.total,
-          activeKeys: keys.count ?? 0,
+          activeKeys: null,
           url: feedUrl,
         },
       },
@@ -306,16 +134,6 @@ export const clickimobAdapter: PortalAdapter = {
   id: "clickimob",
 
   async testConnection(ctx) {
-    if (!configured(ctx)) {
-      return {
-        ok: false,
-        code: "CONFIG_ERROR",
-        message: PORTAL_ERROR_MESSAGE.CONFIG_ERROR,
-        detail: "test",
-      };
-    }
-    // ClickImob nu documentează un endpoint de ping; testul real verifică
-    // feedul pe care îl va citi portalul plus cheia emisă de Habitoo.
     const result = await status(ctx);
     if (!result.ok) return result;
     if (!result.data.feed?.ok) {
@@ -324,14 +142,6 @@ export const clickimobAdapter: PortalAdapter = {
         code: "FEED_ERROR",
         message: "Feedul Habitoo nu răspunde corect.",
         detail: "feed_check",
-      };
-    }
-    if ((result.data.feed.activeKeys ?? 0) === 0) {
-      return {
-        ok: false,
-        code: "CONFIG_ERROR",
-        message: "Portalul nu are nicio cheie activă emisă de Habitoo pentru citirea feedului.",
-        detail: "missing_habitoo_key",
       };
     }
     return result;
@@ -442,5 +252,3 @@ export const clickimobAdapter: PortalAdapter = {
   },
 };
 
-export const CLICKIMOB_DEFAULT_ENDPOINT = DEFAULT_ENDPOINT;
-export const clickimobSafeUrl = safeUrl;

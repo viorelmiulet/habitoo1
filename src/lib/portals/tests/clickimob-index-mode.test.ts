@@ -1,8 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { PortalContext } from "@/lib/portals/adapter";
 import { getPortalDefinition } from "@/lib/portals/registry";
+import { assertPortalKeyAllowed } from "@/lib/portals/key-policy";
 import {
-  isClickimobIndexMode,
+  clickimobIndexStatusLabel,
   portalConnectionReady,
 } from "@/lib/portals/clickimob/index-feed";
 
@@ -20,12 +21,14 @@ vi.mock("@/lib/portals/feed-inspect.server", () => ({
 
 import { clickimobAdapter } from "@/lib/portals/adapters/clickimob.server";
 
+const def = getPortalDefinition("clickimob")!;
+
 function ctx(overrides: Partial<PortalContext> = {}): PortalContext {
   return {
     organizationId: "org-1",
-    definition: getPortalDefinition("clickimob")!,
+    definition: def,
     direction: "habitoo_to_portal" as never,
-    authenticationMode: "api_key" as never,
+    authenticationMode: "none" as never,
     externalAccountId: null,
     portalCredential: null,
     settings: {},
@@ -41,27 +44,29 @@ beforeEach(() => {
 });
 afterEach(() => vi.unstubAllGlobals());
 
-describe("ClickImob mod index", () => {
-  it("regula de mod index = regula de includere din index", () => {
-    expect(isClickimobIndexMode({ activated: true, externalAccountId: null, activeKeys: 0 })).toBe(true);
-    expect(isClickimobIndexMode({ activated: true, externalAccountId: "x", activeKeys: 0 })).toBe(false);
-    expect(isClickimobIndexMode({ activated: true, externalAccountId: null, activeKeys: 1 })).toBe(false);
-    expect(isClickimobIndexMode({ activated: false, externalAccountId: null, activeKeys: 0 })).toBe(false);
+describe("ClickImob doar prin index", () => {
+  it("cardul nu mai are câmpuri manuale, test de conexiune sau chei", () => {
+    expect(def.configuration_schema.fields).toHaveLength(0);
+    expect(def.authentication).toEqual(["none"]);
+    expect(def.capabilities).not.toContain("test_connection");
+    expect(def.capabilities).not.toContain("webhook_send");
   });
 
-  it("bifarea e permisă în mod index", () => {
-    const conn = { status: "not_configured", activated: true, external_account_id: null };
-    expect(portalConnectionReady("clickimob", conn, new Set())).toBe(true);
-    // Conexiune pe agenție neconfigurată → rămâne blocată, ca acum.
-    expect(
-      portalConnectionReady("clickimob", { ...conn, external_account_id: "ag" }, new Set()),
-    ).toBe(false);
-    expect(portalConnectionReady("clickimob", conn, new Set(["clickimob"]))).toBe(false);
-    expect(portalConnectionReady("romimo", conn, new Set())).toBe(false);
+  it("generarea unei chei ClickImob e respinsă", () => {
+    expect(() => assertPortalKeyAllowed(def)).toThrow(/ClickImob nu folosește chei/);
+    expect(() => assertPortalKeyAllowed({ ...def, authentication: ["habitoo_api_key"] })).toThrow(
+      /ClickImob/,
+    );
   });
 
-  it("publish/update/withdraw în mod index nu fac nicio cerere HTTP", async () => {
-    const c = ctx({ indexMode: true });
+  it("bifarea e permisă imediat ce ClickImob e activat", () => {
+    expect(portalConnectionReady("clickimob", { status: "not_configured", activated: true })).toBe(true);
+    expect(portalConnectionReady("clickimob", { status: "not_configured", activated: false })).toBe(false);
+    expect(portalConnectionReady("romimo", { status: "not_configured", activated: true })).toBe(false);
+  });
+
+  it("publish/update/withdraw nu fac nicio cerere HTTP, chiar cu date vechi de conexiune", async () => {
+    const c = ctx({ externalAccountId: "ag-1", portalCredential: "tok" });
     for (const op of [
       clickimobAdapter.publishListing,
       clickimobAdapter.updateListing,
@@ -69,23 +74,26 @@ describe("ClickImob mod index", () => {
     ]) {
       const r = await op!(c, { propertyId: "p1", externalId: null });
       expect(r.ok).toBe(true);
-      if (r.ok) expect(r.data.message).toContain("ClickImob preia modificarea din feed în cel mult 15 minute");
+      if (r.ok)
+        expect(r.data.message).toContain("ClickImob preia modificarea din feed în cel mult 15 minute");
     }
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
-  it("conexiune pe agenție: comportament neschimbat (webhook apelat)", async () => {
-    const r = await clickimobAdapter.publishListing!(
-      ctx({ externalAccountId: "ag-1", portalCredential: "tok" }),
-      { propertyId: "p1", externalId: null },
+  it("stările din index", () => {
+    const base = { entry: null, orgOpen: true, activated: true, selected: 0, graceDays: 7 };
+    expect(clickimobIndexStatusLabel({ ...base, entry: { status: "active", inactive_since: null } })).toBe(
+      "În index",
     );
-    expect(r.ok).toBe(true);
-    expect(fetchMock).toHaveBeenCalledTimes(1);
-  });
-
-  it("conexiune pe agenție incompletă, fără mod index → CONFIG_ERROR", async () => {
-    const r = await clickimobAdapter.publishListing!(ctx(), { propertyId: "p1", externalId: null });
-    expect(r.ok).toBe(false);
-    expect(fetchMock).not.toHaveBeenCalled();
+    expect(
+      clickimobIndexStatusLabel({
+        ...base,
+        entry: { status: "grace", inactive_since: "2026-09-01T10:00:00Z" },
+      }),
+    ).toBe("În perioada de retragere până la 08.09.2026");
+    expect(clickimobIndexStatusLabel(base)).toBe("Nu apare: nicio ofertă bifată pentru ClickImob");
+    expect(clickimobIndexStatusLabel({ ...base, orgOpen: false })).toBe(
+      "Agenție suspendată sau arhivată",
+    );
   });
 });
