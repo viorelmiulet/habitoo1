@@ -131,28 +131,29 @@ export const updatePlatformUser = createServerFn({ method: "POST" })
     const roleList = (rolesBefore ?? []).map((r) => r.role as string);
     const isSuperadmin = roleList.includes("superadmin");
 
-    // 1. Câmpurile de profil.
-    const { error: updateError } = await supabaseAdmin
-      .from("profiles")
-      .update({
-        full_name: data.full_name,
-        email: data.email,
-        phone: data.phone,
-        job_title: data.job_title,
-      })
-      .eq("id", data.userId);
-    if (updateError) throw new Error(updateError.message);
-
-    // 2. Emailul de autentificare, dacă s-a schimbat.
-    if (data.email && data.email.toLowerCase() !== (before.email ?? "").toLowerCase()) {
-      const { error: authError } = await supabaseAdmin.auth.admin.updateUserById(data.userId, {
-        email: data.email,
-        email_confirm: true,
-      });
-      if (authError) {
-        throw new Error(`Emailul de autentificare nu a putut fi schimbat: ${authError.message}`);
-      }
-    }
+    // 1–2. Întâi emailul de login; profilul se actualizează doar dacă acesta a reușit.
+    await applyProfileUpdateEmailFirst({
+      emailChanged: emailChanged(data.email, before.email),
+      updateAuthEmail: async () => {
+        const { error } = await supabaseAdmin.auth.admin.updateUserById(data.userId, {
+          email: data.email as string,
+          email_confirm: true,
+        });
+        return { error };
+      },
+      updateProfile: async () => {
+        const { error } = await supabaseAdmin
+          .from("profiles")
+          .update({
+            full_name: data.full_name,
+            email: data.email,
+            phone: data.phone,
+            job_title: data.job_title,
+          })
+          .eq("id", data.userId);
+        return { error };
+      },
+    });
 
     // 3. Agenția (funcție dedicată, cu audit propriu).
     if (data.organizationId !== before.organization_id) {
