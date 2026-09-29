@@ -16,7 +16,7 @@ import {
   type PortalContext,
   type PortalResult,
 } from "../adapter";
-import { PORTAL_ERROR_MESSAGE, codeFromHttpStatus, toPortalError } from "../errors";
+import { toPortalError } from "../errors";
 
 /** Diagnoza feedului pentru o ofertă: ce va citi portalul, în realitate. */
 async function diagnose(ctx: PortalContext, ref: ListingRef): Promise<ListingDiagnostics> {
@@ -97,16 +97,9 @@ async function status(ctx: PortalContext): Promise<PortalResult<ConnectionStatus
   const feedUrl = `${CRM_URL}/api/public/portal/v1/properties`;
   try {
     const { inspectFeedAgents, inspectFeedProperties } = await import("../feed-inspect.server");
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const [properties, agents, keys] = await Promise.all([
+    const [properties, agents] = await Promise.all([
       inspectFeedProperties(ctx.organizationId, 1, "clickimob"),
       inspectFeedAgents(ctx.organizationId),
-      supabaseAdmin
-        .from("portal_api_keys")
-        .select("id", { count: "exact", head: true })
-        .eq("organization_id", ctx.organizationId)
-        .eq("portal", "clickimob")
-        .eq("status", "active"),
     ]);
 
     const feedOk = properties.status === 200 && agents.status === 200;
@@ -121,7 +114,6 @@ async function status(ctx: PortalContext): Promise<PortalResult<ConnectionStatus
           apiVersion: properties.apiVersion,
           properties: properties.total,
           agents: agents.total,
-          activeKeys: keys.count ?? 0,
           url: feedUrl,
         },
       },
