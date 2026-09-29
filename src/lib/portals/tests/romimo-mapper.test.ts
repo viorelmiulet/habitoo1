@@ -74,7 +74,7 @@ describe("mapPropertyToRomimo", () => {
     const validTo = new Date(result.dto.ad?.validTo as string);
     expect(validTo.getMonth()).toBe((NOW.getMonth() + 12) % 12);
     expect(result.dto.location).toMatchObject({
-      countyName: "Bucureşti",
+      countyName: "bucuresti",
       cityName: "sector 6",
       areaName: "Militari",
       latitude: 44.435,
