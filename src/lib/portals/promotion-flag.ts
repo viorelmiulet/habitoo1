@@ -30,3 +30,31 @@ export function promotedAfterAction(input: {
   if (input.action === "withdraw") return input.ok ? false : input.saved;
   return input.ok ? input.requested : input.saved;
 }
+
+/**
+ * Decizia din fluxul „Publică” pentru un portal cu promovare prin flag:
+ * ce valoare se trimite, ce operație apare în jurnal și dacă o schimbare
+ * doar la „Promovat” pe un anunț publicat cere o actualizare.
+ */
+export function promotionPlan(input: {
+  flag: boolean;
+  enabled: boolean;
+  published: boolean;
+  previous: boolean;
+  savedPromoted: boolean;
+  wantedPromoted: boolean | undefined;
+}): {
+  promoted: boolean;
+  operation: "promote_on" | "promote_off" | null;
+  /** Anunț deja publicat, schimbată doar promovarea → actualizare cu noul `promoted`. */
+  promotionOnlyUpdate: boolean;
+} {
+  if (!input.flag) return { promoted: false, operation: null, promotionOnlyUpdate: false };
+  const promoted = effectivePromoted(input.enabled, input.wantedPromoted ?? input.savedPromoted);
+  const operation = promotionOperation(input.savedPromoted, promoted);
+  return {
+    promoted,
+    operation,
+    promotionOnlyUpdate: input.enabled && input.previous && input.published && operation !== null,
+  };
+}

@@ -9,7 +9,7 @@ import { mergePortalOffers, parsePortalOffers } from "@/lib/portals/imobiliare/o
  *  - cheile emise de Habitoo se afișează o singură dată, la generare;
  *  - fiecare operație este jurnalizată sanitizat în `portal_operation_logs`.
  */
-import { effectivePromoted, promotedAfterAction, promotionOperation } from "@/lib/portals/promotion-flag";
+import { promotedAfterAction, promotionOperation, promotionPlan } from "@/lib/portals/promotion-flag";
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireActiveOrgAuth } from "@/lib/org-access";
@@ -2798,12 +2798,16 @@ export async function applyPortalSelectionForOrg(input: {
         // retrasă sau nu a plecat niciodată cu succes, bifa rămasă activă trebuie
         // să declanșeze o publicare, nu „nicio schimbare".
         const promotionFlag = definition.supports_promoted_flag === true;
-        const savedPromoted =
-          (publications ?? []).find((p) => p.portal_key === definition.id)?.promoted === true;
-        const wantedPromoted = promotionFlag
-          ? effectivePromoted(wanted.enabled, wanted.promoted ?? savedPromoted)
-          : false;
-        const promoOp = promotionFlag ? promotionOperation(savedPromoted, wantedPromoted) : null;
+        const plan = promotionPlan({
+          flag: promotionFlag,
+          enabled: wanted.enabled,
+          published,
+          previous,
+          savedPromoted:
+            (publications ?? []).find((p) => p.portal_key === definition.id)?.promoted === true,
+          wantedPromoted: wanted.promoted,
+        });
+        const promoOp = plan.operation;
 
         if (previous && published && !data.syncExisting && !promoOp) {
           results.push({
@@ -2818,14 +2822,14 @@ export async function applyPortalSelectionForOrg(input: {
 
         const action = published ? "update" : "publish";
         // O schimbare doar la „Promovat” pe un anunț publicat = actualizare etichetată în jurnal.
-        const promotionOnly = previous && published && promoOp !== null;
+        const promotionOnly = plan.promotionOnlyUpdate;
         const res = await executeListingAction({
           organizationId,
           actorId,
           portalId: definition.id,
           propertyId: data.propertyId,
           action,
-          ...(promotionFlag ? { promoted: wantedPromoted } : {}),
+          ...(promotionFlag ? { promoted: plan.promoted } : {}),
           ...(promotionOnly && promoOp ? { operationLabel: promoOp } : {}),
         });
         results.push({
