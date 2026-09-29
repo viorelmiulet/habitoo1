@@ -114,6 +114,7 @@ async function status(ctx: PortalContext): Promise<PortalResult<ConnectionStatus
           apiVersion: properties.apiVersion,
           properties: properties.total,
           agents: agents.total,
+          activeKeys: null,
           url: feedUrl,
         },
       },
