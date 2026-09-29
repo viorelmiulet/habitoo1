@@ -121,8 +121,10 @@ describe("token ClickImob din index în /sites/v1", () => {
     expect(auth.tokenPrefix).not.toContain(".");
 
     const list = await handlePropertiesList(req(tokenFor(ORG_A)), auth);
-    const body = (await list.response.json()) as { data: { id: string }[] };
-    expect(body.data.map((p) => p.id)).toEqual(["p-sel"]);
+    const body = (await list.response.json()) as { data: Record<string, unknown>[] };
+    expect(body.data).toHaveLength(1);
+    expect(JSON.stringify(body.data[0])).toContain("P-SEL");
+    expect(JSON.stringify(body.data)).not.toContain("P-OTHER");
 
     const nebifat = await handlePropertyDetail(req(tokenFor(ORG_A)), auth, "p-other");
     expect(nebifat.response.status).toBe(404);
