@@ -48,7 +48,15 @@ export type PortalContext = {
   allowLiveRequests: boolean;
 };
 
-export type ListingRef = { propertyId: string; externalId: string | null };
+export type ListingRef = {
+  propertyId: string;
+  externalId: string | null;
+  /**
+   * Promovarea cerută pentru anunț (doar portalurile cu `supports_promoted_flag`).
+   * Lipsă = portalul nu are promovare prin flag.
+   */
+  promoted?: boolean;
+};
 
 export type ListingOutcome = {
   externalId: string | null;
