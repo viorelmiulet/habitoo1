@@ -103,7 +103,11 @@ describe("indexul Properstar", () => {
 
   it("agenție activă fără oferte → absentă", async () => {
     const res = await handleProperstarIndex(req("/x"), KEY, deps([A], {}), NOW);
-    expect(await res.text()).not.toContain("<Feed>");
+    expect(res.status).toBe(200);
+    const xml = await res.text();
+    expect(xml).toContain("<Feeds>");
+    expect(xml).not.toContain("<feed");
+    expect(xml).not.toContain("hbA");
   });
 
   it("limita de cereri se aplică și se jurnalizează", async () => {
