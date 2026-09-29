@@ -14,6 +14,7 @@
  * (min. 60 caractere), preț întreg pozitiv, telefon, județ + localitate, minimum
  * o imagine. Când ceva lipsește, utilizatorul vede motivul exact, nu o eroare API.
  */
+import { buildImospotOffers } from "../public-links";
 import {
   type ConnectionStatusOutcome,
   type ListingDiagnostics,
