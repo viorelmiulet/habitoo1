@@ -9,6 +9,7 @@ import { mergePortalOffers, parsePortalOffers } from "@/lib/portals/imobiliare/o
  *  - cheile emise de Habitoo se afișează o singură dată, la generare;
  *  - fiecare operație este jurnalizată sanitizat în `portal_operation_logs`.
  */
+import { effectivePromoted, promotedAfterAction, promotionOperation } from "@/lib/portals/promotion-flag";
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireActiveOrgAuth } from "@/lib/org-access";
@@ -1097,6 +1098,11 @@ export async function executeListingAction(input: {
    * retrimit niciodată automat.
    */
   withdrawReason?: string;
+  /**
+   * Promovarea cerută (portaluri cu `supports_promoted_flag`). Lipsă = se
+   * păstrează valoarea salvată, ca orice altă actualizare să nu o schimbe.
+   */
+  promoted?: boolean;
 }): Promise<ListingActionResult> {
   const { organizationId, actorId, portalId, propertyId, action } = input;
   const definition = getPortalDefinition(portalId);
@@ -1283,11 +1289,29 @@ export async function executeListingAction(input: {
    * O normalizăm în același rezultat de eșec, ca să se scrie și starea în
    * `portal_listings` / `portal_publications`.
    */
+  const promotionFlag = definition.supports_promoted_flag === true;
+  let savedPromoted = false;
+  if (promotionFlag) {
+    const { data: pubRow } = await admin
+      .from("portal_publications")
+      .select("promoted")
+      .eq("organization_id", organizationId)
+      .eq("property_id", propertyId)
+      .eq("portal_key", definition.id)
+      .maybeSingle();
+    savedPromoted = (pubRow as { promoted?: boolean } | null)?.promoted === true;
+  }
+  const requestedPromoted = action === "withdraw" ? false : (input.promoted ?? savedPromoted);
+
   const { toPortalError } = await import("@/lib/portals/errors");
   let result: Awaited<ReturnType<typeof adapter.publishListing>>;
   try {
     const { ctx } = await buildContext(organizationId, definition);
-    const ref = { propertyId, externalId: listing?.external_id ?? null };
+    const ref = {
+      propertyId,
+      externalId: listing?.external_id ?? null,
+      ...(promotionFlag ? { promoted: requestedPromoted } : {}),
+    };
     result =
       action === "publish"
         ? await adapter.publishListing(ctx, ref)
@@ -1388,6 +1412,16 @@ export async function executeListingAction(input: {
       last_error: errorMessage,
       external_ref: result.ok && result.data.externalId ? result.data.externalId : null,
       ...withdrawReasonPatch,
+      ...(promotionFlag
+        ? {
+            promoted: promotedAfterAction({
+              action,
+              ok: result.ok,
+              saved: savedPromoted,
+              requested: requestedPromoted,
+            }),
+          }
+        : {}),
       updated_by: actorId,
     } as never)
     .eq("organization_id", organizationId)
@@ -1411,6 +1445,20 @@ export async function executeListingAction(input: {
     propertyId,
     actorId,
   });
+
+  // Jurnal: „Promovare activată/dezactivată” când promovarea confirmată se schimbă.
+  const promoOp =
+    promotionFlag && action !== "withdraw" ? promotionOperation(savedPromoted, requestedPromoted) : null;
+  if (promoOp && result.ok && input.operationLabel !== promoOp) {
+    await logOperation({
+      organizationId,
+      portal: definition.id,
+      operation: promoOp,
+      success: true,
+      propertyId,
+      actorId,
+    });
+  }
 
   return result.ok
     ? {
@@ -1852,6 +1900,10 @@ export type PropertyPortalCell = {
    */
   publicWarning: string | null;
   offerLinks: { transaction: string | null; url: string; label: string | null }[];
+  /** Portalul are promovare prin flag (bifa „Promovat”). */
+  promotionFlag: boolean;
+  /** Promovarea confirmată salvată în Habitoo (NU dacă nu e publicat). */
+  promoted: boolean;
 };
 
 export type PropertyPortalMatrix = {
@@ -1953,7 +2005,7 @@ export const getPropertiesPortalMatrix = createServerFn({ method: "POST" })
       admin
         .from("portal_publications")
         .select(
-          "property_id, portal_key, enabled, status, last_synced_at, last_error, external_ref",
+          "property_id, portal_key, enabled, status, last_synced_at, last_error, external_ref, promoted",
         )
         .eq("organization_id", organizationId)
         .in("property_id", data.propertyIds),
@@ -2053,6 +2105,8 @@ export const getPropertiesPortalMatrix = createServerFn({ method: "POST" })
             url: o.url,
             label: o.label ?? null,
           })),
+          promotionFlag: portal.supports_promoted_flag === true,
+          promoted: portal.supports_promoted_flag === true && pub?.enabled === true && pub?.promoted === true,
           publicWarning:
             portal.id === "imobiliare_ro" && imobiliareNoSubscription && listing?.public_url
               ? IMOBILIARE_NO_SUBSCRIPTION_MESSAGE
@@ -2430,7 +2484,14 @@ const applySelectionSchema = z.object({
   organizationId: z.string().uuid().optional(),
   propertyId: z.string().uuid(),
   selections: z
-    .array(z.object({ portalId: z.string().min(1).max(40), enabled: z.boolean() }))
+    .array(
+      z.object({
+        portalId: z.string().min(1).max(40),
+        enabled: z.boolean(),
+        /** Doar portalurile cu promovare prin flag (ex. Romimo); lipsă = neschimbat. */
+        promoted: z.boolean().optional(),
+      }),
+    )
     .max(40),
   /** Sincronizează portalurile rămase bifate (după salvarea datelor proprietății). */
   syncExisting: z.boolean().default(false),
@@ -2504,7 +2565,7 @@ export async function applyPortalSelectionForOrg(input: {
     ] = await Promise.all([
       admin
         .from("portal_publications")
-        .select("portal_key, enabled")
+        .select("portal_key, enabled, promoted")
         .eq("organization_id", organizationId)
         .eq("property_id", data.propertyId),
       admin
@@ -2630,6 +2691,8 @@ export async function applyPortalSelectionForOrg(input: {
               enabled: wanted.enabled,
               status: wanted.enabled ? "pending" : "disabled",
               withdrawn_at: wanted.enabled ? null : new Date().toISOString(),
+              // Retragerea șterge promovarea salvată.
+              ...(wanted.enabled ? {} : { promoted: false }),
               ...(wanted.enabled
                 ? { withdraw_reason: null }
                 : input.withdrawReason
@@ -2734,7 +2797,15 @@ export async function applyPortalSelectionForOrg(input: {
         // doar dacă oferta este efectiv publicată pe portal. Dacă listarea este
         // retrasă sau nu a plecat niciodată cu succes, bifa rămasă activă trebuie
         // să declanșeze o publicare, nu „nicio schimbare".
-        if (previous && published && !data.syncExisting) {
+        const promotionFlag = definition.supports_promoted_flag === true;
+        const savedPromoted =
+          (publications ?? []).find((p) => p.portal_key === definition.id)?.promoted === true;
+        const wantedPromoted = promotionFlag
+          ? effectivePromoted(wanted.enabled, wanted.promoted ?? savedPromoted)
+          : false;
+        const promoOp = promotionFlag ? promotionOperation(savedPromoted, wantedPromoted) : null;
+
+        if (previous && published && !data.syncExisting && !promoOp) {
           results.push({
             portalId: definition.id,
             portalName: name,
@@ -2746,12 +2817,16 @@ export async function applyPortalSelectionForOrg(input: {
         }
 
         const action = published ? "update" : "publish";
+        // O schimbare doar la „Promovat” pe un anunț publicat = actualizare etichetată în jurnal.
+        const promotionOnly = previous && published && promoOp !== null;
         const res = await executeListingAction({
           organizationId,
           actorId,
           portalId: definition.id,
           propertyId: data.propertyId,
           action,
+          ...(promotionFlag ? { promoted: wantedPromoted } : {}),
+          ...(promotionOnly && promoOp ? { operationLabel: promoOp } : {}),
         });
         results.push({
           portalId: definition.id,
