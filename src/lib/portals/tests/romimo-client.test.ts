@@ -129,6 +129,33 @@ describe("client Romimo", () => {
     expect(!result.ok && result.message).toContain("externalid lipsește");
   });
 
+  it("la 400 pune textele din errors înaintea mesajului generic", async () => {
+    mockFetch(() =>
+      json(
+        {
+          title: "One or more validation errors occurred.",
+          status: 400,
+          errors: { "": ["Invalid county!"] },
+        },
+        400,
+      ),
+    );
+    const result = await saveArticle(TOKEN, DTO);
+    expect(result.ok).toBe(false);
+    expect(!result.ok && result.kind).toBe("invalid_request");
+    const message = !result.ok ? result.message : "";
+    const errorsIndex = message.indexOf("Invalid county!");
+    const genericIndex = message.indexOf(ROMIMO_MESSAGE.invalidRequest);
+    expect(errorsIndex).toBeGreaterThanOrEqual(0);
+    expect(genericIndex).toBeGreaterThan(errorsIndex);
+    // portal_response rămâne salvat intact.
+    expect(!result.ok && result.body).toEqual({
+      title: "One or more validation errors occurred.",
+      status: 400,
+      errors: { "": ["Invalid county!"] },
+    });
+  });
+
   it("dă mesaje distincte pentru 415, 500 și timeout", async () => {
     mockFetch(() => json({}, 415));
     const unsupported = await saveArticle(TOKEN, DTO);
