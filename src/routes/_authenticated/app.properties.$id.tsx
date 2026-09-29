@@ -4,6 +4,10 @@ import { useRef, useState } from "react";
 import {
   BarChart3,
   Building2,
+  CalendarPlus,
+  ChevronLeft,
+  ChevronRight,
+  MapPin,
   MessageCircle,
   MoreHorizontal,
   Pencil,
@@ -21,7 +25,6 @@ import { isWithdrawStatus } from "@/components/app/StatusWithdrawPreview";
 import { changePropertyStatus } from "@/lib/property-status.functions";
 import { unarchiveProperty } from "@/lib/property-archive.functions";
 import { toastError } from "@/lib/errors";
-import { PageHeader } from "@/components/app/PageHeader";
 import { FormSection, RequiredMark } from "@/components/app/FormSection";
 import { DetailSkeleton } from "@/components/app/LoadingState";
 import { StatusBadge } from "@/components/app/StatusBadge";
@@ -33,7 +36,6 @@ import { PropertyAcpCard } from "@/components/app/PropertyAcpCard";
 import { MarketingAgentPanel } from "@/components/app/MarketingAgentPanel";
 
 import { PropertyHeroGallery } from "@/components/app/PropertyHeroGallery";
-import { PortfolioPanel } from "@/components/app/PortfolioPanel";
 import {
   PropertyPortalsCard,
   type PropertyPortalsHandle,
@@ -70,6 +72,9 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
@@ -93,6 +98,8 @@ import { printHtmlDocument } from "@/lib/print";
 import { MEDIA_BUCKET, signedUrls } from "@/lib/storage";
 
 import { useAgencyLogoUrl } from "@/components/app/AgencyBrandingCard";
+import { UserAvatar } from "@/components/app/UserAvatar";
+import { getPropertiesPortalMatrix, type PropertyPortalCell } from "@/lib/portals.functions";
 
 import { formatDate, formatDateTime, formatMoney, formatNumber } from "@/lib/format";
 import {
@@ -106,6 +113,21 @@ import {
 import { activityStatusLabels, activityStatusTone, logAudit } from "@/lib/crm";
 import { matchLabel, matchTone, scoreMatch } from "@/lib/matching";
 import { appHead } from "@/components/app/app-head";
+
+function cleanLocation(district: string | null, city: string | null): string {
+  const normalizedCity = (city ?? "")
+    .replace(/Bucure(?:ș|ş)ti\s+Sectorul\s+(\d)/i, "Sector $1, București")
+    .replace(/Bucuresti\s+Sectorul\s+(\d)/i, "Sector $1, București");
+  if (/^Sector \d, București$/i.test(normalizedCity)) return normalizedCity;
+  return [district, normalizedCity].filter(Boolean).join(", ");
+}
+
+function portalState(cell: PropertyPortalCell) {
+  if (cell.state === "published" || cell.state === "in_feed") return { label: "Publicat", tone: "success" as const };
+  if (cell.state === "syncing" || cell.state === "selected") return { label: "În lucru", tone: "warning" as const };
+  if (cell.state === "error" || cell.state === "expired") return { label: "Eroare", tone: "danger" as const };
+  return { label: "Nepublicat", tone: "neutral" as const };
+}
 
 /** Notificare neblocantă despre codul poștal dedus la salvare. */
 function postalNotice(report: { status: string; reasonLabel: string } | null): void {
@@ -153,11 +175,14 @@ function PropertyDetailPage() {
   const unarchivePropertyFn = useServerFn(unarchiveProperty);
   const resolvePostalCode = useServerFn(resolvePropertyPostalCode);
   const [archiveOpen, setArchiveOpen] = useState(false);
+  const [descriptionExpanded, setDescriptionExpanded] = useState(false);
+  const [specsExpanded, setSpecsExpanded] = useState(false);
+  const loadPortalMatrix = useServerFn(getPropertiesPortalMatrix);
 
   const { data, isLoading } = useQuery({
     queryKey: ["property", id],
     queryFn: async () => {
-      const [property, activities, leads, requests, contacts, audit] = await Promise.all([
+      const [property, activities, leads, requests, contacts, audit, imageCount] = await Promise.all([
         supabase.from("properties").select("*").eq("id", id).maybeSingle(),
         supabase
           .from("activities")
@@ -173,6 +198,10 @@ function PropertyDetailPage() {
           .eq("entity_id", id)
           .order("created_at", { ascending: false })
           .limit(50),
+        supabase
+          .from("property_images")
+          .select("id", { count: "exact", head: true })
+          .eq("property_id", id),
       ]);
       if (property.error) throw property.error;
       return {
@@ -182,6 +211,7 @@ function PropertyDetailPage() {
         requests: requests.data ?? [],
         contacts: contacts.data ?? [],
         audit: audit.data ?? [],
+        imageCount: imageCount.count ?? 0,
       };
     },
   });
@@ -193,12 +223,34 @@ function PropertyDetailPage() {
     queryFn: async () => {
       const { data: profile, error } = await supabase
         .from("profiles")
-        .select("full_name")
+        .select("full_name,phone,job_title,avatar_url")
         .eq("id", property?.assigned_to ?? "")
         .maybeSingle();
       if (error) throw error;
       return profile;
     },
+  });
+
+  const { data: neighbors = [] } = useQuery({
+    queryKey: ["property-neighbors", orgId],
+    enabled: Boolean(orgId),
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("properties")
+        .select("id,reference")
+        .eq("organization_id", orgId as string)
+        .is("deleted_at", null)
+        .neq("status", "archived" as never)
+        .order("updated_at", { ascending: false });
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
+  const portalMatrix = useQuery({
+    queryKey: ["property-portals-matrix", orgId, id],
+    enabled: Boolean(orgId),
+    queryFn: () => loadPortalMatrix({ data: { propertyIds: [id] } }),
   });
 
   const [draft, setDraft] = useState<Record<string, string>>({});
@@ -499,17 +551,66 @@ function PropertyDetailPage() {
 
   const specs: { label: string; value: string }[] = [
     { label: "Tip", value: propertyTypeLabels[property.property_type] ?? property.property_type },
-    { label: "Tranzacție", value: transactionLabels[property.transaction_kind] },
-    { label: "Suprafață", value: property.surface ? `${formatNumber(property.surface)} m²` : "—" },
-    { label: "Camere", value: property.rooms ? String(property.rooms) : "—" },
-    { label: "Băi", value: property.bathrooms ? String(property.bathrooms) : "—" },
-    { label: "Etaj", value: property.floor !== null ? String(property.floor) : "—" },
-    { label: "An construcție", value: property.build_year ? String(property.build_year) : "—" },
-    { label: "Comision", value: property.commission ?? "—" },
-    { label: "Referință", value: property.reference ?? "—" },
-    { label: "Sursă", value: property.source ?? "—" },
+    { label: "Compartimentare", value: property.layout ?? "" },
+    { label: "Confort", value: property.comfort ?? "" },
+    { label: "Destinație", value: property.destination ?? "" },
+    { label: "Suprafață construită", value: property.built_surface ? `${formatNumber(property.built_surface)} m²` : "" },
+    { label: "Suprafață teren", value: property.land_surface ? `${formatNumber(property.land_surface)} m²` : "" },
+    { label: "Balcoane", value: property.balconies ? String(property.balconies) : "" },
+    { label: "Terase", value: property.terraces ? String(property.terraces) : "" },
+    { label: "Orientare", value: property.orientation ?? "" },
+    { label: "Tip clădire", value: property.building_type ?? "" },
+    { label: "Structură", value: property.building_structure ?? "" },
+    { label: "Stare construcție", value: property.construction_stage ?? "" },
+    { label: "Renovat în", value: property.renovation_year ? String(property.renovation_year) : "" },
+    { label: "Mobilare", value: property.furnishing ?? "" },
+    { label: "Parcare", value: property.parking ?? "" },
+    { label: "Comision", value: property.commission ?? "" },
+    { label: "Sursă", value: property.source ?? "" },
     { label: "Adăugat", value: formatDate(property.created_at) },
-  ];
+  ].filter((item) => item.value);
+
+  const amenityGroups = [
+    ...(property.features ?? []),
+    ...(property.utilities ?? []),
+    ...(property.heating_systems ?? []),
+    ...(property.cooling_systems ?? []),
+    ...(property.appliances ?? []),
+    ...(property.building_amenities ?? []),
+    ...(property.kitchen_features ?? []),
+    ...(property.misc_features ?? []),
+  ].filter(Boolean);
+
+  const usableSurface = property.usable_surface ?? property.total_usable_surface ?? property.surface;
+  const isHouse = property.property_type === "house";
+  const primaryFacts = [
+    { label: "Suprafață utilă", value: usableSurface ? `${formatNumber(usableSurface)} m²` : "" },
+    { label: "Camere", value: property.rooms ? String(property.rooms) : "" },
+    { label: "Băi", value: property.bathrooms ? String(property.bathrooms) : "" },
+    {
+      label: isHouse ? "Suprafață teren" : "Etaj",
+      value: isHouse
+        ? property.land_surface ? `${formatNumber(property.land_surface)} m²` : ""
+        : property.floor_label || (property.floor !== null ? `${property.floor}${property.building_floors ? ` din ${property.building_floors}` : ""}` : ""),
+    },
+    { label: "Compartimentare", value: property.layout ?? "" },
+    { label: "An construcție", value: property.build_year ? String(property.build_year) : "" },
+  ].filter((item) => item.value);
+
+  const transactionLabel = property.for_sale && property.for_rent
+    ? "Vânzare și închiriere"
+    : property.for_rent || property.transaction_kind === "rent"
+      ? "Închiriere"
+      : "Vânzare";
+  const salePrice = property.sale_price ?? (property.for_sale ? property.price : null);
+  const rentPrice = property.rent_price ?? (property.for_rent || property.transaction_kind === "rent" ? property.price : null);
+  const pricePerSqm = usableSurface && salePrice ? Math.round(salePrice / usableSurface) : null;
+  const locationLabel = cleanLocation(property.district, property.city);
+  const portalCells = portalMatrix.data?.properties[id] ?? [];
+  const publishedPortals = portalCells.filter((cell) => cell.state === "published" || cell.state === "in_feed").length;
+  const currentNeighborIndex = neighbors.findIndex((row) => row.id === id);
+  const previousProperty = currentNeighborIndex > 0 ? neighbors[currentNeighborIndex - 1] : null;
+  const nextProperty = currentNeighborIndex >= 0 ? neighbors[currentNeighborIndex + 1] : null;
 
   /**
    * Fișa de prezentare: identitatea vizuală a agenției plus fotografiile
@@ -564,105 +665,85 @@ function PropertyDetailPage() {
   // Coordonatele arătate în panoul read-only: exacte sau zona aproximativă.
   const mapCoords = publicCoords(property);
 
-  /**
-   * Banda de metrici: doar date reale existente în CRM (nu avem contor de
-   * vizualizări, deci folosim activitățile planificate).
-   */
-  const metrics: { label: string; value: string }[] = [
-    { label: "Suprafață", value: property.surface ? `${formatNumber(property.surface)} m²` : "—" },
-    {
-      label: "Camere / etaj",
-      value:
-        [
-          property.rooms ? `${property.rooms} cam.` : null,
-          property.floor !== null && property.floor !== undefined ? `etaj ${property.floor}` : null,
-        ]
-          .filter(Boolean)
-          .join(" · ") || "—",
-    },
-    { label: "Lead-uri active", value: String(activeLeads.length) },
-    {
-      label: "Activități planificate",
-      value: String(activities.filter((a) => a.status === "planned").length),
-    },
-  ];
-
   return (
     <>
-      {tab === "publishing" ? (
-        <PageHeader
-          backTo="/app/properties"
-          backLabel="Proprietăți"
-          title={<span className="font-display">{property.title}</span>}
-          description={[
-            property.reference ? `Ref. ${property.reference}` : null,
-            [property.district, property.city].filter(Boolean).join(", ") || null,
-            formatMoney(property.price, property.currency),
-            responsibleAgent?.full_name ? `Responsabil: ${responsibleAgent.full_name}` : null,
-          ]
-            .filter(Boolean)
-            .join(" · ")}
-          actions={
-            <>
-              <Button
-                variant="secondary"
-                onClick={() => {
-                  startEdit();
-                  setTab("overview");
-                }}
-              >
-                <Pencil /> Editează
-              </Button>
-              <Button
-                onClick={() => publish.mutate()}
-                disabled={publish.isPending || save.isPending}
-              >
-                {publish.isPending ? "Se publică…" : "Publică pe portaluri"}
-              </Button>
-            </>
-          }
-        />
-      ) : (
-        <PageHeader
-          backTo="/app/properties"
-          backLabel="Proprietăți"
-          eyebrow={
-            [property.reference, [property.district, property.city].filter(Boolean).join(", ")]
-              .filter(Boolean)
-              .join(" · ") || "Proprietate"
-          }
-          title={property.title}
-          description={[property.address, property.district, property.city]
-            .filter(Boolean)
-            .join(", ")}
-          meta={
-            <>
-              <StatusBadge tone={propertyStatusTone[property.status]} dot>
-                {propertyStatusLabels[property.status]}
-              </StatusBadge>
-              <StatusBadge
-                tone={property.publish_status === "published" ? "success" : "neutral"}
-                dot
-              >
-                {property.publish_status === "published" ? "Publicat" : "Nepublicat"}
-              </StatusBadge>
+      <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-4">
+        <nav aria-label="Breadcrumb" className="min-w-0 text-sm text-muted-foreground">
+          <Link to="/app/properties" className="hover:text-foreground">Proprietăți</Link>
+          <span aria-hidden className="mx-2">/</span>
+          <span className="truncate text-foreground">{property.reference ?? "Fără referință"}</span>
+        </nav>
+        <div className="flex shrink-0 gap-2">
+          {previousProperty ? (
+            <Button variant="outline" size="compact" asChild>
+              <Link to="/app/properties/$id" params={{ id: previousProperty.id }}>
+                <ChevronLeft aria-hidden /> {previousProperty.reference ?? "Anterior"}
+              </Link>
+            </Button>
+          ) : null}
+          {nextProperty ? (
+            <Button variant="outline" size="compact" asChild>
+              <Link to="/app/properties/$id" params={{ id: nextProperty.id }}>
+                {nextProperty.reference ?? "Următor"} <ChevronRight aria-hidden />
+              </Link>
+            </Button>
+          ) : null}
+        </div>
+      </div>
+
+      <header className="panel overflow-hidden px-6 py-6 sm:px-7">
+        <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-6 max-md:grid-cols-1">
+          <div className="min-w-0">
+            <div className="flex flex-wrap gap-2">
+              <StatusBadge tone={propertyStatusTone[property.status]} dot>{propertyStatusLabels[property.status]}</StatusBadge>
+              <StatusBadge tone="warning">{transactionLabel}</StatusBadge>
+              <StatusBadge tone="neutral">{publishedPortals ? `Publicat pe ${publishedPortals} portaluri` : "Nepublicat"}</StatusBadge>
               {property.negotiable ? <StatusBadge tone="info">Negociabil</StatusBadge> : null}
-              {property.collaboration ? (
-                <StatusBadge tone="primary">
-                  {property.collab_commission_percent
-                    ? `Colaborare · ${property.collab_commission_percent}%`
-                    : "Colaborare"}
-                </StatusBadge>
-              ) : null}
-            </>
-          }
-          actions={
-            <span className="text-2xl font-medium tracking-tight">
-              {formatMoney(property.price, property.currency)}
-            </span>
-          }
-        />
-      )}
+              {property.collaboration ? <StatusBadge tone="primary">{property.collab_commission_percent ? `Colaborare · ${property.collab_commission_percent}%` : "Colaborare"}</StatusBadge> : null}
+            </div>
+            <h1 className="mt-4 text-[34px] leading-[1.15] font-semibold">{property.title}</h1>
+            <div className="mt-3 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-muted-foreground">
+              {locationLabel ? <span className="inline-flex items-center gap-1"><MapPin className="size-4" aria-hidden />{locationLabel}</span> : null}
+              {property.reference ? <><span aria-hidden>·</span><span>{property.reference}</span></> : null}
+              {responsibleAgent?.full_name ? <><span aria-hidden>·</span><span>Agent: {responsibleAgent.full_name}</span></> : null}
+            </div>
+          </div>
+          <div className="text-right max-md:text-left">
+            {salePrice ? <p className="font-display text-[38px] leading-none font-semibold">{formatMoney(salePrice, property.sale_currency ?? property.currency)}</p> : null}
+            {rentPrice ? <p className={salePrice ? "mt-2 font-display text-xl font-semibold" : "font-display text-[38px] leading-none font-semibold"}>{formatMoney(rentPrice, property.rent_currency ?? property.currency)} <span className="font-sans text-base font-normal text-muted-foreground">/ lună</span></p> : null}
+            {usableSurface ? <p className="mt-3 text-sm text-muted-foreground">{pricePerSqm ? `${formatNumber(pricePerSqm)} €/m² · ` : ""}{formatNumber(usableSurface)} m² utili</p> : null}
+          </div>
+        </div>
+        <div className="mt-6 flex flex-wrap items-center gap-2 border-t border-border pt-5">
+          <Button
+            onClick={() => tab === "publishing" ? publish.mutate() : setTab("publishing")}
+            disabled={publish.isPending || save.isPending}
+          >
+            {publish.isPending ? "Se publică…" : "Publică pe portaluri"}
+          </Button>
+          {editing ? <Button variant="outline" onClick={() => setEditing(false)}>Anulează</Button> : <Button variant="outline" onClick={() => { startEdit(); setTab("overview"); }}><Pencil /> Editează</Button>}
+          <Button variant="outline" onClick={() => setActivityDialog({ open: true, kind: "viewing" })}><CalendarPlus /> Programează vizionare</Button>
+          <Button variant="outline" onClick={() => setActivityDialog({ open: true, kind: "call" })}>Adaugă activitate</Button>
+          <Button variant="outline" onClick={() => setTab("acp")}><BarChart3 /> Analiză comparativă de piață (ACP)</Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild><Button size="icon" variant="outline" aria-label="Mai multe acțiuni"><MoreHorizontal /></Button></DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => duplicate.mutate()} disabled={duplicate.isPending}>Clonează</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setPresentationDialogOpen(true)}><Printer /> Generează fișă de vizionare</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setAddClientOpen(true)}><UserPlus /> Adaugă client</DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuSub>
+                <DropdownMenuSubTrigger>Status</DropdownMenuSubTrigger>
+                <DropdownMenuSubContent>
+                  {Object.entries(propertyStatusLabels).map(([key, label]) => <DropdownMenuItem key={key} onClick={() => isWithdrawStatus(key) ? setPendingStatus(key as "sold" | "rented" | "archived") : changeStatus.mutate(key)}>{label}</DropdownMenuItem>)}
+                </DropdownMenuSubContent>
+              </DropdownMenuSub>
+              <DropdownMenuSeparator />
+              {property.status === "archived" ? <DropdownMenuItem onClick={() => unarchive.mutate()}>Dezarhivează</DropdownMenuItem> : <DropdownMenuItem onClick={() => setArchiveOpen(true)}>Arhivează</DropdownMenuItem>}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      </header>
 
       <StatusChangeDialog
         propertyIds={[id]}
@@ -679,156 +760,21 @@ function PropertyDetailPage() {
         onArchived={() => navigate({ to: "/app/properties" })}
       />
 
-      {/* Galeria proprietății, alături de portofoliul agenției. */}
-      <div className={tab === "publishing" ? "hidden" : "grid gap-4 lg:grid-cols-3"}>
-        <div className="space-y-4 lg:col-span-2">
-          <PropertyHeroGallery propertyId={id} title={property.title} />
-
-          {/* Bandă de metrici: date reale, fără borduri, doar fundal ușor diferit. */}
-          <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-            {metrics.map((m) => (
-              <div key={m.label} className="rounded-2xl bg-secondary/60 px-4 py-3">
-                <p className="text-xs text-muted-foreground">{m.label}</p>
-                <p className="mt-0.5 text-lg font-medium tracking-tight">{m.value}</p>
-              </div>
-            ))}
-          </div>
-
-          {(property.features ?? []).length > 0 ? (
-            <div className="flex flex-wrap gap-2">
-              {(property.features ?? []).slice(0, 8).map((f) => (
-                <span
-                  key={f}
-                  className="rounded-full bg-secondary/60 px-3 py-1 text-xs text-muted-foreground"
-                >
-                  {f}
-                </span>
-              ))}
-            </div>
-          ) : null}
-        </div>
-
-        <PortfolioPanel orgId={orgId} userId={user?.userId} currentPropertyId={id} />
-      </div>
-
-      {/* Rând de acțiuni, sub banda de metrici. */}
-      <div className={tab === "publishing" ? "hidden" : "flex flex-wrap items-center gap-2"}>
-        {editing ? (
-          <Button size="sm" variant="outline" onClick={() => setEditing(false)}>
-            Anulează
-          </Button>
-        ) : (
-          <Button size="sm" variant="outline" onClick={startEdit}>
-            <Pencil className="size-4" /> Editează
-          </Button>
-        )}
-        <Button
-          size="sm"
-          variant="outline"
-          onClick={() => duplicate.mutate()}
-          disabled={duplicate.isPending}
-        >
-          Clonează
-        </Button>
-        <Button
-          size="sm"
-          onClick={() => publish.mutate()}
-          disabled={publish.isPending || save.isPending}
-        >
-          {publish.isPending ? "Se publică…" : "Publică"}
-        </Button>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button size="icon" variant="outline" aria-label="Mai multe acțiuni">
-              <MoreHorizontal className="size-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="start">
-            <DropdownMenuItem onClick={() => setPresentationDialogOpen(true)}>
-              <Printer className="size-4" /> Generează fișă de vizionare
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            {Object.entries(propertyStatusLabels).map(([k, v]) => (
-              <DropdownMenuItem key={k} onClick={() =>
-                  isWithdrawStatus(k) ? setPendingStatus(k) : changeStatus.mutate(k)
-                }>
-                Status: {v}
-              </DropdownMenuItem>
-            ))}
-            <DropdownMenuSeparator />
-            {property.status === "archived" ? (
-              <DropdownMenuItem onClick={() => unarchive.mutate()}>Dezarhivează</DropdownMenuItem>
-            ) : (
-              <DropdownMenuItem onClick={() => setArchiveOpen(true)}>Arhivează</DropdownMenuItem>
-            )}
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </div>
-
-      <div className={tab === "publishing" ? "hidden" : "flex flex-wrap gap-2"}>
-        {ownerContact?.phone ? (
-          <Button size="sm" variant="outline" asChild>
-            <a href={`tel:${ownerContact.phone}`}>
-              <Phone className="size-4" /> Sună proprietarul
-            </a>
-          </Button>
-        ) : null}
-        {(ownerContact?.whatsapp ?? ownerContact?.phone) ? (
-          <Button size="sm" variant="outline" asChild>
-            <a
-              href={`https://wa.me/${(ownerContact?.whatsapp ?? ownerContact?.phone ?? "").replace(/[^\d]/g, "")}`}
-              target="_blank"
-              rel="noreferrer"
-            >
-              <MessageCircle className="size-4" /> WhatsApp
-            </a>
-          </Button>
-        ) : null}
-        <Button
-          size="sm"
-          variant="outline"
-          onClick={() => setActivityDialog({ open: true, kind: "call" })}
-        >
-          Adaugă activitate
-        </Button>
-        <Button
-          size="sm"
-          variant="outline"
-          onClick={() => setActivityDialog({ open: true, kind: "viewing" })}
-        >
-          Creează vizionare
-        </Button>
-        <Button size="sm" variant="outline" onClick={() => setAddClientOpen(true)}>
-          <UserPlus className="size-4" /> Adaugă client
-        </Button>
-        <Button size="sm" variant="outline" onClick={() => setTab("acp")}>
-          <BarChart3 className="size-4" /> Analiză comparativă de piață (ACP)
-        </Button>
-      </div>
-
       <Tabs value={tab} onValueChange={setTab}>
-        <TabsList className="h-auto flex-wrap justify-start gap-1 rounded-none border-b border-border bg-transparent p-0">
-          {(tab === "publishing"
-            ? [
-                ["overview", "Detalii"],
-                ["media", "Fotografii"],
-                ["publishing", "Publicare"],
-                ["activities", "Activitate"],
-                ["documents", "Contracte"],
-              ]
-            : [
-                ["overview", "Overview"],
-                ["media", "Media"],
-                ["acp", "ACP"],
-                ["marketing", "Marketing AI"],
-                ["leads", `Lead-uri (${data?.leads.length ?? 0})`],
-                ["matching", `Cereri compatibile (${matches.length})`],
-                ["activities", `Activități (${activities.length})`],
-                ["documents", "Documente"],
-                ["publishing", "Publicare"],
-                ["history", "Istoric"],
-              ]
-          ).map(([value, label]) => (
+        <div className="sticky top-0 z-40 -mx-1 overflow-x-auto bg-background px-1">
+        <TabsList className="h-auto w-max min-w-full justify-start gap-1 rounded-none border-b border-border bg-transparent p-0" aria-label="Secțiunile proprietății">
+          {[
+            ["overview", "Prezentare"],
+            ["media", `Poze (${data?.imageCount ?? 0})`],
+            ["publishing", `Publicare (${publishedPortals}/${portalCells.length})`],
+            ["leads", `Lead-uri (${data?.leads.length ?? 0})`],
+            ["matching", `Cereri compatibile (${matches.length})`],
+            ["activities", `Activități (${activities.length})`],
+            ["documents", "Documente"],
+            ["acp", "ACP"],
+            ["marketing", "Marketing AI"],
+            ["history", "Istoric"],
+          ].map(([value, label]) => (
             <TabsTrigger
               key={value}
               value={value as string}
@@ -838,6 +784,7 @@ function PropertyDetailPage() {
             </TabsTrigger>
           ))}
         </TabsList>
+        </div>
 
         <TabsContent value="overview" className="space-y-6">
           {editing ? (
@@ -963,152 +910,92 @@ function PropertyDetailPage() {
           ) : null}
 
           {!editing ? (
-            <div className="grid gap-6 lg:grid-cols-3">
-              <div className="space-y-6 lg:col-span-2">
-                <div className="panel p-5">
-                  <h2 className="text-sm font-semibold">Descriere</h2>
-                  <p className="mt-3 text-sm whitespace-pre-line text-muted-foreground">
-                    {property.description || "Nu există descriere."}
-                  </p>
-                  {property.features.length > 0 ? (
-                    <div className="mt-5 flex flex-wrap gap-2">
-                      {property.features.map((f) => (
-                        <StatusBadge key={f}>{f}</StatusBadge>
-                      ))}
-                    </div>
-                  ) : null}
-                  {property.internal_notes ? (
-                    <div className="mt-5 rounded-xl border border-warning/30 bg-warning/10 p-4 text-sm">
-                      <p className="font-medium">Note interne</p>
-                      <p className="mt-1 text-muted-foreground">{property.internal_notes}</p>
-                    </div>
-                  ) : null}
-                </div>
+            <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_352px]">
+              <div className="min-w-0 space-y-5">
+                <PropertyHeroGallery propertyId={id} title={property.title} onAddPhotos={() => setTab("media")} />
 
-                <div className="panel p-5">
-                  <h2 className="text-sm font-semibold">Hartă</h2>
-                  {mapCoords ? (
-                    <div className="mt-3 space-y-2">
-                      <PropertyMapClient
-                        lat={mapCoords.lat}
-                        lng={mapCoords.lng}
-                        precise={mapCoords.precise}
-                        seed={property.id}
-                        className="h-64 w-full overflow-hidden rounded-xl border border-border"
-                      />
-                      <p className="text-xs text-muted-foreground">
-                        {mapCoords.precise
-                          ? "Locație exactă."
-                          : `Hartă estimativă — zonă de aproximativ ${APPROX_RADIUS_M} m.`}
-                      </p>
-                    </div>
-                  ) : (
-                    <p className="mt-3 text-sm text-muted-foreground">
-                      Nu există coordonate GPS pentru această proprietate.
-                    </p>
-                  )}
-                </div>
-
-                <div className="panel p-5">
-                  <h2 className="text-sm font-semibold">Specificații</h2>
-                  <dl className="mt-3 grid gap-2 sm:grid-cols-2">
-                    {specs.map((s) => (
-                      <div
-                        key={s.label}
-                        className="flex items-center justify-between gap-3 text-sm"
-                      >
-                        <dt className="text-muted-foreground">{s.label}</dt>
-                        <dd className="text-right font-medium">{s.value}</dd>
+                {primaryFacts.length > 0 ? (
+                  <section className="panel grid grid-cols-2 overflow-hidden md:grid-cols-3 xl:grid-cols-6" aria-label="Date principale">
+                    {primaryFacts.map((fact, index) => (
+                      <div key={fact.label} className={`px-4 py-4 ${index > 0 ? "border-l border-border" : ""}`}>
+                        <p className="text-xs text-muted-foreground">{fact.label}</p>
+                        <p className="mt-1 text-lg font-bold">{fact.value}</p>
                       </div>
                     ))}
-                  </dl>
-                </div>
+                  </section>
+                ) : null}
 
-                <div className="panel p-5">
-                  <h2 className="text-sm font-semibold">Proprietar</h2>
-                  {ownerContact ? (
-                    <div className="mt-3 space-y-1 text-sm">
-                      <Link
-                        to="/app/contacts/$id"
-                        params={{ id: ownerContact.id }}
-                        className="font-medium hover:text-primary"
-                      >
-                        {ownerContact.first_name} {ownerContact.last_name}
-                      </Link>
-                      <p className="text-muted-foreground">{ownerContact.phone ?? "—"}</p>
-                      <p className="text-muted-foreground">{ownerContact.email ?? "—"}</p>
+                <section className="panel p-5 sm:p-6">
+                  <h2 className="text-[21px] leading-tight">Descriere</h2>
+                  <p className={`mt-4 text-sm leading-6 whitespace-pre-line text-muted-foreground ${descriptionExpanded ? "" : "line-clamp-8"}`}>
+                    {property.description || "Nu există descriere."}
+                  </p>
+                  {property.description ? <Button type="button" variant="link" className="mt-3 p-0" onClick={() => setDescriptionExpanded((value) => !value)}>{descriptionExpanded ? "Restrânge descrierea" : "Citește toată descrierea"}</Button> : null}
+                  {property.internal_notes ? (
+                    <div className="mt-5 rounded-xl bg-muted p-4 text-sm">
+                      <p className="font-bold">Note interne (vizibile doar în CRM)</p>
+                      <p className="mt-1 whitespace-pre-line text-muted-foreground">{property.internal_notes}</p>
                     </div>
-                  ) : (
-                    <p className="mt-3 text-sm text-muted-foreground">Niciun proprietar asociat.</p>
-                  )}
-                </div>
+                  ) : null}
+                </section>
+
+                {(specs.length > 0 || amenityGroups.length > 0) ? (
+                  <section className="panel p-5 sm:p-6">
+                    <h2 className="text-[21px] leading-tight">Specificații</h2>
+                    <dl className="mt-4 grid gap-x-6 sm:grid-cols-2">
+                      {(specsExpanded ? specs : specs.slice(0, 8)).map((spec) => (
+                        <div key={spec.label} className="flex items-center justify-between gap-4 border-b border-border py-3 text-sm">
+                          <dt className="text-muted-foreground">{spec.label}</dt>
+                          <dd className="text-right font-bold">{spec.value}</dd>
+                        </div>
+                      ))}
+                    </dl>
+                    {specsExpanded && amenityGroups.length > 0 ? <div className="mt-5 flex flex-wrap gap-2">{amenityGroups.map((item, index) => <span key={`${item}-${index}`} className="rounded-full border border-border bg-muted px-3 py-1 text-xs">{item}</span>)}</div> : null}
+                    {(specs.length > 8 || amenityGroups.length > 0) ? <Button type="button" variant="link" className="mt-4 p-0" onClick={() => setSpecsExpanded((value) => !value)}>{specsExpanded ? "Restrânge caracteristicile" : "Vezi toate caracteristicile"}</Button> : null}
+                  </section>
+                ) : null}
+
+                <section className="panel p-5 sm:p-6">
+                  <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-4">
+                    <h2 className="text-[21px] leading-tight">Locație</h2>
+                    <p className="max-w-md text-right text-sm text-muted-foreground">{[property.address, locationLabel].filter(Boolean).join(", ")}</p>
+                  </div>
+                  {mapCoords ? <PropertyMapClient lat={mapCoords.lat} lng={mapCoords.lng} precise={mapCoords.precise} seed={property.id} className="mt-4 h-[220px] w-full overflow-hidden rounded-xl border border-border" /> : <div className="mt-4 flex h-[220px] items-center justify-center rounded-xl border border-border bg-muted text-sm text-muted-foreground">Nu există coordonate GPS pentru această proprietate.</div>}
+                  {mapCoords && !mapCoords.precise ? <p className="mt-2 text-xs text-muted-foreground">Hartă estimativă — zonă de aproximativ {APPROX_RADIUS_M} m.</p> : null}
+                </section>
               </div>
 
-              <div className="space-y-6">
-                <div className="panel p-5">
-                  <h2 className="text-sm font-semibold">Următoarea activitate</h2>
-                  {upcoming ? (
-                    <div className="mt-3 text-sm">
-                      <p className="font-medium">{upcoming.title}</p>
-                      <p className="text-muted-foreground">{formatDateTime(upcoming.starts_at)}</p>
-                    </div>
-                  ) : (
-                    <p className="mt-3 text-sm text-muted-foreground">
-                      Nicio activitate planificată.
-                    </p>
-                  )}
-                </div>
+              <aside className="space-y-4">
+                <section className="panel px-5 py-[18px]">
+                  <div className="flex items-center justify-between gap-3"><h2 className="font-sans text-base font-bold">Pe portaluri</h2><span className="text-sm text-muted-foreground">{publishedPortals} din {portalCells.length} activate</span></div>
+                  {portalCells.length > 0 ? <ul className="mt-4 space-y-3">{portalCells.map((cell) => { const state = portalState(cell); return <li key={cell.portalId} className="flex items-center justify-between gap-3 text-sm"><span className="min-w-0 truncate font-medium">{cell.portalName}</span><span className="flex shrink-0 items-center gap-2"><StatusBadge tone={state.tone} dot>{state.label}</StatusBadge>{cell.promoted ? <StatusBadge tone="warning">Promovat</StatusBadge> : null}</span></li>; })}</ul> : <p className="mt-3 text-sm text-muted-foreground">Niciun portal activat pentru agenție.</p>}
+                  <Button variant="outline" className="mt-4 w-full" onClick={() => setTab("publishing")}>Gestionează publicarea</Button>
+                </section>
 
-                <div className="panel p-5">
-                  <h2 className="text-sm font-semibold">Activități recente</h2>
-                  {recentActivities.length === 0 ? (
-                    <p className="mt-3 text-sm text-muted-foreground">Nicio activitate.</p>
-                  ) : (
-                    <ul className="mt-3 space-y-2 text-sm">
-                      {recentActivities.map((a) => (
-                        <li key={a.id} className="flex items-center justify-between gap-2">
-                          <span className="truncate">{a.title}</span>
-                          <StatusBadge tone={activityStatusTone[a.status]}>
-                            {activityStatusLabels[a.status]}
-                          </StatusBadge>
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                </div>
+                <section className="panel px-5 py-[18px]">
+                  <h2 className="font-sans text-base font-bold">Următorul pas</h2>
+                  {upcoming ? <div className="mt-3 text-sm"><p className="font-bold">{upcoming.title}</p><p className="mt-1 text-muted-foreground">{formatDateTime(upcoming.starts_at)}</p></div> : <p className="mt-3 text-sm text-muted-foreground">Nicio activitate programată pentru această proprietate.</p>}
+                  <div className="mt-4 grid gap-2"><Button variant="soft" onClick={() => setActivityDialog({ open: true, kind: "viewing" })}>Programează vizionare</Button><Button variant="outline" onClick={() => setActivityDialog({ open: true, kind: "call" })}>Adaugă activitate</Button></div>
+                </section>
 
-                <div className="panel p-5">
-                  <h2 className="text-sm font-semibold">Lead-uri active</h2>
-                  {activeLeads.length === 0 ? (
-                    <p className="mt-3 text-sm text-muted-foreground">Niciun lead activ.</p>
-                  ) : (
-                    <ul className="mt-3 space-y-2 text-sm">
-                      {activeLeads.map((l) => (
-                        <li key={l.id} className="flex items-center justify-between gap-2">
-                          <span className="truncate">{l.name}</span>
-                          <StatusBadge tone="info">{leadStageLabels[l.stage]}</StatusBadge>
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                </div>
+                <section className="panel px-5 py-[18px]">
+                  <h2 className="font-sans text-base font-bold">Interes</h2>
+                  <div className="mt-3 grid grid-cols-2 gap-2">
+                    <Button type="button" variant="outline" onClick={() => setTab("leads")} className="h-auto items-start p-3 text-left"><span><span className="block text-[22px] font-bold">{activeLeads.length}</span><span className="text-xs font-normal text-muted-foreground">Lead-uri active</span></span></Button>
+                    <Button type="button" variant="outline" onClick={() => setTab("matching")} className="h-auto items-start p-3 text-left"><span><span className="block text-[22px] font-bold">{matches.length}</span><span className="text-xs font-normal text-muted-foreground">Cereri compatibile</span></span></Button>
+                  </div>
+                  {matches.length > 0 ? <div className="mt-4"><p className="text-sm font-bold">Top potriviri</p><ul className="mt-2 space-y-2">{matches.slice(0, 3).map(({ request, match }) => <li key={request.id} className="flex items-center justify-between gap-2 text-sm"><span className="truncate">{request.title}</span><StatusBadge tone={matchTone(match.score)}>{match.score}%</StatusBadge></li>)}</ul></div> : null}
+                </section>
 
-                <div className="panel p-5">
-                  <h2 className="text-sm font-semibold">Top potriviri</h2>
-                  {matches.length === 0 ? (
-                    <p className="mt-3 text-sm text-muted-foreground">Nicio potrivire momentan.</p>
-                  ) : (
-                    <ul className="mt-3 space-y-2 text-sm">
-                      {matches.slice(0, 3).map(({ request, match }) => (
-                        <li key={request.id} className="flex items-center justify-between gap-2">
-                          <span className="truncate">{request.title}</span>
-                          <StatusBadge tone={matchTone(match.score)}>{match.score}%</StatusBadge>
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                </div>
-              </div>
+                {responsibleAgent ? <section className="panel px-5 py-[18px]"><h2 className="font-sans text-base font-bold">Agent responsabil</h2><div className="mt-4 flex items-center gap-3"><UserAvatar name={responsibleAgent.full_name} path={responsibleAgent.avatar_url} className="size-11" /><div className="min-w-0"><p className="truncate text-sm font-bold">{responsibleAgent.full_name}</p><p className="truncate text-xs text-muted-foreground">{[responsibleAgent.job_title, responsibleAgent.phone].filter(Boolean).join(" · ") || "Agent"}</p></div></div></section> : null}
+
+                <section className="panel px-5 py-[18px]">
+                  <h2 className="font-sans text-base font-bold">Proprietar</h2>
+                  {ownerContact ? <><div className="mt-3 text-sm"><Link to="/app/contacts/$id" params={{ id: ownerContact.id }} className="font-bold hover:text-primary">{ownerContact.first_name} {ownerContact.last_name}</Link><p className="mt-1 text-muted-foreground">{ownerContact.phone ?? "Fără telefon"}</p></div><div className="mt-4 grid grid-cols-2 gap-2">{ownerContact.phone ? <Button variant="outline" asChild><a href={`tel:${ownerContact.phone}`}><Phone /> Sună</a></Button> : null}{(ownerContact.whatsapp ?? ownerContact.phone) ? <Button variant="outline" asChild><a href={`https://wa.me/${(ownerContact.whatsapp ?? ownerContact.phone ?? "").replace(/[^\d]/g, "")}`} target="_blank" rel="noreferrer"><MessageCircle /> WhatsApp</a></Button> : null}</div></> : <><p className="mt-3 text-sm text-muted-foreground">Niciun proprietar asociat</p><Button variant="outline" className="mt-4 w-full" onClick={() => { startEdit(); setTab("overview"); }}>Adaugă proprietar</Button></>}
+                </section>
+
+                {recentActivities.length > 0 ? <section className="panel px-5 py-[18px]"><h2 className="font-sans text-base font-bold">Activități recente</h2><ul className="mt-3 space-y-3">{recentActivities.map((activity) => <li key={activity.id} className="flex items-center justify-between gap-2 text-sm"><span className="truncate">{activity.title}</span><StatusBadge tone={activityStatusTone[activity.status]}>{activityStatusLabels[activity.status]}</StatusBadge></li>)}</ul></section> : null}
+              </aside>
             </div>
           ) : null}
         </TabsContent>
