@@ -1,7 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import { Archive, ArchiveRestore, Building2, Check, FileUp, Search, Trash2, X } from "lucide-react";
+import { Archive, ArchiveRestore, Building2, Check, FileUp, Pencil, Search, Trash2, X } from "lucide-react";
+import { AgencyDetailsDialog } from "@/components/superadmin/AgencyDetailsDialog";
 
 import { SubscriptionPicker } from "@/components/superadmin/SubscriptionPicker";
 import { PropertyImportDialog } from "@/components/superadmin/PropertyImportDialog";
@@ -113,6 +114,7 @@ function AgenciesPage() {
   const [showArchived, setShowArchived] = useState(false);
   const [tab, setTab] = useState<"pending" | "all">("pending");
   const [pendingArchive, setPendingArchive] = useState<{ id: string; name: string } | null>(null);
+  const [editingOrgId, setEditingOrgId] = useState<string | null>(null);
   const [pendingDelete, setPendingDelete] = useState<{ id: string; name: string } | null>(null);
   const [importOrg, setImportOrg] = useState<{ id: string; name: string } | null>(null);
   // Respingerea unei cereri de înscriere, cu motiv opțional.
@@ -542,6 +544,11 @@ function AgenciesPage() {
                       Importă proprietăți
                     </Button>
 
+                    <Button size="sm" variant="outline" onClick={() => setEditingOrgId(o.id)}>
+                      <Pencil className="mr-1.5 size-4" />
+                      Editează datele
+                    </Button>
+
                     {/* Acțiuni distructive, separate vizual de restul */}
                     <div className="ml-auto flex items-center gap-2 border-l border-border pl-3">
                       {o.archived_at ? (
@@ -583,6 +590,13 @@ function AgenciesPage() {
           )}
         </div>
       )}
+
+      {editingOrgId && data?.orgs.find((x) => x.id === editingOrgId) ? (
+        <AgencyDetailsDialog
+          org={data.orgs.find((x) => x.id === editingOrgId) as never}
+          onClose={() => setEditingOrgId(null)}
+        />
+      ) : null}
 
       <ConfirmDialog
         open={pendingArchive !== null}
