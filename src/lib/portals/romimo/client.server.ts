@@ -77,6 +77,24 @@ function fail(
   return { ok: false, kind, status, message: message ?? fallback[kind], body };
 }
 
+/** Textele din `errors` (RFC 7807): valori string sau array-uri de stringuri. */
+export function errorTexts(body: unknown): string[] {
+  if (!body || typeof body !== "object") return [];
+  const errors = (body as RomimoProblemDetails).errors;
+  if (!errors || typeof errors !== "object") return [];
+  const texts: string[] = [];
+  for (const value of Object.values(errors)) {
+    if (typeof value === "string") {
+      if (value.trim()) texts.push(value.trim());
+    } else if (Array.isArray(value)) {
+      for (const item of value) {
+        if (typeof item === "string" && item.trim()) texts.push(item.trim());
+      }
+    }
+  }
+  return texts;
+}
+
 /** Textul suplimentar din ProblemDetails, fără chei care pot purta secrete. */
 function problemText(body: unknown): string | null {
   if (!body || typeof body !== "object") return null;
