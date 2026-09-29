@@ -62,16 +62,16 @@ const A: IndexedAgency = { organizationId: "org-a", officeId: "hbA", officeName:
 const req = (path: string) => new Request(`http://localhost:8080${path}`);
 
 describe("indexul Properstar", () => {
-  it("cheie corectă → 200 și XML cu Feed", async () => {
+  it("cheie corectă → 200 și XML cu feed în formatul Properstar", async () => {
     const d = deps([A], { "org-a": build([advert("HB-1")]) });
     const res = await handleProperstarIndex(req(`/x/${KEY}.xml`), `${KEY}.xml`, d, NOW);
     expect(res.status).toBe(200);
     const xml = await res.text();
-    expect(xml).toMatch(/^<\?xml version="1.0" encoding="UTF-8"\?>/);
-    expect(xml).toContain("<OfficeId>hbA</OfficeId>");
-    expect(xml).toContain("<OfficeName><![CDATA[Agenția A & Co]]></OfficeName>");
-    expect(xml).toContain(`agency/hbA.xml?sig=${signOfficeId("hbA", KEY)}`);
-    expect(xml).toContain("<LastUpdate>2026-09-26T10:11:12Z</LastUpdate>");
+    expect(xml).toMatch(/^<\?xml version="1.0" encoding="utf-8"\?>/);
+    expect(xml).toContain(
+      `<feed id="hbA" name="Agenția A &amp; Co" url="http://localhost:8080/api/public/feed/properstar/agency/hbA.xml?sig=${signOfficeId("hbA", KEY)}"/>`,
+    );
+    expect(xml).not.toContain("<OfficeId>");
     expect(d.log).toHaveBeenCalledWith(expect.objectContaining({ status: 200, endpoint: "portal.properstar.index" }));
   });
 
