@@ -50,14 +50,6 @@ export function verifyClickimobIndexKey(candidate: string, key: string | null | 
   return timingSafeEqual(a, b);
 }
 
-/** Conexiune ClickImob pe agenție (cheie Habitoo / agency_id) → exclusă din index. */
-export function hasPerAgencyClickimob(input: {
-  externalAccountId: string | null | undefined;
-  activeKeys: number;
-}): boolean {
-  return Boolean(input.externalAccountId?.trim()) || input.activeKeys > 0;
-}
-
 export type ClickimobIndexAgency = {
   id: string;
   name: string | null;
@@ -118,32 +110,36 @@ export function clickimobAgencyContact(org: ClickimobOrgRow) {
   };
 }
 
-/**
- * „Mod index”: ClickImob activat, fără conexiune pe agenție. Exact regula de
- * includere din indexul ClickImob (refolosește `hasPerAgencyClickimob`).
- */
-export function isClickimobIndexMode(input: {
-  activated: boolean | null | undefined;
-  externalAccountId: string | null | undefined;
-  activeKeys: number;
-}): boolean {
-  return input.activated === true && !hasPerAgencyClickimob(input);
-}
-
-/** Conexiune pregătită: status connected/ready sau ClickImob în mod index. */
+/** Conexiune pregătită: status connected/ready; ClickImob e gata imediat ce e activat. */
 export function portalConnectionReady(
   portalId: string,
-  connection:
-    | { status?: string | null; activated?: boolean | null; external_account_id?: string | null }
-    | null
-    | undefined,
-  activeKeyPortals: Set<string>,
+  connection: { status?: string | null; activated?: boolean | null } | null | undefined,
 ): boolean {
   if (connection?.status === "connected" || connection?.status === "ready") return true;
-  if (portalId !== "clickimob") return false;
-  return isClickimobIndexMode({
-    activated: connection?.activated,
-    externalAccountId: connection?.external_account_id,
-    activeKeys: activeKeyPortals.has("clickimob") ? 1 : 0,
-  });
+  return portalId === "clickimob" && connection?.activated === true;
+}
+
+export type ClickimobIndexStatusInput = {
+  /** Intrarea agenției în index (calculată de `selectClickimobAgencies`), dacă există. */
+  entry: { status: "active" | "grace"; inactive_since: string | null } | null;
+  orgOpen: boolean;
+  activated: boolean;
+  selected: number;
+  graceDays: number;
+};
+
+/** Eticheta stării agenției în indexul ClickImob, pentru cardul din Superadmin. */
+export function clickimobIndexStatusLabel(input: ClickimobIndexStatusInput): string {
+  if (input.entry?.status === "active") return "În index";
+  if (input.entry?.status === "grace") {
+    const since = input.entry.inactive_since ? new Date(input.entry.inactive_since) : null;
+    if (since) {
+      const until = new Date(since.getTime() + input.graceDays * 86_400_000);
+      return `În perioada de retragere până la ${until.toLocaleDateString("ro-RO", { timeZone: "Europe/Bucharest" })}`;
+    }
+    return "În perioada de retragere";
+  }
+  if (!input.orgOpen) return "Agenție suspendată sau arhivată";
+  if (!input.activated) return "Nu apare: ClickImob nu este activat";
+  return "Nu apare: nicio ofertă bifată pentru ClickImob";
 }

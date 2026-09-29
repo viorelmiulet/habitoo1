@@ -46,11 +46,6 @@ export type PortalContext = {
    * trimis, fără niciun request extern (dry-run).
    */
   allowLiveRequests: boolean;
-  /**
-   * ClickImob „mod index”: fără conexiune pe agenție; portalul preia din feed.
-   * Lipsă/false pentru celelalte portaluri.
-   */
-  indexMode?: boolean;
 };
 
 export type ListingRef = {

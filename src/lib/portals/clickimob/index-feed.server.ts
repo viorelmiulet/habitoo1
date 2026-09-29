@@ -21,7 +21,6 @@ import {
   CLICKIMOB_INDEX_VERSION,
   clickimobAgencyContact,
   clickimobFeedToken,
-  hasPerAgencyClickimob,
   verifyClickimobIndexKey,
   type ClickimobIndex,
   type ClickimobIndexAgency,
@@ -46,10 +45,8 @@ export type ClickimobSourceData = {
   connections: {
     organization_id: string;
     activated: boolean | null;
-    external_account_id: string | null;
     updated_at: string | null;
   }[];
-  activeKeyOrgs: string[];
   selectedOrgs: string[];
   states: (ProperstarIndexState & { organization_id: string })[];
 };
@@ -63,21 +60,12 @@ export function selectClickimobAgencies(
 ): { agencies: ClickimobIndexedAgency[]; changes: ClickimobStateChange[] } {
   const connByOrg = new Map(src.connections.map((c) => [c.organization_id, c]));
   const stateByOrg = new Map(src.states.map((s) => [s.organization_id, s]));
-  const keyCount = new Map<string, number>();
-  for (const o of src.activeKeyOrgs) keyCount.set(o, (keyCount.get(o) ?? 0) + 1);
   const selected = new Set(src.selectedOrgs);
 
   const agencies: ClickimobIndexedAgency[] = [];
   const changes: ClickimobStateChange[] = [];
   for (const org of src.orgs) {
     const connection = connByOrg.get(org.id) ?? null;
-    if (
-      hasPerAgencyClickimob({
-        externalAccountId: connection?.external_account_id,
-        activeKeys: keyCount.get(org.id) ?? 0,
-      })
-    )
-      continue;
     const previous = stateByOrg.get(org.id) ?? null;
     const active = isProperstarActive(org, connection);
     const hints = [org.archived_at, connection && !connection.activated ? connection.updated_at : null];
@@ -104,7 +92,7 @@ export function selectClickimobAgencies(
 
 export async function listClickimobIndexedAgencies(now: Date): Promise<ClickimobIndexedAgency[]> {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-  const [orgs, connections, keys, pubs, states] = await Promise.all([
+  const [orgs, connections, pubs, states] = await Promise.all([
     supabaseAdmin
       .from("organizations")
       .select(
@@ -112,14 +100,8 @@ export async function listClickimobIndexedAgencies(now: Date): Promise<Clickimob
       ),
     supabaseAdmin
       .from("portal_connections")
-      .select("organization_id, activated, external_account_id, updated_at")
+      .select("organization_id, activated, updated_at")
       .eq("portal", CLICKIMOB_PORTAL),
-    supabaseAdmin
-      .from("portal_api_keys")
-      .select("organization_id, expires_at")
-      .eq("portal", CLICKIMOB_PORTAL)
-      .eq("status", "active")
-      .is("revoked_at", null),
     supabaseAdmin
       .from("portal_publications")
       .select("organization_id")
@@ -130,17 +112,13 @@ export async function listClickimobIndexedAgencies(now: Date): Promise<Clickimob
       .select("organization_id, active, last_active_at, inactive_since")
       .eq("portal", CLICKIMOB_PORTAL),
   ]);
-  const firstError = [orgs, connections, keys, pubs, states].find((r) => r.error)?.error;
+  const firstError = [orgs, connections, pubs, states].find((r) => r.error)?.error;
   if (firstError) throw new Error(firstError.message);
 
-  const nowMs = now.getTime();
   const { agencies, changes } = selectClickimobAgencies(
     {
       orgs: orgs.data ?? [],
       connections: connections.data ?? [],
-      activeKeyOrgs: (keys.data ?? [])
-        .filter((k) => !k.expires_at || new Date(k.expires_at).getTime() > nowMs)
-        .map((k) => k.organization_id),
       selectedOrgs: (pubs.data ?? []).map((p) => p.organization_id),
       states: states.data ?? [],
     },
