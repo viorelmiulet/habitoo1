@@ -171,6 +171,7 @@ describe("regula 3: mapper-ul trimite valoarea salvată", () => {
     };
     const on = await mapPropertyToRomimo(property, { ...context, promoted: true });
     const off = await mapPropertyToRomimo(property, context);
+    if (!on.ok) throw new Error(on.reasons.join(" / "));
     expect(on.ok && on.dto.ad?.promoted).toBe(true);
     expect(off.ok).toBe(true);
     if (off.ok) expect(off.dto.ad?.promoted).toBe(false);
