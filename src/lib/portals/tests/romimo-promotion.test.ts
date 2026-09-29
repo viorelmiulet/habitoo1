@@ -153,7 +153,7 @@ describe("regula 3: mapper-ul trimite valoarea salvată", () => {
       district: null,
       lat: 46.77,
       lng: 23.6,
-      assignedTo: null,
+      assignedTo: "agent-1",
       usableSurface: 52,
       builtSurface: 120,
       landSurface: 300,
