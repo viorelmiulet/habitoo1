@@ -1837,7 +1837,7 @@ export type PropertyPortalCell = {
    * avertismentul, nu linkul.
    */
   publicWarning: string | null;
-  offerLinks: { transaction: string | null; url: string }[];
+  offerLinks: { transaction: string | null; url: string; label: string | null }[];
 };
 
 export type PropertyPortalMatrix = {
@@ -2037,6 +2037,7 @@ export const getPropertiesPortalMatrix = createServerFn({ method: "POST" })
           offerLinks: parsePortalOffers(listing?.portal_offers).map((o) => ({
             transaction: o.transaction,
             url: o.url,
+            label: o.label ?? null,
           })),
           publicWarning:
             portal.id === "imobiliare_ro" && imobiliareNoSubscription && listing?.public_url
