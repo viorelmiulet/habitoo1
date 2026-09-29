@@ -361,7 +361,7 @@ describe("mapPropertyToRomimo — garsonieră (studio)", () => {
     title: "Garsonieră modernă Militari",
   };
 
-  it("garsonieră la vânzare → categoria 343, roomno „1 cameră" chiar fără număr de camere", async () => {
+  it("garsonieră la vânzare → categoria 343, roomno 1 cameră chiar fără număr de camere", async () => {
     const result = await mapPropertyToRomimo(
       { ...studioBase, transactionKind: "sale" },
       baseContext,
@@ -377,7 +377,7 @@ describe("mapPropertyToRomimo — garsonieră (studio)", () => {
     expect(result.dto.properties).toContainEqual({ key: "yearofbuilding", value: "1985" });
   });
 
-  it("garsonieră la închiriere → categoria 318, roomno „1 cameră"", async () => {
+  it("garsonieră la închiriere → categoria 318, roomno 1 cameră", async () => {
     const result = await mapPropertyToRomimo(
       { ...studioBase, transactionKind: "rent" },
       baseContext,
@@ -388,7 +388,7 @@ describe("mapPropertyToRomimo — garsonieră (studio)", () => {
     expect(result.dto.properties).toContainEqual({ key: "roomno", value: "1 cameră" });
   });
 
-  it("garsonieră cu rooms = 1 păstrează „1 cameră"", async () => {
+  it("garsonieră cu rooms = 1 păstrează 1 cameră", async () => {
     const result = await mapPropertyToRomimo(
       { ...studioBase, transactionKind: "sale", rooms: 1 },
       baseContext,
