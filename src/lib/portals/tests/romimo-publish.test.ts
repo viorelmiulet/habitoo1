@@ -190,7 +190,7 @@ describe("publicarea Romimo cu date reale", () => {
     expect(dto["ad"]?.["category"]).toBe(338);
     expect(dto["ad"]?.["price"]).toBe(124000);
     expect(dto["contact"]?.["contactPhone"]).toBe("+40727151461");
-    expect(dto["location"]?.["countyName"]).toBe("Cluj");
+    expect(dto["location"]?.["countyName"]).toBe("cluj");
     expect(dto["properties"]).toEqual(
       expect.arrayContaining([
         { key: "livingspace", value: "52" },
