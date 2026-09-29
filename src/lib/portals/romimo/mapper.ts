@@ -102,6 +102,8 @@ export type RomimoMapperContext = {
   publicBaseUrl: string;
   /** Injectabil în teste; implicit `new Date()`. */
   now?: Date;
+  /** Promovarea salvată în Habitoo pentru acest anunț (`ad.promoted`). Implicit NU. */
+  promoted?: boolean;
 };
 
 
@@ -412,7 +414,7 @@ export async function mapPropertyToRomimo(
   const dto: Partial<SaveArticleDto> = {
     ad: {
       active: true,
-      promoted: false,
+      promoted: context.promoted === true,
       externalid: externalId as string,
       category,
       price: price as number,

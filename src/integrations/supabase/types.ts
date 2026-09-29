@@ -4861,6 +4861,7 @@ export type Database = {
           last_synced_at: string | null
           organization_id: string
           portal_key: string
+          promoted: boolean
           property_id: string
           status: string
           updated_at: string
@@ -4878,6 +4879,7 @@ export type Database = {
           last_synced_at?: string | null
           organization_id: string
           portal_key: string
+          promoted?: boolean
           property_id: string
           status?: string
           updated_at?: string
@@ -4895,6 +4897,7 @@ export type Database = {
           last_synced_at?: string | null
           organization_id?: string
           portal_key?: string
+          promoted?: boolean
           property_id?: string
           status?: string
           updated_at?: string

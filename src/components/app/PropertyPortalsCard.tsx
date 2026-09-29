@@ -24,6 +24,7 @@ import { Label } from "@/components/ui/label";
 import { StatusPill, type StatusPillState } from "@/components/ui/status-pill";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
+import { effectivePromoted } from "@/lib/portals/promotion-flag";
 import { PortalLogoStack } from "@/components/app/PortalLogo";
 import { getMyPortalSlot } from "@/lib/portals/slots.functions";
 import { PropertyImobiliarePromotionsCard } from "@/components/app/PropertyImobiliarePromotionsCard";
@@ -93,6 +94,8 @@ function operationLabel(operation: string): string {
     update: "Actualizare",
     withdraw: "Retragere",
     status: "Verificare",
+    promote_on: "Promovare activată",
+    promote_off: "Promovare dezactivată",
   };
   return labels[operation] ?? operation.replaceAll("_", " ");
 }
@@ -214,13 +217,24 @@ export const PropertyPortalsCard = forwardRef<
           collabTerms.trim() !== (collabRow?.terms ?? ""))));
 
   const [checked, setChecked] = useState<Record<string, boolean>>({});
+  const [promotedChecked, setPromotedChecked] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     if (cells.length === 0) return;
     setChecked(Object.fromEntries(cells.map((c) => [c.portalId, c.selected])));
+    setPromotedChecked(Object.fromEntries(cells.map((c) => [c.portalId, c.promoted])));
   }, [cells]);
 
-  const dirty = cells.filter((c) => (checked[c.portalId] ?? c.selected) !== c.selected);
+  /** „Promovat” e valabil doar cât timp „Publicat” e bifat. */
+  const promotedValue = (c: PropertyPortalCell) =>
+    c.promotionFlag &&
+    effectivePromoted(checked[c.portalId] ?? c.selected, promotedChecked[c.portalId] ?? c.promoted);
+
+  const dirty = cells.filter(
+    (c) =>
+      (checked[c.portalId] ?? c.selected) !== c.selected ||
+      (c.promotionFlag && promotedValue(c) !== c.promoted),
+  );
   /**
    * Portaluri bifate care trebuie sincronizate la apăsarea butonului „Publică”:
    * fie sunt publicate (→ actualizare cu datele curente), fie sunt retrase/în
@@ -239,7 +253,11 @@ export const PropertyPortalsCard = forwardRef<
           propertyId,
           selections: cells
             .filter((c) => c.availability === "available")
-            .map((c) => ({ portalId: c.portalId, enabled: checked[c.portalId] ?? c.selected })),
+            .map((c) => ({
+              portalId: c.portalId,
+              enabled: checked[c.portalId] ?? c.selected,
+              ...(c.promotionFlag ? { promoted: promotedValue(c) } : {}),
+            })),
           // Butonul unic „Publică” sincronizează starea curentă, deci ofertele
           // deja publicate primesc o actualizare reală cu datele editate.
           syncExisting: true,
@@ -560,8 +578,40 @@ export const PropertyPortalsCard = forwardRef<
                               );
                             }
                             setChecked((prev) => ({ ...prev, [cell.portalId]: next === true }));
+                            // Debifarea „Publicat” debifează automat „Promovat”.
+                            if (next !== true) {
+                              setPromotedChecked((prev) => ({ ...prev, [cell.portalId]: false }));
+                            }
                           }}
                         />
+                        {cell.promotionFlag ? (
+                          <label htmlFor={`portal-${cell.portalId}`} className="text-xs">
+                            Publicat
+                          </label>
+                        ) : null}
+                        {cell.promotionFlag ? (
+                          <label
+                            htmlFor={`portal-${cell.portalId}-promoted`}
+                            className={cn(
+                              "inline-flex items-center gap-2 text-xs",
+                              !value && "text-muted-foreground",
+                            )}
+                          >
+                            <Checkbox
+                              id={`portal-${cell.portalId}-promoted`}
+                              checked={promotedValue(cell)}
+                              disabled={disabled || !value}
+                              aria-label={`Promovat pe ${cell.portalName}`}
+                              onCheckedChange={(next) =>
+                                setPromotedChecked((prev) => ({
+                                  ...prev,
+                                  [cell.portalId]: next === true,
+                                }))
+                              }
+                            />
+                            Promovat
+                          </label>
+                        ) : null}
                       </div>
                     </div>
 

@@ -288,7 +288,10 @@ export const buildRomimoArticle: RomimoArticleBuilder = async (ctx, ref) => {
   });
   if (!loaded.ok) return { ok: false, reasons: loaded.reasons };
 
-  const mapped = await mapPropertyToRomimo(loaded.property, loaded.context);
+  const mapped = await mapPropertyToRomimo(loaded.property, {
+    ...loaded.context,
+    promoted: ref.promoted === true,
+  });
   if (!mapped.ok) return { ok: false, reasons: mapped.reasons };
 
   const { ad, contact, location, properties, pictures } = mapped.dto;

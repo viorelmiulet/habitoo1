@@ -81,6 +81,11 @@ export type PortalDefinition = {
   public_feed_path_template?: string;
   /** Limitări reale, afișate în UI ca să nu promitem funcții inexistente. */
   notes?: string;
+  /**
+   * Portalul are o singură opțiune de promovare, un flag trimis odată cu
+   * anunțul (ex. Romimo `ad.promoted`). Afișează bifa „Promovat” în Publicare.
+   */
+  supports_promoted_flag?: boolean;
 };
 
 
@@ -477,6 +482,7 @@ export const PORTALS: PortalDefinition[] = [
       ],
     },
     website: "https://www.romimo.ro",
+    supports_promoted_flag: true,
   },
   {
     id: "primulanunt",
