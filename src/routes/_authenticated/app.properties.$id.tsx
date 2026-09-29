@@ -175,11 +175,14 @@ function PropertyDetailPage() {
   const unarchivePropertyFn = useServerFn(unarchiveProperty);
   const resolvePostalCode = useServerFn(resolvePropertyPostalCode);
   const [archiveOpen, setArchiveOpen] = useState(false);
+  const [descriptionExpanded, setDescriptionExpanded] = useState(false);
+  const [specsExpanded, setSpecsExpanded] = useState(false);
+  const loadPortalMatrix = useServerFn(getPropertiesPortalMatrix);
 
   const { data, isLoading } = useQuery({
     queryKey: ["property", id],
     queryFn: async () => {
-      const [property, activities, leads, requests, contacts, audit] = await Promise.all([
+      const [property, activities, leads, requests, contacts, audit, imageCount] = await Promise.all([
         supabase.from("properties").select("*").eq("id", id).maybeSingle(),
         supabase
           .from("activities")
@@ -195,6 +198,10 @@ function PropertyDetailPage() {
           .eq("entity_id", id)
           .order("created_at", { ascending: false })
           .limit(50),
+        supabase
+          .from("property_images")
+          .select("id", { count: "exact", head: true })
+          .eq("property_id", id),
       ]);
       if (property.error) throw property.error;
       return {
@@ -204,6 +211,7 @@ function PropertyDetailPage() {
         requests: requests.data ?? [],
         contacts: contacts.data ?? [],
         audit: audit.data ?? [],
+        imageCount: imageCount.count ?? 0,
       };
     },
   });
@@ -215,12 +223,34 @@ function PropertyDetailPage() {
     queryFn: async () => {
       const { data: profile, error } = await supabase
         .from("profiles")
-        .select("full_name")
+        .select("full_name,phone,job_title,avatar_url")
         .eq("id", property?.assigned_to ?? "")
         .maybeSingle();
       if (error) throw error;
       return profile;
     },
+  });
+
+  const { data: neighbors = [] } = useQuery({
+    queryKey: ["property-neighbors", orgId],
+    enabled: Boolean(orgId),
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("properties")
+        .select("id,reference")
+        .eq("organization_id", orgId as string)
+        .is("deleted_at", null)
+        .neq("status", "archived" as never)
+        .order("updated_at", { ascending: false });
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
+  const portalMatrix = useQuery({
+    queryKey: ["property-portals-matrix", orgId, id],
+    enabled: Boolean(orgId),
+    queryFn: () => loadPortalMatrix({ data: { propertyIds: [id] } }),
   });
 
   const [draft, setDraft] = useState<Record<string, string>>({});
