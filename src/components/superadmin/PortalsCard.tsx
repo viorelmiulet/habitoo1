@@ -471,6 +471,7 @@ export function PortalsCard({ organizationId }: { organizationId: string }) {
                               {item.listings.published} trimise · {item.listings.failed} cu eroare
                             </dd>
                           </div>
+                          {item.hasConnectionFields ? (
                           <div>
                             <dt className="text-muted-foreground">Credențiale portal</dt>
                             <dd>
@@ -479,6 +480,7 @@ export function PortalsCard({ organizationId }: { organizationId: string }) {
                                 : "Nesalvate"}
                             </dd>
                           </div>
+                          ) : null}
                         </>
                       )}
                       <div>
@@ -739,8 +741,15 @@ export function PortalsCard({ organizationId }: { organizationId: string }) {
                       />
                     </div>
 
+                    {item.indexStatus ? (
+                      <div className="rounded-lg border border-border p-3 text-sm">
+                        <p className="text-muted-foreground">Stare în indexul ClickImob</p>
+                        <p className="font-medium">{item.indexStatus}</p>
+                      </div>
+                    ) : null}
 
-                    {item.oauth || item.portal.id === "properstar" ? null : (
+
+                    {item.oauth || !item.keysAllowed ? null : (
                       <div className="space-y-2 rounded-lg border border-border p-3">
                         <p className="text-sm font-medium">Acces al portalului la ofertele tale</p>
                         <div className="flex items-center justify-between gap-3 text-xs">
