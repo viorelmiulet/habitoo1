@@ -715,7 +715,12 @@ function PropertyDetailPage() {
           </div>
         </div>
         <div className="mt-6 flex flex-wrap items-center gap-2 border-t border-border pt-5">
-          <Button onClick={() => setTab("publishing")}>Publică pe portaluri</Button>
+          <Button
+            onClick={() => tab === "publishing" ? publish.mutate() : setTab("publishing")}
+            disabled={publish.isPending || save.isPending}
+          >
+            {publish.isPending ? "Se publică…" : "Publică pe portaluri"}
+          </Button>
           {editing ? <Button variant="outline" onClick={() => setEditing(false)}>Anulează</Button> : <Button variant="outline" onClick={() => { startEdit(); setTab("overview"); }}><Pencil /> Editează</Button>}
           <Button variant="outline" onClick={() => setActivityDialog({ open: true, kind: "viewing" })}><CalendarPlus /> Programează vizionare</Button>
           <Button variant="outline" onClick={() => setActivityDialog({ open: true, kind: "call" })}>Adaugă activitate</Button>
