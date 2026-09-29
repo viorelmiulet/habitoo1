@@ -7,6 +7,8 @@ import { OrgBlocked } from "@/components/app/OrgBlocked";
 import { appHead } from "@/components/app/app-head";
 import { useCurrentUser } from "@/hooks/use-session";
 import { useAiFeatures } from "@/hooks/use-ai-features";
+import { CompleteAgencyData } from "@/components/app/CompleteAgencyData";
+import { mustCompleteAgencyData } from "@/lib/agency-public-data";
 
 export const Route = createFileRoute("/_authenticated/app")({
   head: () => appHead("Habitoo CRM — aplicație"),
@@ -22,6 +24,15 @@ function AppLayout() {
   const blocked = user.isSuperadmin ? null : user.orgBlocked;
   if (blocked) return <OrgBlocked reason={blocked} />;
   if (!user.organization && !user.isSuperadmin) return <Navigate to="/onboarding" />;
+  if (
+    mustCompleteAgencyData({
+      roles: user.roles,
+      impersonating: Boolean(user.impersonation),
+      org: user.organization,
+    })
+  ) {
+    return <CompleteAgencyData user={user} />;
+  }
 
   // Funcțiile AI sunt activate individual per agenție; cele oprite nu apar în meniu.
   const agencyGroups = filterAiNavigation(agencyNavFor(user.isAdmin), features);

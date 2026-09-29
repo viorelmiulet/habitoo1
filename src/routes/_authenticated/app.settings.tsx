@@ -161,6 +161,10 @@ function SettingsPage() {
 
     mutationFn: async () => {
       if (!user?.organization?.id) throw new Error("Agenția nu este configurată.");
+      for (const f of ["email", "phone", "city", "postal_code"] as const) {
+        const msg = validateRequiredAgencyField(f, orgForm[f]);
+        if (msg) throw new Error(`${AGENCY_FIELD_LABELS[f]}: ${msg}`);
+      }
       const { error } = await supabase
         .from("organizations")
         .update({
@@ -302,6 +306,16 @@ function SettingsPage() {
                 saveOrg.mutate();
               }}
             >
+              <div className="grid gap-3 rounded-md border p-3 text-sm sm:grid-cols-2">
+                <div>
+                  <div className="text-muted-foreground">Denumire legală</div>
+                  <div>{user?.organization?.legal_name ?? "—"}</div>
+                </div>
+                <div>
+                  <div className="text-muted-foreground">CUI</div>
+                  <div>{user?.organization?.cui ?? "—"}</div>
+                </div>
+              </div>
               <div className="space-y-2">
                 <Label htmlFor="name">Numele agenției</Label>
                 <Input
@@ -312,7 +326,7 @@ function SettingsPage() {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="city">Oraș</Label>
+                <Label htmlFor="city">Oraș *</Label>
                 <Input
                   id="city"
                   value={orgForm.city}
@@ -321,7 +335,7 @@ function SettingsPage() {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="org_postal_code">Cod poștal</Label>
+                <Label htmlFor="org_postal_code">Cod poștal *</Label>
                 <Input
                   id="org_postal_code"
                   value={orgForm.postal_code}
@@ -332,7 +346,7 @@ function SettingsPage() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="org_phone">Telefon</Label>
+                <Label htmlFor="org_phone">Telefon *</Label>
                 <Input
                   id="org_phone"
                   value={orgForm.phone}
@@ -341,7 +355,7 @@ function SettingsPage() {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="org_email">Email</Label>
+                <Label htmlFor="org_email">Email *</Label>
                 <Input
                   id="org_email"
                   value={orgForm.email}
