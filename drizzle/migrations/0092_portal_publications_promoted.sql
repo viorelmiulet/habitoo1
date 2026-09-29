@@ -1,0 +1,2 @@
+ALTER TABLE public.portal_publications ADD COLUMN IF NOT EXISTS promoted boolean NOT NULL DEFAULT false;
+COMMENT ON COLUMN public.portal_publications.promoted IS 'Promovarea confirmată de portal pentru anunț (portaluri cu promovare prin flag, ex. Romimo ad.promoted).';
