@@ -200,7 +200,12 @@ export function romaniaDateBoundary(date: string, boundary: "start" | "end"): st
     boundary === "end" ? 59 : 0,
     boundary === "end" ? 999 : 0,
   );
-  let instant = new Date(localAsUtc);
-  instant = new Date(localAsUtc - bucharestOffsetMs(instant));
+  const offsetProbe = new Date(Date.UTC(
+    Number(year), Number(month) - 1, Number(day),
+    boundary === "end" ? 23 : 0,
+    boundary === "end" ? 59 : 0,
+    boundary === "end" ? 59 : 0,
+  ));
+  const instant = new Date(localAsUtc - bucharestOffsetMs(offsetProbe));
   return instant.toISOString();
 }
