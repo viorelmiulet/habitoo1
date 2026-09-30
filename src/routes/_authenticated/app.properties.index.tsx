@@ -295,6 +295,7 @@ function PropertiesPage() {
   });
 
   const { data: result, isLoading: listLoading } = useQuery({
+    // (isLoading de mai jos combină și încărcarea filtrului de portaluri)
     queryKey: ["properties", orgId, filters, debouncedQ, sort, page, favoriteIds, portalIds],
     enabled: Boolean(orgId) && (!portalFilter || portalIds !== undefined),
     queryFn: async () => {
