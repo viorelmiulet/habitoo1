@@ -6,6 +6,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
 import {
   ArchiveRestore,
+  Trash2,
   Building2,
   ChevronLeft,
   ChevronRight,
@@ -58,6 +59,7 @@ import {
 } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { useCurrentUser } from "@/hooks/use-session";
+import { DeletePropertyDialog, canDeleteProperty } from "@/components/app/DeletePropertyDialog";
 import { useSavedViews } from "@/hooks/use-saved-views";
 import { formatMoney, formatNumber, relativeDays } from "@/lib/format";
 import { downloadCsv } from "@/lib/crm";
@@ -180,6 +182,7 @@ function PropertiesPage() {
   const [sort, setSort] = useState<SortKey>("created_desc");
   const [page, setPage] = useState(0);
   const [archiveTarget, setArchiveTarget] = useState<string[] | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
   const [promptRequest, setPromptRequest] = useState<PromptRequest | null>(null);
   const archivePropertyFn = useServerFn(archiveProperty);
   const unarchivePropertyFn = useServerFn(unarchiveProperty);
@@ -1084,6 +1087,17 @@ function PropertiesPage() {
                         <ArchiveRestore className="size-4" /> Dezarhivează
                       </Button>
                     ) : null}
+                    {canDeleteProperty(user, p) ? (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        aria-label={`Șterge anunțul ${p.reference ?? p.title}`}
+                        title="Șterge anunțul"
+                        onClick={() => setDeleteTarget(p.id)}
+                      >
+                        <Trash2 className="size-4 text-destructive" />
+                      </Button>
+                    ) : null}
                   </li>
                 ))}
               </ul>
@@ -1170,6 +1184,15 @@ function PropertiesPage() {
         </AlertDialogContent>
       </AlertDialog>
 
+      <DeletePropertyDialog
+        propertyId={deleteTarget}
+        open={deleteTarget !== null}
+        onOpenChange={(o) => !o && setDeleteTarget(null)}
+        onDeleted={() => {
+          setSelected((s) => s.filter((x) => x !== deleteTarget));
+          setDeleteTarget(null);
+        }}
+      />
       <PromptDialog request={promptRequest} onClose={() => setPromptRequest(null)} />
     </>
   );

@@ -93,6 +93,7 @@ import { PropertyLocationMap } from "@/components/app/PropertyLocationMap";
 import { PropertyMapClient } from "@/components/app/PropertyMapClient";
 import { APPROX_RADIUS_M, publicCoords } from "@/lib/geo";
 import { useCurrentUser } from "@/hooks/use-session";
+import { DeletePropertyDialog, canDeleteProperty } from "@/components/app/DeletePropertyDialog";
 import { brandingFromOrg, buildPresentationHtml } from "@/lib/materials";
 import { printHtmlDocument } from "@/lib/print";
 import { MEDIA_BUCKET, signedUrls } from "@/lib/storage";
@@ -175,6 +176,7 @@ function PropertyDetailPage() {
   const unarchivePropertyFn = useServerFn(unarchiveProperty);
   const resolvePostalCode = useServerFn(resolvePropertyPostalCode);
   const [archiveOpen, setArchiveOpen] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
   const [descriptionExpanded, setDescriptionExpanded] = useState(false);
   const [specsExpanded, setSpecsExpanded] = useState(false);
   const loadPortalMatrix = useServerFn(getPropertiesPortalMatrix);
@@ -740,6 +742,7 @@ function PropertyDetailPage() {
               </DropdownMenuSub>
               <DropdownMenuSeparator />
               {property.status === "archived" ? <DropdownMenuItem onClick={() => unarchive.mutate()}>Dezarhivează</DropdownMenuItem> : <DropdownMenuItem onClick={() => setArchiveOpen(true)}>Arhivează</DropdownMenuItem>}
+              {canDeleteProperty(user, property) ? <><DropdownMenuSeparator /><DropdownMenuItem className="text-destructive focus:text-destructive" onClick={() => setDeleteOpen(true)}>Șterge anunțul</DropdownMenuItem></> : null}
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
@@ -758,6 +761,12 @@ function PropertyDetailPage() {
         open={archiveOpen}
         onOpenChange={setArchiveOpen}
         onArchived={() => navigate({ to: "/app/properties" })}
+      />
+      <DeletePropertyDialog
+        propertyId={id}
+        open={deleteOpen}
+        onOpenChange={setDeleteOpen}
+        onDeleted={() => navigate({ to: "/app/properties" })}
       />
 
       <Tabs value={tab} onValueChange={setTab}>
