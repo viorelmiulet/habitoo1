@@ -36,7 +36,8 @@ function fakeDb() {
   const roles: Record<string, string> = { [ADMIN]: "agency_admin", [AGENT]: "agent", [OTHER]: "agent", sa: "superadmin" };
   const deny = (message: string) => ({ data: null, error: { message } });
   const asUser = (uid: string) => ({
-    rpc: async (name: string, p: Row) => {
+    rpc: async (name: string, params?: Row) => {
+      const p = params ?? {};
       const row = tables["properties"]!.find((r) => r["id"] === p["_id"]);
       if (name === "delete_property") {
         if (!row || (row["deleted_at"] && roles[uid] !== "superadmin")) return deny("Anunțul nu a fost găsit.");
