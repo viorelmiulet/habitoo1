@@ -1,9 +1,14 @@
 import { describe, expect, it } from "vitest";
 import {
   PROPERTY_TYPE_TABS,
+  buildCityFilterOptions,
+  buildDistrictFilterOptions,
+  cityRawValues,
   isAtLeastFilter,
+  normalizeCityFilterValue,
   normalizeSavedPropertyFilters,
   numericFilterValue,
+  romaniaDateBoundary,
   shouldShowAdvancedFilters,
 } from "./property-list-filters";
 
@@ -43,5 +48,45 @@ describe("filtrele listei de proprietăți", () => {
   it("ascunde câmpurile avansate când grila este restrânsă", () => {
     expect(shouldShowAdvancedFilters(false)).toBe(false);
     expect(shouldShowAdvancedFilters(true)).toBe(true);
+  });
+
+  it("normalizează variantele București și filtrează pe toate valorile brute din grup", () => {
+    const rows = [
+      { city: "Bucureşti", district: "Militari", source: "immoflux" },
+      { city: "București", district: "Drumul Taberei", source: "manual" },
+      { city: "Bucureşti Sectorul 6", district: "Militari", source: "immoflux" },
+      { city: "Cluj-Napoca", district: "Centru", source: "manual" },
+    ];
+    const options = buildCityFilterOptions(rows);
+
+    expect(normalizeCityFilterValue("Bucureşti Sectorul 6")).toBe("București");
+    expect(options.find((option) => option.value === "București")).toMatchObject({ count: 3 });
+    expect(cityRawValues(options, "București")).toEqual([
+      "Bucureşti",
+      "București",
+      "Bucureşti Sectorul 6",
+    ]);
+  });
+
+  it("arată și numără numai zonele orașului selectat", () => {
+    const rows = [
+      { city: "Bucureşti", district: "Militari", source: "immoflux" },
+      { city: "Bucureşti Sectorul 6", district: "Militari", source: "manual" },
+      { city: "București", district: "Drumul Taberei", source: "manual" },
+      { city: "Cluj-Napoca", district: "Centru", source: "manual" },
+    ];
+    const cities = buildCityFilterOptions(rows);
+
+    expect(buildDistrictFilterOptions(rows, "București", cities)).toEqual([
+      { value: "Drumul Taberei", label: "Drumul Taberei", count: 1 },
+      { value: "Militari", label: "Militari", count: 2 },
+    ]);
+  });
+
+  it("calculează începutul și sfârșitul zilei în ora României", () => {
+    expect(romaniaDateBoundary("2026-09-30", "start")).toBe("2026-09-29T21:00:00.000Z");
+    expect(romaniaDateBoundary("2026-09-30", "end")).toBe("2026-09-30T20:59:59.999Z");
+    expect(romaniaDateBoundary("2026-01-15", "start")).toBe("2026-01-14T22:00:00.000Z");
+    expect(romaniaDateBoundary("2026-01-15", "end")).toBe("2026-01-15T21:59:59.999Z");
   });
 });
