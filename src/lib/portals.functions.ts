@@ -3033,7 +3033,6 @@ export async function applyPortalSelectionForOrg(input: {
           ok: false,
           message: `${definition.display_name}: ${reason}`,
           code: portalError.code,
-          httpStatus: portalError.httpStatus ?? null,
         });
         await logOperation({
           organizationId,
