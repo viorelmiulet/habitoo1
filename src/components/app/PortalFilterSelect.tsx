@@ -58,21 +58,6 @@ export function PortalFilterSelect({
   const selectedPortal =
     parsed && parsed.portal !== "any" ? options.find((o) => o.portalId === parsed.portal) : null;
 
-  const item = (val: string, label: string, indent = false) => (
-    <CommandItem
-      key={val}
-      value={val}
-      onSelect={() => {
-        onChange(val);
-        setOpen(false);
-      }}
-      className={cn(indent && "pl-11", value === val && "bg-accent")}
-    >
-      <span className="flex-1">{label}</span>
-      {value === val ? <Check className="size-4" aria-hidden /> : null}
-    </CommandItem>
-  );
-
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
@@ -93,32 +78,65 @@ export function PortalFilterSelect({
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-80 p-0" align="start">
-        <Command>
-          <p className="px-3 pt-3 pb-1 text-xs text-muted-foreground">
-            Doar portalurile activate pentru agenția ta.
-          </p>
-          <CommandList className="max-h-96">
-            <CommandGroup>{item("all", "Oricare")}</CommandGroup>
-            <CommandGroup heading="Toate portalurile">
-              {BUCKETS.map((b) => item(`any:${b}`, ANY_LABELS[b]))}
-            </CommandGroup>
-            {options.map((o) => (
-              <CommandGroup
-                key={o.portalId}
-                data-portal-group={o.portalId}
-                heading={
-                  <span className="flex items-center gap-2 text-sm font-semibold normal-case text-foreground">
-                    <PortalLogoStack portalId={o.portalId} name={o.name} size={28} />
-                    {o.name}
-                  </span>
-                }
-              >
-                {BUCKETS.map((b) => item(`${o.portalId}:${b}`, bucketLabel(b, o.pushSupported), true))}
-              </CommandGroup>
-            ))}
-          </CommandList>
-        </Command>
+        <PortalFilterOptionsList
+          value={value}
+          options={options}
+          onSelect={(v) => {
+            onChange(v);
+            setOpen(false);
+          }}
+        />
       </PopoverContent>
     </Popover>
+  );
+}
+
+/** Lista de opțiuni (exportată separat pentru teste). */
+export function PortalFilterOptionsList({
+  value,
+  options,
+  onSelect,
+}: {
+  value: string;
+  options: PortalFilterOption[];
+  onSelect: (value: string) => void;
+}) {
+  const item = (val: string, label: string, indent = false) => (
+    <CommandItem
+      key={val}
+      value={val}
+      onSelect={() => onSelect(val)}
+      className={cn(indent && "pl-11", value === val && "bg-accent")}
+    >
+      <span className="flex-1">{label}</span>
+      {value === val ? <Check className="size-4" aria-hidden /> : null}
+    </CommandItem>
+  );
+  return (
+    <Command>
+      <p className="px-3 pt-3 pb-1 text-xs text-muted-foreground">
+        Doar portalurile activate pentru agenția ta.
+      </p>
+      <CommandList className="max-h-96">
+        <CommandGroup>{item("all", "Oricare")}</CommandGroup>
+        <CommandGroup heading="Toate portalurile">
+          {BUCKETS.map((b) => item(`any:${b}`, ANY_LABELS[b]))}
+        </CommandGroup>
+        {options.map((o) => (
+          <CommandGroup
+            key={o.portalId}
+            data-portal-group={o.portalId}
+            heading={
+              <span className="flex items-center gap-2 text-sm font-semibold normal-case text-foreground">
+                <PortalLogoStack portalId={o.portalId} name={o.name} size={28} />
+                {o.name}
+              </span>
+            }
+          >
+            {BUCKETS.map((b) => item(`${o.portalId}:${b}`, bucketLabel(b, o.pushSupported), true))}
+          </CommandGroup>
+        ))}
+      </CommandList>
+    </Command>
   );
 }

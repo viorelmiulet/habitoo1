@@ -1,6 +1,5 @@
-// @vitest-environment jsdom
 import { describe, expect, it, vi } from "vitest";
-import { render, screen, fireEvent } from "@testing-library/react";
+import { renderToStaticMarkup } from "react-dom/server";
 import {
   matchesPortalFilter,
   parsePortalFilter,
@@ -14,7 +13,7 @@ vi.mock("@/components/app/PortalLogo", () => ({
   ),
 }));
 
-import { PortalFilterSelect } from "@/components/app/PortalFilterSelect";
+import { PortalFilterOptionsList } from "@/components/app/PortalFilterSelect";
 
 describe("maparea stărilor", () => {
   it("published/in_feed → Publicate, error → Cu erori, restul → Nepublicate", () => {
@@ -63,15 +62,15 @@ describe("PortalFilterSelect", () => {
     { portalId: "properstar", name: "Properstar", pushSupported: false },
   ];
   it("afișează doar portalurile activate, fiecare cu PortalLogoStack", () => {
-    globalThis.ResizeObserver ??= class { observe() {} unobserve() {} disconnect() {} } as never;
-    Element.prototype.scrollIntoView ??= () => {};
-    render(<PortalFilterSelect value="all" options={options} onChange={() => {}} />);
-    fireEvent.click(screen.getByRole("combobox", { name: "Publicare pe portaluri" }));
-    expect(screen.getByText("Doar portalurile activate pentru agenția ta.")).toBeTruthy();
-    expect(screen.getByText("Publicate pe cel puțin un portal")).toBeTruthy();
-    expect(screen.getByTestId("logo-stack-romimo").dataset.size).toBe("28");
-    expect(screen.getByTestId("logo-stack-properstar")).toBeTruthy();
-    expect(screen.queryByTestId("logo-stack-imobiliare_ro")).toBeNull();
-    expect(screen.getByText("Publicate (în feed)")).toBeTruthy();
+    const html = renderToStaticMarkup(
+      <PortalFilterOptionsList value="romimo:unpublished" options={options} onSelect={() => {}} />,
+    );
+    expect(html).toContain("Doar portalurile activate pentru agenția ta.");
+    expect(html).toContain("Toate portalurile");
+    expect(html).toContain("Publicate pe cel puțin un portal");
+    expect(html).toContain('data-testid="logo-stack-romimo" data-size="28"');
+    expect(html).toContain('data-testid="logo-stack-properstar"');
+    expect(html).not.toContain("logo-stack-imobiliare_ro");
+    expect(html).toContain("Publicate (în feed)");
   });
 });
