@@ -186,7 +186,7 @@ function PropertiesPage() {
       void writeUrlState({ ...filters, q: searchInput.trim() }, sort, 1, view, true);
     }, 300);
     return () => clearTimeout(t);
-  }, [searchInput, filters, sort, view]);
+  }, [searchInput, filters.q, sort, view]);
 
   useEffect(() => {
     try {
