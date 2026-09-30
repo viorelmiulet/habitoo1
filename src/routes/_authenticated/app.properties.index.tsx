@@ -26,7 +26,6 @@ import { PageHeader } from "@/components/app/PageHeader";
 import { CardGridSkeleton, ListSkeleton } from "@/components/app/LoadingState";
 import { PropertyPortalsCell, usePropertyPortals } from "@/components/app/PropertyPortalsCell";
 import { PortalFilterSelect, portalFilterLabel } from "@/components/app/PortalFilterSelect";
-import { PortalLogoStack } from "@/components/app/PortalLogo";
 import { getPortalFilterOptions, getPropertyIdsByPortalState } from "@/lib/portals.functions";
 import { parsePortalFilter } from "@/lib/portals/portal-state";
 import { PropertyCard, type PropertyCardRow } from "@/components/app/PropertyCard";
@@ -289,10 +288,6 @@ function PropertiesPage() {
     parsedPortal &&
     (parsedPortal.portal === "any" || portalOptions.some((o) => o.portalId === parsedPortal.portal))
       ? parsedPortal
-      : null;
-  const portalPillPortal =
-    portalFilter && portalFilter.portal !== "any"
-      ? (portalOptions.find((o) => o.portalId === portalFilter.portal) ?? null)
       : null;
   const { data: portalIds, isLoading: portalIdsLoading } = useQuery({
     queryKey: ["property-portals-matrix", "filter-ids", orgId, portalFilter],
@@ -703,7 +698,7 @@ function PropertiesPage() {
             <legend className={fieldLabelClass}>Tranzacție</legend>
             <div className="grid grid-cols-3 overflow-hidden rounded-control border border-input bg-surface">
               {[["all", "Toate"], ["sale", "Vânzare"], ["rent", "Închiriere"]].map(([value, label]) => (
-                <Button key={value} type="button" variant="ghost" aria-pressed={filters.transaction === value} onClick={() => setFilters((f) => ({ ...f, transaction: value }))} className={cn("rounded-none border-0 px-2", filters.transaction === value && "bg-sidebar text-sidebar-foreground hover:bg-sidebar hover:text-sidebar-foreground")}>{label}</Button>
+                <Button key={value} type="button" variant="ghost" aria-pressed={filters.transaction === value} onClick={() => setFilters((f) => ({ ...f, transaction: value }))} className={cn("rounded-none border-0 px-2", filters.transaction === value && "bg-sidebar text-surface hover:bg-sidebar hover:text-surface")}>{label}</Button>
               ))}
             </div>
           </fieldset>
@@ -740,7 +735,7 @@ function PropertiesPage() {
             </fieldset>
             <fieldset>
               <legend className={fieldLabelClass}>Camere</legend>
-              <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-3">{[["", "Oricâte"], ["1", "1"], ["2", "2"], ["3", "3"], ["4", "4"], ["5+", "5+"]].map(([value, label]) => <Button key={value || "any"} type="button" variant="outline" aria-pressed={filters.rooms === value} onClick={() => setFilters((f) => ({ ...f, rooms: value }))} className={cn("px-2", filters.rooms === value && "border-sidebar bg-sidebar text-sidebar-foreground hover:bg-sidebar hover:text-sidebar-foreground")}>{label}</Button>)}</div>
+              <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-3">{[["", "Oricâte"], ["1", "1"], ["2", "2"], ["3", "3"], ["4", "4"], ["5+", "5+"]].map(([value, label]) => <Button key={value || "any"} type="button" variant="outline" aria-pressed={filters.rooms === value} onClick={() => setFilters((f) => ({ ...f, rooms: value }))} className={cn("px-2", filters.rooms === value && "border-sidebar bg-sidebar text-surface hover:bg-sidebar hover:text-surface")}>{label}</Button>)}</div>
             </fieldset>
             <fieldset>
               <legend className={fieldLabelClass}>Etaj</legend>
@@ -752,7 +747,7 @@ function PropertiesPage() {
             </fieldset>
             <fieldset>
               <legend className={fieldLabelClass}>Băi</legend>
-              <div className="grid grid-cols-4 gap-1.5">{[["", "Oricâte"], ["1", "1"], ["2", "2"], ["3+", "3+"]].map(([value, label]) => <Button key={value || "any"} type="button" variant="outline" aria-pressed={filters.bathrooms === value} onClick={() => setFilters((f) => ({ ...f, bathrooms: value }))} className={cn("px-1", filters.bathrooms === value && "border-sidebar bg-sidebar text-sidebar-foreground hover:bg-sidebar hover:text-sidebar-foreground")}>{label}</Button>)}</div>
+              <div className="grid grid-cols-4 gap-1.5">{[["", "Oricâte"], ["1", "1"], ["2", "2"], ["3+", "3+"]].map(([value, label]) => <Button key={value || "any"} type="button" variant="outline" aria-pressed={filters.bathrooms === value} onClick={() => setFilters((f) => ({ ...f, bathrooms: value }))} className={cn("px-1", filters.bathrooms === value && "border-sidebar bg-sidebar text-surface hover:bg-sidebar hover:text-surface")}>{label}</Button>)}</div>
             </fieldset>
             <div>
               <label htmlFor="property-agent" className={fieldLabelClass}>Agent</label>
@@ -767,7 +762,7 @@ function PropertiesPage() {
 
         {!filtersExpanded && hiddenPills.length > 0 ? (
           <div className="flex flex-wrap gap-2">
-            {hiddenPills.map((pill) => <Button key={String(pill.key)} type="button" variant="ghost" size="sm" onClick={() => clearPill(pill.key)} aria-label={`Renunță la filtrul ${pill.label}`} className="rounded-full bg-sidebar text-sidebar-foreground hover:bg-sidebar hover:text-sidebar-foreground">{pill.label}<X aria-hidden /></Button>)}
+            {hiddenPills.map((pill) => <Button key={String(pill.key)} type="button" variant="ghost" size="sm" onClick={() => clearPill(pill.key)} aria-label={`Renunță la filtrul ${pill.label}`} className="rounded-full bg-sidebar text-surface hover:bg-sidebar hover:text-surface">{pill.label}<X aria-hidden /></Button>)}
           </div>
         ) : null}
 
@@ -776,7 +771,7 @@ function PropertiesPage() {
             <span className={fieldLabelClass.replace("mb-2 block", "mb-0 inline")}>Afișează</span>
             {[["mine", "Doar ale mele"], ["favoritesOnly", "Doar favorite"], ["showArchived", "Include arhivate"]].map(([key, label]) => {
               const pressed = Boolean(filters[key as "mine" | "favoritesOnly" | "showArchived"]);
-              return <Button key={key} type="button" variant="outline" aria-pressed={pressed} onClick={() => setFilters((f) => ({ ...f, [key]: !pressed }))} className={cn("rounded-full", pressed && "border-sidebar bg-sidebar text-sidebar-foreground hover:bg-sidebar hover:text-sidebar-foreground")}>{key === "favoritesOnly" ? <Star aria-hidden /> : key === "showArchived" ? <ArchiveRestore aria-hidden /> : null}{label}</Button>;
+              return <Button key={key} type="button" variant="outline" aria-pressed={pressed} onClick={() => setFilters((f) => ({ ...f, [key]: !pressed }))} className={cn("rounded-full", pressed && "border-sidebar bg-sidebar text-surface hover:bg-sidebar hover:text-surface")}>{key === "favoritesOnly" ? <Star aria-hidden /> : key === "showArchived" ? <ArchiveRestore aria-hidden /> : null}{label}</Button>;
             })}
           </div>
           <div className="flex flex-wrap items-center gap-2">
@@ -855,6 +850,28 @@ function PropertiesPage() {
       </div>
 
       <div className="panel overflow-hidden">
+        <div className="flex flex-col justify-between gap-3 border-b border-border px-4 py-3 sm:flex-row sm:items-center">
+          <div className="flex items-baseline gap-2">
+            <span className="font-semibold">{total} {total === 1 ? "proprietate" : "proprietăți"}</span>
+            {filtersActive ? <span className="text-sm text-muted-foreground">din {portfolioTotal} în portofoliu</span> : null}
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <Select value={sort} onValueChange={(v) => setSort(v as SortKey)}>
+              <SelectTrigger className="w-64"><span className="shrink-0 text-muted-foreground">Sortare:</span><SelectValue /></SelectTrigger>
+              <SelectContent>{Object.entries(sortOptions).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}</SelectContent>
+            </Select>
+            <div className="grid grid-cols-2 overflow-hidden rounded-control border border-input bg-surface">
+              <Button variant="ghost" aria-pressed={view === "list"} onClick={() => setView("list")} className={cn("rounded-none border-0 px-3", view === "list" && "bg-sidebar text-surface hover:bg-sidebar hover:text-surface")}><List aria-hidden /> Listă</Button>
+              <Button variant="ghost" aria-pressed={view === "grid"} onClick={() => setView("grid")} className={cn("rounded-none border-0 px-3", view === "grid" && "bg-sidebar text-surface hover:bg-sidebar hover:text-surface")}><LayoutGrid aria-hidden /> Carduri</Button>
+            </div>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild><Button variant="outline"><Columns3 aria-hidden /> Coloane</Button></DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                {allColumns.map((column) => <DropdownMenuCheckboxItem key={column.key} checked={columns.includes(column.key)} onCheckedChange={(checked) => setColumns((current) => checked ? [...current, column.key] : current.filter((key) => key !== column.key))}>{column.label}</DropdownMenuCheckboxItem>)}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        </div>
         {view === "list" ? (
           <>
             <div className="hidden items-center gap-3 border-b border-border px-4 py-3 text-xs font-medium tracking-wide text-muted-foreground uppercase lg:flex">
@@ -1018,8 +1035,8 @@ function PropertiesPage() {
         <div className="flex items-center justify-between gap-3 border-t border-border px-4 py-3 text-sm">
           <span className="text-xs text-muted-foreground">
             {total > 0
-              ? `${page * PAGE_SIZE + 1}–${Math.min(total, (page + 1) * PAGE_SIZE)} din ${total}`
-              : "0 rezultate"}
+              ? `Rezultate ${page * PAGE_SIZE + 1}–${Math.min(total, (page + 1) * PAGE_SIZE)} din ${total}`
+              : "Rezultate 0 din 0"}
           </span>
           <div className="flex items-center gap-2">
             <Button
