@@ -8,8 +8,10 @@ import {
   ArchiveRestore,
   Trash2,
   Building2,
+  ChevronDown,
   ChevronLeft,
   ChevronRight,
+  ChevronUp,
   Columns3,
   Download,
   LayoutGrid,
@@ -24,7 +26,6 @@ import { PageHeader } from "@/components/app/PageHeader";
 import { CardGridSkeleton, ListSkeleton } from "@/components/app/LoadingState";
 import { PropertyPortalsCell, usePropertyPortals } from "@/components/app/PropertyPortalsCell";
 import { PortalFilterSelect, portalFilterLabel } from "@/components/app/PortalFilterSelect";
-import { PortalLogoStack } from "@/components/app/PortalLogo";
 import { getPortalFilterOptions, getPropertyIdsByPortalState } from "@/lib/portals.functions";
 import { parsePortalFilter } from "@/lib/portals/portal-state";
 import { PropertyCard, type PropertyCardRow } from "@/components/app/PropertyCard";
@@ -52,6 +53,7 @@ import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
   DropdownMenuContent,
+  DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
@@ -74,61 +76,25 @@ import {
   transactionLabels,
 } from "@/lib/labels";
 import { appHead } from "@/components/app/app-head";
+import { cn } from "@/lib/utils";
+import {
+  emptyPropertyListFilters,
+  formatThousands,
+  isAtLeastFilter,
+  normalizeSavedPropertyFilters,
+  numericFilterValue,
+  PROPERTY_TYPE_TABS,
+  shouldShowAdvancedFilters,
+  type PropertyListFilters,
+} from "@/lib/property-list-filters";
 
 export const Route = createFileRoute("/_authenticated/app/properties/")({
   head: () => appHead("Habitoo CRM — proprietăți"),
   component: PropertiesPage,
 });
 
-type Filters = {
-  q: string;
-  status: string;
-  transaction: string;
-  type: string;
-  city: string;
-  district: string;
-  agent: string;
-  source: string;
-  mine: boolean;
-  favoritesOnly: boolean;
-  /** Aduce înapoi la vedere proprietățile arhivate. */
-  showArchived: boolean;
-  priceMin: string;
-  priceMax: string;
-  surfaceMin: string;
-  surfaceMax: string;
-  rooms: string;
-  bathrooms: string;
-  floor: string;
-  addedAfter: string;
-  addedBefore: string;
-  /** `all` sau `<portalId|any>:<published|unpublished|error>`. */
-  portal: string;
-};
-
-const emptyFilters: Filters = {
-  q: "",
-  status: "all",
-  transaction: "all",
-  type: "all",
-  city: "all",
-  district: "all",
-  agent: "all",
-  source: "all",
-  mine: false,
-  favoritesOnly: false,
-  showArchived: false,
-  priceMin: "",
-  priceMax: "",
-  surfaceMin: "",
-  surfaceMax: "",
-  rooms: "",
-  bathrooms: "",
-  floor: "",
-  addedAfter: "",
-  addedBefore: "",
-  portal: "all",
-};
+type Filters = PropertyListFilters;
+const emptyFilters = emptyPropertyListFilters;
 
 type SortKey =
   "created_desc" | "updated_desc" | "price_asc" | "price_desc" | "surface_asc" | "surface_desc";
@@ -169,11 +135,16 @@ function readColumns(): ColumnKey[] {
 // Cheie nouă: utilizatorii care aveau vechea grilă memorată primesc
 // noua listă ca vizualizare implicită, dar își pot alege din nou grila.
 const VIEW_KEY = "habitoo.propertyView.v3";
+const FILTERS_EXPANDED_KEY = "habitoo.propertyFiltersExpanded.v1";
 
 function readView(): "list" | "grid" {
   if (typeof window === "undefined") return "list";
   return window.localStorage.getItem(VIEW_KEY) === "grid" ? "grid" : "list";
 }
+
+const fieldLabelClass =
+  "mb-2 block text-[11px] font-bold uppercase tracking-[0.08em] text-muted-foreground";
+const valuedControlClass = "border-primary bg-primary/5";
 
 const PAGE_SIZE = 25;
 
@@ -188,6 +159,7 @@ function PropertiesPage() {
   const [columns, setColumns] = useState<ColumnKey[]>(readColumns);
   const [sort, setSort] = useState<SortKey>("created_desc");
   const [page, setPage] = useState(0);
+  const [filtersExpanded, setFiltersExpanded] = useState(true);
   const [archiveTarget, setArchiveTarget] = useState<string[] | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
   const [promptRequest, setPromptRequest] = useState<PromptRequest | null>(null);
@@ -208,6 +180,27 @@ function PropertiesPage() {
   useEffect(() => {
     window.localStorage.setItem(VIEW_KEY, view);
   }, [view]);
+
+  useEffect(() => {
+    try {
+      const saved = window.localStorage.getItem(FILTERS_EXPANDED_KEY);
+      setFiltersExpanded(saved === null ? window.innerWidth >= 768 : saved === "true");
+    } catch {
+      setFiltersExpanded(window.innerWidth >= 768);
+    }
+  }, []);
+
+  const toggleFiltersExpanded = () => {
+    setFiltersExpanded((current) => {
+      const next = !current;
+      try {
+        window.localStorage.setItem(FILTERS_EXPANDED_KEY, String(next));
+      } catch {
+        /* Browsers may deny localStorage access. */
+      }
+      return next;
+    });
+  };
 
   useEffect(() => {
     setPage(0);
@@ -258,6 +251,21 @@ function PropertiesPage() {
     },
   });
 
+  const { data: portfolioTotal = 0 } = useQuery({
+    queryKey: ["properties", "portfolio-count", orgId],
+    enabled: Boolean(orgId),
+    queryFn: async () => {
+      const { count, error } = await supabase
+        .from("properties")
+        .select("id", { count: "exact", head: true })
+        .eq("organization_id", orgId as string)
+        .is("deleted_at", null)
+        .neq("status", "archived" as never);
+      if (error) throw error;
+      return count ?? 0;
+    },
+  });
+
   const sortColumn: Record<SortKey, { col: string; asc: boolean }> = {
     created_desc: { col: "created_at", asc: false },
     updated_desc: { col: "updated_at", asc: false },
@@ -280,10 +288,6 @@ function PropertiesPage() {
     parsedPortal &&
     (parsedPortal.portal === "any" || portalOptions.some((o) => o.portalId === parsedPortal.portal))
       ? parsedPortal
-      : null;
-  const portalPillPortal =
-    portalFilter && portalFilter.portal !== "any"
-      ? (portalOptions.find((o) => o.portalId === portalFilter.portal) ?? null)
       : null;
   const { data: portalIds, isLoading: portalIdsLoading } = useQuery({
     queryKey: ["property-portals-matrix", "filter-ids", orgId, portalFilter],
@@ -321,9 +325,16 @@ function PropertiesPage() {
       if (filters.priceMax) query = query.lte("price", Number(filters.priceMax));
       if (filters.surfaceMin) query = query.gte("surface", Number(filters.surfaceMin));
       if (filters.surfaceMax) query = query.lte("surface", Number(filters.surfaceMax));
-      if (filters.rooms) query = query.eq("rooms", Number(filters.rooms));
-      if (filters.bathrooms) query = query.eq("bathrooms", Number(filters.bathrooms));
-      if (filters.floor) query = query.eq("floor", Number(filters.floor));
+      if (filters.rooms)
+        query = isAtLeastFilter(filters.rooms)
+          ? query.gte("rooms", numericFilterValue(filters.rooms))
+          : query.eq("rooms", numericFilterValue(filters.rooms));
+      if (filters.bathrooms)
+        query = isAtLeastFilter(filters.bathrooms)
+          ? query.gte("bathrooms", numericFilterValue(filters.bathrooms))
+          : query.eq("bathrooms", numericFilterValue(filters.bathrooms));
+      if (filters.floorMin) query = query.gte("floor", Number(filters.floorMin));
+      if (filters.floorMax) query = query.lte("floor", Number(filters.floorMax));
       if (filters.addedAfter) query = query.gte("created_at", filters.addedAfter);
       if (filters.addedBefore) query = query.lte("created_at", filters.addedBefore);
       if (filters.favoritesOnly) {
@@ -553,6 +564,7 @@ function PropertiesPage() {
     filters.agent !== "all" ? { key: "agent" as const, label: agentName(filters.agent) } : null,
     filters.mine ? { key: "mine" as const, label: "Doar ale mele" } : null,
     filters.favoritesOnly ? { key: "favoritesOnly" as const, label: "Doar favorite" } : null,
+    filters.showArchived ? { key: "showArchived" as const, label: "Include arhivate" } : null,
     portalFilter
       ? { key: "portal" as const, label: portalFilterLabel(filters.portal, portalOptions) }
       : null,
@@ -566,7 +578,8 @@ function PropertiesPage() {
       : null,
     filters.rooms ? { key: "rooms" as const, label: `${filters.rooms} camere` } : null,
     filters.bathrooms ? { key: "bathrooms" as const, label: `${filters.bathrooms} băi` } : null,
-    filters.floor ? { key: "floor" as const, label: `Etaj ${filters.floor}` } : null,
+    filters.floorMin ? { key: "floorMin" as const, label: `Etaj ≥ ${filters.floorMin}` } : null,
+    filters.floorMax ? { key: "floorMax" as const, label: `Etaj ≤ ${filters.floorMax}` } : null,
     filters.addedAfter ? { key: "addedAfter" as const, label: `După ${filters.addedAfter}` } : null,
     filters.addedBefore
       ? { key: "addedBefore" as const, label: `Înainte de ${filters.addedBefore}` }
@@ -577,6 +590,11 @@ function PropertiesPage() {
     setFilters((f) => ({ ...f, [key]: emptyFilters[key] }) as Filters);
 
   const filtersActive = activePills.length > 0;
+  const hiddenFilterKeys: (keyof Filters)[] = [
+    "city", "district", "priceMin", "priceMax", "surfaceMin", "surfaceMax", "rooms",
+    "bathrooms", "floorMin", "floorMax", "addedAfter", "addedBefore", "agent", "source",
+  ];
+  const hiddenPills = activePills.filter((pill) => hiddenFilterKeys.includes(pill.key));
 
   /** Stare goală utilă: fără portofoliu vs. fără rezultate la filtrare. */
   const emptyBlock = filtersActive ? (
@@ -618,6 +636,9 @@ function PropertiesPage() {
     });
   };
 
+  const setDigits = (key: "priceMin" | "priceMax" | "surfaceMin" | "surfaceMax" | "floorMin" | "floorMax", value: string) =>
+    setFilters((current) => ({ ...current, [key]: value.replace(/\D/g, "") }));
+
   return (
     <>
       <PageHeader
@@ -635,331 +656,135 @@ function PropertiesPage() {
         }
       />
 
-      <div className="panel space-y-4 p-4">
-        <div className="flex flex-wrap items-center gap-2">
-          <div className="relative min-w-56 flex-1">
-            <Search className="pointer-events-none absolute top-2.5 left-3 size-4 text-muted-foreground" />
-            <Input
-              value={filters.q}
-              onChange={(e) => setFilters((f) => ({ ...f, q: e.target.value }))}
-              placeholder="Caută după titlu, referință, adresă…"
-              className="pl-9"
-            />
-          </div>
-
-          <Select
-            value={filters.status}
-            onValueChange={(v) => setFilters((f) => ({ ...f, status: v }))}
-          >
-            <SelectTrigger className="w-40">
-              <SelectValue placeholder="Status" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Toate statusurile</SelectItem>
-              {Object.entries(propertyStatusLabels).map(([k, v]) => (
-                <SelectItem key={k} value={k}>
-                  {v}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-
-          <Select
-            value={filters.transaction}
-            onValueChange={(v) => setFilters((f) => ({ ...f, transaction: v }))}
-          >
-            <SelectTrigger className="w-36">
-              <SelectValue placeholder="Tranzacție" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Toate</SelectItem>
-              <SelectItem value="sale">Vânzare</SelectItem>
-              <SelectItem value="rent">Închiriere</SelectItem>
-            </SelectContent>
-          </Select>
-
-          <Select
-            value={filters.type}
-            onValueChange={(v) => setFilters((f) => ({ ...f, type: v }))}
-          >
-            <SelectTrigger className="w-40">
-              <SelectValue placeholder="Tip" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Toate tipurile</SelectItem>
-              {Object.entries(propertyTypeLabels).map(([k, v]) => (
-                <SelectItem key={k} value={k}>
-                  {v}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-
-          <Select value={sort} onValueChange={(v) => setSort(v as SortKey)}>
-            <SelectTrigger className="w-52">
-              <SelectValue placeholder="Sortare" />
-            </SelectTrigger>
-            <SelectContent>
-              {Object.entries(sortOptions).map(([k, v]) => (
-                <SelectItem key={k} value={k}>
-                  {v}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-
-          <Button
-            variant={view === "list" ? "default" : "outline"}
-            size="icon"
-            onClick={() => setView("list")}
-            title="Vizualizare listă"
-            aria-label="Vizualizare listă"
-            aria-pressed={view === "list"}
-          >
-            <List className="size-4" />
-          </Button>
-          <Button
-            variant={view === "grid" ? "default" : "outline"}
-            size="icon"
-            onClick={() => setView("grid")}
-            title="Vizualizare carduri"
-            aria-label="Vizualizare carduri"
-            aria-pressed={view === "grid"}
-          >
-            <LayoutGrid className="size-4" />
-          </Button>
-
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="icon" title="Coloane">
-                <Columns3 className="size-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              {allColumns.map((c) => (
-                <DropdownMenuCheckboxItem
-                  key={c.key}
-                  checked={columns.includes(c.key)}
-                  onCheckedChange={(checked) =>
-                    setColumns((cols) =>
-                      checked ? [...cols, c.key] : cols.filter((k) => k !== c.key),
-                    )
-                  }
-                >
-                  {c.label}
-                </DropdownMenuCheckboxItem>
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-
-        <div className="flex flex-wrap items-center gap-2 border-t border-border pt-3">
-          {portalOptions.length > 0 ? (
-            <div className="flex items-center gap-2">
-              <span className="text-sm text-muted-foreground">Publicare pe portaluri</span>
-              <PortalFilterSelect
-                value={filters.portal}
-                options={portalOptions}
-                onChange={(v) => setFilters((f) => ({ ...f, portal: v }))}
-              />
-            </div>
-          ) : null}
-          <Select
-            value={filters.district}
-            onValueChange={(v) => setFilters((f) => ({ ...f, district: v }))}
-          >
-            <SelectTrigger className="w-40">
-              <SelectValue placeholder="Zonă" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Toate zonele</SelectItem>
-              {(meta?.districts ?? []).map((d) => (
-                <SelectItem key={d} value={d}>
-                  {d}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Select
-            value={filters.city}
-            onValueChange={(v) => setFilters((f) => ({ ...f, city: v }))}
-          >
-            <SelectTrigger className="w-40">
-              <SelectValue placeholder="Oraș" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Toate orașele</SelectItem>
-              {(meta?.cities ?? []).map((c) => (
-                <SelectItem key={c} value={c}>
-                  {c}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Select
-            value={filters.agent}
-            onValueChange={(v) => setFilters((f) => ({ ...f, agent: v }))}
-          >
-            <SelectTrigger className="w-40">
-              <SelectValue placeholder="Agent" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Toți agenții</SelectItem>
-              {agents.map((a) => (
-                <SelectItem key={a.id} value={a.id}>
-                  {a.full_name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Select
-            value={filters.source}
-            onValueChange={(v) => setFilters((f) => ({ ...f, source: v }))}
-          >
-            <SelectTrigger className="w-36">
-              <SelectValue placeholder="Sursă" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Toate sursele</SelectItem>
-              {(meta?.sources ?? []).map((s) => (
-                <SelectItem key={s} value={s}>
-                  {s}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Input
-            className="w-28"
-            placeholder="Preț min"
-            type="number"
-            value={filters.priceMin}
-            onChange={(e) => setFilters((f) => ({ ...f, priceMin: e.target.value }))}
-          />
-          <Input
-            className="w-28"
-            placeholder="Preț max"
-            type="number"
-            value={filters.priceMax}
-            onChange={(e) => setFilters((f) => ({ ...f, priceMax: e.target.value }))}
-          />
-          <Input
-            className="w-32"
-            placeholder="Supr. min (m²)"
-            type="number"
-            value={filters.surfaceMin}
-            onChange={(e) => setFilters((f) => ({ ...f, surfaceMin: e.target.value }))}
-          />
-          <Input
-            className="w-32"
-            placeholder="Supr. max (m²)"
-            type="number"
-            value={filters.surfaceMax}
-            onChange={(e) => setFilters((f) => ({ ...f, surfaceMax: e.target.value }))}
-          />
-          <Input
-            className="w-24"
-            placeholder="Camere"
-            type="number"
-            value={filters.rooms}
-            onChange={(e) => setFilters((f) => ({ ...f, rooms: e.target.value }))}
-          />
-          <Input
-            className="w-24"
-            placeholder="Băi"
-            type="number"
-            value={filters.bathrooms}
-            onChange={(e) => setFilters((f) => ({ ...f, bathrooms: e.target.value }))}
-          />
-          <Input
-            className="w-24"
-            placeholder="Etaj"
-            type="number"
-            value={filters.floor}
-            onChange={(e) => setFilters((f) => ({ ...f, floor: e.target.value }))}
-          />
-          <Input
-            className="w-40"
-            type="date"
-            title="Adăugat după"
-            value={filters.addedAfter}
-            onChange={(e) => setFilters((f) => ({ ...f, addedAfter: e.target.value }))}
-          />
-          <Input
-            className="w-40"
-            type="date"
-            title="Adăugat înainte"
-            value={filters.addedBefore}
-            onChange={(e) => setFilters((f) => ({ ...f, addedBefore: e.target.value }))}
-          />
-          <Button
-            variant={filters.mine ? "default" : "outline"}
-            size="sm"
-            onClick={() => setFilters((f) => ({ ...f, mine: !f.mine }))}
-          >
-            Doar ale mele
-          </Button>
-          <Button
-            variant={filters.favoritesOnly ? "default" : "outline"}
-            size="sm"
-            onClick={() => setFilters((f) => ({ ...f, favoritesOnly: !f.favoritesOnly }))}
-          >
-            <Star className="size-4" /> Doar favorite
-          </Button>
-          <Button
-            variant={filters.showArchived ? "default" : "outline"}
-            size="sm"
-            onClick={() => setFilters((f) => ({ ...f, showArchived: !f.showArchived }))}
-          >
-            <ArchiveRestore className="size-4" /> Arată și arhivate
-          </Button>
-          <Button variant="ghost" size="sm" onClick={saveFilter}>
-            Salvează filtrul
-          </Button>
-          <Button variant="ghost" size="sm" onClick={() => setFilters(emptyFilters)}>
-            <X className="size-4" /> Resetează
-          </Button>
-        </div>
-
-        {filtersActive ? (
-          <div className="flex flex-wrap items-center gap-2 border-t border-border pt-3">
-            <span className="text-xs text-muted-foreground">Filtre active:</span>
-            {activePills.map((pill) => (
+      <div className="panel space-y-5 p-4 sm:p-5">
+        <div className="flex flex-col gap-2 border-b border-border md:grid md:grid-cols-[minmax(0,1fr)_auto] md:items-end md:gap-4">
+          <div role="tablist" aria-label="Tip proprietate" className="flex min-w-0 overflow-x-auto">
+            {PROPERTY_TYPE_TABS.map((tab) => (
               <button
-                key={String(pill.key)}
+                key={tab.value}
                 type="button"
-                onClick={() => clearPill(pill.key)}
-                aria-label={`Renunță la filtrul ${pill.label}`}
-                className="inline-flex items-center gap-1.5 rounded-full bg-muted px-2.5 py-1 text-xs text-foreground transition-colors hover:bg-secondary"
+                role="tab"
+                aria-selected={filters.type === tab.value}
+                onClick={() => setFilters((current) => ({ ...current, type: tab.value }))}
+                className={cn(
+                  "relative min-h-11 shrink-0 px-3 text-sm font-semibold text-muted-foreground transition-colors hover:text-foreground",
+                  filters.type === tab.value && "text-foreground after:absolute after:inset-x-3 after:bottom-0 after:h-0.5 after:bg-primary",
+                )}
               >
-                {pill.key === "portal" && portalPillPortal ? (
-                  <PortalLogoStack
-                    portalId={portalPillPortal.portalId}
-                    name={portalPillPortal.name}
-                    size={16}
-                  />
-                ) : null}
-                {pill.label}
-                <X className="size-3 text-muted-foreground" aria-hidden />
+                {tab.label}
               </button>
             ))}
           </div>
-        ) : null}
+          <div className="flex shrink-0 items-center gap-1 pb-1">
+            <Button variant="ghost" size="sm" onClick={toggleFiltersExpanded} aria-expanded={filtersExpanded}>
+              <span className="hidden md:inline">{filtersExpanded ? "Mai puține filtre" : "Mai multe filtre"}</span>
+              <span className="md:hidden">{filtersExpanded ? "Mai puține filtre" : `Mai multe filtre${hiddenPills.length ? ` (${hiddenPills.length})` : ""}`}</span>
+              {filtersExpanded ? <ChevronUp aria-hidden /> : <ChevronDown aria-hidden />}
+            </Button>
+            <Button variant="ghost" size="sm" onClick={() => setFilters(emptyFilters)}>
+              <X aria-hidden /> Resetează filtrele
+            </Button>
+          </div>
+        </div>
 
-        {savedViews.views.length > 0 ? (
-          <div className="flex flex-wrap items-center gap-2 border-t border-border pt-3">
-            <span className="text-xs text-muted-foreground">Filtre salvate:</span>
-            {savedViews.views.map((v) => (
-              <Button
-                key={v.id}
-                variant="secondary"
-                size="sm"
-                onClick={() => setFilters({ ...emptyFilters, ...(v.config as Partial<Filters>) })}
-              >
-                {v.name}
-              </Button>
-            ))}
+        <div className="grid grid-cols-1 gap-x-4 gap-y-5 md:grid-cols-2 xl:grid-cols-4">
+          <div>
+            <label htmlFor="property-keywords" className={fieldLabelClass}>Cuvinte cheie / ID</label>
+            <div className="relative">
+              <Search className="pointer-events-none absolute top-3.5 left-3 size-4 text-muted-foreground" />
+              <Input id="property-keywords" value={filters.q} onChange={(e) => setFilters((f) => ({ ...f, q: e.target.value }))} placeholder="Titlu, HB-…, adresă" className={cn("pl-9", filters.q && valuedControlClass)} />
+            </div>
+          </div>
+          <fieldset>
+            <legend className={fieldLabelClass}>Tranzacție</legend>
+            <div className="grid grid-cols-3 overflow-hidden rounded-control border border-input bg-surface">
+              {[["all", "Toate"], ["sale", "Vânzare"], ["rent", "Închiriere"]].map(([value, label]) => (
+                <Button key={value} type="button" variant="ghost" aria-pressed={filters.transaction === value} onClick={() => setFilters((f) => ({ ...f, transaction: value }))} className={cn("rounded-none border-0 px-2", filters.transaction === value && "bg-sidebar text-surface hover:bg-sidebar hover:text-surface")}>{label}</Button>
+              ))}
+            </div>
+          </fieldset>
+          <div>
+            <label htmlFor="property-status" className={fieldLabelClass}>Status</label>
+            <Select value={filters.status} onValueChange={(v) => setFilters((f) => ({ ...f, status: v }))}>
+              <SelectTrigger id="property-status" className={cn("w-full", filters.status !== "all" && valuedControlClass)}><SelectValue /></SelectTrigger>
+              <SelectContent><SelectItem value="all">Toate statusurile</SelectItem>{Object.entries(propertyStatusLabels).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}</SelectContent>
+            </Select>
+          </div>
+          {portalOptions.length > 0 ? (
+            <div>
+              <label htmlFor="property-portal" className={fieldLabelClass}>Publicare pe portaluri</label>
+              <PortalFilterSelect id="property-portal" value={filters.portal} options={portalOptions} onChange={(v) => setFilters((f) => ({ ...f, portal: v }))} className={cn("w-full", filters.portal !== "all" && valuedControlClass)} />
+            </div>
+          ) : <div aria-hidden />}
+
+          {shouldShowAdvancedFilters(filtersExpanded) ? <>
+            <div>
+              <label htmlFor="property-city" className={fieldLabelClass}>Oraș</label>
+              <Select value={filters.city} onValueChange={(v) => setFilters((f) => ({ ...f, city: v }))}><SelectTrigger id="property-city" className={cn("w-full", filters.city !== "all" && valuedControlClass)}><SelectValue /></SelectTrigger><SelectContent><SelectItem value="all">Toate orașele</SelectItem>{(meta?.cities ?? []).map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent></Select>
+            </div>
+            <div>
+              <label htmlFor="property-district" className={fieldLabelClass}>Zonă</label>
+              <Select value={filters.district} onValueChange={(v) => setFilters((f) => ({ ...f, district: v }))}><SelectTrigger id="property-district" className={cn("w-full", filters.district !== "all" && valuedControlClass)}><SelectValue /></SelectTrigger><SelectContent><SelectItem value="all">Toate zonele</SelectItem>{(meta?.districts ?? []).map((d) => <SelectItem key={d} value={d}>{d}</SelectItem>)}</SelectContent></Select>
+            </div>
+            <fieldset>
+              <legend className={fieldLabelClass}>Preț (EUR)</legend>
+              <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2"><Input aria-label="Preț minim" inputMode="numeric" placeholder="Min" value={formatThousands(filters.priceMin)} onChange={(e) => setDigits("priceMin", e.target.value)} className={cn(filters.priceMin && valuedControlClass)} /><span className="text-muted-foreground">–</span><Input aria-label="Preț maxim" inputMode="numeric" placeholder="Max" value={formatThousands(filters.priceMax)} onChange={(e) => setDigits("priceMax", e.target.value)} className={cn(filters.priceMax && valuedControlClass)} /></div>
+            </fieldset>
+            <fieldset>
+              <legend className={fieldLabelClass}>Suprafață utilă (m²)</legend>
+              <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2"><Input aria-label="Suprafață minimă" inputMode="numeric" placeholder="Min" value={formatThousands(filters.surfaceMin)} onChange={(e) => setDigits("surfaceMin", e.target.value)} className={cn(filters.surfaceMin && valuedControlClass)} /><span className="text-muted-foreground">–</span><Input aria-label="Suprafață maximă" inputMode="numeric" placeholder="Max" value={formatThousands(filters.surfaceMax)} onChange={(e) => setDigits("surfaceMax", e.target.value)} className={cn(filters.surfaceMax && valuedControlClass)} /></div>
+            </fieldset>
+            <fieldset>
+              <legend className={fieldLabelClass}>Camere</legend>
+              <div className="grid grid-cols-2 gap-1.5">{[["", "Oricâte"], ["1", "1"], ["2", "2"], ["3", "3"], ["4", "4"], ["5+", "5+"]].map(([value, label]) => <Button key={value || "any"} type="button" variant="outline" aria-pressed={filters.rooms === value} onClick={() => setFilters((f) => ({ ...f, rooms: value }))} className={cn("px-2", filters.rooms === value && "border-sidebar bg-sidebar text-surface hover:bg-sidebar hover:text-surface")}>{label}</Button>)}</div>
+            </fieldset>
+            <fieldset>
+              <legend className={fieldLabelClass}>Etaj</legend>
+              <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2"><Input aria-label="Etaj minim" inputMode="numeric" placeholder="Min" value={filters.floorMin} onChange={(e) => setDigits("floorMin", e.target.value)} className={cn(filters.floorMin && valuedControlClass)} /><span className="text-muted-foreground">–</span><Input aria-label="Etaj maxim" inputMode="numeric" placeholder="Max" value={filters.floorMax} onChange={(e) => setDigits("floorMax", e.target.value)} className={cn(filters.floorMax && valuedControlClass)} /></div>
+            </fieldset>
+            <fieldset className="md:col-span-2">
+              <legend className={fieldLabelClass}>Adăugată între</legend>
+              <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2"><Input aria-label="Adăugată de la" type="date" value={filters.addedAfter} onChange={(e) => setFilters((f) => ({ ...f, addedAfter: e.target.value }))} className={cn(filters.addedAfter && valuedControlClass)} /><span className="text-muted-foreground">–</span><Input aria-label="Adăugată până la" type="date" value={filters.addedBefore} onChange={(e) => setFilters((f) => ({ ...f, addedBefore: e.target.value }))} className={cn(filters.addedBefore && valuedControlClass)} /></div>
+            </fieldset>
+            <fieldset>
+              <legend className={fieldLabelClass}>Băi</legend>
+              <div className="grid grid-cols-4 gap-1.5">{[["", "Oricâte"], ["1", "1"], ["2", "2"], ["3+", "3+"]].map(([value, label]) => <Button key={value || "any"} type="button" variant="outline" aria-pressed={filters.bathrooms === value} onClick={() => setFilters((f) => ({ ...f, bathrooms: value }))} className={cn("px-1", filters.bathrooms === value && "border-sidebar bg-sidebar text-surface hover:bg-sidebar hover:text-surface")}>{label}</Button>)}</div>
+            </fieldset>
+            <div>
+              <label htmlFor="property-agent" className={fieldLabelClass}>Agent</label>
+              <Select value={filters.agent} onValueChange={(v) => setFilters((f) => ({ ...f, agent: v }))}><SelectTrigger id="property-agent" className={cn("w-full", filters.agent !== "all" && valuedControlClass)}><SelectValue /></SelectTrigger><SelectContent><SelectItem value="all">Toți agenții</SelectItem>{agents.map((a) => <SelectItem key={a.id} value={a.id}>{a.full_name}</SelectItem>)}</SelectContent></Select>
+            </div>
+            <div>
+              <label htmlFor="property-source" className={fieldLabelClass}>Sursă</label>
+              <Select value={filters.source} onValueChange={(v) => setFilters((f) => ({ ...f, source: v }))}><SelectTrigger id="property-source" className={cn("w-full", filters.source !== "all" && valuedControlClass)}><SelectValue /></SelectTrigger><SelectContent><SelectItem value="all">Toate sursele</SelectItem>{(meta?.sources ?? []).map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent></Select>
+            </div>
+          </> : null}
+        </div>
+
+        {!filtersExpanded && hiddenPills.length > 0 ? (
+          <div className="flex flex-wrap gap-2">
+            {hiddenPills.map((pill) => <Button key={String(pill.key)} type="button" variant="ghost" size="sm" onClick={() => clearPill(pill.key)} aria-label={`Renunță la filtrul ${pill.label}`} className="rounded-full bg-sidebar text-surface hover:bg-sidebar hover:text-surface">{pill.label}<X aria-hidden /></Button>)}
           </div>
         ) : null}
+
+        <div className="flex flex-col justify-between gap-4 border-t border-border pt-4 lg:flex-row lg:items-center">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className={fieldLabelClass.replace("mb-2 block", "mb-0 inline")}>Afișează</span>
+            {[["mine", "Doar ale mele"], ["favoritesOnly", "Doar favorite"], ["showArchived", "Include arhivate"]].map(([key, label]) => {
+              const pressed = Boolean(filters[key as "mine" | "favoritesOnly" | "showArchived"]);
+              return <Button key={key} type="button" variant="outline" aria-pressed={pressed} onClick={() => setFilters((f) => ({ ...f, [key]: !pressed }))} className={cn("rounded-full", pressed && "border-sidebar bg-sidebar text-surface hover:bg-sidebar hover:text-surface")}>{key === "favoritesOnly" ? <Star aria-hidden /> : key === "showArchived" ? <ArchiveRestore aria-hidden /> : null}{label}</Button>;
+            })}
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild><Button variant="outline">Filtre salvate <ChevronDown aria-hidden /></Button></DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="min-w-56">
+                {savedViews.views.length > 0 ? savedViews.views.map((saved) => <DropdownMenuItem key={saved.id} onSelect={() => setFilters(normalizeSavedPropertyFilters(saved.config))}>{saved.name}</DropdownMenuItem>) : <DropdownMenuItem disabled>Niciun filtru salvat</DropdownMenuItem>}
+              </DropdownMenuContent>
+            </DropdownMenu>
+            <Button variant="outline" onClick={saveFilter}>Salvează filtrul</Button>
+          </div>
+        </div>
 
         {selected.length > 0 ? (
           <div className="flex flex-wrap items-center gap-3 rounded-xl border border-primary/30 bg-primary/5 px-4 py-3">
@@ -1026,6 +851,28 @@ function PropertiesPage() {
       </div>
 
       <div className="panel overflow-hidden">
+        <div className="flex flex-col justify-between gap-3 border-b border-border px-4 py-3 sm:flex-row sm:items-center">
+          <div className="flex items-baseline gap-2">
+            <span className="font-semibold">{total} {total === 1 ? "proprietate" : "proprietăți"}</span>
+            {filtersActive ? <span className="text-sm text-muted-foreground">din {portfolioTotal} în portofoliu</span> : null}
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <Select value={sort} onValueChange={(v) => setSort(v as SortKey)}>
+              <SelectTrigger className="w-64"><span className="shrink-0 text-muted-foreground">Sortare:</span><SelectValue /></SelectTrigger>
+              <SelectContent>{Object.entries(sortOptions).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}</SelectContent>
+            </Select>
+            <div className="grid grid-cols-2 overflow-hidden rounded-control border border-input bg-surface">
+              <Button variant="ghost" aria-pressed={view === "list"} onClick={() => setView("list")} className={cn("rounded-none border-0 px-3", view === "list" && "bg-sidebar text-surface hover:bg-sidebar hover:text-surface")}><List aria-hidden /> Listă</Button>
+              <Button variant="ghost" aria-pressed={view === "grid"} onClick={() => setView("grid")} className={cn("rounded-none border-0 px-3", view === "grid" && "bg-sidebar text-surface hover:bg-sidebar hover:text-surface")}><LayoutGrid aria-hidden /> Carduri</Button>
+            </div>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild><Button variant="outline"><Columns3 aria-hidden /> Coloane</Button></DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                {allColumns.map((column) => <DropdownMenuCheckboxItem key={column.key} checked={columns.includes(column.key)} onCheckedChange={(checked) => setColumns((current) => checked ? [...current, column.key] : current.filter((key) => key !== column.key))}>{column.label}</DropdownMenuCheckboxItem>)}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        </div>
         {view === "list" ? (
           <>
             <div className="hidden items-center gap-3 border-b border-border px-4 py-3 text-xs font-medium tracking-wide text-muted-foreground uppercase lg:flex">
@@ -1189,8 +1036,8 @@ function PropertiesPage() {
         <div className="flex items-center justify-between gap-3 border-t border-border px-4 py-3 text-sm">
           <span className="text-xs text-muted-foreground">
             {total > 0
-              ? `${page * PAGE_SIZE + 1}–${Math.min(total, (page + 1) * PAGE_SIZE)} din ${total}`
-              : "0 rezultate"}
+              ? `Rezultate ${page * PAGE_SIZE + 1}–${Math.min(total, (page + 1) * PAGE_SIZE)} din ${total}`
+              : "Rezultate 0 din 0"}
           </span>
           <div className="flex items-center gap-2">
             <Button
