@@ -8,8 +8,10 @@ import {
   ArchiveRestore,
   Trash2,
   Building2,
+  ChevronDown,
   ChevronLeft,
   ChevronRight,
+  ChevronUp,
   Columns3,
   Download,
   LayoutGrid,
@@ -52,6 +54,7 @@ import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
   DropdownMenuContent,
+  DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
@@ -74,61 +77,25 @@ import {
   transactionLabels,
 } from "@/lib/labels";
 import { appHead } from "@/components/app/app-head";
+import { cn } from "@/lib/utils";
+import {
+  emptyPropertyListFilters,
+  formatThousands,
+  isAtLeastFilter,
+  normalizeSavedPropertyFilters,
+  numericFilterValue,
+  PROPERTY_TYPE_TABS,
+  shouldShowAdvancedFilters,
+  type PropertyListFilters,
+} from "@/lib/property-list-filters";
 
 export const Route = createFileRoute("/_authenticated/app/properties/")({
   head: () => appHead("Habitoo CRM — proprietăți"),
   component: PropertiesPage,
 });
 
-type Filters = {
-  q: string;
-  status: string;
-  transaction: string;
-  type: string;
-  city: string;
-  district: string;
-  agent: string;
-  source: string;
-  mine: boolean;
-  favoritesOnly: boolean;
-  /** Aduce înapoi la vedere proprietățile arhivate. */
-  showArchived: boolean;
-  priceMin: string;
-  priceMax: string;
-  surfaceMin: string;
-  surfaceMax: string;
-  rooms: string;
-  bathrooms: string;
-  floor: string;
-  addedAfter: string;
-  addedBefore: string;
-  /** `all` sau `<portalId|any>:<published|unpublished|error>`. */
-  portal: string;
-};
-
-const emptyFilters: Filters = {
-  q: "",
-  status: "all",
-  transaction: "all",
-  type: "all",
-  city: "all",
-  district: "all",
-  agent: "all",
-  source: "all",
-  mine: false,
-  favoritesOnly: false,
-  showArchived: false,
-  priceMin: "",
-  priceMax: "",
-  surfaceMin: "",
-  surfaceMax: "",
-  rooms: "",
-  bathrooms: "",
-  floor: "",
-  addedAfter: "",
-  addedBefore: "",
-  portal: "all",
-};
+type Filters = PropertyListFilters;
+const emptyFilters = emptyPropertyListFilters;
 
 type SortKey =
   "created_desc" | "updated_desc" | "price_asc" | "price_desc" | "surface_asc" | "surface_desc";
@@ -169,11 +136,16 @@ function readColumns(): ColumnKey[] {
 // Cheie nouă: utilizatorii care aveau vechea grilă memorată primesc
 // noua listă ca vizualizare implicită, dar își pot alege din nou grila.
 const VIEW_KEY = "habitoo.propertyView.v3";
+const FILTERS_EXPANDED_KEY = "habitoo.propertyFiltersExpanded.v1";
 
 function readView(): "list" | "grid" {
   if (typeof window === "undefined") return "list";
   return window.localStorage.getItem(VIEW_KEY) === "grid" ? "grid" : "list";
 }
+
+const fieldLabelClass =
+  "mb-2 block text-[11px] font-bold uppercase tracking-[0.08em] text-muted-foreground";
+const valuedControlClass = "border-primary bg-primary/5";
 
 const PAGE_SIZE = 25;
 
