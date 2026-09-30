@@ -62,3 +62,25 @@ export function isRetryablePortalBulkError(input: { code?: string | null; httpSt
   if (input.code === "RATE_LIMIT" || input.httpStatus === 429 || (input.httpStatus ?? 0) >= 500) return true;
   return /network|rețea|timeout|timed out|temporar|temporarily|\b5\d\d\b/i.test(input.message ?? "");
 }
+
+export type BulkSelectionPreview = {
+  changed: number;
+  skipped: number;
+  before: number;
+  after: number;
+};
+
+/** Previzualizarea deterministă folosită de acțiunile portal din bara de selecție. */
+export function previewBulkSelection(input: {
+  enabled: boolean;
+  used: number;
+  selected: { enabled: boolean }[];
+}): BulkSelectionPreview {
+  const changed = input.selected.filter((item) => item.enabled !== input.enabled).length;
+  return {
+    changed,
+    skipped: input.selected.length - changed,
+    before: input.used,
+    after: Math.max(0, input.used + changed * (input.enabled ? 1 : -1)),
+  };
+}
