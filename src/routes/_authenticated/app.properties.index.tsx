@@ -37,6 +37,8 @@ import { archiveProperty, unarchiveProperty } from "@/lib/property-archive.funct
 import { reassignPropertyAgent } from "@/lib/property-agent.functions";
 import { PropertyThumb, usePropertyCovers } from "@/components/app/PropertyThumb";
 import { PropertyPublishView } from "@/components/app/PropertyPublishView";
+import { PortalBulkProgress } from "@/components/app/PortalBulkProgress";
+import { PortalBulkSelectionDialog } from "@/components/app/PortalBulkSelectionDialog";
 import { StatusBadge } from "@/components/app/StatusBadge";
 import { PortalLogoStack } from "@/components/app/PortalLogo";
 import { UserAvatar } from "@/components/app/UserAvatar";
@@ -154,6 +156,8 @@ function PropertiesPage() {
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
   const [promptRequest, setPromptRequest] = useState<PromptRequest | null>(null);
   const [portalDrafts, setPortalDrafts] = useState<Record<string, BulkDraft>>({});
+  const [portalBulkMode, setPortalBulkMode] = useState<"publish" | "withdraw" | null>(null);
+  const [portalBulkJobId, setPortalBulkJobId] = useState<string | null>(null);
   const archivePropertyFn = useServerFn(archiveProperty);
   const unarchivePropertyFn = useServerFn(unarchiveProperty);
 
@@ -877,7 +881,13 @@ function PropertiesPage() {
               Adaugă etichetă
             </Button>
             <Button variant="outline" size="sm" onClick={() => publishMany.mutate(selected)}>
-              Publică
+              Publică pe site
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => setPortalBulkMode("publish")}>
+              Publică pe portaluri…
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => setPortalBulkMode("withdraw")}>
+              Retrage de pe portaluri…
             </Button>
             <Button variant="outline" size="sm" onClick={exportCsv}>
               Export CSV
@@ -1149,6 +1159,18 @@ function PropertiesPage() {
         }}
       />
       <PromptDialog request={promptRequest} onClose={() => setPromptRequest(null)} />
+      <PortalBulkSelectionDialog
+        mode={portalBulkMode}
+        propertyIds={selected}
+        cellsFor={portals.cellsFor}
+        organizationId={orgId}
+        onClose={() => setPortalBulkMode(null)}
+        onStarted={(jobId) => {
+          setPortalBulkJobId(jobId);
+          setSelected([]);
+        }}
+      />
+      <PortalBulkProgress jobId={portalBulkJobId} />
     </>
   );
 }

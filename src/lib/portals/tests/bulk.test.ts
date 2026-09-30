@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { bulkDraftKey, bulkLimitExceeded, bulkSlotProjection, reconcileBulkDraft, toggleBulkPage, isRetryablePortalBulkError } from "@/lib/portals/bulk";
+import { bulkDraftKey, bulkLimitExceeded, bulkSlotProjection, reconcileBulkDraft, toggleBulkPage, isRetryablePortalBulkError, previewBulkSelection } from "@/lib/portals/bulk";
 import { processPortalBulkProperty } from "@/lib/portals/bulk.server";
 
 describe("portal bulk changes", () => {
@@ -28,6 +28,16 @@ describe("portal bulk changes", () => {
   it("classifies transient failures for retry", () => {
     expect(isRetryablePortalBulkError({ httpStatus: 503 })).toBe(true);
     expect(isRetryablePortalBulkError({ code: "VALIDATION_ERROR" })).toBe(false);
+  });
+  it("previews skipped listings and slot changes for publication", () => {
+    expect(previewBulkSelection({ enabled: true, used: 11, selected: [{ enabled: false }, { enabled: true }, { enabled: false }] })).toEqual({
+      changed: 2, skipped: 1, before: 11, after: 13,
+    });
+  });
+  it("previews skipped listings and slot changes for withdrawal", () => {
+    expect(previewBulkSelection({ enabled: false, used: 11, selected: [{ enabled: true }, { enabled: false }] })).toEqual({
+      changed: 1, skipped: 1, before: 11, after: 10,
+    });
   });
 });
 
