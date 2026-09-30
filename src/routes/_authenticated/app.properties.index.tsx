@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { StatusChangeDialog } from "@/components/app/StatusChangeDialog";
 import { isWithdrawStatus } from "@/components/app/StatusWithdrawPreview";
 import { changePropertyStatus } from "@/lib/property-status.functions";
@@ -93,12 +93,17 @@ import {
   normalizeSavedPropertyFilters,
   numericFilterValue,
   PROPERTY_TYPE_TABS,
+  propertyListSearchFromState,
+  propertyListSearchSchema,
+  propertyListStateFromSearch,
   romaniaDateBoundary,
   shouldShowAdvancedFilters,
   type PropertyListFilters,
+  type PropertyListSort,
 } from "@/lib/property-list-filters";
 
 export const Route = createFileRoute("/_authenticated/app/properties/")({
+  validateSearch: (search) => propertyListSearchSchema.parse(search),
   head: () => appHead("Habitoo CRM — proprietăți"),
   component: PropertiesPage,
 });
@@ -106,8 +111,7 @@ export const Route = createFileRoute("/_authenticated/app/properties/")({
 type Filters = PropertyListFilters;
 const emptyFilters = emptyPropertyListFilters;
 
-type SortKey =
-  "created_desc" | "updated_desc" | "price_asc" | "price_desc" | "surface_asc" | "surface_desc";
+type SortKey = PropertyListSort;
 
 const sortOptions: Record<SortKey, string> = {
   created_desc: "Dată adăugare (nou→vechi)",
@@ -118,16 +122,7 @@ const sortOptions: Record<SortKey, string> = {
   surface_desc: "Suprafață descrescătoare",
 };
 
-/** Lista e vizualizarea implicită; preferința utilizatorului se ține local. */
-// Cheie nouă: utilizatorii care aveau vechea grilă memorată primesc
-// noua listă ca vizualizare implicită, dar își pot alege din nou grila.
-const VIEW_KEY = "habitoo.propertyView.v3";
 const FILTERS_EXPANDED_KEY = "habitoo.propertyFiltersExpanded.v1";
-
-function readView(): "list" | "grid" {
-  if (typeof window === "undefined") return "list";
-  return window.localStorage.getItem(VIEW_KEY) === "grid" ? "grid" : "list";
-}
 
 const fieldLabelClass =
   "mb-2 block text-[11px] font-bold uppercase tracking-[0.08em] text-muted-foreground";
@@ -136,15 +131,18 @@ const valuedControlClass = "border-primary bg-primary/5";
 const PAGE_SIZE = 25;
 
 function PropertiesPage() {
+  const search = Route.useSearch();
+  const navigate = useNavigate({ from: Route.fullPath });
+  const urlState = propertyListStateFromSearch(search);
+  const filters = urlState.filters;
+  const sort = urlState.sort;
+  const page = urlState.page - 1;
+  const view = urlState.view;
   const { data: user } = useCurrentUser();
   const orgId = user?.organization?.id;
   const queryClient = useQueryClient();
-  const [filters, setFilters] = useState<Filters>(emptyFilters);
-  const [debouncedQ, setDebouncedQ] = useState("");
+  const [searchInput, setSearchInput] = useState(filters.q);
   const [selected, setSelected] = useState<string[]>([]);
-  const [view, setView] = useState<"list" | "grid">(readView);
-  const [sort, setSort] = useState<SortKey>("created_desc");
-  const [page, setPage] = useState(0);
   const [filtersExpanded, setFiltersExpanded] = useState(true);
   const [archiveTarget, setArchiveTarget] = useState<string[] | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
@@ -155,13 +153,40 @@ function PropertiesPage() {
   const savedViews = useSavedViews("properties", orgId, user?.userId);
 
   useEffect(() => {
-    const t = setTimeout(() => setDebouncedQ(filters.q.trim()), 300);
-    return () => clearTimeout(t);
+    setSearchInput(filters.q);
   }, [filters.q]);
 
+  const writeUrlState = (
+    nextFilters: Filters,
+    nextSort = sort,
+    nextPage = 1,
+    nextView = view,
+    replace = false,
+  ) => navigate({
+    search: propertyListSearchFromState(nextFilters, nextSort, nextPage, nextView),
+    replace,
+  });
+
+  const setFilters = (updater: Filters | ((current: Filters) => Filters)) => {
+    const next = typeof updater === "function" ? updater(filters) : updater;
+    void writeUrlState(next);
+  };
+
+  const setSort = (nextSort: SortKey) => void writeUrlState(filters, nextSort);
+  const setView = (nextView: "list" | "grid") =>
+    void writeUrlState(filters, sort, urlState.page, nextView);
+  const setPage = (updater: number | ((current: number) => number)) => {
+    const nextZeroBased = typeof updater === "function" ? updater(page) : updater;
+    void writeUrlState(filters, sort, nextZeroBased + 1, view);
+  };
+
   useEffect(() => {
-    window.localStorage.setItem(VIEW_KEY, view);
-  }, [view]);
+    if (searchInput.trim() === filters.q) return;
+    const t = setTimeout(() => {
+      void writeUrlState({ ...filters, q: searchInput.trim() }, sort, 1, view, true);
+    }, 300);
+    return () => clearTimeout(t);
+  }, [searchInput, filters, sort, view]);
 
   useEffect(() => {
     try {
@@ -183,10 +208,6 @@ function PropertiesPage() {
       return next;
     });
   };
-
-  useEffect(() => {
-    setPage(0);
-  }, [filters, sort]);
 
   const { data: agents = [] } = useQuery({
     queryKey: ["profiles", "org", orgId],
@@ -297,7 +318,7 @@ function PropertiesPage() {
 
   const { data: result, isLoading: listLoading } = useQuery({
     // (isLoading de mai jos combină și încărcarea filtrului de portaluri)
-    queryKey: ["properties", orgId, filters, debouncedQ, sort, page, favoriteIds, portalIds],
+    queryKey: ["properties", orgId, filters, sort, page, favoriteIds, portalIds],
     enabled: Boolean(orgId) && (!portalFilter || portalIds !== undefined),
     queryFn: async () => {
       let query = supabase
@@ -344,8 +365,8 @@ function PropertiesPage() {
         if (!portalIds || portalIds.length === 0) return { rows: [], count: 0 };
         query = query.in("id", portalIds);
       }
-      if (debouncedQ) {
-        const q = debouncedQ.replace(/[%,()"\\]/g, " ").trim();
+      if (filters.q) {
+        const q = filters.q.replace(/[%,()"\\]/g, " ").trim();
         query = query.or(
           `title.ilike.%${q}%,reference.ilike.%${q}%,address.ilike.%${q}%,city.ilike.%${q}%,district.ilike.%${q}%`,
         );
@@ -691,7 +712,7 @@ function PropertiesPage() {
             <label htmlFor="property-keywords" className={fieldLabelClass}>Cuvinte cheie / ID</label>
             <div className="relative">
               <Search className="pointer-events-none absolute top-3.5 left-3 size-4 text-muted-foreground" />
-              <Input id="property-keywords" value={filters.q} onChange={(e) => setFilters((f) => ({ ...f, q: e.target.value }))} placeholder="Titlu, HB-…, adresă" className={cn("pl-9", filters.q && valuedControlClass)} />
+              <Input id="property-keywords" value={searchInput} onChange={(e) => setSearchInput(e.target.value)} placeholder="Titlu, HB-…, adresă" className={cn("pl-9", searchInput && valuedControlClass)} />
             </div>
           </div>
           <fieldset>
