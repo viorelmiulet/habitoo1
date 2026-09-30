@@ -163,6 +163,7 @@ async function loadOwnedLead(
   const { data } = await admin
     .from("leads")
     .select(LEAD_FIELDS)
+    .is("deleted_at", null)
     .eq("id", leadId)
     .eq("organization_id", actor.organizationId)
     .maybeSingle();
@@ -394,6 +395,7 @@ export async function runCrmTool(
       let query = admin
         .from("leads")
         .select(LEAD_FIELDS)
+        .is("deleted_at", null)
         .eq("organization_id", org)
         .order("created_at", { ascending: false })
         .limit(limitOf(args, 12));
@@ -494,6 +496,7 @@ export async function runCrmTool(
         admin
           .from("leads")
           .select(LEAD_FIELDS)
+          .is("deleted_at", null)
           .eq("organization_id", org)
           .eq("contact_id", contactId)
           .limit(5),
@@ -521,6 +524,7 @@ export async function runCrmTool(
       const { data } = await admin
         .from("leads")
         .select(LEAD_FIELDS)
+        .is("deleted_at", null)
         .eq("id", leadId)
         .eq("organization_id", org)
         .maybeSingle();
@@ -685,6 +689,7 @@ export async function runCrmTool(
       let query = admin
         .from("leads")
         .select(LEAD_FIELDS)
+        .is("deleted_at", null)
         .eq("organization_id", org)
         .in("stage", OPEN_STAGES as never)
         .limit(200);

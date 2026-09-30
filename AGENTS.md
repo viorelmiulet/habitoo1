@@ -18,3 +18,5 @@
 - ClickImob index: JSON index at /api/public/feed/clickimob/index/{CLICKIMOB_INDEX_KEY}.json reuses Properstar index rules; state in `portal_index_state` (portal column), agencies with per-agency ClickImob connection excluded. Why: parallel to per-agency keys without duplicate listings, Properstar untouched.
 
 - Property deletion is soft: only RPCs `delete_property`/`restore_property` touch `deleted_at` (guard trigger + RLS hide deleted rows from non-superadmins); portal withdrawals reuse `enqueueStatusWithdrawals` with reason `deleted`. Why: only superadmin restores or hard-deletes, and restore never republishes.
+
+- Lead deletion is soft: only RPCs `delete_lead`/`restore_lead` touch `leads.deleted_at` (guard trigger + RLS hide deleted rows from non-superadmins; admin-client reads filter `deleted_at`). Why: only superadmin restores or hard-deletes.

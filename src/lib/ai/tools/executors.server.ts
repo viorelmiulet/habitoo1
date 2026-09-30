@@ -284,6 +284,7 @@ async function runTool(
       let query = admin
         .from("leads")
         .select(LEAD_FIELDS)
+        .is("deleted_at", null)
         .eq("organization_id", org)
         .limit(limitOf(args));
       const text = typeof args["query"] === "string" ? escapeLike(args["query"]) : "";
@@ -315,6 +316,7 @@ async function runTool(
       const { data, error } = await admin
         .from("leads")
         .select(LEAD_FIELDS)
+        .is("deleted_at", null)
         .eq("id", String(args["leadId"]))
         .eq("organization_id", org)
         .maybeSingle();
