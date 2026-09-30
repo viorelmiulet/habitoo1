@@ -23,6 +23,10 @@ import { toastError } from "@/lib/errors";
 import { PageHeader } from "@/components/app/PageHeader";
 import { CardGridSkeleton, ListSkeleton } from "@/components/app/LoadingState";
 import { PropertyPortalsCell, usePropertyPortals } from "@/components/app/PropertyPortalsCell";
+import { PortalFilterSelect, portalFilterLabel } from "@/components/app/PortalFilterSelect";
+import { PortalLogoStack } from "@/components/app/PortalLogo";
+import { getPortalFilterOptions, getPropertyIdsByPortalState } from "@/lib/portals.functions";
+import { parsePortalFilter } from "@/lib/portals/portal-state";
 import { PropertyCard, type PropertyCardRow } from "@/components/app/PropertyCard";
 import { useServerFn } from "@tanstack/react-start";
 import { archiveProperty, unarchiveProperty } from "@/lib/property-archive.functions";
@@ -98,6 +102,8 @@ type Filters = {
   floor: string;
   addedAfter: string;
   addedBefore: string;
+  /** `all` sau `<portalId|any>:<published|unpublished|error>`. */
+  portal: string;
 };
 
 const emptyFilters: Filters = {
@@ -121,6 +127,7 @@ const emptyFilters: Filters = {
   floor: "",
   addedAfter: "",
   addedBefore: "",
+  portal: "all",
 };
 
 type SortKey =
@@ -260,9 +267,36 @@ function PropertiesPage() {
     surface_desc: { col: "surface", asc: false },
   };
 
-  const { data: result, isLoading } = useQuery({
-    queryKey: ["properties", orgId, filters, debouncedQ, sort, page, favoriteIds],
+  const loadPortalOptions = useServerFn(getPortalFilterOptions);
+  const loadPortalIds = useServerFn(getPropertyIdsByPortalState);
+  const { data: portalOptions = [] } = useQuery({
+    queryKey: ["property-portals-matrix", "filter-options", orgId],
     enabled: Boolean(orgId),
+    queryFn: () => loadPortalOptions({ data: { organizationId: orgId } }),
+  });
+  // Filtrul se aplică doar pe un portal încă activat (sau „any”).
+  const parsedPortal = parsePortalFilter(filters.portal);
+  const portalFilter =
+    parsedPortal &&
+    (parsedPortal.portal === "any" || portalOptions.some((o) => o.portalId === parsedPortal.portal))
+      ? parsedPortal
+      : null;
+  const portalPillPortal =
+    portalFilter && portalFilter.portal !== "any"
+      ? (portalOptions.find((o) => o.portalId === portalFilter.portal) ?? null)
+      : null;
+  const { data: portalIds, isLoading: portalIdsLoading } = useQuery({
+    queryKey: ["property-portals-matrix", "filter-ids", orgId, portalFilter],
+    enabled: Boolean(orgId && portalFilter),
+    queryFn: () =>
+      loadPortalIds({
+        data: { organizationId: orgId, portal: portalFilter!.portal, state: portalFilter!.state },
+      }),
+  });
+
+  const { data: result, isLoading: listLoading } = useQuery({
+    queryKey: ["properties", orgId, filters, debouncedQ, sort, page, favoriteIds, portalIds],
+    enabled: Boolean(orgId) && (!portalFilter || portalIds !== undefined),
     queryFn: async () => {
       let query = supabase
         .from("properties")
@@ -294,6 +328,10 @@ function PropertiesPage() {
       if (filters.favoritesOnly) {
         if (favoriteIds.length === 0) return { rows: [], count: 0 };
         query = query.in("id", favoriteIds);
+      }
+      if (portalFilter) {
+        if (!portalIds || portalIds.length === 0) return { rows: [], count: 0 };
+        query = query.in("id", portalIds);
       }
       if (debouncedQ) {
         const q = debouncedQ.replace(/[%,()"\\]/g, " ").trim();
@@ -513,6 +551,9 @@ function PropertiesPage() {
     filters.agent !== "all" ? { key: "agent" as const, label: agentName(filters.agent) } : null,
     filters.mine ? { key: "mine" as const, label: "Doar ale mele" } : null,
     filters.favoritesOnly ? { key: "favoritesOnly" as const, label: "Doar favorite" } : null,
+    portalFilter
+      ? { key: "portal" as const, label: portalFilterLabel(filters.portal, portalOptions) }
+      : null,
     filters.priceMin ? { key: "priceMin" as const, label: `Preț ≥ ${filters.priceMin}` } : null,
     filters.priceMax ? { key: "priceMax" as const, label: `Preț ≤ ${filters.priceMax}` } : null,
     filters.surfaceMin
@@ -711,6 +752,16 @@ function PropertiesPage() {
         </div>
 
         <div className="flex flex-wrap items-center gap-2 border-t border-border pt-3">
+          {portalOptions.length > 0 ? (
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-muted-foreground">Publicare pe portaluri</span>
+              <PortalFilterSelect
+                value={filters.portal}
+                options={portalOptions}
+                onChange={(v) => setFilters((f) => ({ ...f, portal: v }))}
+              />
+            </div>
+          ) : null}
           <Select
             value={filters.district}
             onValueChange={(v) => setFilters((f) => ({ ...f, district: v }))}
@@ -878,6 +929,13 @@ function PropertiesPage() {
                 aria-label={`Renunță la filtrul ${pill.label}`}
                 className="inline-flex items-center gap-1.5 rounded-full bg-muted px-2.5 py-1 text-xs text-foreground transition-colors hover:bg-secondary"
               >
+                {pill.key === "portal" && portalPillPortal ? (
+                  <PortalLogoStack
+                    portalId={portalPillPortal.portalId}
+                    name={portalPillPortal.name}
+                    size={16}
+                  />
+                ) : null}
                 {pill.label}
                 <X className="size-3 text-muted-foreground" aria-hidden />
               </button>
