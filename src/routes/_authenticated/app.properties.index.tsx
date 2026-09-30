@@ -736,7 +736,7 @@ function PropertiesPage() {
             </fieldset>
             <fieldset>
               <legend className={fieldLabelClass}>Camere</legend>
-              <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-3">{[["", "Oricâte"], ["1", "1"], ["2", "2"], ["3", "3"], ["4", "4"], ["5+", "5+"]].map(([value, label]) => <Button key={value || "any"} type="button" variant="outline" aria-pressed={filters.rooms === value} onClick={() => setFilters((f) => ({ ...f, rooms: value }))} className={cn("px-2", filters.rooms === value && "border-sidebar bg-sidebar text-surface hover:bg-sidebar hover:text-surface")}>{label}</Button>)}</div>
+              <div className="grid grid-cols-2 gap-1.5">{[["", "Oricâte"], ["1", "1"], ["2", "2"], ["3", "3"], ["4", "4"], ["5+", "5+"]].map(([value, label]) => <Button key={value || "any"} type="button" variant="outline" aria-pressed={filters.rooms === value} onClick={() => setFilters((f) => ({ ...f, rooms: value }))} className={cn("px-2", filters.rooms === value && "border-sidebar bg-sidebar text-surface hover:bg-sidebar hover:text-surface")}>{label}</Button>)}</div>
             </fieldset>
             <fieldset>
               <legend className={fieldLabelClass}>Etaj</legend>
