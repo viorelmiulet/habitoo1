@@ -160,6 +160,7 @@ function PropertiesPage() {
   const [columns, setColumns] = useState<ColumnKey[]>(readColumns);
   const [sort, setSort] = useState<SortKey>("created_desc");
   const [page, setPage] = useState(0);
+  const [filtersExpanded, setFiltersExpanded] = useState(true);
   const [archiveTarget, setArchiveTarget] = useState<string[] | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
   const [promptRequest, setPromptRequest] = useState<PromptRequest | null>(null);
@@ -180,6 +181,27 @@ function PropertiesPage() {
   useEffect(() => {
     window.localStorage.setItem(VIEW_KEY, view);
   }, [view]);
+
+  useEffect(() => {
+    try {
+      const saved = window.localStorage.getItem(FILTERS_EXPANDED_KEY);
+      setFiltersExpanded(saved === null ? window.innerWidth >= 768 : saved === "true");
+    } catch {
+      setFiltersExpanded(window.innerWidth >= 768);
+    }
+  }, []);
+
+  const toggleFiltersExpanded = () => {
+    setFiltersExpanded((current) => {
+      const next = !current;
+      try {
+        window.localStorage.setItem(FILTERS_EXPANDED_KEY, String(next));
+      } catch {
+        /* Browsers may deny localStorage access. */
+      }
+      return next;
+    });
+  };
 
   useEffect(() => {
     setPage(0);
@@ -227,6 +249,21 @@ function PropertiesPage() {
         districts: [...new Set(data.map((p) => p.district).filter(Boolean) as string[])].sort(),
         sources: [...new Set(data.map((p) => p.source).filter(Boolean) as string[])].sort(),
       };
+    },
+  });
+
+  const { data: portfolioTotal = 0 } = useQuery({
+    queryKey: ["properties", "portfolio-count", orgId],
+    enabled: Boolean(orgId),
+    queryFn: async () => {
+      const { count, error } = await supabase
+        .from("properties")
+        .select("id", { count: "exact", head: true })
+        .eq("organization_id", orgId as string)
+        .is("deleted_at", null)
+        .neq("status", "archived" as never);
+      if (error) throw error;
+      return count ?? 0;
     },
   });
 
@@ -293,9 +330,16 @@ function PropertiesPage() {
       if (filters.priceMax) query = query.lte("price", Number(filters.priceMax));
       if (filters.surfaceMin) query = query.gte("surface", Number(filters.surfaceMin));
       if (filters.surfaceMax) query = query.lte("surface", Number(filters.surfaceMax));
-      if (filters.rooms) query = query.eq("rooms", Number(filters.rooms));
-      if (filters.bathrooms) query = query.eq("bathrooms", Number(filters.bathrooms));
-      if (filters.floor) query = query.eq("floor", Number(filters.floor));
+      if (filters.rooms)
+        query = isAtLeastFilter(filters.rooms)
+          ? query.gte("rooms", numericFilterValue(filters.rooms))
+          : query.eq("rooms", numericFilterValue(filters.rooms));
+      if (filters.bathrooms)
+        query = isAtLeastFilter(filters.bathrooms)
+          ? query.gte("bathrooms", numericFilterValue(filters.bathrooms))
+          : query.eq("bathrooms", numericFilterValue(filters.bathrooms));
+      if (filters.floorMin) query = query.gte("floor", Number(filters.floorMin));
+      if (filters.floorMax) query = query.lte("floor", Number(filters.floorMax));
       if (filters.addedAfter) query = query.gte("created_at", filters.addedAfter);
       if (filters.addedBefore) query = query.lte("created_at", filters.addedBefore);
       if (filters.favoritesOnly) {
