@@ -564,6 +564,7 @@ function PropertiesPage() {
     filters.agent !== "all" ? { key: "agent" as const, label: agentName(filters.agent) } : null,
     filters.mine ? { key: "mine" as const, label: "Doar ale mele" } : null,
     filters.favoritesOnly ? { key: "favoritesOnly" as const, label: "Doar favorite" } : null,
+    filters.showArchived ? { key: "showArchived" as const, label: "Include arhivate" } : null,
     portalFilter
       ? { key: "portal" as const, label: portalFilterLabel(filters.portal, portalOptions) }
       : null,
@@ -656,7 +657,7 @@ function PropertiesPage() {
       />
 
       <div className="panel space-y-5 p-4 sm:p-5">
-        <div className="grid grid-cols-[minmax(0,1fr)_auto] items-end gap-4 border-b border-border">
+        <div className="flex flex-col gap-2 border-b border-border md:grid md:grid-cols-[minmax(0,1fr)_auto] md:items-end md:gap-4">
           <div role="tablist" aria-label="Tip proprietate" className="flex min-w-0 overflow-x-auto">
             {PROPERTY_TYPE_TABS.map((tab) => (
               <button
@@ -711,8 +712,8 @@ function PropertiesPage() {
           </div>
           {portalOptions.length > 0 ? (
             <div>
-              <label className={fieldLabelClass}>Publicare pe portaluri</label>
-              <PortalFilterSelect value={filters.portal} options={portalOptions} onChange={(v) => setFilters((f) => ({ ...f, portal: v }))} className={cn("w-full", filters.portal !== "all" && valuedControlClass)} />
+              <label htmlFor="property-portal" className={fieldLabelClass}>Publicare pe portaluri</label>
+              <PortalFilterSelect id="property-portal" value={filters.portal} options={portalOptions} onChange={(v) => setFilters((f) => ({ ...f, portal: v }))} className={cn("w-full", filters.portal !== "all" && valuedControlClass)} />
             </div>
           ) : <div aria-hidden />}
 

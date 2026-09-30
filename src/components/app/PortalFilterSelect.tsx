@@ -49,11 +49,13 @@ export function PortalFilterSelect({
   options,
   onChange,
   className,
+  id,
 }: {
   value: string;
   options: PortalFilterOption[];
   onChange: (value: string) => void;
   className?: string;
+  id?: string;
 }) {
   const [open, setOpen] = useState(false);
   const parsed = parsePortalFilter(value);
@@ -65,6 +67,7 @@ export function PortalFilterSelect({
       <PopoverTrigger asChild>
         <Button
           variant="outline"
+          id={id}
           role="combobox"
           aria-expanded={open}
           aria-label="Publicare pe portaluri"
