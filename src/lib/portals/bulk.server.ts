@@ -104,7 +104,7 @@ export async function realPortalBulkDeps(): Promise<BulkProcessDeps> {
         organizationId: input.organizationId, superadmin: false, actorId: input.actorId,
         data: { propertyId: input.propertyId, selections: input.selections, syncExisting: false },
       });
-      return result.results.map((entry) => ({ portalId: entry.portalId, ok: entry.ok, message: entry.message }));
+      return result.results.map((entry) => ({ portalId: entry.portalId, ok: entry.ok, message: entry.message, code: entry.code, httpStatus: entry.httpStatus }));
     },
   };
 }
