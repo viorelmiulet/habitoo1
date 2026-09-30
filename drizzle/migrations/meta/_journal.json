@@ -666,6 +666,13 @@
       "when": 1790712903831,
       "tag": "0094_agency_required_public_data",
       "breakpoints": true
+    },
+    {
+      "idx": 95,
+      "version": "7",
+      "when": 1790744198542,
+      "tag": "0095_property_soft_delete",
+      "breakpoints": true
     }
   ]
 }
