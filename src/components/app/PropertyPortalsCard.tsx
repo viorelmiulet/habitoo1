@@ -854,6 +854,7 @@ const AUTO_REASON_LABEL: Record<AutoWithdrawView["reason"], string> = {
   status_sold: "Vândut",
   status_rented: "Închiriat",
   archived: "Arhivat",
+  deleted: "Șters",
 };
 
 /** Starea retragerii automate (Vândut / Închiriat / Arhivat) pe acest portal. */

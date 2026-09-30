@@ -140,7 +140,7 @@ export const changePropertyStatus = createServerFn({ method: "POST" })
 export type AutoWithdrawView = {
   portalId: string;
   status: "queued" | "running" | "done" | "failed" | "manual_required" | "cancelled";
-  reason: "status_sold" | "status_rented" | "archived";
+  reason: "status_sold" | "status_rented" | "archived" | "deleted";
   attempts: number;
   lastError: string | null;
   message: string | null;

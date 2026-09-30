@@ -31,6 +31,7 @@ import {
   Radar,
   Settings,
   ShieldCheck,
+  Trash2,
   Sparkles,
   Target,
   UserRound,
@@ -176,7 +177,10 @@ export const superadminNav: NavGroup[] = [
   },
   {
     title: "Audit",
-    items: [{ label: "Jurnal audit", to: "/superadmin/audit", icon: ShieldCheck }],
+    items: [
+      { label: "Jurnal audit", to: "/superadmin/audit", icon: ShieldCheck },
+      { label: "Elemente șterse", to: "/superadmin/deleted", icon: Trash2 },
+    ],
   },
 ];
 

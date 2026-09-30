@@ -5697,6 +5697,7 @@ export type Database = {
           created_by: string | null
           currency: string
           deleted_at: string | null
+          deleted_by: string | null
           description: string | null
           destination: string | null
           district: string | null
@@ -5750,6 +5751,9 @@ export type Database = {
           postal_code_resolved_from: string | null
           postal_code_source: string | null
           pre_archive_status:
+            | Database["public"]["Enums"]["property_status"]
+            | null
+          pre_delete_status:
             | Database["public"]["Enums"]["property_status"]
             | null
           price: number | null
@@ -5827,6 +5831,7 @@ export type Database = {
           created_by?: string | null
           currency?: string
           deleted_at?: string | null
+          deleted_by?: string | null
           description?: string | null
           destination?: string | null
           district?: string | null
@@ -5880,6 +5885,9 @@ export type Database = {
           postal_code_resolved_from?: string | null
           postal_code_source?: string | null
           pre_archive_status?:
+            | Database["public"]["Enums"]["property_status"]
+            | null
+          pre_delete_status?:
             | Database["public"]["Enums"]["property_status"]
             | null
           price?: number | null
@@ -5957,6 +5965,7 @@ export type Database = {
           created_by?: string | null
           currency?: string
           deleted_at?: string | null
+          deleted_by?: string | null
           description?: string | null
           destination?: string | null
           district?: string | null
@@ -6010,6 +6019,9 @@ export type Database = {
           postal_code_resolved_from?: string | null
           postal_code_source?: string | null
           pre_archive_status?:
+            | Database["public"]["Enums"]["property_status"]
+            | null
+          pre_delete_status?:
             | Database["public"]["Enums"]["property_status"]
             | null
           price?: number | null
@@ -7665,6 +7677,7 @@ export type Database = {
       }
       cron_nonce_issue: { Args: { _purpose: string }; Returns: string }
       current_org: { Args: never; Returns: string }
+      delete_property: { Args: { _id: string }; Returns: string }
       email_job_finish: {
         Args: { _error?: string; _job_id: string; _ok: boolean }
         Returns: undefined
@@ -7897,6 +7910,7 @@ export type Database = {
         Args: { _job_id: string }
         Returns: undefined
       }
+      restore_property: { Args: { _id: string }; Returns: string }
       ro_normalize_name: { Args: { _v: string }; Returns: string }
       set_organization_subscription: {
         Args: { _org: string; _term: string }

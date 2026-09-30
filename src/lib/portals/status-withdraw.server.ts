@@ -16,12 +16,13 @@ export type StatusWithdrawAdmin = {
   rpc: (name: string, params?: any) => any;
 };
 
-export type StatusWithdrawReason = "status_sold" | "status_rented" | "archived";
+export type StatusWithdrawReason = "status_sold" | "status_rented" | "archived" | "deleted";
 
 export const STATUS_WITHDRAW_REASON_LABEL: Record<StatusWithdrawReason, string> = {
   status_sold: "Vândut",
   status_rented: "Închiriat",
   archived: "Arhivat",
+  deleted: "Șters",
 };
 
 /** Statusurile proprietății care declanșează retragerea. */
@@ -37,6 +38,7 @@ const STATUS_FOR_REASON: Record<StatusWithdrawReason, string[]> = {
   status_sold: ["sold", "archived"],
   status_rented: ["rented", "archived"],
   archived: ["archived", "sold", "rented"],
+  deleted: [],
 };
 
 export const MANUAL_WITHDRAW_TEXT = "trebuie retras manual din contul portalului";
@@ -266,12 +268,17 @@ export async function processStatusWithdrawItem(
 
   const { data: property } = await admin
     .from("properties")
-    .select("id, status, assigned_to, reference, title")
+    .select("id, status, assigned_to, reference, title, deleted_at")
     .eq("id", item.property_id)
     .maybeSingle();
 
   // Proprietatea a revenit în „Activ” înainte de retragere: nu mai retragem.
-  if (!property || !STATUS_FOR_REASON[item.reason].includes(String(property.status))) {
+  const stillApplies =
+    property &&
+    (item.reason === "deleted"
+      ? Boolean(property.deleted_at)
+      : STATUS_FOR_REASON[item.reason].includes(String(property.status)));
+  if (!stillApplies) {
     await admin
       .from("portal_status_withdraw_items")
       .update({
