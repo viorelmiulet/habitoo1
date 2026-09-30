@@ -582,7 +582,8 @@ function PropertiesPage() {
       : null,
     filters.rooms ? { key: "rooms" as const, label: `${filters.rooms} camere` } : null,
     filters.bathrooms ? { key: "bathrooms" as const, label: `${filters.bathrooms} băi` } : null,
-    filters.floor ? { key: "floor" as const, label: `Etaj ${filters.floor}` } : null,
+    filters.floorMin ? { key: "floorMin" as const, label: `Etaj ≥ ${filters.floorMin}` } : null,
+    filters.floorMax ? { key: "floorMax" as const, label: `Etaj ≤ ${filters.floorMax}` } : null,
     filters.addedAfter ? { key: "addedAfter" as const, label: `După ${filters.addedAfter}` } : null,
     filters.addedBefore
       ? { key: "addedBefore" as const, label: `Înainte de ${filters.addedBefore}` }
@@ -593,6 +594,11 @@ function PropertiesPage() {
     setFilters((f) => ({ ...f, [key]: emptyFilters[key] }) as Filters);
 
   const filtersActive = activePills.length > 0;
+  const hiddenFilterKeys: (keyof Filters)[] = [
+    "city", "district", "priceMin", "priceMax", "surfaceMin", "surfaceMax", "rooms",
+    "bathrooms", "floorMin", "floorMax", "addedAfter", "addedBefore", "agent", "source",
+  ];
+  const hiddenPills = activePills.filter((pill) => hiddenFilterKeys.includes(pill.key));
 
   /** Stare goală utilă: fără portofoliu vs. fără rezultate la filtrare. */
   const emptyBlock = filtersActive ? (
@@ -633,6 +639,9 @@ function PropertiesPage() {
         }),
     });
   };
+
+  const setDigits = (key: "priceMin" | "priceMax" | "surfaceMin" | "surfaceMax" | "floorMin" | "floorMax", value: string) =>
+    setFilters((current) => ({ ...current, [key]: value.replace(/\D/g, "") }));
 
   return (
     <>
