@@ -103,6 +103,7 @@ export async function realPortalBulkDeps(): Promise<BulkProcessDeps> {
       const result = await applyPortalSelectionForOrg({
         organizationId: input.organizationId, superadmin: false, actorId: input.actorId,
         data: { propertyId: input.propertyId, selections: input.selections, syncExisting: false },
+        pauseBetweenPortalsMs: 250,
       });
       return result.results.map((entry) => ({ portalId: entry.portalId, ok: entry.ok, message: entry.message, code: entry.code, httpStatus: entry.httpStatus }));
     },

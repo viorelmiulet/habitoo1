@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Check, X } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -36,8 +36,19 @@ export function PropertyPublishView({ rows, coverOf, cellsFor, drafts, setDrafts
   const [confirming, setConfirming] = useState(false);
   const [jobId, setJobId] = useState<string | null>(null);
   const [showProgress, setShowProgress] = useState(true);
+  const notifiedJob = useRef<string | null>(null);
   const { data: portals = [] } = useQuery({ queryKey: ["portal-bulk-overview", organizationId], enabled: Boolean(organizationId), queryFn: () => loadOverview({ data: { organizationId } }) });
   const progress = useQuery({ queryKey: ["portal-bulk-job", jobId], enabled: Boolean(jobId), queryFn: () => loadJob({ data: { jobId: jobId ?? "" } }), refetchInterval: (query) => ["queued", "running"].includes(query.state.data?.job.status ?? "") ? 2_000 : false });
+  useEffect(() => {
+    if (!jobId || progress.data?.job.status !== "done" || notifiedJob.current === jobId) return;
+    notifiedJob.current = jobId;
+    toast.success(`Publicare finalizată: ${progress.data.job.done} reușite, ${progress.data.job.failed} eșuate.`);
+    void Promise.all([
+      queryClient.invalidateQueries({ queryKey: ["property-portals-matrix"] }),
+      queryClient.invalidateQueries({ queryKey: ["portal-filter-options"] }),
+      queryClient.invalidateQueries({ queryKey: ["portal-bulk-overview"] }),
+    ]);
+  }, [jobId, progress.data?.job.status, progress.data?.job.done, progress.data?.job.failed, queryClient]);
   const initial = useMemo(() => Object.fromEntries(rows.flatMap((row) => cellsFor(row.id).map((cell) => [bulkDraftKey(row.id, cell.portalId), { enabled: cell.selected, promoted: cell.promoted } satisfies BulkCellValue]))), [rows, cellsFor]);
   const initialRef = useRef<Record<string, BulkCellValue>>({});
   Object.assign(initialRef.current, initial);

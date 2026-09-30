@@ -2718,6 +2718,8 @@ export async function applyPortalSelectionForOrg(input: {
   data: z.infer<typeof applySelectionSchema>;
   /** Motivul retragerii (automatizări: status_sold, status_rented, archived). */
   withdrawReason?: string;
+  /** Worker bulk: mică pauză între portaluri pentru a evita rafalele de cereri. */
+  pauseBetweenPortalsMs?: number;
 }): Promise<{ ok: boolean; results: PortalSelectionOutcome[] }> {
   {
     const { organizationId, superadmin, actorId, data } = input;
@@ -2763,7 +2765,10 @@ export async function applyPortalSelectionForOrg(input: {
 
     const results: PortalSelectionOutcome[] = [];
 
-    for (const wanted of data.selections) {
+    for (const [wantedIndex, wanted] of data.selections.entries()) {
+      if (wantedIndex > 0 && input.pauseBetweenPortalsMs) {
+        await new Promise((resolve) => setTimeout(resolve, input.pauseBetweenPortalsMs));
+      }
       const definition = getPortalDefinition(wanted.portalId);
       if (!definition) continue;
       /**
