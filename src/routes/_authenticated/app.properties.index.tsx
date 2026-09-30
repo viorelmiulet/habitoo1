@@ -3,7 +3,7 @@ import { StatusChangeDialog } from "@/components/app/StatusChangeDialog";
 import { isWithdrawStatus } from "@/components/app/StatusWithdrawPreview";
 import { changePropertyStatus } from "@/lib/property-status.functions";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   ArchiveRestore,
   Trash2,
@@ -138,6 +138,8 @@ function PropertiesPage() {
   const sort = urlState.sort;
   const page = urlState.page - 1;
   const view = urlState.view;
+  const urlStateRef = useRef(urlState);
+  urlStateRef.current = urlState;
   const { data: user } = useCurrentUser();
   const orgId = user?.organization?.id;
   const queryClient = useQueryClient();
@@ -183,7 +185,8 @@ function PropertiesPage() {
   useEffect(() => {
     if (searchInput.trim() === filters.q) return;
     const t = setTimeout(() => {
-      void writeUrlState({ ...filters, q: searchInput.trim() }, sort, 1, view, true);
+      const latest = urlStateRef.current;
+      void writeUrlState({ ...latest.filters, q: searchInput.trim() }, latest.sort, 1, latest.view, true);
     }, 300);
     return () => clearTimeout(t);
   }, [searchInput, filters.q, sort, view]);
