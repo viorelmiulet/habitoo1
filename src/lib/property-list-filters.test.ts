@@ -8,6 +8,9 @@ import {
   normalizeCityFilterValue,
   normalizeSavedPropertyFilters,
   numericFilterValue,
+  propertyListSearchFromState,
+  propertyListSearchSchema,
+  propertyListStateFromSearch,
   romaniaDateBoundary,
   shouldShowAdvancedFilters,
 } from "./property-list-filters";
@@ -88,5 +91,36 @@ describe("filtrele listei de proprietăți", () => {
     expect(romaniaDateBoundary("2026-09-30", "end")).toBe("2026-09-30T20:59:59.999Z");
     expect(romaniaDateBoundary("2026-01-15", "start")).toBe("2026-01-14T22:00:00.000Z");
     expect(romaniaDateBoundary("2026-01-15", "end")).toBe("2026-01-15T21:59:59.999Z");
+  });
+
+  it("citește filtrele, sortarea, pagina și modul din URL", () => {
+    const state = propertyListStateFromSearch(propertyListSearchSchema.parse({
+      q: "Militari",
+      type: "apartment",
+      portal: "romimo:published",
+      favoritesOnly: true,
+      sort: "price_asc",
+      page: "3",
+      view: "grid",
+    }));
+
+    expect(state).toMatchObject({
+      filters: { q: "Militari", type: "apartment", portal: "romimo:published", favoritesOnly: true },
+      sort: "price_asc",
+      page: 3,
+      view: "grid",
+    });
+  });
+
+  it("scrie în URL numai valorile diferite de cele implicite", () => {
+    const defaults = propertyListStateFromSearch(propertyListSearchSchema.parse({}));
+    expect(propertyListSearchFromState(defaults.filters, defaults.sort, defaults.page, defaults.view)).toEqual({});
+
+    expect(propertyListSearchFromState(
+      { ...defaults.filters, city: "București", mine: true },
+      "updated_desc",
+      2,
+      "grid",
+    )).toEqual({ city: "București", mine: true, sort: "updated_desc", page: 2, view: "grid" });
   });
 });
