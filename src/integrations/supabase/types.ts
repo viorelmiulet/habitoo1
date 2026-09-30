@@ -2904,6 +2904,8 @@ export type Database = {
           contact_id: string | null
           created_at: string
           created_by: string | null
+          deleted_at: string | null
+          deleted_by: string | null
           email: string | null
           id: string
           last_interaction_at: string | null
@@ -2913,6 +2915,7 @@ export type Database = {
           notes: string | null
           organization_id: string
           phone: string | null
+          pre_delete_stage: Database["public"]["Enums"]["lead_stage"] | null
           property_id: string | null
           request_id: string | null
           score: number
@@ -2929,6 +2932,8 @@ export type Database = {
           contact_id?: string | null
           created_at?: string
           created_by?: string | null
+          deleted_at?: string | null
+          deleted_by?: string | null
           email?: string | null
           id?: string
           last_interaction_at?: string | null
@@ -2938,6 +2943,7 @@ export type Database = {
           notes?: string | null
           organization_id: string
           phone?: string | null
+          pre_delete_stage?: Database["public"]["Enums"]["lead_stage"] | null
           property_id?: string | null
           request_id?: string | null
           score?: number
@@ -2954,6 +2960,8 @@ export type Database = {
           contact_id?: string | null
           created_at?: string
           created_by?: string | null
+          deleted_at?: string | null
+          deleted_by?: string | null
           email?: string | null
           id?: string
           last_interaction_at?: string | null
@@ -2963,6 +2971,7 @@ export type Database = {
           notes?: string | null
           organization_id?: string
           phone?: string | null
+          pre_delete_stage?: Database["public"]["Enums"]["lead_stage"] | null
           property_id?: string | null
           request_id?: string | null
           score?: number
@@ -7677,6 +7686,7 @@ export type Database = {
       }
       cron_nonce_issue: { Args: { _purpose: string }; Returns: string }
       current_org: { Args: never; Returns: string }
+      delete_lead: { Args: { _id: string }; Returns: string }
       delete_property: { Args: { _id: string }; Returns: string }
       email_job_finish: {
         Args: { _error?: string; _job_id: string; _ok: boolean }
@@ -7910,6 +7920,7 @@ export type Database = {
         Args: { _job_id: string }
         Returns: undefined
       }
+      restore_lead: { Args: { _id: string }; Returns: string }
       restore_property: { Args: { _id: string }; Returns: string }
       ro_normalize_name: { Args: { _v: string }; Returns: string }
       set_organization_subscription: {
