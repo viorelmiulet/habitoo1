@@ -185,7 +185,7 @@ function bucharestOffsetMs(instant: Date): number {
     Number(values.year), Number(values.month) - 1, Number(values.day),
     Number(values.hour), Number(values.minute), Number(values.second),
   );
-  return representedAsUtc - instant.getTime();
+  return Math.round((representedAsUtc - instant.getTime()) / 1_000) * 1_000;
 }
 
 /** Transformă o dată din formular în limita exactă a zilei din România. */
