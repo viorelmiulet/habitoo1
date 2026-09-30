@@ -81,7 +81,7 @@ import {
 } from "@/lib/labels";
 import { appHead } from "@/components/app/app-head";
 import { cn } from "@/lib/utils";
-import { canShowDeleteAction, formatPropertyListDetails, formatPropertyListPrice, portalDotTone } from "@/lib/property-list-row";
+import { canShowDeleteAction, formatPropertyListDetails, formatPropertyListPrice, portalDotTone, portalStateLabel } from "@/lib/property-list-row";
 import {
   emptyPropertyListFilters,
   formatThousands,
@@ -895,7 +895,7 @@ function PropertiesPage() {
                         setSelected((s) => (c ? [...s, p.id] : s.filter((id) => id !== p.id)))
                       }
                       aria-label={`Selectează ${p.reference ?? p.title}`}
-                      className="absolute top-5 left-6 z-10 bg-surface lg:static"
+                      className="absolute top-5 right-16 z-10 bg-surface lg:static"
                     />
                     <div className="relative col-span-2 aspect-[16/10] w-full lg:col-span-1 lg:h-24 lg:w-[132px] lg:aspect-auto">
                       <PropertyThumb
@@ -914,7 +914,7 @@ function PropertiesPage() {
                       >
                         <Star className={cn("size-4 text-muted-foreground", favoriteIds.includes(p.id) && "fill-warning text-warning")} />
                       </Button>
-                      {promoted ? <span className="absolute bottom-2 left-2 rounded-pill bg-sidebar px-2 py-1 text-[11px] font-bold text-warning-foreground">Promovat</span> : null}
+                      {promoted ? <span className="absolute bottom-2 left-2 rounded-pill bg-sidebar px-2 py-1 text-[11px] font-bold text-sidebar-primary">Promovat</span> : null}
                     </div>
                     <div className="col-span-2 min-w-0 lg:col-span-1">
                       <div className="mb-2 flex flex-wrap items-center gap-1.5">
@@ -950,7 +950,7 @@ function PropertiesPage() {
                                 })} />
                               </span>
                             </TooltipTrigger>
-                            <TooltipContent>{cell.portalName}: {cell.state}</TooltipContent>
+                            <TooltipContent>{cell.portalName}: {portalStateLabel(cell.state)}</TooltipContent>
                           </Tooltip>
                         ))}</div> : null}
                         {portalError ? <p className="mt-1.5 truncate text-xs font-semibold text-destructive">Eroare pe {portalError.portalName}</p> : publishedPortals.length > 0 ? <p className="mt-1.5 text-xs font-semibold text-success">Publicat pe {publishedPortals.length} {publishedPortals.length === 1 ? "portal" : "portaluri"}</p> : <p className="mt-1.5 text-xs text-muted-foreground">Nepublicată · <a href={`/app/properties/${p.id}?tab=publishing`} className="font-semibold text-primary hover:underline">Publică pe portaluri</a></p>}

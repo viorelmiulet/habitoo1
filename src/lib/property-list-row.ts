@@ -56,6 +56,22 @@ export function portalDotTone(state: PropertyPortalCell["state"]): PortalDotTone
   return "neutral";
 }
 
+export function portalStateLabel(state: PropertyPortalCell["state"]): string {
+  const labels: Record<PropertyPortalCell["state"], string> = {
+    published: "publicat",
+    in_feed: "în feed",
+    selected: "selectat",
+    syncing: "în curs",
+    expired: "expirat",
+    error: "eroare",
+    withdrawn: "retras",
+    not_selected: "neselectat",
+    not_configured: "neconfigurat",
+    coming_soon: "indisponibil momentan",
+  };
+  return labels[state];
+}
+
 export function canShowDeleteAction(allowed: boolean): boolean {
   return allowed;
 }
