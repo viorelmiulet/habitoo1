@@ -6,7 +6,18 @@ import { Button } from "@/components/ui/button";
 import { toast } from "@/components/ui/sonner";
 import { getPortalBulkJob } from "@/lib/portals/bulk.functions";
 
-export function PortalBulkProgress({ jobId }: { jobId: string | null }) {
+type FailedBulkItem = {
+  property_id: string;
+  portal_key: string;
+  enabled: boolean;
+  promoted: boolean | null;
+};
+
+export function PortalBulkProgress({ jobId, onRetry, feedOnlyPortalIds = [] }: {
+  jobId: string | null;
+  onRetry?: (items: FailedBulkItem[]) => void;
+  feedOnlyPortalIds?: string[];
+}) {
   const queryClient = useQueryClient();
   const loadJob = useServerFn(getPortalBulkJob);
   const [visible, setVisible] = useState(true);
@@ -35,6 +46,7 @@ export function PortalBulkProgress({ jobId }: { jobId: string | null }) {
   return <aside role="status" aria-live="polite" className="fixed right-4 bottom-4 z-50 w-[min(390px,calc(100vw-2rem))] rounded-[18px] border border-border bg-card p-4">
     <div className="flex justify-between"><div><h3 className="font-display text-lg font-bold">Publicare pe portaluri</h3><p className="text-xs text-muted-foreground">{completed} din {total}</p></div><Button variant="ghost" size="icon" aria-label="Ascunde progresul" onClick={() => setVisible(false)}><X /></Button></div>
     <div className="mt-3 h-2 overflow-hidden rounded-full bg-muted"><div className="h-full bg-primary" style={{ width: `${total ? completed / total * 100 : 0}%` }} /></div>
-    <ul className="mt-3 max-h-64 space-y-2 overflow-auto">{progress.data?.items.map((item) => <li key={item.id} className="rounded-xl border border-border p-2 text-xs"><strong>{item.property?.reference ?? item.property?.title ?? item.property_id}</strong><p className={item.status === "failed" ? "text-destructive" : "text-muted-foreground"}>{item.status === "ok" ? item.enabled ? "Publicat / În feed" : "Retras" : item.status === "failed" || item.status === "skipped" ? item.message : "În curs"}</p></li>)}</ul>
+    <ul className="mt-3 max-h-64 space-y-2 overflow-auto">{progress.data?.items.map((item) => <li key={item.id} className="rounded-xl border border-border p-2 text-xs"><strong>{item.property?.reference ?? item.property?.title ?? item.property_id}</strong><p className={item.status === "failed" ? "text-destructive" : "text-muted-foreground"}>{item.status === "ok" ? item.enabled ? feedOnlyPortalIds.includes(item.portal_key) ? "În feed" : "Publicat" : "Retras" : item.status === "failed" || item.status === "skipped" ? item.message : "În curs"}</p></li>)}</ul>
+    {onRetry && progress.data?.items.some((item) => item.status === "failed") ? <Button variant="outline" className="mt-3 w-full" onClick={() => onRetry(progress.data?.items.filter((item) => item.status === "failed") ?? [])}>Reîncearcă</Button> : null}
   </aside>;
 }

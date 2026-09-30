@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Check } from "lucide-react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -25,6 +25,12 @@ export function PortalBulkSelectionDialog({ mode, propertyIds, cellsFor, organiz
   const startJob = useServerFn(startPortalBulkJob);
   const [selectedPortals, setSelectedPortals] = useState<Record<string, boolean>>({});
   const [promotions, setPromotions] = useState<Record<string, boolean>>({});
+  useEffect(() => {
+    if (!mode) {
+      setSelectedPortals({});
+      setPromotions({});
+    }
+  }, [mode]);
   const { data: portals = [] } = useQuery({ queryKey: ["portal-bulk-overview", organizationId], enabled: Boolean(mode && organizationId), queryFn: () => loadOverview({ data: { organizationId } }) });
   const previews = useMemo(() => portals.map((portal) => ({
     ...portal,

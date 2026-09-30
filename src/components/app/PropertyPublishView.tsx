@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { Check, X } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -8,11 +8,12 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { PortalLogoStack } from "@/components/app/PortalLogo";
 import { PropertyThumb } from "@/components/app/PropertyThumb";
 import { StatusBadge } from "@/components/app/StatusBadge";
+import { PortalBulkProgress } from "@/components/app/PortalBulkProgress";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { propertyStatusLabels, propertyStatusTone, transactionLabels } from "@/lib/labels";
 import { formatPropertyListPrice, portalDotTone, portalStateLabel } from "@/lib/property-list-row";
 import type { PropertyPortalCell } from "@/lib/portals.functions";
-import { getPortalBulkJob, getPortalBulkOverview, startPortalBulkJob } from "@/lib/portals/bulk.functions";
+import { getPortalBulkOverview, startPortalBulkJob } from "@/lib/portals/bulk.functions";
 import { bulkDraftKey, bulkLimitExceeded, bulkSlotProjection, reconcileBulkDraft, toggleBulkPage, type BulkCellValue, type BulkDraft } from "@/lib/portals/bulk";
 import { toast } from "@/components/ui/sonner";
 import { toastError } from "@/lib/errors";
@@ -32,23 +33,9 @@ export function PropertyPublishView({ rows, coverOf, cellsFor, drafts, setDrafts
   const queryClient = useQueryClient();
   const loadOverview = useServerFn(getPortalBulkOverview);
   const startJob = useServerFn(startPortalBulkJob);
-  const loadJob = useServerFn(getPortalBulkJob);
   const [confirming, setConfirming] = useState(false);
   const [jobId, setJobId] = useState<string | null>(null);
-  const [showProgress, setShowProgress] = useState(true);
-  const notifiedJob = useRef<string | null>(null);
   const { data: portals = [] } = useQuery({ queryKey: ["portal-bulk-overview", organizationId], enabled: Boolean(organizationId), queryFn: () => loadOverview({ data: { organizationId } }) });
-  const progress = useQuery({ queryKey: ["portal-bulk-job", jobId], enabled: Boolean(jobId), queryFn: () => loadJob({ data: { jobId: jobId ?? "" } }), refetchInterval: (query) => ["queued", "running"].includes(query.state.data?.job.status ?? "") ? 2_000 : false });
-  useEffect(() => {
-    if (!jobId || progress.data?.job.status !== "done" || notifiedJob.current === jobId) return;
-    notifiedJob.current = jobId;
-    toast.success(`Publicare finalizată: ${progress.data.job.done} reușite, ${progress.data.job.failed} eșuate.`);
-    void Promise.all([
-      queryClient.invalidateQueries({ queryKey: ["property-portals-matrix"] }),
-      queryClient.invalidateQueries({ queryKey: ["portal-filter-options"] }),
-      queryClient.invalidateQueries({ queryKey: ["portal-bulk-overview"] }),
-    ]);
-  }, [jobId, progress.data?.job.status, progress.data?.job.done, progress.data?.job.failed, queryClient]);
   const initial = useMemo(() => Object.fromEntries(rows.flatMap((row) => cellsFor(row.id).map((cell) => [bulkDraftKey(row.id, cell.portalId), { enabled: cell.selected, promoted: cell.promoted } satisfies BulkCellValue]))), [rows, cellsFor]);
   const initialRef = useRef<Record<string, BulkCellValue>>({});
   Object.assign(initialRef.current, initial);
@@ -57,7 +44,7 @@ export function PropertyPublishView({ rows, coverOf, cellsFor, drafts, setDrafts
   const exceeded = projections.find((portal) => bulkLimitExceeded(portal.used, portal.limit, portal.projected));
   const withdrawals = changes.filter((change) => !change.enabled);
   const publications = changes.filter((change) => change.enabled && !initialRef.current[bulkDraftKey(change.propertyId, change.portalId)]?.enabled);
-  const mutation = useMutation({ mutationFn: () => startJob({ data: { organizationId, items: changes.map((item) => ({ propertyId: item.propertyId, portalId: item.portalId, enabled: item.enabled, promoted: item.promoted })) } }), onSuccess: (result) => { setConfirming(false); setDrafts({}); setJobId(result.jobId); setShowProgress(true); toast.success(`${result.queued} modificări rulează în fundal.`); void queryClient.invalidateQueries({ queryKey: ["property-portals-matrix"] }); }, onError: (error: Error) => toastError(error) });
+  const mutation = useMutation({ mutationFn: () => startJob({ data: { organizationId, items: changes.map((item) => ({ propertyId: item.propertyId, portalId: item.portalId, enabled: item.enabled, promoted: item.promoted })) } }), onSuccess: (result) => { setConfirming(false); setDrafts({}); setJobId(result.jobId); toast.success(`${result.queued} modificări rulează în fundal.`); void queryClient.invalidateQueries({ queryKey: ["property-portals-matrix"] }); }, onError: (error: Error) => toastError(error) });
   const updateCell = (propertyId: string, cell: PropertyPortalCell, value: BulkCellValue) => setDrafts((current) => reconcileBulkDraft(current, { enabled: cell.selected, promoted: cell.promoted }, { propertyId, portalId: cell.portalId, ...value }));
   const columnTemplate = `minmax(300px,1.65fr) repeat(${Math.max(portals.length, 1)}, minmax(170px,1fr))`;
 
@@ -80,7 +67,7 @@ export function PropertyPublishView({ rows, coverOf, cellsFor, drafts, setDrafts
 
     {changes.length > 0 ? <div className="fixed inset-x-3 bottom-3 z-40 mx-auto flex max-w-5xl flex-wrap items-center gap-3 rounded-2xl bg-sidebar px-4 py-3 text-sidebar-foreground"><span className="flex size-8 items-center justify-center rounded-full bg-primary font-bold text-primary-foreground">{changes.length}</span><div><strong>modificări nesalvate</strong><p className="text-xs opacity-75">{publications.length} publicări · {withdrawals.length} retrageri</p></div><div className="min-w-0 flex-1 text-xs">{projections.filter((portal) => portal.limit !== null).map((portal) => <span key={portal.portalId} className={cn("mr-3", bulkLimitExceeded(portal.used, portal.limit, portal.projected) && "text-destructive")}>{portal.name}: {portal.used} → {portal.projected} din {portal.limit}</span>)}{exceeded ? <p className="font-semibold text-destructive">Depășești limita de locuri pe {exceeded.name}</p> : null}</div><Button variant="ghost" className="text-sidebar-foreground" onClick={() => setDrafts({})}>Renunță</Button><Button disabled={Boolean(exceeded)} onClick={() => setConfirming(true)}>Aplică modificările</Button></div> : null}
 
-    {jobId ? showProgress ? <aside role="status" aria-live="polite" className="fixed right-4 bottom-4 z-50 w-[min(390px,calc(100vw-2rem))] rounded-[18px] border border-border bg-card p-4"><div className="flex justify-between"><div><h3 className="font-display text-lg font-bold">Publicare pe portaluri</h3><p className="text-xs text-muted-foreground">{progress.data?.job.done ?? 0} din {progress.data?.job.total ?? 0}</p></div><Button variant="ghost" size="icon" aria-label="Ascunde progresul" onClick={() => setShowProgress(false)}><X /></Button></div><div className="mt-3 h-2 overflow-hidden rounded-full bg-muted"><div className="h-full bg-primary" style={{ width: `${progress.data?.job.total ? ((progress.data.job.done + progress.data.job.failed) / progress.data.job.total) * 100 : 0}%` }} /></div><ul className="mt-3 max-h-64 space-y-2 overflow-auto">{progress.data?.items.map((item) => <li key={item.id} className="rounded-xl border border-border p-2 text-xs"><strong>{item.property?.reference ?? item.property?.title ?? item.property_id}</strong><p className={item.status === "failed" ? "text-destructive" : "text-muted-foreground"}>{item.status === "ok" ? item.enabled ? portals.find((portal) => portal.portalId === item.portal_key)?.feedOnly ? "În feed" : "Publicat" : "Retras" : item.status === "failed" || item.status === "skipped" ? item.message : "În curs"}</p></li>)}</ul>{progress.data?.items.some((item) => item.status === "failed") ? <Button variant="outline" className="mt-3 w-full" onClick={() => { const failed = progress.data?.items.filter((item) => item.status === "failed") ?? []; setDrafts(Object.fromEntries(failed.map((item) => [bulkDraftKey(item.property_id, item.portal_key), { propertyId: item.property_id, portalId: item.portal_key, enabled: item.enabled, promoted: item.promoted ?? false }]))); setShowProgress(false); }}>Reîncearcă</Button> : null}</aside> : <Button className="fixed right-4 bottom-4 z-40 rounded-full bg-sidebar text-sidebar-foreground" onClick={() => setShowProgress(true)}>Publicare în curs {progress.data?.job.done ?? 0}/{progress.data?.job.total ?? 0}</Button> : null}
+    <PortalBulkProgress jobId={jobId} feedOnlyPortalIds={portals.filter((portal) => portal.feedOnly).map((portal) => portal.portalId)} onRetry={(failed) => setDrafts(Object.fromEntries(failed.map((item) => [bulkDraftKey(item.property_id, item.portal_key), { propertyId: item.property_id, portalId: item.portal_key, enabled: item.enabled, promoted: item.promoted ?? false }]))) } />
 
     <Dialog open={confirming} onOpenChange={setConfirming}><DialogContent className="max-w-2xl rounded-[18px]"><DialogHeader><DialogTitle className="font-display">Aplici {changes.length} modificări pe portaluri?</DialogTitle><DialogDescription>{new Set(changes.map((change) => change.propertyId)).size} anunțuri sunt afectate. Operațiile rulează în fundal; poți închide pagina.</DialogDescription></DialogHeader><div className="max-h-[55vh] space-y-3 overflow-auto">{portals.map((portal) => { const items = changes.filter((item) => item.portalId === portal.portalId); if (!items.length) return null; const refs = (enabled: boolean) => items.filter((item) => item.enabled === enabled).map((item) => rows.find((row) => row.id === item.propertyId)?.reference ?? item.propertyId); const pub = refs(true); const withdraw = refs(false); const promo = items.filter((item) => item.promoted).map((item) => rows.find((row) => row.id === item.propertyId)?.reference ?? item.propertyId); const projection = projections.find((entry) => entry.portalId === portal.portalId); return <section key={portal.portalId} className="rounded-2xl border border-border p-3"><div className="mb-2 flex items-center gap-2"><PortalLogoStack portalId={portal.portalId} name={portal.name} size={28} /><strong>{portal.name}</strong></div>{pub.length ? <p className="text-sm">Publici {pub.length}: {pub.join(", ")}</p> : null}{withdraw.length ? <p className="text-sm">Retragi {withdraw.length}: {withdraw.join(", ")}</p> : null}{promo.length ? <p className="text-sm">Promovezi {promo.length}: {promo.join(", ")}</p> : null}{portal.limit !== null ? <p className="mt-1 text-xs text-muted-foreground">Locuri: {portal.used} → {projection?.projected ?? portal.used} din {portal.limit}</p> : null}</section>; })}{withdrawals.length ? <p className="rounded-2xl border border-destructive bg-destructive/5 p-3 text-sm">Retragerea scoate anunțul de pe portal. Dacă îl publici din nou, poate primi un anunț nou pe portal, cu alt link.</p> : null}</div><DialogFooter><Button variant="outline" onClick={() => setConfirming(false)}>Înapoi</Button><Button disabled={mutation.isPending} onClick={() => mutation.mutate()}>Aplică {changes.length} modificări</Button></DialogFooter></DialogContent></Dialog>
   </>;
