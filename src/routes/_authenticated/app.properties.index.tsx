@@ -12,8 +12,10 @@ import {
   ChevronLeft,
   ChevronRight,
   ChevronUp,
-  Columns3,
   Download,
+  ExternalLink,
+  MoreVertical,
+  Pencil,
   LayoutGrid,
   List,
   Search,
@@ -24,7 +26,7 @@ import { toast } from "@/components/ui/sonner";
 import { toastError } from "@/lib/errors";
 import { PageHeader } from "@/components/app/PageHeader";
 import { CardGridSkeleton, ListSkeleton } from "@/components/app/LoadingState";
-import { PropertyPortalsCell, usePropertyPortals } from "@/components/app/PropertyPortalsCell";
+import { usePropertyPortals } from "@/components/app/PropertyPortalsCell";
 import { PortalFilterSelect, portalFilterLabel } from "@/components/app/PortalFilterSelect";
 import { getPortalFilterOptions, getPropertyIdsByPortalState } from "@/lib/portals.functions";
 import { parsePortalFilter } from "@/lib/portals/portal-state";
@@ -34,6 +36,9 @@ import { archiveProperty, unarchiveProperty } from "@/lib/property-archive.funct
 import { reassignPropertyAgent } from "@/lib/property-agent.functions";
 import { PropertyThumb, usePropertyCovers } from "@/components/app/PropertyThumb";
 import { StatusBadge } from "@/components/app/StatusBadge";
+import { PortalLogoStack } from "@/components/app/PortalLogo";
+import { UserAvatar } from "@/components/app/UserAvatar";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { EmptyState } from "@/components/app/EmptyState";
 import { PromptDialog, type PromptRequest } from "@/components/app/PromptDialog";
 import { Button } from "@/components/ui/button";
@@ -51,7 +56,6 @@ import {
 } from "@/components/ui/alert-dialog";
 import {
   DropdownMenu,
-  DropdownMenuCheckboxItem,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
@@ -67,7 +71,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useCurrentUser } from "@/hooks/use-session";
 import { DeletePropertyDialog, canDeleteProperty } from "@/components/app/DeletePropertyDialog";
 import { useSavedViews } from "@/hooks/use-saved-views";
-import { formatMoney, formatNumber, relativeDays } from "@/lib/format";
+import { relativeDays } from "@/lib/format";
 import { downloadCsv } from "@/lib/crm";
 import {
   propertyStatusLabels,
@@ -77,6 +81,7 @@ import {
 } from "@/lib/labels";
 import { appHead } from "@/components/app/app-head";
 import { cn } from "@/lib/utils";
+import { canShowDeleteAction, formatPropertyListDetails, formatPropertyListPrice, portalDotTone, portalStateLabel } from "@/lib/property-list-row";
 import {
   emptyPropertyListFilters,
   formatThousands,
@@ -108,29 +113,6 @@ const sortOptions: Record<SortKey, string> = {
   surface_desc: "Suprafață descrescătoare",
 };
 
-const COLUMNS_KEY = "imobiflow.propertyColumns";
-const allColumns = [
-  { key: "type", label: "Tip" },
-  { key: "transaction", label: "Tranzacție" },
-  { key: "status", label: "Status" },
-  { key: "price", label: "Preț" },
-  { key: "surface", label: "Suprafață" },
-  { key: "agent", label: "Agent" },
-  { key: "updated", label: "Actualizat" },
-] as const;
-type ColumnKey = (typeof allColumns)[number]["key"];
-
-function readColumns(): ColumnKey[] {
-  if (typeof window === "undefined") return allColumns.map((c) => c.key);
-  try {
-    const stored = JSON.parse(window.localStorage.getItem(COLUMNS_KEY) ?? "null");
-    if (Array.isArray(stored)) return stored;
-  } catch {
-    /* ignore */
-  }
-  return allColumns.map((c) => c.key);
-}
-
 /** Lista e vizualizarea implicită; preferința utilizatorului se ține local. */
 // Cheie nouă: utilizatorii care aveau vechea grilă memorată primesc
 // noua listă ca vizualizare implicită, dar își pot alege din nou grila.
@@ -156,7 +138,6 @@ function PropertiesPage() {
   const [debouncedQ, setDebouncedQ] = useState("");
   const [selected, setSelected] = useState<string[]>([]);
   const [view, setView] = useState<"list" | "grid">(readView);
-  const [columns, setColumns] = useState<ColumnKey[]>(readColumns);
   const [sort, setSort] = useState<SortKey>("created_desc");
   const [page, setPage] = useState(0);
   const [filtersExpanded, setFiltersExpanded] = useState(true);
@@ -172,10 +153,6 @@ function PropertiesPage() {
     const t = setTimeout(() => setDebouncedQ(filters.q.trim()), 300);
     return () => clearTimeout(t);
   }, [filters.q]);
-
-  useEffect(() => {
-    window.localStorage.setItem(COLUMNS_KEY, JSON.stringify(columns));
-  }, [columns]);
 
   useEffect(() => {
     window.localStorage.setItem(VIEW_KEY, view);
@@ -533,7 +510,7 @@ function PropertiesPage() {
     );
   };
 
-  const agentName = (id: string | null) => agents.find((a) => a.id === id)?.full_name ?? "—";
+  const agentName = (id: string | null) => agents.find((a) => a.id === id)?.full_name ?? "Nealocat";
 
   /**
    * Filtrele active, ca pastile închizabile individual. Doar prezentare:
@@ -865,36 +842,27 @@ function PropertiesPage() {
               <Button variant="ghost" aria-pressed={view === "list"} onClick={() => setView("list")} className={cn("rounded-none border-0 px-3", view === "list" && "bg-sidebar text-surface hover:bg-sidebar hover:text-surface")}><List aria-hidden /> Listă</Button>
               <Button variant="ghost" aria-pressed={view === "grid"} onClick={() => setView("grid")} className={cn("rounded-none border-0 px-3", view === "grid" && "bg-sidebar text-surface hover:bg-sidebar hover:text-surface")}><LayoutGrid aria-hidden /> Carduri</Button>
             </div>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild><Button variant="outline"><Columns3 aria-hidden /> Coloane</Button></DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                {allColumns.map((column) => <DropdownMenuCheckboxItem key={column.key} checked={columns.includes(column.key)} onCheckedChange={(checked) => setColumns((current) => checked ? [...current, column.key] : current.filter((key) => key !== column.key))}>{column.label}</DropdownMenuCheckboxItem>)}
-              </DropdownMenuContent>
-            </DropdownMenu>
           </div>
         </div>
         {view === "list" ? (
           <>
-            <div className="hidden items-center gap-3 border-b border-border px-4 py-3 text-xs font-medium tracking-wide text-muted-foreground uppercase lg:flex">
+            <div className={cn(
+              "hidden items-center gap-[18px] border-b border-border px-[18px] py-3 text-xs font-bold tracking-[0.08em] text-muted-foreground uppercase lg:grid",
+              portals.hasPortals
+                ? "lg:grid-cols-[20px_132px_minmax(0,1fr)_140px_150px_170px_36px]"
+                : "lg:grid-cols-[20px_132px_minmax(0,1fr)_140px_170px_36px]",
+            )}>
               <Checkbox
                 checked={allSelected}
                 onCheckedChange={(c) => setSelected(c ? rows.map((r) => r.id) : [])}
+                aria-label="Selectează toate proprietățile"
               />
-              <span className="w-4" aria-hidden />
-              <span className="w-[120px]">Foto</span>
-              <span className="flex-1 basis-[200px]">Proprietate</span>
-              {columns.includes("type") ? <span className="w-28">Tip</span> : null}
-              {columns.includes("transaction") ? <span className="w-24">Tranzacție</span> : null}
-              {columns.includes("status") ? <span className="w-28">Status</span> : null}
-              {columns.includes("price") ? <span className="w-28 text-right">Preț</span> : null}
-              {columns.includes("surface") ? (
-                <span className="w-24 text-right">Suprafață</span>
-              ) : null}
-              {portals.hasPortals ? <span className="w-40">Portaluri</span> : null}
-              {columns.includes("agent") ? <span className="w-32">Agent</span> : null}
-              {columns.includes("updated") ? (
-                <span className="w-24 text-right">Actualizat</span>
-              ) : null}
+              <span aria-hidden />
+              <span>Proprietate</span>
+              <span className="text-right">Preț</span>
+              {portals.hasPortals ? <span>Portaluri</span> : null}
+              <span>Agent</span>
+              <span aria-hidden />
             </div>
 
             {isLoading ? (
@@ -902,111 +870,113 @@ function PropertiesPage() {
             ) : rows.length === 0 ? (
               emptyBlock
             ) : (
-              <ul className="divide-y divide-border">
-                {rows.map((p) => (
+              <ul>
+                {rows.map((p) => {
+                  const portalCells = portals.cellsFor(p.id);
+                  const selectedPortals = portalCells.filter((cell) => cell.selected);
+                  const publishedPortals = selectedPortals.filter((cell) => cell.state === "published" || cell.state === "in_feed");
+                  const portalError = selectedPortals.find((cell) => cell.state === "error");
+                  const promoted = portalCells.some((cell) => cell.promoted);
+                  const details = formatPropertyListDetails(p);
+                  const price = formatPropertyListPrice(p.price, p.currency, p.transaction_kind, p.surface);
+                  const permittedDelete = canShowDeleteAction(canDeleteProperty(user, p));
+                  return (
                   <li
                     key={p.id}
-                    className="flex flex-wrap items-center gap-3 px-4 py-3 text-sm lg:flex-nowrap"
+                    className={cn(
+                      "relative grid grid-cols-2 items-center gap-[18px] border-b border-border px-[18px] py-[14px] text-sm transition-colors last:border-b-0 hover:bg-accent/40 lg:grid-cols-[20px_132px_minmax(0,1fr)_140px_170px_36px]",
+                      portals.hasPortals && "lg:grid-cols-[20px_132px_minmax(0,1fr)_140px_150px_170px_36px]",
+                      selected.includes(p.id) && "bg-accent hover:bg-accent",
+                    )}
                   >
                     <Checkbox
                       checked={selected.includes(p.id)}
                       onCheckedChange={(c) =>
                         setSelected((s) => (c ? [...s, p.id] : s.filter((id) => id !== p.id)))
                       }
+                      aria-label={`Selectează ${p.reference ?? p.title}`}
+                      className="absolute top-5 right-16 z-10 bg-surface lg:static"
                     />
-                    <button
-                      type="button"
-                      onClick={() => toggleFavorite.mutate(p.id)}
-                      title="Favorit"
-                    >
-                      <Star
-                        className={`size-4 ${favoriteIds.includes(p.id) ? "fill-warning text-warning" : "text-muted-foreground"}`}
+                    <div className="relative col-span-2 aspect-[16/10] w-full lg:col-span-1 lg:h-24 lg:w-[132px] lg:aspect-auto">
+                      <PropertyThumb
+                        propertyId={p.id}
+                        title={p.title}
+                        cover={coverOf(p.id)}
+                        className="size-full rounded-xl"
                       />
-                    </button>
-                    <PropertyThumb
-                      propertyId={p.id}
-                      title={p.title}
-                      cover={coverOf(p.id)}
-                      className="h-[90px] w-[110px] sm:h-[100px] sm:w-[120px]"
-                    />
-                    <div className="min-w-0 flex-1 basis-[200px]">
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => toggleFavorite.mutate(p.id)}
+                        aria-label={favoriteIds.includes(p.id) ? "Elimină din favorite" : "Adaugă la favorite"}
+                        className="absolute top-2 left-2 size-[30px] min-h-0 rounded-full border border-border bg-surface shadow-sm hover:bg-surface"
+                      >
+                        <Star className={cn("size-4 text-muted-foreground", favoriteIds.includes(p.id) && "fill-warning text-warning")} />
+                      </Button>
+                      {promoted ? <span className="absolute bottom-2 left-2 rounded-pill bg-sidebar px-2 py-1 text-[11px] font-bold text-sidebar-primary">Promovat</span> : null}
+                    </div>
+                    <div className="col-span-2 min-w-0 lg:col-span-1">
+                      <div className="mb-2 flex flex-wrap items-center gap-1.5">
+                        <StatusBadge tone={propertyStatusTone[p.status]} dot className="text-xs">{propertyStatusLabels[p.status]}</StatusBadge>
+                        <span className={cn("rounded-pill px-2.5 py-0.5 text-xs font-bold", p.transaction_kind === "rent" ? "bg-accent text-accent-foreground" : "bg-muted text-muted-foreground")}>{transactionLabels[p.transaction_kind]}</span>
+                        <span className="rounded-pill border border-border px-2.5 py-0.5 text-xs font-bold text-muted-foreground">{propertyTypeLabels[p.property_type] ?? p.property_type}</span>
+                      </div>
                       <Link
                         to="/app/properties/$id"
                         params={{ id: p.id }}
-                        className="block truncate font-medium hover:text-primary"
+                        className="line-clamp-2 text-[15px] leading-5 font-bold hover:text-primary"
                       >
                         {p.title}
                       </Link>
-                      <p className="truncate text-xs text-muted-foreground">
-                        {p.reference ? `${p.reference} · ` : ""}
-                        {[p.district, p.city].filter(Boolean).join(", ") || "Locație nespecificată"}
-                      </p>
+                      {details ? <p className="mt-1 truncate text-[13px] text-muted-foreground">{details}</p> : null}
                     </div>
-                    {columns.includes("type") ? (
-                      <span className="w-28 text-xs text-muted-foreground">
-                        {propertyTypeLabels[p.property_type] ?? p.property_type}
-                      </span>
-                    ) : null}
-                    {columns.includes("transaction") ? (
-                      <span className="w-24 text-xs text-muted-foreground">
-                        {transactionLabels[p.transaction_kind]}
-                      </span>
-                    ) : null}
-                    {columns.includes("status") ? (
-                      <span className="w-28">
-                        <StatusBadge tone={propertyStatusTone[p.status]}>
-                          {propertyStatusLabels[p.status]}
-                        </StatusBadge>
-                      </span>
-                    ) : null}
-                    {columns.includes("price") ? (
-                      <span className="w-28 text-right font-medium">
-                        {formatMoney(p.price, p.currency)}
-                      </span>
-                    ) : null}
-                    {columns.includes("surface") ? (
-                      <span className="w-24 text-right text-xs text-muted-foreground">
-                        {p.surface ? `${formatNumber(p.surface)} m²` : "—"}
-                      </span>
-                    ) : null}
+                    <div className="col-span-2 text-left lg:col-span-1 lg:text-right">
+                      <p className="font-display text-[21px] leading-tight font-semibold">{price.main}{price.suffix ? <span className="ml-1 font-sans text-xs font-normal text-muted-foreground">{price.suffix}</span> : null}</p>
+                      {price.perSquareMeter ? <p className="mt-1 text-xs text-muted-foreground">{price.perSquareMeter}</p> : null}
+                    </div>
                     {portals.hasPortals ? (
-                      <span className="w-40">
-                        <PropertyPortalsCell cells={portals.cellsFor(p.id)} />
-                      </span>
+                      <div className="min-w-0 self-end lg:self-center">
+                        {selectedPortals.length > 0 ? <div className="flex flex-wrap gap-1.5">{selectedPortals.map((cell) => (
+                          <Tooltip key={cell.portalId}>
+                            <TooltipTrigger asChild>
+                              <span className="relative inline-flex rounded-lg border border-border bg-surface p-1">
+                                <PortalLogoStack portalId={cell.portalId} name={cell.portalName} size={24} />
+                                <span className={cn("absolute right-0 bottom-0 size-[11px] rounded-full border-2 border-surface", {
+                                  "bg-success": portalDotTone(cell.state) === "success",
+                                  "bg-warning": portalDotTone(cell.state) === "warning",
+                                  "bg-destructive": portalDotTone(cell.state) === "danger",
+                                  "bg-muted-foreground": portalDotTone(cell.state) === "neutral",
+                                })} />
+                              </span>
+                            </TooltipTrigger>
+                            <TooltipContent>{cell.portalName}: {portalStateLabel(cell.state)}</TooltipContent>
+                          </Tooltip>
+                        ))}</div> : null}
+                        {portalError ? <p className="mt-1.5 truncate text-xs font-semibold text-destructive">Eroare pe {portalError.portalName}</p> : publishedPortals.length > 0 ? <p className="mt-1.5 text-xs font-semibold text-success">Publicat pe {publishedPortals.length} {publishedPortals.length === 1 ? "portal" : "portaluri"}</p> : <p className="mt-1.5 text-xs text-muted-foreground">Nepublicată · <a href={`/app/properties/${p.id}?tab=publishing`} className="font-semibold text-primary hover:underline">Publică pe portaluri</a></p>}
+                      </div>
                     ) : null}
-                    {columns.includes("agent") ? (
-                      <span className="w-32 truncate text-xs text-muted-foreground">
-                        {agentName(p.assigned_to)}
-                      </span>
-                    ) : null}
-                    {columns.includes("updated") ? (
-                      <span className="w-24 text-right text-xs text-muted-foreground">
-                        {relativeDays(p.updated_at)}
-                      </span>
-                    ) : null}
-                    {p.status === "archived" ? (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        disabled={unarchiveOne.isPending}
-                        onClick={() => unarchiveOne.mutate(p.id)}
-                      >
-                        <ArchiveRestore className="size-4" /> Dezarhivează
-                      </Button>
-                    ) : null}
-                    {canDeleteProperty(user, p) ? (
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        aria-label={`Șterge anunțul ${p.reference ?? p.title}`}
-                        title="Șterge anunțul"
-                        onClick={() => setDeleteTarget(p.id)}
-                      >
-                        <Trash2 className="size-4 text-destructive" />
-                      </Button>
-                    ) : null}
+                    <div className="flex min-w-0 items-center gap-2 self-end lg:self-center">
+                      <UserAvatar name={agentName(p.assigned_to)} className="size-8 bg-sidebar text-sidebar-foreground" textClassName="text-xs font-bold" />
+                      <div className="min-w-0"><p className="truncate text-[13px] font-semibold">{agentName(p.assigned_to)}</p><p className="truncate text-xs text-muted-foreground">Actualizat {relativeDays(p.updated_at)}</p></div>
+                    </div>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon" aria-label={`Acțiuni pentru ${p.reference ?? p.title}`} className="absolute top-5 right-6 size-9 border border-transparent hover:border-border focus-visible:border-border lg:static">
+                          <MoreVertical className="size-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem asChild><Link to="/app/properties/$id" params={{ id: p.id }}><ExternalLink /> Deschide</Link></DropdownMenuItem>
+                        <DropdownMenuItem asChild><a href={`/app/properties/${p.id}?edit=true`}><Pencil /> Editează</a></DropdownMenuItem>
+                        <DropdownMenuItem asChild><a href={`/app/properties/${p.id}?tab=publishing`}><ExternalLink /> Publicare pe portaluri</a></DropdownMenuItem>
+                        {p.status === "archived" ? <DropdownMenuItem disabled={unarchiveOne.isPending} onSelect={() => unarchiveOne.mutate(p.id)}><ArchiveRestore /> Dezarhivează</DropdownMenuItem> : null}
+                        {permittedDelete ? <DropdownMenuItem className="text-destructive focus:text-destructive" onSelect={() => setDeleteTarget(p.id)}><Trash2 /> Șterge</DropdownMenuItem> : null}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </li>
-                ))}
+                  );
+                })}
               </ul>
             )}
           </>
