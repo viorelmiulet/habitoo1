@@ -100,7 +100,7 @@ export const propertyListSearchSchema = z.object({
 export type PropertyListSearch = z.infer<typeof propertyListSearchSchema>;
 export type PropertyListSort =
   | "created_desc" | "updated_desc" | "price_asc" | "price_desc" | "surface_asc" | "surface_desc";
-export type PropertyListView = "list" | "grid";
+export type PropertyListView = "list" | "grid" | "publish";
 
 const propertyListSorts = new Set<PropertyListSort>([
   "created_desc", "updated_desc", "price_asc", "price_desc", "surface_asc", "surface_desc",
@@ -123,7 +123,7 @@ export function propertyListStateFromSearch(search: PropertyListSearch): {
       ? search.sort as PropertyListSort
       : PROPERTY_LIST_DEFAULT_SORT,
     page: search.page ?? 1,
-    view: search.view === "grid" ? "grid" : PROPERTY_LIST_DEFAULT_VIEW,
+    view: search.view === "grid" || search.view === "publish" ? search.view : PROPERTY_LIST_DEFAULT_VIEW,
   };
 }
 
