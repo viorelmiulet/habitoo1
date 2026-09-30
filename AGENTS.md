@@ -20,3 +20,5 @@
 - Property deletion is soft: only RPCs `delete_property`/`restore_property` touch `deleted_at` (guard trigger + RLS hide deleted rows from non-superadmins); portal withdrawals reuse `enqueueStatusWithdrawals` with reason `deleted`. Why: only superadmin restores or hard-deletes, and restore never republishes.
 
 - Lead deletion is soft: only RPCs `delete_lead`/`restore_lead` touch `leads.deleted_at` (guard trigger + RLS hide deleted rows from non-superadmins; admin-client reads filter `deleted_at`). Why: only superadmin restores or hard-deletes.
+
+- Bulk portal changes use durable `portal_bulk_jobs`/`portal_bulk_items`, processed by an armed cron through `applyPortalSelectionForOrg`; UI requests never call adapters directly. Why: jobs survive navigation, preserve portal rules, retries, audit, feed cache and real withdrawals.

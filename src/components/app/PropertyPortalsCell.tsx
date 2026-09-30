@@ -34,6 +34,8 @@ export function usePropertyPortals(propertyIds: string[]) {
     queryFn: () => loadMatrix({ data: { propertyIds: ids } }),
   });
   return {
+    data: query.data,
+    isLoading: query.isLoading,
     hasPortals: Object.values(query.data?.properties ?? {}).some((cells) => cells.length > 0),
     cellsFor: (propertyId: string): PropertyPortalCell[] =>
       query.data?.properties[propertyId] ?? [],

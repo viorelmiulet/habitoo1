@@ -1,4 +1,4 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, useBlocker, useNavigate } from "@tanstack/react-router";
 import { StatusChangeDialog } from "@/components/app/StatusChangeDialog";
 import { isWithdrawStatus } from "@/components/app/StatusWithdrawPreview";
 import { changePropertyStatus } from "@/lib/property-status.functions";
@@ -18,6 +18,7 @@ import {
   Pencil,
   LayoutGrid,
   List,
+  Send,
   Search,
   Star,
   X,
@@ -35,6 +36,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { archiveProperty, unarchiveProperty } from "@/lib/property-archive.functions";
 import { reassignPropertyAgent } from "@/lib/property-agent.functions";
 import { PropertyThumb, usePropertyCovers } from "@/components/app/PropertyThumb";
+import { PropertyPublishView } from "@/components/app/PropertyPublishView";
 import { StatusBadge } from "@/components/app/StatusBadge";
 import { PortalLogoStack } from "@/components/app/PortalLogo";
 import { UserAvatar } from "@/components/app/UserAvatar";
@@ -100,7 +102,9 @@ import {
   shouldShowAdvancedFilters,
   type PropertyListFilters,
   type PropertyListSort,
+  type PropertyListView,
 } from "@/lib/property-list-filters";
+import type { BulkDraft } from "@/lib/portals/bulk";
 
 export const Route = createFileRoute("/_authenticated/app/properties/")({
   validateSearch: (search) => propertyListSearchSchema.parse(search),
@@ -149,6 +153,7 @@ function PropertiesPage() {
   const [archiveTarget, setArchiveTarget] = useState<string[] | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
   const [promptRequest, setPromptRequest] = useState<PromptRequest | null>(null);
+  const [portalDrafts, setPortalDrafts] = useState<Record<string, BulkDraft>>({});
   const archivePropertyFn = useServerFn(archiveProperty);
   const unarchivePropertyFn = useServerFn(unarchiveProperty);
 
@@ -175,8 +180,13 @@ function PropertiesPage() {
   };
 
   const setSort = (nextSort: SortKey) => void writeUrlState(filters, nextSort);
-  const setView = (nextView: "list" | "grid") =>
+  const setView = (nextView: PropertyListView) => {
+    if (nextView !== "publish" && view === "publish" && Object.keys(portalDrafts).length > 0) {
+      if (!window.confirm(`Renunți la ${Object.keys(portalDrafts).length} modificări?`)) return;
+      setPortalDrafts({});
+    }
     void writeUrlState(filters, sort, urlState.page, nextView);
+  };
   const setPage = (updater: number | ((current: number) => number)) => {
     const nextZeroBased = typeof updater === "function" ? updater(page) : updater;
     void writeUrlState(filters, sort, nextZeroBased + 1, view);
@@ -190,6 +200,15 @@ function PropertiesPage() {
     }, 300);
     return () => clearTimeout(t);
   }, [searchInput, filters.q, sort, view]);
+
+  useBlocker({
+    disabled: Object.keys(portalDrafts).length === 0,
+    enableBeforeUnload: true,
+    shouldBlockFn: ({ current, next }) => {
+      if (current.pathname === next.pathname) return false;
+      return !window.confirm(`Renunți la ${Object.keys(portalDrafts).length} modificări?`);
+    },
+  });
 
   useEffect(() => {
     try {
@@ -884,13 +903,26 @@ function PropertiesPage() {
               <SelectTrigger className="w-64"><span className="shrink-0 text-muted-foreground">Sortare:</span><SelectValue /></SelectTrigger>
               <SelectContent>{Object.entries(sortOptions).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}</SelectContent>
             </Select>
-            <div className="grid grid-cols-2 overflow-hidden rounded-control border border-input bg-surface">
+            <div className="grid grid-cols-3 overflow-hidden rounded-control border border-input bg-surface">
               <Button variant="ghost" aria-pressed={view === "list"} onClick={() => setView("list")} className={cn("rounded-none border-0 px-3", view === "list" && "bg-sidebar text-surface hover:bg-sidebar hover:text-surface")}><List aria-hidden /> Listă</Button>
               <Button variant="ghost" aria-pressed={view === "grid"} onClick={() => setView("grid")} className={cn("rounded-none border-0 px-3", view === "grid" && "bg-sidebar text-surface hover:bg-sidebar hover:text-surface")}><LayoutGrid aria-hidden /> Carduri</Button>
+              <Button variant="ghost" aria-pressed={view === "publish"} onClick={() => setView("publish")} className={cn("rounded-none border-0 px-3", view === "publish" && "bg-sidebar text-surface hover:bg-sidebar hover:text-surface")}><Send aria-hidden /> Publicare</Button>
             </div>
           </div>
         </div>
-        {view === "list" ? (
+        {view === "publish" ? (
+          isLoading || portals.isLoading ? <ListSkeleton rows={8} /> : rows.length === 0 ? emptyBlock : (
+            <PropertyPublishView
+              rows={rows}
+              coverOf={coverOf}
+              cellsFor={portals.cellsFor}
+              drafts={portalDrafts}
+              setDrafts={setPortalDrafts}
+              organizationId={orgId}
+              isAdmin={user?.isAdmin === true}
+            />
+          )
+        ) : view === "list" ? (
           <>
             <div className={cn(
               "hidden items-center gap-[18px] border-b border-border px-[18px] py-3 text-xs font-bold tracking-[0.08em] text-muted-foreground uppercase lg:grid",

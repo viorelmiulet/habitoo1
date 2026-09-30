@@ -123,4 +123,10 @@ describe("filtrele listei de proprietăți", () => {
       "grid",
     )).toEqual({ city: "București", mine: true, sort: "updated_desc", page: 2, view: "grid" });
   });
+
+  it("citește și scrie view=publish în URL", () => {
+    const state = propertyListStateFromSearch(propertyListSearchSchema.parse({ view: "publish" }));
+    expect(state.view).toBe("publish");
+    expect(propertyListSearchFromState(state.filters, state.sort, state.page, state.view)).toEqual({ view: "publish" });
+  });
 });

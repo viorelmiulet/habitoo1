@@ -4326,6 +4326,126 @@ export type Database = {
           },
         ]
       }
+      portal_bulk_items: {
+        Row: {
+          attempts: number
+          created_at: string
+          enabled: boolean
+          finished_at: string | null
+          id: string
+          job_id: string
+          locked_until: string | null
+          max_attempts: number
+          message: string | null
+          next_attempt_at: string | null
+          portal_key: string
+          promoted: boolean | null
+          property_id: string
+          status: string
+        }
+        Insert: {
+          attempts?: number
+          created_at?: string
+          enabled: boolean
+          finished_at?: string | null
+          id?: string
+          job_id: string
+          locked_until?: string | null
+          max_attempts?: number
+          message?: string | null
+          next_attempt_at?: string | null
+          portal_key: string
+          promoted?: boolean | null
+          property_id: string
+          status?: string
+        }
+        Update: {
+          attempts?: number
+          created_at?: string
+          enabled?: boolean
+          finished_at?: string | null
+          id?: string
+          job_id?: string
+          locked_until?: string | null
+          max_attempts?: number
+          message?: string | null
+          next_attempt_at?: string | null
+          portal_key?: string
+          promoted?: boolean | null
+          property_id?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "portal_bulk_items_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "portal_bulk_jobs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "portal_bulk_items_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      portal_bulk_jobs: {
+        Row: {
+          created_at: string
+          done: number
+          failed: number
+          finished_at: string | null
+          id: string
+          organization_id: string
+          requested_by: string | null
+          started_at: string | null
+          status: string
+          total: number
+        }
+        Insert: {
+          created_at?: string
+          done?: number
+          failed?: number
+          finished_at?: string | null
+          id?: string
+          organization_id: string
+          requested_by?: string | null
+          started_at?: string | null
+          status?: string
+          total?: number
+        }
+        Update: {
+          created_at?: string
+          done?: number
+          failed?: number
+          finished_at?: string | null
+          id?: string
+          organization_id?: string
+          requested_by?: string | null
+          started_at?: string | null
+          status?: string
+          total?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "portal_bulk_jobs_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "portal_bulk_jobs_requested_by_fkey"
+            columns: ["requested_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       portal_connections: {
         Row: {
           activated: boolean
@@ -7576,6 +7696,31 @@ export type Database = {
           isSetofReturn: true
         }
       }
+      claim_portal_bulk_property: {
+        Args: { _job_id: string; _property_id: string; _ttl_seconds: number }
+        Returns: {
+          attempts: number
+          created_at: string
+          enabled: boolean
+          finished_at: string | null
+          id: string
+          job_id: string
+          locked_until: string | null
+          max_attempts: number
+          message: string | null
+          next_attempt_at: string | null
+          portal_key: string
+          promoted: boolean | null
+          property_id: string
+          status: string
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "portal_bulk_items"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
       claim_portal_slot_withdraw_job: {
         Args: { _job_id: string; _ttl_seconds: number }
         Returns: {
@@ -7868,6 +8013,8 @@ export type Database = {
         }[]
       }
       plan_agent_limit: { Args: { _plan: string }; Returns: number }
+      portal_bulk_arm: { Args: never; Returns: undefined }
+      portal_bulk_tick: { Args: never; Returns: undefined }
       portal_slot_withdraw_arm: { Args: never; Returns: undefined }
       portal_slot_withdraw_tick: { Args: never; Returns: undefined }
       portal_status_withdraw_arm: { Args: never; Returns: undefined }

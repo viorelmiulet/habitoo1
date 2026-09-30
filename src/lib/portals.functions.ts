@@ -2650,6 +2650,9 @@ export type PortalSelectionOutcome = {
   action: "none" | "selected" | "published" | "updated" | "withdrawn" | "blocked";
   ok: boolean;
   message: string | null;
+  /** Cod/status tehnic folosit de workerul bulk pentru politica de retry. */
+  code?: string | null;
+  httpStatus?: number | null;
 };
 
 const applySelectionSchema = z.object({
@@ -2715,6 +2718,8 @@ export async function applyPortalSelectionForOrg(input: {
   data: z.infer<typeof applySelectionSchema>;
   /** Motivul retragerii (automatizări: status_sold, status_rented, archived). */
   withdrawReason?: string;
+  /** Worker bulk: mică pauză între portaluri pentru a evita rafalele de cereri. */
+  pauseBetweenPortalsMs?: number;
 }): Promise<{ ok: boolean; results: PortalSelectionOutcome[] }> {
   {
     const { organizationId, superadmin, actorId, data } = input;
@@ -2760,7 +2765,10 @@ export async function applyPortalSelectionForOrg(input: {
 
     const results: PortalSelectionOutcome[] = [];
 
-    for (const wanted of data.selections) {
+    for (const [wantedIndex, wanted] of data.selections.entries()) {
+      if (wantedIndex > 0 && input.pauseBetweenPortalsMs) {
+        await new Promise((resolve) => setTimeout(resolve, input.pauseBetweenPortalsMs));
+      }
       const definition = getPortalDefinition(wanted.portalId);
       if (!definition) continue;
       /**
@@ -3016,6 +3024,7 @@ export async function applyPortalSelectionForOrg(input: {
             : res.message.startsWith(name)
               ? res.message
               : `${name}: ${res.message}`,
+          ...(!res.ok ? { code: res.code, httpStatus: res.httpStatus ?? null } : {}),
         });
       } catch (error) {
         // Izolare per portal: un portal cu probleme nu oprește procesarea celorlalte.
@@ -3028,6 +3037,7 @@ export async function applyPortalSelectionForOrg(input: {
           action: "blocked",
           ok: false,
           message: `${definition.display_name}: ${reason}`,
+          code: portalError.code,
         });
         await logOperation({
           organizationId,
