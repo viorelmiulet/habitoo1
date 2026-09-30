@@ -147,6 +147,8 @@ const auditActionLabels: Record<string, string> = {
   "property.created": "Proprietate creată",
   property_published: "Proprietate publicată",
   property_archived: "Proprietate arhivată",
+  "property.deleted": "Anunț șters",
+  "property.restored": "Anunț restabilit",
   property_duplicated: "Proprietate duplicată",
   property_status_changed: "Status proprietate schimbat",
   request_status_changed: "Status cerere schimbat",
