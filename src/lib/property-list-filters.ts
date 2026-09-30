@@ -1,3 +1,5 @@
+import { z } from "zod";
+
 export type PropertyListFilters = {
   q: string;
   status: string;
@@ -47,6 +49,101 @@ export const emptyPropertyListFilters: PropertyListFilters = {
   addedBefore: "",
   portal: "all",
 };
+
+export const PROPERTY_LIST_DEFAULT_SORT = "created_desc" as const;
+export const PROPERTY_LIST_DEFAULT_VIEW = "list" as const;
+
+const optionalSearchString = z.preprocess(
+  (value) => typeof value === "string" && value.length > 0 ? value : undefined,
+  z.string().optional(),
+);
+const optionalSearchBoolean = z.preprocess(
+  (value) => value === true || value === "true" ? true : undefined,
+  z.boolean().optional(),
+);
+const optionalSearchPage = z.preprocess(
+  (value) => {
+    const number = Number(value);
+    return Number.isInteger(number) && number > 1 ? number : undefined;
+  },
+  z.number().int().optional(),
+);
+
+export const propertyListSearchSchema = z.object({
+  q: optionalSearchString,
+  status: optionalSearchString,
+  transaction: optionalSearchString,
+  type: optionalSearchString,
+  city: optionalSearchString,
+  district: optionalSearchString,
+  agent: optionalSearchString,
+  source: optionalSearchString,
+  mine: optionalSearchBoolean,
+  favoritesOnly: optionalSearchBoolean,
+  showArchived: optionalSearchBoolean,
+  priceMin: optionalSearchString,
+  priceMax: optionalSearchString,
+  surfaceMin: optionalSearchString,
+  surfaceMax: optionalSearchString,
+  rooms: optionalSearchString,
+  bathrooms: optionalSearchString,
+  floorMin: optionalSearchString,
+  floorMax: optionalSearchString,
+  addedAfter: optionalSearchString,
+  addedBefore: optionalSearchString,
+  portal: optionalSearchString,
+  sort: optionalSearchString,
+  page: optionalSearchPage,
+  view: optionalSearchString,
+});
+
+export type PropertyListSearch = z.infer<typeof propertyListSearchSchema>;
+export type PropertyListSort =
+  | "created_desc" | "updated_desc" | "price_asc" | "price_desc" | "surface_asc" | "surface_desc";
+export type PropertyListView = "list" | "grid";
+
+const propertyListSorts = new Set<PropertyListSort>([
+  "created_desc", "updated_desc", "price_asc", "price_desc", "surface_asc", "surface_desc",
+]);
+
+export function propertyListStateFromSearch(search: PropertyListSearch): {
+  filters: PropertyListFilters;
+  sort: PropertyListSort;
+  page: number;
+  view: PropertyListView;
+} {
+  const filters = { ...emptyPropertyListFilters };
+  for (const key of Object.keys(filters) as (keyof PropertyListFilters)[]) {
+    const value = search[key];
+    if (typeof value === typeof filters[key]) (filters as Record<string, unknown>)[key] = value;
+  }
+  return {
+    filters,
+    sort: propertyListSorts.has(search.sort as PropertyListSort)
+      ? search.sort as PropertyListSort
+      : PROPERTY_LIST_DEFAULT_SORT,
+    page: search.page ?? 1,
+    view: search.view === "grid" ? "grid" : PROPERTY_LIST_DEFAULT_VIEW,
+  };
+}
+
+export function propertyListSearchFromState(
+  filters: PropertyListFilters,
+  sort: PropertyListSort,
+  page: number,
+  view: PropertyListView,
+): PropertyListSearch {
+  const search: PropertyListSearch = {};
+  for (const key of Object.keys(emptyPropertyListFilters) as (keyof PropertyListFilters)[]) {
+    if (filters[key] !== emptyPropertyListFilters[key]) {
+      (search as Record<string, unknown>)[key] = filters[key];
+    }
+  }
+  if (sort !== PROPERTY_LIST_DEFAULT_SORT) search.sort = sort;
+  if (page > 1) search.page = page;
+  if (view !== PROPERTY_LIST_DEFAULT_VIEW) search.view = view;
+  return search;
+}
 
 export const PROPERTY_TYPE_TABS = [
   { value: "all", label: "Toate" },
