@@ -1,4 +1,4 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, useBlocker, useNavigate } from "@tanstack/react-router";
 import { StatusChangeDialog } from "@/components/app/StatusChangeDialog";
 import { isWithdrawStatus } from "@/components/app/StatusWithdrawPreview";
 import { changePropertyStatus } from "@/lib/property-status.functions";
@@ -201,12 +201,14 @@ function PropertiesPage() {
     return () => clearTimeout(t);
   }, [searchInput, filters.q, sort, view]);
 
-  useEffect(() => {
-    if (Object.keys(portalDrafts).length === 0) return;
-    const warn = (event: BeforeUnloadEvent) => event.preventDefault();
-    window.addEventListener("beforeunload", warn);
-    return () => window.removeEventListener("beforeunload", warn);
-  }, [portalDrafts]);
+  useBlocker({
+    disabled: Object.keys(portalDrafts).length === 0,
+    enableBeforeUnload: true,
+    shouldBlockFn: ({ current, next }) => {
+      if (current.pathname === next.pathname) return false;
+      return !window.confirm(`Renunți la ${Object.keys(portalDrafts).length} modificări?`);
+    },
+  });
 
   useEffect(() => {
     try {

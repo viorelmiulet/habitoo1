@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { Check, X } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -39,11 +39,13 @@ export function PropertyPublishView({ rows, coverOf, cellsFor, drafts, setDrafts
   const { data: portals = [] } = useQuery({ queryKey: ["portal-bulk-overview", organizationId], enabled: Boolean(organizationId), queryFn: () => loadOverview({ data: { organizationId } }) });
   const progress = useQuery({ queryKey: ["portal-bulk-job", jobId], enabled: Boolean(jobId), queryFn: () => loadJob({ data: { jobId: jobId ?? "" } }), refetchInterval: (query) => ["queued", "running"].includes(query.state.data?.job.status ?? "") ? 2_000 : false });
   const initial = useMemo(() => Object.fromEntries(rows.flatMap((row) => cellsFor(row.id).map((cell) => [bulkDraftKey(row.id, cell.portalId), { enabled: cell.selected, promoted: cell.promoted } satisfies BulkCellValue]))), [rows, cellsFor]);
+  const initialRef = useRef<Record<string, BulkCellValue>>({});
+  Object.assign(initialRef.current, initial);
   const changes = Object.values(drafts);
-  const projections = portals.map((portal) => ({ ...portal, projected: bulkSlotProjection(portal.used, portal.portalId, drafts, initial) }));
+  const projections = portals.map((portal) => ({ ...portal, projected: bulkSlotProjection(portal.used, portal.portalId, drafts, initialRef.current) }));
   const exceeded = projections.find((portal) => bulkLimitExceeded(portal.used, portal.limit, portal.projected));
   const withdrawals = changes.filter((change) => !change.enabled);
-  const publications = changes.filter((change) => change.enabled && !initial[bulkDraftKey(change.propertyId, change.portalId)]?.enabled);
+  const publications = changes.filter((change) => change.enabled && !initialRef.current[bulkDraftKey(change.propertyId, change.portalId)]?.enabled);
   const mutation = useMutation({ mutationFn: () => startJob({ data: { organizationId, items: changes.map((item) => ({ propertyId: item.propertyId, portalId: item.portalId, enabled: item.enabled, promoted: item.promoted })) } }), onSuccess: (result) => { setConfirming(false); setDrafts({}); setJobId(result.jobId); setShowProgress(true); toast.success(`${result.queued} modificări rulează în fundal.`); void queryClient.invalidateQueries({ queryKey: ["property-portals-matrix"] }); }, onError: (error: Error) => toastError(error) });
   const updateCell = (propertyId: string, cell: PropertyPortalCell, value: BulkCellValue) => setDrafts((current) => reconcileBulkDraft(current, { enabled: cell.selected, promoted: cell.promoted }, { propertyId, portalId: cell.portalId, ...value }));
   const columnTemplate = `minmax(300px,1.65fr) repeat(${Math.max(portals.length, 1)}, minmax(170px,1fr))`;
