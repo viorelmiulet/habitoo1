@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { bulkDraftKey, bulkLimitExceeded, bulkSlotProjection, reconcileBulkDraft, toggleBulkPage, isRetryablePortalBulkError } from "@/lib/portals/bulk";
+import { processPortalBulkProperty } from "@/lib/portals/bulk.server";
 
 describe("portal bulk changes", () => {
   it("removes a reverted checkbox change", () => {
@@ -27,5 +28,39 @@ describe("portal bulk changes", () => {
   it("classifies transient failures for retry", () => {
     expect(isRetryablePortalBulkError({ httpStatus: 503 })).toBe(true);
     expect(isRetryablePortalBulkError({ code: "VALIDATION_ERROR" })).toBe(false);
+  });
+});
+
+type FakeRow = Record<string, unknown>;
+function workerDb(items: FakeRow[]) {
+  const jobs: FakeRow[] = [{ id: "job", status: "queued", total: items.length, done: 0, failed: 0 }];
+  const from = (table: string) => {
+    const rows = table === "portal_bulk_items" ? items : jobs;
+    const filters: [string, unknown][] = [];
+    let patch: FakeRow | null = null;
+    const selected = () => rows.filter((row) => filters.every(([key, value]) => row[key] === value));
+    const query: Record<string, unknown> = {};
+    query.select = () => query;
+    query.eq = (key: string, value: unknown) => (filters.push([key, value]), query);
+    query.update = (value: FakeRow) => (patch = value, query);
+    query.then = (resolve: (value: unknown) => unknown) => { if (patch) selected().forEach((row) => Object.assign(row, patch)); return resolve({ data: selected(), error: null }); };
+    return query;
+  };
+  const rpc = async () => ({ data: items.filter((item) => item.status === "queued").map((item) => ({ ...item, status: "running" })), error: null });
+  return { admin: { from, rpc }, jobs, items };
+}
+
+describe("portal bulk worker with mocked adapters", () => {
+  const base = (id: string) => ({ id, job_id: "job", property_id: "property", portal_key: id, enabled: true, promoted: null, status: "queued", attempts: 0, max_attempts: 3 });
+  it("marks a successful mocked portal operation", async () => {
+    const db = workerDb([base("portal-ok")]);
+    await processPortalBulkProperty(db.admin as never, { jobId: "job", propertyId: "property", organizationId: "org", actorId: "user" }, { apply: vi.fn(async () => [{ portalId: "portal-ok", ok: true, message: "Publicat" }]), pause: async () => {} });
+    expect(db.items[0]?.status).toBe("ok");
+  });
+  it("requeues a temporary failure and does not retry a definitive one", async () => {
+    const db = workerDb([base("temporary"), base("definitive")]);
+    await processPortalBulkProperty(db.admin as never, { jobId: "job", propertyId: "property", organizationId: "org", actorId: "user" }, { apply: vi.fn(async () => [{ portalId: "temporary", ok: false, code: "RATE_LIMIT", message: "429" }, { portalId: "definitive", ok: false, code: "VALIDATION_ERROR", message: "Date invalide" }]), pause: async () => {} });
+    expect(db.items.find((item) => item.portal_key === "temporary")?.status).toBe("queued");
+    expect(db.items.find((item) => item.portal_key === "definitive")?.status).toBe("failed");
   });
 });

@@ -91,6 +91,7 @@ export async function runPortalBulkTick(admin: PortalBulkAdmin, deps: BulkProces
       jobId: row.job_id, propertyId: row.property_id,
       organizationId: job.organization_id, actorId: job.requested_by,
     }, deps));
+    await (deps.pause ?? ((ms) => new Promise((resolve) => setTimeout(resolve, ms))))(250);
   }
   return results;
 }
