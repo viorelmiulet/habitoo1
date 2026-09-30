@@ -680,6 +680,13 @@
       "when": 1790744524583,
       "tag": "0096_lead_soft_delete",
       "breakpoints": true
+    },
+    {
+      "idx": 97,
+      "version": "7",
+      "when": 1790798585143,
+      "tag": "0097_portal_bulk_publish_jobs",
+      "breakpoints": true
     }
   ]
 }
