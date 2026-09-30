@@ -84,11 +84,16 @@ import { cn } from "@/lib/utils";
 import { canShowDeleteAction, formatPropertyListDetails, formatPropertyListPrice, portalDotTone, portalStateLabel } from "@/lib/property-list-row";
 import {
   emptyPropertyListFilters,
+  buildCityFilterOptions,
+  buildDistrictFilterOptions,
+  cityRawValues,
+  formatPropertySourceLabel,
   formatThousands,
   isAtLeastFilter,
   normalizeSavedPropertyFilters,
   numericFilterValue,
   PROPERTY_TYPE_TABS,
+  romaniaDateBoundary,
   shouldShowAdvancedFilters,
   type PropertyListFilters,
 } from "@/lib/property-list-filters";
@@ -221,12 +226,27 @@ function PropertiesPage() {
         .is("deleted_at", null);
       if (error) throw error;
       return {
-        cities: [...new Set(data.map((p) => p.city).filter(Boolean) as string[])].sort(),
-        districts: [...new Set(data.map((p) => p.district).filter(Boolean) as string[])].sort(),
+        rows: data,
         sources: [...new Set(data.map((p) => p.source).filter(Boolean) as string[])].sort(),
       };
     },
   });
+
+  const cityOptions = useMemo(() => buildCityFilterOptions(meta?.rows ?? []), [meta?.rows]);
+  const selectedCityRawValues = useMemo(
+    () => cityRawValues(cityOptions, filters.city),
+    [cityOptions, filters.city],
+  );
+  const districtOptions = useMemo(
+    () => buildDistrictFilterOptions(meta?.rows ?? [], filters.city, cityOptions),
+    [meta?.rows, filters.city, cityOptions],
+  );
+
+  useEffect(() => {
+    if (filters.district !== "all" && !districtOptions.some((option) => option.value === filters.district)) {
+      setFilters((current) => ({ ...current, district: "all" }));
+    }
+  }, [districtOptions, filters.district]);
 
   const { data: portfolioTotal = 0 } = useQuery({
     queryKey: ["properties", "portfolio-count", orgId],
@@ -293,7 +313,9 @@ function PropertiesPage() {
       if (filters.transaction !== "all")
         query = query.eq("transaction_kind", filters.transaction as never);
       if (filters.type !== "all") query = query.eq("property_type", filters.type);
-      if (filters.city !== "all") query = query.eq("city", filters.city);
+      if (filters.city !== "all") {
+        query = query.in("city", selectedCityRawValues.length > 0 ? selectedCityRawValues : [filters.city]);
+      }
       if (filters.district !== "all") query = query.eq("district", filters.district);
       if (filters.source !== "all") query = query.eq("source", filters.source);
       if (filters.agent !== "all") query = query.eq("assigned_to", filters.agent);
@@ -312,8 +334,8 @@ function PropertiesPage() {
           : query.eq("bathrooms", numericFilterValue(filters.bathrooms));
       if (filters.floorMin) query = query.gte("floor", Number(filters.floorMin));
       if (filters.floorMax) query = query.lte("floor", Number(filters.floorMax));
-      if (filters.addedAfter) query = query.gte("created_at", filters.addedAfter);
-      if (filters.addedBefore) query = query.lte("created_at", filters.addedBefore);
+      if (filters.addedAfter) query = query.gte("created_at", romaniaDateBoundary(filters.addedAfter, "start"));
+      if (filters.addedBefore) query = query.lte("created_at", romaniaDateBoundary(filters.addedBefore, "end"));
       if (filters.favoritesOnly) {
         if (favoriteIds.length === 0) return { rows: [], count: 0 };
         query = query.in("id", favoriteIds);
@@ -537,7 +559,7 @@ function PropertiesPage() {
       : null,
     filters.city !== "all" ? { key: "city" as const, label: filters.city } : null,
     filters.district !== "all" ? { key: "district" as const, label: filters.district } : null,
-    filters.source !== "all" ? { key: "source" as const, label: `Sursă: ${filters.source}` } : null,
+    filters.source !== "all" ? { key: "source" as const, label: `Sursă: ${formatPropertySourceLabel(filters.source)}` } : null,
     filters.agent !== "all" ? { key: "agent" as const, label: agentName(filters.agent) } : null,
     filters.mine ? { key: "mine" as const, label: "Doar ale mele" } : null,
     filters.favoritesOnly ? { key: "favoritesOnly" as const, label: "Doar favorite" } : null,
@@ -697,11 +719,11 @@ function PropertiesPage() {
           {shouldShowAdvancedFilters(filtersExpanded) ? <>
             <div>
               <label htmlFor="property-city" className={fieldLabelClass}>Oraș</label>
-              <Select value={filters.city} onValueChange={(v) => setFilters((f) => ({ ...f, city: v }))}><SelectTrigger id="property-city" className={cn("w-full", filters.city !== "all" && valuedControlClass)}><SelectValue /></SelectTrigger><SelectContent><SelectItem value="all">Toate orașele</SelectItem>{(meta?.cities ?? []).map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent></Select>
+              <Select value={filters.city} onValueChange={(v) => setFilters((f) => ({ ...f, city: v }))}><SelectTrigger id="property-city" className={cn("w-full", filters.city !== "all" && valuedControlClass)}><SelectValue /></SelectTrigger><SelectContent><SelectItem value="all">Toate orașele</SelectItem>{cityOptions.map((option) => <SelectItem key={option.value} value={option.value}>{option.label} ({option.count})</SelectItem>)}</SelectContent></Select>
             </div>
             <div>
               <label htmlFor="property-district" className={fieldLabelClass}>Zonă</label>
-              <Select value={filters.district} onValueChange={(v) => setFilters((f) => ({ ...f, district: v }))}><SelectTrigger id="property-district" className={cn("w-full", filters.district !== "all" && valuedControlClass)}><SelectValue /></SelectTrigger><SelectContent><SelectItem value="all">Toate zonele</SelectItem>{(meta?.districts ?? []).map((d) => <SelectItem key={d} value={d}>{d}</SelectItem>)}</SelectContent></Select>
+              <Select value={filters.district} onValueChange={(v) => setFilters((f) => ({ ...f, district: v }))}><SelectTrigger id="property-district" className={cn("w-full", filters.district !== "all" && valuedControlClass)}><SelectValue /></SelectTrigger><SelectContent><SelectItem value="all">Toate zonele</SelectItem>{districtOptions.map((option) => <SelectItem key={option.value} value={option.value}>{option.label} ({option.count})</SelectItem>)}</SelectContent></Select>
             </div>
             <fieldset>
               <legend className={fieldLabelClass}>Preț (EUR)</legend>
@@ -727,14 +749,14 @@ function PropertiesPage() {
               <legend className={fieldLabelClass}>Băi</legend>
               <div className="grid grid-cols-4 gap-1.5">{[["", "Oricâte"], ["1", "1"], ["2", "2"], ["3+", "3+"]].map(([value, label]) => <Button key={value || "any"} type="button" variant="outline" aria-pressed={filters.bathrooms === value} onClick={() => setFilters((f) => ({ ...f, bathrooms: value }))} className={cn("px-1", filters.bathrooms === value && "border-sidebar bg-sidebar text-surface hover:bg-sidebar hover:text-surface")}>{label}</Button>)}</div>
             </fieldset>
-            <div>
+            {agents.length >= 2 ? <div>
               <label htmlFor="property-agent" className={fieldLabelClass}>Agent</label>
               <Select value={filters.agent} onValueChange={(v) => setFilters((f) => ({ ...f, agent: v }))}><SelectTrigger id="property-agent" className={cn("w-full", filters.agent !== "all" && valuedControlClass)}><SelectValue /></SelectTrigger><SelectContent><SelectItem value="all">Toți agenții</SelectItem>{agents.map((a) => <SelectItem key={a.id} value={a.id}>{a.full_name}</SelectItem>)}</SelectContent></Select>
-            </div>
-            <div>
+            </div> : null}
+            {(meta?.sources.length ?? 0) >= 2 ? <div>
               <label htmlFor="property-source" className={fieldLabelClass}>Sursă</label>
-              <Select value={filters.source} onValueChange={(v) => setFilters((f) => ({ ...f, source: v }))}><SelectTrigger id="property-source" className={cn("w-full", filters.source !== "all" && valuedControlClass)}><SelectValue /></SelectTrigger><SelectContent><SelectItem value="all">Toate sursele</SelectItem>{(meta?.sources ?? []).map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent></Select>
-            </div>
+              <Select value={filters.source} onValueChange={(v) => setFilters((f) => ({ ...f, source: v }))}><SelectTrigger id="property-source" className={cn("w-full", filters.source !== "all" && valuedControlClass)}><SelectValue /></SelectTrigger><SelectContent><SelectItem value="all">Toate sursele</SelectItem>{(meta?.sources ?? []).map((s) => <SelectItem key={s} value={s}>{formatPropertySourceLabel(s)}</SelectItem>)}</SelectContent></Select>
+            </div> : null}
           </> : null}
         </div>
 
