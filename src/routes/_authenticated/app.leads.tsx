@@ -14,7 +14,9 @@ import {
   CalendarClock,
   StickyNote,
   Users,
+  Trash2,
 } from "lucide-react";
+import { DeleteLeadDialog, canDeleteLead } from "@/components/app/DeleteLeadDialog";
 import { toast } from "@/components/ui/sonner";
 import { toastError } from "@/lib/errors";
 import { PageHeader } from "@/components/app/PageHeader";
@@ -169,6 +171,7 @@ function LeadsPage() {
   const [lostReason, setLostReason] = useState(leadLostReasons[0]);
   const [lostReasonFree, setLostReasonFree] = useState("");
   const [activityOpen, setActivityOpen] = useState(false);
+  const [deleteLeadId, setDeleteLeadId] = useState<string | null>(null);
 
   const { data: leads = [], isLoading } = useQuery({
     queryKey: ["leads", orgId],
@@ -649,6 +652,20 @@ function LeadsPage() {
                       >
                         <div className="flex items-start justify-between gap-2">
                           <p className="min-w-0 flex-1 truncate text-sm font-medium">{l.name}</p>
+                          {canDeleteLead(user, l) ? (
+                            <button
+                              type="button"
+                              aria-label={`Șterge lead-ul ${l.name}`}
+                              title="Șterge lead-ul"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setDeleteLeadId(l.id);
+                              }}
+                              className="rounded p-0.5 text-muted-foreground hover:text-destructive"
+                            >
+                              <Trash2 className="size-3.5" aria-hidden />
+                            </button>
+                          ) : null}
                           {stale ? (
                             <span
                               className="inline-flex items-center gap-1 rounded-full bg-warning/15 px-1.5 py-0.5 text-[10px] font-medium text-warning-foreground"
@@ -967,6 +984,15 @@ function LeadsPage() {
         </DialogContent>
       </Dialog>
 
+      <DeleteLeadDialog
+        leadId={deleteLeadId}
+        open={deleteLeadId !== null}
+        onOpenChange={(o) => !o && setDeleteLeadId(null)}
+        onDeleted={() => {
+          if (detailLead?.id === deleteLeadId) setDetailLead(null);
+          setDeleteLeadId(null);
+        }}
+      />
       <Sheet open={Boolean(detailLead)} onOpenChange={(v) => !v && setDetailLead(null)}>
         <SheetContent className="w-full overflow-y-auto sm:max-w-lg">
           {detailLead ? (
@@ -1020,6 +1046,15 @@ function LeadsPage() {
                     >
                       <Mail className="size-4" aria-hidden /> Email
                     </a>
+                  ) : null}
+                  {canDeleteLead(user, detailLead) ? (
+                    <button
+                      type="button"
+                      onClick={() => setDeleteLeadId(detailLead.id)}
+                      className="flex flex-col items-center gap-0.5 rounded-lg px-2 py-1 text-[11px] text-destructive transition-colors hover:bg-destructive/10"
+                    >
+                      <Trash2 className="size-4" aria-hidden /> Șterge lead-ul
+                    </button>
                   ) : null}
                 </div>
               </div>
