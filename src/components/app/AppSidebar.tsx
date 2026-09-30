@@ -31,6 +31,7 @@ import {
   Radar,
   Settings,
   ShieldCheck,
+  Trash2,
   Sparkles,
   Target,
   UserRound,
