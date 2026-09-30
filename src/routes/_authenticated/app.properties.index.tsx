@@ -243,10 +243,10 @@ function PropertiesPage() {
   );
 
   useEffect(() => {
-    if (filters.district !== "all" && !districtOptions.some((option) => option.value === filters.district)) {
+    if (meta?.rows && filters.district !== "all" && !districtOptions.some((option) => option.value === filters.district)) {
       setFilters((current) => ({ ...current, district: "all" }));
     }
-  }, [districtOptions, filters.district]);
+  }, [districtOptions, filters.district, meta?.rows]);
 
   const { data: portfolioTotal = 0 } = useQuery({
     queryKey: ["properties", "portfolio-count", orgId],
