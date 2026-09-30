@@ -151,6 +151,7 @@ async function describeProposal(
     const { data: lead } = await admin
       .from("leads")
       .select("id,name,stage,assigned_to")
+      .is("deleted_at", null)
       .eq("id", leadId)
       .eq("organization_id", org)
       .maybeSingle();
@@ -345,6 +346,7 @@ async function describeProposal(
     const { data: lead } = await admin
       .from("leads")
       .select("id,name")
+      .is("deleted_at", null)
       .eq("id", leadId)
       .eq("organization_id", org)
       .maybeSingle();

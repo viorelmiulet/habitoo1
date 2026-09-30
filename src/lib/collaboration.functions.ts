@@ -626,6 +626,7 @@ export const createCollaborationProposal = createServerFn({ method: "POST" })
       const { data: lead } = await admin
         .from("leads")
         .select("id,organization_id")
+        .is("deleted_at", null)
         .eq("id", data.leadId)
         .maybeSingle();
       if (!lead || lead.organization_id !== actor.organizationId) {
