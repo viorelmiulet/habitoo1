@@ -12,8 +12,10 @@ import {
   ChevronLeft,
   ChevronRight,
   ChevronUp,
-  Columns3,
   Download,
+  ExternalLink,
+  MoreVertical,
+  Pencil,
   LayoutGrid,
   List,
   Search,
@@ -24,7 +26,7 @@ import { toast } from "@/components/ui/sonner";
 import { toastError } from "@/lib/errors";
 import { PageHeader } from "@/components/app/PageHeader";
 import { CardGridSkeleton, ListSkeleton } from "@/components/app/LoadingState";
-import { PropertyPortalsCell, usePropertyPortals } from "@/components/app/PropertyPortalsCell";
+import { usePropertyPortals } from "@/components/app/PropertyPortalsCell";
 import { PortalFilterSelect, portalFilterLabel } from "@/components/app/PortalFilterSelect";
 import { getPortalFilterOptions, getPropertyIdsByPortalState } from "@/lib/portals.functions";
 import { parsePortalFilter } from "@/lib/portals/portal-state";
@@ -34,6 +36,9 @@ import { archiveProperty, unarchiveProperty } from "@/lib/property-archive.funct
 import { reassignPropertyAgent } from "@/lib/property-agent.functions";
 import { PropertyThumb, usePropertyCovers } from "@/components/app/PropertyThumb";
 import { StatusBadge } from "@/components/app/StatusBadge";
+import { PortalLogoStack } from "@/components/app/PortalLogo";
+import { UserAvatar } from "@/components/app/UserAvatar";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { EmptyState } from "@/components/app/EmptyState";
 import { PromptDialog, type PromptRequest } from "@/components/app/PromptDialog";
 import { Button } from "@/components/ui/button";
@@ -51,7 +56,6 @@ import {
 } from "@/components/ui/alert-dialog";
 import {
   DropdownMenu,
-  DropdownMenuCheckboxItem,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
@@ -67,7 +71,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useCurrentUser } from "@/hooks/use-session";
 import { DeletePropertyDialog, canDeleteProperty } from "@/components/app/DeletePropertyDialog";
 import { useSavedViews } from "@/hooks/use-saved-views";
-import { formatMoney, formatNumber, relativeDays } from "@/lib/format";
+import { relativeDays } from "@/lib/format";
 import { downloadCsv } from "@/lib/crm";
 import {
   propertyStatusLabels,
@@ -77,6 +81,7 @@ import {
 } from "@/lib/labels";
 import { appHead } from "@/components/app/app-head";
 import { cn } from "@/lib/utils";
+import { canShowDeleteAction, formatPropertyListDetails, formatPropertyListPrice, portalDotTone } from "@/lib/property-list-row";
 import {
   emptyPropertyListFilters,
   formatThousands,
@@ -108,29 +113,6 @@ const sortOptions: Record<SortKey, string> = {
   surface_desc: "Suprafață descrescătoare",
 };
 
-const COLUMNS_KEY = "imobiflow.propertyColumns";
-const allColumns = [
-  { key: "type", label: "Tip" },
-  { key: "transaction", label: "Tranzacție" },
-  { key: "status", label: "Status" },
-  { key: "price", label: "Preț" },
-  { key: "surface", label: "Suprafață" },
-  { key: "agent", label: "Agent" },
-  { key: "updated", label: "Actualizat" },
-] as const;
-type ColumnKey = (typeof allColumns)[number]["key"];
-
-function readColumns(): ColumnKey[] {
-  if (typeof window === "undefined") return allColumns.map((c) => c.key);
-  try {
-    const stored = JSON.parse(window.localStorage.getItem(COLUMNS_KEY) ?? "null");
-    if (Array.isArray(stored)) return stored;
-  } catch {
-    /* ignore */
-  }
-  return allColumns.map((c) => c.key);
-}
-
 /** Lista e vizualizarea implicită; preferința utilizatorului se ține local. */
 // Cheie nouă: utilizatorii care aveau vechea grilă memorată primesc
 // noua listă ca vizualizare implicită, dar își pot alege din nou grila.
@@ -156,7 +138,6 @@ function PropertiesPage() {
   const [debouncedQ, setDebouncedQ] = useState("");
   const [selected, setSelected] = useState<string[]>([]);
   const [view, setView] = useState<"list" | "grid">(readView);
-  const [columns, setColumns] = useState<ColumnKey[]>(readColumns);
   const [sort, setSort] = useState<SortKey>("created_desc");
   const [page, setPage] = useState(0);
   const [filtersExpanded, setFiltersExpanded] = useState(true);
@@ -172,10 +153,6 @@ function PropertiesPage() {
     const t = setTimeout(() => setDebouncedQ(filters.q.trim()), 300);
     return () => clearTimeout(t);
   }, [filters.q]);
-
-  useEffect(() => {
-    window.localStorage.setItem(COLUMNS_KEY, JSON.stringify(columns));
-  }, [columns]);
 
   useEffect(() => {
     window.localStorage.setItem(VIEW_KEY, view);
