@@ -1931,17 +1931,11 @@ export const getPortalLogs = createServerFn({ method: "POST" })
 /* Selecția de portaluri per proprietate (lista de proprietăți)              */
 /* ------------------------------------------------------------------------- */
 
-type PortalSelectionState =
-  | "coming_soon"
-  | "not_configured"
-  | "not_selected"
-  | "selected"
-  | "syncing"
-  | "published"
-  | "in_feed"
-  | "error"
-  | "expired"
-  | "withdrawn";
+import {
+  deriveState,
+  matchesPortalFilter,
+  type PortalSelectionState,
+} from "@/lib/portals/portal-state";
 
 export type PropertyPortalCell = {
   portalId: string;
@@ -1980,32 +1974,142 @@ export type PropertyPortalMatrix = {
   properties: Record<string, PropertyPortalCell[]>;
 };
 
-function deriveState(input: {
-  availability: "available" | "coming_soon" | "disabled";
-  configured: boolean;
-  selected: boolean;
-  listingStatus: string;
-  publicationStatus: string | null;
-  /** Portalul acceptă trimiteri directe; altfel oferta circulă doar prin feed. */
-  pushSupported: boolean;
-  /** Doar pentru portalurile de tip feed: oferta este publicabilă în feed. */
-  feedEligible: boolean;
-}): PortalSelectionState {
-  if (input.availability !== "available") return "coming_soon";
-  if (!input.pushSupported) {
-    // Portal de tip feed: nu există „trimitere”. Starea reală este prezența în feed.
-    if (!input.configured) return "not_configured";
-    if (!input.selected) return "not_selected";
-    return input.feedEligible ? "in_feed" : "error";
+export type PortalFilterOption = { portalId: string; name: string; pushSupported: boolean };
+
+/**
+ * Portalurile pentru filtrul „Publicare pe portaluri”: DOAR cele activate
+ * pentru agenție (și pentru superadmin), fără portalurile acoperite.
+ */
+export const getPortalFilterOptions = createServerFn({ method: "POST" })
+  .middleware([requireActiveOrgAuth])
+  .inputValidator((input: unknown) =>
+    z.object({ organizationId: z.string().uuid().optional() }).parse(input),
+  )
+  .handler(async ({ data, context }): Promise<PortalFilterOption[]> => {
+    const { organizationId } = await resolvePublishingOrg(
+      context as unknown as AuthContext,
+      data.organizationId,
+    );
+    const visible = await activatedPortalIds(organizationId);
+    return PORTALS.filter((p) => !isPortalCovered(p.id) && visible.has(p.id)).map((p) => ({
+      portalId: p.id,
+      name: portalDisplayName(p.id),
+      pushSupported: p.capabilities.includes("publish_listing"),
+    }));
+  });
+
+async function fetchAllRows<T>(
+  build: (from: number, to: number) => PromiseLike<{ data: T[] | null; error: unknown }>,
+): Promise<T[]> {
+  const out: T[] = [];
+  for (let from = 0; ; from += 1000) {
+    const { data, error } = await build(from, from + 999);
+    if (error) throw new Error("Nu am putut citi starea portalurilor.");
+    out.push(...(data ?? []));
+    if (!data || data.length < 1000) break;
   }
-  if (input.listingStatus === "error" || input.publicationStatus === "error") return "error";
-  if (input.listingStatus === "published" || input.listingStatus === "updated") return "published";
-  if (input.listingStatus === "pending") return "syncing";
-  if (input.listingStatus === "expired") return "expired";
-  if (input.listingStatus === "withdrawn") return "withdrawn";
-  if (!input.configured) return "not_configured";
-  return input.selected ? "selected" : "not_selected";
+  return out;
 }
+
+/**
+ * Stările pe portalurile activate pentru toate ofertele neșterse ale agenției.
+ * Aceleași intrări și același `deriveState` ca în `getPropertiesPortalMatrix`.
+ */
+export async function computeOrgPortalStates(
+  organizationId: string,
+): Promise<Map<string, { portalId: string; state: PortalSelectionState }[]>> {
+  const admin = await loadAdmin();
+  const visible = await activatedPortalIds(organizationId);
+  const portals = PORTALS.filter((p) => !isPortalCovered(p.id) && visible.has(p.id));
+  const [propertyRows, publications, listings, { data: connections }, { data: activeKeys }] =
+    await Promise.all([
+      fetchAllRows((a, b) =>
+        admin
+          .from("properties")
+          .select("id, publish_status, status, deleted_at")
+          .eq("organization_id", organizationId)
+          .is("deleted_at", null)
+          .order("id")
+          .range(a, b),
+      ),
+      fetchAllRows((a, b) =>
+        admin
+          .from("portal_publications")
+          .select("property_id, portal_key, enabled, status")
+          .eq("organization_id", organizationId)
+          .order("id")
+          .range(a, b),
+      ),
+      fetchAllRows((a, b) =>
+        admin
+          .from("portal_listings")
+          .select("property_id, portal, status")
+          .eq("organization_id", organizationId)
+          .order("id")
+          .range(a, b),
+      ),
+      admin.from("portal_connections").select("portal, status, activated").eq("organization_id", organizationId),
+      admin.from("portal_api_keys").select("portal").eq("organization_id", organizationId).eq("status", "active"),
+    ]);
+  const keyedPortals = new Set((activeKeys ?? []).map((k) => k.portal));
+  const { isPropertyFeedEligible } = await import("@/lib/site-feed/mapper");
+  const pubBy = new Map(publications.map((p) => [`${p.property_id}|${p.portal_key}`, p]));
+  const listBy = new Map(listings.map((l) => [`${l.property_id}|${l.portal}`, l]));
+  const result = new Map<string, { portalId: string; state: PortalSelectionState }[]>();
+  for (const row of propertyRows) {
+    const feedEligible = isPropertyFeedEligible(row as never) === true;
+    result.set(
+      row.id,
+      portals.map((portal) => {
+        const pub = pubBy.get(`${row.id}|${portal.id}`);
+        const listing = listBy.get(`${row.id}|${portal.id}`);
+        const connection = (connections ?? []).find((c) => c.portal === portal.id);
+        const pushSupported = portal.capabilities.includes("publish_listing");
+        const connectionReady = portalConnectionReady(portal.id, connection);
+        const configured =
+          portal.status === "available" &&
+          (pushSupported ? connectionReady : keyedPortals.has(portal.id) || connectionReady);
+        return {
+          portalId: portal.id,
+          state: deriveState({
+            availability: portal.status,
+            configured,
+            selected: pub?.enabled === true,
+            listingStatus: listing?.status ?? "not_published",
+            publicationStatus: pub?.status ?? null,
+            pushSupported,
+            feedEligible,
+          }),
+        };
+      }),
+    );
+  }
+  return result;
+}
+
+/** Filtrul „Publicare pe portaluri”: doar citire, întoarce id-urile potrivite. */
+export const getPropertyIdsByPortalState = createServerFn({ method: "POST" })
+  .middleware([requireActiveOrgAuth])
+  .inputValidator((input: unknown) =>
+    z
+      .object({
+        organizationId: z.string().uuid().optional(),
+        portal: z.string().regex(/^([a-z0-9_]+|any)$/),
+        state: z.enum(["published", "unpublished", "error"]),
+      })
+      .parse(input),
+  )
+  .handler(async ({ data, context }): Promise<string[]> => {
+    const { organizationId } = await resolvePublishingOrg(
+      context as unknown as AuthContext,
+      data.organizationId,
+    );
+    const states = await computeOrgPortalStates(organizationId);
+    const ids: string[] = [];
+    for (const [id, cells] of states)
+      if (matchesPortalFilter(cells, { portal: data.portal, state: data.state })) ids.push(id);
+    return ids;
+  });
 
 /**
  * Starea contului Imobiliare.ro pentru agenție (abonament). Memorată 10 minute
