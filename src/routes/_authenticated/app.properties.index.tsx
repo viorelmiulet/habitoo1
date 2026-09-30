@@ -351,6 +351,7 @@ function PropertiesPage() {
     },
   });
 
+  const isLoading = listLoading || (Boolean(portalFilter) && portalIdsLoading);
   const rows = result?.rows ?? [];
   // Coverul fiecărei proprietăți din pagina curentă (is_primary → prima poziție).
   const coverOf = usePropertyCovers(rows.map((r) => r.id));
