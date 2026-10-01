@@ -33,6 +33,8 @@ import {
   type TeamOverview,
 } from "@/lib/agency-team.functions";
 import { appHead } from "@/components/app/app-head";
+import { ProfileEditForm } from "@/components/app/ProfileEditForm";
+import { mobilePhoneSchema, normalizeRoMobile } from "@/lib/user-profile";
 
 export const Route = createFileRoute("/_authenticated/app/team")({
   head: () => appHead("Habitoo CRM — echipă"),
@@ -48,7 +50,8 @@ function TeamPage() {
   const remove = useServerFn(removeAgent);
 
   const [open, setOpen] = useState(false);
-  const [form, setForm] = useState({ email: "", full_name: "" });
+  const [form, setForm] = useState({ email: "", full_name: "", phone: "" });
+  const [editing, setEditing] = useState<TeamOverview["members"][number] | null>(null);
   const [pendingRemoval, setPendingRemoval] = useState<{ id: string; name: string } | null>(null);
 
   const isAdmin = user?.isAdmin ?? false;
@@ -64,11 +67,15 @@ function TeamPage() {
   };
 
   const inviteMutation = useMutation({
-    mutationFn: () => invite({ data: { email: form.email, full_name: form.full_name } }),
+    mutationFn: () => {
+      const phone = mobilePhoneSchema.safeParse(form.phone);
+      if (!phone.success) throw new Error(phone.error.issues[0]?.message ?? "Telefon invalid.");
+      return invite({ data: { email: form.email, full_name: form.full_name, phone: form.phone } });
+    },
     onSuccess: (overview) => {
       applyOverview(overview);
       setOpen(false);
-      setForm({ email: "", full_name: "" });
+      setForm({ email: "", full_name: "", phone: "" });
       toast.success("Invitația a fost trimisă prin email.");
     },
     onError: (e: Error) => toastError(e),
@@ -173,6 +180,9 @@ function TeamPage() {
                       {roleLabels[r] ?? r}
                     </StatusBadge>
                   ))}
+                  {normalizeRoMobile(m.phone) === null ? (
+                    <StatusBadge tone="warning">Fără telefon — nu poate publica pe portaluri</StatusBadge>
+                  ) : null}
                   {m.invited ? <StatusBadge tone="warning">Invitație trimisă</StatusBadge> : null}
                   <StatusBadge tone={m.is_active ? "success" : "neutral"}>
                     {m.is_active ? "Activ" : "Inactiv"}
@@ -180,6 +190,11 @@ function TeamPage() {
                   <span className="w-24 text-right text-xs text-muted-foreground">
                     {formatDate(m.created_at)}
                   </span>
+                  {(isAgent && !m.roles.includes("agency_admin")) || m.id === user?.userId ? (
+                    <Button size="sm" variant="outline" onClick={() => setEditing(m)}>
+                      Editează
+                    </Button>
+                  ) : null}
                   {isAgent && m.id !== user?.userId ? (
                     <div className="flex gap-2">
                       <Button
@@ -243,6 +258,18 @@ function TeamPage() {
                 required
               />
             </div>
+            <div className="space-y-2">
+              <Label htmlFor="agent_phone">Telefon mobil</Label>
+              <Input
+                id="agent_phone"
+                type="tel"
+                inputMode="tel"
+                placeholder="0722 123 456"
+                value={form.phone}
+                onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))}
+                required
+              />
+            </div>
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => setOpen(false)}>
                 Anulează
@@ -252,6 +279,25 @@ function TeamPage() {
               </Button>
             </DialogFooter>
           </form>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={editing !== null} onOpenChange={(v) => !v && setEditing(null)}>
+        <DialogContent className="max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Editează profilul</DialogTitle>
+            <DialogDescription>
+              Numele și telefonul apar pe portaluri la anunțurile agentului. Emailul de autentificare
+              îl poate schimba doar utilizatorul.
+            </DialogDescription>
+          </DialogHeader>
+          {editing ? (
+            <ProfileEditForm
+              key={editing.id}
+              profile={editing}
+              onSaved={() => setEditing(null)}
+            />
+          ) : null}
         </DialogContent>
       </Dialog>
 
