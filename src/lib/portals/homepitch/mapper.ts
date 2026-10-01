@@ -13,6 +13,7 @@
  *  - email valid al agentului asignat (cheia de match la HomePitch);
  *  - titlu, descriere, preț în EUR, tip de proprietate mapabil.
  */
+import { resolveListingContact } from "@/lib/portals/listing-contact";
 import {
   feedImageUrl,
   isImageFeedEligible,
@@ -264,6 +265,12 @@ export function mapPropertyToHomePitch(
     reasons.push("Agentul asignat nu are un email valid (cheia de match la HomePitch).");
   }
 
+  const resolvedContact = resolveListingContact({
+    assignedTo: options.agent ? "assigned" : null,
+    agent: options.agent ?? null,
+  });
+  if (!resolvedContact.ok) reasons.push(resolvedContact.message);
+
   if (reasons.length > 0) return { ok: false, reasons };
 
   const eligibleImages = (options.images ?? [])
@@ -331,7 +338,7 @@ export function mapPropertyToHomePitch(
         email: agentEmail,
         first_name: names.first,
         last_name: names.last,
-        phone: (options.agent?.phone ?? "").trim() || null,
+        phone: resolvedContact.ok ? resolvedContact.contact.phone : null,
       },
     },
   };

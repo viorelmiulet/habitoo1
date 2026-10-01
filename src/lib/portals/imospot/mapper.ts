@@ -15,6 +15,7 @@
  *    video_url, promotion) NU sunt trimise deloc — nu inventăm valori;
  *  - nu trimitem id-uri de taxonomie: Imospot rezolvă zona din text + coordonate.
  */
+import { resolveListingContact } from "@/lib/portals/listing-contact";
 import {
   feedImageUrl,
   isImageFeedEligible,
@@ -205,8 +206,6 @@ export type ImospotMapOptions = {
   baseUrl: string;
   images?: PropertyImageRow[];
   agent?: Pick<ProfileRow, "full_name" | "email" | "phone"> | null;
-  /** Telefonul agenției, folosit când agentul nu are telefon. */
-  organizationPhone?: string | null;
 };
 
 /**
@@ -241,8 +240,12 @@ export function mapPropertyToImospot(p: PropertyRow, options: ImospotMapOptions)
     reasons.push("Nu este bifată nicio tranzacție (vânzare sau închiriere).");
   }
 
-  const phone = (options.agent?.phone ?? "").trim() || (options.organizationPhone ?? "").trim();
-  if (!phone) reasons.push("Lipsește telefonul de contact (agent sau agenție).");
+  const resolved = resolveListingContact({
+    assignedTo: options.agent ? "assigned" : null,
+    agent: options.agent ?? null,
+  });
+  if (!resolved.ok) reasons.push(resolved.message);
+  const phone = resolved.ok ? resolved.contact.phone : "";
 
   const county = (p.county ?? "").trim();
   const city = (p.city ?? "").trim();
@@ -314,7 +317,7 @@ export function mapPropertyToImospot(p: PropertyRow, options: ImospotMapOptions)
       listing.contact.agent = {
         name: agentName,
         ...(options.agent?.email ? { email: options.agent.email } : {}),
-        ...(options.agent?.phone ? { phone: options.agent.phone } : {}),
+        ...(phone ? { phone } : {}),
       };
     }
     const neighborhood = (p.district ?? "").trim();

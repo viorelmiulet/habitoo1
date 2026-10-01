@@ -5,6 +5,7 @@
  * publicare a unui agent Habitoo căutăm agentul după email în `/agents` și,
  * dacă nu există, îl creăm. Corespondența se salvează în `imobiliare_agents`.
  */
+import { noPhoneMessage } from "@/lib/portals/listing-contact";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/integrations/supabase/types";
 import { IMOBILIARE_PATHS } from "./config";
@@ -64,19 +65,16 @@ export async function ensureImobiliareAgent(input: {
   session: ImobiliareSession;
   organizationId: string;
   profile: { id: string; full_name: string | null; email: string | null; phone: string | null };
-  /** Telefon de rezervă (agenție) când agentul nu are unul valid. */
-  fallbackPhone?: string | null;
-  /** Mobil de rezervă (agenție) pentru WhatsApp. */
-  fallbackWhatsapp?: string | null;
 }): Promise<AgentSyncResult> {
   const { admin, session, organizationId, profile } = input;
   const email = profile.email?.trim().toLowerCase() ?? "";
   // Portalul cere pentru agent `phones` și `whatsapp_number`, nu un `phone` simplu.
-  const phone =
-    normalizeImobiliarePhone(profile.phone) ?? normalizeImobiliarePhone(input.fallbackPhone ?? null);
-  const whatsapp =
-    normalizeImobiliareMobile(profile.phone) ??
-    normalizeImobiliareMobile(input.fallbackWhatsapp ?? null);
+  // Exclusiv telefonul agentului din Habitoo (fără telefonul agenției).
+  const phone = normalizeImobiliarePhone(profile.phone);
+  const whatsapp = normalizeImobiliareMobile(profile.phone);
+  if (!phone || !whatsapp) {
+    return { ok: false, message: noPhoneMessage(profile.full_name) };
+  }
 
   const { data: existing } = await admin
     .from("imobiliare_agents")

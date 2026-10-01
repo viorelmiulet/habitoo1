@@ -9,6 +9,7 @@ import { mergePortalOffers, parsePortalOffers } from "@/lib/portals/imobiliare/o
  *  - cheile emise de Habitoo se afișează o singură dată, la generare;
  *  - fiecare operație este jurnalizată sanitizat în `portal_operation_logs`.
  */
+import { resolveListingContact } from "@/lib/portals/listing-contact";
 import { portalConnectionReady } from "@/lib/portals/clickimob/index-feed";
 import { promotedAfterAction, promotionOperation, promotionPlan } from "@/lib/portals/promotion-flag";
 import { createServerFn } from "@tanstack/react-start";
@@ -1972,6 +1973,8 @@ export type PropertyPortalCell = {
 export type PropertyPortalMatrix = {
   canManage: boolean;
   properties: Record<string, PropertyPortalCell[]>;
+  /** Motivul pentru care oferta nu poate fi publicată (contactul agentului), sau null. */
+  contactBlocks?: Record<string, string | null>;
 };
 
 export type PortalFilterOption = { portalId: string; name: string; pushSupported: boolean };
@@ -2165,7 +2168,7 @@ export const getPropertiesPortalMatrix = createServerFn({ method: "POST" })
     const canManage = true;
     // Agenția vede DOAR portalurile activate pentru ea de Superadmin.
     const visiblePortals = superadmin ? null : await activatedPortalIds(organizationId);
-    if (data.propertyIds.length === 0) return { canManage, properties: {} };
+    if (data.propertyIds.length === 0) return { canManage, properties: {}, contactBlocks: {} };
 
     const admin = await loadAdmin();
     const [
@@ -2193,7 +2196,7 @@ export const getPropertiesPortalMatrix = createServerFn({ method: "POST" })
         .eq("organization_id", organizationId),
       admin
         .from("properties")
-        .select("id, publish_status, status, deleted_at")
+        .select("id, publish_status, status, deleted_at, assigned_to")
         .eq("organization_id", organizationId)
         .in("id", data.propertyIds),
       admin
@@ -2286,7 +2289,22 @@ export const getPropertiesPortalMatrix = createServerFn({ method: "POST" })
         };
       });
     }
-    return { canManage, properties };
+    const contactAgentIds = [
+      ...new Set((propertyRows ?? []).map((row) => row.assigned_to).filter(Boolean)),
+    ] as string[];
+    const { data: contactAgents } = contactAgentIds.length
+      ? await admin.from("profiles").select("id, full_name, email, phone").in("id", contactAgentIds)
+      : { data: [] };
+    const agentById = new Map((contactAgents ?? []).map((a) => [a.id, a]));
+    const contactBlocks: Record<string, string | null> = {};
+    for (const row of propertyRows ?? []) {
+      const result = resolveListingContact({
+        assignedTo: row.assigned_to,
+        agent: row.assigned_to ? (agentById.get(row.assigned_to) ?? null) : null,
+      });
+      contactBlocks[row.id] = result.ok ? null : result.message;
+    }
+    return { canManage, properties, contactBlocks };
   });
 
 /** Activează/dezactivează publicarea unei proprietăți pe un portal. */
@@ -2728,11 +2746,23 @@ export async function applyPortalSelectionForOrg(input: {
 
     const { data: property } = await admin
       .from("properties")
-      .select("id")
+      .select("id, assigned_to")
       .eq("id", data.propertyId)
       .eq("organization_id", organizationId)
       .maybeSingle();
     if (!property) throw new Error("Proprietatea nu a fost găsită.");
+    // Contactul anunțului = agentul responsabil; fără telefon, publicarea se blochează.
+    const { data: contactAgent } = property.assigned_to
+      ? await admin
+          .from("profiles")
+          .select("full_name, email, phone")
+          .eq("id", property.assigned_to)
+          .maybeSingle()
+      : { data: null };
+    const listingContact = resolveListingContact({
+      assignedTo: property.assigned_to,
+      agent: contactAgent ?? null,
+    });
 
     const [
       { data: publications },
@@ -2813,6 +2843,17 @@ export async function applyPortalSelectionForOrg(input: {
               message: `Integrarea ${name} nu este încă disponibilă.`,
             });
           }
+          continue;
+        }
+
+        if (wanted.enabled && !listingContact.ok) {
+          results.push({
+            portalId: definition.id,
+            portalName: name,
+            action: "blocked",
+            ok: false,
+            message: listingContact.message,
+          });
           continue;
         }
 

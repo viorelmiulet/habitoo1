@@ -1,4 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
+import { resolveListingContact } from "@/lib/portals/listing-contact";
 import { z } from "zod";
 import { requireActiveOrgAuth } from "@/lib/org-access";
 import { assertPortalPropertyAccess, resolvePublishingOrg } from "@/lib/portals.functions";
@@ -41,6 +42,18 @@ export const getPortalBulkOverview = createServerFn({ method: "POST" })
     });
   });
 
+
+async function listingContactBlock(admin: Awaited<ReturnType<typeof loadAdmin>>, propertyId: string): Promise<string | null> {
+
+  const { data: property } = await admin.from("properties").select("assigned_to").eq("id", propertyId).maybeSingle();
+  const { data: agent } = property?.assigned_to
+    ? await admin.from("profiles").select("full_name, email, phone").eq("id", property.assigned_to).maybeSingle()
+    : { data: null };
+  const result = resolveListingContact({ assignedTo: property?.assigned_to ?? null, agent: agent ?? null });
+  const message = result.ok ? null : result.message;
+  return message;
+}
+
 export const startPortalBulkJob = createServerFn({ method: "POST" })
   .middleware([requireActiveOrgAuth])
   .inputValidator((input: unknown) => z.object({ organizationId: z.string().uuid().optional(), items: z.array(itemSchema).min(1).max(500) }).parse(input))
@@ -61,6 +74,10 @@ export const startPortalBulkJob = createServerFn({ method: "POST" })
         if (!portal || isPortalCovered(item.portalId) || (!superadmin && !active.has(item.portalId))) throw new Error("Portalul nu este activat pentru agenție.");
         if (item.promoted === true && (!item.enabled || portal.supports_promoted_flag !== true)) throw new Error("Promovarea este permisă doar pentru un anunț bifat pe un portal compatibil.");
         await assertPortalPropertyAccess({ organizationId, propertyId: item.propertyId, agentOnly, userId: context.userId });
+        if (item.enabled) {
+          const blocked = await listingContactBlock(admin, item.propertyId);
+          if (blocked) throw new Error(blocked);
+        }
         accepted.push(item);
       } catch (error) {
         skipped.push({ item, message: error instanceof Error ? error.message : "Element respins." });

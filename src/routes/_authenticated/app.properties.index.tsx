@@ -926,6 +926,7 @@ function PropertiesPage() {
               rows={rows}
               coverOf={coverOf}
               cellsFor={portals.cellsFor}
+              contactBlockOf={portals.contactBlockOf}
               drafts={portalDrafts}
               setDrafts={setPortalDrafts}
               organizationId={orgId}
@@ -1163,6 +1164,8 @@ function PropertiesPage() {
         mode={portalBulkMode}
         propertyIds={selected}
         cellsFor={portals.cellsFor}
+        contactBlockOf={portals.contactBlockOf}
+        isAdmin={user?.isAdmin === true}
         organizationId={orgId}
         onClose={() => setPortalBulkMode(null)}
         onStarted={(jobId) => {

@@ -9,6 +9,9 @@
  * Separă intenția (checkbox) de starea reală a integrării (status), fără să
  * introducă o a doua sursă de adevăr.
  */
+import { ContactBlockNotice } from "@/components/app/ContactBlockNotice";
+import { FEED_EXCLUDED_NO_PHONE, FEED_PORTALS_REQUIRING_AGENT_PHONE } from "@/lib/portals/listing-contact";
+import { useCurrentUser } from "@/hooks/use-session";
 import { getPropertyAutoWithdrawals, type AutoWithdrawView } from "@/lib/property-status.functions";
 import { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useState } from "react";
 import { AlertTriangle, Check, CheckCircle2, Circle, ExternalLink } from "lucide-react";
@@ -176,6 +179,8 @@ export const PropertyPortalsCard = forwardRef<
     [matrix.data, propertyId],
   );
   const canManage = matrix.data?.canManage ?? false;
+  const contactBlock = matrix.data?.contactBlocks?.[propertyId] ?? null;
+  const sessionUser = useCurrentUser().data;
 
   /**
    * Colaborarea Habitoo se comportă ca un portal: același rând, aceeași bifă,
@@ -389,6 +394,13 @@ export const PropertyPortalsCard = forwardRef<
             ) : null}
           </header>
 
+          {contactBlock ? (
+            <ContactBlockNotice
+              message={contactBlock}
+              isAdmin={sessionUser?.isAdmin === true}
+              className="mb-3 rounded-2xl border border-destructive bg-destructive/5 p-3 text-sm"
+            />
+          ) : null}
           <ul className="space-y-3">
             {collabVisible ? (
               <li>
@@ -478,7 +490,11 @@ export const PropertyPortalsCard = forwardRef<
 
             {cells.map((cell) => {
               const value = checked[cell.portalId] ?? cell.selected;
-              const disabled = !canManage || cell.availability !== "available" || apply.isPending;
+              const disabled =
+                !canManage ||
+                cell.availability !== "available" ||
+                apply.isPending ||
+                (Boolean(contactBlock) && !value && !cell.selected);
               const problem =
                 cell.state === "error" ||
                 Boolean(cell.lastError) ||
@@ -510,6 +526,16 @@ export const PropertyPortalsCard = forwardRef<
                           {detail}
                           {problem && failure?.requestId ? ` · Cerere ${failure.requestId}` : ""}
                         </p>
+                        {contactBlock && value && FEED_PORTALS_REQUIRING_AGENT_PHONE.has(cell.portalId) ? (
+                          <p className="mt-1 text-xs font-semibold text-destructive">
+                            {FEED_EXCLUDED_NO_PHONE}
+                          </p>
+                        ) : null}
+                        {cell.portalId === "oferteimobiliare" ? (
+                          <p className="mt-1 text-xs text-muted-foreground">
+                            OferteImobiliare afișează telefonul contului agenției.
+                          </p>
+                        ) : null}
                         <MyPortalSlotLine portalId={cell.portalId} />
                         <AutoWithdrawLine
                           view={autoWithdrawals.data?.find((w) => w.portalId === cell.portalId)}
