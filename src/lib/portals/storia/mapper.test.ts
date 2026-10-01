@@ -51,8 +51,6 @@ const options: StoriaMapOptions = {
   baseUrl: "https://crm.habitoo.ro",
   images: [image("img-1", true)],
   agent: { full_name: "Ana Popescu", email: "ana@test.ro", phone: "0722333444" } as never,
-  organizationPhone: "0311111111",
-  organizationEmail: "office@test.ro",
 };
 
 describe("mapPropertyToStoria", () => {
