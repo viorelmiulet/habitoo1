@@ -48,20 +48,23 @@ export const getAccountDeletionJob = createServerFn({ method: "POST" })
     return job;
   });
 
-export type UserDeletionPreview = {
+export type DeletionPreview = {
   workload: Record<string, number>;
   images: number;
   /** Anunțuri de retras, pe portal (rânduri cu ID de portal sau publicări active). */
   withdrawals: { portal: string; count: number }[];
-  otherMembers: number;
+  /** La utilizator: ceilalți membri ai agenției; la agenție: toți membrii. */
+  members: number;
+  portalConnections: number;
+  organizationId: string | null;
   organizationName: string | null;
 };
 
-/** Datele afișate în dialogul „Șterge utilizatorul”; doar citire. */
-export const getUserDeletionPreview = createServerFn({ method: "POST" })
+/** Datele afișate în dialogurile de ștergere (utilizator sau agenție); doar citire. */
+export const getDeletionPreview = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .validator((data: unknown) => z.object({ userId: z.string().uuid() }).parse(data))
-  .handler(async ({ data, context }): Promise<UserDeletionPreview> => {
+  .validator((data: unknown) => z.object({ kind: z.enum(["user", "organization"]), targetId: z.string().uuid() }).parse(data))
+  .handler(async ({ data, context }): Promise<DeletionPreview> => {
     const actorId = await assertSuperadmin(context as AuthContext);
     await assertNoActiveImpersonation(actorId);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -69,10 +72,21 @@ export const getUserDeletionPreview = createServerFn({ method: "POST" })
       if (r.error) throw new Error(r.error.message);
       return r.data;
     };
-    const workload = (must(await supabaseAdmin.rpc("superadmin_user_workload", { _user: data.userId, _actor: actorId })) ?? {}) as Record<string, number>;
-    const profile = must(await supabaseAdmin.from("profiles").select("organization_id").eq("id", data.userId).maybeSingle());
-    const orgId = profile?.organization_id ?? null;
-    const props = (must(await supabaseAdmin.from("properties").select("id").eq("assigned_to", data.userId)) ?? []).map((r) => r.id);
+    const isUser = data.kind === "user";
+    let orgId: string | null = isUser ? null : data.targetId;
+    let workload: Record<string, number> = {};
+    if (isUser) {
+      workload = (must(await supabaseAdmin.rpc("superadmin_user_workload", { _user: data.targetId, _actor: actorId })) ?? {}) as Record<string, number>;
+      orgId = must(await supabaseAdmin.from("profiles").select("organization_id").eq("id", data.targetId).maybeSingle())?.organization_id ?? null;
+    } else {
+      for (const t of ["properties", "leads", "contacts", "activities", "requests"] as const) {
+        const r = await supabaseAdmin.from(t).select("id", { count: "exact", head: true }).eq("organization_id", data.targetId);
+        if (r.error) throw new Error(r.error.message);
+        workload[t] = r.count ?? 0;
+      }
+    }
+    const col = isUser ? "assigned_to" : "organization_id";
+    const props = (must(await supabaseAdmin.from("properties").select("id").eq(col, data.targetId)) ?? []).map((r) => r.id);
     let images = 0;
     const perPortal = new Map<string, Set<string>>();
     for (let i = 0; i < props.length; i += 200) {
@@ -91,19 +105,44 @@ export const getUserDeletionPreview = createServerFn({ method: "POST" })
       for (const r of must(listings) ?? []) add(r.portal, r.property_id);
       for (const r of must(pubs) ?? []) add(r.portal_key, r.property_id);
     }
-    let otherMembers = 0;
+    let members = 0;
+    let portalConnections = 0;
     let organizationName: string | null = null;
     if (orgId) {
-      const r = await supabaseAdmin.from("profiles").select("id", { count: "exact", head: true }).eq("organization_id", orgId).neq("id", data.userId);
+      let mq = supabaseAdmin.from("profiles").select("id", { count: "exact", head: true }).eq("organization_id", orgId);
+      if (isUser) mq = mq.neq("id", data.targetId);
+      const r = await mq;
       if (r.error) throw new Error(r.error.message);
-      otherMembers = r.count ?? 0;
+      members = r.count ?? 0;
       organizationName = must(await supabaseAdmin.from("organizations").select("name").eq("id", orgId).maybeSingle())?.name ?? null;
+      if (!isUser) {
+        const c = await supabaseAdmin.from("portal_connections").select("id", { count: "exact", head: true }).eq("organization_id", orgId);
+        if (c.error) throw new Error(c.error.message);
+        portalConnections = c.count ?? 0;
+      }
     }
     return {
       workload,
       images,
       withdrawals: [...perPortal.entries()].map(([portal, set]) => ({ portal, count: set.size })),
-      otherMembers,
+      members,
+      portalConnections,
+      organizationId: orgId,
       organizationName,
     };
+  });
+
+/** Agențiile care au cel puțin un superadmin (nu se pot șterge). */
+export const listSuperadminOrganizationIds = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }): Promise<string[]> => {
+    await assertSuperadmin(context as AuthContext);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const roles = await supabaseAdmin.from("user_roles").select("user_id").eq("role", "superadmin");
+    if (roles.error) throw new Error(roles.error.message);
+    const ids = (roles.data ?? []).map((r) => r.user_id);
+    if (!ids.length) return [];
+    const p = await supabaseAdmin.from("profiles").select("organization_id").in("id", ids);
+    if (p.error) throw new Error(p.error.message);
+    return [...new Set((p.data ?? []).map((r) => r.organization_id).filter((x): x is string => Boolean(x)))];
   });
