@@ -23,14 +23,15 @@ vi.mock("@/lib/portals/rate-limit.server", () => ({ portalRateLimited: () => fal
 const writes: { table: string; op: string; row: Record<string, unknown> }[] = [];
 const tableData: Record<string, unknown[]> = {
   portal_connections: [{ portal: "properstar", status: "ready", activated: true, settings: {} }],
-  properties: [{ id: "prop-1" }],
+  properties: [{ id: "prop-1", assigned_to: "agent-1" }],
+  profiles: [{ id: "agent-1", full_name: "Ana Pop", email: "ana@example.ro", phone: "0722123456" }],
 };
 
 function chain(table: string) {
   const q: Record<string, unknown> = {};
   for (const k of ["select", "eq", "order", "limit", "in", "is", "neq", "not"]) q[k] = () => q;
   const rows = () => tableData[table] ?? [];
-  q["maybeSingle"] = async () => ({ data: table === "properties" ? rows()[0] : null, error: null });
+  q["maybeSingle"] = async () => ({ data: table === "properties" || table === "profiles" ? rows()[0] : null, error: null });
   q["single"] = q["maybeSingle"];
   for (const op of ["insert", "update", "upsert", "delete"]) {
     q[op] = (row: Record<string, unknown>) => {
