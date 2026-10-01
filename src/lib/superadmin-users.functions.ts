@@ -258,6 +258,20 @@ export const reassignUserData = createServerFn({ method: "POST" })
     const actorId = await assertSuperadmin(context as AuthContext);
     await assertNoActiveImpersonation(actorId);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const [{ data: from }, { data: to }] = await Promise.all([
+      supabaseAdmin.from("profiles").select("organization_id").eq("id", data.fromUserId).maybeSingle(),
+      supabaseAdmin.from("profiles").select("organization_id").eq("id", data.toUserId).maybeSingle(),
+    ]);
+    // Altă agenție: aceeași logică ca la ștergere (retrageri, poze mutate), în fundal,
+    // fără ștergerea utilizatorului sursă.
+    if (from && to && from.organization_id !== to.organization_id) {
+      const { startAccountDeletion, supabaseDeletionStore } = await import("@/lib/account-deletion.server");
+      await startAccountDeletion(supabaseDeletionStore(supabaseAdmin), {
+        actorId, kind: "user", targetId: data.fromUserId, mode: "reassign",
+        reassignToUserId: data.toUserId, deleteTarget: false,
+      });
+      return {};
+    }
     const { data: result, error } = await supabaseAdmin.rpc("superadmin_reassign_user_data", {
       _from: data.fromUserId,
       _to: data.toUserId,

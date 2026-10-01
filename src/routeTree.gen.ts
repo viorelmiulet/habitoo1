@@ -73,6 +73,7 @@ import { Route as AuthenticatedAppPropertiesIndexRouteImport } from './routes/_a
 import { Route as AuthenticatedAppPropertiesIdRouteImport } from './routes/_authenticated/app.properties.$id'
 import { Route as AuthenticatedAppPropertiesNewRouteImport } from './routes/_authenticated/app.properties.new'
 import { Route as AuthenticatedAppRequestsIdRouteImport } from './routes/_authenticated/app.requests.$id'
+import { Route as ApiPublicCronAccountDeletionRouteImport } from './routes/api/public/cron/account-deletion'
 import { Route as ApiPublicCronLacheieResendRouteImport } from './routes/api/public/cron/lacheie-resend'
 import { Route as ApiPublicCronListingCollectorRouteImport } from './routes/api/public/cron/listing-collector'
 import { Route as ApiPublicCronMarketPriceIndicesRouteImport } from './routes/api/public/cron/market-price-indices'
@@ -463,6 +464,12 @@ const AuthenticatedAppRequestsIdRoute =
     path: '/$id',
     getParentRoute: () => AuthenticatedAppRequestsRoute,
   } as any)
+const ApiPublicCronAccountDeletionRoute =
+  ApiPublicCronAccountDeletionRouteImport.update({
+    id: '/api/public/cron/account-deletion',
+    path: '/api/public/cron/account-deletion',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicCronLacheieResendRoute =
   ApiPublicCronLacheieResendRouteImport.update({
     id: '/api/public/cron/lacheie-resend',
@@ -736,6 +743,7 @@ export interface FileRoutesByFullPath {
   '/app/properties/$id': typeof AuthenticatedAppPropertiesIdRoute
   '/app/properties/new': typeof AuthenticatedAppPropertiesNewRoute
   '/app/requests/$id': typeof AuthenticatedAppRequestsIdRoute
+  '/api/public/cron/account-deletion': typeof ApiPublicCronAccountDeletionRoute
   '/api/public/cron/lacheie-resend': typeof ApiPublicCronLacheieResendRoute
   '/api/public/cron/listing-collector': typeof ApiPublicCronListingCollectorRoute
   '/api/public/cron/market-price-indices': typeof ApiPublicCronMarketPriceIndicesRoute
@@ -836,6 +844,7 @@ export interface FileRoutesByTo {
   '/app/properties/$id': typeof AuthenticatedAppPropertiesIdRoute
   '/app/properties/new': typeof AuthenticatedAppPropertiesNewRoute
   '/app/requests/$id': typeof AuthenticatedAppRequestsIdRoute
+  '/api/public/cron/account-deletion': typeof ApiPublicCronAccountDeletionRoute
   '/api/public/cron/lacheie-resend': typeof ApiPublicCronLacheieResendRoute
   '/api/public/cron/listing-collector': typeof ApiPublicCronListingCollectorRoute
   '/api/public/cron/market-price-indices': typeof ApiPublicCronMarketPriceIndicesRoute
@@ -940,6 +949,7 @@ export interface FileRoutesById {
   '/_authenticated/app/properties/$id': typeof AuthenticatedAppPropertiesIdRoute
   '/_authenticated/app/properties/new': typeof AuthenticatedAppPropertiesNewRoute
   '/_authenticated/app/requests/$id': typeof AuthenticatedAppRequestsIdRoute
+  '/api/public/cron/account-deletion': typeof ApiPublicCronAccountDeletionRoute
   '/api/public/cron/lacheie-resend': typeof ApiPublicCronLacheieResendRoute
   '/api/public/cron/listing-collector': typeof ApiPublicCronListingCollectorRoute
   '/api/public/cron/market-price-indices': typeof ApiPublicCronMarketPriceIndicesRoute
@@ -1044,6 +1054,7 @@ export interface FileRouteTypes {
     | '/app/properties/$id'
     | '/app/properties/new'
     | '/app/requests/$id'
+    | '/api/public/cron/account-deletion'
     | '/api/public/cron/lacheie-resend'
     | '/api/public/cron/listing-collector'
     | '/api/public/cron/market-price-indices'
@@ -1144,6 +1155,7 @@ export interface FileRouteTypes {
     | '/app/properties/$id'
     | '/app/properties/new'
     | '/app/requests/$id'
+    | '/api/public/cron/account-deletion'
     | '/api/public/cron/lacheie-resend'
     | '/api/public/cron/listing-collector'
     | '/api/public/cron/market-price-indices'
@@ -1247,6 +1259,7 @@ export interface FileRouteTypes {
     | '/_authenticated/app/properties/$id'
     | '/_authenticated/app/properties/new'
     | '/_authenticated/app/requests/$id'
+    | '/api/public/cron/account-deletion'
     | '/api/public/cron/lacheie-resend'
     | '/api/public/cron/listing-collector'
     | '/api/public/cron/market-price-indices'
@@ -1309,6 +1322,7 @@ export interface RootRouteChildren {
   TermeniSiConditiiRoute: typeof TermeniSiConditiiRoute
   AuthCallbackRoute: typeof AuthCallbackRoute
   OfertaIdRoute: typeof OfertaIdRoute
+  ApiPublicCronAccountDeletionRoute: typeof ApiPublicCronAccountDeletionRoute
   ApiPublicCronLacheieResendRoute: typeof ApiPublicCronLacheieResendRoute
   ApiPublicCronListingCollectorRoute: typeof ApiPublicCronListingCollectorRoute
   ApiPublicCronMarketPriceIndicesRoute: typeof ApiPublicCronMarketPriceIndicesRoute
@@ -1793,6 +1807,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAppRequestsIdRouteImport
       parentRoute: typeof AuthenticatedAppRequestsRoute
     }
+    '/api/public/cron/account-deletion': {
+      id: '/api/public/cron/account-deletion'
+      path: '/api/public/cron/account-deletion'
+      fullPath: '/api/public/cron/account-deletion'
+      preLoaderRoute: typeof ApiPublicCronAccountDeletionRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/cron/lacheie-resend': {
       id: '/api/public/cron/lacheie-resend'
       path: '/api/public/cron/lacheie-resend'
@@ -2259,6 +2280,7 @@ const rootRouteChildren: RootRouteChildren = {
   TermeniSiConditiiRoute: TermeniSiConditiiRoute,
   AuthCallbackRoute: AuthCallbackRoute,
   OfertaIdRoute: OfertaIdRoute,
+  ApiPublicCronAccountDeletionRoute: ApiPublicCronAccountDeletionRoute,
   ApiPublicCronLacheieResendRoute: ApiPublicCronLacheieResendRoute,
   ApiPublicCronListingCollectorRoute: ApiPublicCronListingCollectorRoute,
   ApiPublicCronMarketPriceIndicesRoute: ApiPublicCronMarketPriceIndicesRoute,

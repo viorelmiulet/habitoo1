@@ -14,6 +14,75 @@ export type Database = {
   }
   public: {
     Tables: {
+      account_deletion_jobs: {
+        Row: {
+          created_at: string
+          created_by: string
+          delete_target: boolean
+          done: number
+          errors: Json
+          failed: number
+          finished_at: string | null
+          id: string
+          kind: string
+          locked_until: string | null
+          mode: string
+          next_attempt_at: string | null
+          phase: string
+          reassign_to_user_id: string | null
+          report: Json
+          started_at: string | null
+          status: string
+          target_id: string
+          target_label: string | null
+          total: number
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          delete_target?: boolean
+          done?: number
+          errors?: Json
+          failed?: number
+          finished_at?: string | null
+          id?: string
+          kind: string
+          locked_until?: string | null
+          mode: string
+          next_attempt_at?: string | null
+          phase?: string
+          reassign_to_user_id?: string | null
+          report?: Json
+          started_at?: string | null
+          status?: string
+          target_id: string
+          target_label?: string | null
+          total?: number
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          delete_target?: boolean
+          done?: number
+          errors?: Json
+          failed?: number
+          finished_at?: string | null
+          id?: string
+          kind?: string
+          locked_until?: string | null
+          mode?: string
+          next_attempt_at?: string | null
+          phase?: string
+          reassign_to_user_id?: string | null
+          report?: Json
+          started_at?: string | null
+          status?: string
+          target_id?: string
+          target_label?: string | null
+          total?: number
+        }
+        Relationships: []
+      }
       acp_ai_insights: {
         Row: {
           analysis_id: string
@@ -7607,6 +7676,53 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      account_deletion_apply_rest: {
+        Args: {
+          _actor: string
+          _kind: string
+          _mode: string
+          _target: string
+          _to_user: string
+        }
+        Returns: Json
+      }
+      account_deletion_arm: { Args: never; Returns: undefined }
+      account_deletion_claim: {
+        Args: { _ttl_seconds?: number }
+        Returns: {
+          created_at: string
+          created_by: string
+          delete_target: boolean
+          done: number
+          errors: Json
+          failed: number
+          finished_at: string | null
+          id: string
+          kind: string
+          locked_until: string | null
+          mode: string
+          next_attempt_at: string | null
+          phase: string
+          reassign_to_user_id: string | null
+          report: Json
+          started_at: string | null
+          status: string
+          target_id: string
+          target_label: string | null
+          total: number
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "account_deletion_jobs"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
+      account_deletion_move_property: {
+        Args: { _actor: string; _property: string; _to_user: string }
+        Returns: Json
+      }
+      account_deletion_tick: { Args: never; Returns: undefined }
       acquire_portal_operation_lock: {
         Args: {
           _lock_key: string
