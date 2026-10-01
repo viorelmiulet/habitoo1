@@ -9,6 +9,8 @@ import { useCurrentUser } from "@/hooks/use-session";
 import { useAiFeatures } from "@/hooks/use-ai-features";
 import { CompleteAgencyData } from "@/components/app/CompleteAgencyData";
 import { mustCompleteAgencyData } from "@/lib/agency-public-data";
+import { CompleteUserProfile } from "@/components/app/CompleteUserProfile";
+import { mustCompleteUserProfile } from "@/lib/user-profile";
 
 export const Route = createFileRoute("/_authenticated/app")({
   head: () => appHead("Habitoo CRM — aplicație"),
@@ -32,6 +34,15 @@ function AppLayout() {
     })
   ) {
     return <CompleteAgencyData user={user} />;
+  }
+  if (
+    mustCompleteUserProfile({
+      roles: user.roles,
+      impersonating: Boolean(user.impersonation),
+      profile: user.profile,
+    })
+  ) {
+    return <CompleteUserProfile user={user} />;
   }
 
   // Funcțiile AI sunt activate individual per agenție; cele oprite nu apar în meniu.
