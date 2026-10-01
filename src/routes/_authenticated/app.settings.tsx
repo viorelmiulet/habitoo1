@@ -42,6 +42,7 @@ import { roleLabels } from "@/lib/labels";
 import { PLAN_LABELS, normalizePlan, planAgentLimitLabel } from "@/lib/plans";
 import { getTeamOverview } from "@/lib/agency-team.functions";
 import { useServerFn } from "@tanstack/react-start";
+import { ProfileEditForm } from "@/components/app/ProfileEditForm";
 import { appHead } from "@/components/app/app-head";
 
 
@@ -231,70 +232,20 @@ function SettingsPage() {
         </TabsContent>
 
         <TabsContent value="profile">
-          <form
-            className="panel max-w-xl space-y-4 p-5"
-            onSubmit={(e) => {
-              e.preventDefault();
-              saveProfile.mutate();
-            }}
-          >
-            <div className="flex items-center gap-4">
-              <UserAvatar
-                name={user?.profile?.full_name ?? user?.email}
-                path={user?.profile?.avatar_url}
-                className="size-16 text-base"
+          <div className="panel max-w-xl p-5">
+            {user ? (
+              <ProfileEditForm
+                profile={{
+                  id: user.userId,
+                  full_name: user.profile?.full_name ?? null,
+                  phone: user.profile?.phone ?? null,
+                  job_title: user.profile?.job_title ?? null,
+                  avatar_url: user.profile?.avatar_url ?? null,
+                  email: user.email ?? null,
+                }}
               />
-              <div className="space-y-1">
-                <Label htmlFor="avatar">Fotografie de profil</Label>
-                <Input
-                  id="avatar"
-                  type="file"
-                  accept="image/jpeg,image/png,image/webp"
-                  disabled={uploadAvatar.isPending}
-                  onChange={(e) => {
-                    const file = e.target.files?.[0];
-                    e.target.value = "";
-                    if (file) uploadAvatar.mutate(file);
-                  }}
-                />
-                <p className="text-xs text-muted-foreground">JPG, PNG sau WebP, maximum 5 MB.</p>
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="full_name">Nume complet</Label>
-              <Input
-                id="full_name"
-                value={profileForm.full_name}
-                onChange={(e) => setProfileForm((f) => ({ ...f, full_name: e.target.value }))}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="phone">Telefon</Label>
-              <Input
-                id="phone"
-                value={profileForm.phone}
-                onChange={(e) => setProfileForm((f) => ({ ...f, phone: e.target.value }))}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="job_title">Funcție</Label>
-              <Input
-                id="job_title"
-                value={profileForm.job_title}
-                onChange={(e) => setProfileForm((f) => ({ ...f, job_title: e.target.value }))}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Email</Label>
-              <Input value={user?.email ?? ""} disabled />
-            </div>
-            <div className="flex justify-end">
-              <Button type="submit" disabled={saveProfile.isPending}>
-                Salvează profilul
-              </Button>
-            </div>
-          </form>
+            ) : null}
+          </div>
         </TabsContent>
 
         {user?.isAdmin ? (
