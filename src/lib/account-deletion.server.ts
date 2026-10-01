@@ -72,6 +72,8 @@ export interface DeletionStore {
   updateJob(id: string, patch: Partial<DeletionJob> & Record<string, unknown>): Promise<void>;
   audit(row: { action: string; entity: string; entity_id: string; actor_id: string; old_values?: unknown; new_values?: unknown }): Promise<void>;
   arm(): Promise<void>;
+  /** Portalurile pe care destinația (aceeași agenție) ar depăși locurile alocate după preluare. */
+  sameOrgSlotConflicts?(fromUserId: string, toUserId: string): Promise<string[]>;
 }
 
 export type StorageEntry = { name: string; folder: boolean };
@@ -98,6 +100,10 @@ function normalizeReport(report: Partial<DeletionReport> | null | undefined): De
 }
 
 // ---------------------------------------------------------------- validare
+
+export function slotConflictMessage(name: string, portals: string[]) {
+  return `${name} nu are locuri libere pe: ${portals.join(", ")}. Eliberează locuri sau mărește limita.`;
+}
 
 export type StartDeletionInput = {
   actorId: string;
@@ -142,6 +148,10 @@ export async function validateDeletionRequest(store: DeletionStore, input: Start
     if (destination.id === input.targetId) throw new Error("Utilizatorul destinație nu poate fi cel șters.");
     if (input.kind === "organization" && destination.organization_id === input.targetId) {
       throw new Error("Utilizatorul destinație nu poate fi din agenția ștearsă.");
+    }
+    if (input.kind === "user" && destination.organization_id === targetOrgId && store.sameOrgSlotConflicts) {
+      const conflicts = await store.sameOrgSlotConflicts(input.targetId, destination.id);
+      if (conflicts.length) throw new Error(slotConflictMessage(destination.full_name ?? "Utilizatorul destinație", conflicts));
     }
   } else if (input.reassignToUserId) {
     throw new Error("La ștergerea definitivă nu se alege un utilizator destinație.");
@@ -443,6 +453,27 @@ export function supabaseDeletionStore(admin: Admin): DeletionStore {
     updateJob: async (id, patch) => void must(await admin.from("account_deletion_jobs").update(patch).eq("id", id)),
     audit: async (row) => void must(await admin.from("audit_logs").insert({ ...row, organization_id: null, created_by: row.actor_id })),
     arm: async () => void must(await admin.rpc("account_deletion_arm")),
+    sameOrgSlotConflicts: async (from, to) => {
+      const enabledPortals = async (userId: string) => {
+        const props = (must(await admin.from("properties").select("id").eq("assigned_to", userId)) ?? []).map((r: { id: string }) => r.id);
+        const counts: Record<string, number> = {};
+        for (let i = 0; i < props.length; i += 200) {
+          const rows = must(await admin.from("portal_publications").select("portal_key").eq("enabled", true).in("property_id", props.slice(i, i + 200))) ?? [];
+          for (const r of rows as { portal_key: string }[]) counts[r.portal_key] = (counts[r.portal_key] ?? 0) + 1;
+        }
+        return counts;
+      };
+      const incoming = await enabledPortals(from);
+      if (!Object.keys(incoming).length) return [];
+      const allocations = (must(await admin.from("portal_slot_allocations").select("portal_key,slots").eq("user_id", to)) ?? []) as { portal_key: string; slots: number | null }[];
+      const limited = allocations.filter((a) => a.slots !== null && incoming[a.portal_key]);
+      if (!limited.length) return [];
+      const used = await enabledPortals(to);
+      const { portalDisplayName } = await import("@/lib/portals/registry");
+      return limited
+        .filter((a) => (used[a.portal_key] ?? 0) + incoming[a.portal_key] > (a.slots as number))
+        .map((a) => portalDisplayName(a.portal_key as never));
+    },
   };
 }
 

@@ -297,7 +297,6 @@ export const deletePlatformUser = createServerFn({ method: "POST" })
       .object({
         userId: z.string().uuid(),
         reassignToUserId: z.string().uuid().nullable(),
-        confirmName: z.string().trim().min(1, "Scrie numele contului pentru confirmare."),
       })
       .parse(data),
   )
@@ -314,9 +313,6 @@ export const deletePlatformUser = createServerFn({ method: "POST" })
       .maybeSingle();
     if (profileError) throw new Error(profileError.message);
     if (!profile) throw new Error("Utilizatorul nu există sau a fost deja șters.");
-    if (profile.full_name.trim() !== data.confirmName.trim()) {
-      throw new Error("Numele scris nu corespunde numelui contului.");
-    }
 
     const { data: result, error } = await supabaseAdmin.rpc("superadmin_delete_user", {
       _user: data.userId,
