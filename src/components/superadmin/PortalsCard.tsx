@@ -7,6 +7,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "@/components/ui/sonner";
 import {
+  Check,
   ChevronDown,
   Copy,
   Eye,
@@ -364,71 +365,98 @@ export function PortalsCard({ organizationId }: { organizationId: string }) {
               hasError ? "panel border-destructive/50 ring-1 ring-destructive/20" : "panel"
             }
           >
-            <div className="flex items-center gap-2 px-5 py-4">
-              <button
-                type="button"
-                onClick={toggle}
-                aria-expanded={open}
-                className="flex min-w-0 flex-1 flex-wrap items-center gap-3 text-left"
-              >
-                <PortalLogoStack
-                  portalId={item.portal.id}
-                  name={portalDisplayName(item.portal.id)}
-                  size={40}
-                />
-                <span className="min-w-0 flex-1">
-                  <span className="block truncate font-medium">{portalDisplayName(item.portal.id)}</span>
-                  <span className="block text-xs text-muted-foreground">
-                    Ultima verificare:{" "}
-                    {item.connection.lastSyncAt
-                      ? formatDateTime(item.connection.lastSyncAt)
-                      : "niciodată"}
-                  </span>
+            <div className="grid grid-cols-[minmax(0,1fr)_40px] items-start gap-3 px-4 pt-4 sm:px-5 sm:pt-5">
+              <div className="flex min-w-0 items-start gap-3">
+                <span className="flex size-10 shrink-0 items-center justify-center rounded-[10px] border border-border bg-card">
+                  <PortalLogoStack
+                    portalId={item.portal.id}
+                    name={portalDisplayName(item.portal.id)}
+                    size={40}
+                  />
                 </span>
-                {unavailable ? (
-                  <StatusBadge tone="neutral">
-                    {PORTAL_AVAILABILITY_LABEL[item.portal.status]}
-                  </StatusBadge>
-                ) : (
-                  <>
-                    <StatusBadge tone={badge.tone} dot>
-                      {badge.label}
-                    </StatusBadge>
-                    <StatusBadge tone={item.connection.activated ? "success" : "neutral"}>
-                      {item.connection.activated ? "Activat pentru agenție" : "Neactivat"}
-                    </StatusBadge>
-                    {item.portal.id === "imobiliare_ro" &&
-                    item.connection.hasPortalCredential ? (
-                      <ImobiliareSubscriptionBadge organizationId={organizationId} />
-                    ) : null}
-                  </>
-                )}
-                {dirty ? <StatusBadge tone="warning">Modificări nesalvate</StatusBadge> : null}
-                <ChevronDown
-                  className={
-                    open
-                      ? "size-4 shrink-0 rotate-180 text-muted-foreground transition-transform"
-                      : "size-4 shrink-0 text-muted-foreground transition-transform"
-                  }
-                  aria-hidden
-                />
-              </button>
+                <div className="min-w-0 flex-1">
+                  <h3 className="text-[17px] leading-6 font-bold break-words">
+                    {portalDisplayName(item.portal.id)}
+                  </h3>
+                  <p className="mt-0.5 text-[13px] leading-5 text-muted-foreground">
+                    {item.feedOnly ? "Prin feed · " : ""}
+                    {item.connection.lastSyncAt
+                      ? `Verificat: ${formatDateTime(item.connection.lastSyncAt)}`
+                      : "Neverificat încă"}
+                  </p>
+                </div>
+              </div>
               {item.portal.website ? (
                 <a
                   href={item.portal.website}
                   target="_blank"
                   rel="noreferrer noopener"
-                  className="text-muted-foreground hover:text-foreground"
-                  aria-label={`Deschide ${portalDisplayName(item.portal.id)}`}
+                  className="flex size-10 shrink-0 items-center justify-center rounded-control border border-border text-muted-foreground transition-colors hover:text-foreground"
+                  aria-label={`Deschide ${portalDisplayName(item.portal.id)} într-o filă nouă`}
                 >
-                  <ExternalLink className="size-4" />
+                  <ExternalLink className="size-5" />
                 </a>
-              ) : null}
+              ) : <span aria-hidden />}
+            </div>
+
+            <div data-portal-statuses className="flex flex-wrap gap-2 px-4 py-4 sm:px-5">
+              {unavailable ? (
+                <StatusBadge className="h-7 text-[13px]" tone="neutral">
+                  {PORTAL_AVAILABILITY_LABEL[item.portal.status]}
+                </StatusBadge>
+              ) : (
+                <>
+                  <StatusBadge
+                    className={
+                      item.connection.status === "connected"
+                        ? "h-7 border-success bg-success text-[13px] text-success-foreground"
+                        : "h-7 text-[13px]"
+                    }
+                    tone={badge.tone}
+                    dot
+                  >
+                    {badge.label}
+                  </StatusBadge>
+                  <StatusBadge
+                    className={
+                      item.connection.activated
+                        ? "h-7 border-success bg-card text-[13px] text-success"
+                        : "h-7 border-neutral/25 bg-card text-[13px] text-neutral"
+                    }
+                    tone="neutral"
+                  >
+                    {item.connection.activated ? <Check className="size-3.5" aria-hidden /> : null}
+                    {item.connection.activated ? "Activat pentru agenție" : "Neactivat"}
+                  </StatusBadge>
+                  {item.portal.id === "imobiliare_ro" && item.connection.hasPortalCredential ? (
+                    <ImobiliareSubscriptionBadge organizationId={organizationId} />
+                  ) : null}
+                </>
+              )}
+              {dirty ? <StatusBadge className="h-7 text-[13px]" tone="warning">Modificări nesalvate</StatusBadge> : null}
             </div>
 
             {hasError && !open && item.connection.lastSyncError ? (
-              <p className="px-5 pb-4 text-sm text-destructive">{item.connection.lastSyncError}</p>
+              <p className="px-4 pb-4 text-sm break-words text-destructive sm:px-5">{item.connection.lastSyncError}</p>
             ) : null}
+
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={toggle}
+              aria-expanded={open}
+              className="h-11 w-full justify-between rounded-none border-t border-border px-4 text-[13px] sm:px-5"
+            >
+              Detalii și setări
+              <ChevronDown
+                className={
+                  open
+                    ? "size-4 shrink-0 rotate-180 text-muted-foreground transition-transform"
+                    : "size-4 shrink-0 text-muted-foreground transition-transform"
+                }
+                aria-hidden
+              />
+            </Button>
 
             {open ? (
               <div className="space-y-4 border-t border-border p-5">
