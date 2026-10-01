@@ -150,7 +150,7 @@ export function mapPropertyToImove(p: PropertyRow, options: ImoveMapOptions): Im
   }
 
   const contact = resolveListingContact({
-    assignedTo: p.assigned_to ?? null,
+    assignedTo: options.agent ? "assigned" : null,
     agent: options.agent ?? null,
   });
   if (!contact.ok) {

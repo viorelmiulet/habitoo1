@@ -45,7 +45,7 @@ export function resolveListingContact(property: {
   const email = (agent.email ?? "").trim() || null;
   return {
     ok: true,
-    contact: { name, phone, email, photoUrl: agent.avatar_url ?? null },
+    contact: { name, phone: (agent.phone ?? "").trim(), email, photoUrl: agent.avatar_url ?? null },
   };
 }
 
