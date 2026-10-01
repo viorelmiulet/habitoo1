@@ -1,3 +1,4 @@
+import { deletePlatformUserInput } from "@/lib/user-deletion";
 // Administrarea completă a conturilor din platformă, exclusiv pentru superadmin.
 // Rolul este verificat pe server (RPC acoperit de RLS) și încă o dată în funcțiile SQL
 // `superadmin_reassign_user_data` / `superadmin_delete_user`, care rulează tranzacțional.
@@ -293,13 +294,7 @@ export type DeleteUserResult = {
 export const deletePlatformUser = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((data: unknown) =>
-    z
-      .object({
-        userId: z.string().uuid(),
-        reassignToUserId: z.string().uuid().nullable(),
-        confirmName: z.string().trim().min(1, "Scrie numele contului pentru confirmare."),
-      })
-      .parse(data),
+deletePlatformUserInput.parse(data),
   )
   .handler(async ({ data, context }): Promise<DeleteUserResult> => {
     const actorId = await assertSuperadmin(context as AuthContext);
@@ -314,9 +309,6 @@ export const deletePlatformUser = createServerFn({ method: "POST" })
       .maybeSingle();
     if (profileError) throw new Error(profileError.message);
     if (!profile) throw new Error("Utilizatorul nu există sau a fost deja șters.");
-    if (profile.full_name.trim() !== data.confirmName.trim()) {
-      throw new Error("Numele scris nu corespunde numelui contului.");
-    }
 
     const { data: result, error } = await supabaseAdmin.rpc("superadmin_delete_user", {
       _user: data.userId,
