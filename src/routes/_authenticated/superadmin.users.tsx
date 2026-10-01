@@ -41,8 +41,6 @@ import {
 import { formatDate } from "@/lib/format";
 import { roleLabels } from "@/lib/labels";
 import {
-  deletePlatformUser,
-  getUserWorkload,
   listPlatformUsers,
   reassignUserData,
   setPlatformUserActive,
@@ -102,7 +100,6 @@ function UsersPage() {
     void navigate({ to: "/app" });
   };
   const fetchUsers = useServerFn(listPlatformUsers);
-  const fetchWorkload = useServerFn(getUserWorkload);
   const saveUser = useServerFn(updatePlatformUser);
   const setActive = useServerFn(setPlatformUserActive);
   const reassign = useServerFn(reassignUserData);
