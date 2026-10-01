@@ -12,8 +12,6 @@ import { CRM_URL } from "@/lib/host";
 
 type Row = Record<string, unknown>;
 const db: Record<string, Row[]> = {
-  portal_connections: [],
-  site_feed_access_logs: [],
   portal_publications: [],
   properties: [],
   organizations: [],
@@ -72,28 +70,50 @@ function seedProperty(overrides: Row = {}): Row {
     deleted_at: null,
     price: 85000,
     currency: "EUR",
-    surface: 60,
+    city: "Timișoara",
+    county: "Timiș",
+    postal_code: "300001",
+    street: "Strada Lungă",
+    street_number: "12",
+    address: "Strada Lungă 12",
+    location_precise: true,
     rooms: 2,
+    bedrooms: 1,
     bathrooms: 1,
-    floor: 2,
-    updated_at: "2026-10-01T10:00:00Z",
+    usable_surface: 54,
+    assigned_to: "agent-1",
+    created_at: "2026-01-01T08:00:00.000Z",
+    updated_at: "2026-02-01T08:00:00.000Z",
     ...overrides,
   };
+}
+
+function seedBase() {
+  db.organizations = [
+    {
+      id: ORG,
+      name: "Habitoo Imobiliare",
+      email: "office@habitoo.ro",
+      phone: "0722000111",
+      city: "Timișoara",
+      postal_code: "300001",
+    },
+  ];
+  db.profiles = [
+    {
+      id: "agent-1",
+      full_name: "Ana Pop",
+      email: "ana@habitoo.ro",
+      phone: "0733111222",
+      avatar_url: null,
+    },
+  ];
 }
 
 describe("raportul Properstar fără cale pe cheie de agenție", () => {
   beforeEach(() => {
     for (const t of Object.keys(db)) db[t] = [];
-    db.organizations = [
-      {
-        id: ORG,
-        name: "Agenția Test",
-        email: "contact@agentie.ro",
-        phone: "0740123456",
-        city: "București",
-        postal_code: "010101",
-      },
-    ];
+    seedBase();
   });
 
   it("requestUrl-ul raportului nu conține nicio cheie", () => {
@@ -109,13 +129,27 @@ describe("raportul Properstar fără cale pe cheie de agenție", () => {
 
   it("raportul construiește feedul pe prefixul fix: selected, active și excluded", async () => {
     db.portal_publications = [
-      { property_id: "prop-1", organization_id: ORG, portal_key: "properstar", enabled: true },
-      { property_id: "prop-2", organization_id: ORG, portal_key: "properstar", enabled: true },
+      {
+        organization_id: ORG,
+        property_id: "prop-1",
+        portal_key: "properstar",
+        enabled: true,
+        withdrawn_at: null,
+        updated_at: "2026-02-01T08:00:00.000Z",
+      },
+      {
+        organization_id: ORG,
+        property_id: "prop-2",
+        portal_key: "properstar",
+        enabled: true,
+        withdrawn_at: null,
+        updated_at: "2026-02-01T08:00:00.000Z",
+      },
     ];
     db.properties = [
       seedProperty(),
-      // incompletă: fără preț → exclusă din feed, prezentă în raport
-      seedProperty({ id: "prop-2", reference: "HB-1002", price: null }),
+      // incompletă: fără cod poștal → exclusă din feed, prezentă în raport
+      seedProperty({ id: "prop-2", reference: "HB-1002", postal_code: null }),
     ];
 
     const build = await buildProperstarFeed({
@@ -128,5 +162,6 @@ describe("raportul Properstar fără cale pe cheie de agenție", () => {
     expect(build.active).toBe(1);
     expect(build.excluded).toHaveLength(1);
     expect(build.excluded[0]?.propertyId).toBe("prop-2");
+    expect(build.excluded[0]?.missing.length).toBeGreaterThan(0);
   });
 });
