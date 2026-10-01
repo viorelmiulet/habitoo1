@@ -60,14 +60,16 @@ export const getProperstarFeedReport = createServerFn({ method: "GET" })
   .handler(async ({ context }): Promise<ProperstarFeedReport> => {
     const organizationId = await organizationOf(context as unknown as AuthContext);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { buildProperstarFeed, properstarFeedPath } = await import(
+    const { buildProperstarFeed, PROPERSTAR_FEED_PATH_PREFIX } = await import(
       "@/lib/portals/properstar/feed.server"
     );
     const { CRM_URL } = await import("@/lib/host");
 
+    // Doar bază pentru linkurile din feed; nu conține nicio cheie. Feedul
+    // Properstar nu mai are cale pe cheie de agenție (model retras).
     const build = await buildProperstarFeed({
       organizationId,
-      requestUrl: `${CRM_URL}${properstarFeedPath("preview")}`,
+      requestUrl: `${CRM_URL}${PROPERSTAR_FEED_PATH_PREFIX}`,
     });
 
     const [{ data: connection }, { data: logs }] = await Promise.all([
