@@ -14,7 +14,6 @@ import { pickAgencyLogoUrl, signAgencyLogos } from "@/lib/portals/agency-logo";
  */
 import { CRM_URL } from "@/lib/host";
 import { clearProperstarCache, readProperstarCache, writeProperstarCache } from "./cache";
-import { portalPublicFeedUrl } from "@/lib/portals/registry";
 import { feedUrlsForRequest } from "@/lib/site-feed/config";
 
 import {
@@ -60,11 +59,6 @@ export type ProperstarFeedBuild = {
   /** Cea mai recentă modificare (ofertă sau selecție) dintre ofertele incluse; nu apare în XML. */
   lastModified: string | null;
 };
-
-export function properstarFeedPath(agencyKey: string): string {
-  // Sursa unică a căii este definiția portalului din registry.
-  return portalPublicFeedUrl(PROPERSTAR_PORTAL_ID, agencyKey)!.slice(CRM_URL.length);
-}
 
 function splitName(fullName: string | null | undefined): {
   firstName: string | null;
