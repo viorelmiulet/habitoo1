@@ -194,6 +194,13 @@ describe("Properstar feed", () => {
     expect(xml).toContain("+40733111222");
   });
 
+  it("landPhone nu conține niciodată telefonul agenției", async () => {
+    const feed = await build();
+    const xml = typeof feed === "string" ? feed : JSON.stringify(feed);
+    expect(xml).not.toMatch(/<AgentLandPhone>[^<]*722000111/);
+    expect(xml).toContain("733111222");
+  });
+
   it("nu publică HTML nepermis și învelește textul liber în CDATA", async () => {
     const { xml } = await build();
     expect(xml).toContain("<![CDATA[");

@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { idsWithAgentPhone, resolveListingContact } from "./listing-contact";
 import { mapPropertyToStoria } from "./storia/mapper";
 import { mapPropertyToImospot } from "./imospot/mapper";
-import { mapPropertyToHomepitch } from "./homepitch/mapper";
+import { mapPropertyToHomePitch } from "./homepitch/mapper";
 import { mapPropertyToImove } from "./imove/mapper";
 
 const AGENCY_PHONE = "0311111111";
@@ -47,7 +47,7 @@ describe("mapperii nu folosesc telefonul agenției", () => {
     if (!r.ok) expect(r.reasons.join(" ")).toContain("nu are telefon în profil");
   });
   it("Homepitch: fără telefon de agent, blocat", () => {
-    const r = mapPropertyToHomepitch(p, { baseUrl: "https://crm.habitoo.ro", agent: noPhone } as never);
+    const r = mapPropertyToHomePitch(p, { baseUrl: "https://crm.habitoo.ro", agent: noPhone } as never);
     expect(r.ok).toBe(false);
     if (!r.ok) expect(r.reasons.join(" ")).toContain("nu are telefon în profil");
   });
