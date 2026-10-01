@@ -244,6 +244,7 @@ async function deletePropertyData(deps: DeletionDeps, property: TargetProperty, 
 
 async function movePropertyData(deps: DeletionDeps, job: DeletionJob, property: TargetProperty, toUserId: string, toOrgId: string, report: DeletionReport) {
   const oldPrefix = `${property.organization_id}/`;
+  const oldReference = property.reference;
   if (toOrgId !== property.organization_id) {
     for (const image of await deps.store.listImages(property.id)) {
       if (!image.storage_path) continue;
@@ -257,7 +258,7 @@ async function movePropertyData(deps: DeletionDeps, job: DeletionJob, property: 
     report.storageRemoved += await removeWatermarked(deps.storage, `${property.organization_id}/${property.id}`);
   }
   const out = await deps.store.moveProperty(property.id, toUserId, job.created_by);
-  if (out.new_reference) report.newReferences.push({ propertyId: property.id, from: property.reference, to: out.new_reference });
+  if (out.new_reference) report.newReferences.push({ propertyId: property.id, from: oldReference, to: out.new_reference });
   report.moved.properties = (report.moved.properties ?? 0) + 1;
 }
 
