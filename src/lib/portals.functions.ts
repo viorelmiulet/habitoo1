@@ -1577,6 +1577,8 @@ export async function performPortalWithdraw(input: {
   /** Portalul nu cunoștea oferta (404): nu era nimic de retras. */
   alreadyWithdrawn: boolean;
   message: string;
+  code?: string | null;
+  httpStatus?: number | null;
 }> {
   const definition = getPortalDefinition(input.portalId);
   if (!definition) throw new Error("Portal necunoscut.");
@@ -1661,6 +1663,8 @@ export async function performPortalWithdraw(input: {
     attempted: true,
     alreadyWithdrawn: false,
     message: res.message.startsWith(name) ? res.message : `${name}: ${res.message}`,
+    code: res.code ?? null,
+    httpStatus: res.httpStatus ?? null,
   };
 }
 
