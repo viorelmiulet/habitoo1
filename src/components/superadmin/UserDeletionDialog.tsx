@@ -179,7 +179,7 @@ function DeletionProgress({ jobId, name, onClose, lastMember, orgName }: { jobId
           <div className="h-full bg-primary transition-all" style={{ width: `${total ? Math.round((done / total) * 100) : finished ? 100 : 0}%` }} />
         </div>
         <p>{finished ? "Finalizat" : failed ? "Oprit cu eroare" : "În curs"} · {done} din {total} proprietăți · {report.withdrawn ?? 0} retrase</p>
-        {failed ? <p className="text-destructive">{JSON.stringify((j?.errors ?? []).slice(-1)[0] ?? "Eroare necunoscută")}</p> : null}
+        {failed ? <p className="text-destructive">{JSON.stringify((Array.isArray(j?.errors) ? j.errors : []).slice(-1)[0] ?? "Eroare necunoscută")}</p> : null}
         {report.manual?.length ? (
           <div className="grid gap-1">
             <p className="font-semibold">Retragere manuală necesară:</p>
