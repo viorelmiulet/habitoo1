@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
  * Error boundary pentru rutele de autentificare: un token invalid sau o excepție
  * neașteptată afișează un mesaj lizibil, nu o pagină albă.
  */
-export function AuthRouteError({ error }: { error?: Error }) {
+export function AuthRouteError({ error }: { error?: unknown }) {
   if (error) console.error(error);
 
   return (
