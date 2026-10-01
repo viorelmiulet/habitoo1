@@ -12,7 +12,6 @@ import { pickAgencyLogoUrl, signAgencyLogos } from "@/lib/portals/agency-logo";
  * Nicio ofertă nu este trimisă cu noduri obligatorii goale: cele incomplete
  * sunt excluse și raportate în UI („De completat pentru Properstar").
  */
-import { CRM_URL } from "@/lib/host";
 import { clearProperstarCache, readProperstarCache, writeProperstarCache } from "./cache";
 import { feedUrlsForRequest } from "@/lib/site-feed/config";
 
