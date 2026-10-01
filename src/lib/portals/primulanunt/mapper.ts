@@ -7,6 +7,7 @@
  *
  * Pozele NU fac parte din acest DTO: se încarcă separat (multipart).
  */
+import { resolveListingContact } from "@/lib/portals/listing-contact";
 import type { PrimulAnuntListingDto, PrimulAnuntPurpose } from "./types";
 
 export type PrimulAnuntMapperProperty = {
@@ -177,17 +178,16 @@ export async function mapPropertyToPrimulAnunt(
   const city = text(property.city);
   if (!city) reasons.push("Oferta nu are oraș completat.");
 
-  // Contact: agentul responsabil, cu fallback pe telefonul agenției. Opțional.
-  const agent = property.assignedTo ? context.agent : null;
-  const agentName = text(agent?.fullName ?? null);
-  const agentEmail = text(agent?.email ?? null);
-  const agentPhone =
-    text(agent?.phone ?? null) ??
-    text(context.organization?.phone ?? null) ??
-    text(context.organization?.materialPhone ?? null);
-  if (!agentPhone && !agentEmail) {
-    warnings.push("Oferta nu are date de contact (nici agent, nici telefon de agenție).");
-  }
+  // Contact: exclusiv agentul responsabil; fără telefon, publicarea se blochează.
+  const agent = context.agent;
+  const resolved = resolveListingContact({
+    assignedTo: property.assignedTo,
+    agent: agent ? { full_name: agent.fullName, email: agent.email, phone: agent.phone } : null,
+  });
+  if (!resolved.ok) reasons.push(resolved.message);
+  const agentName = resolved.ok ? text(resolved.contact.name) : null;
+  const agentEmail = resolved.ok ? text(resolved.contact.email) : null;
+  const agentPhone = resolved.ok ? resolved.contact.phone : null;
 
   if (reasons.length > 0) return { ok: false, reasons };
 

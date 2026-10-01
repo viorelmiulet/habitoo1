@@ -186,31 +186,23 @@ describe("mapPropertyToPrimulAnunt", () => {
     expect(result.dto.currency).toBe("EUR");
   });
 
-  it("cade pe telefonul agenției când agentul nu are telefon", async () => {
+  it("blochează publicarea când agentul nu are telefon (fără telefonul agenției)", async () => {
     const result = await mapPropertyToPrimulAnunt(baseProperty, {
       ...baseContext,
       agent: { fullName: "Marius Grigore", email: "marius@example.com", phone: null },
     });
-    expect(result.ok && result.dto.agent_phone).toBe("0212345678");
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.reasons.join(" ")).toContain("Agentul Marius Grigore nu are telefon în profil");
+    expect(JSON.stringify(result)).not.toContain("0212345678");
   });
 
-  it("cade pe telefonul de materiale când agenția nu are telefon principal", async () => {
-    const result = await mapPropertyToPrimulAnunt(baseProperty, {
-      agent: null,
-      organization: { phone: null, materialPhone: "0700000001" },
-    });
-    expect(result.ok && result.dto.agent_phone).toBe("0700000001");
-  });
-
-  it("avertizează, fără respingere, când nu există niciun contact", async () => {
+  it("blochează publicarea când anunțul nu are agent responsabil", async () => {
     const result = await mapPropertyToPrimulAnunt(
       { ...baseProperty, assignedTo: null },
-      { agent: null, organization: null },
+      { agent: null, organization: { phone: "0212345678", materialPhone: "0700000001" } },
     );
-    expect(result.ok).toBe(true);
-    if (!result.ok) return;
-    expect(result.dto).not.toHaveProperty("agent_phone");
-    expect(result.warnings.join(" ")).toContain("date de contact");
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.reasons).toContain("Anunțul nu are agent responsabil.");
   });
 
   it("trimite mereu is_private false", async () => {

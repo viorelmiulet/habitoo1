@@ -116,12 +116,7 @@ export async function buildImobiliarePayload(input: {
   warnings.push(location.note);
 
   // Portalul cere telefon și WhatsApp obligatoriu (și pe anunț, și pe agent):
-  // agentul, altfel agenția.
-  const { data: org } = await input.admin
-    .from("organizations")
-    .select("phone, material_phone")
-    .eq("id", input.organizationId)
-    .maybeSingle();
+  // exclusiv telefonul agentului responsabil.
 
   const agentIds: number[] = [];
   let agentPhone: string | null = null;
@@ -137,8 +132,6 @@ export async function buildImobiliarePayload(input: {
         session: input.session,
         organizationId: input.organizationId,
         profile,
-        fallbackPhone: resolveImobiliareContactPhone(null, org?.phone, org?.material_phone),
-        fallbackWhatsapp: resolveImobiliareWhatsapp(null, org?.phone, org?.material_phone),
       });
       if (!sync.ok) return { ok: false, reasons: [sync.message], warnings };
       agentIds.push(sync.agentId);
@@ -154,8 +147,8 @@ export async function buildImobiliarePayload(input: {
     };
   }
 
-  const contactPhone = resolveImobiliareContactPhone(agentPhone, org?.phone, org?.material_phone);
-  const whatsappNumber = resolveImobiliareWhatsapp(agentPhone, org?.phone, org?.material_phone);
+  const contactPhone = resolveImobiliareContactPhone(agentPhone);
+  const whatsappNumber = resolveImobiliareWhatsapp(agentPhone);
 
 
   const coords = publicCoords(row);

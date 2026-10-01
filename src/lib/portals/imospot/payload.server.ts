@@ -66,7 +66,6 @@ export async function buildImospotPayload(input: {
     baseUrl: CRM_URL,
     images: (images ?? []) as PropertyImageRow[],
     agent: (agentResult.data ?? null) as Pick<ProfileRow, "full_name" | "email" | "phone"> | null,
-    organizationPhone: org?.phone ?? null,
   });
 
   if (!result.ok) return { ok: false, reasons: result.reasons };

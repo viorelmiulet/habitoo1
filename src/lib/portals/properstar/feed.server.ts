@@ -259,7 +259,8 @@ export async function buildProperstarFeed(input: {
           lastName: names.lastName,
           email: agentRow.email ?? null,
           mobilePhone: agentRow.phone ?? null,
-          landPhone: office.phone,
+          // Niciodată telefonul agenției: egal cu mobilul agentului sau gol.
+          landPhone: agentRow.phone ?? null,
           photo: agentRow.avatar_url ?? null,
         }
       : null;

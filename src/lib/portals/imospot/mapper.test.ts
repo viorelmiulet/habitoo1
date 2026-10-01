@@ -154,11 +154,10 @@ describe("mapPropertyToImospot", () => {
     const result = mapPropertyToImospot(baseProperty, {
       ...options,
       agent: { full_name: "Ana Pop", email: null, phone: null },
-      organizationPhone: null,
     });
     expect(result.ok).toBe(false);
     if (result.ok) return;
-    expect(result.reasons.join(" ")).toContain("telefonul");
+    expect(result.reasons.join(" ")).toContain("Agentul Ana Pop nu are telefon în profil");
   });
 
   it("normalizează tipul de proprietate și external_id stabil", () => {

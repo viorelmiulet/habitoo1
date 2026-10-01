@@ -39,6 +39,8 @@ export function usePropertyPortals(propertyIds: string[]) {
     hasPortals: Object.values(query.data?.properties ?? {}).some((cells) => cells.length > 0),
     cellsFor: (propertyId: string): PropertyPortalCell[] =>
       query.data?.properties[propertyId] ?? [],
+    contactBlockOf: (propertyId: string): string | null =>
+      query.data?.contactBlocks?.[propertyId] ?? null,
   };
 }
 

@@ -154,7 +154,7 @@ const RULE = {
   phone: (): PortalRequirementRule => ({
     key: "phone",
     label: "Telefon de contact",
-    requirement: "telefon valid (agent sau agenție)",
+    requirement: "telefonul agentului responsabil",
     ok: (s) => text(s.contactPhone).replace(/\D/g, "").length >= 9,
   }),
   imobiliarePhone: (): PortalRequirementRule => ({

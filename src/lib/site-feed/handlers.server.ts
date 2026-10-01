@@ -5,6 +5,7 @@
  *  - /api/public/portal/v1/*  (cheie emisă de Habitoo pentru un portal)
  * Nu există o a doua implementare paralelă pentru proprietăți.
  */
+import { FEED_PORTALS_REQUIRING_AGENT_PHONE, idsWithAgentPhone } from "@/lib/portals/listing-contact";
 import {
   errorResponse,
   jsonResponse,
@@ -89,7 +90,18 @@ async function selectedPropertyIdsForPortal(
     .eq("organization_id", organizationId)
     .eq("portal_key", portal)
     .eq("enabled", true);
-  return [...new Set((data ?? []).map((row) => row.property_id))];
+  const ids = [...new Set((data ?? []).map((row) => row.property_id))];
+  if (!FEED_PORTALS_REQUIRING_AGENT_PHONE.has(portal) || ids.length === 0) return ids;
+  // ClickImob: oferta al cărei agent nu are telefon nu intră în feed.
+  const { data: props } = await supabaseAdmin
+    .from("properties")
+    .select("id, assigned_to")
+    .in("id", ids);
+  const agentIds = [...new Set((props ?? []).map((p) => p.assigned_to).filter(Boolean))] as string[];
+  const { data: agents } = agentIds.length
+    ? await supabaseAdmin.from("profiles").select("id, full_name, email, phone").in("id", agentIds)
+    : { data: [] };
+  return idsWithAgentPhone(props ?? [], agents ?? []);
 }
 
 export async function handlePropertiesList(

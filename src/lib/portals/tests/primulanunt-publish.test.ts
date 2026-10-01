@@ -208,7 +208,7 @@ describe("publicarea PrimulAnunț.ro cu date reale", () => {
     expect(dto["is_private"]).toBe(false);
   });
 
-  it("atașează avertismentele mapper-ului fără să blocheze publicarea", async () => {
+  it("blochează publicarea fără agent responsabil (fără contactul agenției)", async () => {
     mockFetch();
     fixture.agent = null;
     fixture.organization = { phone: null, material_phone: null };
@@ -219,9 +219,8 @@ describe("publicarea PrimulAnunț.ro cu date reale", () => {
       propertyId: PROPERTY_ID,
       externalId: null,
     });
-    expect(result.ok).toBe(true);
-    if (!result.ok) return;
-    expect(result.data.message).toContain("date de contact");
+    expect(result.ok).toBe(false);
+    expect(JSON.stringify(result)).toContain("Anunțul nu are agent responsabil.");
   });
 
   it("refuză publicarea cu toate motivele mapper-ului, în română", async () => {

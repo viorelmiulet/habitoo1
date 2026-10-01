@@ -94,8 +94,7 @@ export async function loadRequirementSubject(
     agentName,
     agentEmail,
     contactPhone:
-      resolveImobiliareWhatsapp(agentPhone, (org as any)?.phone, (org as any)?.material_phone) ??
-      resolveImobiliareContactPhone(agentPhone, (org as any)?.phone, (org as any)?.material_phone),
+      resolveImobiliareWhatsapp(agentPhone) ?? resolveImobiliareContactPhone(agentPhone),
   };
 }
 

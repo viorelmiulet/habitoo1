@@ -12,6 +12,7 @@
  *
  * O proprietate cu ambele tranzacții active produce DOUĂ anunțuri distincte.
  */
+import { resolveListingContact } from "@/lib/portals/listing-contact";
 import {
   feedImageUrl,
   isImageFeedEligible,
@@ -126,8 +127,6 @@ export type StoriaMapOptions = {
   baseUrl: string;
   images?: PropertyImageRow[];
   agent?: Pick<ProfileRow, "full_name" | "email" | "phone"> | null;
-  organizationPhone?: string | null;
-  organizationEmail?: string | null;
 };
 
 export function mapPropertyToStoria(p: PropertyRow, options: StoriaMapOptions): StoriaMapResult {
@@ -189,21 +188,17 @@ export function mapPropertyToStoria(p: PropertyRow, options: StoriaMapOptions): 
     }
   }
 
-  const agentName = softenUppercase((options.agent?.full_name ?? "").trim());
-  const agentEmail = (options.agent?.email ?? "").trim();
-  const phone = storiaPhone(options.agent?.phone) ?? storiaPhone(options.organizationPhone);
-  if (!phone && (options.agent?.phone || options.organizationPhone)) {
-    warnings.push(
-      "Telefonul de contact nu are între 7 și 14 cifre, așa că nu se trimite către Storia.",
-    );
-  }
-  const contactEmail = agentEmail || (options.organizationEmail ?? "").trim();
-  const useContact = Boolean(agentName && contactEmail);
-  if (!useContact) {
-    warnings.push(
-      "Anunțul folosește contactul implicit al contului Storia: agentul asignat nu are nume și email complete.",
-    );
-  }
+  // Contact: mereu agentul responsabil (fără telefonul/emailul agenției).
+  const resolved = resolveListingContact({
+    assignedTo: options.agent ? "assigned" : null,
+    agent: options.agent ?? null,
+  });
+  if (!resolved.ok) reasons.push(resolved.message);
+  const agentName = resolved.ok ? softenUppercase(resolved.contact.name) : "";
+  const contactEmail = resolved.ok ? (resolved.contact.email ?? "") : "";
+  const phone = resolved.ok ? storiaPhone(resolved.contact.phone) : null;
+  if (resolved.ok && !agentName) reasons.push("Agentul responsabil nu are nume completat în profil.");
+  if (resolved.ok && !contactEmail) reasons.push("Agentul responsabil nu are email completat în profil.");
 
   const coords = publicCoords(p);
   if (!coords) {
@@ -299,13 +294,11 @@ export function mapPropertyToStoria(p: PropertyRow, options: StoriaMapOptions): 
       market,
       auto_extend: true,
     };
-    if (useContact) {
-      advert.contact = {
-        name: agentName,
-        email: contactEmail,
-        ...(phone ? { phone } : {}),
-      };
-    }
+    advert.contact = {
+      name: agentName,
+      email: contactEmail,
+      ...(phone ? { phone } : {}),
+    };
     return { transaction: entry.transaction, advert };
   });
 

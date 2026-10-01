@@ -85,6 +85,7 @@ function property(id: string, org: string): Row {
   return {
     id,
     organization_id: org,
+    assigned_to: "agent-1",
     reference: id.toUpperCase(),
     publish_status: "published",
     status: "active",
@@ -100,6 +101,7 @@ beforeEach(() => {
   inserts.length = 0;
   indexed.clear();
   db["organizations"] = [{ id: ORG_A }, { id: ORG_B }, { id: ORG_OUT }];
+  db["profiles"] = [{ id: "agent-1", full_name: "Ana Pop", email: "ana@example.ro", phone: "0722123456" }];
   db["properties"] = [property("p-sel", ORG_A), property("p-other", ORG_A), property("p-b", ORG_B)];
   db["portal_publications"] = [
     { organization_id: ORG_A, property_id: "p-sel", portal_key: "clickimob", enabled: true },

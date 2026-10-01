@@ -5,6 +5,7 @@
  * fără rețea și fără DB: generatorul de referință CRM (`next_property_reference`)
  * este injectat prin context, ca mapperul să rămână testabil.
  */
+import { resolveListingContact } from "@/lib/portals/listing-contact";
 import type { RomimoPicture, RomimoProperty, SaveArticleDto } from "./types";
 
 
@@ -314,23 +315,19 @@ export async function mapPropertyToRomimo(
     }
   }
 
-  // Contact: agentul responsabil, cu fallback pe telefonul agenției.
-  if (!property.assignedTo || !context.agent) {
-    reasons.push("Oferta nu are un agent responsabil cu profil complet.");
-  }
+  // Contact: exclusiv agentul responsabil (fără telefonul agenției).
   const agent = context.agent;
-  const contactName = text(agent?.fullName ?? null);
-  const contactEmail = text(agent?.email ?? null);
-  if (property.assignedTo && agent) {
+  const resolved = resolveListingContact({
+    assignedTo: property.assignedTo,
+    agent: agent ? { full_name: agent.fullName, email: agent.email, phone: agent.phone } : null,
+  });
+  if (!resolved.ok) reasons.push(resolved.message);
+  const contactName = resolved.ok ? text(resolved.contact.name) : null;
+  const contactEmail = resolved.ok ? text(resolved.contact.email) : null;
+  const contactPhone = resolved.ok ? resolved.contact.phone : null;
+  if (resolved.ok) {
     if (!contactName) reasons.push("Agentul responsabil nu are nume completat în profil.");
     if (!contactEmail) reasons.push("Agentul responsabil nu are email completat în profil.");
-  }
-  const contactPhone =
-    text(agent?.phone ?? null) ??
-    text(context.organization?.phone ?? null) ??
-    text(context.organization?.materialPhone ?? null);
-  if (!contactPhone) {
-    reasons.push("Lipsește telefonul de contact (agent sau agenție).");
   }
 
   // properties[]: caracteristicile cerute de categoria calculată.

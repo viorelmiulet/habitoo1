@@ -11,6 +11,7 @@
  *
  * Nu inventăm câmpuri: ce nu există în Habitoo lipsește din payload.
  */
+import { FEED_EXCLUDED_NO_PHONE, resolveListingContact } from "@/lib/portals/listing-contact";
 import {
   feedImageUrl,
   isImageFeedEligible,
@@ -148,6 +149,14 @@ export function mapPropertyToImove(p: PropertyRow, options: ImoveMapOptions): Im
     );
   }
 
+  const contact = resolveListingContact({
+    assignedTo: options.agent ? "assigned" : null,
+    agent: options.agent ?? null,
+  });
+  if (!contact.ok) {
+    reasons.push(contact.code === "NO_PHONE" ? FEED_EXCLUDED_NO_PHONE : contact.message);
+  }
+
   if (reasons.length) return { ok: false, reasons };
 
   const eligibleImages = (options.images ?? [])
@@ -193,8 +202,8 @@ export function mapPropertyToImove(p: PropertyRow, options: ImoveMapOptions): Im
       totalFloors: p.building_floors ?? null,
       constructionYear: p.build_year ?? null,
       imageUrls,
-      agentPhone: options.agent?.phone ?? null,
-      agentEmail: options.agent?.email ?? null,
+      agentPhone: contact.ok ? contact.contact.phone : null,
+      agentEmail: contact.ok ? contact.contact.email : null,
       url: options.publicSiteUrl ? offerUrl(options.publicSiteUrl, p.id) : null,
       updatedAt: p.updated_at ?? null,
     },
