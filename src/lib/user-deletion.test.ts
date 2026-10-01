@@ -45,3 +45,30 @@ describe("dialog ștergere utilizator", () => {
     expect(inserted).toBe(false);
   });
 });
+
+import { deleteOrganizationInput, formatDeletionJobError, organizationDeletionBlock } from "./user-deletion";
+
+describe("dialog ștergere agenție", () => {
+  it("alegere obligatorie când există date", () => {
+    expect(canConfirmDeletion({ workload: { properties: 0, leads: 3 }, choice: null, destinationId: null })).toBe(false);
+  });
+  it("selectul exclude agenția ștearsă și superadminii", () => {
+    const groups = groupDeletionDestinations([u("a", "1"), u("b", "2"), u("s", "2", { roles: ["superadmin"] })], "", "1");
+    expect(groups.map((g) => [g.organizationId, g.users.map((x) => x.id)])).toEqual([["2", ["b"]]]);
+  });
+  it("serverul nu mai cere numele agenției", () => {
+    const id = "00000000-0000-4000-8000-000000000002";
+    expect(deleteOrganizationInput.parse({ organizationId: id })).toEqual({ organizationId: id, mode: "delete", reassignToUserId: null });
+  });
+  it("agenția proprie și cea cu superadmin sunt blocate", () => {
+    expect(organizationDeletionBlock("o1", "o1", [])).toBe("Nu poți șterge agenția din care faci parte.");
+    expect(organizationDeletionBlock("o2", "o1", ["o2"])).toBe("Agenția are un cont de superadmin și nu poate fi ștearsă.");
+    expect(organizationDeletionBlock("o3", "o1", ["o2"])).toBeNull();
+  });
+  it("eroarea jobului e formatată ca text", () => {
+    expect(formatDeletionJobError({ propertyId: "p", reference: "HB-1085", portal: "storia", message: "Timeout" }))
+      .toMatch(/^Retragerea de pe .*Storia.* a eșuat pentru HB-1085: Timeout\. Ștergerea s-a oprit; nimic nu a fost șters pentru această proprietate\.$/);
+    expect(formatDeletionJobError({ message: "boom" })).toBe("Ștergerea s-a oprit: boom.");
+    expect(formatDeletionJobError({ authUser: "x", message: "nu" })).toBe("Contul de autentificare nu a putut fi șters: nu.");
+  });
+});
