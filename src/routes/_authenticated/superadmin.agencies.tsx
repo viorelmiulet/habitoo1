@@ -1,3 +1,4 @@
+import { useServerFn } from "@tanstack/react-start";
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
@@ -28,7 +29,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { formatDate } from "@/lib/format";
 import { useCurrentUser } from "@/hooks/use-session";
-import { deleteOrganizationPermanently } from "@/lib/superadmin-orgs.functions";
+import { OrganizationDeletionDialog } from "@/components/superadmin/UserDeletionDialog";
+import { listSuperadminOrganizationIds } from "@/lib/account-deletion.functions";
+import { listPlatformUsers } from "@/lib/superadmin-users.functions";
+import { organizationDeletionBlock } from "@/lib/user-deletion";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { approveRegistrationRequest } from "@/lib/registration-approval.functions";
 import {
   PLAN_AGENT_LIMITS,
@@ -278,21 +283,10 @@ function AgenciesPage() {
     onError: (e: Error) => toastError(e),
   });
 
-  // Ștergere definitivă: elimină agenția și toate datele ei, ireversibil.
-  const hardDelete = useMutation({
-    mutationFn: async (vars: { id: string; name: string }) =>
-      deleteOrganizationPermanently({ data: { organizationId: vars.id, confirmName: vars.name } }),
-    onSuccess: (res) => {
-      queryClient.invalidateQueries({ queryKey: ["superadmin"] });
-      const total = Object.values(res.deletedRows).reduce((a, b) => a + Number(b ?? 0), 0);
-      toast.success(
-        `Agenția „${res.organizationName}” a fost ștearsă definitiv (${total} înregistrări, ${res.deletedAuthUsers} conturi).`,
-      );
-      if (res.authErrors.length)
-        toast.warning(`Unele conturi nu au putut fi șterse: ${res.authErrors.join("; ")}`);
-    },
-    onError: (e: Error) => toastError(e),
-  });
+  const fetchPlatformUsers = useServerFn(listPlatformUsers);
+  const fetchSuperadminOrgs = useServerFn(listSuperadminOrganizationIds);
+  const platformUsers = useQuery({ queryKey: ["superadmin", "users"], queryFn: () => fetchPlatformUsers() });
+  const superadminOrgs = useQuery({ queryKey: ["superadmin", "superadmin-orgs"], queryFn: () => fetchSuperadminOrgs() });
 
   const pendingCount = (requests ?? []).length;
 
@@ -572,16 +566,29 @@ function AgenciesPage() {
                           Arhivează
                         </Button>
                       )}
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        className="text-destructive hover:bg-destructive/10 hover:text-destructive"
-                        disabled={hardDelete.isPending}
-                        onClick={() => setPendingDelete({ id: o.id, name: o.name })}
-                      >
-                        <Trash2 className="mr-1.5 size-4" />
-                        Șterge
-                      </Button>
+                      {(() => {
+                        const block = organizationDeletionBlock(o.id, me?.profile?.organization_id, superadminOrgs.data ?? []);
+                        const btn = (
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+                            disabled={block !== null || !superadminOrgs.data}
+                            onClick={() => setPendingDelete({ id: o.id, name: o.name })}
+                          >
+                            <Trash2 className="mr-1.5 size-4" />
+                            Șterge
+                          </Button>
+                        );
+                        return block ? (
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <span tabIndex={0} aria-label={block}>{btn}</span>
+                            </TooltipTrigger>
+                            <TooltipContent>{block}</TooltipContent>
+                          </Tooltip>
+                        ) : btn;
+                      })()}
                     </div>
                   </div>
                 </li>
@@ -614,28 +621,10 @@ function AgenciesPage() {
         }}
       />
 
-      <ConfirmDialog
-        open={pendingDelete !== null}
-        onOpenChange={(v) => {
-          if (!v) setPendingDelete(null);
-        }}
-        title={`Ștergi DEFINITIV „${pendingDelete?.name ?? ""}”?`}
-        description={
-          <span className="text-destructive">
-            Această acțiune este ireversibilă. Se șterg definitiv toate proprietățile și
-            fotografiile lor, contactele, lead-urile și istoricul, cererile, activitățile,
-            documentele, obiectivele, notificările, conexiunile și cheile de portal, precum și toți
-            membrii agenției împreună cu conturile lor de autentificare. Nu există restaurare.
-          </span>
-        }
-        confirmLabel="Șterge definitiv"
-        destructive
-        typeToConfirm={pendingDelete?.name}
-        onConfirm={async () => {
-          if (!pendingDelete) return;
-          await hardDelete.mutateAsync({ id: pendingDelete.id, name: pendingDelete.name });
-          setPendingDelete(null);
-        }}
+      <OrganizationDeletionDialog
+        organization={pendingDelete}
+        users={platformUsers.data?.users ?? []}
+        onClose={() => setPendingDelete(null)}
       />
       <PropertyImportDialog
         open={importOrg !== null}
