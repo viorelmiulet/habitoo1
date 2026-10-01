@@ -33,7 +33,7 @@ import { OrganizationDeletionDialog } from "@/components/superadmin/UserDeletion
 import { listSuperadminOrganizationIds } from "@/lib/account-deletion.functions";
 import { listPlatformUsers } from "@/lib/superadmin-users.functions";
 import { organizationDeletionBlock } from "@/lib/user-deletion";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { approveRegistrationRequest } from "@/lib/registration-approval.functions";
 import {
   PLAN_AGENT_LIMITS,
@@ -581,12 +581,12 @@ function AgenciesPage() {
                           </Button>
                         );
                         return block ? (
-                          <Tooltip>
+                          <TooltipProvider><Tooltip>
                             <TooltipTrigger asChild>
                               <span tabIndex={0} aria-label={block}>{btn}</span>
                             </TooltipTrigger>
                             <TooltipContent>{block}</TooltipContent>
-                          </Tooltip>
+                          </Tooltip></TooltipProvider>
                         ) : btn;
                       })()}
                     </div>
