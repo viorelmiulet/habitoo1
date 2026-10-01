@@ -40,6 +40,7 @@ export type DeletionJob = {
   done: number;
   failed: number;
   report: Partial<DeletionReport> | null;
+  next_attempt_at?: string | null;
   errors: unknown[] | null;
   created_by: string;
 };
@@ -390,7 +391,7 @@ export async function processDeletionJob(job: DeletionJob, deps: DeletionDeps): 
 type Admin = any;
 
 export function supabaseDeletionStore(admin: Admin): DeletionStore {
-  const must = <T,>(r: { data: T; error: { message: string } | null }) => {
+  const must = (r: { data: any; error: { message: string } | null }): any => {
     if (r.error) throw new Error(r.error.message);
     return r.data;
   };

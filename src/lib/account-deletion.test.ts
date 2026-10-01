@@ -124,7 +124,7 @@ function world() {
     remove: async (bucket, paths) => paths.filter((p) => buckets[bucket]?.delete(p)).length,
     move: async (bucket, from, to) => { buckets[bucket]!.delete(from); buckets[bucket]!.add(to); },
   };
-  const withdraw = vi.fn(async (i: { portalId: string }): Promise<WithdrawResult> =>
+  const withdraw = vi.fn(async (i: { portalId: string; propertyId: string; externalId: string | null; organizationId: string }): Promise<WithdrawResult> =>
     i.portalId === "oferteimobiliare" ? { ok: false, manual: true, message: "manual" } : { ok: true, attempted: true, message: "ok" });
   const deps: DeletionDeps = { store, storage, withdraw, deleteAuthUser: async (id) => { authDeleted.push(id); return { error: null }; } };
   const run = async (jobId: string) => {
@@ -193,7 +193,7 @@ describe("account deletion engine", () => {
     const { jobId } = await startAccountDeletion(w.store, { actorId: "admin", kind: "user", targetId: "u1", mode: "reassign", reassignToUserId: "x" });
     expect((await w.run(jobId)).status).toBe("done");
     expect(w.withdraw).toHaveBeenCalledTimes(3);
-    expect(w.withdraw.mock.calls.every((c) => (c[0] as { organizationId: string }).organizationId === "orgA")).toBe(true);
+    expect(w.withdraw.mock.calls.every((c) => c[0].organizationId === "orgA")).toBe(true);
     expect(w.portalRowsDeleted).toEqual(["p1", "p2"]);
     for (const id of ["p1", "p2"]) expect(w.properties.find((p) => p.id === id)).toMatchObject({ organization_id: "orgB", assigned_to: "x" });
     for (const name of ["leads", "contacts", "requests", "activities", "goals"]) expect(w.tables[name]![0]!.organization_id).toBe("orgB");
