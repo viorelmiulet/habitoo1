@@ -1,3 +1,4 @@
+import { deletePlatformUserInput } from "@/lib/user-deletion";
 // Administrarea completă a conturilor din platformă, exclusiv pentru superadmin.
 // Rolul este verificat pe server (RPC acoperit de RLS) și încă o dată în funcțiile SQL
 // `superadmin_reassign_user_data` / `superadmin_delete_user`, care rulează tranzacțional.
@@ -293,12 +294,7 @@ export type DeleteUserResult = {
 export const deletePlatformUser = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((data: unknown) =>
-    z
-      .object({
-        userId: z.string().uuid(),
-        reassignToUserId: z.string().uuid().nullable(),
-      })
-      .parse(data),
+deletePlatformUserInput.parse(data),
   )
   .handler(async ({ data, context }): Promise<DeleteUserResult> => {
     const actorId = await assertSuperadmin(context as AuthContext);
