@@ -148,8 +148,8 @@ describe("raportul Properstar fără cale pe cheie de agenție", () => {
     ];
     db.properties = [
       seedProperty(),
-      // incompletă: fără cod poștal → exclusă din feed, prezentă în raport
-      seedProperty({ id: "prop-2", reference: "HB-1002", postal_code: null }),
+      // incompletă: fără agent responsabil → exclusă din feed, prezentă în raport
+      seedProperty({ id: "prop-2", reference: "HB-1002", assigned_to: "agent-2" }),
     ];
 
     const build = await buildProperstarFeed({
