@@ -366,14 +366,12 @@ export function PortalsCard({ organizationId }: { organizationId: string }) {
             }
           >
             <div className="grid grid-cols-[minmax(0,1fr)_40px] items-start gap-3 px-4 pt-4 sm:px-5 sm:pt-5">
-              <div className="flex min-w-0 items-start gap-3">
-                <span className="flex size-10 shrink-0 items-center justify-center rounded-[10px] border border-border bg-card">
-                  <PortalLogoStack
-                    portalId={item.portal.id}
-                    name={portalDisplayName(item.portal.id)}
-                    size={40}
-                  />
-                </span>
+                <PortalLogoStack
+                  portalId={item.portal.id}
+                  name={portalDisplayName(item.portal.id)}
+                  size={40}
+                  className="shrink-0"
+                />
                 <div className="min-w-0 flex-1">
                   <h3 className="text-[17px] leading-6 font-bold break-words">
                     {portalDisplayName(item.portal.id)}
