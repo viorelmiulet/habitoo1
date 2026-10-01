@@ -70,12 +70,12 @@ export function AgencyPortalCatalogCard() {
         <ul className="grid gap-4 p-5 sm:grid-cols-2 xl:grid-cols-3">
           <li className="flex flex-col gap-3 rounded-xl border border-border bg-surface p-4">
             <div className="flex items-start gap-3">
-              <span className="flex size-12 shrink-0 items-center justify-center rounded-xl border border-border bg-background">
+              <span className="flex size-10 shrink-0 items-center justify-center rounded-[10px] border border-border bg-card">
                 <BrandLogo markOnly className="size-8" />
               </span>
               <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-semibold">Colaborare Habitoo</p>
-                <div className="mt-1 flex flex-wrap gap-1.5">
+                <p className="text-[17px] leading-6 font-bold break-words">Colaborare Habitoo</p>
+                <div data-portal-statuses className="mt-2 flex flex-wrap gap-2">
                   {collaborating ? (
                     <StatusBadge tone="success" dot>
                       Participi
@@ -106,12 +106,12 @@ export function AgencyPortalCatalogCard() {
                 className="flex flex-col gap-3 rounded-xl border border-border bg-surface p-4"
               >
                 <div className="flex items-start gap-3">
-                  <span className="flex shrink-0 items-center justify-center gap-1 rounded-xl border border-border bg-background px-2 py-2">
-                    <PortalLogoStack portalId={item.id} name={item.displayName} size={32} />
+                  <span className="flex size-10 shrink-0 items-center justify-center rounded-[10px] border border-border bg-card">
+                    <PortalLogoStack portalId={item.id} name={item.displayName} size={40} />
                   </span>
                   <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-semibold">{item.displayName}</p>
-                    <div className="mt-1 flex flex-wrap gap-1.5">
+                    <p className="text-[17px] leading-6 font-bold break-words">{item.displayName}</p>
+                    <div data-portal-statuses className="mt-2 flex flex-wrap gap-2">
                       {item.activated ? (
                         <StatusBadge tone="success" dot>
                           Activat
@@ -155,8 +155,7 @@ export function AgencyPortalCatalogCard() {
                     <span className="text-xs text-muted-foreground">Disponibil în publicare</span>
                   ) : (
                     <Button
-                      size="sm"
-                      className="w-full"
+                      className="h-11 w-full"
                       variant={pending ? "outline" : "default"}
                       disabled={pending || request.isPending}
                       onClick={() => request.mutate(item.id)}
