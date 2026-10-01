@@ -366,6 +366,7 @@ export function PortalsCard({ organizationId }: { organizationId: string }) {
             }
           >
             <div className="grid grid-cols-[minmax(0,1fr)_40px] items-start gap-3 px-4 pt-4 sm:px-5 sm:pt-5">
+              <div className="flex min-w-0 items-start gap-3">
                 <PortalLogoStack
                   portalId={item.portal.id}
                   name={portalDisplayName(item.portal.id)}
