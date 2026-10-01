@@ -687,6 +687,13 @@
       "when": 1790798585143,
       "tag": "0097_portal_bulk_publish_jobs",
       "breakpoints": true
+    },
+    {
+      "idx": 98,
+      "version": "7",
+      "when": 1790863937793,
+      "tag": "0098_profile_edit_guard_admin_scope",
+      "breakpoints": true
     }
   ]
 }

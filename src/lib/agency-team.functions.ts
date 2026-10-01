@@ -7,6 +7,7 @@ import { z } from "zod";
 import { requireActiveOrgAuth } from "@/lib/org-access";
 import { planAgentLimit, planLabel, normalizePlan, nextPlan, type PlanKey } from "@/lib/plans";
 import { getCrmUrl } from "@/lib/host";
+import { inviteAgentSchema } from "@/lib/user-profile";
 
 type AuthContext = {
   supabase: {
@@ -202,14 +203,7 @@ export const getTeamOverview = createServerFn({ method: "GET" })
   });
 
 export const inviteAgent = createServerFn({ method: "POST" })
-  .inputValidator((data: unknown) =>
-    z
-      .object({
-        email: z.string().trim().email("Adresa de email nu este validă."),
-        full_name: z.string().trim().min(2, "Numele agentului este obligatoriu."),
-      })
-      .parse(data),
-  )
+  .inputValidator((data: unknown) => inviteAgentSchema.parse(data))
   .middleware([requireActiveOrgAuth])
   .handler(async ({ data, context }): Promise<TeamOverview> => {
     const { organizationId, actorId } = await requireOrgAdmin(context as unknown as AuthContext);
@@ -277,6 +271,7 @@ export const inviteAgent = createServerFn({ method: "POST" })
       organization_id: organizationId,
       full_name: data.full_name,
       email,
+      phone: data.phone,
       is_active: true,
     });
     if (profile.error) throw profile.error;
@@ -297,6 +292,7 @@ export const inviteAgent = createServerFn({ method: "POST" })
       values: {
         email,
         full_name: data.full_name,
+        phone: data.phone,
         plan: before.plan,
         seats_used: before.seatsUsed + 1,
       },
