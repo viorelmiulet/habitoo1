@@ -16,4 +16,18 @@ describe("cardurile portalurilor pe mobil", () => {
     expect(superadmin).toMatch(/data-portal-statuses className="[^"]*flex flex-wrap[^"]*"/);
     expect(agency.match(/data-portal-statuses className="[^"]*flex flex-wrap[^"]*"/g)).toHaveLength(2);
   });
+
+  it("nu pune logo-urile într-o casetă cu lățime fixă la portalurile duble (storia, romimo)", () => {
+    for (const [name, source] of [
+      ["superadmin", superadmin],
+      ["agency", agency],
+    ] as const) {
+      const boxed = source.match(/size-10[^>]*>\s*<PortalLogoStack/);
+      expect(boxed, `${name} învelește PortalLogoStack într-o casetă size-10`).toBeNull();
+      expect(
+        source,
+        `${name} trebuie să păstreze PortalLogoStack shrink-0 lângă nume`,
+      ).toMatch(/<PortalLogoStack[\s\S]{0,220}className="shrink-0"/);
+    }
+  });
 });

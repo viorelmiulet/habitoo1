@@ -106,9 +106,12 @@ export function AgencyPortalCatalogCard() {
                 className="flex flex-col gap-3 rounded-xl border border-border bg-surface p-4"
               >
                 <div className="flex items-start gap-3">
-                  <span className="flex size-10 shrink-0 items-center justify-center rounded-[10px] border border-border bg-card">
-                    <PortalLogoStack portalId={item.id} name={item.displayName} size={40} />
-                  </span>
+                <PortalLogoStack
+                  portalId={item.id}
+                  name={item.displayName}
+                  size={40}
+                  className="shrink-0"
+                />
                   <div className="min-w-0 flex-1">
                     <p className="text-[17px] leading-6 font-bold break-words">{item.displayName}</p>
                     <div data-portal-statuses className="mt-2 flex flex-wrap gap-2">
