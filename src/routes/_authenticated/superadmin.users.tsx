@@ -54,6 +54,7 @@ import { listMyImpersonationRequests } from "@/lib/impersonation.functions";
 import { setImpersonationId } from "@/lib/impersonation-client";
 import { useNavigate } from "@tanstack/react-router";
 import { appHead } from "@/components/app/app-head";
+import { UserDeletionDialog } from "@/components/superadmin/UserDeletionDialog";
 
 export const Route = createFileRoute("/_authenticated/superadmin/users")({
   head: () => appHead("Habitoo CRM — utilizatori"),
@@ -105,7 +106,6 @@ function UsersPage() {
   const saveUser = useServerFn(updatePlatformUser);
   const setActive = useServerFn(setPlatformUserActive);
   const reassign = useServerFn(reassignUserData);
-  const removeUser = useServerFn(deletePlatformUser);
 
   const [q, setQ] = useState("");
   const [orgFilter, setOrgFilter] = useState("all");
@@ -123,9 +123,6 @@ function UsersPage() {
   });
 
   const [deleting, setDeleting] = useState<PlatformUser | null>(null);
-  const [deleteTarget, setDeleteTarget] = useState("none");
-  const [confirmName, setConfirmName] = useState("");
-  const [workload, setWorkload] = useState<Record<string, number> | null>(null);
 
   const [reassignOpen, setReassignOpen] = useState(false);
   const [reassignFrom, setReassignFrom] = useState("");
@@ -180,27 +177,6 @@ function UsersPage() {
     onError: (e: Error) => toastError(e),
   });
 
-  const doDelete = useMutation({
-    mutationFn: () =>
-      removeUser({
-        data: {
-          userId: deleting!.id,
-          reassignToUserId: deleteTarget === "none" ? null : deleteTarget,
-          confirmName: confirmName.trim(),
-        },
-      }),
-    onSuccess: (result) => {
-      invalidate();
-      setDeleting(null);
-      toast.success(
-        result.authError
-          ? `Contul a fost șters, dar autentificarea a raportat: ${result.authError}`
-          : "Contul a fost șters definitiv.",
-      );
-    },
-    onError: (e: Error) => toastError(e),
-  });
-
   const users = data?.users ?? [];
   const orgs = data?.organizations ?? [];
 
@@ -241,22 +217,9 @@ function UsersPage() {
     });
   };
 
-  const openDelete = async (u: PlatformUser) => {
-    setDeleting(u);
-    setDeleteTarget("none");
-    setConfirmName("");
-    setWorkload(null);
-    try {
-      setWorkload(await fetchWorkload({ data: { userId: u.id } }));
-    } catch (e) {
-      toastError(e as Error);
-    }
-  };
+  const openDelete = (u: PlatformUser) => setDeleting(u);
 
   const reassignSource = users.find((u) => u.id === reassignFrom) ?? null;
-  const pendingWork = workload
-    ? Object.values(workload).reduce((s, n) => s + Number(n || 0), 0)
-    : 0;
 
   return (
     <>
@@ -640,71 +603,7 @@ function UsersPage() {
         </SheetContent>
       </Sheet>
 
-      {/* Ștergere definitivă */}
-      <Dialog open={deleting !== null} onOpenChange={(o) => !o && setDeleting(null)}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Șterge definitiv contul</DialogTitle>
-            <DialogDescription>
-              Se șterg profilul, rolurile și contul de autentificare. Acțiunea nu poate fi anulată.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="grid gap-3">
-            <p className="text-sm">
-              Date asignate: <strong>{workload ? workloadText(workload) : "se verifică…"}</strong>
-            </p>
-            {pendingWork > 0 ? (
-              <div className="grid gap-1.5">
-                <Label>Realocă toate către</Label>
-                <Select value={deleteTarget} onValueChange={setDeleteTarget}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Alege un coleg" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {colleagues(deleting).map((u) => (
-                      <SelectItem key={u.id} value={u.id}>
-                        {u.full_name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                {colleagues(deleting).length === 0 ? (
-                  <p className="text-xs text-destructive">
-                    Nu există alt membru în agenție — ștergerea nu este posibilă fără realocare.
-                  </p>
-                ) : null}
-              </div>
-            ) : null}
-            <div className="grid gap-1.5">
-              <Label htmlFor="u-confirm">
-                Scrie numele contului pentru confirmare: {deleting?.full_name}
-              </Label>
-              <Input
-                id="u-confirm"
-                value={confirmName}
-                onChange={(e) => setConfirmName(e.target.value)}
-              />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setDeleting(null)}>
-              Renunță
-            </Button>
-            <Button
-              variant="destructive"
-              disabled={
-                doDelete.isPending ||
-                workload === null ||
-                confirmName.trim() !== (deleting?.full_name ?? "").trim() ||
-                (pendingWork > 0 && deleteTarget === "none")
-              }
-              onClick={() => doDelete.mutate()}
-            >
-              Șterge definitiv
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <UserDeletionDialog user={deleting} users={users} onClose={() => setDeleting(null)} />
     </>
   );
 }
