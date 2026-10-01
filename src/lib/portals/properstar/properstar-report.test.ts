@@ -111,7 +111,6 @@ describe("raportul Properstar fără cale pe cheie de agenție", () => {
     db.portal_publications = [
       { property_id: "prop-1", organization_id: ORG, portal_key: "properstar", enabled: true },
       { property_id: "prop-2", organization_id: ORG, portal_key: "properstar", enabled: true },
-ed: true },
     ];
     db.properties = [
       seedProperty(),
