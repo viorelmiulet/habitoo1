@@ -94,6 +94,13 @@ function SuperadminPortalsPage() {
       <PageHeader
         title="Portaluri imobiliare"
         description="Integrările cu portalurile se configurează exclusiv de aici, separat pentru fiecare agenție."
+        actions={
+          <Button asChild variant="outline" className="h-11">
+            <Link to="/superadmin/portal-logs" search={organizationId ? { org: organizationId } : {}}>
+              Jurnal portaluri
+            </Link>
+          </Button>
+        }
       />
 
       {/* Selectorul de agenție rămâne vizibil la derulare. */}
