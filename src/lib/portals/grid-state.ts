@@ -42,3 +42,48 @@ export function portalGridState(input: {
   }
   return { key: "inactive", label: "Neactivat", tone: "muted" };
 }
+
+/** Starea cardului din grila administratorului de agenție (fără configurare). */
+export type AgencyPortalCardState =
+  | { key: "connected"; label: "Conectat"; tone: "success" }
+  | { key: "request"; buttonLabel: "Solicită activarea"; disabled: false }
+  | { key: "pending"; buttonLabel: "Cerere trimisă"; disabled: true; requestedAt: string }
+  | {
+      key: "rejected";
+      buttonLabel: "Solicită din nou";
+      disabled: false;
+      reason: string | null;
+    };
+
+export function agencyPortalCardState(input: {
+  activated: boolean;
+  request: { status: PortalRequestStatus; requestedAt: string; rejectionReason: string | null } | null;
+}): AgencyPortalCardState {
+  const base = portalGridState({
+    connectionStatus: input.activated ? "connected" : "disconnected",
+    requestStatus: input.request?.status ?? null,
+  });
+  if (base.key === "connected") return { key: "connected", label: "Conectat", tone: "success" };
+  if (base.key === "pending_request" && input.request) {
+    return { key: "pending", buttonLabel: "Cerere trimisă", disabled: true, requestedAt: input.request.requestedAt };
+  }
+  if (base.key === "rejected_request") {
+    return {
+      key: "rejected",
+      buttonLabel: "Solicită din nou",
+      disabled: false,
+      reason: input.request?.rejectionReason ?? null,
+    };
+  }
+  return { key: "request", buttonLabel: "Solicită activarea", disabled: false };
+}
+
+/** Doar portalurile integrate, fiecare pereche o singură dată (sursa e deja `configurablePortals()`). */
+export function agencyGridItems<T extends { id: string; availability: string }>(items: T[]): T[] {
+  const seen = new Set<string>();
+  return items.filter((i) => {
+    if (i.availability !== "available" || seen.has(i.id)) return false;
+    seen.add(i.id);
+    return true;
+  });
+}
