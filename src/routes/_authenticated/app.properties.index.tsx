@@ -34,7 +34,7 @@ import { parsePortalFilter } from "@/lib/portals/portal-state";
 import { PropertyCard, type PropertyCardRow } from "@/components/app/PropertyCard";
 import { useServerFn } from "@tanstack/react-start";
 import { archiveProperty, unarchiveProperty } from "@/lib/property-archive.functions";
-import { reassignPropertyAgent } from "@/lib/property-agent.functions";
+import { ReassignPropertiesDialog } from "@/components/app/ReassignPropertiesDialog";
 import { PropertyThumb, usePropertyCovers } from "@/components/app/PropertyThumb";
 import { PropertyPublishView } from "@/components/app/PropertyPublishView";
 import { PortalBulkProgress } from "@/components/app/PortalBulkProgress";
@@ -439,29 +439,7 @@ function PropertiesPage() {
     onError: (e: Error) => toastError(e),
   });
 
-  const assignAgent = useMutation({
-    mutationFn: async ({ ids, agentId }: { ids: string[]; agentId: string }) => {
-      /**
-       * Reasignarea trece prin server: acolo se verifică locurile de publicare
-       * ale noului agent, iar refuzul vine ca mesaj clar, nu ca eroare tehnică.
-       */
-      const blocked: string[] = [];
-      for (const id of ids) {
-        const result = await reassignPropertyAgent({ data: { propertyId: id, agentId } });
-        if (!result.ok) blocked.push(result.message);
-      }
-      if (blocked.length > 0) throw new Error(blocked[0]);
-    },
-    onSuccess: () => {
-      invalidateList();
-      setSelected([]);
-      toast.success("Agent asignat.");
-    },
-    onError: (e: Error) => {
-      invalidateList();
-      toastError(e);
-    },
-  });
+  const [reassignOpen, setReassignOpen] = useState(false);
 
 
   /**
@@ -852,18 +830,22 @@ function PropertiesPage() {
                 ))}
               </SelectContent>
             </Select>
-            <Select onValueChange={(v) => assignAgent.mutate({ ids: selected, agentId: v })}>
-              <SelectTrigger className="w-48">
-                <SelectValue placeholder="Asignează agent" />
-              </SelectTrigger>
-              <SelectContent>
-                {agents.map((a) => (
-                  <SelectItem key={a.id} value={a.id}>
-                    {a.full_name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            {user?.isAdmin ? (
+              <Button variant="outline" onClick={() => setReassignOpen(true)}>
+                Realocă la…
+              </Button>
+            ) : null}
+            <ReassignPropertiesDialog
+              open={reassignOpen}
+              onOpenChange={setReassignOpen}
+              title={`Realocă ${selected.length} anunțuri`}
+              candidates={agents}
+              loadIds={async () => selected}
+              onDone={() => {
+                invalidateList();
+                setSelected([]);
+              }}
+            />
             <Button
               variant="outline"
               size="sm"
