@@ -104,6 +104,7 @@ export function PortalsCard({ organizationId }: { organizationId: string }) {
   const queryClient = useQueryClient();
   const loadHub = useServerFn(getPortalHub);
   const loadLogs = useServerFn(getPortalLogs);
+  const loadActivationRequests = useServerFn(listPortalActivationRequests);
   const runSave = useServerFn(savePortalConnection);
   const runTest = useServerFn(testPortalConnection);
   const runDisconnect = useServerFn(disconnectPortal);
@@ -130,35 +131,30 @@ export function PortalsCard({ organizationId }: { organizationId: string }) {
   } | null>(null);
 
   const [confirmDisconnect, setConfirmDisconnect] = useState<string | null>(null);
-  // Carduri restrânse implicit; starea se păstrează la navigare înapoi (per agenție).
-  const expandedStorageKey = `habitoo:portals-expanded:${organizationId}`;
-  const [expanded, setExpanded] = useState<Record<string, boolean>>({});
-  const [confirmCollapse, setConfirmCollapse] = useState<string | null>(null);
+  // Portalul selectat din grilă: configurația lui se deschide dedesubt.
+  // Selecția se păstrează la navigare înapoi (per agenție).
+  const selectedStorageKey = `habitoo:portals-selected:${organizationId}`;
+  const [selected, setSelected] = useState<string>("");
+  const [confirmDeactivate, setConfirmDeactivate] = useState<string | null>(null);
+  const [confirmSwitch, setConfirmSwitch] = useState<string | null>(null);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
     try {
-      const raw = window.sessionStorage.getItem(expandedStorageKey);
-      setExpanded(raw ? (JSON.parse(raw) as Record<string, boolean>) : {});
+      setSelected(window.sessionStorage.getItem(selectedStorageKey) ?? "");
     } catch {
-      setExpanded({});
+      setSelected("");
     }
-  }, [expandedStorageKey]);
+  }, [selectedStorageKey]);
 
-  const persistExpanded = (next: Record<string, boolean>) => {
-    setExpanded(next);
+  const persistSelected = (portalId: string) => {
+    setSelected(portalId);
     if (typeof window === "undefined") return;
     try {
-      window.sessionStorage.setItem(expandedStorageKey, JSON.stringify(next));
+      window.sessionStorage.setItem(selectedStorageKey, portalId);
     } catch {
       /* sesiunea nu poate fi scrisă — starea rămâne doar în pagină */
     }
-  };
-
-  const collapse = (portalId: string) => {
-    const next = { ...expanded };
-    delete next[portalId];
-    persistExpanded(next);
   };
   const [confirmRevoke, setConfirmRevoke] = useState<string | null>(null);
   const [feedPreview, setFeedPreview] = useState<Awaited<
