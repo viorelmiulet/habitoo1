@@ -23,3 +23,5 @@
 
 - Bulk portal changes use durable `portal_bulk_jobs`/`portal_bulk_items`, processed by an armed cron through `applyPortalSelectionForOrg`; UI requests never call adapters directly. Why: jobs survive navigation, preserve portal rules, retries, audit, feed cache and real withdrawals.
 - Account/agency deletion and cross-agency reassignment run only through `account_deletion_jobs` (worker in `src/lib/account-deletion.server.ts`, cron armed on enqueue). Why: portal withdrawals and storage moves must finish before rows change or disappear.
+
+- Changing `properties.assigned_to` is allowed only for agency_admin/superadmin (trigger `guard_property_reassign`; service role and self-claim of unassigned listings exempt) and goes through `reassignProperties` in `src/lib/property-agent.functions.ts`. Why: RLS lets any member update other fields, but reassignment must stay manager-only and keep the slot trigger in force.
