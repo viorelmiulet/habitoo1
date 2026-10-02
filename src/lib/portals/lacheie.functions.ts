@@ -787,7 +787,7 @@ export const deactivateLaCheieAgency = createServerFn({ method: "POST" })
       await mergeSettings(organizationId, { allow_live: false }, auth.userId);
       await admin
         .from("portal_connections")
-        .update({ status: "disabled", activated: false, updated_by: auth.userId })
+        .update({ status: "disconnected", activated: false, updated_by: auth.userId })
         .eq("id", row.id);
 
       // Starea locală: ofertele acestei conexiuni sunt retrase, fără apeluri extra.
