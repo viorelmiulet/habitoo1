@@ -166,6 +166,17 @@ export function PortalsCard({ organizationId }: { organizationId: string }) {
     queryKey: logsKey,
     queryFn: () => loadLogs({ data: { organizationId } }),
   });
+  // Cererile de activare ale agenției: starea lor apare pe cardul din grilă.
+  const activationRequests = useQuery({
+    queryKey: ["portal-activation-requests", "org", organizationId],
+    queryFn: () => loadActivationRequests({ data: { status: "all" } }),
+  });
+  /** Ultima cerere de activare per portal (lista vine ordonată descrescător). */
+  const latestRequestByPortal = new Map<string, PortalActivationRequestRow["status"]>();
+  for (const r of (activationRequests.data ?? []) as PortalActivationRequestRow[]) {
+    if (r.organizationId !== organizationId) continue;
+    if (!latestRequestByPortal.has(r.portalId)) latestRequestByPortal.set(r.portalId, r.status);
+  }
   const invalidate = () => {
     queryClient.invalidateQueries({ queryKey: hubKey });
     queryClient.invalidateQueries({ queryKey: logsKey });
