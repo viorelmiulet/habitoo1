@@ -231,43 +231,6 @@ export const deleteTemplate = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
-export const getContractInventoryDefaults = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) => {
-    const ctx = context as unknown as Ctx;
-    const { orgId, isAdmin } = await orgContext(ctx);
-    const db = await admin();
-    const { data: org } = await db
-      .from("organizations")
-      .select("contract_inventory_defaults")
-      .eq("id", orgId)
-      .maybeSingle();
-    return { items: inventoryItems(org?.contract_inventory_defaults), canEdit: isAdmin };
-  });
-
-export const saveContractInventoryDefaults = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
-  .inputValidator((data: unknown) => z.object({ items: z.array(inventoryItemInput).max(100) }).parse(data))
-  .handler(async ({ data, context }) => {
-    const ctx = context as unknown as Ctx;
-    const { orgId, isAdmin } = await orgContext(ctx);
-    if (!isAdmin) throw new Error("Doar administratorul agenției poate modifica inventarul implicit.");
-    const db = await admin();
-    const { error } = await db
-      .from("organizations")
-      .update({ contract_inventory_defaults: data.items as never })
-      .eq("id", orgId);
-    if (error) throw new Error(error.message);
-    await audit({
-      orgId,
-      actorId: ctx.userId,
-      action: "contract_inventory_defaults.updated",
-      values: { items: data.items.length },
-    });
-    return { ok: true };
-  });
-
-
 /* ------------------------------------------------------------------ */
 /* Contracte                                                           */
 /* ------------------------------------------------------------------ */

@@ -29,7 +29,6 @@ import { isValidCnp, type InventoryItem, type PartyRole } from "@/lib/contracts/
 import { prepareIdCapture } from "@/lib/contracts/image";
 import {
   createContract,
-  getContractInventoryDefaults,
   listTemplates,
 } from "@/lib/contracts.functions";
 import { getIdReadingStatus, readIdDocument } from "@/lib/contracts/id-document.functions";
@@ -95,7 +94,6 @@ export function NewContractDialog({
   const navigate = useNavigate();
   const { data: currentUser } = useCurrentUser();
   const fetchTemplates = useServerFn(listTemplates);
-  const fetchInventory = useServerFn(getContractInventoryDefaults);
   const runCreate = useServerFn(createContract);
   const runRead = useServerFn(readIdDocument);
   const fetchExtractionStatus = useServerFn(getIdReadingStatus);
@@ -149,11 +147,6 @@ export function NewContractDialog({
   const templates = useQuery({
     queryKey: ["contract-templates"],
     queryFn: () => fetchTemplates({}),
-    enabled: open,
-  });
-  const defaults = useQuery({
-    queryKey: ["contract-inventory-defaults"],
-    queryFn: () => fetchInventory({}),
     enabled: open,
   });
   const extractionStatus = useQuery({
@@ -307,7 +300,7 @@ export function NewContractDialog({
       for (const party of clientParties)
         if (party.cnp && !isValidCnp(party.cnp))
           throw new Error(`CNP-ul pentru ${party.fullName} nu este valid.`);
-      const cleanInventory = (inventory ?? defaults.data?.items ?? []).filter((item) =>
+      const cleanInventory = (inventory ?? []).filter((item) =>
         item.name.trim(),
       );
       const parties =
@@ -663,7 +656,7 @@ export function NewContractDialog({
                 onCheckedChange={(checked) => {
                   const next = checked === true;
                   setIncludeInventory(next);
-                  if (next && inventory === null) setInventory(defaults.data?.items ?? []);
+                  if (next && inventory === null) setInventory([]);
                 }}
               />
               <div>
@@ -675,7 +668,7 @@ export function NewContractDialog({
             </div>
             {includeInventory ? (
               <InventoryEditor
-                items={inventory ?? defaults.data?.items ?? []}
+                items={inventory ?? []}
                 onChange={setInventory}
               />
             ) : null}
