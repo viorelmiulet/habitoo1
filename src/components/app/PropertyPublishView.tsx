@@ -15,7 +15,6 @@ import { formatPropertyListPrice, portalDotTone, portalStateLabel } from "@/lib/
 import type { PropertyPortalCell } from "@/lib/portals.functions";
 import { getPortalBulkOverview, startPortalBulkJob } from "@/lib/portals/bulk.functions";
 import { bulkDraftKey, bulkLimitExceeded, bulkSlotProjection, reconcileBulkDraft, toggleBulkPage, type BulkCellValue, type BulkDraft } from "@/lib/portals/bulk";
-import { toast } from "@/components/ui/sonner";
 import { toastError } from "@/lib/errors";
 import { cn } from "@/lib/utils";
 import { ContactBlockNotice } from "@/components/app/ContactBlockNotice";
