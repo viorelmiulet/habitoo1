@@ -32,6 +32,17 @@ niciodată.
 | POST   | `/visits`                        | Raportare vizualizări externe                 |
 | GET    | `/visits`                        | Total vizualizări pe proprietate              |
 | GET    | `/media/{imageId}`               | Redirect 302 către URL semnat al imaginii     |
+| GET    | `/agency`                        | Numele și logo-ul agenției (`{ nume, logo }`) |
+| GET    | `/media/agent/{profileId}`       | Redirect 302 către poza agentului (fără token)|
+| GET    | `/media/agency/{organizationId}` | Redirect 302 către logo-ul agenției (fără token)|
+
+Câmpul `poza` din `/agents` este un URL absolut stabil
+(`{baseUrl}/api/public/sites/v1/media/agent/{profileId}`) sau `null` dacă agentul
+nu are poză. `/agency` returnează `{ "data": { "nume", "logo" }, "api_version" }`,
+cu `logo` = `{baseUrl}/api/public/sites/v1/media/agency/{organizationId}` sau `null`.
+Ambele endpointuri sunt disponibile și pe prefixul `/api/public/portal/v1`. Rutele
+media acceptă și extensia `.jpg/.png/.webp`, redirecționează 302 către un URL
+semnat valabil 24h și răspund 404 când poza/logo-ul lipsește.
 
 Listele returnează `total`, `per_page`, `current_page`, `last_page`,
 `next_page_url`, `prev_page_url`, `from`, `to`, `data`.

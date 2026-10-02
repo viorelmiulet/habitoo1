@@ -173,15 +173,44 @@ export function isImageFeedEligible(image: PropertyImageRow): boolean {
   return image.include_in_publish === true && image.is_confidential !== true;
 }
 
+/** URL https absolut lăsat neschimbat; altfel null. */
+export function httpsUrlOrNull(value: string | null | undefined): string | null {
+  const v = value?.trim();
+  if (!v) return null;
+  try {
+    return new URL(v).protocol === "https:" ? v : null;
+  } catch {
+    return null;
+  }
+}
+
+/** Poza agentului: URL https existent ca atare, altfel ruta publică stabilă. */
+export function agentPhotoUrl(
+  profile: Pick<ProfileRow, "id" | "avatar_url">,
+  baseUrl?: string,
+): string | null {
+  const raw = profile.avatar_url?.trim();
+  if (!raw) return null;
+  const https = httpsUrlOrNull(raw);
+  if (https) return https;
+  if (!baseUrl) return null;
+  return `${baseUrl.replace(/\/$/, "")}/api/public/sites/v1/media/agent/${profile.id}`;
+}
+
+export function agencyLogoFeedUrl(organizationId: string, hasLogo: boolean, baseUrl: string) {
+  return hasLogo
+    ? `${baseUrl.replace(/\/$/, "")}/api/public/sites/v1/media/agency/${organizationId}`
+    : null;
+}
+
 export function mapAgent(profile: ProfileRow, baseUrl?: string): FeedAgent {
-  void baseUrl;
   return {
     idstr: profile.id,
     nume: profile.full_name,
     email: profile.email ?? null,
     telefon: profile.phone ?? null,
     functie: profile.job_title ?? null,
-    poza: profile.avatar_url ?? null,
+    poza: agentPhotoUrl(profile, baseUrl),
     activ: profile.is_active,
   };
 }
