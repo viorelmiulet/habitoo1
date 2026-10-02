@@ -43,7 +43,7 @@ describe("publicare în masă în fundal", () => {
     finishPortalBulkJob("a", { done: 3, failed: 0 }, client);
     expect(toastMock.success).toHaveBeenLastCalledWith("Publicare finalizată: 3 reușite.");
     expect(toastMock.success).toHaveBeenCalledTimes(2);
-    expect(client.invalidateQueries.mock.calls.map((c) => (c[0] as { queryKey: string[] }).queryKey[0])).toEqual([
+    expect(client.invalidateQueries.mock.calls.map((c) => ((c as unknown[])[0] as { queryKey: string[] }).queryKey[0])).toEqual([
       "property-portals-matrix", "portal-filter-options", "portal-bulk-overview",
     ]);
     expect(activePortalBulkJobs()).toEqual([]);
