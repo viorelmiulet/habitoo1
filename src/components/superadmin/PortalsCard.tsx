@@ -8,7 +8,6 @@ import { useServerFn } from "@tanstack/react-start";
 import { toast } from "@/components/ui/sonner";
 import {
   Check,
-  ChevronDown,
   Copy,
   Eye,
   EyeOff,
@@ -97,6 +96,14 @@ function ImobiliareSubscriptionBadge({ organizationId }: { organizationId: strin
     </StatusBadge>
   );
 }
+
+/** Punctul colorat din linia de stare a cardului din grilă. */
+const GRID_DOT_CLASS: Record<PortalGridTone, string> = {
+  success: "bg-success",
+  warning: "bg-warning",
+  danger: "bg-destructive",
+  muted: "bg-muted-foreground/50",
+};
 
 export function PortalsCard({ organizationId }: { organizationId: string }) {
   const hubKey = ["portal-hub", organizationId] as const;
@@ -212,6 +219,8 @@ export function PortalsCard({ organizationId }: { organizationId: string }) {
       }),
     onSuccess: (res) => {
       invalidate();
+      // Starea cererii de activare se reflectă pe cardul din grilă.
+      queryClient.invalidateQueries({ queryKey: ["portal-activation-requests"] });
       toast.success(
         res.activated
           ? "Portalul este activat pentru agenție: își poate publica singură ofertele."
@@ -334,52 +343,126 @@ export function PortalsCard({ organizationId }: { organizationId: string }) {
     }
   };
 
+  /** Clic pe cardul din grilă: deschide configurarea portalului dedesubt. */
+  const select = (portalId: string) => {
+    if (portalId === selected) return;
+    const current = (hub.data ?? []).find((i) => i.portal.id === selected);
+    const currentDirty = current
+      ? (credential[selected]?.trim() ?? "") !== "" ||
+        (accountId[selected] !== undefined &&
+          accountId[selected] !== (current.connection.externalAccountId ?? "")) ||
+        (endpoint[selected] !== undefined &&
+          endpoint[selected] !== (current.connection.endpointUrl ?? ""))
+      : false;
+    if (currentDirty) {
+      setConfirmSwitch(portalId);
+      return;
+    }
+    persistSelected(portalId);
+  };
+
   if (hub.isLoading) return <InlineLoading label="Se încarcă portalurile…" />;
   if (hub.isError) return <QueryError error={hub.error} onRetry={() => hub.refetch()} />;
 
   return (
     <div className="space-y-4">
-      <div>
-        <h2 className="text-base font-semibold">Portaluri imobiliare</h2>
-        <p className="text-sm text-muted-foreground">
-          Conectează agenția la portaluri, emite chei de acces pentru ele și urmărește ce s-a
-          trimis. Nimic nu pleacă spre un portal până nu activezi explicit trimiterile reale.
-        </p>
-      </div>
+      {/* Grila de portaluri: bifa activează pentru agenție, clicul deschide configurarea. */}
+      <section className="panel overflow-hidden">
+        <header className="border-b border-border px-5 py-4">
+          <h2 className="text-sm font-semibold tracking-wide uppercase">Portaluri</h2>
+          <p className="text-xs text-muted-foreground">
+            Bifează portalul ca să-l activezi pentru agenție. Apar doar portalurile deja integrate
+            în Habitoo.
+          </p>
+        </header>
+        <div className="grid gap-3 p-5 sm:grid-cols-2 lg:grid-cols-3">
+          {(hub.data ?? [])
+            .filter((item) => item.portal.status === "available")
+            .map((item) => {
+              const name = portalDisplayName(item.portal.id);
+              const state = portalGridState({
+                connectionStatus: item.connection.status,
+                requestStatus: latestRequestByPortal.get(item.portal.id) ?? null,
+              });
+              const isSelected = item.portal.id === selected;
+              return (
+                <div
+                  key={item.portal.id}
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => select(item.portal.id)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      select(item.portal.id);
+                    }
+                  }}
+                  className={cn(
+                    "panel cursor-pointer p-4 transition-shadow hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold",
+                    isSelected ? "border-gold ring-2 ring-gold/40" : "",
+                  )}
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <PortalLogoStack
+                      portalId={item.portal.id}
+                      name={name}
+                      size={40}
+                      className="shrink-0"
+                    />
+                    <Checkbox
+                      checked={item.connection.activated}
+                      disabled={activation.isPending}
+                      onClick={(e) => e.stopPropagation()}
+                      onCheckedChange={(checked) => {
+                        if (checked) {
+                          activation.mutate({ portalId: item.portal.id, activated: true });
+                        } else {
+                          setConfirmDeactivate(item.portal.id);
+                        }
+                      }}
+                      aria-label={`Activează ${name} pentru agenție`}
+                    />
+                  </div>
+                  <h3 className="mt-3 text-[17px] leading-6 font-bold break-words">{name}</h3>
+                  <div data-portal-statuses className="mt-1 flex flex-wrap gap-2">
+                    <span className="inline-flex items-center gap-1.5 text-[13px] text-muted-foreground">
+                      <span
+                        aria-hidden
+                        className={cn("size-2 shrink-0 rounded-full", GRID_DOT_CLASS[state.tone])}
+                      />
+                      {state.label}
+                    </span>
+                  </div>
+                </div>
+              );
+            })}
+        </div>
+      </section>
 
-      {(hub.data ?? []).map((item) => {
-        const badge = PORTAL_CONNECTION_LABEL[item.connection.status];
-        const unavailable = item.portal.status !== "available";
-        const activeKeys = item.keys.filter((k) => k.status === "active");
-        const open = expanded[item.portal.id] === true;
-        // Un portal cu erori rămâne evidențiat și restrâns, ca să nu fie ratat.
-        const hasError =
-          item.connection.status === "error" || Boolean(item.connection.lastSyncError);
-        // Modificări tastate, dar nesalvate — blochează restrângerea silențioasă.
-        const dirty =
-          (credential[item.portal.id]?.trim() ?? "") !== "" ||
-          (accountId[item.portal.id] !== undefined &&
-            accountId[item.portal.id] !== (item.connection.externalAccountId ?? "")) ||
-          (endpoint[item.portal.id] !== undefined &&
-            endpoint[item.portal.id] !== (item.connection.endpointUrl ?? ""));
-        const toggle = () => {
-          if (open) {
-            if (dirty) {
-              setConfirmCollapse(item.portal.id);
-              return;
-            }
-            collapse(item.portal.id);
-            return;
-          }
-          persistExpanded({ ...expanded, [item.portal.id]: true });
-        };
-        return (
-          <div
-            key={item.portal.id}
-            className={
-              hasError ? "panel border-destructive/50 ring-1 ring-destructive/20" : "panel"
-            }
-          >
+      {/* Configurarea portalului selectat: exact mecanismul existent, neschimbat. */}
+      {(hub.data ?? [])
+        .filter((item) => item.portal.status === "available" && item.portal.id === selected)
+        .map((item) => {
+          const badge = PORTAL_CONNECTION_LABEL[item.connection.status];
+          const unavailable = item.portal.status !== "available";
+          const activeKeys = item.keys.filter((k) => k.status === "active");
+          // Un portal cu erori rămâne evidențiat, ca să nu fie ratat.
+          const hasError =
+            item.connection.status === "error" || Boolean(item.connection.lastSyncError);
+          // Modificări tastate, dar nesalvate — blochează comutarea silențioasă.
+          const dirty =
+            (credential[item.portal.id]?.trim() ?? "") !== "" ||
+            (accountId[item.portal.id] !== undefined &&
+              accountId[item.portal.id] !== (item.connection.externalAccountId ?? "")) ||
+            (endpoint[item.portal.id] !== undefined &&
+              endpoint[item.portal.id] !== (item.connection.endpointUrl ?? ""));
+          return (
+            <div
+              key={item.portal.id}
+              className={
+                hasError ? "panel border-destructive/50 ring-1 ring-destructive/20" : "panel"
+              }
+            >
             <div className="grid grid-cols-[minmax(0,1fr)_40px] items-start gap-3 px-4 pt-4 sm:px-5 sm:pt-5">
               <div className="flex min-w-0 items-start gap-3">
                 <PortalLogoStack
