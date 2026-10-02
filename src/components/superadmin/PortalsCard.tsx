@@ -19,6 +19,7 @@ import {
   Unplug,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Link } from "@tanstack/react-router";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -35,7 +36,6 @@ import {
   disconnectPortal,
   getImobiliareAccountStatus,
   getPortalHub,
-  getPortalLogs,
   issuePortalApiKey,
   previewPortalFeed,
   revokePortalApiKey,
@@ -107,10 +107,8 @@ const GRID_DOT_CLASS: Record<PortalGridTone, string> = {
 
 export function PortalsCard({ organizationId }: { organizationId: string }) {
   const hubKey = ["portal-hub", organizationId] as const;
-  const logsKey = ["portal-logs", organizationId] as const;
   const queryClient = useQueryClient();
   const loadHub = useServerFn(getPortalHub);
-  const loadLogs = useServerFn(getPortalLogs);
   const loadActivationRequests = useServerFn(listPortalActivationRequests);
   const runSave = useServerFn(savePortalConnection);
   const runTest = useServerFn(testPortalConnection);
@@ -169,10 +167,6 @@ export function PortalsCard({ organizationId }: { organizationId: string }) {
   > | null>(null);
 
   const hub = useQuery({ queryKey: hubKey, queryFn: () => loadHub({ data: { organizationId } }) });
-  const logs = useQuery({
-    queryKey: logsKey,
-    queryFn: () => loadLogs({ data: { organizationId } }),
-  });
   // Cererile de activare ale agenției: starea lor apare pe cardul din grilă.
   const activationRequests = useQuery({
     queryKey: ["portal-activation-requests", "org", organizationId],
@@ -186,7 +180,6 @@ export function PortalsCard({ organizationId }: { organizationId: string }) {
   }
   const invalidate = () => {
     queryClient.invalidateQueries({ queryKey: hubKey });
-    queryClient.invalidateQueries({ queryKey: logsKey });
   };
 
   const save = useMutation({
@@ -1108,30 +1101,21 @@ export function PortalsCard({ organizationId }: { organizationId: string }) {
         </div>
       ) : null}
 
-      <div className="panel space-y-3 p-5">
-        <h3 className="font-medium">Jurnal operațiuni portaluri</h3>
-        {logs.isLoading ? (
-          <InlineLoading label="Se încarcă jurnalul…" />
-        ) : (logs.data ?? []).length === 0 ? (
-          <p className="text-sm text-muted-foreground">Încă nu s-a executat nicio operațiune.</p>
-        ) : (
-          <ul className="divide-y divide-border text-sm">
-            {(logs.data ?? []).map((log) => (
-              <li key={log.id} className="flex flex-wrap items-center gap-2 py-2">
-                <StatusBadge tone={log.success ? "success" : "danger"}>
-                  {log.success ? "OK" : (log.errorCode ?? "Eroare")}
-                </StatusBadge>
-                <span className="min-w-0 flex-1 truncate">
-                  {log.portal} · {log.operation}
-                  {log.errorMessage ? ` — ${log.errorMessage}` : ""}
-                </span>
-                <span className="text-xs text-muted-foreground">
-                  {formatDateTime(log.createdAt)}
-                </span>
-              </li>
-            ))}
-          </ul>
-        )}
+      <div className="panel flex flex-wrap items-center justify-between gap-3 p-5">
+        <div className="min-w-0">
+          <h3 className="font-medium">Jurnal operațiuni portaluri</h3>
+          <p className="text-sm text-muted-foreground">
+            Operațiile se văd pe pagina separată, filtrate pe agenție{selected ? " și portal" : ""}.
+          </p>
+        </div>
+        <Button asChild variant="outline" className="h-11 shrink-0">
+          <Link
+            to="/superadmin/portal-logs"
+            search={{ org: organizationId, ...(selected ? { portal: selected } : {}) }}
+          >
+            Vezi jurnalul
+          </Link>
+        </Button>
       </div>
 
       <ConfirmDialog

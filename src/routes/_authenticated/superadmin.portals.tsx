@@ -4,7 +4,8 @@
  * selecția ofertelor). Agențiile nu au acces la această zonă.
  */
 import { useEffect, useState } from "react";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { Button } from "@/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { Search } from "lucide-react";
@@ -93,6 +94,13 @@ function SuperadminPortalsPage() {
       <PageHeader
         title="Portaluri imobiliare"
         description="Integrările cu portalurile se configurează exclusiv de aici, separat pentru fiecare agenție."
+        actions={
+          <Button asChild variant="outline" className="h-11">
+            <Link to="/superadmin/portal-logs" search={organizationId ? { org: organizationId } : {}}>
+              Jurnal portaluri
+            </Link>
+          </Button>
+        }
       />
 
       {/* Selectorul de agenție rămâne vizibil la derulare. */}
