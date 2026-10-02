@@ -140,7 +140,7 @@ export async function ingestPortalLead(
     action: input.auditAction,
     entity: "leads",
     entity_id: lead.id,
-    new_values: input.auditValues,
+    new_values: input.auditValues as never,
   });
 
   return { leadId: lead.id, created: true };
