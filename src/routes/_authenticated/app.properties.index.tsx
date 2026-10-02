@@ -37,7 +37,7 @@ import { archiveProperty, unarchiveProperty } from "@/lib/property-archive.funct
 import { ReassignPropertiesDialog } from "@/components/app/ReassignPropertiesDialog";
 import { PropertyThumb, usePropertyCovers } from "@/components/app/PropertyThumb";
 import { PropertyPublishView } from "@/components/app/PropertyPublishView";
-import { PortalBulkProgress } from "@/components/app/PortalBulkProgress";
+import { trackPortalBulkJob } from "@/components/app/PortalBulkProgress";
 import { PortalBulkSelectionDialog } from "@/components/app/PortalBulkSelectionDialog";
 import { StatusBadge } from "@/components/app/StatusBadge";
 import { PortalLogoStack } from "@/components/app/PortalLogo";
@@ -157,7 +157,6 @@ function PropertiesPage() {
   const [promptRequest, setPromptRequest] = useState<PromptRequest | null>(null);
   const [portalDrafts, setPortalDrafts] = useState<Record<string, BulkDraft>>({});
   const [portalBulkMode, setPortalBulkMode] = useState<"publish" | "withdraw" | null>(null);
-  const [portalBulkJobId, setPortalBulkJobId] = useState<string | null>(null);
   const archivePropertyFn = useServerFn(archiveProperty);
   const unarchivePropertyFn = useServerFn(unarchiveProperty);
 
@@ -1151,11 +1150,10 @@ function PropertiesPage() {
         organizationId={orgId}
         onClose={() => setPortalBulkMode(null)}
         onStarted={(jobId) => {
-          setPortalBulkJobId(jobId);
+          trackPortalBulkJob(jobId);
           setSelected([]);
         }}
       />
-      <PortalBulkProgress jobId={portalBulkJobId} />
     </>
   );
 }
