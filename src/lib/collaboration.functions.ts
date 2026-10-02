@@ -14,6 +14,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireActiveOrgAuth } from "@/lib/org-access";
+import { collaborationCommissionSchema, resolveCollaborationCommission } from "@/lib/collaboration-commission";
 
 export type CollaborationProposalStatus =
   "pending" | "accepted" | "viewing" | "declined" | "closed";
@@ -79,7 +80,12 @@ async function loadAdmin() {
   return supabaseAdmin;
 }
 
-type Actor = { userId: string; organizationId: string; collaborationEnabled: boolean };
+type Actor = {
+  userId: string;
+  organizationId: string;
+  collaborationEnabled: boolean;
+  collaborationDefaultCommissionPercent: number | null;
+};
 
 async function loadActor(context: AuthContext): Promise<Actor> {
   const admin = await loadAdmin();
@@ -94,13 +100,14 @@ async function loadActor(context: AuthContext): Promise<Actor> {
   }
   const { data: org } = await admin
     .from("organizations")
-    .select("collaboration_enabled")
+    .select("collaboration_enabled,collab_default_commission_percent")
     .eq("id", organizationId)
     .maybeSingle();
   return {
     userId: context.userId,
     organizationId,
     collaborationEnabled: org?.collaboration_enabled !== false,
+    collaborationDefaultCommissionPercent: org?.collab_default_commission_percent ?? null,
   };
 }
 
@@ -862,6 +869,7 @@ export type PropertyCollaborationRow = {
   participating: boolean;
   enabled: boolean;
   commissionPercent: number | null;
+  defaultCommissionPercent: number | null;
   terms: string | null;
   /** Statusul proprietății permite expunerea către alte agenții. */
   offerable: boolean;
@@ -893,6 +901,7 @@ export const getPropertyCollaboration = createServerFn({ method: "POST" })
       participating: actor.collaborationEnabled,
       enabled: property.collaboration === true,
       commissionPercent: property.collab_commission_percent ?? null,
+      defaultCommissionPercent: actor.collaborationDefaultCommissionPercent,
       terms: property.collab_terms ?? null,
       offerable: OFFERABLE_STATUSES.includes(
         property.status as (typeof OFFERABLE_STATUSES)[number],
@@ -907,7 +916,7 @@ export const setPropertyCollaboration = createServerFn({ method: "POST" })
       .object({
         propertyId: z.string().uuid(),
         enabled: z.boolean(),
-        commissionPercent: z.number().min(0).max(100).nullable().optional(),
+        commissionPercent: collaborationCommissionSchema.optional(),
         terms: z.string().trim().max(2000).nullable().optional(),
       })
       .parse(data),
@@ -917,7 +926,11 @@ export const setPropertyCollaboration = createServerFn({ method: "POST" })
     requireParticipation(actor);
     await loadOwnProperty(actor, data.propertyId);
 
-    if (data.enabled && (data.commissionPercent === null || data.commissionPercent === undefined)) {
+    const commissionPercent = resolveCollaborationCommission(
+      data.commissionPercent,
+      actor.collaborationDefaultCommissionPercent,
+    );
+    if (data.enabled && commissionPercent === null) {
       throw new Error("Completează comisionul oferit pentru colaborare.");
     }
 
@@ -926,7 +939,7 @@ export const setPropertyCollaboration = createServerFn({ method: "POST" })
       .from("properties")
       .update({
         collaboration: data.enabled,
-        collab_commission_percent: data.enabled ? (data.commissionPercent ?? null) : null,
+        collab_commission_percent: data.enabled ? commissionPercent : null,
         collab_terms: data.enabled ? (data.terms ?? null) : null,
         updated_by: actor.userId,
       })

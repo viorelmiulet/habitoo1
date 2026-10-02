@@ -44,6 +44,7 @@ import { getTeamOverview } from "@/lib/agency-team.functions";
 import { useServerFn } from "@tanstack/react-start";
 import { ProfileEditForm } from "@/components/app/ProfileEditForm";
 import { appHead } from "@/components/app/app-head";
+import { parseOptionalCollaborationCommission } from "@/lib/collaboration-commission";
 
 
 export const Route = createFileRoute("/_authenticated/app/settings")({
@@ -82,6 +83,11 @@ function SettingsPage() {
     legal_representative: user?.organization?.legal_representative ?? "",
     legal_representative_title: user?.organization?.legal_representative_title ?? "",
     collaboration_enabled: user?.organization?.collaboration_enabled !== false,
+    collab_default_commission_percent:
+      user?.organization?.collab_default_commission_percent !== null &&
+      user?.organization?.collab_default_commission_percent !== undefined
+        ? String(user.organization.collab_default_commission_percent)
+        : "",
     storia_auto_republish: user?.organization?.storia_auto_republish === true,
   });
 
@@ -163,6 +169,9 @@ function SettingsPage() {
 
     mutationFn: async () => {
       if (!user?.organization?.id) throw new Error("Agenția nu este configurată.");
+      if (user.role !== "agency_admin" && !user.isSuperadmin) {
+        throw new Error("Doar administratorul agenției poate modifica aceste date.");
+      }
       for (const f of ["email", "phone", "city", "postal_code"] as const) {
         const msg = validateRequiredAgencyField(f, orgForm[f]);
         if (msg) throw new Error(`${AGENCY_FIELD_LABELS[f]}: ${msg}`);
@@ -179,6 +188,9 @@ function SettingsPage() {
           legal_representative: orgForm.legal_representative || null,
           legal_representative_title: orgForm.legal_representative_title || null,
           collaboration_enabled: orgForm.collaboration_enabled,
+          collab_default_commission_percent: parseOptionalCollaborationCommission(
+            orgForm.collab_default_commission_percent,
+          ),
           storia_auto_republish: orgForm.storia_auto_republish,
         })
         .eq("id", user.organization.id);
@@ -350,6 +362,32 @@ function SettingsPage() {
                   onCheckedChange={(v) => setOrgForm((f) => ({ ...f, collaboration_enabled: v }))}
                 />
               </div>
+              {orgForm.collaboration_enabled ? (
+                <div className="space-y-2">
+                  <Label htmlFor="collab_default_commission_percent">
+                    Comision standard pentru colaborare (%)
+                  </Label>
+                  <Input
+                    id="collab_default_commission_percent"
+                    type="number"
+                    inputMode="decimal"
+                    min={0}
+                    max={100}
+                    step="any"
+                    value={orgForm.collab_default_commission_percent}
+                    disabled={!user?.isAdmin}
+                    onChange={(e) =>
+                      setOrgForm((form) => ({
+                        ...form,
+                        collab_default_commission_percent: e.target.value,
+                      }))
+                    }
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Se aplică ofertelor bifate pentru colaborare fără comision propriu.
+                  </p>
+                </div>
+              ) : null}
               <div className="flex items-start justify-between gap-4 rounded-xl border border-border p-4">
                 <div className="space-y-1">
                   <Label htmlFor="storia_auto_republish" className="text-sm">
