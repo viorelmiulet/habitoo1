@@ -236,6 +236,18 @@ function TeamPage() {
         )}
       </div>
 
+      {isAdmin && moveFrom ? (
+        <ReassignPropertiesDialog
+          open
+          onOpenChange={(v) => !v && setMoveFrom(null)}
+          title={`Mută toate anunțurile lui ${moveFrom.name}`}
+          description="Se mută toate anunțurile nesterse ale utilizatorului, în loturi."
+          candidates={(data?.members ?? []).filter((m) => m.is_active)}
+          excludeUserId={moveFrom.id}
+          loadIds={async () => (await listIds({ data: { userId: moveFrom.id } })).ids}
+          onDone={() => queryClient.invalidateQueries({ queryKey: ["properties"] })}
+        />
+      ) : null}
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent>
           <DialogHeader>
