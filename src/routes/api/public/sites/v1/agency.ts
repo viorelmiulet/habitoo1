@@ -7,7 +7,7 @@ export const Route = createFileRoute("/api/public/sites/v1/agency")({
   server: {
     handlers: {
       GET: async ({ request }) =>
-        withFeedAuth(request, "agencysites", (auth) => handleAgency(request, auth)),
+        withFeedAuth(request, "agency", (auth) => handleAgency(request, auth)),
     },
   },
 });

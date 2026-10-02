@@ -7,7 +7,7 @@ export const Route = createFileRoute("/api/public/portal/v1/agency")({
   server: {
     handlers: {
       GET: async ({ request }) =>
-        withFeedAuth(request, "portalportal.agency", (auth) => handleAgency(request, auth)),
+        withFeedAuth(request, "portal.agency", (auth) => handleAgency(request, auth)),
     },
   },
 });
