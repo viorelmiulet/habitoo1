@@ -1108,30 +1108,21 @@ export function PortalsCard({ organizationId }: { organizationId: string }) {
         </div>
       ) : null}
 
-      <div className="panel space-y-3 p-5">
-        <h3 className="font-medium">Jurnal operațiuni portaluri</h3>
-        {logs.isLoading ? (
-          <InlineLoading label="Se încarcă jurnalul…" />
-        ) : (logs.data ?? []).length === 0 ? (
-          <p className="text-sm text-muted-foreground">Încă nu s-a executat nicio operațiune.</p>
-        ) : (
-          <ul className="divide-y divide-border text-sm">
-            {(logs.data ?? []).map((log) => (
-              <li key={log.id} className="flex flex-wrap items-center gap-2 py-2">
-                <StatusBadge tone={log.success ? "success" : "danger"}>
-                  {log.success ? "OK" : (log.errorCode ?? "Eroare")}
-                </StatusBadge>
-                <span className="min-w-0 flex-1 truncate">
-                  {log.portal} · {log.operation}
-                  {log.errorMessage ? ` — ${log.errorMessage}` : ""}
-                </span>
-                <span className="text-xs text-muted-foreground">
-                  {formatDateTime(log.createdAt)}
-                </span>
-              </li>
-            ))}
-          </ul>
-        )}
+      <div className="panel flex flex-wrap items-center justify-between gap-3 p-5">
+        <div className="min-w-0">
+          <h3 className="font-medium">Jurnal operațiuni portaluri</h3>
+          <p className="text-sm text-muted-foreground">
+            Operațiile se văd pe pagina separată, filtrate pe agenție{selected ? " și portal" : ""}.
+          </p>
+        </div>
+        <Button asChild variant="outline" className="h-11 shrink-0">
+          <Link
+            to="/superadmin/portal-logs"
+            search={{ org: organizationId, ...(selected ? { portal: selected } : {}) }}
+          >
+            Vezi jurnalul
+          </Link>
+        </Button>
       </div>
 
       <ConfirmDialog
