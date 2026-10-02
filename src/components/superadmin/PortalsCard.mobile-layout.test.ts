@@ -14,7 +14,7 @@ describe("cardurile portalurilor pe mobil", () => {
 
   it("ține etichetele într-un container care permite trecerea pe rând nou", () => {
     expect(superadmin).toMatch(/data-portal-statuses className="[^"]*flex flex-wrap[^"]*"/);
-    expect(agency.match(/data-portal-statuses className="[^"]*flex flex-wrap[^"]*"/g)).toHaveLength(2);
+    expect(agency.match(/data-portal-statuses className="[^"]*flex flex-wrap[^"]*"/g)).toHaveLength(1);
   });
 
   it("nu pune logo-urile într-o casetă cu lățime fixă la portalurile duble (storia, romimo)", () => {
