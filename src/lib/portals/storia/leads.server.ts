@@ -402,114 +402,35 @@ async function processMessage(admin: Admin, shape: StoriaEventShape): Promise<St
     messageRowId = inserted.data?.id ?? null;
   }
 
-  const attachMessageToLead = async (leadId: string) => {
-    if (messageRowId) {
-      await admin.from("portal_messages").update({ lead_id: leadId }).eq("id", messageRowId);
-      return;
-    }
-    // Fără id de mesaj de la portal nu putem deduplica, dar păstrăm mesajul.
-    await admin.from("portal_messages").insert({
-      organization_id: match.organizationId,
-      portal: "storia",
-      property_id: match.propertyId,
-      lead_id: leadId,
-      sender_name: message.senderName,
-      sender_email: message.email,
-      sender_phone: message.phone,
-      body: bodyText,
-      sent_at: sentAt,
-      expires_at: portalMessageExpiry(sentAt),
-    });
-  };
-
-  // Deduplicare: același expeditor, aceeași proprietate, lead încă deschis.
-  const query = admin
-    .from("leads")
-    .select("id, notes")
-    .eq("organization_id", match.organizationId)
-    .eq("property_id", match.propertyId)
-    .eq("source", SOURCE)
-    .not("stage", "in", "(won,lost)")
-    .limit(1);
-  const existing = await (
-    message.email
-      ? query.eq("email", message.email)
-      : message.phone
-        ? query.eq("phone", message.phone)
-        : query.eq("name", name)
-  ).maybeSingle();
-
-  if (existing.data) {
-    const leadId = existing.data.id;
-    await admin
-      .from("leads")
-      .update({
-        last_interaction_at: now,
-        notes: [existing.data.notes, noteLine].filter(Boolean).join("\n---\n").slice(0, 8000),
-      })
-      .eq("id", leadId);
-    await admin.from("lead_events").insert({
-      organization_id: match.organizationId,
-      lead_id: leadId,
-      to_stage: "new",
-      note: noteLine.slice(0, 2000),
-    });
-    await attachMessageToLead(leadId);
-    return { processed: true, note: `mesaj Storia adăugat pe lead-ul existent ${leadId}` };
-  }
-
-  const { data: lead, error } = await admin
-    .from("leads")
-    .insert({
-      organization_id: match.organizationId,
-      property_id: match.propertyId,
-      name,
-      phone: message.phone,
-      email: message.email,
-      source: SOURCE,
-      stage: "new",
-      notes: noteLine,
-      assigned_to: match.assignedTo,
-      last_interaction_at: sentAt,
-    })
-    .select("id")
-    .single();
-  if (error) throw error;
-
-  await admin.from("lead_events").insert({
-    organization_id: match.organizationId,
-    lead_id: lead.id,
-    to_stage: "new",
-    note: `Lead creat din mesaj Storia.ro. ${bodyText ?? ""}`.trim().slice(0, 2000),
-  });
-
-  await attachMessageToLead(lead.id);
-
-  if (match.assignedTo) {
-    await admin.from("notifications").insert({
-      organization_id: match.organizationId,
-      user_id: match.assignedTo,
-      type: "lead",
-      title: "Lead nou din Storia.ro",
-      body: `${name} a trimis un mesaj pentru „${match.propertyTitle}”.`,
-      link: `/app/leads`,
-    });
-  }
-
-  await admin.from("audit_logs").insert({
-    organization_id: match.organizationId,
-    action: "storia.message_lead_created",
-    entity: "leads",
-    entity_id: lead.id,
-    new_values: {
+  const { ingestPortalLead } = await import("@/lib/portals/lead-ingest.server");
+  const outcome = await ingestPortalLead(admin, {
+    portal: "storia",
+    source: SOURCE,
+    match,
+    name,
+    email: message.email,
+    phone: message.phone,
+    senderName: message.senderName,
+    bodyText,
+    noteLine,
+    sentAt,
+    now,
+    messageRowId,
+    expiresAt: portalMessageExpiry(sentAt),
+    createdEventNote: `Lead creat din mesaj Storia.ro. ${bodyText ?? ""}`.trim().slice(0, 2000),
+    notificationTitle: "Lead nou din Storia.ro",
+    notificationBody: `${name} a trimis un mesaj pentru „${match.propertyTitle}”.`,
+    auditAction: "storia.message_lead_created",
+    auditValues: {
       property_id: match.propertyId,
       transaction_id: shape.transactionId,
       message_id: message.messageId,
       assigned_to: match.assignedTo,
     },
   });
-
-  return { processed: true, note: `lead nou din mesaj Storia (${lead.id})` };
+  return outcome.created
+    ? { processed: true, note: `lead nou din mesaj Storia (${outcome.leadId})` }
+    : { processed: true, note: `mesaj Storia adăugat pe lead-ul existent ${outcome.leadId}` };
 }
 
 async function processLifecycle(
