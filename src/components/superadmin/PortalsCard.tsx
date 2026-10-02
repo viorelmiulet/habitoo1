@@ -19,6 +19,7 @@ import {
   Unplug,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Link } from "@tanstack/react-router";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -35,7 +36,6 @@ import {
   disconnectPortal,
   getImobiliareAccountStatus,
   getPortalHub,
-  getPortalLogs,
   issuePortalApiKey,
   previewPortalFeed,
   revokePortalApiKey,
@@ -107,10 +107,8 @@ const GRID_DOT_CLASS: Record<PortalGridTone, string> = {
 
 export function PortalsCard({ organizationId }: { organizationId: string }) {
   const hubKey = ["portal-hub", organizationId] as const;
-  const logsKey = ["portal-logs", organizationId] as const;
   const queryClient = useQueryClient();
   const loadHub = useServerFn(getPortalHub);
-  const loadLogs = useServerFn(getPortalLogs);
   const loadActivationRequests = useServerFn(listPortalActivationRequests);
   const runSave = useServerFn(savePortalConnection);
   const runTest = useServerFn(testPortalConnection);
@@ -169,10 +167,6 @@ export function PortalsCard({ organizationId }: { organizationId: string }) {
   > | null>(null);
 
   const hub = useQuery({ queryKey: hubKey, queryFn: () => loadHub({ data: { organizationId } }) });
-  const logs = useQuery({
-    queryKey: logsKey,
-    queryFn: () => loadLogs({ data: { organizationId } }),
-  });
   // Cererile de activare ale agenției: starea lor apare pe cardul din grilă.
   const activationRequests = useQuery({
     queryKey: ["portal-activation-requests", "org", organizationId],
@@ -186,7 +180,6 @@ export function PortalsCard({ organizationId }: { organizationId: string }) {
   }
   const invalidate = () => {
     queryClient.invalidateQueries({ queryKey: hubKey });
-    queryClient.invalidateQueries({ queryKey: logsKey });
   };
 
   const save = useMutation({

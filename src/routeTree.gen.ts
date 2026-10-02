@@ -57,6 +57,7 @@ import { Route as AuthenticatedSuperadminAuditRouteImport } from './routes/_auth
 import { Route as AuthenticatedSuperadminDeletedRouteImport } from './routes/_authenticated/superadmin.deleted'
 import { Route as AuthenticatedSuperadminMailRouteImport } from './routes/_authenticated/superadmin.mail'
 import { Route as AuthenticatedSuperadminNomenclatorRouteImport } from './routes/_authenticated/superadmin.nomenclator'
+import { Route as AuthenticatedSuperadminPortalLogsRouteImport } from './routes/_authenticated/superadmin.portal-logs'
 import { Route as AuthenticatedSuperadminPortalsRouteImport } from './routes/_authenticated/superadmin.portals'
 import { Route as AuthenticatedSuperadminQaRouteImport } from './routes/_authenticated/superadmin.qa'
 import { Route as AuthenticatedSuperadminStareAgentiiRouteImport } from './routes/_authenticated/superadmin.stare-agentii'
@@ -369,6 +370,12 @@ const AuthenticatedSuperadminNomenclatorRoute =
   AuthenticatedSuperadminNomenclatorRouteImport.update({
     id: '/nomenclator',
     path: '/nomenclator',
+    getParentRoute: () => AuthenticatedSuperadminRoute,
+  } as any)
+const AuthenticatedSuperadminPortalLogsRoute =
+  AuthenticatedSuperadminPortalLogsRouteImport.update({
+    id: '/portal-logs',
+    path: '/portal-logs',
     getParentRoute: () => AuthenticatedSuperadminRoute,
   } as any)
 const AuthenticatedSuperadminPortalsRoute =
@@ -736,6 +743,7 @@ export interface FileRoutesByFullPath {
   '/superadmin/deleted': typeof AuthenticatedSuperadminDeletedRoute
   '/superadmin/mail': typeof AuthenticatedSuperadminMailRoute
   '/superadmin/nomenclator': typeof AuthenticatedSuperadminNomenclatorRoute
+  '/superadmin/portal-logs': typeof AuthenticatedSuperadminPortalLogsRoute
   '/superadmin/portals': typeof AuthenticatedSuperadminPortalsRoute
   '/superadmin/qa': typeof AuthenticatedSuperadminQaRoute
   '/superadmin/stare-agentii': typeof AuthenticatedSuperadminStareAgentiiRoute
@@ -838,6 +846,7 @@ export interface FileRoutesByTo {
   '/superadmin/deleted': typeof AuthenticatedSuperadminDeletedRoute
   '/superadmin/mail': typeof AuthenticatedSuperadminMailRoute
   '/superadmin/nomenclator': typeof AuthenticatedSuperadminNomenclatorRoute
+  '/superadmin/portal-logs': typeof AuthenticatedSuperadminPortalLogsRoute
   '/superadmin/portals': typeof AuthenticatedSuperadminPortalsRoute
   '/superadmin/qa': typeof AuthenticatedSuperadminQaRoute
   '/superadmin/stare-agentii': typeof AuthenticatedSuperadminStareAgentiiRoute
@@ -944,6 +953,7 @@ export interface FileRoutesById {
   '/_authenticated/superadmin/deleted': typeof AuthenticatedSuperadminDeletedRoute
   '/_authenticated/superadmin/mail': typeof AuthenticatedSuperadminMailRoute
   '/_authenticated/superadmin/nomenclator': typeof AuthenticatedSuperadminNomenclatorRoute
+  '/_authenticated/superadmin/portal-logs': typeof AuthenticatedSuperadminPortalLogsRoute
   '/_authenticated/superadmin/portals': typeof AuthenticatedSuperadminPortalsRoute
   '/_authenticated/superadmin/qa': typeof AuthenticatedSuperadminQaRoute
   '/_authenticated/superadmin/stare-agentii': typeof AuthenticatedSuperadminStareAgentiiRoute
@@ -1050,6 +1060,7 @@ export interface FileRouteTypes {
     | '/superadmin/deleted'
     | '/superadmin/mail'
     | '/superadmin/nomenclator'
+    | '/superadmin/portal-logs'
     | '/superadmin/portals'
     | '/superadmin/qa'
     | '/superadmin/stare-agentii'
@@ -1152,6 +1163,7 @@ export interface FileRouteTypes {
     | '/superadmin/deleted'
     | '/superadmin/mail'
     | '/superadmin/nomenclator'
+    | '/superadmin/portal-logs'
     | '/superadmin/portals'
     | '/superadmin/qa'
     | '/superadmin/stare-agentii'
@@ -1257,6 +1269,7 @@ export interface FileRouteTypes {
     | '/_authenticated/superadmin/deleted'
     | '/_authenticated/superadmin/mail'
     | '/_authenticated/superadmin/nomenclator'
+    | '/_authenticated/superadmin/portal-logs'
     | '/_authenticated/superadmin/portals'
     | '/_authenticated/superadmin/qa'
     | '/_authenticated/superadmin/stare-agentii'
@@ -1707,6 +1720,13 @@ declare module '@tanstack/react-router' {
       path: '/nomenclator'
       fullPath: '/superadmin/nomenclator'
       preLoaderRoute: typeof AuthenticatedSuperadminNomenclatorRouteImport
+      parentRoute: typeof AuthenticatedSuperadminRoute
+    }
+    '/_authenticated/superadmin/portal-logs': {
+      id: '/_authenticated/superadmin/portal-logs'
+      path: '/portal-logs'
+      fullPath: '/superadmin/portal-logs'
+      preLoaderRoute: typeof AuthenticatedSuperadminPortalLogsRouteImport
       parentRoute: typeof AuthenticatedSuperadminRoute
     }
     '/_authenticated/superadmin/portals': {
@@ -2190,6 +2210,7 @@ interface AuthenticatedSuperadminRouteChildren {
   AuthenticatedSuperadminDeletedRoute: typeof AuthenticatedSuperadminDeletedRoute
   AuthenticatedSuperadminMailRoute: typeof AuthenticatedSuperadminMailRoute
   AuthenticatedSuperadminNomenclatorRoute: typeof AuthenticatedSuperadminNomenclatorRoute
+  AuthenticatedSuperadminPortalLogsRoute: typeof AuthenticatedSuperadminPortalLogsRoute
   AuthenticatedSuperadminPortalsRoute: typeof AuthenticatedSuperadminPortalsRoute
   AuthenticatedSuperadminQaRoute: typeof AuthenticatedSuperadminQaRoute
   AuthenticatedSuperadminStareAgentiiRoute: typeof AuthenticatedSuperadminStareAgentiiRoute
@@ -2208,6 +2229,8 @@ const AuthenticatedSuperadminRouteChildren: AuthenticatedSuperadminRouteChildren
     AuthenticatedSuperadminMailRoute: AuthenticatedSuperadminMailRoute,
     AuthenticatedSuperadminNomenclatorRoute:
       AuthenticatedSuperadminNomenclatorRoute,
+    AuthenticatedSuperadminPortalLogsRoute:
+      AuthenticatedSuperadminPortalLogsRoute,
     AuthenticatedSuperadminPortalsRoute: AuthenticatedSuperadminPortalsRoute,
     AuthenticatedSuperadminQaRoute: AuthenticatedSuperadminQaRoute,
     AuthenticatedSuperadminStareAgentiiRoute:
