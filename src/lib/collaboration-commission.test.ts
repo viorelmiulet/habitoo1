@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  canManageCollaborationDefault,
   collaborationCommissionSchema,
   parseOptionalCollaborationCommission,
   resolveCollaborationCommission,
@@ -29,5 +30,11 @@ describe("collaboration commission", () => {
     expect(collaborationCommissionSchema.parse(100)).toBe(100);
     expect(() => collaborationCommissionSchema.parse(-0.01)).toThrow();
     expect(() => collaborationCommissionSchema.parse(100.01)).toThrow();
+  });
+
+  it("allows only an agency administrator to set the default", () => {
+    expect(canManageCollaborationDefault("agency_admin")).toBe(true);
+    expect(canManageCollaborationDefault("agent")).toBe(false);
+    expect(canManageCollaborationDefault("superadmin")).toBe(false);
   });
 });

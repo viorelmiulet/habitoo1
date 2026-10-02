@@ -44,7 +44,10 @@ import { getTeamOverview } from "@/lib/agency-team.functions";
 import { useServerFn } from "@tanstack/react-start";
 import { ProfileEditForm } from "@/components/app/ProfileEditForm";
 import { appHead } from "@/components/app/app-head";
-import { parseOptionalCollaborationCommission } from "@/lib/collaboration-commission";
+import {
+  canManageCollaborationDefault,
+  parseOptionalCollaborationCommission,
+} from "@/lib/collaboration-commission";
 
 
 export const Route = createFileRoute("/_authenticated/app/settings")({
@@ -169,7 +172,7 @@ function SettingsPage() {
 
     mutationFn: async () => {
       if (!user?.organization?.id) throw new Error("Agenția nu este configurată.");
-      if (user.role !== "agency_admin" && !user.isSuperadmin) {
+      if (!canManageCollaborationDefault(user.role)) {
         throw new Error("Doar administratorul agenției poate modifica aceste date.");
       }
       for (const f of ["email", "phone", "city", "postal_code"] as const) {
@@ -226,7 +229,7 @@ function SettingsPage() {
         <TabsList>
           <TabsTrigger value="profile">Profil</TabsTrigger>
           <TabsTrigger value="access">Acces la cont</TabsTrigger>
-          {user?.isAdmin ? <TabsTrigger value="agency">Agenție</TabsTrigger> : null}
+          {user?.role === "agency_admin" ? <TabsTrigger value="agency">Agenție</TabsTrigger> : null}
           {user?.isAdmin ? <TabsTrigger value="branding">Logo &amp; watermark</TabsTrigger> : null}
           {user?.isAdmin ? <TabsTrigger value="team">Echipă ({team.length})</TabsTrigger> : null}
           {user?.isAdmin ? <TabsTrigger value="integrations">Integrări</TabsTrigger> : null}
@@ -260,7 +263,7 @@ function SettingsPage() {
           </div>
         </TabsContent>
 
-        {user?.isAdmin ? (
+        {user?.role === "agency_admin" ? (
           <TabsContent value="agency">
             <div className="max-w-5xl space-y-6">
             <form
@@ -375,7 +378,7 @@ function SettingsPage() {
                     max={100}
                     step="any"
                     value={orgForm.collab_default_commission_percent}
-                    disabled={!user?.isAdmin}
+                    disabled={user?.role !== "agency_admin"}
                     onChange={(e) =>
                       setOrgForm((form) => ({
                         ...form,
