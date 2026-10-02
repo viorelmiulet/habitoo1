@@ -18,7 +18,6 @@ describe("grila de portaluri (Superadmin)", () => {
     expect(portals.length).toBeGreaterThan(0);
     for (const p of portals) {
       expect(p.status).toBe("available");
-: true
     }
   });
 
@@ -34,7 +33,6 @@ describe("grila de portaluri (Superadmin)", () => {
     expect(new Set(ids).size).toBe(ids.length);
     expect(ids.filter((id) => id === "storia")).toHaveLength(1);
     expect(ids.filter((id) => id === "romimo")).toHaveLength(1);
-: true
   });
 
   it("derivă corect starea afișată pe card", () => {
@@ -56,12 +54,16 @@ describe("grila de portaluri (Superadmin)", () => {
     });
 
     // Cererile de activare au prioritate în fața stării neutre.
-    expect(portalGridState({ connectionStatus: "not_configured", requestStatus: "pending" })).toEqual({
+    expect(
+      portalGridState({ connectionStatus: "not_configured", requestStatus: "pending" }),
+    ).toEqual({
       key: "pending_request",
       label: "Cerere de activare în așteptare",
       tone: "warning",
     });
-    expect(portalGridState({ connectionStatus: "not_configured", requestStatus: "rejected" })).toEqual({
+    expect(
+      portalGridState({ connectionStatus: "not_configured", requestStatus: "rejected" }),
+    ).toEqual({
       key: "rejected_request",
       label: "Cerere respinsă",
       tone: "danger",
@@ -81,6 +83,5 @@ describe("grila de portaluri (Superadmin)", () => {
       label: "Eroare de conexiune",
       tone: "danger",
     });
-: true
   });
 });
