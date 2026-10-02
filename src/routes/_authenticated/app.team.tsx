@@ -23,6 +23,8 @@ import {
 } from "@/components/ui/dialog";
 import { useCurrentUser } from "@/hooks/use-session";
 import { UserAvatar } from "@/components/app/UserAvatar";
+import { ReassignPropertiesDialog } from "@/components/app/ReassignPropertiesDialog";
+import { listUserPropertyIds } from "@/lib/property-agent.functions";
 import { formatDate } from "@/lib/format";
 import { roleLabels } from "@/lib/labels";
 import {
@@ -55,6 +57,8 @@ function TeamPage() {
   const [pendingRemoval, setPendingRemoval] = useState<{ id: string; name: string } | null>(null);
 
   const isAdmin = user?.isAdmin ?? false;
+  const [moveFrom, setMoveFrom] = useState<{ id: string; name: string } | null>(null);
+  const listIds = useServerFn(listUserPropertyIds);
 
   const { data, isLoading, error } = useQuery({
     queryKey: ["agency", "team"],
@@ -190,6 +194,15 @@ function TeamPage() {
                   <span className="w-24 text-right text-xs text-muted-foreground">
                     {formatDate(m.created_at)}
                   </span>
+                  {isAdmin ? (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => setMoveFrom({ id: m.id, name: m.full_name })}
+                    >
+                      Mută toate anunțurile
+                    </Button>
+                  ) : null}
                   {(isAgent && !m.roles.includes("agency_admin")) || m.id === user?.userId ? (
                     <Button size="sm" variant="outline" onClick={() => setEditing(m)}>
                       Editează
