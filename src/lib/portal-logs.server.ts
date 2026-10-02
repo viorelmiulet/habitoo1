@@ -53,7 +53,7 @@ export async function queryPortalLogs(
       .ilike("reference", `%${safe}%`)
       .limit(200);
     propertyIds = (props ?? []).map((p: { id: string }) => p.id);
-    if (propertyIds.length === 0) return { rows: [], total: 0, page, pageSize: PORTAL_LOGS_PAGE_SIZE };
+    if (!propertyIds || propertyIds.length === 0) return { rows: [], total: 0, page, pageSize: PORTAL_LOGS_PAGE_SIZE };
   }
 
   let q = admin
