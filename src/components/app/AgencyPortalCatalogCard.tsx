@@ -16,6 +16,12 @@ import { useCurrentUser } from "@/hooks/use-session";
 import { getAgencyPortalCatalog, requestPortalActivation } from "@/lib/portal-activation.functions";
 import { LaCheieActivationPanel } from "@/components/app/LaCheieActivationPanel";
 import { LACHEIE_PORTAL_KEY } from "@/lib/portals/lacheie/config";
+import { agencyGridItems, agencyPortalCardState } from "@/lib/portals/grid-state";
+
+function formatRequestDate(iso: string): string {
+  const d = new Date(iso);
+  return Number.isNaN(d.getTime()) ? "—" : d.toLocaleDateString("ro-RO", { day: "2-digit", month: "long", year: "numeric" });
+}
 
 export function AgencyPortalCatalogCard() {
   const queryClient = useQueryClient();
@@ -67,7 +73,7 @@ export function AgencyPortalCatalogCard() {
           <QueryError error={catalog.error} onRetry={() => catalog.refetch()} />
         </div>
       ) : (
-        <ul className="grid gap-4 p-5 sm:grid-cols-2 xl:grid-cols-3">
+        <ul className="grid grid-cols-1 gap-4 p-5 md:grid-cols-2 lg:grid-cols-3">
           <li className="flex flex-col gap-3 rounded-xl border border-border bg-surface p-4">
             <div className="flex items-start gap-3">
               <span className="flex size-10 shrink-0 items-center justify-center rounded-[10px] border border-border bg-card">
@@ -97,76 +103,58 @@ export function AgencyPortalCatalogCard() {
             </div>
           </li>
 
-          {(catalog.data ?? []).map((item) => {
-            const pending = item.request?.status === "pending";
-            const rejected = item.request?.status === "rejected";
+          {agencyGridItems(catalog.data ?? []).map((item) => {
+            const state = agencyPortalCardState(item);
+            const isLaCheie = item.id === LACHEIE_PORTAL_KEY;
             return (
               <li
                 key={item.id}
+                data-portal-card={item.id}
+                data-portal-state={state.key}
                 className="flex flex-col gap-3 rounded-xl border border-border bg-surface p-4"
               >
-                <div className="flex items-start gap-3">
-                <PortalLogoStack
-                  portalId={item.id}
-                  name={item.displayName}
-                  size={40}
-                  className="shrink-0"
-                />
-                  <div className="min-w-0 flex-1">
+                <div className="grid grid-cols-[auto_minmax(0,1fr)] items-center gap-3 sm:grid-cols-[auto_minmax(0,1fr)_auto]">
+                  <PortalLogoStack
+                    portalId={item.id}
+                    name={item.displayName}
+                    size={40}
+                    className="shrink-0"
+                  />
+                  <div className="min-w-0">
                     <p className="text-[17px] leading-6 font-bold break-words">{item.displayName}</p>
-                    <div data-portal-statuses className="mt-2 flex flex-wrap gap-2">
-                      {item.activated ? (
-                        <StatusBadge tone="success" dot>
-                          Activat
-                        </StatusBadge>
-                      ) : pending ? (
-                        <StatusBadge tone="warning" dot>
-                          Cerere trimisă
-                        </StatusBadge>
-                      ) : rejected ? (
-                        <StatusBadge tone="danger" dot>
-                          Respins
-                        </StatusBadge>
-                      ) : (
-                        <StatusBadge tone="neutral">Neactivat</StatusBadge>
-                      )}
-                      {item.availability !== "available" ? (
-                        <StatusBadge tone="neutral">În pregătire</StatusBadge>
-                      ) : null}
-                    </div>
+                    {state.key === "pending" ? (
+                      <p className="text-xs text-muted-foreground">
+                        Trimisă pe {formatRequestDate(state.requestedAt)}
+                      </p>
+                    ) : null}
+                  </div>
+                  <div className="col-span-2 sm:col-span-1 sm:justify-self-end">
+                    {state.key === "connected" ? (
+                      <span className="inline-flex items-center gap-2 text-sm font-medium">
+                        <span aria-hidden className="size-2 rounded-full bg-success" />
+                        Conectat
+                      </span>
+                    ) : isLaCheie ? null : (
+                      <Button
+                        className="h-11 w-full sm:w-auto"
+                        variant={state.disabled ? "outline" : "default"}
+                        disabled={state.disabled || request.isPending}
+                        onClick={() => request.mutate(item.id)}
+                      >
+                        {state.buttonLabel}
+                      </Button>
+                    )}
                   </div>
                 </div>
-
-                <p className="text-xs text-muted-foreground">{item.description}</p>
-                {rejected ? (
+                {state.key === "rejected" ? (
                   <p className="text-xs text-destructive">
-                    {item.request?.rejectionReason
-                      ? `Motiv: ${item.request.rejectionReason}`
-                      : "Cererea a fost respinsă."}
+                    {state.reason ? `Cerere respinsă. Motiv: ${state.reason}` : "Cererea a fost respinsă."}
                   </p>
                 ) : null}
-
-                <div className="mt-auto pt-1">
-                  {item.id === LACHEIE_PORTAL_KEY ? (
-                    // La Cheie aprobă automat cererile valide: activare directă,
-                    // fără coada de aprobare a Superadminului. Fără o agenție în
-                    // context (ex. Superadmin fără agenție selectată) nu afișăm panoul.
-                    organizationId ? (
-                      <LaCheieActivationPanel organizationId={organizationId} />
-                    ) : null
-                  ) : item.activated ? (
-                    <span className="text-xs text-muted-foreground">Disponibil în publicare</span>
-                  ) : (
-                    <Button
-                      className="h-11 w-full"
-                      variant={pending ? "outline" : "default"}
-                      disabled={pending || request.isPending}
-                      onClick={() => request.mutate(item.id)}
-                    >
-                      {pending ? "Cerere trimisă" : "Solicită activare"}
-                    </Button>
-                  )}
-                </div>
+                {isLaCheie && state.key !== "connected" && organizationId ? (
+                  // La Cheie aprobă automat cererile valide: activare directă.
+                  <LaCheieActivationPanel organizationId={organizationId} />
+                ) : null}
               </li>
             );
           })}
