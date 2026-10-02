@@ -20,6 +20,7 @@ import {
   Unplug,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
@@ -28,6 +29,7 @@ import { PortalLogoStack } from "@/components/app/PortalLogo";
 import { InlineLoading } from "@/components/app/LoadingState";
 import { QueryError } from "@/components/app/QueryError";
 import { ConfirmDialog } from "@/components/app/ConfirmDialog";
+import { cn } from "@/lib/utils";
 import { toastError } from "@/lib/errors";
 import { formatDateTime } from "@/lib/format";
 import {
@@ -41,7 +43,13 @@ import {
   savePortalConnection,
   setPortalActivation,
   testPortalConnection,
+  type PortalHubItem,
 } from "@/lib/portals.functions";
+import {
+  listPortalActivationRequests,
+  type PortalActivationRequestRow,
+} from "@/lib/portal-activation.functions";
+import { portalGridState, type PortalGridTone } from "@/lib/portals/grid-state";
 import {
   revokeStoriaAuthorization,
   startStoriaAuthorization,
