@@ -4,6 +4,7 @@ import {
   formatPropertyListDetails,
   formatPropertyListPrice,
   portalDotTone,
+  portalStateLabel,
 } from "./property-list-row";
 
 describe("property list row", () => {
@@ -25,6 +26,13 @@ describe("property list row", () => {
     expect(portalDotTone("expired")).toBe("warning");
     expect(portalDotTone("error")).toBe("danger");
     expect(portalDotTone("withdrawn")).toBe("neutral");
+  });
+
+  it("uses the same visible publication labels for equivalent portal states", () => {
+    expect(portalStateLabel("published")).toBe("Publicat");
+    expect(portalStateLabel("in_feed")).toBe("Publicat");
+    expect(portalStateLabel("not_selected")).toBe("Nepublicat");
+    expect(portalStateLabel("withdrawn")).toBe("Nepublicat");
   });
 
   it("shows Delete only when permission allows it", () => {

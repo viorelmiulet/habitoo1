@@ -68,27 +68,26 @@ function stateSentence(cell: PropertyPortalCell, selected: boolean) {
     return "Portalul a raportat o problemă la acest anunț, fără detalii. Apasă „Retrimite” pentru mesajul portalului.";
   if (cell.state === "syncing") return "Se sincronizează cu portalul…";
   if (cell.state === "published" || cell.state === "in_feed") {
-    const base = cell.state === "in_feed" ? "Activ în feedul portalului" : "Activ pe portal";
-    return cell.lastSyncAt ? `${base} · sincronizat ${syncAgo(cell.lastSyncAt)}` : base;
+    return cell.lastSyncAt ? `Ultima actualizare: ${syncAgo(cell.lastSyncAt)}` : "Publicat.";
   }
   if (cell.state === "expired")
     return "Anunțul a expirat pe portal — apasă „Publică” pentru a-l republica.";
-  if (cell.state === "withdrawn") return "Retrasă de pe portal.";
+  if (cell.state === "withdrawn") return "Nepublicat.";
   if (cell.state === "selected") return "Selectat — se trimite la următoarea apăsare pe „Publică”.";
-  return "Neselectat.";
+  return "Nepublicat.";
 }
 
 const STATE_VIEW: Record<PropertyPortalCell["state"], { label: string; pill: StatusPillState }> = {
   coming_soon: { label: "Inactiv", pill: "inactive" },
   not_configured: { label: "Neconfigurat", pill: "inactive" },
-  not_selected: { label: "Inactiv", pill: "inactive" },
+  not_selected: { label: "Nepublicat", pill: "inactive" },
   selected: { label: "Selectat", pill: "pending" },
   syncing: { label: "Se sincronizează", pill: "pending" },
   published: { label: "Publicat", pill: "published" },
-  in_feed: { label: "Activ în feed", pill: "published" },
+  in_feed: { label: "Publicat", pill: "published" },
   error: { label: "Refuzat", pill: "error" },
   expired: { label: "Expirat", pill: "pending" },
-  withdrawn: { label: "Retras", pill: "inactive" },
+  withdrawn: { label: "Nepublicat", pill: "inactive" },
 };
 
 function operationLabel(operation: string): string {

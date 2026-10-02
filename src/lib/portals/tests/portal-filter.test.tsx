@@ -71,6 +71,7 @@ describe("PortalFilterSelect", () => {
     expect(html).toContain('data-testid="logo-stack-romimo" data-size="28"');
     expect(html).toContain('data-testid="logo-stack-properstar"');
     expect(html).not.toContain("logo-stack-imobiliare_ro");
-    expect(html).toContain("Publicate (în feed)");
+    expect(html).toContain("Publicate");
+    expect(html).not.toContain("în feed");
   });
 });

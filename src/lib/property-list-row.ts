@@ -58,14 +58,14 @@ export function portalDotTone(state: PropertyPortalCell["state"]): PortalDotTone
 
 export function portalStateLabel(state: PropertyPortalCell["state"]): string {
   const labels: Record<PropertyPortalCell["state"], string> = {
-    published: "publicat",
-    in_feed: "în feed",
+    published: "Publicat",
+    in_feed: "Publicat",
     selected: "selectat",
     syncing: "în curs",
     expired: "expirat",
     error: "eroare",
-    withdrawn: "retras",
-    not_selected: "neselectat",
+    withdrawn: "Nepublicat",
+    not_selected: "Nepublicat",
     not_configured: "neconfigurat",
     coming_soon: "indisponibil momentan",
   };
