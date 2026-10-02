@@ -708,6 +708,13 @@
       "when": 1790939540089,
       "tag": "0100_guard_property_reassign",
       "breakpoints": true
+    },
+    {
+      "idx": 101,
+      "version": "7",
+      "when": 1790939559477,
+      "tag": "0101_guard_property_reassign_fix",
+      "breakpoints": true
     }
   ]
 }
