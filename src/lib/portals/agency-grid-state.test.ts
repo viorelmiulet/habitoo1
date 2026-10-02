@@ -34,4 +34,42 @@ describe("grila portalurilor pentru administratorul agenției", () => {
     const src = readFileSync("src/components/app/AgencyPortalCatalogCard.tsx", "utf8");
     expect(src).not.toMatch(/Checkbox|apiKey|credential|secret/i);
   });
+
+  it("afișează doar portalurile, fără Colaborare Habitoo", () => {
+    const src = readFileSync("src/components/app/AgencyPortalCatalogCard.tsx", "utf8");
+    expect(src).not.toContain("Colaborare Habitoo");
+    expect(src).toContain("Cere activarea portalurilor de care ai nevoie. Le activează echipa Habitoo.");
+  });
+
+  it("La Cheie folosește același card și nu afișează panoul de retrimitere", () => {
+    const catalog = readFileSync("src/components/app/AgencyPortalCatalogCard.tsx", "utf8");
+    const laCheie = readFileSync("src/components/app/LaCheieActivationPanel.tsx", "utf8");
+    expect(catalog).toMatch(/<li[\s\S]*isLaCheie[\s\S]*<LaCheieActivationPanel/);
+    expect(laCheie).toContain('"Solicită activarea"');
+    expect(laCheie).not.toContain("LaCheieResendPanel");
+  });
+
+  it("folosește mesaje simple pentru date lipsă și erori", () => {
+    const catalog = readFileSync("src/components/app/AgencyPortalCatalogCard.tsx", "utf8");
+    const laCheie = readFileSync("src/components/app/LaCheieActivationPanel.tsx", "utf8");
+    expect(laCheie).toContain("Completează datele agenției în");
+    expect(laCheie).toContain("Activarea nu a reușit acum. Încearcă din nou sau scrie-ne.");
+    expect(catalog).toContain("Cererea nu a fost trimisă. Încearcă din nou.");
+  });
+
+  it("nu afișează termeni tehnici", () => {
+    const sources = [
+      readFileSync("src/components/app/AgencyPortalCatalogCard.tsx", "utf8"),
+      readFileSync("src/components/app/LaCheieActivationPanel.tsx", "utf8"),
+    ];
+    const visibleStrings = sources.flatMap((source) =>
+      [...source.matchAll(/(?:"([^"\n]*)"|'([^'\n]*)'|>([^<{\n]+)<)/g)].map(
+        (match) => match[1] ?? match[2] ?? match[3] ?? "",
+      ),
+    );
+    const copyWithoutBrandName = visibleStrings.join(" ").replaceAll("La Cheie", "LaCheie");
+    expect(copyWithoutBrandName).not.toMatch(
+      /\b(?:API|feed|XML|JSON|cheie|sincronizare|extern_id)\b/i,
+    );
+  });
 });

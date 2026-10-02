@@ -1,14 +1,7 @@
-/**
- * Catalog de portaluri pentru administratorul agenției: READ-ONLY + cerere de
- * activare. Nicio credențială, nicio conexiune, nicio configurare aici —
- * acelea rămân exclusiv la Superadmin.
- */
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "@/components/ui/sonner";
-import { StatusBadge } from "@/components/app/StatusBadge";
 import { PortalLogoStack } from "@/components/app/PortalLogo";
-import { BrandLogo } from "@/components/brand/BrandLogo";
 import { Button } from "@/components/ui/button";
 import { InlineLoading } from "@/components/app/LoadingState";
 import { QueryError } from "@/components/app/QueryError";
@@ -18,22 +11,11 @@ import { LaCheieActivationPanel } from "@/components/app/LaCheieActivationPanel"
 import { LACHEIE_PORTAL_KEY } from "@/lib/portals/lacheie/config";
 import { agencyGridItems, agencyPortalCardState } from "@/lib/portals/grid-state";
 
-function formatRequestDate(iso: string): string {
-  const d = new Date(iso);
-  return Number.isNaN(d.getTime()) ? "—" : d.toLocaleDateString("ro-RO", { day: "2-digit", month: "long", year: "numeric" });
-}
-
 export function AgencyPortalCatalogCard() {
   const queryClient = useQueryClient();
   const loadCatalog = useServerFn(getAgencyPortalCatalog);
   const sendRequest = useServerFn(requestPortalActivation);
   const { data: currentUser } = useCurrentUser();
-  /**
-   * Colaborarea Habitoo apare aici doar informativ: e o alegere a agenției
-   * (Setări → Agenție), nu o activare aprobată de echipa Habitoo.
-   */
-  const collaborating = currentUser?.organization?.collaboration_enabled === true;
-  /** Agenția din context: fără ea (Superadmin fără agenție) nu putem activa nimic. */
   const organizationId = currentUser?.organization?.id ?? null;
 
   const catalog = useQuery({
@@ -51,7 +33,7 @@ export function AgencyPortalCatalogCard() {
       );
       void queryClient.invalidateQueries({ queryKey: ["agency-portal-catalog"] });
     },
-    onError: (error: Error) => toast.error(error.message),
+    onError: () => toast.error("Cererea nu a fost trimisă. Încearcă din nou."),
   });
 
   return (
@@ -59,8 +41,7 @@ export function AgencyPortalCatalogCard() {
       <header className="border-b border-border px-5 py-4">
         <h2 className="text-sm font-semibold tracking-wide uppercase">Portaluri imobiliare</h2>
         <p className="text-xs text-muted-foreground">
-          Configurarea conexiunilor se face de echipa Habitoo. Aici vezi ce portaluri sunt
-          disponibile și poți cere activarea lor pentru agenția ta.
+          Cere activarea portalurilor de care ai nevoie. Le activează echipa Habitoo.
         </p>
       </header>
 
@@ -70,39 +51,13 @@ export function AgencyPortalCatalogCard() {
         </div>
       ) : catalog.isError ? (
         <div className="p-5">
-          <QueryError error={catalog.error} onRetry={() => catalog.refetch()} />
+          <QueryError
+            error={new Error("Portalurile nu s-au încărcat. Încearcă din nou.")}
+            onRetry={() => catalog.refetch()}
+          />
         </div>
       ) : (
         <ul className="grid grid-cols-1 gap-4 p-5 md:grid-cols-2 lg:grid-cols-3">
-          <li className="flex flex-col gap-3 rounded-xl border border-border bg-surface p-4">
-            <div className="flex items-start gap-3">
-              <span className="flex size-10 shrink-0 items-center justify-center rounded-[10px] border border-border bg-card">
-                <BrandLogo markOnly className="size-8" />
-              </span>
-              <div className="min-w-0 flex-1">
-                <p className="text-[17px] leading-6 font-bold break-words">Colaborare Habitoo</p>
-                <div data-portal-statuses className="mt-2 flex flex-wrap gap-2">
-                  {collaborating ? (
-                    <StatusBadge tone="success" dot>
-                      Participi
-                    </StatusBadge>
-                  ) : (
-                    <StatusBadge tone="neutral">Neactivat</StatusBadge>
-                  )}
-                </div>
-              </div>
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Rețeaua internă Habitoo: proprietățile bifate ajung la celelalte agenții, fără date de
-              proprietar. Este alegerea agenției, nu necesită aprobare.
-            </p>
-            <div className="mt-auto pt-1">
-              <span className="text-xs text-muted-foreground">
-                Se comută din Setări → Agenție, apoi se bifează per proprietate în fila Publicare.
-              </span>
-            </div>
-          </li>
-
           {agencyGridItems(catalog.data ?? []).map((item) => {
             const state = agencyPortalCardState(item);
             const isLaCheie = item.id === LACHEIE_PORTAL_KEY;
@@ -113,28 +68,26 @@ export function AgencyPortalCatalogCard() {
                 data-portal-state={state.key}
                 className="flex flex-col gap-3 rounded-xl border border-border bg-surface p-4"
               >
-                <div className="grid grid-cols-[auto_minmax(0,1fr)] items-center gap-3 sm:grid-cols-[auto_minmax(0,1fr)_auto]">
+                <div className="flex items-center gap-3">
                   <PortalLogoStack
                     portalId={item.id}
                     name={item.displayName}
                     size={40}
                     className="shrink-0"
                   />
-                  <div className="min-w-0">
+                  <div className="min-w-0 flex-1">
                     <p className="text-[17px] leading-6 font-bold break-words">{item.displayName}</p>
-                    {state.key === "pending" ? (
-                      <p className="text-xs text-muted-foreground">
-                        Trimisă pe {formatRequestDate(state.requestedAt)}
-                      </p>
-                    ) : null}
                   </div>
-                  <div className="col-span-2 sm:col-span-1 sm:justify-self-end">
+                </div>
+                <div data-portal-statuses className="mt-auto flex flex-wrap items-center gap-2 pt-1">
                     {state.key === "connected" ? (
                       <span className="inline-flex items-center gap-2 text-sm font-medium">
                         <span aria-hidden className="size-2 rounded-full bg-success" />
                         Conectat
                       </span>
-                    ) : isLaCheie ? null : (
+                    ) : isLaCheie && organizationId ? (
+                      <LaCheieActivationPanel organizationId={organizationId} />
+                    ) : (
                       <Button
                         className="h-11 w-full sm:w-auto"
                         variant={state.disabled ? "outline" : "default"}
@@ -144,17 +97,7 @@ export function AgencyPortalCatalogCard() {
                         {state.buttonLabel}
                       </Button>
                     )}
-                  </div>
                 </div>
-                {state.key === "rejected" ? (
-                  <p className="text-xs text-destructive">
-                    {state.reason ? `Cerere respinsă. Motiv: ${state.reason}` : "Cererea a fost respinsă."}
-                  </p>
-                ) : null}
-                {isLaCheie && state.key !== "connected" && organizationId ? (
-                  // La Cheie aprobă automat cererile valide: activare directă.
-                  <LaCheieActivationPanel organizationId={organizationId} />
-                ) : null}
               </li>
             );
           })}
