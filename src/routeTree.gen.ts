@@ -93,8 +93,10 @@ import { Route as AuthenticatedAppAcpDatePiataIndexRouteImport } from './routes/
 import { Route as AuthenticatedAppAcpDatePiataIdRouteImport } from './routes/_authenticated/app.acp.date-piata.$id'
 import { Route as ApiPublicFeedProperstarAgencyKeyRouteImport } from './routes/api/public/feed/properstar/$agencyKey'
 import { Route as ApiPublicHomepitchV1PropertiesRouteImport } from './routes/api/public/homepitch/v1/properties'
+import { Route as ApiPublicPortalV1AgencyRouteImport } from './routes/api/public/portal/v1/agency'
 import { Route as ApiPublicPortalV1AgentsRouteImport } from './routes/api/public/portal/v1/agents'
 import { Route as ApiPublicPortalV1PropertiesRouteImport } from './routes/api/public/portal/v1/properties'
+import { Route as ApiPublicSitesV1AgencyRouteImport } from './routes/api/public/sites/v1/agency'
 import { Route as ApiPublicSitesV1AgentsRouteImport } from './routes/api/public/sites/v1/agents'
 import { Route as ApiPublicSitesV1ContactsRouteImport } from './routes/api/public/sites/v1/contacts'
 import { Route as ApiPublicSitesV1PropertiesRouteImport } from './routes/api/public/sites/v1/properties'
@@ -113,6 +115,8 @@ import { Route as ApiPublicPortalV1StoriaNotificationsRouteImport } from './rout
 import { Route as ApiPublicSitesV1MediaIdRouteImport } from './routes/api/public/sites/v1/media.$id'
 import { Route as ApiPublicSitesV1PropertiesIdRouteImport } from './routes/api/public/sites/v1/properties.$id'
 import { Route as ApiPublicPortalV1StoriaOauthCallbackRouteImport } from './routes/api/public/portal/v1/storia.oauth.callback'
+import { Route as ApiPublicSitesV1MediaAgencyIdRouteImport } from './routes/api/public/sites/v1/media.agency.$id'
+import { Route as ApiPublicSitesV1MediaAgentIdRouteImport } from './routes/api/public/sites/v1/media.agent.$id'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -580,6 +584,11 @@ const ApiPublicHomepitchV1PropertiesRoute =
     path: '/api/public/homepitch/v1/properties',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicPortalV1AgencyRoute = ApiPublicPortalV1AgencyRouteImport.update({
+  id: '/api/public/portal/v1/agency',
+  path: '/api/public/portal/v1/agency',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicPortalV1AgentsRoute = ApiPublicPortalV1AgentsRouteImport.update({
   id: '/api/public/portal/v1/agents',
   path: '/api/public/portal/v1/agents',
@@ -591,6 +600,11 @@ const ApiPublicPortalV1PropertiesRoute =
     path: '/api/public/portal/v1/properties',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicSitesV1AgencyRoute = ApiPublicSitesV1AgencyRouteImport.update({
+  id: '/api/public/sites/v1/agency',
+  path: '/api/public/sites/v1/agency',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicSitesV1AgentsRoute = ApiPublicSitesV1AgentsRouteImport.update({
   id: '/api/public/sites/v1/agents',
   path: '/api/public/sites/v1/agents',
@@ -696,6 +710,18 @@ const ApiPublicPortalV1StoriaOauthCallbackRoute =
     path: '/api/public/portal/v1/storia/oauth/callback',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicSitesV1MediaAgencyIdRoute =
+  ApiPublicSitesV1MediaAgencyIdRouteImport.update({
+    id: '/api/public/sites/v1/media/agency/$id',
+    path: '/api/public/sites/v1/media/agency/$id',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicSitesV1MediaAgentIdRoute =
+  ApiPublicSitesV1MediaAgentIdRouteImport.update({
+    id: '/api/public/sites/v1/media/agent/$id',
+    path: '/api/public/sites/v1/media/agent/$id',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -780,8 +806,10 @@ export interface FileRoutesByFullPath {
   '/app/acp/date-piata/$id': typeof AuthenticatedAppAcpDatePiataIdRoute
   '/api/public/feed/properstar/$agencyKey': typeof ApiPublicFeedProperstarAgencyKeyRoute
   '/api/public/homepitch/v1/properties': typeof ApiPublicHomepitchV1PropertiesRouteWithChildren
+  '/api/public/portal/v1/agency': typeof ApiPublicPortalV1AgencyRoute
   '/api/public/portal/v1/agents': typeof ApiPublicPortalV1AgentsRoute
   '/api/public/portal/v1/properties': typeof ApiPublicPortalV1PropertiesRouteWithChildren
+  '/api/public/sites/v1/agency': typeof ApiPublicSitesV1AgencyRoute
   '/api/public/sites/v1/agents': typeof ApiPublicSitesV1AgentsRoute
   '/api/public/sites/v1/contacts': typeof ApiPublicSitesV1ContactsRoute
   '/api/public/sites/v1/properties': typeof ApiPublicSitesV1PropertiesRouteWithChildren
@@ -801,6 +829,8 @@ export interface FileRoutesByFullPath {
   '/api/public/sites/v1/media/$id': typeof ApiPublicSitesV1MediaIdRoute
   '/api/public/sites/v1/properties/$id': typeof ApiPublicSitesV1PropertiesIdRoute
   '/api/public/portal/v1/storia/oauth/callback': typeof ApiPublicPortalV1StoriaOauthCallbackRoute
+  '/api/public/sites/v1/media/agency/$id': typeof ApiPublicSitesV1MediaAgencyIdRoute
+  '/api/public/sites/v1/media/agent/$id': typeof ApiPublicSitesV1MediaAgentIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -883,8 +913,10 @@ export interface FileRoutesByTo {
   '/app/acp/date-piata/$id': typeof AuthenticatedAppAcpDatePiataIdRoute
   '/api/public/feed/properstar/$agencyKey': typeof ApiPublicFeedProperstarAgencyKeyRoute
   '/api/public/homepitch/v1/properties': typeof ApiPublicHomepitchV1PropertiesRouteWithChildren
+  '/api/public/portal/v1/agency': typeof ApiPublicPortalV1AgencyRoute
   '/api/public/portal/v1/agents': typeof ApiPublicPortalV1AgentsRoute
   '/api/public/portal/v1/properties': typeof ApiPublicPortalV1PropertiesRouteWithChildren
+  '/api/public/sites/v1/agency': typeof ApiPublicSitesV1AgencyRoute
   '/api/public/sites/v1/agents': typeof ApiPublicSitesV1AgentsRoute
   '/api/public/sites/v1/contacts': typeof ApiPublicSitesV1ContactsRoute
   '/api/public/sites/v1/properties': typeof ApiPublicSitesV1PropertiesRouteWithChildren
@@ -904,6 +936,8 @@ export interface FileRoutesByTo {
   '/api/public/sites/v1/media/$id': typeof ApiPublicSitesV1MediaIdRoute
   '/api/public/sites/v1/properties/$id': typeof ApiPublicSitesV1PropertiesIdRoute
   '/api/public/portal/v1/storia/oauth/callback': typeof ApiPublicPortalV1StoriaOauthCallbackRoute
+  '/api/public/sites/v1/media/agency/$id': typeof ApiPublicSitesV1MediaAgencyIdRoute
+  '/api/public/sites/v1/media/agent/$id': typeof ApiPublicSitesV1MediaAgentIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -990,8 +1024,10 @@ export interface FileRoutesById {
   '/_authenticated/app/acp/date-piata/$id': typeof AuthenticatedAppAcpDatePiataIdRoute
   '/api/public/feed/properstar/$agencyKey': typeof ApiPublicFeedProperstarAgencyKeyRoute
   '/api/public/homepitch/v1/properties': typeof ApiPublicHomepitchV1PropertiesRouteWithChildren
+  '/api/public/portal/v1/agency': typeof ApiPublicPortalV1AgencyRoute
   '/api/public/portal/v1/agents': typeof ApiPublicPortalV1AgentsRoute
   '/api/public/portal/v1/properties': typeof ApiPublicPortalV1PropertiesRouteWithChildren
+  '/api/public/sites/v1/agency': typeof ApiPublicSitesV1AgencyRoute
   '/api/public/sites/v1/agents': typeof ApiPublicSitesV1AgentsRoute
   '/api/public/sites/v1/contacts': typeof ApiPublicSitesV1ContactsRoute
   '/api/public/sites/v1/properties': typeof ApiPublicSitesV1PropertiesRouteWithChildren
@@ -1011,6 +1047,8 @@ export interface FileRoutesById {
   '/api/public/sites/v1/media/$id': typeof ApiPublicSitesV1MediaIdRoute
   '/api/public/sites/v1/properties/$id': typeof ApiPublicSitesV1PropertiesIdRoute
   '/api/public/portal/v1/storia/oauth/callback': typeof ApiPublicPortalV1StoriaOauthCallbackRoute
+  '/api/public/sites/v1/media/agency/$id': typeof ApiPublicSitesV1MediaAgencyIdRoute
+  '/api/public/sites/v1/media/agent/$id': typeof ApiPublicSitesV1MediaAgentIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -1097,8 +1135,10 @@ export interface FileRouteTypes {
     | '/app/acp/date-piata/$id'
     | '/api/public/feed/properstar/$agencyKey'
     | '/api/public/homepitch/v1/properties'
+    | '/api/public/portal/v1/agency'
     | '/api/public/portal/v1/agents'
     | '/api/public/portal/v1/properties'
+    | '/api/public/sites/v1/agency'
     | '/api/public/sites/v1/agents'
     | '/api/public/sites/v1/contacts'
     | '/api/public/sites/v1/properties'
@@ -1118,6 +1158,8 @@ export interface FileRouteTypes {
     | '/api/public/sites/v1/media/$id'
     | '/api/public/sites/v1/properties/$id'
     | '/api/public/portal/v1/storia/oauth/callback'
+    | '/api/public/sites/v1/media/agency/$id'
+    | '/api/public/sites/v1/media/agent/$id'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -1200,8 +1242,10 @@ export interface FileRouteTypes {
     | '/app/acp/date-piata/$id'
     | '/api/public/feed/properstar/$agencyKey'
     | '/api/public/homepitch/v1/properties'
+    | '/api/public/portal/v1/agency'
     | '/api/public/portal/v1/agents'
     | '/api/public/portal/v1/properties'
+    | '/api/public/sites/v1/agency'
     | '/api/public/sites/v1/agents'
     | '/api/public/sites/v1/contacts'
     | '/api/public/sites/v1/properties'
@@ -1221,6 +1265,8 @@ export interface FileRouteTypes {
     | '/api/public/sites/v1/media/$id'
     | '/api/public/sites/v1/properties/$id'
     | '/api/public/portal/v1/storia/oauth/callback'
+    | '/api/public/sites/v1/media/agency/$id'
+    | '/api/public/sites/v1/media/agent/$id'
   id:
     | '__root__'
     | '/'
@@ -1306,8 +1352,10 @@ export interface FileRouteTypes {
     | '/_authenticated/app/acp/date-piata/$id'
     | '/api/public/feed/properstar/$agencyKey'
     | '/api/public/homepitch/v1/properties'
+    | '/api/public/portal/v1/agency'
     | '/api/public/portal/v1/agents'
     | '/api/public/portal/v1/properties'
+    | '/api/public/sites/v1/agency'
     | '/api/public/sites/v1/agents'
     | '/api/public/sites/v1/contacts'
     | '/api/public/sites/v1/properties'
@@ -1327,6 +1375,8 @@ export interface FileRouteTypes {
     | '/api/public/sites/v1/media/$id'
     | '/api/public/sites/v1/properties/$id'
     | '/api/public/portal/v1/storia/oauth/callback'
+    | '/api/public/sites/v1/media/agency/$id'
+    | '/api/public/sites/v1/media/agent/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -1365,8 +1415,10 @@ export interface RootRouteChildren {
   LovableEmailAuthWebhookRoute: typeof LovableEmailAuthWebhookRoute
   ApiPublicFeedProperstarAgencyKeyRoute: typeof ApiPublicFeedProperstarAgencyKeyRoute
   ApiPublicHomepitchV1PropertiesRoute: typeof ApiPublicHomepitchV1PropertiesRouteWithChildren
+  ApiPublicPortalV1AgencyRoute: typeof ApiPublicPortalV1AgencyRoute
   ApiPublicPortalV1AgentsRoute: typeof ApiPublicPortalV1AgentsRoute
   ApiPublicPortalV1PropertiesRoute: typeof ApiPublicPortalV1PropertiesRouteWithChildren
+  ApiPublicSitesV1AgencyRoute: typeof ApiPublicSitesV1AgencyRoute
   ApiPublicSitesV1AgentsRoute: typeof ApiPublicSitesV1AgentsRoute
   ApiPublicSitesV1ContactsRoute: typeof ApiPublicSitesV1ContactsRoute
   ApiPublicSitesV1PropertiesRoute: typeof ApiPublicSitesV1PropertiesRouteWithChildren
@@ -1382,6 +1434,8 @@ export interface RootRouteChildren {
   ApiPublicPortalV1StoriaNotificationsRoute: typeof ApiPublicPortalV1StoriaNotificationsRoute
   ApiPublicSitesV1MediaIdRoute: typeof ApiPublicSitesV1MediaIdRoute
   ApiPublicPortalV1StoriaOauthCallbackRoute: typeof ApiPublicPortalV1StoriaOauthCallbackRoute
+  ApiPublicSitesV1MediaAgencyIdRoute: typeof ApiPublicSitesV1MediaAgencyIdRoute
+  ApiPublicSitesV1MediaAgentIdRoute: typeof ApiPublicSitesV1MediaAgentIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -1974,6 +2028,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicHomepitchV1PropertiesRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/portal/v1/agency': {
+      id: '/api/public/portal/v1/agency'
+      path: '/api/public/portal/v1/agency'
+      fullPath: '/api/public/portal/v1/agency'
+      preLoaderRoute: typeof ApiPublicPortalV1AgencyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/portal/v1/agents': {
       id: '/api/public/portal/v1/agents'
       path: '/api/public/portal/v1/agents'
@@ -1986,6 +2047,13 @@ declare module '@tanstack/react-router' {
       path: '/api/public/portal/v1/properties'
       fullPath: '/api/public/portal/v1/properties'
       preLoaderRoute: typeof ApiPublicPortalV1PropertiesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/sites/v1/agency': {
+      id: '/api/public/sites/v1/agency'
+      path: '/api/public/sites/v1/agency'
+      fullPath: '/api/public/sites/v1/agency'
+      preLoaderRoute: typeof ApiPublicSitesV1AgencyRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/sites/v1/agents': {
@@ -2112,6 +2180,20 @@ declare module '@tanstack/react-router' {
       path: '/api/public/portal/v1/storia/oauth/callback'
       fullPath: '/api/public/portal/v1/storia/oauth/callback'
       preLoaderRoute: typeof ApiPublicPortalV1StoriaOauthCallbackRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/sites/v1/media/agency/$id': {
+      id: '/api/public/sites/v1/media/agency/$id'
+      path: '/api/public/sites/v1/media/agency/$id'
+      fullPath: '/api/public/sites/v1/media/agency/$id'
+      preLoaderRoute: typeof ApiPublicSitesV1MediaAgencyIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/sites/v1/media/agent/$id': {
+      id: '/api/public/sites/v1/media/agent/$id'
+      path: '/api/public/sites/v1/media/agent/$id'
+      fullPath: '/api/public/sites/v1/media/agent/$id'
+      preLoaderRoute: typeof ApiPublicSitesV1MediaAgentIdRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
@@ -2344,9 +2426,11 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicFeedProperstarAgencyKeyRoute: ApiPublicFeedProperstarAgencyKeyRoute,
   ApiPublicHomepitchV1PropertiesRoute:
     ApiPublicHomepitchV1PropertiesRouteWithChildren,
+  ApiPublicPortalV1AgencyRoute: ApiPublicPortalV1AgencyRoute,
   ApiPublicPortalV1AgentsRoute: ApiPublicPortalV1AgentsRoute,
   ApiPublicPortalV1PropertiesRoute:
     ApiPublicPortalV1PropertiesRouteWithChildren,
+  ApiPublicSitesV1AgencyRoute: ApiPublicSitesV1AgencyRoute,
   ApiPublicSitesV1AgentsRoute: ApiPublicSitesV1AgentsRoute,
   ApiPublicSitesV1ContactsRoute: ApiPublicSitesV1ContactsRoute,
   ApiPublicSitesV1PropertiesRoute: ApiPublicSitesV1PropertiesRouteWithChildren,
@@ -2368,6 +2452,8 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicSitesV1MediaIdRoute: ApiPublicSitesV1MediaIdRoute,
   ApiPublicPortalV1StoriaOauthCallbackRoute:
     ApiPublicPortalV1StoriaOauthCallbackRoute,
+  ApiPublicSitesV1MediaAgencyIdRoute: ApiPublicSitesV1MediaAgencyIdRoute,
+  ApiPublicSitesV1MediaAgentIdRoute: ApiPublicSitesV1MediaAgentIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

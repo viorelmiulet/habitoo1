@@ -16,6 +16,8 @@ import { feedUrlsForRequest } from "@/lib/site-feed/config";
 import {
   buildPaginatedFeed,
   isPropertyFeedEligible,
+  agencyLogoFeedUrl,
+  httpsUrlOrNull,
   mapAgent,
   mapPropertyToFeed,
   parsePagination,
@@ -311,7 +313,7 @@ export async function handleAgentsList(
   if (error) throw error;
 
   const feed = buildPaginatedFeed({
-    data: ((data ?? []) as ProfileRow[]).map((p) => mapAgent(p)),
+    data: ((data ?? []) as ProfileRow[]).map((p) => mapAgent(p, feedUrlsForRequest(url).baseUrl)),
     total: count ?? 0,
     page,
     perPage,
@@ -321,5 +323,36 @@ export async function handleAgentsList(
   return {
     response: jsonResponse({ ...feed, api_version: FEED_API_VERSION }, 200, 60),
     items: feed.data.length,
+  };
+}
+
+/** Identitatea publică a agenției: doar nume și URL logo stabil. */
+export async function handleAgency(
+  request: Request,
+  auth: FeedAuthOk,
+): Promise<FeedHandlerResult> {
+  if (!hasScope(auth, "agents:read") && !hasScope(auth, "feed:read")) {
+    return missingScope("agents:read");
+  }
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { data, error } = await supabaseAdmin
+    .from("organizations")
+    .select("id, name, logo_path, logo_url")
+    .eq("id", auth.organizationId)
+    .maybeSingle();
+  if (error) throw error;
+  if (!data) return { response: errorResponse(404, "Agency not found."), items: 0 };
+  const hasLogo = Boolean(data.logo_path?.trim()) || Boolean(httpsUrlOrNull(data.logo_url));
+  const { baseUrl } = feedUrlsForRequest(new URL(request.url));
+  return {
+    response: jsonResponse(
+      {
+        data: { nume: data.name, logo: agencyLogoFeedUrl(data.id, hasLogo, baseUrl) },
+        api_version: FEED_API_VERSION,
+      },
+      200,
+      60,
+    ),
+    items: 1,
   };
 }
