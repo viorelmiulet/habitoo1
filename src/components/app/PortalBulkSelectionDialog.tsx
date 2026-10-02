@@ -51,7 +51,7 @@ export function PortalBulkSelectionDialog({ mode, propertyIds: allPropertyIds, c
       if ((cell?.selected ?? false) === enabled) return [];
       return [{ propertyId, portalId: portal.portalId, enabled, promoted: enabled && portal.promotionFlag ? Boolean(promotions[portal.portalId]) : false }];
     })) } }),
-    onSuccess: (result) => { onStarted(result.jobId); onClose(); toast.success(`${result.queued} modificări rulează în fundal.`); },
+    onSuccess: (result) => { onStarted(result.jobId); onClose(); },
     onError: (error: Error) => toastError(error),
   });
   return <Dialog open={mode !== null} onOpenChange={(open) => !open && onClose()}><DialogContent className="max-w-2xl rounded-[18px] bg-card"><DialogHeader><DialogTitle className="font-display">{enabled ? "Publică pe portaluri" : "Retrage de pe portaluri"}</DialogTitle><DialogDescription>Alege portalurile pentru cele {propertyIds.length} anunțuri selectate.</DialogDescription></DialogHeader>

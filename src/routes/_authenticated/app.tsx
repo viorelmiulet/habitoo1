@@ -1,4 +1,5 @@
 import { createFileRoute, Navigate, Outlet } from "@tanstack/react-router";
+import { PortalBulkWatcher } from "@/components/app/PortalBulkProgress";
 import { AppShell } from "@/components/app/AppShell";
 import { agencyNavFor, superadminNav } from "@/components/app/AppSidebar";
 import { filterAiNavigation } from "@/components/app/sidebar-navigation";
@@ -52,6 +53,7 @@ function AppLayout() {
   return (
     <AppShell user={user} groups={groups} variant="agency">
       <Outlet />
+      <PortalBulkWatcher />
     </AppShell>
   );
 }
