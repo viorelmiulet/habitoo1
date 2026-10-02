@@ -450,29 +450,11 @@ export function PortalsCard({ organizationId }: { organizationId: string }) {
               {dirty ? <StatusBadge className="h-7 text-[13px]" tone="warning">Modificări nesalvate</StatusBadge> : null}
             </div>
 
-            {hasError && !open && item.connection.lastSyncError ? (
+            {hasError && item.connection.lastSyncError ? (
               <p className="px-4 pb-4 text-sm break-words text-destructive sm:px-5">{item.connection.lastSyncError}</p>
             ) : null}
 
-            <Button
-              type="button"
-              variant="ghost"
-              onClick={toggle}
-              aria-expanded={open}
-              className="h-11 w-full justify-between rounded-none border-t border-border px-4 text-[13px] sm:px-5"
-            >
-              Detalii și setări
-              <ChevronDown
-                className={
-                  open
-                    ? "size-4 shrink-0 rotate-180 text-muted-foreground transition-transform"
-                    : "size-4 shrink-0 text-muted-foreground transition-transform"
-                }
-                aria-hidden
-              />
-            </Button>
-
-            {open ? (
+            {
               <div className="space-y-4 border-t border-border p-5">
                 <p className="text-sm text-muted-foreground">{item.portal.description}</p>
 
@@ -1009,7 +991,7 @@ export function PortalsCard({ organizationId }: { organizationId: string }) {
                   </>
                 )}
               </div>
-            ) : null}
+            }
           </div>
         );
       })}
@@ -1083,15 +1065,15 @@ export function PortalsCard({ organizationId }: { organizationId: string }) {
       />
 
       <ConfirmDialog
-        open={confirmCollapse !== null}
-        onOpenChange={(o) => setConfirmCollapse(o ? confirmCollapse : null)}
+        open={confirmSwitch !== null}
+        onOpenChange={(o) => setConfirmSwitch(o ? confirmSwitch : null)}
         title="Ai modificări nesalvate"
-        description="Datele completate pentru acest portal nu au fost salvate. Dacă restrângi cardul, se pierd."
-        confirmLabel="Restrânge și renunță"
+        description="Datele completate pentru portalul curent nu au fost salvate. Dacă comuți pe alt portal, se pierd."
+        confirmLabel="Comută și renunță"
         destructive
         onConfirm={() => {
-          if (confirmCollapse) {
-            const id = confirmCollapse;
+          if (confirmSwitch) {
+            const id = confirmSwitch;
             setAccountId((prev) => {
               const next = { ...prev };
               delete next[id];
@@ -1103,9 +1085,24 @@ export function PortalsCard({ organizationId }: { organizationId: string }) {
               return next;
             });
             setCredential((prev) => ({ ...prev, [id]: "" }));
-            collapse(id);
+            persistSelected(id);
           }
-          setConfirmCollapse(null);
+          setConfirmSwitch(null);
+        }}
+      />
+
+      <ConfirmDialog
+        open={confirmDeactivate !== null}
+        onOpenChange={(o) => setConfirmDeactivate(o ? confirmDeactivate : null)}
+        title="Dezactivezi portalul pentru agenție?"
+        description="Agenția nu va mai putea publica pe acest portal, iar trimiterile reale către el se opresc. Dezactivarea nu retrage automat anunțurile publicate."
+        confirmLabel="Dezactivează"
+        destructive
+        onConfirm={() => {
+          if (confirmDeactivate) {
+            activation.mutate({ portalId: confirmDeactivate, activated: false });
+          }
+          setConfirmDeactivate(null);
         }}
       />
 
