@@ -67,6 +67,9 @@ describe("grila portalurilor pentru administratorul agenției", () => {
         (match) => match[1] ?? match[2] ?? match[3] ?? "",
       ),
     );
-    expect(visibleStrings.join(" ")).not.toMatch(/\b(?:API|feed|XML|JSON|cheie|sincronizare|extern_id)\b/i);
+    const copyWithoutBrandName = visibleStrings.join(" ").replaceAll("La Cheie", "LaCheie");
+    expect(copyWithoutBrandName).not.toMatch(
+      /\b(?:API|feed|XML|JSON|cheie|sincronizare|extern_id)\b/i,
+    );
   });
 });
