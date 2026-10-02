@@ -25,3 +25,4 @@
 - Account/agency deletion and cross-agency reassignment run only through `account_deletion_jobs` (worker in `src/lib/account-deletion.server.ts`, cron armed on enqueue). Why: portal withdrawals and storage moves must finish before rows change or disappear.
 
 - Changing `properties.assigned_to` is allowed only for agency_admin/superadmin (trigger `guard_property_reassign`; service role and self-claim of unassigned listings exempt) and goes through `reassignProperties` in `src/lib/property-agent.functions.ts`. Why: RLS lets any member update other fields, but reassignment must stay manager-only and keep the slot trigger in force.
+- Collaboration activation copies the agency default commission onto the property only when no explicit commission is supplied. Why: each offer keeps a stable commission after activation while later agency-default changes affect only future activations.

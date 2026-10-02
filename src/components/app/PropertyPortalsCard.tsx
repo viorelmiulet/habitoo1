@@ -10,6 +10,7 @@
  * introducă o a doua sursă de adevăr.
  */
 import { ContactBlockNotice } from "@/components/app/ContactBlockNotice";
+import { Link } from "@tanstack/react-router";
 import { FEED_EXCLUDED_NO_PHONE, FEED_PORTALS_REQUIRING_AGENT_PHONE } from "@/lib/portals/listing-contact";
 import { useCurrentUser } from "@/hooks/use-session";
 import { getPropertyAutoWithdrawals, type AutoWithdrawView } from "@/lib/property-status.functions";
@@ -287,7 +288,13 @@ export const PropertyPortalsCard = forwardRef<
     // publicarea pe portaluri, exact ca între portaluri.
     if (collabDirty) {
       const percent = collabPercent.trim() === "" ? null : Number(collabPercent);
-      if (collabValue && (percent === null || Number.isNaN(percent))) {
+      if (
+        collabValue &&
+        (Number.isNaN(percent) ||
+          (percent === null &&
+            (collabRow?.defaultCommissionPercent === null ||
+              collabRow?.defaultCommissionPercent === undefined)))
+      ) {
         throw new Error("Completează comisionul oferit pentru Colaborare Habitoo.");
       }
       try {
@@ -333,6 +340,7 @@ export const PropertyPortalsCard = forwardRef<
     collabValue,
     collabPercent,
     collabTerms,
+    collabRow?.defaultCommissionPercent,
     propertyId,
     saveCollab,
     queryClient,
@@ -406,7 +414,11 @@ export const PropertyPortalsCard = forwardRef<
                 <Card
                   className={cn(
                     "p-5 text-sm",
-                    collabValue && collabPercent.trim() === "" && "bg-warning/10",
+                    collabValue &&
+                      collabPercent.trim() === "" &&
+                      (collabRow?.defaultCommissionPercent === null ||
+                        collabRow?.defaultCommissionPercent === undefined) &&
+                      "bg-warning/10",
                   )}
                 >
                   <div className="flex flex-wrap items-start gap-3">
@@ -459,13 +471,32 @@ export const PropertyPortalsCard = forwardRef<
                         <Input
                           id="collab-percent"
                           inputMode="decimal"
-                          placeholder="Ex. 1.5"
+                          placeholder={
+                            collabRow?.defaultCommissionPercent !== null &&
+                            collabRow?.defaultCommissionPercent !== undefined
+                              ? `Standard agenție: ${collabRow.defaultCommissionPercent}%`
+                              : "Ex. 1.5"
+                          }
                           value={collabPercent}
                           onChange={(e) => setCollabPercent(e.target.value)}
                         />
-                        {collabPercent.trim() === "" ? (
+                        {collabPercent.trim() === "" &&
+                        collabRow?.defaultCommissionPercent !== null &&
+                        collabRow?.defaultCommissionPercent !== undefined ? (
+                          <p className="text-xs text-muted-foreground">
+                            Lasă gol pentru comisionul standard.
+                          </p>
+                        ) : collabPercent.trim() === "" ? (
                           <p className="text-xs text-warning-foreground">
-                            Obligatoriu cât timp colaborarea este activă.
+                            Obligatoriu cât timp colaborarea este activă. Setează un standard în{" "}
+                            <Link
+                              to="/app/settings"
+                              search={{ tab: "agency" }}
+                              className="font-semibold underline"
+                            >
+                              Setări → Agenție
+                            </Link>
+                            .
                           </p>
                         ) : null}
                       </div>

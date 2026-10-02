@@ -715,6 +715,13 @@
       "when": 1790939559477,
       "tag": "0101_guard_property_reassign_fix",
       "breakpoints": true
+    },
+    {
+      "idx": 102,
+      "version": "7",
+      "when": 1790967950494,
+      "tag": "0102_add_collaboration_default_commission",
+      "breakpoints": true
     }
   ]
 }

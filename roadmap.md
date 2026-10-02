@@ -29,6 +29,13 @@
 - [x] Texte reale pentru /confidentialitate și /termeni (date companie rămase placeholder [...], completate de client).
 - [ ] Leads module — audit QA complet (cerință anterioară rămasă deschisă).
 
+## Comision standard pentru colaborare
+
+- [x] Standard opțional 0–100 la nivel de agenție, editabil doar de administratorul agenției.
+- [x] La activarea colaborării, comisionul explicit are prioritate; în lipsă se copiază standardul agenției.
+- [x] Fila Publicare explică standardul și păstrează comisionul obligatoriu când agenția nu are unul.
+- [x] Proprietățile și comisioanele existente nu sunt modificate prin migrare.
+
 ## Arhitectura domeniilor
 
 - [x] Site public pe habitoo.ro / www.habitoo.ro (comportament neschimbat).
