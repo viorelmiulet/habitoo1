@@ -8,7 +8,6 @@ import { PageHeader } from "@/components/app/PageHeader";
 import { StatusBadge } from "@/components/app/StatusBadge";
 import { AgencyPortalCatalogCard } from "@/components/app/AgencyPortalCatalogCard";
 import { AgencyBrandingCard } from "@/components/app/AgencyBrandingCard";
-import { InventoryDefaultsCard } from "@/components/app/contracts/InventoryDefaultsCard";
 import { AiSettingsCard } from "@/components/app/ai/AiSettingsCard";
 
 
@@ -444,7 +443,6 @@ function SettingsPage() {
                 </p>
               )}
             </form>
-            <InventoryDefaultsCard />
             </div>
           </TabsContent>
         ) : null}
