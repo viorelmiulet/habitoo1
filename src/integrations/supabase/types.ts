@@ -4118,6 +4118,7 @@ export type Database = {
           archived_at: string | null
           archived_by: string | null
           city: string | null
+          collab_default_commission_percent: number | null
           collaboration_enabled: boolean
           contract_inventory_defaults: Json
           created_at: string
@@ -4169,6 +4170,7 @@ export type Database = {
           archived_at?: string | null
           archived_by?: string | null
           city?: string | null
+          collab_default_commission_percent?: number | null
           collaboration_enabled?: boolean
           contract_inventory_defaults?: Json
           created_at?: string
@@ -4220,6 +4222,7 @@ export type Database = {
           archived_at?: string | null
           archived_by?: string | null
           city?: string | null
+          collab_default_commission_percent?: number | null
           collaboration_enabled?: boolean
           contract_inventory_defaults?: Json
           created_at?: string
