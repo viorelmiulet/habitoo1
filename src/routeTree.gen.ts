@@ -106,6 +106,7 @@ import { Route as ApiPublicHomepitchV1PropertiesIdRouteImport } from './routes/a
 import { Route as ApiPublicPortalV1ImoveFeedRouteImport } from './routes/api/public/portal/v1/imove.feed'
 import { Route as ApiPublicPortalV1ImoveFeedDotcsvRouteImport } from './routes/api/public/portal/v1/imove.feed[.]csv'
 import { Route as ApiPublicPortalV1ImoveFeedDotjsonRouteImport } from './routes/api/public/portal/v1/imove.feed[.]json'
+import { Route as ApiPublicPortalV1ProperstarLeadsRouteImport } from './routes/api/public/portal/v1/properstar.leads'
 import { Route as ApiPublicPortalV1PropertiesIdRouteImport } from './routes/api/public/portal/v1/properties.$id'
 import { Route as ApiPublicPortalV1StoriaNotificationsRouteImport } from './routes/api/public/portal/v1/storia.notifications'
 import { Route as ApiPublicSitesV1MediaIdRouteImport } from './routes/api/public/sites/v1/media.$id'
@@ -653,6 +654,12 @@ const ApiPublicPortalV1ImoveFeedDotjsonRoute =
     path: '/api/public/portal/v1/imove/feed.json',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicPortalV1ProperstarLeadsRoute =
+  ApiPublicPortalV1ProperstarLeadsRouteImport.update({
+    id: '/api/public/portal/v1/properstar/leads',
+    path: '/api/public/portal/v1/properstar/leads',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicPortalV1PropertiesIdRoute =
   ApiPublicPortalV1PropertiesIdRouteImport.update({
     id: '/$id',
@@ -780,6 +787,7 @@ export interface FileRoutesByFullPath {
   '/api/public/portal/v1/imove/feed': typeof ApiPublicPortalV1ImoveFeedRoute
   '/api/public/portal/v1/imove/feed.csv': typeof ApiPublicPortalV1ImoveFeedDotcsvRoute
   '/api/public/portal/v1/imove/feed.json': typeof ApiPublicPortalV1ImoveFeedDotjsonRoute
+  '/api/public/portal/v1/properstar/leads': typeof ApiPublicPortalV1ProperstarLeadsRoute
   '/api/public/portal/v1/properties/$id': typeof ApiPublicPortalV1PropertiesIdRoute
   '/api/public/portal/v1/storia/notifications': typeof ApiPublicPortalV1StoriaNotificationsRoute
   '/api/public/sites/v1/media/$id': typeof ApiPublicSitesV1MediaIdRoute
@@ -881,6 +889,7 @@ export interface FileRoutesByTo {
   '/api/public/portal/v1/imove/feed': typeof ApiPublicPortalV1ImoveFeedRoute
   '/api/public/portal/v1/imove/feed.csv': typeof ApiPublicPortalV1ImoveFeedDotcsvRoute
   '/api/public/portal/v1/imove/feed.json': typeof ApiPublicPortalV1ImoveFeedDotjsonRoute
+  '/api/public/portal/v1/properstar/leads': typeof ApiPublicPortalV1ProperstarLeadsRoute
   '/api/public/portal/v1/properties/$id': typeof ApiPublicPortalV1PropertiesIdRoute
   '/api/public/portal/v1/storia/notifications': typeof ApiPublicPortalV1StoriaNotificationsRoute
   '/api/public/sites/v1/media/$id': typeof ApiPublicSitesV1MediaIdRoute
@@ -986,6 +995,7 @@ export interface FileRoutesById {
   '/api/public/portal/v1/imove/feed': typeof ApiPublicPortalV1ImoveFeedRoute
   '/api/public/portal/v1/imove/feed.csv': typeof ApiPublicPortalV1ImoveFeedDotcsvRoute
   '/api/public/portal/v1/imove/feed.json': typeof ApiPublicPortalV1ImoveFeedDotjsonRoute
+  '/api/public/portal/v1/properstar/leads': typeof ApiPublicPortalV1ProperstarLeadsRoute
   '/api/public/portal/v1/properties/$id': typeof ApiPublicPortalV1PropertiesIdRoute
   '/api/public/portal/v1/storia/notifications': typeof ApiPublicPortalV1StoriaNotificationsRoute
   '/api/public/sites/v1/media/$id': typeof ApiPublicSitesV1MediaIdRoute
@@ -1091,6 +1101,7 @@ export interface FileRouteTypes {
     | '/api/public/portal/v1/imove/feed'
     | '/api/public/portal/v1/imove/feed.csv'
     | '/api/public/portal/v1/imove/feed.json'
+    | '/api/public/portal/v1/properstar/leads'
     | '/api/public/portal/v1/properties/$id'
     | '/api/public/portal/v1/storia/notifications'
     | '/api/public/sites/v1/media/$id'
@@ -1192,6 +1203,7 @@ export interface FileRouteTypes {
     | '/api/public/portal/v1/imove/feed'
     | '/api/public/portal/v1/imove/feed.csv'
     | '/api/public/portal/v1/imove/feed.json'
+    | '/api/public/portal/v1/properstar/leads'
     | '/api/public/portal/v1/properties/$id'
     | '/api/public/portal/v1/storia/notifications'
     | '/api/public/sites/v1/media/$id'
@@ -1296,6 +1308,7 @@ export interface FileRouteTypes {
     | '/api/public/portal/v1/imove/feed'
     | '/api/public/portal/v1/imove/feed.csv'
     | '/api/public/portal/v1/imove/feed.json'
+    | '/api/public/portal/v1/properstar/leads'
     | '/api/public/portal/v1/properties/$id'
     | '/api/public/portal/v1/storia/notifications'
     | '/api/public/sites/v1/media/$id'
@@ -1352,6 +1365,7 @@ export interface RootRouteChildren {
   ApiPublicPortalV1ImoveFeedRoute: typeof ApiPublicPortalV1ImoveFeedRoute
   ApiPublicPortalV1ImoveFeedDotcsvRoute: typeof ApiPublicPortalV1ImoveFeedDotcsvRoute
   ApiPublicPortalV1ImoveFeedDotjsonRoute: typeof ApiPublicPortalV1ImoveFeedDotjsonRoute
+  ApiPublicPortalV1ProperstarLeadsRoute: typeof ApiPublicPortalV1ProperstarLeadsRoute
   ApiPublicPortalV1StoriaNotificationsRoute: typeof ApiPublicPortalV1StoriaNotificationsRoute
   ApiPublicSitesV1MediaIdRoute: typeof ApiPublicSitesV1MediaIdRoute
   ApiPublicPortalV1StoriaOauthCallbackRoute: typeof ApiPublicPortalV1StoriaOauthCallbackRoute
@@ -2038,6 +2052,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicPortalV1ImoveFeedDotjsonRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/portal/v1/properstar/leads': {
+      id: '/api/public/portal/v1/properstar/leads'
+      path: '/api/public/portal/v1/properstar/leads'
+      fullPath: '/api/public/portal/v1/properstar/leads'
+      preLoaderRoute: typeof ApiPublicPortalV1ProperstarLeadsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/portal/v1/properties/$id': {
       id: '/api/public/portal/v1/properties/$id'
       path: '/$id'
@@ -2318,6 +2339,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicPortalV1ImoveFeedDotcsvRoute: ApiPublicPortalV1ImoveFeedDotcsvRoute,
   ApiPublicPortalV1ImoveFeedDotjsonRoute:
     ApiPublicPortalV1ImoveFeedDotjsonRoute,
+  ApiPublicPortalV1ProperstarLeadsRoute: ApiPublicPortalV1ProperstarLeadsRoute,
   ApiPublicPortalV1StoriaNotificationsRoute:
     ApiPublicPortalV1StoriaNotificationsRoute,
   ApiPublicSitesV1MediaIdRoute: ApiPublicSitesV1MediaIdRoute,
