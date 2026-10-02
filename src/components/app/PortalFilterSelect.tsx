@@ -30,9 +30,7 @@ const ANY_LABELS: Record<PortalFilterBucket, string> = {
 };
 
 export function bucketLabel(bucket: PortalFilterBucket, pushSupported: boolean) {
-  return bucket === "published" && !pushSupported
-    ? "Publicate (în feed)"
-    : PORTAL_BUCKET_LABELS[bucket];
+  return PORTAL_BUCKET_LABELS[bucket];
 }
 
 /** Textul alegerii, folosit în buton și în pastila filtrului activ. */
