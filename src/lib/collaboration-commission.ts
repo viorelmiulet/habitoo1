@@ -1,5 +1,4 @@
 import { z } from "zod";
-import type { AppRole } from "@/hooks/use-session";
 
 export const collaborationCommissionSchema = z.number().min(0).max(100).nullable();
 
@@ -18,6 +17,8 @@ export function resolveCollaborationCommission(
   return null;
 }
 
-export function canManageCollaborationDefault(role: AppRole): boolean {
+export function canManageCollaborationDefault(
+  role: "superadmin" | "agency_admin" | "agent",
+): boolean {
   return role === "agency_admin";
 }
