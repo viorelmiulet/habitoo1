@@ -63,7 +63,7 @@ describe("grila portalurilor pentru administratorul agenției", () => {
       readFileSync("src/components/app/LaCheieActivationPanel.tsx", "utf8"),
     ];
     const visibleStrings = sources.flatMap((source) =>
-      [...source.matchAll(/(?:"([^"\n]*)"|'([^'\n]*)'|>([^<{\n]+)</g)].map(
+      [...source.matchAll(/(?:"([^"\n]*)"|'([^'\n]*)'|>([^<{\n]+)<)/g)].map(
         (match) => match[1] ?? match[2] ?? match[3] ?? "",
       ),
     );
