@@ -77,25 +77,9 @@ async function connectionRow(organizationId: string) {
 
 /** Conexiunea există chiar dacă agenția nu deține nicio cheie: cheia e a CRM-ului. */
 async function ensureConnectionRow(organizationId: string, actorId: string | null) {
-  const existing = await connectionRow(organizationId);
-  if (existing) return existing;
+  const { ensureLaCheieConnectionRow } = await import("@/lib/portals/lacheie/connection-row");
   const admin = await loadAdmin();
-  const { data } = await admin
-    .from("portal_connections")
-    .insert({
-      organization_id: organizationId,
-      portal: LACHEIE_PORTAL_KEY,
-      direction: "habitoo_to_portal",
-      authentication_mode: "portal_api_key",
-      status: "pending",
-      settings: {} as never,
-      created_by: actorId,
-      updated_by: actorId,
-    })
-    .select("*")
-    .maybeSingle();
-  if (!data) throw new Error("Conexiunea La Cheie nu a putut fi creată.");
-  return data;
+  return ensureLaCheieConnectionRow(admin, organizationId, actorId);
 }
 
 async function buildLaCheieContext(organizationId: string) {
@@ -803,7 +787,7 @@ export const deactivateLaCheieAgency = createServerFn({ method: "POST" })
       await mergeSettings(organizationId, { allow_live: false }, auth.userId);
       await admin
         .from("portal_connections")
-        .update({ status: "disabled", activated: false, updated_by: auth.userId })
+        .update({ status: "disconnected", activated: false, updated_by: auth.userId })
         .eq("id", row.id);
 
       // Starea locală: ofertele acestei conexiuni sunt retrase, fără apeluri extra.
