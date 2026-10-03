@@ -1,11 +1,9 @@
 import { createServerFn } from "@tanstack/react-start";
-import { setResponseHeader, setResponseStatus } from "@tanstack/react-start/server";
+import { setResponseHeader } from "@tanstack/react-start/server";
 import { z } from "zod";
 import { requireActiveOrgAuth } from "@/lib/org-access";
 import {
-  buildAgentPortalMatrix,
   buildMyPortalItems,
-  type AgentPortalMatrix,
   computePreselection,
   validatePortalKeys,
   type MyPortalItem,
@@ -115,43 +113,4 @@ export const getPortalPreselection = createServerFn({ method: "POST" })
         hasPortalHistory: (pubs ?? 0) > 0 || (listings ?? 0) > 0,
       }),
     };
-  });
-
-/** Doar citire, doar adminul propriei agenții: alegerile tuturor agenților activi. */
-export const getAgentPortalMatrix = createServerFn({ method: "POST" })
-  .middleware([requireActiveOrgAuth])
-  .handler(async ({ context }): Promise<AgentPortalMatrix> => {
-    const ctx = context as unknown as Ctx;
-    const { data: isOrgAdmin } = await ctx.supabase.rpc("is_org_admin");
-    if (isOrgAdmin !== true) {
-      setResponseStatus(403);
-      throw new Error("Acces refuzat: doar administratorul agenției vede portalurile pe agent.");
-    }
-    const organizationId = await myOrg(ctx);
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const [{ data: users }, { data: connections }, { data: prefs }] = await Promise.all([
-      supabaseAdmin
-        .from("profiles")
-        .select("id, full_name, organization_id, is_active")
-        .eq("organization_id", organizationId)
-        .eq("is_active", true)
-        .order("full_name", { ascending: true }),
-      supabaseAdmin
-        .from("portal_connections")
-        .select(
-          "portal, activated, external_account_id, portal_credentials_encrypted, last_sync_error, last_sync_status",
-        )
-        .eq("organization_id", organizationId),
-      supabaseAdmin
-        .from("agent_portal_preferences")
-        .select("organization_id, user_id, portal_key, selected")
-        .eq("organization_id", organizationId),
-    ]);
-    setResponseHeader("Cache-Control", "no-store");
-    return buildAgentPortalMatrix({
-      organizationId,
-      users: users ?? [],
-      connections: connections ?? [],
-      prefs: prefs ?? [],
-    });
   });

@@ -107,7 +107,7 @@ describe("server și RLS", () => {
   });
   it("fila Portaluri e vizibilă agenților, dar cardurile de admin rămân ascunse", () => {
     const page = readFileSync("src/routes/_authenticated/app.settings.tsx", "utf8");
-    expect(page).toMatch(/user\?\.organization \|\| user\?\.isAdmin \? <TabsTrigger value="portals">/);
+    expect(page).toMatch(/user\?\.organization \|\| user\?\.isAdmin \? <TabsTrigger[^>]*value="portals"/);
     expect(page).toMatch(/user\?\.isAdmin \? \(\s*<>\s*<AgencyPortalCatalogCard \/>/);
   });
 });
