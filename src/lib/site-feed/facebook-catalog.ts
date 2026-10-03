@@ -45,6 +45,8 @@ export type FacebookCatalogResult = {
   csv: string;
   included: number;
   excluded: Record<ExclusionReason, number>;
+  /** Anunțurile excluse, cu primul motiv (aditiv; nu intră în CSV). */
+  excludedItems?: { id: string; reference: string | null; title: string; reason: ExclusionReason }[];
   excludedTotal: number;
 };
 
@@ -156,6 +158,7 @@ export function buildFacebookCatalogCsv(input: {
     no_city: 0,
   };
   const lines = [FACEBOOK_CATALOG_COLUMNS.join(",")];
+  const excludedItems: NonNullable<FacebookCatalogResult["excludedItems"]> = [];
   let included = 0;
 
   for (const p of input.properties) {
@@ -174,11 +177,22 @@ export function buildFacebookCatalogCsv(input: {
     const { city, sector } = metaCity(p.city);
 
     // Un singur motiv per anunț, în ordinea priorității.
-    if (!offer) excluded.no_price += 1;
-    else if (!coords) excluded.no_coordinates += 1;
-    else if (images.length === 0) excluded.no_images += 1;
-    else if (!city) excluded.no_city += 1;
-    if (!offer || !coords || images.length === 0 || !city) continue;
+    const reason: ExclusionReason | null = !offer
+      ? "no_price"
+      : !coords
+        ? "no_coordinates"
+        : images.length === 0
+          ? "no_images"
+          : !city
+            ? "no_city"
+            : null;
+    if (reason || !offer || !coords) {
+      if (reason) {
+        excluded[reason] += 1;
+        excludedItems.push({ id: p.id, reference: p.reference ?? null, title: p.title, reason });
+      }
+      continue;
+    }
 
     const imageCols = Array.from({ length: FACEBOOK_MAX_IMAGES }, (_, i) =>
       images[i] ? feedImageUrl(input.baseUrl, images[i]!.id) : "",
@@ -218,7 +232,7 @@ export function buildFacebookCatalogCsv(input: {
   }
 
   const excludedTotal = Object.values(excluded).reduce((a, b) => a + b, 0);
-  return { csv: `${lines.join("\r\n")}\r\n`, included, excluded, excludedTotal };
+  return { csv: `${lines.join("\r\n")}\r\n`, included, excluded, excludedTotal, excludedItems };
 }
 
 /** Rezumat scurt pentru `site_feed_access_logs.detail`. */

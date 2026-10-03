@@ -18,41 +18,11 @@ export async function handleFacebookCatalog(
   }
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
-  const properties: PropertyRow[] = [];
-  if (auth.indexStatus !== "grace") {
-    for (let from = 0; ; from += PAGE) {
-      const { data, error } = await supabaseAdmin
-        .from("properties")
-        .select("*")
-        .eq("organization_id", auth.organizationId)
-        .eq("publish_status", "published")
-        .is("deleted_at", null)
-        .in("status", [...FEED_PUBLIC_STATUSES])
-        .order("updated_at", { ascending: false })
-        .range(from, from + PAGE - 1);
-      if (error) throw error;
-      properties.push(...((data ?? []) as PropertyRow[]));
-      if (!data || data.length < PAGE) break;
-    }
-  }
-
-  const imagesByProperty = new Map<string, PropertyImageRow[]>();
-  const ids = properties.map((p) => p.id);
-  for (let i = 0; i < ids.length; i += 200) {
-    const { data, error } = await supabaseAdmin
-      .from("property_images")
-      .select("*")
-      .eq("organization_id", auth.organizationId)
-      .in("property_id", ids.slice(i, i + 200))
-      .eq("include_in_publish", true)
-      .eq("is_confidential", false);
-    if (error) throw error;
-    for (const img of (data ?? []) as PropertyImageRow[]) {
-      const list = imagesByProperty.get(img.property_id) ?? [];
-      list.push(img);
-      imagesByProperty.set(img.property_id, list);
-    }
-  }
+  const { properties, imagesByProperty } = await loadFacebookCatalogInput(
+    supabaseAdmin,
+    auth.organizationId,
+    auth.indexStatus !== "grace",
+  );
 
   const { baseUrl, publicSiteUrl } = feedUrlsForRequest(new URL(request.url));
   const result = buildFacebookCatalogCsv({ properties, imagesByProperty, baseUrl, publicSiteUrl });
@@ -70,4 +40,51 @@ export async function handleFacebookCatalog(
     items: result.included,
     detail: exclusionDetail(result),
   };
+}
+
+type AdminClient = Awaited<typeof import("@/integrations/supabase/client.server")>["supabaseAdmin"];
+
+/** Aceeași selecție ca feed-ul (publicate, nesterse, statusuri publice) + pozele publicabile. */
+export async function loadFacebookCatalogInput(
+  supabaseAdmin: AdminClient,
+  organizationId: string,
+  includeProperties = true,
+): Promise<{ properties: PropertyRow[]; imagesByProperty: Map<string, PropertyImageRow[]> }> {
+  const properties: PropertyRow[] = [];
+  if (includeProperties) {
+    for (let from = 0; ; from += PAGE) {
+      const { data, error } = await supabaseAdmin
+        .from("properties")
+        .select("*")
+        .eq("organization_id", organizationId)
+        .eq("publish_status", "published")
+        .is("deleted_at", null)
+        .in("status", [...FEED_PUBLIC_STATUSES])
+        .order("updated_at", { ascending: false })
+        .range(from, from + PAGE - 1);
+      if (error) throw error;
+      properties.push(...((data ?? []) as PropertyRow[]));
+      if (!data || data.length < PAGE) break;
+    }
+  }
+
+  const imagesByProperty = new Map<string, PropertyImageRow[]>();
+  const ids = properties.map((p) => p.id);
+  for (let i = 0; i < ids.length; i += 200) {
+    const { data, error } = await supabaseAdmin
+      .from("property_images")
+      .select("*")
+      .eq("organization_id", organizationId)
+      .in("property_id", ids.slice(i, i + 200))
+      .eq("include_in_publish", true)
+      .eq("is_confidential", false);
+    if (error) throw error;
+    for (const img of (data ?? []) as PropertyImageRow[]) {
+      const list = imagesByProperty.get(img.property_id) ?? [];
+      list.push(img);
+      imagesByProperty.set(img.property_id, list);
+    }
+  }
+
+  return { properties, imagesByProperty };
 }
