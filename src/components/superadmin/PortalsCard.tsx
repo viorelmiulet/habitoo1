@@ -375,7 +375,6 @@ export function PortalsCard({ organizationId }: { organizationId: string }) {
               const name = portalDisplayName(item.portal.id);
               const state = portalGridState({
                 connectionStatus: item.connection.status,
-                requestStatus: latestRequestByPortal.get(item.portal.id) ?? null,
               });
               const isSelected = item.portal.id === selected;
               return (

@@ -2,17 +2,17 @@
  * Starea afișată pe cardul unui portal din grila Superadmin → Portaluri.
  *
  * Combină două surse, în ordinea importantei pentru administrator:
- *  1. starea conexiunii derivată (`derivePortalConnectionStatus`);
- *  2. ultima cerere de activare trimisă de agenție (din `portal_activation_requests`).
+ *  starea conexiunii derivată (`derivePortalConnectionStatus`). Cererile de
+ *  activare se văd separat, în cardul de cereri.
  *
  * Pură și partajată: UI-ul doar o afișează, testele o verifică direct.
  */
-import type { PortalConnectionStatus } from "./registry";
+import { PORTAL_CONNECTION_LABEL, type PortalConnectionStatus } from "./registry";
 
-export type PortalGridTone = "success" | "warning" | "danger" | "muted";
+export type PortalGridTone = "success" | "danger" | "muted";
 
 export type PortalGridState = {
-  key: "connected" | "ready" | "pending_request" | "rejected_request" | "inactive" | "error";
+  key: PortalConnectionStatus;
   label: string;
   tone: PortalGridTone;
 };
@@ -20,27 +20,16 @@ export type PortalGridState = {
 /** Cererea de activare a agenției, ca stare simplă. */
 export type PortalRequestStatus = "pending" | "approved" | "rejected";
 
+/** Doar trei stări: Conectat (verde), Eroare (roșu), Deconectat (neutru). */
 export function portalGridState(input: {
   connectionStatus: PortalConnectionStatus;
-  /** Ultima cerere de activare a agenției pentru portal, dacă există. */
-  requestStatus?: PortalRequestStatus | null;
 }): PortalGridState {
-  if (input.connectionStatus === "connected") {
-    return { key: "connected", label: "Conectat", tone: "success" };
-  }
-  if (input.requestStatus === "pending") {
-    return { key: "pending_request", label: "Cerere de activare în așteptare", tone: "warning" };
-  }
-  if (input.requestStatus === "rejected") {
-    return { key: "rejected_request", label: "Cerere respinsă", tone: "danger" };
-  }
-  if (input.connectionStatus === "ready") {
-    return { key: "ready", label: "Pregătit pentru conectare", tone: "warning" };
-  }
-  if (input.connectionStatus === "error") {
-    return { key: "error", label: "Eroare de conexiune", tone: "danger" };
-  }
-  return { key: "inactive", label: "Neactivat", tone: "muted" };
+  const meta = PORTAL_CONNECTION_LABEL[input.connectionStatus];
+  return {
+    key: input.connectionStatus,
+    label: meta.label,
+    tone: meta.tone === "neutral" ? "muted" : meta.tone,
+  };
 }
 
 /** Starea cardului din grila administratorului de agenție (fără configurare). */
@@ -59,15 +48,11 @@ export function agencyPortalCardState(input: {
   activated: boolean;
   request: { status: PortalRequestStatus; requestedAt: string; rejectionReason: string | null } | null;
 }): AgencyPortalCardState {
-  const base = portalGridState({
-    connectionStatus: input.activated ? "connected" : "disconnected",
-    requestStatus: input.request?.status ?? null,
-  });
-  if (base.key === "connected") return { key: "connected", label: "Conectat", tone: "success" };
-  if (base.key === "pending_request" && input.request) {
+  if (input.activated) return { key: "connected", label: "Conectat", tone: "success" };
+  if (input.request?.status === "pending") {
     return { key: "pending", buttonLabel: "Cerere trimisă", disabled: true, requestedAt: input.request.requestedAt };
   }
-  if (base.key === "rejected_request") {
+  if (input.request?.status === "rejected") {
     return {
       key: "rejected",
       buttonLabel: "Solicită din nou",
