@@ -667,3 +667,27 @@ export function derivePortalConnectionStatus(input: {
     lastSyncStatus: input.lastSyncStatus,
   });
 }
+
+/**
+ * Aceeași regulă pentru un rând brut `portal_connections` (fără credențiale
+ * decriptate): `ready`/`connected`/`error` înseamnă configurat; portalurile
+ * care citesc feedul sunt configurate prin simpla activare.
+ */
+export function integrationDisplayStatus(row: {
+  portal: string;
+  status: string | null;
+  activated: boolean | null;
+  lastError: string | null;
+}): PortalConnectionStatus {
+  const definition = getPortalDefinition(row.portal);
+  const configured =
+    (definition ? isFeedPullPortal(definition) : false) ||
+    row.status === "ready" ||
+    row.status === "connected" ||
+    row.status === "error";
+  return portalDisplayStatus({
+    activated: row.activated === true,
+    configured,
+    lastError: row.lastError,
+  });
+}

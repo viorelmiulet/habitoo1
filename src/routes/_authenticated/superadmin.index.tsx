@@ -30,6 +30,7 @@ import { auditActionLabel, auditEntityLabels } from "@/lib/labels";
 import {
   PORTAL_CONNECTION_LABEL,
   getPortalDefinition,
+  integrationDisplayStatus,
 } from "@/lib/portals/registry";
 import {
   getSuperadminDashboard,
