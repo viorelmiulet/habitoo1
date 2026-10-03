@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { readFileSync } from "node:fs";
 import { agencyGridItems, agencyPortalCardState } from "./grid-state";
+import { agencySettingsPortals, getPortalDefinition } from "./registry";
 
 describe("grila portalurilor pentru administratorul agenției", () => {
   it("activat → Conectat, fără buton", () => {
@@ -24,6 +25,20 @@ describe("grila portalurilor pentru administratorul agenției", () => {
       { id: "x", availability: "planned" },
     ]);
     expect(out.map((i) => i.id)).toEqual(["storia"]);
+  });
+  it("Catalog Facebook este în registru și în lista agenției o singură dată", () => {
+    expect(getPortalDefinition("facebook_catalog")?.display_name).toBe("Catalog Facebook");
+    expect(agencySettingsPortals().filter((p) => p.id === "facebook_catalog")).toHaveLength(1);
+    const catalog = readFileSync("src/components/app/AgencyPortalCatalogCard.tsx", "utf8");
+    expect(catalog).toContain('<FacebookCatalogCard portalList />');
+  });
+
+  it("Catalog Facebook refolosește cardul existent și nu afișează date de conectare", () => {
+    const card = readFileSync("src/components/app/FacebookCatalogCard.tsx", "utf8");
+    expect(card).toContain("Adresa feed-ului");
+    expect(card).toContain("Deschide Meta Commerce Manager");
+    expect(card).toContain("Doar anunțurile bifate pentru Catalog Facebook");
+    expect(card).not.toMatch(/portal_credentials|token_hash|token_encrypted|secret/i);
   });
   it("agentul obișnuit vede doar „Portalurile mele”, nu grila de activare", () => {
     const src = readFileSync("src/routes/_authenticated/app.settings.tsx", "utf8");

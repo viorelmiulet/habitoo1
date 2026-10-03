@@ -499,6 +499,23 @@ export const PORTALS: PortalDefinition[] = [
   },
 ];
 
+/** Cataloage de promovare afișate lângă portaluri, fără a intra în fluxurile lor de publicare. */
+export const PROMOTION_CATALOGS: PortalDefinition[] = [
+  {
+    id: "facebook_catalog",
+    display_name: "Catalog Facebook",
+    description:
+      "Anunțurile selectate apar în Meta Commerce Manager și pot fi folosite în reclame.",
+    logo: "FB",
+    status: "available",
+    directions: ["habitoo_to_portal"],
+    authentication: ["query_parameter"],
+    capabilities: ["feed_pull"],
+    configuration_schema: { fields: [] },
+    website: "https://www.facebook.com/commerce_manager",
+  },
+];
+
 /**
  * Perechi de portaluri acoperite de o SINGURĂ integrare (aceeași cheie API):
  * ce se publică pe portalul principal apare automat și pe cel acoperit.
@@ -582,8 +599,13 @@ export function configurablePortals(): PortalDefinition[] {
   return PORTALS.filter((p) => !isPortalCovered(p.id));
 }
 
+/** Lista din Setări → Portaluri: integrările obișnuite plus cataloagele de promovare. */
+export function agencySettingsPortals(): PortalDefinition[] {
+  return [...configurablePortals(), ...PROMOTION_CATALOGS];
+}
+
 export function getPortalDefinition(id: string): PortalDefinition | null {
-  return PORTALS.find((p) => p.id === id) ?? null;
+  return [...PORTALS, ...PROMOTION_CATALOGS].find((p) => p.id === id) ?? null;
 }
 
 /**

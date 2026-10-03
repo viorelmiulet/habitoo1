@@ -46,6 +46,7 @@ describe("acces și token", () => {
   const settings = readFileSync("src/routes/_authenticated/app.settings.tsx", "utf8");
   const fn = readFileSync("src/lib/facebook-catalog.functions.ts", "utf8");
   const card = readFileSync("src/components/app/FacebookCatalogCard.tsx", "utf8");
+  const logo = readFileSync("src/components/app/PortalLogo.tsx", "utf8");
 
   it("fila Promovare e doar pentru admin (agentul nu o vede)", () => {
     expect(settings).toContain('{user?.isAdmin ? <TabsTrigger value="promotion">');
@@ -64,5 +65,11 @@ describe("acces și token", () => {
     expect(card).toContain("Adresa veche nu va mai funcționa; trebuie să o actualizezi în Meta.");
     expect(card).not.toContain("generateSiteFeedToken");
     expect(card).not.toContain("tokenPrefix");
+  });
+  it("folosește logoul Facebook primit și păstrează fallback-ul pe inițiale", () => {
+    expect(logo).toContain('facebookLogo from "@/assets/portals/facebook.svg"');
+    expect(logo).toContain("facebook_catalog: facebookLogo");
+    expect(logo).toContain("onError={() => setFailed(true)}");
+    expect(logo).toContain("initials");
   });
 });
