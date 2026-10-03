@@ -12,6 +12,7 @@ import { AiSettingsCard } from "@/components/app/ai/AiSettingsCard";
 
 
 import { SiteFeedCard } from "@/components/app/SiteFeedCard";
+import { FacebookCatalogCard } from "@/components/app/FacebookCatalogCard";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -53,8 +54,8 @@ export const Route = createFileRoute("/_authenticated/app/settings")({
   head: () => appHead("Habitoo CRM — setări"),
   validateSearch: (
     search: Record<string, unknown>,
-  ): { tab?: "profile" | "access" | "agency" | "branding" | "team" | "integrations" | "portals"; request?: string } => {
-    const tabs = ["profile", "access", "agency", "branding", "team", "integrations", "portals"] as const;
+  ): { tab?: "profile" | "access" | "agency" | "branding" | "team" | "integrations" | "portals" | "promotion"; request?: string } => {
+    const tabs = ["profile", "access", "agency", "branding", "team", "integrations", "portals", "promotion"] as const;
     const tab = tabs.find((value) => value === search.tab);
     return {
       ...(tab ? { tab } : {}),
@@ -233,6 +234,7 @@ function SettingsPage() {
           {user?.isAdmin ? <TabsTrigger value="team">Echipă ({team.length})</TabsTrigger> : null}
           {user?.isAdmin ? <TabsTrigger value="integrations">Integrări</TabsTrigger> : null}
           {user?.isAdmin ? <TabsTrigger value="portals">Portaluri</TabsTrigger> : null}
+          {user?.isAdmin ? <TabsTrigger value="promotion">Promovare</TabsTrigger> : null}
           <TabsTrigger value="ai">AI</TabsTrigger>
         </TabsList>
 
@@ -510,6 +512,13 @@ function SettingsPage() {
             </div>
           </TabsContent>
 
+        ) : null}
+        {user?.isAdmin ? (
+          <TabsContent value="promotion">
+            <div className="space-y-6">
+              <FacebookCatalogCard />
+            </div>
+          </TabsContent>
         ) : null}
       </Tabs>
     </>
