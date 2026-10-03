@@ -81,13 +81,13 @@ export function FacebookCatalogCard({ portalList = false }: { portalList?: boole
     .filter((r) => d.excluded[r] > 0);
 
   return (
-    <div className={portalList ? "space-y-5" : "panel space-y-5 p-5"}>
-      <div className="flex flex-wrap items-start justify-between gap-3">
+    <div className={portalList ? "min-w-0 max-w-full space-y-5" : "panel min-w-0 max-w-full space-y-5 p-5"}>
+      <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-start gap-3 sm:flex sm:flex-wrap sm:justify-between">
         <div className="flex min-w-0 items-center gap-3">
           {portalList ? <PortalLogo portalId="facebook_catalog" name="Catalog Facebook" size={40} /> : null}
-          <div>
-            <h3 className={portalList ? "text-[17px] leading-6 font-bold" : "font-medium"}>Catalog Facebook</h3>
-            <p className="text-sm text-muted-foreground">
+          <div className="min-w-0">
+            <h3 className={portalList ? "truncate text-[17px] leading-6 font-bold" : "truncate font-medium"}>Catalog Facebook</h3>
+            <p className="break-words text-sm text-muted-foreground">
               Anunțurile tale apar în Meta Commerce Manager și pot fi folosite în reclame.
             </p>
           </div>
@@ -97,16 +97,16 @@ export function FacebookCatalogCard({ portalList = false }: { portalList?: boole
         </StatusPill>
       </div>
 
-      <div className="space-y-2">
+      <div className="min-w-0 max-w-full space-y-2">
         <p className="text-sm font-medium">Adresa feed-ului</p>
         {d.feedUrl ? (
           <div className="space-y-2">
-            <div className="flex flex-col gap-2 sm:flex-row">
+            <div className="flex min-w-0 max-w-full flex-col gap-2 sm:flex-row">
               <Input
                 readOnly
                 value={d.feedUrl}
                 aria-label="Adresa feedului Catalog Facebook"
-                className="min-w-0 flex-1 font-mono text-xs"
+                className="w-full min-w-0 max-w-full flex-1 truncate font-mono text-xs"
                 onFocus={(e) => e.currentTarget.select()}
               />
               <Button variant="outline" onClick={() => copy(d.feedUrl!)}>
@@ -151,11 +151,11 @@ export function FacebookCatalogCard({ portalList = false }: { portalList?: boole
         </div>
       </dl>
 
-      <div className="flex flex-wrap gap-2">
-        <Button variant="outline" size="sm" disabled={bulk.isPending} onClick={() => setBulkMode("add_eligible")}>
+      <div className="flex min-w-0 flex-wrap gap-2">
+        <Button className="h-auto min-h-9 max-w-full whitespace-normal text-left" variant="outline" size="sm" disabled={bulk.isPending} onClick={() => setBulkMode("add_eligible")}>
           Adaugă toate anunțurile eligibile
         </Button>
-        <Button variant="outline" size="sm" disabled={bulk.isPending} onClick={() => setBulkMode("remove_all")}>
+        <Button className="h-auto min-h-9 max-w-full whitespace-normal text-left" variant="outline" size="sm" disabled={bulk.isPending} onClick={() => setBulkMode("remove_all")}>
           Scoate toate anunțurile
         </Button>
       </div>
