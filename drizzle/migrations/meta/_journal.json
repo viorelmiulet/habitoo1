@@ -736,6 +736,13 @@
       "when": 1791049794979,
       "tag": "0104_facebook_catalog_token_scope",
       "breakpoints": true
+    },
+    {
+      "idx": 105,
+      "version": "7",
+      "when": 1791050505016,
+      "tag": "0105_agent_portal_preferences",
+      "breakpoints": true
     }
   ]
 }
