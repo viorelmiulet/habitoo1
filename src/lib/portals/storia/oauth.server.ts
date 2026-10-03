@@ -130,12 +130,12 @@ export async function createStoriaOAuthState(input: {
 /** Validează și consumă `state`-ul primit la retur. Returnează agenția vizată. */
 export async function consumeStoriaOAuthState(
   raw: string | null,
-): Promise<{ organizationId: string } | null> {
+): Promise<{ organizationId: string; createdBy: string | null } | null> {
   if (!raw || raw.length < 20 || raw.length > 200) return null;
   const db = await admin();
   const { data } = await db
     .from("portal_oauth_states")
-    .select("id, organization_id, state_hash, expires_at, consumed_at")
+    .select("id, organization_id, state_hash, expires_at, consumed_at, created_by")
     .eq("portal", "storia")
     .eq("state_hash", hashState(raw))
     .maybeSingle();
@@ -157,7 +157,7 @@ export async function consumeStoriaOAuthState(
   // Dacă altcineva l-a consumat între timp, refuzăm (single-use real).
   if (!consumed) return null;
 
-  return { organizationId: data.organization_id };
+  return { organizationId: data.organization_id, createdBy: data.created_by ?? null };
 }
 
 /** URL-ul de autorizare către care trimitem browserul agenției. */

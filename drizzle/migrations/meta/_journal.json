@@ -722,6 +722,13 @@
       "when": 1790967950494,
       "tag": "0102_add_collaboration_default_commission",
       "breakpoints": true
+    },
+    {
+      "idx": 103,
+      "version": "7",
+      "when": 1791048478233,
+      "tag": "0103_migration",
+      "breakpoints": true
     }
   ]
 }

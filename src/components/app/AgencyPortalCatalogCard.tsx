@@ -6,7 +6,12 @@ import { Button } from "@/components/ui/button";
 import { InlineLoading } from "@/components/app/LoadingState";
 import { QueryError } from "@/components/app/QueryError";
 import { useCurrentUser } from "@/hooks/use-session";
-import { getAgencyPortalCatalog, requestPortalActivation } from "@/lib/portal-activation.functions";
+import {
+  getAgencyPortalCatalog,
+  requestPortalActivation,
+  selfActivatePortal,
+} from "@/lib/portal-activation.functions";
+import { startStoriaAuthorization } from "@/lib/portals/storia.functions";
 import { LaCheieActivationPanel } from "@/components/app/LaCheieActivationPanel";
 import { LACHEIE_PORTAL_KEY } from "@/lib/portals/lacheie/config";
 import { agencyGridItems, agencyPortalCardState } from "@/lib/portals/grid-state";
@@ -15,6 +20,8 @@ export function AgencyPortalCatalogCard() {
   const queryClient = useQueryClient();
   const loadCatalog = useServerFn(getAgencyPortalCatalog);
   const sendRequest = useServerFn(requestPortalActivation);
+  const runActivate = useServerFn(selfActivatePortal);
+  const runStoria = useServerFn(startStoriaAuthorization);
   const { data: currentUser } = useCurrentUser();
   const organizationId = currentUser?.organization?.id ?? null;
 
@@ -36,12 +43,40 @@ export function AgencyPortalCatalogCard() {
     onError: () => toast.error("Cererea nu a fost trimisă. Încearcă din nou."),
   });
 
+  const activate = useMutation({
+    mutationFn: async (portalId: string) => {
+      const result = await runActivate({ data: { portalId } });
+      if (!result.ok) throw new Error("activation_failed");
+      return result;
+    },
+    onSuccess: () => {
+      toast.success("Portalul a fost activat.");
+      void queryClient.invalidateQueries({ queryKey: ["agency-portal-catalog"] });
+    },
+    onError: () => {
+      toast.error("Activarea nu a reușit acum. Încearcă din nou sau scrie-ne.");
+      void queryClient.invalidateQueries({ queryKey: ["agency-portal-catalog"] });
+    },
+  });
+
+  const connect = useMutation({
+    mutationFn: async (portalId: string) => {
+      if (!organizationId) throw new Error("no_org");
+      await runActivate({ data: { portalId } });
+      const { url } = await runStoria({ data: { organizationId } });
+      window.location.assign(url);
+    },
+    onError: () => toast.error("Conectarea nu a pornit. Încearcă din nou sau scrie-ne."),
+  });
+
+  const busy = request.isPending || activate.isPending || connect.isPending;
+
   return (
     <section className="panel">
       <header className="border-b border-border px-5 py-4">
         <h2 className="text-sm font-semibold tracking-wide uppercase">Portaluri imobiliare</h2>
         <p className="text-xs text-muted-foreground">
-          Cere activarea portalurilor de care ai nevoie. Le activează echipa Habitoo.
+          Cere activarea portalurilor de care ai nevoie. Le activează echipa Habitoo. Unele le poți activa direct.
         </p>
       </header>
 
@@ -82,8 +117,17 @@ export function AgencyPortalCatalogCard() {
                 <div data-portal-statuses className="mt-auto flex flex-wrap items-center gap-2 pt-1">
                     {state.key === "connected" ? (
                       <span className="inline-flex items-center gap-2 text-sm font-medium">
-                        <span aria-hidden className="size-2 rounded-full bg-success" />
-                        Conectat
+                        <span
+                          aria-hidden
+                          className={
+                            state.tone === "success"
+                              ? "size-2 rounded-full bg-success"
+                              : state.tone === "danger"
+                                ? "size-2 rounded-full bg-destructive"
+                                : "size-2 rounded-full bg-muted-foreground"
+                          }
+                        />
+                        {state.label}
                       </span>
                     ) : isLaCheie && organizationId ? (
                       <LaCheieActivationPanel organizationId={organizationId} />
@@ -91,8 +135,14 @@ export function AgencyPortalCatalogCard() {
                       <Button
                         className="h-11 w-full sm:w-auto"
                         variant={state.disabled ? "outline" : "default"}
-                        disabled={state.disabled || request.isPending}
-                        onClick={() => request.mutate(item.id)}
+                        disabled={state.disabled || busy}
+                        onClick={() =>
+                          state.key === "activate"
+                            ? activate.mutate(item.id)
+                            : state.key === "oauth"
+                              ? connect.mutate(item.id)
+                              : request.mutate(item.id)
+                        }
                       >
                         {state.buttonLabel}
                       </Button>

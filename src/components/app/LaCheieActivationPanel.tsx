@@ -4,15 +4,13 @@ import { Link } from "@tanstack/react-router";
 import { toast } from "@/components/ui/sonner";
 import { Button } from "@/components/ui/button";
 import { InlineLoading } from "@/components/app/LoadingState";
-import {
-  activateLaCheieAgency,
-  getLaCheieAgencyStatusForAgency,
-} from "@/lib/portals/lacheie.functions";
+import { getLaCheieAgencyStatusForAgency } from "@/lib/portals/lacheie.functions";
+import { selfActivatePortal } from "@/lib/portal-activation.functions";
 
 export function LaCheieActivationPanel({ organizationId }: { organizationId: string }) {
   const queryClient = useQueryClient();
   const loadStatus = useServerFn(getLaCheieAgencyStatusForAgency);
-  const activate = useServerFn(activateLaCheieAgency);
+  const activate = useServerFn(selfActivatePortal);
 
   const status = useQuery({
     queryKey: ["lacheie-agency-self", organizationId],
@@ -20,9 +18,10 @@ export function LaCheieActivationPanel({ organizationId }: { organizationId: str
   });
 
   const request = useMutation({
-    mutationFn: () => activate({ data: { organizationId } }),
-    onSuccess: () => {
-      toast.success("La Cheie a fost activat.");
+    mutationFn: () => activate({ data: { portalId: "lacheie", organizationId } }),
+    onSuccess: (result) => {
+      if (result.ok) toast.success("La Cheie a fost activat.");
+      else toast.error("Activarea nu a reușit acum. Încearcă din nou sau scrie-ne.");
       void queryClient.invalidateQueries({ queryKey: ["lacheie-agency-self"] });
       void queryClient.invalidateQueries({ queryKey: ["agency-portal-catalog"] });
     },
@@ -57,7 +56,7 @@ export function LaCheieActivationPanel({ organizationId }: { organizationId: str
         disabled={blocked || request.isPending}
         onClick={() => request.mutate()}
       >
-        {request.isPending ? "Se trimite…" : "Solicită activarea"}
+        {request.isPending ? "Se trimite…" : "Activează"}
       </Button>
     </div>
   );

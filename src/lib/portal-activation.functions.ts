@@ -15,7 +15,11 @@ import { z } from "zod";
 import { requireActiveOrgAuth } from "@/lib/org-access";
 import {
   configurablePortals,
+  derivePortalConnectionStatus,
   getPortalDefinition,
+  portalActivationMode,
+  type PortalActivationMode,
+  type PortalConnectionStatus,
   isPortalCovered,
   portalDisplayName,
 } from "@/lib/portals/registry";
@@ -72,6 +76,8 @@ export type AgencyPortalCatalogItem = {
   description: string;
   availability: string;
   activated: boolean;
+  activation: PortalActivationMode;
+  connectionStatus: PortalConnectionStatus;
   request: {
     id: string;
     status: "pending" | "approved" | "rejected";
@@ -90,7 +96,7 @@ export const getAgencyPortalCatalog = createServerFn({ method: "POST" })
     const [{ data: connections }, { data: requests }] = await Promise.all([
       admin
         .from("portal_connections")
-        .select("portal, activated")
+        .select("portal, activated, external_account_id, portal_credentials_encrypted, last_sync_error, last_sync_status")
         .eq("organization_id", organizationId),
       admin
         .from("portal_activation_requests")
@@ -114,9 +120,21 @@ export const getAgencyPortalCatalog = createServerFn({ method: "POST" })
       if (!latest.has(row.portal)) latest.set(row.portal, row);
     }
 
+    const rows = new Map((connections ?? []).map((c) => [c.portal, c]));
     return configurablePortals().map((p) => {
       const req = latest.get(p.id);
+      const row = rows.get(p.id);
       return {
+        activation: portalActivationMode(p.id),
+        connectionStatus: derivePortalConnectionStatus({
+          definition: p,
+          activated: row?.activated === true,
+          externalAccountId: row?.external_account_id ?? null,
+          hasPortalCredential: Boolean(row?.portal_credentials_encrypted),
+          hasOAuthTokens: Boolean(row?.portal_credentials_encrypted),
+          lastError: row?.last_sync_error ?? null,
+          lastSyncStatus: row?.last_sync_status ?? null,
+        }),
         id: p.id,
         displayName: portalDisplayName(p.id),
         description: p.description,
@@ -148,6 +166,10 @@ export const requestPortalActivation = createServerFn({ method: "POST" })
     if (!definition) throw new Error("Portal necunoscut.");
     // Portalurile acoperite de o altă integrare nu se activează separat.
     if (isPortalCovered(data.portalId)) throw new Error("Portal necunoscut.");
+    // Portalurile self-service se activează direct, fără cerere.
+    if (portalActivationMode(definition.id) === "self_service") {
+      throw new Error("Acest portal se activează direct, fără cerere.");
+    }
 
     const admin = await loadAdmin();
 
@@ -341,4 +363,114 @@ export const resolvePortalActivationRequest = createServerFn({ method: "POST" })
     } as never);
 
     return { ok: true as const };
+  });
+
+export class PortalAccessError extends Error {
+  readonly status = 403;
+}
+
+/**
+ * Activare self-service din grila agenției: doar adminul agenției, pentru agenția lui,
+ * doar portalurile `self_service`/`oauth` din registru. Refolosește activarea din Superadmin
+ * (`applyPortalActivationForOrg`) și, la La Cheie, înregistrarea agenției.
+ */
+export async function selfActivatePortalForSession(
+  context: AuthContext,
+  input: { portalId: string; organizationId?: string },
+): Promise<{ ok: boolean; alreadyActive: boolean; error: string | null }> {
+  let organizationId: string;
+  try {
+    organizationId = await requireOrgAdminOrg(context);
+  } catch {
+    throw new PortalAccessError("Acces refuzat: doar administratorul agenției poate activa portaluri.");
+  }
+  if (input.organizationId && input.organizationId !== organizationId) {
+    throw new PortalAccessError("Acces refuzat: poți activa portaluri doar pentru agenția ta.");
+  }
+  const definition = getPortalDefinition(input.portalId);
+  if (!definition || isPortalCovered(input.portalId)) throw new Error("Portal necunoscut.");
+  const mode = portalActivationMode(definition.id);
+  if (mode !== "self_service" && mode !== "oauth") {
+    throw new PortalAccessError("Acest portal se activează doar cu aprobarea echipei Habitoo.");
+  }
+
+  const admin = await loadAdmin();
+  const { data: row } = await admin
+    .from("portal_connections")
+    .select("id, activated, last_sync_error")
+    .eq("organization_id", organizationId)
+    .eq("portal", definition.id)
+    .maybeSingle();
+  if (row?.activated === true && !row.last_sync_error) {
+    return { ok: true, alreadyActive: true, error: null };
+  }
+
+  if (definition.id === "lacheie") {
+    const { runLaCheieAgencyActivation } = await import("@/lib/portals/lacheie.functions");
+    try {
+      await runLaCheieAgencyActivation(context as never, organizationId);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Activarea La Cheie a eșuat.";
+      // Pasul extern a eșuat: portalul apare „Eroare”, fără trimiteri reale.
+      await admin
+        .from("portal_connections")
+        .update({
+          activated: true,
+          last_sync_status: "error",
+          last_sync_error: message.slice(0, 500),
+          updated_by: context.userId,
+        } as never)
+        .eq("organization_id", organizationId)
+        .eq("portal", definition.id);
+      await writeSelfActivationAudit(organizationId, context.userId, definition.id, false);
+      return { ok: false, alreadyActive: false, error: message };
+    }
+  }
+
+  const { applyPortalActivationForOrg } = await import("@/lib/portals.functions");
+  await applyPortalActivationForOrg({
+    organizationId,
+    portalId: definition.id,
+    activated: true,
+    actorId: context.userId,
+    source: "self_service",
+  });
+  await writeSelfActivationAudit(organizationId, context.userId, definition.id, true);
+  return { ok: true, alreadyActive: false, error: null };
+}
+
+async function writeSelfActivationAudit(
+  organizationId: string,
+  actorId: string,
+  portal: string,
+  success: boolean,
+) {
+  const admin = await loadAdmin();
+  await admin.from("audit_logs").insert({
+    organization_id: organizationId,
+    actor_id: actorId,
+    action: "portal.self_activated",
+    entity: "portal_connections",
+    new_values: { portal, success, source: "self_service", at: new Date().toISOString() },
+    created_by: actorId,
+  } as never);
+}
+
+export const selfActivatePortal = createServerFn({ method: "POST" })
+  .middleware([requireActiveOrgAuth])
+  .inputValidator((input: unknown) =>
+    z
+      .object({ portalId: z.string().min(1).max(40), organizationId: z.string().uuid().optional() })
+      .parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    try {
+      return await selfActivatePortalForSession(context as unknown as AuthContext, data);
+    } catch (error) {
+      if (error instanceof PortalAccessError) {
+        const { setResponseStatus } = await import("@tanstack/react-start/server");
+        setResponseStatus(403);
+      }
+      throw error;
+    }
   });

@@ -7,7 +7,11 @@
  *
  * Pură și partajată: UI-ul doar o afișează, testele o verifică direct.
  */
-import { PORTAL_CONNECTION_LABEL, type PortalConnectionStatus } from "./registry";
+import {
+  PORTAL_CONNECTION_LABEL,
+  type PortalActivationMode,
+  type PortalConnectionStatus,
+} from "./registry";
 
 export type PortalGridTone = "success" | "danger" | "muted";
 
@@ -34,7 +38,9 @@ export function portalGridState(input: {
 
 /** Starea cardului din grila administratorului de agenție (fără configurare). */
 export type AgencyPortalCardState =
-  | { key: "connected"; label: "Conectat"; tone: "success" }
+  | { key: "connected"; label: string; tone: PortalGridTone; status: PortalConnectionStatus }
+  | { key: "activate"; buttonLabel: "Activează"; disabled: false }
+  | { key: "oauth"; buttonLabel: "Conectează contul"; disabled: false }
   | { key: "request"; buttonLabel: "Solicită activarea"; disabled: false }
   | { key: "pending"; buttonLabel: "Cerere trimisă"; disabled: true; requestedAt: string }
   | {
@@ -46,9 +52,24 @@ export type AgencyPortalCardState =
 
 export function agencyPortalCardState(input: {
   activated: boolean;
+  activation?: PortalActivationMode;
+  /** Starea comună (`portalDisplayStatus`); lipsă = Conectat pentru un portal activat. */
+  connectionStatus?: PortalConnectionStatus;
   request: { status: PortalRequestStatus; requestedAt: string; rejectionReason: string | null } | null;
 }): AgencyPortalCardState {
-  if (input.activated) return { key: "connected", label: "Conectat", tone: "success" };
+  const activation = input.activation ?? "approval";
+  const status = input.activated ? (input.connectionStatus ?? "connected") : "disconnected";
+  // OAuth: fără cont legat (Deconectat) se poate conecta direct.
+  if (activation === "oauth" && status === "disconnected") {
+    return { key: "oauth", buttonLabel: "Conectează contul", disabled: false };
+  }
+  if (input.activated) {
+    const grid = portalGridState({ connectionStatus: status });
+    return { key: "connected", label: grid.label, tone: grid.tone, status };
+  }
+  if (activation === "self_service") {
+    return { key: "activate", buttonLabel: "Activează", disabled: false };
+  }
   if (input.request?.status === "pending") {
     return { key: "pending", buttonLabel: "Cerere trimisă", disabled: true, requestedAt: input.request.requestedAt };
   }

@@ -12,8 +12,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { getCrmUrl } from "@/lib/host";
 
-function back(params: Record<string, string>): Response {
-  const url = new URL(getCrmUrl("/superadmin/portals"));
+function back(params: Record<string, string>, path = "/superadmin/portals"): Response {
+  const url = new URL(getCrmUrl(path));
   for (const [key, value] of Object.entries(params)) url.searchParams.set(key, value);
   return new Response(null, { status: 302, headers: { location: url.toString() } });
 }
@@ -37,6 +37,22 @@ export const Route = createFileRoute("/api/public/portal/v1/storia/oauth/callbac
         }
 
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+        // Revenim unde a pornit fluxul: Superadmin → Portaluri sau Setări → Portaluri ale agenției.
+        let returnPath = "/superadmin/portals";
+        if (validated.createdBy) {
+          const { data: superRole } = await supabaseAdmin
+            .from("user_roles")
+            .select("user_id")
+            .eq("user_id", validated.createdBy)
+            .eq("role", "superadmin")
+            .maybeSingle();
+          if (!superRole) returnPath = "/app/settings?tab=portals";
+        }
+        const done = (params: Record<string, string>) => {
+          const target = new URL(getCrmUrl(returnPath));
+          for (const [k, v] of Object.entries(params)) target.searchParams.set(k, v);
+          return new Response(null, { status: 302, headers: { location: target.toString() } });
+        };
         const log = async (success: boolean, message: string | null) => {
           await supabaseAdmin.from("portal_operation_logs").insert({
             organization_id: validated.organizationId,
@@ -53,7 +69,7 @@ export const Route = createFileRoute("/api/public/portal/v1/storia/oauth/callbac
             false,
             portalError ? `portal a refuzat autorizarea (${portalError})` : "cod lipsă",
           );
-          return back({
+          return done({
             org: validated.organizationId,
             storia_error: portalError || "missing_code",
           });
@@ -68,11 +84,11 @@ export const Route = createFileRoute("/api/public/portal/v1/storia/oauth/callbac
             initial: true,
           });
           await log(true, null);
-          return back({ org: validated.organizationId, storia: "connected" });
+          return done({ org: validated.organizationId, storia: "connected" });
         } catch (error) {
           const message = error instanceof Error ? error.message : "Autorizarea Storia a eșuat.";
           await log(false, message.slice(0, 300));
-          return back({ org: validated.organizationId, storia_error: "exchange_failed" });
+          return done({ org: validated.organizationId, storia_error: "exchange_failed" });
         }
       },
     },
