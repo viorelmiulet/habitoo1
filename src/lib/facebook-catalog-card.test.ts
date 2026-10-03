@@ -58,7 +58,11 @@ describe("acces și token", () => {
   });
   it("cardul nu regenerează sau revocă și afișează doar modelul pentru tokenul existent", () => {
     expect(card).not.toContain("revokeSiteFeedToken");
-    expect(card).toContain("?token=TOKENUL_TĂU");
+    expect(card).not.toContain("TOKENUL_TĂU");
+    expect(card).not.toContain("nu se mai poate vedea");
+    expect(card).toContain("Generează adresa feedului");
+    expect(card).toContain("Adresa veche nu va mai funcționa; trebuie să o actualizezi în Meta.");
+    expect(card).not.toContain("generateSiteFeedToken");
     expect(card).not.toContain("tokenPrefix");
   });
 });
