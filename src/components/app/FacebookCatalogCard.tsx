@@ -2,22 +2,23 @@ import { useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { ChevronDown, Copy } from "lucide-react";
+import { ChevronDown, Copy, RefreshCw } from "lucide-react";
 import { toast } from "@/components/ui/sonner";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { ConfirmDialog } from "@/components/app/ConfirmDialog";
 import { StatusPill, type StatusPillState } from "@/components/ui/status-pill";
 import { InlineLoading } from "@/components/app/LoadingState";
 import { QueryError } from "@/components/app/QueryError";
 import { toastError } from "@/lib/errors";
 import { formatDateTime } from "@/lib/format";
-import { generateSiteFeedToken } from "@/lib/site-feed.functions";
-import { getFacebookCatalogOverview } from "@/lib/facebook-catalog.functions";
+import {
+  generateFacebookCatalogToken,
+  getFacebookCatalogOverview,
+} from "@/lib/facebook-catalog.functions";
 import {
   EXCLUSION_REASON_LABEL,
-  FACEBOOK_CATALOG_PATH,
-  FACEBOOK_CATALOG_PUBLIC_ORIGIN,
   FACEBOOK_CATALOG_STATE_LABEL,
-  facebookCatalogUrl,
   type FacebookCatalogState,
 } from "@/lib/facebook-catalog-status";
 
@@ -30,18 +31,17 @@ const PILL: Record<FacebookCatalogState, StatusPillState> = {
 export function FacebookCatalogCard() {
   const queryClient = useQueryClient();
   const load = useServerFn(getFacebookCatalogOverview);
-  const runGenerate = useServerFn(generateSiteFeedToken);
-  const [plainUrl, setPlainUrl] = useState<string | null>(null);
+  const runGenerate = useServerFn(generateFacebookCatalogToken);
+  const [confirmOpen, setConfirmOpen] = useState(false);
   const [showExcluded, setShowExcluded] = useState(false);
 
   const q = useQuery({ queryKey: ["facebook-catalog-overview"], queryFn: () => load() });
 
   const generate = useMutation({
-    mutationFn: () => runGenerate({ data: {} }),
+    mutationFn: () => runGenerate(),
     onSuccess: (res) => {
-      setPlainUrl(facebookCatalogUrl(res.token));
+      toast.success(res.regenerated ? "Adresa a fost regenerată." : "Adresa feedului a fost generată.");
       queryClient.invalidateQueries({ queryKey: ["facebook-catalog-overview"] });
-      queryClient.invalidateQueries({ queryKey: ["site-feed-status"] });
     },
     onError: (e: Error) => toastError(e),
   });
@@ -78,34 +78,40 @@ export function FacebookCatalogCard() {
 
       <div className="space-y-2">
         <p className="text-sm font-medium">Adresa feed-ului</p>
-        {plainUrl ? (
+        {d.feedUrl ? (
           <div className="space-y-2">
             <div className="flex flex-col gap-2 sm:flex-row">
-              <code className="min-w-0 flex-1 break-all rounded-md border bg-muted px-3 py-2 text-xs">
-                {plainUrl}
-              </code>
-              <Button variant="outline" onClick={() => copy(plainUrl)}>
+              <Input
+                readOnly
+                value={d.feedUrl}
+                aria-label="Adresa feedului Catalog Facebook"
+                className="min-w-0 flex-1 font-mono text-xs"
+                onFocus={(e) => e.currentTarget.select()}
+              />
+              <Button variant="outline" onClick={() => copy(d.feedUrl!)}>
                 <Copy className="size-4" /> Copiază
               </Button>
             </div>
-            <p className="text-sm text-destructive">
-              Copiază adresa acum. Tokenul nu se mai poate vedea după ce părăsești pagina.
-            </p>
-          </div>
-        ) : d.hasToken ? (
-          <div className="space-y-2">
-            <code className="block break-all rounded-md border bg-muted px-3 py-2 text-xs">
-              {`${FACEBOOK_CATALOG_PUBLIC_ORIGIN}${FACEBOOK_CATALOG_PATH}?token=TOKENUL_TĂU`}
-            </code>
-            <p className="text-sm text-muted-foreground">
-              Folosește tokenul de feed al agenției (din Setări → Integrări). Valoarea lui se vede
-              doar la generare.
-            </p>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setConfirmOpen(true)}
+              disabled={generate.isPending}
+            >
+              <RefreshCw className="size-4" /> Regenerează adresa
+            </Button>
           </div>
         ) : (
-          <Button onClick={() => generate.mutate()} disabled={generate.isPending}>
-            Generează token
-          </Button>
+          <div className="space-y-2">
+            {d.hasLegacySiteToken ? (
+              <p className="text-sm text-muted-foreground">
+                Generează o adresă dedicată Catalogului Facebook. Feedul pentru site rămâne neschimbat.
+              </p>
+            ) : null}
+            <Button onClick={() => generate.mutate()} disabled={generate.isPending}>
+              Generează adresa feedului
+            </Button>
+          </div>
         )}
       </div>
 
@@ -161,6 +167,17 @@ export function FacebookCatalogCard() {
           <li>Alege citirea zilnică și salvează.</li>
         </ol>
       </details>
+      <ConfirmDialog
+        open={confirmOpen}
+        onOpenChange={setConfirmOpen}
+        title="Regenerezi adresa feedului?"
+        description="Adresa veche nu va mai funcționa; trebuie să o actualizezi în Meta."
+        confirmLabel="Regenerează"
+        destructive
+        onConfirm={async () => {
+          await generate.mutateAsync();
+        }}
+      />
     </div>
   );
 }

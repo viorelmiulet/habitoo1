@@ -138,6 +138,11 @@ export type FeedAuthOptions = {
    * Are prioritate față de headere și query; restul verificării este identică.
    */
   explicitToken?: string | null;
+  /**
+   * Acceptă tokenul dedicat Catalogului Facebook (`scope = facebook_catalog`).
+   * Activ DOAR pe /api/public/catalog/v1/facebook.csv; implicit respins.
+   */
+  allowFacebookCatalogToken?: boolean;
 };
 
 export async function authenticateFeedRequest(
@@ -194,12 +199,16 @@ export async function authenticateFeedRequest(
   const hash = hashFeedToken(token);
   const { data, error } = await supabaseAdmin
     .from("site_feed_tokens")
-    .select("id, organization_id, token_prefix, revoked_at, request_count")
+    .select("id, organization_id, token_prefix, revoked_at, request_count, scope")
     .eq("token_hash", hash)
     .is("revoked_at", null)
     .maybeSingle();
 
   if (!error && data) {
+    // Tokenul Catalogului Facebook nu deschide celelalte endpointuri ale feedului.
+    if (data.scope === "facebook_catalog" && !options.allowFacebookCatalogToken) {
+      return { ok: false, status: 401, message: "Invalid or revoked API token.", tokenPrefix: prefix };
+    }
     await supabaseAdmin
       .from("site_feed_tokens")
       .update({

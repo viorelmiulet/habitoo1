@@ -1,6 +1,7 @@
 // Cardul „Catalog Facebook” (Setări → Promovare). Doar agency_admin/superadmin, doar agenția proprie.
 // Nu returnează niciodată tokenul existent sau prefixul lui.
 import { createServerFn } from "@tanstack/react-start";
+import { setResponseHeader } from "@tanstack/react-start/server";
 import { requireActiveOrgAuth } from "@/lib/org-access";
 import {
   facebookCatalogState,
@@ -11,6 +12,10 @@ import type { ExclusionReason } from "@/lib/site-feed/facebook-catalog";
 export type FacebookCatalogOverview = {
   state: FacebookCatalogState;
   hasToken: boolean;
+  /** Adresa completă, doar pentru tokenul `facebook_catalog` al agenției proprii. */
+  feedUrl: string | null;
+  /** Agenția are doar tokenuri de site (fără valoare recuperabilă). */
+  hasLegacySiteToken: boolean;
   included: number;
   excluded: Record<ExclusionReason, number>;
   excludedTotal: number;
@@ -32,10 +37,7 @@ type Ctx = {
   userId: string;
 };
 
-export const getFacebookCatalogOverview = createServerFn({ method: "GET" })
-  .middleware([requireActiveOrgAuth])
-  .handler(async ({ context }): Promise<FacebookCatalogOverview> => {
-    const ctx = context as unknown as Ctx;
+async function requireCatalogAdmin(ctx: Ctx): Promise<string> {
     const { data: isAdmin, error } = await ctx.supabase.rpc("is_org_admin");
     if (error || isAdmin !== true) {
       throw new Error("Acces refuzat: doar administratorul agenției vede Catalogul Facebook.");
@@ -47,12 +49,25 @@ export const getFacebookCatalogOverview = createServerFn({ method: "GET" })
       .maybeSingle();
     const organizationId = profile?.organization_id;
     if (!organizationId) throw new Error("Agenția nu este configurată.");
+    return organizationId;
+}
 
-    const [{ supabaseAdmin }, { loadFacebookCatalogInput }, { buildFacebookCatalogCsv }] =
-      await Promise.all([
+export const getFacebookCatalogOverview = createServerFn({ method: "GET" })
+  .middleware([requireActiveOrgAuth])
+  .handler(async ({ context }): Promise<FacebookCatalogOverview> => {
+    setResponseHeader("Cache-Control", "no-store");
+    const organizationId = await requireCatalogAdmin(context as unknown as Ctx);
+
+    const [
+      { supabaseAdmin },
+      { loadFacebookCatalogInput },
+      { buildFacebookCatalogCsv },
+      { loadFacebookCatalogFeedUrl },
+    ] = await Promise.all([
         import("@/integrations/supabase/client.server"),
         import("@/lib/site-feed/facebook-catalog.server"),
         import("@/lib/site-feed/facebook-catalog"),
+        import("@/lib/site-feed/facebook-catalog-token.server"),
       ]);
 
     const [{ data: tokens }, { data: logs }, { data: lastOk }] = await Promise.all([
@@ -60,6 +75,7 @@ export const getFacebookCatalogOverview = createServerFn({ method: "GET" })
         .from("site_feed_tokens")
         .select("id")
         .eq("organization_id", organizationId)
+        .in("scope", ["site", "facebook_catalog"])
         .is("revoked_at", null)
         .limit(1),
       supabaseAdmin
@@ -81,6 +97,7 @@ export const getFacebookCatalogOverview = createServerFn({ method: "GET" })
     ]);
 
     const hasToken = (tokens ?? []).length > 0;
+    const feedUrl = await loadFacebookCatalogFeedUrl(supabaseAdmin, organizationId);
     const input = await loadFacebookCatalogInput(supabaseAdmin, organizationId);
     const result = buildFacebookCatalogCsv({
       ...input,
@@ -98,10 +115,27 @@ export const getFacebookCatalogOverview = createServerFn({ method: "GET" })
         })),
       }),
       hasToken,
+      feedUrl,
+      hasLegacySiteToken: hasToken && !feedUrl,
       included: result.included,
       excluded: result.excluded,
       excludedTotal: result.excludedTotal,
       excludedItems: (result.excludedItems ?? []).slice(0, 200),
       lastReadAt: lastOk?.[0]?.created_at ?? null,
     };
+  });
+
+/** Generează (sau regenerează) tokenul dedicat Catalogului Facebook. Nu atinge tokenurile de site. */
+export const generateFacebookCatalogToken = createServerFn({ method: "POST" })
+  .middleware([requireActiveOrgAuth])
+  .handler(async ({ context }): Promise<{ feedUrl: string; regenerated: boolean }> => {
+    setResponseHeader("Cache-Control", "no-store");
+    const ctx = context as unknown as Ctx;
+    const organizationId = await requireCatalogAdmin(ctx);
+    const [{ supabaseAdmin }, { rotateFacebookCatalogToken }] = await Promise.all([
+      import("@/integrations/supabase/client.server"),
+      import("@/lib/site-feed/facebook-catalog-token.server"),
+    ]);
+    const res = await rotateFacebookCatalogToken(supabaseAdmin, organizationId, ctx.userId);
+    return { feedUrl: res.url, regenerated: res.regenerated };
   });
