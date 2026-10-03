@@ -12,7 +12,7 @@ import { requireActiveOrgAuth } from "@/lib/org-access";
 type AuthContext = {
   supabase: {
     rpc: (
-      fn: "is_superadmin",
+      fn: "is_superadmin" | "is_org_admin",
     ) => PromiseLike<{ data: boolean | null; error: { message: string } | null }>;
   };
   userId: string;
@@ -33,6 +33,23 @@ async function requireSuperadminOrg(context: AuthContext, organizationId: string
   return org.id;
 }
 
+/** Superadmin pentru orice agenție, sau adminul agenției pentru agenția proprie. */
+async function requireStoriaConnector(context: AuthContext, organizationId: string): Promise<string> {
+  const { data: isSuper } = await context.supabase.rpc("is_superadmin");
+  if (isSuper === true) return requireSuperadminOrg(context, organizationId);
+  const { data: isOrgAdmin } = await context.supabase.rpc("is_org_admin");
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { data: profile } = await supabaseAdmin
+    .from("profiles")
+    .select("organization_id")
+    .eq("id", context.userId)
+    .maybeSingle();
+  if (isOrgAdmin !== true || !profile?.organization_id || profile.organization_id !== organizationId) {
+    throw new Error("Acces refuzat: poți conecta contul Storia doar pentru agenția ta.");
+  }
+  return organizationId;
+}
+
 /**
  * Pornește autorizarea: generează `state`-ul CSRF legat de agenție și întoarce
  * URL-ul paginii de autorizare Storia, unde este trimis browserul.
@@ -41,7 +58,7 @@ export const startStoriaAuthorization = createServerFn({ method: "POST" })
   .middleware([requireActiveOrgAuth])
   .inputValidator((input: unknown) => z.object({ organizationId: z.string().uuid() }).parse(input))
   .handler(async ({ data, context }) => {
-    const organizationId = await requireSuperadminOrg(
+    const organizationId = await requireStoriaConnector(
       context as unknown as AuthContext,
       data.organizationId,
     );

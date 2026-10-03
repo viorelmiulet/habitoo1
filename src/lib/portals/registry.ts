@@ -59,8 +59,13 @@ export type PortalConfigField = {
   target: "external_account_id" | "credentials" | "settings";
 };
 
+/** Cum își activează agenția portalul: singură, prin contul ei (OAuth) sau cu aprobare. */
+export type PortalActivationMode = "self_service" | "oauth" | "approval";
+
 export type PortalDefinition = {
   id: PortalId;
+  /** Implicit `approval` pentru orice portal care nu declară altceva. */
+  activation?: PortalActivationMode;
   display_name: string;
   description: string;
   /** Token text scurt folosit ca logo în UI (fără asset extern). */
@@ -129,6 +134,7 @@ export const PORTAL_AVAILABILITY_LABEL: Record<PortalAvailability, string> = {
 export const PORTALS: PortalDefinition[] = [
   {
     id: "clickimob",
+    activation: "self_service",
     display_name: "ClickImob",
     description:
       "ClickImob citește ofertele agenției din feedul Habitoo, prin indexul ClickImob. Agenția intră automat în index după activarea portalului.",
@@ -176,6 +182,7 @@ export const PORTALS: PortalDefinition[] = [
   },
   {
     id: "properstar",
+    activation: "self_service",
     display_name: "Properstar",
     description:
       "Properstar citește periodic feedul XML Habitoo al agenției și importă ofertele selectate. Retragerea se anunță în feed (Status=Deleted) și apoi oferta dispare.",
@@ -199,6 +206,7 @@ export const PORTALS: PortalDefinition[] = [
 
   {
     id: "lacheie",
+    activation: "self_service",
     display_name: "La Cheie",
     description:
       "La Cheie expune un API REST production-only pentru furnizori CRM: Habitoo se autentifică cu o singură cheie de furnizor păstrată pe server, iar fiecare agenție este identificată prin external_id după activarea conexiunii.",
@@ -368,6 +376,7 @@ export const PORTALS: PortalDefinition[] = [
   },
   {
     id: "storia",
+    activation: "oauth",
     display_name: "Storia.ro",
     description:
       "Storia (OLX Group RE API): Habitoo folosește un singur set de credențiale de aplicație, iar fiecare agenție își autorizează propriul cont Storia prin OAuth2.",
@@ -690,4 +699,10 @@ export function integrationDisplayStatus(row: {
     configured,
     lastError: row.lastError,
   });
+}
+
+/** Modul de activare, moștenit de la portalul principal al perechii (ex. OLX → Storia). */
+export function portalActivationMode(id: string): PortalActivationMode {
+  const definition = getPortalDefinition(portalIntegrationOwner(id as PortalId));
+  return definition?.activation ?? "approval";
 }

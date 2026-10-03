@@ -666,6 +666,8 @@ export async function applyPortalActivationForOrg(input: {
   portalId: string;
   activated: boolean;
   actorId: string;
+  /** Proveniența activării, pentru audit (ex. self_service). */
+  source?: string;
 }) {
   const { organizationId, activated, actorId } = input;
   const definition = getPortalDefinition(input.portalId);
@@ -705,7 +707,7 @@ export async function applyPortalActivationForOrg(input: {
     actor_id: actorId,
     action: activated ? "portal.activated_for_org" : "portal.deactivated_for_org",
     entity: "portal_connections",
-    new_values: { portal: definition.id, activated, allow_live: activated },
+    new_values: { portal: definition.id, activated, allow_live: activated, source: input.source ?? "superadmin" },
     created_by: actorId,
   } as never);
 
@@ -726,6 +728,7 @@ export async function applyPortalActivationForOrg(input: {
           status: "approved",
           resolved_by: actorId,
           resolved_at: new Date().toISOString(),
+          ...(input.source === "self_service" ? { note: "activare automată" } : {}),
         } as never)
         .eq("id", pending.id);
       await admin.from("audit_logs").insert({
@@ -735,7 +738,7 @@ export async function applyPortalActivationForOrg(input: {
         entity: "portal_activation_requests",
         entity_id: pending.id,
         old_values: { status: "pending" },
-        new_values: { status: "approved", portal: definition.id, via: "portal_activation" },
+        new_values: { status: "approved", portal: definition.id, via: input.source ?? "portal_activation" },
         created_by: actorId,
       } as never);
     }

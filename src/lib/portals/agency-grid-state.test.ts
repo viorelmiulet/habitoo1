@@ -45,7 +45,7 @@ describe("grila portalurilor pentru administratorul agenției", () => {
     const catalog = readFileSync("src/components/app/AgencyPortalCatalogCard.tsx", "utf8");
     const laCheie = readFileSync("src/components/app/LaCheieActivationPanel.tsx", "utf8");
     expect(catalog).toMatch(/<li[\s\S]*isLaCheie[\s\S]*<LaCheieActivationPanel/);
-    expect(laCheie).toContain('"Solicită activarea"');
+    expect(laCheie).toContain("\"Activează\"");
     expect(laCheie).not.toContain("LaCheieResendPanel");
   });
 
