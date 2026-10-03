@@ -25,10 +25,9 @@ describe("grila portalurilor pentru administratorul agenției", () => {
     ]);
     expect(out.map((i) => i.id)).toEqual(["storia"]);
   });
-  it("agentul obișnuit nu vede fila Portaluri", () => {
+  it("agentul obișnuit vede doar „Portalurile mele”, nu grila de activare", () => {
     const src = readFileSync("src/routes/_authenticated/app.settings.tsx", "utf8");
-    expect(src).toMatch(/user\?\.isAdmin \? <TabsTrigger value="portals">/);
-    expect(src).toMatch(/user\?\.isAdmin \? \(\s*<TabsContent value="portals">\s*<div[^>]*>\s*<AgencyPortalCatalogCard/);
+    expect(src).toMatch(/user\?\.isAdmin \? \(\s*<>\s*<AgencyPortalCatalogCard \/>/);
   });
   it("cardurile nu au checkbox și nici chei/configurare", () => {
     const src = readFileSync("src/components/app/AgencyPortalCatalogCard.tsx", "utf8");

@@ -7,6 +7,7 @@ import { notifyProperstarFeedChanged } from "@/lib/portals/properstar-cache";
 import { PageHeader } from "@/components/app/PageHeader";
 import { StatusBadge } from "@/components/app/StatusBadge";
 import { AgencyPortalCatalogCard } from "@/components/app/AgencyPortalCatalogCard";
+import { MyPortalsCard } from "@/components/app/MyPortalsCard";
 import { AgencyBrandingCard } from "@/components/app/AgencyBrandingCard";
 import { AiSettingsCard } from "@/components/app/ai/AiSettingsCard";
 
@@ -233,7 +234,7 @@ function SettingsPage() {
           {user?.isAdmin ? <TabsTrigger value="branding">Logo &amp; watermark</TabsTrigger> : null}
           {user?.isAdmin ? <TabsTrigger value="team">Echipă ({team.length})</TabsTrigger> : null}
           {user?.isAdmin ? <TabsTrigger value="integrations">Integrări</TabsTrigger> : null}
-          {user?.isAdmin ? <TabsTrigger value="portals">Portaluri</TabsTrigger> : null}
+          {user?.organization || user?.isAdmin ? <TabsTrigger value="portals">Portaluri</TabsTrigger> : null}
           {user?.isAdmin ? <TabsTrigger value="promotion">Promovare</TabsTrigger> : null}
           <TabsTrigger value="ai">AI</TabsTrigger>
         </TabsList>
@@ -501,17 +502,20 @@ function SettingsPage() {
           </TabsContent>
         ) : null}
 
-        {user?.isAdmin ? (
+        {user?.organization || user?.isAdmin ? (
           <TabsContent value="portals">
             <div className="space-y-6">
-              <AgencyPortalCatalogCard />
-              <PortalSlotsCard />
-              <ImobiliarePromotionsAdminCard />
-              <ProperstarFeedCard />
-
+              {user?.organization ? <MyPortalsCard /> : null}
+              {user?.isAdmin ? (
+                <>
+                  <AgencyPortalCatalogCard />
+                  <PortalSlotsCard />
+                  <ImobiliarePromotionsAdminCard />
+                  <ProperstarFeedCard />
+                </>
+              ) : null}
             </div>
           </TabsContent>
-
         ) : null}
         {user?.isAdmin ? (
           <TabsContent value="promotion">
