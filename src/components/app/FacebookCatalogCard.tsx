@@ -16,6 +16,7 @@ import {
   generateFacebookCatalogToken,
   getFacebookCatalogOverview,
 } from "@/lib/facebook-catalog.functions";
+import { bulkSetFacebookCatalog } from "@/lib/facebook-catalog-listings.functions";
 import {
   EXCLUSION_REASON_LABEL,
   FACEBOOK_CATALOG_STATE_LABEL,
@@ -33,6 +34,22 @@ export function FacebookCatalogCard() {
   const load = useServerFn(getFacebookCatalogOverview);
   const runGenerate = useServerFn(generateFacebookCatalogToken);
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const runBulk = useServerFn(bulkSetFacebookCatalog);
+  const [bulkMode, setBulkMode] = useState<"add_eligible" | "remove_all" | null>(null);
+  const bulk = useMutation({
+    mutationFn: (mode: "add_eligible" | "remove_all") => runBulk({ data: { mode } }),
+    onSuccess: (res, mode) => {
+      toast.success(
+        mode === "add_eligible"
+          ? `${res.changed} anunțuri adăugate în catalog.`
+          : `${res.changed} anunțuri scoase din catalog.`,
+      );
+      queryClient.invalidateQueries({ queryKey: ["facebook-catalog-overview"] });
+      queryClient.invalidateQueries({ queryKey: ["property-facebook-catalog"] });
+      queryClient.invalidateQueries({ queryKey: ["property-promotion"] });
+    },
+    onError: (e: Error) => toastError(e),
+  });
   const [showExcluded, setShowExcluded] = useState(false);
 
   const q = useQuery({ queryKey: ["facebook-catalog-overview"], queryFn: () => load() });
@@ -117,18 +134,27 @@ export function FacebookCatalogCard() {
 
       <dl className="grid gap-3 text-sm sm:grid-cols-3">
         <div>
-          <dt className="text-muted-foreground">Intră în catalog</dt>
-          <dd className="font-medium">{d.included}</dd>
+          <dt className="text-muted-foreground">În catalog</dt>
+          <dd className="font-medium">{d.included} anunțuri în catalog</dd>
         </div>
         <div>
           <dt className="text-muted-foreground">Excluse</dt>
-          <dd className="font-medium">{d.excludedTotal}</dd>
+          <dd className="font-medium">{d.excludedTotal} activate, dar excluse</dd>
         </div>
         <div>
           <dt className="text-muted-foreground">Ultima citire de Meta</dt>
           <dd>{d.lastReadAt ? formatDateTime(d.lastReadAt) : "Încă nu a fost citit"}</dd>
         </div>
       </dl>
+
+      <div className="flex flex-wrap gap-2">
+        <Button variant="outline" size="sm" disabled={bulk.isPending} onClick={() => setBulkMode("add_eligible")}>
+          Adaugă toate anunțurile eligibile
+        </Button>
+        <Button variant="outline" size="sm" disabled={bulk.isPending} onClick={() => setBulkMode("remove_all")}>
+          Scoate toate anunțurile
+        </Button>
+      </div>
 
       {d.excludedTotal > 0 ? (
         <div className="space-y-2">
@@ -167,6 +193,22 @@ export function FacebookCatalogCard() {
           <li>Alege citirea zilnică și salvează.</li>
         </ol>
       </details>
+      <ConfirmDialog
+        open={bulkMode !== null}
+        onOpenChange={(o) => (o ? null : setBulkMode(null))}
+        title={bulkMode === "remove_all" ? "Scoți toate anunțurile din catalog?" : "Adaugi toate anunțurile eligibile?"}
+        description={
+          bulkMode === "remove_all"
+            ? "Niciun anunț nu va mai apărea în Catalogul Facebook la următoarea citire."
+            : "Se activează doar anunțurile publicate care au preț, coordonate, poze și oraș."
+        }
+        confirmLabel={bulkMode === "remove_all" ? "Scoate toate" : "Adaugă"}
+        destructive={bulkMode === "remove_all"}
+        onConfirm={async () => {
+          if (bulkMode) await bulk.mutateAsync(bulkMode);
+          setBulkMode(null);
+        }}
+      />
       <ConfirmDialog
         open={confirmOpen}
         onOpenChange={setConfirmOpen}
