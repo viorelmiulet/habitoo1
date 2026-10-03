@@ -29,7 +29,7 @@ import { StatusPill, type StatusPillState } from "@/components/ui/status-pill";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { effectivePromoted } from "@/lib/portals/promotion-flag";
-import { PortalLogoStack } from "@/components/app/PortalLogo";
+import { PortalLogo, PortalLogoStack } from "@/components/app/PortalLogo";
 import { getMyPortalSlot } from "@/lib/portals/slots.functions";
 import { PropertyImobiliarePromotionsCard } from "@/components/app/PropertyImobiliarePromotionsCard";
 import { BrandLogo } from "@/components/brand/BrandLogo";
@@ -505,7 +505,7 @@ export const PropertyPortalsCard = forwardRef<
                   ) : (
                     <Circle aria-hidden className="mt-0.5 size-4 shrink-0 text-muted-foreground/60" />
                   )}
-                  <PortalLogoStack portalId="facebook" name="Catalog Facebook" size={40} />
+                  <PortalLogo portalId="facebook_catalog" name="Catalog Facebook" fallback="FB" size={40} />
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-2">
                       <label htmlFor="portal-facebook-catalog" className="font-semibold">
