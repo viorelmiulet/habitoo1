@@ -10,22 +10,25 @@ import { act } from "react";
 import { createRoot } from "react-dom/client";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
-const overview = {
-  state: "connected" as const,
-  hasToken: true,
-  feedUrl: "https://example.test/api/public/catalog/v1/facebook.csv?token=abc",
-  hasLegacySiteToken: false,
-  included: 5,
-  excluded: { no_price: 0, no_coordinates: 0, no_images: 0, no_city: 0 },
-  excludedTotal: 0,
-  excludedItems: [],
-  lastReadAt: null,
-  agentsCanManage: false,
-};
-
-vi.mock("@tanstack/react-start", () => ({
-  useServerFn: () => async () => overview,
+const { overview } = vi.hoisted(() => ({
+  overview: {
+    state: "connected" as const,
+    hasToken: true,
+    feedUrl: "https://example.test/api/public/catalog/v1/facebook.csv?token=abc",
+    hasLegacySiteToken: false,
+    included: 5,
+    excluded: { no_price: 0, no_coordinates: 0, no_images: 0, no_city: 0 },
+    excludedTotal: 0,
+    excludedItems: [] as { id: string; reference: string | null; title: string; reason: "no_price" }[],
+    lastReadAt: null,
+    agentsCanManage: false,
+  },
 }));
+
+vi.mock("@tanstack/react-start", async (importOriginal) => {
+  const actual = await importOriginal<Record<string, unknown>>();
+  return { ...actual, useServerFn: () => async () => overview };
+});
 
 vi.mock("@tanstack/react-router", () => ({
   Link: ({ children }: { children: React.ReactNode }) => <a>{children}</a>,
