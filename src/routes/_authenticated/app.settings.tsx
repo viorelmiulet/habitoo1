@@ -524,9 +524,6 @@ function SettingsPage() {
             </div>
           </TabsContent>
         ) : null}
-            </div>
-          </TabsContent>
-        ) : null}
         {user?.isAdmin ? (
           <TabsContent value="promotion">
             <div className="space-y-6">
