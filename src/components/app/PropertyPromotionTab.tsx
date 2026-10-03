@@ -15,8 +15,8 @@ import { getPropertyPromotion } from "@/lib/property-promotion.functions";
 import { generateMarketing } from "@/lib/ai/agents/marketing/marketing.functions";
 import { MEDIA_BUCKET, signedUrls } from "@/lib/storage";
 import { cn } from "@/lib/utils";
+import { facebookListingState } from "@/lib/facebook-catalog-status";
 import {
-  CATALOG_ROW_REASON_LABEL,
   SOCIAL_CHAR_LIMITS,
   SOCIAL_NETWORKS,
   SOCIAL_NETWORK_LABELS,
@@ -28,7 +28,13 @@ import {
   type SocialNetwork,
 } from "@/lib/social-post";
 
-export function PropertyPromotionTab({ propertyId }: { propertyId: string }) {
+export function PropertyPromotionTab({
+  propertyId,
+  onOpenPublishing,
+}: {
+  propertyId: string;
+  onOpenPublishing?: () => void;
+}) {
   const load = useServerFn(getPropertyPromotion);
   const runAi = useServerFn(generateMarketing);
   const { data: user } = useCurrentUser();
@@ -240,15 +246,20 @@ export function PropertyPromotionTab({ propertyId }: { propertyId: string }) {
         <div>
           <h3 className="font-medium">Catalog Facebook</h3>
           <p className="text-sm">
-            În catalogul Facebook: <strong>{d.catalog.included ? "Da" : "Nu"}</strong>
-            {!d.catalog.included && d.catalog.reason ? ` (${CATALOG_ROW_REASON_LABEL[d.catalog.reason]})` : ""}
+            În catalogul Facebook:{" "}
+            <strong>{facebookListingState(d.catalog.enabled, d.catalog.reason).label}</strong>
           </p>
         </div>
-        {user?.isAdmin ? (
-          <Link to="/app/settings" search={{ tab: "promotion" }} className="text-sm underline">
-            Vezi setările catalogului
-          </Link>
-        ) : null}
+        <div className="flex flex-wrap items-center gap-3">
+          <Button variant="outline" size="sm" onClick={() => onOpenPublishing?.()}>
+            {d.catalog.enabled ? "Dezactivează din Publicare" : "Activează din Publicare"}
+          </Button>
+          {user?.isAdmin ? (
+            <Link to="/app/settings" search={{ tab: "promotion" }} className="text-sm underline">
+              Vezi setările catalogului
+            </Link>
+          ) : null}
+        </div>
       </div>
     </div>
   );
