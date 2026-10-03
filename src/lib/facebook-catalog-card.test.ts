@@ -72,4 +72,9 @@ describe("acces și token", () => {
     expect(logo).toContain("onError={() => setFailed(true)}");
     expect(logo).toContain("initials");
   });
+  it("rândul din fila Publicare afișează logoul facebook_catalog cu fallback FB", () => {
+    const portals = readFileSync("src/components/app/PropertyPortalsCard.tsx", "utf8");
+    expect(portals).toContain('<PortalLogo portalId="facebook_catalog" name="Catalog Facebook" fallback="FB"');
+    expect(portals).not.toContain('portalId="facebook"');
+  });
 });
