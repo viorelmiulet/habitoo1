@@ -94,6 +94,30 @@ export function FacebookCatalogCard({ portalList = false }: { portalList?: boole
   const reasons = (Object.keys(EXCLUSION_REASON_LABEL) as (keyof typeof EXCLUSION_REASON_LABEL)[])
     .filter((r) => d.excluded[r] > 0);
 
+  const metaSteps = (
+    <ol className="mt-2 list-decimal space-y-1 pl-5 text-muted-foreground">
+      <li>Deschide Meta Commerce Manager.</li>
+      <li>Creează un catalog de tip „Home listings”.</li>
+      <li>Mergi la Surse de date → Feed de date → URL programat.</li>
+      <li>Lipește adresa feed-ului de mai sus.</li>
+      <li>Alege citirea zilnică și salvează.</li>
+    </ol>
+  );
+
+  const metaFooter = (
+    <div className="mt-3 space-y-3 border-t pt-3">
+      <p className="text-muted-foreground">
+        Doar anunțurile bifate pentru Catalog Facebook, în fila Publicare a anunțului, apar în catalog.
+        Un anunț fără preț, coordonate, poze sau oraș este exclus.
+      </p>
+      <Button asChild variant="outline" size="sm">
+        <a href="https://www.facebook.com/commerce_manager" target="_blank" rel="noreferrer">
+          Deschide Meta Commerce Manager <ExternalLink className="size-4" />
+        </a>
+      </Button>
+    </div>
+  );
+
   return (
     <div className={portalList ? "min-w-0 max-w-full space-y-5" : "panel min-w-0 max-w-full space-y-5 p-5"}>
       <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-start gap-3 sm:flex sm:flex-wrap sm:justify-between">
@@ -217,36 +241,21 @@ export function FacebookCatalogCard({ portalList = false }: { portalList?: boole
         </div>
       ) : null}
 
-      <details open={portalList || undefined} className="group rounded-md border px-3 py-2 text-sm">
-        {portalList ? (
+      {portalList ? (
+        <div className="rounded-md border px-3 py-2 text-sm">
           <p className="font-medium">Cum îl conectez la Meta</p>
-        ) : (
+          {metaSteps}
+          {metaFooter}
+        </div>
+      ) : (
+        <details className="group rounded-md border px-3 py-2 text-sm">
           <summary className="flex cursor-pointer list-none items-center justify-between font-medium">
             Cum îl conectez la Meta
             <ChevronDown className="size-4 transition-transform group-open:rotate-180" />
           </summary>
-        )}
-        <ol className="mt-2 list-decimal space-y-1 pl-5 text-muted-foreground">
-          <li>Deschide Meta Commerce Manager.</li>
-          <li>Creează un catalog de tip „Home listings”.</li>
-          <li>Mergi la Surse de date → Feed de date → URL programat.</li>
-          <li>Lipește adresa feed-ului de mai sus.</li>
-          <li>Alege citirea zilnică și salvează.</li>
-        </ol>
-        {portalList ? (
-          <div className="mt-3 space-y-3 border-t pt-3">
-            <p className="text-muted-foreground">
-              Doar anunțurile bifate pentru Catalog Facebook, în fila Publicare a anunțului, apar în catalog.
-              Un anunț fără preț, coordonate, poze sau oraș este exclus.
-            </p>
-            <Button asChild variant="outline" size="sm">
-              <a href="https://www.facebook.com/commerce_manager" target="_blank" rel="noreferrer">
-                Deschide Meta Commerce Manager <ExternalLink className="size-4" />
-              </a>
-            </Button>
-          </div>
-        ) : null}
-      </details>
+          {metaSteps}
+        </details>
+      )}
       <ConfirmDialog
         open={bulkMode !== null}
         onOpenChange={(o) => (o ? null : setBulkMode(null))}
