@@ -49,14 +49,17 @@ export async function loadFacebookCatalogInput(
   supabaseAdmin: AdminClient,
   organizationId: string,
   includeProperties = true,
+  onlyPropertyIds?: string[],
 ): Promise<{ properties: PropertyRow[]; imagesByProperty: Map<string, PropertyImageRow[]> }> {
   const properties: PropertyRow[] = [];
   if (includeProperties) {
     for (let from = 0; ; from += PAGE) {
-      const { data, error } = await supabaseAdmin
+      let query = supabaseAdmin
         .from("properties")
         .select("*")
-        .eq("organization_id", organizationId)
+        .eq("organization_id", organizationId);
+      if (onlyPropertyIds) query = query.in("id", onlyPropertyIds);
+      const { data, error } = await query
         .eq("publish_status", "published")
         .is("deleted_at", null)
         .in("status", [...FEED_PUBLIC_STATUSES])
