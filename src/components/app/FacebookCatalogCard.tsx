@@ -185,10 +185,14 @@ export function FacebookCatalogCard({ portalList = false }: { portalList?: boole
       ) : null}
 
       <details open={portalList || undefined} className="group rounded-md border px-3 py-2 text-sm">
-        <summary className="flex cursor-pointer list-none items-center justify-between font-medium">
-          Cum îl conectez la Meta
-          <ChevronDown className="size-4 transition-transform group-open:rotate-180" />
-        </summary>
+        {portalList ? (
+          <p className="font-medium">Cum îl conectez la Meta</p>
+        ) : (
+          <summary className="flex cursor-pointer list-none items-center justify-between font-medium">
+            Cum îl conectez la Meta
+            <ChevronDown className="size-4 transition-transform group-open:rotate-180" />
+          </summary>
+        )}
         <ol className="mt-2 list-decimal space-y-1 pl-5 text-muted-foreground">
           <li>Deschide Meta Commerce Manager.</li>
           <li>Creează un catalog de tip „Home listings”.</li>
