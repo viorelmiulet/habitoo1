@@ -187,3 +187,27 @@ describe("mapImmofluxItem", () => {
     ]);
   });
 });
+
+describe("immoflux casă și hală", () => {
+  const ctx2 = { organizationId: "org", assignedTo: null };
+  const item = (o: Record<string, unknown>) =>
+    ({ id: 1, title: { ro: "T" }, city: { name: "Chiajna" }, transaction_id: 1, price: 295000, price_currency: 1, ...o }) as never;
+  it("categoria 2 → house cu teren, fără etaj/compartimentare", () => {
+    const r = mapImmofluxItem(item({ category_id: 2, subcategory_id: 201, land_size: "400.00", floor: 50, partitioning: 1 }), ctx2);
+    expect(r.ok).toBe(true);
+    if (r.ok) {
+      expect(r.row.property_type).toBe("house");
+      expect(r.row.land_surface).toBe(400);
+      expect(r.row.floor).toBeNull();
+      expect(r.row.layout).toBeNull();
+    }
+  });
+  it("categoria 6 fără subcategorie → industrial", () => {
+    const r = mapImmofluxItem(item({ category_id: 6, subcategory_id: 0, transaction_id: 2, price: 2500 }), ctx2);
+    expect(r.ok && r.row.property_type).toBe("industrial");
+  });
+  it("altă categorie rămâne sărită", () => {
+    const r = mapImmofluxItem(item({ category_id: 3, subcategory_id: 301 }), ctx2);
+    expect(r.ok).toBe(false);
+  });
+});
