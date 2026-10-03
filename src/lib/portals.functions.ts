@@ -562,11 +562,11 @@ export const getPortalHub = createServerFn({ method: "POST" })
           exists: Boolean(row),
           status: derivePortalConnectionStatus({
             definition: portal,
+            activated: row?.activated === true,
             externalAccountId: row?.external_account_id ?? null,
             hasPortalCredential: Boolean(row?.portal_credentials_encrypted),
-            hasHabitooKey: portalKeys.some((k) => k.status === "active"),
             lastError,
-            testedOk: row?.status === "connected",
+            lastSyncStatus: lastError ? (row?.last_sync_status ?? null) : null,
             hasOAuthTokens: Boolean(row?.portal_credentials_encrypted),
           }),
 
