@@ -34,6 +34,7 @@ export type ImmofluxItem = {
   zone?: { name?: string | null } | null;
   eficienta_energetica?: string | null;
   balconies?: number | null;
+  land_size?: string | number | null;
   images?: { ordering?: number | null; src?: string | null }[] | null;
 };
 
@@ -45,7 +46,7 @@ export type ImmofluxPropertyRow = {
   source: "immoflux";
   external_id: string;
   status: "active";
-  property_type: "apartment" | "studio";
+  property_type: ImmofluxPropertyType;
   title: string;
   description: string | null;
   transaction_kind: "sale" | "rent";
@@ -82,7 +83,10 @@ export type ImmofluxPropertyRow = {
   district: string | null;
   energy_class: string | null;
   balconies: number | null;
+  land_surface: number | null;
 };
+
+export type ImmofluxPropertyType = "apartment" | "studio" | "house" | "industrial";
 
 export type ImmofluxImage = { source_url: string; ordering: number };
 
@@ -176,9 +180,13 @@ export function mapImmofluxItem(
   else if (item.transaction_id === 2) kind = "rent";
   else reasons.push(`Tip de tranzacție necunoscut (${String(item.transaction_id)}).`);
 
-  let propertyType: "apartment" | "studio" | null = null;
+  // Coduri confirmate din exportul MRM: 1/101 apartament, 1/102 garsonieră,
+  // categoria 2 (ex. 201) casă, categoria 6 (fără subcategorie) hală.
+  let propertyType: ImmofluxPropertyType | null = null;
   if (item.subcategory_id === 101) propertyType = "apartment";
   else if (item.subcategory_id === 102) propertyType = "studio";
+  else if (item.category_id === 2) propertyType = "house";
+  else if (item.category_id === 6) propertyType = "industrial";
   else reasons.push(`Subcategorie neacceptată (${String(item.subcategory_id)}).`);
 
   if (item.price_currency !== 1) {
@@ -193,13 +201,15 @@ export function mapImmofluxItem(
   const currency = "EUR";
   const isSale = kind === "sale";
 
-  const floor = mapFloor(item.floor);
-  if (!floor && item.floor !== null && item.floor !== undefined) {
+  const isFlat = propertyType === "apartment" || propertyType === "studio";
+  const floor = isFlat ? mapFloor(item.floor) : null;
+  if (isFlat && !floor && item.floor !== null && item.floor !== undefined) {
     warnings.push(`Etaj necunoscut (cod ${String(item.floor)}): lăsat necompletat.`);
   }
 
   let layout: string | null = null;
-  if (item.partitioning === 1) layout = "Decomandat";
+  if (!isFlat) layout = null;
+  else if (item.partitioning === 1) layout = "Decomandat";
   else if (item.partitioning !== null && item.partitioning !== undefined) {
     warnings.push(`Compartimentare necunoscută (cod ${String(item.partitioning)}): lăsată necompletată.`);
   }
@@ -282,6 +292,7 @@ export function mapImmofluxItem(
     district,
     energy_class: energy && ENERGY_CLASSES.has(energy) ? energy : null,
     balconies: intOrNull(item.balconies),
+    land_surface: propertyType === "house" ? positiveNumber(item.land_size) : null,
   };
 
   return { ok: true, row, images, warnings };
