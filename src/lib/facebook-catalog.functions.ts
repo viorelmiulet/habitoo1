@@ -64,10 +64,10 @@ export const getFacebookCatalogOverview = createServerFn({ method: "GET" })
       { buildFacebookCatalogCsv },
       { loadFacebookCatalogFeedUrl },
     ] = await Promise.all([
-        import("@/lib/site-feed/facebook-catalog-token.server"),
         import("@/integrations/supabase/client.server"),
         import("@/lib/site-feed/facebook-catalog.server"),
         import("@/lib/site-feed/facebook-catalog"),
+        import("@/lib/site-feed/facebook-catalog-token.server"),
       ]);
 
     const [{ data: tokens }, { data: logs }, { data: lastOk }] = await Promise.all([
