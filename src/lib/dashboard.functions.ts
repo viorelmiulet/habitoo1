@@ -239,7 +239,7 @@ export const getAgentDashboard = createServerFn({ method: "GET" })
           supabase.from("property_images").select("property_id").in("property_id", propertyIds),
           supabase
             .from("portal_publications")
-            .select("property_id,portal_key,status,enabled")
+            .select("property_id,portal_key,status,enabled").neq("portal_key", "facebook_catalog")
             .in("property_id", propertyIds),
         ])
       : [{ data: [] }, { data: [] }];
@@ -549,7 +549,7 @@ export const getManagerDashboard = createServerFn({ method: "GET" })
           .limit(2000),
         supabase
           .from("portal_publications")
-          .select("property_id,portal_key,status,enabled")
+          .select("property_id,portal_key,status,enabled").neq("portal_key", "facebook_catalog")
           .eq("organization_id", org.id)
           .eq("enabled", true)
           .limit(5000),
@@ -622,7 +622,7 @@ export const getManagerDashboard = createServerFn({ method: "GET" })
           supabase.from("property_images").select("property_id").in("property_id", propertyIds),
           supabase
             .from("portal_publications")
-            .select("property_id,portal_key,status,enabled")
+            .select("property_id,portal_key,status,enabled").neq("portal_key", "facebook_catalog")
             .in("property_id", propertyIds),
         ])
       : [{ data: [] }, { data: [] }];

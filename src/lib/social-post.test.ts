@@ -97,7 +97,7 @@ describe("rândul de catalog", () => {
   });
   it("serverul refolosește regulile feed-ului, doar pentru acest anunț, fără token", () => {
     const fn = readFileSync("src/lib/property-promotion.functions.ts", "utf8");
-    expect(fn).toContain("loadFacebookCatalogInput(supabaseAdmin, p.organization_id, true, [p.id])");
+    expect(fn).toContain("loadFacebookCatalogInput(supabaseAdmin, p.organization_id, true, [p.id], false)");
     expect(fn).toContain("buildFacebookCatalogCsv");
     expect(fn).not.toMatch(/site_feed_tokens|token/i);
   });

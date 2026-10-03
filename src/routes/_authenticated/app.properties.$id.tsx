@@ -1139,6 +1139,7 @@ function PropertyDetailPage() {
           <PropertyPortalsCard
             ref={portalsRef}
             propertyId={id}
+            onOpenMedia={() => setTab("media")}
             onCompleteMissing={() => {
               setEditing(true);
               setTab("overview");
@@ -1152,7 +1153,7 @@ function PropertyDetailPage() {
         </TabsContent>
 
         <TabsContent value="promotion">
-          <PropertyPromotionTab propertyId={id} />
+          <PropertyPromotionTab propertyId={id} onOpenPublishing={() => setTab("publishing")} />
         </TabsContent>
 
         <TabsContent value="history">

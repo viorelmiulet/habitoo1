@@ -46,6 +46,11 @@ import {
   type PropertyPortalCell,
 } from "@/lib/portals.functions";
 import { getPropertyCollaboration, setPropertyCollaboration } from "@/lib/collaboration.functions";
+import {
+  getPropertyFacebookCatalog,
+  setPropertyFacebookCatalog,
+} from "@/lib/facebook-catalog-listings.functions";
+import { FACEBOOK_LISTING_FIX, facebookListingState } from "@/lib/facebook-catalog-status";
 
 /** „acum 4 min” / „acum 3 h” / data completă, pentru ultima sincronizare. */
 function syncAgo(iso: string) {
@@ -125,8 +130,10 @@ export const PropertyPortalsCard = forwardRef<
     organizationId?: string;
     propertyId: string;
     onCompleteMissing?: () => void;
+    /** Deschide fila Poze (pentru „fără poze” în Catalogul Facebook). */
+    onOpenMedia?: () => void;
   }
->(function PropertyPortalsCard({ organizationId, propertyId, onCompleteMissing }, ref) {
+>(function PropertyPortalsCard({ organizationId, propertyId, onCompleteMissing, onOpenMedia }, ref) {
   const queryClient = useQueryClient();
   const loadMatrix = useServerFn(getPropertiesPortalMatrix);
   const applyFn = useServerFn(applyPropertyPortalSelection);
@@ -221,6 +228,22 @@ export const PropertyPortalsCard = forwardRef<
             : "") ||
           collabTerms.trim() !== (collabRow?.terms ?? ""))));
 
+  /** Catalogul Facebook: același rând, aceeași bifă, aplicată prin „Publică”. */
+  const loadFb = useServerFn(getPropertyFacebookCatalog);
+  const saveFb = useServerFn(setPropertyFacebookCatalog);
+  const fbKey = ["property-facebook-catalog", organizationId, propertyId] as const;
+  const fb = useQuery({
+    queryKey: fbKey,
+    queryFn: () => loadFb({ data: { ...(organizationId ? { organizationId } : {}), propertyId } }),
+  });
+  const [fbChecked, setFbChecked] = useState<boolean | null>(null);
+  useEffect(() => {
+    if (fb.data) setFbChecked(fb.data.enabled);
+  }, [fb.data]);
+  const fbValue = fbChecked ?? fb.data?.enabled ?? false;
+  const fbDirty = fb.data !== undefined && fbValue !== fb.data.enabled;
+  const fbState = facebookListingState(fbValue, fb.data?.reason ?? null);
+
   const [checked, setChecked] = useState<Record<string, boolean>>({});
   const [promotedChecked, setPromotedChecked] = useState<Record<string, boolean>>({});
 
@@ -280,9 +303,33 @@ export const PropertyPortalsCard = forwardRef<
 
   const applyPending = useCallback(async () => {
     const portalsActionable = canManage && actionable.length > 0;
-    if (!portalsActionable && !collabDirty) return null;
+    if (!portalsActionable && !collabDirty && !fbDirty) return null;
 
     const results: PortalApplyResult[] = [];
+
+    if (fbDirty) {
+      try {
+        await saveFb({
+          data: { ...(organizationId ? { organizationId } : {}), propertyId, enabled: fbValue },
+        });
+        results.push({
+          portalId: "facebook_catalog",
+          portalName: "Catalog Facebook",
+          ok: true,
+          message: fbValue ? "Catalog Facebook: activat" : "Catalog Facebook: dezactivat",
+        });
+      } catch (e) {
+        results.push({
+          portalId: "facebook_catalog",
+          portalName: "Catalog Facebook",
+          ok: false,
+          message: e instanceof Error ? e.message : "Catalog Facebook: salvarea a eșuat.",
+        });
+      }
+      void queryClient.invalidateQueries({ queryKey: ["property-facebook-catalog"] });
+      void queryClient.invalidateQueries({ queryKey: ["property-promotion"] });
+      void queryClient.invalidateQueries({ queryKey: ["facebook-catalog-overview"] });
+    }
 
     // Colaborarea se salvează separat de portaluri: o eroare aici nu blochează
     // publicarea pe portaluri, exact ca între portaluri.
@@ -341,6 +388,10 @@ export const PropertyPortalsCard = forwardRef<
     collabPercent,
     collabTerms,
     collabRow?.defaultCommissionPercent,
+    fbDirty,
+    fbValue,
+    saveFb,
+    organizationId,
     propertyId,
     saveCollab,
     queryClient,
@@ -352,13 +403,15 @@ export const PropertyPortalsCard = forwardRef<
     return <InlineLoading label="Se încarcă publicarea pe portaluri…" />;
   if (matrix.isError) return <QueryError error={matrix.error} onRetry={() => matrix.refetch()} />;
   // Nicio secțiune când agenției nu i-a fost activat niciun portal și nu participă la colaborare.
-  if (cells.length === 0 && !collabVisible) return null;
+  // Catalogul Facebook e mereu disponibil, deci secțiunea apare mereu.
 
   const activeCount =
     cells.filter((c) => c.state === "published" || c.state === "in_feed").length +
-    (collabVisible && collabRow?.enabled ? 1 : 0);
-  const totalRows = cells.length + (collabVisible ? 1 : 0);
-  const pendingCount = (canManage ? actionable.length : 0) + (collabDirty ? 1 : 0);
+    (collabVisible && collabRow?.enabled ? 1 : 0) +
+    (fb.data?.enabled ? 1 : 0);
+  const totalRows = cells.length + (collabVisible ? 1 : 0) + 1;
+  const pendingCount =
+    (canManage ? actionable.length : 0) + (collabDirty ? 1 : 0) + (fbDirty ? 1 : 0);
 
   const allRequired = Array.from(
     new Map(
@@ -409,6 +462,71 @@ export const PropertyPortalsCard = forwardRef<
             />
           ) : null}
           <ul className="space-y-3">
+            <li>
+              <Card className={cn("p-5 text-sm", fbState.key === "excluded" && "bg-warning/10")}>
+                <div className="flex flex-wrap items-start gap-3">
+                  <Checkbox
+                    id="portal-facebook-catalog"
+                    checked={fbValue}
+                    disabled={!canManage || fb.isLoading}
+                    className="mt-0.5"
+                    onCheckedChange={(next) => setFbChecked(next === true)}
+                  />
+                  {fbState.key === "in_catalog" ? (
+                    <CheckCircle2 aria-hidden className="mt-0.5 size-4 shrink-0 text-success" />
+                  ) : fbState.key === "excluded" ? (
+                    <AlertTriangle aria-hidden className="mt-0.5 size-4 shrink-0 text-warning" />
+                  ) : (
+                    <Circle aria-hidden className="mt-0.5 size-4 shrink-0 text-muted-foreground/60" />
+                  )}
+                  <PortalLogoStack portalId="facebook" name="Catalog Facebook" size={40} />
+                  <div className="min-w-0 flex-1">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <label htmlFor="portal-facebook-catalog" className="font-semibold">
+                        Catalog Facebook
+                      </label>
+                      <StatusPill
+                        state={
+                          fbState.key === "in_catalog"
+                            ? "published"
+                            : fbState.key === "excluded"
+                              ? "pending"
+                              : "inactive"
+                        }
+                        dot
+                      >
+                        {fbState.label}
+                      </StatusPill>
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      {fbDirty
+                        ? "Se aplică la următoarea apăsare pe „Publică”."
+                        : fbState.key === "in_catalog"
+                          ? "Apare în feedul citit de Meta."
+                          : fbState.key === "excluded"
+                            ? "Nu apare în feed până nu completezi datele lipsă."
+                            : "Nu intră în Catalogul Facebook."}
+                    </p>
+                    {fbValue && fbState.reason ? (
+                      <p className="mt-1 text-xs">
+                        {FACEBOOK_LISTING_FIX[fbState.reason].hint}{" "}
+                        <button
+                          type="button"
+                          className="font-semibold text-primary hover:underline"
+                          onClick={() =>
+                            FACEBOOK_LISTING_FIX[fbState.reason!].target === "media"
+                              ? onOpenMedia?.()
+                              : onCompleteMissing?.()
+                          }
+                        >
+                          Completează
+                        </button>
+                      </p>
+                    ) : null}
+                  </div>
+                </div>
+              </Card>
+            </li>
             {collabVisible ? (
               <li>
                 <Card
