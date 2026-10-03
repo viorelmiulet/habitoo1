@@ -44,10 +44,6 @@ import {
   testPortalConnection,
   type PortalHubItem,
 } from "@/lib/portals.functions";
-import {
-  listPortalActivationRequests,
-  type PortalActivationRequestRow,
-} from "@/lib/portal-activation.functions";
 import { portalGridState, type PortalGridTone } from "@/lib/portals/grid-state";
 import {
   revokeStoriaAuthorization,
@@ -108,7 +104,6 @@ export function PortalsCard({ organizationId }: { organizationId: string }) {
   const hubKey = ["portal-hub", organizationId] as const;
   const queryClient = useQueryClient();
   const loadHub = useServerFn(getPortalHub);
-  const loadActivationRequests = useServerFn(listPortalActivationRequests);
   const runSave = useServerFn(savePortalConnection);
   const runTest = useServerFn(testPortalConnection);
   const runDisconnect = useServerFn(disconnectPortal);

@@ -35,53 +35,21 @@ describe("grila de portaluri (Superadmin)", () => {
     expect(ids.filter((id) => id === "romimo")).toHaveLength(1);
   });
 
-  it("derivă corect starea afișată pe card", () => {
-    // Conectat (punct verde), indiferent de cererile vechi.
+  it("afișează doar trei stări", () => {
     expect(portalGridState({ connectionStatus: "connected" })).toEqual({
       key: "connected",
       label: "Conectat",
       tone: "success",
     });
-    expect(
-      portalGridState({ connectionStatus: "connected", requestStatus: "rejected" }).label,
-    ).toBe("Conectat");
-
-    // Pregătit pentru conectare (punct galben).
-    expect(portalGridState({ connectionStatus: "ready" })).toEqual({
-      key: "ready",
-      label: "Pregătit pentru conectare",
-      tone: "warning",
-    });
-
-    // Cererile de activare au prioritate în fața stării neutre.
-    expect(
-      portalGridState({ connectionStatus: "not_configured", requestStatus: "pending" }),
-    ).toEqual({
-      key: "pending_request",
-      label: "Cerere de activare în așteptare",
-      tone: "warning",
-    });
-    expect(
-      portalGridState({ connectionStatus: "not_configured", requestStatus: "rejected" }),
-    ).toEqual({
-      key: "rejected_request",
-      label: "Cerere respinsă",
-      tone: "danger",
-    });
-
-    // Fără conexiune și fără cereri: neactivat.
-    expect(portalGridState({ connectionStatus: "not_configured" })).toEqual({
-      key: "inactive",
-      label: "Neactivat",
-      tone: "muted",
-    });
-    expect(portalGridState({ connectionStatus: "disconnected" }).label).toBe("Neactivat");
-
-    // O eroare de conexiune nu se ascunde.
     expect(portalGridState({ connectionStatus: "error" })).toEqual({
       key: "error",
-      label: "Eroare de conexiune",
+      label: "Eroare",
       tone: "danger",
+    });
+    expect(portalGridState({ connectionStatus: "disconnected" })).toEqual({
+      key: "disconnected",
+      label: "Deconectat",
+      tone: "muted",
     });
   });
 });
