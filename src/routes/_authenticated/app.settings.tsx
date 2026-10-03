@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "@/components/ui/sonner";
 import { toastError } from "@/lib/errors";
 import { notifyProperstarFeedChanged } from "@/lib/portals/properstar-cache";
@@ -72,6 +72,12 @@ function SettingsPage() {
   const navigate = useNavigate({ from: Route.fullPath });
   const { data: user } = useCurrentUser();
   const queryClient = useQueryClient();
+  const tabsListRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const activeTab = tabsListRef.current?.querySelector<HTMLElement>('[data-state="active"]');
+    activeTab?.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
+  }, [tab]);
 
   const [profileForm, setProfileForm] = useState({
     full_name: user?.profile?.full_name ?? "",
@@ -209,13 +215,14 @@ function SettingsPage() {
   });
 
   return (
-    <>
+    <div data-settings-root className="min-w-0 max-w-full overflow-x-hidden">
       <PageHeader
         title="Setări"
         description="Profilul tău, datele agenției și echipa care are acces la CRM."
       />
 
       <Tabs
+        className="min-w-0 max-w-full"
         value={tab}
         onValueChange={(value) => {
           void navigate({
@@ -228,17 +235,23 @@ function SettingsPage() {
           });
         }}
       >
-        <TabsList>
-          <TabsTrigger value="profile">Profil</TabsTrigger>
-          <TabsTrigger value="access">Acces la cont</TabsTrigger>
-          {user?.role === "agency_admin" ? <TabsTrigger value="agency">Agenție</TabsTrigger> : null}
-          {user?.isAdmin ? <TabsTrigger value="branding">Logo &amp; watermark</TabsTrigger> : null}
-          {user?.isAdmin ? <TabsTrigger value="team">Echipă ({team.length})</TabsTrigger> : null}
-          {user?.isAdmin ? <TabsTrigger value="integrations">Integrări</TabsTrigger> : null}
-          {user?.organization || user?.isAdmin ? <TabsTrigger value="portals">Portaluri</TabsTrigger> : null}
-          {user?.isAdmin ? <TabsTrigger value="promotion">Promovare</TabsTrigger> : null}
-          <TabsTrigger value="ai">AI</TabsTrigger>
-        </TabsList>
+        <div className="relative min-w-0 max-w-full overflow-hidden after:pointer-events-none after:absolute after:inset-y-0 after:right-0 after:w-6 after:bg-gradient-to-l after:from-background after:to-transparent before:pointer-events-none before:absolute before:inset-y-0 before:left-0 before:z-10 before:w-6 before:bg-gradient-to-r before:from-background before:to-transparent">
+          <TabsList
+            ref={tabsListRef}
+            data-settings-tabs
+            className="scrollbar-hidden flex h-10 w-full min-w-0 justify-start overflow-x-auto overflow-y-hidden px-4 sm:px-1"
+          >
+            <TabsTrigger className="shrink-0" value="profile">Profil</TabsTrigger>
+            <TabsTrigger className="shrink-0" value="access">Acces la cont</TabsTrigger>
+            {user?.role === "agency_admin" ? <TabsTrigger className="shrink-0" value="agency">Agenție</TabsTrigger> : null}
+            {user?.isAdmin ? <TabsTrigger className="shrink-0" value="branding">Logo &amp; watermark</TabsTrigger> : null}
+            {user?.isAdmin ? <TabsTrigger className="shrink-0" value="team">Echipă ({team.length})</TabsTrigger> : null}
+            {user?.isAdmin ? <TabsTrigger className="shrink-0" value="integrations">Integrări</TabsTrigger> : null}
+            {user?.organization || user?.isAdmin ? <TabsTrigger className="shrink-0" value="portals">Portaluri</TabsTrigger> : null}
+            {user?.isAdmin ? <TabsTrigger className="shrink-0" value="promotion">Promovare</TabsTrigger> : null}
+            <TabsTrigger className="shrink-0" value="ai">AI</TabsTrigger>
+          </TabsList>
+        </div>
 
         <TabsContent value="ai">
           <AiSettingsCard />
@@ -527,6 +540,6 @@ function SettingsPage() {
           </TabsContent>
         ) : null}
       </Tabs>
-    </>
+    </div>
   );
 }
