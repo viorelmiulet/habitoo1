@@ -29,7 +29,7 @@ import { StatusPill, type StatusPillState } from "@/components/ui/status-pill";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { effectivePromoted } from "@/lib/portals/promotion-flag";
-import { PortalLogoStack } from "@/components/app/PortalLogo";
+import { PortalLogo, PortalLogoStack } from "@/components/app/PortalLogo";
 import { getMyPortalSlot } from "@/lib/portals/slots.functions";
 import { PropertyImobiliarePromotionsCard } from "@/components/app/PropertyImobiliarePromotionsCard";
 import { BrandLogo } from "@/components/brand/BrandLogo";
