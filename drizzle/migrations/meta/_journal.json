@@ -743,6 +743,13 @@
       "when": 1791050505016,
       "tag": "0105_agent_portal_preferences",
       "breakpoints": true
+    },
+    {
+      "idx": 106,
+      "version": "7",
+      "when": 1791053528089,
+      "tag": "0106_facebook_catalog_agent_permission",
+      "breakpoints": true
     }
   ]
 }
