@@ -21,6 +21,7 @@ export type FacebookCatalogOverview = {
   excludedTotal: number;
   excludedItems: { id: string; reference: string | null; title: string; reason: ExclusionReason }[];
   lastReadAt: string | null;
+  agentsCanManage: boolean;
 };
 
 type Ctx = {
@@ -97,6 +98,11 @@ export const getFacebookCatalogOverview = createServerFn({ method: "GET" })
     ]);
 
     const hasToken = (tokens ?? []).length > 0;
+    const { data: organization } = await supabaseAdmin
+      .from("organizations")
+      .select("facebook_catalog_agents_enabled")
+      .eq("id", organizationId)
+      .maybeSingle();
     const feedUrl = await loadFacebookCatalogFeedUrl(supabaseAdmin, organizationId);
     const input = await loadFacebookCatalogInput(supabaseAdmin, organizationId);
     const result = buildFacebookCatalogCsv({
@@ -122,7 +128,29 @@ export const getFacebookCatalogOverview = createServerFn({ method: "GET" })
       excludedTotal: result.excludedTotal,
       excludedItems: (result.excludedItems ?? []).slice(0, 200),
       lastReadAt: lastOk?.[0]?.created_at ?? null,
+      agentsCanManage: organization?.facebook_catalog_agents_enabled === true,
     };
+  });
+
+export const setFacebookCatalogAgentPermission = createServerFn({ method: "POST" })
+  .middleware([requireActiveOrgAuth])
+  .inputValidator((input: unknown) => {
+    if (!input || typeof input !== "object" || typeof (input as { enabled?: unknown }).enabled !== "boolean") {
+      throw new Error("Setare invalidă.");
+    }
+    return { enabled: (input as { enabled: boolean }).enabled };
+  })
+  .handler(async ({ data, context }): Promise<{ enabled: boolean }> => {
+    setResponseHeader("Cache-Control", "no-store");
+    const ctx = context as unknown as Ctx;
+    const organizationId = await requireCatalogAdmin(ctx);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { error } = await supabaseAdmin
+      .from("organizations")
+      .update({ facebook_catalog_agents_enabled: data.enabled })
+      .eq("id", organizationId);
+    if (error) throw error;
+    return { enabled: data.enabled };
   });
 
 /** Generează (sau regenerează) tokenul dedicat Catalogului Facebook. Nu atinge tokenurile de site. */

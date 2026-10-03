@@ -245,6 +245,7 @@ export const PropertyPortalsCard = forwardRef<
   const fbValue = fbChecked ?? fb.data?.enabled ?? false;
   const fbDirty = fb.data !== undefined && fbValue !== fb.data.enabled;
   const fbState = facebookListingState(fbValue, fb.data?.reason ?? null);
+  const canEditFacebookCatalog = fb.data?.canEdit === true;
 
   const [checked, setChecked] = useState<Record<string, boolean>>({});
   const [promotedChecked, setPromotedChecked] = useState<Record<string, boolean>>({});
@@ -319,7 +320,7 @@ export const PropertyPortalsCard = forwardRef<
 
     const results: PortalApplyResult[] = [];
 
-    if (fbDirty) {
+    if (fbDirty && canEditFacebookCatalog) {
       try {
         await saveFb({
           data: { ...(organizationId ? { organizationId } : {}), propertyId, enabled: fbValue },
@@ -402,6 +403,7 @@ export const PropertyPortalsCard = forwardRef<
     collabRow?.defaultCommissionPercent,
     fbDirty,
     fbValue,
+    canEditFacebookCatalog,
     saveFb,
     organizationId,
     propertyId,
@@ -480,7 +482,7 @@ export const PropertyPortalsCard = forwardRef<
                   <Checkbox
                     id="portal-facebook-catalog"
                     checked={fbValue}
-                    disabled={!canManage || fb.isLoading}
+                    disabled={!canManage || !canEditFacebookCatalog || fb.isLoading}
                     className="mt-0.5"
                     onCheckedChange={(next) => setFbChecked(next === true)}
                   />
@@ -511,8 +513,10 @@ export const PropertyPortalsCard = forwardRef<
                       </StatusPill>
                     </div>
                     <p className="text-xs text-muted-foreground">
-                      {fbDirty
-                        ? "Se aplică la următoarea apăsare pe „Publică”."
+                      {!canEditFacebookCatalog
+                        ? "Doar managerul agenției poate adăuga anunțuri în Catalog Facebook."
+                        : fbDirty
+                          ? "Se aplică la următoarea apăsare pe „Publică”."
                         : fbState.key === "in_catalog"
                           ? "Apare în feedul citit de Meta."
                           : fbState.key === "excluded"

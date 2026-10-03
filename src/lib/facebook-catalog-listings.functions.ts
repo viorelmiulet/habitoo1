@@ -1,6 +1,7 @@
 // Opt-in per anunț în Catalogul Facebook. Toate scrierile pe server, cu verificarea
 // organizației (din sesiune) și a rolului, ca la publicarea pe portaluri.
 import { createServerFn } from "@tanstack/react-start";
+import { setResponseStatus } from "@tanstack/react-start/server";
 import { z } from "zod";
 import { requireActiveOrgAuth } from "@/lib/org-access";
 import { assertPortalPropertyAccess, resolvePublishingOrg } from "@/lib/portals.functions";
@@ -19,7 +20,12 @@ async function loadServer() {
 export type PropertyFacebookCatalog = {
   enabled: boolean;
   reason: FacebookListingReason | null;
+  canEdit: boolean;
 };
+
+export function canEditFacebookCatalog(agentOnly: boolean, agentsEnabled: boolean): boolean {
+  return !agentOnly || agentsEnabled;
+}
 
 const propertySchema = z.object({
   propertyId: z.string().uuid(),
@@ -30,15 +36,22 @@ export const getPropertyFacebookCatalog = createServerFn({ method: "POST" })
   .middleware([requireActiveOrgAuth])
   .inputValidator((input: unknown) => propertySchema.parse(input))
   .handler(async ({ data, context }): Promise<PropertyFacebookCatalog> => {
-    const { organizationId } = await resolvePublishingOrg(context as unknown as Ctx, data.organizationId);
+    const { organizationId, agentOnly } = await resolvePublishingOrg(context as unknown as Ctx, data.organizationId);
     const { admin, optin } = await loadServer();
-    const { data: prop } = await admin
-      .from("properties")
-      .select("id")
-      .eq("id", data.propertyId)
-      .eq("organization_id", organizationId)
-      .is("deleted_at", null)
-      .maybeSingle();
+    const [{ data: prop }, { data: organization }] = await Promise.all([
+      admin
+        .from("properties")
+        .select("id")
+        .eq("id", data.propertyId)
+        .eq("organization_id", organizationId)
+        .is("deleted_at", null)
+        .maybeSingle(),
+      admin
+        .from("organizations")
+        .select("facebook_catalog_agents_enabled")
+        .eq("id", organizationId)
+        .maybeSingle(),
+    ]);
     if (!prop) throw new Error("Proprietatea nu a fost găsită.");
     const [{ data: row }, reasons] = await Promise.all([
       admin
@@ -51,7 +64,14 @@ export const getPropertyFacebookCatalog = createServerFn({ method: "POST" })
         .limit(1),
       optin.facebookEligibility(admin, organizationId, [data.propertyId]),
     ]);
-    return { enabled: (row ?? []).length > 0, reason: reasons.get(data.propertyId) ?? null };
+    return {
+      enabled: (row ?? []).length > 0,
+      reason: reasons.get(data.propertyId) ?? null,
+      canEdit: canEditFacebookCatalog(
+        agentOnly,
+        organization?.facebook_catalog_agents_enabled === true,
+      ),
+    };
   });
 
 export const setPropertyFacebookCatalog = createServerFn({ method: "POST" })
@@ -62,6 +82,16 @@ export const setPropertyFacebookCatalog = createServerFn({ method: "POST" })
       context as unknown as Ctx,
       data.organizationId,
     );
+    const { admin, optin } = await loadServer();
+    const { data: organization } = await admin
+      .from("organizations")
+      .select("facebook_catalog_agents_enabled")
+      .eq("id", organizationId)
+      .maybeSingle();
+    if (!canEditFacebookCatalog(agentOnly, organization?.facebook_catalog_agents_enabled === true)) {
+      setResponseStatus(403);
+      throw new Error("Doar managerul agenției poate adăuga anunțuri în Catalog Facebook.");
+    }
     // Agentul doar pe anunțurile lui, ca la celelalte portaluri.
     await assertPortalPropertyAccess({
       organizationId,
@@ -69,7 +99,6 @@ export const setPropertyFacebookCatalog = createServerFn({ method: "POST" })
       agentOnly,
       userId: context.userId,
     });
-    const { admin, optin } = await loadServer();
     const { data: prop } = await admin
       .from("properties")
       .select("id")
