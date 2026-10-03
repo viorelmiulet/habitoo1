@@ -9,6 +9,7 @@ export const Route = createFileRoute("/api/public/catalog/v1/facebook.csv")({
       GET: async ({ request }) =>
         withFeedAuth(request, "catalog.facebook", (auth) => handleFacebookCatalog(request, auth), {
           allowQueryToken: true,
+          allowFacebookCatalogToken: true,
         }),
     },
   },

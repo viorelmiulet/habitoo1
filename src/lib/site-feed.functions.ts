@@ -81,6 +81,7 @@ export const getSiteFeedStatus = createServerFn({ method: "GET" })
         .from("site_feed_tokens")
         .select("id, name, token_prefix, created_at, last_used_at, request_count")
         .eq("organization_id", organizationId)
+        .eq("scope", "site")
         .is("revoked_at", null)
         .order("created_at", { ascending: false })
         .limit(1),
@@ -132,6 +133,7 @@ export const generateSiteFeedToken = createServerFn({ method: "POST" })
       .from("site_feed_tokens")
       .update({ revoked_at: new Date().toISOString(), updated_by: context.userId })
       .eq("organization_id", organizationId)
+      .eq("scope", "site")
       .is("revoked_at", null);
 
     const { error } = await admin.from("site_feed_tokens").insert({
@@ -164,6 +166,7 @@ export const revokeSiteFeedToken = createServerFn({ method: "POST" })
       .from("site_feed_tokens")
       .update({ revoked_at: new Date().toISOString(), updated_by: context.userId })
       .eq("organization_id", organizationId)
+      .eq("scope", "site")
       .is("revoked_at", null)
       .select("id");
     if (error) throw new Error("Tokenul nu a putut fi revocat.");
@@ -202,6 +205,7 @@ export const testSiteFeed = createServerFn({ method: "POST" })
           .from("site_feed_tokens")
           .select("id", { count: "exact", head: true })
           .eq("organization_id", organizationId)
+          .eq("scope", "site")
           .is("revoked_at", null),
       ]);
       return {
