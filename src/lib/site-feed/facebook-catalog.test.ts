@@ -84,3 +84,44 @@ describe("facebook catalog csv", () => {
     expect(row["latitude"]).not.toBe("44.4");
   });
 });
+
+describe("oraș/județ/cartier normalizate pentru Meta", () => {
+  const run = (o: Record<string, unknown>) => {
+    const p = { ...base, ...o } as PropertyRow;
+    const r = buildFacebookCatalogCsv({
+      properties: [p],
+      imagesByProperty: new Map([[p.id, [img(p.id)]]]),
+      baseUrl: "https://b",
+      publicSiteUrl: "https://s",
+    });
+    return { r, row: parseCsv(r.csv).rows[0] };
+  };
+  it("Bucureşti Sectorul 6 cu zonă", () => {
+    const { row } = run({ city: "Bucureşti Sectorul 6", county: "Bucureşti", district: "Militari" });
+    expect(row!["address.city"]).toBe("București");
+    expect(row!["address.region"]).toBe("București");
+    expect(row!["neighborhood[0]"]).toBe("Militari");
+  });
+  it("fără zonă → Sectorul N", () => {
+    const { row } = run({ city: "BUCUREŞTI sector 2", district: null });
+    expect(row!["address.city"]).toBe("București");
+    expect(row!["neighborhood[0]"]).toBe("Sectorul 2");
+  });
+  it("Bucuresti și Sector 3", () => {
+    expect(run({ city: "Bucuresti" }).row!["address.city"]).toBe("București");
+    const s3 = run({ city: "Sector 3", district: null }).row!;
+    expect(s3["address.city"]).toBe("București");
+    expect(s3["neighborhood[0]"]).toBe("Sectorul 3");
+  });
+  it("alte orașe păstrate, cu diacritice normalizate", () => {
+    expect(run({ city: "Cluj-Napoca", county: "Cluj" }).row!["address.city"]).toBe("Cluj-Napoca");
+    expect(run({ city: "Chiajna", county: "Ilfov" }).row!["address.city"]).toBe("Chiajna");
+    const t = run({ city: "Târgu Mureş", county: "Mureş", district: "Ţiglina" }).row!;
+    expect(t["address.city"]).toBe("Târgu Mureș");
+    expect(t["address.region"]).toBe("Mureș");
+    expect(t["neighborhood[0]"]).toBe("Țiglina");
+  });
+  it("oraș gol rămâne exclus", () => {
+    expect(run({ city: "  " }).r.excluded.no_city).toBe(1);
+  });
+});

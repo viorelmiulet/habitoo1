@@ -73,6 +73,30 @@ export function plainText(value: string | null | undefined): string {
     .trim();
 }
 
+/** ş/ţ (sedilă) → ș/ț (virgulă), inclusiv majuscule. */
+export function normalizeRoDiacritics(value: string | null | undefined): string {
+  return (value ?? "")
+    .replace(/\u015F/g, "\u0219")
+    .replace(/\u015E/g, "\u0218")
+    .replace(/\u0163/g, "\u021B")
+    .replace(/\u0162/g, "\u021A")
+    .trim();
+}
+
+const BUCHAREST_RE = /^bucure[sșş]ti\b/i;
+const SECTOR_RE = /\bsector(?:ul)?\s*([1-6])\b/i;
+
+/** Oraș curat pentru Meta + sectorul (1–6), dacă reiese din oraș. */
+export function metaCity(raw: string | null | undefined): { city: string; sector: number | null } {
+  const value = normalizeRoDiacritics(raw);
+  const sectorMatch = SECTOR_RE.exec(value);
+  const sector = sectorMatch ? Number(sectorMatch[1]) : null;
+  if (BUCHAREST_RE.test(value) || (sector !== null && value.replace(SECTOR_RE, "").trim() === "")) {
+    return { city: "București", sector };
+  }
+  return { city: value, sector: null };
+}
+
 /** Valorile Meta pentru property_type: apartment, condo, house, land, townhouse, other... */
 export function metaPropertyType(type: string | null | undefined): string {
   switch (type) {
@@ -147,7 +171,7 @@ export function buildFacebookCatalogCsv(input: {
             : 1,
       )
       .slice(0, FACEBOOK_MAX_IMAGES);
-    const city = p.city?.trim();
+    const { city, sector } = metaCity(p.city);
 
     // Un singur motiv per anunț, în ordinea priorității.
     if (!offer) excluded.no_price += 1;
@@ -175,12 +199,12 @@ export function buildFacebookCatalogCsv(input: {
       ...imageCols,
       addr1,
       city,
-      p.county ?? "",
+      metaCity(p.county).city,
       "RO",
       p.postal_code ?? "",
       coords.lat,
       coords.lng,
-      p.district ?? "",
+      normalizeRoDiacritics(p.district) || (sector ? `Sectorul ${sector}` : ""),
       metaPropertyType(p.property_type),
       offer.mode === "sale" ? "for_sale_by_agent" : "for_rent_by_agent",
       p.bedrooms ?? null,
