@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { ChevronDown, Copy, RefreshCw } from "lucide-react";
+import { ChevronDown, Copy, ExternalLink, RefreshCw } from "lucide-react";
 import { toast } from "@/components/ui/sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,6 +10,7 @@ import { ConfirmDialog } from "@/components/app/ConfirmDialog";
 import { StatusPill, type StatusPillState } from "@/components/ui/status-pill";
 import { InlineLoading } from "@/components/app/LoadingState";
 import { QueryError } from "@/components/app/QueryError";
+import { PortalLogo } from "@/components/app/PortalLogo";
 import { toastError } from "@/lib/errors";
 import { formatDateTime } from "@/lib/format";
 import {
@@ -29,7 +30,7 @@ const PILL: Record<FacebookCatalogState, StatusPillState> = {
   disconnected: "inactive",
 };
 
-export function FacebookCatalogCard() {
+export function FacebookCatalogCard({ portalList = false }: { portalList?: boolean }) {
   const queryClient = useQueryClient();
   const load = useServerFn(getFacebookCatalogOverview);
   const runGenerate = useServerFn(generateFacebookCatalogToken);
@@ -80,13 +81,16 @@ export function FacebookCatalogCard() {
     .filter((r) => d.excluded[r] > 0);
 
   return (
-    <div className="panel space-y-5 p-5">
+    <div className={portalList ? "space-y-5" : "panel space-y-5 p-5"}>
       <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h3 className="font-medium">Catalog Facebook</h3>
-          <p className="text-sm text-muted-foreground">
-            Anunțurile tale apar în Meta Commerce Manager și pot fi folosite în reclame.
-          </p>
+        <div className="flex min-w-0 items-center gap-3">
+          {portalList ? <PortalLogo portalId="facebook_catalog" name="Catalog Facebook" size={40} /> : null}
+          <div>
+            <h3 className={portalList ? "text-[17px] leading-6 font-bold" : "font-medium"}>Catalog Facebook</h3>
+            <p className="text-sm text-muted-foreground">
+              Anunțurile tale apar în Meta Commerce Manager și pot fi folosite în reclame.
+            </p>
+          </div>
         </div>
         <StatusPill state={PILL[d.state]} dot>
           {FACEBOOK_CATALOG_STATE_LABEL[d.state]}
@@ -180,7 +184,7 @@ export function FacebookCatalogCard() {
         </div>
       ) : null}
 
-      <details className="group rounded-md border px-3 py-2 text-sm">
+      <details open={portalList || undefined} className="group rounded-md border px-3 py-2 text-sm">
         <summary className="flex cursor-pointer list-none items-center justify-between font-medium">
           Cum îl conectez la Meta
           <ChevronDown className="size-4 transition-transform group-open:rotate-180" />
@@ -192,6 +196,19 @@ export function FacebookCatalogCard() {
           <li>Lipește adresa feed-ului de mai sus.</li>
           <li>Alege citirea zilnică și salvează.</li>
         </ol>
+        {portalList ? (
+          <div className="mt-3 space-y-3 border-t pt-3">
+            <p className="text-muted-foreground">
+              Doar anunțurile bifate pentru Catalog Facebook, în fila Publicare a anunțului, apar în catalog.
+              Un anunț fără preț, coordonate, poze sau oraș este exclus.
+            </p>
+            <Button asChild variant="outline" size="sm">
+              <a href="https://www.facebook.com/commerce_manager" target="_blank" rel="noreferrer">
+                Deschide Meta Commerce Manager <ExternalLink className="size-4" />
+              </a>
+            </Button>
+          </div>
+        ) : null}
       </details>
       <ConfirmDialog
         open={bulkMode !== null}

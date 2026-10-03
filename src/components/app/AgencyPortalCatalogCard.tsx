@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "@/components/ui/sonner";
 import { PortalLogoStack } from "@/components/app/PortalLogo";
+import { FacebookCatalogCard } from "@/components/app/FacebookCatalogCard";
 import { Button } from "@/components/ui/button";
 import { InlineLoading } from "@/components/app/LoadingState";
 import { QueryError } from "@/components/app/QueryError";
@@ -96,6 +97,18 @@ export function AgencyPortalCatalogCard() {
           {agencyGridItems(catalog.data ?? []).map((item) => {
             const state = agencyPortalCardState(item);
             const isLaCheie = item.id === LACHEIE_PORTAL_KEY;
+            if (item.id === "facebook_catalog") {
+              return (
+                <li
+                  key={item.id}
+                  data-portal-card={item.id}
+                  data-portal-state={item.connectionStatus}
+                  className="rounded-xl border border-border bg-surface p-4 md:col-span-2 lg:col-span-3"
+                >
+                  <FacebookCatalogCard portalList />
+                </li>
+              );
+            }
             return (
               <li
                 key={item.id}

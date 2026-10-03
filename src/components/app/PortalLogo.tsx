@@ -7,6 +7,7 @@
  */
 import { useState } from "react";
 import clickimobLogo from "@/assets/portals/clickimob-logo.webp.asset.json";
+import facebookLogo from "@/assets/portals/facebook.svg";
 import homepitchLogo from "@/assets/portals/homepitch.png";
 import imobiliareRoLogo from "@/assets/portals/imobiliare_ro.png";
 import imospotLogo from "@/assets/portals/imospot.png";
@@ -24,6 +25,7 @@ import { cn } from "@/lib/utils";
 
 const PORTAL_LOGOS: Record<string, string> = {
   clickimob: clickimobLogo.url,
+  facebook_catalog: facebookLogo,
   imove: imoveLogo,
   lacheie: lacheieLogo,
   imospot: imospotLogo,

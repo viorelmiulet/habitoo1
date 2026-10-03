@@ -14,7 +14,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireActiveOrgAuth } from "@/lib/org-access";
 import {
-  configurablePortals,
+  agencySettingsPortals,
   derivePortalConnectionStatus,
   getPortalDefinition,
   portalActivationMode,
@@ -23,6 +23,7 @@ import {
   isPortalCovered,
   portalDisplayName,
 } from "@/lib/portals/registry";
+import { facebookCatalogState } from "@/lib/facebook-catalog-status";
 
 type AuthContext = {
   supabase: {
@@ -93,7 +94,7 @@ export const getAgencyPortalCatalog = createServerFn({ method: "POST" })
     const organizationId = await requireOrgAdminOrg(context as unknown as AuthContext);
     const admin = await loadAdmin();
 
-    const [{ data: connections }, { data: requests }] = await Promise.all([
+    const [{ data: connections }, { data: requests }, { data: catalogTokens }, { data: catalogLogs }] = await Promise.all([
       admin
         .from("portal_connections")
         .select("portal, activated, external_account_id, portal_credentials_encrypted, last_sync_error, last_sync_status")
@@ -103,6 +104,21 @@ export const getAgencyPortalCatalog = createServerFn({ method: "POST" })
         .select("id, portal, status, requested_at, rejection_reason")
         .eq("organization_id", organizationId)
         .order("requested_at", { ascending: false }),
+      admin
+        .from("site_feed_tokens")
+        .select("id")
+        .eq("organization_id", organizationId)
+        .in("scope", ["site", "facebook_catalog"])
+        .is("revoked_at", null)
+        .limit(1),
+      admin
+        .from("site_feed_access_logs")
+        .select("status, token_prefix, created_at")
+        .eq("organization_id", organizationId)
+        .eq("endpoint", "catalog.facebook")
+        .gte("created_at", new Date(Date.now() - 48 * 3600 * 1000).toISOString())
+        .order("created_at", { ascending: false })
+        .limit(20),
     ]);
 
     const activated = new Set(
@@ -121,12 +137,22 @@ export const getAgencyPortalCatalog = createServerFn({ method: "POST" })
     }
 
     const rows = new Map((connections ?? []).map((c) => [c.portal, c]));
-    return configurablePortals().map((p) => {
+    return agencySettingsPortals().map((p) => {
       const req = latest.get(p.id);
       const row = rows.get(p.id);
+      const catalogStatus = p.id === "facebook_catalog"
+        ? facebookCatalogState({
+            hasToken: (catalogTokens ?? []).length > 0,
+            logs: (catalogLogs ?? []).map((log) => ({
+              status: log.status,
+              tokenPrefix: log.token_prefix,
+              createdAt: log.created_at,
+            })),
+          })
+        : null;
       return {
         activation: portalActivationMode(p.id),
-        connectionStatus: derivePortalConnectionStatus({
+        connectionStatus: catalogStatus ?? derivePortalConnectionStatus({
           definition: p,
           activated: row?.activated === true,
           externalAccountId: row?.external_account_id ?? null,
@@ -139,7 +165,7 @@ export const getAgencyPortalCatalog = createServerFn({ method: "POST" })
         displayName: portalDisplayName(p.id),
         description: p.description,
         availability: p.status,
-        activated: activated.has(p.id),
+        activated: p.id === "facebook_catalog" ? (catalogTokens ?? []).length > 0 : activated.has(p.id),
         request: req
           ? {
               id: req.id,
