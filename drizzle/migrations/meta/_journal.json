@@ -729,6 +729,13 @@
       "when": 1791048478233,
       "tag": "0103_migration",
       "breakpoints": true
+    },
+    {
+      "idx": 104,
+      "version": "7",
+      "when": 1791049794979,
+      "tag": "0104_facebook_catalog_token_scope",
+      "breakpoints": true
     }
   ]
 }

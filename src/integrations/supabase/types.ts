@@ -7430,6 +7430,8 @@ export type Database = {
           organization_id: string
           request_count: number
           revoked_at: string | null
+          scope: string
+          token_encrypted: string | null
           token_hash: string
           token_prefix: string
           updated_at: string
@@ -7444,6 +7446,8 @@ export type Database = {
           organization_id: string
           request_count?: number
           revoked_at?: string | null
+          scope?: string
+          token_encrypted?: string | null
           token_hash: string
           token_prefix: string
           updated_at?: string
@@ -7458,6 +7462,8 @@ export type Database = {
           organization_id?: string
           request_count?: number
           revoked_at?: string | null
+          scope?: string
+          token_encrypted?: string | null
           token_hash?: string
           token_prefix?: string
           updated_at?: string
