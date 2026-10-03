@@ -51,8 +51,6 @@ import {
   setPropertyFacebookCatalog,
 } from "@/lib/facebook-catalog-listings.functions";
 import { FACEBOOK_LISTING_FIX, facebookListingState } from "@/lib/facebook-catalog-status";
-import { getPortalPreselection } from "@/lib/agent-portal-preferences.functions";
-import { applyPreselection } from "@/lib/agent-portal-preferences";
 
 /** „acum 4 min” / „acum 3 h” / data completă, pentru ultima sincronizare. */
 function syncAgo(iso: string) {
@@ -250,20 +248,11 @@ export const PropertyPortalsCard = forwardRef<
   const [checked, setChecked] = useState<Record<string, boolean>>({});
   const [promotedChecked, setPromotedChecked] = useState<Record<string, boolean>>({});
 
-  /** „Portalurile mele”: pre-bifează doar la un anunț nou al agentului; altfel null. */
-  const loadPreselection = useServerFn(getPortalPreselection);
-  const preselection = useQuery({
-    queryKey: ["portal-preselection", propertyId] as const,
-    queryFn: () => loadPreselection({ data: { propertyId } }),
-    enabled: !organizationId,
-  });
-  const preselectKeys = preselection.data?.portalKeys ?? null;
-
   useEffect(() => {
     if (cells.length === 0) return;
-    setChecked(applyPreselection(cells, preselectKeys));
+    setChecked(Object.fromEntries(cells.map((c) => [c.portalId, c.selected])));
     setPromotedChecked(Object.fromEntries(cells.map((c) => [c.portalId, c.promoted])));
-  }, [cells, preselectKeys]);
+  }, [cells]);
 
   /** „Promovat” e valabil doar cât timp „Publicat” e bifat. */
   const promotedValue = (c: PropertyPortalCell) =>
@@ -307,7 +296,6 @@ export const PropertyPortalsCard = forwardRef<
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey });
       queryClient.invalidateQueries({ queryKey: ["property-portals-matrix"] });
-      queryClient.invalidateQueries({ queryKey: ["portal-preselection", propertyId] });
       queryClient.invalidateQueries({
         queryKey: ["property-portal-journal", organizationId, propertyId],
       });
