@@ -37,6 +37,12 @@ export const getPropertyFacebookCatalog = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => propertySchema.parse(input))
   .handler(async ({ data, context }): Promise<PropertyFacebookCatalog> => {
     const { organizationId, agentOnly } = await resolvePublishingOrg(context as unknown as Ctx, data.organizationId);
+    await assertPortalPropertyAccess({
+      organizationId,
+      propertyId: data.propertyId,
+      agentOnly,
+      userId: context.userId,
+    });
     const { admin, optin } = await loadServer();
     const [{ data: prop }, { data: organization }] = await Promise.all([
       admin

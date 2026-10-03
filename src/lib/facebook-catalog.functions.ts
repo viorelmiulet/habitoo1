@@ -2,6 +2,7 @@
 // Nu returnează niciodată tokenul existent sau prefixul lui.
 import { createServerFn } from "@tanstack/react-start";
 import { setResponseHeader } from "@tanstack/react-start/server";
+import { z } from "zod";
 import { requireActiveOrgAuth } from "@/lib/org-access";
 import {
   facebookCatalogState,
@@ -134,12 +135,7 @@ export const getFacebookCatalogOverview = createServerFn({ method: "GET" })
 
 export const setFacebookCatalogAgentPermission = createServerFn({ method: "POST" })
   .middleware([requireActiveOrgAuth])
-  .inputValidator((input: unknown) => {
-    if (!input || typeof input !== "object" || typeof (input as { enabled?: unknown }).enabled !== "boolean") {
-      throw new Error("Setare invalidă.");
-    }
-    return { enabled: (input as { enabled: boolean }).enabled };
-  })
+  .inputValidator((input: unknown) => z.object({ enabled: z.boolean() }).parse(input))
   .handler(async ({ data, context }): Promise<{ enabled: boolean }> => {
     setResponseHeader("Cache-Control", "no-store");
     const ctx = context as unknown as Ctx;
