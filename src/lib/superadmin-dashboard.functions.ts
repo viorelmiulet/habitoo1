@@ -141,7 +141,7 @@ export const getSuperadminDashboard = createServerFn({ method: "POST" })
       admin.from("properties").select("id", { count: "exact", head: true }).is("deleted_at", null),
       admin.from("user_roles").select("role"),
       admin.from("profiles").select("id", { count: "exact", head: true }),
-      admin.from("portal_publications").select("property_id").eq("enabled", true),
+      admin.from("portal_publications").select("property_id").neq("portal_key", "facebook_catalog").eq("enabled", true),
       admin
         .from("portal_connections")
         .select(
