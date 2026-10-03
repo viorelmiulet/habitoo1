@@ -30,7 +30,7 @@ import { auditActionLabel, auditEntityLabels } from "@/lib/labels";
 import {
   PORTAL_CONNECTION_LABEL,
   getPortalDefinition,
-  type PortalConnectionStatus,
+  integrationDisplayStatus,
 } from "@/lib/portals/registry";
 import {
   getSuperadminDashboard,
@@ -356,13 +356,7 @@ function MetricCard({
 
 function IntegrationRow({ row }: { row: IntegrationHealthRow }) {
   const definition = getPortalDefinition(row.portal);
-  const key =
-    (row.status as PortalConnectionStatus) in PORTAL_CONNECTION_LABEL
-      ? (row.status as PortalConnectionStatus)
-      : "not_configured";
-  const meta = row.lastError
-    ? { label: "Eroare", tone: "danger" as const }
-    : PORTAL_CONNECTION_LABEL[key];
+  const meta = PORTAL_CONNECTION_LABEL[integrationDisplayStatus(row)];
 
   return (
     <li className="flex flex-wrap items-center gap-x-3 gap-y-2 px-5 py-3 text-sm">

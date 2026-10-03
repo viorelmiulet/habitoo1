@@ -596,58 +596,98 @@ export function portalSupports(
   return definition.capabilities.includes(capability);
 }
 
-/** Starea conexiunii unei agenții (diferită de disponibilitatea integrării). */
-export type PortalConnectionStatus =
-  "not_configured" | "ready" | "connected" | "error" | "disconnected";
+/**
+ * Starea conexiunii unei agenții, afișată peste tot în interfață.
+ * Doar trei valori: valorile brute din DB (`ready`, `not_configured`…) nu
+ * ajung în interfață; se trec prin `portalDisplayStatus`.
+ */
+export type PortalConnectionStatus = "connected" | "error" | "disconnected";
 
 export const PORTAL_CONNECTION_LABEL: Record<
   PortalConnectionStatus,
-  { label: string; tone: "success" | "warning" | "danger" | "neutral" }
+  { label: string; tone: "success" | "danger" | "neutral" }
 > = {
-  not_configured: { label: "Neconectat", tone: "neutral" },
-  ready: { label: "Pregătit pentru conectare", tone: "warning" },
   connected: { label: "Conectat", tone: "success" },
   error: { label: "Eroare", tone: "danger" },
   disconnected: { label: "Deconectat", tone: "neutral" },
 };
 
 /**
- * Starea derivată din configurarea existentă. Nu marcăm niciodată „connected”
- * doar pentru că datele există: conectarea rămâne confirmată de un test reușit.
+ * Funcția comună de afișare:
+ *  - Deconectat: neactivat sau fără datele obligatorii (cheie/cont);
+ *  - Eroare: activat și configurat, dar ultima operație a eșuat;
+ *  - Conectat: altfel.
  */
+export function portalDisplayStatus(input: {
+  activated: boolean;
+  configured: boolean;
+  lastError?: string | null;
+  lastSyncStatus?: string | null;
+}): PortalConnectionStatus {
+  if (!input.activated || !input.configured) return "disconnected";
+  if (input.lastError || input.lastSyncStatus === "error") return "error";
+  return "connected";
+}
+
+/** Portalurile care citesc singure feedul Habitoo: activarea este suficientă. */
+export function isFeedPullPortal(definition: PortalDefinition): boolean {
+  return definition.capabilities.includes("feed_pull") &&
+    !definition.configuration_schema.fields.some((f) => !f.optional);
+}
+
+/** Starea derivată din configurarea existentă (vezi `portalDisplayStatus`). */
 export function derivePortalConnectionStatus(input: {
   definition: PortalDefinition;
+  activated: boolean;
   externalAccountId: string | null;
   hasPortalCredential: boolean;
-  hasHabitooKey: boolean;
   lastError: string | null;
-  testedOk: boolean;
+  lastSyncStatus?: string | null;
   /** Portalurile cu OAuth au tokenurile agenției salvate. */
   hasOAuthTokens?: boolean;
 }): PortalConnectionStatus {
-  // OAuth: nu există câmpuri de completat; conexiunea există doar cu tokenuri.
+  let configured: boolean;
   if (input.definition.authentication.includes("oauth")) {
-    if (!input.hasOAuthTokens) return "not_configured";
-    if (input.lastError) return "error";
-    return "connected";
+    configured = Boolean(input.hasOAuthTokens);
+  } else if (isFeedPullPortal(input.definition)) {
+    configured = true;
+  } else {
+    configured = input.definition.configuration_schema.fields
+      .filter((f) => !f.optional)
+      .every((field) => {
+        if (field.target === "external_account_id") return Boolean(input.externalAccountId);
+        if (field.target === "credentials") return input.hasPortalCredential;
+        return true;
+      });
   }
-  const required = input.definition.configuration_schema.fields.filter((f) => !f.optional);
-  const complete = required.every((field) => {
-    if (field.target === "external_account_id") return Boolean(input.externalAccountId);
-    if (field.target === "credentials") return input.hasPortalCredential;
-    return true;
+  return portalDisplayStatus({
+    activated: input.activated,
+    configured,
+    lastError: input.lastError,
+    lastSyncStatus: input.lastSyncStatus,
   });
-  if (!complete) return "not_configured";
-  // Portalurile fără credențiale proprii (doar feed cu cheie Habitoo) nu pot
-  // funcționa fără o cheie activă emisă de noi.
-  if (
-    required.length === 0 &&
-    input.definition.authentication.includes("habitoo_api_key") &&
-    !input.hasHabitooKey
-  ) {
-    return "not_configured";
-  }
-  if (input.lastError) return "error";
+}
 
-  return input.testedOk ? "connected" : "ready";
+/**
+ * Aceeași regulă pentru un rând brut `portal_connections` (fără credențiale
+ * decriptate): `ready`/`connected`/`error` înseamnă configurat; portalurile
+ * care citesc feedul sunt configurate prin simpla activare.
+ */
+export function integrationDisplayStatus(row: {
+  portal: string;
+  status: string | null;
+  activated: boolean | null;
+  lastError: string | null;
+}): PortalConnectionStatus {
+  const definition = getPortalDefinition(row.portal);
+  const configured =
+    (definition ? isFeedPullPortal(definition) : false) ||
+    row.status === "ready" ||
+    row.status === "connected" ||
+    row.status === "error";
+  return portalDisplayStatus({
+    activated: row.activated === true,
+    configured,
+    lastError: row.lastError,
+  });
 }

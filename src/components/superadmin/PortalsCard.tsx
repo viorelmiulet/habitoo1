@@ -44,10 +44,6 @@ import {
   testPortalConnection,
   type PortalHubItem,
 } from "@/lib/portals.functions";
-import {
-  listPortalActivationRequests,
-  type PortalActivationRequestRow,
-} from "@/lib/portal-activation.functions";
 import { portalGridState, type PortalGridTone } from "@/lib/portals/grid-state";
 import {
   revokeStoriaAuthorization,
@@ -100,7 +96,6 @@ function ImobiliareSubscriptionBadge({ organizationId }: { organizationId: strin
 /** Punctul colorat din linia de stare a cardului din grilă. */
 const GRID_DOT_CLASS: Record<PortalGridTone, string> = {
   success: "bg-success",
-  warning: "bg-warning",
   danger: "bg-destructive",
   muted: "bg-muted-foreground/50",
 };
@@ -109,7 +104,6 @@ export function PortalsCard({ organizationId }: { organizationId: string }) {
   const hubKey = ["portal-hub", organizationId] as const;
   const queryClient = useQueryClient();
   const loadHub = useServerFn(getPortalHub);
-  const loadActivationRequests = useServerFn(listPortalActivationRequests);
   const runSave = useServerFn(savePortalConnection);
   const runTest = useServerFn(testPortalConnection);
   const runDisconnect = useServerFn(disconnectPortal);
@@ -167,17 +161,6 @@ export function PortalsCard({ organizationId }: { organizationId: string }) {
   > | null>(null);
 
   const hub = useQuery({ queryKey: hubKey, queryFn: () => loadHub({ data: { organizationId } }) });
-  // Cererile de activare ale agenției: starea lor apare pe cardul din grilă.
-  const activationRequests = useQuery({
-    queryKey: ["portal-activation-requests", "org", organizationId],
-    queryFn: () => loadActivationRequests({ data: { status: "all" } }),
-  });
-  /** Ultima cerere de activare per portal (lista vine ordonată descrescător). */
-  const latestRequestByPortal = new Map<string, PortalActivationRequestRow["status"]>();
-  for (const r of (activationRequests.data ?? []) as PortalActivationRequestRow[]) {
-    if (r.organizationId !== organizationId) continue;
-    if (!latestRequestByPortal.has(r.portalId)) latestRequestByPortal.set(r.portalId, r.status);
-  }
   const invalidate = () => {
     queryClient.invalidateQueries({ queryKey: hubKey });
   };
@@ -375,7 +358,6 @@ export function PortalsCard({ organizationId }: { organizationId: string }) {
               const name = portalDisplayName(item.portal.id);
               const state = portalGridState({
                 connectionStatus: item.connection.status,
-                requestStatus: latestRequestByPortal.get(item.portal.id) ?? null,
               });
               const isSelected = item.portal.id === selected;
               return (
