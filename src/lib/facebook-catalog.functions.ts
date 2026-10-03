@@ -1,7 +1,7 @@
 // Cardul „Catalog Facebook” (Setări → Promovare). Doar agency_admin/superadmin, doar agenția proprie.
 // Nu returnează niciodată tokenul existent sau prefixul lui.
 import { createServerFn } from "@tanstack/react-start";
-import { setResponseHeader } from "@tanstack/react-start/server";
+import { setResponseHeader, setResponseStatus } from "@tanstack/react-start/server";
 import { z } from "zod";
 import { requireActiveOrgAuth } from "@/lib/org-access";
 import {
@@ -42,6 +42,7 @@ type Ctx = {
 async function requireCatalogAdmin(ctx: Ctx): Promise<string> {
     const { data: isAdmin, error } = await ctx.supabase.rpc("is_org_admin");
     if (error || isAdmin !== true) {
+      setResponseStatus(403);
       throw new Error("Acces refuzat: doar administratorul agenției vede Catalogul Facebook.");
     }
     const { data: profile } = await ctx.supabase
