@@ -62,6 +62,7 @@
     "dompurify": "^3.4.15",
     "embla-carousel-react": "^8.6.0",
     "fast-png": "^8.0.0",
+    "fflate": "^0.8.3",
     "input-otp": "^1.4.2",
     "jpeg-js": "^0.4.4",
     "leaflet": "^1.9.4",
