@@ -336,7 +336,9 @@ export function errorResponse(status: number, message: string): Response {
 export async function withFeedAuth(
   request: Request,
   endpoint: string,
-  handler: (auth: FeedAuthOk) => Promise<{ response: Response; items?: number }>,
+  handler: (
+    auth: FeedAuthOk,
+  ) => Promise<{ response: Response; items?: number; detail?: string | null }>,
   options: FeedAuthOptions = {},
 ): Promise<Response> {
   const method = request.method;
@@ -355,7 +357,7 @@ export async function withFeedAuth(
     return errorResponse(auth.status, auth.message);
   }
   try {
-    const { response, items } = await handler(auth);
+    const { response, items, detail } = await handler(auth);
     await logFeedAccess({
       organizationId: auth.organizationId,
       tokenPrefix: auth.tokenPrefix,
@@ -363,6 +365,7 @@ export async function withFeedAuth(
       method,
       status: response.status,
       items: items ?? null,
+      detail: detail ?? null,
     });
     return response;
   } catch (error) {

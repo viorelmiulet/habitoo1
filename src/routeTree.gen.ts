@@ -91,6 +91,7 @@ import { Route as LovableEmailAuthPreviewRouteImport } from './routes/lovable/em
 import { Route as LovableEmailAuthWebhookRouteImport } from './routes/lovable/email/auth/webhook'
 import { Route as AuthenticatedAppAcpDatePiataIndexRouteImport } from './routes/_authenticated/app.acp.date-piata.index'
 import { Route as AuthenticatedAppAcpDatePiataIdRouteImport } from './routes/_authenticated/app.acp.date-piata.$id'
+import { Route as ApiPublicCatalogV1FacebookDotcsvRouteImport } from './routes/api/public/catalog/v1/facebook[.]csv'
 import { Route as ApiPublicFeedProperstarAgencyKeyRouteImport } from './routes/api/public/feed/properstar/$agencyKey'
 import { Route as ApiPublicHomepitchV1PropertiesRouteImport } from './routes/api/public/homepitch/v1/properties'
 import { Route as ApiPublicPortalV1AgencyRouteImport } from './routes/api/public/portal/v1/agency'
@@ -572,6 +573,12 @@ const AuthenticatedAppAcpDatePiataIdRoute =
     path: '/acp/date-piata/$id',
     getParentRoute: () => AuthenticatedAppRoute,
   } as any)
+const ApiPublicCatalogV1FacebookDotcsvRoute =
+  ApiPublicCatalogV1FacebookDotcsvRouteImport.update({
+    id: '/api/public/catalog/v1/facebook.csv',
+    path: '/api/public/catalog/v1/facebook.csv',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicFeedProperstarAgencyKeyRoute =
   ApiPublicFeedProperstarAgencyKeyRouteImport.update({
     id: '/api/public/feed/properstar/$agencyKey',
@@ -804,6 +811,7 @@ export interface FileRoutesByFullPath {
   '/app/contracts/': typeof AuthenticatedAppContractsIndexRoute
   '/app/properties/': typeof AuthenticatedAppPropertiesIndexRoute
   '/app/acp/date-piata/$id': typeof AuthenticatedAppAcpDatePiataIdRoute
+  '/api/public/catalog/v1/facebook.csv': typeof ApiPublicCatalogV1FacebookDotcsvRoute
   '/api/public/feed/properstar/$agencyKey': typeof ApiPublicFeedProperstarAgencyKeyRoute
   '/api/public/homepitch/v1/properties': typeof ApiPublicHomepitchV1PropertiesRouteWithChildren
   '/api/public/portal/v1/agency': typeof ApiPublicPortalV1AgencyRoute
@@ -911,6 +919,7 @@ export interface FileRoutesByTo {
   '/app/contracts': typeof AuthenticatedAppContractsIndexRoute
   '/app/properties': typeof AuthenticatedAppPropertiesIndexRoute
   '/app/acp/date-piata/$id': typeof AuthenticatedAppAcpDatePiataIdRoute
+  '/api/public/catalog/v1/facebook.csv': typeof ApiPublicCatalogV1FacebookDotcsvRoute
   '/api/public/feed/properstar/$agencyKey': typeof ApiPublicFeedProperstarAgencyKeyRoute
   '/api/public/homepitch/v1/properties': typeof ApiPublicHomepitchV1PropertiesRouteWithChildren
   '/api/public/portal/v1/agency': typeof ApiPublicPortalV1AgencyRoute
@@ -1022,6 +1031,7 @@ export interface FileRoutesById {
   '/_authenticated/app/contracts/': typeof AuthenticatedAppContractsIndexRoute
   '/_authenticated/app/properties/': typeof AuthenticatedAppPropertiesIndexRoute
   '/_authenticated/app/acp/date-piata/$id': typeof AuthenticatedAppAcpDatePiataIdRoute
+  '/api/public/catalog/v1/facebook.csv': typeof ApiPublicCatalogV1FacebookDotcsvRoute
   '/api/public/feed/properstar/$agencyKey': typeof ApiPublicFeedProperstarAgencyKeyRoute
   '/api/public/homepitch/v1/properties': typeof ApiPublicHomepitchV1PropertiesRouteWithChildren
   '/api/public/portal/v1/agency': typeof ApiPublicPortalV1AgencyRoute
@@ -1133,6 +1143,7 @@ export interface FileRouteTypes {
     | '/app/contracts/'
     | '/app/properties/'
     | '/app/acp/date-piata/$id'
+    | '/api/public/catalog/v1/facebook.csv'
     | '/api/public/feed/properstar/$agencyKey'
     | '/api/public/homepitch/v1/properties'
     | '/api/public/portal/v1/agency'
@@ -1240,6 +1251,7 @@ export interface FileRouteTypes {
     | '/app/contracts'
     | '/app/properties'
     | '/app/acp/date-piata/$id'
+    | '/api/public/catalog/v1/facebook.csv'
     | '/api/public/feed/properstar/$agencyKey'
     | '/api/public/homepitch/v1/properties'
     | '/api/public/portal/v1/agency'
@@ -1350,6 +1362,7 @@ export interface FileRouteTypes {
     | '/_authenticated/app/contracts/'
     | '/_authenticated/app/properties/'
     | '/_authenticated/app/acp/date-piata/$id'
+    | '/api/public/catalog/v1/facebook.csv'
     | '/api/public/feed/properstar/$agencyKey'
     | '/api/public/homepitch/v1/properties'
     | '/api/public/portal/v1/agency'
@@ -1413,6 +1426,7 @@ export interface RootRouteChildren {
   ApiPublicMailgunInboundRoute: typeof ApiPublicMailgunInboundRoute
   LovableEmailAuthPreviewRoute: typeof LovableEmailAuthPreviewRoute
   LovableEmailAuthWebhookRoute: typeof LovableEmailAuthWebhookRoute
+  ApiPublicCatalogV1FacebookDotcsvRoute: typeof ApiPublicCatalogV1FacebookDotcsvRoute
   ApiPublicFeedProperstarAgencyKeyRoute: typeof ApiPublicFeedProperstarAgencyKeyRoute
   ApiPublicHomepitchV1PropertiesRoute: typeof ApiPublicHomepitchV1PropertiesRouteWithChildren
   ApiPublicPortalV1AgencyRoute: typeof ApiPublicPortalV1AgencyRoute
@@ -2014,6 +2028,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAppAcpDatePiataIdRouteImport
       parentRoute: typeof AuthenticatedAppRoute
     }
+    '/api/public/catalog/v1/facebook.csv': {
+      id: '/api/public/catalog/v1/facebook.csv'
+      path: '/api/public/catalog/v1/facebook.csv'
+      fullPath: '/api/public/catalog/v1/facebook.csv'
+      preLoaderRoute: typeof ApiPublicCatalogV1FacebookDotcsvRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/feed/properstar/$agencyKey': {
       id: '/api/public/feed/properstar/$agencyKey'
       path: '/api/public/feed/properstar/$agencyKey'
@@ -2423,6 +2444,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicMailgunInboundRoute: ApiPublicMailgunInboundRoute,
   LovableEmailAuthPreviewRoute: LovableEmailAuthPreviewRoute,
   LovableEmailAuthWebhookRoute: LovableEmailAuthWebhookRoute,
+  ApiPublicCatalogV1FacebookDotcsvRoute: ApiPublicCatalogV1FacebookDotcsvRoute,
   ApiPublicFeedProperstarAgencyKeyRoute: ApiPublicFeedProperstarAgencyKeyRoute,
   ApiPublicHomepitchV1PropertiesRoute:
     ApiPublicHomepitchV1PropertiesRouteWithChildren,
