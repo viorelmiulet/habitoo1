@@ -6,6 +6,8 @@ import { ChevronDown, Copy, ExternalLink, RefreshCw } from "lucide-react";
 import { toast } from "@/components/ui/sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 import { ConfirmDialog } from "@/components/app/ConfirmDialog";
 import { StatusPill, type StatusPillState } from "@/components/ui/status-pill";
 import { InlineLoading } from "@/components/app/LoadingState";
@@ -16,6 +18,7 @@ import { formatDateTime } from "@/lib/format";
 import {
   generateFacebookCatalogToken,
   getFacebookCatalogOverview,
+  setFacebookCatalogAgentPermission,
 } from "@/lib/facebook-catalog.functions";
 import { bulkSetFacebookCatalog } from "@/lib/facebook-catalog-listings.functions";
 import {
@@ -34,6 +37,7 @@ export function FacebookCatalogCard({ portalList = false }: { portalList?: boole
   const queryClient = useQueryClient();
   const load = useServerFn(getFacebookCatalogOverview);
   const runGenerate = useServerFn(generateFacebookCatalogToken);
+  const saveAgentPermission = useServerFn(setFacebookCatalogAgentPermission);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const runBulk = useServerFn(bulkSetFacebookCatalog);
   const [bulkMode, setBulkMode] = useState<"add_eligible" | "remove_all" | null>(null);
@@ -52,6 +56,16 @@ export function FacebookCatalogCard({ portalList = false }: { portalList?: boole
     onError: (e: Error) => toastError(e),
   });
   const [showExcluded, setShowExcluded] = useState(false);
+
+  const agentPermission = useMutation({
+    mutationFn: (enabled: boolean) => saveAgentPermission({ data: { enabled } }),
+    onSuccess: () => {
+      toast.success("Permisiunea agenților a fost salvată.");
+      queryClient.invalidateQueries({ queryKey: ["facebook-catalog-overview"] });
+      queryClient.invalidateQueries({ queryKey: ["property-facebook-catalog"] });
+    },
+    onError: (e: Error) => toastError(e),
+  });
 
   const q = useQuery({ queryKey: ["facebook-catalog-overview"], queryFn: () => load() });
 
@@ -96,6 +110,25 @@ export function FacebookCatalogCard({ portalList = false }: { portalList?: boole
           {FACEBOOK_CATALOG_STATE_LABEL[d.state]}
         </StatusPill>
       </div>
+
+      {portalList ? (
+        <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-4 rounded-lg border p-4">
+          <div className="min-w-0 space-y-1">
+            <Label htmlFor="facebook-catalog-agents-enabled" className="text-sm">
+              Agenții pot adăuga anunțuri în Catalog Facebook
+            </Label>
+            <p className="text-xs text-muted-foreground">
+              Oprit: doar managerul agenției bifează anunțuri pentru catalog. Pornit: fiecare agent o poate face pentru anunțurile lui.
+            </p>
+          </div>
+          <Switch
+            id="facebook-catalog-agents-enabled"
+            checked={d.agentsCanManage}
+            disabled={agentPermission.isPending}
+            onCheckedChange={(enabled) => agentPermission.mutate(enabled)}
+          />
+        </div>
+      ) : null}
 
       <div className="min-w-0 max-w-full space-y-2">
         <p className="text-sm font-medium">Adresa feed-ului</p>

@@ -1,7 +1,8 @@
 // Cardul „Catalog Facebook” (Setări → Promovare). Doar agency_admin/superadmin, doar agenția proprie.
 // Nu returnează niciodată tokenul existent sau prefixul lui.
 import { createServerFn } from "@tanstack/react-start";
-import { setResponseHeader } from "@tanstack/react-start/server";
+import { setResponseHeader, setResponseStatus } from "@tanstack/react-start/server";
+import { z } from "zod";
 import { requireActiveOrgAuth } from "@/lib/org-access";
 import {
   facebookCatalogState,
@@ -21,6 +22,7 @@ export type FacebookCatalogOverview = {
   excludedTotal: number;
   excludedItems: { id: string; reference: string | null; title: string; reason: ExclusionReason }[];
   lastReadAt: string | null;
+  agentsCanManage: boolean;
 };
 
 type Ctx = {
@@ -40,6 +42,7 @@ type Ctx = {
 async function requireCatalogAdmin(ctx: Ctx): Promise<string> {
     const { data: isAdmin, error } = await ctx.supabase.rpc("is_org_admin");
     if (error || isAdmin !== true) {
+      setResponseStatus(403);
       throw new Error("Acces refuzat: doar administratorul agenției vede Catalogul Facebook.");
     }
     const { data: profile } = await ctx.supabase
@@ -97,6 +100,11 @@ export const getFacebookCatalogOverview = createServerFn({ method: "GET" })
     ]);
 
     const hasToken = (tokens ?? []).length > 0;
+    const { data: organization } = await supabaseAdmin
+      .from("organizations")
+      .select("facebook_catalog_agents_enabled")
+      .eq("id", organizationId)
+      .maybeSingle();
     const feedUrl = await loadFacebookCatalogFeedUrl(supabaseAdmin, organizationId);
     const input = await loadFacebookCatalogInput(supabaseAdmin, organizationId);
     const result = buildFacebookCatalogCsv({
@@ -122,7 +130,24 @@ export const getFacebookCatalogOverview = createServerFn({ method: "GET" })
       excludedTotal: result.excludedTotal,
       excludedItems: (result.excludedItems ?? []).slice(0, 200),
       lastReadAt: lastOk?.[0]?.created_at ?? null,
+      agentsCanManage: organization?.facebook_catalog_agents_enabled === true,
     };
+  });
+
+export const setFacebookCatalogAgentPermission = createServerFn({ method: "POST" })
+  .middleware([requireActiveOrgAuth])
+  .inputValidator((input: unknown) => z.object({ enabled: z.boolean() }).parse(input))
+  .handler(async ({ data, context }): Promise<{ enabled: boolean }> => {
+    setResponseHeader("Cache-Control", "no-store");
+    const ctx = context as unknown as Ctx;
+    const organizationId = await requireCatalogAdmin(ctx);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { error } = await supabaseAdmin
+      .from("organizations")
+      .update({ facebook_catalog_agents_enabled: data.enabled })
+      .eq("id", organizationId);
+    if (error) throw error;
+    return { enabled: data.enabled };
   });
 
 /** Generează (sau regenerează) tokenul dedicat Catalogului Facebook. Nu atinge tokenurile de site. */

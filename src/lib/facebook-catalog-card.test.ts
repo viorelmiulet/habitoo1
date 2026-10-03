@@ -49,7 +49,7 @@ describe("acces și token", () => {
   const logo = readFileSync("src/components/app/PortalLogo.tsx", "utf8");
 
   it("fila Promovare e doar pentru admin (agentul nu o vede)", () => {
-    expect(settings).toContain('{user?.isAdmin ? <TabsTrigger value="promotion">');
+    expect(settings).toMatch(/user\?\.isAdmin \? <TabsTrigger[^>]*value="promotion">/);
     expect(settings).toMatch(/user\?\.isAdmin \? \(\s*<TabsContent value="promotion">/);
   });
   it("serverul verifică rolul și nu citește tokenul/prefixul existent", () => {

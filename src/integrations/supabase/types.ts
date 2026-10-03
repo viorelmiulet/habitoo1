@@ -4165,6 +4165,7 @@ export type Database = {
           demo_seed_version: string | null
           demo_seeded_at: string | null
           email: string | null
+          facebook_catalog_agents_enabled: boolean
           id: string
           is_demo: boolean
           is_trial: boolean
@@ -4217,6 +4218,7 @@ export type Database = {
           demo_seed_version?: string | null
           demo_seeded_at?: string | null
           email?: string | null
+          facebook_catalog_agents_enabled?: boolean
           id?: string
           is_demo?: boolean
           is_trial?: boolean
@@ -4269,6 +4271,7 @@ export type Database = {
           demo_seed_version?: string | null
           demo_seeded_at?: string | null
           email?: string | null
+          facebook_catalog_agents_enabled?: boolean
           id?: string
           is_demo?: boolean
           is_trial?: boolean
