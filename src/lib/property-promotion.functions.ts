@@ -11,7 +11,7 @@ export type PropertyPromotion = {
   agencyName: string;
   post: SocialPostData;
   photos: PromotionPhoto[];
-  catalog: { included: boolean; reason: CatalogRowReason | null };
+  catalog: { enabled: boolean; included: boolean; reason: CatalogRowReason | null };
 };
 
 type Db = {
