@@ -505,7 +505,7 @@ export const PropertyPortalsCard = forwardRef<
                   ) : (
                     <Circle aria-hidden className="mt-0.5 size-4 shrink-0 text-muted-foreground/60" />
                   )}
-                  <PortalLogoStack portalId="facebook" name="Catalog Facebook" size={40} />
+                  <PortalLogo portalId="facebook_catalog" name="Catalog Facebook" fallback="FB" size={40} />
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-2">
                       <label htmlFor="portal-facebook-catalog" className="font-semibold">
