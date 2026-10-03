@@ -8,7 +8,6 @@ import { PageHeader } from "@/components/app/PageHeader";
 import { StatusBadge } from "@/components/app/StatusBadge";
 import { AgencyPortalCatalogCard } from "@/components/app/AgencyPortalCatalogCard";
 import { MyPortalsCard } from "@/components/app/MyPortalsCard";
-import { AgentPortalMatrixCard } from "@/components/app/AgentPortalMatrixCard";
 import { AgencyBrandingCard } from "@/components/app/AgencyBrandingCard";
 import { AiSettingsCard } from "@/components/app/ai/AiSettingsCard";
 
@@ -523,7 +522,6 @@ function SettingsPage() {
               {user?.isAdmin ? (
                 <>
                   <AgencyPortalCatalogCard />
-                  {user?.role === "agency_admin" ? <AgentPortalMatrixCard /> : null}
                   <PortalSlotsCard />
                   <ImobiliarePromotionsAdminCard />
                   <ProperstarFeedCard />
