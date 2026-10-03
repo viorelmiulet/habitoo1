@@ -132,8 +132,13 @@ export const PropertyPortalsCard = forwardRef<
     onCompleteMissing?: () => void;
     /** Deschide fila Poze (pentru „fără poze” în Catalogul Facebook). */
     onOpenMedia?: () => void;
+    /** Starea de editare a paginii anunțului — butonul „Publică” e activ doar în editare. */
+    editing?: boolean;
+    /** Aceeași acțiune ca fostul buton din antet: salvează (în editare) și aplică bifele. */
+    onPublish?: () => void;
+    publishPending?: boolean;
   }
->(function PropertyPortalsCard({ organizationId, propertyId, onCompleteMissing, onOpenMedia }, ref) {
+>(function PropertyPortalsCard({ organizationId, propertyId, onCompleteMissing, onOpenMedia, editing, onPublish, publishPending }, ref) {
   const queryClient = useQueryClient();
   const loadMatrix = useServerFn(getPropertiesPortalMatrix);
   const applyFn = useServerFn(applyPropertyPortalSelection);
@@ -449,11 +454,30 @@ export const PropertyPortalsCard = forwardRef<
                 {lastSync ? ` · ultima sincronizare ${syncAgo(lastSync)}` : ""}
               </p>
             </div>
-            {pendingCount > 0 ? (
-              <span className="text-xs text-muted-foreground">
-                {pendingCount} {pendingCount === 1 ? "modificare" : "modificări"} de aplicat
-              </span>
-            ) : null}
+            <div className="flex flex-col items-end gap-1 max-sm:w-full max-sm:items-stretch">
+              {pendingCount > 0 ? (
+                <span className="text-xs text-muted-foreground">
+                  {pendingCount} {pendingCount === 1 ? "modificare" : "modificări"} de aplicat
+                </span>
+              ) : null}
+              {onPublish ? (
+                <>
+                  <Button
+                    onClick={onPublish}
+                    disabled={!editing || publishPending}
+                    title={editing ? undefined : "Apasă Editează pentru a publica."}
+                    className="max-sm:w-full"
+                  >
+                    {publishPending ? "Se publică…" : "Publică"}
+                  </Button>
+                  {!editing ? (
+                    <span className="text-xs text-muted-foreground sm:hidden">
+                      Apasă Editează pentru a publica.
+                    </span>
+                  ) : null}
+                </>
+              ) : null}
+            </div>
           </header>
 
           {contactBlock ? (
