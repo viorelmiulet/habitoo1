@@ -53,7 +53,7 @@ describe("acces și token", () => {
   });
   it("serverul verifică rolul și nu citește tokenul/prefixul existent", () => {
     expect(fn).toContain('rpc("is_org_admin")');
-    expect(fn).not.toMatch(/token_hash|token_prefix,|tokenPrefix:\s*row/);
+    expect(fn).not.toMatch(/token_hash|tokenPrefix:\s*row|token:\s/);
     expect(fn).toMatch(/from\("site_feed_tokens"\)\s*\.select\("id"\)/);
   });
   it("cardul nu regenerează sau revocă și afișează doar modelul pentru tokenul existent", () => {
