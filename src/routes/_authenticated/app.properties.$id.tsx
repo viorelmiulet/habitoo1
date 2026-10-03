@@ -33,6 +33,7 @@ import { EmptyState } from "@/components/app/EmptyState";
 import { ActivityDialog } from "@/components/app/ActivityDialog";
 import { PropertyMediaManager } from "@/components/app/PropertyMediaManager";
 import { PropertyAcpCard } from "@/components/app/PropertyAcpCard";
+import { PropertyPromotionTab } from "@/components/app/PropertyPromotionTab";
 import { MarketingAgentPanel } from "@/components/app/MarketingAgentPanel";
 
 import { PropertyHeroGallery } from "@/components/app/PropertyHeroGallery";
@@ -791,6 +792,7 @@ function PropertyDetailPage() {
             ["overview", "Prezentare"],
             ["media", `Poze (${data?.imageCount ?? 0})`],
             ["publishing", `Publicare (${publishedPortals}/${portalCells.length})`],
+            ["promotion", "Promovare"],
             ["leads", `Lead-uri (${data?.leads.length ?? 0})`],
             ["matching", `Cereri compatibile (${matches.length})`],
             ["activities", `Activități (${activities.length})`],
@@ -1147,6 +1149,10 @@ function PropertyDetailPage() {
               );
             }}
           />
+        </TabsContent>
+
+        <TabsContent value="promotion">
+          <PropertyPromotionTab propertyId={id} />
         </TabsContent>
 
         <TabsContent value="history">
