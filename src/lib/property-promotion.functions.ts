@@ -51,18 +51,28 @@ export const getPropertyPromotion = createServerFn({ method: "GET" })
       import("@/lib/site-feed/facebook-catalog.server"),
       import("@/lib/site-feed/facebook-catalog"),
     ]);
-    const input = await loadFacebookCatalogInput(supabaseAdmin, p.organization_id, true, [p.id]);
+    const input = await loadFacebookCatalogInput(supabaseAdmin, p.organization_id, true, [p.id], false);
+    const { data: optIn } = await supabaseAdmin
+      .from("portal_publications")
+      .select("enabled")
+      .eq("organization_id", p.organization_id)
+      .eq("property_id", p.id)
+      .eq("portal_key", "facebook_catalog")
+      .eq("enabled", true)
+      .limit(1);
+    const catalogEnabled = (optIn ?? []).length > 0;
     const result = fb.buildFacebookCatalogCsv({
       ...input,
       baseUrl: "https://crm.habitoo.ro",
       publicSiteUrl: "https://habitoo.ro",
     });
-    const catalog =
+    const reason =
       input.properties.length === 0
-        ? { included: false, reason: "not_published" as const }
+        ? ("not_published" as const)
         : result.included > 0
-          ? { included: true, reason: null }
-          : { included: false, reason: result.excludedItems?.[0]?.reason ?? null };
+          ? null
+          : (result.excludedItems?.[0]?.reason ?? null);
+    const catalog = { enabled: catalogEnabled, included: catalogEnabled && !reason, reason };
 
     const offer = fb.pickOffer(p);
     const agent = agentRes.data as { full_name: string | null; phone: string | null } | null;

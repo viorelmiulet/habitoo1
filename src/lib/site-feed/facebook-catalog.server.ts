@@ -50,6 +50,8 @@ export async function loadFacebookCatalogInput(
   organizationId: string,
   includeProperties = true,
   onlyPropertyIds?: string[],
+  /** true (implicit) = doar anunțurile cu opt-in în Catalogul Facebook. */
+  requireOptIn = true,
 ): Promise<{ properties: PropertyRow[]; imagesByProperty: Map<string, PropertyImageRow[]> }> {
   const properties: PropertyRow[] = [];
   if (includeProperties) {
@@ -68,6 +70,14 @@ export async function loadFacebookCatalogInput(
       if (error) throw error;
       properties.push(...((data ?? []) as PropertyRow[]));
       if (!data || data.length < PAGE) break;
+    }
+  }
+
+  if (requireOptIn && properties.length > 0) {
+    const { optedInPropertyIds } = await import("@/lib/site-feed/facebook-catalog-optin.server");
+    const opted = await optedInPropertyIds(supabaseAdmin, organizationId);
+    for (let i = properties.length - 1; i >= 0; i--) {
+      if (!opted.has(properties[i]!.id)) properties.splice(i, 1);
     }
   }
 
