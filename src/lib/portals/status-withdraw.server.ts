@@ -363,8 +363,20 @@ export async function processStatusWithdrawItem(
     .eq("id", item.id);
   await audit("portal_auto_withdraw_failed", { error: outcome.message });
 
-  // Shared listing failures already alert the agent and admins on the first attempt.
-  // Do not send a second, technical notification when retries are exhausted.
+  // Adapter failures normally notify in executeListingAction. An exception before
+  // that point still gets an alert; the stable ID suppresses retry duplicates.
+  try {
+    const { notifyPortalFailure } = await import("@/lib/portals/failure-notification.server");
+    await notifyPortalFailure(admin, {
+      organizationId: item.organization_id,
+      propertyId: item.property_id,
+      portalKey: item.portal_key,
+      portalName: getPortalDefinition(item.portal_key)?.display_name ?? item.portal_key,
+      error: outcome.message,
+    });
+  } catch {
+    // Alerts never block the withdrawal queue.
+  }
   return { status: "failed", message: outcome.message };
 }
 
