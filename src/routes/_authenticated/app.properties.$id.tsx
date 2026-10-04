@@ -1133,6 +1133,7 @@ function PropertyDetailPage() {
           <PropertyPortalsCard
             ref={portalsRef}
             propertyId={id}
+            assignedTo={property.assigned_to}
             editing={editing}
             publishPending={publish.isPending || save.isPending}
             onPublish={() => publish.mutate()}

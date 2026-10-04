@@ -15,9 +15,9 @@ import { FEED_EXCLUDED_NO_PHONE, FEED_PORTALS_REQUIRING_AGENT_PHONE } from "@/li
 import { useCurrentUser } from "@/hooks/use-session";
 import { getPropertyAutoWithdrawals, type AutoWithdrawView } from "@/lib/property-status.functions";
 import { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useState } from "react";
-import { AlertTriangle, Check, CheckCircle2, Circle, ExternalLink } from "lucide-react";
+import { AlertTriangle, Check, ExternalLink } from "lucide-react";
 
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueries, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "@/components/ui/sonner";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -129,6 +129,7 @@ export const PropertyPortalsCard = forwardRef<
     /** Doar Superadmin trimite agenția explicit; agenția o ia din sesiune. */
     organizationId?: string;
     propertyId: string;
+    assignedTo?: string | null;
     onCompleteMissing?: () => void;
     /** Deschide fila Poze (pentru „fără poze” în Catalogul Facebook). */
     onOpenMedia?: () => void;
@@ -138,7 +139,7 @@ export const PropertyPortalsCard = forwardRef<
     onPublish?: () => void;
     publishPending?: boolean;
   }
->(function PropertyPortalsCard({ organizationId, propertyId, onCompleteMissing, onOpenMedia, editing, onPublish, publishPending }, ref) {
+>(function PropertyPortalsCard({ organizationId, propertyId, assignedTo, onCompleteMissing, onOpenMedia, editing, onPublish, publishPending }, ref) {
   const queryClient = useQueryClient();
   const loadMatrix = useServerFn(getPropertiesPortalMatrix);
   const applyFn = useServerFn(applyPropertyPortalSelection);
@@ -190,9 +191,18 @@ export const PropertyPortalsCard = forwardRef<
     () => matrix.data?.properties[propertyId] ?? [],
     [matrix.data, propertyId],
   );
+  const sessionUser = useCurrentUser().data;
+  const loadMine = useServerFn(getMyPortalSlot);
+  const slotQueries = useQueries({
+    queries: cells.map((cell) => ({
+      queryKey: ["my-portal-slot", cell.portalId],
+      queryFn: () => loadMine({ data: { portalId: cell.portalId } }),
+      retry: false,
+      enabled: Boolean(assignedTo && assignedTo === sessionUser?.userId),
+    })),
+  });
   const canManage = matrix.data?.canManage ?? false;
   const contactBlock = matrix.data?.contactBlocks?.[propertyId] ?? null;
-  const sessionUser = useCurrentUser().data;
 
   /**
    * Colaborarea Habitoo se comportă ca un portal: același rând, aceeași bifă,
@@ -487,43 +497,33 @@ export const PropertyPortalsCard = forwardRef<
               className="mb-3 rounded-2xl border border-destructive bg-destructive/5 p-3 text-sm"
             />
           ) : null}
-          <ul className="space-y-3">
-            <li>
-              <Card className={cn("p-5 text-sm", fbState.key === "excluded" && "bg-warning/10")}>
-                <div className="flex flex-wrap items-start gap-3">
-                  <Checkbox
-                    id="portal-facebook-catalog"
-                    checked={fbValue}
-                    disabled={!canManage || !canEditFacebookCatalog || fb.isLoading}
-                    className="mt-0.5"
-                    onCheckedChange={(next) => setFbChecked(next === true)}
-                  />
-                  {fbState.key === "in_catalog" ? (
-                    <CheckCircle2 aria-hidden className="mt-0.5 size-4 shrink-0 text-success" />
-                  ) : fbState.key === "excluded" ? (
-                    <AlertTriangle aria-hidden className="mt-0.5 size-4 shrink-0 text-warning" />
-                  ) : (
-                    <Circle aria-hidden className="mt-0.5 size-4 shrink-0 text-muted-foreground/60" />
-                  )}
-                  <PortalLogo portalId="facebook_catalog" name="Catalog Facebook" fallback="FB" size={40} />
-                  <div className="min-w-0 flex-1">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <label htmlFor="portal-facebook-catalog" className="font-semibold">
-                        Catalog Facebook
-                      </label>
+          <ul className="grid min-w-0 grid-cols-1 items-start gap-4 md:grid-cols-2 lg:grid-cols-3">
+            <li className="min-w-0">
+              <Card className={cn("relative min-w-0 bg-surface p-4 text-sm", fbValue && "border-gold ring-1 ring-gold/40", fbState.key === "excluded" && "bg-warning/10")}>
+                <label htmlFor="portal-facebook-catalog" aria-label="Catalog Facebook" className={cn("absolute inset-0 z-0", editing && canManage && canEditFacebookCatalog && !fb.isLoading ? "cursor-pointer" : "cursor-default")} />
+                <div className="relative z-10 grid grid-cols-[minmax(0,1fr)_auto] items-start gap-2 pointer-events-none">
+                  <div className="flex min-w-0 items-start gap-3">
+                    <PortalLogo portalId="facebook_catalog" name="Catalog Facebook" fallback="FB" size={40} />
+                    <div className="min-w-0 flex-1">
+                      <p className="break-words text-[17px] font-bold leading-6">Catalog Facebook</p>
                       <StatusPill
-                        state={
-                          fbState.key === "in_catalog"
-                            ? "published"
-                            : fbState.key === "excluded"
-                              ? "pending"
-                              : "inactive"
-                        }
+                        state={fbState.key === "in_catalog" ? "published" : fbState.key === "excluded" ? "pending" : "inactive"}
                         dot
                       >
                         {fbState.label}
                       </StatusPill>
                     </div>
+                  </div>
+                  <Checkbox
+                    id="portal-facebook-catalog"
+                    checked={fbValue}
+                    disabled={!editing || !canManage || !canEditFacebookCatalog || fb.isLoading}
+                    aria-label="Catalog Facebook"
+                    className="pointer-events-auto mt-0.5 size-6 rounded-full disabled:opacity-40 [&_svg]:size-4"
+                    onCheckedChange={(next) => setFbChecked(next === true)}
+                  />
+                </div>
+                <div className="relative z-10 mt-3 min-w-0 pointer-events-none">
                     <p className="text-xs text-muted-foreground">
                       {!canEditFacebookCatalog
                         ? "Doar managerul agenției poate adăuga anunțuri în Catalog Facebook."
@@ -538,28 +538,30 @@ export const PropertyPortalsCard = forwardRef<
                     {fbValue && fbState.reason ? (
                       <p className="mt-1 text-xs">
                         {FACEBOOK_LISTING_FIX[fbState.reason].hint}{" "}
-                        <button
+                        <Button
                           type="button"
-                          className="font-semibold text-primary hover:underline"
+                          variant="link"
+                          size="compact"
+                          className="pointer-events-auto h-auto p-0 font-semibold"
                           onClick={() =>
-                            FACEBOOK_LISTING_FIX[fbState.reason!].target === "media"
+                            fbState.reason && FACEBOOK_LISTING_FIX[fbState.reason].target === "media"
                               ? onOpenMedia?.()
                               : onCompleteMissing?.()
                           }
                         >
                           Completează
-                        </button>
+                        </Button>
                       </p>
                     ) : null}
-                  </div>
                 </div>
               </Card>
             </li>
             {collabVisible ? (
-              <li>
+              <li className="min-w-0">
                 <Card
                   className={cn(
-                    "p-5 text-sm",
+                    "relative min-w-0 bg-surface p-4 text-sm",
+                    collabValue && "border-gold ring-1 ring-gold/40",
                     collabValue &&
                       collabPercent.trim() === "" &&
                       (collabRow?.defaultCommissionPercent === null ||
@@ -567,33 +569,29 @@ export const PropertyPortalsCard = forwardRef<
                       "bg-warning/10",
                   )}
                 >
-                  <div className="flex flex-wrap items-start gap-3">
-                    <Checkbox
-                      id="portal-habitoo-collaboration"
-                      checked={collabValue}
-                      className="mt-0.5"
-                      onCheckedChange={(next) => setCollabChecked(next === true)}
-                    />
-                    {collabValue ? (
-                      <CheckCircle2 aria-hidden className="mt-0.5 size-4 shrink-0 text-success" />
-                    ) : (
-                      <Circle
-                        aria-hidden
-                        className="mt-0.5 size-4 shrink-0 text-muted-foreground/60"
-                      />
-                    )}
-                    <span className="inline-flex size-10 shrink-0 items-center justify-center overflow-hidden rounded-control border border-border bg-surface">
-                      <BrandLogo markOnly className="size-5" />
-                    </span>
-                    <div className="min-w-0 flex-1">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <label htmlFor="portal-habitoo-collaboration" className="font-semibold">
-                          Colaborare Habitoo
-                        </label>
+                  <label htmlFor="portal-habitoo-collaboration" aria-label="Colaborare Habitoo" className={cn("absolute inset-0 z-0", editing && canManage ? "cursor-pointer" : "cursor-default")} />
+                  <div className="relative z-10 grid grid-cols-[minmax(0,1fr)_auto] items-start gap-2 pointer-events-none">
+                    <div className="flex min-w-0 items-start gap-3">
+                      <span className="inline-flex size-10 shrink-0 items-center justify-center overflow-hidden rounded-control border border-border bg-surface">
+                        <BrandLogo markOnly className="size-5" />
+                      </span>
+                      <div className="min-w-0 flex-1">
+                        <p className="break-words text-[17px] font-bold leading-6">Colaborare Habitoo</p>
                         <StatusPill state={collabValue ? "published" : "inactive"} dot>
                           {collabValue ? "Activ" : "Inactiv"}
                         </StatusPill>
                       </div>
+                    </div>
+                    <Checkbox
+                      id="portal-habitoo-collaboration"
+                      checked={collabValue}
+                      disabled={!editing || !canManage}
+                      aria-label="Colaborare Habitoo"
+                      className="pointer-events-auto mt-0.5 size-6 rounded-full disabled:opacity-40 [&_svg]:size-4"
+                      onCheckedChange={(next) => setCollabChecked(next === true)}
+                    />
+                  </div>
+                  <div className="relative z-10 mt-3 pointer-events-none">
                       <p className="text-xs text-muted-foreground">
                         {!collabRow?.offerable && collabValue
                           ? "Oferta ajunge la celelalte agenții doar când proprietatea este activă."
@@ -605,11 +603,13 @@ export const PropertyPortalsCard = forwardRef<
                               ? "Se retrage din rețeaua de colaborare la următoarea publicare."
                               : "Neselectat."}
                       </p>
-                    </div>
                   </div>
-
-                  {collabValue ? (
-                    <div className="mt-3 grid gap-3 pl-9 sm:grid-cols-2">
+                </Card>
+              </li>
+            ) : null}
+            {collabVisible && collabValue ? (
+              <li className="min-w-0 md:col-span-2 lg:col-span-3">
+                    <div className="grid min-w-0 gap-3 sm:grid-cols-2">
                       <div className="space-y-1.5">
                         <Label htmlFor="collab-percent" className="text-xs">
                           Comision oferit (%)
@@ -659,16 +659,19 @@ export const PropertyPortalsCard = forwardRef<
                         />
                       </div>
                     </div>
-                  ) : null}
-                </Card>
               </li>
             ) : null}
 
-            {cells.map((cell) => {
+            {cells.map((cell, index) => {
               const value = checked[cell.portalId] ?? cell.selected;
+              const slot = slotQueries[index]?.data;
+              const noSlots = !value && !cell.selected && Boolean(slot && (slot.remaining === 0 || slot.agencyExhausted));
               const disabled =
+                !editing ||
                 !canManage ||
                 cell.availability !== "available" ||
+                !cell.configured ||
+                noSlots ||
                 apply.isPending ||
                 (Boolean(contactBlock) && !value && !cell.selected);
               const problem =
@@ -680,19 +683,34 @@ export const PropertyPortalsCard = forwardRef<
               const detail = stateSentence(cell, value);
 
               return (
-                <li key={cell.portalId}>
-                  <Card className="p-5 text-sm">
-                    <div className="grid gap-4 sm:grid-cols-[auto_minmax(0,1fr)_auto] sm:items-center">
-                      <PortalLogoStack portalId={cell.portalId} name={cell.portalName} size={40} />
-                      <div className="min-w-0">
-                        <div className="flex flex-wrap items-center gap-2">
-                          <label htmlFor={`portal-${cell.portalId}`} className="font-semibold">
-                            {cell.portalName}
-                          </label>
-                          <StatusPill state={stateView.pill} dot>
-                            {stateView.label}
-                          </StatusPill>
+                <li key={cell.portalId} className="min-w-0">
+                  <Card className={cn("relative min-w-0 bg-surface p-4 text-sm", value && "border-gold ring-1 ring-gold/40", !cell.configured && "opacity-55")}>
+                    {cell.configured ? <label htmlFor={`portal-${cell.portalId}`} aria-label={cell.portalName} className={cn("absolute inset-0 z-0", !disabled ? "cursor-pointer" : "cursor-default")} /> : null}
+                    <div className="relative z-10 grid grid-cols-[minmax(0,1fr)_auto] items-start gap-2 pointer-events-none">
+                      <div className="flex min-w-0 items-start gap-3">
+                        <PortalLogoStack portalId={cell.portalId} name={cell.portalName} size={40} />
+                        <div className="min-w-0">
+                          <p className="break-words text-[17px] font-bold leading-6">{cell.portalName}</p>
+                          <StatusPill state={stateView.pill} dot>{stateView.label}</StatusPill>
                         </div>
+                      </div>
+                      {cell.configured ? <Checkbox
+                        id={`portal-${cell.portalId}`}
+                        checked={value}
+                        disabled={disabled}
+                        aria-label={cell.portalName}
+                        className="pointer-events-auto mt-0.5 size-6 rounded-full disabled:opacity-40 [&_svg]:size-4"
+                        onCheckedChange={(next) => {
+                          if (next === true && cell.availability === "available" && !cell.configured) {
+                            toast.error(`${cell.portalName} nu este configurat. Configurează portalul în Setări.`);
+                          }
+                          setChecked((prev) => ({ ...prev, [cell.portalId]: next === true }));
+                          if (next !== true) setPromotedChecked((prev) => ({ ...prev, [cell.portalId]: false }));
+                        }}
+                      /> : null}
+                    </div>
+                    <div className="relative z-10 mt-3 min-w-0 pointer-events-none">
+                      {!cell.configured ? <p className="text-xs text-muted-foreground">Agenția nu l-a conectat încă</p> : null}
                         <p
                           className={cn(
                             "mt-1 text-xs",
@@ -712,12 +730,14 @@ export const PropertyPortalsCard = forwardRef<
                             OferteImobiliare afișează telefonul contului agenției.
                           </p>
                         ) : null}
-                        <MyPortalSlotLine portalId={cell.portalId} />
+                        {slot?.allocated !== null && slot?.allocated !== undefined ? (
+                          <p className="mt-2 text-xs text-muted-foreground">{slot.used} din {slot.allocated} sloturi{slot.agencyExhausted ? " — agenția nu mai are locuri libere." : ""}</p>
+                        ) : null}
+                        {noSlots ? <p className="mt-1 text-xs font-medium text-warning-foreground">{slot?.agencyExhausted ? "Agenția nu mai are locuri libere." : "Nu mai ai locuri libere de publicare pe acest portal."}</p> : null}
                         <AutoWithdrawLine
                           view={autoWithdrawals.data?.find((w) => w.portalId === cell.portalId)}
                         />
-                      </div>
-                      <div className="flex min-w-0 flex-wrap items-center gap-3 sm:justify-end">
+                      <div className="relative z-10 mt-3 flex min-w-0 flex-wrap items-center gap-2 [&>*]:pointer-events-auto">
                         {(cell.portalId === "imobiliare_ro" || cell.portalId === "romimo") &&
                         cell.offerLinks.length > 0 &&
                         !cell.publicWarning ? (
@@ -764,33 +784,6 @@ export const PropertyPortalsCard = forwardRef<
                             {cell.lastSyncAt ? "Retrimite" : "Reîncearcă"}
                           </Button>
                         ) : null}
-                        <Checkbox
-                          id={`portal-${cell.portalId}`}
-                          checked={value}
-                          disabled={disabled}
-                          aria-label={`${value ? "Dezactivează" : "Activează"} ${cell.portalName}`}
-                          onCheckedChange={(next) => {
-                            if (
-                              next === true &&
-                              cell.availability === "available" &&
-                              !cell.configured
-                            ) {
-                              toast.error(
-                                `${cell.portalName} nu este configurat. Configurează portalul în Setări.`,
-                              );
-                            }
-                            setChecked((prev) => ({ ...prev, [cell.portalId]: next === true }));
-                            // Debifarea „Publicat” debifează automat „Promovat”.
-                            if (next !== true) {
-                              setPromotedChecked((prev) => ({ ...prev, [cell.portalId]: false }));
-                            }
-                          }}
-                        />
-                        {cell.promotionFlag ? (
-                          <label htmlFor={`portal-${cell.portalId}`} className="text-xs">
-                            Publicat
-                          </label>
-                        ) : null}
                         {cell.promotionFlag ? (
                           <label
                             htmlFor={`portal-${cell.portalId}-promoted`}
@@ -819,14 +812,14 @@ export const PropertyPortalsCard = forwardRef<
 
                     {/* Anunț trimis, dar pagina publică nu funcționează (cont fără abonament). */}
                     {cell.publicWarning ? (
-                      <p className="mt-3 rounded-md border border-warning/40 bg-warning/10 px-3 py-2 text-xs text-warning-foreground">
+                      <p className="pointer-events-none relative z-10 mt-3 rounded-md border border-warning/40 bg-warning/10 px-3 py-2 text-xs text-warning-foreground">
                         {cell.publicWarning}
                       </p>
                     ) : null}
 
                     {/* Validare pre-publicare: ce lipsește, în cuvinte, pe acest portal. */}
                     {value && (requirementByPortal.get(cell.portalId)?.missing.length ?? 0) > 0 ? (
-                      <div className="mt-3 rounded-md border border-warning/40 bg-warning/10 px-3 py-2 pl-3 text-xs">
+                      <div className="pointer-events-none relative z-10 mt-3 rounded-md border border-warning/40 bg-warning/10 px-3 py-2 pl-3 text-xs">
                         <p className="font-medium text-warning-foreground">
                           Publicarea este blocată până completezi:
                         </p>
@@ -1027,28 +1020,6 @@ function StoriaAutoRenewControl({
           : " Anunțul expirat rămâne marcat expirat, fără republicare."}
       </p>
     </div>
-  );
-}
-
-/**
- * Câte locuri de publicare are utilizatorul curent pe un portal: doar citire,
- * doar rândul lui (fără totalul agenției și fără alți utilizatori).
- */
-function MyPortalSlotLine({ portalId }: { portalId: string }) {
-  const loadMine = useServerFn(getMyPortalSlot);
-  const mine = useQuery({
-    queryKey: ["my-portal-slot", portalId],
-    queryFn: () => loadMine({ data: { portalId } }),
-    retry: false,
-  });
-  if (!mine.data) return null;
-  const total = mine.data.allocated;
-  return (
-    <p className="mt-2 text-xs text-muted-foreground">
-      Locurile tale pe acest portal: {mine.data.used}
-      {total === null ? " (nelimitat)" : ` / ${total}`}
-      {mine.data.agencyExhausted ? " — agenția nu mai are locuri libere." : ""}
-    </p>
   );
 }
 
