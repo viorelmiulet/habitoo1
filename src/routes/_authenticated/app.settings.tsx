@@ -12,6 +12,7 @@ import { AiSettingsCard } from "@/components/app/ai/AiSettingsCard";
 
 
 import { SiteFeedCard } from "@/components/app/SiteFeedCard";
+import { CollaborationAutoSwitch } from "@/components/app/CollaborationAutoSwitch";
 import { FacebookCatalogCard } from "@/components/app/FacebookCatalogCard";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -404,6 +405,11 @@ function SettingsPage() {
                     Se aplică ofertelor bifate pentru colaborare fără comision propriu.
                   </p>
                 </div>
+              ) : null}
+              {user?.role === "agency_admin" && user?.organization?.collaboration_enabled !== false ? (
+                <CollaborationAutoSwitch
+                  initial={user.organization?.collaboration_auto_enabled !== false}
+                />
               ) : null}
               <div className="flex items-start justify-between gap-4 rounded-xl border border-border p-4">
                 <div className="space-y-1">
