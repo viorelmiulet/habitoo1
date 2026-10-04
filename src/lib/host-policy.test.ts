@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { CRM_ROBOTS_TXT, LLMS_TXT, PUBLIC_ROBOTS_TXT, decideEdge, shouldTagNoindex } from "./host-policy";
+import { CRM_ROBOTS_TXT, PUBLIC_ROBOTS_TXT, decideEdge, shouldTagNoindex } from "./host-policy";
 
 const req = (url: string, method = "GET") => new Request(url, { method });
 const html = new Response("x", { headers: { "content-type": "text/html; charset=utf-8" } });
@@ -36,8 +36,8 @@ describe("host policy", () => {
     expect(decideEdge(req("https://crm.habitoo.ro/robots.txt"))).toEqual({ kind: "robots", body: CRM_ROBOTS_TXT });
     expect(decideEdge(req("https://www.habitoo.ro/robots.txt"))).toEqual({ kind: "robots", body: PUBLIC_ROBOTS_TXT });
   });
-  it("llms.txt: www servește conținutul, apex → 301 www, crm → 301 www", () => {
-    expect(decideEdge(req("https://www.habitoo.ro/llms.txt"))).toEqual({ kind: "llms", body: LLMS_TXT });
+  it("llms.txt: www ajunge la ruta dinamică, apex → 301 www, crm → 301 www", () => {
+    expect(decideEdge(req("https://www.habitoo.ro/llms.txt"))).toEqual({ kind: "pass" });
     expect(decideEdge(req("https://habitoo.ro/llms.txt"))).toEqual({
       kind: "redirect",
       location: "https://www.habitoo.ro/llms.txt",
@@ -47,17 +47,13 @@ describe("host policy", () => {
       location: "https://www.habitoo.ro/llms.txt",
     });
   });
-  it("llms.txt începe cu titlul și se termină cu politica de confidențialitate", () => {
-    expect(LLMS_TXT.startsWith("# Habitoo CRM\n")).toBe(true);
-    expect(LLMS_TXT).toContain("- [Politica de confidențialitate](https://www.habitoo.ro/politica-de-confidentialitate)\n");
-    expect(LLMS_TXT).toContain("contact@habitoo.ro");
-    expect(LLMS_TXT).toContain("+40 767 941 512");
-    expect(LLMS_TXT).toContain("Storia și OLX");
-    expect(LLMS_TXT).toContain("https://www.habitoo.ro/integrari");
-    expect(LLMS_TXT).toContain("Catalog Facebook");
-    expect(LLMS_TXT).toContain("Pro 40 €/lună");
-    expect(LLMS_TXT).toContain("240 €/an Pro");
-    expect(LLMS_TXT).not.toContain("Pro 20 €/lună");
+  it("robots permite blogul și păstrează zonele private blocate", () => {
+    expect(PUBLIC_ROBOTS_TXT).toContain("User-agent: GPTBot");
+    expect(PUBLIC_ROBOTS_TXT).toContain("User-agent: Claude-SearchBot");
+    expect(PUBLIC_ROBOTS_TXT).toContain("Allow: /blog");
+    expect(PUBLIC_ROBOTS_TXT).toContain("Disallow: /app");
+    expect(PUBLIC_ROBOTS_TXT).toContain("Disallow: /superadmin");
+    expect(PUBLIC_ROBOTS_TXT).toContain("Disallow: /api/");
   });
   it("X-Robots-Tag doar pe HTML crm, nu pe api/public sau non-HTML", () => {
     expect(shouldTagNoindex(req("https://crm.habitoo.ro/app"), html)).toBe(true);
