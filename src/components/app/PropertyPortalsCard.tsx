@@ -15,7 +15,7 @@ import { FEED_EXCLUDED_NO_PHONE, FEED_PORTALS_REQUIRING_AGENT_PHONE } from "@/li
 import { useCurrentUser } from "@/hooks/use-session";
 import { getPropertyAutoWithdrawals, type AutoWithdrawView } from "@/lib/property-status.functions";
 import { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useState } from "react";
-import { AlertTriangle, Check, CheckCircle2, Circle, ExternalLink } from "lucide-react";
+import { AlertTriangle, Check, ExternalLink } from "lucide-react";
 
 import { useMutation, useQueries, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -129,6 +129,7 @@ export const PropertyPortalsCard = forwardRef<
     /** Doar Superadmin trimite agenția explicit; agenția o ia din sesiune. */
     organizationId?: string;
     propertyId: string;
+    assignedTo?: string | null;
     onCompleteMissing?: () => void;
     /** Deschide fila Poze (pentru „fără poze” în Catalogul Facebook). */
     onOpenMedia?: () => void;
@@ -138,7 +139,7 @@ export const PropertyPortalsCard = forwardRef<
     onPublish?: () => void;
     publishPending?: boolean;
   }
->(function PropertyPortalsCard({ organizationId, propertyId, onCompleteMissing, onOpenMedia, editing, onPublish, publishPending }, ref) {
+>(function PropertyPortalsCard({ organizationId, propertyId, assignedTo, onCompleteMissing, onOpenMedia, editing, onPublish, publishPending }, ref) {
   const queryClient = useQueryClient();
   const loadMatrix = useServerFn(getPropertiesPortalMatrix);
   const applyFn = useServerFn(applyPropertyPortalSelection);
@@ -190,17 +191,18 @@ export const PropertyPortalsCard = forwardRef<
     () => matrix.data?.properties[propertyId] ?? [],
     [matrix.data, propertyId],
   );
+  const sessionUser = useCurrentUser().data;
   const loadMine = useServerFn(getMyPortalSlot);
   const slotQueries = useQueries({
     queries: cells.map((cell) => ({
       queryKey: ["my-portal-slot", cell.portalId],
       queryFn: () => loadMine({ data: { portalId: cell.portalId } }),
       retry: false,
+      enabled: Boolean(assignedTo && assignedTo === sessionUser?.userId),
     })),
   });
   const canManage = matrix.data?.canManage ?? false;
   const contactBlock = matrix.data?.contactBlocks?.[propertyId] ?? null;
-  const sessionUser = useCurrentUser().data;
 
   /**
    * Colaborarea Habitoo se comportă ca un portal: același rând, aceeași bifă,
