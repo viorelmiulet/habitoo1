@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import {
+  HABITOO_LOGO_URL,
   IMOSPOT_DEFAULT_SETTINGS,
   buildImospotEmail,
   missingImospotFields,
@@ -18,7 +19,6 @@ const complete: ImospotCompanyData = {
   adminEmail: "ana@test.ro",
   adminPhone: "0722123456",
   city: "Cluj-Napoca",
-  activeListings: 4,
 };
 
 function harness(opts: { company?: ImospotCompanyData; row?: Partial<NotifyRequestRow>; sendOk?: boolean; to?: string } = {}) {
@@ -56,8 +56,27 @@ describe("cererea de cheie Imospot", () => {
     expect(email.replyTo).toBe("ana@test.ro");
     expect(email.subject).toBe("Solicitare cheie API Imospot — Test Imobiliare SRL (CUI RO123456)");
     expect(email.text).toContain("J40/1/2020");
-    expect(email.text).toContain("/app/settings?tab=portals");
     expect(h.audits[0]).toMatchObject({ success: true });
+  });
+
+  it("emailul are logo-ul Habitoo și doar datele firmei", async () => {
+    const h = harness();
+    expect(await notifyImospotForRequest(h.deps, "r1")).toEqual({ status: "sent" });
+    const email = (h.send.mock.calls as unknown[][])[0]![0] as unknown as ReturnType<typeof buildImospotEmail>;
+    expect(email.html).toContain(`<img src="${HABITOO_LOGO_URL}" alt="Habitoo CRM" width="140"`);
+    expect(email.html.indexOf("Habitoo CRM")).toBeLessThan(email.html.indexOf("Bună ziua"));
+    expect(email.text).not.toContain(HABITOO_LOGO_URL);
+    for (const removed of ["Anunțuri active", "Pagina din Habitoo", "app/settings"]) {
+      expect(email.text).not.toContain(removed);
+      expect(email.html).not.toContain(removed);
+    }
+    for (const kept of [
+      "Denumirea agenției", "Agenția Test", "Denumirea legală", "Test Imobiliare SRL",
+      "CUI", "RO123456", "J40/1/2020", "Ana Pop", "ana@test.ro", "0722123456", "Cluj-Napoca",
+    ]) {
+      expect(email.text).toContain(kept);
+      expect(email.html).toContain(kept);
+    }
   });
 
   it("nu retrimite la o aprobare repetată", async () => {

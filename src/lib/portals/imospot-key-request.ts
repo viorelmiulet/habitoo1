@@ -76,7 +76,8 @@ export function buildImospotEmail(d: ImospotCompanyData, s: ImospotSettings) {
   const text = `${intro}\n\n${rows.map(([k, v]) => `- ${k}: ${v}`).join("\n")}\n\n${outro.join("\n\n")}\n`;
   const esc = (v: string) =>
     v.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
-  const html = `<p>${esc(intro).replace(/\n/g, "<br>")}</p><ul>${rows
+  const logo = `<p style="margin:0 0 16px"><img src="${HABITOO_LOGO_URL}" alt="Habitoo CRM" width="140" style="display:block;width:140px;height:auto" /></p>`;
+  const html = `${logo}<p>${esc(intro).replace(/\n/g, "<br>")}</p><ul>${rows
     .map(([k, v]) => `<li><strong>${esc(k)}:</strong> ${esc(v)}</li>`)
     .join("")}</ul>${outro.map((p) => `<p>${esc(p).replace(/\n/g, "<br>")}</p>`).join("")}`;
 
