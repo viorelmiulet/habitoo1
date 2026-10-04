@@ -64,17 +64,15 @@ const enqueueDeps = { logOperation: vi.fn(async () => {}) };
 
 function processDeps(fail: Set<string> = new Set()) {
   const calls: { propertyId: string; portalId: string; reason: string }[] = [];
-  const notify = vi.fn(async () => {});
   let clock = Date.now();
   const deps: ProcessDeps = {
     withdraw: async (i) => {
       calls.push({ propertyId: i.propertyId, portalId: i.portalId, reason: i.reason });
       return fail.has(i.portalId) ? { ok: false, message: "eroare portal" } : { ok: true, message: "retrasă" };
     },
-    notify,
     now: () => clock,
   };
-  return { deps, calls, notify, advance: (ms: number) => (clock += ms) };
+  return { deps, calls, advance: (ms: number) => (clock += ms) };
 }
 
 /** Rulează workerul până se golește coada (sărind peste pauzele dintre încercări). */
@@ -134,7 +132,6 @@ describe("retragerea automată la schimbarea statusului", () => {
     const items = tables["portal_status_withdraw_items"]!;
     expect(items.find((i) => i["portal_key"] === "storia")!["status"]).toBe("failed");
     expect(items.find((i) => i["portal_key"] === "imobiliare_ro")!["status"]).toBe("done");
-    expect(p.notify).not.toHaveBeenCalled();
     expect(tables["audit_logs"]!.some((a) => a["action"] === "portal_auto_withdraw_failed")).toBe(true);
   });
 

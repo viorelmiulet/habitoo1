@@ -231,13 +231,6 @@ export type ProcessDeps = {
     actorId: string | null;
     reason: StatusWithdrawReason;
   }) => Promise<WithdrawOutcome>;
-  notify: (input: {
-    organizationId: string;
-    userId: string;
-    title: string;
-    body: string;
-    link: string;
-  }) => Promise<void>;
   now?: () => number;
 };
 
@@ -404,7 +397,7 @@ export async function runStatusWithdrawTick(
   return results;
 }
 
-/** Dependențele reale: calea debifării și notificările aplicației. */
+/** Dependențele reale: calea debifării. */
 export async function realProcessDeps(admin: StatusWithdrawAdmin): Promise<ProcessDeps> {
   const { applyPortalSelectionForOrg, performPortalWithdraw } = await import(
     "@/lib/portals.functions"
@@ -429,16 +422,6 @@ export async function realProcessDeps(admin: StatusWithdrawAdmin): Promise<Proce
         withdrawReason: reason,
       });
       return { ok: w.ok, manual: w.manual, message: w.message };
-    },
-    notify: async (n) => {
-      await admin.from("notifications").insert({
-        organization_id: n.organizationId,
-        user_id: n.userId,
-        type: "portal_withdraw_failed",
-        title: n.title,
-        body: n.body,
-        link: n.link,
-      });
     },
   };
 }
