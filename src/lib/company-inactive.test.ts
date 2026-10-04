@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { parseAnafResponse, buildOrgSyncPatch, companyStatePatch, inactiveWarning } from "./company-lookup";
-import { notifyImospotForRequest, INACTIVE_COMPANY_MESSAGE } from "./portals/imospot-key-request";
+import { notifyImospotForRequest } from "./portals/imospot-key-request";
 
 const body = (inactiv: Record<string, unknown>) => ({
   found: [{ date_generale: { cui: 40930967, denumire: "X SRL", nrRegCom: "J40/1/2019", stare_inregistrare: "INREGISTRAT din data 01.01.2019" }, stare_inactiv: inactiv }],
@@ -31,31 +31,19 @@ describe("firme inactive ANAF", () => {
   });
 });
 
-describe("Imospot blocat pentru firmă inactivă", () => {
+describe("Imospot nu e blocat de starea ANAF", () => {
   const company = { agencyName: "A", legalName: "X SRL", cui: "40930967", tradeRegistryNumber: "J40/1/2019", adminName: "Ion", adminEmail: "a@b.ro", adminPhone: "0722123456", city: "București", activeListings: 1 };
-  const mk = (companyStatus: string | null) => {
-    const saved: unknown[] = []; let sent = 0;
+  it("firmă inactivă → cererea pleacă (simulat), ca la una activă", async () => {
+    let sent = 0;
     const deps = {
       loadRequest: async () => ({ id: "r", organizationId: "o", portal: "imospot", status: "approved", notifyRequired: true, notifiedAt: null, requestedBy: null }),
-      loadCompany: async () => ({ ...company, companyStatus }),
+      loadCompany: async () => ({ ...company, companyStatus: "inactiva" }),
       loadSettings: async () => ({ to: "info@imospot.ro", from: "contact@habitoo.ro", cc: "contact@habitoo.ro" }),
       send: async () => { sent++; return { ok: true }; },
-      save: async (_: string, v: unknown) => { saved.push(v); },
+      save: async () => {},
       audit: async () => {},
     };
-    return { deps: deps as never, saved, sent: () => sent };
-  };
-  it("inactivă → blocată cu mesaj, fără email", async () => {
-    const m = mk("inactiva");
-    expect(await notifyImospotForRequest(m.deps, "r")).toEqual({ status: "inactive" });
-    expect(m.sent()).toBe(0);
-    expect(m.saved).toContainEqual({ error: INACTIVE_COMPANY_MESSAGE });
-  });
-  it("activă / necunoscută → se trimite (simulat)", async () => {
-    for (const s of ["activa", null]) {
-      const m = mk(s);
-      expect((await notifyImospotForRequest(m.deps, "r")).status).toBe("sent");
-      expect(m.sent()).toBe(1);
-    }
+    expect((await notifyImospotForRequest(deps as never, "r")).status).toBe("sent");
+    expect(sent).toBe(1);
   });
 });
