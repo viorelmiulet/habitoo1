@@ -10,6 +10,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable/index";
 import { authErrorMessage } from "@/lib/auth-errors";
 import { authUrl } from "@/lib/host";
+import { CuiLookupField, type CuiLookupState } from "@/components/auth/CuiLookupField";
+import { DUPLICATE_CUI_MESSAGE, normalizeCui } from "@/lib/company-lookup";
 
 export const Route = createFileRoute("/register")({
   head: () => ({
@@ -34,6 +36,7 @@ export const Route = createFileRoute("/register")({
 function RegisterPage() {
   const navigate = useNavigate();
   const [form, setForm] = useState({
+    cui: "",
     fullName: "",
     agency: "",
     phone: "",
@@ -42,19 +45,33 @@ function RegisterPage() {
   });
   const [loading, setLoading] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
+  const [cuiState, setCuiState] = useState<CuiLookupState>({ kind: "idle" });
+  const onCuiState = (st: CuiLookupState) => {
+    setCuiState(st);
+    if (st.kind === "found") setForm((f) => ({ ...f, agency: st.company.legalName }));
+  };
 
   const set = (key: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement>) =>
     setForm((f) => ({ ...f, [key]: e.target.value }));
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (cuiState.kind === "duplicate") {
+      toast.error(DUPLICATE_CUI_MESSAGE);
+      return;
+    }
     setLoading(true);
     const { data, error } = await supabase.auth.signUp({
       email: form.email,
       password: form.password,
       options: {
         emailRedirectTo: authUrl("/auth/callback"),
-        data: { full_name: form.fullName, agency_name: form.agency, phone: form.phone },
+        data: {
+          full_name: form.fullName,
+          agency_name: form.agency,
+          phone: form.phone,
+          cui: normalizeCui(form.cui) ?? form.cui.trim(),
+        },
       },
     });
     setLoading(false);
@@ -109,13 +126,19 @@ function RegisterPage() {
     >
       {notice ? <div className="panel mb-4 p-4 text-sm text-muted-foreground">{notice}</div> : null}
       <form onSubmit={submit} className="space-y-4">
-        <div className="space-y-2">
-          <Label htmlFor="fullName">Nume complet</Label>
-          <Input id="fullName" required value={form.fullName} onChange={set("fullName")} />
-        </div>
+        <CuiLookupField
+          value={form.cui}
+          onChange={(v) => setForm((f) => ({ ...f, cui: v }))}
+          onState={onCuiState}
+        />
         <div className="space-y-2">
           <Label htmlFor="agency">Numele agenției</Label>
           <Input id="agency" required value={form.agency} onChange={set("agency")} />
+          <p className="text-xs text-muted-foreground">Poți folosi numele comercial al agenției.</p>
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="fullName">Nume complet</Label>
+          <Input id="fullName" required value={form.fullName} onChange={set("fullName")} />
         </div>
         <div className="space-y-2">
           <Label htmlFor="phone">Telefon</Label>
@@ -146,7 +169,7 @@ function RegisterPage() {
           />
           <p className="text-xs text-muted-foreground">Minim 8 caractere.</p>
         </div>
-        <Button type="submit" className="w-full" disabled={loading}>
+        <Button type="submit" className="w-full" disabled={loading || cuiState.kind === "duplicate"}>
           {loading ? "Se creează contul…" : "Creează cont"}
         </Button>
       </form>
