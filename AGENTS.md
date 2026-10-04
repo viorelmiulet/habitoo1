@@ -30,3 +30,4 @@
 - Public portal grids share registry data. Why: lists stay in sync.
 - Failure alerts use stable IDs per org, listing, portal, error and user. Why: retries do not duplicate alerts.
 - Collaboration auto-activation lives only in the DB (insert trigger `properties_auto_collaboration`, RPC `collaboration_auto_activate`), copying the agency default commission only when none is explicit; `collaboration_opted_out` is never overridden. Why: one rule for all insert paths; opt-out differs from unset.
+- Provider key requests (Imospot) are sent only by `notifyImospotForRequest` (src/lib/portals/imospot-key-request.ts) on approvals flagged `provider_notify_required`; recipients live in `platform_settings`. Why: one send per request, testable without network.
