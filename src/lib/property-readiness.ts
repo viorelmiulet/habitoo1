@@ -25,7 +25,6 @@ export type PropertyIssueCode =
   | "no_price"
   | "no_coords"
   | "no_location"
-  | "portal_error"
   | "portal_withdrawn"
   | "unpublished";
 
@@ -105,13 +104,7 @@ export function computePropertyIssues(input: ReadinessInput): PropertyIssue[] {
 
   for (const pub of input.publications) {
     if (!pub.enabled) continue;
-    if (pub.status === "error") {
-      issues.push({
-        code: "portal_error",
-        label: `Eroare de publicare pe ${pub.portalKey}`,
-        severity: "danger",
-      });
-    } else if (pub.status === "disabled" || pub.status === "withdrawn") {
+    if (pub.status === "disabled" || pub.status === "withdrawn") {
       issues.push({
         code: "portal_withdrawn",
         label: `Retrasă de pe ${pub.portalKey}`,

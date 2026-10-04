@@ -358,7 +358,7 @@ export function ManagerDashboard() {
           {/* Secțiunea 3 — Portaluri */}
           <SectionCard
             title="Portaluri"
-            description="Anunțuri active și erori per portal"
+             description="Anunțuri active per portal"
             icon={Plug}
           >
             {(data?.portals.length ?? 0) === 0 ? (
@@ -382,11 +382,6 @@ export function ManagerDashboard() {
                         {portal.active} anunțuri active
                       </p>
                     </div>
-                    {portal.errors > 0 ? (
-                      <StatusBadge tone="danger">{portal.errors} erori</StatusBadge>
-                    ) : (
-                      <StatusBadge tone="success">OK</StatusBadge>
-                    )}
                   </div>
                 ))}
               </div>

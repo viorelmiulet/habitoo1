@@ -164,7 +164,6 @@ describe("ștergerea soft a anunțurilor", () => {
       admin,
       {
         withdraw: async (i) => (calls.push(i.portalId), { ok: true, message: "retrasă" }),
-        notify: async () => {},
       },
       { maxItems: 50, budgetMs: 10_000 },
     );
@@ -177,7 +176,7 @@ describe("ștergerea soft a anunțurilor", () => {
     await deletePropertyCore(asUser(AGENT), admin, { propertyId: "p-own", actorId: AGENT }, deps);
     await asUser("sa").rpc("restore_property", { _id: "p-own" });
     const withdraw = vi.fn();
-    await runStatusWithdrawTick(admin, { withdraw, notify: async () => {} }, { maxItems: 50, budgetMs: 10_000 });
+    await runStatusWithdrawTick(admin, { withdraw }, { maxItems: 50, budgetMs: 10_000 });
     expect(withdraw).not.toHaveBeenCalled();
     expect(tables["portal_status_withdraw_items"]!.filter((i) => i["status"] === "cancelled")).toHaveLength(2);
   });

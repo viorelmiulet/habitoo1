@@ -231,13 +231,6 @@ export type ProcessDeps = {
     actorId: string | null;
     reason: StatusWithdrawReason;
   }) => Promise<WithdrawOutcome>;
-  notify: (input: {
-    organizationId: string;
-    userId: string;
-    title: string;
-    body: string;
-    link: string;
-  }) => Promise<void>;
   now?: () => number;
 };
 
@@ -363,18 +356,19 @@ export async function processStatusWithdrawItem(
     .eq("id", item.id);
   await audit("portal_auto_withdraw_failed", { error: outcome.message });
 
-  // Notificare: agentul responsabil sau, dacă nu există, cel care a schimbat statusul.
-  const recipient = (property.assigned_to as string | null) ?? item.requested_by;
-  if (recipient) {
-    const def = getPortalDefinition(item.portal_key);
-    const label = property.reference ?? property.title ?? "Proprietate";
-    await deps.notify({
+  // Adapter failures normally notify in executeListingAction. An exception before
+  // that point still gets an alert; the stable ID suppresses retry duplicates.
+  try {
+    const { notifyPortalFailure } = await import("@/lib/portals/failure-notification.server");
+    await notifyPortalFailure(admin, {
       organizationId: item.organization_id,
-      userId: recipient,
-      title: `Retragere eșuată de pe ${def?.display_name ?? item.portal_key}: ${label}`,
-      body: `După ${attempts} încercări: ${outcome.message} Retrage manual oferta din fila Publicare.`,
-      link: `/app/properties/${item.property_id}`,
+      propertyId: item.property_id,
+      portalKey: item.portal_key,
+      portalName: getPortalDefinition(item.portal_key)?.display_name ?? item.portal_key,
+      error: outcome.message,
     });
+  } catch {
+    // Alerts never block the withdrawal queue.
   }
   return { status: "failed", message: outcome.message };
 }
@@ -403,7 +397,7 @@ export async function runStatusWithdrawTick(
   return results;
 }
 
-/** Dependențele reale: calea debifării și notificările aplicației. */
+/** Dependențele reale: calea debifării. */
 export async function realProcessDeps(admin: StatusWithdrawAdmin): Promise<ProcessDeps> {
   const { applyPortalSelectionForOrg, performPortalWithdraw } = await import(
     "@/lib/portals.functions"
@@ -428,16 +422,6 @@ export async function realProcessDeps(admin: StatusWithdrawAdmin): Promise<Proce
         withdrawReason: reason,
       });
       return { ok: w.ok, manual: w.manual, message: w.message };
-    },
-    notify: async (n) => {
-      await admin.from("notifications").insert({
-        organization_id: n.organizationId,
-        user_id: n.userId,
-        type: "portal_withdraw_failed",
-        title: n.title,
-        body: n.body,
-        link: n.link,
-      });
     },
   };
 }

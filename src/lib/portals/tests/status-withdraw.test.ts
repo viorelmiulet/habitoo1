@@ -64,17 +64,15 @@ const enqueueDeps = { logOperation: vi.fn(async () => {}) };
 
 function processDeps(fail: Set<string> = new Set()) {
   const calls: { propertyId: string; portalId: string; reason: string }[] = [];
-  const notify = vi.fn(async () => {});
   let clock = Date.now();
   const deps: ProcessDeps = {
     withdraw: async (i) => {
       calls.push({ propertyId: i.propertyId, portalId: i.portalId, reason: i.reason });
       return fail.has(i.portalId) ? { ok: false, message: "eroare portal" } : { ok: true, message: "retrasă" };
     },
-    notify,
     now: () => clock,
   };
-  return { deps, calls, notify, advance: (ms: number) => (clock += ms) };
+  return { deps, calls, advance: (ms: number) => (clock += ms) };
 }
 
 /** Rulează workerul până se golește coada (sărind peste pauzele dintre încercări). */
@@ -121,7 +119,7 @@ describe("retragerea automată la schimbarea statusului", () => {
     expect(enqueueDeps.logOperation).toHaveBeenCalledWith(expect.objectContaining({ portal: "oferteimobiliare", operation: "auto_withdraw_manual_required" }));
   });
 
-  it("eroare la un portal → reîncercări, apoi notificare, fără să le blocheze pe celelalte", async () => {
+  it("eroare la un portal → reîncercări fără notificare duplicată la epuizare", async () => {
     const { admin, tables } = fakeDb({
       properties: [prop("p1", "rented")],
       portal_publications: [pub("p1", "imobiliare_ro"), pub("p1", "storia")],
@@ -134,8 +132,6 @@ describe("retragerea automată la schimbarea statusului", () => {
     const items = tables["portal_status_withdraw_items"]!;
     expect(items.find((i) => i["portal_key"] === "storia")!["status"]).toBe("failed");
     expect(items.find((i) => i["portal_key"] === "imobiliare_ro")!["status"]).toBe("done");
-    expect(p.notify).toHaveBeenCalledTimes(1);
-    expect(p.notify).toHaveBeenCalledWith(expect.objectContaining({ userId: "agent-1" }));
     expect(tables["audit_logs"]!.some((a) => a["action"] === "portal_auto_withdraw_failed")).toBe(true);
   });
 

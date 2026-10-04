@@ -18,13 +18,11 @@ export type OverviewPortalUsage = {
   portalKey: string;
   displayName: string;
   count: number;
-  errors: number;
 };
 
 export type OverviewPropertyPortal = {
   portalKey: string;
   displayName: string;
-  hasError: boolean;
 };
 
 export type OverviewProperty = {
@@ -110,7 +108,7 @@ export function useDashboardOverview(organizationId?: string | null) {
           .limit(50),
         supabase
           .from("portal_publications")
-          .select("property_id,portal_key,status,enabled")
+           .select("property_id,portal_key,enabled")
           .eq("organization_id", orgId)
           .eq("enabled", true)
           .limit(5000),
@@ -131,7 +129,7 @@ export function useDashboardOverview(organizationId?: string | null) {
 
       const wonLeads = leads.filter((l) => l.stage === "won");
 
-      // Portaluri: câte anunțuri sunt bifate pe fiecare portal și câte au erori.
+      // Portaluri: câte anunțuri sunt bifate pe fiecare portal.
       const usage = new Map<string, OverviewPortalUsage>();
       const byProperty = new Map<string, OverviewPropertyPortal[]>();
       const publishedIds = new Set<string>();
@@ -140,10 +138,8 @@ export function useDashboardOverview(organizationId?: string | null) {
           portalKey: row.portal_key,
           displayName: portalName(row.portal_key),
           count: 0,
-          errors: 0,
         };
         entry.count += 1;
-        if (row.status === "error") entry.errors += 1;
         usage.set(row.portal_key, entry);
         publishedIds.add(row.property_id);
 
@@ -151,7 +147,6 @@ export function useDashboardOverview(organizationId?: string | null) {
         list.push({
           portalKey: row.portal_key,
           displayName: portalName(row.portal_key),
-          hasError: row.status === "error",
         });
         byProperty.set(row.property_id, list);
       }

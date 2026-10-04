@@ -170,13 +170,6 @@ function PortalDonut({
               />
               <PortalLogo portalId={row.portalKey} name={row.displayName} size={20} />
               <span className="min-w-0 flex-1 truncate text-sm">{row.displayName}</span>
-              {row.errors > 0 ? (
-                <span
-                  className="size-2 rounded-full bg-destructive"
-                  title={`${row.errors} anunțuri cu eroare`}
-                  aria-label={`${row.errors} anunțuri cu eroare`}
-                />
-              ) : null}
               <span className="text-sm tabular-nums text-muted-foreground">{row.count}</span>
             </li>
           ))
@@ -388,12 +381,6 @@ export function DashboardOverview({
                                 size={14}
                               />
                               <span className="max-w-24 truncate">{portal.displayName}</span>
-                              {portal.hasError ? (
-                                <span
-                                  className="absolute -top-0.5 -right-0.5 size-2 rounded-full bg-destructive ring-2 ring-card"
-                                  aria-label="Eroare de publicare"
-                                />
-                              ) : null}
                             </span>
                           ))}
                         </div>

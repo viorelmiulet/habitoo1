@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Bell, CalendarClock, CheckCheck, Flame, Sparkles } from "lucide-react";
 import { toastError } from "@/lib/errors";
@@ -11,6 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useCurrentUser } from "@/hooks/use-session";
 import { formatDateTime } from "@/lib/format";
 import { appHead } from "@/components/app/app-head";
+import { safeInternalPath } from "@/lib/host";
 
 export const Route = createFileRoute("/_authenticated/app/notifications")({
   head: () => appHead("Habitoo CRM — notificări"),
@@ -79,7 +80,7 @@ function NotificationsPage() {
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
             <p className={isUnread ? "font-semibold" : "font-medium text-muted-foreground"}>
-              {n.title}
+              {safeInternalPath(n.link) ? <Link to={safeInternalPath(n.link) ?? "/app/notifications"} className="hover:underline">{n.title}</Link> : n.title}
             </p>
             {isUnread ? (
               <StatusBadge tone="primary" dot>
