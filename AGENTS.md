@@ -35,4 +35,5 @@
 - Table `agent_portal_preferences` is kept but unused by code: Publicare never preselects portals. Why: "Portalurile mele" was removed; data preserved.
 - Property publication cards share checkbox state and query only the assigned agent's slots; the server checks publication. Why: avoid duplicate state and other agents' quotas.
 - Public prices and structured offers read display prices; billing and seat limits stay separate. Why: marketing prices must not affect billing.
-- Public portal grids share one registry-backed component. Why: homepage and integrations must display the same list and logo note.
+- Public portal grids share registry data. Why: lists stay in sync.
+- Failure alerts use stable IDs per org, listing, portal, error and user. Why: retries do not duplicate alerts.
