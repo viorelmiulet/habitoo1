@@ -119,6 +119,7 @@ function liveDeps(actorId: string | null): NotifyDeps {
         .from("portal_activation_requests")
         .update({
           provider_notify_error: patch.error,
+          provider_notify_required: true,
           ...(patch.notifiedAt ? { provider_notified_at: patch.notifiedAt } : {}),
         })
         .eq("id", id);
@@ -189,7 +190,6 @@ export async function retryPendingImospotRequests(organizationId: string, actorI
       .eq("organization_id", organizationId)
       .eq("portal", IMOSPOT_PORTAL_ID)
       .eq("status", "approved")
-      .eq("provider_notify_required", true)
       .is("provider_notified_at", null);
     for (const r of data ?? []) await notifyImospotRequest(r.id, actorId);
   } catch (e) {

@@ -122,7 +122,7 @@ export async function notifyImospotForRequest(
   opts: { force?: boolean } = {},
 ): Promise<NotifyOutcome> {
   const row = await deps.loadRequest(requestId);
-  if (!row || row.portal !== IMOSPOT_PORTAL_ID || row.status !== "approved" || !row.notifyRequired) {
+  if (!row || row.portal !== IMOSPOT_PORTAL_ID || row.status !== "approved") {
     return { status: "skipped", reason: "not_applicable" };
   }
   if (row.notifiedAt && !opts.force) return { status: "skipped", reason: "already_sent" };

@@ -100,8 +100,31 @@ describe("cererea de cheie Imospot", () => {
     expect(((h.send.mock.calls as unknown[][])[0]![0] as unknown as { to: string }).to).toBe("parteneri@imospot.ro");
   });
 
-  it("nu trimite pentru aprobările vechi sau alte portaluri", async () => {
-    for (const row of [{ notifyRequired: false }, { portal: "storia" }, { status: "pending" }]) {
+  it("trimite și pentru cererile aprobate cu flag false", async () => {
+    const h = harness({ row: { notifyRequired: false } });
+    expect(await notifyImospotForRequest(h.deps, "r1")).toEqual({ status: "sent" });
+    expect(h.send).toHaveBeenCalledTimes(1);
+  });
+
+  it("reîncearcă după eșec Mailgun și trimite o singură dată", async () => {
+    let ok = false;
+    const h = harness();
+    h.deps.send = vi.fn(async () => (ok ? { ok: true } : { ok: false, error: "503" }));
+    expect((await notifyImospotForRequest(h.deps, "r1")).status).toBe("failed");
+    ok = true;
+    expect(await notifyImospotForRequest(h.deps, "r1")).toEqual({ status: "sent" });
+    expect(await notifyImospotForRequest(h.deps, "r1")).toEqual({ status: "skipped", reason: "already_sent" });
+    expect(h.deps.send).toHaveBeenCalledTimes(2);
+  });
+
+  it("cererea deja trimisă nu se retrimite", async () => {
+    const h = harness({ row: { notifiedAt: "2026-10-01T00:00:00.000Z" } });
+    expect(await notifyImospotForRequest(h.deps, "r1")).toEqual({ status: "skipped", reason: "already_sent" });
+    expect(h.send).not.toHaveBeenCalled();
+  });
+
+  it("nu trimite pentru alte portaluri sau cereri neaprobate", async () => {
+    for (const row of [{ portal: "storia" }, { status: "pending" }]) {
       const h = harness({ row });
       expect((await notifyImospotForRequest(h.deps, "r1")).status).toBe("skipped");
       expect(h.send).not.toHaveBeenCalled();
