@@ -9,7 +9,7 @@ vi.mock("@tanstack/react-router", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@tanstack/react-router")>();
   return {
     ...actual,
-    createFileRoute: () => (config: Record<string, unknown>) => ({ ...config, useSearch: () => ({}) }),
+    createFileRoute: () => (config: Record<string, unknown>) => ({ options: config, useSearch: () => ({}) }),
     Link: ({ children, to: _to, ...props }: { children: React.ReactNode; to?: string }) => <a {...props}>{children}</a>,
     useNavigate: () => vi.fn(),
   };
@@ -22,13 +22,15 @@ vi.mock("@/integrations/lovable/index", () => ({
   lovable: { auth: { signInWithOAuth: vi.fn() } },
 }));
 
-import { LoginPage } from "./login";
+import { Route } from "./login";
 
 describe("LoginPage", () => {
   it("conține câmpurile E-mail și Parolă și butonul Conectare", () => {
     const host = document.createElement("div");
     document.body.appendChild(host);
-    act(() => createRoot(host).render(<LoginPage />));
+    const Component = Route.options.component;
+    if (!Component) throw new Error("Componenta paginii lipsește");
+    act(() => createRoot(host).render(<Component />));
 
     expect(host.querySelector('label[for="email"]')?.textContent).toBe("E-mail");
     expect(host.querySelector('label[for="password"]')?.textContent).toBe("Parolă");

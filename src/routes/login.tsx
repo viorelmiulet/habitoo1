@@ -49,7 +49,7 @@ export const Route = createFileRoute("/login")({
   errorComponent: AuthRouteError,
 });
 
-export function LoginPage() {
+function LoginPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { redirect: requestedRedirect } = Route.useSearch();
