@@ -231,25 +231,36 @@ export const requestPortalActivation = createServerFn({ method: "POST" })
       throw new Error("Portalul este deja activat pentru agenția ta.");
     }
 
+    const isImospot = definition.id === "imospot";
     const { data: existing } = await admin
       .from("portal_activation_requests")
       .select("id")
       .eq("organization_id", organizationId)
       .eq("portal", definition.id)
-      .eq("status", "pending")
+      .in("status", isImospot ? ["pending", "approved"] : ["pending"])
+      .limit(1)
       .maybeSingle();
     if (existing) {
+      if (isImospot) {
+        // Cerere anterioară (inclusiv pending, din fluxul vechi): același mecanism de retry.
+        const { retryPendingImospotRequests } = await import("@/lib/portals/imospot-key-request.server");
+        await retryPendingImospotRequests(organizationId, context.userId);
+      }
       return { ok: true as const, alreadyPending: true as const };
     }
 
+    const nowIso = new Date().toISOString();
     const { data: inserted, error } = await admin
       .from("portal_activation_requests")
       .insert({
         organization_id: organizationId,
         portal: definition.id,
-        status: "pending",
+        status: isImospot ? "approved" : "pending",
         requested_by: context.userId,
         note: data.note ?? null,
+        ...(isImospot
+          ? { resolved_at: nowIso, resolved_by: null, provider_notify_required: true }
+          : {}),
       } as never)
       .select("id")
       .maybeSingle();
@@ -259,6 +270,16 @@ export const requestPortalActivation = createServerFn({ method: "POST" })
       admin.from("organizations").select("name").eq("id", organizationId).maybeSingle(),
       admin.from("profiles").select("full_name").eq("id", context.userId).maybeSingle(),
     ]);
+
+    let providerNotify: NotifyOutcome | null = null;
+    if (isImospot && inserted?.id) {
+      const { notifyImospotRequest } = await import("@/lib/portals/imospot-key-request.server");
+      try {
+        providerNotify = await notifyImospotRequest(inserted.id, context.userId);
+      } catch (e) {
+        console.error("[imospot] auto notify failed", (e as Error).message);
+      }
+    }
 
     // Notificare pentru toți superadminii, în clopoțelul existent.
     const { data: supers } = await admin
@@ -271,9 +292,13 @@ export const requestPortalActivation = createServerFn({ method: "POST" })
         uniqueSupers.map((userId) => ({
           organization_id: null,
           user_id: userId,
-          type: "portal_activation_request",
-          title: `Cerere activare ${definition.display_name}`,
-          body: `${org?.name ?? "O agenție"} a cerut activarea portalului ${definition.display_name} (${profile?.full_name ?? "administrator agenție"}).`,
+          type: isImospot ? "portal_activation_auto" : "portal_activation_request",
+          title: isImospot
+            ? `Imospot activat automat`
+            : `Cerere activare ${definition.display_name}`,
+          body: isImospot
+            ? `Imospot activat automat pentru ${org?.name ?? "o agenție"}; cererea a fost trimisă.`
+            : `${org?.name ?? "O agenție"} a cerut activarea portalului ${definition.display_name} (${profile?.full_name ?? "administrator agenție"}).`,
           link: "/superadmin/portals",
           created_by: context.userId,
         })) as never,
@@ -283,14 +308,18 @@ export const requestPortalActivation = createServerFn({ method: "POST" })
     await admin.from("audit_logs").insert({
       organization_id: organizationId,
       actor_id: context.userId,
-      action: "portal.activation_requested",
+      action: isImospot ? "portal.activation_request_auto_approved" : "portal.activation_requested",
       entity: "portal_activation_requests",
       entity_id: inserted?.id ?? null,
-      new_values: { portal: definition.id, status: "pending", note: data.note ?? null },
+      new_values: {
+        portal: definition.id,
+        status: isImospot ? "approved" : "pending",
+        note: data.note ?? null,
+      },
       created_by: context.userId,
     } as never);
 
-    return { ok: true as const, alreadyPending: false as const };
+    return { ok: true as const, alreadyPending: false as const, providerNotify };
   });
 
 export type PortalActivationRequestRow = {

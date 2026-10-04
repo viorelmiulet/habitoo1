@@ -145,10 +145,44 @@ export async function notifyImospotRequest(
   return notifyImospotForRequest(liveDeps(actorId), requestId, opts);
 }
 
-/** După completarea datelor: trimite automat cererile aprobate, netrimise încă. */
+/**
+ * Reîncercare automată: aprobă automat cererile Imospot rămase `pending` (flux vechi)
+ * și trimite cererile aprobate, netrimise încă. Protecția „deja trimis" rămâne în
+ * `notifyImospotForRequest` (`provider_notified_at`).
+ */
 export async function retryPendingImospotRequests(organizationId: string, actorId: string | null) {
   try {
     const db = await admin();
+    const { data: pending } = await db
+      .from("portal_activation_requests")
+      .select("id")
+      .eq("organization_id", organizationId)
+      .eq("portal", IMOSPOT_PORTAL_ID)
+      .eq("status", "pending");
+    for (const p of pending ?? []) {
+      const { data: updated } = await db
+        .from("portal_activation_requests")
+        .update({
+          status: "approved",
+          resolved_at: new Date().toISOString(),
+          resolved_by: null,
+          provider_notify_required: true,
+        } as never)
+        .eq("id", p.id)
+        .eq("status", "pending")
+        .select("id");
+      if ((updated ?? []).length > 0) {
+        await db.from("audit_logs").insert({
+          organization_id: organizationId,
+          actor_id: actorId,
+          action: "portal.activation_request_auto_approved",
+          entity: "portal_activation_requests",
+          entity_id: p.id,
+          old_values: { status: "pending" },
+          new_values: { status: "approved", portal: IMOSPOT_PORTAL_ID },
+        } as never);
+      }
+    }
     const { data } = await db
       .from("portal_activation_requests")
       .select("id")
