@@ -56,7 +56,7 @@ const PropertyDescriptionTextarea = React.forwardRef<
         onChange?.(event);
       }}
       className={cn(
-        "min-h-[260px] max-w-full resize-y overflow-x-hidden sm:min-h-[330px]",
+        "min-h-[260px] max-h-[70vh] max-w-full resize-y overflow-x-hidden sm:min-h-[330px]",
         className,
       )}
     />
