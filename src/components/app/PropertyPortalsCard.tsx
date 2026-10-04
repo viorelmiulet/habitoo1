@@ -604,6 +604,60 @@ export const PropertyPortalsCard = forwardRef<
                               : "Neselectat."}
                       </p>
                   </div>
+                  {collabValue ? (
+                    <div className="relative z-10 mt-3 min-w-0 space-y-3 pointer-events-auto">
+                      <div className="min-w-0 space-y-1.5">
+                        <Label htmlFor="collab-percent" className="text-xs">
+                          Comision oferit (%)
+                        </Label>
+                        <Input
+                          id="collab-percent"
+                          inputMode="decimal"
+                          disabled={!editing || !canManage}
+                          placeholder={
+                            collabRow?.defaultCommissionPercent !== null &&
+                            collabRow?.defaultCommissionPercent !== undefined
+                              ? `Standard agenție: ${collabRow.defaultCommissionPercent}%`
+                              : "Ex. 1.5"
+                          }
+                          value={collabPercent}
+                          onChange={(e) => setCollabPercent(e.target.value)}
+                        />
+                        {collabPercent.trim() === "" &&
+                        collabRow?.defaultCommissionPercent !== null &&
+                        collabRow?.defaultCommissionPercent !== undefined ? (
+                          <p className="text-xs text-muted-foreground">
+                            Lasă gol pentru comisionul standard.
+                          </p>
+                        ) : collabPercent.trim() === "" ? (
+                          <p className="text-xs text-warning-foreground">
+                            Obligatoriu cât timp colaborarea este activă. Setează un standard în{" "}
+                            <Link
+                              to="/app/settings"
+                              search={{ tab: "agency" }}
+                              className="font-semibold underline"
+                            >
+                              Setări → Agenție
+                            </Link>
+                            .
+                          </p>
+                        ) : null}
+                      </div>
+                      <div className="min-w-0 space-y-1.5">
+                        <Label htmlFor="collab-terms" className="text-xs">
+                          Condiții (opțional)
+                        </Label>
+                        <Textarea
+                          id="collab-terms"
+                          rows={2}
+                          disabled={!editing || !canManage}
+                          placeholder="Ex. vizionări doar cu agentul proprietății"
+                          value={collabTerms}
+                          onChange={(e) => setCollabTerms(e.target.value)}
+                        />
+                      </div>
+                    </div>
+                  ) : null}
                 </Card>
               </li>
             ) : null}
