@@ -1,5 +1,5 @@
-// Selector oficial județ + localitate (nomenclator SIRUTA, read-only).
-// Localitățile se caută server-side, cu limită, deci nu se încarcă niciodată tot nomenclatorul în browser.
+// Selector oficial județ + localitate (nomenclator read-only).
+// Se încarcă doar localitățile județului ales; filtrarea se face local, fără diacritice.
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Check, Loader2, MapPin, Search, X } from "lucide-react";
@@ -7,7 +7,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { normalizeRoName, prettyUatName, titleCaseRo } from "@/lib/ro-normalize";
+import { prettyUatName, titleCaseRo } from "@/lib/ro-normalize";
+import { filterSuggestions, toSuggestions, type LocalitySuggestion } from "@/lib/locality-suggestions";
 import { cn } from "@/lib/utils";
 
 export type LocationValue = {
@@ -51,20 +52,17 @@ export function useCounties() {
   });
 }
 
-type LocalityHit = {
-  sirutaCode: number;
-  name: string;
-  type: string;
-  uatSirutaCode: number;
-  uatName: string;
-};
+type LocalityHit = LocalitySuggestion;
 
 export function LocationPicker({
   value,
   onChange,
   idPrefix = "loc",
   required = false,
+  onPostalCode,
 }: {
+  /** Codul poștal al localității alese (6 cifre) sau `null` la golire/schimbarea județului. */
+  onPostalCode?: (code: string | null) => void;
   value: LocationValue;
   onChange: (next: LocationValue) => void;
   idPrefix?: string;
@@ -77,8 +75,6 @@ export function LocationPicker({
   const boxRef = useRef<HTMLDivElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
 
-  const normalized = useMemo(() => normalizeRoName(term), [term]);
-
   useEffect(() => {
     const onDocClick = (e: MouseEvent) => {
       if (boxRef.current && !boxRef.current.contains(e.target as Node)) setOpen(false);
@@ -88,36 +84,40 @@ export function LocationPicker({
   }, []);
 
   const localities = useQuery({
-    queryKey: ["ro-localities", value.countySirutaCode, normalized],
-    enabled: Boolean(value.countySirutaCode) && normalized.length >= 2,
-    staleTime: 5 * 60 * 1000,
+    queryKey: ["ro-localities-county", value.countySirutaCode],
+    enabled: Boolean(value.countySirutaCode),
+    staleTime: 30 * 60 * 1000,
     queryFn: async (): Promise<LocalityHit[]> => {
       const { data, error } = await supabase
         .from("ro_localities")
-        .select("siruta_code, name, type, uat_siruta_code, ro_uats!inner(name)")
+        .select("siruta_code, name, type, uat_siruta_code, postal_code, ro_uats!inner(name, type)")
         .eq("county_siruta_code", value.countySirutaCode!)
-        .like("normalized_name", `${normalized}%`)
         .eq("active", true)
         .order("normalized_name")
-        .limit(20);
+        .limit(1000);
       if (error) throw error;
-      return (data ?? []).map((row) => {
-        const uat = (row as unknown as { ro_uats: { name: string } | { name: string }[] }).ro_uats;
-        const uatName = Array.isArray(uat) ? (uat[0]?.name ?? "") : (uat?.name ?? "");
-        return {
-          sirutaCode: row.siruta_code,
-          name: titleCaseRo(row.name),
-          type: row.type,
-          uatSirutaCode: row.uat_siruta_code,
-          uatName: titleCaseRo(prettyUatName(uatName)),
-        };
-      });
+      return toSuggestions(
+        (data ?? []).map((row) => {
+          const raw = (row as unknown as { ro_uats: { name: string; type: string } | { name: string; type: string }[] }).ro_uats;
+          const uat = Array.isArray(raw) ? raw[0] : raw;
+          return {
+            sirutaCode: row.siruta_code,
+            rawName: row.name,
+            type: row.type,
+            uatSirutaCode: row.uat_siruta_code,
+            uatName: uat?.name ?? "",
+            uatType: uat?.type ?? null,
+            postalCode: (row as unknown as { postal_code: string | null }).postal_code,
+          };
+        }),
+      );
     },
   });
 
   const selectCounty = (code: string) => {
     const county = counties.data?.find((c) => String(c.sirutaCode) === code);
     setTerm("");
+    if (!county || county.sirutaCode !== value.countySirutaCode) onPostalCode?.(null);
     onChange({
       countySirutaCode: county ? county.sirutaCode : null,
       countyName: county?.name ?? "",
@@ -127,12 +127,12 @@ export function LocationPicker({
     });
   };
 
-  const results = localities.data ?? [];
+  const results = useMemo(() => filterSuggestions(localities.data ?? [], term), [localities.data, term]);
 
   // Reset keyboard highlight whenever the result set changes.
   useEffect(() => {
     setActiveIndex(results.length > 0 ? 0 : -1);
-  }, [localities.data]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [results]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Keep the highlighted option visible inside the scrollable list.
   useEffect(() => {
@@ -149,6 +149,7 @@ export function LocationPicker({
       localitySirutaCode: hit.sirutaCode,
       localityName: hit.name,
     });
+    onPostalCode?.(hit.postalCode);
     setTerm("");
     setOpen(false);
     setActiveIndex(-1);
@@ -175,6 +176,7 @@ export function LocationPicker({
 
   const clearLocality = () => {
     onChange({ ...value, uatSirutaCode: null, localitySirutaCode: null, localityName: "" });
+    onPostalCode?.(null);
     setTerm("");
   };
 
@@ -199,7 +201,7 @@ export function LocationPicker({
           ))}
         </select>
         {counties.isLoading && (
-          <p className="text-xs text-muted-foreground">Se încarcă nomenclatorul…</p>
+          <p className="text-xs text-muted-foreground">Se încarcă județele…</p>
         )}
       </div>
 
@@ -214,9 +216,6 @@ export function LocationPicker({
               <MapPin className="size-4 shrink-0 text-muted-foreground" />
               <span className="truncate">
                 {value.localityName}
-                <span className="ml-1 text-xs text-muted-foreground">
-                  SIRUTA {value.localitySirutaCode}
-                </span>
               </span>
             </span>
             <Button
@@ -239,7 +238,7 @@ export function LocationPicker({
               disabled={!value.countySirutaCode}
               placeholder={
                 value.countySirutaCode
-                  ? "Caută localitatea (ex. chiajna)…"
+                  ? "Alege sau caută localitatea…"
                   : "Alege mai întâi județul"
               }
               value={term}
@@ -248,6 +247,7 @@ export function LocationPicker({
                 setOpen(true);
               }}
               onFocus={() => setOpen(true)}
+              onClick={() => setOpen(true)}
               onKeyDown={onSearchKeyDown}
               role="combobox"
               aria-expanded={open && results.length > 0}
@@ -262,12 +262,12 @@ export function LocationPicker({
               <Loader2 className="absolute right-3 top-1/2 size-4 -translate-y-1/2 animate-spin text-muted-foreground" />
             )}
 
-            {open && value.countySirutaCode && normalized.length >= 2 && (
+            {open && value.countySirutaCode && (
               <div
                 ref={listRef}
                 id={`${idPrefix}-locality-list`}
                 role="listbox"
-                className="absolute z-(--z-floating) mt-1 max-h-72 w-full overflow-auto rounded-md border bg-popover p-1 shadow-lg"
+                className="absolute z-(--z-floating) mt-1 max-h-[min(18rem,50vh)] w-full overflow-y-auto overscroll-contain rounded-md border bg-popover p-1 shadow-lg"
               >
                 {results.length > 0 ? (
                   results.map((hit, index) => (
@@ -307,8 +307,7 @@ export function LocationPicker({
           </div>
         )}
         <p className="text-xs text-muted-foreground">
-          Nomenclator oficial SIRUTA. Cartierele și ansamblurile (ex. Militari Residence) se trec în
-          câmpul „Zonă / cartier”.
+          Cartierele și ansamblurile (ex. Militari Residence) se trec în câmpul „Zonă / cartier”.
         </p>
       </div>
     </>

@@ -73,7 +73,7 @@ function NomenclatorPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Nomenclator SIRUTA"
+        title="Nomenclator localități"
         description="Județele, UAT-urile și localitățile oficiale (INS). Date de referință: agenții le pot doar citi."
         actions={
           <Button onClick={() => importMutation.mutate()} disabled={importMutation.isPending}>
@@ -136,7 +136,7 @@ function NomenclatorPage() {
             <p className="mt-4 text-xs text-muted-foreground">
               Importul este idempotent: rulările repetate actualizează denumirile fără să creeze
               duplicate. Anunțurile existente care au deja localitate ca text sunt completate
-              automat cu codul SIRUTA atunci când potrivirea este neambiguă; textul introdus de
+              automat cu codul oficial atunci când potrivirea este neambiguă; textul introdus de
               agenți nu este șters.
             </p>
             {lastImport && (
