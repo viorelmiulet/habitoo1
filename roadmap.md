@@ -2,6 +2,7 @@
 
 - [x] Prețuri Basic/Pro/Unlimited actualizate doar în sursa de afișare, textele publice și datele structurate.
 - [x] Bandă compactă de prețuri pe homepage și componentă de ofertă ascunsă până la primirea textului.
+- [x] Oferta de lansare activată: o singură linie „Profită de oferta de lansare", fără etichetă separată și fără dată de final.
 
 ## Publicare — grilă de portaluri
 
