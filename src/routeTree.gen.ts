@@ -96,6 +96,7 @@ import { Route as LovableEmailAuthPreviewRouteImport } from './routes/lovable/em
 import { Route as LovableEmailAuthWebhookRouteImport } from './routes/lovable/email/auth/webhook'
 import { Route as AuthenticatedAppAcpDatePiataIndexRouteImport } from './routes/_authenticated/app.acp.date-piata.index'
 import { Route as AuthenticatedAppAcpDatePiataIdRouteImport } from './routes/_authenticated/app.acp.date-piata.$id'
+import { Route as AuthenticatedSuperadminBlogPreviewIdRouteImport } from './routes/_authenticated/superadmin.blog.preview.$id'
 import { Route as ApiPublicCatalogV1FacebookDotcsvRouteImport } from './routes/api/public/catalog/v1/facebook[.]csv'
 import { Route as ApiPublicFeedProperstarAgencyKeyRouteImport } from './routes/api/public/feed/properstar/$agencyKey'
 import { Route as ApiPublicHomepitchV1PropertiesRouteImport } from './routes/api/public/homepitch/v1/properties'
@@ -604,6 +605,12 @@ const AuthenticatedAppAcpDatePiataIdRoute =
     path: '/acp/date-piata/$id',
     getParentRoute: () => AuthenticatedAppRoute,
   } as any)
+const AuthenticatedSuperadminBlogPreviewIdRoute =
+  AuthenticatedSuperadminBlogPreviewIdRouteImport.update({
+    id: '/preview/$id',
+    path: '/preview/$id',
+    getParentRoute: () => AuthenticatedSuperadminBlogRoute,
+  } as any)
 const ApiPublicCatalogV1FacebookDotcsvRoute =
   ApiPublicCatalogV1FacebookDotcsvRouteImport.update({
     id: '/api/public/catalog/v1/facebook.csv',
@@ -807,7 +814,7 @@ export interface FileRoutesByFullPath {
   '/superadmin/agencies': typeof AuthenticatedSuperadminAgenciesRoute
   '/superadmin/ai-features': typeof AuthenticatedSuperadminAiFeaturesRoute
   '/superadmin/audit': typeof AuthenticatedSuperadminAuditRoute
-  '/superadmin/blog': typeof AuthenticatedSuperadminBlogRoute
+  '/superadmin/blog': typeof AuthenticatedSuperadminBlogRouteWithChildren
   '/superadmin/deleted': typeof AuthenticatedSuperadminDeletedRoute
   '/superadmin/mail': typeof AuthenticatedSuperadminMailRoute
   '/superadmin/nomenclator': typeof AuthenticatedSuperadminNomenclatorRoute
@@ -847,6 +854,7 @@ export interface FileRoutesByFullPath {
   '/app/contracts/': typeof AuthenticatedAppContractsIndexRoute
   '/app/properties/': typeof AuthenticatedAppPropertiesIndexRoute
   '/app/acp/date-piata/$id': typeof AuthenticatedAppAcpDatePiataIdRoute
+  '/superadmin/blog/preview/$id': typeof AuthenticatedSuperadminBlogPreviewIdRoute
   '/api/public/catalog/v1/facebook.csv': typeof ApiPublicCatalogV1FacebookDotcsvRoute
   '/api/public/feed/properstar/$agencyKey': typeof ApiPublicFeedProperstarAgencyKeyRoute
   '/api/public/homepitch/v1/properties': typeof ApiPublicHomepitchV1PropertiesRouteWithChildren
@@ -920,7 +928,7 @@ export interface FileRoutesByTo {
   '/superadmin/agencies': typeof AuthenticatedSuperadminAgenciesRoute
   '/superadmin/ai-features': typeof AuthenticatedSuperadminAiFeaturesRoute
   '/superadmin/audit': typeof AuthenticatedSuperadminAuditRoute
-  '/superadmin/blog': typeof AuthenticatedSuperadminBlogRoute
+  '/superadmin/blog': typeof AuthenticatedSuperadminBlogRouteWithChildren
   '/superadmin/deleted': typeof AuthenticatedSuperadminDeletedRoute
   '/superadmin/mail': typeof AuthenticatedSuperadminMailRoute
   '/superadmin/nomenclator': typeof AuthenticatedSuperadminNomenclatorRoute
@@ -960,6 +968,7 @@ export interface FileRoutesByTo {
   '/app/contracts': typeof AuthenticatedAppContractsIndexRoute
   '/app/properties': typeof AuthenticatedAppPropertiesIndexRoute
   '/app/acp/date-piata/$id': typeof AuthenticatedAppAcpDatePiataIdRoute
+  '/superadmin/blog/preview/$id': typeof AuthenticatedSuperadminBlogPreviewIdRoute
   '/api/public/catalog/v1/facebook.csv': typeof ApiPublicCatalogV1FacebookDotcsvRoute
   '/api/public/feed/properstar/$agencyKey': typeof ApiPublicFeedProperstarAgencyKeyRoute
   '/api/public/homepitch/v1/properties': typeof ApiPublicHomepitchV1PropertiesRouteWithChildren
@@ -1037,7 +1046,7 @@ export interface FileRoutesById {
   '/_authenticated/superadmin/agencies': typeof AuthenticatedSuperadminAgenciesRoute
   '/_authenticated/superadmin/ai-features': typeof AuthenticatedSuperadminAiFeaturesRoute
   '/_authenticated/superadmin/audit': typeof AuthenticatedSuperadminAuditRoute
-  '/_authenticated/superadmin/blog': typeof AuthenticatedSuperadminBlogRoute
+  '/_authenticated/superadmin/blog': typeof AuthenticatedSuperadminBlogRouteWithChildren
   '/_authenticated/superadmin/deleted': typeof AuthenticatedSuperadminDeletedRoute
   '/_authenticated/superadmin/mail': typeof AuthenticatedSuperadminMailRoute
   '/_authenticated/superadmin/nomenclator': typeof AuthenticatedSuperadminNomenclatorRoute
@@ -1077,6 +1086,7 @@ export interface FileRoutesById {
   '/_authenticated/app/contracts/': typeof AuthenticatedAppContractsIndexRoute
   '/_authenticated/app/properties/': typeof AuthenticatedAppPropertiesIndexRoute
   '/_authenticated/app/acp/date-piata/$id': typeof AuthenticatedAppAcpDatePiataIdRoute
+  '/_authenticated/superadmin/blog/preview/$id': typeof AuthenticatedSuperadminBlogPreviewIdRoute
   '/api/public/catalog/v1/facebook.csv': typeof ApiPublicCatalogV1FacebookDotcsvRoute
   '/api/public/feed/properstar/$agencyKey': typeof ApiPublicFeedProperstarAgencyKeyRoute
   '/api/public/homepitch/v1/properties': typeof ApiPublicHomepitchV1PropertiesRouteWithChildren
@@ -1194,6 +1204,7 @@ export interface FileRouteTypes {
     | '/app/contracts/'
     | '/app/properties/'
     | '/app/acp/date-piata/$id'
+    | '/superadmin/blog/preview/$id'
     | '/api/public/catalog/v1/facebook.csv'
     | '/api/public/feed/properstar/$agencyKey'
     | '/api/public/homepitch/v1/properties'
@@ -1307,6 +1318,7 @@ export interface FileRouteTypes {
     | '/app/contracts'
     | '/app/properties'
     | '/app/acp/date-piata/$id'
+    | '/superadmin/blog/preview/$id'
     | '/api/public/catalog/v1/facebook.csv'
     | '/api/public/feed/properstar/$agencyKey'
     | '/api/public/homepitch/v1/properties'
@@ -1423,6 +1435,7 @@ export interface FileRouteTypes {
     | '/_authenticated/app/contracts/'
     | '/_authenticated/app/properties/'
     | '/_authenticated/app/acp/date-piata/$id'
+    | '/_authenticated/superadmin/blog/preview/$id'
     | '/api/public/catalog/v1/facebook.csv'
     | '/api/public/feed/properstar/$agencyKey'
     | '/api/public/homepitch/v1/properties'
@@ -2127,6 +2140,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAppAcpDatePiataIdRouteImport
       parentRoute: typeof AuthenticatedAppRoute
     }
+    '/_authenticated/superadmin/blog/preview/$id': {
+      id: '/_authenticated/superadmin/blog/preview/$id'
+      path: '/preview/$id'
+      fullPath: '/superadmin/blog/preview/$id'
+      preLoaderRoute: typeof AuthenticatedSuperadminBlogPreviewIdRouteImport
+      parentRoute: typeof AuthenticatedSuperadminBlogRoute
+    }
     '/api/public/catalog/v1/facebook.csv': {
       id: '/api/public/catalog/v1/facebook.csv'
       path: '/api/public/catalog/v1/facebook.csv'
@@ -2405,11 +2425,26 @@ const AuthenticatedAppRouteChildren: AuthenticatedAppRouteChildren = {
 const AuthenticatedAppRouteWithChildren =
   AuthenticatedAppRoute._addFileChildren(AuthenticatedAppRouteChildren)
 
+interface AuthenticatedSuperadminBlogRouteChildren {
+  AuthenticatedSuperadminBlogPreviewIdRoute: typeof AuthenticatedSuperadminBlogPreviewIdRoute
+}
+
+const AuthenticatedSuperadminBlogRouteChildren: AuthenticatedSuperadminBlogRouteChildren =
+  {
+    AuthenticatedSuperadminBlogPreviewIdRoute:
+      AuthenticatedSuperadminBlogPreviewIdRoute,
+  }
+
+const AuthenticatedSuperadminBlogRouteWithChildren =
+  AuthenticatedSuperadminBlogRoute._addFileChildren(
+    AuthenticatedSuperadminBlogRouteChildren,
+  )
+
 interface AuthenticatedSuperadminRouteChildren {
   AuthenticatedSuperadminAgenciesRoute: typeof AuthenticatedSuperadminAgenciesRoute
   AuthenticatedSuperadminAiFeaturesRoute: typeof AuthenticatedSuperadminAiFeaturesRoute
   AuthenticatedSuperadminAuditRoute: typeof AuthenticatedSuperadminAuditRoute
-  AuthenticatedSuperadminBlogRoute: typeof AuthenticatedSuperadminBlogRoute
+  AuthenticatedSuperadminBlogRoute: typeof AuthenticatedSuperadminBlogRouteWithChildren
   AuthenticatedSuperadminDeletedRoute: typeof AuthenticatedSuperadminDeletedRoute
   AuthenticatedSuperadminMailRoute: typeof AuthenticatedSuperadminMailRoute
   AuthenticatedSuperadminNomenclatorRoute: typeof AuthenticatedSuperadminNomenclatorRoute
@@ -2428,7 +2463,8 @@ const AuthenticatedSuperadminRouteChildren: AuthenticatedSuperadminRouteChildren
     AuthenticatedSuperadminAiFeaturesRoute:
       AuthenticatedSuperadminAiFeaturesRoute,
     AuthenticatedSuperadminAuditRoute: AuthenticatedSuperadminAuditRoute,
-    AuthenticatedSuperadminBlogRoute: AuthenticatedSuperadminBlogRoute,
+    AuthenticatedSuperadminBlogRoute:
+      AuthenticatedSuperadminBlogRouteWithChildren,
     AuthenticatedSuperadminDeletedRoute: AuthenticatedSuperadminDeletedRoute,
     AuthenticatedSuperadminMailRoute: AuthenticatedSuperadminMailRoute,
     AuthenticatedSuperadminNomenclatorRoute:
