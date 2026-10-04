@@ -237,6 +237,96 @@
     linear-gradient(180deg, var(--color-background) 0%, var(--color-card) 100%);
 }
 
+@utility home-grid {
+  background-image:
+    linear-gradient(color-mix(in oklab, var(--color-gold) 8%, transparent) 1px, transparent 1px),
+    linear-gradient(90deg, color-mix(in oklab, var(--color-gold) 8%, transparent) 1px, transparent 1px),
+    radial-gradient(color-mix(in oklab, var(--color-gold) 28%, transparent) 1px, transparent 1px);
+  background-size: 72px 72px, 72px 72px, 24px 24px;
+  mask-image: linear-gradient(to bottom, black, transparent 92%);
+}
+
+@utility home-glow {
+  pointer-events: none;
+  position: absolute;
+  width: 28rem;
+  height: 28rem;
+  border-radius: 999px;
+  background: color-mix(in oklab, var(--color-gold) 20%, transparent);
+  filter: blur(90px);
+}
+
+@utility home-glow-one {
+  top: -14rem;
+  left: -8rem;
+}
+
+@utility home-glow-two {
+  right: -10rem;
+  bottom: -16rem;
+}
+
+@utility home-dashboard-transform {
+  transform: perspective(1300px) rotateY(-3deg) rotateX(1deg);
+  transform-origin: center;
+}
+
+@utility home-float {
+  position: absolute;
+  z-index: 2;
+  display: flex;
+  min-height: 2.75rem;
+  align-items: center;
+  gap: 0.5rem;
+  border: 1px solid color-mix(in oklab, var(--color-gold) 26%, var(--color-border));
+  border-radius: 999px;
+  background: color-mix(in oklab, var(--color-card) 94%, transparent);
+  padding: 0.65rem 0.9rem;
+  color: var(--color-foreground);
+  box-shadow: 0 18px 48px color-mix(in oklab, var(--color-navy) 28%, transparent);
+  font-size: 0.75rem;
+  font-weight: 700;
+  backdrop-filter: blur(12px);
+  animation: home-float 6s ease-in-out infinite;
+}
+
+@utility home-float-one {
+  top: -1.2rem;
+  right: -0.5rem;
+}
+
+@utility home-float-two {
+  bottom: -0.5rem;
+  left: -1rem;
+  animation-delay: -2s;
+}
+
+@utility home-float-three {
+  right: 1rem;
+  bottom: 3.25rem;
+  animation-delay: -4s;
+}
+
+@utility home-bento-card {
+  height: 100%;
+  border: 1px solid color-mix(in oklab, var(--color-gold) 17%, var(--color-border));
+  border-radius: 28px;
+  background: var(--color-card);
+  padding: 1.75rem;
+  box-shadow: 0 18px 52px color-mix(in oklab, var(--color-navy) 7%, transparent);
+  transition: transform 240ms ease, box-shadow 240ms ease, border-color 240ms ease;
+  &:hover {
+    transform: translateY(-5px);
+    border-color: color-mix(in oklab, var(--color-gold) 42%, var(--color-border));
+    box-shadow: 0 26px 64px color-mix(in oklab, var(--color-navy) 12%, transparent);
+  }
+}
+
+@keyframes home-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+
 @utility mk-navy-bg {
   background-color: var(--color-navy);
   background-image:
@@ -295,5 +385,29 @@
     transition: none;
     opacity: 1;
     transform: none;
+  }
+
+  .home-float {
+    animation: none;
+  }
+}
+
+@media (max-width: 639px) {
+  .home-dashboard-transform {
+    transform: none;
+  }
+
+  .home-float-one {
+    top: -1rem;
+    right: 0.25rem;
+  }
+
+  .home-float-two {
+    bottom: -0.75rem;
+    left: 0.25rem;
+  }
+
+  .home-float-three {
+    display: none;
   }
 }
