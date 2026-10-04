@@ -742,6 +742,11 @@ export async function applyPortalActivationForOrg(input: {
         created_by: actorId,
       } as never);
     }
+    // Imospot: orice aprobare (inclusiv din /superadmin/portals) trece prin același mecanism de trimitere.
+    if (definition.id === "imospot") {
+      const { retryPendingImospotRequests } = await import("@/lib/portals/imospot-key-request.server");
+      await retryPendingImospotRequests(organizationId, actorId);
+    }
   }
 
   await logOperation({
