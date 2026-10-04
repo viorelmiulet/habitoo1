@@ -544,7 +544,7 @@ export const PropertyPortalsCard = forwardRef<
                           size="compact"
                           className="pointer-events-auto h-auto p-0 font-semibold"
                           onClick={() =>
-                            FACEBOOK_LISTING_FIX[fbState.reason!].target === "media"
+                            fbState.reason && FACEBOOK_LISTING_FIX[fbState.reason].target === "media"
                               ? onOpenMedia?.()
                               : onCompleteMissing?.()
                           }
@@ -605,8 +605,11 @@ export const PropertyPortalsCard = forwardRef<
                       </p>
                   </div>
                 </Card>
-                {collabValue ? (
-                    <div className="relative mt-3 grid min-w-0 gap-3 md:col-span-2 xl:col-span-3 sm:grid-cols-2">
+              </li>
+            ) : null}
+            {collabVisible && collabValue ? (
+              <li className="min-w-0 md:col-span-2 xl:col-span-3">
+                    <div className="grid min-w-0 gap-3 sm:grid-cols-2">
                       <div className="space-y-1.5">
                         <Label htmlFor="collab-percent" className="text-xs">
                           Comision oferit (%)
@@ -656,7 +659,6 @@ export const PropertyPortalsCard = forwardRef<
                         />
                       </div>
                     </div>
-                  ) : null}
               </li>
             ) : null}
 
@@ -707,7 +709,7 @@ export const PropertyPortalsCard = forwardRef<
                         }}
                       /> : null}
                     </div>
-                    <div className="relative z-10 mt-3 min-w-0">
+                    <div className="relative z-10 mt-3 min-w-0 pointer-events-none">
                       {!cell.configured ? <p className="text-xs text-muted-foreground">Agenția nu l-a conectat încă</p> : null}
                         <p
                           className={cn(
@@ -735,7 +737,7 @@ export const PropertyPortalsCard = forwardRef<
                         <AutoWithdrawLine
                           view={autoWithdrawals.data?.find((w) => w.portalId === cell.portalId)}
                         />
-                      <div className="relative z-10 mt-3 flex min-w-0 flex-wrap items-center gap-2 pointer-events-auto">
+                      <div className="relative z-10 mt-3 flex min-w-0 flex-wrap items-center gap-2 [&>*]:pointer-events-auto">
                         {(cell.portalId === "imobiliare_ro" || cell.portalId === "romimo") &&
                         cell.offerLinks.length > 0 &&
                         !cell.publicWarning ? (
