@@ -1,6 +1,6 @@
 ## Publicare — grilă de portaluri
 
-- [ ] Carduri în 1/2/3 coloane, cu selecție existentă, restricții de editare și sloturi; teste fără publicare reală.
+- [x] Carduri în 1/2/3 coloane, cu selecție existentă, restricții de editare și sloturi; teste fără publicare reală.
 
 ## Faza 2 – de finalizat
 

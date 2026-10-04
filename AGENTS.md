@@ -33,3 +33,4 @@
 - Facebook Catalog opt-ins use `portal_publications` key `facebook_catalog` without slots. Admins always manage them; agents manage only owned listings when the organization setting allows it. Why: feed inclusion requires an authorized explicit choice.
 - Promotion catalogs are registered separately from listing portals and are merged only into the agency Settings portal list. Why: Catalog Facebook must look like a portal without entering portal publication, slot, activation, or withdrawal flows.
 - Table `agent_portal_preferences` is kept but unused by code: Publicare never preselects portals. Why: "Portalurile mele" was removed; data preserved.
+- Property publication cards share the existing checkbox state and use only the assigned agent's own slot query for client-side slot hints; the server remains authoritative for publication checks. Why: visual redesign must not create a second publication state or apply another agent's quota.
