@@ -20,6 +20,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { PropertyDescriptionTextarea } from "@/components/app/PropertyDescriptionTextarea";
 import {
   Select,
   SelectContent,
@@ -294,9 +295,8 @@ function NewPropertyPage() {
         <FormSection title="Descriere">
           <div className="space-y-2">
             <Label htmlFor="description">Descriere publică</Label>
-            <Textarea
+            <PropertyDescriptionTextarea
               id="description"
-              rows={5}
               value={form.description}
               onChange={(e) => set("description", e.target.value)}
             />

@@ -58,6 +58,7 @@ import { DocumentsPanel } from "@/components/app/DocumentsPanel";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { PropertyDescriptionTextarea } from "@/components/app/PropertyDescriptionTextarea";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
@@ -889,9 +890,8 @@ function PropertyDetailPage() {
               <FormSection title="Descriere">
                 <div className="space-y-2">
                   <Label htmlFor="description">Descriere</Label>
-                  <Textarea
+                  <PropertyDescriptionTextarea
                     id="description"
-                    rows={4}
                     value={draft.description ?? ""}
                     onChange={(e) => setDraft((d) => ({ ...d, description: e.target.value }))}
                   />
