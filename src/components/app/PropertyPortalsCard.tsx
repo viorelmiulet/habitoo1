@@ -604,19 +604,16 @@ export const PropertyPortalsCard = forwardRef<
                               : "Neselectat."}
                       </p>
                   </div>
-                </Card>
-              </li>
-            ) : null}
-            {collabVisible && collabValue ? (
-              <li className="min-w-0 md:col-span-2 lg:col-span-3">
-                    <div className="grid min-w-0 gap-3 sm:grid-cols-2">
-                      <div className="space-y-1.5">
+                  {collabValue ? (
+                    <div className="relative z-10 mt-3 min-w-0 space-y-3 pointer-events-auto">
+                      <div className="min-w-0 space-y-1.5">
                         <Label htmlFor="collab-percent" className="text-xs">
                           Comision oferit (%)
                         </Label>
                         <Input
                           id="collab-percent"
                           inputMode="decimal"
+                          disabled={!editing || !canManage}
                           placeholder={
                             collabRow?.defaultCommissionPercent !== null &&
                             collabRow?.defaultCommissionPercent !== undefined
@@ -646,19 +643,22 @@ export const PropertyPortalsCard = forwardRef<
                           </p>
                         ) : null}
                       </div>
-                      <div className="space-y-1.5">
+                      <div className="min-w-0 space-y-1.5">
                         <Label htmlFor="collab-terms" className="text-xs">
                           Condiții (opțional)
                         </Label>
                         <Textarea
                           id="collab-terms"
                           rows={2}
+                          disabled={!editing || !canManage}
                           placeholder="Ex. vizionări doar cu agentul proprietății"
                           value={collabTerms}
                           onChange={(e) => setCollabTerms(e.target.value)}
                         />
                       </div>
                     </div>
+                  ) : null}
+                </Card>
               </li>
             ) : null}
 
