@@ -1,49 +1,33 @@
-import { createFileRoute, Link, redirect } from "@tanstack/react-router";
+import { createFileRoute, redirect } from "@tanstack/react-router";
 import {
   ArrowRight,
-  ArrowRightLeft,
   BarChart3,
-  Bell,
   Building2,
-  CalendarDays,
   Check,
+  CircleCheck,
   ClipboardList,
-  Clock,
-  Eye,
-  History,
-  Images,
   Kanban,
-  Search,
+  Link2,
   ShieldCheck,
   Sparkles,
-  Target,
-  TrendingUp,
   Users,
+  type LucideIcon,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { CollaborationSection } from "@/components/marketing/CollaborationSection";
-import { CtaBand } from "@/components/marketing/CtaBand";
+import { BrandLogo } from "@/components/brand/BrandLogo";
+import { CookieConsent } from "@/components/marketing/CookieConsent";
+import { CrmLink } from "@/components/marketing/CrmLink";
 import { FaqSection, faqPageJsonLd, type FaqItem } from "@/components/marketing/FaqSection";
-import { PortalsSection } from "@/components/marketing/PortalsSection";
+import { HomeHeader } from "@/components/marketing/HomeHeader";
 import { HomePricingSection } from "@/components/marketing/HomePricingSection";
-import { navyButton } from "@/components/marketing/PublicHeader";
-import { PublicLayout } from "@/components/marketing/PublicLayout";
+import { PublicFooter } from "@/components/marketing/PublicFooter";
 import { Reveal } from "@/components/marketing/Reveal";
 import { Container, Eyebrow, Section, SectionHeading } from "@/components/marketing/Section";
+import { DashboardMock } from "@/components/marketing/mockups/DashboardMock";
 import { homeIdentityJsonLd } from "@/components/marketing/structured-data";
-import { publicHead, SITE_URL } from "@/components/marketing/public-head";
+import { publicHead } from "@/components/marketing/public-head";
 import { getCurrentHostname } from "@/lib/current-host";
 import { isCrmHostname } from "@/lib/host";
-import { DashboardMock } from "@/components/marketing/mockups/DashboardMock";
-import {
-  PropertyMatchesMock,
-  RequestMatchesMock,
-} from "@/components/marketing/mockups/MatchingMock";
-import { PipelineMock } from "@/components/marketing/mockups/PipelineMock";
-import { PropertiesMock } from "@/components/marketing/mockups/PropertiesMock";
-import { ReportsMock } from "@/components/marketing/mockups/ReportsMock";
-import { ScoreRing } from "@/components/marketing/mockups/ScoreRing";
-import { CrmLink } from "@/components/marketing/CrmLink";
 
 const TITLE = "Habitoo CRM — CRM imobiliar pentru agenții din România";
 const DESCRIPTION =
@@ -92,501 +76,249 @@ const faq: FaqItem[] = [
   },
 ];
 
+const trustItems = [
+  { icon: Link2, label: "Portaluri integrate" },
+  { icon: Sparkles, label: "Matching automat" },
+  { icon: ShieldCheck, label: "Date separate pe agenții" },
+  { icon: Users, label: "Echipă cu roluri" },
+];
+
+type HomeFeature = {
+  icon: LucideIcon;
+  title: string;
+  text: string;
+  wide?: boolean;
+  visual?: "properties" | "matching";
+};
+
+const features: HomeFeature[] = [
+  {
+    icon: Building2,
+    title: "Proprietăți",
+    text: "Portofoliul tău rămâne complet, ordonat și ușor de găsit.",
+    wide: true,
+    visual: "properties",
+  },
+  {
+    icon: Sparkles,
+    title: "Matching automat",
+    text: "Vezi rapid ce proprietăți se potrivesc fiecărei cereri.",
+    wide: true,
+    visual: "matching",
+  },
+  {
+    icon: Users,
+    title: "Clienți și cereri",
+    text: "Păstrezi contactele și criteriile lor în același loc.",
+  },
+  {
+    icon: Kanban,
+    title: "Lead-uri",
+    text: "Urmărești fiecare oportunitate până la tranzacția închisă.",
+  },
+  {
+    icon: Link2,
+    title: "Publicare pe portaluri",
+    text: "Alegi unde apare fiecare anunț, direct din fișa lui.",
+  },
+  {
+    icon: BarChart3,
+    title: "Rapoarte",
+    text: "Înțelegi portofoliul, activitatea și rezultatele agenției.",
+  },
+];
+
+const steps = [
+  ["Adaugi proprietățile", "Completezi datele și fotografiile o singură dată."],
+  ["Primești cererile și lead-urile", "Echipa vede imediat ce are de urmărit."],
+  ["Închizi tranzacția", "Păstrezi istoricul clar până la rezultatul final."],
+] as const;
+
 export const Route = createFileRoute("/")({
-  // Pe subdomeniul aplicației (crm.habitoo.ro) rădăcina deschide direct CRM-ul,
-  // nu homepage-ul de marketing. Site-ul public rămâne neschimbat.
   beforeLoad: () => {
-    if (isCrmHostname(getCurrentHostname())) {
-      throw redirect({ to: "/app" });
-    }
+    if (isCrmHostname(getCurrentHostname())) throw redirect({ to: "/app" });
   },
   head: () =>
     publicHead({
       path: "/",
       title: TITLE,
       description: DESCRIPTION,
-      jsonLd: [
-        ...homeIdentityJsonLd(DESCRIPTION),
-        faqPageJsonLd(faq),
-      ],
+      jsonLd: [...homeIdentityJsonLd(DESCRIPTION), faqPageJsonLd(faq)],
     }),
   component: HomePage,
 });
 
-const valueStrip = [
-  {
-    icon: Building2,
-    title: "Proprietăți",
-    text: "Portofoliu complet, cu galerie foto, status și vederi salvate.",
-  },
-  {
-    icon: Users,
-    title: "Clienți și cereri",
-    text: "Fișă 360° pentru fiecare contact, cu cereri structurate pe criterii.",
-  },
-  {
-    icon: Kanban,
-    title: "Lead-uri",
-    text: "Pipeline vizual în 9 etape, cu istoric pentru fiecare mutare.",
-  },
-  {
-    icon: Sparkles,
-    title: "Matching automat",
-    text: "Scor și motive clare pentru fiecare potrivire cerere ↔ proprietate.",
-  },
-];
-
-const flow = [
-  {
-    icon: Building2,
-    title: "Proprietate",
-    text: "Adaugi proprietatea cu date, fotografii și status.",
-  },
-  { icon: Users, title: "Client", text: "Creezi contactul: proprietar, cumpărător, chiriaș." },
-  {
-    icon: ClipboardList,
-    title: "Cerere",
-    text: "Notezi criteriile: buget, zonă, camere, suprafață.",
-  },
-  { icon: Sparkles, title: "Matching", text: "Vezi imediat potrivirile cu scor și motive." },
-  { icon: Kanban, title: "Lead", text: "Urmărești oportunitatea prin etapele pipeline-ului." },
-  {
-    icon: CalendarDays,
-    title: "Vizionare",
-    text: "Programezi vizionarea direct din proprietate sau lead.",
-  },
-  {
-    icon: TrendingUp,
-    title: "Tranzacție",
-    text: "Închizi și vezi rezultatul în obiective și rapoarte.",
-  },
-];
-
-const benefits = [
-  {
-    icon: Clock,
-    title: "Mai puțin timp pierdut",
-    text: "Adăugare rapidă, căutare globală și agendă zilnică. Agentul găsește în câteva secunde proprietatea, clientul sau lead-ul de care are nevoie.",
-  },
-  {
-    icon: Building2,
-    title: "Mai mult control asupra portofoliului",
-    text: "Statusuri clare (activ, rezervat, în negociere, vândut, închiriat), filtre, vederi salvate și favorite. Nimic nu rămâne uitat sau expirat.",
-  },
-  {
-    icon: Eye,
-    title: "Vizibilitate asupra lead-urilor",
-    text: "Fiecare oportunitate are o etapă, un responsabil și un istoric complet. Știi exact unde s-a blocat și ce urmează.",
-  },
-  {
-    icon: BarChart3,
-    title: "Decizii mai bune din date",
-    text: "Dashboard pe rol, obiective pe agent și rapoarte despre portofoliu, surse de lead-uri și activitate.",
-  },
-];
-
-const extras = [
-  { icon: Users, label: "Contacte 360°" },
-  { icon: ClipboardList, label: "Cereri structurate" },
-  { icon: CalendarDays, label: "Activități și calendar" },
-  { icon: Target, label: "Obiective pe agent" },
-  { icon: Bell, label: "Notificări" },
-  { icon: ShieldCheck, label: "Echipă și roluri" },
-  { icon: Search, label: "Căutare globală" },
-  { icon: History, label: "Jurnal de audit" },
-];
+function FeatureVisual({ type }: { type?: "properties" | "matching" }) {
+  if (type === "matching") {
+    return (
+      <div className="mt-8 flex items-center gap-5 rounded-2xl border border-gold/20 bg-gold-tint/60 p-4">
+        <div className="grid size-20 shrink-0 place-items-center rounded-full border-8 border-gold bg-card text-xl font-bold text-navy">
+          92%
+        </div>
+        <div className="min-w-0 space-y-2">
+          <div className="h-2 w-32 max-w-full rounded-full bg-gold" />
+          <div className="h-2 w-24 max-w-full rounded-full bg-gold/50" />
+          <p className="text-xs font-semibold text-gold-dark">Potrivire foarte bună</p>
+        </div>
+      </div>
+    );
+  }
+  if (type === "properties") {
+    return (
+      <div className="mt-8 grid grid-cols-3 gap-2" aria-hidden>
+        {["Activ", "Vizionare", "Ofertă"].map((label, index) => (
+          <div key={label} className="rounded-2xl border border-border bg-background p-3">
+            <span className="text-[10px] font-semibold text-muted-foreground">{label}</span>
+            <div className="mt-3 h-2 rounded-full bg-gold/20">
+              <div className={index === 0 ? "h-full w-5/6 rounded-full bg-gold" : index === 1 ? "h-full w-2/3 rounded-full bg-gold" : "h-full w-1/2 rounded-full bg-gold"} />
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  }
+  return null;
+}
 
 function HomePage() {
   return (
-    <PublicLayout>
-      {/* HERO */}
-      <section className="mk-hero-bg relative overflow-hidden">
-        <div
-          aria-hidden
-          className="mk-dots pointer-events-none absolute inset-0 [mask-image:radial-gradient(70%_60%_at_50%_0%,black,transparent)]"
-        />
-        <Container className="relative grid gap-12 py-16 sm:py-20 lg:grid-cols-12 lg:items-center lg:gap-10 lg:py-28">
-          <div className="lg:col-span-5">
-            <Eyebrow tone="gold">CRM imobiliar pentru agenții din România</Eyebrow>
-            <h1 className="mt-5 text-4xl leading-[1.08] font-semibold tracking-tight text-balance text-navy sm:text-5xl lg:text-[3.35rem]">
-              Transformă cererile și proprietățile în{" "}
-              <span className="text-gold-gradient">tranzacții închise</span>.
-            </h1>
-            <p className="mt-6 max-w-xl text-lg text-pretty text-muted-foreground">
-              Habitoo CRM ține portofoliul, clienții, cererile și lead-urile agenției tale într-un
-              singur sistem, cu matching automat, agendă și rapoarte, ca nimic să nu se piardă între
-              etape.
-            </p>
-            <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-              <Button asChild size="lg" className={`${navyButton} h-12 px-7 text-base`}>
-                <CrmLink to="/register">
-                  Începe acum <ArrowRight />
-                </CrmLink>
-              </Button>
-              <Button asChild size="lg" variant="outline" className="h-12 px-7 text-base">
-                <a href="#flux">Vezi cum funcționează</a>
-              </Button>
-            </div>
-            <ul className="mt-8 flex flex-wrap gap-x-6 gap-y-2 text-sm text-muted-foreground">
-              {["Fără instalare", "Roluri pentru admin și agenți", "Date izolate per agenție"].map(
-                (t) => (
-                  <li key={t} className="inline-flex items-center gap-2">
-                    <Check className="size-4 text-success" /> {t}
-                  </li>
-                ),
-              )}
-            </ul>
-          </div>
-
-          <div className="relative lg:col-span-7">
-            <DashboardMock />
-            <div className="pointer-events-none absolute -top-7 right-4 hidden w-[19rem] rounded-2xl border border-border bg-card p-3 shadow-float md:block lg:-right-8">
-              <div className="flex items-center gap-3">
-                <span className="flex size-9 items-center justify-center rounded-xl bg-primary/10 text-primary">
-                  <ArrowRightLeft className="size-4" />
-                </span>
-                <div className="min-w-0">
-                  <p className="truncate text-xs font-semibold">
-                    Lead mutat: Contactat → Calificat
-                  </p>
-                  <p className="text-[11px] text-muted-foreground">Salvat automat în istoric</p>
-                </div>
-              </div>
-            </div>
-            <div className="pointer-events-none absolute -bottom-7 left-4 hidden w-[21rem] rounded-2xl border border-border bg-card p-3 shadow-float md:block lg:-left-10">
-              <div className="flex items-center gap-3">
-                <ScoreRing score={92} size={46} />
-                <div className="min-w-0">
-                  <p className="text-[10px] font-semibold tracking-wide text-gold uppercase">
-                    Potrivire nouă
-                  </p>
-                  <p className="truncate text-xs font-semibold">Apartament 3 camere, Aviației</p>
-                  <p className="truncate text-[11px] text-muted-foreground">
-                    Cerere Mihai Ionescu · buget, zonă, camere
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </Container>
-      </section>
-
-      {/* VALUE STRIP */}
-      <section className="border-y border-border bg-card">
-        <Container>
-          <ul className="grid divide-y divide-border sm:grid-cols-2 sm:divide-y-0 lg:grid-cols-4 lg:divide-x">
-            {valueStrip.map((v, i) => (
-              <li key={v.title} className="py-6 sm:px-6 sm:py-8 first:sm:pl-0 last:sm:pr-0">
-                <Reveal delay={i * 60}>
-                  <div className="flex items-start gap-3">
-                    <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-navy text-navy-foreground">
-                      <v.icon className="size-5" />
-                    </span>
-                    <div>
-                      <h2 className="font-sans text-sm font-semibold text-navy">{v.title}</h2>
-                      <p className="mt-1 text-sm text-muted-foreground">{v.text}</p>
-                    </div>
-                  </div>
-                </Reveal>
-              </li>
-            ))}
-          </ul>
-        </Container>
-      </section>
-
-      {/* FLOW */}
-      <Section id="flux" tone="muted">
-        <Container>
-          <SectionHeading
-            eyebrow="Totul într-un singur loc"
-            title="De la prima proprietate la tranzacția închisă, fără foi de calcul și mesaje pierdute"
-            text="Fiecare pas al muncii de agent are locul lui în Habitoo CRM, iar informația circulă natural între module."
-          />
-          <ol className="mt-14 grid gap-4 sm:grid-cols-2 lg:grid-cols-7 lg:gap-3">
-            {flow.map((step, i) => (
-              <li key={step.title} className="relative">
-                <Reveal delay={i * 50} className="h-full">
-                  <div className="panel flex h-full flex-col p-4">
-                    <div className="flex items-center justify-between">
-                      <span className="flex size-9 items-center justify-center rounded-xl bg-primary/10 text-primary">
-                        <step.icon className="size-4.5" />
-                      </span>
-                      <span className="text-xs font-semibold text-muted-foreground tabular-nums">
-                        0{i + 1}
-                      </span>
-                    </div>
-                    <h3 className="mt-4 font-sans text-sm font-semibold text-navy">{step.title}</h3>
-                    <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
-                      {step.text}
-                    </p>
-                  </div>
-                </Reveal>
-                {i < flow.length - 1 ? (
-                  <ArrowRight
-                    aria-hidden
-                    className="absolute top-1/2 -right-3 hidden size-4 -translate-y-1/2 text-border lg:block"
-                  />
-                ) : null}
-              </li>
-            ))}
-          </ol>
-        </Container>
-      </Section>
-
-      {/* PROPERTIES */}
-      <Section id="proprietati">
-        <Container className="grid items-center gap-12 lg:grid-cols-12">
-          <div className="lg:col-span-5">
-            <SectionHeading
-              align="left"
-              eyebrow="Proprietăți"
-              title="Un portofoliu pe care îl controlezi, nu doar îl păstrezi"
-              text="Fiecare proprietate are fișa ei completă: preț, suprafață, camere, zonă, caracteristici, status și galerie foto gestionată din aplicație."
-            />
-            <ul className="mt-8 space-y-4">
-              {[
-                {
-                  icon: Images,
-                  title: "Media manager",
-                  text: "Încarci fotografii, le reordonezi prin tragere și alegi imaginea principală.",
-                },
-                {
-                  icon: ClipboardList,
-                  title: "Date complete și statusuri clare",
-                  text: "Activ, rezervat, în negociere, vândut, închiriat, expirat sau arhivat, cu istoric în audit.",
-                },
-                {
-                  icon: Search,
-                  title: "Filtre, sortare și vederi salvate",
-                  text: "Găsești rapid ce cauți și salvezi filtrele pe care le folosești zilnic. Favorite pentru proprietățile importante.",
-                },
-              ].map((b) => (
-                <li key={b.title} className="flex gap-4">
-                  <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-gold/12 text-gold">
-                    <b.icon className="size-5" />
-                  </span>
-                  <div>
-                    <h3 className="font-sans text-sm font-semibold text-navy">{b.title}</h3>
-                    <p className="mt-1 text-sm text-muted-foreground">{b.text}</p>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          </div>
-          <Reveal className="lg:col-span-7">
-            <PropertiesMock />
-          </Reveal>
-        </Container>
-      </Section>
-
-      {/* LEADS */}
-      <Section id="lead-uri" tone="muted">
-        <Container className="grid items-center gap-12 lg:grid-cols-12">
-          <Reveal className="order-2 lg:order-1 lg:col-span-7">
-            <PipelineMock />
-          </Reveal>
-          <div className="order-1 lg:order-2 lg:col-span-5">
-            <SectionHeading
-              align="left"
-              eyebrow="Lead-uri"
-              title="Un pipeline vizual în care nimic nu se pierde între etape"
-              text="Fiecare oportunitate trece prin etape clare, de la Nou până la Câștigat, iar echipa vede în orice moment unde se află."
-            />
-            <ul className="mt-8 space-y-4">
-              {[
-                {
-                  icon: Kanban,
-                  title: "Kanban cu drag & drop",
-                  text: "Muți lead-ul dintr-o etapă în alta cu o singură mișcare; schimbarea se salvează instant.",
-                },
-                {
-                  icon: History,
-                  title: "Istoric complet",
-                  text: "Fiecare schimbare de etapă, notă, apel sau vizionare rămâne în cronologia lead-ului.",
-                },
-                {
-                  icon: Users,
-                  title: "Legat de contact, cerere și proprietate",
-                  text: "Lead-ul știe cine este clientul, ce caută și ce proprietate îl interesează.",
-                },
-              ].map((b) => (
-                <li key={b.title} className="flex gap-4">
-                  <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
-                    <b.icon className="size-5" />
-                  </span>
-                  <div>
-                    <h3 className="font-sans text-sm font-semibold text-navy">{b.title}</h3>
-                    <p className="mt-1 text-sm text-muted-foreground">{b.text}</p>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          </div>
-        </Container>
-      </Section>
-
-      {/* MATCHING */}
-      <Section id="matching" tone="navy">
-        <Container>
-          <SectionHeading
-            tone="light"
-            eyebrow="Matching automat"
-            title="Potriviri în ambele sensuri, cu scor și motive explicate"
-            text="Pentru fiecare cerere vezi proprietățile potrivite, iar pentru fiecare proprietate vezi clienții care o caută. Scorul se calculează live, din criteriile deja introduse."
-          />
-          <div className="mt-14 grid gap-6 lg:grid-cols-2">
-            <Reveal>
-              <RequestMatchesMock />
-            </Reveal>
-            <Reveal delay={80}>
-              <PropertyMatchesMock />
-            </Reveal>
-          </div>
-          <ul className="mt-12 grid gap-6 sm:grid-cols-3">
-            {[
-              {
-                title: "Criterii reale",
-                text: "Tip tranzacție, buget, oraș și zonă, număr de camere, suprafață, tip de proprietate și facilități.",
-              },
-              {
-                title: "Motive, nu doar un număr",
-                text: "Fiecare potrivire arată ce criterii sunt îndeplinite și ce lipsește, ca să știi ce propui clientului.",
-              },
-              {
-                title: "Mereu la zi",
-                text: "Când actualizezi o cerere sau o proprietate, potrivirile se recalculează automat.",
-              },
-            ].map((f, i) => (
-              <li key={f.title}>
-                <Reveal delay={i * 60}>
-                  <div className="rounded-2xl border border-navy-foreground/10 bg-navy-foreground/5 p-5">
-                    <h3 className="font-sans text-sm font-semibold text-navy-foreground">
-                      {f.title}
-                    </h3>
-                    <p className="mt-2 text-sm text-navy-muted">{f.text}</p>
-                  </div>
-                </Reveal>
-              </li>
-            ))}
-          </ul>
-          <p className="mt-8 text-center text-xs text-navy-muted">
-            Datele și scorurile afișate sunt demonstrative.
-          </p>
-        </Container>
-      </Section>
-
-      {/* DASHBOARD & REPORTS */}
-      <Section id="rapoarte">
-        <Container className="grid items-center gap-12 lg:grid-cols-12">
-          <div className="lg:col-span-5">
-            <SectionHeading
-              align="left"
-              eyebrow="Dashboard și rapoarte"
-              title="Vezi cum merge agenția, nu doar ce s-a întâmplat"
-              text="Fiecare rol are propriul dashboard: agentul își vede agenda și obiectivele, administratorul vede întreaga agenție."
-            />
-            <ul className="mt-8 space-y-4">
-              {[
-                {
-                  icon: BarChart3,
-                  title: "Rapoarte pe portofoliu și lead-uri",
-                  text: "Proprietăți pe status, surse de lead-uri, funnel pe etape și activitatea agenților.",
-                },
-                {
-                  icon: Target,
-                  title: "Obiective pe agent",
-                  text: "Ținte lunare pentru lead-uri, vizionări, proprietăți noi, tranzacții sau comision, cu progres vizibil.",
-                },
-                {
-                  icon: CalendarDays,
-                  title: "Agenda de azi, într-un singur ecran",
-                  text: "Apeluri, vizionări, follow-up-uri și task-uri, direct din dashboard și din calendar.",
-                },
-              ].map((b) => (
-                <li key={b.title} className="flex gap-4">
-                  <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-gold/12 text-gold">
-                    <b.icon className="size-5" />
-                  </span>
-                  <div>
-                    <h3 className="font-sans text-sm font-semibold text-navy">{b.title}</h3>
-                    <p className="mt-1 text-sm text-muted-foreground">{b.text}</p>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          </div>
-          <Reveal className="lg:col-span-7">
-            <ReportsMock />
-          </Reveal>
-        </Container>
-      </Section>
-
-      <PortalsSection />
-
-      <CollaborationSection />
-
-      {/* BENEFITS */}
-      <Section tone="muted">
-        <Container>
-          <SectionHeading
-            eyebrow="De ce Habitoo CRM"
-            title="Construit pentru felul în care lucrează o agenție imobiliară"
-            text="Nu un CRM generic adaptat, ci un sistem gândit din start pentru proprietăți, clienți, cereri și vizionări."
-          />
-          <ul className="mt-14 grid gap-5 sm:grid-cols-2">
-            {benefits.map((b, i) => (
-              <li key={b.title}>
-                <Reveal delay={i * 60} className="h-full">
-                  <div className="panel flex h-full gap-5 p-6">
-                    <span className="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-navy text-navy-foreground">
-                      <b.icon className="size-5" />
-                    </span>
-                    <div>
-                      <h3 className="text-lg font-semibold text-navy">{b.title}</h3>
-                      <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{b.text}</p>
-                    </div>
-                  </div>
-                </Reveal>
-              </li>
-            ))}
-          </ul>
-
-          <div className="mt-14 rounded-3xl border border-border bg-card p-6 sm:p-8">
-            <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
-              <div className="max-w-md">
-                <h3 className="text-xl font-semibold text-navy">
-                  Și tot ce mai are nevoie o echipă
-                </h3>
-                <p className="mt-2 text-sm text-muted-foreground">
-                  Module care lucrează împreună cu proprietățile și lead-urile, nu pe lângă ele.
-                </p>
-                <Button asChild variant="link" className="mt-3 h-auto px-0 text-primary">
-                  <Link to="/functionalitati">
-                    Vezi toate funcționalitățile <ArrowRight />
-                  </Link>
+    <div className="mk-root min-h-screen overflow-x-hidden bg-background text-foreground">
+      <a href="#continut" className="sr-only focus:fixed focus:top-2 focus:left-2 focus:z-50 focus:not-sr-only focus:rounded-full focus:bg-background focus:px-4 focus:py-2">
+        Sari la conținut
+      </a>
+      <HomeHeader />
+      <main id="continut">
+        <section className="home-hero relative overflow-hidden bg-navy pt-28 text-navy-foreground sm:pt-32">
+          <div aria-hidden className="home-grid pointer-events-none absolute inset-0 opacity-50" />
+          <div aria-hidden className="home-glow home-glow-one" />
+          <div aria-hidden className="home-glow home-glow-two" />
+          <Container className="relative grid min-h-[760px] items-center gap-14 pb-20 pt-8 lg:grid-cols-[0.88fr_1.12fr] lg:gap-16 lg:pb-28 lg:pt-12">
+            <div className="max-w-2xl">
+              <Eyebrow tone="light" className="border-gold/30 bg-gold/10 text-gold">
+                CRM imobiliar pentru agenții din România
+              </Eyebrow>
+              <h1 className="mt-6 text-[2.6rem] leading-[1.05] font-semibold text-balance text-surface sm:text-6xl lg:text-[4.4rem]">
+                Transformă cererile și proprietățile în <span className="text-gold">tranzacții închise.</span>
+              </h1>
+              <p className="mt-6 max-w-xl text-base leading-relaxed text-navy-foreground sm:text-lg">
+                Anunțuri, clienți și lead-uri într-un singur loc, simplu de folosit de prima zi.
+              </p>
+              <div className="mt-7 grid grid-cols-2 gap-2 sm:mt-9 sm:flex sm:gap-3">
+                <Button asChild size="lg" className="h-12 rounded-full px-3 text-sm shadow-raised sm:px-7 sm:text-base">
+                  <CrmLink to="/register">Începe acum <ArrowRight /></CrmLink>
+                </Button>
+                <Button asChild size="lg" variant="outline" className="h-12 rounded-full border-navy-foreground/30 bg-transparent px-3 text-sm text-navy-foreground hover:bg-surface/10 hover:text-surface sm:px-7 sm:text-base">
+                  <a href="#cum-functioneaza">Vezi cum funcționează</a>
                 </Button>
               </div>
-              <ul className="grid flex-1 grid-cols-2 gap-3 sm:grid-cols-4">
-                {extras.map((e) => (
-                  <li
-                    key={e.label}
-                    className="flex items-center gap-2 rounded-xl border border-border bg-background px-3 py-2.5 text-xs font-medium text-foreground"
-                  >
-                    <e.icon className="size-4 shrink-0 text-primary" />
-                    <span className="truncate">{e.label}</span>
+              <ul className="mt-8 grid gap-3 text-sm sm:grid-cols-3">
+                {["Fără instalare", "Roluri pentru admin și agenți", "Datele agenției rămân separate"].map((item) => (
+                  <li key={item} className="flex items-start gap-2 text-navy-foreground">
+                    <CircleCheck className="mt-0.5 size-4 shrink-0 text-gold" />
+                    <span>{item}</span>
                   </li>
                 ))}
               </ul>
             </div>
+
+            <div className="home-dashboard-stage relative mx-auto w-full max-w-3xl pb-8 lg:pb-0">
+              <div className="home-dashboard-transform rounded-[28px] border border-gold/30 bg-background/10 p-2 shadow-float backdrop-blur-sm">
+                <DashboardMock />
+              </div>
+              <div className="home-float home-float-one">
+                <Kanban className="size-4 text-gold" />
+                <span>Lead mutat în Calificat</span>
+              </div>
+              <div className="home-float home-float-two">
+                <Sparkles className="size-4 text-gold" />
+                <span>Potrivire 92%</span>
+              </div>
+              <div className="home-float home-float-three">
+                <Check className="size-4 text-success" />
+                <span>Vizionare confirmată</span>
+              </div>
+            </div>
+          </Container>
+        </section>
+
+        <section className="relative z-10 -mt-6 pb-12 sm:-mt-9 sm:pb-16">
+          <Container>
+            <ul className="grid overflow-hidden rounded-[28px] border border-gold/20 bg-card shadow-float sm:grid-cols-2 lg:grid-cols-4">
+              {trustItems.map((item) => (
+                <li key={item.label} className="flex min-h-24 items-center gap-3 border-b border-border p-5 last:border-b-0 sm:[&:nth-child(3)]:border-b-0 lg:border-r lg:border-b-0 lg:last:border-r-0">
+                  <span className="grid size-11 shrink-0 place-items-center rounded-full bg-gold-tint text-gold-dark">
+                    <item.icon className="size-5" />
+                  </span>
+                  <span className="text-sm font-bold text-navy">{item.label}</span>
+                </li>
+              ))}
+            </ul>
+          </Container>
+        </section>
+
+        <Section id="functionalitati" className="pt-12 sm:pt-16">
+          <Container>
+            <SectionHeading eyebrow="Tot ce contează" title={<>Munca agenției, mai <span className="text-gold">clară</span></>} text="Instrumentele zilnice lucrează împreună, fără pași complicați." />
+            <div className="mt-12 grid gap-5 lg:grid-cols-2">
+              {features.map((feature, index) => (
+                <Reveal key={feature.title} delay={index * 45} className={feature.wide ? "lg:row-span-2" : undefined}>
+                  <article className={feature.wide ? "home-bento-card min-h-[360px]" : "home-bento-card min-h-[220px]"}>
+                    <span className="grid size-12 place-items-center rounded-2xl bg-gold-tint text-gold-dark">
+                      <feature.icon className="size-5" />
+                    </span>
+                    <h3 className="mt-6 text-2xl text-navy">{feature.title}</h3>
+                    <p className="mt-3 max-w-md text-base leading-relaxed text-muted-foreground">{feature.text}</p>
+                    <FeatureVisual type={feature.visual} />
+                  </article>
+                </Reveal>
+              ))}
+            </div>
+          </Container>
+        </Section>
+
+        <Section id="cum-functioneaza" tone="muted" className="relative overflow-hidden">
+          <Container>
+            <SectionHeading eyebrow="Cum funcționează" title={<>Trei pași spre mai multă <span className="text-gold">ordine</span></>} text="Începi simplu și păstrezi totul la îndemână." />
+            <ol className="relative mt-14 grid gap-8 lg:grid-cols-3 lg:gap-12">
+              <div aria-hidden className="absolute top-11 right-[16%] left-[16%] hidden border-t-2 border-dashed border-gold/40 lg:block" />
+              {steps.map(([title, text], index) => (
+                <li key={title} className="relative z-10 text-center">
+                  <Reveal delay={index * 70}>
+                    <span className="mx-auto grid size-22 place-items-center rounded-full border border-gold/30 bg-background text-4xl font-semibold text-gold shadow-soft">{index + 1}</span>
+                    <h3 className="mt-6 text-xl text-navy">{title}</h3>
+                    <p className="mx-auto mt-3 max-w-xs text-base text-muted-foreground">{text}</p>
+                  </Reveal>
+                </li>
+              ))}
+            </ol>
+          </Container>
+        </Section>
+
+        <HomePricingSection />
+        <FaqSection items={faq} />
+
+        <section className="px-4 pb-16 sm:px-6 sm:pb-20 lg:px-8 lg:pb-28">
+          <div className="home-final-cta relative mx-auto max-w-7xl overflow-hidden rounded-[32px] bg-navy px-6 py-16 text-center shadow-float sm:px-12 lg:py-24">
+            <div aria-hidden className="home-grid pointer-events-none absolute inset-0 opacity-30" />
+            <div aria-hidden className="home-glow home-glow-two" />
+            <div className="relative mx-auto max-w-3xl">
+              <BrandLogo fullIdentity className="mx-auto mb-8 w-24 opacity-80" />
+              <h2 className="text-3xl text-surface sm:text-5xl">Gata să-ți organizezi <span className="text-gold">agenția?</span></h2>
+              <p className="mx-auto mt-5 max-w-xl text-base text-navy-foreground sm:text-lg">Începe cu echipa ta și păstrează fiecare oportunitate aproape.</p>
+              <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
+                <Button asChild size="lg" className="h-12 rounded-full px-7 text-base">
+                  <CrmLink to="/register">Creează agenția <ArrowRight /></CrmLink>
+                </Button>
+                <Button asChild size="lg" variant="outline" className="h-12 rounded-full border-navy-foreground/30 bg-transparent px-7 text-base text-navy-foreground hover:bg-surface/10 hover:text-surface">
+                  <CrmLink to="/login">Autentificare</CrmLink>
+                </Button>
+              </div>
+            </div>
           </div>
-        </Container>
-      </Section>
-
-      <HomePricingSection />
-
-      <FaqSection items={faq} />
-
-      <CtaBand />
-    </PublicLayout>
+        </section>
+      </main>
+      <PublicFooter />
+      <CookieConsent />
+    </div>
   );
 }

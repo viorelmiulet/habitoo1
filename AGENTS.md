@@ -30,5 +30,6 @@
 - Public portal grids share registry data. Why: sync.
 - Failure alerts use stable IDs per org, listing, portal, error and user. Why: no duplicates.
 - Collaboration auto-activation lives only in the DB (insert trigger `properties_auto_collaboration`, RPC `collaboration_auto_activate`), copying the agency default commission only when none is explicit; `collaboration_opted_out` is never overridden. Why: one rule for all inserts.
-- Provider key requests (Imospot) are sent only by `notifyImospotForRequest` (src/lib/portals/imospot-key-request.ts) on approvals flagged `provider_notify_required`; recipients live in `platform_settings`. Why: one send per request.
+- Imospot email uses `notifyImospotForRequest`; `provider_notified_at` prevents duplicates. Why: one send.
 - Company data comes from ANAF only via `src/lib/company-lookup.ts` (pure, injected fetch) with 24h `company_lookup_cache`; org sync fills empty fields only. Why: ANAF rate limit; user edits win.
+- Homepage-only navigation uses `HomeHeader`; other public pages keep `PublicHeader`. Why: isolate its overlay behavior.
