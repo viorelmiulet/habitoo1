@@ -91,7 +91,7 @@ export const getRegistrationRequestDetails = createServerFn({ method: "POST" })
         ? admin
             .from("organizations")
             .select(
-              "id,name,status,plan,is_trial,subscription_started_at,subscription_expires_at,collaboration_enabled,legal_name,cui,trade_registry_number,registered_address,city,county,postal_code,company_status,company_status_since,company_verified_at",
+              "id,name,status,plan,is_trial,subscription_started_at,subscription_expires_at,collaboration_enabled,legal_name,cui,trade_registry_number,registered_address,city,county,postal_code,company_status,company_inactive_since,company_verified_at",
             )
             .eq("id", req.organization_id)
             .maybeSingle()
@@ -145,7 +145,7 @@ export const getRegistrationRequestDetails = createServerFn({ method: "POST" })
         county: org?.county ?? null,
         postalCode: org?.postal_code ?? null,
         companyStatus: org?.company_status ?? null,
-        companyStatusSince: org?.company_status_since ?? null,
+        companyStatusSince: org?.company_inactive_since ?? null,
         companyVerifiedAt: org?.company_verified_at ?? null,
       },
       organization: org
