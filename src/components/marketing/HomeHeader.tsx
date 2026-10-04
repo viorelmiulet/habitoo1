@@ -29,19 +29,19 @@ export function HomeHeader() {
   return (
     <header
       className={cn(
-        "fixed inset-x-0 top-0 z-40 border-b transition-all duration-300",
+        "fixed inset-x-0 top-0 z-40 border-b bg-background/85 backdrop-blur-xl transition-all duration-300",
         scrolled
-          ? "border-border/70 bg-background/90 shadow-soft backdrop-blur-xl"
-          : "border-transparent bg-transparent",
+          ? "h-16 border-border/70 shadow-soft"
+          : "h-16 border-border/40 lg:h-[72px]",
       )}
     >
-      <div className="mx-auto grid h-20 w-full max-w-7xl grid-cols-[minmax(0,1fr)_auto] items-center gap-4 px-4 sm:px-6 lg:grid-cols-[1fr_auto_1fr] lg:px-8">
+      <div className="mx-auto grid h-full w-full max-w-7xl grid-cols-[minmax(0,1fr)_auto] items-center gap-4 px-4 sm:px-6 lg:grid-cols-[1fr_auto_1fr] lg:px-8">
         <Link
           to="/"
-          className="w-fit rounded-full bg-background/95 px-4 py-2 shadow-soft"
+          className="flex h-full w-fit items-center"
           aria-label="Habitoo CRM — pagina principală"
         >
-          <BrandLogo className="w-32 sm:w-36" priority />
+          <BrandLogo className="h-8 w-auto max-w-none lg:h-10" priority />
         </Link>
 
         <nav aria-label="Navigare principală" className="hidden items-center gap-1 lg:flex">
@@ -50,10 +50,7 @@ export function HomeHeader() {
               key={item.to}
               to={item.to}
               className={cn(
-                "rounded-full px-4 py-2 text-sm font-semibold transition-colors",
-                scrolled
-                  ? "text-muted-foreground hover:bg-muted hover:text-foreground"
-                  : "text-navy-foreground hover:bg-surface/10 hover:text-surface",
+                "rounded-full px-4 py-2 text-[15px] font-semibold text-muted-foreground transition-colors hover:bg-muted hover:text-foreground",
               )}
             >
               {item.label}
@@ -65,16 +62,11 @@ export function HomeHeader() {
           <Button
             asChild
             variant="ghost"
-            className={cn(
-              "rounded-full",
-              scrolled
-                ? "text-foreground"
-                : "text-navy-foreground hover:bg-surface/10 hover:text-surface",
-            )}
+            className="h-10 rounded-full px-[18px] text-[15px] text-foreground"
           >
             <CrmLink to="/login">Autentificare</CrmLink>
           </Button>
-          <Button asChild className="rounded-full px-5 shadow-raised">
+          <Button asChild className="h-10 rounded-full px-[18px] text-[15px] shadow-raised">
             <CrmLink to="/register">
               Creează agenția <ArrowRight />
             </CrmLink>
@@ -86,7 +78,7 @@ export function HomeHeader() {
             <Button
               variant="outline"
               size="icon"
-              className="rounded-full border-gold/30 bg-background/95 lg:hidden"
+              className="size-11 rounded-full border-gold/30 bg-background lg:hidden"
               aria-label="Deschide meniul"
             >
               <Menu />
