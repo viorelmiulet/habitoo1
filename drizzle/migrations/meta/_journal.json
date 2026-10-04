@@ -792,6 +792,13 @@
       "when": 1791134715635,
       "tag": "0112_create_blog_posts",
       "breakpoints": true
+    },
+    {
+      "idx": 113,
+      "version": "7",
+      "when": 1791134804103,
+      "tag": "0113_secure_blog_media",
+      "breakpoints": true
     }
   ]
 }
