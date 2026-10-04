@@ -457,7 +457,6 @@ export type PortalUsageRow = {
   portalKey: string;
   displayName: string;
   active: number;
-  errors: number;
 };
 
 export type ConversionRow = {
@@ -687,15 +686,11 @@ export const getManagerDashboard = createServerFn({ method: "GET" })
         portalKey: row.portal_key,
         displayName: portalName(row.portal_key),
         active: 0,
-        errors: 0,
       };
-      if (row.status === "error") entry.errors += 1;
-      else entry.active += 1;
+      if (row.status !== "error") entry.active += 1;
       portalMap.set(row.portal_key, entry);
     }
-    const portals = [...portalMap.values()].sort(
-      (a, b) => b.errors - a.errors || b.active - a.active,
-    );
+    const portals = [...portalMap.values()].sort((a, b) => b.active - a.active);
 
     // --- Secțiunea 4: conversie ------------------------------------------
     const inWindow = (iso: string | null, from: string, to?: string) => {
