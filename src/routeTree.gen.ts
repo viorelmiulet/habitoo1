@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AccesContRouteImport } from './routes/acces-cont'
+import { Route as BlogRouteImport } from './routes/blog'
 import { Route as ConfidentialitateRouteImport } from './routes/confidentialitate'
 import { Route as ContactRouteImport } from './routes/contact'
 import { Route as DespreRouteImport } from './routes/despre'
@@ -31,6 +32,7 @@ import { Route as AuthenticatedAppRouteImport } from './routes/_authenticated/ap
 import { Route as AuthenticatedOnboardingRouteImport } from './routes/_authenticated/onboarding'
 import { Route as AuthenticatedSuperadminRouteImport } from './routes/_authenticated/superadmin'
 import { Route as AuthCallbackRouteImport } from './routes/auth.callback'
+import { Route as BlogSlugRouteImport } from './routes/blog.$slug'
 import { Route as OfertaIdRouteImport } from './routes/oferta.$id'
 import { Route as AuthenticatedAppIndexRouteImport } from './routes/_authenticated/app.index'
 import { Route as AuthenticatedAppActivitiesRouteImport } from './routes/_authenticated/app.activities'
@@ -75,6 +77,7 @@ import { Route as AuthenticatedAppPropertiesIndexRouteImport } from './routes/_a
 import { Route as AuthenticatedAppPropertiesIdRouteImport } from './routes/_authenticated/app.properties.$id'
 import { Route as AuthenticatedAppPropertiesNewRouteImport } from './routes/_authenticated/app.properties.new'
 import { Route as AuthenticatedAppRequestsIdRouteImport } from './routes/_authenticated/app.requests.$id'
+import { Route as ApiPublicBlogMediaSplatRouteImport } from './routes/api/public/blog-media/$'
 import { Route as ApiPublicCronAccountDeletionRouteImport } from './routes/api/public/cron/account-deletion'
 import { Route as ApiPublicCronLacheieResendRouteImport } from './routes/api/public/cron/lacheie-resend'
 import { Route as ApiPublicCronListingCollectorRouteImport } from './routes/api/public/cron/listing-collector'
@@ -132,6 +135,11 @@ const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
 const AccesContRoute = AccesContRouteImport.update({
   id: '/acces-cont',
   path: '/acces-cont',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BlogRoute = BlogRouteImport.update({
+  id: '/blog',
+  path: '/blog',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ConfidentialitateRoute = ConfidentialitateRouteImport.update({
@@ -230,6 +238,11 @@ const AuthCallbackRoute = AuthCallbackRouteImport.update({
   id: '/auth/callback',
   path: '/auth/callback',
   getParentRoute: () => rootRouteImport,
+} as any)
+const BlogSlugRoute = BlogSlugRouteImport.update({
+  id: '/$slug',
+  path: '/$slug',
+  getParentRoute: () => BlogRoute,
 } as any)
 const OfertaIdRoute = OfertaIdRouteImport.update({
   id: '/oferta/$id',
@@ -483,6 +496,11 @@ const AuthenticatedAppRequestsIdRoute =
     path: '/$id',
     getParentRoute: () => AuthenticatedAppRequestsRoute,
   } as any)
+const ApiPublicBlogMediaSplatRoute = ApiPublicBlogMediaSplatRouteImport.update({
+  id: '/api/public/blog-media/$',
+  path: '/api/public/blog-media/$',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicCronAccountDeletionRoute =
   ApiPublicCronAccountDeletionRouteImport.update({
     id: '/api/public/cron/account-deletion',
@@ -739,6 +757,7 @@ const ApiPublicSitesV1MediaAgentIdRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/acces-cont': typeof AccesContRoute
+  '/blog': typeof BlogRouteWithChildren
   '/confidentialitate': typeof ConfidentialitateRoute
   '/contact': typeof ContactRoute
   '/despre': typeof DespreRoute
@@ -758,6 +777,7 @@ export interface FileRoutesByFullPath {
   '/onboarding': typeof AuthenticatedOnboardingRoute
   '/superadmin': typeof AuthenticatedSuperadminRouteWithChildren
   '/auth/callback': typeof AuthCallbackRoute
+  '/blog/$slug': typeof BlogSlugRoute
   '/oferta/$id': typeof OfertaIdRoute
   '/app/activities': typeof AuthenticatedAppActivitiesRoute
   '/app/ai': typeof AuthenticatedAppAiRoute
@@ -798,6 +818,7 @@ export interface FileRoutesByFullPath {
   '/app/properties/$id': typeof AuthenticatedAppPropertiesIdRoute
   '/app/properties/new': typeof AuthenticatedAppPropertiesNewRoute
   '/app/requests/$id': typeof AuthenticatedAppRequestsIdRoute
+  '/api/public/blog-media/$': typeof ApiPublicBlogMediaSplatRoute
   '/api/public/cron/account-deletion': typeof ApiPublicCronAccountDeletionRoute
   '/api/public/cron/lacheie-resend': typeof ApiPublicCronLacheieResendRoute
   '/api/public/cron/listing-collector': typeof ApiPublicCronListingCollectorRoute
@@ -850,6 +871,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/acces-cont': typeof AccesContRoute
+  '/blog': typeof BlogRouteWithChildren
   '/confidentialitate': typeof ConfidentialitateRoute
   '/contact': typeof ContactRoute
   '/despre': typeof DespreRoute
@@ -867,6 +889,7 @@ export interface FileRoutesByTo {
   '/anunturi-proprietari': typeof AuthenticatedAnunturiProprietariRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
   '/auth/callback': typeof AuthCallbackRoute
+  '/blog/$slug': typeof BlogSlugRoute
   '/oferta/$id': typeof OfertaIdRoute
   '/app/activities': typeof AuthenticatedAppActivitiesRoute
   '/app/ai': typeof AuthenticatedAppAiRoute
@@ -907,6 +930,7 @@ export interface FileRoutesByTo {
   '/app/properties/$id': typeof AuthenticatedAppPropertiesIdRoute
   '/app/properties/new': typeof AuthenticatedAppPropertiesNewRoute
   '/app/requests/$id': typeof AuthenticatedAppRequestsIdRoute
+  '/api/public/blog-media/$': typeof ApiPublicBlogMediaSplatRoute
   '/api/public/cron/account-deletion': typeof ApiPublicCronAccountDeletionRoute
   '/api/public/cron/lacheie-resend': typeof ApiPublicCronLacheieResendRoute
   '/api/public/cron/listing-collector': typeof ApiPublicCronListingCollectorRoute
@@ -961,6 +985,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/acces-cont': typeof AccesContRoute
+  '/blog': typeof BlogRouteWithChildren
   '/confidentialitate': typeof ConfidentialitateRoute
   '/contact': typeof ContactRoute
   '/despre': typeof DespreRoute
@@ -980,6 +1005,7 @@ export interface FileRoutesById {
   '/_authenticated/onboarding': typeof AuthenticatedOnboardingRoute
   '/_authenticated/superadmin': typeof AuthenticatedSuperadminRouteWithChildren
   '/auth/callback': typeof AuthCallbackRoute
+  '/blog/$slug': typeof BlogSlugRoute
   '/oferta/$id': typeof OfertaIdRoute
   '/_authenticated/app/activities': typeof AuthenticatedAppActivitiesRoute
   '/_authenticated/app/ai': typeof AuthenticatedAppAiRoute
@@ -1020,6 +1046,7 @@ export interface FileRoutesById {
   '/_authenticated/app/properties/$id': typeof AuthenticatedAppPropertiesIdRoute
   '/_authenticated/app/properties/new': typeof AuthenticatedAppPropertiesNewRoute
   '/_authenticated/app/requests/$id': typeof AuthenticatedAppRequestsIdRoute
+  '/api/public/blog-media/$': typeof ApiPublicBlogMediaSplatRoute
   '/api/public/cron/account-deletion': typeof ApiPublicCronAccountDeletionRoute
   '/api/public/cron/lacheie-resend': typeof ApiPublicCronLacheieResendRoute
   '/api/public/cron/listing-collector': typeof ApiPublicCronListingCollectorRoute
@@ -1074,6 +1101,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/acces-cont'
+    | '/blog'
     | '/confidentialitate'
     | '/contact'
     | '/despre'
@@ -1093,6 +1121,7 @@ export interface FileRouteTypes {
     | '/onboarding'
     | '/superadmin'
     | '/auth/callback'
+    | '/blog/$slug'
     | '/oferta/$id'
     | '/app/activities'
     | '/app/ai'
@@ -1133,6 +1162,7 @@ export interface FileRouteTypes {
     | '/app/properties/$id'
     | '/app/properties/new'
     | '/app/requests/$id'
+    | '/api/public/blog-media/$'
     | '/api/public/cron/account-deletion'
     | '/api/public/cron/lacheie-resend'
     | '/api/public/cron/listing-collector'
@@ -1185,6 +1215,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/acces-cont'
+    | '/blog'
     | '/confidentialitate'
     | '/contact'
     | '/despre'
@@ -1202,6 +1233,7 @@ export interface FileRouteTypes {
     | '/anunturi-proprietari'
     | '/onboarding'
     | '/auth/callback'
+    | '/blog/$slug'
     | '/oferta/$id'
     | '/app/activities'
     | '/app/ai'
@@ -1242,6 +1274,7 @@ export interface FileRouteTypes {
     | '/app/properties/$id'
     | '/app/properties/new'
     | '/app/requests/$id'
+    | '/api/public/blog-media/$'
     | '/api/public/cron/account-deletion'
     | '/api/public/cron/lacheie-resend'
     | '/api/public/cron/listing-collector'
@@ -1295,6 +1328,7 @@ export interface FileRouteTypes {
     | '/'
     | '/_authenticated'
     | '/acces-cont'
+    | '/blog'
     | '/confidentialitate'
     | '/contact'
     | '/despre'
@@ -1314,6 +1348,7 @@ export interface FileRouteTypes {
     | '/_authenticated/onboarding'
     | '/_authenticated/superadmin'
     | '/auth/callback'
+    | '/blog/$slug'
     | '/oferta/$id'
     | '/_authenticated/app/activities'
     | '/_authenticated/app/ai'
@@ -1354,6 +1389,7 @@ export interface FileRouteTypes {
     | '/_authenticated/app/properties/$id'
     | '/_authenticated/app/properties/new'
     | '/_authenticated/app/requests/$id'
+    | '/api/public/blog-media/$'
     | '/api/public/cron/account-deletion'
     | '/api/public/cron/lacheie-resend'
     | '/api/public/cron/listing-collector'
@@ -1408,6 +1444,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AccesContRoute: typeof AccesContRoute
+  BlogRoute: typeof BlogRouteWithChildren
   ConfidentialitateRoute: typeof ConfidentialitateRoute
   ContactRoute: typeof ContactRoute
   DespreRoute: typeof DespreRoute
@@ -1424,6 +1461,7 @@ export interface RootRouteChildren {
   TermeniSiConditiiRoute: typeof TermeniSiConditiiRoute
   AuthCallbackRoute: typeof AuthCallbackRoute
   OfertaIdRoute: typeof OfertaIdRoute
+  ApiPublicBlogMediaSplatRoute: typeof ApiPublicBlogMediaSplatRoute
   ApiPublicCronAccountDeletionRoute: typeof ApiPublicCronAccountDeletionRoute
   ApiPublicCronLacheieResendRoute: typeof ApiPublicCronLacheieResendRoute
   ApiPublicCronListingCollectorRoute: typeof ApiPublicCronListingCollectorRoute
@@ -1486,6 +1524,13 @@ declare module '@tanstack/react-router' {
       path: '/acces-cont'
       fullPath: '/acces-cont'
       preLoaderRoute: typeof AccesContRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/blog': {
+      id: '/blog'
+      path: '/blog'
+      fullPath: '/blog'
+      preLoaderRoute: typeof BlogRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/confidentialitate': {
@@ -1620,6 +1665,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/auth/callback'
       preLoaderRoute: typeof AuthCallbackRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/blog/$slug': {
+      id: '/blog/$slug'
+      path: '/$slug'
+      fullPath: '/blog/$slug'
+      preLoaderRoute: typeof BlogSlugRouteImport
+      parentRoute: typeof BlogRoute
     }
     '/oferta/$id': {
       id: '/oferta/$id'
@@ -1928,6 +1980,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/app/requests/$id'
       preLoaderRoute: typeof AuthenticatedAppRequestsIdRouteImport
       parentRoute: typeof AuthenticatedAppRequestsRoute
+    }
+    '/api/public/blog-media/$': {
+      id: '/api/public/blog-media/$'
+      path: '/api/public/blog-media/$'
+      fullPath: '/api/public/blog-media/$'
+      preLoaderRoute: typeof ApiPublicBlogMediaSplatRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/api/public/cron/account-deletion': {
       id: '/api/public/cron/account-deletion'
@@ -2385,6 +2444,16 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
 const AuthenticatedRouteRouteWithChildren =
   AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
 
+interface BlogRouteChildren {
+  BlogSlugRoute: typeof BlogSlugRoute
+}
+
+const BlogRouteChildren: BlogRouteChildren = {
+  BlogSlugRoute: BlogSlugRoute,
+}
+
+const BlogRouteWithChildren = BlogRoute._addFileChildren(BlogRouteChildren)
+
 interface ApiPublicHomepitchV1PropertiesRouteChildren {
   ApiPublicHomepitchV1PropertiesIdRoute: typeof ApiPublicHomepitchV1PropertiesIdRoute
 }
@@ -2432,6 +2501,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AccesContRoute: AccesContRoute,
+  BlogRoute: BlogRouteWithChildren,
   ConfidentialitateRoute: ConfidentialitateRoute,
   ContactRoute: ContactRoute,
   DespreRoute: DespreRoute,
@@ -2448,6 +2518,7 @@ const rootRouteChildren: RootRouteChildren = {
   TermeniSiConditiiRoute: TermeniSiConditiiRoute,
   AuthCallbackRoute: AuthCallbackRoute,
   OfertaIdRoute: OfertaIdRoute,
+  ApiPublicBlogMediaSplatRoute: ApiPublicBlogMediaSplatRoute,
   ApiPublicCronAccountDeletionRoute: ApiPublicCronAccountDeletionRoute,
   ApiPublicCronLacheieResendRoute: ApiPublicCronLacheieResendRoute,
   ApiPublicCronListingCollectorRoute: ApiPublicCronListingCollectorRoute,
