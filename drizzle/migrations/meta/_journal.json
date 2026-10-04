@@ -785,6 +785,13 @@
       "when": 1791105747095,
       "tag": "0111_company_inactive_since",
       "breakpoints": true
+    },
+    {
+      "idx": 112,
+      "version": "7",
+      "when": 1791134715635,
+      "tag": "0112_create_blog_posts",
+      "breakpoints": true
     }
   ]
 }
