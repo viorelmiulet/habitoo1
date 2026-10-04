@@ -33,10 +33,12 @@ export function AgencyPortalCatalogCard() {
   });
 
   const request = useMutation({
-    mutationFn: (portalId: string) => sendRequest({ data: { portalId } }),
+    mutationFn: async (portalId: string) => ({ portalId, ...(await sendRequest({ data: { portalId } })) }),
     onSuccess: (result) => {
       toast.success(
-        result.alreadyPending
+        result.portalId === "imospot"
+          ? "Cererea a fost trimisă către Imospot. Vei primi cheia pe email."
+          : result.alreadyPending
           ? "Cererea era deja trimisă și așteaptă aprobare."
           : "Cererea de activare a fost trimisă.",
       );
@@ -166,7 +168,7 @@ export function AgencyPortalCatalogCard() {
                         />
                         {state.label}
                       </span>
-                    ) : isLaCheie && organizationId ? (
+                    ) : item.id === "imospot" && item.request?.status === "approved" ? null : isLaCheie && organizationId ? (
                       <LaCheieActivationPanel organizationId={organizationId} />
                     ) : (
                       <Button
