@@ -2,7 +2,9 @@ import { useServerFn } from "@tanstack/react-start";
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import { Archive, ArchiveRestore, Building2, Check, FileUp, Pencil, Search, Trash2, X } from "lucide-react";
+import { Archive, ArchiveRestore, Building2, Check, ChevronDown, FileUp, Pencil, Search, Trash2, X } from "lucide-react";
+import { RegistrationRequestDetails } from "@/components/superadmin/RegistrationRequestDetails";
+import { getRegistrationRequestDetails } from "@/lib/registration-request-details.functions";
 import { AgencyDetailsDialog } from "@/components/superadmin/AgencyDetailsDialog";
 
 import { SubscriptionPicker } from "@/components/superadmin/SubscriptionPicker";
