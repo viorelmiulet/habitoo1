@@ -32,7 +32,7 @@ describe("firme inactive ANAF", () => {
 });
 
 describe("Imospot nu e blocat de starea ANAF", () => {
-  const company = { agencyName: "A", legalName: "X SRL", cui: "40930967", tradeRegistryNumber: "J40/1/2019", adminName: "Ion", adminEmail: "a@b.ro", adminPhone: "0722123456", city: "București", activeListings: 1 };
+  const company = { agencyName: "A", legalName: "X SRL", cui: "40930967", tradeRegistryNumber: "J40/1/2019", adminName: "Ion", adminEmail: "a@b.ro", adminPhone: "0722123456", city: "București" };
   it("firmă inactivă → cererea pleacă (simulat), ca la una activă", async () => {
     let sent = 0;
     const deps = {

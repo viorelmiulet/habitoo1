@@ -6,7 +6,8 @@ import { z } from "zod";
 
 export const IMOSPOT_PORTAL_ID = "imospot";
 export const IMOSPOT_SETTINGS_KEY = "imospot_key_request";
-export const IMOSPOT_SETTINGS_URL = "https://crm.habitoo.ro/app/settings?tab=portals";
+/** Logo-ul Habitoo, același fișier public folosit și în celelalte documente generate. */
+export const HABITOO_LOGO_URL = "https://crm.habitoo.ro/assets/habitoo-logo.png";
 
 export const imospotSettingsSchema = z.object({
   to: z.string().trim().email("Destinatar invalid.").max(255),
@@ -35,7 +36,6 @@ export type ImospotCompanyData = {
   adminEmail: string | null;
   adminPhone: string | null;
   city: string | null;
-  activeListings: number | null;
 };
 
 const REQUIRED: { key: keyof ImospotCompanyData; label: string }[] = [
@@ -65,8 +65,6 @@ export function buildImospotEmail(d: ImospotCompanyData, s: ImospotSettings) {
     ["Telefon", d.adminPhone ?? "—"],
     ["Oraș", d.city ?? "—"],
   ];
-  if (d.activeListings !== null) rows.push(["Anunțuri active în Habitoo", String(d.activeListings)]);
-  rows.push(["Pagina din Habitoo unde se introduce cheia", `${IMOSPOT_SETTINGS_URL} (fila Portaluri, cardul Imospot)`]);
 
   const intro =
     "Bună ziua,\n\nVă rugăm să creați contul Imospot și să emiteți cheia API pentru agenția de mai jos, partener Habitoo CRM:";
