@@ -47,6 +47,16 @@ export const approveRegistrationRequest = createServerFn({ method: "POST" })
       .single();
     if (requestError) throw new Error(requestError.message);
 
+    // 2b. Datele firmei din ANAF la crearea organizației — best-effort, nu blochează aprobarea.
+    if (request.organization_id) {
+      try {
+        const { syncOrgFromAnaf } = await import("@/lib/company-lookup.server");
+        await syncOrgFromAnaf(supabaseAdmin, request.organization_id, ctx.userId ?? null);
+      } catch (e) {
+        console.error("[registration] ANAF sync failed", e);
+      }
+    }
+
     // 3. Emailul de confirmare — best-effort; aprobarea nu se anulează dacă emailul pică.
     let emailSent = false;
     try {
