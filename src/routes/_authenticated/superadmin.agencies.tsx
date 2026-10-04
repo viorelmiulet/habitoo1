@@ -114,6 +114,115 @@ function PlanPicker({
   );
 }
 
+type RegistrationRequestRow = {
+  id: string;
+  agency_name: string;
+  legal_name: string;
+  cui: string;
+  trade_registry_number: string;
+  full_name: string;
+  email: string | null;
+  phone: string | null;
+  created_at: string;
+};
+
+/** Rând extensibil pentru o cerere de înscriere: detaliile se încarcă la extindere. */
+function RegistrationRequestListItem({
+  r,
+  approving,
+  rejecting,
+  rejectReason,
+  onApprove,
+  onToggleReject,
+  onRejectReason,
+  onConfirmReject,
+  rejectPending,
+}: {
+  r: RegistrationRequestRow;
+  approving: boolean;
+  rejecting: boolean;
+  rejectReason: string;
+  onApprove: () => void;
+  onToggleReject: () => void;
+  onRejectReason: (v: string) => void;
+  onConfirmReject: () => void;
+  rejectPending: boolean;
+}) {
+  const [expanded, setExpanded] = useState(false);
+  const fetchDetails = useServerFn(getRegistrationRequestDetails);
+  const details = useQuery({
+    queryKey: ["superadmin", "registration-request", r.id],
+    queryFn: () => fetchDetails({ data: { requestId: r.id } }),
+    enabled: expanded,
+  });
+
+  return (
+    <li className="space-y-3 px-4 py-4 text-sm">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div className="flex min-w-0 items-start gap-2">
+          <Button
+            size="sm"
+            variant="ghost"
+            className="mt-0.5 size-7 shrink-0 p-0"
+            aria-label={expanded ? `Restrânge detaliile pentru ${r.agency_name}` : `Extinde detaliile pentru ${r.agency_name}`}
+            aria-expanded={expanded}
+            onClick={() => setExpanded((v) => !v)}
+          >
+            <ChevronDown
+              className={`size-4 transition-transform ${expanded ? "rotate-180" : ""}`}
+            />
+          </Button>
+          <div className="min-w-0">
+            <p className="flex items-center gap-2 font-medium">
+              <span className="truncate">{r.agency_name}</span>
+              <StatusBadge tone="warning">În așteptare</StatusBadge>
+            </p>
+            <p className="text-xs text-muted-foreground">
+              {r.legal_name} · CUI {r.cui} · Reg. Com. {r.trade_registry_number}
+            </p>
+            <p className="text-xs text-muted-foreground">
+              {r.full_name} · {r.phone ?? "fără telefon"} · {r.email ?? "fără email"}
+            </p>
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-muted-foreground">{formatDate(r.created_at)}</span>
+          <Button size="sm" disabled={approving} onClick={onApprove}>
+            <Check className="mr-1.5 size-4" />
+            Aprobă
+          </Button>
+          <Button size="sm" variant="outline" onClick={onToggleReject}>
+            <X className="mr-1.5 size-4" />
+            Respinge
+          </Button>
+        </div>
+      </div>
+      {rejecting ? (
+        <div className="flex flex-wrap items-center gap-2">
+          <Input
+            value={rejectReason}
+            onChange={(e) => onRejectReason(e.target.value)}
+            placeholder="Motivul respingerii (opțional, vizibil agenției)"
+            className="max-w-md"
+          />
+          <Button size="sm" variant="destructive" disabled={rejectPending} onClick={onConfirmReject}>
+            Confirmă respingerea
+          </Button>
+        </div>
+      ) : null}
+      {expanded ? (
+        details.isLoading ? (
+          <ListSkeleton rows={3} />
+        ) : details.data ? (
+          <RegistrationRequestDetails details={details.data} />
+        ) : (
+          <p className="text-xs text-muted-foreground">Detaliile nu au putut fi încărcate.</p>
+        )
+      ) : null}
+    </li>
+  );
+}
+
 function AgenciesPage() {
   const queryClient = useQueryClient();
   const { data: me } = useCurrentUser();
