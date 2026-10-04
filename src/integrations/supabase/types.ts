@@ -4157,6 +4157,7 @@ export type Database = {
           archived_by: string | null
           city: string | null
           collab_default_commission_percent: number | null
+          collaboration_auto_enabled: boolean
           collaboration_enabled: boolean
           contract_inventory_defaults: Json
           created_at: string
@@ -4210,6 +4211,7 @@ export type Database = {
           archived_by?: string | null
           city?: string | null
           collab_default_commission_percent?: number | null
+          collaboration_auto_enabled?: boolean
           collaboration_enabled?: boolean
           contract_inventory_defaults?: Json
           created_at?: string
@@ -4263,6 +4265,7 @@ export type Database = {
           archived_by?: string | null
           city?: string | null
           collab_default_commission_percent?: number | null
+          collaboration_auto_enabled?: boolean
           collaboration_enabled?: boolean
           contract_inventory_defaults?: Json
           created_at?: string
@@ -5929,6 +5932,7 @@ export type Database = {
           collab_commission_percent: number | null
           collab_terms: string | null
           collaboration: boolean
+          collaboration_opted_out: boolean
           comfort: string | null
           commission: string | null
           construction_stage: string | null
@@ -6063,6 +6067,7 @@ export type Database = {
           collab_commission_percent?: number | null
           collab_terms?: string | null
           collaboration?: boolean
+          collaboration_opted_out?: boolean
           comfort?: string | null
           commission?: string | null
           construction_stage?: string | null
@@ -6197,6 +6202,7 @@ export type Database = {
           collab_commission_percent?: number | null
           collab_terms?: string | null
           collaboration?: boolean
+          collaboration_opted_out?: boolean
           comfort?: string | null
           commission?: string | null
           construction_stage?: string | null
@@ -7988,6 +7994,10 @@ export type Database = {
           isOneToOne: false
           isSetofReturn: true
         }
+      }
+      collaboration_auto_activate: {
+        Args: { _actor: string; _org: string; _source: string }
+        Returns: number
       }
       collector_arm: { Args: never; Returns: undefined }
       collector_tick: { Args: never; Returns: undefined }
