@@ -173,7 +173,7 @@ export const superadminNav: NavGroup[] = [
       { label: "Funcții AI", to: "/superadmin/ai-features", icon: Bot },
       { label: "Email", to: "/superadmin/mail", icon: Mail },
       { label: "Suport", to: "/superadmin/support", icon: LifeBuoy },
-      { label: "Nomenclator SIRUTA", to: "/superadmin/nomenclator", icon: MapPin },
+      { label: "Nomenclator localități", to: "/superadmin/nomenclator", icon: MapPin },
       { label: "QA / Demo Data", to: "/superadmin/qa", icon: FlaskConical },
     ],
   },

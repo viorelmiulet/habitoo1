@@ -823,7 +823,12 @@ function PropertyDetailPage() {
             >
               <FormSection title="Date generale">
                 <div className="grid gap-5 md:grid-cols-2">
-                  <LocationPicker idPrefix="edit" value={location} onChange={setLocation} />
+                  <LocationPicker
+                    idPrefix="edit"
+                    value={location}
+                    onChange={setLocation}
+                    onPostalCode={(code) => setDraft((d) => ({ ...d, postal_code: code ?? "" }))}
+                  />
                   {[
                     ["title", "Titlu"],
                     ["district", "Zonă"],
