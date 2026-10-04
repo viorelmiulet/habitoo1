@@ -1,4 +1,4 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate, useSearch } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRef, useState } from "react";
 import {
@@ -149,6 +149,7 @@ export const Route = createFileRoute("/_authenticated/app/properties/$id")({
 
 function PropertyDetailPage() {
   const { id } = Route.useParams();
+  const search = useSearch({ strict: false }) as { tab?: string };
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { data: user } = useCurrentUser();
@@ -171,7 +172,7 @@ function PropertyDetailPage() {
 
   const [editing, setEditing] = useState(false);
   /** Fila activă; butonul din antet duce direct la fluxul ACP. */
-  const [tab, setTab] = useState("overview");
+  const [tab, setTab] = useState(() => search.tab === "publishing" ? "publishing" : "overview");
 
   /** Evită tipăriri suprapuse ale fișei de prezentare. */
   const printingRef = useRef(false);

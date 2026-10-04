@@ -363,19 +363,8 @@ export async function processStatusWithdrawItem(
     .eq("id", item.id);
   await audit("portal_auto_withdraw_failed", { error: outcome.message });
 
-  // Notificare: agentul responsabil sau, dacă nu există, cel care a schimbat statusul.
-  const recipient = (property.assigned_to as string | null) ?? item.requested_by;
-  if (recipient) {
-    const def = getPortalDefinition(item.portal_key);
-    const label = property.reference ?? property.title ?? "Proprietate";
-    await deps.notify({
-      organizationId: item.organization_id,
-      userId: recipient,
-      title: `Retragere eșuată de pe ${def?.display_name ?? item.portal_key}: ${label}`,
-      body: `După ${attempts} încercări: ${outcome.message} Retrage manual oferta din fila Publicare.`,
-      link: `/app/properties/${item.property_id}`,
-    });
-  }
+  // Shared listing failures already alert the agent and admins on the first attempt.
+  // Do not send a second, technical notification when retries are exhausted.
   return { status: "failed", message: outcome.message };
 }
 

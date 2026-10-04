@@ -1144,6 +1144,14 @@ export async function persistListingFailure(
     .eq("organization_id", input.organizationId)
     .eq("portal", input.portalKey)
     .eq("property_id", input.propertyId);
+  const { notifyPortalFailure } = await import("@/lib/portals/failure-notification.server");
+  await notifyPortalFailure(admin, {
+    organizationId: input.organizationId,
+    portalKey: input.portalKey,
+    portalName: getPortalDefinition(input.portalKey)?.display_name ?? input.portalKey,
+    propertyId: input.propertyId,
+    error: input.message,
+  }).catch(() => undefined); // Notifications must not change the publication result.
 }
 
 /**
@@ -1520,6 +1528,14 @@ export async function executeListingAction(input: {
   });
 
   // Jurnal: „Promovare activată/dezactivată” când promovarea confirmată se schimbă.
+  if (status === "error") {
+    const { notifyPortalFailure } = await import("@/lib/portals/failure-notification.server");
+    await notifyPortalFailure(admin, {
+      organizationId, propertyId, portalKey: definition.id,
+      portalName: definition.display_name,
+      error: errorMessage ?? "Eroare portal",
+    }).catch(() => undefined);
+  }
   const promoOp =
     promotionFlag && action !== "withdraw" ? promotionOperation(savedPromoted, requestedPromoted) : null;
   if (promoOp && result.ok && input.operationLabel !== promoOp) {
