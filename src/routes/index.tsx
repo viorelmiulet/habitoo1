@@ -11,6 +11,7 @@ import {
   ShieldCheck,
   Sparkles,
   Users,
+  type LucideIcon,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { BrandLogo } from "@/components/brand/BrandLogo";
@@ -82,7 +83,15 @@ const trustItems = [
   { icon: Users, label: "Echipă cu roluri" },
 ];
 
-const features = [
+type HomeFeature = {
+  icon: LucideIcon;
+  title: string;
+  text: string;
+  wide?: boolean;
+  visual?: "properties" | "matching";
+};
+
+const features: HomeFeature[] = [
   {
     icon: Building2,
     title: "Proprietăți",
@@ -117,7 +126,7 @@ const features = [
     title: "Rapoarte",
     text: "Înțelegi portofoliul, activitatea și rezultatele agenției.",
   },
-] as const;
+];
 
 const steps = [
   ["Adaugi proprietățile", "Completezi datele și fotografiile o singură dată."],
