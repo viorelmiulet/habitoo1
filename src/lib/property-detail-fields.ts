@@ -71,7 +71,8 @@ export const PROPERTY_DETAIL_FIELDS = [
   "street_arrangement",
   "views",
   "misc_features",
-  "features",
+  // `features` (vechiul grup „Facilități”) nu se mai editează și nu se trimite
+  // la salvare, ca valorile existente să rămână neatinse.
 ] as const;
 
 export type PropertyDetailField = (typeof PROPERTY_DETAIL_FIELDS)[number];
