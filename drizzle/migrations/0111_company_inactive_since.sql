@@ -1,0 +1,2 @@
+ALTER TABLE public.organizations ADD COLUMN IF NOT EXISTS company_inactive_since date;
+COMMENT ON COLUMN public.organizations.company_inactive_since IS 'Data inactivării fiscale conform ANAF (stare_inactiv.dataInactivare); null când firma e activă.';
