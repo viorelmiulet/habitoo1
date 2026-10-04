@@ -27,4 +27,24 @@ describe("grila de publicare", () => {
     expect(view).toContain('noSlots ||');
     expect(view).toContain('din {slot.allocated} sloturi');
   });
+
+  it("ține câmpurile de colaborare în cardul Colaborare Habitoo, stivuite și active doar în editare", () => {
+    const card = view.indexOf('portal-habitoo-collaboration');
+    const percent = view.indexOf('id="collab-percent"');
+    const terms = view.indexOf('id="collab-terms"');
+    const cells = view.indexOf('cells.map((cell, index)');
+    // Rândurile de portal vin după card; câmpurile sunt în interiorul lui.
+    expect(card).toBeGreaterThan(-1);
+    expect(percent).toBeGreaterThan(card);
+    expect(terms).toBeGreaterThan(percent);
+    expect(terms).toBeLessThan(cells);
+    // Fără rând separat pe toată lățimea.
+    expect(view).not.toContain('md:col-span-2 lg:col-span-3');
+    // Stivuite vertical, deasupra etichetei care bifează la click.
+    expect(view).toContain('relative z-10 mt-3 min-w-0 space-y-3 pointer-events-auto');
+    // Vizibile doar cu bifa bifată.
+    expect(view.indexOf('{collabValue ? (')).toBeLessThan(percent);
+    // Dezactivate în afara editării, ca bifa.
+    expect(view.match(/disabled=\{!editing \|\| !canManage\}/g)).toHaveLength(3);
+  });
 });
