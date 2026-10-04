@@ -33,10 +33,12 @@ export function AgencyPortalCatalogCard() {
   });
 
   const request = useMutation({
-    mutationFn: (portalId: string) => sendRequest({ data: { portalId } }),
+    mutationFn: async (portalId: string) => ({ portalId, ...(await sendRequest({ data: { portalId } })) }),
     onSuccess: (result) => {
       toast.success(
-        result.alreadyPending
+        result.portalId === "imospot"
+          ? "Cererea a fost trimisă către Imospot. Vei primi cheia pe email."
+          : result.alreadyPending
           ? "Cererea era deja trimisă și așteaptă aprobare."
           : "Cererea de activare a fost trimisă.",
       );
@@ -130,10 +132,16 @@ export function AgencyPortalCatalogCard() {
                 </div>
                 {item.id === "imospot" ? (
                   <div className="space-y-2 text-xs text-muted-foreground">
-                    <p>
-                      Cheia API este emisă de Imospot după aprobarea cererii, de obicei în aceeași zi
-                      lucrătoare, și ajunge pe emailul administratorului.
-                    </p>
+                    {item.request?.status === "approved" && state.key !== "connected" ? (
+                      <p data-imospot-sent className="font-medium text-foreground">
+                        Cererea a fost trimisă către Imospot. Vei primi cheia pe email.
+                      </p>
+                    ) : (
+                      <p>
+                        Cheia API este emisă de Imospot, de obicei în aceeași zi lucrătoare, și
+                        ajunge pe emailul administratorului.
+                      </p>
+                    )}
                     {item.companyDataMissing.length > 0 ? (
                       <p data-imospot-incomplete className="text-destructive">
                         Completează datele firmei în{" "}
@@ -160,7 +168,7 @@ export function AgencyPortalCatalogCard() {
                         />
                         {state.label}
                       </span>
-                    ) : isLaCheie && organizationId ? (
+                    ) : item.id === "imospot" && item.request?.status === "approved" ? null : isLaCheie && organizationId ? (
                       <LaCheieActivationPanel organizationId={organizationId} />
                     ) : (
                       <Button
