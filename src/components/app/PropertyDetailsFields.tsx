@@ -36,7 +36,6 @@ import {
   floorFinishOptions,
   floorLabelOptions,
   furnishingOptions,
-  generalFeatureOptions,
   heatingOptions,
   insulationOptions,
   interiorDoorOptions,
@@ -476,12 +475,6 @@ export function PropertyDetailsFields({ idPrefix = "det", value, onChange }: Pro
           />
           <CheckGroup ctx={ctx} field="views" label="Priveliște" options={viewOptions} />
           <CheckGroup ctx={ctx} field="misc_features" label="Diverse" options={miscFeatureOptions} />
-          <CheckGroup
-            ctx={ctx}
-            field="features"
-            label="Facilități"
-            options={generalFeatureOptions}
-          />
         </AccordionContent>
       </AccordionItem>
     </Accordion>

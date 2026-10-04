@@ -7,7 +7,6 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { PROPERTY_DETAIL_FIELDS } from "@/lib/property-detail-fields";
-import { generalFeatureOptions } from "@/lib/property-taxonomy";
 
 const newScreen = readFileSync("src/routes/_authenticated/app.properties.new.tsx", "utf8");
 const editScreen = readFileSync("src/routes/_authenticated/app.properties.$id.tsx", "utf8");
@@ -21,7 +20,6 @@ const movedColumns = [
   "bathrooms",
   "floor_label",
   "build_year",
-  "features",
 ] as const;
 
 describe("caracteristicile proprietății", () => {
@@ -56,7 +54,6 @@ describe("caracteristicile proprietății", () => {
     }
     // Facilitățile sunt acum o listă din nomenclator, nu o listă locală.
     expect(newScreen).not.toContain("featureOptions");
-    expect(generalFeatureOptions.length).toBeGreaterThan(0);
   });
 
   it("nu mai sunt randate în ecranul de editare în afara secțiunii de detalii", () => {
@@ -90,5 +87,11 @@ describe("caracteristicile proprietății", () => {
     // Nicio regulă de validare nu era atașată câmpurilor mutate.
     expect(newScreen.match(/required/g) ?? []).toHaveLength(1);
     expect(newScreen).toContain('id="title"');
+  });
+
+  it("nu mai afișează grupul „Facilități” și nu trimite `features` la salvare", () => {
+    expect(detailsFields).not.toContain('field="features"');
+    expect(detailsFields).not.toContain('label="Facilități"');
+    expect(PROPERTY_DETAIL_FIELDS).not.toContain("features");
   });
 });

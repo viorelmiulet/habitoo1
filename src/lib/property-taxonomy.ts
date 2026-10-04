@@ -119,7 +119,6 @@ export const heatingOptions = [
   "Centrală pe lemne",
   "Încălzire pardoseală",
   "Calorifere",
-  "Semineu",
   "Pompă de căldură",
 ] as const;
 
@@ -281,19 +280,6 @@ export const parkingOptions = [
   "Parcare supraterană",
 ] as const;
 
-/** Facilitățile generale ale anunțului (coloana `features`). */
-export const generalFeatureOptions = [
-  "Balcon",
-  "Parcare",
-  "Lift",
-  "Terasă",
-  "Aer condiționat",
-  "Mobilat",
-  "Boxă",
-  "Grădină",
-  "Centrală proprie",
-] as const;
-
 /** Toate coloanele de tip listă (checkbox multiplu) din formularul de detalii. */
 export const PROPERTY_ARRAY_FIELDS = [
   "utilities",
@@ -315,7 +301,6 @@ export const PROPERTY_ARRAY_FIELDS = [
   "street_arrangement",
   "views",
   "misc_features",
-  "features",
 ] as const;
 
 export type PropertyArrayField = (typeof PROPERTY_ARRAY_FIELDS)[number];
