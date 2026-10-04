@@ -14,7 +14,7 @@ describe("host policy", () => {
     expect(decideEdge(req("https://habitoo.ro/api/public/x", "POST")).kind).toBe("redirect");
   });
   it("paginile de prezentare pe crm → 301 www, dar nu și `/`", () => {
-    for (const p of ["/functionalitati", "/preturi", "/despre", "/contact", "/termeni", "/politica-de-confidentialitate"]) {
+    for (const p of ["/functionalitati", "/integrari", "/preturi", "/despre", "/contact", "/termeni", "/politica-de-confidentialitate"]) {
       expect(decideEdge(req(`https://crm.habitoo.ro${p}?q=1`))).toEqual({
         kind: "redirect",
         location: `https://www.habitoo.ro${p}?q=1`,
@@ -53,6 +53,7 @@ describe("host policy", () => {
     expect(LLMS_TXT).toContain("contact@habitoo.ro");
     expect(LLMS_TXT).toContain("+40 767 941 512");
     expect(LLMS_TXT).toContain("Storia și OLX");
+    expect(LLMS_TXT).toContain("https://www.habitoo.ro/integrari");
     expect(LLMS_TXT).toContain("Catalog Facebook");
     expect(LLMS_TXT).toContain("Pro 40 €/lună");
     expect(LLMS_TXT).toContain("240 €/an Pro");

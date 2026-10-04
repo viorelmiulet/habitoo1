@@ -5,7 +5,7 @@ import { openCookiePreferences } from "@/lib/cookie-consent";
 import { FACEBOOK_URL } from "./structured-data";
 import { footerColumns } from "./public-nav";
 
-export function PublicFooter() {
+export function PublicFooter({ description = "CRM imobiliar pentru agențiile din România: proprietăți, clienți, cereri, lead-uri, matching automat, activități și rapoarte, într-o singură platformă." }: { description?: string }) {
   const year = new Date().getFullYear();
   return (
     <footer className="border-t border-border bg-card">
@@ -16,8 +16,7 @@ export function PublicFooter() {
               <BrandLogo />
             </Link>
             <p className="mt-5 max-w-sm text-sm leading-relaxed text-muted-foreground">
-              CRM imobiliar pentru agențiile din România: proprietăți, clienți, cereri, lead-uri,
-              matching automat, activități și rapoarte, într-o singură platformă.
+              {description}
             </p>
           </div>
           <div className="grid grid-cols-2 gap-8 sm:grid-cols-3 lg:col-span-7">

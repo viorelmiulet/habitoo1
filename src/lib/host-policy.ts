@@ -16,6 +16,7 @@ export const APEX_HOST = "habitoo.ro";
  */
 export const MARKETING_PATHS = new Set([
   "/functionalitati",
+  "/integrari",
   "/preturi",
   "/despre",
   "/contact",
@@ -43,6 +44,7 @@ Informații esențiale:
 ## Pagini
 
 - [Funcționalități](https://www.habitoo.ro/functionalitati): toate modulele CRM-ului
+- [Integrări](https://www.habitoo.ro/integrari): portalurile pe care le poți selecta pentru anunțuri și feedul Catalog Facebook
 - [Prețuri](https://www.habitoo.ro/preturi): planuri, perioada gratuită, întrebări frecvente
 - [Despre](https://www.habitoo.ro/despre): misiunea și principiile Habitoo
 - [Contact](https://www.habitoo.ro/contact): demonstrație, telefon, WhatsApp

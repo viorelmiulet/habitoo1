@@ -11,7 +11,7 @@
 
 <!-- LOVABLE:END -->
 
-- Properstar index: agency presence tracked in `properstar_index_state` (7-day Deleted grace after deactivation); agency links signed HMAC-SHA256(OfficeId, PROPERSTAR_INDEX_KEY). Why: Properstar pulls one index URL, deactivation has no reliable timestamp elsewhere.
+- Properstar index tracks agency presence with 7-day deletion grace; links use HMAC-SHA256. Why: one index URL; deactivation has no timestamp elsewhere.
 
 - Property status sold/rented/archived enqueues `portal_status_withdraw_items` (cron worker armed on enqueue) that withdraws via `applyPortalSelectionForOrg` enabled:false with reason status_sold/status_rented/archived; no auto-republish. Why: same path as manual deselect, non-blocking with retries.
 
@@ -34,4 +34,5 @@
 - Promotion catalogs are registered separately from listing portals and are merged only into the agency Settings portal list. Why: Catalog Facebook must look like a portal without entering portal publication, slot, activation, or withdrawal flows.
 - Table `agent_portal_preferences` is kept but unused by code: Publicare never preselects portals. Why: "Portalurile mele" was removed; data preserved.
 - Property publication cards share checkbox state and query only the assigned agent's slots; the server checks publication. Why: avoid duplicate state and other agents' quotas.
-- Public pricing cards and structured offers read shared plan display prices; subscription activation and seat limits remain separate. Why: marketing prices must not alter billing or capacity rules.
+- Public prices and structured offers read display prices; billing and seat limits stay separate. Why: marketing prices must not affect billing.
+- Public portal grids share one registry-backed component. Why: homepage and integrations must display the same list and logo note.

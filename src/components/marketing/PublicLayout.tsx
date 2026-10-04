@@ -3,7 +3,7 @@ import { CookieConsent } from "./CookieConsent";
 import { PublicFooter } from "./PublicFooter";
 import { PublicHeader } from "./PublicHeader";
 
-export function PublicLayout({ children }: { children: ReactNode }) {
+export function PublicLayout({ children, footerDescription }: { children: ReactNode; footerDescription?: string }) {
   return (
     <div className="mk-root flex min-h-screen flex-col bg-background text-foreground">
       <a
@@ -16,7 +16,7 @@ export function PublicLayout({ children }: { children: ReactNode }) {
       <main id="continut" className="flex-1">
         {children}
       </main>
-      <PublicFooter />
+      <PublicFooter description={footerDescription} />
       <CookieConsent />
     </div>
   );

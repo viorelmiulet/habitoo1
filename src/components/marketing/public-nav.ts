@@ -10,6 +10,7 @@ export const footerColumns = [
     title: "Produs",
     links: [
       { to: "/functionalitati", label: "Funcționalități" },
+      { to: "/integrari", label: "Integrări" },
       { to: "/preturi", label: "Prețuri" },
       { to: "/despre", label: "Despre" },
       { to: "/contact", label: "Contact" },

@@ -1,3 +1,7 @@
+## Pagină publică de integrări
+
+- [x] Grilă comună pe homepage și /integrari, texte despre modele, SEO și subsol; fără date modificate.
+
 ## Prețuri publice și ofertă de lansare
 
 - [x] Prețuri Basic/Pro/Unlimited actualizate doar în sursa de afișare, textele publice și datele structurate.
