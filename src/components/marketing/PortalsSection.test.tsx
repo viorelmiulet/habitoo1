@@ -9,6 +9,6 @@ describe("grila publică de portaluri", () => {
     const names = [...html.matchAll(/<p class="truncate text-sm font-semibold text-navy">([^<]+)<\/p>/g)].map((match) => match[1]);
     expect(names).toEqual([...PORTALS.map((portal) => portal.display_name), ...PROMOTION_CATALOGS.map((catalog) => catalog.display_name)]);
     expect(names.filter((name) => name === "Catalog Facebook")).toHaveLength(1);
-    expect(html).toMatch(/facebook\.svg/);
+    expect(html).toMatch(/title="Catalog Facebook"><img src="data:image\/svg\+xml,/);
   });
 });
