@@ -5,11 +5,15 @@ import { describe, expect, it, vi } from "vitest";
 
 (globalThis as unknown as { IS_REACT_ACT_ENVIRONMENT: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
-vi.mock("@tanstack/react-router", () => ({
-  createFileRoute: () => (config: Record<string, unknown>) => ({ ...config, useSearch: () => ({}) }),
-  Link: ({ children, to: _to, ...props }: { children: React.ReactNode; to?: string }) => <a {...props}>{children}</a>,
-  useNavigate: () => vi.fn(),
-}));
+vi.mock("@tanstack/react-router", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@tanstack/react-router")>();
+  return {
+    ...actual,
+    createFileRoute: () => (config: Record<string, unknown>) => ({ ...config, useSearch: () => ({}) }),
+    Link: ({ children, to: _to, ...props }: { children: React.ReactNode; to?: string }) => <a {...props}>{children}</a>,
+    useNavigate: () => vi.fn(),
+  };
+});
 vi.mock("@tanstack/react-query", () => ({ useQueryClient: () => ({ removeQueries: vi.fn() }) }));
 vi.mock("@/integrations/supabase/client", () => ({
   supabase: { auth: { signInWithPassword: vi.fn(), resend: vi.fn() } },
