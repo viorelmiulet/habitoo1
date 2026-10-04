@@ -16,8 +16,9 @@ export const Route = createFileRoute("/blog/$slug")({
     const { post } = loaderData; const title = post.seo_title || `${post.title} — Habitoo`; const description = post.seo_description || post.excerpt; const url = `${SITE_URL}/blog/${post.slug}`;
     const meta: Record<string,string>[] = [{ title }, { name: "description", content: description }, { property: "og:title", content: title }, { property: "og:description", content: description }, { property: "og:type", content: "article" }, { property: "og:url", content: url }, { property: "og:site_name", content: SITE_NAME }, { name: "twitter:card", content: "summary_large_image" }];
     if (post.published_at) meta.push({ property: "article:published_time", content: post.published_at });
-    if (post.cover_image_url?.startsWith("https://")) meta.push({ property: "og:image", content: post.cover_image_url }, { name: "twitter:image", content: post.cover_image_url });
-    return { meta, links: [{ rel: "canonical", href: url }], scripts: [{ type: "application/ld+json", children: JSON.stringify({ "@context": "https://schema.org", "@type": "BlogPosting", headline: post.title, description, datePublished: post.published_at, dateModified: post.updated_at, author: { "@type": "Organization", name: post.author_name }, publisher: { "@type": "Organization", name: "Habitoo" }, mainEntityOfPage: url, ...(post.cover_image_url?.startsWith("https://") ? { image: post.cover_image_url } : {}) }) }] };
+    const image = post.cover_image_url ? (post.cover_image_url.startsWith("http") ? post.cover_image_url : `${SITE_URL}${post.cover_image_url}`) : null;
+    if (image) meta.push({ property: "og:image", content: image }, { name: "twitter:image", content: image });
+    return { meta, links: [{ rel: "canonical", href: url }], scripts: [{ type: "application/ld+json", children: JSON.stringify({ "@context": "https://schema.org", "@type": "BlogPosting", headline: post.title, description, datePublished: post.published_at, dateModified: post.updated_at, author: { "@type": "Organization", name: post.author_name }, publisher: { "@type": "Organization", name: "Habitoo" }, mainEntityOfPage: url, ...(image ? { image } : {}) }) }] };
   },
   notFoundComponent: BlogNotFound,
   component: BlogArticlePage,
