@@ -22,8 +22,8 @@ describe("sugestii localitate", () => {
       row({ sirutaCode: 4, rawName: "BACIU" }),
       row({ sirutaCode: 5, rawName: "FLOREŞTI" }),
     ]);
-    expect(filterSuggestions(list, "").map((s) => s.name)).toEqual(["Turda", "Huedin", "Apahida", "Baciu", "Florești"]);
-    expect(filterSuggestions(list, "floresti").map((s) => s.name)).toEqual(["Florești"]);
+    expect(filterSuggestions(list, "").map((s) => s.name)).toEqual(["Turda", "Huedin", "Apahida", "Baciu", "Floreşti"]);
+    expect(filterSuggestions(list, "floresti").map((s) => s.name)).toEqual(["Floreşti"]);
   });
 
   it("lista vine doar din județul cerut (filtrul e pe interogare); filtrarea nu adaugă alte rânduri", () => {
