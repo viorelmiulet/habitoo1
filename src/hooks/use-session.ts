@@ -38,8 +38,26 @@ export type CurrentUser = {
 
 export const currentUserQueryKey = ["current-user"] as const;
 
+/** Limita de timp pentru apelurile de sesiune: după somnul tabului pot rămâne blocate. */
+export const SESSION_TIMEOUT_MS = 12_000;
+
+export class SessionTimeoutError extends Error {
+  constructor() {
+    super("Sesiunea nu a răspuns");
+    this.name = "SessionTimeoutError";
+  }
+}
+
+export function withSessionTimeout<T>(promise: Promise<T>, ms = SESSION_TIMEOUT_MS): Promise<T> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const timeout = new Promise<never>((_, reject) => {
+    timer = setTimeout(() => reject(new SessionTimeoutError()), ms);
+  });
+  return Promise.race([promise, timeout]).finally(() => clearTimeout(timer));
+}
+
 export async function fetchCurrentUser(): Promise<CurrentUser | null> {
-  const { data: userData } = await supabase.auth.getUser();
+  const { data: userData } = await withSessionTimeout(supabase.auth.getUser());
   const user = userData.user;
   if (!user) return null;
 
@@ -47,8 +65,8 @@ export async function fetchCurrentUser(): Promise<CurrentUser | null> {
   // Serverul revalidează starea cererii, deci un id inventat local nu are efect.
   const impersonationId = getImpersonationId();
   if (impersonationId) {
-    const session = await getImpersonationSession({ data: { id: impersonationId } }).catch(
-      () => null,
+    const session = await withSessionTimeout(
+      getImpersonationSession({ data: { id: impersonationId } }).catch(() => null),
     );
     if (!session) {
       clearImpersonationId();
@@ -151,5 +169,8 @@ export function useCurrentUser() {
     queryKey: currentUserQueryKey,
     queryFn: fetchCurrentUser,
     staleTime: 30_000,
+    // O sesiune care nu răspunde nu se mai reîncearcă de 3 ori la rând:
+    // ecranul de recuperare oferă imediat „Reîncearcă”.
+    retry: (count, error) => !(error instanceof SessionTimeoutError) && count < 3,
   });
 }
