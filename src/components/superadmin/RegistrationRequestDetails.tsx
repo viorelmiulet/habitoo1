@@ -116,7 +116,6 @@ export function RegistrationRequestDetails({ details }: { details: RegistrationR
             <div className="min-w-0 sm:col-span-2 lg:col-span-3">
               <Link
                 to="/superadmin/agencies"
-                search={{ tab: "all", q: o.name } as never}
                 className="text-sm font-medium text-primary underline-offset-4 hover:underline"
               >
                 Deschide agenția „{o.name}” în SuperAdmin
