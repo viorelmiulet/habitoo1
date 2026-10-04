@@ -25,6 +25,7 @@ import { Route as PreturiRouteImport } from './routes/preturi'
 import { Route as RegisterRouteImport } from './routes/register'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as SemnareRouteImport } from './routes/semnare'
+import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as TermeniRouteImport } from './routes/termeni'
 import { Route as TermeniSiConditiiRouteImport } from './routes/termeni-si-conditii'
 import { Route as AuthenticatedAnunturiProprietariRouteImport } from './routes/_authenticated/anunturi-proprietari'
@@ -203,6 +204,11 @@ const ResetPasswordRoute = ResetPasswordRouteImport.update({
 const SemnareRoute = SemnareRouteImport.update({
   id: '/semnare',
   path: '/semnare',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
+  id: '/sitemap.xml',
+  path: '/sitemap.xml',
   getParentRoute: () => rootRouteImport,
 } as any)
 const TermeniRoute = TermeniRouteImport.update({
@@ -784,6 +790,7 @@ export interface FileRoutesByFullPath {
   '/register': typeof RegisterRoute
   '/reset-password': typeof ResetPasswordRoute
   '/semnare': typeof SemnareRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/termeni': typeof TermeniRoute
   '/termeni-si-conditii': typeof TermeniSiConditiiRoute
   '/anunturi-proprietari': typeof AuthenticatedAnunturiProprietariRoute
@@ -900,6 +907,7 @@ export interface FileRoutesByTo {
   '/register': typeof RegisterRoute
   '/reset-password': typeof ResetPasswordRoute
   '/semnare': typeof SemnareRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/termeni': typeof TermeniRoute
   '/termeni-si-conditii': typeof TermeniSiConditiiRoute
   '/anunturi-proprietari': typeof AuthenticatedAnunturiProprietariRoute
@@ -1016,6 +1024,7 @@ export interface FileRoutesById {
   '/register': typeof RegisterRoute
   '/reset-password': typeof ResetPasswordRoute
   '/semnare': typeof SemnareRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/termeni': typeof TermeniRoute
   '/termeni-si-conditii': typeof TermeniSiConditiiRoute
   '/_authenticated/anunturi-proprietari': typeof AuthenticatedAnunturiProprietariRoute
@@ -1134,6 +1143,7 @@ export interface FileRouteTypes {
     | '/register'
     | '/reset-password'
     | '/semnare'
+    | '/sitemap.xml'
     | '/termeni'
     | '/termeni-si-conditii'
     | '/anunturi-proprietari'
@@ -1250,6 +1260,7 @@ export interface FileRouteTypes {
     | '/register'
     | '/reset-password'
     | '/semnare'
+    | '/sitemap.xml'
     | '/termeni'
     | '/termeni-si-conditii'
     | '/anunturi-proprietari'
@@ -1365,6 +1376,7 @@ export interface FileRouteTypes {
     | '/register'
     | '/reset-password'
     | '/semnare'
+    | '/sitemap.xml'
     | '/termeni'
     | '/termeni-si-conditii'
     | '/_authenticated/anunturi-proprietari'
@@ -1483,6 +1495,7 @@ export interface RootRouteChildren {
   RegisterRoute: typeof RegisterRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   SemnareRoute: typeof SemnareRoute
+  SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   TermeniRoute: typeof TermeniRoute
   TermeniSiConditiiRoute: typeof TermeniSiConditiiRoute
   AuthCallbackRoute: typeof AuthCallbackRoute
@@ -1641,6 +1654,13 @@ declare module '@tanstack/react-router' {
       path: '/semnare'
       fullPath: '/semnare'
       preLoaderRoute: typeof SemnareRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/sitemap.xml': {
+      id: '/sitemap.xml'
+      path: '/sitemap.xml'
+      fullPath: '/sitemap.xml'
+      preLoaderRoute: typeof SitemapDotxmlRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/termeni': {
@@ -2572,6 +2592,7 @@ const rootRouteChildren: RootRouteChildren = {
   RegisterRoute: RegisterRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   SemnareRoute: SemnareRoute,
+  SitemapDotxmlRoute: SitemapDotxmlRoute,
   TermeniRoute: TermeniRoute,
   TermeniSiConditiiRoute: TermeniSiConditiiRoute,
   AuthCallbackRoute: AuthCallbackRoute,
