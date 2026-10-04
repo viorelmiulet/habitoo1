@@ -8,6 +8,7 @@ import { lookupCompanyByCui } from "@/lib/company-lookup.functions";
 import {
   COMPANY_STATUS_LABEL,
   DUPLICATE_CUI_MESSAGE,
+  inactiveWarning,
   LOOKUP_MESSAGES,
   type CompanyInfo,
   type LookupResult,
@@ -92,8 +93,9 @@ export function CuiLookupField({ value, onChange, onState, lookup }: Props) {
           {state.company.status !== "activa" ? (
             <p role="alert" className="mt-2 flex gap-2 text-xs text-destructive">
               <AlertTriangle className="size-4 shrink-0" />
-              Firma apare ca {COMPANY_STATUS_LABEL[state.company.status].toLowerCase()} la ANAF. Poți continua
-              înregistrarea; echipa Habitoo va verifica datele.
+              {state.company.status === "inactiva"
+                ? `${inactiveWarning(state.company.inactiveSince)}. Poți continua înregistrarea.`
+                : `Firma apare ca ${COMPANY_STATUS_LABEL[state.company.status].toLowerCase()} la ANAF. Poți continua înregistrarea.`}
             </p>
           ) : null}
         </div>

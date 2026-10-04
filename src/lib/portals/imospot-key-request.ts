@@ -36,7 +36,11 @@ export type ImospotCompanyData = {
   adminPhone: string | null;
   city: string | null;
   activeListings: number | null;
+  /** Starea fiscală ANAF a organizației (`inactiva` blochează cererea). */
+  companyStatus?: string | null;
 };
+
+export const INACTIVE_COMPANY_MESSAGE = "Firma figurează ca inactivă la ANAF";
 
 const REQUIRED: { key: keyof ImospotCompanyData; label: string }[] = [
   { key: "legalName", label: "Denumire legală" },
@@ -110,6 +114,7 @@ export type NotifyOutcome =
   | { status: "sent" }
   | { status: "skipped"; reason: "not_applicable" | "already_sent" }
   | { status: "incomplete"; missing: string[] }
+  | { status: "inactive" }
   | { status: "failed"; error: string };
 
 /**
@@ -132,6 +137,11 @@ export async function notifyImospotForRequest(
   if (missing.length > 0) {
     await deps.save(row.id, { error: `${INCOMPLETE_PREFIX}${missing.join(", ")}` });
     return { status: "incomplete", missing };
+  }
+
+  if (company.companyStatus === "inactiva") {
+    await deps.save(row.id, { error: INACTIVE_COMPANY_MESSAGE });
+    return { status: "inactive" };
   }
 
   const settings = await deps.loadSettings();
