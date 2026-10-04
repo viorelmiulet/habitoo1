@@ -80,7 +80,7 @@ export default {
     if (decision.kind === "redirect") {
       return new Response(null, { status: 301, headers: { location: decision.location } });
     }
-    if (decision.kind === "robots" || decision.kind === "llms") {
+    if (decision.kind === "robots") {
       return withNoindexHeader(
         new Response(decision.body, { headers: { "content-type": "text/plain; charset=utf-8" } }),
         request,

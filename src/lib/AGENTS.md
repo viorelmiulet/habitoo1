@@ -1,2 +1,3 @@
 - Blog content is Markdown sanitized server-side to restricted HTML; keep public rendering safe.
 - Blog covers use private `blog-media`, served by the read-only public media route; writes stay SuperAdmin-only.
+- Sitemap, RSS, and llms.txt share the published-and-due blog filter and are generated per request.

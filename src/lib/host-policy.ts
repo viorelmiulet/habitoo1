@@ -19,6 +19,7 @@ export const MARKETING_PATHS = new Set([
   "/integrari",
   "/preturi",
   "/despre",
+  "/blog",
   "/contact",
   "/termeni",
   "/termeni-si-conditii",
@@ -28,50 +29,53 @@ export const MARKETING_PATHS = new Set([
 
 export const CRM_ROBOTS_TXT = "User-agent: *\nDisallow: /\nAllow: /api/public/\n";
 
-/** Fișierul llms.txt — servit DOAR pe www.habitoo.ro. */
-export const LLMS_TXT = `# Habitoo CRM
-
-> Habitoo CRM este un CRM imobiliar pentru agențiile din România. Gestionează proprietăți, clienți, cereri și lead-uri, face potrivirea automată între cereri și proprietăți și publică anunțurile pe portalurile imobiliare direct din aplicație.
-
-Informații esențiale:
-- Portaluri: Imobiliare.ro, Storia și OLX, Publi24 (prin Romimo), iMove, Imospot, HomePitch, PrimulAnunț, OferteImobiliare, LaCheie, ClickImob și, internațional, Properstar.
-- Catalog Facebook: anunțurile selectate pentru catalog sunt trimise prin feed în Meta Commerce Manager, pentru reclame și afișare în Facebook și Instagram.
-- Prețuri: Basic 10 €/lună (până la 3 agenți), Pro 40 €/lună (până la 10 agenți), Unlimited 100 €/lună (agenți nelimitați). -50% la plata anuală: 60 €/an Basic, 240 €/an Pro, 600 €/an Unlimited. 30 de zile gratuite, fără card bancar.
-- Colaborare între agenții de tip MLS, import din orice CRM imobiliar, date izolate pentru fiecare agenție.
-- Interfață în limba română, în browser, fără instalare. Aplicația mobilă pentru iOS și Android va fi disponibilă în curând.
-- Contact: contact@habitoo.ro, telefon/WhatsApp +40 767 941 512.
-
-## Pagini
-
-- [Funcționalități](https://www.habitoo.ro/functionalitati): toate modulele CRM-ului
-- [Integrări](https://www.habitoo.ro/integrari): portalurile pe care le poți selecta pentru anunțuri și feedul Catalog Facebook
-- [Prețuri](https://www.habitoo.ro/preturi): planuri, perioada gratuită, întrebări frecvente
-- [Despre](https://www.habitoo.ro/despre): misiunea și principiile Habitoo
-- [Contact](https://www.habitoo.ro/contact): demonstrație, telefon, WhatsApp
-
-## Opțional
-
-- [Termeni și condiții](https://www.habitoo.ro/termeni)
-- [Politica de confidențialitate](https://www.habitoo.ro/politica-de-confidentialitate)
-`;
-
 export const PUBLIC_ROBOTS_TXT = `User-agent: Googlebot
 Allow: /
 Disallow: /anunturi-proprietari
+Disallow: /app
+Disallow: /superadmin
+Disallow: /api/
+Disallow: /login
+Disallow: /register
+Disallow: /auth/
 
 User-agent: Bingbot
 Allow: /
 Disallow: /anunturi-proprietari
+Disallow: /app
+Disallow: /superadmin
+Disallow: /api/
+Disallow: /login
+Disallow: /register
+Disallow: /auth/
 
-User-agent: Twitterbot
-Allow: /
-
-User-agent: facebookexternalhit
-Allow: /
+User-agent: GPTBot
+User-agent: OAI-SearchBot
+User-agent: ChatGPT-User
+User-agent: ClaudeBot
+User-agent: Claude-SearchBot
+User-agent: PerplexityBot
+User-agent: Google-Extended
+User-agent: Applebot-Extended
+User-agent: CCBot
+Allow: /blog
+Disallow: /anunturi-proprietari
+Disallow: /app
+Disallow: /superadmin
+Disallow: /api/
+Disallow: /login
+Disallow: /register
+Disallow: /auth/
 
 User-agent: *
 Allow: /
 Disallow: /anunturi-proprietari
+Disallow: /app
+Disallow: /superadmin
+Disallow: /api/
+Disallow: /login
+Disallow: /register
+Disallow: /auth/
 
 Sitemap: https://www.habitoo.ro/sitemap.xml
 `;
@@ -88,7 +92,6 @@ function normalizePath(p: string): string {
 export type EdgeDecision =
   | { kind: "redirect"; location: string }
   | { kind: "robots"; body: string }
-  | { kind: "llms"; body: string }
   | { kind: "pass" };
 
 export function decideEdge(request: Request): EdgeDecision {
@@ -107,7 +110,7 @@ export function decideEdge(request: Request): EdgeDecision {
     if (isCrmHostname(host)) {
       return { kind: "redirect", location: `${PUBLIC_SITE_URL}/llms.txt` };
     }
-    return { kind: "llms", body: LLMS_TXT };
+    return { kind: "pass" };
   }
   if (isCrmHostname(host) && isRead && MARKETING_PATHS.has(normalizePath(url.pathname))) {
     return { kind: "redirect", location: `${PUBLIC_SITE_URL}${url.pathname}${url.search}` };

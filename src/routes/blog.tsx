@@ -14,7 +14,7 @@ const roDate = (value: string | null) => value ? new Intl.DateTimeFormat("ro-RO"
 
 export const Route = createFileRoute("/blog")({
   loader: () => listPublishedBlogPosts(),
-  head: () => publicHead({ path: "/blog", title: TITLE, description: DESCRIPTION, jsonLd: { "@context": "https://schema.org", "@type": "Blog", name: "Blog Habitoo", description: DESCRIPTION, url: `${SITE_URL}/blog`, publisher: { "@type": "Organization", name: "Habitoo" } } }),
+  head: ({ loaderData }) => publicHead({ path: "/blog", title: TITLE, description: DESCRIPTION, jsonLd: { "@context": "https://schema.org", "@type": "Blog", name: "Blog Habitoo", description: DESCRIPTION, url: `${SITE_URL}/blog`, publisher: { "@type": "Organization", name: "Habitoo CRM" }, blogPost: (loaderData ?? []).map((post) => ({ "@type": "BlogPosting", headline: post.title, url: `${SITE_URL}/blog/${post.slug}`, datePublished: post.published_at, dateModified: post.updated_at })) } }),
   component: BlogPage,
 });
 
