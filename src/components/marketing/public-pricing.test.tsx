@@ -1,7 +1,11 @@
 import { renderToStaticMarkup } from "react-dom/server";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { HomePricingSection } from "./HomePricingSection";
 import { LAUNCH_OFFER, LaunchOfferBadge } from "./LaunchOfferBadge";
+
+vi.mock("@tanstack/react-router", () => ({
+  Link: ({ to, children }: { to: string; children: React.ReactNode }) => <a href={to}>{children}</a>,
+}));
 
 describe("prețurile publice", () => {
   it("nu arată oferta necompletată, dar afișează un text atunci când este furnizat", () => {
