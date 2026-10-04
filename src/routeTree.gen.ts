@@ -26,6 +26,8 @@ import { Route as PreturiRouteImport } from './routes/preturi'
 import { Route as RegisterRouteImport } from './routes/register'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as SemnareRouteImport } from './routes/semnare'
+import { Route as SitemapBlogDotxmlRouteImport } from './routes/sitemap-blog[.]xml'
+import { Route as SitemapPagesDotxmlRouteImport } from './routes/sitemap-pages[.]xml'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as TermeniRouteImport } from './routes/termeni'
 import { Route as TermeniSiConditiiRouteImport } from './routes/termeni-si-conditii'
@@ -211,6 +213,16 @@ const ResetPasswordRoute = ResetPasswordRouteImport.update({
 const SemnareRoute = SemnareRouteImport.update({
   id: '/semnare',
   path: '/semnare',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SitemapBlogDotxmlRoute = SitemapBlogDotxmlRouteImport.update({
+  id: '/sitemap-blog.xml',
+  path: '/sitemap-blog.xml',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SitemapPagesDotxmlRoute = SitemapPagesDotxmlRouteImport.update({
+  id: '/sitemap-pages.xml',
+  path: '/sitemap-pages.xml',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
@@ -803,6 +815,8 @@ export interface FileRoutesByFullPath {
   '/register': typeof RegisterRoute
   '/reset-password': typeof ResetPasswordRoute
   '/semnare': typeof SemnareRoute
+  '/sitemap-blog.xml': typeof SitemapBlogDotxmlRoute
+  '/sitemap-pages.xml': typeof SitemapPagesDotxmlRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/termeni': typeof TermeniRoute
   '/termeni-si-conditii': typeof TermeniSiConditiiRoute
@@ -922,6 +936,8 @@ export interface FileRoutesByTo {
   '/register': typeof RegisterRoute
   '/reset-password': typeof ResetPasswordRoute
   '/semnare': typeof SemnareRoute
+  '/sitemap-blog.xml': typeof SitemapBlogDotxmlRoute
+  '/sitemap-pages.xml': typeof SitemapPagesDotxmlRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/termeni': typeof TermeniRoute
   '/termeni-si-conditii': typeof TermeniSiConditiiRoute
@@ -1041,6 +1057,8 @@ export interface FileRoutesById {
   '/register': typeof RegisterRoute
   '/reset-password': typeof ResetPasswordRoute
   '/semnare': typeof SemnareRoute
+  '/sitemap-blog.xml': typeof SitemapBlogDotxmlRoute
+  '/sitemap-pages.xml': typeof SitemapPagesDotxmlRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/termeni': typeof TermeniRoute
   '/termeni-si-conditii': typeof TermeniSiConditiiRoute
@@ -1162,6 +1180,8 @@ export interface FileRouteTypes {
     | '/register'
     | '/reset-password'
     | '/semnare'
+    | '/sitemap-blog.xml'
+    | '/sitemap-pages.xml'
     | '/sitemap.xml'
     | '/termeni'
     | '/termeni-si-conditii'
@@ -1281,6 +1301,8 @@ export interface FileRouteTypes {
     | '/register'
     | '/reset-password'
     | '/semnare'
+    | '/sitemap-blog.xml'
+    | '/sitemap-pages.xml'
     | '/sitemap.xml'
     | '/termeni'
     | '/termeni-si-conditii'
@@ -1399,6 +1421,8 @@ export interface FileRouteTypes {
     | '/register'
     | '/reset-password'
     | '/semnare'
+    | '/sitemap-blog.xml'
+    | '/sitemap-pages.xml'
     | '/sitemap.xml'
     | '/termeni'
     | '/termeni-si-conditii'
@@ -1520,6 +1544,8 @@ export interface RootRouteChildren {
   RegisterRoute: typeof RegisterRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   SemnareRoute: typeof SemnareRoute
+  SitemapBlogDotxmlRoute: typeof SitemapBlogDotxmlRoute
+  SitemapPagesDotxmlRoute: typeof SitemapPagesDotxmlRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   TermeniRoute: typeof TermeniRoute
   TermeniSiConditiiRoute: typeof TermeniSiConditiiRoute
@@ -1686,6 +1712,20 @@ declare module '@tanstack/react-router' {
       path: '/semnare'
       fullPath: '/semnare'
       preLoaderRoute: typeof SemnareRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/sitemap-blog.xml': {
+      id: '/sitemap-blog.xml'
+      path: '/sitemap-blog.xml'
+      fullPath: '/sitemap-blog.xml'
+      preLoaderRoute: typeof SitemapBlogDotxmlRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/sitemap-pages.xml': {
+      id: '/sitemap-pages.xml'
+      path: '/sitemap-pages.xml'
+      fullPath: '/sitemap-pages.xml'
+      preLoaderRoute: typeof SitemapPagesDotxmlRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/sitemap.xml': {
@@ -2634,6 +2674,8 @@ const rootRouteChildren: RootRouteChildren = {
   RegisterRoute: RegisterRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   SemnareRoute: SemnareRoute,
+  SitemapBlogDotxmlRoute: SitemapBlogDotxmlRoute,
+  SitemapPagesDotxmlRoute: SitemapPagesDotxmlRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   TermeniRoute: TermeniRoute,
   TermeniSiConditiiRoute: TermeniSiConditiiRoute,
