@@ -37,3 +37,4 @@
 - Public prices and structured offers read display prices; billing and seat limits stay separate. Why: marketing prices must not affect billing.
 - Public portal grids share registry data. Why: lists stay in sync.
 - Failure alerts use stable IDs per org, listing, portal, error and user. Why: retries do not duplicate alerts.
+- Collaboration auto-activation runs only in the DB: BEFORE INSERT trigger `properties_auto_collaboration` (all creation/import paths) and `collaboration_auto_activate` (migration and toggle re-enable); agent disable sets `properties.collaboration_opted_out`, which auto-activation never overrides. Why: one rule for every insert path, explicit opt-out distinct from unset.
