@@ -3,6 +3,7 @@ import { ArrowRight, Check, MessageCircle } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { CtaBand } from "@/components/marketing/CtaBand";
+import { LaunchOfferBadge } from "@/components/marketing/LaunchOfferBadge";
 import { FaqSection, faqPageJsonLd, type FaqItem } from "@/components/marketing/FaqSection";
 import { navyButton } from "@/components/marketing/PublicHeader";
 import { PublicLayout } from "@/components/marketing/PublicLayout";
@@ -15,7 +16,7 @@ import { cn } from "@/lib/utils";
 
 const TITLE = "Prețuri și planuri — Habitoo CRM";
 const DESCRIPTION =
-  "Planurile Habitoo CRM: Basic 10€, Pro 20€ și Unlimited 100€ pe lună, cu 50% reducere la plata anuală. Alege planul potrivit pentru agenția ta imobiliară.";
+  "Planurile Habitoo CRM: Basic 10€, Pro 40€ și Unlimited 100€ pe lună, cu 50% reducere la plata anuală. Alege planul potrivit pentru agenția ta imobiliară.";
 
 
 export const Route = createFileRoute("/preturi")({
@@ -87,7 +88,7 @@ const faq: FaqItem[] = [
   },
   {
     q: "Cum funcționează reducerea la plata anuală?",
-    a: "La plata anuală tariful lunar este cu 50% mai mic, dar factura se emite o singură dată, pentru 12 luni: 60€/an pentru Basic, 120€/an pentru Pro și 600€/an pentru Unlimited.",
+    a: "La plata anuală tariful lunar este cu 50% mai mic, dar factura se emite o singură dată, pentru 12 luni: 60 €/an pentru Basic, 240 €/an pentru Pro și 600 €/an pentru Unlimited.",
   },
 
   {
@@ -265,6 +266,7 @@ function PricingPage() {
 
       <Section className="pt-12 sm:pt-16">
         <Container>
+          <LaunchOfferBadge className="mb-8" />
           <div className="grid gap-6 lg:grid-cols-3">
             {plans.map((p, i) => (
               <Reveal key={p.key} delay={i * 70} className="h-full">
