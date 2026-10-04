@@ -188,7 +188,7 @@ function HomePage() {
       </a>
       <HomeHeader />
       <main id="continut">
-        <section className="home-hero relative overflow-hidden bg-navy pt-28 text-navy-foreground sm:pt-32">
+        <section className="home-hero relative overflow-hidden bg-navy pt-[88px] text-navy-foreground lg:pt-[104px]">
           <div aria-hidden className="home-grid pointer-events-none absolute inset-0 opacity-50" />
           <div aria-hidden className="home-glow home-glow-one" />
           <div aria-hidden className="home-glow home-glow-two" />
