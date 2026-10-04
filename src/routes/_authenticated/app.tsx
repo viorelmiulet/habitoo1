@@ -1,4 +1,9 @@
-import { createFileRoute, Navigate, Outlet } from "@tanstack/react-router";
+import { useCallback } from "react";
+import { createFileRoute, Navigate, Outlet, useNavigate } from "@tanstack/react-router";
+import { useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { clearAuthenticatedSession } from "@/lib/sign-out";
+import { SessionRecoveryScreen, useSessionRecovery } from "@/components/app/SessionRecovery";
 import { PortalBulkWatcher } from "@/components/app/PortalBulkProgress";
 import { AppShell } from "@/components/app/AppShell";
 import { agencyNavFor, superadminNav } from "@/components/app/AppSidebar";
@@ -20,9 +25,30 @@ export const Route = createFileRoute("/_authenticated/app")({
 });
 
 function AppLayout() {
-  const { data: user, isLoading } = useCurrentUser();
+  const { data: user, isLoading, isError, refetch } = useCurrentUser();
   const { features } = useAiFeatures();
+  const queryClient = useQueryClient();
+  const navigate = useNavigate();
 
+  const onExpired = useCallback(() => {
+    const redirect = `${window.location.pathname}${window.location.search}${window.location.hash}`;
+    void clearAuthenticatedSession(queryClient)
+      .catch(() => undefined)
+      .then(() => navigate({ to: "/login", search: { redirect }, replace: true }));
+  }, [queryClient, navigate]);
+
+  const recovery = useSessionRecovery({
+    data: user,
+    isLoading,
+    isError,
+    refetch,
+    startAutoRefresh: () => supabase.auth.startAutoRefresh(),
+    onExpired,
+  });
+
+  if (recovery.showError && !user) {
+    return <SessionRecoveryScreen onRetry={() => void recovery.retry()} retrying={recovery.retrying} />;
+  }
   if (isLoading) return <ShellLoading label="Se încarcă spațiul de lucru…" />;
   if (!user) return <Navigate to="/login" />;
   const blocked = user.isSuperadmin ? null : user.orgBlocked;
