@@ -959,11 +959,9 @@ export const setCollaborationAutoEnabled = createServerFn({ method: "POST" })
     const actor = await loadActor(context as AuthContext);
     requireParticipation(actor);
     const userClient = (context as AuthContext).supabase as {
-      rpc: (fn: "is_org_admin", args: { _org_id: string }) => PromiseLike<{ data: boolean | null; error: unknown }>;
+      rpc: (fn: "is_org_admin") => PromiseLike<{ data: boolean | null; error: unknown }>;
     };
-    const { data: isAdmin, error: roleError } = await userClient.rpc("is_org_admin", {
-      _org_id: actor.organizationId,
-    });
+    const { data: isAdmin, error: roleError } = await userClient.rpc("is_org_admin");
     if (roleError || isAdmin !== true) {
       throw new Error("Doar administratorul agenției poate schimba această setare.");
     }
