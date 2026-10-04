@@ -22,16 +22,13 @@ vi.mock("@/integrations/lovable/index", () => ({
   lovable: { auth: { signInWithOAuth: vi.fn() } },
 }));
 
-import { Route } from "./login";
+import { LoginPage } from "./login";
 
 describe("LoginPage", () => {
   it("conține câmpurile E-mail și Parolă și butonul Conectare", () => {
     const host = document.createElement("div");
     document.body.appendChild(host);
-    const Component = Route.options.component;
-    if (!Component) throw new Error("Componenta paginii lipsește");
-
-    act(() => createRoot(host).render(<Component />));
+    act(() => createRoot(host).render(<LoginPage />));
 
     expect(host.querySelector('label[for="email"]')?.textContent).toBe("E-mail");
     expect(host.querySelector('label[for="password"]')?.textContent).toBe("Parolă");
