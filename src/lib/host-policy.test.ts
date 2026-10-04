@@ -52,6 +52,8 @@ describe("host policy", () => {
     expect(LLMS_TXT).toContain("- [Politica de confidențialitate](https://www.habitoo.ro/politica-de-confidentialitate)\n");
     expect(LLMS_TXT).toContain("contact@habitoo.ro");
     expect(LLMS_TXT).toContain("+40 767 941 512");
+    expect(LLMS_TXT).toContain("Storia și OLX");
+    expect(LLMS_TXT).toContain("Catalog Facebook");
   });
   it("X-Robots-Tag doar pe HTML crm, nu pe api/public sau non-HTML", () => {
     expect(shouldTagNoindex(req("https://crm.habitoo.ro/app"), html)).toBe(true);
