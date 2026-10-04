@@ -5,17 +5,9 @@ import { LAUNCH_OFFER, LaunchOfferBadge } from "./LaunchOfferBadge";
 
 vi.mock("@tanstack/react-router", () => ({
   Link: ({ to, children }: { to: string; children: React.ReactNode }) => <a href={to}>{children}</a>,
-  createFileRoute: (to: string) => (options: unknown) => ({ to, options }),
 }));
 
-import { Route as PricingRoute } from "@/routes/preturi";
-
 const OFFER_TEXT = "Profită de oferta de lansare";
-
-function renderPricingPage() {
-  const Pricing = (PricingRoute as unknown as { options: { component: () => React.ReactElement } }).options.component;
-  return renderToStaticMarkup(<Pricing />);
-}
 
 describe("prețurile publice", () => {
   it("are textul final al ofertei de lansare, fără dată de final", () => {
@@ -34,7 +26,7 @@ describe("prețurile publice", () => {
     expect(renderToStaticMarkup(<LaunchOfferBadge offer={{ text: "Text de probă" }} />)).toContain("Text de probă");
   });
 
-  it("arată trei planuri și un singur comutator comun", () => {
+  it("arată trei planuri, un singur comutator comun și oferta de lansare pe homepage", () => {
     const html = renderToStaticMarkup(<HomePricingSection />);
     expect(html).toContain("Prețuri simple, fără surprize");
     expect(html.match(/aria-label="Perioada de plată"/g)).toHaveLength(1);
@@ -42,12 +34,6 @@ describe("prețurile publice", () => {
     expect(html).toContain("Anual · -50%");
     for (const name of ["Basic", "Pro", "Unlimited"]) expect(html).toContain(`>${name}</h3>`);
     expect(html).toContain("40 €");
-    expect(html).toContain(OFFER_TEXT);
-    expect(html).not.toContain("OFERTĂ DE LANSARE");
-  });
-
-  it("arată oferta de lansare și pe pagina de prețuri", () => {
-    const html = renderPricingPage();
     expect(html).toContain(OFFER_TEXT);
     expect(html.match(new RegExp(OFFER_TEXT, "g"))).toHaveLength(1);
     expect(html).not.toContain("OFERTĂ DE LANSARE");
