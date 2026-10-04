@@ -1749,6 +1749,27 @@ export type Database = {
         }
         Relationships: []
       }
+      company_lookup_cache: {
+        Row: {
+          cui: string
+          fetched_at: string
+          found: boolean
+          result: Json | null
+        }
+        Insert: {
+          cui: string
+          fetched_at?: string
+          found: boolean
+          result?: Json | null
+        }
+        Update: {
+          cui?: string
+          fetched_at?: string
+          found?: boolean
+          result?: Json | null
+        }
+        Relationships: []
+      }
       contact_requests: {
         Row: {
           agency: string
@@ -4159,7 +4180,11 @@ export type Database = {
           collab_default_commission_percent: number | null
           collaboration_auto_enabled: boolean
           collaboration_enabled: boolean
+          company_status: string | null
+          company_sync_attempted_at: string | null
+          company_verified_at: string | null
           contract_inventory_defaults: Json
+          county: string | null
           created_at: string
           created_by: string | null
           cui: string | null
@@ -4187,6 +4212,7 @@ export type Database = {
           phone: string | null
           plan: string
           postal_code: string | null
+          registered_address: string | null
           slug: string
           status: Database["public"]["Enums"]["org_status"]
           storia_auto_republish: boolean
@@ -4213,7 +4239,11 @@ export type Database = {
           collab_default_commission_percent?: number | null
           collaboration_auto_enabled?: boolean
           collaboration_enabled?: boolean
+          company_status?: string | null
+          company_sync_attempted_at?: string | null
+          company_verified_at?: string | null
           contract_inventory_defaults?: Json
+          county?: string | null
           created_at?: string
           created_by?: string | null
           cui?: string | null
@@ -4241,6 +4271,7 @@ export type Database = {
           phone?: string | null
           plan?: string
           postal_code?: string | null
+          registered_address?: string | null
           slug: string
           status?: Database["public"]["Enums"]["org_status"]
           storia_auto_republish?: boolean
@@ -4267,7 +4298,11 @@ export type Database = {
           collab_default_commission_percent?: number | null
           collaboration_auto_enabled?: boolean
           collaboration_enabled?: boolean
+          company_status?: string | null
+          company_sync_attempted_at?: string | null
+          company_verified_at?: string | null
           contract_inventory_defaults?: Json
+          county?: string | null
           created_at?: string
           created_by?: string | null
           cui?: string | null
@@ -4295,6 +4330,7 @@ export type Database = {
           phone?: string | null
           plan?: string
           postal_code?: string | null
+          registered_address?: string | null
           slug?: string
           status?: Database["public"]["Enums"]["org_status"]
           storia_auto_republish?: boolean

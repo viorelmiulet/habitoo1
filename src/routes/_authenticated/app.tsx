@@ -12,6 +12,7 @@ import { CompleteAgencyData } from "@/components/app/CompleteAgencyData";
 import { mustCompleteAgencyData } from "@/lib/agency-public-data";
 import { CompleteUserProfile } from "@/components/app/CompleteUserProfile";
 import { mustCompleteUserProfile } from "@/lib/user-profile";
+import { CompanyAnafSync } from "@/components/app/CompanyAnafSync";
 
 export const Route = createFileRoute("/_authenticated/app")({
   head: () => appHead("Habitoo CRM — aplicație"),
@@ -54,6 +55,7 @@ function AppLayout() {
     <AppShell user={user} groups={groups} variant="agency">
       <Outlet />
       <PortalBulkWatcher />
+      {user.role === "agency_admin" && !user.impersonation ? <CompanyAnafSync org={user.organization} /> : null}
     </AppShell>
   );
 }

@@ -14,6 +14,8 @@ import { clearAuthenticatedSession } from "@/lib/sign-out";
 import { OrgBlocked } from "@/components/app/OrgBlocked";
 import { ShellLoading } from "@/components/app/LoadingState";
 import { cn } from "@/lib/utils";
+import { CuiLookupField, type CuiLookupState } from "@/components/auth/CuiLookupField";
+import { DUPLICATE_CUI_MESSAGE } from "@/lib/company-lookup";
 import {
   PLAN_KEYS,
   PLAN_LABELS,
@@ -51,18 +53,32 @@ function OnboardingPage() {
   const [loading, setLoading] = useState(false);
   // Retrimiterea unei cereri respinse: afișează din nou formularul.
   const [resubmit, setResubmit] = useState(false);
+  const [cuiState, setCuiState] = useState<CuiLookupState>({ kind: "idle" });
+  const onCuiState = (st: CuiLookupState) => {
+    setCuiState(st);
+    if (st.kind === "found")
+      setForm((f) => ({
+        ...f,
+        agency: f.agency || st.company.legalName,
+        legalName: st.company.legalName,
+        tradeRegistry: st.company.tradeRegistryNumber ?? f.tradeRegistry,
+      }));
+  };
+  // Datele firmei se tastează doar dacă ANAF nu le-a găsit sau nu răspunde.
+  const manualCompany = cuiState.kind === "error" || (cuiState.kind === "found" && !cuiState.company.tradeRegistryNumber);
 
   // Precompletează datele din metadata contului (completate la înscriere).
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
       const meta = data.user?.user_metadata as
-        { full_name?: string; agency_name?: string; phone?: string } | undefined;
+        { full_name?: string; agency_name?: string; phone?: string; cui?: string } | undefined;
       if (!meta) return;
       setForm((f) => ({
         ...f,
         fullName: f.fullName || meta.full_name || "",
         agency: f.agency || meta.agency_name || "",
         phone: f.phone || meta.phone || "",
+        cui: f.cui || meta.cui || "",
       }));
     });
   }, []);
@@ -88,6 +104,10 @@ function OnboardingPage() {
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (cuiState.kind === "duplicate") {
+      toast.error(DUPLICATE_CUI_MESSAGE);
+      return;
+    }
     setLoading(true);
     // Se înregistrează DOAR cererea de înscriere. Organizația, profilul și rolul
     // de agency_admin se creează abia la aprobarea superadminului.
@@ -265,59 +285,37 @@ function OnboardingPage() {
     >
       <form onSubmit={submit} className="space-y-7">
         <fieldset className="space-y-4">
-          <legend className="text-sm font-semibold">Date de identificare a firmei</legend>
-          <p className="text-xs text-muted-foreground">
-            Le folosim pentru a verifica agenția. Trebuie să corespundă documentelor oficiale.
-          </p>
+          <legend className="text-sm font-semibold">Firma</legend>
+          <CuiLookupField
+            value={form.cui}
+            onChange={(v) => setForm((f) => ({ ...f, cui: v }))}
+            onState={onCuiState}
+          />
           <div className="space-y-2">
-            <Label htmlFor="agency">Nume comercial</Label>
-            <Input
-              id="agency"
-              required
-              value={form.agency}
-              onChange={set("agency")}
-              placeholder="ex. Habitoo Imobiliare"
-            />
+            <Label htmlFor="agency">Numele agenției</Label>
+            <Input id="agency" required value={form.agency} onChange={set("agency")} />
             <p className="text-xs text-muted-foreground">
-              Numele sub care ești cunoscut de clienți — apare în aplicație și pe anunțuri.
+              Poți folosi numele comercial — apare în aplicație și pe anunțuri.
             </p>
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="legalName">Denumire legală</Label>
-            <Input
-              id="legalName"
-              required
-              value={form.legalName}
-              onChange={set("legalName")}
-              placeholder="ex. HABITOO IMOBILIARE S.R.L."
-            />
-            <p className="text-xs text-muted-foreground">
-              Denumirea exactă din certificatul de înregistrare, cu forma juridică (S.R.L., S.A.).
-              Poate fi diferită de numele comercial.
-            </p>
-          </div>
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div className="space-y-2">
-              <Label htmlFor="cui">CUI</Label>
-              <Input
-                id="cui"
-                required
-                value={form.cui}
-                onChange={set("cui")}
-                placeholder="ex. RO12345678"
-              />
+          {manualCompany || (cuiState.kind === "idle" && form.cui && !form.legalName) ? (
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="legalName">Denumire legală</Label>
+                <Input id="legalName" required value={form.legalName} onChange={set("legalName")} />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="tradeRegistry">Nr. Registrul Comerțului</Label>
+                <Input
+                  id="tradeRegistry"
+                  required
+                  value={form.tradeRegistry}
+                  onChange={set("tradeRegistry")}
+                  placeholder="ex. J40/1234/2020"
+                />
+              </div>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="tradeRegistry">Nr. Registrul Comerțului</Label>
-              <Input
-                id="tradeRegistry"
-                required
-                value={form.tradeRegistry}
-                onChange={set("tradeRegistry")}
-                placeholder="ex. J40/1234/2020"
-              />
-            </div>
-          </div>
+          ) : null}
         </fieldset>
 
         <fieldset className="space-y-4">
@@ -402,7 +400,11 @@ function OnboardingPage() {
           </div>
         </fieldset>
 
-        <Button type="submit" className="w-full" disabled={loading}>
+        <Button
+          type="submit"
+          className="w-full"
+          disabled={loading || cuiState.kind === "duplicate" || cuiState.kind === "loading"}
+        >
           {loading ? "Se trimite…" : "Trimite spre aprobare"}
         </Button>
         <p className="text-center text-xs text-muted-foreground">

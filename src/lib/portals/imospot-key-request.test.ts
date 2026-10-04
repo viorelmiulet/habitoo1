@@ -49,7 +49,7 @@ describe("cererea de cheie Imospot", () => {
   it("trimite la aprobare cu date complete, cu Cc și Reply-To corecte", async () => {
     const h = harness();
     expect(await notifyImospotForRequest(h.deps, "r1")).toEqual({ status: "sent" });
-    const email = h.send.mock.calls[0]![0] as unknown as ReturnType<typeof buildImospotEmail>;
+    const email = (h.send.mock.calls as unknown[][])[0]![0] as unknown as ReturnType<typeof buildImospotEmail>;
     expect(email.to).toBe("info@imospot.ro");
     expect(email.from).toContain("contact@habitoo.ro");
     expect(email.cc).toBe("contact@habitoo.ro");
@@ -97,7 +97,7 @@ describe("cererea de cheie Imospot", () => {
   it("folosește destinatarul configurat de Superadmin", async () => {
     const h = harness({ to: "parteneri@imospot.ro" });
     await notifyImospotForRequest(h.deps, "r1");
-    expect((h.send.mock.calls[0]![0] as unknown as { to: string }).to).toBe("parteneri@imospot.ro");
+    expect(((h.send.mock.calls as unknown[][])[0]![0] as unknown as { to: string }).to).toBe("parteneri@imospot.ro");
   });
 
   it("nu trimite pentru aprobările vechi sau alte portaluri", async () => {
