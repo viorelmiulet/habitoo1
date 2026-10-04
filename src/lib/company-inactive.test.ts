@@ -9,25 +9,25 @@ const now = new Date("2026-10-04T10:00:00Z");
 
 describe("firme inactive ANAF", () => {
   it("firmă inactivă: stare + dată + avertisment", () => {
-    const c = parseAnafResponse(body({ statusInactivi: true, dataInactivare: "2021-12-07", dataReactivare: "" }))!;
+    const c = parseAnafResponse(body({ statusInactivi: true, dataInactivare: "2021-12-07", dataReactivare: "" }), "40930967")!;
     expect(c.status).toBe("inactiva");
     expect(c.inactiveSince).toBe("2021-12-07");
     expect(companyStatePatch(c, now).company_inactive_since).toBe("2021-12-07");
     expect(inactiveWarning(c.inactiveSince)).toBe("Conform ANAF, această firmă figurează ca inactivă fiscal din 7 decembrie 2021");
   });
   it("firmă reactivată: activă, fără dată de inactivare", () => {
-    const c = parseAnafResponse(body({ statusInactivi: false, dataInactivare: "2021-12-07", dataReactivare: "2023-01-10" }))!;
+    const c = parseAnafResponse(body({ statusInactivi: false, dataInactivare: "2021-12-07", dataReactivare: "2023-01-10" }), "40930967")!;
     expect(c.status).toBe("activa");
     expect(companyStatePatch(c, now)).toMatchObject({ company_status: "activa", company_inactive_since: null });
   });
   it("firmă activă: patch neschimbat ca formă", () => {
-    const c = parseAnafResponse(body({ statusInactivi: false }))!;
+    const c = parseAnafResponse(body({ statusInactivi: false }), "40930967")!;
     const p = buildOrgSyncPatch({} as never, c, now);
     expect(p.company_status).toBe("activa");
     expect(p.company_inactive_since).toBeNull();
   });
   it("ANAF indisponibil: nu există companie, starea nu se schimbă", () => {
-    expect(parseAnafResponse(null)).toBeNull();
+    expect(parseAnafResponse(null, "40930967")).toBeNull();
   });
 });
 
