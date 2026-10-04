@@ -44,7 +44,7 @@ export async function loadImospotCompanyData(
 ): Promise<ImospotCompanyData> {
   const db = await admin();
   const adminId = await resolveAdminId(organizationId, requestedBy);
-  const [{ data: org }, profileRes, userRes, countRes] = await Promise.all([
+  const [{ data: org }, profileRes, userRes] = await Promise.all([
     db
       .from("organizations")
       .select("name, legal_name, cui, trade_registry_number, city")
@@ -54,12 +54,6 @@ export async function loadImospotCompanyData(
       ? db.from("profiles").select("full_name, phone").eq("id", adminId).maybeSingle()
       : Promise.resolve({ data: null }),
     adminId ? db.auth.admin.getUserById(adminId) : Promise.resolve({ data: { user: null } }),
-    db
-      .from("properties")
-      .select("id", { count: "exact", head: true })
-      .eq("organization_id", organizationId)
-      .eq("status", "active")
-      .is("deleted_at", null),
   ]);
   const profile = (profileRes as { data: { full_name: string | null; phone: string | null } | null }).data;
   const user = (userRes as { data: { user: { email?: string | null } | null } }).data.user;
@@ -72,7 +66,6 @@ export async function loadImospotCompanyData(
     adminEmail: user?.email ?? null,
     adminPhone: profile?.phone ?? null,
     city: org?.city ?? null,
-    activeListings: typeof countRes.count === "number" ? countRes.count : null,
   };
 }
 
