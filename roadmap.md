@@ -2,8 +2,8 @@
 
 ## Erori de publicare în notificări
 
-- [ ] Elimină etichetele de eroare din Dashboard, păstrează celelalte informații.
-- [ ] Notifică agentul responsabil și administratorii doar pentru eșecuri noi, fără duplicate la reîncercări; verifică testele fără operațiuni reale.
+- [x] Elimină etichetele de eroare din Dashboard, păstrează celelalte informații.
+- [x] Notifică agentul responsabil și administratorii doar pentru eșecuri noi, fără duplicate la reîncercări; verifică testele fără operațiuni reale.
 
 - [x] Grilă comună pe homepage și /integrari, texte despre modele, SEO și subsol; fără date modificate.
 

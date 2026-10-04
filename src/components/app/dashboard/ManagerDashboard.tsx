@@ -382,7 +382,6 @@ export function ManagerDashboard() {
                         {portal.active} anunțuri active
                       </p>
                     </div>
-                     <StatusBadge tone="success">OK</StatusBadge>
                   </div>
                 ))}
               </div>

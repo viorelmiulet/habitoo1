@@ -108,7 +108,7 @@ export function useDashboardOverview(organizationId?: string | null) {
           .limit(50),
         supabase
           .from("portal_publications")
-          .select("property_id,portal_key,status,enabled")
+           .select("property_id,portal_key,enabled")
           .eq("organization_id", orgId)
           .eq("enabled", true)
           .limit(5000),
