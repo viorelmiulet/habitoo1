@@ -812,14 +812,14 @@ export const PropertyPortalsCard = forwardRef<
 
                     {/* Anunț trimis, dar pagina publică nu funcționează (cont fără abonament). */}
                     {cell.publicWarning ? (
-                      <p className="mt-3 rounded-md border border-warning/40 bg-warning/10 px-3 py-2 text-xs text-warning-foreground">
+                      <p className="pointer-events-none relative z-10 mt-3 rounded-md border border-warning/40 bg-warning/10 px-3 py-2 text-xs text-warning-foreground">
                         {cell.publicWarning}
                       </p>
                     ) : null}
 
                     {/* Validare pre-publicare: ce lipsește, în cuvinte, pe acest portal. */}
                     {value && (requirementByPortal.get(cell.portalId)?.missing.length ?? 0) > 0 ? (
-                      <div className="mt-3 rounded-md border border-warning/40 bg-warning/10 px-3 py-2 pl-3 text-xs">
+                      <div className="pointer-events-none relative z-10 mt-3 rounded-md border border-warning/40 bg-warning/10 px-3 py-2 pl-3 text-xs">
                         <p className="font-medium text-warning-foreground">
                           Publicarea este blocată până completezi:
                         </p>
@@ -1020,28 +1020,6 @@ function StoriaAutoRenewControl({
           : " Anunțul expirat rămâne marcat expirat, fără republicare."}
       </p>
     </div>
-  );
-}
-
-/**
- * Câte locuri de publicare are utilizatorul curent pe un portal: doar citire,
- * doar rândul lui (fără totalul agenției și fără alți utilizatori).
- */
-function MyPortalSlotLine({ portalId }: { portalId: string }) {
-  const loadMine = useServerFn(getMyPortalSlot);
-  const mine = useQuery({
-    queryKey: ["my-portal-slot", portalId],
-    queryFn: () => loadMine({ data: { portalId } }),
-    retry: false,
-  });
-  if (!mine.data) return null;
-  const total = mine.data.allocated;
-  return (
-    <p className="mt-2 text-xs text-muted-foreground">
-      Locurile tale pe acest portal: {mine.data.used}
-      {total === null ? " (nelimitat)" : ` / ${total}`}
-      {mine.data.agencyExhausted ? " — agenția nu mai are locuri libere." : ""}
-    </p>
   );
 }
 
