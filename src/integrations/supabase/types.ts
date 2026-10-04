@@ -4314,6 +4314,27 @@ export type Database = {
         }
         Relationships: []
       }
+      platform_settings: {
+        Row: {
+          key: string
+          updated_at: string
+          updated_by: string | null
+          value: Json
+        }
+        Insert: {
+          key: string
+          updated_at?: string
+          updated_by?: string | null
+          value?: Json
+        }
+        Update: {
+          key?: string
+          updated_at?: string
+          updated_by?: string | null
+          value?: Json
+        }
+        Relationships: []
+      }
       portal_activation_requests: {
         Row: {
           created_at: string
@@ -4321,6 +4342,9 @@ export type Database = {
           note: string | null
           organization_id: string
           portal: string
+          provider_notified_at: string | null
+          provider_notify_error: string | null
+          provider_notify_required: boolean
           rejection_reason: string | null
           requested_at: string
           requested_by: string | null
@@ -4335,6 +4359,9 @@ export type Database = {
           note?: string | null
           organization_id: string
           portal: string
+          provider_notified_at?: string | null
+          provider_notify_error?: string | null
+          provider_notify_required?: boolean
           rejection_reason?: string | null
           requested_at?: string
           requested_by?: string | null
@@ -4349,6 +4376,9 @@ export type Database = {
           note?: string | null
           organization_id?: string
           portal?: string
+          provider_notified_at?: string | null
+          provider_notify_error?: string | null
+          provider_notify_required?: boolean
           rejection_reason?: string | null
           requested_at?: string
           requested_by?: string | null

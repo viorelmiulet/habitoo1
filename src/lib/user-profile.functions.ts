@@ -64,6 +64,10 @@ export const updateUserProfile = createServerFn({ method: "POST" })
         created_by: actorId,
       });
     }
+    if (changed.includes("phone") && before.organization_id) {
+      const { retryPendingImospotRequests } = await import("@/lib/portals/imospot-key-request.server");
+      await retryPendingImospotRequests(before.organization_id, actorId);
+    }
     return { ok: true as const, changed };
   });
 

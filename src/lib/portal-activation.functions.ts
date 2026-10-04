@@ -24,6 +24,12 @@ import {
   portalDisplayName,
 } from "@/lib/portals/registry";
 import { facebookCatalogState } from "@/lib/facebook-catalog-status";
+import {
+  imospotSettingsSchema,
+  missingImospotFields,
+  type ImospotSettings,
+  type NotifyOutcome,
+} from "@/lib/portals/imospot-key-request";
 
 type AuthContext = {
   supabase: {
@@ -85,6 +91,8 @@ export type AgencyPortalCatalogItem = {
     requestedAt: string;
     rejectionReason: string | null;
   } | null;
+  /** Doar la Imospot: câmpurile firmei lipsă pentru cererea de cheie. */
+  companyDataMissing: string[];
 };
 
 /** Catalogul platformei, cu statusul agenției din sesiune. READ-ONLY. */
@@ -137,6 +145,19 @@ export const getAgencyPortalCatalog = createServerFn({ method: "POST" })
     }
 
     const rows = new Map((connections ?? []).map((c) => [c.portal, c]));
+    const imospotReq = latest.get("imospot");
+    let imospotMissing: string[] = [];
+    if (imospotReq && imospotReq.status !== "rejected" && !activated.has("imospot")) {
+      const { loadImospotCompanyData } = await import("@/lib/portals/imospot-key-request.server");
+      const { data: reqRow } = await admin
+        .from("portal_activation_requests")
+        .select("requested_by")
+        .eq("id", imospotReq.id)
+        .maybeSingle();
+      imospotMissing = missingImospotFields(
+        await loadImospotCompanyData(organizationId, reqRow?.requested_by ?? null),
+      );
+    }
     return agencySettingsPortals().map((p) => {
       const req = latest.get(p.id);
       const row = rows.get(p.id);
@@ -151,6 +172,7 @@ export const getAgencyPortalCatalog = createServerFn({ method: "POST" })
           })
         : null;
       return {
+        companyDataMissing: p.id === "imospot" ? imospotMissing : [],
         activation: portalActivationMode(p.id),
         connectionStatus: catalogStatus ?? derivePortalConnectionStatus({
           definition: p,
@@ -283,6 +305,9 @@ export type PortalActivationRequestRow = {
   resolvedAt: string | null;
   rejectionReason: string | null;
   note: string | null;
+  providerNotifyRequired: boolean;
+  providerNotifiedAt: string | null;
+  providerNotifyError: string | null;
 };
 
 /** Lista cererilor pentru Superadmin. */
@@ -300,7 +325,7 @@ export const listPortalActivationRequests = createServerFn({ method: "POST" })
     let query = admin
       .from("portal_activation_requests")
       .select(
-        "id, organization_id, portal, status, requested_at, requested_by, resolved_at, rejection_reason, note",
+        "id, organization_id, portal, status, requested_at, requested_by, resolved_at, rejection_reason, note, provider_notify_required, provider_notified_at, provider_notify_error",
       )
       .order("requested_at", { ascending: false })
       .limit(200);
@@ -336,6 +361,9 @@ export const listPortalActivationRequests = createServerFn({ method: "POST" })
       resolvedAt: r.resolved_at,
       rejectionReason: r.rejection_reason,
       note: r.note,
+      providerNotifyRequired: r.provider_notify_required === true,
+      providerNotifiedAt: r.provider_notified_at,
+      providerNotifyError: r.provider_notify_error,
     }));
   });
 
@@ -370,6 +398,8 @@ export const resolvePortalActivationRequest = createServerFn({ method: "POST" })
         resolved_by: context.userId,
         resolved_at: new Date().toISOString(),
         rejection_reason: data.status === "rejected" ? (data.reason ?? null) : null,
+        // Doar aprobările Imospot de acum încolo trimit cererea de cheie către portal.
+        provider_notify_required: data.status === "approved" && request.portal === "imospot",
       } as never)
       .eq("id", request.id);
     if (error) throw new Error(error.message);
@@ -388,7 +418,12 @@ export const resolvePortalActivationRequest = createServerFn({ method: "POST" })
       created_by: context.userId,
     } as never);
 
-    return { ok: true as const };
+    let providerNotify: NotifyOutcome | null = null;
+    if (data.status === "approved" && request.portal === "imospot") {
+      const { notifyImospotRequest } = await import("@/lib/portals/imospot-key-request.server");
+      providerNotify = await notifyImospotRequest(request.id, context.userId);
+    }
+    return { ok: true as const, providerNotify };
   });
 
 export class PortalAccessError extends Error {
@@ -499,4 +534,45 @@ export const selfActivatePortal = createServerFn({ method: "POST" })
       }
       throw error;
     }
+  });
+
+/** Retrimiterea cererii de cheie către Imospot (Superadmin, cu confirmare în UI). */
+export const resendImospotKeyRequest = createServerFn({ method: "POST" })
+  .middleware([requireActiveOrgAuth])
+  .inputValidator((input: unknown) => z.object({ requestId: z.string().uuid() }).parse(input))
+  .handler(async ({ data, context }): Promise<NotifyOutcome> => {
+    await requireSuperadmin(context as unknown as AuthContext);
+    const { notifyImospotRequest } = await import("@/lib/portals/imospot-key-request.server");
+    return notifyImospotRequest(data.requestId, context.userId, { force: true });
+  });
+
+export const getImospotSettings = createServerFn({ method: "POST" })
+  .middleware([requireActiveOrgAuth])
+  .handler(async ({ context }): Promise<ImospotSettings> => {
+    await requireSuperadmin(context as unknown as AuthContext);
+    const { loadImospotSettings } = await import("@/lib/portals/imospot-key-request.server");
+    return loadImospotSettings();
+  });
+
+export const saveImospotSettings = createServerFn({ method: "POST" })
+  .middleware([requireActiveOrgAuth])
+  .inputValidator((input: unknown) => imospotSettingsSchema.parse(input))
+  .handler(async ({ data, context }) => {
+    await requireSuperadmin(context as unknown as AuthContext);
+    const admin = await loadAdmin();
+    const { error } = await admin.from("platform_settings").upsert({
+      key: "imospot_key_request",
+      value: data,
+      updated_at: new Date().toISOString(),
+      updated_by: context.userId,
+    });
+    if (error) throw new Error(error.message);
+    await admin.from("audit_logs").insert({
+      organization_id: null,
+      actor_id: context.userId,
+      action: "platform.settings_updated",
+      entity: "platform_settings",
+      new_values: { key: "imospot_key_request", ...data },
+    } as never);
+    return { ok: true as const };
   });

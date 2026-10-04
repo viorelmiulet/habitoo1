@@ -18,6 +18,7 @@ import { EmptyState } from "@/components/app/EmptyState";
 import { PortalLogoStack } from "@/components/app/PortalLogo";
 import {
   listPortalActivationRequests,
+  resendImospotKeyRequest,
   resolvePortalActivationRequest,
 } from "@/lib/portal-activation.functions";
 
@@ -42,10 +43,26 @@ export function PortalActivationRequestsCard({
   const resolve = useMutation({
     mutationFn: (input: { requestId: string; status: "approved" | "rejected"; reason?: string }) =>
       resolveRequest({ data: input }),
-    onSuccess: () => {
+    onSuccess: (res) => {
+      const n = res.providerNotify;
+      if (n?.status === "incomplete") toast.warning(`Date firmă incomplete: ${n.missing.join(", ")}`);
+      else if (n?.status === "failed") toast.error("Cererea către Imospot nu a fost trimisă.");
+      else if (n?.status === "sent") toast.success("Cererea de cheie a fost trimisă către Imospot.");
       toast.success("Cererea a fost actualizată.");
       setReasonFor("");
       setReason("");
+      void queryClient.invalidateQueries({ queryKey: ["portal-activation-requests"] });
+    },
+    onError: (error: Error) => toast.error(error.message),
+  });
+
+  const resendFn = useServerFn(resendImospotKeyRequest);
+  const resend = useMutation({
+    mutationFn: (requestId: string) => resendFn({ data: { requestId } }),
+    onSuccess: (n) => {
+      if (n.status === "sent") toast.success("Cererea a fost retrimisă către Imospot.");
+      else if (n.status === "incomplete") toast.warning(`Date firmă incomplete: ${n.missing.join(", ")}`);
+      else if (n.status === "failed") toast.error(n.error);
       void queryClient.invalidateQueries({ queryKey: ["portal-activation-requests"] });
     },
     onError: (error: Error) => toast.error(error.message),
@@ -110,6 +127,34 @@ export function PortalActivationRequestsCard({
                 {new Date(r.requestedAt).toLocaleString("ro-RO")}
                 {r.rejectionReason ? ` · Motiv respingere: ${r.rejectionReason}` : ""}
               </p>
+
+              {r.providerNotifyRequired ? (
+                <div data-imospot-notify className="flex flex-wrap items-center gap-2 text-xs">
+                  {r.providerNotifiedAt ? (
+                    <span className="text-muted-foreground">
+                      Cerere de cheie trimisă către Imospot pe{" "}
+                      {new Date(r.providerNotifiedAt).toLocaleString("ro-RO")}
+                    </span>
+                  ) : null}
+                  {r.providerNotifyError ? (
+                    <span className="text-destructive">{r.providerNotifyError}</span>
+                  ) : null}
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    disabled={resend.isPending}
+                    onClick={() => {
+                      if (
+                        !r.providerNotifiedAt ||
+                        window.confirm("Cererea a fost deja trimisă. O retrimiți către Imospot?")
+                      )
+                        resend.mutate(r.id);
+                    }}
+                  >
+                    Retrimite cererea către Imospot
+                  </Button>
+                </div>
+              ) : null}
 
               {r.status === "pending" ? (
                 <div className="flex flex-wrap items-center gap-2">

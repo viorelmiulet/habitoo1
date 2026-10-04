@@ -1,3 +1,4 @@
+import { Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "@/components/ui/sonner";
@@ -127,6 +128,23 @@ export function AgencyPortalCatalogCard() {
                     <p className="text-[17px] leading-6 font-bold break-words">{item.displayName}</p>
                   </div>
                 </div>
+                {item.id === "imospot" ? (
+                  <div className="space-y-2 text-xs text-muted-foreground">
+                    <p>
+                      Cheia API este emisă de Imospot după aprobarea cererii, de obicei în aceeași zi
+                      lucrătoare, și ajunge pe emailul administratorului.
+                    </p>
+                    {item.companyDataMissing.length > 0 ? (
+                      <p data-imospot-incomplete className="text-destructive">
+                        Completează datele firmei în{" "}
+                        <Link to="/app/settings" search={{ tab: "agency" }} className="underline">
+                          Setări → Agenție
+                        </Link>{" "}
+                        ca să poți solicita cheia Imospot.
+                      </p>
+                    ) : null}
+                  </div>
+                ) : null}
                 <div data-portal-statuses className="mt-auto flex flex-wrap items-center gap-2 pt-1">
                     {state.key === "connected" ? (
                       <span className="inline-flex items-center gap-2 text-sm font-medium">

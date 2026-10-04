@@ -13,6 +13,7 @@ import { AiSettingsCard } from "@/components/app/ai/AiSettingsCard";
 
 import { SiteFeedCard } from "@/components/app/SiteFeedCard";
 import { CollaborationAutoSwitch } from "@/components/app/CollaborationAutoSwitch";
+import { AgencyCompanyDataFields } from "@/components/app/AgencyCompanyDataFields";
 import { FacebookCatalogCard } from "@/components/app/FacebookCatalogCard";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -288,16 +289,10 @@ function SettingsPage() {
                 saveOrg.mutate();
               }}
             >
-              <div className="grid gap-3 rounded-md border p-3 text-sm sm:grid-cols-2">
-                <div>
-                  <div className="text-muted-foreground">Denumire legală</div>
-                  <div>{user?.organization?.legal_name ?? "—"}</div>
-                </div>
-                <div>
-                  <div className="text-muted-foreground">CUI</div>
-                  <div>{user?.organization?.cui ?? "—"}</div>
-                </div>
-              </div>
+              <AgencyCompanyDataFields
+                org={user?.organization ?? null}
+                canEdit={user?.role === "agency_admin"}
+              />
               <div className="space-y-2">
                 <Label htmlFor="name">Numele agenției</Label>
                 <Input

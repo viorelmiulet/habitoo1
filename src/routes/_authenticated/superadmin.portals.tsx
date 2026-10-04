@@ -26,6 +26,7 @@ import {
 } from "@/components/ui/select";
 import { appHead } from "@/components/app/app-head";
 import { PortalsCard } from "@/components/superadmin/PortalsCard";
+import { ImospotSettingsCard } from "@/components/superadmin/ImospotSettingsCard";
 import { LaCheieCard } from "@/components/superadmin/LaCheieCard";
 import { PortalActivationRequestsCard } from "@/components/superadmin/PortalActivationRequestsCard";
 import { PropertyPortalsCard } from "@/components/app/PropertyPortalsCard";
@@ -143,6 +144,7 @@ function SuperadminPortalsPage() {
               window.scrollTo({ top: 0, behavior: "smooth" });
             }}
           />
+          <ImospotSettingsCard />
           <PortalsCard organizationId={organizationId} />
           <LaCheieCard organizationId={organizationId} />
           <PortalSlotsCard organizationId={organizationId} />
