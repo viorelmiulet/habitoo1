@@ -17,6 +17,7 @@ import { Route as ContactRouteImport } from './routes/contact'
 import { Route as DespreRouteImport } from './routes/despre'
 import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
 import { Route as FunctionalitatiRouteImport } from './routes/functionalitati'
+import { Route as IntegrariRouteImport } from './routes/integrari'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as PoliticaDeConfidentialitateRouteImport } from './routes/politica-de-confidentialitate'
 import { Route as PreturiRouteImport } from './routes/preturi'
@@ -156,6 +157,11 @@ const ForgotPasswordRoute = ForgotPasswordRouteImport.update({
 const FunctionalitatiRoute = FunctionalitatiRouteImport.update({
   id: '/functionalitati',
   path: '/functionalitati',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const IntegrariRoute = IntegrariRouteImport.update({
+  id: '/integrari',
+  path: '/integrari',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LoginRoute = LoginRouteImport.update({
@@ -738,6 +744,7 @@ export interface FileRoutesByFullPath {
   '/despre': typeof DespreRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/functionalitati': typeof FunctionalitatiRoute
+  '/integrari': typeof IntegrariRoute
   '/login': typeof LoginRoute
   '/politica-de-confidentialitate': typeof PoliticaDeConfidentialitateRoute
   '/preturi': typeof PreturiRoute
@@ -848,6 +855,7 @@ export interface FileRoutesByTo {
   '/despre': typeof DespreRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/functionalitati': typeof FunctionalitatiRoute
+  '/integrari': typeof IntegrariRoute
   '/login': typeof LoginRoute
   '/politica-de-confidentialitate': typeof PoliticaDeConfidentialitateRoute
   '/preturi': typeof PreturiRoute
@@ -958,6 +966,7 @@ export interface FileRoutesById {
   '/despre': typeof DespreRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/functionalitati': typeof FunctionalitatiRoute
+  '/integrari': typeof IntegrariRoute
   '/login': typeof LoginRoute
   '/politica-de-confidentialitate': typeof PoliticaDeConfidentialitateRoute
   '/preturi': typeof PreturiRoute
@@ -1070,6 +1079,7 @@ export interface FileRouteTypes {
     | '/despre'
     | '/forgot-password'
     | '/functionalitati'
+    | '/integrari'
     | '/login'
     | '/politica-de-confidentialitate'
     | '/preturi'
@@ -1180,6 +1190,7 @@ export interface FileRouteTypes {
     | '/despre'
     | '/forgot-password'
     | '/functionalitati'
+    | '/integrari'
     | '/login'
     | '/politica-de-confidentialitate'
     | '/preturi'
@@ -1289,6 +1300,7 @@ export interface FileRouteTypes {
     | '/despre'
     | '/forgot-password'
     | '/functionalitati'
+    | '/integrari'
     | '/login'
     | '/politica-de-confidentialitate'
     | '/preturi'
@@ -1401,6 +1413,7 @@ export interface RootRouteChildren {
   DespreRoute: typeof DespreRoute
   ForgotPasswordRoute: typeof ForgotPasswordRoute
   FunctionalitatiRoute: typeof FunctionalitatiRoute
+  IntegrariRoute: typeof IntegrariRoute
   LoginRoute: typeof LoginRoute
   PoliticaDeConfidentialitateRoute: typeof PoliticaDeConfidentialitateRoute
   PreturiRoute: typeof PreturiRoute
@@ -1508,6 +1521,13 @@ declare module '@tanstack/react-router' {
       path: '/functionalitati'
       fullPath: '/functionalitati'
       preLoaderRoute: typeof FunctionalitatiRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/integrari': {
+      id: '/integrari'
+      path: '/integrari'
+      fullPath: '/integrari'
+      preLoaderRoute: typeof IntegrariRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/login': {
@@ -2417,6 +2437,7 @@ const rootRouteChildren: RootRouteChildren = {
   DespreRoute: DespreRoute,
   ForgotPasswordRoute: ForgotPasswordRoute,
   FunctionalitatiRoute: FunctionalitatiRoute,
+  IntegrariRoute: IntegrariRoute,
   LoginRoute: LoginRoute,
   PoliticaDeConfidentialitateRoute: PoliticaDeConfidentialitateRoute,
   PreturiRoute: PreturiRoute,

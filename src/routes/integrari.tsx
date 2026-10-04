@@ -27,7 +27,7 @@ export const Route = createFileRoute("/integrari")({
 
 function IntegrationsPage() {
   return (
-    <PublicLayout>
+    <PublicLayout footerDescription="CRM imobiliar pentru agențiile din România, într-o singură platformă.">
       <section className="mk-hero-bg border-b border-border">
         <Container className="py-16 sm:py-20 lg:py-24">
           <SectionHeading as="h1" title="Integrări cu portalurile imobiliare" text={DESCRIPTION} />
@@ -45,7 +45,7 @@ function IntegrationsPage() {
           </div>
         </Container>
       </Section>
-      <CtaBand />
+      <CtaBand text="Creează agenția în câteva minute, invită echipa și lucrează dintr-un singur sistem." />
     </PublicLayout>
   );
 }
