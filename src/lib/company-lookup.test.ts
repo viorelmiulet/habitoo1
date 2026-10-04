@@ -123,3 +123,65 @@ describe("salvare pe organizație", () => {
     expect(shouldSyncOrg({ cui: "18547290", company_verified_at: "2026-10-01" }, now)).toBe(false);
   });
 });
+
+import { buildSeatAddress, normalizePostalCode } from "./company-lookup";
+import { syncOrgFromAnaf } from "./company-lookup.server";
+
+const BUC = {
+  found: [{
+    date_generale: { denumire: "EXPERT TEST S.R.L.", adresa: "MUNICIPIUL BUCUREŞTI, SECTOR 1, STR. X, NR.4", nrRegCom: "J40/1/2019", codPostal: "14584", stare_inregistrare: "INREGISTRAT" },
+    stare_inactiv: { statusInactivi: false },
+    adresa_sediu_social: { sdenumire_Localitate: "Sector 1 Mun. Bucureşti", sdenumire_Strada: "Str. Lămâiului", snumar_Strada: "4", sdetalii_Adresa: "CAMERA NR. 2", sdenumire_Judet: "MUNICIPIUL BUCUREŞTI", scod_Postal: "14584" },
+  }],
+};
+
+function fakeDb(org: Record<string, unknown>) {
+  const updates: Record<string, unknown>[] = [];
+  const chain = (table: string) => ({
+    select: () => ({ eq: () => ({ maybeSingle: async () => ({ data: { ...org } }) }) }),
+    update: (p: Record<string, unknown>) => ({ eq: async () => { if (table === "organizations") { updates.push(p); Object.assign(org, p); } return { error: null }; } }),
+    insert: async () => ({ error: null }),
+  });
+  return { db: { from: chain } as never, updates, org };
+}
+const sdeps = (fetchAnaf: () => Promise<unknown>) => ({
+  now: () => new Date("2026-10-04T10:00:00Z"), cacheGet: async () => null, cachePut: async () => {}, fetchAnaf,
+});
+
+describe("ANAF la crearea organizației", () => {
+  it("cod poștal cu zero în față", () => {
+    expect(normalizePostalCode("14584")).toBe("014584");
+    expect(normalizePostalCode("400002")).toBe("400002");
+    expect(normalizePostalCode("")).toBeNull();
+  });
+  it("sediul social București: oraș București, sectorul în adresă", () => {
+    const c = parseAnafResponse(BUC, "40930967")!;
+    expect(c).toMatchObject({ city: "București", county: "București", postalCode: "014584" });
+    expect(c.address).toBe("Sector 1, Str. Lămâiului, nr. 4, CAMERA NR. 2");
+    expect(buildSeatAddress({})).toBeNull();
+  });
+  it("completare la creare: doar câmpurile goale, marcat verificat", async () => {
+    const f = fakeDb({ id: "o1", cui: "40930967", legal_name: "EDITAT", material_address: null, city: null });
+    const r = await syncOrgFromAnaf(f.db, "o1", null, sdeps(async () => BUC));
+    expect(r.status).toBe("verified");
+    expect(f.org).toMatchObject({ legal_name: "EDITAT", city: "București", county: "București", postal_code: "014584", registered_address: "Sector 1, Str. Lămâiului, nr. 4, CAMERA NR. 2", material_address: "Sector 1, Str. Lămâiului, nr. 4, CAMERA NR. 2", company_status: "activa" });
+    expect(f.org.company_verified_at).toBeTruthy();
+  });
+  it("ANAF indisponibil → neverificat, câmpurile rămân de completat manual", async () => {
+    const f = fakeDb({ id: "o1", cui: "40930967", city: null });
+    const r = await syncOrgFromAnaf(f.db, "o1", null, sdeps(async () => { throw new Error("timeout"); }));
+    expect(r.status).toBe("unverified");
+    expect(f.org.city).toBeNull();
+    expect(f.org.company_verified_at).toBeUndefined();
+    expect(f.org.company_sync_attempted_at).toBeTruthy();
+  });
+  it("câmp parțial gol în ANAF → doar acela rămâne de cerut", async () => {
+    const b = structuredClone(BUC);
+    (b.found[0]!.adresa_sediu_social as Record<string, string>).scod_Postal = "";
+    b.found[0]!.date_generale.codPostal = "";
+    const f = fakeDb({ id: "o1", cui: "40930967" });
+    await syncOrgFromAnaf(f.db, "o1", null, sdeps(async () => b));
+    expect(f.org.city).toBe("București");
+    expect(f.org.postal_code).toBeUndefined();
+  });
+});

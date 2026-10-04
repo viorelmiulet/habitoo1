@@ -107,6 +107,26 @@ export function parseAddressText(address: string | null): { county: string | nul
   return { county, city };
 }
 
+/** Cod poștal din ANAF (ex. „14584") → 6 cifre („014584"); `null` dacă nu e valid. */
+export function normalizePostalCode(raw: string | null): string | null {
+  const v = String(raw ?? "").replace(/\D/g, "");
+  if (!v || v.length > 6 || /^0+$/.test(v)) return null;
+  return v.length >= 4 ? v.padStart(6, "0") : null;
+}
+
+/** Sediul social: sector (București), strada, numărul, detaliile. */
+export function buildSeatAddress(seat: Record<string, unknown>): string | null {
+  const loc = str(seat["sdenumire_Localitate"]) ?? "";
+  const sector = /SECTOR(UL)?\s*(\d)/i.exec(loc);
+  const street = str(seat["sdenumire_Strada"]);
+  const nr = str(seat["snumar_Strada"]);
+  const details = str(seat["sdetalii_Adresa"]);
+  if (!street && !details) return null;
+  return [sector ? `Sector ${sector[2]}` : null, street, nr ? `nr. ${nr}` : null, details]
+    .filter(Boolean)
+    .join(", ");
+}
+
 export function statusFrom(general: Record<string, unknown>, inactive: Record<string, unknown>): CompanyStatus {
   const reg = String(general["stare_inregistrare"] ?? "");
   if (/RADIER|RADIAT/i.test(reg) || str(inactive["dataRadiere"])) return "radiata";
@@ -135,8 +155,8 @@ export function parseAnafResponse(body: unknown, cui: string): CompanyInfo | nul
     cui,
     legalName,
     tradeRegistryNumber: str(g["nrRegCom"]),
-    address,
-    postalCode: str(seat["scod_Postal"]) ?? str(g["codPostal"]),
+    address: buildSeatAddress(seat) ?? address,
+    postalCode: normalizePostalCode(str(seat["scod_Postal"])) ?? normalizePostalCode(str(g["codPostal"])),
     county: cleanCounty(str(seat["sdenumire_Judet"])) ?? fromText.county,
     city: cleanLocality(str(seat["sdenumire_Localitate"])) ?? fromText.city,
     phone: str(g["telefon"]),
@@ -217,12 +237,16 @@ export function buildOrgSyncPatch(org: OrgCompanyRow, c: CompanyInfo, now: Date)
     const v = c[key];
     if (empty(org[col]) && typeof v === "string" && v.trim()) patch[col] = v.trim();
   }
-  if (col6(c.postalCode) === null) delete patch.postal_code;
+  if (patch.postal_code) {
+    const pc = normalizePostalCode(patch.postal_code);
+    if (pc) patch.postal_code = pc;
+    else delete patch.postal_code;
+  }
   patch.company_status = c.status;
   patch.company_verified_at = now.toISOString();
   return patch;
 }
-const col6 = (v: string | null) => (v && /^\d{6}$/.test(v) ? v : null);
+const col6 = (v: string | null) => normalizePostalCode(v);
 
 export type CompanyDiff = { field: string; label: string; current: string | null; next: string };
 

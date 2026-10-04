@@ -1,4 +1,14 @@
-import { ANAF_TIMEOUT_MS, ANAF_URL, LOOKUP_RATE_LIMIT, type CompanyInfo, type LookupDeps } from "./company-lookup";
+import {
+  ANAF_TIMEOUT_MS,
+  ANAF_URL,
+  LOOKUP_RATE_LIMIT,
+  buildOrgSyncPatch,
+  fetchCompany,
+  shouldSyncOrg,
+  validateCui,
+  type CompanyInfo,
+  type LookupDeps,
+} from "./company-lookup";
 
 type Admin = (typeof import("@/integrations/supabase/client.server"))["supabaseAdmin"];
 
@@ -55,4 +65,37 @@ export function serverLookupDeps(db: Admin, rateBucket: string | null): LookupDe
     fetchAnaf: fetchAnafHttp,
     cuiTaken: (cui) => cuiTakenBy(db, cui),
   };
+}
+
+const ORG_COLS =
+  "id,cui,legal_name,trade_registry_number,registered_address,material_address,postal_code,city,county,company_verified_at,company_sync_attempted_at";
+
+export type OrgSyncStatus = "skipped" | "verified" | "unverified";
+
+/** Completează din ANAF doar câmpurile goale ale organizației (la creare și la deschiderea aplicației). */
+export async function syncOrgFromAnaf(
+  db: Admin,
+  orgId: string,
+  actorId: string | null,
+  deps: Omit<LookupDeps, "rateAllow" | "cuiTaken"> = serverLookupDeps(db, null),
+): Promise<{ status: OrgSyncStatus; changed: string[] }> {
+  const { data: org } = await db.from("organizations").select(ORG_COLS).eq("id", orgId).maybeSingle();
+  const now = deps.now();
+  if (!org || !shouldSyncOrg(org, now)) return { status: "skipped", changed: [] };
+  await db.from("organizations").update({ company_sync_attempted_at: now.toISOString() } as never).eq("id", orgId);
+  const r = await fetchCompany(deps, validateCui(org.cui ?? "")!);
+  if (!r.ok) return { status: "unverified", changed: [] };
+  const patch = buildOrgSyncPatch(org, r.company, now);
+  const { error } = await db.from("organizations").update(patch as never).eq("id", orgId);
+  if (error) return { status: "unverified", changed: [] };
+  const changed = Object.keys(patch).filter((k) => !k.startsWith("company_"));
+  await db.from("audit_logs").insert({
+    organization_id: orgId,
+    actor_id: actorId,
+    action: "organization.company_synced_anaf",
+    entity: "organizations",
+    entity_id: orgId,
+    new_values: patch,
+  } as never);
+  return { status: "verified", changed };
 }

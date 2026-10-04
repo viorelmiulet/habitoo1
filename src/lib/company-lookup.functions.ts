@@ -3,11 +3,9 @@ import { getRequestIP } from "@tanstack/react-start/server";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import {
-  buildOrgSyncPatch,
   diffOrgWithCompany,
   fetchCompany,
   lookupCompany,
-  shouldSyncOrg,
   validateCui,
   type CompanyDiff,
   type LookupResult,
@@ -47,28 +45,9 @@ export const syncOrganizationFromCui = createServerFn({ method: "POST" })
   .handler(async ({ context }): Promise<{ status: "skipped" | "verified" | "unverified"; changed: string[] }> => {
     const orgId = await adminOrgContext(context as never);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { serverLookupDeps } = await import("@/lib/company-lookup.server");
-    const { data: org } = await supabaseAdmin.from("organizations").select(ORG_COLS).eq("id", orgId).maybeSingle();
-    const now = new Date();
-    if (!org || !shouldSyncOrg(org, now)) return { status: "skipped", changed: [] };
-    await supabaseAdmin
-      .from("organizations")
-      .update({ company_sync_attempted_at: now.toISOString() } as never)
-      .eq("id", orgId);
-    const r = await fetchCompany(serverLookupDeps(supabaseAdmin, null), validateCui(org.cui ?? "")!);
-    if (!r.ok) return { status: "unverified", changed: [] };
-    const patch = buildOrgSyncPatch(org, r.company, now);
-    const { error } = await supabaseAdmin.from("organizations").update(patch as never).eq("id", orgId);
-    if (error) return { status: "unverified", changed: [] };
-    const changed = Object.keys(patch).filter((k) => !k.startsWith("company_"));
-    await supabaseAdmin.from("audit_logs").insert({
-      organization_id: orgId,
-      actor_id: context.userId,
-      action: "organization.company_synced_anaf",
-      entity: "organizations",
-      entity_id: orgId,
-      new_values: patch,
-    } as never);
+    const { syncOrgFromAnaf } = await import("@/lib/company-lookup.server");
+    const { status, changed } = await syncOrgFromAnaf(supabaseAdmin, orgId, context.userId);
+    if (status !== "verified") return { status, changed };
     if (changed.length) {
       const { retryPendingImospotRequests } = await import("@/lib/portals/imospot-key-request.server");
       await retryPendingImospotRequests(orgId, context.userId).catch(() => undefined);

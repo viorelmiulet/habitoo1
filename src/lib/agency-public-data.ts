@@ -89,6 +89,11 @@ export function buildCompletionPatch(
     if (!v) throw new Error(`${AGENCY_FIELD_LABELS[f]} este obligatoriu.`);
     patch[f] = f === "phone" ? (normalizeRoPhone(v) as string) : v;
   }
+  // Valorile preluate din ANAF pot fi corectate explicit („Modifică").
+  for (const f of ["material_address", "city", "postal_code"] as const) {
+    const v = input[f]?.trim();
+    if (v && v !== String(org[f] ?? "").trim()) patch[f] = v;
+  }
   if (input.material_website && !org.material_website?.trim()) {
     patch.material_website = input.material_website;
   }
