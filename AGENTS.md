@@ -1,5 +1,3 @@
-- Blog content is authored as Markdown, sanitized server-side into a restricted HTML subset for rendering; this keeps editing simple and public output safe.
-- Blog cover uploads use the private `blog-media` bucket and are served through the read-only public media route; this keeps write access SuperAdmin-only.
 <!-- LOVABLE:BEGIN -->
 
 > [!IMPORTANT]
