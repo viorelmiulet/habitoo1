@@ -57,6 +57,7 @@ import { Route as AuthenticatedSuperadminIndexRouteImport } from './routes/_auth
 import { Route as AuthenticatedSuperadminAgenciesRouteImport } from './routes/_authenticated/superadmin.agencies'
 import { Route as AuthenticatedSuperadminAiFeaturesRouteImport } from './routes/_authenticated/superadmin.ai-features'
 import { Route as AuthenticatedSuperadminAuditRouteImport } from './routes/_authenticated/superadmin.audit'
+import { Route as AuthenticatedSuperadminBlogRouteImport } from './routes/_authenticated/superadmin.blog'
 import { Route as AuthenticatedSuperadminDeletedRouteImport } from './routes/_authenticated/superadmin.deleted'
 import { Route as AuthenticatedSuperadminMailRouteImport } from './routes/_authenticated/superadmin.mail'
 import { Route as AuthenticatedSuperadminNomenclatorRouteImport } from './routes/_authenticated/superadmin.nomenclator'
@@ -376,6 +377,12 @@ const AuthenticatedSuperadminAuditRoute =
   AuthenticatedSuperadminAuditRouteImport.update({
     id: '/audit',
     path: '/audit',
+    getParentRoute: () => AuthenticatedSuperadminRoute,
+  } as any)
+const AuthenticatedSuperadminBlogRoute =
+  AuthenticatedSuperadminBlogRouteImport.update({
+    id: '/blog',
+    path: '/blog',
     getParentRoute: () => AuthenticatedSuperadminRoute,
   } as any)
 const AuthenticatedSuperadminDeletedRoute =
@@ -800,6 +807,7 @@ export interface FileRoutesByFullPath {
   '/superadmin/agencies': typeof AuthenticatedSuperadminAgenciesRoute
   '/superadmin/ai-features': typeof AuthenticatedSuperadminAiFeaturesRoute
   '/superadmin/audit': typeof AuthenticatedSuperadminAuditRoute
+  '/superadmin/blog': typeof AuthenticatedSuperadminBlogRoute
   '/superadmin/deleted': typeof AuthenticatedSuperadminDeletedRoute
   '/superadmin/mail': typeof AuthenticatedSuperadminMailRoute
   '/superadmin/nomenclator': typeof AuthenticatedSuperadminNomenclatorRoute
@@ -912,6 +920,7 @@ export interface FileRoutesByTo {
   '/superadmin/agencies': typeof AuthenticatedSuperadminAgenciesRoute
   '/superadmin/ai-features': typeof AuthenticatedSuperadminAiFeaturesRoute
   '/superadmin/audit': typeof AuthenticatedSuperadminAuditRoute
+  '/superadmin/blog': typeof AuthenticatedSuperadminBlogRoute
   '/superadmin/deleted': typeof AuthenticatedSuperadminDeletedRoute
   '/superadmin/mail': typeof AuthenticatedSuperadminMailRoute
   '/superadmin/nomenclator': typeof AuthenticatedSuperadminNomenclatorRoute
@@ -1028,6 +1037,7 @@ export interface FileRoutesById {
   '/_authenticated/superadmin/agencies': typeof AuthenticatedSuperadminAgenciesRoute
   '/_authenticated/superadmin/ai-features': typeof AuthenticatedSuperadminAiFeaturesRoute
   '/_authenticated/superadmin/audit': typeof AuthenticatedSuperadminAuditRoute
+  '/_authenticated/superadmin/blog': typeof AuthenticatedSuperadminBlogRoute
   '/_authenticated/superadmin/deleted': typeof AuthenticatedSuperadminDeletedRoute
   '/_authenticated/superadmin/mail': typeof AuthenticatedSuperadminMailRoute
   '/_authenticated/superadmin/nomenclator': typeof AuthenticatedSuperadminNomenclatorRoute
@@ -1144,6 +1154,7 @@ export interface FileRouteTypes {
     | '/superadmin/agencies'
     | '/superadmin/ai-features'
     | '/superadmin/audit'
+    | '/superadmin/blog'
     | '/superadmin/deleted'
     | '/superadmin/mail'
     | '/superadmin/nomenclator'
@@ -1256,6 +1267,7 @@ export interface FileRouteTypes {
     | '/superadmin/agencies'
     | '/superadmin/ai-features'
     | '/superadmin/audit'
+    | '/superadmin/blog'
     | '/superadmin/deleted'
     | '/superadmin/mail'
     | '/superadmin/nomenclator'
@@ -1371,6 +1383,7 @@ export interface FileRouteTypes {
     | '/_authenticated/superadmin/agencies'
     | '/_authenticated/superadmin/ai-features'
     | '/_authenticated/superadmin/audit'
+    | '/_authenticated/superadmin/blog'
     | '/_authenticated/superadmin/deleted'
     | '/_authenticated/superadmin/mail'
     | '/_authenticated/superadmin/nomenclator'
@@ -1839,6 +1852,13 @@ declare module '@tanstack/react-router' {
       path: '/audit'
       fullPath: '/superadmin/audit'
       preLoaderRoute: typeof AuthenticatedSuperadminAuditRouteImport
+      parentRoute: typeof AuthenticatedSuperadminRoute
+    }
+    '/_authenticated/superadmin/blog': {
+      id: '/_authenticated/superadmin/blog'
+      path: '/blog'
+      fullPath: '/superadmin/blog'
+      preLoaderRoute: typeof AuthenticatedSuperadminBlogRouteImport
       parentRoute: typeof AuthenticatedSuperadminRoute
     }
     '/_authenticated/superadmin/deleted': {
@@ -2389,6 +2409,7 @@ interface AuthenticatedSuperadminRouteChildren {
   AuthenticatedSuperadminAgenciesRoute: typeof AuthenticatedSuperadminAgenciesRoute
   AuthenticatedSuperadminAiFeaturesRoute: typeof AuthenticatedSuperadminAiFeaturesRoute
   AuthenticatedSuperadminAuditRoute: typeof AuthenticatedSuperadminAuditRoute
+  AuthenticatedSuperadminBlogRoute: typeof AuthenticatedSuperadminBlogRoute
   AuthenticatedSuperadminDeletedRoute: typeof AuthenticatedSuperadminDeletedRoute
   AuthenticatedSuperadminMailRoute: typeof AuthenticatedSuperadminMailRoute
   AuthenticatedSuperadminNomenclatorRoute: typeof AuthenticatedSuperadminNomenclatorRoute
@@ -2407,6 +2428,7 @@ const AuthenticatedSuperadminRouteChildren: AuthenticatedSuperadminRouteChildren
     AuthenticatedSuperadminAiFeaturesRoute:
       AuthenticatedSuperadminAiFeaturesRoute,
     AuthenticatedSuperadminAuditRoute: AuthenticatedSuperadminAuditRoute,
+    AuthenticatedSuperadminBlogRoute: AuthenticatedSuperadminBlogRoute,
     AuthenticatedSuperadminDeletedRoute: AuthenticatedSuperadminDeletedRoute,
     AuthenticatedSuperadminMailRoute: AuthenticatedSuperadminMailRoute,
     AuthenticatedSuperadminNomenclatorRoute:
