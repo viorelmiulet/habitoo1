@@ -51,7 +51,7 @@ const orgStatusLabels: Record<string, string> = {
 export function RegistrationRequestDetails({ details }: { details: RegistrationRequestDetails }) {
   const { request: r, company: c, organization: o, contact } = details;
   const companyStatusLabel = c.companyStatus
-    ? (COMPANY_STATUS_LABEL[c.companyStatus] ?? c.companyStatus)
+    ? ((COMPANY_STATUS_LABEL as Record<string, string>)[c.companyStatus] ?? c.companyStatus)
     : null;
   const companyStatusText = companyStatusLabel
     ? c.companyStatus === "inactiva" && c.companyStatusSince
