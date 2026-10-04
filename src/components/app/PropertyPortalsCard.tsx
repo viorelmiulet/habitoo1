@@ -497,7 +497,7 @@ export const PropertyPortalsCard = forwardRef<
               className="mb-3 rounded-2xl border border-destructive bg-destructive/5 p-3 text-sm"
             />
           ) : null}
-          <ul className="grid min-w-0 grid-cols-1 items-start gap-4 md:grid-cols-2 xl:grid-cols-3">
+          <ul className="grid min-w-0 grid-cols-1 items-start gap-4 md:grid-cols-2 lg:grid-cols-3">
             <li className="min-w-0">
               <Card className={cn("relative min-w-0 bg-surface p-4 text-sm", fbValue && "border-gold ring-1 ring-gold/40", fbState.key === "excluded" && "bg-warning/10")}>
                 <label htmlFor="portal-facebook-catalog" aria-label="Catalog Facebook" className={cn("absolute inset-0 z-0", editing && canManage && canEditFacebookCatalog && !fb.isLoading ? "cursor-pointer" : "cursor-default")} />
@@ -608,7 +608,7 @@ export const PropertyPortalsCard = forwardRef<
               </li>
             ) : null}
             {collabVisible && collabValue ? (
-              <li className="min-w-0 md:col-span-2 xl:col-span-3">
+              <li className="min-w-0 md:col-span-2 lg:col-span-3">
                     <div className="grid min-w-0 gap-3 sm:grid-cols-2">
                       <div className="space-y-1.5">
                         <Label htmlFor="collab-percent" className="text-xs">
