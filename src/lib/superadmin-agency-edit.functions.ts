@@ -95,5 +95,7 @@ export const saveAgencyDetails = createServerFn({ method: "POST" })
       new_values: diff.newValues,
     } as never);
 
+    const { retryPendingImospotRequests } = await import("@/lib/portals/imospot-key-request.server");
+    await retryPendingImospotRequests(data.organizationId, userId);
     return { changed: diff.changed };
   });
