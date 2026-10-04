@@ -52,6 +52,14 @@ describe("JSON-LD public", () => {
     expect(sw.publisher).toEqual({ "@id": ORG_ID });
   });
 
+  it("FAQ-ul public și datele structurate includ Storia și OLX și Catalogul Facebook", () => {
+    const faq = ld(Home).find((x) => x["@type"] === "FAQPage");
+    const entries = faq?.mainEntity as Array<{ name: string; acceptedAnswer: { text: string } }>;
+    const answer = entries.find((entry) => entry.name.startsWith("Pe ce portaluri"))?.acceptedAnswer.text;
+    expect(answer).toContain("Storia și OLX");
+    expect(answer).toContain("Catalogul Facebook (Meta)");
+  });
+
   it.each(pages)("pagina are tipul corect, isPartOf și breadcrumb", (route, type) => {
     const n = ld(route);
     const page = n.find((x) => x["@type"] === type)!;

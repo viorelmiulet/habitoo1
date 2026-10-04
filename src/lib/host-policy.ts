@@ -33,7 +33,8 @@ export const LLMS_TXT = `# Habitoo CRM
 > Habitoo CRM este un CRM imobiliar pentru agențiile din România. Gestionează proprietăți, clienți, cereri și lead-uri, face potrivirea automată între cereri și proprietăți și publică anunțurile pe portalurile imobiliare direct din aplicație.
 
 Informații esențiale:
-- Portaluri: Imobiliare.ro, Storia, Publi24 (prin Romimo), iMove, Imospot, HomePitch, PrimulAnunț, OferteImobiliare, LaCheie, ClickImob și, internațional, Properstar.
+- Portaluri: Imobiliare.ro, Storia și OLX, Publi24 (prin Romimo), iMove, Imospot, HomePitch, PrimulAnunț, OferteImobiliare, LaCheie, ClickImob și, internațional, Properstar.
+- Catalog Facebook: anunțurile selectate pentru catalog sunt trimise prin feed în Meta Commerce Manager, pentru reclame și afișare în Facebook și Instagram.
 - Prețuri: Basic 10 €/lună (până la 3 agenți), Pro 20 €/lună (până la 10 agenți), Unlimited 100 €/lună (agenți nelimitați). -50% la plata anuală. 30 de zile gratuite, fără card bancar.
 - Colaborare între agenții de tip MLS, import din orice CRM imobiliar, date izolate pentru fiecare agenție.
 - Interfață în limba română, în browser, fără instalare. Aplicația mobilă pentru iOS și Android va fi disponibilă în curând.
