@@ -42,6 +42,7 @@ import {
   Bot,
   BrainCircuit,
   Wand2,
+  Newspaper,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { initials } from "@/lib/format";
@@ -172,6 +173,7 @@ export const superadminNav: NavGroup[] = [
       { label: "Jurnal portaluri", to: "/superadmin/portal-logs", icon: ScrollText },
       { label: "Funcții AI", to: "/superadmin/ai-features", icon: Bot },
       { label: "Email", to: "/superadmin/mail", icon: Mail },
+      { label: "Blog", to: "/superadmin/blog", icon: Newspaper },
       { label: "Suport", to: "/superadmin/support", icon: LifeBuoy },
       { label: "Nomenclator localități", to: "/superadmin/nomenclator", icon: MapPin },
       { label: "QA / Demo Data", to: "/superadmin/qa", icon: FlaskConical },

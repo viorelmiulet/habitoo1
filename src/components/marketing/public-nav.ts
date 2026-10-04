@@ -2,6 +2,7 @@ export const publicNav = [
   { to: "/functionalitati", label: "Funcționalități" },
   { to: "/preturi", label: "Prețuri" },
   { to: "/despre", label: "Despre" },
+  { to: "/blog", label: "Blog" },
   { to: "/contact", label: "Contact" },
 ] as const;
 
@@ -13,6 +14,7 @@ export const footerColumns = [
       { to: "/integrari", label: "Integrări" },
       { to: "/preturi", label: "Prețuri" },
       { to: "/despre", label: "Despre" },
+      { to: "/blog", label: "Blog" },
       { to: "/contact", label: "Contact" },
     ],
   },

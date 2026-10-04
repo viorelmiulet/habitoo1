@@ -1,0 +1,35 @@
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
+import { useState } from "react";
+import { Eye, FilePenLine, Plus, Trash2 } from "lucide-react";
+import { BlogEditor } from "@/components/superadmin/BlogEditor";
+import { PageHeader } from "@/components/app/PageHeader";
+import { EmptyState } from "@/components/app/EmptyState";
+import { ListSkeleton } from "@/components/app/LoadingState";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { toast } from "@/components/ui/sonner";
+import { appHead } from "@/components/app/app-head";
+import type { BlogPost, BlogPostInput } from "@/lib/blog";
+import { deleteBlogPost, listAdminBlogPosts, saveBlogPost, uploadBlogImage } from "@/lib/blog.functions";
+import { toastError } from "@/lib/errors";
+
+export const Route = createFileRoute("/_authenticated/superadmin/blog")({ head: () => appHead("Habitoo CRM — administrare blog"), component: SuperadminBlogPage });
+const date = (value: string | null) => value ? new Intl.DateTimeFormat("ro-RO", { dateStyle: "medium" }).format(new Date(value)) : "—";
+function SuperadminBlogPage() {
+  const client = useQueryClient(); const list = useServerFn(listAdminBlogPosts); const save = useServerFn(saveBlogPost); const remove = useServerFn(deleteBlogPost); const upload = useServerFn(uploadBlogImage);
+  const query = useQuery({ queryKey: ["superadmin", "blog"], queryFn: () => list() }); const [editing, setEditing] = useState<BlogPost | null | undefined>(); const [deleting, setDeleting] = useState<BlogPost | null>(null);
+  const refresh = () => client.invalidateQueries({ queryKey: ["superadmin", "blog"] });
+  const saveMutation = useMutation({ mutationFn: (value: BlogPostInput) => save({ data: value }), onSuccess: () => { void refresh(); setEditing(undefined); toast.success("Articolul a fost salvat."); }, onError: (error: Error) => toastError(error) });
+  const deleteMutation = useMutation({ mutationFn: (id: string) => remove({ data: { id } }), onSuccess: () => { void refresh(); setDeleting(null); toast.success("Articolul a fost șters."); }, onError: (error: Error) => toastError(error) });
+  const posts = query.data ?? []; const categories = [...new Set(posts.map((item) => item.category))];
+  const uploadFile = async (file: File) => { if (file.size > 8 * 1024 * 1024) throw new Error("Imaginea poate avea cel mult 8 MB."); const base64 = await new Promise<string>((resolve, reject) => { const reader = new FileReader(); reader.onload = () => resolve(String(reader.result).split(",")[1] ?? ""); reader.onerror = reject; reader.readAsDataURL(file); }); return (await upload({ data: { name: file.name, contentType: file.type as "image/jpeg" | "image/png" | "image/webp" | "image/svg+xml", base64 } })).url ?? ""; };
+  return <><PageHeader eyebrow="Conținut public" title="Blog" description="Scrie, previzualizează și publică articolele Habitoo." actions={<Button onClick={() => setEditing(null)}><Plus/> Articol nou</Button>}/>
+    {query.isLoading ? <ListSkeleton rows={6}/> : posts.length === 0 ? <div className="panel"><EmptyState icon={FilePenLine} title="Niciun articol" description="Creează primul articol pentru blog."/></div> : <div className="panel overflow-x-auto"><table className="w-full min-w-[720px] text-left text-sm"><thead className="border-b bg-muted/60 text-xs uppercase text-muted-foreground"><tr><th className="px-5 py-3">Titlu</th><th className="px-5 py-3">Categorie</th><th className="px-5 py-3">Stare</th><th className="px-5 py-3">Dată</th><th className="px-5 py-3 text-right">Acțiuni</th></tr></thead><tbody className="divide-y">{posts.map((post) => <tr key={post.id}><td className="px-5 py-4 font-medium">{post.title}</td><td className="px-5 py-4">{post.category}</td><td className="px-5 py-4"><Badge variant="outline" className={post.status === "published" ? "border-success/30 bg-success/10 text-success" : ""}>{post.status === "published" ? "Publicat" : "Ciornă"}</Badge></td><td className="px-5 py-4 text-muted-foreground">{date(post.published_at ?? post.updated_at)}</td><td className="px-5 py-4"><div className="flex justify-end gap-2"><Button size="icon" variant="ghost" title="Previzualizează" aria-label="Previzualizează" asChild><Link to="/superadmin/blog/preview/$id" params={{ id: post.id }} target="_blank"><Eye/></Link></Button><Button size="icon" variant="outline" title="Editează" aria-label="Editează" onClick={() => setEditing(post)}><FilePenLine/></Button><Button size="icon" variant="danger" title="Șterge" aria-label="Șterge" onClick={() => setDeleting(post)}><Trash2/></Button></div></td></tr>)}</tbody></table></div>}
+    <Dialog open={editing !== undefined} onOpenChange={(open) => !open && setEditing(undefined)}><DialogContent className="max-h-[94vh] max-w-5xl overflow-y-auto"><DialogHeader><DialogTitle>{editing ? "Editează articolul" : "Articol nou"}</DialogTitle><DialogDescription>Articolele rămân private până alegi starea Publicat.</DialogDescription></DialogHeader><BlogEditor post={editing ?? null} categories={categories} busy={saveMutation.isPending} onCancel={() => setEditing(undefined)} onSave={(value) => saveMutation.mutate({ ...value, cover_image_url: value.cover_image_url || null, published_at: value.published_at ? new Date(value.published_at).toISOString() : null, seo_title: value.seo_title || null, seo_description: value.seo_description || null })} onPreview={(value) => { sessionStorage.setItem("habitoo.blog.preview", JSON.stringify(value)); window.open("/superadmin/blog/preview/new", "_blank", "noopener,noreferrer"); }} onUpload={uploadFile}/></DialogContent></Dialog>
+    <AlertDialog open={!!deleting} onOpenChange={(open) => !open && setDeleting(null)}><AlertDialogContent><AlertDialogHeader><AlertDialogTitle>Ștergi articolul?</AlertDialogTitle><AlertDialogDescription>„{deleting?.title}” va fi șters definitiv.</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel>Anulează</AlertDialogCancel><AlertDialogAction className="bg-destructive text-destructive-foreground" onClick={() => deleting && deleteMutation.mutate(deleting.id)}>Șterge</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog>
+  </>;
+}

@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AccesContRouteImport } from './routes/acces-cont'
+import { Route as BlogRouteImport } from './routes/blog'
 import { Route as ConfidentialitateRouteImport } from './routes/confidentialitate'
 import { Route as ContactRouteImport } from './routes/contact'
 import { Route as DespreRouteImport } from './routes/despre'
@@ -24,6 +25,7 @@ import { Route as PreturiRouteImport } from './routes/preturi'
 import { Route as RegisterRouteImport } from './routes/register'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as SemnareRouteImport } from './routes/semnare'
+import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as TermeniRouteImport } from './routes/termeni'
 import { Route as TermeniSiConditiiRouteImport } from './routes/termeni-si-conditii'
 import { Route as AuthenticatedAnunturiProprietariRouteImport } from './routes/_authenticated/anunturi-proprietari'
@@ -31,6 +33,7 @@ import { Route as AuthenticatedAppRouteImport } from './routes/_authenticated/ap
 import { Route as AuthenticatedOnboardingRouteImport } from './routes/_authenticated/onboarding'
 import { Route as AuthenticatedSuperadminRouteImport } from './routes/_authenticated/superadmin'
 import { Route as AuthCallbackRouteImport } from './routes/auth.callback'
+import { Route as BlogSlugRouteImport } from './routes/blog.$slug'
 import { Route as OfertaIdRouteImport } from './routes/oferta.$id'
 import { Route as AuthenticatedAppIndexRouteImport } from './routes/_authenticated/app.index'
 import { Route as AuthenticatedAppActivitiesRouteImport } from './routes/_authenticated/app.activities'
@@ -55,6 +58,7 @@ import { Route as AuthenticatedSuperadminIndexRouteImport } from './routes/_auth
 import { Route as AuthenticatedSuperadminAgenciesRouteImport } from './routes/_authenticated/superadmin.agencies'
 import { Route as AuthenticatedSuperadminAiFeaturesRouteImport } from './routes/_authenticated/superadmin.ai-features'
 import { Route as AuthenticatedSuperadminAuditRouteImport } from './routes/_authenticated/superadmin.audit'
+import { Route as AuthenticatedSuperadminBlogRouteImport } from './routes/_authenticated/superadmin.blog'
 import { Route as AuthenticatedSuperadminDeletedRouteImport } from './routes/_authenticated/superadmin.deleted'
 import { Route as AuthenticatedSuperadminMailRouteImport } from './routes/_authenticated/superadmin.mail'
 import { Route as AuthenticatedSuperadminNomenclatorRouteImport } from './routes/_authenticated/superadmin.nomenclator'
@@ -75,6 +79,7 @@ import { Route as AuthenticatedAppPropertiesIndexRouteImport } from './routes/_a
 import { Route as AuthenticatedAppPropertiesIdRouteImport } from './routes/_authenticated/app.properties.$id'
 import { Route as AuthenticatedAppPropertiesNewRouteImport } from './routes/_authenticated/app.properties.new'
 import { Route as AuthenticatedAppRequestsIdRouteImport } from './routes/_authenticated/app.requests.$id'
+import { Route as ApiPublicBlogMediaSplatRouteImport } from './routes/api/public/blog-media/$'
 import { Route as ApiPublicCronAccountDeletionRouteImport } from './routes/api/public/cron/account-deletion'
 import { Route as ApiPublicCronLacheieResendRouteImport } from './routes/api/public/cron/lacheie-resend'
 import { Route as ApiPublicCronListingCollectorRouteImport } from './routes/api/public/cron/listing-collector'
@@ -92,6 +97,7 @@ import { Route as LovableEmailAuthPreviewRouteImport } from './routes/lovable/em
 import { Route as LovableEmailAuthWebhookRouteImport } from './routes/lovable/email/auth/webhook'
 import { Route as AuthenticatedAppAcpDatePiataIndexRouteImport } from './routes/_authenticated/app.acp.date-piata.index'
 import { Route as AuthenticatedAppAcpDatePiataIdRouteImport } from './routes/_authenticated/app.acp.date-piata.$id'
+import { Route as AuthenticatedSuperadminBlogPreviewIdRouteImport } from './routes/_authenticated/superadmin.blog.preview.$id'
 import { Route as ApiPublicCatalogV1FacebookDotcsvRouteImport } from './routes/api/public/catalog/v1/facebook[.]csv'
 import { Route as ApiPublicFeedProperstarAgencyKeyRouteImport } from './routes/api/public/feed/properstar/$agencyKey'
 import { Route as ApiPublicHomepitchV1PropertiesRouteImport } from './routes/api/public/homepitch/v1/properties'
@@ -132,6 +138,11 @@ const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
 const AccesContRoute = AccesContRouteImport.update({
   id: '/acces-cont',
   path: '/acces-cont',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BlogRoute = BlogRouteImport.update({
+  id: '/blog',
+  path: '/blog',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ConfidentialitateRoute = ConfidentialitateRouteImport.update({
@@ -195,6 +206,11 @@ const SemnareRoute = SemnareRouteImport.update({
   path: '/semnare',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
+  id: '/sitemap.xml',
+  path: '/sitemap.xml',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const TermeniRoute = TermeniRouteImport.update({
   id: '/termeni',
   path: '/termeni',
@@ -230,6 +246,11 @@ const AuthCallbackRoute = AuthCallbackRouteImport.update({
   id: '/auth/callback',
   path: '/auth/callback',
   getParentRoute: () => rootRouteImport,
+} as any)
+const BlogSlugRoute = BlogSlugRouteImport.update({
+  id: '/$slug',
+  path: '/$slug',
+  getParentRoute: () => BlogRoute,
 } as any)
 const OfertaIdRoute = OfertaIdRouteImport.update({
   id: '/oferta/$id',
@@ -365,6 +386,12 @@ const AuthenticatedSuperadminAuditRoute =
     path: '/audit',
     getParentRoute: () => AuthenticatedSuperadminRoute,
   } as any)
+const AuthenticatedSuperadminBlogRoute =
+  AuthenticatedSuperadminBlogRouteImport.update({
+    id: '/blog',
+    path: '/blog',
+    getParentRoute: () => AuthenticatedSuperadminRoute,
+  } as any)
 const AuthenticatedSuperadminDeletedRoute =
   AuthenticatedSuperadminDeletedRouteImport.update({
     id: '/deleted',
@@ -483,6 +510,11 @@ const AuthenticatedAppRequestsIdRoute =
     path: '/$id',
     getParentRoute: () => AuthenticatedAppRequestsRoute,
   } as any)
+const ApiPublicBlogMediaSplatRoute = ApiPublicBlogMediaSplatRouteImport.update({
+  id: '/api/public/blog-media/$',
+  path: '/api/public/blog-media/$',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicCronAccountDeletionRoute =
   ApiPublicCronAccountDeletionRouteImport.update({
     id: '/api/public/cron/account-deletion',
@@ -578,6 +610,12 @@ const AuthenticatedAppAcpDatePiataIdRoute =
     id: '/acp/date-piata/$id',
     path: '/acp/date-piata/$id',
     getParentRoute: () => AuthenticatedAppRoute,
+  } as any)
+const AuthenticatedSuperadminBlogPreviewIdRoute =
+  AuthenticatedSuperadminBlogPreviewIdRouteImport.update({
+    id: '/preview/$id',
+    path: '/preview/$id',
+    getParentRoute: () => AuthenticatedSuperadminBlogRoute,
   } as any)
 const ApiPublicCatalogV1FacebookDotcsvRoute =
   ApiPublicCatalogV1FacebookDotcsvRouteImport.update({
@@ -739,6 +777,7 @@ const ApiPublicSitesV1MediaAgentIdRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/acces-cont': typeof AccesContRoute
+  '/blog': typeof BlogRouteWithChildren
   '/confidentialitate': typeof ConfidentialitateRoute
   '/contact': typeof ContactRoute
   '/despre': typeof DespreRoute
@@ -751,6 +790,7 @@ export interface FileRoutesByFullPath {
   '/register': typeof RegisterRoute
   '/reset-password': typeof ResetPasswordRoute
   '/semnare': typeof SemnareRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/termeni': typeof TermeniRoute
   '/termeni-si-conditii': typeof TermeniSiConditiiRoute
   '/anunturi-proprietari': typeof AuthenticatedAnunturiProprietariRoute
@@ -758,6 +798,7 @@ export interface FileRoutesByFullPath {
   '/onboarding': typeof AuthenticatedOnboardingRoute
   '/superadmin': typeof AuthenticatedSuperadminRouteWithChildren
   '/auth/callback': typeof AuthCallbackRoute
+  '/blog/$slug': typeof BlogSlugRoute
   '/oferta/$id': typeof OfertaIdRoute
   '/app/activities': typeof AuthenticatedAppActivitiesRoute
   '/app/ai': typeof AuthenticatedAppAiRoute
@@ -780,6 +821,7 @@ export interface FileRoutesByFullPath {
   '/superadmin/agencies': typeof AuthenticatedSuperadminAgenciesRoute
   '/superadmin/ai-features': typeof AuthenticatedSuperadminAiFeaturesRoute
   '/superadmin/audit': typeof AuthenticatedSuperadminAuditRoute
+  '/superadmin/blog': typeof AuthenticatedSuperadminBlogRouteWithChildren
   '/superadmin/deleted': typeof AuthenticatedSuperadminDeletedRoute
   '/superadmin/mail': typeof AuthenticatedSuperadminMailRoute
   '/superadmin/nomenclator': typeof AuthenticatedSuperadminNomenclatorRoute
@@ -798,6 +840,7 @@ export interface FileRoutesByFullPath {
   '/app/properties/$id': typeof AuthenticatedAppPropertiesIdRoute
   '/app/properties/new': typeof AuthenticatedAppPropertiesNewRoute
   '/app/requests/$id': typeof AuthenticatedAppRequestsIdRoute
+  '/api/public/blog-media/$': typeof ApiPublicBlogMediaSplatRoute
   '/api/public/cron/account-deletion': typeof ApiPublicCronAccountDeletionRoute
   '/api/public/cron/lacheie-resend': typeof ApiPublicCronLacheieResendRoute
   '/api/public/cron/listing-collector': typeof ApiPublicCronListingCollectorRoute
@@ -818,6 +861,7 @@ export interface FileRoutesByFullPath {
   '/app/contracts/': typeof AuthenticatedAppContractsIndexRoute
   '/app/properties/': typeof AuthenticatedAppPropertiesIndexRoute
   '/app/acp/date-piata/$id': typeof AuthenticatedAppAcpDatePiataIdRoute
+  '/superadmin/blog/preview/$id': typeof AuthenticatedSuperadminBlogPreviewIdRoute
   '/api/public/catalog/v1/facebook.csv': typeof ApiPublicCatalogV1FacebookDotcsvRoute
   '/api/public/feed/properstar/$agencyKey': typeof ApiPublicFeedProperstarAgencyKeyRoute
   '/api/public/homepitch/v1/properties': typeof ApiPublicHomepitchV1PropertiesRouteWithChildren
@@ -850,6 +894,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/acces-cont': typeof AccesContRoute
+  '/blog': typeof BlogRouteWithChildren
   '/confidentialitate': typeof ConfidentialitateRoute
   '/contact': typeof ContactRoute
   '/despre': typeof DespreRoute
@@ -862,11 +907,13 @@ export interface FileRoutesByTo {
   '/register': typeof RegisterRoute
   '/reset-password': typeof ResetPasswordRoute
   '/semnare': typeof SemnareRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/termeni': typeof TermeniRoute
   '/termeni-si-conditii': typeof TermeniSiConditiiRoute
   '/anunturi-proprietari': typeof AuthenticatedAnunturiProprietariRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
   '/auth/callback': typeof AuthCallbackRoute
+  '/blog/$slug': typeof BlogSlugRoute
   '/oferta/$id': typeof OfertaIdRoute
   '/app/activities': typeof AuthenticatedAppActivitiesRoute
   '/app/ai': typeof AuthenticatedAppAiRoute
@@ -889,6 +936,7 @@ export interface FileRoutesByTo {
   '/superadmin/agencies': typeof AuthenticatedSuperadminAgenciesRoute
   '/superadmin/ai-features': typeof AuthenticatedSuperadminAiFeaturesRoute
   '/superadmin/audit': typeof AuthenticatedSuperadminAuditRoute
+  '/superadmin/blog': typeof AuthenticatedSuperadminBlogRouteWithChildren
   '/superadmin/deleted': typeof AuthenticatedSuperadminDeletedRoute
   '/superadmin/mail': typeof AuthenticatedSuperadminMailRoute
   '/superadmin/nomenclator': typeof AuthenticatedSuperadminNomenclatorRoute
@@ -907,6 +955,7 @@ export interface FileRoutesByTo {
   '/app/properties/$id': typeof AuthenticatedAppPropertiesIdRoute
   '/app/properties/new': typeof AuthenticatedAppPropertiesNewRoute
   '/app/requests/$id': typeof AuthenticatedAppRequestsIdRoute
+  '/api/public/blog-media/$': typeof ApiPublicBlogMediaSplatRoute
   '/api/public/cron/account-deletion': typeof ApiPublicCronAccountDeletionRoute
   '/api/public/cron/lacheie-resend': typeof ApiPublicCronLacheieResendRoute
   '/api/public/cron/listing-collector': typeof ApiPublicCronListingCollectorRoute
@@ -927,6 +976,7 @@ export interface FileRoutesByTo {
   '/app/contracts': typeof AuthenticatedAppContractsIndexRoute
   '/app/properties': typeof AuthenticatedAppPropertiesIndexRoute
   '/app/acp/date-piata/$id': typeof AuthenticatedAppAcpDatePiataIdRoute
+  '/superadmin/blog/preview/$id': typeof AuthenticatedSuperadminBlogPreviewIdRoute
   '/api/public/catalog/v1/facebook.csv': typeof ApiPublicCatalogV1FacebookDotcsvRoute
   '/api/public/feed/properstar/$agencyKey': typeof ApiPublicFeedProperstarAgencyKeyRoute
   '/api/public/homepitch/v1/properties': typeof ApiPublicHomepitchV1PropertiesRouteWithChildren
@@ -961,6 +1011,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/acces-cont': typeof AccesContRoute
+  '/blog': typeof BlogRouteWithChildren
   '/confidentialitate': typeof ConfidentialitateRoute
   '/contact': typeof ContactRoute
   '/despre': typeof DespreRoute
@@ -973,6 +1024,7 @@ export interface FileRoutesById {
   '/register': typeof RegisterRoute
   '/reset-password': typeof ResetPasswordRoute
   '/semnare': typeof SemnareRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/termeni': typeof TermeniRoute
   '/termeni-si-conditii': typeof TermeniSiConditiiRoute
   '/_authenticated/anunturi-proprietari': typeof AuthenticatedAnunturiProprietariRoute
@@ -980,6 +1032,7 @@ export interface FileRoutesById {
   '/_authenticated/onboarding': typeof AuthenticatedOnboardingRoute
   '/_authenticated/superadmin': typeof AuthenticatedSuperadminRouteWithChildren
   '/auth/callback': typeof AuthCallbackRoute
+  '/blog/$slug': typeof BlogSlugRoute
   '/oferta/$id': typeof OfertaIdRoute
   '/_authenticated/app/activities': typeof AuthenticatedAppActivitiesRoute
   '/_authenticated/app/ai': typeof AuthenticatedAppAiRoute
@@ -1002,6 +1055,7 @@ export interface FileRoutesById {
   '/_authenticated/superadmin/agencies': typeof AuthenticatedSuperadminAgenciesRoute
   '/_authenticated/superadmin/ai-features': typeof AuthenticatedSuperadminAiFeaturesRoute
   '/_authenticated/superadmin/audit': typeof AuthenticatedSuperadminAuditRoute
+  '/_authenticated/superadmin/blog': typeof AuthenticatedSuperadminBlogRouteWithChildren
   '/_authenticated/superadmin/deleted': typeof AuthenticatedSuperadminDeletedRoute
   '/_authenticated/superadmin/mail': typeof AuthenticatedSuperadminMailRoute
   '/_authenticated/superadmin/nomenclator': typeof AuthenticatedSuperadminNomenclatorRoute
@@ -1020,6 +1074,7 @@ export interface FileRoutesById {
   '/_authenticated/app/properties/$id': typeof AuthenticatedAppPropertiesIdRoute
   '/_authenticated/app/properties/new': typeof AuthenticatedAppPropertiesNewRoute
   '/_authenticated/app/requests/$id': typeof AuthenticatedAppRequestsIdRoute
+  '/api/public/blog-media/$': typeof ApiPublicBlogMediaSplatRoute
   '/api/public/cron/account-deletion': typeof ApiPublicCronAccountDeletionRoute
   '/api/public/cron/lacheie-resend': typeof ApiPublicCronLacheieResendRoute
   '/api/public/cron/listing-collector': typeof ApiPublicCronListingCollectorRoute
@@ -1040,6 +1095,7 @@ export interface FileRoutesById {
   '/_authenticated/app/contracts/': typeof AuthenticatedAppContractsIndexRoute
   '/_authenticated/app/properties/': typeof AuthenticatedAppPropertiesIndexRoute
   '/_authenticated/app/acp/date-piata/$id': typeof AuthenticatedAppAcpDatePiataIdRoute
+  '/_authenticated/superadmin/blog/preview/$id': typeof AuthenticatedSuperadminBlogPreviewIdRoute
   '/api/public/catalog/v1/facebook.csv': typeof ApiPublicCatalogV1FacebookDotcsvRoute
   '/api/public/feed/properstar/$agencyKey': typeof ApiPublicFeedProperstarAgencyKeyRoute
   '/api/public/homepitch/v1/properties': typeof ApiPublicHomepitchV1PropertiesRouteWithChildren
@@ -1074,6 +1130,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/acces-cont'
+    | '/blog'
     | '/confidentialitate'
     | '/contact'
     | '/despre'
@@ -1086,6 +1143,7 @@ export interface FileRouteTypes {
     | '/register'
     | '/reset-password'
     | '/semnare'
+    | '/sitemap.xml'
     | '/termeni'
     | '/termeni-si-conditii'
     | '/anunturi-proprietari'
@@ -1093,6 +1151,7 @@ export interface FileRouteTypes {
     | '/onboarding'
     | '/superadmin'
     | '/auth/callback'
+    | '/blog/$slug'
     | '/oferta/$id'
     | '/app/activities'
     | '/app/ai'
@@ -1115,6 +1174,7 @@ export interface FileRouteTypes {
     | '/superadmin/agencies'
     | '/superadmin/ai-features'
     | '/superadmin/audit'
+    | '/superadmin/blog'
     | '/superadmin/deleted'
     | '/superadmin/mail'
     | '/superadmin/nomenclator'
@@ -1133,6 +1193,7 @@ export interface FileRouteTypes {
     | '/app/properties/$id'
     | '/app/properties/new'
     | '/app/requests/$id'
+    | '/api/public/blog-media/$'
     | '/api/public/cron/account-deletion'
     | '/api/public/cron/lacheie-resend'
     | '/api/public/cron/listing-collector'
@@ -1153,6 +1214,7 @@ export interface FileRouteTypes {
     | '/app/contracts/'
     | '/app/properties/'
     | '/app/acp/date-piata/$id'
+    | '/superadmin/blog/preview/$id'
     | '/api/public/catalog/v1/facebook.csv'
     | '/api/public/feed/properstar/$agencyKey'
     | '/api/public/homepitch/v1/properties'
@@ -1185,6 +1247,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/acces-cont'
+    | '/blog'
     | '/confidentialitate'
     | '/contact'
     | '/despre'
@@ -1197,11 +1260,13 @@ export interface FileRouteTypes {
     | '/register'
     | '/reset-password'
     | '/semnare'
+    | '/sitemap.xml'
     | '/termeni'
     | '/termeni-si-conditii'
     | '/anunturi-proprietari'
     | '/onboarding'
     | '/auth/callback'
+    | '/blog/$slug'
     | '/oferta/$id'
     | '/app/activities'
     | '/app/ai'
@@ -1224,6 +1289,7 @@ export interface FileRouteTypes {
     | '/superadmin/agencies'
     | '/superadmin/ai-features'
     | '/superadmin/audit'
+    | '/superadmin/blog'
     | '/superadmin/deleted'
     | '/superadmin/mail'
     | '/superadmin/nomenclator'
@@ -1242,6 +1308,7 @@ export interface FileRouteTypes {
     | '/app/properties/$id'
     | '/app/properties/new'
     | '/app/requests/$id'
+    | '/api/public/blog-media/$'
     | '/api/public/cron/account-deletion'
     | '/api/public/cron/lacheie-resend'
     | '/api/public/cron/listing-collector'
@@ -1262,6 +1329,7 @@ export interface FileRouteTypes {
     | '/app/contracts'
     | '/app/properties'
     | '/app/acp/date-piata/$id'
+    | '/superadmin/blog/preview/$id'
     | '/api/public/catalog/v1/facebook.csv'
     | '/api/public/feed/properstar/$agencyKey'
     | '/api/public/homepitch/v1/properties'
@@ -1295,6 +1363,7 @@ export interface FileRouteTypes {
     | '/'
     | '/_authenticated'
     | '/acces-cont'
+    | '/blog'
     | '/confidentialitate'
     | '/contact'
     | '/despre'
@@ -1307,6 +1376,7 @@ export interface FileRouteTypes {
     | '/register'
     | '/reset-password'
     | '/semnare'
+    | '/sitemap.xml'
     | '/termeni'
     | '/termeni-si-conditii'
     | '/_authenticated/anunturi-proprietari'
@@ -1314,6 +1384,7 @@ export interface FileRouteTypes {
     | '/_authenticated/onboarding'
     | '/_authenticated/superadmin'
     | '/auth/callback'
+    | '/blog/$slug'
     | '/oferta/$id'
     | '/_authenticated/app/activities'
     | '/_authenticated/app/ai'
@@ -1336,6 +1407,7 @@ export interface FileRouteTypes {
     | '/_authenticated/superadmin/agencies'
     | '/_authenticated/superadmin/ai-features'
     | '/_authenticated/superadmin/audit'
+    | '/_authenticated/superadmin/blog'
     | '/_authenticated/superadmin/deleted'
     | '/_authenticated/superadmin/mail'
     | '/_authenticated/superadmin/nomenclator'
@@ -1354,6 +1426,7 @@ export interface FileRouteTypes {
     | '/_authenticated/app/properties/$id'
     | '/_authenticated/app/properties/new'
     | '/_authenticated/app/requests/$id'
+    | '/api/public/blog-media/$'
     | '/api/public/cron/account-deletion'
     | '/api/public/cron/lacheie-resend'
     | '/api/public/cron/listing-collector'
@@ -1374,6 +1447,7 @@ export interface FileRouteTypes {
     | '/_authenticated/app/contracts/'
     | '/_authenticated/app/properties/'
     | '/_authenticated/app/acp/date-piata/$id'
+    | '/_authenticated/superadmin/blog/preview/$id'
     | '/api/public/catalog/v1/facebook.csv'
     | '/api/public/feed/properstar/$agencyKey'
     | '/api/public/homepitch/v1/properties'
@@ -1408,6 +1482,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AccesContRoute: typeof AccesContRoute
+  BlogRoute: typeof BlogRouteWithChildren
   ConfidentialitateRoute: typeof ConfidentialitateRoute
   ContactRoute: typeof ContactRoute
   DespreRoute: typeof DespreRoute
@@ -1420,10 +1495,12 @@ export interface RootRouteChildren {
   RegisterRoute: typeof RegisterRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   SemnareRoute: typeof SemnareRoute
+  SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   TermeniRoute: typeof TermeniRoute
   TermeniSiConditiiRoute: typeof TermeniSiConditiiRoute
   AuthCallbackRoute: typeof AuthCallbackRoute
   OfertaIdRoute: typeof OfertaIdRoute
+  ApiPublicBlogMediaSplatRoute: typeof ApiPublicBlogMediaSplatRoute
   ApiPublicCronAccountDeletionRoute: typeof ApiPublicCronAccountDeletionRoute
   ApiPublicCronLacheieResendRoute: typeof ApiPublicCronLacheieResendRoute
   ApiPublicCronListingCollectorRoute: typeof ApiPublicCronListingCollectorRoute
@@ -1486,6 +1563,13 @@ declare module '@tanstack/react-router' {
       path: '/acces-cont'
       fullPath: '/acces-cont'
       preLoaderRoute: typeof AccesContRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/blog': {
+      id: '/blog'
+      path: '/blog'
+      fullPath: '/blog'
+      preLoaderRoute: typeof BlogRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/confidentialitate': {
@@ -1572,6 +1656,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SemnareRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/sitemap.xml': {
+      id: '/sitemap.xml'
+      path: '/sitemap.xml'
+      fullPath: '/sitemap.xml'
+      preLoaderRoute: typeof SitemapDotxmlRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/termeni': {
       id: '/termeni'
       path: '/termeni'
@@ -1620,6 +1711,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/auth/callback'
       preLoaderRoute: typeof AuthCallbackRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/blog/$slug': {
+      id: '/blog/$slug'
+      path: '/$slug'
+      fullPath: '/blog/$slug'
+      preLoaderRoute: typeof BlogSlugRouteImport
+      parentRoute: typeof BlogRoute
     }
     '/oferta/$id': {
       id: '/oferta/$id'
@@ -1789,6 +1887,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSuperadminAuditRouteImport
       parentRoute: typeof AuthenticatedSuperadminRoute
     }
+    '/_authenticated/superadmin/blog': {
+      id: '/_authenticated/superadmin/blog'
+      path: '/blog'
+      fullPath: '/superadmin/blog'
+      preLoaderRoute: typeof AuthenticatedSuperadminBlogRouteImport
+      parentRoute: typeof AuthenticatedSuperadminRoute
+    }
     '/_authenticated/superadmin/deleted': {
       id: '/_authenticated/superadmin/deleted'
       path: '/deleted'
@@ -1929,6 +2034,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAppRequestsIdRouteImport
       parentRoute: typeof AuthenticatedAppRequestsRoute
     }
+    '/api/public/blog-media/$': {
+      id: '/api/public/blog-media/$'
+      path: '/api/public/blog-media/$'
+      fullPath: '/api/public/blog-media/$'
+      preLoaderRoute: typeof ApiPublicBlogMediaSplatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/cron/account-deletion': {
       id: '/api/public/cron/account-deletion'
       path: '/api/public/cron/account-deletion'
@@ -2047,6 +2159,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/app/acp/date-piata/$id'
       preLoaderRoute: typeof AuthenticatedAppAcpDatePiataIdRouteImport
       parentRoute: typeof AuthenticatedAppRoute
+    }
+    '/_authenticated/superadmin/blog/preview/$id': {
+      id: '/_authenticated/superadmin/blog/preview/$id'
+      path: '/preview/$id'
+      fullPath: '/superadmin/blog/preview/$id'
+      preLoaderRoute: typeof AuthenticatedSuperadminBlogPreviewIdRouteImport
+      parentRoute: typeof AuthenticatedSuperadminBlogRoute
     }
     '/api/public/catalog/v1/facebook.csv': {
       id: '/api/public/catalog/v1/facebook.csv'
@@ -2326,10 +2445,26 @@ const AuthenticatedAppRouteChildren: AuthenticatedAppRouteChildren = {
 const AuthenticatedAppRouteWithChildren =
   AuthenticatedAppRoute._addFileChildren(AuthenticatedAppRouteChildren)
 
+interface AuthenticatedSuperadminBlogRouteChildren {
+  AuthenticatedSuperadminBlogPreviewIdRoute: typeof AuthenticatedSuperadminBlogPreviewIdRoute
+}
+
+const AuthenticatedSuperadminBlogRouteChildren: AuthenticatedSuperadminBlogRouteChildren =
+  {
+    AuthenticatedSuperadminBlogPreviewIdRoute:
+      AuthenticatedSuperadminBlogPreviewIdRoute,
+  }
+
+const AuthenticatedSuperadminBlogRouteWithChildren =
+  AuthenticatedSuperadminBlogRoute._addFileChildren(
+    AuthenticatedSuperadminBlogRouteChildren,
+  )
+
 interface AuthenticatedSuperadminRouteChildren {
   AuthenticatedSuperadminAgenciesRoute: typeof AuthenticatedSuperadminAgenciesRoute
   AuthenticatedSuperadminAiFeaturesRoute: typeof AuthenticatedSuperadminAiFeaturesRoute
   AuthenticatedSuperadminAuditRoute: typeof AuthenticatedSuperadminAuditRoute
+  AuthenticatedSuperadminBlogRoute: typeof AuthenticatedSuperadminBlogRouteWithChildren
   AuthenticatedSuperadminDeletedRoute: typeof AuthenticatedSuperadminDeletedRoute
   AuthenticatedSuperadminMailRoute: typeof AuthenticatedSuperadminMailRoute
   AuthenticatedSuperadminNomenclatorRoute: typeof AuthenticatedSuperadminNomenclatorRoute
@@ -2348,6 +2483,8 @@ const AuthenticatedSuperadminRouteChildren: AuthenticatedSuperadminRouteChildren
     AuthenticatedSuperadminAiFeaturesRoute:
       AuthenticatedSuperadminAiFeaturesRoute,
     AuthenticatedSuperadminAuditRoute: AuthenticatedSuperadminAuditRoute,
+    AuthenticatedSuperadminBlogRoute:
+      AuthenticatedSuperadminBlogRouteWithChildren,
     AuthenticatedSuperadminDeletedRoute: AuthenticatedSuperadminDeletedRoute,
     AuthenticatedSuperadminMailRoute: AuthenticatedSuperadminMailRoute,
     AuthenticatedSuperadminNomenclatorRoute:
@@ -2384,6 +2521,16 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
 
 const AuthenticatedRouteRouteWithChildren =
   AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
+
+interface BlogRouteChildren {
+  BlogSlugRoute: typeof BlogSlugRoute
+}
+
+const BlogRouteChildren: BlogRouteChildren = {
+  BlogSlugRoute: BlogSlugRoute,
+}
+
+const BlogRouteWithChildren = BlogRoute._addFileChildren(BlogRouteChildren)
 
 interface ApiPublicHomepitchV1PropertiesRouteChildren {
   ApiPublicHomepitchV1PropertiesIdRoute: typeof ApiPublicHomepitchV1PropertiesIdRoute
@@ -2432,6 +2579,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AccesContRoute: AccesContRoute,
+  BlogRoute: BlogRouteWithChildren,
   ConfidentialitateRoute: ConfidentialitateRoute,
   ContactRoute: ContactRoute,
   DespreRoute: DespreRoute,
@@ -2444,10 +2592,12 @@ const rootRouteChildren: RootRouteChildren = {
   RegisterRoute: RegisterRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   SemnareRoute: SemnareRoute,
+  SitemapDotxmlRoute: SitemapDotxmlRoute,
   TermeniRoute: TermeniRoute,
   TermeniSiConditiiRoute: TermeniSiConditiiRoute,
   AuthCallbackRoute: AuthCallbackRoute,
   OfertaIdRoute: OfertaIdRoute,
+  ApiPublicBlogMediaSplatRoute: ApiPublicBlogMediaSplatRoute,
   ApiPublicCronAccountDeletionRoute: ApiPublicCronAccountDeletionRoute,
   ApiPublicCronLacheieResendRoute: ApiPublicCronLacheieResendRoute,
   ApiPublicCronListingCollectorRoute: ApiPublicCronListingCollectorRoute,
