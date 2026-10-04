@@ -8,18 +8,21 @@ import { currentUserQueryKey } from "@/hooks/use-session";
 type Org = { cui?: string | null; company_verified_at?: string | null; company_sync_attempted_at?: string | null };
 
 /** Completează în fundal datele firmei din ANAF (doar câmpurile goale), cel mult o dată pe zi. */
-export function CompanyAnafSync({ org }: { org: Org | null }) {
+export function CompanyAnafSync({ org, onDone }: { org: Org | null; onDone?: () => void }) {
   const sync = useServerFn(syncOrganizationFromCui);
   const queryClient = useQueryClient();
   const done = useRef(false);
   useEffect(() => {
-    if (done.current || !org || !shouldSyncOrg(org, new Date())) return;
+    if (done.current) return;
+    if (!org || !shouldSyncOrg(org, new Date())) return onDone?.();
     done.current = true;
     sync()
-      .then((r) => {
-        if (r.status === "verified") void queryClient.invalidateQueries({ queryKey: currentUserQueryKey });
+      .then(async (r) => {
+        if (r.status === "verified") await queryClient.invalidateQueries({ queryKey: currentUserQueryKey });
       })
-      .catch(() => undefined);
-  }, [org, sync, queryClient]);
+      .catch(() => undefined)
+      .finally(() => onDone?.());
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [org]);
   return null;
 }

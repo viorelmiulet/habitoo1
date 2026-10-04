@@ -2,6 +2,9 @@ import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { Building2 } from "lucide-react";
+import { CompanyAnafSync } from "@/components/app/CompanyAnafSync";
+import { ShellLoading } from "@/components/app/LoadingState";
+import { shouldSyncOrg } from "@/lib/company-lookup";
 
 import { toast } from "@/components/ui/sonner";
 import { toastError } from "@/lib/errors";
@@ -28,6 +31,8 @@ import {
 import { completeAgencyPublicData } from "@/lib/agency-public-data.functions";
 import { notifyProperstarFeedChanged } from "@/lib/portals/properstar-cache";
 
+const ANAF_FIELDS = ["material_address", "city", "postal_code"] as const satisfies readonly AgencyRequiredField[];
+
 const PLACEHOLDERS: Record<AgencyRequiredField, string> = {
   email: "contact@agentia-ta.ro",
   phone: "0722 123 456",
@@ -41,7 +46,11 @@ export function CompleteAgencyData({ user }: { user: CurrentUser }) {
   const org = user.organization!;
   const queryClient = useQueryClient();
   const save = useServerFn(completeAgencyPublicData);
-  const [missing] = useState(() => missingAgencyPublicFields(org));
+  // Câmpurile preluate din ANAF nu se mai cer; „Modifică" le redeschide pentru editare.
+  const [editing, setEditing] = useState<AgencyRequiredField[]>([]);
+  const [syncing, setSyncing] = useState(() => shouldSyncOrg(org, new Date()));
+  const missing = [...missingAgencyPublicFields(org), ...editing.filter((f) => !missingAgencyPublicFields(org).includes(f))];
+  const fromAnaf = ANAF_FIELDS.filter((f) => !missing.includes(f) && String(org[f] ?? "").trim());
   const [values, setValues] = useState<Record<string, string>>({});
   const [errors, setErrors] = useState<Record<string, string>>({});
   const askWebsite = !org.material_website?.trim();
@@ -91,6 +100,14 @@ export function CompleteAgencyData({ user }: { user: CurrentUser }) {
     onError: (e: Error) => toastError(e),
   });
 
+  if (syncing)
+    return (
+      <>
+        <CompanyAnafSync org={org} onDone={() => setSyncing(false)} />
+        <ShellLoading label="Preluăm datele firmei din ANAF…" />
+      </>
+    );
+
   return (
     <div className="flex min-h-screen items-center justify-center bg-background p-4">
       <form
@@ -120,6 +137,22 @@ export function CompleteAgencyData({ user }: { user: CurrentUser }) {
               <span className="text-muted-foreground">CUI: </span>
               {org.cui ?? "—"}
             </div>
+            {fromAnaf.map((f) => (
+              <div key={f} className="flex flex-wrap items-baseline gap-x-2">
+                <span className="text-muted-foreground">{AGENCY_FIELD_LABELS[f]}: </span>
+                <span className="min-w-0 break-words">{org[f]}</span>
+                <button
+                  type="button"
+                  className="text-xs text-primary underline-offset-2 hover:underline"
+                  onClick={() => {
+                    setEditing((e) => [...e, f]);
+                    setValues((v) => ({ ...v, [f]: String(org[f] ?? "") }));
+                  }}
+                >
+                  Modifică
+                </button>
+              </div>
+            ))}
           </div>
         ) : null}
 
