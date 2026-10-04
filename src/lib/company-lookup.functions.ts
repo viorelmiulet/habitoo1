@@ -48,11 +48,11 @@ export const syncOrganizationFromCui = createServerFn({ method: "POST" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { syncOrgFromAnaf } = await import("@/lib/company-lookup.server");
     const { status, changed } = await syncOrgFromAnaf(supabaseAdmin, orgId, context.userId);
+    // La fiecare deschidere a aplicației: reîncearcă automat cererile Imospot netrimise
+    // (date completate între timp, Mailgun căzut, cereri vechi `pending`).
+    const { retryPendingImospotRequests } = await import("@/lib/portals/imospot-key-request.server");
+    await retryPendingImospotRequests(orgId, context.userId).catch(() => undefined);
     if (status !== "verified") return { status, changed };
-    if (changed.length) {
-      const { retryPendingImospotRequests } = await import("@/lib/portals/imospot-key-request.server");
-      await retryPendingImospotRequests(orgId, context.userId).catch(() => undefined);
-    }
     return { status: "verified", changed };
   });
 

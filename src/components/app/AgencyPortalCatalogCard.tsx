@@ -130,10 +130,16 @@ export function AgencyPortalCatalogCard() {
                 </div>
                 {item.id === "imospot" ? (
                   <div className="space-y-2 text-xs text-muted-foreground">
-                    <p>
-                      Cheia API este emisă de Imospot după aprobarea cererii, de obicei în aceeași zi
-                      lucrătoare, și ajunge pe emailul administratorului.
-                    </p>
+                    {item.request?.status === "approved" && state.key !== "connected" ? (
+                      <p data-imospot-sent className="font-medium text-foreground">
+                        Cererea a fost trimisă către Imospot. Vei primi cheia pe email.
+                      </p>
+                    ) : (
+                      <p>
+                        Cheia API este emisă de Imospot, de obicei în aceeași zi lucrătoare, și
+                        ajunge pe emailul administratorului.
+                      </p>
+                    )}
                     {item.companyDataMissing.length > 0 ? (
                       <p data-imospot-incomplete className="text-destructive">
                         Completează datele firmei în{" "}
