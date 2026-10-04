@@ -22,7 +22,7 @@ export const PLAN_AGENT_LIMITS: Record<PlanKey, number | null> = {
 /** Prețuri în euro: tariful lunar și tariful lunar echivalent la plata anuală (-50%). */
 export const PLAN_PRICES: Record<PlanKey, { monthly: number; annualMonthly: number }> = {
   basic: { monthly: 10, annualMonthly: 5 },
-  pro: { monthly: 20, annualMonthly: 10 },
+  pro: { monthly: 40, annualMonthly: 20 },
   unlimited: { monthly: 100, annualMonthly: 50 },
 };
 

@@ -25,6 +25,7 @@ import { CollaborationSection } from "@/components/marketing/CollaborationSectio
 import { CtaBand } from "@/components/marketing/CtaBand";
 import { FaqSection, faqPageJsonLd, type FaqItem } from "@/components/marketing/FaqSection";
 import { PortalsSection } from "@/components/marketing/PortalsSection";
+import { HomePricingSection } from "@/components/marketing/HomePricingSection";
 import { navyButton } from "@/components/marketing/PublicHeader";
 import { PublicLayout } from "@/components/marketing/PublicLayout";
 import { Reveal } from "@/components/marketing/Reveal";
@@ -71,7 +72,7 @@ const faq: FaqItem[] = [
   },
   {
     q: "Cât costă Habitoo CRM?",
-    a: "Habitoo are trei planuri: Basic la 10 €/lună, pentru până la 3 agenți; Pro la 20 €/lună, pentru până la 10 agenți; Unlimited la 100 €/lună, fără limită de agenți. La plata anuală prețul lunar scade cu 50%. Toate planurile încep cu 30 de zile gratuite, fără card bancar.",
+    a: "Habitoo are trei planuri: Basic la 10 €/lună, pentru până la 3 agenți; Pro la 40 €/lună, pentru până la 10 agenți; Unlimited la 100 €/lună, fără limită de agenți. La plata anuală prețul lunar scade cu 50%. Toate planurile încep cu 30 de zile gratuite, fără card bancar.",
   },
   {
     q: "Pot testa Habitoo gratuit?",
@@ -580,6 +581,8 @@ function HomePage() {
           </div>
         </Container>
       </Section>
+
+      <HomePricingSection />
 
       <FaqSection items={faq} />
 
