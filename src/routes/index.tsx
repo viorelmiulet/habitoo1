@@ -203,11 +203,11 @@ function HomePage() {
               <p className="mt-6 max-w-xl text-base leading-relaxed text-navy-foreground sm:text-lg">
                 Anunțuri, clienți și lead-uri într-un singur loc, simplu de folosit de prima zi.
               </p>
-              <div className="mt-9 flex flex-col gap-3 sm:flex-row">
-                <Button asChild size="lg" className="h-12 rounded-full px-7 text-base shadow-raised">
+              <div className="mt-7 grid grid-cols-2 gap-2 sm:mt-9 sm:flex sm:gap-3">
+                <Button asChild size="lg" className="h-12 rounded-full px-3 text-sm shadow-raised sm:px-7 sm:text-base">
                   <CrmLink to="/register">Începe acum <ArrowRight /></CrmLink>
                 </Button>
-                <Button asChild size="lg" variant="outline" className="h-12 rounded-full border-navy-foreground/30 bg-transparent px-7 text-base text-navy-foreground hover:bg-surface/10 hover:text-surface">
+                <Button asChild size="lg" variant="outline" className="h-12 rounded-full border-navy-foreground/30 bg-transparent px-3 text-sm text-navy-foreground hover:bg-surface/10 hover:text-surface sm:px-7 sm:text-base">
                   <a href="#cum-functioneaza">Vezi cum funcționează</a>
                 </Button>
               </div>
