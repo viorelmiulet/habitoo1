@@ -31,6 +31,7 @@ export const CRM_ROBOTS_TXT = "User-agent: *\nDisallow: /\nAllow: /api/public/\n
 
 export const PUBLIC_ROBOTS_TXT = `User-agent: Googlebot
 Allow: /
+Disallow: /anunturi-proprietari
 Disallow: /app
 Disallow: /superadmin
 Disallow: /api/
@@ -40,6 +41,7 @@ Disallow: /auth/
 
 User-agent: Bingbot
 Allow: /
+Disallow: /anunturi-proprietari
 Disallow: /app
 Disallow: /superadmin
 Disallow: /api/
@@ -57,6 +59,7 @@ User-agent: Google-Extended
 User-agent: Applebot-Extended
 User-agent: CCBot
 Allow: /blog
+Disallow: /anunturi-proprietari
 Disallow: /app
 Disallow: /superadmin
 Disallow: /api/
