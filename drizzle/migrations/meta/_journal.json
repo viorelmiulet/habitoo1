@@ -750,6 +750,20 @@
       "when": 1791053528089,
       "tag": "0106_facebook_catalog_agent_permission",
       "breakpoints": true
+    },
+    {
+      "idx": 107,
+      "version": "7",
+      "when": 1791100741525,
+      "tag": "0107_collaboration_auto_enable",
+      "breakpoints": true
+    },
+    {
+      "idx": 108,
+      "version": "7",
+      "when": 1791100850726,
+      "tag": "0108_fix_guard_org_collab_auto",
+      "breakpoints": true
     }
   ]
 }

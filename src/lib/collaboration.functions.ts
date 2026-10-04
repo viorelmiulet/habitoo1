@@ -939,6 +939,8 @@ export const setPropertyCollaboration = createServerFn({ method: "POST" })
       .from("properties")
       .update({
         collaboration: data.enabled,
+        // Dezactivarea agentului e o decizie explicită: activarea automată n-o mai suprascrie.
+        collaboration_opted_out: !data.enabled,
         collab_commission_percent: data.enabled ? commissionPercent : null,
         collab_terms: data.enabled ? (data.terms ?? null) : null,
         updated_by: actor.userId,
@@ -947,4 +949,37 @@ export const setPropertyCollaboration = createServerFn({ method: "POST" })
       .eq("organization_id", actor.organizationId);
     if (error) throw error;
     return { ok: true, enabled: data.enabled };
+  });
+
+/** Comutatorul agenției „Activează colaborarea automat pe anunțuri” (doar admin). */
+export const setCollaborationAutoEnabled = createServerFn({ method: "POST" })
+  .middleware([requireActiveOrgAuth])
+  .inputValidator((data: unknown) => z.object({ enabled: z.boolean() }).parse(data))
+  .handler(async ({ context, data }): Promise<{ ok: true; activated: number }> => {
+    const actor = await loadActor(context as AuthContext);
+    requireParticipation(actor);
+    const userClient = (context as AuthContext).supabase as {
+      rpc: (fn: "is_org_admin") => PromiseLike<{ data: boolean | null; error: unknown }>;
+    };
+    const { data: isAdmin, error: roleError } = await userClient.rpc("is_org_admin");
+    if (roleError || isAdmin !== true) {
+      throw new Error("Doar administratorul agenției poate schimba această setare.");
+    }
+    const admin = await loadAdmin();
+    const { error } = await admin
+      .from("organizations")
+      .update({ collaboration_auto_enabled: data.enabled })
+      .eq("id", actor.organizationId);
+    if (error) throw error;
+    let activated = 0;
+    if (data.enabled) {
+      const { data: n, error: rpcError } = await admin.rpc("collaboration_auto_activate", {
+        _org: actor.organizationId,
+        _actor: actor.userId,
+        _source: "toggle_enabled",
+      });
+      if (rpcError) throw rpcError;
+      activated = n ?? 0;
+    }
+    return { ok: true, activated };
   });
