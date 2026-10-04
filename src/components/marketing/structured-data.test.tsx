@@ -83,13 +83,27 @@ describe("JSON-LD public", () => {
       PLAN_PRICES.pro.monthly,
       PLAN_PRICES.unlimited.monthly,
     ]);
-    expect(offers.map((o) => o.price)).toEqual([10, 20, 100]);
+    expect(offers.map((o) => o.price)).toEqual([10, 40, 100]);
+    expect(PLAN_PRICES).toEqual({
+      basic: { monthly: 10, annualMonthly: 5 },
+      pro: { monthly: 40, annualMonthly: 20 },
+      unlimited: { monthly: 100, annualMonthly: 50 },
+    });
     for (const o of offers) {
       expect(o.priceCurrency).toBe("EUR");
       expect(o.url).toBe("https://www.habitoo.ro/preturi");
       expect((o.priceSpecification as Node).unitText).toBe("MONTH");
       expect((o.priceSpecification as Node)["@type"]).toBe("UnitPriceSpecification");
     }
+  });
+
+  it("FAQ-urile arată prețurile și totalurile anuale actualizate", () => {
+    const homeFaq = ld(Home).find((x) => x["@type"] === "FAQPage");
+    const pricingFaq = ld(Pricing).find((x) => x["@type"] === "FAQPage");
+    const text = JSON.stringify([homeFaq, pricingFaq]);
+    expect(text).toContain("Pro la 40 €/lună");
+    expect(text).toContain("60 €/an pentru Basic, 240 €/an pentru Pro și 600 €/an pentru Unlimited");
+    expect(text).not.toMatch(/Pro la 20 €|120\s*€\/an/);
   });
 
   it("fără aggregateRating sau review, FAQPage păstrat", () => {

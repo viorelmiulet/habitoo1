@@ -54,6 +54,9 @@ describe("host policy", () => {
     expect(LLMS_TXT).toContain("+40 767 941 512");
     expect(LLMS_TXT).toContain("Storia și OLX");
     expect(LLMS_TXT).toContain("Catalog Facebook");
+    expect(LLMS_TXT).toContain("Pro 40 €/lună");
+    expect(LLMS_TXT).toContain("240 €/an Pro");
+    expect(LLMS_TXT).not.toContain("Pro 20 €/lună");
   });
   it("X-Robots-Tag doar pe HTML crm, nu pe api/public sau non-HTML", () => {
     expect(shouldTagNoindex(req("https://crm.habitoo.ro/app"), html)).toBe(true);

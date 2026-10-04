@@ -15,7 +15,7 @@ export function HomePricingSection() {
   const [cycle, setCycle] = useState<"monthly" | "annual">("monthly");
 
   return (
-    <Section aria-label="Prețuri" id="preturi" className="bg-background">
+    <Section id="preturi" className="bg-background">
       <Container>
         <SectionHeading title="Prețuri simple, fără surprize" />
         <LaunchOfferBadge className="mt-8" />

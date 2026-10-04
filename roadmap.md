@@ -1,3 +1,8 @@
+## Prețuri publice și ofertă de lansare
+
+- [x] Prețuri Basic/Pro/Unlimited actualizate doar în sursa de afișare, textele publice și datele structurate.
+- [x] Bandă compactă de prețuri pe homepage și componentă de ofertă ascunsă până la primirea textului.
+
 ## Publicare — grilă de portaluri
 
 - [x] Carduri în 1/2/3 coloane, cu selecție existentă, restricții de editare și sloturi; teste fără publicare reală.
