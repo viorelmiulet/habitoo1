@@ -30,7 +30,7 @@ export async function notifyPortalFailure(
     if (agent) recipients.add(agent.id);
   }
   for (const userId of recipients) {
-    const id = await notificationId([input.organizationId, input.propertyId, input.portalKey, input.error, userId]);
+    const id = await notificationId(["habitoo-portal-failure", input.organizationId, input.propertyId, input.portalKey, input.error, userId]);
     const { error } = await admin.from("notifications").upsert({
       id,
       organization_id: input.organizationId,
