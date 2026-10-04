@@ -7,14 +7,22 @@ export async function loadDiscoverableBlogPosts(limit?: number): Promise<Discove
   const key = process.env['SUPABASE_PUBLISHABLE_KEY'];
   if (!url || !key) throw new Error("Configurația blogului public lipsește.");
   const db = createClient<Database>(url, key, { auth: { persistSession: false, autoRefreshToken: false } });
-  let query = db
-    .from("blog_posts")
-    .select("slug,title,excerpt,status,published_at,updated_at")
-    .eq("status", "published")
-    .lte("published_at", new Date().toISOString())
-    .order("published_at", { ascending: false });
-  if (limit) query = query.limit(limit);
-  const { data, error } = await query;
-  if (error) throw new Error(error.message);
-  return (data ?? []) as DiscoverableBlogPost[];
+  const pageSize = limit ? Math.min(limit, 1000) : 1000;
+  const rows: DiscoverableBlogPost[] = [];
+  for (let from = 0; ; from += pageSize) {
+    let query = db
+      .from("blog_posts")
+      .select("slug,title,excerpt,status,published_at,updated_at")
+      .eq("status", "published")
+      .lte("published_at", new Date().toISOString())
+      .order("published_at", { ascending: false })
+      .range(from, from + pageSize - 1);
+    if (limit) query = query.limit(limit);
+    const { data, error } = await query;
+    if (error) throw new Error(error.message);
+    const batch = (data ?? []) as DiscoverableBlogPost[];
+    rows.push(...batch);
+    if (limit || batch.length < pageSize) break;
+  }
+  return rows;
 }
