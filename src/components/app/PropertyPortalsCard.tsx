@@ -569,7 +569,7 @@ export const PropertyPortalsCard = forwardRef<
                       "bg-warning/10",
                   )}
                 >
-                  <label htmlFor="portal-habitoo-collaboration" aria-label="Colaborare Habitoo" className={cn("absolute inset-0 z-0", editing ? "cursor-pointer" : "cursor-default")} />
+                  <label htmlFor="portal-habitoo-collaboration" aria-label="Colaborare Habitoo" className={cn("absolute inset-0 z-0", editing && canManage ? "cursor-pointer" : "cursor-default")} />
                   <div className="relative z-10 grid grid-cols-[minmax(0,1fr)_auto] items-start gap-2 pointer-events-none">
                     <div className="flex min-w-0 items-start gap-3">
                       <span className="inline-flex size-10 shrink-0 items-center justify-center overflow-hidden rounded-control border border-border bg-surface">
@@ -585,7 +585,7 @@ export const PropertyPortalsCard = forwardRef<
                     <Checkbox
                       id="portal-habitoo-collaboration"
                       checked={collabValue}
-                      disabled={!editing}
+                      disabled={!editing || !canManage}
                       aria-label="Colaborare Habitoo"
                       className="pointer-events-auto mt-0.5 size-6 rounded-full disabled:opacity-40 [&_svg]:size-4"
                       onCheckedChange={(next) => setCollabChecked(next === true)}

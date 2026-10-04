@@ -17,7 +17,7 @@ describe("grila de publicare", () => {
     expect(view).toContain('setChecked((prev) => ({ ...prev, [cell.portalId]: next === true }))');
     expect(view).toContain('!editing ||\n                !canManage');
     expect(view).toContain('disabled={!editing || !canManage || !canEditFacebookCatalog || fb.isLoading}');
-    expect(view).toContain('disabled={!editing}');
+    expect(view).toContain('disabled={!editing || !canManage}');
   });
 
   it("ascunde bifa portalului neconectat și arată restricția de locuri pentru agentul responsabil", () => {
