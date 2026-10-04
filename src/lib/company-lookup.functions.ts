@@ -3,6 +3,7 @@ import { getRequestIP } from "@tanstack/react-start/server";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import {
+  companyStatePatch,
   diffOrgWithCompany,
   fetchCompany,
   lookupCompany,
@@ -88,9 +89,10 @@ export const applyAnafReload = createServerFn({ method: "POST" })
     const r = await fetchCompany(serverLookupDeps(supabaseAdmin, null), cui);
     if (!r.ok) throw new Error("Registrul ANAF nu răspunde acum. Încearcă mai târziu.");
     const diffs = diffOrgWithCompany(org, r.company).filter((d) => data.fields.includes(d.field));
-    const patch: Record<string, string> = Object.fromEntries(diffs.map((d) => [d.field, d.next]));
-    patch.company_status = r.company.status;
-    patch.company_verified_at = new Date().toISOString();
+    const patch: Record<string, string | null> = {
+      ...Object.fromEntries(diffs.map((d) => [d.field, d.next])),
+      ...companyStatePatch(r.company, new Date()),
+    };
     const { error } = await supabaseAdmin.from("organizations").update(patch as never).eq("id", orgId);
     if (error) throw new Error("Nu am putut salva datele firmei.");
     await supabaseAdmin.from("audit_logs").insert({
@@ -102,5 +104,8 @@ export const applyAnafReload = createServerFn({ method: "POST" })
       old_values: Object.fromEntries(diffs.map((d) => [d.field, d.current])),
       new_values: patch,
     } as never);
+    // Starea fiscală poate debloca cererea către Imospot (firmă reactivată).
+    const { retryPendingImospotRequests } = await import("@/lib/portals/imospot-key-request.server");
+    await retryPendingImospotRequests(orgId, context.userId).catch(() => undefined);
     return { ok: true, changed: diffs.map((d) => d.field) };
   });

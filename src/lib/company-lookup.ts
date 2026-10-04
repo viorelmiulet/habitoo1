@@ -13,6 +13,8 @@ export type CompanyInfo = {
   city: string | null;
   phone: string | null;
   status: CompanyStatus;
+  /** Data inactivării fiscale (yyyy-MM-dd), doar când firma e inactivă. */
+  inactiveSince?: string | null;
   vatPayer: boolean;
 };
 
@@ -161,6 +163,7 @@ export function parseAnafResponse(body: unknown, cui: string): CompanyInfo | nul
     city: cleanLocality(str(seat["sdenumire_Localitate"])) ?? fromText.city,
     phone: str(g["telefon"]),
     status: statusFrom(g, inactive),
+    inactiveSince: statusFrom(g, inactive) === "inactiva" ? str(inactive["dataInactivare"]) : null,
     vatPayer: vat["scpTVA"] === true,
   };
 }
@@ -231,19 +234,18 @@ const ORG_FIELD_FROM_COMPANY: Array<[keyof OrgCompanyRow, keyof CompanyInfo, str
 const empty = (v: unknown) => !String(v ?? "").trim();
 
 /** Doar câmpurile goale ale organizației; ce a editat utilizatorul nu se suprascrie. */
-export function buildOrgSyncPatch(org: OrgCompanyRow, c: CompanyInfo, now: Date): Record<string, string> {
-  const patch: Record<string, string> = {};
+export function buildOrgSyncPatch(org: OrgCompanyRow, c: CompanyInfo, now: Date): Record<string, string | null> {
+  const patch: Record<string, string | null> = {};
   for (const [col, key] of ORG_FIELD_FROM_COMPANY) {
     const v = c[key];
     if (empty(org[col]) && typeof v === "string" && v.trim()) patch[col] = v.trim();
   }
-  if (patch.postal_code) {
+  if (typeof patch.postal_code === "string") {
     const pc = normalizePostalCode(patch.postal_code);
     if (pc) patch.postal_code = pc;
     else delete patch.postal_code;
   }
-  patch.company_status = c.status;
-  patch.company_verified_at = now.toISOString();
+  Object.assign(patch, companyStatePatch(c, now));
   return patch;
 }
 const col6 = (v: string | null) => normalizePostalCode(v);
@@ -273,4 +275,27 @@ export function shouldSyncOrg(
   if (org.company_verified_at) return false;
   if (!org.company_sync_attempted_at) return true;
   return now.getTime() - new Date(org.company_sync_attempted_at).getTime() >= CACHE_TTL_MS;
+}
+
+/** Starea fiscală: se actualizează la fiecare verificare ANAF (nu e editabilă de agenție). */
+export function companyStatePatch(c: CompanyInfo, now: Date) {
+  return {
+    company_status: c.status,
+    company_inactive_since: c.status === "inactiva" ? (c.inactiveSince ?? null) : null,
+    company_verified_at: now.toISOString(),
+  };
+}
+
+/** „7 decembrie 2021" din „2021-12-07". */
+export function formatRoDate(iso: string | null | undefined): string | null {
+  if (!iso || !/^\d{4}-\d{2}-\d{2}/.test(iso)) return null;
+  const d = new Date(`${iso.slice(0, 10)}T12:00:00Z`);
+  return d.toLocaleDateString("ro-RO", { day: "numeric", month: "long", year: "numeric", timeZone: "UTC" });
+}
+
+export function inactiveWarning(since: string | null | undefined): string {
+  const d = formatRoDate(since);
+  return d
+    ? `Conform ANAF, această firmă figurează ca inactivă fiscal din ${d}`
+    : "Conform ANAF, această firmă figurează ca inactivă fiscal";
 }

@@ -47,7 +47,7 @@ export async function loadImospotCompanyData(
   const [{ data: org }, profileRes, userRes, countRes] = await Promise.all([
     db
       .from("organizations")
-      .select("name, legal_name, cui, trade_registry_number, city")
+      .select("name, legal_name, cui, trade_registry_number, city, company_status")
       .eq("id", organizationId)
       .maybeSingle(),
     adminId
@@ -72,6 +72,7 @@ export async function loadImospotCompanyData(
     adminEmail: user?.email ?? null,
     adminPhone: profile?.phone ?? null,
     city: org?.city ?? null,
+    companyStatus: org?.company_status ?? null,
     activeListings: typeof countRes.count === "number" ? countRes.count : null,
   };
 }

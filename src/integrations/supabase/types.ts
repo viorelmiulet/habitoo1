@@ -4180,6 +4180,7 @@ export type Database = {
           collab_default_commission_percent: number | null
           collaboration_auto_enabled: boolean
           collaboration_enabled: boolean
+          company_inactive_since: string | null
           company_status: string | null
           company_sync_attempted_at: string | null
           company_verified_at: string | null
@@ -4239,6 +4240,7 @@ export type Database = {
           collab_default_commission_percent?: number | null
           collaboration_auto_enabled?: boolean
           collaboration_enabled?: boolean
+          company_inactive_since?: string | null
           company_status?: string | null
           company_sync_attempted_at?: string | null
           company_verified_at?: string | null
@@ -4298,6 +4300,7 @@ export type Database = {
           collab_default_commission_percent?: number | null
           collaboration_auto_enabled?: boolean
           collaboration_enabled?: boolean
+          company_inactive_since?: string | null
           company_status?: string | null
           company_sync_attempted_at?: string | null
           company_verified_at?: string | null

@@ -778,6 +778,13 @@
       "when": 1791104509197,
       "tag": "0110_company_lookup_anaf",
       "breakpoints": true
+    },
+    {
+      "idx": 111,
+      "version": "7",
+      "when": 1791105747095,
+      "tag": "0111_company_inactive_since",
+      "breakpoints": true
     }
   ]
 }

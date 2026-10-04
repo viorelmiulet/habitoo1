@@ -100,7 +100,14 @@ export function AgencyDetailsDialog({ org, onClose }: { org: Org; onClose: () =>
     <Dialog open onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
         <DialogHeader>
-          <DialogTitle>Editează datele — {org.name}</DialogTitle>
+          <DialogTitle className="flex flex-wrap items-center gap-2">
+            Editează datele — {org.name}
+            {(org as { company_status?: string | null }).company_status === "inactiva" ? (
+              <span className="rounded-full border border-destructive/40 bg-destructive/10 px-2 py-0.5 text-xs font-medium text-destructive">
+                Firmă inactivă (ANAF)
+              </span>
+            ) : null}
+          </DialogTitle>
           <DialogDescription>Fiecare modificare se înregistrează în jurnalul de audit.</DialogDescription>
         </DialogHeader>
 
