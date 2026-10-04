@@ -19,6 +19,7 @@ import { Route as DespreRouteImport } from './routes/despre'
 import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
 import { Route as FunctionalitatiRouteImport } from './routes/functionalitati'
 import { Route as IntegrariRouteImport } from './routes/integrari'
+import { Route as LlmsDottxtRouteImport } from './routes/llms[.]txt'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as PoliticaDeConfidentialitateRouteImport } from './routes/politica-de-confidentialitate'
 import { Route as PreturiRouteImport } from './routes/preturi'
@@ -34,6 +35,7 @@ import { Route as AuthenticatedOnboardingRouteImport } from './routes/_authentic
 import { Route as AuthenticatedSuperadminRouteImport } from './routes/_authenticated/superadmin'
 import { Route as AuthCallbackRouteImport } from './routes/auth.callback'
 import { Route as BlogSlugRouteImport } from './routes/blog.$slug'
+import { Route as BlogRssDotxmlRouteImport } from './routes/blog/rss[.]xml'
 import { Route as OfertaIdRouteImport } from './routes/oferta.$id'
 import { Route as AuthenticatedAppIndexRouteImport } from './routes/_authenticated/app.index'
 import { Route as AuthenticatedAppActivitiesRouteImport } from './routes/_authenticated/app.activities'
@@ -175,6 +177,11 @@ const IntegrariRoute = IntegrariRouteImport.update({
   path: '/integrari',
   getParentRoute: () => rootRouteImport,
 } as any)
+const LlmsDottxtRoute = LlmsDottxtRouteImport.update({
+  id: '/llms.txt',
+  path: '/llms.txt',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
@@ -250,6 +257,11 @@ const AuthCallbackRoute = AuthCallbackRouteImport.update({
 const BlogSlugRoute = BlogSlugRouteImport.update({
   id: '/$slug',
   path: '/$slug',
+  getParentRoute: () => BlogRoute,
+} as any)
+const BlogRssDotxmlRoute = BlogRssDotxmlRouteImport.update({
+  id: '/rss.xml',
+  path: '/rss.xml',
   getParentRoute: () => BlogRoute,
 } as any)
 const OfertaIdRoute = OfertaIdRouteImport.update({
@@ -784,6 +796,7 @@ export interface FileRoutesByFullPath {
   '/forgot-password': typeof ForgotPasswordRoute
   '/functionalitati': typeof FunctionalitatiRoute
   '/integrari': typeof IntegrariRoute
+  '/llms.txt': typeof LlmsDottxtRoute
   '/login': typeof LoginRoute
   '/politica-de-confidentialitate': typeof PoliticaDeConfidentialitateRoute
   '/preturi': typeof PreturiRoute
@@ -799,6 +812,7 @@ export interface FileRoutesByFullPath {
   '/superadmin': typeof AuthenticatedSuperadminRouteWithChildren
   '/auth/callback': typeof AuthCallbackRoute
   '/blog/$slug': typeof BlogSlugRoute
+  '/blog/rss.xml': typeof BlogRssDotxmlRoute
   '/oferta/$id': typeof OfertaIdRoute
   '/app/activities': typeof AuthenticatedAppActivitiesRoute
   '/app/ai': typeof AuthenticatedAppAiRoute
@@ -901,6 +915,7 @@ export interface FileRoutesByTo {
   '/forgot-password': typeof ForgotPasswordRoute
   '/functionalitati': typeof FunctionalitatiRoute
   '/integrari': typeof IntegrariRoute
+  '/llms.txt': typeof LlmsDottxtRoute
   '/login': typeof LoginRoute
   '/politica-de-confidentialitate': typeof PoliticaDeConfidentialitateRoute
   '/preturi': typeof PreturiRoute
@@ -914,6 +929,7 @@ export interface FileRoutesByTo {
   '/onboarding': typeof AuthenticatedOnboardingRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/blog/$slug': typeof BlogSlugRoute
+  '/blog/rss.xml': typeof BlogRssDotxmlRoute
   '/oferta/$id': typeof OfertaIdRoute
   '/app/activities': typeof AuthenticatedAppActivitiesRoute
   '/app/ai': typeof AuthenticatedAppAiRoute
@@ -1018,6 +1034,7 @@ export interface FileRoutesById {
   '/forgot-password': typeof ForgotPasswordRoute
   '/functionalitati': typeof FunctionalitatiRoute
   '/integrari': typeof IntegrariRoute
+  '/llms.txt': typeof LlmsDottxtRoute
   '/login': typeof LoginRoute
   '/politica-de-confidentialitate': typeof PoliticaDeConfidentialitateRoute
   '/preturi': typeof PreturiRoute
@@ -1033,6 +1050,7 @@ export interface FileRoutesById {
   '/_authenticated/superadmin': typeof AuthenticatedSuperadminRouteWithChildren
   '/auth/callback': typeof AuthCallbackRoute
   '/blog/$slug': typeof BlogSlugRoute
+  '/blog/rss.xml': typeof BlogRssDotxmlRoute
   '/oferta/$id': typeof OfertaIdRoute
   '/_authenticated/app/activities': typeof AuthenticatedAppActivitiesRoute
   '/_authenticated/app/ai': typeof AuthenticatedAppAiRoute
@@ -1137,6 +1155,7 @@ export interface FileRouteTypes {
     | '/forgot-password'
     | '/functionalitati'
     | '/integrari'
+    | '/llms.txt'
     | '/login'
     | '/politica-de-confidentialitate'
     | '/preturi'
@@ -1152,6 +1171,7 @@ export interface FileRouteTypes {
     | '/superadmin'
     | '/auth/callback'
     | '/blog/$slug'
+    | '/blog/rss.xml'
     | '/oferta/$id'
     | '/app/activities'
     | '/app/ai'
@@ -1254,6 +1274,7 @@ export interface FileRouteTypes {
     | '/forgot-password'
     | '/functionalitati'
     | '/integrari'
+    | '/llms.txt'
     | '/login'
     | '/politica-de-confidentialitate'
     | '/preturi'
@@ -1267,6 +1288,7 @@ export interface FileRouteTypes {
     | '/onboarding'
     | '/auth/callback'
     | '/blog/$slug'
+    | '/blog/rss.xml'
     | '/oferta/$id'
     | '/app/activities'
     | '/app/ai'
@@ -1370,6 +1392,7 @@ export interface FileRouteTypes {
     | '/forgot-password'
     | '/functionalitati'
     | '/integrari'
+    | '/llms.txt'
     | '/login'
     | '/politica-de-confidentialitate'
     | '/preturi'
@@ -1385,6 +1408,7 @@ export interface FileRouteTypes {
     | '/_authenticated/superadmin'
     | '/auth/callback'
     | '/blog/$slug'
+    | '/blog/rss.xml'
     | '/oferta/$id'
     | '/_authenticated/app/activities'
     | '/_authenticated/app/ai'
@@ -1489,6 +1513,7 @@ export interface RootRouteChildren {
   ForgotPasswordRoute: typeof ForgotPasswordRoute
   FunctionalitatiRoute: typeof FunctionalitatiRoute
   IntegrariRoute: typeof IntegrariRoute
+  LlmsDottxtRoute: typeof LlmsDottxtRoute
   LoginRoute: typeof LoginRoute
   PoliticaDeConfidentialitateRoute: typeof PoliticaDeConfidentialitateRoute
   PreturiRoute: typeof PreturiRoute
@@ -1614,6 +1639,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IntegrariRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/llms.txt': {
+      id: '/llms.txt'
+      path: '/llms.txt'
+      fullPath: '/llms.txt'
+      preLoaderRoute: typeof LlmsDottxtRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/login': {
       id: '/login'
       path: '/login'
@@ -1717,6 +1749,13 @@ declare module '@tanstack/react-router' {
       path: '/$slug'
       fullPath: '/blog/$slug'
       preLoaderRoute: typeof BlogSlugRouteImport
+      parentRoute: typeof BlogRoute
+    }
+    '/blog/rss.xml': {
+      id: '/blog/rss.xml'
+      path: '/rss.xml'
+      fullPath: '/blog/rss.xml'
+      preLoaderRoute: typeof BlogRssDotxmlRouteImport
       parentRoute: typeof BlogRoute
     }
     '/oferta/$id': {
@@ -2524,10 +2563,12 @@ const AuthenticatedRouteRouteWithChildren =
 
 interface BlogRouteChildren {
   BlogSlugRoute: typeof BlogSlugRoute
+  BlogRssDotxmlRoute: typeof BlogRssDotxmlRoute
 }
 
 const BlogRouteChildren: BlogRouteChildren = {
   BlogSlugRoute: BlogSlugRoute,
+  BlogRssDotxmlRoute: BlogRssDotxmlRoute,
 }
 
 const BlogRouteWithChildren = BlogRoute._addFileChildren(BlogRouteChildren)
@@ -2586,6 +2627,7 @@ const rootRouteChildren: RootRouteChildren = {
   ForgotPasswordRoute: ForgotPasswordRoute,
   FunctionalitatiRoute: FunctionalitatiRoute,
   IntegrariRoute: IntegrariRoute,
+  LlmsDottxtRoute: LlmsDottxtRoute,
   LoginRoute: LoginRoute,
   PoliticaDeConfidentialitateRoute: PoliticaDeConfidentialitateRoute,
   PreturiRoute: PreturiRoute,
