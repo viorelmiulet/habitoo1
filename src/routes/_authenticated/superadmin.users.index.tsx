@@ -24,8 +24,6 @@ export const Route = createFileRoute("/_authenticated/superadmin/users/")({
 });
 
 function UsersPage() {
-  const queryClient = useQueryClient();
-  const navigate = useNavigate();
   const fetchUsers = useServerFn(listPlatformUsers);
   const [q, setQ] = useState("");
   const [orgFilter, setOrgFilter] = useState("all");

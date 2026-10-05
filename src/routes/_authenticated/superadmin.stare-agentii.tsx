@@ -38,6 +38,9 @@ import {
   type AuditValues,
 } from "@/lib/superadmin-agency-overview.functions";
 import { cn } from "@/lib/utils";
+import { Link } from "@tanstack/react-router";
+import { SummaryCard } from "@/components/superadmin/SuperadminUi";
+import { orgStatusBadge } from "@/lib/superadmin-status";
 
 export const Route = createFileRoute("/_authenticated/superadmin/stare-agentii")({
   head: () => appHead("Habitoo CRM — stare agenții"),
@@ -177,7 +180,20 @@ function AgencyOverviewPage() {
         description="Planul, locurile ocupate și istoricul schimbărilor fiecărei agenții, dintr-o privire."
       />
 
-      <div className="panel flex items-center gap-4 p-4">
+      <div className="mb-4 grid grid-cols-2 gap-3 lg:grid-cols-4">
+        {(() => {
+          const all = data?.agencies ?? [];
+          const sums = all.map((o) => subscriptionSummary({ subscription_expires_at: o.subscriptionExpiresAt, subscription_term: o.subscriptionTerm, is_trial: o.isTrial }));
+          return (<>
+            <SummaryCard label="Active" value={isLoading ? "—" : all.filter((o) => o.status === "active" && !o.archivedAt).length} tone="success" />
+            <SummaryCard label="În probă" value={isLoading ? "—" : all.filter((o) => o.isTrial).length} tone="primary" />
+            <SummaryCard label="Expiră curând / în grație" value={isLoading ? "—" : sums.filter((s) => s.tone === "warning").length} tone="warning" />
+            <SummaryCard label="Suspendate sau expirate" value={isLoading ? "—" : all.filter((o, i) => o.status === "suspended" || sums[i].tone === "danger").length} tone="danger" />
+          </>);
+        })()}
+      </div>
+
+      <div className="mb-4 flex items-center gap-4 rounded-[20px] border border-border/70 bg-card p-4 shadow-sm">
         <div className="relative w-full max-w-md">
           <Search className="pointer-events-none absolute top-2.5 left-3 size-4 text-muted-foreground" />
           <Input
@@ -189,7 +205,7 @@ function AgencyOverviewPage() {
         </div>
       </div>
 
-      <div className="panel overflow-hidden">
+      <div className="overflow-hidden rounded-[20px] border border-border/70 bg-card shadow-sm">
         {isLoading ? (
           <ListSkeleton rows={5} />
         ) : rows.length === 0 ? (
@@ -213,15 +229,12 @@ function AgencyOverviewPage() {
                       }
                     }}
                     aria-expanded={isOpen}
-                    className="grid w-full cursor-pointer grid-cols-1 items-center gap-3 px-4 py-4 text-left transition-colors hover:bg-muted/40 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none sm:grid-cols-[minmax(0,1.4fr)_auto_minmax(0,1fr)_auto_auto]"
+                    className="grid w-full cursor-pointer grid-cols-1 items-center gap-3 px-4 py-4 text-left transition-colors hover:bg-muted/40 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none sm:grid-cols-[minmax(0,1.4fr)_auto_minmax(0,1fr)_auto_auto_auto]"
                   >
                     <div className="min-w-0">
                       <p className="flex items-center gap-2 font-medium">
                         <span className="truncate">{org.name}</span>
-                        <StatusBadge tone={statusTone(org.status, Boolean(org.archivedAt))}>
-                          {org.archivedAt ? "Arhivată" : (statusLabels[org.status] ?? org.status)}
-                        </StatusBadge>
-                        {org.isTrial ? <StatusBadge tone="info">Trial</StatusBadge> : null}
+                        {(() => { const b = orgStatusBadge({ status: org.status, is_trial: org.isTrial, archived_at: org.archivedAt }); return <StatusBadge tone={b.tone}>{b.label}</StatusBadge>; })()}
                       </p>
                       <p className="text-xs text-muted-foreground">
                         {org.city ?? "—"} · creată la {formatDate(org.createdAt)}
@@ -253,6 +266,14 @@ function AgencyOverviewPage() {
                       </Button>
                     </div>
 
+                    <Link
+                      to="/superadmin/agencies/$id"
+                      params={{ id: org.id }}
+                      onClick={(e) => e.stopPropagation()}
+                      className="inline-flex min-h-11 items-center text-sm font-medium text-gold-dark hover:underline"
+                    >
+                      Vezi agenția
+                    </Link>
                     <span className="hidden items-center gap-1 text-xs text-muted-foreground sm:flex">
                       <History className="size-3.5" aria-hidden />
                       {history.length} {history.length === 1 ? "schimbare" : "schimbări"}
