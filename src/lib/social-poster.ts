@@ -195,8 +195,7 @@ export async function renderSocialPoster(canvas: HTMLCanvasElement, options: Soc
   ctx.fillText("OFERTĂ EXCLUSIVĂ", left, cardY + 66);
   ctx.letterSpacing = "0px";
 
-  const reservePrice = options.showPrice && options.price ? 280 : 0;
-  const titleWidth = cardWidth - pad * 2 - reservePrice;
+  const titleWidth = cardWidth - pad * 2;
   ctx.fillStyle = "#FFFFFF";
   ctx.font = `600 ${options.format === "story" ? 70 : 62}px "Fraunces", Georgia, serif`;
   const titleLines = fitLines(ctx, options.title, titleWidth, 2);
@@ -209,11 +208,11 @@ export async function renderSocialPoster(canvas: HTMLCanvasElement, options: Soc
     ctx.fillStyle = "rgba(255,255,255,.72)";
     ctx.font = '700 19px "Manrope", sans-serif';
     ctx.letterSpacing = "4px";
-    ctx.fillText("PREȚ", right, titleTop - 28);
+    ctx.fillText("PREȚ", right, cardY + cardHeight - 104);
     ctx.letterSpacing = "0px";
     ctx.fillStyle = "#D4AF57";
     ctx.font = '600 55px "Fraunces", Georgia, serif';
-    ctx.fillText(formatPosterPrice(options.price, options.currency), right, titleTop + 37);
+    ctx.fillText(formatPosterPrice(options.price, options.currency), right, cardY + cardHeight - 48);
     ctx.textAlign = "left";
   }
 

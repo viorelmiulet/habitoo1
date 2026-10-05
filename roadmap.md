@@ -11,4 +11,4 @@
 - [x] Generator PNG Story și Postare cu previzualizare live
 - [x] Selectare fotografie, tranzacție, logo, telefon și preț
 - [x] Preferințe memorate individual în browser
-- [ ] Verificare vizuală pe trei anunțuri reale și ambele formate
+- [x] Verificare vizuală pe trei anunțuri reale și ambele formate
