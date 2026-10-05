@@ -13,4 +13,10 @@ describe("blog public", () => {
     const { data, error } = await db.from("blog_posts").select("id,status").eq("status", "draft").limit(1);
     expect(error).toBeNull(); expect(data).toEqual([]);
   });
+  it("vizitatorul anonim vede articolele publicate", async () => {
+    const url = process.env.SUPABASE_URL ?? process.env.VITE_SUPABASE_URL; const key = process.env.SUPABASE_PUBLISHABLE_KEY ?? process.env.VITE_SUPABASE_PUBLISHABLE_KEY; if (!url || !key) return;
+    const db = createClient<Database>(url, key, { auth: { persistSession: false, autoRefreshToken: false } });
+    const { data, error } = await db.from("blog_posts").select("id,status").eq("status", "published");
+    expect(error).toBeNull(); expect((data ?? []).length).toBeGreaterThan(0); expect(data?.every((p) => p.status === "published")).toBe(true);
+  });
 });
