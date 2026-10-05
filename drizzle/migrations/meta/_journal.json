@@ -813,6 +813,13 @@
       "when": 1791175431287,
       "tag": "0115_public_partners_simplify",
       "breakpoints": true
+    },
+    {
+      "idx": 116,
+      "version": "7",
+      "when": 1791175526980,
+      "tag": "0116_public_partner_logo_rpc",
+      "breakpoints": true
     }
   ]
 }
