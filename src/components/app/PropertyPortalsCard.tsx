@@ -629,7 +629,7 @@ export const PropertyPortalsCard = forwardRef<
                               : "Neselectat."}
                       </p>
                   </div>
-                  {collabValue ? (
+                  {collabValue ? (<>
                     <button
                       type="button"
                       aria-expanded={collabDetailsExpanded}
