@@ -710,9 +710,11 @@ export const PropertyPortalsCard = forwardRef<
                           value={collabTerms}
                           onChange={(e) => setCollabTerms(e.target.value)}
                         />
-                      </div>
-                    </div>
-                  ) : null}
+                       </div>
+                       </div>
+                     </div>
+                   </div>
+                   </>) : null}
                 </Card>
               </li>
             ) : null}
