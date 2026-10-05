@@ -247,6 +247,26 @@ export const PropertyPortalsCard = forwardRef<
             ? String(collabRow.commissionPercent)
             : "") ||
           collabTerms.trim() !== (collabRow?.terms ?? ""))));
+  /** Comision lipsă când e activă: eroarea de validare deschide automat detaliile. */
+  const collabCommissionMissing =
+    collabValue &&
+    collabPercent.trim() === "" &&
+    (collabRow?.defaultCommissionPercent === null ||
+      collabRow?.defaultCommissionPercent === undefined);
+  const collabDetailsExpanded = collabDetailsOpen || collabCommissionMissing;
+  /** Rezumat scurt, arătat pe rând când detaliile sunt închise. */
+  const collabSummary = (() => {
+    const parts: string[] = [];
+    const raw = collabPercent.trim();
+    if (raw !== "") parts.push(`Comision ${raw}%`);
+    else if (
+      collabRow?.defaultCommissionPercent !== null &&
+      collabRow?.defaultCommissionPercent !== undefined
+    )
+      parts.push(`Comision ${collabRow.defaultCommissionPercent}% (standard)`);
+    if (collabTerms.trim() !== "") parts.push("+ condiții");
+    return parts.join(" ");
+  })();
 
   /** Catalogul Facebook: același rând, aceeași bifă, aplicată prin „Publică”. */
   const loadFb = useServerFn(getPropertyFacebookCatalog);
