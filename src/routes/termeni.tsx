@@ -113,6 +113,18 @@ const sections: LegalSection[] = [
           Garantezi că ai dreptul legal de a publica materialele încărcate, inclusiv fotografiile,
           și că deții mandatele necesare pentru proprietățile listate.
         </p>
+        <p>
+          Agențiile care folosesc Habitoo pot fi afișate în lista publică „Agenții partenere” de pe
+          site, cu numele și logoul lor. Nu publicăm date de contact, adrese sau date despre agenți.
+          Pentru a fi scoasă din listă, o agenție ne poate scrie la{" "}
+          <a
+            href="mailto:contact@habitoo.ro"
+            className="font-medium text-primary underline-offset-4 hover:underline"
+          >
+            contact@habitoo.ro
+          </a>
+          .
+        </p>
       </>
     ),
   },
