@@ -107,7 +107,13 @@ function sumUsage(...parts: (VisionUsage | null)[]): VisionUsage {
 /** Spune interfeței dacă citirea automată a actului este configurată. */
 export const getIdReadingStatus = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .handler(async () => ({ configured: Boolean(process.env["GEMINI_API_KEY"]) }));
+  .handler(async ({ context }) => {
+    const ctx = context as unknown as Ctx;
+    if (!process.env["GEMINI_API_KEY"]) return { configured: false };
+    const { data: org } = await ctx.supabase.rpc("current_org");
+    const { isOrgAiEnabled } = await import("@/lib/ai/features/features.server");
+    return { configured: await isOrgAiEnabled(typeof org === "string" ? org : null) };
+  });
 
 
 
