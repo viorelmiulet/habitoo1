@@ -47,15 +47,92 @@ import {
   canManageCollaborationDefault,
   parseOptionalCollaborationCommission,
 } from "@/lib/collaboration-commission";
+import {
+  SETTINGS_TABS,
+  SETTINGS_TAB_LABELS,
+  settingsTabGroups,
+  type SettingsTab,
+} from "@/lib/settings-tabs";
+import { useAgencyLogoUrl } from "@/components/app/AgencyBrandingCard";
+import { UserAvatar } from "@/components/app/UserAvatar";
+import { Link } from "@tanstack/react-router";
+import {
+  Building2,
+  Bot,
+  Megaphone,
+  Palette,
+  Plug,
+  Globe,
+  ShieldCheck,
+  UserRound,
+  Users,
+  type LucideIcon,
+} from "lucide-react";
+import type { ReactNode } from "react";
+import { cn } from "@/lib/utils";
+
+const TAB_ICONS: Record<SettingsTab, LucideIcon> = {
+  profile: UserRound,
+  access: ShieldCheck,
+  agency: Building2,
+  branding: Palette,
+  team: Users,
+  portals: Globe,
+  promotion: Megaphone,
+  integrations: Plug,
+  ai: Bot,
+};
+
+function SettingsCard({
+  title,
+  description,
+  children,
+  className,
+}: {
+  title: string;
+  description?: string;
+  children: ReactNode;
+  className?: string;
+}) {
+  return (
+    <section className={cn("rounded-[22px] border border-border/70 bg-card p-5 shadow-soft sm:p-6", className)}>
+      <header className="mb-5 space-y-1">
+        <h2 className="font-display text-lg font-semibold text-foreground">{title}</h2>
+        {description ? <p className="text-sm text-muted-foreground">{description}</p> : null}
+      </header>
+      {children}
+    </section>
+  );
+}
+
+function SettingsField({
+  id,
+  label,
+  hint,
+  children,
+}: {
+  id: string;
+  label: string;
+  hint?: string;
+  children: ReactNode;
+}) {
+  return (
+    <div className="min-w-0 space-y-2">
+      <Label htmlFor={id}>{label}</Label>
+      {children}
+      {hint ? <p className="text-xs text-muted-foreground">{hint}</p> : null}
+    </div>
+  );
+}
+
 
 
 export const Route = createFileRoute("/_authenticated/app/settings")({
   head: () => appHead("Habitoo CRM — setări"),
   validateSearch: (
     search: Record<string, unknown>,
-  ): { tab?: "profile" | "access" | "agency" | "branding" | "integrations" | "portals" | "promotion"; request?: string } => {
-    const tabs = ["profile", "access", "agency", "branding", "integrations", "portals", "promotion"] as const;
-    const tab = tabs.find((value) => value === search.tab);
+  ): { tab?: SettingsTab; request?: string } => {
+    const tab = SETTINGS_TABS.find((value) => value === search.tab);
     return {
       ...(tab ? { tab } : {}),
       ...(typeof search.request === "string" ? { request: search.request } : {}),
