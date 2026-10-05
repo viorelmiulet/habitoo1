@@ -56,8 +56,8 @@ export const Route = createFileRoute("/_authenticated/app/settings")({
   head: () => appHead("Habitoo CRM — setări"),
   validateSearch: (
     search: Record<string, unknown>,
-  ): { tab?: "profile" | "access" | "agency" | "branding" | "team" | "integrations" | "portals" | "promotion"; request?: string } => {
-    const tabs = ["profile", "access", "agency", "branding", "team", "integrations", "portals", "promotion"] as const;
+  ): { tab?: "profile" | "access" | "agency" | "branding" | "integrations" | "portals" | "promotion"; request?: string } => {
+    const tabs = ["profile", "access", "agency", "branding", "integrations", "portals", "promotion"] as const;
     const tab = tabs.find((value) => value === search.tab);
     return {
       ...(tab ? { tab } : {}),
@@ -245,7 +245,6 @@ function SettingsPage() {
             <TabsTrigger className="shrink-0" value="access">Acces la cont</TabsTrigger>
             {user?.role === "agency_admin" ? <TabsTrigger className="shrink-0" value="agency">Agenție</TabsTrigger> : null}
             {user?.isAdmin ? <TabsTrigger className="shrink-0" value="branding">Logo &amp; watermark</TabsTrigger> : null}
-            {user?.isAdmin ? <TabsTrigger className="shrink-0" value="team">Echipă ({team.length})</TabsTrigger> : null}
             {user?.isAdmin ? <TabsTrigger className="shrink-0" value="integrations">Integrări</TabsTrigger> : null}
             {user?.isAdmin ? <TabsTrigger className="shrink-0" value="portals">Portaluri</TabsTrigger> : null}
             {user?.isAdmin ? <TabsTrigger className="shrink-0" value="promotion">Promovare</TabsTrigger> : null}
@@ -468,42 +467,6 @@ function SettingsPage() {
             <div className="max-w-3xl">
               <AgencyBrandingCard />
             </div>
-          </TabsContent>
-        ) : null}
-
-        {user?.isAdmin ? (
-          <TabsContent value="team">
-            <div className="panel overflow-hidden">
-              <ul className="divide-y divide-border">
-                {team.map((m) => (
-                  <li key={m.id} className="flex flex-wrap items-center gap-3 px-5 py-3 text-sm">
-                    <UserAvatar name={m.full_name} path={m.avatar_url} />
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate font-medium">{m.full_name}</p>
-                      <p className="truncate text-xs text-muted-foreground">{m.email ?? "—"}</p>
-                    </div>
-                    {m.roles.map((r) => (
-                      <StatusBadge key={r} tone="primary">
-                        {roleLabels[r] ?? r}
-                      </StatusBadge>
-                    ))}
-                    <StatusBadge tone={m.is_active ? "success" : "neutral"}>
-                      {m.is_active ? "Activ" : "Inactiv"}
-                    </StatusBadge>
-                    <span className="text-xs text-muted-foreground">
-                      {formatDate(m.created_at)}
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-            <p className="mt-3 text-xs text-muted-foreground">
-              Invitarea de agenți noi și locurile disponibile în plan se gestionează din pagina{" "}
-              <Link to="/app/team" className="underline">
-                Agenți
-              </Link>
-              .
-            </p>
           </TabsContent>
         ) : null}
 
