@@ -9,7 +9,17 @@ const DESCRIPTION =
 
 export const Route = createFileRoute("/termeni")({
   head: () => {
-    const h = publicHead({ path: "/termeni", title: TITLE, description: DESCRIPTION, jsonLd: pageJsonLd({ path: "/termeni", name: "Termeni și condiții", description: DESCRIPTION, about: "organization" }) });
+    const h = publicHead({
+      path: "/termeni",
+      title: TITLE,
+      description: DESCRIPTION,
+      jsonLd: pageJsonLd({
+        path: "/termeni",
+        name: "Termeni și condiții",
+        description: DESCRIPTION,
+        about: "organization",
+      }),
+    });
     h.meta.push({ name: "robots", content: "index, follow" });
     return h;
   },
