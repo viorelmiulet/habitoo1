@@ -293,8 +293,8 @@ export async function renderSocialPoster(canvas: HTMLCanvasElement, o: SocialPos
   if (o.agent) blocks.push(26 * k + 64 * k);
   if (bottomH) blocks.push(28 * k + bottomH);
   const contentH = blocks.reduce((a, b) => a + b, 0);
-  const cardH = landscape ? height - 2 * M : contentH + 2 * pad;
-  const cardY = landscape ? M : height - M - cardH;
+  const cardH = Math.min(height - 2 * M, contentH + 2 * pad);
+  const cardY = height - M - cardH;
 
   // Big agent photo
   if (o.bigAgentPhotoUrl && avatar) {
@@ -375,7 +375,7 @@ export async function renderSocialPoster(canvas: HTMLCanvasElement, o: SocialPos
 
   const left = cardX + pad;
   const right = cardX + cardW - pad;
-  let y = landscape ? cardY + Math.max(pad, (cardH - contentH) / 2) : cardY + pad;
+  let y = cardY + pad;
 
   if (o.overtitle) {
     ctx.fillStyle = accent;
@@ -429,7 +429,7 @@ export async function renderSocialPoster(canvas: HTMLCanvasElement, o: SocialPos
     y += s;
   }
   if (bottomH) {
-    const rowY = landscape ? cardY + cardH - pad - bottomH : y + 28 * k;
+    const rowY = y + 28 * k;
     let tx = left;
     for (const tag of tags) tx += pill(ctx, tag, tx, rowY + bottomH - 48 * k, k, text) + 14 * k;
     if (o.price) {
