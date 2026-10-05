@@ -222,6 +222,11 @@ export const PropertyPortalsCard = forwardRef<
   const [collabChecked, setCollabChecked] = useState<boolean | null>(null);
   const [collabPercent, setCollabPercent] = useState("");
   const [collabTerms, setCollabTerms] = useState("");
+  /** Detaliile (comision + condiții) stau închise implicit; săgeata le deschide. */
+  const [collabDetailsOpen, setCollabDetailsOpen] = useState(false);
+  useEffect(() => {
+    setCollabDetailsOpen(false);
+  }, [propertyId]);
 
   useEffect(() => {
     if (!collabRow) return;
