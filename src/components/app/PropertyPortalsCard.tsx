@@ -832,7 +832,6 @@ export const PropertyPortalsCard = forwardRef<
                         </ul>
                       </div>
                     ) : null}
-
                   </Card>
                 </li>
               );
