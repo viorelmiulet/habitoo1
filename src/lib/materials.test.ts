@@ -44,10 +44,10 @@ describe("buildPresentationHtml", () => {
     const html = buildPresentationHtml(branding, {
       ...samplePresentation,
       specs: [
-        ...samplePresentation.specs,
         { label: "Sursă", value: "immoflux" },
         { label: "Adăugat", value: "12.09.2026" },
         { label: "ID intern", value: "secret-id" },
+        ...samplePresentation.specs,
       ],
     });
 

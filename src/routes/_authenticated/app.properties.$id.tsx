@@ -588,6 +588,7 @@ function PropertyDetailPage() {
     { label: "Comision", value: property.commission ?? "" },
   ].filter((item) => item.value);
 
+  const usableSurface = property.usable_surface ?? property.total_usable_surface ?? property.surface;
   const presentationSpecs: { label: string; value: string }[] = [
     { label: "Tip", value: propertyTypeLabels[property.property_type] ?? property.property_type },
     { label: "Suprafață", value: usableSurface ? `${formatNumber(usableSurface)} m²` : "" },
@@ -616,7 +617,6 @@ function PropertyDetailPage() {
     ...(property.misc_features ?? []),
   ].filter(Boolean);
 
-  const usableSurface = property.usable_surface ?? property.total_usable_surface ?? property.surface;
   const isHouse = property.property_type === "house";
   const primaryFacts = [
     { label: "Suprafață utilă", value: usableSurface ? `${formatNumber(usableSurface)} m²` : "" },
