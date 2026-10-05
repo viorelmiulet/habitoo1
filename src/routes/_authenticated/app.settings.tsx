@@ -1,4 +1,4 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "@/components/ui/sonner";
@@ -27,7 +27,6 @@ import { ProperstarFeedCard } from "@/components/app/ProperstarFeedCard";
 
 import { AccountAccessCard } from "@/components/app/AccountAccessCard";
 import { supabase } from "@/integrations/supabase/client";
-import { UserAvatar } from "@/components/app/UserAvatar";
 import { AGENCY_FIELD_LABELS, validateRequiredAgencyField } from "@/lib/agency-public-data";
 import {
   AVATAR_BUCKET,
@@ -39,8 +38,6 @@ import {
   uploadToBucket,
 } from "@/lib/storage";
 import { currentUserQueryKey, useCurrentUser } from "@/hooks/use-session";
-import { formatDate } from "@/lib/format";
-import { roleLabels } from "@/lib/labels";
 import { PLAN_LABELS, normalizePlan, planAgentLimitLabel } from "@/lib/plans";
 import { getTeamOverview } from "@/lib/agency-team.functions";
 import { useServerFn } from "@tanstack/react-start";
@@ -102,19 +99,6 @@ function SettingsPage() {
     storia_auto_republish: user?.organization?.storia_auto_republish === true,
   });
 
-  const { data: team = [] } = useQuery({
-    queryKey: ["team"],
-    queryFn: async () => {
-      const [profiles, roles] = await Promise.all([
-        supabase.from("profiles").select("*"),
-        supabase.from("user_roles").select("user_id,role"),
-      ]);
-      return (profiles.data ?? []).map((p) => ({
-        ...p,
-        roles: (roles.data ?? []).filter((r) => r.user_id === p.id).map((r) => r.role),
-      }));
-    },
-  });
 
   const uploadAvatar = useMutation({
     mutationFn: async (file: File) => {
