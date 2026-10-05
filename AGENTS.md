@@ -32,4 +32,4 @@
 - Collaboration auto-activation lives only in the DB (insert trigger `properties_auto_collaboration`, RPC `collaboration_auto_activate`), copying the agency default commission only when none is explicit; `collaboration_opted_out` is never overridden. Why: one rule for all inserts.
 - Imospot email uses `notifyImospotForRequest`; `provider_notified_at` prevents duplicates. Why: one send.
 - Company data comes from ANAF only via `src/lib/company-lookup.ts` (pure, injected fetch) with 24h `company_lookup_cache`; org sync fills empty fields only. Why: ANAF rate limit; user edits win.
-- Homepage-only navigation uses `HomeHeader`; other public pages keep `PublicHeader`. Why: isolate its overlay behavior.
+- `HomeHeader` is used on the homepage and blog pages (via `PublicLayout homeHeader`); other public pages keep `PublicHeader`. Why: isolate its fixed overlay behavior.
