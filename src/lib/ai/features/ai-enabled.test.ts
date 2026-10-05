@@ -38,7 +38,7 @@ describe("comutatorul general AI per agenție", () => {
     expect((await loadAiFeatures(OFF)).ai_marketing).toBe(false);
     const quota = await checkAiQuota({} as never, { userId: "u", organizationId: OFF } as never);
     expect(quota.allowed).toBe(false);
-    expect(quota.message).toMatch(/nu sunt activate/);
+    expect(quota.allowed ? "" : quota.message).toMatch(/nu sunt activate/);
   });
   it("agenția activată: funcțiile activate rămân disponibile", async () => {
     expect(await isOrgAiEnabled(ON)).toBe(true);
