@@ -17,7 +17,7 @@ import type { BlogPost, BlogPostInput } from "@/lib/blog";
 import { deleteBlogPost, listAdminBlogPosts, saveBlogPost, uploadBlogImage } from "@/lib/blog.functions";
 import { toastError } from "@/lib/errors";
 
-export const Route = createFileRoute("/_authenticated/superadmin/blog")({ head: () => appHead("Habitoo CRM — administrare blog"), component: SuperadminBlogPage });
+export const Route = createFileRoute("/_authenticated/superadmin/blog/")({ head: () => appHead("Habitoo CRM — administrare blog"), component: SuperadminBlogPage });
 const date = (value: string | null) => value ? new Intl.DateTimeFormat("ro-RO", { dateStyle: "medium" }).format(new Date(value)) : "—";
 function SuperadminBlogPage() {
   const client = useQueryClient(); const list = useServerFn(listAdminBlogPosts); const save = useServerFn(saveBlogPost); const remove = useServerFn(deleteBlogPost); const upload = useServerFn(uploadBlogImage);

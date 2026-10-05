@@ -13,7 +13,6 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AccesContRouteImport } from './routes/acces-cont'
 import { Route as AgentiiRouteImport } from './routes/agentii'
-import { Route as BlogRouteImport } from './routes/blog'
 import { Route as ConfidentialitateRouteImport } from './routes/confidentialitate'
 import { Route as ContactRouteImport } from './routes/contact'
 import { Route as DespreRouteImport } from './routes/despre'
@@ -37,6 +36,7 @@ import { Route as AuthenticatedAppRouteImport } from './routes/_authenticated/ap
 import { Route as AuthenticatedOnboardingRouteImport } from './routes/_authenticated/onboarding'
 import { Route as AuthenticatedSuperadminRouteImport } from './routes/_authenticated/superadmin'
 import { Route as AuthCallbackRouteImport } from './routes/auth.callback'
+import { Route as BlogIndexRouteImport } from './routes/blog.index'
 import { Route as BlogSlugRouteImport } from './routes/blog.$slug'
 import { Route as BlogRssDotxmlRouteImport } from './routes/blog/rss[.]xml'
 import { Route as OfertaIdRouteImport } from './routes/oferta.$id'
@@ -153,11 +153,6 @@ const AccesContRoute = AccesContRouteImport.update({
 const AgentiiRoute = AgentiiRouteImport.update({
   id: '/agentii',
   path: '/agentii',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const BlogRoute = BlogRouteImport.update({
-  id: '/blog',
-  path: '/blog',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ConfidentialitateRoute = ConfidentialitateRouteImport.update({
@@ -277,15 +272,20 @@ const AuthCallbackRoute = AuthCallbackRouteImport.update({
   path: '/auth/callback',
   getParentRoute: () => rootRouteImport,
 } as any)
+const BlogIndexRoute = BlogIndexRouteImport.update({
+  id: '/blog/',
+  path: '/blog/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const BlogSlugRoute = BlogSlugRouteImport.update({
-  id: '/$slug',
-  path: '/$slug',
-  getParentRoute: () => BlogRoute,
+  id: '/blog/$slug',
+  path: '/blog/$slug',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const BlogRssDotxmlRoute = BlogRssDotxmlRouteImport.update({
-  id: '/rss.xml',
-  path: '/rss.xml',
-  getParentRoute: () => BlogRoute,
+  id: '/blog/rss.xml',
+  path: '/blog/rss.xml',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const OfertaIdRoute = OfertaIdRouteImport.update({
   id: '/oferta/$id',
@@ -841,7 +841,6 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/acces-cont': typeof AccesContRoute
   '/agentii': typeof AgentiiRoute
-  '/blog': typeof BlogRouteWithChildren
   '/confidentialitate': typeof ConfidentialitateRoute
   '/contact': typeof ContactRoute
   '/despre': typeof DespreRoute
@@ -868,6 +867,7 @@ export interface FileRoutesByFullPath {
   '/blog/$slug': typeof BlogSlugRoute
   '/blog/rss.xml': typeof BlogRssDotxmlRoute
   '/oferta/$id': typeof OfertaIdRoute
+  '/blog/': typeof BlogIndexRoute
   '/app/activities': typeof AuthenticatedAppActivitiesRoute
   '/app/ai': typeof AuthenticatedAppAiRoute
   '/app/ai-crm': typeof AuthenticatedAppAiCrmRoute
@@ -968,7 +968,6 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/acces-cont': typeof AccesContRoute
   '/agentii': typeof AgentiiRoute
-  '/blog': typeof BlogRouteWithChildren
   '/confidentialitate': typeof ConfidentialitateRoute
   '/contact': typeof ContactRoute
   '/despre': typeof DespreRoute
@@ -993,6 +992,7 @@ export interface FileRoutesByTo {
   '/blog/$slug': typeof BlogSlugRoute
   '/blog/rss.xml': typeof BlogRssDotxmlRoute
   '/oferta/$id': typeof OfertaIdRoute
+  '/blog': typeof BlogIndexRoute
   '/app/activities': typeof AuthenticatedAppActivitiesRoute
   '/app/ai': typeof AuthenticatedAppAiRoute
   '/app/ai-crm': typeof AuthenticatedAppAiCrmRoute
@@ -1094,7 +1094,6 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/acces-cont': typeof AccesContRoute
   '/agentii': typeof AgentiiRoute
-  '/blog': typeof BlogRouteWithChildren
   '/confidentialitate': typeof ConfidentialitateRoute
   '/contact': typeof ContactRoute
   '/despre': typeof DespreRoute
@@ -1121,6 +1120,7 @@ export interface FileRoutesById {
   '/blog/$slug': typeof BlogSlugRoute
   '/blog/rss.xml': typeof BlogRssDotxmlRoute
   '/oferta/$id': typeof OfertaIdRoute
+  '/blog/': typeof BlogIndexRoute
   '/_authenticated/app/activities': typeof AuthenticatedAppActivitiesRoute
   '/_authenticated/app/ai': typeof AuthenticatedAppAiRoute
   '/_authenticated/app/ai-crm': typeof AuthenticatedAppAiCrmRoute
@@ -1223,7 +1223,6 @@ export interface FileRouteTypes {
     | '/'
     | '/acces-cont'
     | '/agentii'
-    | '/blog'
     | '/confidentialitate'
     | '/contact'
     | '/despre'
@@ -1250,6 +1249,7 @@ export interface FileRouteTypes {
     | '/blog/$slug'
     | '/blog/rss.xml'
     | '/oferta/$id'
+    | '/blog/'
     | '/app/activities'
     | '/app/ai'
     | '/app/ai-crm'
@@ -1350,7 +1350,6 @@ export interface FileRouteTypes {
     | '/'
     | '/acces-cont'
     | '/agentii'
-    | '/blog'
     | '/confidentialitate'
     | '/contact'
     | '/despre'
@@ -1375,6 +1374,7 @@ export interface FileRouteTypes {
     | '/blog/$slug'
     | '/blog/rss.xml'
     | '/oferta/$id'
+    | '/blog'
     | '/app/activities'
     | '/app/ai'
     | '/app/ai-crm'
@@ -1475,7 +1475,6 @@ export interface FileRouteTypes {
     | '/_authenticated'
     | '/acces-cont'
     | '/agentii'
-    | '/blog'
     | '/confidentialitate'
     | '/contact'
     | '/despre'
@@ -1502,6 +1501,7 @@ export interface FileRouteTypes {
     | '/blog/$slug'
     | '/blog/rss.xml'
     | '/oferta/$id'
+    | '/blog/'
     | '/_authenticated/app/activities'
     | '/_authenticated/app/ai'
     | '/_authenticated/app/ai-crm'
@@ -1604,7 +1604,6 @@ export interface RootRouteChildren {
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AccesContRoute: typeof AccesContRoute
   AgentiiRoute: typeof AgentiiRoute
-  BlogRoute: typeof BlogRouteWithChildren
   ConfidentialitateRoute: typeof ConfidentialitateRoute
   ContactRoute: typeof ContactRoute
   DespreRoute: typeof DespreRoute
@@ -1624,7 +1623,10 @@ export interface RootRouteChildren {
   TermeniRoute: typeof TermeniRoute
   TermeniSiConditiiRoute: typeof TermeniSiConditiiRoute
   AuthCallbackRoute: typeof AuthCallbackRoute
+  BlogSlugRoute: typeof BlogSlugRoute
+  BlogRssDotxmlRoute: typeof BlogRssDotxmlRoute
   OfertaIdRoute: typeof OfertaIdRoute
+  BlogIndexRoute: typeof BlogIndexRoute
   ApiPublicBlogMediaSplatRoute: typeof ApiPublicBlogMediaSplatRoute
   ApiPublicCronAccountDeletionRoute: typeof ApiPublicCronAccountDeletionRoute
   ApiPublicCronLacheieResendRoute: typeof ApiPublicCronLacheieResendRoute
@@ -1696,13 +1698,6 @@ declare module '@tanstack/react-router' {
       path: '/agentii'
       fullPath: '/agentii'
       preLoaderRoute: typeof AgentiiRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/blog': {
-      id: '/blog'
-      path: '/blog'
-      fullPath: '/blog'
-      preLoaderRoute: typeof BlogRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/confidentialitate': {
@@ -1866,19 +1861,26 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthCallbackRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/blog/': {
+      id: '/blog/'
+      path: '/blog'
+      fullPath: '/blog/'
+      preLoaderRoute: typeof BlogIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/blog/$slug': {
       id: '/blog/$slug'
-      path: '/$slug'
+      path: '/blog/$slug'
       fullPath: '/blog/$slug'
       preLoaderRoute: typeof BlogSlugRouteImport
-      parentRoute: typeof BlogRoute
+      parentRoute: typeof rootRouteImport
     }
     '/blog/rss.xml': {
       id: '/blog/rss.xml'
-      path: '/rss.xml'
+      path: '/blog/rss.xml'
       fullPath: '/blog/rss.xml'
       preLoaderRoute: typeof BlogRssDotxmlRouteImport
-      parentRoute: typeof BlogRoute
+      parentRoute: typeof rootRouteImport
     }
     '/oferta/$id': {
       id: '/oferta/$id'
@@ -2738,18 +2740,6 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
 const AuthenticatedRouteRouteWithChildren =
   AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
 
-interface BlogRouteChildren {
-  BlogSlugRoute: typeof BlogSlugRoute
-  BlogRssDotxmlRoute: typeof BlogRssDotxmlRoute
-}
-
-const BlogRouteChildren: BlogRouteChildren = {
-  BlogSlugRoute: BlogSlugRoute,
-  BlogRssDotxmlRoute: BlogRssDotxmlRoute,
-}
-
-const BlogRouteWithChildren = BlogRoute._addFileChildren(BlogRouteChildren)
-
 interface ApiPublicHomepitchV1PropertiesRouteChildren {
   ApiPublicHomepitchV1PropertiesIdRoute: typeof ApiPublicHomepitchV1PropertiesIdRoute
 }
@@ -2798,7 +2788,6 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AccesContRoute: AccesContRoute,
   AgentiiRoute: AgentiiRoute,
-  BlogRoute: BlogRouteWithChildren,
   ConfidentialitateRoute: ConfidentialitateRoute,
   ContactRoute: ContactRoute,
   DespreRoute: DespreRoute,
@@ -2818,7 +2807,10 @@ const rootRouteChildren: RootRouteChildren = {
   TermeniRoute: TermeniRoute,
   TermeniSiConditiiRoute: TermeniSiConditiiRoute,
   AuthCallbackRoute: AuthCallbackRoute,
+  BlogSlugRoute: BlogSlugRoute,
+  BlogRssDotxmlRoute: BlogRssDotxmlRoute,
   OfertaIdRoute: OfertaIdRoute,
+  BlogIndexRoute: BlogIndexRoute,
   ApiPublicBlogMediaSplatRoute: ApiPublicBlogMediaSplatRoute,
   ApiPublicCronAccountDeletionRoute: ApiPublicCronAccountDeletionRoute,
   ApiPublicCronLacheieResendRoute: ApiPublicCronLacheieResendRoute,
