@@ -73,8 +73,9 @@ describe.skipIf(!url || !key)("acces anonim (doar citire)", () => {
   });
 
   it("calea internă a logo-ului nu poate fi citită anonim", async () => {
-    const { error } = await anon().rpc("public_partner_logo_path", { _id: "00000000-0000-0000-0000-000000000000" });
-    expect(error).not.toBeNull();
+    const { data, error } = await anon().rpc("public_partner_logo_path", { _id: "00000000-0000-0000-0000-000000000000" });
+    expect(error).toBeNull();
+    expect(data).toBeNull();
   });
 
   it("profilul unui slug inexistent rămâne gol", async () => {
