@@ -302,7 +302,9 @@ function HomePage() {
             <div aria-hidden className="home-grid pointer-events-none absolute inset-0 opacity-30" />
             <div aria-hidden className="home-glow home-glow-two" />
             <div className="relative mx-auto max-w-3xl">
-              <BrandLogo fullIdentity className="mx-auto mb-8 w-24 opacity-80" />
+              <span className="mx-auto mb-8 inline-flex items-center justify-center rounded-[22px] border border-gold/40 bg-background px-5 py-3 shadow-soft">
+                <BrandLogo fullIdentity className="h-10 w-auto lg:h-12" />
+              </span>
               <h2 className="text-3xl text-surface sm:text-5xl">Gata să-ți organizezi <span className="text-gold">agenția?</span></h2>
               <p className="mx-auto mt-5 max-w-xl text-base text-navy-foreground sm:text-lg">Începe cu echipa ta și păstrează fiecare oportunitate aproape.</p>
               <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
