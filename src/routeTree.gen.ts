@@ -57,6 +57,7 @@ import { Route as AuthenticatedAppReportsRouteImport } from './routes/_authentic
 import { Route as AuthenticatedAppRequestsRouteImport } from './routes/_authenticated/app.requests'
 import { Route as AuthenticatedAppSettingsRouteImport } from './routes/_authenticated/app.settings'
 import { Route as AuthenticatedAppSupportRouteImport } from './routes/_authenticated/app.support'
+import { Route as AuthenticatedAppTeamRouteImport } from './routes/_authenticated/app.team'
 import { Route as AuthenticatedSuperadminIndexRouteImport } from './routes/_authenticated/superadmin.index'
 import { Route as AuthenticatedSuperadminAgenciesRouteImport } from './routes/_authenticated/superadmin.agencies'
 import { Route as AuthenticatedSuperadminAiFeaturesRouteImport } from './routes/_authenticated/superadmin.ai-features'
@@ -82,6 +83,8 @@ import { Route as AuthenticatedAppPropertiesIndexRouteImport } from './routes/_a
 import { Route as AuthenticatedAppPropertiesIdRouteImport } from './routes/_authenticated/app.properties.$id'
 import { Route as AuthenticatedAppPropertiesNewRouteImport } from './routes/_authenticated/app.properties.new'
 import { Route as AuthenticatedAppRequestsIdRouteImport } from './routes/_authenticated/app.requests.$id'
+import { Route as AuthenticatedAppTeamIndexRouteImport } from './routes/_authenticated/app.team.index'
+import { Route as AuthenticatedAppTeamIdRouteImport } from './routes/_authenticated/app.team.$id'
 import { Route as ApiPublicBlogMediaSplatRouteImport } from './routes/api/public/blog-media/$'
 import { Route as ApiPublicCronAccountDeletionRouteImport } from './routes/api/public/cron/account-deletion'
 import { Route as ApiPublicCronLacheieResendRouteImport } from './routes/api/public/cron/lacheie-resend'
@@ -380,6 +383,11 @@ const AuthenticatedAppSupportRoute = AuthenticatedAppSupportRouteImport.update({
   path: '/support',
   getParentRoute: () => AuthenticatedAppRoute,
 } as any)
+const AuthenticatedAppTeamRoute = AuthenticatedAppTeamRouteImport.update({
+  id: '/team',
+  path: '/team',
+  getParentRoute: () => AuthenticatedAppRoute,
+} as any)
 const AuthenticatedSuperadminIndexRoute =
   AuthenticatedSuperadminIndexRouteImport.update({
     id: '/',
@@ -528,6 +536,17 @@ const AuthenticatedAppRequestsIdRoute =
     path: '/$id',
     getParentRoute: () => AuthenticatedAppRequestsRoute,
   } as any)
+const AuthenticatedAppTeamIndexRoute =
+  AuthenticatedAppTeamIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => AuthenticatedAppTeamRoute,
+  } as any)
+const AuthenticatedAppTeamIdRoute = AuthenticatedAppTeamIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => AuthenticatedAppTeamRoute,
+} as any)
 const ApiPublicBlogMediaSplatRoute = ApiPublicBlogMediaSplatRouteImport.update({
   id: '/api/public/blog-media/$',
   path: '/api/public/blog-media/$',
@@ -839,6 +858,7 @@ export interface FileRoutesByFullPath {
   '/app/requests': typeof AuthenticatedAppRequestsRouteWithChildren
   '/app/settings': typeof AuthenticatedAppSettingsRoute
   '/app/support': typeof AuthenticatedAppSupportRoute
+  '/app/team': typeof AuthenticatedAppTeamRouteWithChildren
   '/superadmin/agencies': typeof AuthenticatedSuperadminAgenciesRoute
   '/superadmin/ai-features': typeof AuthenticatedSuperadminAiFeaturesRoute
   '/superadmin/audit': typeof AuthenticatedSuperadminAuditRoute
@@ -861,6 +881,7 @@ export interface FileRoutesByFullPath {
   '/app/properties/$id': typeof AuthenticatedAppPropertiesIdRoute
   '/app/properties/new': typeof AuthenticatedAppPropertiesNewRoute
   '/app/requests/$id': typeof AuthenticatedAppRequestsIdRoute
+  '/app/team/$id': typeof AuthenticatedAppTeamIdRoute
   '/api/public/blog-media/$': typeof ApiPublicBlogMediaSplatRoute
   '/api/public/cron/account-deletion': typeof ApiPublicCronAccountDeletionRoute
   '/api/public/cron/lacheie-resend': typeof ApiPublicCronLacheieResendRoute
@@ -881,6 +902,7 @@ export interface FileRoutesByFullPath {
   '/app/contacts/': typeof AuthenticatedAppContactsIndexRoute
   '/app/contracts/': typeof AuthenticatedAppContractsIndexRoute
   '/app/properties/': typeof AuthenticatedAppPropertiesIndexRoute
+  '/app/team/': typeof AuthenticatedAppTeamIndexRoute
   '/app/acp/date-piata/$id': typeof AuthenticatedAppAcpDatePiataIdRoute
   '/superadmin/blog/preview/$id': typeof AuthenticatedSuperadminBlogPreviewIdRoute
   '/api/public/catalog/v1/facebook.csv': typeof ApiPublicCatalogV1FacebookDotcsvRoute
@@ -979,6 +1001,7 @@ export interface FileRoutesByTo {
   '/app/properties/$id': typeof AuthenticatedAppPropertiesIdRoute
   '/app/properties/new': typeof AuthenticatedAppPropertiesNewRoute
   '/app/requests/$id': typeof AuthenticatedAppRequestsIdRoute
+  '/app/team/$id': typeof AuthenticatedAppTeamIdRoute
   '/api/public/blog-media/$': typeof ApiPublicBlogMediaSplatRoute
   '/api/public/cron/account-deletion': typeof ApiPublicCronAccountDeletionRoute
   '/api/public/cron/lacheie-resend': typeof ApiPublicCronLacheieResendRoute
@@ -999,6 +1022,7 @@ export interface FileRoutesByTo {
   '/app/contacts': typeof AuthenticatedAppContactsIndexRoute
   '/app/contracts': typeof AuthenticatedAppContractsIndexRoute
   '/app/properties': typeof AuthenticatedAppPropertiesIndexRoute
+  '/app/team': typeof AuthenticatedAppTeamIndexRoute
   '/app/acp/date-piata/$id': typeof AuthenticatedAppAcpDatePiataIdRoute
   '/superadmin/blog/preview/$id': typeof AuthenticatedSuperadminBlogPreviewIdRoute
   '/api/public/catalog/v1/facebook.csv': typeof ApiPublicCatalogV1FacebookDotcsvRoute
@@ -1079,6 +1103,7 @@ export interface FileRoutesById {
   '/_authenticated/app/requests': typeof AuthenticatedAppRequestsRouteWithChildren
   '/_authenticated/app/settings': typeof AuthenticatedAppSettingsRoute
   '/_authenticated/app/support': typeof AuthenticatedAppSupportRoute
+  '/_authenticated/app/team': typeof AuthenticatedAppTeamRouteWithChildren
   '/_authenticated/superadmin/agencies': typeof AuthenticatedSuperadminAgenciesRoute
   '/_authenticated/superadmin/ai-features': typeof AuthenticatedSuperadminAiFeaturesRoute
   '/_authenticated/superadmin/audit': typeof AuthenticatedSuperadminAuditRoute
@@ -1101,6 +1126,7 @@ export interface FileRoutesById {
   '/_authenticated/app/properties/$id': typeof AuthenticatedAppPropertiesIdRoute
   '/_authenticated/app/properties/new': typeof AuthenticatedAppPropertiesNewRoute
   '/_authenticated/app/requests/$id': typeof AuthenticatedAppRequestsIdRoute
+  '/_authenticated/app/team/$id': typeof AuthenticatedAppTeamIdRoute
   '/api/public/blog-media/$': typeof ApiPublicBlogMediaSplatRoute
   '/api/public/cron/account-deletion': typeof ApiPublicCronAccountDeletionRoute
   '/api/public/cron/lacheie-resend': typeof ApiPublicCronLacheieResendRoute
@@ -1121,6 +1147,7 @@ export interface FileRoutesById {
   '/_authenticated/app/contacts/': typeof AuthenticatedAppContactsIndexRoute
   '/_authenticated/app/contracts/': typeof AuthenticatedAppContractsIndexRoute
   '/_authenticated/app/properties/': typeof AuthenticatedAppPropertiesIndexRoute
+  '/_authenticated/app/team/': typeof AuthenticatedAppTeamIndexRoute
   '/_authenticated/app/acp/date-piata/$id': typeof AuthenticatedAppAcpDatePiataIdRoute
   '/_authenticated/superadmin/blog/preview/$id': typeof AuthenticatedSuperadminBlogPreviewIdRoute
   '/api/public/catalog/v1/facebook.csv': typeof ApiPublicCatalogV1FacebookDotcsvRoute
@@ -1201,6 +1228,7 @@ export interface FileRouteTypes {
     | '/app/requests'
     | '/app/settings'
     | '/app/support'
+    | '/app/team'
     | '/superadmin/agencies'
     | '/superadmin/ai-features'
     | '/superadmin/audit'
@@ -1223,6 +1251,7 @@ export interface FileRouteTypes {
     | '/app/properties/$id'
     | '/app/properties/new'
     | '/app/requests/$id'
+    | '/app/team/$id'
     | '/api/public/blog-media/$'
     | '/api/public/cron/account-deletion'
     | '/api/public/cron/lacheie-resend'
@@ -1243,6 +1272,7 @@ export interface FileRouteTypes {
     | '/app/contacts/'
     | '/app/contracts/'
     | '/app/properties/'
+    | '/app/team/'
     | '/app/acp/date-piata/$id'
     | '/superadmin/blog/preview/$id'
     | '/api/public/catalog/v1/facebook.csv'
@@ -1341,6 +1371,7 @@ export interface FileRouteTypes {
     | '/app/properties/$id'
     | '/app/properties/new'
     | '/app/requests/$id'
+    | '/app/team/$id'
     | '/api/public/blog-media/$'
     | '/api/public/cron/account-deletion'
     | '/api/public/cron/lacheie-resend'
@@ -1361,6 +1392,7 @@ export interface FileRouteTypes {
     | '/app/contacts'
     | '/app/contracts'
     | '/app/properties'
+    | '/app/team'
     | '/app/acp/date-piata/$id'
     | '/superadmin/blog/preview/$id'
     | '/api/public/catalog/v1/facebook.csv'
@@ -1440,6 +1472,7 @@ export interface FileRouteTypes {
     | '/_authenticated/app/requests'
     | '/_authenticated/app/settings'
     | '/_authenticated/app/support'
+    | '/_authenticated/app/team'
     | '/_authenticated/superadmin/agencies'
     | '/_authenticated/superadmin/ai-features'
     | '/_authenticated/superadmin/audit'
@@ -1462,6 +1495,7 @@ export interface FileRouteTypes {
     | '/_authenticated/app/properties/$id'
     | '/_authenticated/app/properties/new'
     | '/_authenticated/app/requests/$id'
+    | '/_authenticated/app/team/$id'
     | '/api/public/blog-media/$'
     | '/api/public/cron/account-deletion'
     | '/api/public/cron/lacheie-resend'
@@ -1482,6 +1516,7 @@ export interface FileRouteTypes {
     | '/_authenticated/app/contacts/'
     | '/_authenticated/app/contracts/'
     | '/_authenticated/app/properties/'
+    | '/_authenticated/app/team/'
     | '/_authenticated/app/acp/date-piata/$id'
     | '/_authenticated/superadmin/blog/preview/$id'
     | '/api/public/catalog/v1/facebook.csv'
@@ -1919,6 +1954,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAppSupportRouteImport
       parentRoute: typeof AuthenticatedAppRoute
     }
+    '/_authenticated/app/team': {
+      id: '/_authenticated/app/team'
+      path: '/team'
+      fullPath: '/app/team'
+      preLoaderRoute: typeof AuthenticatedAppTeamRouteImport
+      parentRoute: typeof AuthenticatedAppRoute
+    }
     '/_authenticated/superadmin/': {
       id: '/_authenticated/superadmin/'
       path: '/'
@@ -2093,6 +2135,20 @@ declare module '@tanstack/react-router' {
       fullPath: '/app/requests/$id'
       preLoaderRoute: typeof AuthenticatedAppRequestsIdRouteImport
       parentRoute: typeof AuthenticatedAppRequestsRoute
+    }
+    '/_authenticated/app/team/': {
+      id: '/_authenticated/app/team/'
+      path: '/'
+      fullPath: '/app/team/'
+      preLoaderRoute: typeof AuthenticatedAppTeamIndexRouteImport
+      parentRoute: typeof AuthenticatedAppTeamRoute
+    }
+    '/_authenticated/app/team/$id': {
+      id: '/_authenticated/app/team/$id'
+      path: '/$id'
+      fullPath: '/app/team/$id'
+      preLoaderRoute: typeof AuthenticatedAppTeamIdRouteImport
+      parentRoute: typeof AuthenticatedAppTeamRoute
     }
     '/api/public/blog-media/$': {
       id: '/api/public/blog-media/$'
@@ -2433,6 +2489,19 @@ const AuthenticatedAppRequestsRouteWithChildren =
     AuthenticatedAppRequestsRouteChildren,
   )
 
+interface AuthenticatedAppTeamRouteChildren {
+  AuthenticatedAppTeamIdRoute: typeof AuthenticatedAppTeamIdRoute
+  AuthenticatedAppTeamIndexRoute: typeof AuthenticatedAppTeamIndexRoute
+}
+
+const AuthenticatedAppTeamRouteChildren: AuthenticatedAppTeamRouteChildren = {
+  AuthenticatedAppTeamIdRoute: AuthenticatedAppTeamIdRoute,
+  AuthenticatedAppTeamIndexRoute: AuthenticatedAppTeamIndexRoute,
+}
+
+const AuthenticatedAppTeamRouteWithChildren =
+  AuthenticatedAppTeamRoute._addFileChildren(AuthenticatedAppTeamRouteChildren)
+
 interface AuthenticatedAppRouteChildren {
   AuthenticatedAppActivitiesRoute: typeof AuthenticatedAppActivitiesRoute
   AuthenticatedAppAiRoute: typeof AuthenticatedAppAiRoute
@@ -2451,6 +2520,7 @@ interface AuthenticatedAppRouteChildren {
   AuthenticatedAppRequestsRoute: typeof AuthenticatedAppRequestsRouteWithChildren
   AuthenticatedAppSettingsRoute: typeof AuthenticatedAppSettingsRoute
   AuthenticatedAppSupportRoute: typeof AuthenticatedAppSupportRoute
+  AuthenticatedAppTeamRoute: typeof AuthenticatedAppTeamRouteWithChildren
   AuthenticatedAppIndexRoute: typeof AuthenticatedAppIndexRoute
   AuthenticatedAppAcpIdRoute: typeof AuthenticatedAppAcpIdRoute
   AuthenticatedAppAcpNewRoute: typeof AuthenticatedAppAcpNewRoute
@@ -2484,6 +2554,7 @@ const AuthenticatedAppRouteChildren: AuthenticatedAppRouteChildren = {
   AuthenticatedAppRequestsRoute: AuthenticatedAppRequestsRouteWithChildren,
   AuthenticatedAppSettingsRoute: AuthenticatedAppSettingsRoute,
   AuthenticatedAppSupportRoute: AuthenticatedAppSupportRoute,
+  AuthenticatedAppTeamRoute: AuthenticatedAppTeamRouteWithChildren,
   AuthenticatedAppIndexRoute: AuthenticatedAppIndexRoute,
   AuthenticatedAppAcpIdRoute: AuthenticatedAppAcpIdRoute,
   AuthenticatedAppAcpNewRoute: AuthenticatedAppAcpNewRoute,
