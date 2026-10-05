@@ -41,6 +41,7 @@ import { cn } from "@/lib/utils";
 import { Link } from "@tanstack/react-router";
 import { SummaryCard } from "@/components/superadmin/SuperadminUi";
 import { orgStatusBadge } from "@/lib/superadmin-status";
+import { AgencyLogo, useAgencyLogoUrls } from "@/components/superadmin/AgencyLogo";
 
 export const Route = createFileRoute("/_authenticated/superadmin/stare-agentii")({
   head: () => appHead("Habitoo CRM — stare agenții"),
@@ -172,6 +173,7 @@ function AgencyOverviewPage() {
   const rows = (data?.agencies ?? []).filter((o) =>
     q.trim() ? `${o.name} ${o.city ?? ""}`.toLowerCase().includes(q.trim().toLowerCase()) : true,
   );
+  const logoUrls = useAgencyLogoUrls((data?.agencies ?? []).map((org) => org.logoPath));
 
   return (
     <>
@@ -231,14 +233,17 @@ function AgencyOverviewPage() {
                     aria-expanded={isOpen}
                     className="grid w-full cursor-pointer grid-cols-1 items-center gap-3 px-4 py-4 text-left transition-colors hover:bg-muted/40 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none sm:grid-cols-[minmax(0,1.4fr)_auto_minmax(0,1fr)_auto_auto_auto]"
                   >
-                    <div className="min-w-0">
-                      <p className="flex items-center gap-2 font-medium">
-                        <span className="truncate">{org.name}</span>
-                        {(() => { const b = orgStatusBadge({ status: org.status, is_trial: org.isTrial, archived_at: org.archivedAt }); return <StatusBadge tone={b.tone}>{b.label}</StatusBadge>; })()}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {org.city ?? "—"} · creată la {formatDate(org.createdAt)}
-                      </p>
+                    <div className="flex min-w-0 items-center gap-3">
+                      <AgencyLogo name={org.name} path={org.logoPath} urls={logoUrls} />
+                      <div className="min-w-0">
+                        <p className="flex flex-wrap items-center gap-2 font-medium">
+                          <span className="truncate">{org.name}</span>
+                          {(() => { const b = orgStatusBadge({ status: org.status, is_trial: org.isTrial, archived_at: org.archivedAt }); return <StatusBadge tone={b.tone}>{b.label}</StatusBadge>; })()}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {org.city ?? "—"} · creată la {formatDate(org.createdAt)}
+                        </p>
+                      </div>
                     </div>
 
                     <div className="text-sm">

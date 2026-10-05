@@ -46,7 +46,7 @@ export type PlatformUser = {
 
 export type PlatformUsersOverview = {
   users: PlatformUser[];
-  organizations: { id: string; name: string }[];
+  organizations: { id: string; name: string; logo_path: string | null }[];
 };
 
 export const listPlatformUsers = createServerFn({ method: "POST" })
@@ -63,7 +63,7 @@ export const listPlatformUsers = createServerFn({ method: "POST" })
         )
         .order("created_at", { ascending: false }),
       supabaseAdmin.from("user_roles").select("user_id,role"),
-      supabaseAdmin.from("organizations").select("id,name").order("name"),
+      supabaseAdmin.from("organizations").select("id,name,logo_path").order("name"),
     ]);
     if (error) throw new Error(error.message);
 
@@ -76,7 +76,7 @@ export const listPlatformUsers = createServerFn({ method: "POST" })
       if (authPage.users.length < 1000) break;
     }
 
-    const orgList = (orgs ?? []).map((o) => ({ id: o.id, name: o.name }));
+    const orgList = (orgs ?? []).map((o) => ({ id: o.id, name: o.name, logo_path: o.logo_path }));
     const orgById = new Map(orgList.map((o) => [o.id, o.name]));
 
     return {
