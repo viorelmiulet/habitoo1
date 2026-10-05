@@ -13,6 +13,7 @@ import {
   Pencil,
   Phone,
   Printer,
+  Share2,
   Sparkles,
   UserPlus,
 } from "lucide-react";
@@ -103,6 +104,7 @@ import { AVATAR_BUCKET, MEDIA_BUCKET, signedUrl, signedUrls } from "@/lib/storag
 import { useAgencyLogoUrl } from "@/components/app/AgencyBrandingCard";
 import { UserAvatar } from "@/components/app/UserAvatar";
 import { ReassignPropertiesDialog } from "@/components/app/ReassignPropertiesDialog";
+import { SocialPosterDialog } from "@/components/app/SocialPosterDialog";
 import { getPropertiesPortalMatrix, type PropertyPortalCell } from "@/lib/portals.functions";
 
 import { formatDateTime, formatMoney, formatNumber } from "@/lib/format";
@@ -178,6 +180,7 @@ function PropertyDetailPage() {
   /** Evită tipăriri suprapuse ale fișei de prezentare. */
   const printingRef = useRef(false);
   const [presentationDialogOpen, setPresentationDialogOpen] = useState(false);
+  const [socialPosterOpen, setSocialPosterOpen] = useState(false);
 
   const [activityDialog, setActivityDialog] = useState<{
     open: boolean;
@@ -765,6 +768,7 @@ function PropertyDetailPage() {
             <DropdownMenuContent align="end">
               <DropdownMenuItem onClick={() => duplicate.mutate()} disabled={duplicate.isPending}>Clonează</DropdownMenuItem>
               <DropdownMenuItem onClick={() => setPresentationDialogOpen(true)}><Printer /> Generează fișă de vizionare</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setSocialPosterOpen(true)}><Share2 /> Imagine pentru story / postare</DropdownMenuItem>
               <DropdownMenuItem onClick={() => setAddClientOpen(true)}><UserPlus /> Adaugă client</DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuSub>
@@ -1243,6 +1247,26 @@ function PropertyDetailPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <SocialPosterDialog
+        open={socialPosterOpen}
+        onOpenChange={setSocialPosterOpen}
+        propertyId={id}
+        userId={user?.userId ?? "anonymous"}
+        title={property.title}
+        location={locationLabel}
+        rooms={property.rooms ?? null}
+        surface={usableSurface ?? null}
+        floor={property.floor_label ?? (property.floor !== null ? String(property.floor) : null)}
+        forSale={Boolean(property.for_sale || property.transaction_kind === "sale")}
+        forRent={Boolean(property.for_rent || property.transaction_kind === "rent")}
+        salePrice={salePrice}
+        rentPrice={rentPrice}
+        saleCurrency={property.sale_currency ?? property.currency}
+        rentCurrency={property.rent_currency ?? property.currency}
+        logoUrl={agencyLogoUrl}
+        phone={responsibleAgent?.phone ?? user?.profile?.phone ?? null}
+      />
 
       <Dialog open={addClientOpen} onOpenChange={setAddClientOpen}>
         <DialogContent>

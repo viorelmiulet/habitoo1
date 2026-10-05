@@ -34,3 +34,4 @@
 - Company data comes from ANAF only via `src/lib/company-lookup.ts` (pure, injected fetch) with 24h `company_lookup_cache`; org sync fills empty fields only. Why: ANAF rate limit; user edits win.
 - `HomeHeader` on homepage + blog (`PublicLayout homeHeader`); else `PublicHeader`. Why: isolate fixed overlay.
 - Public partner list (`/agentii`) auto-lists eligible agencies (`public_partner_eligible`: active/trial, not archived, not hidden by superadmin) via RPC `public_partner_agencies`; logos served by `/api/public/partner-logo/$id` via service-only `public_partner_logo_path`. Why: only name+logo of visible partners leave the DB.
+- Social property posters are rendered client-side from existing signed media and downloaded as PNG; per-agent display preferences stay in localStorage. Why: no social publishing or generated-media persistence is needed.
