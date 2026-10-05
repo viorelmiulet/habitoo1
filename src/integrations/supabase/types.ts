@@ -8363,12 +8363,32 @@ export type Database = {
         }
         Returns: Json
       }
+      public_agency_agents: {
+        Args: { _org: string }
+        Returns: {
+          bio: string
+          full_name: string
+          job_title: string
+          phone: string
+        }[]
+      }
+      public_agency_profile: {
+        Args: { _slug: string }
+        Returns: {
+          description: string
+          has_logo: boolean
+          id: string
+          name: string
+          slug: string
+        }[]
+      }
       public_partner_agencies: {
         Args: never
         Returns: {
           has_logo: boolean
           id: string
           name: string
+          public_slug: string
         }[]
       }
       public_partner_eligible: {
