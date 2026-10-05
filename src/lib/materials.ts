@@ -91,8 +91,42 @@ export type PresentationData = {
   /** Destinația fișei controlează exclusiv afișarea numerelor de telefon. */
   audience?: "client" | "agent";
   /** Agentul care generează fișa; este afișat cu telefon doar în varianta pentru client. */
-  agent?: { name: string | null; phone: string | null };
+  agent?: {
+    name: string | null;
+    phone: string | null;
+    email?: string | null;
+    photoUrl?: string | null;
+  };
 };
+
+const PRESENTATION_DESCRIPTION_LIMIT = 2_200;
+
+/** Păstrează numai paragrafe sau propoziții complete în cele maximum două pagini. */
+export function presentationDescription(value: string | null | undefined) {
+  const normalized = (value ?? "").replace(/\r\n/g, "\n").trim();
+  if (!normalized) return "Descriere indisponibilă.";
+  if (normalized.length <= PRESENTATION_DESCRIPTION_LIMIT) return normalized;
+
+  const paragraphs = normalized.split(/\n\s*\n/).map((paragraph) => paragraph.trim()).filter(Boolean);
+  const kept: string[] = [];
+  let length = 0;
+  for (const paragraph of paragraphs) {
+    const extra = (kept.length ? 2 : 0) + paragraph.length;
+    if (length + extra > PRESENTATION_DESCRIPTION_LIMIT) break;
+    kept.push(paragraph);
+    length += extra;
+  }
+  if (kept.length) return kept.join("\n\n");
+
+  const sentences = normalized.match(/[^.!?]+[.!?]+(?:\s|$)/g) ?? [];
+  let result = "";
+  for (const sentence of sentences) {
+    const candidate = `${result}${sentence}`.trim();
+    if (candidate.length > PRESENTATION_DESCRIPTION_LIMIT) break;
+    result = candidate;
+  }
+  return result || "Descriere disponibilă la cerere.";
+}
 
 
 /** Prezentare de probă pentru previzualizarea din Setări. */
@@ -102,11 +136,13 @@ export const samplePresentation: PresentationData = {
   price: "119.000 €",
   specs: [
     { label: "Tip", value: "Apartament" },
-    { label: "Tranzacție", value: "Vânzare" },
     { label: "Suprafață", value: "78 m²" },
     { label: "Camere", value: "3" },
+    { label: "Compartimentare", value: "Decomandat" },
     { label: "Etaj", value: "4" },
-    { label: "Referință", value: "HB-1024" },
+    { label: "An construcție", value: "2021" },
+    { label: "Mobilare", value: "Mobilat" },
+    { label: "Balcoane", value: "2" },
   ],
   description:
     "Apartament luminos, bloc nou, finisaje premium, parcare subterană. Text de probă pentru previzualizarea materialului.",
@@ -120,90 +156,94 @@ export const samplePresentation: PresentationData = {
 export function buildPresentationHtml(branding: MaterialBranding, data: PresentationData): string {
   const accent = safeAccent(branding.accent);
   const audience = data.audience ?? "client";
-  const header = branding.logoUrl
-    ? `<img class="logo" src="${escapeHtml(branding.logoUrl)}" alt="${escapeHtml(branding.agencyName)}" />`
-    : `<span class="agency">${escapeHtml(branding.agencyName)}</span>`;
-
-  const agencyContacts = [
-    audience === "client" && branding.phone ? `Agenție: ${branding.phone}` : null,
-    branding.email,
-    branding.website,
-    branding.address,
-  ].filter((value): value is string => Boolean(value));
-  const agentContact =
-    audience === "client" && data.agent?.phone
-      ? `Agent: ${data.agent.name ? `${data.agent.name} · ` : ""}${data.agent.phone}`
-      : null;
-  const contacts = [...agencyContacts, agentContact]
-    .filter((value): value is string => Boolean(value))
-    .map((line) => `<span>${escapeHtml(line)}</span>`)
-    .join('<span class="sep">·</span>');
+  const agencyLogo = branding.logoUrl
+    ? `<img class="agency-logo" src="${escapeHtml(branding.logoUrl)}" alt="Logo ${escapeHtml(branding.agencyName)}" />`
+    : `<span class="agency-monogram">${escapeHtml(branding.agencyName.slice(0, 2).toUpperCase())}</span>`;
+  const headerPhone = audience === "client" ? data.agent?.phone ?? branding.phone : null;
+  const contactPhone = audience === "client" ? data.agent?.phone ?? branding.phone : null;
+  const contactEmail = data.agent?.email ?? branding.email;
+  const agentPhoto = data.agent?.photoUrl
+    ? `<img class="agent-photo" src="${escapeHtml(data.agent.photoUrl)}" alt="Fotografia agentului ${escapeHtml(data.agent.name ?? "imobiliar")}" />`
+    : `<span class="agent-fallback">${escapeHtml((data.agent?.name ?? branding.agencyName).split(/\s+/).slice(0, 2).map((part) => part[0] ?? "").join("").toUpperCase())}</span>`;
 
   const photos = (data.photos ?? []).filter(Boolean).slice(0, 5);
   const [cover, ...others] = photos;
-  const gallery = cover
-    ? `<figure class="gallery">
-  <img class="cover" src="${escapeHtml(cover)}" alt="${escapeHtml(data.title)}" />
-  ${
-    others.length
-      ? `<div class="thumbs">${others
-          .map((src) => `<img src="${escapeHtml(src)}" alt="" />`)
-          .join("")}</div>`
-      : ""
-  }
-</figure>`
-    : "";
+  const coverMarkup = cover
+    ? `<img class="cover" src="${escapeHtml(cover)}" alt="${escapeHtml(data.title)}" />`
+    : `<div class="cover photo-empty">Fotografie indisponibilă</div>`;
+  const thumbs = Array.from({ length: 4 }, (_, index) => {
+    const src = others[index];
+    return src
+      ? `<img src="${escapeHtml(src)}" alt="Fotografie proprietate ${index + 2}" />`
+      : `<div class="photo-empty">${index === 0 && !cover ? "Fără fotografii" : ""}</div>`;
+  }).join("");
+  const specs = data.specs
+    .filter((spec) => spec.label && spec.value)
+    .slice(0, 8)
+    .map((spec) => `<div class="feature"><dt>${escapeHtml(spec.label)}</dt><dd>${escapeHtml(spec.value)}</dd></div>`)
+    .join("");
+  const description = presentationDescription(data.description)
+    .split(/\n\s*\n/)
+    .map((paragraph) => `<p>${escapeHtml(paragraph)}</p>`)
+    .join("");
+  const footer = `<footer><span class="footer-rule"></span><span class="footer-brand"><img src="/assets/habitoo-logo.png" alt="Habitoo CRM" />Fișă generată cu Habitoo CRM</span></footer>`;
 
   return `<!doctype html><html lang="ro"><head><meta charset="utf-8" />
 <title>${escapeHtml(data.title)}</title>
-
 <style>
   *{box-sizing:border-box}
-  body{margin:0;padding:32px;font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;color:${INK};background:#fff}
-  .sheet{max-width:760px;margin:0 auto}
-  header{display:flex;align-items:center;justify-content:space-between;gap:16px;padding-bottom:16px;border-bottom:3px solid ${accent}}
-  .logo{max-height:56px;max-width:220px;object-fit:contain}
-  .agency{font-size:20px;font-weight:700;letter-spacing:-0.01em;color:${NAVY}}
-  .ref{font-size:12px;color:${MUTED};text-align:right}
-  h1{margin:24px 0 4px;font-size:26px;line-height:1.2;letter-spacing:-0.01em;color:${NAVY}}
-  .loc{margin:0;color:${MUTED};font-size:14px}
-  .price{margin:16px 0 0;font-size:24px;font-weight:700;color:${accent}}
-  dl{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px 24px;margin:24px 0 0;padding:16px 0;border-top:1px solid ${LINE};border-bottom:1px solid ${LINE}}
-  .row{display:flex;justify-content:space-between;gap:12px;font-size:14px}
-  dt{color:${MUTED};margin:0}
-  dd{margin:0;font-weight:600}
-  h2{margin:24px 0 6px;font-size:15px;text-transform:uppercase;letter-spacing:0.08em;color:${accent}}
-  p.desc{margin:0;white-space:pre-line;font-size:14px;line-height:1.6;color:${INK}}
-  footer{margin-top:32px;padding-top:14px;border-top:1px solid ${LINE};font-size:12px;color:${MUTED}}
-  footer .name{font-weight:600;color:${NAVY}}
-  .contacts{margin-top:4px;display:flex;flex-wrap:wrap;gap:6px}
-  .sep{color:${LINE}}
-  .habitoo{margin-top:12px;display:flex;align-items:center;gap:8px;font-size:11px;color:#9AA0A8}
-  .habitoo img{display:block;width:76px;height:auto;object-fit:contain}
-  .gallery{margin:20px 0 0;padding:0}
-  .gallery .cover{display:block;width:100%;height:340px;object-fit:cover;border-radius:12px;background:${LINE}}
-  .gallery .thumbs{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-top:8px}
-  .gallery .thumbs img{width:100%;height:84px;object-fit:cover;border-radius:8px;background:${LINE}}
-  @media print{body{padding:0}.gallery,.gallery img{break-inside:avoid;page-break-inside:avoid}}
-</style></head><body><div class="sheet">
-<header>${header}<div class="ref">${escapeHtml(branding.agencyName)}</div></header>
-<h1>${escapeHtml(data.title)}</h1>
-<p class="loc">${escapeHtml(data.location)}</p>
-<p class="price">${escapeHtml(data.price)}</p>
-${gallery}
-<dl>${data.specs
-
-    .map(
-      (s) =>
-        `<div class="row"><dt>${escapeHtml(s.label)}</dt><dd>${escapeHtml(s.value)}</dd></div>`,
-    )
-    .join("")}</dl>
-<h2>Descriere</h2>
-<p class="desc">${escapeHtml(data.description ?? "—")}</p>
-<footer>
-  <div class="name">${escapeHtml(branding.agencyName)}</div>
-  ${contacts ? `<div class="contacts">${contacts}</div>` : ""}
-  <div class="habitoo"><img src="/assets/habitoo-logo.png" alt="Habitoo CRM" /><span>Generat cu Habitoo CRM</span></div>
-</footer>
-</div></body></html>`;
+  @page{size:A4;margin:0}
+  html,body{margin:0;padding:0;background:#fff;color:${INK};font-family:Arial,Helvetica,sans-serif;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .page{position:relative;width:210mm;height:297mm;margin:0 auto;padding:13mm 15mm 17mm;overflow:hidden;background:#fff;page-break-after:always}
+  .page:last-child{page-break-after:auto}
+  .brand-header{height:18mm;display:flex;align-items:center;justify-content:space-between;gap:10mm;border-bottom:1.2mm solid ${accent};padding-bottom:4mm}
+  .brand{display:flex;min-width:0;align-items:center;gap:4mm}
+  .agency-logo{display:block;max-width:38mm;max-height:12mm;object-fit:contain}
+  .agency-monogram{display:grid;width:12mm;height:12mm;place-items:center;border-radius:3mm;background:${accent};color:#fff;font-size:12pt;font-weight:800}
+  .agency-name{max-width:86mm;color:${NAVY};font-size:12pt;font-weight:800;line-height:1.15}
+  .header-contact{text-align:right;color:${MUTED};font-size:8.5pt;line-height:1.45}
+  .header-contact strong{display:block;color:${NAVY};font-size:10pt}
+  .property-heading{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:end;gap:8mm;padding:7mm 0 5mm}
+  h1{margin:0;color:${NAVY};font-size:22pt;line-height:1.08}
+  .location{margin:2mm 0 0;color:${MUTED};font-size:10pt;line-height:1.35}
+  .price{margin:0;color:${accent};font-size:21pt;font-weight:800;white-space:nowrap}
+  .gallery{margin:0;break-inside:avoid}
+  .cover{display:flex;width:100%;height:91mm;align-items:center;justify-content:center;border-radius:3mm;background:${LINE};object-fit:cover;color:${MUTED};font-size:9pt}
+  .thumbs{display:grid;grid-template-columns:repeat(4,1fr);gap:2.5mm;margin-top:2.5mm}
+  .thumbs img,.thumbs .photo-empty{display:flex;width:100%;height:25mm;align-items:center;justify-content:center;border-radius:2mm;background:${LINE};object-fit:cover;color:${MUTED};font-size:8pt}
+  .section-title{margin:5mm 0 2.5mm;color:${accent};font-size:9pt;font-weight:800;letter-spacing:.08em;text-transform:uppercase}
+  .features{display:grid;grid-template-columns:repeat(4,1fr);gap:2.2mm;margin:0;break-inside:avoid}
+  .feature{min-height:16mm;padding:3mm;border:1px solid ${LINE};border-radius:2mm;background:#fafafa}
+  .feature dt{margin:0 0 1.2mm;color:${MUTED};font-size:7.5pt}
+  .feature dd{margin:0;color:${NAVY};font-size:10pt;font-weight:700;line-height:1.2}
+  .description-title{margin:7mm 0 4mm;color:${NAVY};font-size:20pt;line-height:1.1}
+  .description{max-height:154mm;overflow:hidden;color:${INK};font-size:11.2pt;line-height:1.62}
+  .description p{margin:0 0 4mm;orphans:3;widows:3}
+  .contact-card{position:absolute;right:15mm;bottom:28mm;left:15mm;display:grid;grid-template-columns:18mm minmax(0,1fr);align-items:center;gap:5mm;min-height:30mm;padding:5mm;border:1px solid ${LINE};border-left:1.5mm solid ${accent};border-radius:3mm;background:#fafafa;break-inside:avoid}
+  .agent-photo,.agent-fallback{display:grid;width:18mm;height:18mm;place-items:center;border-radius:50%;background:${accent};object-fit:cover;color:#fff;font-size:12pt;font-weight:800}
+  .contact-label{margin:0 0 1mm;color:${accent};font-size:8pt;font-weight:800;letter-spacing:.08em;text-transform:uppercase}
+  .contact-name{margin:0;color:${NAVY};font-size:13pt;font-weight:800}
+  .contact-details{margin:1.5mm 0 0;color:${MUTED};font-size:9pt;line-height:1.5}
+  footer{position:absolute;right:15mm;bottom:8mm;left:15mm;display:flex;align-items:center;gap:4mm;color:${MUTED};font-size:7.5pt}
+  .footer-rule{height:1px;flex:1;background:${LINE}}
+  .footer-brand{display:flex;align-items:center;gap:2mm;white-space:nowrap}
+  .footer-brand img{display:block;width:20mm;height:5mm;object-fit:contain}
+  @media screen{body{background:#e5e7eb}.page{margin:8mm auto;box-shadow:0 2mm 8mm rgba(22,34,60,.12)}}
+  @media print{.page{margin:0;box-shadow:none}}
+</style></head><body>
+<section class="page page-one">
+  <header class="brand-header"><div class="brand">${agencyLogo}<span class="agency-name">${escapeHtml(branding.agencyName)}</span></div><div class="header-contact">${headerPhone ? `<span>Contact direct</span><strong>${escapeHtml(headerPhone)}</strong>` : ""}</div></header>
+  <div class="property-heading"><div><h1>${escapeHtml(data.title)}</h1><p class="location">${escapeHtml(data.location)}</p></div><p class="price">${escapeHtml(data.price)}</p></div>
+  <figure class="gallery">${coverMarkup}<div class="thumbs">${thumbs}</div></figure>
+  ${specs ? `<h2 class="section-title">Caracteristici</h2><dl class="features">${specs}</dl>` : ""}
+  ${footer}
+</section>
+<section class="page page-two">
+  <header class="brand-header"><div class="brand">${agencyLogo}<span class="agency-name">${escapeHtml(branding.agencyName)}</span></div><div class="header-contact">${headerPhone ? `<span>Contact direct</span><strong>${escapeHtml(headerPhone)}</strong>` : ""}</div></header>
+  <h2 class="description-title">Descriere</h2>
+  <div class="description">${description}</div>
+  <aside class="contact-card">${agentPhoto}<div><p class="contact-label">Contact</p><p class="contact-name">${escapeHtml(data.agent?.name ?? branding.agencyName)}</p><p class="contact-details">${[contactPhone, contactEmail, branding.agencyName].filter(Boolean).map(escapeHtml).join(" · ")}</p></div></aside>
+  ${footer}
+</section>
+</body></html>`;
 }

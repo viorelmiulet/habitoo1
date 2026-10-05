@@ -98,14 +98,14 @@ import { useCurrentUser } from "@/hooks/use-session";
 import { DeletePropertyDialog, canDeleteProperty } from "@/components/app/DeletePropertyDialog";
 import { brandingFromOrg, buildPresentationHtml } from "@/lib/materials";
 import { printHtmlDocument } from "@/lib/print";
-import { MEDIA_BUCKET, signedUrls } from "@/lib/storage";
+import { AVATAR_BUCKET, MEDIA_BUCKET, signedUrl, signedUrls } from "@/lib/storage";
 
 import { useAgencyLogoUrl } from "@/components/app/AgencyBrandingCard";
 import { UserAvatar } from "@/components/app/UserAvatar";
 import { ReassignPropertiesDialog } from "@/components/app/ReassignPropertiesDialog";
 import { getPropertiesPortalMatrix, type PropertyPortalCell } from "@/lib/portals.functions";
 
-import { formatDate, formatDateTime, formatMoney, formatNumber } from "@/lib/format";
+import { formatDateTime, formatMoney, formatNumber } from "@/lib/format";
 import {
   activityKindLabels,
   leadStageLabels,
@@ -243,7 +243,7 @@ function PropertyDetailPage() {
     queryFn: async () => {
       const { data: profile, error } = await supabase
         .from("profiles")
-        .select("full_name,phone,job_title,avatar_url")
+        .select("full_name,email,phone,job_title,avatar_url")
         .eq("id", property?.assigned_to ?? "")
         .maybeSingle();
       if (error) throw error;
@@ -586,8 +586,23 @@ function PropertyDetailPage() {
     { label: "Mobilare", value: property.furnishing ?? "" },
     { label: "Parcare", value: property.parking ?? "" },
     { label: "Comision", value: property.commission ?? "" },
-    { label: "Sursă", value: property.source ?? "" },
-    { label: "Adăugat", value: formatDate(property.created_at) },
+  ].filter((item) => item.value);
+
+  const presentationSpecs: { label: string; value: string }[] = [
+    { label: "Tip", value: propertyTypeLabels[property.property_type] ?? property.property_type },
+    { label: "Suprafață", value: usableSurface ? `${formatNumber(usableSurface)} m²` : "" },
+    { label: "Camere", value: property.rooms ? String(property.rooms) : "" },
+    { label: "Compartimentare", value: property.layout ?? "" },
+    {
+      label: "Etaj",
+      value: property.floor_label || (property.floor !== null ? `${property.floor}${property.building_floors ? ` din ${property.building_floors}` : ""}` : ""),
+    },
+    {
+      label: property.build_year ? "An construcție" : "Stare",
+      value: property.build_year ? String(property.build_year) : property.construction_stage ?? "",
+    },
+    { label: "Mobilare", value: property.furnishing ?? "" },
+    { label: "Balcoane", value: property.balconies ? String(property.balconies) : "" },
   ].filter((item) => item.value);
 
   const amenityGroups = [
@@ -659,19 +674,25 @@ function PropertyDetailPage() {
       const photos = sorted
         .map((r) => (r.storage_path ? signed[r.storage_path] : null) ?? r.url ?? null)
         .filter((v): v is string => Boolean(v));
+      const contactAgent = responsibleAgent ?? user?.profile ?? null;
+      const agentPhotoUrl = contactAgent?.avatar_url
+        ? await signedUrl(AVATAR_BUCKET, contactAgent.avatar_url, 3600)
+        : null;
 
       await printHtmlDocument(
         buildPresentationHtml(brandingFromOrg(user?.organization, agencyLogoUrl), {
           title: property.title,
           location: [property.address, property.district, property.city].filter(Boolean).join(", "),
           price: formatMoney(property.price, property.currency),
-          specs,
+          specs: presentationSpecs,
           description: property.description,
           photos,
           audience,
           agent: {
-            name: user?.profile?.full_name ?? null,
-            phone: user?.profile?.phone ?? null,
+            name: contactAgent?.full_name ?? null,
+            phone: contactAgent?.phone ?? null,
+            email: contactAgent?.email ?? user?.email ?? null,
+            photoUrl: agentPhotoUrl,
           },
         }),
       );
