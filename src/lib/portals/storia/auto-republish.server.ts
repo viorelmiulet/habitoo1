@@ -54,13 +54,12 @@ export async function handleStoriaExpiry(
   ]);
 
   /**
-   * Suprascrierea de pe proprietate are prioritate; dacă lipsește (null),
-   * decide setarea agenției.
+   * Decide exclusiv setarea agenției (Setări → Portaluri). Coloana per anunț
+   * `properties.storia_auto_renew` este păstrată, dar nu mai este citită.
    */
-  const override =
-    (property as { storia_auto_renew?: boolean | null } | null)?.storia_auto_renew ?? null;
+  const override: boolean | null = null;
   const agencyDefault = org?.storia_auto_republish === true;
-  const autoEnabled = override ?? agencyDefault;
+  const autoEnabled = agencyDefault;
 
   // Motivul pentru care republicarea nu este permisă (independent de comutator).
   let blocked: string | null = null;

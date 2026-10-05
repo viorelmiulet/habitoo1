@@ -832,15 +832,6 @@ export const PropertyPortalsCard = forwardRef<
                         </ul>
                       </div>
                     ) : null}
-
-                    {/* Auto-prelungire, doar pentru Storia și doar când portalul e bifat. */}
-                    {cell.portalId === "storia" && value ? (
-                      <StoriaAutoRenewControl
-                        propertyId={propertyId}
-                        organizationId={organizationId}
-                        canManage={canManage}
-                      />
-                    ) : null}
                   </Card>
                 </li>
               );
