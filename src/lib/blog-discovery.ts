@@ -41,8 +41,9 @@ const publicPages = [
   { path: "/politica-de-confidentialitate", changefreq: "yearly", priority: "0.3" },
 ] as const;
 
-export function buildStaticSitemapXml() {
-  const urls = publicPages.map(({ path, changefreq, priority }) =>
+export function buildStaticSitemapXml(hasPartners = false) {
+  const pages = hasPartners ? [...publicPages, { path: "/agentii", changefreq: "weekly", priority: "0.6" }] : publicPages;
+  const urls = pages.map(({ path, changefreq, priority }) =>
     `  <url>\n    <loc>${escapeXml(`${BLOG_SITE_URL}${path}`)}</loc>\n    <changefreq>${changefreq}</changefreq>\n    <priority>${priority}</priority>\n  </url>`,
   );
   return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls.join("\n")}\n</urlset>\n`;
@@ -59,15 +60,15 @@ export function buildSitemapIndexXml() {
   return `<?xml version="1.0" encoding="UTF-8"?>\n<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n  <sitemap><loc>${BLOG_SITE_URL}/sitemap-pages.xml</loc></sitemap>\n  <sitemap><loc>${BLOG_SITE_URL}/sitemap-blog.xml</loc></sitemap>\n</sitemapindex>\n`;
 }
 
-export function buildSitemapXml(posts: DiscoverableBlogPost[], now = new Date()) {
+export function buildSitemapXml(posts: DiscoverableBlogPost[], now = new Date(), hasPartners = false) {
   const articles = selectDiscoverablePosts(posts, now);
   if (articles.length > 500) return buildSitemapIndexXml();
-  const staticXml = buildStaticSitemapXml().replace(/^<\?xml[^>]+>\n|<urlset[^>]+>\n|\n<\/urlset>\n$/g, "");
+  const staticXml = buildStaticSitemapXml(hasPartners).replace(/^<\?xml[^>]+>\n|<urlset[^>]+>\n|\n<\/urlset>\n$/g, "");
   const blogXml = buildBlogSitemapXml(articles, now).replace(/^<\?xml[^>]+>\n|<urlset[^>]+>\n|\n<\/urlset>\n$/g, "");
   return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${staticXml}${blogXml ? `\n${blogXml}` : ""}\n</urlset>\n`;
 }
 
-export function buildLlmsTxt(posts: DiscoverableBlogPost[], now = new Date()) {
+export function buildLlmsTxt(posts: DiscoverableBlogPost[], now = new Date(), hasPartners = false) {
   const articles = selectDiscoverablePosts(posts, now);
   const blogLines = articles.length
     ? articles.map((post) => `- [${post.title}](${BLOG_SITE_URL}/blog/${post.slug}): ${post.excerpt.replace(/\s+/g, " ").trim()}`).join("\n")
@@ -85,7 +86,7 @@ ${blogLines}
 - [Pagina principală](${BLOG_SITE_URL}/)
 - [Prețuri](${BLOG_SITE_URL}/preturi)
 - [Contact](${BLOG_SITE_URL}/contact)
-`;
+${hasPartners ? `- [Agenții partenere](${BLOG_SITE_URL}/agentii)\n` : ""}`;
 }
 
 export function buildRssXml(posts: DiscoverableBlogPost[], now = new Date()) {

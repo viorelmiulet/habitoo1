@@ -42,13 +42,6 @@ import { PLAN_LABELS, normalizePlan, planAgentLimitLabel } from "@/lib/plans";
 import { getTeamOverview } from "@/lib/agency-team.functions";
 import { useServerFn } from "@tanstack/react-start";
 import { ProfileEditForm } from "@/components/app/ProfileEditForm";
-import { PublicAgentProfileCard } from "@/components/app/PublicAgentProfileCard";
-import { Textarea } from "@/components/ui/textarea";
-import {
-  PUBLIC_AGENCY_DESCRIPTION_MAX,
-  publicSlugError,
-  publicSlugify,
-} from "@/lib/public-profile";
 import { appHead } from "@/components/app/app-head";
 import {
   canManageCollaborationDefault,
@@ -410,21 +403,6 @@ function SettingsPage() {
                 />
               ) : null}
             </SettingsCard>
-            {user ? (
-              <div className="mt-6">
-                <PublicAgentProfileCard
-                  key={`${user.profile?.public_profile_enabled}-${user.profile?.public_bio}-${user.profile?.public_show_phone}`}
-                  userId={user.userId}
-                  agencyPublic={user.organization?.public_profile_enabled === true && user.organization?.public_hidden_by_admin !== true}
-                  initial={{
-                    enabled: user.profile?.public_profile_enabled === true,
-                    bio: user.profile?.public_bio ?? null,
-                    showPhone: user.profile?.public_show_phone === true,
-                    slug: user.profile?.public_slug ?? null,
-                  }}
-                />
-              </div>
-            ) : null}
           </TabsContent>
 
           <TabsContent value="access" className="mt-0">

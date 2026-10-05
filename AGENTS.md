@@ -33,4 +33,4 @@
 - Imospot email uses `notifyImospotForRequest`; `provider_notified_at` prevents duplicates. Why: one send.
 - Company data comes from ANAF only via `src/lib/company-lookup.ts` (pure, injected fetch) with 24h `company_lookup_cache`; org sync fills empty fields only. Why: ANAF rate limit; user edits win.
 - `HomeHeader` on homepage + blog (`PublicLayout homeHeader`); else `PublicHeader`. Why: isolate fixed overlay.
-- Anonymous catalog reads only via RPCs `public_agencies_list`/`public_agency_by_slug`; triggers limit `public_hidden_by_admin` to superadmin, agent `public_*` to self. Why: only public fields leave the DB.
+- Public partner list (`/agentii`) reads only RPC `public_partner_agencies`; logos served by `/api/public/partner-logo/$id` via service-only `public_partner_logo_path`. Why: only name+logo of visible partners leave the DB.

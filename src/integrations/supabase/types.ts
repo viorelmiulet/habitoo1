@@ -8363,10 +8363,12 @@ export type Database = {
       public_partner_agencies: {
         Args: never
         Returns: {
-          logo_path: string
+          has_logo: boolean
+          id: string
           name: string
         }[]
       }
+      public_partner_logo_path: { Args: { _id: string }; Returns: string }
       purge_expired_portal_messages: { Args: never; Returns: number }
       qa_purge_demo_organization: { Args: { _org: string }; Returns: string[] }
       qa_reset_demo_organization: { Args: { _org: string }; Returns: Json }

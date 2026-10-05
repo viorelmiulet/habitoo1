@@ -15,6 +15,7 @@ export const footerColumns = [
       { to: "/preturi", label: "Prețuri" },
       { to: "/despre", label: "Despre" },
       { to: "/blog", label: "Blog" },
+      { to: "/agentii", label: "Agenții partenere" },
       { to: "/contact", label: "Contact" },
     ],
   },

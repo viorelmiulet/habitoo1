@@ -179,7 +179,7 @@ export function AgencyPublicCatalogToggle({ org }: { org: Org }) {
     },
     onSuccess: (_d, hidden) => {
       queryClient.invalidateQueries({ queryKey: ["superadmin", "agency", org.id] });
-      toast.success(hidden ? "Agenția a fost ascunsă din catalog." : "Agenția nu mai este ascunsă din catalog.");
+      toast.success(hidden ? "Agenția a fost ascunsă din lista publică." : "Agenția nu mai este ascunsă din lista publică.");
       setPending(null);
     },
     onError: (e: Error) => toastError(e),
@@ -187,18 +187,17 @@ export function AgencyPublicCatalogToggle({ org }: { org: Org }) {
   return (
     <div className="flex items-start justify-between gap-4 rounded-2xl border border-border p-4">
       <div className="space-y-1">
-        <label htmlFor="sa_public_hidden" className="text-sm font-medium">Ascunde din catalogul public</label>
+        <label htmlFor="sa_public_hidden" className="text-sm font-medium">Ascunde din lista publică</label>
         <p className="text-xs text-muted-foreground">
-          {org.public_profile_enabled ? "Agenția a activat pagina publică." : "Agenția nu a activat pagina publică."}
-          {org.public_slug ? ` Adresa: habitoo.ro/agentii/${org.public_slug}` : ""}
+          {org.public_partner_enabled ? "Managerul a activat afișarea în lista agențiilor partenere." : "Managerul nu a activat afișarea în lista agențiilor partenere."}
         </p>
       </div>
       <Switch id="sa_public_hidden" checked={org.public_hidden_by_admin} disabled={mutation.isPending} onCheckedChange={(v) => setPending(v)} />
       <ConfirmDialog
         open={pending !== null}
         onOpenChange={(o) => { if (!o) setPending(null); }}
-        title={pending ? `Ascunzi „${org.name}” din catalog?` : `Afișezi din nou „${org.name}”?`}
-        description={pending ? "Pagina publică a agenției și profilurile agenților ei nu vor mai fi vizibile." : "Pagina va fi vizibilă doar dacă agenția o are activată."}
+        title={pending ? `Ascunzi „${org.name}” din lista publică?` : `Afișezi din nou „${org.name}”?`}
+        description={pending ? "Numele și logo-ul agenției nu vor mai apărea în lista agențiilor partenere." : "Agenția va apărea doar dacă managerul a activat afișarea."}
         confirmLabel={pending ? "Ascunde" : "Nu mai ascunde"}
         destructive={pending === true}
         onConfirm={async () => { if (pending !== null) await mutation.mutateAsync(pending); }}

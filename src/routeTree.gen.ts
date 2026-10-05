@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AccesContRouteImport } from './routes/acces-cont'
+import { Route as AgentiiRouteImport } from './routes/agentii'
 import { Route as BlogRouteImport } from './routes/blog'
 import { Route as ConfidentialitateRouteImport } from './routes/confidentialitate'
 import { Route as ContactRouteImport } from './routes/contact'
@@ -101,6 +102,7 @@ import { Route as ApiPublicCronSubscriptionsRouteImport } from './routes/api/pub
 import { Route as ApiPublicListingsUpsertRouteImport } from './routes/api/public/listings/upsert'
 import { Route as ApiPublicMailgunEventsRouteImport } from './routes/api/public/mailgun/events'
 import { Route as ApiPublicMailgunInboundRouteImport } from './routes/api/public/mailgun/inbound'
+import { Route as ApiPublicPartnerLogoIdRouteImport } from './routes/api/public/partner-logo/$id'
 import { Route as LovableEmailAuthPreviewRouteImport } from './routes/lovable/email/auth/preview'
 import { Route as LovableEmailAuthWebhookRouteImport } from './routes/lovable/email/auth/webhook'
 import { Route as AuthenticatedAppAcpDatePiataIndexRouteImport } from './routes/_authenticated/app.acp.date-piata.index'
@@ -146,6 +148,11 @@ const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
 const AccesContRoute = AccesContRouteImport.update({
   id: '/acces-cont',
   path: '/acces-cont',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AgentiiRoute = AgentiiRouteImport.update({
+  id: '/agentii',
+  path: '/agentii',
   getParentRoute: () => rootRouteImport,
 } as any)
 const BlogRoute = BlogRouteImport.update({
@@ -640,6 +647,11 @@ const ApiPublicMailgunInboundRoute = ApiPublicMailgunInboundRouteImport.update({
   path: '/api/public/mailgun/inbound',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicPartnerLogoIdRoute = ApiPublicPartnerLogoIdRouteImport.update({
+  id: '/api/public/partner-logo/$id',
+  path: '/api/public/partner-logo/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const LovableEmailAuthPreviewRoute = LovableEmailAuthPreviewRouteImport.update({
   id: '/lovable/email/auth/preview',
   path: '/lovable/email/auth/preview',
@@ -828,6 +840,7 @@ const ApiPublicSitesV1MediaAgentIdRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/acces-cont': typeof AccesContRoute
+  '/agentii': typeof AgentiiRoute
   '/blog': typeof BlogRouteWithChildren
   '/confidentialitate': typeof ConfidentialitateRoute
   '/contact': typeof ContactRoute
@@ -910,6 +923,7 @@ export interface FileRoutesByFullPath {
   '/api/public/listings/upsert': typeof ApiPublicListingsUpsertRoute
   '/api/public/mailgun/events': typeof ApiPublicMailgunEventsRoute
   '/api/public/mailgun/inbound': typeof ApiPublicMailgunInboundRoute
+  '/api/public/partner-logo/$id': typeof ApiPublicPartnerLogoIdRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
   '/app/acp/': typeof AuthenticatedAppAcpIndexRoute
@@ -953,6 +967,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/acces-cont': typeof AccesContRoute
+  '/agentii': typeof AgentiiRoute
   '/blog': typeof BlogRouteWithChildren
   '/confidentialitate': typeof ConfidentialitateRoute
   '/contact': typeof ContactRoute
@@ -1032,6 +1047,7 @@ export interface FileRoutesByTo {
   '/api/public/listings/upsert': typeof ApiPublicListingsUpsertRoute
   '/api/public/mailgun/events': typeof ApiPublicMailgunEventsRoute
   '/api/public/mailgun/inbound': typeof ApiPublicMailgunInboundRoute
+  '/api/public/partner-logo/$id': typeof ApiPublicPartnerLogoIdRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
   '/app/acp': typeof AuthenticatedAppAcpIndexRoute
@@ -1077,6 +1093,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/acces-cont': typeof AccesContRoute
+  '/agentii': typeof AgentiiRoute
   '/blog': typeof BlogRouteWithChildren
   '/confidentialitate': typeof ConfidentialitateRoute
   '/contact': typeof ContactRoute
@@ -1159,6 +1176,7 @@ export interface FileRoutesById {
   '/api/public/listings/upsert': typeof ApiPublicListingsUpsertRoute
   '/api/public/mailgun/events': typeof ApiPublicMailgunEventsRoute
   '/api/public/mailgun/inbound': typeof ApiPublicMailgunInboundRoute
+  '/api/public/partner-logo/$id': typeof ApiPublicPartnerLogoIdRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
   '/_authenticated/app/acp/': typeof AuthenticatedAppAcpIndexRoute
@@ -1204,6 +1222,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/acces-cont'
+    | '/agentii'
     | '/blog'
     | '/confidentialitate'
     | '/contact'
@@ -1286,6 +1305,7 @@ export interface FileRouteTypes {
     | '/api/public/listings/upsert'
     | '/api/public/mailgun/events'
     | '/api/public/mailgun/inbound'
+    | '/api/public/partner-logo/$id'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
     | '/app/acp/'
@@ -1329,6 +1349,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/acces-cont'
+    | '/agentii'
     | '/blog'
     | '/confidentialitate'
     | '/contact'
@@ -1408,6 +1429,7 @@ export interface FileRouteTypes {
     | '/api/public/listings/upsert'
     | '/api/public/mailgun/events'
     | '/api/public/mailgun/inbound'
+    | '/api/public/partner-logo/$id'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
     | '/app/acp'
@@ -1452,6 +1474,7 @@ export interface FileRouteTypes {
     | '/'
     | '/_authenticated'
     | '/acces-cont'
+    | '/agentii'
     | '/blog'
     | '/confidentialitate'
     | '/contact'
@@ -1534,6 +1557,7 @@ export interface FileRouteTypes {
     | '/api/public/listings/upsert'
     | '/api/public/mailgun/events'
     | '/api/public/mailgun/inbound'
+    | '/api/public/partner-logo/$id'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
     | '/_authenticated/app/acp/'
@@ -1579,6 +1603,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AccesContRoute: typeof AccesContRoute
+  AgentiiRoute: typeof AgentiiRoute
   BlogRoute: typeof BlogRouteWithChildren
   ConfidentialitateRoute: typeof ConfidentialitateRoute
   ContactRoute: typeof ContactRoute
@@ -1614,6 +1639,7 @@ export interface RootRouteChildren {
   ApiPublicListingsUpsertRoute: typeof ApiPublicListingsUpsertRoute
   ApiPublicMailgunEventsRoute: typeof ApiPublicMailgunEventsRoute
   ApiPublicMailgunInboundRoute: typeof ApiPublicMailgunInboundRoute
+  ApiPublicPartnerLogoIdRoute: typeof ApiPublicPartnerLogoIdRoute
   LovableEmailAuthPreviewRoute: typeof LovableEmailAuthPreviewRoute
   LovableEmailAuthWebhookRoute: typeof LovableEmailAuthWebhookRoute
   ApiPublicCatalogV1FacebookDotcsvRoute: typeof ApiPublicCatalogV1FacebookDotcsvRoute
@@ -1663,6 +1689,13 @@ declare module '@tanstack/react-router' {
       path: '/acces-cont'
       fullPath: '/acces-cont'
       preLoaderRoute: typeof AccesContRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/agentii': {
+      id: '/agentii'
+      path: '/agentii'
+      fullPath: '/agentii'
+      preLoaderRoute: typeof AgentiiRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/blog': {
@@ -2288,6 +2321,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicMailgunInboundRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/partner-logo/$id': {
+      id: '/api/public/partner-logo/$id'
+      path: '/api/public/partner-logo/$id'
+      fullPath: '/api/public/partner-logo/$id'
+      preLoaderRoute: typeof ApiPublicPartnerLogoIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/lovable/email/auth/preview': {
       id: '/lovable/email/auth/preview'
       path: '/lovable/email/auth/preview'
@@ -2757,6 +2797,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AccesContRoute: AccesContRoute,
+  AgentiiRoute: AgentiiRoute,
   BlogRoute: BlogRouteWithChildren,
   ConfidentialitateRoute: ConfidentialitateRoute,
   ContactRoute: ContactRoute,
@@ -2794,6 +2835,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicListingsUpsertRoute: ApiPublicListingsUpsertRoute,
   ApiPublicMailgunEventsRoute: ApiPublicMailgunEventsRoute,
   ApiPublicMailgunInboundRoute: ApiPublicMailgunInboundRoute,
+  ApiPublicPartnerLogoIdRoute: ApiPublicPartnerLogoIdRoute,
   LovableEmailAuthPreviewRoute: LovableEmailAuthPreviewRoute,
   LovableEmailAuthWebhookRoute: LovableEmailAuthWebhookRoute,
   ApiPublicCatalogV1FacebookDotcsvRoute: ApiPublicCatalogV1FacebookDotcsvRoute,
