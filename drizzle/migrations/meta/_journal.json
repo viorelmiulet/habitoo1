@@ -820,6 +820,13 @@
       "when": 1791175526980,
       "tag": "0116_public_partner_logo_rpc",
       "breakpoints": true
+    },
+    {
+      "idx": 117,
+      "version": "7",
+      "when": 1791175772669,
+      "tag": "0117_public_partners_all_eligible",
+      "breakpoints": true
     }
   ]
 }

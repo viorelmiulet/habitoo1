@@ -8368,6 +8368,10 @@ export type Database = {
           name: string
         }[]
       }
+      public_partner_eligible: {
+        Args: { o: Database["public"]["Tables"]["organizations"]["Row"] }
+        Returns: boolean
+      }
       public_partner_logo_path: { Args: { _id: string }; Returns: string }
       purge_expired_portal_messages: { Args: never; Returns: number }
       qa_purge_demo_organization: { Args: { _org: string }; Returns: string[] }
