@@ -156,6 +156,7 @@ export const samplePresentation: PresentationData = {
 export function buildPresentationHtml(branding: MaterialBranding, data: PresentationData): string {
   const accent = safeAccent(branding.accent);
   const audience = data.audience ?? "client";
+  const hasDescription = Boolean(data.description?.trim());
   const agencyLogo = branding.logoUrl
     ? `<img class="agency-logo" src="${escapeHtml(branding.logoUrl)}" alt="Logo ${escapeHtml(branding.agencyName)}" />`
     : `<span class="agency-monogram">${escapeHtml(branding.agencyName.slice(0, 2).toUpperCase())}</span>`;
@@ -218,7 +219,7 @@ export function buildPresentationHtml(branding: MaterialBranding, data: Presenta
   .feature dt{margin:0 0 1.2mm;color:${MUTED};font-size:7.5pt}
   .feature dd{margin:0;color:${NAVY};font-size:10pt;font-weight:700;line-height:1.2}
   .description-title{margin:7mm 0 4mm;color:${NAVY};font-size:20pt;line-height:1.1}
-  .description{max-height:154mm;overflow:hidden;color:${INK};font-size:11.2pt;line-height:1.62}
+  .description{max-height:154mm;overflow:hidden;color:${INK};font-size:11.2pt;line-height:1.62;white-space:pre-line}
   .description p{margin:0 0 4mm;orphans:3;widows:3}
   .contact-card{position:absolute;right:15mm;bottom:28mm;left:15mm;display:grid;grid-template-columns:18mm minmax(0,1fr);align-items:center;gap:5mm;min-height:30mm;padding:5mm;border:1px solid ${LINE};border-left:1.5mm solid ${accent};border-radius:3mm;background:#fafafa;break-inside:avoid}
   .agent-photo,.agent-fallback{display:grid;width:18mm;height:18mm;place-items:center;border-radius:50%;background:${accent};object-fit:cover;color:#fff;font-size:12pt;font-weight:800}
@@ -237,14 +238,15 @@ export function buildPresentationHtml(branding: MaterialBranding, data: Presenta
   <div class="property-heading"><div><h1>${escapeHtml(data.title)}</h1><p class="location">${escapeHtml(data.location)}</p></div><p class="price">${escapeHtml(data.price)}</p></div>
   <figure class="gallery">${coverMarkup}<div class="thumbs">${thumbs}</div></figure>
   ${specs ? `<h2 class="section-title">Caracteristici</h2><dl class="features">${specs}</dl>` : ""}
+  ${!hasDescription ? `<aside class="contact-card">${agentPhoto}<div><p class="contact-label">Contact</p><p class="contact-name">${escapeHtml(data.agent?.name ?? branding.agencyName)}</p><p class="contact-details">${[contactPhone, contactEmail, branding.agencyName].filter(Boolean).map(escapeHtml).join(" · ")}</p></div></aside>` : ""}
   ${footer}
 </section>
-<section class="page page-two">
+${hasDescription ? `<section class="page page-two">
   <header class="brand-header"><div class="brand">${agencyLogo}<span class="agency-name">${escapeHtml(branding.agencyName)}</span></div><div class="header-contact">${headerPhone ? `<span>Contact direct</span><strong>${escapeHtml(headerPhone)}</strong>` : ""}</div></header>
   <h2 class="description-title">Descriere</h2>
   <div class="description">${description}</div>
   <aside class="contact-card">${agentPhoto}<div><p class="contact-label">Contact</p><p class="contact-name">${escapeHtml(data.agent?.name ?? branding.agencyName)}</p><p class="contact-details">${[contactPhone, contactEmail, branding.agencyName].filter(Boolean).map(escapeHtml).join(" · ")}</p></div></aside>
   ${footer}
-</section>
+</section>` : ""}
 </body></html>`;
 }

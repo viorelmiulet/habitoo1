@@ -62,4 +62,10 @@ describe("buildPresentationHtml", () => {
     expect(result.length).toBeLessThanOrEqual(2_200);
     expect(result).toMatch(/[.!?]$/);
   });
+
+  it("nu creează o a doua pagină aproape goală când descrierea lipsește", () => {
+    const html = buildPresentationHtml(branding, { ...samplePresentation, description: null });
+    expect(html.match(/class="page /g)).toHaveLength(1);
+    expect(html).toContain("class=\"contact-card\"");
+  });
 });
