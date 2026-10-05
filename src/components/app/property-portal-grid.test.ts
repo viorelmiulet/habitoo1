@@ -50,4 +50,11 @@ describe("grila de publicare", () => {
     // Dezactivate în afara editării, ca bifa.
     expect(view.match(/disabled=\{!editing \|\| !canManage\}/g)).toHaveLength(3);
   });
+
+  it("ascunde jurnalul detaliat pentru agenție și păstrează doar starea scurtă de eroare", () => {
+    expect(view).toContain("showPortalJournal = false");
+    expect(view).toContain("{showPortalJournal ? (");
+    expect(view).toContain("Eroare la ultima publicare");
+    expect(view).not.toContain("problem && failure?.requestId");
+  });
 });

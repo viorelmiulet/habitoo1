@@ -194,7 +194,11 @@ function SuperadminPortalsPage() {
                     </button>
                     {propertyId === p.id ? (
                       <div className="mt-3">
-                        <PropertyPortalsCard organizationId={organizationId} propertyId={p.id} />
+                        <PropertyPortalsCard
+                          organizationId={organizationId}
+                          propertyId={p.id}
+                          showPortalJournal
+                        />
                       </div>
                     ) : null}
                   </li>

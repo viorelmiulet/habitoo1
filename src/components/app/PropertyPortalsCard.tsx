@@ -138,8 +138,10 @@ export const PropertyPortalsCard = forwardRef<
     /** Aceeași acțiune ca fostul buton din antet: salvează (în editare) și aplică bifele. */
     onPublish?: () => void;
     publishPending?: boolean;
+    /** Jurnalul detaliat este disponibil numai în suprafața dedicată SuperAdmin. */
+    showPortalJournal?: boolean;
   }
->(function PropertyPortalsCard({ organizationId, propertyId, assignedTo, onCompleteMissing, onOpenMedia, editing, onPublish, publishPending }, ref) {
+>(function PropertyPortalsCard({ organizationId, propertyId, assignedTo, onCompleteMissing, onOpenMedia, editing, onPublish, publishPending, showPortalJournal = false }, ref) {
   const queryClient = useQueryClient();
   const loadMatrix = useServerFn(getPropertiesPortalMatrix);
   const applyFn = useServerFn(applyPropertyPortalSelection);
@@ -468,15 +470,15 @@ export const PropertyPortalsCard = forwardRef<
     .filter((value): value is string => Boolean(value))
     .sort()
     .at(-1);
-  const latestFailureByPortal = new Map<string, NonNullable<typeof journal.data>[number]>();
+  const latestOperationByPortal = new Map<string, NonNullable<typeof journal.data>[number]>();
   for (const item of journal.data ?? []) {
-    if (!item.success && !latestFailureByPortal.has(item.portal)) {
-      latestFailureByPortal.set(item.portal, item);
+    if (!latestOperationByPortal.has(item.portal)) {
+      latestOperationByPortal.set(item.portal, item);
     }
   }
 
   return (
-    <div className="grid items-start gap-6 min-[1100px]:grid-cols-[minmax(0,1fr)_340px]">
+    <div className={cn("grid items-start gap-6", showPortalJournal && "min-[1100px]:grid-cols-[minmax(0,1fr)_340px]")}>
       <div className="min-w-0 space-y-6">
         <section aria-labelledby="portal-publication-title">
           <header className="mb-4 flex flex-wrap items-end justify-between gap-3">
@@ -736,8 +738,11 @@ export const PropertyPortalsCard = forwardRef<
                 Boolean(cell.lastError) ||
                 (cell.availability === "available" && value && !cell.configured);
               const stateView = STATE_VIEW[cell.state];
-              const failure = latestFailureByPortal.get(cell.portalId);
-              const detail = stateSentence(cell, value);
+              const latestOperation = latestOperationByPortal.get(cell.portalId);
+              const latestOperationFailed = latestOperation?.success === false;
+              const detail = latestOperationFailed
+                ? "Eroare la ultima publicare"
+                : stateSentence(cell, value);
 
               return (
                 <li key={cell.portalId} className="min-w-0">
@@ -775,7 +780,6 @@ export const PropertyPortalsCard = forwardRef<
                           )}
                         >
                           {detail}
-                          {problem && failure?.requestId ? ` · Cerere ${failure.requestId}` : ""}
                         </p>
                         {contactBlock && value && FEED_PORTALS_REQUIRING_AGENT_PHONE.has(cell.portalId) ? (
                           <p className="mt-1 text-xs font-semibold text-destructive">
@@ -948,33 +952,35 @@ export const PropertyPortalsCard = forwardRef<
           ) : null}
         </Panel>
 
-        <Panel className="p-5">
-          <h2 className="text-lg font-semibold">Jurnal portal</h2>
-          {(journal.data?.length ?? 0) === 0 ? (
-            <p className="mt-3 text-sm text-muted-foreground">
-              Nicio operație înregistrată pentru această proprietate.
-            </p>
-          ) : (
-            <ul className="mt-4 space-y-4">
-              {journal.data?.map((item) => (
-                <li key={item.id} className="border-b border-border pb-4 last:border-0 last:pb-0">
-                  <div className="flex items-center justify-between gap-3 text-sm">
-                    <span className="font-semibold">{portalDisplayLabel(cells, item.portal)}</span>
-                    <span className={item.success ? "text-success" : "text-destructive"}>
-                      {item.success ? "Reușit" : "Eșuat"}
-                    </span>
-                  </div>
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    {syncAgo(item.createdAt)} · {operationLabel(item.operation)}
-                  </p>
-                  {item.errorMessage ? (
-                    <p className="mt-1 text-xs text-destructive">{item.errorMessage}</p>
-                  ) : null}
-                </li>
-              ))}
-            </ul>
-          )}
-        </Panel>
+        {showPortalJournal ? (
+          <Panel className="p-5">
+            <h2 className="text-lg font-semibold">Jurnal portal</h2>
+            {(journal.data?.length ?? 0) === 0 ? (
+              <p className="mt-3 text-sm text-muted-foreground">
+                Nicio operație înregistrată pentru această proprietate.
+              </p>
+            ) : (
+              <ul className="mt-4 space-y-4">
+                {journal.data?.map((item) => (
+                  <li key={item.id} className="border-b border-border pb-4 last:border-0 last:pb-0">
+                    <div className="flex items-center justify-between gap-3 text-sm">
+                      <span className="font-semibold">{portalDisplayLabel(cells, item.portal)}</span>
+                      <span className={item.success ? "text-success" : "text-destructive"}>
+                        {item.success ? "Reușit" : "Eșuat"}
+                      </span>
+                    </div>
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      {syncAgo(item.createdAt)} · {operationLabel(item.operation)}
+                    </p>
+                    {item.errorMessage ? (
+                      <p className="mt-1 text-xs text-destructive">{item.errorMessage}</p>
+                    ) : null}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </Panel>
+        ) : null}
       </aside>
     </div>
   );
