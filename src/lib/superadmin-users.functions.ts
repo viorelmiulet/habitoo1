@@ -41,6 +41,7 @@ export type PlatformUser = {
   organization_id: string | null;
   organization_name: string | null;
   roles: string[];
+  last_sign_in_at: string | null;
 };
 
 export type PlatformUsersOverview = {
@@ -66,6 +67,15 @@ export const listPlatformUsers = createServerFn({ method: "POST" })
     ]);
     if (error) throw new Error(error.message);
 
+    // Ultima autentificare: doar citire din Auth, fără alte date de securitate.
+    const lastSignIn = new Map<string, string | null>();
+    for (let page = 1; page <= 20; page++) {
+      const { data: authPage, error: authError } = await supabaseAdmin.auth.admin.listUsers({ page, perPage: 1000 });
+      if (authError) break;
+      for (const u of authPage.users) lastSignIn.set(u.id, u.last_sign_in_at ?? null);
+      if (authPage.users.length < 1000) break;
+    }
+
     const orgList = (orgs ?? []).map((o) => ({ id: o.id, name: o.name }));
     const orgById = new Map(orgList.map((o) => [o.id, o.name]));
 
@@ -83,6 +93,7 @@ export const listPlatformUsers = createServerFn({ method: "POST" })
         organization_id: p.organization_id,
         organization_name: p.organization_id ? (orgById.get(p.organization_id) ?? null) : null,
         roles: (roles ?? []).filter((r) => r.user_id === p.id).map((r) => r.role as string),
+        last_sign_in_at: lastSignIn.get(p.id) ?? null,
       })),
     };
   });

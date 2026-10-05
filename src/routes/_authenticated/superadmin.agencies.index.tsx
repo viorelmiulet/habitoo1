@@ -59,7 +59,7 @@ import {
 
 import { appHead } from "@/components/app/app-head";
 
-export const Route = createFileRoute("/_authenticated/superadmin/agencies")({
+export const Route = createFileRoute("/_authenticated/superadmin/agencies/")({
   head: () => appHead("Habitoo CRM — agenții"),
   component: AgenciesPage,
 });

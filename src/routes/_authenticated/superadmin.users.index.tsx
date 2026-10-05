@@ -54,7 +54,7 @@ import { useNavigate } from "@tanstack/react-router";
 import { appHead } from "@/components/app/app-head";
 import { UserDeletionDialog } from "@/components/superadmin/UserDeletionDialog";
 
-export const Route = createFileRoute("/_authenticated/superadmin/users")({
+export const Route = createFileRoute("/_authenticated/superadmin/users/")({
   head: () => appHead("Habitoo CRM — utilizatori"),
   component: UsersPage,
 });
