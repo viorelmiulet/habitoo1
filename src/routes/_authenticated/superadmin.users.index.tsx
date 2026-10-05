@@ -1,177 +1,42 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
-import { ArrowRightLeft, KeyRound, LogIn, Pencil, Search, Trash2, Users, X } from "lucide-react";
-import { toast } from "@/components/ui/sonner";
-import { toastError } from "@/lib/errors";
+import { ArrowRightLeft, ChevronRight, Search, Users, X } from "lucide-react";
 import { PageHeader } from "@/components/app/PageHeader";
 import { ListSkeleton } from "@/components/app/LoadingState";
 import { StatusBadge } from "@/components/app/StatusBadge";
 import { EmptyState } from "@/components/app/EmptyState";
 import { UserAvatar } from "@/components/app/UserAvatar";
-import { UserAvatarEditor } from "@/components/superadmin/UserAvatarEditor";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetFooter,
-  SheetHeader,
-  SheetTitle,
-} from "@/components/ui/sheet";
-
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { formatDate } from "@/lib/format";
 import { roleLabels } from "@/lib/labels";
-import {
-  listPlatformUsers,
-  reassignUserData,
-  setPlatformUserActive,
-  updatePlatformUser,
-  type PlatformUser,
-} from "@/lib/superadmin-users.functions";
-import { ImpersonationRequestDialog } from "@/components/app/ImpersonationRequestDialog";
-import { listMyImpersonationRequests } from "@/lib/impersonation.functions";
-import { setImpersonationId } from "@/lib/impersonation-client";
-import { useNavigate } from "@tanstack/react-router";
+import { listPlatformUsers } from "@/lib/superadmin-users.functions";
+import { userStatusBadge } from "@/lib/superadmin-status";
+import { ReassignUserDataSheet } from "@/components/superadmin/UserAdminActions";
 import { appHead } from "@/components/app/app-head";
-import { UserDeletionDialog } from "@/components/superadmin/UserDeletionDialog";
 
 export const Route = createFileRoute("/_authenticated/superadmin/users/")({
   head: () => appHead("Habitoo CRM — utilizatori"),
   component: UsersPage,
 });
 
-const workloadLabels: Record<string, string> = {
-  properties: "proprietăți",
-  leads: "lead-uri",
-  activities: "activități",
-  requests: "cereri",
-  contacts: "contacte",
-  goals: "obiective",
-};
-
-function workloadText(w: Record<string, number>) {
-  const parts = Object.entries(w)
-    .filter(([, n]) => Number(n) > 0)
-    .map(([k, n]) => `${n} ${workloadLabels[k] ?? k}`);
-  return parts.length ? parts.join(", ") : "nimic asignat";
-}
-
 function UsersPage() {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
-  const fetchMyRequests = useServerFn(listMyImpersonationRequests);
-  const myRequests = useQuery({
-    queryKey: ["impersonation-requests"],
-    queryFn: () => fetchMyRequests({}),
-    refetchInterval: 60_000,
-  });
-  const [accessTarget, setAccessTarget] = useState<PlatformUser | null>(null);
-  const liveSessionFor = (userId: string) =>
-    (myRequests.data ?? []).find(
-      (r) =>
-        r.target_user_id === userId &&
-        r.status === "approved" &&
-        new Date(r.expires_at).getTime() > Date.now(),
-    ) ?? null;
-  const pendingFor = (userId: string) =>
-    (myRequests.data ?? []).some((r) => r.target_user_id === userId && r.status === "pending");
-  const enterAccount = async (requestId: string) => {
-    setImpersonationId(requestId);
-    await queryClient.invalidateQueries();
-    void navigate({ to: "/app" });
-  };
   const fetchUsers = useServerFn(listPlatformUsers);
-  const saveUser = useServerFn(updatePlatformUser);
-  const setActive = useServerFn(setPlatformUserActive);
-  const reassign = useServerFn(reassignUserData);
-
   const [q, setQ] = useState("");
   const [orgFilter, setOrgFilter] = useState("all");
   const [roleFilter, setRoleFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
 
-  const [editing, setEditing] = useState<PlatformUser | null>(null);
-  const [form, setForm] = useState({
-    full_name: "",
-    email: "",
-    phone: "",
-    job_title: "",
-    role: "agent",
-    organizationId: "none",
-  });
-
-  const [deleting, setDeleting] = useState<PlatformUser | null>(null);
-
   const [reassignOpen, setReassignOpen] = useState(false);
-  const [reassignFrom, setReassignFrom] = useState("");
-  const [reassignTo, setReassignTo] = useState("");
 
   const { data, isLoading } = useQuery({
     queryKey: ["superadmin", "users"],
     queryFn: () => fetchUsers(),
-  });
-
-  const invalidate = () => queryClient.invalidateQueries({ queryKey: ["superadmin", "users"] });
-
-  const toggleActive = useMutation({
-    mutationFn: (vars: { userId: string; isActive: boolean }) => setActive({ data: vars }),
-    onSuccess: () => {
-      invalidate();
-      toast.success("Statusul contului a fost actualizat.");
-    },
-    onError: (e: Error) => toastError(e),
-  });
-
-  const save = useMutation({
-    mutationFn: () =>
-      saveUser({
-        data: {
-          userId: editing!.id,
-          full_name: form.full_name.trim(),
-          email: form.email.trim() ? form.email.trim() : null,
-          phone: form.phone.trim() ? form.phone.trim() : null,
-          job_title: form.job_title.trim() ? form.job_title.trim() : null,
-          role: editing!.roles.includes("superadmin")
-            ? null
-            : (form.role as "agent" | "agency_admin"),
-          organizationId: form.organizationId === "none" ? null : form.organizationId,
-        },
-      }),
-    onSuccess: () => {
-      invalidate();
-      setEditing(null);
-      toast.success("Contul a fost actualizat.");
-    },
-    onError: (e: Error) => toastError(e),
-  });
-
-  const doReassign = useMutation({
-    mutationFn: (vars: { fromUserId: string; toUserId: string }) => reassign({ data: vars }),
-    onSuccess: (result) => {
-      invalidate();
-      setReassignOpen(false);
-      toast.success(`Realocare finalizată: ${workloadText(result)}.`);
-    },
-    onError: (e: Error) => toastError(e),
   });
 
   const users = data?.users ?? [];
@@ -194,43 +59,16 @@ function UsersPage() {
     [users, q, orgFilter, roleFilter, statusFilter],
   );
 
-  const colleagues = (user: PlatformUser | null) =>
-    user
-      ? users.filter(
-          (u) =>
-            u.id !== user.id && u.organization_id && u.organization_id === user.organization_id,
-        )
-      : [];
-
-  const openEdit = (u: PlatformUser) => {
-    setEditing(u);
-    setForm({
-      full_name: u.full_name,
-      email: u.email ?? "",
-      phone: u.phone ?? "",
-      job_title: u.job_title ?? "",
-      role: u.roles.includes("agency_admin") ? "agency_admin" : "agent",
-      organizationId: u.organization_id ?? "none",
-    });
-  };
-
-  const openDelete = (u: PlatformUser) => setDeleting(u);
-
-  const reassignSource = users.find((u) => u.id === reassignFrom) ?? null;
-
   return (
-    <>
+    <div className="min-w-0 max-w-full space-y-4 overflow-x-hidden">
       <PageHeader
         title="Utilizatori"
-        description="Toate conturile platformei: editare, activare, realocare și ștergere definitivă."
+        description="Toate conturile platformei. Deschide un cont pentru editare, acces temporar, realocare sau ștergere."
         actions={
           <Button
             variant="outline"
-            onClick={() => {
-              setReassignFrom("");
-              setReassignTo("");
-              setReassignOpen(true);
-            }}
+            className="h-11"
+            onClick={() => setReassignOpen(true)}
           >
             <ArrowRightLeft className="mr-2 size-4" />
             Realocă date
@@ -238,18 +76,18 @@ function UsersPage() {
         }
       />
 
-      <div className="panel grid gap-3 p-4 md:grid-cols-4">
+      <div className="grid gap-3 rounded-[20px] border border-border/70 bg-card p-4 shadow-sm md:grid-cols-4">
         <div className="relative md:col-span-2">
           <Search className="pointer-events-none absolute top-2.5 left-3 size-4 text-muted-foreground" />
           <Input
             value={q}
             onChange={(e) => setQ(e.target.value)}
             placeholder="Caută nume sau email…"
-            className="pl-9"
+            className="h-11 pl-9" aria-label="Caută utilizator"
           />
         </div>
         <Select value={orgFilter} onValueChange={setOrgFilter}>
-          <SelectTrigger>
+          <SelectTrigger className="h-11">
             <SelectValue placeholder="Agenție" />
           </SelectTrigger>
           <SelectContent>
@@ -264,7 +102,7 @@ function UsersPage() {
         </Select>
         <div className="grid grid-cols-2 gap-3">
           <Select value={roleFilter} onValueChange={setRoleFilter}>
-            <SelectTrigger>
+            <SelectTrigger className="h-11">
               <SelectValue placeholder="Rol" />
             </SelectTrigger>
             <SelectContent>
@@ -275,7 +113,7 @@ function UsersPage() {
             </SelectContent>
           </Select>
           <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger>
+            <SelectTrigger className="h-11">
               <SelectValue placeholder="Status" />
             </SelectTrigger>
             <SelectContent>
@@ -328,280 +166,36 @@ function UsersPage() {
         </div>
       ) : null}
 
-      <div className="panel overflow-hidden">
-        {isLoading ? (
-          <ListSkeleton rows={8} />
-        ) : rows.length === 0 ? (
-          <EmptyState icon={Users} title="Niciun utilizator găsit" />
-        ) : (
-          <ul className="divide-y divide-border">
-            {rows.map((u) => (
-              <li key={u.id} className="flex flex-wrap items-center gap-3 px-4 py-3 text-sm">
-                <UserAvatar name={u.full_name} path={u.avatar_url} />
-                <div className="min-w-0 flex-1">
-                  <p className="truncate font-medium">{u.full_name}</p>
-                  <p className="truncate text-xs text-muted-foreground">{u.email ?? "—"}</p>
-                </div>
-                <span className="w-40 truncate text-xs text-muted-foreground">
-                  {u.organization_name ?? "Fără agenție"}
+      <ul className="space-y-2" data-user-list>
+        {isLoading ? <ListSkeleton rows={8} /> : rows.length === 0 ? (
+          <li className="rounded-[20px] border border-border/70 bg-card"><EmptyState icon={Users} title="Niciun utilizator găsit" /></li>
+        ) : rows.map((u) => {
+          const st = userStatusBadge(u.is_active);
+          return (
+            <li key={u.id}>
+              <Link to="/superadmin/users/$id" params={{ id: u.id }} className="grid min-h-16 grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 rounded-[20px] border border-border/70 bg-card p-4 shadow-sm transition-colors hover:border-gold/50 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none md:grid-cols-[auto_minmax(0,1.5fr)_minmax(0,1fr)_auto_auto_minmax(0,0.8fr)_auto]">
+                <UserAvatar name={u.full_name} path={u.avatar_url} className="size-11 shrink-0" />
+                <span className="min-w-0">
+                  <span className="block truncate font-medium text-foreground">{u.full_name}</span>
+                  <span className="block truncate text-xs text-muted-foreground">{u.email ?? "—"}</span>
+                  <span className="mt-1 flex flex-wrap items-center gap-1 md:hidden">
+                    <StatusBadge tone={st.tone}>{st.label}</StatusBadge>
+                    <span className="truncate text-xs text-muted-foreground">{u.roles.map((r) => roleLabels[r] ?? r).join(", ")} · {u.organization_name ?? "Fără agenție"}</span>
+                  </span>
                 </span>
-                {u.roles.map((r) => (
-                  <StatusBadge key={r} tone="primary">
-                    {roleLabels[r] ?? r}
-                  </StatusBadge>
-                ))}
-                <StatusBadge tone={u.is_active ? "success" : "neutral"}>
-                  {u.is_active ? "Activ" : "Dezactivat"}
-                </StatusBadge>
-                <span className="w-24 text-right text-xs text-muted-foreground">
-                  {formatDate(u.created_at)}
-                </span>
-                <div className="flex items-center gap-2">
-                  <Button size="sm" variant="outline" onClick={() => openEdit(u)}>
-                    <Pencil className="size-4" />
-                    <span className="sr-only">Editează</span>
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    disabled={toggleActive.isPending}
-                    onClick={() => toggleActive.mutate({ userId: u.id, isActive: !u.is_active })}
-                  >
-                    {u.is_active ? "Dezactivează" : "Reactivează"}
-                  </Button>
-                  {u.roles.includes("superadmin") ? null : liveSessionFor(u.id) ? (
-                    <Button
-                      size="sm"
-                      onClick={() => void enterAccount(liveSessionFor(u.id)!.id)}
-                      title="Accesul a fost aprobat de utilizator"
-                    >
-                      <LogIn className="size-4" /> Intră în cont
-                    </Button>
-                  ) : (
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      disabled={pendingFor(u.id)}
-                      onClick={() => setAccessTarget(u)}
-                      title={
-                        pendingFor(u.id)
-                          ? "Cerere trimisă, în așteptarea acordului utilizatorului"
-                          : "Solicită acces temporar la cont"
-                      }
-                    >
-                      <KeyRound className="size-4" />
-                      <span className="sr-only">Solicită acces</span>
-                    </Button>
-                  )}
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="text-destructive"
-                    disabled={u.roles.includes("superadmin")}
-                    onClick={() => void openDelete(u)}
-                  >
-                    <Trash2 className="size-4" />
-                    <span className="sr-only">Șterge</span>
-                  </Button>
-                </div>
-              </li>
-            ))}
-          </ul>
-        )}
-      </div>
+                <span className="hidden truncate text-sm text-muted-foreground md:block">{u.organization_name ?? "Fără agenție"}</span>
+                <span className="hidden flex-wrap gap-1 md:flex">{u.roles.map((r) => <StatusBadge key={r} tone="primary">{roleLabels[r] ?? r}</StatusBadge>)}</span>
+                <span className="hidden md:block"><StatusBadge tone={st.tone}>{st.label}</StatusBadge></span>
+                <span className="hidden text-xs text-muted-foreground md:block">{u.last_sign_in_at ? `Autentificat ${formatDate(u.last_sign_in_at)}` : "Nicio autentificare"}</span>
+                <ChevronRight className="size-4 shrink-0 text-muted-foreground" aria-hidden />
+              </Link>
+            </li>
+          );
+        })}
+      </ul>
 
-      <ImpersonationRequestDialog
-        open={accessTarget !== null}
-        onOpenChange={(o) => setAccessTarget(o ? accessTarget : null)}
-        targetUserId={accessTarget?.id ?? null}
-        targetLabel={accessTarget?.full_name || accessTarget?.email || "Utilizatorul"}
-      />
-
-      {/* Editare cont */}
-      <Dialog open={editing !== null} onOpenChange={(o) => !o && setEditing(null)}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Editează contul</DialogTitle>
-            <DialogDescription>
-              Modificările se aplică imediat și se înregistrează în jurnalul de audit.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="grid gap-3">
-            {editing ? (
-              <UserAvatarEditor
-                key={editing.id}
-                userId={editing.id}
-                name={editing.full_name}
-                initialPath={editing.avatar_url}
-              />
-            ) : null}
-            <div className="grid gap-1.5">
-              <Label htmlFor="u-name">Nume complet</Label>
-              <Input
-                id="u-name"
-                value={form.full_name}
-                onChange={(e) => setForm((f) => ({ ...f, full_name: e.target.value }))}
-              />
-            </div>
-            <div className="grid gap-1.5">
-              <Label htmlFor="u-email">Email</Label>
-              <Input
-                id="u-email"
-                type="email"
-                value={form.email}
-                onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
-              />
-              <p className="text-xs text-muted-foreground">
-                Schimbarea emailului actualizează și datele de autentificare.
-              </p>
-            </div>
-            <div className="grid gap-3 sm:grid-cols-2">
-              <div className="grid gap-1.5">
-                <Label htmlFor="u-phone">Telefon</Label>
-                <Input
-                  id="u-phone"
-                  value={form.phone}
-                  onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))}
-                />
-              </div>
-              <div className="grid gap-1.5">
-                <Label htmlFor="u-job">Funcție</Label>
-                <Input
-                  id="u-job"
-                  value={form.job_title}
-                  onChange={(e) => setForm((f) => ({ ...f, job_title: e.target.value }))}
-                />
-              </div>
-            </div>
-            {editing && !editing.roles.includes("superadmin") ? (
-              <div className="grid gap-3 sm:grid-cols-2">
-                <div className="grid gap-1.5">
-                  <Label>Rol</Label>
-                  <Select
-                    value={form.role}
-                    onValueChange={(v) => setForm((f) => ({ ...f, role: v }))}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="agent">Agent</SelectItem>
-                      <SelectItem value="agency_admin">Admin agenție</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="grid gap-1.5">
-                  <Label>Agenție</Label>
-                  <Select
-                    value={form.organizationId}
-                    onValueChange={(v) => setForm((f) => ({ ...f, organizationId: v }))}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="none">Fără agenție</SelectItem>
-                      {orgs.map((o) => (
-                        <SelectItem key={o.id} value={o.id}>
-                          {o.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <p className="text-xs text-muted-foreground">
-                    Mutarea nu duce cu ea datele asignate — realocă-le înainte, în agenția veche.
-                  </p>
-                </div>
-              </div>
-            ) : null}
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setEditing(null)}>
-              Renunță
-            </Button>
-            <Button onClick={() => save.mutate()} disabled={save.isPending}>
-              Salvează
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Realocare independentă */}
-      <Sheet open={reassignOpen} onOpenChange={setReassignOpen}>
-        <SheetContent className="flex w-full flex-col gap-4 overflow-y-auto p-6 sm:max-w-md">
-          <SheetHeader className="p-0">
-            <SheetTitle>Realocă proprietăți și lead-uri</SheetTitle>
-            <SheetDescription>
-              Mută tot ce este asignat unui utilizator (proprietăți, lead-uri, activități, cereri,
-              contacte, obiective) către un coleg din aceeași agenție. Nu se șterge nimeni.
-            </SheetDescription>
-          </SheetHeader>
-
-          <div className="grid gap-3">
-            <div className="grid gap-1.5">
-              <Label>De la</Label>
-              <Select
-                value={reassignFrom || undefined}
-                onValueChange={(v) => {
-                  setReassignFrom(v);
-                  setReassignTo("");
-                }}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Alege utilizatorul sursă" />
-                </SelectTrigger>
-                <SelectContent>
-                  {users
-                    .filter((u) => u.organization_id)
-                    .map((u) => (
-                      <SelectItem key={u.id} value={u.id}>
-                        {u.full_name} · {u.organization_name}
-                      </SelectItem>
-                    ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="grid gap-1.5">
-              <Label>Către</Label>
-              <Select
-                value={reassignTo || undefined}
-                onValueChange={setReassignTo}
-                disabled={!reassignFrom}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Alege utilizatorul destinație" />
-                </SelectTrigger>
-                <SelectContent>
-                  {colleagues(reassignSource).map((u) => (
-                    <SelectItem key={u.id} value={u.id}>
-                      {u.full_name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              {reassignFrom && colleagues(reassignSource).length === 0 ? (
-                <p className="text-xs text-destructive">
-                  Agenția nu are alt membru care să preia datele.
-                </p>
-              ) : null}
-            </div>
-          </div>
-          <SheetFooter className="mt-auto flex-row justify-end gap-2 p-0">
-            <Button variant="outline" onClick={() => setReassignOpen(false)}>
-              Renunță
-            </Button>
-            <Button
-              disabled={!reassignFrom || !reassignTo || doReassign.isPending}
-              onClick={() => doReassign.mutate({ fromUserId: reassignFrom, toUserId: reassignTo })}
-            >
-              Realocă
-            </Button>
-          </SheetFooter>
-        </SheetContent>
-      </Sheet>
-
-      <UserDeletionDialog user={deleting} users={users} onClose={() => setDeleting(null)} />
-    </>
+      <ReassignUserDataSheet users={users} open={reassignOpen} onOpenChange={setReassignOpen} />
+    </div>
   );
 }
 
