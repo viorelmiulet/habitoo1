@@ -12,3 +12,12 @@ export async function loadPublicPartners(): Promise<PublicPartner[]> {
   if (error) throw new Error("Lista agențiilor partenere nu a putut fi încărcată.");
   return toPublicPartners(data ?? []);
 }
+
+/** Pentru sitemap și llms.txt: `/agentii` apare doar dacă există cel puțin un partener. */
+export async function hasPublicPartners(): Promise<boolean> {
+  try {
+    return (await loadPublicPartners()).length > 0;
+  } catch {
+    return false;
+  }
+}
