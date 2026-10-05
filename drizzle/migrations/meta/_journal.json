@@ -799,6 +799,13 @@
       "when": 1791134804103,
       "tag": "0113_secure_blog_media",
       "breakpoints": true
+    },
+    {
+      "idx": 114,
+      "version": "7",
+      "when": 1791175170693,
+      "tag": "0114_public_profiles_foundation",
+      "breakpoints": true
     }
   ]
 }
