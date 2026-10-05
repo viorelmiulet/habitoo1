@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { describe, expect, it, vi } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { renderToStaticMarkup } from "react-dom/server";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import type { ReactNode } from "react";
 import { canAccessSuperadmin, orgStatusBadge } from "@/lib/superadmin-status";
@@ -27,15 +27,15 @@ describe("SuperAdmin — acces", () => {
 });
 
 describe("SuperAdmin — pagini de detaliu", () => {
-  const wrap = (ui: ReactNode) => render(<QueryClientProvider client={new QueryClient()}>{ui}</QueryClientProvider>);
+  const wrap = (ui: ReactNode) => renderToStaticMarkup(<QueryClientProvider client={new QueryClient()}>{ui}</QueryClientProvider>);
   it("randează cardurile cu date de test", () => {
-    wrap(<DetailCard title="Date firmă"><dl><DetailRow label="CUI">RO123</DetailRow></dl></DetailCard>);
-    expect(screen.getByText("Date firmă")).toBeTruthy();
-    expect(screen.getByText("RO123")).toBeTruthy();
+    const html = wrap(<DetailCard title="Date firmă"><dl><DetailRow label="CUI">RO123</DetailRow></dl></DetailCard>);
+    expect(html).toContain("Date firmă");
+    expect(html).toContain("RO123");
   });
   it("ID inexistent arată 404 prietenos cu link înapoi", () => {
-    wrap(<DetailNotFound title="Agenția nu a fost găsită" to="/superadmin/agencies" label="Înapoi la agenții" />);
-    expect(screen.getByText("Agenția nu a fost găsită")).toBeTruthy();
-    expect(screen.getByText("Înapoi la agenții").closest("a")?.getAttribute("href")).toBe("/superadmin/agencies");
+    const html = wrap(<DetailNotFound title="Agenția nu a fost găsită" to="/superadmin/agencies" label="Înapoi la agenții" />);
+    expect(html).toContain("Agenția nu a fost găsită");
+    expect(html).toMatch(/href="\/superadmin\/agencies"[^>]*>[\s\S]*Înapoi la agenții/);
   });
 });
