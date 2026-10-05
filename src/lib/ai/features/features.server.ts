@@ -11,6 +11,8 @@ export async function loadAiFeatures(organizationId: string | null): Promise<AiF
   const map = emptyAiFeatureMap();
   if (!organizationId) return map;
 
+  if (!(await isOrgAiEnabled(organizationId))) return map;
+
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   const { data, error } = await supabaseAdmin
     .from("organization_ai_features")
@@ -31,4 +33,24 @@ export async function isAiFeatureEnabled(
 ): Promise<boolean> {
   const features = await loadAiFeatures(organizationId);
   return features[key];
+}
+
+/** Mesaj unic când AI este oprit pentru întreaga agenție. */
+export const AI_DISABLED_MESSAGE =
+  "Funcțiile AI nu sunt activate pentru agenția ta. Doar administratorul platformei Habitoo le poate activa.";
+
+/**
+ * Comutatorul general `organizations.ai_enabled` (setat doar de superadmin).
+ * Fail-closed: lipsă/eroare = oprit.
+ */
+export async function isOrgAiEnabled(organizationId: string | null | undefined): Promise<boolean> {
+  if (!organizationId) return false;
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { data, error } = await supabaseAdmin
+    .from("organizations")
+    .select("ai_enabled")
+    .eq("id", organizationId)
+    .maybeSingle();
+  if (error || !data) return false;
+  return data.ai_enabled === true;
 }
