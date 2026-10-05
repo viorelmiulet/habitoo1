@@ -42,6 +42,13 @@ import { PLAN_LABELS, normalizePlan, planAgentLimitLabel } from "@/lib/plans";
 import { getTeamOverview } from "@/lib/agency-team.functions";
 import { useServerFn } from "@tanstack/react-start";
 import { ProfileEditForm } from "@/components/app/ProfileEditForm";
+import { PublicAgentProfileCard } from "@/components/app/PublicAgentProfileCard";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  PUBLIC_AGENCY_DESCRIPTION_MAX,
+  publicSlugError,
+  publicSlugify,
+} from "@/lib/public-profile";
 import { appHead } from "@/components/app/app-head";
 import {
   canManageCollaborationDefault,
@@ -174,6 +181,9 @@ function SettingsPage() {
         ? String(user.organization.collab_default_commission_percent)
         : "",
     storia_auto_republish: user?.organization?.storia_auto_republish === true,
+    public_profile_enabled: user?.organization?.public_profile_enabled === true,
+    public_slug: user?.organization?.public_slug ?? "",
+    public_description: user?.organization?.public_description ?? "",
   });
   const [orgForm, setOrgForm] = useState(buildOrgForm);
   const orgBaseline = buildOrgForm();
@@ -265,6 +275,8 @@ function SettingsPage() {
         const msg = validateRequiredAgencyField(f, orgForm[f]);
         if (msg) throw new Error(`${AGENCY_FIELD_LABELS[f]}: ${msg}`);
       }
+      const slugMsg = publicSlugError(orgForm.public_slug.trim());
+      if (slugMsg) throw new Error(`Adresa paginii publice: ${slugMsg}`);
       const { error } = await supabase
         .from("organizations")
         .update({
@@ -281,9 +293,15 @@ function SettingsPage() {
             orgForm.collab_default_commission_percent,
           ),
           storia_auto_republish: orgForm.storia_auto_republish,
+          public_profile_enabled: orgForm.public_profile_enabled,
+          public_slug: orgForm.public_slug.trim() || null,
+          public_description: orgForm.public_description.trim() || null,
         })
         .eq("id", user.organization.id);
-      if (error) throw error;
+      if (error) {
+        if (error.code === "23505") throw new Error("Adresa paginii publice este deja folosită de altă agenție.");
+        throw error;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: currentUserQueryKey });
@@ -398,6 +416,21 @@ function SettingsPage() {
                 />
               ) : null}
             </SettingsCard>
+            {user ? (
+              <div className="mt-6">
+                <PublicAgentProfileCard
+                  key={`${user.profile?.public_profile_enabled}-${user.profile?.public_bio}-${user.profile?.public_show_phone}`}
+                  userId={user.userId}
+                  agencyPublic={user.organization?.public_profile_enabled === true && user.organization?.public_hidden_by_admin !== true}
+                  initial={{
+                    enabled: user.profile?.public_profile_enabled === true,
+                    bio: user.profile?.public_bio ?? null,
+                    showPhone: user.profile?.public_show_phone === true,
+                    slug: user.profile?.public_slug ?? null,
+                  }}
+                />
+              </div>
+            ) : null}
           </TabsContent>
 
           <TabsContent value="access" className="mt-0">
@@ -548,6 +581,62 @@ function SettingsPage() {
                         Planul nu poate fi schimbat din aplicație. Pentru alt plan, scrie-ne la
                         contact@habitoo.ro sau deschide un tichet de suport.
                       </p>
+                    </div>
+
+                    <div className="space-y-4 rounded-2xl border border-gold/30 p-4">
+                      <div className="space-y-1">
+                        <h3 className="font-display text-base font-semibold text-foreground">Pagina publică a agenției</h3>
+                        <p className="text-xs text-muted-foreground">
+                          Doar numele, logo-ul, orașul, descrierea și agenții care și-au activat singuri profilul sunt afișate.
+                        </p>
+                      </div>
+                      {user?.organization?.public_hidden_by_admin ? (
+                        <p className="rounded-xl bg-destructive/10 p-3 text-xs text-destructive">
+                          Agenția a fost ascunsă din catalog de echipa Habitoo. Scrie-ne pentru detalii.
+                        </p>
+                      ) : null}
+                      <div className="flex items-start justify-between gap-4">
+                        <Label htmlFor="public_profile_enabled" className="text-sm">
+                          Afișează agenția în catalogul Habitoo
+                        </Label>
+                        <Switch
+                          id="public_profile_enabled"
+                          disabled={!user?.isAdmin}
+                          checked={orgForm.public_profile_enabled}
+                          onCheckedChange={(v) => setOrgForm((f) => ({ ...f, public_profile_enabled: v }))}
+                        />
+                      </div>
+                      <SettingsField
+                        id="public_slug"
+                        label="Adresa paginii"
+                        hint={publicSlugError(orgForm.public_slug) ?? "Litere mici, cifre și cratimă. Se generează din nume dacă rămâne goală."}
+                      >
+                        <Input
+                          id="public_slug"
+                          className="h-11"
+                          value={orgForm.public_slug}
+                          disabled={!user?.isAdmin}
+                          aria-invalid={Boolean(publicSlugError(orgForm.public_slug))}
+                          placeholder={publicSlugify(orgForm.name)}
+                          onChange={(e) => setOrgForm((f) => ({ ...f, public_slug: e.target.value.toLowerCase() }))}
+                        />
+                      </SettingsField>
+                      <p className="break-all text-sm text-muted-foreground">
+                        Adresa viitoare: <span className="font-medium text-foreground">habitoo.ro/agentii/{orgForm.public_slug || publicSlugify(orgForm.name) || "…"}</span>
+                      </p>
+                      <SettingsField id="public_description" label="Descriere publică">
+                        <Textarea
+                          id="public_description"
+                          rows={4}
+                          maxLength={PUBLIC_AGENCY_DESCRIPTION_MAX}
+                          value={orgForm.public_description}
+                          disabled={!user?.isAdmin}
+                          onChange={(e) => setOrgForm((f) => ({ ...f, public_description: e.target.value }))}
+                        />
+                        <p className="text-right text-xs text-muted-foreground" aria-live="polite">
+                          {orgForm.public_description.length}/{PUBLIC_AGENCY_DESCRIPTION_MAX}
+                        </p>
+                      </SettingsField>
                     </div>
                   </div>
                 </SettingsCard>
