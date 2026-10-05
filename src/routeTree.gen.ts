@@ -84,6 +84,7 @@ import { Route as AuthenticatedAppRequestsIdRouteImport } from './routes/_authen
 import { Route as AuthenticatedAppTeamIndexRouteImport } from './routes/_authenticated/app.team.index'
 import { Route as AuthenticatedAppTeamIdRouteImport } from './routes/_authenticated/app.team.$id'
 import { Route as AuthenticatedSuperadminAgenciesIndexRouteImport } from './routes/_authenticated/superadmin.agencies.index'
+import { Route as AuthenticatedSuperadminAgenciesIdRouteImport } from './routes/_authenticated/superadmin.agencies.$id'
 import { Route as AuthenticatedSuperadminUsersIndexRouteImport } from './routes/_authenticated/superadmin.users.index'
 import { Route as ApiPublicBlogMediaSplatRouteImport } from './routes/api/public/blog-media/$'
 import { Route as ApiPublicCronAccountDeletionRouteImport } from './routes/api/public/cron/account-deletion'
@@ -541,6 +542,12 @@ const AuthenticatedSuperadminAgenciesIndexRoute =
     path: '/agencies/',
     getParentRoute: () => AuthenticatedSuperadminRoute,
   } as any)
+const AuthenticatedSuperadminAgenciesIdRoute =
+  AuthenticatedSuperadminAgenciesIdRouteImport.update({
+    id: '/agencies/$id',
+    path: '/agencies/$id',
+    getParentRoute: () => AuthenticatedSuperadminRoute,
+  } as any)
 const AuthenticatedSuperadminUsersIndexRoute =
   AuthenticatedSuperadminUsersIndexRouteImport.update({
     id: '/users/',
@@ -880,6 +887,7 @@ export interface FileRoutesByFullPath {
   '/app/properties/new': typeof AuthenticatedAppPropertiesNewRoute
   '/app/requests/$id': typeof AuthenticatedAppRequestsIdRoute
   '/app/team/$id': typeof AuthenticatedAppTeamIdRoute
+  '/superadmin/agencies/$id': typeof AuthenticatedSuperadminAgenciesIdRoute
   '/api/public/blog-media/$': typeof ApiPublicBlogMediaSplatRoute
   '/api/public/cron/account-deletion': typeof ApiPublicCronAccountDeletionRoute
   '/api/public/cron/lacheie-resend': typeof ApiPublicCronLacheieResendRoute
@@ -1000,6 +1008,7 @@ export interface FileRoutesByTo {
   '/app/properties/new': typeof AuthenticatedAppPropertiesNewRoute
   '/app/requests/$id': typeof AuthenticatedAppRequestsIdRoute
   '/app/team/$id': typeof AuthenticatedAppTeamIdRoute
+  '/superadmin/agencies/$id': typeof AuthenticatedSuperadminAgenciesIdRoute
   '/api/public/blog-media/$': typeof ApiPublicBlogMediaSplatRoute
   '/api/public/cron/account-deletion': typeof ApiPublicCronAccountDeletionRoute
   '/api/public/cron/lacheie-resend': typeof ApiPublicCronLacheieResendRoute
@@ -1125,6 +1134,7 @@ export interface FileRoutesById {
   '/_authenticated/app/properties/new': typeof AuthenticatedAppPropertiesNewRoute
   '/_authenticated/app/requests/$id': typeof AuthenticatedAppRequestsIdRoute
   '/_authenticated/app/team/$id': typeof AuthenticatedAppTeamIdRoute
+  '/_authenticated/superadmin/agencies/$id': typeof AuthenticatedSuperadminAgenciesIdRoute
   '/api/public/blog-media/$': typeof ApiPublicBlogMediaSplatRoute
   '/api/public/cron/account-deletion': typeof ApiPublicCronAccountDeletionRoute
   '/api/public/cron/lacheie-resend': typeof ApiPublicCronLacheieResendRoute
@@ -1250,6 +1260,7 @@ export interface FileRouteTypes {
     | '/app/properties/new'
     | '/app/requests/$id'
     | '/app/team/$id'
+    | '/superadmin/agencies/$id'
     | '/api/public/blog-media/$'
     | '/api/public/cron/account-deletion'
     | '/api/public/cron/lacheie-resend'
@@ -1370,6 +1381,7 @@ export interface FileRouteTypes {
     | '/app/properties/new'
     | '/app/requests/$id'
     | '/app/team/$id'
+    | '/superadmin/agencies/$id'
     | '/api/public/blog-media/$'
     | '/api/public/cron/account-deletion'
     | '/api/public/cron/lacheie-resend'
@@ -1494,6 +1506,7 @@ export interface FileRouteTypes {
     | '/_authenticated/app/properties/new'
     | '/_authenticated/app/requests/$id'
     | '/_authenticated/app/team/$id'
+    | '/_authenticated/superadmin/agencies/$id'
     | '/api/public/blog-media/$'
     | '/api/public/cron/account-deletion'
     | '/api/public/cron/lacheie-resend'
@@ -2143,6 +2156,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSuperadminAgenciesIndexRouteImport
       parentRoute: typeof AuthenticatedSuperadminRoute
     }
+    '/_authenticated/superadmin/agencies/$id': {
+      id: '/_authenticated/superadmin/agencies/$id'
+      path: '/agencies/$id'
+      fullPath: '/superadmin/agencies/$id'
+      preLoaderRoute: typeof AuthenticatedSuperadminAgenciesIdRouteImport
+      parentRoute: typeof AuthenticatedSuperadminRoute
+    }
     '/_authenticated/superadmin/users/': {
       id: '/_authenticated/superadmin/users/'
       path: '/users'
@@ -2602,6 +2622,7 @@ interface AuthenticatedSuperadminRouteChildren {
   AuthenticatedSuperadminStareAgentiiRoute: typeof AuthenticatedSuperadminStareAgentiiRoute
   AuthenticatedSuperadminSupportRoute: typeof AuthenticatedSuperadminSupportRoute
   AuthenticatedSuperadminIndexRoute: typeof AuthenticatedSuperadminIndexRoute
+  AuthenticatedSuperadminAgenciesIdRoute: typeof AuthenticatedSuperadminAgenciesIdRoute
   AuthenticatedSuperadminAgenciesIndexRoute: typeof AuthenticatedSuperadminAgenciesIndexRoute
   AuthenticatedSuperadminUsersIndexRoute: typeof AuthenticatedSuperadminUsersIndexRoute
 }
@@ -2625,6 +2646,8 @@ const AuthenticatedSuperadminRouteChildren: AuthenticatedSuperadminRouteChildren
       AuthenticatedSuperadminStareAgentiiRoute,
     AuthenticatedSuperadminSupportRoute: AuthenticatedSuperadminSupportRoute,
     AuthenticatedSuperadminIndexRoute: AuthenticatedSuperadminIndexRoute,
+    AuthenticatedSuperadminAgenciesIdRoute:
+      AuthenticatedSuperadminAgenciesIdRoute,
     AuthenticatedSuperadminAgenciesIndexRoute:
       AuthenticatedSuperadminAgenciesIndexRoute,
     AuthenticatedSuperadminUsersIndexRoute:
