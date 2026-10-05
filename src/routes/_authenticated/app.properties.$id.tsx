@@ -768,7 +768,6 @@ function PropertyDetailPage() {
             <DropdownMenuContent align="end">
               <DropdownMenuItem onClick={() => duplicate.mutate()} disabled={duplicate.isPending}>Clonează</DropdownMenuItem>
               <DropdownMenuItem onClick={() => setPresentationDialogOpen(true)}><Printer /> Generează fișă de vizionare</DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setSocialPosterOpen(true)}><Share2 /> Imagine pentru story / postare</DropdownMenuItem>
               <DropdownMenuItem onClick={() => setAddClientOpen(true)}><UserPlus /> Adaugă client</DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuSub>
@@ -1179,6 +1178,13 @@ function PropertyDetailPage() {
               );
             }}
           />
+          <section className="panel flex flex-col gap-3 px-5 py-[18px] sm:flex-row sm:items-center sm:justify-between">
+            <div className="min-w-0">
+              <h2 className="flex items-center gap-2 font-sans text-base font-bold"><Share2 className="size-4" />Poster pentru rețele sociale</h2>
+              <p className="mt-1 text-sm text-muted-foreground">Creează o imagine pentru feed, story sau landscape și descarc-o ca PNG. Nu publicăm nimic pe rețele.</p>
+            </div>
+            <Button className="shrink-0" onClick={() => setSocialPosterOpen(true)}>Creează poster</Button>
+          </section>
         </TabsContent>
 
         <TabsContent value="promotion">
@@ -1266,6 +1272,8 @@ function PropertyDetailPage() {
         rentCurrency={property.rent_currency ?? property.currency}
         logoUrl={agencyLogoUrl}
         phone={responsibleAgent?.phone ?? user?.profile?.phone ?? null}
+        agentName={responsibleAgent?.full_name ?? user?.profile?.full_name ?? null}
+        agentAvatarPath={responsibleAgent?.avatar_url ?? user?.profile?.avatar_url ?? null}
       />
 
       <Dialog open={addClientOpen} onOpenChange={setAddClientOpen}>
