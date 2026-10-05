@@ -1,3 +1,4 @@
+import { visibleSettingsTabs } from "@/lib/settings-tabs";
 import { describe, expect, it } from "vitest";
 import { readFileSync } from "node:fs";
 import { agencyGridItems, agencyPortalCardState } from "./grid-state";
@@ -42,7 +43,8 @@ describe("grila portalurilor pentru administratorul agenției", () => {
   });
   it("fila Portaluri e doar pentru admin, fără „Portalurile mele”", () => {
     const src = readFileSync("src/routes/_authenticated/app.settings.tsx", "utf8");
-    expect(src).toMatch(/user\?\.isAdmin \? <TabsTrigger[^>]*value="portals"/);
+    expect(visibleSettingsTabs({ role: "agent", isAdmin: false })).not.toContain("portals");
+    expect(src).toMatch(/user\?\.isAdmin \? \(\s*<TabsContent value="portals"/);
     expect(src).not.toMatch(/MyPortalsCard|user\?\.organization \|\| user\?\.isAdmin/);
     expect(src.match(/<AgencyPortalCatalogCard \/>/g)?.length).toBe(1);
   });

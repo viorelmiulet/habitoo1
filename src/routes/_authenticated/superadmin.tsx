@@ -4,6 +4,7 @@ import { superadminNav } from "@/components/app/AppSidebar";
 import { ShellLoading } from "@/components/app/LoadingState";
 import { appHead } from "@/components/app/app-head";
 import { useCurrentUser } from "@/hooks/use-session";
+import { canAccessSuperadmin } from "@/lib/superadmin-status";
 
 export const Route = createFileRoute("/_authenticated/superadmin")({
   head: () => appHead("Habitoo CRM — administrare platformă"),
@@ -15,7 +16,7 @@ function SuperadminLayout() {
 
   if (isLoading) return <ShellLoading label="Se încarcă panoul platformei…" />;
   if (!user) return <Navigate to="/login" />;
-  if (!user.isSuperadmin) return <Navigate to="/app" />;
+  if (!canAccessSuperadmin(user)) return <Navigate to="/app" />;
 
   return (
     <AppShell user={user} groups={superadminNav} variant="platform">

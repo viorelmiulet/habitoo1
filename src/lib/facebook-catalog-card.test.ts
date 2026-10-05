@@ -1,3 +1,4 @@
+import { visibleSettingsTabs } from "@/lib/settings-tabs";
 import { describe, expect, it } from "vitest";
 import { readFileSync } from "node:fs";
 import { facebookCatalogState } from "@/lib/facebook-catalog-status";
@@ -49,8 +50,8 @@ describe("acces și token", () => {
   const logo = readFileSync("src/components/app/PortalLogo.tsx", "utf8");
 
   it("fila Promovare e doar pentru admin (agentul nu o vede)", () => {
-    expect(settings).toMatch(/user\?\.isAdmin \? <TabsTrigger[^>]*value="promotion">/);
-    expect(settings).toMatch(/user\?\.isAdmin \? \(\s*<TabsContent value="promotion">/);
+    expect(visibleSettingsTabs({ role: "agent", isAdmin: false })).not.toContain("promotion");
+    expect(settings).toMatch(/user\?\.isAdmin \? \(\s*<TabsContent value="promotion"/);
   });
   it("serverul verifică rolul și nu citește tokenul/prefixul existent", () => {
     expect(fn).toContain('rpc("is_org_admin")');
