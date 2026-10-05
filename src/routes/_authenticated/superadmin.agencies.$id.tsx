@@ -8,7 +8,7 @@ import { ListSkeleton } from "@/components/app/LoadingState";
 import { StatusBadge } from "@/components/app/StatusBadge";
 import { UserAvatar } from "@/components/app/UserAvatar";
 import { AgencyLogo, useAgencyLogoUrls } from "@/components/superadmin/AgencyLogo";
-import { AgencyHeaderActions, AgencyPublicCatalogToggle, AgencySubscriptionControls } from "@/components/superadmin/AgencyAdminActions";
+import { AgencyAiToggle, AgencyHeaderActions, AgencyPublicCatalogToggle, AgencySubscriptionControls } from "@/components/superadmin/AgencyAdminActions";
 import { BackLink, DetailCard, DetailNotFound, DetailRow } from "@/components/superadmin/SuperadminUi";
 import { listPlatformUsers } from "@/lib/superadmin-users.functions";
 import { formatDate, formatDateTime } from "@/lib/format";
@@ -76,6 +76,7 @@ function AgencyDetail({ org }: { org: Tables<"organizations"> }) {
               <StatusBadge tone={badge.tone}>{badge.label}</StatusBadge>
               {org.company_status === "inactiva" ? <StatusBadge tone="danger">Firmă inactivă (ANAF)</StatusBadge> : null}
               {org.is_demo ? <StatusBadge tone="warning">DEMO / QA</StatusBadge> : null}
+              {org.ai_enabled ? <StatusBadge tone="info">AI</StatusBadge> : null}
             </div>
           </div>
         </div>
@@ -105,6 +106,7 @@ function AgencyDetail({ org }: { org: Tables<"organizations"> }) {
           </dl>
           <AgencySubscriptionControls org={org} />
           <div className="mt-4"><AgencyPublicCatalogToggle org={org} /></div>
+          <div className="mt-4"><AgencyAiToggle org={org} /></div>
         </DetailCard>
 
         <DetailCard title="Echipă" description={`${members.length} membri`}>

@@ -98,3 +98,35 @@ export const setOrganizationAiFeature = createServerFn({ method: "POST" })
 
     return { ok: true };
   });
+
+const aiEnabledSchema = z.object({ organizationId: z.string().uuid(), enabled: z.boolean() });
+
+/** Comutatorul general „Funcții AI activate” pentru o agenție. Doar superadmin, cu audit. */
+export const setOrganizationAiEnabled = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) => aiEnabledSchema.parse(input))
+  .handler(async ({ data, context }): Promise<{ ok: true }> => {
+    await assertSuperadmin(context);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: before } = await supabaseAdmin
+      .from("organizations")
+      .select("ai_enabled")
+      .eq("id", data.organizationId)
+      .maybeSingle();
+    if (!before) throw new Error("Agenția nu a fost găsită.");
+    const { error } = await supabaseAdmin
+      .from("organizations")
+      .update({ ai_enabled: data.enabled })
+      .eq("id", data.organizationId);
+    if (error) throw new Error(error.message);
+    await supabaseAdmin.from("audit_logs").insert({
+      organization_id: data.organizationId,
+      actor_id: context.userId,
+      action: data.enabled ? "organization.ai_enabled" : "organization.ai_disabled",
+      entity: "organizations",
+      entity_id: data.organizationId,
+      old_values: { ai_enabled: before.ai_enabled },
+      new_values: { ai_enabled: data.enabled },
+    } as never);
+    return { ok: true };
+  });

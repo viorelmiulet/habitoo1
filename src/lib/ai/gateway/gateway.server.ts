@@ -157,6 +157,10 @@ export async function checkAiQuota(
   actor: AiActor,
   scope: "chat" | "workflow" = "chat",
 ): Promise<AiQuotaDecision> {
+  const { isOrgAiEnabled, AI_DISABLED_MESSAGE } = await import("../features/features.server");
+  if (!(await isOrgAiEnabled(actor.organizationId))) {
+    return { allowed: false, message: AI_DISABLED_MESSAGE };
+  }
   if (!(await checkAiRateLimits(admin, actor, scope))) {
     return { allowed: false, message: AI_RATE_LIMIT_MESSAGE };
   }

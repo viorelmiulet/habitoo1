@@ -4228,6 +4228,7 @@ export type Database = {
         Row: {
           acp_calibration_enabled: boolean
           acp_calibration_min_sample_size: number
+          ai_enabled: boolean
           archived_at: string | null
           archived_by: string | null
           city: string | null
@@ -4293,6 +4294,7 @@ export type Database = {
         Insert: {
           acp_calibration_enabled?: boolean
           acp_calibration_min_sample_size?: number
+          ai_enabled?: boolean
           archived_at?: string | null
           archived_by?: string | null
           city?: string | null
@@ -4358,6 +4360,7 @@ export type Database = {
         Update: {
           acp_calibration_enabled?: boolean
           acp_calibration_min_sample_size?: number
+          ai_enabled?: boolean
           archived_at?: string | null
           archived_by?: string | null
           city?: string | null

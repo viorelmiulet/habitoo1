@@ -260,7 +260,7 @@ function AgenciesPage() {
                   >
                     <AgencyLogo name={o.name} path={o.logo_path} urls={logoUrls} />
                     <span className="min-w-0">
-                      <span className="block truncate font-semibold text-foreground">{o.name}</span>
+                      <span className="flex min-w-0 items-center gap-1.5"><span className="truncate font-semibold text-foreground">{o.name}</span>{o.ai_enabled ? <StatusBadge tone="info">AI</StatusBadge> : null}</span>
                       <span className="block truncate text-xs text-muted-foreground">{o.city ?? "—"} · CUI {o.cui ?? "—"}</span>
                       <span className="mt-1 flex flex-wrap gap-1 md:hidden"><StatusBadge tone={badge.tone}>{badge.label}</StatusBadge><span className="text-xs text-muted-foreground">{PLAN_LABELS[normalizePlan(o.plan)]} · {memberCount(o.id)} agenți</span></span>
                     </span>

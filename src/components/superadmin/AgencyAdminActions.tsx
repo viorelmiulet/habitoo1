@@ -19,6 +19,7 @@ import { listSuperadminOrganizationIds } from "@/lib/account-deletion.functions"
 import { listPlatformUsers } from "@/lib/superadmin-users.functions";
 import { organizationDeletionBlock } from "@/lib/user-deletion";
 import { approveRegistrationRequest } from "@/lib/registration-approval.functions";
+import { setOrganizationAiEnabled } from "@/lib/ai/features/features.functions";
 import { PLAN_AGENT_LIMITS, PLAN_KEYS, PLAN_LABELS, PLAN_PRICES, normalizePlan, planAgentLimitLabel, planPriceLabel, type PlanKey } from "@/lib/plans";
 import { SUBSCRIPTION_TERM_LABELS, type SubscriptionTerm } from "@/lib/subscription";
 import { ORG_STATUS_LABELS } from "@/lib/superadmin-status";
@@ -226,4 +227,41 @@ export function useRegistrationRequestActions() {
     onError: (e: Error) => toastError(e),
   });
   return { approveRequest, rejectRequest };
+}
+
+/** Comutatorul „Funcții AI activate”, cu confirmare și audit pe server. */
+export function AgencyAiToggle({ org }: { org: Org }) {
+  const queryClient = useQueryClient();
+  const setAi = useServerFn(setOrganizationAiEnabled);
+  const [pending, setPending] = useState<boolean | null>(null);
+  const mutation = useMutation({
+    mutationFn: (enabled: boolean) => setAi({ data: { organizationId: org.id, enabled } }),
+    onSuccess: (_r, enabled) => {
+      void queryClient.invalidateQueries({ queryKey: ["superadmin"] });
+      toast.success(enabled ? "Funcțiile AI au fost activate pentru agenție." : "Funcțiile AI au fost dezactivate pentru agenție.");
+    },
+    onError: (e: Error) => toastError(e),
+  });
+  return (
+    <div className="flex items-start justify-between gap-4 rounded-xl border border-border/70 p-4">
+      <div className="min-w-0">
+        <p className="text-sm font-medium">Funcții AI activate</p>
+        <p className="text-xs text-muted-foreground">Când e activat, toți agenții agenției pot folosi funcțiile AI. Managerii nu pot schimba această setare.</p>
+      </div>
+      <Switch
+        checked={org.ai_enabled === true}
+        disabled={mutation.isPending}
+        onCheckedChange={(v) => setPending(v)}
+        aria-label="Funcții AI activate"
+      />
+      <ConfirmDialog
+        open={pending !== null}
+        onOpenChange={(o) => { if (!o) setPending(null); }}
+        title={pending ? "Activezi funcțiile AI?" : "Dezactivezi funcțiile AI?"}
+        description={pending ? `Toți agenții din ${org.name} vor putea folosi funcțiile AI.` : `Funcțiile AI vor fi blocate pentru toți utilizatorii din ${org.name}.`}
+        confirmLabel={pending ? "Activează" : "Dezactivează"}
+        onConfirm={() => { if (pending !== null) mutation.mutate(pending); setPending(null); }}
+      />
+    </div>
+  );
 }

@@ -36,12 +36,19 @@ export const SETTINGS_TAB_LABELS: Record<SettingsTab, string> = {
 export type SettingsTabGroup = { title: string; tabs: SettingsTab[] };
 
 /** Agentul vede doar „Contul meu"; managerul vede și grupa „Agenția". */
-export function settingsTabGroups(user: { role?: string | null; isAdmin?: boolean } | null | undefined): SettingsTabGroup[] {
+export function settingsTabGroups(
+  user:
+    | { role?: string | null; isAdmin?: boolean; isSuperadmin?: boolean; organization?: { ai_enabled?: boolean | null } | null }
+    | null
+    | undefined,
+): SettingsTabGroup[] {
   const groups: SettingsTabGroup[] = [{ title: "Contul meu", tabs: ["profile", "access"] }];
   if (!user?.isAdmin) return groups;
   const agency: SettingsTab[] = [];
   if (user.role === "agency_admin") agency.push("agency");
-  agency.push("branding", "team", "portals", "promotion", "integrations", "ai");
+  agency.push("branding", "team", "portals", "promotion", "integrations");
+  // Fila AI apare doar când superadminul a activat AI pentru agenție.
+  if (user.isSuperadmin || user.organization?.ai_enabled === true) agency.push("ai");
   groups.push({ title: "Agenția", tabs: agency });
   return groups;
 }
