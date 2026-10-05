@@ -131,6 +131,24 @@ function drawTag(ctx: CanvasRenderingContext2D, text: string, x: number, y: numb
   return width;
 }
 
+function drawLocationPin(ctx: CanvasRenderingContext2D, x: number, y: number) {
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.beginPath();
+  ctx.moveTo(0, 13);
+  ctx.bezierCurveTo(-15, -5, -13, -23, 0, -23);
+  ctx.bezierCurveTo(13, -23, 15, -5, 0, 13);
+  ctx.closePath();
+  ctx.strokeStyle = "rgba(255,255,255,.82)";
+  ctx.lineWidth = 3;
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.arc(0, -10, 4, 0, Math.PI * 2);
+  ctx.fillStyle = "rgba(255,255,255,.82)";
+  ctx.fill();
+  ctx.restore();
+}
+
 export async function renderSocialPoster(canvas: HTMLCanvasElement, options: SocialPosterOptions) {
   const { width, height } = SOCIAL_POSTER_SIZES[options.format];
   canvas.width = width;
@@ -217,11 +235,10 @@ export async function renderSocialPoster(canvas: HTMLCanvasElement, options: Soc
   }
 
   const detailsY = titleTop + titleLines.length * titleLineHeight + 36;
-  ctx.fillStyle = "rgba(255,255,255,.78)";
+  drawLocationPin(ctx, left + 8, detailsY - 7);
   ctx.font = '500 27px "Manrope", sans-serif';
-  ctx.fillText("●", left, detailsY);
   ctx.fillStyle = "#FFFFFF";
-  ctx.fillText(options.location || "Localizare indisponibilă", left + 32, detailsY);
+  ctx.fillText(options.location || "Localizare indisponibilă", left + 38, detailsY);
 
   const tags = [
     options.rooms ? `${options.rooms} ${options.rooms === 1 ? "cameră" : "camere"}` : null,
