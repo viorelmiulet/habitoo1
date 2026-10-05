@@ -39,7 +39,7 @@ function AgencyDetailPage() {
   return <AgencyDetail org={org.data} />;
 }
 
-export function AgencyDetail({ org }: { org: Tables<"organizations"> }) {
+function AgencyDetail({ org }: { org: Tables<"organizations"> }) {
   const badge = orgStatusBadge(org);
   const logoUrl = useAgencyLogoUrl(org.logo_path);
   const fetchUsers = useServerFn(listPlatformUsers);

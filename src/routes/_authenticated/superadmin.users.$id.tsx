@@ -28,7 +28,7 @@ function UserDetailPage() {
   return <UserDetail user={user} users={data?.users ?? []} organizations={data?.organizations ?? []} />;
 }
 
-export function UserDetail({ user, users, organizations }: { user: PlatformUser; users: PlatformUser[]; organizations: { id: string; name: string }[] }) {
+function UserDetail({ user, users, organizations }: { user: PlatformUser; users: PlatformUser[]; organizations: { id: string; name: string }[] }) {
   const st = userStatusBadge(user.is_active);
   const props = useQuery({
     queryKey: ["superadmin", "user", user.id, "properties"],
