@@ -127,7 +127,24 @@ export function SocialPosterDialog(props: SocialPosterDialogProps) {
       if (active) setRendering(false);
     });
     return () => { active = false; };
-  }, [photoIndex, photos, preferences, props, transaction]);
+  }, [
+    photoIndex,
+    photos,
+    preferences,
+    props.floor,
+    props.location,
+    props.logoUrl,
+    props.phone,
+    props.rentCurrency,
+    props.rentPrice,
+    props.rooms,
+    props.saleCurrency,
+    props.salePrice,
+    props.surface,
+    props.title,
+    props.open,
+    transaction,
+  ]);
 
   const updatePreferences = (patch: Partial<PosterPreferences>) => {
     const next = { ...preferences, ...patch };
