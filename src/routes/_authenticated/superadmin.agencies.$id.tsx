@@ -8,7 +8,7 @@ import { ListSkeleton } from "@/components/app/LoadingState";
 import { StatusBadge } from "@/components/app/StatusBadge";
 import { UserAvatar } from "@/components/app/UserAvatar";
 import { AgencyLogo, useAgencyLogoUrls } from "@/components/superadmin/AgencyLogo";
-import { AgencyHeaderActions, AgencySubscriptionControls } from "@/components/superadmin/AgencyAdminActions";
+import { AgencyHeaderActions, AgencyPublicCatalogToggle, AgencySubscriptionControls } from "@/components/superadmin/AgencyAdminActions";
 import { BackLink, DetailCard, DetailNotFound, DetailRow } from "@/components/superadmin/SuperadminUi";
 import { listPlatformUsers } from "@/lib/superadmin-users.functions";
 import { formatDate, formatDateTime } from "@/lib/format";
@@ -104,6 +104,7 @@ function AgencyDetail({ org }: { org: Tables<"organizations"> }) {
             <DetailRow label="Locuri folosite">{limit === null ? `${seatsUsed} · fără limită` : `${seatsUsed} din ${seatLimitLabel(limit)}`}</DetailRow>
           </dl>
           <AgencySubscriptionControls org={org} />
+          <div className="mt-4"><AgencyPublicCatalogToggle org={org} /></div>
         </DetailCard>
 
         <DetailCard title="Echipă" description={`${members.length} membri`}>

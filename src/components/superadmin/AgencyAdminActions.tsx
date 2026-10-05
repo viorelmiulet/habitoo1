@@ -10,6 +10,7 @@ import { ConfirmDialog } from "@/components/app/ConfirmDialog";
 import { toast } from "@/components/ui/sonner";
 import { toastError } from "@/lib/errors";
 import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { supabase } from "@/integrations/supabase/client";
@@ -163,6 +164,45 @@ export function AgencyHeaderActions({ org }: { org: Org }) {
       />
       <OrganizationDeletionDialog organization={deleting ? { id: org.id, name: org.name } : null} users={platformUsers.data?.users ?? []} onClose={() => setDeleting(false)} />
       <PropertyImportDialog open={importing} onOpenChange={setImporting} organization={importing ? { id: org.id, name: org.name } : null} />
+    </div>
+  );
+}
+
+/** Moderarea catalogului public: doar superadminul (trigger în DB). */
+export function AgencyPublicCatalogToggle({ org }: { org: Org }) {
+  const queryClient = useQueryClient();
+  const [pending, setPending] = useState<boolean | null>(null);
+  const mutation = useMutation({
+    mutationFn: async (hidden: boolean) => {
+      const { error } = await supabase.from("organizations").update({ public_hidden_by_admin: hidden }).eq("id", org.id);
+      if (error) throw error;
+    },
+    onSuccess: (_d, hidden) => {
+      queryClient.invalidateQueries({ queryKey: ["superadmin", "agency", org.id] });
+      toast.success(hidden ? "Agenția a fost ascunsă din catalog." : "Agenția nu mai este ascunsă din catalog.");
+      setPending(null);
+    },
+    onError: (e: Error) => toastError(e),
+  });
+  return (
+    <div className="flex items-start justify-between gap-4 rounded-2xl border border-border p-4">
+      <div className="space-y-1">
+        <label htmlFor="sa_public_hidden" className="text-sm font-medium">Ascunde din catalogul public</label>
+        <p className="text-xs text-muted-foreground">
+          {org.public_profile_enabled ? "Agenția a activat pagina publică." : "Agenția nu a activat pagina publică."}
+          {org.public_slug ? ` Adresa: habitoo.ro/agentii/${org.public_slug}` : ""}
+        </p>
+      </div>
+      <Switch id="sa_public_hidden" checked={org.public_hidden_by_admin} disabled={mutation.isPending} onCheckedChange={(v) => setPending(v)} />
+      <ConfirmDialog
+        open={pending !== null}
+        onOpenChange={(o) => { if (!o) setPending(null); }}
+        title={pending ? `Ascunzi „${org.name}” din catalog?` : `Afișezi din nou „${org.name}”?`}
+        description={pending ? "Pagina publică a agenției și profilurile agenților ei nu vor mai fi vizibile." : "Pagina va fi vizibilă doar dacă agenția o are activată."}
+        confirmLabel={pending ? "Ascunde" : "Nu mai ascunde"}
+        destructive={pending === true}
+        onConfirm={async () => { if (pending !== null) await mutation.mutateAsync(pending); }}
+      />
     </div>
   );
 }

@@ -4267,6 +4267,10 @@ export type Database = {
           phone: string | null
           plan: string
           postal_code: string | null
+          public_description: string | null
+          public_hidden_by_admin: boolean
+          public_profile_enabled: boolean
+          public_slug: string | null
           registered_address: string | null
           slug: string
           status: Database["public"]["Enums"]["org_status"]
@@ -4327,6 +4331,10 @@ export type Database = {
           phone?: string | null
           plan?: string
           postal_code?: string | null
+          public_description?: string | null
+          public_hidden_by_admin?: boolean
+          public_profile_enabled?: boolean
+          public_slug?: string | null
           registered_address?: string | null
           slug: string
           status?: Database["public"]["Enums"]["org_status"]
@@ -4387,6 +4395,10 @@ export type Database = {
           phone?: string | null
           plan?: string
           postal_code?: string | null
+          public_description?: string | null
+          public_hidden_by_admin?: boolean
+          public_profile_enabled?: boolean
+          public_slug?: string | null
           registered_address?: string | null
           slug?: string
           status?: Database["public"]["Enums"]["org_status"]
@@ -5733,6 +5745,10 @@ export type Database = {
           onboarding_tour_seen_at: string | null
           organization_id: string | null
           phone: string | null
+          public_bio: string | null
+          public_profile_enabled: boolean
+          public_show_phone: boolean
+          public_slug: string | null
           updated_at: string
         }
         Insert: {
@@ -5746,6 +5762,10 @@ export type Database = {
           onboarding_tour_seen_at?: string | null
           organization_id?: string | null
           phone?: string | null
+          public_bio?: string | null
+          public_profile_enabled?: boolean
+          public_show_phone?: boolean
+          public_slug?: string | null
           updated_at?: string
         }
         Update: {
@@ -5759,6 +5779,10 @@ export type Database = {
           onboarding_tour_seen_at?: string | null
           organization_id?: string | null
           phone?: string | null
+          public_bio?: string | null
+          public_profile_enabled?: boolean
+          public_show_phone?: boolean
+          public_slug?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -8332,6 +8356,22 @@ export type Database = {
           _prospect: string
         }
         Returns: Json
+      }
+      public_agencies_list: {
+        Args: never
+        Returns: {
+          city: string
+          description: string
+          logo_path: string
+          name: string
+          slug: string
+        }[]
+      }
+      public_agency_by_slug: { Args: { _slug: string }; Returns: Json }
+      public_slugify: { Args: { _v: string }; Returns: string }
+      public_unique_slug: {
+        Args: { _base: string; _id: string; _table: string }
+        Returns: string
       }
       purge_expired_portal_messages: { Args: never; Returns: number }
       qa_purge_demo_organization: { Args: { _org: string }; Returns: string[] }
