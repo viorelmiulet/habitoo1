@@ -158,7 +158,7 @@ function SettingsPage() {
     phone: user?.profile?.phone ?? "",
     job_title: user?.profile?.job_title ?? "",
   });
-  const [orgForm, setOrgForm] = useState({
+  const buildOrgForm = () => ({
     name: user?.organization?.name ?? "",
     city: user?.organization?.city ?? "",
     postal_code: user?.organization?.postal_code ?? "",
@@ -175,6 +175,23 @@ function SettingsPage() {
         : "",
     storia_auto_republish: user?.organization?.storia_auto_republish === true,
   });
+  const [orgForm, setOrgForm] = useState(buildOrgForm);
+  const orgBaseline = buildOrgForm();
+  const orgDirty = JSON.stringify(orgForm) !== JSON.stringify(orgBaseline);
+  const logoUrl = useAgencyLogoUrl(user?.organization?.logo_path);
+  const groups = settingsTabGroups(user);
+  const visibleTabs = groups.flatMap((g) => g.tabs);
+  const activeTab: SettingsTab = visibleTabs.includes(tab) ? tab : "profile";
+  const selectTab = (value: SettingsTab) => {
+    void navigate({
+      search: (previous) => ({
+        ...previous,
+        tab: value,
+        request: value === "access" ? previous.request : undefined,
+      }),
+      replace: true,
+    });
+  };
 
 
   const uploadAvatar = useMutation({
