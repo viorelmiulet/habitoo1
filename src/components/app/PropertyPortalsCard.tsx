@@ -69,9 +69,7 @@ function stateSentence(cell: PropertyPortalCell, selected: boolean) {
     return selected
       ? "Portal neconfigurat — configurează-l pentru a putea publica."
       : "Portal neconfigurat.";
-  if (cell.lastError) return cell.lastError;
-  if (cell.state === "error")
-    return "Portalul a raportat o problemă la acest anunț, fără detalii. Apasă „Retrimite” pentru mesajul portalului.";
+  if (cell.lastError || cell.state === "error") return "Eroare la ultima publicare";
   if (cell.state === "syncing") return "Se sincronizează cu portalul…";
   if (cell.state === "published" || cell.state === "in_feed") {
     return cell.lastSyncAt ? `Ultima actualizare: ${syncAgo(cell.lastSyncAt)}` : "Publicat.";
