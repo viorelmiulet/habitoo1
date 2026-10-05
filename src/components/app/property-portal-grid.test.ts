@@ -40,8 +40,11 @@ describe("grila de publicare", () => {
     expect(terms).toBeLessThan(cells);
     // Fără rând separat pe toată lățimea.
     expect(view).not.toContain('md:col-span-2 lg:col-span-3');
-    // Stivuite vertical, deasupra etichetei care bifează la click.
-    expect(view).toContain('relative z-10 mt-3 min-w-0 space-y-3 pointer-events-auto');
+    // Stivuite vertical, într-o secțiune pliabilă „Detalii colaborare” cu săgeată.
+    expect(view).toContain('aria-expanded={collabDetailsExpanded}');
+    expect(view).toContain('id="collab-details"');
+    expect(view).toContain('Detalii colaborare');
+    expect(view).toContain('min-w-0 space-y-3');
     // Vizibile doar cu bifa bifată.
     expect(view.indexOf('{collabValue ? (')).toBeLessThan(percent);
     // Dezactivate în afara editării, ca bifa.

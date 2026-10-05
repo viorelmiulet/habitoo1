@@ -15,7 +15,7 @@ import { FEED_EXCLUDED_NO_PHONE, FEED_PORTALS_REQUIRING_AGENT_PHONE } from "@/li
 import { useCurrentUser } from "@/hooks/use-session";
 import { getPropertyAutoWithdrawals, type AutoWithdrawView } from "@/lib/property-status.functions";
 import { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useState } from "react";
-import { AlertTriangle, Check, ExternalLink } from "lucide-react";
+import { AlertTriangle, Check, ChevronDown, ExternalLink } from "lucide-react";
 
 import { useMutation, useQueries, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -222,6 +222,11 @@ export const PropertyPortalsCard = forwardRef<
   const [collabChecked, setCollabChecked] = useState<boolean | null>(null);
   const [collabPercent, setCollabPercent] = useState("");
   const [collabTerms, setCollabTerms] = useState("");
+  /** Detaliile (comision + condiții) stau închise implicit; săgeata le deschide. */
+  const [collabDetailsOpen, setCollabDetailsOpen] = useState(false);
+  useEffect(() => {
+    setCollabDetailsOpen(false);
+  }, [propertyId]);
 
   useEffect(() => {
     if (!collabRow) return;
@@ -242,6 +247,26 @@ export const PropertyPortalsCard = forwardRef<
             ? String(collabRow.commissionPercent)
             : "") ||
           collabTerms.trim() !== (collabRow?.terms ?? ""))));
+  /** Comision lipsă când e activă: eroarea de validare deschide automat detaliile. */
+  const collabCommissionMissing =
+    collabValue &&
+    collabPercent.trim() === "" &&
+    (collabRow?.defaultCommissionPercent === null ||
+      collabRow?.defaultCommissionPercent === undefined);
+  const collabDetailsExpanded = collabDetailsOpen || collabCommissionMissing;
+  /** Rezumat scurt, arătat pe rând când detaliile sunt închise. */
+  const collabSummary = (() => {
+    const parts: string[] = [];
+    const raw = collabPercent.trim();
+    if (raw !== "") parts.push(`Comision ${raw}%`);
+    else if (
+      collabRow?.defaultCommissionPercent !== null &&
+      collabRow?.defaultCommissionPercent !== undefined
+    )
+      parts.push(`Comision ${collabRow.defaultCommissionPercent}% (standard)`);
+    if (collabTerms.trim() !== "") parts.push("+ condiții");
+    return parts.join(" ");
+  })();
 
   /** Catalogul Facebook: același rând, aceeași bifă, aplicată prin „Publică”. */
   const loadFb = useServerFn(getPropertyFacebookCatalog);
@@ -604,9 +629,39 @@ export const PropertyPortalsCard = forwardRef<
                               : "Neselectat."}
                       </p>
                   </div>
-                  {collabValue ? (
-                    <div className="relative z-10 mt-3 min-w-0 space-y-3 pointer-events-auto">
-                      <div className="min-w-0 space-y-1.5">
+                  {collabValue ? (<>
+                    <button
+                      type="button"
+                      aria-expanded={collabDetailsExpanded}
+                      aria-controls="collab-details"
+                      onClick={() => setCollabDetailsOpen((v) => !v)}
+                      className="relative z-10 mt-3 flex w-full items-center justify-between gap-2 pointer-events-auto rounded-md text-xs font-medium text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    >
+                      <span className="flex min-w-0 items-center gap-2">
+                        Detalii colaborare
+                        {collabDetailsExpanded ? null : collabSummary ? (
+                          <span className="truncate font-normal">{collabSummary}</span>
+                        ) : null}
+                      </span>
+                      <ChevronDown
+                        className={cn(
+                          "size-4 shrink-0 transition-transform duration-200",
+                          collabDetailsExpanded && "rotate-180",
+                        )}
+                      />
+                    </button>
+                    <div
+                      id="collab-details"
+                      className={cn(
+                        "relative z-10 grid transition-all duration-200 ease-out",
+                        collabDetailsExpanded
+                          ? "mt-3 grid-rows-[1fr] opacity-100 pointer-events-auto"
+                          : "grid-rows-[0fr] opacity-0 pointer-events-none",
+                      )}
+                    >
+                      <div className="min-h-0 min-w-0 overflow-hidden">
+                        <div className="min-w-0 space-y-3">
+                          <div className="min-w-0 space-y-1.5">
                         <Label htmlFor="collab-percent" className="text-xs">
                           Comision oferit (%)
                         </Label>
@@ -655,9 +710,11 @@ export const PropertyPortalsCard = forwardRef<
                           value={collabTerms}
                           onChange={(e) => setCollabTerms(e.target.value)}
                         />
-                      </div>
-                    </div>
-                  ) : null}
+                       </div>
+                       </div>
+                     </div>
+                   </div>
+                   </>) : null}
                 </Card>
               </li>
             ) : null}
