@@ -630,8 +630,38 @@ export const PropertyPortalsCard = forwardRef<
                       </p>
                   </div>
                   {collabValue ? (
-                    <div className="relative z-10 mt-3 min-w-0 space-y-3 pointer-events-auto">
-                      <div className="min-w-0 space-y-1.5">
+                    <button
+                      type="button"
+                      aria-expanded={collabDetailsExpanded}
+                      aria-controls="collab-details"
+                      onClick={() => setCollabDetailsOpen((v) => !v)}
+                      className="relative z-10 mt-3 flex w-full items-center justify-between gap-2 pointer-events-auto rounded-md text-xs font-medium text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    >
+                      <span className="flex min-w-0 items-center gap-2">
+                        Detalii colaborare
+                        {collabDetailsExpanded ? null : collabSummary ? (
+                          <span className="truncate font-normal">{collabSummary}</span>
+                        ) : null}
+                      </span>
+                      <ChevronDown
+                        className={cn(
+                          "size-4 shrink-0 transition-transform duration-200",
+                          collabDetailsExpanded && "rotate-180",
+                        )}
+                      />
+                    </button>
+                    <div
+                      id="collab-details"
+                      className={cn(
+                        "relative z-10 grid transition-all duration-200 ease-out",
+                        collabDetailsExpanded
+                          ? "mt-3 grid-rows-[1fr] opacity-100 pointer-events-auto"
+                          : "grid-rows-[0fr] opacity-0 pointer-events-none",
+                      )}
+                    >
+                      <div className="min-h-0 min-w-0 overflow-hidden">
+                        <div className="min-w-0 space-y-3">
+                          <div className="min-w-0 space-y-1.5">
                         <Label htmlFor="collab-percent" className="text-xs">
                           Comision oferit (%)
                         </Label>
