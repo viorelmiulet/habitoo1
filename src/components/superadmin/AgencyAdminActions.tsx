@@ -189,7 +189,7 @@ export function AgencyPublicCatalogToggle({ org }: { org: Org }) {
       <div className="space-y-1">
         <label htmlFor="sa_public_hidden" className="text-sm font-medium">Ascunde din lista publică</label>
         <p className="text-xs text-muted-foreground">
-          {org.public_partner_enabled ? "Managerul a activat afișarea în lista agențiilor partenere." : "Managerul nu a activat afișarea în lista agențiilor partenere."}
+          Agențiile active sau în probă apar automat în lista agențiilor partenere (doar nume și logo).
         </p>
       </div>
       <Switch id="sa_public_hidden" checked={org.public_hidden_by_admin} disabled={mutation.isPending} onCheckedChange={(v) => setPending(v)} />
@@ -197,7 +197,7 @@ export function AgencyPublicCatalogToggle({ org }: { org: Org }) {
         open={pending !== null}
         onOpenChange={(o) => { if (!o) setPending(null); }}
         title={pending ? `Ascunzi „${org.name}” din lista publică?` : `Afișezi din nou „${org.name}”?`}
-        description={pending ? "Numele și logo-ul agenției nu vor mai apărea în lista agențiilor partenere." : "Agenția va apărea doar dacă managerul a activat afișarea."}
+        description={pending ? "Numele și logo-ul agenției nu vor mai apărea în lista agențiilor partenere." : "Agenția va reapărea dacă este activă sau în probă."}
         confirmLabel={pending ? "Ascunde" : "Nu mai ascunde"}
         destructive={pending === true}
         onConfirm={async () => { if (pending !== null) await mutation.mutateAsync(pending); }}

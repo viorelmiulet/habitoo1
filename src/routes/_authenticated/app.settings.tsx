@@ -174,7 +174,6 @@ function SettingsPage() {
         ? String(user.organization.collab_default_commission_percent)
         : "",
     storia_auto_republish: user?.organization?.storia_auto_republish === true,
-    public_partner_enabled: user?.organization?.public_partner_enabled === true,
   });
   const [orgForm, setOrgForm] = useState(buildOrgForm);
   const orgBaseline = buildOrgForm();
@@ -282,7 +281,6 @@ function SettingsPage() {
             orgForm.collab_default_commission_percent,
           ),
           storia_auto_republish: orgForm.storia_auto_republish,
-          public_partner_enabled: orgForm.public_partner_enabled,
         })
         .eq("id", user.organization.id);
       if (error) {
@@ -555,30 +553,6 @@ function SettingsPage() {
                       </p>
                     </div>
 
-                    <div className="space-y-3 rounded-2xl border border-gold/30 p-4">
-                      <h3 className="font-display text-base font-semibold text-foreground">Agenție parteneră Habitoo</h3>
-                      {user?.organization?.public_hidden_by_admin ? (
-                        <p className="rounded-xl bg-destructive/10 p-3 text-xs text-destructive">
-                          Agenția a fost ascunsă din lista publică de echipa Habitoo. Scrie-ne pentru detalii.
-                        </p>
-                      ) : null}
-                      <div className="flex items-start justify-between gap-4">
-                        <div className="min-w-0 space-y-1">
-                          <Label htmlFor="public_partner_enabled" className="text-sm">
-                            Afișează agenția în lista publică de agenții partenere
-                          </Label>
-                          <p className="text-xs text-muted-foreground">
-                            Se vor afișa doar numele și logo-ul agenției. Nu se afișează date de contact și nici agenții.
-                          </p>
-                        </div>
-                        <Switch
-                          id="public_partner_enabled"
-                          disabled={!user?.isAdmin}
-                          checked={orgForm.public_partner_enabled}
-                          onCheckedChange={(v) => setOrgForm((f) => ({ ...f, public_partner_enabled: v }))}
-                        />
-                      </div>
-                    </div>
                   </div>
                 </SettingsCard>
 
