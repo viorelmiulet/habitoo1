@@ -7,7 +7,7 @@ import { appHead } from "@/components/app/app-head";
 import { ListSkeleton } from "@/components/app/LoadingState";
 import { StatusBadge } from "@/components/app/StatusBadge";
 import { UserAvatar } from "@/components/app/UserAvatar";
-import { useAgencyLogoUrl } from "@/components/app/AgencyBrandingCard";
+import { AgencyLogo, useAgencyLogoUrls } from "@/components/superadmin/AgencyLogo";
 import { AgencyHeaderActions, AgencySubscriptionControls } from "@/components/superadmin/AgencyAdminActions";
 import { BackLink, DetailCard, DetailNotFound, DetailRow } from "@/components/superadmin/SuperadminUi";
 import { listPlatformUsers } from "@/lib/superadmin-users.functions";
@@ -16,7 +16,7 @@ import { roleLabels } from "@/lib/labels";
 import { PLAN_LABELS, normalizePlan, planAgentLimit, planPriceLabel, seatLimitLabel } from "@/lib/plans";
 import { subscriptionSummary, subscriptionTermLabel } from "@/lib/subscription";
 import { PORTAL_CONNECTION_LABEL, portalDisplayName, portalDisplayStatus, type PortalId } from "@/lib/portals/registry";
-import { initials, orgStatusBadge, userStatusBadge } from "@/lib/superadmin-status";
+import { orgStatusBadge, userStatusBadge } from "@/lib/superadmin-status";
 import type { Tables } from "@/integrations/supabase/types";
 
 export const Route = createFileRoute("/_authenticated/superadmin/agencies/$id")({
@@ -41,7 +41,7 @@ function AgencyDetailPage() {
 
 function AgencyDetail({ org }: { org: Tables<"organizations"> }) {
   const badge = orgStatusBadge(org);
-  const logoUrl = useAgencyLogoUrl(org.logo_path);
+  const logoUrls = useAgencyLogoUrls([org.logo_path]);
   const fetchUsers = useServerFn(listPlatformUsers);
   const users = useQuery({ queryKey: ["superadmin", "users"], queryFn: () => fetchUsers() });
   const members = (users.data?.users ?? []).filter((u) => u.organization_id === org.id);
@@ -69,11 +69,7 @@ function AgencyDetail({ org }: { org: Tables<"organizations"> }) {
       <BackLink to="/superadmin/agencies" label="Înapoi la agenții" />
       <header className="flex flex-col gap-4 rounded-[22px] border border-border/70 bg-card p-5 shadow-sm sm:p-6 lg:flex-row lg:items-center lg:justify-between">
         <div className="flex min-w-0 items-center gap-4">
-          {logoUrl ? (
-            <img src={logoUrl} alt={`Logo ${org.name}`} className="size-16 shrink-0 rounded-2xl border border-border object-contain p-1" />
-          ) : (
-            <span className="grid size-16 shrink-0 place-items-center rounded-2xl bg-gold/15 text-lg font-semibold" aria-hidden>{initials(org.name)}</span>
-          )}
+          <AgencyLogo name={org.name} path={org.logo_path} urls={logoUrls} size="detail" />
           <div className="min-w-0">
             <h1 className="truncate font-display text-2xl font-semibold text-foreground">{org.name}</h1>
             <div className="mt-1 flex flex-wrap gap-1.5">

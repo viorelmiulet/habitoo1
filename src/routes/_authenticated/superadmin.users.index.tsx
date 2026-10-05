@@ -17,6 +17,7 @@ import { listPlatformUsers } from "@/lib/superadmin-users.functions";
 import { userStatusBadge } from "@/lib/superadmin-status";
 import { ReassignUserDataSheet } from "@/components/superadmin/UserAdminActions";
 import { appHead } from "@/components/app/app-head";
+import { AgencyLogo, useAgencyLogoUrls } from "@/components/superadmin/AgencyLogo";
 
 export const Route = createFileRoute("/_authenticated/superadmin/users/")({
   head: () => appHead("Habitoo CRM — utilizatori"),
@@ -39,6 +40,8 @@ function UsersPage() {
 
   const users = data?.users ?? [];
   const orgs = data?.organizations ?? [];
+  const logoUrls = useAgencyLogoUrls(orgs.map((org) => org.logo_path));
+  const orgById = useMemo(() => new Map(orgs.map((org) => [org.id, org])), [orgs]);
 
   const rows = useMemo(
     () =>
@@ -181,7 +184,10 @@ function UsersPage() {
                     <span className="truncate text-xs text-muted-foreground">{u.roles.map((r) => roleLabels[r] ?? r).join(", ")} · {u.organization_name ?? "Fără agenție"}</span>
                   </span>
                 </span>
-                <span className="hidden truncate text-sm text-muted-foreground md:block">{u.organization_name ?? "Fără agenție"}</span>
+                <span className="hidden min-w-0 items-center gap-2 text-sm text-muted-foreground md:flex">
+                  {u.organization_id ? <AgencyLogo name={u.organization_name ?? "Agenție"} path={orgById.get(u.organization_id)?.logo_path} urls={logoUrls} size="small" /> : null}
+                  <span className="truncate">{u.organization_name ?? "Fără agenție"}</span>
+                </span>
                 <span className="hidden flex-wrap gap-1 md:flex">{u.roles.map((r) => <StatusBadge key={r} tone="primary">{roleLabels[r] ?? r}</StatusBadge>)}</span>
                 <span className="hidden md:block"><StatusBadge tone={st.tone}>{st.label}</StatusBadge></span>
                 <span className="hidden text-xs text-muted-foreground md:block">{u.last_sign_in_at ? `Autentificat ${formatDate(u.last_sign_in_at)}` : "Nicio autentificare"}</span>

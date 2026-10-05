@@ -26,6 +26,7 @@ export type AgencyOverviewRow = {
   id: string;
   name: string;
   city: string | null;
+  logoPath: string | null;
   status: string;
   plan: string;
   subscriptionTerm: string | null;
@@ -64,7 +65,7 @@ export const getAgencyOverview = createServerFn({ method: "POST" })
       admin
         .from("organizations")
         .select(
-          "id,name,city,status,plan,subscription_term,subscription_expires_at,is_trial,archived_at,created_at",
+          "id,name,city,logo_path,status,plan,subscription_term,subscription_expires_at,is_trial,archived_at,created_at",
         )
         .order("name", { ascending: true }),
       admin.from("profiles").select("id,organization_id,is_active"),
@@ -129,6 +130,7 @@ export const getAgencyOverview = createServerFn({ method: "POST" })
         id: o.id,
         name: o.name,
         city: o.city,
+        logoPath: o.logo_path,
         status: o.status,
         plan: o.plan,
         subscriptionTerm: o.subscription_term,

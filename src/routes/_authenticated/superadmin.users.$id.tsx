@@ -12,6 +12,8 @@ import { listPlatformUsers, type PlatformUser } from "@/lib/superadmin-users.fun
 import { formatDate, formatDateTime } from "@/lib/format";
 import { roleLabels } from "@/lib/labels";
 import { userStatusBadge } from "@/lib/superadmin-status";
+import { AgencyLogo, useAgencyLogoUrls } from "@/components/superadmin/AgencyLogo";
+import type { PlatformUsersOverview } from "@/lib/superadmin-users.functions";
 
 export const Route = createFileRoute("/_authenticated/superadmin/users/$id")({
   head: () => appHead("Habitoo CRM — detaliu utilizator"),
@@ -28,8 +30,10 @@ function UserDetailPage() {
   return <UserDetail user={user} users={data?.users ?? []} organizations={data?.organizations ?? []} />;
 }
 
-function UserDetail({ user, users, organizations }: { user: PlatformUser; users: PlatformUser[]; organizations: { id: string; name: string }[] }) {
+function UserDetail({ user, users, organizations }: { user: PlatformUser; users: PlatformUser[]; organizations: PlatformUsersOverview["organizations"] }) {
   const st = userStatusBadge(user.is_active);
+  const organization = organizations.find((org) => org.id === user.organization_id);
+  const logoUrls = useAgencyLogoUrls([organization?.logo_path]);
   const props = useQuery({
     queryKey: ["superadmin", "user", user.id, "properties"],
     queryFn: async () => {
@@ -50,7 +54,10 @@ function UserDetail({ user, users, organizations }: { user: PlatformUser; users:
               <StatusBadge tone={st.tone}>{st.label}</StatusBadge>
               {user.roles.map((r) => <StatusBadge key={r} tone="primary">{roleLabels[r] ?? r}</StatusBadge>)}
               {user.organization_id ? (
-                <Link to="/superadmin/agencies/$id" params={{ id: user.organization_id }} className="text-sm font-medium text-gold-dark underline-offset-4 hover:underline">{user.organization_name}</Link>
+                <Link to="/superadmin/agencies/$id" params={{ id: user.organization_id }} className="inline-flex min-w-0 items-center gap-2 text-sm font-medium text-gold-dark underline-offset-4 hover:underline">
+                  <AgencyLogo name={user.organization_name ?? "Agenție"} path={organization?.logo_path} urls={logoUrls} size="small" />
+                  <span className="truncate">{user.organization_name}</span>
+                </Link>
               ) : null}
             </div>
           </div>

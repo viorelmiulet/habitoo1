@@ -19,8 +19,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { formatDate } from "@/lib/format";
 import { PLAN_LABELS, normalizePlan } from "@/lib/plans";
-import { initials, orgStatusBadge } from "@/lib/superadmin-status";
+import { orgStatusBadge } from "@/lib/superadmin-status";
 import { appHead } from "@/components/app/app-head";
+import { AgencyLogo, useAgencyLogoUrls } from "@/components/superadmin/AgencyLogo";
 
 export const Route = createFileRoute("/_authenticated/superadmin/agencies/")({
   head: () => appHead("Habitoo CRM — agenții"),
@@ -169,6 +170,7 @@ function AgenciesPage() {
   });
 
   const orgs = data?.orgs ?? [];
+  const logoUrls = useAgencyLogoUrls(orgs.map((org) => org.logo_path));
   const live = orgs.filter((o) => !o.archived_at);
   const counts = {
     pending: (requests ?? []).length,
@@ -256,7 +258,7 @@ function AgenciesPage() {
                     params={{ id: o.id }}
                     className="grid min-h-16 grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 rounded-[20px] border border-border/70 bg-card p-4 shadow-sm transition-colors hover:border-gold/50 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none md:grid-cols-[auto_minmax(0,1.6fr)_minmax(0,0.8fr)_minmax(0,0.6fr)_auto_minmax(0,0.8fr)_auto]"
                   >
-                    <span className="grid size-11 shrink-0 place-items-center rounded-xl bg-gold/15 text-sm font-semibold text-foreground" aria-hidden>{initials(o.name)}</span>
+                    <AgencyLogo name={o.name} path={o.logo_path} urls={logoUrls} />
                     <span className="min-w-0">
                       <span className="block truncate font-semibold text-foreground">{o.name}</span>
                       <span className="block truncate text-xs text-muted-foreground">{o.city ?? "—"} · CUI {o.cui ?? "—"}</span>
