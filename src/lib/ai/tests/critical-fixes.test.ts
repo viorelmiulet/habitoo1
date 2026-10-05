@@ -3,7 +3,10 @@
  * limite fail-closed, plafon pe agenție, nume interzise la execuție,
  * redactare recursivă.
  */
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
+
+// Comutatorul general AI al agenției este testat separat (ai-enabled.test.ts).
+vi.mock("../features/features.server", () => ({ isOrgAiEnabled: async () => true, AI_DISABLED_MESSAGE: "off" }));
 import {
   checkAiQuota,
   checkAiRateLimits,
