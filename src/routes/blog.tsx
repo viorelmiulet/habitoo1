@@ -26,7 +26,7 @@ function BlogPage() {
   const filtered = category === "Toate" ? posts : posts.filter((post) => post.category === category);
   const featured = filtered[0];
   const rest = filtered.slice(1, visible + 1);
-  return <PublicLayout footerDescription="Sfaturi practice pentru agenții imobiliare, pregătite de echipa Habitoo.">
+  return <PublicLayout homeHeader footerDescription="Sfaturi practice pentru agenții imobiliare, pregătite de echipa Habitoo.">
     <section className="mk-hero-bg border-b border-border"><div className="mx-auto max-w-7xl px-4 py-14 sm:px-6 sm:py-20 lg:px-8"><p className="text-sm font-semibold text-gold-dark">Idei pentru o agenție mai bine organizată</p><h1 className="mt-3 font-display text-4xl font-semibold text-navy sm:text-5xl">Blog Habitoo</h1><p className="mt-4 text-lg text-muted-foreground">Sfaturi practice pentru agenții imobiliare.</p></div></section>
     <section className="mx-auto w-full max-w-7xl px-4 py-12 sm:px-6 lg:px-8 lg:py-16">
       {posts.length === 0 ? <div className="rounded-2xl border border-border bg-card px-6 py-16 text-center"><h2 className="font-display text-2xl font-semibold text-navy">Pregătim primele articole. Revino curând.</h2><p className="mt-2 text-muted-foreground">Lucrăm la idei practice pentru munca de zi cu zi din agenție.</p></div> : <>

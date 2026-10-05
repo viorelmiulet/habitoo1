@@ -29,7 +29,7 @@ export function PublicHeader() {
           className="block w-32 shrink-0 sm:w-36 lg:w-40"
           aria-label="Habitoo CRM — pagina principală"
         >
-          <BrandLogo priority />
+          <BrandLogo priority className="h-8 w-auto max-w-none lg:h-10" />
         </Link>
 
         <nav aria-label="Navigare principală" className="hidden items-center gap-1 lg:flex">
@@ -76,7 +76,7 @@ export function PublicHeader() {
                   className="block w-36"
                   aria-label="Habitoo CRM — pagina principală"
                 >
-                  <BrandLogo />
+                  <BrandLogo className="h-8 w-auto max-w-none" />
                 </Link>
               </SheetHeader>
               <nav aria-label="Navigare mobilă" className="mt-8 flex flex-col gap-1">

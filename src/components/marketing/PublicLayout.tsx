@@ -2,8 +2,9 @@ import type { ReactNode } from "react";
 import { CookieConsent } from "./CookieConsent";
 import { PublicFooter } from "./PublicFooter";
 import { PublicHeader } from "./PublicHeader";
+import { HomeHeader } from "./HomeHeader";
 
-export function PublicLayout({ children, footerDescription }: { children: ReactNode; footerDescription?: string }) {
+export function PublicLayout({ children, footerDescription, homeHeader = false }: { children: ReactNode; footerDescription?: string; homeHeader?: boolean }) {
   return (
     <div className="mk-root flex min-h-screen flex-col bg-background text-foreground">
       <a
@@ -12,8 +13,8 @@ export function PublicLayout({ children, footerDescription }: { children: ReactN
       >
         Sari la conținut
       </a>
-      <PublicHeader />
-      <main id="continut" className="flex-1">
+      {homeHeader ? <HomeHeader /> : <PublicHeader />}
+      <main id="continut" className={homeHeader ? "flex-1 pt-16 lg:pt-[72px]" : "flex-1"}>
         {children}
       </main>
       <PublicFooter description={footerDescription} />
