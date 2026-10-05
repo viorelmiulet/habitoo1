@@ -278,14 +278,14 @@ const BlogIndexRoute = BlogIndexRouteImport.update({
   getParentRoute: () => rootRouteImport,
 } as any)
 const BlogSlugRoute = BlogSlugRouteImport.update({
-  id: '/blog/$slug',
-  path: '/blog/$slug',
-  getParentRoute: () => rootRouteImport,
+  id: '/$slug',
+  path: '/$slug',
+  getParentRoute: () => BlogRoute,
 } as any)
 const BlogRssDotxmlRoute = BlogRssDotxmlRouteImport.update({
-  id: '/blog/rss.xml',
-  path: '/blog/rss.xml',
-  getParentRoute: () => rootRouteImport,
+  id: '/rss.xml',
+  path: '/rss.xml',
+  getParentRoute: () => BlogRoute,
 } as any)
 const OfertaIdRoute = OfertaIdRouteImport.update({
   id: '/oferta/$id',
@@ -1623,8 +1623,6 @@ export interface RootRouteChildren {
   TermeniRoute: typeof TermeniRoute
   TermeniSiConditiiRoute: typeof TermeniSiConditiiRoute
   AuthCallbackRoute: typeof AuthCallbackRoute
-  BlogSlugRoute: typeof BlogSlugRoute
-  BlogRssDotxmlRoute: typeof BlogRssDotxmlRoute
   OfertaIdRoute: typeof OfertaIdRoute
   BlogIndexRoute: typeof BlogIndexRoute
   ApiPublicBlogMediaSplatRoute: typeof ApiPublicBlogMediaSplatRoute
@@ -1870,17 +1868,17 @@ declare module '@tanstack/react-router' {
     }
     '/blog/$slug': {
       id: '/blog/$slug'
-      path: '/blog/$slug'
+      path: '/$slug'
       fullPath: '/blog/$slug'
       preLoaderRoute: typeof BlogSlugRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof BlogRoute
     }
     '/blog/rss.xml': {
       id: '/blog/rss.xml'
-      path: '/blog/rss.xml'
+      path: '/rss.xml'
       fullPath: '/blog/rss.xml'
       preLoaderRoute: typeof BlogRssDotxmlRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof BlogRoute
     }
     '/oferta/$id': {
       id: '/oferta/$id'
@@ -2795,8 +2793,6 @@ const rootRouteChildren: RootRouteChildren = {
   TermeniRoute: TermeniRoute,
   TermeniSiConditiiRoute: TermeniSiConditiiRoute,
   AuthCallbackRoute: AuthCallbackRoute,
-  BlogSlugRoute: BlogSlugRoute,
-  BlogRssDotxmlRoute: BlogRssDotxmlRoute,
   OfertaIdRoute: OfertaIdRoute,
   BlogIndexRoute: BlogIndexRoute,
   ApiPublicBlogMediaSplatRoute: ApiPublicBlogMediaSplatRoute,
