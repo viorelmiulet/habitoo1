@@ -35,6 +35,8 @@ import { Route as AuthenticatedAnunturiProprietariRouteImport } from './routes/_
 import { Route as AuthenticatedAppRouteImport } from './routes/_authenticated/app'
 import { Route as AuthenticatedOnboardingRouteImport } from './routes/_authenticated/onboarding'
 import { Route as AuthenticatedSuperadminRouteImport } from './routes/_authenticated/superadmin'
+import { Route as AgentiiIndexRouteImport } from './routes/agentii.index'
+import { Route as AgentiiSlugRouteImport } from './routes/agentii.$slug'
 import { Route as AuthCallbackRouteImport } from './routes/auth.callback'
 import { Route as BlogIndexRouteImport } from './routes/blog.index'
 import { Route as BlogSlugRouteImport } from './routes/blog.$slug'
@@ -266,6 +268,16 @@ const AuthenticatedSuperadminRoute = AuthenticatedSuperadminRouteImport.update({
   id: '/superadmin',
   path: '/superadmin',
   getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AgentiiIndexRoute = AgentiiIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AgentiiRoute,
+} as any)
+const AgentiiSlugRoute = AgentiiSlugRouteImport.update({
+  id: '/$slug',
+  path: '/$slug',
+  getParentRoute: () => AgentiiRoute,
 } as any)
 const AuthCallbackRoute = AuthCallbackRouteImport.update({
   id: '/auth/callback',
@@ -840,7 +852,7 @@ const ApiPublicSitesV1MediaAgentIdRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/acces-cont': typeof AccesContRoute
-  '/agentii': typeof AgentiiRoute
+  '/agentii': typeof AgentiiRouteWithChildren
   '/confidentialitate': typeof ConfidentialitateRoute
   '/contact': typeof ContactRoute
   '/despre': typeof DespreRoute
@@ -863,10 +875,12 @@ export interface FileRoutesByFullPath {
   '/app': typeof AuthenticatedAppRouteWithChildren
   '/onboarding': typeof AuthenticatedOnboardingRoute
   '/superadmin': typeof AuthenticatedSuperadminRouteWithChildren
+  '/agentii/$slug': typeof AgentiiSlugRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/blog/$slug': typeof BlogSlugRoute
   '/blog/rss.xml': typeof BlogRssDotxmlRoute
   '/oferta/$id': typeof OfertaIdRoute
+  '/agentii/': typeof AgentiiIndexRoute
   '/blog/': typeof BlogIndexRoute
   '/app/activities': typeof AuthenticatedAppActivitiesRoute
   '/app/ai': typeof AuthenticatedAppAiRoute
@@ -967,7 +981,6 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/acces-cont': typeof AccesContRoute
-  '/agentii': typeof AgentiiRoute
   '/confidentialitate': typeof ConfidentialitateRoute
   '/contact': typeof ContactRoute
   '/despre': typeof DespreRoute
@@ -988,10 +1001,12 @@ export interface FileRoutesByTo {
   '/termeni-si-conditii': typeof TermeniSiConditiiRoute
   '/anunturi-proprietari': typeof AuthenticatedAnunturiProprietariRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
+  '/agentii/$slug': typeof AgentiiSlugRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/blog/$slug': typeof BlogSlugRoute
   '/blog/rss.xml': typeof BlogRssDotxmlRoute
   '/oferta/$id': typeof OfertaIdRoute
+  '/agentii': typeof AgentiiIndexRoute
   '/blog': typeof BlogIndexRoute
   '/app/activities': typeof AuthenticatedAppActivitiesRoute
   '/app/ai': typeof AuthenticatedAppAiRoute
@@ -1093,7 +1108,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/acces-cont': typeof AccesContRoute
-  '/agentii': typeof AgentiiRoute
+  '/agentii': typeof AgentiiRouteWithChildren
   '/confidentialitate': typeof ConfidentialitateRoute
   '/contact': typeof ContactRoute
   '/despre': typeof DespreRoute
@@ -1116,10 +1131,12 @@ export interface FileRoutesById {
   '/_authenticated/app': typeof AuthenticatedAppRouteWithChildren
   '/_authenticated/onboarding': typeof AuthenticatedOnboardingRoute
   '/_authenticated/superadmin': typeof AuthenticatedSuperadminRouteWithChildren
+  '/agentii/$slug': typeof AgentiiSlugRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/blog/$slug': typeof BlogSlugRoute
   '/blog/rss.xml': typeof BlogRssDotxmlRoute
   '/oferta/$id': typeof OfertaIdRoute
+  '/agentii/': typeof AgentiiIndexRoute
   '/blog/': typeof BlogIndexRoute
   '/_authenticated/app/activities': typeof AuthenticatedAppActivitiesRoute
   '/_authenticated/app/ai': typeof AuthenticatedAppAiRoute
@@ -1245,10 +1262,12 @@ export interface FileRouteTypes {
     | '/app'
     | '/onboarding'
     | '/superadmin'
+    | '/agentii/$slug'
     | '/auth/callback'
     | '/blog/$slug'
     | '/blog/rss.xml'
     | '/oferta/$id'
+    | '/agentii/'
     | '/blog/'
     | '/app/activities'
     | '/app/ai'
@@ -1349,7 +1368,6 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/acces-cont'
-    | '/agentii'
     | '/confidentialitate'
     | '/contact'
     | '/despre'
@@ -1370,10 +1388,12 @@ export interface FileRouteTypes {
     | '/termeni-si-conditii'
     | '/anunturi-proprietari'
     | '/onboarding'
+    | '/agentii/$slug'
     | '/auth/callback'
     | '/blog/$slug'
     | '/blog/rss.xml'
     | '/oferta/$id'
+    | '/agentii'
     | '/blog'
     | '/app/activities'
     | '/app/ai'
@@ -1497,10 +1517,12 @@ export interface FileRouteTypes {
     | '/_authenticated/app'
     | '/_authenticated/onboarding'
     | '/_authenticated/superadmin'
+    | '/agentii/$slug'
     | '/auth/callback'
     | '/blog/$slug'
     | '/blog/rss.xml'
     | '/oferta/$id'
+    | '/agentii/'
     | '/blog/'
     | '/_authenticated/app/activities'
     | '/_authenticated/app/ai'
@@ -1603,7 +1625,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AccesContRoute: typeof AccesContRoute
-  AgentiiRoute: typeof AgentiiRoute
+  AgentiiRoute: typeof AgentiiRouteWithChildren
   ConfidentialitateRoute: typeof ConfidentialitateRoute
   ContactRoute: typeof ContactRoute
   DespreRoute: typeof DespreRoute
@@ -1853,6 +1875,20 @@ declare module '@tanstack/react-router' {
       fullPath: '/superadmin'
       preLoaderRoute: typeof AuthenticatedSuperadminRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/agentii/': {
+      id: '/agentii/'
+      path: '/'
+      fullPath: '/agentii/'
+      preLoaderRoute: typeof AgentiiIndexRouteImport
+      parentRoute: typeof AgentiiRoute
+    }
+    '/agentii/$slug': {
+      id: '/agentii/$slug'
+      path: '/$slug'
+      fullPath: '/agentii/$slug'
+      preLoaderRoute: typeof AgentiiSlugRouteImport
+      parentRoute: typeof AgentiiRoute
     }
     '/auth/callback': {
       id: '/auth/callback'
@@ -2728,6 +2764,19 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
 const AuthenticatedRouteRouteWithChildren =
   AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
 
+interface AgentiiRouteChildren {
+  AgentiiSlugRoute: typeof AgentiiSlugRoute
+  AgentiiIndexRoute: typeof AgentiiIndexRoute
+}
+
+const AgentiiRouteChildren: AgentiiRouteChildren = {
+  AgentiiSlugRoute: AgentiiSlugRoute,
+  AgentiiIndexRoute: AgentiiIndexRoute,
+}
+
+const AgentiiRouteWithChildren =
+  AgentiiRoute._addFileChildren(AgentiiRouteChildren)
+
 interface ApiPublicHomepitchV1PropertiesRouteChildren {
   ApiPublicHomepitchV1PropertiesIdRoute: typeof ApiPublicHomepitchV1PropertiesIdRoute
 }
@@ -2775,7 +2824,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AccesContRoute: AccesContRoute,
-  AgentiiRoute: AgentiiRoute,
+  AgentiiRoute: AgentiiRouteWithChildren,
   ConfidentialitateRoute: ConfidentialitateRoute,
   ContactRoute: ContactRoute,
   DespreRoute: DespreRoute,
