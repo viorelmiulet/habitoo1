@@ -113,6 +113,8 @@ export type PortalHubItem = {
     expiresAt: string | null;
     expired: boolean;
     canRefresh: boolean;
+    /** Tokenul nu mai poate fi reînnoit: agenția trebuie să se reconecteze. */
+    reconnectRequired: boolean;
     connectedAt: string | null;
     refreshedAt: string | null;
   } | null;
@@ -639,6 +641,8 @@ export const getPortalHub = createServerFn({ method: "POST" })
               expiresAt: oauthExpiresAt,
               expired: oauthExpiresAt ? new Date(oauthExpiresAt).getTime() <= Date.now() : false,
               canRefresh: oauthMeta?.has_refresh_token ?? Boolean(storiaTokens?.refresh_token),
+              reconnectRequired:
+                ((row?.settings ?? {}) as Record<string, unknown>)["reconnect_required"] === true,
               connectedAt: oauthMeta?.connected_at ?? null,
               refreshedAt: oauthMeta?.refreshed_at ?? null,
             }

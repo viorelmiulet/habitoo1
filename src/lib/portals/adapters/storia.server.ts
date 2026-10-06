@@ -46,8 +46,38 @@ import {
 
 import type { StoriaTransaction } from "../storia/taxonomy";
 
-/** Endpoint minim, folosit doar ca să confirmăm că tokenul este acceptat. */
-const PROBE_PATH = "/advert/v1/adverts?limit=1";
+/** Endpoint documentat de OLX, folosit doar ca să confirmăm că tokenul este acceptat. */
+export const PROBE_PATH = "/advert/v1/meta";
+
+/** Doar un răspuns 2xx confirmă conexiunea; orice altceva e eroare. */
+export function storiaProbeOutcome(status: number):
+  | { ok: true; detail: string }
+  | { ok: false; code: ReturnType<typeof codeFromHttpStatus>; message: string; detail: string } {
+  if (status >= 200 && status < 300) return { ok: true, detail: `storia oauth valid (http_${status})` };
+  const detail = `probe_http_${status}`;
+  if (status === 401 || status === 403) {
+    return {
+      ok: false,
+      code: "AUTH_ERROR",
+      message: "Storia a refuzat tokenul agenției. Reconectează contul Storia.",
+      detail,
+    };
+  }
+  if (status >= 500) {
+    return {
+      ok: false,
+      code: codeFromHttpStatus(status),
+      message: "Storia nu a răspuns corect. Reîncearcă în câteva minute.",
+      detail,
+    };
+  }
+  return {
+    ok: false,
+    code: codeFromHttpStatus(status),
+    message: `Storia a răspuns neașteptat la testul de conexiune (HTTP ${status}).`,
+    detail,
+  };
+}
 
 const TX_LABEL: Record<StoriaTransaction, string> = { sale: "vânzare", rent: "închiriere" };
 
@@ -107,27 +137,9 @@ async function probe(ctx: PortalContext): Promise<PortalResult<ConnectionStatusO
 
   try {
     const res = await olxAuthorizedRequest(ctx.organizationId, "GET", PROBE_PATH);
-    // Orice răspuns care nu este 401/403 confirmă că tokenul agenției e acceptat.
-    if (res.status === 401 || res.status === 403) {
-      return {
-        ok: false,
-        code: "AUTH_ERROR",
-        message: "Storia a refuzat tokenul agenției. Reia conectarea contului Storia.",
-        detail: `probe_http_${res.status}`,
-      };
-    }
-    if (res.status >= 500) {
-      return {
-        ok: false,
-        code: codeFromHttpStatus(res.status),
-        message: "Storia nu a răspuns corect. Reîncearcă în câteva minute.",
-        detail: `probe_http_${res.status}`,
-      };
-    }
-    return {
-      ok: true,
-      data: { configured: true, live: true, detail: `storia oauth valid (http_${res.status})` },
-    };
+    const outcome = storiaProbeOutcome(res.status);
+    if (!outcome.ok) return { ...outcome, ok: false };
+    return { ok: true, data: { configured: true, live: true, detail: outcome.detail } };
   } catch (error) {
     return fail(error);
   }
