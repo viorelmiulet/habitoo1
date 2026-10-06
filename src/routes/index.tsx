@@ -18,6 +18,7 @@ import { BrandLogo } from "@/components/brand/BrandLogo";
 import { CookieConsent } from "@/components/marketing/CookieConsent";
 import { CrmLink } from "@/components/marketing/CrmLink";
 import { FaqSection, faqPageJsonLd, type FaqItem } from "@/components/marketing/FaqSection";
+import { IntegratedPortalsSection } from "@/components/marketing/IntegratedPortalsSection";
 import { HomeHeader } from "@/components/marketing/HomeHeader";
 import { HomePricingSection } from "@/components/marketing/HomePricingSection";
 import { PublicFooter } from "@/components/marketing/PublicFooter";
@@ -275,6 +276,8 @@ function HomePage() {
             </div>
           </Container>
         </Section>
+
+        <IntegratedPortalsSection />
 
         <Section id="cum-functioneaza" tone="muted" className="relative overflow-hidden">
           <Container>
