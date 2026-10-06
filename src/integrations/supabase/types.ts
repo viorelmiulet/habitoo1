@@ -4508,6 +4508,50 @@ export type Database = {
           },
         ]
       }
+      portal_agent_links: {
+        Row: {
+          created_at: string
+          external_id: number
+          id: string
+          last_error: string | null
+          organization_id: string
+          portal: string
+          synced_at: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          external_id?: number
+          id?: string
+          last_error?: string | null
+          organization_id: string
+          portal: string
+          synced_at?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          external_id?: number
+          id?: string
+          last_error?: string | null
+          organization_id?: string
+          portal?: string
+          synced_at?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "portal_agent_links_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       portal_api_keys: {
         Row: {
           created_at: string
