@@ -174,7 +174,7 @@ export async function runPortalPublishWorker(
           ? `${name}: ${withdrawn ? "retras" : "publicat"}`
           : `${name}: publicarea a eșuat`,
         body: decision.ok ? null : decision.message,
-        link: `/app/properties/${job.property_id}?tab=publish`,
+        link: `/app/properties/${job.property_id}`,
         created_by: job.requested_by,
       });
     });
