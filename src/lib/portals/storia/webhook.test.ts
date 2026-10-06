@@ -8,7 +8,7 @@ import {
   STORIA_MAX_ATTEMPTS,
   verifyNotificationSignature,
 } from "./notifications.server";
-import { isRetryDue } from "./webhook-retry.server";
+import { isRetryDue, processWithinBudget, runStoriaWebhookRetry } from "./webhook-retry.server";
 
 const SECRET = "test-secret";
 const payload = {
@@ -94,8 +94,11 @@ describe("reîncercări", () => {
     expect(isRetryDue({ ...base, attempts: 1, next_attempt_at: "2026-10-06T11:59:00Z" }, now)).toBe(true);
     expect(isRetryDue({ ...base, attempts: 1, next_attempt_at: "2026-10-06T12:05:00Z" }, now)).toBe(false);
     expect(isRetryDue({ ...base, attempts: 5, next_attempt_at: "2026-10-06T11:00:00Z" }, now)).toBe(false);
-    // Procesarea după răspuns n-a apucat să ruleze: preluat după 2 minute.
+    // Procesarea din cerere n-a terminat: preluat după 1 minut.
     expect(isRetryDue({ ...base, attempts: 0, next_attempt_at: null }, now)).toBe(true);
+    expect(
+      isRetryDue({ ...base, attempts: 0, next_attempt_at: null, received_at: "2026-10-06T11:58:50Z" }, now),
+    ).toBe(true);
     expect(
       isRetryDue({ ...base, attempts: 0, next_attempt_at: null, received_at: "2026-10-06T11:59:30Z" }, now),
     ).toBe(false);
@@ -107,5 +110,46 @@ describe("limitarea pe IP", () => {
     expect(clientIp(new Request("https://x", { headers: { "cf-connecting-ip": "1.2.3.4" } }))).toBe("1.2.3.4");
     expect(clientIp(new Request("https://x", { headers: { "x-forwarded-for": "5.6.7.8, 9.9.9.9" } }))).toBe("5.6.7.8");
     expect(clientIp(new Request("https://x"))).toBe("unknown");
+  });
+});
+
+describe("procesarea în limita de timp", () => {
+  it("termină în limită", async () => {
+    expect(await processWithinBudget(async () => "ok", 1500)).toBe("done");
+  });
+
+  it("depășirea limitei răspunde fără să aștepte", async () => {
+    const started = Date.now();
+    const result = await processWithinBudget(() => new Promise((r) => setTimeout(r, 500)), 50);
+    expect(result).toBe("timeout");
+    expect(Date.now() - started).toBeLessThan(400);
+  });
+
+  it("o eroare nu blochează răspunsul", async () => {
+    expect(await processWithinBudget(async () => { throw new Error("x"); }, 1500)).toBe("failed");
+  });
+});
+
+describe("reluarea preia rândurile cu attempts = 0", () => {
+  it("procesează un rând rămas fără next_attempt_at", async () => {
+    const row = {
+      id: "evt-0",
+      parsed_payload: { flow: "publish_advert" },
+      attempts: 0,
+      next_attempt_at: null,
+      received_at: new Date(Date.now() - 5 * 60_000).toISOString(),
+    };
+    const query: Record<string, unknown> = {};
+    const self = () => query;
+    Object.assign(query, { select: self, eq: self, lt: self, order: self, limit: async () => ({ data: [row] }) });
+    const admin = { from: () => query } as never;
+    const seen: { eventId: string; attempts: number }[] = [];
+    const result = await runStoriaWebhookRetry(
+      admin,
+      async (args) => { seen.push(args); return { processed: true }; },
+      { maxItems: 10, budgetMs: 10_000 },
+    );
+    expect(seen).toEqual([{ eventId: "evt-0", parsed: row.parsed_payload, attempts: 0 }]);
+    expect(result).toEqual({ attempted: 1, succeeded: 1 });
   });
 });
