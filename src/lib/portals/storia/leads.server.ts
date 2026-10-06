@@ -41,6 +41,12 @@ import {
   storiaInfoMessage,
   storiaNotificationId,
 } from "./advert-errors";
+import { normalizeStoriaPhone } from "./phone";
+import {
+  findConversationLead,
+  notifyAgentOfStoriaMessage,
+  saveUnmatchedStoriaMessage,
+} from "./messages.server";
 import { isStaleStoriaEvent, storiaEventTimestampMs } from "./notifications.server";
 
 type Json = Record<string, unknown>;
@@ -166,6 +172,7 @@ export type MessagePayload = {
   email: string | null;
   body: string | null;
   messageId: string | null;
+  conversationId: string | null;
   sentAt: string | null;
 };
 
@@ -181,19 +188,21 @@ export function readMessagePayload(shape: StoriaEventShape): MessagePayload {
       "message.name",
       "name",
     ]),
-    phone: pick(d, [
+    phone: normalizeStoriaPhone(pick(d, [
       "sender_phone",
       "sender.phone",
       "user.phone",
       "contact.phone",
       "phone",
       "phone_number",
-    ]),
+    ])),
     email: pick(d, ["sender_email", "sender.email", "user.email", "contact.email", "email"]),
     // Payloadul real folosește obiectul `message: { name, text }`.
     // Căutăm explicit câmpurile imbricate înaintea variantelor legacy plate.
     body: pick(d, ["message.text", "message.body", "text", "body", "content", "message"]),
-    messageId: pick(d, ["id", "message_id", "message.id", "conversation_id", "conversation.id"]),
+    // Documentație: `uuid` identifică mesajul, `conversation_id` grupează conversația.
+    messageId: pick(d, ["uuid", "id", "message_id", "message.id"]),
+    conversationId: pick(d, ["conversation_id", "conversation.id"]),
     sentAt: pick(d, ["created_at", "message.created_at", "sent_at", "recorded_at"]),
   };
 }
@@ -237,7 +246,8 @@ async function propertyMatch(
  *   2. uuid-ul anunțului, căutat în `portal_listings.external_id` (`SALE:uuid|RENT:uuid`);
  *   3. slugul anunțului, căutat în segmentul canonic `ADSLUG:<slug>`.
  */
-async function matchListing(admin: Admin, shape: StoriaEventShape): Promise<MatchedListing | null> {
+/** Ultima variantă: identificatorul propriu trimis la publicare (`HBT-<id>-SALE`). */
+async function matchByCustomId(admin: Admin, shape: StoriaEventShape): Promise<MatchedListing | null> {
   const custom = parseStoriaCustomId(shape.customId);
   if (custom) {
     const { data: listing } = await admin
@@ -250,13 +260,17 @@ async function matchListing(admin: Admin, shape: StoriaEventShape): Promise<Matc
     if (match) return match;
   }
 
+  return null;
+}
+
+async function matchListing(admin: Admin, shape: StoriaEventShape): Promise<MatchedListing | null> {
   // Forma canonică este `ADSLUG:`. `AD:` rămâne doar fallback pentru date vechi.
   const needles = [
     shape.advertUuid,
     shape.adSlug ? `ADSLUG:${shape.adSlug}` : null,
     shape.adSlug ? `AD:${shape.adSlug}` : null,
   ].filter(Boolean) as string[];
-  if (!needles.length) return null;
+  if (!needles.length) return matchByCustomId(admin, shape);
 
   const { data: listings } = await admin
     .from("portal_listings")
@@ -296,7 +310,7 @@ async function matchListing(admin: Admin, shape: StoriaEventShape): Promise<Matc
       if (match) return match;
     }
   }
-  return null;
+  return matchByCustomId(admin, shape);
 }
 
 const SOURCE = "Storia.ro";
@@ -310,7 +324,11 @@ export function portalMessageExpiry(sentAt: string): string {
   return new Date(from.getTime() + PORTAL_MESSAGE_RETENTION_DAYS * 86_400_000).toISOString();
 }
 
-async function processMessage(admin: Admin, shape: StoriaEventShape): Promise<StoriaProcessResult> {
+async function processMessage(
+  admin: Admin,
+  shape: StoriaEventShape,
+  eventId: string | null = null,
+): Promise<StoriaProcessResult> {
   const message = readMessagePayload(shape);
   if (!message.body && !message.senderName && !message.email && !message.phone) {
     return {
@@ -321,10 +339,13 @@ async function processMessage(admin: Admin, shape: StoriaEventShape): Promise<St
 
   const match = await matchListing(admin, shape);
   if (!match) {
-    return {
-      processed: false,
-      note: `mesaj Storia fără proprietate identificabilă (slug=${shape.adSlug ?? "-"}, custom_id=${shape.customId ?? "-"})`,
-    };
+    // Nu ghicim agenția: mesajul merge doar în lista SuperAdmin de atribuire.
+    return saveUnmatchedStoriaMessage(admin, {
+      webhookEventId: eventId,
+      adRef: shape.adSlug ?? shape.advertUuid ?? shape.customId,
+      message,
+      externalMessageId: message.messageId ?? shape.transactionId ?? null,
+    });
   }
 
   const name = message.senderName ?? "Contact Storia";
@@ -346,6 +367,7 @@ async function processMessage(admin: Admin, shape: StoriaEventShape): Promise<St
         portal: "storia",
         property_id: match.propertyId,
         external_message_id: externalMessageId,
+        conversation_id: message.conversationId,
         sender_name: message.senderName,
         sender_email: message.email,
         sender_phone: message.phone,
@@ -414,6 +436,68 @@ async function processMessage(admin: Admin, shape: StoriaEventShape): Promise<St
     messageRowId = inserted.data?.id ?? null;
   }
 
+  const messageKey = externalMessageId ?? messageRowId ?? `${sentAt}:${name}`;
+
+  // Același `conversation_id` → același lead, chiar dacă expeditorul nu a
+  // trimis din nou email/telefon.
+  const conversationLeadId = await findConversationLead(
+    admin,
+    match.organizationId,
+    message.conversationId,
+    messageRowId,
+  );
+  if (conversationLeadId) {
+    const { data: lead } = await admin
+      .from("leads")
+      .select("notes")
+      .eq("id", conversationLeadId)
+      .maybeSingle();
+    await admin
+      .from("leads")
+      .update({
+        last_interaction_at: sentAt,
+        notes: [lead?.notes, noteLine].filter(Boolean).join("\n---\n").slice(0, 8000),
+      })
+      .eq("id", conversationLeadId);
+    await admin.from("lead_events").insert({
+      organization_id: match.organizationId,
+      lead_id: conversationLeadId,
+      to_stage: "new",
+      note: noteLine.slice(0, 2000),
+    });
+    if (messageRowId) {
+      await admin.from("portal_messages").update({ lead_id: conversationLeadId }).eq("id", messageRowId);
+    } else {
+      await admin.from("portal_messages").insert({
+        organization_id: match.organizationId,
+        portal: "storia",
+        property_id: match.propertyId,
+        lead_id: conversationLeadId,
+        conversation_id: message.conversationId,
+        sender_name: message.senderName,
+        sender_email: message.email,
+        sender_phone: message.phone,
+        body: bodyText,
+        sent_at: sentAt,
+        expires_at: portalMessageExpiry(sentAt),
+      });
+    }
+    await notifyAgentOfStoriaMessage(admin, {
+      organizationId: match.organizationId,
+      assignedTo: match.assignedTo,
+      propertyTitle: match.propertyTitle,
+      leadId: conversationLeadId,
+      senderName: name,
+      body: bodyText,
+      messageKey,
+      inApp: true,
+    });
+    return {
+      processed: true,
+      note: `mesaj Storia adăugat în conversația lead-ului ${conversationLeadId}`,
+    };
+  }
+
   const { ingestPortalLead } = await import("@/lib/portals/lead-ingest.server");
   const outcome = await ingestPortalLead(admin, {
     portal: "storia",
@@ -439,6 +523,18 @@ async function processMessage(admin: Admin, shape: StoriaEventShape): Promise<St
       message_id: message.messageId,
       assigned_to: match.assignedTo,
     },
+  });
+  // Lead nou: notificarea în aplicație o face deja `ingestPortalLead`;
+  // mesaj ulterior pe lead existent: notificăm explicit. Email în ambele cazuri.
+  await notifyAgentOfStoriaMessage(admin, {
+    organizationId: match.organizationId,
+    assignedTo: match.assignedTo,
+    propertyTitle: match.propertyTitle,
+    leadId: outcome.leadId,
+    senderName: name,
+    body: bodyText,
+    messageKey,
+    inApp: !outcome.created,
   });
   return outcome.created
     ? { processed: true, note: `lead nou din mesaj Storia (${outcome.leadId})` }
@@ -709,7 +805,7 @@ export async function processStoriaNotification(args: {
         note: `duplicat ignorat (transaction_id ${shape.transactionId})`,
       };
     } else if (isMessageEvent(shape)) {
-      result = await processMessage(admin, shape);
+      result = await processMessage(admin, shape, args.eventId);
     } else if (isLifecycleEvent(shape)) {
       result = await processLifecycle(admin, shape);
     } else {
