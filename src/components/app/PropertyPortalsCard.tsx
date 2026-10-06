@@ -14,7 +14,16 @@ import { Link } from "@tanstack/react-router";
 import { FEED_EXCLUDED_NO_PHONE, FEED_PORTALS_REQUIRING_AGENT_PHONE } from "@/lib/portals/listing-contact";
 import { useCurrentUser } from "@/hooks/use-session";
 import { getPropertyAutoWithdrawals, type AutoWithdrawView } from "@/lib/property-status.functions";
-import { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useState } from "react";
+import {
+  forwardRef,
+  useCallback,
+  useEffect,
+  useImperativeHandle,
+  useMemo,
+  useState,
+  useSyncExternalStore,
+} from "react";
+import { portalQueue, portalTaskKey } from "@/lib/portals/portal-queue";
 import { AlertTriangle, Check, ChevronDown, ExternalLink } from "lucide-react";
 
 import { useMutation, useQueries, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -118,7 +127,7 @@ export type PortalApplyResult = {
  * aplică exact bifele curente. `null` = nimic de aplicat (sau retragere anulată).
  */
 export type PropertyPortalsHandle = {
-  applyPending: () => Promise<{ results: PortalApplyResult[] } | null>;
+  applyPending: () => Promise<{ results: PortalApplyResult[]; portalsQueued: number } | null>;
 };
 
 export const PropertyPortalsCard = forwardRef<
@@ -314,33 +323,65 @@ export const PropertyPortalsCard = forwardRef<
   );
   const actionable = [...new Set([...dirty, ...toSync])];
 
-  const apply = useMutation({
-    mutationFn: () =>
-      applyFn({
-        data: {
-          ...(organizationId ? { organizationId } : {}),
-          propertyId,
-          selections: cells
-            .filter((c) => c.availability === "available")
-            .map((c) => ({
-              portalId: c.portalId,
-              enabled: checked[c.portalId] ?? c.selected,
-              ...(c.promotionFlag ? { promoted: promotedValue(c) } : {}),
-            })),
-          // Butonul unic „Publică” sincronizează starea curentă, deci ofertele
-          // deja publicate primesc o actualizare reală cu datele editate.
-          syncExisting: true,
-        },
-      }),
+  const inFlight = useSyncExternalStore(
+    portalQueue.subscribe,
+    portalQueue.getSnapshot,
+    portalQueue.getSnapshot,
+  );
 
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey });
-      queryClient.invalidateQueries({ queryKey: ["property-portals-matrix"] });
-      queryClient.invalidateQueries({
-        queryKey: ["property-portal-journal", organizationId, propertyId],
+  /**
+   * Trimite UN singur portal, în fundal (coada sesiunii, max. 3 în paralel).
+   * Selecția conține doar acest portal, deci `syncExisting` nu atinge altele.
+   * `false` = portalul e deja în lucru.
+   */
+  const enqueuePortal = useCallback(
+    (cell: PropertyPortalCell) => {
+      const selection = {
+        portalId: cell.portalId,
+        enabled: checked[cell.portalId] ?? cell.selected,
+        ...(cell.promotionFlag ? { promoted: promotedValue(cell) } : {}),
+      };
+      const name = cell.portalName;
+      return portalQueue.enqueue({
+        propertyId,
+        portalId: cell.portalId,
+        run: () =>
+          applyFn({
+            data: {
+              ...(organizationId ? { organizationId } : {}),
+              propertyId,
+              selections: [selection],
+              syncExisting: true,
+            },
+          }),
+        onDone: (outcome) => {
+          if (outcome.ok) {
+            const result = outcome.value.results.find((r) => r.portalId === cell.portalId);
+            if (!result) toast.success(`${name}: nicio schimbare`);
+            else if (result.ok)
+              toast.success(
+                result.action === "withdrawn" ? `${name}: retras` : `${name}: publicat`,
+              );
+            else toast.error(result.message ?? `${name}: publicarea a eșuat.`);
+          } else {
+            const message =
+              outcome.error instanceof Error ? outcome.error.message : "publicarea a eșuat.";
+            toast.error(`${name}: ${message}`);
+          }
+          void queryClient.invalidateQueries({
+            queryKey: ["property-portals-selection", organizationId, propertyId],
+          });
+          void queryClient.invalidateQueries({ queryKey: ["property-portals-matrix"] });
+          void queryClient.invalidateQueries({ queryKey: ["my-portal-slot", cell.portalId] });
+          void queryClient.invalidateQueries({
+            queryKey: ["property-portal-journal", organizationId, propertyId],
+          });
+        },
       });
     },
-  });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [checked, promotedChecked, propertyId, organizationId, applyFn, queryClient],
+  );
 
   const applyPending = useCallback(async () => {
     const portalsActionable = canManage && actionable.length > 0;
@@ -414,16 +455,20 @@ export const PropertyPortalsCard = forwardRef<
       void queryClient.invalidateQueries({ queryKey: ["collaboration-offers"] });
     }
 
+    // Portalurile NU se așteaptă: fiecare pleacă separat, în fundal.
+    let portalsQueued = 0;
     if (portalsActionable) {
-      const portals = await apply.mutateAsync();
-      results.push(...portals.results);
+      for (const cell of actionable) {
+        if (cell.availability !== "available") continue;
+        if (enqueuePortal(cell)) portalsQueued += 1;
+      }
     }
 
-    return { results };
+    return { results, portalsQueued };
   }, [
     canManage,
-    actionable.length,
-    apply,
+    actionable,
+    enqueuePortal,
     collabDirty,
     collabValue,
     collabPercent,
@@ -723,28 +768,32 @@ export const PropertyPortalsCard = forwardRef<
               const value = checked[cell.portalId] ?? cell.selected;
               const slot = slotQueries[index]?.data;
               const noSlots = !value && !cell.selected && Boolean(slot && (slot.remaining === 0 || slot.agencyExhausted));
+              const busy = inFlight.has(portalTaskKey(propertyId, cell.portalId));
               const disabled =
                 !editing ||
                 !canManage ||
                 cell.availability !== "available" ||
                 !cell.configured ||
                 noSlots ||
-                apply.isPending ||
+                busy ||
                 (Boolean(contactBlock) && !value && !cell.selected);
               const problem =
-                cell.state === "error" ||
-                Boolean(cell.lastError) ||
-                (cell.availability === "available" && value && !cell.configured);
+                !busy &&
+                (cell.state === "error" ||
+                  Boolean(cell.lastError) ||
+                  (cell.availability === "available" && value && !cell.configured));
               const stateView = STATE_VIEW[cell.state];
               const latestOperation = latestOperationByPortal.get(cell.portalId);
               const latestOperationFailed = latestOperation?.success === false;
-              const detail = latestOperationFailed
-                ? "Eroare la ultima publicare"
-                : stateSentence(cell, value);
+              const detail = busy
+                ? "Se sincronizează…"
+                : latestOperationFailed
+                  ? "Eroare la ultima publicare"
+                  : stateSentence(cell, value);
 
               return (
                 <li key={cell.portalId} className="min-w-0">
-                  <Card className={cn("relative min-w-0 bg-surface p-4 text-sm", value && "border-gold ring-1 ring-gold/40", !cell.configured && "opacity-55")}>
+                  <Card aria-busy={busy} className={cn("relative min-w-0 bg-surface p-4 text-sm", value && "border-gold ring-1 ring-gold/40", !cell.configured && "opacity-55", busy && "opacity-70")}>
                     {cell.configured ? <label htmlFor={`portal-${cell.portalId}`} aria-label={cell.portalName} className={cn("absolute inset-0 z-0", !disabled ? "cursor-pointer" : "cursor-default")} /> : null}
                     <div className="relative z-10 grid grid-cols-[minmax(0,1fr)_auto] items-start gap-2 pointer-events-none">
                       <div className="flex min-w-0 items-start gap-3">
@@ -837,8 +886,8 @@ export const PropertyPortalsCard = forwardRef<
                           <Button
                             type="button"
                             variant="secondary"
-                            disabled={apply.isPending}
-                            onClick={() => void applyPending()}
+                            disabled={busy}
+                            onClick={() => enqueuePortal(cell)}
                           >
                             {cell.lastSyncAt ? "Retrimite" : "Reîncearcă"}
                           </Button>
