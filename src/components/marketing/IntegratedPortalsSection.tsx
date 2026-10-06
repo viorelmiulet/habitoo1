@@ -24,17 +24,25 @@ export function IntegratedPortalsSection() {
           {integratedPortals.map((portal, i) => (
             <li key={portal.id}>
               <Reveal delay={i * 40} className="h-full">
-                <div className="panel flex h-full items-center gap-3 p-4">
+                <div className="panel flex h-full min-w-0 items-center gap-3 p-4">
                   {hasPortalLogo(portal.id) ? (
-                    <PortalLogo
-                      portalId={portal.id}
-                      name={portal.display_name}
-                      fallback={portal.logo}
-                      size={40}
-                      alt={portal.display_name}
-                    />
+                    <>
+                      <PortalLogo
+                        portalId={portal.id}
+                        name={portal.display_name}
+                        fallback={portal.logo}
+                        size={40}
+                        alt={portal.display_name}
+                        className="shrink-0"
+                      />
+                      <span className="truncate text-sm font-semibold text-navy">
+                        {portal.display_name}
+                      </span>
+                    </>
                   ) : (
-                    <span className="text-sm font-semibold text-navy">{portal.display_name}</span>
+                    <span className="truncate text-sm font-semibold text-navy">
+                      {portal.display_name}
+                    </span>
                   )}
                 </div>
               </Reveal>
