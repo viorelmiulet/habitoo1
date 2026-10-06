@@ -14,3 +14,4 @@
 - Public portal grids share registry data. Why: sync.
 - Failure alerts use stable IDs per org, listing, portal, error and user. Why: no duplicates.
 - Storia webhook requires the documented OLX signature (401 otherwise), returns 200 after logging and processes via `runAfterResponse`; failures retry through an armed cron (`storia_webhook_retry_arm`, max 5 attempts); `portal_listings.last_event_at` drops older events. Why: OLX wants <2s replies and gives no ordering.
+- Storia messages with no recognised listing go only to `portal_unmatched_messages` (SuperAdmin-only, manual assignment); never guess an agency. Leads group by `conversation_id`; every message notifies the agent. Why: no cross-agency leaks, no lost messages.
