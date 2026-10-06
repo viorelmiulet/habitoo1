@@ -6,7 +6,7 @@
  * validare per câmp; erorile de imagine vin separat (ex. dimensiuni minime).
  * Denumirile exacte pot varia, așa că acceptăm mai multe forme. Pur, fără I/O.
  */
-import { STORIA_STATUS_MESSAGE } from "./status-messages";
+import { STORIA_STATUS_MESSAGE } from "./adverts.server";
 
 type Json = Record<string, unknown>;
 
