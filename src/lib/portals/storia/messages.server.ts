@@ -163,7 +163,7 @@ export async function notifyAgentOfStoriaMessage(
       subject: title.slice(0, 180),
       text: `${text}\n\nDeschide lead-ul în Habitoo CRM: https://crm.habitoo.ro/app/leads`,
       sendKey: `storia-message:${input.messageKey}`,
-    } as never);
+    });
   } catch (error) {
     console.error("[storia] emailul către agent a eșuat", error);
   }
