@@ -26,6 +26,7 @@ import {
 } from "@/components/ui/select";
 import { appHead } from "@/components/app/app-head";
 import { PortalsCard } from "@/components/superadmin/PortalsCard";
+import { StoriaUnmatchedCard } from "@/components/superadmin/StoriaUnmatchedCard";
 import { ImospotSettingsCard } from "@/components/superadmin/ImospotSettingsCard";
 import { LaCheieCard } from "@/components/superadmin/LaCheieCard";
 import { PortalActivationRequestsCard } from "@/components/superadmin/PortalActivationRequestsCard";
@@ -133,6 +134,10 @@ function SuperadminPortalsPage() {
             </Select>
           )}
         </div>
+      </div>
+
+      <div className="mt-6">
+        <StoriaUnmatchedCard />
       </div>
 
       {organizationId ? (
