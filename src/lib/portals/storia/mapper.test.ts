@@ -179,3 +179,14 @@ describe("helpers Storia", () => {
     expect(storiaListingStatus(null)).toBe("pending");
   });
 });
+
+describe("auto_extend urmează setarea agenției", () => {
+  it("trimite true doar când auto-prelungirea e activă", () => {
+    const on = mapPropertyToStoria(baseProperty(), { ...options, autoExtend: true });
+    const off = mapPropertyToStoria(baseProperty(), { ...options, autoExtend: false });
+    const missing = mapPropertyToStoria(baseProperty(), options);
+    expect(on.ok && on.listings[0]!.advert.auto_extend).toBe(true);
+    expect(off.ok && off.listings[0]!.advert.auto_extend).toBe(false);
+    expect(missing.ok && missing.listings[0]!.advert.auto_extend).toBe(false);
+  });
+});
