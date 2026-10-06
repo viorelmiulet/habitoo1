@@ -453,8 +453,9 @@ function PropertyDetailPage() {
         entityId: id,
       });
 
-      // Portalurile sunt opționale: fără bife schimbate nu se întâmplă nimic aici.
-      let portals: { results: { ok: boolean; message: string | null }[] } | null = null;
+      // Catalogul Facebook și colaborarea se salvează aici (rapid); portalurile
+      // pleacă separat în fundal și NU se așteaptă.
+      let portals: { results: { ok: boolean; message: string | null }[]; portalsQueued: number } | null = null;
       let portalsError: string | null = null;
       try {
         portals = (await portalsRef.current?.applyPending()) ?? null;
@@ -471,25 +472,19 @@ function PropertyDetailPage() {
       const base = saved
         ? "Modificările au fost salvate și proprietatea a fost publicată."
         : "Proprietatea a fost publicată.";
+      const background = (portals?.portalsQueued ?? 0) > 0
+        ? " Publicarea pe portaluri continuă în fundal."
+        : "";
       const results = portals?.results ?? [];
-      const done = results.filter((r) => r.ok && r.message);
       const failed = results.filter((r) => !r.ok);
-
-      // Dacă o operație cerută pe un portal a eșuat, rezultatul este PARȚIAL:
-      // nu raportăm succes global ambiguu lângă eroarea portalului.
       if (failed.length > 0 || portalsError) {
-        const okPart = done.length
-          ? `Publicată pe ${done.length} ${done.length === 1 ? "portal" : "portaluri"}`
-          : "Niciun portal nu a fost actualizat";
         const failPart = failed
-          .map((r) => r.message ?? "eroare portal")
+          .map((r) => r.message ?? "eroare")
           .concat(portalsError ? [portalsError] : [])
           .join(" · ");
-        toast.warning(`${saved ? "Modificările au fost salvate. " : ""}${okPart}; ${failPart}`);
-      } else if (done.length > 0) {
-        toast.success(`${base} ${done.map((r) => r.message).join(" · ")}`);
+        toast.warning(`${base}${background} ${failPart}`);
       } else {
-        toast.success(base);
+        toast.success(`${base}${background}`);
       }
     },
     onError: (e: Error) => toastError(e),
