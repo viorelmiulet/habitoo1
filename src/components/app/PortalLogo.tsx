@@ -39,6 +39,7 @@ const PORTAL_LOGOS: Record<string, string> = {
   properstar: properstarLogo.url,
   romimo: romimoLogo,
   primulanunt: primulanuntLogo,
+  vdi: vdiLogo,
 };
 
 /** Există logo local pentru portalul dat? */
