@@ -45,7 +45,8 @@ import { InlineLoading } from "@/components/app/LoadingState";
 import { QueryError } from "@/components/app/QueryError";
 import { formatDateTime } from "@/lib/format";
 import {
-  applyPropertyPortalSelection,
+  enqueuePortalPublishJobs,
+  getPropertyPublishJobs,
   getPropertiesPortalMatrix,
   getPropertyPortalJournal,
   getPropertyPortalRequirements,
