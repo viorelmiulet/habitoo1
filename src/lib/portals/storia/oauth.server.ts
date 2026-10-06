@@ -506,6 +506,10 @@ export async function olxAuthorizedRequest(
   if ((response.status === 401 || response.status === 403) && !retriedAfterRefresh) {
     return olxAuthorizedRequest(organizationId, method, path, payload, true);
   }
+  // 401 persistent chiar cu token proaspăt reînnoit: accesul a fost revocat.
+  if (response.status === 401 && retriedAfterRefresh) {
+    await markStoriaReconnectRequired(organizationId, "access_revoked");
+  }
 
   const raw = (await response.text().catch(() => "")).slice(0, 1500);
   let body: Record<string, unknown> | null = null;
