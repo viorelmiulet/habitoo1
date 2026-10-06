@@ -4950,6 +4950,7 @@ export type Database = {
           external_id: string | null
           id: string
           last_error: string | null
+          last_event_at: string | null
           last_sync_at: string | null
           organization_id: string
           portal: string
@@ -4968,6 +4969,7 @@ export type Database = {
           external_id?: string | null
           id?: string
           last_error?: string | null
+          last_event_at?: string | null
           last_sync_at?: string | null
           organization_id: string
           portal: string
@@ -4986,6 +4988,7 @@ export type Database = {
           external_id?: string | null
           id?: string
           last_error?: string | null
+          last_event_at?: string | null
           last_sync_at?: string | null
           organization_id?: string
           portal?: string
@@ -5634,9 +5637,12 @@ export type Database = {
       }
       portal_webhook_events: {
         Row: {
+          attempts: number
           headers: Json
           http_method: string
           id: string
+          last_attempt_at: string | null
+          next_attempt_at: string | null
           organization_id: string | null
           parsed_payload: Json | null
           portal: string
@@ -5649,9 +5655,12 @@ export type Database = {
           signature_valid: boolean | null
         }
         Insert: {
+          attempts?: number
           headers?: Json
           http_method: string
           id?: string
+          last_attempt_at?: string | null
+          next_attempt_at?: string | null
           organization_id?: string | null
           parsed_payload?: Json | null
           portal: string
@@ -5664,9 +5673,12 @@ export type Database = {
           signature_valid?: boolean | null
         }
         Update: {
+          attempts?: number
           headers?: Json
           http_method?: string
           id?: string
+          last_attempt_at?: string | null
+          next_attempt_at?: string | null
           organization_id?: string | null
           parsed_payload?: Json | null
           portal?: string
@@ -8446,6 +8458,8 @@ export type Database = {
         }
         Returns: undefined
       }
+      storia_webhook_retry_arm: { Args: never; Returns: undefined }
+      storia_webhook_retry_tick: { Args: never; Returns: undefined }
       submit_agency_registration_request:
         | {
             Args: {

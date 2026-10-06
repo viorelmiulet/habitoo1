@@ -1,0 +1,16 @@
+# Portal rules
+
+- Properstar index tracks agency presence with 7-day deletion grace; links use HMAC-SHA256. Why: one index URL; deactivation has no timestamp elsewhere.
+- ClickImob index: JSON index at /api/public/feed/clickimob/index/{CLICKIMOB_INDEX_KEY}.json reuses Properstar index rules; state in `portal_index_state` (portal column), agencies with per-agency ClickImob connection excluded. Why: no duplicate listings.
+- Bulk portal changes use durable `portal_bulk_jobs`/`portal_bulk_items`, processed by an armed cron through `applyPortalSelectionForOrg`; UI requests never call adapters directly. Why: jobs survive navigation and keep portal rules, retries and audit.
+- Portal connection status shown in the UI has exactly three values (connected/error/disconnected), computed only by `portalDisplayStatus` in `src/lib/portals/registry.ts`; raw DB values never reach the UI. Why: one rule.
+- Facebook Catalog card state (connected/error/disconnected) is computed only by `facebookCatalogState` in `src/lib/facebook-catalog-status.ts`; card counts reuse `loadFacebookCatalogInput` + `buildFacebookCatalogCsv`. Why: one rule for the feed and the card, no token ever returned.
+- Self-service portal activation uses `selfActivatePortalForSession` (mode from `PortalDefinition.activation`); new orgs get ClickImob via trigger `t_org_auto_clickimob`. Why: one path for every org creation.
+- Facebook Catalog token is a `site_feed_tokens` row `scope = facebook_catalog` (encrypted), accepted only with `allowFacebookCatalogToken`. Why: no site-token exposure.
+- Facebook Catalog opt-ins use `portal_publications` key `facebook_catalog` without slots. Admins always manage them; agents manage only owned listings when the organization setting allows it. Why: feed inclusion requires an authorized explicit choice.
+- Promotion catalogs are registered separately from listing portals and are merged only into the agency Settings portal list. Why: Catalog Facebook must look like a portal without entering portal publication, slot, activation, or withdrawal flows.
+- Table `agent_portal_preferences` is kept but unused by code: Publicare never preselects portals. Why: "Portalurile mele" was removed; data preserved.
+- Property publication cards share checkbox state and query only the assigned agent's slots; the server checks publication. Why: no duplicate state.
+- Public portal grids share registry data. Why: sync.
+- Failure alerts use stable IDs per org, listing, portal, error and user. Why: no duplicates.
+- Storia webhook requires the documented OLX signature (401 otherwise), returns 200 after logging and processes via `runAfterResponse`; failures retry through an armed cron (`storia_webhook_retry_arm`, max 5 attempts); `portal_listings.last_event_at` drops older events. Why: OLX wants <2s replies and gives no ordering.

@@ -100,6 +100,7 @@ import { Route as ApiPublicCronPortalSlotWithdrawRouteImport } from './routes/ap
 import { Route as ApiPublicCronPortalStatusWithdrawRouteImport } from './routes/api/public/cron/portal-status-withdraw'
 import { Route as ApiPublicCronPromotionWithdrawRouteImport } from './routes/api/public/cron/promotion-withdraw'
 import { Route as ApiPublicCronPropertyImportImagesRouteImport } from './routes/api/public/cron/property-import-images'
+import { Route as ApiPublicCronStoriaWebhookRetryRouteImport } from './routes/api/public/cron/storia-webhook-retry'
 import { Route as ApiPublicCronSubscriptionsRouteImport } from './routes/api/public/cron/subscriptions'
 import { Route as ApiPublicListingsUpsertRouteImport } from './routes/api/public/listings/upsert'
 import { Route as ApiPublicMailgunEventsRouteImport } from './routes/api/public/mailgun/events'
@@ -638,6 +639,12 @@ const ApiPublicCronPropertyImportImagesRoute =
     path: '/api/public/cron/property-import-images',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicCronStoriaWebhookRetryRoute =
+  ApiPublicCronStoriaWebhookRetryRouteImport.update({
+    id: '/api/public/cron/storia-webhook-retry',
+    path: '/api/public/cron/storia-webhook-retry',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicCronSubscriptionsRoute =
   ApiPublicCronSubscriptionsRouteImport.update({
     id: '/api/public/cron/subscriptions',
@@ -932,6 +939,7 @@ export interface FileRoutesByFullPath {
   '/api/public/cron/portal-status-withdraw': typeof ApiPublicCronPortalStatusWithdrawRoute
   '/api/public/cron/promotion-withdraw': typeof ApiPublicCronPromotionWithdrawRoute
   '/api/public/cron/property-import-images': typeof ApiPublicCronPropertyImportImagesRoute
+  '/api/public/cron/storia-webhook-retry': typeof ApiPublicCronStoriaWebhookRetryRoute
   '/api/public/cron/subscriptions': typeof ApiPublicCronSubscriptionsRoute
   '/api/public/listings/upsert': typeof ApiPublicListingsUpsertRoute
   '/api/public/mailgun/events': typeof ApiPublicMailgunEventsRoute
@@ -1057,6 +1065,7 @@ export interface FileRoutesByTo {
   '/api/public/cron/portal-status-withdraw': typeof ApiPublicCronPortalStatusWithdrawRoute
   '/api/public/cron/promotion-withdraw': typeof ApiPublicCronPromotionWithdrawRoute
   '/api/public/cron/property-import-images': typeof ApiPublicCronPropertyImportImagesRoute
+  '/api/public/cron/storia-webhook-retry': typeof ApiPublicCronStoriaWebhookRetryRoute
   '/api/public/cron/subscriptions': typeof ApiPublicCronSubscriptionsRoute
   '/api/public/listings/upsert': typeof ApiPublicListingsUpsertRoute
   '/api/public/mailgun/events': typeof ApiPublicMailgunEventsRoute
@@ -1188,6 +1197,7 @@ export interface FileRoutesById {
   '/api/public/cron/portal-status-withdraw': typeof ApiPublicCronPortalStatusWithdrawRoute
   '/api/public/cron/promotion-withdraw': typeof ApiPublicCronPromotionWithdrawRoute
   '/api/public/cron/property-import-images': typeof ApiPublicCronPropertyImportImagesRoute
+  '/api/public/cron/storia-webhook-retry': typeof ApiPublicCronStoriaWebhookRetryRoute
   '/api/public/cron/subscriptions': typeof ApiPublicCronSubscriptionsRoute
   '/api/public/listings/upsert': typeof ApiPublicListingsUpsertRoute
   '/api/public/mailgun/events': typeof ApiPublicMailgunEventsRoute
@@ -1319,6 +1329,7 @@ export interface FileRouteTypes {
     | '/api/public/cron/portal-status-withdraw'
     | '/api/public/cron/promotion-withdraw'
     | '/api/public/cron/property-import-images'
+    | '/api/public/cron/storia-webhook-retry'
     | '/api/public/cron/subscriptions'
     | '/api/public/listings/upsert'
     | '/api/public/mailgun/events'
@@ -1444,6 +1455,7 @@ export interface FileRouteTypes {
     | '/api/public/cron/portal-status-withdraw'
     | '/api/public/cron/promotion-withdraw'
     | '/api/public/cron/property-import-images'
+    | '/api/public/cron/storia-webhook-retry'
     | '/api/public/cron/subscriptions'
     | '/api/public/listings/upsert'
     | '/api/public/mailgun/events'
@@ -1574,6 +1586,7 @@ export interface FileRouteTypes {
     | '/api/public/cron/portal-status-withdraw'
     | '/api/public/cron/promotion-withdraw'
     | '/api/public/cron/property-import-images'
+    | '/api/public/cron/storia-webhook-retry'
     | '/api/public/cron/subscriptions'
     | '/api/public/listings/upsert'
     | '/api/public/mailgun/events'
@@ -1659,6 +1672,7 @@ export interface RootRouteChildren {
   ApiPublicCronPortalStatusWithdrawRoute: typeof ApiPublicCronPortalStatusWithdrawRoute
   ApiPublicCronPromotionWithdrawRoute: typeof ApiPublicCronPromotionWithdrawRoute
   ApiPublicCronPropertyImportImagesRoute: typeof ApiPublicCronPropertyImportImagesRoute
+  ApiPublicCronStoriaWebhookRetryRoute: typeof ApiPublicCronStoriaWebhookRetryRoute
   ApiPublicCronSubscriptionsRoute: typeof ApiPublicCronSubscriptionsRoute
   ApiPublicListingsUpsertRoute: typeof ApiPublicListingsUpsertRoute
   ApiPublicMailgunEventsRoute: typeof ApiPublicMailgunEventsRoute
@@ -2331,6 +2345,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicCronPropertyImportImagesRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/cron/storia-webhook-retry': {
+      id: '/api/public/cron/storia-webhook-retry'
+      path: '/api/public/cron/storia-webhook-retry'
+      fullPath: '/api/public/cron/storia-webhook-retry'
+      preLoaderRoute: typeof ApiPublicCronStoriaWebhookRetryRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/cron/subscriptions': {
       id: '/api/public/cron/subscriptions'
       path: '/api/public/cron/subscriptions'
@@ -2860,6 +2881,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicCronPromotionWithdrawRoute: ApiPublicCronPromotionWithdrawRoute,
   ApiPublicCronPropertyImportImagesRoute:
     ApiPublicCronPropertyImportImagesRoute,
+  ApiPublicCronStoriaWebhookRetryRoute: ApiPublicCronStoriaWebhookRetryRoute,
   ApiPublicCronSubscriptionsRoute: ApiPublicCronSubscriptionsRoute,
   ApiPublicListingsUpsertRoute: ApiPublicListingsUpsertRoute,
   ApiPublicMailgunEventsRoute: ApiPublicMailgunEventsRoute,
