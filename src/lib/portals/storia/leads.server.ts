@@ -33,6 +33,14 @@ import {
   storiaListingStatus,
   withStoriaAdSlug,
 } from "./adverts.server";
+import {
+  isStoriaErrorEvent,
+  isStoriaRemovalSuccess,
+  isStoriaSuccessEvent,
+  readStoriaAdvertError,
+  storiaInfoMessage,
+  storiaNotificationId,
+} from "./advert-errors";
 
 type Json = Record<string, unknown>;
 
@@ -433,6 +441,31 @@ async function processMessage(admin: Admin, shape: StoriaEventShape): Promise<St
     : { processed: true, note: `mesaj Storia adăugat pe lead-ul existent ${outcome.leadId}` };
 }
 
+/** Notificare în aplicație pentru agentul responsabil, o singură dată per tranzacție. */
+async function notifyStoriaAgent(
+  admin: Admin,
+  match: MatchedListing,
+  shape: StoriaEventShape,
+  input: { kind: string; title: string; body: string },
+): Promise<void> {
+  if (!match.assignedTo) return;
+  const txKey =
+    shape.transactionId ?? `${shape.advertUuid ?? "-"}:${shape.eventType ?? "-"}:${input.body}`;
+  const id = await storiaNotificationId([input.kind, match.organizationId, txKey, match.assignedTo]);
+  await admin.from("notifications").upsert(
+    {
+      id,
+      organization_id: match.organizationId,
+      user_id: match.assignedTo,
+      type: input.kind === "storia_error" ? "portal_failure" : "portal_info",
+      title: input.title.slice(0, 200),
+      body: input.body.slice(0, 500),
+      link: `/app/properties/${match.propertyId}?tab=publishing`,
+    },
+    { onConflict: "id", ignoreDuplicates: true },
+  );
+}
+
 async function processLifecycle(
   admin: Admin,
   shape: StoriaEventShape,
@@ -585,6 +618,17 @@ async function processLifecycle(
       processed: true,
       note: `anunț Storia expirat („${code}”) — ${outcome.note}`,
     };
+  }
+
+  // Stări de așteptare (new/unpaid/blocked): mesaj informativ, nu eroare.
+  const info = storiaInfoMessage(code);
+  if (info) {
+    await notifyStoriaAgent(admin, match, shape, {
+      kind: "storia_info",
+      title: `Storia: „${match.propertyTitle}”`,
+      body: info,
+    });
+    return { processed: true, note: `status anunț Storia „${code}” → ${status}: ${info}` };
   }
 
   return { processed: true, note: `status anunț Storia „${code}” → ${status}` };
