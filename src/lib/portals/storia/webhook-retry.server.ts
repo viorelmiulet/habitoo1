@@ -13,8 +13,38 @@ export type RetryRow = {
   received_at: string;
 };
 
-/** Primul pas: procesarea după răspuns are 2 minute înainte să fie preluată de cron. */
-export const FIRST_PICKUP_MS = 2 * 60_000;
+/** Rând fără `next_attempt_at` (procesarea din cerere n-a terminat): preluat după 1 minut. */
+export const FIRST_PICKUP_MS = 60_000;
+
+/** Timpul maxim de procesare în cererea webhook-ului (OLX cere răspuns sub 2s). */
+export const STORIA_INLINE_BUDGET_MS = 1500;
+
+/**
+ * Rulează procesarea cu limită de timp. „done” = a terminat în limită;
+ * „timeout” = limita a fost depășită (procesarea poate continua, dar
+ * răspundem fără s-o așteptăm); „failed” = a aruncat o eroare.
+ */
+export async function processWithinBudget(
+  task: () => Promise<unknown>,
+  budgetMs: number,
+): Promise<"done" | "timeout" | "failed"> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const timeout = new Promise<"timeout">((resolve) => {
+    timer = setTimeout(() => resolve("timeout"), budgetMs);
+  });
+  const run = task().then(
+    () => "done" as const,
+    (error) => {
+      console.error("[storia] procesarea din cerere a eșuat", error);
+      return "failed" as const;
+    },
+  );
+  try {
+    return await Promise.race([run, timeout]);
+  } finally {
+    if (timer) clearTimeout(timer);
+  }
+}
 
 export function isRetryDue(row: RetryRow, nowMs: number): boolean {
   if (row.attempts >= STORIA_MAX_ATTEMPTS) return false;
