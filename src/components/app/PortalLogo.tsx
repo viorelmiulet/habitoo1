@@ -18,6 +18,7 @@ import olxLogo from "@/assets/portals/olx.png";
 import primulanuntLogo from "@/assets/portals/primulanunt.png";
 import publi24Logo from "@/assets/portals/publi24.png";
 import properstarLogo from "@/assets/portals/properstar.png.asset.json";
+import vdiLogo from "@/assets/portals/vdi.png";
 import romimoLogo from "@/assets/portals/romimo.png";
 import storiaLogo from "@/assets/portals/storia.png";
 import { portalLogoIds } from "@/lib/portals/registry";
@@ -38,6 +39,7 @@ const PORTAL_LOGOS: Record<string, string> = {
   properstar: properstarLogo.url,
   romimo: romimoLogo,
   primulanunt: primulanuntLogo,
+  vdi: vdiLogo,
 };
 
 /** Există logo local pentru portalul dat? */
