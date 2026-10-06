@@ -323,64 +323,86 @@ export const PropertyPortalsCard = forwardRef<
   );
   const actionable = [...new Set([...dirty, ...toSync])];
 
-  const inFlight = useSyncExternalStore(
-    portalQueue.subscribe,
-    portalQueue.getSnapshot,
-    portalQueue.getSnapshot,
+  /**
+   * Starea joburilor vine din baza de date (coada durabilă de pe server):
+   * funcționează după reîncărcare sau de pe alt dispozitiv. Reîmprospătare la
+   * 3 s doar cât există joburi active pe proprietate.
+   */
+  const jobsKey = ["property-publish-jobs", organizationId, propertyId] as const;
+  const jobs = useQuery({
+    queryKey: jobsKey,
+    queryFn: () =>
+      loadJobs({ data: { ...(organizationId ? { organizationId } : {}), propertyId } }),
+    refetchInterval: (q) =>
+      q.state.data?.some((j) => j.status === "queued" || j.status === "running") ? 3_000 : false,
+  });
+  const activePortals = useMemo(
+    () =>
+      new Set(
+        (jobs.data ?? [])
+          .filter((j) => j.status === "queued" || j.status === "running")
+          .map((j) => j.portalId),
+      ),
+    [jobs.data],
   );
 
+  /** Joburi văzute active în această pagină: la finalizare, mesaj pe portal. */
+  const watchedJobs = useRef(new Set<string>());
+  useEffect(() => {
+    let finished = false;
+    for (const job of jobs.data ?? []) {
+      const active = job.status === "queued" || job.status === "running";
+      if (active) {
+        watchedJobs.current.add(job.id);
+        continue;
+      }
+      if (!watchedJobs.current.has(job.id)) continue;
+      watchedJobs.current.delete(job.id);
+      finished = true;
+      const name = cells.find((c) => c.portalId === job.portalId)?.portalName ?? job.portalId;
+      if (job.ok) toast.success(`${name}: ${job.message ?? "actualizat"}`.replace(/: (.+)$/, (m) => m));
+      else toast.error(job.message ? `${name}: ${job.message}` : `${name}: publicarea a eșuat.`);
+    }
+    if (finished) {
+      void queryClient.invalidateQueries({
+        queryKey: ["property-portals-selection", organizationId, propertyId],
+      });
+      void queryClient.invalidateQueries({ queryKey: ["property-portals-matrix"] });
+      void queryClient.invalidateQueries({ queryKey: ["my-portal-slot"] });
+      void queryClient.invalidateQueries({
+        queryKey: ["property-portal-journal", organizationId, propertyId],
+      });
+    }
+  }, [jobs.data, cells, queryClient, organizationId, propertyId]);
+
   /**
-   * Trimite UN singur portal, în fundal (coada sesiunii, max. 3 în paralel).
-   * Selecția conține doar acest portal, deci `syncExisting` nu atinge altele.
-   * `false` = portalul e deja în lucru.
+   * Înscrie câte un job pe server pentru fiecare portal și revine imediat.
+   * Portalurile cu job activ sunt sărite (fără dublă trimitere).
    */
-  const enqueuePortal = useCallback(
-    (cell: PropertyPortalCell) => {
-      const selection = {
-        portalId: cell.portalId,
-        enabled: checked[cell.portalId] ?? cell.selected,
-        ...(cell.promotionFlag ? { promoted: promotedValue(cell) } : {}),
-      };
-      const name = cell.portalName;
-      return portalQueue.enqueue({
-        propertyId,
-        portalId: cell.portalId,
-        run: () =>
-          applyFn({
-            data: {
-              ...(organizationId ? { organizationId } : {}),
-              propertyId,
-              selections: [selection],
-              syncExisting: true,
-            },
-          }),
-        onDone: (outcome) => {
-          if (outcome.ok) {
-            const result = outcome.value.results.find((r) => r.portalId === cell.portalId);
-            if (!result) toast.success(`${name}: nicio schimbare`);
-            else if (result.ok)
-              toast.success(
-                result.action === "withdrawn" ? `${name}: retras` : `${name}: publicat`,
-              );
-            else toast.error(result.message ?? `${name}: publicarea a eșuat.`);
-          } else {
-            const message =
-              outcome.error instanceof Error ? outcome.error.message : "publicarea a eșuat.";
-            toast.error(`${name}: ${message}`);
-          }
-          void queryClient.invalidateQueries({
-            queryKey: ["property-portals-selection", organizationId, propertyId],
-          });
-          void queryClient.invalidateQueries({ queryKey: ["property-portals-matrix"] });
-          void queryClient.invalidateQueries({ queryKey: ["my-portal-slot", cell.portalId] });
-          void queryClient.invalidateQueries({
-            queryKey: ["property-portal-journal", organizationId, propertyId],
-          });
+  const enqueuePortals = useCallback(
+    async (targets: PropertyPortalCell[]): Promise<number> => {
+      const selections = targets
+        .filter((c) => c.availability === "available" && !activePortals.has(c.portalId))
+        .map((c) => ({
+          portalId: c.portalId,
+          enabled: checked[c.portalId] ?? c.selected,
+          ...(c.promotionFlag ? { promoted: promotedValue(c) } : {}),
+        }));
+      if (selections.length === 0) return 0;
+      const out = await enqueueFn({
+        data: {
+          ...(organizationId ? { organizationId } : {}),
+          propertyId,
+          selections,
+          syncExisting: true,
         },
       });
+      for (const r of out.results) if (!r.queued && r.message) toast.error(r.message);
+      void queryClient.invalidateQueries({ queryKey: jobsKey });
+      return out.results.filter((r) => r.queued).length;
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [checked, promotedChecked, propertyId, organizationId, applyFn, queryClient],
+    [checked, promotedChecked, propertyId, organizationId, enqueueFn, queryClient, activePortals],
   );
 
   const applyPending = useCallback(async () => {
