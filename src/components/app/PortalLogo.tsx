@@ -73,13 +73,13 @@ export function PortalLogo({ portalId, name, fallback, size = 32, className, alt
         className,
       )}
       style={{ width: size, height: size }}
-      aria-hidden
+      aria-hidden={alt ? undefined : true}
       title={name}
     >
       {src && !failed ? (
         <img
           src={src}
-          alt=""
+          alt={alt ?? ""}
           width={size}
           height={size}
           loading="lazy"
