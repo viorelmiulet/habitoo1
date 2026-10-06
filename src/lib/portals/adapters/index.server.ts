@@ -10,6 +10,7 @@ import { primulanuntAdapter } from "./primulanunt.server";
 import { homepitchAdapter } from "./homepitch.server";
 import { romimoAdapter } from "./romimo.server";
 import { storiaAdapter } from "./storia.server";
+import { vdiAdapter } from "./vdi.server";
 
 const ADAPTERS: Record<string, PortalAdapter> = {
   clickimob: clickimobAdapter,
@@ -22,6 +23,7 @@ const ADAPTERS: Record<string, PortalAdapter> = {
   homepitch: homepitchAdapter,
   romimo: romimoAdapter,
   storia: storiaAdapter,
+  vdi: vdiAdapter,
 };
 
 export function getPortalAdapter(portalId: string): PortalAdapter | null {

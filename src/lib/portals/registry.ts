@@ -497,6 +497,33 @@ export const PORTALS: PortalDefinition[] = [
     notes:
       "Publicare PUSH pe POST /api/public/v1/listings, idempotentă după external_id (a doua trimitere actualizează același anunț). Actualizarea este parțială (PATCH modifică doar câmpurile trimise), iar retragerea arhivează anunțul (DELETE), nu îl șterge definitiv. Testul conexiunii folosește GET /api/public/v1/ping. Pozele se încarcă separat, multipart/form-data, maximum 20 de imagini și 10 MB fiecare, prima devine automat coperta; cu ?replace=true se înlocuiește tot setul dintr-un apel. Anunțul publicat primește de la portal linkul public complet. Conturile de agenție neverificate trec prin moderare (eventual anunțată prin webhook — nu implementat în această etapă). Promovarea plătită în timp real (boost cu credite) nu este implementată din Habitoo. Portalul nu impune o limită fixă pe cheie; pentru sincronizări mari recomandă maximum 2–3 cereri pe secundă.",
   },
+  {
+    id: "vdi",
+    activation: "self_service",
+    display_name: "VDI.ro",
+    description:
+      "Habitoo trimite direct anunțul (publicare, actualizare, retragere) cu cheia API a agenției. Agentul responsabil este trimis automat înaintea anunțului.",
+    logo: "VDI",
+    status: "available",
+    directions: ["habitoo_to_portal"],
+    authentication: ["portal_api_key"],
+    capabilities: ["test_connection", "publish_listing", "update_listing", "withdraw_listing", "sync"],
+    configuration_schema: {
+      fields: [
+        {
+          key: "api_key",
+          label: "Cheie API VDI.ro",
+          help: "Cheia agenției, obținută de la suport@vdi.ro. Se salvează criptat.",
+          secret: true,
+          target: "credentials",
+        },
+      ],
+    },
+    website: "https://vdi.ro",
+    docs: "https://vdi.ro/en/documentatie-api/8o3AfHgVfwJYgEXaqETXW5jQnUGwtPCKGE5VDE75",
+    notes:
+      "PUSH JSON pe POST /apioferte (add/mod/del/list) și POST /api pentru agenți, cu header X-Api-Key. Agentul trebuie să aibă email. Facilitățile (optiuni) nu se trimit încă: o valoare necunoscută respinge tot anunțul. O ofertă de vânzare și închiriere se trimite ca vânzare.",
+  },
 ];
 
 /** Cataloage de promovare afișate lângă portaluri, fără a intra în fluxurile lor de publicare. */
