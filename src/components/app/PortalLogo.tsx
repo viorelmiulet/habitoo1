@@ -56,9 +56,11 @@ type Props = {
   /** Latura pătratului, în px. */
   size?: number;
   className?: string;
+  /** Alt text al imaginii; când e setat, logo-ul devine accesibil screen-reader-urilor. */
+  alt?: string;
 };
 
-export function PortalLogo({ portalId, name, fallback, size = 32, className }: Props) {
+export function PortalLogo({ portalId, name, fallback, size = 32, className, alt }: Props) {
   const [failed, setFailed] = useState(false);
   const src = PORTAL_LOGOS[portalId];
   const initials = fallback ?? name.slice(0, 2).toUpperCase();
