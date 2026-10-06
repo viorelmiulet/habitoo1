@@ -3453,3 +3453,81 @@ export const setPropertyStoriaAutoRenew = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { ok: true };
   });
+
+/* ------------------- coada durabilă de publicare (portal_publish_jobs) ------------------- */
+
+export type PortalEnqueueResult = {
+  portalId: string;
+  portalName: string;
+  queued: boolean;
+  message: string | null;
+};
+
+/**
+ * Înscrie câte un job per portal și răspunde imediat; nu rulează nimic pe portal.
+ * Validările rapide (permisiuni, activare, contact, sloturi) rămân aici.
+ */
+export const enqueuePortalPublishJobs = createServerFn({ method: "POST" })
+  .middleware([requireActiveOrgAuth])
+  .inputValidator((input: unknown) => applySelectionSchema.parse(input))
+  .handler(async ({ data, context }): Promise<{ results: PortalEnqueueResult[] }> => {
+    const { organizationId, superadmin, agentOnly } = await resolvePublishingOrg(
+      context as unknown as AuthContext,
+      data.organizationId,
+    );
+    await assertPortalPropertyAccess({
+      organizationId,
+      propertyId: data.propertyId,
+      agentOnly,
+      userId: context.userId,
+    });
+    const { enqueuePublishJobsForOrg } = await import("@/lib/portals/publish-enqueue.server");
+    return enqueuePublishJobsForOrg({
+      organizationId,
+      superadmin,
+      actorId: context.userId,
+      data,
+      loadAdmin,
+      activatedPortalIds,
+    });
+  });
+
+export type PropertyPublishJobView = {
+  portalId: string;
+  status: "queued" | "running" | "done" | "error";
+  ok: boolean | null;
+  action: string | null;
+  message: string | null;
+  finishedAt: string | null;
+  id: string;
+};
+
+/** Joburile recente ale proprietății (active + ultimele finalizate). */
+export const getPropertyPublishJobs = createServerFn({ method: "POST" })
+  .middleware([requireActiveOrgAuth])
+  .inputValidator((input: unknown) =>
+    z.object({ organizationId: z.string().uuid().optional(), propertyId: z.string().uuid() }).parse(input),
+  )
+  .handler(async ({ data, context }): Promise<PropertyPublishJobView[]> => {
+    const { organizationId } = await resolvePublishingOrg(
+      context as unknown as AuthContext,
+      data.organizationId,
+    );
+    const admin = await loadAdmin();
+    const { data: rows } = await admin
+      .from("portal_publish_jobs")
+      .select("id, portal_key, status, result_ok, result_action, result_message, finished_at")
+      .eq("organization_id", organizationId)
+      .eq("property_id", data.propertyId)
+      .order("created_at", { ascending: false })
+      .limit(40);
+    return (rows ?? []).map((r) => ({
+      id: r.id,
+      portalId: r.portal_key,
+      status: r.status as PropertyPublishJobView["status"],
+      ok: r.result_ok,
+      action: r.result_action,
+      message: r.result_message,
+      finishedAt: r.finished_at,
+    }));
+  });

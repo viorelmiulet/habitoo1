@@ -5314,6 +5314,84 @@ export type Database = {
           },
         ]
       }
+      portal_publish_jobs: {
+        Row: {
+          attempts: number
+          created_at: string
+          enabled: boolean
+          finished_at: string | null
+          id: string
+          locked_at: string | null
+          next_attempt_at: string
+          organization_id: string
+          portal_key: string
+          promoted: boolean | null
+          property_id: string
+          requested_by: string
+          result_action: string | null
+          result_message: string | null
+          result_ok: boolean | null
+          status: string
+          superadmin: boolean
+          sync_existing: boolean
+        }
+        Insert: {
+          attempts?: number
+          created_at?: string
+          enabled: boolean
+          finished_at?: string | null
+          id?: string
+          locked_at?: string | null
+          next_attempt_at?: string
+          organization_id: string
+          portal_key: string
+          promoted?: boolean | null
+          property_id: string
+          requested_by: string
+          result_action?: string | null
+          result_message?: string | null
+          result_ok?: boolean | null
+          status?: string
+          superadmin?: boolean
+          sync_existing?: boolean
+        }
+        Update: {
+          attempts?: number
+          created_at?: string
+          enabled?: boolean
+          finished_at?: string | null
+          id?: string
+          locked_at?: string | null
+          next_attempt_at?: string
+          organization_id?: string
+          portal_key?: string
+          promoted?: boolean | null
+          property_id?: string
+          requested_by?: string
+          result_action?: string | null
+          result_message?: string | null
+          result_ok?: boolean | null
+          status?: string
+          superadmin?: boolean
+          sync_existing?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "portal_publish_jobs_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "portal_publish_jobs_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       portal_slot_allocations: {
         Row: {
           created_at: string
@@ -8142,6 +8220,35 @@ export type Database = {
           isSetofReturn: true
         }
       }
+      claim_portal_publish_jobs: {
+        Args: { _lease_seconds: number; _limit: number }
+        Returns: {
+          attempts: number
+          created_at: string
+          enabled: boolean
+          finished_at: string | null
+          id: string
+          locked_at: string | null
+          next_attempt_at: string
+          organization_id: string
+          portal_key: string
+          promoted: boolean | null
+          property_id: string
+          requested_by: string
+          result_action: string | null
+          result_message: string | null
+          result_ok: boolean | null
+          status: string
+          superadmin: boolean
+          sync_existing: boolean
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "portal_publish_jobs"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
       claim_portal_slot_withdraw_job: {
         Args: { _job_id: string; _ttl_seconds: number }
         Returns: {
@@ -8440,6 +8547,9 @@ export type Database = {
       plan_agent_limit: { Args: { _plan: string }; Returns: number }
       portal_bulk_arm: { Args: never; Returns: undefined }
       portal_bulk_tick: { Args: never; Returns: undefined }
+      portal_publish_arm: { Args: never; Returns: undefined }
+      portal_publish_kick: { Args: never; Returns: undefined }
+      portal_publish_tick: { Args: never; Returns: undefined }
       portal_slot_withdraw_arm: { Args: never; Returns: undefined }
       portal_slot_withdraw_tick: { Args: never; Returns: undefined }
       portal_status_withdraw_arm: { Args: never; Returns: undefined }
