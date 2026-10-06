@@ -257,4 +257,25 @@ describe("applyPropertyPortalSelection", () => {
     const listingWrites = writes.filter((w) => w.table === "portal_listings");
     expect(listingWrites.length).toBeGreaterThan(0);
   });
+
+  it("un apel cu o singură selecție nu atinge alte portaluri", async () => {
+    const { applyPortalSelectionForOrg } = await import("@/lib/portals.functions");
+    const out = await applyPortalSelectionForOrg({
+      organizationId: "org-1",
+      superadmin: false,
+      actorId: "user-1",
+      data: {
+        propertyId: "11111111-1111-1111-1111-111111111111",
+        selections: [{ portalId: "clickimob", enabled: true }],
+        syncExisting: true,
+      },
+    });
+    expect(out.results.map((r) => r.portalId)).toEqual(["clickimob"]);
+    expect(adapterContexts.map((c) => c.portal)).toEqual(["clickimob"]);
+    const touched = writes
+      .map((w) => (w.row as { portal_key?: string; portal?: string } | null) ?? {})
+      .map((row) => row.portal_key ?? row.portal)
+      .filter(Boolean);
+    expect(touched.every((key) => key === "clickimob")).toBe(true);
+  });
 });
