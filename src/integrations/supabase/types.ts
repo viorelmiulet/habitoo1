@@ -5021,6 +5021,7 @@ export type Database = {
       portal_messages: {
         Row: {
           body: string | null
+          conversation_id: string | null
           created_at: string
           expires_at: string
           external_message_id: string | null
@@ -5037,6 +5038,7 @@ export type Database = {
         }
         Insert: {
           body?: string | null
+          conversation_id?: string | null
           created_at?: string
           expires_at?: string
           external_message_id?: string | null
@@ -5053,6 +5055,7 @@ export type Database = {
         }
         Update: {
           body?: string | null
+          conversation_id?: string | null
           created_at?: string
           expires_at?: string
           external_message_id?: string | null
@@ -5631,6 +5634,87 @@ export type Database = {
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      portal_unmatched_messages: {
+        Row: {
+          ad_ref: string | null
+          assigned_at: string | null
+          assigned_by: string | null
+          assigned_lead_id: string | null
+          assigned_organization_id: string | null
+          assigned_property_id: string | null
+          body: string | null
+          conversation_id: string | null
+          created_at: string
+          expires_at: string
+          external_message_id: string | null
+          id: string
+          portal: string
+          sender_email: string | null
+          sender_name: string | null
+          sender_phone: string | null
+          sent_at: string
+          status: string
+          webhook_event_id: string | null
+        }
+        Insert: {
+          ad_ref?: string | null
+          assigned_at?: string | null
+          assigned_by?: string | null
+          assigned_lead_id?: string | null
+          assigned_organization_id?: string | null
+          assigned_property_id?: string | null
+          body?: string | null
+          conversation_id?: string | null
+          created_at?: string
+          expires_at?: string
+          external_message_id?: string | null
+          id?: string
+          portal: string
+          sender_email?: string | null
+          sender_name?: string | null
+          sender_phone?: string | null
+          sent_at?: string
+          status?: string
+          webhook_event_id?: string | null
+        }
+        Update: {
+          ad_ref?: string | null
+          assigned_at?: string | null
+          assigned_by?: string | null
+          assigned_lead_id?: string | null
+          assigned_organization_id?: string | null
+          assigned_property_id?: string | null
+          body?: string | null
+          conversation_id?: string | null
+          created_at?: string
+          expires_at?: string
+          external_message_id?: string | null
+          id?: string
+          portal?: string
+          sender_email?: string | null
+          sender_name?: string | null
+          sender_phone?: string | null
+          sent_at?: string
+          status?: string
+          webhook_event_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "portal_unmatched_messages_assigned_organization_id_fkey"
+            columns: ["assigned_organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "portal_unmatched_messages_assigned_property_id_fkey"
+            columns: ["assigned_property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
             referencedColumns: ["id"]
           },
         ]
