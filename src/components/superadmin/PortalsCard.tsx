@@ -681,6 +681,15 @@ export function PortalsCard({ organizationId }: { organizationId: string }) {
                           </p>
                         </div>
 
+                        {item.oauth.reconnectRequired ? (
+                          <p
+                            role="alert"
+                            className="rounded-lg border border-destructive/40 bg-destructive/5 p-3 text-sm font-medium text-destructive"
+                          >
+                            Reconectează contul Storia: autorizarea nu mai poate fi reînnoită automat.
+                          </p>
+                        ) : null}
+
                         {item.oauth.appConfigured ? null : (
                           <p className="rounded-lg border border-destructive/40 bg-destructive/5 p-3 text-xs text-destructive">
                             Credențialele de aplicație pentru {portalDisplayName(item.portal.id)} nu sunt
@@ -692,7 +701,9 @@ export function PortalsCard({ organizationId }: { organizationId: string }) {
                           <div>
                             <dt className="text-muted-foreground">Autorizare</dt>
                             <dd>
-                              {!item.oauth.connected
+                              {item.oauth.reconnectRequired
+                                ? "Necesită reconectare"
+                                : !item.oauth.connected
                                 ? "Neconectat"
                                 : item.oauth.expired
                                   ? item.oauth.canRefresh
@@ -732,7 +743,9 @@ export function PortalsCard({ organizationId }: { organizationId: string }) {
                             disabled={startOAuth.isPending || item.oauth?.appConfigured !== true}
                           >
                             <ExternalLink className="mr-2 size-4" />
-                            {item.oauth.connected
+                            {item.oauth.reconnectRequired
+                              ? "Reconectează contul Storia"
+                              : item.oauth.connected
                               ? "Reconectează contul"
                               : `Conectează contul ${portalDisplayName(item.portal.id)}`}
                           </Button>

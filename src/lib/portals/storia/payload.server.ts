@@ -58,7 +58,7 @@ export async function buildStoriaPayload(input: {
       .eq("property_id", input.propertyId),
     supabaseAdmin
       .from("organizations")
-      .select("phone, email")
+      .select("phone, email, storia_auto_republish")
       .eq("id", input.organizationId)
       .maybeSingle(),
     row.assigned_to
@@ -74,6 +74,7 @@ export async function buildStoriaPayload(input: {
     baseUrl: CRM_URL,
     images: (images ?? []) as PropertyImageRow[],
     agent: (agentResult.data ?? null) as Pick<ProfileRow, "full_name" | "email" | "phone"> | null,
+    autoExtend: org?.storia_auto_republish === true,
   });
 
   if (!result.ok) return { ok: false, reasons: result.reasons };

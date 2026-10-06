@@ -299,6 +299,9 @@ export async function saveStoriaTokens(input: {
     has_refresh_token: Boolean(input.tokens.refresh_token),
   };
   settings["oauth"] = meta;
+  // Tokenuri noi = conexiune refăcută: ștergem marcajul de reconectare.
+  delete settings["reconnect_required"];
+  delete settings["reconnect_required_at"];
 
   const patch = {
     organization_id: input.organizationId,
@@ -367,13 +370,22 @@ export async function getStoriaAccessToken(
   if (!options.force && !expiringSoon) return tokens.access_token;
 
   if (!tokens.refresh_token) {
+    await markStoriaReconnectRequired(organizationId, "refresh_token_missing");
     throw new PortalError(
       "AUTH_ERROR",
       "storia_refresh_token_missing",
       "Autorizarea Storia a expirat și nu poate fi reînnoită automat. Reia conectarea contului Storia.",
     );
   }
-  const refreshed = await refreshStoriaTokens(tokens.refresh_token);
+  let refreshed: StoriaTokens;
+  try {
+    refreshed = await refreshStoriaTokens(tokens.refresh_token);
+  } catch (error) {
+    if (isPermanentRefreshFailure(error)) {
+      await markStoriaReconnectRequired(organizationId, (error as PortalError).detail ?? "refresh_failed");
+    }
+    throw error;
+  }
   // OLX rotește refresh_token-ul: păstrăm cel nou, altfel pierdem accesul.
   const next: StoriaTokens = {
     ...refreshed,
@@ -381,6 +393,70 @@ export async function getStoriaAccessToken(
   };
   await saveStoriaTokens({ organizationId, tokens: next, actorId: null, initial: false });
   return next.access_token;
+}
+
+/**
+ * Reînnoirea a fost refuzată definitiv (refresh invalid sau acces revocat):
+ * 400/401/403 la `grant_type=refresh_token`. Erorile de rețea sau 5xx nu
+ * înseamnă reconectare.
+ */
+export function isPermanentRefreshFailure(error: unknown): boolean {
+  return (
+    error instanceof PortalError &&
+    /^token_http_(400|401|403)$/.test(error.detail ?? "")
+  );
+}
+
+/**
+ * Marchează conexiunea Storia ca „necesită reconectare” și notifică
+ * administratorii agenției o singură dată (doar la trecerea în această stare).
+ */
+export async function markStoriaReconnectRequired(
+  organizationId: string,
+  reason: string,
+): Promise<void> {
+  try {
+    const db = await admin();
+    const { data: row } = await db
+      .from("portal_connections")
+      .select("id, settings")
+      .eq("organization_id", organizationId)
+      .eq("portal", "storia")
+      .maybeSingle();
+    if (!row) return;
+    const settings = { ...((row.settings ?? {}) as Record<string, unknown>) };
+    const already = settings["reconnect_required"] === true;
+    settings["reconnect_required"] = true;
+    settings["reconnect_required_at"] = settings["reconnect_required_at"] ?? new Date().toISOString();
+    await db
+      .from("portal_connections")
+      .update({
+        settings,
+        status: "error",
+        last_sync_error: "Reconectează contul Storia: autorizarea nu mai poate fi reînnoită.",
+      } as never)
+      .eq("id", row.id);
+    if (already) return;
+
+    const { data: admins } = await db
+      .from("user_roles")
+      .select("user_id")
+      .eq("organization_id", organizationId)
+      .eq("role", "agency_admin");
+    for (const userId of new Set((admins ?? []).map((r) => r.user_id))) {
+      await db.from("notifications").insert({
+        organization_id: organizationId,
+        user_id: userId,
+        type: "portal_failure",
+        title: "Reconectează contul Storia",
+        body: "Autorizarea Storia a expirat sau a fost revocată. Publicările pe Storia sunt oprite până la reconectare.",
+        link: "/app/settings?tab=portals",
+      });
+    }
+    console.warn(`[storia] conexiune marcată pentru reconectare (${reason})`);
+  } catch (error) {
+    console.error("[storia] marcarea pentru reconectare a eșuat", error);
+  }
 }
 
 // ------------------------------------------------------------- cereri OLX API

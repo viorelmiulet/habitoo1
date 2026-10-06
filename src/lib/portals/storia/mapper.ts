@@ -127,6 +127,8 @@ export type StoriaMapOptions = {
   baseUrl: string;
   images?: PropertyImageRow[];
   agent?: Pick<ProfileRow, "full_name" | "email" | "phone"> | null;
+  /** Setarea agenției `storia_auto_republish`; lipsă = oprită. */
+  autoExtend?: boolean;
 };
 
 export function mapPropertyToStoria(p: PropertyRow, options: StoriaMapOptions): StoriaMapResult {
@@ -292,7 +294,7 @@ export function mapPropertyToStoria(p: PropertyRow, options: StoriaMapOptions): 
         ...(reference ? { reference_id: reference } : {}),
       },
       market,
-      auto_extend: true,
+      auto_extend: options.autoExtend === true,
     };
     advert.contact = {
       name: agentName,
