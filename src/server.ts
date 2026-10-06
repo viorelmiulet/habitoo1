@@ -1,4 +1,5 @@
 import "./lib/error-capture";
+import { runWithRequestContext } from "./lib/after-response";
 
 import { consumeLastCapturedError } from "./lib/error-capture";
 import { renderErrorPage } from "./lib/error-page";
@@ -88,7 +89,7 @@ export default {
     }
     try {
       const handler = await getServerEntry();
-      const response = await handler.fetch(request, env, ctx);
+      const response = await runWithRequestContext(ctx, () => handler.fetch(request, env, ctx));
       return withNoindexHeader(
         withPrivateDocumentCache(await normalizeCatastrophicSsrResponse(response), request),
         request,

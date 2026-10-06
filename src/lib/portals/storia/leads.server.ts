@@ -41,6 +41,7 @@ import {
   storiaInfoMessage,
   storiaNotificationId,
 } from "./advert-errors";
+import { isStaleStoriaEvent, storiaEventTimestampMs } from "./notifications.server";
 
 type Json = Record<string, unknown>;
 
@@ -98,6 +99,8 @@ export type StoriaEventShape = {
   adSlug: string | null;
   /** Linkul public al anunțului (`data.url`), când vine în notificare. */
   publicUrl: string | null;
+  /** `event_timestamp` (sau `timestamp`) normalizat în milisecunde. */
+  eventTimestampMs: number | null;
   customId: string | null;
   data: Json;
 };
@@ -135,6 +138,7 @@ export function readEventShape(parsed: unknown): StoriaEventShape | null {
         ? adSlugCandidate
         : null,
     publicUrl: publicUrl && /^https?:\/\//i.test(publicUrl) ? publicUrl : null,
+    eventTimestampMs: storiaEventTimestampMs(root),
     customId: pick(data, [
       "custom_fields.id",
       "advert.custom_fields.id",
@@ -487,6 +491,30 @@ async function processLifecycle(
     learned = withStoriaAdSlug(learned ?? match.externalId, shape.adSlug);
   }
   const externalId = learned;
+
+  // Ordinea nu e garantată: un eveniment mai vechi decât ultimul aplicat pe
+  // anunț nu suprascrie o stare mai nouă.
+  if (shape.eventTimestampMs !== null) {
+    const { data: row } = await admin
+      .from("portal_listings")
+      .select("last_event_at")
+      .eq("portal", "storia")
+      .eq("organization_id", match.organizationId)
+      .eq("property_id", match.propertyId)
+      .maybeSingle();
+    if (isStaleStoriaEvent(shape.eventTimestampMs, row?.last_event_at ?? null)) {
+      return {
+        processed: true,
+        note: `eveniment Storia mai vechi decât ultimul aplicat (${shape.eventType ?? "-"}) — ignorat`,
+      };
+    }
+    await admin
+      .from("portal_listings")
+      .update({ last_event_at: new Date(shape.eventTimestampMs).toISOString() })
+      .eq("portal", "storia")
+      .eq("organization_id", match.organizationId)
+      .eq("property_id", match.propertyId);
+  }
   const urlPatch = shape.publicUrl ? { public_url: shape.publicUrl } : {};
   const scope = (q: any) =>
     q.eq("organization_id", match.organizationId).eq("property_id", match.propertyId);
@@ -658,8 +686,12 @@ async function alreadyProcessed(
 export async function processStoriaNotification(args: {
   eventId: string | null;
   parsed: unknown;
+  /** Încercări deja făcute pentru acest eveniment (0 la prima procesare). */
+  attempts?: number;
 }): Promise<StoriaProcessResult> {
   let result: StoriaProcessResult = { processed: false, note: "payload nerecunoscut" };
+  /** false = eșec permanent (payload gol, flux necunoscut): nu se reîncearcă. */
+  let retryable = true;
   let admin: Admin | null = null;
   try {
     admin = (await import("@/integrations/supabase/client.server")).supabaseAdmin;
@@ -667,6 +699,7 @@ export async function processStoriaNotification(args: {
 
     if (!shape) {
       result = { processed: false, note: "payload gol sau non-JSON" };
+      retryable = false;
     } else if (
       shape.transactionId &&
       (await alreadyProcessed(admin, shape.transactionId, args.eventId))
@@ -684,27 +717,34 @@ export async function processStoriaNotification(args: {
         processed: false,
         note: `flux Storia neprocesat (flow=${shape.flow ?? "-"}, event=${shape.eventType ?? "-"})`,
       };
+      retryable = false;
     }
   } catch (error) {
     console.error("[storia] procesarea notificării a eșuat", error);
     result = { processed: false, note: `eroare la procesare: ${String(error).slice(0, 300)}` };
   }
 
-  // Curățare oportunistă: mesajele mai vechi decât perioada de păstrare dispar.
-  if (admin) {
-    try {
-      await admin.rpc("purge_expired_portal_messages");
-    } catch (error) {
-      console.error("[storia] curățarea mesajelor expirate a eșuat", error);
-    }
-  }
-
   if (args.eventId && admin) {
+    const { STORIA_MAX_ATTEMPTS, storiaRetryDelayMs } = await import("./notifications.server");
+    const attempts = result.processed || !retryable
+      ? Math.max((args.attempts ?? 0) + 1, retryable ? 0 : STORIA_MAX_ATTEMPTS)
+      : (args.attempts ?? 0) + 1;
+    const delay = result.processed || !retryable ? null : storiaRetryDelayMs(attempts);
+    const now = Date.now();
     try {
+      // `processed = true` se scrie doar după succes: idempotența după
+      // `transaction_id` ia în calcul numai rândurile reușite.
       await admin
         .from("portal_webhook_events")
-        .update({ processed: result.processed, process_note: result.note.slice(0, 500) })
+        .update({
+          processed: result.processed,
+          process_note: result.note.slice(0, 500),
+          attempts,
+          last_attempt_at: new Date(now).toISOString(),
+          next_attempt_at: delay === null ? null : new Date(now + delay).toISOString(),
+        })
         .eq("id", args.eventId);
+      if (delay !== null) await admin.rpc("storia_webhook_retry_arm");
     } catch (error) {
       console.error("[storia] marcarea evenimentului a eșuat", error);
     }

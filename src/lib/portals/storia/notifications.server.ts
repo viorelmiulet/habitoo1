@@ -61,60 +61,81 @@ function equalsHex(a: string, b: string): boolean {
 
 export type SignatureCheck = {
   present: boolean;
-  valid: boolean | null;
+  valid: boolean;
   note: string;
 };
 
 /**
- * Verificare defensivă: orice formă de payload este acceptată la parsare, iar
- * lipsa semnăturii NU invalidează cererea (butonul „Test Callback” din App
- * Manager poate trimite fără semnătură, înainte ca secretul să fie salvat).
- * O semnătură prezentă dar greșită este însă respinsă.
+ * Semnătura documentată de OLX: `x-signature` = HMAC-SHA1 hex peste
+ * `"<object_id>,<transaction_id>"`, cu secretul aplicației. Verificată pe
+ * toate evenimentele reale din jurnal. Lipsa semnăturii, lipsa secretului sau
+ * o semnătură greșită înseamnă cerere respinsă (401, fără procesare).
  */
 export function verifyNotificationSignature(args: {
-  rawBody: string;
   parsed: unknown;
   signature: { header: string; value: string } | null;
+  secret?: string | null;
 }): SignatureCheck {
-  const { rawBody, parsed, signature } = args;
-  if (!signature) {
-    return {
-      present: false,
-      valid: null,
-      note: "semnătură absentă (acceptat pentru testul App Manager)",
-    };
-  }
+  const { parsed, signature } = args;
+  if (!signature) return { present: false, valid: false, note: "semnătură absentă" };
 
-  const secret = notificationSecret();
+  const secret = args.secret === undefined ? notificationSecret() : args.secret;
   if (!secret) {
-    return {
-      present: true,
-      valid: null,
-      note: "OLX_NOTIFICATION_SECRET neconfigurat: semnătura nu a putut fi verificată",
-    };
+    return { present: true, valid: false, note: "OLX_NOTIFICATION_SECRET neconfigurat" };
   }
 
-  const candidates = new Set<string>();
-  candidates.add(hmacSha1Hex(secret, rawBody));
-
-  if (parsed && typeof parsed === "object") {
-    const record = parsed as Record<string, unknown>;
-    const objectId = record["object_id"] ?? record["objectId"];
-    const transactionId = record["transaction_id"] ?? record["transactionId"];
-    if (objectId != null || transactionId != null) {
-      candidates.add(
-        hmacSha1Hex(secret, `${String(objectId ?? "")},${String(transactionId ?? "")}`),
-      );
-    }
+  const record =
+    parsed && typeof parsed === "object" ? (parsed as Record<string, unknown>) : null;
+  const objectId = record?.["object_id"];
+  const transactionId = record?.["transaction_id"];
+  if (objectId == null || transactionId == null) {
+    return { present: true, valid: false, note: "payload fără object_id/transaction_id" };
   }
 
-  for (const candidate of candidates) {
-    if (equalsHex(candidate, signature.value)) {
-      return { present: true, valid: true, note: `semnătură validă (${signature.header})` };
-    }
-  }
+  const expected = hmacSha1Hex(secret, `${String(objectId)},${String(transactionId)}`);
+  return equalsHex(expected, signature.value)
+    ? { present: true, valid: true, note: `semnătură validă (${signature.header})` }
+    : { present: true, valid: false, note: `semnătură invalidă (${signature.header})` };
+}
 
-  return { present: true, valid: false, note: `semnătură invalidă (${signature.header})` };
+/** IP-ul clientului, pentru limitarea de rată. */
+export function clientIp(request: Request): string {
+  const cf = request.headers.get("cf-connecting-ip");
+  if (cf) return cf.trim();
+  const fwd = request.headers.get("x-forwarded-for");
+  if (fwd) return fwd.split(",")[0]!.trim();
+  return "unknown";
+}
+
+/** Momentul evenimentului în ms (`event_timestamp`, altfel `timestamp`; secunde sau ms). */
+export function storiaEventTimestampMs(parsed: unknown): number | null {
+  const record =
+    parsed && typeof parsed === "object" ? (parsed as Record<string, unknown>) : null;
+  if (!record) return null;
+  for (const key of ["event_timestamp", "timestamp"]) {
+    const raw = Number(record[key]);
+    if (Number.isFinite(raw) && raw > 0) return raw < 1e12 ? Math.round(raw * 1000) : Math.round(raw);
+  }
+  return null;
+}
+
+/** Un eveniment strict mai vechi decât ultimul aplicat pe anunț este ignorat. */
+export function isStaleStoriaEvent(eventMs: number | null, lastAppliedIso: string | null): boolean {
+  if (eventMs === null || !lastAppliedIso) return false;
+  const last = Date.parse(lastAppliedIso);
+  return Number.isFinite(last) && eventMs < last;
+}
+
+/** Limita de rată pe IP: cereri per fereastră. */
+export const STORIA_WEBHOOK_RATE_LIMIT = { limit: 120, windowSeconds: 60 } as const;
+
+/** Reprocesare: maxim 5 încercări, pauză crescătoare (1, 5, 15, 60 minute). */
+export const STORIA_MAX_ATTEMPTS = 5;
+const RETRY_DELAYS_MS = [60_000, 5 * 60_000, 15 * 60_000, 60 * 60_000];
+
+export function storiaRetryDelayMs(attempts: number): number | null {
+  if (attempts >= STORIA_MAX_ATTEMPTS) return null;
+  return RETRY_DELAYS_MS[Math.max(0, attempts - 1)] ?? RETRY_DELAYS_MS[RETRY_DELAYS_MS.length - 1]!;
 }
 
 export function parsePayload(rawBody: string): unknown {
