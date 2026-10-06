@@ -3496,6 +3496,7 @@ export type PropertyPublishJobView = {
   portalId: string;
   status: "queued" | "running" | "done" | "error";
   ok: boolean | null;
+  action: string | null;
   message: string | null;
   finishedAt: string | null;
   id: string;
@@ -3515,7 +3516,7 @@ export const getPropertyPublishJobs = createServerFn({ method: "POST" })
     const admin = await loadAdmin();
     const { data: rows } = await admin
       .from("portal_publish_jobs")
-      .select("id, portal_key, status, result_ok, result_message, finished_at")
+      .select("id, portal_key, status, result_ok, result_action, result_message, finished_at")
       .eq("organization_id", organizationId)
       .eq("property_id", data.propertyId)
       .order("created_at", { ascending: false })
@@ -3525,6 +3526,7 @@ export const getPropertyPublishJobs = createServerFn({ method: "POST" })
       portalId: r.portal_key,
       status: r.status as PropertyPublishJobView["status"],
       ok: r.result_ok,
+      action: r.result_action,
       message: r.result_message,
       finishedAt: r.finished_at,
     }));

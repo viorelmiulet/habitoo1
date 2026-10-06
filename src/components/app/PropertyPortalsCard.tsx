@@ -20,10 +20,9 @@ import {
   useEffect,
   useImperativeHandle,
   useMemo,
+  useRef,
   useState,
-  useSyncExternalStore,
 } from "react";
-import { portalQueue, portalTaskKey } from "@/lib/portals/portal-queue";
 import { AlertTriangle, Check, ChevronDown, ExternalLink } from "lucide-react";
 
 import { useMutation, useQueries, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -151,7 +150,8 @@ export const PropertyPortalsCard = forwardRef<
 >(function PropertyPortalsCard({ organizationId, propertyId, assignedTo, onCompleteMissing, onOpenMedia, editing, onPublish, publishPending, showPortalJournal = false }, ref) {
   const queryClient = useQueryClient();
   const loadMatrix = useServerFn(getPropertiesPortalMatrix);
-  const applyFn = useServerFn(applyPropertyPortalSelection);
+  const enqueueFn = useServerFn(enqueuePortalPublishJobs);
+  const loadJobs = useServerFn(getPropertyPublishJobs);
   const queryKey = ["property-portals-selection", organizationId, propertyId] as const;
 
   const loadAutoWithdrawals = useServerFn(getPropertyAutoWithdrawals);
@@ -360,7 +360,7 @@ export const PropertyPortalsCard = forwardRef<
       watchedJobs.current.delete(job.id);
       finished = true;
       const name = cells.find((c) => c.portalId === job.portalId)?.portalName ?? job.portalId;
-      if (job.ok) toast.success(`${name}: ${job.message ?? "actualizat"}`.replace(/: (.+)$/, (m) => m));
+      if (job.ok) toast.success(`${name}: ${job.action === "withdrawn" ? "retras" : "publicat"}`);
       else toast.error(job.message ? `${name}: ${job.message}` : `${name}: publicarea a eșuat.`);
     }
     if (finished) {
@@ -477,20 +477,15 @@ export const PropertyPortalsCard = forwardRef<
       void queryClient.invalidateQueries({ queryKey: ["collaboration-offers"] });
     }
 
-    // Portalurile NU se așteaptă: fiecare pleacă separat, în fundal.
+    // Portalurile NU se execută aici: se înscriu joburi pe server (rapid).
     let portalsQueued = 0;
-    if (portalsActionable) {
-      for (const cell of actionable) {
-        if (cell.availability !== "available") continue;
-        if (enqueuePortal(cell)) portalsQueued += 1;
-      }
-    }
+    if (portalsActionable) portalsQueued = await enqueuePortals(actionable);
 
     return { results, portalsQueued };
   }, [
     canManage,
     actionable,
-    enqueuePortal,
+    enqueuePortals,
     collabDirty,
     collabValue,
     collabPercent,
@@ -790,7 +785,7 @@ export const PropertyPortalsCard = forwardRef<
               const value = checked[cell.portalId] ?? cell.selected;
               const slot = slotQueries[index]?.data;
               const noSlots = !value && !cell.selected && Boolean(slot && (slot.remaining === 0 || slot.agencyExhausted));
-              const busy = inFlight.has(portalTaskKey(propertyId, cell.portalId));
+              const busy = activePortals.has(cell.portalId);
               const disabled =
                 !editing ||
                 !canManage ||
@@ -909,7 +904,7 @@ export const PropertyPortalsCard = forwardRef<
                             type="button"
                             variant="secondary"
                             disabled={busy}
-                            onClick={() => enqueuePortal(cell)}
+                            onClick={() => void enqueuePortals([cell]).catch((e: Error) => toast.error(e.message))}
                           >
                             {cell.lastSyncAt ? "Retrimite" : "Reîncearcă"}
                           </Button>
