@@ -33,6 +33,14 @@ import {
   storiaListingStatus,
   withStoriaAdSlug,
 } from "./adverts.server";
+import {
+  isStoriaErrorEvent,
+  isStoriaRemovalSuccess,
+  isStoriaSuccessEvent,
+  readStoriaAdvertError,
+  storiaInfoMessage,
+  storiaNotificationId,
+} from "./advert-errors";
 
 type Json = Record<string, unknown>;
 
@@ -433,6 +441,31 @@ async function processMessage(admin: Admin, shape: StoriaEventShape): Promise<St
     : { processed: true, note: `mesaj Storia adăugat pe lead-ul existent ${outcome.leadId}` };
 }
 
+/** Notificare în aplicație pentru agentul responsabil, o singură dată per tranzacție. */
+async function notifyStoriaAgent(
+  admin: Admin,
+  match: MatchedListing,
+  shape: StoriaEventShape,
+  input: { kind: string; title: string; body: string },
+): Promise<void> {
+  if (!match.assignedTo) return;
+  const txKey =
+    shape.transactionId ?? `${shape.advertUuid ?? "-"}:${shape.eventType ?? "-"}:${input.body}`;
+  const id = await storiaNotificationId([input.kind, match.organizationId, txKey, match.assignedTo]);
+  await admin.from("notifications").upsert(
+    {
+      id,
+      organization_id: match.organizationId,
+      user_id: match.assignedTo,
+      type: input.kind === "storia_error" ? "portal_failure" : "portal_info",
+      title: input.title.slice(0, 200),
+      body: input.body.slice(0, 500),
+      link: `/app/properties/${match.propertyId}?tab=publishing`,
+    },
+    { onConflict: "id", ignoreDuplicates: true },
+  );
+}
+
 async function processLifecycle(
   admin: Admin,
   shape: StoriaEventShape,
@@ -455,6 +488,63 @@ async function processLifecycle(
   }
   const externalId = learned;
   const urlPatch = shape.publicUrl ? { public_url: shape.publicUrl } : {};
+  const scope = (q: any) =>
+    q.eq("organization_id", match.organizationId).eq("property_id", match.propertyId);
+
+  // Erori de publicare (`*_error`, inclusiv erorile de imagine): nu au `data.code`.
+  if (isStoriaErrorEvent(shape.eventType)) {
+    const error = readStoriaAdvertError(shape.data, shape.eventType);
+    await scope(
+      admin
+        .from("portal_listings")
+        .update({ status: "error", last_error: error.message, last_sync_at: now })
+        .eq("portal", "storia"),
+    );
+    await scope(
+      admin
+        .from("portal_publications")
+        .update({ status: "error", last_error: error.message, last_synced_at: now })
+        .eq("portal_key", "storia"),
+    );
+    await notifyStoriaAgent(admin, match, shape, {
+      kind: "storia_error",
+      title: `Storia a respins anunțul „${match.propertyTitle}”`,
+      body: error.message,
+    });
+    const rawNote = error.recognized ? "" : ` | brut: ${error.raw}`;
+    return {
+      processed: true,
+      note: `eroare Storia (${shape.eventType}): ${error.message}${rawNote}`.slice(0, 500),
+    };
+  }
+
+  // Succes fără cod de status: ștergem eroarea rămasă de la o încercare anterioară.
+  if (!code && isStoriaSuccessEvent(shape.eventType)) {
+    const removed = isStoriaRemovalSuccess(shape.eventType);
+    const { data: current } = await scope(
+      admin.from("portal_listings").select("status").eq("portal", "storia"),
+    ).maybeSingle();
+    await scope(
+      admin
+        .from("portal_listings")
+        .update({
+          last_error: null,
+          last_sync_at: now,
+          ...(current?.status === "error" ? { status: removed ? "withdrawn" : "pending" } : {}),
+          ...(externalId ? { external_id: externalId } : {}),
+          ...urlPatch,
+        })
+        .eq("portal", "storia"),
+    );
+    await scope(
+      admin
+        .from("portal_publications")
+        .update({ status: removed ? "disabled" : "synced", last_error: null, last_synced_at: now })
+        .eq("portal_key", "storia")
+        .eq("status", "error"),
+    );
+    return { processed: true, note: `succes Storia (${shape.eventType}); eroarea anterioară a fost ștearsă` };
+  }
 
   if (!code) {
     if (externalId || shape.publicUrl) {
@@ -528,6 +618,17 @@ async function processLifecycle(
       processed: true,
       note: `anunț Storia expirat („${code}”) — ${outcome.note}`,
     };
+  }
+
+  // Stări de așteptare (new/unpaid/blocked): mesaj informativ, nu eroare.
+  const info = storiaInfoMessage(code);
+  if (info) {
+    await notifyStoriaAgent(admin, match, shape, {
+      kind: "storia_info",
+      title: `Storia: „${match.propertyTitle}”`,
+      body: info,
+    });
+    return { processed: true, note: `status anunț Storia „${code}” → ${status}: ${info}` };
   }
 
   return { processed: true, note: `status anunț Storia „${code}” → ${status}` };
