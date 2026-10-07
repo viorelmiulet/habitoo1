@@ -137,6 +137,7 @@ export type VdiLeadDeps = {
     organizationId: string;
     assignedTo: string | null;
     leadId: string;
+    created: boolean;
     lead: VdiLead;
     propertyTitle: string | null;
   }) => Promise<void>;
@@ -180,6 +181,7 @@ export async function processVdiLead(
     organizationId,
     assignedTo,
     leadId: result.leadId,
+    created: result.created,
     lead,
     propertyTitle: listing?.title ?? lead.offerTitle,
   });
