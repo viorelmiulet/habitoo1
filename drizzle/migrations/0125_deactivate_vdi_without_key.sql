@@ -1,0 +1,1 @@
+UPDATE public.portal_connections SET activated = false, updated_at = now() WHERE portal = 'vdi' AND organization_id = 'f255a149-456c-48bc-a6d7-6219741cfe0d' AND portal_credentials_encrypted IS NULL;
