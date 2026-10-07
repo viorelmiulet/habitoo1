@@ -1,0 +1,1 @@
+DELETE FROM public.notifications WHERE type = 'portal_publish_done';

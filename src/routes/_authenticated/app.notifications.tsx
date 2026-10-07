@@ -29,6 +29,7 @@ function NotificationsPage() {
       const { data, error } = await supabase
         .from("notifications")
         .select("*")
+        .or("type.is.null,type.neq.portal_publish_done")
         .order("created_at", { ascending: false });
       if (error) throw error;
       return data;
