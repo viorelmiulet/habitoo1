@@ -96,6 +96,74 @@ export function sanitizeProperstarHtml(input: string): string {
     .trim();
 }
 
+/** Formatare inline: **bold**, *italic*; asteriscurile rămase singure dispar. */
+function properstarInline(text: string): string {
+  let out = text.replace(/\*\*([^*\n]+)\*\*/g, "<strong>$1</strong>");
+  out = out.replace(/\*([^*\n]+)\*/g, "<em>$1</em>");
+  // Asteriscuri rămase singure: izolate între spații sau la capetele de rând.
+  // Textul cu * între caractere (de exemplu 5*4) rămâne neatins.
+  out = out.replace(/(^|\s)\*(?=\s|$)/gm, "$1");
+  out = out.replace(/\*$/gm, "");
+  out = out.replace(/^\*/gm, "");
+  return out.trim();
+}
+
+/**
+ * Text simplu → HTML permis: rândurile consecutive formează un paragraf
+ * `<p>` cu `<br/>` între ele, rândul gol separă paragrafele, iar rândurile
+ * care încep cu `* ` sau `- ` formează o listă `<ul><li>`.
+ */
+export function plainTextToProperstarHtml(input: string): string {
+  const lines = input.replace(/\r\n?/g, "\n").split("\n");
+  const blocks: string[] = [];
+  let paragraph: string[] = [];
+  let list: string[] = [];
+
+  const flushParagraph = () => {
+    if (!paragraph.length) return;
+    const content = paragraph.map(properstarInline).filter(Boolean).join("<br/>");
+    paragraph = [];
+    if (content) blocks.push(`<p>${content}</p>`);
+  };
+  const flushList = () => {
+    if (!list.length) return;
+    const items = list.map(properstarInline).filter(Boolean);
+    list = [];
+    if (items.length) blocks.push(`<ul>${items.map((i) => `<li>${i}</li>`).join("")}</ul>`);
+  };
+
+  for (const rawLine of lines) {
+    const line = rawLine.trim();
+    const listItem = /^[*-] (.+)$/.exec(line);
+    if (listItem) {
+      flushParagraph();
+      list.push(listItem[1]);
+    } else if (!line) {
+      flushParagraph();
+      flushList();
+    } else {
+      flushList();
+      paragraph.push(line);
+    }
+  }
+  flushParagraph();
+  flushList();
+  return blocks.join("");
+}
+
+const HAS_ALLOWED_TAG_RE = /<(\/?)(ul|ol|li|b|strong|i|em|p|br)\b/i;
+
+/**
+ * Descrierea pentru feed: textul simplu (cu asteriscuri tip markdown) devine
+ * HTML-ul permis; descrierile care conțin deja etichete HTML permise rămân
+ * neatinse, ca până acum. Nimic nu se modifică în CRM, doar în feed.
+ */
+export function properstarDescriptionHtml(input: string): string {
+  if (!input) return "";
+  if (HAS_ALLOWED_TAG_RE.test(input)) return input;
+  return plainTextToProperstarHtml(input);
+}
+
 function xmlEscape(value: string): string {
   return value
     .replace(/&/g, "&amp;")
@@ -310,7 +378,9 @@ export function mapPropertyToProperstar(
   const subType = properstarSubType(p.property_type);
   if (!subType) missing.push("Tip proprietate acceptat de Properstar");
 
-  const description = sanitizeProperstarHtml((p.description ?? "").trim());
+  const description = sanitizeProperstarHtml(
+    properstarDescriptionHtml((p.description ?? "").trim()),
+  );
   if (!description) missing.push("Descriere");
 
   // Rezervă doar în feed: fără cod propriu, oferta folosește codul agenției.
