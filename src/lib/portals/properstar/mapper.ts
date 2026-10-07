@@ -310,7 +310,9 @@ export function mapPropertyToProperstar(
   const subType = properstarSubType(p.property_type);
   if (!subType) missing.push("Tip proprietate acceptat de Properstar");
 
-  const description = sanitizeProperstarHtml((p.description ?? "").trim());
+  const description = sanitizeProperstarHtml(
+    properstarDescriptionHtml((p.description ?? "").trim()),
+  );
   if (!description) missing.push("Descriere");
 
   // Rezervă doar în feed: fără cod propriu, oferta folosește codul agenției.
