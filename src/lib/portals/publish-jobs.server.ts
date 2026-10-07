@@ -165,15 +165,14 @@ export async function runPortalPublishWorker(
           result_message: decision.message,
         })
         .eq("id", job.id);
-      const withdrawn = job.enabled === false;
+      // Clopoțelul arată doar erori: succesul nu creează notificare.
+      if (decision.ok) return;
       await admin.from("notifications").insert({
         organization_id: job.organization_id,
         user_id: job.requested_by,
-        type: decision.ok ? "portal_publish_done" : "portal_publish_error",
-        title: decision.ok
-          ? `${name}: ${withdrawn ? "retras" : "publicat"}`
-          : `${name}: publicarea a eșuat`,
-        body: decision.ok ? null : decision.message,
+        type: "portal_publish_error",
+        title: `${name}: publicarea a eșuat`,
+        body: decision.message,
         link: `/app/properties/${job.property_id}`,
         created_by: job.requested_by,
       });
