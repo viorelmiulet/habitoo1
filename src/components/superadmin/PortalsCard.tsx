@@ -118,6 +118,7 @@ export function PortalsCard({ organizationId }: { organizationId: string }) {
 
   const [accountId, setAccountId] = useState<Record<string, string>>({});
   const [credential, setCredential] = useState<Record<string, string>>({});
+  const [webhookSecret, setWebhookSecret] = useState<Record<string, string>>({});
   const [endpoint, setEndpoint] = useState<Record<string, string>>({});
   // Credențialele rămân mascate implicit; dezvăluirea se face la cerere, per câmp.
   const [revealed, setRevealed] = useState<Record<string, boolean>>({});
@@ -172,10 +173,11 @@ export function PortalsCard({ organizationId }: { organizationId: string }) {
         credential: credential[input.portalId]?.trim() || undefined,
         endpointUrl: endpoint[input.portalId]?.trim(),
       };
+      const secret = webhookSecret[input.portalId]?.trim() || undefined;
       // Formatele cerute de portal (ex. email) se semnalează înainte de salvare.
       const formatError = validatePortalConfigValues(input.portalId, values);
       if (formatError) throw new Error(formatError);
-      return runSave({ data: { organizationId, portalId: input.portalId, ...values } });
+      return runSave({ data: { organizationId, portalId: input.portalId, ...values, webhookSecret: secret } });
     },
 
 
@@ -614,12 +616,16 @@ export function PortalsCard({ organizationId }: { organizationId: string }) {
                             ? (accountId[item.portal.id] ?? item.connection.externalAccountId ?? "")
                             : field.target === "credentials"
                               ? (credential[item.portal.id] ?? "")
-                              : (endpoint[item.portal.id] ?? item.connection.endpointUrl ?? "");
+                              : field.target === "webhook_secret"
+                                ? (webhookSecret[item.portal.id] ?? "")
+                                : (endpoint[item.portal.id] ?? item.connection.endpointUrl ?? "");
                         const setValue = (next: string) => {
                           if (field.target === "external_account_id") {
                             setAccountId((prev) => ({ ...prev, [item.portal.id]: next }));
                           } else if (field.target === "credentials") {
                             setCredential((prev) => ({ ...prev, [item.portal.id]: next }));
+                          } else if (field.target === "webhook_secret") {
+                            setWebhookSecret((prev) => ({ ...prev, [item.portal.id]: next }));
                           } else {
                             setEndpoint((prev) => ({ ...prev, [item.portal.id]: next }));
                           }
@@ -638,7 +644,10 @@ export function PortalsCard({ organizationId }: { organizationId: string }) {
                                 onChange={(e) => setValue(e.target.value)}
                                 className={field.secret ? "pr-10" : undefined}
                                 placeholder={
-                                  field.secret && item.connection.hasPortalCredential
+                                  field.secret &&
+                                  (field.target === "webhook_secret"
+                                    ? item.connection.hasWebhookSecret
+                                    : item.connection.hasPortalCredential)
                                     ? "Salvat — completează pentru a-l înlocui"
                                     : (field.placeholder ?? "")
                                 }

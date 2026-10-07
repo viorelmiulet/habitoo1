@@ -55,6 +55,8 @@ export type PortalHubItem = {
     authenticationMode: string;
     externalAccountId: string | null;
     hasPortalCredential: boolean;
+    /** Doar existența secretului de webhook (VDI.ro), niciodată valoarea. */
+    hasWebhookSecret: boolean;
     endpointUrl: string | null;
     allowLiveRequests: boolean;
     /** Superadmin a activat explicit portalul pentru această agenție. */
@@ -576,6 +578,7 @@ export const getPortalHub = createServerFn({ method: "POST" })
           authenticationMode: row?.authentication_mode ?? portal.authentication[0] ?? "none",
           externalAccountId: row?.external_account_id ?? null,
           hasPortalCredential: Boolean(row?.portal_credentials_encrypted),
+          hasWebhookSecret: typeof settings["webhook_secret_encrypted"] === "string",
           endpointUrl:
             typeof settings["endpoint_url"] === "string" ? String(settings["endpoint_url"]) : null,
           allowLiveRequests: settings["allow_live"] === true,
@@ -857,6 +860,11 @@ export const savePortalConnection = createServerFn({ method: "POST" })
         .from("portal_connections")
         .insert({ ...patch, created_by: context.userId } as never);
       if (error) throw new Error("Configurarea nu a putut fi salvată.");
+    }
+
+    // VDI.ro: cronul de lead-uri (reluări + tragerea de rezervă) rulează cât există o cheie.
+    if (definition.id === "vdi" && data.credential) {
+      await admin.rpc("vdi_leads_arm").then(() => undefined, () => undefined);
     }
 
     await logOperation({
