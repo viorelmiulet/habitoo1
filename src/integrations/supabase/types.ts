@@ -5844,6 +5844,7 @@ export type Database = {
       portal_webhook_events: {
         Row: {
           attempts: number
+          external_event_id: string | null
           headers: Json
           http_method: string
           id: string
@@ -5862,6 +5863,7 @@ export type Database = {
         }
         Insert: {
           attempts?: number
+          external_event_id?: string | null
           headers?: Json
           http_method: string
           id?: string
@@ -5880,6 +5882,7 @@ export type Database = {
         }
         Update: {
           attempts?: number
+          external_event_id?: string | null
           headers?: Json
           http_method?: string
           id?: string
@@ -8746,6 +8749,8 @@ export type Database = {
         Returns: Json
       }
       team_remove_agent: { Args: { _user_id: string }; Returns: Json }
+      vdi_leads_arm: { Args: never; Returns: undefined }
+      vdi_leads_tick: { Args: never; Returns: undefined }
     }
     Enums: {
       activity_kind:
