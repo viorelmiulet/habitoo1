@@ -393,7 +393,16 @@ describe("helperi Properstar", () => {
           city: "Timișoara",
           logo: null,
         },
-        agent: null,
+        agent: {
+          agentId: "agent-1",
+          fullName: "Ana Pop",
+          firstName: "Ana",
+          lastName: "Pop",
+          email: "ana@example.com",
+          mobilePhone: "+40722000111",
+          landPhone: "+40722000111",
+          photo: null,
+        },
         status: "Active",
       } as never,
     );
