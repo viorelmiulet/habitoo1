@@ -149,7 +149,8 @@ function SuperadminPortalsPage() {
               window.scrollTo({ top: 0, behavior: "smooth" });
             }}
           />
-          <ImospotSettingsCard />
+          <ImospotSettingsCard portal="imospot" />
+          <ImospotSettingsCard portal="vdi" />
           <PortalsCard organizationId={organizationId} />
           <LaCheieCard organizationId={organizationId} />
           <PortalSlotsCard organizationId={organizationId} />

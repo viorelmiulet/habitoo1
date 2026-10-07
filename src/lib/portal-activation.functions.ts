@@ -25,6 +25,9 @@ import {
 } from "@/lib/portals/registry";
 import { facebookCatalogState } from "@/lib/facebook-catalog-status";
 import {
+  KEY_REQUEST_PORTAL_IDS,
+  KEY_REQUEST_PORTALS,
+  isKeyRequestPortal,
   imospotSettingsSchema,
   missingImospotFields,
   type ImospotSettings,
@@ -91,7 +94,7 @@ export type AgencyPortalCatalogItem = {
     requestedAt: string;
     rejectionReason: string | null;
   } | null;
-  /** Doar la Imospot: câmpurile firmei lipsă pentru cererea de cheie. */
+  /** Doar la portalurile cu cerere de cheie (Imospot, VDI.ro): câmpurile firmei lipsă. */
   companyDataMissing: string[];
 };
 
@@ -145,17 +148,19 @@ export const getAgencyPortalCatalog = createServerFn({ method: "POST" })
     }
 
     const rows = new Map((connections ?? []).map((c) => [c.portal, c]));
-    const imospotReq = latest.get("imospot");
-    let imospotMissing: string[] = [];
-    if (imospotReq && imospotReq.status !== "rejected" && !activated.has("imospot")) {
+    const keyMissing = new Map<string, string[]>();
+    for (const portal of KEY_REQUEST_PORTAL_IDS) {
+      const req = latest.get(portal);
+      if (!req || req.status === "rejected" || activated.has(portal)) continue;
       const { loadImospotCompanyData } = await import("@/lib/portals/imospot-key-request.server");
       const { data: reqRow } = await admin
         .from("portal_activation_requests")
         .select("requested_by")
-        .eq("id", imospotReq.id)
+        .eq("id", req.id)
         .maybeSingle();
-      imospotMissing = missingImospotFields(
-        await loadImospotCompanyData(organizationId, reqRow?.requested_by ?? null),
+      keyMissing.set(
+        portal,
+        missingImospotFields(await loadImospotCompanyData(organizationId, reqRow?.requested_by ?? null)),
       );
     }
     return agencySettingsPortals().map((p) => {
@@ -172,7 +177,7 @@ export const getAgencyPortalCatalog = createServerFn({ method: "POST" })
           })
         : null;
       return {
-        companyDataMissing: p.id === "imospot" ? imospotMissing : [],
+        companyDataMissing: keyMissing.get(p.id) ?? [],
         activation: portalActivationMode(p.id),
         connectionStatus: catalogStatus ?? derivePortalConnectionStatus({
           definition: p,
@@ -231,7 +236,7 @@ export const requestPortalActivation = createServerFn({ method: "POST" })
       throw new Error("Portalul este deja activat pentru agenția ta.");
     }
 
-    const isImospot = definition.id === "imospot";
+    const isImospot = isKeyRequestPortal(definition.id);
     const { data: existing } = await admin
       .from("portal_activation_requests")
       .select("id")
@@ -243,8 +248,8 @@ export const requestPortalActivation = createServerFn({ method: "POST" })
     if (existing) {
       if (isImospot) {
         // Cerere anterioară (inclusiv pending, din fluxul vechi): același mecanism de retry.
-        const { retryPendingImospotRequests } = await import("@/lib/portals/imospot-key-request.server");
-        await retryPendingImospotRequests(organizationId, context.userId);
+        const { retryPendingKeyRequests } = await import("@/lib/portals/imospot-key-request.server");
+        await retryPendingKeyRequests(organizationId, context.userId, definition.id as "imospot" | "vdi");
       }
       return { ok: true as const, alreadyPending: true as const };
     }
@@ -273,11 +278,11 @@ export const requestPortalActivation = createServerFn({ method: "POST" })
 
     let providerNotify: NotifyOutcome | null = null;
     if (isImospot && inserted?.id) {
-      const { notifyImospotRequest } = await import("@/lib/portals/imospot-key-request.server");
+      const { notifyKeyRequest } = await import("@/lib/portals/imospot-key-request.server");
       try {
-        providerNotify = await notifyImospotRequest(inserted.id, context.userId);
+        providerNotify = await notifyKeyRequest(inserted.id, context.userId);
       } catch (e) {
-        console.error("[imospot] auto notify failed", (e as Error).message);
+        console.error(`[${definition.id}] auto notify failed`, (e as Error).message);
       }
     }
 
@@ -294,10 +299,10 @@ export const requestPortalActivation = createServerFn({ method: "POST" })
           user_id: userId,
           type: isImospot ? "portal_activation_auto" : "portal_activation_request",
           title: isImospot
-            ? `Imospot activat automat`
+            ? `${definition.display_name} activat automat`
             : `Cerere activare ${definition.display_name}`,
           body: isImospot
-            ? `Imospot activat automat pentru ${org?.name ?? "o agenție"}; cererea a fost trimisă.`
+            ? `${definition.display_name} activat automat pentru ${org?.name ?? "o agenție"}; cererea a fost trimisă.`
             : `${org?.name ?? "O agenție"} a cerut activarea portalului ${definition.display_name} (${profile?.full_name ?? "administrator agenție"}).`,
           link: "/superadmin/portals",
           created_by: context.userId,
@@ -427,8 +432,8 @@ export const resolvePortalActivationRequest = createServerFn({ method: "POST" })
         resolved_by: context.userId,
         resolved_at: new Date().toISOString(),
         rejection_reason: data.status === "rejected" ? (data.reason ?? null) : null,
-        // Doar aprobările Imospot de acum încolo trimit cererea de cheie către portal.
-        provider_notify_required: data.status === "approved" && request.portal === "imospot",
+        // Aprobările portalurilor cu cerere de cheie trimit cererea către portal.
+        provider_notify_required: data.status === "approved" && isKeyRequestPortal(request.portal),
       } as never)
       .eq("id", request.id);
     if (error) throw new Error(error.message);
@@ -448,9 +453,9 @@ export const resolvePortalActivationRequest = createServerFn({ method: "POST" })
     } as never);
 
     let providerNotify: NotifyOutcome | null = null;
-    if (data.status === "approved" && request.portal === "imospot") {
-      const { notifyImospotRequest } = await import("@/lib/portals/imospot-key-request.server");
-      providerNotify = await notifyImospotRequest(request.id, context.userId);
+    if (data.status === "approved" && isKeyRequestPortal(request.portal)) {
+      const { notifyKeyRequest } = await import("@/lib/portals/imospot-key-request.server");
+      providerNotify = await notifyKeyRequest(request.id, context.userId);
     }
     return { ok: true as const, providerNotify };
   });
@@ -571,27 +576,34 @@ export const resendImospotKeyRequest = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => z.object({ requestId: z.string().uuid() }).parse(input))
   .handler(async ({ data, context }): Promise<NotifyOutcome> => {
     await requireSuperadmin(context as unknown as AuthContext);
-    const { notifyImospotRequest } = await import("@/lib/portals/imospot-key-request.server");
-    return notifyImospotRequest(data.requestId, context.userId, { force: true });
+    const { notifyKeyRequest } = await import("@/lib/portals/imospot-key-request.server");
+    return notifyKeyRequest(data.requestId, context.userId, { force: true });
   });
+
+const keyPortalInput = z.object({ portal: z.enum(["imospot", "vdi"]).default("imospot") });
 
 export const getImospotSettings = createServerFn({ method: "POST" })
   .middleware([requireActiveOrgAuth])
-  .handler(async ({ context }): Promise<ImospotSettings> => {
+  .inputValidator((input: unknown) => keyPortalInput.parse(input ?? {}))
+  .handler(async ({ data, context }): Promise<ImospotSettings> => {
     await requireSuperadmin(context as unknown as AuthContext);
-    const { loadImospotSettings } = await import("@/lib/portals/imospot-key-request.server");
-    return loadImospotSettings();
+    const { loadKeyRequestSettings } = await import("@/lib/portals/imospot-key-request.server");
+    return loadKeyRequestSettings(data.portal);
   });
 
 export const saveImospotSettings = createServerFn({ method: "POST" })
   .middleware([requireActiveOrgAuth])
-  .inputValidator((input: unknown) => imospotSettingsSchema.parse(input))
+  .inputValidator((input: unknown) => {
+    const { portal } = keyPortalInput.parse(input ?? {});
+    return { portal, settings: imospotSettingsSchema.parse(input) };
+  })
   .handler(async ({ data, context }) => {
     await requireSuperadmin(context as unknown as AuthContext);
     const admin = await loadAdmin();
+    const key = KEY_REQUEST_PORTALS[data.portal].settingsKey;
     const { error } = await admin.from("platform_settings").upsert({
-      key: "imospot_key_request",
-      value: data,
+      key,
+      value: data.settings,
       updated_at: new Date().toISOString(),
       updated_by: context.userId,
     });
@@ -601,7 +613,7 @@ export const saveImospotSettings = createServerFn({ method: "POST" })
       actor_id: context.userId,
       action: "platform.settings_updated",
       entity: "platform_settings",
-      new_values: { key: "imospot_key_request", ...data },
+      new_values: { key, ...data.settings },
     } as never);
     return { ok: true as const };
   });

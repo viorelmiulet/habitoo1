@@ -2,6 +2,8 @@ import { describe, expect, it, vi } from "vitest";
 import {
   HABITOO_LOGO_URL,
   IMOSPOT_DEFAULT_SETTINGS,
+  KEY_REQUEST_PORTALS,
+  notifyKeyRequestForRequest,
   buildImospotEmail,
   missingImospotFields,
   notifyImospotForRequest,
@@ -9,6 +11,7 @@ import {
   type NotifyDeps,
   type NotifyRequestRow,
 } from "./imospot-key-request";
+import { derivePortalConnectionStatus, getPortalDefinition, portalActivationMode } from "./registry";
 
 const complete: ImospotCompanyData = {
   agencyName: "Agenția Test",
@@ -152,5 +155,41 @@ describe("cererea de cheie Imospot", () => {
 
   it("câmpurile obligatorii", () => {
     expect(missingImospotFields(complete)).toEqual([]);
+  });
+});
+
+describe("cererea de cheie VDI.ro (același flux)", () => {
+  function vdiHarness(sendOk = true) {
+    const h = harness({ row: { portal: "vdi" }, sendOk });
+    h.deps.loadSettings = async (p) => KEY_REQUEST_PORTALS[p].defaults;
+    return h;
+  }
+  it("trimite către suport@vdi.ro cu subiect VDI.ro, fără paragraful Imospot", async () => {
+    const h = vdiHarness();
+    expect(await notifyKeyRequestForRequest(h.deps, "r1")).toEqual({ status: "sent" });
+    const email = (h.send.mock.calls as unknown[][])[0]![0] as ReturnType<typeof buildImospotEmail>;
+    expect(email.to).toBe("suport@vdi.ro");
+    expect(email.cc).toBe("contact@habitoo.ro");
+    expect(email.from).toContain("contact@habitoo.ro");
+    expect(email.subject).toBe("Solicitare cheie API VDI.ro — Test Imobiliare SRL (CUI RO123456)");
+    expect(email.text).toContain("emiteți cheia API VDI.ro");
+    expect(email.text).toContain("contact@habitoo.ro");
+    expect(email.text).not.toContain("Imospot");
+  });
+  it("nu retrimite, blochează date incomplete, retrimite cu force", async () => {
+    const h = vdiHarness();
+    await notifyKeyRequestForRequest(h.deps, "r1");
+    expect(await notifyKeyRequestForRequest(h.deps, "r1")).toEqual({ status: "skipped", reason: "already_sent" });
+    expect(await notifyKeyRequestForRequest(h.deps, "r1", { force: true })).toEqual({ status: "sent" });
+    const i = harness({ row: { portal: "vdi" }, company: { ...complete, cui: null } });
+    expect((await notifyKeyRequestForRequest(i.deps, "r1")).status).toBe("incomplete");
+  });
+  it("VDI.ro se activează prin aprobare și fără cheie nu e conectat", () => {
+    expect(portalActivationMode("vdi")).toBe("approval");
+    expect(portalActivationMode("imospot")).toBe("approval");
+    const def = getPortalDefinition("vdi")!;
+    const base = { definition: def, activated: true, externalAccountId: null, lastError: null };
+    expect(derivePortalConnectionStatus({ ...base, hasPortalCredential: false })).toBe("disconnected");
+    expect(derivePortalConnectionStatus({ ...base, hasPortalCredential: true, lastError: "Cheie invalida" })).toBe("error");
   });
 });

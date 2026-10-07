@@ -55,7 +55,7 @@ function fail(code: PortalFail["code"], message: string, extra: Partial<PortalFa
 
 function apiKeyOf(ctx: PortalContext): string | PortalFail {
   const key = ctx.portalCredential?.trim();
-  return key ? key : fail("CONFIG_ERROR", "Lipsește cheia API VDI.ro. Completeaz-o în setările portalului.");
+  return key ? key : fail("CONFIG_ERROR", "Publicarea pe VDI.ro este blocată: agenția nu are încă o cheie API VDI.ro. Cheia este introdusă de echipa Habitoo după ce VDI.ro o emite.");
 }
 
 /** Respingerea VDI → eroare finală, cu textul portalului afișat cum e. */
