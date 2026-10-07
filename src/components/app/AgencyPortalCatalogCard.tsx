@@ -1,3 +1,4 @@
+import { isKeyRequestPortal, keyRequestLabel } from "@/lib/portals/imospot-key-request";
 import { Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -36,8 +37,8 @@ export function AgencyPortalCatalogCard() {
     mutationFn: async (portalId: string) => ({ portalId, ...(await sendRequest({ data: { portalId } })) }),
     onSuccess: (result) => {
       toast.success(
-        result.portalId === "imospot"
-          ? "Cererea a fost trimisă către Imospot. Vei primi cheia pe email."
+        isKeyRequestPortal(result.portalId)
+          ? `Cererea a fost trimisă către ${keyRequestLabel(result.portalId)}. Vei primi cheia pe email.`
           : result.alreadyPending
           ? "Cererea era deja trimisă și așteaptă aprobare."
           : "Cererea de activare a fost trimisă.",
@@ -130,15 +131,15 @@ export function AgencyPortalCatalogCard() {
                     <p className="text-[17px] leading-6 font-bold break-words">{item.displayName}</p>
                   </div>
                 </div>
-                {item.id === "imospot" ? (
+                {isKeyRequestPortal(item.id) ? (
                   <div className="space-y-2 text-xs text-muted-foreground">
                     {item.request?.status === "approved" && state.key !== "connected" ? (
                       <p data-imospot-sent className="font-medium text-foreground">
-                        Cererea a fost trimisă către Imospot. Vei primi cheia pe email.
+                        Cererea a fost trimisă către {keyRequestLabel(item.id)}. Vei primi cheia pe email.
                       </p>
                     ) : (
                       <p>
-                        Cheia API este emisă de Imospot, de obicei în aceeași zi lucrătoare, și
+                        Cheia API este emisă de {keyRequestLabel(item.id)}, de obicei în aceeași zi lucrătoare, și
                         ajunge pe emailul administratorului.
                       </p>
                     )}
@@ -148,7 +149,7 @@ export function AgencyPortalCatalogCard() {
                         <Link to="/app/settings" search={{ tab: "agency" }} className="underline">
                           Setări → Agenție
                         </Link>{" "}
-                        ca să poți solicita cheia Imospot.
+                        ca să poți solicita cheia {keyRequestLabel(item.id)}.
                       </p>
                     ) : null}
                   </div>
@@ -168,7 +169,7 @@ export function AgencyPortalCatalogCard() {
                         />
                         {state.label}
                       </span>
-                    ) : item.id === "imospot" && item.request?.status === "approved" ? null : isLaCheie && organizationId ? (
+                    ) : isKeyRequestPortal(item.id) && item.request?.status === "approved" ? null : isLaCheie && organizationId ? (
                       <LaCheieActivationPanel organizationId={organizationId} />
                     ) : (
                       <Button

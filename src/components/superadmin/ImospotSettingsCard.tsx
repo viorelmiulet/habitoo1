@@ -6,33 +6,35 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "@/components/ui/sonner";
 import { getImospotSettings, saveImospotSettings } from "@/lib/portal-activation.functions";
+import { KEY_REQUEST_PORTALS, type KeyRequestPortalId } from "@/lib/portals/imospot-key-request";
 
 const FIELDS = [
-  { key: "to", label: "Destinația cererilor Imospot" },
+  { key: "to", label: "Destinația cererilor" },
   { key: "from", label: "Expeditor" },
   { key: "cc", label: "Adresă de copie (Cc)" },
 ] as const;
 
-/** Setarea de platformă pentru cererile de cheie Imospot (doar Superadmin). */
-export function ImospotSettingsCard() {
+/** Setarea de platformă pentru cererile de cheie ale unui portal (doar Superadmin). */
+export function ImospotSettingsCard({ portal = "imospot" }: { portal?: KeyRequestPortalId }) {
+  const label = KEY_REQUEST_PORTALS[portal].label;
   const load = useServerFn(getImospotSettings);
   const save = useServerFn(saveImospotSettings);
-  const settings = useQuery({ queryKey: ["imospot-settings"], queryFn: () => load({}) });
+  const settings = useQuery({ queryKey: ["key-request-settings", portal], queryFn: () => load({ data: { portal } }) });
   const [form, setForm] = useState({ to: "", from: "", cc: "" });
   useEffect(() => {
     if (settings.data) setForm(settings.data);
   }, [settings.data]);
   const mutation = useMutation({
-    mutationFn: () => save({ data: form }),
-    onSuccess: () => toast.success("Setările Imospot au fost salvate."),
+    mutationFn: () => save({ data: { ...form, portal } }),
+    onSuccess: () => toast.success(`Setările ${label} au fost salvate.`),
     onError: (e: Error) => toast.error(e.message),
   });
   return (
     <section className="panel">
       <header className="border-b border-border px-5 py-4">
-        <h2 className="text-sm font-semibold tracking-wide uppercase">Cereri de cheie Imospot</h2>
+        <h2 className="text-sm font-semibold tracking-wide uppercase">Cereri de cheie {label}</h2>
         <p className="text-xs text-muted-foreground">
-          Emailul trimis automat către Imospot când aprobi activarea unei agenții.
+          Emailul trimis automat către {label} când aprobi activarea unei agenții.
         </p>
       </header>
       <form
@@ -44,9 +46,9 @@ export function ImospotSettingsCard() {
       >
         {FIELDS.map((f) => (
           <div key={f.key} className="min-w-0 space-y-1">
-            <Label htmlFor={`imospot_${f.key}`}>{f.label}</Label>
+            <Label htmlFor={`${portal}_${f.key}`}>{f.label}</Label>
             <Input
-              id={`imospot_${f.key}`}
+              id={`${portal}_${f.key}`}
               type="email"
               value={form[f.key]}
               onChange={(e) => setForm((v) => ({ ...v, [f.key]: e.target.value }))}

@@ -3,6 +3,7 @@
  * De aici se ajunge direct la ecranul de activare al agenției respective sau
  * se respinge cererea, cu motiv opțional.
  */
+import { keyRequestLabel } from "@/lib/portals/imospot-key-request";
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -46,8 +47,8 @@ export function PortalActivationRequestsCard({
     onSuccess: (res) => {
       const n = res.providerNotify;
       if (n?.status === "incomplete") toast.warning(`Date firmă incomplete: ${n.missing.join(", ")}`);
-      else if (n?.status === "failed") toast.error("Cererea către Imospot nu a fost trimisă.");
-      else if (n?.status === "sent") toast.success("Cererea de cheie a fost trimisă către Imospot.");
+      else if (n?.status === "failed") toast.error("Cererea de cheie către portal nu a fost trimisă.");
+      else if (n?.status === "sent") toast.success("Cererea de cheie a fost trimisă către portal.");
       toast.success("Cererea a fost actualizată.");
       setReasonFor("");
       setReason("");
@@ -60,7 +61,7 @@ export function PortalActivationRequestsCard({
   const resend = useMutation({
     mutationFn: (requestId: string) => resendFn({ data: { requestId } }),
     onSuccess: (n) => {
-      if (n.status === "sent") toast.success("Cererea a fost retrimisă către Imospot.");
+      if (n.status === "sent") toast.success("Cererea a fost retrimisă către portal.");
       else if (n.status === "incomplete") toast.warning(`Date firmă incomplete: ${n.missing.join(", ")}`);
       else if (n.status === "failed") toast.error(n.error);
       void queryClient.invalidateQueries({ queryKey: ["portal-activation-requests"] });
@@ -132,7 +133,7 @@ export function PortalActivationRequestsCard({
                 <div data-imospot-notify className="flex flex-wrap items-center gap-2 text-xs">
                   {r.providerNotifiedAt ? (
                     <span className="text-muted-foreground">
-                      Cerere de cheie trimisă către Imospot pe{" "}
+                      Cerere de cheie trimisă către {keyRequestLabel(r.portalId)} pe{" "}
                       {new Date(r.providerNotifiedAt).toLocaleString("ro-RO")}
                     </span>
                   ) : null}
@@ -146,12 +147,12 @@ export function PortalActivationRequestsCard({
                     onClick={() => {
                       if (
                         !r.providerNotifiedAt ||
-                        window.confirm("Cererea a fost deja trimisă. O retrimiți către Imospot?")
+                        window.confirm(`Cererea a fost deja trimisă. O retrimiți către ${keyRequestLabel(r.portalId)}?`)
                       )
                         resend.mutate(r.id);
                     }}
                   >
-                    Retrimite cererea către Imospot
+                    Retrimite cererea către {keyRequestLabel(r.portalId)}
                   </Button>
                 </div>
               ) : null}
