@@ -147,7 +147,8 @@ describe("workerul", () => {
     expect(peak).toBe(3);
     expect(actors.every((a) => a === "agent-1")).toBe(true);
     expect(db.jobs.every((j) => j.status === "done")).toBe(true);
-    expect(db.notifications).toHaveLength(5);
+    // Publicările reușite nu creează nicio notificare.
+    expect(db.notifications).toHaveLength(0);
   });
 
   it("reia un job cu lease expirat", async () => {
@@ -172,6 +173,9 @@ describe("workerul", () => {
     });
     expect(db.jobs.map((j) => j.status)).toEqual(["done", "error", "done"]);
     expect(db.jobs[1]?.result_message).toMatch(/validarea/);
+    // Doar eșecul notifică: exact o notificare, de tip eroare.
+    expect(db.notifications).toHaveLength(1);
+    expect((db.notifications[0] as { type: string }).type).toBe("portal_publish_error");
   });
 
   it("reîncearcă erorile temporare, cu pauză crescătoare, apoi le face finale", async () => {

@@ -49,7 +49,8 @@ export function useUnreadNotificationsCount(userId: string) {
         .from("notifications")
         .select("id", { count: "exact", head: true })
         .eq("user_id", userId)
-        .is("read_at", null);
+        .is("read_at", null)
+        .or("type.is.null,type.neq.portal_publish_done");
       if (error) throw error;
       return count ?? 0;
     },
@@ -75,6 +76,7 @@ export function NotificationsMenu({ userId }: { userId: string }) {
         .from("notifications")
         .select("id, title, body, type, link, read_at, created_at")
         .eq("user_id", userId)
+        .or("type.is.null,type.neq.portal_publish_done")
         .order("created_at", { ascending: false })
         .limit(8);
       if (error) throw error;
