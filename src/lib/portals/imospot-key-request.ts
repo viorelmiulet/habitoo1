@@ -22,9 +22,60 @@ export const IMOSPOT_DEFAULT_SETTINGS: ImospotSettings = {
   cc: "contact@habitoo.ro",
 };
 
-export function resolveImospotSettings(raw: unknown): ImospotSettings {
+/**
+ * Portalurile la care cheia API o emite portalul după cererea Habitoo
+ * (activare prin aprobare automată + email). Același flux, text pe portal.
+ */
+export type KeyRequestPortalId = "imospot" | "vdi";
+type KeyRequestPortalConfig = {
+  label: string;
+  settingsKey: string;
+  defaults: ImospotSettings;
+  intro: string;
+  outro: string[];
+};
+const KEY_SEND_LINE =
+  "Vă rugăm să trimiteți cheia pe email atât agenției (administratorului de mai sus), cât și integratorului Habitoo (contact@habitoo.ro).";
+const THANKS = "Mulțumim,\nEchipa Habitoo CRM";
+export const KEY_REQUEST_PORTALS: Record<KeyRequestPortalId, KeyRequestPortalConfig> = {
+  imospot: {
+    label: "Imospot",
+    settingsKey: IMOSPOT_SETTINGS_KEY,
+    defaults: IMOSPOT_DEFAULT_SETTINGS,
+    intro:
+      "Bună ziua,\n\nVă rugăm să creați contul Imospot și să emiteți cheia API pentru agenția de mai jos, partener Habitoo CRM:",
+    outro: [
+      KEY_SEND_LINE,
+      "Dacă agenția are deja anunțuri publicate manual pe Imospot, vă va comunica separat perechile „anunț Imospot (link sau cod) → cod Habitoo”.",
+      THANKS,
+    ],
+  },
+  vdi: {
+    label: "VDI.ro",
+    settingsKey: "vdi_key_request",
+    defaults: { to: "suport@vdi.ro", from: "contact@habitoo.ro", cc: "contact@habitoo.ro" },
+    intro:
+      "Bună ziua,\n\nVă rugăm să creați contul VDI.ro și să emiteți cheia API VDI.ro pentru agenția de mai jos, partener Habitoo CRM:",
+    outro: [KEY_SEND_LINE, THANKS],
+  },
+};
+export const KEY_REQUEST_PORTAL_IDS = Object.keys(KEY_REQUEST_PORTALS) as KeyRequestPortalId[];
+
+export function isKeyRequestPortal(id: string | null | undefined): id is KeyRequestPortalId {
+  return !!id && Object.prototype.hasOwnProperty.call(KEY_REQUEST_PORTALS, id);
+}
+
+export function keyRequestLabel(id: string): string {
+  return isKeyRequestPortal(id) ? KEY_REQUEST_PORTALS[id].label : id;
+}
+
+export function resolveKeyRequestSettings(portal: KeyRequestPortalId, raw: unknown): ImospotSettings {
   const parsed = imospotSettingsSchema.partial().safeParse(raw ?? {});
-  return { ...IMOSPOT_DEFAULT_SETTINGS, ...(parsed.success ? parsed.data : {}) };
+  return { ...KEY_REQUEST_PORTALS[portal].defaults, ...(parsed.success ? parsed.data : {}) };
+}
+
+export function resolveImospotSettings(raw: unknown): ImospotSettings {
+  return resolveKeyRequestSettings("imospot", raw);
 }
 
 export type ImospotCompanyData = {
@@ -53,8 +104,9 @@ export function missingImospotFields(d: ImospotCompanyData): string[] {
 
 export const INCOMPLETE_PREFIX = "Date firmă incomplete: ";
 
-export function buildImospotEmail(d: ImospotCompanyData, s: ImospotSettings) {
-  const subject = `Solicitare cheie API Imospot — ${d.legalName} (CUI ${d.cui})`;
+export function buildKeyRequestEmail(portal: KeyRequestPortalId, d: ImospotCompanyData, s: ImospotSettings) {
+  const cfg = KEY_REQUEST_PORTALS[portal];
+  const subject = `Solicitare cheie API ${cfg.label} — ${d.legalName} (CUI ${d.cui})`;
   const rows: [string, string][] = [
     ["Denumirea agenției", d.agencyName ?? "—"],
     ["Denumirea legală", d.legalName ?? "—"],
@@ -66,13 +118,8 @@ export function buildImospotEmail(d: ImospotCompanyData, s: ImospotSettings) {
     ["Oraș", d.city ?? "—"],
   ];
 
-  const intro =
-    "Bună ziua,\n\nVă rugăm să creați contul Imospot și să emiteți cheia API pentru agenția de mai jos, partener Habitoo CRM:";
-  const outro = [
-    "Vă rugăm să trimiteți cheia pe email atât agenției (administratorului de mai sus), cât și integratorului Habitoo (contact@habitoo.ro).",
-    "Dacă agenția are deja anunțuri publicate manual pe Imospot, vă va comunica separat perechile „anunț Imospot (link sau cod) → cod Habitoo”.",
-    "Mulțumim,\nEchipa Habitoo CRM",
-  ];
+  const intro = cfg.intro;
+  const outro = cfg.outro;
   const text = `${intro}\n\n${rows.map(([k, v]) => `- ${k}: ${v}`).join("\n")}\n\n${outro.join("\n\n")}\n`;
   const esc = (v: string) =>
     v.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
@@ -84,7 +131,11 @@ export function buildImospotEmail(d: ImospotCompanyData, s: ImospotSettings) {
   return { from: `Habitoo CRM <${s.from}>`, to: s.to, cc: s.cc, replyTo: d.adminEmail, subject, text, html };
 }
 
-export type ImospotEmail = ReturnType<typeof buildImospotEmail>;
+export function buildImospotEmail(d: ImospotCompanyData, s: ImospotSettings) {
+  return buildKeyRequestEmail("imospot", d, s);
+}
+
+export type ImospotEmail = ReturnType<typeof buildKeyRequestEmail>;
 
 export type NotifyRequestRow = {
   id: string;
@@ -98,7 +149,7 @@ export type NotifyRequestRow = {
 export type NotifyDeps = {
   loadRequest: (id: string) => Promise<NotifyRequestRow | null>;
   loadCompany: (row: NotifyRequestRow) => Promise<ImospotCompanyData>;
-  loadSettings: () => Promise<ImospotSettings>;
+  loadSettings: (portal: KeyRequestPortalId) => Promise<ImospotSettings>;
   send: (email: ImospotEmail) => Promise<{ ok: boolean; error?: string }>;
   save: (id: string, patch: { notifiedAt?: string; error: string | null }) => Promise<void>;
   audit: (row: NotifyRequestRow, values: Record<string, unknown>) => Promise<void>;
@@ -115,13 +166,13 @@ export type NotifyOutcome =
  * Trimite cererea o singură dată. `force` (retrimitere deliberată) ignoră doar
  * „deja trimis”; datele incomplete blochează mereu.
  */
-export async function notifyImospotForRequest(
+export async function notifyKeyRequestForRequest(
   deps: NotifyDeps,
   requestId: string,
   opts: { force?: boolean } = {},
 ): Promise<NotifyOutcome> {
   const row = await deps.loadRequest(requestId);
-  if (!row || row.portal !== IMOSPOT_PORTAL_ID || row.status !== "approved") {
+  if (!row || !isKeyRequestPortal(row.portal) || row.status !== "approved") {
     return { status: "skipped", reason: "not_applicable" };
   }
   if (row.notifiedAt && !opts.force) return { status: "skipped", reason: "already_sent" };
@@ -133,8 +184,9 @@ export async function notifyImospotForRequest(
     return { status: "incomplete", missing };
   }
 
-  const settings = await deps.loadSettings();
-  const email = buildImospotEmail(company, settings);
+  const portal = row.portal;
+  const settings = await deps.loadSettings(portal);
+  const email = buildKeyRequestEmail(portal, company, settings);
   let result: { ok: boolean; error?: string };
   try {
     result = await deps.send(email);
@@ -152,3 +204,6 @@ export async function notifyImospotForRequest(
   await deps.audit(row, { success: true, to: settings.to, cc: settings.cc, resend: Boolean(opts.force) });
   return { status: "sent" };
 }
+
+/** Alias istoric: același flux servește toate portalurile din `KEY_REQUEST_PORTALS`. */
+export const notifyImospotForRequest = notifyKeyRequestForRequest;
