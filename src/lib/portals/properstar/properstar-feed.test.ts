@@ -406,7 +406,6 @@ describe("helperi Properstar", () => {
         status: "Active",
       } as never,
     );
-    if (!result.ok) console.log("MISSING:", result.missing);
     expect(result.ok).toBe(true);
     if (result.ok) {
       expect(result.advert.description).toBe(
