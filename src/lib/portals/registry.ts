@@ -499,7 +499,8 @@ export const PORTALS: PortalDefinition[] = [
   },
   {
     id: "vdi",
-    activation: "self_service",
+    // Ca Imospot: cererea se aprobă automat, VDI.ro emite cheia, Superadminul o introduce.
+    activation: "approval",
     display_name: "VDI.ro",
     description:
       "Habitoo trimite direct anunțul (publicare, actualizare, retragere) cu cheia API a agenției. Agentul responsabil este trimis automat înaintea anunțului.",

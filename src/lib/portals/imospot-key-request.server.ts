@@ -1,9 +1,10 @@
 /** Legătura cu baza de date și cu Mailgun pentru cererea de cheie Imospot. */
 import {
   IMOSPOT_PORTAL_ID,
-  IMOSPOT_SETTINGS_KEY,
-  notifyImospotForRequest,
-  resolveImospotSettings,
+  KEY_REQUEST_PORTALS,
+  notifyKeyRequestForRequest,
+  resolveKeyRequestSettings,
+  type KeyRequestPortalId,
   type ImospotCompanyData,
   type NotifyDeps,
   type NotifyOutcome,
@@ -15,14 +16,18 @@ async function admin() {
   return supabaseAdmin;
 }
 
-export async function loadImospotSettings() {
+export async function loadKeyRequestSettings(portal: KeyRequestPortalId) {
   const db = await admin();
   const { data } = await db
     .from("platform_settings")
     .select("value")
-    .eq("key", IMOSPOT_SETTINGS_KEY)
+    .eq("key", KEY_REQUEST_PORTALS[portal].settingsKey)
     .maybeSingle();
-  return resolveImospotSettings(data?.value);
+  return resolveKeyRequestSettings(portal, data?.value);
+}
+
+export function loadImospotSettings() {
+  return loadKeyRequestSettings(IMOSPOT_PORTAL_ID);
 }
 
 /** Administratorul agenției: cel care a cerut activarea, altfel primul admin al agenției. */
@@ -92,7 +97,7 @@ function liveDeps(actorId: string | null): NotifyDeps {
     },
     loadCompany: (row: NotifyRequestRow) =>
       loadImospotCompanyData(row.organizationId, requestedBy.get(row.id) ?? null),
-    loadSettings: loadImospotSettings,
+    loadSettings: loadKeyRequestSettings,
     send: async (email) => {
       const { sendEmail } = await import("@/lib/mailgun.server");
       const r = await sendEmail({
@@ -131,27 +136,33 @@ function liveDeps(actorId: string | null): NotifyDeps {
   };
 }
 
-export async function notifyImospotRequest(
+export async function notifyKeyRequest(
   requestId: string,
   actorId: string | null,
   opts: { force?: boolean } = {},
 ): Promise<NotifyOutcome> {
-  return notifyImospotForRequest(liveDeps(actorId), requestId, opts);
+  return notifyKeyRequestForRequest(liveDeps(actorId), requestId, opts);
 }
+
+export const notifyImospotRequest = notifyKeyRequest;
 
 /**
  * Reîncercare automată: aprobă automat cererile Imospot rămase `pending` (flux vechi)
  * și trimite cererile aprobate, netrimise încă. Protecția „deja trimis" rămâne în
  * `notifyImospotForRequest` (`provider_notified_at`).
  */
-export async function retryPendingImospotRequests(organizationId: string, actorId: string | null) {
+export async function retryPendingKeyRequests(
+  organizationId: string,
+  actorId: string | null,
+  portal: KeyRequestPortalId,
+) {
   try {
     const db = await admin();
     const { data: pending } = await db
       .from("portal_activation_requests")
       .select("id")
       .eq("organization_id", organizationId)
-      .eq("portal", IMOSPOT_PORTAL_ID)
+      .eq("portal", portal)
       .eq("status", "pending");
     for (const p of pending ?? []) {
       const { data: updated } = await db
@@ -173,7 +184,7 @@ export async function retryPendingImospotRequests(organizationId: string, actorI
           entity: "portal_activation_requests",
           entity_id: p.id,
           old_values: { status: "pending" },
-          new_values: { status: "approved", portal: IMOSPOT_PORTAL_ID },
+          new_values: { status: "approved", portal },
         } as never);
       }
     }
@@ -181,11 +192,15 @@ export async function retryPendingImospotRequests(organizationId: string, actorI
       .from("portal_activation_requests")
       .select("id")
       .eq("organization_id", organizationId)
-      .eq("portal", IMOSPOT_PORTAL_ID)
+      .eq("portal", portal)
       .eq("status", "approved")
       .is("provider_notified_at", null);
-    for (const r of data ?? []) await notifyImospotRequest(r.id, actorId);
+    for (const r of data ?? []) await notifyKeyRequest(r.id, actorId);
   } catch (e) {
-    console.error("[imospot] pending notify failed", (e as Error).message);
+    console.error(`[${portal}] pending notify failed`, (e as Error).message);
   }
+}
+
+export function retryPendingImospotRequests(organizationId: string, actorId: string | null) {
+  return retryPendingKeyRequests(organizationId, actorId, IMOSPOT_PORTAL_ID);
 }
