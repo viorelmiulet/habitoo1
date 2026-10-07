@@ -36,10 +36,12 @@ export async function saveUnmatchedStoriaMessage(
     message: StoriaMessageInput;
     externalMessageId: string | null;
   },
+  portal: "storia" | "vdi" = "storia",
 ): Promise<{ processed: boolean; note: string }> {
   const m = input.message;
+  const portalName = portal === "vdi" ? "VDI.ro" : "Storia";
   const row = {
-    portal: "storia",
+    portal,
     webhook_event_id: input.webhookEventId,
     ad_ref: input.adRef,
     conversation_id: m.conversationId,
@@ -67,11 +69,11 @@ export async function saveUnmatchedStoriaMessage(
     for (const userId of new Set((supers ?? []).map((r) => r.user_id))) {
       await admin.from("notifications").upsert(
         {
-          id: await stableId(["storia-unmatched", data.id, userId]),
+          id: await stableId([`${portal}-unmatched`, data.id, userId]),
           organization_id: null,
           user_id: userId,
           type: "portal_unmatched",
-          title: "Mesaj Storia fără anunț recunoscut",
+          title: `Mesaj ${portalName} fără anunț recunoscut`,
           body: `Anunț „${input.adRef ?? "-"}”, de la ${m.senderName ?? "contact necunoscut"}. Atribuie-l manual.`,
           link: "/superadmin/portals",
         },
@@ -81,7 +83,7 @@ export async function saveUnmatchedStoriaMessage(
   }
   return {
     processed: true,
-    note: `mesaj Storia nepotrivit (anunț=${input.adRef ?? "-"}) — păstrat pentru atribuire SuperAdmin`,
+    note: `mesaj ${portalName} nepotrivit (anunț=${input.adRef ?? "-"}) — păstrat pentru atribuire SuperAdmin`,
   };
 }
 
