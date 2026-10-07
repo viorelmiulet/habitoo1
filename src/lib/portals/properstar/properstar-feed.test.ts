@@ -7,6 +7,8 @@ import {
   mapPropertyToProperstar,
   properstarStatusFor,
   sanitizeProperstarHtml,
+  plainTextToProperstarHtml,
+  properstarDescriptionHtml,
   properstarPhone,
   properstarPhotoDateSuffix,
   properstarEntityId,
@@ -332,6 +334,75 @@ describe("helperi Properstar", () => {
     expect(sanitizeProperstarHtml("<p>ok</p><div>x</div><ul><li>a</li></ul>")).toBe(
       "<p>ok</p>x<ul><li>a</li></ul>",
     );
+  });
+
+  it("text simplu: rânduri → paragrafe cu <br/>, listă → <ul><li>", () => {
+    expect(
+      plainTextToProperstarHtml("Primul rând\nAl doilea rând\n\n* Parcare\n* Piscină"),
+    ).toBe("<p>Primul rând<br/>Al doilea rând</p><ul><li>Parcare</li><li>Piscină</li></ul>");
+  });
+
+  it("HB-1162: **bold** în mijlocul propoziției devine <strong>", () => {
+    expect(properstarDescriptionHtml("Apartament **de lux**, finisaje premium")).toBe(
+      "<p>Apartament <strong>de lux</strong>, finisaje premium</p>",
+    );
+  });
+
+  it("HB-1161: asterisc singur la final dispare", () => {
+    expect(properstarDescriptionHtml("Apartament luminiș, verde\n*")).toBe(
+      "<p>Apartament luminiș, verde</p>",
+    );
+  });
+
+  it("HB-1166 și HB-1167: rânduri noi și majuscule la început", () => {
+    expect(properstarDescriptionHtml("Vila P+1\nTeren 800 mp\n\n* gaze\n* curent")).toBe(
+      "<p>Vila P+1<br/>Teren 800 mp</p><ul><li>gaze</li><li>curent</li></ul>",
+    );
+  });
+
+  it("*italic* devine <em>, iar textul cu * între caractere rămâne neatins", () => {
+    expect(properstarDescriptionHtml("Casă *renovată* complet, 5*4 camere")).toBe(
+      "<p>Casă <em>renovată</em> complet, 5*4 camere</p>",
+    );
+  });
+
+  it("descrierea care conține deja HTML permis nu e convertită, doar sanitizată", () => {
+    expect(properstarDescriptionHtml("<p>ok</p><div>x</div>")).toBe("<p>ok</p><div>x</div>");
+    expect(sanitizeProperstarHtml(properstarDescriptionHtml("<p>ok</p><div>x</div>"))).toBe(
+      "<p>ok</p>x",
+    );
+  });
+
+  it("maparea descrierii în advert aplică conversia", () => {
+    const result = mapPropertyToProperstar(
+      seedProperty({
+        description: "Apartament **de lux**\n* parcare subterană",
+      }) as never,
+      {
+        baseUrl: "https://crm.habitoo.ro",
+        publicSiteUrl: "https://www.habitoo.ro",
+        images: [],
+        office: {
+          officeId: ORG,
+          officeName: "Habitoo",
+          email: "a@b.ro",
+          phone: "+40722000111",
+          website: null,
+          address: null,
+          postalCode: "300001",
+          city: "Timișoara",
+          logo: null,
+        },
+        agent: null,
+        status: "Active",
+      } as never,
+    );
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.advert.description).toBe(
+        "<p>Apartament <strong>de lux</strong></p><ul><li>parcare subterană</li></ul>",
+      );
+    }
   });
 
   it("normalizează telefonul la +40", () => {
