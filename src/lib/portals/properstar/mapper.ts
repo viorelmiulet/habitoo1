@@ -121,7 +121,7 @@ export function plainTextToProperstarHtml(input: string): string {
 
   const flushParagraph = () => {
     if (!paragraph.length) return;
-    const content = properstarInline(paragraph.join("<br/>"));
+    const content = paragraph.map(properstarInline).filter(Boolean).join("<br/>");
     paragraph = [];
     if (content) blocks.push(`<p>${content}</p>`);
   };
