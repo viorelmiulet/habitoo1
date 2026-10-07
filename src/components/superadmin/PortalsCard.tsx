@@ -327,6 +327,7 @@ export function PortalsCard({ organizationId }: { organizationId: string }) {
     const current = (hub.data ?? []).find((i) => i.portal.id === selected);
     const currentDirty = current
       ? (credential[selected]?.trim() ?? "") !== "" ||
+        (webhookSecret[selected]?.trim() ?? "") !== "" ||
         (accountId[selected] !== undefined &&
           accountId[selected] !== (current.connection.externalAccountId ?? "")) ||
         (endpoint[selected] !== undefined &&
@@ -429,6 +430,7 @@ export function PortalsCard({ organizationId }: { organizationId: string }) {
           // Modificări tastate, dar nesalvate — blochează comutarea silențioasă.
           const dirty =
             (credential[item.portal.id]?.trim() ?? "") !== "" ||
+            (webhookSecret[item.portal.id]?.trim() ?? "") !== "" ||
             (accountId[item.portal.id] !== undefined &&
               accountId[item.portal.id] !== (item.connection.externalAccountId ?? "")) ||
             (endpoint[item.portal.id] !== undefined &&
