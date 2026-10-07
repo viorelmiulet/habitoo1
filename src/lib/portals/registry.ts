@@ -56,7 +56,7 @@ export type PortalConfigField = {
   /** Validare suplimentară de format, aplicată în UI și server-side. */
   validate?: "email";
   /** Unde se persistă: identificatorul contului, credențialul criptat sau setările. */
-  target: "external_account_id" | "credentials" | "settings";
+  target: "external_account_id" | "credentials" | "settings" | "webhook_secret";
 };
 
 /** Cum își activează agenția portalul: singură, prin contul ei (OAuth) sau cu aprobare. */
@@ -517,6 +517,21 @@ export const PORTALS: PortalDefinition[] = [
           help: "Cheia agenției, obținută de la suport@vdi.ro. Se salvează criptat.",
           secret: true,
           target: "credentials",
+        },
+        {
+          key: "agency_id",
+          label: "ID agenție VDI",
+          help: "Numărul agenției la VDI.ro (`agentie_id` din webhook-ul de lead-uri).",
+          optional: true,
+          target: "external_account_id",
+        },
+        {
+          key: "webhook_secret",
+          label: "Secret webhook",
+          help: "Secretul primit de la VDI.ro pentru semnătura lead-urilor. Se salvează criptat.",
+          secret: true,
+          optional: true,
+          target: "webhook_secret",
         },
       ],
     },

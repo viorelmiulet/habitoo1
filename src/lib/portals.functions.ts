@@ -657,6 +657,7 @@ const saveSchema = z.object({
   externalAccountId: z.string().trim().max(200).optional(),
   credential: z.string().trim().min(1).max(500).optional(),
   endpointUrl: z.string().trim().max(300).optional(),
+  webhookSecret: z.string().trim().min(8).max(500).optional(),
 });
 
 /**
@@ -818,6 +819,11 @@ export const savePortalConnection = createServerFn({ method: "POST" })
     if (data.endpointUrl !== undefined) {
       if (data.endpointUrl) settings["endpoint_url"] = data.endpointUrl;
       else delete settings["endpoint_url"];
+    }
+    if (data.webhookSecret) {
+      if (!definition.configuration_schema.fields.some((f) => f.target === "webhook_secret"))
+        throw new Error("Portalul nu folosește secret de webhook.");
+      settings["webhook_secret_encrypted"] = encryptPortalCredential(data.webhookSecret);
     }
     // Trimiterile reale nu au comutator separat: urmează mereu activarea.
     settings["allow_live"] = row?.activated === true;
