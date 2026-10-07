@@ -103,6 +103,7 @@ import { Route as ApiPublicCronPromotionWithdrawRouteImport } from './routes/api
 import { Route as ApiPublicCronPropertyImportImagesRouteImport } from './routes/api/public/cron/property-import-images'
 import { Route as ApiPublicCronStoriaWebhookRetryRouteImport } from './routes/api/public/cron/storia-webhook-retry'
 import { Route as ApiPublicCronSubscriptionsRouteImport } from './routes/api/public/cron/subscriptions'
+import { Route as ApiPublicCronVdiLeadsRouteImport } from './routes/api/public/cron/vdi-leads'
 import { Route as ApiPublicListingsUpsertRouteImport } from './routes/api/public/listings/upsert'
 import { Route as ApiPublicMailgunEventsRouteImport } from './routes/api/public/mailgun/events'
 import { Route as ApiPublicMailgunInboundRouteImport } from './routes/api/public/mailgun/inbound'
@@ -134,6 +135,7 @@ import { Route as ApiPublicPortalV1ImoveFeedDotjsonRouteImport } from './routes/
 import { Route as ApiPublicPortalV1ProperstarLeadsRouteImport } from './routes/api/public/portal/v1/properstar.leads'
 import { Route as ApiPublicPortalV1PropertiesIdRouteImport } from './routes/api/public/portal/v1/properties.$id'
 import { Route as ApiPublicPortalV1StoriaNotificationsRouteImport } from './routes/api/public/portal/v1/storia.notifications'
+import { Route as ApiPublicPortalV1VdiLeadsRouteImport } from './routes/api/public/portal/v1/vdi/leads'
 import { Route as ApiPublicSitesV1MediaIdRouteImport } from './routes/api/public/sites/v1/media.$id'
 import { Route as ApiPublicSitesV1PropertiesIdRouteImport } from './routes/api/public/sites/v1/properties.$id'
 import { Route as ApiPublicPortalV1StoriaOauthCallbackRouteImport } from './routes/api/public/portal/v1/storia.oauth.callback'
@@ -658,6 +660,11 @@ const ApiPublicCronSubscriptionsRoute =
     path: '/api/public/cron/subscriptions',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicCronVdiLeadsRoute = ApiPublicCronVdiLeadsRouteImport.update({
+  id: '/api/public/cron/vdi-leads',
+  path: '/api/public/cron/vdi-leads',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicListingsUpsertRoute = ApiPublicListingsUpsertRouteImport.update({
   id: '/api/public/listings/upsert',
   path: '/api/public/listings/upsert',
@@ -833,6 +840,12 @@ const ApiPublicPortalV1StoriaNotificationsRoute =
     path: '/api/public/portal/v1/storia/notifications',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicPortalV1VdiLeadsRoute =
+  ApiPublicPortalV1VdiLeadsRouteImport.update({
+    id: '/api/public/portal/v1/vdi/leads',
+    path: '/api/public/portal/v1/vdi/leads',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicSitesV1MediaIdRoute = ApiPublicSitesV1MediaIdRouteImport.update({
   id: '/api/public/sites/v1/media/$id',
   path: '/api/public/sites/v1/media/$id',
@@ -949,6 +962,7 @@ export interface FileRoutesByFullPath {
   '/api/public/cron/property-import-images': typeof ApiPublicCronPropertyImportImagesRoute
   '/api/public/cron/storia-webhook-retry': typeof ApiPublicCronStoriaWebhookRetryRoute
   '/api/public/cron/subscriptions': typeof ApiPublicCronSubscriptionsRoute
+  '/api/public/cron/vdi-leads': typeof ApiPublicCronVdiLeadsRoute
   '/api/public/listings/upsert': typeof ApiPublicListingsUpsertRoute
   '/api/public/mailgun/events': typeof ApiPublicMailgunEventsRoute
   '/api/public/mailgun/inbound': typeof ApiPublicMailgunInboundRoute
@@ -988,6 +1002,7 @@ export interface FileRoutesByFullPath {
   '/api/public/portal/v1/properstar/leads': typeof ApiPublicPortalV1ProperstarLeadsRoute
   '/api/public/portal/v1/properties/$id': typeof ApiPublicPortalV1PropertiesIdRoute
   '/api/public/portal/v1/storia/notifications': typeof ApiPublicPortalV1StoriaNotificationsRoute
+  '/api/public/portal/v1/vdi/leads': typeof ApiPublicPortalV1VdiLeadsRoute
   '/api/public/sites/v1/media/$id': typeof ApiPublicSitesV1MediaIdRoute
   '/api/public/sites/v1/properties/$id': typeof ApiPublicSitesV1PropertiesIdRoute
   '/api/public/portal/v1/storia/oauth/callback': typeof ApiPublicPortalV1StoriaOauthCallbackRoute
@@ -1076,6 +1091,7 @@ export interface FileRoutesByTo {
   '/api/public/cron/property-import-images': typeof ApiPublicCronPropertyImportImagesRoute
   '/api/public/cron/storia-webhook-retry': typeof ApiPublicCronStoriaWebhookRetryRoute
   '/api/public/cron/subscriptions': typeof ApiPublicCronSubscriptionsRoute
+  '/api/public/cron/vdi-leads': typeof ApiPublicCronVdiLeadsRoute
   '/api/public/listings/upsert': typeof ApiPublicListingsUpsertRoute
   '/api/public/mailgun/events': typeof ApiPublicMailgunEventsRoute
   '/api/public/mailgun/inbound': typeof ApiPublicMailgunInboundRoute
@@ -1115,6 +1131,7 @@ export interface FileRoutesByTo {
   '/api/public/portal/v1/properstar/leads': typeof ApiPublicPortalV1ProperstarLeadsRoute
   '/api/public/portal/v1/properties/$id': typeof ApiPublicPortalV1PropertiesIdRoute
   '/api/public/portal/v1/storia/notifications': typeof ApiPublicPortalV1StoriaNotificationsRoute
+  '/api/public/portal/v1/vdi/leads': typeof ApiPublicPortalV1VdiLeadsRoute
   '/api/public/sites/v1/media/$id': typeof ApiPublicSitesV1MediaIdRoute
   '/api/public/sites/v1/properties/$id': typeof ApiPublicSitesV1PropertiesIdRoute
   '/api/public/portal/v1/storia/oauth/callback': typeof ApiPublicPortalV1StoriaOauthCallbackRoute
@@ -1209,6 +1226,7 @@ export interface FileRoutesById {
   '/api/public/cron/property-import-images': typeof ApiPublicCronPropertyImportImagesRoute
   '/api/public/cron/storia-webhook-retry': typeof ApiPublicCronStoriaWebhookRetryRoute
   '/api/public/cron/subscriptions': typeof ApiPublicCronSubscriptionsRoute
+  '/api/public/cron/vdi-leads': typeof ApiPublicCronVdiLeadsRoute
   '/api/public/listings/upsert': typeof ApiPublicListingsUpsertRoute
   '/api/public/mailgun/events': typeof ApiPublicMailgunEventsRoute
   '/api/public/mailgun/inbound': typeof ApiPublicMailgunInboundRoute
@@ -1248,6 +1266,7 @@ export interface FileRoutesById {
   '/api/public/portal/v1/properstar/leads': typeof ApiPublicPortalV1ProperstarLeadsRoute
   '/api/public/portal/v1/properties/$id': typeof ApiPublicPortalV1PropertiesIdRoute
   '/api/public/portal/v1/storia/notifications': typeof ApiPublicPortalV1StoriaNotificationsRoute
+  '/api/public/portal/v1/vdi/leads': typeof ApiPublicPortalV1VdiLeadsRoute
   '/api/public/sites/v1/media/$id': typeof ApiPublicSitesV1MediaIdRoute
   '/api/public/sites/v1/properties/$id': typeof ApiPublicSitesV1PropertiesIdRoute
   '/api/public/portal/v1/storia/oauth/callback': typeof ApiPublicPortalV1StoriaOauthCallbackRoute
@@ -1342,6 +1361,7 @@ export interface FileRouteTypes {
     | '/api/public/cron/property-import-images'
     | '/api/public/cron/storia-webhook-retry'
     | '/api/public/cron/subscriptions'
+    | '/api/public/cron/vdi-leads'
     | '/api/public/listings/upsert'
     | '/api/public/mailgun/events'
     | '/api/public/mailgun/inbound'
@@ -1381,6 +1401,7 @@ export interface FileRouteTypes {
     | '/api/public/portal/v1/properstar/leads'
     | '/api/public/portal/v1/properties/$id'
     | '/api/public/portal/v1/storia/notifications'
+    | '/api/public/portal/v1/vdi/leads'
     | '/api/public/sites/v1/media/$id'
     | '/api/public/sites/v1/properties/$id'
     | '/api/public/portal/v1/storia/oauth/callback'
@@ -1469,6 +1490,7 @@ export interface FileRouteTypes {
     | '/api/public/cron/property-import-images'
     | '/api/public/cron/storia-webhook-retry'
     | '/api/public/cron/subscriptions'
+    | '/api/public/cron/vdi-leads'
     | '/api/public/listings/upsert'
     | '/api/public/mailgun/events'
     | '/api/public/mailgun/inbound'
@@ -1508,6 +1530,7 @@ export interface FileRouteTypes {
     | '/api/public/portal/v1/properstar/leads'
     | '/api/public/portal/v1/properties/$id'
     | '/api/public/portal/v1/storia/notifications'
+    | '/api/public/portal/v1/vdi/leads'
     | '/api/public/sites/v1/media/$id'
     | '/api/public/sites/v1/properties/$id'
     | '/api/public/portal/v1/storia/oauth/callback'
@@ -1601,6 +1624,7 @@ export interface FileRouteTypes {
     | '/api/public/cron/property-import-images'
     | '/api/public/cron/storia-webhook-retry'
     | '/api/public/cron/subscriptions'
+    | '/api/public/cron/vdi-leads'
     | '/api/public/listings/upsert'
     | '/api/public/mailgun/events'
     | '/api/public/mailgun/inbound'
@@ -1640,6 +1664,7 @@ export interface FileRouteTypes {
     | '/api/public/portal/v1/properstar/leads'
     | '/api/public/portal/v1/properties/$id'
     | '/api/public/portal/v1/storia/notifications'
+    | '/api/public/portal/v1/vdi/leads'
     | '/api/public/sites/v1/media/$id'
     | '/api/public/sites/v1/properties/$id'
     | '/api/public/portal/v1/storia/oauth/callback'
@@ -1688,6 +1713,7 @@ export interface RootRouteChildren {
   ApiPublicCronPropertyImportImagesRoute: typeof ApiPublicCronPropertyImportImagesRoute
   ApiPublicCronStoriaWebhookRetryRoute: typeof ApiPublicCronStoriaWebhookRetryRoute
   ApiPublicCronSubscriptionsRoute: typeof ApiPublicCronSubscriptionsRoute
+  ApiPublicCronVdiLeadsRoute: typeof ApiPublicCronVdiLeadsRoute
   ApiPublicListingsUpsertRoute: typeof ApiPublicListingsUpsertRoute
   ApiPublicMailgunEventsRoute: typeof ApiPublicMailgunEventsRoute
   ApiPublicMailgunInboundRoute: typeof ApiPublicMailgunInboundRoute
@@ -1714,6 +1740,7 @@ export interface RootRouteChildren {
   ApiPublicPortalV1ImoveFeedDotjsonRoute: typeof ApiPublicPortalV1ImoveFeedDotjsonRoute
   ApiPublicPortalV1ProperstarLeadsRoute: typeof ApiPublicPortalV1ProperstarLeadsRoute
   ApiPublicPortalV1StoriaNotificationsRoute: typeof ApiPublicPortalV1StoriaNotificationsRoute
+  ApiPublicPortalV1VdiLeadsRoute: typeof ApiPublicPortalV1VdiLeadsRoute
   ApiPublicSitesV1MediaIdRoute: typeof ApiPublicSitesV1MediaIdRoute
   ApiPublicPortalV1StoriaOauthCallbackRoute: typeof ApiPublicPortalV1StoriaOauthCallbackRoute
   ApiPublicSitesV1MediaAgencyIdRoute: typeof ApiPublicSitesV1MediaAgencyIdRoute
@@ -2380,6 +2407,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicCronSubscriptionsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/cron/vdi-leads': {
+      id: '/api/public/cron/vdi-leads'
+      path: '/api/public/cron/vdi-leads'
+      fullPath: '/api/public/cron/vdi-leads'
+      preLoaderRoute: typeof ApiPublicCronVdiLeadsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/listings/upsert': {
       id: '/api/public/listings/upsert'
       path: '/api/public/listings/upsert'
@@ -2595,6 +2629,13 @@ declare module '@tanstack/react-router' {
       path: '/api/public/portal/v1/storia/notifications'
       fullPath: '/api/public/portal/v1/storia/notifications'
       preLoaderRoute: typeof ApiPublicPortalV1StoriaNotificationsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/portal/v1/vdi/leads': {
+      id: '/api/public/portal/v1/vdi/leads'
+      path: '/api/public/portal/v1/vdi/leads'
+      fullPath: '/api/public/portal/v1/vdi/leads'
+      preLoaderRoute: typeof ApiPublicPortalV1VdiLeadsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/sites/v1/media/$id': {
@@ -2905,6 +2946,7 @@ const rootRouteChildren: RootRouteChildren = {
     ApiPublicCronPropertyImportImagesRoute,
   ApiPublicCronStoriaWebhookRetryRoute: ApiPublicCronStoriaWebhookRetryRoute,
   ApiPublicCronSubscriptionsRoute: ApiPublicCronSubscriptionsRoute,
+  ApiPublicCronVdiLeadsRoute: ApiPublicCronVdiLeadsRoute,
   ApiPublicListingsUpsertRoute: ApiPublicListingsUpsertRoute,
   ApiPublicMailgunEventsRoute: ApiPublicMailgunEventsRoute,
   ApiPublicMailgunInboundRoute: ApiPublicMailgunInboundRoute,
@@ -2938,6 +2980,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicPortalV1ProperstarLeadsRoute: ApiPublicPortalV1ProperstarLeadsRoute,
   ApiPublicPortalV1StoriaNotificationsRoute:
     ApiPublicPortalV1StoriaNotificationsRoute,
+  ApiPublicPortalV1VdiLeadsRoute: ApiPublicPortalV1VdiLeadsRoute,
   ApiPublicSitesV1MediaIdRoute: ApiPublicSitesV1MediaIdRoute,
   ApiPublicPortalV1StoriaOauthCallbackRoute:
     ApiPublicPortalV1StoriaOauthCallbackRoute,

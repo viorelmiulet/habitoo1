@@ -8,7 +8,8 @@
  */
 
 export const VDI_MIN_TITLE = 10;
-export const VDI_MAX_PHOTOS = 40;
+/** Limita contului de probă VDI.ro: 20 de poze pe anunț (max 8 MB fiecare). */
+export const VDI_MAX_PHOTOS = 20;
 
 /* ------------------------------- răspunsuri ------------------------------- */
 

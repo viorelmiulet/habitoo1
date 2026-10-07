@@ -14,7 +14,7 @@ import type {
   PortalFail,
   PortalResult,
 } from "../adapter";
-import { vdiCall, VDI_BASE_URL } from "../vdi/client.server";
+import { vdiCall, vdiLimitedCall, VDI_BASE_URL } from "../vdi/client.server";
 import {
   mapAgentToVdi,
   mapPropertyToVdi,
@@ -237,6 +237,7 @@ async function admin() {
 }
 
 const realDeps: VdiDeps = {
+  call: vdiLimitedCall,
   async loadProperty(ctx, ref) {
     const db = await admin();
     const { data: row } = await db
