@@ -403,6 +403,23 @@ export const PORTALS: PortalDefinition[] = [
   },
 
   {
+    id: "olx_direct",
+    activation: "oauth",
+    display_name: "OLX.ro (cont propriu)",
+    description:
+      "Pentru agențiile fără abonament Storia, care publică din propriul pachet OLX. Momentan doar conectarea contului.",
+    logo: "OX",
+    status: "available",
+    directions: ["habitoo_to_portal"],
+    authentication: ["oauth"],
+    capabilities: ["test_connection"],
+    configuration_schema: { fields: [] },
+    website: "https://www.olx.ro",
+    docs: "https://www.olx.ro/api/partner",
+    notes:
+      "OAuth OLX Partner API 2.0, callback /api/public/portal/v1/olx/oauth/callback. Exclusiv cu Storia. Habitoo nu cumpără pachete sau promovări.",
+  },
+  {
     id: "olx",
     display_name: "OLX",
     description: "Integrare de publicare anunțuri. Necesită acord și documentație de la portal.",
