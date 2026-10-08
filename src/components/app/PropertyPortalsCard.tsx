@@ -803,7 +803,10 @@ export const PropertyPortalsCard = forwardRef<
                 (cell.state === "error" ||
                   Boolean(cell.lastError) ||
                   (cell.availability === "available" && value && !cell.configured));
-              const stateView = STATE_VIEW[cell.state];
+              const stateView =
+                cell.portalId === "olx_direct" && cell.state === "syncing"
+                  ? { label: "În moderare OLX", pill: "pending" as StatusPillState }
+                  : STATE_VIEW[cell.state];
               const latestOperation = latestOperationByPortal.get(cell.portalId);
               const latestOperationFailed = latestOperation?.success === false;
               const detail = publishSoon
