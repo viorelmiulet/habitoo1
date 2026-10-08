@@ -47,12 +47,12 @@ export function IntegratedPortalsSection() {
                         className="shrink-0"
                       />
                       <span className="truncate text-sm font-semibold text-navy">
-                        {portal.display_name}
+                        {homepageLabel(portal.id, portal.display_name)}
                       </span>
                     </>
                   ) : (
                     <span className="truncate text-sm font-semibold text-navy">
-                      {portal.display_name}
+                      {homepageLabel(portal.id, portal.display_name)}
                     </span>
                   )}
                 </div>
