@@ -15,6 +15,7 @@ import {
   selfActivatePortal,
 } from "@/lib/portal-activation.functions";
 import { startStoriaAuthorization } from "@/lib/portals/storia.functions";
+import { startOlxAuthorization } from "@/lib/portals/olx.functions";
 import { LaCheieActivationPanel } from "@/components/app/LaCheieActivationPanel";
 import { LACHEIE_PORTAL_KEY } from "@/lib/portals/lacheie/config";
 import { agencyGridItems, agencyPortalCardState } from "@/lib/portals/grid-state";
@@ -25,6 +26,7 @@ export function AgencyPortalCatalogCard() {
   const sendRequest = useServerFn(requestPortalActivation);
   const runActivate = useServerFn(selfActivatePortal);
   const runStoria = useServerFn(startStoriaAuthorization);
+  const runOlx = useServerFn(startOlxAuthorization);
   const { data: currentUser } = useCurrentUser();
   const organizationId = currentUser?.organization?.id ?? null;
 
@@ -67,11 +69,14 @@ export function AgencyPortalCatalogCard() {
   const connect = useMutation({
     mutationFn: async (portalId: string) => {
       if (!organizationId) throw new Error("no_org");
-      await runActivate({ data: { portalId } });
-      const { url } = await runStoria({ data: { organizationId } });
+      if (portalId !== "olx_direct") await runActivate({ data: { portalId } });
+      const { url } =
+        portalId === "olx_direct"
+          ? await runOlx({ data: { organizationId } })
+          : await runStoria({ data: { organizationId } });
       window.location.assign(url);
     },
-    onError: () => toast.error("Conectarea nu a pornit. Încearcă din nou sau scrie-ne."),
+    onError: (e: Error) => toast.error(e.message || "Conectarea nu a pornit. Încearcă din nou sau scrie-ne."),
   });
 
   const busy = request.isPending || activate.isPending || connect.isPending;
