@@ -244,6 +244,11 @@ const BASE_REQUIRED = [
 ];
 
 export const PORTAL_REQUIREMENTS: Record<string, PortalRequirementSpec> = {
+  // OLX.ro direct: doar conectarea contului; cerințele de publicare vin la pasul de publicare.
+  olx_direct: {
+    required: BASE_REQUIRED,
+    allowed: COMMON_ALLOWED,
+  },
   clickimob: {
     required: BASE_REQUIRED,
     allowed: COMMON_ALLOWED,
