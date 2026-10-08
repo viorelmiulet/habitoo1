@@ -527,6 +527,8 @@ export const getPortalHub = createServerFn({ method: "POST" })
       await import("@/lib/portals/storia/oauth.server");
     const storiaTokens = await loadStoriaTokens(organizationId);
     const storiaAppReady = storiaAppConfigured();
+    const { olxAppConfigured } = await import("@/lib/portals/olx/oauth.server");
+    const olxAppReady = olxAppConfigured();
     const { getPortalAdapter } = await import("@/lib/portals/adapters/index.server");
     const hasPortalAdapter = (id: string) => Boolean(getPortalAdapter(id));
     const clickimobIndexStatus = await clickimobIndexStatusFor(
@@ -639,7 +641,7 @@ export const getPortalHub = createServerFn({ method: "POST" })
               },
         oauth: portal.authentication.includes("oauth")
           ? {
-              appConfigured: storiaAppReady,
+              appConfigured: portal.id === "olx_direct" ? olxAppReady : storiaAppReady,
               connected: Boolean(row?.portal_credentials_encrypted),
               expiresAt: oauthExpiresAt,
               expired: oauthExpiresAt ? new Date(oauthExpiresAt).getTime() <= Date.now() : false,
@@ -681,6 +683,10 @@ export async function applyPortalActivationForOrg(input: {
   const definition = getPortalDefinition(input.portalId);
   if (!definition) throw new Error("Portal necunoscut.");
 
+  if (activated) {
+    const { assertPortalExclusivity } = await import("@/lib/portals/olx/exclusivity");
+    await assertPortalExclusivity(organizationId, definition.id);
+  }
   const admin = await loadAdmin();
   const { data: existing } = await admin
     .from("portal_connections")
@@ -942,6 +948,21 @@ export const testPortalConnection = createServerFn({ method: "POST" })
     const { portalRateLimited } = await import("@/lib/portals/rate-limit.server");
     if (portalRateLimited("test", `${organizationId}|${data.portalId}`)) {
       return { ok: false as const, code: "RATE_LIMIT", message: PORTAL_ERROR_MESSAGE.RATE_LIMIT };
+    }
+
+    if (definition.id === "olx_direct") {
+      const { testOlxConnection } = await import("@/lib/portals/olx/oauth.server");
+      const adminDb = await loadAdmin();
+      try {
+        const account = await testOlxConnection(organizationId);
+        await adminDb.from("portal_connections").update({ status: "connected", last_sync_status: "ok", last_sync_error: null, last_sync_at: new Date().toISOString() }).eq("organization_id", organizationId).eq("portal", "olx_direct");
+        await logOperation({ organizationId, portal: "olx_direct", operation: "test_connection", success: true, actorId: context.userId });
+        return { ok: true as const, live: true, detail: null, feed: null, olxAccount: account };
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "Testul conexiunii OLX a eșuat.";
+        await logOperation({ organizationId, portal: "olx_direct", operation: "test_connection", success: false, errorCode: "AUTH_ERROR", errorMessage: message, actorId: context.userId });
+        return { ok: false as const, code: "AUTH_ERROR", message };
+      }
     }
 
     const { getPortalAdapter } = await import("@/lib/portals/adapters/index.server");

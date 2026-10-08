@@ -49,6 +49,7 @@ import {
   revokeStoriaAuthorization,
   startStoriaAuthorization,
 } from "@/lib/portals/storia.functions";
+import { revokeOlxAuthorization, startOlxAuthorization } from "@/lib/portals/olx.functions";
 import {
   getStoriaTaxonomyState,
   refreshStoriaTaxonomy,
@@ -113,6 +114,9 @@ export function PortalsCard({ organizationId }: { organizationId: string }) {
   const runActivation = useServerFn(setPortalActivation);
   const runStartOAuth = useServerFn(startStoriaAuthorization);
   const runRevokeOAuth = useServerFn(revokeStoriaAuthorization);
+  const runStartOlx = useServerFn(startOlxAuthorization);
+  const runRevokeOlx = useServerFn(revokeOlxAuthorization);
+  const [olxAccount, setOlxAccount] = useState<OlxAccountView | null>(null);
   const loadTaxonomy = useServerFn(getStoriaTaxonomyState);
   const runRefreshTaxonomy = useServerFn(refreshStoriaTaxonomy);
 
@@ -213,7 +217,10 @@ export function PortalsCard({ organizationId }: { organizationId: string }) {
    * returnarea este procesată de ruta publică de callback.
    */
   const startOAuth = useMutation({
-    mutationFn: (_portalId: string) => runStartOAuth({ data: { organizationId } }),
+    mutationFn: (portalId: string) =>
+      portalId === "olx_direct"
+        ? runStartOlx({ data: { organizationId } })
+        : runStartOAuth({ data: { organizationId } }),
     onSuccess: (res) => {
       window.location.href = res.url;
     },
@@ -242,7 +249,10 @@ export function PortalsCard({ organizationId }: { organizationId: string }) {
   });
 
   const revokeOAuth = useMutation({
-    mutationFn: (_portalId: string) => runRevokeOAuth({ data: { organizationId } }),
+    mutationFn: (portalId: string) =>
+      portalId === "olx_direct"
+        ? runRevokeOlx({ data: { organizationId } })
+        : runRevokeOAuth({ data: { organizationId } }),
     onSuccess: () => {
       invalidate();
       toast.success("Autorizarea a fost desfăcută. Agenția trebuie să reconecteze contul.");
@@ -255,6 +265,11 @@ export function PortalsCard({ organizationId }: { organizationId: string }) {
     onSuccess: (res) => {
       invalidate();
       if (res.ok) {
+        if ("olxAccount" in res && res.olxAccount) {
+          setOlxAccount(res.olxAccount);
+          toast.success("Contul OLX a fost verificat.");
+          return;
+        }
         const feed = res.feed;
         toast.success(
           feed
@@ -697,7 +712,7 @@ export function PortalsCard({ organizationId }: { organizationId: string }) {
                             role="alert"
                             className="rounded-lg border border-destructive/40 bg-destructive/5 p-3 text-sm font-medium text-destructive"
                           >
-                            Reconectează contul Storia: autorizarea nu mai poate fi reînnoită automat.
+                            Reconectează contul {portalDisplayName(item.portal.id)}: autorizarea nu mai poate fi reînnoită automat.
                           </p>
                         ) : null}
 
@@ -755,11 +770,14 @@ export function PortalsCard({ organizationId }: { organizationId: string }) {
                           >
                             <ExternalLink className="mr-2 size-4" />
                             {item.oauth.reconnectRequired
-                              ? "Reconectează contul Storia"
+                              ? `Reconectează contul ${item.portal.id === "olx_direct" ? "OLX" : "Storia"}`
                               : item.oauth.connected
                               ? "Reconectează contul"
                               : `Conectează contul ${portalDisplayName(item.portal.id)}`}
                           </Button>
+                          {item.portal.id === "olx_direct" && olxAccount ? (
+                            <OlxAccountPanel account={olxAccount} />
+                          ) : null}
                           {item.oauth.connected ? (
                             <Button
                               type="button"
@@ -1235,5 +1253,41 @@ function TaxonomyDiscrepancies({
         <li key={line}>{line}</li>
       ))}
     </ul>
+  );
+}
+
+
+type OlxAccountView = {
+  name: string | null;
+  email: string | null;
+  isBusiness: boolean | null;
+  balance: { sum: number | null; currency: string | null } | null;
+  packets: { name: string; left: number | null; total: number | null; validTo: string | null }[];
+};
+
+function OlxAccountPanel({ account }: { account: OlxAccountView }) {
+  return (
+    <div data-olx-account className="w-full space-y-2 rounded-lg border border-border bg-surface p-3 text-sm">
+      <p className="font-medium">
+        {account.name ?? "Cont OLX"}
+        {account.email ? <span className="ml-2 text-muted-foreground">{account.email}</span> : null}
+      </p>
+      <p className="text-muted-foreground">
+        Cont business: {account.isBusiness === null ? "—" : account.isBusiness ? "da" : "nu"} · Sold:{" "}
+        {account.balance?.sum ?? "—"} {account.balance?.currency ?? ""}
+      </p>
+      {account.packets.length === 0 ? (
+        <p className="text-muted-foreground">Niciun pachet activ.</p>
+      ) : (
+        <ul className="space-y-1">
+          {account.packets.map((p, i) => (
+            <li key={i}>
+              {p.name}: {p.left ?? "—"} din {p.total ?? "—"} anunțuri
+              {p.validTo ? `, valabil până la ${new Date(p.validTo).toLocaleDateString("ro-RO")}` : ""}
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
   );
 }
