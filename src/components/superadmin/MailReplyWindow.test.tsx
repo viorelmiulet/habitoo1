@@ -66,7 +66,7 @@ describe("floating mail reply (no real email)", () => {
   });
   it("double submit sends exactly one mocked message and closes on success", async () => {
     let finish: ((value: { ok: boolean }) => void) | undefined;
-    const send = vi.fn(() => new Promise<{ ok: boolean }>((resolve) => { finish = resolve; }));
+    const send = vi.fn<Send>(() => new Promise<{ ok: boolean }>((resolve) => { finish = resolve; }));
     render(send); click("Răspunde primit"); type("Răspuns");
     act(() => { const submit = button("Trimite"); submit.click(); submit.click(); });
     expect(send).toHaveBeenCalledTimes(1);
