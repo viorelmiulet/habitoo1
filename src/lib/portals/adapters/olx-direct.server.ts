@@ -17,6 +17,8 @@ import type {
   PortalResult,
 } from "../adapter";
 import { PortalError, toPortalError } from "../errors";
+import { OlxHttpError, olxExactHttpText } from "../olx/errors";
+import { maskSecrets } from "../operation-logs";
 import { mapPropertyToOlx, type OlxLocation, type OlxProperty } from "../olx/mapper";
 import { olxCategoryChain, type OlxTaxonomy } from "../olx/taxonomy";
 
@@ -48,9 +50,60 @@ function fail(code: PortalFail["code"], message: string, extra: Partial<PortalFa
   return { ok: false, code, message, detail: null, httpStatus: null, ...extra };
 }
 
-function asFail(error: unknown): PortalFail {
-  const e = toPortalError(error);
-  return fail(e.code, `${NAME}: ${e.message}`, { detail: e.detail ?? null });
+export type OlxStage =
+  | "încărcarea anunțului"
+  | "încărcarea categoriilor OLX"
+  | "găsirea localității"
+  | "trimiterea anunțului"
+  | "verificarea stării"
+  | "activarea din pachet"
+  | "retragerea anunțului"
+  | "testul conexiunii";
+
+/** Marchează pasul în care a căzut o eroare (fără a o transforma). */
+function inStage<T>(stage: OlxStage, run: () => Promise<T>): Promise<T> {
+  return run().catch((error: unknown) => {
+    if (error && typeof error === "object" && !("olxStage" in error)) {
+      try {
+        Object.defineProperty(error, "olxStage", { value: stage });
+      } catch {
+        /* obiect înghețat: pasul rămâne cel exterior */
+      }
+    }
+    throw error;
+  });
+}
+
+/**
+ * Eroarea EXACTĂ, cu pasul: HTTP OLX → status, title, detail, validation[];
+ * excepție internă → mesajul real (secrete mascate). Niciodată textul generic.
+ */
+export function olxFail(error: unknown, fallbackStage: OlxStage): PortalFail {
+  const stage = ((error as { olxStage?: OlxStage } | null)?.olxStage ?? fallbackStage) as OlxStage;
+  if (error instanceof OlxHttpError) {
+    return fail(error.code, `${NAME} – ${stage}: ${olxExactHttpText(error.status, error.body)}`.slice(0, 1000), {
+      detail: `olx_http_${error.status}`,
+      httpStatus: error.status,
+      portalResponse: error.body ?? null,
+    });
+  }
+  const raw =
+    error instanceof Error
+      ? error.message || error.name
+      : typeof error === "string"
+        ? error
+        : (() => {
+            try {
+              return JSON.stringify(error);
+            } catch {
+              return String(error);
+            }
+          })();
+  const text = String(maskSecrets(raw ?? "eroare necunoscută")).slice(0, 800);
+  const code = error instanceof PortalError ? error.code : "PORTAL_ERROR";
+  const detail =
+    error instanceof PortalError && error.detail ? error.detail : error instanceof Error ? `olx_internal:${error.name}` : "olx_internal";
+  return fail(code, `${NAME} – ${stage}: ${text}`, { detail });
 }
 
 const data = (body: Record<string, unknown> | null) =>
@@ -130,7 +183,9 @@ export async function checkOlxAdvert(
       return left > 0 && cats.some((c) => chain.includes(c));
     });
     if (usable) {
-      await request(organizationId, "POST", `/adverts/${advertId}/commands`, { command: "activate" });
+      await inStage("activarea din pachet", () =>
+        request(organizationId, "POST", `/adverts/${advertId}/commands`, { command: "activate" }),
+      );
       return { portalStatus: "pending", message: "În moderare OLX", url: null };
     }
     const name = taxonomy?.[String(categoryId)]?.name ?? "anunțului";
@@ -159,19 +214,21 @@ export async function checkOlxAdvert(
 
 export function createOlxDirectAdapter(deps: OlxDirectDeps): PortalAdapter {
   async function build(ctx: PortalContext, ref: ListingRef) {
-    const loaded = await deps.loadProperty(ctx, ref);
+    const loaded = await inStage("încărcarea anunțului", () => deps.loadProperty(ctx, ref));
     if (!loaded.ok) return { fail: fail("VALIDATION_ERROR", `Anunțul nu poate fi trimis la OLX: ${loaded.reasons.join(", ")}.`) };
-    const taxonomy = await deps.loadTaxonomy();
+    const taxonomy = await inStage("încărcarea categoriilor OLX", () => deps.loadTaxonomy());
     // Validare locală completă înainte de orice apel (locația o rezolvăm abia după).
     const preview = mapPropertyToOlx(loaded.property, taxonomy, { city_id: 1 });
     if (!preview.ok) return { fail: fail("VALIDATION_ERROR", `Anunțul nu poate fi trimis la OLX: ${preview.reasons.join(", ")}.`) };
     const location = ctx.allowLiveRequests
-      ? await resolveOlxLocation(deps.request, ctx.organizationId, {
-          lat: loaded.property.lat,
-          lng: loaded.property.lng,
-          city: loaded.city,
-          county: loaded.county,
-        })
+      ? await inStage("găsirea localității", () =>
+          resolveOlxLocation(deps.request, ctx.organizationId, {
+            lat: loaded.property.lat,
+            lng: loaded.property.lng,
+            city: loaded.city,
+            county: loaded.county,
+          }),
+        )
       : { city_id: 0 };
     const mapped = mapPropertyToOlx(loaded.property, taxonomy, location);
     if (!mapped.ok) return { fail: fail("VALIDATION_ERROR", `Anunțul nu poate fi trimis la OLX: ${mapped.reasons.join(", ")}.`) };
@@ -187,7 +244,7 @@ export function createOlxDirectAdapter(deps: OlxDirectDeps): PortalAdapter {
     httpStatus: number,
     body: unknown,
   ): Promise<PortalResult<ListingOutcome>> {
-    const check = await checkOlxAdvert(deps.request, ctx.organizationId, advertId, taxonomy);
+    const check = await inStage("verificarea stării", () => checkOlxAdvert(deps.request, ctx.organizationId, advertId, taxonomy));
     if (check.portalStatus === "pending") await deps.armStatusCron();
     if (check.portalStatus === "error") await deps.notifyError(ctx.organizationId, ref.propertyId, check.message);
     return {
@@ -221,23 +278,25 @@ export function createOlxDirectAdapter(deps: OlxDirectDeps): PortalAdapter {
         // Republicare: întâi activate (anunț dezactivat anterior), apoi PUT complet.
         if (mode === "publish") {
           try {
-            await command(ctx, ref.externalId, { command: "activate" });
+            await inStage("trimiterea anunțului", () => command(ctx, ref.externalId!, { command: "activate" }));
           } catch (error) {
             const e = toPortalError(error);
             if (e.code !== "VALIDATION_ERROR") throw error;
           }
         }
-        const res = await deps.request(ctx.organizationId, "PUT", `/adverts/${ref.externalId}`, mapped.payload);
+        const res = await inStage("trimiterea anunțului", () =>
+          deps.request(ctx.organizationId, "PUT", `/adverts/${ref.externalId}`, mapped.payload),
+        );
         return finish(ctx, ref, ref.externalId, taxonomy, mode === "publish" ? "republish" : "put", res.status, res.body);
       }
-      const res = await deps.request(ctx.organizationId, "POST", "/adverts", mapped.payload);
+      const res = await inStage("trimiterea anunțului", () => deps.request(ctx.organizationId, "POST", "/adverts", mapped.payload));
       const id = data(res.body)["id"];
       if (id === undefined || id === null || String(id) === "") {
-        return fail("PORTAL_ERROR", `${NAME}: OLX nu a întors ID-ul anunțului.`, { httpStatus: res.status, portalResponse: res.body });
+        return fail("PORTAL_ERROR", `${NAME} – trimiterea anunțului: OLX nu a întors ID-ul anunțului.`, { detail: "olx_missing_id", httpStatus: res.status, portalResponse: res.body });
       }
       return finish(ctx, ref, String(id), taxonomy, "post", res.status, res.body);
     } catch (error) {
-      const f = asFail(error);
+      const f = olxFail(error, "trimiterea anunțului");
       await deps.notifyError(ctx.organizationId, ref.propertyId, f.message).catch(() => undefined);
       return f;
     }
@@ -251,7 +310,7 @@ export function createOlxDirectAdapter(deps: OlxDirectDeps): PortalAdapter {
         await deps.request(ctx.organizationId, "GET", "/users/me");
         return { ok: true, data: { configured: true, live: true, detail: "olx_users_me ok" } };
       } catch (error) {
-        return asFail(error);
+        return olxFail(error, "testul conexiunii");
       }
     },
 
@@ -294,7 +353,7 @@ export function createOlxDirectAdapter(deps: OlxDirectDeps): PortalAdapter {
           },
         };
       } catch (error) {
-        return asFail(error);
+        return olxFail(error, "retragerea anunțului");
       }
     },
 
