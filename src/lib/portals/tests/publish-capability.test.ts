@@ -3,18 +3,18 @@ import { getPortalDefinition, portalCanPublish, publishUnavailableMessage } from
 import { decideJobResult } from "@/lib/portals/publish-jobs.server";
 
 describe("portal fără publicare implementată", () => {
-  it("olx_direct (doar test_connection) nu poate fi publicat", () => {
-    const def = getPortalDefinition("olx_direct")!;
+  it("un portal fără publish_listing și fără feed_pull nu poate fi publicat", () => {
+    const def = getPortalDefinition("olx")!;
     expect(def.capabilities).not.toContain("publish_listing");
     expect(def.capabilities).not.toContain("feed_pull");
-    expect(portalCanPublish("olx_direct")).toBe(false);
-    const msg = publishUnavailableMessage("olx_direct");
+    expect(portalCanPublish("olx")).toBe(false);
+    const msg = publishUnavailableMessage("olx");
     expect(msg).toMatch(/publicarea nu este încă disponibilă\.$/);
-    const d = decideJobResult({ attempts: 1 }, { portalId: "olx_direct", ok: false, action: "blocked", message: msg }, undefined);
+    const d = decideJobResult({ attempts: 1 }, { portalId: "olx", ok: false, action: "blocked", message: msg }, undefined);
     expect(d.status).toBe("error");
   });
 
   it("portalurile feed rămân publicabile", () => {
-    for (const id of ["clickimob", "properstar", "homepitch"]) expect(portalCanPublish(id)).toBe(true);
+    for (const id of ["clickimob", "properstar", "homepitch", "olx_direct"]) expect(portalCanPublish(id)).toBe(true);
   });
 });

@@ -407,17 +407,17 @@ export const PORTALS: PortalDefinition[] = [
     activation: "oauth",
     display_name: "OLX.ro (cont prepaid)",
     description:
-      "Pentru agențiile fără abonament Storia, care publică din propriul pachet OLX. Momentan doar conectarea contului.",
+      "Pentru agențiile care publică din propriul pachet OLX, cu contul OLX conectat.",
     logo: "OX",
     status: "available",
     directions: ["habitoo_to_portal"],
     authentication: ["oauth"],
-    capabilities: ["test_connection"],
+    capabilities: ["test_connection", "publish_listing", "update_listing", "withdraw_listing"],
     configuration_schema: { fields: [] },
     website: "https://www.olx.ro",
     docs: "https://www.olx.ro/api/partner",
     notes:
-      "OAuth OLX Partner API 2.0, callback /api/public/portal/v1/olx/oauth/callback. Exclusiv cu Storia. Habitoo nu cumpără pachete sau promovări.",
+      "OAuth OLX Partner API 2.0, callback /api/public/portal/v1/olx/oauth/callback. Publicare POST /adverts, starea reală din GET /adverts/{id}. Habitoo nu cumpără pachete sau promovări.",
   },
   {
     id: "olx",

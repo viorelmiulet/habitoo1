@@ -575,3 +575,31 @@ export async function testOlxConnection(organizationId: string, deps?: OlxDeps):
     }),
   };
 }
+
+// ------------------------------------------------- token de aplicație (taxonomie)
+
+/** Token `client_credentials` (scope `v2 read write`) — folosit doar pentru GET-uri de taxonomie. */
+export async function olxAppAccessToken(deps?: Partial<Pick<OlxDeps, "fetch" | "now">>): Promise<string> {
+  const d = { fetch: deps?.fetch ?? fetch, now: deps?.now ?? Date.now } as OlxDeps;
+  const tokens = await tokenRequest({ grant_type: "client_credentials" }, d);
+  return tokens.access_token;
+}
+
+/** GET public de taxonomie cu tokenul de aplicație; doar host-ul OLX.ro permis. */
+export async function olxAppGet(
+  token: string,
+  path: string,
+  fetchImpl: typeof fetch = fetch,
+): Promise<Record<string, unknown> | null> {
+  const url = new URL(`${OLXRO_PARTNER_BASE}${path.startsWith("/") ? path : `/${path}`}`);
+  if (url.hostname !== OLXRO_HOST || !url.pathname.startsWith("/api/partner/")) {
+    throw new PortalError("CONFIG_ERROR", "blocked_host");
+  }
+  const res = await fetchImpl(url.toString(), {
+    method: "GET",
+    headers: { authorization: `Bearer ${token}`, version: "2.0", accept: "application/json", "user-agent": OLXRO_USER_AGENT },
+  });
+  const body = (await res.json().catch(() => null)) as Record<string, unknown> | null;
+  if (!res.ok) throw new PortalError(codeFromHttpStatus(res.status), `olx_http_${res.status}`, olxErrorMessage(res.status, body));
+  return body;
+}
