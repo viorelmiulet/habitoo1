@@ -3,7 +3,7 @@
  * Validările rapide aici; validarea completă (date curente, sloturi) se
  * reface la execuție în worker.
  */
-import { getPortalDefinition, portalDisplayName, type PortalId } from "./registry";
+import { getPortalDefinition, portalCanPublish, publishUnavailableMessage, portalDisplayName, type PortalId } from "./registry";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Admin = any;
@@ -48,6 +48,10 @@ export async function enqueuePublishJobsForOrg(input: EnqueueInput) {
 
     if (wanted.enabled && allowed !== null && !allowed.has(definition.id)) {
       results.push({ portalId: definition.id, portalName: name, queued: false, message: `${name} nu este activat pentru agenția ta.` });
+      continue;
+    }
+    if (wanted.enabled && !portalCanPublish(definition.id)) {
+      results.push({ portalId: definition.id, portalName: name, queued: false, message: publishUnavailableMessage(definition.id) });
       continue;
     }
     if (wanted.enabled && definition.status !== "available") {

@@ -1,3 +1,4 @@
+import { portalCanPublish, publishUnavailableMessage } from "@/lib/portals/registry";
 import { mergePortalOffers, parsePortalOffers } from "@/lib/portals/imobiliare/offer-links";
 /**
  * Server functions pentru modulul de portaluri imobiliare.
@@ -2872,6 +2873,17 @@ export async function applyPortalSelectionForOrg(input: {
        * portaluri, iar utilizatorul vedea un singur mesaj generic de eroare.
        */
       try {
+        // Fără publicare push și fără feed: nu există nicio cale reală de publicare.
+        if (wanted.enabled && !portalCanPublish(definition.id)) {
+          results.push({
+            portalId: definition.id,
+            portalName: portalDisplayName(definition.id),
+            action: "blocked",
+            ok: false,
+            message: publishUnavailableMessage(definition.id),
+          });
+          continue;
+        }
         // Portalurile neactivate pentru agenție sunt respinse, nu ignorate silențios.
         if (allowedPortals !== null && !allowedPortals.has(definition.id)) {
           if (wanted.enabled) {
@@ -3069,7 +3081,7 @@ export async function applyPortalSelectionForOrg(input: {
         }
 
         // Portalurile de tip feed nu primesc trimiteri: selecția este suficientă.
-        if (!pushSupported) {
+        if (!pushSupported && definition.capabilities.includes("feed_pull")) {
           results.push({
             portalId: definition.id,
             portalName: name,
