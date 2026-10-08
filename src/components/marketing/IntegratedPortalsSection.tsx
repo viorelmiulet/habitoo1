@@ -1,7 +1,7 @@
 import { hasPortalLogo, PortalLogo } from "@/components/app/PortalLogo";
 import { Reveal } from "@/components/marketing/Reveal";
 import { Container, Section, SectionHeading } from "@/components/marketing/Section";
-import { isPortalCovered, PORTALS } from "@/lib/portals/registry";
+import { isPortalCovered, PORTAL_GROUPS, PORTALS } from "@/lib/portals/registry";
 
 const integratedPortals = PORTALS.filter(
   (portal) =>
@@ -11,6 +11,12 @@ const integratedPortals = PORTALS.filter(
     // apare deja prin cardul Storia+OLX.
     portal.id !== "olx_direct",
 );
+
+/** Portalurile care acoperă alte portaluri (ex. Storia+OLX) își arată grupul pe homepage. */
+function homepageLabel(portalId: string, fallback: string): string {
+  const group = PORTAL_GROUPS.find((g) => g.primary === portalId);
+  return group ? group.label : fallback;
+}
 
 export function IntegratedPortalsSection() {
   return (
