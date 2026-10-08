@@ -58,6 +58,7 @@ import {
 import { appHead } from "@/components/app/app-head";
 import { formatDateTime } from "@/lib/format";
 import { cn } from "@/lib/utils";
+import { sortMessagesNewestFirst } from "@/lib/mail-order";
 import {
   AlertDialog,
   AlertDialogCancel,
@@ -1202,7 +1203,11 @@ function ThreadView({
   });
 
   const thread = query.data?.thread;
-  const messages = useMemo(() => query.data?.messages ?? [], [query.data]);
+  // Cel mai nou mesaj primul; sortăm o copie, niciodată datele din cache.
+  const messages = useMemo(
+    () => sortMessagesNewestFirst(query.data?.messages ?? []),
+    [query.data],
+  );
   const attachments = query.data?.attachments ?? [];
 
   // La deschidere marcăm ca citit; contoarele se recalculează în baza de date.
@@ -1317,6 +1322,14 @@ function ThreadView({
         </Button>
       </div>
 
+      <ReplyBox
+        threadId={threadId}
+        onSent={() => {
+          void query.refetch();
+          onChanged();
+        }}
+      />
+
       <div className="space-y-3">
         {messages.map((m) => (
           <MessageCard
@@ -1327,14 +1340,6 @@ function ThreadView({
           />
         ))}
       </div>
-
-      <ReplyBox
-        threadId={threadId}
-        onSent={() => {
-          void query.refetch();
-          onChanged();
-        }}
-      />
     </div>
   );
 }
