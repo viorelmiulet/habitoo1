@@ -3,11 +3,11 @@ import { describe, expect, it } from "vitest";
 import { PortalLogo, hasPortalLogo } from "@/components/app/PortalLogo";
 import { portalLogoIds } from "@/lib/portals/registry";
 
-describe("logo-ul portalului OLX.ro (cont propriu)", () => {
+describe("logo-ul portalului OLX.ro (cont prepaid)", () => {
   it("are logo local, deci cardul nu afișează inițialele", () => {
     expect(hasPortalLogo("olx_direct")).toBe(true);
     const html = renderToStaticMarkup(
-      <PortalLogo portalId="olx_direct" name="OLX.ro (cont propriu)" size={40} alt="OLX.ro (cont propriu)" />,
+      <PortalLogo portalId="olx_direct" name="OLX.ro (cont prepaid)" size={40} alt="OLX.ro (cont prepaid)" />,
     );
     expect(html).toContain("<img");
     expect(html).not.toContain(">OX<");
