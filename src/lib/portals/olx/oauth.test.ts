@@ -12,7 +12,6 @@ import {
   type OlxStore,
 } from "./oauth.server";
 import { isForbiddenOlxPurchase, OLXRO_REDIRECT_URI } from "./config";
-import { portalExclusivityConflict, STORIA_BLOCKS_OLX, OLX_BLOCKS_STORIA } from "./exclusivity";
 
 const ORG = "org-1";
 type State = { id: string; organizationId: string; hash: string; expiresAt: string; consumedAt: string | null; createdBy: string | null };
@@ -132,10 +131,29 @@ describe("OLX.ro OAuth", () => {
   });
 });
 
-describe("Storia / OLX exclusivity", () => {
-  it("blocks both directions", () => {
-    expect(portalExclusivityConflict("olx_direct", ["storia"])).toBe(STORIA_BLOCKS_OLX);
-    expect(portalExclusivityConflict("storia", ["olx_direct"])).toBe(OLX_BLOCKS_STORIA);
-    expect(portalExclusivityConflict("olx_direct", ["imospot"])).toBeNull();
+describe("Storia + OLX direct together", () => {
+  it("an agency with Storia active can connect its own OLX account", async () => {
+    const t = setup([json(200, { access_token: "A1", refresh_token: "R1", expires_in: 86400, token_type: "bearer", scope: "v2 read write" })]);
+    const activeConnections = ["storia", "olx_direct"];
+    expect(activeConnections).toContain("storia");
+    const state = await createOlxOAuthState({ organizationId: ORG, createdBy: "u1" }, t.deps);
+    expect(await consumeOlxOAuthState(state, t.deps)).toEqual({ organizationId: ORG, createdBy: "u1" });
+    const tokens = await exchangeOlxAuthorizationCode("CODE", t.deps);
+    await saveOlxTokens({ organizationId: ORG, tokens, actorId: "u1", initial: true }, t.deps);
+    expect((await loadOlxTokens(ORG, t.deps))!.access_token).toBe("A1");
+  });
+
+  it("no exclusivity check remains on any path", async () => {
+    const { readFileSync } = await import("node:fs");
+    for (const f of [
+      "src/lib/portals.functions.ts",
+      "src/lib/portals/olx.functions.ts",
+      "src/lib/portals/storia.functions.ts",
+      "src/routes/api/public/portal/v1/olx.oauth.callback.ts",
+    ]) {
+      const src = readFileSync(f, "utf8");
+      expect(src).not.toContain("assertPortalExclusivity");
+      expect(src).not.toContain("deja inclus prin Storia");
+    }
   });
 });

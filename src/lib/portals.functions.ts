@@ -683,10 +683,6 @@ export async function applyPortalActivationForOrg(input: {
   const definition = getPortalDefinition(input.portalId);
   if (!definition) throw new Error("Portal necunoscut.");
 
-  if (activated) {
-    const { assertPortalExclusivity } = await import("@/lib/portals/olx/exclusivity");
-    await assertPortalExclusivity(organizationId, definition.id);
-  }
   const admin = await loadAdmin();
   const { data: existing } = await admin
     .from("portal_connections")

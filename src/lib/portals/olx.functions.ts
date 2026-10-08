@@ -31,8 +31,6 @@ export const startOlxAuthorization = createServerFn({ method: "POST" })
   .inputValidator(orgInput)
   .handler(async ({ data, context }) => {
     const organizationId = await requireConnector(context as unknown as Ctx, data.organizationId);
-    const { assertPortalExclusivity } = await import("@/lib/portals/olx/exclusivity");
-    await assertPortalExclusivity(organizationId, "olx_direct");
     const { createOlxOAuthState, olxAuthorizationUrl, olxAppConfigured } = await import(
       "@/lib/portals/olx/oauth.server"
     );

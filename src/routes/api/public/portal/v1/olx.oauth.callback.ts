@@ -49,8 +49,6 @@ export const Route = createFileRoute("/api/public/portal/v1/olx/oauth/callback")
           return redirect(path, { ...base, olx_error: portalError ? "denied" : "missing_code" });
         }
         try {
-          const { assertPortalExclusivity } = await import("@/lib/portals/olx/exclusivity");
-          await assertPortalExclusivity(validated.organizationId, "olx_direct");
           const tokens = await oauth.exchangeOlxAuthorizationCode(code);
           await oauth.saveOlxTokens({
             organizationId: validated.organizationId,

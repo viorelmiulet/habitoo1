@@ -62,8 +62,6 @@ export const startStoriaAuthorization = createServerFn({ method: "POST" })
       context as unknown as AuthContext,
       data.organizationId,
     );
-    const { assertPortalExclusivity } = await import("@/lib/portals/olx/exclusivity");
-    await assertPortalExclusivity(organizationId, "storia");
     const { createStoriaOAuthState, storiaAuthorizationUrl, storiaAppConfigured } =
       await import("@/lib/portals/storia/oauth.server");
     if (!storiaAppConfigured()) {
