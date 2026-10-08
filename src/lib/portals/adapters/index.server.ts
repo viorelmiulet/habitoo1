@@ -11,6 +11,7 @@ import { homepitchAdapter } from "./homepitch.server";
 import { romimoAdapter } from "./romimo.server";
 import { storiaAdapter } from "./storia.server";
 import { vdiAdapter } from "./vdi.server";
+import { olxDirectAdapter } from "./olx-direct.server";
 
 const ADAPTERS: Record<string, PortalAdapter> = {
   clickimob: clickimobAdapter,
@@ -24,6 +25,7 @@ const ADAPTERS: Record<string, PortalAdapter> = {
   romimo: romimoAdapter,
   storia: storiaAdapter,
   vdi: vdiAdapter,
+  olx_direct: olxDirectAdapter,
 };
 
 export function getPortalAdapter(portalId: string): PortalAdapter | null {
