@@ -27,7 +27,11 @@ const superadminCuAgentie: Session = {
 };
 
 const agent: Session = { isSuperadmin: false, organization: { id: "org-1" }, impersonation: null };
-const agencyAdmin: Session = { isSuperadmin: false, organization: { id: "org-1" }, impersonation: null };
+const agencyAdmin: Session = {
+  isSuperadmin: false,
+  organization: { id: "org-1" },
+  impersonation: null,
+};
 
 describe("destinația după autentificare (/app)", () => {
   it("superadminul fără agenție merge direct în panoul platformei", () => {
