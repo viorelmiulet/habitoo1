@@ -66,7 +66,7 @@ export function MailReplyWindow({ target, threadId, subject, attachmentIds, uplo
           "inset-0 sm:inset-auto sm:bottom-4 sm:right-4 sm:h-[min(600px,calc(100dvh-2rem))] sm:w-[560px] sm:max-w-[calc(100vw-2rem)] sm:rounded-t-lg",
     )}>
       <header className="flex shrink-0 items-center justify-between border-b border-border bg-muted px-4 py-2">
-        <h3 className="text-sm font-semibold">Răponse<span className="sr-only" /></h3>
+        <h3 className="text-sm font-semibold">Răspuns</h3>
         <div className="flex items-center gap-1">
           <Button variant="ghost" size="icon" aria-label={minimized ? "Redeschide răspunsul" : "Minimizează"} title={minimized ? "Redeschide răspunsul" : "Minimizează"} onClick={() => setMinimized(!minimized)}><Minus className="h-4 w-4" /></Button>
           <Button variant="ghost" size="icon" aria-label={expanded ? "Micșorează" : "Mărește"} title={expanded ? "Micșorează" : "Mărește"} onClick={() => { setExpanded(!expanded); setMinimized(false); }}>{expanded ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}</Button>

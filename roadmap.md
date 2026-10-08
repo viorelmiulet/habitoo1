@@ -12,3 +12,9 @@
 - [x] Selectare fotografie, tranzacție, logo, telefon și preț
 - [x] Preferințe memorate individual în browser
 - [x] Verificare vizuală pe trei anunțuri reale și ambele formate
+
+# Răspuns plutitor SuperAdmin Email
+
+- [x] Fereastră nemodală cu minimizare, maximizare, confirmare și atașamente existente
+- [ ] Teste mock pentru destinatar, păstrarea textului și trimitere unică
+- [ ] Verificare vizuală desktop și mobil fără emailuri reale

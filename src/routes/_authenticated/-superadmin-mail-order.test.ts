@@ -99,30 +99,3 @@ describe("conversația se afișează de la cel mai nou mesaj", () => {
   });
 });
 
-describe("ThreadView sortează și pune răspunsul deasupra listei", () => {
-  const source = readFileSync(
-    "src/routes/_authenticated/superadmin.mail.tsx",
-    "utf8",
-  );
-  const threadView = source.slice(
-    source.indexOf("function ThreadView"),
-    source.indexOf("function MessageCard"),
-  );
-
-  it("sortează în useMemo, pe o copie", () => {
-    expect(threadView).toContain("useMemo(");
-    expect(threadView).toContain("sortMessagesNewestFirst(");
-  });
-
-  it("ReplyBox este între bara de acțiuni și lista de mesaje", () => {
-    const back = threadView.indexOf("Înapoi");
-    const reply = threadView.indexOf("<ReplyBox");
-    const list = threadView.indexOf("{messages.map((m) => (");
-    expect(back).toBeGreaterThan(-1);
-    expect(reply).toBeGreaterThan(-1);
-    expect(list).toBeGreaterThan(-1);
-    expect(back).toBeLessThan(reply);
-    expect(reply).toBeLessThan(list);
-    expect(threadView.lastIndexOf("<ReplyBox")).toBe(reply);
-  });
-});

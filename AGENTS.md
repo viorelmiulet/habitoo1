@@ -22,3 +22,5 @@
 - `HomeHeader` on homepage + blog (`PublicLayout homeHeader`); else `PublicHeader`. Why: isolate fixed overlay.
 - Public agency pages: `/agentii` lists only eligible agencies with `public_profile_enabled` (RPC `public_partner_agencies`: name/logo/slug); `/agentii/$slug` profile via `public_agency_profile`/`public_agency_agents`; agent phone only with `public_show_phone`; logo via `/api/public/partner-logo/$id`. Why: opt-in per org; only opted-in data leaves the DB.
 - Social property posters are rendered client-side from existing signed media and downloaded as PNG; per-agent display preferences stay in localStorage. Why: no social publishing or generated-media persistence is needed.
+
+- Superadmin mail replies use a single nonmodal MailReplyWindow and the unchanged replyMail contract, with a stable draft send key and synchronous in-flight lock. Why: preserve draft state and prevent duplicate submissions without changing server behavior.
