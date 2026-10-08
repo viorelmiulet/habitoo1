@@ -8582,6 +8582,8 @@ export type Database = {
       }
       next_contract_number: { Args: never; Returns: string }
       next_property_reference: { Args: never; Returns: string }
+      olx_direct_refresh_arm: { Args: never; Returns: undefined }
+      olx_direct_refresh_tick: { Args: never; Returns: undefined }
       org_access_blocked: { Args: never; Returns: string }
       org_seat_usage: {
         Args: { _org: string }
