@@ -101,6 +101,7 @@ describe("adaptor olx_direct", () => {
     const h = harness({
       "GET /locations": loc,
       "POST /adverts": () => ({ status: 200, body: { data: { id: 777 } } }),
+      "PUT /adverts/777": () => ({ status: 200, body: { data: { id: 777 } } }),
       "GET /adverts/777": () => ({ status: 200, body: { data: { id: 777, status, url: "https://www.olx.ro/d/x", category_id: 1165 } } }),
     });
     const first = await h.adapter.publishListing(ctx, { propertyId: "p", externalId: null });

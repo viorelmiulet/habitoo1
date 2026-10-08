@@ -579,7 +579,7 @@ export async function testOlxConnection(organizationId: string, deps?: OlxDeps):
 // ------------------------------------------------- token de aplicație (taxonomie)
 
 /** Token `client_credentials` (scope `v2 read write`) — folosit doar pentru GET-uri de taxonomie. */
-export async function olxAppAccessToken(deps?: Pick<OlxDeps, "fetch" | "now">): Promise<string> {
+export async function olxAppAccessToken(deps?: Partial<Pick<OlxDeps, "fetch" | "now">>): Promise<string> {
   const d = { fetch: deps?.fetch ?? fetch, now: deps?.now ?? Date.now } as OlxDeps;
   const tokens = await tokenRequest({ grant_type: "client_credentials" }, d);
   return tokens.access_token;
