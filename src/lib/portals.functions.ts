@@ -261,6 +261,22 @@ async function loadAdmin() {
   return supabaseAdmin;
 }
 
+/** Prefixul portalului apare o singură dată, oricâte straturi l-au adăugat. */
+export function withPortalPrefixOnce(names: string[], message: string): string {
+  const unique = [...new Set(names.filter(Boolean))];
+  let rest = message.trim();
+  let found: string | null = null;
+  for (let guard = 0; guard < 5; guard += 1) {
+    const hit = unique.find((n) => rest.startsWith(`${n}:`));
+    if (!hit) break;
+    found ??= hit;
+    rest = rest.slice(hit.length + 1).trim();
+  }
+  const dashed = unique.find((n) => rest.startsWith(`${n} –`));
+  if (dashed) return rest;
+  return `${found ?? unique[0]}: ${rest}`;
+}
+
 export async function logOperation(input: {
   organizationId: string;
   portal: string;
@@ -1556,7 +1572,12 @@ export async function executeListingAction(input: {
     portal: definition.id,
     operation: input.operationLabel ?? action,
     success: result.ok,
-    errorCode: result.ok ? null : result.code,
+    // OLX: codul tehnic exact (ex. `olx_http_400`, `taxonomy_empty`), nu cel generic.
+    errorCode: result.ok
+      ? null
+      : definition.id === "olx_direct" && result.detail
+        ? result.detail
+        : result.code,
     errorMessage: result.ok ? null : result.message,
     // Și la succes: statusul HTTP și corpul răspunsului (sanitizate), ca
     // jurnalul să dovedească ce a confirmat portalul, nu doar ce a refuzat.
@@ -3138,9 +3159,7 @@ export async function applyPortalSelectionForOrg(input: {
           ok: res.ok,
           message: res.ok
             ? `${name}: ${action === "update" ? "actualizat" : "publicat"}.`
-            : res.message.startsWith(name)
-              ? res.message
-              : `${name}: ${res.message}`,
+            : withPortalPrefixOnce([name, definition.display_name], res.message),
           ...(!res.ok ? { code: res.code, httpStatus: res.httpStatus ?? null } : {}),
         });
       } catch (error) {
@@ -3153,7 +3172,7 @@ export async function applyPortalSelectionForOrg(input: {
           portalName: portalDisplayName(definition.id),
           action: "blocked",
           ok: false,
-          message: `${definition.display_name}: ${reason}`,
+          message: withPortalPrefixOnce([definition.display_name], reason),
           code: portalError.code,
         });
         await logOperation({
