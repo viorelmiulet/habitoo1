@@ -23,6 +23,7 @@ import {
   Paperclip,
   Plus,
   RefreshCw,
+  Reply,
   Search,
   Send,
   Settings2,
@@ -59,6 +60,7 @@ import { appHead } from "@/components/app/app-head";
 import { formatDateTime } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { sortMessagesNewestFirst } from "@/lib/mail-order";
+import { MailReplyWindow } from "@/components/superadmin/MailReplyWindow";
 import {
   AlertDialog,
   AlertDialogCancel,
@@ -1192,6 +1194,10 @@ function ThreadView({
   onChanged: () => void;
 }) {
   const load = useServerFn(getThread);
+  const reply = useServerFn(replyMail);
+  const [replyTarget, setReplyTarget] = useState<MailMessage | null>(null);
+  const staged = useStagedAttachments();
+  const replyFileRef = useRef<HTMLInputElement | null>(null);
   const markRead = useServerFn(setMailThreadRead);
   const setStatus = useServerFn(setMailThreadStatus);
   const getUrl = useServerFn(getAttachmentUrl);
@@ -1322,14 +1328,6 @@ function ThreadView({
         </Button>
       </div>
 
-      <ReplyBox
-        threadId={threadId}
-        onSent={() => {
-          void query.refetch();
-          onChanged();
-        }}
-      />
-
       <div className="space-y-3">
         {messages.map((m) => (
           <MessageCard
@@ -1337,21 +1335,41 @@ function ThreadView({
             message={m}
             attachments={attachments.filter((a) => a.message_id === m.id)}
             onDownload={downloadAttachment}
+            onReply={() => setReplyTarget(m)}
           />
         ))}
       </div>
+      {replyTarget && <MailReplyWindow
+        target={replyTarget}
+        threadId={threadId}
+        subject={thread.subject || "(fără subiect)"}
+        attachmentIds={staged.items.map((item) => item.id)}
+        uploading={staged.uploading}
+        attachments={staged.items.map((item) => (
+          <span key={item.id} className="flex min-w-0 items-center gap-1 rounded bg-muted px-2 py-1 text-xs">
+            <span className="max-w-48 truncate">{item.filename}</span>
+            <Button variant="ghost" size="icon" className="h-7 w-7" disabled={staged.uploading} aria-label={`Elimină ${item.filename}`} onClick={() => staged.remove(item.id)}><X className="h-3 w-3" /></Button>
+          </span>
+        ))}
+        picker={<AttachmentPicker staged={staged} inputRef={replyFileRef} showItems={false} />}
+        onSend={(data) => reply({ data })}
+        onClose={() => { setReplyTarget(null); staged.reset(); }}
+        onSent={() => { void query.refetch(); onChanged(); }}
+      />}
     </div>
   );
 }
 
-function MessageCard({
+export function MessageCard({
   message,
   attachments,
   onDownload,
+  onReply,
 }: {
   message: MailMessage;
   attachments: MailAttachment[];
   onDownload: (id: string) => void;
+  onReply: () => void;
 }) {
   const inbound = message.direction === "inbound";
   const [showImages, setShowImages] = useState(false);
@@ -1394,6 +1412,7 @@ function MessageCard({
           <span className="text-xs text-muted-foreground">
             {formatDateTime(message.received_at ?? message.sent_at ?? message.created_at)}
           </span>
+          <Button variant="ghost" size="sm" onClick={onReply}><Reply className="mr-1.5 h-4 w-4" />Răspunde</Button>
         </div>
       </header>
 
@@ -1503,9 +1522,11 @@ function useStagedAttachments() {
 function AttachmentPicker({
   staged,
   inputRef,
+  showItems = true,
 }: {
   staged: ReturnType<typeof useStagedAttachments>;
   inputRef: React.RefObject<HTMLInputElement | null>;
+  showItems?: boolean;
 }) {
   return (
     <div className="space-y-2">
@@ -1534,7 +1555,7 @@ function AttachmentPicker({
           )}
           Atașează
         </Button>
-        {staged.items.map((i) => (
+        {showItems && staged.items.map((i) => (
           <span
             key={i.id}
             className="flex items-center gap-1 rounded-full bg-muted px-2.5 py-1 text-xs"
@@ -1549,69 +1570,6 @@ function AttachmentPicker({
             </button>
           </span>
         ))}
-      </div>
-    </div>
-  );
-}
-
-function ReplyBox({ threadId, onSent }: { threadId: string; onSent: () => void }) {
-  const reply = useServerFn(replyMail);
-  const [text, setText] = useState("");
-  const [sending, setSending] = useState(false);
-  const staged = useStagedAttachments();
-  const fileRef = useRef<HTMLInputElement | null>(null);
-  // Cheie de idempotență stabilă per boză: un retry nu trimite de două ori.
-  const sendKeyRef = useRef(crypto.randomUUID());
-
-  const send = async () => {
-    if (!text.trim() && !staged.items.length) {
-      toast.error("Scrie un mesaj sau atașează un fișier.");
-      return;
-    }
-    setSending(true);
-    try {
-      const res = await reply({
-        data: {
-          threadId,
-          text: text.trim() || null,
-          sendKey: sendKeyRef.current,
-          attachmentIds: staged.items.map((i) => i.id),
-        },
-      });
-      if (!res.ok) {
-        toast.error(res.error ?? "Răspunsul nu a putut fi trimis.");
-        return;
-      }
-      toast.success("Răspuns trimis.");
-      setText("");
-      staged.reset();
-      sendKeyRef.current = crypto.randomUUID();
-      onSent();
-    } finally {
-      setSending(false);
-    }
-  };
-
-  return (
-    <div className="space-y-3 rounded-xl border border-border bg-surface p-4">
-      <Label htmlFor="reply-body">Răspunde</Label>
-      <Textarea
-        id="reply-body"
-        value={text}
-        onChange={(e) => setText(e.target.value)}
-        rows={4}
-        placeholder="Scrie răspunsul…"
-      />
-      <AttachmentPicker staged={staged} inputRef={fileRef} />
-      <div className="flex justify-end">
-        <Button size="sm" onClick={send} disabled={sending}>
-          {sending ? (
-            <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />
-          ) : (
-            <Send className="mr-1.5 h-4 w-4" />
-          )}
-          Trimite răspuns
-        </Button>
       </div>
     </div>
   );
