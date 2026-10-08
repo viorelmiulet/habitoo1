@@ -14,12 +14,15 @@ export type DatedMessage = {
   created_at?: string | null;
 };
 
+function fieldTime(value: string | null | undefined): number {
+  if (!value) return 0;
+  const time = Date.parse(value);
+  return Number.isNaN(time) ? 0 : time;
+}
+
 /** Data afișată în cardul mesajului: `received_at ?? sent_at ?? created_at`. */
 export function messageDisplayDate(message: DatedMessage): number {
-  const raw = message.received_at ?? message.sent_at ?? message.created_at;
-  if (!raw) return 0;
-  const time = Date.parse(raw);
-  return Number.isNaN(time) ? 0 : time;
+  return fieldTime(message.received_at ?? message.sent_at ?? message.created_at);
 }
 
 /**
@@ -32,6 +35,6 @@ export function sortMessagesNewestFirst<T extends DatedMessage>(
   return [...messages].sort((a, b) => {
     const byDisplay = messageDisplayDate(b) - messageDisplayDate(a);
     if (byDisplay !== 0) return byDisplay;
-    return messageDisplayDate(b) - messageDisplayDate(a) || 0;
+    return fieldTime(b.created_at) - fieldTime(a.created_at);
   });
 }
