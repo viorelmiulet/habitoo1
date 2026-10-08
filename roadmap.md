@@ -16,5 +16,5 @@
 # Răspuns plutitor SuperAdmin Email
 
 - [x] Fereastră nemodală cu minimizare, maximizare, confirmare și atașamente existente
-- [ ] Teste mock pentru destinatar, păstrarea textului și trimitere unică
-- [ ] Verificare vizuală desktop și mobil fără emailuri reale
+- [x] Teste mock pentru destinatar, păstrarea textului și trimitere unică
+- [x] Verificare vizuală desktop și mobil cu conversație simulată, fără emailuri reale
