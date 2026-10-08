@@ -23,7 +23,7 @@ import {
   OLX_DIRECT_PORTAL_ID as PORTAL,
   isForbiddenOlxPurchase,
 } from "./config";
-import { olxErrorMessage } from "./errors";
+import { olxErrorMessage, OlxHttpError } from "./errors";
 
 const TIMEOUT_MS = 15_000;
 
@@ -530,7 +530,7 @@ export async function olxPartnerRequest(
     body = null;
   }
   if (res.status < 200 || res.status >= 300) {
-    throw new PortalError(codeFromHttpStatus(res.status), `olx_http_${res.status}`, olxErrorMessage(res.status, body));
+    throw new OlxHttpError(res.status, body);
   }
   return { status: res.status, body };
 }
@@ -580,7 +580,7 @@ export async function testOlxConnection(organizationId: string, deps?: OlxDeps):
 
 /** Token `client_credentials` (scope `v2 read write`) — folosit doar pentru GET-uri de taxonomie. */
 export async function olxAppAccessToken(deps?: Partial<Pick<OlxDeps, "fetch" | "now">>): Promise<string> {
-  const d = { fetch: deps?.fetch ?? fetch, now: deps?.now ?? Date.now } as OlxDeps;
+  const d = { fetch: deps?.fetch ?? ((i: RequestInfo | URL, init?: RequestInit) => fetch(i, init)), now: deps?.now ?? Date.now } as OlxDeps;
   const tokens = await tokenRequest({ grant_type: "client_credentials" }, d);
   return tokens.access_token;
 }
@@ -600,6 +600,6 @@ export async function olxAppGet(
     headers: { authorization: `Bearer ${token}`, version: "2.0", accept: "application/json", "user-agent": OLXRO_USER_AGENT },
   });
   const body = (await res.json().catch(() => null)) as Record<string, unknown> | null;
-  if (!res.ok) throw new PortalError(codeFromHttpStatus(res.status), `olx_http_${res.status}`, olxErrorMessage(res.status, body));
+  if (!res.ok) throw new OlxHttpError(res.status, body);
   return body;
 }

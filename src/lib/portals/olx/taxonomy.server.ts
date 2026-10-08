@@ -12,6 +12,7 @@ import {
   type OlxCategory,
   type OlxTaxonomy,
 } from "./taxonomy";
+import { PortalError } from "../errors";
 
 type RawAttr = {
   code: string;
@@ -20,7 +21,9 @@ type RawAttr = {
   values?: { code: string }[];
 };
 
-export async function fetchOlxTaxonomy(fetchImpl: typeof fetch = fetch): Promise<OlxTaxonomy> {
+export async function fetchOlxTaxonomy(
+  fetchImpl: typeof fetch = ((i: RequestInfo | URL, init?: RequestInit) => fetch(i, init)) as typeof fetch,
+): Promise<OlxTaxonomy> {
   const { olxAppAccessToken, olxAppGet } = await import("./oauth.server");
   const token = await olxAppAccessToken({ fetch: fetchImpl });
   const all = ((await olxAppGet(token, "/categories", fetchImpl))?.["data"] ?? []) as OlxCategory[];
@@ -48,7 +51,9 @@ export async function fetchOlxTaxonomy(fetchImpl: typeof fetch = fetch): Promise
     }
   };
   await walk(OLX_REAL_ESTATE_ROOT);
-  if (Object.keys(out).length < 5) throw new Error("Taxonomia OLX Imobiliare a venit goală.");
+  if (Object.keys(out).length < 5) {
+    throw new PortalError("PORTAL_ERROR", "taxonomy_empty", `Taxonomia OLX Imobiliare a venit goală (${all.length} categorii primite, ${Object.keys(out).length} sub Imobiliare).`);
+  }
   return out;
 }
 
@@ -65,7 +70,7 @@ export async function refreshOlxTaxonomyCache(): Promise<OlxTaxonomy> {
     },
     { onConflict: "portal,site_urn" },
   );
-  if (error) throw new Error(error.message);
+  if (error) throw new PortalError("PORTAL_ERROR", "taxonomy_db_error", `Salvarea taxonomiei OLX în baza de date a eșuat: ${error.message}`);
   return live;
 }
 
