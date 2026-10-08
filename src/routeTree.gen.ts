@@ -95,6 +95,7 @@ import { Route as ApiPublicCronAccountDeletionRouteImport } from './routes/api/p
 import { Route as ApiPublicCronLacheieResendRouteImport } from './routes/api/public/cron/lacheie-resend'
 import { Route as ApiPublicCronListingCollectorRouteImport } from './routes/api/public/cron/listing-collector'
 import { Route as ApiPublicCronMarketPriceIndicesRouteImport } from './routes/api/public/cron/market-price-indices'
+import { Route as ApiPublicCronOlxStatusRouteImport } from './routes/api/public/cron/olx-status'
 import { Route as ApiPublicCronOlxTokenRefreshRouteImport } from './routes/api/public/cron/olx-token-refresh'
 import { Route as ApiPublicCronPortalBulkRouteImport } from './routes/api/public/cron/portal-bulk'
 import { Route as ApiPublicCronPortalPublishRouteImport } from './routes/api/public/cron/portal-publish'
@@ -615,6 +616,11 @@ const ApiPublicCronMarketPriceIndicesRoute =
     path: '/api/public/cron/market-price-indices',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicCronOlxStatusRoute = ApiPublicCronOlxStatusRouteImport.update({
+  id: '/api/public/cron/olx-status',
+  path: '/api/public/cron/olx-status',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicCronOlxTokenRefreshRoute =
   ApiPublicCronOlxTokenRefreshRouteImport.update({
     id: '/api/public/cron/olx-token-refresh',
@@ -968,6 +974,7 @@ export interface FileRoutesByFullPath {
   '/api/public/cron/lacheie-resend': typeof ApiPublicCronLacheieResendRoute
   '/api/public/cron/listing-collector': typeof ApiPublicCronListingCollectorRoute
   '/api/public/cron/market-price-indices': typeof ApiPublicCronMarketPriceIndicesRoute
+  '/api/public/cron/olx-status': typeof ApiPublicCronOlxStatusRoute
   '/api/public/cron/olx-token-refresh': typeof ApiPublicCronOlxTokenRefreshRoute
   '/api/public/cron/portal-bulk': typeof ApiPublicCronPortalBulkRoute
   '/api/public/cron/portal-publish': typeof ApiPublicCronPortalPublishRoute
@@ -1099,6 +1106,7 @@ export interface FileRoutesByTo {
   '/api/public/cron/lacheie-resend': typeof ApiPublicCronLacheieResendRoute
   '/api/public/cron/listing-collector': typeof ApiPublicCronListingCollectorRoute
   '/api/public/cron/market-price-indices': typeof ApiPublicCronMarketPriceIndicesRoute
+  '/api/public/cron/olx-status': typeof ApiPublicCronOlxStatusRoute
   '/api/public/cron/olx-token-refresh': typeof ApiPublicCronOlxTokenRefreshRoute
   '/api/public/cron/portal-bulk': typeof ApiPublicCronPortalBulkRoute
   '/api/public/cron/portal-publish': typeof ApiPublicCronPortalPublishRoute
@@ -1236,6 +1244,7 @@ export interface FileRoutesById {
   '/api/public/cron/lacheie-resend': typeof ApiPublicCronLacheieResendRoute
   '/api/public/cron/listing-collector': typeof ApiPublicCronListingCollectorRoute
   '/api/public/cron/market-price-indices': typeof ApiPublicCronMarketPriceIndicesRoute
+  '/api/public/cron/olx-status': typeof ApiPublicCronOlxStatusRoute
   '/api/public/cron/olx-token-refresh': typeof ApiPublicCronOlxTokenRefreshRoute
   '/api/public/cron/portal-bulk': typeof ApiPublicCronPortalBulkRoute
   '/api/public/cron/portal-publish': typeof ApiPublicCronPortalPublishRoute
@@ -1373,6 +1382,7 @@ export interface FileRouteTypes {
     | '/api/public/cron/lacheie-resend'
     | '/api/public/cron/listing-collector'
     | '/api/public/cron/market-price-indices'
+    | '/api/public/cron/olx-status'
     | '/api/public/cron/olx-token-refresh'
     | '/api/public/cron/portal-bulk'
     | '/api/public/cron/portal-publish'
@@ -1504,6 +1514,7 @@ export interface FileRouteTypes {
     | '/api/public/cron/lacheie-resend'
     | '/api/public/cron/listing-collector'
     | '/api/public/cron/market-price-indices'
+    | '/api/public/cron/olx-status'
     | '/api/public/cron/olx-token-refresh'
     | '/api/public/cron/portal-bulk'
     | '/api/public/cron/portal-publish'
@@ -1640,6 +1651,7 @@ export interface FileRouteTypes {
     | '/api/public/cron/lacheie-resend'
     | '/api/public/cron/listing-collector'
     | '/api/public/cron/market-price-indices'
+    | '/api/public/cron/olx-status'
     | '/api/public/cron/olx-token-refresh'
     | '/api/public/cron/portal-bulk'
     | '/api/public/cron/portal-publish'
@@ -1731,6 +1743,7 @@ export interface RootRouteChildren {
   ApiPublicCronLacheieResendRoute: typeof ApiPublicCronLacheieResendRoute
   ApiPublicCronListingCollectorRoute: typeof ApiPublicCronListingCollectorRoute
   ApiPublicCronMarketPriceIndicesRoute: typeof ApiPublicCronMarketPriceIndicesRoute
+  ApiPublicCronOlxStatusRoute: typeof ApiPublicCronOlxStatusRoute
   ApiPublicCronOlxTokenRefreshRoute: typeof ApiPublicCronOlxTokenRefreshRoute
   ApiPublicCronPortalBulkRoute: typeof ApiPublicCronPortalBulkRoute
   ApiPublicCronPortalPublishRoute: typeof ApiPublicCronPortalPublishRoute
@@ -2379,6 +2392,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicCronMarketPriceIndicesRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/cron/olx-status': {
+      id: '/api/public/cron/olx-status'
+      path: '/api/public/cron/olx-status'
+      fullPath: '/api/public/cron/olx-status'
+      preLoaderRoute: typeof ApiPublicCronOlxStatusRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/cron/olx-token-refresh': {
       id: '/api/public/cron/olx-token-refresh'
       path: '/api/public/cron/olx-token-refresh'
@@ -2978,6 +2998,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicCronLacheieResendRoute: ApiPublicCronLacheieResendRoute,
   ApiPublicCronListingCollectorRoute: ApiPublicCronListingCollectorRoute,
   ApiPublicCronMarketPriceIndicesRoute: ApiPublicCronMarketPriceIndicesRoute,
+  ApiPublicCronOlxStatusRoute: ApiPublicCronOlxStatusRoute,
   ApiPublicCronOlxTokenRefreshRoute: ApiPublicCronOlxTokenRefreshRoute,
   ApiPublicCronPortalBulkRoute: ApiPublicCronPortalBulkRoute,
   ApiPublicCronPortalPublishRoute: ApiPublicCronPortalPublishRoute,
