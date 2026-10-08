@@ -405,7 +405,7 @@ export const PORTALS: PortalDefinition[] = [
   {
     id: "olx_direct",
     activation: "oauth",
-    display_name: "OLX.ro (cont propriu)",
+    display_name: "OLX.ro (cont prepaid)",
     description:
       "Pentru agențiile fără abonament Storia, care publică din propriul pachet OLX. Momentan doar conectarea contului.",
     logo: "OX",
