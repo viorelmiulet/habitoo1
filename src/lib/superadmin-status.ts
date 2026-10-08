@@ -31,3 +31,17 @@ export function initials(name: string | null | undefined): string {
 export function canAccessSuperadmin(user: { isSuperadmin?: boolean } | null | undefined): boolean {
   return user?.isSuperadmin === true;
 }
+
+/**
+ * Unde ajunge un utilizator când deschide `/app`.
+ * Superadminul fără agenție (și care nu impersonează pe nimeni) nu are dashboard de
+ * agenție, deci intră direct în panoul platformei. Toți ceilalți rămân pe `/app`.
+ */
+export function dashboardHomeFor(user: {
+  isSuperadmin?: boolean;
+  organization?: unknown;
+  impersonation?: unknown;
+}): "/superadmin" | "/app" {
+  if (user.isSuperadmin && !user.organization && !user.impersonation) return "/superadmin";
+  return "/app";
+}
