@@ -4,7 +4,12 @@ import { Container, Section, SectionHeading } from "@/components/marketing/Secti
 import { isPortalCovered, PORTALS } from "@/lib/portals/registry";
 
 const integratedPortals = PORTALS.filter(
-  (portal) => portal.status === "available" && !isPortalCovered(portal.id),
+  (portal) =>
+    portal.status === "available" &&
+    !isPortalCovered(portal.id) &&
+    // OLX direct (cont prepaid) rămâne doar în aplicație; pe homepage OLX
+    // apare deja prin cardul Storia+OLX.
+    portal.id !== "olx_direct",
 );
 
 export function IntegratedPortalsSection() {
