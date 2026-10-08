@@ -1,3 +1,4 @@
+import { portalCanPublish } from "@/lib/portals/registry";
 /**
  * PUBLICARE PE PORTALURI — secțiunea din pagina proprietății.
  *
@@ -787,7 +788,9 @@ export const PropertyPortalsCard = forwardRef<
               const slot = slotQueries[index]?.data;
               const noSlots = !value && !cell.selected && Boolean(slot && (slot.remaining === 0 || slot.agencyExhausted));
               const busy = activePortals.has(cell.portalId);
+              const publishSoon = !portalCanPublish(cell.portalId);
               const disabled =
+                publishSoon ||
                 !editing ||
                 !canManage ||
                 cell.availability !== "available" ||
@@ -803,7 +806,9 @@ export const PropertyPortalsCard = forwardRef<
               const stateView = STATE_VIEW[cell.state];
               const latestOperation = latestOperationByPortal.get(cell.portalId);
               const latestOperationFailed = latestOperation?.success === false;
-              const detail = busy
+              const detail = publishSoon
+                ? "Publicare în curând"
+                : busy
                 ? "Se sincronizează…"
                 : latestOperationFailed
                   ? "Eroare la ultima publicare"

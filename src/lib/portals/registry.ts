@@ -788,3 +788,14 @@ export function portalActivationMode(id: string): PortalActivationMode {
   const definition = getPortalDefinition(portalIntegrationOwner(id as PortalId));
   return definition?.activation ?? "approval";
 }
+
+/** Un portal poate primi oferte doar dacă are publicare push sau citește feedul Habitoo. */
+export function portalCanPublish(id: string): boolean {
+  const def = getPortalDefinition(id);
+  if (!def) return false;
+  return def.capabilities.includes("publish_listing") || def.capabilities.includes("feed_pull");
+}
+
+export function publishUnavailableMessage(id: string): string {
+  return `${portalDisplayName(id as PortalId)}: publicarea nu este încă disponibilă.`;
+}
