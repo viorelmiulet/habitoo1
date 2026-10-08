@@ -95,6 +95,7 @@ import { Route as ApiPublicCronAccountDeletionRouteImport } from './routes/api/p
 import { Route as ApiPublicCronLacheieResendRouteImport } from './routes/api/public/cron/lacheie-resend'
 import { Route as ApiPublicCronListingCollectorRouteImport } from './routes/api/public/cron/listing-collector'
 import { Route as ApiPublicCronMarketPriceIndicesRouteImport } from './routes/api/public/cron/market-price-indices'
+import { Route as ApiPublicCronOlxTokenRefreshRouteImport } from './routes/api/public/cron/olx-token-refresh'
 import { Route as ApiPublicCronPortalBulkRouteImport } from './routes/api/public/cron/portal-bulk'
 import { Route as ApiPublicCronPortalPublishRouteImport } from './routes/api/public/cron/portal-publish'
 import { Route as ApiPublicCronPortalSlotWithdrawRouteImport } from './routes/api/public/cron/portal-slot-withdraw'
@@ -138,6 +139,7 @@ import { Route as ApiPublicPortalV1StoriaNotificationsRouteImport } from './rout
 import { Route as ApiPublicPortalV1VdiLeadsRouteImport } from './routes/api/public/portal/v1/vdi/leads'
 import { Route as ApiPublicSitesV1MediaIdRouteImport } from './routes/api/public/sites/v1/media.$id'
 import { Route as ApiPublicSitesV1PropertiesIdRouteImport } from './routes/api/public/sites/v1/properties.$id'
+import { Route as ApiPublicPortalV1OlxOauthCallbackRouteImport } from './routes/api/public/portal/v1/olx.oauth.callback'
 import { Route as ApiPublicPortalV1StoriaOauthCallbackRouteImport } from './routes/api/public/portal/v1/storia.oauth.callback'
 import { Route as ApiPublicSitesV1MediaAgencyIdRouteImport } from './routes/api/public/sites/v1/media.agency.$id'
 import { Route as ApiPublicSitesV1MediaAgentIdRouteImport } from './routes/api/public/sites/v1/media.agent.$id'
@@ -613,6 +615,12 @@ const ApiPublicCronMarketPriceIndicesRoute =
     path: '/api/public/cron/market-price-indices',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicCronOlxTokenRefreshRoute =
+  ApiPublicCronOlxTokenRefreshRouteImport.update({
+    id: '/api/public/cron/olx-token-refresh',
+    path: '/api/public/cron/olx-token-refresh',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicCronPortalBulkRoute = ApiPublicCronPortalBulkRouteImport.update({
   id: '/api/public/cron/portal-bulk',
   path: '/api/public/cron/portal-bulk',
@@ -857,6 +865,12 @@ const ApiPublicSitesV1PropertiesIdRoute =
     path: '/$id',
     getParentRoute: () => ApiPublicSitesV1PropertiesRoute,
   } as any)
+const ApiPublicPortalV1OlxOauthCallbackRoute =
+  ApiPublicPortalV1OlxOauthCallbackRouteImport.update({
+    id: '/api/public/portal/v1/olx/oauth/callback',
+    path: '/api/public/portal/v1/olx/oauth/callback',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicPortalV1StoriaOauthCallbackRoute =
   ApiPublicPortalV1StoriaOauthCallbackRouteImport.update({
     id: '/api/public/portal/v1/storia/oauth/callback',
@@ -954,6 +968,7 @@ export interface FileRoutesByFullPath {
   '/api/public/cron/lacheie-resend': typeof ApiPublicCronLacheieResendRoute
   '/api/public/cron/listing-collector': typeof ApiPublicCronListingCollectorRoute
   '/api/public/cron/market-price-indices': typeof ApiPublicCronMarketPriceIndicesRoute
+  '/api/public/cron/olx-token-refresh': typeof ApiPublicCronOlxTokenRefreshRoute
   '/api/public/cron/portal-bulk': typeof ApiPublicCronPortalBulkRoute
   '/api/public/cron/portal-publish': typeof ApiPublicCronPortalPublishRoute
   '/api/public/cron/portal-slot-withdraw': typeof ApiPublicCronPortalSlotWithdrawRoute
@@ -1005,6 +1020,7 @@ export interface FileRoutesByFullPath {
   '/api/public/portal/v1/vdi/leads': typeof ApiPublicPortalV1VdiLeadsRoute
   '/api/public/sites/v1/media/$id': typeof ApiPublicSitesV1MediaIdRoute
   '/api/public/sites/v1/properties/$id': typeof ApiPublicSitesV1PropertiesIdRoute
+  '/api/public/portal/v1/olx/oauth/callback': typeof ApiPublicPortalV1OlxOauthCallbackRoute
   '/api/public/portal/v1/storia/oauth/callback': typeof ApiPublicPortalV1StoriaOauthCallbackRoute
   '/api/public/sites/v1/media/agency/$id': typeof ApiPublicSitesV1MediaAgencyIdRoute
   '/api/public/sites/v1/media/agent/$id': typeof ApiPublicSitesV1MediaAgentIdRoute
@@ -1083,6 +1099,7 @@ export interface FileRoutesByTo {
   '/api/public/cron/lacheie-resend': typeof ApiPublicCronLacheieResendRoute
   '/api/public/cron/listing-collector': typeof ApiPublicCronListingCollectorRoute
   '/api/public/cron/market-price-indices': typeof ApiPublicCronMarketPriceIndicesRoute
+  '/api/public/cron/olx-token-refresh': typeof ApiPublicCronOlxTokenRefreshRoute
   '/api/public/cron/portal-bulk': typeof ApiPublicCronPortalBulkRoute
   '/api/public/cron/portal-publish': typeof ApiPublicCronPortalPublishRoute
   '/api/public/cron/portal-slot-withdraw': typeof ApiPublicCronPortalSlotWithdrawRoute
@@ -1134,6 +1151,7 @@ export interface FileRoutesByTo {
   '/api/public/portal/v1/vdi/leads': typeof ApiPublicPortalV1VdiLeadsRoute
   '/api/public/sites/v1/media/$id': typeof ApiPublicSitesV1MediaIdRoute
   '/api/public/sites/v1/properties/$id': typeof ApiPublicSitesV1PropertiesIdRoute
+  '/api/public/portal/v1/olx/oauth/callback': typeof ApiPublicPortalV1OlxOauthCallbackRoute
   '/api/public/portal/v1/storia/oauth/callback': typeof ApiPublicPortalV1StoriaOauthCallbackRoute
   '/api/public/sites/v1/media/agency/$id': typeof ApiPublicSitesV1MediaAgencyIdRoute
   '/api/public/sites/v1/media/agent/$id': typeof ApiPublicSitesV1MediaAgentIdRoute
@@ -1218,6 +1236,7 @@ export interface FileRoutesById {
   '/api/public/cron/lacheie-resend': typeof ApiPublicCronLacheieResendRoute
   '/api/public/cron/listing-collector': typeof ApiPublicCronListingCollectorRoute
   '/api/public/cron/market-price-indices': typeof ApiPublicCronMarketPriceIndicesRoute
+  '/api/public/cron/olx-token-refresh': typeof ApiPublicCronOlxTokenRefreshRoute
   '/api/public/cron/portal-bulk': typeof ApiPublicCronPortalBulkRoute
   '/api/public/cron/portal-publish': typeof ApiPublicCronPortalPublishRoute
   '/api/public/cron/portal-slot-withdraw': typeof ApiPublicCronPortalSlotWithdrawRoute
@@ -1269,6 +1288,7 @@ export interface FileRoutesById {
   '/api/public/portal/v1/vdi/leads': typeof ApiPublicPortalV1VdiLeadsRoute
   '/api/public/sites/v1/media/$id': typeof ApiPublicSitesV1MediaIdRoute
   '/api/public/sites/v1/properties/$id': typeof ApiPublicSitesV1PropertiesIdRoute
+  '/api/public/portal/v1/olx/oauth/callback': typeof ApiPublicPortalV1OlxOauthCallbackRoute
   '/api/public/portal/v1/storia/oauth/callback': typeof ApiPublicPortalV1StoriaOauthCallbackRoute
   '/api/public/sites/v1/media/agency/$id': typeof ApiPublicSitesV1MediaAgencyIdRoute
   '/api/public/sites/v1/media/agent/$id': typeof ApiPublicSitesV1MediaAgentIdRoute
@@ -1353,6 +1373,7 @@ export interface FileRouteTypes {
     | '/api/public/cron/lacheie-resend'
     | '/api/public/cron/listing-collector'
     | '/api/public/cron/market-price-indices'
+    | '/api/public/cron/olx-token-refresh'
     | '/api/public/cron/portal-bulk'
     | '/api/public/cron/portal-publish'
     | '/api/public/cron/portal-slot-withdraw'
@@ -1404,6 +1425,7 @@ export interface FileRouteTypes {
     | '/api/public/portal/v1/vdi/leads'
     | '/api/public/sites/v1/media/$id'
     | '/api/public/sites/v1/properties/$id'
+    | '/api/public/portal/v1/olx/oauth/callback'
     | '/api/public/portal/v1/storia/oauth/callback'
     | '/api/public/sites/v1/media/agency/$id'
     | '/api/public/sites/v1/media/agent/$id'
@@ -1482,6 +1504,7 @@ export interface FileRouteTypes {
     | '/api/public/cron/lacheie-resend'
     | '/api/public/cron/listing-collector'
     | '/api/public/cron/market-price-indices'
+    | '/api/public/cron/olx-token-refresh'
     | '/api/public/cron/portal-bulk'
     | '/api/public/cron/portal-publish'
     | '/api/public/cron/portal-slot-withdraw'
@@ -1533,6 +1556,7 @@ export interface FileRouteTypes {
     | '/api/public/portal/v1/vdi/leads'
     | '/api/public/sites/v1/media/$id'
     | '/api/public/sites/v1/properties/$id'
+    | '/api/public/portal/v1/olx/oauth/callback'
     | '/api/public/portal/v1/storia/oauth/callback'
     | '/api/public/sites/v1/media/agency/$id'
     | '/api/public/sites/v1/media/agent/$id'
@@ -1616,6 +1640,7 @@ export interface FileRouteTypes {
     | '/api/public/cron/lacheie-resend'
     | '/api/public/cron/listing-collector'
     | '/api/public/cron/market-price-indices'
+    | '/api/public/cron/olx-token-refresh'
     | '/api/public/cron/portal-bulk'
     | '/api/public/cron/portal-publish'
     | '/api/public/cron/portal-slot-withdraw'
@@ -1667,6 +1692,7 @@ export interface FileRouteTypes {
     | '/api/public/portal/v1/vdi/leads'
     | '/api/public/sites/v1/media/$id'
     | '/api/public/sites/v1/properties/$id'
+    | '/api/public/portal/v1/olx/oauth/callback'
     | '/api/public/portal/v1/storia/oauth/callback'
     | '/api/public/sites/v1/media/agency/$id'
     | '/api/public/sites/v1/media/agent/$id'
@@ -1705,6 +1731,7 @@ export interface RootRouteChildren {
   ApiPublicCronLacheieResendRoute: typeof ApiPublicCronLacheieResendRoute
   ApiPublicCronListingCollectorRoute: typeof ApiPublicCronListingCollectorRoute
   ApiPublicCronMarketPriceIndicesRoute: typeof ApiPublicCronMarketPriceIndicesRoute
+  ApiPublicCronOlxTokenRefreshRoute: typeof ApiPublicCronOlxTokenRefreshRoute
   ApiPublicCronPortalBulkRoute: typeof ApiPublicCronPortalBulkRoute
   ApiPublicCronPortalPublishRoute: typeof ApiPublicCronPortalPublishRoute
   ApiPublicCronPortalSlotWithdrawRoute: typeof ApiPublicCronPortalSlotWithdrawRoute
@@ -1742,6 +1769,7 @@ export interface RootRouteChildren {
   ApiPublicPortalV1StoriaNotificationsRoute: typeof ApiPublicPortalV1StoriaNotificationsRoute
   ApiPublicPortalV1VdiLeadsRoute: typeof ApiPublicPortalV1VdiLeadsRoute
   ApiPublicSitesV1MediaIdRoute: typeof ApiPublicSitesV1MediaIdRoute
+  ApiPublicPortalV1OlxOauthCallbackRoute: typeof ApiPublicPortalV1OlxOauthCallbackRoute
   ApiPublicPortalV1StoriaOauthCallbackRoute: typeof ApiPublicPortalV1StoriaOauthCallbackRoute
   ApiPublicSitesV1MediaAgencyIdRoute: typeof ApiPublicSitesV1MediaAgencyIdRoute
   ApiPublicSitesV1MediaAgentIdRoute: typeof ApiPublicSitesV1MediaAgentIdRoute
@@ -2351,6 +2379,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicCronMarketPriceIndicesRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/cron/olx-token-refresh': {
+      id: '/api/public/cron/olx-token-refresh'
+      path: '/api/public/cron/olx-token-refresh'
+      fullPath: '/api/public/cron/olx-token-refresh'
+      preLoaderRoute: typeof ApiPublicCronOlxTokenRefreshRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/cron/portal-bulk': {
       id: '/api/public/cron/portal-bulk'
       path: '/api/public/cron/portal-bulk'
@@ -2652,6 +2687,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicSitesV1PropertiesIdRouteImport
       parentRoute: typeof ApiPublicSitesV1PropertiesRoute
     }
+    '/api/public/portal/v1/olx/oauth/callback': {
+      id: '/api/public/portal/v1/olx/oauth/callback'
+      path: '/api/public/portal/v1/olx/oauth/callback'
+      fullPath: '/api/public/portal/v1/olx/oauth/callback'
+      preLoaderRoute: typeof ApiPublicPortalV1OlxOauthCallbackRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/portal/v1/storia/oauth/callback': {
       id: '/api/public/portal/v1/storia/oauth/callback'
       path: '/api/public/portal/v1/storia/oauth/callback'
@@ -2936,6 +2978,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicCronLacheieResendRoute: ApiPublicCronLacheieResendRoute,
   ApiPublicCronListingCollectorRoute: ApiPublicCronListingCollectorRoute,
   ApiPublicCronMarketPriceIndicesRoute: ApiPublicCronMarketPriceIndicesRoute,
+  ApiPublicCronOlxTokenRefreshRoute: ApiPublicCronOlxTokenRefreshRoute,
   ApiPublicCronPortalBulkRoute: ApiPublicCronPortalBulkRoute,
   ApiPublicCronPortalPublishRoute: ApiPublicCronPortalPublishRoute,
   ApiPublicCronPortalSlotWithdrawRoute: ApiPublicCronPortalSlotWithdrawRoute,
@@ -2982,6 +3025,8 @@ const rootRouteChildren: RootRouteChildren = {
     ApiPublicPortalV1StoriaNotificationsRoute,
   ApiPublicPortalV1VdiLeadsRoute: ApiPublicPortalV1VdiLeadsRoute,
   ApiPublicSitesV1MediaIdRoute: ApiPublicSitesV1MediaIdRoute,
+  ApiPublicPortalV1OlxOauthCallbackRoute:
+    ApiPublicPortalV1OlxOauthCallbackRoute,
   ApiPublicPortalV1StoriaOauthCallbackRoute:
     ApiPublicPortalV1StoriaOauthCallbackRoute,
   ApiPublicSitesV1MediaAgencyIdRoute: ApiPublicSitesV1MediaAgencyIdRoute,
