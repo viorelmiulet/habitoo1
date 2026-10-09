@@ -62,6 +62,7 @@ export function portalStateLabel(state: PropertyPortalCell["state"]): string {
     in_feed: "Publicat",
     selected: "selectat",
     syncing: "în curs",
+    needs_packet: "Necesită pachet OLX",
     expired: "expirat",
     error: "eroare",
     withdrawn: "Nepublicat",

@@ -16,6 +16,7 @@ const TONE: Record<PropertyPortalCell["state"], "success" | "warning" | "danger"
   published: "success",
   selected: "warning",
   syncing: "warning",
+  needs_packet: "warning",
   expired: "warning",
   error: "danger",
   withdrawn: "neutral",
