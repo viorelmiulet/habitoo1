@@ -530,7 +530,8 @@ export async function olxPartnerRequest(
   if (res.status === 401 && !retried) {
     return olxPartnerRequest(organizationId, method, path, payload, d, true);
   }
-  const raw = (await res.text().catch(() => "")).slice(0, 4000);
+  // Fără tăiere: un JSON trunchiat nu se mai poate citi (listele de anunțuri depășesc ușor 4 KB).
+  const raw = (await res.text().catch(() => "")).slice(0, 2_000_000);
   let body: Record<string, unknown> | null = null;
   try {
     const parsed = JSON.parse(raw) as unknown;

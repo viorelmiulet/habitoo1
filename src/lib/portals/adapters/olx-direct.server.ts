@@ -161,7 +161,10 @@ export async function findOlxAdvertByExternalId(
   const res = await request(organizationId, "GET", `/adverts?external_id=${encodeURIComponent(externalId)}`);
   const raw = res.body?.["data"];
   const list = (Array.isArray(raw) ? raw : raw ? [raw] : []) as Record<string, unknown>[];
-  const hit = list.find((a) => a && String(a["external_id"] ?? externalId) === externalId && a["id"] != null);
+  // OLX poate ignora filtrul: potrivim strict după external_id; ignorăm anunțurile șterse de utilizator.
+  const hit = list.find(
+    (a) => a && String(a["external_id"] ?? "") === externalId && a["id"] != null && !["removed_by_user", "deleted"].includes(String(a["status"] ?? "")),
+  );
   return hit ? String(hit["id"]) : null;
 }
 
