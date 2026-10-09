@@ -871,6 +871,18 @@ export const PropertyPortalsCard = forwardRef<
                         >
                           {detail}
                         </p>
+                        {cell.portalId === "olx_direct" && (cell.state === "needs_packet" || cell.state === "syncing") ? (
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="outline"
+                            className="pointer-events-auto mt-2"
+                            disabled={olxRechecking}
+                            onClick={() => void recheckOlx()}
+                          >
+                            {olxRechecking ? "Se verifică…" : "Verifică din nou"}
+                          </Button>
+                        ) : null}
                         {contactBlock && value && FEED_PORTALS_REQUIRING_AGENT_PHONE.has(cell.portalId) ? (
                           <p className="mt-1 text-xs font-semibold text-destructive">
                             {FEED_EXCLUDED_NO_PHONE}
