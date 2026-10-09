@@ -7,6 +7,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { getChatDirectory } from "@/lib/chat.functions";
 import {
   CHAT_MAX_LENGTH,
+  contactAgencyLabel,
+  PLATFORM_LABEL,
+  PLATFORM_ORG_ID,
   groupContacts,
   lastSeenLabel,
   normalizeChatBody,
@@ -180,7 +183,7 @@ export function Messenger({ user }: { user: CurrentUser }) {
   );
   const contactById = useMemo(() => new Map(contacts.map((c) => [c.userId, c])), [contacts]);
   const groups = useMemo(
-    () => groupContacts(contacts, user.organization?.id ?? null, search),
+    () => groupContacts(contacts, user.isSuperadmin ? PLATFORM_ORG_ID : (user.organization?.id ?? null), search),
     [contacts, user.organization?.id, search],
   );
   const totalUnread = (convs.data ?? []).reduce((s, c) => s + c.unread, 0);
@@ -219,7 +222,7 @@ export function Messenger({ user }: { user: CurrentUser }) {
             <Avatar name={myName} url={myAvatar} online />
             <div className="min-w-0 flex-1">
               <p className="truncate text-sm font-semibold">{myName}</p>
-              <p className="truncate text-xs text-muted-foreground">{user.organization?.name}</p>
+              <p className="truncate text-xs text-muted-foreground">{user.isSuperadmin ? PLATFORM_LABEL : user.organization?.name}</p>
             </div>
             <button
               type="button"
@@ -281,7 +284,7 @@ export function Messenger({ user }: { user: CurrentUser }) {
                             <Avatar name={c.fullName} url={c.avatarUrl} online={c.online} />
                             <span className="min-w-0 flex-1">
                               <span className={cn("block truncate text-sm", c.unread && "font-semibold")}>{c.fullName}</span>
-                              <span className="block truncate text-xs text-muted-foreground">{c.organizationName}</span>
+                              <span className="block truncate text-xs text-muted-foreground">{contactAgencyLabel(c)}</span>
                             </span>
                             {c.unread ? (
                               <span className="rounded-full bg-primary px-1.5 text-[11px] leading-5 text-primary-foreground">
@@ -455,7 +458,7 @@ function ChatWindow({
           <span className="min-w-0">
             <span className="block truncate text-sm font-semibold">{contact.fullName}</span>
             <span className="block truncate text-[11px] text-muted-foreground">
-              {contact.organizationName} · {contact.online ? "Online" : lastSeenLabel(contact.lastSeenAt)}
+              {contactAgencyLabel(contact)} · {contact.online ? "Online" : lastSeenLabel(contact.lastSeenAt)}
             </span>
           </span>
         </button>

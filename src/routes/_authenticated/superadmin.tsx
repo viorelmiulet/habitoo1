@@ -1,5 +1,7 @@
 import { createFileRoute, Navigate, Outlet } from "@tanstack/react-router";
 import { AppShell } from "@/components/app/AppShell";
+import { Messenger } from "@/components/app/chat/Messenger";
+import { messengerVisible } from "@/lib/chat/chat-rules";
 import { superadminNav } from "@/components/app/AppSidebar";
 import { ShellLoading } from "@/components/app/LoadingState";
 import { appHead } from "@/components/app/app-head";
@@ -21,6 +23,7 @@ function SuperadminLayout() {
   return (
     <AppShell user={user} groups={superadminNav} variant="platform">
       <Outlet />
+      {messengerVisible({ isSuperadmin: user.isSuperadmin, hasOrganization: Boolean(user.organization), impersonating: Boolean(user.impersonation) }) ? <Messenger user={user} /> : null}
     </AppShell>
   );
 }

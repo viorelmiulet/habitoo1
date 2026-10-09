@@ -5,6 +5,15 @@ export const CHAT_MAX_LENGTH = 4000;
 export const CHAT_MAX_WINDOWS = 3;
 export const CHAT_EMAIL_DELAY_MS = 15 * 60_000;
 export const CHAT_EMAIL_COOLDOWN_MS = 60 * 60_000;
+/** Grupul superadminilor (fără agenție) din lista de contacte. */
+export const PLATFORM_ORG_ID = "00000000-0000-0000-0000-000000000000";
+export const PLATFORM_GROUP_NAME = "Habitoo";
+export const PLATFORM_LABEL = "Admin platformă";
+
+/** Eticheta afișată în locul agenției (rând, antet fereastră, email). */
+export function contactAgencyLabel(c: { organizationId: string; organizationName: string }) {
+  return c.organizationId === PLATFORM_ORG_ID ? PLATFORM_LABEL : c.organizationName;
+}
 
 /** Perechea ordonată: aceiași doi utilizatori au mereu aceeași cheie. */
 export function chatPair(a: string, b: string): [string, string] {
@@ -84,7 +93,7 @@ export function groupContacts(
   const q = fold(query.trim());
   const map = new Map<string, ChatGroup>();
   for (const c of contacts) {
-    if (q && !fold(c.fullName).includes(q) && !fold(c.organizationName).includes(q)) continue;
+    if (q && !fold(c.fullName).includes(q) && !fold(contactAgencyLabel(c)).includes(q)) continue;
     const g = map.get(c.organizationId) ?? {
       organizationId: c.organizationId,
       organizationName: c.organizationName,
@@ -105,6 +114,7 @@ export function groupContacts(
   }
   return groups.sort(
     (a, b) =>
+      Number(b.organizationId === PLATFORM_ORG_ID) - Number(a.organizationId === PLATFORM_ORG_ID) ||
       Number(b.organizationId === myOrgId) - Number(a.organizationId === myOrgId) ||
       a.organizationName.localeCompare(b.organizationName, "ro"),
   );
@@ -129,4 +139,9 @@ export function lastSeenLabel(iso: string | null, now = Date.now()): string {
 export function openWindow(list: string[], id: string): string[] {
   const next = [id, ...list.filter((x) => x !== id)];
   return next.slice(0, CHAT_MAX_WINDOWS);
+}
+
+/** Messengerul apare pentru agenți cu agenție și pentru superadmini, niciodată în impersonare. */
+export function messengerVisible(u: { isSuperadmin: boolean; hasOrganization: boolean; impersonating: boolean }) {
+  return !u.impersonating && (u.hasOrganization || u.isSuperadmin);
 }

@@ -49,6 +49,12 @@ export const Route = createFileRoute("/api/public/cron/chat-email")({
             .from("organizations")
             .select("id,name")
             .in("id", orgIds as string[]);
+          const { data: admins } = await supabaseAdmin
+            .from("user_roles")
+            .select("user_id")
+            .eq("role", "superadmin")
+            .in("user_id", ids);
+          const platform = new Set((admins ?? []).map((a) => a.user_id));
           const byId = new Map((profiles ?? []).map((p) => [p.id, p]));
           const orgName = new Map((orgs ?? []).map((o) => [o.id, o.name]));
           for (const d of due) {
@@ -56,7 +62,9 @@ export const Route = createFileRoute("/api/public/cron/chat-email")({
             const from = byId.get(d.sender_id);
             if (!to?.email || !from) continue;
             const name = from.full_name || "un agent";
-            const agency = (from.organization_id && orgName.get(from.organization_id)) || "Habitoo";
+            const agency = platform.has(from.id)
+              ? "Admin platformă"
+              : (from.organization_id && orgName.get(from.organization_id)) || "Habitoo";
             const subject = `Ai un mesaj nou de la ${name}, ${agency}`;
             const text = `${subject}.\n\nDeschide Habitoo CRM pentru a răspunde: https://crm.habitoo.ro/app`;
             const html = `<p>${esc(subject)}.</p><p><a href="https://crm.habitoo.ro/app">Deschide Habitoo CRM</a> pentru a răspunde.</p>`;
