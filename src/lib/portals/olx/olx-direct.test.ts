@@ -2,7 +2,8 @@
 import { describe, expect, it } from "vitest";
 import { mapPropertyToOlx, olxPlainText, type OlxProperty } from "./mapper";
 import { olxCategoryId, type OlxTaxonomy } from "./taxonomy";
-import { createOlxDirectAdapter, type OlxRequest } from "../adapters/olx-direct.server";
+import { checkOlxAdvert, createOlxDirectAdapter, type OlxRequest } from "../adapters/olx-direct.server";
+import { PortalError } from "../errors";
 import { isForbiddenOlxPurchase } from "./config";
 import type { PortalContext } from "../adapter";
 
@@ -78,7 +79,7 @@ function harness(script: Record<string, (payload?: unknown) => { status: number;
     calls.push({ method, path, payload });
     if (method === "POST" && isForbiddenOlxPurchase(method, path)) throw new Error("purchase");
     const key = `${method} ${path.split("?")[0]}`;
-    const fn = script[key];
+    const fn = script[key] ?? (key === "GET /adverts" ? () => ({ status: 200, body: { data: [] } }) : undefined);
     if (!fn) throw new Error(`neașteptat: ${key}`);
     return fn(payload);
   };
@@ -129,7 +130,7 @@ describe("adaptor olx_direct", () => {
     expect(h.calls.some((c) => c.method === "POST" && isForbiddenOlxPurchase(c.method, c.path))).toBe(false);
   });
 
-  it("limited fără pachet → eroare clară, notificată o dată", async () => {
+  it("limited fără pachet → „Necesită pachet OLX”, o singură notificare", async () => {
     const h = harness({
       "GET /locations": loc,
       "POST /adverts": () => ({ status: 200, body: { data: { id: 9 } } }),
@@ -137,9 +138,10 @@ describe("adaptor olx_direct", () => {
       "GET /users/me/packets": () => ({ status: 200, body: { data: [{ category_id: 3, left: 0 }] } }),
     });
     const r = await h.adapter.publishListing(ctx, { propertyId: "p", externalId: null });
-    expect(r.ok && r.data.portalStatus).toBe("error");
-    expect(r.ok && r.data.message).toBe("Contul OLX nu are pachet activ pentru categoria 2 camere. Cumpără un pachet din contul OLX.");
+    expect(r.ok && r.data.portalStatus).toBe("needs_packet");
+    expect(r.ok && r.data.message).toBe("Anunțul a fost trimis pe OLX, dar nu e activ: contul OLX nu are pachet pentru categoria 2 camere. Cumpără un pachet din contul OLX, iar Habitoo îl activează automat.");
     expect(h.errors).toHaveLength(1);
+    expect(h.armed()).toBe(1);
   });
 
   it("moderare respinsă → eroare cu motivul OLX", async () => {
@@ -179,5 +181,60 @@ describe("adaptor olx_direct", () => {
     }, true);
     await h.adapter.withdrawListing(ctx, { propertyId: "p", externalId: "5" });
     expect(h.calls.map((c) => c.method)).toEqual(["POST", "DELETE"]);
+  });
+
+  it("timeout la POST → găsește anunțul după external_id, fără duplicat", async () => {
+    let created = false;
+    const h = harness({
+      "GET /locations": loc,
+      "GET /adverts": () => ({ status: 200, body: { data: created ? [{ id: 42, external_id: "HB-1175" }] : [] } }),
+      "POST /adverts": () => { created = true; throw new PortalError("TIMEOUT"); },
+      "GET /adverts/42": () => ({ status: 200, body: { data: { status: "new" } } }),
+    });
+    const r = await h.adapter.publishListing(ctx, { propertyId: "p", externalId: null });
+    expect(r.ok && r.data.externalId).toBe("42");
+    expect(r.ok && r.data.portalStatus).toBe("pending");
+    expect(h.calls.filter((c) => c.method === "POST" && c.path === "/adverts")).toHaveLength(1);
+  });
+
+  it("anunț existent după external_id → PUT, nu POST nou", async () => {
+    const h = harness({
+      "GET /locations": loc,
+      "GET /adverts": () => ({ status: 200, body: { data: [{ id: 42, external_id: "HB-1175" }] } }),
+      "PUT /adverts/42": () => ({ status: 200, body: { data: { id: 42 } } }),
+      "GET /adverts/42": () => ({ status: 200, body: { data: { status: "active", url: "https://www.olx.ro/d/42" } } }),
+    });
+    const r = await h.adapter.publishListing(ctx, { propertyId: "p", externalId: null });
+    expect(r.ok && r.data.externalId).toBe("42");
+    expect(h.calls.some((c) => c.method === "POST" && c.path === "/adverts")).toBe(false);
+  });
+
+  it("după apariția pachetului → activate, apoi active = Publicat", async () => {
+    let status = "limited";
+    let packets: unknown[] = [];
+    const calls: string[] = [];
+    const request: OlxRequest = async (_o, method, path) => {
+      calls.push(`${method} ${path.split("?")[0]}`);
+      if (method === "GET" && path.startsWith("/adverts/9")) return { status: 200, body: { data: { status, category_id: 1165, url: "https://www.olx.ro/d/9" } } };
+      if (path.startsWith("/users/me/packets")) return { status: 200, body: { data: packets } };
+      if (method === "POST" && path === "/adverts/9/commands") { status = "active"; return { status: 200, body: null }; }
+      throw new Error(path);
+    };
+    expect((await checkOlxAdvert(request, "org", "9", TAX)).portalStatus).toBe("needs_packet");
+    packets = [{ category_id: 3, left: 2 }];
+    expect((await checkOlxAdvert(request, "org", "9", TAX)).portalStatus).toBe("pending");
+    expect(calls).toContain("POST /adverts/9/commands");
+    const done = await checkOlxAdvert(request, "org", "9", TAX);
+    expect(done).toMatchObject({ portalStatus: "published", url: "https://www.olx.ro/d/9" });
+  });
+});
+
+describe("descriere OLX", () => {
+  it("se termină cu „Cod ofertă: HB-…” și rămâne în 9000 de caractere", () => {
+    const r = mapPropertyToOlx(base(), TAX, { city_id: 1 });
+    expect(r.ok && r.payload.description.endsWith("\n\nCod ofertă: HB-1175")).toBe(true);
+    const long = mapPropertyToOlx(base({ description: "Apartament frumos. ".repeat(600) }), TAX, { city_id: 1 });
+    expect(long.ok && long.payload.description.length).toBeLessThanOrEqual(9000);
+    expect(long.ok && long.payload.description.endsWith("Cod ofertă: HB-1175")).toBe(true);
   });
 });
