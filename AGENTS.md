@@ -24,3 +24,4 @@
 - Social property posters are rendered client-side from existing signed media and downloaded as PNG; per-agent display preferences stay in localStorage. Why: no social publishing or generated-media persistence is needed.
 
 - Superadmin mail replies use a single nonmodal MailReplyWindow and the unchanged replyMail contract, with a stable draft send key and synchronous in-flight lock. Why: preserve draft state and prevent duplicate submissions without changing server behavior.
+- Agent chat lives only in `chat_*` tables (1-to-1 ordered pair, RLS by participant, contacts via `chat_directory`, block = recipient's `blocked_at`); unread emails via armed cron `chat_email_claim` (15 min, max 1/conversation/hour); never in `notifications`. Why: separate from collaboration messages and the portal-error bell.
