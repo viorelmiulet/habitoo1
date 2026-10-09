@@ -558,7 +558,7 @@ function ChatWindow({
                 <div key={m.id} className={cn("flex", mine ? "justify-end" : "justify-start")}>
                   <div
                     className={cn(
-                      "max-w-[80%] rounded-2xl px-3 py-1.5 text-sm break-words whitespace-pre-wrap",
+                      "max-w-[80%] rounded-2xl px-3 py-1.5 text-sm break-words whitespace-pre-wrap [overflow-wrap:anywhere]",
                       mine ? "rounded-br-sm bg-primary text-primary-foreground" : "rounded-bl-sm bg-muted text-foreground",
                     )}
                   >
@@ -587,7 +587,7 @@ function ChatWindow({
               }}
             >
               <textarea
-                autoFocus
+                autoFocus={!mobile}
                 rows={1}
                 value={text}
                 maxLength={CHAT_MAX_LENGTH}
