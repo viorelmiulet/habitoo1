@@ -8317,6 +8317,7 @@ export type Database = {
         }[]
       }
       chat_email_tick: { Args: never; Returns: undefined }
+      chat_is_platform_admin: { Args: { _user: string }; Returns: boolean }
       chat_my_conversations: {
         Args: never
         Returns: {
