@@ -66,6 +66,7 @@ export function verifyBasicAuth(header: string | null, user: string | undefined,
 const payloadSchema = z.object({
   listing_id: z.union([z.string(), z.number()]).transform((v) => String(v).trim()).pipe(z.string().min(1).max(100).regex(/^[A-Za-z0-9._-]+$/)),
   agency_id: z.string().trim().max(64).optional().nullable(),
+  agent_id: z.string().trim().max(64).optional().nullable(),
   lead_name: z.string().trim().max(200).optional().nullable(),
   lead_email: z.string().trim().max(255).optional().nullable(),
   lead_phone: z.string().trim().max(40).optional().nullable(),
@@ -76,6 +77,23 @@ const payloadSchema = z.object({
 
 function err(status: number, code: string, message: string): ProperstarLeadResponse {
   return { status, body: { status: "error", code, message } };
+}
+
+export const PROPERSTAR_RELAY_DOMAIN = "@reply.properstar.com";
+export const PROPERSTAR_DIRECT_NOTE = "Mesaj direct către agent (pagina de agent Properstar)";
+export const PROPERSTAR_HIDDEN_CONTACT_NOTE =
+  "Contact ascuns de Properstar: răspunde la adresa de email (releu Properstar)";
+
+/** Tipul cererii, după textul mesajului Properstar. */
+export function properstarRequestKind(message: string | null, direct: boolean): { label: string; preferredDate: string | null } {
+  if (direct) return { label: "Mesaj direct către agent", preferredDate: null };
+  const text = message ?? "";
+  if (/take a tour|preferred date/i.test(text)) {
+    const m = /Preferred date:\s*(.+?)(?:\s*⚠|\n|$)/i.exec(text);
+    return { label: "Cerere vizionare", preferredDate: m?.[1]?.trim() || null };
+  }
+  if (/exact address/i.test(text)) return { label: "Cerere adresă", preferredDate: null };
+  return { label: "Mesaj general", preferredDate: null };
 }
 
 type PropertyRow = { id: string; organization_id: string; assigned_to: string | null; title: string | null; reference: string | null };
@@ -134,7 +152,7 @@ export async function handleProperstarLead(
     const p = result.data;
     isTest = p.test === true;
     const email = p.lead_email ? p.lead_email.toLowerCase() : null;
-    const phone = normalizePhoneE164(p.lead_phone ?? null);
+    const phone = p.lead_phone && p.lead_phone.trim() ? normalizePhoneE164(p.lead_phone) : null;
     if (!email && !phone) return finish(err(400, "invalid_payload", "lead_email or lead_phone is required."), "no contact");
     if (email && !z.string().email().safeParse(email).success) return finish(err(400, "invalid_payload", "lead_email is invalid."), "invalid email");
 
@@ -158,6 +176,24 @@ export async function handleProperstarLead(
       organizationId = hit.id;
     }
 
+    // Agentul din feed (AgentId = properstarEntityId("ag", userId)), căutat printre membrii agenției.
+    const direct = Boolean(p.listing_id.startsWith("ag") || (p.agent_id && p.listing_id === p.agent_id));
+    const agentKey = p.agent_id || (direct ? p.listing_id : null);
+    let agent: { id: string; full_name: string | null; organization_id: string } | null = null;
+    if (agentKey) {
+      let aq = admin.from("profiles").select("id, full_name, organization_id");
+      aq = agencyOrgId ? aq.eq("organization_id", agencyOrgId) : aq.in("organization_id", [...enabled]);
+      const { data: members, error: memErr } = await aq;
+      if (memErr) throw memErr;
+      agent =
+        ((members ?? []) as { id: string; full_name: string | null; organization_id: string }[]).find(
+          (m) => properstarEntityId("ag", m.id) === agentKey,
+        ) ?? null;
+    }
+    if (direct && !agent) {
+      return finish(err(404, "agent_not_found", "Agent not found in this agency."), `agent ${agentKey}`);
+    }
+
     let q = admin
       .from("properties")
       .select("id, organization_id, assigned_to, title, reference")
@@ -171,7 +207,9 @@ export async function handleProperstarLead(
     const candidates = all.filter((r) => enabled.has(r.organization_id));
 
     let property: PropertyRow | null = null;
-    if (candidates.length > 1 && !agencyOrgId) {
+    if (direct) {
+      // Mesaj de pe pagina agentului: nu există anunț.
+    } else if (candidates.length > 1 && !agencyOrgId) {
       return finish(err(409, "ambiguous_listing", "listing_id matches several agencies; send agency_id."), `ambiguous ${p.listing_id}`);
     }
     if (candidates.length >= 1) property = candidates[0]!;
@@ -182,19 +220,31 @@ export async function handleProperstarLead(
       return finish(err(404, "listing_not_found", "Listing not found."), `listing ${p.listing_id}`);
     }
 
-    organizationId = property?.organization_id ?? agencyOrgId;
+    if (agent && property && agent.organization_id !== property.organization_id) agent = null;
+    organizationId = property?.organization_id ?? agencyOrgId ?? agent?.organization_id ?? null;
     const orgId = organizationId!;
-    let agentName: string | null = null;
-    if (property?.assigned_to) {
+    const assignedTo = agent?.id ?? property?.assigned_to ?? null;
+    let agentName: string | null = agent?.full_name ?? null;
+    if (!agent && property?.assigned_to) {
       const { data: prof } = await admin.from("profiles").select("full_name").eq("id", property.assigned_to).maybeSingle();
       agentName = prof?.full_name ?? null;
     }
-    const listingLabel = property?.reference ?? property?.id ?? p.listing_id;
+    const listingLabel = direct ? null : (property?.reference ?? property?.id ?? p.listing_id);
 
     if (isTest) {
       return finish(
-        { status: 200, body: { status: "success", test: true, listing: listingLabel, agency: orgName.get(orgId) ?? null, agent: agentName } },
-        property ? `test ok ${listingLabel}` : `test ok, listing ${p.listing_id} not found in agency`,
+        {
+          status: 200,
+          body: {
+            status: "success",
+            test: true,
+            ...(direct ? { direct: true } : {}),
+            listing: listingLabel,
+            agency: orgName.get(orgId) ?? null,
+            agent: agentName,
+          },
+        },
+        direct ? `test ok direct agent ${agentKey}` : property ? `test ok ${listingLabel}` : `test ok, listing ${p.listing_id} not found in agency`,
       );
     }
 
@@ -220,14 +270,26 @@ export async function handleProperstarLead(
     }
 
     const name = p.lead_name?.trim() || "Contact Properstar";
-    const missingNote = property ? null : `Anunț Properstar ${p.listing_id} negăsit`;
-    const noteLine = [missingNote, [`Mesaj Properstar (${sentAt})`, bodyText].filter(Boolean).join(":\n")].filter(Boolean).join("\n");
+    const missingNote = property || direct ? null : `Anunț Properstar ${p.listing_id} negăsit`;
+    const kind = properstarRequestKind(bodyText, direct);
+    const kindLine = `Tip cerere: ${kind.label}${kind.preferredDate ? ` (data preferată: ${kind.preferredDate})` : ""}`;
+    const hiddenNote = email?.endsWith(PROPERSTAR_RELAY_DOMAIN) ? PROPERSTAR_HIDDEN_CONTACT_NOTE : null;
+    const directNote = direct ? PROPERSTAR_DIRECT_NOTE : null;
+    const noteLine = [
+      directNote,
+      missingNote,
+      kindLine,
+      hiddenNote,
+      [`Mesaj Properstar (${sentAt})`, bodyText].filter(Boolean).join(":\n"),
+    ]
+      .filter(Boolean)
+      .join("\n");
     const { ingestPortalLead } = await import("@/lib/portals/lead-ingest.server");
     const { portalMessageExpiry } = await import("@/lib/portals/storia/leads.server");
     const outcome = await ingestPortalLead(admin, {
       portal: "properstar",
       source: PROPERSTAR_LEAD_SOURCE,
-      match: { organizationId: orgId, propertyId: property?.id ?? null, assignedTo: property?.assigned_to ?? null, propertyTitle: property?.title ?? null },
+      match: { organizationId: orgId, propertyId: property?.id ?? null, assignedTo, propertyTitle: property?.title ?? null },
       name,
       email,
       phone,
@@ -238,11 +300,18 @@ export async function handleProperstarLead(
       now: sentAt,
       messageRowId: null,
       expiresAt: portalMessageExpiry(sentAt),
-      createdEventNote: [`Lead creat din mesaj Properstar.`, missingNote, bodyText].filter(Boolean).join(" ").slice(0, 2000),
+      createdEventNote: [`Lead creat din mesaj Properstar.`, directNote, missingNote, `${kindLine}.`, hiddenNote, bodyText]
+        .filter(Boolean)
+        .join(" ")
+        .slice(0, 2000),
       notificationTitle: "Lead nou din Properstar",
-      notificationBody: property ? `${name} a trimis un mesaj pentru „${property.title ?? listingLabel}”.` : `${name} a trimis un mesaj prin Properstar.`,
+      notificationBody: property
+        ? `${name} a trimis un mesaj pentru „${property.title ?? listingLabel}” (${kind.label}).`
+        : direct
+          ? `${name} ți-a scris de pe pagina ta de agent Properstar.`
+          : `${name} a trimis un mesaj prin Properstar.`,
       auditAction: "properstar.message_lead_created",
-      auditValues: { property_id: property?.id ?? null, listing_id: p.listing_id, gateway: p.gateway ?? null, assigned_to: property?.assigned_to ?? null },
+      auditValues: { property_id: property?.id ?? null, listing_id: p.listing_id, gateway: p.gateway ?? null, assigned_to: assignedTo, agent_id: p.agent_id ?? null, request_kind: kind.label, direct },
     });
     return finish(
       { status: 200, body: { status: "success", lead_id: outcome.leadId, duplicate: false } },
