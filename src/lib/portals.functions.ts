@@ -3594,3 +3594,19 @@ export const getPropertyPublishJobs = createServerFn({ method: "POST" })
       finishedAt: r.finished_at,
     }));
   });
+
+/** „Verifică din nou” pentru OLX.ro (cont prepaid): doar citiri de stare + activare din pachet existent. */
+export const recheckOlxDirectListing = createServerFn({ method: "POST" })
+  .middleware([requireActiveOrgAuth])
+  .inputValidator((input: unknown) =>
+    z.object({ organizationId: z.string().uuid().optional(), propertyId: z.string().uuid() }).parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    const { organizationId, agentOnly } = await resolvePublishingOrg(
+      context as unknown as AuthContext,
+      data.organizationId,
+    );
+    await assertPortalPropertyAccess({ organizationId, propertyId: data.propertyId, agentOnly, userId: context.userId });
+    const { pollOlxPendingListings } = await import("@/lib/portals/adapters/olx-direct.server");
+    return pollOlxPendingListings({ organizationId, propertyId: data.propertyId });
+  });
