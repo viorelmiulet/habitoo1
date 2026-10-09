@@ -140,3 +140,8 @@ export function openWindow(list: string[], id: string): string[] {
   const next = [id, ...list.filter((x) => x !== id)];
   return next.slice(0, CHAT_MAX_WINDOWS);
 }
+
+/** Messengerul apare pentru agenți cu agenție și pentru superadmini, niciodată în impersonare. */
+export function messengerVisible(u: { isSuperadmin: boolean; hasOrganization: boolean; impersonating: boolean }) {
+  return !u.impersonating && (u.hasOrganization || u.isSuperadmin);
+}

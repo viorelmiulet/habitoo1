@@ -64,7 +64,7 @@ export const Route = createFileRoute("/api/public/cron/chat-email")({
             const name = from.full_name || "un agent";
             const agency = platform.has(from.id)
               ? "Admin platformă"
-              : (from.organization_id && orgName.get(from.organization_id)) || "Habitoo");
+              : (from.organization_id && orgName.get(from.organization_id)) || "Habitoo";
             const subject = `Ai un mesaj nou de la ${name}, ${agency}`;
             const text = `${subject}.\n\nDeschide Habitoo CRM pentru a răspunde: https://crm.habitoo.ro/app`;
             const html = `<p>${esc(subject)}.</p><p><a href="https://crm.habitoo.ro/app">Deschide Habitoo CRM</a> pentru a răspunde.</p>`;
