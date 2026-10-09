@@ -1479,6 +1479,112 @@ export type Database = {
         }
         Relationships: []
       }
+      chat_conversations: {
+        Row: {
+          created_at: string
+          id: string
+          last_message_at: string | null
+          user_a: string
+          user_b: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          last_message_at?: string | null
+          user_a: string
+          user_b: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          last_message_at?: string | null
+          user_a?: string
+          user_b?: string
+        }
+        Relationships: []
+      }
+      chat_messages: {
+        Row: {
+          body: string
+          conversation_id: string
+          created_at: string
+          emailed_at: string | null
+          id: string
+          sender_id: string
+        }
+        Insert: {
+          body: string
+          conversation_id: string
+          created_at?: string
+          emailed_at?: string | null
+          id?: string
+          sender_id: string
+        }
+        Update: {
+          body?: string
+          conversation_id?: string
+          created_at?: string
+          emailed_at?: string | null
+          id?: string
+          sender_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_messages_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "chat_conversations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      chat_participants: {
+        Row: {
+          blocked_at: string | null
+          conversation_id: string
+          last_email_at: string | null
+          last_read_at: string
+          user_id: string
+        }
+        Insert: {
+          blocked_at?: string | null
+          conversation_id: string
+          last_email_at?: string | null
+          last_read_at?: string
+          user_id: string
+        }
+        Update: {
+          blocked_at?: string | null
+          conversation_id?: string
+          last_email_at?: string | null
+          last_read_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_participants_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "chat_conversations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      chat_presence: {
+        Row: {
+          last_seen_at: string
+          user_id: string
+        }
+        Insert: {
+          last_seen_at?: string
+          user_id: string
+        }
+        Update: {
+          last_seen_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       collaboration_messages: {
         Row: {
           body: string
@@ -8189,6 +8295,42 @@ export type Database = {
       }
       can_access_contract: { Args: { _contract_id: string }; Returns: boolean }
       can_access_ticket: { Args: { _ticket_id: string }; Returns: boolean }
+      chat_directory: {
+        Args: never
+        Returns: {
+          avatar_path: string
+          full_name: string
+          last_seen_at: string
+          organization_id: string
+          organization_name: string
+          user_id: string
+        }[]
+      }
+      chat_email_arm: { Args: never; Returns: undefined }
+      chat_email_claim: {
+        Args: never
+        Returns: {
+          conversation_id: string
+          message_count: number
+          recipient_id: string
+          sender_id: string
+        }[]
+      }
+      chat_email_tick: { Args: never; Returns: undefined }
+      chat_my_conversations: {
+        Args: never
+        Returns: {
+          blocked_me: boolean
+          conversation_id: string
+          i_blocked: boolean
+          last_message_at: string
+          other_user_id: string
+          unread: number
+        }[]
+      }
+      chat_open_conversation: { Args: { _other: string }; Returns: string }
+      chat_touch_presence: { Args: never; Returns: undefined }
+      chat_user_eligible: { Args: { _user: string }; Returns: boolean }
       claim_collector_source: {
         Args: { _key: string; _ttl_seconds: number }
         Returns: {
@@ -8490,6 +8632,10 @@ export type Database = {
         Returns: undefined
       }
       impersonation_target: { Args: { _id: string }; Returns: string }
+      is_chat_participant: {
+        Args: { _conv: string; _user: string }
+        Returns: boolean
+      }
       is_org_admin: { Args: never; Returns: boolean }
       is_superadmin: { Args: never; Returns: boolean }
       lacheie_resend_arm: { Args: never; Returns: undefined }
