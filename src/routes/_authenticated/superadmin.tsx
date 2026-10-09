@@ -1,5 +1,6 @@
 import { createFileRoute, Navigate, Outlet } from "@tanstack/react-router";
 import { AppShell } from "@/components/app/AppShell";
+import { Messenger } from "@/components/app/chat/Messenger";
 import { superadminNav } from "@/components/app/AppSidebar";
 import { ShellLoading } from "@/components/app/LoadingState";
 import { appHead } from "@/components/app/app-head";
