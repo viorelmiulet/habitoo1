@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { ChevronDown, ChevronRight, Minus, MessageCircle, MoreVertical, Search, Send, X } from "lucide-react";
+import { ArrowLeft, ChevronDown, ChevronRight, Minus, MessageCircle, MoreVertical, Search, Send, X } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { getChatDirectory } from "@/lib/chat.functions";
@@ -26,6 +26,28 @@ import {
 } from "@/components/ui/dropdown-menu";
 import type { CurrentUser } from "@/hooks/use-session";
 import { useAvatarUrl } from "@/components/app/UserAvatar";
+import { useIsMobile } from "@/hooks/use-mobile";
+
+/** Înălțimea vizibilă reală (scade când apare tastatura pe iOS/Android). */
+function useVisualViewport(active: boolean) {
+  const [vp, setVp] = useState<{ height: number; top: number } | null>(null);
+  useEffect(() => {
+    if (!active) return;
+    const vv = window.visualViewport;
+    const update = () =>
+      setVp({ height: vv ? vv.height : window.innerHeight, top: vv ? vv.offsetTop : 0 });
+    update();
+    vv?.addEventListener("resize", update);
+    vv?.addEventListener("scroll", update);
+    window.addEventListener("resize", update);
+    return () => {
+      vv?.removeEventListener("resize", update);
+      vv?.removeEventListener("scroll", update);
+      window.removeEventListener("resize", update);
+    };
+  }, [active]);
+  return active && vp ? { height: `${vp.height}px`, top: `${vp.top}px` } : undefined;
+}
 
 type Conv = {
   conversation_id: string;
@@ -190,35 +212,62 @@ export function Messenger({ user }: { user: CurrentUser }) {
   const myAvatar = useAvatarUrl(user.profile?.avatar_url);
   const myName = user.profile?.full_name || user.email || "Eu";
 
+  const isMobile = useIsMobile();
+  const mobileConv =
+    isMobile && ui.windows[0] && !ui.minimized.includes(ui.windows[0]) ? ui.windows[0] : null;
+  const mobileOpen = isMobile && (ui.panel || mobileConv !== null);
+  const vpStyle = useVisualViewport(mobileOpen);
+  useEffect(() => {
+    if (!mobileOpen) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, [mobileOpen]);
+
   const openChat = (userId: string) =>
     setUi((s) => ({ ...s, windows: openWindow(s.windows, userId), minimized: s.minimized.filter((x) => x !== userId) }));
 
   return (
     <>
-      {!ui.panel ? (
+      {!ui.panel && !mobileConv ? (
         <button
           type="button"
           onClick={() => setUi((s) => ({ ...s, panel: true }))}
           className={cn(
-            "fixed right-4 bottom-20 z-40 flex h-11 items-center gap-2 rounded-full bg-primary px-4 text-sm font-medium text-primary-foreground shadow-lg transition-transform lg:bottom-5",
+            "fixed right-3 bottom-[calc(env(safe-area-inset-bottom)+4.5rem)] z-40 flex size-12 items-center justify-center gap-2 rounded-full bg-primary text-sm font-medium text-primary-foreground shadow-lg transition-transform md:right-4 md:bottom-20 md:size-auto md:h-11 md:px-4 lg:bottom-5",
             flash && "animate-pulse ring-4 ring-primary/40",
           )}
           aria-label={`Mesaje${totalUnread ? `, ${totalUnread} necitite` : ""}`}
         >
-          <MessageCircle className="size-4" />
-          Mesaje
+          <MessageCircle className="size-5 md:size-4" />
+          <span className="max-md:sr-only">Mesaje</span>
           {totalUnread ? (
-            <span className="rounded-full bg-destructive px-1.5 text-[11px] leading-5 text-destructive-foreground">
+            <span className="rounded-full bg-destructive px-1.5 text-[11px] leading-5 text-destructive-foreground max-md:absolute max-md:-top-1 max-md:-right-1 max-md:min-w-5 max-md:text-center">
               {totalUnread > 99 ? "99+" : totalUnread}
             </span>
           ) : null}
         </button>
-      ) : (
+      ) : null}
+      {ui.panel && !mobileConv ? (
         <aside
+          style={vpStyle}
           aria-label="Mesaje"
-          className="fixed inset-0 z-50 flex flex-col border-l border-border bg-surface sm:inset-auto sm:top-16 sm:right-0 sm:bottom-0 sm:z-40 sm:w-80 sm:shadow-xl"
+          className="fixed inset-x-0 top-0 z-50 flex h-[100dvh] flex-col overflow-x-hidden border-l border-border bg-surface md:inset-auto md:top-16 md:right-0 md:bottom-0 md:z-40 md:w-80 md:shadow-xl"
         >
-          <div className="flex items-center gap-2 border-b border-border p-3">
+          <div className="flex h-14 shrink-0 items-center justify-between border-b border-border pr-1.5 pl-4 md:hidden">
+            <h2 className="text-base font-semibold">Mesaje</h2>
+            <button
+              type="button"
+              className="flex size-11 items-center justify-center rounded-md text-muted-foreground hover:bg-muted"
+              onClick={() => setUi((s) => ({ ...s, panel: false }))}
+              aria-label="Închide mesajele"
+            >
+              <X className="size-5" />
+            </button>
+          </div>
+          <div className="flex items-center gap-2 border-b border-border p-3 max-md:hidden">
             <Avatar name={myName} url={myAvatar} online />
             <div className="min-w-0 flex-1">
               <p className="truncate text-sm font-semibold">{myName}</p>
@@ -241,7 +290,7 @@ export function Messenger({ user }: { user: CurrentUser }) {
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Caută agent sau agenție"
                 aria-label="Caută agent sau agenție"
-                className="h-9 w-full rounded-md border border-input bg-background pr-2 pl-8 text-sm outline-none focus:ring-2 focus:ring-ring"
+                className="h-11 w-full rounded-md border border-input bg-background pr-2 pl-8 text-base md:h-9 md:text-sm outline-none focus:ring-2 focus:ring-ring"
               />
             </label>
           </div>
@@ -264,7 +313,7 @@ export function Messenger({ user }: { user: CurrentUser }) {
                           : [...s.collapsed, g.organizationId],
                       }))
                     }
-                    className="flex w-full items-center gap-1 px-3 pt-3 pb-1 text-left text-xs font-semibold tracking-wide text-muted-foreground uppercase hover:text-foreground"
+                    className="flex min-h-11 w-full items-center gap-1 px-3 pt-3 pb-1 md:min-h-0 text-left text-xs font-semibold tracking-wide text-muted-foreground uppercase hover:text-foreground"
                   >
                     {collapsed ? <ChevronRight className="size-3.5" /> : <ChevronDown className="size-3.5" />}
                     <span className="truncate">{g.organizationName}</span>
@@ -279,7 +328,7 @@ export function Messenger({ user }: { user: CurrentUser }) {
                           <button
                             type="button"
                             onClick={() => openChat(c.userId)}
-                            className="flex w-full items-center gap-2.5 px-3 py-1.5 text-left hover:bg-muted"
+                            className="flex min-h-14 w-full items-center gap-2.5 px-3 py-1.5 text-left hover:bg-muted md:min-h-0"
                           >
                             <Avatar name={c.fullName} url={c.avatarUrl} online={c.online} />
                             <span className="min-w-0 flex-1">
@@ -304,9 +353,9 @@ export function Messenger({ user }: { user: CurrentUser }) {
             ) : null}
           </div>
         </aside>
-      )}
+      ) : null}
 
-      {ui.windows.map((uid, i) => {
+      {(isMobile ? (mobileConv ? [mobileConv] : []) : ui.windows).map((uid, i) => {
         const contact = contactById.get(uid);
         if (!contact) return null;
         return (
@@ -318,6 +367,11 @@ export function Messenger({ user }: { user: CurrentUser }) {
             index={i}
             panelOpen={ui.panel}
             minimized={ui.minimized.includes(uid)}
+            mobile={isMobile}
+            mobileStyle={vpStyle}
+            onBack={() =>
+              setUi((s) => ({ ...s, panel: true, windows: s.windows.filter((x) => x !== uid) }))
+            }
             onToggleMin={() =>
               setUi((s) => ({
                 ...s,
@@ -347,7 +401,13 @@ function ChatWindow({
   minimized,
   onToggleMin,
   onClose,
+  mobile,
+  mobileStyle,
+  onBack,
 }: {
+  mobile: boolean;
+  mobileStyle?: React.CSSProperties;
+  onBack: () => void;
   me: string;
   contact: ChatContact;
   conv: Conv | null;
@@ -445,15 +505,20 @@ function ChatWindow({
     <div
       role="dialog"
       aria-label={`Conversație cu ${contact.fullName}`}
-      style={{ ["--chat-right" as string]: `${right}px` }}
+      style={{ ["--chat-right" as string]: `${right}px`, ...(mobile ? mobileStyle : {}) }}
       className={cn(
-        "fixed inset-0 z-[60] flex flex-col bg-surface sm:inset-auto sm:right-[var(--chat-right)] sm:bottom-0 sm:z-40 sm:w-80 sm:rounded-t-lg sm:border sm:border-border sm:shadow-xl",
-        minimized ? "max-sm:hidden sm:h-12" : "sm:h-[420px]",
-        index > 0 && "max-sm:hidden",
+        "fixed inset-x-0 top-0 z-[60] flex h-[100dvh] flex-col overflow-x-hidden bg-surface md:inset-auto md:right-[var(--chat-right)] md:bottom-0 md:z-40 md:w-80 md:rounded-t-lg md:border md:border-border md:shadow-xl",
+        minimized ? "max-md:hidden md:h-12" : "md:h-[420px]",
+        index > 0 && "max-md:hidden",
       )}
     >
-      <div className="flex items-center gap-2 border-b border-border px-2.5 py-2">
-        <button type="button" className="flex min-w-0 flex-1 items-center gap-2 text-left" onClick={onToggleMin}>
+      <div className="flex shrink-0 items-center gap-1 border-b border-border px-1.5 py-1.5 md:gap-2 md:px-2.5 md:py-2">
+        {mobile ? (
+          <button type="button" className="flex size-11 shrink-0 items-center justify-center rounded-md hover:bg-muted" onClick={onBack} aria-label="Înapoi la listă">
+            <ArrowLeft className="size-5" />
+          </button>
+        ) : null}
+        <button type="button" className="flex min-w-0 flex-1 items-center gap-2 text-left" onClick={mobile ? undefined : onToggleMin}>
           <Avatar name={contact.fullName} url={contact.avatarUrl} online={contact.online} size="size-7" />
           <span className="min-w-0">
             <span className="block truncate text-sm font-semibold">{contact.fullName}</span>
@@ -464,7 +529,7 @@ function ChatWindow({
         </button>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <button type="button" className="rounded p-1 text-muted-foreground hover:bg-muted" aria-label="Opțiuni conversație">
+            <button type="button" className="flex shrink-0 items-center justify-center rounded p-1 text-muted-foreground hover:bg-muted max-md:size-11" aria-label="Opțiuni conversație">
               <MoreVertical className="size-4" />
             </button>
           </DropdownMenuTrigger>
@@ -474,10 +539,10 @@ function ChatWindow({
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
-        <button type="button" className="rounded p-1 text-muted-foreground hover:bg-muted max-sm:hidden" onClick={onToggleMin} aria-label={minimized ? "Extinde" : "Minimizează"}>
+        <button type="button" className="rounded p-1 text-muted-foreground hover:bg-muted max-md:hidden" onClick={onToggleMin} aria-label={minimized ? "Extinde" : "Minimizează"}>
           <Minus className="size-4" />
         </button>
-        <button type="button" className="rounded p-1 text-muted-foreground hover:bg-muted" onClick={onClose} aria-label="Închide conversația">
+        <button type="button" className="rounded p-1 text-muted-foreground hover:bg-muted max-md:hidden" onClick={onClose} aria-label="Închide conversația">
           <X className="size-4" />
         </button>
       </div>
@@ -493,7 +558,7 @@ function ChatWindow({
                 <div key={m.id} className={cn("flex", mine ? "justify-end" : "justify-start")}>
                   <div
                     className={cn(
-                      "max-w-[80%] rounded-2xl px-3 py-1.5 text-sm break-words whitespace-pre-wrap",
+                      "max-w-[80%] rounded-2xl px-3 py-1.5 text-sm break-words whitespace-pre-wrap [overflow-wrap:anywhere]",
                       mine ? "rounded-br-sm bg-primary text-primary-foreground" : "rounded-bl-sm bg-muted text-foreground",
                     )}
                   >
@@ -515,32 +580,32 @@ function ChatWindow({
             </p>
           ) : (
             <form
-              className="flex items-end gap-1.5 border-t border-border p-2"
+              className="flex shrink-0 items-end gap-1.5 border-t border-border p-2 max-md:pb-[max(0.5rem,env(safe-area-inset-bottom))]"
               onSubmit={(e) => {
                 e.preventDefault();
                 void send();
               }}
             >
               <textarea
-                autoFocus
+                autoFocus={!mobile}
                 rows={1}
                 value={text}
                 maxLength={CHAT_MAX_LENGTH}
                 onChange={(e) => setText(e.target.value)}
                 onKeyDown={(e) => {
-                  if (e.key === "Enter" && !e.shiftKey && !e.nativeEvent.isComposing) {
+                  if (!mobile && e.key === "Enter" && !e.shiftKey && !e.nativeEvent.isComposing) {
                     e.preventDefault();
                     void send();
                   }
                 }}
                 placeholder="Scrie un mesaj…"
                 aria-label="Mesaj"
-                className="max-h-28 min-h-9 flex-1 resize-none rounded-md border border-input bg-background px-2.5 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
+                className="max-h-28 min-h-11 min-w-0 flex-1 resize-none rounded-md border border-input bg-background px-2.5 py-2 text-base md:min-h-9 md:text-sm outline-none focus:ring-2 focus:ring-ring"
               />
               <button
                 type="submit"
                 disabled={sending || !text.trim()}
-                className="flex size-9 items-center justify-center rounded-md bg-primary text-primary-foreground disabled:opacity-50"
+                className="flex size-11 shrink-0 items-center justify-center rounded-md bg-primary md:size-9 text-primary-foreground disabled:opacity-50"
                 aria-label="Trimite"
               >
                 <Send className="size-4" />
