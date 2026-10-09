@@ -152,8 +152,27 @@ export async function resolveOlxLocation(
   return null;
 }
 
+/** Anunțul deja creat pe OLX pentru referința HB (evită duplicatele). */
+export async function findOlxAdvertByExternalId(
+  request: OlxRequest,
+  organizationId: string,
+  externalId: string,
+): Promise<string | null> {
+  const res = await request(organizationId, "GET", `/adverts?external_id=${encodeURIComponent(externalId)}`);
+  const raw = res.body?.["data"];
+  const list = (Array.isArray(raw) ? raw : raw ? [raw] : []) as Record<string, unknown>[];
+  // OLX poate ignora filtrul: potrivim strict după external_id; ignorăm anunțurile șterse de utilizator.
+  const hit = list.find(
+    (a) => a && String(a["external_id"] ?? "") === externalId && a["id"] != null && !["removed_by_user", "deleted"].includes(String(a["status"] ?? "")),
+  );
+  return hit ? String(hit["id"]) : null;
+}
+
+export const olxNeedsPacketMessage = (category: string) =>
+  `Anunțul a fost trimis pe OLX, dar nu e activ: contul OLX nu are pachet pentru categoria ${category}. Cumpără un pachet din contul OLX, iar Habitoo îl activează automat.`;
+
 export type OlxAdvertCheck = {
-  portalStatus: "pending" | "published" | "error";
+  portalStatus: "pending" | "published" | "error" | "needs_packet";
   message: string;
   url: string | null;
 };
@@ -188,12 +207,8 @@ export async function checkOlxAdvert(
       );
       return { portalStatus: "pending", message: "În moderare OLX", url: null };
     }
-    const name = taxonomy?.[String(categoryId)]?.name ?? "anunțului";
-    return {
-      portalStatus: "error",
-      message: `Contul OLX nu are pachet activ pentru categoria ${name}. Cumpără un pachet din contul OLX.`,
-      url: null,
-    };
+    const name = taxonomy?.[String(categoryId)]?.name ?? (Number.isFinite(categoryId) ? String(categoryId) : "anunțului");
+    return { portalStatus: "needs_packet", message: olxNeedsPacketMessage(name), url };
   }
   if (["moderated", "blocked", "disabled", "removed_by_moderator"].includes(status)) {
     let reason = "";
@@ -245,8 +260,9 @@ export function createOlxDirectAdapter(deps: OlxDirectDeps): PortalAdapter {
     body: unknown,
   ): Promise<PortalResult<ListingOutcome>> {
     const check = await inStage("verificarea stării", () => checkOlxAdvert(deps.request, ctx.organizationId, advertId, taxonomy));
-    if (check.portalStatus === "pending") await deps.armStatusCron();
-    if (check.portalStatus === "error") await deps.notifyError(ctx.organizationId, ref.propertyId, check.message);
+    if (check.portalStatus === "pending" || check.portalStatus === "needs_packet") await deps.armStatusCron();
+    // O singură notificare: id stabil per ofertă + mesaj.
+    if (check.portalStatus === "error" || check.portalStatus === "needs_packet") await deps.notifyError(ctx.organizationId, ref.propertyId, check.message);
     return {
       ok: true,
       data: {
@@ -254,7 +270,7 @@ export function createOlxDirectAdapter(deps: OlxDirectDeps): PortalAdapter {
         live: true,
         detail: `olx_${verb} id=${advertId}`,
         message: check.message,
-        portalStatus: check.portalStatus === "published" ? (verb === "put" ? "updated" : "published") : check.portalStatus,
+        portalStatus: check.portalStatus === "published" ? (verb === "put" || verb === "put_existing" ? "updated" : "published") : check.portalStatus,
         publicUrl: check.url,
         httpStatus,
         portalResponse: body,
@@ -289,7 +305,31 @@ export function createOlxDirectAdapter(deps: OlxDirectDeps): PortalAdapter {
         );
         return finish(ctx, ref, ref.externalId, taxonomy, mode === "publish" ? "republish" : "put", res.status, res.body);
       }
-      const res = await inStage("trimiterea anunțului", () => deps.request(ctx.organizationId, "POST", "/adverts", mapped.payload));
+      const reference = mapped.payload.external_id;
+      const existing = await inStage("trimiterea anunțului", () =>
+        findOlxAdvertByExternalId(deps.request, ctx.organizationId, reference),
+      );
+      if (existing) {
+        const res = await inStage("trimiterea anunțului", () =>
+          deps.request(ctx.organizationId, "PUT", `/adverts/${existing}`, mapped.payload),
+        );
+        return finish(ctx, ref, existing, taxonomy, "put_existing", res.status, res.body);
+      }
+      let res: { status: number; body: Record<string, unknown> | null };
+      try {
+        res = await inStage("trimiterea anunțului", () => deps.request(ctx.organizationId, "POST", "/adverts", mapped.payload));
+      } catch (error) {
+        const e = toPortalError(error);
+        const uncertain =
+          e.code === "TIMEOUT" ||
+          e.code === "NETWORK_ERROR" ||
+          (error instanceof OlxHttpError && error.status >= 500);
+        if (!uncertain) throw error;
+        // OLX poate fi creat anunțul chiar dacă răspunsul nu a ajuns.
+        const created = await findOlxAdvertByExternalId(deps.request, ctx.organizationId, reference).catch(() => null);
+        if (!created) throw error;
+        return finish(ctx, ref, created, taxonomy, "post_recovered", 200, null);
+      }
       const id = data(res.body)["id"];
       if (id === undefined || id === null || String(id) === "") {
         return fail("PORTAL_ERROR", `${NAME} – trimiterea anunțului: OLX nu a întors ID-ul anunțului.`, { detail: "olx_missing_id", httpStatus: res.status, portalResponse: res.body });
@@ -458,44 +498,53 @@ export const realOlxDirectDeps: OlxDirectDeps = {
 
 export const olxDirectAdapter: PortalAdapter = createOlxDirectAdapter(realOlxDirectDeps);
 
-/** Cron: urmărește anunțurile OLX aflate în moderare până la o stare finală. */
-export async function pollOlxPendingListings(): Promise<{ checked: number; published: number; failed: number }> {
+/** Cron: urmărește anunțurile OLX în moderare și pe cele care așteaptă un pachet. */
+export async function pollOlxPendingListings(
+  filter: { organizationId?: string; propertyId?: string } = {},
+): Promise<{ checked: number; published: number; failed: number; needsPacket: number }> {
   const db = await admin();
-  const { data: rows } = await db
+  let q = db
     .from("portal_listings")
-    .select("id, organization_id, property_id, external_id")
+    .select("id, organization_id, property_id, external_id, status, last_error")
     .eq("portal", "olx_direct")
-    .eq("status", "pending")
+    .in("status", ["pending", "needs_packet"])
     .not("external_id", "is", null)
     .limit(50);
+  if (filter.organizationId) q = q.eq("organization_id", filter.organizationId);
+  if (filter.propertyId) q = q.eq("property_id", filter.propertyId);
+  const { data: rows } = await q;
   const { loadOlxTaxonomy } = await import("../olx/taxonomy.server");
   const taxonomy = await loadOlxTaxonomy().catch(() => null);
-  const stats = { checked: 0, published: 0, failed: 0 };
+  const stats = { checked: 0, published: 0, failed: 0, needsPacket: 0 };
   for (const row of rows ?? []) {
     stats.checked += 1;
     let check: OlxAdvertCheck;
     try {
       check = await checkOlxAdvert(realRequest, row.organization_id, row.external_id!, taxonomy);
-    } catch (error) {
-      if (error instanceof PortalError && error.code === "AUTH_ERROR") continue;
+    } catch {
       continue;
     }
-    if (check.portalStatus === "pending") continue;
     const now = new Date().toISOString();
+    const status = check.portalStatus;
     await db
       .from("portal_listings")
       .update({
-        status: check.portalStatus,
+        status,
         last_sync_at: now,
-        last_error: check.portalStatus === "error" ? check.message : null,
+        last_error: status === "error" || status === "needs_packet" ? check.message : null,
         ...(check.url ? { public_url: check.url } : {}),
+        ...(status === "published" ? { published_at: now } : {}),
       } as never)
       .eq("id", row.id);
-    if (check.portalStatus === "published") stats.published += 1;
-    else {
-      stats.failed += 1;
+    if (status === "published") stats.published += 1;
+    if (status === "needs_packet") stats.needsPacket += 1;
+    if (status === "error") stats.failed += 1;
+    // Notificare doar la schimbarea stării (și oricum deduplicată după mesaj).
+    const changed = row.status !== status || row.last_error !== check.message;
+    if ((status === "error" || status === "needs_packet") && changed) {
       await notifyOlxError(row.organization_id, row.property_id, check.message).catch(() => undefined);
     }
   }
+  if ((rows ?? []).length) await db.rpc("olx_direct_status_arm" as never).then(() => undefined, () => undefined);
   return stats;
 }

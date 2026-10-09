@@ -26,6 +26,15 @@ import {
 import { olxErrorMessage, OlxHttpError } from "./errors";
 
 const TIMEOUT_MS = 15_000;
+/** OLX descarcă pozele în timpul cererii: crearea/actualizarea anunțului poate dura. */
+export const OLX_ADVERT_WRITE_TIMEOUT_MS = 60_000;
+
+export function olxRequestTimeoutMs(method: string, path: string): number {
+  const p = path.split("?")[0]!;
+  if (method === "POST" && p === "/adverts") return OLX_ADVERT_WRITE_TIMEOUT_MS;
+  if (method === "PUT" && /^\/adverts\/[^/]+$/.test(p)) return OLX_ADVERT_WRITE_TIMEOUT_MS;
+  return TIMEOUT_MS;
+}
 
 export type OlxTokens = {
   access_token: string;
@@ -498,7 +507,7 @@ export async function olxPartnerRequest(
   }
   const token = await getOlxAccessToken(organizationId, { force: retried }, d);
   const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
+  const timer = setTimeout(() => controller.abort(), olxRequestTimeoutMs(method, rel));
   let res: Response;
   try {
     res = await d.fetch(url.toString(), {
@@ -521,7 +530,8 @@ export async function olxPartnerRequest(
   if (res.status === 401 && !retried) {
     return olxPartnerRequest(organizationId, method, path, payload, d, true);
   }
-  const raw = (await res.text().catch(() => "")).slice(0, 4000);
+  // Fără tăiere: un JSON trunchiat nu se mai poate citi (listele de anunțuri depășesc ușor 4 KB).
+  const raw = (await res.text().catch(() => "")).slice(0, 2_000_000);
   let body: Record<string, unknown> | null = null;
   try {
     const parsed = JSON.parse(raw) as unknown;

@@ -50,6 +50,7 @@ import {
   getPropertyPublishJobs,
   getPropertiesPortalMatrix,
   getPropertyPortalJournal,
+  recheckOlxDirectListing,
   getPropertyPortalRequirements,
   getPropertyStoriaAutoRenew,
   setPropertyStoriaAutoRenew,
@@ -79,6 +80,7 @@ function stateSentence(cell: PropertyPortalCell, selected: boolean) {
     return selected
       ? "Portal neconfigurat — configurează-l pentru a putea publica."
       : "Portal neconfigurat.";
+  if (cell.state === "needs_packet") return cell.lastError ?? "Anunțul așteaptă un pachet OLX.";
   if (cell.lastError || cell.state === "error") return "Eroare la ultima publicare";
   if (cell.state === "syncing") return "Se sincronizează cu portalul…";
   if (cell.state === "published" || cell.state === "in_feed") {
@@ -97,6 +99,7 @@ const STATE_VIEW: Record<PropertyPortalCell["state"], { label: string; pill: Sta
   not_selected: { label: "Nepublicat", pill: "inactive" },
   selected: { label: "Selectat", pill: "pending" },
   syncing: { label: "Se sincronizează", pill: "pending" },
+  needs_packet: { label: "Necesită pachet OLX", pill: "pending" },
   published: { label: "Publicat", pill: "published" },
   in_feed: { label: "Publicat", pill: "published" },
   error: { label: "Refuzat", pill: "error" },
@@ -155,6 +158,19 @@ export const PropertyPortalsCard = forwardRef<
   const enqueueFn = useServerFn(enqueuePortalPublishJobs);
   const loadJobs = useServerFn(getPropertyPublishJobs);
   const queryKey = ["property-portals-selection", organizationId, propertyId] as const;
+  const recheckOlxFn = useServerFn(recheckOlxDirectListing);
+  const [olxRechecking, setOlxRechecking] = useState(false);
+  const recheckOlx = async () => {
+    setOlxRechecking(true);
+    try {
+      await recheckOlxFn({ data: { ...(organizationId ? { organizationId } : {}), propertyId } });
+      await queryClient.invalidateQueries({ queryKey });
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Verificarea OLX a eșuat.");
+    } finally {
+      setOlxRechecking(false);
+    }
+  };
 
   const loadAutoWithdrawals = useServerFn(getPropertyAutoWithdrawals);
   const autoWithdrawals = useQuery({
@@ -800,6 +816,7 @@ export const PropertyPortalsCard = forwardRef<
                 (Boolean(contactBlock) && !value && !cell.selected);
               const problem =
                 !busy &&
+                cell.state !== "needs_packet" &&
                 (cell.state === "error" ||
                   Boolean(cell.lastError) ||
                   (cell.availability === "available" && value && !cell.configured));
@@ -813,7 +830,7 @@ export const PropertyPortalsCard = forwardRef<
                 ? "Publicare în curând"
                 : busy
                 ? "Se sincronizează…"
-                : latestOperationFailed
+                : latestOperationFailed && cell.state !== "needs_packet"
                   ? "Eroare la ultima publicare"
                   : stateSentence(cell, value);
 
@@ -854,6 +871,18 @@ export const PropertyPortalsCard = forwardRef<
                         >
                           {detail}
                         </p>
+                        {cell.portalId === "olx_direct" && (cell.state === "needs_packet" || cell.state === "syncing") ? (
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="outline"
+                            className="pointer-events-auto mt-2"
+                            disabled={olxRechecking}
+                            onClick={() => void recheckOlx()}
+                          >
+                            {olxRechecking ? "Se verifică…" : "Verifică din nou"}
+                          </Button>
+                        ) : null}
                         {contactBlock && value && FEED_PORTALS_REQUIRING_AGENT_PHONE.has(cell.portalId) ? (
                           <p className="mt-1 text-xs font-semibold text-destructive">
                             {FEED_EXCLUDED_NO_PHONE}
