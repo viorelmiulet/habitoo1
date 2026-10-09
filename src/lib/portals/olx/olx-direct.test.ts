@@ -4,6 +4,7 @@ import { mapPropertyToOlx, olxPlainText, type OlxProperty } from "./mapper";
 import { olxCategoryId, type OlxTaxonomy } from "./taxonomy";
 import { checkOlxAdvert, createOlxDirectAdapter, type OlxRequest } from "../adapters/olx-direct.server";
 import { PortalError } from "../errors";
+import { OlxHttpError } from "./errors";
 import { isForbiddenOlxPurchase } from "./config";
 import type { PortalContext } from "../adapter";
 
@@ -165,7 +166,7 @@ describe("adaptor olx_direct", () => {
     });
     const w = await h.adapter.withdrawListing(ctx, { propertyId: "p", externalId: "5" });
     expect(w.ok).toBe(true);
-    expect(h.calls[0]).toMatchObject({ method: "POST", path: "/adverts/5/commands", payload: { command: "deactivate", is_success: false } });
+    expect(h.calls[1]).toMatchObject({ method: "POST", path: "/adverts/5/commands", payload: { command: "deactivate", is_success: false } });
     expect(h.calls.some((c) => c.method === "DELETE")).toBe(false);
     h.calls.length = 0;
     const p = await h.adapter.publishListing(ctx, { propertyId: "p", externalId: "5" });
@@ -176,11 +177,12 @@ describe("adaptor olx_direct", () => {
 
   it("ștergerea proprietății: deactivate, apoi DELETE", async () => {
     const h = harness({
+      "GET /adverts/5": () => ({ status: 200, body: { data: { status: "active" } } }),
       "POST /adverts/5/commands": () => ({ status: 200, body: null }),
       "DELETE /adverts/5": () => ({ status: 204, body: null }),
     }, true);
     await h.adapter.withdrawListing(ctx, { propertyId: "p", externalId: "5" });
-    expect(h.calls.map((c) => c.method)).toEqual(["POST", "DELETE"]);
+    expect(h.calls.map((c) => c.method)).toEqual(["GET", "POST", "DELETE"]);
   });
 
   it("timeout la POST → găsește anunțul după external_id, fără duplicat", async () => {
@@ -236,5 +238,44 @@ describe("descriere OLX", () => {
     const long = mapPropertyToOlx(base({ description: "Apartament frumos. ".repeat(600) }), TAX, { city_id: 1 });
     expect(long.ok && long.payload.description.length).toBeLessThanOrEqual(9000);
     expect(long.ok && long.payload.description.endsWith("Cod ofertă: HB-1175")).toBe(true);
+  });
+});
+
+describe("retragere OLX după starea reală", () => {
+  it("limited → Retras, fără nicio comandă", async () => {
+    const h = harness({ "GET /adverts/9": () => ({ status: 200, body: { data: { status: "limited" } } }) });
+    const r = await h.adapter.withdrawListing(ctx, { propertyId: "p", externalId: "9" });
+    expect(r.ok).toBe(true);
+    expect(h.calls.map((c) => c.method)).toEqual(["GET"]);
+  });
+
+  it("active → deactivate (is_success: false)", async () => {
+    const h = harness({
+      "GET /adverts/9": () => ({ status: 200, body: { data: { status: "active" } } }),
+      "POST /adverts/9/commands": () => ({ status: 200, body: null }),
+    });
+    await h.adapter.withdrawListing(ctx, { propertyId: "p", externalId: "9" });
+    expect(h.calls[1]).toMatchObject({ method: "POST", payload: { command: "deactivate", is_success: false } });
+  });
+
+  it("404 de la OLX → Retras, fără eroare", async () => {
+    const h = harness({ "GET /adverts/9": () => { throw new OlxHttpError(404, null); } });
+    const r = await h.adapter.withdrawListing(ctx, { propertyId: "p", externalId: "9" });
+    expect(r.ok).toBe(true);
+    expect(h.calls.some((c) => c.method !== "GET")).toBe(false);
+  });
+
+  it("republicare limited: activate refuzat → același ID, PUT + verificare", async () => {
+    const h = harness({
+      "GET /locations": loc,
+      "POST /adverts/9/commands": () => { throw new OlxHttpError(400, { error: { validation: [{ field: "ad", title: "Primul pas este ca anuntul sa fie activ" }] } }); },
+      "PUT /adverts/9": () => ({ status: 200, body: { data: { id: 9 } } }),
+      "GET /adverts/9": () => ({ status: 200, body: { data: { status: "limited", category_id: 1165 } } }),
+      "GET /users/me/packets": () => ({ status: 200, body: { data: [] } }),
+    });
+    const r = await h.adapter.publishListing(ctx, { propertyId: "p", externalId: "9" });
+    expect(r.ok && r.data.externalId).toBe("9");
+    expect(r.ok && r.data.portalStatus).toBe("needs_packet");
+    expect(h.calls.some((c) => c.method === "POST" && c.path === "/adverts")).toBe(false);
   });
 });

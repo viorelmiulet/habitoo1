@@ -296,8 +296,10 @@ export function createOlxDirectAdapter(deps: OlxDirectDeps): PortalAdapter {
           try {
             await inStage("trimiterea anunțului", () => command(ctx, ref.externalId!, { command: "activate" }));
           } catch (error) {
+            // Anunț nedezactivat de noi (ex. `limited`): OLX refuză `activate`; continuăm cu PUT + verificarea stării.
             const e = toPortalError(error);
-            if (e.code !== "VALIDATION_ERROR") throw error;
+            const refused = e.code === "VALIDATION_ERROR" || (error instanceof OlxHttpError && error.status >= 400 && error.status < 500);
+            if (!refused) throw error;
           }
         }
         const res = await inStage("trimiterea anunțului", () =>
@@ -375,10 +377,26 @@ export function createOlxDirectAdapter(deps: OlxDirectDeps): PortalAdapter {
       }
       try {
         const loaded = await deps.loadProperty(ctx, ref);
-        const res = await command(ctx, ref.externalId, { command: "deactivate", is_success: false });
-        let detail = `olx_deactivate id=${ref.externalId}`;
+        const id = ref.externalId;
+        // Doar un anunț `active` acceptă `deactivate`; celelalte nu sunt publice.
+        let state: string | null = null;
+        try {
+          const current = await inStage("retragerea anunțului", () => deps.request(ctx.organizationId, "GET", `/adverts/${id}`));
+          state = String(data(current.body)["status"] ?? "").toLowerCase() || null;
+        } catch (error) {
+          if (error instanceof OlxHttpError && error.status === 404) {
+            return { ok: true, data: { externalId: id, live: true, detail: `olx_withdraw id=${id} not_found`, message: "Anunțul nu mai există în contul OLX; marcat retras." } };
+          }
+          throw error;
+        }
+        let res: { status: number; body: Record<string, unknown> | null } = { status: 200, body: null };
+        let detail = `olx_withdraw id=${id} state=${state ?? "necunoscută"}`;
+        if (state === "active") {
+          res = await command(ctx, id, { command: "deactivate", is_success: false });
+          detail = `olx_deactivate id=${id}`;
+        }
         if (loaded.ok && loaded.deleted) {
-          await deps.request(ctx.organizationId, "DELETE", `/adverts/${ref.externalId}`);
+          await deps.request(ctx.organizationId, "DELETE", `/adverts/${id}`);
           detail += " deleted";
         }
         return {
@@ -387,7 +405,12 @@ export function createOlxDirectAdapter(deps: OlxDirectDeps): PortalAdapter {
             externalId: ref.externalId,
             live: true,
             detail,
-            message: loaded.ok && loaded.deleted ? "Anunțul a fost șters de pe OLX." : "Anunțul a fost dezactivat pe OLX.",
+            message:
+              loaded.ok && loaded.deleted
+                ? "Anunțul a fost șters de pe OLX."
+                : state === "active"
+                  ? "Anunțul a fost dezactivat pe OLX."
+                  : "Anunțul nu era public pe OLX; marcat retras.",
             httpStatus: res.status,
             portalResponse: res.body,
           },
