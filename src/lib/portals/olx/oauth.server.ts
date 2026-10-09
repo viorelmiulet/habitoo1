@@ -26,6 +26,15 @@ import {
 import { olxErrorMessage, OlxHttpError } from "./errors";
 
 const TIMEOUT_MS = 15_000;
+/** OLX descarcă pozele în timpul cererii: crearea/actualizarea anunțului poate dura. */
+export const OLX_ADVERT_WRITE_TIMEOUT_MS = 60_000;
+
+export function olxRequestTimeoutMs(method: string, path: string): number {
+  const p = path.split("?")[0]!;
+  if (method === "POST" && p === "/adverts") return OLX_ADVERT_WRITE_TIMEOUT_MS;
+  if (method === "PUT" && /^\/adverts\/[^/]+$/.test(p)) return OLX_ADVERT_WRITE_TIMEOUT_MS;
+  return TIMEOUT_MS;
+}
 
 export type OlxTokens = {
   access_token: string;
@@ -498,7 +507,7 @@ export async function olxPartnerRequest(
   }
   const token = await getOlxAccessToken(organizationId, { force: retried }, d);
   const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
+  const timer = setTimeout(() => controller.abort(), olxRequestTimeoutMs(method, rel));
   let res: Response;
   try {
     res = await d.fetch(url.toString(), {

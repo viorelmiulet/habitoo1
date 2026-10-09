@@ -125,7 +125,10 @@ export function mapPropertyToOlx(
   }
 
   const title = olxPlainText(p.title ?? "");
-  const description = olxPlainText(p.description ?? "");
+  const codeLine = p.reference?.trim() ? `Cod ofertă: ${p.reference.trim()}` : "";
+  const body = olxPlainText(p.description ?? "");
+  const room = 9000 - (codeLine ? codeLine.length + 2 : 0);
+  const description = codeLine ? `${body.slice(0, room).trimEnd()}\n\n${codeLine}` : body;
   const t = validateOlxText("titlul", title, 16, 150);
   if (t) reasons.push(t);
   const d = validateOlxText("descrierea", description, 80, 9000);

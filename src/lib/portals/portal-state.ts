@@ -9,6 +9,7 @@ export type PortalSelectionState =
   | "not_selected"
   | "selected"
   | "syncing"
+  | "needs_packet"
   | "published"
   | "in_feed"
   | "error"
@@ -36,6 +37,7 @@ export function deriveState(input: {
   if (input.listingStatus === "error" || input.publicationStatus === "error") return "error";
   if (input.listingStatus === "published" || input.listingStatus === "updated") return "published";
   if (input.listingStatus === "pending") return "syncing";
+  if (input.listingStatus === "needs_packet") return "needs_packet";
   if (input.listingStatus === "expired") return "expired";
   if (input.listingStatus === "withdrawn") return "withdrawn";
   if (!input.configured) return "not_configured";
