@@ -345,7 +345,7 @@ function canDo(def: PortalDefinition, name: string): string[] {
 function activationText(def: PortalDefinition, custom?: string): string {
   if (custom) return custom;
   if (KEY_REQUEST_PORTALS.some((p) => p === def.id)) {
-    return `Administratorul agenției soliciți activarea din Setări → Portaluri. Habitoo trimite cererea, iar cheia o emite ${def.display_name} și ajunge pe emailul administratorului; echipa Habitoo finalizează apoi conexiunea.`.replace("agenției soliciți", "agenției solicită");
+    return `Administratorul agenției solicită activarea din Setări → Portaluri. Habitoo trimite cererea, iar cheia o emite ${def.display_name} și ajunge pe emailul administratorului; echipa Habitoo finalizează apoi conexiunea.`;
   }
   if (def.activation === "self_service") return "Administratorul agenției activează portalul singur, dintr-un click, din Setări → Portaluri. Nu trebuie să aștepți aprobare.";
   if (def.activation === "oauth") return `Administratorul agenției intră în Setări → Portaluri și își conectează contul de pe ${def.display_name}.`;
