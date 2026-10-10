@@ -343,10 +343,15 @@ function FeaturesPage() {
             <TeamMini />
             <NotificationsMini />
           </div>
-          <div className="mt-10 text-center">
+          <div className="mt-10 flex flex-wrap items-center justify-center gap-x-6 gap-y-2">
             <Button asChild variant="link" className="text-navy-foreground">
               <Link to="/despre">
                 Află mai multe despre platformă <ArrowRight />
+              </Link>
+            </Button>
+            <Button asChild variant="link" className="text-navy-foreground">
+              <Link to="/intrebari-frecvente">
+                Întrebări frecvente <ArrowRight />
               </Link>
             </Button>
           </div>

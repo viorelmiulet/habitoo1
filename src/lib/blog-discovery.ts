@@ -42,11 +42,12 @@ export const PAGE_LASTMOD: Record<string, string> = {
   "/despre": "2026-09-27",
   "/contact": "2026-09-27",
   "/integrari": "2026-10-10",
+  "/intrebari-frecvente": "2026-10-10",
   "/termeni": "2026-10-05",
   "/politica-de-confidentialitate": "2026-09-27",
 };
 
-const publicPages = ["/", "/functionalitati", "/preturi", "/despre", "/contact", "/integrari", "/blog", "/termeni", "/politica-de-confidentialitate"];
+const publicPages = ["/", "/functionalitati", "/preturi", "/despre", "/contact", "/integrari", "/intrebari-frecvente", "/blog", "/termeni", "/politica-de-confidentialitate"];
 
 const integrationPaths = INTEGRATION_PAGES.map((p) => `/integrari/${p.slug}`);
 
