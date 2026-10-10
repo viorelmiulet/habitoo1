@@ -274,7 +274,7 @@ const CONTENT: Record<string, Content> = {
     intro: [
       "ClickImob preia ofertele agenției direct din Habitoo. Agențiile noi îl au activ de la început, iar celelalte îl pot activa singure, dintr-un click.",
       "Bifezi ClickImob la ofertele pe care vrei să le arăți. Modificările de preț, text sau poze ajung pe portal în cel mult 15 minute, fără să faci nimic în plus.",
-      "Când debifezi o ofertă sau o marchezi vândută, iese de pe ClickImob la următoarea preluare.",
+      "Când debifezi o ofertă sau o marchezi vândută, iese de pe ClickImob la următoarea preluare. Astfel, ce vede clientul pe portal rămâne mereu la fel cu ce ai în CRM, fără verificări manuale.",
     ],
     notes: [
       "Nu există chei sau parole de introdus; conexiunea se face prin Habitoo.",
