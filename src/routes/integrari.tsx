@@ -15,6 +15,7 @@ export const MULTI_PORTAL_INTRO = [
   "Cu Habitoo introduci anunțul o singură dată, în fișa proprietății: datele, pozele, descrierea și agentul responsabil. Apoi, în fila Publicare, alegi pe ce portaluri apare. Bifezi portalurile dorite și apeși Publică, iar Habitoo trimite anunțul spre fiecare. Trimiterea continuă și dacă închizi pagina, iar dacă un portal respinge anunțul primești o notificare cu motivul.",
   "Când schimbi prețul sau pozele, modifici o singură dată în Habitoo și trimiți varianta nouă pe toate portalurile alese. Unele portaluri primesc anunțul imediat, altele îl preiau singure, periodic, din Habitoo; pe pagina fiecărei integrări scrie exact cum funcționează.",
   "Când renunți la un portal, îl debifezi și anunțul se retrage de acolo. Când proprietatea devine Vândută, Închiriată sau Arhivată, anunțul se retrage automat de pe portalurile care permit asta, fără să intri în fiecare cont. Astfel, ce văd clienții online rămâne la fel cu ce ai în CRM.",
+  "Toată echipa lucrează în același sistem. Pe fiecare proprietate vezi pe ce portaluri este publicată, când a fost trimisă ultima dată și dacă a apărut o problemă. Mesajele clienților de pe portalurile care permit asta ajung direct în CRM, ca lead-uri, la agentul proprietății, ca să nu se piardă nicio cerere.",
   "Fiecare portal se activează separat, din Setări → Portaluri, de către administratorul agenției. Alege mai jos un portal ca să vezi ce poți face cu el, cum îl activezi și ce e bine de știut.",
 ];
 
