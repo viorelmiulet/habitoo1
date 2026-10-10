@@ -8599,6 +8599,7 @@ export type Database = {
         Returns: number
       }
       email_threads_trash: { Args: { _thread_ids: string[] }; Returns: number }
+      ensure_superadmin_profile: { Args: { _user: string }; Returns: undefined }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
