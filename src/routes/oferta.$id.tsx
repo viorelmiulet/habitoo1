@@ -18,7 +18,7 @@ export const Route = createFileRoute("/oferta/$id")({
   head: ({ loaderData }) => {
     if (!loaderData) {
       return {
-        meta: [{ title: "Ofertă indisponibilă — Habitoo" }, { name: "robots", content: "noindex" }],
+        meta: [{ title: "Ofertă indisponibilă — Habitoo" }, { name: "robots", content: "noindex, nofollow" }],
       };
     }
     const { offer } = loaderData;
@@ -26,7 +26,8 @@ export const Route = createFileRoute("/oferta/$id")({
     const description =
       offer.description?.slice(0, 155) ??
       `${offer.title} în ${offer.city ?? "România"}. Detalii, fotografii și contact prin agenția care administrează oferta.`;
-    return publicHead({ path: `/oferta/${offer.id}`, title, description });
+    // Link privat trimis clienților: nu se indexează (dar rămâne accesibil).
+    return publicHead({ path: `/oferta/${offer.id}`, title, description, noindex: true });
   },
   notFoundComponent: OfferNotFound,
   errorComponent: OfferNotFound,
