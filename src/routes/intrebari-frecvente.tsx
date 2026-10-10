@@ -111,18 +111,20 @@ export const Route = createFileRoute("/intrebari-frecvente")({
       path: "/intrebari-frecvente",
       title: TITLE,
       description: DESCRIPTION,
-      jsonLd: [
-        pageJsonLd({ path: "/intrebari-frecvente", name: "Întrebări frecvente", description: DESCRIPTION }),
-        {
-          "@context": "https://schema.org",
-          "@type": "FAQPage",
-          mainEntity: allFaqs.map((f) => ({
-            "@type": "Question",
-            name: f.q,
-            acceptedAnswer: { "@type": "Answer", text: f.a },
-          })),
-        },
-      ],
+      jsonLd: {
+        "@context": "https://schema.org",
+        "@graph": [
+          pageJsonLd({ path: "/intrebari-frecvente", name: "Întrebări frecvente", description: DESCRIPTION }),
+          {
+            "@type": "FAQPage",
+            mainEntity: allFaqs.map((f) => ({
+              "@type": "Question",
+              name: f.q,
+              acceptedAnswer: { "@type": "Answer", text: f.a },
+            })),
+          },
+        ],
+      },
     }),
   component: FaqPage,
 });
