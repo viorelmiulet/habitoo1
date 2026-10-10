@@ -104,13 +104,6 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
   head: ({ matches }) => ({
     meta: [
       { charSet: "utf-8" },
-      // Doar ruta rădăcină potrivită = URL inexistent (404 global).
-      ...(matches.length === 1
-        ? [
-            { title: "Pagina nu a fost găsită — Habitoo CRM" },
-            { name: "robots", content: "noindex" },
-          ]
-        : []),
       { name: "viewport", content: "width=device-width, initial-scale=1" },
       { name: "author", content: "Habitoo" },
       // Sitewide default — folosit doar de paginile fără titlu propriu.
@@ -127,6 +120,13 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         content:
           "Habitoo CRM organizează proprietățile, clienții, cererile și lead-urile agenției tale, cu matching automat, pipeline vizual, calendar și rapoarte. Creează agenția în câteva minute.",
       },
+      // Doar ruta rădăcină potrivită = URL inexistent (404 global).
+      ...(matches.length === 1
+        ? [
+            { title: "Pagina nu a fost găsită — Habitoo CRM" },
+            { name: "robots", content: "noindex" },
+          ]
+        : []),
     ],
     links: [
       {
