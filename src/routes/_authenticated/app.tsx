@@ -29,6 +29,7 @@ export const Route = createFileRoute("/_authenticated/app")({
 
 function AppLayout() {
   const { data: user, isLoading, isError, refetch } = useCurrentUser();
+  usePresenceHeartbeat(Boolean(user) && !user?.impersonation);
   const { features } = useAiFeatures();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
