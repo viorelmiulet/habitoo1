@@ -145,3 +145,19 @@ export function openWindow(list: string[], id: string): string[] {
 export function messengerVisible(u: { isSuperadmin: boolean; hasOrganization: boolean; impersonating: boolean }) {
   return !u.impersonating && (u.hasOrganization || u.isSuperadmin);
 }
+
+/** Oglinda `chat_is_platform_admin`: superadmin fără profil = activ; profil inactiv explicit = exclus. */
+export function platformAdminEligible(u: { isSuperadmin: boolean; profile: { is_active: boolean | null } | null }) {
+  return u.isSuperadmin && u.profile?.is_active !== false;
+}
+
+/** Oglinda `ensure_superadmin_profile`: profil creat din auth (nume din metadate, altfel email). */
+export function ensureSuperadminProfile(
+  profiles: Map<string, { full_name: string; is_active: boolean | null }>,
+  authUser: { id: string; email: string; fullName?: string | null },
+) {
+  if (!profiles.has(authUser.id)) {
+    profiles.set(authUser.id, { full_name: authUser.fullName?.trim() || authUser.email, is_active: true });
+  }
+  return profiles.get(authUser.id)!;
+}
