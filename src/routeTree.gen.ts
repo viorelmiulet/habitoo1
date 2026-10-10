@@ -91,6 +91,7 @@ import { Route as AuthenticatedSuperadminBlogIndexRouteImport } from './routes/_
 import { Route as AuthenticatedSuperadminUsersIndexRouteImport } from './routes/_authenticated/superadmin.users.index'
 import { Route as AuthenticatedSuperadminUsersIdRouteImport } from './routes/_authenticated/superadmin.users.$id'
 import { Route as ApiPublicBlogMediaSplatRouteImport } from './routes/api/public/blog-media/$'
+import { Route as ApiPublicBlogOgSplatRouteImport } from './routes/api/public/blog-og/$'
 import { Route as ApiPublicCronAccountDeletionRouteImport } from './routes/api/public/cron/account-deletion'
 import { Route as ApiPublicCronChatEmailRouteImport } from './routes/api/public/cron/chat-email'
 import { Route as ApiPublicCronLacheieResendRouteImport } from './routes/api/public/cron/lacheie-resend'
@@ -593,6 +594,11 @@ const ApiPublicBlogMediaSplatRoute = ApiPublicBlogMediaSplatRouteImport.update({
   path: '/api/public/blog-media/$',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicBlogOgSplatRoute = ApiPublicBlogOgSplatRouteImport.update({
+  id: '/api/public/blog-og/$',
+  path: '/api/public/blog-og/$',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicCronAccountDeletionRoute =
   ApiPublicCronAccountDeletionRouteImport.update({
     id: '/api/public/cron/account-deletion',
@@ -976,6 +982,7 @@ export interface FileRoutesByFullPath {
   '/superadmin/agencies/$id': typeof AuthenticatedSuperadminAgenciesIdRoute
   '/superadmin/users/$id': typeof AuthenticatedSuperadminUsersIdRoute
   '/api/public/blog-media/$': typeof ApiPublicBlogMediaSplatRoute
+  '/api/public/blog-og/$': typeof ApiPublicBlogOgSplatRoute
   '/api/public/cron/account-deletion': typeof ApiPublicCronAccountDeletionRoute
   '/api/public/cron/chat-email': typeof ApiPublicCronChatEmailRoute
   '/api/public/cron/lacheie-resend': typeof ApiPublicCronLacheieResendRoute
@@ -1109,6 +1116,7 @@ export interface FileRoutesByTo {
   '/superadmin/agencies/$id': typeof AuthenticatedSuperadminAgenciesIdRoute
   '/superadmin/users/$id': typeof AuthenticatedSuperadminUsersIdRoute
   '/api/public/blog-media/$': typeof ApiPublicBlogMediaSplatRoute
+  '/api/public/blog-og/$': typeof ApiPublicBlogOgSplatRoute
   '/api/public/cron/account-deletion': typeof ApiPublicCronAccountDeletionRoute
   '/api/public/cron/chat-email': typeof ApiPublicCronChatEmailRoute
   '/api/public/cron/lacheie-resend': typeof ApiPublicCronLacheieResendRoute
@@ -1248,6 +1256,7 @@ export interface FileRoutesById {
   '/_authenticated/superadmin/agencies/$id': typeof AuthenticatedSuperadminAgenciesIdRoute
   '/_authenticated/superadmin/users/$id': typeof AuthenticatedSuperadminUsersIdRoute
   '/api/public/blog-media/$': typeof ApiPublicBlogMediaSplatRoute
+  '/api/public/blog-og/$': typeof ApiPublicBlogOgSplatRoute
   '/api/public/cron/account-deletion': typeof ApiPublicCronAccountDeletionRoute
   '/api/public/cron/chat-email': typeof ApiPublicCronChatEmailRoute
   '/api/public/cron/lacheie-resend': typeof ApiPublicCronLacheieResendRoute
@@ -1387,6 +1396,7 @@ export interface FileRouteTypes {
     | '/superadmin/agencies/$id'
     | '/superadmin/users/$id'
     | '/api/public/blog-media/$'
+    | '/api/public/blog-og/$'
     | '/api/public/cron/account-deletion'
     | '/api/public/cron/chat-email'
     | '/api/public/cron/lacheie-resend'
@@ -1520,6 +1530,7 @@ export interface FileRouteTypes {
     | '/superadmin/agencies/$id'
     | '/superadmin/users/$id'
     | '/api/public/blog-media/$'
+    | '/api/public/blog-og/$'
     | '/api/public/cron/account-deletion'
     | '/api/public/cron/chat-email'
     | '/api/public/cron/lacheie-resend'
@@ -1658,6 +1669,7 @@ export interface FileRouteTypes {
     | '/_authenticated/superadmin/agencies/$id'
     | '/_authenticated/superadmin/users/$id'
     | '/api/public/blog-media/$'
+    | '/api/public/blog-og/$'
     | '/api/public/cron/account-deletion'
     | '/api/public/cron/chat-email'
     | '/api/public/cron/lacheie-resend'
@@ -1751,6 +1763,7 @@ export interface RootRouteChildren {
   OfertaIdRoute: typeof OfertaIdRoute
   BlogIndexRoute: typeof BlogIndexRoute
   ApiPublicBlogMediaSplatRoute: typeof ApiPublicBlogMediaSplatRoute
+  ApiPublicBlogOgSplatRoute: typeof ApiPublicBlogOgSplatRoute
   ApiPublicCronAccountDeletionRoute: typeof ApiPublicCronAccountDeletionRoute
   ApiPublicCronChatEmailRoute: typeof ApiPublicCronChatEmailRoute
   ApiPublicCronLacheieResendRoute: typeof ApiPublicCronLacheieResendRoute
@@ -2375,6 +2388,13 @@ declare module '@tanstack/react-router' {
       path: '/api/public/blog-media/$'
       fullPath: '/api/public/blog-media/$'
       preLoaderRoute: typeof ApiPublicBlogMediaSplatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/blog-og/$': {
+      id: '/api/public/blog-og/$'
+      path: '/api/public/blog-og/$'
+      fullPath: '/api/public/blog-og/$'
+      preLoaderRoute: typeof ApiPublicBlogOgSplatRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/cron/account-deletion': {
@@ -3014,6 +3034,7 @@ const rootRouteChildren: RootRouteChildren = {
   OfertaIdRoute: OfertaIdRoute,
   BlogIndexRoute: BlogIndexRoute,
   ApiPublicBlogMediaSplatRoute: ApiPublicBlogMediaSplatRoute,
+  ApiPublicBlogOgSplatRoute: ApiPublicBlogOgSplatRoute,
   ApiPublicCronAccountDeletionRoute: ApiPublicCronAccountDeletionRoute,
   ApiPublicCronChatEmailRoute: ApiPublicCronChatEmailRoute,
   ApiPublicCronLacheieResendRoute: ApiPublicCronLacheieResendRoute,
