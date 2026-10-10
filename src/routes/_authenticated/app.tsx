@@ -18,6 +18,7 @@ import { mustCompleteAgencyData } from "@/lib/agency-public-data";
 import { CompleteUserProfile } from "@/components/app/CompleteUserProfile";
 import { mustCompleteUserProfile } from "@/lib/user-profile";
 import { CompanyAnafSync } from "@/components/app/CompanyAnafSync";
+import { usePresenceHeartbeat } from "@/hooks/use-presence-heartbeat";
 import { Messenger } from "@/components/app/chat/Messenger";
 import { messengerVisible } from "@/lib/chat/chat-rules";
 
@@ -28,6 +29,7 @@ export const Route = createFileRoute("/_authenticated/app")({
 
 function AppLayout() {
   const { data: user, isLoading, isError, refetch } = useCurrentUser();
+  usePresenceHeartbeat(Boolean(user) && !user?.impersonation);
   const { features } = useAiFeatures();
   const queryClient = useQueryClient();
   const navigate = useNavigate();

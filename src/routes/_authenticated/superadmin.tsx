@@ -1,5 +1,6 @@
 import { createFileRoute, Navigate, Outlet } from "@tanstack/react-router";
 import { AppShell } from "@/components/app/AppShell";
+import { usePresenceHeartbeat } from "@/hooks/use-presence-heartbeat";
 import { Messenger } from "@/components/app/chat/Messenger";
 import { messengerVisible } from "@/lib/chat/chat-rules";
 import { superadminNav } from "@/components/app/AppSidebar";
@@ -15,6 +16,7 @@ export const Route = createFileRoute("/_authenticated/superadmin")({
 
 function SuperadminLayout() {
   const { data: user, isLoading } = useCurrentUser();
+  usePresenceHeartbeat(Boolean(user) && !user?.impersonation);
 
   if (isLoading) return <ShellLoading label="Se încarcă panoul platformei…" />;
   if (!user) return <Navigate to="/login" />;
