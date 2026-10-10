@@ -1,3 +1,4 @@
+import { INTEGRATION_PAGES, INTEGRATION_PAGES_LASTMOD } from "@/lib/portals/integration-pages";
 import type { BlogStatus } from "@/lib/blog";
 
 export const BLOG_SITE_URL = "https://www.habitoo.ro";
@@ -47,6 +48,8 @@ export const PAGE_LASTMOD: Record<string, string> = {
 
 const publicPages = ["/", "/functionalitati", "/preturi", "/despre", "/contact", "/integrari", "/blog", "/termeni", "/politica-de-confidentialitate"];
 
+const integrationPaths = INTEGRATION_PAGES.map((p) => `/integrari/${p.slug}`);
+
 function urlXml(path: string, lastmod: string | null) {
   return `  <url>\n    <loc>${escapeXml(`${BLOG_SITE_URL}${path}`)}</loc>${lastmod ? `\n    <lastmod>${escapeXml(lastmod)}</lastmod>` : ""}\n  </url>`;
 }
@@ -57,9 +60,9 @@ function latestPostDate(posts: DiscoverableBlogPost[], now: Date) {
 }
 
 export function buildStaticSitemapXml(hasPartners = false, posts: DiscoverableBlogPost[] = [], now = new Date()) {
-  const pages = hasPartners ? [...publicPages, "/agentii"] : publicPages;
+  const pages = [...publicPages, ...(hasPartners ? ["/agentii"] : []), ...integrationPaths];
   const urls = pages.map((path) =>
-    urlXml(path, path === "/blog" ? latestPostDate(posts, now) : (PAGE_LASTMOD[path] ?? null)),
+    urlXml(path, path === "/blog" ? latestPostDate(posts, now) : (PAGE_LASTMOD[path] ?? (path.startsWith("/integrari/") ? INTEGRATION_PAGES_LASTMOD : null))),
   );
   return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls.join("\n")}\n</urlset>\n`;
 }
