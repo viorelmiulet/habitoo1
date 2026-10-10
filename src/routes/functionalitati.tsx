@@ -48,7 +48,7 @@ import { cn } from "@/lib/utils";
 
 const TITLE = "Funcționalități — Habitoo CRM imobiliar";
 const DESCRIPTION =
-  "Toate modulele Habitoo CRM: proprietăți cu media manager, contacte 360°, cereri, pipeline de lead-uri, matching automat, activități, calendar, obiective, dashboard și rapoarte.";
+  "Modulele Habitoo, CRM imobiliar complet: proprietăți cu media manager, contacte 360°, cereri, pipeline de lead-uri, matching automat, calendar și rapoarte.";
 
 export const Route = createFileRoute("/functionalitati")({
   head: () =>

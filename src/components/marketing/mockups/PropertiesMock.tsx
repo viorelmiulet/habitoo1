@@ -28,7 +28,7 @@ export function PropertiesMock({ className }: { className?: string }) {
             />
             <img
               src={p.photos[1]}
-              alt="Bucătărie"
+              alt="Bucătăria apartamentului demonstrativ"
               width={768}
               height={512}
               loading="lazy"
@@ -37,7 +37,7 @@ export function PropertiesMock({ className }: { className?: string }) {
             <div className="relative">
               <img
                 src={p.photos[2]}
-                alt="Dormitor"
+                alt="Dormitorul apartamentului demonstrativ"
                 width={768}
                 height={512}
                 loading="lazy"
@@ -95,6 +95,7 @@ export function PropertiesMock({ className }: { className?: string }) {
                 <img
                   src={item.photo}
                   alt=""
+                  aria-hidden="true"
                   width={768}
                   height={512}
                   loading="lazy"

@@ -32,7 +32,7 @@ import { isCrmHostname } from "@/lib/host";
 
 const TITLE = "Habitoo CRM — CRM imobiliar pentru agenții din România";
 const DESCRIPTION =
-  "Habitoo CRM organizează proprietățile, clienții, cererile și lead-urile agenției tale, cu matching automat, pipeline vizual, calendar și rapoarte. Creează agenția în câteva minute.";
+  "Habitoo este CRM imobiliar pentru agențiile din România: proprietăți, clienți, cereri și lead-uri, cu matching automat, publicare pe portaluri și rapoarte.";
 
 const faq: FaqItem[] = [
   {
@@ -199,7 +199,8 @@ function HomePage() {
                 CRM imobiliar pentru agenții din România
               </Eyebrow>
               <h1 className="mt-6 text-[2.6rem] leading-[1.05] font-semibold text-balance text-surface sm:text-6xl lg:text-[4.4rem]">
-                Transformă cererile și proprietățile în <span className="text-gold">tranzacții închise.</span>
+                CRM imobiliar care transformă cererile și proprietățile în{" "}
+                <span className="text-gold">tranzacții închise.</span>
               </h1>
               <p className="mt-6 max-w-xl text-base leading-relaxed text-navy-foreground sm:text-lg">
                 Anunțuri, clienți și lead-uri într-un singur loc, simplu de folosit de prima zi.

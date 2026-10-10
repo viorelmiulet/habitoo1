@@ -43,7 +43,7 @@ export function IntegratedPortalsSection() {
                         name={portal.display_name}
                         fallback={portal.logo}
                         size={40}
-                        alt={portal.display_name}
+                        alt={`Logo ${portal.display_name}`}
                         className="shrink-0"
                       />
                       <span className="truncate text-sm font-semibold text-navy">

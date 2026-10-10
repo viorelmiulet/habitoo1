@@ -26,6 +26,7 @@ export function RequestMatchesMock({ className }: { className?: string }) {
             <img
               src={m.photo}
               alt=""
+              aria-hidden="true"
               width={768}
               height={512}
               loading="lazy"

@@ -12,3 +12,8 @@ export const fetchAgencyProfile = createServerFn({ method: "GET" })
     const { loadAgencyProfile } = await import("@/lib/public-partners.server");
     return loadAgencyProfile(data.slug);
   });
+
+export const getHasPublicPartners = createServerFn({ method: "GET" }).handler(async () => {
+  const { hasPublicPartners } = await import("@/lib/public-partners.server");
+  return hasPublicPartners();
+});

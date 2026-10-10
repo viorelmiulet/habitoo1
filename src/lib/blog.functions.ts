@@ -81,6 +81,14 @@ export const deleteBlogPost = createServerFn({ method: "POST" }).middleware([req
   return { ok: true as const };
 });
 
+export const uploadBlogShareImage = createServerFn({ method: "POST" }).middleware([requireSupabaseAuth]).inputValidator((data) => z.object({ id: z.string().uuid(), base64: z.string().max(4_000_000) }).parse(data)).handler(async ({ data, context }) => {
+  await assertSuperadmin(context as AuthContext);
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { error } = await supabaseAdmin.storage.from("blog-media").upload(`og/${data.id}.png`, Buffer.from(data.base64, "base64"), { contentType: "image/png", upsert: true });
+  if (error) throw new Error(error.message);
+  return { ok: true as const };
+});
+
 export const uploadBlogImage = createServerFn({ method: "POST" }).middleware([requireSupabaseAuth]).inputValidator((data) => z.object({ name: z.string().max(180), contentType: z.enum(["image/jpeg", "image/png", "image/webp", "image/svg+xml"]), base64: z.string().max(11_000_000) }).parse(data)).handler(async ({ data, context }) => {
   await assertSuperadmin(context as AuthContext);
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");

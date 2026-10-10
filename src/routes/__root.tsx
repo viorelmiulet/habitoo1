@@ -18,22 +18,31 @@ import { getCurrentHostname } from "@/lib/current-host";
 import { getCrmUrl, isCrmPath, isPublicHostname } from "@/lib/host";
 
 function NotFoundComponent() {
+  const links = [
+    { to: "/", label: "Pagina principală" },
+    { to: "/functionalitati", label: "Funcționalități" },
+    { to: "/preturi", label: "Prețuri" },
+    { to: "/blog", label: "Blog" },
+  ] as const;
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="max-w-md text-center">
-        <h1 className="text-7xl font-bold text-foreground">404</h1>
-        <h2 className="mt-4 text-xl font-semibold text-foreground">Page not found</h2>
+        <p className="text-7xl font-bold text-foreground">404</p>
+        <h1 className="mt-4 text-xl font-semibold text-foreground">Pagina nu a fost găsită</h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          The page you're looking for doesn't exist or has been moved.
+          Pagina căutată nu există sau a fost mutată.
         </p>
-        <div className="mt-6">
-          <Link
-            to="/"
-            className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
-          >
-            Go home
-          </Link>
-        </div>
+        <nav aria-label="Linkuri utile" className="mt-6 flex flex-wrap justify-center gap-2">
+          {links.map((l) => (
+            <Link
+              key={l.to}
+              to={l.to}
+              className="inline-flex min-h-11 items-center justify-center rounded-md border border-input bg-background px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-accent"
+            >
+              {l.label}
+            </Link>
+          ))}
+        </nav>
       </div>
     </div>
   );
@@ -92,7 +101,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       });
     }
   },
-  head: () => ({
+  head: ({ matches }) => ({
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
@@ -111,6 +120,13 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         content:
           "Habitoo CRM organizează proprietățile, clienții, cererile și lead-urile agenției tale, cu matching automat, pipeline vizual, calendar și rapoarte. Creează agenția în câteva minute.",
       },
+      // Doar ruta rădăcină potrivită = URL inexistent (404 global).
+      ...(matches.length === 1
+        ? [
+            { title: "Pagina nu a fost găsită — Habitoo CRM" },
+            { name: "robots", content: "noindex" },
+          ]
+        : []),
     ],
     links: [
       {

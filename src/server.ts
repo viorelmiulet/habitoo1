@@ -3,7 +3,7 @@ import { runWithRequestContext } from "./lib/after-response";
 
 import { consumeLastCapturedError } from "./lib/error-capture";
 import { renderErrorPage } from "./lib/error-page";
-import { decideEdge, shouldTagNoindex } from "./lib/host-policy";
+import { decideEdge, publicCacheControl, shouldTagNoindex } from "./lib/host-policy";
 
 type ServerEntry = {
   fetch: (request: Request, env: unknown, ctx: unknown) => Promise<Response> | Response;
@@ -59,6 +59,14 @@ function withPrivateDocumentCache(response: Response, request: Request): Respons
   return new Response(response.body, { status: response.status, statusText: response.statusText, headers });
 }
 
+function withPublicCache(response: Response, request: Request): Response {
+  const value = publicCacheControl(request, response);
+  if (!value) return response;
+  const headers = new Headers(response.headers);
+  headers.set("cache-control", value);
+  return new Response(response.body, { status: response.status, statusText: response.statusText, headers });
+}
+
 function isH3SwallowedErrorBody(body: string): boolean {
   try {
     const payload = JSON.parse(body) as { unhandled?: unknown; message?: unknown };
@@ -91,7 +99,7 @@ export default {
       const handler = await getServerEntry();
       const response = await runWithRequestContext(ctx, () => handler.fetch(request, env, ctx));
       return withNoindexHeader(
-        withPrivateDocumentCache(await normalizeCatastrophicSsrResponse(response), request),
+        withPublicCache(withPrivateDocumentCache(await normalizeCatastrophicSsrResponse(response), request), request),
         request,
       );
     } catch (error) {
