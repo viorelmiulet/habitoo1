@@ -101,10 +101,10 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       });
     }
   },
-  head: ({ match }) => ({
+  head: ({ matches }) => ({
     meta: [
       { charSet: "utf-8" },
-      ...(match.globalNotFound
+      ...(matches.some((m) => (m as { globalNotFound?: boolean }).globalNotFound || m.status === "notFound")
         ? [
             { title: "Pagina nu a fost găsită — Habitoo CRM" },
             { name: "robots", content: "noindex" },
