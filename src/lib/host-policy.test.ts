@@ -77,3 +77,12 @@ describe("cache public pentru marketing", () => {
     expect(publicCacheControl(req("/nu-exista"), new Response("", { status: 404, headers: { "content-type": "text/html" } }))).toBeNull();
   });
 });
+
+describe("oferte private", () => {
+  it("X-Robots-Tag noindex pe /oferta/* pe www, fără blocare în robots.txt", () => {
+    const h = () => new Response("x", { headers: { "content-type": "text/html" } });
+    expect(shouldTagNoindex(new Request("https://www.habitoo.ro/oferta/abc"), h())).toBe(true);
+    expect(shouldTagNoindex(new Request("https://www.habitoo.ro/preturi"), h())).toBe(false);
+    expect(PUBLIC_ROBOTS_TXT).not.toContain("/oferta");
+  });
+});
