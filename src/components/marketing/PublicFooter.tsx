@@ -3,14 +3,17 @@ import { Facebook } from "lucide-react";
 import { BrandLogo } from "@/components/brand/BrandLogo";
 import { openCookiePreferences } from "@/lib/cookie-consent";
 import { FACEBOOK_URL } from "./structured-data";
-import { useQuery } from "@tanstack/react-query";
+import { useEffect, useState } from "react";
 import { footerColumns } from "./public-nav";
 import { getHasPublicPartners } from "@/lib/public-partners.functions";
 
 export function PublicFooter({ description = "CRM imobiliar pentru agențiile din România: proprietăți, clienți, cereri, lead-uri, matching automat, activități și rapoarte, într-o singură platformă." }: { description?: string }) {
   const year = new Date().getFullYear();
   // „Agenții partenere” apare doar când pagina e indexabilă (are cel puțin o agenție).
-  const partners = useQuery({ queryKey: ["has-public-partners"], queryFn: () => getHasPublicPartners(), staleTime: 10 * 60_000 });
+  const [hasPartners, setHasPartners] = useState(false);
+  useEffect(() => {
+    getHasPublicPartners().then(setHasPartners, () => setHasPartners(false));
+  }, []);
   return (
     <footer className="border-t border-border bg-card">
       <div className="mx-auto w-full max-w-7xl px-4 py-14 sm:px-6 lg:px-8">
@@ -30,7 +33,7 @@ export function PublicFooter({ description = "CRM imobiliar pentru agențiile di
                   {col.title}
                 </h3>
                 <ul className="mt-4 space-y-2.5">
-                  {col.links.filter((l) => l.to !== "/agentii" || partners.data === true).map((l) => (
+                  {col.links.filter((l) => l.to !== "/agentii" || hasPartners).map((l) => (
                     <li key={l.to}>
                       <Link
                         to={l.to}
