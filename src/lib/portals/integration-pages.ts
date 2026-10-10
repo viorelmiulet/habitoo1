@@ -189,7 +189,7 @@ const CONTENT: Record<string, Content> = {
   primulanunt: {
     slug: "primulanunt",
     name: "PrimulAnunț.ro",
-    description: "Publici anunțurile pe PrimulAnunț.ro direct din Habitoo CRM: pozele se încarcă automat, actualizezi anunțul și îl retragi dintr-un click.",
+    description: "Publici anunțurile pe PrimulAnunț.ro direct din Habitoo CRM: pozele se încarcă automat, actualizezi anunțul și îl retragi dintr-un click, fără dubluri.",
     intro: [
       "PrimulAnunț.ro este un portal imobiliar cu care Habitoo lucrează direct. Anunțul pe care îl ai în CRM ajunge pe portal când apeși Publică, împreună cu pozele, încărcate automat.",
       "Prima poză devine coperta anunțului. Modificările le trimiți tot cu Publică și se actualizează același anunț, fără dubluri. Retragerea îl arhivează pe portal, nu îl șterge definitiv.",
