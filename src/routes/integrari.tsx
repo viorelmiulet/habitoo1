@@ -47,7 +47,7 @@ function IntegrationsPage() {
           <h2 className="text-2xl font-semibold tracking-tight text-navy">Publici pe mai multe portaluri dintr-un singur loc</h2>
           {MULTI_PORTAL_INTRO.map((p) => <p key={p}>{p}</p>)}
         </Container>
-        <Container><PortalGrid /></Container>
+        <Container><PortalGrid linkToPages /></Container>
       </Section>
       <Section tone="muted">
         <Container>

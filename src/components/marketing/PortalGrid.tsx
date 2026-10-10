@@ -9,7 +9,8 @@ const displayedPortals = [
   ...PROMOTION_CATALOGS.filter((catalog) => !PORTALS.some((portal) => portal.id === catalog.id)),
 ];
 
-export function PortalGrid() {
+/** `linkToPages`: fiecare card duce la pagina integrării (/integrari/<slug>). */
+export function PortalGrid({ linkToPages = false }: { linkToPages?: boolean } = {}) {
   return (
     <>
       <ul className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -25,7 +26,7 @@ export function PortalGrid() {
                     </div>
                   </>
                 );
-                const slug = integrationSlugFor(portal.id);
+                const slug = linkToPages ? integrationSlugFor(portal.id) : null;
                 return slug ? (
                   <Link to="/integrari/$slug" params={{ slug }} className="panel flex h-full items-center gap-3 p-4 transition-shadow hover:shadow-float">
                     {inner}
