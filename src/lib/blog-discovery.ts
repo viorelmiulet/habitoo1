@@ -29,29 +29,44 @@ export function escapeXml(value: string) {
     .replace(/'/g, "&apos;");
 }
 
-const publicPages = [
-  { path: "/", changefreq: "weekly", priority: "1.0" },
-  { path: "/functionalitati", changefreq: "monthly", priority: "0.8" },
-  { path: "/preturi", changefreq: "monthly", priority: "0.8" },
-  { path: "/despre", changefreq: "monthly", priority: "0.6" },
-  { path: "/contact", changefreq: "monthly", priority: "0.6" },
-  { path: "/integrari", changefreq: "monthly", priority: "0.7" },
-  { path: "/blog", changefreq: "weekly", priority: "0.9" },
-  { path: "/termeni", changefreq: "yearly", priority: "0.3" },
-  { path: "/politica-de-confidentialitate", changefreq: "yearly", priority: "0.3" },
-] as const;
+/**
+ * Data ultimei modificări reale a fiecărei pagini (conținutul paginii, nu build-ul).
+ * Actualizează valoarea când schimbi conținutul paginii respective.
+ * `/blog` folosește data celui mai recent articol modificat.
+ */
+export const PAGE_LASTMOD: Record<string, string> = {
+  "/": "2026-10-10",
+  "/functionalitati": "2026-10-10",
+  "/preturi": "2026-10-04",
+  "/despre": "2026-09-27",
+  "/contact": "2026-09-27",
+  "/integrari": "2026-10-10",
+  "/termeni": "2026-10-05",
+  "/politica-de-confidentialitate": "2026-09-27",
+};
 
-export function buildStaticSitemapXml(hasPartners = false) {
-  const pages = hasPartners ? [...publicPages, { path: "/agentii", changefreq: "weekly", priority: "0.6" }] : publicPages;
-  const urls = pages.map(({ path, changefreq, priority }) =>
-    `  <url>\n    <loc>${escapeXml(`${BLOG_SITE_URL}${path}`)}</loc>\n    <changefreq>${changefreq}</changefreq>\n    <priority>${priority}</priority>\n  </url>`,
+const publicPages = ["/", "/functionalitati", "/preturi", "/despre", "/contact", "/integrari", "/blog", "/termeni", "/politica-de-confidentialitate"];
+
+function urlXml(path: string, lastmod: string | null) {
+  return `  <url>\n    <loc>${escapeXml(`${BLOG_SITE_URL}${path}`)}</loc>${lastmod ? `\n    <lastmod>${escapeXml(lastmod)}</lastmod>` : ""}\n  </url>`;
+}
+
+function latestPostDate(posts: DiscoverableBlogPost[], now: Date) {
+  const times = selectDiscoverablePosts(posts, now).map((p) => new Date(p.updated_at).getTime());
+  return times.length ? new Date(Math.max(...times)).toISOString() : null;
+}
+
+export function buildStaticSitemapXml(hasPartners = false, posts: DiscoverableBlogPost[] = [], now = new Date()) {
+  const pages = hasPartners ? [...publicPages, "/agentii"] : publicPages;
+  const urls = pages.map((path) =>
+    urlXml(path, path === "/blog" ? latestPostDate(posts, now) : (PAGE_LASTMOD[path] ?? null)),
   );
   return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls.join("\n")}\n</urlset>\n`;
 }
 
 export function buildBlogSitemapXml(posts: DiscoverableBlogPost[], now = new Date()) {
   const urls = selectDiscoverablePosts(posts, now).map((post) =>
-    `  <url>\n    <loc>${escapeXml(`${BLOG_SITE_URL}/blog/${post.slug}`)}</loc>\n    <lastmod>${escapeXml(new Date(post.updated_at).toISOString())}</lastmod>\n    <changefreq>monthly</changefreq>\n    <priority>0.7</priority>\n  </url>`,
+    urlXml(`/blog/${post.slug}`, new Date(post.updated_at).toISOString()),
   );
   return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls.join("\n")}\n</urlset>\n`;
 }
@@ -63,7 +78,7 @@ export function buildSitemapIndexXml() {
 export function buildSitemapXml(posts: DiscoverableBlogPost[], now = new Date(), hasPartners = false) {
   const articles = selectDiscoverablePosts(posts, now);
   if (articles.length > 500) return buildSitemapIndexXml();
-  const staticXml = buildStaticSitemapXml(hasPartners).replace(/^<\?xml[^>]+>\n|<urlset[^>]+>\n|\n<\/urlset>\n$/g, "");
+  const staticXml = buildStaticSitemapXml(hasPartners, posts, now).replace(/^<\?xml[^>]+>\n|<urlset[^>]+>\n|\n<\/urlset>\n$/g, "");
   const blogXml = buildBlogSitemapXml(articles, now).replace(/^<\?xml[^>]+>\n|<urlset[^>]+>\n|\n<\/urlset>\n$/g, "");
   return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${staticXml}${blogXml ? `\n${blogXml}` : ""}\n</urlset>\n`;
 }
