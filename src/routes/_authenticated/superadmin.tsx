@@ -1,5 +1,6 @@
 import { createFileRoute, Navigate, Outlet } from "@tanstack/react-router";
 import { AppShell } from "@/components/app/AppShell";
+import { usePresenceHeartbeat } from "@/hooks/use-presence-heartbeat";
 import { Messenger } from "@/components/app/chat/Messenger";
 import { messengerVisible } from "@/lib/chat/chat-rules";
 import { superadminNav } from "@/components/app/AppSidebar";

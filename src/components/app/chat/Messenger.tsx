@@ -1,4 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { activityLabel, isOnline } from "@/lib/chat/presence";
+import { useMinuteClock } from "@/hooks/use-presence-heartbeat";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { ArrowLeft, ChevronDown, ChevronRight, Minus, MessageCircle, MoreVertical, Search, Send, X } from "lucide-react";
@@ -11,7 +13,6 @@ import {
   PLATFORM_LABEL,
   PLATFORM_ORG_ID,
   groupContacts,
-  lastSeenLabel,
   normalizeChatBody,
   openWindow,
   type ChatContact,
@@ -87,6 +88,17 @@ function useUiState() {
   return [state, update] as const;
 }
 
+function ActivityText({ online, lastSeenAt, now }: { online: boolean; lastSeenAt: string | null; now: number }) {
+  const label = activityLabel(online, lastSeenAt, now);
+  if (!label) return null;
+  return (
+    <span className="flex items-center gap-1 truncate text-[11px] text-muted-foreground">
+      {online ? <span aria-hidden className="size-1.5 shrink-0 rounded-full bg-success" /> : null}
+      {label}
+    </span>
+  );
+}
+
 function Avatar({ name, url, online, size = "size-8" }: { name: string; url: string | null; online?: boolean; size?: string }) {
   return (
     <span className={cn("relative shrink-0", size)}>
@@ -152,14 +164,7 @@ export function Messenger({ user }: { user: CurrentUser }) {
       .subscribe((status) => {
         if (status === "SUBSCRIBED") void channel.track({ at: Date.now() });
       });
-    const touch = () => void supabase.rpc("chat_touch_presence");
-    touch();
-    const t = window.setInterval(touch, 60_000);
-    window.addEventListener("beforeunload", touch);
     return () => {
-      touch();
-      window.clearInterval(t);
-      window.removeEventListener("beforeunload", touch);
       void supabase.removeChannel(channel);
     };
   }, [me]);
@@ -188,6 +193,7 @@ export function Messenger({ user }: { user: CurrentUser }) {
     return () => void supabase.removeChannel(channel);
   }, [me, qc]);
 
+  const now = useMinuteClock();
   const contacts: ChatContact[] = useMemo(
     () =>
       (directory.data ?? [])
@@ -196,12 +202,12 @@ export function Messenger({ user }: { user: CurrentUser }) {
           const c = convByUser.get(d.userId);
           return {
             ...d,
-            online: online.has(d.userId),
+            online: isOnline(online.has(d.userId), d.lastSeenAt, now),
             unread: c?.unread ?? 0,
             lastMessageAt: c?.last_message_at ?? null,
           };
         }),
-    [directory.data, convByUser, online, me],
+    [directory.data, convByUser, online, me, now],
   );
   const contactById = useMemo(() => new Map(contacts.map((c) => [c.userId, c])), [contacts]);
   const groups = useMemo(
@@ -334,6 +340,7 @@ export function Messenger({ user }: { user: CurrentUser }) {
                             <span className="min-w-0 flex-1">
                               <span className={cn("block truncate text-sm", c.unread && "font-semibold")}>{c.fullName}</span>
                               <span className="block truncate text-xs text-muted-foreground">{contactAgencyLabel(c)}</span>
+                              <ActivityText online={c.online} lastSeenAt={c.lastSeenAt} now={now} />
                             </span>
                             {c.unread ? (
                               <span className="rounded-full bg-primary px-1.5 text-[11px] leading-5 text-primary-foreground">
@@ -523,7 +530,8 @@ function ChatWindow({
           <span className="min-w-0">
             <span className="block truncate text-sm font-semibold">{contact.fullName}</span>
             <span className="block truncate text-[11px] text-muted-foreground">
-              {contactAgencyLabel(contact)} · {contact.online ? "Online" : lastSeenLabel(contact.lastSeenAt)}
+              {contactAgencyLabel(contact)}
+              {activityLabel(contact.online, contact.lastSeenAt, Date.now()) ? ` · ${activityLabel(contact.online, contact.lastSeenAt, Date.now())}` : ""}
             </span>
           </span>
         </button>
