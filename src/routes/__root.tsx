@@ -26,9 +26,6 @@ function NotFoundComponent() {
   ] as const;
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
-      {/* React 19 mută title/meta în <head>. */}
-      <title>Pagina nu a fost găsită — Habitoo CRM</title>
-      <meta name="robots" content="noindex" />
       <div className="max-w-md text-center">
         <p className="text-7xl font-bold text-foreground">404</p>
         <h1 className="mt-4 text-xl font-semibold text-foreground">Pagina nu a fost găsită</h1>
@@ -104,9 +101,15 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       });
     }
   },
-  head: () => ({
+  head: ({ match }) => ({
     meta: [
       { charSet: "utf-8" },
+      ...(match.globalNotFound
+        ? [
+            { title: "Pagina nu a fost găsită — Habitoo CRM" },
+            { name: "robots", content: "noindex" },
+          ]
+        : []),
       { name: "viewport", content: "width=device-width, initial-scale=1" },
       { name: "author", content: "Habitoo" },
       // Sitewide default — folosit doar de paginile fără titlu propriu.
