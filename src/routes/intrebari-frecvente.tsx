@@ -10,7 +10,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 
 const TITLE = "Întrebări frecvente — Habitoo CRM imobiliar";
 const DESCRIPTION =
-  "Răspunsuri despre Habitoo CRM: publicarea anunțurilor pe portaluri, chatul dintre agenți și activarea contului de agenție, pas cu pas.";
+  "Răspunsuri despre Habitoo CRM: publicarea anunțurilor pe portaluri, chatul dintre agenți și activarea contului de agenție, explicate pe scurt, pas cu pas.";
 
 type Faq = { q: string; a: string };
 type FaqGroup = { id: string; icon: typeof Rocket; title: string; faqs: Faq[] };
