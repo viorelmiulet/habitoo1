@@ -3,7 +3,7 @@
  * Textele sunt scrise pentru agenți, fără termeni tehnici, și descriu doar ce face codul.
  */
 import { PORTALS, PROMOTION_CATALOGS, portalIntegrationOwner, type PortalDefinition } from "./registry";
-import { KEY_REQUEST_PORTALS } from "./imospot-key-request";
+import { isKeyRequestPortal } from "./imospot-key-request";
 
 export const INTEGRATION_PAGES_LASTMOD = "2026-10-10";
 
@@ -344,7 +344,7 @@ function canDo(def: PortalDefinition, name: string): string[] {
 
 function activationText(def: PortalDefinition, custom?: string): string {
   if (custom) return custom;
-  if (KEY_REQUEST_PORTALS.some((p) => p === def.id)) {
+  if (isKeyRequestPortal(def.id)) {
     return `Administratorul agenției solicită activarea din Setări → Portaluri. Habitoo trimite cererea, iar cheia o emite ${def.display_name} și ajunge pe emailul administratorului; echipa Habitoo finalizează apoi conexiunea.`;
   }
   if (def.activation === "self_service") return "Administratorul agenției activează portalul singur, dintr-un click, din Setări → Portaluri. Nu trebuie să aștepți aprobare.";
