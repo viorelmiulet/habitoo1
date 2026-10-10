@@ -314,6 +314,7 @@ export type IntegrationPage = Content & {
   portalId: string;
   definition: PortalDefinition;
   canDo: string[];
+  dailyWork: string[];
   activationText: string;
   related: { slug: string; name: string }[];
   title: string;
@@ -342,6 +343,30 @@ function canDo(def: PortalDefinition, name: string): string[] {
   return out;
 }
 
+function dailyWork(def: PortalDefinition, name: string): string[] {
+  const c = new Set(def.capabilities);
+  const start = "Introduci proprietatea o singură dată în Habitoo: datele, pozele, descrierea și agentul responsabil.";
+  if (def.id === "facebook_catalog") {
+    return [start, "Alegi apoi anunțurile care intră în catalog. Meta citește lista la intervalele stabilite în Commerce Manager și preia singură anunțurile noi, modificările și pe cele scoase. Tu te ocupi doar de reclame, în contul tău Meta, unde poți folosi anunțurile din catalog ca să ajungi la oameni care caută o locuință."];
+  }
+  if (c.has("publish_listing") && !c.has("feed_pull")) {
+    return [
+      start,
+      `În fila Publicare a proprietății bifezi ${name}, alături de celelalte portaluri pe care vrei să apară anunțul, și apeși Publică. Trimiterea continuă și dacă închizi pagina. Rezultatul îl vezi pe cardul portalului, iar dacă ceva nu merge primești o notificare cu motivul exact. Când schimbi prețul sau pozele, apeși din nou Publică.`,
+      ...(c.has("withdraw_listing") ? ["Când proprietatea se vinde sau se închiriază, schimbi doar statusul în Habitoo, iar anunțul se retrage singur."] : []),
+    ];
+  }
+  return [
+    start,
+    `În fila Publicare a proprietății bifezi ${name}. Portalul citește periodic lista ofertelor alese de tine în Habitoo și preia singur ofertele noi, modificările și pe cele scoase. După o modificare nu trebuie să apeși nimic în plus: varianta nouă apare la următoarea preluare. Pe cardul portalului vezi dacă oferta este inclusă.`,
+  ];
+}
+
+const SHARED_FAQ = [
+  { q: "Pot publica același anunț pe mai multe portaluri?", a: "Da. În fila Publicare bifezi toate portalurile active ale agenției și le trimiți deodată, din același loc." },
+  { q: "Cine poate activa integrarea?", a: "Doar administratorul agenției, din Setări → Portaluri. Agenții folosesc apoi portalurile active pentru anunțurile lor." },
+];
+
 function activationText(def: PortalDefinition, custom?: string): string {
   if (custom) return custom;
   if (isKeyRequestPortal(def.id)) {
@@ -360,7 +385,9 @@ export const INTEGRATION_PAGES: IntegrationPage[] = BASE.map(({ d, c }, i) => ({
   ...c,
   portalId: d.id,
   definition: d,
+  faq: [...c.faq, ...SHARED_FAQ].slice(0, 5),
   canDo: canDo(d, c.name),
+  dailyWork: dailyWork(d, c.name),
   activationText: activationText(d, c.activation),
   related: [1, 2, 3].map((k) => BASE[(i + k) % BASE.length].c).map((r) => ({ slug: r.slug, name: r.name })),
   title: `Integrare ${c.name} cu CRM imobiliar | Habitoo`,
@@ -384,6 +411,8 @@ export function integrationPageText(p: IntegrationPage): string {
     ...p.intro,
     "Ce poți face",
     ...p.canDo,
+    "Cum lucrezi în fiecare zi",
+    ...p.dailyWork,
     "Cum activezi",
     p.activationText,
     "Bine de știut",
