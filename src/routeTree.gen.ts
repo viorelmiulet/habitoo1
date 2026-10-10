@@ -41,6 +41,7 @@ import { Route as AuthCallbackRouteImport } from './routes/auth.callback'
 import { Route as BlogIndexRouteImport } from './routes/blog.index'
 import { Route as BlogSlugRouteImport } from './routes/blog.$slug'
 import { Route as BlogRssDotxmlRouteImport } from './routes/blog/rss[.]xml'
+import { Route as IntegrariSlugRouteImport } from './routes/integrari_.$slug'
 import { Route as OfertaIdRouteImport } from './routes/oferta.$id'
 import { Route as AuthenticatedAppIndexRouteImport } from './routes/_authenticated/app.index'
 import { Route as AuthenticatedAppActivitiesRouteImport } from './routes/_authenticated/app.activities'
@@ -306,6 +307,11 @@ const BlogSlugRoute = BlogSlugRouteImport.update({
 const BlogRssDotxmlRoute = BlogRssDotxmlRouteImport.update({
   id: '/blog/rss.xml',
   path: '/blog/rss.xml',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const IntegrariSlugRoute = IntegrariSlugRouteImport.update({
+  id: '/integrari_/$slug',
+  path: '/integrari/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
 const OfertaIdRoute = OfertaIdRouteImport.update({
@@ -938,6 +944,7 @@ export interface FileRoutesByFullPath {
   '/auth/callback': typeof AuthCallbackRoute
   '/blog/$slug': typeof BlogSlugRoute
   '/blog/rss.xml': typeof BlogRssDotxmlRoute
+  '/integrari/$slug': typeof IntegrariSlugRoute
   '/oferta/$id': typeof OfertaIdRoute
   '/agentii/': typeof AgentiiIndexRoute
   '/blog/': typeof BlogIndexRoute
@@ -1073,6 +1080,7 @@ export interface FileRoutesByTo {
   '/auth/callback': typeof AuthCallbackRoute
   '/blog/$slug': typeof BlogSlugRoute
   '/blog/rss.xml': typeof BlogRssDotxmlRoute
+  '/integrari/$slug': typeof IntegrariSlugRoute
   '/oferta/$id': typeof OfertaIdRoute
   '/agentii': typeof AgentiiIndexRoute
   '/blog': typeof BlogIndexRoute
@@ -1212,6 +1220,7 @@ export interface FileRoutesById {
   '/auth/callback': typeof AuthCallbackRoute
   '/blog/$slug': typeof BlogSlugRoute
   '/blog/rss.xml': typeof BlogRssDotxmlRoute
+  '/integrari_/$slug': typeof IntegrariSlugRoute
   '/oferta/$id': typeof OfertaIdRoute
   '/agentii/': typeof AgentiiIndexRoute
   '/blog/': typeof BlogIndexRoute
@@ -1352,6 +1361,7 @@ export interface FileRouteTypes {
     | '/auth/callback'
     | '/blog/$slug'
     | '/blog/rss.xml'
+    | '/integrari/$slug'
     | '/oferta/$id'
     | '/agentii/'
     | '/blog/'
@@ -1487,6 +1497,7 @@ export interface FileRouteTypes {
     | '/auth/callback'
     | '/blog/$slug'
     | '/blog/rss.xml'
+    | '/integrari/$slug'
     | '/oferta/$id'
     | '/agentii'
     | '/blog'
@@ -1625,6 +1636,7 @@ export interface FileRouteTypes {
     | '/auth/callback'
     | '/blog/$slug'
     | '/blog/rss.xml'
+    | '/integrari_/$slug'
     | '/oferta/$id'
     | '/agentii/'
     | '/blog/'
@@ -1760,6 +1772,7 @@ export interface RootRouteChildren {
   AuthCallbackRoute: typeof AuthCallbackRoute
   BlogSlugRoute: typeof BlogSlugRoute
   BlogRssDotxmlRoute: typeof BlogRssDotxmlRoute
+  IntegrariSlugRoute: typeof IntegrariSlugRoute
   OfertaIdRoute: typeof OfertaIdRoute
   BlogIndexRoute: typeof BlogIndexRoute
   ApiPublicBlogMediaSplatRoute: typeof ApiPublicBlogMediaSplatRoute
@@ -2038,6 +2051,13 @@ declare module '@tanstack/react-router' {
       path: '/blog/rss.xml'
       fullPath: '/blog/rss.xml'
       preLoaderRoute: typeof BlogRssDotxmlRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/integrari_/$slug': {
+      id: '/integrari_/$slug'
+      path: '/integrari/$slug'
+      fullPath: '/integrari/$slug'
+      preLoaderRoute: typeof IntegrariSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/oferta/$id': {
@@ -3031,6 +3051,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthCallbackRoute: AuthCallbackRoute,
   BlogSlugRoute: BlogSlugRoute,
   BlogRssDotxmlRoute: BlogRssDotxmlRoute,
+  IntegrariSlugRoute: IntegrariSlugRoute,
   OfertaIdRoute: OfertaIdRoute,
   BlogIndexRoute: BlogIndexRoute,
   ApiPublicBlogMediaSplatRoute: ApiPublicBlogMediaSplatRoute,

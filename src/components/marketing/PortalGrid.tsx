@@ -1,3 +1,5 @@
+import { Link } from "@tanstack/react-router";
+import { integrationSlugFor } from "@/lib/portals/integration-pages";
 import { PortalLogo } from "@/components/app/PortalLogo";
 import { Reveal } from "@/components/marketing/Reveal";
 import { PORTALS, PROMOTION_CATALOGS } from "@/lib/portals/registry";
@@ -14,12 +16,24 @@ export function PortalGrid() {
         {displayedPortals.map((portal, i) => (
           <li key={portal.id}>
             <Reveal delay={i * 50} className="h-full">
-              <div className="panel flex h-full items-center gap-3 p-4">
-                <PortalLogo portalId={portal.id} name={portal.display_name} fallback={portal.logo} size={40} alt={`Logo ${portal.display_name}`} />
-                <div className="min-w-0">
-                  <p className="truncate text-sm font-semibold text-navy">{portal.display_name}</p>
-                </div>
-              </div>
+              {(() => {
+                const inner = (
+                  <>
+                    <PortalLogo portalId={portal.id} name={portal.display_name} fallback={portal.logo} size={40} alt={`Logo ${portal.display_name}`} />
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-semibold text-navy">{portal.display_name}</p>
+                    </div>
+                  </>
+                );
+                const slug = integrationSlugFor(portal.id);
+                return slug ? (
+                  <Link to="/integrari/$slug" params={{ slug }} className="panel flex h-full items-center gap-3 p-4 transition-shadow hover:shadow-float">
+                    {inner}
+                  </Link>
+                ) : (
+                  <div className="panel flex h-full items-center gap-3 p-4">{inner}</div>
+                );
+              })()}
             </Reveal>
           </li>
         ))}
