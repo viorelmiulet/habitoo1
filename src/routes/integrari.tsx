@@ -49,6 +49,15 @@ function IntegrationsPage() {
           {MULTI_PORTAL_INTRO.map((p) => <p key={p}>{p}</p>)}
         </Container>
         <Container><PortalGrid linkToPages /></Container>
+        <Container className="mt-10 text-center">
+          <p className="text-sm text-muted-foreground">
+            Ai întrebări despre publicare? Vezi{" "}
+            <Link to="/intrebari-frecvente" className="font-medium text-primary underline-offset-4 hover:underline">
+              întrebările frecvente
+            </Link>
+            .
+          </p>
+        </Container>
       </Section>
       <Section tone="muted">
         <Container>
