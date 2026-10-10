@@ -8,6 +8,7 @@ import { pageJsonLd } from "@/components/marketing/structured-data";
 
 const TITLE = "Integrări cu portalurile imobiliare — Habitoo CRM";
 const DESCRIPTION = "Introduci anunțul o singură dată în Habitoo și alegi, pentru fiecare anunț, pe ce portaluri apare.";
+const META_DESCRIPTION = "CRM imobiliar Habitoo publică anunțurile pe Storia, OLX, Imobiliare.ro, Romimo, Imospot, VDI.ro și alte portaluri. Introduci anunțul o dată, alegi unde apare.";
 
 const deliveryDescriptions = [
   "Trimitere directă: Habitoo trimite anunțul către portal când îl publici; actualizările se trimit când apeși «Publică», iar la Vândut, Închiriat sau Arhivat anunțul este retras automat.",
@@ -19,7 +20,7 @@ export const Route = createFileRoute("/integrari")({
   head: () => publicHead({
     path: "/integrari",
     title: TITLE,
-    description: DESCRIPTION,
+    description: META_DESCRIPTION,
     jsonLd: pageJsonLd({ path: "/integrari", name: "Integrări cu portalurile imobiliare", description: DESCRIPTION }),
   }),
   component: IntegrationsPage,

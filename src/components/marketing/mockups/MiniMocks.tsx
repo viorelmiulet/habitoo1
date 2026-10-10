@@ -207,6 +207,7 @@ export function MediaMini({ className }: { className?: string }) {
             <img
               src={src}
               alt=""
+              aria-hidden="true"
               width={768}
               height={512}
               loading="lazy"
