@@ -62,3 +62,18 @@ describe("host policy", () => {
     expect(shouldTagNoindex(req("https://www.habitoo.ro/preturi"), html)).toBe(false);
   });
 });
+
+import { publicCacheControl, PUBLIC_CACHE_CONTROL } from "./host-policy";
+describe("cache public pentru marketing", () => {
+  const html = () => new Response("<html>", { status: 200, headers: { "content-type": "text/html" } });
+  const req = (path: string, headers: Record<string, string> = {}) => new Request(`https://www.habitoo.ro${path}`, { headers });
+  it("pagini publice fără sesiune primesc cache public", () => {
+    for (const p of ["/", "/preturi", "/blog", "/blog/un-articol", "/integrari"]) expect(publicCacheControl(req(p), html())).toBe(PUBLIC_CACHE_CONTROL);
+  });
+  it("app, superadmin, api și cereri cu sesiune nu primesc cache public", () => {
+    for (const p of ["/app", "/superadmin", "/api/public/x", "/login"]) expect(publicCacheControl(req(p), html())).toBeNull();
+    expect(publicCacheControl(req("/", { cookie: "sb-abc-auth-token=x" }), html())).toBeNull();
+    expect(publicCacheControl(req("/", { authorization: "Bearer x" }), html())).toBeNull();
+    expect(publicCacheControl(req("/nu-exista"), new Response("", { status: 404, headers: { "content-type": "text/html" } }))).toBeNull();
+  });
+});

@@ -125,3 +125,20 @@ export function shouldTagNoindex(request: Request, response: Response): boolean 
   if (url.pathname.startsWith("/api/public/")) return false;
   return (response.headers.get("content-type") ?? "").toLowerCase().includes("text/html");
 }
+
+export const PUBLIC_CACHE_CONTROL = "public, s-maxage=300, stale-while-revalidate=86400";
+const CACHEABLE_PAGES = new Set(["/", "/functionalitati", "/preturi", "/despre", "/contact", "/integrari", "/blog", "/termeni", "/politica-de-confidentialitate"]);
+
+/** Cache public doar pentru paginile de marketing, fără sesiune și fără răspuns personalizat. */
+export function publicCacheControl(request: Request, response: Response): string | null {
+  const method = request.method.toUpperCase();
+  if (method !== "GET" && method !== "HEAD") return null;
+  if (response.status !== 200 || response.headers.has("set-cookie")) return null;
+  if (!(response.headers.get("content-type") ?? "").includes("text/html")) return null;
+  const path = normalizePath(new URL(request.url).pathname);
+  if (!CACHEABLE_PAGES.has(path) && !/^\/blog\/[^/]+$/.test(path)) return null;
+  if (request.headers.get("authorization")) return null;
+  const cookie = request.headers.get("cookie") ?? "";
+  if (/(?:^|;\s*)(?:sb-[^=]*|[^=]*auth-token[^=]*|habitoo[^=]*session[^=]*)=/i.test(cookie)) return null;
+  return PUBLIC_CACHE_CONTROL;
+}
