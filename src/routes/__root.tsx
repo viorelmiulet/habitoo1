@@ -101,10 +101,11 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       });
     }
   },
-  head: ({ matches }) => (console.log("HEADDBG", JSON.stringify(matches.map((m) => ({ id: m.routeId, s: m.status, g: (m as { globalNotFound?: boolean }).globalNotFound, e: Boolean(m.error) })))), {
+  head: ({ matches }) => ({
     meta: [
       { charSet: "utf-8" },
-      ...(matches.some((m) => (m as { globalNotFound?: boolean }).globalNotFound || m.status === "notFound")
+      // Doar ruta rădăcină potrivită = URL inexistent (404 global).
+      ...(matches.length === 1
         ? [
             { title: "Pagina nu a fost găsită — Habitoo CRM" },
             { name: "robots", content: "noindex" },
