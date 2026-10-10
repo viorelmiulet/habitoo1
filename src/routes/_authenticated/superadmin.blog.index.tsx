@@ -14,16 +14,17 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { toast } from "@/components/ui/sonner";
 import { appHead } from "@/components/app/app-head";
 import type { BlogPost, BlogPostInput } from "@/lib/blog";
-import { deleteBlogPost, listAdminBlogPosts, saveBlogPost, uploadBlogImage } from "@/lib/blog.functions";
+import { deleteBlogPost, listAdminBlogPosts, saveBlogPost, uploadBlogImage, uploadBlogShareImage } from "@/lib/blog.functions";
+import { renderBlogShareImage } from "@/lib/blog-share-image";
 import { toastError } from "@/lib/errors";
 
 export const Route = createFileRoute("/_authenticated/superadmin/blog/")({ head: () => appHead("Habitoo CRM — administrare blog"), component: SuperadminBlogPage });
 const date = (value: string | null) => value ? new Intl.DateTimeFormat("ro-RO", { dateStyle: "medium" }).format(new Date(value)) : "—";
 function SuperadminBlogPage() {
-  const client = useQueryClient(); const list = useServerFn(listAdminBlogPosts); const save = useServerFn(saveBlogPost); const remove = useServerFn(deleteBlogPost); const upload = useServerFn(uploadBlogImage);
+  const client = useQueryClient(); const list = useServerFn(listAdminBlogPosts); const save = useServerFn(saveBlogPost); const remove = useServerFn(deleteBlogPost); const upload = useServerFn(uploadBlogImage); const uploadShare = useServerFn(uploadBlogShareImage);
   const query = useQuery({ queryKey: ["superadmin", "blog"], queryFn: () => list() }); const [editing, setEditing] = useState<BlogPost | null | undefined>(); const [deleting, setDeleting] = useState<BlogPost | null>(null); const [toggling, setToggling] = useState<BlogPost | null>(null);
   const refresh = () => client.invalidateQueries({ queryKey: ["superadmin", "blog"] });
-  const saveMutation = useMutation({ mutationFn: (value: BlogPostInput) => save({ data: value }), onSuccess: (_r, value) => { void refresh(); setEditing(undefined); setToggling(null); if (value.status === "published") toast.success("Articol publicat", { description: `/blog/${value.slug}`, action: { label: "Vezi pagina", onClick: () => window.open(`/blog/${value.slug}`, "_blank", "noopener,noreferrer") } }); else toast.success("Articolul a fost salvat ca ciornă."); }, onError: (error: Error) => toastError(error) });
+  const saveMutation = useMutation({ mutationFn: (value: BlogPostInput) => save({ data: value }), onSuccess: (row, value) => { void (async () => { try { const blob = await renderBlogShareImage({ title: row.title, coverUrl: row.cover_image_url, category: row.category }); const buf = new Uint8Array(await blob.arrayBuffer()); let bin = ""; for (let i = 0; i < buf.length; i += 0x8000) bin += String.fromCharCode(...buf.subarray(i, i + 0x8000)); await uploadShare({ data: { id: row.id, base64: btoa(bin) } }); } catch { toast.error("Imaginea de distribuire nu a putut fi generată."); } })(); void refresh(); setEditing(undefined); setToggling(null); if (value.status === "published") toast.success("Articol publicat", { description: `/blog/${value.slug}`, action: { label: "Vezi pagina", onClick: () => window.open(`/blog/${value.slug}`, "_blank", "noopener,noreferrer") } }); else toast.success("Articolul a fost salvat ca ciornă."); }, onError: (error: Error) => toastError(error) });
   const deleteMutation = useMutation({ mutationFn: (id: string) => remove({ data: { id } }), onSuccess: () => { void refresh(); setDeleting(null); toast.success("Articolul a fost șters."); }, onError: (error: Error) => toastError(error) });
   const posts = query.data ?? []; const categories = [...new Set(posts.map((item) => item.category))];
   const togglePublish = (post: BlogPost) => { const publish = post.status !== "published"; saveMutation.mutate({ id: post.id, slug: post.slug, title: post.title, excerpt: post.excerpt, content: post.content, cover_image_url: post.cover_image_url, category: post.category, author_name: post.author_name, status: publish ? "published" : "draft", published_at: publish ? (post.published_at ?? new Date().toISOString()) : post.published_at, seo_title: post.seo_title, seo_description: post.seo_description }); };

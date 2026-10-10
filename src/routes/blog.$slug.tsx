@@ -6,6 +6,7 @@ import { PublicLayout } from "@/components/marketing/PublicLayout";
 import { Button } from "@/components/ui/button";
 import { getPublishedBlogPost } from "@/lib/blog.functions";
 import { SITE_NAME, SITE_URL } from "@/components/marketing/public-head";
+import { blogShareImageUrl } from "@/lib/blog-share-image";
 
 const roDate = (value: string | null) => value ? new Intl.DateTimeFormat("ro-RO", { day: "numeric", month: "long", year: "numeric" }).format(new Date(value)) : "În curând";
 
@@ -16,8 +17,8 @@ export const Route = createFileRoute("/blog/$slug")({
     const { post } = loaderData; const title = post.seo_title || `${post.title} — Habitoo`; const description = post.seo_description || post.excerpt; const url = `${SITE_URL}/blog/${post.slug}`;
     const meta: Record<string,string>[] = [{ title }, { name: "description", content: description }, { name: "robots", content: "index, follow, max-image-preview:large" }, { property: "og:title", content: title }, { property: "og:description", content: description }, { property: "og:type", content: "article" }, { property: "og:url", content: url }, { property: "og:site_name", content: SITE_NAME }, { name: "twitter:card", content: "summary_large_image" }];
     if (post.published_at) meta.push({ property: "article:published_time", content: post.published_at });
-    const image = post.cover_image_url ? (post.cover_image_url.startsWith("http") ? post.cover_image_url : `${SITE_URL}${post.cover_image_url}`) : null;
-    if (image) meta.push({ property: "og:image", content: image }, { name: "twitter:image", content: image });
+    const image = blogShareImageUrl(SITE_URL, post.id, post.updated_at);
+    meta.push({ property: "og:image", content: image }, { property: "og:image:width", content: "1200" }, { property: "og:image:height", content: "630" }, { property: "og:image:type", content: "image/png" }, { name: "twitter:image", content: image });
     return { meta, links: [{ rel: "canonical", href: url }, { rel: "alternate", type: "application/rss+xml", href: `${SITE_URL}/blog/rss.xml`, title: "Blog Habitoo" }], scripts: [{ type: "application/ld+json", children: JSON.stringify({ "@context": "https://schema.org", "@type": "BlogPosting", headline: post.title, description, datePublished: post.published_at, dateModified: post.updated_at, author: { "@type": "Person", name: post.author_name }, publisher: { "@type": "Organization", name: SITE_NAME, logo: { "@type": "ImageObject", url: `${SITE_URL}/assets/habitoo-logo.png` } }, mainEntityOfPage: { "@type": "WebPage", "@id": url }, ...(image ? { image } : {}) }) }] };
   },
   notFoundComponent: BlogNotFound,
