@@ -315,6 +315,7 @@ export type IntegrationPage = Content & {
   definition: PortalDefinition;
   canDo: string[];
   dailyWork: string[];
+  whyHabitoo: string;
   activationText: string;
   related: { slug: string; name: string }[];
   title: string;
@@ -362,6 +363,10 @@ function dailyWork(def: PortalDefinition, name: string): string[] {
   ];
 }
 
+function whyHabitoo(name: string): string {
+  return `Când lucrezi cu mai multe portaluri, cel mai mult timp se pierde cu aceleași date scrise de mai multe ori și cu anunțurile uitate online după vânzare. Cu ${name} legat de Habitoo, proprietatea, clientul și anunțul stau în același loc, iar echipa vede pe fiecare proprietate unde este publicată și ce s-a întâmplat cu ea.`;
+}
+
 const SHARED_FAQ = [
   { q: "Pot publica același anunț pe mai multe portaluri?", a: "Da. În fila Publicare bifezi toate portalurile active ale agenției și le trimiți deodată, din același loc." },
   { q: "Cine poate activa integrarea?", a: "Doar administratorul agenției, din Setări → Portaluri. Agenții folosesc apoi portalurile active pentru anunțurile lor." },
@@ -385,10 +390,11 @@ export const INTEGRATION_PAGES: IntegrationPage[] = BASE.map(({ d, c }, i) => ({
   ...c,
   portalId: d.id,
   definition: d,
-  faq: [...c.faq, ...SHARED_FAQ].slice(0, 5),
+  faq: [...c.faq.slice(0, 3), SHARED_FAQ[0]],
   canDo: canDo(d, c.name),
   dailyWork: dailyWork(d, c.name),
-  activationText: activationText(d, c.activation),
+  activationText: `${activationText(d, c.activation)} ${SHARED_FAQ[1].a.replace("Doar administratorul agenției, din Setări → Portaluri. ", "")}`,
+  whyHabitoo: whyHabitoo(c.name),
   related: [1, 2, 3].map((k) => BASE[(i + k) % BASE.length].c).map((r) => ({ slug: r.slug, name: r.name })),
   title: `Integrare ${c.name} cu CRM imobiliar | Habitoo`,
 }));
@@ -409,6 +415,7 @@ export function integrationPageText(p: IntegrationPage): string {
   return [
     `Integrare ${p.name} cu Habitoo CRM`,
     ...p.intro,
+    p.whyHabitoo,
     "Ce poți face",
     ...p.canDo,
     "Cum lucrezi în fiecare zi",
