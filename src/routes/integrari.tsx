@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { CtaBand } from "@/components/marketing/CtaBand";
 import { PortalGrid } from "@/components/marketing/PortalGrid";
 import { PublicLayout } from "@/components/marketing/PublicLayout";
