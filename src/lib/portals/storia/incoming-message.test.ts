@@ -26,7 +26,7 @@ function fakeDb(seed: Record<string, Row[]>) {
     let lim = Infinity;
     const run = () => {
       if (op === "insert" || op === "upsert") {
-        const row = { id: `${table}-${++seq}`, ...payload! };
+        const row: Row = { id: `${table}-${++seq}`, ...payload! };
         if (
           table === "portal_messages" &&
           row.external_message_id &&
