@@ -511,10 +511,12 @@ export async function olxAuthorizedRequest(
     await markStoriaReconnectRequired(organizationId, "access_revoked");
   }
 
-  const raw = (await response.text().catch(() => "")).slice(0, 1500);
+  const fullText = await response.text().catch(() => "");
+  const raw = fullText.slice(0, 1500);
   let body: Record<string, unknown> | null = null;
   try {
-    const parsed = JSON.parse(raw) as unknown;
+    // Corpul complet (listele `/meta` depășesc ușor 1500 de caractere).
+    const parsed = JSON.parse(fullText) as unknown;
     body = parsed && typeof parsed === "object" ? (parsed as Record<string, unknown>) : null;
   } catch {
     body = null;
