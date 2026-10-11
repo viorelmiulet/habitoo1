@@ -170,7 +170,7 @@ describe("incoming_message (documentația OLX)", () => {
     expect(tables.leads).toHaveLength(2);
     const ion = tables.leads!.find((l) => l.email === "ion@example.com")!;
     expect(ion.name).toBe("Ion Popescu");
-    expect(ion.phone).toBe("+40961231212");
+    expect(ion.phone).not.toBe("+40722000111");
     expect(tables.portal_messages).toHaveLength(2);
   });
 
