@@ -15,9 +15,13 @@ export const Route = createFileRoute("/api/public/cron/storia-meta")({
           const unauthorized = await authenticateCronRequest(request);
           if (unauthorized) return unauthorized;
         }
-        const body = (await request.json().catch(() => ({}))) as { mode?: string };
+        const body = (await request.json().catch(() => ({}))) as { mode?: string; advertUuid?: string };
         const m = await import("@/lib/portals/storia/meta-sync.server");
-        const result = body.mode === "reconcile" ? await m.reconcileStoriaAccounts() : await m.syncPendingStoriaListings();
+        const result = body.mode === "reconcile" ? await m.reconcileStoriaAccounts() : await m.syncPendingStoriaListings(
+                typeof body.advertUuid === "string" && /^[0-9a-f-]{36}$/i.test(body.advertUuid)
+                  ? { advertUuid: body.advertUuid }
+                  : undefined,
+              );
         return Response.json({ ok: true, ...result });
       },
     },
