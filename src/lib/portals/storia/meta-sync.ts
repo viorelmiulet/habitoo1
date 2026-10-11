@@ -91,7 +91,7 @@ export function metaSyncDecision(
   const last = current.lastEventAt ? Date.parse(current.lastEventAt) : NaN;
   if (Number.isFinite(last) && meta.changedAtMs !== null && meta.changedAtMs < last) return "skip";
   const sameState = current.status === mappedStatus && (!meta.url || meta.url === current.publicUrl);
-  if (sameState && (!Number.isFinite(last) || meta.changedAtMs === null || meta.changedAtMs <= last)) {
+  if (sameState && Number.isFinite(last) && (meta.changedAtMs === null || meta.changedAtMs <= last)) {
     return "skip";
   }
   return "apply";
