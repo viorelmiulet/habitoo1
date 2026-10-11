@@ -10,7 +10,14 @@ declare global {
   }
 }
 
+/**
+ * Domenii excluse din analiză: aplicația CRM (crm.habitoo.ro) nu trebuie
+ * numărată de Plausible, doar site-ul public de marketing.
+ */
+const EXCLUDED_HOSTNAMES = new Set(["crm.habitoo.ro"]);
+
 function loadPlausible() {
+  if (EXCLUDED_HOSTNAMES.has(window.location.hostname)) return;
   if (document.getElementById(SCRIPT_ID)) return;
   // Stub-ul oficial Plausible: colectează apelurile până se încarcă scriptul.
   const w = window;
