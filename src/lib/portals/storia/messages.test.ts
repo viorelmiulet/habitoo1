@@ -29,7 +29,7 @@ const documented = {
 describe("forma documentată incoming_message", () => {
   it("acceptă ad_id numeric și message text simplu", () => {
     const shape = readEventShape(documented)!;
-    expect(shape.adSlug).toBe("Fjdj");
+    expect(shape.adSlug).toBe("FjvP");
     expect(shape.advertUuid).toBe("a2b5c1e0-1111-4222-8333-944455556666");
     const m = readMessagePayload(shape);
     expect(m.body).toBe("Bună ziua, mai este disponibil?");
