@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { CookieConsent } from "./CookieConsent";
+import { PlausibleAnalytics } from "./PlausibleAnalytics";
 import { PublicFooter } from "./PublicFooter";
 import { PublicHeader } from "./PublicHeader";
 import { HomeHeader } from "./HomeHeader";
@@ -19,6 +20,7 @@ export function PublicLayout({ children, footerDescription, homeHeader = false }
       </main>
       <PublicFooter description={footerDescription} />
       <CookieConsent />
+      <PlausibleAnalytics />
     </div>
   );
 }
