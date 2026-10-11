@@ -107,6 +107,7 @@ import { Route as ApiPublicCronPortalSlotWithdrawRouteImport } from './routes/ap
 import { Route as ApiPublicCronPortalStatusWithdrawRouteImport } from './routes/api/public/cron/portal-status-withdraw'
 import { Route as ApiPublicCronPromotionWithdrawRouteImport } from './routes/api/public/cron/promotion-withdraw'
 import { Route as ApiPublicCronPropertyImportImagesRouteImport } from './routes/api/public/cron/property-import-images'
+import { Route as ApiPublicCronStoriaMetaRouteImport } from './routes/api/public/cron/storia-meta'
 import { Route as ApiPublicCronStoriaWebhookRetryRouteImport } from './routes/api/public/cron/storia-webhook-retry'
 import { Route as ApiPublicCronSubscriptionsRouteImport } from './routes/api/public/cron/subscriptions'
 import { Route as ApiPublicCronVdiLeadsRouteImport } from './routes/api/public/cron/vdi-leads'
@@ -686,6 +687,11 @@ const ApiPublicCronPropertyImportImagesRoute =
     path: '/api/public/cron/property-import-images',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicCronStoriaMetaRoute = ApiPublicCronStoriaMetaRouteImport.update({
+  id: '/api/public/cron/storia-meta',
+  path: '/api/public/cron/storia-meta',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicCronStoriaWebhookRetryRoute =
   ApiPublicCronStoriaWebhookRetryRouteImport.update({
     id: '/api/public/cron/storia-webhook-retry',
@@ -1010,6 +1016,7 @@ export interface FileRoutesByFullPath {
   '/api/public/cron/portal-status-withdraw': typeof ApiPublicCronPortalStatusWithdrawRoute
   '/api/public/cron/promotion-withdraw': typeof ApiPublicCronPromotionWithdrawRoute
   '/api/public/cron/property-import-images': typeof ApiPublicCronPropertyImportImagesRoute
+  '/api/public/cron/storia-meta': typeof ApiPublicCronStoriaMetaRoute
   '/api/public/cron/storia-webhook-retry': typeof ApiPublicCronStoriaWebhookRetryRoute
   '/api/public/cron/subscriptions': typeof ApiPublicCronSubscriptionsRoute
   '/api/public/cron/vdi-leads': typeof ApiPublicCronVdiLeadsRoute
@@ -1146,6 +1153,7 @@ export interface FileRoutesByTo {
   '/api/public/cron/portal-status-withdraw': typeof ApiPublicCronPortalStatusWithdrawRoute
   '/api/public/cron/promotion-withdraw': typeof ApiPublicCronPromotionWithdrawRoute
   '/api/public/cron/property-import-images': typeof ApiPublicCronPropertyImportImagesRoute
+  '/api/public/cron/storia-meta': typeof ApiPublicCronStoriaMetaRoute
   '/api/public/cron/storia-webhook-retry': typeof ApiPublicCronStoriaWebhookRetryRoute
   '/api/public/cron/subscriptions': typeof ApiPublicCronSubscriptionsRoute
   '/api/public/cron/vdi-leads': typeof ApiPublicCronVdiLeadsRoute
@@ -1288,6 +1296,7 @@ export interface FileRoutesById {
   '/api/public/cron/portal-status-withdraw': typeof ApiPublicCronPortalStatusWithdrawRoute
   '/api/public/cron/promotion-withdraw': typeof ApiPublicCronPromotionWithdrawRoute
   '/api/public/cron/property-import-images': typeof ApiPublicCronPropertyImportImagesRoute
+  '/api/public/cron/storia-meta': typeof ApiPublicCronStoriaMetaRoute
   '/api/public/cron/storia-webhook-retry': typeof ApiPublicCronStoriaWebhookRetryRoute
   '/api/public/cron/subscriptions': typeof ApiPublicCronSubscriptionsRoute
   '/api/public/cron/vdi-leads': typeof ApiPublicCronVdiLeadsRoute
@@ -1430,6 +1439,7 @@ export interface FileRouteTypes {
     | '/api/public/cron/portal-status-withdraw'
     | '/api/public/cron/promotion-withdraw'
     | '/api/public/cron/property-import-images'
+    | '/api/public/cron/storia-meta'
     | '/api/public/cron/storia-webhook-retry'
     | '/api/public/cron/subscriptions'
     | '/api/public/cron/vdi-leads'
@@ -1566,6 +1576,7 @@ export interface FileRouteTypes {
     | '/api/public/cron/portal-status-withdraw'
     | '/api/public/cron/promotion-withdraw'
     | '/api/public/cron/property-import-images'
+    | '/api/public/cron/storia-meta'
     | '/api/public/cron/storia-webhook-retry'
     | '/api/public/cron/subscriptions'
     | '/api/public/cron/vdi-leads'
@@ -1707,6 +1718,7 @@ export interface FileRouteTypes {
     | '/api/public/cron/portal-status-withdraw'
     | '/api/public/cron/promotion-withdraw'
     | '/api/public/cron/property-import-images'
+    | '/api/public/cron/storia-meta'
     | '/api/public/cron/storia-webhook-retry'
     | '/api/public/cron/subscriptions'
     | '/api/public/cron/vdi-leads'
@@ -1803,6 +1815,7 @@ export interface RootRouteChildren {
   ApiPublicCronPortalStatusWithdrawRoute: typeof ApiPublicCronPortalStatusWithdrawRoute
   ApiPublicCronPromotionWithdrawRoute: typeof ApiPublicCronPromotionWithdrawRoute
   ApiPublicCronPropertyImportImagesRoute: typeof ApiPublicCronPropertyImportImagesRoute
+  ApiPublicCronStoriaMetaRoute: typeof ApiPublicCronStoriaMetaRoute
   ApiPublicCronStoriaWebhookRetryRoute: typeof ApiPublicCronStoriaWebhookRetryRoute
   ApiPublicCronSubscriptionsRoute: typeof ApiPublicCronSubscriptionsRoute
   ApiPublicCronVdiLeadsRoute: typeof ApiPublicCronVdiLeadsRoute
@@ -2528,6 +2541,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicCronPropertyImportImagesRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/cron/storia-meta': {
+      id: '/api/public/cron/storia-meta'
+      path: '/api/public/cron/storia-meta'
+      fullPath: '/api/public/cron/storia-meta'
+      preLoaderRoute: typeof ApiPublicCronStoriaMetaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/cron/storia-webhook-retry': {
       id: '/api/public/cron/storia-webhook-retry'
       path: '/api/public/cron/storia-webhook-retry'
@@ -3092,6 +3112,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicCronPromotionWithdrawRoute: ApiPublicCronPromotionWithdrawRoute,
   ApiPublicCronPropertyImportImagesRoute:
     ApiPublicCronPropertyImportImagesRoute,
+  ApiPublicCronStoriaMetaRoute: ApiPublicCronStoriaMetaRoute,
   ApiPublicCronStoriaWebhookRetryRoute: ApiPublicCronStoriaWebhookRetryRoute,
   ApiPublicCronSubscriptionsRoute: ApiPublicCronSubscriptionsRoute,
   ApiPublicCronVdiLeadsRoute: ApiPublicCronVdiLeadsRoute,

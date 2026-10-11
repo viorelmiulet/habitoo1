@@ -546,7 +546,7 @@ async function notifyStoriaAgent(
   );
 }
 
-async function processLifecycle(
+export async function processLifecycle(
   admin: Admin,
   shape: StoriaEventShape,
 ): Promise<StoriaProcessResult> {
