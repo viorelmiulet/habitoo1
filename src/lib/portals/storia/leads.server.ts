@@ -5,15 +5,13 @@
  *
  *  1. `flow: "incoming_message"` — mesaj de la un cumpărător pe un anunț → lead
  *     în CRM, legat de proprietate, asignat agentului responsabil, cu notificare.
- *     CONFIRMAT PE PAYLOAD REAL: `data.ad_id` conține slugul alfanumeric din
- *     linkul public al anunțului (de exemplu `IwcT`), nu un id numeric.
- *     Câmpuri documentate: `data.ad_id`,
- *     `data.sender_name`, `data.sender_email`, `data.sender_phone`,
- *     `data.message`, `data.id`, `data.conversation_id`, `data.created_at`.
- *     Atenție: `object_id` de la nivelul rădăcină este uuid-ul MESAJULUI, nu al
- *     anunțului, iar payload-ul nu conține `custom_fields.id`. Extragerea este
- *     tolerantă (acceptă și denumiri alternative), iar dacă nu recunoaștem
- *     nimic, evenimentul rămâne `processed = false` cu notă explicită.
+ *     Format după documentația OLX („Receiving leads”): `object_id` și
+ *     `data.uuid` = uuid-ul anunțului; `data.ad_id` = id numeric al anunțului
+ *     (în URL apare scris în baza 62, ex. 10678293 → `INUx`); `data.id` = id-ul
+ *     mesajului; `data.conversation_id` grupează conversația; plus
+ *     `sender_name`, `sender_email`, `sender_phone`, `message`, `created_at`.
+ *     Potrivire: uuid → slug din `ad_id` (`ADSLUG:` / `public_url`) →
+ *     `custom_fields.id`. Fără potrivire → lista SuperAdmin de nepotriviri.
  *
  *  2. `flow: "publish_advert"` — ciclul de viață al anunțului. CONFIRMAT pe
  *     payload-uri reale din jurnal (`event_type: advert_posted_success`,
@@ -42,6 +40,7 @@ import {
   storiaNotificationId,
 } from "./advert-errors";
 import { normalizeStoriaPhone } from "./phone";
+import { storiaAdSlugFromAdId } from "./ad-id";
 import {
   findConversationLead,
   notifyAgentOfStoriaMessage,
@@ -120,17 +119,16 @@ export function readEventShape(parsed: unknown): StoriaEventShape | null {
     `${flow ?? ""} ${pick(root, ["event_type", "eventType"]) ?? ""}`,
   );
 
-  // La mesaje, `object_id` este uuid-ul mesajului — nu îl folosim ca anunț.
+  // Documentație: la mesaje `data.uuid` și `object_id` sunt uuid-ul anunțului.
   const advertCandidate = isMessage
-    ? pick(data, ["advert_id", "advertId", "advert.uuid", "advert.id"])
+    ? (pick(data, ["uuid", "advert_uuid", "advert.uuid"]) ?? pick(root, ["object_id", "objectId"]))
     : (pick(root, ["object_id", "objectId"]) ??
       pick(data, ["advert_id", "advertId", "advert.uuid", "advert.id", "id"]));
 
   const publicUrl = pick(data, ["url", "advert.url", "state.url"]);
-  // Payloadurile reale confirmă că `data.ad_id` este chiar slugul din URL.
-  // Acceptăm valori alfanumerice și folosim URL-ul drept fallback.
+  // `ad_id` numeric → slug în baza 62; alfanumeric → folosit direct.
   const adSlugCandidate =
-    pick(data, ["ad_id", "adId", "advert.ad_id", "advert.id"]) ??
+    storiaAdSlugFromAdId(pick(data, ["ad_id", "adId", "advert.ad_id"])) ??
     storiaAdSlugFromUrl(publicUrl);
 
   return {
@@ -200,8 +198,9 @@ export function readMessagePayload(shape: StoriaEventShape): MessagePayload {
     // Payloadul real folosește obiectul `message: { name, text }`.
     // Căutăm explicit câmpurile imbricate înaintea variantelor legacy plate.
     body: pick(d, ["message.text", "message.body", "text", "body", "content", "message"]),
-    // Documentație: `uuid` identifică mesajul, `conversation_id` grupează conversația.
-    messageId: pick(d, ["uuid", "id", "message_id", "message.id"]),
+    // Documentație: `data.id` identifică mesajul (`uuid` este al anunțului);
+    // rezervă: `transaction_id`.
+    messageId: pick(d, ["id", "message_id", "message.id"]) ?? shape.transactionId,
     conversationId: pick(d, ["conversation_id", "conversation.id"]),
     sentAt: pick(d, ["created_at", "message.created_at", "sent_at", "recorded_at"]),
   };
@@ -264,41 +263,42 @@ async function matchByCustomId(admin: Admin, shape: StoriaEventShape): Promise<M
 }
 
 async function matchListing(admin: Admin, shape: StoriaEventShape): Promise<MatchedListing | null> {
-  // Forma canonică este `ADSLUG:`. `AD:` rămâne doar fallback pentru date vechi.
-  const needles = [
-    shape.advertUuid,
-    shape.adSlug ? `ADSLUG:${shape.adSlug}` : null,
-    shape.adSlug ? `AD:${shape.adSlug}` : null,
-  ].filter(Boolean) as string[];
-  if (!needles.length) return matchByCustomId(admin, shape);
-
-  const { data: listings } = await admin
-    .from("portal_listings")
-    .select("organization_id, property_id, external_id")
-    .eq("portal", "storia")
-    .or(needles.map((n) => `external_id.ilike.%${n}%`).join(","))
-    .limit(20);
-
-  for (const listing of listings ?? []) {
-    const uuidHit =
-      shape.advertUuid &&
-      Object.values(parseAdvertRefs(listing.external_id)).some(
+  // 1. uuid-ul anunțului în `external_id` (`SALE:uuid|RENT:uuid`).
+  if (shape.advertUuid) {
+    const { data: listings } = await admin
+      .from("portal_listings")
+      .select("organization_id, property_id, external_id")
+      .eq("portal", "storia")
+      .ilike("external_id", `%${shape.advertUuid}%`)
+      .limit(20);
+    for (const listing of listings ?? []) {
+      const hit = Object.values(parseAdvertRefs(listing.external_id)).some(
         (uuid) => uuid?.toLowerCase() === shape.advertUuid,
       );
-    const known = [
-      ...parseStoriaAdIds(listing.external_id),
-      ...parseStoriaAdSlugs(listing.external_id),
-    ];
-    const slugHit = shape.adSlug ? known.includes(shape.adSlug) : false;
-    if (!uuidHit && !slugHit) continue;
-
-    const match = await propertyMatch(admin, listing.property_id, listing.external_id);
-    if (match) return match;
+      if (!hit) continue;
+      const match = await propertyMatch(admin, listing.property_id, listing.external_id);
+      if (match) return match;
+    }
   }
 
-  // Ultimă punte: slugul din linkul public salvat pe anunț (`...-ID<slug>.html`).
-  const slugCandidates = [shape.adSlug].filter(Boolean) as string[];
-  for (const slug of slugCandidates) {
+  // 2. slugul (din `ad_id`) în `ADSLUG:` (sau vechiul `AD:`), apoi în linkul public.
+  if (shape.adSlug) {
+    const slug = shape.adSlug;
+    const { data: listings } = await admin
+      .from("portal_listings")
+      .select("organization_id, property_id, external_id")
+      .eq("portal", "storia")
+      .or(`external_id.ilike.%ADSLUG:${slug}%,external_id.ilike.%AD:${slug}%`)
+      .limit(20);
+    for (const listing of listings ?? []) {
+      const known = [
+        ...parseStoriaAdSlugs(listing.external_id),
+        ...parseStoriaAdIds(listing.external_id),
+      ];
+      if (!known.includes(slug)) continue;
+      const match = await propertyMatch(admin, listing.property_id, listing.external_id);
+      if (match) return match;
+    }
     const { data: byUrl } = await admin
       .from("portal_listings")
       .select("property_id, external_id, public_url")
@@ -306,14 +306,20 @@ async function matchListing(admin: Admin, shape: StoriaEventShape): Promise<Matc
       .ilike("public_url", `%ID${slug}.html%`)
       .limit(5);
     for (const listing of byUrl ?? []) {
+      if (storiaAdSlugFromUrl(listing.public_url) !== slug) continue;
       const match = await propertyMatch(admin, listing.property_id, listing.external_id);
       if (match) return match;
     }
   }
+
+  // 3. Ultima variantă: `custom_fields.id`.
   return matchByCustomId(admin, shape);
 }
 
 const SOURCE = "Storia.ro";
+
+/** Fereastra în care același text în aceeași conversație e considerat dublură. */
+export const STORIA_DUPLICATE_WINDOW_MS = 10 * 60_000;
 
 /** Cât timp păstrăm textul mesajelor primite din portaluri (date personale). */
 export const PORTAL_MESSAGE_RETENTION_DAYS = 180;
@@ -324,7 +330,7 @@ export function portalMessageExpiry(sentAt: string): string {
   return new Date(from.getTime() + PORTAL_MESSAGE_RETENTION_DAYS * 86_400_000).toISOString();
 }
 
-async function processMessage(
+export async function processStoriaMessage(
   admin: Admin,
   shape: StoriaEventShape,
   eventId: string | null = null,
@@ -358,6 +364,25 @@ async function processMessage(
   // indexul unic pe (portal, organizație, id mesaj) oprește efectele repetate
   // ÎNAINTE de a atinge lead-ul, deci nu se creează lead-uri duplicate.
   const externalMessageId = message.messageId ?? shape.transactionId ?? null;
+
+  // Cumpărătorul a apăsat de mai multe ori „Trimite”: același text în aceeași
+  // conversație, în maximum 10 minute → ignorat (fără lead, fără notificare).
+  if (message.conversationId && bodyText) {
+    const since = new Date(new Date(sentAt).getTime() - STORIA_DUPLICATE_WINDOW_MS).toISOString();
+    const { data: dup } = await admin
+      .from("portal_messages")
+      .select("id")
+      .eq("portal", "storia")
+      .eq("organization_id", match.organizationId)
+      .eq("conversation_id", message.conversationId)
+      .eq("body", bodyText)
+      .gte("sent_at", since)
+      .limit(1);
+    if (dup && dup.length) {
+      return { processed: true, note: "mesaj Storia duplicat (același text, aceeași conversație) — ignorat" };
+    }
+  }
+
   let messageRowId: string | null = null;
   if (externalMessageId) {
     const inserted = await admin
@@ -379,53 +404,8 @@ async function processMessage(
       .maybeSingle();
     if (inserted.error) {
       if (inserted.error.code === "23505") {
-        const { data: savedMessage, error: savedMessageError } = await admin
-          .from("portal_messages")
-          .select("id, lead_id")
-          .eq("organization_id", match.organizationId)
-          .eq("portal", "storia")
-          .eq("external_message_id", externalMessageId)
-          .maybeSingle();
-        if (savedMessageError) throw savedMessageError;
-
-        if (savedMessage) {
-          await admin
-            .from("portal_messages")
-            .update({
-              sender_name: message.senderName,
-              sender_email: message.email,
-              sender_phone: message.phone,
-              body: bodyText,
-              sent_at: sentAt,
-              expires_at: portalMessageExpiry(sentAt),
-            })
-            .eq("id", savedMessage.id);
-
-          if (savedMessage.lead_id) {
-            const { data: savedLead } = await admin
-              .from("leads")
-              .select("notes")
-              .eq("id", savedMessage.lead_id)
-              .maybeSingle();
-            const notes = savedLead?.notes?.includes(noteLine)
-              ? savedLead.notes
-              : [savedLead?.notes, noteLine].filter(Boolean).join("\n---\n").slice(0, 8000);
-            await admin
-              .from("leads")
-              .update({
-                name,
-                phone: message.phone,
-                email: message.email,
-                notes,
-                last_interaction_at: sentAt,
-              })
-              .eq("id", savedMessage.lead_id);
-            return {
-              processed: true,
-              note: `mesaj Storia actualizat pe lead-ul existent ${savedMessage.lead_id}`,
-            };
-          }
-        }
+        // Aceeași notificare reluată de OLX: nu atingem lead-ul (nume,
+        // telefon, email rămân ale cumpărătorului care l-a creat).
         return {
           processed: true,
           note: `mesaj Storia deja înregistrat (id ${externalMessageId}) — reîncercare ignorată`,
@@ -805,7 +785,7 @@ export async function processStoriaNotification(args: {
         note: `duplicat ignorat (transaction_id ${shape.transactionId})`,
       };
     } else if (isMessageEvent(shape)) {
-      result = await processMessage(admin, shape, args.eventId);
+      result = await processStoriaMessage(admin, shape, args.eventId);
     } else if (isLifecycleEvent(shape)) {
       result = await processLifecycle(admin, shape);
     } else {

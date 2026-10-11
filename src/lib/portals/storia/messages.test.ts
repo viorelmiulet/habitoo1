@@ -29,17 +29,17 @@ const documented = {
 describe("forma documentată incoming_message", () => {
   it("acceptă ad_id numeric și message text simplu", () => {
     const shape = readEventShape(documented)!;
-    expect(shape.adSlug).toBe("9846457");
-    expect(shape.advertUuid).toBeNull();
+    expect(shape.adSlug).toBe("FjvP");
+    expect(shape.advertUuid).toBe("a2b5c1e0-1111-4222-8333-944455556666");
     const m = readMessagePayload(shape);
     expect(m.body).toBe("Bună ziua, mai este disponibil?");
     expect(m.senderName).toBe("Ion Popescu");
     expect(m.email).toBe("ion@example.com");
   });
 
-  it("folosește uuid ca id de mesaj și conversation_id pentru grupare", () => {
+  it("folosește data.id ca id de mesaj și conversation_id pentru grupare", () => {
     const m = readMessagePayload(readEventShape(documented)!);
-    expect(m.messageId).toBe("a2b5c1e0-1111-4222-8333-944455556666");
+    expect(m.messageId).toBe("555");
     expect(m.conversationId).toBe("conv-123");
   });
 
@@ -56,7 +56,7 @@ describe("forma documentată incoming_message", () => {
     const m = readMessagePayload(shape);
     expect(m.body).toBe("Salut");
     expect(m.senderName).toBe("Ana");
-    expect(m.messageId).toBeNull();
+    expect(m.messageId).toBe("b480075b-43de-11e8-a691-55a1dd521900");
   });
 });
 

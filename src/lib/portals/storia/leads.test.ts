@@ -51,10 +51,10 @@ describe("readEventShape", () => {
     expect(shape.transactionId).toBe("3e2d3d2f-ccaf-4da7-b7ea-97234e78470f");
   });
 
-  it("nu confundă uuid-ul mesajului cu cel al anunțului", () => {
+  it("la mesaje, object_id este uuid-ul anunțului (documentație OLX)", () => {
     const shape = readEventShape(messagePayload)!;
     expect(shape.flow).toBe("incoming_message");
-    expect(shape.advertUuid).toBeNull();
+    expect(shape.advertUuid).toBe("6073df05-2979-4372-a552-4c906a02a5cc");
     expect(shape.adSlug).toBe("IwcT");
   });
 
@@ -64,7 +64,7 @@ describe("readEventShape", () => {
     expect(message.email).toBeNull();
     expect(message.phone).toBeNull();
     expect(message.body).toBe("Sunt interesat de apartament, se poate vedea sâmbătă?");
-    expect(message.messageId).toBeNull();
+    expect(message.messageId).toBe("b480075b-43de-11e8-a691-55a1dd521900");
     expect(message.sentAt).toBeNull();
   });
 
