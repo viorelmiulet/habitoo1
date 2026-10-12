@@ -919,6 +919,29 @@ export const PropertyPortalsCard = forwardRef<
                               </a>
                             </Button>
                           ))
+                        ) : cell.portalId === "storia" && (cell.publicUrl || (cell.olxLinks?.length ?? 0) > 0) ? (
+                          <>
+                            {cell.publicUrl ? (
+                              <Button variant="link" size="compact" asChild>
+                                <a href={cell.publicUrl} target="_blank" rel="noopener noreferrer">
+                                  Vezi pe Storia <ExternalLink aria-hidden />
+                                </a>
+                              </Button>
+                            ) : null}
+                            {(cell.olxLinks ?? []).map((link) => (
+                              <Button key={link.url} variant="link" size="compact" asChild>
+                                <a href={link.url} target="_blank" rel="noopener noreferrer">
+                                  Vezi pe OLX
+                                  {(cell.olxLinks?.length ?? 0) > 1
+                                    ? link.transaction === "rent"
+                                      ? " (închiriere)"
+                                      : " (vânzare)"
+                                    : ""}{" "}
+                                  <ExternalLink aria-hidden />
+                                </a>
+                              </Button>
+                            ))}
+                          </>
                         ) : cell.publicUrl && !cell.publicWarning && cell.portalId !== "imobiliare_ro" ? (
                           <Button variant="link" size="compact" asChild>
                             <a href={cell.publicUrl} target="_blank" rel="noopener noreferrer">

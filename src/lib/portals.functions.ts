@@ -2051,6 +2051,8 @@ export type PropertyPortalCell = {
    */
   publicWarning: string | null;
   offerLinks: { transaction: string | null; url: string; label: string | null }[];
+  /** Storia: linkurile anunțului exportat automat pe OLX.ro. */
+  olxLinks: { transaction: string | null; url: string }[];
   /** Portalul are promovare prin flag (bifa „Promovat”). */
   promotionFlag: boolean;
   /** Promovarea confirmată salvată în Habitoo (NU dacă nu e publicat). */
