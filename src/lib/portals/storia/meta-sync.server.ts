@@ -108,7 +108,7 @@ export async function reconcileStoriaAccounts() {
     .from("portal_connections")
     .select("organization_id")
     .eq("portal", "storia");
-  const summary: { organizationId: string; pages: number; records: number; applied: number; complete: boolean }[] = [];
+  const summary: { organizationId: string; pages: number; records: number; applied: number; complete: boolean; olx?: unknown }[] = [];
   await Promise.all(
     (conns ?? []).map(async ({ organization_id: orgId }) => {
       if (!(await loadStoriaTokens(orgId).catch(() => null))) return;
@@ -122,11 +122,29 @@ export async function reconcileStoriaAccounts() {
           const r = await applyStoriaMeta(orgId, meta);
           if (r.propertyId && !r.note.startsWith("fără schimbare")) applied++;
         }
-        summary.push({ organizationId: orgId, pages, records: records.length, applied, complete });
+        const { recoverOlxLinks } = await import("./vas.server");
+        const olx = await recoverOlxLinks(supabaseAdmin, orgId, (path) => olxAuthorizedRequest(orgId, "GET", path), sleep);
+        summary.push({ organizationId: orgId, pages, records: records.length, applied, complete, olx });
       } catch (error) {
         console.error("[storia-meta] reconcilierea a eșuat", orgId, String(error).slice(0, 200));
       }
     }),
   );
   return { organizations: summary.length, summary };
+}
+
+/** Recuperarea linkurilor OLX, rulată separat (ex. o singură dată pentru câteva agenții). */
+export async function recoverOlxLinksForOrgs(organizationIds: string[]) {
+  const { recoverOlxLinks } = await import("./vas.server");
+  const out: { organizationId: string; checked: number; found: number; skipped?: string }[] = [];
+  await Promise.all(
+    organizationIds.map(async (orgId) => {
+      if (!(await loadStoriaTokens(orgId).catch(() => null))) {
+        out.push({ organizationId: orgId, checked: 0, found: 0, skipped: "neconectată" });
+        return;
+      }
+      out.push({ organizationId: orgId, ...(await recoverOlxLinks(supabaseAdmin, orgId, (path) => olxAuthorizedRequest(orgId, "GET", path), sleep)) });
+    }),
+  );
+  return { organizations: out };
 }

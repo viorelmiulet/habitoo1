@@ -15,8 +15,12 @@ export const Route = createFileRoute("/api/public/cron/storia-meta")({
           const unauthorized = await authenticateCronRequest(request);
           if (unauthorized) return unauthorized;
         }
-        const body = (await request.json().catch(() => ({}))) as { mode?: string; advertUuid?: string };
+        const body = (await request.json().catch(() => ({}))) as { mode?: string; advertUuid?: string; organizationIds?: unknown };
         const m = await import("@/lib/portals/storia/meta-sync.server");
+        const orgIds = Array.isArray(body.organizationIds)
+          ? body.organizationIds.filter((v): v is string => typeof v === "string" && /^[0-9a-f-]{36}$/i.test(v)).slice(0, 20)
+          : [];
+        if (body.mode === "olx_links") return Response.json({ ok: true, ...(await m.recoverOlxLinksForOrgs(orgIds)) });
         const result = body.mode === "reconcile" ? await m.reconcileStoriaAccounts() : await m.syncPendingStoriaListings(
                 typeof body.advertUuid === "string" && /^[0-9a-f-]{36}$/i.test(body.advertUuid)
                   ? { advertUuid: body.advertUuid }
