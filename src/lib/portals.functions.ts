@@ -1,3 +1,4 @@
+import { visibleOlxLinks } from "@/lib/portals/storia/vas";
 import { portalCanPublish, publishUnavailableMessage } from "@/lib/portals/registry";
 import { mergePortalOffers, parsePortalOffers } from "@/lib/portals/imobiliare/offer-links";
 /**
@@ -2361,7 +2362,9 @@ export const getPropertiesPortalMatrix = createServerFn({ method: "POST" })
             portal.id === "imobiliare_ro"
               ? (parsePortalOffers(listing?.portal_offers)[0]?.url ?? null)
               : (listing?.public_url ?? null),
-          offerLinks: parsePortalOffers(listing?.portal_offers).map((o) => ({
+          // Storia: linkurile exportului automat pe OLX, doar cât anunțul e publicat.
+          olxLinks: portal.id === "storia" ? visibleOlxLinks(listing?.portal_offers, listingStatus) : [],
+          offerLinks: parsePortalOffers(listing?.portal_offers).filter((o) => o.label !== "OLX").map((o) => ({
             transaction: o.transaction,
             url: o.url,
             label: o.label ?? null,

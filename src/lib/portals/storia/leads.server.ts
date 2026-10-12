@@ -784,6 +784,9 @@ export async function processStoriaNotification(args: {
         processed: true,
         note: `duplicat ignorat (transaction_id ${shape.transactionId})`,
       };
+    } else if ((await import("./vas")).isStoriaVasFlow(args.parsed)) {
+      // Promovările: anunțul vine în `data.advert_uuid` (`object_id` = promovarea).
+      result = await (await import("./vas.server")).processStoriaVas(admin, args.parsed);
     } else if (isMessageEvent(shape)) {
       result = await processStoriaMessage(admin, shape, args.eventId);
     } else if (isLifecycleEvent(shape)) {
