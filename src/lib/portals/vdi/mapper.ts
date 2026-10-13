@@ -322,3 +322,11 @@ export function mapAgentToVdi(
   if (agent.avatarUrl && /^https:\/\//.test(agent.avatarUrl)) payload.photo = agent.avatarUrl;
   return { ok: true, payload };
 }
+
+/** Amprenta datelor agentului trimise la VDI (nume, email, telefon, poză). */
+export function vdiAgentFingerprint(p: VdiAgentPayload): string {
+  const s = JSON.stringify([p.firstname, p.lastname, p.email.toLowerCase(), p.phone ?? "", p.photo ?? ""]);
+  let h = 0x811c9dc5;
+  for (let i = 0; i < s.length; i++) h = Math.imul(h ^ s.charCodeAt(i), 0x01000193) >>> 0;
+  return `v1:${h.toString(16)}:${s.length}`;
+}
