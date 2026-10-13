@@ -2,8 +2,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireActiveOrgAuth } from "@/lib/org-access";
-import type { AuthContext } from "@/lib/auth-context";
-import { activatedPortalIds, assertPortalPropertyAccess, resolvePublishingOrg } from "@/lib/portals.functions";
+import { activatedPortalIds, type AuthContext, assertPortalPropertyAccess, resolvePublishingOrg } from "@/lib/portals.functions";
 import { getPortalDefinition, portalCanPublish, portalDisplayName, publishUnavailableMessage, type PortalId } from "./registry";
 import { scheduleWindowError, type PortalScheduleView } from "./publish-schedule";
 
