@@ -3620,7 +3620,7 @@ export const recheckOlxDirectListing = createServerFn({ method: "POST" })
 export const checkPortalRelayIp = createServerFn({ method: "POST" })
   .middleware([requireActiveOrgAuth])
   .handler(async ({ context }) => {
-    await requireSuperadmin(context as AuthContext);
+    await requireSuperadmin(context as unknown as AuthContext);
     const { checkRelayIp } = await import("./portals/relay.server");
     return checkRelayIp();
   });
