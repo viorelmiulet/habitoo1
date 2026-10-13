@@ -19,12 +19,41 @@ export type VdiParsed =
 
 const SUCCESS = /^Proprietatea a fost (adaugata|modificata|stearsa)/i;
 
-/** Citește textul, nu cheia: `eroare` apare și la succes. */
+/** Corpul brut, tăiat la 200 de caractere, pentru erorile cu formă necunoscută. */
+function rawBodyPreview(body: unknown): string {
+  let text: string;
+  try {
+    text = typeof body === "string" ? body : JSON.stringify(body) ?? "";
+  } catch {
+    text = String(body);
+  }
+  return text.length > 200 ? `${text.slice(0, 200)}…` : text;
+}
+
+/** Valoarea cheii `succes` (număr sau text nevid), dacă există; altfel null. */
+function successValue(record: Record<string, unknown> | null): string | null {
+  const raw = record?.["succes"];
+  if (typeof raw === "number" && Number.isFinite(raw)) return String(raw);
+  if (typeof raw === "string" && raw.trim()) return raw.trim();
+  return null;
+}
+
+/** Citește textul, nu cheia: `eroare` apare și la succes; `succes` (nedocumentat) e tot succes. */
 export function parseVdiResponse(body: unknown): VdiParsed {
   const record = body && typeof body === "object" ? (body as Record<string, unknown>) : null;
   const raw = record?.["eroare"];
   const text = typeof raw === "string" ? raw.trim() : "";
-  if (!text) return { ok: false, text: "Răspuns VDI.ro neașteptat (fără mesaj).", kind: "rejected" };
+  if (!text) {
+    const succes = successValue(record);
+    if (succes !== null) {
+      // Formă nedocumentată observată în producție: {"succes": 1000}. ID-ul/linkul
+      // lipsesc și se completează ulterior din `cat=list` (sincronizarea existentă).
+      const id = /ID:\s*([^\s|]+)/i.exec(succes)?.[1] ?? null;
+      const link = /Link:\s*(https?:\/\/\S+)/i.exec(succes)?.[1] ?? null;
+      return { ok: true, operation: "add", vdiId: id, link, text: `succes: ${succes}` };
+    }
+    return { ok: false, text: `Răspuns VDI.ro neașteptat: ${rawBodyPreview(body) || "(gol)"}`, kind: "rejected" };
+  }
   const match = SUCCESS.exec(text);
   if (match) {
     const verb = match[1]!.toLowerCase();
@@ -49,7 +78,10 @@ export function parseVdiAgentResponse(body: unknown): { ok: boolean; text: strin
   const raw = record?.["eroare"];
   const text = typeof raw === "string" ? raw.trim() : "";
   if (/(a fost|au fost)\s+(adaugat|modificat|actualizat)/i.test(text)) return { ok: true, text };
-  return { ok: false, text: text || "Răspuns VDI.ro neașteptat.", notFound: /nu a fost gasit|nu exista/i.test(text) };
+  if (text) return { ok: false, text, notFound: /nu a fost gasit|nu exista/i.test(text) };
+  const succes = successValue(record);
+  if (succes !== null) return { ok: true, text: `succes: ${succes}` };
+  return { ok: false, text: `Răspuns VDI.ro neașteptat: ${rawBodyPreview(body) || "(gol)"}` };
 }
 
 /* ------------------------------- identificatori ------------------------------- */
