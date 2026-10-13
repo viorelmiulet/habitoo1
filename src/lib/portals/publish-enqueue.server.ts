@@ -19,6 +19,8 @@ export type EnqueueInput = {
   };
   loadAdmin: () => Promise<Admin>;
   activatedPortalIds: (organizationId: string) => Promise<Set<string>>;
+  /** Pornit de o programare: nu anulează programarea care rulează. */
+  fromSchedule?: boolean;
 };
 
 export async function enqueuePublishJobsForOrg(input: EnqueueInput) {
@@ -95,6 +97,23 @@ export async function enqueuePublishJobsForOrg(input: EnqueueInput) {
     }
     inserted += 1;
     results.push({ portalId: definition.id, portalName: name, queued: true, message: null });
+  }
+
+  // Publicarea manuală sau debifarea anulează programarea activă a portalului.
+  if (!input.fromSchedule) {
+    const touched = results.filter((r) => r.queued).map((r) => r.portalId);
+    const unchecked = input.data.selections.filter((s) => !s.enabled).map((s) => s.portalId);
+    const keys = [...new Set([...touched, ...unchecked])];
+    if (keys.length > 0) {
+      const { cancelActiveSchedules } = await import("./publish-schedule.server");
+      await cancelActiveSchedules(admin, {
+        organizationId: input.organizationId,
+        propertyId: input.data.propertyId,
+        portalKeys: keys,
+        actorId: input.actorId,
+        reason: unchecked.length > 0 && touched.length === 0 ? "Portal debifat înainte de oră." : "Publicat manual înainte de oră.",
+      }).catch((e: unknown) => console.error("[portal-schedule] anularea a eșuat", String(e).slice(0, 200)));
+    }
   }
 
   // Pornește workerul imediat (cerere asincronă din baza de date) și armează
