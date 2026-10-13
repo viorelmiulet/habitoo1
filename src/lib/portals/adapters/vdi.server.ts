@@ -48,6 +48,8 @@ export type VdiDeps = {
     organizationId: string,
     items: { idintern: string; status: "published" | "withdrawn" }[],
   ) => Promise<number>;
+  /** Codul proprietății (ex. HB-1175), pentru retragere fără external_id. */
+  loadReference?: (ctx: PortalContext, ref: ListingRef) => Promise<string | null>;
   call?: typeof vdiCall;
 };
 
@@ -137,9 +139,9 @@ export function createVdiAdapter(deps: VdiDeps): PortalAdapter {
     }
     const res = await call(apiKey, "/apioferte", cat, mapped.payload as unknown as Record<string, unknown>);
     if (!res.ok) return res;
-    const parsed = parseVdiResponse(res.body);
+    const parsed = parseVdiResponse(res.body, cat);
     if (!parsed.ok) return rejection(parsed, res.status, res.body);
-    const allWarnings = agentWarning ? [...mapped.warnings, agentWarning] : mapped.warnings;
+    const allWarnings = [...mapped.warnings, ...(agentWarning ? [agentWarning] : []), ...(parsed.warning ? [`Atenționare VDI.ro: ${parsed.warning}`] : [])];
     const warn = allWarnings.length ? ` ${allWarnings.join(" ")}` : "";
     return {
       ok: true,
@@ -189,7 +191,9 @@ export function createVdiAdapter(deps: VdiDeps): PortalAdapter {
     async withdrawListing(ctx, ref): Promise<PortalResult<ListingOutcome>> {
       const apiKey = apiKeyOf(ctx);
       if (typeof apiKey !== "string") return apiKey;
-      const idintern = vdiIdIntern(ref.externalId);
+      let idintern = vdiIdIntern(ref.externalId);
+      // Fără external_id: idintern din codul proprietății, ca să nu rămână anunțuri orfane.
+      if (idintern === null && deps.loadReference) idintern = vdiIdIntern(await deps.loadReference(ctx, ref));
       if (idintern === null) {
         return { ok: true, data: { externalId: null, live: false, detail: "vdi_withdraw skipped", message: "Anunțul nu a fost publicat pe VDI.ro." } };
       }
@@ -198,7 +202,10 @@ export function createVdiAdapter(deps: VdiDeps): PortalAdapter {
       }
       const res = await call(apiKey, "/apioferte", "del", { idintern });
       if (!res.ok) return res;
-      const parsed = parseVdiResponse(res.body);
+      const parsed = parseVdiResponse(res.body, "del");
+      if (!parsed.ok && parsed.kind === "not_found") {
+        return { ok: true, data: { externalId: String(idintern), live: true, detail: `vdi_del not_found idintern=${idintern}`, message: "Anunțul nu mai exista pe VDI.ro: marcat ca retras.", httpStatus: res.status, portalResponse: res.body } };
+      }
       if (!parsed.ok) return rejection(parsed, res.status, res.body);
       return { ok: true, data: { externalId: String(idintern), live: true, detail: `vdi_del idintern=${idintern}`, message: "Anunțul a fost retras de pe VDI.ro.", httpStatus: res.status, portalResponse: res.body } };
     },
@@ -313,6 +320,11 @@ const realDeps: VdiDeps = {
         photoUrls,
       },
     };
+  },
+  async loadReference(ctx, ref) {
+    const db = await admin();
+    const { data } = await db.from("properties").select("reference").eq("id", ref.propertyId).eq("organization_id", ctx.organizationId).maybeSingle();
+    return data?.reference ?? null;
   },
   async agentLink(organizationId, userId) {
     const db = await admin();
