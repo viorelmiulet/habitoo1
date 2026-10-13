@@ -5545,6 +5545,72 @@ export type Database = {
           },
         ]
       }
+      portal_publish_schedules: {
+        Row: {
+          created_at: string
+          finished_at: string | null
+          finished_by: string | null
+          id: string
+          locked_at: string | null
+          organization_id: string
+          portal_key: string
+          promoted: boolean | null
+          property_id: string
+          reason: string | null
+          requested_by: string
+          scheduled_at: string
+          status: string
+          superadmin: boolean
+        }
+        Insert: {
+          created_at?: string
+          finished_at?: string | null
+          finished_by?: string | null
+          id?: string
+          locked_at?: string | null
+          organization_id: string
+          portal_key: string
+          promoted?: boolean | null
+          property_id: string
+          reason?: string | null
+          requested_by: string
+          scheduled_at: string
+          status?: string
+          superadmin?: boolean
+        }
+        Update: {
+          created_at?: string
+          finished_at?: string | null
+          finished_by?: string | null
+          id?: string
+          locked_at?: string | null
+          organization_id?: string
+          portal_key?: string
+          promoted?: boolean | null
+          property_id?: string
+          reason?: string | null
+          requested_by?: string
+          scheduled_at?: string
+          status?: string
+          superadmin?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "portal_publish_schedules_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "portal_publish_schedules_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       portal_slot_allocations: {
         Row: {
           created_at: string
@@ -8357,6 +8423,31 @@ export type Database = {
         SetofOptions: {
           from: "*"
           to: "collector_sources"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
+      claim_due_portal_publish_schedules: {
+        Args: { _lease_seconds: number; _limit: number }
+        Returns: {
+          created_at: string
+          finished_at: string | null
+          finished_by: string | null
+          id: string
+          locked_at: string | null
+          organization_id: string
+          portal_key: string
+          promoted: boolean | null
+          property_id: string
+          reason: string | null
+          requested_by: string
+          scheduled_at: string
+          status: string
+          superadmin: boolean
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "portal_publish_schedules"
           isOneToOne: false
           isSetofReturn: true
         }

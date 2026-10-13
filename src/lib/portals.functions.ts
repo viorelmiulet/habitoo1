@@ -248,7 +248,7 @@ export async function assertPortalPropertyAccess(input: {
 }
 
 /** Portalurile activate explicit de Superadmin pentru agenție. */
-async function activatedPortalIds(organizationId: string): Promise<Set<string>> {
+export async function activatedPortalIds(organizationId: string): Promise<Set<string>> {
   const admin = await loadAdmin();
   const { data } = await admin
     .from("portal_connections")
