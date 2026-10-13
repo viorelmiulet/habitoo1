@@ -387,7 +387,7 @@ function PropertiesPage() {
       }
       if (filters.district !== "all") query = query.eq("district", filters.district);
       if (filters.source !== "all") query = query.eq("source", filters.source);
-      const agentClause = agentFilterClause(filters.agent);
+      const agentClause = mainAgentFilter ? agentFilterClause(filters.agent) : ({ kind: "none" } as const);
       if (agentClause.kind === "unassigned") query = query.is("assigned_to", null);
       else if (agentClause.kind === "agent") query = query.eq("assigned_to", agentClause.id);
       if (filters.mine && user?.userId) query = query.eq("assigned_to", user.userId);
@@ -609,7 +609,7 @@ function PropertiesPage() {
     filters.city !== "all" ? { key: "city" as const, label: filters.city } : null,
     filters.district !== "all" ? { key: "district" as const, label: filters.district } : null,
     filters.source !== "all" ? { key: "source" as const, label: `Sursă: ${formatPropertySourceLabel(filters.source)}` } : null,
-    filters.agent !== "all"
+    mainAgentFilter && filters.agent !== "all"
       ? { key: "agent" as const, label: filters.agent === UNASSIGNED_AGENT_FILTER ? "Nealocate" : agentName(filters.agent) }
       : null,
     filters.mine ? { key: "mine" as const, label: "Doar ale mele" } : null,
