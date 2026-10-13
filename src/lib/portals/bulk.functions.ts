@@ -4,7 +4,7 @@ import { z } from "zod";
 import { requireActiveOrgAuth } from "@/lib/org-access";
 import { assertPortalPropertyAccess, resolvePublishingOrg } from "@/lib/portals.functions";
 import { getPortalDefinition, isPortalCovered, portalDisplayName, PORTALS } from "@/lib/portals/registry";
-import { portalConnectionReady } from "@/lib/portals/clickimob/index-feed";
+import { portalConnectionReady } from "@/lib/portals/clickimob/connection-ready";
 
 async function loadAdmin() {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");

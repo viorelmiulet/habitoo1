@@ -12,7 +12,7 @@ import { mergePortalOffers, parsePortalOffers } from "@/lib/portals/imobiliare/o
  *  - fiecare operație este jurnalizată sanitizat în `portal_operation_logs`.
  */
 import { resolveListingContact } from "@/lib/portals/listing-contact";
-import { portalConnectionReady } from "@/lib/portals/clickimob/index-feed";
+import { portalConnectionReady } from "@/lib/portals/clickimob/connection-ready";
 import { promotedAfterAction, promotionOperation, promotionPlan } from "@/lib/portals/promotion-flag";
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
