@@ -7,6 +7,9 @@ import {
   parseVdiAgentResponse,
   parseVdiResponse,
   vdiIdIntern,
+  vdiAgentFingerprint,
+  vdiDiacritics,
+  splitLocality,
   vdiOfferType,
   type VdiProperty,
 } from "./mapper";
