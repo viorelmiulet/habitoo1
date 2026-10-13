@@ -60,6 +60,13 @@ function fakeDb(initial: Partial<Job>[] = []) {
     from: (table: string) => {
       if (table === "notifications")
         return { insert: async (row: unknown) => (notifications.push(row), { error: null }) };
+      if (table === "portal_publish_schedules") {
+        // Nicio programare activă: anularea nu găsește rânduri.
+        const chain: Record<string, unknown> = {};
+        for (const k of ["update", "eq", "in"]) chain[k] = () => chain;
+        chain.select = async () => ({ data: [] });
+        return chain;
+      }
       if (table === "portal_publications")
         return { select: () => ({ eq: () => ({ eq: async () => ({ data: [] }) }) }) };
       return {
