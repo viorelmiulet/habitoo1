@@ -15,6 +15,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireActiveOrgAuth } from "@/lib/org-access";
 import { collaborationCommissionSchema, resolveCollaborationCommission } from "@/lib/collaboration-commission";
+import { PARTNER_OFFERS_PAGE_SIZE, PARTNER_OFFER_SORTS } from "@/lib/partner-offers";
 
 export type CollaborationProposalStatus =
   "pending" | "accepted" | "viewing" | "declined" | "closed";
@@ -61,6 +62,7 @@ export type CollaborationOffer = {
   collabTerms: string | null;
   agencyName: string;
   agencyCity: string | null;
+  agencyLogoUrl?: string | null;
   updatedAt: string;
   coverUrl: string | null;
   images: string[];
@@ -122,19 +124,19 @@ function requireParticipation(actor: Actor) {
 /** Agențiile care participă la colaborare, fără agenția curentă. */
 async function participatingOrgIds(
   actor: Actor,
-): Promise<Map<string, { name: string; city: string | null }>> {
+): Promise<Map<string, { name: string; city: string | null; logoPath?: string | null }>> {
   const admin = await loadAdmin();
   const { data, error } = await admin
     .from("organizations")
-    .select("id,name,city,status,archived_at,collaboration_enabled")
+    .select("id,name,city,status,archived_at,collaboration_enabled,logo_path")
     .neq("id", actor.organizationId);
   if (error) throw error;
-  const map = new Map<string, { name: string; city: string | null }>();
+  const map = new Map<string, { name: string; city: string | null; logoPath?: string | null }>();
   for (const org of data ?? []) {
     if (org.collaboration_enabled === false) continue;
     if (org.archived_at) continue;
     if (org.status !== "active" && org.status !== "trial") continue;
-    map.set(org.id, { name: org.name, city: org.city ?? null });
+    map.set(org.id, { name: org.name, city: org.city ?? null, logoPath: org.logo_path });
   }
   return map;
 }
@@ -150,6 +152,9 @@ const filtersSchema = z
     roomsMin: z.number().int().min(0).max(30).nullable().optional(),
     surfaceMin: z.number().nonnegative().nullable().optional(),
     limit: z.number().int().min(1).max(120).optional(),
+    offset: z.number().int().nonnegative().optional(),
+    agencyId: z.string().uuid().optional(),
+    sort: z.enum(["newest", "price-asc", "price-desc", "commission-desc"]).optional(),
   })
   .default({});
 
@@ -282,23 +287,25 @@ function mapOffer(
 export const listCollaborationOffers = createServerFn({ method: "GET" })
   .middleware([requireActiveOrgAuth])
   .inputValidator((data: unknown) => filtersSchema.parse(data ?? {}))
-  .handler(async ({ context, data }): Promise<CollaborationOffer[]> => {
+  .handler(async ({ context, data }): Promise<{ offers: CollaborationOffer[]; total: number }> => {
     const actor = await loadActor(context as AuthContext);
     requireParticipation(actor);
     const agencies = await participatingOrgIds(actor);
-    if (agencies.size === 0) return [];
+    if (agencies.size === 0 || (data.agencyId && !agencies.has(data.agencyId))) return { offers: [], total: 0 };
 
     const admin = await loadAdmin();
     let query = admin
       .from("properties")
-      .select(OFFER_COLUMNS)
+      .select(OFFER_COLUMNS, { count: "exact" })
       .in("organization_id", [...agencies.keys()])
       .eq("collaboration", true)
       .is("deleted_at", null)
       .in("status", [...OFFERABLE_STATUSES])
-      .order("updated_at", { ascending: false })
-      .limit(data.limit ?? 60);
+      .order(PARTNER_OFFER_SORTS[data.sort ?? "newest"].column, { ascending: PARTNER_OFFER_SORTS[data.sort ?? "newest"].ascending, nullsFirst: false })
+      .order("id", { ascending: true })
+      .range(data.offset ?? 0, (data.offset ?? 0) + (data.limit ?? PARTNER_OFFERS_PAGE_SIZE) - 1);
 
+    if (data.agencyId) query = query.eq("organization_id", data.agencyId);
     if (data.city && data.city !== "all") query = query.eq("city", data.city);
     if (data.propertyType && data.propertyType !== "all") {
       query = query.eq("property_type", data.propertyType);
@@ -318,7 +325,7 @@ export const listCollaborationOffers = createServerFn({ method: "GET" })
       }
     }
 
-    const { data: rows, error } = await query;
+    const { data: rows, error, count } = await query;
     if (error) throw error;
     const offers = (rows ?? []) as unknown as OfferRow[];
     const ids = offers.map((r) => r.id);
@@ -339,14 +346,18 @@ export const listCollaborationOffers = createServerFn({ method: "GET" })
       counts.set(row.property_id, (counts.get(row.property_id) ?? 0) + 1);
     }
 
-    return offers.map((row) =>
-      mapOffer(
+    const logoPaths = [...new Set(offers.map((r) => agencies.get(r.organization_id)?.logoPath).filter((p): p is string => Boolean(p)))];
+    const { data: signedLogos } = logoPaths.length ? await admin.storage.from("agency-logos").createSignedUrls(logoPaths, 3600) : { data: [] };
+    const logos = new Map((signedLogos ?? []).map((l) => [l.path, l.signedUrl]));
+    return { total: count ?? 0, offers: offers.map((row) => ({
+      ...mapOffer(
         row,
         agencies.get(row.organization_id) ?? { name: "Agenție Habitoo", city: null },
         images.get(row.id) ?? [],
         counts.get(row.id) ?? 0,
       ),
-    );
+      agencyLogoUrl: logos.get(agencies.get(row.organization_id)?.logoPath ?? "") ?? null,
+    })) };
   });
 
 export const getCollaborationOffer = createServerFn({ method: "GET" })
@@ -380,15 +391,15 @@ export const getCollaborationOffer = createServerFn({ method: "GET" })
 export const getCollaborationFacets = createServerFn({ method: "GET" })
   .middleware([requireActiveOrgAuth])
   .handler(
-    async ({ context }): Promise<{ cities: string[]; types: string[]; participating: boolean }> => {
+    async ({ context }): Promise<{ cities: string[]; types: string[]; participating: boolean; agencies: { id: string; name: string }[] }> => {
       const actor = await loadActor(context as AuthContext);
-      if (!actor.collaborationEnabled) return { cities: [], types: [], participating: false };
+      if (!actor.collaborationEnabled) return { cities: [], types: [], participating: false, agencies: [] };
       const agencies = await participatingOrgIds(actor);
-      if (agencies.size === 0) return { cities: [], types: [], participating: true };
+      if (agencies.size === 0) return { cities: [], types: [], participating: true, agencies: [] };
       const admin = await loadAdmin();
       const { data } = await admin
         .from("properties")
-        .select("city,property_type")
+        .select("city,property_type,organization_id")
         .in("organization_id", [...agencies.keys()])
         .eq("collaboration", true)
         .is("deleted_at", null)
@@ -403,6 +414,7 @@ export const getCollaborationFacets = createServerFn({ method: "GET" })
         cities: [...cities].sort((a, b) => a.localeCompare(b, "ro")),
         types: [...types].sort(),
         participating: true,
+        agencies: [...new Set((data ?? []).map((r) => r.organization_id))].map((id) => ({ id, name: agencies.get(id)?.name ?? "Agenție Habitoo" })).sort((a, b) => a.name.localeCompare(b.name, "ro")),
       };
     },
   );
