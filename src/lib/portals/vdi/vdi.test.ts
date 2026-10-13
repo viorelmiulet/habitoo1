@@ -4,6 +4,7 @@ import {
   mapAgentToVdi,
   mapPropertyToVdi,
   mapVdiState,
+  parseVdiAgentResponse,
   parseVdiResponse,
   vdiIdIntern,
   vdiOfferType,
