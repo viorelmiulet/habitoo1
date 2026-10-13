@@ -78,7 +78,10 @@ export function parseVdiAgentResponse(body: unknown): { ok: boolean; text: strin
   const raw = record?.["eroare"];
   const text = typeof raw === "string" ? raw.trim() : "";
   if (/(a fost|au fost)\s+(adaugat|modificat|actualizat)/i.test(text)) return { ok: true, text };
-  return { ok: false, text: text || "Răspuns VDI.ro neașteptat.", notFound: /nu a fost gasit|nu exista/i.test(text) };
+  if (text) return { ok: false, text, notFound: /nu a fost gasit|nu exista/i.test(text) };
+  const succes = successValue(record);
+  if (succes !== null) return { ok: true, text: `succes: ${succes}` };
+  return { ok: false, text: `Răspuns VDI.ro neașteptat: ${rawBodyPreview(body) || "(gol)"}` };
 }
 
 /* ------------------------------- identificatori ------------------------------- */
