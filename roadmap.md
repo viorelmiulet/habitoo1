@@ -1,10 +1,11 @@
-# Descoperire SEO blog Habitoo
-
 # Email vizual pentru chat
 
-- [ ] Șablon reutilizabil și integrare în notificările de chat, fără schimbarea regulilor de trimitere
-- [ ] Acces direct la conversație și teste mock
-- [ ] Previzualizări cu/fără poză și capturi desktop/mobil, fără emailuri reale
+- [x] Șablon reutilizabil și integrare în notificările de chat, fără schimbarea regulilor de trimitere
+- [x] Acces direct la conversație și teste mock
+- [x] Previzualizări cu/fără poză și capturi desktop/mobil, fără emailuri reale
+- [ ] Verificare acces direct în cont real — blocată de lipsa unei sesiuni autorizate în preview
+
+# Descoperire SEO blog Habitoo
 
 - [x] Sitemap dinamic cu URL-urile publice și articolele publicate
 - [x] robots.txt pentru motoare de căutare și AI, cu zonele private blocate
