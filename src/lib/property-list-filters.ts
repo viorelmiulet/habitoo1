@@ -306,3 +306,41 @@ export function romaniaDateBoundary(date: string, boundary: "start" | "end"): st
   const instant = new Date(localAsUtc - bucharestOffsetMs(offsetProbe));
   return instant.toISOString();
 }
+
+/** Valoarea filtrului „Agent” pentru anunțurile fără agent responsabil. */
+export const UNASSIGNED_AGENT_FILTER = "unassigned";
+
+export function agentFilterClause(value: string): { kind: "none" } | { kind: "unassigned" } | { kind: "agent"; id: string } {
+  if (!value || value === "all") return { kind: "none" };
+  if (value === UNASSIGNED_AGENT_FILTER) return { kind: "unassigned" };
+  return { kind: "agent", id: value };
+}
+
+/** Filtrul principal „Agent” apare doar pentru cine vede toate anunțurile agenției. */
+export function showMainAgentFilter(user: { isAdmin: boolean; isSuperadmin: boolean } | null | undefined): boolean {
+  return Boolean(user && (user.isAdmin || user.isSuperadmin));
+}
+
+export type AgentFilterOption = { value: string; label: string; count: number };
+
+/** Opțiunile filtrului: membrii (inactivii doar dacă au anunțuri) + „Nealocate”; numărul exclude arhivatele și șterse. */
+export function buildAgentFilterOptions(
+  members: { id: string; full_name: string | null; is_active: boolean | null }[],
+  listings: { assigned_to: string | null; status: string; deleted_at: string | null }[],
+): AgentFilterOption[] {
+  const counts = new Map<string, number>();
+  let unassigned = 0;
+  for (const l of listings) {
+    if (l.deleted_at || l.status === "archived") continue;
+    if (!l.assigned_to) unassigned += 1;
+    else counts.set(l.assigned_to, (counts.get(l.assigned_to) ?? 0) + 1);
+  }
+  const options = members
+    .filter((m) => m.is_active !== false || (counts.get(m.id) ?? 0) > 0)
+    .map((m) => ({
+      value: m.id,
+      label: `${m.full_name ?? "Fără nume"}${m.is_active === false ? " (inactiv)" : ""}`,
+      count: counts.get(m.id) ?? 0,
+    }));
+  return [...options, { value: UNASSIGNED_AGENT_FILTER, label: "Nealocate", count: unassigned }];
+}
