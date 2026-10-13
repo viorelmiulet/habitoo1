@@ -110,14 +110,7 @@ export function clickimobAgencyContact(org: ClickimobOrgRow) {
   };
 }
 
-/** Conexiune pregătită: status connected/ready; ClickImob e gata imediat ce e activat. */
-export function portalConnectionReady(
-  portalId: string,
-  connection: { status?: string | null; activated?: boolean | null } | null | undefined,
-): boolean {
-  if (connection?.status === "connected" || connection?.status === "ready") return true;
-  return portalId === "clickimob" && connection?.activated === true;
-}
+export { portalConnectionReady } from "./connection-ready";
 
 export type ClickimobIndexStatusInput = {
   /** Intrarea agenției în index (calculată de `selectClickimobAgencies`), dacă există. */
