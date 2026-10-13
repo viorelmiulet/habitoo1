@@ -70,29 +70,38 @@ function rejection(parsed: Extract<VdiParsed, { ok: false }>, status: number, bo
 export function createVdiAdapter(deps: VdiDeps): PortalAdapter {
   const call = deps.call ?? vdiCall;
 
-  /** Trimite agentul (add sau mod) înaintea anunțului. */
-  async function ensureAgent(ctx: PortalContext, apiKey: string, agent: VdiAgentInfo): Promise<number | PortalFail> {
+  /**
+   * Trimite agentul înaintea anunțului: `add` prima dată, `mod` doar când s-au schimbat
+   * datele (amprentă). Eroare la `mod` (alta decât „nu a fost gasit”) = avertisment.
+   */
+  async function ensureAgent(ctx: PortalContext, apiKey: string, agent: VdiAgentInfo): Promise<{ id: number; warning: string | null } | PortalFail> {
     const link = await deps.agentLink(ctx.organizationId, agent.userId);
     const mapped = mapAgentToVdi(agent, link.externalId);
     if (!mapped.ok) return fail("VALIDATION_ERROR", mapped.reason);
-    if (!ctx.allowLiveRequests) return link.externalId;
+    const fp = vdiAgentFingerprint(mapped.payload);
+    if (!ctx.allowLiveRequests) return { id: link.externalId, warning: null };
+    if (link.synced && link.fingerprint === fp) return { id: link.externalId, warning: null };
     let res = await call(apiKey, "/api", link.synced ? "mod" : "add", mapped.payload);
     if (!res.ok) return res;
     let parsed = parseVdiAgentResponse(res.body);
-    // Agent marcat trimis, dar absent pe VDI: îl adăugăm din nou.
     if (!parsed.ok && link.synced && parsed.notFound) {
       res = await call(apiKey, "/api", "add", mapped.payload);
       if (!res.ok) return res;
       parsed = parseVdiAgentResponse(res.body);
+    } else if (!parsed.ok && link.synced) {
+      const listing = parseVdiResponse(res.body);
+      await deps.markAgentSynced(ctx.organizationId, agent.userId, parsed.text, null);
+      if (!listing.ok && (listing.kind === "invalid_key" || listing.kind === "expired")) return rejection(listing, res.status, res.body);
+      return { id: link.externalId, warning: `Datele agentului nu au fost actualizate pe VDI.ro: ${parsed.text}` };
     }
     if (!parsed.ok) {
       const listing = parseVdiResponse(res.body);
-      await deps.markAgentSynced(ctx.organizationId, agent.userId, parsed.text);
+      await deps.markAgentSynced(ctx.organizationId, agent.userId, parsed.text, null);
       if (!listing.ok && listing.kind !== "rejected") return rejection(listing, res.status, res.body);
       return fail("VALIDATION_ERROR", `VDI.ro (agent): ${parsed.text}`, { httpStatus: res.status, portalResponse: res.body });
     }
-    await deps.markAgentSynced(ctx.organizationId, agent.userId, null);
-    return link.externalId;
+    await deps.markAgentSynced(ctx.organizationId, agent.userId, null, fp);
+    return { id: link.externalId, warning: null };
   }
 
   async function upsert(ctx: PortalContext, ref: ListingRef, cat: "add" | "mod"): Promise<PortalResult<ListingOutcome>> {
