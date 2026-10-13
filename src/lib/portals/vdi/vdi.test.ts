@@ -148,7 +148,7 @@ describe("mapper", () => {
     expect(r.payload.pretinchiriere).toBe(2500);
     expect(r.payload.etajul).toBe("parter");
     expect(r.payload.titlu.length).toBeGreaterThanOrEqual(10);
-    expect(r.payload.localitatea).toBe("București");
+    expect(r.payload.localitatea).toBe("Bucuresti");
     expect(r.payload.cartierul).toBe("Sector 6");
     expect(r.payload).not.toHaveProperty("idagent");
   });
