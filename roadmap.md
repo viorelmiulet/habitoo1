@@ -2,8 +2,8 @@
 
 # Lista publică de agenții
 
-- [ ] Listare automată a agențiilor eligibile și logo-uri, cu profil opțional
-- [ ] Teste și publicare; verificare live a celor patru agenții
+- [x] Listare automată a agențiilor eligibile și logo-uri, cu profil opțional
+- [x] Teste și publicare; verificare live a celor patru agenții
 
 # Oferte partenere unificate
 

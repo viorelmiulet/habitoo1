@@ -96,6 +96,17 @@ describe.skipIf(!url || !key)("acces anonim (doar citire)", () => {
     expect(data ?? []).toHaveLength(0);
   });
 
+  it("agenții unui profil de agenție dezactivat nu sunt expuși anonim", async () => {
+    const { data: agencies, error } = await anon().rpc("public_partner_agencies");
+    expect(error).toBeNull();
+    for (const agency of agencies ?? []) {
+      if (agency.public_slug !== null) continue;
+      const { data: agents, error: agentsError } = await anon().rpc("public_agency_agents", { _org: agency.id });
+      expect(agentsError).toBeNull();
+      expect(agents ?? []).toEqual([]);
+    }
+  });
+
   it("tabelele organizations și profiles rămân închise", async () => {
     for (const t of ["organizations", "profiles"] as const) {
       const { data } = await anon().from(t).select("id").limit(1);
