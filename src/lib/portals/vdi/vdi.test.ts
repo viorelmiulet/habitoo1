@@ -176,11 +176,11 @@ describe("mapper", () => {
 
 describe("adaptor (mock)", () => {
   const ctx = { organizationId: "org", portalCredential: "k", allowLiveRequests: true, settings: {} } as unknown as PortalContext;
-  function deps(agentEmail: string | null, responses: unknown[]) {
+  function deps(agentEmail: string | null, responses: unknown[], link: { externalId: number; synced: boolean; fingerprint?: string | null } = { externalId: 1001, synced: false }) {
     const calls: { endpoint: string; cat: string; body: unknown }[] = [];
     const d: VdiDeps = {
       loadProperty: async () => ({ ok: true, property: base, agent: { userId: "u1", fullName: "Ana Pop", email: agentEmail, phone: null, avatarUrl: null } }),
-      agentLink: async () => ({ externalId: 1001, synced: false }),
+      agentLink: async () => link,
       markAgentSynced: vi.fn(async () => {}),
       applyRemoteStates: async () => 0,
       call: (async (_k: string, endpoint: string, cat: string, body: unknown) => {
@@ -214,5 +214,41 @@ describe("adaptor (mock)", () => {
     const { d } = deps("ana@x.ro", [{ eroare: "Agentul a fost adaugat" }, { eroare: "Localitatea este invalida" }]);
     const out = await createVdiAdapter(d).publishListing(ctx, { propertyId: "p", externalId: null });
     expect(out).toMatchObject({ ok: false, code: "VALIDATION_ERROR", message: "VDI.ro: Localitatea este invalida" });
+  });
+
+  it("agent deja trimis, date neschimbate: nu se retrimite", async () => {
+    const fp = vdiAgentFingerprint({ idintern: 1001, firstname: "Ana", lastname: "Pop", email: "ana@x.ro" });
+    const { d, calls } = deps("ana@x.ro", [{ eroare: "Proprietatea a fost adaugata. ID: VDI1.5 | Link: https://vdi.ro/a/5" }], { externalId: 1001, synced: true, fingerprint: fp });
+    const out = await createVdiAdapter(d).publishListing(ctx, { propertyId: "p", externalId: null });
+    expect(calls.map((c) => `${c.endpoint}:${c.cat}`)).toEqual(["/apioferte:add"]);
+    expect(out.ok).toBe(true);
+  });
+
+  it("mod cu „Date invalide” nu blochează anunțul; avertisment păstrat", async () => {
+    const { d, calls } = deps("ana@x.ro", [{ eroare: "Date invalide" }, { eroare: "Proprietatea a fost adaugata. ID: VDI1.5 | Link: https://vdi.ro/a/5" }], { externalId: 1000, synced: true, fingerprint: "vechi" });
+    const out = await createVdiAdapter(d).publishListing(ctx, { propertyId: "p", externalId: null });
+    expect(calls.map((c) => `${c.endpoint}:${c.cat}`)).toEqual(["/api:mod", "/apioferte:add"]);
+    expect((calls[1]!.body as { idagent: number }).idagent).toBe(1000);
+    expect(out.ok && out.data.message).toContain("Date invalide");
+  });
+
+  it("mod cu „nu a fost gasit” → add", async () => {
+    const { d, calls } = deps("ana@x.ro", [{ eroare: "Agentul cu id intern 1000 nu a fost gasit" }, { succes: 1000 }, { eroare: "Proprietatea a fost adaugata. ID: VDI1.5 | Link: https://vdi.ro/a/5" }], { externalId: 1000, synced: true, fingerprint: null });
+    await createVdiAdapter(d).publishListing(ctx, { propertyId: "p", externalId: null });
+    expect(calls.map((c) => `${c.endpoint}:${c.cat}`)).toEqual(["/api:mod", "/api:add", "/apioferte:add"]);
+  });
+});
+
+describe("HB-1175 (date reale, fără trimitere)", () => {
+  it("diacritice cu virgulă și București Sector 6", () => {
+    const r = mapPropertyToVdi({ ...base, reference: "HB-1175", county: "Bucure\u015fti", city: "Bucure\u015fti Sectorul 6", district: "Militari" }, 1000);
+    if (!r.ok) throw new Error(r.reasons.join());
+    const out = { judetul: r.payload.judetul, localitatea: r.payload.localitatea, cartierul: r.payload.cartierul, idagent: r.payload.idagent };
+    console.log("HB-1175 payload", JSON.stringify(out));
+    expect(out).toEqual({ judetul: "Bucure\u0219ti", localitatea: "Bucure\u0219ti", cartierul: "Militari", idagent: 1000 });
+  });
+  it("„București Sector 6” fără zonă → cartier „Sector 6”; ţ → ț", () => {
+    expect(splitLocality("Bucure\u0219ti Sector 6", null)).toEqual({ judet: "Bucure\u0219ti", localitate: "Bucure\u0219ti", cartier: "Sector 6" });
+    expect(vdiDiacritics("Mehedin\u0163i \u015e\u0162")).toBe("Mehedin\u021bi \u0218\u021a");
   });
 });
