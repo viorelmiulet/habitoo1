@@ -1,4 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useLocation } from "@tanstack/react-router";
+import { requestedChatContact } from "@/lib/chat/email-data";
 import { activityLabel, isOnline } from "@/lib/chat/presence";
 import { useMinuteClock } from "@/hooks/use-presence-heartbeat";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -155,6 +157,16 @@ export function Messenger({ user }: { user: CurrentUser }) {
   }, [convs.data]);
   const convToUserRef = useRef(convToUser);
   convToUserRef.current = convToUser;
+
+  const location = useLocation();
+  const openedEmailLink = useRef<string | null>(null);
+  useEffect(() => {
+    if (openedEmailLink.current === location.href || !directory.data) return;
+    const other = requestedChatContact(location.href, convs.data ?? []);
+    if (!other || !directory.data.some((c) => c.userId === other)) return;
+    openedEmailLink.current = location.href;
+    setUi((s) => ({ ...s, panel: false, windows: openWindow(s.windows, other), minimized: s.minimized.filter((x) => x !== other) }));
+  }, [location.href, convs.data, directory.data, setUi]);
 
   // Prezență realtime + „văzut ultima dată” persistat.
   useEffect(() => {

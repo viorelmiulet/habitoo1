@@ -5,6 +5,8 @@
  */
 import { createFileRoute } from "@tanstack/react-router";
 import { authenticateCronRequest } from "@/integrations/supabase/cron-auth";
+import { CHAT_EMAIL_IMAGE_TTL, chatConversationUrl } from "@/lib/chat/email-data";
+import { chatEmailProps, chatEmailText, renderHabitooEmail } from "@/lib/email-templates/habitoo-email";
 
 async function authenticate(request: Request): Promise<Response | null> {
   const nonce = request.headers.get("x-cron-nonce");
@@ -18,10 +20,6 @@ async function authenticate(request: Request): Promise<Response | null> {
     return new Response("Unauthorized", { status: 401 });
   }
   return authenticateCronRequest(request);
-}
-
-function esc(s: string) {
-  return s.replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
 }
 
 export const Route = createFileRoute("/api/public/cron/chat-email")({
@@ -42,12 +40,12 @@ export const Route = createFileRoute("/api/public/cron/chat-email")({
           const ids = [...new Set(due.flatMap((d) => [d.recipient_id, d.sender_id]))];
           const { data: profiles } = await supabaseAdmin
             .from("profiles")
-            .select("id,email,full_name,organization_id")
+            .select("id,email,full_name,organization_id,avatar_url")
             .in("id", ids);
           const orgIds = [...new Set((profiles ?? []).map((p) => p.organization_id).filter(Boolean))];
           const { data: orgs } = await supabaseAdmin
             .from("organizations")
-            .select("id,name")
+            .select("id,name,logo_path")
             .in("id", orgIds as string[]);
           const { data: admins } = await supabaseAdmin
             .from("user_roles")
@@ -57,6 +55,24 @@ export const Route = createFileRoute("/api/public/cron/chat-email")({
           const platform = new Set((admins ?? []).map((a) => a.user_id));
           const byId = new Map((profiles ?? []).map((p) => [p.id, p]));
           const orgName = new Map((orgs ?? []).map((o) => [o.id, o.name]));
+          const orgLogo = new Map((orgs ?? []).map((o) => [o.id, o.logo_path]));
+          // Images stay private; failures fall back to initials or agency text.
+          const imageUrls = new Map<string, string | null>();
+          const emailImage = async (bucket: string, path?: string | null) => {
+            if (!path) return null;
+            const key = `${bucket}:${path}`;
+            if (imageUrls.has(key)) return imageUrls.get(key) ?? null;
+            try {
+              const { data, error: imageError } = await supabaseAdmin.storage.from(bucket)
+                .createSignedUrl(path, CHAT_EMAIL_IMAGE_TTL);
+              const url = imageError ? null : data?.signedUrl ?? null;
+              imageUrls.set(key, url);
+              return url;
+            } catch {
+              imageUrls.set(key, null);
+              return null;
+            }
+          };
           for (const d of due) {
             const to = byId.get(d.recipient_id);
             const from = byId.get(d.sender_id);
@@ -66,9 +82,31 @@ export const Route = createFileRoute("/api/public/cron/chat-email")({
               ? "Admin platformă"
               : (from.organization_id && orgName.get(from.organization_id)) || "Habitoo";
             const subject = `Ai un mesaj nou de la ${name}, ${agency}`;
-            const text = `${subject}.\n\nDeschide Habitoo CRM pentru a răspunde: https://crm.habitoo.ro/app`;
-            const html = `<p>${esc(subject)}.</p><p><a href="https://crm.habitoo.ro/app">Deschide Habitoo CRM</a> pentru a răspunde.</p>`;
             try {
+              // Current unread content, without changing the atomic claim or frequency.
+              const { data: participant, error: participantError } = await supabaseAdmin
+                .from("chat_participants").select("last_read_at")
+                .eq("conversation_id", d.conversation_id).eq("user_id", d.recipient_id).maybeSingle();
+              if (participantError || !participant) continue;
+              const { data: messages, count, error: messageError } = await supabaseAdmin
+                .from("chat_messages").select("body", { count: "exact" })
+                .eq("conversation_id", d.conversation_id).eq("sender_id", d.sender_id)
+                .gt("created_at", participant.last_read_at)
+                .order("created_at", { ascending: false }).order("id", { ascending: false }).limit(1);
+              const message = messages?.[0];
+              if (messageError || !message) continue;
+              const [avatarUrl, agencyLogoUrl] = await Promise.all([
+                emailImage("avatars", from.avatar_url),
+                emailImage("agency-logos", platform.has(from.id) || !from.organization_id ? null : orgLogo.get(from.organization_id)),
+              ]);
+              const emailData = {
+                senderName: name, agencyName: agency, avatarUrl, agencyLogoUrl,
+                message: message.body, unreadCount: count ?? d.message_count,
+                conversationUrl: chatConversationUrl(d.conversation_id, platform.has(to.id)),
+              };
+              const html = await renderHabitooEmail(chatEmailProps(emailData));
+              const text = chatEmailText(emailData, subject);
+              // Lovable appends the existing hosted unsubscribe footer.
               await sendLovableEmail(
                 {
                   to: to.email,
