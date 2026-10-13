@@ -23,6 +23,15 @@ describe("relayFetch", () => {
     expect(url).toBe("https://relay.habitoo.ro/imobiliare/api/v3/me?x=1");
     expect(new Headers(init.headers).get("X-Relay-Key")).toBe(KEY);
   });
+  it("fără PORTAL_RELAY_URL, folosește adresa implicită a releului", async () => {
+    const f = ok();
+    await relayFetch("vdi", "https://vdi.ro/apioferte?cat=add", {}, f, { key: KEY });
+    const [url, init] = f.mock.calls[0] as unknown as [string, RequestInit];
+    expect(url).toBe("https://relay.habitoo.ro/vdi/apioferte?cat=add");
+    expect(new Headers(init.headers).get("X-Relay-Key")).toBe(KEY);
+    const r = await checkRelayIp(ok(), { key: KEY });
+    expect(r).toEqual({ ok: true, ip: "185.166.212.65", expected: true });
+  });
   it("fără secrete, apel direct", async () => {
     const f = ok();
     await relayFetch("vdi", "https://vdi.ro/api?cat=list", {}, f, {});

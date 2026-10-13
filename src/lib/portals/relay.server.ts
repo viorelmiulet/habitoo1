@@ -1,7 +1,8 @@
 /**
  * Releu cu IP fix pentru portalurile care acceptă doar IP-uri aprobate
- * (VDI.ro, Imobiliare.ro). Cu `PORTAL_RELAY_URL` + `PORTAL_RELAY_KEY` setate,
- * cererea merge prin releu și primește `X-Relay-Key`; altfel apel direct.
+ * (VDI.ro, Imobiliare.ro). Adresa releului este `https://relay.habitoo.ro`
+ * (secretul opțional `PORTAL_RELAY_URL` o poate înlocui); cheia
+ * `PORTAL_RELAY_KEY` rămâne obligatorie — fără ea cererea pleacă direct.
  * Cheia nu apare niciodată în loguri sau mesaje de eroare.
  */
 export type RelayPortal = "vdi" | "imobiliare";
@@ -11,14 +12,22 @@ const PORTAL_HOSTS: Record<RelayPortal, string> = {
   imobiliare: "www.imobiliare.ro",
 };
 
+/** Adresa releului cu IP fix, folosită când `PORTAL_RELAY_URL` nu e setat. */
+export const RELAY_DEFAULT_URL = "https://relay.habitoo.ro";
+
 type RelayEnv = { url?: string; key?: string };
 
 function readRelayEnv(): RelayEnv {
   return { url: process.env["PORTAL_RELAY_URL"], key: process.env["PORTAL_RELAY_KEY"] };
 }
 
+/** Adresa efectivă a releului: secretul `PORTAL_RELAY_URL` sau valoarea implicită. */
+export function relayUrlOf(env: RelayEnv = readRelayEnv()): string {
+  return (env.url?.trim() || RELAY_DEFAULT_URL).replace(/\/+$/, "");
+}
+
 export function relayConfigured(env: RelayEnv = readRelayEnv()): boolean {
-  return Boolean(env.url?.trim() && env.key?.trim());
+  return Boolean(env.key?.trim());
 }
 
 /** Rescrie adresa portalului către releu; `null` dacă hostul nu e al portalului. */
@@ -41,7 +50,7 @@ export async function relayFetch(
   env: RelayEnv = readRelayEnv(),
 ): Promise<Response> {
   if (!relayConfigured(env)) return fetchImpl(url, init);
-  const rewritten = rewriteForRelay(portal, url, env.url!.trim());
+  const rewritten = rewriteForRelay(portal, url, relayUrlOf(env));
   if (!rewritten) return fetchImpl(url, init);
   const headers = new Headers(init.headers);
   headers.set("X-Relay-Key", env.key!.trim());
@@ -71,12 +80,12 @@ export async function checkRelayIp(
   env: RelayEnv = readRelayEnv(),
 ): Promise<RelayIpCheck> {
   if (!relayConfigured(env)) {
-    return { ok: false, reason: "not_configured", message: "Releul nu este configurat (lipsește adresa sau cheia)." };
+    return { ok: false, reason: "not_configured", message: "Releul nu este configurat (lipsește cheia de acces)." };
   }
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), 10_000);
   try {
-    const response = await fetchImpl(`${env.url!.trim().replace(/\/+$/, "")}/ipcheck/`, {
+    const response = await fetchImpl(`${relayUrlOf(env)}/ipcheck/`, {
       method: "GET",
       headers: { "X-Relay-Key": env.key!.trim() },
       signal: controller.signal,
