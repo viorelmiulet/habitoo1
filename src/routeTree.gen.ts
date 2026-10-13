@@ -103,6 +103,7 @@ import { Route as ApiPublicCronOlxStatusRouteImport } from './routes/api/public/
 import { Route as ApiPublicCronOlxTokenRefreshRouteImport } from './routes/api/public/cron/olx-token-refresh'
 import { Route as ApiPublicCronPortalBulkRouteImport } from './routes/api/public/cron/portal-bulk'
 import { Route as ApiPublicCronPortalPublishRouteImport } from './routes/api/public/cron/portal-publish'
+import { Route as ApiPublicCronPortalSchedulesRouteImport } from './routes/api/public/cron/portal-schedules'
 import { Route as ApiPublicCronPortalSlotWithdrawRouteImport } from './routes/api/public/cron/portal-slot-withdraw'
 import { Route as ApiPublicCronPortalStatusWithdrawRouteImport } from './routes/api/public/cron/portal-status-withdraw'
 import { Route as ApiPublicCronPromotionWithdrawRouteImport } from './routes/api/public/cron/promotion-withdraw'
@@ -663,6 +664,12 @@ const ApiPublicCronPortalPublishRoute =
     path: '/api/public/cron/portal-publish',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicCronPortalSchedulesRoute =
+  ApiPublicCronPortalSchedulesRouteImport.update({
+    id: '/api/public/cron/portal-schedules',
+    path: '/api/public/cron/portal-schedules',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicCronPortalSlotWithdrawRoute =
   ApiPublicCronPortalSlotWithdrawRouteImport.update({
     id: '/api/public/cron/portal-slot-withdraw',
@@ -1012,6 +1019,7 @@ export interface FileRoutesByFullPath {
   '/api/public/cron/olx-token-refresh': typeof ApiPublicCronOlxTokenRefreshRoute
   '/api/public/cron/portal-bulk': typeof ApiPublicCronPortalBulkRoute
   '/api/public/cron/portal-publish': typeof ApiPublicCronPortalPublishRoute
+  '/api/public/cron/portal-schedules': typeof ApiPublicCronPortalSchedulesRoute
   '/api/public/cron/portal-slot-withdraw': typeof ApiPublicCronPortalSlotWithdrawRoute
   '/api/public/cron/portal-status-withdraw': typeof ApiPublicCronPortalStatusWithdrawRoute
   '/api/public/cron/promotion-withdraw': typeof ApiPublicCronPromotionWithdrawRoute
@@ -1149,6 +1157,7 @@ export interface FileRoutesByTo {
   '/api/public/cron/olx-token-refresh': typeof ApiPublicCronOlxTokenRefreshRoute
   '/api/public/cron/portal-bulk': typeof ApiPublicCronPortalBulkRoute
   '/api/public/cron/portal-publish': typeof ApiPublicCronPortalPublishRoute
+  '/api/public/cron/portal-schedules': typeof ApiPublicCronPortalSchedulesRoute
   '/api/public/cron/portal-slot-withdraw': typeof ApiPublicCronPortalSlotWithdrawRoute
   '/api/public/cron/portal-status-withdraw': typeof ApiPublicCronPortalStatusWithdrawRoute
   '/api/public/cron/promotion-withdraw': typeof ApiPublicCronPromotionWithdrawRoute
@@ -1292,6 +1301,7 @@ export interface FileRoutesById {
   '/api/public/cron/olx-token-refresh': typeof ApiPublicCronOlxTokenRefreshRoute
   '/api/public/cron/portal-bulk': typeof ApiPublicCronPortalBulkRoute
   '/api/public/cron/portal-publish': typeof ApiPublicCronPortalPublishRoute
+  '/api/public/cron/portal-schedules': typeof ApiPublicCronPortalSchedulesRoute
   '/api/public/cron/portal-slot-withdraw': typeof ApiPublicCronPortalSlotWithdrawRoute
   '/api/public/cron/portal-status-withdraw': typeof ApiPublicCronPortalStatusWithdrawRoute
   '/api/public/cron/promotion-withdraw': typeof ApiPublicCronPromotionWithdrawRoute
@@ -1435,6 +1445,7 @@ export interface FileRouteTypes {
     | '/api/public/cron/olx-token-refresh'
     | '/api/public/cron/portal-bulk'
     | '/api/public/cron/portal-publish'
+    | '/api/public/cron/portal-schedules'
     | '/api/public/cron/portal-slot-withdraw'
     | '/api/public/cron/portal-status-withdraw'
     | '/api/public/cron/promotion-withdraw'
@@ -1572,6 +1583,7 @@ export interface FileRouteTypes {
     | '/api/public/cron/olx-token-refresh'
     | '/api/public/cron/portal-bulk'
     | '/api/public/cron/portal-publish'
+    | '/api/public/cron/portal-schedules'
     | '/api/public/cron/portal-slot-withdraw'
     | '/api/public/cron/portal-status-withdraw'
     | '/api/public/cron/promotion-withdraw'
@@ -1714,6 +1726,7 @@ export interface FileRouteTypes {
     | '/api/public/cron/olx-token-refresh'
     | '/api/public/cron/portal-bulk'
     | '/api/public/cron/portal-publish'
+    | '/api/public/cron/portal-schedules'
     | '/api/public/cron/portal-slot-withdraw'
     | '/api/public/cron/portal-status-withdraw'
     | '/api/public/cron/promotion-withdraw'
@@ -1811,6 +1824,7 @@ export interface RootRouteChildren {
   ApiPublicCronOlxTokenRefreshRoute: typeof ApiPublicCronOlxTokenRefreshRoute
   ApiPublicCronPortalBulkRoute: typeof ApiPublicCronPortalBulkRoute
   ApiPublicCronPortalPublishRoute: typeof ApiPublicCronPortalPublishRoute
+  ApiPublicCronPortalSchedulesRoute: typeof ApiPublicCronPortalSchedulesRoute
   ApiPublicCronPortalSlotWithdrawRoute: typeof ApiPublicCronPortalSlotWithdrawRoute
   ApiPublicCronPortalStatusWithdrawRoute: typeof ApiPublicCronPortalStatusWithdrawRoute
   ApiPublicCronPromotionWithdrawRoute: typeof ApiPublicCronPromotionWithdrawRoute
@@ -2513,6 +2527,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicCronPortalPublishRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/cron/portal-schedules': {
+      id: '/api/public/cron/portal-schedules'
+      path: '/api/public/cron/portal-schedules'
+      fullPath: '/api/public/cron/portal-schedules'
+      preLoaderRoute: typeof ApiPublicCronPortalSchedulesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/cron/portal-slot-withdraw': {
       id: '/api/public/cron/portal-slot-withdraw'
       path: '/api/public/cron/portal-slot-withdraw'
@@ -3106,6 +3127,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicCronOlxTokenRefreshRoute: ApiPublicCronOlxTokenRefreshRoute,
   ApiPublicCronPortalBulkRoute: ApiPublicCronPortalBulkRoute,
   ApiPublicCronPortalPublishRoute: ApiPublicCronPortalPublishRoute,
+  ApiPublicCronPortalSchedulesRoute: ApiPublicCronPortalSchedulesRoute,
   ApiPublicCronPortalSlotWithdrawRoute: ApiPublicCronPortalSlotWithdrawRoute,
   ApiPublicCronPortalStatusWithdrawRoute:
     ApiPublicCronPortalStatusWithdrawRoute,
