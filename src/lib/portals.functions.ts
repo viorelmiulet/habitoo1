@@ -3618,7 +3618,7 @@ export const recheckOlxDirectListing = createServerFn({ method: "POST" })
 
 /** SuperAdmin: verifică IP-ul de ieșire al releului portalurilor (doar citire). */
 export const checkPortalRelayIp = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireActiveOrgAuth])
   .handler(async ({ context }) => {
     await requireSuperadmin(context as AuthContext);
     const { checkRelayIp } = await import("./portals/relay.server");
