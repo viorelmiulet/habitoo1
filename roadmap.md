@@ -1,5 +1,10 @@
 # Email vizual pentru chat
 
+# Oferte partenere unificate
+
+- [ ] Carduri/Listă fără grupare, sortare, filtru Agenție și loturi de 24
+- [ ] Teste mock și verificare vizuală desktop/mobil
+
 - [x] Șablon reutilizabil și integrare în notificările de chat, fără schimbarea regulilor de trimitere
 - [x] Acces direct la conversație și teste mock
 - [x] Previzualizări cu/fără poză și capturi desktop/mobil, fără emailuri reale
