@@ -946,6 +946,13 @@
       "when": 1791609484873,
       "tag": "0134_superadmin_profile_guarantee",
       "breakpoints": true
+    },
+    {
+      "idx": 135,
+      "version": "7",
+      "when": 1791866826557,
+      "tag": "0135_public_partners_automatic_eligible_list",
+      "breakpoints": true
     }
   ]
 }
