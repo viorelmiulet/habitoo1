@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { AirVent, Blinds, Blocks, Building2, Check, CircleCheck, DoorClosed, DoorOpen, Flame, Gauge, Grid2X2, Info, List, Mountain, PaintRoller, PanelsTopLeft, Plug, Refrigerator, Road, Search, Shield, Sofa, SquareStack, Utensils, Wallpaper, type LucideIcon } from "lucide-react";
+import { AirVent, Blinds, Blocks, Building2, Check, CircleCheck, DoorClosed, DoorOpen, Flame, Gauge, Grid2X2, Info, List, Mountain, PaintRoller, PanelsTopLeft, Plug, Refrigerator, Route, Search, Shield, Sofa, SquareStack, Utensils, Wallpaper, type LucideIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
@@ -39,7 +39,7 @@ export const propertyFeatureSections: FeatureSection[] = [
     { field: "metering", title: "Contorizare", icon: Gauge, options: taxonomy.meteringOptions },
     { field: "appliances", title: "Electrocasnice", icon: Refrigerator, options: taxonomy.applianceOptions },
     { field: "building_amenities", title: "Imobil", icon: Building2, options: taxonomy.buildingAmenityOptions },
-    { field: "street_arrangement", title: "Amenajare străzi", icon: Road, options: taxonomy.streetArrangementOptions },
+    { field: "street_arrangement", title: "Amenajare străzi", icon: Route, options: taxonomy.streetArrangementOptions },
     { field: "views", title: "Priveliște", icon: Mountain, options: taxonomy.viewOptions },
     { field: "misc_features", title: "Diverse", icon: Grid2X2, options: taxonomy.miscFeatureOptions },
   ] },
