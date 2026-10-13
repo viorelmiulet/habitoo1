@@ -1,8 +1,9 @@
 # Structura utilităților, finisajelor și dotărilor
 
-- [ ] Panouri cu căutare, Carduri/În linie și selecții existente
-- [ ] Aceeași structură pentru valorile afișate doar pentru citire
-- [ ] Teste comportamentale și verificare vizuală, fără modificări de date
+- [x] Panouri cu căutare, Carduri/În linie și selecții existente
+- [x] Aceeași structură pentru valorile afișate doar pentru citire
+- [x] Teste comportamentale și verificare vizuală cu date locale, fără modificări de date
+- [ ] Verificare în fișa unui cont real — sesiunea solicitantului nu poate fi obținută automat
 
 # Email vizual pentru chat
 

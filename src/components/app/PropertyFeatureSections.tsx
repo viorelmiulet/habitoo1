@@ -105,12 +105,12 @@ export function PropertyFeatureSections({ value, onChange, idPrefix = "features"
   }, []);
   const sections = filterFeatureSections(query, onChange ? undefined : value);
   const inline = !!onChange && view === "inline";
-  return <div className="property-feature-sections min-w-0 space-y-6 text-foreground">
+  return <div className="property-feature-sections min-w-0 space-y-6 bg-background text-foreground">
     {onChange ? <div className="grid min-w-0 gap-3 sm:grid-cols-[minmax(0,1fr)_auto]">
-      <div className="relative min-w-0"><Search className="pointer-events-none absolute left-3 top-3.5 size-4 text-muted-foreground" aria-hidden="true" /><Input type="search" aria-label="Caută o opțiune (utilitate, finisaj, dotare)" placeholder="Caută o opțiune (utilitate, finisaj, dotare)…" className="h-11 pl-9" value={query} onChange={(event) => setQuery(event.target.value)} /></div>
+      <div className="relative min-w-0"><Search className="pointer-events-none absolute left-3 top-3.5 size-4 text-muted-foreground" aria-hidden="true" /><Input type="search" aria-label="Caută o opțiune (utilitate, finisaj, dotare)" placeholder="Caută o opțiune (utilitate, finisaj, dotare)…" className="h-11 bg-card pl-9 text-foreground" value={query} onChange={(event) => setQuery(event.target.value)} /></div>
       <ToggleGroup type="single" aria-label="Afișarea opțiunilor" value={view} className="shrink-0 justify-start rounded-control border border-border bg-muted p-1" onValueChange={(next) => { if (!next) return; setView(next); try { localStorage.setItem(VIEW_KEY, next); } catch { /* Session-only preference fallback. */ } }}>
-        <ToggleGroupItem value="cards" className="h-9 gap-2 px-3 data-[state=on]:bg-surface data-[state=on]:text-accent-foreground"><Grid2X2 className="size-4" />Carduri</ToggleGroupItem>
-        <ToggleGroupItem value="inline" className="h-9 gap-2 px-3 data-[state=on]:bg-surface data-[state=on]:text-accent-foreground"><List className="size-4" />În linie</ToggleGroupItem>
+        <ToggleGroupItem value="cards" className="h-9 gap-2 px-3 text-foreground data-[state=on]:bg-surface data-[state=on]:text-accent-foreground"><Grid2X2 className="size-4" />Carduri</ToggleGroupItem>
+        <ToggleGroupItem value="inline" className="h-9 gap-2 px-3 text-foreground data-[state=on]:bg-surface data-[state=on]:text-accent-foreground"><List className="size-4" />În linie</ToggleGroupItem>
       </ToggleGroup>
     </div> : null}
     {sections.map((section) => { const Icon = section.icon; return <section key={section.title} aria-label={section.title} className="min-w-0 space-y-4 border-b border-border pb-6 last:border-b-0">
