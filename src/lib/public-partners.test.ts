@@ -13,6 +13,18 @@ const key = process.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 const FORBIDDEN = /email|cui|address|adresa|city|oras|user|count/i;
 
 describe("parteneri publici", () => {
+  it("păstrează toate cele patru agenții eligibile fără profil public și fără link", () => {
+    const names = ["DENDY IMOBILIARE SRL", "MG Imobiliare", "MRM IMOBILIARE", "MVA PERFECT BUSINESS S.R.L."];
+    const result = toPublicPartners(names.map((name, i) => ({
+      id: `00000000-0000-0000-0000-00000000000${i + 1}`,
+      name, has_logo: name === "MRM IMOBILIARE", public_slug: null,
+    })));
+    expect(result.map((p) => p.name)).toEqual(names);
+    expect(result.every((p) => p.slug === null)).toBe(true);
+    expect(result[2]?.logoUrl).toBe("/api/public/partner-logo/00000000-0000-0000-0000-000000000003");
+    expect(partnerInitials(result[0]?.name ?? "")).toBe("DI");
+  });
+
   it("pagina primește doar nume, slug și logo, sortate alfabetic", () => {
     const out = toPublicPartners([
       { id: "00000000-0000-0000-0000-000000000002", name: "Zeta", has_logo: false, public_slug: "zeta" },
