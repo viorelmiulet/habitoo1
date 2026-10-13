@@ -215,18 +215,51 @@ function positive(n: number | null): number | undefined {
   return n !== null && Number.isFinite(n) && n > 0 ? Math.round(n * 100) / 100 : undefined;
 }
 
-/** Diacritice corecte (virgulă), cum cere VDI.ro: ş→ș, ţ→ț. */
-export function vdiDiacritics(s: string): string {
-  return s.replace(/ş/g, "ș").replace(/Ş/g, "Ș").replace(/ţ/g, "ț").replace(/Ţ/g, "Ț");
+/** Fără diacritice (ș/ş→s, ț/ţ→t, ă/â→a, î→i, și majuscule); cratimele rămân. */
+export function vdiAscii(s: string): string {
+  return s
+    .replace(/[șş]/g, "s").replace(/[ȘŞ]/g, "S")
+    .replace(/[țţ]/g, "t").replace(/[ȚŢ]/g, "T")
+    .replace(/[ăâ]/g, "a").replace(/[ĂÂ]/g, "A")
+    .replace(/î/g, "i").replace(/Î/g, "I")
+    .replace(/\s+/g, " ")
+    .trim();
 }
 
-/** București cu sector: județ și localitatea „București”, zona (sau „Sector N”) devine cartier. */
-export function splitLocality(city: string, district: string | null): { judet: string | null; localitate: string; cartier: string | null } {
-  const c = vdiDiacritics(city.trim());
-  const d = district ? vdiDiacritics(district.trim()) : "";
-  const m = /^Bucure[sș]ti\s+Sector(?:ul)?\s*(\d)/i.exec(c);
-  if (m) return { judet: "București", localitate: "București", cartier: d || `Sector ${m[1]}` };
-  return { judet: null, localitate: c, cartier: d || null };
+/** Lista exactă de județe VDI.ro (București și Ilfov unite). */
+export const VDI_COUNTIES = [
+  "Alba", "Arad", "Arges", "Bacau", "Bihor", "Bistrita Nasaud", "Botosani", "Braila", "Brasov", "Bucuresti Ilfov",
+  "Buzau", "Calarasi", "Caras Severin", "Cluj", "Constanta", "Covasna", "Dambovita", "Dolj", "Galati", "Giurgiu",
+  "Gorj", "Harghita", "Hunedoara", "Ialomita", "Iasi", "Maramures", "Mehedinti", "Mures", "Neamt", "Olt",
+  "Prahova", "Salaj", "Satu Mare", "Sibiu", "Suceava", "Teleorman", "Timis", "Tulcea", "Valcea", "Vaslui", "Vrancea",
+] as const;
+
+function countyKey(s: string): string {
+  return vdiAscii(s)
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim()
+    .replace(/^(judetul|jud|municipiul|mun)\s+/, "")
+    .trim();
+}
+
+/** Județ CRM → valoare din lista VDI.ro; null dacă nu există. */
+export function vdiCounty(county: string): string | null {
+  const k = countyKey(county);
+  if (/^bucuresti\b/.test(k) || k === "ilfov" || /^sector(ul)? \d$/.test(k)) return "Bucuresti Ilfov";
+  return VDI_COUNTIES.find((c) => countyKey(c) === k) ?? null;
+}
+
+/** București (cu sau fără sector) → „Bucuresti”; cartier = zona sau „Sector N”. Fără diacritice. */
+export function splitLocality(city: string, district: string | null): { bucuresti: boolean; localitate: string; cartier: string | null } {
+  const c = vdiAscii(city);
+  const d = district ? vdiAscii(district) : "";
+  const m = /^(?:(?:mun(?:icipiul|\.)?\s+)?Bucuresti(?:\s+Sector(?:ul)?\s*(\d))?|Sector(?:ul)?\s*(\d))$/i.exec(c);
+  if (m) {
+    const n = m[1] ?? m[2];
+    return { bucuresti: true, localitate: "Bucuresti", cartier: d || (n ? `Sector ${n}` : null) };
+  }
+  return { bucuresti: false, localitate: c, cartier: d || null };
 }
 
 export function vdiTitle(title: string | null, fallback: string): string {
@@ -261,17 +294,20 @@ export function mapPropertyToVdi(p: VdiProperty, agentId: number | null): VdiMap
 
   if (!p.county?.trim()) reasons.push("județul lipsește");
   if (!p.city?.trim()) reasons.push("localitatea lipsește");
+  const judet = p.county?.trim() ? vdiCounty(p.county) : null;
+  if (p.county?.trim() && judet === null) reasons.push(`Județul ${p.county.trim()} nu există în lista VDI.ro`);
 
   if (reasons.length > 0) return { ok: false, reasons };
 
-  const { judet, localitate, cartier } = splitLocality(p.city!, p.district);
+  const { bucuresti, localitate, cartier } = splitLocality(p.city!, p.district);
+  const titleCity = bucuresti ? "București" : p.city!.trim();
   const typeLabel = ["", "Apartament", "Casă", "Spațiu comercial", "Teren", "Spațiu industrial", "Birou", "Garsonieră", "Hotel"][tipoferta!]!;
   const payload: VdiListingPayload = {
     idintern: idintern!,
-    titlu: vdiTitle(p.title, `${typeLabel} ${localitate}`),
+    titlu: vdiTitle(p.title, `${typeLabel} ${titleCity}`),
     tipoferta: tipoferta!,
     tipoperatiune: sale ? 2 : 1,
-    judetul: judet ?? vdiDiacritics(p.county!.trim()),
+    judetul: judet!,
     localitatea: localitate,
     moneda: moneda!,
   };

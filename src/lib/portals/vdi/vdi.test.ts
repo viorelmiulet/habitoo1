@@ -8,8 +8,7 @@ import {
   parseVdiResponse,
   vdiIdIntern,
   vdiAgentFingerprint,
-  vdiDiacritics,
-  splitLocality,
+  vdiCounty,
   vdiOfferType,
   type VdiProperty,
 } from "./mapper";
@@ -149,7 +148,7 @@ describe("mapper", () => {
     expect(r.payload.pretinchiriere).toBe(2500);
     expect(r.payload.etajul).toBe("parter");
     expect(r.payload.titlu.length).toBeGreaterThanOrEqual(10);
-    expect(r.payload.localitatea).toBe("București");
+    expect(r.payload.localitatea).toBe("Bucuresti");
     expect(r.payload.cartierul).toBe("Sector 6");
     expect(r.payload).not.toHaveProperty("idagent");
   });
@@ -242,16 +241,31 @@ describe("adaptor (mock)", () => {
   });
 });
 
-describe("HB-1175 (date reale, fără trimitere)", () => {
-  it("diacritice cu virgulă și București Sector 6", () => {
-    const r = mapPropertyToVdi({ ...base, reference: "HB-1175", county: "Bucure\u015fti", city: "Bucure\u015fti Sectorul 6", district: "Militari" }, 1000);
-    if (!r.ok) throw new Error(r.reasons.join());
-    const out = { judetul: r.payload.judetul, localitatea: r.payload.localitatea, cartierul: r.payload.cartierul, idagent: r.payload.idagent };
-    console.log("HB-1175 payload", JSON.stringify(out));
-    expect(out).toEqual({ judetul: "Bucure\u0219ti", localitatea: "Bucure\u0219ti", cartierul: "Militari", idagent: 1000 });
+describe("adresa VDI.ro (fără trimitere)", () => {
+  const addr = (county: string, city: string, district: string | null) => {
+    const r = mapPropertyToVdi({ ...base, county, city, district }, 1000);
+    return r.ok ? { judetul: r.payload.judetul, localitatea: r.payload.localitatea, cartierul: r.payload.cartierul } : r.reasons;
+  };
+  it("HB-1175 date reale", () => {
+    const out = addr("Bucure\u015fti", "Bucure\u015fti Sectorul 6", "Militari");
+    console.log("HB-1175 adresa", JSON.stringify(out));
+    expect(out).toEqual({ judetul: "Bucuresti Ilfov", localitatea: "Bucuresti", cartierul: "Militari" });
   });
-  it("„București Sector 6” fără zonă → cartier „Sector 6”; ţ → ț", () => {
-    expect(splitLocality("Bucure\u0219ti Sector 6", null)).toEqual({ judet: "Bucure\u0219ti", localitate: "Bucure\u0219ti", cartier: "Sector 6" });
-    expect(vdiDiacritics("Mehedin\u0163i \u015e\u0162")).toBe("Mehedin\u021bi \u0218\u021a");
+  it("Sector 6 fără zonă", () => {
+    expect(addr("București", "Sector 6", null)).toEqual({ judetul: "Bucuresti Ilfov", localitatea: "Bucuresti", cartierul: "Sector 6" });
+  });
+  it("Ilfov/Chiajna și Sibiu", () => {
+    expect(addr("Ilfov", "Chiajna", null)).toEqual({ judetul: "Bucuresti Ilfov", localitatea: "Chiajna", cartierul: undefined });
+    expect(addr("Județul Sibiu", "Sibiu", null)).toMatchObject({ judetul: "Sibiu", localitatea: "Sibiu" });
+    expect(addr("Ilfov", "Popești-Leordeni", null)).toMatchObject({ localitatea: "Popesti-Leordeni" });
+  });
+  it("județe cu cratimă și diacritice", () => {
+    expect(vdiCounty("Caraș-Severin")).toBe("Caras Severin");
+    expect(vdiCounty("Bistrița-Năsăud")).toBe("Bistrita Nasaud");
+    expect(vdiCounty("Dâmbovița")).toBe("Dambovita");
+    expect(vdiCounty("Mun. București")).toBe("Bucuresti Ilfov");
+  });
+  it("județ necunoscut → motiv, fără trimitere", () => {
+    expect(addr("Atlantida", "X", null)).toContain("Județul Atlantida nu există în lista VDI.ro");
   });
 });
