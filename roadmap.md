@@ -2,8 +2,9 @@
 
 # Oferte partenere unificate
 
-- [ ] Carduri/Listă fără grupare, sortare, filtru Agenție și loturi de 24
-- [ ] Teste mock și verificare vizuală desktop/mobil
+- [x] Carduri/Listă fără grupare, sortare, filtru Agenție și loturi de 24
+- [x] Teste mock și verificare vizuală desktop/mobil
+- [ ] Verificare completă Oferte partenere în cont real — lipsă sesiune autorizată; autentificarea automată nu identifică un cont al solicitantului
 
 - [x] Șablon reutilizabil și integrare în notificările de chat, fără schimbarea regulilor de trimitere
 - [x] Acces direct la conversație și teste mock
