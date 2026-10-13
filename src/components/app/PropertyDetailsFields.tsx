@@ -6,7 +6,7 @@
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { PropertyFeatureSections } from "@/components/app/PropertyFeatureSections";
 import {
   Accordion,
   AccordionContent,
@@ -21,37 +21,16 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
-  additionalSpaceOptions,
-  applianceOptions,
-  blindOptions,
-  buildingAmenityOptions,
   buildingStructureOptions,
   buildingTypeOptions,
   comfortOptions,
   constructionStageOptions,
-  coolingOptions,
   destinationOptions,
-  entryDoorOptions,
-  finishStateOptions,
-  floorFinishOptions,
   floorLabelOptions,
-  furnishingOptions,
-  heatingOptions,
-  insulationOptions,
-  interiorDoorOptions,
-  kitchenOptions,
   layoutOptions,
-  meteringOptions,
-  miscFeatureOptions,
   orientationOptions,
   parkingOptions,
   seismicRiskOptions,
-  shutterOptions,
-  streetArrangementOptions,
-  utilityOptions,
-  viewOptions,
-  wallFinishOptions,
-  windowOptions,
 } from "@/lib/property-taxonomy";
 import { propertyTypeLabels } from "@/lib/labels";
 import { floorNumberRequired, syncFloor } from "@/lib/property-floor";
@@ -220,84 +199,6 @@ function BoolField({
   );
 }
 
-function CheckGroup({
-  ctx,
-  field,
-  label,
-  options,
-}: {
-  ctx: FieldCtx;
-  field: string;
-  label: string;
-  options: readonly string[];
-}) {
-  const selected = ctx.arr(field);
-  return (
-    <fieldset className="space-y-3">
-      <legend className="text-sm font-medium">{label}</legend>
-      <div className="grid items-start gap-x-6 gap-y-2.5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-        {options.map((o) => (
-          <div key={o} className="flex items-center gap-2 text-sm">
-            <Checkbox
-              id={`${ctx.idPrefix}-${field}-${o}`}
-              checked={selected.includes(o)}
-              onCheckedChange={(c) => ctx.toggleInArray(field, o, c === true)}
-            />
-            <Label
-              htmlFor={`${ctx.idPrefix}-${field}-${o}`}
-              className="min-w-0 cursor-pointer font-normal break-words"
-            >
-              {o}
-            </Label>
-          </div>
-        ))}
-      </div>
-    </fieldset>
-  );
-}
-
-function RadioField({
-  ctx,
-  field,
-  label,
-  options,
-}: {
-  ctx: FieldCtx;
-  field: string;
-  label: string;
-  options: readonly string[];
-}) {
-  const current = ctx.str(field);
-  return (
-    <fieldset className="space-y-3">
-      <legend className="text-sm font-medium">{label}</legend>
-      <RadioGroup
-        value={current}
-        onValueChange={(v) => ctx.setField(field, v || null)}
-        className="grid items-start gap-x-6 gap-y-2.5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
-      >
-        {options.map((o) => (
-          <div key={o} className="flex items-center gap-2 text-sm">
-            <RadioGroupItem value={o} id={`${ctx.idPrefix}-${field}-${o}`} />
-            <Label htmlFor={`${ctx.idPrefix}-${field}-${o}`} className="cursor-pointer font-normal">
-              {o}
-            </Label>
-          </div>
-        ))}
-      </RadioGroup>
-      {current ? (
-        <button
-          type="button"
-          className="text-xs text-muted-foreground underline"
-          onClick={() => ctx.setField(field, null)}
-        >
-          Șterge selecția
-        </button>
-      ) : null}
-    </fieldset>
-  );
-}
-
 export function PropertyDetailsFields({ idPrefix = "det", value, onChange }: Props) {
   const valueRef = useRef(value);
   valueRef.current = value;
@@ -330,6 +231,7 @@ export function PropertyDetailsFields({ idPrefix = "det", value, onChange }: Pro
   const setField = ctx.setField;
 
   return (
+    <div className="min-w-0 space-y-6">
     <Accordion type="multiple" className="w-full">
       <AccordionItem value="detalii">
         <AccordionTrigger className="text-sm font-medium">Detalii</AccordionTrigger>
@@ -429,54 +331,8 @@ export function PropertyDetailsFields({ idPrefix = "det", value, onChange }: Pro
         </AccordionContent>
       </AccordionItem>
 
-      <AccordionItem value="utilitati">
-        <AccordionTrigger className="text-sm font-medium">Utilități</AccordionTrigger>
-        <AccordionContent className="space-y-6 pt-2">
-          <CheckGroup ctx={ctx} field="utilities" label="Generale" options={utilityOptions} />
-          <CheckGroup ctx={ctx} field="heating_systems" label="Sistem încălzire" options={heatingOptions} />
-          <CheckGroup ctx={ctx} field="cooling_systems" label="Climatizare" options={coolingOptions} />
-        </AccordionContent>
-      </AccordionItem>
-
-      <AccordionItem value="finisaje">
-        <AccordionTrigger className="text-sm font-medium">Finisaje</AccordionTrigger>
-        <AccordionContent className="space-y-6 pt-2">
-          <RadioField ctx={ctx} field="finish_state" label="Stare" options={finishStateOptions} />
-          <CheckGroup ctx={ctx} field="insulation" label="Izolații" options={insulationOptions} />
-          <CheckGroup ctx={ctx} field="wall_finishes" label="Pereți" options={wallFinishOptions} />
-          <CheckGroup ctx={ctx} field="floor_finishes" label="Podele" options={floorFinishOptions} />
-          <CheckGroup ctx={ctx} field="windows" label="Ferestre" options={windowOptions} />
-          <CheckGroup ctx={ctx} field="blinds" label="Jaluzele" options={blindOptions} />
-          <CheckGroup ctx={ctx} field="shutters" label="Rulouri" options={shutterOptions} />
-          <CheckGroup ctx={ctx} field="entry_door" label="Ușă intrare" options={entryDoorOptions} />
-          <CheckGroup ctx={ctx} field="interior_doors" label="Uși interior" options={interiorDoorOptions} />
-        </AccordionContent>
-      </AccordionItem>
-
-      <AccordionItem value="dotari">
-        <AccordionTrigger className="text-sm font-medium">Dotări</AccordionTrigger>
-        <AccordionContent className="space-y-6 pt-2">
-          <RadioField ctx={ctx} field="furnishing" label="Mobilat" options={furnishingOptions} />
-          <CheckGroup
-              ctx={ctx}
-            field="additional_spaces"
-            label="Spații adiționale"
-            options={additionalSpaceOptions}
-          />
-          <CheckGroup ctx={ctx} field="kitchen_features" label="Bucătărie" options={kitchenOptions} />
-          <CheckGroup ctx={ctx} field="metering" label="Contorizare" options={meteringOptions} />
-          <CheckGroup ctx={ctx} field="appliances" label="Electrocasnice" options={applianceOptions} />
-          <CheckGroup ctx={ctx} field="building_amenities" label="Imobil" options={buildingAmenityOptions} />
-          <CheckGroup
-              ctx={ctx}
-            field="street_arrangement"
-            label="Amenajare străzi"
-            options={streetArrangementOptions}
-          />
-          <CheckGroup ctx={ctx} field="views" label="Priveliște" options={viewOptions} />
-          <CheckGroup ctx={ctx} field="misc_features" label="Diverse" options={miscFeatureOptions} />
-        </AccordionContent>
-      </AccordionItem>
     </Accordion>
+    <PropertyFeatureSections idPrefix={idPrefix} value={value} onChange={onChange} />
+    </div>
   );
 }
