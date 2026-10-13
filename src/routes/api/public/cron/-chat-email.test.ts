@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const mocks = vi.hoisted(() => ({ send: vi.fn(async () => ({})), sign: vi.fn(async () => ({ data: { signedUrl: "https://example.test/signed-image" }, error: null })), rpc: vi.fn(), from: vi.fn() }));
+const mocks = vi.hoisted(() => ({ send: vi.fn(async (_payload: unknown, _options: unknown) => ({})), sign: vi.fn(async (_path: string, _ttl: number) => ({ data: { signedUrl: "https://example.test/signed-image" }, error: null })), rpc: vi.fn(), from: vi.fn() }));
 vi.mock("@tanstack/react-router", () => ({ createFileRoute: () => (options: unknown) => ({ options }) }));
 vi.mock("@/integrations/supabase/cron-auth", () => ({ authenticateCronRequest: async () => null }));
 vi.mock("@/integrations/supabase/client.server", () => ({ supabaseAdmin: { rpc: mocks.rpc, from: mocks.from, storage: { from: () => ({ createSignedUrl: mocks.sign }) } } }));
