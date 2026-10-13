@@ -269,3 +269,47 @@ describe("adresa VDI.ro (fără trimitere)", () => {
     expect(addr("Atlantida", "X", null)).toContain("Județul Atlantida nu există în lista VDI.ro");
   });
 });
+
+describe("răspunsuri reale anunț HB-1175 (13.10)", () => {
+  const url = "https://vdi.ro/apartament-de-vanzare-2-camere-decomandat-militari-residence-1329184.html";
+  const first = { id: "VDI720.1329184", url, atentionare: "Una din imaginile trimise nu este valida" };
+  const second = { mesaj: "Oferta a fost modificata", ...first };
+  it("prima trimitere: succes, operația cerută, atenționare", () => {
+    expect(parseVdiResponse(first, "add")).toMatchObject({ ok: true, operation: "add", vdiId: "VDI720.1329184", link: url, warning: "Una din imaginile trimise nu este valida" });
+  });
+  it("a doua trimitere: operația din mesaj", () => {
+    expect(parseVdiResponse(second, "add")).toMatchObject({ ok: true, operation: "mod", vdiId: "VDI720.1329184", link: url });
+  });
+  it("mesaj fără id, nu de succes → respingere cu textul lui", () => {
+    expect(parseVdiResponse({ mesaj: "Date invalide" })).toEqual({ ok: false, text: "Date invalide", kind: "rejected" });
+  });
+  it("adaptor: publicat cu idintern 1175, link și avertisment", async () => {
+    const calls: string[] = [];
+    const d: VdiDeps = {
+      loadProperty: async () => ({ ok: true, property: { ...base, reference: "HB-1175" }, agent: null }),
+      agentLink: async () => ({ externalId: 1, synced: true }),
+      markAgentSynced: async () => {},
+      applyRemoteStates: async () => 0,
+      call: (async (_k: string, e: string, c: string) => { calls.push(`${e}:${c}`); return { ok: true, status: 200, body: first }; }) as never,
+    };
+    const ctx = { organizationId: "org", portalCredential: "k", allowLiveRequests: true, settings: {} } as unknown as PortalContext;
+    const out = await createVdiAdapter(d).publishListing(ctx, { propertyId: "p", externalId: null });
+    expect(out.ok && out.data).toMatchObject({ externalId: "1175", publicUrl: url });
+    expect(out.ok && out.data.message).toContain("Una din imaginile trimise nu este valida");
+  });
+  it("retragere fără external_id: cat=del cu idintern din cod; „nu exista” = retras", async () => {
+    const bodies: unknown[] = [];
+    const d: VdiDeps = {
+      loadProperty: async () => ({ ok: false, reasons: [] }),
+      loadReference: async () => "HB-1175",
+      agentLink: async () => ({ externalId: 1, synced: true }),
+      markAgentSynced: async () => {},
+      applyRemoteStates: async () => 0,
+      call: (async (_k: string, _e: string, c: string, b: unknown) => { bodies.push({ c, b }); return { ok: true, status: 200, body: { eroare: "Proprietatea nu exista" } }; }) as never,
+    };
+    const ctx = { organizationId: "org", portalCredential: "k", allowLiveRequests: true, settings: {} } as unknown as PortalContext;
+    const out = await createVdiAdapter(d).withdrawListing(ctx, { propertyId: "p", externalId: null });
+    expect(bodies).toEqual([{ c: "del", b: { idintern: 1175 } }]);
+    expect(out.ok && out.data.externalId).toBe("1175");
+  });
+});

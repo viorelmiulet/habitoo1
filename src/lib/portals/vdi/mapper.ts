@@ -14,8 +14,17 @@ export const VDI_MAX_PHOTOS = 20;
 /* ------------------------------- răspunsuri ------------------------------- */
 
 export type VdiParsed =
-  | { ok: true; operation: "add" | "mod" | "del"; vdiId: string | null; link: string | null; text: string }
-  | { ok: false; text: string; kind: "invalid_key" | "expired" | "rejected" };
+  | { ok: true; operation: "add" | "mod" | "del"; vdiId: string | null; link: string | null; text: string; warning?: string | null }
+  | { ok: false; text: string; kind: "invalid_key" | "expired" | "rejected" | "not_found" };
+
+const MESAJ_SUCCESS = /^Oferta a fost (adaugata|modificata|stearsa)/i;
+const VERB_OP = { adaugata: "add", modificata: "mod", stearsa: "del" } as const;
+const NOT_FOUND = /nu exista|nu a fost gasit/i;
+
+function str(record: Record<string, unknown> | null, key: string): string {
+  const v = record?.[key];
+  return typeof v === "string" ? v.trim() : typeof v === "number" && Number.isFinite(v) ? String(v) : "";
+}
 
 const SUCCESS = /^Proprietatea a fost (adaugata|modificata|stearsa)/i;
 
@@ -39,8 +48,27 @@ function successValue(record: Record<string, unknown> | null): string | null {
 }
 
 /** Citește textul, nu cheia: `eroare` apare și la succes; `succes` (nedocumentat) e tot succes. */
-export function parseVdiResponse(body: unknown): VdiParsed {
+export function parseVdiResponse(body: unknown, requested: "add" | "mod" | "del" = "add"): VdiParsed {
   const record = body && typeof body === "object" ? (body as Record<string, unknown>) : null;
+  // Forma reală pentru anunțuri: {id, url, mesaj?, atentionare?}.
+  const id = str(record, "id");
+  const mesaj = str(record, "mesaj");
+  const atentionare = str(record, "atentionare") || null;
+  const mesajMatch = MESAJ_SUCCESS.exec(mesaj);
+  if (id || mesajMatch) {
+    const verb = mesajMatch?.[1]?.toLowerCase() as keyof typeof VERB_OP | undefined;
+    return {
+      ok: true,
+      operation: verb ? VERB_OP[verb] : requested,
+      vdiId: id || null,
+      link: str(record, "url") || null,
+      text: mesaj || `id: ${id}`,
+      warning: atentionare,
+    };
+  }
+  if (mesaj && !str(record, "eroare")) {
+    return { ok: false, text: mesaj, kind: NOT_FOUND.test(mesaj) ? "not_found" : "rejected" };
+  }
   const raw = record?.["eroare"];
   const text = typeof raw === "string" ? raw.trim() : "";
   if (!text) {
@@ -50,7 +78,7 @@ export function parseVdiResponse(body: unknown): VdiParsed {
       // lipsesc și se completează ulterior din `cat=list` (sincronizarea existentă).
       const id = /ID:\s*([^\s|]+)/i.exec(succes)?.[1] ?? null;
       const link = /Link:\s*(https?:\/\/\S+)/i.exec(succes)?.[1] ?? null;
-      return { ok: true, operation: "add", vdiId: id, link, text: `succes: ${succes}` };
+      return { ok: true, operation: requested, vdiId: id, link, text: `succes: ${succes}` };
     }
     return { ok: false, text: `Răspuns VDI.ro neașteptat: ${rawBodyPreview(body) || "(gol)"}`, kind: "rejected" };
   }
@@ -69,6 +97,7 @@ export function parseVdiResponse(body: unknown): VdiParsed {
   }
   if (/^Cheie invalida/i.test(text)) return { ok: false, text, kind: "invalid_key" };
   if (/^Abonamentul a expirat/i.test(text)) return { ok: false, text, kind: "expired" };
+  if (NOT_FOUND.test(text)) return { ok: false, text, kind: "not_found" };
   return { ok: false, text, kind: "rejected" };
 }
 
