@@ -4,6 +4,7 @@
  * (rețea, 5xx, 429) le face coada durabilă de publicare, nu clientul.
  */
 import type { PortalFail } from "../adapter";
+import { vdiRelayFetch } from "../relay.server";
 
 export const VDI_BASE_URL = "https://vdi.ro";
 const VDI_TIMEOUT_MS = 15_000;
@@ -16,7 +17,7 @@ export async function vdiCall(
   cat: "add" | "mod" | "del" | "list",
   body: Record<string, unknown> | null,
   query: Record<string, string> = {},
-  fetchImpl: typeof fetch = fetch,
+  fetchImpl: typeof fetch = vdiRelayFetch,
 ): Promise<VdiHttpOk | PortalFail> {
   const url = new URL(endpoint, VDI_BASE_URL);
   url.searchParams.set("cat", cat);
@@ -96,7 +97,7 @@ export async function vdiGetLeads(
   apiKey: string,
   cursor: string | null,
   limit: number,
-  fetchImpl: typeof fetch = fetch,
+  fetchImpl: typeof fetch = vdiRelayFetch,
 ): Promise<VdiHttpOk | PortalFail> {
   const limited = await vdiThrottle(apiKey);
   if (limited) return limited;
