@@ -1,5 +1,10 @@
 # Email vizual pentru chat
 
+# Lista publică de agenții
+
+- [x] Listare automată a agențiilor eligibile și logo-uri, cu profil opțional
+- [x] Teste și publicare; verificare live a celor patru agenții
+
 # Oferte partenere unificate
 
 - [x] Carduri/Listă fără grupare, sortare, filtru Agenție și loturi de 24

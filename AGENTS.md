@@ -22,7 +22,7 @@
 - Key-request emails (Imospot, VDI.ro) use `notifyKeyRequest` over `KEY_REQUEST_PORTALS`; `provider_notified_at` prevents duplicates. Why: one send, one flow for every portal.
 - Company data comes from ANAF only via `src/lib/company-lookup.ts` (pure, injected fetch) with 24h `company_lookup_cache`; org sync fills empty fields only. Why: ANAF rate limit; user edits win.
 - `HomeHeader` on homepage + blog (`PublicLayout homeHeader`); else `PublicHeader`. Why: isolate fixed overlay.
-- Public agency pages: `/agentii` lists only eligible agencies with `public_profile_enabled` (RPC `public_partner_agencies`: name/logo/slug); `/agentii/$slug` profile via `public_agency_profile`/`public_agency_agents`; agent phone only with `public_show_phone`; logo via `/api/public/partner-logo/$id`. Why: opt-in per org; only opted-in data leaves the DB.
+- Public agency pages: `/agentii` and public logo reads use `public_partner_eligible`; `public_partner_agencies` returns a slug only for enabled profiles. `/agentii/$slug` remains opt-in via `public_agency_profile`/`public_agency_agents`; agent phone only with `public_show_phone`. Why: list eligibility is independent of optional profile/contact disclosure.
 - Social property posters are rendered client-side from existing signed media and downloaded as PNG; per-agent display preferences stay in localStorage. Why: no social publishing or generated-media persistence is needed.
 
 - Superadmin mail replies use a single nonmodal MailReplyWindow and the unchanged replyMail contract, with a stable draft send key and synchronous in-flight lock. Why: preserve draft state and prevent duplicate submissions without changing server behavior.

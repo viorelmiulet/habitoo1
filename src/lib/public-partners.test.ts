@@ -13,6 +13,18 @@ const key = process.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 const FORBIDDEN = /email|cui|address|adresa|city|oras|user|count/i;
 
 describe("parteneri publici", () => {
+  it("păstrează toate cele patru agenții eligibile fără profil public și fără link", () => {
+    const names = ["DENDY IMOBILIARE SRL", "MG Imobiliare", "MRM IMOBILIARE", "MVA PERFECT BUSINESS S.R.L."];
+    const result = toPublicPartners(names.map((name, i) => ({
+      id: `00000000-0000-0000-0000-00000000000${i + 1}`,
+      name, has_logo: name === "MRM IMOBILIARE", public_slug: null,
+    })));
+    expect(result.map((p) => p.name)).toEqual(names);
+    expect(result.every((p) => p.slug === null)).toBe(true);
+    expect(result[2]?.logoUrl).toBe("/api/public/partner-logo/00000000-0000-0000-0000-000000000003");
+    expect(partnerInitials(result[0]?.name ?? "")).toBe("DI");
+  });
+
   it("pagina primește doar nume, slug și logo, sortate alfabetic", () => {
     const out = toPublicPartners([
       { id: "00000000-0000-0000-0000-000000000002", name: "Zeta", has_logo: false, public_slug: "zeta" },
@@ -74,7 +86,7 @@ describe.skipIf(!url || !key)("acces anonim (doar citire)", () => {
 
   it("calea internă a logo-ului nu poate fi citită anonim", async () => {
     const { data, error } = await anon().rpc("public_partner_logo_path", { _id: "00000000-0000-0000-0000-000000000000" });
-    expect(error).toBeNull();
+    expect(error?.code).toBe("42501");
     expect(data).toBeNull();
   });
 
@@ -82,6 +94,17 @@ describe.skipIf(!url || !key)("acces anonim (doar citire)", () => {
     const { data, error } = await anon().rpc("public_agency_profile", { _slug: "nu-exista" });
     expect(error).toBeNull();
     expect(data ?? []).toHaveLength(0);
+  });
+
+  it("agenții unui profil de agenție dezactivat nu sunt expuși anonim", async () => {
+    const { data: agencies, error } = await anon().rpc("public_partner_agencies");
+    expect(error).toBeNull();
+    for (const agency of agencies ?? []) {
+      if (agency.public_slug !== null) continue;
+      const { data: agents, error: agentsError } = await anon().rpc("public_agency_agents", { _org: agency.id });
+      expect(agentsError).toBeNull();
+      expect(agents ?? []).toEqual([]);
+    }
   });
 
   it("tabelele organizations și profiles rămân închise", async () => {
