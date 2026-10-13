@@ -56,6 +56,8 @@ import {
   setPropertyStoriaAutoRenew,
   type PropertyPortalCell,
 } from "@/lib/portals.functions";
+import { PortalScheduleControl } from "@/components/app/PortalScheduleControl";
+import { listPropertyPortalSchedules } from "@/lib/portals/publish-schedule.functions";
 import { getPropertyCollaboration, setPropertyCollaboration } from "@/lib/collaboration.functions";
 import {
   getPropertyFacebookCatalog,
@@ -364,6 +366,24 @@ export const PropertyPortalsCard = forwardRef<
     [jobs.data],
   );
 
+  /** Programările active (o singură programare activă per portal). */
+  const loadSchedules = useServerFn(listPropertyPortalSchedules);
+  const schedulesKey = ["property-portal-schedules", organizationId, propertyId] as const;
+  const schedules = useQuery({
+    queryKey: schedulesKey,
+    queryFn: () => loadSchedules({ data: { ...(organizationId ? { organizationId } : {}), propertyId } }),
+    refetchInterval: (q) => ((q.state.data?.length ?? 0) > 0 ? 60_000 : false),
+  });
+  const scheduleByPortal = useMemo(
+    () => new Map((schedules.data ?? []).map((s) => [s.portalId, s])),
+    [schedules.data],
+  );
+  const refreshSchedules = useCallback(() => {
+    void queryClient.invalidateQueries({ queryKey: schedulesKey });
+    void queryClient.invalidateQueries({ queryKey: jobsKey });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [queryClient, organizationId, propertyId]);
+
   /** Joburi văzute active în această pagină: la finalizare, mesaj pe portal. */
   const watchedJobs = useRef(new Set<string>());
   useEffect(() => {
@@ -400,7 +420,8 @@ export const PropertyPortalsCard = forwardRef<
   const enqueuePortals = useCallback(
     async (targets: PropertyPortalCell[]): Promise<number> => {
       const selections = targets
-        .filter((c) => c.availability === "available" && !activePortals.has(c.portalId))
+        // Portalurile programate nu se publică acum (doar prin „Publică acum”).
+        .filter((c) => c.availability === "available" && !activePortals.has(c.portalId) && !scheduleByPortal.has(c.portalId))
         .map((c) => ({
           portalId: c.portalId,
           enabled: checked[c.portalId] ?? c.selected,
@@ -420,7 +441,7 @@ export const PropertyPortalsCard = forwardRef<
       return out.results.filter((r) => r.queued).length;
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [checked, promotedChecked, propertyId, organizationId, enqueueFn, queryClient, activePortals],
+    [checked, promotedChecked, propertyId, organizationId, enqueueFn, queryClient, activePortals, scheduleByPortal],
   );
 
   const applyPending = useCallback(async () => {
@@ -813,6 +834,7 @@ export const PropertyPortalsCard = forwardRef<
                 !cell.configured ||
                 noSlots ||
                 busy ||
+                scheduleByPortal.has(cell.portalId) ||
                 (Boolean(contactBlock) && !value && !cell.selected);
               const problem =
                 !busy &&
@@ -970,6 +992,39 @@ export const PropertyPortalsCard = forwardRef<
                             {cell.lastSyncAt ? "Retrimite" : "Reîncearcă"}
                           </Button>
                         ) : null}
+                        <PortalScheduleControl
+                          organizationId={organizationId}
+                          propertyId={propertyId}
+                          portalId={cell.portalId}
+                          portalName={cell.portalName}
+                          {...(cell.promotionFlag ? { promoted: promotedValue(cell) } : {})}
+                          schedule={scheduleByPortal.get(cell.portalId)}
+                          canManage={canManage}
+                          canSchedule={
+                            canManage &&
+                            !publishSoon &&
+                            cell.availability === "available" &&
+                            cell.configured &&
+                            !cell.selected &&
+                            !busy &&
+                            !noSlots &&
+                            !contactBlock
+                          }
+                          onPublishNow={async () => {
+                            const out = await enqueueFn({
+                              data: {
+                                ...(organizationId ? { organizationId } : {}),
+                                propertyId,
+                                selections: [{ portalId: cell.portalId, enabled: true, ...(cell.promotionFlag ? { promoted: promotedValue(cell) } : {}) }],
+                                syncExisting: true,
+                              },
+                            });
+                            const r = out.results.find((x) => x.portalId === cell.portalId);
+                            if (!r?.queued) throw new Error(r?.message ?? `${cell.portalName}: publicarea nu a putut porni.`);
+                            setChecked((prev) => ({ ...prev, [cell.portalId]: true }));
+                          }}
+                          onChanged={refreshSchedules}
+                        />
                         {cell.promotionFlag ? (
                           <label
                             htmlFor={`portal-${cell.portalId}-promoted`}
