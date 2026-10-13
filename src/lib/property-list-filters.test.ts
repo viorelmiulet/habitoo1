@@ -130,3 +130,42 @@ describe("filtrele listei de proprietăți", () => {
     expect(propertyListSearchFromState(state.filters, state.sort, state.page, state.view)).toEqual({ view: "publish" });
   });
 });
+
+import { agentFilterClause, buildAgentFilterOptions, showMainAgentFilter, UNASSIGNED_AGENT_FILTER } from "./property-list-filters";
+
+describe("filtrul Agent", () => {
+  it("„Nealocate” filtrează anunțurile fără agent", () => {
+    expect(agentFilterClause(UNASSIGNED_AGENT_FILTER)).toEqual({ kind: "unassigned" });
+    expect(agentFilterClause("all")).toEqual({ kind: "none" });
+    expect(agentFilterClause("u1")).toEqual({ kind: "agent", id: "u1" });
+  });
+
+  it("agentul fără drept să vadă alte anunțuri nu vede filtrul; adminul și superadminul da", () => {
+    expect(showMainAgentFilter({ isAdmin: false, isSuperadmin: false })).toBe(false);
+    expect(showMainAgentFilter({ isAdmin: true, isSuperadmin: false })).toBe(true);
+    expect(showMainAgentFilter({ isAdmin: false, isSuperadmin: true })).toBe(true);
+  });
+
+  it("numărul pe agent exclude arhivatele și șterse; inactivii doar cu anunțuri", () => {
+    const options = buildAgentFilterOptions(
+      [
+        { id: "a", full_name: "Ana", is_active: true },
+        { id: "b", full_name: "Bogdan", is_active: false },
+        { id: "c", full_name: "Cristi", is_active: false },
+      ],
+      [
+        { assigned_to: "a", status: "active", deleted_at: null },
+        { assigned_to: "a", status: "archived", deleted_at: null },
+        { assigned_to: "a", status: "active", deleted_at: "2026-10-01T00:00:00Z" },
+        { assigned_to: "b", status: "sold", deleted_at: null },
+        { assigned_to: "c", status: "archived", deleted_at: null },
+        { assigned_to: null, status: "draft", deleted_at: null },
+      ],
+    );
+    expect(options).toEqual([
+      { value: "a", label: "Ana", count: 1 },
+      { value: "b", label: "Bogdan (inactiv)", count: 1 },
+      { value: UNASSIGNED_AGENT_FILTER, label: "Nealocate", count: 1 },
+    ]);
+  });
+});

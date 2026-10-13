@@ -86,6 +86,7 @@ import {
 import { appHead } from "@/components/app/app-head";
 import { cn } from "@/lib/utils";
 import { canShowDeleteAction, formatPropertyListDetails, formatPropertyListPrice, portalDotTone, portalStateLabel } from "@/lib/property-list-row";
+import { agentFilterClause, buildAgentFilterOptions, showMainAgentFilter, UNASSIGNED_AGENT_FILTER } from "@/lib/property-list-filters";
 import {
   emptyPropertyListFilters,
   buildCityFilterOptions,
@@ -240,13 +241,35 @@ function PropertiesPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("profiles")
-        .select("id,full_name")
+        .select("id,full_name,is_active")
         .eq("organization_id", orgId as string)
         .order("full_name");
       if (error) throw error;
       return data;
     },
   });
+
+  // Filtrul principal „Agent”: doar pentru cine vede toate anunțurile agenției.
+  const mainAgentFilter = showMainAgentFilter(user);
+  const { data: agentListingRows = [] } = useQuery({
+    queryKey: ["property-agent-counts", orgId],
+    enabled: Boolean(orgId) && mainAgentFilter,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("properties")
+        .select("assigned_to,status,deleted_at")
+        .eq("organization_id", orgId as string)
+        .is("deleted_at", null)
+        .neq("status", "archived")
+        .limit(10000);
+      if (error) throw error;
+      return data;
+    },
+  });
+  const agentOptions = useMemo(
+    () => buildAgentFilterOptions(agents, agentListingRows),
+    [agents, agentListingRows],
+  );
 
   const { data: favoriteIds = [] } = useQuery({
     queryKey: ["property-favorites", user?.userId],
@@ -364,7 +387,9 @@ function PropertiesPage() {
       }
       if (filters.district !== "all") query = query.eq("district", filters.district);
       if (filters.source !== "all") query = query.eq("source", filters.source);
-      if (filters.agent !== "all") query = query.eq("assigned_to", filters.agent);
+      const agentClause = agentFilterClause(filters.agent);
+      if (agentClause.kind === "unassigned") query = query.is("assigned_to", null);
+      else if (agentClause.kind === "agent") query = query.eq("assigned_to", agentClause.id);
       if (filters.mine && user?.userId) query = query.eq("assigned_to", user.userId);
       if (filters.priceMin) query = query.gte("price", Number(filters.priceMin));
       if (filters.priceMax) query = query.lte("price", Number(filters.priceMax));
@@ -584,7 +609,9 @@ function PropertiesPage() {
     filters.city !== "all" ? { key: "city" as const, label: filters.city } : null,
     filters.district !== "all" ? { key: "district" as const, label: filters.district } : null,
     filters.source !== "all" ? { key: "source" as const, label: `Sursă: ${formatPropertySourceLabel(filters.source)}` } : null,
-    filters.agent !== "all" ? { key: "agent" as const, label: agentName(filters.agent) } : null,
+    filters.agent !== "all"
+      ? { key: "agent" as const, label: filters.agent === UNASSIGNED_AGENT_FILTER ? "Nealocate" : agentName(filters.agent) }
+      : null,
     filters.mine ? { key: "mine" as const, label: "Doar ale mele" } : null,
     filters.favoritesOnly ? { key: "favoritesOnly" as const, label: "Doar favorite" } : null,
     filters.showArchived ? { key: "showArchived" as const, label: "Include arhivate" } : null,
@@ -739,6 +766,20 @@ function PropertiesPage() {
               <PortalFilterSelect id="property-portal" value={filters.portal} options={portalOptions} onChange={(v) => setFilters((f) => ({ ...f, portal: v }))} className={cn("w-full", filters.portal !== "all" && valuedControlClass)} />
             </div>
           ) : <div aria-hidden />}
+          {mainAgentFilter ? (
+            <div>
+              <label htmlFor="property-agent" className={fieldLabelClass}>Agent</label>
+              <Select value={filters.agent} onValueChange={(v) => setFilters((f) => ({ ...f, agent: v }))}>
+                <SelectTrigger id="property-agent" className={cn("w-full", filters.agent !== "all" && valuedControlClass)}><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Toți agenții</SelectItem>
+                  {agentOptions.map((o) => (
+                    <SelectItem key={o.value} value={o.value}>{o.label} ({o.count})</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          ) : null}
 
           {shouldShowAdvancedFilters(filtersExpanded) ? <>
             <div>
@@ -773,7 +814,7 @@ function PropertiesPage() {
               <legend className={fieldLabelClass}>Băi</legend>
               <div className="grid grid-cols-4 gap-1.5">{[["", "Oricâte"], ["1", "1"], ["2", "2"], ["3+", "3+"]].map(([value, label]) => <Button key={value || "any"} type="button" variant="outline" aria-pressed={filters.bathrooms === value} onClick={() => setFilters((f) => ({ ...f, bathrooms: value }))} className={cn("px-1", filters.bathrooms === value && "border-sidebar bg-sidebar text-surface hover:bg-sidebar hover:text-surface")}>{label}</Button>)}</div>
             </fieldset>
-            {agents.length >= 2 ? <div>
+            {!mainAgentFilter && agents.length >= 2 ? <div>
               <label htmlFor="property-agent" className={fieldLabelClass}>Agent</label>
               <Select value={filters.agent} onValueChange={(v) => setFilters((f) => ({ ...f, agent: v }))}><SelectTrigger id="property-agent" className={cn("w-full", filters.agent !== "all" && valuedControlClass)}><SelectValue /></SelectTrigger><SelectContent><SelectItem value="all">Toți agenții</SelectItem>{agents.map((a) => <SelectItem key={a.id} value={a.id}>{a.full_name}</SelectItem>)}</SelectContent></Select>
             </div> : null}
