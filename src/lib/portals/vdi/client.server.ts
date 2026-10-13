@@ -14,7 +14,7 @@ export type VdiHttpOk = { ok: true; status: number; body: unknown };
 export async function vdiCall(
   apiKey: string,
   endpoint: "/apioferte" | "/api",
-  cat: "add" | "mod" | "del" | "list",
+  cat: "add" | "edit" | "mod" | "del" | "list",
   body: Record<string, unknown> | null,
   query: Record<string, string> = {},
   fetchImpl: typeof fetch = vdiRelayFetch,

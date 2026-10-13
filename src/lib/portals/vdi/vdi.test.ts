@@ -226,18 +226,18 @@ describe("adaptor (mock)", () => {
     expect(out.ok).toBe(true);
   });
 
-  it("mod cu „Date invalide” nu blochează anunțul; avertisment păstrat", async () => {
+  it("edit cu „Date invalide” nu blochează anunțul; avertisment păstrat", async () => {
     const { d, calls } = deps("ana@x.ro", [{ eroare: "Date invalide" }, { eroare: "Proprietatea a fost adaugata. ID: VDI1.5 | Link: https://vdi.ro/a/5" }], { externalId: 1000, synced: true, fingerprint: "vechi" });
     const out = await createVdiAdapter(d).publishListing(ctx, { propertyId: "p", externalId: null });
-    expect(calls.map((c) => `${c.endpoint}:${c.cat}`)).toEqual(["/api:mod", "/apioferte:add"]);
+    expect(calls.map((c) => `${c.endpoint}:${c.cat}`)).toEqual(["/api:edit", "/apioferte:add"]);
     expect((calls[1]!.body as { idagent: number }).idagent).toBe(1000);
     expect(out.ok && out.data.message).toContain("Date invalide");
   });
 
-  it("mod cu „nu a fost gasit” → add", async () => {
+  it("edit cu „nu a fost gasit” → add; anunțurile rămân pe mod pe /apioferte", async () => {
     const { d, calls } = deps("ana@x.ro", [{ eroare: "Agentul cu id intern 1000 nu a fost gasit" }, { succes: 1000 }, { eroare: "Proprietatea a fost adaugata. ID: VDI1.5 | Link: https://vdi.ro/a/5" }], { externalId: 1000, synced: true, fingerprint: null });
-    await createVdiAdapter(d).publishListing(ctx, { propertyId: "p", externalId: null });
-    expect(calls.map((c) => `${c.endpoint}:${c.cat}`)).toEqual(["/api:mod", "/api:add", "/apioferte:add"]);
+    await createVdiAdapter(d).publishListing(ctx, { propertyId: "p", externalId: "1172" });
+    expect(calls.map((c) => `${c.endpoint}:${c.cat}`)).toEqual(["/api:edit", "/api:add", "/apioferte:mod"]);
   });
 });
 
