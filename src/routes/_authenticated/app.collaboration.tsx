@@ -10,10 +10,10 @@
  * nu se expun proprietarul, notele interne sau agentul agenției sursă.
  */
 import { createFileRoute } from "@tanstack/react-router";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { useMemo, useState } from "react";
-import { Building2, Handshake, Inbox, MessageCircle, Search, Send, X } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { LayoutGrid, List, Building2, Handshake, Inbox, MessageCircle, Search, Send, X } from "lucide-react";
 import { toast } from "@/components/ui/sonner";
 import { PageHeader } from "@/components/app/PageHeader";
 import { CardGridSkeleton } from "@/components/app/LoadingState";
@@ -24,12 +24,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
 import {
   Dialog,
   DialogContent,
@@ -62,6 +56,8 @@ import {
   type CollaborationOffer,
   type CollaborationProposalStatus,
 } from "@/lib/collaboration.functions";
+import { PartnerOfferItem } from "@/components/app/PartnerOfferItem";
+import { PARTNER_OFFERS_PAGE_SIZE, nextPartnerOfferOffset, partnerOfferViewKey, parsePartnerOfferView, type PartnerOfferSort, type PartnerOfferView } from "@/lib/partner-offers";
 import { appHead } from "@/components/app/app-head";
 
 export const Route = createFileRoute("/_authenticated/app/collaboration")({
@@ -110,6 +106,17 @@ function num(value: string): number | null {
 function CollaborationPage() {
   const { data: user } = useCurrentUser();
   const queryClient = useQueryClient();
+  const [agencyId, setAgencyId] = useState("all");
+  const [sort, setSort] = useState<PartnerOfferSort>("newest");
+  const [view, setView] = useState<PartnerOfferView>("cards");
+  useEffect(() => {
+    if (!user?.userId) return;
+    try { setView(parsePartnerOfferView(localStorage.getItem(partnerOfferViewKey(user.userId)))); } catch { setView("cards"); }
+  }, [user?.userId]);
+  const changeView = (next: PartnerOfferView) => {
+    setView(next);
+    if (user?.userId) { try { localStorage.setItem(partnerOfferViewKey(user.userId), next); } catch { /* preference remains for this visit */ } }
+  };
   const [filters, setFilters] = useState<Filters>(emptyFilters);
   const [proposeFor, setProposeFor] = useState<CollaborationOffer | null>(null);
   const [detailOffer, setDetailOffer] = useState<CollaborationOffer | null>(null);
@@ -127,12 +134,14 @@ function CollaborationPage() {
     queryFn: () => fetchFacets(),
   });
 
-  const offers = useQuery({
-    queryKey: ["collab-offers", filters],
+  const offers = useInfiniteQuery({
+    queryKey: ["collab-offers", filters, agencyId, sort, user?.userId],
+    initialPageParam: 0,
     enabled: participating,
-    queryFn: () =>
+    queryFn: ({ pageParam }) =>
       fetchOffers({
         data: {
+          offset: pageParam, limit: PARTNER_OFFERS_PAGE_SIZE, sort, agencyId: agencyId === "all" ? undefined : agencyId,
           q: filters.q.trim() || undefined,
           city: filters.city,
           propertyType: filters.type,
@@ -143,6 +152,7 @@ function CollaborationPage() {
           surfaceMin: num(filters.surfaceMin),
         },
       }),
+    getNextPageParam: (lastPage: { offers: CollaborationOffer[]; total: number }, pages: { offers: CollaborationOffer[]; total: number }[]) => nextPartnerOfferOffset(pages.reduce((n, p) => n + p.offers.length, 0), lastPage.total),
   });
 
   const proposals = useQuery({
@@ -153,25 +163,8 @@ function CollaborationPage() {
   const incomingPending = (proposals.data?.incoming ?? []).filter(
     (p) => p.status === "pending",
   ).length;
-  const partnerAgencies = useMemo(() => {
-    const grouped = new Map<
-      string,
-      { id: string; name: string; city: string | null; offers: CollaborationOffer[] }
-    >();
-    for (const offer of offers.data ?? []) {
-      const agency = grouped.get(offer.agencyId) ?? {
-        id: offer.agencyId,
-        name: offer.agencyName,
-        city: offer.agencyCity,
-        offers: [],
-      };
-      agency.offers.push(offer);
-      grouped.set(offer.agencyId, agency);
-    }
-    return [...grouped.values()].sort(
-      (a, b) => b.offers.length - a.offers.length || a.name.localeCompare(b.name, "ro"),
-    );
-  }, [offers.data]);
+  const allOffers = offers.data?.pages.flatMap((p) => p.offers) ?? [];
+  const totalOffers = offers.data?.pages[0]?.total ?? 0;
 
   return (
     <>
@@ -195,7 +188,7 @@ function CollaborationPage() {
       <Tabs defaultValue={participating ? "offers" : "outgoing"}>
         <TabsList className="flex-wrap">
           {participating ? (
-            <TabsTrigger value="offers">Oferte partenere ({offers.data?.length ?? 0})</TabsTrigger>
+            <TabsTrigger value="offers">Oferte partenere ({totalOffers})</TabsTrigger>
           ) : null}
           <TabsTrigger value="outgoing">
             Propunerile mele ({proposals.data?.outgoing.length ?? 0})
@@ -295,7 +288,7 @@ function CollaborationPage() {
               />
               <Button
                 variant="outline"
-                onClick={() => setFilters(emptyFilters)}
+                onClick={() => { setFilters(emptyFilters); setAgencyId("all"); }}
                 aria-label="Resetează filtrele"
               >
                 <X className="size-4" />
@@ -303,108 +296,40 @@ function CollaborationPage() {
             </div>
           </div>
 
-          {offers.isLoading ? (
-            <CardGridSkeleton />
-          ) : (offers.data ?? []).length === 0 ? (
-            <EmptyState
-              icon={Handshake}
-              title="Nicio ofertă de colaborare disponibilă"
-              description="Colaborarea înseamnă că o agenție deschide o proprietate din portofoliul ei către celelalte agenții Habitoo și afișează comisionul pe care îl împarte. Momentan nicio ofertă nu corespunde filtrelor tale. Îți poți marca propriile proprietăți pentru colaborare din pagina proprietății, secțiunea Colaborare, unde stabilești comisionul și condițiile."
-            />
-          ) : (
-            <div className="panel overflow-hidden">
-              <Accordion type="multiple" className="divide-y divide-border">
-                {partnerAgencies.map((agency) => (
-                  <AccordionItem key={agency.id} value={agency.id} className="border-0 px-4">
-                    <AccordionTrigger className="gap-3 py-4 hover:no-underline">
-                      <span className="flex min-w-0 flex-1 items-center gap-3 text-left">
-                        <span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                          <Building2 className="size-5" aria-hidden />
-                        </span>
-                        <span className="min-w-0 flex-1">
-                          <span className="block truncate text-sm font-semibold">{agency.name}</span>
-                          <span className="block text-xs font-normal text-muted-foreground">
-                            {[agency.city, `${agency.offers.length} ${agency.offers.length === 1 ? "ofertă" : "oferte"}`]
-                              .filter(Boolean)
-                              .join(" · ")}
-                          </span>
-                        </span>
-                        <StatusBadge tone="success">Partener activ</StatusBadge>
-                      </span>
-                    </AccordionTrigger>
-                    <AccordionContent className="pb-4">
-                      <ul className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-                        {agency.offers.map((offer) => (
-                          <li key={offer.id} className="flex flex-col overflow-hidden rounded-xl border border-border bg-card">
-                  <button
-                    type="button"
-                    onClick={() => setDetailOffer(offer)}
-                    className="relative block aspect-[1.82/1] w-full overflow-hidden bg-muted text-left"
-                  >
-                    {offer.coverUrl ? (
-                      <img
-                        src={offer.coverUrl}
-                        alt={offer.title}
-                        loading="lazy"
-                        className="size-full object-cover"
-                      />
-                    ) : (
-                      <span className="flex size-full items-center justify-center text-xs text-muted-foreground">
-                        Fără fotografii
-                      </span>
-                    )}
-                    {offer.collabCommissionPercent !== null ? (
-                      <span className="absolute top-3 left-3 rounded-full bg-gold px-3 py-1 text-sm font-semibold text-gold-foreground shadow-sm">
-                        {offer.collabCommissionPercent}% comision
-                      </span>
-                    ) : null}
-                  </button>
-                  <div className="flex flex-1 flex-col gap-1.5 p-3.5">
-                    <h3 className="line-clamp-2 text-sm font-semibold">{offer.title}</h3>
-                    <p className="text-xs text-muted-foreground">
-                      {[offer.district, offer.city, offer.county].filter(Boolean).join(", ") ||
-                        "Locație nespecificată"}
-                    </p>
-                    <p className="text-lg font-semibold">
-                      {formatMoney(offer.price, offer.currency)}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      {[
-                        propertyTypeLabels[offer.propertyType] ?? offer.propertyType,
-                        transactionLabels[offer.transactionKind as "sale" | "rent"],
-                        offer.rooms ? `${offer.rooms} camere` : null,
-                        offer.surface ? `${formatNumber(offer.surface)} m²` : null,
-                      ]
-                        .filter(Boolean)
-                        .join(" · ")}
-                    </p>
-                    <div className="mt-auto flex gap-2 pt-3">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="flex-1"
-                        onClick={() => setDetailOffer(offer)}
-                      >
-                        Detalii
-                      </Button>
-                      <Button size="sm" className="flex-1" onClick={() => setProposeFor(offer)}>
-                        Propune unui client
-                      </Button>
-                    </div>
-                    <p className="border-t border-border pt-2 text-[11px] text-muted-foreground">
-                      {offer.myProposalCount > 0
-                        ? `${offer.myProposalCount} propunere(i) trimise`
-                        : "Nicio propunere trimisă"}
-                    </p>
-                  </div>
-                          </li>
-                        ))}
-                      </ul>
-                    </AccordionContent>
-                  </AccordionItem>
-                ))}
-              </Accordion>
+          <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 sm:flex sm:flex-wrap">
+            <Select value={agencyId} onValueChange={setAgencyId}>
+              <SelectTrigger aria-label="Agenție" className="w-full sm:w-56"><SelectValue placeholder="Agenție" /></SelectTrigger>
+              <SelectContent><SelectItem value="all">Toate agențiile</SelectItem>{(facets.data?.agencies ?? []).map((a) => <SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>)}</SelectContent>
+            </Select>
+            <Select value={sort} onValueChange={(value) => setSort(value as PartnerOfferSort)}>
+              <SelectTrigger aria-label="Sortare" className="w-full sm:w-48"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="newest">Cele mai noi</SelectItem>
+                <SelectItem value="price-asc">Preț crescător</SelectItem>
+                <SelectItem value="price-desc">Preț descrescător</SelectItem>
+                <SelectItem value="commission-desc">Comision descrescător</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3">
+            <p className="text-sm font-medium" aria-live="polite">{totalOffers} oferte</p>
+            <div className="flex shrink-0 gap-1" role="group" aria-label="Afișare oferte">
+              <Button size="sm" variant={view === "cards" ? "secondary" : "ghost"} aria-pressed={view === "cards"} onClick={() => changeView("cards")}><LayoutGrid className="size-4" />Carduri</Button>
+              <Button size="sm" variant={view === "list" ? "secondary" : "ghost"} aria-pressed={view === "list"} onClick={() => changeView("list")}><List className="size-4" />Listă</Button>
             </div>
+          </div>
+          {offers.isLoading ? <CardGridSkeleton /> : offers.isError ? (
+            <div className="py-8 text-center"><p className="mb-3 text-sm text-muted-foreground">Ofertele nu au putut fi încărcate.</p><Button variant="outline" onClick={() => offers.refetch()}>Reîncearcă</Button></div>
+          ) : allOffers.length === 0 ? (
+            <EmptyState icon={Handshake} title="Nicio ofertă de colaborare disponibilă" description="Momentan nicio ofertă nu corespunde filtrelor tale." />
+          ) : (
+            <>
+              <ul className={view === "cards" ? "grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4" : "divide-y divide-border"}>
+                {allOffers.map((offer) => <PartnerOfferItem key={offer.id} offer={offer} view={view} onDetails={setDetailOffer} onPropose={setProposeFor} />)}
+              </ul>
+              {offers.hasNextPage ? <div className="flex justify-center py-4"><Button variant="outline" disabled={offers.isFetchingNextPage} onClick={() => offers.fetchNextPage()}>{offers.isFetchingNextPage ? "Se încarcă…" : "Încarcă mai multe"}</Button></div> : null}
+              {offers.isFetchNextPageError ? <p role="alert" className="text-center text-sm text-destructive">Nu am putut încărca următoarele oferte. Încearcă din nou.</p> : null}
+            </>
           )}
         </TabsContent>
 
