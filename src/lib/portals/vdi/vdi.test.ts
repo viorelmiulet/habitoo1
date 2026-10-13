@@ -55,6 +55,39 @@ describe("parsarea răspunsului `eroare`", () => {
     expect(parseVdiResponse({ eroare: "Abonamentul a expirat" })).toMatchObject({ ok: false, kind: "expired" });
     expect(parseVdiResponse({})).toMatchObject({ ok: false });
   });
+
+  it("cheia nedocumentată `succes` (răspuns real) înseamnă succes", () => {
+    const r = parseVdiResponse({ succes: 1000 });
+    expect(r).toMatchObject({ ok: true, operation: "add", vdiId: null, link: null });
+    expect(parseVdiResponse({ succes: "Proprietatea adaugata. ID: VDI1.9 | Link: https://vdi.ro/y" })).toMatchObject({
+      ok: true,
+      vdiId: "VDI1.9",
+      link: "https://vdi.ro/y",
+    });
+  });
+
+  it("forma necunoscută arată corpul exact primit (max 200 caractere)", () => {
+    const r = parseVdiResponse({ altceva: "x".repeat(500) });
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    expect(r.text).toContain('{"altceva":"');
+    expect(r.text.length).toBeLessThanOrEqual("Răspuns VDI.ro neașteptat: ".length + 201);
+  });
+});
+
+describe("parsarea răspunsului agentului", () => {
+  it("`{\"succes\":1000}` (răspuns real) → succes", () => {
+    expect(parseVdiAgentResponse({ succes: 1000 })).toMatchObject({ ok: true });
+    expect(parseVdiAgentResponse({ succes: "ok" })).toMatchObject({ ok: true });
+  });
+  it("anunț adăugat cu ID și link → succes cu ID și link", () => {
+    const r = parseVdiResponse({ eroare: "Proprietatea a fost adaugata. ID: VDI126.1262725 | Link: https://vdi.ro/x" });
+    expect(r).toMatchObject({ ok: true, vdiId: "VDI126.1262725", link: "https://vdi.ro/x" });
+  });
+  it("cheie invalidă și agent negăsit rămân erori", () => {
+    expect(parseVdiAgentResponse({ eroare: "Cheie invalida" })).toMatchObject({ ok: false, notFound: false });
+    expect(parseVdiAgentResponse({ eroare: "Agentul cu id intern 5 nu a fost gasit" })).toMatchObject({ ok: false, notFound: true });
+  });
 });
 
 describe("mapper", () => {
