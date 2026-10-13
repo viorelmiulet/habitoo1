@@ -1,6 +1,6 @@
 /**
  * Adaptor VDI.ro — PUSH REST cu cheia API a agenției (header `X-Api-Key`).
- *   POST /api?cat=add|mod           agenții (trimiși ÎNAINTEA anunțurilor)
+ *   POST /api?cat=add|edit|mod      agenții (`add` la prima creare, `edit` la actualizare)
  *   POST /apioferte?cat=add|mod|del anunțuri, identificate prin `idintern`
  *   POST /apioferte?cat=list        test conexiune și sincronizare stări
  * Doc: https://vdi.ro/en/documentatie-api/8o3AfHgVfwJYgEXaqETXW5jQnUGwtPCKGE5VDE75
@@ -75,8 +75,9 @@ export function createVdiAdapter(deps: VdiDeps): PortalAdapter {
   const call = deps.call ?? vdiCall;
 
   /**
-   * Trimite agentul înaintea anunțului: `add` prima dată, `mod` doar când s-au schimbat
-   * datele (amprentă). Eroare la `mod` (alta decât „nu a fost gasit”) = avertisment.
+   * Trimite agentul înaintea anunțului: `add` prima dată, `edit` doar când s-au
+   * schimbat datele (amprentă). `mod` e doar pentru anunțuri (`/apioferte`).
+   * Eroare la `edit` (alta decât „nu a fost gasit”) = avertisment.
    */
   async function ensureAgent(ctx: PortalContext, apiKey: string, agent: VdiAgentInfo): Promise<{ id: number; warning: string | null } | PortalFail> {
     const link = await deps.agentLink(ctx.organizationId, agent.userId);
@@ -85,7 +86,7 @@ export function createVdiAdapter(deps: VdiDeps): PortalAdapter {
     const fp = vdiAgentFingerprint(mapped.payload);
     if (!ctx.allowLiveRequests) return { id: link.externalId, warning: null };
     if (link.synced && link.fingerprint === fp) return { id: link.externalId, warning: null };
-    let res = await call(apiKey, "/api", link.synced ? "mod" : "add", mapped.payload);
+    let res = await call(apiKey, "/api", link.synced ? "edit" : "add", mapped.payload);
     if (!res.ok) return res;
     let parsed = parseVdiAgentResponse(res.body);
     if (!parsed.ok && link.synced && parsed.notFound) {
