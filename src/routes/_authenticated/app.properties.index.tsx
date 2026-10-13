@@ -814,10 +814,6 @@ function PropertiesPage() {
               <legend className={fieldLabelClass}>Băi</legend>
               <div className="grid grid-cols-4 gap-1.5">{[["", "Oricâte"], ["1", "1"], ["2", "2"], ["3+", "3+"]].map(([value, label]) => <Button key={value || "any"} type="button" variant="outline" aria-pressed={filters.bathrooms === value} onClick={() => setFilters((f) => ({ ...f, bathrooms: value }))} className={cn("px-1", filters.bathrooms === value && "border-sidebar bg-sidebar text-surface hover:bg-sidebar hover:text-surface")}>{label}</Button>)}</div>
             </fieldset>
-            {!mainAgentFilter && agents.length >= 2 ? <div>
-              <label htmlFor="property-agent" className={fieldLabelClass}>Agent</label>
-              <Select value={filters.agent} onValueChange={(v) => setFilters((f) => ({ ...f, agent: v }))}><SelectTrigger id="property-agent" className={cn("w-full", filters.agent !== "all" && valuedControlClass)}><SelectValue /></SelectTrigger><SelectContent><SelectItem value="all">Toți agenții</SelectItem>{agents.map((a) => <SelectItem key={a.id} value={a.id}>{a.full_name}</SelectItem>)}</SelectContent></Select>
-            </div> : null}
             {(meta?.sources.length ?? 0) >= 2 ? <div>
               <label htmlFor="property-source" className={fieldLabelClass}>Sursă</label>
               <Select value={filters.source} onValueChange={(v) => setFilters((f) => ({ ...f, source: v }))}><SelectTrigger id="property-source" className={cn("w-full", filters.source !== "all" && valuedControlClass)}><SelectValue /></SelectTrigger><SelectContent><SelectItem value="all">Toate sursele</SelectItem>{(meta?.sources ?? []).map((s) => <SelectItem key={s} value={s}>{formatPropertySourceLabel(s)}</SelectItem>)}</SelectContent></Select>
