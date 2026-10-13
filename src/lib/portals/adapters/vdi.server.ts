@@ -101,7 +101,7 @@ export function createVdiAdapter(deps: VdiDeps): PortalAdapter {
     if (!parsed.ok) {
       const listing = parseVdiResponse(res.body);
       await deps.markAgentSynced(ctx.organizationId, agent.userId, parsed.text, null);
-      if (!listing.ok && listing.kind !== "rejected") return rejection(listing, res.status, res.body);
+      if (!listing.ok && (listing.kind === "invalid_key" || listing.kind === "expired")) return rejection(listing, res.status, res.body);
       return fail("VALIDATION_ERROR", `VDI.ro (agent): ${parsed.text}`, { httpStatus: res.status, portalResponse: res.body });
     }
     await deps.markAgentSynced(ctx.organizationId, agent.userId, null, fp);
@@ -167,7 +167,7 @@ export function createVdiAdapter(deps: VdiDeps): PortalAdapter {
       const res = await call(apiKey, "/apioferte", "list", {}, { pe_pagina: "1", modificate_de_la: new Date().toISOString().slice(0, 10) });
       if (!res.ok) return res;
       const parsed = parseVdiResponse(res.body);
-      if (!parsed.ok && parsed.kind !== "rejected") return rejection(parsed, res.status, res.body);
+      if (!parsed.ok && (parsed.kind === "invalid_key" || parsed.kind === "expired")) return rejection(parsed, res.status, res.body);
       if (!parsed.ok && !Array.isArray((res.body as Record<string, unknown>)?.["anunturi"])) {
         return rejection(parsed, res.status, res.body);
       }
