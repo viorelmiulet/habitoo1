@@ -1,0 +1,2 @@
+ALTER TABLE public.portal_agent_links ADD COLUMN IF NOT EXISTS sent_fingerprint text;
+COMMENT ON COLUMN public.portal_agent_links.sent_fingerprint IS 'Hash of agent data (name, email, phone, photo) last accepted by the portal; mod is resent only when it changes.';

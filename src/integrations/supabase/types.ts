@@ -4622,6 +4622,7 @@ export type Database = {
           last_error: string | null
           organization_id: string
           portal: string
+          sent_fingerprint: string | null
           synced_at: string | null
           updated_at: string
           user_id: string
@@ -4633,6 +4634,7 @@ export type Database = {
           last_error?: string | null
           organization_id: string
           portal: string
+          sent_fingerprint?: string | null
           synced_at?: string | null
           updated_at?: string
           user_id: string
@@ -4644,6 +4646,7 @@ export type Database = {
           last_error?: string | null
           organization_id?: string
           portal?: string
+          sent_fingerprint?: string | null
           synced_at?: string | null
           updated_at?: string
           user_id?: string
