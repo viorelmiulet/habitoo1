@@ -17,6 +17,7 @@
 - `properties.assigned_to` changes only via `reassignProperties` (manager/superadmin; trigger `guard_property_reassign`). Why: reassignment stays manager-only with slot checks.
 - Public prices and structured offers read display prices; billing and seat limits stay separate. Why: billing stays separate.
 - Collaboration auto-activation lives only in the DB (insert trigger `properties_auto_collaboration`, RPC `collaboration_auto_activate`), copying the agency default commission only when none is explicit; `collaboration_opted_out` is never overridden. Why: one rule for all inserts.
+- Partner offers use authenticated, counted server pagination with global ordering and agency filtering before pagination; agency logos use private signed storage and display preferences are user-scoped. Why: flat views must include all eligible offers rather than sort/filter a truncated first batch; proposal flows remain unchanged.
 - Key-request emails (Imospot, VDI.ro) use `notifyKeyRequest` over `KEY_REQUEST_PORTALS`; `provider_notified_at` prevents duplicates. Why: one send, one flow for every portal.
 - Company data comes from ANAF only via `src/lib/company-lookup.ts` (pure, injected fetch) with 24h `company_lookup_cache`; org sync fills empty fields only. Why: ANAF rate limit; user edits win.
 - `HomeHeader` on homepage + blog (`PublicLayout homeHeader`); else `PublicHeader`. Why: isolate fixed overlay.
