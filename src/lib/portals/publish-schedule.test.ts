@@ -53,7 +53,7 @@ const baseTables = () => ({
   properties: [{ id: "p1", organization_id: "org", status: "active", deleted_at: null, assigned_to: "agent" }],
   profiles: [{ id: "agent", is_active: true, organization_id: "org" }],
   user_roles: [{ user_id: "agent", role: "agent", organization_id: "org" }],
-  portal_publish_schedules: [{ ...schedule }],
+  portal_publish_schedules: [{ ...schedule }] as Row[],
 });
 
 describe("ora României → UTC", () => {
