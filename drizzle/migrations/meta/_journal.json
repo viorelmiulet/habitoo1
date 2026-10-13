@@ -960,6 +960,13 @@
       "when": 1791866929575,
       "tag": "0136_public_agency_agents_require_enabled_agency_profile",
       "breakpoints": true
+    },
+    {
+      "idx": 137,
+      "version": "7",
+      "when": 1791879213145,
+      "tag": "0137_portal_agent_links_fingerprint",
+      "breakpoints": true
     }
   ]
 }

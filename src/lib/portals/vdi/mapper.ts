@@ -215,11 +215,18 @@ function positive(n: number | null): number | undefined {
   return n !== null && Number.isFinite(n) && n > 0 ? Math.round(n * 100) / 100 : undefined;
 }
 
-/** București cu sector: localitatea „București”, sectorul devine cartier dacă lipsește. */
-function splitLocality(city: string, district: string | null): { localitate: string; cartier: string | null } {
-  const m = /^(Bucure[sș]ti)\s+Sector(?:ul)?\s*(\d)/i.exec(city.trim());
-  if (m) return { localitate: "București", cartier: district?.trim() || `Sector ${m[2]}` };
-  return { localitate: city.trim(), cartier: district?.trim() || null };
+/** Diacritice corecte (virgulă), cum cere VDI.ro: ş→ș, ţ→ț. */
+export function vdiDiacritics(s: string): string {
+  return s.replace(/ş/g, "ș").replace(/Ş/g, "Ș").replace(/ţ/g, "ț").replace(/Ţ/g, "Ț");
+}
+
+/** București cu sector: județ și localitatea „București”, zona (sau „Sector N”) devine cartier. */
+export function splitLocality(city: string, district: string | null): { judet: string | null; localitate: string; cartier: string | null } {
+  const c = vdiDiacritics(city.trim());
+  const d = district ? vdiDiacritics(district.trim()) : "";
+  const m = /^Bucure[sș]ti\s+Sector(?:ul)?\s*(\d)/i.exec(c);
+  if (m) return { judet: "București", localitate: "București", cartier: d || `Sector ${m[1]}` };
+  return { judet: null, localitate: c, cartier: d || null };
 }
 
 export function vdiTitle(title: string | null, fallback: string): string {
@@ -257,14 +264,14 @@ export function mapPropertyToVdi(p: VdiProperty, agentId: number | null): VdiMap
 
   if (reasons.length > 0) return { ok: false, reasons };
 
-  const { localitate, cartier } = splitLocality(p.city!, p.district);
+  const { judet, localitate, cartier } = splitLocality(p.city!, p.district);
   const typeLabel = ["", "Apartament", "Casă", "Spațiu comercial", "Teren", "Spațiu industrial", "Birou", "Garsonieră", "Hotel"][tipoferta!]!;
   const payload: VdiListingPayload = {
     idintern: idintern!,
     titlu: vdiTitle(p.title, `${typeLabel} ${localitate}`),
     tipoferta: tipoferta!,
     tipoperatiune: sale ? 2 : 1,
-    judetul: p.county!.trim(),
+    judetul: judet ?? vdiDiacritics(p.county!.trim()),
     localitatea: localitate,
     moneda: moneda!,
   };
@@ -314,4 +321,12 @@ export function mapAgentToVdi(
   if (agent.phone?.trim()) payload.phone = agent.phone.trim();
   if (agent.avatarUrl && /^https:\/\//.test(agent.avatarUrl)) payload.photo = agent.avatarUrl;
   return { ok: true, payload };
+}
+
+/** Amprenta datelor agentului trimise la VDI (nume, email, telefon, poză). */
+export function vdiAgentFingerprint(p: VdiAgentPayload): string {
+  const s = JSON.stringify([p.firstname, p.lastname, p.email.toLowerCase(), p.phone ?? "", p.photo ?? ""]);
+  let h = 0x811c9dc5;
+  for (let i = 0; i < s.length; i++) h = Math.imul(h ^ s.charCodeAt(i), 0x01000193) >>> 0;
+  return `v1:${h.toString(16)}:${s.length}`;
 }
