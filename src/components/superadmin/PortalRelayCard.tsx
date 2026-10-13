@@ -29,7 +29,7 @@ export function PortalRelayCard() {
       <div className="space-y-1">
         <h2 className="text-sm font-semibold tracking-wide uppercase">IP fix pentru portaluri</h2>
         <p className="text-xs text-muted-foreground">
-          VDI.ro și Imobiliare.ro primesc cererile prin releu. IP așteptat: 185.166.212.65.
+          VDI.ro și Imobiliare.ro primesc cererile prin releul https://relay.habitoo.ro. IP așteptat: 185.166.212.65.
         </p>
         {result?.ok ? (
           <p className={result.expected ? "text-sm text-primary" : "text-sm text-destructive"}>
