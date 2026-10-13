@@ -1,3 +1,9 @@
+# Structura utilităților, finisajelor și dotărilor
+
+- [ ] Panouri cu căutare, Carduri/În linie și selecții existente
+- [ ] Aceeași structură pentru valorile afișate doar pentru citire
+- [ ] Teste comportamentale și verificare vizuală, fără modificări de date
+
 # Email vizual pentru chat
 
 # Lista publică de agenții
