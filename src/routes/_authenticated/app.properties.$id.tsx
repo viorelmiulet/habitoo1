@@ -147,7 +147,18 @@ function postalNotice(report: { status: string; reasonLabel: string } | null): v
 }
 
 export const Route = createFileRoute("/_authenticated/app/properties/$id")({
-  head: () => appHead("Habitoo CRM — detalii proprietate"),
+  head: () => {
+    const title = "Habitoo CRM — detalii proprietate";
+    const description = "Fișa proprietății în Habitoo CRM: detalii, utilități, finisaje, dotări, fotografii și publicarea pe portaluri.";
+    const head = appHead(title);
+    return { ...head, meta: [...head.meta,
+      { name: "description", content: description },
+      { property: "og:title", content: title },
+      { property: "og:description", content: description },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
+    ] };
+  },
   component: PropertyDetailPage,
 });
 

@@ -105,7 +105,7 @@ export function PropertyFeatureSections({ value, onChange, idPrefix = "features"
   }, []);
   const sections = filterFeatureSections(query, onChange ? undefined : value);
   const inline = !!onChange && view === "inline";
-  return <div className="min-w-0 space-y-6">
+  return <div className="property-feature-sections min-w-0 space-y-6 text-foreground">
     {onChange ? <div className="grid min-w-0 gap-3 sm:grid-cols-[minmax(0,1fr)_auto]">
       <div className="relative min-w-0"><Search className="pointer-events-none absolute left-3 top-3.5 size-4 text-muted-foreground" aria-hidden="true" /><Input type="search" aria-label="Caută o opțiune (utilitate, finisaj, dotare)" placeholder="Caută o opțiune (utilitate, finisaj, dotare)…" className="h-11 pl-9" value={query} onChange={(event) => setQuery(event.target.value)} /></div>
       <ToggleGroup type="single" aria-label="Afișarea opțiunilor" value={view} className="shrink-0 justify-start rounded-control border border-border bg-muted p-1" onValueChange={(next) => { if (!next) return; setView(next); try { localStorage.setItem(VIEW_KEY, next); } catch { /* Session-only preference fallback. */ } }}>
