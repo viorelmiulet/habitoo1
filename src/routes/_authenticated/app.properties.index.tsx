@@ -387,7 +387,7 @@ function PropertiesPage() {
       }
       if (filters.district !== "all") query = query.eq("district", filters.district);
       if (filters.source !== "all") query = query.eq("source", filters.source);
-      const agentClause = agentFilterClause(filters.agent);
+      const agentClause = mainAgentFilter ? agentFilterClause(filters.agent) : ({ kind: "none" } as const);
       if (agentClause.kind === "unassigned") query = query.is("assigned_to", null);
       else if (agentClause.kind === "agent") query = query.eq("assigned_to", agentClause.id);
       if (filters.mine && user?.userId) query = query.eq("assigned_to", user.userId);
@@ -609,7 +609,7 @@ function PropertiesPage() {
     filters.city !== "all" ? { key: "city" as const, label: filters.city } : null,
     filters.district !== "all" ? { key: "district" as const, label: filters.district } : null,
     filters.source !== "all" ? { key: "source" as const, label: `Sursă: ${formatPropertySourceLabel(filters.source)}` } : null,
-    filters.agent !== "all"
+    mainAgentFilter && filters.agent !== "all"
       ? { key: "agent" as const, label: filters.agent === UNASSIGNED_AGENT_FILTER ? "Nealocate" : agentName(filters.agent) }
       : null,
     filters.mine ? { key: "mine" as const, label: "Doar ale mele" } : null,
@@ -814,10 +814,6 @@ function PropertiesPage() {
               <legend className={fieldLabelClass}>Băi</legend>
               <div className="grid grid-cols-4 gap-1.5">{[["", "Oricâte"], ["1", "1"], ["2", "2"], ["3+", "3+"]].map(([value, label]) => <Button key={value || "any"} type="button" variant="outline" aria-pressed={filters.bathrooms === value} onClick={() => setFilters((f) => ({ ...f, bathrooms: value }))} className={cn("px-1", filters.bathrooms === value && "border-sidebar bg-sidebar text-surface hover:bg-sidebar hover:text-surface")}>{label}</Button>)}</div>
             </fieldset>
-            {!mainAgentFilter && agents.length >= 2 ? <div>
-              <label htmlFor="property-agent" className={fieldLabelClass}>Agent</label>
-              <Select value={filters.agent} onValueChange={(v) => setFilters((f) => ({ ...f, agent: v }))}><SelectTrigger id="property-agent" className={cn("w-full", filters.agent !== "all" && valuedControlClass)}><SelectValue /></SelectTrigger><SelectContent><SelectItem value="all">Toți agenții</SelectItem>{agents.map((a) => <SelectItem key={a.id} value={a.id}>{a.full_name}</SelectItem>)}</SelectContent></Select>
-            </div> : null}
             {(meta?.sources.length ?? 0) >= 2 ? <div>
               <label htmlFor="property-source" className={fieldLabelClass}>Sursă</label>
               <Select value={filters.source} onValueChange={(v) => setFilters((f) => ({ ...f, source: v }))}><SelectTrigger id="property-source" className={cn("w-full", filters.source !== "all" && valuedControlClass)}><SelectValue /></SelectTrigger><SelectContent><SelectItem value="all">Toate sursele</SelectItem>{(meta?.sources ?? []).map((s) => <SelectItem key={s} value={s}>{formatPropertySourceLabel(s)}</SelectItem>)}</SelectContent></Select>
