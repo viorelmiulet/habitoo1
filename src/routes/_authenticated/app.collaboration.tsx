@@ -12,7 +12,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { LayoutGrid, List, Building2, Handshake, Inbox, MessageCircle, Search, Send, X } from "lucide-react";
 import { toast } from "@/components/ui/sonner";
 import { PageHeader } from "@/components/app/PageHeader";
@@ -137,7 +137,6 @@ function CollaborationPage() {
   const offers = useInfiniteQuery({
     queryKey: ["collab-offers", filters, agencyId, sort, user?.userId],
     initialPageParam: 0,
-    getNextPageParam: (lastPage, pages) => nextPartnerOfferOffset(pages.reduce((n, p) => n + p.offers.length, 0), lastPage.total),
     enabled: participating,
     queryFn: ({ pageParam }) =>
       fetchOffers({
@@ -153,6 +152,7 @@ function CollaborationPage() {
           surfaceMin: num(filters.surfaceMin),
         },
       }),
+    getNextPageParam: (lastPage: { offers: CollaborationOffer[]; total: number }, pages: { offers: CollaborationOffer[]; total: number }[]) => nextPartnerOfferOffset(pages.reduce((n, p) => n + p.offers.length, 0), lastPage.total),
   });
 
   const proposals = useQuery({
