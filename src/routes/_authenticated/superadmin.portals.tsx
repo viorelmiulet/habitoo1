@@ -28,6 +28,7 @@ import { appHead } from "@/components/app/app-head";
 import { PortalsCard } from "@/components/superadmin/PortalsCard";
 import { StoriaUnmatchedCard } from "@/components/superadmin/StoriaUnmatchedCard";
 import { ImospotSettingsCard } from "@/components/superadmin/ImospotSettingsCard";
+import { PortalRelayCard } from "@/components/superadmin/PortalRelayCard";
 import { LaCheieCard } from "@/components/superadmin/LaCheieCard";
 import { PortalActivationRequestsCard } from "@/components/superadmin/PortalActivationRequestsCard";
 import { PropertyPortalsCard } from "@/components/app/PropertyPortalsCard";
@@ -134,6 +135,10 @@ function SuperadminPortalsPage() {
             </Select>
           )}
         </div>
+      </div>
+
+      <div className="mt-6">
+        <PortalRelayCard />
       </div>
 
       <div className="mt-6">
