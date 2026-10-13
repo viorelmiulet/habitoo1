@@ -3615,3 +3615,12 @@ export const recheckOlxDirectListing = createServerFn({ method: "POST" })
     const { pollOlxPendingListings } = await import("@/lib/portals/adapters/olx-direct.server");
     return pollOlxPendingListings({ organizationId, propertyId: data.propertyId });
   });
+
+/** SuperAdmin: verifică IP-ul de ieșire al releului portalurilor (doar citire). */
+export const checkPortalRelayIp = createServerFn({ method: "POST" })
+  .middleware([requireActiveOrgAuth])
+  .handler(async ({ context }) => {
+    await requireSuperadmin(context as unknown as AuthContext);
+    const { checkRelayIp } = await import("./portals/relay.server");
+    return checkRelayIp();
+  });

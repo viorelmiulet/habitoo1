@@ -7,6 +7,7 @@
  */
 import { PortalError } from "../errors";
 import { IMOBILIARE_BASE_URL } from "./config";
+import { relayFetch } from "../relay.server";
 import {
   classifyImobiliareNetworkError,
   classifyImobiliareStatus,
@@ -130,7 +131,7 @@ export async function imobiliareRequest(
       const headers: Record<string, string> = { Accept: "application/json" };
       if (input.accessToken) headers["Authorization"] = `Bearer ${input.accessToken}`;
       if (input.body !== undefined) headers["Content-Type"] = "application/json";
-      const response = await fetch(url.toString(), {
+      const response = await relayFetch("imobiliare", url.toString(), {
         method: input.method,
         headers,
         ...(input.body === undefined ? {} : { body: JSON.stringify(input.body) }),
