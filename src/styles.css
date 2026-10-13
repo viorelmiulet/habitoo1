@@ -414,6 +414,22 @@
 
 
 @layer components {
+  /* Local dark surfaces for the property feature editor and read-only groups. */
+  .dark .property-feature-sections {
+    --background: oklch(0.18 0.01 260);
+    --foreground: oklch(0.93 0.01 85);
+    --surface: oklch(0.22 0.01 260);
+    --card: oklch(0.22 0.01 260);
+    --muted: oklch(0.25 0.01 260);
+    --muted-foreground: oklch(0.75 0.01 85);
+    --accent: oklch(0.29 0.035 75);
+    --accent-foreground: oklch(0.86 0.09 75);
+    --primary: oklch(0.74 0.12 75);
+    --primary-foreground: oklch(0.2 0.02 75);
+    --border: oklch(0.35 0.015 75);
+    --input: oklch(0.42 0.025 75);
+    --gold-dark: oklch(0.86 0.09 75);
+  }
   .blog-prose { color: var(--color-foreground); font-size: 1.0625rem; line-height: 1.85; overflow-wrap: anywhere; }
   .blog-prose h2 { margin-top: 2.5rem; margin-bottom: .8rem; color: var(--color-navy); font-size: 1.75rem; line-height: 1.25; }
   .blog-prose h3 { margin-top: 2rem; margin-bottom: .65rem; color: var(--color-navy); font-size: 1.3rem; line-height: 1.35; }
@@ -425,3 +441,15 @@
   .blog-prose a { color: var(--color-gold-dark); text-decoration: underline; text-underline-offset: 3px; }
   .blog-prose img { margin: 2rem 0; width: 100%; border-radius: var(--radius-card); }
 }
+
+  .dark .property-feature-sections input {
+    background-color: var(--card);
+    color: var(--foreground);
+  }
+  .dark .property-feature-sections [data-radix-collection-item][role="radio"] {
+    color: var(--foreground);
+  }
+  .dark .property-feature-sections [data-radix-collection-item][role="radio"][data-state="on"] {
+    background-color: var(--surface);
+    color: var(--accent-foreground);
+  }

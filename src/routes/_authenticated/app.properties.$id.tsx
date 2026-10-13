@@ -46,6 +46,7 @@ import {
   PropertyDetailsFields,
   type PropertyDetailsValue,
 } from "@/components/app/PropertyDetailsFields";
+import { PropertyFeatureSections, filterFeatureSections } from "@/components/app/PropertyFeatureSections";
 import { PROPERTY_DETAIL_FIELDS } from "@/lib/property-detail-fields";
 import {
   PropertyTransactionFields,
@@ -146,7 +147,18 @@ function postalNotice(report: { status: string; reasonLabel: string } | null): v
 }
 
 export const Route = createFileRoute("/_authenticated/app/properties/$id")({
-  head: () => appHead("Habitoo CRM — detalii proprietate"),
+  head: () => {
+    const title = "Habitoo CRM — detalii proprietate";
+    const description = "Fișa proprietății în Habitoo CRM: detalii, utilități, finisaje, dotări, fotografii și publicarea pe portaluri.";
+    const head = appHead(title);
+    return { ...head, meta: [...head.meta,
+      { name: "description", content: description },
+      { property: "og:title", content: title },
+      { property: "og:description", content: description },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
+    ] };
+  },
   component: PropertyDetailPage,
 });
 
@@ -604,16 +616,8 @@ function PropertyDetailPage() {
     { label: "Balcoane", value: property.balconies ? String(property.balconies) : "" },
   ].filter((item) => item.value);
 
-  const amenityGroups = [
-    ...(property.features ?? []),
-    ...(property.utilities ?? []),
-    ...(property.heating_systems ?? []),
-    ...(property.cooling_systems ?? []),
-    ...(property.appliances ?? []),
-    ...(property.building_amenities ?? []),
-    ...(property.kitchen_features ?? []),
-    ...(property.misc_features ?? []),
-  ].filter(Boolean);
+  const legacyFeatures = property.features ?? [];
+  const hasFeatureSections = filterFeatureSections("", property).length > 0;
 
   const isHouse = property.property_type === "house";
   const primaryFacts = [
@@ -984,7 +988,7 @@ function PropertyDetailPage() {
                   ) : null}
                 </section>
 
-                {(specs.length > 0 || amenityGroups.length > 0) ? (
+                {(specs.length > 0 || legacyFeatures.length > 0) ? (
                   <section className="panel p-5 sm:p-6">
                     <h2 className="text-[21px] leading-tight">Specificații</h2>
                     <dl className="mt-4 grid gap-x-6 sm:grid-cols-2">
@@ -995,10 +999,12 @@ function PropertyDetailPage() {
                         </div>
                       ))}
                     </dl>
-                    {specsExpanded && amenityGroups.length > 0 ? <div className="mt-5 flex flex-wrap gap-2">{amenityGroups.map((item, index) => <span key={`${item}-${index}`} className="rounded-full border border-border bg-muted px-3 py-1 text-xs">{item}</span>)}</div> : null}
-                    {(specs.length > 8 || amenityGroups.length > 0) ? <Button type="button" variant="link" className="mt-4 p-0" onClick={() => setSpecsExpanded((value) => !value)}>{specsExpanded ? "Restrânge caracteristicile" : "Vezi toate caracteristicile"}</Button> : null}
+                    {specsExpanded && legacyFeatures.length > 0 ? <div className="mt-5 flex flex-wrap gap-2">{legacyFeatures.map((item, index) => <span key={`${item}-${index}`} className="rounded-full border border-border bg-muted px-3 py-1 text-xs">{item}</span>)}</div> : null}
+                    {(specs.length > 8 || legacyFeatures.length > 0) ? <Button type="button" variant="link" className="mt-4 p-0" onClick={() => setSpecsExpanded((value) => !value)}>{specsExpanded ? "Restrânge caracteristicile" : "Vezi toate caracteristicile"}</Button> : null}
                   </section>
                 ) : null}
+
+                {hasFeatureSections ? <PropertyFeatureSections value={property} idPrefix="read-features" /> : null}
 
                 <section className="panel p-5 sm:p-6">
                   <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-4">
