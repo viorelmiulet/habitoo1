@@ -15,6 +15,8 @@ import { getPropertyPromotion } from "@/lib/property-promotion.functions";
 import { generateMarketing } from "@/lib/ai/agents/marketing/marketing.functions";
 import { MEDIA_BUCKET, signedUrls } from "@/lib/storage";
 import { cn } from "@/lib/utils";
+import { PropertyVideoCard } from "@/components/app/PropertyVideoCard";
+import type { VideoListing } from "@/lib/property-video";
 import { facebookListingState } from "@/lib/facebook-catalog-status";
 import {
   SOCIAL_CHAR_LIMITS,
@@ -31,9 +33,11 @@ import {
 export function PropertyPromotionTab({
   propertyId,
   onOpenPublishing,
+  video,
 }: {
   propertyId: string;
   onOpenPublishing?: () => void;
+  video?: VideoListing;
 }) {
   const load = useServerFn(getPropertyPromotion);
   const runAi = useServerFn(generateMarketing);
@@ -241,6 +245,13 @@ export function PropertyPromotionTab({
           </div>
         </div>
       </div>
+
+      {video ? (
+        <PropertyVideoCard
+          listing={video}
+          photos={d.photos.filter((p) => urls[p.id]).map((p) => ({ id: p.id, url: urls[p.id] as string, alt: p.alt }))}
+        />
+      ) : null}
 
       <div className="panel flex flex-wrap items-center justify-between gap-3 p-5">
         <div>

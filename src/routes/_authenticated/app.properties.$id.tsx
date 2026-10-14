@@ -106,6 +106,7 @@ import { useAgencyLogoUrl } from "@/components/app/AgencyBrandingCard";
 import { UserAvatar } from "@/components/app/UserAvatar";
 import { ReassignPropertiesDialog } from "@/components/app/ReassignPropertiesDialog";
 import { SocialPosterDialog } from "@/components/app/SocialPosterDialog";
+import { formatPosterPrice } from "@/lib/social-poster";
 import { getPropertiesPortalMatrix, type PropertyPortalCell } from "@/lib/portals.functions";
 
 import { formatDateTime, formatMoney, formatNumber } from "@/lib/format";
@@ -1189,7 +1190,23 @@ function PropertyDetailPage() {
         </TabsContent>
 
         <TabsContent value="promotion">
-          <PropertyPromotionTab propertyId={id} onOpenPublishing={() => setTab("publishing")} />
+          <PropertyPromotionTab
+            propertyId={id}
+            onOpenPublishing={() => setTab("publishing")}
+            video={{
+              title: property.title ?? "",
+              district: property.district ?? null,
+              city: property.city ?? null,
+              price: salePrice ? formatPosterPrice(salePrice, property.sale_currency ?? property.currency ?? "EUR") : rentPrice ? `${formatPosterPrice(rentPrice, property.rent_currency ?? property.currency ?? "EUR")}/lună` : null,
+              rooms: property.rooms ?? null,
+              usableSurface: usableSurface ?? null,
+              floor: property.floor_label ?? (property.floor !== null && property.floor !== undefined ? String(property.floor) : null),
+              reference: property.reference ?? null,
+              agentName: responsibleAgent?.full_name ?? user?.profile?.full_name ?? null,
+              agentPhone: responsibleAgent?.phone ?? user?.profile?.phone ?? null,
+              logoUrl: agencyLogoUrl ?? null,
+            }}
+          />
         </TabsContent>
 
         <TabsContent value="history">
