@@ -1,3 +1,5 @@
+import { canShareFiles } from "@/lib/share";
+import { shareFilesFromPhone, useShareLogger } from "@/lib/share-client";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { AlertTriangle, Download, Image as ImageIcon, Loader2, Save, X } from "lucide-react";
 import { toast } from "@/components/ui/sonner";
@@ -126,6 +128,10 @@ function readJson<T>(key: string): Partial<T> | null {
 
 export function SocialPosterDialog(props: SocialPosterDialogProps) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const posterBlobRef = useRef<Blob | null>(null);
+  const [phoneShare, setPhoneShare] = useState(false);
+  const logShare = useShareLogger(props.propertyId);
+  useEffect(() => { setPhoneShare(canShareFiles(navigator)); }, []);
   const [photos, setPhotos] = useState<string[]>([]);
   const [loadingPhotos, setLoadingPhotos] = useState(false);
   const [rendering, setRendering] = useState(false);
@@ -243,7 +249,12 @@ export function SocialPosterDialog(props: SocialPosterDialogProps) {
         bigAgentPhotoUrl: s.bigPhotoOn && avatarUrl ? avatarUrl : null,
         stamp: s.stampOn ? POSTER_STAMPS[s.stamp] : null,
         colors: { accent, background, text: textColor },
-      }).then(() => { if (active) setError(null); }).catch((reason: unknown) => {
+      }).then(() => {
+        if (!active) return;
+        setError(null);
+        posterBlobRef.current = null;
+        canvasRef.current?.toBlob((b) => { if (active) posterBlobRef.current = b; }, "image/png");
+      }).catch((reason: unknown) => {
         if (active) setError(reason instanceof Error ? reason.message : "Previzualizarea nu a putut fi creată.");
       }).finally(() => {
         if (active) setRendering(false);
@@ -300,6 +311,14 @@ export function SocialPosterDialog(props: SocialPosterDialogProps) {
           <Button variant="outline" size="sm" onClick={save}><Save className="size-4" />Salvează</Button>
           <Button variant="outline" size="sm" onClick={() => setPhotoPickerOpen(true)} disabled={!photos.length}><ImageIcon className="size-4" />Poza</Button>
           <Button size="sm" onClick={download} disabled={!photos.length || rendering || Boolean(error)}><Download className="size-4" />Descarcă</Button>
+          {phoneShare ? (
+            <Button size="sm" variant="outline" disabled={!photos.length || rendering || Boolean(error)} onClick={() => {
+              const blob = posterBlobRef.current;
+              if (!blob) return;
+              const file = new File([blob], posterFileName(s.format, s.title || props.title), { type: "image/png" });
+              void shareFilesFromPhone([file], "", () => logShare("Distribuit din telefon"));
+            }}><Share2 className="size-4" />Distribuie posterul</Button>
+          ) : null}
         </div>
 
         <div className="min-h-0 flex-1 overflow-y-auto lg:grid lg:grid-cols-[minmax(0,1fr)_400px] lg:overflow-hidden">
