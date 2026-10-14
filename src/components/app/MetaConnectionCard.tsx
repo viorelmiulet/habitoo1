@@ -51,12 +51,12 @@ export function MetaConnectionCard() {
   const connect = useMutation({
     mutationFn: (_: void) => start(),
     onSuccess: ({ url }) => window.location.assign(url),
-    onError: toastError,
+    onError: (e: unknown) => toastError(e),
   });
   const pick = useMutation({
     mutationFn: (pageId: string) => setDefault({ data: { pageId } }),
     onSuccess: () => qc.invalidateQueries({ queryKey: KEY }),
-    onError: toastError,
+    onError: (e: unknown) => toastError(e),
   });
   const drop = useMutation({
     mutationFn: (_: void) => disconnect(),
@@ -64,7 +64,7 @@ export function MetaConnectionCard() {
       toast.success("Facebook și Instagram au fost deconectate.");
       void qc.invalidateQueries({ queryKey: KEY });
     },
-    onError: toastError,
+    onError: (e: unknown) => toastError(e),
   });
 
   if (q.isLoading) return <div className="panel p-5"><InlineLoading /></div>;
