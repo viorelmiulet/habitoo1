@@ -184,7 +184,7 @@ export function buildPresentationHtml(branding: MaterialBranding, data: Presenta
     .slice(0, 8)
     .map((spec) => `<div class="feature"><dt>${escapeHtml(spec.label)}</dt><dd>${escapeHtml(spec.value)}</dd></div>`)
     .join("");
-  const description = presentationDescription(data.description)
+  const description = (data.description?.trim() || "Descriere indisponibilă.")
     .split(/\n\s*\n/)
     .map((paragraph) => `<p>${escapeHtml(paragraph)}</p>`)
     .join("");
