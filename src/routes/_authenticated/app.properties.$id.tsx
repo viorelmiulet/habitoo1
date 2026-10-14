@@ -1006,6 +1006,15 @@ function PropertyDetailPage() {
                   ) : null}
                 </section>
 
+                <section className="panel p-5 sm:p-6">
+                  <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-4">
+                    <h2 className="text-[21px] leading-tight">Locație</h2>
+                    <p className="max-w-md text-right text-sm text-muted-foreground">{[property.address, locationLabel].filter(Boolean).join(", ")}</p>
+                  </div>
+                  {mapCoords ? <PropertyMapClient lat={mapCoords.lat} lng={mapCoords.lng} precise={mapCoords.precise} seed={property.id} className="mt-4 h-[220px] w-full overflow-hidden rounded-xl border border-border" /> : <div className="mt-4 flex h-[220px] items-center justify-center rounded-xl border border-border bg-muted text-sm text-muted-foreground">Nu există coordonate GPS pentru această proprietate.</div>}
+                  {mapCoords && !mapCoords.precise ? <p className="mt-2 text-xs text-muted-foreground">Hartă estimativă — zonă de aproximativ {APPROX_RADIUS_M} m.</p> : null}
+                </section>
+
                 {(specs.length > 0 || legacyFeatures.length > 0) ? (
                   <section className="panel p-5 sm:p-6">
                     <h2 className="text-[21px] leading-tight">Specificații</h2>
@@ -1024,14 +1033,6 @@ function PropertyDetailPage() {
 
                 {hasFeatureSections ? <PropertyFeatureSections value={property} idPrefix="read-features" /> : null}
 
-                <section className="panel p-5 sm:p-6">
-                  <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-4">
-                    <h2 className="text-[21px] leading-tight">Locație</h2>
-                    <p className="max-w-md text-right text-sm text-muted-foreground">{[property.address, locationLabel].filter(Boolean).join(", ")}</p>
-                  </div>
-                  {mapCoords ? <PropertyMapClient lat={mapCoords.lat} lng={mapCoords.lng} precise={mapCoords.precise} seed={property.id} className="mt-4 h-[220px] w-full overflow-hidden rounded-xl border border-border" /> : <div className="mt-4 flex h-[220px] items-center justify-center rounded-xl border border-border bg-muted text-sm text-muted-foreground">Nu există coordonate GPS pentru această proprietate.</div>}
-                  {mapCoords && !mapCoords.precise ? <p className="mt-2 text-xs text-muted-foreground">Hartă estimativă — zonă de aproximativ {APPROX_RADIUS_M} m.</p> : null}
-                </section>
               </div>
 
               <aside className="space-y-4">
