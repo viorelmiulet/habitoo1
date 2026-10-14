@@ -981,6 +981,13 @@
       "when": 1791996785606,
       "tag": "0139_add_imobox_market_query_source",
       "breakpoints": true
+    },
+    {
+      "idx": 140,
+      "version": "7",
+      "when": 1792008960372,
+      "tag": "0140_meta_connections",
+      "breakpoints": true
     }
   ]
 }
