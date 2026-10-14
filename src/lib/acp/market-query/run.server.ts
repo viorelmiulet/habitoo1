@@ -135,7 +135,7 @@ export async function querySingleSource(input: {
   }, source.timeoutMs);
   try {
     const raw = await adapter.query({ criteria, source, signal: controller.signal });
-    const { items, marketContext, requestedUrls } = marketQueryAdapterResult(raw ?? []);
+    const { items, marketContext, requestedUrls, detail } = marketQueryAdapterResult(raw ?? []);
     const context: MarketQueryMarketContext | null = marketContext
       ? { ...marketContext, ...base }
       : null;
@@ -145,7 +145,7 @@ export async function querySingleSource(input: {
         comparables: [],
         marketContext: context,
         requestedUrls,
-        outcome: { ...base, outcome: "empty", comparables: 0, detail: null },
+        outcome: { ...base, outcome: "empty", comparables: 0, detail },
       };
     }
     return {
@@ -156,7 +156,7 @@ export async function querySingleSource(input: {
         ...base,
         outcome: "answered",
         comparables: normalized.length,
-        detail: null,
+        detail,
       },
     };
   } catch (error) {
