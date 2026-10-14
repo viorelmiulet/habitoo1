@@ -1,7 +1,7 @@
 import { canShareFiles } from "@/lib/share";
 import { shareFilesFromPhone, useShareLogger } from "@/lib/share-client";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { AlertTriangle, Download, Image as ImageIcon, Loader2, Save, X } from "lucide-react";
+import { AlertTriangle, Download, Image as ImageIcon, Loader2, Save, Share2, X } from "lucide-react";
 import { toast } from "@/components/ui/sonner";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";

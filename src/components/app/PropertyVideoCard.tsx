@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from "react";
-import { ArrowDown, ArrowUp, Download, Film, Music, X } from "lucide-react";
+import { ArrowDown, ArrowUp, Download, Film, Music, Share2, X } from "lucide-react";
+import { canShareFiles } from "@/lib/share";
+import { shareFilesFromPhone, useShareLogger } from "@/lib/share-client";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
@@ -13,7 +15,10 @@ import {
 
 type Photo = { id: string; url: string; alt: string | null };
 
-export function PropertyVideoCard({ photos, listing }: { photos: Photo[]; listing: VideoListing }) {
+export function PropertyVideoCard({ photos, listing, propertyId, shareText = "" }: { photos: Photo[]; listing: VideoListing; propertyId: string; shareText?: string }) {
+  const logShare = useShareLogger(propertyId);
+  const [phoneShare, setPhoneShare] = useState(false);
+  useEffect(() => { setPhoneShare(canShareFiles(navigator)); }, []);
   const [format, setFormat] = useState<VideoFormat>("vertical");
   const [order, setOrder] = useState<string[]>([]);
   const [off, setOff] = useState<Set<string>>(new Set());
@@ -21,7 +26,7 @@ export function PropertyVideoCard({ photos, listing }: { photos: Photo[]; listin
   const [music, setMusic] = useState<File | null>(null);
   const [opts, setOpts] = useState({ showLogo: true, showPhone: true, showPrice: true });
   const [progress, setProgress] = useState<number | null>(null);
-  const [result, setResult] = useState<{ url: string; name: string; webm: boolean } | null>(null);
+  const [result, setResult] = useState<{ url: string; name: string; webm: boolean; blob: Blob } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [supported, setSupported] = useState(true);
   const abortRef = useRef<AbortController | null>(null);
@@ -55,7 +60,7 @@ export function PropertyVideoCard({ photos, listing }: { photos: Photo[]; listin
         photoUrls: chosen.map((id) => byId.get(id)!.url),
         overlay: buildVideoOverlay({ ...listing, logoUrl: hasLogo ? listing.logoUrl : null }, { ...opts, showLogo: opts.showLogo && hasLogo }),
       });
-      setResult({ url: URL.createObjectURL(r.blob), name: videoFileName(listing.reference, format, r.ext), webm: r.ext === "webm" });
+      setResult({ url: URL.createObjectURL(r.blob), name: videoFileName(listing.reference, format, r.ext), webm: r.ext === "webm", blob: r.blob });
     } catch (e) {
       if ((e as Error).name !== "AbortError") {
         setError((e as Error).message === "UNSUPPORTED"
@@ -152,6 +157,11 @@ export function PropertyVideoCard({ photos, listing }: { photos: Photo[]; listin
           {result.webm ? <p role="alert" className="text-sm text-destructive">Browserul a generat WebM. Instagram nu acceptă WebM; pentru MP4 folosește Chrome sau Edge pe calculator.</p> : null}
           <video src={result.url} controls playsInline className="max-h-[480px] w-full rounded-xl bg-muted object-contain" />
           <Button asChild variant="outline"><a href={result.url} download={result.name}><Download className="size-4" /> Descarcă video</a></Button>
+          {phoneShare ? (
+            <Button type="button" variant="outline" className="ml-2" onClick={() => void shareFilesFromPhone([new File([result.blob], result.name, { type: result.blob.type })], shareText, () => logShare("Distribuit din telefon"))}>
+              <Share2 className="size-4" /> Distribuie video-ul
+            </Button>
+          ) : null}
         </div>
       ) : null}
     </div>

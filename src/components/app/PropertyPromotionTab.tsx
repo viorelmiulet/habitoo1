@@ -2,7 +2,9 @@ import { useEffect, useMemo, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { Copy, Download, Sparkles } from "lucide-react";
+import { Copy, Download, Share2, Sparkles } from "lucide-react";
+import { SHARE_MAX_PHOTOS, SHARE_NETWORK_LABEL, canShareFiles, offerShareUrl, shareLinks, type ShareNetwork } from "@/lib/share";
+import { shareFilesFromPhone, useShareLogger } from "@/lib/share-client";
 import { toast } from "@/components/ui/sonner";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -53,6 +55,10 @@ export function PropertyPromotionTab({
   const [selected, setSelected] = useState<string[]>([]);
   const [urls, setUrls] = useState<Record<string, string>>({});
   const [zipping, setZipping] = useState(false);
+  const [phoneShare, setPhoneShare] = useState(false);
+  const [photoFiles, setPhotoFiles] = useState<File[]>([]);
+  const logShare = useShareLogger(propertyId);
+  useEffect(() => { setPhoneShare(canShareFiles(navigator)); }, []);
 
   const d = q.data;
   useEffect(() => {
@@ -71,6 +77,20 @@ export function PropertyPromotionTab({
       setUrls(next);
     });
   }, [d]);
+
+  const shareKey = selected.slice(0, SHARE_MAX_PHOTOS).map((id) => urls[id] ?? "").join("|");
+  useEffect(() => {
+    if (!phoneShare || !shareKey) { setPhotoFiles([]); return; }
+    let active = true;
+    void Promise.all(shareKey.split("|").filter(Boolean).map(async (u, i) => {
+      const res = await fetch(u);
+      if (!res.ok) return null;
+      const blob = await res.blob();
+      const ext = blob.type.includes("png") ? "png" : blob.type.includes("webp") ? "webp" : "jpg";
+      return new File([blob], `foto-${String(i + 1).padStart(2, "0")}.${ext}`, { type: blob.type || "image/jpeg" });
+    })).then((files) => { if (active) setPhotoFiles(files.filter((f): f is File => Boolean(f))); }).catch(() => undefined);
+    return () => { active = false; };
+  }, [phoneShare, shareKey]);
 
   const ai = useMutation({
     mutationFn: () =>
@@ -101,6 +121,7 @@ export function PropertyPromotionTab({
   if (q.isError || !d) return <QueryError error={q.error} onRetry={() => q.refetch()} />;
 
   const limit = SOCIAL_CHAR_LIMITS[network];
+  const offerLink = offerShareUrl(propertyId);
   const firstPhoto = selected[0] ? urls[selected[0]] : undefined;
 
   const copyText = async () => {
@@ -235,7 +256,27 @@ export function PropertyPromotionTab({
               <Button variant="outline" onClick={downloadZip} disabled={zipping || selected.length === 0}>
                 <Download className="size-4" /> Descarcă fotografiile (ZIP)
               </Button>
+              {phoneShare ? (
+                <Button onClick={() => void shareFilesFromPhone(photoFiles, `${text}\n\n${offerLink}`, () => logShare("Distribuit din telefon"))} disabled={photoFiles.length === 0}>
+                  <Share2 className="size-4" /> Distribuie pozele
+                </Button>
+              ) : null}
             </div>
+            {!phoneShare ? (
+              <div className="space-y-2" data-testid="desktop-share">
+                <div className="flex flex-wrap gap-2">
+                  {(["facebook", "whatsapp", "linkedin"] as ShareNetwork[]).map((n) => (
+                    <Button key={n} variant="outline" size="sm" onClick={() => {
+                      window.open(shareLinks(offerLink, text)[n], "_blank", "noopener,noreferrer");
+                      logShare(`Distribuit pe ${SHARE_NETWORK_LABEL[n]}`);
+                    }}>
+                      <Share2 className="size-4" /> {n === "whatsapp" ? "Trimite pe WhatsApp" : `Distribuie pe ${SHARE_NETWORK_LABEL[n]}`}
+                    </Button>
+                  ))}
+                </div>
+                <p className="text-xs text-muted-foreground">Instagram și TikTok: descarcă posterul sau video-ul și postează-l din telefon.</p>
+              </div>
+            ) : null}
           </div>
 
           <div className="overflow-hidden rounded-xl border border-border" aria-label="Previzualizare postare">
@@ -249,6 +290,8 @@ export function PropertyPromotionTab({
       {video ? (
         <PropertyVideoCard
           listing={video}
+          propertyId={propertyId}
+          shareText={text}
           photos={d.photos.filter((p) => urls[p.id]).map((p) => ({ id: p.id, url: urls[p.id] as string, alt: p.alt }))}
         />
       ) : null}
