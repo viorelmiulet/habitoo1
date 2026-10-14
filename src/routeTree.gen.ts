@@ -115,6 +115,8 @@ import { Route as ApiPublicCronVdiLeadsRouteImport } from './routes/api/public/c
 import { Route as ApiPublicListingsUpsertRouteImport } from './routes/api/public/listings/upsert'
 import { Route as ApiPublicMailgunEventsRouteImport } from './routes/api/public/mailgun/events'
 import { Route as ApiPublicMailgunInboundRouteImport } from './routes/api/public/mailgun/inbound'
+import { Route as ApiPublicMetaDataDeletionRouteImport } from './routes/api/public/meta/data-deletion'
+import { Route as ApiPublicMetaDeauthorizeRouteImport } from './routes/api/public/meta/deauthorize'
 import { Route as ApiPublicPartnerLogoIdRouteImport } from './routes/api/public/partner-logo/$id'
 import { Route as LovableEmailAuthPreviewRouteImport } from './routes/lovable/email/auth/preview'
 import { Route as LovableEmailAuthWebhookRouteImport } from './routes/lovable/email/auth/webhook'
@@ -124,6 +126,7 @@ import { Route as AuthenticatedSuperadminBlogPreviewIdRouteImport } from './rout
 import { Route as ApiPublicCatalogV1FacebookDotcsvRouteImport } from './routes/api/public/catalog/v1/facebook[.]csv'
 import { Route as ApiPublicFeedProperstarAgencyKeyRouteImport } from './routes/api/public/feed/properstar/$agencyKey'
 import { Route as ApiPublicHomepitchV1PropertiesRouteImport } from './routes/api/public/homepitch/v1/properties'
+import { Route as ApiPublicMetaOauthCallbackRouteImport } from './routes/api/public/meta/oauth.callback'
 import { Route as ApiPublicPortalV1AgencyRouteImport } from './routes/api/public/portal/v1/agency'
 import { Route as ApiPublicPortalV1AgentsRouteImport } from './routes/api/public/portal/v1/agents'
 import { Route as ApiPublicPortalV1PropertiesRouteImport } from './routes/api/public/portal/v1/properties'
@@ -731,6 +734,18 @@ const ApiPublicMailgunInboundRoute = ApiPublicMailgunInboundRouteImport.update({
   path: '/api/public/mailgun/inbound',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicMetaDataDeletionRoute =
+  ApiPublicMetaDataDeletionRouteImport.update({
+    id: '/api/public/meta/data-deletion',
+    path: '/api/public/meta/data-deletion',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicMetaDeauthorizeRoute =
+  ApiPublicMetaDeauthorizeRouteImport.update({
+    id: '/api/public/meta/deauthorize',
+    path: '/api/public/meta/deauthorize',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicPartnerLogoIdRoute = ApiPublicPartnerLogoIdRouteImport.update({
   id: '/api/public/partner-logo/$id',
   path: '/api/public/partner-logo/$id',
@@ -780,6 +795,12 @@ const ApiPublicHomepitchV1PropertiesRoute =
   ApiPublicHomepitchV1PropertiesRouteImport.update({
     id: '/api/public/homepitch/v1/properties',
     path: '/api/public/homepitch/v1/properties',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicMetaOauthCallbackRoute =
+  ApiPublicMetaOauthCallbackRouteImport.update({
+    id: '/api/public/meta/oauth/callback',
+    path: '/api/public/meta/oauth/callback',
     getParentRoute: () => rootRouteImport,
   } as any)
 const ApiPublicPortalV1AgencyRoute = ApiPublicPortalV1AgencyRouteImport.update({
@@ -1031,6 +1052,8 @@ export interface FileRoutesByFullPath {
   '/api/public/listings/upsert': typeof ApiPublicListingsUpsertRoute
   '/api/public/mailgun/events': typeof ApiPublicMailgunEventsRoute
   '/api/public/mailgun/inbound': typeof ApiPublicMailgunInboundRoute
+  '/api/public/meta/data-deletion': typeof ApiPublicMetaDataDeletionRoute
+  '/api/public/meta/deauthorize': typeof ApiPublicMetaDeauthorizeRoute
   '/api/public/partner-logo/$id': typeof ApiPublicPartnerLogoIdRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
@@ -1047,6 +1070,7 @@ export interface FileRoutesByFullPath {
   '/api/public/catalog/v1/facebook.csv': typeof ApiPublicCatalogV1FacebookDotcsvRoute
   '/api/public/feed/properstar/$agencyKey': typeof ApiPublicFeedProperstarAgencyKeyRoute
   '/api/public/homepitch/v1/properties': typeof ApiPublicHomepitchV1PropertiesRouteWithChildren
+  '/api/public/meta/oauth/callback': typeof ApiPublicMetaOauthCallbackRoute
   '/api/public/portal/v1/agency': typeof ApiPublicPortalV1AgencyRoute
   '/api/public/portal/v1/agents': typeof ApiPublicPortalV1AgentsRoute
   '/api/public/portal/v1/properties': typeof ApiPublicPortalV1PropertiesRouteWithChildren
@@ -1169,6 +1193,8 @@ export interface FileRoutesByTo {
   '/api/public/listings/upsert': typeof ApiPublicListingsUpsertRoute
   '/api/public/mailgun/events': typeof ApiPublicMailgunEventsRoute
   '/api/public/mailgun/inbound': typeof ApiPublicMailgunInboundRoute
+  '/api/public/meta/data-deletion': typeof ApiPublicMetaDataDeletionRoute
+  '/api/public/meta/deauthorize': typeof ApiPublicMetaDeauthorizeRoute
   '/api/public/partner-logo/$id': typeof ApiPublicPartnerLogoIdRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
@@ -1185,6 +1211,7 @@ export interface FileRoutesByTo {
   '/api/public/catalog/v1/facebook.csv': typeof ApiPublicCatalogV1FacebookDotcsvRoute
   '/api/public/feed/properstar/$agencyKey': typeof ApiPublicFeedProperstarAgencyKeyRoute
   '/api/public/homepitch/v1/properties': typeof ApiPublicHomepitchV1PropertiesRouteWithChildren
+  '/api/public/meta/oauth/callback': typeof ApiPublicMetaOauthCallbackRoute
   '/api/public/portal/v1/agency': typeof ApiPublicPortalV1AgencyRoute
   '/api/public/portal/v1/agents': typeof ApiPublicPortalV1AgentsRoute
   '/api/public/portal/v1/properties': typeof ApiPublicPortalV1PropertiesRouteWithChildren
@@ -1313,6 +1340,8 @@ export interface FileRoutesById {
   '/api/public/listings/upsert': typeof ApiPublicListingsUpsertRoute
   '/api/public/mailgun/events': typeof ApiPublicMailgunEventsRoute
   '/api/public/mailgun/inbound': typeof ApiPublicMailgunInboundRoute
+  '/api/public/meta/data-deletion': typeof ApiPublicMetaDataDeletionRoute
+  '/api/public/meta/deauthorize': typeof ApiPublicMetaDeauthorizeRoute
   '/api/public/partner-logo/$id': typeof ApiPublicPartnerLogoIdRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
@@ -1329,6 +1358,7 @@ export interface FileRoutesById {
   '/api/public/catalog/v1/facebook.csv': typeof ApiPublicCatalogV1FacebookDotcsvRoute
   '/api/public/feed/properstar/$agencyKey': typeof ApiPublicFeedProperstarAgencyKeyRoute
   '/api/public/homepitch/v1/properties': typeof ApiPublicHomepitchV1PropertiesRouteWithChildren
+  '/api/public/meta/oauth/callback': typeof ApiPublicMetaOauthCallbackRoute
   '/api/public/portal/v1/agency': typeof ApiPublicPortalV1AgencyRoute
   '/api/public/portal/v1/agents': typeof ApiPublicPortalV1AgentsRoute
   '/api/public/portal/v1/properties': typeof ApiPublicPortalV1PropertiesRouteWithChildren
@@ -1457,6 +1487,8 @@ export interface FileRouteTypes {
     | '/api/public/listings/upsert'
     | '/api/public/mailgun/events'
     | '/api/public/mailgun/inbound'
+    | '/api/public/meta/data-deletion'
+    | '/api/public/meta/deauthorize'
     | '/api/public/partner-logo/$id'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
@@ -1473,6 +1505,7 @@ export interface FileRouteTypes {
     | '/api/public/catalog/v1/facebook.csv'
     | '/api/public/feed/properstar/$agencyKey'
     | '/api/public/homepitch/v1/properties'
+    | '/api/public/meta/oauth/callback'
     | '/api/public/portal/v1/agency'
     | '/api/public/portal/v1/agents'
     | '/api/public/portal/v1/properties'
@@ -1595,6 +1628,8 @@ export interface FileRouteTypes {
     | '/api/public/listings/upsert'
     | '/api/public/mailgun/events'
     | '/api/public/mailgun/inbound'
+    | '/api/public/meta/data-deletion'
+    | '/api/public/meta/deauthorize'
     | '/api/public/partner-logo/$id'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
@@ -1611,6 +1646,7 @@ export interface FileRouteTypes {
     | '/api/public/catalog/v1/facebook.csv'
     | '/api/public/feed/properstar/$agencyKey'
     | '/api/public/homepitch/v1/properties'
+    | '/api/public/meta/oauth/callback'
     | '/api/public/portal/v1/agency'
     | '/api/public/portal/v1/agents'
     | '/api/public/portal/v1/properties'
@@ -1738,6 +1774,8 @@ export interface FileRouteTypes {
     | '/api/public/listings/upsert'
     | '/api/public/mailgun/events'
     | '/api/public/mailgun/inbound'
+    | '/api/public/meta/data-deletion'
+    | '/api/public/meta/deauthorize'
     | '/api/public/partner-logo/$id'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
@@ -1754,6 +1792,7 @@ export interface FileRouteTypes {
     | '/api/public/catalog/v1/facebook.csv'
     | '/api/public/feed/properstar/$agencyKey'
     | '/api/public/homepitch/v1/properties'
+    | '/api/public/meta/oauth/callback'
     | '/api/public/portal/v1/agency'
     | '/api/public/portal/v1/agents'
     | '/api/public/portal/v1/properties'
@@ -1836,12 +1875,15 @@ export interface RootRouteChildren {
   ApiPublicListingsUpsertRoute: typeof ApiPublicListingsUpsertRoute
   ApiPublicMailgunEventsRoute: typeof ApiPublicMailgunEventsRoute
   ApiPublicMailgunInboundRoute: typeof ApiPublicMailgunInboundRoute
+  ApiPublicMetaDataDeletionRoute: typeof ApiPublicMetaDataDeletionRoute
+  ApiPublicMetaDeauthorizeRoute: typeof ApiPublicMetaDeauthorizeRoute
   ApiPublicPartnerLogoIdRoute: typeof ApiPublicPartnerLogoIdRoute
   LovableEmailAuthPreviewRoute: typeof LovableEmailAuthPreviewRoute
   LovableEmailAuthWebhookRoute: typeof LovableEmailAuthWebhookRoute
   ApiPublicCatalogV1FacebookDotcsvRoute: typeof ApiPublicCatalogV1FacebookDotcsvRoute
   ApiPublicFeedProperstarAgencyKeyRoute: typeof ApiPublicFeedProperstarAgencyKeyRoute
   ApiPublicHomepitchV1PropertiesRoute: typeof ApiPublicHomepitchV1PropertiesRouteWithChildren
+  ApiPublicMetaOauthCallbackRoute: typeof ApiPublicMetaOauthCallbackRoute
   ApiPublicPortalV1AgencyRoute: typeof ApiPublicPortalV1AgencyRoute
   ApiPublicPortalV1AgentsRoute: typeof ApiPublicPortalV1AgentsRoute
   ApiPublicPortalV1PropertiesRoute: typeof ApiPublicPortalV1PropertiesRouteWithChildren
@@ -2611,6 +2653,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicMailgunInboundRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/meta/data-deletion': {
+      id: '/api/public/meta/data-deletion'
+      path: '/api/public/meta/data-deletion'
+      fullPath: '/api/public/meta/data-deletion'
+      preLoaderRoute: typeof ApiPublicMetaDataDeletionRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/meta/deauthorize': {
+      id: '/api/public/meta/deauthorize'
+      path: '/api/public/meta/deauthorize'
+      fullPath: '/api/public/meta/deauthorize'
+      preLoaderRoute: typeof ApiPublicMetaDeauthorizeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/partner-logo/$id': {
       id: '/api/public/partner-logo/$id'
       path: '/api/public/partner-logo/$id'
@@ -2672,6 +2728,13 @@ declare module '@tanstack/react-router' {
       path: '/api/public/homepitch/v1/properties'
       fullPath: '/api/public/homepitch/v1/properties'
       preLoaderRoute: typeof ApiPublicHomepitchV1PropertiesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/meta/oauth/callback': {
+      id: '/api/public/meta/oauth/callback'
+      path: '/api/public/meta/oauth/callback'
+      fullPath: '/api/public/meta/oauth/callback'
+      preLoaderRoute: typeof ApiPublicMetaOauthCallbackRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/portal/v1/agency': {
@@ -3141,6 +3204,8 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicListingsUpsertRoute: ApiPublicListingsUpsertRoute,
   ApiPublicMailgunEventsRoute: ApiPublicMailgunEventsRoute,
   ApiPublicMailgunInboundRoute: ApiPublicMailgunInboundRoute,
+  ApiPublicMetaDataDeletionRoute: ApiPublicMetaDataDeletionRoute,
+  ApiPublicMetaDeauthorizeRoute: ApiPublicMetaDeauthorizeRoute,
   ApiPublicPartnerLogoIdRoute: ApiPublicPartnerLogoIdRoute,
   LovableEmailAuthPreviewRoute: LovableEmailAuthPreviewRoute,
   LovableEmailAuthWebhookRoute: LovableEmailAuthWebhookRoute,
@@ -3148,6 +3213,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicFeedProperstarAgencyKeyRoute: ApiPublicFeedProperstarAgencyKeyRoute,
   ApiPublicHomepitchV1PropertiesRoute:
     ApiPublicHomepitchV1PropertiesRouteWithChildren,
+  ApiPublicMetaOauthCallbackRoute: ApiPublicMetaOauthCallbackRoute,
   ApiPublicPortalV1AgencyRoute: ApiPublicPortalV1AgencyRoute,
   ApiPublicPortalV1AgentsRoute: ApiPublicPortalV1AgentsRoute,
   ApiPublicPortalV1PropertiesRoute:
