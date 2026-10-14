@@ -11,6 +11,8 @@ export const META_GRAPH_BASE = `https://graph.facebook.com/${META_GRAPH_VERSION}
 export const META_REDIRECT_URI = "https://crm.habitoo.ro/api/public/meta/oauth/callback";
 export const META_STATE_TTL_MS = 10 * 60 * 1000;
 
+export { META_ERROR_MESSAGES, META_NO_INSTAGRAM_MESSAGE } from "./messages";
+
 const b64u = (b: Buffer | string) => Buffer.from(b).toString("base64url");
 
 function safeEqual(a: Buffer, b: Buffer): boolean {
@@ -96,18 +98,6 @@ export class MetaConnectError extends Error {
     super(code);
   }
 }
-
-export const META_ERROR_MESSAGES: Record<string, string> = {
-  denied: "Ai refuzat permisiunile cerute de Habitoo. Reconectează și acceptă accesul la pagini.",
-  no_pages: "Contul tău de Facebook nu administrează nicio pagină.",
-  no_postable_pages: "Nu ai dreptul de a posta pe niciuna dintre pagini. Cere rolul potrivit pe pagină și reconectează.",
-  exchange_failed: "Conectarea la Facebook a eșuat. Încearcă din nou.",
-  invalid_state: "Linkul de conectare a expirat sau nu este valid. Încearcă din nou.",
-  config: "Conectarea Facebook nu este configurată încă.",
-};
-
-export const META_NO_INSTAGRAM_MESSAGE =
-  "Leagă contul de Instagram Business de pagina de Facebook, apoi reconectează.";
 
 export function newConfirmationCode(): string {
   return randomBytes(12).toString("hex");
