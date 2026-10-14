@@ -1,3 +1,10 @@
+# Fișă de proprietate PDF
+
+- [x] Redenumire în aplicație și verificarea tuturor textelor
+- [x] Descărcare PDF A4 în browser, progres și protecție la apăsări repetate
+- [x] Teste și verificarea PDF-ului generat cu date de test: A4, 4 pagini, 1,29 MB, fără tăieri
+- [ ] Verificare în cont real și pe telefon fizic — sesiunea solicitantului și dispozitivul nu sunt disponibile
+
 # Structura utilităților, finisajelor și dotărilor
 
 - [x] Panouri cu căutare, Carduri/În linie și selecții existente

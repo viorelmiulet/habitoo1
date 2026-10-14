@@ -178,13 +178,13 @@ export function buildPresentationHtml(branding: MaterialBranding, data: Presenta
       ? `<img src="${escapeHtml(src)}" alt="Fotografie proprietate ${index + 2}" />`
       : `<div class="photo-empty">${index === 0 && !cover ? "Fără fotografii" : ""}</div>`;
   }).join("");
-  const forbiddenSpec = /^(sursă|sursa|adăugat|adaugat|origine|portal|id(?:\s+intern)?|identificator|referință|referinta)$/i;
+  const forbiddenSpec = /^(sursă|sursa|adăugat|adaugat|data\s+(?:adăugării|adaugarii|adăugare|adaugare)|origine|portal|id(?:\s+intern)?|identificator|referință|referinta)$/i;
   const specs = data.specs
     .filter((spec) => spec.label && spec.value && !forbiddenSpec.test(spec.label.trim()))
     .slice(0, 8)
     .map((spec) => `<div class="feature"><dt>${escapeHtml(spec.label)}</dt><dd>${escapeHtml(spec.value)}</dd></div>`)
     .join("");
-  const description = presentationDescription(data.description)
+  const description = (data.description?.trim() || "Descriere indisponibilă.")
     .split(/\n\s*\n/)
     .map((paragraph) => `<p>${escapeHtml(paragraph)}</p>`)
     .join("");
