@@ -5,7 +5,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { brandingFromOrg, type MaterialBranding } from "@/lib/materials";
 
-export type PublicOfferImage = { id: string; alt: string | null; isPrimary: boolean };
+export type PublicOfferImage = { id: string; alt: string | null; isPrimary: boolean; width?: number | null; height?: number | null };
 
 export type PublicOffer = {
   id: string;
@@ -56,7 +56,7 @@ export const getPublicOffer = createServerFn({ method: "GET" })
     const [images, org] = await Promise.all([
       supabaseAdmin
         .from("property_images")
-        .select("id, alt, is_primary, position")
+        .select("id, alt, is_primary, position, width, height")
         .eq("property_id", property.id)
         .eq("include_in_publish", true)
         .eq("is_confidential", false)
@@ -103,7 +103,7 @@ export const getPublicOffer = createServerFn({ method: "GET" })
       utilities: property.utilities ?? [],
       images: (images.data ?? [])
         .sort((a, b) => (a.is_primary === b.is_primary ? 0 : a.is_primary ? -1 : 1))
-        .map((img) => ({ id: img.id, alt: img.alt, isPrimary: Boolean(img.is_primary) })),
+        .map((img) => ({ id: img.id, alt: img.alt, isPrimary: Boolean(img.is_primary), width: img.width ?? null, height: img.height ?? null })),
       agencyName: org.data?.name ?? null,
       branding: brandingFromOrg(org.data, logoUrl),
       updatedAt: property.updated_at,
