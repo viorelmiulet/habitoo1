@@ -1,3 +1,4 @@
+import { MetaConnectionCard } from "@/components/app/MetaConnectionCard";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
@@ -706,6 +707,7 @@ function SettingsPage() {
           {user?.isAdmin ? (
             <TabsContent value="promotion" className="mt-0">
               <div className="space-y-6">
+                <MetaConnectionCard />
                 <FacebookCatalogCard />
               </div>
             </TabsContent>
