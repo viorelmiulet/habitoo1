@@ -53,3 +53,22 @@ export function offerOgMeta(o: OfferOgInput, origin = OFFER_SITE_URL) {
   ].filter(Boolean);
   return { image, width, height, description: [price, ...facts].join(" · "), siteName: o.agencyName || "Habitoo" };
 }
+
+export type VideoUploadNetwork = "youtube" | "tiktok";
+export const VIDEO_UPLOAD_URL: Record<VideoUploadNetwork, string> = {
+  youtube: "https://www.youtube.com/upload",
+  tiktok: "https://www.tiktok.com/upload",
+};
+
+/** YouTube cere orice video generat; TikTok doar video vertical. Fără video → se deschide generarea. */
+export function videoUploadStep(network: VideoUploadNetwork, video: { format: string } | null): "generate" | "upload" {
+  if (!video) return "generate";
+  if (network === "tiktok" && video.format !== "vertical") return "generate";
+  return "upload";
+}
+
+/** Titlul (titlu anunț + preț) și descrierea (text postare + link ofertă) copiate pentru încărcare. */
+export function videoUploadCopy(title: string, price: string | null, postText: string, link: string) {
+  const t = [title.trim(), price?.trim()].filter(Boolean).join(" – ");
+  return { title: t, description: [postText.trim(), link].filter(Boolean).join("\n\n"), clipboard: `${t}\n\n${[postText.trim(), link].filter(Boolean).join("\n\n")}` };
+}
