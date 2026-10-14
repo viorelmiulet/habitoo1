@@ -8,6 +8,7 @@ import { feedImageUrl } from "@/lib/site-feed/mapper";
 import { getCurrentHostname } from "@/lib/current-host";
 import { formatMoney } from "@/lib/format";
 import { contactLines, safeAccent } from "@/lib/materials";
+import { offerOgMeta } from "@/lib/share";
 
 export const Route = createFileRoute("/oferta/$id")({
   loader: async ({ params }) => {
@@ -27,7 +28,19 @@ export const Route = createFileRoute("/oferta/$id")({
       offer.description?.slice(0, 155) ??
       `${offer.title} în ${offer.city ?? "România"}. Detalii, fotografii și contact prin agenția care administrează oferta.`;
     // Link privat trimis clienților: nu se indexează (dar rămâne accesibil).
-    return publicHead({ path: `/oferta/${offer.id}`, title, description, noindex: true });
+    const og = offerOgMeta(offer);
+    const head = publicHead({ path: `/oferta/${offer.id}`, title, description, ogDescription: og.description, noindex: true });
+    const replaced: Record<string, string | null> = {
+      "og:image": og.image, "twitter:image": og.image, "og:site_name": og.siteName,
+      "og:image:width": og.width ? String(og.width) : null, "og:image:height": og.height ? String(og.height) : null,
+    };
+    head.meta = head.meta.flatMap((m) => {
+      const key = m.property ?? m.name;
+      if (!key || !(key in replaced)) return [m];
+      const content = replaced[key];
+      return content ? [{ ...m, content }] : [];
+    });
+    return head;
   },
   notFoundComponent: OfferNotFound,
   errorComponent: OfferNotFound,
