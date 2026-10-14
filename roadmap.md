@@ -1,3 +1,9 @@
+# Fișă de proprietate PDF
+
+- [ ] Redenumire în aplicație și ghid
+- [ ] Descărcare PDF A4 în browser, progres și protecție la apăsări repetate
+- [ ] Teste și verificarea PDF-ului generat
+
 # Structura utilităților, finisajelor și dotărilor
 
 - [x] Panouri cu căutare, Carduri/În linie și selecții existente

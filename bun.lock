@@ -53,6 +53,7 @@
         "embla-carousel-react": "^8.6.0",
         "fast-png": "^8.0.0",
         "fflate": "^0.8.3",
+        "html2canvas-pro": "^2.5.2",
         "input-otp": "^1.4.2",
         "jpeg-js": "^0.4.4",
         "leaflet": "^1.9.4",
@@ -1049,6 +1050,8 @@
     "html-encoding-sniffer": ["html-encoding-sniffer@6.0.0", "https://europe-west4-npm.pkg.dev/lovable-core-prod/sandbox-npm-cache/html-encoding-sniffer/-/html-encoding-sniffer-6.0.0.tgz", { "dependencies": { "@exodus/bytes": "^1.6.0" } }, "sha512-CV9TW3Y3f8/wT0BRFc1/KAVQ3TUHiXmaAb6VW9vtiMFf7SLoMd1PdAc4W3KFOFETBJUb90KatHqlsZMWV+R9Gg=="],
 
     "html-to-text": ["html-to-text@9.0.5", "https://europe-west1-npm.pkg.dev/lovable-core-prod/sandbox-npm-cache/html-to-text/-/html-to-text-9.0.5.tgz", { "dependencies": { "@selderee/plugin-htmlparser2": "^0.11.0", "deepmerge": "^4.3.1", "dom-serializer": "^2.0.0", "htmlparser2": "^8.0.2", "selderee": "^0.11.0" } }, "sha512-qY60FjREgVZL03vJU6IfMV4GDjGBIoOyvuFdpBDIX9yTlDw0TjxVBQp+P8NvpdIXNJvfWBTNul7fsAQJq2FNpg=="],
+
+    "html2canvas-pro": ["html2canvas-pro@2.5.2", "https://europe-west4-npm.pkg.dev/lovable-core-prod/sandbox-npm-cache/html2canvas-pro/-/html2canvas-pro-2.5.2.tgz", {}, "sha512-uka+0oVG/yB4B7U9M/+aJFF0aKZVmMWZKi4unemkQh537cLu3jXPvZtXakTuPl3taOI+O43RhuV6kn2igk1Z6g=="],
 
     "html5parser": ["html5parser@3.0.0", "https://europe-west1-npm.pkg.dev/lovable-core-prod/sandbox-npm-cache/html5parser/-/html5parser-3.0.0.tgz", {}, "sha512-iNpSopa+4YHX50UOk825tBy7MghmXHo/ZpLskBYN0kAr1xhH8GlIMk5bLRXcZlfP3AnLUcSuFMu8C4MdOUxA8A=="],
 
