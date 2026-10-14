@@ -49,7 +49,7 @@ export function MetaConnectionCard() {
   }, []);
 
   const connect = useMutation({
-    mutationFn: () => start(),
+    mutationFn: (_: void) => start(),
     onSuccess: ({ url }) => window.location.assign(url),
     onError: toastError,
   });
@@ -59,7 +59,7 @@ export function MetaConnectionCard() {
     onError: toastError,
   });
   const drop = useMutation({
-    mutationFn: () => disconnect(),
+    mutationFn: (_: void) => disconnect(),
     onSuccess: () => {
       toast.success("Facebook și Instagram au fost deconectate.");
       void qc.invalidateQueries({ queryKey: KEY });
@@ -87,7 +87,7 @@ export function MetaConnectionCard() {
           </div>
         </div>
         <div className="flex flex-wrap gap-2">
-          <Button onClick={() => connect.mutate()} disabled={!d.configured || connect.isPending}>
+          <Button onClick={() => connect.mutate(undefined)} disabled={!d.configured || connect.isPending}>
             {connected ? <RefreshCw className="size-4" /> : <Facebook className="size-4" />}
             {connected ? "Reconectează" : "Conectează Facebook și Instagram"}
           </Button>
@@ -151,7 +151,7 @@ export function MetaConnectionCard() {
         description="Accesul la pagini și la conturile de Instagram se șterge din Habitoo și se revocă la Facebook."
         confirmLabel="Deconectează"
         destructive
-        onConfirm={() => drop.mutate()}
+        onConfirm={() => drop.mutate(undefined)}
       />
     </div>
   );
