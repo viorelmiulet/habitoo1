@@ -4242,6 +4242,176 @@ export type Database = {
           },
         ]
       }
+      meta_connections: {
+        Row: {
+          connected_at: string
+          connected_by: string | null
+          default_page_id: string | null
+          disconnected_at: string | null
+          id: string
+          meta_user_id: string | null
+          organization_id: string
+          status: string
+          token_expires_at: string | null
+          updated_at: string
+          user_token_enc: string | null
+        }
+        Insert: {
+          connected_at?: string
+          connected_by?: string | null
+          default_page_id?: string | null
+          disconnected_at?: string | null
+          id?: string
+          meta_user_id?: string | null
+          organization_id: string
+          status?: string
+          token_expires_at?: string | null
+          updated_at?: string
+          user_token_enc?: string | null
+        }
+        Update: {
+          connected_at?: string
+          connected_by?: string | null
+          default_page_id?: string | null
+          disconnected_at?: string | null
+          id?: string
+          meta_user_id?: string | null
+          organization_id?: string
+          status?: string
+          token_expires_at?: string | null
+          updated_at?: string
+          user_token_enc?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "meta_connections_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: true
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      meta_data_deletion_requests: {
+        Row: {
+          completed_at: string | null
+          confirmation_code: string
+          created_at: string
+          meta_user_id: string
+          status: string
+        }
+        Insert: {
+          completed_at?: string | null
+          confirmation_code: string
+          created_at?: string
+          meta_user_id: string
+          status?: string
+        }
+        Update: {
+          completed_at?: string | null
+          confirmation_code?: string
+          created_at?: string
+          meta_user_id?: string
+          status?: string
+        }
+        Relationships: []
+      }
+      meta_instagram_accounts: {
+        Row: {
+          created_at: string
+          id: string
+          ig_user_id: string
+          organization_id: string
+          page_row_id: string
+          picture_url: string | null
+          username: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          ig_user_id: string
+          organization_id: string
+          page_row_id: string
+          picture_url?: string | null
+          username?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          ig_user_id?: string
+          organization_id?: string
+          page_row_id?: string
+          picture_url?: string | null
+          username?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "meta_instagram_accounts_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "meta_instagram_accounts_page_row_id_fkey"
+            columns: ["page_row_id"]
+            isOneToOne: false
+            referencedRelation: "meta_pages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      meta_pages: {
+        Row: {
+          connection_id: string
+          created_at: string
+          id: string
+          name: string
+          organization_id: string
+          page_id: string
+          page_token_enc: string | null
+          picture_url: string | null
+          tasks: string[]
+        }
+        Insert: {
+          connection_id: string
+          created_at?: string
+          id?: string
+          name: string
+          organization_id: string
+          page_id: string
+          page_token_enc?: string | null
+          picture_url?: string | null
+          tasks?: string[]
+        }
+        Update: {
+          connection_id?: string
+          created_at?: string
+          id?: string
+          name?: string
+          organization_id?: string
+          page_id?: string
+          page_token_enc?: string | null
+          picture_url?: string | null
+          tasks?: string[]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "meta_pages_connection_id_fkey"
+            columns: ["connection_id"]
+            isOneToOne: false
+            referencedRelation: "meta_connections"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "meta_pages_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       notifications: {
         Row: {
           body: string | null
