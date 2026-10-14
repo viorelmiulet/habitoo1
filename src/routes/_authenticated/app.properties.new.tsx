@@ -183,21 +183,32 @@ function NewPropertyPage() {
           create.mutate();
         }}
       >
+        <FormSection title="Titlu și descriere">
+          <div className="space-y-2">
+            <Label htmlFor="title">
+              Titlu anunț
+              <RequiredMark />
+            </Label>
+            <Input
+              id="title"
+              required
+              value={form.title}
+              onChange={(e) => set("title", e.target.value)}
+              placeholder="Apartament 3 camere, Aviatorilor"
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="description">Descriere publică</Label>
+            <PropertyDescriptionTextarea
+              id="description"
+              value={form.description}
+              onChange={(e) => set("description", e.target.value)}
+            />
+          </div>
+        </FormSection>
+
         <FormSection title="Informații generale">
           <div className="grid gap-4 md:grid-cols-2">
-            <div className="space-y-2 md:col-span-2">
-              <Label htmlFor="title">
-                Titlu anunț
-                <RequiredMark />
-              </Label>
-              <Input
-                id="title"
-                required
-                value={form.title}
-                onChange={(e) => set("title", e.target.value)}
-                placeholder="Apartament 3 camere, Aviatorilor"
-              />
-            </div>
             <div className="space-y-2">
               <Label>Status</Label>
               <Select value={form.status} onValueChange={(v) => set("status", v)}>
@@ -233,34 +244,7 @@ function NewPropertyPage() {
           </div>
         </FormSection>
 
-        <FormSection title="Tranzacție și preț" description="Alege vânzare, închiriere sau ambele.">
-          <PropertyTransactionFields idPrefix="new" value={tx} onChange={setTx} />
-
-          <div className="grid gap-4 md:grid-cols-3">
-            <div className="space-y-2">
-              <Label htmlFor="commission">Comision</Label>
-              <Input
-                id="commission"
-                value={form.commission}
-                onChange={(e) => set("commission", e.target.value)}
-                placeholder="2%"
-              />
-            </div>
-          </div>
-        </FormSection>
-
-        <FormSection
-          title="Detalii complete"
-          description="Tip, camere, băi, etaj, suprafețe, an construcție și facilități."
-        >
-          <PropertyDetailsFields
-            idPrefix="new"
-            value={details}
-            onChange={(patch) => setDetails((d) => ({ ...d, ...patch }))}
-          />
-        </FormSection>
-
-        <FormSection title="Localizare">
+        <FormSection title="Locație">
           <div className="grid gap-4 md:grid-cols-2">
             <LocationPicker idPrefix="new" value={location} onChange={setLocation} />
             <div className="space-y-2">
@@ -292,15 +276,37 @@ function NewPropertyPage() {
           />
         </FormSection>
 
-        <FormSection title="Descriere">
-          <div className="space-y-2">
-            <Label htmlFor="description">Descriere publică</Label>
-            <PropertyDescriptionTextarea
-              id="description"
-              value={form.description}
-              onChange={(e) => set("description", e.target.value)}
-            />
+        <FormSection title="Tranzacție și preț" description="Alege vânzare, închiriere sau ambele.">
+          <PropertyTransactionFields idPrefix="new" value={tx} onChange={setTx} />
+
+          <div className="grid gap-4 md:grid-cols-3">
+            <div className="space-y-2">
+              <Label htmlFor="commission">Comision</Label>
+              <Input
+                id="commission"
+                value={form.commission}
+                onChange={(e) => set("commission", e.target.value)}
+                placeholder="2%"
+              />
+            </div>
           </div>
+        </FormSection>
+
+        <FormSection
+          title="Detalii complete"
+          description="Tip, camere, băi, etaj, suprafețe, an construcție și facilități."
+        >
+          <PropertyDetailsFields
+            idPrefix="new"
+            value={details}
+            onChange={(patch) => setDetails((d) => ({ ...d, ...patch }))}
+          />
+        </FormSection>
+
+        <FormSection
+          title="Note interne"
+          description="Nu se publică pe site sau pe portaluri."
+        >
           <div className="space-y-2">
             <Label htmlFor="internal_notes">Note interne (nu se publică)</Label>
             <Textarea
