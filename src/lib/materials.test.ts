@@ -46,6 +46,7 @@ describe("buildPresentationHtml", () => {
       specs: [
         { label: "Sursă", value: "immoflux" },
         { label: "Adăugat", value: "12.09.2026" },
+        { label: "Data adăugării", value: "14.10.2026" },
         { label: "ID intern", value: "secret-id" },
         ...samplePresentation.specs,
       ],
@@ -53,6 +54,7 @@ describe("buildPresentationHtml", () => {
 
     expect(html).not.toContain("immoflux");
     expect(html).not.toContain("12.09.2026");
+    expect(html).not.toContain("14.10.2026");
     expect(html).not.toContain("secret-id");
   });
 
@@ -67,5 +69,11 @@ describe("buildPresentationHtml", () => {
     const html = buildPresentationHtml(branding, { ...samplePresentation, description: null });
     expect(html.match(/class="page /g)).toHaveLength(1);
     expect(html).toContain("class=\"contact-card\"");
+  });
+
+  it("păstrează descrierea completă pentru paginarea PDF fără pierderi", () => {
+    const description = "Apartament luminos și spațios. ".repeat(100) + "Ultima propoziție rămâne inclusă.";
+    const html = buildPresentationHtml(branding, { ...samplePresentation, description });
+    expect(html).toContain(description);
   });
 });
