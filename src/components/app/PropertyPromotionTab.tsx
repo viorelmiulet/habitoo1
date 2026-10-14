@@ -1,8 +1,11 @@
-import { useEffect, useMemo, useState } from "react";
-import { Link } from "@tanstack/react-router";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { Copy, Download, Share2, Sparkles } from "lucide-react";
+import { Copy, Download, Facebook, Film, Image as ImageIcon, Instagram, MessageCircle, Music2, Share2, Sparkles, Youtube } from "lucide-react";
+import { QRCodeSVG } from "qrcode.react";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { VIDEO_UPLOAD_URL, videoUploadCopy, videoUploadStep, type VideoUploadNetwork } from "@/lib/share";
+import type { VideoFormat } from "@/lib/property-video";
 import { SHARE_MAX_PHOTOS, SHARE_NETWORK_LABEL, canShareFiles, offerShareUrl, shareLinks, type ShareNetwork } from "@/lib/share";
 import { shareFilesFromPhone, useShareLogger } from "@/lib/share-client";
 import { toast } from "@/components/ui/sonner";
@@ -11,7 +14,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { InlineLoading } from "@/components/app/LoadingState";
 import { QueryError } from "@/components/app/QueryError";
-import { useCurrentUser } from "@/hooks/use-session";
 import { useAiFeatures } from "@/hooks/use-ai-features";
 import { getPropertyPromotion } from "@/lib/property-promotion.functions";
 import { generateMarketing } from "@/lib/ai/agents/marketing/marketing.functions";
@@ -35,15 +37,16 @@ import {
 export function PropertyPromotionTab({
   propertyId,
   onOpenPublishing,
+  onOpenPoster,
   video,
 }: {
   propertyId: string;
   onOpenPublishing?: () => void;
+  onOpenPoster?: () => void;
   video?: VideoListing;
 }) {
   const load = useServerFn(getPropertyPromotion);
   const runAi = useServerFn(generateMarketing);
-  const { data: user } = useCurrentUser();
   const { isEnabled } = useAiFeatures();
   const q = useQuery({
     queryKey: ["property-promotion", propertyId],
@@ -58,6 +61,13 @@ export function PropertyPromotionTab({
   const [phoneShare, setPhoneShare] = useState(false);
   const [photoFiles, setPhotoFiles] = useState<File[]>([]);
   const logShare = useShareLogger(propertyId);
+  const [videoOpen, setVideoOpen] = useState(false);
+  const [videoFormat, setVideoFormat] = useState<VideoFormat>("vertical");
+  const [pendingUpload, setPendingUpload] = useState<VideoUploadNetwork | null>(null);
+  const [videoResult, setVideoResult] = useState<{ blob: Blob; name: string; format: VideoFormat } | null>(null);
+  const [qrOpen, setQrOpen] = useState(false);
+  const [pageUrl, setPageUrl] = useState("");
+  useEffect(() => { setPageUrl(window.location.href); }, []);
   useEffect(() => { setPhoneShare(canShareFiles(navigator)); }, []);
 
   const d = q.data;
@@ -162,8 +172,123 @@ export function PropertyPromotionTab({
     }
   };
 
+  const uploadVideo = (n: VideoUploadNetwork, res = videoResult) => {
+    if (videoUploadStep(n, res) === "generate" || !res) {
+      setPendingUpload(n);
+      setVideoFormat("vertical");
+      setVideoOpen(true);
+      toast.info(n === "tiktok" ? "Generează întâi video-ul vertical." : "Generează întâi video-ul de prezentare.");
+      return;
+    }
+    const copy = videoUploadCopy(video?.title ?? "", video?.price ?? null, text, offerLink);
+    void navigator.clipboard?.writeText(copy.clipboard).catch(() => undefined);
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(res.blob);
+    a.download = res.name;
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+    window.open(VIDEO_UPLOAD_URL[n], "_blank", "noopener,noreferrer");
+    toast.success(`Titlul și descrierea sunt copiate, lipește-le pe ${n === "tiktok" ? "TikTok" : "YouTube"}`);
+    logShare(`Distribuit pe ${n === "tiktok" ? "TikTok" : "YouTube"}`);
+  };
+  const sharePhone = () => void shareFilesFromPhone(photoFiles, `${text}\n\n${offerLink}`, () => logShare("Distribuit din telefon"));
+  const fbState = facebookListingState(d.catalog.enabled, d.catalog.reason).label;
+
+  const cards: PromoCard[] = [
+    { key: "poster", icon: ImageIcon, tone: "bg-primary/15 text-primary", title: "Poster", badge: "Recomandat",
+      text: "Creează un poster pentru feed sau story, gata de postat.", action: "Creează poster",
+      onClick: () => { onOpenPoster?.(); logShare("Poster deschis din Promovare"); } },
+    { key: "video", icon: Film, tone: "bg-accent text-accent-foreground", title: "Video",
+      text: "Creează un video de prezentare, cu muzică și animații.", action: "Creează video",
+      onClick: () => { setPendingUpload(null); setVideoOpen(true); }, disabled: !video },
+    { key: "facebook", icon: Facebook, tone: "bg-[#1877F2] text-white", title: "Facebook",
+      text: "Publică proprietatea pe pagina ta de Facebook.", action: "Postează",
+      onClick: () => {
+        if (phoneShare && photoFiles.length) return sharePhone();
+        window.open(shareLinks(offerLink, text).facebook, "_blank", "noopener,noreferrer");
+        logShare("Distribuit pe Facebook");
+      },
+      footer: (
+        <button type="button" onClick={() => onOpenPublishing?.()} className="text-xs text-muted-foreground underline-offset-2 hover:underline">
+          Catalog Facebook: {fbState}
+        </button>
+      ) },
+    { key: "instagram", icon: Instagram, tone: "bg-gradient-to-br from-[#F58529] via-[#DD2A7B] to-[#8134AF] text-white", title: "Instagram",
+      text: "Postează posterul sau video-ul în feed, story sau reels.", action: "Postează",
+      onClick: () => (phoneShare && photoFiles.length ? sharePhone() : setQrOpen(true)) },
+    { key: "whatsapp", icon: MessageCircle, tone: "bg-[#25D366] text-white", title: "WhatsApp",
+      text: "Trimite oferta clienților sau în grupuri.", action: "Trimite",
+      onClick: () => { window.open(shareLinks(offerLink, text).whatsapp, "_blank", "noopener,noreferrer"); logShare("Distribuit pe WhatsApp"); } },
+    { key: "youtube", icon: Youtube, tone: "bg-[#FF0000] text-white", title: "YouTube",
+      text: "Publică video-ul de prezentare pe canalul tău.", action: "Publică pe YouTube",
+      onClick: () => uploadVideo("youtube"), disabled: !video },
+    { key: "tiktok", icon: Music2, tone: "bg-[#010101] text-white", title: "TikTok",
+      text: "Publică video-ul vertical pe contul tău de TikTok.", action: "Publică pe TikTok",
+      onClick: () => uploadVideo("tiktok"), disabled: !video },
+  ];
+
   return (
     <div className="space-y-6">
+      <section className="space-y-4">
+        <h2 className="font-sans text-lg font-bold">Promovează proprietatea pe rețelele sociale</h2>
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4" data-testid="promotion-cards">
+          {cards.map((c) => (
+            <div key={c.key} className="panel flex flex-col gap-3 p-5">
+              <div className="flex items-start justify-between gap-2">
+                <span className={cn("grid size-12 place-items-center rounded-xl", c.tone)} aria-hidden="true">
+                  <c.icon className="size-6" />
+                </span>
+                {c.badge ? <span className="rounded-pill bg-gold-tint px-2 py-0.5 text-xs font-semibold text-gold-dark">{c.badge}</span> : null}
+              </div>
+              <div className="flex-1">
+                <h3 className="font-semibold">{c.title}</h3>
+                <p className="mt-1 text-sm text-muted-foreground">{c.text}</p>
+              </div>
+              <Button variant={c.key === "poster" ? "default" : "outline"} onClick={c.onClick} disabled={c.disabled}>{c.action}</Button>
+              {c.footer}
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <Dialog open={videoOpen} onOpenChange={setVideoOpen}>
+        <DialogContent className="max-h-[92vh] max-w-2xl overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Video de prezentare</DialogTitle>
+            <DialogDescription>Se generează în browser; nimic nu se publică automat.</DialogDescription>
+          </DialogHeader>
+          {video ? (
+            <PropertyVideoCard
+              key={videoFormat}
+              listing={video}
+              propertyId={propertyId}
+              shareText={text}
+              initialFormat={videoFormat}
+              onResult={(r) => {
+                setVideoResult(r);
+                if (pendingUpload && videoUploadStep(pendingUpload, r) === "upload") {
+                  toast.success(`Video gata. Apasă din nou „Publică pe ${pendingUpload === "tiktok" ? "TikTok" : "YouTube"}”.`);
+                  setPendingUpload(null);
+                }
+              }}
+              photos={d.photos.filter((p) => urls[p.id]).map((p) => ({ id: p.id, url: urls[p.id] as string, alt: p.alt }))}
+            />
+          ) : null}
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={qrOpen} onOpenChange={setQrOpen}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Instagram</DialogTitle>
+            <DialogDescription>Scanează cu telefonul ca să postezi pe Instagram</DialogDescription>
+          </DialogHeader>
+          <div className="mx-auto rounded-xl bg-card p-4">
+            {pageUrl ? <QRCodeSVG value={pageUrl} size={220} bgColor="transparent" fgColor="currentColor" className="text-foreground" aria-label="Cod QR pentru această pagină" /> : null}
+          </div>
+        </DialogContent>
+      </Dialog>
+
       <div className="panel space-y-5 p-5">
         <div>
           <h3 className="font-medium">Postare pe rețele sociale</h3>
@@ -287,34 +412,19 @@ export function PropertyPromotionTab({
         </div>
       </div>
 
-      {video ? (
-        <PropertyVideoCard
-          listing={video}
-          propertyId={propertyId}
-          shareText={text}
-          photos={d.photos.filter((p) => urls[p.id]).map((p) => ({ id: p.id, url: urls[p.id] as string, alt: p.alt }))}
-        />
-      ) : null}
-
-      <div className="panel flex flex-wrap items-center justify-between gap-3 p-5">
-        <div>
-          <h3 className="font-medium">Catalog Facebook</h3>
-          <p className="text-sm">
-            În catalogul Facebook:{" "}
-            <strong>{facebookListingState(d.catalog.enabled, d.catalog.reason).label}</strong>
-          </p>
-        </div>
-        <div className="flex flex-wrap items-center gap-3">
-          <Button variant="outline" size="sm" onClick={() => onOpenPublishing?.()}>
-            {d.catalog.enabled ? "Dezactivează din Publicare" : "Activează din Publicare"}
-          </Button>
-          {user?.isAdmin ? (
-            <Link to="/app/settings" search={{ tab: "promotion" }} className="text-sm underline">
-              Vezi setările catalogului
-            </Link>
-          ) : null}
-        </div>
-      </div>
     </div>
   );
 }
+
+type PromoCard = {
+  key: string;
+  icon: typeof Film;
+  tone: string;
+  title: string;
+  badge?: string;
+  text: string;
+  action: string;
+  onClick: () => void;
+  disabled?: boolean;
+  footer?: ReactNode;
+};
