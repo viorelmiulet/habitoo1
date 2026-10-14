@@ -853,7 +853,29 @@ function PropertyDetailPage() {
                 save.mutate(buildEditPatch());
               }}
             >
-              <FormSection title="Date generale">
+              <FormSection title="Titlu și descriere">
+                <div className="space-y-2">
+                  <Label htmlFor="title">
+                    Titlu
+                    <RequiredMark />
+                  </Label>
+                  <Input
+                    id="title"
+                    value={draft.title ?? ""}
+                    onChange={(e) => setDraft((d) => ({ ...d, title: e.target.value }))}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="description">Descriere</Label>
+                  <PropertyDescriptionTextarea
+                    id="description"
+                    value={draft.description ?? ""}
+                    onChange={(e) => setDraft((d) => ({ ...d, description: e.target.value }))}
+                  />
+                </div>
+              </FormSection>
+
+              <FormSection title="Locație">
                 <div className="grid gap-5 md:grid-cols-2">
                   <LocationPicker
                     idPrefix="edit"
@@ -861,23 +883,22 @@ function PropertyDetailPage() {
                     onChange={setLocation}
                     onPostalCode={(code) => setDraft((d) => ({ ...d, postal_code: code ?? "" }))}
                   />
-                  {[
-                    ["title", "Titlu"],
-                    ["district", "Zonă"],
-                    ["address", "Adresă"],
-                  ].map(([key, label]) => (
-                    <div key={key} className="space-y-2">
-                      <Label htmlFor={key}>
-                        {label}
-                        {key === "title" ? <RequiredMark /> : null}
-                      </Label>
-                      <Input
-                        id={key}
-                        value={draft[key] ?? ""}
-                        onChange={(e) => setDraft((d) => ({ ...d, [key]: e.target.value }))}
-                      />
-                    </div>
-                  ))}
+                  <div className="space-y-2">
+                    <Label htmlFor="district">Zonă</Label>
+                    <Input
+                      id="district"
+                      value={draft.district ?? ""}
+                      onChange={(e) => setDraft((d) => ({ ...d, district: e.target.value }))}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="address">Adresă</Label>
+                    <Input
+                      id="address"
+                      value={draft.address ?? ""}
+                      onChange={(e) => setDraft((d) => ({ ...d, address: e.target.value }))}
+                    />
+                  </div>
                   <div className="space-y-2">
                     <Label htmlFor="postal_code">Cod poștal</Label>
                     <Input
@@ -887,7 +908,7 @@ function PropertyDetailPage() {
                       onChange={(e) => setDraft((d) => ({ ...d, postal_code: e.target.value }))}
                     />
                     {(draft.postal_code ?? "").trim() === (property.postal_code ?? "").trim() &&
-                    postalCodeHint(property.postal_code_source) ? (
+                     postalCodeHint(property.postal_code_source) ? (
                       <p className="text-xs text-muted-foreground">
                         {postalCodeHint(property.postal_code_source)}
                       </p>
@@ -916,17 +937,6 @@ function PropertyDetailPage() {
                 description="Alege vânzare, închiriere sau ambele."
               >
                 <PropertyTransactionFields idPrefix="edit" value={tx} onChange={setTx} />
-              </FormSection>
-
-              <FormSection title="Descriere">
-                <div className="space-y-2">
-                  <Label htmlFor="description">Descriere</Label>
-                  <PropertyDescriptionTextarea
-                    id="description"
-                    value={draft.description ?? ""}
-                    onChange={(e) => setDraft((d) => ({ ...d, description: e.target.value }))}
-                  />
-                </div>
               </FormSection>
 
               <FormSection
