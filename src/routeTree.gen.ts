@@ -30,6 +30,7 @@ import { Route as SemnareRouteImport } from './routes/semnare'
 import { Route as SitemapBlogDotxmlRouteImport } from './routes/sitemap-blog[.]xml'
 import { Route as SitemapPagesDotxmlRouteImport } from './routes/sitemap-pages[.]xml'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
+import { Route as StergereDateRouteImport } from './routes/stergere-date'
 import { Route as TermeniRouteImport } from './routes/termeni'
 import { Route as TermeniSiConditiiRouteImport } from './routes/termeni-si-conditii'
 import { Route as AuthenticatedAnunturiProprietariRouteImport } from './routes/_authenticated/anunturi-proprietari'
@@ -257,6 +258,11 @@ const SitemapPagesDotxmlRoute = SitemapPagesDotxmlRouteImport.update({
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
   id: '/sitemap.xml',
   path: '/sitemap.xml',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const StergereDateRoute = StergereDateRouteImport.update({
+  id: '/stergere-date',
+  path: '/stergere-date',
   getParentRoute: () => rootRouteImport,
 } as any)
 const TermeniRoute = TermeniRouteImport.update({
@@ -975,6 +981,7 @@ export interface FileRoutesByFullPath {
   '/sitemap-blog.xml': typeof SitemapBlogDotxmlRoute
   '/sitemap-pages.xml': typeof SitemapPagesDotxmlRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/stergere-date': typeof StergereDateRoute
   '/termeni': typeof TermeniRoute
   '/termeni-si-conditii': typeof TermeniSiConditiiRoute
   '/anunturi-proprietari': typeof AuthenticatedAnunturiProprietariRoute
@@ -1119,6 +1126,7 @@ export interface FileRoutesByTo {
   '/sitemap-blog.xml': typeof SitemapBlogDotxmlRoute
   '/sitemap-pages.xml': typeof SitemapPagesDotxmlRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/stergere-date': typeof StergereDateRoute
   '/termeni': typeof TermeniRoute
   '/termeni-si-conditii': typeof TermeniSiConditiiRoute
   '/anunturi-proprietari': typeof AuthenticatedAnunturiProprietariRoute
@@ -1263,6 +1271,7 @@ export interface FileRoutesById {
   '/sitemap-blog.xml': typeof SitemapBlogDotxmlRoute
   '/sitemap-pages.xml': typeof SitemapPagesDotxmlRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/stergere-date': typeof StergereDateRoute
   '/termeni': typeof TermeniRoute
   '/termeni-si-conditii': typeof TermeniSiConditiiRoute
   '/_authenticated/anunturi-proprietari': typeof AuthenticatedAnunturiProprietariRoute
@@ -1410,6 +1419,7 @@ export interface FileRouteTypes {
     | '/sitemap-blog.xml'
     | '/sitemap-pages.xml'
     | '/sitemap.xml'
+    | '/stergere-date'
     | '/termeni'
     | '/termeni-si-conditii'
     | '/anunturi-proprietari'
@@ -1554,6 +1564,7 @@ export interface FileRouteTypes {
     | '/sitemap-blog.xml'
     | '/sitemap-pages.xml'
     | '/sitemap.xml'
+    | '/stergere-date'
     | '/termeni'
     | '/termeni-si-conditii'
     | '/anunturi-proprietari'
@@ -1697,6 +1708,7 @@ export interface FileRouteTypes {
     | '/sitemap-blog.xml'
     | '/sitemap-pages.xml'
     | '/sitemap.xml'
+    | '/stergere-date'
     | '/termeni'
     | '/termeni-si-conditii'
     | '/_authenticated/anunturi-proprietari'
@@ -1844,6 +1856,7 @@ export interface RootRouteChildren {
   SitemapBlogDotxmlRoute: typeof SitemapBlogDotxmlRoute
   SitemapPagesDotxmlRoute: typeof SitemapPagesDotxmlRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
+  StergereDateRoute: typeof StergereDateRoute
   TermeniRoute: typeof TermeniRoute
   TermeniSiConditiiRoute: typeof TermeniSiConditiiRoute
   AuthCallbackRoute: typeof AuthCallbackRoute
@@ -2056,6 +2069,13 @@ declare module '@tanstack/react-router' {
       path: '/sitemap.xml'
       fullPath: '/sitemap.xml'
       preLoaderRoute: typeof SitemapDotxmlRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/stergere-date': {
+      id: '/stergere-date'
+      path: '/stergere-date'
+      fullPath: '/stergere-date'
+      preLoaderRoute: typeof StergereDateRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/termeni': {
@@ -3171,6 +3191,7 @@ const rootRouteChildren: RootRouteChildren = {
   SitemapBlogDotxmlRoute: SitemapBlogDotxmlRoute,
   SitemapPagesDotxmlRoute: SitemapPagesDotxmlRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
+  StergereDateRoute: StergereDateRoute,
   TermeniRoute: TermeniRoute,
   TermeniSiConditiiRoute: TermeniSiConditiiRoute,
   AuthCallbackRoute: AuthCallbackRoute,

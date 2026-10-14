@@ -129,7 +129,7 @@ export function MetaConnectionCard() {
                   <input
                     type="radio"
                     name="meta-default-page"
-                    className="size-4 accent-[var(--primary)]"
+                    className="size-4 accent-primary"
                     checked={d.defaultPageId === p.pageId}
                     onChange={() => pick.mutate(p.pageId)}
                     disabled={pick.isPending}
