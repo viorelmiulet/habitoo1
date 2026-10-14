@@ -5,9 +5,11 @@
  * explicit interogarea. Înregistrarea nu activează nimic: o sursă este
  * întrebată doar dacă este activată în `market_query_sources`.
  */
+import { imoboxAdapter } from "./imobox/adapter.server";
 import { imospotAdapter } from "./imospot/adapter.server";
 import { registerMarketQueryAdapter } from "./port";
 
 registerMarketQueryAdapter(imospotAdapter);
+registerMarketQueryAdapter(imoboxAdapter);
 
 export {};

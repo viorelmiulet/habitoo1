@@ -125,6 +125,8 @@ export type MarketQueryAdapterResult =
       items: MarketQueryRawComparable[];
       marketContext?: MarketQueryMarketContextData | null;
       requestedUrls?: string[];
+      /** Rezumat în română (ex. găsite/excluse), consemnat la sursă. */
+      detail?: string | null;
     };
 
 export type MarketQueryAdapter = {
@@ -141,14 +143,16 @@ export function marketQueryAdapterResult(result: MarketQueryAdapterResult): {
   items: MarketQueryRawComparable[];
   marketContext: MarketQueryMarketContextData | null;
   requestedUrls: string[];
+  detail: string | null;
 } {
   if (Array.isArray(result)) {
-    return { items: result, marketContext: null, requestedUrls: [] };
+    return { items: result, marketContext: null, requestedUrls: [], detail: null };
   }
   return {
     items: result.items ?? [],
     marketContext: result.marketContext ?? null,
     requestedUrls: result.requestedUrls ?? [],
+    detail: result.detail ?? null,
   };
 }
 

@@ -31,25 +31,25 @@ export type MarketQueryFetchResult = {
   error: string | null;
 };
 
-function requestHeaders(): Record<string, string> {
+function requestHeaders(userAgent: string): Record<string, string> {
   return {
-    "User-Agent": MARKET_QUERY_USER_AGENT,
+    "User-Agent": userAgent,
     Accept: "application/json,text/html;q=0.9,application/xml;q=0.8",
     "Accept-Language": "ro,en;q=0.8",
   };
 }
 
-async function loadRobots(target: URL, timeoutMs: number): Promise<RobotsRules> {
+async function loadRobots(target: URL, timeoutMs: number, userAgent: string): Promise<RobotsRules> {
   const cached = robotsCache.get(target.host);
   if (cached && cached.expiresAt > Date.now()) return cached.rules;
   const robotsUrl = `${target.protocol}//${target.host}/robots.txt`;
-  const result = await rawFetch(robotsUrl, timeoutMs);
+  const result = await rawFetch(robotsUrl, timeoutMs, userAgent);
   const rules = result.status === 200 ? parseRobotsTxt(result.body) : EMPTY_ROBOTS;
   robotsCache.set(target.host, { rules, expiresAt: Date.now() + ROBOTS_TTL_MS });
   return rules;
 }
 
-async function rawFetch(url: string, timeoutMs: number): Promise<MarketQueryFetchResult> {
+async function rawFetch(url: string, timeoutMs: number, userAgent: string): Promise<MarketQueryFetchResult> {
   return runSerialPerDomain(url, async () => {
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), timeoutMs);
@@ -57,7 +57,7 @@ async function rawFetch(url: string, timeoutMs: number): Promise<MarketQueryFetc
       const response = await fetch(url, {
         method: "GET",
         redirect: "follow",
-        headers: requestHeaders(),
+        headers: requestHeaders(userAgent),
         signal: controller.signal,
       });
       const contentType = response.headers.get("content-type") ?? "";
@@ -85,20 +85,21 @@ async function rawFetch(url: string, timeoutMs: number): Promise<MarketQueryFetc
 /** O cerere politicoasă: robots.txt întâi, apoi pagina cerută. */
 export async function marketQueryFetch(
   url: string,
-  options: { timeoutMs?: number } = {},
+  options: { timeoutMs?: number; userAgent?: string } = {},
 ): Promise<MarketQueryFetchResult> {
   const timeoutMs = options.timeoutMs ?? 4000;
+  const userAgent = options.userAgent ?? MARKET_QUERY_USER_AGENT;
   let target: URL;
   try {
     target = new URL(url);
   } catch {
     return { url, status: 0, body: null, error: "Adresă invalidă." };
   }
-  const rules = await loadRobots(target, timeoutMs);
-  if (!robotsAllows(rules, MARKET_QUERY_USER_AGENT, urlPathForRobots(url))) {
+  const rules = await loadRobots(target, timeoutMs, userAgent);
+  if (!robotsAllows(rules, userAgent, urlPathForRobots(url))) {
     return { url, status: 0, body: null, error: "robots.txt interzice această cale." };
   }
-  return rawFetch(url, timeoutMs);
+  return rawFetch(url, timeoutMs, userAgent);
 }
 
 /** Doar pentru teste: uită regulile memorate. */
