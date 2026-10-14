@@ -103,7 +103,7 @@ describe("ImoBox — adaptorul", () => {
           url,
           status: 200,
           error: null,
-          body: JSON.stringify({ requestInfo: { totalPages: 9 }, results: [{ ...DOC_RESULT, id_anunt: url }, { ...noArea, id_anunt: `x${url}` }] }),
+          body: JSON.stringify({ requestInfo: { totalPages: url.includes("Militari") ? 1 : 9 }, results: [{ ...DOC_RESULT, id_anunt: url }, { ...noArea, id_anunt: `x${url}` }] }),
         };
       },
     });
