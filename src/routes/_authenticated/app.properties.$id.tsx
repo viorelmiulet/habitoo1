@@ -12,7 +12,7 @@ import {
   MoreHorizontal,
   Pencil,
   Phone,
-  Printer,
+  Download,
   Share2,
   Sparkles,
   UserPlus,
@@ -99,7 +99,7 @@ import { APPROX_RADIUS_M, publicCoords } from "@/lib/geo";
 import { useCurrentUser } from "@/hooks/use-session";
 import { DeletePropertyDialog, canDeleteProperty } from "@/components/app/DeletePropertyDialog";
 import { brandingFromOrg, buildPresentationHtml } from "@/lib/materials";
-import { printHtmlDocument } from "@/lib/print";
+import { generatePropertySheetPdf, downloadPropertySheet } from "@/lib/property-sheet-pdf";
 import { AVATAR_BUCKET, MEDIA_BUCKET, signedUrl, signedUrls } from "@/lib/storage";
 
 import { useAgencyLogoUrl } from "@/components/app/AgencyBrandingCard";
@@ -190,8 +190,10 @@ function PropertyDetailPage() {
   /** Fila activă; butonul din antet duce direct la fluxul ACP. */
   const [tab, setTab] = useState(() => search.tab === "publishing" ? "publishing" : "overview");
 
-  /** Evită tipăriri suprapuse ale fișei de prezentare. */
+  /** Evită generări suprapuse ale fișei de proprietate. */
   const printingRef = useRef(false);
+  const [generatingPdf, setGeneratingPdf] = useState<"client" | "agent" | null>(null);
+  const [readyPdf, setReadyPdf] = useState<Blob | null>(null);
   const [presentationDialogOpen, setPresentationDialogOpen] = useState(false);
   const [socialPosterOpen, setSocialPosterOpen] = useState(false);
 
@@ -651,14 +653,13 @@ function PropertyDetailPage() {
   const nextProperty = currentNeighborIndex >= 0 ? neighbors[currentNeighborIndex + 1] : null;
 
   /**
-   * Fișa de prezentare: identitatea vizuală a agenției plus fotografiile
-   * publice ale proprietății (fără cele confidențiale). Tipărirea se face în
-   * iframe, după încărcarea imaginilor.
+   * Fișa de proprietate: PDF local cu fotografii publicabile și branding.
    */
   const printSummary = async (audience: "client" | "agent") => {
     if (printingRef.current) return;
     printingRef.current = true;
-    setPresentationDialogOpen(false);
+    setGeneratingPdf(audience);
+    setReadyPdf(null);
 
     try {
       const { data: rows, error } = await supabase
@@ -682,7 +683,7 @@ function PropertyDetailPage() {
         ? await signedUrl(AVATAR_BUCKET, contactAgent.avatar_url, 3600)
         : null;
 
-      await printHtmlDocument(
+      const pdf = await generatePropertySheetPdf(
         buildPresentationHtml(brandingFromOrg(user?.organization, agencyLogoUrl), {
           title: property.title,
           location: [property.address, property.district, property.city].filter(Boolean).join(", "),
@@ -699,10 +700,16 @@ function PropertyDetailPage() {
           },
         }),
       );
+      setReadyPdf(pdf);
+      if (!matchMedia("(pointer: coarse)").matches) {
+        await downloadPropertySheet(pdf, property.reference);
+        toast.success("Fișa de proprietate a fost descărcată.");
+      }
     } catch (e) {
-      toastError(e as Error);
+      toast.error(`PDF-ul nu a putut fi generat. ${e instanceof Error ? e.message : "Încearcă din nou."}`);
     } finally {
       printingRef.current = false;
+      setGeneratingPdf(null);
     }
   };
 
@@ -767,7 +774,7 @@ function PropertyDetailPage() {
             <DropdownMenuTrigger asChild><Button size="icon" variant="outline" aria-label="Mai multe acțiuni"><MoreHorizontal /></Button></DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuItem onClick={() => duplicate.mutate()} disabled={duplicate.isPending}>Clonează</DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setPresentationDialogOpen(true)}><Printer /> Generează fișă de vizionare</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => { setReadyPdf(null); setPresentationDialogOpen(true); }}><Download /> Generează fișa de proprietate</DropdownMenuItem>
               <DropdownMenuItem onClick={() => setAddClientOpen(true)}><UserPlus /> Adaugă client</DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuSub>
@@ -1236,10 +1243,10 @@ function PropertyDetailPage() {
         onCreated={() => queryClient.invalidateQueries({ queryKey: ["property", id] })}
       />
 
-      <Dialog open={presentationDialogOpen} onOpenChange={setPresentationDialogOpen}>
+      <Dialog open={presentationDialogOpen} onOpenChange={(open) => { if (!printingRef.current) setPresentationDialogOpen(open); }}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Generează fișa de vizionare</DialogTitle>
+            <DialogTitle>Fișă de proprietate</DialogTitle>
             <DialogDescription>Alege cui îi este destinată fișa.</DialogDescription>
           </DialogHeader>
           <div className="grid gap-3 sm:grid-cols-2">
@@ -1247,8 +1254,9 @@ function PropertyDetailPage() {
               variant="outline"
               className="h-auto min-h-24 flex-col items-start gap-1 whitespace-normal p-4 text-left"
               onClick={() => void printSummary("client")}
+              disabled={generatingPdf !== null}
             >
-              <span className="font-semibold">Pentru client</span>
+              <span className="font-semibold">{generatingPdf === "client" ? "Se generează PDF…" : "Pentru client"}</span>
               <span className="text-xs font-normal text-muted-foreground">
                 Include telefoanele agenției și agentului.
               </span>
@@ -1257,16 +1265,18 @@ function PropertyDetailPage() {
               variant="outline"
               className="h-auto min-h-24 flex-col items-start gap-1 whitespace-normal p-4 text-left"
               onClick={() => void printSummary("agent")}
+              disabled={generatingPdf !== null}
             >
-              <span className="font-semibold">Pentru alt agent</span>
+              <span className="font-semibold">{generatingPdf === "agent" ? "Se generează PDF…" : "Pentru alt agent"}</span>
               <span className="text-xs font-normal text-muted-foreground">
                 Nu include niciun număr de telefon.
               </span>
             </Button>
           </div>
+          {readyPdf ? <Button onClick={() => void downloadPropertySheet(readyPdf, property.reference).catch(() => toast.error("PDF-ul nu a putut fi salvat. Încearcă din nou."))}><Download /> Descarcă PDF</Button> : null}
           <DialogFooter>
-            <Button variant="outline" onClick={() => setPresentationDialogOpen(false)}>
-              Anulează
+            <Button variant="outline" disabled={generatingPdf !== null} onClick={() => setPresentationDialogOpen(false)}>
+              {readyPdf ? "Închide" : "Anulează"}
             </Button>
           </DialogFooter>
         </DialogContent>
