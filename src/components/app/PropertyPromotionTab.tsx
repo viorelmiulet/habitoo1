@@ -1,5 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
-import { Link } from "@tanstack/react-router";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { Copy, Download, Facebook, Film, Image as ImageIcon, Instagram, MessageCircle, Music2, Share2, Sparkles, Youtube } from "lucide-react";
@@ -15,7 +14,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { InlineLoading } from "@/components/app/LoadingState";
 import { QueryError } from "@/components/app/QueryError";
-import { useCurrentUser } from "@/hooks/use-session";
 import { useAiFeatures } from "@/hooks/use-ai-features";
 import { getPropertyPromotion } from "@/lib/property-promotion.functions";
 import { generateMarketing } from "@/lib/ai/agents/marketing/marketing.functions";
@@ -49,7 +47,6 @@ export function PropertyPromotionTab({
 }) {
   const load = useServerFn(getPropertyPromotion);
   const runAi = useServerFn(generateMarketing);
-  const { data: user } = useCurrentUser();
   const { isEnabled } = useAiFeatures();
   const q = useQuery({
     queryKey: ["property-promotion", propertyId],
@@ -429,5 +426,5 @@ type PromoCard = {
   action: string;
   onClick: () => void;
   disabled?: boolean;
-  footer?: React.ReactNode;
+  footer?: ReactNode;
 };

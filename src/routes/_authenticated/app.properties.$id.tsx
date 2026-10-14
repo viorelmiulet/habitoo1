@@ -1180,13 +1180,6 @@ function PropertyDetailPage() {
           value="publishing"
           className="space-y-4 data-[state=inactive]:hidden"
         >
-          <section className="panel flex flex-col gap-3 px-5 py-[18px] sm:flex-row sm:items-center sm:justify-between">
-            <div className="min-w-0">
-              <h2 className="flex items-center gap-2 font-sans text-base font-bold"><Share2 className="size-4" />Poster pentru rețele sociale</h2>
-              <p className="mt-1 text-sm text-muted-foreground">Creează o imagine pentru feed, story sau landscape și descarc-o ca PNG. Nu publicăm nimic pe rețele.</p>
-            </div>
-            <Button className="shrink-0" onClick={() => setSocialPosterOpen(true)}>Creează poster</Button>
-          </section>
           <PropertyPortalsCard
             ref={portalsRef}
             propertyId={id}
@@ -1211,6 +1204,7 @@ function PropertyDetailPage() {
           <PropertyPromotionTab
             propertyId={id}
             onOpenPublishing={() => setTab("publishing")}
+            onOpenPoster={() => setSocialPosterOpen(true)}
             video={{
               title: property.title ?? "",
               district: property.district ?? null,
