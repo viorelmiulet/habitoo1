@@ -95,3 +95,83 @@ describe("caracteristicile proprietății", () => {
     expect(PROPERTY_DETAIL_FIELDS).not.toContain("features");
   });
 });
+
+describe("ordinea secțiunilor din tabul Prezentare", () => {
+  const editOrder = [
+    'title="Titlu și descriere"',
+    'title="Locație"',
+    'title="Tranzacție și preț"',
+    'title="Detalii complete"',
+    'title="Note interne"',
+  ];
+
+  const newOrder = [
+    'title="Titlu și descriere"',
+    'title="Informații generale"',
+    'title="Locație"',
+    'title="Tranzacție și preț"',
+    'title="Detalii complete"',
+    'title="Note interne"',
+  ];
+
+  const sectionOrder = (screen: string, markers: string[]) => {
+    const positions = markers.map((marker) => screen.indexOf(marker));
+    for (const position of positions) expect(position).toBeGreaterThan(-1);
+    expect([...positions].sort((a, b) => a - b)).toEqual(positions);
+  };
+
+  it("editarea: titlu și descriere, locație, tranzacție, detalii, note interne", () => {
+    sectionOrder(editScreen, editOrder);
+    expect(editScreen).not.toContain('title="Date generale"');
+    expect(editScreen).not.toContain('title="Descriere"');
+  });
+
+  it("adăugarea: aceeași ordine, cu Stare și Proprietar imediat după titlu", () => {
+    sectionOrder(newScreen, newOrder);
+    expect(newScreen).not.toContain('title="Localizare"');
+    expect(newScreen).not.toContain('title="Descriere"');
+  });
+
+  it("descrierea stă imediat sub titlu, care rămâne obligatoriu", () => {
+    for (const screen of [newScreen, editScreen]) {
+      const section = screen.slice(
+        screen.indexOf('title="Titlu și descriere"'),
+        screen.indexOf('title="Locație"'),
+      );
+      expect(section).toContain('id="title"');
+      expect(section).toContain("<RequiredMark />");
+      expect(section).toContain('id="description"');
+      expect(section).toContain("<PropertyDescriptionTextarea");
+    }
+    expect(newScreen).toMatch(/id="title"[\s\S]{0,200}required/);
+  });
+
+  it("salvarea trimite exact aceleași câmpuri ca înainte", () => {
+    // Identificatoarele de câmpuri nu s-au schimbat, doar ordinea secțiunilor.
+    for (const id of ["title", "description", "district", "address", "internal_notes"]) {
+      expect(editScreen).toContain(`id="${id}"`);
+      expect(newScreen).toContain(`id="${id}"`);
+    }
+    expect(editScreen).toContain('id="postal_code"');
+    expect(newScreen).not.toContain('id="postal_code"');
+    const patch = editScreen.slice(
+      editScreen.indexOf("const buildEditPatch"),
+      editScreen.indexOf("const changeStatusFn"),
+    );
+    for (const column of [
+      "title",
+      "description",
+      "internal_notes",
+      "district",
+      "address",
+      "postal_code",
+      "lat",
+      "lng",
+      "location_precise",
+    ]) {
+      expect(patch).toContain(column);
+    }
+    expect(patch).toContain("...transactionPayload(tx)");
+    expect(patch).toContain("...details,");
+  });
+});
