@@ -1,3 +1,11 @@
+# Galerie modele Poster
+
+- [x] Șase modele pe toate formatele, toate opțiunile și fotografii publicabile
+- [x] Miniaturi mici live cu imagini comune și model salvat cu stilul
+- [x] 29 teste, 48 randări plus titluri lungi în browser; capturi Story/Pătrat pentru fiecare model, contrastul Editorial și suprapunerile ștampilei corectate
+- [x] Dialog desktop/mobil cu fotografii simulate: alegere, salvare, redeschidere și descărcare PNG, fără erori
+- [ ] Verificare în cont real — sesiunea solicitantului nu este disponibilă; nicio postare reală efectuată
+
 # Fișă de proprietate PDF
 
 ## Modele PDF A4

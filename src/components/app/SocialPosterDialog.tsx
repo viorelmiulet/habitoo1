@@ -15,6 +15,13 @@ import { supabase } from "@/integrations/supabase/client";
 import { AVATAR_BUCKET, MEDIA_BUCKET, signedUrl, signedUrls } from "@/lib/storage";
 import {
   cleanPosterTitle,
+  createPosterAssetPool,
+  posterTemplate,
+  posterPhotoSequence,
+  SOCIAL_POSTER_TEMPLATES,
+  type SocialPosterTemplate,
+  type SocialPosterOptions,
+  type PosterAssetPool,
   contrastRatio,
   DEFAULT_POSTER_COLORS,
   downloadPoster,
@@ -56,6 +63,7 @@ type SocialPosterDialogProps = {
 };
 
 type StyleSettings = {
+  template: SocialPosterTemplate;
   format: SocialPosterFormat;
   labelOn: boolean;
   overtitleOn: boolean;
@@ -91,11 +99,12 @@ type PosterSettings = StyleSettings & {
 };
 
 const STYLE_KEYS: (keyof StyleSettings)[] = [
-  "format", "labelOn", "overtitleOn", "locationOn", "priceOn", "titleScale", "detailsOn", "agentOn",
+  "template", "format", "labelOn", "overtitleOn", "locationOn", "priceOn", "titleScale", "detailsOn", "agentOn",
   "bigPhotoOn", "stampOn", "stamp", "logoOn", "accent", "background", "text", "logoBackground",
 ];
 
 const DEFAULT_STYLE: StyleSettings = {
+  template: "classic",
   format: "square",
   labelOn: true,
   overtitleOn: true,
@@ -170,7 +179,7 @@ export function SocialPosterDialog(props: SocialPosterDialogProps) {
     if (!props.open) return;
     const style = readJson<StyleSettings>(styleKey) ?? {};
     const saved = readJson<PosterSettings>(propertyKey) ?? {};
-    setS({ ...buildDefaults(), ...style, ...saved });
+    setS({ ...buildDefaults(), ...style, ...saved, template: posterTemplate(saved.template ?? style.template) });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [props.open, styleKey, propertyKey]);
 
@@ -194,7 +203,7 @@ export function SocialPosterDialog(props: SocialPosterDialogProps) {
         .eq("is_confidential", false)
         .order("position");
       if (queryError) throw queryError;
-      const sorted = [...(data ?? [])].sort((a, b) => Number(b.is_primary) - Number(a.is_primary) || a.position - b.position);
+      const sorted = [...(data ?? [])].sort((a, b) => a.position - b.position);
       const paths = sorted.map((row) => row.storage_path).filter((path): path is string => Boolean(path));
       const signed = await signedUrls(MEDIA_BUCKET, paths);
       const urls = sorted
@@ -226,13 +235,11 @@ export function SocialPosterDialog(props: SocialPosterDialogProps) {
   const lowContrast = contrastRatio(textColor, background) < 4.5;
   const lowAccentContrast = contrastRatio(accent, background) < 3;
 
-  useEffect(() => {
-    if (!props.open || !photos[photoIndex] || !canvasRef.current) return;
-    let active = true;
-    setRendering(true);
-    const timer = window.setTimeout(() => {
-      if (!canvasRef.current) return;
-      void renderSocialPoster(canvasRef.current, {
+  const assetPool = useMemo(() => createPosterAssetPool(), [props.open, photos, avatarUrl, props.logoUrl]);
+  useEffect(() => () => assetPool.dispose(), [assetPool]);
+  const renderOptions = useMemo<SocialPosterOptions>(() => ({
+        template: s.template,
+        photoUrls: posterPhotoSequence(photos, photoIndex),
         format: s.format,
         photoUrl: photos[photoIndex],
         logoUrl: s.logoOn && hasLogo ? props.logoUrl : null,
@@ -250,19 +257,28 @@ export function SocialPosterDialog(props: SocialPosterDialogProps) {
         bigAgentPhotoUrl: s.bigPhotoOn && avatarUrl ? avatarUrl : null,
         stamp: s.stampOn ? POSTER_STAMPS[s.stamp] : null,
         colors: { accent, background, text: textColor },
-      }).then(() => {
-        if (!active) return;
+  }), [photos, photoIndex, s, details, hasLogo, props.logoUrl, props.title, props.agentName, props.phone, avatarUrl, accent, background, textColor]);
+
+  useEffect(() => {
+    if (!props.open || !photos[photoIndex] || !canvasRef.current) return;
+    let active = true;
+    setRendering(true);
+    posterBlobRef.current = null;
+    const timer = window.setTimeout(() => {
+      const output = document.createElement("canvas");
+      void renderSocialPoster(output, renderOptions, { assets: assetPool }).then(() => {
+        if (!active || !canvasRef.current) return;
+        const canvas = canvasRef.current;
+        canvas.width = output.width; canvas.height = output.height;
+        canvas.getContext("2d")?.drawImage(output, 0, 0);
         setError(null);
-        posterBlobRef.current = null;
-        canvasRef.current?.toBlob((b) => { if (active) { posterBlobRef.current = b; if (b) setLatestPoster(props.propertyId, b); } }, "image/png");
+        output.toBlob(b => { if (active) { posterBlobRef.current = b; if (b) setLatestPoster(props.propertyId, b); } }, "image/png");
       }).catch((reason: unknown) => {
         if (active) setError(reason instanceof Error ? reason.message : "Previzualizarea nu a putut fi creată.");
-      }).finally(() => {
-        if (active) setRendering(false);
-      });
+      }).finally(() => { if (active) setRendering(false); });
     }, 120);
     return () => { active = false; window.clearTimeout(timer); };
-  }, [props.open, photos, photoIndex, s, details, hasLogo, props.logoUrl, props.title, props.agentName, props.phone, avatarUrl, accent, background, textColor]);
+  }, [props.open, photos, photoIndex, renderOptions, assetPool]);
 
   const save = () => {
     try {
@@ -342,6 +358,16 @@ export function SocialPosterDialog(props: SocialPosterDialogProps) {
           </div>
 
           <div className="space-y-6 border-t border-border p-4 lg:h-full lg:overflow-y-auto lg:border-l lg:border-t-0">
+            <Section title="Modele">
+              <div className="grid grid-cols-2 gap-2 lg:grid-cols-3" role="group" aria-label="Modele poster">
+                {SOCIAL_POSTER_TEMPLATES.map(model => (
+                  <Button key={model.value} variant="ghost" className={cn("h-auto min-w-0 flex-col gap-1 p-1", s.template === model.value ? "ring-2 ring-ring bg-accent" : "border border-border")} aria-pressed={s.template === model.value} onClick={() => update({ template: model.value })}>
+                    <PosterThumbnail options={{ ...renderOptions, template: model.value }} assets={assetPool} />
+                    <span className="text-xs">{model.label}</span>
+                  </Button>
+                ))}
+              </div>
+            </Section>
             {error ? <p className="text-sm text-destructive" role="alert">{error}</p> : null}
 
             {props.forSale && props.forRent ? (
@@ -482,4 +508,23 @@ function ColorField({ label, value, presets, onChange }: { label: string; value:
       </div>
     </div>
   );
+}
+
+function PosterThumbnail({ options, assets }: { options: SocialPosterOptions; assets: PosterAssetPool }) {
+  const ref = useRef<HTMLCanvasElement>(null);
+  useEffect(() => {
+    if (!options.photoUrl) return;
+    let active = true;
+    const timer = window.setTimeout(() => {
+      const output = document.createElement("canvas");
+      void renderSocialPoster(output, options, { assets, maxWidth: 180 }).then(() => {
+        if (!active || !ref.current) return;
+        ref.current.width = output.width; ref.current.height = output.height;
+        ref.current.getContext("2d")?.drawImage(output, 0, 0);
+      }).catch(() => {});
+    }, 180);
+    return () => { active = false; window.clearTimeout(timer); };
+  }, [options, assets]);
+  const size = SOCIAL_POSTER_SIZES[options.format];
+  return <canvas ref={ref} width={180} height={Math.round(180 * size.height / size.width)} className="block w-full rounded-sm bg-muted" aria-hidden="true" />;
 }
