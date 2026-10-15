@@ -113,7 +113,7 @@ function SuperadminMusicPage() {
   const saveEdit = () => {
     if (!editing) return;
     const err = validateTrackInput({ ...editForm, requireFile: false });
-    if (err) return toast.error(err);
+    if (err) { toast.error(err); return; }
     update.mutate({ id: editing.id, patch: { title: editForm.title.trim(), style: editForm.style, artist: editForm.artist.trim() || null, source_url: editForm.sourceUrl.trim(), content_id_checked: true } }, { onSuccess: () => { setEditing(null); toast.success("Piesa a fost salvată."); } });
   };
 
