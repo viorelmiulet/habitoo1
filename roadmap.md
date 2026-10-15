@@ -1,9 +1,10 @@
 # Fișă de proprietate PDF
 
 ## Modele PDF A4
-- [ ] Șase modele și paginare comună fără pierderi
-- [ ] Miniaturi live, preferință individuală și model implicit în Branding
-- [ ] Teste pe modele/destinatari/date lipsă și verificarea vizuală a șase PDF-uri cu număr de pagini și mărime
+- [x] Șase modele și paginare comună fără pierderi
+- [x] Miniaturi live, preferință individuală și model implicit în Branding
+- [x] 43 teste, 30 cazuri în browser și verificarea vizuală a tuturor paginilor celor șase PDF-uri: Clasic 4/0,88 MB; Elegant 4/0,87 MB; Panoramic 4/0,91 MB; Split 4/0,90 MB; Galerie 5/1,20 MB; Minimal 4/0,86 MB
+- [ ] Verificare dialog și salvare Branding în contul solicitantului — conectarea în preview este necesară; sesiunea automată nu a găsit contul
 
 - [x] Redenumire în aplicație și verificarea tuturor textelor
 - [x] Descărcare PDF A4 în browser, progres și protecție la apăsări repetate
