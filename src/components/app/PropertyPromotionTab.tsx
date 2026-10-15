@@ -18,6 +18,8 @@ import { useAiFeatures } from "@/hooks/use-ai-features";
 import { getPropertyPromotion } from "@/lib/property-promotion.functions";
 import { getMetaPostingContext } from "@/lib/meta/post.functions";
 import { MetaPostDialog } from "@/components/app/MetaPostDialog";
+import { InstagramPostDialog } from "@/components/app/InstagramPostDialog";
+import { IG_NO_ACCOUNT_MESSAGE } from "@/lib/meta/instagram-core";
 import { formatDateTime } from "@/lib/format";
 import { generateMarketing } from "@/lib/ai/agents/marketing/marketing.functions";
 import { MEDIA_BUCKET, signedUrls } from "@/lib/storage";
@@ -70,6 +72,7 @@ export function PropertyPromotionTab({
   const [videoResult, setVideoResult] = useState<{ blob: Blob; name: string; format: VideoFormat } | null>(null);
   const [qrOpen, setQrOpen] = useState(false);
   const [metaOpen, setMetaOpen] = useState(false);
+  const [igOpen, setIgOpen] = useState(false);
   const loadMeta = useServerFn(getMetaPostingContext);
   const metaQ = useQuery({ queryKey: ["meta-posting", propertyId], queryFn: () => loadMeta({ data: { propertyId } }) });
   const [pageUrl, setPageUrl] = useState("");
@@ -233,7 +236,18 @@ export function PropertyPromotionTab({
       ) },
     { key: "instagram", icon: Instagram, tone: "bg-gradient-to-br from-[#F58529] via-[#DD2A7B] to-[#8134AF] text-white", title: "Instagram",
       text: "Postează posterul sau video-ul în feed, story sau reels.", action: "Postează",
-      onClick: () => (phoneShare && photoFiles.length ? sharePhone() : setQrOpen(true)) },
+      onClick: () => (metaQ.data?.instagram.length ? setIgOpen(true) : phoneShare && photoFiles.length ? sharePhone() : setQrOpen(true)),
+      footer: (
+        <div className="space-y-1">
+          {metaQ.data?.lastInstagramPost ? (
+            <p className="text-xs text-muted-foreground">
+              Postat pe @{metaQ.data.lastInstagramPost.username} · {metaQ.data.lastInstagramPost.publishedAt ? formatDateTime(metaQ.data.lastInstagramPost.publishedAt) : ""}
+              {metaQ.data.lastInstagramPost.permalink ? <> · <a href={metaQ.data.lastInstagramPost.permalink} target="_blank" rel="noopener noreferrer" className="underline">Vezi postarea</a></> : null}
+            </p>
+          ) : null}
+          {metaQ.data && !metaQ.data.instagram.length ? <p className="text-xs text-muted-foreground">{IG_NO_ACCOUNT_MESSAGE}</p> : null}
+        </div>
+      ) },
     { key: "whatsapp", icon: MessageCircle, tone: "bg-[#25D366] text-white", title: "WhatsApp",
       text: "Trimite oferta clienților sau în grupuri.", action: "Trimite",
       onClick: () => { window.open(shareLinks(offerLink, text).whatsapp, "_blank", "noopener,noreferrer"); logShare("Distribuit pe WhatsApp"); } },
@@ -306,6 +320,22 @@ export function PropertyPromotionTab({
           video={videoResult?.blob ?? null}
           onCreatePoster={() => { setMetaOpen(false); onOpenPoster?.(); }}
           onCreateVideo={() => { setMetaOpen(false); setPendingUpload(null); setVideoOpen(true); }}
+          onPosted={() => void metaQ.refetch()}
+        />
+      ) : null}
+
+      {metaQ.data?.instagram.length ? (
+        <InstagramPostDialog
+          open={igOpen}
+          onOpenChange={setIgOpen}
+          propertyId={propertyId}
+          ctx={metaQ.data}
+          initialText={text}
+          photos={selected.filter((id) => urls[id]).map((id) => ({ id, url: urls[id] as string }))}
+          video={videoResult?.blob ?? null}
+          videoVertical={videoResult?.format === "vertical"}
+          onCreatePoster={() => { setIgOpen(false); onOpenPoster?.(); }}
+          onCreateVideo={() => { setIgOpen(false); setPendingUpload(null); setVideoFormat("vertical"); setVideoOpen(true); }}
           onPosted={() => void metaQ.refetch()}
         />
       ) : null}

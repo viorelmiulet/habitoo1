@@ -47,6 +47,7 @@ export const META_RECONNECT_MESSAGE = "Reconectează pagina din Setări → Prom
 
 export type MetaPostErrorKind = "expired" | "permission" | "rejected";
 export class MetaPostError extends Error {
+  raw?: string;
   constructor(public kind: MetaPostErrorKind, message: string, public code?: number) {
     super(message);
   }
@@ -56,12 +57,16 @@ export class MetaPostError extends Error {
 export function classifyMetaError(body: unknown): MetaPostError {
   const e = (body as { error?: { code?: number; message?: string; error_user_msg?: string } } | null)?.error ?? {};
   const code = typeof e.code === "number" ? e.code : undefined;
-  if (code === 190) return new MetaPostError("expired", `Conexiunea Facebook a expirat. ${META_RECONNECT_MESSAGE}.`, code);
+  const raw = (e.error_user_msg || e.message || "").slice(0, 500) || undefined;
+  const mk = (k: MetaPostErrorKind, m: string) => Object.assign(new MetaPostError(k, m, code), { raw });
+  if (code === 190) return mk("expired", `Conexiunea Facebook a expirat. ${META_RECONNECT_MESSAGE}.`);
   if (code === 10 || code === 200 || (code !== undefined && code >= 200 && code < 300)) {
-    return new MetaPostError("permission", "Habitoo nu are permisiunea să posteze pe această pagină. Reconectează pagina și acceptă permisiunile de postare.", code);
+    return mk("permission", "Habitoo nu are permisiunea să posteze pe această pagină. Reconectează pagina și acceptă permisiunile de postare.");
   }
   const text = (e.error_user_msg || e.message || "Facebook a respins postarea.").slice(0, 300);
-  return new MetaPostError("rejected", `Facebook: ${text}`, code);
+  const err = new MetaPostError("rejected", `Facebook: ${text}`, code);
+  err.raw = (e.error_user_msg || e.message || "").slice(0, 500) || undefined;
+  return err;
 }
 
 /** Agentul postează doar pentru proprietățile lui; adminul agenției și superadminul pentru oricare. */
