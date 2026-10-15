@@ -1,3 +1,4 @@
+import { formatFloorLabel } from "@/lib/property-floor";
 import { setLatestPoster } from "@/lib/poster-store";
 import { canShareFiles } from "@/lib/share";
 import { shareFilesFromPhone, useShareLogger } from "@/lib/share-client";
@@ -223,7 +224,7 @@ export function SocialPosterDialog(props: SocialPosterDialogProps) {
   const details = useMemo(() => [
     props.rooms ? `${props.rooms} ${props.rooms === 1 ? "cameră" : "camere"}` : null,
     props.surface ? `${new Intl.NumberFormat("ro-RO", { maximumFractionDigits: 0 }).format(props.surface)} mp` : null,
-    props.floor ? `Etaj ${props.floor}` : null,
+    formatFloorLabel(props.floor),
   ].filter((v): v is string => Boolean(v)), [props.rooms, props.surface, props.floor]);
 
   const hasLogo = Boolean(props.logoUrl);

@@ -85,6 +85,7 @@ export const getPropertyPromotion = createServerFn({ method: "GET" })
         district: p.district ?? null,
         city: p.city ? fb.metaCity(p.city).city : null,
         floor: p.floor ?? null,
+        floorLabel: p.floor_label ?? null,
         usableSurface: p.usable_surface ?? null,
         features: Array.isArray(p.features) ? p.features : [],
         price: offer?.amount ?? null,

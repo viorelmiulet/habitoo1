@@ -57,3 +57,31 @@ export function floorNumberRequired(label: string | null): boolean {
   if (!l) return false;
   return (FLOOR_LABEL_NUMBER as Record<string, number | null | undefined>)[l] === null;
 }
+
+/**
+ * Eticheta etajului pentru afișare (poster, video, fișă, texte social).
+ * Acceptă eticheta salvată (deja formatată) sau numărul; nu dublează niciodată „Etaj ”.
+ */
+export function formatFloorLabel(label: string | null | undefined, floor?: number | string | null): string | null {
+  const raw = (label ?? "").toString().trim();
+  if (raw) {
+    const prefixed = raw.match(/^etaj\s+(.+)$/i);
+    if (!prefixed) {
+      if (/^-?\d+$/.test(raw)) return formatFloorLabel(null, Number(raw));
+      return raw;
+    }
+    const rest = prefixed[1]!.trim();
+    if (/^-?\d+\+?$/.test(rest)) {
+      return rest.endsWith("+") ? `Etaj ${rest}` : formatFloorLabel(null, Number(rest));
+    }
+    return formatFloorLabel(rest, null) ?? null;
+  }
+  if (floor === null || floor === undefined || floor === "") return null;
+  const n = typeof floor === "number" ? floor : Number(String(floor).trim());
+  if (!Number.isFinite(n)) return formatFloorLabel(String(floor), null);
+  if (n === -1) return "Demisol";
+  if (n === 0) return "Parter";
+  if (n === 100) return "Mansardă";
+  if (n < -1) return "Subsol";
+  return `Etaj ${n}`;
+}
