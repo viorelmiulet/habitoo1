@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { cleanTrackId, isPixabayUrl, parseMusicChoice, resolveMusicChoice, serializeMusicChoice, validateTrackInput } from "./video-music";
+import { cleanTrackId, isHttpsUrl, parseMusicChoice, resolveMusicChoice, serializeMusicChoice, validateTrackInput } from "./video-music";
 
-const ok = { title: "Piano", style: "Calm", sourceUrl: "https://pixabay.com/music/x-123/", contentIdChecked: true, requireFile: true, file: { name: "a.mp3", type: "audio/mpeg", size: 1000 } };
+const ok = { title: "Piano", style: "Calm", sourceUrl: "https://pixabay.com/music/x-123/", license: "Pixabay Content License", requireFile: true, file: { name: "a.mp3", type: "audio/mpeg", size: 1000 } };
 
 describe("validare piese", () => {
   it("acceptă o piesă completă", () => expect(validateTrackInput(ok)).toBeNull());
@@ -10,14 +10,19 @@ describe("validare piese", () => {
     expect(validateTrackInput({ ...ok, file: { ...ok.file, size: 10 * 1024 * 1024 } })).toBeNull();
     expect(validateTrackInput({ ...ok, file: { ...ok.file, size: 10 * 1024 * 1024 + 1 } })).toBe("Fișierul MP3 depășește 10 MB.");
   });
-  it("link doar de pe Pixabay", () => {
-    expect(isPixabayUrl("https://www.pixabay.com/music/a")).toBe(true);
-    expect(isPixabayUrl("https://pixabay.com.evil.ro/a")).toBe(false);
-    expect(isPixabayUrl("http://pixabay.com/a")).toBe(false);
-    expect(validateTrackInput({ ...ok, sourceUrl: "https://youtube.com/x" })).toBe("Linkul trebuie să fie de pe pixabay.com.");
-    expect(validateTrackInput({ ...ok, sourceUrl: "" })).toBe("Linkul Pixabay este obligatoriu.");
+  it("link sursă opțional, orice site https", () => {
+    expect(validateTrackInput({ ...ok, sourceUrl: "" })).toBeNull();
+    expect(validateTrackInput({ ...ok, sourceUrl: "https://youtube.com/x" })).toBeNull();
+    expect(isHttpsUrl("https://www.example.com/a")).toBe(true);
+    expect(isHttpsUrl("http://example.com/a")).toBe(false);
+    expect(validateTrackInput({ ...ok, sourceUrl: "http://example.com/a" })).toBe("Linkul sursă trebuie să fie un link https valid.");
+    expect(validateTrackInput({ ...ok, sourceUrl: "nu e link" })).toBe("Linkul sursă trebuie să fie un link https valid.");
   });
-  it("bifa Content ID obligatorie", () => expect(validateTrackInput({ ...ok, contentIdChecked: false })).toBe("Confirmă că piesa nu are Content ID."));
+  it("licența e obligatorie, text liber permis", () => {
+    expect(validateTrackInput({ ...ok, license: "" })).toBe("Completează licența.");
+    expect(validateTrackInput({ ...ok, license: "Licența mea custom" })).toBeNull();
+  });
+  it("se salvează fără bifă Content ID", () => expect(validateTrackInput({ ...ok })).toBeNull());
   it("MP3 obligatoriu la adăugare", () => expect(validateTrackInput({ ...ok, file: null })).toBe("Alege fișierul MP3."));
 });
 
