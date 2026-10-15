@@ -635,7 +635,7 @@ function PropertyDetailPage() {
     { label: "Compartimentare", value: property.layout ?? "" },
     {
       label: "Etaj",
-      value: (formatFloorLabel(property.floor_label, property.floor) ?? ""),
+      value: (formatFloorLabel(property.floor_label, property.floor) ? `${formatFloorLabel(property.floor_label, property.floor)}${property.building_floors ? ` din ${property.building_floors}` : ""}` : ""),
     },
     {
       label: property.build_year ? "An construcție" : "Stare",
@@ -657,7 +657,7 @@ function PropertyDetailPage() {
       label: isHouse ? "Suprafață teren" : "Etaj",
       value: isHouse
         ? property.land_surface ? `${formatNumber(property.land_surface)} m²` : ""
-        : (formatFloorLabel(property.floor_label, property.floor) ?? ""),
+        : (formatFloorLabel(property.floor_label, property.floor) ? `${formatFloorLabel(property.floor_label, property.floor)}${property.building_floors ? ` din ${property.building_floors}` : ""}` : ""),
     },
     { label: "Compartimentare", value: property.layout ?? "" },
     { label: "An construcție", value: property.build_year ? String(property.build_year) : "" },
