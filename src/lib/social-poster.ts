@@ -565,6 +565,11 @@ function drawPosterLayout(ctx: CanvasRenderingContext2D, o: SocialPosterOptions,
     ctx.fillStyle = rgba(o.colors.background, 0.9);
     ctx.beginPath(); ctx.roundRect(panel.x, panel.y, panel.w, panel.h, margin * 0.5); ctx.fill();
   }
+  if (model === "editorial") {
+    ctx.fillStyle = o.colors.background;
+    ctx.beginPath(); ctx.roundRect(panel.x - margin * 0.2, panel.y - margin * 0.2, panel.w + margin * 0.4, panel.h + margin * 0.4, 12); ctx.fill();
+    panel = { x: panel.x + margin * 0.3, y: panel.y + margin * 0.3, w: panel.w - margin * 0.6, h: panel.h - margin * 0.6 };
+  }
   const topX = image.x + margin * 0.5;
   const topY = image.y + margin * 0.5;
   if (logo) {
@@ -582,7 +587,8 @@ function drawPosterLayout(ctx: CanvasRenderingContext2D, o: SocialPosterOptions,
     ctx.strokeStyle = o.colors.accent; ctx.lineWidth = 4; ctx.strokeRect(r.x, r.y, r.w, r.h);
   }
   if (o.stamp) {
-    const x = image.x + image.w * 0.5, y = image.y + image.h * 0.68;
+    const x = image.x + image.w * 0.5;
+    const y = model === "mosaic" ? height * 0.18 : model === "spotlight" ? height * 0.24 : image.y + image.h * 0.68;
     ctx.save(); ctx.translate(x, y); ctx.rotate(-0.12);
     const w = image.w * 0.69, h = Math.min(75, image.h * 0.14);
     ctx.fillStyle = rgba(o.colors.background, 0.8); ctx.fillRect(-w / 2, -h / 2, w, h);
@@ -628,7 +634,7 @@ function drawPosterContent(ctx: CanvasRenderingContext2D, o: SocialPosterOptions
   for (const b of measured) {
     let left = r.x;
     if (priceBadge && b.kind === "price") {
-      ctx.fillStyle = o.colors.background; ctx.beginPath(); ctx.roundRect(r.x, y - 5 * scale, r.w, b.size * scale * 1.18 + 20 * scale, 8); ctx.fill();
+      ctx.fillStyle = o.colors.accent; ctx.beginPath(); ctx.roundRect(r.x, y - 5 * scale, r.w, b.size * scale * 1.18 + 20 * scale, 8); ctx.fill();
       left += 10 * scale; y += 5 * scale;
     }
     if (b.kind === "agent" && o.agent?.photoUrl && avatar) {
@@ -636,7 +642,7 @@ function drawPosterContent(ctx: CanvasRenderingContext2D, o: SocialPosterOptions
       ctx.save(); ctx.beginPath(); ctx.arc(r.x + size / 2, y + size / 2, size / 2, 0, Math.PI * 2); ctx.clip(); coverInto(ctx, avatar, r.x, y, size, size); ctx.restore(); left += 60 * scale;
     }
     ctx.font = `${b.weight} ${b.size * scale}px "${b.font}", sans-serif`;
-    ctx.fillStyle = b.color; ctx.textAlign = spotlight ? "center" : "left";
+    ctx.fillStyle = priceBadge && b.kind === "price" ? o.colors.background : b.color; ctx.textAlign = spotlight ? "center" : "left";
     const x = spotlight ? r.x + r.w / 2 : left;
     b.rendered.forEach((line, i) => ctx.fillText(line, x, y + i * b.size * scale * 1.18, r.w - (left - r.x) - (priceBadge ? 20 * scale : 0)));
     if (b.kind === "old") {
