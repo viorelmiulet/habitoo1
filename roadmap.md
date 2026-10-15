@@ -1,3 +1,9 @@
+# Galerie modele Poster
+
+- [ ] Șase modele pe toate formatele, toate opțiunile și fotografii publicabile
+- [ ] Miniaturi mici live cu imagini comune și model salvat cu stilul
+- [ ] Teste combinații/date-limită și capturi Story/Pătrat pentru fiecare model
+
 # Fișă de proprietate PDF
 
 ## Modele PDF A4
