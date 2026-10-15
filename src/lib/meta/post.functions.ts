@@ -106,7 +106,7 @@ export const publishMetaPost = createServerFn({ method: "POST" })
       message: d.get("message") ?? "",
       photoIds: JSON.parse(String(d.get("photoIds") ?? "[]")),
     });
-    return { ...parsed, file: file instanceof Blob ? file : null };
+    return { ...parsed, file: file instanceof Blob ? file : null, musicTrackId: d.get("musicTrackId") };
   })
   .handler(async ({ data, context }) => {
     const ctx = context as unknown as Ctx;
@@ -151,7 +151,7 @@ export const publishMetaPost = createServerFn({ method: "POST" })
 
     const { data: row } = await db
       .from("meta_posts")
-      .insert({ organization_id: p.organization_id, property_id: p.id, page_id: page.page_id, page_name: page.name, kind, status: "pending", posted_by: ctx.userId })
+      .insert({ organization_id: p.organization_id, property_id: p.id, page_id: page.page_id, page_name: page.name, kind, status: "pending", posted_by: ctx.userId, music_track_id: kind === "video" ? (await import("@/lib/video-music")).cleanTrackId(data.musicTrackId) : null })
       .select("id")
       .single();
 

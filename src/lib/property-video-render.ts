@@ -13,7 +13,7 @@ export type RenderInput = {
   photoUrls: string[];
   perPhoto: number;
   overlay: VideoOverlay;
-  music: File | null;
+  music: Blob | null;
   signal: AbortSignal;
   onProgress: (pct: number) => void;
 };
@@ -114,7 +114,7 @@ function frameAt(ctx: CanvasRenderingContext2D, t: number, segs: VideoSegment[],
   }
 }
 
-async function musicBuffer(file: File, total: number, sampleRate = 48000) {
+async function musicBuffer(file: Blob, total: number, sampleRate = 48000) {
   const ctx = new AudioContext();
   const decoded = await ctx.decodeAudioData(await file.arrayBuffer());
   void ctx.close();

@@ -151,6 +151,7 @@ const StartInput = z.object({
   tags: z.array(z.string().max(100)).max(100),
   privacy: z.enum(["public", "unlisted", "private"]),
   size: z.number().int().positive(),
+  musicTrackId: z.string().uuid().nullable().optional(),
 });
 
 /** Pornește sesiunea resumable și întoarce adresa la care browserul încarcă MP4-ul. */
@@ -171,7 +172,7 @@ export const startYoutubeUpload = createServerFn({ method: "POST" })
       connId = conn.id;
       const { data: row } = await db
         .from("meta_posts")
-        .insert({ organization_id: p.organization_id, property_id: p.id, platform: "youtube", page_id: conn.channel_id, page_name: conn.channel_title, kind: "yt_video", status: "pending", posted_by: ctx.userId })
+        .insert({ organization_id: p.organization_id, property_id: p.id, platform: "youtube", page_id: conn.channel_id, page_name: conn.channel_title, kind: "yt_video", status: "pending", posted_by: ctx.userId, music_track_id: data.musicTrackId ?? null })
         .select("id")
         .single();
       rowId = row?.id ?? null;

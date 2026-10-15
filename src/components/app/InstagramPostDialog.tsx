@@ -48,6 +48,7 @@ export function InstagramPostDialog(props: {
   photos: { id: string; url: string }[];
   video: Blob | null;
   videoVertical: boolean;
+  musicTrackId?: string | null;
   onCreatePoster: () => void;
   onCreateVideo: () => void;
   onPosted: () => void;
@@ -93,7 +94,7 @@ export function InstagramPostDialog(props: {
       if (kind === "ig_album") {
         for (const [i, p] of photos.entries()) fd.append("images", await urlToInstagramJpeg(p.url, ratio), `foto-${i + 1}.jpg`);
       }
-      if ((kind === "ig_reel" || (kind === "ig_story" && storySource === "video")) && verticalVideo) fd.set("video", verticalVideo, "video.mp4");
+      if ((kind === "ig_reel" || (kind === "ig_story" && storySource === "video")) && verticalVideo) { fd.set("video", verticalVideo, "video.mp4"); if (props.musicTrackId) fd.set("musicTrackId", props.musicTrackId); }
       return publish({ data: fd });
     },
     onSuccess: (r) => {
