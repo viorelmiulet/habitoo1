@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { ArrowDown, ArrowUp, Download, Film, Music, Pause, Play, Share2, X } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -234,7 +234,7 @@ export function PropertyVideoCard({ photos, listing, propertyId, shareText = "",
   );
 }
 
-function MusicOption({ checked, onSelect, title, meta, action }: { checked: boolean; onSelect: () => void; title: string; meta?: string; action?: React.ReactNode }) {
+function MusicOption({ checked, onSelect, title, meta, action }: { checked: boolean; onSelect: () => void; title: string; meta?: string; action?: ReactNode }) {
   return (
     <div role="radio" aria-checked={checked} tabIndex={0} onClick={onSelect} onKeyDown={(e) => { if (e.key === " " || e.key === "Enter") { e.preventDefault(); onSelect(); } }}
       className={cn("flex min-h-11 cursor-pointer items-center gap-3 rounded-control border p-2 text-sm", checked ? "border-primary bg-accent" : "border-border")}>
