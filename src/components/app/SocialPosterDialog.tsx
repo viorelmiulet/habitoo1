@@ -1,3 +1,4 @@
+import { setLatestPoster } from "@/lib/poster-store";
 import { canShareFiles } from "@/lib/share";
 import { shareFilesFromPhone, useShareLogger } from "@/lib/share-client";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -253,7 +254,7 @@ export function SocialPosterDialog(props: SocialPosterDialogProps) {
         if (!active) return;
         setError(null);
         posterBlobRef.current = null;
-        canvasRef.current?.toBlob((b) => { if (active) posterBlobRef.current = b; }, "image/png");
+        canvasRef.current?.toBlob((b) => { if (active) { posterBlobRef.current = b; if (b) setLatestPoster(props.propertyId, b); } }, "image/png");
       }).catch((reason: unknown) => {
         if (active) setError(reason instanceof Error ? reason.message : "Previzualizarea nu a putut fi creată.");
       }).finally(() => {

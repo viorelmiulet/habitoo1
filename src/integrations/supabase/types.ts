@@ -4412,6 +4412,69 @@ export type Database = {
           },
         ]
       }
+      meta_posts: {
+        Row: {
+          created_at: string
+          error: string | null
+          id: string
+          kind: string
+          organization_id: string
+          page_id: string
+          page_name: string | null
+          permalink_url: string | null
+          post_id: string | null
+          posted_by: string | null
+          property_id: string
+          published_at: string | null
+          status: string
+        }
+        Insert: {
+          created_at?: string
+          error?: string | null
+          id?: string
+          kind: string
+          organization_id: string
+          page_id: string
+          page_name?: string | null
+          permalink_url?: string | null
+          post_id?: string | null
+          posted_by?: string | null
+          property_id: string
+          published_at?: string | null
+          status?: string
+        }
+        Update: {
+          created_at?: string
+          error?: string | null
+          id?: string
+          kind?: string
+          organization_id?: string
+          page_id?: string
+          page_name?: string | null
+          permalink_url?: string | null
+          post_id?: string | null
+          posted_by?: string | null
+          property_id?: string
+          published_at?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "meta_posts_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "meta_posts_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       notifications: {
         Row: {
           body: string | null

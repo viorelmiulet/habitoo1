@@ -16,6 +16,9 @@ import { InlineLoading } from "@/components/app/LoadingState";
 import { QueryError } from "@/components/app/QueryError";
 import { useAiFeatures } from "@/hooks/use-ai-features";
 import { getPropertyPromotion } from "@/lib/property-promotion.functions";
+import { getMetaPostingContext } from "@/lib/meta/post.functions";
+import { MetaPostDialog } from "@/components/app/MetaPostDialog";
+import { formatDateTime } from "@/lib/format";
 import { generateMarketing } from "@/lib/ai/agents/marketing/marketing.functions";
 import { MEDIA_BUCKET, signedUrls } from "@/lib/storage";
 import { cn } from "@/lib/utils";
@@ -66,6 +69,9 @@ export function PropertyPromotionTab({
   const [pendingUpload, setPendingUpload] = useState<VideoUploadNetwork | null>(null);
   const [videoResult, setVideoResult] = useState<{ blob: Blob; name: string; format: VideoFormat } | null>(null);
   const [qrOpen, setQrOpen] = useState(false);
+  const [metaOpen, setMetaOpen] = useState(false);
+  const loadMeta = useServerFn(getMetaPostingContext);
+  const metaQ = useQuery({ queryKey: ["meta-posting", propertyId], queryFn: () => loadMeta({ data: { propertyId } }) });
   const [pageUrl, setPageUrl] = useState("");
   useEffect(() => { setPageUrl(window.location.href); }, []);
   useEffect(() => { setPhoneShare(canShareFiles(navigator)); }, []);
@@ -204,14 +210,26 @@ export function PropertyPromotionTab({
     { key: "facebook", icon: Facebook, tone: "bg-[#1877F2] text-white", title: "Facebook",
       text: "Publică proprietatea pe pagina ta de Facebook.", action: "Postează",
       onClick: () => {
+        if (metaQ.data?.pages.length) return setMetaOpen(true);
         if (phoneShare && photoFiles.length) return sharePhone();
         window.open(shareLinks(offerLink, text).facebook, "_blank", "noopener,noreferrer");
         logShare("Distribuit pe Facebook");
       },
       footer: (
+        <div className="space-y-1">
+        {metaQ.data?.lastPost ? (
+          <p className="text-xs text-muted-foreground">
+            Postat pe {metaQ.data.lastPost.pageName} · {metaQ.data.lastPost.publishedAt ? formatDateTime(metaQ.data.lastPost.publishedAt) : ""}
+            {metaQ.data.lastPost.permalink ? <> · <a href={metaQ.data.lastPost.permalink} target="_blank" rel="noopener noreferrer" className="underline">Vezi postarea</a></> : null}
+          </p>
+        ) : null}
+        {metaQ.data && !metaQ.data.pages.length ? (
+          <p className="text-xs text-muted-foreground">{metaQ.data.status === "expired" ? "Conexiunea a expirat. Reconectează pagina din Setări → Promovare" : "Conectează pagina din Setări → Promovare"}</p>
+        ) : null}
         <button type="button" onClick={() => onOpenPublishing?.()} className="text-xs text-muted-foreground underline-offset-2 hover:underline">
           Catalog Facebook: {fbState}
         </button>
+        </div>
       ) },
     { key: "instagram", icon: Instagram, tone: "bg-gradient-to-br from-[#F58529] via-[#DD2A7B] to-[#8134AF] text-white", title: "Instagram",
       text: "Postează posterul sau video-ul în feed, story sau reels.", action: "Postează",
@@ -276,6 +294,21 @@ export function PropertyPromotionTab({
           ) : null}
         </DialogContent>
       </Dialog>
+
+      {metaQ.data?.pages.length ? (
+        <MetaPostDialog
+          open={metaOpen}
+          onOpenChange={setMetaOpen}
+          propertyId={propertyId}
+          ctx={metaQ.data}
+          initialText={text}
+          photos={selected.filter((id) => urls[id]).map((id) => ({ id, url: urls[id] as string }))}
+          video={videoResult?.blob ?? null}
+          onCreatePoster={() => { setMetaOpen(false); onOpenPoster?.(); }}
+          onCreateVideo={() => { setMetaOpen(false); setPendingUpload(null); setVideoOpen(true); }}
+          onPosted={() => void metaQ.refetch()}
+        />
+      ) : null}
 
       <Dialog open={qrOpen} onOpenChange={setQrOpen}>
         <DialogContent className="max-w-sm">

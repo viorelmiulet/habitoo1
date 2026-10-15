@@ -1,0 +1,2 @@
+- Meta (Facebook/Instagram) connections are server-only tables (`meta_*`, no client RLS policies) accessed via `src/lib/meta/*`; tokens encrypted with the portal credential cipher; state and `signed_request` are HMAC-verified in pure `core.ts`. Why: tokens never reach the browser or logs.
+- Facebook page posting runs only server-side via `publishMetaPost` (`src/lib/meta/post.*`), history in server-only `meta_posts`; Graph error 190 sets the connection to `expired`. Why: page tokens never reach the browser.

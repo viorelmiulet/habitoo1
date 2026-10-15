@@ -7,7 +7,7 @@ import { requireActiveOrgAuth } from "@/lib/org-access";
 
 export type MetaOverview = {
   configured: boolean;
-  status: "none" | "connected" | "disconnected";
+  status: "none" | "connected" | "disconnected" | "expired";
   connectedAt: string | null;
   connectedByName: string | null;
   defaultPageId: string | null;
