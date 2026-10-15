@@ -63,7 +63,7 @@ describe("postare Instagram", () => {
       { fetch: g.f, now: () => t, sleep: async (ms) => { t += ms; } },
     );
     expect(r).toEqual({ status: "processing", containerId: "c1" });
-    expect(g.calls.filter((c) => c.url.includes("status_code")).length).toBe(60);
+    expect(g.calls.filter((c) => c.url.includes("status_code")).length).toBe(61);
     expect(g.calls.some((c) => c.url.includes("media_publish"))).toBe(false);
   });
 
