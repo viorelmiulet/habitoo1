@@ -19,7 +19,7 @@ export const publishInstagramPost = createServerFn({ method: "POST" })
     const parsed = Input.parse({ propertyId: d.get("propertyId"), igUserId: d.get("igUserId"), kind: d.get("kind"), caption: d.get("caption") ?? "" });
     const images = d.getAll("images").filter((f): f is File => f instanceof Blob);
     const video = d.get("video");
-    return { ...parsed, images, video: video instanceof Blob ? video : null };
+    return { ...parsed, images, video: video instanceof Blob ? video : null, musicTrackId: d.get("musicTrackId") };
   })
   .handler(async ({ data, context }) => {
     const ctx = context as unknown as Ctx;
@@ -72,7 +72,7 @@ export const publishInstagramPost = createServerFn({ method: "POST" })
 
     const { data: row } = await db
       .from("meta_posts")
-      .insert({ organization_id: p.organization_id, property_id: p.id, page_id: acc.ig_user_id, page_name: acc.username, kind, platform: "instagram", status: "pending", posted_by: ctx.userId })
+      .insert({ organization_id: p.organization_id, property_id: p.id, page_id: acc.ig_user_id, page_name: acc.username, kind, platform: "instagram", status: "pending", posted_by: ctx.userId, music_track_id: usesVideo ? (await import("@/lib/video-music")).cleanTrackId(data.musicTrackId) : null })
       .select("id, organization_id, property_id, posted_by, page_name, kind")
       .single();
 

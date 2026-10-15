@@ -55,6 +55,7 @@ export function YoutubePostDialog(props: {
   initialText: string;
   hashtags: string[];
   video: Blob | null;
+  musicTrackId?: string | null;
   onCreateVideo: () => void;
   onPosted: () => void;
 }) {
@@ -82,7 +83,7 @@ export function YoutubePostDialog(props: {
       const file = props.video!;
       if (file.size > YT_VIDEO_MAX_BYTES) throw new Error("Video-ul depășește 100 MB.");
       setProgress(2);
-      const s = await start({ data: { propertyId: props.propertyId, title, description, tags, privacy, size: file.size } });
+      const s = await start({ data: { propertyId: props.propertyId, title, description, tags, privacy, size: file.size, musicTrackId: props.musicTrackId ?? null } });
       if (!s.ok) throw new Error(s.error);
       const direct = await putDirect(s.uploadUrl, file, setProgress);
       let res;

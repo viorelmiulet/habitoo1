@@ -71,7 +71,7 @@ export function PropertyPromotionTab({
   const [videoOpen, setVideoOpen] = useState(false);
   const [videoFormat, setVideoFormat] = useState<VideoFormat>("vertical");
   const [pendingUpload, setPendingUpload] = useState<VideoUploadNetwork | null>(null);
-  const [videoResult, setVideoResult] = useState<{ blob: Blob; name: string; format: VideoFormat } | null>(null);
+  const [videoResult, setVideoResult] = useState<{ blob: Blob; name: string; format: VideoFormat; musicTrackId?: string | null } | null>(null);
   const [qrOpen, setQrOpen] = useState(false);
   const [metaOpen, setMetaOpen] = useState(false);
   const [igOpen, setIgOpen] = useState(false);
@@ -334,6 +334,7 @@ export function PropertyPromotionTab({
           initialText={text}
           photos={selected.filter((id) => urls[id]).map((id) => ({ id, url: urls[id] as string }))}
           video={videoResult?.blob ?? null}
+          musicTrackId={videoResult?.musicTrackId ?? null}
           onCreatePoster={() => { setMetaOpen(false); onOpenPoster?.(); }}
           onCreateVideo={() => { setMetaOpen(false); setPendingUpload(null); setVideoOpen(true); }}
           onPosted={() => void metaQ.refetch()}
@@ -349,6 +350,7 @@ export function PropertyPromotionTab({
           initialText={text}
           photos={selected.filter((id) => urls[id]).map((id) => ({ id, url: urls[id] as string }))}
           video={videoResult?.blob ?? null}
+          musicTrackId={videoResult?.musicTrackId ?? null}
           videoVertical={videoResult?.format === "vertical"}
           onCreatePoster={() => { setIgOpen(false); onOpenPoster?.(); }}
           onCreateVideo={() => { setIgOpen(false); setPendingUpload(null); setVideoFormat("vertical"); setVideoOpen(true); }}
@@ -367,6 +369,7 @@ export function PropertyPromotionTab({
           initialText={text}
           hashtags={hashtags}
           video={videoResult?.blob ?? null}
+          musicTrackId={videoResult?.musicTrackId ?? null}
           onCreateVideo={() => { setYtOpen(false); setPendingUpload(null); setVideoOpen(true); }}
           onPosted={() => void ytQ.refetch()}
         />

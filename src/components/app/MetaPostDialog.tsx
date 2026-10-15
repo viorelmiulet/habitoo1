@@ -28,6 +28,7 @@ export function MetaPostDialog(props: {
   initialText: string;
   photos: { id: string; url: string }[];
   video: Blob | null;
+  musicTrackId?: string | null;
   onCreatePoster: () => void;
   onCreateVideo: () => void;
   onPosted: () => void;
@@ -63,7 +64,7 @@ export function MetaPostDialog(props: {
       fd.set("message", text);
       fd.set("photoIds", JSON.stringify(kind === "photos" ? photos.map((p) => p.id) : []));
       if (kind === "poster" && poster) fd.set("file", poster, "poster.png");
-      if (kind === "video" && props.video) fd.set("file", props.video, "video.mp4");
+      if (kind === "video" && props.video) { fd.set("file", props.video, "video.mp4"); if (props.musicTrackId) fd.set("musicTrackId", props.musicTrackId); }
       return publish({ data: fd });
     },
     onSuccess: (r) => {
