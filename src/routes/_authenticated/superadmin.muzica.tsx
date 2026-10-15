@@ -1,4 +1,4 @@
-/** Superadmin → Muzică video: biblioteca de piese Pixabay folosite în generatorul video. */
+/** Superadmin → Muzică video: biblioteca de piese folosite în generatorul video. */
 import { useRef, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -13,14 +13,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "@/components/ui/sonner";
 import { toastError } from "@/lib/errors";
 import {
-  MUSIC_BUCKET, MUSIC_DEFAULT_LICENSE, MUSIC_SIGNED_SECONDS, MUSIC_STYLES, formatDuration, validateTrackInput,
+  MUSIC_BUCKET, MUSIC_DEFAULT_LICENSE, MUSIC_LICENSES, MUSIC_OTHER_LICENSE, MUSIC_SIGNED_SECONDS, MUSIC_STYLES,
+  formatDuration, validateTrackInput,
 } from "@/lib/video-music";
 
 export const Route = createFileRoute("/_authenticated/superadmin/muzica")({
@@ -33,8 +33,9 @@ type Row = {
   storage_path: string; duration_sec: number | null; certificate_path: string | null; content_id_checked: boolean;
   active: boolean; position: number;
 };
-type Form = { title: string; style: string; artist: string; sourceUrl: string; contentIdChecked: boolean };
-const EMPTY: Form = { title: "", style: "", artist: "", sourceUrl: "", contentIdChecked: false };
+type Form = { title: string; style: string; artist: string; sourceUrl: string; licenseKind: string; licenseOther: string };
+const EMPTY: Form = { title: "", style: "", artist: "", sourceUrl: "", licenseKind: MUSIC_DEFAULT_LICENSE, licenseOther: "" };
+const formLicense = (f: Form) => (f.licenseKind === MUSIC_OTHER_LICENSE ? f.licenseOther.trim() : f.licenseKind);
 
 function audioDuration(file: File): Promise<number | null> {
   return new Promise((resolve) => {
@@ -76,7 +77,7 @@ function SuperadminMusicPage() {
 
   const create = useMutation({
     mutationFn: async () => {
-      const err = validateTrackInput({ ...form, file, certificate: cert, requireFile: true });
+      const err = validateTrackInput({ title: form.title, style: form.style, sourceUrl: form.sourceUrl, license: formLicense(form), file, certificate: cert, requireFile: true });
       if (err) throw new Error(err);
       const { data: u } = await supabase.auth.getUser();
       const id = crypto.randomUUID();
@@ -92,8 +93,8 @@ function SuperadminMusicPage() {
       const position = Math.max(0, ...(q.data ?? []).map((r) => r.position + 1));
       const { error } = await supabase.from("video_music_tracks").insert({
         id, title: form.title.trim(), style: form.style, artist: form.artist.trim() || null, source_url: form.sourceUrl.trim(),
-        license: MUSIC_DEFAULT_LICENSE, storage_path: path, duration_sec: await audioDuration(file!), certificate_path: certPath,
-        content_id_checked: form.contentIdChecked, active: true, position, created_by: u.user?.id ?? null,
+        license: formLicense(form), storage_path: path, duration_sec: await audioDuration(file!), certificate_path: certPath,
+        content_id_checked: false, active: true, position, created_by: u.user?.id ?? null,
       });
       if (error) { await supabase.storage.from(MUSIC_BUCKET).remove([path, ...(certPath ? [certPath] : [])]); throw error; }
     },
@@ -112,9 +113,9 @@ function SuperadminMusicPage() {
 
   const saveEdit = () => {
     if (!editing) return;
-    const err = validateTrackInput({ ...editForm, requireFile: false });
+    const err = validateTrackInput({ title: editForm.title, style: editForm.style, sourceUrl: editForm.sourceUrl, license: formLicense(editForm), requireFile: false });
     if (err) { toast.error(err); return; }
-    update.mutate({ id: editing.id, patch: { title: editForm.title.trim(), style: editForm.style, artist: editForm.artist.trim() || null, source_url: editForm.sourceUrl.trim(), content_id_checked: true } }, { onSuccess: () => { setEditing(null); toast.success("Piesa a fost salvată."); } });
+    update.mutate({ id: editing.id, patch: { title: editForm.title.trim(), style: editForm.style, artist: editForm.artist.trim() || null, source_url: editForm.sourceUrl.trim(), license: formLicense(editForm) } }, { onSuccess: () => { setEditing(null); toast.success("Piesa a fost salvată."); } });
   };
 
   const remove = useMutation({
@@ -147,7 +148,7 @@ function SuperadminMusicPage() {
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Muzică video" description="Piese Pixabay disponibile agenților în generatorul video. Agenții nu pot descărca piesele separat." />
+      <PageHeader title="Muzică video" description="Piese disponibile agenților în generatorul video. Agenții nu pot descărca piesele separat." />
 
       <Card>
         <CardHeader><CardTitle>Adaugă piesă</CardTitle></CardHeader>
@@ -156,14 +157,14 @@ function SuperadminMusicPage() {
           <div className="space-y-1"><Label htmlFor="m-cert">Certificat de descărcare (PDF sau imagine, opțional)</Label><Input id="m-cert" type="file" accept="application/pdf,image/jpeg,image/png,image/webp" onChange={(e) => setCert(e.target.files?.[0] ?? null)} /></div>
           <TrackFields form={form} setForm={setForm} prefix="m" />
           <div className="md:col-span-2 flex flex-wrap items-center justify-between gap-3">
-            <p className="text-xs text-muted-foreground">Licență: {MUSIC_DEFAULT_LICENSE}. Durata se detectează automat.</p>
+            <p className="text-xs text-muted-foreground">Durata se detectează automat la încărcare.</p>
             <Button onClick={() => create.mutate()} disabled={create.isPending}>{create.isPending ? "Se încarcă…" : "Adaugă piesa"}</Button>
           </div>
         </CardContent>
       </Card>
 
       {q.isLoading ? <InlineLoading label="Se încarcă piesele…" /> : q.error ? <QueryError error={q.error} onRetry={() => void q.refetch()} /> : !q.data?.length ? (
-        <EmptyState icon={Music2} title="Nicio piesă încă" description="Adaugă prima piesă de pe Pixabay." />
+        <EmptyState icon={Music2} title="Nicio piesă încă" description="Adaugă prima piesă din bibliotecă." />
       ) : (
         <ul className="space-y-2">
           {q.data.map((r, i) => (
@@ -171,12 +172,12 @@ function SuperadminMusicPage() {
               <Button size="icon" variant="ghost" aria-label={playing === r.id ? `Oprește ${r.title}` : `Ascultă ${r.title}`} onClick={() => void toggle(r)}>{playing === r.id ? <Pause className="size-4" /> : <Play className="size-4" />}</Button>
               <div className="min-w-0 flex-1">
                 <p className="truncate font-medium">{r.title}</p>
-                <p className="text-xs text-muted-foreground">{r.style} · {formatDuration(r.duration_sec)}{r.artist ? ` · ${r.artist}` : ""} · <a className="underline" href={r.source_url} target="_blank" rel="noopener noreferrer">Pixabay</a>{r.certificate_path ? <> · <button type="button" className="inline-flex items-center gap-1 underline" onClick={() => void signed(r.certificate_path!).then((u) => window.open(u, "_blank", "noopener")).catch(toastError)}><FileText className="size-3" />certificat</button></> : null}</p>
+                <p className="text-xs text-muted-foreground">{r.style} · {formatDuration(r.duration_sec)}{r.artist ? ` · ${r.artist}` : ""} · {r.license}{r.source_url ? <> · <a className="underline" href={r.source_url} target="_blank" rel="noopener noreferrer">sursă</a></> : null}{r.certificate_path ? <> · <button type="button" className="inline-flex items-center gap-1 underline" onClick={() => void signed(r.certificate_path!).then((u) => window.open(u, "_blank", "noopener")).catch(toastError)}><FileText className="size-3" />certificat</button></> : null}</p>
               </div>
               <label className="flex items-center gap-2 text-sm"><Switch checked={r.active} onCheckedChange={(v) => update.mutate({ id: r.id, patch: { active: v } })} aria-label={`Activă: ${r.title}`} />{r.active ? "Activă" : "Inactivă"}</label>
               <Button size="icon" variant="ghost" aria-label="Mută mai sus" disabled={i === 0} onClick={() => void move(i, -1)}><ArrowUp className="size-4" /></Button>
               <Button size="icon" variant="ghost" aria-label="Mută mai jos" disabled={i === q.data.length - 1} onClick={() => void move(i, 1)}><ArrowDown className="size-4" /></Button>
-              <Button size="icon" variant="ghost" aria-label={`Editează ${r.title}`} onClick={() => { setEditing(r); setEditForm({ title: r.title, style: r.style, artist: r.artist ?? "", sourceUrl: r.source_url, contentIdChecked: r.content_id_checked }); }}><Pencil className="size-4" /></Button>
+              <Button size="icon" variant="ghost" aria-label={`Editează ${r.title}`} onClick={() => { setEditing(r); setEditForm({ title: r.title, style: r.style, artist: r.artist ?? "", sourceUrl: r.source_url, licenseKind: (MUSIC_LICENSES as readonly string[]).includes(r.license) ? r.license : MUSIC_OTHER_LICENSE, licenseOther: (MUSIC_LICENSES as readonly string[]).includes(r.license) ? "" : r.license }); }}><Pencil className="size-4" /></Button>
               <Button size="icon" variant="ghost" aria-label={`Șterge ${r.title}`} onClick={() => { if (window.confirm(`Ștergi piesa „${r.title}”?`)) remove.mutate(r); }}><Trash2 className="size-4" /></Button>
             </li>
           ))}
@@ -205,8 +206,16 @@ function TrackFields({ form, setForm, prefix }: { form: Form; setForm: (f: Form)
         </Select>
       </div>
       <div className="space-y-1"><Label htmlFor={`${prefix}-artist`}>Artist</Label><Input id={`${prefix}-artist`} value={form.artist} onChange={(e) => setForm({ ...form, artist: e.target.value })} /></div>
-      <div className="space-y-1"><Label htmlFor={`${prefix}-url`}>Link Pixabay</Label><Input id={`${prefix}-url`} type="url" placeholder="https://pixabay.com/music/…" value={form.sourceUrl} onChange={(e) => setForm({ ...form, sourceUrl: e.target.value })} /></div>
-      <label className="flex items-start gap-2 text-sm md:col-span-2"><Checkbox checked={form.contentIdChecked} onCheckedChange={(v) => setForm({ ...form, contentIdChecked: v === true })} />Am verificat că piesa nu are Content ID (fără scut pe Pixabay)</label>
+      <div className="space-y-1"><Label htmlFor={`${prefix}-url`}>Link sursă (opțional)</Label><Input id={`${prefix}-url`} type="url" placeholder="https://…" value={form.sourceUrl} onChange={(e) => setForm({ ...form, sourceUrl: e.target.value })} /></div>
+      <div className="space-y-1"><Label>Licență</Label>
+        <Select value={form.licenseKind} onValueChange={(v) => setForm({ ...form, licenseKind: v })}>
+          <SelectTrigger aria-label="Licență"><SelectValue /></SelectTrigger>
+          <SelectContent>{MUSIC_LICENSES.map((l) => <SelectItem key={l} value={l}>{l}</SelectItem>)}</SelectContent>
+        </Select>
+      </div>
+      {form.licenseKind === MUSIC_OTHER_LICENSE ? (
+        <div className="space-y-1"><Label htmlFor={`${prefix}-license-other`}>Numele licenței</Label><Input id={`${prefix}-license-other`} value={form.licenseOther} maxLength={120} onChange={(e) => setForm({ ...form, licenseOther: e.target.value })} /></div>
+      ) : null}
     </>
   );
 }
