@@ -46,8 +46,8 @@ export function fitSheetHeadings(doc: Document) {
     const win = doc.defaultView;
     if (!win) continue;
     let size = parseFloat(win.getComputedStyle(title).fontSize);
-    const limit = doc.body.dataset.template === "split" ? 145 : 110;
-    while (heading.offsetHeight > limit && size > 9) {
+    const limit = doc.body.dataset.template === "split" ? 140 : 90;
+    while (title.offsetHeight > limit && size > 9) {
       size -= 1;
       title.style.fontSize = `${size}px`;
     }

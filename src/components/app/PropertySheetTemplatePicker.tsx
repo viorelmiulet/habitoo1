@@ -5,7 +5,7 @@ import { PROPERTY_SHEET_TEMPLATES, type PropertySheetTemplate } from "@/lib/prop
 
 function thumbnailHtml(branding: MaterialBranding, data: PresentationData, template: PropertySheetTemplate) {
   return buildPresentationHtml(branding, data, template).replace("</head>", `<style>html,body{overflow:hidden;background:transparent}.page{margin:0;box-shadow:none}.page~.page{display:none}h1,.price{overflow-wrap:anywhere;white-space:normal}</style></head>`)
-    .replace("</body>", `<script>function fit(){document.body.style.zoom=innerWidth/(210*96/25.4);const h=document.querySelector('.property-heading');const t=h?.querySelector('h1');if(t){let s=parseFloat(getComputedStyle(t).fontSize);while(h.offsetHeight>110&&s>9){t.style.fontSize=(--s)+'px'}}}addEventListener('resize',fit);addEventListener('load',fit);fit();</script></body>`);
+    .replace("</body>", `<script>function fit(){document.body.style.zoom=innerWidth/(210*96/25.4);const t=document.querySelector('.property-heading h1');if(t){let s=parseFloat(getComputedStyle(t).fontSize);while(t.offsetHeight>90&&s>9){t.style.fontSize=(--s)+'px'}}}addEventListener('resize',fit);addEventListener('load',fit);fit();</script></body>`);
 }
 
 export function PropertySheetTemplatePicker({ branding, data, value, onChange, disabled = false }: {
