@@ -1,3 +1,4 @@
+import { setLatestPoster } from "@/lib/poster-store";
 import { canShareFiles } from "@/lib/share";
 import { shareFilesFromPhone, useShareLogger } from "@/lib/share-client";
 import { useEffect, useMemo, useRef, useState } from "react";
