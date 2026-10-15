@@ -51,6 +51,18 @@ export function fitSheetHeadings(doc: Document) {
       size -= 1;
       title.style.fontSize = `${size}px`;
     }
+    const features = page.querySelector<HTMLElement>(".features");
+    const contact = page.querySelector<HTMLElement>(".contact-card");
+    const cover = page.querySelector<HTMLElement>(".cover");
+    if (features && contact && cover && win.getComputedStyle(contact).position === "absolute") {
+      const overlap = features.getBoundingClientRect().bottom - contact.getBoundingClientRect().top + 12;
+      if (overlap > 0) {
+        const mosaic = cover.closest<HTMLElement>(".minimal-mosaic");
+        const target = mosaic ?? cover;
+        target.style.height = `${Math.max(100, target.offsetHeight - overlap)}px`;
+        if (mosaic) for (const img of mosaic.querySelectorAll<HTMLElement>(".small-photos img")) img.style.height = `${(target.offsetHeight - 8) / 2}px`;
+      }
+    }
   }
 }
 
