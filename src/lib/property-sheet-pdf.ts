@@ -1,19 +1,19 @@
 import { propertySheetFileName } from "./property-sheet";
 
 /** Partition description on paragraph/word boundaries, never crop a rendered line. */
-function paginateDescription(doc: Document) {
-  const original = doc.querySelector<HTMLElement>(".page-two");
-  const description = original?.querySelector<HTMLElement>(".description");
+export function paginateDescription(doc: Document) {
+  const original = doc.querySelector<HTMLElement>("[data-sheet-description-page]");
+  const description = original?.querySelector<HTMLElement>("[data-sheet-description]");
   if (!original || !description) return;
   const paragraphs = Array.from(description.querySelectorAll("p")).map(p => p.textContent ?? "");
   const template = original.cloneNode(true) as HTMLElement;
   let page = original;
   let container = description;
   container.replaceChildren();
-  const fits = () => container.scrollHeight <= container.clientHeight;
+  const fits = () => container.scrollHeight <= container.clientHeight + 1;
   const nextPage = () => {
     const next = template.cloneNode(true) as HTMLElement;
-    const nextContainer = next.querySelector<HTMLElement>(".description");
+    const nextContainer = next.querySelector<HTMLElement>("[data-sheet-description]");
     if (!nextContainer) throw new Error("Nu am putut pregăti paginile fișei.");
     nextContainer.replaceChildren();
     page.after(next);
@@ -23,9 +23,9 @@ function paginateDescription(doc: Document) {
   for (const text of paragraphs) {
     let p = doc.createElement("p");
     container.append(p);
-    for (const word of text.split(/\s+/)) {
+    for (const word of text.split(/(\s+)/).filter(Boolean)) {
       const previous = p.textContent ?? "";
-      p.textContent = previous ? `${previous} ${word}` : word;
+      p.textContent = previous + word;
       if (fits()) continue;
       p.textContent = previous;
       if (!previous) p.remove();
@@ -33,6 +33,23 @@ function paginateDescription(doc: Document) {
       p = doc.createElement("p");
       p.textContent = word;
       container.append(p);
+    }
+  }
+}
+
+/** Fit unusually long headings within their allocated space before pagination. */
+export function fitSheetHeadings(doc: Document) {
+  for (const page of doc.querySelectorAll<HTMLElement>(".page:not([data-sheet-description-page])")) {
+    const heading = page.querySelector<HTMLElement>(".property-heading");
+    const title = heading?.querySelector<HTMLElement>("h1");
+    if (!heading || !title) continue;
+    const win = doc.defaultView;
+    if (!win) continue;
+    let size = parseFloat(win.getComputedStyle(title).fontSize);
+    const limit = doc.body.dataset.template === "split" ? 145 : 110;
+    while (heading.offsetHeight > limit && size > 9) {
+      size -= 1;
+      title.style.fontSize = `${size}px`;
     }
   }
 }
@@ -52,7 +69,7 @@ export async function generatePropertySheetPdf(html: string): Promise<Blob> {
     if (!doc) throw new Error("Nu am putut pregăti fișa de proprietate.");
     doc.open(); doc.write(html); doc.close();
     const style = doc.createElement("style");
-    style.textContent = ".page{margin:0;box-shadow:none}.description{height:154mm;max-height:none;overflow:visible}.description p{overflow-wrap:anywhere}";
+    style.textContent = ".page{margin:0;box-shadow:none}[data-sheet-description]{height:154mm;max-height:none;overflow:visible}[data-sheet-description] p{overflow-wrap:anywhere}";
     doc.head.append(style);
     await Promise.all(Array.from(doc.images).map(async image => {
       const response = await fetch(image.src);
@@ -63,17 +80,26 @@ export async function generatePropertySheetPdf(html: string): Promise<Blob> {
       await image.decode();
     }));
     await doc.fonts.ready;
+    fitSheetHeadings(doc);
     paginateDescription(doc);
-    const pdf = await PDFDocument.create();
+    const canvases: HTMLCanvasElement[] = [];
     for (const element of doc.querySelectorAll<HTMLElement>(".page")) {
       const canvas = await html2canvas(element, { scale: 2, useCORS: true, logging: false, windowWidth: 900, windowHeight: 1200 });
-      const jpeg = await pdf.embedJpg(canvas.toDataURL("image/jpeg", 0.82));
-      const page = pdf.addPage([595.28, 841.89]);
-      page.drawImage(jpeg, { x: 0, y: 0, width: 595.28, height: 841.89 });
-      canvas.width = 0; canvas.height = 0;
+      canvases.push(canvas);
     }
-    const bytes = await pdf.save();
-    return new Blob([new Uint8Array(bytes)], { type: "application/pdf" });
+    try {
+      for (const quality of [0.82, 0.65, 0.48, 0.32]) {
+        const pdf = await PDFDocument.create();
+        for (const canvas of canvases) {
+          const jpeg = await pdf.embedJpg(canvas.toDataURL("image/jpeg", quality));
+          const page = pdf.addPage([595.28, 841.89]);
+          page.drawImage(jpeg, { x: 0, y: 0, width: 595.28, height: 841.89 });
+        }
+        const bytes = await pdf.save();
+        if (bytes.byteLength < 5_000_000) return new Blob([new Uint8Array(bytes)], { type: "application/pdf" });
+      }
+      throw new Error("Fișa depășește 5 MB. Redu numărul de fotografii sau lungimea descrierii.");
+    } finally { canvases.forEach(canvas => { canvas.width = 0; canvas.height = 0; }); }
   } finally {
     frame.remove();
     urls.forEach(url => URL.revokeObjectURL(url));

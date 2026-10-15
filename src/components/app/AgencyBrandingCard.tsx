@@ -7,6 +7,8 @@ import { notifyProperstarFeedChanged } from "@/lib/portals/properstar-cache";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { PropertySheetTemplatePicker } from "./PropertySheetTemplatePicker";
+import { sheetTemplate } from "@/lib/property-sheet-templates";
 import { Switch } from "@/components/ui/switch";
 import { Slider } from "@/components/ui/slider";
 import {
@@ -68,6 +70,7 @@ export function AgencyBrandingCard() {
   const canEdit = Boolean(user?.isAdmin);
 
   const [form, setForm] = useState({
+    sheetTemplate: sheetTemplate(org?.property_sheet_template),
     accent: safeAccent(org?.material_accent_color),
     phone: org?.material_phone ?? org?.phone ?? "",
     email: org?.material_email ?? org?.email ?? "",
@@ -171,6 +174,7 @@ export function AgencyBrandingCard() {
           material_website: form.website.trim() || null,
           material_address: form.address.trim() || null,
           material_show_habitoo: form.showHabitoo,
+          property_sheet_template: form.sheetTemplate,
         })
         .eq("id", org.id);
       if (error) throw error;
@@ -217,9 +221,9 @@ export function AgencyBrandingCard() {
           address: form.address.trim() || null,
           showHabitoo: form.showHabitoo,
         },
-        samplePresentation,
+        { ...samplePresentation, photos: [photoUrl], template: form.sheetTemplate },
       ),
-    [org, logoUrl, form],
+    [org, logoUrl, form, photoUrl],
   );
 
   return (
@@ -358,6 +362,8 @@ export function AgencyBrandingCard() {
 
       <div className="space-y-2">
         <p className="text-sm font-medium">Previzualizare prezentare de probă</p>
+        <Label>Model implicit al agenției</Label>
+        <PropertySheetTemplatePicker branding={brandingFromOrg(org, logoUrl)} data={{ ...samplePresentation, photos: [photoUrl] }} value={form.sheetTemplate} disabled={!canEdit || save.isPending} onChange={(value) => setForm(f => ({ ...f, sheetTemplate: value }))} />
         <iframe
           title="Previzualizare material"
           srcDoc={previewHtml}
