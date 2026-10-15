@@ -1,3 +1,3 @@
-- Blog content is Markdown sanitized server-side to restricted HTML; keep public rendering safe.
-- Blog covers use private `blog-media`, served by the read-only public media route; writes stay SuperAdmin-only.
-- Sitemap, RSS, and llms.txt share the published-and-due blog filter and are generated per request.
+- Partner offers use authenticated, counted server pagination with global ordering and agency filtering before pagination; agency logos use private signed storage and display preferences are user-scoped. Why: flat views must include all eligible offers rather than sort/filter a truncated first batch; proposal flows remain unchanged.
+- Partner-offer handler mocks run with `vitest.partner-offers.config.ts`. Why: isolate read-query tests from the application's server-function transport transform.
+- Company data comes from ANAF only via `src/lib/company-lookup.ts` (pure, injected fetch) with 24h `company_lookup_cache`; org sync fills empty fields only. Why: ANAF rate limit; user edits win.
