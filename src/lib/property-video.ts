@@ -3,6 +3,8 @@
  * texte afișate). Randarea propriu-zisă e în `property-video-render.ts`, doar în browser.
  * Sursa anunțului și data adăugării nu fac parte din datele acceptate aici.
  */
+import { formatFloorLabel } from "@/lib/property-floor";
+
 export type VideoFormat = "vertical" | "square" | "landscape";
 
 export const VIDEO_FORMATS: Record<VideoFormat, { width: number; height: number; label: string; help: string }> = {
@@ -67,7 +69,7 @@ export function buildVideoOverlay(l: VideoListing, o: VideoOverlayOptions): Vide
   const facts = [
     l.rooms ? `${l.rooms} ${l.rooms === 1 ? "cameră" : "camere"}` : null,
     l.usableSurface ? `${Math.round(l.usableSurface)} mp utili` : null,
-    l.floor ? `Etaj ${l.floor}` : null,
+    formatFloorLabel(l.floor),
   ].filter((v): v is string => Boolean(v));
   return {
     intro: { title: l.title.trim(), location, price: o.showPrice ? l.price : null, facts },

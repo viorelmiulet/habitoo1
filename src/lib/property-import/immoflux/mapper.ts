@@ -151,6 +151,8 @@ function sectorFrom(...values: (string | null)[]): number | null {
 function mapFloor(code: unknown): { floor: number | null; label: string | null } | null {
   if (code === 2) return { floor: -1, label: "Demisol" };
   if (code === 3) return { floor: 0, label: "Parter" };
+  // ImmoFlux: 100 (cod 1000) = mansardă, nu „Etaj 100”.
+  if (code === 1000 || code === 100) return { floor: null, label: "Mansardă" };
   if (typeof code === "number" && code > 0 && code % 10 === 0) {
     const n = code / 10;
     return { floor: n, label: `Etaj ${n}` };

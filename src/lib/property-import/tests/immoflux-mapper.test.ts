@@ -125,6 +125,8 @@ describe("mapImmofluxItem", () => {
     [2, -1, "Demisol"],
     [3, 0, "Parter"],
     [50, 5, "Etaj 5"],
+    [1000, null, "Mansardă"],
+    [100, null, "Mansardă"],
   ])("etaj cod %i → %i / %s", (code, floor, label) => {
     const r = mapImmofluxItem(base({ floor: code }), ctx);
     expect(r.ok && r.row.floor).toBe(floor);

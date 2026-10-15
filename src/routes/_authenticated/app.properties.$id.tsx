@@ -1,3 +1,4 @@
+import { formatFloorLabel } from "@/lib/property-floor";
 import { createFileRoute, Link, useNavigate, useSearch } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
@@ -634,7 +635,7 @@ function PropertyDetailPage() {
     { label: "Compartimentare", value: property.layout ?? "" },
     {
       label: "Etaj",
-      value: property.floor_label || (property.floor !== null ? `${property.floor}${property.building_floors ? ` din ${property.building_floors}` : ""}` : ""),
+      value: (formatFloorLabel(property.floor_label, property.floor) ?? ""),
     },
     {
       label: property.build_year ? "An construcție" : "Stare",
@@ -656,7 +657,7 @@ function PropertyDetailPage() {
       label: isHouse ? "Suprafață teren" : "Etaj",
       value: isHouse
         ? property.land_surface ? `${formatNumber(property.land_surface)} m²` : ""
-        : property.floor_label || (property.floor !== null ? `${property.floor}${property.building_floors ? ` din ${property.building_floors}` : ""}` : ""),
+        : (formatFloorLabel(property.floor_label, property.floor) ?? ""),
     },
     { label: "Compartimentare", value: property.layout ?? "" },
     { label: "An construcție", value: property.build_year ? String(property.build_year) : "" },

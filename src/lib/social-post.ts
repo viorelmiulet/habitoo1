@@ -2,6 +2,7 @@
 // Ce lipsește din anunț lipsește și din text.
 import { propertyTypeLabels } from "@/lib/labels";
 import { formatMoney } from "@/lib/format";
+import { formatFloorLabel } from "@/lib/property-floor";
 
 export const SOCIAL_NETWORKS = ["facebook", "instagram", "whatsapp"] as const;
 export type SocialNetwork = (typeof SOCIAL_NETWORKS)[number];
@@ -28,6 +29,7 @@ export type SocialPostData = {
   district: string | null;
   city: string | null;
   floor: number | null;
+  floorLabel?: string | null;
   usableSurface: number | null;
   features: string[];
   price: number | null;
@@ -58,8 +60,7 @@ function roomsLabel(d: SocialPostData): string {
 }
 
 function floorLabel(d: SocialPostData): string {
-  if (d.floor === null || d.floor === undefined) return "";
-  return d.floor === 0 ? "Parter" : `Etaj ${d.floor}`;
+  return formatFloorLabel(d.floorLabel ?? null, d.floor) ?? "";
 }
 
 function headline(d: SocialPostData): string {
