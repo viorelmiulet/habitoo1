@@ -1,5 +1,8 @@
 import { useEffect, useRef, useState } from "react";
-import { ArrowDown, ArrowUp, Download, Film, Music, Share2, X } from "lucide-react";
+import { ArrowDown, ArrowUp, Download, Film, Music, Pause, Play, Share2, X } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { MUSIC_BUCKET, MUSIC_SIGNED_SECONDS, formatDuration, musicChoiceKey, parseMusicChoice, resolveMusicChoice, serializeMusicChoice, type MusicChoice, type MusicTrack } from "@/lib/video-music";
 import { canShareFiles } from "@/lib/share";
 import { shareFilesFromPhone, useShareLogger } from "@/lib/share-client";
 import { Button } from "@/components/ui/button";
@@ -15,7 +18,7 @@ import {
 
 type Photo = { id: string; url: string; alt: string | null };
 
-export function PropertyVideoCard({ photos, listing, propertyId, shareText = "", initialFormat = "vertical", onResult }: { photos: Photo[]; listing: VideoListing; propertyId: string; shareText?: string; initialFormat?: VideoFormat; onResult?: (r: { blob: Blob; name: string; format: VideoFormat }) => void }) {
+export function PropertyVideoCard({ photos, listing, propertyId, shareText = "", initialFormat = "vertical", onResult }: { photos: Photo[]; listing: VideoListing; propertyId: string; shareText?: string; initialFormat?: VideoFormat; onResult?: (r: { blob: Blob; name: string; format: VideoFormat; musicTrackId: string | null }) => void }) {
   const logShare = useShareLogger(propertyId);
   const [phoneShare, setPhoneShare] = useState(false);
   useEffect(() => { setPhoneShare(canShareFiles(navigator)); }, []);
@@ -24,6 +27,43 @@ export function PropertyVideoCard({ photos, listing, propertyId, shareText = "",
   const [off, setOff] = useState<Set<string>>(new Set());
   const [perPhoto, setPerPhoto] = useState(VIDEO_DEFAULT_PER_PHOTO);
   const [music, setMusic] = useState<File | null>(null);
+  const [choice, setChoiceState] = useState<MusicChoice>({ kind: "none" });
+  const [userKey, setUserKey] = useState<string | null>(null);
+  const [playing, setPlaying] = useState<string | null>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const tracksQ = useQuery({
+    queryKey: ["video-music", "active"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("video_music_tracks").select("id,title,style,artist,duration_sec,storage_path,active,position").eq("active", true).order("position").order("created_at");
+      if (error) throw error;
+      return (data ?? []) as MusicTrack[];
+    },
+  });
+  const tracks = tracksQ.data ?? [];
+  useEffect(() => { void supabase.auth.getSession().then(({ data }) => setUserKey(musicChoiceKey(data.session?.user.id ?? null))); }, []);
+  useEffect(() => {
+    if (!userKey || !tracksQ.data) return;
+    setChoiceState(resolveMusicChoice(parseMusicChoice(localStorage.getItem(userKey)), tracksQ.data.map((t) => t.id)));
+  }, [userKey, tracksQ.data]);
+  useEffect(() => () => { audioRef.current?.pause(); }, []);
+  const setChoice = (c: MusicChoice) => {
+    setChoiceState(c);
+    if (userKey) localStorage.setItem(userKey, serializeMusicChoice(c));
+  };
+  const trackUrl = async (t: MusicTrack) => {
+    const { data } = await supabase.storage.from(MUSIC_BUCKET).createSignedUrl(t.storage_path, MUSIC_SIGNED_SECONDS);
+    if (!data?.signedUrl) throw new Error("TRACK");
+    return data.signedUrl;
+  };
+  const togglePlay = async (t: MusicTrack) => {
+    audioRef.current?.pause();
+    if (playing === t.id) return setPlaying(null);
+    try {
+      const a = new Audio(await trackUrl(t));
+      audioRef.current = a; a.onended = () => setPlaying(null);
+      await a.play(); setPlaying(t.id);
+    } catch { setPlaying(null); setError("Piesa nu a putut fi redată."); }
+  };
   const [opts, setOpts] = useState({ showLogo: true, showPhone: true, showPrice: true });
   const [progress, setProgress] = useState<number | null>(null);
   const [result, setResult] = useState<{ url: string; name: string; webm: boolean; blob: Blob } | null>(null);
@@ -53,18 +93,26 @@ export function PropertyVideoCard({ photos, listing, propertyId, shareText = "",
   const generate = async () => {
     setError(null); setResult(null); setProgress(0);
     const ctrl = new AbortController(); abortRef.current = ctrl;
+    audioRef.current?.pause(); setPlaying(null);
     try {
+      const track = choice.kind === "track" ? tracks.find((t) => t.id === choice.id) ?? null : null;
+      let audio: Blob | null = choice.kind === "own" ? music : null;
+      if (track) {
+        const res = await fetch(await trackUrl(track), { signal: ctrl.signal });
+        if (!res.ok) throw new Error("TRACK");
+        audio = await res.blob();
+      }
       const { renderPropertyVideo } = await import("@/lib/property-video-render");
       const r = await renderPropertyVideo({
-        format, perPhoto: plan.perPhoto, music, signal: ctrl.signal, onProgress: setProgress,
+        format, perPhoto: plan.perPhoto, music: audio, signal: ctrl.signal, onProgress: setProgress,
         photoUrls: chosen.map((id) => byId.get(id)!.url),
         overlay: buildVideoOverlay({ ...listing, logoUrl: hasLogo ? listing.logoUrl : null }, { ...opts, showLogo: opts.showLogo && hasLogo }),
       });
       setResult({ url: URL.createObjectURL(r.blob), name: videoFileName(listing.reference, format, r.ext), webm: r.ext === "webm", blob: r.blob });
-      onResult?.({ blob: r.blob, name: videoFileName(listing.reference, format, r.ext), format });
+      onResult?.({ blob: r.blob, name: videoFileName(listing.reference, format, r.ext), format, musicTrackId: track?.id ?? null });
     } catch (e) {
       if ((e as Error).name !== "AbortError") {
-        setError((e as Error).message === "UNSUPPORTED"
+        setError((e as Error).message === "TRACK" ? "Piesa aleasă nu a putut fi încărcată. Încearcă din nou." : (e as Error).message === "UNSUPPORTED"
           ? "Acest dispozitiv nu poate genera video. Încearcă de pe un calculator, în Chrome sau Edge."
           : "Video-ul nu a putut fi generat. Încearcă din nou sau folosește un calculator.");
       }
@@ -126,15 +174,32 @@ export function PropertyVideoCard({ photos, listing, propertyId, shareText = "",
             Durată totală: {plan.total} s{plan.reduced ? ` · ${plan.perPhoto} s pe poză, ca video-ul să nu depășească 60 s` : ""}
           </p>
         </div>
-        <div className="space-y-2">
-          <Label htmlFor="video-music">Muzică (opțional, MP3, max. 10 MB)</Label>
-          <div className="flex items-center gap-2">
-            <input id="video-music" type="file" accept="audio/mpeg,.mp3" className="block w-full text-sm file:mr-3 file:rounded-control file:border file:border-border file:bg-muted file:px-3 file:py-1.5" onChange={(e) => pickMusic(e.target.files?.[0])} />
-            {music ? <Button type="button" size="icon" variant="ghost" aria-label="Elimină muzica" onClick={() => setMusic(null)}><X className="size-4" /></Button> : null}
-          </div>
-          {music ? <p className="flex items-center gap-1 text-xs text-muted-foreground"><Music className="size-3" />{music.name} · se taie la lungimea video-ului, cu fade-out de 2 s</p> : null}
-        </div>
       </div>
+
+      <fieldset className="space-y-2">
+        <legend className="text-sm font-medium">Muzică</legend>
+        <div className="grid gap-2" role="radiogroup" aria-label="Muzică">
+          <MusicOption checked={choice.kind === "none"} onSelect={() => setChoice({ kind: "none" })} title="Fără muzică" />
+          {tracks.map((t) => (
+            <MusicOption key={t.id} checked={choice.kind === "track" && choice.id === t.id} onSelect={() => setChoice({ kind: "track", id: t.id })}
+              title={t.title} meta={`${t.style} · ${formatDuration(t.duration_sec)}`}
+              action={<Button type="button" size="icon" variant="ghost" aria-label={playing === t.id ? `Oprește ${t.title}` : `Ascultă ${t.title}`} onClick={(e) => { e.stopPropagation(); void togglePlay(t); }}>{playing === t.id ? <Pause className="size-4" /> : <Play className="size-4" />}</Button>} />
+          ))}
+          <MusicOption checked={choice.kind === "own"} onSelect={() => setChoice({ kind: "own" })} title="Muzica ta (MP3)" />
+        </div>
+        {choice.kind === "own" ? (
+          <div className="space-y-1 rounded-control border border-border p-3">
+            <Label htmlFor="video-music">Fișier MP3, max. 10 MB</Label>
+            <div className="flex items-center gap-2">
+              <input id="video-music" type="file" accept="audio/mpeg,.mp3" className="block w-full text-sm file:mr-3 file:rounded-control file:border file:border-border file:bg-muted file:px-3 file:py-1.5" onChange={(e) => pickMusic(e.target.files?.[0])} />
+              {music ? <Button type="button" size="icon" variant="ghost" aria-label="Elimină muzica" onClick={() => setMusic(null)}><X className="size-4" /></Button> : null}
+            </div>
+            <p className="text-xs text-muted-foreground">Folosește doar muzică pentru care ai drept de utilizare.</p>
+            {music ? <p className="flex items-center gap-1 text-xs text-muted-foreground"><Music className="size-3" />{music.name}</p> : null}
+          </div>
+        ) : null}
+        {choice.kind !== "none" ? <p className="text-xs text-muted-foreground">Muzica se taie la lungimea video-ului, cu fade-out de 2 s.</p> : null}
+      </fieldset>
 
       <div className="flex flex-wrap gap-4">
         <label className="flex items-center gap-2 text-sm"><Checkbox checked={opts.showLogo && hasLogo} disabled={!hasLogo} onCheckedChange={(v) => setOpts((o) => ({ ...o, showLogo: v === true }))} />Logo agenție{hasLogo ? "" : " (lipsă)"}</label>
@@ -165,6 +230,17 @@ export function PropertyVideoCard({ photos, listing, propertyId, shareText = "",
           ) : null}
         </div>
       ) : null}
+    </div>
+  );
+}
+
+function MusicOption({ checked, onSelect, title, meta, action }: { checked: boolean; onSelect: () => void; title: string; meta?: string; action?: React.ReactNode }) {
+  return (
+    <div role="radio" aria-checked={checked} tabIndex={0} onClick={onSelect} onKeyDown={(e) => { if (e.key === " " || e.key === "Enter") { e.preventDefault(); onSelect(); } }}
+      className={cn("flex min-h-11 cursor-pointer items-center gap-3 rounded-control border p-2 text-sm", checked ? "border-primary bg-accent" : "border-border")}>
+      <span className={cn("size-4 shrink-0 rounded-full border", checked ? "border-4 border-primary" : "border-border")} aria-hidden />
+      <span className="flex-1"><span className="font-medium">{title}</span>{meta ? <span className="block text-xs text-muted-foreground">{meta}</span> : null}</span>
+      {action}
     </div>
   );
 }
