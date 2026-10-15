@@ -1,5 +1,10 @@
 # Fișă de proprietate PDF
 
+## Modele PDF A4
+- [ ] Șase modele și paginare comună fără pierderi
+- [ ] Miniaturi live, preferință individuală și model implicit în Branding
+- [ ] Teste pe modele/destinatari/date lipsă și verificarea vizuală a șase PDF-uri cu număr de pagini și mărime
+
 - [x] Redenumire în aplicație și verificarea tuturor textelor
 - [x] Descărcare PDF A4 în browser, progres și protecție la apăsări repetate
 - [x] Teste și verificarea PDF-ului generat cu date de test: A4, 4 pagini, 1,29 MB, fără tăieri
