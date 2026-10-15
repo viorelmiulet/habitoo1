@@ -109,6 +109,7 @@ import { Route as ApiPublicCronPortalSlotWithdrawRouteImport } from './routes/ap
 import { Route as ApiPublicCronPortalStatusWithdrawRouteImport } from './routes/api/public/cron/portal-status-withdraw'
 import { Route as ApiPublicCronPromotionWithdrawRouteImport } from './routes/api/public/cron/promotion-withdraw'
 import { Route as ApiPublicCronPropertyImportImagesRouteImport } from './routes/api/public/cron/property-import-images'
+import { Route as ApiPublicCronSocialTempRouteImport } from './routes/api/public/cron/social-temp'
 import { Route as ApiPublicCronStoriaMetaRouteImport } from './routes/api/public/cron/storia-meta'
 import { Route as ApiPublicCronStoriaWebhookRetryRouteImport } from './routes/api/public/cron/storia-webhook-retry'
 import { Route as ApiPublicCronSubscriptionsRouteImport } from './routes/api/public/cron/subscriptions'
@@ -703,6 +704,11 @@ const ApiPublicCronPropertyImportImagesRoute =
     path: '/api/public/cron/property-import-images',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicCronSocialTempRoute = ApiPublicCronSocialTempRouteImport.update({
+  id: '/api/public/cron/social-temp',
+  path: '/api/public/cron/social-temp',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicCronStoriaMetaRoute = ApiPublicCronStoriaMetaRouteImport.update({
   id: '/api/public/cron/storia-meta',
   path: '/api/public/cron/storia-meta',
@@ -1052,6 +1058,7 @@ export interface FileRoutesByFullPath {
   '/api/public/cron/portal-status-withdraw': typeof ApiPublicCronPortalStatusWithdrawRoute
   '/api/public/cron/promotion-withdraw': typeof ApiPublicCronPromotionWithdrawRoute
   '/api/public/cron/property-import-images': typeof ApiPublicCronPropertyImportImagesRoute
+  '/api/public/cron/social-temp': typeof ApiPublicCronSocialTempRoute
   '/api/public/cron/storia-meta': typeof ApiPublicCronStoriaMetaRoute
   '/api/public/cron/storia-webhook-retry': typeof ApiPublicCronStoriaWebhookRetryRoute
   '/api/public/cron/subscriptions': typeof ApiPublicCronSubscriptionsRoute
@@ -1194,6 +1201,7 @@ export interface FileRoutesByTo {
   '/api/public/cron/portal-status-withdraw': typeof ApiPublicCronPortalStatusWithdrawRoute
   '/api/public/cron/promotion-withdraw': typeof ApiPublicCronPromotionWithdrawRoute
   '/api/public/cron/property-import-images': typeof ApiPublicCronPropertyImportImagesRoute
+  '/api/public/cron/social-temp': typeof ApiPublicCronSocialTempRoute
   '/api/public/cron/storia-meta': typeof ApiPublicCronStoriaMetaRoute
   '/api/public/cron/storia-webhook-retry': typeof ApiPublicCronStoriaWebhookRetryRoute
   '/api/public/cron/subscriptions': typeof ApiPublicCronSubscriptionsRoute
@@ -1342,6 +1350,7 @@ export interface FileRoutesById {
   '/api/public/cron/portal-status-withdraw': typeof ApiPublicCronPortalStatusWithdrawRoute
   '/api/public/cron/promotion-withdraw': typeof ApiPublicCronPromotionWithdrawRoute
   '/api/public/cron/property-import-images': typeof ApiPublicCronPropertyImportImagesRoute
+  '/api/public/cron/social-temp': typeof ApiPublicCronSocialTempRoute
   '/api/public/cron/storia-meta': typeof ApiPublicCronStoriaMetaRoute
   '/api/public/cron/storia-webhook-retry': typeof ApiPublicCronStoriaWebhookRetryRoute
   '/api/public/cron/subscriptions': typeof ApiPublicCronSubscriptionsRoute
@@ -1490,6 +1499,7 @@ export interface FileRouteTypes {
     | '/api/public/cron/portal-status-withdraw'
     | '/api/public/cron/promotion-withdraw'
     | '/api/public/cron/property-import-images'
+    | '/api/public/cron/social-temp'
     | '/api/public/cron/storia-meta'
     | '/api/public/cron/storia-webhook-retry'
     | '/api/public/cron/subscriptions'
@@ -1632,6 +1642,7 @@ export interface FileRouteTypes {
     | '/api/public/cron/portal-status-withdraw'
     | '/api/public/cron/promotion-withdraw'
     | '/api/public/cron/property-import-images'
+    | '/api/public/cron/social-temp'
     | '/api/public/cron/storia-meta'
     | '/api/public/cron/storia-webhook-retry'
     | '/api/public/cron/subscriptions'
@@ -1779,6 +1790,7 @@ export interface FileRouteTypes {
     | '/api/public/cron/portal-status-withdraw'
     | '/api/public/cron/promotion-withdraw'
     | '/api/public/cron/property-import-images'
+    | '/api/public/cron/social-temp'
     | '/api/public/cron/storia-meta'
     | '/api/public/cron/storia-webhook-retry'
     | '/api/public/cron/subscriptions'
@@ -1881,6 +1893,7 @@ export interface RootRouteChildren {
   ApiPublicCronPortalStatusWithdrawRoute: typeof ApiPublicCronPortalStatusWithdrawRoute
   ApiPublicCronPromotionWithdrawRoute: typeof ApiPublicCronPromotionWithdrawRoute
   ApiPublicCronPropertyImportImagesRoute: typeof ApiPublicCronPropertyImportImagesRoute
+  ApiPublicCronSocialTempRoute: typeof ApiPublicCronSocialTempRoute
   ApiPublicCronStoriaMetaRoute: typeof ApiPublicCronStoriaMetaRoute
   ApiPublicCronStoriaWebhookRetryRoute: typeof ApiPublicCronStoriaWebhookRetryRoute
   ApiPublicCronSubscriptionsRoute: typeof ApiPublicCronSubscriptionsRoute
@@ -2624,6 +2637,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicCronPropertyImportImagesRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/cron/social-temp': {
+      id: '/api/public/cron/social-temp'
+      path: '/api/public/cron/social-temp'
+      fullPath: '/api/public/cron/social-temp'
+      preLoaderRoute: typeof ApiPublicCronSocialTempRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/cron/storia-meta': {
       id: '/api/public/cron/storia-meta'
       path: '/api/public/cron/storia-meta'
@@ -3218,6 +3238,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicCronPromotionWithdrawRoute: ApiPublicCronPromotionWithdrawRoute,
   ApiPublicCronPropertyImportImagesRoute:
     ApiPublicCronPropertyImportImagesRoute,
+  ApiPublicCronSocialTempRoute: ApiPublicCronSocialTempRoute,
   ApiPublicCronStoriaMetaRoute: ApiPublicCronStoriaMetaRoute,
   ApiPublicCronStoriaWebhookRetryRoute: ApiPublicCronStoriaWebhookRetryRoute,
   ApiPublicCronSubscriptionsRoute: ApiPublicCronSubscriptionsRoute,
