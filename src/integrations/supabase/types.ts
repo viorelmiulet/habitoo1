@@ -4421,6 +4421,7 @@ export type Database = {
           error_message_raw: string | null
           id: string
           kind: string
+          music_track_id: string | null
           organization_id: string
           page_id: string
           page_name: string | null
@@ -4441,6 +4442,7 @@ export type Database = {
           error_message_raw?: string | null
           id?: string
           kind: string
+          music_track_id?: string | null
           organization_id: string
           page_id: string
           page_name?: string | null
@@ -4461,6 +4463,7 @@ export type Database = {
           error_message_raw?: string | null
           id?: string
           kind?: string
+          music_track_id?: string | null
           organization_id?: string
           page_id?: string
           page_name?: string | null
@@ -4474,6 +4477,13 @@ export type Database = {
           status?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "meta_posts_music_track_id_fkey"
+            columns: ["music_track_id"]
+            isOneToOne: false
+            referencedRelation: "video_music_tracks"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "meta_posts_organization_id_fkey"
             columns: ["organization_id"]
@@ -8552,6 +8562,60 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      video_music_tracks: {
+        Row: {
+          active: boolean
+          artist: string | null
+          certificate_path: string | null
+          content_id_checked: boolean
+          created_at: string
+          created_by: string | null
+          duration_sec: number | null
+          id: string
+          license: string
+          position: number
+          source_url: string
+          storage_path: string
+          style: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          artist?: string | null
+          certificate_path?: string | null
+          content_id_checked?: boolean
+          created_at?: string
+          created_by?: string | null
+          duration_sec?: number | null
+          id?: string
+          license?: string
+          position?: number
+          source_url: string
+          storage_path: string
+          style: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          artist?: string | null
+          certificate_path?: string | null
+          content_id_checked?: boolean
+          created_at?: string
+          created_by?: string | null
+          duration_sec?: number | null
+          id?: string
+          license?: string
+          position?: number
+          source_url?: string
+          storage_path?: string
+          style?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       youtube_connections: {
         Row: {
