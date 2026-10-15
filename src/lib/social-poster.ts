@@ -1,4 +1,18 @@
 export type SocialPosterFormat = "square" | "story" | "landscape" | "post";
+export type SocialPosterTemplate = "classic" | "split" | "editorial" | "spotlight" | "collage" | "mosaic";
+export const SOCIAL_POSTER_TEMPLATES: { value: SocialPosterTemplate; label: string }[] = [
+  { value: "classic", label: "Clasic" }, { value: "split", label: "Split" },
+  { value: "editorial", label: "Editorial" }, { value: "spotlight", label: "Spotlight" },
+  { value: "collage", label: "Colaj" }, { value: "mosaic", label: "Mozaic" },
+];
+export function posterTemplate(value: unknown): SocialPosterTemplate {
+  return SOCIAL_POSTER_TEMPLATES.find(t => t.value === value)?.value ?? "classic";
+}
+/** Selected cover first, followed by the remaining public images in listing order. */
+export function posterPhotoSequence(photos: string[], selected: number) {
+  const main = photos[Math.min(Math.max(0, selected), photos.length - 1)];
+  return main ? [main, ...photos.filter(url => url !== main)] : [];
+}
 export type SocialPosterTransaction = "sale" | "rent";
 export type PosterLogoBackground = "transparent" | "white" | "dark";
 export type PosterStamp = "new" | "exclusive" | "reduced" | "reserved" | "sold" | "zero";
@@ -30,6 +44,8 @@ export type PosterColors = { accent: string; background: string; text: string };
 export const DEFAULT_POSTER_COLORS: PosterColors = { accent: "#C8A24B", background: "#0E1118", text: "#FFFFFF" };
 
 export type SocialPosterOptions = {
+  template?: SocialPosterTemplate;
+  photoUrls?: string[];
   format: SocialPosterFormat;
   photoUrl: string;
   logoUrl: string | null;
@@ -169,7 +185,12 @@ function fitLines(ctx: CanvasRenderingContext2D, value: string, maxWidth: number
     }
     lines[last] = `${lines[last].replace(/[,;:.\-—]+$/, "")}…`;
   }
-  return lines;
+  return lines.map(line => {
+    if (ctx.measureText(line).width <= maxWidth) return line;
+    let short = line;
+    while (short.length && ctx.measureText(`${short}…`).width > maxWidth) short = short.slice(0, -1);
+    return `${short}…`;
+  });
 }
 
 function pill(ctx: CanvasRenderingContext2D, text: string, x: number, y: number, k: number, color: string) {
@@ -209,12 +230,31 @@ function drawPin(ctx: CanvasRenderingContext2D, x: number, y: number, k: number,
   ctx.restore();
 }
 
-export async function renderSocialPoster(canvas: HTMLCanvasElement, o: SocialPosterOptions) {
+/** One dialog-scoped pool shares decoded images across preview and every thumbnail. */
+export function createPosterAssetPool() {
+  const images = new Map<string, Promise<ImageBitmap>>();
+  let disposed = false;
+  return {
+    load(url: string) {
+      let pending = images.get(url);
+      if (!pending) {
+        pending = loadBitmap(url).then(image => { if (disposed) image.close(); return image; });
+        images.set(url, pending);
+      }
+      return pending;
+    },
+    dispose() { disposed = true; images.forEach(p => { void p.then(image => image.close()).catch(() => {}); }); images.clear(); },
+  };
+}
+export type PosterAssetPool = ReturnType<typeof createPosterAssetPool>;
+export async function renderSocialPoster(canvas: HTMLCanvasElement, o: SocialPosterOptions, render: { assets?: PosterAssetPool; maxWidth?: number } = {}) {
   const { width, height } = SOCIAL_POSTER_SIZES[o.format];
-  canvas.width = width;
-  canvas.height = height;
+  const outputScale = render.maxWidth ? Math.min(1, render.maxWidth / width) : 1;
+  canvas.width = Math.round(width * outputScale);
+  canvas.height = Math.round(height * outputScale);
   const ctx = canvas.getContext("2d");
   if (!ctx) throw new Error("Previzualizarea nu poate fi creată în acest browser.");
+  ctx.setTransform(outputScale, 0, 0, outputScale, 0, 0);
   const k = SCALE[o.format];
   const landscape = o.format === "landscape";
   const { accent, background, text } = o.colors;
@@ -225,12 +265,20 @@ export async function renderSocialPoster(canvas: HTMLCanvasElement, o: SocialPos
     document.fonts?.load('600 30px "Manrope"'),
     document.fonts?.load('800 30px "Manrope"'),
   ]);
+  const assets = render.assets ?? createPosterAssetPool();
   const avatarUrl = o.agent?.photoUrl ?? o.bigAgentPhotoUrl;
   const [photo, logo, avatar] = await Promise.all([
-    loadBitmap(o.photoUrl),
-    o.logoUrl ? loadBitmap(o.logoUrl).catch(() => null) : Promise.resolve(null),
-    avatarUrl ? loadBitmap(avatarUrl).catch(() => null) : Promise.resolve(null),
+    assets.load(o.photoUrl),
+    o.logoUrl ? assets.load(o.logoUrl).catch(() => null) : Promise.resolve(null),
+    avatarUrl ? assets.load(avatarUrl).catch(() => null) : Promise.resolve(null),
   ]);
+  if (posterTemplate(o.template) !== "classic") {
+    try {
+      const extras = await Promise.all((o.photoUrls ?? []).filter(url => url !== o.photoUrl).slice(0, 3).map(url => assets.load(url)));
+      drawPosterLayout(ctx, o, [photo, ...extras], logo, avatar, width, height);
+    } finally { if (!render.assets) assets.dispose(); }
+    return;
+  }
   ctx.textBaseline = "top";
   ctx.letterSpacing = "0px";
 
@@ -456,9 +504,7 @@ export async function renderSocialPoster(canvas: HTMLCanvasElement, o: SocialPos
     }
   }
 
-  photo.close();
-  logo?.close();
-  avatar?.close();
+  if (!render.assets) assets.dispose();
 }
 
 export function downloadPoster(canvas: HTMLCanvasElement, fileName: string) {
