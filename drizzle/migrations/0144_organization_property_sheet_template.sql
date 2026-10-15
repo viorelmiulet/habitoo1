@@ -1,0 +1,2 @@
+ALTER TABLE public.organizations ADD COLUMN property_sheet_template text NOT NULL DEFAULT 'classic' CHECK (property_sheet_template IN ('classic','elegant','panoramic','split','gallery','minimal'));
+COMMENT ON COLUMN public.organizations.property_sheet_template IS 'Default A4 property sheet layout; individual users may override when generating.';

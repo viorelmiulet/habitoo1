@@ -4622,6 +4622,7 @@ export type Database = {
           phone: string | null
           plan: string
           postal_code: string | null
+          property_sheet_template: string
           public_description: string | null
           public_hidden_by_admin: boolean
           public_partner_enabled: boolean
@@ -4688,6 +4689,7 @@ export type Database = {
           phone?: string | null
           plan?: string
           postal_code?: string | null
+          property_sheet_template?: string
           public_description?: string | null
           public_hidden_by_admin?: boolean
           public_partner_enabled?: boolean
@@ -4754,6 +4756,7 @@ export type Database = {
           phone?: string | null
           plan?: string
           postal_code?: string | null
+          property_sheet_template?: string
           public_description?: string | null
           public_hidden_by_admin?: boolean
           public_partner_enabled?: boolean

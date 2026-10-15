@@ -1,6 +1,7 @@
 // Identitatea vizuală a materialelor generate pentru clienți (prezentare
 // printabilă, pagina publică de ofertă, textul ofertelor trimise pe email).
 // NU se folosește în interfața aplicației și nu ajunge în feedurile portalurilor.
+import { restylePropertySheet, sheetTemplate, type PropertySheetTemplate } from "./property-sheet-templates";
 
 /** Auriul Habitoo — accentul implicit al materialelor. */
 export const HABITOO_GOLD = "#C9A227";
@@ -81,6 +82,7 @@ export function materialSignature(branding: MaterialBranding) {
 }
 
 export type PresentationData = {
+  template?: PropertySheetTemplate;
   title: string;
   location: string;
   price: string;
@@ -153,7 +155,7 @@ export const samplePresentation: PresentationData = {
  * configurat și datele de contact în subsol. Fără logo, numele agenției apare
  * ca text stilizat — niciodată logo-ul Habitoo în locul lui.
  */
-export function buildPresentationHtml(branding: MaterialBranding, data: PresentationData): string {
+export function buildPresentationHtml(branding: MaterialBranding, data: PresentationData, template = data.template): string {
   const accent = safeAccent(branding.accent);
   const audience = data.audience ?? "client";
   const hasDescription = Boolean(data.description?.trim());
@@ -190,10 +192,10 @@ export function buildPresentationHtml(branding: MaterialBranding, data: Presenta
     .join("");
   const footer = `<footer><span class="footer-rule"></span><span class="footer-brand"><img src="/assets/habitoo-logo.png" alt="Habitoo CRM" />Fișă generată cu Habitoo CRM</span></footer>`;
 
-  return `<!doctype html><html lang="ro"><head><meta charset="utf-8" />
+  const html = `<!doctype html><html lang="ro"><head><meta charset="utf-8" />
 <title>${escapeHtml(data.title)}</title>
 <style>
-  *{box-sizing:border-box}
+  *{box-sizing:border-box}body{--sheet-accent:${accent}}
   @page{size:A4;margin:0}
   html,body{margin:0;padding:0;background:#fff;color:${INK};font-family:Arial,Helvetica,sans-serif;-webkit-print-color-adjust:exact;print-color-adjust:exact}
   .page{position:relative;width:210mm;height:297mm;margin:0 auto;padding:13mm 15mm 17mm;overflow:hidden;background:#fff;page-break-after:always}
@@ -241,12 +243,13 @@ export function buildPresentationHtml(branding: MaterialBranding, data: Presenta
   ${!hasDescription ? `<aside class="contact-card">${agentPhoto}<div><p class="contact-label">Contact</p><p class="contact-name">${escapeHtml(data.agent?.name ?? branding.agencyName)}</p><p class="contact-details">${[contactPhone, contactEmail, branding.agencyName].filter(Boolean).map(escapeHtml).join(" · ")}</p></div></aside>` : ""}
   ${footer}
 </section>
-${hasDescription ? `<section class="page page-two">
+${hasDescription ? `<section class="page page-two" data-sheet-description-page>
   <header class="brand-header"><div class="brand">${agencyLogo}<span class="agency-name">${escapeHtml(branding.agencyName)}</span></div><div class="header-contact">${headerPhone ? `<span>Contact direct</span><strong>${escapeHtml(headerPhone)}</strong>` : ""}</div></header>
   <h2 class="description-title">Descriere</h2>
-  <div class="description">${description}</div>
+  <div class="description" data-sheet-description>${description}</div>
   <aside class="contact-card">${agentPhoto}<div><p class="contact-label">Contact</p><p class="contact-name">${escapeHtml(data.agent?.name ?? branding.agencyName)}</p><p class="contact-details">${[contactPhone, contactEmail, branding.agencyName].filter(Boolean).map(escapeHtml).join(" · ")}</p></div></aside>
   ${footer}
 </section>` : ""}
 </body></html>`;
+  return restylePropertySheet(html, sheetTemplate(template), (data.photos ?? []).filter(Boolean), escapeHtml);
 }

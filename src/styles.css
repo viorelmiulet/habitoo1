@@ -4,6 +4,8 @@
 
 @custom-variant dark (&:is(.dark *));
 
+.sheet-thumbnail { aspect-ratio: 210 / 297; }
+
 /*
  * Habitoo CRM — design system
  * Premium SaaS look: cool slate neutrals, deep teal primary, warm amber accent.

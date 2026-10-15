@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate, useSearch } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   BarChart3,
   Building2,
@@ -99,6 +99,8 @@ import { APPROX_RADIUS_M, publicCoords } from "@/lib/geo";
 import { useCurrentUser } from "@/hooks/use-session";
 import { DeletePropertyDialog, canDeleteProperty } from "@/components/app/DeletePropertyDialog";
 import { brandingFromOrg, buildPresentationHtml } from "@/lib/materials";
+import { PropertySheetTemplatePicker } from "@/components/app/PropertySheetTemplatePicker";
+import { preferredSheetTemplate, type PropertySheetTemplate } from "@/lib/property-sheet-templates";
 import { generatePropertySheetPdf, downloadPropertySheet } from "@/lib/property-sheet-pdf";
 import { AVATAR_BUCKET, MEDIA_BUCKET, signedUrl, signedUrls } from "@/lib/storage";
 
@@ -195,6 +197,29 @@ function PropertyDetailPage() {
   const [generatingPdf, setGeneratingPdf] = useState<"client" | "agent" | null>(null);
   const [readyPdf, setReadyPdf] = useState<Blob | null>(null);
   const [presentationDialogOpen, setPresentationDialogOpen] = useState(false);
+  const [selectedSheetTemplate, setSelectedSheetTemplate] = useState<PropertySheetTemplate>("classic");
+  useEffect(() => {
+    if (!user?.userId) return;
+    let saved: string | null = null;
+    try { saved = localStorage.getItem(`property-sheet-template:${user.userId}`); } catch { /* Storage unavailable. */ }
+    setSelectedSheetTemplate(preferredSheetTemplate(saved, user.organization?.property_sheet_template));
+  }, [user?.userId, user?.organization?.property_sheet_template]);
+  const selectSheetTemplate = (value: PropertySheetTemplate) => {
+    setSelectedSheetTemplate(value);
+    setReadyPdf(null);
+    if (user?.userId) try { localStorage.setItem(`property-sheet-template:${user.userId}`, value); } catch { /* Keep this session's choice. */ }
+  };
+  const { data: sheetPhotos = [], isLoading: sheetPhotosLoading } = useQuery({
+    queryKey: ["property-sheet-photos", id], enabled: presentationDialogOpen,
+    queryFn: async () => {
+      const { data: rows, error } = await supabase.from("property_images")
+        .select("url,storage_path,position").eq("property_id", id).eq("is_confidential", false).order("position", { ascending: true });
+      if (error) throw error;
+      const paths = (rows ?? []).map(row => row.storage_path).filter((path): path is string => Boolean(path));
+      const signed = await signedUrls(MEDIA_BUCKET, paths);
+      return (rows ?? []).map(row => (row.storage_path ? signed[row.storage_path] : null) ?? row.url).filter((url): url is string => Boolean(url));
+    },
+  });
   const [socialPosterOpen, setSocialPosterOpen] = useState(false);
 
   const [activityDialog, setActivityDialog] = useState<{
@@ -669,10 +694,7 @@ function PropertyDetailPage() {
         .eq("is_confidential", false)
         .order("position", { ascending: true });
       if (error) throw error;
-      const sorted = [...(rows ?? [])].sort((a, b) => {
-        if (a.is_primary !== b.is_primary) return a.is_primary ? -1 : 1;
-        return a.position - b.position;
-      });
+      const sorted = rows ?? [];
       const paths = sorted.map((r) => r.storage_path).filter((v): v is string => Boolean(v));
       const signed = paths.length ? await signedUrls(MEDIA_BUCKET, paths) : {};
       const photos = sorted
@@ -687,11 +709,14 @@ function PropertyDetailPage() {
         buildPresentationHtml(brandingFromOrg(user?.organization, agencyLogoUrl), {
           title: property.title,
           location: [property.address, property.district, property.city].filter(Boolean).join(", "),
-          price: formatMoney(property.price, property.currency),
+          price: property.for_sale && property.for_rent
+            ? `Vânzare: ${formatMoney(salePrice, property.currency)} · Închiriere: ${formatMoney(rentPrice, property.currency)}`
+            : formatMoney(property.price, property.currency),
           specs: presentationSpecs,
           description: property.description,
           photos,
           audience,
+          template: selectedSheetTemplate,
           agent: {
             name: contactAgent?.full_name ?? null,
             phone: contactAgent?.phone ?? null,
@@ -1249,11 +1274,18 @@ function PropertyDetailPage() {
       />
 
       <Dialog open={presentationDialogOpen} onOpenChange={(open) => { if (!printingRef.current) setPresentationDialogOpen(open); }}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="max-h-[90dvh] overflow-y-auto sm:max-w-2xl">
           <DialogHeader>
             <DialogTitle>Fișă de proprietate</DialogTitle>
             <DialogDescription>Alege cui îi este destinată fișa.</DialogDescription>
           </DialogHeader>
+          {sheetPhotosLoading ? <p className="text-sm text-muted-foreground">Se încarcă fotografiile…</p> : null}
+          <PropertySheetTemplatePicker branding={brandingFromOrg(user?.organization, agencyLogoUrl)}
+            data={{ title: property.title, location: [property.address, property.district, property.city].filter(Boolean).join(", "),
+              price: property.for_sale && property.for_rent ? `Vânzare: ${formatMoney(salePrice, property.currency)} · Închiriere: ${formatMoney(rentPrice, property.currency)}` : formatMoney(property.price, property.currency),
+              specs: presentationSpecs, description: property.description, photos: sheetPhotos,
+              agent: { name: responsibleAgent?.full_name ?? user?.profile?.full_name ?? null, phone: responsibleAgent?.phone ?? user?.profile?.phone ?? null, email: responsibleAgent?.email ?? user?.email ?? null } }}
+            value={selectedSheetTemplate} onChange={selectSheetTemplate} disabled={generatingPdf !== null} />
           <div className="grid gap-3 sm:grid-cols-2">
             <Button
               variant="outline"

@@ -132,7 +132,14 @@ function SettingsField({
 
 
 export const Route = createFileRoute("/_authenticated/app/settings")({
-  head: () => appHead("Habitoo CRM — setări"),
+  head: () => {
+    const title = "Habitoo CRM — setări";
+    const description = "Configurează agenția, brandingul și modelele fișei de proprietate în Habitoo CRM.";
+    const head = appHead(title);
+    return { ...head, meta: [...head.meta, { name: "description", content: description },
+      { property: "og:title", content: title }, { property: "og:description", content: description },
+      { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }] };
+  },
   validateSearch: (
     search: Record<string, unknown>,
   ): { tab?: SettingsTab; request?: string } => {
