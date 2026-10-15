@@ -94,7 +94,7 @@ export function isFeedRatioOk(width: number, height: number) {
 
 export type IgErrorKind = "expired" | "permission" | "format" | "video" | "limit" | "rejected";
 export class IgPostError extends MetaPostError {
-  constructor(public igKind: IgErrorKind, message: string, code?: number, public raw?: string) {
+  constructor(public igKind: IgErrorKind, message: string, code?: number, public override raw?: string) {
     super(igKind === "expired" ? "expired" : igKind === "permission" ? "permission" : "rejected", message, code);
   }
 }
