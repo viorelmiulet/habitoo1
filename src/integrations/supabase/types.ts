@@ -4414,46 +4414,61 @@ export type Database = {
       }
       meta_posts: {
         Row: {
+          container_id: string | null
           created_at: string
           error: string | null
+          error_code: number | null
+          error_message_raw: string | null
           id: string
           kind: string
           organization_id: string
           page_id: string
           page_name: string | null
           permalink_url: string | null
+          platform: string
           post_id: string | null
           posted_by: string | null
+          processing_until: string | null
           property_id: string
           published_at: string | null
           status: string
         }
         Insert: {
+          container_id?: string | null
           created_at?: string
           error?: string | null
+          error_code?: number | null
+          error_message_raw?: string | null
           id?: string
           kind: string
           organization_id: string
           page_id: string
           page_name?: string | null
           permalink_url?: string | null
+          platform?: string
           post_id?: string | null
           posted_by?: string | null
+          processing_until?: string | null
           property_id: string
           published_at?: string | null
           status?: string
         }
         Update: {
+          container_id?: string | null
           created_at?: string
           error?: string | null
+          error_code?: number | null
+          error_message_raw?: string | null
           id?: string
           kind?: string
           organization_id?: string
           page_id?: string
           page_name?: string | null
           permalink_url?: string | null
+          platform?: string
           post_id?: string | null
           posted_by?: string | null
+          processing_until?: string | null
           property_id?: string
           published_at?: string | null
           status?: string
@@ -8352,6 +8367,32 @@ export type Database = {
             columns: ["property_id"]
             isOneToOne: false
             referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      social_temp_files: {
+        Row: {
+          created_at: string
+          organization_id: string
+          path: string
+        }
+        Insert: {
+          created_at?: string
+          organization_id: string
+          path: string
+        }
+        Update: {
+          created_at?: string
+          organization_id?: string
+          path?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "social_temp_files_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
         ]
