@@ -7,16 +7,19 @@ import { requireActiveOrgAuth } from "@/lib/org-access";
 import type { MetaPostKind } from "./post-core";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-type Ctx = { supabase: any; userId: string };
+export type Ctx = { supabase: any; userId: string };
 
 export type MetaPostingContext = {
   status: "none" | "connected" | "disconnected" | "expired";
   defaultPageId: string | null;
   pages: { pageId: string; name: string; pictureUrl: string | null }[];
   lastPost: { pageName: string | null; permalink: string | null; publishedAt: string | null } | null;
+  instagram: { igUserId: string; username: string | null; pictureUrl: string | null }[];
+  lastInstagramPost: { username: string | null; permalink: string | null; publishedAt: string | null } | null;
+  agentPhone: string | null;
 };
 
-async function roleOf(ctx: Ctx): Promise<"superadmin" | "agency_admin" | "agent" | null> {
+export async function roleOf(ctx: Ctx): Promise<"superadmin" | "agency_admin" | "agent" | null> {
   for (const r of ["superadmin", "agency_admin", "agent"] as const) {
     const { data } = await ctx.supabase.rpc("has_role", { _user_id: ctx.userId, _role: r });
     if (data === true) return r;
@@ -24,7 +27,7 @@ async function roleOf(ctx: Ctx): Promise<"superadmin" | "agency_admin" | "agent"
   return null;
 }
 
-async function loadProperty(ctx: Ctx, propertyId: string) {
+export async function loadProperty(ctx: Ctx, propertyId: string) {
   const { data: p } = await ctx.supabase
     .from("properties")
     .select("id, organization_id, assigned_to")
@@ -44,17 +47,29 @@ export const getMetaPostingContext = createServerFn({ method: "GET" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const db = supabaseAdmin as any;
-    const [{ data: conn }, { data: pages }, { data: posts }] = await Promise.all([
+    const [{ data: conn }, { data: pages }, { data: posts }, { data: igs }, { data: igPosts }, { data: agent }] = await Promise.all([
       db.from("meta_connections").select("status, default_page_id").eq("organization_id", p.organization_id).maybeSingle(),
       db.from("meta_pages").select("page_id, name, picture_url").eq("organization_id", p.organization_id).order("name"),
       db
         .from("meta_posts")
         .select("page_name, permalink_url, published_at")
         .eq("property_id", p.id)
+        .eq("platform", "facebook")
         .eq("status", "published")
         .order("published_at", { ascending: false })
         .limit(1),
+      db.from("meta_instagram_accounts").select("ig_user_id, username, picture_url").eq("organization_id", p.organization_id).order("username"),
+      db
+        .from("meta_posts")
+        .select("page_name, permalink_url, published_at")
+        .eq("property_id", p.id)
+        .eq("platform", "instagram")
+        .eq("status", "published")
+        .order("published_at", { ascending: false })
+        .limit(1),
+      p.assigned_to ? db.from("profiles").select("phone").eq("id", p.assigned_to).maybeSingle() : Promise.resolve({ data: null }),
     ]);
+    const lastIg = igPosts?.[0];
     const last = posts?.[0];
     return {
       status: conn?.status ?? "none",
@@ -63,6 +78,11 @@ export const getMetaPostingContext = createServerFn({ method: "GET" })
         ? ((pages ?? []) as { page_id: string; name: string; picture_url: string | null }[]).map((x) => ({ pageId: x.page_id, name: x.name, pictureUrl: x.picture_url }))
         : [],
       lastPost: last ? { pageName: last.page_name, permalink: last.permalink_url, publishedAt: last.published_at } : null,
+      instagram: conn?.status === "connected"
+        ? ((igs ?? []) as { ig_user_id: string; username: string | null; picture_url: string | null }[]).map((x) => ({ igUserId: x.ig_user_id, username: x.username, pictureUrl: x.picture_url }))
+        : [],
+      lastInstagramPost: lastIg ? { username: lastIg.page_name, permalink: lastIg.permalink_url, publishedAt: lastIg.published_at } : null,
+      agentPhone: (agent as { phone: string | null } | null)?.phone ?? null,
     };
   });
 
@@ -160,7 +180,7 @@ export const publishMetaPost = createServerFn({ method: "POST" })
       return { ok: true as const, permalink: res.permalink, pageName: page.name as string, publishedAt: now };
     } catch (e) {
       const err = e instanceof core.MetaPostError ? e : new core.MetaPostError("rejected", "Postarea nu a reușit. Încearcă din nou.");
-      await db.from("meta_posts").update({ status: "failed", error: err.message }).eq("id", row?.id);
+      await db.from("meta_posts").update({ status: "failed", error: err.message, error_code: err.code ?? null, error_message_raw: err.raw ?? null }).eq("id", row?.id);
       if (err.kind === "expired") {
         await db.from("meta_connections").update({ status: "expired", updated_at: new Date().toISOString() }).eq("id", conn.id);
       }
