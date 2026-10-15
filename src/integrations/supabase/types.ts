@@ -8572,8 +8572,10 @@ export type Database = {
           created_at: string
           created_by: string | null
           duration_sec: number | null
+          file_size_bytes: number | null
           id: string
           license: string
+          original_filename: string | null
           position: number
           source_url: string
           storage_path: string
@@ -8589,8 +8591,10 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           duration_sec?: number | null
+          file_size_bytes?: number | null
           id?: string
           license?: string
+          original_filename?: string | null
           position?: number
           source_url: string
           storage_path: string
@@ -8606,8 +8610,10 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           duration_sec?: number | null
+          file_size_bytes?: number | null
           id?: string
           license?: string
+          original_filename?: string | null
           position?: number
           source_url?: string
           storage_path?: string

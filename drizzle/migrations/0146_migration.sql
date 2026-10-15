@@ -1,0 +1,1 @@
+alter table public.video_music_tracks add column if not exists original_filename text, add column if not exists file_size_bytes bigint;
