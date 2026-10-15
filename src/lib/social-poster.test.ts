@@ -27,7 +27,7 @@ describe("poster templates", () => {
     expect(posterTemplate(undefined)).toBe("classic");
     expect(posterTemplate("unknown")).toBe("classic");
     expect(posterTemplate("mosaic")).toBe("mosaic");
-    expect(posterPhotoSequence(["a", "b", "c"], 1)).toEqual(["b", "a", "c"]);
+    expect(posterPhotoSequence(["a", "b", "c"], 1)).toEqual(["b", "c", "a"]);
     expect(posterPhotoSequence([], 0)).toEqual([]);
   });
   it("decodes each shared image only once", async () => {

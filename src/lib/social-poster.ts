@@ -10,8 +10,8 @@ export function posterTemplate(value: unknown): SocialPosterTemplate {
 }
 /** Selected cover first, followed by the remaining public images in listing order. */
 export function posterPhotoSequence(photos: string[], selected: number) {
-  const main = photos[Math.min(Math.max(0, selected), photos.length - 1)];
-  return main ? [main, ...photos.filter(url => url !== main)] : [];
+  const index = Math.min(Math.max(0, selected), photos.length - 1);
+  return photos[index] ? [...new Set([...photos.slice(index), ...photos.slice(0, index)])] : [];
 }
 export type SocialPosterTransaction = "sale" | "rent";
 export type PosterLogoBackground = "transparent" | "white" | "dark";
