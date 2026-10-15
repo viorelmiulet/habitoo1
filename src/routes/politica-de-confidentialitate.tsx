@@ -156,6 +156,28 @@ const sections: LegalSection[] = [
     ),
   },
   {
+    title: "YouTube",
+    body: (
+      <>
+        <p>
+          Habitoo folosește YouTube API Services pentru publicarea video-urilor de prezentare pe
+          canalul agenției. Folosind această funcție, accepți{" "}
+          <a href="https://www.youtube.com/t/terms" target="_blank" rel="noopener noreferrer" className="underline">Termenii YouTube</a>{" "}
+          și{" "}
+          <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer" className="underline">Politica de confidențialitate Google</a>.
+        </p>
+        <p>
+          Accesăm doar datele canalului (id, nume, poză) și încărcarea video-urilor pe care le
+          publici explicit din Habitoo. Tokenul de acces se păstrează criptat.
+        </p>
+        <p>
+          Poți revoca accesul oricând din Habitoo (Setări → Promovare → Deconectează) sau din{" "}
+          <a href="https://myaccount.google.com/permissions" target="_blank" rel="noopener noreferrer" className="underline">myaccount.google.com/permissions</a>.
+        </p>
+      </>
+    ),
+  },
+  {
     title: "Localizarea datelor",
     body: (
       <p>
