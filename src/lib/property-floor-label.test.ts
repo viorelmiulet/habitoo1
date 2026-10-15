@@ -37,3 +37,10 @@ describe("fără „Etaj Etaj”", () => {
     expect(t).not.toMatch(/Etaj (Etaj|Mansard|100)/);
   });
 });
+
+it("posterul folosește eticheta comună", async () => {
+  const { readFileSync } = await import("node:fs");
+  const c = readFileSync("src/components/app/SocialPosterDialog.tsx", "utf8");
+  expect(c).toContain("formatFloorLabel(props.floor)");
+  expect(c).not.toContain("`Etaj ${");
+});
