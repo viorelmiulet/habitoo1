@@ -7,6 +7,8 @@ export const MUSIC_STYLES = ["Elegant", "Modern", "Corporate", "Calm", "Lux", "E
 export type MusicStyle = (typeof MUSIC_STYLES)[number];
 export const MUSIC_MAX_BYTES = 10 * 1024 * 1024;
 export const MUSIC_DEFAULT_LICENSE = "Pixabay Content License";
+export const MUSIC_LICENSES = [MUSIC_DEFAULT_LICENSE, "CC0 / domeniu public", "Licență cumpărată", "Altă licență"] as const;
+export const MUSIC_OTHER_LICENSE = "Altă licență";
 export const MUSIC_SIGNED_SECONDS = 300;
 export const CERT_TYPES = ["application/pdf", "image/jpeg", "image/png", "image/webp"];
 
@@ -15,10 +17,10 @@ export type MusicTrack = {
   storage_path: string; active: boolean; position: number;
 };
 
-export function isPixabayUrl(url: string): boolean {
+/** Link sursă opțional: gol sau https valid (orice site). */
+export function isHttpsUrl(url: string): boolean {
   try {
-    const u = new URL(url.trim());
-    return u.protocol === "https:" && (u.hostname === "pixabay.com" || u.hostname.endsWith(".pixabay.com"));
+    return new URL(url.trim()).protocol === "https:";
   } catch { return false; }
 }
 
@@ -27,7 +29,7 @@ export function isMp3(file: { name: string; type: string }) {
 }
 
 export type TrackInput = {
-  title: string; style: string; sourceUrl: string; contentIdChecked: boolean;
+  title: string; style: string; sourceUrl: string; license: string;
   file?: { name: string; type: string; size: number } | null;
   certificate?: { name: string; type: string; size: number } | null;
   requireFile: boolean;
@@ -37,13 +39,13 @@ export type TrackInput = {
 export function validateTrackInput(i: TrackInput): string | null {
   if (!i.title.trim()) return "Completează titlul.";
   if (!(MUSIC_STYLES as readonly string[]).includes(i.style)) return "Alege stilul.";
-  if (!i.sourceUrl.trim()) return "Linkul Pixabay este obligatoriu.";
-  if (!isPixabayUrl(i.sourceUrl)) return "Linkul trebuie să fie de pe pixabay.com.";
+  if (i.sourceUrl.trim() && !isHttpsUrl(i.sourceUrl)) return "Linkul sursă trebuie să fie un link https valid.";
+  if (!i.license.trim()) return "Completează licența.";
+  if (i.license.trim().length > 120) return "Licența e prea lungă (max. 120 caractere).";
   if (i.requireFile && !i.file) return "Alege fișierul MP3.";
   if (i.file && !isMp3(i.file)) return "Fișierul trebuie să fie MP3.";
   if (i.file && i.file.size > MUSIC_MAX_BYTES) return "Fișierul MP3 depășește 10 MB.";
   if (i.certificate && !CERT_TYPES.includes(i.certificate.type)) return "Certificatul trebuie să fie PDF sau imagine.";
-  if (!i.contentIdChecked) return "Confirmă că piesa nu are Content ID.";
   return null;
 }
 
