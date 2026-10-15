@@ -140,6 +140,8 @@ export function MetaConnectionCard() {
             ))}
           </ul>
         </>
+      ) : d.status === "expired" ? (
+        <p className="text-sm text-destructive">Conexiunea Facebook a expirat. Reconectează pagina ca să poți posta din nou.</p>
       ) : d.status === "disconnected" ? (
         <p className="text-sm text-muted-foreground">Conexiunea a fost întreruptă. Reconectează pentru a o folosi din nou.</p>
       ) : null}
