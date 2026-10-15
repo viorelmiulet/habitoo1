@@ -8550,6 +8550,59 @@ export type Database = {
           },
         ]
       }
+      youtube_connections: {
+        Row: {
+          channel_id: string | null
+          channel_thumbnail: string | null
+          channel_title: string | null
+          connected_at: string | null
+          connected_by: string | null
+          created_at: string
+          disconnected_at: string | null
+          id: string
+          organization_id: string
+          refresh_token_enc: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          channel_id?: string | null
+          channel_thumbnail?: string | null
+          channel_title?: string | null
+          connected_at?: string | null
+          connected_by?: string | null
+          created_at?: string
+          disconnected_at?: string | null
+          id?: string
+          organization_id: string
+          refresh_token_enc?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          channel_id?: string | null
+          channel_thumbnail?: string | null
+          channel_title?: string | null
+          connected_at?: string | null
+          connected_by?: string | null
+          created_at?: string
+          disconnected_at?: string | null
+          id?: string
+          organization_id?: string
+          refresh_token_enc?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "youtube_connections_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: true
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
