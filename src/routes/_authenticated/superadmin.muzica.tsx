@@ -2,7 +2,8 @@
 import { useRef, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowDown, ArrowUp, FileText, Music2, Pause, Pencil, Play, Trash2 } from "lucide-react";
+import { ArrowDown, ArrowUp, FileText, Music2, Pause, Pencil, Play, Trash2, Upload } from "lucide-react";
+import { MusicBulkUpload } from "@/components/app/MusicBulkUpload";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader } from "@/components/app/PageHeader";
 import { InlineLoading } from "@/components/app/LoadingState";
@@ -31,7 +32,7 @@ export const Route = createFileRoute("/_authenticated/superadmin/muzica")({
 type Row = {
   id: string; title: string; style: string; artist: string | null; source_url: string; license: string;
   storage_path: string; duration_sec: number | null; certificate_path: string | null; content_id_checked: boolean;
-  active: boolean; position: number;
+  active: boolean; position: number; original_filename: string | null; file_size_bytes: number | null;
 };
 type Form = { title: string; style: string; artist: string; sourceUrl: string; licenseKind: string; licenseOther: string };
 const EMPTY: Form = { title: "", style: "", artist: "", sourceUrl: "", licenseKind: MUSIC_DEFAULT_LICENSE, licenseOther: "" };
@@ -73,6 +74,7 @@ function SuperadminMusicPage() {
   const [editing, setEditing] = useState<Row | null>(null);
   const [editForm, setEditForm] = useState<Form>(EMPTY);
   const [playing, setPlaying] = useState<string | null>(null);
+  const [bulkOpen, setBulkOpen] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   const create = useMutation({
@@ -95,6 +97,7 @@ function SuperadminMusicPage() {
         id, title: form.title.trim(), style: form.style, artist: form.artist.trim() || null, source_url: form.sourceUrl.trim(),
         license: formLicense(form), storage_path: path, duration_sec: await audioDuration(file!), certificate_path: certPath,
         content_id_checked: false, active: true, position, created_by: u.user?.id ?? null,
+        original_filename: file!.name, file_size_bytes: file!.size,
       });
       if (error) { await supabase.storage.from(MUSIC_BUCKET).remove([path, ...(certPath ? [certPath] : [])]); throw error; }
     },
@@ -149,9 +152,10 @@ function SuperadminMusicPage() {
   return (
     <div className="space-y-6">
       <PageHeader title="Muzică video" description="Piese disponibile agenților în generatorul video. Agenții nu pot descărca piesele separat." />
+      <MusicBulkUpload open={bulkOpen} onOpenChange={setBulkOpen} existing={q.data ?? []} onUploaded={refresh} />
 
       <Card>
-        <CardHeader><CardTitle>Adaugă piesă</CardTitle></CardHeader>
+        <CardHeader className="flex-row items-center justify-between gap-3 space-y-0"><CardTitle>Adaugă piesă</CardTitle><Button variant="outline" onClick={() => setBulkOpen(true)} disabled={!q.data}><Upload className="size-4" />Încarcă mai multe</Button></CardHeader>
         <CardContent key={formKey} className="grid gap-4 md:grid-cols-2">
           <div className="space-y-1"><Label htmlFor="m-file">Fișier MP3 (max. 10 MB)</Label><Input id="m-file" type="file" accept="audio/mpeg,.mp3" onChange={(e) => setFile(e.target.files?.[0] ?? null)} /></div>
           <div className="space-y-1"><Label htmlFor="m-cert">Certificat de descărcare (PDF sau imagine, opțional)</Label><Input id="m-cert" type="file" accept="application/pdf,image/jpeg,image/png,image/webp" onChange={(e) => setCert(e.target.files?.[0] ?? null)} /></div>
