@@ -1,9 +1,10 @@
 # Cereri abonament
 
-- [ ] Alegere plan pentru administratorul agenției, benzi și acces când contul este suspendat
-- [ ] Cereri unice în așteptare, anulare/schimbare, notificări și rezolvare tranzacțională cu activarea existentă
-- [ ] SuperAdmin: listă, activare cu date editabile și respingere cu motiv
-- [ ] Teste fără emailuri sau activări reale și verificare în browser
+- [x] Alegere plan pentru administratorul agenției, benzi și acces când contul este suspendat
+- [x] Cereri unice în așteptare, anulare/schimbare, notificări și rezolvare tranzacțională cu activarea existentă
+- [x] SuperAdmin: listă, activare cu date editabile și respingere cu motiv
+- [x] 19 teste automate, reguli tranzacționale cu rollback și dialoguri desktop/mobil fără emailuri sau activări păstrate
+- [ ] Verificare completă în contul solicitantului — conectarea în previzualizare este necesară; sesiunea automată nu găsește contul
 
 # Facebook Reel
 
