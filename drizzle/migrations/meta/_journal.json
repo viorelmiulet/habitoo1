@@ -1058,6 +1058,13 @@
       "when": 1792297716403,
       "tag": "0150_subscription_requests",
       "breakpoints": true
+    },
+    {
+      "idx": 151,
+      "version": "7",
+      "when": 1792339136068,
+      "tag": "0151_trial_90_days",
+      "breakpoints": true
     }
   ]
 }
