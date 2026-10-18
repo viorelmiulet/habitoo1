@@ -1,7 +1,7 @@
 /**
  * Postare pe pagina de Facebook — părți pure, testabile (fără rețea, fără DB).
  */
-import { META_GRAPH_VERSION } from "./core";
+import { META_GRAPH_VERSION } from "./constants";
 import { offerShareUrl } from "@/lib/share";
 
 export type MetaPostKind = "photos" | "poster" | "video" | "reel" | "link";
