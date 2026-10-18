@@ -1,3 +1,9 @@
+# Facebook Reel
+
+- [ ] Opțiune Reel, validare MP4 vertical 9:16 și 3–90 secunde, preselectare și creare verticală
+- [ ] Flux start/upload/finish, verificare status durabilă, istoric și piesă muzicală
+- [ ] Teste mock și verificare dialog fără postare reală
+
 # VDI — agenți legați de cont
 
 - [x] Cont VDI pe legătură, reset automat la schimbarea contului și recuperare agent negăsit o singură dată
