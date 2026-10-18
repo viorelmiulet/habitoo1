@@ -41,9 +41,9 @@ export type VdiDeps = {
     ref: ListingRef,
   ) => Promise<{ ok: true; property: VdiProperty; agent: VdiAgentInfo | null } | { ok: false; reasons: string[] }>;
   /** Maparea agent CRM → idintern VDI (creată la prima cerere, imuabilă). */
-  agentLink: (organizationId: string, userId: string) => Promise<{ externalId: number; synced: boolean; fingerprint?: string | null }>;
+  agentLink: (organizationId: string, userId: string) => Promise<{ externalId: number; synced: boolean; externalAccountId?: string | null; fingerprint?: string | null }>;
   /** `fingerprint` se salvează doar la succes (null = neschimbat). */
-  markAgentSynced: (organizationId: string, userId: string, error: string | null, fingerprint: string | null) => Promise<void>;
+  markAgentSynced: (organizationId: string, userId: string, error: string | null, fingerprint: string | null, externalAccountId: string | null) => Promise<void>;
   applyRemoteStates: (
     organizationId: string,
     items: { idintern: string; status: "published" | "withdrawn" }[],
@@ -79,33 +79,35 @@ export function createVdiAdapter(deps: VdiDeps): PortalAdapter {
    * schimbat datele (amprentă). `mod` e doar pentru anunțuri (`/apioferte`).
    * Eroare la `edit` (alta decât „nu a fost gasit”) = avertisment.
    */
-  async function ensureAgent(ctx: PortalContext, apiKey: string, agent: VdiAgentInfo): Promise<{ id: number; warning: string | null } | PortalFail> {
+  async function ensureAgent(ctx: PortalContext, apiKey: string, agent: VdiAgentInfo, forceAdd = false): Promise<{ id: number; warning: string | null } | PortalFail> {
     const link = await deps.agentLink(ctx.organizationId, agent.userId);
+    const accountId = ctx.externalAccountId ?? null;
+    const synced = !forceAdd && link.synced && accountId !== null && link.externalAccountId === accountId;
     const mapped = mapAgentToVdi(agent, link.externalId);
     if (!mapped.ok) return fail("VALIDATION_ERROR", mapped.reason);
     const fp = vdiAgentFingerprint(mapped.payload);
     if (!ctx.allowLiveRequests) return { id: link.externalId, warning: null };
-    if (link.synced && link.fingerprint === fp) return { id: link.externalId, warning: null };
-    let res = await call(apiKey, "/api", link.synced ? "edit" : "add", mapped.payload);
+    if (synced && link.fingerprint === fp) return { id: link.externalId, warning: null };
+    let res = await call(apiKey, "/api", synced ? "edit" : "add", mapped.payload);
     if (!res.ok) return res;
     let parsed = parseVdiAgentResponse(res.body);
-    if (!parsed.ok && link.synced && parsed.notFound) {
+    if (!parsed.ok && synced && parsed.notFound) {
       res = await call(apiKey, "/api", "add", mapped.payload);
       if (!res.ok) return res;
       parsed = parseVdiAgentResponse(res.body);
-    } else if (!parsed.ok && link.synced) {
+    } else if (!parsed.ok && synced) {
       const listing = parseVdiResponse(res.body);
-      await deps.markAgentSynced(ctx.organizationId, agent.userId, parsed.text, null);
+      await deps.markAgentSynced(ctx.organizationId, agent.userId, parsed.text, null, accountId);
       if (!listing.ok && (listing.kind === "invalid_key" || listing.kind === "expired")) return rejection(listing, res.status, res.body);
       return { id: link.externalId, warning: `Datele agentului nu au fost actualizate pe VDI.ro: ${parsed.text}` };
     }
     if (!parsed.ok) {
       const listing = parseVdiResponse(res.body);
-      await deps.markAgentSynced(ctx.organizationId, agent.userId, parsed.text, null);
+      await deps.markAgentSynced(ctx.organizationId, agent.userId, parsed.text, null, accountId);
       if (!listing.ok && (listing.kind === "invalid_key" || listing.kind === "expired")) return rejection(listing, res.status, res.body);
       return fail("VALIDATION_ERROR", `VDI.ro (agent): ${parsed.text}`, { httpStatus: res.status, portalResponse: res.body });
     }
-    await deps.markAgentSynced(ctx.organizationId, agent.userId, null, fp);
+    await deps.markAgentSynced(ctx.organizationId, agent.userId, null, fp, accountId);
     return { id: link.externalId, warning: null };
   }
 
@@ -138,9 +140,21 @@ export function createVdiAdapter(deps: VdiDeps): PortalAdapter {
     if (!ctx.allowLiveRequests) {
       return { ok: true, data: { externalId, live: false, detail: `vdi_dry_run cat=${cat} idintern=${externalId}`, message: "Trimiterile reale către VDI.ro sunt oprite: anunțul a fost doar validat local." } };
     }
-    const res = await call(apiKey, "/apioferte", cat, mapped.payload as unknown as Record<string, unknown>);
+    let res = await call(apiKey, "/apioferte", cat, mapped.payload as unknown as Record<string, unknown>);
     if (!res.ok) return res;
-    const parsed = parseVdiResponse(res.body, cat);
+    let parsed = parseVdiResponse(res.body, cat);
+    // Recovery is deliberately bounded: add the missing agent, then retry the
+    // exact listing operation once. Other not-found errors never enter here.
+    const missingAgent = !parsed.ok && /agentul\s+cu\s+id\s+intern\s+\d+\s+nu a fost g[aă]sit/i.test(parsed.text);
+    if (missingAgent && loaded.agent) {
+      await deps.markAgentSynced(ctx.organizationId, loaded.agent.userId, parsed.ok ? null : parsed.text, null, ctx.externalAccountId ?? null);
+      const recovered = await ensureAgent(ctx, apiKey, loaded.agent, true);
+      if ("ok" in recovered) return recovered;
+      agentWarning = recovered.warning;
+      res = await call(apiKey, "/apioferte", cat, mapped.payload as unknown as Record<string, unknown>);
+      if (!res.ok) return res;
+      parsed = parseVdiResponse(res.body, cat);
+    }
     if (!parsed.ok) return rejection(parsed, res.status, res.body);
     const allWarnings = [...mapped.warnings, ...(agentWarning ? [agentWarning] : []), ...(parsed.warning ? [`Atenționare VDI.ro: ${parsed.warning}`] : [])];
     const warn = allWarnings.length ? ` ${allWarnings.join(" ")}` : "";
@@ -334,22 +348,24 @@ const realDeps: VdiDeps = {
       .upsert({ organization_id: organizationId, portal: "vdi", user_id: userId }, { onConflict: "organization_id,portal,user_id", ignoreDuplicates: true });
     const { data } = await db
       .from("portal_agent_links")
-      .select("external_id, synced_at, sent_fingerprint")
+      .select("external_id, synced_at, sent_fingerprint, external_account_id")
       .eq("organization_id", organizationId)
       .eq("portal", "vdi")
       .eq("user_id", userId)
       .single();
     if (!data) throw new Error("Maparea agentului VDI.ro nu a putut fi creată.");
-    return { externalId: Number(data.external_id), synced: data.synced_at !== null, fingerprint: data.sent_fingerprint };
+    return { externalId: Number(data.external_id), synced: data.synced_at !== null, fingerprint: data.sent_fingerprint, externalAccountId: data.external_account_id };
   },
-  async markAgentSynced(organizationId, userId, error, fingerprint) {
+  async markAgentSynced(organizationId, userId, error, fingerprint, externalAccountId) {
     const db = await admin();
-    await db
+    const missingAgent = error && /agentul\s+cu\s+id\s+intern\s+\d+\s+nu a fost g[aă]sit/i.test(error);
+    const { error: saveError } = await db
       .from("portal_agent_links")
-      .update(error ? { last_error: error.slice(0, 500), updated_at: new Date().toISOString() } : { synced_at: new Date().toISOString(), last_error: null, updated_at: new Date().toISOString(), ...(fingerprint ? { sent_fingerprint: fingerprint } : {}) })
+      .update(error ? { last_error: error.slice(0, 500), updated_at: new Date().toISOString(), ...(missingAgent ? { synced_at: null, sent_fingerprint: null } : {}) } : { external_account_id: externalAccountId, synced_at: new Date().toISOString(), last_error: null, updated_at: new Date().toISOString(), ...(fingerprint ? { sent_fingerprint: fingerprint } : {}) })
       .eq("organization_id", organizationId)
       .eq("portal", "vdi")
       .eq("user_id", userId);
+    if (saveError) throw new Error(saveError.message);
   },
   async applyRemoteStates(organizationId, items) {
     const db = await admin();

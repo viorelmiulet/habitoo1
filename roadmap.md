@@ -1,3 +1,9 @@
+# VDI — agenți legați de cont
+
+- [x] Cont VDI pe legătură, reset automat la schimbarea contului și recuperare agent negăsit o singură dată
+- [x] Legăturile MRM 1000/1013 marcate nesincronizate, cont origine 720 păstrat; HB-1170/HB-1174/HB-1175 încă publicate pe 720, fără modificarea anunțurilor sau apeluri VDI
+- [x] 59 teste mock trec; reset cont schimbat și păstrare cont identic verificate într-o tranzacție anulată; aplicația fără erori
+
 # Galerie modele Poster
 
 - [x] Șase modele pe toate formatele, toate opțiunile și fotografii publicabile
