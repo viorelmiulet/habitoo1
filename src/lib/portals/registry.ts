@@ -74,6 +74,8 @@ export type PortalDefinition = {
   directions: PortalDirection[];
   authentication: PortalAuthenticationMode[];
   capabilities: PortalCapability[];
+  /** Mesajele clienților sunt preluate efectiv ca lead-uri în CRM. Metadată publică, nu operație de publicare. */
+  receives_leads?: boolean;
   configuration_schema: { fields: PortalConfigField[] };
   website?: string;
   docs?: string;
@@ -182,6 +184,7 @@ export const PORTALS: PortalDefinition[] = [
   },
   {
     id: "properstar",
+    receives_leads: true,
     activation: "self_service",
     display_name: "Properstar",
     description:
@@ -376,6 +379,7 @@ export const PORTALS: PortalDefinition[] = [
   },
   {
     id: "storia",
+    receives_leads: true,
     activation: "oauth",
     display_name: "Storia.ro",
     description:
@@ -516,6 +520,7 @@ export const PORTALS: PortalDefinition[] = [
   },
   {
     id: "vdi",
+    receives_leads: true,
     // Ca Imospot: cererea se aprobă automat, VDI.ro emite cheia, Superadminul o introduce.
     activation: "approval",
     display_name: "VDI.ro",
