@@ -30,3 +30,4 @@
 - Subdirectories (e.g. `src/lib`, `src/lib/meta`) have their own `AGENTS.md`; read it before changing files there.
 - VDI agent synchronization is account-scoped in `portal_agent_links.external_account_id`; connection-account changes reset sync through a database trigger, and listing missing-agent recovery is limited to one add and one retry. Why: immutable agent IDs can exist on the old account but not the current one.
 - Video music uses private `video-music` storage with superadmin writes and signed reads; video/Reel posts record `music_track_id`. Facebook Reels use the Meta boundary and GET-only social-temp completion. Why: private tokens, music provenance and no duplicate publishing.
+- No global `entities` aliases or version overrides. Why: consumers require different majors and package exports.
