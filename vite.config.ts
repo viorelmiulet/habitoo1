@@ -5,9 +5,18 @@
 //     React/TanStack dedupe, error logger plugins, and sandbox detection (port/host/strictPort).
 // You can pass additional config via defineConfig({ vite: { ... }, etc... }) if needed.
 import { defineConfig } from "@lovable.dev/vite-tanstack-config";
+import { loadEnv } from "vite";
+import path from "node:path";
+
+Object.assign(process.env, loadEnv(process.env["NODE_ENV"] ?? "development", process.cwd(), ""));
 
 export default defineConfig({
   vite: {
+    resolve: { alias: {
+      "entities/lib/decode.js": path.resolve("node_modules/entities/lib/decode.js"),
+      "entities/lib/encode.js": path.resolve("node_modules/entities/lib/encode.js"),
+      "entities": path.resolve("node_modules/entities"),
+    } },
     // Permite testarea locală a separării de domenii (site public vs subdomeniul CRM).
     server: { allowedHosts: ["habitoo.ro", "www.habitoo.ro", "crm.habitoo.ro"] },
   },

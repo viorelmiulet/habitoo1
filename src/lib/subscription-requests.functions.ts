@@ -10,12 +10,22 @@ export const getSubscriptionChoices = createServerFn({ method: "POST" }).middlew
   const summary = summarySchema.parse(data);
   const { data: requests, error: requestError } = await context.supabase.from("subscription_requests").select("*").eq("organization_id", summary.organizationId).order("requested_at", { ascending: false }).limit(30);
   if (requestError) throw new Error(requestError.message);
-  return { ...summary, requests: requests ?? [] };
+  const { subscriptionEmailEvidence } = await import("./subscription-request-email.server");
+  const emails = await subscriptionEmailEvidence((requests ?? []).map(r => r.id));
+  return { ...summary, requests: (requests ?? []).map(r => ({ ...r, email: emails.get(r.id) ?? null })) };
 });
 export const submitSubscriptionRequest = createServerFn({ method: "POST" }).middleware([requireSupabaseAuth]).inputValidator((input: unknown) => subscriptionChoiceSchema.parse(input)).handler(async ({ data, context }) => {
   await assertNoActiveImpersonation(context.userId);
   const { data: id, error } = await context.supabase.rpc("submit_subscription_request", { _plan: data.plan, _term: data.term, _note: data.note ?? "", _replace: data.replace ?? undefined });
   if (error) throw new Error(error.code === "23505" ? "Există deja o cerere în așteptare. O poți schimba sau anula." : error.message);
+  if (id) {
+    try {
+      const { notifySubscriptionRequest } = await import("./subscription-request-email.server");
+      await notifySubscriptionRequest(id, context.userId);
+    } catch {
+      console.error("[subscription-request] Email notification could not be recorded");
+    }
+  }
   return { id };
 });
 export const cancelSubscriptionRequest = createServerFn({ method: "POST" }).middleware([requireSupabaseAuth]).inputValidator((input: unknown) => z.object({ requestId: z.string().uuid() }).parse(input)).handler(async ({ data, context }) => {
@@ -33,7 +43,9 @@ export const listSubscriptionRequests = createServerFn({ method: "POST" }).middl
   const profiles = ids.length ? await context.supabase.from("profiles").select("id, full_name").in("id", ids) : { data: [], error: null };
   if (profiles.error) throw new Error(profiles.error.message);
   const names = new Map((profiles.data ?? []).map(p => [p.id, p.full_name]));
-  return (data ?? []).map(r => ({ ...r, organizationName: r.organizations?.name ?? "Agenție", requestedByName: names.get(r.requested_by) ?? "Administrator agenție" }));
+  const { subscriptionEmailEvidence } = await import("./subscription-request-email.server");
+  const emails = await subscriptionEmailEvidence((data ?? []).map(r => r.id));
+  return (data ?? []).map(r => ({ ...r, email: emails.get(r.id) ?? null, organizationName: r.organizations?.name ?? "Agenție", requestedByName: names.get(r.requested_by) ?? "Administrator agenție" }));
 });
 export const resolveSubscriptionRequest = createServerFn({ method: "POST" }).middleware([requireSupabaseAuth]).inputValidator((input: unknown) => subscriptionResolutionSchema.parse(input)).handler(async ({ data, context }) => {
   await assertNoActiveImpersonation(context.userId);

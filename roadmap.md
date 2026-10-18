@@ -1,5 +1,6 @@
 # Cereri abonament
 
+- [ ] Email automat la cerere nouă, confirmare și conținut afișate în cerere; teste fără trimiteri reale
 - [x] Alegere plan pentru administratorul agenției, benzi și acces când contul este suspendat
 - [x] Cereri unice în așteptare, anulare/schimbare, notificări și rezolvare tranzacțională cu activarea existentă
 - [x] SuperAdmin: listă, activare cu date editabile și respingere cu motiv
