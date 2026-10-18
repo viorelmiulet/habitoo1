@@ -5,6 +5,8 @@ import { AuthShell } from "@/components/auth/AuthShell";
 import { Button } from "@/components/ui/button";
 import type { OrgBlockReason } from "@/lib/org-access";
 import { clearAuthenticatedSession } from "@/lib/sign-out";
+import { useCurrentUser } from "@/hooks/use-session";
+import { SubscriptionRequestAction } from "@/components/app/SubscriptionRequestAction";
 
 /** Text dedicat pentru fiecare motiv de blocare, cu indicația cui să se adreseze. */
 const BLOCKED: Record<
@@ -58,6 +60,7 @@ const BLOCKED: Record<
 export function OrgBlocked({ reason }: { reason: OrgBlockReason }) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { data: user } = useCurrentUser();
   const info = BLOCKED[reason];
   const Icon = info.icon;
 
@@ -73,6 +76,7 @@ export function OrgBlocked({ reason }: { reason: OrgBlockReason }) {
           <Icon className="size-6" />
         </span>
         <p className="text-sm text-muted-foreground">{info.contact}</p>
+        {user ? <SubscriptionRequestAction user={user} /> : null}
         <Button variant="outline" className="w-full" onClick={signOut}>
           Deconectare
         </Button>

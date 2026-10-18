@@ -15,7 +15,7 @@
 - Lead deletion is soft: only RPCs `delete_lead`/`restore_lead` touch `leads.deleted_at` (guard trigger + RLS hide deleted rows from non-superadmins; admin-client reads filter `deleted_at`). Why: only superadmin restores or hard-deletes.
 - Account/agency deletion and cross-agency reassignment run only through `account_deletion_jobs` (worker in `src/lib/account-deletion.server.ts`, cron armed on enqueue). Why: portal withdrawals and storage moves must finish before rows change or disappear.
 - `properties.assigned_to` changes only via `reassignProperties` (manager/superadmin; trigger `guard_property_reassign`). Why: reassignment stays manager-only with slot checks.
-- Public prices and structured offers read display prices; billing and seat limits stay separate. Why: billing stays separate.
+- Public offers use display prices; billing/seats stay separate. Subscription requests follow src/lib/AGENTS.md. Why: one renewal flow.
 - Collaboration auto-activation lives only in the DB (insert trigger `properties_auto_collaboration`, RPC `collaboration_auto_activate`), copying the agency default commission only when none is explicit; `collaboration_opted_out` is never overridden. Why: one rule for all inserts.
 - Key-request emails (Imospot, VDI.ro) use `notifyKeyRequest` over `KEY_REQUEST_PORTALS`; `provider_notified_at` prevents duplicates. Why: one send, one flow for every portal.
 - `HomeHeader` on homepage + blog (`PublicLayout homeHeader`); else `PublicHeader`. Why: isolate fixed overlay.

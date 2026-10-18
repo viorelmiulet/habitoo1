@@ -8437,6 +8437,56 @@ export type Database = {
         }
         Relationships: []
       }
+      subscription_requests: {
+        Row: {
+          id: string
+          note: string | null
+          organization_id: string
+          plan: string
+          rejection_reason: string | null
+          requested_at: string
+          requested_by: string
+          resolved_at: string | null
+          resolved_by: string | null
+          status: string
+          term: string
+        }
+        Insert: {
+          id?: string
+          note?: string | null
+          organization_id: string
+          plan: string
+          rejection_reason?: string | null
+          requested_at?: string
+          requested_by: string
+          resolved_at?: string | null
+          resolved_by?: string | null
+          status?: string
+          term: string
+        }
+        Update: {
+          id?: string
+          note?: string | null
+          organization_id?: string
+          plan?: string
+          rejection_reason?: string | null
+          requested_at?: string
+          requested_by?: string
+          resolved_at?: string | null
+          resolved_by?: string | null
+          status?: string
+          term?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "subscription_requests_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       support_ticket_messages: {
         Row: {
           body: string
@@ -8767,6 +8817,10 @@ export type Database = {
       }
       can_access_contract: { Args: { _contract_id: string }; Returns: boolean }
       can_access_ticket: { Args: { _ticket_id: string }; Returns: boolean }
+      cancel_subscription_request: {
+        Args: { _request: string }
+        Returns: undefined
+      }
       chat_directory: {
         Args: never
         Returns: {
@@ -9331,6 +9385,16 @@ export type Database = {
         Args: { _job_id: string }
         Returns: undefined
       }
+      resolve_subscription_request: {
+        Args: {
+          _expires?: string
+          _reason?: string
+          _request: string
+          _starts?: string
+          _status: string
+        }
+        Returns: undefined
+      }
       restore_lead: { Args: { _id: string }; Returns: string }
       restore_property: { Args: { _id: string }; Returns: string }
       ro_normalize_name: { Args: { _v: string }; Returns: string }
@@ -9375,8 +9439,19 @@ export type Database = {
             }
             Returns: string
           }
+      submit_subscription_request: {
+        Args: {
+          _note?: string
+          _plan: string
+          _replace?: string
+          _term: string
+        }
+        Returns: string
+      }
       subscription_cron_tick: { Args: never; Returns: Json }
       subscription_enforce_daily: { Args: never; Returns: Json }
+      subscription_request_org: { Args: never; Returns: string }
+      subscription_request_summary: { Args: never; Returns: Json }
       superadmin_delete_organization: {
         Args: { _actor?: string; _org: string }
         Returns: Json

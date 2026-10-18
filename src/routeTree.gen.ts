@@ -33,6 +33,7 @@ import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as StergereDateRouteImport } from './routes/stergere-date'
 import { Route as TermeniRouteImport } from './routes/termeni'
 import { Route as TermeniSiConditiiRouteImport } from './routes/termeni-si-conditii'
+import { Route as AuthenticatedAbonamentRouteImport } from './routes/_authenticated/abonament'
 import { Route as AuthenticatedAnunturiProprietariRouteImport } from './routes/_authenticated/anunturi-proprietari'
 import { Route as AuthenticatedAppRouteImport } from './routes/_authenticated/app'
 import { Route as AuthenticatedOnboardingRouteImport } from './routes/_authenticated/onboarding'
@@ -67,6 +68,7 @@ import { Route as AuthenticatedAppTeamRouteImport } from './routes/_authenticate
 import { Route as AuthenticatedSuperadminIndexRouteImport } from './routes/_authenticated/superadmin.index'
 import { Route as AuthenticatedSuperadminAiFeaturesRouteImport } from './routes/_authenticated/superadmin.ai-features'
 import { Route as AuthenticatedSuperadminAuditRouteImport } from './routes/_authenticated/superadmin.audit'
+import { Route as AuthenticatedSuperadminCereriAbonamentRouteImport } from './routes/_authenticated/superadmin.cereri-abonament'
 import { Route as AuthenticatedSuperadminDeletedRouteImport } from './routes/_authenticated/superadmin.deleted'
 import { Route as AuthenticatedSuperadminMailRouteImport } from './routes/_authenticated/superadmin.mail'
 import { Route as AuthenticatedSuperadminMuzicaRouteImport } from './routes/_authenticated/superadmin.muzica'
@@ -278,6 +280,11 @@ const TermeniSiConditiiRoute = TermeniSiConditiiRouteImport.update({
   path: '/termeni-si-conditii',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedAbonamentRoute = AuthenticatedAbonamentRouteImport.update({
+  id: '/abonament',
+  path: '/abonament',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedAnunturiProprietariRoute =
   AuthenticatedAnunturiProprietariRouteImport.update({
     id: '/anunturi-proprietari',
@@ -460,6 +467,12 @@ const AuthenticatedSuperadminAuditRoute =
   AuthenticatedSuperadminAuditRouteImport.update({
     id: '/audit',
     path: '/audit',
+    getParentRoute: () => AuthenticatedSuperadminRoute,
+  } as any)
+const AuthenticatedSuperadminCereriAbonamentRoute =
+  AuthenticatedSuperadminCereriAbonamentRouteImport.update({
+    id: '/cereri-abonament',
+    path: '/cereri-abonament',
     getParentRoute: () => AuthenticatedSuperadminRoute,
   } as any)
 const AuthenticatedSuperadminDeletedRoute =
@@ -1004,6 +1017,7 @@ export interface FileRoutesByFullPath {
   '/stergere-date': typeof StergereDateRoute
   '/termeni': typeof TermeniRoute
   '/termeni-si-conditii': typeof TermeniSiConditiiRoute
+  '/abonament': typeof AuthenticatedAbonamentRoute
   '/anunturi-proprietari': typeof AuthenticatedAnunturiProprietariRoute
   '/app': typeof AuthenticatedAppRouteWithChildren
   '/onboarding': typeof AuthenticatedOnboardingRoute
@@ -1036,6 +1050,7 @@ export interface FileRoutesByFullPath {
   '/app/team': typeof AuthenticatedAppTeamRouteWithChildren
   '/superadmin/ai-features': typeof AuthenticatedSuperadminAiFeaturesRoute
   '/superadmin/audit': typeof AuthenticatedSuperadminAuditRoute
+  '/superadmin/cereri-abonament': typeof AuthenticatedSuperadminCereriAbonamentRoute
   '/superadmin/deleted': typeof AuthenticatedSuperadminDeletedRoute
   '/superadmin/mail': typeof AuthenticatedSuperadminMailRoute
   '/superadmin/muzica': typeof AuthenticatedSuperadminMuzicaRoute
@@ -1152,6 +1167,7 @@ export interface FileRoutesByTo {
   '/stergere-date': typeof StergereDateRoute
   '/termeni': typeof TermeniRoute
   '/termeni-si-conditii': typeof TermeniSiConditiiRoute
+  '/abonament': typeof AuthenticatedAbonamentRoute
   '/anunturi-proprietari': typeof AuthenticatedAnunturiProprietariRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
   '/agentii/$slug': typeof AgentiiSlugRoute
@@ -1181,6 +1197,7 @@ export interface FileRoutesByTo {
   '/app/support': typeof AuthenticatedAppSupportRoute
   '/superadmin/ai-features': typeof AuthenticatedSuperadminAiFeaturesRoute
   '/superadmin/audit': typeof AuthenticatedSuperadminAuditRoute
+  '/superadmin/cereri-abonament': typeof AuthenticatedSuperadminCereriAbonamentRoute
   '/superadmin/deleted': typeof AuthenticatedSuperadminDeletedRoute
   '/superadmin/mail': typeof AuthenticatedSuperadminMailRoute
   '/superadmin/muzica': typeof AuthenticatedSuperadminMuzicaRoute
@@ -1300,6 +1317,7 @@ export interface FileRoutesById {
   '/stergere-date': typeof StergereDateRoute
   '/termeni': typeof TermeniRoute
   '/termeni-si-conditii': typeof TermeniSiConditiiRoute
+  '/_authenticated/abonament': typeof AuthenticatedAbonamentRoute
   '/_authenticated/anunturi-proprietari': typeof AuthenticatedAnunturiProprietariRoute
   '/_authenticated/app': typeof AuthenticatedAppRouteWithChildren
   '/_authenticated/onboarding': typeof AuthenticatedOnboardingRoute
@@ -1332,6 +1350,7 @@ export interface FileRoutesById {
   '/_authenticated/app/team': typeof AuthenticatedAppTeamRouteWithChildren
   '/_authenticated/superadmin/ai-features': typeof AuthenticatedSuperadminAiFeaturesRoute
   '/_authenticated/superadmin/audit': typeof AuthenticatedSuperadminAuditRoute
+  '/_authenticated/superadmin/cereri-abonament': typeof AuthenticatedSuperadminCereriAbonamentRoute
   '/_authenticated/superadmin/deleted': typeof AuthenticatedSuperadminDeletedRoute
   '/_authenticated/superadmin/mail': typeof AuthenticatedSuperadminMailRoute
   '/_authenticated/superadmin/muzica': typeof AuthenticatedSuperadminMuzicaRoute
@@ -1451,6 +1470,7 @@ export interface FileRouteTypes {
     | '/stergere-date'
     | '/termeni'
     | '/termeni-si-conditii'
+    | '/abonament'
     | '/anunturi-proprietari'
     | '/app'
     | '/onboarding'
@@ -1483,6 +1503,7 @@ export interface FileRouteTypes {
     | '/app/team'
     | '/superadmin/ai-features'
     | '/superadmin/audit'
+    | '/superadmin/cereri-abonament'
     | '/superadmin/deleted'
     | '/superadmin/mail'
     | '/superadmin/muzica'
@@ -1599,6 +1620,7 @@ export interface FileRouteTypes {
     | '/stergere-date'
     | '/termeni'
     | '/termeni-si-conditii'
+    | '/abonament'
     | '/anunturi-proprietari'
     | '/onboarding'
     | '/agentii/$slug'
@@ -1628,6 +1650,7 @@ export interface FileRouteTypes {
     | '/app/support'
     | '/superadmin/ai-features'
     | '/superadmin/audit'
+    | '/superadmin/cereri-abonament'
     | '/superadmin/deleted'
     | '/superadmin/mail'
     | '/superadmin/muzica'
@@ -1746,6 +1769,7 @@ export interface FileRouteTypes {
     | '/stergere-date'
     | '/termeni'
     | '/termeni-si-conditii'
+    | '/_authenticated/abonament'
     | '/_authenticated/anunturi-proprietari'
     | '/_authenticated/app'
     | '/_authenticated/onboarding'
@@ -1778,6 +1802,7 @@ export interface FileRouteTypes {
     | '/_authenticated/app/team'
     | '/_authenticated/superadmin/ai-features'
     | '/_authenticated/superadmin/audit'
+    | '/_authenticated/superadmin/cereri-abonament'
     | '/_authenticated/superadmin/deleted'
     | '/_authenticated/superadmin/mail'
     | '/_authenticated/superadmin/muzica'
@@ -2132,6 +2157,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TermeniSiConditiiRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/abonament': {
+      id: '/_authenticated/abonament'
+      path: '/abonament'
+      fullPath: '/abonament'
+      preLoaderRoute: typeof AuthenticatedAbonamentRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/anunturi-proprietari': {
       id: '/_authenticated/anunturi-proprietari'
       path: '/anunturi-proprietari'
@@ -2368,6 +2400,13 @@ declare module '@tanstack/react-router' {
       path: '/audit'
       fullPath: '/superadmin/audit'
       preLoaderRoute: typeof AuthenticatedSuperadminAuditRouteImport
+      parentRoute: typeof AuthenticatedSuperadminRoute
+    }
+    '/_authenticated/superadmin/cereri-abonament': {
+      id: '/_authenticated/superadmin/cereri-abonament'
+      path: '/cereri-abonament'
+      fullPath: '/superadmin/cereri-abonament'
+      preLoaderRoute: typeof AuthenticatedSuperadminCereriAbonamentRouteImport
       parentRoute: typeof AuthenticatedSuperadminRoute
     }
     '/_authenticated/superadmin/deleted': {
@@ -3105,6 +3144,7 @@ const AuthenticatedAppRouteWithChildren =
 interface AuthenticatedSuperadminRouteChildren {
   AuthenticatedSuperadminAiFeaturesRoute: typeof AuthenticatedSuperadminAiFeaturesRoute
   AuthenticatedSuperadminAuditRoute: typeof AuthenticatedSuperadminAuditRoute
+  AuthenticatedSuperadminCereriAbonamentRoute: typeof AuthenticatedSuperadminCereriAbonamentRoute
   AuthenticatedSuperadminDeletedRoute: typeof AuthenticatedSuperadminDeletedRoute
   AuthenticatedSuperadminMailRoute: typeof AuthenticatedSuperadminMailRoute
   AuthenticatedSuperadminMuzicaRoute: typeof AuthenticatedSuperadminMuzicaRoute
@@ -3128,6 +3168,8 @@ const AuthenticatedSuperadminRouteChildren: AuthenticatedSuperadminRouteChildren
     AuthenticatedSuperadminAiFeaturesRoute:
       AuthenticatedSuperadminAiFeaturesRoute,
     AuthenticatedSuperadminAuditRoute: AuthenticatedSuperadminAuditRoute,
+    AuthenticatedSuperadminCereriAbonamentRoute:
+      AuthenticatedSuperadminCereriAbonamentRoute,
     AuthenticatedSuperadminDeletedRoute: AuthenticatedSuperadminDeletedRoute,
     AuthenticatedSuperadminMailRoute: AuthenticatedSuperadminMailRoute,
     AuthenticatedSuperadminMuzicaRoute: AuthenticatedSuperadminMuzicaRoute,
@@ -3160,6 +3202,7 @@ const AuthenticatedSuperadminRouteWithChildren =
   )
 
 interface AuthenticatedRouteRouteChildren {
+  AuthenticatedAbonamentRoute: typeof AuthenticatedAbonamentRoute
   AuthenticatedAnunturiProprietariRoute: typeof AuthenticatedAnunturiProprietariRoute
   AuthenticatedAppRoute: typeof AuthenticatedAppRouteWithChildren
   AuthenticatedOnboardingRoute: typeof AuthenticatedOnboardingRoute
@@ -3167,6 +3210,7 @@ interface AuthenticatedRouteRouteChildren {
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedAbonamentRoute: AuthenticatedAbonamentRoute,
   AuthenticatedAnunturiProprietariRoute: AuthenticatedAnunturiProprietariRoute,
   AuthenticatedAppRoute: AuthenticatedAppRouteWithChildren,
   AuthenticatedOnboardingRoute: AuthenticatedOnboardingRoute,

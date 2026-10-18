@@ -136,6 +136,7 @@ export const agencyNav: NavGroup[] = [
       { label: "Tichetele mele", to: "/app/support", icon: LifeBuoy },
       { label: "Agenți", to: "/app/team", icon: Users },
       { label: "Setări agenție", to: "/app/settings", icon: Settings },
+      { label: "Alege abonamentul", to: "/abonament", icon: CalendarDays },
     ],
   },
 ];
@@ -150,7 +151,7 @@ export const agentNav: NavGroup[] = agencyNav.map((group) =>
     ? {
         ...group,
         items: [
-          ...group.items.filter((i) => i.to !== "/app/team" && i.to !== "/app/settings"),
+          ...group.items.filter((i) => i.to !== "/app/team" && i.to !== "/app/settings" && i.to !== "/abonament"),
           { label: "Profilul meu", to: "/app/settings", icon: UserRound },
         ],
       }
@@ -169,6 +170,7 @@ export const superadminNav: NavGroup[] = [
     items: [
       { label: "Agenții", to: "/superadmin/agencies", icon: Building2 },
       { label: "Stare agenții", to: "/superadmin/stare-agentii", icon: ChartBar },
+      { label: "Cereri abonament", to: "/superadmin/cereri-abonament", icon: CalendarDays },
       { label: "Utilizatori", to: "/superadmin/users", icon: Users },
       { label: "Portaluri", to: "/superadmin/portals", icon: PlugZap },
       { label: "Jurnal portaluri", to: "/superadmin/portal-logs", icon: ScrollText },
