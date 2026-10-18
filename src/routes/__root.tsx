@@ -14,6 +14,7 @@ import { useEffect, type ReactNode } from "react";
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { Toaster } from "@/components/ui/sonner";
+import { PublicTrackers } from "@/components/marketing/PublicTrackers";
 import { getCurrentHostname } from "@/lib/current-host";
 import { getCrmUrl, isCrmPath, isPublicHostname } from "@/lib/host";
 
@@ -164,6 +165,7 @@ function RootComponent() {
       {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
       <Outlet />
       <Toaster position="top-right" richColors />
+      <PublicTrackers />
     </QueryClientProvider>
   );
 }

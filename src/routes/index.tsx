@@ -16,7 +16,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { BrandLogo } from "@/components/brand/BrandLogo";
 import { CookieConsent } from "@/components/marketing/CookieConsent";
-import { PlausibleAnalytics } from "@/components/marketing/PlausibleAnalytics";
 import { CrmLink } from "@/components/marketing/CrmLink";
 import { FaqSection, faqPageJsonLd, type FaqItem } from "@/components/marketing/FaqSection";
 import { IntegratedPortalsSection } from "@/components/marketing/IntegratedPortalsSection";
@@ -326,7 +325,6 @@ function HomePage() {
       </main>
       <PublicFooter />
       <CookieConsent />
-      <PlausibleAnalytics />
     </div>
   );
 }
