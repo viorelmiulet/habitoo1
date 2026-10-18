@@ -1,3 +1,9 @@
+# VDI — agenți legați de cont
+
+- [ ] Cont VDI pe legătură, reset automat la schimbarea contului și recuperare agent negăsit o singură dată
+- [ ] Reset local al legăturilor MRM vechi; raport listări cont 720, fără apeluri VDI
+- [ ] Teste mock și verificare declanșator fără date persistente
+
 # Galerie modele Poster
 
 - [x] Șase modele pe toate formatele, toate opțiunile și fotografii publicabile
