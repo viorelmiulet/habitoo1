@@ -18,6 +18,7 @@ async function graph(path: string, token: string, params: Record<string, string>
   } catch {
     throw new MetaPostError("rejected", "Facebook nu a răspuns. Încearcă din nou.");
   }
+  if (response.status >= 500 || response.status === 429) throw new MetaPostError("rejected", "Facebook nu a răspuns. Încearcă din nou.");
   const data = await response.json().catch(() => null) as Record<string, unknown> | null;
   if (!response.ok || !data || data.error) throw classifyMetaError(data);
   return data;

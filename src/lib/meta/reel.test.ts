@@ -77,7 +77,7 @@ describe("Facebook Reel — fără rețea", () => {
       .mockResolvedValueOnce(json({ video_id: "123", upload_url: "https://rupload.facebook.com/upload" }))
       .mockResolvedValueOnce(json({ success: true }))
       .mockResolvedValueOnce(json({ success: true }))
-      .mockResolvedValue(json({ status: { video_status: "processing", publishing_phase: { status: "not_started" } } }));
+      .mockImplementation(async () => json({ status: { video_status: "processing", publishing_phase: { status: "not_started" } } }));
     expect(await publishFacebookReel(input, { fetch: f, sleep: async () => {}, pollAttempts: 3 })).toMatchObject({ status: "processing", postId: "123" });
     expect(f).toHaveBeenCalledTimes(6);
     expect(f.mock.calls.filter(([, init]) => init?.method === "POST")).toHaveLength(3);
