@@ -1,19 +1,31 @@
 /**
  * Postare pe pagina de Facebook — părți pure, testabile (fără rețea, fără DB).
  */
-import { META_GRAPH_VERSION } from "./core";
+import { META_GRAPH_VERSION } from "./constants";
 import { offerShareUrl } from "@/lib/share";
 
-export type MetaPostKind = "photos" | "poster" | "video" | "link";
+export type MetaPostKind = "photos" | "poster" | "video" | "reel" | "link";
 export const META_POST_MAX_PHOTOS = 10;
 export const META_VIDEO_MAX_BYTES = 100 * 1024 * 1024;
 export const META_GRAPH_VIDEO_BASE = `https://graph-video.facebook.com/${META_GRAPH_VERSION}`;
+export const META_REEL_PROCESSING_MESSAGE = "Facebook procesează Reel-ul, poate dura câteva minute";
+export type ReelVideoInfo = { width: number; height: number; duration: number };
+
+export function reelVideoError(info: ReelVideoInfo | null, file: Pick<Blob, "size" | "type"> | null): string | null {
+  if (!file || !info) return "Pentru Reel, generează video-ul vertical";
+  if (file.size > META_VIDEO_MAX_BYTES) return "Video-ul pentru Reel depășește 100 MB. Generează un video mai scurt.";
+  if (!file.type.toLowerCase().startsWith("video/mp4")) return "Pentru Reel este necesar un video MP4. Generează-l în Chrome sau Edge.";
+  if (!(info.width > 0 && info.height > 0) || Math.abs(info.width / info.height - 9 / 16) > 0.001) return "Pentru Reel, generează video-ul vertical";
+  if (!Number.isFinite(info.duration) || info.duration < 3 || info.duration > 90) return "Pentru Reel, video-ul trebuie să aibă între 3 și 90 de secunde.";
+  return null;
+}
 
 export type MetaPostStep =
   | { endpoint: "photos"; mode: "url"; published: true }
   | { endpoint: "photos"; mode: "url"; published: false }
   | { endpoint: "photos"; mode: "source"; published: true }
   | { endpoint: "videos"; mode: "source" }
+  | { endpoint: "video_reels"; mode: "resumable" }
   | { endpoint: "feed"; withAttachedMedia: boolean; withLink: boolean };
 
 /** Endpointurile apelate, în ordine, pentru tipul de postare. */
@@ -21,6 +33,7 @@ export function planMetaPost(kind: MetaPostKind, photoCount = 0): MetaPostStep[]
   if (kind === "link") return [{ endpoint: "feed", withAttachedMedia: false, withLink: true }];
   if (kind === "poster") return [{ endpoint: "photos", mode: "source", published: true }];
   if (kind === "video") return [{ endpoint: "videos", mode: "source" }];
+  if (kind === "reel") return [{ endpoint: "video_reels", mode: "resumable" }];
   if (photoCount < 1) throw new Error("Alege cel puțin o poză.");
   if (photoCount > META_POST_MAX_PHOTOS) throw new Error(`Maximum ${META_POST_MAX_PHOTOS} poze.`);
   if (photoCount === 1) return [{ endpoint: "photos", mode: "url", published: true }];

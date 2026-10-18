@@ -3,11 +3,11 @@
  * Nu conține niciun secret; cheile se primesc ca parametri doar pe server.
  */
 import { createHmac, randomBytes, timingSafeEqual } from "node:crypto";
+import { META_GRAPH_VERSION } from "./constants";
+export { META_GRAPH_VERSION, META_GRAPH_BASE } from "./constants";
 
 export const META_APP_ID = "1074962072209272";
 export const META_CONFIG_ID = "929047083622427";
-export const META_GRAPH_VERSION = "v26.0";
-export const META_GRAPH_BASE = `https://graph.facebook.com/${META_GRAPH_VERSION}`;
 export const META_REDIRECT_URI = "https://crm.habitoo.ro/api/public/meta/oauth/callback";
 export const META_STATE_TTL_MS = 10 * 60 * 1000;
 

@@ -17,7 +17,7 @@ export const Route = createFileRoute("/api/public/cron/social-temp")({
         const cutoff = new Date(Date.now() - 24 * 3600 * 1000).toISOString();
         const [{ data: old }, { data: pending }] = await Promise.all([
           db.from("social_temp_files").select("path").lt("created_at", cutoff).limit(500),
-          db.from("meta_posts").select("id, organization_id, property_id, posted_by, page_name, page_id, kind, container_id, processing_until").eq("status", "processing").limit(20),
+          db.from("meta_posts").select("id, organization_id, property_id, posted_by, page_name, page_id, kind, platform, container_id, processing_until").eq("status", "processing").in("platform", ["facebook", "instagram"]).order("created_at").limit(20),
         ]);
         let deleted = 0;
         let finished = 0;
@@ -35,6 +35,10 @@ export const Route = createFileRoute("/api/public/cron/social-temp")({
           const fin = await import("@/lib/meta/instagram-finalize.server");
           const { decryptPortalCredential } = await import("@/lib/portals/crypto.server");
           for (const row of pending) {
+            if (row.platform === "facebook") {
+              if (row.kind === "reel" && await (await import("@/lib/meta/reel-finalize.server")).reconcileFacebookReel(db, row)) finished++;
+              continue;
+            }
             const { data: acc } = await db.from("meta_instagram_accounts").select("meta_pages(page_token_enc)").eq("organization_id", row.organization_id).eq("ig_user_id", row.page_id).maybeSingle();
             const { data: conn } = await db.from("meta_connections").select("id").eq("organization_id", row.organization_id).maybeSingle();
             const token = acc?.meta_pages?.page_token_enc ? decryptPortalCredential(acc.meta_pages.page_token_enc) : null;

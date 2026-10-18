@@ -71,7 +71,7 @@ export function PropertyPromotionTab({
   const [videoOpen, setVideoOpen] = useState(false);
   const [videoFormat, setVideoFormat] = useState<VideoFormat>("vertical");
   const [pendingUpload, setPendingUpload] = useState<VideoUploadNetwork | null>(null);
-  const [videoResult, setVideoResult] = useState<{ blob: Blob; name: string; format: VideoFormat; musicTrackId?: string | null } | null>(null);
+  const [videoResult, setVideoResult] = useState<{ blob: Blob; name: string; format: VideoFormat; musicTrackId?: string | null; videoInfo: import("@/lib/meta/post-core").ReelVideoInfo | null } | null>(null);
   const [qrOpen, setQrOpen] = useState(false);
   const [metaOpen, setMetaOpen] = useState(false);
   const [igOpen, setIgOpen] = useState(false);
@@ -334,9 +334,11 @@ export function PropertyPromotionTab({
           initialText={text}
           photos={selected.filter((id) => urls[id]).map((id) => ({ id, url: urls[id] as string }))}
           video={videoResult?.blob ?? null}
+          videoInfo={videoResult?.videoInfo ?? null}
           musicTrackId={videoResult?.musicTrackId ?? null}
           onCreatePoster={() => { setMetaOpen(false); onOpenPoster?.(); }}
           onCreateVideo={() => { setMetaOpen(false); setPendingUpload(null); setVideoOpen(true); }}
+          onCreateVerticalVideo={() => { setMetaOpen(false); setPendingUpload(null); setVideoFormat("vertical"); setVideoOpen(true); }}
           onPosted={() => void metaQ.refetch()}
         />
       ) : null}

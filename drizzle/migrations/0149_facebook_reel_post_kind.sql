@@ -1,0 +1,2 @@
+ALTER TABLE public.meta_posts DROP CONSTRAINT meta_posts_kind_check;
+ALTER TABLE public.meta_posts ADD CONSTRAINT meta_posts_kind_check CHECK (kind IN ('photos','poster','video','reel','link','ig_poster','ig_album','ig_photo','ig_reel','ig_story','yt_video'));
