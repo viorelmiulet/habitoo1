@@ -18,7 +18,7 @@ import {
 
 type Photo = { id: string; url: string; alt: string | null };
 
-export function PropertyVideoCard({ photos, listing, propertyId, shareText = "", initialFormat = "vertical", onResult }: { photos: Photo[]; listing: VideoListing; propertyId: string; shareText?: string; initialFormat?: VideoFormat; onResult?: (r: { blob: Blob; name: string; format: VideoFormat; musicTrackId: string | null }) => void }) {
+export function PropertyVideoCard({ photos, listing, propertyId, shareText = "", initialFormat = "vertical", onResult }: { photos: Photo[]; listing: VideoListing; propertyId: string; shareText?: string; initialFormat?: VideoFormat; onResult?: (r: { blob: Blob; name: string; format: VideoFormat; musicTrackId: string | null; videoInfo: import("@/lib/meta/post-core").ReelVideoInfo | null }) => void }) {
   const logShare = useShareLogger(propertyId);
   const [phoneShare, setPhoneShare] = useState(false);
   useEffect(() => { setPhoneShare(canShareFiles(navigator)); }, []);
@@ -109,7 +109,8 @@ export function PropertyVideoCard({ photos, listing, propertyId, shareText = "",
         overlay: buildVideoOverlay({ ...listing, logoUrl: hasLogo ? listing.logoUrl : null }, { ...opts, showLogo: opts.showLogo && hasLogo }),
       });
       setResult({ url: URL.createObjectURL(r.blob), name: videoFileName(listing.reference, format, r.ext), webm: r.ext === "webm", blob: r.blob });
-      onResult?.({ blob: r.blob, name: videoFileName(listing.reference, format, r.ext), format, musicTrackId: track?.id ?? null });
+      const videoInfo = await (await import("@/lib/meta/reel-video")).inspectReelVideo(r.blob).catch(() => null);
+      onResult?.({ blob: r.blob, name: videoFileName(listing.reference, format, r.ext), format, musicTrackId: track?.id ?? null, videoInfo });
     } catch (e) {
       if ((e as Error).name !== "AbortError") {
         setError((e as Error).message === "TRACK" ? "Piesa aleasă nu a putut fi încărcată. Încearcă din nou." : (e as Error).message === "UNSUPPORTED"
