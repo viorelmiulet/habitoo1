@@ -1,3 +1,9 @@
+# Pagina publică /integrari
+
+- [ ] Ilustrație HTML/CSS, carduri unite și grupate, etichete din registru
+- [ ] ItemList, data sitemap și teste pentru unicitate, linkuri și capabilități
+- [ ] Verificare pagină desktop/mobil și reducerea mișcării, fără modificarea detaliilor
+
 # Cereri abonament
 
 - [x] Email automat la cerere nouă către adresa operațională Habitoo, confirmare/conținut în cerere; 11 teste fără trimiteri reale și verificare locală a detaliilor expandabile
