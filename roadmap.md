@@ -1,8 +1,8 @@
 # Pagina publică /integrari
 
-- [ ] Ilustrație HTML/CSS, carduri unite și grupate, etichete din registru
-- [ ] ItemList, data sitemap și teste pentru unicitate, linkuri și capabilități
-- [ ] Verificare pagină desktop/mobil și reducerea mișcării, fără modificarea detaliilor
+- [x] Ilustrație HTML/CSS, carduri unite și grupate, etichete din registru
+- [x] ItemList, data sitemap și 31 teste pentru unicitate, linkuri și capabilități
+- [x] Verificare desktop, telefon, tabletă și reducerea mișcării; 14 legături existente, imagini încărcate, fără erori sau modificarea detaliilor
 
 # Cereri abonament
 

@@ -26,10 +26,11 @@ describe("public integrations overview", () => {
   it("derives labels from changed capabilities rather than portal names", () => {
     const def = getPortalDefinition("storia");
     if (!def) throw new Error("missing Storia registry entry");
-    const minimal: PortalDefinition = { ...def, capabilities: [], activation: "approval", receives_leads: false };
+    const minimal: PortalDefinition = { ...def, capabilities: [], activation: "approval", receives_leads: false, withdraws_via_feed: false };
     expect(integrationBadges(minimal)).toEqual([]);
     expect(integrationBadges({ ...minimal, capabilities: ["publish_listing", "withdraw_listing"], receives_leads: true, activation: "self_service" })).toEqual(["Publicare directă", "Retragere automată", "Lead-uri în CRM", "Activezi singur"]);
-    expect(integrationBadges({ ...minimal, capabilities: ["publish_listing", "feed_pull"] })).toEqual(["Preluare automată", "Retragere automată"]);
+    expect(integrationBadges({ ...minimal, capabilities: ["publish_listing", "feed_pull"] })).toEqual(["Preluare automată"]);
+    expect(integrationBadges({ ...minimal, capabilities: ["feed_pull"], withdraws_via_feed: true })).toEqual(["Preluare automată", "Retragere automată"]);
   });
   it("feed portals are not presented as direct publication", () => {
     for (const id of ["clickimob", "imove", "homepitch", "properstar", "facebook_catalog"]) {

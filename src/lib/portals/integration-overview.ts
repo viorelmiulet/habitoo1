@@ -26,7 +26,7 @@ export function integrationBadges(def: PortalDefinition): string[] {
   const badges: string[] = [];
   if (def.capabilities.includes("publish_listing") && !feed) badges.push("Publicare directă");
   if (feed) badges.push("Preluare automată");
-  if (def.capabilities.includes("withdraw_listing") || (feed && def.id !== "facebook_catalog")) badges.push("Retragere automată");
+  if (def.capabilities.includes("withdraw_listing") || (feed && def.withdraws_via_feed)) badges.push("Retragere automată");
   if (def.receives_leads) badges.push("Lead-uri în CRM");
   if (def.activation === "self_service" || def.activation === "oauth") badges.push("Activezi singur");
   return badges;

@@ -76,6 +76,8 @@ export type PortalDefinition = {
   capabilities: PortalCapability[];
   /** Mesajele clienților sunt preluate efectiv ca lead-uri în CRM. Metadată publică, nu operație de publicare. */
   receives_leads?: boolean;
+  /** Retrait réel via disparition du flux; présentation uniquement. */
+  withdraws_via_feed?: boolean;
   configuration_schema: { fields: PortalConfigField[] };
   website?: string;
   docs?: string;
@@ -155,6 +157,7 @@ export const PORTALS: PortalDefinition[] = [
   },
   {
     id: "imove",
+    withdraws_via_feed: true,
     display_name: "iMove.ro",
     description:
       "iMove citește periodic feedul JSON Habitoo și importă automat ofertele selectate. Retragerea se face prin dispariția ofertei din feed.",
@@ -184,6 +187,7 @@ export const PORTALS: PortalDefinition[] = [
   },
   {
     id: "properstar",
+    withdraws_via_feed: true,
     receives_leads: true,
     activation: "self_service",
     display_name: "Properstar",
@@ -313,6 +317,7 @@ export const PORTALS: PortalDefinition[] = [
   },
   {
     id: "homepitch",
+    withdraws_via_feed: true,
     display_name: "HomePitch.ro",
     description:
       "HomePitch citește feedul dedicat Habitoo cu o cheie emisă de noi și, opțional, primește o notificare de import instant la bifarea unei oferte.",
