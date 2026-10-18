@@ -6,6 +6,38 @@
 
 .sheet-thumbnail { aspect-ratio: 210 / 297; }
 
+/* Public integration illustration: CSS connectors; no continuous movement. */
+.integration-map-content { position: relative; height: 410px; }
+.integration-map-listing { position: absolute; width: 300px; left: 50%; top: 50%; transform: translate(-50%, -50%); z-index: 2; }
+.integration-map-nodes { position: absolute; inset: 0; }
+.integration-node { position: absolute; width: 195px; min-height: 66px; transform: translate(-50%, -50%); background: var(--color-card); border: 1px solid var(--color-border); border-radius: 8px; padding: 10px 12px; z-index: 1; }
+.integration-node-0, .integration-node-1, .integration-node-2, .integration-node-3 { left: 15%; }
+.integration-node-4, .integration-node-5, .integration-node-6, .integration-node-7 { left: 85%; }
+.integration-node-0, .integration-node-4 { top: 10%; }
+.integration-node-1, .integration-node-5 { top: 37%; }
+.integration-node-2, .integration-node-6 { top: 63%; }
+.integration-node-3, .integration-node-7 { top: 90%; }
+.integration-map-lines { position: absolute; inset: 0; }
+.integration-line { position: absolute; border-color: var(--color-gold); border-style: solid; border-width: 0; opacity: .55; transform-origin: center; animation: integration-connect .6s ease-out both; }
+.integration-line-0, .integration-line-1, .integration-line-2, .integration-line-3 { left: 15%; right: 50%; border-right-width: 1px; }
+.integration-line-4, .integration-line-5, .integration-line-6, .integration-line-7 { left: 50%; right: 15%; border-left-width: 1px; }
+.integration-line-0, .integration-line-4 { top: 10%; bottom: 50%; border-top-width: 1px; }
+.integration-line-1, .integration-line-5 { top: 37%; bottom: 50%; border-top-width: 1px; }
+.integration-line-2, .integration-line-6 { top: 50%; bottom: 37%; border-bottom-width: 1px; }
+.integration-line-3, .integration-line-7 { top: 50%; bottom: 10%; border-bottom-width: 1px; }
+.integration-line-1 { animation-delay: .1s; } .integration-line-2 { animation-delay: .2s; } .integration-line-3 { animation-delay: .3s; }
+.integration-line-4 { animation-delay: .4s; } .integration-line-5 { animation-delay: .5s; } .integration-line-6 { animation-delay: .6s; } .integration-line-7 { animation-delay: .7s; }
+@keyframes integration-connect { from { opacity: 0; transform: scaleX(.1); } to { opacity: .55; transform: scaleX(1); } }
+@media (max-width: 767px) {
+  .integration-map-content { height: auto; }
+  .integration-map-listing { position: relative; left: auto; top: auto; transform: none; width: min(300px, 100%); margin: 0 auto 24px; }
+  .integration-map-lines { display: none; }
+  .integration-map-nodes { position: static; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+  .integration-node { position: static; width: auto; transform: none; min-width: 0; padding: 10px 8px; }
+  .integration-node > div { flex-direction: column; gap: 6px; align-items: flex-start; }
+}
+@media (prefers-reduced-motion: reduce) { .integration-line { animation: none; transform: none; opacity: .55; } }
+
 /*
  * Habitoo CRM — design system
  * Premium SaaS look: cool slate neutrals, deep teal primary, warm amber accent.

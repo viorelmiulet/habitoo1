@@ -1,3 +1,9 @@
+# Pagina publică /integrari
+
+- [x] Ilustrație HTML/CSS, carduri unite și grupate, etichete din registru
+- [x] ItemList, data sitemap și 31 teste pentru unicitate, linkuri și capabilități
+- [x] Verificare desktop, telefon, tabletă și reducerea mișcării; 14 legături existente, imagini încărcate, fără erori sau modificarea detaliilor
+
 # Cereri abonament
 
 - [x] Email automat la cerere nouă către adresa operațională Habitoo, confirmare/conținut în cerere; 11 teste fără trimiteri reale și verificare locală a detaliilor expandabile

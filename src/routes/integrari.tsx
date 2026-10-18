@@ -1,6 +1,11 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { CtaBand } from "@/components/marketing/CtaBand";
-import { PortalGrid } from "@/components/marketing/PortalGrid";
+import { IntegrationsOverview } from "@/components/marketing/IntegrationsOverview";
+import { IntegrationsIllustration } from "@/components/marketing/IntegrationsIllustration";
+import { CrmLink } from "@/components/marketing/CrmLink";
+import { Button } from "@/components/ui/button";
+import { ArrowRight } from "lucide-react";
+import { integrationItemListJsonLd } from "@/lib/portals/integration-overview";
 import { PublicLayout } from "@/components/marketing/PublicLayout";
 import { Container, Section, SectionHeading } from "@/components/marketing/Section";
 import { publicHead } from "@/components/marketing/public-head";
@@ -11,18 +16,16 @@ const DESCRIPTION = "Introduci anunțul o singură dată în Habitoo și alegi, 
 const META_DESCRIPTION = "CRM imobiliar Habitoo publică anunțurile pe Storia, OLX, Imobiliare.ro, Romimo, Imospot, VDI.ro și alte portaluri. Introduci anunțul o dată, alegi unde apare.";
 
 export const MULTI_PORTAL_INTRO = [
-  "Majoritatea agențiilor își publică anunțurile pe mai multe portaluri, pentru că fiecare portal aduce alți clienți. Problema apare la lucrul de zi cu zi: același anunț trebuie scris în fiecare cont, cu aceleași poze, iar fiecare schimbare de preț trebuie făcută de mai multe ori. Când proprietatea se vinde, e ușor să rămână un anunț uitat pe un portal, iar clienții sună degeaba.",
-  "Cu Habitoo introduci anunțul o singură dată, în fișa proprietății: datele, pozele, descrierea și agentul responsabil. Apoi, în fila Publicare, alegi pe ce portaluri apare. Bifezi portalurile dorite și apeși Publică, iar Habitoo trimite anunțul spre fiecare. Trimiterea continuă și dacă închizi pagina, iar dacă un portal respinge anunțul primești o notificare cu motivul.",
-  "Când schimbi prețul sau pozele, modifici o singură dată în Habitoo și trimiți varianta nouă pe toate portalurile alese. Unele portaluri primesc anunțul imediat, altele îl preiau singure, periodic, din Habitoo; pe pagina fiecărei integrări scrie exact cum funcționează.",
-  "Când renunți la un portal, îl debifezi și anunțul se retrage de acolo. Când proprietatea devine Vândută, Închiriată sau Arhivată, anunțul se retrage automat de pe portalurile care permit asta, fără să intri în fiecare cont. Astfel, ce văd clienții online rămâne la fel cu ce ai în CRM.",
-  "Toată echipa lucrează în același sistem. Pe fiecare proprietate vezi pe ce portaluri este publicată, când a fost trimisă ultima dată și dacă a apărut o problemă. Mesajele clienților de pe portalurile care permit asta ajung direct în CRM, ca lead-uri, la agentul proprietății, ca să nu se piardă nicio cerere.",
-  "Fiecare portal se activează separat, din Setări → Portaluri, de către administratorul agenției. Alege mai jos un portal ca să vezi ce poți face cu el, cum îl activezi și ce e bine de știut.",
+  "Fiecare portal aduce alți clienți. Cu Habitoo nu mai copiezi același anunț în fiecare cont: introduci datele și pozele o singură dată, apoi alegi portalurile din fila Publicare.",
+  "Apeși Publică și trimiterea continuă chiar dacă închizi pagina. Modifici prețul sau pozele tot în Habitoo; portalurile primesc varianta nouă direct sau la următoarea preluare.",
+  "La Vândută, Închiriată sau Arhivată, anunțul se retrage automat de pe portalurile care permit asta. Vezi starea fiecărei publicări și primești o notificare dacă apare o problemă.",
+  "Mesajele de pe portalurile compatibile ajung ca lead-uri la agentul proprietății. Administratorul activează fiecare integrare din Setări → Portaluri; detaliile și limitele sunt pe pagina ei.",
 ];
 
 const deliveryDescriptions = [
-  "Trimitere directă: Habitoo trimite anunțul către portal când îl publici; actualizările se trimit când apeși «Publică», iar la Vândut, Închiriat sau Arhivat anunțul este retras automat.",
-  "Feed: anunțurile selectate apar în feedul Habitoo, pe care portalul îl citește periodic; modificările și retragerile apar la următoarea citire a portalului.",
-  "Catalog Facebook: anunțurile pe care le activezi intră în feedul de catalog citit de Meta Commerce Manager; un anunț dezactivat sau vândut iese din catalog la următoarea citire.",
+  "Publicare directă: apeși Publică pentru a trimite anunțul și modificările. Retragerea automată este disponibilă doar pe portalurile care o permit.",
+  "Preluare automată: portalul citește periodic ofertele alese din Habitoo. Modificările și retragerile apar la următoarea preluare.",
+  "Catalog Facebook: alegi anunțurile pentru reclame. Cele dezactivate sau vândute ies din catalog la următoarea preluare.",
 ];
 
 export const Route = createFileRoute("/integrari")({
@@ -30,7 +33,7 @@ export const Route = createFileRoute("/integrari")({
     path: "/integrari",
     title: TITLE,
     description: META_DESCRIPTION,
-    jsonLd: pageJsonLd({ path: "/integrari", name: "Integrări cu portalurile imobiliare", description: DESCRIPTION }),
+    jsonLd: [...pageJsonLd({ path: "/integrari", name: "Integrări cu portalurile imobiliare", description: DESCRIPTION }), integrationItemListJsonLd()],
   }),
   component: IntegrationsPage,
 });
@@ -38,17 +41,24 @@ export const Route = createFileRoute("/integrari")({
 function IntegrationsPage() {
   return (
     <PublicLayout footerDescription="CRM imobiliar pentru agențiile din România, într-o singură platformă.">
-      <section className="mk-hero-bg border-b border-border">
-        <Container className="py-16 sm:py-20 lg:py-24">
+      <section className="overflow-hidden border-b border-border bg-background">
+        <Container className="pt-12 pb-8 sm:pt-16 sm:pb-12">
           <SectionHeading as="h1" title="Integrări cu portalurile imobiliare" text={DESCRIPTION} />
+          <div className="mt-6 flex flex-col items-center justify-center gap-3 sm:flex-row">
+            <Button asChild size="lg"><CrmLink to="/register">Creează agenția <ArrowRight /></CrmLink></Button>
+            <Button asChild size="lg" variant="outline"><Link to="/contact" search={{ interes: "demo" }}>Solicită o demonstrație</Link></Button>
+          </div>
+          <IntegrationsIllustration />
         </Container>
       </section>
-      <Section>
+      <Section className="py-10 sm:py-12 lg:py-16">
         <Container className="max-w-3xl space-y-4 text-base leading-relaxed text-foreground sm:text-lg">
           <h2 className="text-2xl font-semibold tracking-tight text-navy">Publici pe mai multe portaluri dintr-un singur loc</h2>
           {MULTI_PORTAL_INTRO.map((p) => <p key={p}>{p}</p>)}
         </Container>
-        <Container><PortalGrid linkToPages /></Container>
+      </Section>
+      <Section className="pt-0 sm:pt-0 lg:pt-0">
+        <Container><IntegrationsOverview /></Container>
         <Container className="mt-10 text-center">
           <p className="text-sm text-muted-foreground">
             Ai întrebări despre publicare? Vezi{" "}

@@ -12,6 +12,7 @@
 - Table `agent_portal_preferences` is kept but unused by code: Publicare never preselects portals. Why: "Portalurile mele" was removed; data preserved.
 - Property publication cards share checkbox state and query only the assigned agent's slots; the server checks publication. Why: no duplicate state.
 - Public portal grids share registry data. Why: sync.
+- The integrations overview derives groups, badges and lead claims from registry metadata in a separate presentation module. Why: no duplicates or false claims; detail pages and publishing stay unchanged.
 - Failure alerts use stable IDs per org, listing, portal, error and user. Why: no duplicates.
 - Storia webhook requires the documented OLX signature (401 otherwise), processes inline within 1500 ms (`processWithinBudget`) then returns 200; timeouts/failures arm the retry cron (`storia_webhook_retry_arm`, max 5 attempts) because post-response work does not run in production; `portal_listings.last_event_at` drops older events. Why: OLX wants <2s replies and gives no ordering.
 - Storia messages with no recognised listing go only to `portal_unmatched_messages` (SuperAdmin-only, manual assignment); never guess an agency. Leads group by `conversation_id`; every message notifies the agent. Why: no cross-agency leaks, no lost messages.
