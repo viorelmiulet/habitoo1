@@ -177,12 +177,12 @@ describe("mapper", () => {
 });
 
 describe("adaptor (mock)", () => {
-  const ctx = { organizationId: "org", portalCredential: "k", allowLiveRequests: true, settings: {} } as unknown as PortalContext;
-  function deps(agentEmail: string | null, responses: unknown[], link: { externalId: number; synced: boolean; fingerprint?: string | null } = { externalId: 1001, synced: false }) {
+  const ctx = { organizationId: "org", externalAccountId: "755", portalCredential: "k", allowLiveRequests: true, settings: {} } as unknown as PortalContext;
+  function deps(agentEmail: string | null, responses: unknown[], link: { externalId: number; synced: boolean; externalAccountId?: string | null; fingerprint?: string | null } = { externalId: 1001, synced: false }) {
     const calls: { endpoint: string; cat: string; body: unknown }[] = [];
     const d: VdiDeps = {
       loadProperty: async () => ({ ok: true, property: base, agent: { userId: "u1", fullName: "Ana Pop", email: agentEmail, phone: null, avatarUrl: null } }),
-      agentLink: async () => link,
+      agentLink: async () => ({ externalAccountId: "755", ...link }),
       markAgentSynced: vi.fn(async () => {}),
       applyRemoteStates: async () => 0,
       call: (async (_k: string, endpoint: string, cat: string, body: unknown) => {
@@ -238,6 +238,47 @@ describe("adaptor (mock)", () => {
     const { d, calls } = deps("ana@x.ro", [{ eroare: "Agentul cu id intern 1000 nu a fost gasit" }, { succes: 1000 }, { eroare: "Proprietatea a fost adaugata. ID: VDI1.5 | Link: https://vdi.ro/a/5" }], { externalId: 1000, synced: true, fingerprint: null });
     await createVdiAdapter(d).publishListing(ctx, { propertyId: "p", externalId: "1172" });
     expect(calls.map((c) => `${c.endpoint}:${c.cat}`)).toEqual(["/api:edit", "/api:add", "/apioferte:mod"]);
+  });
+
+  it("cont schimbat 720 → 755: add chiar dacă amprenta este identică", async () => {
+    const fp = vdiAgentFingerprint({ idintern: 1013, firstname: "Ana", lastname: "Pop", email: "ana@x.ro" });
+    const { d, calls } = deps("ana@x.ro", [{ succes: 1013 }, { succes: 1260 }], { externalId: 1013, synced: true, externalAccountId: "720", fingerprint: fp });
+    const out = await createVdiAdapter(d).publishListing(ctx, { propertyId: "p", externalId: null });
+    expect(out.ok).toBe(true);
+    expect(calls.map(c => `${c.endpoint}:${c.cat}`)).toEqual(["/api:add", "/apioferte:add"]);
+    expect(d.markAgentSynced).toHaveBeenCalledWith("org", "u1", null, fp, "755");
+  });
+
+  it("contul agentului necunoscut: add, nu presupune contul curent", async () => {
+    const { d, calls } = deps("ana@x.ro", [{ succes: 1001 }, { succes: 1260 }], { externalId: 1001, synced: true, externalAccountId: null });
+    await createVdiAdapter(d).publishListing(ctx, { propertyId: "p", externalId: null });
+    expect(calls.map(c => `${c.endpoint}:${c.cat}`)).toEqual(["/api:add", "/apioferte:add"]);
+  });
+
+  it.each(["add", "mod"] as const)("agent negăsit în anunț: add + o singură reîncercare %s", async cat => {
+    const fp = vdiAgentFingerprint({ idintern: 1013, firstname: "Ana", lastname: "Pop", email: "ana@x.ro" });
+    const { d, calls } = deps("ana@x.ro", [{ eroare: "Agentul cu id intern 1013 nu a fost gasit!" }, { succes: 1013 }, { succes: 1260 }], { externalId: 1013, synced: true, fingerprint: fp });
+    const out = await createVdiAdapter(d).publishListing(ctx, { propertyId: "p", externalId: cat === "mod" ? "1260" : null });
+    expect(out.ok).toBe(true);
+    expect(calls.map(c => `${c.endpoint}:${c.cat}`)).toEqual([`/apioferte:${cat}`, "/api:add", `/apioferte:${cat}`]);
+    expect(calls[0]?.body).toEqual(calls[2]?.body);
+  });
+
+  it("agent negăsit și după reîncercare: eroare finală, fără buclă", async () => {
+    const fp = vdiAgentFingerprint({ idintern: 1013, firstname: "Ana", lastname: "Pop", email: "ana@x.ro" });
+    const error = { eroare: "Agentul cu id intern 1013 nu a fost gasit!" };
+    const { d, calls } = deps("ana@x.ro", [error, { succes: 1013 }, error], { externalId: 1013, synced: true, fingerprint: fp });
+    const out = await createVdiAdapter(d).publishListing(ctx, { propertyId: "p", externalId: null });
+    expect(out).toMatchObject({ ok: false, message: "VDI.ro: Agentul cu id intern 1013 nu a fost gasit!" });
+    expect(calls).toHaveLength(3);
+  });
+
+  it("add de recuperare eșuat: nu reîncearcă anunțul", async () => {
+    const fp = vdiAgentFingerprint({ idintern: 1013, firstname: "Ana", lastname: "Pop", email: "ana@x.ro" });
+    const { d, calls } = deps("ana@x.ro", [{ eroare: "Agentul cu id intern 1013 nu a fost gasit!" }, { eroare: "Date invalide" }], { externalId: 1013, synced: true, fingerprint: fp });
+    const out = await createVdiAdapter(d).publishListing(ctx, { propertyId: "p", externalId: null });
+    expect(out.ok).toBe(false);
+    expect(calls.map(c => `${c.endpoint}:${c.cat}`)).toEqual(["/apioferte:add", "/api:add"]);
   });
 });
 
