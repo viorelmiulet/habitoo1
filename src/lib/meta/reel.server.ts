@@ -68,8 +68,13 @@ export async function publishFacebookReel(input: {
   if (uploaded?.success !== true) throw new MetaPostError("rejected", "Facebook nu a confirmat încărcarea Reel-ului.");
   // Persist the identifier before finish: status checks must never submit finish twice.
   await input.onSubmitted(videoId);
-  const finish = await graph(`${input.pageId}/video_reels`, input.pageToken, { upload_phase: "finish", video_id: videoId, video_state: "PUBLISHED", description: input.message }, f);
-  if (finish.success !== true) throw new MetaPostError("rejected", "Facebook nu a confirmat publicarea Reel-ului.");
+  try {
+    const finish = await graph(`${input.pageId}/video_reels`, input.pageToken, { upload_phase: "finish", video_id: videoId, video_state: "PUBLISHED", description: input.message }, f);
+    if (finish.success !== true) throw new MetaPostError("rejected", "Facebook nu a confirmat publicarea Reel-ului.");
+  } catch (e) {
+    if (e instanceof MetaPostError && e.message === "Facebook nu a răspuns. Încearcă din nou.") return { status: "processing", postId: videoId, permalink: null };
+    throw e;
+  }
   const sleep = deps.sleep ?? ((ms: number) => new Promise<void>((r) => setTimeout(r, ms)));
   for (let attempt = 0; attempt < (deps.pollAttempts ?? 3); attempt++) {
     if (attempt) await sleep(5000);
