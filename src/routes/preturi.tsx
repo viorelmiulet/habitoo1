@@ -84,7 +84,7 @@ const included = [
 const faq: FaqItem[] = [
   {
     q: "Cum funcționează perioada gratuită?",
-    a: "Orice agenție nouă primește 30 de zile de acces gratuit, fără card bancar, indiferent de planul ales. La final, plătești planul dorit pentru a continua.",
+    a: "Orice agenție nouă primește 90 de zile de acces gratuit, fără card bancar, indiferent de planul ales. La final, plătești planul dorit pentru a continua.",
   },
   {
     q: "Cum funcționează reducerea la plata anuală?",
@@ -226,7 +226,7 @@ function PlanCard({ plan: p }: { plan: (typeof plans)[number] }) {
             p.featured ? "text-navy-foreground" : "text-success",
           )}
         >
-          30 de zile gratuit, fără card bancar
+          90 de zile gratuit, fără card bancar
         </p>
         <Button
           asChild
@@ -259,7 +259,7 @@ function PricingPage() {
             as="h1"
             eyebrow="Prețuri"
             title="Trei planuri simple, cu prețuri clare"
-            text="Alege plata lunară sau anuală pentru fiecare plan. La plata anuală tariful lunar scade cu 50%, iar factura se emite o singură dată pentru 12 luni. Toate planurile încep cu 30 de zile gratuite."
+            text="Alege plata lunară sau anuală pentru fiecare plan. La plata anuală tariful lunar scade cu 50%, iar factura se emite o singură dată pentru 12 luni. Toate planurile încep cu 90 de zile gratuite."
           />
         </Container>
       </section>
