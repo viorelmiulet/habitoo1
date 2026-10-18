@@ -62,11 +62,13 @@ export async function publishToMetaPage(input: MetaPublishInput, f: Fetch = fetc
     const r = await call(f, url, fd);
     postId = String(r.post_id ?? r.id);
   } else if (steps.length === 1) {
-    const r = await call(f, `${META_GRAPH_BASE}/${pageId}/photos`, form({ url: input.photoUrls![0]!, message: input.message }, token));
+    const firstPhoto = input.photoUrls?.[0];
+    if (!firstPhoto) throw new MetaPostError("rejected", "Alege cel puțin o poză.");
+    const r = await call(f, `${META_GRAPH_BASE}/${pageId}/photos`, form({ url: firstPhoto, message: input.message }, token));
     postId = String(r.post_id ?? r.id);
   } else {
     const ids: string[] = [];
-    for (const url of input.photoUrls!) {
+    for (const url of input.photoUrls ?? []) {
       const r = await call(f, `${META_GRAPH_BASE}/${pageId}/photos`, form({ url, published: "false" }, token));
       ids.push(String(r.id));
     }
