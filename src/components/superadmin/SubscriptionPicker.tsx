@@ -1,5 +1,5 @@
 /**
- * Termenul abonamentului agenției: 30 de zile, 12 luni sau fără termen. Data de
+ * Termenul abonamentului agenției: perioade de probă, 30 de zile, 12 luni sau fără termen. Data de
  * expirare se calculează în baza de date, din momentul salvării — niciodată
  * introdusă manual. Componentă comună paginilor „Agenții” și „Stare agenții”.
  */

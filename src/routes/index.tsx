@@ -58,11 +58,11 @@ const faq: FaqItem[] = [
   },
   {
     q: "Cât costă Habitoo CRM?",
-    a: "Habitoo are trei planuri: Basic la 10 €/lună, pentru până la 3 agenți; Pro la 40 €/lună, pentru până la 10 agenți; Unlimited la 100 €/lună, fără limită de agenți. La plata anuală prețul lunar scade cu 50%. Toate planurile încep cu 30 de zile gratuite, fără card bancar.",
+    a: "Habitoo are trei planuri: Basic la 10 €/lună, pentru până la 3 agenți; Pro la 40 €/lună, pentru până la 10 agenți; Unlimited la 100 €/lună, fără limită de agenți. La plata anuală prețul lunar scade cu 50%. Toate planurile încep cu 90 de zile gratuite, fără card bancar.",
   },
   {
     q: "Pot testa Habitoo gratuit?",
-    a: "Da. Orice agenție poate folosi Habitoo gratuit 30 de zile, fără card bancar. Îți creezi agenția, inviți colegii și adaugi proprietăți, iar la final alegi planul potrivit.",
+    a: "Da. Orice agenție poate folosi Habitoo gratuit 90 de zile, fără card bancar. Îți creezi agenția, inviți colegii și adaugi proprietăți, iar la final alegi planul potrivit.",
   },
   {
     q: "Datele agenției mele sunt separate de ale altor agenții?",

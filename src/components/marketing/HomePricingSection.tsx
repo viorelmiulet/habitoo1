@@ -63,7 +63,7 @@ export function HomePricingSection() {
                 <p className={cn("mt-6 text-sm font-medium", featured ? "text-navy-foreground" : "text-foreground")}>
                   {key === "unlimited" ? "agenți fără limită" : `până la ${PLAN_AGENT_LIMITS[key]} agenți`}
                 </p>
-                <p className={cn("mt-2 text-sm", featured ? "text-navy-foreground" : "text-success")}>30 de zile gratuit, fără card bancar</p>
+                <p className={cn("mt-2 text-sm", featured ? "text-navy-foreground" : "text-success")}>90 de zile gratuit, fără card bancar</p>
               </div>
             );
           })}
