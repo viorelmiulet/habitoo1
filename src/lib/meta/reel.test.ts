@@ -93,4 +93,12 @@ describe("Facebook Reel — fără rețea", () => {
       .mockResolvedValueOnce(json({ error: { code: 352, message: "Invalid video format" } }, 400));
     await expect(publishFacebookReel(input, { fetch: f })).rejects.toMatchObject({ kind: "rejected", raw: "Invalid video format" });
   });
+  it("timeout după finish păstrează procesarea și nu republică", async () => {
+    const f = vi.fn<typeof fetch>()
+      .mockResolvedValueOnce(json({ video_id: "123", upload_url: "https://rupload.facebook.com/upload" }))
+      .mockResolvedValueOnce(json({ success: true }))
+      .mockRejectedValueOnce(new Error("network timeout"));
+    expect(await publishFacebookReel(input, { fetch: f })).toMatchObject({ status: "processing", postId: "123" });
+    expect(f).toHaveBeenCalledTimes(3);
+  });
 });
