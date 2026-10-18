@@ -1037,6 +1037,13 @@
       "when": 1792094897821,
       "tag": "0147_relax_video_music_checks",
       "breakpoints": true
+    },
+    {
+      "idx": 148,
+      "version": "7",
+      "when": 1792296820582,
+      "tag": "0148_vdi_agent_account_scope",
+      "breakpoints": true
     }
   ]
 }

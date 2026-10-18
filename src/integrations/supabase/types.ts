@@ -4878,6 +4878,7 @@ export type Database = {
       portal_agent_links: {
         Row: {
           created_at: string
+          external_account_id: string | null
           external_id: number
           id: string
           last_error: string | null
@@ -4890,6 +4891,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          external_account_id?: string | null
           external_id?: number
           id?: string
           last_error?: string | null
@@ -4902,6 +4904,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          external_account_id?: string | null
           external_id?: number
           id?: string
           last_error?: string | null
