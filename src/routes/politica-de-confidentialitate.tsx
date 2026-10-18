@@ -258,7 +258,14 @@ const sections: LegalSection[] = [
           formularelor și memorarea preferinței tale de consimțământ) — acestea nu pot fi
           dezactivate fără a afecta funcționarea platformei; <strong>analiză</strong> și{" "}
           <strong>marketing</strong> — dezactivate implicit și folosite numai dacă îți dai acordul
-          explicit. În acest moment nu folosim cookie-uri de analiză sau de marketing.
+          explicit.
+        </p>
+        <p>
+          <strong>Google Ads.</strong> Pe site-ul public (habitoo.ro) folosim eticheta Google Ads,
+          furnizată de Google Ireland Limited, pentru măsurarea și personalizarea reclamelor
+          noastre. Eticheta se încarcă și setează cookie-uri numai după ce îți dai acordul pentru
+          categoria „Marketing”; dacă îți retragi acordul, nu mai este încărcată. Nu o folosim în
+          aplicația CRM.
         </p>
         <p>
           Pe site-ul public poți accepta toate categoriile, le poți refuza (păstrând doar cele
