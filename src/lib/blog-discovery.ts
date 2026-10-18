@@ -41,7 +41,7 @@ export const PAGE_LASTMOD: Record<string, string> = {
   "/preturi": "2026-10-04",
   "/despre": "2026-09-27",
   "/contact": "2026-09-27",
-  "/integrari": "2026-10-10",
+  "/integrari": "2026-10-18",
   "/intrebari-frecvente": "2026-10-10",
   "/termeni": "2026-10-05",
   "/politica-de-confidentialitate": "2026-09-27",
