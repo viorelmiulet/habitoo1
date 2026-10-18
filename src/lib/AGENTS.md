@@ -2,3 +2,4 @@
 - Partner-offer handler mocks run with `vitest.partner-offers.config.ts`. Why: isolate read-query tests from the application's server-function transport transform.
 - Company data comes from ANAF only via `src/lib/company-lookup.ts` (pure, injected fetch) with 24h `company_lookup_cache`; org sync fills empty fields only. Why: ANAF rate limit; user edits win.
 - Subscription requests use transactional authenticated RPCs, organization locks, a pending-only unique index and atomic notifications; approval calls set_organization_subscription. A profile-and-role helper scopes suspended admins without current_org. Why: renewal stays available without opening CRM access or duplicating activation.
+- Subscription request emails synchronously use the registered managed template and the platform contact inbox; outcomes are existing audit events read only for RLS-visible request IDs. Why: show durable send evidence without an email queue or new email tables.

@@ -125,6 +125,7 @@ import { Route as ApiPublicMetaDeauthorizeRouteImport } from './routes/api/publi
 import { Route as ApiPublicPartnerLogoIdRouteImport } from './routes/api/public/partner-logo/$id'
 import { Route as LovableEmailAuthPreviewRouteImport } from './routes/lovable/email/auth/preview'
 import { Route as LovableEmailAuthWebhookRouteImport } from './routes/lovable/email/auth/webhook'
+import { Route as LovableEmailTransactionalPreviewRouteImport } from './routes/lovable/email/transactional/preview'
 import { Route as AuthenticatedAppAcpDatePiataIndexRouteImport } from './routes/_authenticated/app.acp.date-piata.index'
 import { Route as AuthenticatedAppAcpDatePiataIdRouteImport } from './routes/_authenticated/app.acp.date-piata.$id'
 import { Route as AuthenticatedSuperadminBlogPreviewIdRouteImport } from './routes/_authenticated/superadmin.blog.preview.$id'
@@ -794,6 +795,12 @@ const LovableEmailAuthWebhookRoute = LovableEmailAuthWebhookRouteImport.update({
   path: '/lovable/email/auth/webhook',
   getParentRoute: () => rootRouteImport,
 } as any)
+const LovableEmailTransactionalPreviewRoute =
+  LovableEmailTransactionalPreviewRouteImport.update({
+    id: '/lovable/email/transactional/preview',
+    path: '/lovable/email/transactional/preview',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const AuthenticatedAppAcpDatePiataIndexRoute =
   AuthenticatedAppAcpDatePiataIndexRouteImport.update({
     id: '/acp/date-piata/',
@@ -1101,6 +1108,7 @@ export interface FileRoutesByFullPath {
   '/api/public/partner-logo/$id': typeof ApiPublicPartnerLogoIdRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
+  '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
   '/app/acp/': typeof AuthenticatedAppAcpIndexRoute
   '/app/contacts/': typeof AuthenticatedAppContactsIndexRoute
   '/app/contracts/': typeof AuthenticatedAppContractsIndexRoute
@@ -1248,6 +1256,7 @@ export interface FileRoutesByTo {
   '/api/public/partner-logo/$id': typeof ApiPublicPartnerLogoIdRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
+  '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
   '/app/acp': typeof AuthenticatedAppAcpIndexRoute
   '/app/contacts': typeof AuthenticatedAppContactsIndexRoute
   '/app/contracts': typeof AuthenticatedAppContractsIndexRoute
@@ -1401,6 +1410,7 @@ export interface FileRoutesById {
   '/api/public/partner-logo/$id': typeof ApiPublicPartnerLogoIdRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
+  '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
   '/_authenticated/app/acp/': typeof AuthenticatedAppAcpIndexRoute
   '/_authenticated/app/contacts/': typeof AuthenticatedAppContactsIndexRoute
   '/_authenticated/app/contracts/': typeof AuthenticatedAppContractsIndexRoute
@@ -1554,6 +1564,7 @@ export interface FileRouteTypes {
     | '/api/public/partner-logo/$id'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
+    | '/lovable/email/transactional/preview'
     | '/app/acp/'
     | '/app/contacts/'
     | '/app/contracts/'
@@ -1701,6 +1712,7 @@ export interface FileRouteTypes {
     | '/api/public/partner-logo/$id'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
+    | '/lovable/email/transactional/preview'
     | '/app/acp'
     | '/app/contacts'
     | '/app/contracts'
@@ -1853,6 +1865,7 @@ export interface FileRouteTypes {
     | '/api/public/partner-logo/$id'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
+    | '/lovable/email/transactional/preview'
     | '/_authenticated/app/acp/'
     | '/_authenticated/app/contacts/'
     | '/_authenticated/app/contracts/'
@@ -1957,6 +1970,7 @@ export interface RootRouteChildren {
   ApiPublicPartnerLogoIdRoute: typeof ApiPublicPartnerLogoIdRoute
   LovableEmailAuthPreviewRoute: typeof LovableEmailAuthPreviewRoute
   LovableEmailAuthWebhookRoute: typeof LovableEmailAuthWebhookRoute
+  LovableEmailTransactionalPreviewRoute: typeof LovableEmailTransactionalPreviewRoute
   ApiPublicCatalogV1FacebookDotcsvRoute: typeof ApiPublicCatalogV1FacebookDotcsvRoute
   ApiPublicFeedProperstarAgencyKeyRoute: typeof ApiPublicFeedProperstarAgencyKeyRoute
   ApiPublicHomepitchV1PropertiesRoute: typeof ApiPublicHomepitchV1PropertiesRouteWithChildren
@@ -2801,6 +2815,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LovableEmailAuthWebhookRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/lovable/email/transactional/preview': {
+      id: '/lovable/email/transactional/preview'
+      path: '/lovable/email/transactional/preview'
+      fullPath: '/lovable/email/transactional/preview'
+      preLoaderRoute: typeof LovableEmailTransactionalPreviewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authenticated/app/acp/date-piata/': {
       id: '/_authenticated/app/acp/date-piata/'
       path: '/acp/date-piata'
@@ -3338,6 +3359,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicPartnerLogoIdRoute: ApiPublicPartnerLogoIdRoute,
   LovableEmailAuthPreviewRoute: LovableEmailAuthPreviewRoute,
   LovableEmailAuthWebhookRoute: LovableEmailAuthWebhookRoute,
+  LovableEmailTransactionalPreviewRoute: LovableEmailTransactionalPreviewRoute,
   ApiPublicCatalogV1FacebookDotcsvRoute: ApiPublicCatalogV1FacebookDotcsvRoute,
   ApiPublicFeedProperstarAgencyKeyRoute: ApiPublicFeedProperstarAgencyKeyRoute,
   ApiPublicHomepitchV1PropertiesRoute:

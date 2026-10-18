@@ -1,5 +1,6 @@
 # Cereri abonament
 
+- [x] Email automat la cerere nouă către adresa operațională Habitoo, confirmare/conținut în cerere; 11 teste fără trimiteri reale și verificare locală a detaliilor expandabile
 - [x] Alegere plan pentru administratorul agenției, benzi și acces când contul este suspendat
 - [x] Cereri unice în așteptare, anulare/schimbare, notificări și rezolvare tranzacțională cu activarea existentă
 - [x] SuperAdmin: listă, activare cu date editabile și respingere cu motiv
