@@ -1,4 +1,4 @@
-import { Link } from "@tanstack/react-router";
+import { SubscriptionRequestAction } from "@/components/app/SubscriptionRequestAction";
 import { Sparkles } from "lucide-react";
 import { formatDate } from "@/lib/format";
 import { isTrialTerm, subscriptionState } from "@/lib/subscription";
@@ -36,14 +36,7 @@ export function TrialBanner({ user }: { user: CurrentUser }) {
       <Sparkles className="size-4 shrink-0" />
       <span className="font-semibold">Perioadă de testare · {zile}</span>
       <span className="opacity-90">se încheie pe {formatDate(state.expiresAt)}</span>
-      {state.canActivate ? (
-        <Link
-          to="/preturi"
-          className="rounded-md bg-info px-2.5 py-1 text-xs font-semibold text-info-foreground underline-offset-2 hover:underline"
-        >
-          Activează acum
-        </Link>
-      ) : null}
+      {state.canActivate ? <SubscriptionRequestAction user={user} /> : null}
     </div>
   );
 }

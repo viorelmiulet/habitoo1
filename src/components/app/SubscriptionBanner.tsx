@@ -2,6 +2,7 @@ import { AlertTriangle } from "lucide-react";
 import { formatDate } from "@/lib/format";
 import { graceBannerText, graceHeadline, subscriptionState } from "@/lib/subscription";
 import type { CurrentUser } from "@/hooks/use-session";
+import { SubscriptionRequestAction } from "@/components/app/SubscriptionRequestAction";
 
 /**
  * Banda roșie permanentă din perioada de grație. O vede doar administratorul
@@ -21,9 +22,9 @@ export function SubscriptionBanner({ user }: { user: CurrentUser }) {
       <AlertTriangle className="size-4 shrink-0" />
       <span>{graceBannerText(state.daysLeft)}</span>
       <span className="font-normal opacity-90">
-        {graceHeadline(isTrial)} pe {formatDate(state.expiresAt)}. Contactează administratorul
-        platformei pentru {isTrial ? "activarea abonamentului" : "reînnoire"}.
+        {graceHeadline(isTrial)} pe {formatDate(state.expiresAt)}.
       </span>
+      <SubscriptionRequestAction user={user} />
     </div>
   );
 }

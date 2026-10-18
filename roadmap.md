@@ -1,3 +1,10 @@
+# Cereri abonament
+
+- [ ] Alegere plan pentru administratorul agenției, benzi și acces când contul este suspendat
+- [ ] Cereri unice în așteptare, anulare/schimbare, notificări și rezolvare tranzacțională cu activarea existentă
+- [ ] SuperAdmin: listă, activare cu date editabile și respingere cu motiv
+- [ ] Teste fără emailuri sau activări reale și verificare în browser
+
 # Facebook Reel
 
 - [x] Opțiune Reel, validare MP4 vertical 9:16 și 3–90 secunde, preselectare și creare verticală
