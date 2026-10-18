@@ -1,8 +1,9 @@
 # Facebook Reel
 
-- [ ] Opțiune Reel, validare MP4 vertical 9:16 și 3–90 secunde, preselectare și creare verticală
-- [ ] Flux start/upload/finish, verificare status durabilă, istoric și piesă muzicală
-- [ ] Teste mock și verificare dialog fără postare reală
+- [x] Opțiune Reel, validare MP4 vertical 9:16 și 3–90 secunde, preselectare și creare verticală
+- [x] Flux start/upload/finish, verificare status durabilă, istoric și piesă muzicală
+- [x] 46 teste mock/metadate MP4 și dialog desktop/mobil verificat cu date simulate, fără postare reală
+- [ ] Verificare în contul solicitantului — sesiunea automată nu găsește contul; conectarea în previzualizare este necesară
 
 # VDI — agenți legați de cont
 
