@@ -89,7 +89,7 @@ export const getMetaPostingContext = createServerFn({ method: "GET" })
 const PostInput = z.object({
   propertyId: z.string().uuid(),
   pageId: z.string().min(1).max(64),
-  kind: z.enum(["photos", "poster", "video", "link"]),
+  kind: z.enum(["photos", "poster", "video", "reel", "link"]),
   message: z.string().max(60000),
   photoIds: z.array(z.string().uuid()).max(10),
 });
@@ -116,8 +116,13 @@ export const publishMetaPost = createServerFn({ method: "POST" })
       throw new Error("Poți posta doar pentru proprietățile tale.");
     }
     const kind = data.kind as MetaPostKind;
-    if ((kind === "poster" || kind === "video") && !data.file) throw new Error(kind === "video" ? "Creează întâi video-ul." : "Creează întâi posterul.");
-    if (kind === "video" && data.file!.size > core.META_VIDEO_MAX_BYTES) throw new Error("Video-ul depășește 100 MB.");
+    if ((kind === "poster" || kind === "video" || kind === "reel") && !data.file) throw new Error(kind === "poster" ? "Creează întâi posterul." : "Creează întâi video-ul.");
+    if ((kind === "video" || kind === "reel") && data.file && data.file.size > core.META_VIDEO_MAX_BYTES) throw new Error("Video-ul depășește 100 MB. Generează un video mai scurt.");
+    if (kind === "reel" && data.file) {
+      const info = await (await import("./reel-video")).inspectReelVideo(data.file);
+      const error = core.reelVideoError(info, data.file);
+      if (error) throw new Error(error);
+    }
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -149,14 +154,31 @@ export const publishMetaPost = createServerFn({ method: "POST" })
     const token = decryptPortalCredential(page.page_token_enc);
     if (!token) throw new Error(core.META_RECONNECT_MESSAGE + ".");
 
-    const { data: row } = await db
+    const { data: row, error: insertError } = await db
       .from("meta_posts")
-      .insert({ organization_id: p.organization_id, property_id: p.id, page_id: page.page_id, page_name: page.name, kind, status: "pending", posted_by: ctx.userId, music_track_id: kind === "video" ? (await import("@/lib/video-music")).cleanTrackId(data.musicTrackId) : null })
+      .insert({ organization_id: p.organization_id, property_id: p.id, page_id: page.page_id, page_name: page.name, kind, status: "pending", posted_by: ctx.userId, music_track_id: kind === "video" || kind === "reel" ? (await import("@/lib/video-music")).cleanTrackId(data.musicTrackId) : null })
       .select("id")
       .single();
+    if (insertError || !row?.id) throw new Error("Postarea nu a putut fi înregistrată. Încearcă din nou.");
 
     const { publishToMetaPage } = await import("./post.server");
     try {
+      if (kind === "reel" && data.file) {
+        const { publishFacebookReel } = await import("./reel.server");
+        const res = await publishFacebookReel({ pageId: page.page_id, pageToken: token, message: core.withOfferLink(data.message, p.id), file: data.file,
+          onSubmitted: async (videoId) => {
+            const { error } = await db.from("meta_posts").update({ container_id: videoId, post_id: videoId, processing_until: new Date(Date.now() + 24 * 3600000).toISOString() }).eq("id", row.id);
+            if (error) throw new Error("Reel-ul nu a putut fi înregistrat.");
+          },
+        });
+        if (res.status === "processing") {
+          await db.from("meta_posts").update({ status: "processing" }).eq("id", row.id);
+          return { ok: true as const, processing: true as const, permalink: null, pageName: page.name as string, publishedAt: null, postRecordId: row.id as string };
+        }
+        const { markFacebookReelPublished } = await import("./reel-finalize.server");
+        const now = await markFacebookReelPublished(db, { ...row, organization_id: p.organization_id, property_id: p.id, posted_by: ctx.userId, page_name: page.name }, res);
+        return { ok: true as const, permalink: res.permalink, pageName: page.name as string, publishedAt: now };
+      }
       const res = await publishToMetaPage({
         pageId: page.page_id,
         pageToken: token,
@@ -186,4 +208,18 @@ export const publishMetaPost = createServerFn({ method: "POST" })
       }
       return { ok: false as const, error: err.message, kind: err.kind };
     }
+  });
+
+/** Poll only; never upload or finish again. Property visibility is checked on every read. */
+export const getFacebookReelProgress = createServerFn({ method: "GET" })
+  .middleware([requireActiveOrgAuth])
+  .inputValidator((d: unknown) => z.object({ propertyId: z.string().uuid(), postId: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }) => {
+    setResponseHeader("Cache-Control", "no-store");
+    await loadProperty(context as unknown as Ctx, data.propertyId);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const db = supabaseAdmin as any;
+    const { data: row } = await db.from("meta_posts").select("status, error, permalink_url, page_name").eq("id", data.postId).eq("property_id", data.propertyId).eq("kind", "reel").maybeSingle();
+    if (!row) throw new Error("Postarea nu există sau nu ai acces la ea.");
+    return { status: row.status as string, error: row.error as string | null, permalink: row.permalink_url as string | null, pageName: row.page_name as string | null };
   });
