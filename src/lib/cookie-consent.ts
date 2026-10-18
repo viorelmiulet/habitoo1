@@ -5,7 +5,7 @@
 
 export const CONSENT_STORAGE_KEY = "habitoo.cookieConsent";
 /** Crește versiunea când se schimbă categoriile — bannerul reapare. */
-export const CONSENT_VERSION = 1;
+export const CONSENT_VERSION = 2;
 
 export type ConsentCategory = "necessary" | "analytics" | "marketing";
 
@@ -45,8 +45,7 @@ export const CATEGORIES: {
     id: "marketing",
     label: "Marketing",
     description:
-      "Ar permite măsurarea campaniilor și afișarea de mesaje relevante. Momentan nu folosim cookie-uri din această categorie; se activează numai cu acordul tău explicit.",
-    empty: true,
+      "Măsurăm eficiența reclamelor noastre Google Ads. Se activează numai cu acordul tău.",
   },
 ];
 

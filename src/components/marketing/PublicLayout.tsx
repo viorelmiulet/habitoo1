@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { CookieConsent } from "./CookieConsent";
 import { PlausibleAnalytics } from "./PlausibleAnalytics";
+import { GoogleAdsTag } from "./GoogleAdsTag";
 import { PublicFooter } from "./PublicFooter";
 import { PublicHeader } from "./PublicHeader";
 import { HomeHeader } from "./HomeHeader";
@@ -21,6 +22,7 @@ export function PublicLayout({ children, footerDescription, homeHeader = false }
       <PublicFooter description={footerDescription} />
       <CookieConsent />
       <PlausibleAnalytics />
+      <GoogleAdsTag />
     </div>
   );
 }
