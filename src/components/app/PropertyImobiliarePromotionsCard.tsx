@@ -275,13 +275,21 @@ export function PropertyImobiliarePromotionsCard({
                 {busy ? <Loader2 className="size-3 animate-spin" aria-hidden /> : null}
               </div>
 
+              {row.stateSource === "local" ? (
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Ultima stare cunoscută
+                  {row.stateUpdatedAt ? ` (${formatDateTime(row.stateUpdatedAt)})` : ""} — portalul
+                  nu raportează starea pe acest anunț.
+                </p>
+              ) : null}
+
               {row.error ? (
                 <p className="mt-1 text-xs text-destructive">{row.error}</p>
               ) : !row.manageable ? (
                 <p className="mt-1 text-xs text-muted-foreground">
                   {row.note ?? "Serviciu informativ: nu poate fi comandat din CRM."}
                 </p>
-              ) : !active && noSlots ? (
+              ) : !active && noSlots && row.value !== null ? (
                 <p className="mt-1 text-xs text-muted-foreground">
                   Toate locurile sunt ocupate — eliberează unul de la alt anunț sau cumpără locuri
                   suplimentare la Imobiliare.ro.
