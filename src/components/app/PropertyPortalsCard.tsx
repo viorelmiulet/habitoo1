@@ -31,6 +31,7 @@ import { useMutation, useQueries, useQuery, useQueryClient } from "@tanstack/rea
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "@/components/ui/sonner";
 import { Checkbox } from "@/components/ui/checkbox";
+import { ImoradarListingToggle } from "@/components/app/ImoradarListingToggle";
 import { Button } from "@/components/ui/button";
 import { Card, Panel } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -1056,6 +1057,13 @@ export const PropertyPortalsCard = forwardRef<
                             />
                             Promovat
                           </label>
+                        ) : null}
+                        {cell.portalId === "imobiliare_ro" && value ? (
+                          <ImoradarListingToggle
+                            propertyId={propertyId}
+                            organizationId={organizationId}
+                            disabled={disabled}
+                          />
                         ) : null}
                       </div>
                     </div>

@@ -26,6 +26,7 @@ import { slugifyBlogTitle } from "@/lib/blog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PortalSlotsCard } from "@/components/app/PortalSlotsCard";
 import { ImobiliarePromotionsAdminCard } from "@/components/app/ImobiliarePromotionsAdminCard";
+import { ImoradarAutoCard } from "@/components/app/ImoradarAutoCard";
 
 import { ProperstarFeedCard } from "@/components/app/ProperstarFeedCard";
 
@@ -706,6 +707,7 @@ function SettingsPage() {
               <div className="space-y-6">
                 <AgencyPortalCatalogCard />
                 <PortalSlotsCard />
+                <ImoradarAutoCard />
                 <ImobiliarePromotionsAdminCard />
                 <ProperstarFeedCard />
               </div>
