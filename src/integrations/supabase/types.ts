@@ -5740,10 +5740,12 @@ export type Database = {
           id: string
           locked_at: string | null
           next_attempt_at: string
+          operation: string
           organization_id: string
           portal_key: string
           promoted: boolean | null
           property_id: string
+          republish_batch_id: string | null
           requested_by: string
           result_action: string | null
           result_message: string | null
@@ -5760,10 +5762,12 @@ export type Database = {
           id?: string
           locked_at?: string | null
           next_attempt_at?: string
+          operation?: string
           organization_id: string
           portal_key: string
           promoted?: boolean | null
           property_id: string
+          republish_batch_id?: string | null
           requested_by: string
           result_action?: string | null
           result_message?: string | null
@@ -5780,10 +5784,12 @@ export type Database = {
           id?: string
           locked_at?: string | null
           next_attempt_at?: string
+          operation?: string
           organization_id?: string
           portal_key?: string
           promoted?: boolean | null
           property_id?: string
+          republish_batch_id?: string | null
           requested_by?: string
           result_action?: string | null
           result_message?: string | null
@@ -5805,6 +5811,13 @@ export type Database = {
             columns: ["property_id"]
             isOneToOne: false
             referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "portal_publish_jobs_republish_batch_id_fkey"
+            columns: ["republish_batch_id"]
+            isOneToOne: false
+            referencedRelation: "portal_republish_batches"
             referencedColumns: ["id"]
           },
         ]
@@ -5871,6 +5884,62 @@ export type Database = {
             columns: ["property_id"]
             isOneToOne: false
             referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      portal_republish_batches: {
+        Row: {
+          created_at: string
+          failed: number
+          finished_at: string | null
+          id: string
+          organization_id: string
+          portal_keys: string[]
+          requested_by: string
+          scope: string
+          skipped: number
+          skipped_items: Json
+          status: string
+          succeeded: number
+          total: number
+        }
+        Insert: {
+          created_at?: string
+          failed?: number
+          finished_at?: string | null
+          id?: string
+          organization_id: string
+          portal_keys?: string[]
+          requested_by: string
+          scope?: string
+          skipped?: number
+          skipped_items?: Json
+          status?: string
+          succeeded?: number
+          total?: number
+        }
+        Update: {
+          created_at?: string
+          failed?: number
+          finished_at?: string | null
+          id?: string
+          organization_id?: string
+          portal_keys?: string[]
+          requested_by?: string
+          scope?: string
+          skipped?: number
+          skipped_items?: Json
+          status?: string
+          succeeded?: number
+          total?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "portal_republish_batches_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
         ]
@@ -8971,10 +9040,12 @@ export type Database = {
           id: string
           locked_at: string | null
           next_attempt_at: string
+          operation: string
           organization_id: string
           portal_key: string
           promoted: boolean | null
           property_id: string
+          republish_batch_id: string | null
           requested_by: string
           result_action: string | null
           result_message: string | null
