@@ -68,6 +68,7 @@ import {
   serializeImobiliareReferences,
 } from "../imobiliare/references";
 import { buildImobiliareOffer, type PortalOffer } from "../imobiliare/offer-links";
+import { imobiliareFloorReasons } from "../imobiliare/mapper";
 
 type PortalFailShape = Extract<PortalResult<never>, { ok: false }>;
 type Admin = Awaited<typeof import("@/integrations/supabase/client.server")>["supabaseAdmin"];
@@ -356,11 +357,27 @@ async function write(
   ref: ListingRef,
   mode: WriteMode,
 ): Promise<PortalResult<ListingOutcome>> {
-  const ready = await prepare(ctx);
-  if (!ready.ok) return ready.result;
-
   try {
     const db = await admin();
+    // Vérificare locală înainte de orice apel la portal, inclusiv refresh/agent.
+    const { data: property } = await db.from("properties")
+      .select("property_type, floor, floor_label")
+      .eq("id", ref.propertyId)
+      .eq("organization_id", ctx.organizationId)
+      .maybeSingle();
+    if (!property) {
+      return { ok: false, code: "VALIDATION_ERROR", message: "Proprietatea nu a fost găsită.", detail: "eligibility" };
+    }
+    const floorReasons = imobiliareFloorReasons({
+      propertyType: property.property_type,
+      floor: property.floor,
+      floorLabel: property.floor_label,
+    });
+    if (floorReasons.length) {
+      return { ok: false, code: "VALIDATION_ERROR", message: floorReasons.join(" "), detail: "eligibility" };
+    }
+    const ready = await prepare(ctx);
+    if (!ready.ok) return ready.result;
     const media = await encodeImobiliareImages({
       admin: db,
       organizationId: ctx.organizationId,

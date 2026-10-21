@@ -1,5 +1,7 @@
 # Portal rules
 
+- Imobiliare.ro floor preflight shares the mapper's pure validation and runs before authorization, catalog refresh or agent sync; seller commission is parsed only in its mapper. Why: invalid apartments must not call the portal and other integrations remain unchanged.
+
 - Properstar index tracks agency presence with 7-day deletion grace; links use HMAC-SHA256. Why: one index URL; deactivation has no timestamp elsewhere.
 - ClickImob index: JSON index at /api/public/feed/clickimob/index/{CLICKIMOB_INDEX_KEY}.json reuses Properstar index rules; state in `portal_index_state` (portal column), agencies with per-agency ClickImob connection excluded. Why: no duplicate listings.
 - Bulk portal changes use durable `portal_bulk_jobs`/`portal_bulk_items`, processed by an armed cron through `applyPortalSelectionForOrg`; UI requests never call adapters directly. Why: jobs survive navigation and keep portal rules, retries and audit.

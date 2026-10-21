@@ -339,6 +339,48 @@ const BASE_INPUT = {
 };
 
 describe("construcția anunțului", () => {
+  it.each([["2%", 2], ["2,5%", 2.5], ["50%", 50], ["50", 50], ["0%", 0]])(
+    "trimite comisionul %s ca numărul %s",
+    (commission, expected) => {
+      const built = buildImobiliareListing({ ...BASE_INPUT, commission });
+      expect(built.ok).toBe(true);
+      if (!built.ok) return;
+      expect(built.listing.data_properties["seller_commission"]).toBe(expected);
+    },
+  );
+
+  it.each(["negociabil", "2% sau 3%", "2-3%", "-2%"])("omite comisionul neclar %s cu avertisment", (commission) => {
+    const built = buildImobiliareListing({ ...BASE_INPUT, commission });
+    expect(built.ok).toBe(true);
+    if (!built.ok) return;
+    expect(built.listing.data_properties).not.toHaveProperty("seller_commission");
+    expect(built.warnings).toContain("Comisionul vânzătorului nu conține un număr clar; nu a fost trimis către Imobiliare.ro.");
+  });
+
+  it.each(["apartment", "apartament", "studio", "garsoniera"])("oprește %s fără etaj", (propertyType) => {
+    const built = buildImobiliareListing({ ...BASE_INPUT, propertyType, floor: null });
+    expect(built.ok).toBe(false);
+    if (!built.ok) expect(built.reasons).toContain("Completează etajul");
+  });
+
+  it.each(["house", "casa", "vila"])("permite %s fără etaj", (propertyType) => {
+    const built = buildImobiliareListing({ ...BASE_INPUT, propertyType, landSurface: 200, floor: null });
+    expect(built.ok).toBe(true);
+    if (built.ok) expect(built.listing.data_properties).not.toHaveProperty("floor_number");
+  });
+
+  it("nu inventează un etaj pentru mansarda fără număr", () => {
+    const built = buildImobiliareListing({ ...BASE_INPUT, floor: null, floorLabel: "Mansardă" });
+    expect(built.ok).toBe(false);
+    if (!built.ok) expect(built.reasons).toContain("Imobiliare.ro: valoarea pentru Mansardă nu este confirmată; completează numărul real al etajului pentru publicare.");
+  });
+
+  it("păstrează parterul cu etaj zero", () => {
+    const built = buildImobiliareListing({ ...BASE_INPUT, floor: 0 });
+    expect(built.ok).toBe(true);
+    if (built.ok) expect(built.listing.data_properties["floor_number"]).toBe("0");
+  });
+
   it("acceptă o ofertă completă și normalizează moneda", () => {
     const built = buildImobiliareListing(BASE_INPUT);
     expect(built.ok).toBe(true);

@@ -54,6 +54,7 @@ export type ImobiliareListingInput = {
   bedrooms: number | null;
   bathrooms: number | null;
   floor: number | null;
+  floorLabel?: string | null;
   buildingFloors: number | null;
   usableSurface: number | null;
   builtSurface: number | null;
@@ -152,6 +153,29 @@ export function hasRealCoordinates(lat: number | null, lng: number | null): bool
 /** Telefon în format românesc local (07xxxxxxxx), cum îl acceptă portalul. */
 export { normalizeImobiliarePhone as normalizeRoPhone } from "./contact";
 
+/** Un singur număr zecimal neechivoc; intervalele și sumele multiple se omit. */
+function commissionNumber(value: string): number | null {
+  const numbers = value.match(/[+-]?\d+(?:[.,]\d+)?/g);
+  if (!numbers || numbers.length !== 1) return null;
+  const parsed = Number(numbers[0]?.replace(",", "."));
+  return Number.isFinite(parsed) && parsed >= 0 ? parsed : null;
+}
+
+/** Aceeași verificare în mapper și înainte de autorizare/sincronizarea agentului. */
+export function imobiliareFloorReasons(input: {
+  propertyType: string | null;
+  floor: number | null;
+  floorLabel?: string | null;
+}): string[] {
+  const housing = housingTypeFor(input.propertyType);
+  if (housing !== "apartment" && housing !== "studio") return [];
+  if (nonNegativeInt(input.floor) !== null) return [];
+  const label = input.floorLabel?.normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim().toLowerCase();
+  if (label === "mansarda") {
+    return ["Imobiliare.ro: valoarea pentru Mansardă nu este confirmată; completează numărul real al etajului pentru publicare."];
+  }
+  return ["Completează etajul"];
+}
 
 export function buildImobiliareListing(input: ImobiliareListingInput): ImobiliareListingBuild {
   const reasons: string[] = [];
@@ -204,6 +228,7 @@ export function buildImobiliareListing(input: ImobiliareListingInput): Imobiliar
   }
 
   const housingForValidation = housingTypeFor(input.propertyType);
+  reasons.push(...imobiliareFloorReasons(input));
   if (
     (housingForValidation === "house" || housingForValidation === "land") &&
     positiveNumber(input.landSurface) === null &&
@@ -276,7 +301,14 @@ export function buildImobiliareListing(input: ImobiliareListingInput): Imobiliar
     if (input.collaboration && percent) data["collaboration_commission_percentage"] = percent;
   }
   const commission = text(input.commission);
-  if (commission) data["seller_commission"] = commission;
+  if (commission) {
+    const numericCommission = commissionNumber(commission);
+    if (numericCommission === null) {
+      warnings.push("Comisionul vânzătorului nu conține un număr clar; nu a fost trimis către Imobiliare.ro.");
+    } else {
+      data["seller_commission"] = numericCommission;
+    }
+  }
 
   const groups: { group: AmenityGroup; values: (string | null)[] | null }[] = [
     { group: "amenities_general", values: [...(input.features ?? []), ...(input.utilities ?? [])] },

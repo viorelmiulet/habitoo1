@@ -15,7 +15,7 @@ import { categoryApiFor, type CategoryCatalog } from "./categories.server";
 import { resolveImobiliareLocation } from "./locations.server";
 import { ensureImobiliareAgent } from "./agents.server";
 import type { ImobiliareSession } from "./auth.server";
-import { buildImobiliareListing, type ImobiliareListing } from "./mapper";
+import { buildImobiliareListing, imobiliareFloorReasons, type ImobiliareListing } from "./mapper";
 import { resolveImobiliareContactPhone, resolveImobiliareWhatsapp } from "./contact";
 
 type Admin = SupabaseClient<Database>;
@@ -88,6 +88,12 @@ export async function buildImobiliarePayload(input: {
   if (!property) return { ok: false, reasons: ["Proprietatea nu a fost găsită."], warnings };
 
   const row = property as PropertyRow;
+  const floorReasons = imobiliareFloorReasons({
+    propertyType: row.property_type,
+    floor: row.floor,
+    floorLabel: row.floor_label,
+  });
+  if (floorReasons.length) return { ok: false, reasons: floorReasons, warnings };
   if (!isPropertyFeedEligible(row)) {
     return {
       ok: false,
@@ -187,6 +193,7 @@ export async function buildImobiliarePayload(input: {
       bedrooms: row.bedrooms,
       bathrooms: row.bathrooms,
       floor: row.floor,
+      floorLabel: row.floor_label,
       buildingFloors: row.building_floors,
       usableSurface: row.usable_surface ?? row.surface,
       builtSurface: row.built_surface,
