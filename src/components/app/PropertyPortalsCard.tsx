@@ -83,6 +83,7 @@ function stateSentence(cell: PropertyPortalCell, selected: boolean) {
       ? "Portal neconfigurat — configurează-l pentru a putea publica."
       : "Portal neconfigurat.";
   if (cell.state === "needs_packet") return cell.lastError ?? "Anunțul așteaptă un pachet OLX.";
+  if (cell.unconfirmedUpdate) return `${UNCONFIRMED_UPDATE_NOTE}.`;
   if (cell.lastError || cell.state === "error") return "Eroare la ultima publicare";
   if (cell.state === "syncing") return "Se sincronizează cu portalul…";
   if (cell.state === "published" || cell.state === "in_feed") {
@@ -841,8 +842,10 @@ export const PropertyPortalsCard = forwardRef<
                 blockedByRequirements ||
                 scheduleByPortal.has(cell.portalId) ||
                 (Boolean(contactBlock) && !value && !cell.selected);
+              const unconfirmed = cell.unconfirmedUpdate === true;
               const problem =
                 !busy &&
+                !unconfirmed &&
                 cell.state !== "needs_packet" &&
                 (cell.state === "error" ||
                   Boolean(cell.lastError) ||
@@ -857,7 +860,7 @@ export const PropertyPortalsCard = forwardRef<
                 ? "Publicare în curând"
                 : busy
                 ? "Se sincronizează…"
-                : latestOperationFailed && cell.state !== "needs_packet"
+                : latestOperationFailed && cell.state !== "needs_packet" && !unconfirmed
                   ? "Eroare la ultima publicare"
                   : stateSentence(cell, value);
 
@@ -984,7 +987,7 @@ export const PropertyPortalsCard = forwardRef<
                             Cere activarea
                           </span>
                         ) : null}
-                        {problem &&
+                        {(problem || (unconfirmed && !busy)) &&
                         canManage &&
                         cell.availability === "available" &&
                         cell.configured ? (
@@ -994,7 +997,7 @@ export const PropertyPortalsCard = forwardRef<
                             disabled={busy}
                             onClick={() => void enqueuePortals([cell]).catch((e: Error) => toast.error(e.message))}
                           >
-                            {cell.lastSyncAt ? "Retrimite" : "Reîncearcă"}
+                            {unconfirmed || cell.lastSyncAt ? "Retrimite" : "Reîncearcă"}
                           </Button>
                         ) : null}
                         <PortalScheduleControl
