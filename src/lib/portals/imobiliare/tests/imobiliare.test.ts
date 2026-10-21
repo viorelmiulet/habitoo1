@@ -375,6 +375,18 @@ describe("construcția anunțului", () => {
     if (!built.ok) expect(built.reasons).toContain("Imobiliare.ro: valoarea pentru Mansardă nu e confirmată");
   });
 
+  it("trimite demisolul ca \"-1\"", () => {
+    const built = buildImobiliareListing({ ...BASE_INPUT, floor: -1, floorLabel: "Demisol" });
+    expect(built.ok).toBe(true);
+    if (built.ok) expect(built.listing.data_properties).toMatchObject({ floor_number: "-1" });
+  });
+
+  it("trimite parterul ca \"0\"", () => {
+    const built = buildImobiliareListing({ ...BASE_INPUT, floor: 0, floorLabel: "Parter" });
+    expect(built.ok).toBe(true);
+    if (built.ok) expect(built.listing.data_properties).toMatchObject({ floor_number: "0" });
+  });
+
   it("păstrează parterul cu etaj zero", () => {
     const built = buildImobiliareListing({ ...BASE_INPUT, floor: 0 });
     expect(built.ok).toBe(true);
