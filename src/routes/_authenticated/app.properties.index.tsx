@@ -29,7 +29,13 @@ import { PageHeader } from "@/components/app/PageHeader";
 import { CardGridSkeleton, ListSkeleton } from "@/components/app/LoadingState";
 import { usePropertyPortals } from "@/components/app/PropertyPortalsCell";
 import { PortalFilterSelect, portalFilterLabel } from "@/components/app/PortalFilterSelect";
+import { PromotionFilterSelect, promotionFilterLabel, parsePromotionValues } from "@/components/app/PromotionFilterSelect";
 import { getPortalFilterOptions, getPropertyIdsByPortalState } from "@/lib/portals.functions";
+import {
+  getPromotionFilterOptions,
+  getPropertyIdsByPromotion,
+  getPropertyPromotionBadges,
+} from "@/lib/portals/promotion-filter.functions";
 import { parsePortalFilter } from "@/lib/portals/portal-state";
 import { PropertyCard, type PropertyCardRow } from "@/components/app/PropertyCard";
 import { useServerFn } from "@tanstack/react-start";
@@ -363,6 +369,31 @@ function PropertiesPage() {
       loadPortalIds({
         data: { organizationId: orgId, portal: portalFilter!.portal, state: portalFilter!.state },
       }),
+  });
+
+  // Filtrul „Promovare”: opțiunile vin din registru, doar pentru portalurile
+  // conectate; id-urile se rezolvă pe server, apoi interogarea listei (sub RLS)
+  // le intersectează — agentul vede în continuare doar anunțurile lui.
+  const loadPromotionOptions = useServerFn(getPromotionFilterOptions);
+  const loadPromotionIds = useServerFn(getPropertyIdsByPromotion);
+  const loadPromotionBadges = useServerFn(getPropertyPromotionBadges);
+  const { data: promotionGroups = [] } = useQuery({
+    queryKey: ["promotion-filter-options", orgId],
+    enabled: Boolean(orgId),
+    queryFn: async () => (await loadPromotionOptions({ data: { organizationId: orgId } })).groups,
+  });
+  const promotionValues = useMemo(() => {
+    const valid = new Set([
+      "any",
+      "none",
+      ...promotionGroups.flatMap((group) => group.options.map((option) => option.value)),
+    ]);
+    return parsePromotionValues(filters.promotion).filter((value) => valid.has(value));
+  }, [filters.promotion, promotionGroups]);
+  const { data: promotionIds, isLoading: promotionIdsLoading } = useQuery({
+    queryKey: ["promotion-filter-ids", orgId, promotionValues],
+    enabled: Boolean(orgId) && promotionValues.length > 0,
+    queryFn: () => loadPromotionIds({ data: { organizationId: orgId, values: promotionValues } }),
   });
 
   const { data: result, isLoading: listLoading } = useQuery({
