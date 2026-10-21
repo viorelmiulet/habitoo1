@@ -109,7 +109,8 @@
 
 # Filtru „Promovare” în lista Proprietăți
 
-- [ ] Integrare în lista portalurilor, aceeași listă pe telefon; păstrare URL și filtrare existentă; teste și verificare
+- [x] Promovări integrate sub portaluri, fără filtru separat; selecție multiplă și URL vechi păstrate; 46 teste trec
+- [x] Listă verificată izolat pe calculator și telefon, selecție/resetare corecte, fără depășirea lățimii; compilare reușită
 
 - [x] Opțiuni din registru, doar portaluri conectate: servicii Imobiliare.ro gestionabile + flag „Promovat” (Romimo/Publi24)
 - [x] Sursa: `imobiliare_promotion_states` (doar pornite) + `portal_publications.promoted`, doar anunțuri publicate
