@@ -1083,13 +1083,15 @@ function PropertiesPage() {
                       >
                         <Star className={cn("size-4 text-muted-foreground", favoriteIds.includes(p.id) && "fill-warning text-warning")} />
                       </Button>
-                      {promoted ? <span className="absolute bottom-2 left-2 rounded-pill bg-sidebar px-2 py-1 text-[11px] font-bold text-sidebar-primary">Promovat</span> : null}
                     </div>
                     <div className="col-span-2 min-w-0 lg:col-span-1">
                       <div className="mb-2 flex flex-wrap items-center gap-1.5">
                         <StatusBadge tone={propertyStatusTone[p.status]} dot className="text-xs">{propertyStatusLabels[p.status]}</StatusBadge>
                         <span className={cn("rounded-pill px-2.5 py-0.5 text-xs font-bold", p.transaction_kind === "rent" ? "bg-accent text-accent-foreground" : "bg-muted text-muted-foreground")}>{transactionLabels[p.transaction_kind]}</span>
                         <span className="rounded-pill border border-border px-2.5 py-0.5 text-xs font-bold text-muted-foreground">{propertyTypeLabels[p.property_type] ?? p.property_type}</span>
+                        {propertyPromotionBadges.map((badge) => (
+                          <span key={badge.label} className="rounded-pill bg-sidebar px-2.5 py-0.5 text-xs font-bold text-sidebar-primary">{badge.label}</span>
+                        ))}
                       </div>
                       <Link
                         to="/app/properties/$id"
