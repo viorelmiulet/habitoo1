@@ -372,7 +372,7 @@ describe("construcția anunțului", () => {
   it("nu inventează un etaj pentru mansarda fără număr", () => {
     const built = buildImobiliareListing({ ...BASE_INPUT, floor: null, floorLabel: "Mansardă" });
     expect(built.ok).toBe(false);
-    if (!built.ok) expect(built.reasons).toContain("Imobiliare.ro: valoarea pentru Mansardă nu este confirmată; completează numărul real al etajului pentru publicare.");
+    if (!built.ok) expect(built.reasons).toContain("Imobiliare.ro: valoarea pentru Mansardă nu e confirmată");
   });
 
   it("păstrează parterul cu etaj zero", () => {

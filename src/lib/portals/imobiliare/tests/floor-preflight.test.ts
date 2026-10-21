@@ -55,7 +55,7 @@ describe("etaj verificat înainte de orice apel Imobiliare.ro", () => {
       { propertyId: "property-test" } as ListingRef,
     );
     expect(result).toMatchObject({ ok: false, code: "VALIDATION_ERROR" });
-    if (!result.ok) expect(result.message).toContain("Mansardă nu este confirmată");
+    if (!result.ok) expect(result.message).toContain("Mansardă nu e confirmată");
     expect(mocks.session).not.toHaveBeenCalled();
     expect(mocks.request).not.toHaveBeenCalled();
   });
