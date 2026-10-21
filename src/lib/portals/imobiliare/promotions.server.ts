@@ -141,6 +141,26 @@ export async function fetchImobiliareSlotListings(input: {
   return { ok: true, listings: parseImobiliareSlotListings(response.body) };
 }
 
+/**
+ * Prezența unei oferte în lista unui slot (`GET /promotions/listings/{slot}`):
+ * `true` = serviciul consumă un loc (activ), `false` = nu apare (inactiv),
+ * `null` = lista nu a putut fi citită.
+ */
+export async function fetchImobiliareSlotMembership(input: {
+  session: ImobiliareSession;
+  organizationId: string;
+  slotType: string;
+  reference: string;
+}): Promise<boolean | null> {
+  try {
+    const result = await fetchImobiliareSlotListings(input);
+    if (!result.ok) return null;
+    return result.listings.some((listing) => listing.reference === input.reference);
+  } catch {
+    return null;
+  }
+}
+
 /** Starea serviciilor pentru o ofertă, citită din anunțul de la portal. */
 export type ListingPromotionState = {
   states: Map<string, boolean | number | null>;
