@@ -15,16 +15,16 @@ import {
   type AuthContext,
 } from "@/lib/portals.functions";
 import {
+  buildPromotionInfos,
   parsePromotionSelection,
   promotionFilterGroups,
   promotionSelectionIsEmpty,
-  promotionStateActive,
   propertyHasAnyPromotion,
   propertyMatchesPromotion,
   promotionBadgesFor,
   type PromotionFilterGroup,
+  type PromotionRows,
   type PropertyPromotionBadge,
-  type PropertyPromotionInfo,
 } from "@/lib/portals/promotion-filter";
 
 const PUBLISHED_LISTING_STATUSES = ["published", "updated"] as const;
