@@ -156,6 +156,72 @@ export function propertyMatchesPromotion(
   );
 }
 
+/** Rândurile brute din DB folosite la construirea informației de promovare. */
+export type PromotionRows = {
+  listings: { property_id: string; portal: string; status: string }[];
+  states: {
+    property_id: string;
+    promotion_id: string;
+    value_boolean: boolean | null;
+    value_numeric: number | null;
+  }[];
+  publications: { property_id: string; portal_key: string; enabled: boolean; promoted: boolean | null }[];
+};
+
+/** Construiește informația de promovare per proprietate (doar anunțuri publicate). */
+export function buildPromotionInfos(rows: PromotionRows): Map<string, PropertyPromotionInfo> {
+  const infos = new Map<string, PropertyPromotionInfo>();
+  const ensure = (propertyId: string): PropertyPromotionInfo => {
+    let existing = infos.get(propertyId);
+    if (!existing) {
+      existing = { imobiliarePublished: false, imobiliareActiveServices: [], flagPromotions: [] };
+      infos.set(propertyId, existing);
+    }
+    return existing;
+  };
+  const publishedPortals = new Map<string, Set<string>>();
+  for (const listing of rows.listings) {
+    let set = publishedPortals.get(listing.property_id);
+    if (!set) {
+      set = new Set();
+      publishedPortals.set(listing.property_id, set);
+    }
+    set.add(listing.portal);
+  }
+  for (const state of rows.states) {
+    if (!promotionStateActive(state.value_boolean, state.value_numeric)) continue;
+    if (!publishedPortals.get(state.property_id)?.has("imobiliare_ro")) continue;
+    const propertyInfo = ensure(state.property_id);
+    propertyInfo.imobiliarePublished = true;
+    if (!propertyInfo.imobiliareActiveServices.includes(state.promotion_id)) {
+      propertyInfo.imobiliareActiveServices.push(state.promotion_id);
+    }
+  }
+  for (const publication of rows.publications) {
+    const published =
+      publishedPortals.get(publication.property_id)?.has(publication.portal_key) === true;
+    const propertyInfo = ensure(publication.property_id);
+    const existing = propertyInfo.flagPromotions.find((f) => f.portalId === publication.portal_key);
+    if (existing) {
+      existing.published = existing.published || published;
+      existing.promoted = true;
+    } else {
+      propertyInfo.flagPromotions.push({
+        portalId: publication.portal_key,
+        published,
+        promoted: true,
+      });
+    }
+  }
+  // Anunțurile publicate pe Imobiliare.ro fără promovări active trebuie să
+  // existe în mapă (pentru „Fără promovare” și pentru etichete goale).
+  for (const [propertyId, portals] of publishedPortals) {
+    const propertyInfo = ensure(propertyId);
+    if (portals.has("imobiliare_ro")) propertyInfo.imobiliarePublished = true;
+  }
+  return infos;
+}
+
 /** Etichetele „Promovat” afișate pe rândul din listă (ex. „Imobiliare.ro · Top Listing”). */
 export type PropertyPromotionBadge = { portalId: string; label: string };
 
