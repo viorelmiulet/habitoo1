@@ -10,6 +10,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { StatusBadge } from "@/components/app/StatusBadge";
 import { PortalLogo } from "@/components/app/PortalLogo";
 import { getPropertiesPortalMatrix, type PropertyPortalCell } from "@/lib/portals.functions";
+import { portalListingLink } from "@/lib/portals/listing-links";
 
 const TONE: Record<PropertyPortalCell["state"], "success" | "warning" | "danger" | "neutral"> = {
   in_feed: "success",

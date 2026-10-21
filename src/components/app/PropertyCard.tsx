@@ -19,6 +19,7 @@ import {
   transactionLabels,
 } from "@/lib/labels";
 import type { PropertyPortalCell } from "@/lib/portals.functions";
+import { portalListingLink } from "@/lib/portals/listing-links";
 import { cn } from "@/lib/utils";
 
 export type PropertyCardRow = {
