@@ -71,7 +71,7 @@ describe("republicarea anunțurilor", () => {
       properties: base.properties[0], portal_listings: base.listings[0], portal_publications: base.publications[0],
     };
     const admin = { from: (t: string) => { const q = { select: () => q, eq: () => q, maybeSingle: async () => ({ data: rows[t] }) }; return q; } };
-    const execute = vi.fn(async () => ({ ok: true }));
+    const execute = vi.fn(async (_input: { action: string; operationLabel: string }) => ({ ok: true }));
     const out = await runRepublishJob(admin, { organization_id: "org", property_id: "mine", portal_key: "storia", requested_by: "agent-1" }, execute);
     expect(out.ok).toBe(true);
     expect(execute).toHaveBeenCalledTimes(1);
