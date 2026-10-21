@@ -18,7 +18,9 @@ import {
   imobiliarePromotionBySlot,
   imobiliarePromotionPatch,
   imobiliarePromotionStateFromListing,
+  imobiliarePromotionWarnings,
   manageableImobiliarePromotions,
+  mergeImobiliarePromotionState,
   normalizeImobiliareSlotInventory,
   parseImobiliareSlotListings,
 } from "../promotions";
@@ -62,6 +64,7 @@ import {
   fetchImobiliareSlotInventories,
   fetchImobiliareSlotInventory,
   fetchImobiliareSlotListings,
+  fetchImobiliareSlotMembership,
   setImobiliareListingPromotion,
 } from "../promotions.server";
 
@@ -83,10 +86,36 @@ function session(overrides?: { refreshTo?: string | null }) {
 
 /** Admin fals: blocarea durabilă răspunde cu succes, fără bază de date reală. */
 const lockCalls: unknown[][] = [];
+const upserts: { table: string; row: Record<string, unknown>; conflict: unknown }[] = [];
 const fakeAdmin = {
   rpc: async (fn: string, args: unknown) => {
     lockCalls.push([fn, args]);
     return { data: true, error: null };
+  },
+  from: (table: string) => {
+    // Agenția de test are toate serviciile activate, fără plafon și fără alocări.
+    const data =
+      table === "promotion_service_settings"
+        ? IMOBILIARE_PROMOTIONS.map((p) => ({
+            service_key: p.id,
+            enabled: true,
+            agency_cap: null,
+          }))
+        : [];
+    const empty = { data, error: null };
+    const chain: Record<string, unknown> = {
+      upsert: async (row: Record<string, unknown>, options: { onConflict?: unknown }) => {
+        upserts.push({ table, row, conflict: options?.onConflict });
+        return { data: null, error: null };
+      },
+      select: () => chain,
+      eq: () => chain,
+      in: () => chain,
+      is: () => chain,
+      maybeSingle: async () => ({ data: null, error: null }),
+      then: (resolve: (value: typeof empty) => unknown) => resolve(empty),
+    };
+    return chain;
   },
 } as never;
 
@@ -97,6 +126,7 @@ function ok(body: unknown) {
 beforeEach(() => {
   calls.length = 0;
   lockCalls.length = 0;
+  upserts.length = 0;
   responder = () => ok({ data: {} });
 });
 
@@ -551,5 +581,164 @@ describe("comanda unui serviciu pe ofertă", () => {
     });
     expect(JSON.stringify(lockCalls[0])).toContain("org-A");
     expect(JSON.stringify(lockCalls[0])).not.toContain("org-B");
+  });
+});
+
+/* ------------------------- avertizări la scriere --------------------------- */
+
+describe("promotion_warnings din răspunsul portalului", () => {
+  it("extrage avertizările text și cele împachetate ca obiecte", () => {
+    expect(
+      imobiliarePromotionWarnings({
+        data: {},
+        promotion_warnings: ["Promovare imoradar nu este activ pentru acest cont"],
+      }),
+    ).toEqual(["Promovare imoradar nu este activ pentru acest cont"]);
+    expect(
+      imobiliarePromotionWarnings({
+        promotion_warnings: [{ message: "Serviciu inactiv." }],
+      }),
+    ).toEqual(["Serviciu inactiv."]);
+    expect(imobiliarePromotionWarnings({ data: {} })).toEqual([]);
+    expect(imobiliarePromotionWarnings({ promotion_warnings: [] })).toEqual([]);
+    expect(imobiliarePromotionWarnings(null)).toEqual([]);
+  });
+
+  it("HTTP 200 cu avertizare = operație NEREUȘITĂ, cu textul portalului", async () => {
+    responder = () =>
+      ok({
+        data: { id: 275994142 },
+        promotion_warnings: ["Promovare imoradar nu este activ pentru acest cont"],
+      });
+    const result = await setImobiliareListingPromotion({
+      admin: fakeAdmin,
+      session: session(),
+      organizationId: "org-1",
+      reference: "HB-1262",
+      definition: imobiliarePromotion("promote_imoradar")!,
+      value: true,
+      current: false,
+      allocation: { propertyId: "prop-1" },
+    });
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.code).toBe("PROMOTION_WARNING");
+      expect(result.message).toBe("Promovare imoradar nu este activ pentru acest cont");
+    }
+    // Starea locală NU se salvează la eșec.
+    expect(upserts).toHaveLength(0);
+  });
+
+  it("răspuns fără `promotions` și fără avertizări = succes, stare salvată local", async () => {
+    // Exact forma observată la HB-1262: `data` fără cheia `promotions`.
+    responder = (call) =>
+      call.path.startsWith("/api/v3/promotions/slots")
+        ? ok({ data: { total: 5, used: 1 } })
+        : ok({ data: { id: 275994142, title: "Apartament" } });
+    const result = await setImobiliareListingPromotion({
+      admin: fakeAdmin,
+      session: session(),
+      organizationId: "org-1",
+      reference: "HB-1262",
+      definition: imobiliarePromotion("tl")!,
+      value: true,
+      current: false,
+      allocation: { propertyId: "prop-1" },
+    });
+    expect(result.ok).toBe(true);
+    expect(upserts).toHaveLength(1);
+    expect(upserts[0]?.table).toBe("imobiliare_promotion_states");
+    expect(upserts[0]?.row).toMatchObject({
+      organization_id: "org-1",
+      property_id: "prop-1",
+      reference: "HB-1262",
+      promotion_id: "tl",
+      value_boolean: true,
+      value_numeric: null,
+    });
+    expect(upserts[0]?.conflict).toBe("organization_id,property_id,promotion_id");
+  });
+
+  it("oprirea salvează local valoarea false și trimite DOAR serviciul respectiv", async () => {
+    responder = () => ok({ data: { id: 1 } });
+    const result = await setImobiliareListingPromotion({
+      admin: fakeAdmin,
+      session: session(),
+      organizationId: "org-1",
+      reference: "HB-1262",
+      definition: imobiliarePromotion("tl")!,
+      value: false,
+      current: null,
+      allocation: { propertyId: "prop-1" },
+    });
+    expect(result.ok).toBe(true);
+    expect(calls.at(-1)?.body).toEqual({ promotions: { top_listing: false } });
+    expect(upserts[0]?.row).toMatchObject({ promotion_id: "tl", value_boolean: false });
+  });
+
+  it("oprirea este permisă când starea este necunoscută", () => {
+    expect(
+      guardImobiliarePromotionChange({
+        definition: imobiliarePromotion("tl")!,
+        inventory: null,
+        current: null,
+        next: false,
+      }).allowed,
+    ).toBe(true);
+  });
+});
+
+/* --------------------------- sursa stării afișate -------------------------- */
+
+describe("starea afișată: portalul are prioritate față de salvarea locală", () => {
+  it("corpul anunțului > lista slotului > local > necunoscut", () => {
+    expect(
+      mergeImobiliarePromotionState({ fromListing: false, fromSlotList: true, fromLocal: true }),
+    ).toEqual({ value: false, source: "portal_listing" });
+    expect(
+      mergeImobiliarePromotionState({ fromListing: null, fromSlotList: true, fromLocal: false }),
+    ).toEqual({ value: true, source: "portal_slot" });
+    expect(
+      mergeImobiliarePromotionState({ fromListing: null, fromSlotList: null, fromLocal: true }),
+    ).toEqual({ value: true, source: "local" });
+    expect(
+      mergeImobiliarePromotionState({ fromListing: null, fromSlotList: null, fromLocal: null }),
+    ).toEqual({ value: null, source: null });
+  });
+
+  it("anunțul prezent în lista slotului = activ; absent = inactiv", async () => {
+    responder = () => ok({ data: [{ custom_reference: "HB-1262" }] });
+    const present = await fetchImobiliareSlotMembership({
+      session: session(),
+      organizationId: "org-1",
+      slotType: "tl",
+      reference: "HB-1262",
+    });
+    expect(present).toBe(true);
+
+    responder = () => ok({ data: [{ custom_reference: "HB-1000" }] });
+    const absent = await fetchImobiliareSlotMembership({
+      session: session(),
+      organizationId: "org-1",
+      slotType: "tl",
+      reference: "HB-1262",
+    });
+    expect(absent).toBe(false);
+  });
+
+  it("lista slotului indisponibilă = stare necunoscută, nu inactiv", async () => {
+    responder = () => ({
+      ok: false,
+      status: 500,
+      body: null,
+      classification: { code: "PORTAL_ERROR", message: "Eroare portal." },
+    });
+    const unknown = await fetchImobiliareSlotMembership({
+      session: session(),
+      organizationId: "org-1",
+      slotType: "tl",
+      reference: "HB-1262",
+    });
+    expect(unknown).toBeNull();
   });
 });

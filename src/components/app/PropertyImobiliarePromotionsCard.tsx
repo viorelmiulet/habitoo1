@@ -160,7 +160,10 @@ export function PropertyImobiliarePromotionsCard({
         {rows.map((row) => {
           const active = row.value === true || (typeof row.value === "number" && row.value > 0);
           const noSlots = row.available !== null && row.available <= 0;
-          const blocked = !row.manageable || (!active && noSlots) || row.error !== null;
+          // Eroarea de inventar NU blochează dezactivarea; la stare necunoscută
+          // controalele rămân disponibile (oprirea este mereu permisă).
+          const blocked =
+            !row.manageable || (!active && noSlots && row.value !== null);
           const busy = pendingId === row.id && mutate.isPending;
           const draft = energyDraft[row.id];
           const energyValue =
@@ -206,15 +209,31 @@ export function PropertyImobiliarePromotionsCard({
                     </Button>
                   </div>
                 ) : (
-                  <Checkbox
-                    checked={active}
-                    disabled={!canManage || busy || blocked}
-                    aria-label={`${row.label} pentru acest anunț`}
-                    onCheckedChange={(checked) => {
-                      setPendingId(row.id);
-                      mutate.mutate({ promotionId: row.id, value: checked === true });
-                    }}
-                  />
+                  <>
+                    <Checkbox
+                      checked={active}
+                      disabled={!canManage || busy || blocked}
+                      aria-label={`${row.label} pentru acest anunț`}
+                      onCheckedChange={(checked) => {
+                        setPendingId(row.id);
+                        mutate.mutate({ promotionId: row.id, value: checked === true });
+                      }}
+                    />
+                    {row.value === null && row.manageable ? (
+                      <Button
+                        type="button"
+                        size="compact"
+                        variant="secondary"
+                        disabled={!canManage || busy}
+                        onClick={() => {
+                          setPendingId(row.id);
+                          mutate.mutate({ promotionId: row.id, value: false });
+                        }}
+                      >
+                        Oprește
+                      </Button>
+                    ) : null}
+                  </>
                 )}
 
                 <span className="text-sm font-semibold">{row.label}</span>
@@ -256,13 +275,21 @@ export function PropertyImobiliarePromotionsCard({
                 {busy ? <Loader2 className="size-3 animate-spin" aria-hidden /> : null}
               </div>
 
+              {row.stateSource === "local" ? (
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Ultima stare cunoscută
+                  {row.stateUpdatedAt ? ` (${formatDateTime(row.stateUpdatedAt)})` : ""} — portalul
+                  nu raportează starea pe acest anunț.
+                </p>
+              ) : null}
+
               {row.error ? (
                 <p className="mt-1 text-xs text-destructive">{row.error}</p>
               ) : !row.manageable ? (
                 <p className="mt-1 text-xs text-muted-foreground">
                   {row.note ?? "Serviciu informativ: nu poate fi comandat din CRM."}
                 </p>
-              ) : !active && noSlots ? (
+              ) : !active && noSlots && row.value !== null ? (
                 <p className="mt-1 text-xs text-muted-foreground">
                   Toate locurile sunt ocupate — eliberează unul de la alt anunț sau cumpără locuri
                   suplimentare la Imobiliare.ro.

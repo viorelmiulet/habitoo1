@@ -25,8 +25,10 @@ import {
   IMOBILIARE_PROMOTIONS,
   imobiliareEnergyCeiling,
   imobiliarePromotion,
+  mergeImobiliarePromotionState,
   type ImobiliarePromotionKind,
   type ImobiliarePromotionSource,
+  type ImobiliarePromotionStateSource,
 } from "@/lib/portals/imobiliare/promotions";
 
 export type ImobiliarePromotionRow = {
@@ -43,6 +45,10 @@ export type ImobiliarePromotionRow = {
   available: number | null;
   /** Starea serviciului pe această ofertă; `null` = necunoscută. */
   value: boolean | number | null;
+  /** De unde provine starea afișată: portalul (anunț/lista slotului) sau salvarea locală. */
+  stateSource: ImobiliarePromotionStateSource | null;
+  /** Momentul salvării locale, când starea provine din baza de date. */
+  stateUpdatedAt: string | null;
   /** Limita superioară pentru serviciile numerice (Energy). */
   max: number | null;
   /** Eroarea specifică acestui serviciu, fără să blocheze celelalte. */
@@ -218,11 +224,60 @@ export const getImobiliarePromotions = createServerFn({ method: "POST" })
       return (inventories.get(definition.slotType)?.inventory ?? null) !== null;
     });
 
+    // Starea pe ofertă, doar prin citire: corpul anunțului (dacă întoarce
+    // `promotions`), prezența în lista slotului și ultima stare salvată local.
+    const { fetchImobiliareSlotMembership } = await import(
+      "@/lib/portals/imobiliare/promotions.server"
+    );
+    const slotServices = visible.filter(
+      (definition) => definition.slotType !== null && definition.kind === "boolean",
+    );
+    const [memberships, localStates] = await Promise.all([
+      Promise.all(
+        slotServices.map(
+          async (definition) =>
+            [
+              definition.id,
+              await fetchImobiliareSlotMembership({
+                session: prepared.session,
+                organizationId,
+                slotType: definition.slotType as string,
+                reference: prepared.reference,
+              }),
+            ] as const,
+        ),
+      ),
+      prepared.admin
+        .from("imobiliare_promotion_states")
+        .select("promotion_id, value_boolean, value_numeric, updated_at")
+        .eq("organization_id", organizationId)
+        .eq("property_id", data.propertyId),
+    ]);
+    const membershipByService = new Map(memberships);
+    const localByService = new Map(
+      (localStates.data ?? []).map((row) => [
+        row.promotion_id,
+        {
+          value: (row.value_numeric ?? row.value_boolean) as boolean | number | null,
+          updatedAt: row.updated_at,
+        },
+      ]),
+    );
+
     const promotions: ImobiliarePromotionRow[] = [];
     for (const definition of visible) {
       const slot = definition.slotType ? inventories.get(definition.slotType) : undefined;
       const inventory = slot?.inventory ?? null;
-      const value = listingState.states.get(definition.id) ?? null;
+      const local = localByService.get(definition.id) ?? null;
+      const merged = mergeImobiliarePromotionState({
+        fromListing: listingState.states.get(definition.id) ?? null,
+        fromSlotList:
+          definition.kind === "boolean"
+            ? (membershipByService.get(definition.id) ?? null)
+            : null,
+        fromLocal: local?.value ?? null,
+      });
+      const value = merged.value;
       const current = typeof value === "number" ? value : 0;
       const allocated = agentId
         ? promotionAllocationFor(
@@ -256,6 +311,8 @@ export const getImobiliarePromotions = createServerFn({ method: "POST" })
         used: inventory?.used ?? null,
         available: inventory?.available ?? null,
         value,
+        stateSource: merged.source,
+        stateUpdatedAt: merged.source === "local" ? (local?.updatedAt ?? null) : null,
         max: definition.kind === "numeric" ? imobiliareEnergyCeiling(inventory, current) : null,
         error: slot?.error ?? null,
         syncedAt: slot?.syncedAt ?? null,

@@ -25,6 +25,7 @@ import {
   guardImobiliarePromotionChange,
   imobiliarePromotionPatch,
   imobiliarePromotionStateFromListing,
+  imobiliarePromotionWarnings,
   manageableImobiliarePromotions,
   normalizeImobiliareSlotInventory,
   parseImobiliareSlotListings,
@@ -138,6 +139,26 @@ export async function fetchImobiliareSlotListings(input: {
   });
   if (!response.ok) return { ok: false, message: failureMessage(response) };
   return { ok: true, listings: parseImobiliareSlotListings(response.body) };
+}
+
+/**
+ * Prezența unei oferte în lista unui slot (`GET /promotions/listings/{slot}`):
+ * `true` = serviciul consumă un loc (activ), `false` = nu apare (inactiv),
+ * `null` = lista nu a putut fi citită.
+ */
+export async function fetchImobiliareSlotMembership(input: {
+  session: ImobiliareSession;
+  organizationId: string;
+  slotType: string;
+  reference: string;
+}): Promise<boolean | null> {
+  try {
+    const result = await fetchImobiliareSlotListings(input);
+    if (!result.ok) return null;
+    return result.listings.some((listing) => listing.reference === input.reference);
+  } catch {
+    return null;
+  }
 }
 
 /** Starea serviciilor pentru o ofertă, citită din anunțul de la portal. */
@@ -285,10 +306,54 @@ export async function setImobiliareListingPromotion(input: {
     };
   }
 
+  // HTTP 200 NU înseamnă aplicare: `promotion_warnings` (ex. „Promovare
+  // imoradar nu este activ pentru acest cont") transformă operația în eșec,
+  // cu textul exact al portalului.
+  const warnings = imobiliarePromotionWarnings(response.body);
+  if (warnings.length > 0) {
+    return {
+      ok: false,
+      code: "PROMOTION_WARNING",
+      message: warnings.join(" "),
+      portalResponse: response.body ?? null,
+      httpStatus: response.status,
+    };
+  }
+
   const value = body.promotions[definition.writeField];
+  const confirmed = value ?? input.value;
+
+  // Răspunsul nu include starea promovărilor (`data` nu are cheia
+  // `promotions`), deci salvăm local rezultatul scrierii fără avertizări:
+  // aceasta devine ultima stare cunoscută, afișată când portalul nu raportează.
+  if (input.allocation) {
+    try {
+      await input.admin
+        .from("imobiliare_promotion_states")
+        .upsert(
+          {
+            organization_id: input.organizationId,
+            property_id: input.allocation.propertyId,
+            reference: input.reference,
+            promotion_id: definition.id,
+            value_boolean: definition.kind === "numeric" ? null : confirmed === true,
+            value_numeric:
+              definition.kind === "numeric"
+                ? Math.max(Math.trunc(Number(confirmed) || 0), 0)
+                : null,
+            updated_at: new Date().toISOString(),
+          },
+          { onConflict: "organization_id,property_id,promotion_id" },
+        );
+    } catch {
+      // Starea locală este un ajutor de afișare; o eroare aici nu anulează
+      // rezultatul confirmat de portal.
+    }
+  }
+
   return {
     ok: true,
-    value: value ?? input.value,
+    value: confirmed,
     portalResponse: response.body ?? null,
     httpStatus: response.status,
   };

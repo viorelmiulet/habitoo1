@@ -98,3 +98,11 @@
 - [x] Fereastră nemodală cu minimizare, maximizare, confirmare și atașamente existente
 - [x] Teste mock pentru destinatar, păstrarea textului și trimitere unică
 - [x] Verificare vizuală desktop și mobil cu conversație simulată, fără emailuri reale
+
+# Promovări Imobiliare.ro (HB-1262)
+
+- [x] `promotion_warnings` = eșec cu textul portalului, bifă nebifată, jurnal success=false
+- [x] Stare locală `imobiliare_promotion_states` după scrieri fără avertizări; prioritate portal > local
+- [x] Citire stare la deschidere: corpul anunțului + prezența în lista slotului; „Oprește” disponibil la stare necunoscută
+- [x] Teste: avertizare → eșec; fără `promotions` → stare salvată; slot list → bifat; oprire trimite doar serviciul
+- [ ] Citire live GET /listings/HB-1262 și /promotions/listings/tl — blocat: sesiunea de browser nu poate fi generată fără aprobare

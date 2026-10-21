@@ -1072,6 +1072,13 @@
       "when": 1792605061173,
       "tag": "0152_portal_republish_batches",
       "breakpoints": true
+    },
+    {
+      "idx": 153,
+      "version": "7",
+      "when": 1792606604247,
+      "tag": "0153_imobiliare_promotion_states",
+      "breakpoints": true
     }
   ]
 }
