@@ -826,6 +826,10 @@ export const PropertyPortalsCard = forwardRef<
               const noSlots = !value && !cell.selected && Boolean(slot && (slot.remaining === 0 || slot.agencyExhausted));
               const busy = activePortals.has(cell.portalId);
               const publishSoon = !portalCanPublish(cell.portalId);
+              const missingReqs = requirementByPortal.get(cell.portalId)?.missing ?? [];
+              // Portalul cu câmpuri lipsă nu poate fi BIFAT; debifarea rămâne
+              // mereu posibilă (anunțurile publicate nu se blochează la retragere).
+              const blockedByRequirements = missingReqs.length > 0 && !value && !cell.selected;
               const disabled =
                 publishSoon ||
                 !editing ||
@@ -834,6 +838,7 @@ export const PropertyPortalsCard = forwardRef<
                 !cell.configured ||
                 noSlots ||
                 busy ||
+                blockedByRequirements ||
                 scheduleByPortal.has(cell.portalId) ||
                 (Boolean(contactBlock) && !value && !cell.selected);
               const problem =
@@ -1059,18 +1064,29 @@ export const PropertyPortalsCard = forwardRef<
                     ) : null}
 
                     {/* Validare pre-publicare: ce lipsește, în cuvinte, pe acest portal. */}
-                    {value && (requirementByPortal.get(cell.portalId)?.missing.length ?? 0) > 0 ? (
+                    {missingReqs.length > 0 ? (
                       <div className="pointer-events-none relative z-10 mt-3 rounded-md border border-warning/40 bg-warning/10 px-3 py-2 pl-3 text-xs">
                         <p className="font-medium text-warning-foreground">
-                          Publicarea este blocată până completezi:
+                          Completează: {missingReqs.map((m) => m.label).join(", ")}
                         </p>
                         <ul className="mt-1 list-disc space-y-0.5 pl-4 text-warning-foreground">
-                          {requirementByPortal.get(cell.portalId)?.missing.map((m) => (
+                          {missingReqs.map((m) => (
                             <li key={m.key}>
                               {m.label} — {m.requirement}
                             </li>
                           ))}
                         </ul>
+                        {onCompleteMissing ? (
+                          <Button
+                            type="button"
+                            variant="link"
+                            size="compact"
+                            className="pointer-events-auto mt-1 h-auto p-0 text-xs font-semibold"
+                            onClick={onCompleteMissing}
+                          >
+                            Deschide editarea și completează
+                          </Button>
+                        ) : null}
                       </div>
                     ) : null}
                   </Card>
