@@ -604,18 +604,17 @@ describe("promotion_warnings din răspunsul portalului", () => {
     expect(imobiliarePromotionWarnings(null)).toEqual([]);
   });
 
-  it("HTTP 200 cu avertizare = operație NEREUȘITĂ, cu textul portalului", async () => {
-    responder = () =>
-      ok({
-        data: { id: 275994142 },
-        promotion_warnings: ["Promovare imoradar nu este activ pentru acest cont"],
-      });
+  it("Top Listing: HTTP 200 cu avertizare = operație NEREUȘITĂ, cu textul portalului", async () => {
+    responder = (call) =>
+      call.path.startsWith("/api/v3/promotions/slots")
+        ? ok({ data: { total: 5, used: 1 } })
+        : ok({ data: { id: 275994142 }, promotion_warnings: ["Top Listing nu este activ pentru acest cont"] });
     const result = await setImobiliareListingPromotion({
       admin: fakeAdmin,
       session: session(),
       organizationId: "org-1",
       reference: "HB-1262",
-      definition: imobiliarePromotion("promote_imoradar")!,
+      definition: imobiliarePromotion("tl")!,
       value: true,
       current: false,
       allocation: { propertyId: "prop-1" },
@@ -623,10 +622,48 @@ describe("promotion_warnings din răspunsul portalului", () => {
     expect(result.ok).toBe(false);
     if (!result.ok) {
       expect(result.code).toBe("PROMOTION_WARNING");
-      expect(result.message).toBe("Promovare imoradar nu este activ pentru acest cont");
+      expect(result.message).toBe("Top Listing nu este activ pentru acest cont");
     }
-    // Starea locală NU se salvează la eșec.
     expect(upserts).toHaveLength(0);
+  });
+
+  it("imoradar24: avertizarea „nu este activ” NU e eșec; stare pornită, avertizare păstrată", async () => {
+    responder = () =>
+      ok({ data: { id: 275994142 }, promotion_warnings: ["Promovare imoradar nu este activ pentru acest cont"] });
+    const result = await setImobiliareListingPromotion({
+      admin: fakeAdmin,
+      session: session(),
+      organizationId: "org-1",
+      reference: "HB-1262",
+      definition: imobiliarePromotion("promote_imoradar")!,
+      value: true,
+      current: null,
+      allocation: { propertyId: "prop-1", skipRules: true },
+    });
+    expect(result.ok).toBe(true);
+    if (result.ok) expect(result.warnings).toEqual(["Promovare imoradar nu este activ pentru acest cont"]);
+    expect(calls.at(-1)?.body).toEqual({ promotions: { promote_imoradar: true } });
+    expect(upserts[0]?.row).toMatchObject({
+      promotion_id: "promote_imoradar",
+      value_boolean: true,
+      manually_stopped: false,
+      last_warning: "Promovare imoradar nu este activ pentru acest cont",
+    });
+  });
+
+  it("imoradar24: oprirea scrisă de utilizator se marchează ca oprire manuală", async () => {
+    responder = () => ok({ data: {} });
+    await setImobiliareListingPromotion({
+      admin: fakeAdmin,
+      session: session(),
+      organizationId: "org-1",
+      reference: "HB-1262",
+      definition: imobiliarePromotion("promote_imoradar")!,
+      value: false,
+      current: true,
+      allocation: { propertyId: "prop-1" },
+    });
+    expect(upserts[0]?.row).toMatchObject({ value_boolean: false, manually_stopped: true });
   });
 
   it("răspuns fără `promotions` și fără avertizări = succes, stare salvată local", async () => {

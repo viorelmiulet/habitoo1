@@ -189,7 +189,14 @@ export async function fetchImobiliareListingPromotions(input: {
 }
 
 export type PromotionWriteResult =
-  | { ok: true; value: boolean | number; portalResponse: unknown; httpStatus: number }
+  | {
+      ok: true;
+      value: boolean | number;
+      portalResponse: unknown;
+      httpStatus: number;
+      /** Avertizări tolerate (doar imoradar „nu este activ”): numai în jurnal. */
+      warnings?: string[];
+    }
   | {
       ok: false;
       code: string;
@@ -216,7 +223,7 @@ export async function setImobiliareListingPromotion(input: {
    * Repartizarea agenției: oferta pentru care se comandă serviciul. `null` doar
    * acolo unde nu există o ofertă locală (teste de contract cu portalul).
    */
-  allocation: { propertyId: string } | null;
+  allocation: { propertyId: string; skipRules?: boolean } | null;
 }): Promise<PromotionWriteResult> {
   const { definition } = input;
   if (!definition.writeField) {
@@ -237,7 +244,7 @@ export async function setImobiliareListingPromotion(input: {
 
   // Regulile agenției (serviciu activat, alocarea agentului, plafonul agenției)
   // se aplică AICI, în locul unic care comandă o promovare.
-  if (input.allocation) {
+  if (input.allocation && !input.allocation.skipRules) {
     const { ensureImobiliarePromotionAllowed } = await import(
       "@/lib/portals/promotions/allocation.server"
     );
@@ -310,7 +317,9 @@ export async function setImobiliareListingPromotion(input: {
   // imoradar nu este activ pentru acest cont") transformă operația în eșec,
   // cu textul exact al portalului.
   const warnings = imobiliarePromotionWarnings(response.body);
-  if (warnings.length > 0) {
+  const { classifyPromotionWarnings, IMORADAR_PROMOTION_ID } = await import("./imoradar-auto");
+  const warningCheck = classifyPromotionWarnings(definition.id, warnings);
+  if (warningCheck.fail) {
     return {
       ok: false,
       code: "PROMOTION_WARNING",
@@ -341,6 +350,13 @@ export async function setImobiliareListingPromotion(input: {
               definition.kind === "numeric"
                 ? Math.max(Math.trunc(Number(confirmed) || 0), 0)
                 : null,
+            ...(definition.id === IMORADAR_PROMOTION_ID
+              ? {
+                  // Orice oprire scrisă este manuală: automatizarea scrie doar `true`.
+                  manually_stopped: confirmed !== true,
+                  last_warning: warningCheck.tolerated.length ? warningCheck.tolerated.join(" ") : null,
+                }
+              : {}),
             updated_at: new Date().toISOString(),
           },
           { onConflict: "organization_id,property_id,promotion_id" },
@@ -356,6 +372,7 @@ export async function setImobiliareListingPromotion(input: {
     value: confirmed,
     portalResponse: response.body ?? null,
     httpStatus: response.status,
+    ...(warningCheck.tolerated.length ? { warnings: warningCheck.tolerated } : {}),
   };
 }
 

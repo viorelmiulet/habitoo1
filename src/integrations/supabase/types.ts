@@ -10,7 +10,7 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "14.5"
+    PostgrestVersion: "14.17"
   }
   public: {
     Tables: {
@@ -2945,6 +2945,8 @@ export type Database = {
       imobiliare_promotion_states: {
         Row: {
           id: string
+          last_warning: string | null
+          manually_stopped: boolean
           organization_id: string
           promotion_id: string
           property_id: string
@@ -2955,6 +2957,8 @@ export type Database = {
         }
         Insert: {
           id?: string
+          last_warning?: string | null
+          manually_stopped?: boolean
           organization_id: string
           promotion_id: string
           property_id: string
@@ -2965,6 +2969,8 @@ export type Database = {
         }
         Update: {
           id?: string
+          last_warning?: string | null
+          manually_stopped?: boolean
           organization_id?: string
           promotion_id?: string
           property_id?: string
@@ -5714,6 +5720,7 @@ export type Database = {
           enabled: boolean
           external_ref: string | null
           id: string
+          imoradar_opt_out: boolean
           last_error: string | null
           last_synced_at: string | null
           organization_id: string
@@ -5732,6 +5739,7 @@ export type Database = {
           enabled?: boolean
           external_ref?: string | null
           id?: string
+          imoradar_opt_out?: boolean
           last_error?: string | null
           last_synced_at?: string | null
           organization_id: string
@@ -5750,6 +5758,7 @@ export type Database = {
           enabled?: boolean
           external_ref?: string | null
           id?: string
+          imoradar_opt_out?: boolean
           last_error?: string | null
           last_synced_at?: string | null
           organization_id?: string
@@ -5942,6 +5951,7 @@ export type Database = {
           failed: number
           finished_at: string | null
           id: string
+          kind: string
           organization_id: string
           portal_keys: string[]
           requested_by: string
@@ -5957,6 +5967,7 @@ export type Database = {
           failed?: number
           finished_at?: string | null
           id?: string
+          kind?: string
           organization_id: string
           portal_keys?: string[]
           requested_by: string
@@ -5972,6 +5983,7 @@ export type Database = {
           failed?: number
           finished_at?: string | null
           id?: string
+          kind?: string
           organization_id?: string
           portal_keys?: string[]
           requested_by?: string
