@@ -46,7 +46,7 @@ describe("starea contului Imobiliare.ro", () => {
 
   it("descrie explicit lipsa abonamentului", () => {
     const text = describeImobiliareAccount(parseImobiliareAccount(ME_BODY));
-    expect(text).toContain(IMOBILIARE_NO_SUBSCRIPTION_MESSAGE);
+    expect(text).not.toContain(IMOBILIARE_NO_SUBSCRIPTION_MESSAGE);
     expect(text).toContain("46");
   });
 

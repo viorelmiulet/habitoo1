@@ -2297,10 +2297,6 @@ export const getPropertiesPortalMatrix = createServerFn({ method: "POST" })
     // când există o cheie Habitoo activă cu care pot citi feedul.
     const keyedPortals = new Set((activeKeys ?? []).map((k) => k.portal));
 
-    const imobiliareVisible = visiblePortals === null || visiblePortals.has("imobiliare_ro");
-    const imobiliareConnected = (connections ?? []).some(
-      (c) => c.portal === "imobiliare_ro" && (c.status === "connected" || c.status === "ready"),
-    );
 
     const { isPropertyFeedEligible } = await import("@/lib/site-feed/mapper");
     const eligibleById = new Map(

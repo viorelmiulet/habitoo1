@@ -83,7 +83,7 @@ function ImobiliareSubscriptionBadge({ organizationId }: { organizationId: strin
   // Valori brute din /api/v3/me, fără concluzii despre abonament.
   const v = (x: string | number | boolean | null) => (x === null ? "—" : String(x));
   return (
-    <StatusBadge tone="muted">
+    <StatusBadge tone="neutral">
       Abonament: tip {v(data.subscriptionType)} · status {v(data.subscriptionStatus)} · anunțuri online {v(data.listingOnlineCount)}
     </StatusBadge>
   );
