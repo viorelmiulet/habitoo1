@@ -6,10 +6,11 @@ const apt = (floor: number | null, floorLabel: string | null) =>
   imobiliareFloorReasons({ propertyType: "apartment", floor, floorLabel });
 
 describe("etaj Imobiliare.ro", () => {
-  it("demisol (-1) nu mai cere „Completează etajul”, ci valoarea neconfirmată", () => {
-    const r = apt(-1, "Demisol");
-    expect(r).not.toContain("Completează etajul");
-    expect(r).toEqual(["Imobiliare.ro: valoarea pentru Demisol nu e confirmată"]);
+  it("demisol (-1) este selectabil", () => {
+    expect(apt(-1, "Demisol")).toEqual([]);
+  });
+  it("subsol rămâne blocat", () => {
+    expect(apt(-2, "Subsol")).toEqual(["Imobiliare.ro: valoarea pentru Subsol nu e confirmată"]);
   });
   it("parter și parter înalt → 0, acceptat", () => {
     expect(apt(syncFloor("Parter", null).floor, "Parter")).toEqual([]);
