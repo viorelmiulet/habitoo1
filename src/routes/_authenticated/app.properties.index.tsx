@@ -39,6 +39,7 @@ import { PropertyThumb, usePropertyCovers } from "@/components/app/PropertyThumb
 import { PropertyPublishView } from "@/components/app/PropertyPublishView";
 import { trackPortalBulkJob } from "@/components/app/PortalBulkProgress";
 import { PortalBulkSelectionDialog } from "@/components/app/PortalBulkSelectionDialog";
+import { PortalRepublishButton } from "@/components/app/PortalRepublishDialog";
 import { StatusBadge } from "@/components/app/StatusBadge";
 import { PortalLogoStack } from "@/components/app/PortalLogo";
 import { UserAvatar } from "@/components/app/UserAvatar";
@@ -696,6 +697,7 @@ function PropertiesPage() {
         description="Portofoliul agenției, cu filtrare avansată, editare rapidă și acțiuni în masă."
         actions={
           <>
+            <PortalRepublishButton organizationId={orgId} />
             <Button variant="outline" size="sm" onClick={exportCsv}>
               <Download className="size-4" /> Export CSV
             </Button>

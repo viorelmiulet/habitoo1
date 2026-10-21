@@ -27,8 +27,13 @@ export const Route = createFileRoute("/api/public/cron/portal-publish")({
         if (unauthorized) return unauthorized;
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
         const { runPortalPublishWorker } = await import("@/lib/portals/publish-jobs.server");
-        const { applyPortalSelectionForOrg } = await import("@/lib/portals.functions");
+        const { applyPortalSelectionForOrg, executeListingAction } = await import("@/lib/portals.functions");
+        const { runRepublishJob, refreshRepublishBatches } = await import("@/lib/portals/republish.server");
         const result = await runPortalPublishWorker(supabaseAdmin, async (job) => {
+          // Republicare: doar retrimiterea anunțului existent, niciodată publish/withdraw.
+          if (job.operation === "republish") {
+            return runRepublishJob(supabaseAdmin, job, (input) => executeListingAction(input));
+          }
           const out = await applyPortalSelectionForOrg({
             organizationId: job.organization_id,
             superadmin: job.superadmin,
@@ -47,6 +52,9 @@ export const Route = createFileRoute("/api/public/cron/portal-publish")({
           });
           return out.results.find((r) => r.portalId === job.portal_key) ?? null;
         });
+        await refreshRepublishBatches(supabaseAdmin).catch((e: unknown) =>
+          console.error("[portal-republish] progresul nu a putut fi actualizat", String(e).slice(0, 200)),
+        );
         return new Response(JSON.stringify({ ok: true, ...result }), {
           headers: { "Content-Type": "application/json" },
         });

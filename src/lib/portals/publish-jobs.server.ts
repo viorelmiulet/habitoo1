@@ -28,6 +28,8 @@ export type PublishJobRow = {
   requested_by: string;
   superadmin: boolean;
   attempts: number;
+  operation?: string;
+  republish_batch_id?: string | null;
 };
 
 export type PublishOutcome = {
@@ -166,7 +168,8 @@ export async function runPortalPublishWorker(
         })
         .eq("id", job.id);
       // Clopoțelul arată doar erori: succesul nu creează notificare.
-      if (decision.ok) return;
+      // Republicarea în lot trimite o singură notificare, la final.
+      if (decision.ok || job.republish_batch_id) return;
       await admin.from("notifications").insert({
         organization_id: job.organization_id,
         user_id: job.requested_by,
