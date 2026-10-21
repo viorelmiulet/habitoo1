@@ -106,3 +106,12 @@
 - [x] Citire stare la deschidere: corpul anunțului + prezența în lista slotului; „Oprește” disponibil la stare necunoscută
 - [x] Teste: avertizare → eșec; fără `promotions` → stare salvată; slot list → bifat; oprire trimite doar serviciul
 - [ ] Citire live GET /listings/HB-1262 și /promotions/listings/tl — blocat: sesiunea de browser nu poate fi generată fără aprobare
+
+# Filtru „Promovare” în lista Proprietăți
+
+- [x] Opțiuni din registru, doar portaluri conectate: servicii Imobiliare.ro gestionabile + flag „Promovat” (Romimo/Publi24)
+- [x] Sursa: `imobiliare_promotion_states` (doar pornite) + `portal_publications.promoted`, doar anunțuri publicate
+- [x] Selecție multiplă în URL, combinabilă cu celelalte filtre; filtrare pe server (id-uri) + RLS pe interogarea listei
+- [x] Etichete „Portal · Serviciu” pe rândurile din listă; pastilă de filtru activ
+- [x] 35 teste noi + 58 teste înrudite, build OK
+- [ ] Verificare live pe cont real — blocat: sesiunea de browser nu poate fi generată fără aprobare
