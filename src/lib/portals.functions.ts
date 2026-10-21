@@ -292,6 +292,8 @@ export async function logOperation(input: {
   portalResponse?: unknown;
   /** Referința anunțului la portal, când există. */
   externalId?: string | null;
+  /** Durata operației (ms), inclusiv așteptarea răspunsului portalului. */
+  durationMs?: number | null;
 }) {
   const admin = await loadAdmin();
   const { portalResponseLog } = await import("@/lib/portals/errors");
@@ -306,6 +308,9 @@ export async function logOperation(input: {
       : { http_status: input.httpStatus }),
     ...(response ? { portal_response: response as never } : {}),
     ...(input.externalId ? { external_id: input.externalId } : {}),
+    ...(typeof input.durationMs === "number" && Number.isFinite(input.durationMs)
+      ? { duration_ms: Math.max(0, Math.round(input.durationMs)) }
+      : {}),
     portal: input.portal,
     operation: input.operation,
     success: input.success,
@@ -1244,6 +1249,8 @@ export async function executeListingAction(input: {
   promoted?: boolean;
 }): Promise<ListingActionResult> {
   const { organizationId, actorId, portalId, propertyId, action } = input;
+  const startedAt = Date.now();
+  const elapsed = () => Date.now() - startedAt;
   const definition = getPortalDefinition(portalId);
   if (!definition) throw new Error("Portal necunoscut.");
   if (definition.status !== "available") {
@@ -1301,6 +1308,7 @@ export async function executeListingAction(input: {
         errorMessage: message,
         propertyId,
         actorId,
+        durationMs: elapsed(),
       });
       await persistListingFailure(admin, {
         organizationId,
@@ -1337,6 +1345,7 @@ export async function executeListingAction(input: {
         errorMessage: guard.message,
         propertyId,
         actorId,
+        durationMs: elapsed(),
       });
       await persistListingFailure(admin, {
         organizationId,
@@ -1402,6 +1411,7 @@ export async function executeListingAction(input: {
       success: true,
       propertyId,
       actorId,
+      durationMs: elapsed(),
     });
     return { ok: true as const, code: null, message: null, data: { externalId: null } } as never;
   }
@@ -1415,7 +1425,7 @@ export async function executeListingAction(input: {
 
   const { data: listing } = await admin
     .from("portal_listings")
-    .select("id, external_id, portal_offers")
+    .select("id, external_id, portal_offers, status")
     .eq("organization_id", organizationId)
     .eq("portal", definition.id)
     .eq("property_id", propertyId)
@@ -1444,6 +1454,7 @@ export async function executeListingAction(input: {
 
   const { toPortalError } = await import("@/lib/portals/errors");
   let result: Awaited<ReturnType<typeof adapter.publishListing>>;
+  const portalStartedAt = Date.now();
   try {
     const { ctx } = await buildContext(organizationId, definition);
     const ref = {
@@ -1466,6 +1477,7 @@ export async function executeListingAction(input: {
       detail: portalError.detail,
     };
   }
+  const portalDurationMs = Date.now() - portalStartedAt;
 
   const now = new Date().toISOString();
   // Portalurile asincrone (Storia) raportează starea reală a anunțului: un
@@ -1479,18 +1491,35 @@ export async function executeListingAction(input: {
    */
   const ALLOWED_STATUS = ["pending", "published", "updated", "withdrawn", "error", "needs_packet"];
   const reported = result.ok ? (result.data.portalStatus ?? null) : null;
-  const status = !result.ok
-    ? "error"
-    : reported && ALLOWED_STATUS.includes(reported)
-      ? reported
-      : fallbackStatus;
+  /**
+   * Anunț deja publicat, actualizare neconfirmată (timeout / rețea): rămâne
+   * „Publicat” cu nota, nu „Eroare”; agentul poate apăsa Retrimite.
+   */
+  const { unconfirmedUpdateState } = await import("@/lib/portals/transient-failure");
+  const unconfirmed = unconfirmedUpdateState({
+    ok: result.ok,
+    action,
+    code: result.ok ? null : result.code,
+    message: result.ok ? null : result.message,
+    previousStatus: (listing as { status?: string | null } | null)?.status ?? null,
+    externalId: listing?.external_id ?? null,
+  });
+  const status = unconfirmed
+    ? unconfirmed.keepStatus
+    : !result.ok
+      ? "error"
+      : reported && ALLOWED_STATUS.includes(reported)
+        ? reported
+        : fallbackStatus;
   /**
    * Explicația arătată agentului. O operațiune poate reuși tehnic, dar
    * portalul să raporteze o stare problematică (ex. anunț respins la
    * moderare): fără mesajul portalului, interfața ar arăta un badge „Eroare”
    * fără nicio explicație.
    */
-  const errorMessage = !result.ok
+  const errorMessage = unconfirmed
+    ? unconfirmed.note
+    : !result.ok
     ? result.message
     : status === "error" || status === "needs_packet"
       ? (result.data.message ?? "Portalul a raportat o problemă la acest anunț.")
