@@ -171,8 +171,16 @@ export function imobiliareFloorReasons(input: {
   if (housing !== "apartment" && housing !== "studio") return [];
   if (nonNegativeInt(input.floor) !== null) return [];
   const label = input.floorLabel?.normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim().toLowerCase();
+  // Valorile portalului pentru demisol/subsol/mansardă nu sunt confirmate
+  // (în jurnale apar doar șiruri numerice ≥ 0): nu inventăm nimic.
+  if (label === "demisol" || input.floor === -1) {
+    return ["Imobiliare.ro: valoarea pentru Demisol nu e confirmată"];
+  }
+  if (label === "subsol" || (typeof input.floor === "number" && input.floor < -1)) {
+    return ["Imobiliare.ro: valoarea pentru Subsol nu e confirmată"];
+  }
   if (label === "mansarda") {
-    return ["Imobiliare.ro: valoarea pentru Mansardă nu este confirmată; completează numărul real al etajului pentru publicare."];
+    return ["Imobiliare.ro: valoarea pentru Mansardă nu e confirmată"];
   }
   return ["Completează etajul"];
 }
