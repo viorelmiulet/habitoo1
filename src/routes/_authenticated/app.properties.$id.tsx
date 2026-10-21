@@ -509,6 +509,10 @@ function PropertyDetailPage() {
       setEditing(false);
       queryClient.invalidateQueries({ queryKey: ["property", id] });
       queryClient.invalidateQueries({ queryKey: ["properties"] });
+      // Cerințele pre-publicare se recalculează imediat: portalul devine
+      // selectabil de îndată ce câmpurile lipsă sunt completate.
+      queryClient.invalidateQueries({ queryKey: ["property-portal-requirements"] });
+      queryClient.invalidateQueries({ queryKey: ["property-portals-matrix"] });
 
       const base = saved
         ? "Modificările au fost salvate și proprietatea a fost publicată."
