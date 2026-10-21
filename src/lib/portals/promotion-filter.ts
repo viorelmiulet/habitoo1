@@ -168,6 +168,9 @@ export type PromotionRows = {
   publications: { property_id: string; portal_key: string; enabled: boolean; promoted: boolean | null }[];
 };
 
+/** Stările de listing care înseamnă „anunțul e live pe portal”. */
+export const PUBLISHED_LISTING_STATUSES = ["published", "updated"] as const;
+
 /** Construiește informația de promovare per proprietate (doar anunțuri publicate). */
 export function buildPromotionInfos(rows: PromotionRows): Map<string, PropertyPromotionInfo> {
   const infos = new Map<string, PropertyPromotionInfo>();
@@ -181,6 +184,7 @@ export function buildPromotionInfos(rows: PromotionRows): Map<string, PropertyPr
   };
   const publishedPortals = new Map<string, Set<string>>();
   for (const listing of rows.listings) {
+    if (!(PUBLISHED_LISTING_STATUSES as readonly string[]).includes(listing.status)) continue;
     let set = publishedPortals.get(listing.property_id);
     if (!set) {
       set = new Set();

@@ -16,6 +16,7 @@ import {
 } from "@/lib/portals.functions";
 import {
   buildPromotionInfos,
+  PUBLISHED_LISTING_STATUSES,
   parsePromotionSelection,
   promotionFilterGroups,
   promotionSelectionIsEmpty,
@@ -26,8 +27,6 @@ import {
   type PromotionRows,
   type PropertyPromotionBadge,
 } from "@/lib/portals/promotion-filter";
-
-const PUBLISHED_LISTING_STATUSES = ["published", "updated"] as const;
 
 async function loadAdmin() {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");

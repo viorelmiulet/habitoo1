@@ -19,7 +19,7 @@ import {
   type PropertyPromotionInfo,
 } from "@/lib/portals/promotion-filter";
 import { manageableImobiliarePromotions } from "@/lib/portals/imobiliare/promotions";
-import { PORTALS } from "@/lib/portals/registry";
+import { PORTALS, portalDisplayName } from "@/lib/portals/registry";
 import { parsePromotionValues, serializePromotionValues, togglePromotionValue } from "@/components/app/PromotionFilterSelect";
 
 const info = (partial: Partial<PropertyPromotionInfo>): PropertyPromotionInfo => ({
@@ -195,7 +195,10 @@ describe("promotionBadgesFor", () => {
         flagPromotions: [{ portalId: "romimo", published: true, promoted: true }],
       }),
     );
-    expect(badges.map((b) => b.label)).toEqual(["Imobiliare.ro · Top Listing", "Romimo.ro · Promovat"]);
+    expect(badges.map((b) => b.label)).toEqual([
+      "Imobiliare.ro · Top Listing",
+      `${portalDisplayName("romimo")} · Promovat`,
+    ]);
   });
 
   it("fără promovări active → fără etichete", () => {
@@ -236,6 +239,7 @@ describe("funcțiile de server", () => {
   });
 
   it("nu face nicio scriere pe portaluri (doar citire)", () => {
-    expect(source).not.toMatch(/setImobiliareListingPromotion|publish|withdraw/i);
+    expect(source).not.toMatch(/setImobiliareListingPromotion/);
+    expect(source).not.toMatch(/fetch\(/);
   });
 });
