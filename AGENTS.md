@@ -32,4 +32,3 @@
 - Video music uses private `video-music` storage with superadmin writes and signed reads; video/Reel posts record `music_track_id`. Facebook Reels use the Meta boundary and GET-only social-temp completion. Why: private tokens, music provenance and no duplicate publishing.
 - No global `entities` aliases or version overrides. Why: consumers require different majors and package exports.
 - Integrations overview has a separate registry-derived presentation module. Why: no duplicates or false claims, unchanged detail pages.
-- Bulk republish of already-published listings runs as `portal_publish_jobs` with `operation=republish` grouped by `portal_republish_batches` (one running per agency); the worker only calls `executeListingAction` update with label `republish`. Why: reuse the durable queue/retries and never publish, withdraw or promote.
