@@ -641,7 +641,6 @@ async function diagnose(
   // bază: nu este o ciornă confirmată de portal.
   const offerUrl = noSubscription ? null : imobiliarePublicUrlFromBody(response.body);
   const notes: string[] = [];
-  if (noSubscription) notes.push(IMOBILIARE_NO_SUBSCRIPTION_MESSAGE);
   if (state && state !== IMOBILIARE_STATUS_ONLINE) {
     notes.push(`Anunțul este în starea „${state}” la Imobiliare.ro, deci nu are pagină publică.`);
   } else if (!offerUrl && !noSubscription) {

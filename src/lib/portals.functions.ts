@@ -38,6 +38,7 @@ import {
 } from "@/lib/portals/link";
 import {
   IMOBILIARE_NO_SUBSCRIPTION_MESSAGE,
+  imobiliareCardUrl,
   subscriptionInactive,
   type ImobiliareAccountState,
 } from "@/lib/portals/imobiliare/account";
@@ -2362,7 +2363,7 @@ export const getPropertiesPortalMatrix = createServerFn({ method: "POST" })
           // Imobiliare.ro: linkul se afișează doar din ID-ul real salvat.
           publicUrl:
             portal.id === "imobiliare_ro"
-              ? (parsePortalOffers(listing?.portal_offers)[0]?.url ?? null)
+              ? imobiliareCardUrl(listing, parsePortalOffers(listing?.portal_offers)[0]?.url ?? null)
               : (listing?.public_url ?? null),
           // Storia: linkurile exportului automat pe OLX, doar cât anunțul e publicat.
           olxLinks: portal.id === "storia" ? visibleOlxLinks(listing?.portal_offers, listingStatus) : [],
@@ -2373,10 +2374,8 @@ export const getPropertiesPortalMatrix = createServerFn({ method: "POST" })
           })),
           promotionFlag: portal.supports_promoted_flag === true,
           promoted: portal.supports_promoted_flag === true && pub?.enabled === true && pub?.promoted === true,
-          publicWarning:
-            portal.id === "imobiliare_ro" && imobiliareNoSubscription && listing?.public_url
-              ? IMOBILIARE_NO_SUBSCRIPTION_MESSAGE
-              : null,
+          // `is_subscription_active` nu e de încredere: niciun avertisment de abonament pe card.
+          publicWarning: null,
         };
       });
     }
