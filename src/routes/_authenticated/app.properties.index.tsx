@@ -37,6 +37,7 @@ import {
   getPropertyPromotionBadges,
 } from "@/lib/portals/promotion-filter.functions";
 import { parsePortalFilter } from "@/lib/portals/portal-state";
+import { portalListingLink } from "@/lib/portals/listing-links";
 import { PropertyCard, type PropertyCardRow } from "@/components/app/PropertyCard";
 import { useServerFn } from "@tanstack/react-start";
 import { archiveProperty, unarchiveProperty } from "@/lib/property-archive.functions";
@@ -1108,22 +1109,42 @@ function PropertiesPage() {
                     </div>
                     {portals.hasPortals ? (
                       <div className="min-w-0 self-end lg:self-center">
-                        {selectedPortals.length > 0 ? <div className="flex flex-wrap gap-1.5">{selectedPortals.map((cell) => (
+                        {selectedPortals.length > 0 ? <div className="flex flex-wrap gap-1.5">{selectedPortals.map((cell) => {
+                          const link = portalListingLink(cell);
+                          const logoBox = (
+                            <>
+                              <PortalLogoStack portalId={cell.portalId} name={cell.portalName} size={24} />
+                              <span className={cn("absolute right-0 bottom-0 size-[11px] rounded-full border-2 border-surface", {
+                                "bg-success": portalDotTone(cell.state) === "success",
+                                "bg-warning": portalDotTone(cell.state) === "warning",
+                                "bg-destructive": portalDotTone(cell.state) === "danger",
+                                "bg-muted-foreground": portalDotTone(cell.state) === "neutral",
+                              })} />
+                            </>
+                          );
+                          return (
                           <Tooltip key={cell.portalId}>
                             <TooltipTrigger asChild>
-                              <span className="relative inline-flex rounded-lg border border-border bg-surface p-1">
-                                <PortalLogoStack portalId={cell.portalId} name={cell.portalName} size={24} />
-                                <span className={cn("absolute right-0 bottom-0 size-[11px] rounded-full border-2 border-surface", {
-                                  "bg-success": portalDotTone(cell.state) === "success",
-                                  "bg-warning": portalDotTone(cell.state) === "warning",
-                                  "bg-destructive": portalDotTone(cell.state) === "danger",
-                                  "bg-muted-foreground": portalDotTone(cell.state) === "neutral",
-                                })} />
-                              </span>
+                              {link.href ? (
+                                <a
+                                  href={link.href}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  aria-label={`Vezi anunțul pe ${cell.portalName}`}
+                                  className="relative inline-flex rounded-lg border border-border bg-surface p-1 transition-colors hover:border-primary"
+                                >
+                                  {logoBox}
+                                </a>
+                              ) : (
+                                <span className="relative inline-flex rounded-lg border border-border bg-surface p-1">
+                                  {logoBox}
+                                </span>
+                              )}
                             </TooltipTrigger>
-                            <TooltipContent>{cell.portalName}: {portalStateLabel(cell.state)}</TooltipContent>
+                            <TooltipContent>{link.tooltip ?? `${cell.portalName}: ${portalStateLabel(cell.state)}`}</TooltipContent>
                           </Tooltip>
-                        ))}</div> : null}
+                          );
+                        })}</div> : null}
                         {portalError ? <p className="mt-1.5 truncate text-xs font-semibold text-destructive">Eroare pe {portalError.portalName}</p> : publishedPortals.length > 0 ? <p className="mt-1.5 text-xs font-semibold text-success">Publicat pe {publishedPortals.length} {publishedPortals.length === 1 ? "portal" : "portaluri"}</p> : <p className="mt-1.5 text-xs text-muted-foreground">Nepublicată · <a href={`/app/properties/${p.id}?tab=publishing`} className="font-semibold text-primary hover:underline">Publică pe portaluri</a></p>}
                       </div>
                     ) : null}

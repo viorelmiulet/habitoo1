@@ -10,6 +10,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { StatusBadge } from "@/components/app/StatusBadge";
 import { PortalLogo } from "@/components/app/PortalLogo";
 import { getPropertiesPortalMatrix, type PropertyPortalCell } from "@/lib/portals.functions";
+import { portalListingLink } from "@/lib/portals/listing-links";
 
 const TONE: Record<PropertyPortalCell["state"], "success" | "warning" | "danger" | "neutral"> = {
   in_feed: "success",
@@ -61,17 +62,40 @@ export function PropertyPortalsCell({ cells }: { cells: PropertyPortalCell[] }) 
     );
   return (
     <span data-tour="property-portals" className="flex flex-wrap gap-1">
-      {active.map((c) => (
-        <StatusBadge key={c.portalId} tone={TONE[c.state]}>
-          <PortalLogo
-            portalId={c.portalId}
-            name={c.portalName}
-            size={16}
-            className="mr-1 rounded-sm"
-          />
-          {c.portalName}
-        </StatusBadge>
-      ))}
+      {active.map((c) => {
+        const link = portalListingLink(c);
+        const body = (
+          <>
+            <PortalLogo
+              portalId={c.portalId}
+              name={c.portalName}
+              size={16}
+              className="mr-1 rounded-sm"
+            />
+            {c.portalName}
+          </>
+        );
+        return (
+          <StatusBadge key={c.portalId} tone={TONE[c.state]}>
+            {link.href ? (
+              <a
+                href={link.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label={link.tooltip ?? undefined}
+                title={link.tooltip ?? undefined}
+                className="inline-flex items-center hover:underline"
+              >
+                {body}
+              </a>
+            ) : (
+              <span title={link.tooltip ?? undefined} className="inline-flex items-center">
+                {body}
+              </span>
+            )}
+          </StatusBadge>
+        );
+      })}
     </span>
   );
 }

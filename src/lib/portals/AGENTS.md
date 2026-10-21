@@ -1,6 +1,7 @@
 # Portal rules
 
 - Pre-publish requirements live only in `src/lib/portals/requirements.ts` (`PORTAL_REQUIREMENTS` + `validatePortalRequirements`), loaded by `requirements.server.ts` (single + batch); `executeListingAction` blocks publish/update/republish with VALIDATION_ERROR before any portal call, withdraw is never blocked; the Publicare tab and the bulk grid disable enabling a portal with missing fields. Why: one rule set for UI, grid and server; published listings are never auto-withdrawn over a newly required field.
+- Portal logo summaries link to the listing only through `portalListingLink` in `src/lib/portals/listing-links.ts`: https `portal_listings.public_url` saved from the portal's real response, only for published/in_feed; never construct or guess URLs (ClickImob's `/anunt/<slug>-<id>` soft-404s on id alone). Why: no invented links.
 - Imobiliare.ro floor preflight shares the mapper's pure validation and runs before authorization, catalog refresh or agent sync; seller commission is parsed only in its mapper. Why: invalid apartments must not call the portal and other integrations remain unchanged.
 
 - Properstar index tracks agency presence with 7-day deletion grace; links use HMAC-SHA256. Why: one index URL; deactivation has no timestamp elsewhere.
