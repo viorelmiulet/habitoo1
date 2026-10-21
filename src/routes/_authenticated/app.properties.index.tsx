@@ -29,7 +29,13 @@ import { PageHeader } from "@/components/app/PageHeader";
 import { CardGridSkeleton, ListSkeleton } from "@/components/app/LoadingState";
 import { usePropertyPortals } from "@/components/app/PropertyPortalsCell";
 import { PortalFilterSelect, portalFilterLabel } from "@/components/app/PortalFilterSelect";
+import { PromotionFilterSelect, promotionFilterLabel, parsePromotionValues } from "@/components/app/PromotionFilterSelect";
 import { getPortalFilterOptions, getPropertyIdsByPortalState } from "@/lib/portals.functions";
+import {
+  getPromotionFilterOptions,
+  getPropertyIdsByPromotion,
+  getPropertyPromotionBadges,
+} from "@/lib/portals/promotion-filter.functions";
 import { parsePortalFilter } from "@/lib/portals/portal-state";
 import { PropertyCard, type PropertyCardRow } from "@/components/app/PropertyCard";
 import { useServerFn } from "@tanstack/react-start";
@@ -365,10 +371,38 @@ function PropertiesPage() {
       }),
   });
 
+  // Filtrul „Promovare”: opțiunile vin din registru, doar pentru portalurile
+  // conectate; id-urile se rezolvă pe server, apoi interogarea listei (sub RLS)
+  // le intersectează — agentul vede în continuare doar anunțurile lui.
+  const loadPromotionOptions = useServerFn(getPromotionFilterOptions);
+  const loadPromotionIds = useServerFn(getPropertyIdsByPromotion);
+  const loadPromotionBadges = useServerFn(getPropertyPromotionBadges);
+  const { data: promotionGroups = [] } = useQuery({
+    queryKey: ["promotion-filter-options", orgId],
+    enabled: Boolean(orgId),
+    queryFn: async () => (await loadPromotionOptions({ data: { organizationId: orgId } })).groups,
+  });
+  const promotionValues = useMemo(() => {
+    const valid = new Set([
+      "any",
+      "none",
+      ...promotionGroups.flatMap((group) => group.options.map((option) => option.value)),
+    ]);
+    return parsePromotionValues(filters.promotion).filter((value) => valid.has(value));
+  }, [filters.promotion, promotionGroups]);
+  const { data: promotionIds, isLoading: promotionIdsLoading } = useQuery({
+    queryKey: ["promotion-filter-ids", orgId, promotionValues],
+    enabled: Boolean(orgId) && promotionValues.length > 0,
+    queryFn: () => loadPromotionIds({ data: { organizationId: orgId, values: promotionValues } }),
+  });
+
   const { data: result, isLoading: listLoading } = useQuery({
-    // (isLoading de mai jos combină și încărcarea filtrului de portaluri)
-    queryKey: ["properties", orgId, filters, sort, page, favoriteIds, portalIds],
-    enabled: Boolean(orgId) && (!portalFilter || portalIds !== undefined),
+    // (isLoading de mai jos combină și încărcarea filtrelor de portaluri/promovare)
+    queryKey: ["properties", orgId, filters, sort, page, favoriteIds, portalIds, promotionIds],
+    enabled:
+      Boolean(orgId) &&
+      (!portalFilter || portalIds !== undefined) &&
+      (promotionValues.length === 0 || promotionIds !== undefined),
     queryFn: async () => {
       let query = supabase
         .from("properties")
@@ -416,6 +450,10 @@ function PropertiesPage() {
         if (!portalIds || portalIds.length === 0) return { rows: [], count: 0 };
         query = query.in("id", portalIds);
       }
+      if (promotionValues.length > 0) {
+        if (!promotionIds || promotionIds.length === 0) return { rows: [], count: 0 };
+        query = query.in("id", promotionIds);
+      }
       if (filters.q) {
         const q = filters.q.replace(/[%,()"\\]/g, " ").trim();
         query = query.or(
@@ -433,8 +471,18 @@ function PropertiesPage() {
     },
   });
 
-  const isLoading = listLoading || (Boolean(portalFilter) && portalIdsLoading);
+  const isLoading =
+    listLoading ||
+    (Boolean(portalFilter) && portalIdsLoading) ||
+    (promotionValues.length > 0 && promotionIdsLoading);
   const rows = result?.rows ?? [];
+  // Etichetele „Promovat” (portal · serviciu) pentru rândurile din pagina curentă.
+  const { data: promotionBadges = {} } = useQuery({
+    queryKey: ["property-promotion-badges", orgId, rows.map((r) => r.id)],
+    enabled: Boolean(orgId) && rows.length > 0,
+    queryFn: () =>
+      loadPromotionBadges({ data: { organizationId: orgId, propertyIds: rows.map((r) => r.id) } }),
+  });
   // Coverul fiecărei proprietăți din pagina curentă (is_primary → prima poziție).
   const coverOf = usePropertyCovers(rows.map((r) => r.id));
   // Selecția de portaluri per proprietate (portal_publications) + starea reală (portal_listings).
@@ -619,6 +667,12 @@ function PropertiesPage() {
     portalFilter
       ? { key: "portal" as const, label: portalFilterLabel(filters.portal, portalOptions) }
       : null,
+    filters.promotion
+      ? {
+          key: "promotion" as const,
+          label: `Promovare: ${promotionFilterLabel(filters.promotion, promotionGroups)}`,
+        }
+      : null,
     filters.priceMin ? { key: "priceMin" as const, label: `Preț ≥ ${filters.priceMin}` } : null,
     filters.priceMax ? { key: "priceMax" as const, label: `Preț ≤ ${filters.priceMax}` } : null,
     filters.surfaceMin
@@ -768,6 +822,12 @@ function PropertiesPage() {
               <PortalFilterSelect id="property-portal" value={filters.portal} options={portalOptions} onChange={(v) => setFilters((f) => ({ ...f, portal: v }))} className={cn("w-full", filters.portal !== "all" && valuedControlClass)} />
             </div>
           ) : <div aria-hidden />}
+          {promotionGroups.length > 0 ? (
+            <div>
+              <label htmlFor="property-promotion" className={fieldLabelClass}>Promovare</label>
+              <PromotionFilterSelect id="property-promotion" value={filters.promotion} groups={promotionGroups} onChange={(v) => setFilters((f) => ({ ...f, promotion: v }))} className={cn("w-full", filters.promotion && valuedControlClass)} />
+            </div>
+          ) : null}
           {mainAgentFilter ? (
             <div>
               <label htmlFor="property-agent" className={fieldLabelClass}>Agent</label>
@@ -985,7 +1045,7 @@ function PropertiesPage() {
                   const selectedPortals = portalCells.filter((cell) => cell.selected);
                   const publishedPortals = selectedPortals.filter((cell) => cell.state === "published" || cell.state === "in_feed");
                   const portalError = selectedPortals.find((cell) => cell.state === "error");
-                  const promoted = portalCells.some((cell) => cell.promoted);
+                  const propertyPromotionBadges = promotionBadges[p.id] ?? [];
                   const details = formatPropertyListDetails(p);
                   const price = formatPropertyListPrice(p.price, p.currency, p.transaction_kind, p.surface);
                   const permittedDelete = canShowDeleteAction(canDeleteProperty(user, p));
@@ -1023,13 +1083,15 @@ function PropertiesPage() {
                       >
                         <Star className={cn("size-4 text-muted-foreground", favoriteIds.includes(p.id) && "fill-warning text-warning")} />
                       </Button>
-                      {promoted ? <span className="absolute bottom-2 left-2 rounded-pill bg-sidebar px-2 py-1 text-[11px] font-bold text-sidebar-primary">Promovat</span> : null}
                     </div>
                     <div className="col-span-2 min-w-0 lg:col-span-1">
                       <div className="mb-2 flex flex-wrap items-center gap-1.5">
                         <StatusBadge tone={propertyStatusTone[p.status]} dot className="text-xs">{propertyStatusLabels[p.status]}</StatusBadge>
                         <span className={cn("rounded-pill px-2.5 py-0.5 text-xs font-bold", p.transaction_kind === "rent" ? "bg-accent text-accent-foreground" : "bg-muted text-muted-foreground")}>{transactionLabels[p.transaction_kind]}</span>
                         <span className="rounded-pill border border-border px-2.5 py-0.5 text-xs font-bold text-muted-foreground">{propertyTypeLabels[p.property_type] ?? p.property_type}</span>
+                        {propertyPromotionBadges.map((badge) => (
+                          <span key={badge.label} className="rounded-pill bg-sidebar px-2.5 py-0.5 text-xs font-bold text-sidebar-primary">{badge.label}</span>
+                        ))}
                       </div>
                       <Link
                         to="/app/properties/$id"
