@@ -37,9 +37,7 @@ import {
   shouldSaveBackfilledUrl,
 } from "@/lib/portals/link";
 import {
-  IMOBILIARE_NO_SUBSCRIPTION_MESSAGE,
   imobiliareCardUrl,
-  subscriptionInactive,
   type ImobiliareAccountState,
 } from "@/lib/portals/imobiliare/account";
 import type { ImoveListing } from "@/lib/portals/imove/mapper";
@@ -2303,11 +2301,6 @@ export const getPropertiesPortalMatrix = createServerFn({ method: "POST" })
     const imobiliareConnected = (connections ?? []).some(
       (c) => c.portal === "imobiliare_ro" && (c.status === "connected" || c.status === "ready"),
     );
-    const imobiliareAccount =
-      imobiliareVisible && imobiliareConnected
-        ? await imobiliareAccountForOrg(organizationId)
-        : null;
-    const imobiliareNoSubscription = subscriptionInactive(imobiliareAccount);
 
     const { isPropertyFeedEligible } = await import("@/lib/site-feed/mapper");
     const eligibleById = new Map(
