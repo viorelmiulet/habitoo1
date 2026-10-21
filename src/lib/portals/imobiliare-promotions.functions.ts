@@ -311,6 +311,8 @@ export const getImobiliarePromotions = createServerFn({ method: "POST" })
         used: inventory?.used ?? null,
         available: inventory?.available ?? null,
         value,
+        stateSource: merged.source,
+        stateUpdatedAt: merged.source === "local" ? (local?.updatedAt ?? null) : null,
         max: definition.kind === "numeric" ? imobiliareEnergyCeiling(inventory, current) : null,
         error: slot?.error ?? null,
         syncedAt: slot?.syncedAt ?? null,
