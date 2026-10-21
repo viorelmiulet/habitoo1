@@ -12,6 +12,8 @@
 import { HOMEPITCH_MAX_TITLE } from "./homepitch/mapper";
 import { IMOBILIARE_DESCRIPTION_MIN, IMOBILIARE_TITLE_MAX } from "./imobiliare/config";
 import { normalizeImobiliareMobile } from "./imobiliare/contact";
+import { imobiliareFloorReasons } from "./imobiliare/mapper";
+import { housingTypeFor } from "./imobiliare/taxonomy";
 import { LACHEIE_MIN_DESCRIPTION, LACHEIE_MIN_TITLE } from "./lacheie/mapper";
 import { IMOSPOT_MIN_DESCRIPTION, IMOSPOT_MIN_TITLE } from "./imospot/mapper";
 import { OI_MIN_DESCRIPTION, OI_MIN_TITLE } from "./oferteimobiliare/mapper";
@@ -54,6 +56,9 @@ export type PortalRequirementSubject = {
   layout: string | null;
   /** Tipurile de încălzire salvate pe ofertă. */
   heatingSystems: string[] | null;
+  /** Etajul numeric (null = necompletat) și eticheta liberă (ex. „Mansardă”). */
+  floor: number | null;
+  floorLabel: string | null;
   agentName: string | null;
   agentEmail: string | null;
   /** Telefonul de contact efectiv trimis: agentul, altfel agenția. */
@@ -192,6 +197,52 @@ const RULE = {
     label: "Număr camere",
     requirement: "completat",
     ok: (s) => s.rooms !== null,
+  }),
+  city: (): PortalRequirementRule => ({
+    key: "city",
+    label: "Localitate",
+    requirement: "completată",
+    ok: (s) => len(s.city) > 0,
+  }),
+  /**
+   * Imobiliare.ro: etajul este obligatoriu la apartamente și garsoniere, iar
+   * mansarda cere numărul real al etajului. Aceeași regulă ca în mapper
+   * (`imobiliareFloorReasons`) — o singură versiune.
+   */
+  imobiliareFloor: (): PortalRequirementRule => ({
+    key: "floor",
+    label: "Etaj",
+    requirement: "obligatoriu la apartamente și garsoniere; mansarda cere numărul real al etajului",
+    ok: (s) =>
+      imobiliareFloorReasons({
+        propertyType: s.propertyType,
+        floor: s.floor,
+        floorLabel: s.floorLabel,
+      }).length === 0,
+  }),
+  /** Imobiliare.ro: „Nr. Camere” obligatoriu la apartamente și case (camere, altfel dormitoare). */
+  imobiliareRooms: (): PortalRequirementRule => ({
+    key: "rooms",
+    label: "Număr camere",
+    requirement: "obligatoriu la apartamente și case",
+    ok: (s) => {
+      const housing = housingTypeFor(s.propertyType);
+      if (housing !== "apartment" && housing !== "house") return true;
+      const rooms = s.rooms ?? s.bedrooms;
+      return typeof rooms === "number" && Number.isInteger(rooms) && rooms > 0;
+    },
+  }),
+  /** Imobiliare.ro: suprafața terenului obligatorie la case și terenuri (terenul poate folosi suprafața utilă). */
+  imobiliareLandSurface: (): PortalRequirementRule => ({
+    key: "land_surface",
+    label: "Suprafață teren",
+    requirement: "obligatorie la case și terenuri",
+    ok: (s) => {
+      const housing = housingTypeFor(s.propertyType);
+      if (housing !== "house" && housing !== "land") return true;
+      if (typeof s.landSurface === "number" && s.landSurface > 0) return true;
+      return housing === "land" && typeof s.usableSurface === "number" && s.usableSurface > 0;
+    },
   }),
   /** Doar pentru case: portalul cere suprafața proprietății (construită sau teren). */
   houseSpace: (): PortalRequirementRule => ({
@@ -342,6 +393,9 @@ export const PORTAL_REQUIREMENTS: Record<string, PortalRequirementSpec> = {
       RULE.images(1),
       RULE.agentEmail(),
       RULE.imobiliarePhone(),
+      RULE.imobiliareFloor(),
+      RULE.imobiliareRooms(),
+      RULE.imobiliareLandSurface(),
     ],
     allowed: COMMON_ALLOWED,
   },
@@ -408,6 +462,14 @@ export const PORTAL_REQUIREMENTS: Record<string, PortalRequirementSpec> = {
       RULE.propertyType(),
       RULE.location(),
     ],
+    allowed: COMMON_ALLOWED,
+  },
+  /**
+   * Catalogul Facebook (feed Meta): motivele de excludere din feed sunt
+   * exact regulile de mai jos — preț, coordonate, cel puțin o poză, oraș.
+   */
+  facebook_catalog: {
+    required: [RULE.price(), RULE.coords(), RULE.images(1), RULE.city()],
     allowed: COMMON_ALLOWED,
   },
 };
