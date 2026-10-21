@@ -67,7 +67,8 @@ export function PromotionFilterSelect({
 }) {
   const [open, setOpen] = useState(false);
   const selected = parsePromotionValues(value);
-  const toggle = (v: string) => onChange(serializePromotionValues(togglePromotionValue(selected, v)));
+  const toggle = (v: string) =>
+    onChange(v === "" ? "" : serializePromotionValues(togglePromotionValue(selected, v)));
 
   const item = (val: string, label: string, indent = false) => (
     <CommandItem

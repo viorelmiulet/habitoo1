@@ -23,6 +23,8 @@ export type PropertyListFilters = {
   addedAfter: string;
   addedBefore: string;
   portal: string;
+  /** Filtrul „Promovare”: valori separate prin virgulă (any, none, imobiliare_ro:<serviciu>, <portal>:promoted). */
+  promotion: string;
 };
 
 export const emptyPropertyListFilters: PropertyListFilters = {
@@ -48,6 +50,7 @@ export const emptyPropertyListFilters: PropertyListFilters = {
   addedAfter: "",
   addedBefore: "",
   portal: "all",
+  promotion: "",
 };
 
 export const PROPERTY_LIST_DEFAULT_SORT = "created_desc" as const;
@@ -92,6 +95,7 @@ export const propertyListSearchSchema = z.object({
   addedAfter: optionalSearchString,
   addedBefore: optionalSearchString,
   portal: optionalSearchString,
+  promotion: optionalSearchString,
   sort: optionalSearchString,
   page: optionalSearchPage,
   view: optionalSearchString,
