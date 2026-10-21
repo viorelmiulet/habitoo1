@@ -90,8 +90,8 @@ export const startRepublish = createServerFn({ method: "POST" })
     }
     await admin.from("audit_logs").insert({
       organization_id: org.organizationId, actor_id: userId, action: "portal_republish_started",
-      entity_type: "portal_republish_batch", entity_id: batch.id,
-      metadata: { scope, portals: data.portalKeys ?? "all", queued: pairs.queued.length - busy.length },
+      entity: "portal_republish_batch", entity_id: batch.id,
+      new_values: { scope, portals: data.portalKeys ?? "all", queued: pairs.queued.length - busy.length },
     } as never).then(() => undefined, () => undefined);
     if (pairs.queued.length > busy.length) {
       const { error: armError } = await admin.rpc("portal_publish_arm");
