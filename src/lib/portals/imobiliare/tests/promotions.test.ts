@@ -92,12 +92,21 @@ const fakeAdmin = {
     lockCalls.push([fn, args]);
     return { data: true, error: null };
   },
-  from: (table: string) => ({
-    upsert: async (row: Record<string, unknown>, options: { onConflict?: unknown }) => {
-      upserts.push({ table, row, conflict: options?.onConflict });
-      return { data: null, error: null };
-    },
-  }),
+  from: (table: string) => {
+    const empty = { data: [], error: null };
+    const chain: Record<string, unknown> = {
+      upsert: async (row: Record<string, unknown>, options: { onConflict?: unknown }) => {
+        upserts.push({ table, row, conflict: options?.onConflict });
+        return { data: null, error: null };
+      },
+      select: () => chain,
+      eq: () => chain,
+      in: () => chain,
+      is: () => chain,
+      then: (resolve: (value: typeof empty) => unknown) => resolve(empty),
+    };
+    return chain;
+  },
 } as never;
 
 function ok(body: unknown) {
