@@ -971,14 +971,15 @@ export const testPortalConnection = createServerFn({ method: "POST" })
     if (definition.id === "olx_direct") {
       const { testOlxConnection } = await import("@/lib/portals/olx/oauth.server");
       const adminDb = await loadAdmin();
+      const olxStartedAt = Date.now();
       try {
         const account = await testOlxConnection(organizationId);
         await adminDb.from("portal_connections").update({ status: "connected", last_sync_status: "ok", last_sync_error: null, last_sync_at: new Date().toISOString() }).eq("organization_id", organizationId).eq("portal", "olx_direct");
-        await logOperation({ organizationId, portal: "olx_direct", operation: "test_connection", success: true, actorId: context.userId });
+        await logOperation({ organizationId, portal: "olx_direct", operation: "test_connection", success: true, actorId: context.userId, durationMs: Date.now() - olxStartedAt });
         return { ok: true as const, live: true, detail: null, feed: null, olxAccount: account };
       } catch (error) {
         const message = error instanceof Error ? error.message : "Testul conexiunii OLX a eșuat.";
-        await logOperation({ organizationId, portal: "olx_direct", operation: "test_connection", success: false, errorCode: "AUTH_ERROR", errorMessage: message, actorId: context.userId });
+        await logOperation({ organizationId, portal: "olx_direct", operation: "test_connection", success: false, errorCode: "AUTH_ERROR", errorMessage: message, actorId: context.userId, durationMs: Date.now() - olxStartedAt });
         return { ok: false as const, code: "AUTH_ERROR", message };
       }
     }
@@ -994,7 +995,9 @@ export const testPortalConnection = createServerFn({ method: "POST" })
     }
 
     const { row, ctx } = await buildContext(organizationId, definition);
+    const testStartedAt = Date.now();
     const result = await adapter.testConnection(ctx);
+    const testDurationMs = Date.now() - testStartedAt;
     const admin = await loadAdmin();
     if (row) {
       await admin
@@ -1018,6 +1021,7 @@ export const testPortalConnection = createServerFn({ method: "POST" })
       ...(result.ok ? {} : { httpStatus: result.httpStatus ?? null }),
       ...(result.ok ? {} : { portalResponse: result.portalResponse ?? null }),
       actorId: context.userId,
+      durationMs: testDurationMs,
     });
 
     return result.ok
@@ -1578,7 +1582,12 @@ export async function executeListingAction(input: {
       status: status === "error" ? "error" : action === "withdraw" ? "disabled" : "synced",
       last_synced_at: now,
       last_error: errorMessage,
-      external_ref: result.ok && result.data.externalId ? result.data.externalId : null,
+      external_ref:
+        result.ok && result.data.externalId
+          ? result.data.externalId
+          : unconfirmed
+            ? (listing?.external_id ?? null)
+            : null,
       ...withdrawReasonPatch,
       ...(promotionFlag
         ? {
@@ -1617,6 +1626,7 @@ export async function executeListingAction(input: {
     ...(result.ok && result.data.externalId ? { externalId: result.data.externalId } : {}),
     propertyId,
     actorId,
+    durationMs: portalDurationMs,
   });
 
   // Jurnal: „Promovare activată/dezactivată” când promovarea confirmată se schimbă.
@@ -1638,6 +1648,7 @@ export async function executeListingAction(input: {
       success: true,
       propertyId,
       actorId,
+      durationMs: portalDurationMs,
     });
   }
 
