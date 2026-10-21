@@ -14,6 +14,7 @@ import { mergePortalOffers, parsePortalOffers } from "@/lib/portals/imobiliare/o
 import { resolveListingContact } from "@/lib/portals/listing-contact";
 import { portalConnectionReady } from "@/lib/portals/clickimob/connection-ready";
 import { promotedAfterAction, promotionOperation, promotionPlan } from "@/lib/portals/promotion-flag";
+import { isUnconfirmedUpdateNote } from "@/lib/portals/transient-failure";
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireActiveOrgAuth } from "@/lib/org-access";
