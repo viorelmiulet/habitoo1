@@ -79,9 +79,17 @@ export async function refreshRepublishBatches(admin: Admin) {
     if (!pending) {
       await admin.from("notifications").insert({
         organization_id: batch.organization_id, user_id: batch.requested_by, created_by: batch.requested_by,
-        type: "portal_republish_done",
-        title: "Republicarea anunțurilor s-a terminat",
-        body: `${succeeded} reușite, ${failed} erori, ${skipped} sărite.`,
+        ...(batch.kind === "imoradar"
+          ? {
+              type: "imoradar_backfill_done",
+              title: "Trimiterea pe imoradar24 s-a terminat",
+              body: `${succeeded} trimise, ${skipped} sărite, ${failed} erori.`,
+            }
+          : {
+              type: "portal_republish_done",
+              title: "Republicarea anunțurilor s-a terminat",
+              body: `${succeeded} reușite, ${failed} erori, ${skipped} sărite.`,
+            }),
         link: "/app/properties",
       });
     }

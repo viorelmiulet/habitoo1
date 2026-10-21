@@ -34,6 +34,11 @@ export const Route = createFileRoute("/api/public/cron/portal-publish")({
           if (job.operation === "republish") {
             return runRepublishJob(supabaseAdmin, job, (input) => executeListingAction(input));
           }
+          // imoradar24 (acțiune unică): doar `promote_imoradar = true`, fără republicare.
+          if (job.operation === "imoradar") {
+            const { runImoradarBackfillJob } = await import("@/lib/portals/imobiliare/imoradar-auto.server");
+            return runImoradarBackfillJob(supabaseAdmin, job);
+          }
           const out = await applyPortalSelectionForOrg({
             organizationId: job.organization_id,
             superadmin: job.superadmin,
