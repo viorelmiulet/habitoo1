@@ -30,3 +30,4 @@
 - Video music uses private `video-music` storage with superadmin writes and signed reads; video/Reel posts record `music_track_id`. Facebook Reels use the Meta boundary and GET-only social-temp completion. Why: private tokens, music provenance and no duplicate publishing.
 - No global `entities` aliases or version overrides. Why: consumers require different majors and package exports.
 - Integrations overview has a separate registry-derived presentation module. Why: no duplicates or false claims, unchanged detail pages.
+- Property-list portal and promotion selections share PortalFilterSelect while retaining independent URL fields and existing server filters. Why: unified presentation without changing OR semantics, access controls or legacy links.

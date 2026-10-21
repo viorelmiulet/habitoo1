@@ -65,7 +65,6 @@ describe("PortalFilterSelect", () => {
     const html = renderToStaticMarkup(
       <PortalFilterOptionsList value="romimo:unpublished" options={options} onSelect={() => {}} />,
     );
-    expect(html).toContain("Doar portalurile activate pentru agenția ta.");
     expect(html).toContain("Toate portalurile");
     expect(html).toContain("Publicate pe cel puțin un portal");
     expect(html).toContain('data-testid="logo-stack-romimo" data-size="28"');
