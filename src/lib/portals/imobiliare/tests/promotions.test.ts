@@ -103,6 +103,7 @@ const fakeAdmin = {
       eq: () => chain,
       in: () => chain,
       is: () => chain,
+      maybeSingle: async () => ({ data: null, error: null }),
       then: (resolve: (value: typeof empty) => unknown) => resolve(empty),
     };
     return chain;
