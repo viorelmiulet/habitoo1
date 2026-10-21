@@ -4,7 +4,7 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 
 const root = join(__dirname, "..", "..", "..");
-const read = (path: string) => readFileSync(join(root, path), "utf8");
+const read = (path: string) => readFileSync(join(root, path.replace(/^src\//, "")), "utf8");
 
 describe("cablarea cerințelor pre-publicare", () => {
   it("serverul validează cerințele ÎNAINTE de orice apel către portal", () => {
