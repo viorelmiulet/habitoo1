@@ -2942,6 +2942,54 @@ export type Database = {
         }
         Relationships: []
       }
+      imobiliare_promotion_states: {
+        Row: {
+          id: string
+          organization_id: string
+          promotion_id: string
+          property_id: string
+          reference: string
+          updated_at: string
+          value_boolean: boolean | null
+          value_numeric: number | null
+        }
+        Insert: {
+          id?: string
+          organization_id: string
+          promotion_id: string
+          property_id: string
+          reference: string
+          updated_at?: string
+          value_boolean?: boolean | null
+          value_numeric?: number | null
+        }
+        Update: {
+          id?: string
+          organization_id?: string
+          promotion_id?: string
+          property_id?: string
+          reference?: string
+          updated_at?: string
+          value_boolean?: boolean | null
+          value_numeric?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "imobiliare_promotion_states_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "imobiliare_promotion_states_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       impersonation_requests: {
         Row: {
           approve_token_hash: string | null
