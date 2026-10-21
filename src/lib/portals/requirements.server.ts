@@ -91,6 +91,8 @@ export async function loadRequirementSubject(
     heatingSystems: Array.isArray(row.heating_systems)
       ? (row.heating_systems as unknown[]).map((item) => String(item))
       : null,
+    floor: typeof row.floor === "number" ? row.floor : null,
+    floorLabel: row.floor_label ?? null,
     agentName,
     agentEmail,
     contactPhone:

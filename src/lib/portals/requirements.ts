@@ -464,6 +464,14 @@ export const PORTAL_REQUIREMENTS: Record<string, PortalRequirementSpec> = {
     ],
     allowed: COMMON_ALLOWED,
   },
+  /**
+   * Catalogul Facebook (feed Meta): motivele de excludere din feed sunt
+   * exact regulile de mai jos — preț, coordonate, cel puțin o poză, oraș.
+   */
+  facebook_catalog: {
+    required: [RULE.price(), RULE.coords(), RULE.images(1), RULE.city()],
+    allowed: COMMON_ALLOWED,
+  },
 };
 
 export type PortalRequirementReport = {
