@@ -2101,6 +2101,11 @@ export type PropertyPortalCell = {
    * din aceleași reguli care blochează publicarea server-side. Gol = selectabil.
    */
   missingRequirements: string[];
+  /**
+   * Anunțul rămâne publicat, dar ultima actualizare a expirat (timeout/rețea)
+   * fără confirmare de la portal: se arată nota și butonul Retrimite.
+   */
+  unconfirmedUpdate: boolean;
 };
 
 export type PropertyPortalMatrix = {
@@ -2423,6 +2428,8 @@ export const getPropertiesPortalMatrix = createServerFn({ method: "POST" })
           promoted: portal.supports_promoted_flag === true && pub?.enabled === true && pub?.promoted === true,
           // `is_subscription_active` nu e de încredere: niciun avertisment de abonament pe card.
           publicWarning: null,
+          unconfirmedUpdate:
+            state === "published" && isUnconfirmedUpdateNote(listing?.last_error ?? null),
           missingRequirements: (() => {
             const subject = requirementSubjects.get(propertyId);
             if (!subject) return [];
