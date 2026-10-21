@@ -2056,6 +2056,11 @@ export type PropertyPortalCell = {
   promotionFlag: boolean;
   /** Promovarea confirmată salvată în Habitoo (NU dacă nu e publicat). */
   promoted: boolean;
+  /**
+   * Câmpurile obligatorii lipsă pentru acest portal (etichete în română),
+   * din aceleași reguli care blochează publicarea server-side. Gol = selectabil.
+   */
+  missingRequirements: string[];
 };
 
 export type PropertyPortalMatrix = {
@@ -2301,6 +2306,19 @@ export const getPropertiesPortalMatrix = createServerFn({ method: "POST" })
     const { isPropertyFeedEligible } = await import("@/lib/site-feed/mapper");
     const eligibleById = new Map(
       (propertyRows ?? []).map((row) => [row.id, isPropertyFeedEligible(row as never)]),
+    );
+
+    /**
+     * Cerințele pre-publicare per ofertă, încărcate în lot: aceleași reguli
+     * pure care blochează publicarea server-side, arătate în grilă ÎNAINTE
+     * de selectarea portalului.
+     */
+    const { loadRequirementSubjects } = await import("@/lib/portals/requirements.server");
+    const { validatePortalRequirements } = await import("@/lib/portals/requirements");
+    const requirementSubjects = await loadRequirementSubjects(
+      admin,
+      organizationId,
+      data.propertyIds,
     );
 
     const properties: Record<string, PropertyPortalCell[]> = {};
