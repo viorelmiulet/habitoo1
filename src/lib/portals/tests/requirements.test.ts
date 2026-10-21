@@ -33,6 +33,8 @@ const complete: PortalRequirementSubject = {
   builtSurface: 78,
   layout: "Decomandat",
   heatingSystems: ["Centrala proprie"],
+  floor: 3,
+  floorLabel: null,
   agentName: "MVA Perfect Business",
   agentEmail: "mvaperfectbusiness@gmail.com",
   contactPhone: "0700000001",
@@ -168,5 +170,103 @@ describe("validare pre-publicare portaluri", () => {
     expect(
       validatePortalRequirements("romimo", apartment).missing.map((m) => m.key).sort(),
     ).toEqual(["surface"]);
+  });
+
+  it("Imobiliare.ro: apartamentul fără etaj este blocat, cu mesajul „Etaj”", () => {
+    const report = validatePortalRequirements("imobiliare_ro", { ...complete, floor: null });
+    expect(report.ok).toBe(false);
+    const floor = report.missing.find((m) => m.key === "floor");
+    expect(floor?.label).toBe("Etaj");
+    // După completarea etajului, portalul devine selectabil.
+    expect(validatePortalRequirements("imobiliare_ro", { ...complete, floor: 2 }).ok).toBe(true);
+    // Casele nu se blochează pe etaj.
+    expect(
+      validatePortalRequirements("imobiliare_ro", {
+        ...complete,
+        propertyType: "house",
+        floor: null,
+        landSurface: 400,
+      }).missing.map((m) => m.key),
+    ).not.toContain("floor");
+  });
+
+  it("Imobiliare.ro: mansarda fără numărul real al etajului este blocată", () => {
+    const report = validatePortalRequirements("imobiliare_ro", {
+      ...complete,
+      floor: null,
+      floorLabel: "Mansardă",
+    });
+    expect(report.missing.map((m) => m.key)).toContain("floor");
+    // Cu etajul real completat, mansarda trece.
+    expect(
+      validatePortalRequirements("imobiliare_ro", { ...complete, floor: 8, floorLabel: "Mansardă" }).ok,
+    ).toBe(true);
+  });
+
+  it("Imobiliare.ro: camerele sunt obligatorii la apartamente și case, cu dormitoarele ca rezervă", () => {
+    const noRooms = validatePortalRequirements("imobiliare_ro", {
+      ...complete,
+      rooms: null,
+      bedrooms: null,
+    });
+    expect(noRooms.missing.map((m) => m.key)).toContain("rooms");
+    // Dormitoarele acoperă lipsa camerelor (mapperul trimite rooms, fallback bedrooms).
+    expect(
+      validatePortalRequirements("imobiliare_ro", { ...complete, rooms: null, bedrooms: 2 }).ok,
+    ).toBe(true);
+    // Terenurile nu cer camere.
+    expect(
+      validatePortalRequirements("imobiliare_ro", {
+        ...complete,
+        propertyType: "land",
+        rooms: null,
+        bedrooms: null,
+        landSurface: 500,
+      }).missing.map((m) => m.key),
+    ).not.toContain("rooms");
+  });
+
+  it("Imobiliare.ro: suprafața terenului este obligatorie la case și terenuri", () => {
+    const house = validatePortalRequirements("imobiliare_ro", {
+      ...complete,
+      propertyType: "house",
+      floor: null,
+      landSurface: null,
+    });
+    expect(house.missing.map((m) => m.key)).toContain("land_surface");
+    // Terenul poate folosi suprafața utilă ca rezervă.
+    expect(
+      validatePortalRequirements("imobiliare_ro", {
+        ...complete,
+        propertyType: "land",
+        floor: null,
+        landSurface: null,
+        usableSurface: 600,
+      }).missing.map((m) => m.key),
+    ).not.toContain("land_surface");
+  });
+
+  it("Catalogul Facebook cere preț, coordonate, cel puțin o poză și localitate", () => {
+    const report = validatePortalRequirements("facebook_catalog", {
+      ...complete,
+      price: null,
+      lat: 0,
+      lng: 0,
+      imageCount: 0,
+      city: null,
+    });
+    expect(report.missing.map((m) => m.key).sort()).toEqual([
+      "city",
+      "coordinates",
+      "images",
+      "price",
+    ]);
+    expect(validatePortalRequirements("facebook_catalog", complete).ok).toBe(true);
+  });
+
+  it("un portal fără cerințe suplimentare rămâne selectabil", () => {
+    // PrimulAnunț cere doar setul minim; o ofertă completă trece fără blocaje.
+    expect(validatePortalRequirements("primulanunt", complete).ok).toBe(true);
+    expect(validatePortalRequirements("vdi", complete).ok).toBe(true);
   });
 });
