@@ -1653,6 +1653,16 @@ export async function executeListingAction(input: {
     });
   }
 
+  // imoradar24: doar după o PUBLICARE reușită pe Imobiliare.ro, doar acest serviciu.
+  if (definition.id === "imobiliare_ro" && action === "publish" && result.ok && status !== "error") {
+    const { autoImoradarAfterListingAction } = await import(
+      "@/lib/portals/imobiliare/imoradar-auto.server"
+    );
+    await autoImoradarAfterListingAction(admin, {
+      organizationId, propertyId, actorId, action, ok: true,
+    });
+  }
+
   return result.ok
     ? {
         ok: true as const,
