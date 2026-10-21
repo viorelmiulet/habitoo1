@@ -30,8 +30,17 @@ const TIMEOUT_LIKE_CODES = new Set(["TIMEOUT", "NETWORK_ERROR"]);
 const TIMEOUT_LIKE_TEXT =
   /în timp util|in timp util|nu a putut fi contactat|network|rețea|retea|timeout|timed out/i;
 
-export function isTimeoutLikeFailure(input: { code?: string | null; message?: string | null }): boolean {
+/**
+ * Timeout sau eroare de rețea: codul `TIMEOUT`/`NETWORK_ERROR` sau mesajul lor.
+ * Un răspuns explicit 429/5xx de la portal nu este timeout (are regula lui).
+ */
+export function isTimeoutLikeFailure(input: {
+  code?: string | null;
+  httpStatus?: number | null;
+  message?: string | null;
+}): boolean {
   if (input.code && TIMEOUT_LIKE_CODES.has(input.code)) return true;
+  if (input.code === "RATE_LIMIT" || input.httpStatus === 429 || (input.httpStatus ?? 0) >= 500) return false;
   return TIMEOUT_LIKE_TEXT.test(input.message ?? "");
 }
 
