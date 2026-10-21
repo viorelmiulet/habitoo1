@@ -65,6 +65,7 @@ export async function withdrawImobiliarePromotion(input: {
   const { fetchImobiliareListingPromotions, setImobiliareListingPromotion } = await import(
     "@/lib/portals/imobiliare/promotions.server"
   );
+  const promotionStartedAt = Date.now();
   const state = await fetchImobiliareListingPromotions({
     session: session.session,
     organizationId: input.organizationId,
@@ -86,7 +87,9 @@ export async function withdrawImobiliarePromotion(input: {
     allocation: null,
   });
 
+  const promotionDurationMs = Date.now() - promotionStartedAt;
   await logOperation({
+    durationMs: promotionDurationMs,
     organizationId: input.organizationId,
     portal: IMOBILIARE_PORTAL_KEY,
     operation: `promotion:${definition.id}:${typeof value === "number" ? value : "off"}`,

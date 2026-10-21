@@ -383,6 +383,7 @@ export const setImobiliarePromotion = createServerFn({ method: "POST" })
     const { fetchImobiliareListingPromotions, setImobiliareListingPromotion } = await import(
       "@/lib/portals/imobiliare/promotions.server"
     );
+    const promotionStartedAt = Date.now();
     const state = await fetchImobiliareListingPromotions({
       session: prepared.session,
       organizationId,
@@ -404,7 +405,9 @@ export const setImobiliarePromotion = createServerFn({ method: "POST" })
     const operation = `promotion:${definition.id}:${
       typeof data.value === "number" ? data.value : data.value ? "on" : "off"
     }`;
+    const promotionDurationMs = Date.now() - promotionStartedAt;
     await logOperation({
+      durationMs: promotionDurationMs,
       organizationId,
       portal: IMOBILIARE_PORTAL_KEY,
       operation,

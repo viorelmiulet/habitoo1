@@ -10,6 +10,7 @@
  *   erorile de validare sunt finale.
  */
 import { isRetryablePortalBulkError } from "./bulk";
+import { isTimeoutLikeFailure, timeoutRetryDelayMs } from "./transient-failure";
 
 export const PUBLISH_JOB_CONCURRENCY = 3;
 export const PUBLISH_JOB_BUDGET_MS = 25_000;
@@ -55,7 +56,7 @@ export type JobDecision =
   | { status: "queued"; retryInMs: number; message: string };
 
 export function decideJobResult(
-  job: Pick<PublishJobRow, "attempts">,
+  job: Pick<PublishJobRow, "attempts"> & { portal_key?: string },
   outcome: PublishOutcome | null,
   thrown: unknown,
 ): JobDecision {
@@ -68,14 +69,21 @@ export function decideJobResult(
         ? thrown.message
         : "Eroare la publicare."
       : (outcome?.message ?? "Publicarea a eșuat.");
-  const transient =
-    thrown !== undefined
-      ? isRetryablePortalBulkError({ message })
-      : isRetryablePortalBulkError({
-          code: outcome?.code ?? null,
-          httpStatus: outcome?.httpStatus ?? null,
-          message,
-        });
+  const portalId = job.portal_key ?? outcome?.portalId ?? null;
+  const failure = {
+    code: thrown !== undefined ? null : (outcome?.code ?? null),
+    httpStatus: thrown !== undefined ? null : (outcome?.httpStatus ?? null),
+    message,
+    portalId,
+  };
+  // Timeout / rețea: max 2 reîncercări (30 s, 2 min), doar la portalurile idempotente.
+  if (isTimeoutLikeFailure(failure)) {
+    const delay = timeoutRetryDelayMs({ portalId, attemptNumber: job.attempts });
+    return delay === null
+      ? { status: "error", ok: false, message: message.slice(0, 500) }
+      : { status: "queued", retryInMs: delay, message };
+  }
+  const transient = isRetryablePortalBulkError(failure);
   if (transient && job.attempts < PUBLISH_JOB_MAX_ATTEMPTS) {
     return { status: "queued", retryInMs: publishRetryDelayMs(job.attempts), message };
   }

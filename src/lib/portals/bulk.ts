@@ -1,3 +1,5 @@
+import { isTimeoutLikeFailure, isTimeoutRetryPortal } from "./transient-failure";
+
 export type BulkCellValue = { enabled: boolean; promoted: boolean };
 export type BulkDraft = BulkCellValue & { propertyId: string; portalId: string };
 
@@ -58,9 +60,20 @@ export function bulkLimitExceeded(used: number, limit: number | null, projected:
   return limit !== null && projected > limit && projected > used;
 }
 
-export function isRetryablePortalBulkError(input: { code?: string | null; httpStatus?: number | null; message?: string | null }): boolean {
+/**
+ * Eroare temporară care merită reîncercată. Timeout-urile și erorile de rețea
+ * (`TIMEOUT`, `NETWORK_ERROR`, „nu a răspuns în timp util”) se reîncearcă doar
+ * la portalurile idempotente (`TIMEOUT_RETRY_PORTALS`); fără `portalId` nu.
+ */
+export function isRetryablePortalBulkError(input: {
+  code?: string | null;
+  httpStatus?: number | null;
+  message?: string | null;
+  portalId?: string | null;
+}): boolean {
+  if (isTimeoutLikeFailure(input)) return isTimeoutRetryPortal(input.portalId);
   if (input.code === "RATE_LIMIT" || input.httpStatus === 429 || (input.httpStatus ?? 0) >= 500) return true;
-  return /network|rețea|timeout|timed out|temporar|temporarily|\b5\d\d\b/i.test(input.message ?? "");
+  return /temporar|temporarily|\b5\d\d\b/i.test(input.message ?? "");
 }
 
 export type BulkSelectionPreview = {

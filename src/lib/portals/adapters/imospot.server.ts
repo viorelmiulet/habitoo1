@@ -31,7 +31,16 @@ import { imospotExternalId, type ImospotListing, type ImospotTransaction } from 
 const DEFAULT_BASE_URL = "https://www.imospot.ro/api/v1";
 /** SSRF guard: nu contactăm niciodată un host nedeclarat. */
 const ALLOWED_HOSTS = new Set(["imospot.ro", "www.imospot.ro"]);
-const TIMEOUT_MS = 10_000;
+/**
+ * Imospot descarcă pozele la primirea anunțului: POST/PUT cu multe imagini pot
+ * dura zeci de secunde. Citirile și retragerile sunt rapide.
+ */
+export const IMOSPOT_WRITE_TIMEOUT_MS = 45_000;
+export const IMOSPOT_READ_TIMEOUT_MS = 15_000;
+
+export function imospotTimeoutMs(method: "GET" | "POST" | "PUT" | "DELETE"): number {
+  return method === "POST" || method === "PUT" ? IMOSPOT_WRITE_TIMEOUT_MS : IMOSPOT_READ_TIMEOUT_MS;
+}
 
 function baseUrlOf(ctx: PortalContext): string {
   const raw =
@@ -66,7 +75,7 @@ async function request(
 ): Promise<ApiResponse> {
   const url = endpoint(ctx, path);
   const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
+  const timer = setTimeout(() => controller.abort(), imospotTimeoutMs(method));
   let response: Response;
   try {
     response = await fetch(url.toString(), {

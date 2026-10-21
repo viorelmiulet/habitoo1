@@ -14,6 +14,7 @@ import { mergePortalOffers, parsePortalOffers } from "@/lib/portals/imobiliare/o
 import { resolveListingContact } from "@/lib/portals/listing-contact";
 import { portalConnectionReady } from "@/lib/portals/clickimob/connection-ready";
 import { promotedAfterAction, promotionOperation, promotionPlan } from "@/lib/portals/promotion-flag";
+import { isUnconfirmedUpdateNote } from "@/lib/portals/transient-failure";
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireActiveOrgAuth } from "@/lib/org-access";
@@ -292,6 +293,8 @@ export async function logOperation(input: {
   portalResponse?: unknown;
   /** Referința anunțului la portal, când există. */
   externalId?: string | null;
+  /** Durata operației (ms), inclusiv așteptarea răspunsului portalului. */
+  durationMs?: number | null;
 }) {
   const admin = await loadAdmin();
   const { portalResponseLog } = await import("@/lib/portals/errors");
@@ -306,6 +309,9 @@ export async function logOperation(input: {
       : { http_status: input.httpStatus }),
     ...(response ? { portal_response: response as never } : {}),
     ...(input.externalId ? { external_id: input.externalId } : {}),
+    ...(typeof input.durationMs === "number" && Number.isFinite(input.durationMs)
+      ? { duration_ms: Math.max(0, Math.round(input.durationMs)) }
+      : {}),
     portal: input.portal,
     operation: input.operation,
     success: input.success,
@@ -966,14 +972,15 @@ export const testPortalConnection = createServerFn({ method: "POST" })
     if (definition.id === "olx_direct") {
       const { testOlxConnection } = await import("@/lib/portals/olx/oauth.server");
       const adminDb = await loadAdmin();
+      const olxStartedAt = Date.now();
       try {
         const account = await testOlxConnection(organizationId);
         await adminDb.from("portal_connections").update({ status: "connected", last_sync_status: "ok", last_sync_error: null, last_sync_at: new Date().toISOString() }).eq("organization_id", organizationId).eq("portal", "olx_direct");
-        await logOperation({ organizationId, portal: "olx_direct", operation: "test_connection", success: true, actorId: context.userId });
+        await logOperation({ organizationId, portal: "olx_direct", operation: "test_connection", success: true, actorId: context.userId, durationMs: Date.now() - olxStartedAt });
         return { ok: true as const, live: true, detail: null, feed: null, olxAccount: account };
       } catch (error) {
         const message = error instanceof Error ? error.message : "Testul conexiunii OLX a eșuat.";
-        await logOperation({ organizationId, portal: "olx_direct", operation: "test_connection", success: false, errorCode: "AUTH_ERROR", errorMessage: message, actorId: context.userId });
+        await logOperation({ organizationId, portal: "olx_direct", operation: "test_connection", success: false, errorCode: "AUTH_ERROR", errorMessage: message, actorId: context.userId, durationMs: Date.now() - olxStartedAt });
         return { ok: false as const, code: "AUTH_ERROR", message };
       }
     }
@@ -989,7 +996,9 @@ export const testPortalConnection = createServerFn({ method: "POST" })
     }
 
     const { row, ctx } = await buildContext(organizationId, definition);
+    const testStartedAt = Date.now();
     const result = await adapter.testConnection(ctx);
+    const testDurationMs = Date.now() - testStartedAt;
     const admin = await loadAdmin();
     if (row) {
       await admin
@@ -1013,6 +1022,7 @@ export const testPortalConnection = createServerFn({ method: "POST" })
       ...(result.ok ? {} : { httpStatus: result.httpStatus ?? null }),
       ...(result.ok ? {} : { portalResponse: result.portalResponse ?? null }),
       actorId: context.userId,
+      durationMs: testDurationMs,
     });
 
     return result.ok
@@ -1244,6 +1254,8 @@ export async function executeListingAction(input: {
   promoted?: boolean;
 }): Promise<ListingActionResult> {
   const { organizationId, actorId, portalId, propertyId, action } = input;
+  const startedAt = Date.now();
+  const elapsed = () => Date.now() - startedAt;
   const definition = getPortalDefinition(portalId);
   if (!definition) throw new Error("Portal necunoscut.");
   if (definition.status !== "available") {
@@ -1301,6 +1313,7 @@ export async function executeListingAction(input: {
         errorMessage: message,
         propertyId,
         actorId,
+        durationMs: elapsed(),
       });
       await persistListingFailure(admin, {
         organizationId,
@@ -1337,6 +1350,7 @@ export async function executeListingAction(input: {
         errorMessage: guard.message,
         propertyId,
         actorId,
+        durationMs: elapsed(),
       });
       await persistListingFailure(admin, {
         organizationId,
@@ -1402,6 +1416,7 @@ export async function executeListingAction(input: {
       success: true,
       propertyId,
       actorId,
+      durationMs: elapsed(),
     });
     return { ok: true as const, code: null, message: null, data: { externalId: null } } as never;
   }
@@ -1415,7 +1430,7 @@ export async function executeListingAction(input: {
 
   const { data: listing } = await admin
     .from("portal_listings")
-    .select("id, external_id, portal_offers")
+    .select("id, external_id, portal_offers, status")
     .eq("organization_id", organizationId)
     .eq("portal", definition.id)
     .eq("property_id", propertyId)
@@ -1444,6 +1459,7 @@ export async function executeListingAction(input: {
 
   const { toPortalError } = await import("@/lib/portals/errors");
   let result: Awaited<ReturnType<typeof adapter.publishListing>>;
+  const portalStartedAt = Date.now();
   try {
     const { ctx } = await buildContext(organizationId, definition);
     const ref = {
@@ -1466,6 +1482,7 @@ export async function executeListingAction(input: {
       detail: portalError.detail,
     };
   }
+  const portalDurationMs = Date.now() - portalStartedAt;
 
   const now = new Date().toISOString();
   // Portalurile asincrone (Storia) raportează starea reală a anunțului: un
@@ -1479,18 +1496,35 @@ export async function executeListingAction(input: {
    */
   const ALLOWED_STATUS = ["pending", "published", "updated", "withdrawn", "error", "needs_packet"];
   const reported = result.ok ? (result.data.portalStatus ?? null) : null;
-  const status = !result.ok
-    ? "error"
-    : reported && ALLOWED_STATUS.includes(reported)
-      ? reported
-      : fallbackStatus;
+  /**
+   * Anunț deja publicat, actualizare neconfirmată (timeout / rețea): rămâne
+   * „Publicat” cu nota, nu „Eroare”; agentul poate apăsa Retrimite.
+   */
+  const { unconfirmedUpdateState } = await import("@/lib/portals/transient-failure");
+  const unconfirmed = unconfirmedUpdateState({
+    ok: result.ok,
+    action,
+    code: result.ok ? null : result.code,
+    message: result.ok ? null : result.message,
+    previousStatus: (listing as { status?: string | null } | null)?.status ?? null,
+    externalId: listing?.external_id ?? null,
+  });
+  const status = unconfirmed
+    ? unconfirmed.keepStatus
+    : !result.ok
+      ? "error"
+      : reported && ALLOWED_STATUS.includes(reported)
+        ? reported
+        : fallbackStatus;
   /**
    * Explicația arătată agentului. O operațiune poate reuși tehnic, dar
    * portalul să raporteze o stare problematică (ex. anunț respins la
    * moderare): fără mesajul portalului, interfața ar arăta un badge „Eroare”
    * fără nicio explicație.
    */
-  const errorMessage = !result.ok
+  const errorMessage = unconfirmed
+    ? unconfirmed.note
+    : !result.ok
     ? result.message
     : status === "error" || status === "needs_packet"
       ? (result.data.message ?? "Portalul a raportat o problemă la acest anunț.")
@@ -1549,7 +1583,12 @@ export async function executeListingAction(input: {
       status: status === "error" ? "error" : action === "withdraw" ? "disabled" : "synced",
       last_synced_at: now,
       last_error: errorMessage,
-      external_ref: result.ok && result.data.externalId ? result.data.externalId : null,
+      external_ref:
+        result.ok && result.data.externalId
+          ? result.data.externalId
+          : unconfirmed
+            ? (listing?.external_id ?? null)
+            : null,
       ...withdrawReasonPatch,
       ...(promotionFlag
         ? {
@@ -1588,6 +1627,7 @@ export async function executeListingAction(input: {
     ...(result.ok && result.data.externalId ? { externalId: result.data.externalId } : {}),
     propertyId,
     actorId,
+    durationMs: portalDurationMs,
   });
 
   // Jurnal: „Promovare activată/dezactivată” când promovarea confirmată se schimbă.
@@ -1609,6 +1649,7 @@ export async function executeListingAction(input: {
       success: true,
       propertyId,
       actorId,
+      durationMs: portalDurationMs,
     });
   }
 
@@ -2061,6 +2102,11 @@ export type PropertyPortalCell = {
    * din aceleași reguli care blochează publicarea server-side. Gol = selectabil.
    */
   missingRequirements: string[];
+  /**
+   * Anunțul rămâne publicat, dar ultima actualizare a expirat (timeout/rețea)
+   * fără confirmare de la portal: se arată nota și butonul Retrimite.
+   */
+  unconfirmedUpdate: boolean;
 };
 
 export type PropertyPortalMatrix = {
@@ -2383,6 +2429,8 @@ export const getPropertiesPortalMatrix = createServerFn({ method: "POST" })
           promoted: portal.supports_promoted_flag === true && pub?.enabled === true && pub?.promoted === true,
           // `is_subscription_active` nu e de încredere: niciun avertisment de abonament pe card.
           publicWarning: null,
+          unconfirmedUpdate:
+            state === "published" && isUnconfirmedUpdateNote(listing?.last_error ?? null),
           missingRequirements: (() => {
             const subject = requirementSubjects.get(propertyId);
             if (!subject) return [];

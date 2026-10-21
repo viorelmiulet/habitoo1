@@ -1,4 +1,5 @@
 import { isRetryablePortalBulkError } from "@/lib/portals/bulk";
+import { isTimeoutLikeFailure, timeoutRetryDelayMs } from "@/lib/portals/transient-failure";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 export type PortalBulkAdmin = { from: (table: string) => any; rpc: (name: string, params?: any) => any };
@@ -62,9 +63,16 @@ export async function processPortalBulkProperty(
     const item = items[index];
     const outcome = outcomes.find((entry) => entry.portalId === item.portal_key) ?? { portalId: item.portal_key, ok: false, message: "Portalul nu a întors un rezultat." };
     const attempts = item.attempts + 1;
+    const timeoutLike = !outcome.ok && isTimeoutLikeFailure(outcome);
+    const timeoutDelay = timeoutLike ? timeoutRetryDelayMs({ portalId: item.portal_key, attemptNumber: attempts }) : null;
     if (outcome.ok) {
       await admin.from("portal_bulk_items").update({ status: "ok", attempts, message: outcome.message, locked_until: null, finished_at: nowIso }).eq("id", item.id);
-    } else if (attempts < item.max_attempts && isRetryablePortalBulkError(outcome)) {
+    } else if (timeoutLike) {
+      // Timeout / rețea: 30 s, 2 min, doar la portalurile idempotente.
+      await admin.from("portal_bulk_items").update(timeoutDelay === null
+        ? { status: "failed", attempts, message: outcome.message, locked_until: null, finished_at: nowIso }
+        : { status: "queued", attempts, message: outcome.message, locked_until: null, next_attempt_at: new Date(now() + timeoutDelay).toISOString() }).eq("id", item.id);
+    } else if (attempts < item.max_attempts && isRetryablePortalBulkError({ ...outcome, portalId: item.portal_key })) {
       const delay = BULK_RETRY_DELAYS_MS[Math.min(attempts - 1, BULK_RETRY_DELAYS_MS.length - 1)] ?? BULK_RETRY_DELAYS_MS[0];
       await admin.from("portal_bulk_items").update({ status: "queued", attempts, message: outcome.message, locked_until: null, next_attempt_at: new Date(now() + delay).toISOString() }).eq("id", item.id);
     } else {
