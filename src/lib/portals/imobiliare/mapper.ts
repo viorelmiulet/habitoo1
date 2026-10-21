@@ -173,9 +173,8 @@ export function imobiliareFloorReasons(input: {
   const label = input.floorLabel?.normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim().toLowerCase();
   // Valorile portalului pentru demisol/subsol/mansardă nu sunt confirmate
   // (în jurnale apar doar șiruri numerice ≥ 0): nu inventăm nimic.
-  if (label === "demisol" || input.floor === -1) {
-    return ["Imobiliare.ro: valoarea pentru Demisol nu e confirmată"];
-  }
+  if (input.floor === -1) return [];
+  if (label === "demisol") return ["Completează etajul"];
   if (label === "subsol" || (typeof input.floor === "number" && input.floor < -1)) {
     return ["Imobiliare.ro: valoarea pentru Subsol nu e confirmată"];
   }
@@ -267,7 +266,8 @@ export function buildImobiliareListing(input: ImobiliareListingInput): Imobiliar
   // dormitoare în API, deci `bedrooms` nu se trimite altundeva.
   put(data, "bedroom_count", roomCount);
   // Portalul cere `floor_number` ca șir („Etaj trebuie să fie un șir”).
-  const floor = nonNegativeInt(input.floor);
+  // Demisol (-1) se trimite ca "-1", parterul ca "0".
+  const floor = input.floor === -1 ? -1 : nonNegativeInt(input.floor);
   put(data, "floor_number", floor === null ? null : String(floor));
   put(data, "number_of_floors", positiveInt(input.buildingFloors));
   put(data, "year_built", positiveInt(input.buildYear));
