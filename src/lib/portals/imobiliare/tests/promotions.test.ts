@@ -93,7 +93,16 @@ const fakeAdmin = {
     return { data: true, error: null };
   },
   from: (table: string) => {
-    const empty = { data: [], error: null };
+    // Agenția de test are toate serviciile activate, fără plafon și fără alocări.
+    const data =
+      table === "promotion_service_settings"
+        ? IMOBILIARE_PROMOTIONS.map((p) => ({
+            service_key: p.id,
+            enabled: true,
+            agency_cap: null,
+          }))
+        : [];
+    const empty = { data, error: null };
     const chain: Record<string, unknown> = {
       upsert: async (row: Record<string, unknown>, options: { onConflict?: unknown }) => {
         upserts.push({ table, row, conflict: options?.onConflict });
