@@ -229,7 +229,10 @@ export function buildImobiliareListing(input: ImobiliareListingInput): Imobiliar
   const data: Record<string, unknown> = {};
 
   put(data, "bathroom_count", positiveInt(input.bathrooms));
-  put(data, "bedroom_count", positiveInt(input.bedrooms));
+  // `bedroom_count` = „Nr. Camere” la portal: camerele, cu dormitoarele ca
+  // rezervă doar când camerele lipsesc. Nu există un câmp separat pentru
+  // dormitoare în API, deci `bedrooms` nu se trimite altundeva.
+  put(data, "bedroom_count", roomCount);
   // Portalul cere `floor_number` ca șir („Etaj trebuie să fie un șir”).
   const floor = nonNegativeInt(input.floor);
   put(data, "floor_number", floor === null ? null : String(floor));
