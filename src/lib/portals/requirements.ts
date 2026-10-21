@@ -12,6 +12,8 @@
 import { HOMEPITCH_MAX_TITLE } from "./homepitch/mapper";
 import { IMOBILIARE_DESCRIPTION_MIN, IMOBILIARE_TITLE_MAX } from "./imobiliare/config";
 import { normalizeImobiliareMobile } from "./imobiliare/contact";
+import { imobiliareFloorReasons } from "./imobiliare/mapper";
+import { housingTypeFor } from "./imobiliare/taxonomy";
 import { LACHEIE_MIN_DESCRIPTION, LACHEIE_MIN_TITLE } from "./lacheie/mapper";
 import { IMOSPOT_MIN_DESCRIPTION, IMOSPOT_MIN_TITLE } from "./imospot/mapper";
 import { OI_MIN_DESCRIPTION, OI_MIN_TITLE } from "./oferteimobiliare/mapper";
@@ -54,6 +56,9 @@ export type PortalRequirementSubject = {
   layout: string | null;
   /** Tipurile de încălzire salvate pe ofertă. */
   heatingSystems: string[] | null;
+  /** Etajul numeric (null = necompletat) și eticheta liberă (ex. „Mansardă”). */
+  floor: number | null;
+  floorLabel: string | null;
   agentName: string | null;
   agentEmail: string | null;
   /** Telefonul de contact efectiv trimis: agentul, altfel agenția. */
