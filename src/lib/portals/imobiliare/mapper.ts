@@ -214,6 +214,16 @@ export function buildImobiliareListing(input: ImobiliareListingInput): Imobiliar
     );
   }
 
+  // `bedroom_count` este etichetat de portal „Nr. Camere” (numărul total de
+  // camere), nu dormitoare. La apartamente și case este obligatoriu.
+  const roomCount = positiveInt(input.rooms) ?? positiveInt(input.bedrooms);
+  if (
+    (housingForValidation === "apartment" || housingForValidation === "house") &&
+    roomCount === null
+  ) {
+    reasons.push("Completează numărul de camere.");
+  }
+
   if (reasons.length > 0) return { ok: false, reasons, warnings };
 
   const data: Record<string, unknown> = {};
