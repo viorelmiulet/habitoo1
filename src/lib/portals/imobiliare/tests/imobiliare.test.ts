@@ -354,6 +354,48 @@ describe("construcția anunțului", () => {
     expect(built.listing.data_properties["energy_certification_class"]).toBeUndefined();
   });
 
+  it("trimite bedroom_count = numărul de camere (cazul HB-1261: rooms=2, bedrooms=1)", () => {
+    const built = buildImobiliareListing({ ...BASE_INPUT, rooms: 2, bedrooms: 1 });
+    expect(built.ok).toBe(true);
+    if (!built.ok) return;
+    expect(built.listing.data_properties["bedroom_count"]).toBe(2);
+  });
+
+  it("folosește dormitoarele doar când camerele lipsesc", () => {
+    const built = buildImobiliareListing({ ...BASE_INPUT, rooms: null, bedrooms: 3 });
+    expect(built.ok).toBe(true);
+    if (!built.ok) return;
+    expect(built.listing.data_properties["bedroom_count"]).toBe(3);
+  });
+
+  it("trimite bedroom_count = 1 la garsonieră", () => {
+    const built = buildImobiliareListing({
+      ...BASE_INPUT,
+      propertyType: "garsoniera",
+      rooms: 1,
+      bedrooms: null,
+    });
+    expect(built.ok).toBe(true);
+    if (!built.ok) return;
+    expect(built.listing.data_properties["bedroom_count"]).toBe(1);
+  });
+
+  it("cere numărul de camere la apartamente și case când lipsesc și camerele, și dormitoarele", () => {
+    for (const propertyType of ["apartament", "casa"]) {
+      const built = buildImobiliareListing({
+        ...BASE_INPUT,
+        propertyType,
+        rooms: null,
+        bedrooms: null,
+        landSurface: propertyType === "casa" ? 200 : null,
+      });
+      expect(built.ok).toBe(false);
+      if (!built.ok) {
+        expect(built.reasons.join(" ")).toContain("Completează numărul de camere");
+      }
+    }
+  });
+
   it("respinge titlul prea lung, descrierea prea scurtă și coordonatele 0/0", () => {
     const long = buildImobiliareListing({ ...BASE_INPUT, title: "T".repeat(81) });
     expect(long.ok).toBe(false);
