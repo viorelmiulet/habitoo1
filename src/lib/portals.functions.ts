@@ -2383,6 +2383,11 @@ export const getPropertiesPortalMatrix = createServerFn({ method: "POST" })
           promoted: portal.supports_promoted_flag === true && pub?.enabled === true && pub?.promoted === true,
           // `is_subscription_active` nu e de încredere: niciun avertisment de abonament pe card.
           publicWarning: null,
+          missingRequirements: (() => {
+            const subject = requirementSubjects.get(propertyId);
+            if (!subject) return [];
+            return validatePortalRequirements(portal.id, subject).missing.map((m) => m.label);
+          })(),
         };
       });
     }
