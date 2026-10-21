@@ -471,8 +471,18 @@ function PropertiesPage() {
     },
   });
 
-  const isLoading = listLoading || (Boolean(portalFilter) && portalIdsLoading);
+  const isLoading =
+    listLoading ||
+    (Boolean(portalFilter) && portalIdsLoading) ||
+    (promotionValues.length > 0 && promotionIdsLoading);
   const rows = result?.rows ?? [];
+  // Etichetele „Promovat” (portal · serviciu) pentru rândurile din pagina curentă.
+  const { data: promotionBadges = {} } = useQuery({
+    queryKey: ["property-promotion-badges", orgId, rows.map((r) => r.id)],
+    enabled: Boolean(orgId) && rows.length > 0,
+    queryFn: () =>
+      loadPromotionBadges({ data: { organizationId: orgId, propertyIds: rows.map((r) => r.id) } }),
+  });
   // Coverul fiecărei proprietăți din pagina curentă (is_primary → prima poziție).
   const coverOf = usePropertyCovers(rows.map((r) => r.id));
   // Selecția de portaluri per proprietate (portal_publications) + starea reală (portal_listings).
@@ -656,6 +666,12 @@ function PropertiesPage() {
     filters.showArchived ? { key: "showArchived" as const, label: "Include arhivate" } : null,
     portalFilter
       ? { key: "portal" as const, label: portalFilterLabel(filters.portal, portalOptions) }
+      : null,
+    filters.promotion
+      ? {
+          key: "promotion" as const,
+          label: `Promovare: ${promotionFilterLabel(filters.promotion, promotionGroups)}`,
+        }
       : null,
     filters.priceMin ? { key: "priceMin" as const, label: `Preț ≥ ${filters.priceMin}` } : null,
     filters.priceMax ? { key: "priceMax" as const, label: `Preț ≤ ${filters.priceMax}` } : null,
