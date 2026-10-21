@@ -397,9 +397,12 @@ function PropertiesPage() {
   });
 
   const { data: result, isLoading: listLoading } = useQuery({
-    // (isLoading de mai jos combină și încărcarea filtrului de portaluri)
-    queryKey: ["properties", orgId, filters, sort, page, favoriteIds, portalIds],
-    enabled: Boolean(orgId) && (!portalFilter || portalIds !== undefined),
+    // (isLoading de mai jos combină și încărcarea filtrelor de portaluri/promovare)
+    queryKey: ["properties", orgId, filters, sort, page, favoriteIds, portalIds, promotionIds],
+    enabled:
+      Boolean(orgId) &&
+      (!portalFilter || portalIds !== undefined) &&
+      (promotionValues.length === 0 || promotionIds !== undefined),
     queryFn: async () => {
       let query = supabase
         .from("properties")
@@ -446,6 +449,10 @@ function PropertiesPage() {
       if (portalFilter) {
         if (!portalIds || portalIds.length === 0) return { rows: [], count: 0 };
         query = query.in("id", portalIds);
+      }
+      if (promotionValues.length > 0) {
+        if (!promotionIds || promotionIds.length === 0) return { rows: [], count: 0 };
+        query = query.in("id", promotionIds);
       }
       if (filters.q) {
         const q = filters.q.replace(/[%,()"\\]/g, " ").trim();
