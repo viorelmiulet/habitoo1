@@ -17,7 +17,6 @@ import {
   propertyMatchesPromotion,
   type PropertyPromotionInfo,
 } from "@/lib/portals/promotion-filter";
-import { buildPromotionInfos } from "@/lib/portals/promotion-filter.functions";
 import { manageableImobiliarePromotions } from "@/lib/portals/imobiliare/promotions";
 import { PORTALS } from "@/lib/portals/registry";
 import { parsePromotionValues, serializePromotionValues, togglePromotionValue } from "@/components/app/PromotionFilterSelect";

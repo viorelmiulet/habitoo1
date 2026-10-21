@@ -47,17 +47,6 @@ async function fetchAllRows<T>(
   return out;
 }
 
-type PromotionRows = {
-  listings: { property_id: string; portal: string; status: string }[];
-  states: {
-    property_id: string;
-    promotion_id: string;
-    value_boolean: boolean | null;
-    value_numeric: number | null;
-  }[];
-  publications: { property_id: string; portal_key: string; enabled: boolean; promoted: boolean | null }[];
-};
-
 async function fetchPromotionRows(organizationId: string): Promise<PromotionRows> {
   const admin = await loadAdmin();
   const [listings, states, publications] = await Promise.all([
