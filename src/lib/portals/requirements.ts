@@ -198,6 +198,52 @@ const RULE = {
     requirement: "completat",
     ok: (s) => s.rooms !== null,
   }),
+  city: (): PortalRequirementRule => ({
+    key: "city",
+    label: "Localitate",
+    requirement: "completată",
+    ok: (s) => len(s.city) > 0,
+  }),
+  /**
+   * Imobiliare.ro: etajul este obligatoriu la apartamente și garsoniere, iar
+   * mansarda cere numărul real al etajului. Aceeași regulă ca în mapper
+   * (`imobiliareFloorReasons`) — o singură versiune.
+   */
+  imobiliareFloor: (): PortalRequirementRule => ({
+    key: "floor",
+    label: "Etaj",
+    requirement: "obligatoriu la apartamente și garsoniere; mansarda cere numărul real al etajului",
+    ok: (s) =>
+      imobiliareFloorReasons({
+        propertyType: s.propertyType,
+        floor: s.floor,
+        floorLabel: s.floorLabel,
+      }).length === 0,
+  }),
+  /** Imobiliare.ro: „Nr. Camere” obligatoriu la apartamente și case (camere, altfel dormitoare). */
+  imobiliareRooms: (): PortalRequirementRule => ({
+    key: "rooms",
+    label: "Număr camere",
+    requirement: "obligatoriu la apartamente și case",
+    ok: (s) => {
+      const housing = housingTypeFor(s.propertyType);
+      if (housing !== "apartment" && housing !== "house") return true;
+      const rooms = s.rooms ?? s.bedrooms;
+      return typeof rooms === "number" && Number.isInteger(rooms) && rooms > 0;
+    },
+  }),
+  /** Imobiliare.ro: suprafața terenului obligatorie la case și terenuri (terenul poate folosi suprafața utilă). */
+  imobiliareLandSurface: (): PortalRequirementRule => ({
+    key: "land_surface",
+    label: "Suprafață teren",
+    requirement: "obligatorie la case și terenuri",
+    ok: (s) => {
+      const housing = housingTypeFor(s.propertyType);
+      if (housing !== "house" && housing !== "land") return true;
+      if (typeof s.landSurface === "number" && s.landSurface > 0) return true;
+      return housing === "land" && typeof s.usableSurface === "number" && s.usableSurface > 0;
+    },
+  }),
   /** Doar pentru case: portalul cere suprafața proprietății (construită sau teren). */
   houseSpace: (): PortalRequirementRule => ({
     key: "house_space",
@@ -347,6 +393,9 @@ export const PORTAL_REQUIREMENTS: Record<string, PortalRequirementSpec> = {
       RULE.images(1),
       RULE.agentEmail(),
       RULE.imobiliarePhone(),
+      RULE.imobiliareFloor(),
+      RULE.imobiliareRooms(),
+      RULE.imobiliareLandSurface(),
     ],
     allowed: COMMON_ALLOWED,
   },
