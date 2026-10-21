@@ -368,3 +368,60 @@ export function imobiliarePromotionStateFromListing(
   }
   return null;
 }
+
+/* ------------------------- avertizări la scriere --------------------------- */
+
+/**
+ * `promotion_warnings` din răspunsul `POST /listings/{ref}/promotions`.
+ * Fiecare scriere trimite UN singur serviciu, deci orice avertizare din
+ * răspuns privește serviciul cerut: operația NU este reușită, chiar dacă
+ * HTTP este 200 (ex. „Promovare imoradar nu este activ pentru acest cont").
+ */
+export function imobiliarePromotionWarnings(body: unknown): string[] {
+  if (!body || typeof body !== "object") return [];
+  const raw = (body as Record<string, unknown>)["promotion_warnings"];
+  if (raw === undefined || raw === null) return [];
+  const entries = Array.isArray(raw) ? raw : [raw];
+  const messages: string[] = [];
+  for (const entry of entries) {
+    if (typeof entry === "string" && entry.trim()) {
+      messages.push(entry.trim());
+      continue;
+    }
+    if (entry && typeof entry === "object") {
+      const record = entry as Record<string, unknown>;
+      const message =
+        record["message"] ?? record["warning"] ?? record["text"] ?? record["detail"];
+      if (typeof message === "string" && message.trim()) {
+        messages.push(message.trim());
+        continue;
+      }
+    }
+    messages.push(String(entry).slice(0, 200));
+  }
+  return messages;
+}
+
+/* --------------------------- sursa stării afișate -------------------------- */
+
+export type ImobiliarePromotionStateSource = "portal_listing" | "portal_slot" | "local";
+
+/**
+ * Starea afișată pentru un serviciu: portalul are prioritate (corpul anunțului,
+ * apoi prezența în lista slotului), iar starea salvată local după ultima
+ * scriere reușită este ultima soluție. `null` = necunoscută.
+ */
+export function mergeImobiliarePromotionState(input: {
+  fromListing: boolean | number | null;
+  fromSlotList: boolean | null;
+  fromLocal: boolean | number | null;
+}): { value: boolean | number | null; source: ImobiliarePromotionStateSource | null } {
+  if (input.fromListing !== null && input.fromListing !== undefined) {
+    return { value: input.fromListing, source: "portal_listing" };
+  }
+  if (input.fromSlotList !== null) return { value: input.fromSlotList, source: "portal_slot" };
+  if (input.fromLocal !== null && input.fromLocal !== undefined) {
+    return { value: input.fromLocal, source: "local" };
+  }
+  return { value: null, source: null };
+}
