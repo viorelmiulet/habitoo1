@@ -1,4 +1,5 @@
 import { portalCanPublish } from "@/lib/portals/registry";
+import { UNCONFIRMED_UPDATE_NOTE } from "@/lib/portals/transient-failure";
 /**
  * PUBLICARE PE PORTALURI — secțiunea din pagina proprietății.
  *
