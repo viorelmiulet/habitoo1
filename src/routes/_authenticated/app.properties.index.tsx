@@ -29,7 +29,7 @@ import { PageHeader } from "@/components/app/PageHeader";
 import { CardGridSkeleton, ListSkeleton } from "@/components/app/LoadingState";
 import { usePropertyPortals } from "@/components/app/PropertyPortalsCell";
 import { PortalFilterSelect, portalFilterLabel } from "@/components/app/PortalFilterSelect";
-import { PromotionFilterSelect, promotionFilterLabel, parsePromotionValues } from "@/components/app/PromotionFilterSelect";
+import { promotionFilterLabel, parsePromotionValues } from "@/components/app/PromotionFilterSelect";
 import { getPortalFilterOptions, getPropertyIdsByPortalState } from "@/lib/portals.functions";
 import {
   getPromotionFilterOptions,
@@ -820,15 +820,9 @@ function PropertiesPage() {
           {portalOptions.length > 0 ? (
             <div>
               <label htmlFor="property-portal" className={fieldLabelClass}>Publicare pe portaluri</label>
-              <PortalFilterSelect id="property-portal" value={filters.portal} options={portalOptions} onChange={(v) => setFilters((f) => ({ ...f, portal: v }))} className={cn("w-full", filters.portal !== "all" && valuedControlClass)} />
+              <PortalFilterSelect id="property-portal" value={filters.portal} options={portalOptions} promotionValue={filters.promotion} promotionGroups={promotionGroups} onChange={(v) => setFilters((f) => ({ ...f, portal: v }))} onPromotionChange={(v) => setFilters((f) => ({ ...f, promotion: v }))} onReset={() => setFilters((f) => ({ ...f, portal: "all", promotion: "" }))} className={cn("w-full", (filters.portal !== "all" || filters.promotion) && valuedControlClass)} />
             </div>
           ) : <div aria-hidden />}
-          {promotionGroups.length > 0 ? (
-            <div>
-              <label htmlFor="property-promotion" className={fieldLabelClass}>Promovare</label>
-              <PromotionFilterSelect id="property-promotion" value={filters.promotion} groups={promotionGroups} onChange={(v) => setFilters((f) => ({ ...f, promotion: v }))} className={cn("w-full", filters.promotion && valuedControlClass)} />
-            </div>
-          ) : null}
           {mainAgentFilter ? (
             <div>
               <label htmlFor="property-agent" className={fieldLabelClass}>Agent</label>

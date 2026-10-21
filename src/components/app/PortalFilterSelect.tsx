@@ -19,6 +19,8 @@ import {
   type PortalFilterBucket,
 } from "@/lib/portals/portal-state";
 import { cn } from "@/lib/utils";
+import { parsePromotionValues, promotionFilterLabel, serializePromotionValues, togglePromotionValue } from "./PromotionFilterSelect";
+import { PROMOTION_FILTER_ANY, PROMOTION_FILTER_NONE, type PromotionFilterGroup } from "@/lib/portals/promotion-filter";
 
 export type PortalFilterOption = { portalId: string; name: string; pushSupported: boolean };
 
@@ -46,12 +48,20 @@ export function PortalFilterSelect({
   value,
   options,
   onChange,
+  promotionValue = "",
+  promotionGroups = [],
+  onPromotionChange,
+  onReset,
   className,
   id,
 }: {
   value: string;
   options: PortalFilterOption[];
   onChange: (value: string) => void;
+  promotionValue?: string;
+  promotionGroups?: PromotionFilterGroup[];
+  onPromotionChange?: (value: string) => void;
+  onReset?: () => void;
   className?: string;
   id?: string;
 }) {
@@ -75,15 +85,22 @@ export function PortalFilterSelect({
             {selectedPortal ? (
               <PortalLogoStack portalId={selectedPortal.portalId} name={selectedPortal.name} size={22} />
             ) : null}
-            <span className="truncate">{portalFilterLabel(value, options)}</span>
+            <span className="truncate">{[
+              value !== "all" ? portalFilterLabel(value, options) : "",
+              promotionValue ? promotionFilterLabel(promotionValue, promotionGroups) : "",
+            ].filter(Boolean).join(" · ") || "Oricare"}</span>
           </span>
           <ChevronsUpDown className="size-4 shrink-0 opacity-60" aria-hidden />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-80 p-0" align="start">
+      <PopoverContent className="w-80 max-w-[calc(100vw-2rem)] p-0" align="start">
         <PortalFilterOptionsList
           value={value}
           options={options}
+          promotionValue={promotionValue}
+          promotionGroups={promotionGroups}
+          onPromotionChange={onPromotionChange}
+          onReset={onReset ? () => { onReset(); setOpen(false); } : undefined}
           onSelect={(v) => {
             onChange(v);
             setOpen(false);
@@ -99,28 +116,46 @@ export function PortalFilterOptionsList({
   value,
   options,
   onSelect,
+  promotionValue = "",
+  promotionGroups = [],
+  onPromotionChange,
+  onReset,
 }: {
   value: string;
   options: PortalFilterOption[];
   onSelect: (value: string) => void;
+  promotionValue?: string;
+  promotionGroups?: PromotionFilterGroup[];
+  onPromotionChange?: (value: string) => void;
+  onReset?: () => void;
 }) {
+  const selectedPromotions = parsePromotionValues(promotionValue);
+  const promotionItem = (val: string, label: string, indent = false) => (
+    <CommandItem
+      key={`promotion:${val}`}
+      value={`promotion:${val}`}
+      onSelect={() => onPromotionChange?.(serializePromotionValues(togglePromotionValue(selectedPromotions, val)))}
+      className={cn("min-h-11", indent && "pl-11", selectedPromotions.includes(val) && "bg-accent")}
+      aria-label={label}
+    >
+      <span className="flex-1">{label}</span>
+      {selectedPromotions.includes(val) ? <Check className="size-4" aria-hidden /> : null}
+    </CommandItem>
+  );
   const item = (val: string, label: string, indent = false) => (
     <CommandItem
       key={val}
       value={val}
-      onSelect={() => onSelect(val)}
-      className={cn(indent && "pl-11", value === val && "bg-accent")}
+      onSelect={() => val === "all" && onReset ? onReset() : onSelect(val)}
+      className={cn("min-h-11", indent && "pl-11", value === val && !(val === "all" && promotionValue) && "bg-accent")}
     >
       <span className="flex-1">{label}</span>
-      {value === val ? <Check className="size-4" aria-hidden /> : null}
+      {value === val && !(val === "all" && promotionValue) ? <Check className="size-4" aria-hidden /> : null}
     </CommandItem>
   );
   return (
-    <Command>
-      <p className="px-3 pt-3 pb-1 text-xs text-muted-foreground">
-        Doar portalurile activate pentru agenția ta.
-      </p>
-      <CommandList className="max-h-96">
+    <Command tabIndex={0}>
+      <CommandList className="max-h-[min(32rem,60dvh)]">
         <CommandGroup>{item("all", "Oricare")}</CommandGroup>
         <CommandGroup heading="Toate portalurile">
           {BUCKETS.map((b) => item(`any:${b}`, ANY_LABELS[b]))}
@@ -137,8 +172,15 @@ export function PortalFilterOptionsList({
             }
           >
             {BUCKETS.map((b) => item(`${o.portalId}:${b}`, bucketLabel(b, o.pushSupported), true))}
+            {onPromotionChange ? promotionGroups.find((group) => group.portalId === o.portalId)?.options.map((option) => promotionItem(option.value, option.label, true)) : null}
           </CommandGroup>
         ))}
+        {onPromotionChange && promotionGroups.length > 0 ? (
+          <CommandGroup heading="Promovări" className="border-t border-border">
+            {promotionItem(PROMOTION_FILTER_ANY, "Orice promovare")}
+            {promotionItem(PROMOTION_FILTER_NONE, "Fără promovare")}
+          </CommandGroup>
+        ) : null}
       </CommandList>
     </Command>
   );
