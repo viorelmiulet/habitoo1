@@ -1,3 +1,9 @@
+# Imobiliare.ro — comision și etaj
+
+- [ ] Comision numeric; text ambiguu omis cu avertisment
+- [ ] Etaj verificat înainte de apeluri; case/vile fără blocare; mansardă fără valoare inventată
+- [ ] Teste fără apeluri sau republicări reale
+
 # Pagina publică /integrari
 
 - [x] Ilustrație HTML/CSS, carduri unite și grupate, etichete din registru
