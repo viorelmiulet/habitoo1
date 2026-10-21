@@ -104,7 +104,7 @@ async function loadAdmin() {
 }
 
 /** Sesiune + referința anunțului, cu izolare strictă pe agenție. */
-async function prepare(organizationId: string, propertyId: string): Promise<Prepared> {
+export async function prepare(organizationId: string, propertyId: string): Promise<Prepared> {
   const definition = getPortalDefinition(IMOBILIARE_PORTAL_KEY);
   if (!definition || definition.status !== "available") {
     return { ok: false, view: emptyView("Integrarea Imobiliare.ro nu este disponibilă.") };
@@ -416,7 +416,14 @@ export const setImobiliarePromotion = createServerFn({ method: "POST" })
       actorId: (context as unknown as { userId: string }).userId,
       externalId: prepared.reference,
       ...(result.ok
-        ? { httpStatus: result.httpStatus, portalResponse: result.portalResponse }
+        ? {
+            httpStatus: result.httpStatus,
+            portalResponse: result.portalResponse,
+            // Avertizarea tolerată (imoradar inactiv) rămâne doar în jurnal.
+            ...(result.warnings?.length
+              ? { errorCode: "PROMOTION_WARNING", errorMessage: result.warnings.join(" ") }
+              : {}),
+          }
         : {
             errorCode: result.code,
             errorMessage: result.message,
