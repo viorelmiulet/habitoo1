@@ -81,55 +81,6 @@ async function fetchPromotionRows(organizationId: string): Promise<PromotionRows
   return { listings, states, publications };
 }
 
-/** Construiește informația de promovare per proprietate (doar anunțuri publicate). */
-export function buildPromotionInfos(rows: PromotionRows): Map<string, PropertyPromotionInfo> {
-  const infos = new Map<string, PropertyPromotionInfo>();
-  const ensure = (propertyId: string): PropertyPromotionInfo => {
-    let info = infos.get(propertyId);
-    if (!info) {
-      info = { imobiliarePublished: false, imobiliareActiveServices: [], flagPromotions: [] };
-      infos.set(propertyId, info);
-    }
-    return info;
-  };
-  const publishedPortals = new Map<string, Set<string>>();
-  for (const listing of rows.listings) {
-    let set = publishedPortals.get(listing.property_id);
-    if (!set) {
-      set = new Set();
-      publishedPortals.set(listing.property_id, set);
-    }
-    set.add(listing.portal);
-  }
-  for (const state of rows.states) {
-    if (!promotionStateActive(state.value_boolean, state.value_numeric)) continue;
-    if (!publishedPortals.get(state.property_id)?.has("imobiliare_ro")) continue;
-    const info = ensure(state.property_id);
-    info.imobiliarePublished = true;
-    if (!info.imobiliareActiveServices.includes(state.promotion_id)) {
-      info.imobiliareActiveServices.push(state.promotion_id);
-    }
-  }
-  for (const publication of rows.publications) {
-    const published = publishedPortals.get(publication.property_id)?.has(publication.portal_key) === true;
-    const info = ensure(publication.property_id);
-    const existing = info.flagPromotions.find((f) => f.portalId === publication.portal_key);
-    if (existing) {
-      existing.published = existing.published || published;
-      existing.promoted = true;
-    } else {
-      info.flagPromotions.push({ portalId: publication.portal_key, published, promoted: true });
-    }
-  }
-  // Anunțurile publicate pe Imobiliare.ro fără promovări active trebuie să
-  // existe în mapă (pentru „Fără promovare” și pentru etichete goale).
-  for (const [propertyId, portals] of publishedPortals) {
-    const info = ensure(propertyId);
-    if (portals.has("imobiliare_ro")) info.imobiliarePublished = true;
-  }
-  return infos;
-}
-
 /** Opțiunile filtrului, doar pentru portalurile conectate ale agenției. */
 export const getPromotionFilterOptions = createServerFn({ method: "POST" })
   .middleware([requireActiveOrgAuth])
