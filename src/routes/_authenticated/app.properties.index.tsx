@@ -822,6 +822,12 @@ function PropertiesPage() {
               <PortalFilterSelect id="property-portal" value={filters.portal} options={portalOptions} onChange={(v) => setFilters((f) => ({ ...f, portal: v }))} className={cn("w-full", filters.portal !== "all" && valuedControlClass)} />
             </div>
           ) : <div aria-hidden />}
+          {promotionGroups.length > 0 ? (
+            <div>
+              <label htmlFor="property-promotion" className={fieldLabelClass}>Promovare</label>
+              <PromotionFilterSelect id="property-promotion" value={filters.promotion} groups={promotionGroups} onChange={(v) => setFilters((f) => ({ ...f, promotion: v }))} className={cn("w-full", filters.promotion && valuedControlClass)} />
+            </div>
+          ) : null}
           {mainAgentFilter ? (
             <div>
               <label htmlFor="property-agent" className={fieldLabelClass}>Agent</label>
@@ -1039,7 +1045,7 @@ function PropertiesPage() {
                   const selectedPortals = portalCells.filter((cell) => cell.selected);
                   const publishedPortals = selectedPortals.filter((cell) => cell.state === "published" || cell.state === "in_feed");
                   const portalError = selectedPortals.find((cell) => cell.state === "error");
-                  const promoted = portalCells.some((cell) => cell.promoted);
+                  const propertyPromotionBadges = promotionBadges[p.id] ?? [];
                   const details = formatPropertyListDetails(p);
                   const price = formatPropertyListPrice(p.price, p.currency, p.transaction_kind, p.surface);
                   const permittedDelete = canShowDeleteAction(canDeleteProperty(user, p));
