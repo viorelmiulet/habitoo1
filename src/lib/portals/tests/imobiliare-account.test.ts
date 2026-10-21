@@ -41,12 +41,12 @@ describe("starea contului Imobiliare.ro", () => {
     expect(state.isSubscriptionActive).toBeNull();
     expect(subscriptionInactive(state)).toBe(false);
     expect(subscriptionInactive(null)).toBe(false);
-    expect(describeImobiliareAccount(state)).toContain("nu a putut fi citită");
+    expect(describeImobiliareAccount(state)).toContain("is_subscription_active —");
   });
 
   it("descrie explicit lipsa abonamentului", () => {
     const text = describeImobiliareAccount(parseImobiliareAccount(ME_BODY));
-    expect(text).toContain(IMOBILIARE_NO_SUBSCRIPTION_MESSAGE);
+    expect(text).not.toContain(IMOBILIARE_NO_SUBSCRIPTION_MESSAGE);
     expect(text).toContain("46");
   });
 

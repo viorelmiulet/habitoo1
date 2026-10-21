@@ -58,7 +58,6 @@ import { parseAgents } from "../imobiliare/agents.server";
 import {
   describeImobiliareAccount,
   subscriptionInactive,
-  IMOBILIARE_NO_SUBSCRIPTION_MESSAGE,
   type ImobiliareAccountState,
 } from "../imobiliare/account";
 import { fetchImobiliareAccount } from "../imobiliare/account.server";
@@ -641,7 +640,6 @@ async function diagnose(
   // bază: nu este o ciornă confirmată de portal.
   const offerUrl = noSubscription ? null : imobiliarePublicUrlFromBody(response.body);
   const notes: string[] = [];
-  if (noSubscription) notes.push(IMOBILIARE_NO_SUBSCRIPTION_MESSAGE);
   if (state && state !== IMOBILIARE_STATUS_ONLINE) {
     notes.push(`Anunțul este în starea „${state}” la Imobiliare.ro, deci nu are pagină publică.`);
   } else if (!offerUrl && !noSubscription) {

@@ -79,17 +79,12 @@ function ImobiliareSubscriptionBadge({ organizationId }: { organizationId: strin
     staleTime: 10 * 60 * 1000,
   });
   const data = account.data;
-  if (!data || data.isSubscriptionActive === null) return null;
-  const details = [
-    data.subscriptionType ? `tip ${data.subscriptionType}` : null,
-    data.listingOnlineCount !== null ? `${data.listingOnlineCount} anunțuri online` : null,
-  ]
-    .filter(Boolean)
-    .join(", ");
+  if (!data) return null;
+  // Valori brute din /api/v3/me, fără concluzii despre abonament.
+  const v = (x: string | number | boolean | null) => (x === null ? "—" : String(x));
   return (
-    <StatusBadge tone={data.isSubscriptionActive ? "success" : "warning"}>
-      {data.isSubscriptionActive ? "Abonament activ" : "Fără abonament activ"}
-      {details ? ` · ${details}` : ""}
+    <StatusBadge tone="neutral">
+      Abonament: tip {v(data.subscriptionType)} · status {v(data.subscriptionStatus)} · anunțuri online {v(data.listingOnlineCount)}
     </StatusBadge>
   );
 }

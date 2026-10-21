@@ -37,8 +37,7 @@ import {
   shouldSaveBackfilledUrl,
 } from "@/lib/portals/link";
 import {
-  IMOBILIARE_NO_SUBSCRIPTION_MESSAGE,
-  subscriptionInactive,
+  imobiliareCardUrl,
   type ImobiliareAccountState,
 } from "@/lib/portals/imobiliare/account";
 import type { ImoveListing } from "@/lib/portals/imove/mapper";
@@ -2298,15 +2297,6 @@ export const getPropertiesPortalMatrix = createServerFn({ method: "POST" })
     // când există o cheie Habitoo activă cu care pot citi feedul.
     const keyedPortals = new Set((activeKeys ?? []).map((k) => k.portal));
 
-    const imobiliareVisible = visiblePortals === null || visiblePortals.has("imobiliare_ro");
-    const imobiliareConnected = (connections ?? []).some(
-      (c) => c.portal === "imobiliare_ro" && (c.status === "connected" || c.status === "ready"),
-    );
-    const imobiliareAccount =
-      imobiliareVisible && imobiliareConnected
-        ? await imobiliareAccountForOrg(organizationId)
-        : null;
-    const imobiliareNoSubscription = subscriptionInactive(imobiliareAccount);
 
     const { isPropertyFeedEligible } = await import("@/lib/site-feed/mapper");
     const eligibleById = new Map(
@@ -2362,7 +2352,7 @@ export const getPropertiesPortalMatrix = createServerFn({ method: "POST" })
           // Imobiliare.ro: linkul se afișează doar din ID-ul real salvat.
           publicUrl:
             portal.id === "imobiliare_ro"
-              ? (parsePortalOffers(listing?.portal_offers)[0]?.url ?? null)
+              ? imobiliareCardUrl(listing, parsePortalOffers(listing?.portal_offers)[0]?.url ?? null)
               : (listing?.public_url ?? null),
           // Storia: linkurile exportului automat pe OLX, doar cât anunțul e publicat.
           olxLinks: portal.id === "storia" ? visibleOlxLinks(listing?.portal_offers, listingStatus) : [],
@@ -2373,10 +2363,8 @@ export const getPropertiesPortalMatrix = createServerFn({ method: "POST" })
           })),
           promotionFlag: portal.supports_promoted_flag === true,
           promoted: portal.supports_promoted_flag === true && pub?.enabled === true && pub?.promoted === true,
-          publicWarning:
-            portal.id === "imobiliare_ro" && imobiliareNoSubscription && listing?.public_url
-              ? IMOBILIARE_NO_SUBSCRIPTION_MESSAGE
-              : null,
+          // `is_subscription_active` nu e de încredere: niciun avertisment de abonament pe card.
+          publicWarning: null,
         };
       });
     }

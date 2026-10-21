@@ -58,24 +58,23 @@ export function parseImobiliareAccount(body: unknown): ImobiliareAccountState {
   };
 }
 
-/** Abonamentul lipsește cu certitudine (nu „nu știm”). */
-export function subscriptionInactive(state: ImobiliareAccountState | null): boolean {
-  return state?.isSubscriptionActive === false;
+/**
+ * `is_subscription_active` din `/api/v3/me` nu reflectă corect abonamentul
+ * agenției: nu se mai folosește pentru a ascunde linkuri sau a afișa avertismente.
+ */
+export function subscriptionInactive(_state: ImobiliareAccountState | null): boolean {
+  return false;
 }
 
-/** Propoziția pentru testul de conexiune și pentru panoul Superadmin. */
+/** Valorile brute din `/api/v3/me`, pentru testul de conexiune; fără concluzii. */
 export function describeImobiliareAccount(state: ImobiliareAccountState | null): string {
-  if (!state || state.isSubscriptionActive === null) {
-    return "Starea abonamentului Imobiliare.ro nu a putut fi citită.";
-  }
-  const parts: string[] = [];
-  if (state.subscriptionType) parts.push(`tip „${state.subscriptionType}”`);
-  if (state.subscriptionStatus) parts.push(`status „${state.subscriptionStatus}”`);
-  if (state.listingOnlineCount !== null) {
-    parts.push(`${state.listingOnlineCount} anunțuri online în cont`);
-  }
-  const suffix = parts.length ? ` (${parts.join(", ")}).` : ".";
-  return state.isSubscriptionActive
-    ? `Abonament Imobiliare.ro activ${suffix}`
-    : `${IMOBILIARE_NO_SUBSCRIPTION_MESSAGE}${parts.length ? ` Detalii: ${parts.join(", ")}.` : ""}`;
+  if (!state) return "Datele contului Imobiliare.ro nu au putut fi citite.";
+  const value = (v: string | number | boolean | null) => (v === null ? "—" : String(v));
+  return `Cont Imobiliare.ro (/api/v3/me): tip abonament ${value(state.subscriptionType)}, status abonament ${value(state.subscriptionStatus)}, is_subscription_active ${value(state.isSubscriptionActive)}, anunțuri online ${value(state.listingOnlineCount)}.`;
+}
+
+/** Linkul de pe card: `public_url` salvat, doar cât anunțul e publicat. */
+export function imobiliareCardUrl(listing: { status?: string | null; public_url?: string | null } | null | undefined, offerUrl: string | null): string | null {
+  if (!listing || (listing.status !== "published" && listing.status !== "updated")) return null;
+  return listing.public_url || offerUrl || null;
 }
