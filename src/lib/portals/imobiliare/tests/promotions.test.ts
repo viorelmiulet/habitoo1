@@ -18,7 +18,9 @@ import {
   imobiliarePromotionBySlot,
   imobiliarePromotionPatch,
   imobiliarePromotionStateFromListing,
+  imobiliarePromotionWarnings,
   manageableImobiliarePromotions,
+  mergeImobiliarePromotionState,
   normalizeImobiliareSlotInventory,
   parseImobiliareSlotListings,
 } from "../promotions";
@@ -62,6 +64,7 @@ import {
   fetchImobiliareSlotInventories,
   fetchImobiliareSlotInventory,
   fetchImobiliareSlotListings,
+  fetchImobiliareSlotMembership,
   setImobiliareListingPromotion,
 } from "../promotions.server";
 
