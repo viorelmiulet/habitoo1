@@ -71,8 +71,8 @@ export function isRetryablePortalBulkError(input: {
   message?: string | null;
   portalId?: string | null;
 }): boolean {
-  if (input.code === "RATE_LIMIT" || input.httpStatus === 429 || (input.httpStatus ?? 0) >= 500) return true;
   if (isTimeoutLikeFailure(input)) return isTimeoutRetryPortal(input.portalId);
+  if (input.code === "RATE_LIMIT" || input.httpStatus === 429 || (input.httpStatus ?? 0) >= 500) return true;
   return /temporar|temporarily|\b5\d\d\b/i.test(input.message ?? "");
 }
 
