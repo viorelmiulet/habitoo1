@@ -37,6 +37,7 @@ import {
   getPropertyPromotionBadges,
 } from "@/lib/portals/promotion-filter.functions";
 import { parsePortalFilter } from "@/lib/portals/portal-state";
+import { portalListingLink } from "@/lib/portals/listing-links";
 import { PropertyCard, type PropertyCardRow } from "@/components/app/PropertyCard";
 import { useServerFn } from "@tanstack/react-start";
 import { archiveProperty, unarchiveProperty } from "@/lib/property-archive.functions";

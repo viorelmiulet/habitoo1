@@ -183,27 +183,45 @@ export function PropertyCard({
 
         {activePortals.length > 0 ? (
           <div className="mt-auto flex flex-wrap gap-1.5 pt-1">
-            {activePortals.map((c) => (
-              <span
-                key={c.portalId}
-                title={c.portalName}
-                className="relative inline-flex items-center gap-1.5 rounded-full bg-muted px-2 py-0.5 text-[11px] text-muted-foreground"
-              >
-                <PortalLogo
-                  portalId={c.portalId}
-                  name={c.portalName}
-                  size={14}
-                  className="rounded-sm"
-                />
-                {c.portalName}
-                {c.state === "error" ? (
-                  <span
-                    aria-label="Problemă pe acest portal"
-                    className="absolute -top-0.5 -right-0.5 size-2 rounded-full bg-destructive"
+            {activePortals.map((c) => {
+              const link = portalListingLink(c);
+              const chipBody = (
+                <>
+                  <PortalLogo
+                    portalId={c.portalId}
+                    name={c.portalName}
+                    size={14}
+                    className="rounded-sm"
                   />
-                ) : null}
-              </span>
-            ))}
+                  {c.portalName}
+                  {c.state === "error" ? (
+                    <span
+                      aria-label="Problemă pe acest portal"
+                      className="absolute -top-0.5 -right-0.5 size-2 rounded-full bg-destructive"
+                    />
+                  ) : null}
+                </>
+              );
+              const chipClass =
+                "relative inline-flex items-center gap-1.5 rounded-full bg-muted px-2 py-0.5 text-[11px] text-muted-foreground";
+              return link.href ? (
+                <a
+                  key={c.portalId}
+                  href={link.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label={link.tooltip ?? undefined}
+                  title={link.tooltip ?? undefined}
+                  className={cn(chipClass, "hover:text-foreground hover:underline")}
+                >
+                  {chipBody}
+                </a>
+              ) : (
+                <span key={c.portalId} title={link.tooltip ?? c.portalName} className={chipClass}>
+                  {chipBody}
+                </span>
+              );
+            })}
           </div>
         ) : null}
       </div>
