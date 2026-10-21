@@ -25,8 +25,10 @@ import {
   IMOBILIARE_PROMOTIONS,
   imobiliareEnergyCeiling,
   imobiliarePromotion,
+  mergeImobiliarePromotionState,
   type ImobiliarePromotionKind,
   type ImobiliarePromotionSource,
+  type ImobiliarePromotionStateSource,
 } from "@/lib/portals/imobiliare/promotions";
 
 export type ImobiliarePromotionRow = {
@@ -43,6 +45,10 @@ export type ImobiliarePromotionRow = {
   available: number | null;
   /** Starea serviciului pe această ofertă; `null` = necunoscută. */
   value: boolean | number | null;
+  /** De unde provine starea afișată: portalul (anunț/lista slotului) sau salvarea locală. */
+  stateSource: ImobiliarePromotionStateSource | null;
+  /** Momentul salvării locale, când starea provine din baza de date. */
+  stateUpdatedAt: string | null;
   /** Limita superioară pentru serviciile numerice (Energy). */
   max: number | null;
   /** Eroarea specifică acestui serviciu, fără să blocheze celelalte. */
