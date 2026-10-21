@@ -306,7 +306,7 @@ export async function processDeletionJob(job: DeletionJob, deps: DeletionDeps): 
         if (!w.ok) {
           const attempts = (report.retries[property.id] ?? 0) + 1;
           report.retries[property.id] = attempts;
-          if (attempts < WITHDRAW_MAX_ATTEMPTS && isRetryablePortalBulkError(w.result)) {
+          if (attempts < WITHDRAW_MAX_ATTEMPTS && isRetryablePortalBulkError({ ...w.result, portalId: w.portal })) {
             const delay = RETRY_DELAYS_MS[Math.min(attempts - 1, RETRY_DELAYS_MS.length - 1)]!;
             await save({ next_attempt_at: new Date(now() + delay).toISOString() });
             return { status: "running", phase: "properties" };
