@@ -86,11 +86,18 @@ function session(overrides?: { refreshTo?: string | null }) {
 
 /** Admin fals: blocarea durabilă răspunde cu succes, fără bază de date reală. */
 const lockCalls: unknown[][] = [];
+const upserts: { table: string; row: Record<string, unknown>; conflict: unknown }[] = [];
 const fakeAdmin = {
   rpc: async (fn: string, args: unknown) => {
     lockCalls.push([fn, args]);
     return { data: true, error: null };
   },
+  from: (table: string) => ({
+    upsert: async (row: Record<string, unknown>, options: { onConflict?: unknown }) => {
+      upserts.push({ table, row, conflict: options?.onConflict });
+      return { data: null, error: null };
+    },
+  }),
 } as never;
 
 function ok(body: unknown) {
@@ -100,6 +107,7 @@ function ok(body: unknown) {
 beforeEach(() => {
   calls.length = 0;
   lockCalls.length = 0;
+  upserts.length = 0;
   responder = () => ok({ data: {} });
 });
 
