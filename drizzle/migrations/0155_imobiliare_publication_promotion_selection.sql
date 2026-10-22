@@ -1,0 +1,3 @@
+ALTER TABLE public.portal_publish_jobs ADD COLUMN IF NOT EXISTS imobiliare_promotions jsonb;
+ALTER TABLE public.portal_publish_jobs ADD CONSTRAINT portal_publish_jobs_imobiliare_promotions_object CHECK (imobiliare_promotions IS NULL OR (portal_key = 'imobiliare_ro' AND jsonb_typeof(imobiliare_promotions) = 'object'));
+COMMENT ON COLUMN public.portal_publish_jobs.imobiliare_promotions IS 'Explicit promotion changes selected on the property portal card, applied in the publication step after online. NULL leaves promotions unchanged.';
