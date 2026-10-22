@@ -1,348 +1,45 @@
-/**
- * PROMOVARE IMOBILIARE.RO — administrarea reală a serviciilor pe ofertă.
- *
- * Contoarele (folosite / total) vin LIVE de la portal la fiecare deschidere:
- * nu afișăm cifre din memorie ca fiind actuale. Serviciile fără locuri libere
- * nu pot fi activate, dar pot fi mereu dezactivate. „Puncte Energy” are câmp
- * numeric, nu bifă.
- */
-import { useMemo, useState } from "react";
-import { AlertTriangle, ChevronRight, Loader2, RefreshCw } from "lucide-react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useServerFn } from "@tanstack/react-start";
-
-import { toast } from "@/components/ui/sonner";
-import { Button } from "@/components/ui/button";
+/** Controlled promotion choices: only the parent publication action sends them. */
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
-import { cn } from "@/lib/utils";
-import { formatDateTime } from "@/lib/format";
-import {
-  getImobiliarePromotions,
-  getImobiliareSlotListings,
-  setImobiliarePromotion,
-  type ImobiliarePromotionRow,
-} from "@/lib/portals/imobiliare-promotions.functions";
+import { Button } from "@/components/ui/button";
+import { RefreshCw } from "lucide-react";
+import type { ImobiliarePromotionsView } from "@/lib/portals/imobiliare-promotions.functions";
+import { IMOBILIARE_CARD_PROMOTION_IDS, imobiliarePromotionControlBlocked, type ImobiliarePromotionChanges } from "@/lib/portals/imobiliare/card-promotions";
 
-function counter(row: ImobiliarePromotionRow): string {
-  if (row.total === null || row.used === null) return "—";
-  return `${row.used} / ${row.total}`;
-}
-
-export function PropertyImobiliarePromotionsCard({
-  propertyId,
-  organizationId,
-  canManage,
-}: {
-  propertyId: string;
-  organizationId?: string;
-  canManage: boolean;
+export function PropertyImobiliarePromotionsCard({ view, drafts, disabled, errors, onChange, onRefresh, loading, loadError }: {
+  view?: ImobiliarePromotionsView;
+  drafts: ImobiliarePromotionChanges;
+  disabled: boolean;
+  errors: Record<string, string>;
+  onChange: (id: string, value: boolean | number) => void;
+  onRefresh: () => void;
+  loading: boolean;
+  loadError?: string;
 }) {
-  const queryClient = useQueryClient();
-  const load = useServerFn(getImobiliarePromotions);
-  const save = useServerFn(setImobiliarePromotion);
-  const loadListings = useServerFn(getImobiliareSlotListings);
-  const queryKey = ["property-imobiliare-promotions", organizationId, propertyId] as const;
-
-  const view = useQuery({
-    queryKey,
-    queryFn: () => load({ data: { ...(organizationId ? { organizationId } : {}), propertyId } }),
-  });
-
-  const [pendingId, setPendingId] = useState<string | null>(null);
-  const [energyDraft, setEnergyDraft] = useState<Record<string, string>>({});
-  const [openSlot, setOpenSlot] = useState<string | null>(null);
-
-  const mutate = useMutation({
-    mutationFn: (input: { promotionId: string; value: boolean | number }) =>
-      save({
-        data: { ...(organizationId ? { organizationId } : {}), propertyId, ...input },
-      }),
-    onSuccess: (result) => {
-      if (result.ok) toast.success(result.message);
-      else toast.error(result.message);
-      void queryClient.invalidateQueries({ queryKey });
-    },
-    onError: (error: Error) => toast.error(error.message),
-    onSettled: () => setPendingId(null),
-  });
-
-  const listings = useQuery({
-    queryKey: ["property-imobiliare-slot-listings", organizationId, propertyId, openSlot] as const,
-    enabled: openSlot !== null,
-    queryFn: () =>
-      loadListings({
-        data: {
-          ...(organizationId ? { organizationId } : {}),
-          propertyId,
-          promotionId: openSlot as string,
-        },
-      }),
-  });
-
-  const rows = useMemo(() => view.data?.promotions ?? [], [view.data]);
-
-  if (view.isLoading) {
-    return (
-      <div className="mt-3 pl-9 text-xs text-muted-foreground">
-        <Loader2 className="mr-1.5 inline size-3 animate-spin" aria-hidden />
-        Se citesc locurile de promovare de la Imobiliare.ro…
-      </div>
-    );
-  }
-
-  if (view.isError) {
-    return (
-      <p className="mt-3 pl-9 text-xs text-destructive">
-        Locurile de promovare nu au putut fi citite: {(view.error as Error).message}
-      </p>
-    );
-  }
-
-  if (!view.data?.available) {
-    return (
-      <p className="mt-3 pl-9 text-xs text-muted-foreground">
-        {view.data?.message ??
-          "Promovarea Imobiliare.ro nu este disponibilă pentru această ofertă."}
-      </p>
-    );
-  }
-
-  return (
-    <div>
-      <header className="flex flex-wrap items-center justify-between gap-2">
-        <div>
-          <h2 className="text-lg font-semibold">Promovări Imobiliare.ro</h2>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Sunt afișate numai serviciile activate de agenție pentru acest cont.
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          <span className="text-xs text-muted-foreground">
-            {view.data.syncedAt
-              ? `Sincronizat ${formatDateTime(view.data.syncedAt)}`
-              : "Nesincronizat"}
-          </span>
-          <Button
-            type="button"
-            size="compact"
-            variant="secondary"
-            disabled={view.isFetching}
-            onClick={() => void view.refetch()}
-          >
-            <RefreshCw
-              className={cn("mr-1 size-3", view.isFetching && "animate-spin")}
-              aria-hidden
-            />
-            Sincronizează
-          </Button>
-        </div>
-      </header>
-
-      {view.data.listingError ? (
-        <p className="mt-2 flex items-start gap-1.5 text-xs text-warning-foreground">
-          <AlertTriangle className="mt-0.5 size-3 shrink-0" aria-hidden />
-          Starea serviciilor pentru acest anunț nu a putut fi citită: {view.data.listingError}
-        </p>
-      ) : view.data.stateUnreported ? (
-        <p className="mt-2 text-xs text-muted-foreground">
-          Starea pe acest anunț nu a fost raportată de portal.
-        </p>
-      ) : null}
-
-      {rows.length === 0 ? (
-        <p className="mt-2 text-xs text-muted-foreground">
-          Agenția nu folosește niciun serviciu de promovare Imobiliare.ro.
-        </p>
-      ) : null}
-
-      <ul className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-        {rows.map((row) => {
-          const active = row.value === true || (typeof row.value === "number" && row.value > 0);
-          const noSlots = row.available !== null && row.available <= 0;
-          // Eroarea de inventar NU blochează dezactivarea; la stare necunoscută
-          // controalele rămân disponibile (oprirea este mereu permisă).
-          const blocked =
-            !row.manageable || (!active && noSlots && row.value !== null);
-          const busy = pendingId === row.id && mutate.isPending;
-          const draft = energyDraft[row.id];
-          const energyValue =
-            draft !== undefined ? draft : typeof row.value === "number" ? String(row.value) : "";
-
-          return (
-            <li key={row.id} className="rounded-card border border-border bg-muted p-4">
-              <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
-                {row.kind === "numeric" ? (
-                  <div className="flex items-center gap-2">
-                    <Input
-                      type="number"
-                      min={0}
-                      {...(row.max !== null ? { max: row.max } : {})}
-                      value={energyValue}
-                      disabled={!canManage || !row.manageable || busy}
-                      aria-label={`${row.label} pentru acest anunț`}
-                      className="w-24"
-                      onChange={(event) =>
-                        setEnergyDraft((current) => ({ ...current, [row.id]: event.target.value }))
-                      }
-                    />
-                    <Button
-                      type="button"
-                      size="compact"
-                      variant="secondary"
-                      disabled={
-                        !canManage ||
-                        !row.manageable ||
-                        busy ||
-                        energyValue === "" ||
-                        Number(energyValue) === (typeof row.value === "number" ? row.value : -1)
-                      }
-                      onClick={() => {
-                        setPendingId(row.id);
-                        mutate.mutate({
-                          promotionId: row.id,
-                          value: Math.max(Math.trunc(Number(energyValue) || 0), 0),
-                        });
-                      }}
-                    >
-                      Trimite
-                    </Button>
-                  </div>
-                ) : (
-                  <>
-                    <Checkbox
-                      checked={active}
-                      disabled={!canManage || busy || blocked}
-                      aria-label={`${row.label} pentru acest anunț`}
-                      onCheckedChange={(checked) => {
-                        setPendingId(row.id);
-                        mutate.mutate({ promotionId: row.id, value: checked === true });
-                      }}
-                    />
-                    {row.value === null && row.manageable ? (
-                      <Button
-                        type="button"
-                        size="compact"
-                        variant="secondary"
-                        disabled={!canManage || busy}
-                        onClick={() => {
-                          setPendingId(row.id);
-                          mutate.mutate({ promotionId: row.id, value: false });
-                        }}
-                      >
-                        Oprește
-                      </Button>
-                    ) : null}
-                  </>
-                )}
-
-                <span className="text-sm font-semibold">{row.label}</span>
-
-                {row.slotType ? (
-                  <button
-                    type="button"
-                    className="inline-flex items-center gap-0.5 text-xs text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
-                    onClick={() => setOpenSlot((current) => (current === row.id ? null : row.id))}
-                    aria-expanded={openSlot === row.id}
-                  >
-                    {counter(row)}
-                    <ChevronRight
-                      className={cn(
-                        "size-3 transition-transform",
-                        openSlot === row.id && "rotate-90",
-                      )}
-                      aria-hidden
-                    />
-                  </button>
-                ) : (
-                  <span className="text-xs text-muted-foreground">fără contor</span>
-                )}
-
-                {row.available !== null ? (
-                  <span className="text-xs text-muted-foreground">
-                    {row.available > 0 ? `disponibile ${row.available}` : "fără locuri libere"}
-                  </span>
-                ) : null}
-
-                <span className="basis-full text-xs text-muted-foreground">
-                  {row.remaining !== null
-                    ? `Alocarea ta: ${row.remaining} rămase${row.allocated !== null ? ` din ${row.allocated}` : ""}`
-                    : row.allocated !== null
-                      ? `Alocarea ta: ${row.allocated}`
-                      : "Alocarea ta: nelimitat în limita agenției"}
-                </span>
-
-                {busy ? <Loader2 className="size-3 animate-spin" aria-hidden /> : null}
-              </div>
-
-              {row.stateSource === "local" ? (
-                <p className="mt-1 text-xs text-muted-foreground">
-                  Ultima stare cunoscută
-                  {row.stateUpdatedAt ? ` (${formatDateTime(row.stateUpdatedAt)})` : ""} — portalul
-                  nu raportează starea pe acest anunț.
-                </p>
-              ) : null}
-
-              {row.error ? (
-                <p className="mt-1 text-xs text-destructive">{row.error}</p>
-              ) : !row.manageable ? (
-                <p className="mt-1 text-xs text-muted-foreground">
-                  {row.note ?? "Serviciu informativ: nu poate fi comandat din CRM."}
-                </p>
-              ) : !active && noSlots && row.value !== null ? (
-                <p className="mt-1 text-xs text-muted-foreground">
-                  Toate locurile sunt ocupate — eliberează unul de la alt anunț sau cumpără locuri
-                  suplimentare la Imobiliare.ro.
-                </p>
-              ) : active && noSlots ? (
-                <p className="mt-1 text-xs text-muted-foreground">
-                  Activ pe acest anunț; locurile sunt epuizate, dar dezactivarea rămâne posibilă.
-                </p>
-              ) : row.value === null && row.manageable && !view.data.stateUnreported ? (
-                <p className="mt-1 text-xs text-muted-foreground">
-                  Starea pe acest anunț nu a fost raportată de portal.
-                </p>
-              ) : null}
-
-              {openSlot === row.id ? (
-                <div className="mt-3 rounded-control border border-border bg-surface p-3">
-                  {listings.isFetching ? (
-                    <p className="text-xs text-muted-foreground">
-                      <Loader2 className="mr-1.5 inline size-3 animate-spin" aria-hidden />
-                      Se citesc anunțurile care folosesc locurile…
-                    </p>
-                  ) : listings.data?.ok === false ? (
-                    <p className="text-xs text-destructive">{listings.data.message}</p>
-                  ) : (listings.data?.listings.length ?? 0) === 0 ? (
-                    <p className="text-xs text-muted-foreground">
-                      Niciun anunț nu folosește acest serviciu.
-                    </p>
-                  ) : (
-                    <ul className="space-y-1">
-                      {listings.data?.listings.map((listing) => (
-                        <li
-                          key={`${listing.reference ?? ""}-${listing.listingId ?? ""}`}
-                          className="text-xs"
-                        >
-                          <span className={cn(listing.isCurrent && "font-medium text-primary")}>
-                            {listing.title ?? listing.reference ?? listing.listingId}
-                          </span>
-                          {listing.reference ? (
-                            <span className="text-muted-foreground"> · {listing.reference}</span>
-                          ) : null}
-                          {listing.isCurrent ? (
-                            <span className="text-muted-foreground"> · acest anunț</span>
-                          ) : null}
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                </div>
-              ) : null}
-            </li>
-          );
-        })}
-      </ul>
+  if (loading && !view) return <p className="text-xs text-muted-foreground">Se citesc locurile de promovare…</p>;
+  if (loadError) return <p className="text-xs text-destructive">{loadError}</p>;
+  if (!view?.available) return <p className="text-xs text-muted-foreground">{view?.message}</p>;
+  const rows = IMOBILIARE_CARD_PROMOTION_IDS.flatMap((id) => view.promotions.filter((row) => row.id === id));
+  return <div className="relative z-10 mt-3 border-t border-border pt-3" aria-label="Promovări Imobiliare.ro">
+    <div className="mb-2 flex items-center justify-between gap-2">
+      <span className="text-xs font-semibold">Promovări</span>
+      <Button type="button" variant="ghost" size="icon" className="size-8" title="Actualizează locurile libere" aria-label="Actualizează locurile libere" disabled={loading} onClick={onRefresh}><RefreshCw className="size-3.5" /></Button>
     </div>
-  );
+    <ul className="space-y-2">{rows.map((row) => {
+      const wanted = drafts[row.id] ?? row.value;
+      const active = row.value === true || (typeof row.value === "number" && row.value > 0);
+      const blocked = imobiliarePromotionControlBlocked(row);
+      const error = errors[row.id] ?? row.error;
+      return <li key={row.id} className="min-w-0">
+        <div className="flex min-h-11 flex-wrap items-center gap-2">
+          {row.kind === "numeric" ? <Input type="number" min={0} max={row.max ?? undefined} value={typeof wanted === "number" ? wanted : 0} className="h-9 w-20 text-base" aria-label={`${row.label} pentru acest anunț`} disabled={disabled || blocked} onChange={(event) => onChange(row.id, Math.max(0, Math.trunc(Number(event.target.value) || 0)))} /> : <Checkbox id={`imobiliare-promotion-${row.id}`} checked={wanted === true} disabled={disabled || blocked} aria-label={`${row.label} pentru acest anunț`} onCheckedChange={(checked) => onChange(row.id, checked === true)} />}
+          <label htmlFor={row.kind === "boolean" ? `imobiliare-promotion-${row.id}` : undefined} className="min-w-0 flex-1 text-xs font-medium">{row.label}</label>
+          <span className="text-xs text-muted-foreground">{row.slotType ? `${row.available ?? "—"}/${row.total ?? "—"} libere` : "Fără limită"}</span>
+        </div>
+        <p className="text-xs text-muted-foreground">{active ? "Activă" : row.value === null ? "Stare necunoscută" : "Inactivă"}{row.remaining !== null ? ` · Alocare: ${row.remaining} rămase` : ""}{row.agencyRemaining != null ? ` · Plafon: ${row.agencyRemaining} rămase` : ""}</p>
+        {row.value === null && row.manageable ? <Button type="button" variant="link" size="compact" disabled={disabled} onClick={() => onChange(row.id, row.kind === "numeric" ? 0 : false)}>Oprește</Button> : null}
+        {error ? <p role="alert" className="mt-1 break-words text-xs text-destructive">{error}</p> : blocked ? <p className="mt-1 text-xs text-muted-foreground">Nu sunt locuri disponibile pentru activare.</p> : null}
+      </li>;
+    })}</ul>
+  </div>;
 }
