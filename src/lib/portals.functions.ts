@@ -1657,7 +1657,7 @@ export async function executeListingAction(input: {
   }
 
   let promotionErrors: { promotionId: string; message: string }[] = [];
-  if (definition.id === "imobiliare_ro" && action !== "withdraw" && result.ok && status === "published" && input.imobiliarePromotions) {
+  if (definition.id === "imobiliare_ro" && action !== "withdraw" && result.ok && (status === "published" || status === "updated") && input.imobiliarePromotions) {
     const { applyImobiliareCardPromotions } = await import("@/lib/portals/imobiliare/card-promotions.server");
     try {
       promotionErrors = await applyImobiliareCardPromotions({ organizationId, propertyId, actorId, changes: input.imobiliarePromotions });

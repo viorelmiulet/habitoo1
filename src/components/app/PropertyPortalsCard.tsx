@@ -448,6 +448,7 @@ export const PropertyPortalsCard = forwardRef<
    */
   const enqueuePortals = useCallback(
     async (targets: PropertyPortalCell[]): Promise<number> => {
+      if (targets.some((cell) => cell.portalId === "imobiliare_ro" && (checked[cell.portalId] ?? cell.selected)) && (!imobiliareView.data || !imoradarPreference.data)) throw new Error("Așteaptă citirea locurilor de promovare Imobiliare.ro și încearcă din nou.");
       const selections = targets
         // Portalurile programate nu se publică acum (doar prin „Publică acum”).
         .filter((c) => c.availability === "available" && !activePortals.has(c.portalId) && !scheduleByPortal.has(c.portalId))
@@ -1052,7 +1053,7 @@ export const PropertyPortalsCard = forwardRef<
                               data: {
                                 ...(organizationId ? { organizationId } : {}),
                                 propertyId,
-                                selections: [{ portalId: cell.portalId, enabled: true, ...(cell.promotionFlag ? { promoted: promotedValue(cell) } : {}) }],
+                                selections: [{ portalId: cell.portalId, enabled: true, ...(cell.promotionFlag ? { promoted: promotedValue(cell) } : {}), ...(cell.portalId === "imobiliare_ro" ? { imobiliarePromotions: imobiliareChanges } : {}) }],
                                 syncExisting: true,
                               },
                             });
