@@ -45,6 +45,7 @@ export type ReassignPorts = {
     values: Record<string, unknown>;
   }) => Promise<void>;
   portalName: (key: string) => string;
+  enqueueContactUpdates: (organizationId: string, propertyIds: string[], superadmin: boolean) => Promise<void>;
 };
 
 export type ReassignResult = {
@@ -52,6 +53,7 @@ export type ReassignResult = {
   skipped: number;
   blocked: { id: string; reference: string | null; message: string }[];
   phoneWarning: string | null;
+  syncWarning?: string | null;
 };
 
 export async function requireReassignAdmin(
@@ -84,7 +86,8 @@ export async function reassignPropertiesCore(
   }
   const orgIds = [...new Set(live.map((p) => p.organization_id))];
   if (orgIds.length !== 1) throw new Error("Toate anunțurile trebuie să aparțină aceleiași agenții.");
-  const organizationId = orgIds[0]!;
+  const organizationId = orgIds[0];
+  if (!organizationId) throw new Error("Agenția nu este configurată.");
   if (!superadmin && !adminOrgs.includes(organizationId)) {
     throw new Error("Unele anunțuri nu există, au fost șterse sau aparțin altei agenții.");
   }
@@ -111,7 +114,7 @@ export async function reassignPropertiesCore(
     if (error) {
       const message =
         humanizeSlotGuardError(error, ports.portalName) ??
-        (error.includes("Doar managerul") ? REASSIGN_ADMIN_ONLY : "Anunțul nu a putut fi mutat.");
+        (error.includes("Doar managerul") ? REASSIGN_ADMIN_ONLY : error);
       result.blocked.push({ id: p.id, reference: p.reference, message });
       continue;
     }
@@ -128,7 +131,7 @@ export async function reassignPropertiesCore(
     await ports.audit({
       organizationId,
       action: "property.reassigned",
-      entityId: movedRows.length === 1 ? movedRows[0]!.id : null,
+      entityId: movedRows.length === 1 ? (movedRows[0]?.id ?? null) : null,
       values: {
         to_user_id: target.id,
         to_user_name: target.full_name ?? target.email,
@@ -137,6 +140,13 @@ export async function reassignPropertiesCore(
         blocked: result.blocked,
       },
     });
+  }
+  if (movedRows.length > 0) {
+    try {
+      await ports.enqueueContactUpdates(organizationId, movedRows.map(row => row.id), superadmin);
+    } catch (error) {
+      result.syncWarning = `Agentul a fost schimbat, dar actualizarea portalurilor nu a putut fi pornită: ${error instanceof Error ? error.message : "eroare necunoscută"}`;
+    }
   }
   return result;
 }

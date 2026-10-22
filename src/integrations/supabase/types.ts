@@ -5791,6 +5791,7 @@ export type Database = {
       portal_publish_jobs: {
         Row: {
           attempts: number
+          contact_update_requested_by: string | null
           created_at: string
           enabled: boolean
           finished_at: string | null
@@ -5814,6 +5815,7 @@ export type Database = {
         }
         Insert: {
           attempts?: number
+          contact_update_requested_by?: string | null
           created_at?: string
           enabled: boolean
           finished_at?: string | null
@@ -5837,6 +5839,7 @@ export type Database = {
         }
         Update: {
           attempts?: number
+          contact_update_requested_by?: string | null
           created_at?: string
           enabled?: boolean
           finished_at?: string | null
@@ -9097,6 +9100,7 @@ export type Database = {
         Args: { _lease_seconds: number; _limit: number }
         Returns: {
           attempts: number
+          contact_update_requested_by: string | null
           created_at: string
           enabled: boolean
           finished_at: string | null
@@ -9285,6 +9289,17 @@ export type Database = {
         Returns: number
       }
       email_threads_trash: { Args: { _thread_ids: string[] }; Returns: number }
+      enqueue_portal_contact_update: {
+        Args: {
+          _actor: string
+          _next: string
+          _org: string
+          _portal: string
+          _property: string
+          _superadmin: boolean
+        }
+        Returns: undefined
+      }
       ensure_superadmin_profile: { Args: { _user: string }; Returns: undefined }
       has_role: {
         Args: {

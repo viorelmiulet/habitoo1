@@ -1093,6 +1093,20 @@
       "when": 1792647667951,
       "tag": "0155_imobiliare_publication_promotion_selection",
       "breakpoints": true
+    },
+    {
+      "idx": 156,
+      "version": "7",
+      "when": 1792648359135,
+      "tag": "0156_property_contact_updates",
+      "breakpoints": true
+    },
+    {
+      "idx": 157,
+      "version": "7",
+      "when": 1792648549427,
+      "tag": "0157_contact_update_cron_backstop",
+      "breakpoints": true
     }
   ]
 }

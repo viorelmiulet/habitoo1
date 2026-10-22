@@ -30,6 +30,10 @@ export const Route = createFileRoute("/api/public/cron/portal-publish")({
         const { applyPortalSelectionForOrg, executeListingAction } = await import("@/lib/portals.functions");
         const { runRepublishJob, refreshRepublishBatches } = await import("@/lib/portals/republish.server");
         const result = await runPortalPublishWorker(supabaseAdmin, async (job) => {
+          if (job.operation === "update") {
+            const { runContactUpdateJob } = await import("@/lib/portals/contact-update.server");
+            return runContactUpdateJob(supabaseAdmin, job, input => executeListingAction(input));
+          }
           // Republicare: doar retrimiterea anunțului existent, niciodată publish/withdraw.
           if (job.operation === "republish") {
             return runRepublishJob(supabaseAdmin, job, (input) => executeListingAction(input));
