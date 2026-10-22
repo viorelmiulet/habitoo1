@@ -10,6 +10,7 @@ export const AI_FEATURE_KEYS = [
   "ai_marketing",
   "ai_assistant",
   "ai_media",
+  "ai_video_voice",
   "acp_ai",
 ] as const;
 
@@ -42,6 +43,11 @@ export const AI_FEATURES: { key: AiFeatureKey; label: string; description: strin
     key: "ai_media",
     label: "Studio AI",
     description: "Îmbunătățirea fotografiilor, video din poză și imagini de marketing.",
+  },
+  {
+    key: "ai_video_voice",
+    label: "Voce AI în video",
+    description: "Narațiune în română pentru videoclipurile proprietăților.",
   },
   {
     key: "acp_ai",

@@ -11,6 +11,7 @@
  */
 
 const REPLICATE_BASE = "https://connector-gateway.lovable.dev/replicate/v1";
+import { buildSpeechInput, NARRATION_MODEL, type NarrationVoice } from "@/lib/video-narration";
 
 export const REPLICATE_KEY_MISSING =
   "Conexiunea Replicate nu este configurată. Leagă contul Replicate din setările de conectori.";
@@ -155,4 +156,9 @@ export async function startAiMediaPrediction(input: {
 
 export async function readAiMediaPrediction(id: string): Promise<ReplicatePrediction> {
   return toPrediction(await replicateFetch(`/predictions/${encodeURIComponent(id)}`));
+}
+
+/** Shares Studio AI's credentials, error messages and prediction protocol. */
+export async function startNarrationPrediction(text: string, voice: NarrationVoice): Promise<ReplicatePrediction> {
+  return toPrediction(await replicateFetch(`/models/${NARRATION_MODEL}/predictions`, { method: "POST", body: { input: buildSpeechInput(text, voice) } }));
 }

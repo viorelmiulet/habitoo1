@@ -8811,6 +8811,82 @@ export type Database = {
         }
         Relationships: []
       }
+      video_narrations: {
+        Row: {
+          created_at: string
+          created_by: string
+          duration_sec: number
+          error: string | null
+          id: string
+          model: string
+          organization_id: string
+          prediction_id: string | null
+          property_id: string
+          request_key: string
+          status: string
+          storage_path: string | null
+          text: string
+          usage_event_id: string | null
+          voice: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          duration_sec: number
+          error?: string | null
+          id?: string
+          model: string
+          organization_id: string
+          prediction_id?: string | null
+          property_id: string
+          request_key: string
+          status?: string
+          storage_path?: string | null
+          text: string
+          usage_event_id?: string | null
+          voice: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          duration_sec?: number
+          error?: string | null
+          id?: string
+          model?: string
+          organization_id?: string
+          prediction_id?: string | null
+          property_id?: string
+          request_key?: string
+          status?: string
+          storage_path?: string | null
+          text?: string
+          usage_event_id?: string | null
+          voice?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "video_narrations_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "video_narrations_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "video_narrations_usage_event_id_fkey"
+            columns: ["usage_event_id"]
+            isOneToOne: false
+            referencedRelation: "ai_usage_events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       youtube_connections: {
         Row: {
           channel_id: string | null
@@ -9534,6 +9610,19 @@ export type Database = {
       release_promotion_withdraw_job: {
         Args: { _job_id: string }
         Returns: undefined
+      }
+      reserve_video_narration: {
+        Args: {
+          p_duration: number
+          p_key: string
+          p_model: string
+          p_org: string
+          p_property: string
+          p_text: string
+          p_user: string
+          p_voice: string
+        }
+        Returns: string
       }
       resolve_subscription_request: {
         Args: {
