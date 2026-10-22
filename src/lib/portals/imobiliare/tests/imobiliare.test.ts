@@ -229,6 +229,46 @@ describe("category_api", () => {
     expect(categoryApiFor(catalog, "apartment", "rent")).toBe(202);
     expect(categoryApiFor(catalog, "house", "sale")).toBe(120);
   });
+
+  // Catalogul real al conexiunii (portal_connections.settings.imobiliare_categories).
+  const REAL_CATALOG = {
+    categories: parseCategories({
+      "102": { offer_type: "sell", name: "Apartament de vanzare" },
+      "103": { offer_type: "sell", name: "Garsoniera de vanzare" },
+      "104": { offer_type: "sell", name: "Penthhouse de vanzare" },
+      "106": { offer_type: "sell", name: "Casa de vanzare" },
+      "202": { offer_type: "rent", name: "Apartament de inchiriat" },
+      "203": { offer_type: "rent", name: "Garsoniera de inchiriat" },
+      "206": { offer_type: "rent", name: "Casa de inchiriat" },
+    }),
+    fetchedAt: null,
+    error: null,
+  };
+
+  it("garsoniera alege categoria de garsonieră, nu apartamentul (HB-1166)", () => {
+    expect(categoryApiFor(REAL_CATALOG, "studio", "rent")).toBe(203);
+    expect(categoryApiFor(REAL_CATALOG, "studio", "sale")).toBe(103);
+    expect(categoryApiFor(REAL_CATALOG, "garsoniera", "rent")).toBe(203);
+    expect(categoryApiFor(REAL_CATALOG, "garsoniera", "sale")).toBe(103);
+  });
+
+  it("apartamentul rămâne pe categoriile de apartament", () => {
+    expect(categoryApiFor(REAL_CATALOG, "apartment", "rent")).toBe(202);
+    expect(categoryApiFor(REAL_CATALOG, "apartment", "sale")).toBe(102);
+  });
+
+  it("garsoniera cade pe apartament când catalogul nu are categorie de garsonieră", () => {
+    const withoutStudio = {
+      categories: parseCategories({
+        "102": { offer_type: "sell", name: "Apartament de vanzare" },
+        "202": { offer_type: "rent", name: "Apartament de inchiriat" },
+      }),
+      fetchedAt: null,
+      error: null,
+    };
+    expect(categoryApiFor(withoutStudio, "studio", "rent")).toBe(202);
+    expect(categoryApiFor(withoutStudio, "studio", "sale")).toBe(102);
+  });
 });
 
 /* --------------------------------- agenți --------------------------------- */
