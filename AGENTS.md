@@ -31,3 +31,4 @@
 - No global `entities` aliases or version overrides. Why: consumers require different majors and package exports.
 - Integrations overview has a separate registry-derived presentation module. Why: no duplicates or false claims, unchanged detail pages.
 - Property-list portal and promotion selections share PortalFilterSelect while retaining independent URL fields and existing server filters. Why: unified presentation without changing OR semantics, access controls or legacy links.
+- Imobiliare.ro property-card promotion drafts are controlled by the publication selection and applied through the durable publication queue, never on checkbox clicks. Why: promotions must follow successful online and only explicit differences may consume slots.

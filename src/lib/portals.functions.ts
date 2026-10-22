@@ -1,3 +1,4 @@
+import { imobiliarePromotionChangesSchema, type ImobiliarePromotionChanges } from "@/lib/portals/imobiliare/card-promotions";
 import { visibleOlxLinks } from "@/lib/portals/storia/vas";
 import { portalCanPublish, publishUnavailableMessage } from "@/lib/portals/registry";
 import { mergePortalOffers, parsePortalOffers } from "@/lib/portals/imobiliare/offer-links";
@@ -1160,6 +1161,7 @@ export type ListingActionResult =
       externalId: string | null;
       feedVisible: boolean | null;
       processed: number | null;
+      promotionErrors?: { promotionId: string; message: string }[];
       message: string | null;
     }
   | {
@@ -1252,6 +1254,7 @@ export async function executeListingAction(input: {
    * păstrează valoarea salvată, ca orice altă actualizare să nu o schimbe.
    */
   promoted?: boolean;
+  imobiliarePromotions?: ImobiliarePromotionChanges;
 }): Promise<ListingActionResult> {
   const { organizationId, actorId, portalId, propertyId, action } = input;
   const startedAt = Date.now();
@@ -1653,8 +1656,19 @@ export async function executeListingAction(input: {
     });
   }
 
+  let promotionErrors: { promotionId: string; message: string }[] = [];
+  if (definition.id === "imobiliare_ro" && action !== "withdraw" && result.ok && (status === "published" || status === "updated") && input.imobiliarePromotions) {
+    const { applyImobiliareCardPromotions } = await import("@/lib/portals/imobiliare/card-promotions.server");
+    try {
+      promotionErrors = await applyImobiliareCardPromotions({ organizationId, propertyId, actorId, changes: input.imobiliarePromotions });
+    } catch (error) {
+      promotionErrors = Object.keys(input.imobiliarePromotions).map((promotionId) => ({ promotionId, message: error instanceof Error ? error.message : "Promovarea nu a fost confirmată de portal." }));
+      for (const promotionError of promotionErrors) await logOperation({ organizationId, propertyId, actorId, portal: definition.id, operation: `promotion:${promotionError.promotionId}:error`, success: false, errorCode: "PORTAL_ERROR", errorMessage: promotionError.message, durationMs: elapsed() }).catch(() => undefined);
+    }
+  }
+
   // imoradar24: doar după o PUBLICARE reușită pe Imobiliare.ro, doar acest serviciu.
-  if (definition.id === "imobiliare_ro" && action === "publish" && result.ok && status !== "error") {
+  if (definition.id === "imobiliare_ro" && action === "publish" && result.ok && status !== "error" && input.imobiliarePromotions?.promote_imoradar === undefined) {
     const { autoImoradarAfterListingAction } = await import(
       "@/lib/portals/imobiliare/imoradar-auto.server"
     );
@@ -1672,6 +1686,7 @@ export async function executeListingAction(input: {
         externalId: result.data.externalId,
         feedVisible: result.data.feedVisible ?? null,
         processed: result.data.processed ?? null,
+        promotionErrors,
         message: result.data.message ?? null,
       }
     : {
@@ -2843,6 +2858,7 @@ const applySelectionSchema = z.object({
         enabled: z.boolean(),
         /** Doar portalurile cu promovare prin flag (ex. Romimo); lipsă = neschimbat. */
         promoted: z.boolean().optional(),
+        imobiliarePromotions: imobiliarePromotionChangesSchema.optional(),
       }),
     )
     .max(40),
@@ -3203,7 +3219,8 @@ export async function applyPortalSelectionForOrg(input: {
         });
         const promoOp = plan.operation;
 
-        if (previous && published && !data.syncExisting && !promoOp) {
+        const hasImobiliareChanges = definition.id === "imobiliare_ro" && Object.keys(wanted.imobiliarePromotions ?? {}).length > 0;
+        if (previous && published && !data.syncExisting && !promoOp && !hasImobiliareChanges) {
           results.push({
             portalId: definition.id,
             portalName: name,
@@ -3224,6 +3241,7 @@ export async function applyPortalSelectionForOrg(input: {
           propertyId: data.propertyId,
           action,
           ...(promotionFlag ? { promoted: plan.promoted } : {}),
+          ...(definition.id === "imobiliare_ro" && wanted.imobiliarePromotions ? { imobiliarePromotions: wanted.imobiliarePromotions } : {}),
           ...(promotionOnly && promoOp ? { operationLabel: promoOp } : {}),
         });
         results.push({
@@ -3232,7 +3250,7 @@ export async function applyPortalSelectionForOrg(input: {
           action: res.ok ? (action === "update" ? "updated" : "published") : "blocked",
           ok: res.ok,
           message: res.ok
-            ? `${name}: ${action === "update" ? "actualizat" : "publicat"}.`
+            ? `${name}: ${action === "update" ? "actualizat" : "publicat"}.${res.promotionErrors?.length ? " " + res.promotionErrors.map((error) => error.message).join("; ") : ""}`
             : withPortalPrefixOnce([name, definition.display_name], res.message),
           ...(!res.ok ? { code: res.code, httpStatus: res.httpStatus ?? null } : {}),
         });

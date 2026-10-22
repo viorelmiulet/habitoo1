@@ -31,7 +31,9 @@ import { useMutation, useQueries, useQuery, useQueryClient } from "@tanstack/rea
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "@/components/ui/sonner";
 import { Checkbox } from "@/components/ui/checkbox";
-import { ImoradarListingToggle } from "@/components/app/ImoradarListingToggle";
+import { getImoradarPreference } from "@/lib/portals/imoradar.functions";
+import { getImobiliarePromotions } from "@/lib/portals/imobiliare-promotions.functions";
+import { imobiliarePromotionChanges, type ImobiliarePromotionChanges } from "@/lib/portals/imobiliare/card-promotions";
 import { Button } from "@/components/ui/button";
 import { Card, Panel } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -331,6 +333,27 @@ export const PropertyPortalsCard = forwardRef<
     c.promotionFlag &&
     effectivePromoted(checked[c.portalId] ?? c.selected, promotedChecked[c.portalId] ?? c.promoted);
 
+  const loadImobiliarePromotions = useServerFn(getImobiliarePromotions);
+  const loadImoradarPreference = useServerFn(getImoradarPreference);
+  const imobiliareCell = cells.find((cell) => cell.portalId === "imobiliare_ro");
+  const imobiliareSelected = Boolean(imobiliareCell && (checked.imobiliare_ro ?? imobiliareCell.selected));
+  const imobiliarePublished = imobiliareCell?.state === "published";
+  const promotionQueryKey = ["property-imobiliare-promotions", organizationId, propertyId] as const;
+  const imobiliareView = useQuery({ queryKey: promotionQueryKey, queryFn: () => loadImobiliarePromotions({ data: { propertyId, ...(organizationId ? { organizationId } : {}) } }), enabled: imobiliareSelected });
+  const imoradarPreference = useQuery({ queryKey: ["imoradar-preference", propertyId, organizationId ?? null], queryFn: () => loadImoradarPreference({ data: { propertyId, ...(organizationId ? { organizationId } : {}) } }), enabled: imobiliareSelected });
+  const [imobiliareDrafts, setImobiliareDrafts] = useState<ImobiliarePromotionChanges>({});
+  useEffect(() => { setImobiliareDrafts({}); }, [propertyId]);
+  const effectiveImobiliareDrafts = { ...(!imobiliarePublished ? { promote_imoradar: imoradarPreference.data?.checked === true && !imoradarPreference.data.manuallyStopped } : {}), ...imobiliareDrafts };
+  const imobiliareChanges = imobiliarePromotionChanges(imobiliareView.data?.promotions ?? [], effectiveImobiliareDrafts, imobiliarePublished);
+  // Even if the inventory is still loading, preserve the explicit imoradar choice.
+  if (!imobiliarePublished && imoradarPreference.data) imobiliareChanges.promote_imoradar = effectiveImobiliareDrafts.promote_imoradar ?? false;
+  const promotionErrors: Record<string, string> = {};
+  for (const entry of journal.data ?? []) {
+    if (entry.portal !== "imobiliare_ro" || !entry.operation.startsWith("promotion:")) continue;
+    const id = entry.operation.split(":")[1];
+    if (id && !(id in promotionErrors)) promotionErrors[id] = entry.success ? "" : entry.errorMessage ?? "Promovarea nu a fost confirmată.";
+  }
+
   const dirty = cells.filter(
     (c) =>
       (checked[c.portalId] ?? c.selected) !== c.selected ||
@@ -400,11 +423,14 @@ export const PropertyPortalsCard = forwardRef<
       if (!watchedJobs.current.has(job.id)) continue;
       watchedJobs.current.delete(job.id);
       finished = true;
+      if (job.portalId === "imobiliare_ro") setImobiliareDrafts({});
       const name = cells.find((c) => c.portalId === job.portalId)?.portalName ?? job.portalId;
       if (job.ok) toast.success(`${name}: ${job.action === "withdrawn" ? "retras" : "publicat"}`);
       else toast.error(job.message ? `${name}: ${job.message}` : `${name}: publicarea a eșuat.`);
     }
     if (finished) {
+      void queryClient.invalidateQueries({ queryKey: ["property-imobiliare-promotions", organizationId, propertyId] });
+      void queryClient.invalidateQueries({ queryKey: ["imoradar-preference", propertyId, organizationId ?? null] });
       void queryClient.invalidateQueries({
         queryKey: ["property-portals-selection", organizationId, propertyId],
       });
@@ -422,6 +448,7 @@ export const PropertyPortalsCard = forwardRef<
    */
   const enqueuePortals = useCallback(
     async (targets: PropertyPortalCell[]): Promise<number> => {
+      if (targets.some((cell) => cell.portalId === "imobiliare_ro" && (checked[cell.portalId] ?? cell.selected)) && (!imobiliareView.data || !imoradarPreference.data)) throw new Error("Așteaptă citirea locurilor de promovare Imobiliare.ro și încearcă din nou.");
       const selections = targets
         // Portalurile programate nu se publică acum (doar prin „Publică acum”).
         .filter((c) => c.availability === "available" && !activePortals.has(c.portalId) && !scheduleByPortal.has(c.portalId))
@@ -429,6 +456,7 @@ export const PropertyPortalsCard = forwardRef<
           portalId: c.portalId,
           enabled: checked[c.portalId] ?? c.selected,
           ...(c.promotionFlag ? { promoted: promotedValue(c) } : {}),
+          ...(c.portalId === "imobiliare_ro" && (checked[c.portalId] ?? c.selected) ? { imobiliarePromotions: imobiliareChanges } : {}),
         }));
       if (selections.length === 0) return 0;
       const out = await enqueueFn({
@@ -444,7 +472,7 @@ export const PropertyPortalsCard = forwardRef<
       return out.results.filter((r) => r.queued).length;
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [checked, promotedChecked, propertyId, organizationId, enqueueFn, queryClient, activePortals, scheduleByPortal],
+    [checked, promotedChecked, imobiliareChanges, propertyId, organizationId, enqueueFn, queryClient, activePortals, scheduleByPortal],
   );
 
   const applyPending = useCallback(async () => {
@@ -1025,7 +1053,7 @@ export const PropertyPortalsCard = forwardRef<
                               data: {
                                 ...(organizationId ? { organizationId } : {}),
                                 propertyId,
-                                selections: [{ portalId: cell.portalId, enabled: true, ...(cell.promotionFlag ? { promoted: promotedValue(cell) } : {}) }],
+                                selections: [{ portalId: cell.portalId, enabled: true, ...(cell.promotionFlag ? { promoted: promotedValue(cell) } : {}), ...(cell.portalId === "imobiliare_ro" ? { imobiliarePromotions: imobiliareChanges } : {}) }],
                                 syncExisting: true,
                               },
                             });
@@ -1058,15 +1086,11 @@ export const PropertyPortalsCard = forwardRef<
                             Promovat
                           </label>
                         ) : null}
-                        {cell.portalId === "imobiliare_ro" && value ? (
-                          <ImoradarListingToggle
-                            propertyId={propertyId}
-                            organizationId={organizationId}
-                            disabled={disabled}
-                          />
-                        ) : null}
+
                       </div>
                     </div>
+
+                    {cell.portalId === "imobiliare_ro" && value ? <PropertyImobiliarePromotionsCard view={imobiliareView.data} drafts={effectiveImobiliareDrafts} disabled={!editing || !canManage || busy} errors={promotionErrors} onChange={(id, next) => setImobiliareDrafts((draft) => ({ ...draft, [id]: next }))} onRefresh={() => void imobiliareView.refetch()} loading={imobiliareView.isFetching} loadError={imobiliareView.error instanceof Error ? imobiliareView.error.message : undefined} /> : null}
 
                     {/* Anunț trimis, dar pagina publică nu funcționează (cont fără abonament). */}
                     {cell.publicWarning ? (
@@ -1108,17 +1132,7 @@ export const PropertyPortalsCard = forwardRef<
           </ul>
         </section>
 
-        {cells.some(
-          (cell) => cell.portalId === "imobiliare_ro" && (checked[cell.portalId] ?? cell.selected),
-        ) ? (
-          <Panel className="p-5">
-            <PropertyImobiliarePromotionsCard
-              propertyId={propertyId}
-              organizationId={organizationId}
-              canManage={canManage}
-            />
-          </Panel>
-        ) : null}
+
       </div>
 
       <aside className="space-y-4">

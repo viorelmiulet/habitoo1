@@ -26,6 +26,7 @@ export type PublishJobRow = {
   enabled: boolean;
   promoted: boolean | null;
   sync_existing: boolean;
+  imobiliare_promotions?: import("./imobiliare/card-promotions").ImobiliarePromotionChanges | null;
   requested_by: string;
   superadmin: boolean;
   attempts: number;

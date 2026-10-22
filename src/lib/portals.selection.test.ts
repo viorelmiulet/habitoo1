@@ -30,6 +30,17 @@ vi.mock("@tanstack/react-start", () => {
 
 vi.mock("@/lib/org-access", () => ({ requireActiveOrgAuth: {} }));
 
+const promotionCalls: unknown[] = [];
+let promotionRejection = false;
+vi.mock("@/lib/portals/imobiliare/card-promotions.server", () => ({
+  applyImobiliareCardPromotions: async (input: { changes: unknown }) => {
+    promotionCalls.push(input.changes);
+    return promotionRejection ? [{ promotionId: "tl", message: "Top Listing: locurile s-au ocupat" }] : [];
+  },
+}));
+vi.mock("@/lib/portals/imobiliare/imoradar-auto.server", () => ({ autoImoradarAfterListingAction: async () => false }));
+vi.mock("@/lib/portals/requirements.server", () => ({ portalRequirementReport: async () => null }));
+
 const writes: { table: string; op: string; row: unknown }[] = [];
 const adapterContexts: { portal: string; settings: Record<string, unknown> }[] = [];
 
@@ -195,6 +206,8 @@ describe("applyPropertyPortalSelection", () => {
   beforeEach(() => {
     writes.length = 0;
     adapterContexts.length = 0;
+    promotionCalls.length = 0;
+    promotionRejection = false;
   });
 
   it("normalizează La Cheie la production-only în fluxul real, fără să schimbe alte portaluri", async () => {
@@ -278,4 +291,33 @@ describe("applyPropertyPortalSelection", () => {
       .filter(Boolean);
     expect(touched.every((key) => key === "clickimob")).toBe(true);
   });
+  it("sends Top Listing within the successful online publication step", async () => {
+    const { executeListingAction } = await import("@/lib/portals.functions");
+    const result = await executeListingAction({ organizationId: "org-1", actorId: "user-1", propertyId: "prop-1", portalId: "imobiliare_ro", action: "publish", skipSlotCheck: true, imobiliarePromotions: { tl: true, promote_imoradar: false } });
+    expect(result.ok).toBe(true);
+    expect(adapterContexts.map((call) => call.portal)).toEqual(["imobiliare_ro"]);
+    expect(promotionCalls).toEqual([{ tl: true, promote_imoradar: false }]);
+    expect(writes.some((write) => write.table === "portal_listings" && (write.row as { status?: string }).status === "published")).toBe(true);
+  });
+  it("promotion rejection preserves published listing and exact per-service error", async () => {
+    promotionRejection = true;
+    const { executeListingAction } = await import("@/lib/portals.functions");
+    const result = await executeListingAction({ organizationId: "org-1", actorId: "user-1", propertyId: "prop-1", portalId: "imobiliare_ro", action: "publish", skipSlotCheck: true, imobiliarePromotions: { tl: true } });
+    expect(result.ok).toBe(true);
+    if (!result.ok) throw new Error("Listing unexpectedly failed");
+    expect(result.status).toBe("published");
+    expect(result.promotionErrors).toEqual([{ promotionId: "tl", message: "Top Listing: locurile s-au ocupat" }]);
+    expect(writes.filter((write) => write.table === "portal_listings").some((write) => (write.row as { status?: string }).status === "error")).toBe(false);
+  });
+  it("saving a published listing sends only Bonus off and republish sends no promotions", async () => {
+    const { executeListingAction } = await import("@/lib/portals.functions");
+    const base = { organizationId: "org-1", actorId: "user-1", propertyId: "prop-1", portalId: "imobiliare_ro", action: "update" as const };
+    const result = await executeListingAction({ ...base, imobiliarePromotions: { bonus: false } });
+    expect(result.ok).toBe(true);
+    expect(promotionCalls).toEqual([{ bonus: false }]);
+    promotionCalls.length = 0;
+    await executeListingAction({ ...base, operationLabel: "republish" });
+    expect(promotionCalls).toEqual([]);
+  });
+
 });
