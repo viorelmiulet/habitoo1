@@ -11,6 +11,8 @@ import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import { Slider } from "@/components/ui/slider";
 import { cn } from "@/lib/utils";
+import { useAiFeatures } from "@/hooks/use-ai-features";
+import { VideoNarrationField } from "./VideoNarrationField";
 import {
   VIDEO_DEFAULT_PER_PHOTO, VIDEO_FORMATS, VIDEO_MAX_MUSIC_BYTES, VIDEO_MAX_PER_PHOTO, VIDEO_MAX_PHOTOS, VIDEO_MIN_PER_PHOTO,
   buildVideoOverlay, moveInList, planVideoTimeline, videoFileName, type VideoFormat, type VideoListing,
@@ -20,6 +22,9 @@ type Photo = { id: string; url: string; alt: string | null };
 
 export function PropertyVideoCard({ photos, listing, propertyId, shareText = "", initialFormat = "vertical", onResult }: { photos: Photo[]; listing: VideoListing; propertyId: string; shareText?: string; initialFormat?: VideoFormat; onResult?: (r: { blob: Blob; name: string; format: VideoFormat; musicTrackId: string | null; videoInfo: import("@/lib/meta/post-core").ReelVideoInfo | null }) => void }) {
   const logShare = useShareLogger(propertyId);
+  const { isEnabled } = useAiFeatures();
+  const voiceEnabled = isEnabled("ai_video_voice");
+  const [narration, setNarration] = useState<Blob | null>(null);
   const [phoneShare, setPhoneShare] = useState(false);
   useEffect(() => { setPhoneShare(canShareFiles(navigator)); }, []);
   const [format, setFormat] = useState<VideoFormat>(initialFormat);
@@ -104,8 +109,8 @@ export function PropertyVideoCard({ photos, listing, propertyId, shareText = "",
       }
       const { renderPropertyVideo } = await import("@/lib/property-video-render");
       const r = await renderPropertyVideo({
-        format, perPhoto: plan.perPhoto, music: audio, signal: ctrl.signal, onProgress: setProgress,
-        photoUrls: chosen.map((id) => byId.get(id)!.url),
+        format, perPhoto: plan.perPhoto, music: audio, narration: voiceEnabled ? narration : null, signal: ctrl.signal, onProgress: setProgress,
+        photoUrls: chosen.flatMap((id) => { const photo = byId.get(id); return photo ? [photo.url] : []; }),
         overlay: buildVideoOverlay({ ...listing, logoUrl: hasLogo ? listing.logoUrl : null }, { ...opts, showLogo: opts.showLogo && hasLogo }),
       });
       setResult({ url: URL.createObjectURL(r.blob), name: videoFileName(listing.reference, format, r.ext), webm: r.ext === "webm", blob: r.blob });
@@ -115,7 +120,7 @@ export function PropertyVideoCard({ photos, listing, propertyId, shareText = "",
       if ((e as Error).name !== "AbortError") {
         setError((e as Error).message === "TRACK" ? "Piesa aleasă nu a putut fi încărcată. Încearcă din nou." : (e as Error).message === "UNSUPPORTED"
           ? "Acest dispozitiv nu poate genera video. Încearcă de pe un calculator, în Chrome sau Edge."
-          : "Video-ul nu a putut fi generat. Încearcă din nou sau folosește un calculator.");
+          : (e as Error).message.startsWith("Narațiunea") ? (e as Error).message : "Video-ul nu a putut fi generat. Încearcă din nou sau folosește un calculator.");
       }
     } finally { setProgress(null); abortRef.current = null; }
   };
@@ -126,7 +131,6 @@ export function PropertyVideoCard({ photos, listing, propertyId, shareText = "",
         <span className="grid size-10 place-items-center rounded-control bg-accent text-accent-foreground"><Film className="size-5" aria-hidden /></span>
         <div>
           <h3 className="font-medium">Video de prezentare</h3>
-          <p className="text-sm text-muted-foreground">Generat în browser din pozele anunțului. Nu se salvează nimic pe server.</p>
         </div>
       </div>
 
@@ -205,8 +209,10 @@ export function PropertyVideoCard({ photos, listing, propertyId, shareText = "",
       <div className="flex flex-wrap gap-4">
         <label className="flex items-center gap-2 text-sm"><Checkbox checked={opts.showLogo && hasLogo} disabled={!hasLogo} onCheckedChange={(v) => setOpts((o) => ({ ...o, showLogo: v === true }))} />Logo agenție{hasLogo ? "" : " (lipsă)"}</label>
         <label className="flex items-center gap-2 text-sm"><Checkbox checked={opts.showPhone} onCheckedChange={(v) => setOpts((o) => ({ ...o, showPhone: v === true }))} />Telefon agent</label>
-        <label className="flex items-center gap-2 text-sm"><Checkbox checked={opts.showPrice} onCheckedChange={(v) => setOpts((o) => ({ ...o, showPrice: v === true }))} />Preț</label>
+        <label className="flex items-center gap-2 text-sm"><Checkbox checked={opts.showPrice} onCheckedChange={(v) => setOpts((o) => ({ ...o, showPrice: v === true }))} />Arată prețul</label>
       </div>
+
+      {voiceEnabled ? <VideoNarrationField listing={listing} propertyId={propertyId} seconds={plan.total} showPrice={opts.showPrice} disabled={busy} onAudio={setNarration} /> : null}
 
       {busy ? (
         <div className="flex items-center gap-3" role="status">

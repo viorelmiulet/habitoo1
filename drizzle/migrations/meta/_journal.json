@@ -1107,6 +1107,20 @@
       "when": 1792648549427,
       "tag": "0157_contact_update_cron_backstop",
       "breakpoints": true
+    },
+    {
+      "idx": 158,
+      "version": "7",
+      "when": 1792696071745,
+      "tag": "0158_video_ai_narration",
+      "breakpoints": true
+    },
+    {
+      "idx": 159,
+      "version": "7",
+      "when": 1792696758358,
+      "tag": "0159_video_narration_read_only_grants",
+      "breakpoints": true
     }
   ]
 }

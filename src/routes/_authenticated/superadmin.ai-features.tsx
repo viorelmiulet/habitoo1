@@ -26,7 +26,7 @@ import {
 } from "@/lib/ai/features/features.functions";
 
 export const Route = createFileRoute("/_authenticated/superadmin/ai-features")({
-  head: () => appHead("Habitoo CRM — funcții AI per agenție"),
+  head: () => ({ ...appHead("Habitoo CRM — funcții AI per agenție"), meta: [...appHead("Habitoo CRM — funcții AI per agenție").meta, { name: "description", content: "Administrarea funcțiilor AI Habitoo pentru fiecare agenție, inclusiv narațiunea video în română." }, { property: "og:title", content: "Habitoo CRM — funcții AI per agenție" }, { property: "og:description", content: "Activarea individuală a funcțiilor AI pentru agenții." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }] }),
   component: SuperadminAiFeaturesPage,
 });
 

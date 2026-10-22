@@ -1,8 +1,9 @@
 /** Randarea video-ului în browser: WebCodecs + mediabunny (MP4), cu MediaRecorder ca rezervă. */
 import {
-  VIDEO_FORMATS, VIDEO_FPS, VIDEO_MUSIC_FADE_SECONDS, VIDEO_TRANSITION_SECONDS, videoSegments,
+  VIDEO_FORMATS, VIDEO_FPS, VIDEO_TRANSITION_SECONDS, videoSegments,
   type VideoFormat, type VideoOverlay, type VideoSegment,
 } from "@/lib/property-video";
+import { mixVideoAudio } from "@/lib/video-audio-mix";
 
 const C = { navy: "#0E1118", gold: "#C8A24B", white: "#FFFFFF" };
 const SERIF = '"Fraunces", Georgia, serif';
@@ -14,6 +15,7 @@ export type RenderInput = {
   perPhoto: number;
   overlay: VideoOverlay;
   music: Blob | null;
+  narration?: Blob | null;
   signal: AbortSignal;
   onProgress: (pct: number) => void;
 };
@@ -101,7 +103,8 @@ function drawSegment(ctx: CanvasRenderingContext2D, seg: VideoSegment, local: nu
 
 function frameAt(ctx: CanvasRenderingContext2D, t: number, segs: VideoSegment[], imgs: ImageBitmap[], logo: ImageBitmap | null, o: VideoOverlay, W: number, H: number) {
   const i = Math.max(0, segs.findIndex((s) => t < s.start + s.duration));
-  const seg = segs[i] ?? segs[segs.length - 1]!;
+  const seg = segs[i] ?? segs[segs.length - 1];
+  if (!seg) return;
   const local = t - seg.start;
   ctx.globalAlpha = 1;
   drawSegment(ctx, seg, local, imgs, logo, o, W, H);
@@ -114,19 +117,6 @@ function frameAt(ctx: CanvasRenderingContext2D, t: number, segs: VideoSegment[],
   }
 }
 
-async function musicBuffer(file: Blob, total: number, sampleRate = 48000) {
-  const ctx = new AudioContext();
-  const decoded = await ctx.decodeAudioData(await file.arrayBuffer());
-  void ctx.close();
-  const off = new OfflineAudioContext(2, Math.ceil(total * sampleRate), sampleRate);
-  const src = off.createBufferSource(); src.buffer = decoded;
-  const gain = off.createGain();
-  gain.gain.setValueAtTime(1, Math.max(0, total - VIDEO_MUSIC_FADE_SECONDS));
-  gain.gain.linearRampToValueAtTime(0, total);
-  src.connect(gain).connect(off.destination); src.start(0);
-  return off.startRendering();
-}
-
 export async function renderPropertyVideo(input: RenderInput): Promise<RenderResult> {
   const { width: W, height: H } = VIDEO_FORMATS[input.format];
   const abort = () => { if (input.signal.aborted) throw new DOMException("Anulat", "AbortError"); };
@@ -135,14 +125,19 @@ export async function renderPropertyVideo(input: RenderInput): Promise<RenderRes
   for (const url of input.photoUrls) { abort(); imgs.push(await loadBitmap(url, input.signal)); input.onProgress(Math.round((imgs.length / input.photoUrls.length) * 10)); }
   const logo = input.overlay.outro.logoUrl ? await loadBitmap(input.overlay.outro.logoUrl, input.signal).catch(() => null) : null;
   const segs = videoSegments(imgs.length, input.perPhoto);
-  const last = segs[segs.length - 1]!; const total = last.start + last.duration;
+  const last = segs[segs.length - 1];
+  if (!last) throw new Error("Nu există fotografii pentru video.");
+  const total = last.start + last.duration;
   const canvas = document.createElement("canvas"); canvas.width = W; canvas.height = H;
-  const ctx = canvas.getContext("2d")!;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) throw new Error("UNSUPPORTED");
+  const mixedAudio = await mixVideoAudio(input.music, input.narration ?? null, total);
   const frames = Math.round(total * VIDEO_FPS);
   const mb = await import("mediabunny");
-  const mp4 = typeof (window as { VideoEncoder?: unknown }).VideoEncoder === "function" && (await mb.canEncodeVideo("avc", { width: W, height: H }));
+  const audioSupported = !mixedAudio || await mb.canEncodeAudio("aac");
+  const mp4 = audioSupported && typeof (window as { VideoEncoder?: unknown }).VideoEncoder === "function" && (await mb.canEncodeVideo("avc", { width: W, height: H }));
   if (mp4) {
-    const withAudio = Boolean(input.music) && (await mb.canEncodeAudio("aac"));
+    const withAudio = Boolean(mixedAudio);
     const output = new mb.Output({ format: new mb.Mp4OutputFormat({ fastStart: "in-memory" }), target: new mb.BufferTarget() });
     const video = new mb.CanvasSource(canvas, { codec: "avc", bitrate: mb.QUALITY_HIGH });
     output.addVideoTrack(video, { frameRate: VIDEO_FPS });
@@ -156,22 +151,33 @@ export async function renderPropertyVideo(input: RenderInput): Promise<RenderRes
         await video.add(f / VIDEO_FPS, 1 / VIDEO_FPS);
         if (f % 15 === 0) input.onProgress(10 + Math.round((f / frames) * 85));
       }
-      if (audio && input.music) await audio.add(await musicBuffer(input.music, total));
+      if (audio && mixedAudio) await audio.add(mixedAudio);
       await output.finalize();
     } catch (e) { await output.cancel().catch(() => undefined); throw e; }
     input.onProgress(100);
-    return { blob: new Blob([output.target.buffer!], { type: "video/mp4" }), ext: "mp4", mime: "video/mp4" };
+    const buffer = output.target.buffer;
+    if (!buffer) throw new Error("UNSUPPORTED");
+    return { blob: new Blob([buffer], { type: "video/mp4" }), ext: "mp4", mime: "video/mp4" };
   }
-  // Rezervă: înregistrare în timp real cu MediaRecorder (fără muzică).
+  // Rezervă: aceeași pistă mixată, înregistrată în timp real.
   const mime = ["video/mp4;codecs=avc1", "video/mp4", "video/webm;codecs=vp9", "video/webm"].find((m) => MediaRecorder.isTypeSupported(m));
   if (!mime) throw new Error("UNSUPPORTED");
   const stream = canvas.captureStream(VIDEO_FPS);
+  const liveAudio = mixedAudio ? new AudioContext() : null;
+  let source: AudioBufferSourceNode | null = null;
+  if (liveAudio && mixedAudio) {
+    await liveAudio.resume();
+    const destination = liveAudio.createMediaStreamDestination();
+    source = liveAudio.createBufferSource(); source.buffer = mixedAudio; source.connect(destination);
+    for (const track of destination.stream.getAudioTracks()) stream.addTrack(track);
+  }
   const rec = new MediaRecorder(stream, { mimeType: mime, videoBitsPerSecond: 8_000_000 });
   const chunks: Blob[] = []; rec.ondataavailable = (e) => e.data.size && chunks.push(e.data);
   const done = new Promise<void>((r) => { rec.onstop = () => r(); });
   rec.start(500);
+  source?.start();
   const t0 = performance.now();
-  await new Promise<void>((resolve, reject) => {
+  try { await new Promise<void>((resolve, reject) => {
     const tick = () => {
       if (input.signal.aborted) { rec.stop(); reject(new DOMException("Anulat", "AbortError")); return; }
       const t = (performance.now() - t0) / 1000;
@@ -181,8 +187,13 @@ export async function renderPropertyVideo(input: RenderInput): Promise<RenderRes
       setTimeout(tick, 1000 / VIDEO_FPS);
     };
     tick();
-  });
-  rec.stop(); await done;
+  }); } finally {
+    if (rec.state !== "inactive") rec.stop();
+    await done;
+    source?.stop();
+    for (const track of stream.getTracks()) track.stop();
+    if (liveAudio) await liveAudio.close();
+  }
   const ext = mime.startsWith("video/mp4") ? "mp4" : "webm";
   input.onProgress(100);
   return { blob: new Blob(chunks, { type: mime.split(";")[0] }), ext, mime };

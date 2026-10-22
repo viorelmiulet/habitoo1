@@ -1,8 +1,10 @@
 # Narațiune video AI
 
-- [ ] Funcție separată per agenție, MiniMax română, text limitat și două voci
-- [ ] Audio privat, limită atomică 20/zi și tracking AI
-- [ ] Mix voce/muzică în ambele randări, teste și verificare
+- [x] Funcție separată implicit oprită, MiniMax 2.8 Turbo cu română, text limitat și selector feminin/masculin
+- [x] Audio privat legat de proprietate, limită atomică 20/zi (Europe/Bucharest), tracking AI și semnare cu accesul utilizatorului
+- [x] 23 teste noi/video și 27 teste de regresie; previzualizare audio, mix și piste audio MP4 prin ambele randări verificate cu date simulate, calculator/telefon
+- [ ] Test scurt MiniMax pentru alegerea finală a vocilor — Replicate răspunde 402, fără credit; necesară alimentarea contului
+- [ ] Verificare completă autentificată cu generare reală și acces între agenții — lipsă credit Replicate și sesiune a solicitantului; conectare în previzualizare necesară
 
 # Agent responsabil în editare și actualizare portaluri
 
