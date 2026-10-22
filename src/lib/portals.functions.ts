@@ -1663,6 +1663,7 @@ export async function executeListingAction(input: {
       promotionErrors = await applyImobiliareCardPromotions({ organizationId, propertyId, actorId, changes: input.imobiliarePromotions });
     } catch (error) {
       promotionErrors = Object.keys(input.imobiliarePromotions).map((promotionId) => ({ promotionId, message: error instanceof Error ? error.message : "Promovarea nu a fost confirmată de portal." }));
+      for (const promotionError of promotionErrors) await logOperation({ organizationId, propertyId, actorId, portal: definition.id, operation: `promotion:${promotionError.promotionId}:error`, success: false, errorCode: "PORTAL_ERROR", errorMessage: promotionError.message, durationMs: elapsed() }).catch(() => undefined);
     }
   }
 

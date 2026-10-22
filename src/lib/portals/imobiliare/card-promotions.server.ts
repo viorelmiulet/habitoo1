@@ -7,7 +7,11 @@ export async function applyImobiliareCardPromotions(input: { organizationId: str
   const { prepare } = await import("../imobiliare-promotions.functions");
   const { logOperation } = await import("@/lib/portals.functions");
   const prepared = await prepare(input.organizationId, input.propertyId);
-  if (!prepared.ok) return Object.keys(input.changes).map((promotionId) => ({ promotionId, message: prepared.view.message ?? "Promovarea nu este disponibilă." }));
+  if (!prepared.ok) {
+    const errors = Object.keys(input.changes).map((promotionId) => ({ promotionId, message: prepared.view.message ?? "Promovarea nu este disponibilă." }));
+    for (const error of errors) await logOperation({ organizationId: input.organizationId, propertyId: input.propertyId, portal: "imobiliare_ro", actorId: input.actorId, operation: `promotion:${error.promotionId}:prepare`, success: false, errorCode: "PORTAL_ERROR", errorMessage: error.message, durationMs: 0 });
+    return errors;
+  }
   const [listing, local] = await Promise.all([
     fetchImobiliareListingPromotions({ session: prepared.session, organizationId: input.organizationId, reference: prepared.reference }),
     prepared.admin.from("imobiliare_promotion_states").select("promotion_id, value_boolean, value_numeric").eq("organization_id", input.organizationId).eq("property_id", input.propertyId),
