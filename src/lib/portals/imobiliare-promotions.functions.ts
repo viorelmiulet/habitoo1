@@ -61,6 +61,7 @@ export type ImobiliarePromotionRow = {
   usedByAgent: number | null;
   /** Cât i-a mai rămas; `null` = nelimitat sau necunoscut. */
   remaining: number | null;
+  agencyRemaining?: number | null;
 };
 
 export type ImobiliarePromotionsView = {
@@ -104,7 +105,7 @@ async function loadAdmin() {
 }
 
 /** Sesiune + referința anunțului, cu izolare strictă pe agenție. */
-export async function prepare(organizationId: string, propertyId: string): Promise<Prepared> {
+export async function prepare(organizationId: string, propertyId: string, allowUnpublished = false): Promise<Prepared> {
   const definition = getPortalDefinition(IMOBILIARE_PORTAL_KEY);
   if (!definition || definition.status !== "available") {
     return { ok: false, view: emptyView("Integrarea Imobiliare.ro nu este disponibilă.") };
@@ -138,7 +139,7 @@ export async function prepare(organizationId: string, propertyId: string): Promi
   const { parseImobiliareReferences } = await import("@/lib/portals/imobiliare/references");
   const references = parseImobiliareReferences(listing?.external_id ?? null);
   const reference = references[0] ?? null;
-  if (!reference) {
+  if (!reference && !allowUnpublished) {
     return {
       ok: false,
       view: emptyView(
@@ -156,7 +157,7 @@ export async function prepare(organizationId: string, propertyId: string): Promi
   });
   if (!session.ok) return { ok: false, view: emptyView(session.message) };
 
-  return { ok: true, reference, session: session.session, admin };
+  return { ok: true, reference: reference ?? "", session: session.session, admin };
 }
 
 export const getImobiliarePromotions = createServerFn({ method: "POST" })
@@ -177,7 +178,7 @@ export const getImobiliarePromotions = createServerFn({ method: "POST" })
       agentOnly,
       userId: context.userId,
     });
-    const prepared = await prepare(organizationId, data.propertyId);
+    const prepared = await prepare(organizationId, data.propertyId, true);
     if (!prepared.ok) return prepared.view;
 
     const { fetchImobiliareSlotInventories, fetchImobiliareListingPromotions } = await import(
@@ -188,11 +189,11 @@ export const getImobiliarePromotions = createServerFn({ method: "POST" })
         session: prepared.session,
         organizationId,
       }),
-      fetchImobiliareListingPromotions({
+      prepared.reference ? fetchImobiliareListingPromotions({
         session: prepared.session,
         organizationId,
         reference: prepared.reference,
-      }),
+      }) : Promise.resolve({ states: new Map<string, boolean | number | null>(), error: null }),
     ]);
 
     // Agentul vede DOAR serviciile pe care agenția le folosește, iar serviciile
@@ -219,7 +220,7 @@ export const getImobiliarePromotions = createServerFn({ method: "POST" })
     const agentId = (property.data?.assigned_to ?? null) as string | null;
 
     const visible = IMOBILIARE_PROMOTIONS.filter((definition) => {
-      if (settings.get(definition.id)?.enabled !== true) return false;
+      if (definition.id !== "promote_imoradar" && settings.get(definition.id)?.enabled !== true) return false;
       if (!definition.slotType) return true;
       return (inventories.get(definition.slotType)?.inventory ?? null) !== null;
     });
@@ -238,12 +239,12 @@ export const getImobiliarePromotions = createServerFn({ method: "POST" })
           async (definition) =>
             [
               definition.id,
-              await fetchImobiliareSlotMembership({
+              prepared.reference ? await fetchImobiliareSlotMembership({
                 session: prepared.session,
                 organizationId,
                 slotType: definition.slotType as string,
                 reference: prepared.reference,
-              }),
+              }) : false,
             ] as const,
         ),
       ),
@@ -277,7 +278,7 @@ export const getImobiliarePromotions = createServerFn({ method: "POST" })
             : null,
         fromLocal: local?.value ?? null,
       });
-      const value = merged.value;
+      const value = prepared.reference ? merged.value : definition.kind === "numeric" ? 0 : false;
       const current = typeof value === "number" ? value : 0;
       const allocated = agentId
         ? promotionAllocationFor(
@@ -320,6 +321,7 @@ export const getImobiliarePromotions = createServerFn({ method: "POST" })
         allocated,
         usedByAgent,
         remaining: usedByAgent === null ? null : promotionRemaining(allocated, usedByAgent),
+        agencyRemaining: settings.get(definition.id)?.agencyCap == null ? null : inventory ? Math.max(0, (settings.get(definition.id)?.agencyCap ?? 0) - inventory.used) : 0,
       });
     }
 
@@ -332,7 +334,7 @@ export const getImobiliarePromotions = createServerFn({ method: "POST" })
 
     return {
       available: true,
-      reference: prepared.reference,
+      reference: prepared.reference || null,
       message: null,
       listingError: listingState.error,
       promotions,

@@ -14,7 +14,7 @@ export type EnqueueInput = {
   actorId: string;
   data: {
     propertyId: string;
-    selections: { portalId: string; enabled: boolean; promoted?: boolean }[];
+    selections: { portalId: string; enabled: boolean; promoted?: boolean; imobiliarePromotions?: import("./imobiliare/card-promotions").ImobiliarePromotionChanges }[];
     syncExisting: boolean;
   };
   loadAdmin: () => Promise<Admin>;
@@ -81,6 +81,7 @@ export async function enqueuePublishJobsForOrg(input: EnqueueInput) {
       portal_key: definition.id,
       enabled: wanted.enabled,
       promoted: wanted.promoted ?? null,
+      imobiliare_promotions: definition.id === "imobiliare_ro" ? wanted.imobiliarePromotions ?? null : null,
       sync_existing: input.data.syncExisting,
       requested_by: input.actorId,
       superadmin: input.superadmin,
