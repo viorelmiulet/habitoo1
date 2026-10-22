@@ -53,6 +53,7 @@ import { Route as AuthenticatedAppAiCrmRouteImport } from './routes/_authenticat
 import { Route as AuthenticatedAppAiManagerRouteImport } from './routes/_authenticated/app.ai-manager'
 import { Route as AuthenticatedAppAiMarketingRouteImport } from './routes/_authenticated/app.ai-marketing'
 import { Route as AuthenticatedAppAiMediaRouteImport } from './routes/_authenticated/app.ai-media'
+import { Route as AuthenticatedAppAnunturiParticulariRouteImport } from './routes/_authenticated/app.anunturi-particulari'
 import { Route as AuthenticatedAppCalendarRouteImport } from './routes/_authenticated/app.calendar'
 import { Route as AuthenticatedAppCollaborationRouteImport } from './routes/_authenticated/app.collaboration'
 import { Route as AuthenticatedAppGoalsRouteImport } from './routes/_authenticated/app.goals'
@@ -385,6 +386,12 @@ const AuthenticatedAppAiMediaRoute = AuthenticatedAppAiMediaRouteImport.update({
   path: '/ai-media',
   getParentRoute: () => AuthenticatedAppRoute,
 } as any)
+const AuthenticatedAppAnunturiParticulariRoute =
+  AuthenticatedAppAnunturiParticulariRouteImport.update({
+    id: '/anunturi-particulari',
+    path: '/anunturi-particulari',
+    getParentRoute: () => AuthenticatedAppRoute,
+  } as any)
 const AuthenticatedAppCalendarRoute =
   AuthenticatedAppCalendarRouteImport.update({
     id: '/calendar',
@@ -1043,6 +1050,7 @@ export interface FileRoutesByFullPath {
   '/app/ai-manager': typeof AuthenticatedAppAiManagerRoute
   '/app/ai-marketing': typeof AuthenticatedAppAiMarketingRoute
   '/app/ai-media': typeof AuthenticatedAppAiMediaRoute
+  '/app/anunturi-particulari': typeof AuthenticatedAppAnunturiParticulariRoute
   '/app/calendar': typeof AuthenticatedAppCalendarRoute
   '/app/collaboration': typeof AuthenticatedAppCollaborationRoute
   '/app/goals': typeof AuthenticatedAppGoalsRoute
@@ -1192,6 +1200,7 @@ export interface FileRoutesByTo {
   '/app/ai-manager': typeof AuthenticatedAppAiManagerRoute
   '/app/ai-marketing': typeof AuthenticatedAppAiMarketingRoute
   '/app/ai-media': typeof AuthenticatedAppAiMediaRoute
+  '/app/anunturi-particulari': typeof AuthenticatedAppAnunturiParticulariRoute
   '/app/calendar': typeof AuthenticatedAppCalendarRoute
   '/app/collaboration': typeof AuthenticatedAppCollaborationRoute
   '/app/goals': typeof AuthenticatedAppGoalsRoute
@@ -1345,6 +1354,7 @@ export interface FileRoutesById {
   '/_authenticated/app/ai-manager': typeof AuthenticatedAppAiManagerRoute
   '/_authenticated/app/ai-marketing': typeof AuthenticatedAppAiMarketingRoute
   '/_authenticated/app/ai-media': typeof AuthenticatedAppAiMediaRoute
+  '/_authenticated/app/anunturi-particulari': typeof AuthenticatedAppAnunturiParticulariRoute
   '/_authenticated/app/calendar': typeof AuthenticatedAppCalendarRoute
   '/_authenticated/app/collaboration': typeof AuthenticatedAppCollaborationRoute
   '/_authenticated/app/goals': typeof AuthenticatedAppGoalsRoute
@@ -1499,6 +1509,7 @@ export interface FileRouteTypes {
     | '/app/ai-manager'
     | '/app/ai-marketing'
     | '/app/ai-media'
+    | '/app/anunturi-particulari'
     | '/app/calendar'
     | '/app/collaboration'
     | '/app/goals'
@@ -1648,6 +1659,7 @@ export interface FileRouteTypes {
     | '/app/ai-manager'
     | '/app/ai-marketing'
     | '/app/ai-media'
+    | '/app/anunturi-particulari'
     | '/app/calendar'
     | '/app/collaboration'
     | '/app/goals'
@@ -1800,6 +1812,7 @@ export interface FileRouteTypes {
     | '/_authenticated/app/ai-manager'
     | '/_authenticated/app/ai-marketing'
     | '/_authenticated/app/ai-media'
+    | '/_authenticated/app/anunturi-particulari'
     | '/_authenticated/app/calendar'
     | '/_authenticated/app/collaboration'
     | '/_authenticated/app/goals'
@@ -2309,6 +2322,13 @@ declare module '@tanstack/react-router' {
       path: '/ai-media'
       fullPath: '/app/ai-media'
       preLoaderRoute: typeof AuthenticatedAppAiMediaRouteImport
+      parentRoute: typeof AuthenticatedAppRoute
+    }
+    '/_authenticated/app/anunturi-particulari': {
+      id: '/_authenticated/app/anunturi-particulari'
+      path: '/anunturi-particulari'
+      fullPath: '/app/anunturi-particulari'
+      preLoaderRoute: typeof AuthenticatedAppAnunturiParticulariRouteImport
       parentRoute: typeof AuthenticatedAppRoute
     }
     '/_authenticated/app/calendar': {
@@ -3097,6 +3117,7 @@ interface AuthenticatedAppRouteChildren {
   AuthenticatedAppAiManagerRoute: typeof AuthenticatedAppAiManagerRoute
   AuthenticatedAppAiMarketingRoute: typeof AuthenticatedAppAiMarketingRoute
   AuthenticatedAppAiMediaRoute: typeof AuthenticatedAppAiMediaRoute
+  AuthenticatedAppAnunturiParticulariRoute: typeof AuthenticatedAppAnunturiParticulariRoute
   AuthenticatedAppCalendarRoute: typeof AuthenticatedAppCalendarRoute
   AuthenticatedAppCollaborationRoute: typeof AuthenticatedAppCollaborationRoute
   AuthenticatedAppGoalsRoute: typeof AuthenticatedAppGoalsRoute
@@ -3131,6 +3152,8 @@ const AuthenticatedAppRouteChildren: AuthenticatedAppRouteChildren = {
   AuthenticatedAppAiManagerRoute: AuthenticatedAppAiManagerRoute,
   AuthenticatedAppAiMarketingRoute: AuthenticatedAppAiMarketingRoute,
   AuthenticatedAppAiMediaRoute: AuthenticatedAppAiMediaRoute,
+  AuthenticatedAppAnunturiParticulariRoute:
+    AuthenticatedAppAnunturiParticulariRoute,
   AuthenticatedAppCalendarRoute: AuthenticatedAppCalendarRoute,
   AuthenticatedAppCollaborationRoute: AuthenticatedAppCollaborationRoute,
   AuthenticatedAppGoalsRoute: AuthenticatedAppGoalsRoute,

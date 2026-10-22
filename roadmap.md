@@ -1,7 +1,8 @@
 # Integrare hbsync
 
 - [x] Documentație livrată cu 129 coloane properties și 19 contacts verificate live, relații, mapare și contract propuse (explicit neimplementate), permisiuni și colectori
-- [ ] Endpoint-uri și token — blocate: utilizatorul a indicat scraping (contrazice regula surselor autorizate) și toate agențiile fără model de autorizare per agenție; nicio schimbare de schemă/date/aplicație
+- [x] Modul „Anunțuri particulari” în aplicație (oraș, zonă, camere, cuvinte cheie), acces doar conectat, import prin endpointul existent cu oraș/zonă
+- [ ] Cheia de import SCRAPER_SECRET de transmis către hbsync (setată de utilizator)
 
 # Narațiune video AI
 
