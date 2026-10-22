@@ -108,6 +108,9 @@ import { AVATAR_BUCKET, MEDIA_BUCKET, signedUrl, signedUrls } from "@/lib/storag
 import { useAgencyLogoUrl } from "@/components/app/AgencyBrandingCard";
 import { UserAvatar } from "@/components/app/UserAvatar";
 import { ReassignPropertiesDialog } from "@/components/app/ReassignPropertiesDialog";
+import { PropertyResponsibleAgentField } from "@/components/app/PropertyResponsibleAgentField";
+import { reassignProperties } from "@/lib/property-agent.functions";
+import { savePropertyEdits } from "@/lib/property-edit-save";
 import { SocialPosterDialog } from "@/components/app/SocialPosterDialog";
 import { formatPosterPrice } from "@/lib/social-poster";
 import { getPropertiesPortalMatrix, type PropertyPortalCell } from "@/lib/portals.functions";
@@ -174,19 +177,6 @@ function PropertyDetailPage() {
   const { data: user } = useCurrentUser();
   const orgId = user?.organization?.id;
   const [reassignOpen, setReassignOpen] = useState(false);
-  const { data: orgMembers = [] } = useQuery({
-    queryKey: ["profiles", "org", orgId],
-    enabled: Boolean(orgId && user?.isAdmin),
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("id,full_name")
-        .eq("organization_id", orgId as string)
-        .order("full_name");
-      if (error) throw error;
-      return data;
-    },
-  });
   const agencyLogoUrl = useAgencyLogoUrl(user?.organization?.logo_path);
 
   const [editing, setEditing] = useState(false);
@@ -281,6 +271,19 @@ function PropertyDetailPage() {
   });
 
   const property = data?.property;
+  const canReassign = Boolean(user?.isAdmin || user?.isSuperadmin);
+  const { data: orgMembers = [] } = useQuery({
+    queryKey: ["profiles", "org", property?.organization_id, "active"],
+    enabled: Boolean(property?.organization_id && canReassign),
+    queryFn: async () => {
+      const { data: members, error } = await supabase.from("profiles").select("id,full_name")
+        .eq("organization_id", property?.organization_id ?? "").eq("is_active", true).order("full_name");
+      if (error) throw error;
+      return members ?? [];
+    },
+  });
+  const reassignFn = useServerFn(reassignProperties);
+  const [draftAgent, setDraftAgent] = useState("");
   const { data: responsibleAgent } = useQuery({
     queryKey: ["property-responsible-agent", property?.assigned_to],
     enabled: Boolean(property?.assigned_to),
@@ -329,6 +332,7 @@ function PropertyDetailPage() {
   const [locationPrecise, setLocationPrecise] = useState(false);
   const startEdit = () => {
     if (!property) return;
+    setDraftAgent(property.assigned_to ?? "");
     setDraft({
       title: property.title,
       price: property.price ? String(property.price) : "",
@@ -366,30 +370,39 @@ function PropertyDetailPage() {
 
   const save = useMutation({
     mutationFn: async (patch: Record<string, unknown>) => {
-      const { error } = await supabase
-        .from("properties")
-        .update({ ...patch, updated_by: user?.userId ?? null } as never)
-        .eq("id", id);
-      if (error) throw error;
+      const assignmentWarnings = await savePropertyEdits({
+        saveDetails: async () => {
+          const { error } = await supabase.from("properties")
+            .update({ ...patch, updated_by: user?.userId ?? null } as never).eq("id", id);
+          if (error) throw error;
+        },
+        assignmentChanged: canReassign && Boolean(draftAgent) && draftAgent !== property?.assigned_to,
+        reassign: () => reassignFn({ data: { propertyIds: [id], toUserId: draftAgent } }),
+      });
       // Codul poștal lipsă se deduce din adresă, pe server; un cod scris de om
       // rămâne neatins (sursa devine „manual” la salvare). Eșecul nu anulează
       // salvarea, dar se arată ca notificare.
       try {
-        return (await resolvePostalCode({ data: { propertyId: id } })) ?? null;
+        return { postal: (await resolvePostalCode({ data: { propertyId: id } })) ?? null, assignmentWarnings };
       } catch (error) {
-        return {
+        return { assignmentWarnings, postal: {
           status: "failed",
           reasonLabel: error instanceof Error ? error.message : "eroare necunoscută",
-        };
+        } };
       }
     },
-    onSuccess: async (postal) => {
+    onSuccess: async ({ postal, assignmentWarnings }) => {
       queryClient.invalidateQueries({ queryKey: ["property", id] });
       queryClient.invalidateQueries({ queryKey: ["properties"] });
+      queryClient.invalidateQueries({ queryKey: ["property-responsible-agent"] });
+      queryClient.invalidateQueries({ queryKey: ["property-publish-jobs"] });
+      queryClient.invalidateQueries({ queryKey: ["property-portals-selection"] });
+      queryClient.invalidateQueries({ queryKey: ["property-portals-matrix"] });
       notifyProperstarFeedChanged();
       postalNotice(postal);
       setEditing(false);
-      toast.success("Modificările au fost salvate.");
+      if (assignmentWarnings.length) toast.warning(`Modificările au fost salvate. ${assignmentWarnings.join(" · ")}`);
+      else toast.success("Modificările au fost salvate.");
     },
     onError: (e: Error) => toastError(e),
   });
@@ -468,11 +481,16 @@ function PropertyDetailPage() {
         if (!hasTransactionSelection(tx)) {
           throw new Error("Alege tipul tranzacției: de vânzare, de închiriere sau ambele.");
         }
-        const { error: saveError } = await supabase
-          .from("properties")
-          .update({ ...buildEditPatch(), updated_by: user?.userId ?? null } as never)
-          .eq("id", id);
-        if (saveError) throw saveError;
+        const warnings = await savePropertyEdits({
+          saveDetails: async () => {
+            const { error: saveError } = await supabase.from("properties")
+              .update({ ...buildEditPatch(), updated_by: user?.userId ?? null } as never).eq("id", id);
+            if (saveError) throw saveError;
+          },
+          assignmentChanged: canReassign && Boolean(draftAgent) && draftAgent !== property?.assigned_to,
+          reassign: () => reassignFn({ data: { propertyIds: [id], toUserId: draftAgent } }),
+        });
+        if (warnings.length) toast.warning(warnings.join(" · "));
       }
 
       // O ofertă publicată nu poate rămâne „Ciornă”: statusul ciornă este exclus
@@ -513,6 +531,8 @@ function PropertyDetailPage() {
       // selectabil de îndată ce câmpurile lipsă sunt completate.
       queryClient.invalidateQueries({ queryKey: ["property-portal-requirements"] });
       queryClient.invalidateQueries({ queryKey: ["property-portals-matrix"] });
+      queryClient.invalidateQueries({ queryKey: ["property-responsible-agent"] });
+      queryClient.invalidateQueries({ queryKey: ["property-publish-jobs"] });
 
       const base = saved
         ? "Modificările au fost salvate și proprietatea a fost publicată."
@@ -980,6 +1000,9 @@ function PropertyDetailPage() {
                 />
               </FormSection>
 
+              <PropertyResponsibleAgentField canEdit={canReassign} value={draftAgent}
+                name={responsibleAgent?.full_name} candidates={orgMembers} onChange={setDraftAgent} />
+
               <FormSection
                 title="Note interne"
                 description="Nu se publică pe site sau pe portaluri."
@@ -1100,6 +1123,8 @@ function PropertyDetailPage() {
                       queryClient.invalidateQueries({ queryKey: ["property", id] });
                       queryClient.invalidateQueries({ queryKey: ["properties"] });
                       queryClient.invalidateQueries({ queryKey: ["property-responsible-agent"] });
+                      queryClient.invalidateQueries({ queryKey: ["property-publish-jobs"] });
+                      queryClient.invalidateQueries({ queryKey: ["property-portals-selection"] });
                     }}
                   />
                 ) : null}

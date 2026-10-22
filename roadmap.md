@@ -1,3 +1,10 @@
+# Agent responsabil în editare și actualizare portaluri
+
+- [x] Câmp editabil doar pentru administratori, utilizatori activi, salvare independentă de blocajul mutării
+- [x] Mutare individuală/în bloc prin nucleul existent, actualizări durabile doar pentru perechi active; cererile concurente nu se pierd
+- [x] Teste mock și formular verificat desktop/mobil: schimbare contact, blocaj cu păstrarea modificărilor, agent fără selector; fără publicări reale
+- [ ] Verificare în contul solicitantului — sesiunea automată nu identifică un cont; necesară conectarea în previzualizare
+
 # Promovări pe cardul Imobiliare.ro
 
 - [x] Opțiuni pe card, contoare live, alocări și diferențe la salvare

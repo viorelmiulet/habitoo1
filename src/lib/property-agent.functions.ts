@@ -2,8 +2,8 @@
  * Mutarea anunțurilor către alt agent responsabil. Permisă doar managerului
  * agenției (agency_admin) și superadminului; rolul se verifică pe server.
  *
- * Publicările rămân neatinse; noul agent devine contact la următoarea
- * sincronizare. Declanșatorul de locuri din baza de date nu este ocolit.
+ * Perechile publicate activ se actualizează în coada existentă după mutare.
+ * Declanșatorul de locuri din baza de date nu este ocolit.
  */
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
@@ -24,7 +24,7 @@ async function buildPorts(context: Ctx): Promise<ReassignPorts> {
       return data === true;
     },
     adminOrgIds: async () => {
-      const { data } = await admin
+      const { data } = await context.supabase
         .from("user_roles")
         .select("organization_id")
         .eq("user_id", context.userId)
@@ -89,6 +89,10 @@ async function buildPorts(context: Ctx): Promise<ReassignPorts> {
       }
     },
     portalName: (key) => portalDisplayName(key as never),
+    enqueueContactUpdates: async (organizationId, propertyIds, superadmin) => {
+      const { enqueueContactUpdates } = await import("@/lib/portals/contact-update.server");
+      await enqueueContactUpdates(admin, { organizationId, propertyIds, actorId: context.userId, superadmin });
+    },
   };
 }
 
@@ -146,7 +150,7 @@ export const reassignPropertyAgent = createServerFn({ method: "POST" })
       toUserId: data.agentId,
     });
     if (res.blocked.length > 0) {
-      return { ok: false as const, code: "SLOT_LIMIT", message: res.blocked[0]!.message };
+      return { ok: false as const, code: "SLOT_LIMIT", message: res.blocked[0]?.message ?? "Mutarea este blocată." };
     }
     return { ok: true as const, agentId: data.agentId };
   });

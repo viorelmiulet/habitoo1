@@ -38,6 +38,7 @@ function ports(opts: {
 }) {
   const updates: string[] = [];
   const audits: unknown[] = [];
+  const queued: string[] = [];
   const p: ReassignPorts = {
     callerId: "admin-1",
     isSuperadmin: async () => opts.superadmin ?? false,
@@ -55,16 +56,19 @@ function ports(opts: {
       audits.push(row);
     },
     portalName: (k) => (k === "lacheie" ? "La Cheie" : k),
+    enqueueContactUpdates: async (_org, ids) => { queued.push(...ids); },
   };
-  return { p, updates, audits };
+  return { p, updates, audits, queued };
 }
 
 describe("realocarea anunțurilor", () => {
   it("refuză rolul nepermis", async () => {
-    const { p } = ports({ adminOrgs: [], props: [prop("1")] });
+    const { p, updates, queued } = ports({ adminOrgs: [], props: [prop("1")] });
     await expect(reassignPropertiesCore(p, { propertyIds: ["1"], toUserId: "agent-b" })).rejects.toThrow(
       REASSIGN_ADMIN_ONLY,
     );
+    expect(updates).toEqual([]);
+    expect(queued).toEqual([]);
   });
 
   it("refuză anunț din altă agenție", async () => {
@@ -95,21 +99,23 @@ describe("realocarea anunțurilor", () => {
   });
 
   it("raportează blocajul de locuri în română, cu anunțul blocat", async () => {
-    const { p } = ports({ props: [prop("1"), prop("2")], blockIds: ["2"] });
+    const { p, queued } = ports({ props: [prop("1"), prop("2")], blockIds: ["2"] });
     const res = await reassignPropertiesCore(p, { propertyIds: ["1", "2"], toUserId: "agent-b" });
     expect(res.moved).toBe(1);
     expect(res.blocked).toHaveLength(1);
     expect(res.blocked[0]!.reference).toBe("HB-2");
     expect(res.blocked[0]!.message).toContain("La Cheie");
+    expect(queued).toEqual(["1"]);
   });
 
   it("mută, sare anunțurile care au deja agentul și scrie în audit", async () => {
-    const { p, updates, audits } = ports({
+    const { p, updates, audits, queued } = ports({
       props: [prop("1"), prop("2", { assigned_to: "agent-b" })],
     });
     const res = await reassignPropertiesCore(p, { propertyIds: ["1", "2"], toUserId: "agent-b" });
     expect(res).toMatchObject({ moved: 1, skipped: 1, blocked: [], phoneWarning: null });
     expect(updates).toEqual(["1"]);
+    expect(queued).toEqual(["1"]);
     expect(JSON.stringify(audits)).toContain("agent-a");
     expect(JSON.stringify(audits)).toContain("property.reassigned");
   });
@@ -123,7 +129,7 @@ describe("realocarea anunțurilor", () => {
 
   it("mută în masă toate anunțurile unui utilizator, în loturi", async () => {
     const all = Array.from({ length: 120 }, (_, i) => prop(String(i)));
-    const { p, updates } = ports({ props: all });
+    const { p, updates, queued } = ports({ props: all });
     let calls = 0;
     const res = await runReassignBatches(
       all.map((x) => x.id),
@@ -136,5 +142,15 @@ describe("realocarea anunțurilor", () => {
     expect(calls).toBe(3);
     expect(res.moved).toBe(120);
     expect(updates).toHaveLength(120);
+    expect(queued).toHaveLength(120);
+    expect(new Set(queued)).toEqual(new Set(all.map(row => row.id)));
+  });
+  it("writes the new assigned_to only after authorization and enqueues that property", async () => {
+    const row = prop("1");
+    const { p, queued } = ports({ props: [row] });
+    p.updateAssigned = async (_id, agentId) => { row.assigned_to = agentId; return { error: null }; };
+    await reassignPropertiesCore(p, { propertyIds: [row.id], toUserId: "agent-b" });
+    expect(row.assigned_to).toBe("agent-b");
+    expect(queued).toEqual(["1"]);
   });
 });

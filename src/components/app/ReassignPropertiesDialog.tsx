@@ -39,6 +39,7 @@ export async function runReassignBatches(
     skipped: number;
     blocked: Summary["blocked"];
     phoneWarning: string | null;
+    syncWarning?: string | null;
   }>,
 ): Promise<Summary> {
   const total: Summary = { moved: 0, skipped: 0, blocked: [], phoneWarnings: [] };
@@ -50,6 +51,7 @@ export async function runReassignBatches(
     if (res.phoneWarning && !total.phoneWarnings.includes(res.phoneWarning)) {
       total.phoneWarnings.push(res.phoneWarning);
     }
+    if (res.syncWarning && !total.phoneWarnings.includes(res.syncWarning)) total.phoneWarnings.push(res.syncWarning);
   }
   return total;
 }
@@ -155,8 +157,8 @@ export function ReassignPropertiesDialog({
               </Select>
             </div>
             <p className="text-xs text-muted-foreground">
-              Publicările pe portaluri rămân active; noul agent devine contact la următoarea
-              sincronizare.
+              Anunțurile mutate se actualizează acum pe portalurile active, cu noul agent drept contact.
+              Portalurile pe feed preiau schimbarea la următoarea citire.
             </p>
             <DialogFooter>
               <Button variant="outline" disabled={pending} onClick={() => close(false)}>

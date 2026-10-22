@@ -425,7 +425,7 @@ export const PropertyPortalsCard = forwardRef<
       finished = true;
       if (job.portalId === "imobiliare_ro") setImobiliareDrafts({});
       const name = cells.find((c) => c.portalId === job.portalId)?.portalName ?? job.portalId;
-      if (job.ok) toast.success(`${name}: ${job.action === "withdrawn" ? "retras" : "publicat"}`);
+      if (job.ok) toast.success(`${name}: ${job.action === "withdrawn" ? "retras" : job.action === "updated" ? "actualizat" : "publicat"}`);
       else toast.error(job.message ? `${name}: ${job.message}` : `${name}: publicarea a eșuat.`);
     }
     if (finished) {
