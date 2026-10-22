@@ -1,3 +1,8 @@
+# Integrare hbsync
+
+- [x] Documentație livrată cu 129 coloane properties și 19 contacts verificate live, relații, mapare și contract propuse (explicit neimplementate), permisiuni și colectori
+- [ ] Endpoint-uri și token — blocate: utilizatorul a indicat scraping (contrazice regula surselor autorizate) și toate agențiile fără model de autorizare per agenție; nicio schimbare de schemă/date/aplicație
+
 # Narațiune video AI
 
 - [x] Funcție separată implicit oprită, MiniMax 2.8 Turbo cu română, text limitat și selector feminin/masculin
