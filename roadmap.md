@@ -1,3 +1,9 @@
+# Promovări pe cardul Imobiliare.ro
+
+- [ ] Opțiuni pe card, contoare live, alocări și diferențe la salvare
+- [ ] Selecții durabile în coadă; promovări în pasul publicării fără anularea anunțului la refuz
+- [ ] Teste mock și verificare vizuală fără publicări reale
+
 # Imobiliare.ro — comision și etaj
 
 - [x] Comision numeric; text ambiguu omis cu avertisment
