@@ -131,7 +131,6 @@ export function PropertyVideoCard({ photos, listing, propertyId, shareText = "",
         <span className="grid size-10 place-items-center rounded-control bg-accent text-accent-foreground"><Film className="size-5" aria-hidden /></span>
         <div>
           <h3 className="font-medium">Video de prezentare</h3>
-          <p className="text-sm text-muted-foreground">Video de prezentare</p>
         </div>
       </div>
 
