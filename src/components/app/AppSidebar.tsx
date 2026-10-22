@@ -98,7 +98,10 @@ export const agencyNav: NavGroup[] = [
   },
   {
     title: "Prospectare",
-    items: [{ label: "Oportunități", to: "/app/prospecting", icon: Radar }],
+    items: [
+      { label: "Oportunități", to: "/app/prospecting", icon: Radar },
+      { label: "Anunțuri particulari", to: "/app/anunturi-particulari", icon: Newspaper },
+    ],
   },
   {
     title: "Asistent AI",

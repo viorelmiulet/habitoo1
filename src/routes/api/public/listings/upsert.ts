@@ -14,7 +14,11 @@ import { z } from "zod";
 const MAX_LISTINGS_PER_CALL = 500;
 
 const listingSchema = z.object({
-  source: z.enum(["storia", "imobiliare", "olx"]),
+  source: z
+    .string()
+    .min(1)
+    .max(50)
+    .regex(/^[a-z0-9_.-]+$/),
   external_id: z.string().min(1).max(200),
   title: z.string().max(500).nullish(),
   price: z.number().nonnegative().nullish(),
@@ -23,6 +27,8 @@ const listingSchema = z.object({
   rooms: z.number().int().nonnegative().nullish(),
   surface: z.number().nonnegative().nullish(),
   floor: z.string().max(50).nullish(),
+  city: z.string().max(100).nullish(),
+  zone: z.string().max(150).nullish(),
   location: z.string().max(300).nullish(),
   county: z.string().max(100).nullish(),
   property_type: z.string().max(100).nullish(),
