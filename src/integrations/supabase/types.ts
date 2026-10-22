@@ -3357,6 +3357,7 @@ export type Database = {
       }
       listings: {
         Row: {
+          city: string | null
           county: string | null
           currency: string | null
           description: string | null
@@ -3381,8 +3382,10 @@ export type Database = {
           title: string | null
           transaction_type: string | null
           url: string | null
+          zone: string | null
         }
         Insert: {
+          city?: string | null
           county?: string | null
           currency?: string | null
           description?: string | null
@@ -3407,8 +3410,10 @@ export type Database = {
           title?: string | null
           transaction_type?: string | null
           url?: string | null
+          zone?: string | null
         }
         Update: {
+          city?: string | null
           county?: string | null
           currency?: string | null
           description?: string | null
@@ -3433,6 +3438,7 @@ export type Database = {
           title?: string | null
           transaction_type?: string | null
           url?: string | null
+          zone?: string | null
         }
         Relationships: []
       }
