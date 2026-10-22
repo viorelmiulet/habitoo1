@@ -119,25 +119,31 @@ export function categoryApiFor(
   if (hints.length === 0) return null;
   const wanted = transaction === "sale" ? ["vanzare", "vand"] : ["inchiriere", "inchiriez"];
 
-  const scored = catalog.categories
-    .map((category) => {
-      const name = normalizeRoName(category.name);
-      const typeHit = hints.some((hint) => name.includes(normalizeRoName(hint)));
-      if (!typeHit) return null;
-      // `offer_type` declarat de portal are prioritate față de ghicirea din nume.
-      if (category.offerType && category.offerType !== transaction) return null;
-      const transactionHit =
-        category.offerType === transaction || wanted.some((word) => name.includes(word));
-      const transactionMiss = (transaction === "sale" ? ["inchiriere"] : ["vanzare"]).some((word) =>
-        name.includes(word),
-      );
-      if (!category.offerType && transactionMiss) return null;
-      return { id: category.id, score: transactionHit ? 2 : 1 };
-    })
-    .filter((entry): entry is { id: number; score: number } => entry !== null)
-    .sort((a, b) => b.score - a.score);
+  // Ordinea din NAME_HINTS contează: pentru garsonieră câștigă categoria care
+  // conține „garsoniera”, iar „apartament” e doar rezervă. Altfel, la scor egal,
+  // prima categorie din catalog câștiga și garsoniera pleca drept apartament.
+  for (const hint of hints) {
+    const normalizedHint = normalizeRoName(hint);
+    const scored = catalog.categories
+      .map((category) => {
+        const name = normalizeRoName(category.name);
+        if (!name.includes(normalizedHint)) return null;
+        // `offer_type` declarat de portal are prioritate față de ghicirea din nume.
+        if (category.offerType && category.offerType !== transaction) return null;
+        const transactionHit =
+          category.offerType === transaction || wanted.some((word) => name.includes(word));
+        const transactionMiss = (transaction === "sale" ? ["inchiriere"] : ["vanzare"]).some(
+          (word) => name.includes(word),
+        );
+        if (!category.offerType && transactionMiss) return null;
+        return { id: category.id, score: transactionHit ? 2 : 1 };
+      })
+      .filter((entry): entry is { id: number; score: number } => entry !== null)
+      .sort((a, b) => b.score - a.score);
+    if (scored.length > 0) return scored[0].id;
+  }
 
-  return scored[0]?.id ?? null;
+  return null;
 }
 
 /** Interoghează endpointurile candidate și salvează rezultatul în conexiune. */
