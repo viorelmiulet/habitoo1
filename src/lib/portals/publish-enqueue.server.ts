@@ -96,6 +96,19 @@ export async function enqueuePublishJobsForOrg(input: EnqueueInput) {
       });
       continue;
     }
+    if (definition.id === "imobiliare_ro" && typeof wanted.imobiliarePromotions?.promote_imoradar === "boolean") {
+      // Persist the explicit per-listing preference with publication, not on checkbox clicks.
+      const { error: preferenceError } = await admin.from("portal_publications").upsert({
+        organization_id: input.organizationId,
+        property_id: input.data.propertyId,
+        portal_key: definition.id,
+        enabled: wasEnabled,
+        imoradar_opt_out: !wanted.imobiliarePromotions.promote_imoradar,
+        created_by: input.actorId,
+        updated_by: input.actorId,
+      }, { onConflict: "organization_id,property_id,portal_key" });
+      if (preferenceError) console.error("[portal-publish] imoradar preference could not be persisted");
+    }
     inserted += 1;
     results.push({ portalId: definition.id, portalName: name, queued: true, message: null });
   }
