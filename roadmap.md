@@ -1,3 +1,9 @@
+# Narațiune video AI
+
+- [ ] Funcție separată per agenție, MiniMax română, text limitat și două voci
+- [ ] Audio privat, limită atomică 20/zi și tracking AI
+- [ ] Mix voce/muzică în ambele randări, teste și verificare
+
 # Agent responsabil în editare și actualizare portaluri
 
 - [x] Câmp editabil doar pentru administratori, utilizatori activi, salvare independentă de blocajul mutării
