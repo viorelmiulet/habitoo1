@@ -361,6 +361,36 @@ function ListingCard({ listing }: { listing: OwnerListing }) {
   );
 }
 
+const DESCRIPTION_COLLAPSED_LENGTH = 280;
+
+function ListingDescription({ text }: { text: string }) {
+  const [expanded, setExpanded] = useState(false);
+  const long = text.length > DESCRIPTION_COLLAPSED_LENGTH;
+  return (
+    <div className="flex flex-col items-start gap-1">
+      <p
+        className={`text-sm whitespace-pre-line break-words text-muted-foreground ${
+          expanded || !long ? "" : "line-clamp-6"
+        }`}
+      >
+        {text}
+      </p>
+      {long ? (
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          className="h-7 px-2 text-xs"
+          aria-expanded={expanded}
+          onClick={() => setExpanded((v) => !v)}
+        >
+          {expanded ? "Arată mai puțin" : "Arată tot"}
+        </Button>
+      ) : null}
+    </div>
+  );
+}
+
 function NumberFilter({
   label,
   value,
