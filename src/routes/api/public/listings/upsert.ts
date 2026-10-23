@@ -120,6 +120,25 @@ export function periodPrefix(period: string): string {
   return `(${period.trim()})`;
 }
 
+const TRANSACTION_LABELS: Record<string, string> = { sale: "Vânzare", lease: "Închiriere", rent: "Închiriere" };
+const PROPERTY_LABELS: Record<string, string> = {
+  apartment: "Apartament",
+  house: "Casă",
+  land: "Teren",
+  office: "Birou",
+  commercial: "Spațiu comercial",
+  warehouse: "Depozit",
+  unknown: "Altă proprietate",
+};
+
+/** Etichete românești unice, ca filtrele să nu vadă „sale” și „Vânzare” separat. */
+export function labelTransaction(v: string | null | undefined): string | null | undefined {
+  return v ? (TRANSACTION_LABELS[v.trim().toLowerCase()] ?? v) : v;
+}
+export function labelPropertyType(v: string | null | undefined): string | null | undefined {
+  return v ? (PROPERTY_LABELS[v.trim().toLowerCase()] ?? v) : v;
+}
+
 function slugify(text: string): string {
   return (
     text
