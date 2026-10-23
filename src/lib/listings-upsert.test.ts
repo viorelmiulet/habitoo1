@@ -95,3 +95,22 @@ describe("mirrorListingImages", () => {
     }
   });
 });
+
+describe("toLenientNumber (câmpuri numerice trimise ca text de hbsync)", () => {
+  it("transformă textul numeric în număr", async () => {
+    const { toLenientNumber } = await import("@/routes/api/public/listings/upsert");
+    expect(toLenientNumber("4", { int: true })).toBe(4);
+    expect(toLenientNumber("P+4", { int: true })).toBe(4);
+    expect(toLenientNumber("120,5 mp")).toBe(120.5);
+  });
+  it("textul gol sau fără cifre devine null", async () => {
+    const { toLenientNumber } = await import("@/routes/api/public/listings/upsert");
+    expect(toLenientNumber("", { int: true })).toBeNull();
+    expect(toLenientNumber("nespecificat")).toBeNull();
+  });
+  it("numerele rămân neschimbate", async () => {
+    const { toLenientNumber } = await import("@/routes/api/public/listings/upsert");
+    expect(toLenientNumber(7, { int: true })).toBe(7);
+    expect(toLenientNumber(null)).toBeNull();
+  });
+});
