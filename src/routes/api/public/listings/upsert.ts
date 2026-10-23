@@ -22,6 +22,32 @@ const IMAGE_TIMEOUT_MS = 10_000;
 const IMAGE_MAX_BYTES = 5 * 1024 * 1024;
 export const LISTING_IMAGES_BUCKET = "listing-images";
 
+/**
+ * Transformă valori numerice venite ca text din hbsync ("4", "P+4", "120,5 mp", "")
+ * în număr; textul gol sau fără cifre devine null, ca un câmp opțional să nu
+ * respingă tot batch-ul. Numerele reale trec neschimbate.
+ */
+export function toLenientNumber(value: unknown, opts: { int?: boolean } = {}): unknown {
+  if (value === undefined || value === null) return value;
+  if (typeof value === "number") return opts.int && Number.isFinite(value) ? Math.round(value) : value;
+  if (typeof value !== "string") return value;
+  const match = value.replace(/\s/g, "").replace(",", ".").match(/-?\d+(\.\d+)?/);
+  if (!match) return null;
+  const n = Number(match[0]);
+  if (!Number.isFinite(n)) return null;
+  return opts.int ? Math.round(n) : n;
+}
+
+const lenientNumber = (schema: z.ZodTypeAny, int = false) =>
+  z.preprocess((v) => toLenientNumber(v, { int }), schema);
+
+/** Ca lenientNumber, dar o valoare în afara intervalului devine null în loc de eroare. */
+const lenientOptionalNumber = (schema: z.ZodNumber, int = false) =>
+  z.preprocess((v) => {
+    const n = toLenientNumber(v, { int });
+    return typeof n === "number" && !schema.safeParse(n).success ? null : n;
+  }, schema.nullish());
+
 const listingSchema = z.object({
   source: z
     .string()
