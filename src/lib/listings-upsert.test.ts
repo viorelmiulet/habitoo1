@@ -114,3 +114,48 @@ describe("toLenientNumber (câmpuri numerice trimise ca text de hbsync)", () => 
     expect(toLenientNumber(null)).toBeNull();
   });
 });
+
+describe("normalizeListingUrl (linkul real al anunțului)", () => {
+  it("transformă linkurile Storia /ro/ad/ (404) în /ro/oferta/", async () => {
+    const { normalizeListingUrl } = await import("@/routes/api/public/listings/upsert");
+    expect(
+      normalizeListingUrl("storia", "https://www.storia.ro/ro/ad/garsonier-aparatorii-patriei-IDIm8a", "x"),
+    ).toBe("https://www.storia.ro/ro/oferta/garsonier-aparatorii-patriei-IDIm8a");
+  });
+  it("reface linkul Storia din id când lipsește", async () => {
+    const { normalizeListingUrl } = await import("@/routes/api/public/listings/upsert");
+    expect(normalizeListingUrl("storia", null, "cloud9-apartament-IDIYWW")).toBe(
+      "https://www.storia.ro/ro/oferta/cloud9-apartament-IDIYWW",
+    );
+  });
+  it("reface linkul Romimo din id când lipsește", async () => {
+    const { normalizeListingUrl } = await import("@/routes/api/public/listings/upsert");
+    expect(normalizeListingUrl("romimo", null, "0444e7f590hd7242d0i6ifg63457if12.html", "Calea Vitan")).toBe(
+      "https://www.romimo.ro/anunturi/anunt/calea-vitan/0444e7f590hd7242d0i6ifg63457if12.html",
+    );
+  });
+  it("nu inventează linkuri pentru id-uri necunoscute", async () => {
+    const { normalizeListingUrl } = await import("@/routes/api/public/listings/upsert");
+    expect(normalizeListingUrl("olx", null, "123")).toBeNull();
+  });
+});
+
+describe("phoneFromText", () => {
+  it("găsește un mobil românesc în descriere", async () => {
+    const { phoneFromText } = await import("@/routes/api/public/listings/upsert");
+    expect(phoneFromText("Sunați la 0722 123 456 oricând")).toBe("0722123456");
+    expect(phoneFromText("Tel +40 744-555-666")).toBe("0744555666");
+    expect(phoneFromText("Telefon validat")).toBeNull();
+  });
+});
+
+describe("preserveExistingFields", () => {
+  it("nu șterge linkul, telefonul sau pozele salvate când batch-ul nu le are", async () => {
+    const { preserveExistingFields } = await import("@/routes/api/public/listings/upsert");
+    const rows: Record<string, unknown>[] = [{ source: "olx", external_id: "a", url: null, phone: null }];
+    preserveExistingFields(rows, [
+      { source: "olx", external_id: "a", url: "https://www.olx.ro/d/oferta/x", phone: "0722123456", images: ["i"] },
+    ]);
+    expect(rows[0]).toMatchObject({ url: "https://www.olx.ro/d/oferta/x", phone: "0722123456", images: ["i"] });
+  });
+});

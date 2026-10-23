@@ -120,6 +120,77 @@ export function periodPrefix(period: string): string {
   return `(${period.trim()})`;
 }
 
+function slugify(text: string): string {
+  return (
+    text
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "")
+      .slice(0, 80) || "anunt"
+  );
+}
+
+/**
+ * Linkul public al anunțului. Storia: formatul vechi `/ro/ad/...` duce la 404,
+ * cel valid este `/ro/oferta/<slug>-ID<cod>`. Când linkul lipsește, îl
+ * refacem doar din id-ul real al portalului (Storia: slugul; Romimo: fișierul
+ * `<cod>.html`, pe care portalul îl rezolvă indiferent de cale).
+ */
+export function normalizeListingUrl(
+  source: string,
+  url: string | null | undefined,
+  externalId: string,
+  title?: string | null,
+): string | null {
+  const raw = (url ?? "").trim();
+  if (raw) {
+    const storia = /^https?:\/\/(?:www\.)?storia\.ro\/ro\/(?:ad|oferta)\/([^/?#]+)\/?(?:[?#].*)?$/i.exec(raw);
+    if (storia) return `https://www.storia.ro/ro/oferta/${storia[1]}`;
+    return raw;
+  }
+  if (source === "storia" && /^[a-z0-9-]+-ID[A-Za-z0-9]+$/i.test(externalId)) {
+    return `https://www.storia.ro/ro/oferta/${externalId}`;
+  }
+  if (source === "romimo" && /^[a-z0-9]{16,}\.html$/i.test(externalId)) {
+    return `https://www.romimo.ro/anunturi/anunt/${slugify(title ?? "")}/${externalId}`;
+  }
+  return null;
+}
+
+/** Primul număr de mobil românesc din text (ex. descriere), sau null. */
+export function phoneFromText(text: string | null | undefined): string | null {
+  if (!text) return null;
+  const m = /(?:\+?40|\b0)[\s.-]?7\d{2}[\s.-]?\d{3}[\s.-]?\d{3}\b/.exec(text);
+  if (!m) return null;
+  const digits = m[0].replace(/\D/g, "");
+  return digits.startsWith("40") ? `0${digits.slice(2)}` : digits;
+}
+
+type ExistingListingFields = {
+  source: string;
+  external_id: string;
+  url: string | null;
+  phone: string | null;
+  images: unknown;
+};
+
+/** Completează link/telefon/imagini lipsă din rândul deja salvat (același source + external_id). */
+export function preserveExistingFields(
+  rows: Record<string, unknown>[],
+  existing: ExistingListingFields[],
+): void {
+  const byKey = new Map(existing.map((e) => [`${e.source}|${e.external_id}`, e]));
+  for (const row of rows) {
+    const old = byKey.get(`${row.source}|${row.external_id}`);
+    if (!old) continue;
+    if (!row.url && old.url) row.url = normalizeListingUrl(String(row.source), old.url, String(row.external_id));
+    if (!row.phone && old.phone) row.phone = old.phone;
+    if (!row.images && Array.isArray(old.images) && old.images.length > 0) row.images = old.images;
+  }
+}
+
 /** Extensia din content-type; fallback la extensia din URL, apoi .jpg. */
 function imageExtension(contentType: string | null, url: string): string {
   const fromType: Record<string, string> = {
@@ -239,6 +310,8 @@ export const Route = createFileRoute("/api/public/listings/upsert")({
             if (skip.has(key)) continue;
             if (value !== undefined) row[key] = value;
           }
+          row.url = normalizeListingUrl(listing.source, listing.url, listing.external_id, listing.title);
+          row.phone = (listing.phone ?? "").trim() || phoneFromText(listing.description);
           // Perioada (ex. „luna") nu are coloană: o punem la începutul descrierii.
           const period = (listing.period ?? listing.perioada)?.trim();
           if (period) {
@@ -261,6 +334,17 @@ export const Route = createFileRoute("/api/public/listings/upsert")({
           }
           rows.push(row);
         }
+
+        // Un batch fără link/telefon/imagini nu trebuie să șteargă ce era deja salvat.
+        const needsExisting = rows.filter((r) => !r.url || !r.phone || !r.images);
+        if (needsExisting.length > 0) {
+          const { data: existing } = await supabaseAdmin
+            .from("listings")
+            .select("source, external_id, url, phone, images")
+            .in("external_id", needsExisting.map((r) => r.external_id as string));
+          preserveExistingFields(rows, existing ?? []);
+        }
+
 
         const { error } = await supabaseAdmin
           .from("listings")
