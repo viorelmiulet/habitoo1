@@ -36,6 +36,7 @@ const listingSchema = z.object({
   is_owner: z.boolean().nullish(),
   owner_type: z.string().max(50).nullish(),
   description: z.string().max(20_000).nullish(),
+  perioada: z.string().max(100).nullish(),
   phone: z.string().max(50).nullish(),
   url: z.string().url().max(2000).nullish(),
   images: z.array(z.string().url().max(2000)).max(50).nullish(),
@@ -99,8 +100,17 @@ export const Route = createFileRoute("/api/public/listings/upsert")({
             external_id: listing.external_id,
           };
           for (const [key, value] of Object.entries(listing)) {
-            if (key === "source" || key === "external_id") continue;
+            if (key === "source" || key === "external_id" || key === "perioada") continue;
             if (value !== undefined) row[key] = value;
+          }
+          // Tabela nu are coloană „perioada”: o punem la începutul descrierii.
+          const perioada = listing.perioada?.trim();
+          if (perioada) {
+            const prefix = `(${perioada})`;
+            const desc = listing.description ?? "";
+            if (!desc.startsWith(prefix)) {
+              row.description = desc ? `${prefix}\n\n${desc}` : prefix;
+            }
           }
           return row;
         });
