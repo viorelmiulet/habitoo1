@@ -66,13 +66,16 @@ export const Route = createFileRoute("/api/public/listings/upsert")({
   server: {
     handlers: {
       POST: async ({ request }) => {
-        const expected = process.env["SCRAPER_SECRET"];
-        if (!expected) {
-          console.error("[listings-upsert] SCRAPER_SECRET is not configured");
+        // Cheie dedicată hbsync; SCRAPER_SECRET rămâne acceptat pentru compatibilitate.
+        const expected = [process.env["HBSYNC_SECRET"], process.env["SCRAPER_SECRET"]].filter(
+          (v): v is string => Boolean(v),
+        );
+        if (expected.length === 0) {
+          console.error("[listings-upsert] HBSYNC_SECRET/SCRAPER_SECRET is not configured");
           return json({ success: false, error: "server_misconfigured" }, 500);
         }
         const provided = request.headers.get("x-scraper-secret") ?? "";
-        if (!provided || !secretMatches(provided, expected)) {
+        if (!provided || !expected.some((key) => secretMatches(provided, key))) {
           return json({ success: false, error: "unauthorized" }, 401);
         }
 
