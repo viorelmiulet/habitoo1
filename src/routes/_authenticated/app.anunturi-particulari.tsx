@@ -31,7 +31,19 @@ const searchSchema = z.object({
   camere: z.string().optional(),
   q: z.string().optional(),
   pagina: z.coerce.number().int().min(1).optional(),
+  sursa: z.enum(["storia", "imobiliare", "olx"]).optional(),
+  tranzactie: z.enum(["sale", "rent"]).optional(),
+  pretMin: z.coerce.number().min(0).optional(),
+  pretMax: z.coerce.number().min(0).optional(),
+  mpMin: z.coerce.number().min(0).optional(),
+  mpMax: z.coerce.number().min(0).optional(),
 });
+
+const SOURCE_LABELS: Record<string, string> = {
+  storia: "Storia",
+  imobiliare: "Imobiliare.ro",
+  olx: "OLX",
+};
 
 export const Route = createFileRoute("/_authenticated/app/anunturi-particulari")({
   validateSearch: searchSchema,
@@ -86,10 +98,18 @@ function PrivateListingsPage() {
     staleTime: 5 * 60_000,
   });
   const listings = useQuery({
-    queryKey: ["owner-listings", search.oras, search.zona, rooms.join(","), search.q, page],
+    queryKey: [
+      "owner-listings", search.oras, search.zona, rooms.join(","), search.q, page,
+      search.sursa, search.tranzactie, search.pretMin, search.pretMax, search.mpMin, search.mpMax,
+    ],
     queryFn: () =>
       fetchListings({
-        data: { city: search.oras, zone: search.zona, rooms, q: search.q, page },
+        data: {
+          city: search.oras, zone: search.zona, rooms, q: search.q, page,
+          source: search.sursa, transaction: search.tranzactie,
+          priceMin: search.pretMin, priceMax: search.pretMax,
+          surfaceMin: search.mpMin, surfaceMax: search.mpMax,
+        },
       }),
     placeholderData: keepPreviousData,
   });
@@ -101,7 +121,11 @@ function PrivateListingsPage() {
     const next = rooms.includes(r) ? rooms.filter((x) => x !== r) : [...rooms, r].sort();
     update({ camere: next.length ? next.join(",") : undefined });
   };
-  const hasFilters = Boolean(search.oras || search.zona || rooms.length || search.q);
+  const hasFilters = Boolean(
+    search.oras || search.zona || rooms.length || search.q || search.sursa || search.tranzactie ||
+      search.pretMin !== undefined || search.pretMax !== undefined ||
+      search.mpMin !== undefined || search.mpMax !== undefined,
+  );
 
   return (
     <div className="space-y-6">
@@ -168,6 +192,35 @@ function PrivateListingsPage() {
             className="pl-9"
             aria-label="Cuvinte cheie"
           />
+        </div>
+        <div className="grid grid-cols-2 gap-3 md:col-span-3 lg:col-span-4 lg:grid-cols-6">
+          <Select
+            value={search.sursa ?? ALL}
+            onValueChange={(v) => update({ sursa: v === ALL ? undefined : (v as "storia") })}
+          >
+            <SelectTrigger aria-label="Sursă"><SelectValue placeholder="Sursă" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value={ALL}>Toate sursele</SelectItem>
+              {Object.entries(SOURCE_LABELS).map(([k, v]) => (
+                <SelectItem key={k} value={k}>{v}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Select
+            value={search.tranzactie ?? ALL}
+            onValueChange={(v) => update({ tranzactie: v === ALL ? undefined : (v as "sale") })}
+          >
+            <SelectTrigger aria-label="Tranzacție"><SelectValue placeholder="Tranzacție" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value={ALL}>Vânzare și închiriere</SelectItem>
+              <SelectItem value="sale">Vânzare</SelectItem>
+              <SelectItem value="rent">Închiriere</SelectItem>
+            </SelectContent>
+          </Select>
+          <NumberFilter label="Preț minim (€)" value={search.pretMin} onChange={(v) => update({ pretMin: v })} />
+          <NumberFilter label="Preț maxim (€)" value={search.pretMax} onChange={(v) => update({ pretMax: v })} />
+          <NumberFilter label="Suprafață min. (m²)" value={search.mpMin} onChange={(v) => update({ mpMin: v })} />
+          <NumberFilter label="Suprafață max. (m²)" value={search.mpMax} onChange={(v) => update({ mpMax: v })} />
         </div>
       </div>
 
@@ -246,8 +299,8 @@ function ListingCard({ listing }: { listing: OwnerListing }) {
   return (
     <Card className="flex h-full flex-col gap-0">
       <CardHeader className="flex flex-row items-center justify-between gap-2 pb-3">
-        <Badge variant="secondary" className="capitalize">
-          {listing.source}
+        <Badge variant="secondary">
+          Sursă: {SOURCE_LABELS[listing.source] ?? listing.source}
         </Badge>
         {listing.transactionType ? (
           <span className="text-xs text-muted-foreground">
@@ -288,5 +341,34 @@ function ListingCard({ listing }: { listing: OwnerListing }) {
         ) : null}
       </CardFooter>
     </Card>
+  );
+}
+
+function NumberFilter({
+  label,
+  value,
+  onChange,
+}: {
+  label: string;
+  value: number | undefined;
+  onChange: (v: number | undefined) => void;
+}) {
+  const [text, setText] = useState(value?.toString() ?? "");
+  useEffect(() => setText(value?.toString() ?? ""), [value]);
+  const commit = () => {
+    const n = Number(text.replace(/[^\d]/g, ""));
+    const next = text.trim() && Number.isFinite(n) ? n : undefined;
+    if (next !== value) onChange(next);
+  };
+  return (
+    <Input
+      inputMode="numeric"
+      value={text}
+      placeholder={label}
+      aria-label={label}
+      onChange={(e) => setText(e.target.value)}
+      onBlur={commit}
+      onKeyDown={(e) => e.key === "Enter" && commit()}
+    />
   );
 }

@@ -40,6 +40,12 @@ const filtersSchema = z.object({
   rooms: z.array(z.number().int()).max(5).optional(),
   q: z.string().max(200).optional(),
   page: z.number().int().min(0).max(1000).optional(),
+  source: z.enum(["storia", "imobiliare", "olx"]).optional(),
+  transaction: z.enum(["sale", "rent"]).optional(),
+  priceMin: z.number().min(0).max(1e9).optional(),
+  priceMax: z.number().min(0).max(1e9).optional(),
+  surfaceMin: z.number().min(0).max(1e6).optional(),
+  surfaceMax: z.number().min(0).max(1e6).optional(),
 });
 
 export const getOwnerListings = createServerFn({ method: "GET" })
@@ -59,6 +65,16 @@ export const getOwnerListings = createServerFn({ method: "GET" })
     const zone = cleanText(data.zone);
     if (city) query = query.ilike("city", city);
     if (zone) query = query.ilike("zone", zone);
+
+    if (data.source) query = query.eq("source", data.source);
+    if (data.transaction === "rent")
+      query = query.or("transaction_type.ilike.%inch%,transaction_type.ilike.%rent%");
+    if (data.transaction === "sale")
+      query = query.or("transaction_type.ilike.%vanz%,transaction_type.ilike.%vânz%,transaction_type.ilike.%sale%");
+    if (data.priceMin !== undefined) query = query.gte("price", data.priceMin);
+    if (data.priceMax !== undefined) query = query.lte("price", data.priceMax);
+    if (data.surfaceMin !== undefined) query = query.gte("surface", data.surfaceMin);
+    if (data.surfaceMax !== undefined) query = query.lte("surface", data.surfaceMax);
 
     const rooms = normalizeRooms(data.rooms);
     if (rooms.length) {
