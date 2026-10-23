@@ -1,0 +1,2 @@
+ALTER TABLE public.listings DROP CONSTRAINT listings_source_check;
+ALTER TABLE public.listings ADD CONSTRAINT listings_source_check CHECK (source = ANY (ARRAY['storia'::text, 'imobiliare'::text, 'olx'::text, 'romimo'::text]));

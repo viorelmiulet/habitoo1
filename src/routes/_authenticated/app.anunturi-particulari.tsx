@@ -31,7 +31,7 @@ const searchSchema = z.object({
   camere: z.string().optional(),
   q: z.string().optional(),
   pagina: z.coerce.number().int().min(1).optional(),
-  sursa: z.enum(["storia", "imobiliare", "olx"]).optional(),
+  sursa: z.enum(["storia", "imobiliare", "olx", "romimo"]).optional(),
   tranzactie: z.enum(["sale", "rent"]).optional(),
   pretMin: z.coerce.number().min(0).optional(),
   pretMax: z.coerce.number().min(0).optional(),
@@ -43,6 +43,7 @@ const SOURCE_LABELS: Record<string, string> = {
   storia: "Storia",
   imobiliare: "Imobiliare.ro",
   olx: "OLX",
+  romimo: "Romimo",
 };
 
 export const Route = createFileRoute("/_authenticated/app/anunturi-particulari")({
