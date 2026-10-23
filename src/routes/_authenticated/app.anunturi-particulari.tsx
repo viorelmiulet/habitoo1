@@ -339,11 +339,7 @@ function ListingCard({ listing }: { listing: OwnerListing }) {
             <span className="line-clamp-1">{place}</span>
           </p>
         ) : null}
-        {listing.description ? (
-          <p className="text-sm whitespace-pre-line break-words text-muted-foreground">
-            {listing.description}
-          </p>
-        ) : null}
+        {listing.description ? <ListingDescription text={listing.description} /> : null}
       </CardContent>
       <CardFooter className="flex gap-2 pt-3">
         {listing.phone ? (

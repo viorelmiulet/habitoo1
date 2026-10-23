@@ -1,5 +1,5 @@
 /** Filtre pentru modulul „Anunțuri particulari” — logică pură, testabilă. */
-export const PRIVATE_LISTINGS_PAGE_SIZE = 24;
+export const PRIVATE_LISTINGS_PAGE_SIZE = 9;
 
 export type PrivateListingsFilters = {
   city?: string;
