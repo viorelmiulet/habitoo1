@@ -287,6 +287,8 @@ export const Route = createFileRoute("/api/public/listings/upsert")({
             if (skip.has(key)) continue;
             if (value !== undefined) row[key] = value;
           }
+          row.url = normalizeListingUrl(listing.source, listing.url, listing.external_id, listing.title);
+          row.phone = (listing.phone ?? "").trim() || phoneFromText(listing.description);
           // Perioada (ex. „luna") nu are coloană: o punem la începutul descrierii.
           const period = (listing.period ?? listing.perioada)?.trim();
           if (period) {
