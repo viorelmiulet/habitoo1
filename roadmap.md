@@ -1,5 +1,6 @@
 # Integrare hbsync
 
+- [ ] Activare colectare OLX în hbsync și verificare import cu sursa reală — verificare acces/configurație serviciu extern în curs
 - [x] Documentație livrată cu 129 coloane properties și 19 contacts verificate live, relații, mapare și contract propuse (explicit neimplementate), permisiuni și colectori
 - [x] Modul „Anunțuri particulari” în aplicație (oraș, zonă, camere, cuvinte cheie), acces doar conectat, import prin endpointul existent cu oraș/zonă
 - [ ] Cheia de import SCRAPER_SECRET de transmis către hbsync (setată de utilizator)
