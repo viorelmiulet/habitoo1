@@ -41,12 +41,19 @@ export const privateListingsFiltersSchema = z.object({
   q: z.string().max(200).optional(),
   page: z.number().int().min(0).max(1000).optional(),
   source: z.enum(["storia", "imobiliare", "olx", "romimo"]).optional(),
-  transaction: z.enum(["sale", "rent"]).optional(),
+  transaction: z.enum(["sale", "rent", "rent_day"]).optional(),
   priceMin: z.number().min(0).max(1e9).optional(),
   priceMax: z.number().min(0).max(1e9).optional(),
   surfaceMin: z.number().min(0).max(1e6).optional(),
   surfaceMax: z.number().min(0).max(1e6).optional(),
+  propertyType: z.string().max(80).optional(),
 });
+
+export const TRANSACTION_FILTERS: Record<"sale" | "rent" | "rent_day", string> = {
+  sale: "transaction_type.ilike.%vanz%,transaction_type.ilike.%vânz%,transaction_type.ilike.%sale%",
+  rent: "transaction_type.ilike.%inch%,transaction_type.ilike.%rent%",
+  rent_day: "transaction_type.ilike.%pe zi%,description.ilike.%pe zi%",
+};
 
 export const getOwnerListings = createServerFn({ method: "GET" })
   .middleware([requireActiveOrgAuth])
@@ -67,10 +74,9 @@ export const getOwnerListings = createServerFn({ method: "GET" })
     if (zone) query = query.ilike("zone", zone);
 
     if (data.source) query = query.eq("source", data.source);
-    if (data.transaction === "rent")
-      query = query.or("transaction_type.ilike.%inch%,transaction_type.ilike.%rent%");
-    if (data.transaction === "sale")
-      query = query.or("transaction_type.ilike.%vanz%,transaction_type.ilike.%vânz%,transaction_type.ilike.%sale%");
+    if (data.transaction) query = query.or(TRANSACTION_FILTERS[data.transaction]);
+    const propertyType = cleanText(data.propertyType);
+    if (propertyType) query = query.ilike("property_type", propertyType);
     if (data.priceMin !== undefined) query = query.gte("price", data.priceMin);
     if (data.priceMax !== undefined) query = query.lte("price", data.priceMax);
     if (data.surfaceMin !== undefined) query = query.gte("surface", data.surfaceMin);
@@ -122,26 +128,29 @@ export const getOwnerListings = createServerFn({ method: "GET" })
     };
   });
 
-/** Orașele și zonele existente, pentru listele din filtre. */
+/** Orașele, zonele și tipurile de proprietate existente, pentru listele din filtre. */
 export const getOwnerListingFacets = createServerFn({ method: "GET" })
   .middleware([requireActiveOrgAuth])
-  .handler(async ({ context }): Promise<{ cities: string[]; zones: Record<string, string[]> }> => {
+  .handler(async ({ context }): Promise<{ cities: string[]; zones: Record<string, string[]>; propertyTypes: string[] }> => {
     const { data } = await context.supabase
       .from("listings")
-      .select("city, zone")
+      .select("city, zone, property_type")
       .eq("is_owner", true)
       .not("city", "is", null)
       .limit(5000);
     const zones: Record<string, Set<string>> = {};
+    const propertyTypes = new Set<string>();
     for (const row of data ?? []) {
       const c = row.city?.trim();
       if (!c) continue;
       zones[c] ??= new Set();
       if (row.zone?.trim()) zones[c].add(row.zone.trim());
+      if (row.property_type?.trim()) propertyTypes.add(row.property_type.trim());
     }
     const sort = (a: string, b: string) => a.localeCompare(b, "ro");
     return {
       cities: Object.keys(zones).sort(sort),
       zones: Object.fromEntries(Object.entries(zones).map(([c, s]) => [c, [...s].sort(sort)])),
+      propertyTypes: [...propertyTypes].sort(sort),
     };
   });
