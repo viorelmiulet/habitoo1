@@ -196,7 +196,10 @@ export const Route = createFileRoute("/api/public/listings/upsert")({
         }
 
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-        const baseUrl = new URL(request.url).origin;
+        // URL-urile de imagini salvate în DB trebuie să fie publice și stabile,
+        // nu origin-ul cererii (care poate fi localhost în dev).
+        const { CRM_URL } = await import("@/lib/host");
+        const baseUrl = CRM_URL;
 
         const rows: Record<string, unknown>[] = [];
         for (const listing of parsed.data.listings) {
