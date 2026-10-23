@@ -75,7 +75,8 @@ export const getOwnerListings = createServerFn({ method: "GET" })
 
     if (data.source) query = query.eq("source", data.source);
     if (data.transaction) query = query.or(TRANSACTION_FILTERS[data.transaction]);
-    if (data.propertyType) query = query.ilike("property_type", cleanText(data.propertyType));
+    const propertyType = cleanText(data.propertyType);
+    if (propertyType) query = query.ilike("property_type", propertyType);
     if (data.priceMin !== undefined) query = query.gte("price", data.priceMin);
     if (data.priceMax !== undefined) query = query.lte("price", data.priceMax);
     if (data.surfaceMin !== undefined) query = query.gte("surface", data.surfaceMin);
