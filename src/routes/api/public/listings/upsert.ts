@@ -363,6 +363,18 @@ export const Route = createFileRoute("/api/public/listings/upsert")({
           }
           row.url = normalizeListingUrl(listing.source, listing.url, listing.external_id, listing.title);
           row.phone = (listing.phone ?? "").trim() || phoneFromText(listing.description);
+          row.transaction_type = labelTransaction(listing.transaction_type);
+          row.property_type = labelPropertyType(listing.property_type);
+          // Storia: prețul se citește din pagina anunțului (textul primit poate avea prețuri lipite).
+          if (listing.source === "storia" && typeof row.url === "string") {
+            const live = await fetchStoriaPrice(row.url);
+            if (live) {
+              row.price = live.price;
+              row.currency = live.currency;
+              const surface = typeof listing.surface === "number" ? listing.surface : null;
+              if (surface && surface > 0) row.price_per_m2 = Math.round((live.price / surface) * 100) / 100;
+            }
+          }
           // Perioada (ex. „luna") nu are coloană: o punem la începutul descrierii.
           const period = (listing.period ?? listing.perioada)?.trim();
           if (period) {
