@@ -168,6 +168,29 @@ export function phoneFromText(text: string | null | undefined): string | null {
   return digits.startsWith("40") ? `0${digits.slice(2)}` : digits;
 }
 
+type ExistingListingFields = {
+  source: string;
+  external_id: string;
+  url: string | null;
+  phone: string | null;
+  images: unknown;
+};
+
+/** Completează link/telefon/imagini lipsă din rândul deja salvat (același source + external_id). */
+export function preserveExistingFields(
+  rows: Record<string, unknown>[],
+  existing: ExistingListingFields[],
+): void {
+  const byKey = new Map(existing.map((e) => [`${e.source}|${e.external_id}`, e]));
+  for (const row of rows) {
+    const old = byKey.get(`${row.source}|${row.external_id}`);
+    if (!old) continue;
+    if (!row.url && old.url) row.url = normalizeListingUrl(String(row.source), old.url, String(row.external_id));
+    if (!row.phone && old.phone) row.phone = old.phone;
+    if (!row.images && Array.isArray(old.images) && old.images.length > 0) row.images = old.images;
+  }
+}
+
 /** Extensia din content-type; fallback la extensia din URL, apoi .jpg. */
 function imageExtension(contentType: string | null, url: string): string {
   const fromType: Record<string, string> = {
@@ -311,6 +334,17 @@ export const Route = createFileRoute("/api/public/listings/upsert")({
           }
           rows.push(row);
         }
+
+        // Un batch fără link/telefon/imagini nu trebuie să șteargă ce era deja salvat.
+        const needsExisting = rows.filter((r) => !r.url || !r.phone || !r.images);
+        if (needsExisting.length > 0) {
+          const { data: existing } = await supabaseAdmin
+            .from("listings")
+            .select("source, external_id, url, phone, images")
+            .in("external_id", needsExisting.map((r) => r.external_id as string));
+          preserveExistingFields(rows, existing ?? []);
+        }
+
 
         const { error } = await supabaseAdmin
           .from("listings")
