@@ -52,7 +52,7 @@ export const privateListingsFiltersSchema = z.object({
 
 export const TRANSACTION_FILTERS: Record<"sale" | "rent" | "rent_day", string> = {
   sale: "transaction_type.ilike.%vanz%,transaction_type.ilike.%vânz%,transaction_type.ilike.%sale%",
-  rent: "transaction_type.ilike.%inch%,transaction_type.ilike.%rent%",
+  rent: "transaction_type.ilike.%inch%,transaction_type.ilike.%închi%,transaction_type.ilike.%Închi%,transaction_type.ilike.%rent%,transaction_type.ilike.%lease%",
   rent_day: "transaction_type.ilike.%pe zi%,description.ilike.%pe zi%",
 };
 
