@@ -339,11 +339,7 @@ function ListingCard({ listing }: { listing: OwnerListing }) {
             <span className="line-clamp-1">{place}</span>
           </p>
         ) : null}
-        {listing.description ? (
-          <p className="text-sm whitespace-pre-line break-words text-muted-foreground">
-            {listing.description}
-          </p>
-        ) : null}
+        {listing.description ? <ListingDescription text={listing.description} /> : null}
       </CardContent>
       <CardFooter className="flex gap-2 pt-3">
         {listing.phone ? (
@@ -362,6 +358,36 @@ function ListingCard({ listing }: { listing: OwnerListing }) {
         ) : null}
       </CardFooter>
     </Card>
+  );
+}
+
+const DESCRIPTION_COLLAPSED_LENGTH = 280;
+
+function ListingDescription({ text }: { text: string }) {
+  const [expanded, setExpanded] = useState(false);
+  const long = text.length > DESCRIPTION_COLLAPSED_LENGTH;
+  return (
+    <div className="flex flex-col items-start gap-1">
+      <p
+        className={`text-sm whitespace-pre-line break-words text-muted-foreground ${
+          expanded || !long ? "" : "line-clamp-6"
+        }`}
+      >
+        {text}
+      </p>
+      {long ? (
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          className="h-7 px-2 text-xs"
+          aria-expanded={expanded}
+          onClick={() => setExpanded((v) => !v)}
+        >
+          {expanded ? "Arată mai puțin" : "Arată tot"}
+        </Button>
+      ) : null}
+    </div>
   );
 }
 
