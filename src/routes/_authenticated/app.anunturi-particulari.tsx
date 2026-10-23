@@ -311,8 +311,17 @@ function ListingCard({ listing }: { listing: OwnerListing }) {
     listing.surface !== null ? `${listing.surface} m²` : null,
     listing.floor ? `Etaj ${listing.floor}` : null,
   ].filter(Boolean);
+  const firstImage = listing.images[0] ?? null;
   return (
-    <Card className="flex h-full flex-col gap-0">
+    <Card className="flex h-full flex-col gap-0 overflow-hidden">
+      {firstImage ? (
+        <img
+          src={firstImage}
+          alt={listing.title?.trim() || "Fotografie anunț"}
+          loading="lazy"
+          className="aspect-[16/9] w-full object-cover"
+        />
+      ) : null}
       <CardHeader className="flex flex-row items-center justify-between gap-2 pb-3">
         <Badge variant="secondary">
           Sursă: {SOURCE_LABELS[listing.source] ?? listing.source}

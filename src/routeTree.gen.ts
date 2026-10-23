@@ -103,6 +103,7 @@ import { Route as ApiPublicCronAccountDeletionRouteImport } from './routes/api/p
 import { Route as ApiPublicCronChatEmailRouteImport } from './routes/api/public/cron/chat-email'
 import { Route as ApiPublicCronLacheieResendRouteImport } from './routes/api/public/cron/lacheie-resend'
 import { Route as ApiPublicCronListingCollectorRouteImport } from './routes/api/public/cron/listing-collector'
+import { Route as ApiPublicCronListingsRetentionRouteImport } from './routes/api/public/cron/listings-retention'
 import { Route as ApiPublicCronMarketPriceIndicesRouteImport } from './routes/api/public/cron/market-price-indices'
 import { Route as ApiPublicCronOlxStatusRouteImport } from './routes/api/public/cron/olx-status'
 import { Route as ApiPublicCronOlxTokenRefreshRouteImport } from './routes/api/public/cron/olx-token-refresh'
@@ -133,6 +134,7 @@ import { Route as AuthenticatedSuperadminBlogPreviewIdRouteImport } from './rout
 import { Route as ApiPublicCatalogV1FacebookDotcsvRouteImport } from './routes/api/public/catalog/v1/facebook[.]csv'
 import { Route as ApiPublicFeedProperstarAgencyKeyRouteImport } from './routes/api/public/feed/properstar/$agencyKey'
 import { Route as ApiPublicHomepitchV1PropertiesRouteImport } from './routes/api/public/homepitch/v1/properties'
+import { Route as ApiPublicListingsMediaIdRouteImport } from './routes/api/public/listings/media.$id'
 import { Route as ApiPublicMetaOauthCallbackRouteImport } from './routes/api/public/meta/oauth.callback'
 import { Route as ApiPublicPortalV1AgencyRouteImport } from './routes/api/public/portal/v1/agency'
 import { Route as ApiPublicPortalV1AgentsRouteImport } from './routes/api/public/portal/v1/agents'
@@ -675,6 +677,12 @@ const ApiPublicCronListingCollectorRoute =
     path: '/api/public/cron/listing-collector',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicCronListingsRetentionRoute =
+  ApiPublicCronListingsRetentionRouteImport.update({
+    id: '/api/public/cron/listings-retention',
+    path: '/api/public/cron/listings-retention',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicCronMarketPriceIndicesRoute =
   ApiPublicCronMarketPriceIndicesRouteImport.update({
     id: '/api/public/cron/market-price-indices',
@@ -842,6 +850,12 @@ const ApiPublicHomepitchV1PropertiesRoute =
   ApiPublicHomepitchV1PropertiesRouteImport.update({
     id: '/api/public/homepitch/v1/properties',
     path: '/api/public/homepitch/v1/properties',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicListingsMediaIdRoute =
+  ApiPublicListingsMediaIdRouteImport.update({
+    id: '/api/public/listings/media/$id',
+    path: '/api/public/listings/media/$id',
     getParentRoute: () => rootRouteImport,
   } as any)
 const ApiPublicMetaOauthCallbackRoute =
@@ -1093,6 +1107,7 @@ export interface FileRoutesByFullPath {
   '/api/public/cron/chat-email': typeof ApiPublicCronChatEmailRoute
   '/api/public/cron/lacheie-resend': typeof ApiPublicCronLacheieResendRoute
   '/api/public/cron/listing-collector': typeof ApiPublicCronListingCollectorRoute
+  '/api/public/cron/listings-retention': typeof ApiPublicCronListingsRetentionRoute
   '/api/public/cron/market-price-indices': typeof ApiPublicCronMarketPriceIndicesRoute
   '/api/public/cron/olx-status': typeof ApiPublicCronOlxStatusRoute
   '/api/public/cron/olx-token-refresh': typeof ApiPublicCronOlxTokenRefreshRoute
@@ -1130,6 +1145,7 @@ export interface FileRoutesByFullPath {
   '/api/public/catalog/v1/facebook.csv': typeof ApiPublicCatalogV1FacebookDotcsvRoute
   '/api/public/feed/properstar/$agencyKey': typeof ApiPublicFeedProperstarAgencyKeyRoute
   '/api/public/homepitch/v1/properties': typeof ApiPublicHomepitchV1PropertiesRouteWithChildren
+  '/api/public/listings/media/$id': typeof ApiPublicListingsMediaIdRoute
   '/api/public/meta/oauth/callback': typeof ApiPublicMetaOauthCallbackRoute
   '/api/public/portal/v1/agency': typeof ApiPublicPortalV1AgencyRoute
   '/api/public/portal/v1/agents': typeof ApiPublicPortalV1AgentsRoute
@@ -1242,6 +1258,7 @@ export interface FileRoutesByTo {
   '/api/public/cron/chat-email': typeof ApiPublicCronChatEmailRoute
   '/api/public/cron/lacheie-resend': typeof ApiPublicCronLacheieResendRoute
   '/api/public/cron/listing-collector': typeof ApiPublicCronListingCollectorRoute
+  '/api/public/cron/listings-retention': typeof ApiPublicCronListingsRetentionRoute
   '/api/public/cron/market-price-indices': typeof ApiPublicCronMarketPriceIndicesRoute
   '/api/public/cron/olx-status': typeof ApiPublicCronOlxStatusRoute
   '/api/public/cron/olx-token-refresh': typeof ApiPublicCronOlxTokenRefreshRoute
@@ -1279,6 +1296,7 @@ export interface FileRoutesByTo {
   '/api/public/catalog/v1/facebook.csv': typeof ApiPublicCatalogV1FacebookDotcsvRoute
   '/api/public/feed/properstar/$agencyKey': typeof ApiPublicFeedProperstarAgencyKeyRoute
   '/api/public/homepitch/v1/properties': typeof ApiPublicHomepitchV1PropertiesRouteWithChildren
+  '/api/public/listings/media/$id': typeof ApiPublicListingsMediaIdRoute
   '/api/public/meta/oauth/callback': typeof ApiPublicMetaOauthCallbackRoute
   '/api/public/portal/v1/agency': typeof ApiPublicPortalV1AgencyRoute
   '/api/public/portal/v1/agents': typeof ApiPublicPortalV1AgentsRoute
@@ -1397,6 +1415,7 @@ export interface FileRoutesById {
   '/api/public/cron/chat-email': typeof ApiPublicCronChatEmailRoute
   '/api/public/cron/lacheie-resend': typeof ApiPublicCronLacheieResendRoute
   '/api/public/cron/listing-collector': typeof ApiPublicCronListingCollectorRoute
+  '/api/public/cron/listings-retention': typeof ApiPublicCronListingsRetentionRoute
   '/api/public/cron/market-price-indices': typeof ApiPublicCronMarketPriceIndicesRoute
   '/api/public/cron/olx-status': typeof ApiPublicCronOlxStatusRoute
   '/api/public/cron/olx-token-refresh': typeof ApiPublicCronOlxTokenRefreshRoute
@@ -1434,6 +1453,7 @@ export interface FileRoutesById {
   '/api/public/catalog/v1/facebook.csv': typeof ApiPublicCatalogV1FacebookDotcsvRoute
   '/api/public/feed/properstar/$agencyKey': typeof ApiPublicFeedProperstarAgencyKeyRoute
   '/api/public/homepitch/v1/properties': typeof ApiPublicHomepitchV1PropertiesRouteWithChildren
+  '/api/public/listings/media/$id': typeof ApiPublicListingsMediaIdRoute
   '/api/public/meta/oauth/callback': typeof ApiPublicMetaOauthCallbackRoute
   '/api/public/portal/v1/agency': typeof ApiPublicPortalV1AgencyRoute
   '/api/public/portal/v1/agents': typeof ApiPublicPortalV1AgentsRoute
@@ -1552,6 +1572,7 @@ export interface FileRouteTypes {
     | '/api/public/cron/chat-email'
     | '/api/public/cron/lacheie-resend'
     | '/api/public/cron/listing-collector'
+    | '/api/public/cron/listings-retention'
     | '/api/public/cron/market-price-indices'
     | '/api/public/cron/olx-status'
     | '/api/public/cron/olx-token-refresh'
@@ -1589,6 +1610,7 @@ export interface FileRouteTypes {
     | '/api/public/catalog/v1/facebook.csv'
     | '/api/public/feed/properstar/$agencyKey'
     | '/api/public/homepitch/v1/properties'
+    | '/api/public/listings/media/$id'
     | '/api/public/meta/oauth/callback'
     | '/api/public/portal/v1/agency'
     | '/api/public/portal/v1/agents'
@@ -1701,6 +1723,7 @@ export interface FileRouteTypes {
     | '/api/public/cron/chat-email'
     | '/api/public/cron/lacheie-resend'
     | '/api/public/cron/listing-collector'
+    | '/api/public/cron/listings-retention'
     | '/api/public/cron/market-price-indices'
     | '/api/public/cron/olx-status'
     | '/api/public/cron/olx-token-refresh'
@@ -1738,6 +1761,7 @@ export interface FileRouteTypes {
     | '/api/public/catalog/v1/facebook.csv'
     | '/api/public/feed/properstar/$agencyKey'
     | '/api/public/homepitch/v1/properties'
+    | '/api/public/listings/media/$id'
     | '/api/public/meta/oauth/callback'
     | '/api/public/portal/v1/agency'
     | '/api/public/portal/v1/agents'
@@ -1855,6 +1879,7 @@ export interface FileRouteTypes {
     | '/api/public/cron/chat-email'
     | '/api/public/cron/lacheie-resend'
     | '/api/public/cron/listing-collector'
+    | '/api/public/cron/listings-retention'
     | '/api/public/cron/market-price-indices'
     | '/api/public/cron/olx-status'
     | '/api/public/cron/olx-token-refresh'
@@ -1892,6 +1917,7 @@ export interface FileRouteTypes {
     | '/api/public/catalog/v1/facebook.csv'
     | '/api/public/feed/properstar/$agencyKey'
     | '/api/public/homepitch/v1/properties'
+    | '/api/public/listings/media/$id'
     | '/api/public/meta/oauth/callback'
     | '/api/public/portal/v1/agency'
     | '/api/public/portal/v1/agents'
@@ -1960,6 +1986,7 @@ export interface RootRouteChildren {
   ApiPublicCronChatEmailRoute: typeof ApiPublicCronChatEmailRoute
   ApiPublicCronLacheieResendRoute: typeof ApiPublicCronLacheieResendRoute
   ApiPublicCronListingCollectorRoute: typeof ApiPublicCronListingCollectorRoute
+  ApiPublicCronListingsRetentionRoute: typeof ApiPublicCronListingsRetentionRoute
   ApiPublicCronMarketPriceIndicesRoute: typeof ApiPublicCronMarketPriceIndicesRoute
   ApiPublicCronOlxStatusRoute: typeof ApiPublicCronOlxStatusRoute
   ApiPublicCronOlxTokenRefreshRoute: typeof ApiPublicCronOlxTokenRefreshRoute
@@ -1987,6 +2014,7 @@ export interface RootRouteChildren {
   ApiPublicCatalogV1FacebookDotcsvRoute: typeof ApiPublicCatalogV1FacebookDotcsvRoute
   ApiPublicFeedProperstarAgencyKeyRoute: typeof ApiPublicFeedProperstarAgencyKeyRoute
   ApiPublicHomepitchV1PropertiesRoute: typeof ApiPublicHomepitchV1PropertiesRouteWithChildren
+  ApiPublicListingsMediaIdRoute: typeof ApiPublicListingsMediaIdRoute
   ApiPublicMetaOauthCallbackRoute: typeof ApiPublicMetaOauthCallbackRoute
   ApiPublicPortalV1AgencyRoute: typeof ApiPublicPortalV1AgencyRoute
   ApiPublicPortalV1AgentsRoute: typeof ApiPublicPortalV1AgentsRoute
@@ -2674,6 +2702,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicCronListingCollectorRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/cron/listings-retention': {
+      id: '/api/public/cron/listings-retention'
+      path: '/api/public/cron/listings-retention'
+      fullPath: '/api/public/cron/listings-retention'
+      preLoaderRoute: typeof ApiPublicCronListingsRetentionRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/cron/market-price-indices': {
       id: '/api/public/cron/market-price-indices'
       path: '/api/public/cron/market-price-indices'
@@ -2882,6 +2917,13 @@ declare module '@tanstack/react-router' {
       path: '/api/public/homepitch/v1/properties'
       fullPath: '/api/public/homepitch/v1/properties'
       preLoaderRoute: typeof ApiPublicHomepitchV1PropertiesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/listings/media/$id': {
+      id: '/api/public/listings/media/$id'
+      path: '/api/public/listings/media/$id'
+      fullPath: '/api/public/listings/media/$id'
+      preLoaderRoute: typeof ApiPublicListingsMediaIdRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/meta/oauth/callback': {
@@ -3357,6 +3399,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicCronChatEmailRoute: ApiPublicCronChatEmailRoute,
   ApiPublicCronLacheieResendRoute: ApiPublicCronLacheieResendRoute,
   ApiPublicCronListingCollectorRoute: ApiPublicCronListingCollectorRoute,
+  ApiPublicCronListingsRetentionRoute: ApiPublicCronListingsRetentionRoute,
   ApiPublicCronMarketPriceIndicesRoute: ApiPublicCronMarketPriceIndicesRoute,
   ApiPublicCronOlxStatusRoute: ApiPublicCronOlxStatusRoute,
   ApiPublicCronOlxTokenRefreshRoute: ApiPublicCronOlxTokenRefreshRoute,
@@ -3387,6 +3430,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicFeedProperstarAgencyKeyRoute: ApiPublicFeedProperstarAgencyKeyRoute,
   ApiPublicHomepitchV1PropertiesRoute:
     ApiPublicHomepitchV1PropertiesRouteWithChildren,
+  ApiPublicListingsMediaIdRoute: ApiPublicListingsMediaIdRoute,
   ApiPublicMetaOauthCallbackRoute: ApiPublicMetaOauthCallbackRoute,
   ApiPublicPortalV1AgencyRoute: ApiPublicPortalV1AgencyRoute,
   ApiPublicPortalV1AgentsRoute: ApiPublicPortalV1AgentsRoute,

@@ -3357,6 +3357,9 @@ export type Database = {
       }
       listings: {
         Row: {
+          availability: string | null
+          bca: string | null
+          building_type: string | null
           city: string | null
           county: string | null
           currency: string | null
@@ -3364,12 +3367,20 @@ export type Database = {
           external_id: string
           fingerprint: string | null
           floor: string | null
+          floors_count: number | null
+          furnished: string | null
+          has_lift: string | null
+          heating: string | null
           id: string
           images: string[] | null
           is_owner: boolean | null
           location: string | null
+          min_term: string | null
+          neighborhood: string | null
           owner_type: string | null
+          parking: string | null
           phone: string | null
+          plot_area: number | null
           price: number | null
           price_per_m2: number | null
           property_type: string | null
@@ -3381,10 +3392,15 @@ export type Database = {
           surface: number | null
           title: string | null
           transaction_type: string | null
+          updated_at: string
           url: string | null
+          year_built: number | null
           zone: string | null
         }
         Insert: {
+          availability?: string | null
+          bca?: string | null
+          building_type?: string | null
           city?: string | null
           county?: string | null
           currency?: string | null
@@ -3392,12 +3408,20 @@ export type Database = {
           external_id: string
           fingerprint?: string | null
           floor?: string | null
+          floors_count?: number | null
+          furnished?: string | null
+          has_lift?: string | null
+          heating?: string | null
           id?: string
           images?: string[] | null
           is_owner?: boolean | null
           location?: string | null
+          min_term?: string | null
+          neighborhood?: string | null
           owner_type?: string | null
+          parking?: string | null
           phone?: string | null
+          plot_area?: number | null
           price?: number | null
           price_per_m2?: number | null
           property_type?: string | null
@@ -3409,10 +3433,15 @@ export type Database = {
           surface?: number | null
           title?: string | null
           transaction_type?: string | null
+          updated_at?: string
           url?: string | null
+          year_built?: number | null
           zone?: string | null
         }
         Update: {
+          availability?: string | null
+          bca?: string | null
+          building_type?: string | null
           city?: string | null
           county?: string | null
           currency?: string | null
@@ -3420,12 +3449,20 @@ export type Database = {
           external_id?: string
           fingerprint?: string | null
           floor?: string | null
+          floors_count?: number | null
+          furnished?: string | null
+          has_lift?: string | null
+          heating?: string | null
           id?: string
           images?: string[] | null
           is_owner?: boolean | null
           location?: string | null
+          min_term?: string | null
+          neighborhood?: string | null
           owner_type?: string | null
+          parking?: string | null
           phone?: string | null
+          plot_area?: number | null
           price?: number | null
           price_per_m2?: number | null
           property_type?: string | null
@@ -3437,7 +3474,9 @@ export type Database = {
           surface?: number | null
           title?: string | null
           transaction_type?: string | null
+          updated_at?: string
           url?: string | null
+          year_built?: number | null
           zone?: string | null
         }
         Relationships: []
@@ -9585,6 +9624,7 @@ export type Database = {
       }
       public_partner_logo_path: { Args: { _id: string }; Returns: string }
       purge_expired_portal_messages: { Args: never; Returns: number }
+      purge_old_listings: { Args: never; Returns: number }
       qa_purge_demo_organization: { Args: { _org: string }; Returns: string[] }
       qa_reset_demo_organization: { Args: { _org: string }; Returns: Json }
       rate_limit_hit: {

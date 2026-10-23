@@ -29,6 +29,7 @@ export type OwnerListing = {
   phone: string | null;
   url: string | null;
   description: string | null;
+  images: string[];
   scrapedAt: string | null;
 };
 
@@ -63,7 +64,7 @@ export const getOwnerListings = createServerFn({ method: "GET" })
     let query = context.supabase
       .from("listings")
       .select(
-        "id, source, title, price, currency, price_per_m2, rooms, surface, floor, city, zone, location, county, property_type, transaction_type, phone, url, description, scraped_at",
+        "id, source, title, price, currency, price_per_m2, rooms, surface, floor, city, zone, location, county, property_type, transaction_type, phone, url, description, images, scraped_at",
         { count: "exact" },
       )
       .eq("is_owner", true);
@@ -123,6 +124,7 @@ export const getOwnerListings = createServerFn({ method: "GET" })
         phone: row.phone,
         url: row.url,
         description: row.description,
+        images: Array.isArray(row.images) ? row.images.filter((u): u is string => typeof u === "string") : [],
         scrapedAt: row.scraped_at,
       })),
     };
