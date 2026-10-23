@@ -32,7 +32,8 @@ const searchSchema = z.object({
   q: z.string().optional(),
   pagina: z.coerce.number().int().min(1).optional(),
   sursa: z.enum(["storia", "imobiliare", "olx", "romimo"]).optional(),
-  tranzactie: z.enum(["sale", "rent"]).optional(),
+  tranzactie: z.enum(["sale", "rent", "rent_day"]).optional(),
+  tip: z.string().max(80).optional(),
   pretMin: z.coerce.number().min(0).optional(),
   pretMax: z.coerce.number().min(0).optional(),
   mpMin: z.coerce.number().min(0).optional(),
@@ -101,13 +102,13 @@ function PrivateListingsPage() {
   const listings = useQuery({
     queryKey: [
       "owner-listings", search.oras, search.zona, rooms.join(","), search.q, page,
-      search.sursa, search.tranzactie, search.pretMin, search.pretMax, search.mpMin, search.mpMax,
+      search.sursa, search.tranzactie, search.tip, search.pretMin, search.pretMax, search.mpMin, search.mpMax,
     ],
     queryFn: () =>
       fetchListings({
         data: {
           city: search.oras, zone: search.zona, rooms, q: search.q, page,
-          source: search.sursa, transaction: search.tranzactie,
+          source: search.sursa, transaction: search.tranzactie, propertyType: search.tip,
           priceMin: search.pretMin, priceMax: search.pretMax,
           surfaceMin: search.mpMin, surfaceMax: search.mpMax,
         },
@@ -123,7 +124,7 @@ function PrivateListingsPage() {
     update({ camere: next.length ? next.join(",") : undefined });
   };
   const hasFilters = Boolean(
-    search.oras || search.zona || rooms.length || search.q || search.sursa || search.tranzactie ||
+    search.oras || search.zona || rooms.length || search.q || search.sursa || search.tranzactie || search.tip ||
       search.pretMin !== undefined || search.pretMax !== undefined ||
       search.mpMin !== undefined || search.mpMax !== undefined,
   );
@@ -194,7 +195,7 @@ function PrivateListingsPage() {
             aria-label="Cuvinte cheie"
           />
         </div>
-        <div className="grid grid-cols-2 gap-3 md:col-span-3 lg:col-span-4 lg:grid-cols-6">
+        <div className="grid grid-cols-2 gap-3 md:col-span-3 lg:col-span-4 lg:grid-cols-7">
           <Select
             value={search.sursa ?? ALL}
             onValueChange={(v) => update({ sursa: v === ALL ? undefined : (v as "storia") })}
@@ -211,11 +212,24 @@ function PrivateListingsPage() {
             value={search.tranzactie ?? ALL}
             onValueChange={(v) => update({ tranzactie: v === ALL ? undefined : (v as "sale") })}
           >
-            <SelectTrigger aria-label="Tranzacție"><SelectValue placeholder="Tranzacție" /></SelectTrigger>
+            <SelectTrigger aria-label="Tip anunț"><SelectValue placeholder="Tip anunț" /></SelectTrigger>
             <SelectContent>
               <SelectItem value={ALL}>Vânzare și închiriere</SelectItem>
               <SelectItem value="sale">Vânzare</SelectItem>
               <SelectItem value="rent">Închiriere</SelectItem>
+              <SelectItem value="rent_day">Închiriere pe zi</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select
+            value={search.tip ?? ALL}
+            onValueChange={(v) => update({ tip: v === ALL ? undefined : v })}
+          >
+            <SelectTrigger aria-label="Tip proprietate"><SelectValue placeholder="Tip proprietate" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value={ALL}>Toate tipurile</SelectItem>
+              {(facets.data?.propertyTypes ?? []).map((t) => (
+                <SelectItem key={t} value={t}>{t}</SelectItem>
+              ))}
             </SelectContent>
           </Select>
           <NumberFilter label="Preț minim (€)" value={search.pretMin} onChange={(v) => update({ pretMin: v })} />
@@ -305,7 +319,11 @@ function ListingCard({ listing }: { listing: OwnerListing }) {
         </Badge>
         {listing.transactionType ? (
           <span className="text-xs text-muted-foreground">
-            {/rent|inch/i.test(listing.transactionType) ? "Închiriere" : "Vânzare"}
+            {/pe zi/i.test(listing.transactionType)
+              ? "Închiriere pe zi"
+              : /rent|inch/i.test(listing.transactionType)
+                ? "Închiriere"
+                : "Vânzare"}
           </span>
         ) : null}
       </CardHeader>
