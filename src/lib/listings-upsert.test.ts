@@ -159,3 +159,12 @@ describe("preserveExistingFields", () => {
     expect(rows[0]).toMatchObject({ url: "https://www.olx.ro/d/oferta/x", phone: "0722123456", images: ["i"] });
   });
 });
+
+describe("parseStoriaPrice", () => {
+  it("citește prețul de vânzare și de închiriere din pagina Storia", async () => {
+    const { parseStoriaPrice } = await import("@/routes/api/public/listings/upsert");
+    expect(parseStoriaPrice('"salePrice":{"value":180000,"currency":"EUR"')).toEqual({ price: 180000, currency: "EUR" });
+    expect(parseStoriaPrice('"rentalPrice":{"value":1299,"currency":"EUR"')).toEqual({ price: 1299, currency: "EUR" });
+    expect(parseStoriaPrice("<html>fără preț</html>")).toBeNull();
+  });
+});

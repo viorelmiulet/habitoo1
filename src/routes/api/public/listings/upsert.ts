@@ -120,6 +120,38 @@ export function periodPrefix(period: string): string {
   return `(${period.trim()})`;
 }
 
+/** Prețul din datele structurate ale paginii Storia (salePrice / rentalPrice). */
+export function parseStoriaPrice(html: string): { price: number; currency: string } | null {
+  const m = /"(?:salePrice|rentalPrice)":\{"value":(\d+(?:\.\d+)?),"currency":"([A-Z]{3})"/.exec(html);
+  if (!m) return null;
+  const price = Number(m[1]);
+  return Number.isFinite(price) && price > 0 ? { price, currency: m[2] } : null;
+}
+
+const STORIA_PAGE_TIMEOUT_MS = 8_000;
+const STORIA_PAGE_MAX_BYTES = 3 * 1024 * 1024;
+
+/** Citește prețul direct din pagina anunțului Storia; null la orice eșec. */
+export async function fetchStoriaPrice(url: string): Promise<{ price: number; currency: string } | null> {
+  if (!/^https:\/\/www\.storia\.ro\/ro\/oferta\//.test(url)) return null;
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), STORIA_PAGE_TIMEOUT_MS);
+  try {
+    const res = await fetch(url, {
+      signal: controller.signal,
+      headers: { "User-Agent": "Mozilla/5.0 (compatible; HabitooCRM/1.0)", Accept: "text/html" },
+    });
+    if (!res.ok) return null;
+    const text = await res.text();
+    if (text.length > STORIA_PAGE_MAX_BYTES) return null;
+    return parseStoriaPrice(text);
+  } catch {
+    return null;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 const TRANSACTION_LABELS: Record<string, string> = { sale: "Vânzare", lease: "Închiriere", rent: "Închiriere" };
 const PROPERTY_LABELS: Record<string, string> = {
   apartment: "Apartament",
@@ -331,6 +363,18 @@ export const Route = createFileRoute("/api/public/listings/upsert")({
           }
           row.url = normalizeListingUrl(listing.source, listing.url, listing.external_id, listing.title);
           row.phone = (listing.phone ?? "").trim() || phoneFromText(listing.description);
+          row.transaction_type = labelTransaction(listing.transaction_type);
+          row.property_type = labelPropertyType(listing.property_type);
+          // Storia: prețul se citește din pagina anunțului (textul primit poate avea prețuri lipite).
+          if (listing.source === "storia" && typeof row.url === "string") {
+            const live = await fetchStoriaPrice(row.url);
+            if (live) {
+              row.price = live.price;
+              row.currency = live.currency;
+              const surface = typeof listing.surface === "number" ? listing.surface : null;
+              if (surface && surface > 0) row.price_per_m2 = Math.round((live.price / surface) * 100) / 100;
+            }
+          }
           // Perioada (ex. „luna") nu are coloană: o punem la începutul descrierii.
           const period = (listing.period ?? listing.perioada)?.trim();
           if (period) {
