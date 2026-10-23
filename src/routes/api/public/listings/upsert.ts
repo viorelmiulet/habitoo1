@@ -22,6 +22,32 @@ const IMAGE_TIMEOUT_MS = 10_000;
 const IMAGE_MAX_BYTES = 5 * 1024 * 1024;
 export const LISTING_IMAGES_BUCKET = "listing-images";
 
+/**
+ * Transformă valori numerice venite ca text din hbsync ("4", "P+4", "120,5 mp", "")
+ * în număr; textul gol sau fără cifre devine null, ca un câmp opțional să nu
+ * respingă tot batch-ul. Numerele reale trec neschimbate.
+ */
+export function toLenientNumber(value: unknown, opts: { int?: boolean } = {}): unknown {
+  if (value === undefined || value === null) return value;
+  if (typeof value === "number") return opts.int && Number.isFinite(value) ? Math.round(value) : value;
+  if (typeof value !== "string") return value;
+  const match = value.replace(/\s/g, "").replace(",", ".").match(/-?\d+(\.\d+)?/);
+  if (!match) return null;
+  const n = Number(match[0]);
+  if (!Number.isFinite(n)) return null;
+  return opts.int ? Math.round(n) : n;
+}
+
+const lenientNumber = (schema: z.ZodTypeAny, int = false) =>
+  z.preprocess((v) => toLenientNumber(v, { int }), schema);
+
+/** Ca lenientNumber, dar o valoare în afara intervalului devine null în loc de eroare. */
+const lenientOptionalNumber = (schema: z.ZodNumber, int = false) =>
+  z.preprocess((v) => {
+    const n = toLenientNumber(v, { int });
+    return typeof n === "number" && !schema.safeParse(n).success ? null : n;
+  }, schema.nullish());
+
 const listingSchema = z.object({
   source: z
     .string()
@@ -30,15 +56,15 @@ const listingSchema = z.object({
     .regex(/^[a-z0-9_.-]+$/),
   external_id: z.string().min(1).max(200),
   title: z.string().max(500).nullish(),
-  price: z.number().nonnegative().nullish(),
+  price: lenientNumber(z.number().nonnegative().nullish()),
   currency: z.string().max(8).nullish(),
-  price_per_m2: z.number().nonnegative().nullish(),
-  rooms: z.number().int().nonnegative().nullish(),
+  price_per_m2: lenientNumber(z.number().nonnegative().nullish()),
+  rooms: lenientNumber(z.number().int().nonnegative().nullish(), true),
   rooms_label: z.string().max(100).nullish(),
-  surface: z.number().nonnegative().nullish(),
+  surface: lenientNumber(z.number().nonnegative().nullish()),
   floor: z.string().max(50).nullish(),
-  floors_count: z.number().int().nonnegative().nullish(),
-  year_built: z.number().int().min(1800).max(2100).nullish(),
+  floors_count: lenientOptionalNumber(z.number().int().nonnegative(), true),
+  year_built: lenientOptionalNumber(z.number().int().min(1800).max(2100), true),
   city: z.string().max(100).nullish(),
   zone: z.string().max(150).nullish(),
   neighborhood: z.string().max(150).nullish(),
@@ -56,7 +82,7 @@ const listingSchema = z.object({
   bca: z.string().max(300).nullish(),
   availability: z.string().max(100).nullish(),
   min_term: z.string().max(100).nullish(),
-  plot_area: z.number().nonnegative().nullish(),
+  plot_area: lenientOptionalNumber(z.number().nonnegative()),
   heating: z.string().max(100).nullish(),
   has_lift: z.string().max(50).nullish(),
   building_type: z.string().max(100).nullish(),
