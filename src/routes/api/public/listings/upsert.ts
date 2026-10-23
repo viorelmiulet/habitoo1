@@ -1,17 +1,26 @@
 /**
- * Endpoint public pentru ingestia anunțurilor de la scraper.
+ * Endpoint public pentru ingestia anunțurilor de la scraper (hbsync).
  *
  * POST /api/public/listings/upsert
- * Header obligatoriu: x-scraper-secret (comparat cu SCRAPER_SECRET).
- * Body: { "listings": [ { source, external_id, ... } ] }
- * Face upsert în `listings` pe (source, external_id) și returnează
- * { success: true, inserted: <număr procesat> }.
+ * Header obligatoriu: x-scraper-secret (comparat cu HBSYNC_SECRET/SCRAPER_SECRET).
+ * Body: { "listings": [ { source, external_id, ... } ] } — batch de 1–500.
+ * Face upsert în `listings` pe (source, external_id) — idempotent: același
+ * anunț trimis de două ori actualizează același rând.
+ *
+ * Imaginile (max 12/anunț, max 5MB, timeout 10s) sunt descărcate și urcate în
+ * bucketul privat `listing-images` sub <external_id>/; în coloana `images` se
+ * salvează URL-uri stabile /api/public/listings/media/<id> care redirectează
+ * către URL-uri semnate. O imagine care pică nu oprește importul.
  */
 import { createFileRoute } from "@tanstack/react-router";
 import { timingSafeEqual } from "crypto";
 import { z } from "zod";
 
 const MAX_LISTINGS_PER_CALL = 500;
+const MAX_IMAGES_PER_LISTING = 12;
+const IMAGE_TIMEOUT_MS = 10_000;
+const IMAGE_MAX_BYTES = 5 * 1024 * 1024;
+export const LISTING_IMAGES_BUCKET = "listing-images";
 
 const listingSchema = z.object({
   source: z
@@ -25,10 +34,14 @@ const listingSchema = z.object({
   currency: z.string().max(8).nullish(),
   price_per_m2: z.number().nonnegative().nullish(),
   rooms: z.number().int().nonnegative().nullish(),
+  rooms_label: z.string().max(100).nullish(),
   surface: z.number().nonnegative().nullish(),
   floor: z.string().max(50).nullish(),
+  floors_count: z.number().int().nonnegative().nullish(),
+  year_built: z.number().int().min(1800).max(2100).nullish(),
   city: z.string().max(100).nullish(),
   zone: z.string().max(150).nullish(),
+  neighborhood: z.string().max(150).nullish(),
   location: z.string().max(300).nullish(),
   county: z.string().max(100).nullish(),
   property_type: z.string().max(100).nullish(),
@@ -36,7 +49,17 @@ const listingSchema = z.object({
   is_owner: z.boolean().nullish(),
   owner_type: z.string().max(50).nullish(),
   description: z.string().max(20_000).nullish(),
-  perioada: z.string().max(100).nullish(),
+  period: z.string().max(100).nullish(),
+  perioada: z.string().max(100).nullish(), // alias vechi, acceptat pentru compatibilitate
+  furnished: z.string().max(50).nullish(),
+  parking: z.string().max(50).nullish(),
+  bca: z.string().max(300).nullish(),
+  availability: z.string().max(100).nullish(),
+  min_term: z.string().max(100).nullish(),
+  plot_area: z.number().nonnegative().nullish(),
+  heating: z.string().max(100).nullish(),
+  has_lift: z.string().max(50).nullish(),
+  building_type: z.string().max(100).nullish(),
   phone: z.string().max(50).nullish(),
   url: z.string().url().max(2000).nullish(),
   images: z.array(z.string().url().max(2000)).max(50).nullish(),
@@ -61,6 +84,84 @@ function secretMatches(provided: string, expected: string): boolean {
   const a = Buffer.from(provided, "utf8");
   const b = Buffer.from(expected, "utf8");
   return a.length === b.length && timingSafeEqual(a, b);
+}
+
+/** Prefixul de perioadă pus la începutul descrierii (tabela nu are coloană dedicată). */
+export function periodPrefix(period: string): string {
+  const p = period.trim().toLowerCase();
+  if (p === "luna" || p === "lună") return "(închiriere - preț pe lună)";
+  if (p === "zi") return "(închiriere - preț pe zi)";
+  return `(${period.trim()})`;
+}
+
+/** Extensia din content-type; fallback la extensia din URL, apoi .jpg. */
+function imageExtension(contentType: string | null, url: string): string {
+  const fromType: Record<string, string> = {
+    "image/jpeg": "jpg",
+    "image/png": "png",
+    "image/webp": "webp",
+    "image/gif": "gif",
+  };
+  if (contentType) {
+    const base = contentType.split(";")[0].trim().toLowerCase();
+    if (fromType[base]) return fromType[base];
+  }
+  const match = /\.(jpe?g|png|webp|gif)(?:[?#]|$)/i.exec(url);
+  return match ? match[1].toLowerCase().replace("jpeg", "jpg") : "jpg";
+}
+
+/**
+ * Descarcă și urcă imaginile unui anunț în bucketul privat; returnează
+ * URL-urile stabile /api/public/listings/media/<uuid>. Eșecurile individuale
+ * sunt ignorate — nu opresc importul.
+ */
+export async function mirrorListingImages(
+  supabaseAdmin: {
+    storage: {
+      from: (bucket: string) => {
+        upload: (
+          path: string,
+          body: Blob | ArrayBuffer,
+          opts: { contentType?: string; upsert?: boolean },
+        ) => Promise<{ error: { message: string } | null }>;
+      };
+    };
+  },
+  externalId: string,
+  imageUrls: string[],
+  baseUrl: string,
+): Promise<string[]> {
+  const stored: string[] = [];
+  const safeId = externalId.replace(/[^a-zA-Z0-9_.-]+/g, "-").slice(0, 180);
+  for (const [index, url] of imageUrls.slice(0, MAX_IMAGES_PER_LISTING).entries()) {
+    try {
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), IMAGE_TIMEOUT_MS);
+      let response: Response;
+      try {
+        response = await fetch(url, { signal: controller.signal });
+      } finally {
+        clearTimeout(timer);
+      }
+      if (!response.ok) continue;
+      const contentType = response.headers.get("content-type") ?? "";
+      if (!contentType.toLowerCase().startsWith("image/")) continue;
+      const buffer = await response.arrayBuffer();
+      if (buffer.byteLength === 0 || buffer.byteLength > IMAGE_MAX_BYTES) continue;
+      const path = `${safeId}/${index}-${crypto.randomUUID()}.${imageExtension(contentType, url)}`;
+      const { error } = await supabaseAdmin.storage
+        .from(LISTING_IMAGES_BUCKET)
+        .upload(path, buffer, { contentType: contentType.split(";")[0].trim(), upsert: true });
+      if (error) {
+        console.error(`[listings-upsert] image upload failed for ${externalId}: ${error.message}`);
+        continue;
+      }
+      stored.push(`${baseUrl}/api/public/listings/media/${crypto.randomUUID()}?p=${encodeURIComponent(path)}`);
+    } catch {
+      // Imaginea pică — continuăm cu celelalte.
+    }
+  }
+  return stored;
 }
 
 export const Route = createFileRoute("/api/public/listings/upsert")({
@@ -94,28 +195,44 @@ export const Route = createFileRoute("/api/public/listings/upsert")({
           );
         }
 
-        const rows = parsed.data.listings.map((listing) => {
+        const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+        const baseUrl = new URL(request.url).origin;
+
+        const rows: Record<string, unknown>[] = [];
+        for (const listing of parsed.data.listings) {
           const row: Record<string, unknown> = {
             source: listing.source,
             external_id: listing.external_id,
           };
+          // Câmpuri care nu sunt coloane reale sau se tratează separat.
+          const skip = new Set(["source", "external_id", "perioada", "period", "rooms_label", "images"]);
           for (const [key, value] of Object.entries(listing)) {
-            if (key === "source" || key === "external_id" || key === "perioada") continue;
+            if (skip.has(key)) continue;
             if (value !== undefined) row[key] = value;
           }
-          // Tabela nu are coloană „perioada”: o punem la începutul descrierii.
-          const perioada = listing.perioada?.trim();
-          if (perioada) {
-            const prefix = `(${perioada})`;
+          // Perioada (ex. „luna") nu are coloană: o punem la începutul descrierii.
+          const period = (listing.period ?? listing.perioada)?.trim();
+          if (period) {
+            const prefix = periodPrefix(period);
             const desc = listing.description ?? "";
             if (!desc.startsWith(prefix)) {
               row.description = desc ? `${prefix}\n\n${desc}` : prefix;
             }
           }
-          return row;
-        });
+          // Imaginile: descărcare + upload în storage; salvăm doar URL-urile.
+          const remoteImages = (listing.images ?? []).slice(0, MAX_IMAGES_PER_LISTING);
+          if (remoteImages.length > 0) {
+            const mirrored = await mirrorListingImages(
+              supabaseAdmin,
+              listing.external_id,
+              remoteImages,
+              baseUrl,
+            );
+            if (mirrored.length > 0) row.images = mirrored;
+          }
+          rows.push(row);
+        }
 
-        const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
         const { error } = await supabaseAdmin
           .from("listings")
           .upsert(rows as never, { onConflict: "source,external_id" });
