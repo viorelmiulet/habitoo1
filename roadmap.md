@@ -3,6 +3,7 @@
 - [ ] Activare colectare OLX în hbsync și verificare import cu sursa reală — blocat: codul/configurația și accesul de administrare hbsync nu sunt disponibile; importatorul Habitoo acceptă deja OLX
 - [x] Documentație livrată cu 129 coloane properties și 19 contacts verificate live, relații, mapare și contract propuse (explicit neimplementate), permisiuni și colectori
 - [x] Modul „Anunțuri particulari” în aplicație (oraș, zonă, camere, cuvinte cheie), acces doar conectat, import prin endpointul existent cu oraș/zonă
+- [x] Import batch hbsync: câmpuri noi (cartier, etaje, an, mobilat etc.), imagini oglindite în storage privat cu URL stabil, perioada ca prefix în descriere, retenție 60 zile cu job zilnic, upsert idempotent; verificat live cu anunț trimis de două ori
 - [ ] Cheia de import SCRAPER_SECRET de transmis către hbsync (setată de utilizator)
 
 # Narațiune video AI
