@@ -120,6 +120,38 @@ export function periodPrefix(period: string): string {
   return `(${period.trim()})`;
 }
 
+/** Prețul din datele structurate ale paginii Storia (salePrice / rentalPrice). */
+export function parseStoriaPrice(html: string): { price: number; currency: string } | null {
+  const m = /"(?:salePrice|rentalPrice)":\{"value":(\d+(?:\.\d+)?),"currency":"([A-Z]{3})"/.exec(html);
+  if (!m) return null;
+  const price = Number(m[1]);
+  return Number.isFinite(price) && price > 0 ? { price, currency: m[2] } : null;
+}
+
+const STORIA_PAGE_TIMEOUT_MS = 8_000;
+const STORIA_PAGE_MAX_BYTES = 3 * 1024 * 1024;
+
+/** Citește prețul direct din pagina anunțului Storia; null la orice eșec. */
+export async function fetchStoriaPrice(url: string): Promise<{ price: number; currency: string } | null> {
+  if (!/^https:\/\/www\.storia\.ro\/ro\/oferta\//.test(url)) return null;
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), STORIA_PAGE_TIMEOUT_MS);
+  try {
+    const res = await fetch(url, {
+      signal: controller.signal,
+      headers: { "User-Agent": "Mozilla/5.0 (compatible; HabitooCRM/1.0)", Accept: "text/html" },
+    });
+    if (!res.ok) return null;
+    const text = await res.text();
+    if (text.length > STORIA_PAGE_MAX_BYTES) return null;
+    return parseStoriaPrice(text);
+  } catch {
+    return null;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 const TRANSACTION_LABELS: Record<string, string> = { sale: "Vânzare", lease: "Închiriere", rent: "Închiriere" };
 const PROPERTY_LABELS: Record<string, string> = {
   apartment: "Apartament",
