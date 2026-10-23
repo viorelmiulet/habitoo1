@@ -340,7 +340,21 @@ function ListingCard({ listing }: { listing: OwnerListing }) {
         <h3 className="line-clamp-2 font-semibold leading-snug">
           {listing.title?.trim() || "Anunț fără titlu"}
         </h3>
-        <p className="text-xl font-bold text-primary">{money(listing.price, listing.currency)}</p>
+        {listing.price === null ? (
+          <p className="text-sm font-medium text-muted-foreground">
+            Preț nedisponibil
+            {listing.url ? (
+              <>
+                {" – "}
+                <a href={listing.url} target="_blank" rel="noopener noreferrer" className="text-primary underline">
+                  vezi anunțul pe {SOURCE_LABELS[listing.source] ?? listing.source}
+                </a>
+              </>
+            ) : null}
+          </p>
+        ) : (
+          <p className="text-xl font-bold text-primary">{money(listing.price, listing.currency)}</p>
+        )}
         {specs.length ? <p className="text-sm">{specs.join(" · ")}</p> : null}
         {place ? (
           <p className="flex items-start gap-1.5 text-sm text-muted-foreground">
