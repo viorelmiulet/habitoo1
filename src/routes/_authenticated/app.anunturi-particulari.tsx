@@ -321,7 +321,9 @@ function ListingCard({ listing }: { listing: OwnerListing }) {
           </p>
         ) : null}
         {listing.description ? (
-          <p className="line-clamp-3 text-sm text-muted-foreground">{listing.description}</p>
+          <p className="text-sm whitespace-pre-line break-words text-muted-foreground">
+            {listing.description}
+          </p>
         ) : null}
       </CardContent>
       <CardFooter className="flex gap-2 pt-3">
