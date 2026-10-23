@@ -34,7 +34,7 @@ export type OwnerListing = {
 
 const num = (v: unknown) => (v === null || v === undefined ? null : Number(v));
 
-const filtersSchema = z.object({
+export const privateListingsFiltersSchema = z.object({
   city: z.string().max(80).optional(),
   zone: z.string().max(80).optional(),
   rooms: z.array(z.number().int()).max(5).optional(),
