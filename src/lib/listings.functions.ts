@@ -40,7 +40,7 @@ const filtersSchema = z.object({
   rooms: z.array(z.number().int()).max(5).optional(),
   q: z.string().max(200).optional(),
   page: z.number().int().min(0).max(1000).optional(),
-  source: z.enum(["storia", "imobiliare", "olx"]).optional(),
+  source: z.enum(["storia", "imobiliare", "olx", "romimo"]).optional(),
   transaction: z.enum(["sale", "rent"]).optional(),
   priceMin: z.number().min(0).max(1e9).optional(),
   priceMax: z.number().min(0).max(1e9).optional(),
