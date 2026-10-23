@@ -50,7 +50,7 @@ export const privateListingsFiltersSchema = z.object({
 
 export const getOwnerListings = createServerFn({ method: "GET" })
   .middleware([requireActiveOrgAuth])
-  .inputValidator((input: unknown) => filtersSchema.parse(input ?? {}))
+  .inputValidator((input: unknown) => privateListingsFiltersSchema.parse(input ?? {}))
   .handler(async ({ data, context }): Promise<{ items: OwnerListing[]; total: number }> => {
     const page = data.page ?? 0;
     let query = context.supabase
