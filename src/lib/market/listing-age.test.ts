@@ -12,11 +12,11 @@ const row: MarketIntelligenceRow = {
 };
 
 describe("ACP source and observed age filters", () => {
-  it("offers Storia, OLX and Romimo from the canonical source registry", () => {
-    expect(MARKET_SOURCES.filter(source => ["storia", "olx", "romimo"].includes(source.id)).map(source => source.id).sort())
-      .toEqual(["olx", "romimo", "storia"]);
+  it("offers Storia, OLX, Romimo and Imobiliare.ro from the canonical source registry", () => {
+    expect(MARKET_SOURCES.filter(source => ["storia", "olx", "romimo", "imobiliare"].includes(source.id)).map(source => source.id).sort())
+      .toEqual(["imobiliare", "olx", "romimo", "storia"]);
   });
-  it.each(["storia", "olx", "romimo"])("filters the exact %s source cumulatively with duration", (source) => {
+  it.each(["storia", "olx", "romimo", "imobiliare"])("filters the exact %s source cumulatively with duration", (source) => {
     expect(matchesMarketFilters({ ...row, source }, { sources: [source], daysOnMarketMin: 30, daysOnMarketMax: 30 }, now)).toBe(true);
     expect(matchesMarketFilters({ ...row, source: "other" }, { sources: [source], daysOnMarketMin: 30 }, now)).toBe(false);
   });
