@@ -1,5 +1,8 @@
 # Integrare hbsync
 
+- [ ] Conectare hbsync la datele de piață ACP, particulari și agenții, mapare canonică și idempotență
+- [ ] Import periodic și verificare reală ACP cu datele hbsync
+
 - [ ] Activare colectare OLX în hbsync și verificare import cu sursa reală — blocat: codul/configurația și accesul de administrare hbsync nu sunt disponibile; importatorul Habitoo acceptă deja OLX
 - [x] Documentație livrată cu 129 coloane properties și 19 contacts verificate live, relații, mapare și contract propuse (explicit neimplementate), permisiuni și colectori
 - [x] Modul „Anunțuri particulari” în aplicație (oraș, zonă, camere, cuvinte cheie), acces doar conectat, import prin endpointul existent cu oraș/zonă
