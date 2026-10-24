@@ -165,3 +165,8 @@
 - [x] Etichete „Portal · Serviciu” pe rândurile din listă; pastilă de filtru activ
 - [x] 35 teste noi + 58 teste înrudite, build OK
 - [ ] Verificare live pe cont real — blocat: sesiunea de browser nu poate fi generată fără aprobare
+
+# Eliminare OferteImobiliare.ro
+
+- [x] Eliminare integrare, carduri, filtre, logo și pagini publice, fără apeluri externe sau ștergerea istoricului
+- [x] 91 teste trec; homepage, Integrări, Întrebări frecvente și pagina eliminată verificate în browser fără erori; aplicație fără erori de compilare

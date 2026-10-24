@@ -31,7 +31,7 @@ function world() {
   const portals: Record<string, { portal: string; external_id: string | null; public_url: string | null }[]> = {
     p1: [
       { portal: "storia", external_id: "S1", public_url: "https://storia.ro/1" },
-      { portal: "oferteimobiliare", external_id: "O1", public_url: "https://oferteimobiliare.ro/1" },
+      { portal: "legacy_portal", external_id: "O1", public_url: "https://legacy.example/1" },
     ],
     p2: [{ portal: "romimo", external_id: "R2", public_url: null }],
   };
@@ -125,7 +125,7 @@ function world() {
     move: async (bucket, from, to) => { buckets[bucket]!.delete(from); buckets[bucket]!.add(to); },
   };
   const withdraw = vi.fn(async (i: { portalId: string; propertyId: string; externalId: string | null; organizationId: string }): Promise<WithdrawResult> =>
-    i.portalId === "oferteimobiliare" ? { ok: false, manual: true, message: "manual" } : { ok: true, attempted: true, message: "ok" });
+    i.portalId === "legacy_portal" ? { ok: false, manual: true, message: "manual" } : { ok: true, attempted: true, message: "ok" });
   const deps: DeletionDeps = { store, storage, withdraw, deleteAuthUser: async (id) => { authDeleted.push(id); return { error: null }; } };
   const run = async (jobId: string) => {
     for (let i = 0; i < 10; i += 1) {
@@ -144,10 +144,10 @@ describe("account deletion engine", () => {
     const out = await w.run(jobId);
     expect(out.status).toBe("done");
     expect(w.withdraw.mock.calls.map((c) => [c[0].propertyId, c[0].portalId, c[0].externalId])).toEqual([
-      ["p1", "storia", "S1"], ["p1", "oferteimobiliare", "O1"], ["p2", "romimo", "R2"],
+      ["p1", "storia", "S1"], ["p1", "legacy_portal", "O1"], ["p2", "romimo", "R2"],
     ]);
     const report = w.jobs[jobId]!.report!;
-    expect(report.manual).toEqual([{ propertyId: "p1", reference: "HB-1", portal: "oferteimobiliare", url: "https://oferteimobiliare.ro/1" }]);
+    expect(report.manual).toEqual([{ propertyId: "p1", reference: "HB-1", portal: "legacy_portal", url: "https://legacy.example/1" }]);
     expect(report.withdrawn).toBe(2);
     expect([...w.files].sort()).toEqual(["orgB/pB/z.jpg"]);
     expect(w.properties.map((p) => p.id)).toEqual(["pB"]);

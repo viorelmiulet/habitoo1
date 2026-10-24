@@ -3,7 +3,7 @@ import { INTEGRATION_PAGES, integrationPageText, integrationSlugFor, wordCount }
 import { integrationJsonLd } from "./integration-jsonld";
 import { buildStaticSitemapXml } from "@/lib/blog-discovery";
 
-const SLUGS = ["storia-olx", "olx", "imobiliare-ro", "publi24-romimo", "imospot", "vdi", "la-cheie", "oferte-imobiliare", "primulanunt", "homepitch", "imove", "properstar", "clickimob", "catalog-facebook"];
+const SLUGS = ["storia-olx", "olx", "imobiliare-ro", "publi24-romimo", "imospot", "vdi", "la-cheie", "primulanunt", "homepitch", "imove", "properstar", "clickimob", "catalog-facebook"];
 
 describe("pagini integrări", () => {
   it("câte o pagină pentru fiecare slug cerut", () => {

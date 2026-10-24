@@ -16,7 +16,6 @@ import { imobiliareFloorReasons } from "./imobiliare/mapper";
 import { housingTypeFor } from "./imobiliare/taxonomy";
 import { LACHEIE_MIN_DESCRIPTION, LACHEIE_MIN_TITLE } from "./lacheie/mapper";
 import { IMOSPOT_MIN_DESCRIPTION, IMOSPOT_MIN_TITLE } from "./imospot/mapper";
-import { OI_MIN_DESCRIPTION, OI_MIN_TITLE } from "./oferteimobiliare/mapper";
 import {
   ROMIMO_LAYOUTS,
   ROMIMO_TEXT_MIN,
@@ -328,18 +327,6 @@ export const PORTAL_REQUIREMENTS: Record<string, PortalRequirementSpec> = {
     required: [
       RULE.title(IMOSPOT_MIN_TITLE),
       RULE.description(IMOSPOT_MIN_DESCRIPTION),
-      RULE.transaction(),
-      RULE.price(),
-      RULE.propertyType(),
-      RULE.location(),
-      RULE.images(1),
-    ],
-    allowed: COMMON_ALLOWED,
-  },
-  oferteimobiliare: {
-    required: [
-      RULE.title(OI_MIN_TITLE),
-      RULE.description(OI_MIN_DESCRIPTION),
       RULE.transaction(),
       RULE.price(),
       RULE.propertyType(),

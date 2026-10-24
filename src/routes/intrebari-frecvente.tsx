@@ -23,7 +23,7 @@ export const FAQ_GROUPS: FaqGroup[] = [
     faqs: [
       {
         q: "Pe ce portaluri pot publica din Habitoo?",
-        a: "Din Habitoo poți publica pe Storia, OLX, Imobiliare.ro, Romimo, Publi24, Imospot, VDI.ro, La-Cheie, Oferte-Imobiliare, PrimulAnunt și altele, plus catalogul Facebook. Lista completă, cu modul de funcționare al fiecărui portal, este pe pagina Integrări.",
+        a: "Din Habitoo poți publica pe Storia, OLX, Imobiliare.ro, Romimo, Publi24, Imospot, VDI.ro, La-Cheie, PrimulAnunt și altele, plus catalogul Facebook. Lista completă, cu modul de funcționare al fiecărui portal, este pe pagina Integrări.",
       },
       {
         q: "Cum public un anunț pe portaluri?",

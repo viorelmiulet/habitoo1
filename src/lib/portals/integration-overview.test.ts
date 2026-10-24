@@ -6,7 +6,7 @@ import { buildStaticSitemapXml } from "@/lib/blog-discovery";
 
 describe("public integrations overview", () => {
   it("lists each integration and covered portal exactly once", () => {
-    expect(INTEGRATION_OVERVIEW).toHaveLength(14);
+    expect(INTEGRATION_OVERVIEW).toHaveLength(13);
     const ids = INTEGRATION_OVERVIEW.flatMap((p) => p.logoIds);
     expect(new Set(ids).size).toBe(ids.length);
     expect(INTEGRATION_OVERVIEW.find((p) => p.id === "storia")?.logoIds).toEqual(["storia", "olx"]);
@@ -16,9 +16,6 @@ describe("public integrations overview", () => {
   it("every card resolves to an existing detail page", () => {
     for (const item of INTEGRATION_OVERVIEW) expect(integrationPageBySlug(item.slug)?.portalId).toBe(item.id);
     expect(new Set(INTEGRATION_OVERVIEW.map((p) => p.slug)).size).toBe(INTEGRATION_PAGES.length);
-  });
-  it("never advertises withdrawal for OferteImobiliare", () => {
-    expect(INTEGRATION_OVERVIEW.find((p) => p.id === "oferteimobiliare")?.badges).toEqual(["Publicare directă"]);
   });
   it("only implemented lead integrations advertise lead intake", () => {
     expect(INTEGRATION_OVERVIEW.filter((p) => p.badges.includes("Lead-uri în CRM")).map((p) => p.id).sort()).toEqual(["properstar", "storia", "vdi"]);
@@ -45,9 +42,9 @@ describe("public integrations overview", () => {
   });
   it("ItemList uses every existing detail URL once", () => {
     const list = integrationItemListJsonLd();
-    expect(list.numberOfItems).toBe(14);
+    expect(list.numberOfItems).toBe(13);
     expect(list.itemListElement.map((p) => p.url)).toEqual(INTEGRATION_OVERVIEW.map((p) => `https://www.habitoo.ro/integrari/${p.slug}`));
-    expect(list.itemListElement.map((p) => p.position)).toEqual(Array.from({ length: 14 }, (_, i) => i + 1));
+    expect(list.itemListElement.map((p) => p.position)).toEqual(Array.from({ length: 13 }, (_, i) => i + 1));
   });
   it("sitemap dates only the updated overview", () => {
     expect(buildStaticSitemapXml()).toContain("<loc>https://www.habitoo.ro/integrari</loc>\n    <lastmod>2026-10-18</lastmod>");

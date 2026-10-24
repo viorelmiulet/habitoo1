@@ -166,26 +166,6 @@ const CONTENT: Record<string, Content> = {
       { q: "Ce se întâmplă la vânzare?", a: "Când marchezi proprietatea Vândut, Închiriat sau Arhivat, anunțul este retras automat." },
     ],
   },
-  oferteimobiliare: {
-    slug: "oferte-imobiliare",
-    name: "OferteImobiliare.ro",
-    description: "Publici și actualizezi anunțurile pe OferteImobiliare.ro direct din Habitoo CRM, fără dubluri. Află ce se trimite și cum dezactivezi un anunț.",
-    intro: [
-      "OferteImobiliare.ro este un portal imobiliar cu care Habitoo lucrează direct. Anunțul pe care îl ai în CRM ajunge pe portal când apeși Publică, iar a doua trimitere actualizează același anunț, fără dubluri.",
-      "Habitoo traduce dotările, utilitățile și finisajele în lista portalului. Ce nu are corespondent pe portal nu se trimite și vezi un avertisment, ca să știi exact ce apare online.",
-      "Locația se potrivește automat cu județul și localitatea din lista portalului.",
-    ],
-    notes: [
-      "Debifarea portalului în Habitoo nu retrage anunțul; dezactivarea se face din contul agenției pe OferteImobiliare.ro.",
-      "Fără potrivirea județului și a localității, anunțul nu se trimite.",
-      "O proprietate scoasă și la vânzare, și la închiriere devine două anunțuri separate.",
-    ],
-    faq: [
-      { q: "Ce date de acces îmi trebuie?", a: "Id-ul agenției și parola primite de la OferteImobiliare.ro. Se păstrează în siguranță și nu se mai afișează." },
-      { q: "De ce nu pot retrage anunțul din Habitoo?", a: "Portalul nu permite retragerea din CRM; o faci din contul agenției de pe OferteImobiliare.ro." },
-      { q: "Pot crea dubluri?", a: "Nu. Retrimiterea aceleiași proprietăți actualizează anunțul existent." },
-    ],
-  },
   primulanunt: {
     slug: "primulanunt",
     name: "PrimulAnunț.ro",

@@ -90,23 +90,19 @@ describe("retragerea automată la schimbarea statusului", () => {
     expect(withdrawReasonForStatus("rented")).toBe("status_rented");
     expect(withdrawReasonForStatus("archived")).toBe("archived");
     expect(withdrawReasonForStatus("active")).toBeNull();
-    expect(isManualWithdrawPortal("oferteimobiliare")).toBe(true);
     expect(isManualWithdrawPortal("imobiliare_ro")).toBe(false);
     for (const feed of ["homepitch", "imove", "clickimob", "properstar"])
       expect(isManualWithdrawPortal(feed)).toBe(false);
   });
 
-  it("Vândut → câte o retragere pentru fiecare portal publicat; OferteImobiliare manual, fără apel", async () => {
+  it("Vândut → câte o retragere pentru fiecare portal publicat", async () => {
     const { admin, tables } = fakeDb({
       properties: [prop("p1")],
-      portal_publications: [pub("p1", "imobiliare_ro"), pub("p1", "lacheie"), pub("p1", "oferteimobiliare")],
+      portal_publications: [pub("p1", "imobiliare_ro"), pub("p1", "lacheie")],
     });
     const out = await enqueueStatusWithdrawals(admin as never, { organizationId: ORG, propertyIds: ["p1"], reason: "status_sold", actorId: "u1" }, enqueueDeps);
     expect(out.queued.map((q) => q.portalId).sort()).toEqual(["imobiliare_ro", "lacheie"]);
-    expect(out.manual.map((q) => q.portalId)).toEqual(["oferteimobiliare"]);
-    const oi = tables["portal_publications"]!.find((r) => r["portal_key"] === "oferteimobiliare")!;
-    expect(oi["enabled"]).toBe(false);
-    expect(oi["withdraw_reason"]).toBe("status_sold");
+    expect(out.manual).toEqual([]);
 
     const p = processDeps();
     await drain(admin as never, p, tables);
@@ -114,9 +110,7 @@ describe("retragerea automată la schimbarea statusului", () => {
     expect(p.calls.every((c) => c.reason === "status_sold")).toBe(true);
     const items = tables["portal_status_withdraw_items"]!;
     expect(items.filter((i) => i["status"] === "done")).toHaveLength(2);
-    expect(items.find((i) => i["portal_key"] === "oferteimobiliare")!["status"]).toBe("manual_required");
     expect(tables["audit_logs"]!.some((a) => a["action"] === "portal_auto_withdraw_succeeded")).toBe(true);
-    expect(enqueueDeps.logOperation).toHaveBeenCalledWith(expect.objectContaining({ portal: "oferteimobiliare", operation: "auto_withdraw_manual_required" }));
   });
 
   it("eroare la un portal → reîncercări fără notificare duplicată la epuizare", async () => {

@@ -12,7 +12,6 @@ const summaries: Record<string, string> = {
   imospot: "Publici, actualizezi și retragi anunțurile, fără dubluri.",
   vdi: "Publici direct, iar mesajele clienților devin lead-uri.",
   lacheie: "Activezi singur și publici anunțurile direct din Habitoo.",
-  oferteimobiliare: "Publici și actualizezi anunțurile fără să le rescrii.",
   primulanunt: "Publici anunțul cu poze și îl retragi dintr-un click.",
   homepitch: "Alegi ofertele, iar portalul le preia automat.",
   imove: "Ofertele și modificările sunt preluate automat din Habitoo.",
