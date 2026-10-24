@@ -32,7 +32,10 @@ export const Route = createFileRoute("/api/public/market-listings/upsert")({
         raw += decoder.decode(chunk.value, { stream: true });
       }
       raw += decoder.decode();
-      const body = hbsyncMarketBodySchema.safeParse(JSON.parse(raw));
+      let parsed: unknown;
+      try { parsed = JSON.parse(raw); }
+      catch { return Response.json({ success: false, error: "invalid_body" }, { status: 400 }); }
+      const body = hbsyncMarketBodySchema.safeParse(parsed);
       if (!body.success) return Response.json({ success: false, error: "invalid_body" }, { status: 400 });
       const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
       const { importHbsyncMarket } = await import("@/lib/market/hbsync.server");
