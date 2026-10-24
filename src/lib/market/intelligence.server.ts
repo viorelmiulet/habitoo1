@@ -25,6 +25,7 @@ import {
 export type { MarketIntelligenceResult };
 import { MARKET_SOURCES, marketSourceName } from "./sources";
 import { applyMarketLocationFilters } from "./acp-location";
+import { applyListingAgeFilters } from "./listing-age";
 
 type Admin = SupabaseClient<Database>;
 
@@ -94,6 +95,7 @@ export async function loadMarketIntelligenceRows(
     query = query.lte("price_per_sqm", filters.pricePerSqmMax);
   }
   if (filters.sources && filters.sources.length > 0) query = query.in("source", filters.sources);
+  query = applyListingAgeFilters(query, filters);
   if (typeof filters.seenWithinDays === "number") {
     const since = new Date(Date.now() - filters.seenWithinDays * 86_400_000).toISOString();
     query = query.gte("last_seen_at", since);

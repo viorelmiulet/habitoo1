@@ -11,6 +11,7 @@
 import { average, median, percentile, pricePerSqm } from "@/lib/acp/statistics";
 import { marketPoolScope } from "./acp-location";
 import { normalizePlace } from "./normalize";
+import { matchesListingAge } from "./listing-age";
 
 /* ------------------------------------------------------------------ */
 /* Praguri și configurație explicită                                   */
@@ -63,6 +64,8 @@ export type MarketIntelligenceFilters = {
   status?: MarketListingStatusFilter | null;
   /** Fereastră temporală pe `last_seen_at` (zile). */
   seenWithinDays?: number | null;
+  daysOnMarketMin?: number | null;
+  daysOnMarketMax?: number | null;
 };
 
 /** Rândul minim necesar agregărilor (proiecție îngustă, fără `raw_data`). */
@@ -150,6 +153,7 @@ export function matchesMarketFilters(
   if (filters.sources && filters.sources.length > 0 && !filters.sources.includes(row.source)) {
     return false;
   }
+  if (!matchesListingAge(row.firstSeenAt, filters, now)) return false;
 
   const days = num(filters.seenWithinDays);
   if (days !== null) {
