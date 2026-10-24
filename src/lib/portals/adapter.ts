@@ -56,6 +56,9 @@ export type ListingRef = {
    * Lipsă = portalul nu are promovare prin flag.
    */
   promoted?: boolean;
+  /** Explicit card choices, used only for Imobiliare.ro's initial online POST. */
+  imobiliarePromotions?: import("./imobiliare/card-promotions").ImobiliarePromotionChanges;
+  actorId?: string | null;
 };
 
 export type ListingOutcome = {
@@ -88,6 +91,7 @@ export type ListingOutcome = {
   httpStatus?: number | null;
   /** Corpul răspunsului portalului la succes (sanitizat la jurnalizare). */
   portalResponse?: unknown;
+  promotionErrors?: { promotionId: string; message: string }[];
 };
 
 export type ConnectionStatusOutcome = {

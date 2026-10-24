@@ -210,7 +210,7 @@ export type PromotionWriteResult =
  * din nou: dacă slotul s-a consumat între afișare și apăsare, nu pretindem
  * succes. Dezactivarea nu are nevoie de inventar.
  */
-export async function setImobiliareListingPromotion(input: {
+export type PromotionWriteInput = {
   admin: Admin;
   session: ImobiliareSession;
   organizationId: string;
@@ -224,7 +224,10 @@ export async function setImobiliareListingPromotion(input: {
    * acolo unde nu există o ofertă locală (teste de contract cu portalul).
    */
   allocation: { propertyId: string; skipRules?: boolean } | null;
-}): Promise<PromotionWriteResult> {
+};
+
+/** Shared allocation and live-inventory gate for standalone and online writes. */
+export async function validateImobiliareListingPromotion(input: PromotionWriteInput): Promise<{ ok: true } | Extract<PromotionWriteResult, { ok: false }>> {
   const { definition } = input;
   if (!definition.writeField) {
     return {
@@ -287,7 +290,13 @@ export async function setImobiliareListingPromotion(input: {
     return { ok: false, code: "VALIDATION_ERROR", message: guard.reason };
   }
 
-  const body = imobiliarePromotionPatch(definition, input.value);
+  return { ok: true };
+}
+
+export async function setImobiliareListingPromotion(input: PromotionWriteInput): Promise<PromotionWriteResult> {
+  const allowed = await validateImobiliareListingPromotion(input);
+  if (!allowed.ok) return allowed;
+  const body = imobiliarePromotionPatch(input.definition, input.value);
   const response = await withDurableImobiliareLock({
     admin: input.admin,
     organizationId: input.organizationId,
@@ -313,10 +322,21 @@ export async function setImobiliareListingPromotion(input: {
     };
   }
 
+  return confirmImobiliareListingPromotion(input, response);
+}
+
+/** Persist only this service's warning-free (or tolerated imoradar) confirmation. */
+export async function confirmImobiliareListingPromotion(
+  input: PromotionWriteInput,
+  response: { body: unknown; status: number },
+  serviceWarnings = imobiliarePromotionWarnings(response.body),
+): Promise<PromotionWriteResult> {
+  const { definition } = input;
+  const body = imobiliarePromotionPatch(definition, input.value);
   // HTTP 200 NU înseamnă aplicare: `promotion_warnings` (ex. „Promovare
   // imoradar nu este activ pentru acest cont") transformă operația în eșec,
   // cu textul exact al portalului.
-  const warnings = imobiliarePromotionWarnings(response.body);
+  const warnings = serviceWarnings;
   const { classifyPromotionWarnings, IMORADAR_PROMOTION_ID } = await import("./imoradar-auto");
   const warningCheck = classifyPromotionWarnings(definition.id, warnings);
   if (warningCheck.fail) {
