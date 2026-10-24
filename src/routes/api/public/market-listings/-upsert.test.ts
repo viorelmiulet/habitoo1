@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { createFakeRepository } from "@/lib/market/__tests__/fake-repository";
+import { MARKET_SOURCES, marketSourceName } from "@/lib/market/sources";
 
 const mocks = vi.hoisted(() => ({ repository: vi.fn(), rpc: vi.fn(), from: vi.fn() }));
 vi.mock("@tanstack/react-router", () => ({ createFileRoute: () => (options: unknown) => ({ options }) }));
@@ -56,6 +57,41 @@ describe("market upsert HTTP outcomes with the real validation and ingestion pip
     const response = await post([validListing]);
     expect(response.status).toBe(200);
     expect(await response.json()).toMatchObject({ success: true, received: 1, imported: 1, rejected: 0, errors: [] });
+  });
+
+  it("imports imobiliare, keeps its identity on reimport and labels it Imobiliare.ro in source choices", async () => {
+    const { repo, store } = createFakeRepository();
+    mocks.repository.mockReturnValue(repo);
+    const row = { ...validListing, source: "imobiliare", external_id: "imobiliare-1" };
+    const response = await post([row]);
+    expect(response.status).toBe(200);
+    expect(await response.json()).toMatchObject({ success: true, imported: 1, rejected: 0, errors: [] });
+    expect(store.listings[0]).toMatchObject({ source: "imobiliare", sourceListingId: "imobiliare-1" });
+    expect(marketSourceName(store.listings[0]?.source ?? "")).toBe("Imobiliare.ro");
+    expect(MARKET_SOURCES.find(source => source.id === "imobiliare")?.name).toBe("Imobiliare.ro");
+    const updated = await post([{ ...row, price: 1600 }]);
+    expect(updated.status).toBe(200);
+    expect(await updated.json()).toMatchObject({ imported: 1, updated: 1 });
+    expect(store.listings).toHaveLength(1);
+    expect(store.listings[0]?.price).toBe(1600);
+  });
+
+  it("uses external_id for schema validation failures", async () => {
+    const response = await post([{ ...validListing, source: "imobiliare", external_id: "invalid-1", price: "not-a-number" }]);
+    expect(response.status).toBe(422);
+    const body = await response.json();
+    expect(body.errors).toHaveLength(1);
+    expect(body.errors[0].reference).toBe("invalid-1");
+    expect(body.imported).toBe(0);
+  });
+
+  it("uses invalid when external_id is absent", async () => {
+    const { external_id, ...row } = validListing;
+    const response = await post([row]);
+    expect(response.status).toBe(422);
+    const body = await response.json();
+    expect(body.errors).toHaveLength(1);
+    expect(body.errors[0].reference).toBe("invalid");
   });
 
   it("reports each blocked Storia external_id while importing OLX with HTTP 200", async () => {
