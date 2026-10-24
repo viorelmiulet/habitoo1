@@ -36,6 +36,7 @@ import {
 } from "./guards";
 import { readStoredAcpAiInsight, type AcpAiInsight } from "./ai/schema";
 import { dedupeMarketCandidates } from "@/lib/market/acp";
+import { marketPoolScope } from "@/lib/market/acp-location";
 import {
   calculateDataQuality,
   calculateFreshness,
@@ -336,9 +337,15 @@ async function collectCandidates(params: {
       .in("status", ["active", "inactive"])
       .order("last_seen_at", { ascending: false })
       .limit(400);
-    if (target.propertyType) query = query.eq("property_type", target.propertyType);
-    if (target.transactionType) query = query.eq("transaction_type", target.transactionType);
-    if (target.city) query = query.eq("city", target.city);
+    const scope = marketPoolScope(target);
+    if (scope.propertyType) query = query.eq("property_type", scope.propertyType);
+    if (scope.transactionType) query = query.eq("transaction_type", scope.transactionType);
+    if (scope.city) {
+      // Keep legacy sector-as-city rows and canonical Bucharest rows visible together.
+      query = scope.sector
+        ? query.in("normalized_city", [scope.city, scope.sector, scope.sector.replace("sector", "sectorul")])
+        : query.eq("normalized_city", scope.city);
+    }
     const { data, error } = await query;
     if (error) throw acpDbError("collect market listings", error);
     const rows = data ?? [];

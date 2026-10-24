@@ -61,6 +61,11 @@ export const HABITOO_MAPPING: MarketFieldMapping = {
 
 export const MARKET_SOURCES: MarketSourceDefinition[] = [
   {
+    id: "romimo", name: "Romimo", description: "Oferte de piață importate din hbsync cu proveniență explicită.",
+    formats: ["json"], pull: false, mapping: HABITOO_MAPPING,
+    notes: "Import separat prin /api/public/market-listings/upsert; particulari și agenții.",
+  },
+  {
     id: "habitoo_internal",
     name: "Date interne Habitoo",
     description: "Oferte introduse de platformă pe baza datelor proprii ale agențiilor.",

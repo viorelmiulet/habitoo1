@@ -85,6 +85,15 @@ export type NormalizedListing = {
   features: Record<string, boolean>;
   status: MarketListingStatus;
   rawData: { source: string; original: Record<string, string> };
+  /** Optional provider metadata; absent for existing importers. */
+  publisherType?: string | null;
+  isPrivate?: boolean | null;
+  sector?: string | null;
+  images?: string[];
+  importProvider?: string;
+  period?: string | null;
+  observedFirstSeenAt?: string | null;
+  observedLastSeenAt?: string | null;
 };
 
 export type MarketListingStatus = "active" | "inactive" | "archived";
@@ -439,7 +448,7 @@ export function normalizeRecord(
 
   const listing: NormalizedListing = {
     source,
-    sourceListingId: sourceListingId!,
+    sourceListingId: sourceListingId ?? "",
     url: url && /^https?:\/\//i.test(url) ? url : null,
     title: textValue(get("title")),
     imageUrl: (() => {

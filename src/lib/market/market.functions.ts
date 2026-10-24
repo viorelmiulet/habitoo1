@@ -215,7 +215,7 @@ export const getMarketOverview = createServerFn({ method: "GET" })
         formats: definition.formats,
         pull: definition.id === "habitoo_internal" ? true : definition.pull,
         notes: definition.notes ?? null,
-        configured: definition.id === "habitoo_internal",
+        configured: definition.id === "habitoo_internal" || Boolean(state?.last_success_at),
         total: sTotal,
         active: sActive,
         inactive: sInactive,
@@ -942,7 +942,7 @@ export const getMarketSourceCounts = createServerFn({ method: "GET" })
         .eq("source", definition.id)
         .eq("status", "active");
       const state = stateFor(definition.id);
-      const configured = definition.id === "habitoo_internal";
+      const configured = definition.id === "habitoo_internal" || Boolean(state?.last_success_at);
       out.push({
         id: definition.id,
         name: definition.name,

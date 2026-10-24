@@ -1,0 +1,4 @@
+ALTER TABLE public.market_listings ADD COLUMN IF NOT EXISTS is_private boolean, ADD COLUMN IF NOT EXISTS publisher_type text, ADD COLUMN IF NOT EXISTS sector text, ADD COLUMN IF NOT EXISTS images jsonb, ADD COLUMN IF NOT EXISTS import_provider text, ADD COLUMN IF NOT EXISTS period text;
+COMMENT ON COLUMN public.market_listings.is_private IS 'Explicit publisher classification: particular=true, agency=false, unknown=NULL. Never inferred from absence of contact details.';
+COMMENT ON COLUMN public.market_listings.sector IS 'Canonical sector, separate from district/neighborhood (cartier).';
+COMMENT ON COLUMN public.market_listings.import_provider IS 'Transport provenance, e.g. hbsync; source remains the original portal.';
