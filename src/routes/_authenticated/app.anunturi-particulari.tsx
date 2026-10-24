@@ -3,12 +3,11 @@ import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useState } from "react";
 import { z } from "zod";
-import { ExternalLink, MapPin, Phone, Search, SearchX } from "lucide-react";
+import { ChevronLeft, ChevronRight, ExternalLink, MapPin, Phone, Search, SearchX } from "lucide-react";
 import { PageHeader } from "@/components/app/PageHeader";
 import { appHead } from "@/components/app/app-head";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -23,7 +22,7 @@ import {
   getOwnerListings,
   type OwnerListing,
 } from "@/lib/listings.functions";
-import { PRIVATE_LISTINGS_PAGE_SIZE } from "@/lib/private-listings";
+import { PRIVATE_LISTINGS_PAGE_SIZE, type PrivateListingsSort } from "@/lib/private-listings";
 
 const searchSchema = z.object({
   oras: z.string().optional(),
@@ -31,6 +30,7 @@ const searchSchema = z.object({
   camere: z.string().optional(),
   q: z.string().optional(),
   pagina: z.coerce.number().int().min(1).optional(),
+  sortare: z.enum(["newest", "price_asc", "price_desc", "surface_desc"]).optional(),
   sursa: z.enum(["storia", "imobiliare", "olx", "romimo"]).optional(),
   tranzactie: z.enum(["sale", "rent", "rent_day"]).optional(),
   tip: z.string().max(80).optional(),
