@@ -38,7 +38,7 @@ export function PropertyImobiliarePromotionsCard({ view, drafts, disabled, error
         </div>
         <p className="text-xs text-muted-foreground">{active ? "Activă" : row.value === null ? "Stare necunoscută" : "Inactivă"}{drafts[row.id] !== undefined && drafts[row.id] !== row.value ? " · Modificare în așteptare" : ""}{row.remaining !== null ? ` · Alocare: ${row.remaining} rămase` : ""}{row.agencyRemaining != null ? ` · Plafon: ${row.agencyRemaining} rămase` : ""}</p>
         {row.value === null && row.manageable ? <Button type="button" variant="link" size="compact" disabled={disabled} onClick={() => onChange(row.id, row.kind === "numeric" ? 0 : false)}>Oprește</Button> : null}
-        {error ? <p role="alert" className="mt-1 break-words text-xs text-destructive">{error}</p> : blocked ? <p className="mt-1 text-xs text-muted-foreground">Nu sunt locuri disponibile pentru activare.</p> : null}
+        {error && row.id !== "bonus" ? <p role="alert" className="mt-1 break-words text-xs text-destructive">{error}</p> : blocked ? <p className="mt-1 text-xs text-muted-foreground">Nu sunt locuri disponibile pentru activare.</p> : null}
       </li>;
     })}</ul>
   </div>;

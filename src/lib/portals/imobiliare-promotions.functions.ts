@@ -188,6 +188,7 @@ export const getImobiliarePromotions = createServerFn({ method: "POST" })
       fetchImobiliareSlotInventories({
         session: prepared.session,
         organizationId,
+        slotTypes: IMOBILIARE_PROMOTIONS.flatMap((definition) => definition.id !== "bonus" && definition.slotType ? [definition.slotType] : []),
       }),
       prepared.reference ? fetchImobiliareListingPromotions({
         session: prepared.session,
@@ -221,7 +222,7 @@ export const getImobiliarePromotions = createServerFn({ method: "POST" })
 
     const visible = IMOBILIARE_PROMOTIONS.filter((definition) => {
       if (definition.id !== "promote_imoradar" && settings.get(definition.id)?.enabled !== true) return false;
-      if (!definition.slotType) return true;
+      if (!definition.slotType || definition.id === "bonus") return true;
       return (inventories.get(definition.slotType)?.inventory ?? null) !== null;
     });
 
@@ -231,7 +232,7 @@ export const getImobiliarePromotions = createServerFn({ method: "POST" })
       "@/lib/portals/imobiliare/promotions.server"
     );
     const slotServices = visible.filter(
-      (definition) => definition.slotType !== null && definition.kind === "boolean",
+      (definition) => definition.id !== "bonus" && definition.slotType !== null && definition.kind === "boolean",
     );
     const [memberships, localStates] = await Promise.all([
       Promise.all(
@@ -288,7 +289,7 @@ export const getImobiliarePromotions = createServerFn({ method: "POST" })
         : null;
       // Consumul agentului se citește numai când există o alocare de arătat.
       const usage =
-        allocated !== null && agentId
+        definition.id !== "bonus" && allocated !== null && agentId
           ? await loadPromotionUsage({
               admin: prepared.admin,
               session: prepared.session,

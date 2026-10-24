@@ -33,8 +33,8 @@ import { toast } from "@/components/ui/sonner";
 import { Checkbox } from "@/components/ui/checkbox";
 import { getImoradarPreference } from "@/lib/portals/imoradar.functions";
 import { getImobiliarePromotions } from "@/lib/portals/imobiliare-promotions.functions";
-import { imobiliarePromotionChanges, type ImobiliarePromotionChanges } from "@/lib/portals/imobiliare/card-promotions";
-import { imobiliareStandardSlotsMessage } from "@/lib/portals/imobiliare/online-promotions";
+import { imobiliarePromotionChanges, type ImobiliarePublicationMode, type ImobiliarePromotionChanges } from "@/lib/portals/imobiliare/card-promotions";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Button } from "@/components/ui/button";
 import { Card, Panel } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -233,7 +233,7 @@ export const PropertyPortalsCard = forwardRef<
       queryKey: ["my-portal-slot", cell.portalId],
       queryFn: () => loadMine({ data: { portalId: cell.portalId } }),
       retry: false,
-      enabled: Boolean(assignedTo && assignedTo === sessionUser?.userId),
+      enabled: cell.portalId !== "imobiliare_ro" && Boolean(assignedTo && assignedTo === sessionUser?.userId),
     })),
   });
   const canManage = matrix.data?.canManage ?? false;
@@ -338,12 +338,15 @@ export const PropertyPortalsCard = forwardRef<
   const loadImoradarPreference = useServerFn(getImoradarPreference);
   const imobiliareCell = cells.find((cell) => cell.portalId === "imobiliare_ro");
   const imobiliareSelected = Boolean(imobiliareCell && (checked.imobiliare_ro ?? imobiliareCell.selected));
-  const imobiliarePublished = imobiliareCell?.state === "published";
+  const [imobiliareModeDraft, setImobiliareModeDraft] = useState<ImobiliarePublicationMode | null>(null);
+  const imobiliareMode = imobiliareModeDraft ?? imobiliareCell?.imobiliareMode ?? "combined";
+  const imobiliareModeChanged = imobiliareMode !== (imobiliareCell?.imobiliareConfirmedMode ?? "combined");
+  const imobiliarePublished = imobiliareCell?.state === "published" && !imobiliareModeChanged;
   const promotionQueryKey = ["property-imobiliare-promotions", organizationId, propertyId] as const;
-  const imobiliareView = useQuery({ queryKey: promotionQueryKey, queryFn: () => loadImobiliarePromotions({ data: { propertyId, ...(organizationId ? { organizationId } : {}) } }), enabled: imobiliareSelected });
-  const imoradarPreference = useQuery({ queryKey: ["imoradar-preference", propertyId, organizationId ?? null], queryFn: () => loadImoradarPreference({ data: { propertyId, ...(organizationId ? { organizationId } : {}) } }), enabled: imobiliareSelected });
+  const imobiliareView = useQuery({ queryKey: promotionQueryKey, queryFn: () => loadImobiliarePromotions({ data: { propertyId, ...(organizationId ? { organizationId } : {}) } }), enabled: imobiliareSelected && imobiliareMode !== "imoradar_only" });
+  const imoradarPreference = useQuery({ queryKey: ["imoradar-preference", propertyId, organizationId ?? null], queryFn: () => loadImoradarPreference({ data: { propertyId, ...(organizationId ? { organizationId } : {}) } }), enabled: imobiliareSelected && imobiliareMode !== "imoradar_only" });
   const [imobiliareDrafts, setImobiliareDrafts] = useState<ImobiliarePromotionChanges>({});
-  useEffect(() => { setImobiliareDrafts({}); }, [propertyId]);
+  useEffect(() => { setImobiliareDrafts({}); setImobiliareModeDraft(null); }, [propertyId]);
   const effectiveImobiliareDrafts: ImobiliarePromotionChanges = { ...(!imobiliarePublished ? { promote_imoradar: imoradarPreference.data?.checked === true && !imoradarPreference.data.manuallyStopped } : {}), ...imobiliareDrafts };
   const imobiliareChanges = imobiliarePromotionChanges(imobiliareView.data?.promotions ?? [], effectiveImobiliareDrafts, imobiliarePublished);
   // Even if the inventory is still loading, preserve the explicit imoradar choice.
@@ -358,7 +361,8 @@ export const PropertyPortalsCard = forwardRef<
   const dirty = cells.filter(
     (c) =>
       (checked[c.portalId] ?? c.selected) !== c.selected ||
-      (c.promotionFlag && promotedValue(c) !== c.promoted),
+      (c.promotionFlag && promotedValue(c) !== c.promoted) ||
+      (c.portalId === "imobiliare_ro" && imobiliareSelected && imobiliareModeChanged),
   );
   /**
    * Portaluri bifate care trebuie sincronizate la apăsarea butonului „Publică”:
@@ -449,7 +453,6 @@ export const PropertyPortalsCard = forwardRef<
    */
   const enqueuePortals = useCallback(
     async (targets: PropertyPortalCell[]): Promise<number> => {
-      if (targets.some((cell) => cell.portalId === "imobiliare_ro" && (checked[cell.portalId] ?? cell.selected)) && (!imobiliareView.data || !imoradarPreference.data)) throw new Error("Așteaptă citirea locurilor de promovare Imobiliare.ro și încearcă din nou.");
       const selections = targets
         // Portalurile programate nu se publică acum (doar prin „Publică acum”).
         .filter((c) => c.availability === "available" && !activePortals.has(c.portalId) && !scheduleByPortal.has(c.portalId))
@@ -457,7 +460,7 @@ export const PropertyPortalsCard = forwardRef<
           portalId: c.portalId,
           enabled: checked[c.portalId] ?? c.selected,
           ...(c.promotionFlag ? { promoted: promotedValue(c) } : {}),
-          ...(c.portalId === "imobiliare_ro" && (checked[c.portalId] ?? c.selected) ? { imobiliarePromotions: imobiliareChanges } : {}),
+          ...(c.portalId === "imobiliare_ro" && (checked[c.portalId] ?? c.selected) ? { imobiliareMode, imobiliarePromotions: imobiliareMode === "imoradar_only" ? {} : imobiliareChanges } : {}),
         }));
       if (selections.length === 0) return 0;
       const out = await enqueueFn({
@@ -473,7 +476,7 @@ export const PropertyPortalsCard = forwardRef<
       return out.results.filter((r) => r.queued).length;
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [checked, promotedChecked, imobiliareChanges, propertyId, organizationId, enqueueFn, queryClient, activePortals, scheduleByPortal],
+    [checked, promotedChecked, imobiliareChanges, imobiliareMode, propertyId, organizationId, enqueueFn, queryClient, activePortals, scheduleByPortal],
   );
 
   const applyPending = useCallback(async () => {
@@ -847,7 +850,7 @@ export const PropertyPortalsCard = forwardRef<
             {cells.map((cell, index) => {
               const value = checked[cell.portalId] ?? cell.selected;
               const slot = slotQueries[index]?.data;
-              const noSlots = !value && !cell.selected && Boolean(slot && (slot.remaining === 0 || slot.agencyExhausted));
+              const noSlots = cell.portalId !== "imobiliare_ro" && !value && !cell.selected && Boolean(slot && (slot.remaining === 0 || slot.agencyExhausted));
               const busy = activePortals.has(cell.portalId);
               const publishSoon = !portalCanPublish(cell.portalId);
               const missingReqs = requirementByPortal.get(cell.portalId)?.missing ?? [];
@@ -876,20 +879,20 @@ export const PropertyPortalsCard = forwardRef<
               const stateView =
                 cell.portalId === "olx_direct" && cell.state === "syncing"
                   ? { label: "În moderare OLX", pill: "pending" as StatusPillState }
-                  : STATE_VIEW[cell.state];
+                  : cell.portalId === "imobiliare_ro" && cell.imobiliareConfirmedMode === "imoradar_only" && cell.selected && !cell.lastError && cell.state !== "error"
+                    ? { label: "Trimis pe imoradar24", pill: "published" as StatusPillState }
+                    : STATE_VIEW[cell.state];
               const latestOperation = latestOperationByPortal.get(cell.portalId);
               const latestOperationFailed = latestOperation?.success === false;
-              const standardSlotsMessage = cell.portalId === "imobiliare_ro"
-                ? imobiliareStandardSlotsMessage(cell.lastError ?? latestOperation?.errorMessage,
-                    effectiveImobiliareDrafts.bonus === true,
-                    imobiliareView.data?.promotions.find(row => row.id === "bonus")?.available) : null;
-              const detail = standardSlotsMessage ?? (publishSoon
+              const detail = publishSoon
                 ? "Publicare în curând"
                 : busy
                 ? "Se sincronizează…"
                 : latestOperationFailed && cell.state !== "needs_packet" && !unconfirmed
                   ? "Eroare la ultima publicare"
-                  : stateSentence(cell, value));
+                  : cell.portalId === "imobiliare_ro" && cell.imobiliareConfirmedMode === "imoradar_only" && cell.selected
+                    ? "Trimis pe imoradar24"
+                    : stateSentence(cell, value);
 
               return (
                 <li key={cell.portalId} className="min-w-0">
@@ -1050,7 +1053,7 @@ export const PropertyPortalsCard = forwardRef<
                               data: {
                                 ...(organizationId ? { organizationId } : {}),
                                 propertyId,
-                                selections: [{ portalId: cell.portalId, enabled: true, ...(cell.promotionFlag ? { promoted: promotedValue(cell) } : {}), ...(cell.portalId === "imobiliare_ro" ? { imobiliarePromotions: imobiliareChanges } : {}) }],
+                                selections: [{ portalId: cell.portalId, enabled: true, ...(cell.promotionFlag ? { promoted: promotedValue(cell) } : {}), ...(cell.portalId === "imobiliare_ro" ? { imobiliareMode, imobiliarePromotions: imobiliareMode === "imoradar_only" ? {} : imobiliareChanges } : {}) }],
                                 syncExisting: true,
                               },
                             });
@@ -1087,7 +1090,13 @@ export const PropertyPortalsCard = forwardRef<
                       </div>
                     </div>
 
-                    {cell.portalId === "imobiliare_ro" && value ? <PropertyImobiliarePromotionsCard view={imobiliareView.data} drafts={effectiveImobiliareDrafts} disabled={!editing || !canManage || busy} errors={promotionErrors} onChange={(id, next) => setImobiliareDrafts((draft) => ({ ...draft, [id]: next }))} onRefresh={() => void imobiliareView.refetch()} loading={imobiliareView.isFetching} loadError={imobiliareView.error instanceof Error ? imobiliareView.error.message : undefined} /> : null}
+                    {cell.portalId === "imobiliare_ro" && value ? <>
+                      <RadioGroup aria-label="Destinație Imobiliare.ro" className="relative z-10 mt-3 gap-3" value={imobiliareMode} disabled={!editing || !canManage || busy} onValueChange={(next) => { if (next === "combined" || next === "imoradar_only") setImobiliareModeDraft(next); }}>
+                        <Label className="flex items-center gap-2 text-xs" htmlFor="imobiliare-mode-combined"><RadioGroupItem id="imobiliare-mode-combined" value="combined" />Imobiliare.ro + imoradar24</Label>
+                        <Label className="flex items-center gap-2 text-xs" htmlFor="imobiliare-mode-imoradar"><RadioGroupItem id="imobiliare-mode-imoradar" value="imoradar_only" />Doar imoradar24</Label>
+                      </RadioGroup>
+                      <PropertyImobiliarePromotionsCard view={imobiliareView.data} drafts={effectiveImobiliareDrafts} disabled={!editing || !canManage || busy || imobiliareMode === "imoradar_only"} errors={promotionErrors} onChange={(id, next) => setImobiliareDrafts((draft) => ({ ...draft, [id]: next }))} onRefresh={() => void imobiliareView.refetch()} loading={imobiliareMode !== "imoradar_only" && imobiliareView.isFetching} loadError={imobiliareMode !== "imoradar_only" && imobiliareView.error instanceof Error ? imobiliareView.error.message : undefined} />
+                    </> : null}
 
                     {/* Anunț trimis, dar pagina publică nu funcționează (cont fără abonament). */}
                     {cell.publicWarning ? (
