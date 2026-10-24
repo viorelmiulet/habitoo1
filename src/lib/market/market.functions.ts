@@ -29,6 +29,7 @@ import {
 } from "./normalize";
 import { createMarketRepository } from "./repository.server";
 import { findMarketSource, MARKET_SOURCES, marketSourceName } from "./sources";
+import { applyMarketLocationFilters } from "./acp-location";
 
 type AuthContext = { userId: string; supabase: { rpc: (fn: string) => Promise<{ data: unknown }> } };
 
@@ -277,6 +278,8 @@ export const getMarketOverview = createServerFn({ method: "GET" })
 const listFilters = z.object({
   source: z.string().optional(),
   city: z.string().optional(),
+  sector: z.string().optional(),
+  neighborhood: z.string().optional(),
   area: z.string().optional(),
   propertyType: z.string().optional(),
   transactionType: z.string().optional(),
@@ -297,6 +300,8 @@ export type MarketListRow = {
   imageUrl: string | null;
   url: string | null;
   city: string | null;
+  sector: string | null;
+  publisherType: string | null;
   district: string | null;
   neighborhood: string | null;
   propertyType: string | null;
@@ -322,7 +327,7 @@ export const listMarketListings = createServerFn({ method: "GET" })
     let query = admin
       .from("market_listings")
       .select(
-        "id,source,title,image_url,url,city,district,neighborhood,property_type,transaction_type,rooms,usable_area,total_area,price,currency,price_per_sqm,status,dedupe_status,first_seen_at,last_seen_at,market_entity_id",
+        "id,source,title,image_url,url,city,sector,publisher_type,district,neighborhood,property_type,transaction_type,rooms,usable_area,total_area,price,currency,price_per_sqm,status,dedupe_status,first_seen_at,last_seen_at,market_entity_id",
         { count: "exact" },
       )
       .order("last_seen_at", { ascending: false })
@@ -337,13 +342,7 @@ export const listMarketListings = createServerFn({ method: "GET" })
     if (data.priceMax) query = query.lte("price", data.priceMax);
     if (data.areaMin) query = query.gte("usable_area", data.areaMin);
     if (data.areaMax) query = query.lte("usable_area", data.areaMax);
-    if (data.city) query = query.ilike("city", `%${data.city}%`);
-    if (data.area) {
-      const term = `%${data.area}%`;
-      query = query.or(
-        `district.ilike.${term},neighborhood.ilike.${term},address.ilike.${term}`,
-      );
-    }
+    query = applyMarketLocationFilters(query, data);
 
     const { data: rows, count, error } = await query;
     if (error) throw error;
@@ -359,6 +358,8 @@ export const listMarketListings = createServerFn({ method: "GET" })
         imageUrl: row.image_url,
         url: row.url,
         city: row.city,
+        sector: row.sector,
+        publisherType: row.publisher_type,
         district: row.district,
         neighborhood: row.neighborhood,
         propertyType: row.property_type,

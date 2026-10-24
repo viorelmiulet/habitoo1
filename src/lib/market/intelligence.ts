@@ -9,6 +9,8 @@
  *  - fără AI, fără text generat: doar cifre și etichete deterministe.
  */
 import { average, median, percentile, pricePerSqm } from "@/lib/acp/statistics";
+import { marketPoolScope } from "./acp-location";
+import { normalizePlace } from "./normalize";
 
 /* ------------------------------------------------------------------ */
 /* Praguri și configurație explicită                                   */
@@ -42,6 +44,8 @@ export type MarketListingStatusFilter = "active" | "inactive" | "archived" | "al
 
 export type MarketIntelligenceFilters = {
   city?: string | null;
+  sector?: string | null;
+  neighborhood?: string | null;
   county?: string | null;
   /** Sector / cartier / adresă — potrivire parțială. */
   area?: string | null;
@@ -67,6 +71,7 @@ export type MarketIntelligenceRow = {
   source: string;
   status: string;
   city: string | null;
+  sector?: string | null;
   county: string | null;
   district: string | null;
   neighborhood: string | null;
@@ -108,11 +113,15 @@ export function matchesMarketFilters(
   const status = filters.status ?? "active";
   if (status !== "all" && row.status !== status) return false;
 
-  if (filters.city && text(row.city) !== text(filters.city)) return false;
+  const scope = marketPoolScope(filters);
+  const rowScope = marketPoolScope(row);
+  if (scope.city && rowScope.city !== scope.city) return false;
+  if (scope.sector && rowScope.sector !== scope.sector) return false;
+  if (filters.neighborhood && normalizePlace(row.neighborhood ?? row.district) !== normalizePlace(filters.neighborhood)) return false;
   if (filters.county && text(row.county) !== text(filters.county)) return false;
   if (filters.area) {
     const needle = text(filters.area);
-    const haystack = [row.district, row.neighborhood, row.address].map(text).join(" | ");
+    const haystack = [row.sector, row.district, row.neighborhood, row.address].map(text).join(" | ");
     if (!haystack.includes(needle)) return false;
   }
   if (filters.propertyType && row.propertyType !== filters.propertyType) return false;
@@ -728,6 +737,7 @@ export type MarketSubjectLike = {
   propertyType?: string | null;
   transactionType?: string | null;
   city?: string | null;
+  sector?: string | null;
   county?: string | null;
   district?: string | null;
   neighborhood?: string | null;
@@ -753,7 +763,8 @@ export function marketFiltersFromSubject(
   const base: MarketIntelligenceFilters = {
     propertyType: subject.propertyType ?? null,
     transactionType: subject.transactionType ?? null,
-    city: subject.city ?? null,
+    city: marketPoolScope(subject).city === "bucuresti" ? "București" : subject.city ?? null,
+    sector: marketPoolScope(subject).sector,
     county: subject.county ?? null,
     area: null,
     roomsMin: rooms === null ? null : Math.max(1, rooms - MARKET_SCOPE_ROOMS_TOLERANCE),

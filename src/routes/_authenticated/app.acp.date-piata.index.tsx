@@ -89,6 +89,8 @@ function MarketDataCenterPage() {
   const [filters, setFilters] = useState({
     source: "all",
     city: "",
+    sector: "",
+    neighborhood: "",
     area: "",
     propertyType: "all",
     transactionType: "all",
@@ -113,6 +115,8 @@ function MarketDataCenterPage() {
     () => ({
       source: filters.source === "all" ? undefined : filters.source,
       city: filters.city || undefined,
+      sector: filters.sector || undefined,
+      neighborhood: filters.neighborhood || undefined,
       area: filters.area || undefined,
       propertyType: filters.propertyType === "all" ? undefined : filters.propertyType,
       transactionType: filters.transactionType === "all" ? undefined : filters.transactionType,
@@ -522,6 +526,20 @@ function MarketDataCenterPage() {
             />
           </div>
           <div className="space-y-1">
+            <Label className="text-xs">Sector</Label>
+            <Input value={filters.sector} placeholder="Sector 3" onChange={(event) => {
+              setPage(1);
+              setFilters((f) => ({ ...f, sector: event.target.value }));
+            }} />
+          </div>
+          <div className="space-y-1">
+            <Label className="text-xs">Cartier</Label>
+            <Input value={filters.neighborhood} placeholder="Titan" onChange={(event) => {
+              setPage(1);
+              setFilters((f) => ({ ...f, neighborhood: event.target.value }));
+            }} />
+          </div>
+          <div className="space-y-1">
             <Label className="text-xs">Zonă / adresă</Label>
             <Input
               value={filters.area}
@@ -673,7 +691,7 @@ function MarketDataCenterPage() {
                         {row.title ?? row.city ?? "Ofertă de piață"}
                       </p>
                       <p className="truncate text-sm text-muted-foreground">
-                        {[row.neighborhood ?? row.district, row.city].filter(Boolean).join(", ") ||
+                        {[row.city, row.sector, row.neighborhood ?? row.district].filter(Boolean).join(", ") ||
                           "Locație necunoscută"}
                       </p>
                       <p className="mt-1 text-sm text-foreground">
@@ -689,6 +707,7 @@ function MarketDataCenterPage() {
                       </p>
                       <div className="mt-2 flex flex-wrap gap-1.5 text-xs">
                         <Badge variant="outline">{row.sourceName}</Badge>
+                        <Badge variant="outline">{row.publisherType === "particular" ? "Particular" : row.publisherType === "agency" ? "Agenție" : "Vânzător necunoscut"}</Badge>
                         {row.rooms ? <Badge variant="outline">{row.rooms} camere</Badge> : null}
                         {row.usableArea ? (
                           <Badge variant="outline">{row.usableArea} mp</Badge>
