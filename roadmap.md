@@ -5,3 +5,9 @@
 - [x] Paginare numerotată cu prima/ultima pagină și paginile din jurul celei curente
 - [x] Sortare: cele mai noi, preț crescător/descrescător, suprafață descrescătoare
 - [x] Teste rulate (11 trec) și build verificat fără erori
+
+# hbsync — blocări scurte și așteptare
+
+- [ ] Expirare 120 secunde doar pentru hbsync partial
+- [ ] Reîncercare la fiecare 2 secunde, maximum 20 secunde
+- [ ] Teste: blocare abandonată, cereri simultane, refuz după 20 secunde
