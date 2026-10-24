@@ -33,6 +33,7 @@ import { toast } from "@/components/ui/sonner";
 import { Checkbox } from "@/components/ui/checkbox";
 import { getImoradarPreference } from "@/lib/portals/imoradar.functions";
 import { getImobiliarePromotions } from "@/lib/portals/imobiliare-promotions.functions";
+import { getImobiliareMediaStatus } from "@/lib/portals/imobiliare-media.functions";
 import { imobiliarePromotionChanges, type ImobiliarePublicationMode, type ImobiliarePromotionChanges } from "@/lib/portals/imobiliare/card-promotions";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Button } from "@/components/ui/button";
@@ -337,6 +338,13 @@ export const PropertyPortalsCard = forwardRef<
   const loadImobiliarePromotions = useServerFn(getImobiliarePromotions);
   const loadImoradarPreference = useServerFn(getImoradarPreference);
   const imobiliareCell = cells.find((cell) => cell.portalId === "imobiliare_ro");
+  const loadImobiliareMedia = useServerFn(getImobiliareMediaStatus);
+  const imobiliareMedia = useQuery({
+    queryKey: ["property-imobiliare-media", organizationId, propertyId],
+    queryFn: () => loadImobiliareMedia({ data: { propertyId, ...(organizationId ? { organizationId } : {}) } }),
+    enabled: imobiliareCell?.configured === true,
+    staleTime: 30_000,
+  });
   const imobiliareSelected = Boolean(imobiliareCell && (checked.imobiliare_ro ?? imobiliareCell.selected));
   const [imobiliareModeDraft, setImobiliareModeDraft] = useState<ImobiliarePublicationMode | null>(null);
   const imobiliareMode = imobiliareModeDraft ?? imobiliareCell?.imobiliareMode ?? "combined";
@@ -434,6 +442,7 @@ export const PropertyPortalsCard = forwardRef<
       else toast.error(job.message ? `${name}: ${job.message}` : `${name}: publicarea a eșuat.`);
     }
     if (finished) {
+      void queryClient.invalidateQueries({ queryKey: ["property-imobiliare-media", organizationId, propertyId] });
       void queryClient.invalidateQueries({ queryKey: ["property-imobiliare-promotions", organizationId, propertyId] });
       void queryClient.invalidateQueries({ queryKey: ["imoradar-preference", propertyId, organizationId ?? null] });
       void queryClient.invalidateQueries({
@@ -932,6 +941,12 @@ export const PropertyPortalsCard = forwardRef<
                           {detail}
                         </p>
                         {cell.portalId === "imobiliare_ro" && (cell.lastError || latestOperationFailed) ? <p role="alert" className="mt-2 break-words text-xs text-destructive">{cell.lastError ?? latestOperation?.errorMessage}</p> : null}
+                        {cell.portalId === "imobiliare_ro" && cell.configured ? (
+                          <div className="mt-2 space-y-1 text-xs text-muted-foreground">
+                            <p>{imobiliareMedia.data ? `${imobiliareMedia.data.sent ?? "?"}/${imobiliareMedia.data.total} poze trimise` : imobiliareMedia.isError ? "Numărul pozelor nu a putut fi verificat." : "Se verifică pozele…"}</p>
+                            {imobiliareMedia.data?.reasons.map(reason => <p key={reason} className="break-words text-warning-foreground">{reason}</p>)}
+                          </div>
+                        ) : null}
                         {cell.portalId === "olx_direct" && (cell.state === "needs_packet" || cell.state === "syncing") ? (
                           <Button
                             type="button"
