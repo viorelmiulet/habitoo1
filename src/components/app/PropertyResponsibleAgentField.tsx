@@ -6,9 +6,9 @@ export function PropertyResponsibleAgentField({ canEdit, value, name, candidates
   candidates: { id: string; full_name: string | null }[]; onChange: (value: string) => void;
 }) {
   return <div className="space-y-2">
-    <Label htmlFor="responsible-agent">Agent responsabil</Label>
+    <Label htmlFor="responsible-agent">Agent</Label>
     {canEdit ? <Select value={value || undefined} onValueChange={onChange}>
-      <SelectTrigger id="responsible-agent" aria-label="Agent responsabil"><SelectValue placeholder={name || "Nealocat"}>
+      <SelectTrigger id="responsible-agent" aria-label="Agent"><SelectValue placeholder={name || "Nealocat"}>
         {candidates.find(candidate => candidate.id === value)?.full_name || name || "Nealocat"}
       </SelectValue></SelectTrigger>
       <SelectContent>{candidates.map(candidate => <SelectItem key={candidate.id} value={candidate.id}>{candidate.full_name || "Utilizator"}</SelectItem>)}</SelectContent>

@@ -866,6 +866,7 @@ function PropertyDetailPage() {
         <div className="sticky top-0 z-40 -mx-1 overflow-x-auto bg-background px-1">
         <TabsList className="h-auto w-max min-w-full justify-start gap-1 rounded-none border-b border-border bg-transparent p-0" aria-label="Secțiunile proprietății">
           {[
+            ["agent", "Agent"],
             ["overview", "Prezentare"],
             ["media", `Poze (${data?.imageCount ?? 0})`],
             ["publishing", `Publicare (${publishedPortals}/${portalCells.length})`],
@@ -888,6 +889,33 @@ function PropertyDetailPage() {
           ))}
         </TabsList>
         </div>
+
+        <TabsContent value="agent" className="space-y-6">
+          <section className="panel px-5 py-[18px]">
+            <div className="flex items-center justify-between gap-2">
+              <h2 className="font-sans text-base font-bold">Agent</h2>
+              {user?.isAdmin && property ? <Button size="sm" variant="outline" onClick={() => setReassignOpen(true)}>Schimbă agentul</Button> : null}
+            </div>
+            {responsibleAgent ? <div className="mt-4 flex items-center gap-3"><UserAvatar name={responsibleAgent.full_name} path={responsibleAgent.avatar_url} className="size-11" /><div className="min-w-0"><p className="truncate text-sm font-bold">{responsibleAgent.full_name}</p><p className="truncate text-xs text-muted-foreground">{[responsibleAgent.job_title, responsibleAgent.phone].filter(Boolean).join(" · ") || "Agent"}</p></div></div> : <p className="mt-3 text-xs text-muted-foreground">Niciun agent asignat.</p>}
+          </section>
+          {user?.isAdmin && property ? (
+            <ReassignPropertiesDialog
+              open={reassignOpen}
+              onOpenChange={setReassignOpen}
+              title="Schimbă agentul"
+              candidates={orgMembers}
+              excludeUserId={property.assigned_to}
+              loadIds={async () => [property.id]}
+              onDone={() => {
+                queryClient.invalidateQueries({ queryKey: ["property", id] });
+                queryClient.invalidateQueries({ queryKey: ["properties"] });
+                queryClient.invalidateQueries({ queryKey: ["property-responsible-agent"] });
+                queryClient.invalidateQueries({ queryKey: ["property-publish-jobs"] });
+                queryClient.invalidateQueries({ queryKey: ["property-portals-selection"] });
+              }}
+            />
+          ) : null}
+        </TabsContent>
 
         <TabsContent value="overview" className="space-y-6">
           {editing ? (
@@ -1109,25 +1137,6 @@ function PropertyDetailPage() {
                   </div>
                   {matches.length > 0 ? <div className="mt-4"><p className="text-sm font-bold">Top potriviri</p><ul className="mt-2 space-y-2">{matches.slice(0, 3).map(({ request, match }) => <li key={request.id} className="flex items-center justify-between gap-2 text-sm"><span className="truncate">{request.title}</span><StatusBadge tone={matchTone(match.score)}>{match.score}%</StatusBadge></li>)}</ul></div> : null}
                 </section>
-
-                {responsibleAgent || user?.isAdmin ? <section className="panel px-5 py-[18px]"><div className="flex items-center justify-between gap-2"><h2 className="font-sans text-base font-bold">Agent responsabil</h2>{user?.isAdmin && property ? <Button size="sm" variant="outline" onClick={() => setReassignOpen(true)}>Schimbă agentul</Button> : null}</div>{responsibleAgent ? <div className="mt-4 flex items-center gap-3"><UserAvatar name={responsibleAgent.full_name} path={responsibleAgent.avatar_url} className="size-11" /><div className="min-w-0"><p className="truncate text-sm font-bold">{responsibleAgent.full_name}</p><p className="truncate text-xs text-muted-foreground">{[responsibleAgent.job_title, responsibleAgent.phone].filter(Boolean).join(" · ") || "Agent"}</p></div></div> : <p className="mt-3 text-xs text-muted-foreground">Fără agent responsabil.</p>}</section> : null}
-                {user?.isAdmin && property ? (
-                  <ReassignPropertiesDialog
-                    open={reassignOpen}
-                    onOpenChange={setReassignOpen}
-                    title="Schimbă agentul"
-                    candidates={orgMembers}
-                    excludeUserId={property.assigned_to}
-                    loadIds={async () => [property.id]}
-                    onDone={() => {
-                      queryClient.invalidateQueries({ queryKey: ["property", id] });
-                      queryClient.invalidateQueries({ queryKey: ["properties"] });
-                      queryClient.invalidateQueries({ queryKey: ["property-responsible-agent"] });
-                      queryClient.invalidateQueries({ queryKey: ["property-publish-jobs"] });
-                      queryClient.invalidateQueries({ queryKey: ["property-portals-selection"] });
-                    }}
-                  />
-                ) : null}
 
                 <section className="panel px-5 py-[18px]">
                   <h2 className="font-sans text-base font-bold">Proprietar</h2>
