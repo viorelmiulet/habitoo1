@@ -4,6 +4,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireActiveOrgAuth } from "@/lib/org-access";
 import {
+  PRIVATE_LISTINGS_ORDER,
   PRIVATE_LISTINGS_PAGE_SIZE,
   cleanText,
   keywordTerms,
@@ -41,6 +42,7 @@ export const privateListingsFiltersSchema = z.object({
   rooms: z.array(z.number().int()).max(5).optional(),
   q: z.string().max(200).optional(),
   page: z.number().int().min(0).max(1000).optional(),
+  sort: z.enum(["newest", "price_asc", "price_desc", "surface_desc"]).optional(),
   source: z.enum(["storia", "imobiliare", "olx", "romimo"]).optional(),
   transaction: z.enum(["sale", "rent", "rent_day"]).optional(),
   priceMin: z.number().min(0).max(1e9).optional(),
@@ -98,7 +100,9 @@ export const getOwnerListings = createServerFn({ method: "GET" })
     }
 
     const from = page * PRIVATE_LISTINGS_PAGE_SIZE;
+    const order = PRIVATE_LISTINGS_ORDER[data.sort ?? "newest"];
     const { data: rows, error, count } = await query
+      .order(order.column, { ascending: order.ascending, nullsFirst: false })
       .order("scraped_at", { ascending: false, nullsFirst: false })
       .range(from, from + PRIVATE_LISTINGS_PAGE_SIZE - 1);
     if (error) throw new Error("Anunțurile nu pot fi încărcate acum.");

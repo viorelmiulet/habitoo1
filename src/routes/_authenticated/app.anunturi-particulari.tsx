@@ -3,12 +3,11 @@ import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useState } from "react";
 import { z } from "zod";
-import { ExternalLink, MapPin, Phone, Search, SearchX } from "lucide-react";
+import { ChevronLeft, ChevronRight, ExternalLink, MapPin, Phone, Search, SearchX } from "lucide-react";
 import { PageHeader } from "@/components/app/PageHeader";
 import { appHead } from "@/components/app/app-head";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -23,7 +22,7 @@ import {
   getOwnerListings,
   type OwnerListing,
 } from "@/lib/listings.functions";
-import { PRIVATE_LISTINGS_PAGE_SIZE } from "@/lib/private-listings";
+import { PRIVATE_LISTINGS_PAGE_SIZE, type PrivateListingsSort } from "@/lib/private-listings";
 
 const searchSchema = z.object({
   oras: z.string().optional(),
@@ -31,6 +30,7 @@ const searchSchema = z.object({
   camere: z.string().optional(),
   q: z.string().optional(),
   pagina: z.coerce.number().int().min(1).optional(),
+  sortare: z.enum(["newest", "price_asc", "price_desc", "surface_desc"]).optional(),
   sursa: z.enum(["storia", "imobiliare", "olx", "romimo"]).optional(),
   tranzactie: z.enum(["sale", "rent", "rent_day"]).optional(),
   tip: z.string().max(80).optional(),
@@ -45,6 +45,13 @@ const SOURCE_LABELS: Record<string, string> = {
   imobiliare: "Imobiliare.ro",
   olx: "OLX",
   romimo: "Romimo",
+};
+
+const SORT_LABELS: Record<PrivateListingsSort, string> = {
+  newest: "Cele mai noi",
+  price_asc: "Preț crescător",
+  price_desc: "Preț descrescător",
+  surface_desc: "Suprafață descrescătoare",
 };
 
 export const Route = createFileRoute("/_authenticated/app/anunturi-particulari")({
@@ -103,6 +110,7 @@ function PrivateListingsPage() {
     queryKey: [
       "owner-listings", search.oras, search.zona, rooms.join(","), search.q, page,
       search.sursa, search.tranzactie, search.tip, search.pretMin, search.pretMax, search.mpMin, search.mpMax,
+      search.sortare,
     ],
     queryFn: () =>
       fetchListings({
@@ -111,6 +119,7 @@ function PrivateListingsPage() {
           source: search.sursa, transaction: search.tranzactie, propertyType: search.tip,
           priceMin: search.pretMin, priceMax: search.pretMax,
           surfaceMin: search.mpMin, surfaceMax: search.mpMax,
+          sort: search.sortare,
         },
       }),
     placeholderData: keepPreviousData,
@@ -239,28 +248,43 @@ function PrivateListingsPage() {
         </div>
       </div>
 
-      <div className="flex items-center justify-between text-sm text-muted-foreground">
+      <div className="flex flex-wrap items-center justify-between gap-2 text-sm text-muted-foreground">
         <span>{listings.isLoading ? "Se încarcă…" : `${total} anunțuri`}</span>
-        {hasFilters ? (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => {
-              setKeywords("");
-              navigate({ search: {}, replace: true });
-            }}
+        <div className="flex items-center gap-2">
+          {hasFilters ? (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                setKeywords("");
+                navigate({ search: {}, replace: true });
+              }}
+            >
+              Șterge filtrele
+            </Button>
+          ) : null}
+          <Select
+            value={search.sortare ?? "newest"}
+            onValueChange={(v) => update({ sortare: v === "newest" ? undefined : (v as PrivateListingsSort) })}
           >
-            Șterge filtrele
-          </Button>
-        ) : null}
+            <SelectTrigger aria-label="Sortare" className="w-56">
+              <SelectValue placeholder="Sortare" />
+            </SelectTrigger>
+            <SelectContent>
+              {Object.entries(SORT_LABELS).map(([k, v]) => (
+                <SelectItem key={k} value={k}>{v}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
       {listings.isError ? (
         <p className="text-destructive">Anunțurile nu pot fi încărcate acum. Reîncearcă.</p>
       ) : listings.isLoading ? (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+        <div className="flex flex-col gap-3">
           {Array.from({ length: 6 }).map((_, i) => (
-            <Skeleton key={i} className="h-64" />
+            <Skeleton key={i} className="h-32" />
           ))}
         </div>
       ) : total === 0 ? (
@@ -272,72 +296,106 @@ function PrivateListingsPage() {
           </p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
-          {listings.data?.items.map((l) => <ListingCard key={l.id} listing={l} />)}
+        <div className="flex flex-col gap-3">
+          {listings.data?.items.map((l) => <ListingRow key={l.id} listing={l} />)}
         </div>
       )}
 
       {pages > 1 ? (
-        <div className="flex items-center justify-center gap-3">
-          <Button
-            variant="outline"
-            disabled={page === 0}
-            onClick={() => navigate({ search: (p) => ({ ...p, pagina: page > 1 ? page : undefined }) })}
-          >
-            Înapoi
-          </Button>
-          <span className="text-sm text-muted-foreground">
-            Pagina {page + 1} din {pages}
-          </span>
-          <Button
-            variant="outline"
-            disabled={page + 1 >= pages}
-            onClick={() => navigate({ search: (p) => ({ ...p, pagina: page + 2 }) })}
-          >
-            Înainte
-          </Button>
-        </div>
+        <Pagination
+          page={page + 1}
+          pages={pages}
+          onGo={(p) =>
+            navigate({ search: (prev) => ({ ...prev, pagina: p > 1 ? p : undefined }) })
+          }
+        />
       ) : null}
     </div>
   );
 }
 
-function ListingCard({ listing }: { listing: OwnerListing }) {
+/** Paginare numerotată: prima, ultima și două pagini în jurul celei curente. */
+function pageNumbers(current: number, pages: number): (number | "…")[] {
+  const wanted = new Set([1, pages, current - 1, current, current + 1]);
+  const list = [...wanted].filter((p) => p >= 1 && p <= pages).sort((a, b) => a - b);
+  const out: (number | "…")[] = [];
+  let prev = 0;
+  for (const p of list) {
+    if (prev && p - prev > 1) out.push("…");
+    out.push(p);
+    prev = p;
+  }
+  return out;
+}
+
+function Pagination({ page, pages, onGo }: { page: number; pages: number; onGo: (p: number) => void }) {
+  return (
+    <nav aria-label="Paginare" className="flex flex-wrap items-center justify-center gap-1">
+      <Button variant="outline" size="sm" disabled={page === 1} onClick={() => onGo(page - 1)} aria-label="Pagina anterioară">
+        <ChevronLeft className="size-4" /> Înapoi
+      </Button>
+      {pageNumbers(page, pages).map((p, i) =>
+        p === "…" ? (
+          <span key={`gap-${i}`} className="px-1 text-muted-foreground">…</span>
+        ) : (
+          <Button
+            key={p}
+            variant={p === page ? "default" : "outline"}
+            size="sm"
+            className="min-w-9"
+            aria-current={p === page ? "page" : undefined}
+            onClick={() => onGo(p)}
+          >
+            {p}
+          </Button>
+        ),
+      )}
+      <Button variant="outline" size="sm" disabled={page >= pages} onClick={() => onGo(page + 1)} aria-label="Pagina următoare">
+        Înainte <ChevronRight className="size-4" />
+      </Button>
+    </nav>
+  );
+}
+
+function ListingRow({ listing }: { listing: OwnerListing }) {
   const place = [listing.zone, listing.city ?? listing.location, listing.county]
     .filter(Boolean)
     .join(", ");
   const specs = [
+    listing.propertyType?.trim() || null,
     listing.rooms !== null ? `${listing.rooms} camere` : null,
     listing.surface !== null ? `${listing.surface} m²` : null,
     listing.floor ? `Etaj ${listing.floor}` : null,
   ].filter(Boolean);
   const firstImage = listing.images[0] ?? null;
+  const transaction = listing.transactionType
+    ? /pe zi/i.test(listing.transactionType)
+      ? "Închiriere pe zi"
+      : /rent|inch/i.test(listing.transactionType)
+        ? "Închiriere"
+        : "Vânzare"
+    : null;
   return (
-    <Card className="flex h-full flex-col gap-0 overflow-hidden">
+    <article className="flex flex-col gap-3 rounded-lg border border-border bg-card p-3 sm:flex-row sm:gap-4">
       {firstImage ? (
         <img
           src={firstImage}
           alt={listing.title?.trim() || "Fotografie anunț"}
           loading="lazy"
-          className="aspect-[16/9] w-full object-cover"
+          className="aspect-[4/3] w-full shrink-0 rounded-md object-cover sm:w-44"
         />
       ) : null}
-      <CardHeader className="flex flex-row items-center justify-between gap-2 pb-3">
-        <Badge variant="secondary">
-          Sursă: {SOURCE_LABELS[listing.source] ?? listing.source}
-        </Badge>
-        {listing.transactionType ? (
-          <span className="text-xs text-muted-foreground">
-            {/pe zi/i.test(listing.transactionType)
-              ? "Închiriere pe zi"
-              : /rent|inch/i.test(listing.transactionType)
-                ? "Închiriere"
-                : "Vânzare"}
-          </span>
-        ) : null}
-      </CardHeader>
-      <CardContent className="flex flex-1 flex-col gap-2">
-        <h3 className="line-clamp-2 font-semibold leading-snug">
+      <div className="flex min-w-0 flex-1 flex-col gap-1.5">
+        <div className="flex flex-wrap items-center gap-2">
+          <Badge variant="secondary">{SOURCE_LABELS[listing.source] ?? listing.source}</Badge>
+          {transaction ? <span className="text-xs text-muted-foreground">{transaction}</span> : null}
+          {listing.scrapedAt ? (
+            <span className="text-xs text-muted-foreground">
+              Adăugat {new Date(listing.scrapedAt).toLocaleDateString("ro-RO")}
+            </span>
+          ) : null}
+        </div>
+        <h3 className="line-clamp-1 font-semibold leading-snug">
           {listing.title?.trim() || "Anunț fără titlu"}
         </h3>
         {listing.price === null ? (
@@ -353,7 +411,7 @@ function ListingCard({ listing }: { listing: OwnerListing }) {
             ) : null}
           </p>
         ) : (
-          <p className="text-xl font-bold text-primary">{money(listing.price, listing.currency)}</p>
+          <p className="text-lg font-bold text-primary">{money(listing.price, listing.currency)}</p>
         )}
         {specs.length ? <p className="text-sm">{specs.join(" · ")}</p> : null}
         {place ? (
@@ -363,24 +421,24 @@ function ListingCard({ listing }: { listing: OwnerListing }) {
           </p>
         ) : null}
         {listing.description ? <ListingDescription text={listing.description} /> : null}
-      </CardContent>
-      <CardFooter className="flex gap-2 pt-3">
+      </div>
+      <div className="flex shrink-0 flex-row gap-2 sm:w-44 sm:flex-col sm:justify-center">
         {listing.phone ? (
-          <Button asChild variant="outline" className="flex-1">
+          <Button asChild variant="outline" className="flex-1 sm:flex-none">
             <a href={`tel:${listing.phone}`}>
               <Phone className="size-4" /> {listing.phone}
             </a>
           </Button>
         ) : null}
         {listing.url ? (
-          <Button asChild className="flex-1">
+          <Button asChild className="flex-1 sm:flex-none">
             <a href={listing.url} target="_blank" rel="noopener noreferrer">
               Anunțul original <ExternalLink className="size-4" />
             </a>
           </Button>
         ) : null}
-      </CardFooter>
-    </Card>
+      </div>
+    </article>
   );
 }
 
@@ -393,7 +451,7 @@ function ListingDescription({ text }: { text: string }) {
     <div className="flex flex-col items-start gap-1">
       <p
         className={`text-sm whitespace-pre-line break-words text-muted-foreground ${
-          expanded || !long ? "" : "line-clamp-6"
+          expanded || !long ? "" : "line-clamp-2"
         }`}
       >
         {text}

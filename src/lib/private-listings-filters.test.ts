@@ -27,4 +27,9 @@ describe("Anunțuri particulari — filtrele tip anunț și tip proprietate", ()
   it("refuză tipuri de proprietate foarte lungi", () => {
     expect(() => privateListingsFiltersSchema.parse({ propertyType: "x".repeat(81) })).toThrow();
   });
+
+  it("acceptă sortările listei și refuză valori necunoscute", () => {
+    expect(privateListingsFiltersSchema.parse({ sort: "price_asc" })).toMatchObject({ sort: "price_asc" });
+    expect(() => privateListingsFiltersSchema.parse({ sort: "random" })).toThrow();
+  });
 });

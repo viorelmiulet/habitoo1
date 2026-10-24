@@ -1,5 +1,16 @@
 /** Filtre pentru modulul „Anunțuri particulari” — logică pură, testabilă. */
-export const PRIVATE_LISTINGS_PAGE_SIZE = 9;
+export const PRIVATE_LISTINGS_PAGE_SIZE = 24;
+
+/** Sortările disponibile în listă și ordonarea lor în baza de date. */
+export const PRIVATE_LISTINGS_SORTS = ["newest", "price_asc", "price_desc", "surface_desc"] as const;
+export type PrivateListingsSort = (typeof PRIVATE_LISTINGS_SORTS)[number];
+
+export const PRIVATE_LISTINGS_ORDER: Record<PrivateListingsSort, { column: string; ascending: boolean }> = {
+  newest: { column: "scraped_at", ascending: false },
+  price_asc: { column: "price", ascending: true },
+  price_desc: { column: "price", ascending: false },
+  surface_desc: { column: "surface", ascending: false },
+};
 
 export type PrivateListingsFilters = {
   city?: string;
