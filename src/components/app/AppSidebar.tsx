@@ -28,7 +28,6 @@ import {
   PanelLeftClose,
   PanelLeftOpen,
   PlusCircle,
-  Radar,
   Settings,
   ShieldCheck,
   Trash2,
@@ -97,9 +96,8 @@ export const agencyNav: NavGroup[] = [
     items: [{ label: "Colaborare", to: "/app/collaboration", icon: Handshake }],
   },
   {
-    title: "Prospectare",
+    title: "Anunțuri",
     items: [
-      { label: "Oportunități", to: "/app/prospecting", icon: Radar },
       { label: "Anunțuri particulari", to: "/app/anunturi-particulari", icon: Newspaper },
     ],
   },
