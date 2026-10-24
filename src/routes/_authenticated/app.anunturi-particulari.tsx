@@ -282,9 +282,9 @@ function PrivateListingsPage() {
       {listings.isError ? (
         <p className="text-destructive">Anunțurile nu pot fi încărcate acum. Reîncearcă.</p>
       ) : listings.isLoading ? (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+        <div className="flex flex-col gap-3">
           {Array.from({ length: 6 }).map((_, i) => (
-            <Skeleton key={i} className="h-64" />
+            <Skeleton key={i} className="h-32" />
           ))}
         </div>
       ) : total === 0 ? (
@@ -296,33 +296,64 @@ function PrivateListingsPage() {
           </p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
-          {listings.data?.items.map((l) => <ListingCard key={l.id} listing={l} />)}
+        <div className="flex flex-col gap-3">
+          {listings.data?.items.map((l) => <ListingRow key={l.id} listing={l} />)}
         </div>
       )}
 
       {pages > 1 ? (
-        <div className="flex items-center justify-center gap-3">
-          <Button
-            variant="outline"
-            disabled={page === 0}
-            onClick={() => navigate({ search: (p) => ({ ...p, pagina: page > 1 ? page : undefined }) })}
-          >
-            Înapoi
-          </Button>
-          <span className="text-sm text-muted-foreground">
-            Pagina {page + 1} din {pages}
-          </span>
-          <Button
-            variant="outline"
-            disabled={page + 1 >= pages}
-            onClick={() => navigate({ search: (p) => ({ ...p, pagina: page + 2 }) })}
-          >
-            Înainte
-          </Button>
-        </div>
+        <Pagination
+          page={page + 1}
+          pages={pages}
+          onGo={(p) =>
+            navigate({ search: (prev) => ({ ...prev, pagina: p > 1 ? p : undefined }) })
+          }
+        />
       ) : null}
     </div>
+  );
+}
+
+/** Paginare numerotată: prima, ultima și două pagini în jurul celei curente. */
+function pageNumbers(current: number, pages: number): (number | "…")[] {
+  const wanted = new Set([1, pages, current - 1, current, current + 1]);
+  const list = [...wanted].filter((p) => p >= 1 && p <= pages).sort((a, b) => a - b);
+  const out: (number | "…")[] = [];
+  let prev = 0;
+  for (const p of list) {
+    if (prev && p - prev > 1) out.push("…");
+    out.push(p);
+    prev = p;
+  }
+  return out;
+}
+
+function Pagination({ page, pages, onGo }: { page: number; pages: number; onGo: (p: number) => void }) {
+  return (
+    <nav aria-label="Paginare" className="flex flex-wrap items-center justify-center gap-1">
+      <Button variant="outline" size="sm" disabled={page === 1} onClick={() => onGo(page - 1)} aria-label="Pagina anterioară">
+        <ChevronLeft className="size-4" /> Înapoi
+      </Button>
+      {pageNumbers(page, pages).map((p, i) =>
+        p === "…" ? (
+          <span key={`gap-${i}`} className="px-1 text-muted-foreground">…</span>
+        ) : (
+          <Button
+            key={p}
+            variant={p === page ? "default" : "outline"}
+            size="sm"
+            className="min-w-9"
+            aria-current={p === page ? "page" : undefined}
+            onClick={() => onGo(p)}
+          >
+            {p}
+          </Button>
+        ),
+      )}
+      <Button variant="outline" size="sm" disabled={page >= pages} onClick={() => onGo(page + 1)} aria-label="Pagina următoare">
+        Înainte <ChevronRight className="size-4" />
+      </Button>
+    </nav>
   );
 }
 
