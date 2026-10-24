@@ -286,6 +286,7 @@ export async function publishPlan(input: {
   images: { dataUrl: string; bytes: number }[];
   mode: WriteMode;
   ref: ListingRef;
+  activateOnline?: boolean;
 }): Promise<
   | {
       ok: true;
@@ -325,6 +326,14 @@ export async function publishPlan(input: {
     const media = await sendImages(session, ctx, plan.customReference, images);
     if (!media.ok) return { ok: false, fail: media.fail };
     steps.push(`${media.sent} imagini trimise`);
+  }
+
+  // Published updates keep their existing status; only explicit promotion differences follow.
+  if (input.activateOnline === false) {
+    const publicUrl = await fetchImobiliarePublicUrlWithRetries(session, ctx, plan.customReference);
+    return { ok: true, steps, publicUrl,
+      offer: buildImobiliareOffer(plan.customReference, plan.transaction, created.body),
+      httpStatus: created.status, portalResponse: created.body ?? null, promotionErrors: [] };
   }
 
   // Fără acest pas anunțul rămâne invizibil, deși API-ul nu semnalează eroare.
@@ -458,6 +467,7 @@ async function write(
               plan,
               images: media.images,
               mode: planMode,
+              activateOnline: mode === "create",
               ref: { ...ref, ...(mode === "update" ? { imobiliarePromotions: undefined } : {}) },
             }),
           ),

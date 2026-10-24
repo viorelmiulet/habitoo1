@@ -27,7 +27,7 @@ beforeEach(() => {
   state.request.mockImplementation(async (_session: unknown, call: { method: string; path: string }) => ({
     ok: true, status: 200, classification: null, body: call.path.includes("/slots/") ? { data: { total: 10, used: 2 } }
       : call.path.includes("/promotions/listings/") ? { data: [] }
-      : call.method === "GET" ? { data: { path: "https://www.imobiliare.ro/oferta/test" } } : { data: {} },
+      : call.method === "GET" ? { data: { path: "/oferta/test" } } : { data: {} },
   }));
 });
 const writes = () => state.request.mock.calls.map(call => call[1]).filter(call => call.method === "POST" && call.path.endsWith("/promotions"));
@@ -101,6 +101,9 @@ describe("initial online contract", () => {
     }
   });
   it("published changes send only their difference without status", async () => {
+    const updated = await publishPlan({ ctx, session: {} as never, plan, images: [], mode: "update", activateOnline: false, ref: { propertyId: "property" } as ListingRef });
+    expect(updated.ok).toBe(true);
+    expect(writes()).toEqual([]);
     const changes = imobiliarePromotionChanges([{ id: "bonus", value: true }, { id: "tl", value: true }], { bonus: false }, true);
     const definition = imobiliarePromotion("bonus");
     if (!definition) throw new Error("Missing Bonus");
