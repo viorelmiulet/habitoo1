@@ -44,7 +44,7 @@ export async function importHbsyncMarket(admin: SupabaseClient<Database>, record
       summary.errors.push(...result.errors);
     } catch {
       success = false;
-      summary.errors.push({ reference: source, message: "Échec d’import de la source." });
+      summary.errors.push({ reference: source, message: "Importul sursei a eșuat." });
       if (runId) await admin.from("market_import_runs").update({ status: "failed", finished_at: new Date().toISOString(), errors: [{ reference: source, message: "Import eșuat." }] }).eq("id", runId);
     } finally {
       const { error } = await admin.rpc("market_sync_release", { _source: source, _ok: success, _run_id: runId ?? undefined, _error: success ? undefined : "Import hbsync incomplet." });

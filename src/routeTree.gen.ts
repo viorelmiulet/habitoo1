@@ -121,6 +121,7 @@ import { Route as ApiPublicCronVdiLeadsRouteImport } from './routes/api/public/c
 import { Route as ApiPublicListingsUpsertRouteImport } from './routes/api/public/listings/upsert'
 import { Route as ApiPublicMailgunEventsRouteImport } from './routes/api/public/mailgun/events'
 import { Route as ApiPublicMailgunInboundRouteImport } from './routes/api/public/mailgun/inbound'
+import { Route as ApiPublicMarketListingsUpsertRouteImport } from './routes/api/public/market-listings/upsert'
 import { Route as ApiPublicMetaDataDeletionRouteImport } from './routes/api/public/meta/data-deletion'
 import { Route as ApiPublicMetaDeauthorizeRouteImport } from './routes/api/public/meta/deauthorize'
 import { Route as ApiPublicPartnerLogoIdRouteImport } from './routes/api/public/partner-logo/$id'
@@ -776,6 +777,12 @@ const ApiPublicMailgunInboundRoute = ApiPublicMailgunInboundRouteImport.update({
   path: '/api/public/mailgun/inbound',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicMarketListingsUpsertRoute =
+  ApiPublicMarketListingsUpsertRouteImport.update({
+    id: '/api/public/market-listings/upsert',
+    path: '/api/public/market-listings/upsert',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicMetaDataDeletionRoute =
   ApiPublicMetaDataDeletionRouteImport.update({
     id: '/api/public/meta/data-deletion',
@@ -1118,6 +1125,7 @@ export interface FileRoutesByFullPath {
   '/api/public/listings/upsert': typeof ApiPublicListingsUpsertRoute
   '/api/public/mailgun/events': typeof ApiPublicMailgunEventsRoute
   '/api/public/mailgun/inbound': typeof ApiPublicMailgunInboundRoute
+  '/api/public/market-listings/upsert': typeof ApiPublicMarketListingsUpsertRoute
   '/api/public/meta/data-deletion': typeof ApiPublicMetaDataDeletionRoute
   '/api/public/meta/deauthorize': typeof ApiPublicMetaDeauthorizeRoute
   '/api/public/partner-logo/$id': typeof ApiPublicPartnerLogoIdRoute
@@ -1268,6 +1276,7 @@ export interface FileRoutesByTo {
   '/api/public/listings/upsert': typeof ApiPublicListingsUpsertRoute
   '/api/public/mailgun/events': typeof ApiPublicMailgunEventsRoute
   '/api/public/mailgun/inbound': typeof ApiPublicMailgunInboundRoute
+  '/api/public/market-listings/upsert': typeof ApiPublicMarketListingsUpsertRoute
   '/api/public/meta/data-deletion': typeof ApiPublicMetaDataDeletionRoute
   '/api/public/meta/deauthorize': typeof ApiPublicMetaDeauthorizeRoute
   '/api/public/partner-logo/$id': typeof ApiPublicPartnerLogoIdRoute
@@ -1424,6 +1433,7 @@ export interface FileRoutesById {
   '/api/public/listings/upsert': typeof ApiPublicListingsUpsertRoute
   '/api/public/mailgun/events': typeof ApiPublicMailgunEventsRoute
   '/api/public/mailgun/inbound': typeof ApiPublicMailgunInboundRoute
+  '/api/public/market-listings/upsert': typeof ApiPublicMarketListingsUpsertRoute
   '/api/public/meta/data-deletion': typeof ApiPublicMetaDataDeletionRoute
   '/api/public/meta/deauthorize': typeof ApiPublicMetaDeauthorizeRoute
   '/api/public/partner-logo/$id': typeof ApiPublicPartnerLogoIdRoute
@@ -1580,6 +1590,7 @@ export interface FileRouteTypes {
     | '/api/public/listings/upsert'
     | '/api/public/mailgun/events'
     | '/api/public/mailgun/inbound'
+    | '/api/public/market-listings/upsert'
     | '/api/public/meta/data-deletion'
     | '/api/public/meta/deauthorize'
     | '/api/public/partner-logo/$id'
@@ -1730,6 +1741,7 @@ export interface FileRouteTypes {
     | '/api/public/listings/upsert'
     | '/api/public/mailgun/events'
     | '/api/public/mailgun/inbound'
+    | '/api/public/market-listings/upsert'
     | '/api/public/meta/data-deletion'
     | '/api/public/meta/deauthorize'
     | '/api/public/partner-logo/$id'
@@ -1885,6 +1897,7 @@ export interface FileRouteTypes {
     | '/api/public/listings/upsert'
     | '/api/public/mailgun/events'
     | '/api/public/mailgun/inbound'
+    | '/api/public/market-listings/upsert'
     | '/api/public/meta/data-deletion'
     | '/api/public/meta/deauthorize'
     | '/api/public/partner-logo/$id'
@@ -1992,6 +2005,7 @@ export interface RootRouteChildren {
   ApiPublicListingsUpsertRoute: typeof ApiPublicListingsUpsertRoute
   ApiPublicMailgunEventsRoute: typeof ApiPublicMailgunEventsRoute
   ApiPublicMailgunInboundRoute: typeof ApiPublicMailgunInboundRoute
+  ApiPublicMarketListingsUpsertRoute: typeof ApiPublicMarketListingsUpsertRoute
   ApiPublicMetaDataDeletionRoute: typeof ApiPublicMetaDataDeletionRoute
   ApiPublicMetaDeauthorizeRoute: typeof ApiPublicMetaDeauthorizeRoute
   ApiPublicPartnerLogoIdRoute: typeof ApiPublicPartnerLogoIdRoute
@@ -2815,6 +2829,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicMailgunInboundRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/market-listings/upsert': {
+      id: '/api/public/market-listings/upsert'
+      path: '/api/public/market-listings/upsert'
+      fullPath: '/api/public/market-listings/upsert'
+      preLoaderRoute: typeof ApiPublicMarketListingsUpsertRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/meta/data-deletion': {
       id: '/api/public/meta/data-deletion'
       path: '/api/public/meta/data-deletion'
@@ -3398,6 +3419,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicListingsUpsertRoute: ApiPublicListingsUpsertRoute,
   ApiPublicMailgunEventsRoute: ApiPublicMailgunEventsRoute,
   ApiPublicMailgunInboundRoute: ApiPublicMailgunInboundRoute,
+  ApiPublicMarketListingsUpsertRoute: ApiPublicMarketListingsUpsertRoute,
   ApiPublicMetaDataDeletionRoute: ApiPublicMetaDataDeletionRoute,
   ApiPublicMetaDeauthorizeRoute: ApiPublicMetaDeauthorizeRoute,
   ApiPublicPartnerLogoIdRoute: ApiPublicPartnerLogoIdRoute,
