@@ -28,7 +28,6 @@ import {
   PanelLeftClose,
   PanelLeftOpen,
   PlusCircle,
-  Radar,
   Settings,
   ShieldCheck,
   Trash2,
