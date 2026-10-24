@@ -23,7 +23,7 @@ export function PropertyImobiliarePromotionsCard({ view, drafts, disabled, error
   return <div className="relative z-10 mt-3 border-t border-border pt-3" aria-label="Promovări Imobiliare.ro">
     <div className="mb-2 flex items-center justify-between gap-2">
       <span className="text-xs font-semibold">Promovări</span>
-      <Button type="button" variant="ghost" size="icon" className="size-8" title="Actualizează locurile libere" aria-label="Actualizează locurile libere" disabled={loading} onClick={onRefresh}><RefreshCw className="size-3.5" /></Button>
+      <Button type="button" variant="ghost" size="icon" className="size-8" title="Actualizează locurile libere" aria-label="Actualizează locurile libere" disabled={loading || disabled} onClick={onRefresh}><RefreshCw className="size-3.5" /></Button>
     </div>
     <ul className="space-y-2">{rows.map((row) => {
       const wanted = drafts[row.id] ?? row.value;
@@ -38,7 +38,7 @@ export function PropertyImobiliarePromotionsCard({ view, drafts, disabled, error
         </div>
         <p className="text-xs text-muted-foreground">{active ? "Activă" : row.value === null ? "Stare necunoscută" : "Inactivă"}{drafts[row.id] !== undefined && drafts[row.id] !== row.value ? " · Modificare în așteptare" : ""}{row.remaining !== null ? ` · Alocare: ${row.remaining} rămase` : ""}{row.agencyRemaining != null ? ` · Plafon: ${row.agencyRemaining} rămase` : ""}</p>
         {row.value === null && row.manageable ? <Button type="button" variant="link" size="compact" disabled={disabled} onClick={() => onChange(row.id, row.kind === "numeric" ? 0 : false)}>Oprește</Button> : null}
-        {error ? <p role="alert" className="mt-1 break-words text-xs text-destructive">{error}</p> : blocked ? <p className="mt-1 text-xs text-muted-foreground">Nu sunt locuri disponibile pentru activare.</p> : null}
+        {error && (row.id !== "bonus" || errors[row.id]) ? <p role="alert" className="mt-1 break-words text-xs text-destructive">{error}</p> : blocked ? <p className="mt-1 text-xs text-muted-foreground">Nu sunt locuri disponibile pentru activare.</p> : null}
       </li>;
     })}</ul>
   </div>;

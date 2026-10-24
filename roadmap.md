@@ -1,3 +1,10 @@
+# Imobiliare.ro — Doar imoradar24
+
+- [x] Alegere pe card, păstrare în coada existentă, mod cerut separat de cel confirmat, schimbări de mod și retragere ambele draft
+- [x] Bonus și Doar imoradar24 fără verificare locală de disponibilitate; răspuns exact pe card și în jurnal; 183 teste fără publicări reale
+- [x] Card izolat verificat pe calculator și telefon: mod exclusiv cu promovări dezactivate, Bonus selectabil fără locuri; aplicația fără erori
+- [ ] Test real după Publish — utilizatorul îl rulează explicit; verificarea în cont nu este disponibilă fără conectare în previzualizare
+
 # Integrare hbsync
 
 - [x] Endpoint PUSH separat pentru ACP, particulari și agenții, mapare canonică, clasificare necunoscută NULL și idempotență; 74 teste și import Storia real repetat HTTP 200

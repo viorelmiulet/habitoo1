@@ -4,6 +4,7 @@
  * reface la execuție în worker.
  */
 import { getPortalDefinition, portalCanPublish, publishUnavailableMessage, portalDisplayName, type PortalId } from "./registry";
+import { imobiliarePortalDecidesSlots, type ImobiliarePublicationMode } from "./imobiliare/card-promotions";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Admin = any;
@@ -14,7 +15,7 @@ export type EnqueueInput = {
   actorId: string;
   data: {
     propertyId: string;
-    selections: { portalId: string; enabled: boolean; promoted?: boolean; imobiliarePromotions?: import("./imobiliare/card-promotions").ImobiliarePromotionChanges }[];
+    selections: { portalId: string; enabled: boolean; promoted?: boolean; imobiliarePromotions?: import("./imobiliare/card-promotions").ImobiliarePromotionChanges; imobiliareMode?: ImobiliarePublicationMode }[];
     syncExisting: boolean;
   };
   loadAdmin: () => Promise<Admin>;
@@ -28,7 +29,7 @@ export async function enqueuePublishJobsForOrg(input: EnqueueInput) {
   const allowed = input.superadmin ? null : await input.activatedPortalIds(input.organizationId);
   const { data: publications } = await admin
     .from("portal_publications")
-    .select("portal_key, enabled")
+    .select("portal_key, enabled, imobiliare_mode")
     .eq("organization_id", input.organizationId)
     .eq("property_id", input.data.propertyId);
   const previous = new Map<string, boolean>(
@@ -60,7 +61,9 @@ export async function enqueuePublishJobsForOrg(input: EnqueueInput) {
       results.push({ portalId: definition.id, portalName: name, queued: false, message: `Integrarea ${name} nu este încă disponibilă.` });
       continue;
     }
-    if (wanted.enabled && !wasEnabled) {
+    const savedMode = (publications ?? []).find((p: { portal_key: string }) => p.portal_key === definition.id)?.imobiliare_mode;
+    const mode = wanted.imobiliareMode ?? (savedMode === "imoradar_only" ? "imoradar_only" : undefined);
+    if (wanted.enabled && !wasEnabled && !imobiliarePortalDecidesSlots(definition.id, mode, wanted.imobiliarePromotions)) {
       const { ensurePortalSlotAvailable } = await import("./slots.server");
       const guard = await ensurePortalSlotAvailable(admin, {
         organizationId: input.organizationId,
@@ -82,6 +85,7 @@ export async function enqueuePublishJobsForOrg(input: EnqueueInput) {
       enabled: wanted.enabled,
       promoted: wanted.promoted ?? null,
       imobiliare_promotions: definition.id === "imobiliare_ro" ? wanted.imobiliarePromotions ?? null : null,
+      imobiliare_mode: definition.id === "imobiliare_ro" ? mode ?? null : null,
       sync_existing: input.data.syncExisting,
       requested_by: input.actorId,
       superadmin: input.superadmin,

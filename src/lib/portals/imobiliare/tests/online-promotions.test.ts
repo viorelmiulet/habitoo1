@@ -11,10 +11,11 @@ vi.mock("@/integrations/supabase/client.server", () => ({ supabaseAdmin: { from:
   return query;
 } } }));
 import { publishPlan } from "../../adapters/imobiliare.server";
-import { imobiliareStandardSlotsMessage, warningsForImobiliareService } from "../online-promotions";
+import { warningsForImobiliareService } from "../online-promotions";
 import { imobiliarePromotion } from "../promotions";
 import { setImobiliareListingPromotion } from "../promotions.server";
 import { imobiliarePromotionChanges } from "../card-promotions";
+import { withdrawImobiliareDestinations } from "../online-promotions.server";
 
 const ctx = { organizationId: "org" } as PortalContext;
 const plan = { customReference: "HB-1126", transaction: "rent", listing: { custom_reference: "HB-1126" } } as unknown as ImobiliareListingPlan;
@@ -37,7 +38,8 @@ describe("initial online contract", () => {
     expect(writes()).toHaveLength(1);
     expect(writes()[0].body).toEqual({ status: "online", promotions: { bonus: true } });
     expect(state.saved).toEqual([expect.objectContaining({ promotion_id: "bonus", value_boolean: true })]);
-    expect(state.gate).toHaveBeenCalledWith(expect.objectContaining({ propertyId: "property", next: true, definition: expect.objectContaining({ id: "bonus" }) }));
+    expect(state.gate).not.toHaveBeenCalled();
+    expect(state.request.mock.calls.some(call => call[1].path.includes("/slots/bonus"))).toBe(false);
   });
   it("Bonus and Top Listing share the same online POST", async () => {
     expect((await publish({ bonus: true, tl: true })).ok).toBe(true);
@@ -52,26 +54,26 @@ describe("initial online contract", () => {
   });
   it("rejects allocation before online", async () => {
     state.gate.mockResolvedValue({ ok: false, message: "Plafonul agenției" });
-    expect((await publish({ bonus: true })).ok).toBe(false);
+    expect((await publish({ tl: true })).ok).toBe(false);
     expect(writes()).toEqual([]);
   });
-  it("rejects exhausted Bonus before online", async () => {
+  it("sends Bonus despite exhausted locally reported capacity", async () => {
     const original = state.request.getMockImplementation();
     state.request.mockImplementation(async (session, call) => call.path.endsWith("/slots/bonus")
       ? { ok: true, status: 200, body: { data: { total: 2, used: 2 } }, classification: null } : original?.(session, call));
-    expect((await publish({ bonus: true })).ok).toBe(false);
-    expect(writes()).toEqual([]);
+    expect((await publish({ bonus: true })).ok).toBe(true);
+    expect(writes()[0].body).toEqual({ status: "online", promotions: { bonus: true } });
+    expect(state.request.mock.calls.some(call => call[1].path.includes("/slots/bonus"))).toBe(false);
   });
-  it("standard-slot 422 without Bonus produces the card message with live Bonus count", async () => {
+  it("preserves the exact standard-slot rejection without extra capacity reads", async () => {
     const original = state.request.getMockImplementation();
     state.request.mockImplementation(async (session, call) => call.method === "POST" && call.path.endsWith("/promotions")
       ? { ok: false, status: 422, body: {}, classification: { code: "VALIDATION_ERROR", message: "Nu aveți suficiente sloturi pentru a publica această ofertă" } } : original?.(session, call));
     const result = await publish({});
     expect(result.ok).toBe(false);
     if (result.ok) throw new Error("Expected failure");
-    expect(result.fail.message).toBe("Locurile standard Imobiliare.ro sunt ocupate. Bifează Bonus (8 locuri libere) sau retrage alt anunț.");
-    expect(imobiliareStandardSlotsMessage(result.fail.message, false, 5)).toContain("Bonus (5 locuri libere)");
-    expect(imobiliareStandardSlotsMessage(result.fail.message, true, 5)).toBeNull();
+    expect(result.fail.message).toBe("Nu aveți suficiente sloturi pentru a publica această ofertă");
+    expect(state.request.mock.calls.some(call => call[1].path.includes("/slots/"))).toBe(false);
     expect(state.saved).toEqual([]);
   });
   it("Top Listing warning does not reject online or confirm Top Listing, while Bonus is saved", async () => {
@@ -111,5 +113,49 @@ describe("initial online contract", () => {
       organizationId: "org", reference: "HB-1126", definition, value: changes.bonus ?? true, current: true, allocation: null });
     expect(writes()).toHaveLength(1);
     expect(writes()[0].body).toEqual({ promotions: { bonus: false } });
+  });
+  it("imoradar-only creates the same reference then sends draft/online without promotions or capacity checks", async () => {
+    const result = await publishPlan({ ctx, session: {} as never, plan, images: [], mode: "create",
+      ref: { propertyId: "property", externalId: null, imobiliareMode: "imoradar_only", imobiliarePromotions: { bonus: true, tl: true } } });
+    expect(result.ok).toBe(true);
+    expect(writes()).toHaveLength(1);
+    expect(writes()[0]).toMatchObject({ path: "/api/v3/listings/HB-1126/promotions", body: { status: "draft", imoradar_status: "online" } });
+    expect(state.gate).not.toHaveBeenCalled();
+    expect(state.request.mock.calls.some(call => call[1].path.includes("/slots/") || call[1].path.includes("/promotions/listings/"))).toBe(false);
+    expect(result.ok && result.publicUrl).toBeNull();
+  });
+  it("switching to combined updates the same reference and sends both online and all promotions in one POST", async () => {
+    const result = await publishPlan({ ctx, session: {} as never, plan, images: [], mode: "update", activateOnline: false,
+      ref: { propertyId: "property", externalId: "HB-1126", imobiliareMode: "combined", imobiliareModeChanged: true, imobiliarePromotions: { bonus: true, tl: true } } });
+    expect(result.ok).toBe(true);
+    expect(writes()).toHaveLength(1);
+    expect(writes()[0].body).toEqual({ status: "online", imoradar_status: "online", promotions: { bonus: true, top_listing: true } });
+    expect(state.request.mock.calls.some(call => call[1].method === "PUT" && call[1].path.endsWith("/HB-1126"))).toBe(true);
+  });
+  it("switching to imoradar-only drafts Imobiliare without sending or validating promotions", async () => {
+    const result = await publishPlan({ ctx, session: {} as never, plan, images: [], mode: "update", activateOnline: false,
+      ref: { propertyId: "property", externalId: "HB-1126", imobiliareMode: "imoradar_only", imobiliareModeChanged: true, imobiliarePromotions: { tl: true } } });
+    expect(result.ok).toBe(true);
+    expect(writes()).toHaveLength(1);
+    expect(writes()[0].body).toEqual({ status: "draft", imoradar_status: "online" });
+    expect(state.gate).not.toHaveBeenCalled();
+  });
+  it("Bonus reaches the portal and its exact refusal and raw response survive", async () => {
+    const original = state.request.getMockImplementation();
+    const body = { errors: ["Nu aveți suficiente sloturi pentru a publica această ofertă"] };
+    state.request.mockImplementation(async (session, call) => call.method === "POST" && call.path.endsWith("/promotions")
+      ? { ok: false, status: 422, body, classification: { code: "VALIDATION_ERROR", message: body.errors[0] } } : original?.(session, call));
+    const result = await publish({ bonus: true });
+    expect(writes()).toHaveLength(1);
+    expect(writes()[0].body.promotions.bonus).toBe(true);
+    expect(result).toMatchObject({ ok: false, fail: { message: body.errors[0], portalResponse: body, httpStatus: 422 } });
+    expect(state.gate).not.toHaveBeenCalled();
+  });
+  it("deselecting sends one POST drafting both destinations and returns the raw portal response", async () => {
+    const response = await withdrawImobiliareDestinations({ session: {} as never, organizationId: "org", reference: "HB-1126" });
+    expect(writes()).toHaveLength(1);
+    expect(writes()[0]).toMatchObject({ path: "/api/v3/listings/HB-1126/promotions", body: { status: "draft", imoradar_status: "draft" } });
+    expect(response).toMatchObject({ ok: true, status: 200, body: { data: {} } });
+    expect(state.gate).not.toHaveBeenCalled();
   });
 });

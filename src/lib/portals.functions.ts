@@ -1,4 +1,4 @@
-import { imobiliarePromotionChangesSchema, type ImobiliarePromotionChanges } from "@/lib/portals/imobiliare/card-promotions";
+import { imobiliarePromotionChangesSchema, imobiliarePublicationModeSchema, imobiliarePortalDecidesSlots, type ImobiliarePublicationMode, type ImobiliarePromotionChanges } from "@/lib/portals/imobiliare/card-promotions";
 import { visibleOlxLinks } from "@/lib/portals/storia/vas";
 import { portalCanPublish, publishUnavailableMessage } from "@/lib/portals/registry";
 import { mergePortalOffers, parsePortalOffers } from "@/lib/portals/imobiliare/offer-links";
@@ -1255,6 +1255,8 @@ export async function executeListingAction(input: {
    */
   promoted?: boolean;
   imobiliarePromotions?: ImobiliarePromotionChanges;
+  imobiliareMode?: ImobiliarePublicationMode;
+  imobiliareModeChanged?: boolean;
 }): Promise<ListingActionResult> {
   const { organizationId, actorId, portalId, propertyId, action } = input;
   const startedAt = Date.now();
@@ -1334,7 +1336,7 @@ export async function executeListingAction(input: {
    * Locul este al AGENTULUI RESPONSABIL, nu al celui care apasă butonul, deci
    * verificarea se aplică și pentru administratorul agenției sau superadmin.
    */
-  if (action === "publish" && !input.skipSlotCheck) {
+  if (action === "publish" && !input.skipSlotCheck && !imobiliarePortalDecidesSlots(portalId, input.imobiliareMode, input.imobiliarePromotions)) {
     const { ensurePortalSlotAvailable } = await import("@/lib/portals/slots.server");
     const guard = await ensurePortalSlotAvailable(admin, {
       organizationId,
@@ -1433,7 +1435,7 @@ export async function executeListingAction(input: {
 
   const { data: listing } = await admin
     .from("portal_listings")
-    .select("id, external_id, portal_offers, status")
+    .select("id, external_id, portal_offers, status, imobiliare_mode")
     .eq("organization_id", organizationId)
     .eq("portal", definition.id)
     .eq("property_id", propertyId)
@@ -1469,7 +1471,12 @@ export async function executeListingAction(input: {
       propertyId,
       externalId: listing?.external_id ?? null,
       ...(promotionFlag ? { promoted: requestedPromoted } : {}),
-      ...(definition.id === "imobiliare_ro" && action === "publish" ? { imobiliarePromotions: input.imobiliarePromotions, actorId } : {}),
+      ...(definition.id === "imobiliare_ro" ? {
+        ...(action === "publish" || input.imobiliareModeChanged ? { imobiliarePromotions: input.imobiliarePromotions } : {}),
+        imobiliareMode: input.imobiliareMode ?? (listing?.imobiliare_mode === "imoradar_only" ? "imoradar_only" : undefined),
+        imobiliareModeChanged: input.imobiliareModeChanged,
+        actorId,
+      } : {}),
     };
     result =
       action === "publish"
@@ -1551,6 +1558,7 @@ export async function executeListingAction(input: {
     status,
     last_sync_at: now,
     last_error: errorMessage,
+    ...(result.ok && definition.id === "imobiliare_ro" ? { imobiliare_mode: action === "withdraw" ? null : result.data.imobiliareMode ?? listing?.imobiliare_mode ?? null } : {}),
     ...(result.ok && result.data.externalId ? { external_id: result.data.externalId } : {}),
     // Linkul public al anunțului, când portalul îl întoarce (generic, nu doar Storia).
     ...(result.ok && result.data.publicUrl ? { public_url: result.data.publicUrl } : {}),
@@ -1658,7 +1666,7 @@ export async function executeListingAction(input: {
   }
 
   let promotionErrors: { promotionId: string; message: string }[] = result.ok ? result.data.promotionErrors ?? [] : [];
-  if (definition.id === "imobiliare_ro" && action === "update" && result.ok && (status === "published" || status === "updated") && input.imobiliarePromotions) {
+  if (definition.id === "imobiliare_ro" && action === "update" && !input.imobiliareModeChanged && result.ok && (status === "published" || status === "updated") && input.imobiliarePromotions) {
     const { applyImobiliareCardPromotions } = await import("@/lib/portals/imobiliare/card-promotions.server");
     try {
       promotionErrors = await applyImobiliareCardPromotions({ organizationId, propertyId, actorId, changes: input.imobiliarePromotions });
@@ -1669,7 +1677,7 @@ export async function executeListingAction(input: {
   }
 
   // imoradar24: doar după o PUBLICARE reușită pe Imobiliare.ro, doar acest serviciu.
-  if (definition.id === "imobiliare_ro" && action === "publish" && result.ok && status !== "error" && input.imobiliarePromotions?.promote_imoradar === undefined) {
+  if (definition.id === "imobiliare_ro" && action === "publish" && !input.imobiliareMode && result.ok && status !== "error" && input.imobiliarePromotions?.promote_imoradar === undefined) {
     const { autoImoradarAfterListingAction } = await import(
       "@/lib/portals/imobiliare/imoradar-auto.server"
     );
@@ -2092,6 +2100,8 @@ import {
 } from "@/lib/portals/portal-state";
 
 export type PropertyPortalCell = {
+  imobiliareMode?: ImobiliarePublicationMode;
+  imobiliareConfirmedMode?: ImobiliarePublicationMode;
   portalId: string;
   portalName: string;
   logo: string;
@@ -2346,13 +2356,13 @@ export const getPropertiesPortalMatrix = createServerFn({ method: "POST" })
       admin
         .from("portal_publications")
         .select(
-          "property_id, portal_key, enabled, status, last_synced_at, last_error, external_ref, promoted",
+          "property_id, portal_key, enabled, status, last_synced_at, last_error, external_ref, promoted, imobiliare_mode",
         )
         .eq("organization_id", organizationId)
         .in("property_id", data.propertyIds),
       admin
         .from("portal_listings")
-        .select("property_id, portal, status, last_sync_at, last_error, external_id, public_url, portal_offers")
+        .select("property_id, portal, status, last_sync_at, last_error, external_id, public_url, portal_offers, imobiliare_mode")
         .eq("organization_id", organizationId)
         .in("property_id", data.propertyIds),
       admin
@@ -2425,6 +2435,10 @@ export const getPropertiesPortalMatrix = createServerFn({ method: "POST" })
         });
         return {
           portalId: portal.id,
+          ...(portal.id === "imobiliare_ro" ? {
+            imobiliareMode: pub?.imobiliare_mode === "imoradar_only" ? "imoradar_only" as const : "combined" as const,
+            imobiliareConfirmedMode: listing?.imobiliare_mode === "imoradar_only" ? "imoradar_only" as const : "combined" as const,
+          } : {}),
           portalName: portalDisplayName(portal.id),
           logo: portal.logo,
           availability: portal.status,
@@ -2441,12 +2455,12 @@ export const getPropertiesPortalMatrix = createServerFn({ method: "POST" })
           externalId: listing?.external_id ?? pub?.external_ref ?? null,
           // Imobiliare.ro: linkul se afișează doar din ID-ul real salvat.
           publicUrl:
-            portal.id === "imobiliare_ro"
+            portal.id === "imobiliare_ro" && listing?.imobiliare_mode === "imoradar_only" ? null : portal.id === "imobiliare_ro"
               ? imobiliareCardUrl(listing, parsePortalOffers(listing?.portal_offers)[0]?.url ?? null)
               : (listing?.public_url ?? null),
           // Storia: linkurile exportului automat pe OLX, doar cât anunțul e publicat.
           olxLinks: portal.id === "storia" ? visibleOlxLinks(listing?.portal_offers, listingStatus) : [],
-          offerLinks: parsePortalOffers(listing?.portal_offers).filter((o) => o.label !== "OLX").map((o) => ({
+          offerLinks: parsePortalOffers(listing?.imobiliare_mode === "imoradar_only" ? [] : listing?.portal_offers).filter((o) => o.label !== "OLX").map((o) => ({
             transaction: o.transaction,
             url: o.url,
             label: o.label ?? null,
@@ -2860,6 +2874,7 @@ const applySelectionSchema = z.object({
         /** Doar portalurile cu promovare prin flag (ex. Romimo); lipsă = neschimbat. */
         promoted: z.boolean().optional(),
         imobiliarePromotions: imobiliarePromotionChangesSchema.optional(),
+        imobiliareMode: imobiliarePublicationModeSchema.optional(),
       }),
     )
     .max(40),
@@ -2949,12 +2964,12 @@ export async function applyPortalSelectionForOrg(input: {
     ] = await Promise.all([
       admin
         .from("portal_publications")
-        .select("portal_key, enabled, promoted")
+        .select("portal_key, enabled, promoted, imobiliare_mode")
         .eq("organization_id", organizationId)
         .eq("property_id", data.propertyId),
       admin
         .from("portal_listings")
-        .select("portal, status, external_id")
+        .select("portal, status, external_id, imobiliare_mode")
 
         .eq("organization_id", organizationId)
         .eq("property_id", data.propertyId),
@@ -3020,6 +3035,12 @@ export async function applyPortalSelectionForOrg(input: {
         const name = definition.display_name;
         const previous =
           (publications ?? []).find((p) => p.portal_key === definition.id)?.enabled === true;
+        const savedPublication = (publications ?? []).find((p) => p.portal_key === definition.id);
+        const savedListing = (listings ?? []).find((l) => l.portal === definition.id);
+        const imobiliareMode: ImobiliarePublicationMode | undefined = definition.id === "imobiliare_ro"
+          ? wanted.imobiliareMode ?? (savedPublication?.imobiliare_mode === "imoradar_only" ? "imoradar_only" : "combined") : undefined;
+        const imobiliareModeChanged = definition.id === "imobiliare_ro" && wanted.imobiliareMode !== undefined
+          && wanted.imobiliareMode !== (savedListing?.imobiliare_mode ?? "combined");
 
         if (definition.status !== "available") {
           if (wanted.enabled) {
@@ -3064,7 +3085,7 @@ export async function applyPortalSelectionForOrg(input: {
         if (!wanted.enabled && !previous) continue;
 
         // Locuri de publicare: doar trecerea neselectat → selectat consumă un loc.
-        if (wanted.enabled && !previous) {
+        if (wanted.enabled && !previous && !imobiliarePortalDecidesSlots(definition.id, imobiliareMode, wanted.imobiliarePromotions)) {
           const { ensurePortalSlotAvailable } = await import("@/lib/portals/slots.server");
           const guard = await ensurePortalSlotAvailable(admin, {
             organizationId,
@@ -3093,13 +3114,14 @@ export async function applyPortalSelectionForOrg(input: {
         }
 
         // Intenția se salvează întotdeauna când se schimbă.
-        if (wanted.enabled !== previous) {
+        if (wanted.enabled !== previous || (definition.id === "imobiliare_ro" && wanted.imobiliareMode !== undefined)) {
           const { error } = await admin.from("portal_publications").upsert(
             {
               organization_id: organizationId,
               property_id: data.propertyId,
               portal_key: definition.id,
               enabled: wanted.enabled,
+              ...(definition.id === "imobiliare_ro" ? { imobiliare_mode: wanted.enabled ? imobiliareMode : null } : {}),
               status: wanted.enabled ? "pending" : "disabled",
               withdrawn_at: wanted.enabled ? null : new Date().toISOString(),
               // Retragerea șterge promovarea salvată.
@@ -3221,7 +3243,7 @@ export async function applyPortalSelectionForOrg(input: {
         const promoOp = plan.operation;
 
         const hasImobiliareChanges = definition.id === "imobiliare_ro" && Object.keys(wanted.imobiliarePromotions ?? {}).length > 0;
-        if (previous && published && !data.syncExisting && !promoOp && !hasImobiliareChanges) {
+        if (previous && published && !data.syncExisting && !promoOp && !hasImobiliareChanges && !imobiliareModeChanged) {
           results.push({
             portalId: definition.id,
             portalName: name,
@@ -3232,7 +3254,7 @@ export async function applyPortalSelectionForOrg(input: {
           continue;
         }
 
-        const action = published ? "update" : "publish";
+        const action = published || (definition.id === "imobiliare_ro" && savedListing?.external_id && savedListing.imobiliare_mode === "imoradar_only") ? "update" : "publish";
         // O schimbare doar la „Promovat” pe un anunț publicat = actualizare etichetată în jurnal.
         const promotionOnly = plan.promotionOnlyUpdate;
         const res = await executeListingAction({
@@ -3243,6 +3265,7 @@ export async function applyPortalSelectionForOrg(input: {
           action,
           ...(promotionFlag ? { promoted: plan.promoted } : {}),
           ...(definition.id === "imobiliare_ro" && wanted.imobiliarePromotions ? { imobiliarePromotions: wanted.imobiliarePromotions } : {}),
+          ...(definition.id === "imobiliare_ro" ? { imobiliareMode, imobiliareModeChanged } : {}),
           ...(promotionOnly && promoOp ? { operationLabel: promoOp } : {}),
         });
         results.push({
