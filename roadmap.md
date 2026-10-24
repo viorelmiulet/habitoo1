@@ -27,6 +27,7 @@
 
 # Promovări pe cardul Imobiliare.ro
 
+- [ ] Publicare online și toate promovările bifate într-un singur POST, validări existente înainte, confirmare per serviciu și mesaj Bonus pentru locuri standard ocupate; teste fără publicări reale
 - [x] Opțiuni pe card, contoare live, alocări și diferențe la salvare
 - [x] Selecții durabile în coadă; promovări imediat după online, contract combinat neconfirmat; refuzul nu anulează publicarea
 - [x] 183 teste mock; card desktop/mobil verificat vizual fără publicări reale
