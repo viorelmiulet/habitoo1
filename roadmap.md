@@ -4,4 +4,4 @@
 - [x] 24 de anunțuri pe pagină (în loc de 9)
 - [x] Paginare numerotată cu prima/ultima pagină și paginile din jurul celei curente
 - [x] Sortare: cele mai noi, preț crescător/descrescător, suprafață descrescătoare
-- [ ] Teste rulate și build verificat
+- [x] Teste rulate (11 trec) și build verificat fără erori
