@@ -15,6 +15,7 @@ export function withdrawImobiliareDestinations(input: { session: ImobiliareSessi
     method: "POST", path: promotionsPath(input.reference), connectionKey: input.organizationId,
     body: imobiliareDestinationStatus(undefined, false),
   });
+}
 
 /** Called inside the listing's existing durable lock; never takes a nested lock. */
 export async function publishImobiliareOnline(input: {
