@@ -1156,6 +1156,13 @@
       "when": 1792828097008,
       "tag": "0164_imobiliare_publication_mode",
       "breakpoints": true
+    },
+    {
+      "idx": 165,
+      "version": "7",
+      "when": 1792867732092,
+      "tag": "0165_listing_comments",
+      "breakpoints": true
     }
   ]
 }
