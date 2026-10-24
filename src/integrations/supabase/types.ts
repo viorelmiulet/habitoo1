@@ -3929,7 +3929,10 @@ export type Database = {
           id: string
           identity_hash: string | null
           image_url: string | null
+          images: Json | null
+          import_provider: string | null
           initial_price: number | null
+          is_private: boolean | null
           last_import_run_id: string | null
           last_seen_at: string
           latitude: number | null
@@ -3942,12 +3945,15 @@ export type Database = {
           normalized_district: string | null
           normalized_neighborhood: string | null
           parking: boolean | null
+          period: string | null
           price: number | null
           price_changes: number
           price_per_sqm: number | null
           property_type: string | null
+          publisher_type: string | null
           raw_data: Json
           rooms: number | null
+          sector: string | null
           source: string
           source_listing_id: string | null
           status: string
@@ -3982,7 +3988,10 @@ export type Database = {
           id?: string
           identity_hash?: string | null
           image_url?: string | null
+          images?: Json | null
+          import_provider?: string | null
           initial_price?: number | null
+          is_private?: boolean | null
           last_import_run_id?: string | null
           last_seen_at?: string
           latitude?: number | null
@@ -3995,12 +4004,15 @@ export type Database = {
           normalized_district?: string | null
           normalized_neighborhood?: string | null
           parking?: boolean | null
+          period?: string | null
           price?: number | null
           price_changes?: number
           price_per_sqm?: number | null
           property_type?: string | null
+          publisher_type?: string | null
           raw_data?: Json
           rooms?: number | null
+          sector?: string | null
           source: string
           source_listing_id?: string | null
           status?: string
@@ -4035,7 +4047,10 @@ export type Database = {
           id?: string
           identity_hash?: string | null
           image_url?: string | null
+          images?: Json | null
+          import_provider?: string | null
           initial_price?: number | null
+          is_private?: boolean | null
           last_import_run_id?: string | null
           last_seen_at?: string
           latitude?: number | null
@@ -4048,12 +4063,15 @@ export type Database = {
           normalized_district?: string | null
           normalized_neighborhood?: string | null
           parking?: boolean | null
+          period?: string | null
           price?: number | null
           price_changes?: number
           price_per_sqm?: number | null
           property_type?: string | null
+          publisher_type?: string | null
           raw_data?: Json
           rooms?: number | null
+          sector?: string | null
           source?: string
           source_listing_id?: string | null
           status?: string
