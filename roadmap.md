@@ -8,6 +8,6 @@
 
 # hbsync — blocări scurte și așteptare
 
-- [ ] Expirare 120 secunde doar pentru hbsync partial
-- [ ] Reîncercare la fiecare 2 secunde, maximum 20 secunde
-- [ ] Teste: blocare abandonată, cereri simultane, refuz după 20 secunde
+- [x] Expirare 120 secunde doar pentru hbsync partial
+- [x] Reîncercare la fiecare 2 secunde, maximum 20 secunde
+- [x] Teste: blocare abandonată, cereri simultane, refuz după 20 secunde (22 teste trec)
