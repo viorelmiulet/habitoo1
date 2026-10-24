@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useState } from "react";
@@ -376,7 +376,7 @@ function ListingRow({ listing }: { listing: OwnerListing }) {
         : "Vânzare"
     : null;
   return (
-    <article className="flex flex-col gap-3 rounded-lg border border-border bg-card p-3 sm:flex-row sm:gap-4">
+    <article className="relative flex flex-col gap-3 rounded-lg border border-border bg-card p-3 transition-colors hover:border-primary/40 sm:flex-row sm:gap-4">
       {firstImage ? (
         <img
           src={firstImage}
@@ -396,7 +396,13 @@ function ListingRow({ listing }: { listing: OwnerListing }) {
           ) : null}
         </div>
         <h3 className="line-clamp-1 font-semibold leading-snug">
-          {listing.title?.trim() || "Anunț fără titlu"}
+          <Link
+            to="/app/anunturi-particulari/$id"
+            params={{ id: listing.id }}
+            className="after:absolute after:inset-0 hover:underline"
+          >
+            {listing.title?.trim() || "Anunț fără titlu"}
+          </Link>
         </h3>
         {listing.price === null ? (
           <p className="text-sm font-medium text-muted-foreground">
@@ -404,7 +410,7 @@ function ListingRow({ listing }: { listing: OwnerListing }) {
             {listing.url ? (
               <>
                 {" – "}
-                <a href={listing.url} target="_blank" rel="noopener noreferrer" className="text-primary underline">
+                <a href={listing.url} target="_blank" rel="noopener noreferrer" className="relative z-10 text-primary underline">
                   vezi anunțul pe {SOURCE_LABELS[listing.source] ?? listing.source}
                 </a>
               </>
@@ -422,7 +428,7 @@ function ListingRow({ listing }: { listing: OwnerListing }) {
         ) : null}
         {listing.description ? <ListingDescription text={listing.description} /> : null}
       </div>
-      <div className="flex shrink-0 flex-row gap-2 sm:w-44 sm:flex-col sm:justify-center">
+      <div className="relative z-10 flex shrink-0 flex-row gap-2 sm:w-44 sm:flex-col sm:justify-center">
         {listing.phone ? (
           <Button asChild variant="outline" className="flex-1 sm:flex-none">
             <a href={`tel:${listing.phone}`}>

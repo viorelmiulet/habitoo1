@@ -81,6 +81,7 @@ import { Route as AuthenticatedSuperadminSupportRouteImport } from './routes/_au
 import { Route as AuthenticatedAppAcpIndexRouteImport } from './routes/_authenticated/app.acp.index'
 import { Route as AuthenticatedAppAcpIdRouteImport } from './routes/_authenticated/app.acp.$id'
 import { Route as AuthenticatedAppAcpNewRouteImport } from './routes/_authenticated/app.acp.new'
+import { Route as AuthenticatedAppAnunturiParticulariIdRouteImport } from './routes/_authenticated/app.anunturi-particulari_.$id'
 import { Route as AuthenticatedAppContactsIndexRouteImport } from './routes/_authenticated/app.contacts.index'
 import { Route as AuthenticatedAppContactsIdRouteImport } from './routes/_authenticated/app.contacts.$id'
 import { Route as AuthenticatedAppContractsIndexRouteImport } from './routes/_authenticated/app.contracts.index'
@@ -549,6 +550,12 @@ const AuthenticatedAppAcpNewRoute = AuthenticatedAppAcpNewRouteImport.update({
   path: '/acp/new',
   getParentRoute: () => AuthenticatedAppRoute,
 } as any)
+const AuthenticatedAppAnunturiParticulariIdRoute =
+  AuthenticatedAppAnunturiParticulariIdRouteImport.update({
+    id: '/anunturi-particulari_/$id',
+    path: '/anunturi-particulari/$id',
+    getParentRoute: () => AuthenticatedAppRoute,
+  } as any)
 const AuthenticatedAppContactsIndexRoute =
   AuthenticatedAppContactsIndexRouteImport.update({
     id: '/contacts/',
@@ -1092,6 +1099,7 @@ export interface FileRoutesByFullPath {
   '/superadmin/': typeof AuthenticatedSuperadminIndexRoute
   '/app/acp/$id': typeof AuthenticatedAppAcpIdRoute
   '/app/acp/new': typeof AuthenticatedAppAcpNewRoute
+  '/app/anunturi-particulari/$id': typeof AuthenticatedAppAnunturiParticulariIdRoute
   '/app/contacts/$id': typeof AuthenticatedAppContactsIdRoute
   '/app/contracts/$id': typeof AuthenticatedAppContractsIdRoute
   '/app/properties/$id': typeof AuthenticatedAppPropertiesIdRoute
@@ -1243,6 +1251,7 @@ export interface FileRoutesByTo {
   '/superadmin': typeof AuthenticatedSuperadminIndexRoute
   '/app/acp/$id': typeof AuthenticatedAppAcpIdRoute
   '/app/acp/new': typeof AuthenticatedAppAcpNewRoute
+  '/app/anunturi-particulari/$id': typeof AuthenticatedAppAnunturiParticulariIdRoute
   '/app/contacts/$id': typeof AuthenticatedAppContactsIdRoute
   '/app/contracts/$id': typeof AuthenticatedAppContractsIdRoute
   '/app/properties/$id': typeof AuthenticatedAppPropertiesIdRoute
@@ -1400,6 +1409,7 @@ export interface FileRoutesById {
   '/_authenticated/superadmin/': typeof AuthenticatedSuperadminIndexRoute
   '/_authenticated/app/acp/$id': typeof AuthenticatedAppAcpIdRoute
   '/_authenticated/app/acp/new': typeof AuthenticatedAppAcpNewRoute
+  '/_authenticated/app/anunturi-particulari_/$id': typeof AuthenticatedAppAnunturiParticulariIdRoute
   '/_authenticated/app/contacts/$id': typeof AuthenticatedAppContactsIdRoute
   '/_authenticated/app/contracts/$id': typeof AuthenticatedAppContractsIdRoute
   '/_authenticated/app/properties/$id': typeof AuthenticatedAppPropertiesIdRoute
@@ -1557,6 +1567,7 @@ export interface FileRouteTypes {
     | '/superadmin/'
     | '/app/acp/$id'
     | '/app/acp/new'
+    | '/app/anunturi-particulari/$id'
     | '/app/contacts/$id'
     | '/app/contracts/$id'
     | '/app/properties/$id'
@@ -1708,6 +1719,7 @@ export interface FileRouteTypes {
     | '/superadmin'
     | '/app/acp/$id'
     | '/app/acp/new'
+    | '/app/anunturi-particulari/$id'
     | '/app/contacts/$id'
     | '/app/contracts/$id'
     | '/app/properties/$id'
@@ -1864,6 +1876,7 @@ export interface FileRouteTypes {
     | '/_authenticated/superadmin/'
     | '/_authenticated/app/acp/$id'
     | '/_authenticated/app/acp/new'
+    | '/_authenticated/app/anunturi-particulari_/$id'
     | '/_authenticated/app/contacts/$id'
     | '/_authenticated/app/contracts/$id'
     | '/_authenticated/app/properties/$id'
@@ -2549,6 +2562,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAppAcpNewRouteImport
       parentRoute: typeof AuthenticatedAppRoute
     }
+    '/_authenticated/app/anunturi-particulari_/$id': {
+      id: '/_authenticated/app/anunturi-particulari_/$id'
+      path: '/anunturi-particulari/$id'
+      fullPath: '/app/anunturi-particulari/$id'
+      preLoaderRoute: typeof AuthenticatedAppAnunturiParticulariIdRouteImport
+      parentRoute: typeof AuthenticatedAppRoute
+    }
     '/_authenticated/app/contacts/': {
       id: '/_authenticated/app/contacts/'
       path: '/contacts'
@@ -3175,6 +3195,7 @@ interface AuthenticatedAppRouteChildren {
   AuthenticatedAppIndexRoute: typeof AuthenticatedAppIndexRoute
   AuthenticatedAppAcpIdRoute: typeof AuthenticatedAppAcpIdRoute
   AuthenticatedAppAcpNewRoute: typeof AuthenticatedAppAcpNewRoute
+  AuthenticatedAppAnunturiParticulariIdRoute: typeof AuthenticatedAppAnunturiParticulariIdRoute
   AuthenticatedAppContactsIdRoute: typeof AuthenticatedAppContactsIdRoute
   AuthenticatedAppContractsIdRoute: typeof AuthenticatedAppContractsIdRoute
   AuthenticatedAppPropertiesIdRoute: typeof AuthenticatedAppPropertiesIdRoute
@@ -3210,6 +3231,8 @@ const AuthenticatedAppRouteChildren: AuthenticatedAppRouteChildren = {
   AuthenticatedAppIndexRoute: AuthenticatedAppIndexRoute,
   AuthenticatedAppAcpIdRoute: AuthenticatedAppAcpIdRoute,
   AuthenticatedAppAcpNewRoute: AuthenticatedAppAcpNewRoute,
+  AuthenticatedAppAnunturiParticulariIdRoute:
+    AuthenticatedAppAnunturiParticulariIdRoute,
   AuthenticatedAppContactsIdRoute: AuthenticatedAppContactsIdRoute,
   AuthenticatedAppContractsIdRoute: AuthenticatedAppContractsIdRoute,
   AuthenticatedAppPropertiesIdRoute: AuthenticatedAppPropertiesIdRoute,
