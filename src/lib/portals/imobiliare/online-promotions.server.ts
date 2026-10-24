@@ -4,7 +4,7 @@ import type { ImobiliareSession } from "./auth.server";
 import { imobiliareAuthedRequest } from "./auth.server";
 import { promotionsPath } from "./config";
 import { imobiliarePromotion, imobiliarePromotionPatch } from "./promotions";
-import { imobiliarePromotionChangesSchema, type ImobiliarePromotionChanges } from "./card-promotions";
+import { imobiliareDestinationStatus, imobiliarePromotionChangesSchema, type ImobiliarePromotionChanges, type ImobiliarePublicationMode } from "./card-promotions";
 import { confirmImobiliareListingPromotion, fetchImobiliareListingPromotions, fetchImobiliareSlotMembership, validateImobiliareListingPromotion, type PromotionWriteInput } from "./promotions.server";
 import { mergeImobiliarePromotionState } from "./promotions";
 import { warningsForImobiliareService } from "./online-promotions";
@@ -13,8 +13,9 @@ import { warningsForImobiliareService } from "./online-promotions";
 export async function publishImobiliareOnline(input: {
   admin: SupabaseClient<Database>; session: ImobiliareSession; organizationId: string;
   propertyId: string; reference: string; actorId: string | null; changes: ImobiliarePromotionChanges;
+  mode?: ImobiliarePublicationMode;
 }) {
-  const changes = imobiliarePromotionChangesSchema.parse(input.changes);
+  const changes = imobiliarePromotionChangesSchema.parse(input.mode === "imoradar_only" ? {} : input.changes);
   const entries: PromotionWriteInput[] = [];
   const promotions: Record<string, boolean | number> = {};
   if (Object.keys(changes).length) {
@@ -26,7 +27,7 @@ export async function publishImobiliareOnline(input: {
     for (const [id, value] of Object.entries(changes)) {
       const definition = imobiliarePromotion(id);
       if (!definition?.writeField) continue;
-      const membership = definition.slotType && definition.kind === "boolean"
+      const membership = id !== "bonus" && definition.slotType && definition.kind === "boolean"
         ? await fetchImobiliareSlotMembership({ ...input, slotType: definition.slotType }) : null;
       const saved = local.data?.find(row => row.promotion_id === id);
       const current = mergeImobiliarePromotionState({ fromListing: listing.states.get(id) ?? null,
@@ -42,7 +43,7 @@ export async function publishImobiliareOnline(input: {
   const started = Date.now();
   const response = await imobiliareAuthedRequest(input.session, {
     method: "POST", path: promotionsPath(input.reference), connectionKey: input.organizationId,
-    body: { status: "online", ...(entries.length ? { promotions } : {}) },
+    body: { ...imobiliareDestinationStatus(input.mode), ...(entries.length ? { promotions } : {}) },
   });
   const promotionErrors: { promotionId: string; message: string }[] = [];
   if (response.ok && entries.length) {

@@ -239,6 +239,9 @@ export async function validateImobiliareListingPromotion(input: PromotionWriteIn
     };
   }
 
+  // Bonus capacity belongs to the portal: no local allocation or inventory gate.
+  if (definition.id === "bonus") return { ok: true };
+
   const activating =
     definition.kind === "numeric"
       ? Math.trunc(Number(input.value) || 0) >

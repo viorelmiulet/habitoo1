@@ -58,6 +58,8 @@ export type ListingRef = {
   promoted?: boolean;
   /** Explicit card choices, used only for Imobiliare.ro's initial online POST. */
   imobiliarePromotions?: import("./imobiliare/card-promotions").ImobiliarePromotionChanges;
+  imobiliareMode?: import("./imobiliare/card-promotions").ImobiliarePublicationMode;
+  imobiliareModeChanged?: boolean;
   actorId?: string | null;
 };
 
@@ -92,6 +94,7 @@ export type ListingOutcome = {
   /** Corpul răspunsului portalului la succes (sanitizat la jurnalizare). */
   portalResponse?: unknown;
   promotionErrors?: { promotionId: string; message: string }[];
+  imobiliareMode?: import("./imobiliare/card-promotions").ImobiliarePublicationMode;
 };
 
 export type ConnectionStatusOutcome = {

@@ -69,8 +69,7 @@ import {
 import { buildImobiliareOffer, type PortalOffer } from "../imobiliare/offer-links";
 import { imobiliareFloorReasons } from "../imobiliare/mapper";
 import { publishImobiliareOnline } from "../imobiliare/online-promotions.server";
-import { imobiliareStandardSlotsMessage } from "../imobiliare/online-promotions";
-import { fetchImobiliareSlotInventory } from "../imobiliare/promotions.server";
+import { imobiliareDestinationStatus } from "../imobiliare/card-promotions";
 
 type PortalFailShape = Extract<PortalResult<never>, { ok: false }>;
 type Admin = Awaited<typeof import("@/integrations/supabase/client.server")>["supabaseAdmin"];
@@ -329,7 +328,7 @@ export async function publishPlan(input: {
   }
 
   // Published updates keep their existing status; only explicit promotion differences follow.
-  if (input.activateOnline === false) {
+  if (input.activateOnline === false && !input.ref.imobiliareModeChanged && input.ref.imobiliareMode !== "imoradar_only") {
     const publicUrl = await fetchImobiliarePublicUrlWithRetries(session, ctx, plan.customReference);
     return { ok: true, steps, publicUrl,
       offer: buildImobiliareOffer(plan.customReference, plan.transaction, created.body),
@@ -341,29 +340,19 @@ export async function publishPlan(input: {
     organizationId: ctx.organizationId, propertyId: input.ref.propertyId,
     reference: plan.customReference, actorId: input.ref.actorId ?? null,
     changes: input.ref.imobiliarePromotions ?? {},
+    mode: input.ref.imobiliareMode,
   });
   if (!promoted.ok) {
     const fail = failFrom(promoted, "promotions_online");
-    let slotMessage = imobiliareStandardSlotsMessage(fail.message, input.ref.imobiliarePromotions?.bonus === true, null);
-    if (slotMessage) {
-      const bonus = await fetchImobiliareSlotInventory({ session, organizationId: ctx.organizationId, slotType: "bonus" }).catch(() => null);
-      slotMessage = imobiliareStandardSlotsMessage(fail.message, false, bonus?.inventory?.available);
-    }
-    return {
-      ok: false,
-      fail: {
-        ...fail,
-        message: slotMessage ?? `${fail.message} Anunțul a rămas în starea draft la portal; reîncearcă publicarea.`,
-      },
-    };
+    return { ok: false, fail };
   }
-  steps.push("promovat online");
-  const publicUrl = await fetchImobiliarePublicUrlWithRetries(session, ctx, plan.customReference);
+  steps.push(input.ref.imobiliareMode === "imoradar_only" ? "trimis pe imoradar24" : "promovat online");
+  const publicUrl = input.ref.imobiliareMode === "imoradar_only" ? null : await fetchImobiliarePublicUrlWithRetries(session, ctx, plan.customReference);
   return {
     ok: true,
     steps,
     publicUrl,
-    offer: buildImobiliareOffer(plan.customReference, plan.transaction, created.body, promoted.body),
+    offer: input.ref.imobiliareMode === "imoradar_only" ? null : buildImobiliareOffer(plan.customReference, plan.transaction, created.body, promoted.body),
     httpStatus: promoted.status,
     portalResponse: promoted.body ?? null,
     promotionErrors: "promotionErrors" in promoted ? promoted.promotionErrors : [],
@@ -468,7 +457,7 @@ async function write(
               images: media.images,
               mode: planMode,
               activateOnline: mode === "create",
-              ref: { ...ref, ...(mode === "update" ? { imobiliarePromotions: undefined } : {}) },
+              ref: { ...ref, ...(mode === "update" && !ref.imobiliareModeChanged ? { imobiliarePromotions: undefined } : {}) },
             }),
           ),
       });
@@ -488,7 +477,8 @@ async function write(
         live: true,
         detail: steps.join("; "),
         // „online” la portal = „published” în starea locală (constrângere DB).
-        portalStatus: mode === "update" ? "updated" : "published",
+        portalStatus: ref.imobiliareMode === "imoradar_only" ? "withdrawn" : mode === "update" ? "updated" : "published",
+        imobiliareMode: ref.imobiliareMode,
         processed: payload.plans.length,
         publicUrl: publicUrls[0] ?? null,
         offers,
@@ -545,7 +535,7 @@ async function withdraw(
               method: "POST",
               path: promotionsPath(externalId),
               connectionKey: ctx.organizationId,
-              body: { status: IMOBILIARE_STATUS_DRAFT },
+              body: imobiliareDestinationStatus(undefined, false),
             }),
           ),
       });

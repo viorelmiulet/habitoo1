@@ -19,7 +19,7 @@ export async function applyImobiliareCardPromotions(input: { organizationId: str
   return runImobiliarePromotionChanges(input.changes, async (id, value) => {
     const definition = imobiliarePromotion(id);
     if (!definition?.writeField) return { ok: false, message: "Serviciu de promovare necunoscut." };
-    const membership = definition.slotType && definition.kind === "boolean"
+    const membership = id !== "bonus" && definition.slotType && definition.kind === "boolean"
       ? await fetchImobiliareSlotMembership({ session: prepared.session, organizationId: input.organizationId, reference: prepared.reference, slotType: definition.slotType }) : null;
     const saved = local.data?.find((row) => row.promotion_id === id);
     const current = mergeImobiliarePromotionState({ fromListing: listing.states.get(id) ?? null, fromSlotList: membership, fromLocal: saved?.value_numeric ?? saved?.value_boolean ?? null }).value;
