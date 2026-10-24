@@ -5,6 +5,21 @@ import { emptySummary, ingestListings } from "./ingest";
 import { createMarketRepository } from "./repository.server";
 import type { NormalizedListing } from "./normalize";
 
+// Only hbsync partial feeds use this lease; other importers keep the RPC default.
+async function claimHbsyncSource(admin: SupabaseClient<Database>, source: string) {
+  const deadline = Date.now() + 20_000;
+  while (true) {
+    const { data: claimed, error } = await admin.rpc("market_sync_claim", {
+      _source: source, _stale_seconds: 120,
+    });
+    if (error) throw error;
+    if (claimed) return true;
+    const remaining = deadline - Date.now();
+    if (remaining <= 0) return false;
+    await new Promise<void>(resolve => setTimeout(resolve, Math.min(2_000, remaining)));
+  }
+}
+
 export async function importHbsyncMarket(admin: SupabaseClient<Database>, records: unknown[]) {
   const summary = emptySummary();
   const groups = new Map<string, NormalizedListing[]>();
@@ -23,8 +38,7 @@ export async function importHbsyncMarket(admin: SupabaseClient<Database>, record
     let success = false;
     let lockClaimed = false;
     try {
-      const { data: claimed, error: claimError } = await admin.rpc("market_sync_claim", { _source: source });
-      if (claimError) throw claimError;
+      const claimed = await claimHbsyncSource(admin, source);
       if (!claimed) {
         summary.errors.push(...sourceErrors("Un import pentru această sursă rulează deja. Reîncearcă lotul."));
         continue;
