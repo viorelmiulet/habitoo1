@@ -76,7 +76,9 @@ export const marketFiltersSchema = z.object({
   sources: z.array(z.string().trim().max(60)).max(20).nullable().optional(),
   status: z.enum(["active", "inactive", "archived", "all"]).nullable().optional(),
   seenWithinDays: z.number().int().min(1).max(730).nullable().optional(),
-});
+  daysOnMarketMin: z.number().int().min(0).nullable().optional(),
+  daysOnMarketMax: z.number().int().min(0).nullable().optional(),
+}).refine((filters) => filters.daysOnMarketMin == null || filters.daysOnMarketMax == null || filters.daysOnMarketMin <= filters.daysOnMarketMax, { message: "Durata minimă trebuie să fie mai mică sau egală cu durata maximă." });
 
 /** Piața globală, cu filtrele alese de utilizator (Centrul de date de piață). */
 export const getMarketIntelligence = createServerFn({ method: "POST" })

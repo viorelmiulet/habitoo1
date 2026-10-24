@@ -49,6 +49,7 @@ import type {
   MarketSourceQuality,
   MarketTrend,
 } from "@/lib/market/intelligence";
+import { MARKET_SOURCES } from "@/lib/market/sources";
 
 type FilterState = {
   city: string;
@@ -68,6 +69,8 @@ type FilterState = {
   source: string;
   status: "active" | "inactive" | "archived" | "all";
   window: string;
+  daysOnMarketMin: string;
+  daysOnMarketMax: string;
 };
 
 const EMPTY_FILTERS: FilterState = {
@@ -88,6 +91,8 @@ const EMPTY_FILTERS: FilterState = {
   source: "all",
   status: "active",
   window: "all",
+  daysOnMarketMin: "",
+  daysOnMarketMax: "",
 };
 
 function numberOrUndefined(value: string): number | undefined {
@@ -413,6 +418,8 @@ export function MarketIntelligenceCard({
       sources: filters.source === "all" ? null : [filters.source],
       status: filters.status,
       seenWithinDays: filters.window === "all" ? null : Number(filters.window),
+      daysOnMarketMin: numberOrUndefined(filters.daysOnMarketMin) ?? null,
+      daysOnMarketMax: numberOrUndefined(filters.daysOnMarketMax) ?? null,
     }),
     [filters],
   );
@@ -596,7 +603,7 @@ export function MarketIntelligenceCard({
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">Toate sursele</SelectItem>
-            {(result?.sources ?? []).map((source) => (
+            {MARKET_SOURCES.map((source) => (
               <SelectItem key={source.id} value={source.id}>
                 {source.name}
               </SelectItem>
@@ -640,6 +647,18 @@ export function MarketIntelligenceCard({
             <SelectItem value="365">Văzute în 12 luni</SelectItem>
           </SelectContent>
         </Select>
+      </div>
+      <div className="grid grid-cols-2 gap-2">
+        <div className="space-y-1">
+          <Label htmlFor={`market-age-min-${analysisId ?? "global"}`} className="text-xs">Vechime min. (zile)</Label>
+          <Input id={`market-age-min-${analysisId ?? "global"}`} type="number" min={0} step={1} value={filters.daysOnMarketMin}
+            onChange={(event) => setFilters((f) => ({ ...f, daysOnMarketMin: event.target.value }))} />
+        </div>
+        <div className="space-y-1">
+          <Label htmlFor={`market-age-max-${analysisId ?? "global"}`} className="text-xs">Vechime max. (zile)</Label>
+          <Input id={`market-age-max-${analysisId ?? "global"}`} type="number" min={0} step={1} value={filters.daysOnMarketMax}
+            onChange={(event) => setFilters((f) => ({ ...f, daysOnMarketMax: event.target.value }))} />
+        </div>
       </div>
       <div className="flex items-end">
         <Button variant="ghost" size="sm" onClick={() => setFilters(EMPTY_FILTERS)}>

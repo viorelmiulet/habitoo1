@@ -30,6 +30,7 @@ import {
 import { createMarketRepository } from "./repository.server";
 import { findMarketSource, MARKET_SOURCES, marketSourceName } from "./sources";
 import { applyMarketLocationFilters } from "./acp-location";
+import { applyListingAgeFilters } from "./listing-age";
 
 type AuthContext = { userId: string; supabase: { rpc: (fn: string) => Promise<{ data: unknown }> } };
 
@@ -289,8 +290,10 @@ const listFilters = z.object({
   areaMin: z.number().optional(),
   areaMax: z.number().optional(),
   rooms: z.number().optional(),
+  daysOnMarketMin: z.number().int().min(0).optional(),
+  daysOnMarketMax: z.number().int().min(0).optional(),
   page: z.number().int().min(1).optional(),
-});
+}).refine((filters) => filters.daysOnMarketMin == null || filters.daysOnMarketMax == null || filters.daysOnMarketMin <= filters.daysOnMarketMax, { message: "Durata minimă trebuie să fie mai mică sau egală cu durata maximă." });
 
 export type MarketListRow = {
   id: string;
@@ -343,6 +346,7 @@ export const listMarketListings = createServerFn({ method: "GET" })
     if (data.areaMin) query = query.gte("usable_area", data.areaMin);
     if (data.areaMax) query = query.lte("usable_area", data.areaMax);
     query = applyMarketLocationFilters(query, data);
+    query = applyListingAgeFilters(query, data);
 
     const { data: rows, count, error } = await query;
     if (error) throw error;

@@ -43,6 +43,7 @@ import {
 } from "@/lib/market/market.functions";
 import { MARKET_SOURCES } from "@/lib/market/sources";
 import { MarketIntelligenceCard } from "@/components/app/MarketIntelligenceCard";
+import { listingAgeDays } from "@/lib/market/listing-age";
 
 export const Route = createFileRoute("/_authenticated/app/acp/date-piata/")({
   head: () => appHead("Habitoo CRM — date de piață"),
@@ -100,6 +101,8 @@ function MarketDataCenterPage() {
     areaMin: "",
     areaMax: "",
     rooms: "",
+    daysOnMarketMin: "",
+    daysOnMarketMax: "",
   });
   const [page, setPage] = useState(1);
 
@@ -126,6 +129,8 @@ function MarketDataCenterPage() {
       areaMin: filters.areaMin ? Number(filters.areaMin) : undefined,
       areaMax: filters.areaMax ? Number(filters.areaMax) : undefined,
       rooms: filters.rooms ? Number(filters.rooms) : undefined,
+      daysOnMarketMin: filters.daysOnMarketMin !== "" ? Number(filters.daysOnMarketMin) : undefined,
+      daysOnMarketMax: filters.daysOnMarketMax !== "" ? Number(filters.daysOnMarketMax) : undefined,
       page,
     }),
     [filters, page],
@@ -652,6 +657,18 @@ function MarketDataCenterPage() {
               onChange={(event) => setFilters((f) => ({ ...f, rooms: event.target.value }))}
             />
           </div>
+          <div className="space-y-1">
+            <Label htmlFor="listing-age-min" className="text-xs">Vechime min. (zile)</Label>
+            <Input id="listing-age-min" type="number" min={0} step={1} value={filters.daysOnMarketMin} onChange={(event) => {
+              setPage(1); setFilters((f) => ({ ...f, daysOnMarketMin: event.target.value }));
+            }} />
+          </div>
+          <div className="space-y-1">
+            <Label htmlFor="listing-age-max" className="text-xs">Vechime max. (zile)</Label>
+            <Input id="listing-age-max" type="number" min={0} step={1} value={filters.daysOnMarketMax} onChange={(event) => {
+              setPage(1); setFilters((f) => ({ ...f, daysOnMarketMax: event.target.value }));
+            }} />
+          </div>
         </div>
 
         <div className="mt-5">
@@ -707,6 +724,7 @@ function MarketDataCenterPage() {
                       </p>
                       <div className="mt-2 flex flex-wrap gap-1.5 text-xs">
                         <Badge variant="outline">{row.sourceName}</Badge>
+                        {listingAgeDays(row.firstSeenAt) !== null ? <Badge variant="outline">{listingAgeDays(row.firstSeenAt)} zile de la prima observare</Badge> : null}
                         <Badge variant="outline">{row.publisherType === "particular" ? "Particular" : row.publisherType === "agency" ? "Agenție" : "Vânzător necunoscut"}</Badge>
                         {row.rooms ? <Badge variant="outline">{row.rooms} camere</Badge> : null}
                         {row.usableArea ? (
