@@ -140,23 +140,25 @@ describe("normalizeListingUrl (linkul real al anunțului)", () => {
   });
 });
 
-describe("phoneFromText", () => {
-  it("găsește un mobil românesc în descriere", async () => {
-    const { phoneFromText } = await import("@/routes/api/public/listings/upsert");
-    expect(phoneFromText("Sunați la 0722 123 456 oricând")).toBe("0722123456");
-    expect(phoneFromText("Tel +40 744-555-666")).toBe("0744555666");
-    expect(phoneFromText("Telefon validat")).toBeNull();
+describe("import fără telefoane", () => {
+  it("ignoră phone și telefonul din descriere, păstrând descrierea integrală", async () => {
+    const { buildListingRow } = await import("@/routes/api/public/listings/upsert");
+    const description = "Sunați la 0722 123 456 oricând";
+    const row = buildListingRow({ source: "olx", external_id: "a", phone: "0744555666", description });
+    expect(row.phone).toBeNull();
+    expect(row.description).toBe(description);
   });
 });
 
 describe("preserveExistingFields", () => {
-  it("nu șterge linkul, telefonul sau pozele salvate când batch-ul nu le are", async () => {
+  it("păstrează linkul și pozele, fără a recupera telefonul vechi", async () => {
     const { preserveExistingFields } = await import("@/routes/api/public/listings/upsert");
     const rows: Record<string, unknown>[] = [{ source: "olx", external_id: "a", url: null, phone: null }];
-    preserveExistingFields(rows, [
+    const existing = [
       { source: "olx", external_id: "a", url: "https://www.olx.ro/d/oferta/x", phone: "0722123456", images: ["i"] },
-    ]);
-    expect(rows[0]).toMatchObject({ url: "https://www.olx.ro/d/oferta/x", phone: "0722123456", images: ["i"] });
+    ];
+    preserveExistingFields(rows, existing);
+    expect(rows[0]).toMatchObject({ url: "https://www.olx.ro/d/oferta/x", phone: null, images: ["i"] });
   });
 });
 

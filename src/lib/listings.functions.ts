@@ -28,7 +28,6 @@ export type OwnerListing = {
   county: string | null;
   propertyType: string | null;
   transactionType: string | null;
-  phone: string | null;
   url: string | null;
   description: string | null;
   images: string[];
@@ -68,7 +67,7 @@ export const getOwnerListings = createServerFn({ method: "GET" })
     let query = context.supabase
       .from("listings")
       .select(
-        "id, source, title, price, currency, price_per_m2, rooms, surface, floor, city, zone, location, county, property_type, transaction_type, phone, url, description, images, scraped_at",
+        "id, source, title, price, currency, price_per_m2, rooms, surface, floor, city, zone, location, county, property_type, transaction_type, url, description, images, scraped_at",
         { count: "exact" },
       )
       .eq("is_owner", true);
@@ -139,7 +138,7 @@ export const getOwnerListingFacets = createServerFn({ method: "GET" })
   });
 
 const LISTING_COLUMNS =
-  "id, source, title, price, currency, price_per_m2, rooms, surface, floor, city, zone, location, county, property_type, transaction_type, phone, url, description, images, scraped_at";
+  "id, source, title, price, currency, price_per_m2, rooms, surface, floor, city, zone, location, county, property_type, transaction_type, url, description, images, scraped_at";
 
 type ListingRow = {
   id: string;
@@ -157,7 +156,6 @@ type ListingRow = {
   county: string | null;
   property_type: string | null;
   transaction_type: string | null;
-  phone: string | null;
   url: string | null;
   description: string | null;
   images: unknown;
@@ -181,7 +179,6 @@ function toOwnerListing(row: ListingRow): OwnerListing {
     county: row.county,
     propertyType: row.property_type,
     transactionType: row.transaction_type,
-    phone: row.phone,
     url: row.url,
     description: row.description,
     images: Array.isArray(row.images) ? row.images.filter((u): u is string => typeof u === "string") : [],
