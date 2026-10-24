@@ -21,6 +21,7 @@
 
 # Anunțuri particulari — fără telefoane
 
-- [ ] Ignorarea telefoanelor la import și eliminarea din răspunsuri/listă/detaliu
-- [ ] Ștergerea telefoanelor existente fără schimbarea descrierilor
-- [ ] Teste import și verificare 0 telefoane salvate
+- [x] Ignorarea telefoanelor la import și eliminarea din răspunsuri/listă/detaliu
+- [x] Ștergerea celor 231 telefoane existente fără schimbarea descrierilor
+- [x] 27 teste trec; verificat 0 telefoane salvate din 1394 anunțuri; build OK
+- [ ] Verificare vizuală în cont — blocată: solicitantul nu are un cont asociat pentru sesiunea de test
