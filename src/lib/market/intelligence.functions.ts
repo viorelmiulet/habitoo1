@@ -59,6 +59,8 @@ const nullableNumber = z.number().finite().nullable().optional();
 
 export const marketFiltersSchema = z.object({
   city: z.string().trim().max(120).nullable().optional(),
+  sector: z.string().trim().max(120).nullable().optional(),
+  neighborhood: z.string().trim().max(160).nullable().optional(),
   county: z.string().trim().max(120).nullable().optional(),
   area: z.string().trim().max(160).nullable().optional(),
   propertyType: z.string().trim().max(60).nullable().optional(),

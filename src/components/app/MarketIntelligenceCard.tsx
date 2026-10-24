@@ -52,6 +52,8 @@ import type {
 
 type FilterState = {
   city: string;
+  sector: string;
+  neighborhood: string;
   area: string;
   propertyType: string;
   transactionType: string;
@@ -70,6 +72,8 @@ type FilterState = {
 
 const EMPTY_FILTERS: FilterState = {
   city: "",
+  sector: "",
+  neighborhood: "",
   area: "",
   propertyType: "all",
   transactionType: "all",
@@ -393,6 +397,8 @@ export function MarketIntelligenceCard({
   const payloadFilters = useMemo(
     () => ({
       city: filters.city.trim() || null,
+      sector: filters.sector.trim() || null,
+      neighborhood: filters.neighborhood.trim() || null,
       area: filters.area.trim() || null,
       propertyType: filters.propertyType === "all" ? null : filters.propertyType,
       transactionType: filters.transactionType === "all" ? null : filters.transactionType,
@@ -456,7 +462,15 @@ export function MarketIntelligenceCard({
         />
       </div>
       <div className="space-y-1">
-        <Label className="text-xs">Zonă / cartier</Label>
+        <Label className="text-xs">Sector</Label>
+        <Input value={filters.sector} placeholder="Sector 3" onChange={(event) => setFilters((f) => ({ ...f, sector: event.target.value }))} />
+      </div>
+      <div className="space-y-1">
+        <Label className="text-xs">Cartier</Label>
+        <Input value={filters.neighborhood} placeholder="Titan" onChange={(event) => setFilters((f) => ({ ...f, neighborhood: event.target.value }))} />
+      </div>
+      <div className="space-y-1">
+        <Label className="text-xs">Zonă / adresă</Label>
         <Input
           value={filters.area}
           onChange={(event) => setFilters((f) => ({ ...f, area: event.target.value }))}

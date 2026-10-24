@@ -7,6 +7,8 @@
 
 # Integrare hbsync
 
+- [x] Filtre ACP canonice București / Sector 3 / Titan în listă și statistici, compatibilitate localități vechi, sursa Portaluri disponibilă și particulari/agenții etichetați; 85 teste trec, aplicație fără erori; verificarea în cont rămâne blocată de lipsa sesiunii solicitantului
+
 - [x] Publicare solicitată la 24 octombrie; URL public HTTP 200; batch real de 10 oferte Storia trimis la endpointul public ACP: created=10, reimport unchanged=10, fără duplicate; toate citite înapoi active cu proveniență hbsync
 - [x] Endpoint PUSH separat pentru ACP, particulari și agenții, mapare canonică, clasificare necunoscută NULL și idempotență; 74 teste și import Storia real repetat HTTP 200
 - [ ] Import periodic hbsync către noul endpoint — blocat: exportul extern hbsync trebuie configurat cu toate ofertele, nu numai particulari; PULL pe HTTP necriptat nu activat

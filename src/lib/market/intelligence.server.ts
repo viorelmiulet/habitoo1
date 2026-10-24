@@ -24,13 +24,14 @@ import {
 } from "./intelligence";
 export type { MarketIntelligenceResult };
 import { MARKET_SOURCES, marketSourceName } from "./sources";
+import { applyMarketLocationFilters } from "./acp-location";
 
 type Admin = SupabaseClient<Database>;
 
 type SourceQualityInput = Parameters<typeof buildSourceQuality>[0]["sources"][number];
 
 const ROW_COLUMNS =
-  "id,source,status,city,county,district,neighborhood,address,property_type," +
+  "id,source,status,city,sector,county,district,neighborhood,address,property_type," +
   "transaction_type,rooms,usable_area,total_area,price,currency,price_per_sqm," +
   "last_seen_at,first_seen_at";
 
@@ -45,6 +46,7 @@ function mapRow(row: Record<string, unknown>): MarketIntelligenceRow {
     source: String(row["source"]),
     status: String(row["status"] ?? "active"),
     city: (row["city"] as string | null) ?? null,
+    sector: (row["sector"] as string | null) ?? null,
     county: (row["county"] as string | null) ?? null,
     district: (row["district"] as string | null) ?? null,
     neighborhood: (row["neighborhood"] as string | null) ?? null,
@@ -75,12 +77,8 @@ export async function loadMarketIntelligenceRows(
 
   const status = filters.status ?? "active";
   if (status !== "all") query = query.eq("status", status);
-  if (filters.city) query = query.ilike("city", filters.city);
+  query = applyMarketLocationFilters(query, filters);
   if (filters.county) query = query.ilike("county", filters.county);
-  if (filters.area) {
-    const term = `%${filters.area.replace(/[%,]/g, " ").trim()}%`;
-    query = query.or(`district.ilike.${term},neighborhood.ilike.${term},address.ilike.${term}`);
-  }
   if (filters.propertyType) query = query.eq("property_type", filters.propertyType);
   if (filters.transactionType) query = query.eq("transaction_type", filters.transactionType);
   if (typeof filters.roomsMin === "number") query = query.gte("rooms", filters.roomsMin);

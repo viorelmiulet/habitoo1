@@ -14,12 +14,14 @@ import {
   type AcpComparableTier,
   type AcpScoreComponent,
 } from "./config";
+import { marketPoolScope } from "../market/acp-location";
 
 /** Reprezentarea normalizată a unei proprietăți folosită de motor. */
 export type AcpSubject = {
   propertyType?: string | null;
   transactionType?: string | null;
   city?: string | null;
+  sector?: string | null;
   county?: string | null;
   district?: string | null;
   neighborhood?: string | null;
@@ -110,7 +112,12 @@ export function scoreLocation(target: AcpSubject, candidate: AcpSubject): number
   };
   if (sameOr(target.neighborhood, candidate.neighborhood)) return 100;
   if (sameOr(target.district, candidate.district)) return 85;
-  if (sameOr(target.city, candidate.city)) return 60;
+  const targetPlace = marketPoolScope(target);
+  const candidatePlace = marketPoolScope(candidate);
+  if (sameOr(targetPlace.city, candidatePlace.city)) {
+    if (targetPlace.sector && candidatePlace.sector && targetPlace.sector !== candidatePlace.sector) return 35;
+    return 60;
+  }
   if (sameOr(target.county, candidate.county)) return 35;
   const known =
     normalizeText(target.city) !== "" ||

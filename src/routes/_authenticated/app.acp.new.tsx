@@ -52,8 +52,8 @@ const SOURCES = [
     type: "portal" as const,
     name: "Portaluri",
     icon: PlugZap,
-    description: "Date normalizate din integrările autorizate (import în etapa următoare).",
-    available: false,
+    description: "Oferte de piață — particulari și agenții.",
+    available: true,
   },
 ];
 
@@ -67,7 +67,7 @@ function NewAcpPage() {
   const [enabled, setEnabled] = useState<Record<string, boolean>>({
     own_properties: true,
     collaboration: true,
-    portal: false,
+    portal: true,
   });
 
   const countsFn = useServerFn(getMarketSourceCounts);

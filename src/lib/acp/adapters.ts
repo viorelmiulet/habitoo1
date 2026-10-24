@@ -95,7 +95,8 @@ export function marketListingToSubject(listing: MarketListingLike): AcpSubject {
   return {
     propertyType: listing.property_type ?? null,
     transactionType: listing.transaction_type ?? null,
-    city: listing.sector ?? listing.city ?? null,
+    city: listing.city ?? null,
+    sector: listing.sector ?? null,
     county: listing.county ?? null,
     district: listing.district ?? null,
     neighborhood: listing.neighborhood ?? listing.district ?? null,

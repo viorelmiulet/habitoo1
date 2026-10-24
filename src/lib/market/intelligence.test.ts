@@ -588,7 +588,7 @@ describe("stratul de date Market Intelligence", () => {
     expect(rows[0]?.pricePerSqm).toBe(2200);
     const used = calls[0]!.calls;
     const methods = used.map((c) => c.method);
-    expect(methods).toContain("ilike");
+    expect(used.some((c) => c.method === "or" && String(c.args[0]).includes("normalized_city.eq.bucuresti"))).toBe(true);
     expect(methods).toContain("or");
     expect(methods.filter((m) => m === "gte").length).toBeGreaterThanOrEqual(4);
     expect(methods.filter((m) => m === "lte").length).toBeGreaterThanOrEqual(4);
