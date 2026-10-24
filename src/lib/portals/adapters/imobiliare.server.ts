@@ -6,7 +6,7 @@
  *   GET  /api/v3/agents                                  test conexiune + agenți
  *   POST /api/v3/agents                                  creare agent
  *   POST /api/v3/listings                                creare anunț (draft)
- *   POST /api/v3/listings/{ref}/medias                   imagini base64, în loturi
+ *   POST /api/v3/listings/{ref}/medias                   galerie completă base64
  *   POST /api/v3/listings/{ref}/promotions {online}      publicare efectivă
  *   PUT  /api/v3/listings/{ref}                          actualizare completă
  *   POST /api/v3/listings/{ref}/promotions {draft}       retragere temporară
@@ -52,7 +52,8 @@ import {
   type CategoryCatalog,
 } from "../imobiliare/categories.server";
 import { imobiliareLocationStats } from "../imobiliare/locations.server";
-import { batchEncodedImages, encodeImobiliareImages } from "../imobiliare/media.server";
+import { encodeImobiliareImages } from "../imobiliare/media.server";
+import { sendImobiliareGallery } from "../imobiliare/media-transfer.server";
 import { buildImobiliarePayload, type ImobiliareListingPlan } from "../imobiliare/payload.server";
 import { parseAgents } from "../imobiliare/agents.server";
 import {
@@ -207,27 +208,6 @@ async function status(
 
 type WriteMode = "create" | "update";
 
-async function sendImages(
-  session: ImobiliareSession,
-  ctx: PortalContext,
-  customReference: string,
-  images: { dataUrl: string; bytes: number }[],
-): Promise<{ ok: true; sent: number } | { ok: false; fail: PortalFailShape }> {
-  let sent = 0;
-  for (const batch of batchEncodedImages(images as never)) {
-    const response = await imobiliareAuthedRequest(session, {
-      method: "POST",
-      path: mediasPath(customReference),
-      connectionKey: ctx.organizationId,
-      body: { images: batch.map((image) => image.dataUrl) },
-      timeoutMs: 60_000,
-    });
-    if (!response.ok) return { ok: false, fail: failFrom(response, "medias") };
-    sent += batch.length;
-  }
-  return { ok: true, sent };
-}
-
 /** Anunțul există deja la portal cu aceeași referință (creare reluată). */
 function isDuplicateReference(body: unknown): boolean {
   if (!body || typeof body !== "object") return false;
@@ -300,6 +280,7 @@ export async function publishPlan(input: {
   const { ctx, session, plan, images } = input;
   let mode = input.mode;
   const steps: string[] = [];
+  let mediaResponse: unknown = null;
 
   let created = await imobiliareAuthedRequest(session, {
     method: mode === "create" ? "POST" : "PUT",
@@ -321,9 +302,10 @@ export async function publishPlan(input: {
   steps.push(mode === "create" ? "anunț creat (draft)" : "anunț actualizat");
 
   if (images.length > 0) {
-    const media = await sendImages(session, ctx, plan.customReference, images);
+    const media = await sendImobiliareGallery(session, ctx, plan.customReference, images);
     if (!media.ok) return { ok: false, fail: media.fail };
-    steps.push(`${media.sent} imagini trimise`);
+    mediaResponse = media.body;
+    steps.push(`${media.sent}/${images.length} poze trimise`);
   }
 
   // Published updates keep their existing status; only explicit promotion differences follow.
@@ -331,7 +313,7 @@ export async function publishPlan(input: {
     const publicUrl = await fetchImobiliarePublicUrlWithRetries(session, ctx, plan.customReference);
     return { ok: true, steps, publicUrl,
       offer: buildImobiliareOffer(plan.customReference, plan.transaction, created.body),
-      httpStatus: created.status, portalResponse: created.body ?? null, promotionErrors: [] };
+      httpStatus: created.status, portalResponse: mediaResponse ? { listing: created.body, medias: mediaResponse } : created.body ?? null, promotionErrors: [] };
   }
 
   // Fără acest pas anunțul rămâne invizibil, deși API-ul nu semnalează eroare.
@@ -353,7 +335,7 @@ export async function publishPlan(input: {
     publicUrl,
     offer: input.ref.imobiliareMode === "imoradar_only" ? null : buildImobiliareOffer(plan.customReference, plan.transaction, created.body, promoted.body),
     httpStatus: promoted.status,
-    portalResponse: promoted.body ?? null,
+    portalResponse: mediaResponse ? { publication: promoted.body, medias: mediaResponse } : promoted.body ?? null,
     promotionErrors: "promotionErrors" in promoted ? promoted.promotionErrors : [],
   };
 }
@@ -389,6 +371,10 @@ async function write(
       organizationId: ctx.organizationId,
       propertyId: ref.propertyId,
     });
+    // Never replace an existing gallery with a silently truncated preparation.
+    if (media.images.length !== media.expected) {
+      return { ok: false, code: "VALIDATION_ERROR", message: `0/${media.expected} poze trimise — ${media.warnings.join(" ")}`, detail: "medias_prepare" };
+    }
 
     const payload = await buildImobiliarePayload({
       admin: db,
