@@ -451,7 +451,7 @@ function ListingDescription({ text }: { text: string }) {
     <div className="flex flex-col items-start gap-1">
       <p
         className={`text-sm whitespace-pre-line break-words text-muted-foreground ${
-          expanded || !long ? "" : "line-clamp-6"
+          expanded || !long ? "" : "line-clamp-2"
         }`}
       >
         {text}
