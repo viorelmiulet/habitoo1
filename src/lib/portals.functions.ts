@@ -1469,6 +1469,7 @@ export async function executeListingAction(input: {
       propertyId,
       externalId: listing?.external_id ?? null,
       ...(promotionFlag ? { promoted: requestedPromoted } : {}),
+      ...(definition.id === "imobiliare_ro" && action === "publish" ? { imobiliarePromotions: input.imobiliarePromotions, actorId } : {}),
     };
     result =
       action === "publish"
@@ -1656,8 +1657,8 @@ export async function executeListingAction(input: {
     });
   }
 
-  let promotionErrors: { promotionId: string; message: string }[] = [];
-  if (definition.id === "imobiliare_ro" && action !== "withdraw" && result.ok && (status === "published" || status === "updated") && input.imobiliarePromotions) {
+  let promotionErrors: { promotionId: string; message: string }[] = result.ok ? result.data.promotionErrors ?? [] : [];
+  if (definition.id === "imobiliare_ro" && action === "update" && result.ok && (status === "published" || status === "updated") && input.imobiliarePromotions) {
     const { applyImobiliareCardPromotions } = await import("@/lib/portals/imobiliare/card-promotions.server");
     try {
       promotionErrors = await applyImobiliareCardPromotions({ organizationId, propertyId, actorId, changes: input.imobiliarePromotions });

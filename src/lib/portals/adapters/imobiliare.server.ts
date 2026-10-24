@@ -68,6 +68,9 @@ import {
 } from "../imobiliare/references";
 import { buildImobiliareOffer, type PortalOffer } from "../imobiliare/offer-links";
 import { imobiliareFloorReasons } from "../imobiliare/mapper";
+import { publishImobiliareOnline } from "../imobiliare/online-promotions.server";
+import { imobiliareStandardSlotsMessage } from "../imobiliare/online-promotions";
+import { fetchImobiliareSlotInventory } from "../imobiliare/promotions.server";
 
 type PortalFailShape = Extract<PortalResult<never>, { ok: false }>;
 type Admin = Awaited<typeof import("@/integrations/supabase/client.server")>["supabaseAdmin"];
@@ -276,12 +279,13 @@ export async function fetchImobiliarePublicUrlWithRetries(
   return null;
 }
 
-async function publishPlan(input: {
+export async function publishPlan(input: {
   ctx: PortalContext;
   session: ImobiliareSession;
   plan: ImobiliareListingPlan;
   images: { dataUrl: string; bytes: number }[];
   mode: WriteMode;
+  ref: ListingRef;
 }): Promise<
   | {
       ok: true;
@@ -290,6 +294,7 @@ async function publishPlan(input: {
       offer: PortalOffer | null;
       httpStatus: number | null;
       portalResponse: unknown;
+      promotionErrors: { promotionId: string; message: string }[];
     }
   | { ok: false; fail: PortalFailShape }
 > {
@@ -323,19 +328,23 @@ async function publishPlan(input: {
   }
 
   // Fără acest pas anunțul rămâne invizibil, deși API-ul nu semnalează eroare.
-  const promoted = await imobiliareAuthedRequest(session, {
-    method: "POST",
-    path: promotionsPath(plan.customReference),
-    connectionKey: ctx.organizationId,
-    body: { status: IMOBILIARE_STATUS_ONLINE },
+  const promoted = await publishImobiliareOnline({ admin: await admin(), session,
+    organizationId: ctx.organizationId, propertyId: input.ref.propertyId,
+    reference: plan.customReference, actorId: input.ref.actorId ?? null,
+    changes: input.ref.imobiliarePromotions ?? {},
   });
   if (!promoted.ok) {
     const fail = failFrom(promoted, "promotions_online");
+    let slotMessage = imobiliareStandardSlotsMessage(fail.message, input.ref.imobiliarePromotions?.bonus === true, null);
+    if (slotMessage) {
+      const bonus = await fetchImobiliareSlotInventory({ session, organizationId: ctx.organizationId, slotType: "bonus" }).catch(() => null);
+      slotMessage = imobiliareStandardSlotsMessage(fail.message, false, bonus?.inventory?.available);
+    }
     return {
       ok: false,
       fail: {
         ...fail,
-        message: `${fail.message} Anunțul a rămas în starea draft la portal; reîncearcă publicarea.`,
+        message: slotMessage ?? `${fail.message} Anunțul a rămas în starea draft la portal; reîncearcă publicarea.`,
       },
     };
   }
@@ -348,6 +357,7 @@ async function publishPlan(input: {
     offer: buildImobiliareOffer(plan.customReference, plan.transaction, created.body, promoted.body),
     httpStatus: promoted.status,
     portalResponse: promoted.body ?? null,
+    promotionErrors: "promotionErrors" in promoted ? promoted.promotionErrors : [],
   };
 }
 
@@ -431,6 +441,7 @@ async function write(
     const steps: string[] = [];
     const publicUrls: string[] = [];
     const offers: PortalOffer[] = [];
+    const promotionErrors: { promotionId: string; message: string }[] = [];
     let lastHttpStatus: number | null = null;
     let lastPortalResponse: unknown = null;
     for (const plan of resolvedPlans) {
@@ -447,11 +458,13 @@ async function write(
               plan,
               images: media.images,
               mode: planMode,
+              ref: { ...ref, ...(mode === "update" ? { imobiliarePromotions: undefined } : {}) },
             }),
           ),
       });
       if (!result.ok) return result.fail;
       steps.push(`${plan.customReference}: ${result.steps.join(" → ")}`);
+      promotionErrors.push(...result.promotionErrors);
       if (result.publicUrl) publicUrls.push(result.publicUrl);
       if (result.offer) offers.push(result.offer);
       lastHttpStatus = result.httpStatus;
@@ -471,6 +484,7 @@ async function write(
         offers,
         httpStatus: lastHttpStatus,
         portalResponse: lastPortalResponse,
+        promotionErrors,
         message: warnings.length ? warnings.join(" ") : undefined,
       },
     };
