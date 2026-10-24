@@ -55,10 +55,9 @@ export const IMOBILIARE_DESCRIPTION_MIN = 80;
 export const IMOBILIARE_STATUS_ONLINE = "online";
 export const IMOBILIARE_STATUS_DRAFT = "draft";
 
-/** Imaginile se trimit base64: le grupăm în loturi ca să nu depășim payload-ul. */
-export const IMOBILIARE_IMAGES_PER_BATCH = 5;
+/** One replacement gallery per request; the budget includes base64 and JSON. */
 export const IMOBILIARE_MAX_IMAGES = 30;
-export const IMOBILIARE_MAX_BATCH_BYTES = 8 * 1024 * 1024;
+export const IMOBILIARE_MAX_MEDIA_REQUEST_BYTES = 8 * 1024 * 1024;
 
 /** Tokenul de acces expiră în 31 de zile; îl reînnoim cu 3 zile înainte. */
 export const IMOBILIARE_TOKEN_TTL_SECONDS = 2_678_400;

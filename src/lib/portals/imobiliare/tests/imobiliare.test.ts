@@ -25,7 +25,7 @@ import {
 import { buildImobiliareListing, hasRealCoordinates } from "../mapper";
 import { categoryApiFor, parseCategories } from "../categories.server";
 import { parseAgents, agentIdFromCreate } from "../agents.server";
-import { batchEncodedImages } from "../media.server";
+import { fitImobiliareGallery, mediaRequestBytes } from "../media-compression.server";
 import {
   normalizeImobiliareMobile,
   normalizeImobiliarePhone,
@@ -293,17 +293,15 @@ describe("agenți", () => {
 
 /* -------------------------------- imagini --------------------------------- */
 
-describe("loturi de imagini", () => {
-  it("limitează atât numărul, cât și dimensiunea totală a lotului", () => {
-    const images = Array.from({ length: 7 }, (_, index) => ({
+describe("galerie completă", () => {
+  it("păstrează toate cele 8 imagini în aceeași ordine într-un singur payload", () => {
+    const images = Array.from({ length: 8 }, (_, index) => ({
       imageId: String(index),
       bytes: 1000,
-      dataUrl: "data:image/jpeg;base64,AAA",
+      dataUrl: `data:image/jpeg;base64,AAA${index}`,
     }));
-    expect(batchEncodedImages(images, 5, 1_000_000).map((batch) => batch.length)).toEqual([5, 2]);
-    expect(batchEncodedImages(images, 5, 2_500).map((batch) => batch.length)).toEqual([
-      2, 2, 2, 1,
-    ]);
+    expect(fitImobiliareGallery(images)).toEqual(images);
+    expect(mediaRequestBytes(images)).toBe(new TextEncoder().encode(JSON.stringify({ images: images.map(image => image.dataUrl) })).byteLength);
   });
 });
 

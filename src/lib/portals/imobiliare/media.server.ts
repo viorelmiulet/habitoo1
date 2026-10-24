@@ -3,7 +3,7 @@
  *
  * Citim fișierul din storage-ul propriu, aplicăm watermark-ul agenției dacă e
  * activ (exact ca la feedurile publice) și codificăm `data:image/...;base64,`.
- * Trimiterea se face în loturi, ca să nu depășim dimensiunea unei cereri.
+ * Galerie completă într-o cerere; comprimare JPEG numai când depășește bugetul.
  */
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/integrations/supabase/types";
@@ -11,11 +11,8 @@ import { MEDIA_BUCKET } from "@/lib/storage";
 import { ensureWatermarkedPath } from "@/lib/watermark.server";
 import { watermarkFromOrg } from "@/lib/watermark";
 import { isImageFeedEligible, type PropertyImageRow } from "@/lib/site-feed/mapper";
-import {
-  IMOBILIARE_IMAGES_PER_BATCH,
-  IMOBILIARE_MAX_BATCH_BYTES,
-  IMOBILIARE_MAX_IMAGES,
-} from "./config";
+import { IMOBILIARE_MAX_IMAGES } from "./config";
+import { fitImobiliareGallery } from "./media-compression.server";
 
 type Admin = SupabaseClient<Database>;
 
@@ -36,36 +33,13 @@ function toBase64(bytes: Uint8Array): string {
   return btoa(binary);
 }
 
-/** Grupează imaginile în loturi limitate la număr și la dimensiune totală. */
-export function batchEncodedImages(
-  images: EncodedImage[],
-  perBatch = IMOBILIARE_IMAGES_PER_BATCH,
-  maxBytes = IMOBILIARE_MAX_BATCH_BYTES,
-): EncodedImage[][] {
-  const batches: EncodedImage[][] = [];
-  let current: EncodedImage[] = [];
-  let size = 0;
-  for (const image of images) {
-    const wouldExceed = current.length >= perBatch || (current.length > 0 && size + image.bytes > maxBytes);
-    if (wouldExceed) {
-      batches.push(current);
-      current = [];
-      size = 0;
-    }
-    current.push(image);
-    size += image.bytes;
-  }
-  if (current.length > 0) batches.push(current);
-  return batches;
-}
-
 export async function encodeImobiliareImages(input: {
   admin: Admin;
   organizationId: string;
   propertyId: string;
-}): Promise<{ images: EncodedImage[]; warnings: string[] }> {
+}): Promise<{ images: EncodedImage[]; warnings: string[]; expected: number }> {
   const warnings: string[] = [];
-  const [{ data: rows }, { data: org }] = await Promise.all([
+  const [{ data: rows, error: rowsError }, { data: org }] = await Promise.all([
     input.admin
       .from("property_images")
       .select("*")
@@ -81,22 +55,25 @@ export async function encodeImobiliareImages(input: {
       .maybeSingle(),
   ]);
 
-  const eligible = ((rows ?? []) as PropertyImageRow[])
-    .filter(isImageFeedEligible)
-    .slice(0, IMOBILIARE_MAX_IMAGES);
+  if (rowsError) throw new Error("Fotografiile CRM nu au putut fi citite; galeria nu a fost trimisă.");
+  const eligible = ((rows ?? []) as PropertyImageRow[]).filter(isImageFeedEligible);
+  const expected = eligible.length;
+  if (expected > IMOBILIARE_MAX_IMAGES) {
+    return { images: [], expected, warnings: [`Galeria are ${expected} poze publicabile; Imobiliare.ro acceptă maximum 30. Nicio poză nu a fost omisă automat.`] };
+  }
   const cfg = watermarkFromOrg(org ?? null);
 
   const images: EncodedImage[] = [];
   for (const row of eligible) {
     if (!row.storage_path) {
-      warnings.push("O imagine nu are fișier în storage și a fost omisă.");
+      warnings.push(`Poza ${eligible.indexOf(row) + 1} nu are fișier disponibil.`);
       continue;
     }
     const watermarked = await ensureWatermarkedPath(input.admin, row.storage_path, cfg);
     const path = watermarked ?? row.storage_path;
     const { data, error } = await input.admin.storage.from(MEDIA_BUCKET).download(path);
     if (error || !data) {
-      warnings.push("O imagine nu a putut fi citită din storage și a fost omisă.");
+      warnings.push(`Poza ${eligible.indexOf(row) + 1} nu a putut fi descărcată.`);
       continue;
     }
     const bytes = new Uint8Array(await data.arrayBuffer());
@@ -111,5 +88,10 @@ export async function encodeImobiliareImages(input: {
   if (images.length === 0) {
     warnings.push("Nicio imagine publicabilă nu a putut fi pregătită pentru Imobiliare.ro.");
   }
-  return { images, warnings };
+  if (images.length !== expected) return { images, warnings, expected };
+  try {
+    return { images: fitImobiliareGallery(images), warnings, expected };
+  } catch (error) {
+    return { images: [], expected, warnings: [...warnings, error instanceof Error ? error.message : "Comprimarea galeriei a eșuat."] };
+  }
 }

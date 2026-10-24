@@ -338,7 +338,7 @@ export const PORTALS: PortalDefinition[] = [
     },
     website: "https://www.imobiliare.ro",
     notes:
-      "Publicarea are doi pași la portal (creare draft + promovare online), tratați ca o singură acțiune „Publică”: dacă promovarea eșuează, operațiunea nu este raportată ca succes. Imaginile se trimit codificate în payload, în loturi, cu watermark-ul agenției dacă este activ. Agenții se sincronizează automat la prima publicare. Locațiile vin din nomenclatorul importat în Superadmin (este obligatorie o zonă de nivel 3); fără nomenclator, publicarea este blocată explicit. Retragerea trece anunțul în draft (reversibil), ștergerea definitivă se face doar la ștergerea proprietății. Nu implementăm promovări plătite, documente sau open house.",
+      "Publicarea are doi pași la portal (creare draft + promovare online), tratați ca o singură acțiune „Publică”: dacă promovarea eșuează, operațiunea nu este raportată ca succes. Galeria completă se trimite codificată într-un singur payload, cu watermark-ul agenției dacă este activ și comprimare JPEG când este necesară; numărul pozelor se verifică prin citire de la portal. Agenții se sincronizează automat la prima publicare. Locațiile vin din nomenclatorul importat în Superadmin (este obligatorie o zonă de nivel 3); fără nomenclator, publicarea este blocată explicit. Retragerea trece anunțul în draft (reversibil), ștergerea definitivă se face doar la ștergerea proprietății. Nu implementăm promovări plătite, documente sau open house.",
   },
   {
     id: "storia",
