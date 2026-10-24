@@ -248,20 +248,35 @@ function PrivateListingsPage() {
         </div>
       </div>
 
-      <div className="flex items-center justify-between text-sm text-muted-foreground">
+      <div className="flex flex-wrap items-center justify-between gap-2 text-sm text-muted-foreground">
         <span>{listings.isLoading ? "Se încarcă…" : `${total} anunțuri`}</span>
-        {hasFilters ? (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => {
-              setKeywords("");
-              navigate({ search: {}, replace: true });
-            }}
+        <div className="flex items-center gap-2">
+          {hasFilters ? (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                setKeywords("");
+                navigate({ search: {}, replace: true });
+              }}
+            >
+              Șterge filtrele
+            </Button>
+          ) : null}
+          <Select
+            value={search.sortare ?? "newest"}
+            onValueChange={(v) => update({ sortare: v === "newest" ? undefined : (v as PrivateListingsSort) })}
           >
-            Șterge filtrele
-          </Button>
-        ) : null}
+            <SelectTrigger aria-label="Sortare" className="w-56">
+              <SelectValue placeholder="Sortare" />
+            </SelectTrigger>
+            <SelectContent>
+              {Object.entries(SORT_LABELS).map(([k, v]) => (
+                <SelectItem key={k} value={k}>{v}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
       {listings.isError ? (
