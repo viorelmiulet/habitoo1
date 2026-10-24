@@ -15,7 +15,7 @@ const validListing = {
 };
 const missingSurface = { ...validListing, external_id: "missing-surface", surface_built: null };
 
-async function post(listings: unknown[]) {
+function beginPost(listings: unknown[]) {
   const route = Route as unknown as { options: { server: { handlers: { POST: (input: { request: Request }) => Promise<Response> } } } };
   return route.options.server.handlers.POST({ request: new Request("https://example.test/api/public/market-listings/upsert", {
     method: "POST", headers: { "Content-Type": "application/json", "x-scraper-secret": "test-only-secret" },
@@ -23,8 +23,15 @@ async function post(listings: unknown[]) {
   }) });
 }
 
+async function post(listings: unknown[]) {
+  const response = beginPost(listings);
+  await vi.runAllTimersAsync();
+  return response;
+}
+
 describe("market upsert HTTP outcomes with the real validation and ingestion pipeline", () => {
   beforeEach(() => {
+    vi.useFakeTimers();
     vi.clearAllMocks();
     vi.stubEnv("HBSYNC_SECRET", "test-only-secret");
     vi.stubEnv("SCRAPER_SECRET", "");
@@ -35,7 +42,10 @@ describe("market upsert HTTP outcomes with the real validation and ingestion pip
       update: () => ({ eq: async () => ({ error: null }) }),
     });
   });
-  afterEach(() => vi.unstubAllEnvs());
+  afterEach(() => {
+    vi.useRealTimers();
+    vi.unstubAllEnvs();
+  });
 
   it("returns 200 and success true for 49 imported and 1 rejected, preserving its error", async () => {
     const rows = Array.from({ length: 49 }, (_, i) => ({ ...validListing, external_id: `valid-${i}` }));
@@ -138,5 +148,77 @@ describe("market upsert HTTP outcomes with the real validation and ingestion pip
     expect(body.imported).toBe(0);
     expect(body.errors).toHaveLength(500);
     expect(body.errors.map((error: { reference: string }) => error.reference)).toEqual(Array.from({ length: 500 }, (_, i) => `storia-${i}`));
+  });
+
+  it("takes over a hbsync lock abandoned 3 minutes ago using 120 seconds, not the RPC default 900", async () => {
+    const runningSince = Date.now() - 180_000;
+    mocks.rpc.mockImplementation(async (name, args) => ({
+      data: name !== "market_sync_claim" || runningSince < Date.now() - (args._stale_seconds ?? 900) * 1000,
+      error: null,
+    }));
+    const response = await post([validListing]);
+    expect(response.status).toBe(200);
+    expect(await response.json()).toMatchObject({ imported: 1, success: true, errors: [] });
+    expect(mocks.rpc).toHaveBeenCalledWith("market_sync_claim", { _source: "storia", _stale_seconds: 120 });
+  });
+
+  it("waits in 2-second intervals for a simultaneous import of the same source to release its lock", async () => {
+    let locked = false;
+    mocks.rpc.mockImplementation(async (name) => {
+      if (name === "market_sync_release") { locked = false; return { data: null, error: null }; }
+      if (locked) return { data: false, error: null };
+      locked = true;
+      return { data: true, error: null };
+    });
+    let finishFirstInsert: (() => void) | undefined;
+    const firstInsert = new Promise<void>(resolve => { finishFirstInsert = resolve; });
+    mocks.from.mockReturnValueOnce({
+      insert: () => ({ select: () => ({ single: async () => {
+        await firstInsert;
+        return { data: { id: "first-run" }, error: null };
+      } }) }),
+    });
+    const first = beginPost([{ ...validListing, external_id: "first" }]);
+    await vi.advanceTimersByTimeAsync(0);
+    const second = beginPost([{ ...validListing, external_id: "second" }]);
+    await vi.advanceTimersByTimeAsync(0);
+    expect(mocks.rpc.mock.calls.filter(([name]) => name === "market_sync_claim")).toHaveLength(2);
+    await vi.advanceTimersByTimeAsync(1_999);
+    expect(mocks.rpc.mock.calls.filter(([name]) => name === "market_sync_claim")).toHaveLength(2);
+    await vi.advanceTimersByTimeAsync(1);
+    expect(mocks.rpc.mock.calls.filter(([name]) => name === "market_sync_claim")).toHaveLength(3);
+    finishFirstInsert?.();
+    expect((await first).status).toBe(200);
+    await vi.advanceTimersByTimeAsync(2_000);
+    const response = await second;
+    expect(response.status).toBe(200);
+    expect(await response.json()).toMatchObject({ imported: 1, success: true, errors: [] });
+    expect(mocks.rpc.mock.calls.filter(([name]) => name === "market_sync_claim")).toHaveLength(4);
+  });
+
+  it("refuses an active lock only after 20 seconds with one error per external_id", async () => {
+    const attempts: number[] = [];
+    const start = Date.now();
+    mocks.rpc.mockImplementation(async (name) => {
+      if (name === "market_sync_claim") attempts.push(Date.now() - start);
+      return { data: false, error: null };
+    });
+    let settled = false;
+    const pending = beginPost([
+      { ...validListing, external_id: "blocked-1" },
+      { ...validListing, external_id: "blocked-2" },
+    ]).then(response => { settled = true; return response; });
+    await vi.advanceTimersByTimeAsync(19_999);
+    expect(settled).toBe(false);
+    await vi.advanceTimersByTimeAsync(1);
+    const response = await pending;
+    expect(response.status).toBe(422);
+    expect(await response.json()).toMatchObject({ imported: 0, success: false, errors: [
+      { reference: "blocked-1", message: "Un import pentru această sursă rulează deja. Reîncearcă lotul." },
+      { reference: "blocked-2", message: "Un import pentru această sursă rulează deja. Reîncearcă lotul." },
+    ] });
+    expect(attempts).toEqual([0, 2000, 4000, 6000, 8000, 10000, 12000, 14000, 16000, 18000, 20000]);
+    expect(mocks.rpc).not.toHaveBeenCalledWith("market_sync_release", expect.anything());
+    expect(mocks.repository).not.toHaveBeenCalled();
   });
 });
