@@ -1149,6 +1149,13 @@
       "when": 1792823738094,
       "tag": "0163_market_hbsync_provenance",
       "breakpoints": true
+    },
+    {
+      "idx": 164,
+      "version": "7",
+      "when": 1792828097008,
+      "tag": "0164_imobiliare_publication_mode",
+      "breakpoints": true
     }
   ]
 }

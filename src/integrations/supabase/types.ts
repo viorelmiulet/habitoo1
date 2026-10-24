@@ -5483,6 +5483,7 @@ export type Database = {
           created_by: string | null
           external_id: string | null
           id: string
+          imobiliare_mode: string | null
           last_error: string | null
           last_event_at: string | null
           last_sync_at: string | null
@@ -5502,6 +5503,7 @@ export type Database = {
           created_by?: string | null
           external_id?: string | null
           id?: string
+          imobiliare_mode?: string | null
           last_error?: string | null
           last_event_at?: string | null
           last_sync_at?: string | null
@@ -5521,6 +5523,7 @@ export type Database = {
           created_by?: string | null
           external_id?: string | null
           id?: string
+          imobiliare_mode?: string | null
           last_error?: string | null
           last_event_at?: string | null
           last_sync_at?: string | null
@@ -5783,6 +5786,7 @@ export type Database = {
           enabled: boolean
           external_ref: string | null
           id: string
+          imobiliare_mode: string | null
           imoradar_opt_out: boolean
           last_error: string | null
           last_synced_at: string | null
@@ -5802,6 +5806,7 @@ export type Database = {
           enabled?: boolean
           external_ref?: string | null
           id?: string
+          imobiliare_mode?: string | null
           imoradar_opt_out?: boolean
           last_error?: string | null
           last_synced_at?: string | null
@@ -5821,6 +5826,7 @@ export type Database = {
           enabled?: boolean
           external_ref?: string | null
           id?: string
+          imobiliare_mode?: string | null
           imoradar_opt_out?: boolean
           last_error?: string | null
           last_synced_at?: string | null
@@ -5859,6 +5865,7 @@ export type Database = {
           enabled: boolean
           finished_at: string | null
           id: string
+          imobiliare_mode: string | null
           imobiliare_promotions: Json | null
           locked_at: string | null
           next_attempt_at: string
@@ -5883,6 +5890,7 @@ export type Database = {
           enabled: boolean
           finished_at?: string | null
           id?: string
+          imobiliare_mode?: string | null
           imobiliare_promotions?: Json | null
           locked_at?: string | null
           next_attempt_at?: string
@@ -5907,6 +5915,7 @@ export type Database = {
           enabled?: boolean
           finished_at?: string | null
           id?: string
+          imobiliare_mode?: string | null
           imobiliare_promotions?: Json | null
           locked_at?: string | null
           next_attempt_at?: string
@@ -9244,6 +9253,7 @@ export type Database = {
           enabled: boolean
           finished_at: string | null
           id: string
+          imobiliare_mode: string | null
           imobiliare_promotions: Json | null
           locked_at: string | null
           next_attempt_at: string
