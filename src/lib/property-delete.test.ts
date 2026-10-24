@@ -29,7 +29,6 @@ function fakeDb() {
     portal_publications: [
       { organization_id: ORG, property_id: "p-own", portal_key: "imobiliare_ro", enabled: true },
       { organization_id: ORG, property_id: "p-own", portal_key: "storia", enabled: true },
-      { organization_id: ORG, property_id: "p-own", portal_key: "oferteimobiliare", enabled: true },
     ],
     audit_logs: [],
   };
@@ -154,10 +153,9 @@ describe("ștergerea soft a anunțurilor", () => {
     const admin = fakeAdmin(tables);
     const out = await deletePropertyCore(asUser(AGENT), admin, { propertyId: "p-own", actorId: AGENT }, deps);
     expect(out.queued).toBe(2);
-    expect(out.manual).toBe(1);
+    expect(out.manual).toBe(0);
     const items = tables["portal_status_withdraw_items"]!;
     expect(items.every((i) => i["reason"] === "deleted")).toBe(true);
-    expect(tables["portal_publications"]!.find((p) => p["portal_key"] === "oferteimobiliare")!["enabled"]).toBe(false);
 
     const calls: string[] = [];
     await runStatusWithdrawTick(

@@ -47,7 +47,7 @@ describe("timeout Imospot", () => {
 describe("reîncercarea automată la timeout", () => {
   it("lista portalurilor idempotente este exact cea cerută", () => {
     expect([...TIMEOUT_RETRY_PORTALS].sort()).toEqual(
-      ["imobiliare_ro", "imospot", "lacheie", "oferteimobiliare", "primulanunt", "romimo", "vdi"].sort(),
+      ["imobiliare_ro", "imospot", "lacheie", "primulanunt", "romimo", "vdi"].sort(),
     );
   });
 

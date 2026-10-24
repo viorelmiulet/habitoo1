@@ -18,7 +18,6 @@ export const TIMEOUT_RETRY_PORTALS: ReadonlySet<string> = new Set([
   "vdi",
   "imobiliare_ro",
   "romimo",
-  "oferteimobiliare",
 ]);
 
 /** Pauzele înainte de reîncercare: 30 s, apoi 2 min. */

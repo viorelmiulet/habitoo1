@@ -949,11 +949,6 @@ export const PropertyPortalsCard = forwardRef<
                             {FEED_EXCLUDED_NO_PHONE}
                           </p>
                         ) : null}
-                        {cell.portalId === "oferteimobiliare" ? (
-                          <p className="mt-1 text-xs text-muted-foreground">
-                            OferteImobiliare afișează telefonul contului agenției.
-                          </p>
-                        ) : null}
                         {slot?.allocated !== null && slot?.allocated !== undefined ? (
                           <p className="mt-2 text-xs text-muted-foreground">{slot.used} din {slot.allocated} sloturi{slot.agencyExhausted ? " — agenția nu mai are locuri libere." : ""}</p>
                         ) : null}

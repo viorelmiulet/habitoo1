@@ -1751,7 +1751,7 @@ export async function performPortalWithdraw(input: {
     };
   }
 
-  // Portal cu publicare, dar fără retragere în API (ex. OferteImobiliare): nu apelăm.
+  // Portal cu publicare, dar fără retragere în API: nu apelăm.
   if (
     !definition.capabilities.includes("withdraw_listing") &&
     !definition.capabilities.includes("feed_pull")

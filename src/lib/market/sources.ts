@@ -79,9 +79,8 @@ export const MARKET_SOURCES: MarketSourceDefinition[] = [
     description: "Export furnizat prin feedul ImmoFlux al agenției.",
     formats: ["json", "csv"],
     pull: false,
-    portalId: "oferteimobiliare",
     mapping: HABITOO_MAPPING,
-    notes: "Integrarea Habitoo este de publicare; importul se face din exportul primit.",
+    notes: "Importul se face din exportul primit de agenție, separat de publicarea pe portaluri.",
   },
   {
     id: "clickimob",

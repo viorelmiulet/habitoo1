@@ -43,7 +43,7 @@ const STATUS_FOR_REASON: Record<StatusWithdrawReason, string[]> = {
 
 export const MANUAL_WITHDRAW_TEXT = "trebuie retras manual din contul portalului";
 
-/** Portal cu publicare, dar fără retragere în API (ex. OferteImobiliare). */
+/** Portal cu publicare, dar fără retragere în API. */
 export function isManualWithdrawPortal(portalKey: string): boolean {
   const def = getPortalDefinition(portalKey);
   if (!def) return false;
