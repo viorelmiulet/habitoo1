@@ -168,5 +168,5 @@
 
 # Eliminare OferteImobiliare.ro
 
-- [ ] Eliminare integrare, carduri, filtre, logo și pagini publice, fără apeluri externe sau ștergerea istoricului
-- [ ] Teste pentru indisponibilitate și verificarea paginilor publice
+- [x] Eliminare integrare, carduri, filtre, logo și pagini publice, fără apeluri externe sau ștergerea istoricului
+- [x] 91 teste trec; homepage, Integrări, Întrebări frecvente și pagina eliminată verificate în browser fără erori; aplicație fără erori de compilare
