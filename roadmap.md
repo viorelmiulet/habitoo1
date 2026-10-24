@@ -7,7 +7,7 @@
 
 # Integrare hbsync
 
-- [ ] Filtru sursă și vechime anunț în ACP și statistici; durata de la prima observare, nu trafic sau vânzare confirmată
+- [x] Filtru sursă Storia / OLX / Romimo din registru și vechime min/max în ACP și statistici; durata de la prima observare afișată pe card, nu trafic sau vânzare confirmată; 63 teste trec, aplicație fără erori; verificarea în cont rămâne blocată de lipsa sesiunii solicitantului
 
 - [x] Filtre ACP canonice București / Sector 3 / Titan în listă și statistici, compatibilitate localități vechi, sursa Portaluri disponibilă și particulari/agenții etichetați; 85 teste trec, aplicație fără erori; verificarea în cont rămâne blocată de lipsa sesiunii solicitantului
 
