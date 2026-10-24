@@ -1,3 +1,9 @@
+# Imobiliare.ro — fotografii complete
+
+- [x] Citire fără scrieri: HB-1111 are 3/8 fotografii, HB-1090 are 2/7, exact ultimul lot
+- [ ] Galerie într-un singur POST, comprimare când este necesară, ordine păstrată, verificare număr și motiv pe card, teste fără publicări reale
+- [ ] Test real HB-1111 după Publish — utilizatorul îl rulează; fără republicare automată
+
 # Imobiliare.ro — Doar imoradar24
 
 - [x] Alegere pe card, păstrare în coada existentă, mod cerut separat de cel confirmat, schimbări de mod și retragere ambele draft
