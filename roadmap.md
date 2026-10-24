@@ -11,3 +11,9 @@
 - [x] Expirare 120 secunde doar pentru hbsync partial
 - [x] Reîncercare la fiecare 2 secunde, maximum 20 secunde
 - [x] Teste: blocare abandonată, cereri simultane, refuz după 20 secunde (22 teste trec)
+
+# Anunțuri particulari — localizare
+
+- [ ] Normalizare la import și corectarea localizărilor existente
+- [ ] Filtre Județ → Localitate → Zonă cu număr de anunțuri și linkuri vechi păstrate
+- [ ] Teste și verificarea datelor/paginii
