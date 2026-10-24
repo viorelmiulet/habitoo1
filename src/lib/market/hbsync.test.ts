@@ -61,6 +61,6 @@ describe("hbsync market contract", () => {
     expect(marketPoolScope({ city: "Sector 3", propertyType: "Apartament", transactionType: "rent" }))
       .toEqual({ city: "bucuresti", sector: "sector 3", propertyType: "apartament", transactionType: "rent" });
     expect(marketListingToSubject({ city: "București", sector: "Sector 3", district: "Titan" }))
-      .toMatchObject({ city: "Sector 3", district: "Titan", neighborhood: "Titan" });
+      .toMatchObject({ city: "București", sector: "Sector 3", district: "Titan", neighborhood: "Titan" });
   });
 });
