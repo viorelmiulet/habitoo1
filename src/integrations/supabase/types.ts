@@ -3399,7 +3399,9 @@ export type Database = {
           bca: string | null
           building_type: string | null
           city: string | null
+          city_key: string | null
           county: string | null
+          county_key: string | null
           currency: string | null
           description: string | null
           external_id: string
@@ -3415,6 +3417,7 @@ export type Database = {
           location: string | null
           min_term: string | null
           neighborhood: string | null
+          neighborhood_key: string | null
           owner_type: string | null
           parking: string | null
           phone: string | null
@@ -3434,13 +3437,16 @@ export type Database = {
           url: string | null
           year_built: number | null
           zone: string | null
+          zone_key: string | null
         }
         Insert: {
           availability?: string | null
           bca?: string | null
           building_type?: string | null
           city?: string | null
+          city_key?: string | null
           county?: string | null
+          county_key?: string | null
           currency?: string | null
           description?: string | null
           external_id: string
@@ -3456,6 +3462,7 @@ export type Database = {
           location?: string | null
           min_term?: string | null
           neighborhood?: string | null
+          neighborhood_key?: string | null
           owner_type?: string | null
           parking?: string | null
           phone?: string | null
@@ -3475,13 +3482,16 @@ export type Database = {
           url?: string | null
           year_built?: number | null
           zone?: string | null
+          zone_key?: string | null
         }
         Update: {
           availability?: string | null
           bca?: string | null
           building_type?: string | null
           city?: string | null
+          city_key?: string | null
           county?: string | null
+          county_key?: string | null
           currency?: string | null
           description?: string | null
           external_id?: string
@@ -3497,6 +3507,7 @@ export type Database = {
           location?: string | null
           min_term?: string | null
           neighborhood?: string | null
+          neighborhood_key?: string | null
           owner_type?: string | null
           parking?: string | null
           phone?: string | null
@@ -3516,6 +3527,7 @@ export type Database = {
           url?: string | null
           year_built?: number | null
           zone?: string | null
+          zone_key?: string | null
         }
         Relationships: []
       }
@@ -9530,6 +9542,8 @@ export type Database = {
       is_superadmin: { Args: never; Returns: boolean }
       lacheie_resend_arm: { Args: never; Returns: undefined }
       lacheie_resend_tick: { Args: never; Returns: undefined }
+      listing_place_label: { Args: { v: string }; Returns: string }
+      listing_sector_label: { Args: { v: string }; Returns: string }
       mail_rate_limit_hit: {
         Args: { _bucket: string; _limit: number; _window_seconds: number }
         Returns: boolean
@@ -9618,6 +9632,20 @@ export type Database = {
       }
       next_contract_number: { Args: never; Returns: string }
       next_property_reference: { Args: never; Returns: string }
+      normalize_listing_geography: {
+        Args: {
+          _city: string
+          _county: string
+          _neighborhood: string
+          _zone: string
+        }
+        Returns: {
+          city: string
+          county: string
+          neighborhood: string
+          zone: string
+        }[]
+      }
       olx_direct_refresh_arm: { Args: never; Returns: undefined }
       olx_direct_refresh_tick: { Args: never; Returns: undefined }
       olx_direct_status_arm: { Args: never; Returns: undefined }

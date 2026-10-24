@@ -409,6 +409,8 @@ export const Route = createFileRoute("/api/public/listings/upsert")({
         }
 
 
+        // Geography is canonicalized by the listings trigger for both insert and
+        // re-import, using the app's locality/county nomenclature.
         const { error } = await supabaseAdmin
           .from("listings")
           .upsert(rows as never, { onConflict: "source,external_id" });

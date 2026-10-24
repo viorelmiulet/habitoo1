@@ -1,0 +1,1 @@
+CREATE OR REPLACE FUNCTION public.listing_place_label(v text) RETURNS text LANGUAGE sql IMMUTABLE SET search_path=public AS $$ SELECT nullif(initcap(translate(regexp_replace(btrim(v), '^(MUNICIPIUL|ORAŞUL|ORAȘUL|ORAŞ|ORAȘ|COMUNA|JUDEŢUL|JUDEȚUL)\s+', '', 'i'), 'şţŞŢ', 'șțȘȚ')), '') $$;

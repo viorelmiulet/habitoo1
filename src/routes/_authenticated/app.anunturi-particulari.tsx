@@ -13,7 +13,9 @@ import { Skeleton } from "@/components/ui/skeleton";
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
+  SelectLabel,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
@@ -23,8 +25,10 @@ import {
   type OwnerListing,
 } from "@/lib/listings.functions";
 import { PRIVATE_LISTINGS_PAGE_SIZE, type PrivateListingsSort } from "@/lib/private-listings";
+import { geographyKey, localityScope } from "@/lib/private-listing-geography";
 
 const searchSchema = z.object({
+  judet: z.string().optional(),
   oras: z.string().optional(),
   zona: z.string().optional(),
   camere: z.string().optional(),
@@ -108,14 +112,14 @@ function PrivateListingsPage() {
   });
   const listings = useQuery({
     queryKey: [
-      "owner-listings", search.oras, search.zona, rooms.join(","), search.q, page,
+      "owner-listings", search.judet, search.oras, search.zona, rooms.join(","), search.q, page,
       search.sursa, search.tranzactie, search.tip, search.pretMin, search.pretMax, search.mpMin, search.mpMax,
       search.sortare,
     ],
     queryFn: () =>
       fetchListings({
         data: {
-          city: search.oras, zone: search.zona, rooms, q: search.q, page,
+          county: search.judet, city: search.oras, zone: search.zona, rooms, q: search.q, page,
           source: search.sursa, transaction: search.tranzactie, propertyType: search.tip,
           priceMin: search.pretMin, priceMax: search.pretMax,
           surfaceMin: search.mpMin, surfaceMax: search.mpMax,
@@ -125,7 +129,10 @@ function PrivateListingsPage() {
     placeholderData: keepPreviousData,
   });
 
-  const zones = search.oras ? (facets.data?.zones[search.oras] ?? []) : [];
+  const countyKey = geographyKey(search.judet);
+  const cityKey = geographyKey(search.oras);
+  const localities = facets.data?.localities[countyKey] ?? [];
+  const zones = search.oras ? (facets.data?.zones[localityScope(search.judet, search.oras)] ?? []) : [];
   const total = listings.data?.total ?? 0;
   const pages = Math.max(1, Math.ceil(total / PRIVATE_LISTINGS_PAGE_SIZE));
   const toggleRoom = (r: number) => {
@@ -133,7 +140,7 @@ function PrivateListingsPage() {
     update({ camere: next.length ? next.join(",") : undefined });
   };
   const hasFilters = Boolean(
-    search.oras || search.zona || rooms.length || search.q || search.sursa || search.tranzactie || search.tip ||
+    search.judet || search.oras || search.zona || rooms.length || search.q || search.sursa || search.tranzactie || search.tip ||
       search.pretMin !== undefined || search.pretMax !== undefined ||
       search.mpMin !== undefined || search.mpMax !== undefined,
   );
@@ -145,38 +152,51 @@ function PrivateListingsPage() {
         description="Anunțuri de la proprietari, aduse automat din alte site-uri. Verifică datele înainte să contactezi proprietarul."
       />
 
-      <div className="grid grid-cols-1 gap-3 rounded-lg border border-border bg-card p-4 md:grid-cols-[1fr_1fr_auto] lg:grid-cols-[1fr_1fr_auto_1.5fr]">
+      <div className="grid grid-cols-1 gap-3 border border-border bg-card p-4 md:grid-cols-3 lg:grid-cols-4">
+        <Select value={countyKey || ALL} onValueChange={(v) => update({ judet: v === ALL ? undefined : v, oras: undefined, zona: undefined })}>
+          <SelectTrigger aria-label="Județ"><SelectValue placeholder="Județ" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value={ALL}>Toate județele</SelectItem>
+            {(facets.data?.counties ?? []).map((c) => <SelectItem key={c.value} value={c.value}>{c.label} ({c.count})</SelectItem>)}
+          </SelectContent>
+        </Select>
         <Select
-          value={search.oras ?? ALL}
+          value={cityKey || ALL}
+          disabled={!search.judet && !search.oras}
           onValueChange={(v) => update({ oras: v === ALL ? undefined : v, zona: undefined })}
         >
-          <SelectTrigger aria-label="Oraș">
-            <SelectValue placeholder="Oraș" />
+          <SelectTrigger aria-label="Localitate">
+            <SelectValue placeholder="Localitate" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value={ALL}>Toate orașele</SelectItem>
-            {(facets.data?.cities ?? []).map((c) => (
-              <SelectItem key={c} value={c}>
-                {c}
+            <SelectItem value={ALL}>Toate localitățile</SelectItem>
+            {localities.map((c) => (
+              <SelectItem key={c.value} value={c.value}>
+                {c.label} ({c.count})
               </SelectItem>
             ))}
           </SelectContent>
         </Select>
         <Select
-          value={search.zona ?? ALL}
+          value={geographyKey(search.zona) || ALL}
           disabled={!search.oras || zones.length === 0}
           onValueChange={(v) => update({ zona: v === ALL ? undefined : v })}
         >
           <SelectTrigger aria-label="Zonă">
-            <SelectValue placeholder={search.oras ? "Zonă" : "Alege întâi orașul"} />
+            <SelectValue placeholder="Zonă" />
           </SelectTrigger>
           <SelectContent>
             <SelectItem value={ALL}>Toate zonele</SelectItem>
-            {zones.map((z) => (
-              <SelectItem key={z} value={z}>
-                {z}
-              </SelectItem>
-            ))}
+            {cityKey === "bucuresti" ? (
+              <>
+                <SelectGroup><SelectLabel>Sectoare</SelectLabel>
+                  {zones.filter((z) => z.kind === "sector").map((z) => <SelectItem key={z.value} value={z.value}>{z.label} ({z.count})</SelectItem>)}
+                </SelectGroup>
+                <SelectGroup><SelectLabel>Cartiere</SelectLabel>
+                  {zones.filter((z) => z.kind === "neighborhood").map((z) => <SelectItem key={z.value} value={z.value}>{z.label} ({z.count})</SelectItem>)}
+                </SelectGroup>
+              </>
+            ) : zones.map((z) => <SelectItem key={z.value} value={z.value}>{z.label} ({z.count})</SelectItem>)}
           </SelectContent>
         </Select>
         <div className="flex gap-1" role="group" aria-label="Camere">
@@ -194,7 +214,7 @@ function PrivateListingsPage() {
             </Button>
           ))}
         </div>
-        <div className="relative md:col-span-3 lg:col-span-1">
+        <div className="relative md:col-span-3 lg:col-span-4">
           <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             value={keywords}
