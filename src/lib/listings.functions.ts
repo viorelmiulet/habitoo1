@@ -3,6 +3,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireActiveOrgAuth } from "@/lib/org-access";
+import { buildListingFacets, geographyKey, zoneFilter, type GeographyRow, type ListingFacets } from "./private-listing-geography";
 import {
   PRIVATE_LISTINGS_ORDER,
   PRIVATE_LISTINGS_PAGE_SIZE,
@@ -37,6 +38,7 @@ export type OwnerListing = {
 const num = (v: unknown) => (v === null || v === undefined ? null : Number(v));
 
 export const privateListingsFiltersSchema = z.object({
+  county: z.string().max(100).optional(),
   city: z.string().max(80).optional(),
   zone: z.string().max(80).optional(),
   rooms: z.array(z.number().int()).max(5).optional(),
@@ -71,10 +73,17 @@ export const getOwnerListings = createServerFn({ method: "GET" })
       )
       .eq("is_owner", true);
 
-    const city = cleanText(data.city);
-    const zone = cleanText(data.zone);
-    if (city) query = query.ilike("city", city);
-    if (zone) query = query.ilike("zone", zone);
+    const county = geographyKey(data.county);
+    const city = geographyKey(data.city);
+    const zone = geographyKey(data.zone);
+    if (county) query = query.eq("county_key", county);
+    if (city) query = query.eq("city_key", city);
+    if (zone) {
+      const filter = zoneFilter(zone);
+      // Non-sector legacy zona links may refer to the old zone column.
+      query = filter.column === "zone_key" ? query.eq(filter.column, filter.value)
+        : query.or(`neighborhood_key.eq.${filter.value},zone_key.eq.${filter.value}`);
+    }
 
     if (data.source) query = query.eq("source", data.source);
     if (data.transaction) query = query.or(TRANSACTION_FILTERS[data.transaction]);
@@ -113,31 +122,20 @@ export const getOwnerListings = createServerFn({ method: "GET" })
     };
   });
 
-/** Orașele, zonele și tipurile de proprietate existente, pentru listele din filtre. */
+/** Complete, counted geography facets; every page is read under caller RLS. */
 export const getOwnerListingFacets = createServerFn({ method: "GET" })
   .middleware([requireActiveOrgAuth])
-  .handler(async ({ context }): Promise<{ cities: string[]; zones: Record<string, string[]>; propertyTypes: string[] }> => {
-    const { data } = await context.supabase
-      .from("listings")
-      .select("city, zone, property_type")
-      .eq("is_owner", true)
-      .not("city", "is", null)
-      .limit(5000);
-    const zones: Record<string, Set<string>> = {};
-    const propertyTypes = new Set<string>();
-    for (const row of data ?? []) {
-      const c = row.city?.trim();
-      if (!c) continue;
-      zones[c] ??= new Set();
-      if (row.zone?.trim()) zones[c].add(row.zone.trim());
-      if (row.property_type?.trim()) propertyTypes.add(row.property_type.trim());
+  .handler(async ({ context }): Promise<ListingFacets> => {
+    const rows: GeographyRow[] = [];
+    for (let from = 0; ; from += 1000) {
+      const { data, error } = await context.supabase.from("listings")
+        .select("city, county, zone, neighborhood, property_type").eq("is_owner", true)
+        .order("id").range(from, from + 999);
+      if (error) throw new Error("Localizările nu pot fi încărcate acum.");
+      rows.push(...(data ?? []));
+      if ((data?.length ?? 0) < 1000) break;
     }
-    const sort = (a: string, b: string) => a.localeCompare(b, "ro");
-    return {
-      cities: Object.keys(zones).sort(sort),
-      zones: Object.fromEntries(Object.entries(zones).map(([c, s]) => [c, [...s].sort(sort)])),
-      propertyTypes: [...propertyTypes].sort(sort),
-    };
+    return buildListingFacets(rows);
   });
 
 const LISTING_COLUMNS =
