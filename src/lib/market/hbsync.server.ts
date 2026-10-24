@@ -18,12 +18,18 @@ export async function importHbsyncMarket(admin: SupabaseClient<Database>, record
   }
   const now = new Date().toISOString();
   for (const [source, listings] of groups) {
-    const { data: claimed, error: claimError } = await admin.rpc("market_sync_claim", { _source: source });
-    if (claimError) throw claimError;
-    if (!claimed) { summary.errors.push({ reference: source, message: "Un import pentru această sursă rulează deja. Reîncearcă lotul." }); continue; }
+    const sourceErrors = (message: string) => listings.map(listing => ({ reference: listing.sourceListingId ?? "", message }));
     let runId: string | null = null;
     let success = false;
+    let lockClaimed = false;
     try {
+      const { data: claimed, error: claimError } = await admin.rpc("market_sync_claim", { _source: source });
+      if (claimError) throw claimError;
+      if (!claimed) {
+        summary.errors.push(...sourceErrors("Un import pentru această sursă rulează deja. Reîncearcă lotul."));
+        continue;
+      }
+      lockClaimed = true;
       const { data: run, error } = await admin.from("market_import_runs").insert({ source, format: "json", mode: "partial", status: "running" }).select("id").single();
       if (error) throw error;
       runId = run.id;
@@ -44,15 +50,25 @@ export async function importHbsyncMarket(admin: SupabaseClient<Database>, record
       summary.errors.push(...result.errors);
     } catch {
       success = false;
-      summary.errors.push({ reference: source, message: "Importul sursei a eșuat." });
-      if (runId) await admin.from("market_import_runs").update({ status: "failed", finished_at: new Date().toISOString(), errors: [{ reference: source, message: "Import eșuat." }] }).eq("id", runId);
+      summary.errors.push(...sourceErrors("Importul sursei a eșuat."));
+      if (runId) {
+        try {
+          await admin.from("market_import_runs").update({ status: "failed", finished_at: new Date().toISOString(), errors: sourceErrors("Import eșuat.") }).eq("id", runId);
+        } catch { /* Preserve per-listing errors and continue with the other sources. */ }
+      }
     } finally {
-      const { error } = await admin.rpc("market_sync_release", { _source: source, _ok: success, _run_id: runId ?? undefined, _error: success ? undefined : "Import hbsync incomplet." });
-      if (error) summary.errors.push({ reference: source, message: "Nu s-a putut elibera blocarea importului." });
+      if (lockClaimed) {
+        try {
+          const { error } = await admin.rpc("market_sync_release", { _source: source, _ok: success, _run_id: runId ?? undefined, _error: success ? undefined : "Import hbsync incomplet." });
+          if (error) summary.errors.push(...sourceErrors("Nu s-a putut elibera blocarea importului."));
+        } catch {
+          summary.errors.push(...sourceErrors("Nu s-a putut elibera blocarea importului."));
+        }
+      }
     }
   }
   return { success: summary.created + summary.updated + summary.unchanged > 0, received: records.length,
     imported: summary.created + summary.updated + summary.unchanged, created: summary.created,
     updated: summary.updated, unchanged: summary.unchanged, rejected: rejected.length,
-    errors: [...rejected.map(({ reference, message }) => ({ reference, message })), ...summary.errors].slice(0, 200) };
+    errors: [...rejected.map(({ reference, message }) => ({ reference, message })), ...summary.errors] };
 }
