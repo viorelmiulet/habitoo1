@@ -10,7 +10,11 @@ const route = readFileSync("src/routes/_authenticated/app.properties.$id.tsx", "
 const agentField = readFileSync("src/components/app/PropertyResponsibleAgentField.tsx", "utf8");
 
 /** Tab-urile declarate în `TabsList`, în ordinea din sursă. */
-const tabValues = [...route.matchAll(/\["([a-z]+)", /g)].map((match) => match[1]);
+const tabsList = route.slice(
+  route.indexOf('aria-label="Secțiunile proprietății"'),
+  route.indexOf("].map(([value, label])"),
+);
+const tabValues = [...tabsList.matchAll(/\["([a-z]+)", /g)].map((match) => match[1]);
 
 describe("fila Agent", () => {
   it("există și stă înaintea prezentării", () => {
