@@ -160,3 +160,149 @@ export const getOwnerListingFacets = createServerFn({ method: "GET" })
       propertyTypes: [...propertyTypes].sort(sort),
     };
   });
+
+const LISTING_COLUMNS =
+  "id, source, title, price, currency, price_per_m2, rooms, surface, floor, city, zone, location, county, property_type, transaction_type, phone, url, description, images, scraped_at";
+
+type ListingRow = {
+  id: string;
+  source: string;
+  title: string | null;
+  price: number | string | null;
+  currency: string | null;
+  price_per_m2: number | string | null;
+  rooms: number | null;
+  surface: number | string | null;
+  floor: string | null;
+  city: string | null;
+  zone: string | null;
+  location: string | null;
+  county: string | null;
+  property_type: string | null;
+  transaction_type: string | null;
+  phone: string | null;
+  url: string | null;
+  description: string | null;
+  images: unknown;
+  scraped_at: string | null;
+};
+
+function toOwnerListing(row: ListingRow): OwnerListing {
+  return {
+    id: row.id,
+    source: row.source,
+    title: row.title,
+    price: num(row.price),
+    currency: row.currency,
+    pricePerM2: num(row.price_per_m2),
+    rooms: row.rooms,
+    surface: num(row.surface),
+    floor: row.floor,
+    city: row.city,
+    zone: row.zone,
+    location: row.location,
+    county: row.county,
+    propertyType: row.property_type,
+    transactionType: row.transaction_type,
+    phone: row.phone,
+    url: row.url,
+    description: row.description,
+    images: Array.isArray(row.images) ? row.images.filter((u): u is string => typeof u === "string") : [],
+    scrapedAt: row.scraped_at,
+  };
+}
+
+/** Detaliul complet al unui anunț de proprietar (toate pozele și descrierea). */
+export const getOwnerListing = createServerFn({ method: "GET" })
+  .middleware([requireActiveOrgAuth])
+  .inputValidator((input: unknown) => z.object({ id: z.string().uuid() }).parse(input))
+  .handler(async ({ data, context }): Promise<OwnerListing | null> => {
+    const { data: row, error } = await context.supabase
+      .from("listings")
+      .select(LISTING_COLUMNS)
+      .eq("id", data.id)
+      .eq("is_owner", true)
+      .maybeSingle();
+    if (error) throw new Error("Anunțul nu poate fi încărcat acum.");
+    return row ? toOwnerListing(row as ListingRow) : null;
+  });
+
+export type ListingComment = {
+  id: string;
+  authorName: string;
+  orgName: string | null;
+  body: string;
+  createdAt: string;
+};
+
+/** Comentariile unui anunț — vizibile tuturor agenților, din orice agenție. */
+export const getListingComments = createServerFn({ method: "GET" })
+  .middleware([requireActiveOrgAuth])
+  .inputValidator((input: unknown) => z.object({ listingId: z.string().uuid() }).parse(input))
+  .handler(async ({ data, context }): Promise<ListingComment[]> => {
+    const { data: rows, error } = await context.supabase
+      .from("listing_comments")
+      .select("id, author_name, org_name, body, created_at")
+      .eq("listing_id", data.listingId)
+      .order("created_at", { ascending: true })
+      .limit(200);
+    if (error) throw new Error("Comentariile nu pot fi încărcate acum.");
+    return (rows ?? []).map((row) => ({
+      id: row.id,
+      authorName: row.author_name,
+      orgName: row.org_name,
+      body: row.body,
+      createdAt: row.created_at,
+    }));
+  });
+
+export const LISTING_COMMENT_MAX_LENGTH = 1000;
+
+/** Adaugă un comentariu; numele autorului și agenția se preiau din profil, nu din client. */
+export const addListingComment = createServerFn({ method: "POST" })
+  .middleware([requireActiveOrgAuth])
+  .inputValidator((input: unknown) =>
+    z
+      .object({
+        listingId: z.string().uuid(),
+        body: z.string().trim().min(1, "Scrie un comentariu.").max(LISTING_COMMENT_MAX_LENGTH),
+      })
+      .parse(input),
+  )
+  .handler(async ({ data, context }): Promise<ListingComment> => {
+    const userId = (context as { userId: string }).userId;
+    const { data: profile } = await context.supabase
+      .from("profiles")
+      .select("full_name, organization_id")
+      .eq("id", userId)
+      .maybeSingle();
+    let orgName: string | null = null;
+    if (profile?.organization_id) {
+      const { data: org } = await context.supabase
+        .from("organizations")
+        .select("name")
+        .eq("id", profile.organization_id)
+        .maybeSingle();
+      orgName = org?.name ?? null;
+    }
+    const authorName = profile?.full_name?.trim() || "Agent";
+    const { data: row, error } = await context.supabase
+      .from("listing_comments")
+      .insert({
+        listing_id: data.listingId,
+        author_id: userId,
+        author_name: authorName,
+        org_name: orgName,
+        body: data.body,
+      })
+      .select("id, author_name, org_name, body, created_at")
+      .single();
+    if (error || !row) throw new Error("Comentariul nu a putut fi salvat. Reîncearcă.");
+    return {
+      id: row.id,
+      authorName: row.author_name,
+      orgName: row.org_name,
+      body: row.body,
+      createdAt: row.created_at,
+    };
+  });
