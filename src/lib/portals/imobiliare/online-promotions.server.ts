@@ -9,6 +9,13 @@ import { confirmImobiliareListingPromotion, fetchImobiliareListingPromotions, fe
 import { mergeImobiliarePromotionState } from "./promotions";
 import { warningsForImobiliareService } from "./online-promotions";
 
+/** Caller holds the same durable listing lock as publication. */
+export function withdrawImobiliareDestinations(input: { session: ImobiliareSession; organizationId: string; reference: string }) {
+  return imobiliareAuthedRequest(input.session, {
+    method: "POST", path: promotionsPath(input.reference), connectionKey: input.organizationId,
+    body: imobiliareDestinationStatus(undefined, false),
+  });
+
 /** Called inside the listing's existing durable lock; never takes a nested lock. */
 export async function publishImobiliareOnline(input: {
   admin: SupabaseClient<Database>; session: ImobiliareSession; organizationId: string;

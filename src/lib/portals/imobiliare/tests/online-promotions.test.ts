@@ -11,11 +11,11 @@ vi.mock("@/integrations/supabase/client.server", () => ({ supabaseAdmin: { from:
   return query;
 } } }));
 import { publishPlan } from "../../adapters/imobiliare.server";
-import { imobiliareStandardSlotsMessage, warningsForImobiliareService } from "../online-promotions";
+import { warningsForImobiliareService } from "../online-promotions";
 import { imobiliarePromotion } from "../promotions";
 import { setImobiliareListingPromotion } from "../promotions.server";
 import { imobiliarePromotionChanges } from "../card-promotions";
-import { publishImobiliareOnline } from "../online-promotions.server";
+import { withdrawImobiliareDestinations } from "../online-promotions.server";
 
 const ctx = { organizationId: "org" } as PortalContext;
 const plan = { customReference: "HB-1126", transaction: "rent", listing: { custom_reference: "HB-1126" } } as unknown as ImobiliareListingPlan;
@@ -116,7 +116,7 @@ describe("initial online contract", () => {
   });
   it("imoradar-only creates the same reference then sends draft/online without promotions or capacity checks", async () => {
     const result = await publishPlan({ ctx, session: {} as never, plan, images: [], mode: "create",
-      ref: { propertyId: "property", imobiliareMode: "imoradar_only", imobiliarePromotions: { bonus: true, tl: true } } as ListingRef });
+      ref: { propertyId: "property", externalId: null, imobiliareMode: "imoradar_only", imobiliarePromotions: { bonus: true, tl: true } } });
     expect(result.ok).toBe(true);
     expect(writes()).toHaveLength(1);
     expect(writes()[0]).toMatchObject({ path: "/api/v3/listings/HB-1126/promotions", body: { status: "draft", imoradar_status: "online" } });
@@ -126,7 +126,7 @@ describe("initial online contract", () => {
   });
   it("switching to combined updates the same reference and sends both online and all promotions in one POST", async () => {
     const result = await publishPlan({ ctx, session: {} as never, plan, images: [], mode: "update", activateOnline: false,
-      ref: { propertyId: "property", imobiliareMode: "combined", imobiliareModeChanged: true, imobiliarePromotions: { bonus: true, tl: true } } as ListingRef });
+      ref: { propertyId: "property", externalId: "HB-1126", imobiliareMode: "combined", imobiliareModeChanged: true, imobiliarePromotions: { bonus: true, tl: true } } });
     expect(result.ok).toBe(true);
     expect(writes()).toHaveLength(1);
     expect(writes()[0].body).toEqual({ status: "online", imoradar_status: "online", promotions: { bonus: true, top_listing: true } });
@@ -134,7 +134,7 @@ describe("initial online contract", () => {
   });
   it("switching to imoradar-only drafts Imobiliare without sending or validating promotions", async () => {
     const result = await publishPlan({ ctx, session: {} as never, plan, images: [], mode: "update", activateOnline: false,
-      ref: { propertyId: "property", imobiliareMode: "imoradar_only", imobiliareModeChanged: true, imobiliarePromotions: { tl: true } } as ListingRef });
+      ref: { propertyId: "property", externalId: "HB-1126", imobiliareMode: "imoradar_only", imobiliareModeChanged: true, imobiliarePromotions: { tl: true } } });
     expect(result.ok).toBe(true);
     expect(writes()).toHaveLength(1);
     expect(writes()[0].body).toEqual({ status: "draft", imoradar_status: "online" });
@@ -149,6 +149,13 @@ describe("initial online contract", () => {
     expect(writes()).toHaveLength(1);
     expect(writes()[0].body.promotions.bonus).toBe(true);
     expect(result).toMatchObject({ ok: false, fail: { message: body.errors[0], portalResponse: body, httpStatus: 422 } });
+    expect(state.gate).not.toHaveBeenCalled();
+  });
+  it("deselecting sends one POST drafting both destinations and returns the raw portal response", async () => {
+    const response = await withdrawImobiliareDestinations({ session: {} as never, organizationId: "org", reference: "HB-1126" });
+    expect(writes()).toHaveLength(1);
+    expect(writes()[0]).toMatchObject({ path: "/api/v3/listings/HB-1126/promotions", body: { status: "draft", imoradar_status: "draft" } });
+    expect(response).toMatchObject({ ok: true, status: 200, body: { data: {} } });
     expect(state.gate).not.toHaveBeenCalled();
   });
 });

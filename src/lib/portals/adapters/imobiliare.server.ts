@@ -68,8 +68,7 @@ import {
 } from "../imobiliare/references";
 import { buildImobiliareOffer, type PortalOffer } from "../imobiliare/offer-links";
 import { imobiliareFloorReasons } from "../imobiliare/mapper";
-import { publishImobiliareOnline } from "../imobiliare/online-promotions.server";
-import { imobiliareDestinationStatus } from "../imobiliare/card-promotions";
+import { publishImobiliareOnline, withdrawImobiliareDestinations } from "../imobiliare/online-promotions.server";
 
 type PortalFailShape = Extract<PortalResult<never>, { ok: false }>;
 type Admin = Awaited<typeof import("@/integrations/supabase/client.server")>["supabaseAdmin"];
@@ -523,6 +522,7 @@ async function withdraw(
 
   try {
     // Retragere = trecerea în draft: reversibilă, fără pierderea anunțului.
+    let lastResponse: { body: unknown; status: number } | null = null;
     for (const externalId of externalIds) {
       const db = await admin();
       const response = await withDurableImobiliareLock({
@@ -531,15 +531,11 @@ async function withdraw(
         reference: externalId,
         run: () =>
           withImobiliareWriteLock(`${ctx.organizationId}:${externalId}`, () =>
-            imobiliareAuthedRequest(ready.session, {
-              method: "POST",
-              path: promotionsPath(externalId),
-              connectionKey: ctx.organizationId,
-              body: imobiliareDestinationStatus(undefined, false),
-            }),
+            withdrawImobiliareDestinations({ session: ready.session, organizationId: ctx.organizationId, reference: externalId }),
           ),
       });
       if (!response.ok) return failFrom(response, `withdraw:${externalId}`);
+      lastResponse = response;
     }
     return {
       ok: true,
@@ -549,6 +545,8 @@ async function withdraw(
         detail: "Anunțul a fost trecut în draft la Imobiliare.ro (retras din public).",
         // Starea salvată local folosește vocabularul CRM, nu al portalului.
         portalStatus: "withdrawn",
+        httpStatus: lastResponse?.status ?? null,
+        portalResponse: lastResponse?.body ?? null,
       },
     };
   } catch (error) {
