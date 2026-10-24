@@ -34,6 +34,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { getImoradarPreference } from "@/lib/portals/imoradar.functions";
 import { getImobiliarePromotions } from "@/lib/portals/imobiliare-promotions.functions";
 import { imobiliarePromotionChanges, type ImobiliarePromotionChanges } from "@/lib/portals/imobiliare/card-promotions";
+import { imobiliareStandardSlotsMessage } from "@/lib/portals/imobiliare/online-promotions";
 import { Button } from "@/components/ui/button";
 import { Card, Panel } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -343,7 +344,7 @@ export const PropertyPortalsCard = forwardRef<
   const imoradarPreference = useQuery({ queryKey: ["imoradar-preference", propertyId, organizationId ?? null], queryFn: () => loadImoradarPreference({ data: { propertyId, ...(organizationId ? { organizationId } : {}) } }), enabled: imobiliareSelected });
   const [imobiliareDrafts, setImobiliareDrafts] = useState<ImobiliarePromotionChanges>({});
   useEffect(() => { setImobiliareDrafts({}); }, [propertyId]);
-  const effectiveImobiliareDrafts = { ...(!imobiliarePublished ? { promote_imoradar: imoradarPreference.data?.checked === true && !imoradarPreference.data.manuallyStopped } : {}), ...imobiliareDrafts };
+  const effectiveImobiliareDrafts: ImobiliarePromotionChanges = { ...(!imobiliarePublished ? { promote_imoradar: imoradarPreference.data?.checked === true && !imoradarPreference.data.manuallyStopped } : {}), ...imobiliareDrafts };
   const imobiliareChanges = imobiliarePromotionChanges(imobiliareView.data?.promotions ?? [], effectiveImobiliareDrafts, imobiliarePublished);
   // Even if the inventory is still loading, preserve the explicit imoradar choice.
   if (!imobiliarePublished && imoradarPreference.data) imobiliareChanges.promote_imoradar = effectiveImobiliareDrafts.promote_imoradar ?? false;
@@ -878,13 +879,17 @@ export const PropertyPortalsCard = forwardRef<
                   : STATE_VIEW[cell.state];
               const latestOperation = latestOperationByPortal.get(cell.portalId);
               const latestOperationFailed = latestOperation?.success === false;
-              const detail = publishSoon
+              const standardSlotsMessage = cell.portalId === "imobiliare_ro"
+                ? imobiliareStandardSlotsMessage(cell.lastError ?? latestOperation?.errorMessage,
+                    effectiveImobiliareDrafts.bonus === true,
+                    imobiliareView.data?.promotions.find(row => row.id === "bonus")?.available) : null;
+              const detail = standardSlotsMessage ?? (publishSoon
                 ? "Publicare în curând"
                 : busy
                 ? "Se sincronizează…"
                 : latestOperationFailed && cell.state !== "needs_packet" && !unconfirmed
                   ? "Eroare la ultima publicare"
-                  : stateSentence(cell, value);
+                  : stateSentence(cell, value));
 
               return (
                 <li key={cell.portalId} className="min-w-0">
