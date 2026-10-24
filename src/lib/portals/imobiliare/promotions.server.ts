@@ -333,6 +333,7 @@ export async function confirmImobiliareListingPromotion(
 ): Promise<PromotionWriteResult> {
   const { definition } = input;
   const body = imobiliarePromotionPatch(definition, input.value);
+  if (!definition.writeField) return { ok: false, code: "NOT_SUPPORTED", message: "Serviciu fără câmp de scriere." };
   // HTTP 200 NU înseamnă aplicare: `promotion_warnings` (ex. „Promovare
   // imoradar nu este activ pentru acest cont") transformă operația în eșec,
   // cu textul exact al portalului.

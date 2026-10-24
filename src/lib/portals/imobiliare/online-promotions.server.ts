@@ -49,7 +49,7 @@ export async function publishImobiliareOnline(input: {
     const { logOperation } = await import("@/lib/portals.functions");
     const { invalidatePromotionUsageCache } = await import("../promotions/allocation.server");
     for (const entry of entries) {
-      const result = await confirmImobiliareListingPromotion(entry, response, warningsForImobiliareService(response.body, entry.definition, entries.map(e => e.definition)));
+      const result = await confirmImobiliareListingPromotion(entry, response, warningsForImobiliareService(response.body, entry.definition));
       await logOperation({ organizationId: input.organizationId, propertyId: input.propertyId, actorId: input.actorId,
         portal: "imobiliare_ro", externalId: input.reference,
         operation: `promotion:${entry.definition.id}:${typeof entry.value === "number" ? entry.value : entry.value ? "on" : "off"}`,

@@ -344,7 +344,7 @@ export const PropertyPortalsCard = forwardRef<
   const imoradarPreference = useQuery({ queryKey: ["imoradar-preference", propertyId, organizationId ?? null], queryFn: () => loadImoradarPreference({ data: { propertyId, ...(organizationId ? { organizationId } : {}) } }), enabled: imobiliareSelected });
   const [imobiliareDrafts, setImobiliareDrafts] = useState<ImobiliarePromotionChanges>({});
   useEffect(() => { setImobiliareDrafts({}); }, [propertyId]);
-  const effectiveImobiliareDrafts = { ...(!imobiliarePublished ? { promote_imoradar: imoradarPreference.data?.checked === true && !imoradarPreference.data.manuallyStopped } : {}), ...imobiliareDrafts };
+  const effectiveImobiliareDrafts: ImobiliarePromotionChanges = { ...(!imobiliarePublished ? { promote_imoradar: imoradarPreference.data?.checked === true && !imoradarPreference.data.manuallyStopped } : {}), ...imobiliareDrafts };
   const imobiliareChanges = imobiliarePromotionChanges(imobiliareView.data?.promotions ?? [], effectiveImobiliareDrafts, imobiliarePublished);
   // Even if the inventory is still loading, preserve the explicit imoradar choice.
   if (!imobiliarePublished && imoradarPreference.data) imobiliareChanges.promote_imoradar = effectiveImobiliareDrafts.promote_imoradar ?? false;
