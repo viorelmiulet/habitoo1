@@ -1,0 +1,4 @@
+CREATE OR REPLACE FUNCTION public.listings_normalize_geography_trigger() RETURNS trigger LANGUAGE plpgsql SET search_path=public AS $$ DECLARE canonical_name text; BEGIN SELECT g.city,g.county,g.zone,g.neighborhood INTO NEW.city,NEW.county,NEW.zone,NEW.neighborhood FROM public.normalize_listing_geography(NEW.city,NEW.county,NEW.zone,NEW.neighborhood) g;
+-- A repeated locality name cannot infer its county, but unanimous spelling can be restored.
+IF NEW.city IS NOT NULL THEN SELECT min(public.listing_place_label(l.name)) INTO canonical_name FROM public.ro_localities l WHERE l.active AND public.ro_normalize_name(public.listing_place_label(l.name))=public.ro_normalize_name(NEW.city) HAVING count(DISTINCT public.listing_place_label(l.name))=1; NEW.city := coalesce(canonical_name,NEW.city); END IF;
+RETURN NEW; END $$;
