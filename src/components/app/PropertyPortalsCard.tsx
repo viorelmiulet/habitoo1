@@ -931,6 +931,7 @@ export const PropertyPortalsCard = forwardRef<
                         >
                           {detail}
                         </p>
+                        {cell.portalId === "imobiliare_ro" && (cell.lastError || latestOperationFailed) ? <p role="alert" className="mt-2 break-words text-xs text-destructive">{cell.lastError ?? latestOperation?.errorMessage}</p> : null}
                         {cell.portalId === "olx_direct" && (cell.state === "needs_packet" || cell.state === "syncing") ? (
                           <Button
                             type="button"

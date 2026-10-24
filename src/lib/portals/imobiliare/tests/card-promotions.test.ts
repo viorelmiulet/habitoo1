@@ -1,8 +1,21 @@
 import { describe, expect, it, vi } from "vitest";
-import { imobiliarePromotionChanges, imobiliarePromotionControlBlocked, imobiliarePromotionChangesSchema, runImobiliarePromotionChanges } from "../card-promotions";
+import { imobiliareDestinationStatus, imobiliarePortalDecidesSlots, imobiliarePromotionChanges, imobiliarePromotionControlBlocked, imobiliarePromotionChangesSchema, runImobiliarePromotionChanges } from "../card-promotions";
 import { imobiliarePromotion, imobiliarePromotionPatch } from "../promotions";
 
 describe("promotion choices on the portal card", () => {
+  it("deselection drafts both destinations", () => {
+    expect(imobiliareDestinationStatus("imoradar_only", false)).toEqual({ status: "draft", imoradar_status: "draft" });
+    expect(imobiliareDestinationStatus("combined", false)).toEqual({ status: "draft", imoradar_status: "draft" });
+  });
+  it("only Bonus and imoradar-only bypass publication capacity locally", () => {
+    expect(imobiliarePortalDecidesSlots("imobiliare_ro", "imoradar_only")).toBe(true);
+    expect(imobiliarePortalDecidesSlots("imobiliare_ro", "combined", { bonus: true })).toBe(true);
+    expect(imobiliarePortalDecidesSlots("imobiliare_ro", "combined", { tl: true })).toBe(false);
+    expect(imobiliarePortalDecidesSlots("storia", "imoradar_only", { bonus: true })).toBe(false);
+  });
+  it("Bonus stays selectable without inventory or remaining capacity", () => {
+    expect(imobiliarePromotionControlBlocked({ id: "bonus", manageable: true, value: false, slotType: "bonus", available: null, remaining: 0, agencyRemaining: 0, error: "Locuri necunoscute" })).toBe(false);
+  });
   it("new publication includes the selected Top Listing", () => {
     expect(imobiliarePromotionChanges([{ id: "tl", value: false }, { id: "bonus", value: false }], { tl: true }, false)).toEqual({ tl: true });
     const definition = imobiliarePromotion("tl");
