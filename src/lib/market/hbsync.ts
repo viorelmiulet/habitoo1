@@ -10,7 +10,7 @@ const crmSchema = z.object({
   pret_eur: number, suprafata_mp: number, url: z.string().url().max(2000).nullish(), perioada: text(100),
 });
 export const hbsyncMarketListingSchema = z.object({
-  source: z.enum(["storia", "olx", "romimo"]), external_id: z.string().min(1).max(200),
+  source: z.enum(["storia", "olx", "romimo", "imobiliare"]), external_id: z.string().min(1).max(200),
   url: z.string().url().max(2000).nullish(), title: text(500),
   deal_type: text(50), property_type: text(100), price: number, currency: text(8),
   surface_built: number, rooms: z.number().int().nonnegative().nullish(),
@@ -38,7 +38,11 @@ const types: Record<string, string> = {
 export function normalizeHbsyncMarketListing(input: unknown):
   { ok: true; listing: NormalizedListing } | { ok: false; reference: string; message: string } {
   const parsed = hbsyncMarketListingSchema.safeParse(input);
-  if (!parsed.success) return { ok: false, reference: "invalid", message: parsed.error.issues.map(i => `${i.path.join(".")}: ${i.message}`).join("; ") };
+  if (!parsed.success) {
+    const reference = input && typeof input === "object" && "external_id" in input && typeof input.external_id === "string" && input.external_id.trim()
+      ? input.external_id : "invalid";
+    return { ok: false, reference, message: parsed.error.issues.map(i => `${i.path.join(".")}: ${i.message}`).join("; ") };
+  }
   const row = parsed.data;
   const crm = row.crm;
   const period = row.period ?? crm?.perioada ?? null;
