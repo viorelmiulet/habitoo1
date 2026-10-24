@@ -866,6 +866,7 @@ function PropertyDetailPage() {
         <div className="sticky top-0 z-40 -mx-1 overflow-x-auto bg-background px-1">
         <TabsList className="h-auto w-max min-w-full justify-start gap-1 rounded-none border-b border-border bg-transparent p-0" aria-label="Secțiunile proprietății">
           {[
+            ["agent", "Agent"],
             ["overview", "Prezentare"],
             ["media", `Poze (${data?.imageCount ?? 0})`],
             ["publishing", `Publicare (${publishedPortals}/${portalCells.length})`],
