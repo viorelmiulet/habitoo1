@@ -63,6 +63,14 @@ function listingRow(listing: NormalizedListing) {
     features: listing.features as never,
     raw_data: listing.rawData as never,
     status: listing.status,
+    ...(listing.importProvider === "hbsync" ? {
+      import_provider: listing.importProvider,
+      publisher_type: listing.publisherType,
+      is_private: listing.isPrivate,
+      sector: listing.sector,
+      images: listing.images,
+      period: listing.period,
+    } : {}),
   };
 }
 
@@ -256,8 +264,8 @@ export function createMarketRepository(admin: Admin): MarketRepository {
           dedupe_score: row.dedupeScore,
           dedupe_reasons: row.dedupeReasons as never,
           initial_price: row.listing.price,
-          first_seen_at: row.now,
-          last_seen_at: row.now,
+          first_seen_at: row.listing.observedFirstSeenAt ?? row.now,
+          last_seen_at: row.listing.observedLastSeenAt ?? row.now,
           last_import_run_id: row.runId,
         })
         .select("id")
@@ -284,7 +292,7 @@ export function createMarketRepository(admin: Admin): MarketRepository {
         status_changes: patch.statusChanges,
         initial_price: patch.initialPrice,
         disappeared_at: patch.disappearedAt,
-        last_seen_at: patch.now,
+        last_seen_at: patch.listing.observedLastSeenAt ?? patch.now,
         last_import_run_id: patch.runId,
         updated_at: patch.now,
       };
