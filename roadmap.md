@@ -18,3 +18,9 @@
 - [x] Filtre Județ → Localitate → Zonă cu număr de anunțuri și linkuri vechi păstrate
 - [x] 17 teste și 6 verificări SQL; Sector 1 = 184, Titan = 49; build OK
 - [ ] Verificarea filtrelor în cont — blocată: nu există cont asociat solicitantului pentru sesiunea de test
+
+# Anunțuri particulari — fără telefoane
+
+- [ ] Ignorarea telefoanelor la import și eliminarea din răspunsuri/listă/detaliu
+- [ ] Ștergerea telefoanelor existente fără schimbarea descrierilor
+- [ ] Teste import și verificare 0 telefoane salvate
