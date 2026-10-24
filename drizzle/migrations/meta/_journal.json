@@ -1184,6 +1184,13 @@
       "when": 1792876014215,
       "tag": "0168_private_listing_geography_variable_scope",
       "breakpoints": true
+    },
+    {
+      "idx": 169,
+      "version": "7",
+      "when": 1792876094636,
+      "tag": "0169_private_listing_geography_lookup_indexes",
+      "breakpoints": true
     }
   ]
 }
