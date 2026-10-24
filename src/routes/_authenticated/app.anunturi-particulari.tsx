@@ -47,6 +47,13 @@ const SOURCE_LABELS: Record<string, string> = {
   romimo: "Romimo",
 };
 
+const SORT_LABELS: Record<PrivateListingsSort, string> = {
+  newest: "Cele mai noi",
+  price_asc: "Preț crescător",
+  price_desc: "Preț descrescător",
+  surface_desc: "Suprafață descrescătoare",
+};
+
 export const Route = createFileRoute("/_authenticated/app/anunturi-particulari")({
   validateSearch: searchSchema,
   head: () => appHead("Anunțuri particulari — Habitoo CRM"),
@@ -103,6 +110,7 @@ function PrivateListingsPage() {
     queryKey: [
       "owner-listings", search.oras, search.zona, rooms.join(","), search.q, page,
       search.sursa, search.tranzactie, search.tip, search.pretMin, search.pretMax, search.mpMin, search.mpMax,
+      search.sortare,
     ],
     queryFn: () =>
       fetchListings({
@@ -111,6 +119,7 @@ function PrivateListingsPage() {
           source: search.sursa, transaction: search.tranzactie, propertyType: search.tip,
           priceMin: search.pretMin, priceMax: search.pretMax,
           surfaceMin: search.mpMin, surfaceMax: search.mpMax,
+          sort: search.sortare,
         },
       }),
     placeholderData: keepPreviousData,
