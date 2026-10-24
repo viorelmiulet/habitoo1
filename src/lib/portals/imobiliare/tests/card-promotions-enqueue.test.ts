@@ -3,6 +3,7 @@ vi.mock("@/lib/portals/publish-schedule.server", () => ({ cancelActiveSchedules:
 const slots = vi.hoisted(() => vi.fn().mockResolvedValue({ ok: false, message: "Fără locuri" }));
 vi.mock("../../slots.server", () => ({ ensurePortalSlotAvailable: slots }));
 import { enqueuePublishJobsForOrg } from "../../publish-enqueue.server";
+import type { ImobiliarePromotionChanges } from "../card-promotions";
 it("keeps explicit promotion choices in the durable job before any portal call", async () => {
   const inserts: Record<string, unknown>[] = [];
   const admin = { from: () => {
@@ -15,8 +16,8 @@ it("keeps explicit promotion choices in the durable job before any portal call",
   expect(inserts[0]).toMatchObject({ portal_key: "imobiliare_ro", imobiliare_promotions: { tl: true, bonus: false }, requested_by: "actor" });
 });
 it.each([
-  { mode: "imoradar_only" as const, changes: {} },
-  { mode: "combined" as const, changes: { bonus: true } },
+  { mode: "imoradar_only" as const, changes: {} as ImobiliarePromotionChanges },
+  { mode: "combined" as const, changes: { bonus: true } as ImobiliarePromotionChanges },
 ])("queues $mode durably despite a refusing local slot gate", async ({ mode, changes }) => {
   slots.mockClear();
   const inserts: Record<string, unknown>[] = [];
