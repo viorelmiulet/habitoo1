@@ -1,5 +1,10 @@
 # Integrare hbsync
 
+# Imobiliare.ro — Doar imoradar24
+
+- [ ] Alegere pe card, păstrare în coada existentă, schimbări de mod și retragere ambele draft
+- [ ] Bonus și Doar imoradar24 fără verificare locală de disponibilitate; răspuns exact și teste fără publicări reale
+
 - [x] Endpoint PUSH separat pentru ACP, particulari și agenții, mapare canonică, clasificare necunoscută NULL și idempotență; 74 teste și import Storia real repetat HTTP 200
 - [ ] Import periodic hbsync către noul endpoint — blocat: aplicația trebuie publicată și exportul extern hbsync configurat cu toate ofertele, nu numai particulari; PULL pe HTTP necriptat nu activat
 - [ ] Verificare vizuală ACP cu datele hbsync — blocat: solicitantul nu are sesiune disponibilă și autentificarea --self nu găsește cont; necesară conectarea în previzualizare
