@@ -357,42 +357,45 @@ function Pagination({ page, pages, onGo }: { page: number; pages: number; onGo: 
   );
 }
 
-function ListingCard({ listing }: { listing: OwnerListing }) {
+function ListingRow({ listing }: { listing: OwnerListing }) {
   const place = [listing.zone, listing.city ?? listing.location, listing.county]
     .filter(Boolean)
     .join(", ");
   const specs = [
+    listing.propertyType?.trim() || null,
     listing.rooms !== null ? `${listing.rooms} camere` : null,
     listing.surface !== null ? `${listing.surface} m²` : null,
     listing.floor ? `Etaj ${listing.floor}` : null,
   ].filter(Boolean);
   const firstImage = listing.images[0] ?? null;
+  const transaction = listing.transactionType
+    ? /pe zi/i.test(listing.transactionType)
+      ? "Închiriere pe zi"
+      : /rent|inch/i.test(listing.transactionType)
+        ? "Închiriere"
+        : "Vânzare"
+    : null;
   return (
-    <Card className="flex h-full flex-col gap-0 overflow-hidden">
+    <article className="flex flex-col gap-3 rounded-lg border border-border bg-card p-3 sm:flex-row sm:gap-4">
       {firstImage ? (
         <img
           src={firstImage}
           alt={listing.title?.trim() || "Fotografie anunț"}
           loading="lazy"
-          className="aspect-[16/9] w-full object-cover"
+          className="aspect-[4/3] w-full shrink-0 rounded-md object-cover sm:w-44"
         />
       ) : null}
-      <CardHeader className="flex flex-row items-center justify-between gap-2 pb-3">
-        <Badge variant="secondary">
-          Sursă: {SOURCE_LABELS[listing.source] ?? listing.source}
-        </Badge>
-        {listing.transactionType ? (
-          <span className="text-xs text-muted-foreground">
-            {/pe zi/i.test(listing.transactionType)
-              ? "Închiriere pe zi"
-              : /rent|inch/i.test(listing.transactionType)
-                ? "Închiriere"
-                : "Vânzare"}
-          </span>
-        ) : null}
-      </CardHeader>
-      <CardContent className="flex flex-1 flex-col gap-2">
-        <h3 className="line-clamp-2 font-semibold leading-snug">
+      <div className="flex min-w-0 flex-1 flex-col gap-1.5">
+        <div className="flex flex-wrap items-center gap-2">
+          <Badge variant="secondary">{SOURCE_LABELS[listing.source] ?? listing.source}</Badge>
+          {transaction ? <span className="text-xs text-muted-foreground">{transaction}</span> : null}
+          {listing.scrapedAt ? (
+            <span className="text-xs text-muted-foreground">
+              Adăugat {new Date(listing.scrapedAt).toLocaleDateString("ro-RO")}
+            </span>
+          ) : null}
+        </div>
+        <h3 className="line-clamp-1 font-semibold leading-snug">
           {listing.title?.trim() || "Anunț fără titlu"}
         </h3>
         {listing.price === null ? (
@@ -408,7 +411,7 @@ function ListingCard({ listing }: { listing: OwnerListing }) {
             ) : null}
           </p>
         ) : (
-          <p className="text-xl font-bold text-primary">{money(listing.price, listing.currency)}</p>
+          <p className="text-lg font-bold text-primary">{money(listing.price, listing.currency)}</p>
         )}
         {specs.length ? <p className="text-sm">{specs.join(" · ")}</p> : null}
         {place ? (
@@ -418,24 +421,24 @@ function ListingCard({ listing }: { listing: OwnerListing }) {
           </p>
         ) : null}
         {listing.description ? <ListingDescription text={listing.description} /> : null}
-      </CardContent>
-      <CardFooter className="flex gap-2 pt-3">
+      </div>
+      <div className="flex shrink-0 flex-row gap-2 sm:w-44 sm:flex-col sm:justify-center">
         {listing.phone ? (
-          <Button asChild variant="outline" className="flex-1">
+          <Button asChild variant="outline" className="flex-1 sm:flex-none">
             <a href={`tel:${listing.phone}`}>
               <Phone className="size-4" /> {listing.phone}
             </a>
           </Button>
         ) : null}
         {listing.url ? (
-          <Button asChild className="flex-1">
+          <Button asChild className="flex-1 sm:flex-none">
             <a href={listing.url} target="_blank" rel="noopener noreferrer">
               Anunțul original <ExternalLink className="size-4" />
             </a>
           </Button>
         ) : null}
-      </CardFooter>
-    </Card>
+      </div>
+    </article>
   );
 }
 
