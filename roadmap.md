@@ -7,8 +7,9 @@
 
 # Integrare hbsync
 
+- [x] Publicare solicitată la 24 octombrie; URL public HTTP 200; batch real de 10 oferte Storia trimis la endpointul public ACP: created=10, reimport unchanged=10, fără duplicate; toate citite înapoi active cu proveniență hbsync
 - [x] Endpoint PUSH separat pentru ACP, particulari și agenții, mapare canonică, clasificare necunoscută NULL și idempotență; 74 teste și import Storia real repetat HTTP 200
-- [ ] Import periodic hbsync către noul endpoint — blocat: aplicația trebuie publicată și exportul extern hbsync configurat cu toate ofertele, nu numai particulari; PULL pe HTTP necriptat nu activat
+- [ ] Import periodic hbsync către noul endpoint — blocat: exportul extern hbsync trebuie configurat cu toate ofertele, nu numai particulari; PULL pe HTTP necriptat nu activat
 - [ ] Verificare vizuală ACP cu datele hbsync — blocat: solicitantul nu are sesiune disponibilă și autentificarea --self nu găsește cont; necesară conectarea în previzualizare
 
 - [ ] Activare colectare OLX în hbsync și verificare import cu sursa reală — blocat: codul/configurația și accesul de administrare hbsync nu sunt disponibile; importatorul Habitoo acceptă deja OLX
