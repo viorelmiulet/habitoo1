@@ -25,7 +25,7 @@ import {
   useRef,
   useState,
 } from "react";
-import { AlertTriangle, Check, ChevronDown, ExternalLink } from "lucide-react";
+import { ChevronDown, ExternalLink } from "lucide-react";
 
 import { useMutation, useQueries, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -587,14 +587,6 @@ export const PropertyPortalsCard = forwardRef<
   const pendingCount =
     (canManage ? actionable.length : 0) + (collabDirty ? 1 : 0) + (fbDirty ? 1 : 0);
 
-  const allRequired = Array.from(
-    new Map(
-      (requirementRows ?? [])
-        .flatMap((report) => report.required)
-        .map((item) => [item.key, item] as const),
-    ).values(),
-  );
-  const missingRequired = allRequired.filter((item) => !item.ok);
   const lastSync = cells
     .map((cell) => cell.lastSyncAt)
     .filter((value): value is string => Boolean(value))
@@ -1135,46 +1127,8 @@ export const PropertyPortalsCard = forwardRef<
 
       </div>
 
-      <aside className="space-y-4">
-        <Panel className="p-5">
-          <h2 className="text-lg font-semibold">Pregătire pentru publicare</h2>
-          {allRequired.length === 0 ? (
-            <p className="mt-3 text-sm text-muted-foreground">
-              Nu există verificări suplimentare pentru portalurile active.
-            </p>
-          ) : (
-            <ul className="mt-4 space-y-3">
-              {allRequired.map((item) => (
-                <li key={item.key} className="flex items-start gap-2 text-sm">
-                  {item.ok ? (
-                    <Check className="mt-0.5 size-4 shrink-0 text-success" aria-hidden />
-                  ) : (
-                    <AlertTriangle
-                      className="mt-0.5 size-4 shrink-0 text-destructive"
-                      aria-hidden
-                    />
-                  )}
-                  <span>
-                    <span className="font-semibold">{item.label}</span>
-                    <span className="block text-xs text-muted-foreground">{item.requirement}</span>
-                  </span>
-                </li>
-              ))}
-            </ul>
-          )}
-          {missingRequired.length > 0 && onCompleteMissing ? (
-            <Button
-              type="button"
-              variant="soft"
-              className="mt-5 w-full"
-              onClick={onCompleteMissing}
-            >
-              Completează ce lipsește
-            </Button>
-          ) : null}
-        </Panel>
-
-        {showPortalJournal ? (
+      {showPortalJournal ? (
+        <aside className="space-y-4">
           <Panel className="p-5">
             <h2 className="text-lg font-semibold">Jurnal portal</h2>
             {(journal.data?.length ?? 0) === 0 ? (
@@ -1202,8 +1156,8 @@ export const PropertyPortalsCard = forwardRef<
               </ul>
             )}
           </Panel>
-        ) : null}
-      </aside>
+        </aside>
+      ) : null}
     </div>
   );
 });
