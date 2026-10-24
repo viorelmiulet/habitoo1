@@ -3,7 +3,7 @@ import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useState } from "react";
 import { z } from "zod";
-import { ChevronLeft, ChevronRight, ExternalLink, MapPin, Phone, Search, SearchX } from "lucide-react";
+import { ChevronLeft, ChevronRight, ExternalLink, MapPin, Search, SearchX } from "lucide-react";
 import { PageHeader } from "@/components/app/PageHeader";
 import { appHead } from "@/components/app/app-head";
 import { Badge } from "@/components/ui/badge";
@@ -449,13 +449,6 @@ function ListingRow({ listing }: { listing: OwnerListing }) {
         {listing.description ? <ListingDescription text={listing.description} /> : null}
       </div>
       <div className="relative z-10 flex shrink-0 flex-row gap-2 sm:w-44 sm:flex-col sm:justify-center">
-        {listing.phone ? (
-          <Button asChild variant="outline" className="flex-1 sm:flex-none">
-            <a href={`tel:${listing.phone}`}>
-              <Phone className="size-4" /> {listing.phone}
-            </a>
-          </Button>
-        ) : null}
         {listing.url ? (
           <Button asChild className="flex-1 sm:flex-none">
             <a href={listing.url} target="_blank" rel="noopener noreferrer">

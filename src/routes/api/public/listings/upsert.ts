@@ -86,7 +86,6 @@ const listingSchema = z.object({
   heating: z.string().max(100).nullish(),
   has_lift: z.string().max(50).nullish(),
   building_type: z.string().max(100).nullish(),
-  phone: z.string().max(50).nullish(),
   url: z.string().url().max(2000).nullish(),
   images: z.array(z.string().url().max(2000)).max(50).nullish(),
   fingerprint: z.string().max(200).nullish(),
@@ -210,24 +209,32 @@ export function normalizeListingUrl(
   return null;
 }
 
-/** Primul număr de mobil românesc din text (ex. descriere), sau null. */
-export function phoneFromText(text: string | null | undefined): string | null {
-  if (!text) return null;
-  const m = /(?:\+?40|\b0)[\s.-]?7\d{2}[\s.-]?\d{3}[\s.-]?\d{3}\b/.exec(text);
-  if (!m) return null;
-  const digits = m[0].replace(/\D/g, "");
-  return digits.startsWith("40") ? `0${digits.slice(2)}` : digits;
+/** Strip ignored incoming fields and prepare only supported database fields. */
+export function buildListingRow(input: unknown): Record<string, unknown> {
+  const listing = listingSchema.parse(input);
+  const row: Record<string, unknown> = {
+    source: listing.source,
+    external_id: listing.external_id,
+    phone: null,
+  };
+  const skip = new Set(["source", "external_id", "perioada", "period", "rooms_label", "images"]);
+  for (const [key, value] of Object.entries(listing)) {
+    if (!skip.has(key) && value !== undefined) row[key] = value;
+  }
+  row.url = normalizeListingUrl(listing.source, listing.url, listing.external_id, listing.title);
+  row.transaction_type = labelTransaction(listing.transaction_type);
+  row.property_type = labelPropertyType(listing.property_type);
+  return row;
 }
 
 type ExistingListingFields = {
   source: string;
   external_id: string;
   url: string | null;
-  phone: string | null;
   images: unknown;
 };
 
-/** Completează link/telefon/imagini lipsă din rândul deja salvat (același source + external_id). */
+/** Completează link/imagini lipsă din rândul deja salvat (același source + external_id). */
 export function preserveExistingFields(
   rows: Record<string, unknown>[],
   existing: ExistingListingFields[],
@@ -237,7 +244,6 @@ export function preserveExistingFields(
     const old = byKey.get(`${row.source}|${row.external_id}`);
     if (!old) continue;
     if (!row.url && old.url) row.url = normalizeListingUrl(String(row.source), old.url, String(row.external_id));
-    if (!row.phone && old.phone) row.phone = old.phone;
     if (!row.images && Array.isArray(old.images) && old.images.length > 0) row.images = old.images;
   }
 }
@@ -351,20 +357,7 @@ export const Route = createFileRoute("/api/public/listings/upsert")({
 
         const rows: Record<string, unknown>[] = [];
         for (const listing of parsed.data.listings) {
-          const row: Record<string, unknown> = {
-            source: listing.source,
-            external_id: listing.external_id,
-          };
-          // Câmpuri care nu sunt coloane reale sau se tratează separat.
-          const skip = new Set(["source", "external_id", "perioada", "period", "rooms_label", "images"]);
-          for (const [key, value] of Object.entries(listing)) {
-            if (skip.has(key)) continue;
-            if (value !== undefined) row[key] = value;
-          }
-          row.url = normalizeListingUrl(listing.source, listing.url, listing.external_id, listing.title);
-          row.phone = (listing.phone ?? "").trim() || phoneFromText(listing.description);
-          row.transaction_type = labelTransaction(listing.transaction_type);
-          row.property_type = labelPropertyType(listing.property_type);
+          const row = buildListingRow(listing);
           // Storia: prețul se citește din pagina anunțului (textul primit poate avea prețuri lipite).
           if (listing.source === "storia" && typeof row.url === "string") {
             const live = await fetchStoriaPrice(row.url);
@@ -398,12 +391,12 @@ export const Route = createFileRoute("/api/public/listings/upsert")({
           rows.push(row);
         }
 
-        // Un batch fără link/telefon/imagini nu trebuie să șteargă ce era deja salvat.
-        const needsExisting = rows.filter((r) => !r.url || !r.phone || !r.images);
+        // Un batch fără link/imagini nu trebuie să șteargă ce era deja salvat.
+        const needsExisting = rows.filter((r) => !r.url || !r.images);
         if (needsExisting.length > 0) {
           const { data: existing } = await supabaseAdmin
             .from("listings")
-            .select("source, external_id, url, phone, images")
+            .select("source, external_id, url, images")
             .in("external_id", needsExisting.map((r) => r.external_id as string));
           preserveExistingFields(rows, existing ?? []);
         }
