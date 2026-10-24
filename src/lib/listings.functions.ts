@@ -109,28 +109,7 @@ export const getOwnerListings = createServerFn({ method: "GET" })
 
     return {
       total: count ?? 0,
-      items: (rows ?? []).map((row) => ({
-        id: row.id,
-        source: row.source,
-        title: row.title,
-        price: num(row.price),
-        currency: row.currency,
-        pricePerM2: num(row.price_per_m2),
-        rooms: row.rooms,
-        surface: num(row.surface),
-        floor: row.floor,
-        city: row.city,
-        zone: row.zone,
-        location: row.location,
-        county: row.county,
-        propertyType: row.property_type,
-        transactionType: row.transaction_type,
-        phone: row.phone,
-        url: row.url,
-        description: row.description,
-        images: Array.isArray(row.images) ? row.images.filter((u): u is string => typeof u === "string") : [],
-        scrapedAt: row.scraped_at,
-      })),
+      items: (rows ?? []).map((row) => toOwnerListing(row as ListingRow)),
     };
   });
 
