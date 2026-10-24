@@ -51,7 +51,7 @@ export async function importHbsyncMarket(admin: SupabaseClient<Database>, record
       if (error) summary.errors.push({ reference: source, message: "Nu s-a putut elibera blocarea importului." });
     }
   }
-  return { success: summary.errors.length === 0 && rejected.length === 0, received: records.length,
+  return { success: summary.created + summary.updated + summary.unchanged > 0, received: records.length,
     imported: summary.created + summary.updated + summary.unchanged, created: summary.created,
     updated: summary.updated, unchanged: summary.unchanged, rejected: rejected.length,
     errors: [...rejected.map(({ reference, message }) => ({ reference, message })), ...summary.errors].slice(0, 200) };
