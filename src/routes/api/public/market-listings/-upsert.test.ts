@@ -57,4 +57,50 @@ describe("market upsert HTTP outcomes with the real validation and ingestion pip
     expect(response.status).toBe(200);
     expect(await response.json()).toMatchObject({ success: true, received: 1, imported: 1, rejected: 0, errors: [] });
   });
+
+  it("reports each blocked Storia external_id while importing OLX with HTTP 200", async () => {
+    mocks.rpc.mockImplementation(async (name, args) => ({ data: !(name === "market_sync_claim" && args._source === "storia"), error: null }));
+    const response = await post([
+      { ...validListing, external_id: "storia-1" },
+      { ...validListing, external_id: "storia-2" },
+      { ...validListing, source: "olx", external_id: "olx-1" },
+    ]);
+    expect(response.status).toBe(200);
+    expect(await response.json()).toMatchObject({ success: true, imported: 1, errors: [
+      { reference: "storia-1", message: "Un import pentru această sursă rulează deja. Reîncearcă lotul." },
+      { reference: "storia-2", message: "Un import pentru această sursă rulează deja. Reîncearcă lotul." },
+    ] });
+    expect(mocks.rpc).not.toHaveBeenCalledWith("market_sync_release", expect.objectContaining({ _source: "storia" }));
+  });
+
+  it.each(["claim", "import"])("reports each Storia external_id on a %s exception and continues with OLX", async (stage) => {
+    if (stage === "claim") {
+      mocks.rpc.mockImplementation(async (name, args) => {
+        if (name === "market_sync_claim" && args._source === "storia") throw new Error("claim failure");
+        return { data: true, error: null };
+      });
+    } else {
+      mocks.repository.mockImplementationOnce(() => { throw new Error("import failure"); });
+    }
+    const response = await post([
+      { ...validListing, external_id: "storia-1" },
+      { ...validListing, external_id: "storia-2" },
+      { ...validListing, source: "olx", external_id: "olx-1" },
+    ]);
+    expect(response.status).toBe(200);
+    expect(await response.json()).toMatchObject({ success: true, imported: 1, errors: [
+      { reference: "storia-1", message: "Importul sursei a eșuat." },
+      { reference: "storia-2", message: "Importul sursei a eșuat." },
+    ] });
+  });
+
+  it("does not truncate failed external_ids beyond 200", async () => {
+    mocks.rpc.mockResolvedValue({ data: false, error: null });
+    const response = await post(Array.from({ length: 500 }, (_, i) => ({ ...validListing, external_id: `storia-${i}` })));
+    expect(response.status).toBe(422);
+    const body = await response.json();
+    expect(body.imported).toBe(0);
+    expect(body.errors).toHaveLength(500);
+    expect(body.errors.map((error: { reference: string }) => error.reference)).toEqual(Array.from({ length: 500 }, (_, i) => `storia-${i}`));
+  });
 });
