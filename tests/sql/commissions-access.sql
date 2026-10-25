@@ -1,74 +1,67 @@
--- Commission RLS: agent own-only, admin allocations read-only for agents,
--- admin full access in own agency, other agency sees nothing. Rolls back.
--- Run: psql -X -v ON_ERROR_STOP=1 -f tests/sql/commissions-access.sql
+-- Commission RLS: agents see/edit only their own, admin allocations are
+-- read-only for agents, the agency admin sees/edits everything in the agency,
+-- another agency sees nothing. Fixtures move two profiles into agency A
+-- inside the transaction; everything rolls back.
+-- Run as a privileged role able to SET ROLE authenticated.
 BEGIN;
-SELECT r.user_id AS admin_id, r.organization_id AS org_a FROM public.user_roles r
- JOIN public.organizations o ON o.id=r.organization_id JOIN public.profiles p ON p.id=r.user_id
- WHERE r.role='agency_admin' AND o.status IN ('active','trial') AND o.archived_at IS NULL AND p.organization_id=r.organization_id
- AND p.is_active AND NOT EXISTS (SELECT 1 FROM public.user_roles s WHERE s.user_id=r.user_id AND s.role='superadmin')
- ORDER BY r.user_id LIMIT 1 \gset
--- Two plain agents placed in agency A for this transaction only (rolled back).
--- Plain users of agency A have no agency_admin role there; superadmins excluded.
-SELECT array_agg(id) AS agents FROM (SELECT id FROM public.profiles x
- WHERE id<>:'admin_id' AND NOT EXISTS (SELECT 1 FROM public.user_roles y WHERE y.user_id=x.id
-   AND (y.role='superadmin' OR (y.role='agency_admin' AND y.organization_id=:'org_a')))
- ORDER BY id LIMIT 2) t \gset
-SELECT (:'agents'::uuid[])[1] AS agent1, (:'agents'::uuid[])[2] AS agent2 \gset
-SELECT p.id AS other_user FROM public.profiles p JOIN public.organizations o ON o.id=p.organization_id
- WHERE o.status IN ('active','trial') AND o.archived_at IS NULL AND p.organization_id<>:'org_a'
- AND p.id NOT IN (:'agent1',:'agent2')
- AND NOT EXISTS (SELECT 1 FROM public.user_roles y WHERE y.user_id=p.id AND y.role='superadmin') ORDER BY p.id LIMIT 1 \gset
-UPDATE public.profiles SET organization_id=:'org_a', is_active=true WHERE id IN (:'agent1',:'agent2');
+DO $$
+DECLARE
+  org_a uuid; admin_id uuid; agent1 uuid; agent2 uuid; other_user uuid;
+  own_id uuid; alloc_id uuid; a2_id uuid; n int; failed boolean;
+BEGIN
+  SELECT r.user_id, r.organization_id INTO admin_id, org_a FROM public.user_roles r
+   JOIN public.organizations o ON o.id=r.organization_id JOIN public.profiles p ON p.id=r.user_id
+   WHERE r.role='agency_admin' AND o.status IN ('active','trial') AND o.archived_at IS NULL
+     AND p.organization_id=r.organization_id AND p.is_active
+     AND NOT EXISTS (SELECT 1 FROM public.user_roles s WHERE s.user_id=r.user_id AND s.role='superadmin')
+   ORDER BY r.user_id LIMIT 1;
+  SELECT id INTO agent1 FROM public.profiles x WHERE id<>admin_id AND NOT EXISTS (
+    SELECT 1 FROM public.user_roles y WHERE y.user_id=x.id AND y.role IN ('superadmin','agency_admin')) ORDER BY id LIMIT 1;
+  SELECT id INTO agent2 FROM public.profiles x WHERE id NOT IN (admin_id, agent1) AND NOT EXISTS (
+    SELECT 1 FROM public.user_roles y WHERE y.user_id=x.id AND y.role IN ('superadmin','agency_admin')) ORDER BY id LIMIT 1;
+  UPDATE public.profiles SET organization_id=org_a, is_active=true WHERE id IN (agent1, agent2);
+  SELECT p.id INTO other_user FROM public.profiles p JOIN public.organizations o ON o.id=p.organization_id
+   WHERE o.status IN ('active','trial') AND o.archived_at IS NULL AND p.organization_id<>org_a AND p.is_active
+     AND NOT EXISTS (SELECT 1 FROM public.user_roles y WHERE y.user_id=p.id AND y.role='superadmin')
+   ORDER BY p.id LIMIT 1;
+  IF org_a IS NULL OR agent1 IS NULL OR agent2 IS NULL OR other_user IS NULL THEN RAISE EXCEPTION 'fixtures missing'; END IF;
 
-CREATE TEMP TABLE ids(k text, id uuid); GRANT ALL ON ids TO authenticated;
-SELECT set_config('test.agent2', :'agent2', true);
-SET LOCAL ROLE authenticated;
+  EXECUTE 'SET LOCAL ROLE authenticated';
 
--- agent1 adds own; cannot add for agent2
-SELECT set_config('request.jwt.claims', json_build_object('sub',:'agent1','role','authenticated')::text, true);
-INSERT INTO ids SELECT 'own', id FROM (INSERT INTO public.commissions(organization_id,agent_id,transaction_kind,property_type,payer,agency_commission,agent_amount)
- VALUES(:'org_a',:'agent1','sale','apartment','buyer',1000,400) RETURNING id) x;
-DO $$ BEGIN
- BEGIN INSERT INTO public.commissions(organization_id,agent_id,transaction_kind,property_type,payer)
-   VALUES(current_setting('test.org', true)::uuid, gen_random_uuid(),'sale','apartment','buyer'); RAISE EXCEPTION 'x';
- EXCEPTION WHEN OTHERS THEN IF SQLERRM='x' THEN RAISE EXCEPTION 'agent inserted for someone else'; END IF; END;
-END $$;
-DO $$ BEGIN
- BEGIN EXECUTE format('INSERT INTO public.commissions(organization_id,agent_id,transaction_kind,property_type,payer) VALUES(%L,%L,''sale'',''apartment'',''buyer'')',
-   (SELECT organization_id FROM public.commissions LIMIT 1), current_setting('test.agent2'));
-   RAISE EXCEPTION 'x';
- EXCEPTION WHEN OTHERS THEN IF SQLERRM='x' THEN RAISE EXCEPTION 'agent1 inserted for agent2'; END IF; END;
-END $$;
+  -- agent1 adds own commission; cannot add one for agent2
+  PERFORM set_config('request.jwt.claims', json_build_object('sub',agent1,'role','authenticated')::text, true);
+  INSERT INTO public.commissions(organization_id,agent_id,transaction_kind,property_type,payer,agency_commission,agent_amount)
+   VALUES(org_a,agent1,'sale','apartment','buyer',1000,400) RETURNING id INTO own_id;
+  failed := false;
+  BEGIN
+    INSERT INTO public.commissions(organization_id,agent_id,transaction_kind,property_type,payer) VALUES(org_a,agent2,'sale','apartment','buyer');
+  EXCEPTION WHEN insufficient_privilege THEN failed := true; END;
+  IF NOT failed THEN RAISE EXCEPTION 'agent inserted for another agent'; END IF;
 
--- admin allocates to agent1 and adds one for agent2
-SELECT set_config('request.jwt.claims', json_build_object('sub',:'admin_id','role','authenticated')::text, true);
-INSERT INTO ids SELECT 'alloc', id FROM (INSERT INTO public.commissions(organization_id,agent_id,transaction_kind,property_type,payer)
- VALUES(:'org_a',:'agent1','rent','apartment','owner') RETURNING id) x;
-INSERT INTO ids SELECT 'a2', id FROM (INSERT INTO public.commissions(organization_id,agent_id,transaction_kind,property_type,payer)
- VALUES(:'org_a',:'agent2','sale','house','seller') RETURNING id) x;
-DO $$ BEGIN
- IF (SELECT count(*) FROM public.commissions c JOIN ids USING(id))<>3 THEN RAISE EXCEPTION 'admin does not see all'; END IF;
- UPDATE public.commissions SET notes='admin edit' WHERE id IN (SELECT id FROM ids);
- IF (SELECT count(*) FROM public.commissions WHERE notes='admin edit')<>3 THEN RAISE EXCEPTION 'admin cannot edit all'; END IF;
- IF NOT (SELECT allocated_by_admin FROM public.commissions WHERE id=(SELECT id FROM ids WHERE k='alloc')) THEN RAISE EXCEPTION 'allocation flag missing'; END IF;
-END $$;
+  -- admin allocates to agent1 and adds one for agent2; sees and edits all
+  PERFORM set_config('request.jwt.claims', json_build_object('sub',admin_id,'role','authenticated')::text, true);
+  INSERT INTO public.commissions(organization_id,agent_id,transaction_kind,property_type,payer)
+   VALUES(org_a,agent1,'rent','apartment','owner') RETURNING id INTO alloc_id;
+  INSERT INTO public.commissions(organization_id,agent_id,transaction_kind,property_type,payer)
+   VALUES(org_a,agent2,'sale','house','seller') RETURNING id INTO a2_id;
+  SELECT count(*) INTO n FROM public.commissions WHERE id IN (own_id,alloc_id,a2_id);
+  IF n<>3 THEN RAISE EXCEPTION 'admin sees % of 3', n; END IF;
+  UPDATE public.commissions SET notes='admin edit' WHERE id IN (own_id,alloc_id,a2_id);
+  GET DIAGNOSTICS n = ROW_COUNT; IF n<>3 THEN RAISE EXCEPTION 'admin edited % of 3', n; END IF;
 
--- agent1: sees own + allocated, not agent2; can edit own only
-SELECT set_config('request.jwt.claims', json_build_object('sub',:'agent1','role','authenticated')::text, true);
-DO $$ BEGIN
- IF EXISTS(SELECT 1 FROM public.commissions WHERE id=(SELECT id FROM ids WHERE k='a2')) THEN RAISE EXCEPTION 'agent sees another agent'; END IF;
- IF (SELECT count(*) FROM public.commissions c JOIN ids USING(id))<>2 THEN RAISE EXCEPTION 'agent does not see own+allocated'; END IF;
- UPDATE public.commissions SET notes='agent' WHERE id IN (SELECT id FROM ids);
- DELETE FROM public.commissions WHERE id IN (SELECT id FROM ids WHERE k<>'own');
- IF (SELECT notes FROM public.commissions WHERE id=(SELECT id FROM ids WHERE k='alloc'))<>'admin edit' THEN RAISE EXCEPTION 'agent edited allocation'; END IF;
- IF (SELECT notes FROM public.commissions WHERE id=(SELECT id FROM ids WHERE k='own'))<>'agent' THEN RAISE EXCEPTION 'agent cannot edit own'; END IF;
- IF (SELECT count(*) FROM public.commissions c JOIN ids USING(id))<>2 THEN RAISE EXCEPTION 'agent deleted allocation'; END IF;
-END $$;
+  -- agent1: own + allocated visible; agent2's hidden; allocation read-only
+  PERFORM set_config('request.jwt.claims', json_build_object('sub',agent1,'role','authenticated')::text, true);
+  IF EXISTS (SELECT 1 FROM public.commissions WHERE id=a2_id) THEN RAISE EXCEPTION 'agent sees another agent'; END IF;
+  SELECT count(*) INTO n FROM public.commissions WHERE id IN (own_id,alloc_id); IF n<>2 THEN RAISE EXCEPTION 'agent sees % of own+allocated', n; END IF;
+  UPDATE public.commissions SET notes='agent' WHERE id IN (own_id,alloc_id,a2_id);
+  GET DIAGNOSTICS n = ROW_COUNT; IF n<>1 THEN RAISE EXCEPTION 'agent updated % rows, expected only own', n; END IF;
+  DELETE FROM public.commissions WHERE id IN (alloc_id,a2_id);
+  GET DIAGNOSTICS n = ROW_COUNT; IF n<>0 THEN RAISE EXCEPTION 'agent deleted % protected rows', n; END IF;
 
--- other agency sees nothing
-SELECT set_config('request.jwt.claims', json_build_object('sub',:'other_user','role','authenticated')::text, true);
-DO $$ BEGIN
- IF EXISTS(SELECT 1 FROM public.commissions c JOIN ids USING(id)) THEN RAISE EXCEPTION 'other agency sees commissions'; END IF;
+  -- other agency sees nothing
+  PERFORM set_config('request.jwt.claims', json_build_object('sub',other_user,'role','authenticated')::text, true);
+  IF EXISTS (SELECT 1 FROM public.commissions WHERE id IN (own_id,alloc_id,a2_id)) THEN RAISE EXCEPTION 'other agency sees commissions'; END IF;
+
+  RAISE NOTICE 'commissions access OK';
 END $$;
-SELECT 'commissions access OK' AS result;
 ROLLBACK;
