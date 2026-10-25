@@ -49,7 +49,7 @@ describe("JSON-LD public", () => {
 
   it("aceleași identități și oferte pe Home, Prețuri, integrare și articol", () => {
     const contexts: [typeof Home | typeof Pricing | typeof Integration | typeof Article, unknown][] = [
-      [Home, {}], [Pricing, {}], [Integration, { loaderData: { slug: "storia" } }],
+      [Home, {}], [Pricing, {}], [Integration, { loaderData: { slug: "storia-olx" } }],
       [Article, { loaderData: { post: { id: "test", slug: "articol-test", title: "Articol", excerpt: "Descriere", author_name: "Autor privat", published_at: "2026-10-01", updated_at: "2026-10-01" } } }],
     ];
     for (const [route, context] of contexts) {
