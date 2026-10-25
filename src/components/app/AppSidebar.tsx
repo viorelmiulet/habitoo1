@@ -43,6 +43,7 @@ import {
   Wand2,
   Newspaper,
   Music2,
+  Coins,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { initials } from "@/lib/format";
@@ -89,6 +90,7 @@ export const agencyNav: NavGroup[] = [
       { label: "Cereri", to: "/app/requests", icon: Target },
       { label: "Lead-uri", to: "/app/leads", icon: Flame },
       { label: "Contracte", to: "/app/contracts", icon: FileSignature },
+      { label: "Comisioane", to: "/app/comisioane", icon: Coins },
     ],
   },
   {

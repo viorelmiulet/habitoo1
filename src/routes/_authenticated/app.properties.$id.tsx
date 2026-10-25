@@ -828,6 +828,7 @@ function PropertyDetailPage() {
           <Button variant="outline" onClick={() => setActivityDialog({ open: true, kind: "viewing" })}><CalendarPlus /> Programează vizionare</Button>
           <Button variant="outline" onClick={() => setActivityDialog({ open: true, kind: "call" })}>Adaugă activitate</Button>
           <Button variant="outline" onClick={() => setTab("acp")}><BarChart3 /> Analiză comparativă de piață (ACP)</Button>
+          <Button variant="outline" asChild><Link to="/app/comisioane" search={{ nou: true, proprietate: id }}>Adaugă comision</Link></Button>
           <DropdownMenu>
             <DropdownMenuTrigger asChild><Button size="icon" variant="outline" aria-label="Mai multe acțiuni"><MoreHorizontal /></Button></DropdownMenuTrigger>
             <DropdownMenuContent align="end">

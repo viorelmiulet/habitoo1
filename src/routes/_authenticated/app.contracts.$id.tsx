@@ -177,6 +177,9 @@ function ContractDetailPage() {
         }
         actions={
           <div className="flex flex-wrap gap-2">
+            <Button variant="outline" asChild>
+              <Link to="/app/comisioane" search={{ nou: true, contract: id }}>Adaugă comision</Link>
+            </Button>
             <Button variant="outline" onClick={() => pdf.mutate()} disabled={pdf.isPending}>
               {pdf.isPending ? (
                 <Loader2 className="size-4 animate-spin" />
