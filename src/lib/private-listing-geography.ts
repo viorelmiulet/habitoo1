@@ -6,9 +6,24 @@ export function geographyKey(value: string | null | undefined): string {
 }
 
 export type GeographyRow = { city: string | null; county: string | null; zone: string | null; neighborhood: string | null; property_type?: string | null };
-export type PlaceOption = { value: string; label: string; count: number; kind?: "sector" | "neighborhood" };
+export type PlaceOption = { value: string; label: string; count: number; kind?: "sector" | "neighborhood"; sector?: string };
 export type ListingFacets = { counties: PlaceOption[]; localities: Record<string, PlaceOption[]>; zones: Record<string, PlaceOption[]>; propertyTypes: string[] };
 export const localityScope = (county?: string | null, city?: string | null) => `${geographyKey(county)}|${geographyKey(city)}`;
+
+/** Căutare în liste de opțiuni, insensibilă la diacritice („cl” găsește Cluj). */
+export function filterPlaceOptions(options: PlaceOption[], query: string): PlaceOption[] {
+  const key = geographyKey(query);
+  if (!key) return options;
+  return options.filter((o) => geographyKey(o.label).includes(key) || o.value.includes(key));
+}
+
+export const ZONE_LETTERS = [..."ABCDEFGHIJKLMNOPQRSTUVWXYZ"];
+
+/** Indexul primei opțiuni a cărei etichetă începe cu litera dată (-1 dacă nu există). */
+export function firstIndexForLetter(options: PlaceOption[], letter: string): number {
+  const target = geographyKey(letter);
+  return options.findIndex((o) => geographyKey(o.label).startsWith(target));
+}
 
 export function buildListingFacets(rows: GeographyRow[]): ListingFacets {
   const counties = new Map<string, PlaceOption>();
