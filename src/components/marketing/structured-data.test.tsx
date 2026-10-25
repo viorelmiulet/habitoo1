@@ -8,14 +8,22 @@ import { Route as Contact } from "@/routes/contact";
 import { Route as Terms } from "@/routes/termeni";
 import { Route as Privacy } from "@/routes/politica-de-confidentialitate";
 import { ORG_ID, SOFTWARE_ID, WEBSITE_ID } from "./structured-data";
+import { Route as Integration } from "@/routes/integrari_.$slug";
+import { Route as Article } from "@/routes/blog.$slug";
+import { publicGraphJsonLd, SERVICE_ID } from "./structured-data";
 
 type Node = Record<string, unknown>;
-function ld(route: { options: { head?: unknown } }): Node[] {
-  const head = (route.options.head as (c: unknown) => { scripts: { children: string }[] })({});
+function requiredNode(nodes: Node[], type: string): Node {
+  const node = nodes.find(item => item["@type"] === type);
+  if (!node) throw new Error(`Missing ${type}`);
+  return node;
+}
+function ld(route: { options: { head?: unknown } }, context: unknown = {}): Node[] {
+  const head = (route.options.head as (c: unknown) => { scripts: { children: string }[] })(context);
   const out: Node[] = [];
   for (const s of head.scripts) {
     const v = JSON.parse(s.children);
-    out.push(...(Array.isArray(v) ? v : [v]));
+    out.push(...(v["@graph"] ?? (Array.isArray(v) ? v : [v])));
   }
   return out;
 }
@@ -31,23 +39,56 @@ const pages = [
 ] as const;
 
 describe("JSON-LD public", () => {
+  it("firma are datele legale și adresa fără stradă", () => {
+    const org = requiredNode(ld(Home), "Organization");
+    expect(org.legalName).toBe("MVA PERFECT BUSINESS S.R.L.");
+    expect(org.taxID).toBe("50477503");
+    expect(org.identifier).toEqual({ "@type": "PropertyValue", propertyID: "Registrul Comerțului", value: "J2024018361001" });
+    expect(org.address).toEqual({ "@type": "PostalAddress", addressLocality: "Dudu, comuna Chiajna", addressRegion: "Ilfov", addressCountry: "RO" });
+  });
+
+  it("aceleași identități și oferte pe Home, Prețuri, integrare și articol", () => {
+    const contexts: [typeof Home | typeof Pricing | typeof Integration | typeof Article, unknown][] = [
+      [Home, {}], [Pricing, {}], [Integration, { loaderData: { slug: "storia-olx" } }],
+      [Article, { loaderData: { post: { id: "test", slug: "articol-test", title: "Articol", excerpt: "Descriere", author_name: "Autor privat", published_at: "2026-10-01", updated_at: "2026-10-01" } } }],
+    ];
+    for (const [route, context] of contexts) {
+      const head = (route.options.head as (c: unknown) => { scripts: { children: string }[] })(context);
+      expect(head.scripts).toHaveLength(1);
+      expect(JSON.parse(head.scripts[0].children)["@context"]).toBe("https://schema.org");
+      const nodes = ld(route, context);
+      for (const id of [ORG_ID, WEBSITE_ID, SOFTWARE_ID, SERVICE_ID]) expect(nodes.filter(n => n["@id"] === id)).toHaveLength(1);
+      expect(requiredNode(nodes, "Organization").sameAs).toEqual(["https://www.facebook.com/profile.php?id=61594347749722", "https://share.google/iZtYGwvM9YTQjM0VT"]);
+      expect((requiredNode(nodes, "SoftwareApplication").offers as Node[]).map(o => o.price)).toEqual([10, 40, 100]);
+      expect(JSON.stringify(nodes)).not.toMatch(/Autor privat|"Person"|aggregateRating|"review"/);
+    }
+    expect(requiredNode(ld(Article, contexts[3][1]), "BlogPosting").author).toEqual({ "@id": ORG_ID });
+  });
+
+  it("Service păstrează audiența și cele șase teme cerute", () => {
+    const service = requiredNode((publicGraphJsonLd()["@graph"] as Node[]), "Service");
+    expect(service.name).toBe("CRM imobiliar pentru agenții imobiliare");
+    expect(service.areaServed).toEqual({ "@type": "Country", name: "România" });
+    expect(service.audience).toEqual({ "@type": "Audience", audienceType: "agenții și agenți imobiliari" });
+    expect(service.knowsAbout).toEqual(["CRM imobiliar", "publicare pe portaluri imobiliare", "anunțuri de la proprietari", "analiză comparativă de piață", "colaborare între agenții", "comisioane agenți"]);
+  });
   it("pagina principală definește identitatea comună", () => {
     const n = ld(Home);
     expect(types(n)).toEqual(
       expect.arrayContaining(["Organization", "WebSite", "SoftwareApplication", "FAQPage"]),
     );
-    const org = n.find((x) => x["@type"] === "Organization")!;
+    const org = requiredNode(n, "Organization");
     expect(org["@id"]).toBe(ORG_ID);
     expect(String(org.logo)).toMatch(/^https:\/\/www\.habitoo\.ro\//);
-    expect(org.sameAs).toEqual(["https://www.facebook.com/profile.php?id=61594347749722"]);
+    expect(org.sameAs).toEqual(["https://www.facebook.com/profile.php?id=61594347749722", "https://share.google/iZtYGwvM9YTQjM0VT"]);
     const contactPoint = org.contactPoint as Node;
     expect(contactPoint.email).toBe("contact@habitoo.ro");
     expect(contactPoint.telephone).toBe("+40767941512");
     expect(contactPoint.contactType).toBe("customer support");
-    const site = n.find((x) => x["@type"] === "WebSite")!;
+    const site = requiredNode(n, "WebSite");
     expect(site["@id"]).toBe(WEBSITE_ID);
     expect(site.potentialAction).toBeUndefined();
-    const sw = n.find((x) => x["@type"] === "SoftwareApplication")!;
+    const sw = requiredNode(n, "SoftwareApplication");
     expect(sw["@id"]).toBe(SOFTWARE_ID);
     expect(sw.publisher).toEqual({ "@id": ORG_ID });
   });
@@ -62,20 +103,20 @@ describe("JSON-LD public", () => {
 
   it.each(pages)("pagina are tipul corect, isPartOf și breadcrumb", (route, type) => {
     const n = ld(route);
-    const page = n.find((x) => x["@type"] === type)!;
+    const page = requiredNode(n, type);
     expect(page.isPartOf).toEqual({ "@id": WEBSITE_ID });
     expect([ORG_ID, SOFTWARE_ID]).toContain((page.about as Node)["@id"]);
-    const bc = n.find((x) => x["@type"] === "BreadcrumbList")!;
+    const bc = requiredNode(n, "BreadcrumbList");
     const items = bc.itemListElement as Node[];
     expect(items[0].item).toBe("https://www.habitoo.ro/");
     expect(String(items[1].item)).toMatch(/^https:\/\/www\.habitoo\.ro\/.+/);
-    // Identitatea nu e redefinită în afara paginii principale.
-    expect(types(n)).not.toContain("Organization");
-    expect(types(n)).not.toContain("WebSite");
+    // Identitatea comună este prezentă o singură dată pe fiecare pagină.
+    expect(n.filter(x => x["@id"] === ORG_ID)).toHaveLength(1);
+    expect(n.filter(x => x["@id"] === WEBSITE_ID)).toHaveLength(1);
   });
 
   it("prețurile din JSON-LD sunt cele din tabel", () => {
-    const sw = ld(Pricing).find((x) => x["@type"] === "SoftwareApplication")!;
+    const sw = requiredNode(ld(Pricing), "SoftwareApplication");
     expect(sw["@id"]).toBe(SOFTWARE_ID);
     const offers = sw.offers as Node[];
     expect(offers.map((o) => o.price)).toEqual([

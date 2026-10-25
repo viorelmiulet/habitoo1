@@ -1,3 +1,9 @@
+# SEO public — pasul 1a
+
+- [x] Datele firmei și linkuri oficiale în subsol/Contact
+- [x] Un singur graph comun cu nodurile paginilor și autor organizație
+- [x] Robots public/CRM; 30 teste trec, JSON-LD SSR și pagini reale verificate, subsol desktop/mobil fără depășire
+
 # Anunțuri particulari — import în portofoliu
 
 - [x] Confirmare Da/Nu pe card și detaliu; deschidere directă la Importat

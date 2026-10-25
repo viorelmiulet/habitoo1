@@ -30,6 +30,7 @@ import { PublicLayout } from "@/components/marketing/PublicLayout";
 import { Container, Section, SectionHeading } from "@/components/marketing/Section";
 import { ContactChannels } from "@/components/marketing/ContactChannels";
 import { pageJsonLd } from "@/components/marketing/structured-data";
+import { GOOGLE_PROFILE_URL } from "@/components/marketing/public-identity";
 import { publicHead } from "@/components/marketing/public-head";
 import { CrmLink } from "@/components/marketing/CrmLink";
 import { submitContactRequest } from "@/lib/contact.functions";
@@ -233,7 +234,7 @@ function ContactPage() {
                           <FormItem>
                             <FormLabel>Nume complet</FormLabel>
                             <FormControl>
-                              <Input placeholder="Andrei Popescu" autoComplete="name" {...field} />
+                              <Input placeholder="Numele tău complet" autoComplete="name" {...field} />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -372,6 +373,9 @@ function ContactPage() {
                 ))}
               </ol>
               <ContactChannels />
+              <a href={GOOGLE_PROFILE_URL} target="_blank" rel="noopener noreferrer" className="mt-4 inline-block text-sm text-muted-foreground underline transition-colors hover:text-foreground">
+                Lasă-ne o recenzie pe Google
+              </a>
               <div className="mt-6 rounded-2xl border border-border bg-card p-5">
                 <p className="text-sm font-semibold text-navy">Preferi să începi singur?</p>
                 <p className="mt-1 text-sm text-muted-foreground">
