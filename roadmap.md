@@ -1,9 +1,9 @@
 # SEO public — pasul 1a
 
 ## SEO pasul 2 — Anunțuri de la proprietari
-- [ ] Pagină publică SSR, cifre agregate live și FAQ în graful comun
-- [ ] Linkuri din Funcționalități/subsol, sitemap cu data schimbării și llms.txt
-- [ ] Teste și verificare fără JavaScript, desktop și telefon; fără publicare
+- [x] Pagină publică SSR, cifre agregate live și FAQ în graful comun
+- [x] Linkuri din Funcționalități/subsol, sitemap cu data schimbării și llms.txt; vechiul link CRM păstrat prin redirecționare
+- [x] 26 teste trec; HTTP 200 fără JavaScript, un H1, FAQ valid cu aceleași cifre (5268 / 6 surse, 25 octombrie), desktop/telefon verificate; build OK, fără publicare
 
 ## Comisioane — BNR
 - [x] Salvare independentă de BNR, completare tolerantă și zilnică (job creat; noua adresă devine disponibilă după publicare)
