@@ -155,6 +155,18 @@ describe("import fără telefoane", () => {
     expect(row.phone).toBeNull();
     expect(row.description).toBe(description);
   });
+
+  it("păstrează telefonul primit doar pentru sursa anuntul", async () => {
+    const { buildListingRow } = await import("@/routes/api/public/listings/upsert");
+    const row = buildListingRow({ source: "anuntul", external_id: "a1", phone: "0744555666" });
+    expect(row).toMatchObject({ source: "anuntul", external_id: "a1", phone: "0744555666" });
+  });
+
+  it("același anunț cu sursa storia rămâne fără telefon", async () => {
+    const { buildListingRow } = await import("@/routes/api/public/listings/upsert");
+    const row = buildListingRow({ source: "storia", external_id: "a1", phone: "0744555666" });
+    expect(row.phone).toBeNull();
+  });
 });
 
 describe("preserveExistingFields", () => {
