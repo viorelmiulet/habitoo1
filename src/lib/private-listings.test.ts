@@ -87,3 +87,31 @@ describe("interleaveNewest", () => {
     expect(interleaveNewest(rows).map((r) => r.id)).toEqual(["r2", "r1", "r3"]);
   });
 });
+
+describe("zile în piață și categorii", () => {
+  // 25 oct 2026, 07:38 UTC = 10:38 în România (ora de vară, UTC+3).
+  const now = new Date("2026-10-25T07:38:00Z");
+
+  it("ziua curentă în România începe la miezul nopții locale", () => {
+    expect(romaniaTodayStart(now).toISOString()).toBe("2026-10-24T21:00:00.000Z");
+  });
+
+  it("De azi pornește de la începutul zilei de azi", () => {
+    expect(daysCutoff(0, now)).toBe("2026-10-24T21:00:00.000Z");
+  });
+
+  it("Ultimele 2 zile include și ziua de ieri", () => {
+    expect(daysCutoff(2, now)).toBe("2026-10-23T21:00:00.000Z");
+    expect(daysCutoff(7, now)).toBe("2026-10-18T21:00:00.000Z");
+  });
+
+  it("categoriile acoperă Apartament, Casă, comerciale și Teren", () => {
+    expect(PRIVATE_LISTINGS_CATEGORIES).toEqual(["apartamente", "case", "comerciale", "terenuri"]);
+    expect(PRIVATE_LISTINGS_CATEGORY_FILTERS.apartamente).toContain("apart");
+    expect(PRIVATE_LISTINGS_CATEGORY_FILTERS.case).toContain("cas");
+    expect(PRIVATE_LISTINGS_CATEGORY_FILTERS.comerciale).toContain("comercial");
+    expect(PRIVATE_LISTINGS_CATEGORY_FILTERS.comerciale).toContain("birou");
+    expect(PRIVATE_LISTINGS_CATEGORY_FILTERS.comerciale).toContain("garaj");
+    expect(PRIVATE_LISTINGS_CATEGORY_FILTERS.terenuri).toContain("teren");
+  });
+});
