@@ -8,6 +8,7 @@ export default defineConfig({
       "src/lib/commissions.test.ts",
       "src/lib/commissions-reports.test.ts",
       "src/lib/commissions-rates.test.ts",
+      "src/lib/commissions-export.test.ts",
     ],
   },
 });
