@@ -3,7 +3,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireActiveOrgAuth } from "@/lib/org-access";
-import { buildListingFacets, geographyKey, zoneFilter, type GeographyRow, type ListingFacets } from "./private-listing-geography";
+import { buildListingFacets, geographyKey, type GeographyRow, type ListingFacets } from "./private-listing-geography";
 import {
   PRIVATE_LISTINGS_CATEGORY_FILTERS,
   PRIVATE_LISTINGS_ORDER,
