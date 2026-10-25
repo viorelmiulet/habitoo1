@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AccesContRouteImport } from './routes/acces-cont'
 import { Route as AgentiiRouteImport } from './routes/agentii'
+import { Route as AnalizaComparativaDePiataRouteImport } from './routes/analiza-comparativa-de-piata'
 import { Route as AnunturiProprietariRouteImport } from './routes/anunturi-proprietari'
 import { Route as ConfidentialitateRouteImport } from './routes/confidentialitate'
 import { Route as ContactRouteImport } from './routes/contact'
@@ -186,6 +187,12 @@ const AgentiiRoute = AgentiiRouteImport.update({
   path: '/agentii',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AnalizaComparativaDePiataRoute =
+  AnalizaComparativaDePiataRouteImport.update({
+    id: '/analiza-comparativa-de-piata',
+    path: '/analiza-comparativa-de-piata',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const AnunturiProprietariRoute = AnunturiProprietariRouteImport.update({
   id: '/anunturi-proprietari',
   path: '/anunturi-proprietari',
@@ -1045,6 +1052,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/acces-cont': typeof AccesContRoute
   '/agentii': typeof AgentiiRouteWithChildren
+  '/analiza-comparativa-de-piata': typeof AnalizaComparativaDePiataRoute
   '/anunturi-proprietari': typeof AnunturiProprietariRoute
   '/confidentialitate': typeof ConfidentialitateRoute
   '/contact': typeof ContactRoute
@@ -1202,6 +1210,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/acces-cont': typeof AccesContRoute
+  '/analiza-comparativa-de-piata': typeof AnalizaComparativaDePiataRoute
   '/anunturi-proprietari': typeof AnunturiProprietariRoute
   '/confidentialitate': typeof ConfidentialitateRoute
   '/contact': typeof ContactRoute
@@ -1359,6 +1368,7 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/acces-cont': typeof AccesContRoute
   '/agentii': typeof AgentiiRouteWithChildren
+  '/analiza-comparativa-de-piata': typeof AnalizaComparativaDePiataRoute
   '/anunturi-proprietari': typeof AnunturiProprietariRoute
   '/confidentialitate': typeof ConfidentialitateRoute
   '/contact': typeof ContactRoute
@@ -1519,6 +1529,7 @@ export interface FileRouteTypes {
     | '/'
     | '/acces-cont'
     | '/agentii'
+    | '/analiza-comparativa-de-piata'
     | '/anunturi-proprietari'
     | '/confidentialitate'
     | '/contact'
@@ -1676,6 +1687,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/acces-cont'
+    | '/analiza-comparativa-de-piata'
     | '/anunturi-proprietari'
     | '/confidentialitate'
     | '/contact'
@@ -1832,6 +1844,7 @@ export interface FileRouteTypes {
     | '/_authenticated'
     | '/acces-cont'
     | '/agentii'
+    | '/analiza-comparativa-de-piata'
     | '/anunturi-proprietari'
     | '/confidentialitate'
     | '/contact'
@@ -1992,6 +2005,7 @@ export interface RootRouteChildren {
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AccesContRoute: typeof AccesContRoute
   AgentiiRoute: typeof AgentiiRouteWithChildren
+  AnalizaComparativaDePiataRoute: typeof AnalizaComparativaDePiataRoute
   AnunturiProprietariRoute: typeof AnunturiProprietariRoute
   ConfidentialitateRoute: typeof ConfidentialitateRoute
   ContactRoute: typeof ContactRoute
@@ -2111,6 +2125,13 @@ declare module '@tanstack/react-router' {
       path: '/agentii'
       fullPath: '/agentii'
       preLoaderRoute: typeof AgentiiRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/analiza-comparativa-de-piata': {
+      id: '/analiza-comparativa-de-piata'
+      path: '/analiza-comparativa-de-piata'
+      fullPath: '/analiza-comparativa-de-piata'
+      preLoaderRoute: typeof AnalizaComparativaDePiataRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/anunturi-proprietari': {
@@ -3430,6 +3451,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AccesContRoute: AccesContRoute,
   AgentiiRoute: AgentiiRouteWithChildren,
+  AnalizaComparativaDePiataRoute: AnalizaComparativaDePiataRoute,
   AnunturiProprietariRoute: AnunturiProprietariRoute,
   ConfidentialitateRoute: ConfidentialitateRoute,
   ContactRoute: ContactRoute,
