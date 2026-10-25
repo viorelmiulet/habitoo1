@@ -79,8 +79,8 @@ interface OwnerFilterQuery<Q> {
   eq(column: string, value: unknown): Q;
   or(filter: string): Q;
   ilike(column: string, pattern: string): Q;
-  gte(column: string, value: number): Q;
-  lte(column: string, value: number): Q;
+  gte(column: string, value: number | string): Q;
+  lte(column: string, value: number | string): Q;
 }
 
 /** Toate filtrele listei, aplicate identic în ambele faze ale sortării „Cele mai noi”. */
