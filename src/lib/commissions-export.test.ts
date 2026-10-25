@@ -33,7 +33,7 @@ describe("export și moneda",()=>{
   });
   it("EUR/RON folosește cursul fiecărui comision",()=>{
     expect(convertCommissionAmount(1000,"EUR","RON",5)).toBe(5000);
-    expect(convertCommissionAmount(5100,"RON","EUR",5.1)).toBe(1000);
+    expect(convertCommissionAmount(5100,"RON","EUR",5.1)).toBeCloseTo(1000,8);
     expect(reportKpis(rows,"EUR").agencyEur).toBe(2000);
     expect(reportKpis(rows,"RON").agencyEur).toBe(10100);
     expect(reportKpis(rows,"RON").agentEur).toBe(4040);
