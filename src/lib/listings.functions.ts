@@ -8,6 +8,7 @@ import {
   PRIVATE_LISTINGS_ORDER,
   PRIVATE_LISTINGS_PAGE_SIZE,
   cleanText,
+  interleaveNewest,
   keywordTerms,
   normalizeRooms,
 } from "@/lib/private-listings";
@@ -32,6 +33,7 @@ export type OwnerListing = {
   description: string | null;
   images: string[];
   scrapedAt: string | null;
+  firstSeenAt: string | null;
 };
 
 const num = (v: unknown) => (v === null || v === undefined ? null : Number(v));
