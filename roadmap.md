@@ -8,6 +8,8 @@
 ## Comisioane — BNR
 - [x] Salvare independentă de BNR, completare tolerantă și zilnică (job creat; noua adresă devine disponibilă după publicare)
 - [x] Surse în ordine, parser, diagnostic anual (HTTP 200 HTML, zero cursuri) și 39 teste simulate trec
+- [x] Surse noi: curs.bnr.ro (curent/10 zile/anual) → www.bnr.ro → BCE prin Frankfurter; sursa (BNR/BCE) pe fiecare curs și comision, în Excel/CSV/PDF
+- [x] Cache populat o dată cu cele 204 cursuri BNR 2026 (ultimul: 23 oct, 5.3495); 0 comisioane fără curs; 43 teste trec
 - [ ] Salvare verificată în cont — solicitantul nu are cont asociat pentru sesiunea de test
 
 ## SEO pasul 1b
