@@ -1,6 +1,7 @@
 -- Evaluate the installed SELECT policy; all fixtures/status changes roll back.
 -- The managed SQL runner cannot SET ROLE authenticated, so apply the actual
--- installed policy expression to a temporary view with the caller's auth.uid().
+-- installed policy expression to a temporary view, substituting only auth.uid()
+-- with the same JWT subject (the managed runner cannot access the auth schema).
 -- Run: psql -X -v ON_ERROR_STOP=1 -f tests/sql/listing-comments-read-access.sql
 BEGIN;
 SELECT p.id AS actor_a, p.organization_id AS org_a
@@ -23,6 +24,7 @@ DO $$ DECLARE predicate text; BEGIN
   AND tablename='listing_comments' AND cmd='SELECT'
   AND policyname='Agents can read listing comments' AND roles=ARRAY['authenticated']::name[];
  IF predicate IS NULL OR predicate='true' THEN RAISE EXCEPTION 'Missing restricted authenticated policy'; END IF;
+ predicate := replace(predicate,'auth.uid()', 'current_setting(''request.jwt.claim.sub'', true)::uuid');
  EXECUTE 'CREATE TEMP VIEW readable_listing_comments AS SELECT * FROM public.listing_comments WHERE ' || predicate;
 END $$;
 
