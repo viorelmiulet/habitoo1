@@ -22,7 +22,7 @@ vi.mock("@tanstack/react-start", () => ({
     };
     builder.handler =
       (fn: (args: { data?: unknown; context: unknown }) => unknown) =>
-      (args: { data?: unknown; context: unknown }) =>
+      async (args: { data?: unknown; context: unknown }) =>
         fn({ ...args, data: builder._v ? (builder._v as (d: unknown) => unknown)(args.data) : args.data });
     return builder;
   },
