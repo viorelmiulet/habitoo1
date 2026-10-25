@@ -36,7 +36,11 @@ import {
 } from "./guards";
 import { readStoredAcpAiInsight, type AcpAiInsight } from "./ai/schema";
 import { dedupeMarketCandidates } from "@/lib/market/acp";
-import { marketPoolScope, applyMarketLocationFilters } from "@/lib/market/acp-location";
+import {
+  marketPoolScope,
+  applyMarketLocationFilters,
+  MARKET_SECTOR_MIN_MATCHES,
+} from "@/lib/market/acp-location";
 import {
   calculateDataQuality,
   calculateFreshness,
@@ -353,8 +357,9 @@ async function collectCandidates(params: {
     if (first.error) throw acpDbError("collect market listings", first.error);
     let rows = first.data ?? [];
     // Sub pragul de oferte potrivite în sector, căutarea se extinde la tot
-    // orașul (aceeași regulă ca în blocul „Piața" din analiză).
-    if (expandSectorFilters(locationTarget, rows.length).sector === null && scope.sector) {
+    // orașul (aceeași regulă ca în blocul „Piața" din analiză). Sectorul
+    // poate fi dedus din oraș („Bucureşti Sectorul 6"), nu doar din câmp.
+    if (scope.sector && rows.length < MARKET_SECTOR_MIN_MATCHES) {
       const widened = await runPoolQuery(false);
       if (widened.error) throw acpDbError("collect market listings", widened.error);
       rows = widened.data ?? [];
