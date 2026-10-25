@@ -119,7 +119,8 @@
 - [x] Comisioane pas 1: înregistrare + acces (fără rapoarte/export)
 
 # Comisioane — pasul 3
-- [ ] Afișare EUR/RON pe baza cursului păstrat, inclusiv pentru comisioane EUR
-- [ ] Excel/CSV cu toate rândurile filtrate, coloane și totaluri
-- [ ] PDF cu perioadă, comparații, grafice și tabel pentru admin
-- [ ] Teste și verificarea descărcărilor în cont
+- [x] Afișare EUR/RON pe baza cursului păstrat, inclusiv pentru comisioane EUR
+- [x] Excel/CSV cu toate rândurile filtrate, coloane și totaluri
+- [x] PDF cu perioadă, comparații, grafice și tabel pentru admin
+- [x] Teste automate, formule Excel recalculate fără erori și verificare vizuală PDF lună/custom fără suprapuneri
+- [ ] Verificarea descărcărilor în cont — solicitantul nu are cont asociat pentru sesiunea de test; necesită autentificarea în previzualizare

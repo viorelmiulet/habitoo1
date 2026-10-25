@@ -41,6 +41,12 @@ describe("export și moneda",()=>{
     expect(breakdownBy(rows,"agent_id","RON")[0].value).toBe(10100);
   });
   it("formular nou EUR",()=>expect(emptyCommissionForm("a1").currency).toBe("EUR"));
+  it("PDF agent fără clasament sau tabel al altor agenți",async()=>{
+    const k=reportKpis([row()]);
+    const blob=await buildCommissionPdf({agency:"MVA Imobiliare",range:filters,generatedAt:"25.10.2026",currency:"RON",filter:"Comisioanele tale",current:k,previous:k,lastYear:k,series:[],byKind:[],byType:[]});
+    await writeFile("/tmp/commissions-agent.pdf",new Uint8Array(await blob.arrayBuffer()));
+    expect((await PDFDocument.load(await blob.arrayBuffer())).getPageCount()).toBeGreaterThan(0);
+  });
   it("Excel conține rândurile, cursurile și formule cu totaluri corecte",async()=>{
     const blob=await commissionXlsx(rows,names,"RON");
     const {default:ExcelJS}=await import("exceljs");const book=new ExcelJS.Workbook();
