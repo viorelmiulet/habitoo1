@@ -14,11 +14,16 @@ const mocks = vi.hoisted(() => ({
 
 vi.mock("@tanstack/react-start", () => ({
   createServerFn: () => {
-    const builder = {
-      middleware: () => builder,
-      inputValidator: () => builder,
-      handler: (fn: unknown) => fn,
+    const builder: Record<string, unknown> = {};
+    builder.middleware = () => builder;
+    builder.inputValidator = (v: unknown) => {
+      builder._v = v;
+      return builder;
     };
+    builder.handler =
+      (fn: (args: { data?: unknown; context: unknown }) => unknown) =>
+      (args: { data?: unknown; context: unknown }) =>
+        fn({ ...args, data: builder._v ? (builder._v as (d: unknown) => unknown)(args.data) : args.data });
     return builder;
   },
 }));
@@ -28,7 +33,11 @@ vi.mock("@tanstack/react-start/server", () => ({
   setResponseStatus: () => {},
 }));
 vi.mock("@/lib/org-access", () => ({ requireActiveOrgAuth: {} }));
-vi.mock("@/integrations/supabase/client.server", () => ({ supabaseAdmin: { __admin: true } }));
+vi.mock("@/integrations/supabase/client.server", () => ({
+  supabaseAdmin: {
+    from: () => ({ insert: async () => ({ error: null }) }),
+  },
+}));
 vi.mock("./connection.server", () => ({
   loadArgusConnection: mocks.load,
   saveArgusConnection: mocks.save,
