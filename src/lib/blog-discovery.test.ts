@@ -6,6 +6,12 @@ import { INTEGRATION_PAGES } from "@/lib/portals/integration-pages";
 const base = { title: "Articol", excerpt: "Rezumat", updated_at: "2026-10-04T12:00:00.000Z" };
 
 describe("sitemap blog", () => {
+  it("dates the new public owner page by its content change, never regeneration time", () => {
+    const xml = buildSitemapXml([], new Date("2026-11-01T12:00:00Z"));
+    const entries = [...xml.matchAll(/<url>\s*<loc>([^<]+)<\/loc>\s*(?:<lastmod>([^<]+)<\/lastmod>)?\s*<\/url>/g)];
+    expect(entries.find((row) => row[1] === "https://www.habitoo.ro/anunturi-proprietari")?.[2]).toBe("2026-10-25");
+    expect(entries.find((row) => row[1] === "https://www.habitoo.ro/preturi")?.[2]).toBe("2026-10-04");
+  });
   it("include numai articole publicate, fără ciorne sau publicări viitoare", () => {
     const posts: DiscoverableBlogPost[] = [
       { ...base, slug: "publicat", status: "published", published_at: "2026-10-03T12:00:00.000Z" },

@@ -6,6 +6,10 @@ const html = new Response("x", { headers: { "content-type": "text/html; charset=
 const xml = new Response("x", { headers: { "content-type": "application/xml" } });
 
 describe("host policy", () => {
+  it("preserves the legacy owner URL on CRM while allowing the public page on www", () => {
+    expect(decideEdge(req("https://crm.habitoo.ro/anunturi-proprietari"))).toEqual({ kind: "redirect", location: "https://crm.habitoo.ro/app/anunturi-particulari" });
+    expect(decideEdge(req("https://www.habitoo.ro/anunturi-proprietari"))).toEqual({ kind: "pass" });
+  });
   it("www permite fiecare crawler public, blocând doar căi tehnice; crm blochează tot", () => {
     expect(CRM_ROBOTS_TXT).toBe("User-agent: *\nDisallow: /\n");
     for (const agent of ["GPTBot", "ClaudeBot", "PerplexityBot", "Google-Extended", "CCBot", "*"]) {
