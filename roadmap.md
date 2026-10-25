@@ -108,11 +108,11 @@
 
 # Integrare Argus — pasul 2: tabul „Argus" în Anunțuri particulari
 
-- [ ] Tab „Argus" lângă lista actuală; agenții fără Argus conectat văd mesajul cu link spre Setări → Integrări
-- [ ] Filtre traduse în parametri Argus: județ/localitate/zone (localizare Argus), tranzacție, tip, camere, preț, suprafață; implicit listed_by = Proprietar, cu opțiunea „Toți"
-- [ ] Rezultate live în carduri ca în tabul principal (poză, titlu, preț, camere, suprafață, oraș/zonă, sursa last_source_name, dată, eticheta „Argus"); paginare cu page
-- [ ] Detaliu la click: descriere, toate pozele, detalii, hartă (position), „Anunțul original" (last_site_link)
-- [ ] Telefon doar la „Arată telefon" (/properties/contact)
-- [ ] Cache 5 minute pentru aceeași căutare
-- [ ] Fără salvare în DB; restul paginii neschimbat
-- [ ] Teste cu răspunsuri simulate
+- [x] Tab „Argus" lângă lista actuală; agenții fără Argus conectat văd mesajul cu link spre Setări → Integrări
+- [x] Filtre traduse în parametri Argus: județ/localitate/zone (localizare Argus), tranzacție, tip, camere, preț, suprafață; implicit listed_by = Proprietar, cu opțiunea „Toți"
+- [x] Rezultate live în carduri ca în tabul principal (poză, titlu, preț, camere, suprafață, oraș/zonă, sursa last_source_name, dată, eticheta „Argus"); paginare cu page
+- [x] Detaliu la click: descriere, toate pozele, detalii, hartă (position), „Anunțul original" (last_site_link)
+- [x] Telefon doar la „Arată telefon" (/properties/contact)
+- [x] Cache 5 minute pentru aceeași căutare
+- [x] Fără salvare în DB; restul paginii neschimbat
+- [x] Teste cu răspunsuri simulate
