@@ -221,10 +221,13 @@ function PrivateListingsPage() {
   const resetFilters = () =>
     navigate({ search: { tab: search.tab, sortare: search.sortare }, replace: true });
 
+  // În tabul „Argus” lista Habitoo nu se încarcă deloc.
+  const habitooTab = search.lista !== "argus";
   const facets = useQuery({
     queryKey: ["owner-listing-facets"],
     queryFn: () => fetchFacets(),
     staleTime: 5 * 60_000,
+    enabled: habitooTab,
   });
   const listings = useQuery({
     queryKey: [
@@ -250,6 +253,7 @@ function PrivateListingsPage() {
         },
       }),
     placeholderData: keepPreviousData,
+    enabled: habitooTab,
   });
 
   const draftCountyKey = geographyKey(draft.judet);
