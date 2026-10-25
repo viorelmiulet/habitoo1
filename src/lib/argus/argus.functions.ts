@@ -290,3 +290,126 @@ export const argusTaxonomy = createServerFn({ method: "POST" })
       method: "GET",
     }),
   );
+
+/* ------------------------------------------------------------------ */
+/* Pasul 2 — tabul „Argus” din Anunțuri particulari. Rezultatele vin     */
+/* live de la Argus și nu se salvează în baza de date; telefonul se     */
+/* cere doar prin getArgusListingContact, la apăsarea „Arată telefon”.  */
+/* ------------------------------------------------------------------ */
+
+/** Starea conexiunii pentru orice membru al agenției (fără date sensibile). */
+export const getArgusTabStatus = createServerFn({ method: "GET" })
+  .middleware([requireActiveOrgAuth])
+  .handler(async ({ context }): Promise<{ configured: boolean; connected: boolean }> => {
+    setResponseHeader("Cache-Control", "no-store");
+    const ctx = context as unknown as Ctx;
+    const orgId = await callerOrgId(ctx);
+    const db = await adminDb();
+    const { loadArgusConnection } = await import("./connection.server");
+    const row = await loadArgusConnection(db, orgId);
+    return {
+      configured: !!process.env["ARGUS_APPLICATION_TOKEN"]?.trim(),
+      connected: !!row,
+    };
+  });
+
+const SearchUiInput = z
+  .object({
+    page: z.number().int().min(1).max(10_000).optional(),
+    transaction: z.enum(["sale", "rent"]).optional(),
+    propertyType: z.number().int().optional(),
+    rooms: z.array(z.number().int().min(1).max(5)).max(5).optional(),
+    priceMin: z.number().min(0).optional(),
+    priceMax: z.number().min(0).optional(),
+    surfaceMin: z.number().min(0).optional(),
+    surfaceMax: z.number().min(0).optional(),
+    countyId: z.number().int().optional(),
+    cityId: z.number().int().optional(),
+    areaIds: z.array(z.number().int()).max(200).optional(),
+    listedBy: z.enum(["owner", "all"]).optional(),
+  })
+  .strict();
+
+export const searchArgusListings = createServerFn({ method: "POST" })
+  .middleware([requireActiveOrgAuth])
+  .inputValidator((d: unknown) => SearchUiInput.parse(d))
+  .handler(async ({ data, context }) => {
+    const ctx = context as unknown as Ctx;
+    const orgId = await callerOrgId(ctx);
+    const db = await adminDb();
+    const { searchArgusProperties } = await import("./search.server");
+    return searchArgusProperties(db, orgId, data, { clientIp: argusClientIp() });
+  });
+
+export const getArgusListingDetail = createServerFn({ method: "POST" })
+  .middleware([requireActiveOrgAuth])
+  .inputValidator((d: unknown) => PropertyRef.parse(d))
+  .handler(async ({ data, context }) => {
+    const ctx = context as unknown as Ctx;
+    const orgId = await callerOrgId(ctx);
+    const db = await adminDb();
+    const { getArgusPropertyDetail } = await import("./search.server");
+    return getArgusPropertyDetail(db, orgId, data.propertyId, { clientIp: argusClientIp() });
+  });
+
+export const getArgusListingImages = createServerFn({ method: "POST" })
+  .middleware([requireActiveOrgAuth])
+  .inputValidator((d: unknown) => PropertyRef.parse(d))
+  .handler(async ({ data, context }) => {
+    const ctx = context as unknown as Ctx;
+    const orgId = await callerOrgId(ctx);
+    const db = await adminDb();
+    const { getArgusPropertyImages } = await import("./search.server");
+    return getArgusPropertyImages(db, orgId, data.propertyId, { clientIp: argusClientIp() });
+  });
+
+/** Telefonul proprietarului — apelat doar la apăsarea „Arată telefon”. */
+export const getArgusListingContact = createServerFn({ method: "POST" })
+  .middleware([requireActiveOrgAuth])
+  .inputValidator((d: unknown) => PropertyRef.parse(d))
+  .handler(async ({ data, context }) => {
+    const ctx = context as unknown as Ctx;
+    const orgId = await callerOrgId(ctx);
+    const db = await adminDb();
+    const { getArgusPropertyContact } = await import("./search.server");
+    return getArgusPropertyContact(db, orgId, data.propertyId, { clientIp: argusClientIp() });
+  });
+
+const LocationsInput = z
+  .object({
+    kind: z.enum(["counties", "cities", "areas"]),
+    countyIds: z.array(z.number().int()).max(50).optional(),
+    cityIds: z.array(z.number().int()).max(200).optional(),
+    query: z.string().trim().max(100).optional(),
+  })
+  .strict();
+
+export const getArgusLocations = createServerFn({ method: "POST" })
+  .middleware([requireActiveOrgAuth])
+  .inputValidator((d: unknown) => LocationsInput.parse(d))
+  .handler(async ({ data, context }) => {
+    const ctx = context as unknown as Ctx;
+    const orgId = await callerOrgId(ctx);
+    const db = await adminDb();
+    const { listArgusPlaces } = await import("./search.server");
+    return listArgusPlaces(
+      db,
+      orgId,
+      data.kind,
+      { countyIds: data.countyIds, cityIds: data.cityIds, query: data.query },
+      { clientIp: argusClientIp() },
+    );
+  });
+
+/** Tipurile de proprietate de nivel superior, pentru filtrul „Tip proprietate”. */
+export const getArgusPropertyTypes = createServerFn({ method: "GET" })
+  .middleware([requireActiveOrgAuth])
+  .handler(async ({ context }) => {
+    const ctx = context as unknown as Ctx;
+    const raw = await argusDataCall(ctx, {
+      path: TAXONOMY_PATHS.property_types,
+      method: "GET",
+    });
+    const { normalizeArgusPropertyTypes } = await import("./search.shared");
+    return normalizeArgusPropertyTypes(raw);
+  });
