@@ -10,7 +10,7 @@ export const Route = createFileRoute("/api/public/cron/commission-rates")({
     let updated = 0;
     let cursor: string | undefined;
     // Keyset pagination keeps completeness when successful writes leave the missing set.
-    const resolved = new Map<string, number | null>();
+    const resolved = new Map<string, { rate: number; source: "BNR" | "BCE" } | null>();
     for (;;) {
       let query = supabaseAdmin.from("commissions").select("id,transaction_date,ron_to_eur_rate")
         .is("ron_to_eur_rate", null).order("id").limit(500);
@@ -22,14 +22,14 @@ export const Route = createFileRoute("/api/public/cron/commission-rates")({
         resolve: async date => {
           if (!resolved.has(date)) {
             const result = await getRonEurRateForDate(date, { table: supabaseAdmin.from("exchange_rates") }).catch(() => null);
-            resolved.set(date, result?.rate ?? null);
+            resolved.set(date, result ? { rate: result.rate, source: result.source } : null);
           }
-          const rate = resolved.get(date);
-          if (rate == null) throw new Error("BNR indisponibil");
-          return { rate };
+          const entry = resolved.get(date);
+          if (!entry) throw new Error("Curs indisponibil");
+          return entry;
         },
-        update: async (ids, date, rate) => {
-          const { error } = await supabaseAdmin.from("commissions").update({ ron_to_eur_rate: rate })
+        update: async (ids, date, rate, source) => {
+          const { error } = await supabaseAdmin.from("commissions").update({ ron_to_eur_rate: rate, rate_source: source })
             .in("id", ids).eq("transaction_date", date).is("ron_to_eur_rate", null);
           if (error) throw error;
         },

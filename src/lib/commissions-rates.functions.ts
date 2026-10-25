@@ -27,13 +27,13 @@ export const ensureCommissionRates = createServerFn({ method: "POST" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     await completeMissingCommissionRates(rows, {
       resolve: date => getRonEurRateForDate(date, { table: supabaseAdmin.from("exchange_rates") }),
-      update: async (ids, date, rate) => {
+      update: async (ids, date, rate, source) => {
         const { error: updateError } = await supabaseAdmin.from("commissions")
-          .update({ ron_to_eur_rate: rate }).in("id", ids).eq("transaction_date", date).is("ron_to_eur_rate", null);
+          .update({ ron_to_eur_rate: rate, rate_source: source }).in("id", ids).eq("transaction_date", date).is("ron_to_eur_rate", null);
         if (updateError) throw updateError;
       },
     });
-    const { data: saved, error: readError } = await context.supabase.from("commissions").select("id,ron_to_eur_rate").in("id", data.ids);
+    const { data: saved, error: readError } = await context.supabase.from("commissions").select("id,ron_to_eur_rate,rate_source").in("id", data.ids);
     if (readError) throw readError;
     return saved ?? [];
   });
