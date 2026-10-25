@@ -1,3 +1,11 @@
+# Anunțuri particulari — filtre de localizare (model „Alege zone”)
+
+- [x] Județ și Localitate: liste cu câmp de căutare (diacritice ignorate), numărul de anunțuri lângă fiecare
+- [x] Zonă: fereastră „Alege zone” cu căutare, litere A–Z, bifa „Toate zonele”, grupare pe sectoare la București (cartierul stă la sectorul unde apare cel mai des), „Zone selectate” cu X, Anulează/Aplică; butonul arată „N zone”
+- [x] Mai multe zone odată (OR pe zone_key/neighborhood_key); `zona` în URL acceptă listă; linkurile vechi cu o singură zonă funcționează
+- [x] 37 teste (19 pure + 18 handler): „cl”→Cluj, Sector 6+Titan, litera M→Militari, link vechi, intercalare neschimbată; build OK
+- [ ] Verificare vizuală în cont — blocată: solicitantul nu are un cont asociat pentru sesiunea de test
+
 # Anunțuri particulari — afișare pe rânduri, paginare și sortare
 
 # Anunțuri particulari — zona de filtre după modelul Imobiliare.ro PRO

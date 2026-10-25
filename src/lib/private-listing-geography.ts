@@ -6,11 +6,41 @@ export function geographyKey(value: string | null | undefined): string {
 }
 
 export type GeographyRow = { city: string | null; county: string | null; zone: string | null; neighborhood: string | null; property_type?: string | null };
-export type PlaceOption = { value: string; label: string; count: number; kind?: "sector" | "neighborhood" };
+export type PlaceOption = { value: string; label: string; count: number; kind?: "sector" | "neighborhood"; sector?: string };
 export type ListingFacets = { counties: PlaceOption[]; localities: Record<string, PlaceOption[]>; zones: Record<string, PlaceOption[]>; propertyTypes: string[] };
 export const localityScope = (county?: string | null, city?: string | null) => `${geographyKey(county)}|${geographyKey(city)}`;
 
+/** Căutare în liste de opțiuni, insensibilă la diacritice („cl” găsește Cluj). */
+export function filterPlaceOptions(options: PlaceOption[], query: string): PlaceOption[] {
+  const key = geographyKey(query);
+  if (!key) return options;
+  return options.filter((o) => geographyKey(o.label).includes(key) || o.value.includes(key));
+}
+
+export const ZONE_LETTERS = [..."ABCDEFGHIJKLMNOPQRSTUVWXYZ"];
+
+/** Indexul primei opțiuni a cărei etichetă începe cu litera dată (-1 dacă nu există). */
+export function firstIndexForLetter(options: PlaceOption[], letter: string): number {
+  const target = geographyKey(letter);
+  return options.findIndex((o) => geographyKey(o.label).startsWith(target));
+}
+
 export function buildListingFacets(rows: GeographyRow[]): ListingFacets {
+  // Un cartier stă la sectorul în care apare cel mai des în anunțuri (București).
+  const neighborhoodSectors = new Map<string, Map<string, number>>();
+  for (const row of rows) {
+    if (geographyKey(row.city) !== "bucuresti") continue;
+    const sector = geographyKey(row.zone);
+    const neighborhood = geographyKey(row.neighborhood);
+    if (!/^sector [1-6]$/.test(sector) || !neighborhood) continue;
+    const counts = neighborhoodSectors.get(neighborhood) ?? new Map<string, number>();
+    counts.set(sector, (counts.get(sector) ?? 0) + 1);
+    neighborhoodSectors.set(neighborhood, counts);
+  }
+  const neighborhoodSector = new Map(
+    [...neighborhoodSectors].map(([nb, counts]) => [nb, [...counts].sort((a, b) => b[1] - a[1])[0][0]]),
+  );
+
   const counties = new Map<string, PlaceOption>();
   const localities = new Map<string, Map<string, PlaceOption>>();
   const zones = new Map<string, Map<string, PlaceOption>>();
@@ -43,10 +73,22 @@ export function buildListingFacets(rows: GeographyRow[]): ListingFacets {
     }
   }
   const alphabetic = (a: PlaceOption, b: PlaceOption) => a.label.localeCompare(b.label, "ro");
+  const zoneEntries = [...zones].map(([key, values]) => {
+    const options = [...values.values()].sort(alphabetic);
+    if (key.endsWith("|bucuresti")) {
+      for (const option of options) {
+        if (option.kind === "neighborhood") {
+          const sector = neighborhoodSector.get(option.value);
+          if (sector) option.sector = sector;
+        }
+      }
+    }
+    return [key, options] as const;
+  });
   return {
     counties: [...counties.values()].sort((a, b) => (a.value === "bucuresti" ? -1 : b.value === "bucuresti" ? 1 : alphabetic(a, b))),
     localities: Object.fromEntries([...localities].map(([key, values]) => [key, [...values.values()].sort((a, b) => b.count - a.count || alphabetic(a, b))])),
-    zones: Object.fromEntries([...zones].map(([key, values]) => [key, [...values.values()].sort(alphabetic)])),
+    zones: Object.fromEntries(zoneEntries),
     propertyTypes: [...types].sort((a, b) => a.localeCompare(b, "ro")),
   };
 }

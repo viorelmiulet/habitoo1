@@ -3,7 +3,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireActiveOrgAuth } from "@/lib/org-access";
-import { buildListingFacets, geographyKey, zoneFilter, type GeographyRow, type ListingFacets } from "./private-listing-geography";
+import { buildListingFacets, geographyKey, type GeographyRow, type ListingFacets } from "./private-listing-geography";
 import {
   PRIVATE_LISTINGS_CATEGORY_FILTERS,
   PRIVATE_LISTINGS_ORDER,
@@ -44,7 +44,7 @@ const num = (v: unknown) => (v === null || v === undefined ? null : Number(v));
 export const privateListingsFiltersSchema = z.object({
   county: z.string().max(100).optional(),
   city: z.string().max(80).optional(),
-  zone: z.string().max(80).optional(),
+  zone: z.array(z.string().max(80)).max(30).optional(),
   rooms: z.array(z.number().int()).max(5).optional(),
   q: z.string().max(200).optional(),
   page: z.number().int().min(0).max(1000).optional(),
@@ -87,14 +87,17 @@ interface OwnerFilterQuery<Q> {
 function applyOwnerFilters<Q extends OwnerFilterQuery<Q>>(query: Q, data: PrivateListingsInput): Q {
   const county = geographyKey(data.county);
   const city = geographyKey(data.city);
-  const zone = geographyKey(data.zone);
+  const zones = [...new Set((data.zone ?? []).map(geographyKey).filter(Boolean))];
   if (county) query = query.eq("county_key", county);
   if (city) query = query.eq("city_key", city);
-  if (zone) {
-    const filter = zoneFilter(zone);
-    // Non-sector legacy zona links may refer to the old zone column.
-    query = filter.column === "zone_key" ? query.eq(filter.column, filter.value)
-      : query.or(`neighborhood_key.eq.${filter.value},zone_key.eq.${filter.value}`);
+  if (zones.length) {
+    // Mai multe zone odată: anunțurile din oricare zonă aleasă. Un sector include
+    // și anunțurile fără cartier; linkurile vechi pot viza coloana zone.
+    const sectors = zones.filter((z) => /^sector [1-6]$/.test(z));
+    const neighborhoods = zones.filter((z) => !/^sector [1-6]$/.test(z));
+    const parts = [`zone_key.in.(${[...sectors, ...neighborhoods].join(",")})`];
+    if (neighborhoods.length) parts.push(`neighborhood_key.in.(${neighborhoods.join(",")})`);
+    query = query.or(parts.join(","));
   }
 
   if (data.source) query = query.eq("source", data.source);

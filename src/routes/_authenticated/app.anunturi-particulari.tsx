@@ -6,6 +6,8 @@ import { z } from "zod";
 import { ChevronDown, ChevronLeft, ChevronRight, ChevronUp, ExternalLink, MapPin, Search, SearchX, X } from "lucide-react";
 import { PageHeader } from "@/components/app/PageHeader";
 import { appHead } from "@/components/app/app-head";
+import { SearchableSelect } from "@/components/app/SearchableSelect";
+import { ZonePickerDialog } from "@/components/app/ZonePickerDialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -14,9 +16,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import {
   Select,
   SelectContent,
-  SelectGroup,
   SelectItem,
-  SelectLabel,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
@@ -32,7 +32,8 @@ const searchSchema = z.object({
   tab: z.enum(["apartamente", "case", "comerciale", "terenuri"]).optional(),
   judet: z.string().optional(),
   oras: z.string().optional(),
-  zona: z.string().optional(),
+  // Mai multe zone odată; linkurile vechi cu o singură zonă (string) rămân valide.
+  zona: z.union([z.string(), z.array(z.string())]).optional(),
   camere: z.string().optional(),
   q: z.string().optional(),
   pagina: z.coerce.number().int().min(1).optional(),
@@ -112,7 +113,7 @@ type Draft = {
   tranzactie: string;
   judet: string;
   oras: string;
-  zona: string;
+  zona: string[];
   zile: string;
   pretMin: string;
   pretMax: string;
@@ -131,12 +132,16 @@ type Draft = {
 
 const numText = (v: number | undefined) => (v === undefined ? "" : String(v));
 
+/** URL-ul acceptă o zonă (linkuri vechi) sau mai multe; în interior lucrăm mereu cu listă. */
+const zonaList = (zona: Search["zona"]): string[] =>
+  (Array.isArray(zona) ? zona : zona ? [zona] : []).map(geographyKey).filter(Boolean);
+
 function draftFromSearch(search: Search): Draft {
   return {
     tranzactie: search.tranzactie ?? "",
     judet: search.judet ?? "",
     oras: search.oras ?? "",
-    zona: search.zona ?? "",
+    zona: zonaList(search.zona),
     zile: search.zile === undefined ? "" : String(search.zile),
     pretMin: numText(search.pretMin),
     pretMax: numText(search.pretMax),
@@ -171,6 +176,7 @@ function PrivateListingsPage() {
     .split(",")
     .map(Number)
     .filter((n) => ROOM_OPTIONS.includes(n));
+  const selectedZones = zonaList(search.zona);
   const page = (search.pagina ?? 1) - 1;
 
   const [draft, setDraft] = useState<Draft>(() => draftFromSearch(search));
@@ -188,7 +194,7 @@ function PrivateListingsPage() {
         tranzactie: (next.tranzactie || undefined) as Search["tranzactie"],
         judet: next.judet || undefined,
         oras: next.judet ? next.oras || undefined : undefined,
-        zona: next.judet && next.oras ? next.zona || undefined : undefined,
+        zona: next.judet && next.oras && next.zona.length ? next.zona : undefined,
         zile: next.zile === "" ? undefined : Number(next.zile),
         pretMin: parseNum(next.pretMin),
         pretMax: parseNum(next.pretMax),
@@ -217,7 +223,7 @@ function PrivateListingsPage() {
   });
   const listings = useQuery({
     queryKey: [
-      "owner-listings", search.tab, search.judet, search.oras, search.zona, rooms.join(","), search.q, page,
+      "owner-listings", search.tab, search.judet, search.oras, selectedZones.join(","), rooms.join(","), search.q, page,
       search.sursa, search.tranzactie, search.tip, search.pretMin, search.pretMax, search.mpMin, search.mpMax,
       search.sortare, search.zile, search.id, search.etajMin, search.etajMax, search.anMin, search.anMax,
       search.anNespecificat,
@@ -226,7 +232,7 @@ function PrivateListingsPage() {
       fetchListings({
         data: {
           category: search.tab,
-          county: search.judet, city: search.oras, zone: search.zona, rooms, q: search.q, page,
+          county: search.judet, city: search.oras, zone: selectedZones.length ? selectedZones : undefined, rooms, q: search.q, page,
           source: search.sursa, transaction: search.tranzactie,
           propertyType: search.tab ? undefined : search.tip,
           priceMin: search.pretMin, priceMax: search.pretMax,
@@ -252,11 +258,11 @@ function PrivateListingsPage() {
     patch({ camere: draft.camere.includes(r) ? draft.camere.filter((x) => x !== r) : [...draft.camere, r] });
 
   const extendedCount = [
-    search.oras, search.zona, search.sursa, search.id, search.camere, search.q,
+    search.oras, selectedZones.length ? "x" : "", search.sursa, search.id, search.camere, search.q,
     search.mpMin, search.mpMax, search.etajMin, search.etajMax, search.anMin, search.anMax,
   ].filter((v) => v !== undefined && v !== "").length;
   const hasFilters = Boolean(
-    search.judet || search.oras || search.zona || rooms.length || search.q || search.sursa || search.tranzactie ||
+    search.judet || search.oras || selectedZones.length || rooms.length || search.q || search.sursa || search.tranzactie ||
       search.tip || search.id || search.zile !== undefined ||
       search.pretMin !== undefined || search.pretMax !== undefined ||
       search.mpMin !== undefined || search.mpMax !== undefined ||
@@ -320,16 +326,14 @@ function PrivateListingsPage() {
               <SelectItem value="rent_day">Închiriere pe zi</SelectItem>
             </SelectContent>
           </Select>
-          <Select
-            value={draftCountyKey || ALL}
-            onValueChange={(v) => patch({ judet: v === ALL ? "" : v, oras: "", zona: "" })}
-          >
-            <SelectTrigger aria-label="Județ"><SelectValue placeholder="Județ" /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value={ALL}>Județ</SelectItem>
-              {(facets.data?.counties ?? []).map((c) => <SelectItem key={c.value} value={c.value}>{c.label} ({c.count})</SelectItem>)}
-            </SelectContent>
-          </Select>
+          <SearchableSelect
+            ariaLabel="Județ"
+            placeholder="Județ"
+            allLabel="Toate județele"
+            value={draftCountyKey}
+            options={facets.data?.counties ?? []}
+            onChange={(v) => patch({ judet: v, oras: "", zona: [] })}
+          />
           <Select value={draft.zile || ALL} onValueChange={(v) => patch({ zile: v === ALL ? "" : v })}>
             <SelectTrigger aria-label="Zile în piață"><SelectValue placeholder="Zile în piață" /></SelectTrigger>
             <SelectContent>
@@ -361,39 +365,22 @@ function PrivateListingsPage() {
         {extendedOpen ? (
           <div className="space-y-3 border border-border bg-card p-4">
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-              <Select
-                value={draftCityKey || ALL}
+              <SearchableSelect
+                ariaLabel="Localitate"
+                placeholder="Localitate"
+                allLabel="Toate localitățile"
+                value={draftCityKey}
                 disabled={!draft.judet && !draft.oras}
-                onValueChange={(v) => patch({ oras: v === ALL ? "" : v, zona: "" })}
-              >
-                <SelectTrigger aria-label="Localitate"><SelectValue placeholder="Localitate" /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value={ALL}>Toate localitățile</SelectItem>
-                  {localities.map((c) => (
-                    <SelectItem key={c.value} value={c.value}>{c.label} ({c.count})</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <Select
-                value={geographyKey(draft.zona) || ALL}
+                options={localities}
+                onChange={(v) => patch({ oras: v, zona: [] })}
+              />
+              <ZonePickerDialog
+                zones={zones}
+                isBucharest={draftCityKey === "bucuresti"}
+                selected={draft.zona}
                 disabled={!draft.oras || zones.length === 0}
-                onValueChange={(v) => patch({ zona: v === ALL ? "" : v })}
-              >
-                <SelectTrigger aria-label="Zonă"><SelectValue placeholder="Zonă" /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value={ALL}>Toate zonele</SelectItem>
-                  {draftCityKey === "bucuresti" ? (
-                    <>
-                      <SelectGroup><SelectLabel>Sectoare</SelectLabel>
-                        {zones.filter((z) => z.kind === "sector").map((z) => <SelectItem key={z.value} value={z.value}>{z.label} ({z.count})</SelectItem>)}
-                      </SelectGroup>
-                      <SelectGroup><SelectLabel>Cartiere</SelectLabel>
-                        {zones.filter((z) => z.kind === "neighborhood").map((z) => <SelectItem key={z.value} value={z.value}>{z.label} ({z.count})</SelectItem>)}
-                      </SelectGroup>
-                    </>
-                  ) : zones.map((z) => <SelectItem key={z.value} value={z.value}>{z.label} ({z.count})</SelectItem>)}
-                </SelectContent>
-              </Select>
+                onApply={(next) => patch({ zona: next })}
+              />
               <Select value={draft.sursa || ALL} onValueChange={(v) => patch({ sursa: v === ALL ? "" : v })}>
                 <SelectTrigger aria-label="Sursă"><SelectValue placeholder="Sursă" /></SelectTrigger>
                 <SelectContent>
