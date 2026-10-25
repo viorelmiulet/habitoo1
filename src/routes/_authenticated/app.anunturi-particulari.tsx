@@ -176,6 +176,7 @@ function PrivateListingsPage() {
     .split(",")
     .map(Number)
     .filter((n) => ROOM_OPTIONS.includes(n));
+  const zones = zonaList(search.zona);
   const page = (search.pagina ?? 1) - 1;
 
   const [draft, setDraft] = useState<Draft>(() => draftFromSearch(search));
@@ -193,7 +194,7 @@ function PrivateListingsPage() {
         tranzactie: (next.tranzactie || undefined) as Search["tranzactie"],
         judet: next.judet || undefined,
         oras: next.judet ? next.oras || undefined : undefined,
-        zona: next.judet && next.oras ? next.zona || undefined : undefined,
+        zona: next.judet && next.oras && next.zona.length ? next.zona : undefined,
         zile: next.zile === "" ? undefined : Number(next.zile),
         pretMin: parseNum(next.pretMin),
         pretMax: parseNum(next.pretMax),
