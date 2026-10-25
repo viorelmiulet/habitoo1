@@ -41,3 +41,4 @@
 
 - Removed publishing integrations have no registry definition, adapter, requirements, logo or public detail content; shared import formats and historical data remain intact. Why: removal must stop availability and outbound calls without rewriting history or unrelated imports.
 - Imobiliare media uses one replacement-gallery POST, a read-back confirmation and Worker-safe sequential JPEG compression with an encoded-JSON size budget; the card reads the portal gallery without refreshing tokens. Why: batching replaced prior photos and submission counts were not portal confirmations.
+- Superadmin-only surfaces reuse one gate: the nav item is added through `withMarketDataNav` and the page is wrapped in `SuperadminGate` (decision in `superadminGateDecision`), so direct links redirect instead of rendering privileged data. Why: menu visibility and route access must not drift apart.

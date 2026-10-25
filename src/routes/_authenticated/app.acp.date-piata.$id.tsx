@@ -6,13 +6,18 @@ import { PageHeader } from "@/components/app/PageHeader";
 import { SectionCard } from "@/components/app/SectionCard";
 import { CardGridSkeleton } from "@/components/app/LoadingState";
 import { appHead } from "@/components/app/app-head";
+import { SuperadminGate } from "@/components/app/SuperadminGate";
 import { Badge } from "@/components/ui/badge";
 import { formatMoney } from "@/lib/format";
 import { getMarketListingDetail } from "@/lib/market/market.functions";
 
 export const Route = createFileRoute("/_authenticated/app/acp/date-piata/$id")({
   head: () => appHead("Habitoo CRM — detaliu ofertă de piață"),
-  component: MarketListingDetailPage,
+  component: () => (
+    <SuperadminGate>
+      <MarketListingDetailPage />
+    </SuperadminGate>
+  ),
   errorComponent: () => (
     <div className="rounded-xl border border-border p-6 text-sm text-muted-foreground">
       Oferta de piață nu a putut fi încărcată.
