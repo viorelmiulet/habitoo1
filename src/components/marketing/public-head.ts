@@ -1,7 +1,8 @@
 import type { LinkHTMLAttributes } from "react";
+import { SITE_URL, SITE_NAME } from "./public-identity";
+import { publicGraphJsonLd } from "./structured-data";
 
-export const SITE_URL = "https://www.habitoo.ro";
-export const SITE_NAME = "Habitoo CRM";
+export { SITE_URL, SITE_NAME } from "./public-identity";
 export const OG_IMAGE_URL = `${SITE_URL}/assets/og-cover.jpg`;
 
 const FONTS_HREF =
@@ -60,13 +61,11 @@ export function publicHead({
   return {
     meta,
     links,
-    scripts: jsonLd
-      ? [
+    scripts: [
           {
             type: "application/ld+json",
-            children: JSON.stringify(jsonLd),
+            children: JSON.stringify(publicGraphJsonLd(jsonLd)),
           },
-        ]
-      : [],
+        ],
   };
 }
