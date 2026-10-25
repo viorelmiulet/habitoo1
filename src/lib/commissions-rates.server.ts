@@ -58,10 +58,10 @@ export async function getRonEurRateForDate(date: string, deps: { table: Exchange
   };
   let row = await lookup();
   if (!row) {
-    await fetchBnrIntoCache(deps.table, Number(date.slice(0, 4)), deps.fetchImpl);
+    const fetched = await fetchBnrIntoCache(deps.table, Number(date.slice(0, 4)), deps.fetchImpl);
     row = await lookup();
     // Current/10-day data may not cover a historical transaction. Fetch its year next.
-    if (!row) {
+    if (!row && fetched) {
       const year = Number(date.slice(0, 4));
       for (const y of [year, year - 1]) {
         const url = BNR_YEAR_URL(y);
