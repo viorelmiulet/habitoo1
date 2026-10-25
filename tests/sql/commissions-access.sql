@@ -8,14 +8,17 @@ SELECT r.user_id AS admin_id, r.organization_id AS org_a FROM public.user_roles 
  AND p.is_active AND NOT EXISTS (SELECT 1 FROM public.user_roles s WHERE s.user_id=r.user_id AND s.role='superadmin')
  ORDER BY r.user_id LIMIT 1 \gset
 -- Two plain agents placed in agency A for this transaction only (rolled back).
+-- Plain users of agency A have no agency_admin role there; superadmins excluded.
 SELECT array_agg(id) AS agents FROM (SELECT id FROM public.profiles x
- WHERE NOT EXISTS (SELECT 1 FROM public.user_roles y WHERE y.user_id=x.id AND y.role IN ('agency_admin','superadmin'))
+ WHERE id<>:'admin_id' AND NOT EXISTS (SELECT 1 FROM public.user_roles y WHERE y.user_id=x.id
+   AND (y.role='superadmin' OR (y.role='agency_admin' AND y.organization_id=:'org_a')))
  ORDER BY id LIMIT 2) t \gset
 SELECT (:'agents'::uuid[])[1] AS agent1, (:'agents'::uuid[])[2] AS agent2 \gset
-UPDATE public.profiles SET organization_id=:'org_a', is_active=true WHERE id IN (:'agent1',:'agent2');
 SELECT p.id AS other_user FROM public.profiles p JOIN public.organizations o ON o.id=p.organization_id
  WHERE o.status IN ('active','trial') AND o.archived_at IS NULL AND p.organization_id<>:'org_a'
+ AND p.id NOT IN (:'agent1',:'agent2')
  AND NOT EXISTS (SELECT 1 FROM public.user_roles y WHERE y.user_id=p.id AND y.role='superadmin') ORDER BY p.id LIMIT 1 \gset
+UPDATE public.profiles SET organization_id=:'org_a', is_active=true WHERE id IN (:'agent1',:'agent2');
 
 CREATE TEMP TABLE ids(k text, id uuid); GRANT ALL ON ids TO authenticated;
 SELECT set_config('test.agent2', :'agent2', true);
