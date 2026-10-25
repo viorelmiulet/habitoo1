@@ -176,7 +176,7 @@ function PrivateListingsPage() {
     .split(",")
     .map(Number)
     .filter((n) => ROOM_OPTIONS.includes(n));
-  const zones = zonaList(search.zona);
+  const selectedZones = zonaList(search.zona);
   const page = (search.pagina ?? 1) - 1;
 
   const [draft, setDraft] = useState<Draft>(() => draftFromSearch(search));
@@ -223,7 +223,7 @@ function PrivateListingsPage() {
   });
   const listings = useQuery({
     queryKey: [
-      "owner-listings", search.tab, search.judet, search.oras, search.zona, rooms.join(","), search.q, page,
+      "owner-listings", search.tab, search.judet, search.oras, selectedZones.join(","), rooms.join(","), search.q, page,
       search.sursa, search.tranzactie, search.tip, search.pretMin, search.pretMax, search.mpMin, search.mpMax,
       search.sortare, search.zile, search.id, search.etajMin, search.etajMax, search.anMin, search.anMax,
       search.anNespecificat,
@@ -232,7 +232,7 @@ function PrivateListingsPage() {
       fetchListings({
         data: {
           category: search.tab,
-          county: search.judet, city: search.oras, zone: search.zona, rooms, q: search.q, page,
+          county: search.judet, city: search.oras, zone: selectedZones.length ? selectedZones : undefined, rooms, q: search.q, page,
           source: search.sursa, transaction: search.tranzactie,
           propertyType: search.tab ? undefined : search.tip,
           priceMin: search.pretMin, priceMax: search.pretMax,
