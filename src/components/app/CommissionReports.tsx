@@ -222,22 +222,22 @@ export function CommissionReports({
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
         <KpiWithLastYear label="Comision agenție" value={eur(cur.agencyEur)}
-          trend={compareValue(cur.agencyEur, prevK.agencyEur).pct} previous={comparison(cur.agencyEur, prevK.agencyEur, "vs. perioada anterioară")}}
+          trend={compareValue(cur.agencyEur, prevK.agencyEur).pct} previous={comparison(cur.agencyEur, prevK.agencyEur, "vs. perioada anterioară")}
           lastYear={vsLastYear(cur.agencyEur, lyK.agencyEur)} loading={data.isLoading} />
         <KpiWithLastYear label="Suma agenților" value={eur(cur.agentEur)}
-          trend={compareValue(cur.agentEur, prevK.agentEur).pct} previous={comparison(cur.agentEur, prevK.agentEur, "vs. perioada anterioară")}}
+          trend={compareValue(cur.agentEur, prevK.agentEur).pct} previous={comparison(cur.agentEur, prevK.agentEur, "vs. perioada anterioară")}
           lastYear={vsLastYear(cur.agentEur, lyK.agentEur)} loading={data.isLoading} />
         <KpiWithLastYear label="Tranzacții" value={String(cur.count)}
-          trend={compareValue(cur.count, prevK.count).pct} previous={comparison(cur.count, prevK.count, "vs. perioada anterioară", true)}}
+          trend={compareValue(cur.count, prevK.count).pct} previous={comparison(cur.count, prevK.count, "vs. perioada anterioară", true)}
           lastYear={vsLastYear(cur.count, lyK.count, true)} loading={data.isLoading} />
         <KpiWithLastYear label="Comision mediu / tranzacție" value={eur(cur.avgEur)}
-          trend={compareValue(cur.avgEur, prevK.avgEur).pct} previous={comparison(cur.avgEur, prevK.avgEur, "vs. perioada anterioară")}}
+          trend={compareValue(cur.avgEur, prevK.avgEur).pct} previous={comparison(cur.avgEur, prevK.avgEur, "vs. perioada anterioară")}
           lastYear={vsLastYear(cur.avgEur, lyK.avgEur)} loading={data.isLoading} />
         <KpiWithLastYear label="Încasat" value={eur(cur.collectedEur)} tone="success"
-          trend={compareValue(cur.collectedEur, prevK.collectedEur).pct} previous={comparison(cur.collectedEur, prevK.collectedEur, "vs. perioada anterioară")}}
+          trend={compareValue(cur.collectedEur, prevK.collectedEur).pct} previous={comparison(cur.collectedEur, prevK.collectedEur, "vs. perioada anterioară")}
           lastYear={vsLastYear(cur.collectedEur, lyK.collectedEur)} loading={data.isLoading} />
         <KpiWithLastYear label="De încasat" value={eur(cur.pendingEur)} tone="warning"
-          trend={compareValue(cur.pendingEur, prevK.pendingEur).pct} previous={comparison(cur.pendingEur, prevK.pendingEur, "vs. perioada anterioară")}}
+          trend={compareValue(cur.pendingEur, prevK.pendingEur).pct} previous={comparison(cur.pendingEur, prevK.pendingEur, "vs. perioada anterioară")}
           lastYear={vsLastYear(cur.pendingEur, lyK.pendingEur)} loading={data.isLoading} />
       </div>
 
