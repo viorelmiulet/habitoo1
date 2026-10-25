@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import { resolveCommissionSaveRate } from "./commission-save-rate";
 import { emptyCommissionForm, toCommissionPayload } from "./commissions";
-import { completeMissingCommissionRates, fetchBnrIntoCache, getRonEurRateForDate, parseBnrYearXml } from "./commissions-rates.server";
+import { bnrFeedUrls, completeMissingCommissionRates, fetchRatesIntoCache, getRonEurRateForDate, parseBnrYearXml, parseFrankfurterJson } from "./commissions-rates.server";
 
 const XML = `<?xml version="1.0" encoding="utf-8"?>
 <DataSet><Body><OrigCurrency>RON</OrigCurrency>
@@ -9,8 +9,8 @@ const XML = `<?xml version="1.0" encoding="utf-8"?>
 <Cube date="2026-06-12"><Rate currency="EUR" multiplier="1">4.9876</Rate></Cube>
 </Body></DataSet>`;
 
-function fakeTable(stored: { day: string; eur_ron: number }[]) {
-  const rows = [...stored];
+function fakeTable(stored: { day: string; eur_ron: number; source?: string }[]) {
+  const rows = stored.map(r => ({ source: "BNR", ...r }));
   return {
     rows,
     select: () => ({
@@ -22,7 +22,7 @@ function fakeTable(stored: { day: string; eur_ron: number }[]) {
           }),
       }),
     }),
-    upsert: async (incoming: { day: string; eur_ron: number }[]) => {
+    upsert: async (incoming: { day: string; eur_ron: number; source: string }[]) => {
       for (const r of incoming) {
         const i = rows.findIndex((x) => x.day === r.day);
         if (i >= 0) rows[i] = r;
@@ -43,29 +43,74 @@ describe("cursul BNR", () => {
     ]);
   });
 
-  it("citește din cache fără cerere la BNR", async () => {
+  it("ordinea surselor: curs.bnr.ro (curent, 10 zile, anual), apoi www.bnr.ro", () => {
+    expect(bnrFeedUrls(2026)).toEqual([
+      "https://curs.bnr.ro/nbrfxrates.xml",
+      "https://curs.bnr.ro/nbrfxrates10days.xml",
+      "https://curs.bnr.ro/files/xml/years/nbrfxrates2026.xml",
+      "https://www.bnr.ro/nbrfxrates.xml",
+      "https://www.bnr.ro/nbrfxrates10days.xml",
+      "https://www.bnr.ro/files/xml/years/nbrfxrates2026.xml",
+    ]);
+  });
+
+  it("citește din cache fără cerere externă", async () => {
     const table = fakeTable([{ day: "2026-06-10", eur_ron: 5.0123 }]);
     let called = false;
     const r = await getRonEurRateForDate("2026-06-10", {
       table,
       fetchImpl: async () => { called = true; return fetchImpl(); },
     });
-    expect(r).toEqual({ date: "2026-06-10", rateDate: "2026-06-10", rate: 5.0123 });
+    expect(r).toEqual({ date: "2026-06-10", rateDate: "2026-06-10", rate: 5.0123, source: "BNR" });
     expect(called).toBe(false);
   });
 
-  it("la cache gol descarcă anul de la BNR și îl păstrează", async () => {
+  it("curs.bnr.ro valid → curs cu sursa BNR, păstrat în cache", async () => {
     const table = fakeTable([]);
-    const r = await getRonEurRateForDate("2026-06-12", { table, fetchImpl });
-    expect(r.rate).toBe(4.9876);
+    const urls: string[] = [];
+    const r = await getRonEurRateForDate("2026-06-12", { table, fetchImpl: async (input) => { urls.push(String(input)); return fetchImpl(); } });
+    expect(r).toMatchObject({ rate: 4.9876, source: "BNR" });
+    expect(urls).toEqual(["https://curs.bnr.ro/nbrfxrates.xml"]);
     expect(table.rows).toHaveLength(2);
+    expect(table.rows.every(row => row.source === "BNR")).toBe(true);
   });
 
-  it("în weekend folosește ultimul curs publicat anterior", async () => {
+  it("BNR răspunde doar HTML peste tot → fallback BCE prin Frankfurter", async () => {
+    const table = fakeTable([]);
+    const urls: string[] = [];
+    const fetchMock: typeof fetch = async (input) => {
+      const url = String(input); urls.push(url);
+      if (url.includes("frankfurter")) return new Response('{"amount":1.0,"base":"EUR","date":"2026-06-12","rates":{"RON":5.05}}', { headers: { "content-type": "application/json" } });
+      return new Response('<html>Access denied</html>', { headers: { "content-type": "text/html" } });
+    };
+    const log = vi.spyOn(console, "info").mockImplementation(() => {});
+    const r = await getRonEurRateForDate("2026-06-12", { table, fetchImpl: fetchMock });
+    expect(r).toEqual({ date: "2026-06-12", rateDate: "2026-06-12", rate: 5.05, source: "BCE" });
+    expect(urls.filter(u => u.includes("bnr.ro"))).toHaveLength(6);
+    expect(urls.at(-1)).toBe("https://api.frankfurter.app/2026-06-12?from=EUR&to=RON");
+    expect(table.rows).toEqual([{ day: "2026-06-12", eur_ron: 5.05, source: "BCE" }]);
+    expect(log.mock.calls.at(-1)?.[1]).toMatchObject({ status: 200, contentType: "application/json" });
+    log.mockRestore();
+  });
+
+  it("duminică → Frankfurter întoarce ultima zi publicată (vineri)", async () => {
+    const table = fakeTable([]);
+    const fetchMock: typeof fetch = async (input) => {
+      const url = String(input);
+      if (url.includes("frankfurter")) return new Response('{"amount":1.0,"base":"EUR","date":"2026-10-23","rates":{"RON":5.3492}}');
+      return new Response('<html></html>', { headers: { "content-type": "text/html" } });
+    };
+    vi.spyOn(console, "info").mockImplementation(() => {});
+    const r = await getRonEurRateForDate("2026-10-25", { table, fetchImpl: fetchMock });
+    expect(r).toEqual({ date: "2026-10-25", rateDate: "2026-10-23", rate: 5.3492, source: "BCE" });
+    vi.restoreAllMocks();
+  });
+
+  it("în weekend folosește ultimul curs BNR publicat anterior", async () => {
     const table = fakeTable([]);
     // 2026-06-13 e sâmbătă; ultimul curs e cel de vineri 12 iunie.
     const r = await getRonEurRateForDate("2026-06-13", { table, fetchImpl });
-    expect(r).toEqual({ date: "2026-06-13", rateDate: "2026-06-12", rate: 4.9876 });
+    expect(r).toEqual({ date: "2026-06-13", rateDate: "2026-06-12", rate: 4.9876, source: "BNR" });
   });
 
   it("cursul din ziua tranzacției diferă de cel al altei zile", async () => {
@@ -75,30 +120,36 @@ describe("cursul BNR", () => {
     expect(a.rate).toBe(5.0123);
     expect(b.rate).toBe(4.9876);
   });
-});
 
+  it("parsează JSON-ul Frankfurter și respinge răspunsurile fără curs", () => {
+    expect(parseFrankfurterJson('{"amount":1.0,"base":"EUR","date":"2026-10-23","rates":{"RON":5.3492}}')).toEqual({ day: "2026-10-23", eurRon: 5.3492 });
+    expect(parseFrankfurterJson('{"error":"not found"}')).toBeNull();
+    expect(parseFrankfurterJson("<html>301</html>")).toBeNull();
+  });
+});
 
 describe("BNR recovery", () => {
   it("saves a EUR commission with null rate during outage and fills it on the next successful attempt", async () => {
     const table = fakeTable([]);
     const form = { ...emptyCommissionForm("agent"), transaction_date: "2026-10-25", agency_commission: "1000", agent_amount: "400", transaction_value: "100000" };
     const fetchFail = async () => { throw new Error("offline"); };
-    const rate = await resolveCommissionSaveRate(form.transaction_date, undefined, date => getRonEurRateForDate(date, { table, fetchImpl: fetchFail }));
-    const saved = { id: "commission", ...toCommissionPayload(form), ron_to_eur_rate: rate };
+    const resolved = await resolveCommissionSaveRate(form.transaction_date, undefined, date => getRonEurRateForDate(date, { table, fetchImpl: fetchFail }));
+    const saved = { id: "commission", ...toCommissionPayload(form), ron_to_eur_rate: resolved?.rate ?? null, rate_source: resolved?.source ?? null };
     expect(saved.currency).toBe("EUR"); expect(saved.agency_commission).toBe(1000); expect(saved.ron_to_eur_rate).toBeNull();
-    const update = vi.fn(async (_ids, _date, newRate) => { saved.ron_to_eur_rate = newRate; });
+    const update = vi.fn(async (_ids: string[], _date: string, newRate: number, source: "BNR" | "BCE") => { saved.ron_to_eur_rate = newRate; saved.rate_source = source; });
     expect(await completeMissingCommissionRates([saved], { resolve: date => getRonEurRateForDate(date, { table, fetchImpl: fetchFail }), update })).toBe(0);
     expect(update).not.toHaveBeenCalled();
     const fridayXml = '<DataSet><Body><Cube date="2026-10-23"><Rate currency="EUR">5.0871</Rate></Cube></Body></DataSet>';
     expect(await completeMissingCommissionRates([saved], { resolve: date => getRonEurRateForDate(date, { table, fetchImpl: async () => new Response(fridayXml) }), update })).toBe(1);
     expect(saved.ron_to_eur_rate).toBe(5.0871);
+    expect(saved.rate_source).toBe("BNR");
   });
   it("uses Friday for Sunday 25 October and latest published rate for future dates", async () => {
     const table = fakeTable([{ day: "2026-10-23", eur_ron: 5.0871 }]);
     expect((await getRonEurRateForDate("2026-10-25", { table })).rateDate).toBe("2026-10-23");
     expect((await getRonEurRateForDate("2027-12-31", { table })).rateDate).toBe("2026-10-23");
   });
-  it("tries current, ten-day, annual in order, uses browser headers and caches every EUR rate", async () => {
+  it("tries curs.bnr.ro current, ten-day, annual in order, uses browser headers and caches every EUR rate", async () => {
     const table = fakeTable([]); const urls: string[] = [];
     const fetchMock: typeof fetch = async (input, init) => {
       urls.push(String(input)); expect(new Headers(init?.headers).get("Accept")).toBe("application/xml");
@@ -106,8 +157,8 @@ describe("BNR recovery", () => {
       return new Response(urls.length < 3 ? '<html>Access denied</html>' : XML, { headers: { "content-type": urls.length < 3 ? "text/html" : "application/xml" } });
     };
     const log = vi.spyOn(console, "info").mockImplementation(() => {});
-    expect(await fetchBnrIntoCache(table, 2026, fetchMock)).toBe(true);
-    expect(urls).toEqual(["https://www.bnr.ro/nbrfxrates.xml", "https://www.bnr.ro/nbrfxrates10days.xml", "https://www.bnr.ro/files/xml/years/nbrfxrates2026.xml"]);
+    expect(await fetchRatesIntoCache(table, "2026-06-12", fetchMock)).toBe(true);
+    expect(urls).toEqual(["https://curs.bnr.ro/nbrfxrates.xml", "https://curs.bnr.ro/nbrfxrates10days.xml", "https://curs.bnr.ro/files/xml/years/nbrfxrates2026.xml"]);
     expect(table.rows).toHaveLength(2);
     expect(log.mock.calls[2]?.[1]).toMatchObject({ status: 200, contentType: "application/xml", preview: XML.slice(0, 300) });
     log.mockRestore();
@@ -116,8 +167,8 @@ describe("BNR recovery", () => {
     expect(parseBnrYearXml(`<DataSet xmlns="http://www.bnr.ro/xsd"><Body><Cube other="x" date='2026-10-23'><Rate multiplier="1" currency = "EUR">\n 5.0871 \n</Rate></Cube></Body></DataSet>`)).toEqual([{day:"2026-10-23",eurRon:5.0871}]);
   });
   it("never overwrites an already saved historical rate", async () => {
-    const fetch = vi.fn(async () => ({ rate: 99 }));
-    expect(await resolveCommissionSaveRate("2026-10-23", { transaction_date: "2026-10-23", ron_to_eur_rate: 5.1 }, fetch)).toBe(5.1);
+    const fetch = vi.fn(async () => ({ rate: 99, source: "BCE" as const }));
+    expect(await resolveCommissionSaveRate("2026-10-23", { transaction_date: "2026-10-23", ron_to_eur_rate: 5.1, rate_source: "BNR" }, fetch)).toEqual({ rate: 5.1, source: "BNR" });
     expect(fetch).not.toHaveBeenCalled();
     const update = vi.fn(async () => {});
     expect(await completeMissingCommissionRates([{id:"saved",transaction_date:"2026-10-23",ron_to_eur_rate:5.1}], {resolve:fetch,update})).toBe(0);

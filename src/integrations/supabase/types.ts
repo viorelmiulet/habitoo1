@@ -1968,6 +1968,7 @@ export type Database = {
           payer: string
           property_id: string | null
           property_type: string
+          rate_source: string | null
           ron_to_eur_rate: number | null
           status: string
           transaction_date: string
@@ -1992,6 +1993,7 @@ export type Database = {
           payer: string
           property_id?: string | null
           property_type: string
+          rate_source?: string | null
           ron_to_eur_rate?: number | null
           status?: string
           transaction_date?: string
@@ -2016,6 +2018,7 @@ export type Database = {
           payer?: string
           property_id?: string | null
           property_type?: string
+          rate_source?: string | null
           ron_to_eur_rate?: number | null
           status?: string
           transaction_date?: string
@@ -2933,14 +2936,17 @@ export type Database = {
         Row: {
           day: string
           eur_ron: number
+          source: string
         }
         Insert: {
           day: string
           eur_ron: number
+          source?: string
         }
         Update: {
           day?: string
           eur_ron?: number
+          source?: string
         }
         Relationships: []
       }

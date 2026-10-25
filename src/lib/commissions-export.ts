@@ -9,16 +9,16 @@ export function commissionFilename(range: ReportRange, agency: string, ext: stri
   return `comisioane_${period}_${name}.${ext}`;
 }
 
-export const exportHeaders = ["ID", "ID agenție", "ID agent", "Agent", "Creat de", "Alocat de admin", "Data tranzacției", "Tranzacție", "Tip proprietate", "ID proprietate", "Proprietate", "ID client", "Client", "Adresă / zonă", "Valoarea tranzacției (original)", "Comision agenție (original)", "Suma agentului (original)", "Moneda originală", "Plătitor", "Stare", "Data încasării", "Note", "Creat la", "Actualizat la", "Curs BNR (RON / EUR)", "Valoarea tranzacției (EUR)", "Comision agenție (EUR)", "Suma agentului (EUR)"];
+export const exportHeaders = ["ID", "ID agenție", "ID agent", "Agent", "Creat de", "Alocat de admin", "Data tranzacției", "Tranzacție", "Tip proprietate", "ID proprietate", "Proprietate", "ID client", "Client", "Adresă / zonă", "Valoarea tranzacției (original)", "Comision agenție (original)", "Suma agentului (original)", "Moneda originală", "Plătitor", "Stare", "Data încasării", "Note", "Creat la", "Actualizat la", "Curs (RON / EUR)", "Sursa cursului", "Valoarea tranzacției (EUR)", "Comision agenție (EUR)", "Suma agentului (EUR)"];
 export type ExportNames = { agents: Map<string,string>; properties: Map<string,string>; contacts: Map<string,string> };
 export function commissionExportMatrix(rows: CommissionRecord[], names: ExportNames, currency: DisplayCurrency) {
   const headers = [...exportHeaders, `Valoarea tranzacției (${currency}, afișare)`, `Comision agenție (${currency}, afișare)`, `Suma agentului (${currency}, afișare)`];
   const values = rows.map(r => [r.id, r.organization_id, r.agent_id, names.agents.get(r.agent_id) ?? r.agent_id, r.created_by, r.allocated_by_admin ? "Da" : "Nu", r.transaction_date,
-    transactionLabels[r.transaction_kind] ?? r.transaction_kind, propertyTypeLabels[r.property_type] ?? r.property_type, r.property_id ?? "", names.properties.get(r.property_id ?? "") ?? "", r.contact_id ?? "", names.contacts.get(r.contact_id ?? "") ?? "", r.location_text ?? "", Number(r.transaction_value), Number(r.agency_commission), Number(r.agent_amount), r.currency, commissionPayerLabels[r.payer] ?? r.payer, commissionStatusLabels[r.status] ?? r.status, r.collected_at ?? "", r.notes ?? "", r.created_at, r.updated_at, r.ron_to_eur_rate ?? "",
+    transactionLabels[r.transaction_kind] ?? r.transaction_kind, propertyTypeLabels[r.property_type] ?? r.property_type, r.property_id ?? "", names.properties.get(r.property_id ?? "") ?? "", r.contact_id ?? "", names.contacts.get(r.contact_id ?? "") ?? "", r.location_text ?? "", Number(r.transaction_value), Number(r.agency_commission), Number(r.agent_amount), r.currency, commissionPayerLabels[r.payer] ?? r.payer, commissionStatusLabels[r.status] ?? r.status, r.collected_at ?? "", r.notes ?? "", r.created_at, r.updated_at, r.ron_to_eur_rate ?? "", r.ron_to_eur_rate ? (r.rate_source ?? "BNR") : "",
     ...["EUR", currency].flatMap(target => [r.transaction_value, r.agency_commission, r.agent_amount].map(v => r.currency !== target && !r.ron_to_eur_rate ? "" : convertCommissionAmount(Number(v), r.currency, target as DisplayCurrency, r.ron_to_eur_rate))) ]);
   const totals: (string | number)[] = headers.map(() => "");
   totals[0] = "TOTAL (fără anulate)";
-  for (const col of [25,26,27,28,29,30]) totals[col] = values.reduce((sum, row, i) => rows[i].status === "cancelled" ? sum : sum + Number(row[col] || 0), 0);
+  for (const col of [26,27,28,29,30,31]) totals[col] = values.reduce((sum, row, i) => rows[i].status === "cancelled" ? sum : sum + Number(row[col] || 0), 0);
   return { headers, values, totals };
 }
 
@@ -42,13 +42,13 @@ export async function commissionXlsx(rows: CommissionRecord[], names: ExportName
     row.alignment = { vertical: "top", wrapText: true };
     if (n === 1) row.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFE4EAE7" } };
   });
-  sheet.autoFilter = { from: "A1", to: `AE${Math.max(1, rows.length + 1)}` };
-  const numericCols = [15,16,17,25,26,27,28,29,30,31];
+  sheet.autoFilter = { from: "A1", to: `AF${Math.max(1, rows.length + 1)}` };
+  const numericCols = [15,16,17,25,27,28,29,30,31,32];
   for (let i = 0; i < rows.length; i++) {
     const n = i + 2;
     const row = rows[i];
     for (const c of numericCols) sheet.getCell(n,c).numFmt = c === 25 ? '0.000000' : '#,##0.00;(#,##0.00);"-"';
-    for (const [start, target] of [[26,"EUR"], [29,currency]] as const) {
+    for (const [start, target] of [[27,"EUR"], [30,currency]] as const) {
       for (let k = 0; k < 3; k++) {
         const original = String.fromCharCode(79 + k);
         const formula = `IF(R${n}="${target}",${original}${n},IF(AND(ISNUMBER(Y${n}),Y${n}>0),${original}${n}${target === "EUR" ? "/" : "*"}Y${n},""))`;
@@ -56,7 +56,7 @@ export async function commissionXlsx(rows: CommissionRecord[], names: ExportName
       }
     }
   }
-  for (const col of [26,27,28,29,30,31]) {
+  for (const col of [27,28,29,30,31,32]) {
     const letter = sheet.getColumn(col).letter;
     sheet.getCell(rows.length+2,col).value = { formula: rows.length ? `SUMIF(T2:T${rows.length+1},"<>Anulat",${letter}2:${letter}${rows.length+1})` : "0", result: matrix.totals[col-1] };
     sheet.getCell(rows.length+2,col).numFmt = '#,##0.00;(#,##0.00);"-"';
