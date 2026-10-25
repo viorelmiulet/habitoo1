@@ -18,8 +18,8 @@ SELECT gen_random_uuid() AS comment_id \gset
 CREATE TEMP TABLE test_comments (LIKE public.listing_comments);
 CREATE TEMP TABLE test_profiles AS SELECT id,organization_id,is_active FROM public.profiles;
 CREATE TEMP TABLE test_organizations AS SELECT id,status,archived_at FROM public.organizations;
-INSERT INTO test_comments(id,listing_id,author_id,author_name,body)
-VALUES(:'comment_id',:'listing_id',:'actor_b','RLS test','Cross-agency visibility test');
+INSERT INTO test_comments(id,listing_id,author_id,author_name,body,created_at)
+VALUES(:'comment_id',:'listing_id',:'actor_b','RLS test','Cross-agency visibility test',now());
 SELECT set_config('test.comment_id',:'comment_id',true),
        set_config('request.jwt.claim.sub',:'actor_a',true) \gset
 DO $$ DECLARE predicate text; BEGIN
