@@ -59,7 +59,10 @@ const ROW = {
   updated_at: "2026-10-25T00:00:00Z",
 };
 
-beforeEach(() => resetArgusThrottles());
+beforeEach(() => {
+  resetArgusThrottles();
+  process.env["ARGUS_APPLICATION_TOKEN"] = "app-token";
+});
 
 describe("autentificare și refolosirea tokenului", () => {
   it("auth trimite cheia în body și tokenul de aplicație în headerul Application", async () => {
@@ -152,8 +155,15 @@ describe("erori Argus", () => {
 describe("limitele locale", () => {
   it("/auth e limitat la 5 pe oră", () => {
     const now = 1_000_000;
-    for (let i = 0; i < 5; i += 1) expect(argusAuthThrottle(now + i)).toBe(0);
-    expect(argusAuthThrottle(now + 5)).toBeGreaterThan(0);
+    // 1/minut: spațiem apelurile; a 6-a din aceeași oră e blocată.
+    for (let i = 0; i < 5; i += 1) expect(argusAuthThrottle(now + i * 61_000)).toBe(0);
+    expect(argusAuthThrottle(now + 5 * 61_000)).toBeGreaterThan(0);
+  });
+
+  it("/auth e limitat la 1 pe minut", () => {
+    const now = 1_000_000;
+    expect(argusAuthThrottle(now)).toBe(0);
+    expect(argusAuthThrottle(now + 1_000)).toBeGreaterThan(0);
   });
 
   it("cererile de date sunt limitate la 2 pe secundă pe agenție", () => {
