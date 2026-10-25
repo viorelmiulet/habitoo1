@@ -9924,6 +9924,7 @@ export type Database = {
           slug: string
         }[]
       }
+      public_llms_statistics: { Args: never; Returns: Json }
       public_partner_agencies: {
         Args: never
         Returns: {
