@@ -32,6 +32,8 @@ import {
   toCommissionPayload,
   type CommissionForm,
 } from "@/lib/commissions";
+import { CommissionReports } from "@/components/app/CommissionReports";
+import { getRonEurRate } from "@/lib/commissions-rates.functions";
 
 const searchSchema = z.object({
   nou: z.coerce.boolean().optional(),
@@ -69,6 +71,7 @@ function CommissionsPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState<CommissionForm>(() => emptyCommissionForm(""));
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [tab, setTab] = useState<"lista" | "rapoarte">("lista");
 
   const refs = useQuery({
     queryKey: ["commission-refs", orgId],
