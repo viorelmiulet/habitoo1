@@ -96,3 +96,44 @@ export function cleanText(value: string | undefined): string | undefined {
   const trimmed = value?.replace(/[%_,()*\\]/g, "").trim();
   return trimmed ? trimmed.slice(0, 80) : undefined;
 }
+
+/** Opțiunile „Zile în piață”: 0 = De azi, apoi ultimele 2/3/7 zile. */
+export const PRIVATE_LISTINGS_DAYS = [0, 2, 3, 7] as const;
+
+/** Începutul zilei curente în fusul României, ca dată UTC. */
+export function romaniaTodayStart(now: Date = new Date()): Date {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: "Europe/Bucharest",
+    hour12: false,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+  }).formatToParts(now);
+  const get = (type: string) => Number(parts.find((p) => p.type === type)?.value ?? 0);
+  const offsetMs =
+    Date.UTC(get("year"), get("month") - 1, get("day"), get("hour") % 24, get("minute"), get("second")) -
+    now.getTime();
+  const local = new Date(now.getTime() + offsetMs);
+  return new Date(Date.UTC(local.getUTCFullYear(), local.getUTCMonth(), local.getUTCDate()) - offsetMs);
+}
+
+/** Pragul `first_seen_at` pentru „Zile în piață”: N zile include ziua curentă. */
+export function daysCutoff(days: number, now: Date = new Date()): string {
+  const start = romaniaTodayStart(now);
+  start.setUTCDate(start.getUTCDate() - Math.max(0, days - 1));
+  return start.toISOString();
+}
+
+/** Taburile de categorie înlocuiesc filtrul „Tip proprietate” (valori românești în date). */
+export const PRIVATE_LISTINGS_CATEGORIES = ["apartamente", "case", "comerciale", "terenuri"] as const;
+export type PrivateListingsCategory = (typeof PRIVATE_LISTINGS_CATEGORIES)[number];
+
+export const PRIVATE_LISTINGS_CATEGORY_FILTERS: Record<PrivateListingsCategory, string> = {
+  apartamente: "property_type.ilike.%apart%",
+  case: "property_type.ilike.%cas%",
+  comerciale: "property_type.ilike.%comercial%,property_type.ilike.%birou%,property_type.ilike.%garaj%",
+  terenuri: "property_type.ilike.%teren%",
+};
