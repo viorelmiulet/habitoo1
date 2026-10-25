@@ -1,3 +1,9 @@
+# Anunțuri particulari — import în portofoliu
+
+- [ ] Confirmare Da/Nu pe card și detaliu; deschidere directă la Importat
+- [ ] Creare atomică fără dubluri per agenție, câmpuri și notă internă, poze copiate în ordine
+- [ ] Teste fără publicări reale și verificarea fluxului în cont
+
 # Anunțuri particulari — filtre de localizare (model „Alege zone”)
 
 - [x] Județ și Localitate: liste cu câmp de căutare (diacritice ignorate), numărul de anunțuri lângă fiecare
