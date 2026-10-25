@@ -8,6 +8,7 @@ import { PageHeader } from "@/components/app/PageHeader";
 import { appHead } from "@/components/app/app-head";
 import { SearchableSelect } from "@/components/app/SearchableSelect";
 import { ZonePickerDialog } from "@/components/app/ZonePickerDialog";
+import { ImportListingButton } from "@/components/app/ImportListingButton";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -89,7 +90,7 @@ const DAYS_OPTIONS: { value: string; label: string }[] = [
 
 export const Route = createFileRoute("/_authenticated/app/anunturi-particulari")({
   validateSearch: searchSchema,
-  head: () => appHead("Anunțuri particulari — Habitoo CRM"),
+  head: () => { const title = "Anunțuri particulari — Habitoo CRM"; const description = "Anunțuri particulari, fotografii și import cu acordul proprietarului în portofoliul agenției."; const head = appHead(title); return { ...head, meta: [...head.meta, { name: "description", content: description }, { property: "og:title", content: title }, { property: "og:description", content: description }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }] }; },
   component: PrivateListingsPage,
 });
 
@@ -640,7 +641,8 @@ function ListingRow({ listing }: { listing: OwnerListing }) {
         ) : null}
         {listing.description ? <ListingDescription text={listing.description} /> : null}
       </div>
-      <div className="relative z-10 flex shrink-0 flex-row gap-2 sm:w-44 sm:flex-col sm:justify-center">
+      <div className="relative z-10 flex shrink-0 flex-col gap-2 sm:w-44 sm:justify-center">
+        <ImportListingButton listingId={listing.id} />
         {listing.phone ? (
           <Button asChild variant="outline" className="flex-1 sm:flex-none">
             <a href={`tel:${listing.phone}`}>
