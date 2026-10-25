@@ -19,7 +19,15 @@ type Row = {
   location?: string;
 };
 
-/** Mock PostgREST minimal: filtre eq/ilike/or, paginare range, citire in(). */
+const cell = (row: Row, col: string) => (row as unknown as Record<string, unknown>)[col];
+const cmp = (a: unknown, b: unknown): number => {
+  const na = Number(a);
+  const nb = Number(b);
+  if (a !== null && a !== undefined && a !== "" && Number.isFinite(na) && Number.isFinite(nb)) return na - nb;
+  return String(a ?? "").localeCompare(String(b));
+};
+
+/** Mock PostgREST minimal: filtre eq/ilike/or generice, paginare range, citire in(), head count. */
 function makeSupabase(rows: Row[]) {
   return {
     from: () => {
@@ -27,41 +35,54 @@ function makeSupabase(rows: Row[]) {
       const query = {
         select: () => query,
         eq: (col: string, val: unknown) => {
-          filtered = filtered.filter((r) => (r as unknown as Record<string, unknown>)[col] === val);
+          filtered = filtered.filter((r) => cell(r, col) === val);
           return query;
         },
         or: (filter: string) => {
-          const terms = [...filter.matchAll(/ilike\.%([^%]+)%/g)].map((m) => m[1].toLowerCase());
-          if (terms.length) {
+          const conditions = filter
+            .split(",")
+            .map((c) => /^([a-z_0-9]+)\.(eq|ilike|gte|lte|is|in)\.(.*)$/i.exec(c))
+            .filter((m): m is RegExpExecArray => Boolean(m));
+          if (conditions.length) {
             filtered = filtered.filter((r) =>
-              terms.every((term) =>
-                [r.title, r.description, r.location].some((field) => (field ?? "").toLowerCase().includes(term)),
-              ),
+              conditions.some((m) => {
+                const v = cell(r, m[1]);
+                const val = m[3];
+                switch (m[2].toLowerCase()) {
+                  case "eq": return String(v) === val;
+                  case "ilike": return String(v ?? "").toLowerCase().includes(val.replace(/%/g, "").toLowerCase());
+                  case "gte": return v !== null && v !== undefined && cmp(v, val) >= 0;
+                  case "lte": return v !== null && v !== undefined && cmp(v, val) <= 0;
+                  case "is": return val === "null" ? v === null || v === undefined : true;
+                  case "in": return val.replace(/[()]/g, "").split(",").map(Number).includes(Number(v));
+                  default: return true;
+                }
+              }),
             );
           }
           return query;
         },
         ilike: (col: string, pattern: string) => {
           const needle = pattern.replace(/%/g, "").toLowerCase();
-          filtered = filtered.filter((r) =>
-            String((r as unknown as Record<string, unknown>)[col] ?? "").toLowerCase().includes(needle),
-          );
+          filtered = filtered.filter((r) => String(cell(r, col) ?? "").toLowerCase().includes(needle));
           return query;
         },
-        gte: (col: string, val: number) => {
-          filtered = filtered.filter((r) => Number((r as unknown as Record<string, unknown>)[col]) >= val);
+        gte: (col: string, val: unknown) => {
+          filtered = filtered.filter((r) => cell(r, col) !== null && cell(r, col) !== undefined && cmp(cell(r, col), val) >= 0);
           return query;
         },
-        lte: (col: string, val: number) => {
-          filtered = filtered.filter((r) => Number((r as unknown as Record<string, unknown>)[col]) <= val);
+        lte: (col: string, val: unknown) => {
+          filtered = filtered.filter((r) => cell(r, col) !== null && cell(r, col) !== undefined && cmp(cell(r, col), val) <= 0);
           return query;
         },
         order: () => query,
         range: async (from: number, to: number) => ({ data: filtered.slice(from, to + 1), error: null }),
         in: async (col: string, vals: string[]) => ({
-          data: filtered.filter((r) => vals.includes((r as unknown as Record<string, unknown>)[col] as string)),
+          data: filtered.filter((r) => vals.includes(cell(r, col) as string)),
           error: null,
         }),
+        then: (resolve: (v: { data: null; count: number; error: null }) => void) =>
+          resolve({ data: null, count: filtered.length, error: null }),
       };
       return query;
     },
