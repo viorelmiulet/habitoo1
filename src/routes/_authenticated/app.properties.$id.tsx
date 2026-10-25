@@ -154,7 +154,7 @@ function postalNotice(report: { status: string; reasonLabel: string } | null): v
 }
 
 export const Route = createFileRoute("/_authenticated/app/properties/$id")({
-  validateSearch: (search: Record<string, unknown>) => ({ edit: search.edit === true || search.edit === "true" ? true : undefined }),
+  validateSearch: (search: Record<string, unknown>): { edit?: boolean; tab?: string } => ({ edit: search.edit === true || search.edit === "true" ? true : undefined, tab: typeof search.tab === "string" ? search.tab : undefined }),
   head: () => {
     const title = "Habitoo CRM — detalii proprietate";
     const description = "Fișa proprietății în Habitoo CRM: detalii, utilități, finisaje, dotări, fotografii și publicarea pe portaluri.";
