@@ -36,6 +36,7 @@ const SOURCE_LABELS: Record<string, string> = {
   imobiliare: "Imobiliare.ro",
   olx: "OLX",
   romimo: "Romimo",
+  imoradar: "Imoradar24",
 };
 
 function money(value: number | null, currency: string | null) {
