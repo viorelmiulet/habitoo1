@@ -258,11 +258,11 @@ function PrivateListingsPage() {
     patch({ camere: draft.camere.includes(r) ? draft.camere.filter((x) => x !== r) : [...draft.camere, r] });
 
   const extendedCount = [
-    search.oras, search.zona, search.sursa, search.id, search.camere, search.q,
+    search.oras, selectedZones.length ? "x" : "", search.sursa, search.id, search.camere, search.q,
     search.mpMin, search.mpMax, search.etajMin, search.etajMax, search.anMin, search.anMax,
   ].filter((v) => v !== undefined && v !== "").length;
   const hasFilters = Boolean(
-    search.judet || search.oras || search.zona || rooms.length || search.q || search.sursa || search.tranzactie ||
+    search.judet || search.oras || selectedZones.length || rooms.length || search.q || search.sursa || search.tranzactie ||
       search.tip || search.id || search.zile !== undefined ||
       search.pretMin !== undefined || search.pretMax !== undefined ||
       search.mpMin !== undefined || search.mpMax !== undefined ||
