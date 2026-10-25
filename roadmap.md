@@ -116,3 +116,4 @@
 - [x] Cache 5 minute pentru aceeași căutare
 - [x] Fără salvare în DB; restul paginii neschimbat
 - [x] Teste cu răspunsuri simulate
+- [x] Comisioane pas 1: înregistrare + acces (fără rapoarte/export)

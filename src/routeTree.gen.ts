@@ -56,6 +56,7 @@ import { Route as AuthenticatedAppAiMediaRouteImport } from './routes/_authentic
 import { Route as AuthenticatedAppAnunturiParticulariRouteImport } from './routes/_authenticated/app.anunturi-particulari'
 import { Route as AuthenticatedAppCalendarRouteImport } from './routes/_authenticated/app.calendar'
 import { Route as AuthenticatedAppCollaborationRouteImport } from './routes/_authenticated/app.collaboration'
+import { Route as AuthenticatedAppComisioaneRouteImport } from './routes/_authenticated/app.comisioane'
 import { Route as AuthenticatedAppGoalsRouteImport } from './routes/_authenticated/app.goals'
 import { Route as AuthenticatedAppLeadsRouteImport } from './routes/_authenticated/app.leads'
 import { Route as AuthenticatedAppMatchingRouteImport } from './routes/_authenticated/app.matching'
@@ -405,6 +406,12 @@ const AuthenticatedAppCollaborationRoute =
   AuthenticatedAppCollaborationRouteImport.update({
     id: '/collaboration',
     path: '/collaboration',
+    getParentRoute: () => AuthenticatedAppRoute,
+  } as any)
+const AuthenticatedAppComisioaneRoute =
+  AuthenticatedAppComisioaneRouteImport.update({
+    id: '/comisioane',
+    path: '/comisioane',
     getParentRoute: () => AuthenticatedAppRoute,
   } as any)
 const AuthenticatedAppGoalsRoute = AuthenticatedAppGoalsRouteImport.update({
@@ -1074,6 +1081,7 @@ export interface FileRoutesByFullPath {
   '/app/anunturi-particulari': typeof AuthenticatedAppAnunturiParticulariRoute
   '/app/calendar': typeof AuthenticatedAppCalendarRoute
   '/app/collaboration': typeof AuthenticatedAppCollaborationRoute
+  '/app/comisioane': typeof AuthenticatedAppComisioaneRoute
   '/app/goals': typeof AuthenticatedAppGoalsRoute
   '/app/leads': typeof AuthenticatedAppLeadsRoute
   '/app/matching': typeof AuthenticatedAppMatchingRoute
@@ -1227,6 +1235,7 @@ export interface FileRoutesByTo {
   '/app/anunturi-particulari': typeof AuthenticatedAppAnunturiParticulariRoute
   '/app/calendar': typeof AuthenticatedAppCalendarRoute
   '/app/collaboration': typeof AuthenticatedAppCollaborationRoute
+  '/app/comisioane': typeof AuthenticatedAppComisioaneRoute
   '/app/goals': typeof AuthenticatedAppGoalsRoute
   '/app/leads': typeof AuthenticatedAppLeadsRoute
   '/app/matching': typeof AuthenticatedAppMatchingRoute
@@ -1384,6 +1393,7 @@ export interface FileRoutesById {
   '/_authenticated/app/anunturi-particulari': typeof AuthenticatedAppAnunturiParticulariRoute
   '/_authenticated/app/calendar': typeof AuthenticatedAppCalendarRoute
   '/_authenticated/app/collaboration': typeof AuthenticatedAppCollaborationRoute
+  '/_authenticated/app/comisioane': typeof AuthenticatedAppComisioaneRoute
   '/_authenticated/app/goals': typeof AuthenticatedAppGoalsRoute
   '/_authenticated/app/leads': typeof AuthenticatedAppLeadsRoute
   '/_authenticated/app/matching': typeof AuthenticatedAppMatchingRoute
@@ -1542,6 +1552,7 @@ export interface FileRouteTypes {
     | '/app/anunturi-particulari'
     | '/app/calendar'
     | '/app/collaboration'
+    | '/app/comisioane'
     | '/app/goals'
     | '/app/leads'
     | '/app/matching'
@@ -1695,6 +1706,7 @@ export interface FileRouteTypes {
     | '/app/anunturi-particulari'
     | '/app/calendar'
     | '/app/collaboration'
+    | '/app/comisioane'
     | '/app/goals'
     | '/app/leads'
     | '/app/matching'
@@ -1851,6 +1863,7 @@ export interface FileRouteTypes {
     | '/_authenticated/app/anunturi-particulari'
     | '/_authenticated/app/calendar'
     | '/_authenticated/app/collaboration'
+    | '/_authenticated/app/comisioane'
     | '/_authenticated/app/goals'
     | '/_authenticated/app/leads'
     | '/_authenticated/app/matching'
@@ -2385,6 +2398,13 @@ declare module '@tanstack/react-router' {
       path: '/collaboration'
       fullPath: '/app/collaboration'
       preLoaderRoute: typeof AuthenticatedAppCollaborationRouteImport
+      parentRoute: typeof AuthenticatedAppRoute
+    }
+    '/_authenticated/app/comisioane': {
+      id: '/_authenticated/app/comisioane'
+      path: '/comisioane'
+      fullPath: '/app/comisioane'
+      preLoaderRoute: typeof AuthenticatedAppComisioaneRouteImport
       parentRoute: typeof AuthenticatedAppRoute
     }
     '/_authenticated/app/goals': {
@@ -3183,6 +3203,7 @@ interface AuthenticatedAppRouteChildren {
   AuthenticatedAppAnunturiParticulariRoute: typeof AuthenticatedAppAnunturiParticulariRoute
   AuthenticatedAppCalendarRoute: typeof AuthenticatedAppCalendarRoute
   AuthenticatedAppCollaborationRoute: typeof AuthenticatedAppCollaborationRoute
+  AuthenticatedAppComisioaneRoute: typeof AuthenticatedAppComisioaneRoute
   AuthenticatedAppGoalsRoute: typeof AuthenticatedAppGoalsRoute
   AuthenticatedAppLeadsRoute: typeof AuthenticatedAppLeadsRoute
   AuthenticatedAppMatchingRoute: typeof AuthenticatedAppMatchingRoute
@@ -3219,6 +3240,7 @@ const AuthenticatedAppRouteChildren: AuthenticatedAppRouteChildren = {
     AuthenticatedAppAnunturiParticulariRoute,
   AuthenticatedAppCalendarRoute: AuthenticatedAppCalendarRoute,
   AuthenticatedAppCollaborationRoute: AuthenticatedAppCollaborationRoute,
+  AuthenticatedAppComisioaneRoute: AuthenticatedAppComisioaneRoute,
   AuthenticatedAppGoalsRoute: AuthenticatedAppGoalsRoute,
   AuthenticatedAppLeadsRoute: AuthenticatedAppLeadsRoute,
   AuthenticatedAppMatchingRoute: AuthenticatedAppMatchingRoute,
