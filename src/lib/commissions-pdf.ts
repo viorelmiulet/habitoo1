@@ -31,6 +31,7 @@ export async function buildCommissionPdf(model: CommissionPdfModel): Promise<Blo
   text(model.agency,20,true); text("Raport comisioane",15,true);
   text(`${model.range.from} — ${model.range.to} · ${model.currency}`);
   text(`Generat: ${model.generatedAt}`); if (model.filter) text(model.filter);
+  text("Conversie: cursul RON/EUR salvat pe fiecare comision (sursa: BNR sau BCE).",9);
   y-=12;
   const keys: [keyof ReportKpis,string][] = [["agencyEur","Comision agenție"],["agentEur","Suma agenților"],["count","Tranzacții"],["avgEur","Comision mediu / tranzacție"],["collectedEur","Încasat"],["pendingEur","De încasat"]];
   for (const [key,label] of keys) {
