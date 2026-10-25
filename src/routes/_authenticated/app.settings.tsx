@@ -14,6 +14,7 @@ import { AiSettingsCard } from "@/components/app/ai/AiSettingsCard";
 
 
 import { SiteFeedCard } from "@/components/app/SiteFeedCard";
+import { ArgusConnectionCard } from "@/components/app/ArgusConnectionCard";
 import { CollaborationAutoSwitch } from "@/components/app/CollaborationAutoSwitch";
 import { AgencyCompanyDataFields } from "@/components/app/AgencyCompanyDataFields";
 import { FacebookCatalogCard } from "@/components/app/FacebookCatalogCard";
