@@ -11,6 +11,7 @@ import {
   scoreDistance,
   scoreFloor,
   scoreLocation,
+  scoreOther,
   scoreRooms,
   type AcpSubject,
 } from "@/lib/acp/scoring";

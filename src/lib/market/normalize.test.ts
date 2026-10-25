@@ -43,6 +43,18 @@ describe("normalizarea valorilor", () => {
     expect(normalizeCondition("Necesită renovare")).toBe("necesita renovare");
   });
 
+  it("echivalează tipurile CRM (engleză) cu cele ale ofertelor (română)", () => {
+    expect(normalizePropertyType("apartment")).toBe("apartament");
+    expect(normalizePropertyType("studio")).toBe("apartament");
+    expect(normalizePropertyType("penthouse")).toBe("apartament");
+    expect(normalizePropertyType("duplex")).toBe("apartament");
+    expect(normalizePropertyType("house")).toBe("casa");
+    expect(normalizePropertyType("villa")).toBe("casa");
+    expect(normalizePropertyType("land")).toBe("teren");
+    expect(normalizePropertyType("commercial")).toBe("spatiu comercial");
+    expect(normalizePropertyType("office")).toBe("birou");
+  });
+
   it("interpretează etajul textual", () => {
     expect(normalizeFloor("Parter")).toBe(0);
     expect(normalizeFloor("demisol")).toBe(-1);

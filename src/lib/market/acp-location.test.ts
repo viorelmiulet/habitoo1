@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { applyMarketLocationFilters, marketPoolScope } from "./acp-location";
+import {
+  applyMarketLocationFilters,
+  expandSectorFilters,
+  marketPoolScope,
+  MARKET_SECTOR_MIN_MATCHES,
+} from "./acp-location";
 import { matchesMarketFilters, type MarketIntelligenceRow } from "./intelligence";
 import { scoreLocation } from "../acp/scoring";
 
@@ -29,6 +34,18 @@ describe("canonical ACP geography and mixed market", () => {
   it("retains legacy sector-as-city rows", () => {
     expect(matchesMarketFilters({ ...row, city: "Sector 3", sector: null }, filters)).toBe(true);
     expect(scoreLocation({ city: "Sector 3" }, { city: "București", sector: "Sector 3" })).toBe(60);
+  });
+  it("treats every „București Sector N" variant as city + sector", () => {
+    for (const city of ["Bucureşti Sectorul 6", "București Sector 6", "Sector 6", "Sectorul 6", "bucuresti sector 6"]) {
+      expect(marketPoolScope({ city })).toMatchObject({ city: "bucuresti", sector: "sector 6" });
+    }
+    expect(marketPoolScope({ city: "Cluj-Napoca" })).toMatchObject({ city: "cluj napoca", sector: null });
+  });
+  it("expands the search to the whole city below the sector match threshold", () => {
+    expect(MARKET_SECTOR_MIN_MATCHES).toBe(8);
+    expect(expandSectorFilters({ sector: "sector 6" }, 7).sector).toBeNull();
+    expect(expandSectorFilters({ sector: "sector 6" }, 8).sector).toBe("sector 6");
+    expect(expandSectorFilters({ sector: null }, 0).sector).toBeNull();
   });
   it("sends separate geographic predicates before pagination and never filters is_private", () => {
     const calls: string[] = [];
