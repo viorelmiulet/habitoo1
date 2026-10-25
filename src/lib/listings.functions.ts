@@ -37,6 +37,7 @@ export type OwnerListing = {
   images: string[];
   scrapedAt: string | null;
   firstSeenAt: string | null;
+  phone: string | null;
 };
 
 const num = (v: unknown) => (v === null || v === undefined ? null : Number(v));
@@ -49,7 +50,7 @@ export const privateListingsFiltersSchema = z.object({
   q: z.string().max(200).optional(),
   page: z.number().int().min(0).max(1000).optional(),
   sort: z.enum(["newest", "price_asc", "price_desc", "surface_desc"]).optional(),
-  source: z.enum(["storia", "imobiliare", "olx", "romimo", "imoradar"]).optional(),
+  source: z.enum(["storia", "imobiliare", "olx", "romimo", "imoradar", "anuntul"]).optional(),
   transaction: z.enum(["sale", "rent", "rent_day"]).optional(),
   priceMin: z.number().min(0).max(1e9).optional(),
   priceMax: z.number().min(0).max(1e9).optional(),
@@ -229,7 +230,7 @@ export const getOwnerListingFacets = createServerFn({ method: "GET" })
   });
 
 const LISTING_COLUMNS =
-  "id, source, title, price, currency, price_per_m2, rooms, surface, floor, city, zone, location, county, property_type, transaction_type, url, description, images, scraped_at, first_seen_at";
+  "id, source, title, price, currency, price_per_m2, rooms, surface, floor, city, zone, location, county, property_type, transaction_type, url, description, images, scraped_at, first_seen_at, phone";
 
 type ListingRow = {
   id: string;
@@ -252,6 +253,7 @@ type ListingRow = {
   images: unknown;
   scraped_at: string | null;
   first_seen_at: string | null;
+  phone: string | null;
 };
 
 function toOwnerListing(row: ListingRow): OwnerListing {
@@ -276,6 +278,7 @@ function toOwnerListing(row: ListingRow): OwnerListing {
     images: Array.isArray(row.images) ? row.images.filter((u): u is string => typeof u === "string") : [],
     scrapedAt: row.scraped_at,
     firstSeenAt: row.first_seen_at,
+    phone: row.phone,
   };
 }
 

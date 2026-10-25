@@ -10,7 +10,7 @@ const crmSchema = z.object({
   pret_eur: number, suprafata_mp: number, url: z.string().url().max(2000).nullish(), perioada: text(100),
 });
 export const hbsyncMarketListingSchema = z.object({
-  source: z.enum(["storia", "olx", "romimo", "imobiliare", "imoradar"]), external_id: z.string().min(1).max(200),
+  source: z.enum(["storia", "olx", "romimo", "imobiliare", "imoradar", "anuntul"]), external_id: z.string().min(1).max(200),
   url: z.string().url().max(2000).nullish(), title: text(500),
   deal_type: text(50), property_type: text(100), price: number, currency: text(8),
   surface_built: number, rooms: z.number().int().nonnegative().nullish(),

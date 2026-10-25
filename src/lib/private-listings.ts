@@ -17,7 +17,7 @@ export const PRIVATE_LISTINGS_ORDER: Record<Exclude<PrivateListingsSort, "newest
 };
 
 /** Ordinea fixă a surselor în ciclul de intercalare dintr-o zi. */
-export const PRIVATE_LISTINGS_SOURCE_CYCLE = ["storia", "romimo", "olx", "imoradar", "imobiliare"] as const;
+export const PRIVATE_LISTINGS_SOURCE_CYCLE = ["storia", "romimo", "olx", "imoradar", "imobiliare", "anuntul"] as const;
 
 export type FirstSeenRow = { id: string; source: string; first_seen_at: string | null };
 

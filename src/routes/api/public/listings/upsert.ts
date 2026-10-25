@@ -87,6 +87,7 @@ const listingSchema = z.object({
   has_lift: z.string().max(50).nullish(),
   building_type: z.string().max(100).nullish(),
   url: z.string().url().max(2000).nullish(),
+  phone: z.string().max(50).nullish(),
   images: z.array(z.string().url().max(2000)).max(50).nullish(),
   fingerprint: z.string().max(200).nullish(),
   scraped_at: z.string().datetime({ offset: true }).nullish(),
@@ -215,9 +216,10 @@ export function buildListingRow(input: unknown): Record<string, unknown> {
   const row: Record<string, unknown> = {
     source: listing.source,
     external_id: listing.external_id,
-    phone: null,
+    // Telefonul se păstrează doar pentru anuntul.ro; celelalte surse rămân fără.
+    phone: listing.source === "anuntul" ? (listing.phone ?? null) : null,
   };
-  const skip = new Set(["source", "external_id", "perioada", "period", "rooms_label", "images"]);
+  const skip = new Set(["source", "external_id", "phone", "perioada", "period", "rooms_label", "images"]);
   for (const [key, value] of Object.entries(listing)) {
     if (!skip.has(key) && value !== undefined) row[key] = value;
   }
