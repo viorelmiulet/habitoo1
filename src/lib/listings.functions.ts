@@ -5,12 +5,15 @@ import { z } from "zod";
 import { requireActiveOrgAuth } from "@/lib/org-access";
 import { buildListingFacets, geographyKey, zoneFilter, type GeographyRow, type ListingFacets } from "./private-listing-geography";
 import {
+  PRIVATE_LISTINGS_CATEGORY_FILTERS,
   PRIVATE_LISTINGS_ORDER,
   PRIVATE_LISTINGS_PAGE_SIZE,
   cleanText,
+  daysCutoff,
   interleaveNewest,
   keywordTerms,
   normalizeRooms,
+  romaniaTodayStart,
 } from "@/lib/private-listings";
 
 export type OwnerListing = {
@@ -53,6 +56,14 @@ export const privateListingsFiltersSchema = z.object({
   surfaceMin: z.number().min(0).max(1e6).optional(),
   surfaceMax: z.number().min(0).max(1e6).optional(),
   propertyType: z.string().max(80).optional(),
+  category: z.enum(["apartamente", "case", "comerciale", "terenuri"]).optional(),
+  days: z.number().int().min(0).max(7).optional(),
+  externalId: z.string().max(200).optional(),
+  floorMin: z.number().int().min(-5).max(100).optional(),
+  floorMax: z.number().int().min(-5).max(100).optional(),
+  yearMin: z.number().int().min(1800).max(2100).optional(),
+  yearMax: z.number().int().min(1800).max(2100).optional(),
+  yearUnknown: z.boolean().optional(),
 });
 
 export const TRANSACTION_FILTERS: Record<"sale" | "rent" | "rent_day", string> = {
@@ -107,6 +118,23 @@ function applyOwnerFilters<Q extends OwnerFilterQuery<Q>>(query: Q, data: Privat
     query = query.or(
       `title.ilike.%${term}%,description.ilike.%${term}%,location.ilike.%${term}%`,
     );
+  }
+
+  if (data.category) query = query.or(PRIVATE_LISTINGS_CATEGORY_FILTERS[data.category]);
+  if (data.days !== undefined) query = query.gte("first_seen_at", daysCutoff(data.days));
+  const externalId = cleanText(data.externalId);
+  if (externalId) query = query.eq("external_id", externalId);
+  if (data.floorMin !== undefined) query = query.gte("floor_num", data.floorMin);
+  if (data.floorMax !== undefined) query = query.lte("floor_num", data.floorMax);
+  if (data.yearMin !== undefined) {
+    query = data.yearUnknown === false
+      ? query.gte("year_built", data.yearMin)
+      : query.or(`year_built.gte.${data.yearMin},year_built.is.null`);
+  }
+  if (data.yearMax !== undefined) {
+    query = data.yearUnknown === false
+      ? query.lte("year_built", data.yearMax)
+      : query.or(`year_built.lte.${data.yearMax},year_built.is.null`);
   }
   return query;
 }
