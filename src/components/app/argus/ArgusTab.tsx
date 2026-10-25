@@ -611,15 +611,6 @@ function ArgusSearch() {
 /* ------------------------------------------------------------------ */
 
 function ArgusCard({ item, onOpen }: { item: ArgusPropertyCard; onOpen: () => void }) {
-  const fetchImages = useServerFn(getArgusListingImages);
-  // Poza cardului se cere doar pentru anunțurile care au imagini.
-  const image = useQuery({
-    queryKey: ["argus-card-image", item.id],
-    queryFn: () => fetchImages({ data: { propertyId: item.id } }),
-    enabled: item.hasImage,
-    staleTime: ARGUS_CACHE_MS,
-  });
-  const firstImage = image.data?.[0] ?? null;
   const place = [item.area, item.city, item.county].filter(Boolean).join(", ");
   const specs = [
     item.propertyTypeLabel,
@@ -630,16 +621,11 @@ function ArgusCard({ item, onOpen }: { item: ArgusPropertyCard; onOpen: () => vo
 
   return (
     <article className="relative flex flex-col gap-3 rounded-lg border border-border bg-card p-3 transition-colors hover:border-primary/40 sm:flex-row sm:gap-4">
-      {firstImage ? (
-        <img
-          src={firstImage.thumb ?? firstImage.full}
-          alt={item.title ?? "Fotografie anunț"}
-          loading="lazy"
-          className="aspect-[4/3] w-full shrink-0 rounded-md object-cover sm:w-44"
-        />
-      ) : item.hasImage ? (
-        <Skeleton className="aspect-[4/3] w-full shrink-0 sm:w-44" />
-      ) : null}
+      {/* Fără cereri de poze din listă: o pagină = o singură căutare Argus. */}
+      <div className="flex aspect-[4/3] w-full shrink-0 flex-col items-center justify-center gap-1 rounded-md bg-muted text-xs text-muted-foreground sm:w-44">
+        <ImageIcon className="size-6" aria-hidden />
+        {item.hasImage ? <span>Are poze</span> : <span>Fără poze</span>}
+      </div>
       <div className="flex min-w-0 flex-1 flex-col gap-1.5">
         <div className="flex flex-wrap items-center gap-2">
           <Badge variant="secondary">Argus</Badge>
