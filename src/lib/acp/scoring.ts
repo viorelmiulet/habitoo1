@@ -15,6 +15,7 @@ import {
   type AcpScoreComponent,
 } from "./config";
 import { marketPoolScope } from "../market/acp-location";
+import { normalizePropertyType, normalizeTransactionType } from "../market/normalize";
 
 /** Reprezentarea normalizată a unei proprietăți folosită de motor. */
 export type AcpSubject = {
@@ -225,15 +226,16 @@ export function scoreFeatures(target: AcpSubject, candidate: AcpSubject): number
   return (matches / pairs.length) * 100;
 }
 
-/** Alte criterii: tipul proprietății și tipul tranzacției. */
+/** Alte criterii: tipul proprietății și tipul tranzacției, pe formele canonice. */
 export function scoreOther(target: AcpSubject, candidate: AcpSubject): number | null {
   const checks: boolean[] = [];
-  const propT = normalizeText(target.propertyType);
-  const propC = normalizeText(candidate.propertyType);
-  if (propT !== "" && propC !== "") checks.push(propT === propC);
-  const trT = normalizeText(target.transactionType);
-  const trC = normalizeText(candidate.transactionType);
-  if (trT !== "" && trC !== "") checks.push(trT === trC);
+  // „apartment"/„studio" (CRM) și „apartament" (oferte) sunt același tip.
+  const propT = normalizePropertyType(target.propertyType);
+  const propC = normalizePropertyType(candidate.propertyType);
+  if (propT !== null && propC !== null) checks.push(propT === propC);
+  const trT = normalizeTransactionType(target.transactionType);
+  const trC = normalizeTransactionType(candidate.transactionType);
+  if (trT !== null && trC !== null) checks.push(trT === trC);
   if (checks.length === 0) return null;
   return (checks.filter(Boolean).length / checks.length) * 100;
 }

@@ -764,11 +764,15 @@ export function marketFiltersFromSubject(
 ): MarketIntelligenceFilters {
   const rooms = num(subject.rooms ?? null);
   const area = num(subject.usableArea ?? null);
+  // Tipurile și localitatea trec prin forma canonică: „apartment" (CRM) și
+  // „apartament" (oferte) sunt același tip, iar „Bucureşti Sectorul 6"
+  // înseamnă orașul București + sectorul 6.
+  const scope = marketPoolScope(subject);
   const base: MarketIntelligenceFilters = {
-    propertyType: subject.propertyType ?? null,
-    transactionType: subject.transactionType ?? null,
-    city: marketPoolScope(subject).city === "bucuresti" ? "București" : subject.city ?? null,
-    sector: marketPoolScope(subject).sector,
+    propertyType: scope.propertyType,
+    transactionType: scope.transactionType,
+    city: scope.city === "bucuresti" ? "București" : subject.city ?? null,
+    sector: scope.sector,
     county: subject.county ?? null,
     area: null,
     roomsMin: rooms === null ? null : Math.max(1, rooms - MARKET_SCOPE_ROOMS_TOLERANCE),
