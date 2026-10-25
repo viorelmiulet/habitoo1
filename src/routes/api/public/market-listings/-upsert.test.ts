@@ -99,12 +99,13 @@ describe("market upsert HTTP outcomes with the real validation and ingestion pip
     const { repo, store } = createFakeRepository();
     mocks.repository.mockReturnValue(repo);
     const url = "https://www.imoradar24.ro/link-extern/123?source=imobiliare.ro";
-    const response = await post(["imoradar", "storia", "olx", "romimo", "imobiliare"].map(source => ({
+    const response = await post(["imoradar", "storia", "olx", "romimo", "imobiliare", "anuntul"].map(source => ({
       ...validListing, source, external_id: `${source}-1`, url: source === "imoradar" ? url : undefined,
     })));
     expect(response.status).toBe(200);
-    expect(await response.json()).toMatchObject({ success: true, imported: 5, rejected: 0, errors: [] });
+    expect(await response.json()).toMatchObject({ success: true, imported: 6, rejected: 0, errors: [] });
     expect(store.listings.find(row => row.source === "imoradar")).toMatchObject({ sourceListingId: "imoradar-1", url });
+    expect(store.listings.find(row => row.source === "anuntul")).toMatchObject({ sourceListingId: "anuntul-1" });
   });
 
   it("uses invalid when external_id is absent", async () => {

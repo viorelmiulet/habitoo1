@@ -1,0 +1,2 @@
+ALTER TABLE public.listings DROP CONSTRAINT listings_source_check;
+ALTER TABLE public.listings ADD CONSTRAINT listings_source_check CHECK (source IN ('storia', 'imobiliare', 'olx', 'romimo', 'imoradar', 'anuntul'));

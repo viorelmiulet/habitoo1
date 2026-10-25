@@ -8,6 +8,9 @@ describe("Anunțuri particulari — filtrul de sursă", () => {
   it("acceptă sursa romimo", () => {
     expect(privateListingsFiltersSchema.parse({ source: "romimo" })).toMatchObject({ source: "romimo" });
   });
+  it("acceptă sursa anuntul", () => {
+    expect(privateListingsFiltersSchema.parse({ source: "anuntul" })).toMatchObject({ source: "anuntul" });
+  });
 
   it("acceptă sursele istorice storia, imobiliare și olx", () => {
     for (const source of ["storia", "imobiliare", "olx"]) {
