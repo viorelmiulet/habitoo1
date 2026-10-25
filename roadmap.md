@@ -79,3 +79,10 @@
 - [x] Casetea dispare din pagina „Analiză nouă"; importul de piață, sursele și comparabilele rămân neschimbate
 - [x] 434 teste ACP și de piață trec; build OK
 - [ ] Verificare în cont — blocată: solicitantul nu are un cont asociat pentru sesiunea de test
+
+# ACP — „Date piață" doar pentru SuperAdmin
+
+- [x] Intrarea „Date piață" din meniu apare doar pentru SuperAdmin; ceilalți utilizatori nu o mai văd
+- [x] Ambele pagini (listă și detaliu) sunt închise în SuperadminGate; link direct → redirecționare la /app/acp
+- [x] Importul hbsync, sursele și comparabilele ACP rămân neschimbate pentru toți (434 teste ACP/piață + 4 teste noi de acces; build OK)
+- [ ] Verificare în cont — blocată: solicitantul nu are un cont asociat pentru sesiunea de test
