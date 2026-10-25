@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { writeFile } from "node:fs/promises";
+import { execFileSync } from "node:child_process";
 import { PDFDocument } from "pdf-lib";
 import { filterCommissionRows, type CommissionRecord } from "./commissions-data";
 import { commissionCsv, commissionExportMatrix, commissionFilename, commissionXlsx } from "./commissions-export";
@@ -45,7 +46,9 @@ describe("export și moneda",()=>{
     const k=reportKpis([row()]);
     const blob=await buildCommissionPdf({agency:"MVA Imobiliare",range:filters,generatedAt:"25.10.2026",currency:"RON",filter:"Comisioanele tale",current:k,previous:k,lastYear:k,series:[],byKind:[],byType:[]});
     await writeFile("/tmp/commissions-agent.pdf",new Uint8Array(await blob.arrayBuffer()));
-    expect((await PDFDocument.load(await blob.arrayBuffer())).getPageCount()).toBeGreaterThan(0);
+    const content=execFileSync("pdftotext",["/tmp/commissions-agent.pdf","-"],{encoding:"utf8"});
+    expect(content).not.toContain("Tabel pe agenți");
+    expect(content).not.toContain("Clasament agenți");
   });
   it("Excel conține rândurile, cursurile și formule cu totaluri corecte",async()=>{
     const blob=await commissionXlsx(rows,names,"RON");
