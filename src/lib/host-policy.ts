@@ -211,6 +211,9 @@ export function decideEdge(request: Request): EdgeDecision {
   if (isCrmHostname(host) && isRead && MARKETING_PATHS.has(normalizePath(url.pathname))) {
     return { kind: "redirect", location: `${PUBLIC_SITE_URL}${url.pathname}${url.search}` };
   }
+  if (isCrmHostname(host) && isRead && normalizePath(url.pathname) === "/anunturi-proprietari") {
+    return { kind: "redirect", location: `${url.origin}/app/anunturi-particulari` };
+  }
   return { kind: "pass" };
 }
 
