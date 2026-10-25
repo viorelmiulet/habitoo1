@@ -37,7 +37,11 @@ function waitFor(w: Window, spanMs: number, limit: number, now: number): number 
   return spanMs - (now - w.start);
 }
 
-function check(bucket: Bucket, limits: typeof ARGUS_API_LIMITS, now: number): number {
+function check(
+  bucket: Bucket,
+  limits: { perSecond: number; perMinute: number; perHour: number },
+  now: number,
+): number {
   const wait = Math.max(
     waitFor(bucket.second, 1_000, limits.perSecond, now),
     waitFor(bucket.minute, 60_000, limits.perMinute, now),

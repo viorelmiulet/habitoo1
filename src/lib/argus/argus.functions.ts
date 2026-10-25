@@ -141,14 +141,23 @@ export const disconnectArgus = createServerFn({ method: "POST" })
 /* salvează în baza de date; fiecare cerere trimite IP-ul utilizatorului. */
 /* ------------------------------------------------------------------ */
 
-async function argusDataCall<T>(
+/** Răspunsul Argus, trecut mai departe ca date JSON simple (nesalvate în DB). */
+export type ArgusJson =
+  | string
+  | number
+  | boolean
+  | null
+  | ArgusJson[]
+  | { [key: string]: ArgusJson };
+
+async function argusDataCall(
   ctx: Ctx,
   opts: { path: string; method?: "GET" | "POST"; body?: Record<string, unknown> },
-): Promise<T> {
+): Promise<ArgusJson> {
   const orgId = await callerOrgId(ctx);
   const db = await adminDb();
   const { argusCall } = await import("./connection.server");
-  return argusCall<T>(db, orgId, { ...opts, clientIp: argusClientIp() });
+  return argusCall<ArgusJson>(db, orgId, { ...opts, clientIp: argusClientIp() });
 }
 
 export const argusFilters = createServerFn({ method: "GET" })
