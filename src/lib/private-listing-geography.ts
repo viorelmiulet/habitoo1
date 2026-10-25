@@ -73,10 +73,22 @@ export function buildListingFacets(rows: GeographyRow[]): ListingFacets {
     }
   }
   const alphabetic = (a: PlaceOption, b: PlaceOption) => a.label.localeCompare(b.label, "ro");
+  const zoneEntries = [...zones].map(([key, values]) => {
+    const options = [...values.values()].sort(alphabetic);
+    if (key.endsWith("|bucuresti")) {
+      for (const option of options) {
+        if (option.kind === "neighborhood") {
+          const sector = neighborhoodSector.get(option.value);
+          if (sector) option.sector = sector;
+        }
+      }
+    }
+    return [key, options] as const;
+  });
   return {
     counties: [...counties.values()].sort((a, b) => (a.value === "bucuresti" ? -1 : b.value === "bucuresti" ? 1 : alphabetic(a, b))),
     localities: Object.fromEntries([...localities].map(([key, values]) => [key, [...values.values()].sort((a, b) => b.count - a.count || alphabetic(a, b))])),
-    zones: Object.fromEntries([...zones].map(([key, values]) => [key, [...values.values()].sort(alphabetic)])),
+    zones: Object.fromEntries(zoneEntries),
     propertyTypes: [...types].sort((a, b) => a.localeCompare(b, "ro")),
   };
 }
