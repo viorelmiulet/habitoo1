@@ -326,16 +326,14 @@ function PrivateListingsPage() {
               <SelectItem value="rent_day">Închiriere pe zi</SelectItem>
             </SelectContent>
           </Select>
-          <Select
-            value={draftCountyKey || ALL}
-            onValueChange={(v) => patch({ judet: v === ALL ? "" : v, oras: "", zona: "" })}
-          >
-            <SelectTrigger aria-label="Județ"><SelectValue placeholder="Județ" /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value={ALL}>Județ</SelectItem>
-              {(facets.data?.counties ?? []).map((c) => <SelectItem key={c.value} value={c.value}>{c.label} ({c.count})</SelectItem>)}
-            </SelectContent>
-          </Select>
+          <SearchableSelect
+            ariaLabel="Județ"
+            placeholder="Județ"
+            allLabel="Toate județele"
+            value={draftCountyKey}
+            options={facets.data?.counties ?? []}
+            onChange={(v) => patch({ judet: v, oras: "", zona: [] })}
+          />
           <Select value={draft.zile || ALL} onValueChange={(v) => patch({ zile: v === ALL ? "" : v })}>
             <SelectTrigger aria-label="Zile în piață"><SelectValue placeholder="Zile în piață" /></SelectTrigger>
             <SelectContent>
@@ -367,39 +365,22 @@ function PrivateListingsPage() {
         {extendedOpen ? (
           <div className="space-y-3 border border-border bg-card p-4">
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-              <Select
-                value={draftCityKey || ALL}
+              <SearchableSelect
+                ariaLabel="Localitate"
+                placeholder="Localitate"
+                allLabel="Toate localitățile"
+                value={draftCityKey}
                 disabled={!draft.judet && !draft.oras}
-                onValueChange={(v) => patch({ oras: v === ALL ? "" : v, zona: "" })}
-              >
-                <SelectTrigger aria-label="Localitate"><SelectValue placeholder="Localitate" /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value={ALL}>Toate localitățile</SelectItem>
-                  {localities.map((c) => (
-                    <SelectItem key={c.value} value={c.value}>{c.label} ({c.count})</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <Select
-                value={geographyKey(draft.zona) || ALL}
+                options={localities}
+                onChange={(v) => patch({ oras: v, zona: [] })}
+              />
+              <ZonePickerDialog
+                zones={zones}
+                isBucharest={draftCityKey === "bucuresti"}
+                selected={draft.zona}
                 disabled={!draft.oras || zones.length === 0}
-                onValueChange={(v) => patch({ zona: v === ALL ? "" : v })}
-              >
-                <SelectTrigger aria-label="Zonă"><SelectValue placeholder="Zonă" /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value={ALL}>Toate zonele</SelectItem>
-                  {draftCityKey === "bucuresti" ? (
-                    <>
-                      <SelectGroup><SelectLabel>Sectoare</SelectLabel>
-                        {zones.filter((z) => z.kind === "sector").map((z) => <SelectItem key={z.value} value={z.value}>{z.label} ({z.count})</SelectItem>)}
-                      </SelectGroup>
-                      <SelectGroup><SelectLabel>Cartiere</SelectLabel>
-                        {zones.filter((z) => z.kind === "neighborhood").map((z) => <SelectItem key={z.value} value={z.value}>{z.label} ({z.count})</SelectItem>)}
-                      </SelectGroup>
-                    </>
-                  ) : zones.map((z) => <SelectItem key={z.value} value={z.value}>{z.label} ({z.count})</SelectItem>)}
-                </SelectContent>
-              </Select>
+                onApply={(next) => patch({ zona: next })}
+              />
               <Select value={draft.sursa || ALL} onValueChange={(v) => patch({ sursa: v === ALL ? "" : v })}>
                 <SelectTrigger aria-label="Sursă"><SelectValue placeholder="Sursă" /></SelectTrigger>
                 <SelectContent>
