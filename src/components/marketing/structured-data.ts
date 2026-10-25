@@ -2,7 +2,7 @@ import { PLAN_AGENT_LIMITS, PLAN_LABELS, PLAN_PRICES, type PlanKey } from "@/lib
 import { SITE_NAME, SITE_URL, LEGAL_NAME, COMPANY_TAX_ID, COMPANY_REGISTER_ID, FACEBOOK_URL, GOOGLE_PROFILE_URL } from "./public-identity";
 export { FACEBOOK_URL, GOOGLE_PROFILE_URL } from "./public-identity";
 
-/** Identități comune; definite complet doar pe pagina principală. */
+/** Identități comune cu aceleași @id pe toate paginile publice. */
 export const ORG_ID = `${SITE_URL}/#organization`;
 export const WEBSITE_ID = `${SITE_URL}/#website`;
 export const SOFTWARE_ID = `${SITE_URL}/#software`;
@@ -45,7 +45,6 @@ export function homeIdentityJsonLd(description: string): Ld[] {
       url: `${SITE_URL}/`,
       inLanguage: "ro",
       publisher: { "@id": ORG_ID },
-      offers: planOffersJsonLd().offers,
     },
     {
       "@context": CTX,
@@ -70,6 +69,7 @@ export function homeIdentityJsonLd(description: string): Ld[] {
       inLanguage: "ro",
       description,
       publisher: { "@id": ORG_ID },
+      offers: planOffersJsonLd().offers,
     },
   ];
 }
