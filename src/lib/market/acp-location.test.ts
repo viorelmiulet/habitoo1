@@ -35,7 +35,7 @@ describe("canonical ACP geography and mixed market", () => {
     expect(matchesMarketFilters({ ...row, city: "Sector 3", sector: null }, filters)).toBe(true);
     expect(scoreLocation({ city: "Sector 3" }, { city: "București", sector: "Sector 3" })).toBe(60);
   });
-  it("treats every „București Sector N" variant as city + sector", () => {
+  it("treats every București Sector N variant as city + sector", () => {
     for (const city of ["Bucureşti Sectorul 6", "București Sector 6", "Sector 6", "Sectorul 6", "bucuresti sector 6"]) {
       expect(marketPoolScope({ city })).toMatchObject({ city: "bucuresti", sector: "sector 6" });
     }

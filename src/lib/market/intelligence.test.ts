@@ -380,7 +380,7 @@ describe("consistența cu statistica ACP", () => {
     expect(filters.status).toBe("active");
   });
 
-  it("derivează filtre canonice din subiectul CRM („apartment", „Bucureşti Sectorul 6")", () => {
+  it("derivează filtre canonice din subiectul CRM (apartment, Bucureşti Sectorul 6)", () => {
     const filters = marketFiltersFromSubject({
       propertyType: "apartment",
       transactionType: "sale",
