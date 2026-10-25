@@ -49,6 +49,10 @@ describe("Imoradar private listing endpoint and exact source filtering", () => {
       },
       order: () => query,
       range: async () => ({ data: filtered, count: filtered.length, error: null }),
+      in: async (_column: string, values: string[]) => ({
+        data: filtered.filter((row) => values.includes(row.id)),
+        error: null,
+      }),
     };
     const handler = getOwnerListings as unknown as (input: unknown) => Promise<{ items: { source: string }[]; total: number }>;
     const result = await handler({ data: privateListingsFiltersSchema.parse({ source: "imoradar" }),
