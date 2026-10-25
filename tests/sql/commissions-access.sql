@@ -12,9 +12,7 @@ SELECT array_agg(id) AS agents FROM (SELECT id FROM public.profiles x
  WHERE NOT EXISTS (SELECT 1 FROM public.user_roles y WHERE y.user_id=x.id AND y.role IN ('agency_admin','superadmin'))
  ORDER BY id LIMIT 2) t \gset
 SELECT (:'agents'::uuid[])[1] AS agent1, (:'agents'::uuid[])[2] AS agent2 \gset
-ALTER TABLE public.profiles DISABLE TRIGGER USER;
 UPDATE public.profiles SET organization_id=:'org_a', is_active=true WHERE id IN (:'agent1',:'agent2');
-ALTER TABLE public.profiles ENABLE TRIGGER USER;
 SELECT p.id AS other_user FROM public.profiles p JOIN public.organizations o ON o.id=p.organization_id
  WHERE o.status IN ('active','trial') AND o.archived_at IS NULL AND p.organization_id<>:'org_a'
  AND NOT EXISTS (SELECT 1 FROM public.user_roles y WHERE y.user_id=p.id AND y.role='superadmin') ORDER BY p.id LIMIT 1 \gset
