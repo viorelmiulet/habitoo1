@@ -9,6 +9,7 @@ import { appHead } from "@/components/app/app-head";
 import { SearchableSelect } from "@/components/app/SearchableSelect";
 import { ZonePickerDialog } from "@/components/app/ZonePickerDialog";
 import { ImportListingButton } from "@/components/app/ImportListingButton";
+import { ArgusTab } from "@/components/app/argus/ArgusTab";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -30,6 +31,8 @@ import { PRIVATE_LISTINGS_PAGE_SIZE, type PrivateListingsSort } from "@/lib/priv
 import { geographyKey, localityScope } from "@/lib/private-listing-geography";
 
 const searchSchema = z.object({
+  // „argus” = tabul cu rezultate live de la Argus; lipsa = lista Habitoo.
+  lista: z.enum(["argus"]).optional(),
   tab: z.enum(["apartamente", "case", "comerciale", "terenuri"]).optional(),
   judet: z.string().optional(),
   oras: z.string().optional(),
