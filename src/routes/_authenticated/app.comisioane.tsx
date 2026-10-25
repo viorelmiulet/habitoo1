@@ -37,6 +37,7 @@ import { CommissionExportButton } from "@/components/app/CommissionExportButton"
 import { readCommissions } from "@/lib/commissions-data";
 import { convertCommissionAmount, reportKpis, type DisplayCurrency } from "@/lib/commissions-reports";
 import { getRonEurRate } from "@/lib/commissions-rates.functions";
+import { resolveCommissionSaveRate } from "@/lib/commission-save-rate";
 
 const searchSchema = z.object({
   nou: z.coerce.boolean().optional(),
@@ -150,9 +151,8 @@ function CommissionsPage() {
       if (!payload.agent_id) throw new Error("Alege agentul.");
       // Keep the saved historical rate unless the transaction date changes.
       const existing = editingId ? rows.find(r => r.id === editingId) : undefined;
-      const ronToEurRate = existing?.transaction_date === payload.transaction_date && existing.ron_to_eur_rate
-        ? existing.ron_to_eur_rate
-        : (await getRonEurRate({ data: { date: payload.transaction_date } })).rate;
+      const ronToEurRate = await resolveCommissionSaveRate(payload.transaction_date, existing,
+        date => getRonEurRate({ data: { date } }));
       if (editingId) {
         const { error } = await supabase.from("commissions").update({ ...payload, ron_to_eur_rate: ronToEurRate }).eq("id", editingId);
         if (error) throw error;

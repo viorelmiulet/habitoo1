@@ -1,5 +1,10 @@
 # SEO public — pasul 1a
 
+## Comisioane — BNR
+- [x] Salvare independentă de BNR, completare tolerantă și zilnică (job creat; noua adresă devine disponibilă după publicare)
+- [x] Surse în ordine, parser, diagnostic anual (HTTP 200 HTML, zero cursuri) și 39 teste simulate trec
+- [ ] Salvare verificată în cont — solicitantul nu are cont asociat pentru sesiunea de test
+
 ## SEO pasul 1b
 - [x] Rescriere llms.txt, statistici agregate actuale și cache o oră
 - [x] 21 teste trec; HTTP 200, 5267 anunțuri / 6 surse și 8056 oferte de piață; răspuns verificat, fără publicare

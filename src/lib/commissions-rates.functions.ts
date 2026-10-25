@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { getRonEurRateForDate } from "@/lib/commissions-rates.server";
+import { completeMissingCommissionRates, getRonEurRateForDate } from "@/lib/commissions-rates.server";
 import { z } from "zod";
 
 /** Cursul BNR RON/EUR din ziua tranzacției (sau ultima zi lucrătoare anterioară). */
@@ -25,13 +25,14 @@ export const ensureCommissionRates = createServerFn({ method: "POST" })
     if (error) throw error;
     if (!rows?.length) return [];
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    for (const date of new Set(rows.filter(r => !r.ron_to_eur_rate).map(r => r.transaction_date))) {
-      const rate = await getRonEurRateForDate(date, { table: supabaseAdmin.from("exchange_rates") });
-      const ids = rows.filter(r => r.transaction_date === date && !r.ron_to_eur_rate).map(r => r.id);
-      const { error: updateError } = await supabaseAdmin.from("commissions")
-        .update({ ron_to_eur_rate: rate.rate }).in("id", ids).eq("transaction_date", date).is("ron_to_eur_rate", null);
-      if (updateError) throw updateError;
-    }
+    await completeMissingCommissionRates(rows, {
+      resolve: date => getRonEurRateForDate(date, { table: supabaseAdmin.from("exchange_rates") }),
+      update: async (ids, date, rate) => {
+        const { error: updateError } = await supabaseAdmin.from("commissions")
+          .update({ ron_to_eur_rate: rate }).in("id", ids).eq("transaction_date", date).is("ron_to_eur_rate", null);
+        if (updateError) throw updateError;
+      },
+    });
     const { data: saved, error: readError } = await context.supabase.from("commissions").select("id,ron_to_eur_rate").in("id", data.ids);
     if (readError) throw readError;
     return saved ?? [];

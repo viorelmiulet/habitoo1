@@ -32,7 +32,8 @@ export async function readCommissions(filters: CommissionFilters, scope: { orgId
   }
   const missing = rows.filter(r => !r.ron_to_eur_rate).map(r => r.id);
   for (let i = 0; i < missing.length; i += 100) {
-    const rates = await ensureCommissionRates({ data: { ids: missing.slice(i, i + 100) } });
+    // A BNR outage or failed retry must not hide the saved list/report rows.
+    const rates = await ensureCommissionRates({ data: { ids: missing.slice(i, i + 100) } }).catch(() => []);
     const byId = new Map(rates.map(r => [r.id, r.ron_to_eur_rate]));
     for (const row of rows) if (byId.has(row.id)) row.ron_to_eur_rate = byId.get(row.id) ?? null;
   }
