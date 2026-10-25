@@ -3406,6 +3406,7 @@ export type Database = {
           description: string | null
           external_id: string
           fingerprint: string | null
+          first_seen_at: string
           floor: string | null
           floors_count: number | null
           furnished: string | null
@@ -3451,6 +3452,7 @@ export type Database = {
           description?: string | null
           external_id: string
           fingerprint?: string | null
+          first_seen_at?: string
           floor?: string | null
           floors_count?: number | null
           furnished?: string | null
@@ -3496,6 +3498,7 @@ export type Database = {
           description?: string | null
           external_id?: string
           fingerprint?: string | null
+          first_seen_at?: string
           floor?: string | null
           floors_count?: number | null
           furnished?: string | null
