@@ -154,6 +154,7 @@ function postalNotice(report: { status: string; reasonLabel: string } | null): v
 }
 
 export const Route = createFileRoute("/_authenticated/app/properties/$id")({
+  validateSearch: (search: Record<string, unknown>): { edit?: boolean; tab?: string } => ({ edit: search.edit === true || search.edit === "true" ? true : undefined, tab: typeof search.tab === "string" ? search.tab : undefined }),
   head: () => {
     const title = "Habitoo CRM — detalii proprietate";
     const description = "Fișa proprietății în Habitoo CRM: detalii, utilități, finisaje, dotări, fotografii și publicarea pe portaluri.";
@@ -171,7 +172,7 @@ export const Route = createFileRoute("/_authenticated/app/properties/$id")({
 
 function PropertyDetailPage() {
   const { id } = Route.useParams();
-  const search = useSearch({ strict: false }) as { tab?: string };
+  const search = useSearch({ strict: false }) as { tab?: string; edit?: boolean };
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { data: user } = useCurrentUser();
@@ -367,6 +368,13 @@ function PropertyDetailPage() {
     });
     setEditing(true);
   };
+
+  const openedEditRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!search.edit || !property || openedEditRef.current === id) return;
+    openedEditRef.current = id;
+    startEdit();
+  }, [search.edit, property, id]);
 
   const save = useMutation({
     mutationFn: async (patch: Record<string, unknown>) => {

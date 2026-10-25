@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { PageHeader } from "@/components/app/PageHeader";
+import { ImportListingButton } from "@/components/app/ImportListingButton";
 import { appHead } from "@/components/app/app-head";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -28,7 +29,7 @@ import {
 } from "@/lib/listings.functions";
 
 export const Route = createFileRoute("/_authenticated/app/anunturi-particulari_/$id")({
-  head: () => appHead("Anunț particular — Habitoo CRM"),
+  head: () => { const title = "Anunț particular — Habitoo CRM"; const description = "Fotografii, detalii, comentarii și importul anunțului în portofoliu cu acordul proprietarului."; const head = appHead(title); return { ...head, meta: [...head.meta, { name: "description", content: description }, { property: "og:title", content: title }, { property: "og:description", content: description }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }] }; },
   component: OwnerListingDetailPage,
 });
 
@@ -173,6 +174,7 @@ function ListingDetail({ listing }: { listing: OwnerListing }) {
               </p>
             ) : null}
             <div className="flex flex-col gap-2 pt-1">
+              <ImportListingButton listingId={listing.id} />
               {listing.phone ? (
                 <Button asChild variant="outline">
                   <a href={`tel:${listing.phone}`}>
