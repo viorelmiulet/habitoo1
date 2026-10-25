@@ -1,5 +1,11 @@
 # Anunțuri particulari — afișare pe rânduri, paginare și sortare
 
+# hbsync — sursa Imoradar24
+
+- [ ] Acceptare imoradar în ambele importuri, cu sursele existente păstrate
+- [ ] Filtru și etichete Imoradar24; linkuri externe păstrate integral
+- [ ] Teste importuri, filtrare și compatibilitate; verificare disponibilă
+
 - [x] Rânduri orizontale (poză stânga, detalii, acțiuni dreapta) în locul grilei de carduri
 - [x] 24 de anunțuri pe pagină (în loc de 9)
 - [x] Paginare numerotată cu prima/ultima pagină și paginile din jurul celei curente
