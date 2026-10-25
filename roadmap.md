@@ -1,8 +1,9 @@
 # Anunțuri particulari — import în portofoliu
 
-- [ ] Confirmare Da/Nu pe card și detaliu; deschidere directă la Importat
-- [ ] Creare atomică fără dubluri per agenție, câmpuri și notă internă, poze copiate în ordine
-- [ ] Teste fără publicări reale și verificarea fluxului în cont
+- [x] Confirmare Da/Nu pe card și detaliu; deschidere directă la Importat
+- [x] Creare atomică fără dubluri per agenție, câmpuri și notă internă, poze copiate în ordine
+- [x] Teste de acord, copiere foto, câmpuri, notă, dubluri și lipsa publicării; test tranzacțional executat și anulat prin instrumentul de date
+- [ ] Verificarea fluxului pe ecran în cont — necesită autentificarea solicitantului în previzualizare (nu există cont asociat pentru sesiunea de test)
 
 # Anunțuri particulari — filtre de localizare (model „Alege zone”)
 
