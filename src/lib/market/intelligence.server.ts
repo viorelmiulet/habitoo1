@@ -24,7 +24,7 @@ import {
 } from "./intelligence";
 export type { MarketIntelligenceResult };
 import { MARKET_SOURCES, marketSourceName } from "./sources";
-import { applyMarketLocationFilters } from "./acp-location";
+import { applyMarketLocationFilters, expandSectorFilters } from "./acp-location";
 import { applyListingAgeFilters } from "./listing-age";
 
 type Admin = SupabaseClient<Database>;
@@ -69,42 +69,56 @@ function mapRow(row: Record<string, unknown>): MarketIntelligenceRow {
 export async function loadMarketIntelligenceRows(
   admin: Admin,
   filters: MarketIntelligenceFilters,
+  options: { expandSector?: boolean } = {},
 ): Promise<{ rows: MarketIntelligenceRow[]; totalMatched: number }> {
-  let query = admin
-    .from("market_listings")
-    .select(ROW_COLUMNS, { count: "exact" })
-    .order("last_seen_at", { ascending: false })
-    .limit(MARKET_SAMPLE_CAP);
+  const run = async (effective: MarketIntelligenceFilters) => {
+    let query = admin
+      .from("market_listings")
+      .select(ROW_COLUMNS, { count: "exact" })
+      .order("last_seen_at", { ascending: false })
+      .limit(MARKET_SAMPLE_CAP);
 
-  const status = filters.status ?? "active";
-  if (status !== "all") query = query.eq("status", status);
-  query = applyMarketLocationFilters(query, filters);
-  if (filters.county) query = query.ilike("county", filters.county);
-  if (filters.propertyType) query = query.eq("property_type", filters.propertyType);
-  if (filters.transactionType) query = query.eq("transaction_type", filters.transactionType);
-  if (typeof filters.roomsMin === "number") query = query.gte("rooms", filters.roomsMin);
-  if (typeof filters.roomsMax === "number") query = query.lte("rooms", filters.roomsMax);
-  if (typeof filters.areaMin === "number") query = query.gte("usable_area", filters.areaMin);
-  if (typeof filters.areaMax === "number") query = query.lte("usable_area", filters.areaMax);
-  if (typeof filters.priceMin === "number") query = query.gte("price", filters.priceMin);
-  if (typeof filters.priceMax === "number") query = query.lte("price", filters.priceMax);
-  if (typeof filters.pricePerSqmMin === "number") {
-    query = query.gte("price_per_sqm", filters.pricePerSqmMin);
-  }
-  if (typeof filters.pricePerSqmMax === "number") {
-    query = query.lte("price_per_sqm", filters.pricePerSqmMax);
-  }
-  if (filters.sources && filters.sources.length > 0) query = query.in("source", filters.sources);
-  query = applyListingAgeFilters(query, filters);
-  if (typeof filters.seenWithinDays === "number") {
-    const since = new Date(Date.now() - filters.seenWithinDays * 86_400_000).toISOString();
-    query = query.gte("last_seen_at", since);
-  }
+    const status = effective.status ?? "active";
+    if (status !== "all") query = query.eq("status", status);
+    query = applyMarketLocationFilters(query, effective);
+    if (effective.county) query = query.ilike("county", effective.county);
+    if (effective.propertyType) query = query.eq("property_type", effective.propertyType);
+    if (effective.transactionType) query = query.eq("transaction_type", effective.transactionType);
+    if (typeof effective.roomsMin === "number") query = query.gte("rooms", effective.roomsMin);
+    if (typeof effective.roomsMax === "number") query = query.lte("rooms", effective.roomsMax);
+    if (typeof effective.areaMin === "number") query = query.gte("usable_area", effective.areaMin);
+    if (typeof effective.areaMax === "number") query = query.lte("usable_area", effective.areaMax);
+    if (typeof effective.priceMin === "number") query = query.gte("price", effective.priceMin);
+    if (typeof effective.priceMax === "number") query = query.lte("price", effective.priceMax);
+    if (typeof effective.pricePerSqmMin === "number") {
+      query = query.gte("price_per_sqm", effective.pricePerSqmMin);
+    }
+    if (typeof effective.pricePerSqmMax === "number") {
+      query = query.lte("price_per_sqm", effective.pricePerSqmMax);
+    }
+    if (effective.sources && effective.sources.length > 0) {
+      query = query.in("source", effective.sources);
+    }
+    query = applyListingAgeFilters(query, effective);
+    if (typeof effective.seenWithinDays === "number") {
+      const since = new Date(Date.now() - effective.seenWithinDays * 86_400_000).toISOString();
+      query = query.gte("last_seen_at", since);
+    }
 
-  const { data, count, error } = await query;
-  if (error) throw error;
-  const rows = ((data ?? []) as unknown as Record<string, unknown>[]).map(mapRow);
-  return { rows, totalMatched: count ?? rows.length };
+    const { data, count, error } = await query;
+    if (error) throw error;
+    const rows = ((data ?? []) as unknown as Record<string, unknown>[]).map(mapRow);
+    return { rows, totalMatched: count ?? rows.length };
+  };
+
+  const result = await run(filters);
+  // Regula ACP: sub pragul de oferte din sector, căutarea acoperă tot orașul.
+  // Nu se aplică filtrelor alese explicit în Centrul de date de piață.
+  if (options.expandSector) {
+    const widened = expandSectorFilters(filters, result.totalMatched);
+    if (widened !== filters) return run(widened);
+  }
+  return result;
 }
 
 /** Istoricul real al listărilor filtrate, din `market_listing_snapshots`. */
@@ -194,9 +208,11 @@ export async function loadSourceQuality(
 export async function computeMarketIntelligence(
   admin: Admin,
   filters: MarketIntelligenceFilters,
-  options: { includeTrend?: boolean; includeSources?: boolean } = {},
+  options: { includeTrend?: boolean; includeSources?: boolean; expandSector?: boolean } = {},
 ): Promise<MarketIntelligenceResult> {
-  const { rows, totalMatched } = await loadMarketIntelligenceRows(admin, filters);
+  const { rows, totalMatched } = await loadMarketIntelligenceRows(admin, filters, {
+    expandSector: options.expandSector,
+  });
 
   const lastSyncAt = await (async () => {
     const { data } = await admin

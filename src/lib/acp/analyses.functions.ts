@@ -36,7 +36,11 @@ import {
 } from "./guards";
 import { readStoredAcpAiInsight, type AcpAiInsight } from "./ai/schema";
 import { dedupeMarketCandidates } from "@/lib/market/acp";
-import { marketPoolScope, applyMarketLocationFilters } from "@/lib/market/acp-location";
+import {
+  marketPoolScope,
+  applyMarketLocationFilters,
+  MARKET_SECTOR_MIN_MATCHES,
+} from "@/lib/market/acp-location";
 import {
   calculateDataQuality,
   calculateFreshness,
@@ -331,19 +335,35 @@ async function collectCandidates(params: {
   //    Ofertele active au prioritate, iar anunțurile aceleiași proprietăți
   //    apărute pe mai multe surse se numără o singură dată (entitate canonică).
   if (sources["portal"]) {
-    let query = admin
-      .from("market_listings")
-      .select("*")
-      .in("status", ["active", "inactive"])
-      .order("last_seen_at", { ascending: false })
-      .limit(400);
     const scope = marketPoolScope(target);
-    if (scope.propertyType) query = query.eq("property_type", scope.propertyType);
-    if (scope.transactionType) query = query.eq("transaction_type", scope.transactionType);
-    query = applyMarketLocationFilters(query, target);
-    const { data, error } = await query;
-    if (error) throw acpDbError("collect market listings", error);
-    const rows = data ?? [];
+    // Cartierul nu elimină oferte: același cartier crește doar scorul de
+    // localizare din motor. Filtrele dure rămân orașul și sectorul.
+    const locationTarget = { ...target, neighborhood: null };
+    const runPoolQuery = (withSector: boolean) => {
+      let query = admin
+        .from("market_listings")
+        .select("*")
+        .in("status", ["active", "inactive"])
+        .order("last_seen_at", { ascending: false })
+        .limit(400);
+      if (scope.propertyType) query = query.eq("property_type", scope.propertyType);
+      if (scope.transactionType) query = query.eq("transaction_type", scope.transactionType);
+      return applyMarketLocationFilters(
+        query,
+        withSector ? locationTarget : { ...locationTarget, sector: null },
+      );
+    };
+    const first = await runPoolQuery(true);
+    if (first.error) throw acpDbError("collect market listings", first.error);
+    let rows = first.data ?? [];
+    // Sub pragul de oferte potrivite în sector, căutarea se extinde la tot
+    // orașul (aceeași regulă ca în blocul „Piața" din analiză). Sectorul
+    // poate fi dedus din oraș („Bucureşti Sectorul 6"), nu doar din câmp.
+    if (scope.sector && rows.length < MARKET_SECTOR_MIN_MATCHES) {
+      const widened = await runPoolQuery(false);
+      if (widened.error) throw acpDbError("collect market listings", widened.error);
+      rows = widened.data ?? [];
+    }
     const deduped = dedupeMarketCandidates(rows as never);
     // Portalurile suplimentare ale unei oferte unite între portaluri: fără ele,
     // cititorul analizei nu ar vedea de unde provine de fapt comparabilul.

@@ -11,6 +11,7 @@ import {
   scoreDistance,
   scoreFloor,
   scoreLocation,
+  scoreOther,
   scoreRooms,
   type AcpSubject,
 } from "@/lib/acp/scoring";
@@ -74,6 +75,20 @@ describe("configurația motorului ACP", () => {
     expect(classifyComparable(ACP_THRESHOLDS.direct)).toBe("direct");
     expect(classifyComparable(75)).toBe("secondary");
     expect(classifyComparable(69.99)).toBe("excluded");
+  });
+});
+
+describe("scoreOther", () => {
+  it("echivalează tipurile CRM (engleză) cu cele ale ofertelor (română)", () => {
+    expect(
+      scoreOther(
+        { propertyType: "apartment", transactionType: "sale" },
+        { propertyType: "apartament", transactionType: "sale" },
+      ),
+    ).toBe(100);
+    expect(scoreOther({ propertyType: "studio" }, { propertyType: "apartament" })).toBe(100);
+    expect(scoreOther({ propertyType: "house" }, { propertyType: "casa" })).toBe(100);
+    expect(scoreOther({ propertyType: "apartment" }, { propertyType: "casa" })).toBe(0);
   });
 });
 

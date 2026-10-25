@@ -380,6 +380,36 @@ describe("consistența cu statistica ACP", () => {
     expect(filters.status).toBe("active");
   });
 
+  it("derivează filtre canonice din subiectul CRM (apartment, Bucureşti Sectorul 6)", () => {
+    const filters = marketFiltersFromSubject({
+      propertyType: "apartment",
+      transactionType: "sale",
+      city: "Bucureşti Sectorul 6",
+      rooms: 2,
+      usableArea: 55,
+    });
+    expect(filters.propertyType).toBe("apartament");
+    expect(filters.transactionType).toBe("sale");
+    expect(filters.city).toBe("București");
+    expect(filters.sector).toBe("sector 6");
+    expect(filters.roomsMin).toBe(1);
+    expect(filters.roomsMax).toBe(3);
+  });
+
+  it("garsoniera rămâne apartament și caută oferte de 1–2 camere", () => {
+    const filters = marketFiltersFromSubject({
+      propertyType: "studio",
+      transactionType: "sale",
+      city: "Sector 6",
+      rooms: 1,
+    });
+    expect(filters.propertyType).toBe("apartament");
+    expect(filters.city).toBe("București");
+    expect(filters.sector).toBe("sector 6");
+    expect(filters.roomsMin).toBe(1);
+    expect(filters.roomsMax).toBe(2);
+  });
+
   it("suprascrierile utilizatorului au prioritate față de derivare", () => {
     const filters = marketFiltersFromSubject({ city: "București", rooms: 3 }, { city: "Cluj-Napoca", roomsMin: 1 });
     expect(filters.city).toBe("Cluj-Napoca");

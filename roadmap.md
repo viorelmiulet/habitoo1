@@ -32,3 +32,11 @@
 - [x] Ștergerea celor 231 telefoane existente fără schimbarea descrierilor
 - [x] 27 teste trec; verificat 0 telefoane salvate din 1394 anunțuri; build OK
 - [ ] Verificare vizuală în cont — blocată: solicitantul nu are un cont asociat pentru sesiunea de test
+
+# ACP — ofertele de piață intră în comparabile
+
+- [x] Tipuri echivalente: apartment/studio/penthouse/duplex → apartament, house/villa → casă, land → teren, commercial → spațiu comercial, office → birou
+- [x] „București Sector N" / „Bucureşti Sectorul N" / „Sector N" = București + Sector N
+- [x] Cartierul nu mai elimină oferte (doar crește scorul); sub 8 oferte în sector → extindere la tot orașul
+- [x] Aceleași reguli în blocul „Piața" din analiză
+- [x] Teste: HB-1171 / HB-1260 / HB-1261 au comparabile din piață; build OK

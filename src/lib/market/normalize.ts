@@ -204,10 +204,11 @@ export function parseBooleanValue(value: unknown): boolean | null {
 }
 
 const PROPERTY_TYPES: { canonical: string; patterns: RegExp }[] = [
-  { canonical: "apartament", patterns: /(apartament|apt|garsoniera|flat)/ },
-  { canonical: "casa", patterns: /(casa|vila|duplex|house)/ },
+  // Garsoniera (studio) rămâne apartament: numărul de camere o diferențiază.
+  { canonical: "apartament", patterns: /(apartament|apartment|apt|garsoniera|studio|penthouse|duplex|flat)/ },
+  { canonical: "casa", patterns: /(casa|vila|villa|house)/ },
   { canonical: "teren", patterns: /(teren|lot|land)/ },
-  { canonical: "spatiu comercial", patterns: /(spatiu comercial|comercial|retail|magazin)/ },
+  { canonical: "spatiu comercial", patterns: /(spatiu comercial|comercial|commercial|retail|magazin)/ },
   { canonical: "birou", patterns: /(birou|office)/ },
   { canonical: "hala", patterns: /(hala|depozit|industrial|warehouse)/ },
 ];
