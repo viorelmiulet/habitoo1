@@ -1212,6 +1212,13 @@
       "when": 1792913461921,
       "tag": "0172_listings_first_seen_at",
       "breakpoints": true
+    },
+    {
+      "idx": 173,
+      "version": "7",
+      "when": 1792914037178,
+      "tag": "0173_listings_floor_num",
+      "breakpoints": true
     }
   ]
 }
