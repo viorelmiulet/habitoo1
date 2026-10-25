@@ -113,7 +113,7 @@ type Draft = {
   tranzactie: string;
   judet: string;
   oras: string;
-  zona: string;
+  zona: string[];
   zile: string;
   pretMin: string;
   pretMax: string;
@@ -132,12 +132,16 @@ type Draft = {
 
 const numText = (v: number | undefined) => (v === undefined ? "" : String(v));
 
+/** URL-ul acceptă o zonă (linkuri vechi) sau mai multe; în interior lucrăm mereu cu listă. */
+const zonaList = (zona: Search["zona"]): string[] =>
+  (Array.isArray(zona) ? zona : zona ? [zona] : []).map(geographyKey).filter(Boolean);
+
 function draftFromSearch(search: Search): Draft {
   return {
     tranzactie: search.tranzactie ?? "",
     judet: search.judet ?? "",
     oras: search.oras ?? "",
-    zona: search.zona ?? "",
+    zona: zonaList(search.zona),
     zile: search.zile === undefined ? "" : String(search.zile),
     pretMin: numText(search.pretMin),
     pretMax: numText(search.pretMax),
