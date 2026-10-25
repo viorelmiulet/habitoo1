@@ -12,6 +12,13 @@ import {
   normalizeRooms,
   romaniaTodayStart,
 } from "./private-listings";
+import {
+  buildListingFacets,
+  filterPlaceOptions,
+  firstIndexForLetter,
+  type GeographyRow,
+  type PlaceOption,
+} from "./private-listing-geography";
 
 describe("filtre anunțuri particulari", () => {
   it("pagina are 24 de anunțuri, afișate pe rânduri", () => {
@@ -113,5 +120,45 @@ describe("zile în piață și categorii", () => {
     expect(PRIVATE_LISTINGS_CATEGORY_FILTERS.comerciale).toContain("birou");
     expect(PRIVATE_LISTINGS_CATEGORY_FILTERS.comerciale).toContain("garaj");
     expect(PRIVATE_LISTINGS_CATEGORY_FILTERS.terenuri).toContain("teren");
+  });
+});
+
+describe("căutarea în listele de localizare și fereastra Alege zone", () => {
+  const counties: PlaceOption[] = [
+    { value: "bucuresti", label: "București", count: 700 },
+    { value: "cluj", label: "Cluj", count: 120 },
+    { value: "constanta", label: "Constanța", count: 80 },
+  ];
+  const zones: PlaceOption[] = [
+    { value: "aviatiei", label: "Aviației", count: 5, kind: "neighborhood" },
+    { value: "militari", label: "Militari", count: 40, kind: "neighborhood", sector: "sector 6" },
+    { value: "marasti", label: "Mărăști", count: 12, kind: "neighborhood" },
+    { value: "titan", label: "Titan", count: 49, kind: "neighborhood", sector: "sector 3" },
+  ];
+
+  it("cl in Judet arata Cluj, fara derulare", () => {
+    expect(filterPlaceOptions(counties, "cl").map((o) => o.label)).toEqual(["Cluj"]);
+  });
+
+  it("căutarea ignoră diacriticele", () => {
+    expect(filterPlaceOptions(zones, "marasti").map((o) => o.value)).toEqual(["marasti"]);
+  });
+
+  it("litera M sare la prima zona cu M", () => {
+    expect(zones[firstIndexForLetter(zones, "M")].value).toBe("militari");
+    expect(firstIndexForLetter(zones, "Z")).toBe(-1);
+  });
+
+  it("un cartier sta la sectorul in care apare cel mai des", () => {
+    const rows: GeographyRow[] = [
+      { city: "București", county: "București", zone: "Sector 3", neighborhood: "Titan" },
+      { city: "București", county: "București", zone: "Sector 3", neighborhood: "Titan" },
+      { city: "București", county: "București", zone: "Sector 2", neighborhood: "Titan" },
+      { city: "București", county: "București", zone: "Sector 3", neighborhood: null },
+    ];
+    const facets = buildListingFacets(rows);
+    const options = facets.zones["bucuresti|bucuresti"];
+    expect(options.find((o) => o.value === "titan")?.sector).toBe("sector 3");
+    expect(options.find((o) => o.value === "sector 3")?.kind).toBe("sector");
   });
 });
