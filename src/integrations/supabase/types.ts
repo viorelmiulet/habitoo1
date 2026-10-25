@@ -1968,6 +1968,7 @@ export type Database = {
           payer: string
           property_id: string | null
           property_type: string
+          ron_to_eur_rate: number | null
           status: string
           transaction_date: string
           transaction_kind: Database["public"]["Enums"]["transaction_kind"]
@@ -1991,6 +1992,7 @@ export type Database = {
           payer: string
           property_id?: string | null
           property_type: string
+          ron_to_eur_rate?: number | null
           status?: string
           transaction_date?: string
           transaction_kind: Database["public"]["Enums"]["transaction_kind"]
@@ -2014,6 +2016,7 @@ export type Database = {
           payer?: string
           property_id?: string | null
           property_type?: string
+          ron_to_eur_rate?: number | null
           status?: string
           transaction_date?: string
           transaction_kind?: Database["public"]["Enums"]["transaction_kind"]
@@ -2925,6 +2928,21 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      exchange_rates: {
+        Row: {
+          day: string
+          eur_ron: number
+        }
+        Insert: {
+          day: string
+          eur_ron: number
+        }
+        Update: {
+          day?: string
+          eur_ron?: number
+        }
+        Relationships: []
       }
       geocode_postal_cache: {
         Row: {
