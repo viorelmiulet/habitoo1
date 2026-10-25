@@ -253,3 +253,28 @@ describe("filtrele noi din zona de căutare", () => {
     expect(result.items.map((r) => r.id)).toEqual(["1"]);
   });
 });
+
+describe("selectarea mai multor zone", () => {
+  const zoneRows: Row[] = [
+    { id: "s6a", source: "storia", first_seen_at: at(8), is_owner: true, city_key: "bucuresti", zone_key: "sector 6" },
+    { id: "s6b", source: "romimo", first_seen_at: at(9), is_owner: true, city_key: "bucuresti", zone_key: "sector 6", neighborhood_key: "militari" },
+    { id: "titan", source: "olx", first_seen_at: at(10), is_owner: true, city_key: "bucuresti", zone_key: "sector 3", neighborhood_key: "titan" },
+    { id: "s1", source: "storia", first_seen_at: at(11), is_owner: true, city_key: "bucuresti", zone_key: "sector 1" },
+  ];
+
+  it("Sector 6 + Titan intorc anunturile din Sector 6 plus cele din Titan", async () => {
+    const result = await run(zoneRows, { city: "București", zone: ["sector 6", "titan"] });
+    expect(result.total).toBe(3);
+    expect(result.items.map((r) => r.id).sort()).toEqual(["s6a", "s6b", "titan"]);
+  });
+
+  it("un singur sector include si anunturile fara cartier", async () => {
+    const result = await run(zoneRows, { city: "București", zone: ["sector 6"] });
+    expect(result.items.map((r) => r.id).sort()).toEqual(["s6a", "s6b"]);
+  });
+
+  it("doua cartiere intorc anunturile din oricare dintre ele", async () => {
+    const result = await run(zoneRows, { city: "București", zone: ["militari", "titan"] });
+    expect(result.items.map((r) => r.id).sort()).toEqual(["s6b", "titan"]);
+  });
+});
