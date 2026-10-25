@@ -16,9 +16,9 @@ BEGIN
      AND NOT EXISTS (SELECT 1 FROM public.user_roles s WHERE s.user_id=r.user_id AND s.role='superadmin')
    ORDER BY r.user_id LIMIT 1;
   SELECT id INTO agent1 FROM public.profiles x WHERE id<>admin_id AND NOT EXISTS (
-    SELECT 1 FROM public.user_roles y WHERE y.user_id=x.id AND y.role IN ('superadmin','agency_admin')) ORDER BY id LIMIT 1;
+    SELECT 1 FROM public.user_roles y WHERE y.user_id=x.id AND (y.role='superadmin' OR (y.role='agency_admin' AND y.organization_id=org_a))) ORDER BY id LIMIT 1;
   SELECT id INTO agent2 FROM public.profiles x WHERE id NOT IN (admin_id, agent1) AND NOT EXISTS (
-    SELECT 1 FROM public.user_roles y WHERE y.user_id=x.id AND y.role IN ('superadmin','agency_admin')) ORDER BY id LIMIT 1;
+    SELECT 1 FROM public.user_roles y WHERE y.user_id=x.id AND (y.role='superadmin' OR (y.role='agency_admin' AND y.organization_id=org_a))) ORDER BY id LIMIT 1;
   UPDATE public.profiles SET organization_id=org_a, is_active=true WHERE id IN (agent1, agent2);
   SELECT p.id INTO other_user FROM public.profiles p JOIN public.organizations o ON o.id=p.organization_id
    WHERE o.status IN ('active','trial') AND o.archived_at IS NULL AND p.organization_id<>org_a AND p.is_active
