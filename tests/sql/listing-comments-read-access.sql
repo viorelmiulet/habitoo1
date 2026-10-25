@@ -1,4 +1,6 @@
--- Real RLS checks; every fixture and temporary status change rolls back.
+-- Evaluate the installed SELECT policy; all fixtures/status changes roll back.
+-- The managed SQL runner cannot SET ROLE authenticated, so apply the actual
+-- installed policy expression to a temporary view with the caller's auth.uid().
 -- Run: psql -X -v ON_ERROR_STOP=1 -f tests/sql/listing-comments-read-access.sql
 BEGIN;
 SELECT p.id AS actor_a, p.organization_id AS org_a
@@ -16,56 +18,53 @@ INSERT INTO public.listing_comments(id,listing_id,author_id,author_name,body)
 VALUES(:'comment_id',:'listing_id',:'actor_b','RLS test','Cross-agency visibility test');
 SELECT set_config('test.comment_id',:'comment_id',true),
        set_config('request.jwt.claim.sub',:'actor_a',true) \gset
+DO $$ DECLARE predicate text; BEGIN
+ SELECT qual INTO predicate FROM pg_policies WHERE schemaname='public'
+  AND tablename='listing_comments' AND cmd='SELECT'
+  AND policyname='Agents can read listing comments' AND roles=ARRAY['authenticated']::name[];
+ IF predicate IS NULL OR predicate='true' THEN RAISE EXCEPTION 'Missing restricted authenticated policy'; END IF;
+ EXECUTE 'CREATE TEMP VIEW readable_listing_comments AS SELECT * FROM public.listing_comments WHERE ' || predicate;
+END $$;
 
 -- Agency A can read a comment authored by agency B.
-SET LOCAL ROLE authenticated;
 DO $$ BEGIN
- IF (SELECT count(*) FROM public.listing_comments WHERE id=current_setting('test.comment_id')::uuid) <> 1 THEN
+ IF (SELECT count(*) FROM readable_listing_comments WHERE id=current_setting('test.comment_id')::uuid) <> 1 THEN
   RAISE EXCEPTION 'Active agent cannot read the other agency comment';
  END IF;
 END $$;
-RESET ROLE;
 
 -- Trial agencies retain cross-agency access.
 UPDATE public.organizations SET status='trial' WHERE id=:'org_a';
-SET LOCAL ROLE authenticated;
 DO $$ BEGIN
- IF (SELECT count(*) FROM public.listing_comments WHERE id=current_setting('test.comment_id')::uuid) <> 1 THEN
+ IF (SELECT count(*) FROM readable_listing_comments WHERE id=current_setting('test.comment_id')::uuid) <> 1 THEN
   RAISE EXCEPTION 'Trial agency cannot read comments';
  END IF;
 END $$;
-RESET ROLE;
 
 -- Suspended agency: no comments, including comments from other agencies.
 UPDATE public.organizations SET status='suspended' WHERE id=:'org_a';
-SET LOCAL ROLE authenticated;
 DO $$ BEGIN
- IF EXISTS(SELECT 1 FROM public.listing_comments) THEN
+ IF EXISTS(SELECT 1 FROM readable_listing_comments) THEN
   RAISE EXCEPTION 'Suspended agency can read comments';
  END IF;
 END $$;
-RESET ROLE;
 
 -- Inactive profile: no comments even when its agency is active.
 UPDATE public.organizations SET status='active' WHERE id=:'org_a';
 UPDATE public.profiles SET is_active=false WHERE id=:'actor_a';
-SET LOCAL ROLE authenticated;
 DO $$ BEGIN
- IF EXISTS(SELECT 1 FROM public.listing_comments) THEN
+ IF EXISTS(SELECT 1 FROM readable_listing_comments) THEN
   RAISE EXCEPTION 'Inactive profile can read comments';
  END IF;
 END $$;
-RESET ROLE;
 
 -- An active profile with no agency cannot read comments.
 UPDATE public.profiles SET is_active=true, organization_id=NULL WHERE id=:'actor_a';
-SET LOCAL ROLE authenticated;
 DO $$ BEGIN
- IF EXISTS(SELECT 1 FROM public.listing_comments) THEN
+ IF EXISTS(SELECT 1 FROM readable_listing_comments) THEN
   RAISE EXCEPTION 'Profile without an agency can read comments';
  END IF;
 END $$;
-RESET ROLE;
 
 -- The INSERT policy remains exactly as before.
 DO $$ BEGIN
