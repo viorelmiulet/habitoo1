@@ -6,6 +6,17 @@ const html = new Response("x", { headers: { "content-type": "text/html; charset=
 const xml = new Response("x", { headers: { "content-type": "application/xml" } });
 
 describe("host policy", () => {
+  it("www permite fiecare crawler public, blocând doar căi tehnice; crm blochează tot", () => {
+    expect(CRM_ROBOTS_TXT).toBe("User-agent: *\nDisallow: /\n");
+    for (const agent of ["GPTBot", "ClaudeBot", "PerplexityBot", "Google-Extended", "CCBot", "*"]) {
+      const block = PUBLIC_ROBOTS_TXT.split("\n\n").find(b => b.startsWith(`User-agent: ${agent}\n`));
+      expect(block).toContain("Allow: /\n");
+      expect(block).toContain("Disallow: /api/");
+      expect(block).toContain("Disallow: /app");
+      expect(block).not.toContain("/anunturi-proprietari");
+    }
+    expect(PUBLIC_ROBOTS_TXT).toContain("Sitemap: https://www.habitoo.ro/sitemap.xml");
+  });
   it("apex → 301 www, cu cale și query", () => {
     expect(decideEdge(req("https://habitoo.ro/preturi?a=1&b=2"))).toEqual({
       kind: "redirect",
