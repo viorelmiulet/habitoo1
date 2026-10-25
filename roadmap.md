@@ -73,3 +73,9 @@
 - [x] Telefonul se salvează doar pentru anuntul; afișat ca link tel: pe card și în detaliu
 - [x] 56 teste trec (upsert cu/fără telefon, import piață, filtru sursă); build OK
 - [ ] Verificare vizuală în cont — blocată: solicitantul nu are un cont asociat pentru sesiunea de test
+
+# ACP — caseta „Oferte disponibile în pool-ul de piață" eliminată
+
+- [x] Casetea dispare din pagina „Analiză nouă"; importul de piață, sursele și comparabilele rămân neschimbate
+- [x] 434 teste ACP și de piață trec; build OK
+- [ ] Verificare în cont — blocată: solicitantul nu are un cont asociat pentru sesiunea de test
