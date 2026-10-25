@@ -6,7 +6,7 @@ import { clearAuthenticatedSession } from "@/lib/sign-out";
 import { SessionRecoveryScreen, useSessionRecovery } from "@/components/app/SessionRecovery";
 import { PortalBulkWatcher } from "@/components/app/PortalBulkProgress";
 import { AppShell } from "@/components/app/AppShell";
-import { agencyNavFor, superadminNav } from "@/components/app/AppSidebar";
+import { agencyNavFor, superadminNav, withMarketDataNav } from "@/components/app/AppSidebar";
 import { filterAiNavigation } from "@/components/app/sidebar-navigation";
 import { ShellLoading } from "@/components/app/LoadingState";
 import { OrgBlocked } from "@/components/app/OrgBlocked";
@@ -78,7 +78,11 @@ function AppLayout() {
   }
 
   // Funcțiile AI sunt activate individual per agenție; cele oprite nu apar în meniu.
-  const agencyGroups = filterAiNavigation(agencyNavFor(user.isAdmin), features);
+  // „Date piață” se adaugă doar pentru SuperAdmin.
+  const agencyGroups = withMarketDataNav(
+    filterAiNavigation(agencyNavFor(user.isAdmin), features),
+    user.isSuperadmin,
+  );
   const groups = user.isSuperadmin ? [...agencyGroups, ...superadminNav] : agencyGroups;
 
   return (

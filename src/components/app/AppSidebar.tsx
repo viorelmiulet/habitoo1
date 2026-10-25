@@ -116,7 +116,6 @@ export const agencyNav: NavGroup[] = [
     items: [
       { label: "Analiză nouă", to: "/app/acp/new", icon: Sparkles },
       { label: "Analize salvate", to: "/app/acp", icon: BarChart3, exact: true },
-      { label: "Date piață", to: "/app/acp/date-piata", icon: Database },
     ],
   },
 
@@ -164,6 +163,24 @@ export function agencyNavFor(isAdmin: boolean): NavGroup[] {
   return isAdmin ? agencyNav : agentNav;
 }
 
+/**
+ * „Date piață” este zona de administrare a datelor de piață: apare în meniu
+ * doar pentru SuperAdmin. Ceilalți utilizatori nu o văd, iar pagina însăși îi
+ * trimite înapoi la ACP (SuperadminGate).
+ */
+export const marketDataNavItem: NavItem = {
+  label: "Date piață",
+  to: "/app/acp/date-piata",
+  icon: Database,
+};
+
+export function withMarketDataNav(groups: NavGroup[], isSuperadmin: boolean): NavGroup[] {
+  if (!isSuperadmin) return groups;
+  return groups.map((group) =>
+    group.title === "ACP" ? { ...group, items: [...group.items, marketDataNavItem] } : group,
+  );
+}
+
 export const superadminNav: NavGroup[] = [
   { items: [{ label: "Dashboard global", to: "/superadmin", icon: Gauge, exact: true }] },
   {
@@ -195,7 +212,10 @@ export const superadminNav: NavGroup[] = [
 
 /** Etichetă (path → label) pentru breadcrumbs, derivată din navigație. */
 export const navLabelByPath: Record<string, string> = Object.fromEntries(
-  [...agencyNav, ...superadminNav].flatMap((g) => g.items.map((i) => [String(i.to), i.label])),
+  [...agencyNav, ...superadminNav]
+    .flatMap((g) => g.items)
+    .concat(marketDataNavItem)
+    .map((i) => [String(i.to), i.label]),
 );
 
 function CollapsedTip({

@@ -45,3 +45,16 @@ export function dashboardHomeFor(user: {
   if (user.isSuperadmin && !user.organization && !user.impersonation) return "/superadmin";
   return "/app";
 }
+
+/**
+ * Ce afișează o pagină rezervată SuperAdmin: se încarcă, cere autentificare,
+ * trimite utilizatorul înapoi sau arată conținutul.
+ */
+export function superadminGateDecision(
+  user: { isSuperadmin?: boolean } | null | undefined,
+  isLoading: boolean,
+): "loading" | "signed_out" | "denied" | "granted" {
+  if (isLoading) return "loading";
+  if (!user) return "signed_out";
+  return canAccessSuperadmin(user) ? "granted" : "denied";
+}

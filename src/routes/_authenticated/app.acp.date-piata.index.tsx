@@ -16,6 +16,7 @@ import { SectionCard } from "@/components/app/SectionCard";
 import { EmptyState } from "@/components/app/EmptyState";
 import { CardGridSkeleton } from "@/components/app/LoadingState";
 import { appHead } from "@/components/app/app-head";
+import { SuperadminGate } from "@/components/app/SuperadminGate";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -47,7 +48,11 @@ import { listingAgeDays } from "@/lib/market/listing-age";
 
 export const Route = createFileRoute("/_authenticated/app/acp/date-piata/")({
   head: () => appHead("Habitoo CRM — date de piață"),
-  component: MarketDataCenterPage,
+  component: () => (
+    <SuperadminGate>
+      <MarketDataCenterPage />
+    </SuperadminGate>
+  ),
 });
 
 const STATUS_LABEL: Record<string, string> = {
