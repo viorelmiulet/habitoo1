@@ -27,55 +27,151 @@ export const MARKETING_PATHS = new Set([
   "/confidentialitate",
 ]);
 
-export const CRM_ROBOTS_TXT = "User-agent: *\nDisallow: /\nAllow: /api/public/\n";
+export const CRM_ROBOTS_TXT = "User-agent: *\nDisallow: /\n";
 
 export const PUBLIC_ROBOTS_TXT = `User-agent: Googlebot
 Allow: /
-Disallow: /anunturi-proprietari
+Disallow: /api/
 Disallow: /app
 Disallow: /superadmin
-Disallow: /api/
 Disallow: /login
 Disallow: /register
 Disallow: /auth/
+Disallow: /forgot-password
+Disallow: /reset-password
+Disallow: /semnare
 
 User-agent: Bingbot
 Allow: /
-Disallow: /anunturi-proprietari
+Disallow: /api/
 Disallow: /app
 Disallow: /superadmin
-Disallow: /api/
 Disallow: /login
 Disallow: /register
 Disallow: /auth/
+Disallow: /forgot-password
+Disallow: /reset-password
+Disallow: /semnare
 
 User-agent: GPTBot
-User-agent: OAI-SearchBot
-User-agent: ChatGPT-User
-User-agent: ClaudeBot
-User-agent: Claude-SearchBot
-User-agent: PerplexityBot
-User-agent: Google-Extended
-User-agent: Applebot-Extended
-User-agent: CCBot
-Allow: /blog
-Disallow: /anunturi-proprietari
+Allow: /
+Disallow: /api/
 Disallow: /app
 Disallow: /superadmin
-Disallow: /api/
 Disallow: /login
 Disallow: /register
 Disallow: /auth/
+Disallow: /forgot-password
+Disallow: /reset-password
+Disallow: /semnare
+
+User-agent: OAI-SearchBot
+Allow: /
+Disallow: /api/
+Disallow: /app
+Disallow: /superadmin
+Disallow: /login
+Disallow: /register
+Disallow: /auth/
+Disallow: /forgot-password
+Disallow: /reset-password
+Disallow: /semnare
+
+User-agent: ChatGPT-User
+Allow: /
+Disallow: /api/
+Disallow: /app
+Disallow: /superadmin
+Disallow: /login
+Disallow: /register
+Disallow: /auth/
+Disallow: /forgot-password
+Disallow: /reset-password
+Disallow: /semnare
+
+User-agent: ClaudeBot
+Allow: /
+Disallow: /api/
+Disallow: /app
+Disallow: /superadmin
+Disallow: /login
+Disallow: /register
+Disallow: /auth/
+Disallow: /forgot-password
+Disallow: /reset-password
+Disallow: /semnare
+
+User-agent: Claude-SearchBot
+Allow: /
+Disallow: /api/
+Disallow: /app
+Disallow: /superadmin
+Disallow: /login
+Disallow: /register
+Disallow: /auth/
+Disallow: /forgot-password
+Disallow: /reset-password
+Disallow: /semnare
+
+User-agent: PerplexityBot
+Allow: /
+Disallow: /api/
+Disallow: /app
+Disallow: /superadmin
+Disallow: /login
+Disallow: /register
+Disallow: /auth/
+Disallow: /forgot-password
+Disallow: /reset-password
+Disallow: /semnare
+
+User-agent: Google-Extended
+Allow: /
+Disallow: /api/
+Disallow: /app
+Disallow: /superadmin
+Disallow: /login
+Disallow: /register
+Disallow: /auth/
+Disallow: /forgot-password
+Disallow: /reset-password
+Disallow: /semnare
+
+User-agent: Applebot-Extended
+Allow: /
+Disallow: /api/
+Disallow: /app
+Disallow: /superadmin
+Disallow: /login
+Disallow: /register
+Disallow: /auth/
+Disallow: /forgot-password
+Disallow: /reset-password
+Disallow: /semnare
+
+User-agent: CCBot
+Allow: /
+Disallow: /api/
+Disallow: /app
+Disallow: /superadmin
+Disallow: /login
+Disallow: /register
+Disallow: /auth/
+Disallow: /forgot-password
+Disallow: /reset-password
+Disallow: /semnare
 
 User-agent: *
 Allow: /
-Disallow: /anunturi-proprietari
+Disallow: /api/
 Disallow: /app
 Disallow: /superadmin
-Disallow: /api/
 Disallow: /login
 Disallow: /register
 Disallow: /auth/
+Disallow: /forgot-password
+Disallow: /reset-password
+Disallow: /semnare
 
 Sitemap: https://www.habitoo.ro/sitemap.xml
 `;

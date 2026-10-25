@@ -50,7 +50,7 @@ describe("host policy", () => {
   it("robots permite blogul și păstrează zonele private blocate", () => {
     expect(PUBLIC_ROBOTS_TXT).toContain("User-agent: GPTBot");
     expect(PUBLIC_ROBOTS_TXT).toContain("User-agent: Claude-SearchBot");
-    expect(PUBLIC_ROBOTS_TXT).toContain("Allow: /blog");
+    expect(PUBLIC_ROBOTS_TXT).toContain("Allow: /");
     expect(PUBLIC_ROBOTS_TXT).toContain("Disallow: /app");
     expect(PUBLIC_ROBOTS_TXT).toContain("Disallow: /superadmin");
     expect(PUBLIC_ROBOTS_TXT).toContain("Disallow: /api/");

@@ -8,13 +8,15 @@ import { Button } from "@/components/ui/button";
 import { listPublishedBlogPosts } from "@/lib/blog.functions";
 import { publicHead, SITE_URL } from "@/components/marketing/public-head";
 
+import { ORG_ID, WEBSITE_ID } from "@/components/marketing/structured-data";
+
 const TITLE = "Blog Habitoo — sfaturi practice pentru agenții imobiliare";
 const DESCRIPTION = "Sfaturi practice pentru agenții imobiliare: organizare, vânzări, negociere, carieră și dezvoltarea agenției.";
 const roDate = (value: string | null) => value ? new Intl.DateTimeFormat("ro-RO", { day: "numeric", month: "long", year: "numeric" }).format(new Date(value)) : "În curând";
 
 export const Route = createFileRoute("/blog/")({
   loader: () => listPublishedBlogPosts(),
-  head: ({ loaderData }) => publicHead({ path: "/blog", title: TITLE, description: DESCRIPTION, jsonLd: { "@context": "https://schema.org", "@type": "Blog", name: "Blog Habitoo", description: DESCRIPTION, url: `${SITE_URL}/blog`, publisher: { "@type": "Organization", name: "Habitoo CRM" }, blogPost: (loaderData ?? []).map((post) => ({ "@type": "BlogPosting", headline: post.title, url: `${SITE_URL}/blog/${post.slug}`, datePublished: post.published_at, dateModified: post.updated_at })) } }),
+  head: ({ loaderData }) => publicHead({ path: "/blog", title: TITLE, description: DESCRIPTION, jsonLd: { "@context": "https://schema.org", "@type": "Blog", "@id": `${SITE_URL}/blog#blog`, isPartOf: { "@id": WEBSITE_ID }, name: "Blog Habitoo", description: DESCRIPTION, url: `${SITE_URL}/blog`, publisher: { "@id": ORG_ID }, blogPost: (loaderData ?? []).map((post) => ({ "@type": "BlogPosting", author: { "@id": ORG_ID }, publisher: { "@id": ORG_ID }, headline: post.title, url: `${SITE_URL}/blog/${post.slug}`, datePublished: post.published_at, dateModified: post.updated_at })) } }),
   component: BlogPage,
 });
 

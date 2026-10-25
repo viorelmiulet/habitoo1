@@ -15,7 +15,7 @@ function ld(route: { options: { head?: unknown } }): Node[] {
   const out: Node[] = [];
   for (const s of head.scripts) {
     const v = JSON.parse(s.children);
-    out.push(...(Array.isArray(v) ? v : [v]));
+    out.push(...(v["@graph"] ?? (Array.isArray(v) ? v : [v])));
   }
   return out;
 }
@@ -36,18 +36,18 @@ describe("JSON-LD public", () => {
     expect(types(n)).toEqual(
       expect.arrayContaining(["Organization", "WebSite", "SoftwareApplication", "FAQPage"]),
     );
-    const org = n.find((x) => x["@type"] === "Organization")!;
+    const org = n.find((x) => x["@type"] === "Organization");
     expect(org["@id"]).toBe(ORG_ID);
     expect(String(org.logo)).toMatch(/^https:\/\/www\.habitoo\.ro\//);
-    expect(org.sameAs).toEqual(["https://www.facebook.com/profile.php?id=61594347749722"]);
+    expect(org.sameAs).toEqual(["https://www.facebook.com/profile.php?id=61594347749722", "https://share.google/iZtYGwvM9YTQjM0VT"]);
     const contactPoint = org.contactPoint as Node;
     expect(contactPoint.email).toBe("contact@habitoo.ro");
     expect(contactPoint.telephone).toBe("+40767941512");
     expect(contactPoint.contactType).toBe("customer support");
-    const site = n.find((x) => x["@type"] === "WebSite")!;
+    const site = n.find((x) => x["@type"] === "WebSite");
     expect(site["@id"]).toBe(WEBSITE_ID);
     expect(site.potentialAction).toBeUndefined();
-    const sw = n.find((x) => x["@type"] === "SoftwareApplication")!;
+    const sw = n.find((x) => x["@type"] === "SoftwareApplication");
     expect(sw["@id"]).toBe(SOFTWARE_ID);
     expect(sw.publisher).toEqual({ "@id": ORG_ID });
   });
@@ -62,20 +62,20 @@ describe("JSON-LD public", () => {
 
   it.each(pages)("pagina are tipul corect, isPartOf și breadcrumb", (route, type) => {
     const n = ld(route);
-    const page = n.find((x) => x["@type"] === type)!;
+    const page = n.find((x) => x["@type"] === type);
     expect(page.isPartOf).toEqual({ "@id": WEBSITE_ID });
     expect([ORG_ID, SOFTWARE_ID]).toContain((page.about as Node)["@id"]);
-    const bc = n.find((x) => x["@type"] === "BreadcrumbList")!;
+    const bc = n.find((x) => x["@type"] === "BreadcrumbList");
     const items = bc.itemListElement as Node[];
     expect(items[0].item).toBe("https://www.habitoo.ro/");
     expect(String(items[1].item)).toMatch(/^https:\/\/www\.habitoo\.ro\/.+/);
-    // Identitatea nu e redefinită în afara paginii principale.
-    expect(types(n)).not.toContain("Organization");
-    expect(types(n)).not.toContain("WebSite");
+    // Identitatea comună este prezentă o singură dată pe fiecare pagină.
+    expect(n.filter(x => x["@id"] === ORG_ID)).toHaveLength(1);
+    expect(n.filter(x => x["@id"] === WEBSITE_ID)).toHaveLength(1);
   });
 
   it("prețurile din JSON-LD sunt cele din tabel", () => {
-    const sw = ld(Pricing).find((x) => x["@type"] === "SoftwareApplication")!;
+    const sw = ld(Pricing).find((x) => x["@type"] === "SoftwareApplication");
     expect(sw["@id"]).toBe(SOFTWARE_ID);
     const offers = sw.offers as Node[];
     expect(offers.map((o) => o.price)).toEqual([
