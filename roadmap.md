@@ -1,8 +1,8 @@
 # SEO public — pasul 1a
 
 ## SEO pasul 1b
-- [ ] Rescriere llms.txt, statistici agregate actuale și cache o oră
-- [ ] Teste și verificare răspuns live local, fără publicare
+- [x] Rescriere llms.txt, statistici agregate actuale și cache o oră
+- [x] 21 teste trec; HTTP 200, 5267 anunțuri / 6 surse și 8056 oferte de piață; răspuns verificat, fără publicare
 
 - [x] Datele firmei și linkuri oficiale în subsol/Contact
 - [x] Un singur graph comun cu nodurile paginilor și autor organizație
