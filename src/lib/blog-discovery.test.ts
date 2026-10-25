@@ -6,6 +6,11 @@ import { INTEGRATION_PAGES } from "@/lib/portals/integration-pages";
 const base = { title: "Articol", excerpt: "Rezumat", updated_at: "2026-10-04T12:00:00.000Z" };
 
 describe("sitemap blog", () => {
+  it("keeps the public ACP creation date when the sitemap regenerates", () => {
+    const xml = buildSitemapXml([], new Date("2026-11-01T12:00:00Z"));
+    const entries = [...xml.matchAll(/<url>\s*<loc>([^<]+)<\/loc>\s*(?:<lastmod>([^<]+)<\/lastmod>)?\s*<\/url>/g)];
+    expect(entries.find((row) => row[1] === "https://www.habitoo.ro/analiza-comparativa-de-piata")?.[2]).toBe("2026-10-25");
+  });
   it("dates the new public owner page by its content change, never regeneration time", () => {
     const xml = buildSitemapXml([], new Date("2026-11-01T12:00:00Z"));
     const entries = [...xml.matchAll(/<url>\s*<loc>([^<]+)<\/loc>\s*(?:<lastmod>([^<]+)<\/lastmod>)?\s*<\/url>/g)];
