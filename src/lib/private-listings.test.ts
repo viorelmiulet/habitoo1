@@ -89,20 +89,20 @@ describe("interleaveNewest", () => {
 });
 
 describe("zile în piață și categorii", () => {
-  // 25 oct 2026, 07:38 UTC = 10:38 în România (ora de vară, UTC+3).
+  // 25 oct 2026, 07:38 UTC = 09:38 în România (ora de iarnă, UTC+2 — schimbarea a fost în aceeași noapte).
   const now = new Date("2026-10-25T07:38:00Z");
 
   it("ziua curentă în România începe la miezul nopții locale", () => {
-    expect(romaniaTodayStart(now).toISOString()).toBe("2026-10-24T21:00:00.000Z");
+    expect(romaniaTodayStart(now).toISOString()).toBe("2026-10-24T22:00:00.000Z");
   });
 
   it("De azi pornește de la începutul zilei de azi", () => {
-    expect(daysCutoff(0, now)).toBe("2026-10-24T21:00:00.000Z");
+    expect(daysCutoff(0, now)).toBe("2026-10-24T22:00:00.000Z");
   });
 
   it("Ultimele 2 zile include și ziua de ieri", () => {
-    expect(daysCutoff(2, now)).toBe("2026-10-23T21:00:00.000Z");
-    expect(daysCutoff(7, now)).toBe("2026-10-18T21:00:00.000Z");
+    expect(daysCutoff(2, now)).toBe("2026-10-23T22:00:00.000Z");
+    expect(daysCutoff(7, now)).toBe("2026-10-18T22:00:00.000Z");
   });
 
   it("categoriile acoperă Apartament, Casă, comerciale și Teren", () => {
