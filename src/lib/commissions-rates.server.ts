@@ -23,12 +23,12 @@ type ExchangeRatesTable = {
     lte: (col: string, v: string) => {
       gte: (col: string, v: string) => {
         order: (col: string, o: { ascending: boolean }) => {
-          limit: (n: number) => Promise<{ data: { day: string; eur_ron: number }[] | null }>;
+          limit: (n: number) => PromiseLike<{ data: { day: string; eur_ron: number }[] | null }>;
         };
       };
     };
   };
-  upsert: (rows: { day: string; eur_ron: number }[]) => Promise<{ error: { message: string } | null }>;
+  upsert: (rows: { day: string; eur_ron: number }[]) => PromiseLike<{ error: { message: string } | null }>;
 };
 
 const dayBefore = (day: string, n: number) => {

@@ -38,8 +38,9 @@ describe("perioade", () => {
       .toEqual({ from: "2026-05-01", to: "2026-05-10" });
   });
   it("perioada anterioară are aceeași lungime și se lipește de cea curentă", () => {
+    // 31 de zile încheiate pe 30 septembrie încep pe 31 august.
     expect(previousRange({ from: "2026-10-01", to: "2026-10-31" }))
-      .toEqual({ from: "2026-09-01", to: "2026-09-30" });
+      .toEqual({ from: "2026-08-31", to: "2026-09-30" });
     expect(previousRange({ from: "2026-10-19", to: "2026-10-25" }))
       .toEqual({ from: "2026-10-12", to: "2026-10-18" });
   });
