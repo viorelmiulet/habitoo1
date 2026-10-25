@@ -114,7 +114,7 @@ function ListingDetail({ listing }: { listing: OwnerListing }) {
     ["Sursă", SOURCE_LABELS[listing.source] ?? listing.source],
     [
       "Adăugat",
-      listing.scrapedAt ? new Date(listing.scrapedAt).toLocaleDateString("ro-RO") : null,
+      listing.firstSeenAt ? new Date(listing.firstSeenAt).toLocaleDateString("ro-RO") : null,
     ],
   ];
 

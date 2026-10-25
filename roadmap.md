@@ -1,5 +1,13 @@
 # Anunțuri particulari — afișare pe rânduri, paginare și sortare
 
+# Anunțuri particulari — first_seen_at și surse intercalate
+
+- [x] Coloană first_seen_at: momentul importului la insert, neschimbat la reimport; cele 1613 anunțuri existente preiau scraped_at
+- [x] „Cele mai noi” sortează după ziua first_seen_at, cu sursele intercalate în zi (Storia, Romimo, OLX, Imoradar24); total și paginare corecte cu toate filtrele și căutarea
+- [x] „Adăugat …” pe card și în pagina anunțului arată first_seen_at
+- [x] 18 teste noi/actualizate (intercalare, pagini, filtru sursă, căutare); build OK
+- [ ] Verificare vizuală în cont — blocată: solicitantul nu are un cont asociat pentru sesiunea de test
+
 # hbsync — sursa Imoradar24
 
 - [x] Acceptare imoradar în ambele importuri, cu sursele existente păstrate

@@ -8,6 +8,7 @@ import {
   PRIVATE_LISTINGS_ORDER,
   PRIVATE_LISTINGS_PAGE_SIZE,
   cleanText,
+  interleaveNewest,
   keywordTerms,
   normalizeRooms,
 } from "@/lib/private-listings";
@@ -32,6 +33,7 @@ export type OwnerListing = {
   description: string | null;
   images: string[];
   scrapedAt: string | null;
+  firstSeenAt: string | null;
 };
 
 const num = (v: unknown) => (v === null || v === undefined ? null : Number(v));
@@ -59,65 +61,112 @@ export const TRANSACTION_FILTERS: Record<"sale" | "rent" | "rent_day", string> =
   rent_day: "transaction_type.ilike.%pe zi%,description.ilike.%pe zi%",
 };
 
+type PrivateListingsInput = z.infer<typeof privateListingsFiltersSchema>;
+
+/** Structural query interface: PostgREST filter builders return `this`. */
+interface OwnerFilterQuery<Q> {
+  eq(column: string, value: unknown): Q;
+  or(filter: string): Q;
+  ilike(column: string, pattern: string): Q;
+  gte(column: string, value: number): Q;
+  lte(column: string, value: number): Q;
+}
+
+/** Toate filtrele listei, aplicate identic în ambele faze ale sortării „Cele mai noi”. */
+function applyOwnerFilters<Q extends OwnerFilterQuery<Q>>(query: Q, data: PrivateListingsInput): Q {
+  const county = geographyKey(data.county);
+  const city = geographyKey(data.city);
+  const zone = geographyKey(data.zone);
+  if (county) query = query.eq("county_key", county);
+  if (city) query = query.eq("city_key", city);
+  if (zone) {
+    const filter = zoneFilter(zone);
+    // Non-sector legacy zona links may refer to the old zone column.
+    query = filter.column === "zone_key" ? query.eq(filter.column, filter.value)
+      : query.or(`neighborhood_key.eq.${filter.value},zone_key.eq.${filter.value}`);
+  }
+
+  if (data.source) query = query.eq("source", data.source);
+  if (data.transaction) query = query.or(TRANSACTION_FILTERS[data.transaction]);
+  const propertyType = cleanText(data.propertyType);
+  if (propertyType) query = query.ilike("property_type", propertyType);
+  if (data.priceMin !== undefined) query = query.gte("price", data.priceMin);
+  if (data.priceMax !== undefined) query = query.lte("price", data.priceMax);
+  if (data.surfaceMin !== undefined) query = query.gte("surface", data.surfaceMin);
+  if (data.surfaceMax !== undefined) query = query.lte("surface", data.surfaceMax);
+
+  const rooms = normalizeRooms(data.rooms);
+  if (rooms.length) {
+    const exact = rooms.filter((r) => r < 5);
+    const parts = exact.length ? [`rooms.in.(${exact.join(",")})`] : [];
+    if (rooms.includes(5)) parts.push("rooms.gte.5");
+    query = query.or(parts.join(","));
+  }
+
+  for (const term of keywordTerms(data.q)) {
+    query = query.or(
+      `title.ilike.%${term}%,description.ilike.%${term}%,location.ilike.%${term}%`,
+    );
+  }
+  return query;
+}
+
 export const getOwnerListings = createServerFn({ method: "GET" })
   .middleware([requireActiveOrgAuth])
   .inputValidator((input: unknown) => privateListingsFiltersSchema.parse(input ?? {}))
   .handler(async ({ data, context }): Promise<{ items: OwnerListing[]; total: number }> => {
     const page = data.page ?? 0;
-    let query = context.supabase
-      .from("listings")
-      .select(
-        "id, source, title, price, currency, price_per_m2, rooms, surface, floor, city, zone, location, county, property_type, transaction_type, url, description, images, scraped_at",
-        { count: "exact" },
-      )
-      .eq("is_owner", true);
-
-    const county = geographyKey(data.county);
-    const city = geographyKey(data.city);
-    const zone = geographyKey(data.zone);
-    if (county) query = query.eq("county_key", county);
-    if (city) query = query.eq("city_key", city);
-    if (zone) {
-      const filter = zoneFilter(zone);
-      // Non-sector legacy zona links may refer to the old zone column.
-      query = filter.column === "zone_key" ? query.eq(filter.column, filter.value)
-        : query.or(`neighborhood_key.eq.${filter.value},zone_key.eq.${filter.value}`);
-    }
-
-    if (data.source) query = query.eq("source", data.source);
-    if (data.transaction) query = query.or(TRANSACTION_FILTERS[data.transaction]);
-    const propertyType = cleanText(data.propertyType);
-    if (propertyType) query = query.ilike("property_type", propertyType);
-    if (data.priceMin !== undefined) query = query.gte("price", data.priceMin);
-    if (data.priceMax !== undefined) query = query.lte("price", data.priceMax);
-    if (data.surfaceMin !== undefined) query = query.gte("surface", data.surfaceMin);
-    if (data.surfaceMax !== undefined) query = query.lte("surface", data.surfaceMax);
-
-    const rooms = normalizeRooms(data.rooms);
-    if (rooms.length) {
-      const exact = rooms.filter((r) => r < 5);
-      const parts = exact.length ? [`rooms.in.(${exact.join(",")})`] : [];
-      if (rooms.includes(5)) parts.push("rooms.gte.5");
-      query = query.or(parts.join(","));
-    }
-
-    for (const term of keywordTerms(data.q)) {
-      query = query.or(
-        `title.ilike.%${term}%,description.ilike.%${term}%,location.ilike.%${term}%`,
-      );
-    }
-
     const from = page * PRIVATE_LISTINGS_PAGE_SIZE;
-    const order = PRIVATE_LISTINGS_ORDER[data.sort ?? "newest"];
-    const { data: rows, error, count } = await query
-      .order(order.column, { ascending: order.ascending, nullsFirst: false })
-      .order("scraped_at", { ascending: false, nullsFirst: false })
-      .range(from, from + PRIVATE_LISTINGS_PAGE_SIZE - 1);
-    if (error) throw new Error("Anunțurile nu pot fi încărcate acum.");
+    const sort = data.sort ?? "newest";
 
+    if (sort !== "newest") {
+      let query = context.supabase
+        .from("listings")
+        .select(LISTING_COLUMNS, { count: "exact" })
+        .eq("is_owner", true);
+      query = applyOwnerFilters(query, data);
+      const order = PRIVATE_LISTINGS_ORDER[sort];
+      const { data: rows, error, count } = await query
+        .order(order.column, { ascending: order.ascending, nullsFirst: false })
+        .order("scraped_at", { ascending: false, nullsFirst: false })
+        .range(from, from + PRIVATE_LISTINGS_PAGE_SIZE - 1);
+      if (error) throw new Error("Anunțurile nu pot fi încărcate acum.");
+      return {
+        total: count ?? 0,
+        items: (rows ?? []).map((row) => toOwnerListing(row as ListingRow)),
+      };
+    }
+
+    // „Cele mai noi": faza 1 citește doar id/sursă/dată pentru toate
+    // rezultatele filtrate, faza 2 aduce rândurile complete ale paginii
+    // intercalate pe surse. Totalul și filtrele rămân identice.
+    let idQuery = context.supabase
+      .from("listings")
+      .select("id, source, first_seen_at")
+      .eq("is_owner", true);
+    idQuery = applyOwnerFilters(idQuery, data);
+    const matches: { id: string; source: string; first_seen_at: string | null }[] = [];
+    for (let offset = 0; ; offset += 1000) {
+      const { data: batch, error } = await idQuery.order("id").range(offset, offset + 999);
+      if (error) throw new Error("Anunțurile nu pot fi încărcate acum.");
+      matches.push(...(batch ?? []));
+      if ((batch?.length ?? 0) < 1000) break;
+    }
+    const ordered = interleaveNewest(matches);
+    const pageIds = ordered.slice(from, from + PRIVATE_LISTINGS_PAGE_SIZE).map((row) => row.id);
+    if (pageIds.length === 0) return { total: ordered.length, items: [] };
+    const { data: rows, error } = await context.supabase
+      .from("listings")
+      .select(LISTING_COLUMNS)
+      .in("id", pageIds);
+    if (error) throw new Error("Anunțurile nu pot fi încărcate acum.");
+    const byId = new Map((rows ?? []).map((row) => [(row as ListingRow).id, row as ListingRow]));
     return {
-      total: count ?? 0,
-      items: (rows ?? []).map((row) => toOwnerListing(row as ListingRow)),
+      total: ordered.length,
+      items: pageIds
+        .map((id) => byId.get(id))
+        .filter((row): row is ListingRow => Boolean(row))
+        .map(toOwnerListing),
     };
   });
 
@@ -138,7 +187,7 @@ export const getOwnerListingFacets = createServerFn({ method: "GET" })
   });
 
 const LISTING_COLUMNS =
-  "id, source, title, price, currency, price_per_m2, rooms, surface, floor, city, zone, location, county, property_type, transaction_type, url, description, images, scraped_at";
+  "id, source, title, price, currency, price_per_m2, rooms, surface, floor, city, zone, location, county, property_type, transaction_type, url, description, images, scraped_at, first_seen_at";
 
 type ListingRow = {
   id: string;
@@ -160,6 +209,7 @@ type ListingRow = {
   description: string | null;
   images: unknown;
   scraped_at: string | null;
+  first_seen_at: string | null;
 };
 
 function toOwnerListing(row: ListingRow): OwnerListing {
@@ -183,6 +233,7 @@ function toOwnerListing(row: ListingRow): OwnerListing {
     description: row.description,
     images: Array.isArray(row.images) ? row.images.filter((u): u is string => typeof u === "string") : [],
     scrapedAt: row.scraped_at,
+    firstSeenAt: row.first_seen_at,
   };
 }
 
