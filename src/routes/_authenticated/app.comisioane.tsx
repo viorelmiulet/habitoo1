@@ -151,13 +151,14 @@ function CommissionsPage() {
       if (!payload.agent_id) throw new Error("Alege agentul.");
       // Keep the saved historical rate unless the transaction date changes.
       const existing = editingId ? rows.find(r => r.id === editingId) : undefined;
-      const ronToEurRate = await resolveCommissionSaveRate(payload.transaction_date, existing,
+      const resolved = await resolveCommissionSaveRate(payload.transaction_date, existing,
         date => getRonEurRate({ data: { date } }));
+      const rateFields = { ron_to_eur_rate: resolved?.rate ?? null, rate_source: resolved?.source ?? null };
       if (editingId) {
-        const { error } = await supabase.from("commissions").update({ ...payload, ron_to_eur_rate: ronToEurRate }).eq("id", editingId);
+        const { error } = await supabase.from("commissions").update({ ...payload, ...rateFields }).eq("id", editingId);
         if (error) throw error;
       } else {
-        const { error } = await supabase.from("commissions").insert({ ...payload, ron_to_eur_rate: ronToEurRate, organization_id: orgId });
+        const { error } = await supabase.from("commissions").insert({ ...payload, ...rateFields, organization_id: orgId });
         if (error) throw error;
       }
     },
