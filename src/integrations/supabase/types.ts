@@ -1366,6 +1366,47 @@ export type Database = {
           },
         ]
       }
+      argus_connections: {
+        Row: {
+          api_key_enc: string
+          api_key_last4: string
+          connected_by: string | null
+          created_at: string
+          organization_id: string
+          token_enc: string | null
+          token_obtained_at: string | null
+          updated_at: string
+        }
+        Insert: {
+          api_key_enc: string
+          api_key_last4: string
+          connected_by?: string | null
+          created_at?: string
+          organization_id: string
+          token_enc?: string | null
+          token_obtained_at?: string | null
+          updated_at?: string
+        }
+        Update: {
+          api_key_enc?: string
+          api_key_last4?: string
+          connected_by?: string | null
+          created_at?: string
+          organization_id?: string
+          token_enc?: string | null
+          token_obtained_at?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "argus_connections_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: true
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       audit_logs: {
         Row: {
           action: string
