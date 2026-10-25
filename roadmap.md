@@ -1,9 +1,8 @@
-# Anunțuri particulari — import în portofoliu
 # SEO public — pasul 1a
 
-- [ ] Datele firmei și linkuri oficiale în subsol/Contact
-- [ ] Un singur graph comun cu nodurile paginilor și autor organizație
-- [ ] Robots public/CRM și verificări JSON-LD/pagini publice
+- [x] Datele firmei și linkuri oficiale în subsol/Contact
+- [x] Un singur graph comun cu nodurile paginilor și autor organizație
+- [x] Robots public/CRM; 30 teste trec, JSON-LD SSR și pagini reale verificate, subsol desktop/mobil fără depășire
 
 # Anunțuri particulari — import în portofoliu
 
