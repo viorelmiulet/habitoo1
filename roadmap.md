@@ -117,3 +117,9 @@
 - [x] Fără salvare în DB; restul paginii neschimbat
 - [x] Teste cu răspunsuri simulate
 - [x] Comisioane pas 1: înregistrare + acces (fără rapoarte/export)
+
+# Comisioane — pasul 3
+- [ ] Afișare EUR/RON pe baza cursului păstrat, inclusiv pentru comisioane EUR
+- [ ] Excel/CSV cu toate rândurile filtrate, coloane și totaluri
+- [ ] PDF cu perioadă, comparații, grafice și tabel pentru admin
+- [ ] Teste și verificarea descărcărilor în cont
