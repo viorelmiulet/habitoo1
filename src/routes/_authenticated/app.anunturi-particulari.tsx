@@ -564,6 +564,8 @@ function PrivateListingsPage() {
           }
         />
       ) : null}
+      </>
+      )}
     </div>
   );
 }
