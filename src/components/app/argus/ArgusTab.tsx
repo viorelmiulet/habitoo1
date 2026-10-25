@@ -19,6 +19,7 @@ import {
   Search,
   SearchX,
   X,
+  ImageIcon,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -46,7 +47,6 @@ import {
 import {
   getArgusListingContact,
   getArgusListingDetail,
-  getArgusListingImages,
   getArgusLocations,
   getArgusPropertyTypes,
   getArgusTabStatus,
