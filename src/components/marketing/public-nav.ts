@@ -1,5 +1,6 @@
 export const publicNav = [
   { to: "/functionalitati", label: "Funcționalități" },
+  { to: "/analiza-comparativa-de-piata", label: "ACP" },
   { to: "/preturi", label: "Prețuri" },
   { to: "/despre", label: "Despre" },
   { to: "/blog", label: "Blog" },

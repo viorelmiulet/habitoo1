@@ -1,5 +1,10 @@
 # SEO public — pasul 1a
 
+## SEO pasul 3 — Analiză comparativă de piață
+- [ ] Pagină publică SSR cu agregate live, ponderi din configurația ACP și FAQ în graful comun
+- [ ] Meniu public, Funcționalități, sitemap cu data de azi și llms.txt
+- [ ] Teste, verificare fără JavaScript și pe desktop/telefon; fără publicare
+
 ## SEO pasul 2 — Anunțuri de la proprietari
 - [x] Pagină publică SSR, cifre agregate live și FAQ în graful comun
 - [x] Linkuri din Funcționalități/subsol, sitemap cu data schimbării și llms.txt; vechiul link CRM păstrat prin redirecționare

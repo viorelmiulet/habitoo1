@@ -43,6 +43,7 @@ export const PAGE_LASTMOD: Record<string, string> = {
   "/": "2026-10-10",
   "/functionalitati": "2026-10-10",
   "/anunturi-proprietari": "2026-10-25",
+  "/analiza-comparativa-de-piata": "2026-10-25",
   "/preturi": "2026-10-04",
   "/despre": "2026-09-27",
   "/contact": "2026-09-27",
@@ -52,7 +53,7 @@ export const PAGE_LASTMOD: Record<string, string> = {
   "/politica-de-confidentialitate": "2026-09-27",
 };
 
-const publicPages = ["/", "/functionalitati", "/anunturi-proprietari", "/preturi", "/despre", "/contact", "/integrari", "/intrebari-frecvente", "/blog", "/termeni", "/politica-de-confidentialitate"];
+const publicPages = ["/", "/functionalitati", "/anunturi-proprietari", "/analiza-comparativa-de-piata", "/preturi", "/despre", "/contact", "/integrari", "/intrebari-frecvente", "/blog", "/termeni", "/politica-de-confidentialitate"];
 
 const integrationPaths = INTEGRATION_PAGES.map((p) => `/integrari/${p.slug}`);
 
@@ -118,6 +119,7 @@ export function buildLlmsTxt(posts: DiscoverableBlogPost[], now: Date, hasPartne
 - [Habitoo CRM — prima pagină](${BLOG_SITE_URL}/): CRM imobiliar pentru agențiile din România.
 - [Funcționalități Habitoo CRM](${BLOG_SITE_URL}/functionalitati): Proprietăți, clienți, cereri, lead-uri și activitatea echipei.
 - [Anunțuri de la proprietari pentru agenții imobiliare](${BLOG_SITE_URL}/anunturi-proprietari): Surse, cifre live, filtre pe zone și import în portofoliu cu acordul proprietarului.
+- [Analiză comparativă de piață pentru agenții](${BLOG_SITE_URL}/analiza-comparativa-de-piata): Oferte reale, scor de similaritate, ajustări explicate, interval de preț și raport PDF pentru client.
 - [Prețuri și planuri de acces](${BLOG_SITE_URL}/preturi): Basic, Pro și Unlimited, abonamente lunare și anuale.
 - [Integrări și publicare pe portaluri](${BLOG_SITE_URL}/integrari): Portalurile și serviciile conectate la Habitoo.
 ${portalLinks}

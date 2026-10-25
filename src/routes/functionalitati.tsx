@@ -270,6 +270,7 @@ function FeaturesPage() {
           </nav>
           <div className="mt-6 text-center">
             <Button asChild variant="link"><Link to="/anunturi-proprietari">Anunțuri de la proprietari, filtre și import în portofoliu <ArrowRight /></Link></Button>
+            <Button asChild variant="link"><Link to="/analiza-comparativa-de-piata">Analiză comparativă de piață, ajustări și raport PDF <ArrowRight /></Link></Button>
           </div>
         </Container>
       </section>
