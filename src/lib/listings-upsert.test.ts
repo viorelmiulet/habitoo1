@@ -116,6 +116,13 @@ describe("toLenientNumber (câmpuri numerice trimise ca text de hbsync)", () => 
 });
 
 describe("normalizeListingUrl (linkul real al anunțului)", () => {
+  it("acceptă imoradar și păstrează integral linkul extern și parametrii", async () => {
+    const { buildListingRow, normalizeListingUrl } = await import("@/routes/api/public/listings/upsert");
+    const url = "https://www.imoradar24.ro/link-extern/123?source=publi24&other=a%2Fb";
+    expect(buildListingRow({ source: "imoradar", external_id: "123", url, is_owner: true }))
+      .toMatchObject({ source: "imoradar", external_id: "123", url, is_owner: true, phone: null });
+    expect(normalizeListingUrl("imoradar", url, "123")).toBe(url);
+  });
   it("transformă linkurile Storia /ro/ad/ (404) în /ro/oferta/", async () => {
     const { normalizeListingUrl } = await import("@/routes/api/public/listings/upsert");
     expect(

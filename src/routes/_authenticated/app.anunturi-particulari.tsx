@@ -35,7 +35,7 @@ const searchSchema = z.object({
   q: z.string().optional(),
   pagina: z.coerce.number().int().min(1).optional(),
   sortare: z.enum(["newest", "price_asc", "price_desc", "surface_desc"]).optional(),
-  sursa: z.enum(["storia", "imobiliare", "olx", "romimo"]).optional(),
+  sursa: z.enum(["storia", "imobiliare", "olx", "romimo", "imoradar"]).optional(),
   tranzactie: z.enum(["sale", "rent", "rent_day"]).optional(),
   tip: z.string().max(80).optional(),
   pretMin: z.coerce.number().min(0).optional(),
@@ -49,6 +49,7 @@ const SOURCE_LABELS: Record<string, string> = {
   imobiliare: "Imobiliare.ro",
   olx: "OLX",
   romimo: "Romimo",
+  imoradar: "Imoradar24",
 };
 
 const SORT_LABELS: Record<PrivateListingsSort, string> = {
