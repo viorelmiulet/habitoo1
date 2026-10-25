@@ -26,6 +26,21 @@ export function firstIndexForLetter(options: PlaceOption[], letter: string): num
 }
 
 export function buildListingFacets(rows: GeographyRow[]): ListingFacets {
+  // Un cartier stă la sectorul în care apare cel mai des în anunțuri (București).
+  const neighborhoodSectors = new Map<string, Map<string, number>>();
+  for (const row of rows) {
+    if (geographyKey(row.city) !== "bucuresti") continue;
+    const sector = geographyKey(row.zone);
+    const neighborhood = geographyKey(row.neighborhood);
+    if (!/^sector [1-6]$/.test(sector) || !neighborhood) continue;
+    const counts = neighborhoodSectors.get(neighborhood) ?? new Map<string, number>();
+    counts.set(sector, (counts.get(sector) ?? 0) + 1);
+    neighborhoodSectors.set(neighborhood, counts);
+  }
+  const neighborhoodSector = new Map(
+    [...neighborhoodSectors].map(([nb, counts]) => [nb, [...counts].sort((a, b) => b[1] - a[1])[0][0]]),
+  );
+
   const counties = new Map<string, PlaceOption>();
   const localities = new Map<string, Map<string, PlaceOption>>();
   const zones = new Map<string, Map<string, PlaceOption>>();
