@@ -32,6 +32,8 @@ import {
   toCommissionPayload,
   type CommissionForm,
 } from "@/lib/commissions";
+import { CommissionReports } from "@/components/app/CommissionReports";
+import { getRonEurRate } from "@/lib/commissions-rates.functions";
 
 const searchSchema = z.object({
   nou: z.coerce.boolean().optional(),
@@ -69,6 +71,7 @@ function CommissionsPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState<CommissionForm>(() => emptyCommissionForm(""));
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [tab, setTab] = useState<"lista" | "rapoarte">("lista");
 
   const refs = useQuery({
     queryKey: ["commission-refs", orgId],
@@ -140,11 +143,19 @@ function CommissionsPage() {
       if (!orgId) throw new Error("Agenția nu este configurată.");
       const payload = toCommissionPayload({ ...form, agent_id: isAdmin ? form.agent_id : userId });
       if (!payload.agent_id) throw new Error("Alege agentul.");
+      // Cursul BNR din ziua tranzacției se păstrează pe comision, ca rapoartele
+      // vechi în EUR să nu se schimbe; dacă BNR nu răspunde, salvăm fără curs.
+      const ronToEurRate =
+        payload.currency === "RON"
+          ? await getRonEurRate({ data: { date: payload.transaction_date } })
+              .then((r) => r.rate)
+              .catch(() => null)
+          : null;
       if (editingId) {
-        const { error } = await supabase.from("commissions").update(payload).eq("id", editingId);
+        const { error } = await supabase.from("commissions").update({ ...payload, ron_to_eur_rate: ronToEurRate }).eq("id", editingId);
         if (error) throw error;
       } else {
-        const { error } = await supabase.from("commissions").insert({ ...payload, organization_id: orgId });
+        const { error } = await supabase.from("commissions").insert({ ...payload, ron_to_eur_rate: ronToEurRate, organization_id: orgId });
         if (error) throw error;
       }
     },
@@ -200,6 +211,27 @@ function CommissionsPage() {
         actions={<Button onClick={openNew}><Plus className="size-4" /> Adaugă comision</Button>}
       />
 
+      <div className="flex gap-1 border-b border-border">
+        {([["lista", "Comisioane"], ["rapoarte", "Rapoarte"]] as const).map(([key, label]) => (
+          <button
+            key={key}
+            type="button"
+            onClick={() => setTab(key)}
+            className={`-mb-px border-b-2 px-4 py-2 text-sm font-medium transition-colors ${
+              tab === key
+                ? "border-primary text-foreground"
+                : "border-transparent text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+
+      {tab === "rapoarte" ? (
+        <CommissionReports orgId={orgId} isAdmin={isAdmin} profiles={refs.data?.profiles ?? []} />
+      ) : (
+      <>
       <div className="grid gap-3 rounded-lg border border-border bg-card p-4 sm:grid-cols-3 lg:grid-cols-6">
         <div><Label>De la</Label><Input type="date" value={filters.from} onChange={(e) => setFilters({ ...filters, from: e.target.value })} /></div>
         <div><Label>Până la</Label><Input type="date" value={filters.to} onChange={(e) => setFilters({ ...filters, to: e.target.value })} /></div>
@@ -266,6 +298,8 @@ function CommissionsPage() {
             ))}
           </div>
         </div>
+      )}
+      </>
       )}
 
       <Dialog open={open} onOpenChange={setOpen}>
