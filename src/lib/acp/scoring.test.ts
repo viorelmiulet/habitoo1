@@ -78,6 +78,20 @@ describe("configurația motorului ACP", () => {
   });
 });
 
+describe("scoreOther", () => {
+  it("echivalează tipurile CRM (engleză) cu cele ale ofertelor (română)", () => {
+    expect(
+      scoreOther(
+        { propertyType: "apartment", transactionType: "sale" },
+        { propertyType: "apartament", transactionType: "sale" },
+      ),
+    ).toBe(100);
+    expect(scoreOther({ propertyType: "studio" }, { propertyType: "apartament" })).toBe(100);
+    expect(scoreOther({ propertyType: "house" }, { propertyType: "casa" })).toBe(100);
+    expect(scoreOther({ propertyType: "apartment" }, { propertyType: "casa" })).toBe(0);
+  });
+});
+
 describe("calculateComparableSimilarity", () => {
   it("dă un scor semnificativ mai mare candidatului din aceeași zonă", () => {
     const a = calculateComparableSimilarity(target, candidateA);
