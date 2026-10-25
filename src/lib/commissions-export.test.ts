@@ -10,7 +10,7 @@ import { emptyCommissionForm } from "./commissions";
 
 vi.mock("@/integrations/supabase/client", () => ({ supabase: {} }));
 vi.mock("./commissions-rates.functions", () => ({ ensureCommissionRates: vi.fn() }));
-const row = (over: Partial<CommissionRecord> = {}): CommissionRecord => ({ id:"c1",organization_id:"org1",agent_id:"a1",created_by:"a1",allocated_by_admin:false,transaction_date:"2026-10-10",transaction_kind:"sale",property_type:"apartment",property_id:null,contact_id:null,location_text:"Titan",transaction_value:100000,agency_commission:1000,agent_amount:400,currency:"EUR",payer:"buyer",status:"collected",collected_at:"2026-10-10",notes:"Notă completă",created_at:"2026-10-10T12:00:00Z",updated_at:"2026-10-10T12:00:00Z",ron_to_eur_rate:5,...over });
+const row = (over: Partial<CommissionRecord> = {}): CommissionRecord => ({ id:"c1",organization_id:"org1",agent_id:"a1",created_by:"a1",allocated_by_admin:false,transaction_date:"2026-10-10",transaction_kind:"sale",property_type:"apartment",property_id:null,contact_id:null,location_text:"Titan",transaction_value:100000,agency_commission:1000,agent_amount:400,currency:"EUR",payer:"buyer",status:"collected",collected_at:"2026-10-10",notes:"Notă completă",created_at:"2026-10-10T12:00:00Z",updated_at:"2026-10-10T12:00:00Z",ron_to_eur_rate:5,rate_source:"BNR",...over });
 const filters={from:"2026-10-01",to:"2026-10-31",agent:"__all",kind:"sale",ptype:"apartment",status:"__all"};
 const scope={orgId:"org1",userId:"a1",isAdmin:false};
 const names={agents:new Map([["a1","Agent unu"]]),properties:new Map<string,string>(),contacts:new Map<string,string>()};
@@ -21,9 +21,12 @@ describe("export și moneda",()=>{
     const selected=filterCommissionRows([...rows,row({id:"old",transaction_date:"2026-09-01"}),row({id:"rent",transaction_kind:"rent"}),row({id:"house",property_type:"house"})],filters,scope);
     expect(selected.map(r=>r.id)).toEqual(["c1","c2","cancel"]);
     const matrix=commissionExportMatrix(selected,names,"EUR");
-    expect(matrix.values).toHaveLength(3);expect(matrix.headers).toHaveLength(31);
-    expect(matrix.totals[26]).toBe(2000);expect(matrix.totals[27]).toBe(800);
+    expect(matrix.values).toHaveLength(3);expect(matrix.headers).toHaveLength(32);
+    expect(matrix.totals[27]).toBe(2000);expect(matrix.totals[28]).toBe(800);
     expect(matrix.values[1][24]).toBe(5.1);
+    expect(matrix.values[1][25]).toBe("BNR");
+    expect(matrix.headers[24]).toBe("Curs (RON / EUR)");expect(matrix.headers[25]).toBe("Sursa cursului");
+    expect(commissionExportMatrix([row({rate_source:"BCE"})],names,"EUR").values[0][25]).toBe("BCE");
     expect(commissionCsv(matrix)).toContain("Notă completă");
     expect(filterCommissionRows(rows,{...filters,status:"collected"},scope)).toHaveLength(2);
   });
@@ -57,8 +60,9 @@ describe("export și moneda",()=>{
     await book.xlsx.load(bytes as unknown as Parameters<typeof book.xlsx.load>[0]);
     const sheet=book.getWorksheet("Comisioane");expect(sheet?.rowCount).toBe(5);
     expect(sheet?.getCell("Y3").value).toBe(5.1);
-    expect(sheet?.getCell("AD5").value).toMatchObject({result:10100});
-    expect(sheet?.getCell("AA5").value).toMatchObject({result:2000});
+    expect(sheet?.getCell("Z3").value).toBe("BNR");
+    expect(sheet?.getCell("AE5").value).toMatchObject({result:10100});
+    expect(sheet?.getCell("AB5").value).toMatchObject({result:2000});
     await writeFile("/tmp/commissions-qa.xlsx",bytes);
     expect(commissionFilename(filters,"MVA-Imobiliare","xlsx")).toBe("comisioane_2026-10_MVA-Imobiliare.xlsx");
   });
