@@ -106,6 +106,19 @@ describe("căutarea Argus din tab", () => {
     expect(JSON.stringify(result)).not.toContain("700 000");
   });
 
+  it("o pagină de rezultate face exact o cerere la Argus", async () => {
+    mocks.call.mockResolvedValue({
+      properties: [{ ...SEARCH_RESPONSE.properties[0], has_image: true }, { ...SEARCH_RESPONSE.properties[0], property_id: "P2", has_image: true }],
+      total: 2,
+    });
+    const result = (await (searchArgusListings as unknown as Handler)({ data: {}, context: agentCtx() })) as {
+      items: { hasImage: boolean }[];
+    };
+    expect(mocks.call).toHaveBeenCalledTimes(1);
+    expect(mocks.call.mock.calls[0]![2].path).toBe("/properties/search");
+    expect(result.items.every((i) => i.hasImage)).toBe(true);
+  });
+
   it("opțiunea „Toți” omite filtrul listed_by", async () => {
     mocks.call.mockResolvedValue({ properties: [], total: 0 });
     await (searchArgusListings as unknown as Handler)({
@@ -141,7 +154,7 @@ describe("detaliul și telefonul", () => {
     })) as Record<string, unknown>;
     expect(detail).toMatchObject({ id: "P1", description: "Descriere" });
     const paths = mocks.call.mock.calls.map((c) => (c[2] as { path: string }).path);
-    expect(paths).toEqual(["/properties/detail"]);
+    expect(paths).toEqual(["/properties/detail", "/properties/images"]);
     expect(paths).not.toContain("/properties/contact");
     expect(JSON.stringify(detail)).not.toContain("700 000");
   });
