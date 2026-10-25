@@ -6,10 +6,15 @@ export const OWNER_LISTINGS_PATH = "/anunturi-proprietari";
 export const OWNER_LISTINGS_TITLE = "Anunțuri de la proprietari pentru agenții imobiliare | Habitoo CRM";
 export const OWNER_LISTINGS_DESCRIPTION = "Anunțurile de la proprietari din Storia, OLX, Romimo, Imoradar24 și Anuntul.ro, într-o singură listă, cu filtre pe zone și import în portofoliu.";
 
-export function ownerStatisticsText(statistics: LlmsStatistics, observedAt: string) {
+export function summarizeOwnerStatistics(statistics: LlmsStatistics, observedAt: string) {
   const sources = statistics.owner_sources.filter((row) => row.count > 0);
   const date = new Intl.DateTimeFormat("ro-RO", { day: "numeric", month: "long", year: "numeric", timeZone: "Europe/Bucharest" }).format(new Date(observedAt));
   const total = sources.reduce((sum, row) => sum + row.count, 0);
+  return { sources, date, total };
+}
+
+export function ownerStatisticsText(statistics: LlmsStatistics, observedAt: string) {
+  const { sources, date, total } = summarizeOwnerStatistics(statistics, observedAt);
   return `La ${date}: ${total} anunțuri de la proprietari din ${sources.length} surse: ${sources.map((row) => `${marketSourceName(row.source)} (${row.count})`).join(", ") || "niciuna"}.`;
 }
 
