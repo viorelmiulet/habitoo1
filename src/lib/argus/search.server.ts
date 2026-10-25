@@ -80,8 +80,10 @@ export async function getArgusPropertyDetail(
   let images = normalizeArgusImages(raw);
   const hasImage =
     raw && typeof raw === "object" && (raw as Record<string, unknown>)["has_image"] === true;
-  if (hasImage && images.length === 0) {
-    images = await getArgusPropertyImages(db, orgId, propertyId, extra);
+  // Pozele se cer o singură dată, doar la deschiderea detaliului.
+  if (hasImage) {
+    const fetched = await getArgusPropertyImages(db, orgId, propertyId, extra);
+    if (fetched.length) images = fetched;
   }
   return normalizeArgusDetail(raw, images);
 }
