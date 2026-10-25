@@ -1,14 +1,38 @@
 import { normalizePlace, normalizePropertyType, normalizeTransactionType } from "./normalize";
 
+/**
+ * Orașe de forma „București Sector 6" / „Bucureşti Sectorul 6" / „Sector 6"
+ * (cu ş sau ș) înseamnă orașul București + sectorul N.
+ */
+const SECTOR_CITY_PATTERN = /^(?:bucuresti )?sector(?:ul)? ([1-6])$/;
+
+/** Sub acest număr de oferte potrivite în sector, căutarea se extinde la tot orașul. */
+export const MARKET_SECTOR_MIN_MATCHES = 8;
+
 export function marketPoolScope(target: { city?: string | null; sector?: string | null; propertyType?: string | null; transactionType?: string | null }) {
   const city = normalizePlace(target.city);
-  const sector = normalizePlace(target.sector)?.replace("sectorul", "sector") ?? (city && /^sector(?:ul)? [1-6]$/.test(city) ? city.replace("sectorul", "sector") : null);
+  const citySector = city?.match(SECTOR_CITY_PATTERN);
+  const sector =
+    normalizePlace(target.sector)?.replace("sectorul", "sector") ??
+    (citySector ? `sector ${citySector[1]}` : null);
   return {
     city: sector ? "bucuresti" : city,
     sector,
     propertyType: normalizePropertyType(target.propertyType),
     transactionType: normalizeTransactionType(target.transactionType),
   };
+}
+
+/**
+ * Regula de extindere: cu mai puțin de MARKET_SECTOR_MIN_MATCHES oferte în
+ * sector, filtrul de sector se renunță și căutarea acoperă tot orașul.
+ */
+export function expandSectorFilters<T extends { sector?: string | null }>(
+  filters: T,
+  matchedCount: number,
+): T {
+  if (!filters.sector || matchedCount >= MARKET_SECTOR_MIN_MATCHES) return filters;
+  return { ...filters, sector: null };
 }
 
 /** Shared geography filter, independent of private/agency classification. */
