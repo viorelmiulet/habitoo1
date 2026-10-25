@@ -1950,6 +1950,100 @@ export type Database = {
         }
         Relationships: []
       }
+      commissions: {
+        Row: {
+          agency_commission: number
+          agent_amount: number
+          agent_id: string
+          allocated_by_admin: boolean
+          collected_at: string | null
+          contact_id: string | null
+          created_at: string
+          created_by: string
+          currency: string
+          id: string
+          location_text: string | null
+          notes: string | null
+          organization_id: string
+          payer: string
+          property_id: string | null
+          property_type: string
+          status: string
+          transaction_date: string
+          transaction_kind: Database["public"]["Enums"]["transaction_kind"]
+          transaction_value: number
+          updated_at: string
+        }
+        Insert: {
+          agency_commission?: number
+          agent_amount?: number
+          agent_id: string
+          allocated_by_admin?: boolean
+          collected_at?: string | null
+          contact_id?: string | null
+          created_at?: string
+          created_by?: string
+          currency?: string
+          id?: string
+          location_text?: string | null
+          notes?: string | null
+          organization_id: string
+          payer: string
+          property_id?: string | null
+          property_type: string
+          status?: string
+          transaction_date?: string
+          transaction_kind: Database["public"]["Enums"]["transaction_kind"]
+          transaction_value?: number
+          updated_at?: string
+        }
+        Update: {
+          agency_commission?: number
+          agent_amount?: number
+          agent_id?: string
+          allocated_by_admin?: boolean
+          collected_at?: string | null
+          contact_id?: string | null
+          created_at?: string
+          created_by?: string
+          currency?: string
+          id?: string
+          location_text?: string | null
+          notes?: string | null
+          organization_id?: string
+          payer?: string
+          property_id?: string | null
+          property_type?: string
+          status?: string
+          transaction_date?: string
+          transaction_kind?: Database["public"]["Enums"]["transaction_kind"]
+          transaction_value?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "commissions_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "commissions_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "commissions_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       company_lookup_cache: {
         Row: {
           cui: string
@@ -9646,6 +9740,7 @@ export type Database = {
         Args: { _conv: string; _user: string }
         Returns: boolean
       }
+      is_commission_admin: { Args: { _org: string }; Returns: boolean }
       is_org_admin: { Args: never; Returns: boolean }
       is_superadmin: { Args: never; Returns: boolean }
       lacheie_resend_arm: { Args: never; Returns: undefined }
