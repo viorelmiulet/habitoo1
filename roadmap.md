@@ -66,3 +66,10 @@
 - [x] Cartierul nu mai elimină oferte (doar crește scorul); sub 8 oferte în sector → extindere la tot orașul
 - [x] Aceleași reguli în blocul „Piața" din analiză
 - [x] Teste: HB-1171 / HB-1260 / HB-1261 au comparabile din piață; build OK
+
+# Anunțuri particulari — sursa Anuntul.ro
+
+- [x] Sursa anuntul acceptată la upsert, import piață (ACP), filtru, etichete și amestecarea surselor
+- [x] Telefonul se salvează doar pentru anuntul; afișat ca link tel: pe card și în detaliu
+- [x] 56 teste trec (upsert cu/fără telefon, import piață, filtru sursă); build OK
+- [ ] Verificare vizuală în cont — blocată: solicitantul nu are un cont asociat pentru sesiunea de test
