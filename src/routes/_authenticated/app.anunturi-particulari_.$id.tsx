@@ -9,6 +9,7 @@ import {
   ExternalLink,
   MapPin,
   MessageSquare,
+  Phone,
   Send,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -37,6 +38,7 @@ const SOURCE_LABELS: Record<string, string> = {
   olx: "OLX",
   romimo: "Romimo",
   imoradar: "Imoradar24",
+  anuntul: "Anuntul.ro",
 };
 
 function money(value: number | null, currency: string | null) {
@@ -171,6 +173,13 @@ function ListingDetail({ listing }: { listing: OwnerListing }) {
               </p>
             ) : null}
             <div className="flex flex-col gap-2 pt-1">
+              {listing.phone ? (
+                <Button asChild variant="outline">
+                  <a href={`tel:${listing.phone}`}>
+                    <Phone className="size-4" /> {listing.phone}
+                  </a>
+                </Button>
+              ) : null}
               {listing.url ? (
                 <Button asChild>
                   <a href={listing.url} target="_blank" rel="noopener noreferrer">

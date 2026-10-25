@@ -3,7 +3,7 @@ import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useState } from "react";
 import { z } from "zod";
-import { ChevronDown, ChevronLeft, ChevronRight, ChevronUp, ExternalLink, MapPin, Search, SearchX, X } from "lucide-react";
+import { ChevronDown, ChevronLeft, ChevronRight, ChevronUp, ExternalLink, MapPin, Phone, Search, SearchX, X } from "lucide-react";
 import { PageHeader } from "@/components/app/PageHeader";
 import { appHead } from "@/components/app/app-head";
 import { SearchableSelect } from "@/components/app/SearchableSelect";
@@ -38,7 +38,7 @@ const searchSchema = z.object({
   q: z.string().optional(),
   pagina: z.coerce.number().int().min(1).optional(),
   sortare: z.enum(["newest", "price_asc", "price_desc", "surface_desc"]).optional(),
-  sursa: z.enum(["storia", "imobiliare", "olx", "romimo", "imoradar"]).optional(),
+  sursa: z.enum(["storia", "imobiliare", "olx", "romimo", "imoradar", "anuntul"]).optional(),
   tranzactie: z.enum(["sale", "rent", "rent_day"]).optional(),
   tip: z.string().max(80).optional(), // linkuri vechi, înlocuit de tab
   zile: z.coerce.number().int().min(0).max(7).optional(),
@@ -62,6 +62,7 @@ const SOURCE_LABELS: Record<string, string> = {
   olx: "OLX",
   romimo: "Romimo",
   imoradar: "Imoradar24",
+  anuntul: "Anuntul.ro",
 };
 
 const SORT_LABELS: Record<PrivateListingsSort, string> = {
@@ -640,6 +641,13 @@ function ListingRow({ listing }: { listing: OwnerListing }) {
         {listing.description ? <ListingDescription text={listing.description} /> : null}
       </div>
       <div className="relative z-10 flex shrink-0 flex-row gap-2 sm:w-44 sm:flex-col sm:justify-center">
+        {listing.phone ? (
+          <Button asChild variant="outline" className="flex-1 sm:flex-none">
+            <a href={`tel:${listing.phone}`}>
+              <Phone className="size-4" /> {listing.phone}
+            </a>
+          </Button>
+        ) : null}
         {listing.url ? (
           <Button asChild className="flex-1 sm:flex-none">
             <a href={listing.url} target="_blank" rel="noopener noreferrer">
