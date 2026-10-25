@@ -62,6 +62,7 @@ BEGIN
   PERFORM set_config('request.jwt.claims', json_build_object('sub',other_user,'role','authenticated')::text, true);
   IF EXISTS (SELECT 1 FROM public.commissions WHERE id IN (own_id,alloc_id,a2_id)) THEN RAISE EXCEPTION 'other agency sees commissions'; END IF;
 
-  RAISE NOTICE 'commissions access OK';
+  -- Abort on purpose so every fixture rolls back.
+  RAISE EXCEPTION 'COMMISSIONS_ACCESS_OK';
 END $$;
 ROLLBACK;
