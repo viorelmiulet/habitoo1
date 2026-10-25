@@ -109,7 +109,7 @@ function dayRows(): Row[] {
   return rows;
 }
 
-const handler = getOwnerListings as unknown as (input: unknown) => Promise<{ items: { id: string; source: string }[]; total: number }>;
+const handler = getOwnerListings as unknown as (input: unknown) => Promise<{ items: { id: string; source: string }[]; total: number; newToday: number }>;
 const run = (rows: Row[], input: unknown) =>
   handler({ data: privateListingsFiltersSchema.parse(input), context: { supabase: makeSupabase(rows) } });
 
