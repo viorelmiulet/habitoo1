@@ -6662,6 +6662,58 @@ export type Database = {
           },
         ]
       }
+      private_listing_imports: {
+        Row: {
+          consent_at: string
+          external_id: string
+          imported_by: string
+          listing_id: string | null
+          organization_id: string
+          property_id: string
+          source: string
+        }
+        Insert: {
+          consent_at?: string
+          external_id: string
+          imported_by: string
+          listing_id?: string | null
+          organization_id: string
+          property_id: string
+          source: string
+        }
+        Update: {
+          consent_at?: string
+          external_id?: string
+          imported_by?: string
+          listing_id?: string | null
+          organization_id?: string
+          property_id?: string
+          source?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "private_listing_imports_listing_id_fkey"
+            columns: ["listing_id"]
+            isOneToOne: false
+            referencedRelation: "listings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "private_listing_imports_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "private_listing_imports_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -9540,6 +9592,15 @@ export type Database = {
         Returns: undefined
       }
       impersonation_target: { Args: { _id: string }; Returns: string }
+      import_private_listing: {
+        Args: {
+          _consent: boolean
+          _images: Json
+          _listing_id: string
+          _property_id: string
+        }
+        Returns: Json
+      }
       is_chat_participant: {
         Args: { _conv: string; _user: string }
         Returns: boolean
