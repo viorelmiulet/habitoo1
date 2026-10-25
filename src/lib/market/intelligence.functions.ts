@@ -161,6 +161,9 @@ export const getAcpMarketIntelligence = createServerFn({ method: "POST" })
     );
     const live = await computeMarketIntelligence(admin, filters, {
       includeTrend: data.includeTrend !== false,
+      // Blocul „Piața" din analiză: sub pragul de oferte din sector, căutarea
+      // se extinde la tot orașul (aceeași regulă ca la comparabile).
+      expandSector: true,
     });
 
     const { data: comparables } = await admin
