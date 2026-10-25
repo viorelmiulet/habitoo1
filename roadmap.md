@@ -1,5 +1,10 @@
 # SEO public — pasul 1a
 
+## SEO pasul 2 — Anunțuri de la proprietari
+- [ ] Pagină publică SSR, cifre agregate live și FAQ în graful comun
+- [ ] Linkuri din Funcționalități/subsol, sitemap cu data schimbării și llms.txt
+- [ ] Teste și verificare fără JavaScript, desktop și telefon; fără publicare
+
 ## Comisioane — BNR
 - [x] Salvare independentă de BNR, completare tolerantă și zilnică (job creat; noua adresă devine disponibilă după publicare)
 - [x] Surse în ordine, parser, diagnostic anual (HTTP 200 HTML, zero cursuri) și 39 teste simulate trec
