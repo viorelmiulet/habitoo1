@@ -102,6 +102,7 @@ import { Route as ApiPublicBlogMediaSplatRouteImport } from './routes/api/public
 import { Route as ApiPublicBlogOgSplatRouteImport } from './routes/api/public/blog-og/$'
 import { Route as ApiPublicCronAccountDeletionRouteImport } from './routes/api/public/cron/account-deletion'
 import { Route as ApiPublicCronChatEmailRouteImport } from './routes/api/public/cron/chat-email'
+import { Route as ApiPublicCronCommissionRatesRouteImport } from './routes/api/public/cron/commission-rates'
 import { Route as ApiPublicCronLacheieResendRouteImport } from './routes/api/public/cron/lacheie-resend'
 import { Route as ApiPublicCronListingCollectorRouteImport } from './routes/api/public/cron/listing-collector'
 import { Route as ApiPublicCronListingsRetentionRouteImport } from './routes/api/public/cron/listings-retention'
@@ -673,6 +674,12 @@ const ApiPublicCronChatEmailRoute = ApiPublicCronChatEmailRouteImport.update({
   path: '/api/public/cron/chat-email',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicCronCommissionRatesRoute =
+  ApiPublicCronCommissionRatesRouteImport.update({
+    id: '/api/public/cron/commission-rates',
+    path: '/api/public/cron/commission-rates',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicCronLacheieResendRoute =
   ApiPublicCronLacheieResendRouteImport.update({
     id: '/api/public/cron/lacheie-resend',
@@ -1120,6 +1127,7 @@ export interface FileRoutesByFullPath {
   '/api/public/blog-og/$': typeof ApiPublicBlogOgSplatRoute
   '/api/public/cron/account-deletion': typeof ApiPublicCronAccountDeletionRoute
   '/api/public/cron/chat-email': typeof ApiPublicCronChatEmailRoute
+  '/api/public/cron/commission-rates': typeof ApiPublicCronCommissionRatesRoute
   '/api/public/cron/lacheie-resend': typeof ApiPublicCronLacheieResendRoute
   '/api/public/cron/listing-collector': typeof ApiPublicCronListingCollectorRoute
   '/api/public/cron/listings-retention': typeof ApiPublicCronListingsRetentionRoute
@@ -1273,6 +1281,7 @@ export interface FileRoutesByTo {
   '/api/public/blog-og/$': typeof ApiPublicBlogOgSplatRoute
   '/api/public/cron/account-deletion': typeof ApiPublicCronAccountDeletionRoute
   '/api/public/cron/chat-email': typeof ApiPublicCronChatEmailRoute
+  '/api/public/cron/commission-rates': typeof ApiPublicCronCommissionRatesRoute
   '/api/public/cron/lacheie-resend': typeof ApiPublicCronLacheieResendRoute
   '/api/public/cron/listing-collector': typeof ApiPublicCronListingCollectorRoute
   '/api/public/cron/listings-retention': typeof ApiPublicCronListingsRetentionRoute
@@ -1432,6 +1441,7 @@ export interface FileRoutesById {
   '/api/public/blog-og/$': typeof ApiPublicBlogOgSplatRoute
   '/api/public/cron/account-deletion': typeof ApiPublicCronAccountDeletionRoute
   '/api/public/cron/chat-email': typeof ApiPublicCronChatEmailRoute
+  '/api/public/cron/commission-rates': typeof ApiPublicCronCommissionRatesRoute
   '/api/public/cron/lacheie-resend': typeof ApiPublicCronLacheieResendRoute
   '/api/public/cron/listing-collector': typeof ApiPublicCronListingCollectorRoute
   '/api/public/cron/listings-retention': typeof ApiPublicCronListingsRetentionRoute
@@ -1591,6 +1601,7 @@ export interface FileRouteTypes {
     | '/api/public/blog-og/$'
     | '/api/public/cron/account-deletion'
     | '/api/public/cron/chat-email'
+    | '/api/public/cron/commission-rates'
     | '/api/public/cron/lacheie-resend'
     | '/api/public/cron/listing-collector'
     | '/api/public/cron/listings-retention'
@@ -1744,6 +1755,7 @@ export interface FileRouteTypes {
     | '/api/public/blog-og/$'
     | '/api/public/cron/account-deletion'
     | '/api/public/cron/chat-email'
+    | '/api/public/cron/commission-rates'
     | '/api/public/cron/lacheie-resend'
     | '/api/public/cron/listing-collector'
     | '/api/public/cron/listings-retention'
@@ -1902,6 +1914,7 @@ export interface FileRouteTypes {
     | '/api/public/blog-og/$'
     | '/api/public/cron/account-deletion'
     | '/api/public/cron/chat-email'
+    | '/api/public/cron/commission-rates'
     | '/api/public/cron/lacheie-resend'
     | '/api/public/cron/listing-collector'
     | '/api/public/cron/listings-retention'
@@ -2010,6 +2023,7 @@ export interface RootRouteChildren {
   ApiPublicBlogOgSplatRoute: typeof ApiPublicBlogOgSplatRoute
   ApiPublicCronAccountDeletionRoute: typeof ApiPublicCronAccountDeletionRoute
   ApiPublicCronChatEmailRoute: typeof ApiPublicCronChatEmailRoute
+  ApiPublicCronCommissionRatesRoute: typeof ApiPublicCronCommissionRatesRoute
   ApiPublicCronLacheieResendRoute: typeof ApiPublicCronLacheieResendRoute
   ApiPublicCronListingCollectorRoute: typeof ApiPublicCronListingCollectorRoute
   ApiPublicCronListingsRetentionRoute: typeof ApiPublicCronListingsRetentionRoute
@@ -2720,6 +2734,13 @@ declare module '@tanstack/react-router' {
       path: '/api/public/cron/chat-email'
       fullPath: '/api/public/cron/chat-email'
       preLoaderRoute: typeof ApiPublicCronChatEmailRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/cron/commission-rates': {
+      id: '/api/public/cron/commission-rates'
+      path: '/api/public/cron/commission-rates'
+      fullPath: '/api/public/cron/commission-rates'
+      preLoaderRoute: typeof ApiPublicCronCommissionRatesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/cron/lacheie-resend': {
@@ -3441,6 +3462,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicBlogOgSplatRoute: ApiPublicBlogOgSplatRoute,
   ApiPublicCronAccountDeletionRoute: ApiPublicCronAccountDeletionRoute,
   ApiPublicCronChatEmailRoute: ApiPublicCronChatEmailRoute,
+  ApiPublicCronCommissionRatesRoute: ApiPublicCronCommissionRatesRoute,
   ApiPublicCronLacheieResendRoute: ApiPublicCronLacheieResendRoute,
   ApiPublicCronListingCollectorRoute: ApiPublicCronListingCollectorRoute,
   ApiPublicCronListingsRetentionRoute: ApiPublicCronListingsRetentionRoute,
