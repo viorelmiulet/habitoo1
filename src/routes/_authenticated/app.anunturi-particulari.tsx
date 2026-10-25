@@ -9,6 +9,7 @@ import { appHead } from "@/components/app/app-head";
 import { SearchableSelect } from "@/components/app/SearchableSelect";
 import { ZonePickerDialog } from "@/components/app/ZonePickerDialog";
 import { ImportListingButton } from "@/components/app/ImportListingButton";
+import { ArgusTab } from "@/components/app/argus/ArgusTab";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -30,6 +31,8 @@ import { PRIVATE_LISTINGS_PAGE_SIZE, type PrivateListingsSort } from "@/lib/priv
 import { geographyKey, localityScope } from "@/lib/private-listing-geography";
 
 const searchSchema = z.object({
+  // „argus” = tabul cu rezultate live de la Argus; lipsa = lista Habitoo.
+  lista: z.enum(["argus"]).optional(),
   tab: z.enum(["apartamente", "case", "comerciale", "terenuri"]).optional(),
   judet: z.string().optional(),
   oras: z.string().optional(),
@@ -218,10 +221,13 @@ function PrivateListingsPage() {
   const resetFilters = () =>
     navigate({ search: { tab: search.tab, sortare: search.sortare }, replace: true });
 
+  // În tabul „Argus” lista Habitoo nu se încarcă deloc.
+  const habitooTab = search.lista !== "argus";
   const facets = useQuery({
     queryKey: ["owner-listing-facets"],
     queryFn: () => fetchFacets(),
     staleTime: 5 * 60_000,
+    enabled: habitooTab,
   });
   const listings = useQuery({
     queryKey: [
@@ -247,6 +253,7 @@ function PrivateListingsPage() {
         },
       }),
     placeholderData: keepPreviousData,
+    enabled: habitooTab,
   });
 
   const draftCountyKey = geographyKey(draft.judet);
@@ -279,6 +286,40 @@ function PrivateListingsPage() {
         description="Anunțuri de la proprietari, aduse automat din alte site-uri. Verifică datele înainte să contactezi proprietarul."
       />
 
+      <div className="flex gap-5 border-b border-border" role="tablist" aria-label="Sursa anunțurilor">
+        {([
+          { value: "", label: "Anunțuri adunate" },
+          { value: "argus", label: "Argus" },
+        ] as const).map(({ value, label }) => {
+          const active = (search.lista ?? "") === value;
+          return (
+            <button
+              key={value || "habitoo"}
+              type="button"
+              role="tab"
+              aria-selected={active}
+              className={`-mb-px shrink-0 border-b-2 px-1 pb-2 text-sm font-medium transition-colors ${
+                active
+                  ? "border-primary text-primary"
+                  : "border-transparent text-muted-foreground hover:text-foreground"
+              }`}
+              onClick={() =>
+                navigate({
+                  search: value === "argus" ? { lista: "argus" } : {},
+                  replace: true,
+                })
+              }
+            >
+              {label}
+            </button>
+          );
+        })}
+      </div>
+
+      {search.lista === "argus" ? (
+        <ArgusTab />
+      ) : (
+      <>
       <form
         className="space-y-3"
         onSubmit={(e) => {
@@ -523,6 +564,8 @@ function PrivateListingsPage() {
           }
         />
       ) : null}
+      </>
+      )}
     </div>
   );
 }
