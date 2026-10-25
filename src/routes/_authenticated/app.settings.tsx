@@ -729,6 +729,7 @@ function SettingsPage() {
             <TabsContent value="integrations" className="mt-0">
               <div className="space-y-6">
                 <SiteFeedCard />
+                <ArgusConnectionCard />
               </div>
             </TabsContent>
           ) : null}
