@@ -410,9 +410,9 @@ function ListingRow({ listing }: { listing: OwnerListing }) {
         <div className="flex flex-wrap items-center gap-2">
           <Badge variant="secondary">{SOURCE_LABELS[listing.source] ?? listing.source}</Badge>
           {transaction ? <span className="text-xs text-muted-foreground">{transaction}</span> : null}
-          {listing.scrapedAt ? (
+          {listing.firstSeenAt ? (
             <span className="text-xs text-muted-foreground">
-              Adăugat {new Date(listing.scrapedAt).toLocaleDateString("ro-RO")}
+              Adăugat {new Date(listing.firstSeenAt).toLocaleDateString("ro-RO")}
             </span>
           ) : null}
         </div>
