@@ -6,7 +6,6 @@
  * direct către apelant.
  */
 import { createServerFn } from "@tanstack/react-start";
-import { getRequestHeader, setResponseHeader, setResponseStatus } from "@tanstack/react-start/server";
 import { z } from "zod";
 import { requireActiveOrgAuth } from "@/lib/org-access";
 import type { Ctx } from "@/lib/meta/post.functions";
