@@ -25,7 +25,6 @@ import {
   canEditCommission,
   commissionPayerLabels,
   commissionStatusLabels,
-  commissionTotals,
   emptyCommissionForm,
   prefillFromContract,
   prefillFromProperty,
@@ -33,6 +32,10 @@ import {
   type CommissionForm,
 } from "@/lib/commissions";
 import { CommissionReports } from "@/components/app/CommissionReports";
+import { CommissionCurrencySelect } from "@/components/app/CommissionCurrencySelect";
+import { CommissionExportButton } from "@/components/app/CommissionExportButton";
+import { readCommissions } from "@/lib/commissions-data";
+import { convertCommissionAmount, reportKpis, type DisplayCurrency } from "@/lib/commissions-reports";
 import { getRonEurRate } from "@/lib/commissions-rates.functions";
 
 const searchSchema = z.object({
@@ -43,7 +46,7 @@ const searchSchema = z.object({
 
 export const Route = createFileRoute("/_authenticated/app/comisioane")({
   validateSearch: searchSchema,
-  head: () => appHead("Habitoo CRM — comisioane"),
+  head: () => ({ ...appHead("Habitoo CRM — comisioane"), meta: [...appHead("Habitoo CRM — comisioane").meta, { name: "description", content: "Comisioanele agenției, rapoarte și exporturi Excel, CSV și PDF." }, { property: "og:title", content: "Habitoo CRM — comisioane" }, { property: "og:description", content: "Comisioane și rapoarte ale agenției." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }] }),
   component: CommissionsPage,
 });
 
@@ -71,35 +74,29 @@ function CommissionsPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState<CommissionForm>(() => emptyCommissionForm(""));
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [currency, setCurrency] = useState<DisplayCurrency>("EUR");
   const [tab, setTab] = useState<"lista" | "rapoarte">("lista");
 
   const refs = useQuery({
     queryKey: ["commission-refs", orgId],
     enabled: !!orgId,
     queryFn: async () => {
+      if (!orgId) throw new Error("Agenția nu este configurată.");
       const [profiles, properties, contacts] = await Promise.all([
-        supabase.from("profiles").select("id,full_name").eq("organization_id", orgId!).order("full_name"),
-        supabase.from("properties").select("id,reference,title,city").eq("organization_id", orgId!).order("created_at", { ascending: false }).limit(1000),
-        supabase.from("contacts").select("id,first_name,last_name").eq("organization_id", orgId!).order("first_name").limit(2000),
+        supabase.from("profiles").select("id,full_name").eq("organization_id", orgId).order("full_name"),
+        supabase.from("properties").select("id,reference,title,city").eq("organization_id", orgId).order("created_at", { ascending: false }).limit(1000),
+        supabase.from("contacts").select("id,first_name,last_name").eq("organization_id", orgId).order("first_name").limit(2000),
       ]);
       return { profiles: profiles.data ?? [], properties: properties.data ?? [], contacts: contacts.data ?? [] };
     },
   });
 
   const list = useQuery({
-    queryKey: ["commissions", orgId, filters],
+    queryKey: ["commissions", orgId, userId, isAdmin, filters],
     enabled: !!orgId,
     queryFn: async () => {
-      let q = supabase.from("commissions").select("*").order("transaction_date", { ascending: false }).limit(2000);
-      if (filters.from) q = q.gte("transaction_date", filters.from);
-      if (filters.to) q = q.lte("transaction_date", filters.to);
-      if (isAdmin && filters.agent !== ALL) q = q.eq("agent_id", filters.agent);
-      if (filters.kind !== ALL) q = q.eq("transaction_kind", filters.kind as "sale" | "rent");
-      if (filters.ptype !== ALL) q = q.eq("property_type", filters.ptype);
-      if (filters.status !== ALL) q = q.eq("status", filters.status);
-      const { data, error } = await q;
-      if (error) throw error;
-      return data ?? [];
+      if (!orgId) throw new Error("Agenția nu este configurată.");
+      return readCommissions(filters, { orgId, userId, isAdmin });
     },
   });
 
@@ -136,21 +133,26 @@ function CommissionsPage() {
   const names = useMemo(() => new Map((refs.data?.profiles ?? []).map((p) => [p.id, p.full_name ?? "—"])), [refs.data]);
   const props = useMemo(() => new Map((refs.data?.properties ?? []).map((p) => [p.id, p])), [refs.data]);
   const rows = list.data ?? [];
-  const totals = commissionTotals(rows);
+  const totals = reportKpis(rows, currency);
+  const prepareExport = async (ext: "xlsx" | "csv") => {
+    if (!orgId) throw new Error("Agenția nu este configurată.");
+    const snapshot = { ...filters };
+    const selected = await readCommissions(snapshot, { orgId, userId, isAdmin });
+    const { commissionFilename, commissionExportMatrix, commissionCsv, commissionXlsx } = await import("@/lib/commissions-export");
+    const exportNames = { agents: names, properties: new Map((refs.data?.properties ?? []).map(p => [p.id, `${p.reference ?? ""} ${p.title ?? ""}`.trim()])), contacts: new Map((refs.data?.contacts ?? []).map(c => [c.id, `${c.first_name ?? ""} ${c.last_name ?? ""}`.trim()])) };
+    return { filename: commissionFilename(snapshot, user?.organization?.name ?? "Agenție", ext), blob: ext === "xlsx" ? await commissionXlsx(selected, exportNames, currency) : new Blob([commissionCsv(commissionExportMatrix(selected, exportNames, currency))], { type: "text/csv;charset=utf-8" }) };
+  };
 
   const save = useMutation({
     mutationFn: async () => {
       if (!orgId) throw new Error("Agenția nu este configurată.");
       const payload = toCommissionPayload({ ...form, agent_id: isAdmin ? form.agent_id : userId });
       if (!payload.agent_id) throw new Error("Alege agentul.");
-      // Cursul BNR din ziua tranzacției se păstrează pe comision, ca rapoartele
-      // vechi în EUR să nu se schimbe; dacă BNR nu răspunde, salvăm fără curs.
-      const ronToEurRate =
-        payload.currency === "RON"
-          ? await getRonEurRate({ data: { date: payload.transaction_date } })
-              .then((r) => r.rate)
-              .catch(() => null)
-          : null;
+      // Keep the saved historical rate unless the transaction date changes.
+      const existing = editingId ? rows.find(r => r.id === editingId) : undefined;
+      const ronToEurRate = existing?.transaction_date === payload.transaction_date && existing.ron_to_eur_rate
+        ? existing.ron_to_eur_rate
+        : (await getRonEurRate({ data: { date: payload.transaction_date } })).rate;
       if (editingId) {
         const { error } = await supabase.from("commissions").update({ ...payload, ron_to_eur_rate: ronToEurRate }).eq("id", editingId);
         if (error) throw error;
@@ -163,6 +165,7 @@ function CommissionsPage() {
       toast.success(editingId ? "Comision actualizat" : "Comision adăugat");
       setOpen(false);
       qc.invalidateQueries({ queryKey: ["commissions"] });
+      qc.invalidateQueries({ queryKey: ["commission-reports"] });
     },
     onError: toastError,
   });
@@ -175,6 +178,7 @@ function CommissionsPage() {
     onSuccess: () => {
       toast.success("Comision șters");
       qc.invalidateQueries({ queryKey: ["commissions"] });
+      qc.invalidateQueries({ queryKey: ["commission-reports"] });
     },
     onError: toastError,
   });
@@ -229,7 +233,7 @@ function CommissionsPage() {
       </div>
 
       {tab === "rapoarte" ? (
-        <CommissionReports orgId={orgId} isAdmin={isAdmin} profiles={refs.data?.profiles ?? []} />
+        <CommissionReports orgId={orgId} userId={userId} agencyName={user?.organization?.name ?? "Agenție"} isAdmin={isAdmin} profiles={refs.data?.profiles ?? []} currency={currency} onCurrencyChange={setCurrency} />
       ) : (
       <>
       <div className="grid gap-3 rounded-lg border border-border bg-card p-4 sm:grid-cols-3 lg:grid-cols-6">
@@ -244,6 +248,11 @@ function CommissionsPage() {
         <FilterSelect label="Stare" value={filters.status} onChange={(v) => setFilters({ ...filters, status: v })} options={Object.entries(commissionStatusLabels)} />
       </div>
 
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <CommissionCurrencySelect value={currency} onChange={setCurrency} />
+        <CommissionExportButton prepare={prepareExport} disabled={list.isFetching || !!list.error || !orgId} />
+      </div>
+      {list.error ? <p role="alert" className="text-destructive">Nu am putut încărca comisioanele și cursurile BNR. <Button variant="outline" size="sm" onClick={() => void list.refetch()}>Reîncearcă</Button></p> : null}
       {rows.length === 0 && !list.isLoading ? (
         <EmptyState title="Niciun comision" description="Adaugă primul comision pentru o tranzacție încheiată." />
       ) : (
@@ -271,8 +280,8 @@ function CommissionsPage() {
                     {isAdmin ? <td className="p-3">{names.get(r.agent_id) ?? "—"}</td> : null}
                     <td className="p-3">{transactionLabels[r.transaction_kind]} · {propertyTypeLabels[r.property_type] ?? r.property_type}</td>
                     <td className="p-3">{p ? `${p.reference ?? ""} ${p.title ?? ""}`.trim() : r.location_text ?? "—"}</td>
-                    <td className="p-3 text-right whitespace-nowrap">{formatMoney(Number(r.agency_commission), r.currency)}</td>
-                    <td className="p-3 text-right whitespace-nowrap">{formatMoney(Number(r.agent_amount), r.currency)}</td>
+                    <td className="p-3 text-right whitespace-nowrap">{formatMoney(convertCommissionAmount(Number(r.agency_commission), r.currency, currency, r.ron_to_eur_rate), currency)}</td>
+                    <td className="p-3 text-right whitespace-nowrap">{formatMoney(convertCommissionAmount(Number(r.agent_amount), r.currency, currency, r.ron_to_eur_rate), currency)}</td>
                     <td className="p-3"><StatusBadge tone={statusTone[r.status] ?? "neutral"}>{commissionStatusLabels[r.status]}</StatusBadge></td>
                     <td className="p-3 text-right whitespace-nowrap">
                       {editable ? (
@@ -291,11 +300,7 @@ function CommissionsPage() {
           </table>
           <div className="flex flex-wrap gap-6 border-t border-border p-3 text-sm">
             <span className="text-muted-foreground">{rows.length} comisioane (fără cele anulate în totaluri)</span>
-            {Object.entries(totals).map(([cur, t]) => (
-              <span key={cur}>
-                <strong>{cur}:</strong> agenție {formatMoney(t.agency, cur)} · agenți {formatMoney(t.agent, cur)} · încasat {formatMoney(t.collected, cur)} · de încasat {formatMoney(t.pending, cur)}
-              </span>
-            ))}
+            <span><strong>{currency}:</strong> agenție {formatMoney(totals.agencyEur, currency)} · agenți {formatMoney(totals.agentEur, currency)} · încasat {formatMoney(totals.collectedEur, currency)} · de încasat {formatMoney(totals.pendingEur, currency)}</span>
           </div>
         </div>
       )}

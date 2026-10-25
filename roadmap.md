@@ -117,3 +117,10 @@
 - [x] Fără salvare în DB; restul paginii neschimbat
 - [x] Teste cu răspunsuri simulate
 - [x] Comisioane pas 1: înregistrare + acces (fără rapoarte/export)
+
+# Comisioane — pasul 3
+- [x] Afișare EUR/RON pe baza cursului păstrat, inclusiv pentru comisioane EUR
+- [x] Excel/CSV cu toate rândurile filtrate, coloane și totaluri
+- [x] PDF cu perioadă, comparații, grafice și tabel pentru admin
+- [x] Teste automate, formule Excel recalculate fără erori și verificare vizuală PDF lună/custom fără suprapuneri
+- [ ] Verificarea descărcărilor în cont — solicitantul nu are cont asociat pentru sesiunea de test; necesită autentificarea în previzualizare
