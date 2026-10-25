@@ -286,6 +286,40 @@ function PrivateListingsPage() {
         description="Anunțuri de la proprietari, aduse automat din alte site-uri. Verifică datele înainte să contactezi proprietarul."
       />
 
+      <div className="flex gap-5 border-b border-border" role="tablist" aria-label="Sursa anunțurilor">
+        {([
+          { value: "", label: "Anunțuri adunate" },
+          { value: "argus", label: "Argus" },
+        ] as const).map(({ value, label }) => {
+          const active = (search.lista ?? "") === value;
+          return (
+            <button
+              key={value || "habitoo"}
+              type="button"
+              role="tab"
+              aria-selected={active}
+              className={`-mb-px shrink-0 border-b-2 px-1 pb-2 text-sm font-medium transition-colors ${
+                active
+                  ? "border-primary text-primary"
+                  : "border-transparent text-muted-foreground hover:text-foreground"
+              }`}
+              onClick={() =>
+                navigate({
+                  search: value === "argus" ? { lista: "argus" } : {},
+                  replace: true,
+                })
+              }
+            >
+              {label}
+            </button>
+          );
+        })}
+      </div>
+
+      {search.lista === "argus" ? (
+        <ArgusTab />
+      ) : (
+      <>
       <form
         className="space-y-3"
         onSubmit={(e) => {
