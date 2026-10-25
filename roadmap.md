@@ -93,3 +93,15 @@
 - [x] Ambele pagini (listă și detaliu) sunt închise în SuperadminGate; link direct → redirecționare la /app/acp
 - [x] Importul hbsync, sursele și comparabilele ACP rămân neschimbate pentru toți (434 teste ACP/piață + 4 teste noi de acces; build OK)
 - [ ] Verificare în cont — blocată: solicitantul nu are un cont asociat pentru sesiunea de test
+
+# Integrare Argus — pasul 1: conectarea
+
+- [x] Tabel `argus_connections` (cheie API criptată, last4, token server-side; RLS fără politici — doar serverul citește)
+- [x] Client server: POST /v2.1/auth cu header `Application`, token refolosit, reautentificare doar la 401; 429 → așteaptă și reia o dată; 403 → „Cota lunară Argus a fost depășită"
+- [x] Limite locale: /auth max 5/oră; restul 2/s, 60/min, 600/oră pe agenție
+- [x] Funcții server fără interfață: filters, search, detail, images, contact, localizare (județe/orașe/zone), taxonomii; fiecare trimite client_ip
+- [x] Setări → Integrări → Argus (doar admin): salvare cheie, „Conectat ••••last4", Testează conexiunea, Deconectează
+- [x] Anunțurile Argus nu se salvează în baza de date
+- [x] 20 teste cu răspunsuri simulate; build OK
+- [ ] Secretul ARGUS_APPLICATION_TOKEN — vine mai târziu de la Argus (utilizatorul îl adaugă în Project Settings → Secrets)
+- [ ] Pasul 2: interfața de căutare Argus

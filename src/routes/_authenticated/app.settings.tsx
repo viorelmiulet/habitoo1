@@ -14,6 +14,7 @@ import { AiSettingsCard } from "@/components/app/ai/AiSettingsCard";
 
 
 import { SiteFeedCard } from "@/components/app/SiteFeedCard";
+import { ArgusConnectionCard } from "@/components/app/ArgusConnectionCard";
 import { CollaborationAutoSwitch } from "@/components/app/CollaborationAutoSwitch";
 import { AgencyCompanyDataFields } from "@/components/app/AgencyCompanyDataFields";
 import { FacebookCatalogCard } from "@/components/app/FacebookCatalogCard";
@@ -728,6 +729,7 @@ function SettingsPage() {
             <TabsContent value="integrations" className="mt-0">
               <div className="space-y-6">
                 <SiteFeedCard />
+                <ArgusConnectionCard />
               </div>
             </TabsContent>
           ) : null}
