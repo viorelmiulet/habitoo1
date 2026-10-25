@@ -6,6 +6,8 @@ import { z } from "zod";
 import { ChevronDown, ChevronLeft, ChevronRight, ChevronUp, ExternalLink, MapPin, Search, SearchX, X } from "lucide-react";
 import { PageHeader } from "@/components/app/PageHeader";
 import { appHead } from "@/components/app/app-head";
+import { SearchableSelect } from "@/components/app/SearchableSelect";
+import { ZonePickerDialog } from "@/components/app/ZonePickerDialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -14,9 +16,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import {
   Select,
   SelectContent,
-  SelectGroup,
   SelectItem,
-  SelectLabel,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
@@ -32,7 +32,8 @@ const searchSchema = z.object({
   tab: z.enum(["apartamente", "case", "comerciale", "terenuri"]).optional(),
   judet: z.string().optional(),
   oras: z.string().optional(),
-  zona: z.string().optional(),
+  // Mai multe zone odată; linkurile vechi cu o singură zonă (string) rămân valide.
+  zona: z.union([z.string(), z.array(z.string())]).optional(),
   camere: z.string().optional(),
   q: z.string().optional(),
   pagina: z.coerce.number().int().min(1).optional(),
