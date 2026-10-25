@@ -142,10 +142,11 @@ function applyOwnerFilters<Q extends OwnerFilterQuery<Q>>(query: Q, data: Privat
 export const getOwnerListings = createServerFn({ method: "GET" })
   .middleware([requireActiveOrgAuth])
   .inputValidator((input: unknown) => privateListingsFiltersSchema.parse(input ?? {}))
-  .handler(async ({ data, context }): Promise<{ items: OwnerListing[]; total: number }> => {
+  .handler(async ({ data, context }): Promise<{ items: OwnerListing[]; total: number; newToday: number }> => {
     const page = data.page ?? 0;
     const from = page * PRIVATE_LISTINGS_PAGE_SIZE;
     const sort = data.sort ?? "newest";
+    const todayStart = romaniaTodayStart().toISOString();
 
     if (sort !== "newest") {
       let query = context.supabase
@@ -159,8 +160,16 @@ export const getOwnerListings = createServerFn({ method: "GET" })
         .order("scraped_at", { ascending: false, nullsFirst: false })
         .range(from, from + PRIVATE_LISTINGS_PAGE_SIZE - 1);
       if (error) throw new Error("Anunțurile nu pot fi încărcate acum.");
+      let todayQuery = context.supabase
+        .from("listings")
+        .select("id", { count: "exact", head: true })
+        .eq("is_owner", true);
+      todayQuery = applyOwnerFilters(todayQuery, data).gte("first_seen_at", todayStart);
+      const { count: newToday, error: todayError } = await todayQuery;
+      if (todayError) throw new Error("Anunțurile nu pot fi încărcate acum.");
       return {
         total: count ?? 0,
+        newToday: newToday ?? 0,
         items: (rows ?? []).map((row) => toOwnerListing(row as ListingRow)),
       };
     }
@@ -181,8 +190,9 @@ export const getOwnerListings = createServerFn({ method: "GET" })
       if ((batch?.length ?? 0) < 1000) break;
     }
     const ordered = interleaveNewest(matches);
+    const newToday = matches.filter((row) => (row.first_seen_at ?? "") >= todayStart).length;
     const pageIds = ordered.slice(from, from + PRIVATE_LISTINGS_PAGE_SIZE).map((row) => row.id);
-    if (pageIds.length === 0) return { total: ordered.length, items: [] };
+    if (pageIds.length === 0) return { total: ordered.length, newToday, items: [] };
     const { data: rows, error } = await context.supabase
       .from("listings")
       .select(LISTING_COLUMNS)
@@ -191,6 +201,7 @@ export const getOwnerListings = createServerFn({ method: "GET" })
     const byId = new Map((rows ?? []).map((row) => [(row as ListingRow).id, row as ListingRow]));
     return {
       total: ordered.length,
+      newToday,
       items: pageIds
         .map((id) => byId.get(id))
         .filter((row): row is ListingRow => Boolean(row))
