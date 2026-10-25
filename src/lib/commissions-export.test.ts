@@ -52,6 +52,7 @@ describe("export și moneda",()=>{
     const content=execFileSync("pdftotext",["/tmp/commissions-agent.pdf","-"],{encoding:"utf8"});
     expect(content).not.toContain("Tabel pe agenți");
     expect(content).not.toContain("Clasament agenți");
+    expect(content).toContain("sursa: BNR sau BCE");
   });
   it("Excel conține rândurile, cursurile și formule cu totaluri corecte",async()=>{
     const blob=await commissionXlsx(rows,names,"RON");
