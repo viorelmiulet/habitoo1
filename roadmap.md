@@ -1,5 +1,15 @@
 # Anunțuri particulari — afișare pe rânduri, paginare și sortare
 
+# Anunțuri particulari — zona de filtre după modelul Imobiliare.ro PRO
+
+- [x] Taburi Apartamente / Case/Vile / Comerciale / Terenuri / Toate (înlocuiesc filtrul Tip proprietate; `tip` vechi încă acceptat)
+- [x] Rând restrâns: Tranzacție, Județ, Zile în piață (după first_seen_at, ziua României), Preț de la–până la, Mai multe, Căutare
+- [x] „Mai multe”: Localitate, Zonă, Sursă, ID anunț, Camere multiplu, Suprafață, Etaj (Parter = 0, coloană generată floor_num), An construcție cu bifa „Include an nespecificat”, Cuvinte cheie; „+N filtre” când e închisă
+- [x] Filtrele se aplică la Căutare/Enter, rămân în URL, linkurile vechi (oras/zona/sursa) funcționează
+- [x] Bara de rezultate: N rezultate · X anunțuri noi (clic = filtru De azi) · sortare
+- [x] 15 teste pure + 15 teste handler (taburi, De azi, linkuri vechi, etaj, an, ID, intercalare neschimbată); build OK
+- [ ] Verificare vizuală în cont — blocată: solicitantul nu are un cont asociat pentru sesiunea de test
+
 # Anunțuri particulari — first_seen_at și surse intercalate
 
 - [x] Coloană first_seen_at: momentul importului la insert, neschimbat la reimport; cele 1613 anunțuri existente preiau scraped_at

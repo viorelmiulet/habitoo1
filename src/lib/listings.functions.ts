@@ -5,12 +5,15 @@ import { z } from "zod";
 import { requireActiveOrgAuth } from "@/lib/org-access";
 import { buildListingFacets, geographyKey, zoneFilter, type GeographyRow, type ListingFacets } from "./private-listing-geography";
 import {
+  PRIVATE_LISTINGS_CATEGORY_FILTERS,
   PRIVATE_LISTINGS_ORDER,
   PRIVATE_LISTINGS_PAGE_SIZE,
   cleanText,
+  daysCutoff,
   interleaveNewest,
   keywordTerms,
   normalizeRooms,
+  romaniaTodayStart,
 } from "@/lib/private-listings";
 
 export type OwnerListing = {
@@ -53,6 +56,14 @@ export const privateListingsFiltersSchema = z.object({
   surfaceMin: z.number().min(0).max(1e6).optional(),
   surfaceMax: z.number().min(0).max(1e6).optional(),
   propertyType: z.string().max(80).optional(),
+  category: z.enum(["apartamente", "case", "comerciale", "terenuri"]).optional(),
+  days: z.number().int().min(0).max(7).optional(),
+  externalId: z.string().max(200).optional(),
+  floorMin: z.number().int().min(-5).max(100).optional(),
+  floorMax: z.number().int().min(-5).max(100).optional(),
+  yearMin: z.number().int().min(1800).max(2100).optional(),
+  yearMax: z.number().int().min(1800).max(2100).optional(),
+  yearUnknown: z.boolean().optional(),
 });
 
 export const TRANSACTION_FILTERS: Record<"sale" | "rent" | "rent_day", string> = {
@@ -68,8 +79,8 @@ interface OwnerFilterQuery<Q> {
   eq(column: string, value: unknown): Q;
   or(filter: string): Q;
   ilike(column: string, pattern: string): Q;
-  gte(column: string, value: number): Q;
-  lte(column: string, value: number): Q;
+  gte(column: string, value: number | string): Q;
+  lte(column: string, value: number | string): Q;
 }
 
 /** Toate filtrele listei, aplicate identic în ambele faze ale sortării „Cele mai noi”. */
@@ -108,16 +119,34 @@ function applyOwnerFilters<Q extends OwnerFilterQuery<Q>>(query: Q, data: Privat
       `title.ilike.%${term}%,description.ilike.%${term}%,location.ilike.%${term}%`,
     );
   }
+
+  if (data.category) query = query.or(PRIVATE_LISTINGS_CATEGORY_FILTERS[data.category]);
+  if (data.days !== undefined) query = query.gte("first_seen_at", daysCutoff(data.days));
+  const externalId = cleanText(data.externalId);
+  if (externalId) query = query.eq("external_id", externalId);
+  if (data.floorMin !== undefined) query = query.gte("floor_num", data.floorMin);
+  if (data.floorMax !== undefined) query = query.lte("floor_num", data.floorMax);
+  if (data.yearMin !== undefined) {
+    query = data.yearUnknown === false
+      ? query.gte("year_built", data.yearMin)
+      : query.or(`year_built.gte.${data.yearMin},year_built.is.null`);
+  }
+  if (data.yearMax !== undefined) {
+    query = data.yearUnknown === false
+      ? query.lte("year_built", data.yearMax)
+      : query.or(`year_built.lte.${data.yearMax},year_built.is.null`);
+  }
   return query;
 }
 
 export const getOwnerListings = createServerFn({ method: "GET" })
   .middleware([requireActiveOrgAuth])
   .inputValidator((input: unknown) => privateListingsFiltersSchema.parse(input ?? {}))
-  .handler(async ({ data, context }): Promise<{ items: OwnerListing[]; total: number }> => {
+  .handler(async ({ data, context }): Promise<{ items: OwnerListing[]; total: number; newToday: number }> => {
     const page = data.page ?? 0;
     const from = page * PRIVATE_LISTINGS_PAGE_SIZE;
     const sort = data.sort ?? "newest";
+    const todayStart = romaniaTodayStart().toISOString();
 
     if (sort !== "newest") {
       let query = context.supabase
@@ -131,8 +160,16 @@ export const getOwnerListings = createServerFn({ method: "GET" })
         .order("scraped_at", { ascending: false, nullsFirst: false })
         .range(from, from + PRIVATE_LISTINGS_PAGE_SIZE - 1);
       if (error) throw new Error("Anunțurile nu pot fi încărcate acum.");
+      let todayQuery = context.supabase
+        .from("listings")
+        .select("id", { count: "exact", head: true })
+        .eq("is_owner", true);
+      todayQuery = applyOwnerFilters(todayQuery, data).gte("first_seen_at", todayStart);
+      const { count: newToday, error: todayError } = await todayQuery;
+      if (todayError) throw new Error("Anunțurile nu pot fi încărcate acum.");
       return {
         total: count ?? 0,
+        newToday: newToday ?? 0,
         items: (rows ?? []).map((row) => toOwnerListing(row as ListingRow)),
       };
     }
@@ -153,8 +190,9 @@ export const getOwnerListings = createServerFn({ method: "GET" })
       if ((batch?.length ?? 0) < 1000) break;
     }
     const ordered = interleaveNewest(matches);
+    const newToday = matches.filter((row) => (row.first_seen_at ?? "") >= todayStart).length;
     const pageIds = ordered.slice(from, from + PRIVATE_LISTINGS_PAGE_SIZE).map((row) => row.id);
-    if (pageIds.length === 0) return { total: ordered.length, items: [] };
+    if (pageIds.length === 0) return { total: ordered.length, newToday, items: [] };
     const { data: rows, error } = await context.supabase
       .from("listings")
       .select(LISTING_COLUMNS)
@@ -163,6 +201,7 @@ export const getOwnerListings = createServerFn({ method: "GET" })
     const byId = new Map((rows ?? []).map((row) => [(row as ListingRow).id, row as ListingRow]));
     return {
       total: ordered.length,
+      newToday,
       items: pageIds
         .map((id) => byId.get(id))
         .filter((row): row is ListingRow => Boolean(row))

@@ -3,11 +3,12 @@ import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useState } from "react";
 import { z } from "zod";
-import { ChevronLeft, ChevronRight, ExternalLink, MapPin, Search, SearchX } from "lucide-react";
+import { ChevronDown, ChevronLeft, ChevronRight, ChevronUp, ExternalLink, MapPin, Search, SearchX, X } from "lucide-react";
 import { PageHeader } from "@/components/app/PageHeader";
 import { appHead } from "@/components/app/app-head";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -28,6 +29,7 @@ import { PRIVATE_LISTINGS_PAGE_SIZE, type PrivateListingsSort } from "@/lib/priv
 import { geographyKey, localityScope } from "@/lib/private-listing-geography";
 
 const searchSchema = z.object({
+  tab: z.enum(["apartamente", "case", "comerciale", "terenuri"]).optional(),
   judet: z.string().optional(),
   oras: z.string().optional(),
   zona: z.string().optional(),
@@ -37,12 +39,21 @@ const searchSchema = z.object({
   sortare: z.enum(["newest", "price_asc", "price_desc", "surface_desc"]).optional(),
   sursa: z.enum(["storia", "imobiliare", "olx", "romimo", "imoradar"]).optional(),
   tranzactie: z.enum(["sale", "rent", "rent_day"]).optional(),
-  tip: z.string().max(80).optional(),
+  tip: z.string().max(80).optional(), // linkuri vechi, înlocuit de tab
+  zile: z.coerce.number().int().min(0).max(7).optional(),
+  id: z.string().optional(),
   pretMin: z.coerce.number().min(0).optional(),
   pretMax: z.coerce.number().min(0).optional(),
   mpMin: z.coerce.number().min(0).optional(),
   mpMax: z.coerce.number().min(0).optional(),
+  etajMin: z.coerce.number().int().optional(),
+  etajMax: z.coerce.number().int().optional(),
+  anMin: z.coerce.number().int().optional(),
+  anMax: z.coerce.number().int().optional(),
+  anNespecificat: z.coerce.boolean().optional(),
 });
+
+type Search = z.infer<typeof searchSchema>;
 
 const SOURCE_LABELS: Record<string, string> = {
   storia: "Storia",
@@ -58,6 +69,21 @@ const SORT_LABELS: Record<PrivateListingsSort, string> = {
   price_desc: "Preț descrescător",
   surface_desc: "Suprafață descrescătoare",
 };
+
+const TAB_LABELS: Record<string, string> = {
+  apartamente: "Apartamente",
+  case: "Case/Vile",
+  comerciale: "Comerciale",
+  terenuri: "Terenuri",
+  toate: "Toate",
+};
+
+const DAYS_OPTIONS: { value: string; label: string }[] = [
+  { value: "0", label: "De azi" },
+  { value: "2", label: "Ultimele 2 zile" },
+  { value: "3", label: "Ultimele 3 zile" },
+  { value: "7", label: "Ultimele 7 zile" },
+];
 
 export const Route = createFileRoute("/_authenticated/app/anunturi-particulari")({
   validateSearch: searchSchema,
@@ -81,6 +107,61 @@ function money(value: number | null, currency: string | null) {
   }
 }
 
+/** Ciorna filtrelor: se aplică abia la „Căutare” sau Enter, nu la fiecare modificare. */
+type Draft = {
+  tranzactie: string;
+  judet: string;
+  oras: string;
+  zona: string;
+  zile: string;
+  pretMin: string;
+  pretMax: string;
+  sursa: string;
+  id: string;
+  camere: number[];
+  mpMin: string;
+  mpMax: string;
+  etajMin: string;
+  etajMax: string;
+  anMin: string;
+  anMax: string;
+  anNespecificat: boolean;
+  q: string;
+};
+
+const numText = (v: number | undefined) => (v === undefined ? "" : String(v));
+
+function draftFromSearch(search: Search): Draft {
+  return {
+    tranzactie: search.tranzactie ?? "",
+    judet: search.judet ?? "",
+    oras: search.oras ?? "",
+    zona: search.zona ?? "",
+    zile: search.zile === undefined ? "" : String(search.zile),
+    pretMin: numText(search.pretMin),
+    pretMax: numText(search.pretMax),
+    sursa: search.sursa ?? "",
+    id: search.id ?? "",
+    camere: (search.camere ?? "")
+      .split(",")
+      .map(Number)
+      .filter((n) => ROOM_OPTIONS.includes(n)),
+    mpMin: numText(search.mpMin),
+    mpMax: numText(search.mpMax),
+    etajMin: numText(search.etajMin),
+    etajMax: numText(search.etajMax),
+    anMin: numText(search.anMin),
+    anMax: numText(search.anMax),
+    anNespecificat: search.anNespecificat !== false,
+    q: search.q ?? "",
+  };
+}
+
+const parseNum = (text: string): number | undefined => {
+  const n = Number(text.replace(/[^\d-]/g, ""));
+  return text.trim() && Number.isFinite(n) ? n : undefined;
+};
+
 function PrivateListingsPage() {
   const search = Route.useSearch();
   const navigate = useNavigate({ from: Route.fullPath });
@@ -91,20 +172,43 @@ function PrivateListingsPage() {
     .map(Number)
     .filter((n) => ROOM_OPTIONS.includes(n));
   const page = (search.pagina ?? 1) - 1;
-  const [keywords, setKeywords] = useState(search.q ?? "");
 
-  useEffect(() => setKeywords(search.q ?? ""), [search.q]);
+  const [draft, setDraft] = useState<Draft>(() => draftFromSearch(search));
+  const [extendedOpen, setExtendedOpen] = useState(false);
+  const searchKey = JSON.stringify(search);
+  useEffect(() => setDraft(draftFromSearch(JSON.parse(searchKey) as Search)), [searchKey]);
 
-  const update = (patch: Partial<z.infer<typeof searchSchema>>) =>
-    navigate({ search: (prev) => ({ ...prev, pagina: undefined, ...patch }), replace: true });
+  const patch = (part: Partial<Draft>) => setDraft((prev) => ({ ...prev, ...part }));
 
-  useEffect(() => {
-    const id = setTimeout(() => {
-      if ((search.q ?? "") !== keywords.trim()) update({ q: keywords.trim() || undefined });
-    }, 400);
-    return () => clearTimeout(id);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [keywords]);
+  const apply = (next: Draft) =>
+    navigate({
+      search: (prev) => ({
+        tab: prev.tab,
+        sortare: prev.sortare,
+        tranzactie: (next.tranzactie || undefined) as Search["tranzactie"],
+        judet: next.judet || undefined,
+        oras: next.judet ? next.oras || undefined : undefined,
+        zona: next.judet && next.oras ? next.zona || undefined : undefined,
+        zile: next.zile === "" ? undefined : Number(next.zile),
+        pretMin: parseNum(next.pretMin),
+        pretMax: parseNum(next.pretMax),
+        sursa: (next.sursa || undefined) as Search["sursa"],
+        id: next.id.trim() || undefined,
+        camere: next.camere.length ? [...next.camere].sort().join(",") : undefined,
+        mpMin: parseNum(next.mpMin),
+        mpMax: parseNum(next.mpMax),
+        etajMin: parseNum(next.etajMin),
+        etajMax: parseNum(next.etajMax),
+        anMin: parseNum(next.anMin),
+        anMax: parseNum(next.anMax),
+        anNespecificat: next.anNespecificat ? undefined : false,
+        q: next.q.trim() || undefined,
+      }),
+      replace: true,
+    });
+
+  const resetFilters = () =>
+    navigate({ search: { tab: search.tab, sortare: search.sortare }, replace: true });
 
   const facets = useQuery({
     queryKey: ["owner-listing-facets"],
@@ -113,37 +217,51 @@ function PrivateListingsPage() {
   });
   const listings = useQuery({
     queryKey: [
-      "owner-listings", search.judet, search.oras, search.zona, rooms.join(","), search.q, page,
+      "owner-listings", search.tab, search.judet, search.oras, search.zona, rooms.join(","), search.q, page,
       search.sursa, search.tranzactie, search.tip, search.pretMin, search.pretMax, search.mpMin, search.mpMax,
-      search.sortare,
+      search.sortare, search.zile, search.id, search.etajMin, search.etajMax, search.anMin, search.anMax,
+      search.anNespecificat,
     ],
     queryFn: () =>
       fetchListings({
         data: {
+          category: search.tab,
           county: search.judet, city: search.oras, zone: search.zona, rooms, q: search.q, page,
-          source: search.sursa, transaction: search.tranzactie, propertyType: search.tip,
+          source: search.sursa, transaction: search.tranzactie,
+          propertyType: search.tab ? undefined : search.tip,
           priceMin: search.pretMin, priceMax: search.pretMax,
           surfaceMin: search.mpMin, surfaceMax: search.mpMax,
+          days: search.zile, externalId: search.id,
+          floorMin: search.etajMin, floorMax: search.etajMax,
+          yearMin: search.anMin, yearMax: search.anMax,
+          yearUnknown: search.anNespecificat,
           sort: search.sortare,
         },
       }),
     placeholderData: keepPreviousData,
   });
 
-  const countyKey = geographyKey(search.judet);
-  const cityKey = geographyKey(search.oras);
-  const localities = facets.data?.localities[countyKey] ?? [];
-  const zones = search.oras ? (facets.data?.zones[localityScope(search.judet, search.oras)] ?? []) : [];
+  const draftCountyKey = geographyKey(draft.judet);
+  const draftCityKey = geographyKey(draft.oras);
+  const localities = facets.data?.localities[draftCountyKey] ?? [];
+  const zones = draft.oras ? (facets.data?.zones[localityScope(draft.judet, draft.oras)] ?? []) : [];
   const total = listings.data?.total ?? 0;
+  const newToday = listings.data?.newToday ?? 0;
   const pages = Math.max(1, Math.ceil(total / PRIVATE_LISTINGS_PAGE_SIZE));
-  const toggleRoom = (r: number) => {
-    const next = rooms.includes(r) ? rooms.filter((x) => x !== r) : [...rooms, r].sort();
-    update({ camere: next.length ? next.join(",") : undefined });
-  };
+  const toggleDraftRoom = (r: number) =>
+    patch({ camere: draft.camere.includes(r) ? draft.camere.filter((x) => x !== r) : [...draft.camere, r] });
+
+  const extendedCount = [
+    search.oras, search.zona, search.sursa, search.id, search.camere, search.q,
+    search.mpMin, search.mpMax, search.etajMin, search.etajMax, search.anMin, search.anMax,
+  ].filter((v) => v !== undefined && v !== "").length;
   const hasFilters = Boolean(
-    search.judet || search.oras || search.zona || rooms.length || search.q || search.sursa || search.tranzactie || search.tip ||
+    search.judet || search.oras || search.zona || rooms.length || search.q || search.sursa || search.tranzactie ||
+      search.tip || search.id || search.zile !== undefined ||
       search.pretMin !== undefined || search.pretMax !== undefined ||
-      search.mpMin !== undefined || search.mpMax !== undefined,
+      search.mpMin !== undefined || search.mpMax !== undefined ||
+      search.etajMin !== undefined || search.etajMax !== undefined ||
+      search.anMin !== undefined || search.anMax !== undefined,
   );
 
   return (
@@ -153,151 +271,236 @@ function PrivateListingsPage() {
         description="Anunțuri de la proprietari, aduse automat din alte site-uri. Verifică datele înainte să contactezi proprietarul."
       />
 
-      <div className="grid grid-cols-1 gap-3 border border-border bg-card p-4 md:grid-cols-3 lg:grid-cols-4">
-        <Select value={countyKey || ALL} onValueChange={(v) => update({ judet: v === ALL ? undefined : v, oras: undefined, zona: undefined })}>
-          <SelectTrigger aria-label="Județ"><SelectValue placeholder="Județ" /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value={ALL}>Toate județele</SelectItem>
-            {(facets.data?.counties ?? []).map((c) => <SelectItem key={c.value} value={c.value}>{c.label} ({c.count})</SelectItem>)}
-          </SelectContent>
-        </Select>
-        <Select
-          value={cityKey || ALL}
-          disabled={!search.judet && !search.oras}
-          onValueChange={(v) => update({ oras: v === ALL ? undefined : v, zona: undefined })}
-        >
-          <SelectTrigger aria-label="Localitate">
-            <SelectValue placeholder="Localitate" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value={ALL}>Toate localitățile</SelectItem>
-            {localities.map((c) => (
-              <SelectItem key={c.value} value={c.value}>
-                {c.label} ({c.count})
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        <Select
-          value={geographyKey(search.zona) || ALL}
-          disabled={!search.oras || zones.length === 0}
-          onValueChange={(v) => update({ zona: v === ALL ? undefined : v })}
-        >
-          <SelectTrigger aria-label="Zonă">
-            <SelectValue placeholder="Zonă" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value={ALL}>Toate zonele</SelectItem>
-            {cityKey === "bucuresti" ? (
-              <>
-                <SelectGroup><SelectLabel>Sectoare</SelectLabel>
-                  {zones.filter((z) => z.kind === "sector").map((z) => <SelectItem key={z.value} value={z.value}>{z.label} ({z.count})</SelectItem>)}
-                </SelectGroup>
-                <SelectGroup><SelectLabel>Cartiere</SelectLabel>
-                  {zones.filter((z) => z.kind === "neighborhood").map((z) => <SelectItem key={z.value} value={z.value}>{z.label} ({z.count})</SelectItem>)}
-                </SelectGroup>
-              </>
-            ) : zones.map((z) => <SelectItem key={z.value} value={z.value}>{z.label} ({z.count})</SelectItem>)}
-          </SelectContent>
-        </Select>
-        <div className="flex gap-1" role="group" aria-label="Camere">
-          {ROOM_OPTIONS.map((r) => (
-            <Button
-              key={r}
-              type="button"
-              size="sm"
-              variant={rooms.includes(r) ? "default" : "outline"}
-              aria-pressed={rooms.includes(r)}
-              className="h-10 min-w-10"
-              onClick={() => toggleRoom(r)}
-            >
-              {r === 5 ? "5+" : r}
-            </Button>
-          ))}
+      <form
+        className="space-y-3"
+        onSubmit={(e) => {
+          e.preventDefault();
+          apply(draft);
+        }}
+      >
+        <div className="flex gap-5 overflow-x-auto border-b border-border" role="tablist" aria-label="Categorie proprietate">
+          {Object.entries(TAB_LABELS).map(([value, label]) => {
+            const active = (search.tab ?? "toate") === value;
+            return (
+              <button
+                key={value}
+                type="button"
+                role="tab"
+                aria-selected={active}
+                className={`-mb-px shrink-0 border-b-2 px-1 pb-2 text-sm font-medium transition-colors ${
+                  active
+                    ? "border-primary text-primary"
+                    : "border-transparent text-muted-foreground hover:text-foreground"
+                }`}
+                onClick={() =>
+                  navigate({
+                    search: (prev) => ({
+                      ...prev,
+                      pagina: undefined,
+                      tip: undefined,
+                      tab: value === "toate" ? undefined : (value as Search["tab"]),
+                    }),
+                    replace: true,
+                  })
+                }
+              >
+                {label}
+              </button>
+            );
+          })}
         </div>
-        <div className="relative md:col-span-3 lg:col-span-4">
-          <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            value={keywords}
-            onChange={(e) => setKeywords(e.target.value)}
-            placeholder="Cuvinte cheie: centrală, parcare, renovat…"
-            className="pl-9"
-            aria-label="Cuvinte cheie"
-          />
-        </div>
-        <div className="grid grid-cols-2 gap-3 md:col-span-3 lg:col-span-4 lg:grid-cols-7">
-          <Select
-            value={search.sursa ?? ALL}
-            onValueChange={(v) => update({ sursa: v === ALL ? undefined : (v as "storia") })}
-          >
-            <SelectTrigger aria-label="Sursă"><SelectValue placeholder="Sursă" /></SelectTrigger>
+
+        <div className="grid grid-cols-1 gap-3 border border-border bg-card p-4 sm:grid-cols-2 xl:grid-cols-[1fr_1fr_1fr_1.4fr_auto_auto]">
+          <Select value={draft.tranzactie || ALL} onValueChange={(v) => patch({ tranzactie: v === ALL ? "" : v })}>
+            <SelectTrigger aria-label="Tranzacție"><SelectValue placeholder="Tranzacție" /></SelectTrigger>
             <SelectContent>
-              <SelectItem value={ALL}>Toate sursele</SelectItem>
-              {Object.entries(SOURCE_LABELS).map(([k, v]) => (
-                <SelectItem key={k} value={k}>{v}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Select
-            value={search.tranzactie ?? ALL}
-            onValueChange={(v) => update({ tranzactie: v === ALL ? undefined : (v as "sale") })}
-          >
-            <SelectTrigger aria-label="Tip anunț"><SelectValue placeholder="Tip anunț" /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value={ALL}>Vânzare și închiriere</SelectItem>
+              <SelectItem value={ALL}>Tranzacție</SelectItem>
               <SelectItem value="sale">Vânzare</SelectItem>
               <SelectItem value="rent">Închiriere</SelectItem>
               <SelectItem value="rent_day">Închiriere pe zi</SelectItem>
             </SelectContent>
           </Select>
           <Select
-            value={search.tip ?? ALL}
-            onValueChange={(v) => update({ tip: v === ALL ? undefined : v })}
+            value={draftCountyKey || ALL}
+            onValueChange={(v) => patch({ judet: v === ALL ? "" : v, oras: "", zona: "" })}
           >
-            <SelectTrigger aria-label="Tip proprietate"><SelectValue placeholder="Tip proprietate" /></SelectTrigger>
+            <SelectTrigger aria-label="Județ"><SelectValue placeholder="Județ" /></SelectTrigger>
             <SelectContent>
-              <SelectItem value={ALL}>Toate tipurile</SelectItem>
-              {(facets.data?.propertyTypes ?? []).map((t) => (
-                <SelectItem key={t} value={t}>{t}</SelectItem>
-              ))}
+              <SelectItem value={ALL}>Județ</SelectItem>
+              {(facets.data?.counties ?? []).map((c) => <SelectItem key={c.value} value={c.value}>{c.label} ({c.count})</SelectItem>)}
             </SelectContent>
           </Select>
-          <NumberFilter label="Preț minim (€)" value={search.pretMin} onChange={(v) => update({ pretMin: v })} />
-          <NumberFilter label="Preț maxim (€)" value={search.pretMax} onChange={(v) => update({ pretMax: v })} />
-          <NumberFilter label="Suprafață min. (m²)" value={search.mpMin} onChange={(v) => update({ mpMin: v })} />
-          <NumberFilter label="Suprafață max. (m²)" value={search.mpMax} onChange={(v) => update({ mpMax: v })} />
+          <Select value={draft.zile || ALL} onValueChange={(v) => patch({ zile: v === ALL ? "" : v })}>
+            <SelectTrigger aria-label="Zile în piață"><SelectValue placeholder="Zile în piață" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value={ALL}>Indiferent</SelectItem>
+              {DAYS_OPTIONS.map((o) => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}
+            </SelectContent>
+          </Select>
+          <div className="grid grid-cols-2 gap-2">
+            <Input inputMode="numeric" value={draft.pretMin} onChange={(e) => patch({ pretMin: e.target.value })} placeholder="Preț de la" aria-label="Preț de la" />
+            <Input inputMode="numeric" value={draft.pretMax} onChange={(e) => patch({ pretMax: e.target.value })} placeholder="Preț până la" aria-label="Preț până la" />
+          </div>
+          <Button
+            type="button"
+            variant="outline"
+            aria-expanded={extendedOpen}
+            onClick={() => setExtendedOpen((v) => !v)}
+          >
+            {extendedOpen ? "Mai puține" : "Mai multe"}
+            {extendedOpen ? <ChevronUp className="size-4" /> : <ChevronDown className="size-4" />}
+            {!extendedOpen && extendedCount > 0 ? (
+              <span className="text-xs text-muted-foreground">+{extendedCount} filtre</span>
+            ) : null}
+          </Button>
+          <Button type="submit">
+            <Search className="size-4" /> Căutare
+          </Button>
         </div>
-      </div>
+
+        {extendedOpen ? (
+          <div className="space-y-3 border border-border bg-card p-4">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              <Select
+                value={draftCityKey || ALL}
+                disabled={!draft.judet && !draft.oras}
+                onValueChange={(v) => patch({ oras: v === ALL ? "" : v, zona: "" })}
+              >
+                <SelectTrigger aria-label="Localitate"><SelectValue placeholder="Localitate" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={ALL}>Toate localitățile</SelectItem>
+                  {localities.map((c) => (
+                    <SelectItem key={c.value} value={c.value}>{c.label} ({c.count})</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Select
+                value={geographyKey(draft.zona) || ALL}
+                disabled={!draft.oras || zones.length === 0}
+                onValueChange={(v) => patch({ zona: v === ALL ? "" : v })}
+              >
+                <SelectTrigger aria-label="Zonă"><SelectValue placeholder="Zonă" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={ALL}>Toate zonele</SelectItem>
+                  {draftCityKey === "bucuresti" ? (
+                    <>
+                      <SelectGroup><SelectLabel>Sectoare</SelectLabel>
+                        {zones.filter((z) => z.kind === "sector").map((z) => <SelectItem key={z.value} value={z.value}>{z.label} ({z.count})</SelectItem>)}
+                      </SelectGroup>
+                      <SelectGroup><SelectLabel>Cartiere</SelectLabel>
+                        {zones.filter((z) => z.kind === "neighborhood").map((z) => <SelectItem key={z.value} value={z.value}>{z.label} ({z.count})</SelectItem>)}
+                      </SelectGroup>
+                    </>
+                  ) : zones.map((z) => <SelectItem key={z.value} value={z.value}>{z.label} ({z.count})</SelectItem>)}
+                </SelectContent>
+              </Select>
+              <Select value={draft.sursa || ALL} onValueChange={(v) => patch({ sursa: v === ALL ? "" : v })}>
+                <SelectTrigger aria-label="Sursă"><SelectValue placeholder="Sursă" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={ALL}>Toate sursele</SelectItem>
+                  {Object.entries(SOURCE_LABELS).map(([k, v]) => (
+                    <SelectItem key={k} value={k}>{v}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Input value={draft.id} onChange={(e) => patch({ id: e.target.value })} placeholder="ID anunț" aria-label="ID anunț" />
+              <div className="flex items-center gap-1" role="group" aria-label="Camere">
+                <span className="mr-1 text-sm text-muted-foreground">Camere</span>
+                {ROOM_OPTIONS.map((r) => (
+                  <Button
+                    key={r}
+                    type="button"
+                    size="sm"
+                    variant={draft.camere.includes(r) ? "default" : "outline"}
+                    aria-pressed={draft.camere.includes(r)}
+                    className="h-10 min-w-10"
+                    onClick={() => toggleDraftRoom(r)}
+                  >
+                    {r === 5 ? "5+" : r}
+                  </Button>
+                ))}
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <Input inputMode="numeric" value={draft.mpMin} onChange={(e) => patch({ mpMin: e.target.value })} placeholder="Suprafață de la (m²)" aria-label="Suprafață utilă de la" />
+                <Input inputMode="numeric" value={draft.mpMax} onChange={(e) => patch({ mpMax: e.target.value })} placeholder="Suprafață până la (m²)" aria-label="Suprafață utilă până la" />
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <Input inputMode="numeric" value={draft.etajMin} onChange={(e) => patch({ etajMin: e.target.value })} placeholder="Etaj de la (Parter = 0)" aria-label="Etaj de la" />
+                <Input inputMode="numeric" value={draft.etajMax} onChange={(e) => patch({ etajMax: e.target.value })} placeholder="Etaj până la" aria-label="Etaj până la" />
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <Input inputMode="numeric" value={draft.anMin} onChange={(e) => patch({ anMin: e.target.value })} placeholder="An construcție de la" aria-label="An construcție de la" />
+                <Input inputMode="numeric" value={draft.anMax} onChange={(e) => patch({ anMax: e.target.value })} placeholder="An construcție până la" aria-label="An construcție până la" />
+              </div>
+              <label className="flex items-center gap-2 text-sm">
+                <Checkbox
+                  checked={draft.anNespecificat}
+                  onCheckedChange={(checked) => patch({ anNespecificat: checked === true })}
+                  aria-label="Include an construcție nespecificat"
+                />
+                Include an construcție nespecificat
+              </label>
+              <div className="relative sm:col-span-2 lg:col-span-3">
+                <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  value={draft.q}
+                  onChange={(e) => patch({ q: e.target.value })}
+                  placeholder="Cuvinte cheie: centrală, parcare, renovat…"
+                  className="pl-9"
+                  aria-label="Cuvinte cheie"
+                />
+              </div>
+            </div>
+            <div className="flex flex-wrap items-center justify-end gap-2">
+              <Button type="button" variant="ghost" onClick={resetFilters}>
+                Șterge filtre <X className="size-4" />
+              </Button>
+              <Button type="button" variant="outline" onClick={() => setExtendedOpen(false)}>
+                Închide filtre <ChevronUp className="size-4" />
+              </Button>
+              <Button type="submit">
+                <Search className="size-4" /> Căutare
+              </Button>
+            </div>
+          </div>
+        ) : null}
+      </form>
 
       <div className="flex flex-wrap items-center justify-between gap-2 text-sm text-muted-foreground">
-        <span>{listings.isLoading ? "Se încarcă…" : `${total} anunțuri`}</span>
-        <div className="flex items-center gap-2">
-          {hasFilters ? (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => {
-                setKeywords("");
-                navigate({ search: {}, replace: true });
-              }}
-            >
-              Șterge filtrele
-            </Button>
-          ) : null}
-          <Select
-            value={search.sortare ?? "newest"}
-            onValueChange={(v) => update({ sortare: v === "newest" ? undefined : (v as PrivateListingsSort) })}
+        <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+          <span className="font-medium text-foreground">
+            {listings.isLoading ? "Se încarcă…" : `${total} rezultate`}
+          </span>
+          <span aria-hidden="true">·</span>
+          <button
+            type="button"
+            className="font-medium text-primary hover:underline disabled:text-muted-foreground disabled:no-underline"
+            disabled={newToday === 0 || search.zile === 0}
+            onClick={() =>
+              navigate({ search: (prev) => ({ ...prev, pagina: undefined, zile: 0 }), replace: true })
+            }
           >
-            <SelectTrigger aria-label="Sortare" className="w-56">
-              <SelectValue placeholder="Sortare" />
-            </SelectTrigger>
-            <SelectContent>
-              {Object.entries(SORT_LABELS).map(([k, v]) => (
-                <SelectItem key={k} value={k}>{v}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+            {newToday} anunțuri noi
+          </button>
         </div>
+        <Select
+          value={search.sortare ?? "newest"}
+          onValueChange={(v) =>
+            navigate({
+              search: (prev) => ({ ...prev, pagina: undefined, sortare: v === "newest" ? undefined : (v as PrivateListingsSort) }),
+              replace: true,
+            })
+          }
+        >
+          <SelectTrigger aria-label="Sortare" className="w-56">
+            <SelectValue placeholder="Sortare" />
+          </SelectTrigger>
+          <SelectContent>
+            {Object.entries(SORT_LABELS).map(([k, v]) => (
+              <SelectItem key={k} value={k}>{v}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
       {listings.isError ? (
@@ -489,34 +692,5 @@ function ListingDescription({ text }: { text: string }) {
         </Button>
       ) : null}
     </div>
-  );
-}
-
-function NumberFilter({
-  label,
-  value,
-  onChange,
-}: {
-  label: string;
-  value: number | undefined;
-  onChange: (v: number | undefined) => void;
-}) {
-  const [text, setText] = useState(value?.toString() ?? "");
-  useEffect(() => setText(value?.toString() ?? ""), [value]);
-  const commit = () => {
-    const n = Number(text.replace(/[^\d]/g, ""));
-    const next = text.trim() && Number.isFinite(n) ? n : undefined;
-    if (next !== value) onChange(next);
-  };
-  return (
-    <Input
-      inputMode="numeric"
-      value={text}
-      placeholder={label}
-      aria-label={label}
-      onChange={(e) => setText(e.target.value)}
-      onBlur={commit}
-      onKeyDown={(e) => e.key === "Enter" && commit()}
-    />
   );
 }
