@@ -299,7 +299,7 @@ function CommissionsPage() {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setOpen(false)}>Renunță</Button>
-            <Button onClick={() => save.mutate()} disabled={save.isPending}>Salvează</Button>
+            <Button onClick={() => save.mutate(undefined)} disabled={save.isPending}>Salvează</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
