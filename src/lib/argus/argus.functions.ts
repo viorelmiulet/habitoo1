@@ -32,18 +32,26 @@ async function callerOrgId(ctx: Ctx): Promise<string> {
 async function requireAdminOrg(ctx: Ctx): Promise<string> {
   const { data: isAdmin, error } = await ctx.supabase.rpc("is_org_admin");
   if (error || isAdmin !== true) {
-    setResponseStatus(403);
+    await argusSetResponseStatus(403);
     throw new Error("Acces refuzat: doar administratorul agenției gestionează conexiunea Argus.");
   }
   return callerOrgId(ctx);
 }
 
-/** IP-ul utilizatorului, trimis Argus ca `client_ip` (doar IPv4 valid). */
-export function argusClientIp(): string | null {
-  const cf = getRequestHeader("cf-connecting-ip")?.trim();
-  const forwarded = getRequestHeader("x-forwarded-for")?.split(",")[0]?.trim();
-  const candidate = cf || forwarded || "";
-  return /^\d{1,3}(\.\d{1,3}){3}$/.test(candidate) ? candidate : null;
+/** IP-ul utilizatorului — helper-ul server-only vine din http.server.ts. */
+async function argusClientIp(): Promise<string | null> {
+  const { argusClientIp: ip } = await import("./http.server");
+  return ip();
+}
+
+async function argusNoStore(): Promise<void> {
+  const { argusNoStore } = await import("./http.server");
+  argusNoStore();
+}
+
+async function argusSetResponseStatus(status: number): Promise<void> {
+  const { argusResponseStatus } = await import("./http.server");
+  argusResponseStatus(status);
 }
 
 export type ArgusConnectionStatus = {
@@ -59,7 +67,7 @@ export type ArgusConnectionStatus = {
 export const getArgusConnectionStatus = createServerFn({ method: "GET" })
   .middleware([requireActiveOrgAuth])
   .handler(async ({ context }): Promise<ArgusConnectionStatus> => {
-    setResponseHeader("Cache-Control", "no-store");
+    await argusNoStore();
     const orgId = await requireAdminOrg(context as unknown as Ctx);
     const db = await adminDb();
     const { loadArgusConnection } = await import("./connection.server");
@@ -156,7 +164,7 @@ async function argusDataCall(
   const orgId = await callerOrgId(ctx);
   const db = await adminDb();
   const { argusCall } = await import("./connection.server");
-  return argusCall<ArgusJson>(db, orgId, { ...opts, clientIp: argusClientIp() });
+  return argusCall<ArgusJson>(db, orgId, { ...opts, clientIp: await argusClientIp() });
 }
 
 export const argusFilters = createServerFn({ method: "GET" })
@@ -300,7 +308,7 @@ export const argusTaxonomy = createServerFn({ method: "POST" })
 export const getArgusTabStatus = createServerFn({ method: "GET" })
   .middleware([requireActiveOrgAuth])
   .handler(async ({ context }): Promise<{ configured: boolean; connected: boolean }> => {
-    setResponseHeader("Cache-Control", "no-store");
+    await argusNoStore();
     const ctx = context as unknown as Ctx;
     const orgId = await callerOrgId(ctx);
     const db = await adminDb();
@@ -337,7 +345,7 @@ export const searchArgusListings = createServerFn({ method: "POST" })
     const orgId = await callerOrgId(ctx);
     const db = await adminDb();
     const { searchArgusProperties } = await import("./search.server");
-    return searchArgusProperties(db, orgId, data, { clientIp: argusClientIp() });
+    return searchArgusProperties(db, orgId, data, { clientIp: await argusClientIp() });
   });
 
 export const getArgusListingDetail = createServerFn({ method: "POST" })
@@ -348,7 +356,7 @@ export const getArgusListingDetail = createServerFn({ method: "POST" })
     const orgId = await callerOrgId(ctx);
     const db = await adminDb();
     const { getArgusPropertyDetail } = await import("./search.server");
-    return getArgusPropertyDetail(db, orgId, data.propertyId, { clientIp: argusClientIp() });
+    return getArgusPropertyDetail(db, orgId, data.propertyId, { clientIp: await argusClientIp() });
   });
 
 export const getArgusListingImages = createServerFn({ method: "POST" })
@@ -359,7 +367,7 @@ export const getArgusListingImages = createServerFn({ method: "POST" })
     const orgId = await callerOrgId(ctx);
     const db = await adminDb();
     const { getArgusPropertyImages } = await import("./search.server");
-    return getArgusPropertyImages(db, orgId, data.propertyId, { clientIp: argusClientIp() });
+    return getArgusPropertyImages(db, orgId, data.propertyId, { clientIp: await argusClientIp() });
   });
 
 /** Telefonul proprietarului — apelat doar la apăsarea „Arată telefon”. */
@@ -371,7 +379,7 @@ export const getArgusListingContact = createServerFn({ method: "POST" })
     const orgId = await callerOrgId(ctx);
     const db = await adminDb();
     const { getArgusPropertyContact } = await import("./search.server");
-    return getArgusPropertyContact(db, orgId, data.propertyId, { clientIp: argusClientIp() });
+    return getArgusPropertyContact(db, orgId, data.propertyId, { clientIp: await argusClientIp() });
   });
 
 const LocationsInput = z
@@ -396,7 +404,7 @@ export const getArgusLocations = createServerFn({ method: "POST" })
       orgId,
       data.kind,
       { countyIds: data.countyIds, cityIds: data.cityIds, query: data.query },
-      { clientIp: argusClientIp() },
+      { clientIp: await argusClientIp() },
     );
   });
 
