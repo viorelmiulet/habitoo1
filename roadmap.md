@@ -1,9 +1,10 @@
 # SEO public — pasul 1a
 
 ## Muzică AI — eșecuri în producție
-- [x] Cererea reală „1”, Lux, 30 s fără descriere reușește prin helperul de previzualizare: submit 200, status 202/200, result/download 200, WAV 5.756.032 B; DB/stocare dublate, fără date reale salvate
-- [x] Coduri scurte nesensibile în extra_info.error_code și mesaje specifice serializabile; 16 teste handler + 8 pure trecute, build OK
-- [ ] Cauza exactă și reproducere autentificată în producție: evenimentele vechi nu au coduri, logurile nu au răspunsuri fal; sesiunea solicitantului nu poate fi emisă, accesul observabilitate externă expirat; nu s-a publicat
+- [x] Coada fal (submit + urmărire cu pauze setTimeout) înlocuită cu apel direct POST fal.run, timeout 110 s; fără node:*, Buffer sau pauze — compatibil cu runtime-ul de producție
+- [x] Erori neprevăzute: extra_info primește error_name + mesaj sigur (150 caractere, fără chei/URL-uri); coduri scurte păstrate
+- [x] 15 teste handler + 8 pure trec, build OK; generare reală 20 s prin apelul direct: WAV 3,85 MB în 9 s, usage success (DB/stocare dublate)
+- [ ] Confirmare în producție după publicare: o generare reală din SuperAdmin → Muzică video
 
 ## AI pasul 4 — voce video MiniMax direct
 - [x] Verificare Get Voice cu cheia existentă: Wise_Woman și Deep_Voice_Man nu apar în lista de 332 voci de sistem

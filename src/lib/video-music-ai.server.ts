@@ -1,7 +1,9 @@
 /**
  * Generare de muzică cu AI prin fal.ai (ACE-Step), numai pe server.
+ * Apel direct (fără coadă): POST fal.run întoarce direct `audio.url`.
  * Cheia FAL_KEY nu părăsește serverul și nu apare în loguri sau răspunsuri.
  * O generare eșuată nu lasă rânduri sau fișiere în bibliotecă.
+ * Compatibil cu runtime-ul de producție: fără node:*, Buffer sau pauze cu setTimeout.
  */
 import { MUSIC_BUCKET } from "@/lib/video-music";
 import {
@@ -13,18 +15,15 @@ import {
   type AiMusicInput,
 } from "@/lib/video-music-ai";
 
-const FAL_SUBMIT_URL = "https://queue.fal.run/fal-ai/ace-step/prompt-to-audio";
-const POLL_INTERVAL_MS = 2000;
-const POLL_BUDGET_MS = 115_000;
+const FAL_DIRECT_URL = "https://fal.run/fal-ai/ace-step/prompt-to-audio";
+const FAL_TIMEOUT_MS = 110_000;
 
 export class AiMusicError extends Error {
   constructor(message: string, readonly code = "generation_failed") { super(message); }
 }
 
 type FetchFn = (input: string, init?: RequestInit) => Promise<Response>;
-export type AiMusicDeps = { fetchFn?: FetchFn; sleep?: (ms: number) => Promise<void> };
-
-const defaultSleep = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
+export type AiMusicDeps = { fetchFn?: FetchFn };
 
 function falErrorMessage(status: number): string {
   if (status === 401 || status === 403) return "Cheia serviciului de generare nu este validă.";
@@ -32,51 +31,33 @@ function falErrorMessage(status: number): string {
   return "Generarea nu a putut fi pornită. Încearcă din nou.";
 }
 
-type FalSubmit = { request_id?: string; status_url?: string; response_url?: string };
+type FalDirectResult = { audio?: { url?: string; content_type?: string; file_name?: string } };
 
-/** Trimite cererea la coada fal.ai și întoarce URL-urile de urmărire. */
-async function submitFal(apiKey: string, input: AiMusicInput, fetchFn: FetchFn): Promise<{ statusUrl: string; responseUrl: string }> {
+/** Apelează direct modelul și întoarce URL-ul fișierului audio generat. */
+async function callFalDirect(apiKey: string, input: AiMusicInput, fetchFn: FetchFn): Promise<{ url: string; contentType: string | null }> {
   let res: Response;
   try {
-    res = await fetchFn(FAL_SUBMIT_URL, {
+    res = await fetchFn(FAL_DIRECT_URL, {
       method: "POST",
       headers: { Authorization: `Key ${apiKey}`, "Content-Type": "application/json" },
       body: JSON.stringify({ prompt: buildAiMusicPrompt(input), instrumental: true, duration: input.durationSec }),
+      signal: AbortSignal.timeout(FAL_TIMEOUT_MS),
     });
-  } catch {
-    throw new AiMusicError("Serviciul de generare nu a putut fi contactat. Încearcă din nou.", "fal_submit_network");
+  } catch (error) {
+    const aborted = error instanceof Error && (error.name === "TimeoutError" || error.name === "AbortError");
+    throw new AiMusicError(
+      aborted ? "Generarea a durat prea mult. Încearcă din nou." : "Serviciul de generare nu a putut fi contactat. Încearcă din nou.",
+      aborted ? "fal_timeout" : "fal_network",
+    );
   }
-  if (!res.ok) throw new AiMusicError(falErrorMessage(res.status), `fal_submit_${res.status}`);
-  const body = (await res.json().catch(() => null)) as FalSubmit | null;
-  if (!body?.status_url || !body?.response_url) throw new AiMusicError("Răspunsul serviciului de generare nu a putut fi citit.", "fal_submit_invalid");
-  for (const url of [body.status_url, body.response_url]) {
-    let parsed: URL;
-    try { parsed = new URL(url); } catch { throw new AiMusicError("Răspunsul serviciului de generare nu a putut fi citit.", "fal_submit_invalid"); }
-    if (parsed.protocol !== "https:" || parsed.hostname !== "queue.fal.run") throw new AiMusicError("Răspunsul serviciului de generare nu a putut fi citit.", "fal_submit_invalid");
-  }
-  return { statusUrl: body.status_url, responseUrl: body.response_url };
-}
-
-/** Urmărește cererea până e gata și întoarce URL-ul fișierului audio. */
-async function awaitFalAudioUrl(apiKey: string, urls: { statusUrl: string; responseUrl: string }, deps: Required<AiMusicDeps>): Promise<string> {
-  const startedAt = Date.now();
-  for (;;) {
-    if (Date.now() - startedAt > POLL_BUDGET_MS) throw new AiMusicError("Generarea a durat prea mult. Încearcă din nou.", "fal_status_timeout");
-    await deps.sleep(POLL_INTERVAL_MS);
-    const statusRes = await deps.fetchFn(urls.statusUrl, { headers: { Authorization: `Key ${apiKey}` } }).catch(() => null);
-    if (statusRes && [401, 403, 404, 422].includes(statusRes.status)) throw new AiMusicError(statusRes.status === 401 || statusRes.status === 403 ? falErrorMessage(statusRes.status) : "Cererea de generare nu poate fi urmărită. Încearcă din nou.", `fal_status_${statusRes.status}`);
-    if (statusRes?.ok) {
-      const status = ((await statusRes.json().catch(() => null)) as { status?: string } | null)?.status;
-      if (status === "FAILED") throw new AiMusicError("Serviciul fal.ai nu a reușit să genereze piesa. Încearcă din nou.", "fal_status_failed");
-      if (status === "COMPLETED") break;
-    }
-  }
-  const resultRes = await deps.fetchFn(urls.responseUrl, { headers: { Authorization: `Key ${apiKey}` } }).catch(() => null);
-  if (!resultRes?.ok) throw new AiMusicError("Rezultatul generării nu a putut fi citit.", resultRes ? `fal_result_${resultRes.status}` : "fal_result_network");
-  const result = (await resultRes.json().catch(() => null)) as { audio?: { url?: string; content_type?: string; file_name?: string } } | null;
-  const url = result?.audio?.url;
+  if (!res.ok) throw new AiMusicError(falErrorMessage(res.status), `fal_${res.status}`);
+  const body = (await res.json().catch(() => null)) as FalDirectResult | null;
+  const url = body?.audio?.url;
   if (!url) throw new AiMusicError("Fișierul generat lipsește din răspuns.", "fal_result_invalid");
-  return url;
+  let parsed: URL;
+  try { parsed = new URL(url); } catch { throw new AiMusicError("Fișierul generat lipsește din răspuns.", "fal_result_invalid"); }
+  if (parsed.protocol !== "https:") throw new AiMusicError("Fișierul generat lipsește din răspuns.", "fal_result_invalid");
+  return { url, contentType: body?.audio?.content_type ?? null };
 }
 
 function audioExtension(contentType: string | null, url: string): string {
@@ -84,6 +65,14 @@ function audioExtension(contentType: string | null, url: string): string {
   if (contentType?.includes("wav")) return "wav";
   const match = /\.([a-z0-9]{2,4})(?:\?|$)/i.exec(url);
   return match ? match[1].toLowerCase() : "wav";
+}
+
+/** Mesaj de eroare sigur pentru jurnal: fără chei, fără URL-uri, max 150 de caractere. */
+function sanitizeErrorMessage(raw: string, apiKey: string): string {
+  let text = raw;
+  if (apiKey) text = text.split(apiKey).join("[key]");
+  text = text.replace(/https?:\/\/\S+/gi, "[url]");
+  return text.slice(0, 150);
 }
 
 /** Porțiunea de bază de date de care are nevoie generarea (supabaseAdmin sau un dublu de test). */
@@ -111,7 +100,7 @@ export type AiMusicResult = { id: string; title: string; durationSec: number; st
 
 /**
  * Generează o piesă și o adaugă inactivă în bibliotecă. Pașii: limită zilnică →
- * coadă fal.ai → descărcare → stocare → rând nou. Orice eșec nu lasă urme.
+ * apel direct fal.ai → descărcare → stocare → rând nou. Orice eșec nu lasă urme.
  */
 export async function generateAiMusicTrack(
   args: { apiKey: string; input: AiMusicInput; userId: string; organizationId: string | null; db: AiMusicDb },
@@ -119,7 +108,6 @@ export async function generateAiMusicTrack(
 ): Promise<AiMusicResult> {
   const validationError = validateAiMusicInput(args.input);
   const fetchFn = deps.fetchFn ?? fetch;
-  const fullDeps: Required<AiMusicDeps> = { fetchFn, sleep: deps.sleep ?? defaultSleep };
   const startedAt = Date.now();
 
   const dayStart = new Date();
@@ -135,7 +123,7 @@ export async function generateAiMusicTrack(
     throw new AiMusicError(`Ai atins limita de ${MUSIC_AI_DAILY_LIMIT} de generări pe zi. Încearcă mâine.`);
   }
 
-  const writeUsage = (success: boolean, errorCode?: string) =>
+  const writeUsage = (success: boolean, extraInfo?: Record<string, unknown>) =>
     args.db
       .from("ai_usage_events")
       .insert({
@@ -151,7 +139,7 @@ export async function generateAiMusicTrack(
         tool_calls: 0,
         tokens_unknown: true,
         fallback_used: false,
-        extra_info: errorCode ? { error_code: errorCode } : null,
+        extra_info: extraInfo ?? null,
       })
       .then(({ error }) => {
         if (error) console.error("[ai-music] usage_insert_failed");
@@ -160,17 +148,16 @@ export async function generateAiMusicTrack(
   try {
     if (validationError) throw new AiMusicError(validationError, "validation");
     if (!args.apiKey.trim()) throw new AiMusicError("Generarea de muzică cu AI nu este configurată.", "configuration");
-    const urls = await submitFal(args.apiKey, args.input, fetchFn);
-    const audioUrl = await awaitFalAudioUrl(args.apiKey, urls, fullDeps);
-    const audioRes = await fetchFn(audioUrl).catch(() => null);
+    const audio = await callFalDirect(args.apiKey, args.input, fetchFn);
+    const audioRes = await fetchFn(audio.url).catch(() => null);
     if (!audioRes?.ok) throw new AiMusicError("Fișierul generat nu a putut fi descărcat.", "download_failed");
-    const contentType = audioRes.headers.get("content-type");
+    const contentType = audioRes.headers.get("content-type") ?? audio.contentType;
     const bytes = await audioRes.arrayBuffer().catch(() => { throw new AiMusicError("Fișierul generat nu a putut fi descărcat.", "download_failed"); });
     const TOO_LARGE = "Piesa generată e prea mare. Alege o durată mai scurtă.";
     if (bytes.byteLength > 30 * 1024 * 1024) throw new AiMusicError(TOO_LARGE, "audio_too_large");
 
     const id = crypto.randomUUID();
-    const ext = audioExtension(contentType, audioUrl);
+    const ext = audioExtension(contentType, audio.url);
     const storagePath = `tracks/${id}.${ext}`;
     const upload = await args.db.storage
       .from(MUSIC_BUCKET)
@@ -206,8 +193,19 @@ export async function generateAiMusicTrack(
     await writeUsage(true);
     return { id, title: args.input.title.trim(), durationSec: args.input.durationSec, storagePath };
   } catch (error) {
-    const safe = error instanceof AiMusicError ? error : new AiMusicError("Piesa nu a putut fi generată din cauza unei probleme interne. Încearcă din nou.", "internal");
-    if (!safe.message.startsWith("Ai atins limita")) await writeUsage(false, safe.code);
-    throw safe;
+    if (error instanceof AiMusicError) {
+      if (!error.message.startsWith("Ai atins limita")) await writeUsage(false, { error_code: error.code });
+      throw error;
+    }
+    // Eroare neprevăzută: păstrăm numele și un fragment sigur al mesajului, ca să
+    // putem diagnostica producția fără să expunem chei sau URL-uri cu token.
+    const name = error instanceof Error ? error.name || "Error" : typeof error;
+    const raw = error instanceof Error ? error.message : String(error);
+    await writeUsage(false, {
+      error_code: "internal",
+      error_name: name,
+      error_message: sanitizeErrorMessage(raw, args.apiKey),
+    });
+    throw new AiMusicError("Piesa nu a putut fi generată din cauza unei probleme interne. Încearcă din nou.", "internal");
   }
 }
