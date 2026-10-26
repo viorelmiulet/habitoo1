@@ -3,14 +3,14 @@ import { StatusChangeDialog } from "@/components/app/StatusChangeDialog";
 import { isWithdrawStatus } from "@/components/app/StatusWithdrawPreview";
 import { changePropertyStatus } from "@/lib/property-status.functions";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { DEFAULT_LIST_PAGE_SIZE, normalizeListPageSize, type ListPageSize } from "@/lib/list-page-size";
+import { ListPagination, PageRange, PageSizeSelect, useRememberedPageSize } from "@/components/app/ListPagination";
 import {
   ArchiveRestore,
   Trash2,
   Building2,
   ChevronDown,
-  ChevronLeft,
-  ChevronRight,
   ChevronUp,
   Download,
   ExternalLink,
@@ -143,7 +143,6 @@ const fieldLabelClass =
   "mb-2 block text-[11px] font-bold uppercase tracking-[0.08em] text-muted-foreground";
 const valuedControlClass = "border-primary bg-primary/5";
 
-const PAGE_SIZE = 25;
 
 function PropertiesPage() {
   const search = Route.useSearch();
@@ -152,6 +151,7 @@ function PropertiesPage() {
   const filters = urlState.filters;
   const sort = urlState.sort;
   const page = urlState.page - 1;
+  const PAGE_SIZE = normalizeListPageSize(search.perPagina);
   const view = urlState.view;
   const urlStateRef = useRef(urlState);
   urlStateRef.current = urlState;
@@ -181,10 +181,17 @@ function PropertiesPage() {
     nextPage = 1,
     nextView = view,
     replace = false,
+    nextPageSize: number | undefined = search.perPagina,
   ) => navigate({
-    search: propertyListSearchFromState(nextFilters, nextSort, nextPage, nextView),
+    search: { ...propertyListSearchFromState(nextFilters, nextSort, nextPage, nextView), perPagina: nextPageSize },
     replace,
   });
+  const confirmDiscardDrafts = () => {
+    if (view !== "publish" || Object.keys(portalDrafts).length === 0) return true;
+    if (!window.confirm(`Renunți la ${Object.keys(portalDrafts).length} modificări?`)) return false;
+    setPortalDrafts({});
+    return true;
+  };
 
   const setFilters = (updater: Filters | ((current: Filters) => Filters)) => {
     const next = typeof updater === "function" ? updater(filters) : updater;
@@ -201,7 +208,26 @@ function PropertiesPage() {
   };
   const setPage = (updater: number | ((current: number) => number)) => {
     const nextZeroBased = typeof updater === "function" ? updater(page) : updater;
+    if (!confirmDiscardDrafts()) return;
+    setSelected([]);
     void writeUrlState(filters, sort, nextZeroBased + 1, view);
+  };
+  const applyPageSize = useCallback(
+    (size: ListPageSize) => {
+      const latest = urlStateRef.current;
+      void navigate({
+        search: { ...propertyListSearchFromState(latest.filters, latest.sort, 1, latest.view), perPagina: size === DEFAULT_LIST_PAGE_SIZE ? undefined : size },
+        replace: true,
+      });
+    },
+    [navigate],
+  );
+  const rememberPageSize = useRememberedPageSize("properties", user ? user.userId : undefined, search.perPagina, applyPageSize);
+  const changePageSize = (size: ListPageSize) => {
+    if (!confirmDiscardDrafts()) return;
+    setSelected([]);
+    rememberPageSize(size);
+    applyPageSize(size);
   };
 
   useEffect(() => {
@@ -399,7 +425,7 @@ function PropertiesPage() {
 
   const { data: result, isLoading: listLoading } = useQuery({
     // (isLoading de mai jos combină și încărcarea filtrelor de portaluri/promovare)
-    queryKey: ["properties", orgId, filters, sort, page, favoriteIds, portalIds, promotionIds],
+    queryKey: ["properties", orgId, filters, sort, page, PAGE_SIZE, favoriteIds, portalIds, promotionIds],
     enabled:
       Boolean(orgId) &&
       (!portalFilter || portalIds !== undefined) &&
@@ -463,7 +489,7 @@ function PropertiesPage() {
       }
 
       const { col, asc } = sortColumn[sort];
-      query = query.order(col, { ascending: asc, nullsFirst: false });
+      query = query.order(col, { ascending: asc, nullsFirst: false }).order("id");
       query = query.range(page * PAGE_SIZE, page * PAGE_SIZE + PAGE_SIZE - 1);
 
       const { data, error, count } = await query;
@@ -980,10 +1006,12 @@ function PropertiesPage() {
       <div className="panel overflow-hidden">
         <div className="flex flex-col justify-between gap-3 border-b border-border px-4 py-3 sm:flex-row sm:items-center">
           <div className="flex items-baseline gap-2">
-            <span className="font-semibold">{total} {total === 1 ? "proprietate" : "proprietăți"}</span>
+            <span className="whitespace-nowrap font-semibold">{total} {total === 1 ? "proprietate" : "proprietăți"}</span>
+            <span className="whitespace-nowrap text-sm text-muted-foreground"><PageRange page={page + 1} pageSize={PAGE_SIZE} total={total} /></span>
             {filtersActive ? <span className="text-sm text-muted-foreground">din {portfolioTotal} în portofoliu</span> : null}
           </div>
           <div className="flex flex-wrap items-center gap-2">
+            <PageSizeSelect value={PAGE_SIZE} onChange={changePageSize} />
             <Select value={sort} onValueChange={(v) => setSort(v as SortKey)}>
               <SelectTrigger className="w-64"><span className="shrink-0 text-muted-foreground">Sortare:</span><SelectValue /></SelectTrigger>
               <SelectContent>{Object.entries(sortOptions).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}</SelectContent>
@@ -995,6 +1023,11 @@ function PropertiesPage() {
             </div>
           </div>
         </div>
+        {totalPages > 1 ? (
+          <div className="border-b border-border px-4 py-3">
+            <ListPagination page={page + 1} pages={totalPages} onGo={(p) => setPage(p - 1)} />
+          </div>
+        ) : null}
         {view === "publish" ? (
           isLoading || portals.isLoading ? <ListSkeleton rows={8} /> : rows.length === 0 ? emptyBlock : (
             <PropertyPublishView
@@ -1189,35 +1222,8 @@ function PropertiesPage() {
           </div>
         )}
 
-        <div className="flex items-center justify-between gap-3 border-t border-border px-4 py-3 text-sm">
-          <span className="text-xs text-muted-foreground">
-            {total > 0
-              ? `Rezultate ${page * PAGE_SIZE + 1}–${Math.min(total, (page + 1) * PAGE_SIZE)} din ${total}`
-              : "Rezultate 0 din 0"}
-          </span>
-          <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="icon"
-              aria-label="Pagina anterioară"
-              disabled={page === 0}
-              onClick={() => setPage((p) => Math.max(0, p - 1))}
-            >
-              <ChevronLeft className="size-4" />
-            </Button>
-            <span className="text-xs text-muted-foreground">
-              Pagina {page + 1} / {totalPages}
-            </span>
-            <Button
-              variant="outline"
-              size="icon"
-              aria-label="Pagina următoare"
-              disabled={page + 1 >= totalPages}
-              onClick={() => setPage((p) => p + 1)}
-            >
-              <ChevronRight className="size-4" />
-            </Button>
-          </div>
+        <div className="border-t border-border px-4 py-3">
+          <ListPagination page={page + 1} pages={totalPages} onGo={(p) => setPage(p - 1)} />
         </div>
       </div>
 

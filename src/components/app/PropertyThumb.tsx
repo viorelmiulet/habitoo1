@@ -7,6 +7,7 @@
  * a fotografiilor și nu atinge regulile de publicare (`include_in_publish`)
  * — acelea privesc feedul public, nu lista internă.
  */
+import { chunk } from "@/lib/list-page-size";
 import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
@@ -52,12 +53,19 @@ export function usePropertyCovers(propertyIds: string[]) {
     queryKey: ["property-covers", key],
     enabled: ids.length > 0,
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("property_images")
-        .select("property_id,url,storage_path,position,is_primary,is_confidential,alt")
-        .in("property_id", ids)
-        .order("position", { ascending: true });
-      if (error) throw error;
+      // Loturi de 20 proprietăți: rămânem sub limita de 1000 de rânduri per citire.
+      const parts = await Promise.all(
+        chunk(ids, 20).map((part) =>
+          supabase
+            .from("property_images")
+            .select("property_id,url,storage_path,position,is_primary,is_confidential,alt")
+            .in("property_id", part)
+            .order("position", { ascending: true }),
+        ),
+      );
+      const failed = parts.find((part) => part.error);
+      if (failed?.error) throw failed.error;
+      const data = parts.flatMap((part) => part.data ?? []);
 
       const grouped = new Map<string, CoverRow[]>();
       for (const row of (data ?? []) as CoverRow[]) {

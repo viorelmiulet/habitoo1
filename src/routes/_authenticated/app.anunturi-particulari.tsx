@@ -1,9 +1,9 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { z } from "zod";
-import { ChevronDown, ChevronLeft, ChevronRight, ChevronUp, ExternalLink, MapPin, Phone, Search, SearchX, X } from "lucide-react";
+import { ChevronDown, ChevronUp, ExternalLink, MapPin, Phone, Search, SearchX, X } from "lucide-react";
 import { PageHeader } from "@/components/app/PageHeader";
 import { appHead } from "@/components/app/app-head";
 import { SearchableSelect } from "@/components/app/SearchableSelect";
@@ -30,7 +30,10 @@ import {
   getOwnerListings,
   type OwnerListing,
 } from "@/lib/listings.functions";
-import { PRIVATE_LISTINGS_PAGE_SIZE, type PrivateListingsSort } from "@/lib/private-listings";
+import { type PrivateListingsSort } from "@/lib/private-listings";
+import { normalizeListPageSize, type ListPageSize } from "@/lib/list-page-size";
+import { ListPagination, PageRange, PageSizeSelect, useRememberedPageSize } from "@/components/app/ListPagination";
+import { useCurrentUser } from "@/hooks/use-session";
 import { geographyKey, localityScope } from "@/lib/private-listing-geography";
 
 const searchSchema = z.object({
@@ -44,6 +47,7 @@ const searchSchema = z.object({
   camere: z.string().optional(),
   q: z.string().optional(),
   pagina: z.coerce.number().int().min(1).optional(),
+  perPagina: z.coerce.number().int().optional(),
   sortare: z.enum(["newest", "price_asc", "price_desc", "surface_desc"]).optional(),
   sursa: z.enum(["storia", "imobiliare", "olx", "romimo", "imoradar", "anuntul", "facebook"]).optional(),
   tranzactie: z.enum(["sale", "rent", "rent_day"]).optional(),
@@ -189,6 +193,19 @@ function PrivateListingsPage() {
     .filter((n) => ROOM_OPTIONS.includes(n));
   const selectedZones = zonaList(search.zona);
   const page = (search.pagina ?? 1) - 1;
+  const pageSize = normalizeListPageSize(search.perPagina);
+  const { data: currentUser } = useCurrentUser();
+  const applyPageSize = useCallback(
+    (size: ListPageSize) =>
+      navigate({ search: (prev) => ({ ...prev, pagina: undefined, perPagina: size === 15 ? undefined : size }), replace: true }),
+    [navigate],
+  );
+  const rememberPageSize = useRememberedPageSize(
+    scope === "facebook" ? "map-facebook" : "map-habitoo",
+    currentUser ? currentUser.userId : undefined,
+    search.perPagina,
+    applyPageSize,
+  );
 
   const [draft, setDraft] = useState<Draft>(() => draftFromSearch(search));
   const [extendedOpen, setExtendedOpen] = useState(false);
@@ -203,6 +220,7 @@ function PrivateListingsPage() {
         lista: prev.lista,
         tab: prev.tab,
         sortare: prev.sortare,
+        perPagina: prev.perPagina,
         tranzactie: (next.tranzactie || undefined) as Search["tranzactie"],
         judet: next.judet || undefined,
         oras: next.judet ? next.oras || undefined : undefined,
@@ -226,7 +244,7 @@ function PrivateListingsPage() {
     });
 
   const resetFilters = () =>
-    navigate({ search: { lista: search.lista, tab: search.tab, sortare: search.sortare }, replace: true });
+    navigate({ search: { lista: search.lista, tab: search.tab, sortare: search.sortare, perPagina: search.perPagina }, replace: true });
 
   // În tabul „Argus” lista Habitoo nu se încarcă deloc.
   const habitooTab = search.lista !== "argus";
@@ -238,7 +256,7 @@ function PrivateListingsPage() {
   });
   const listings = useQuery({
     queryKey: [
-      "owner-listings", scope, search.tab, search.judet, search.oras, selectedZones.join(","), rooms.join(","), search.q, page,
+      "owner-listings", scope, search.tab, search.judet, search.oras, selectedZones.join(","), rooms.join(","), search.q, page, pageSize,
       source, search.tranzactie, search.tip, search.pretMin, search.pretMax, search.mpMin, search.mpMax,
       search.sortare, search.zile, search.id, search.etajMin, search.etajMax, search.anMin, search.anMax,
       search.anNespecificat,
@@ -248,7 +266,7 @@ function PrivateListingsPage() {
         data: {
           scope,
           category: search.tab,
-          county: search.judet, city: search.oras, zone: selectedZones.length ? selectedZones : undefined, rooms, q: search.q, page,
+          county: search.judet, city: search.oras, zone: selectedZones.length ? selectedZones : undefined, rooms, q: search.q, page, pageSize,
           source, transaction: search.tranzactie,
           propertyType: search.tab ? undefined : search.tip,
           priceMin: search.pretMin, priceMax: search.pretMax,
@@ -270,7 +288,7 @@ function PrivateListingsPage() {
   const zones = draft.oras ? (facets.data?.zones[localityScope(draft.judet, draft.oras)] ?? []) : [];
   const total = listings.data?.total ?? 0;
   const newToday = listings.data?.newToday ?? 0;
-  const pages = Math.max(1, Math.ceil(total / PRIVATE_LISTINGS_PAGE_SIZE));
+  const pages = Math.max(1, Math.ceil(total / pageSize));
   const toggleDraftRoom = (r: number) =>
     patch({ camere: draft.camere.includes(r) ? draft.camere.filter((x) => x !== r) : [...draft.camere, r] });
 
@@ -510,7 +528,7 @@ function PrivateListingsPage() {
       <div className="flex flex-wrap items-center justify-between gap-2 text-sm text-muted-foreground">
         <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
           <span className="font-medium text-foreground">
-            {listings.isLoading ? "Se încarcă…" : `${total} rezultate`}
+            {listings.isLoading ? "Se încarcă…" : <PageRange page={page + 1} pageSize={pageSize} total={total} />}
           </span>
           <span aria-hidden="true">·</span>
           <button
@@ -524,6 +542,14 @@ function PrivateListingsPage() {
             {newToday} anunțuri noi
           </button>
         </div>
+        <div className="flex flex-wrap items-center gap-2">
+        <PageSizeSelect
+          value={pageSize}
+          onChange={(size) => {
+            rememberPageSize(size);
+            void applyPageSize(size);
+          }}
+        />
         <Select
           value={search.sortare ?? "newest"}
           onValueChange={(v) =>
@@ -542,7 +568,10 @@ function PrivateListingsPage() {
             ))}
           </SelectContent>
         </Select>
+        </div>
       </div>
+
+      <ListPagination page={page + 1} pages={pages} onGo={(p) => navigate({ search: (prev) => ({ ...prev, pagina: p > 1 ? p : undefined }) })} />
 
       {listings.isError ? (
         <p className="text-destructive">Anunțurile nu pot fi încărcate acum. Reîncearcă.</p>
@@ -566,61 +595,10 @@ function PrivateListingsPage() {
         </div>
       )}
 
-      {pages > 1 ? (
-        <Pagination
-          page={page + 1}
-          pages={pages}
-          onGo={(p) =>
-            navigate({ search: (prev) => ({ ...prev, pagina: p > 1 ? p : undefined }) })
-          }
-        />
-      ) : null}
+      <ListPagination page={page + 1} pages={pages} onGo={(p) => navigate({ search: (prev) => ({ ...prev, pagina: p > 1 ? p : undefined }) })} />
       </>
       )}
     </div>
-  );
-}
-
-/** Paginare numerotată: prima, ultima și două pagini în jurul celei curente. */
-function pageNumbers(current: number, pages: number): (number | "…")[] {
-  const wanted = new Set([1, pages, current - 1, current, current + 1]);
-  const list = [...wanted].filter((p) => p >= 1 && p <= pages).sort((a, b) => a - b);
-  const out: (number | "…")[] = [];
-  let prev = 0;
-  for (const p of list) {
-    if (prev && p - prev > 1) out.push("…");
-    out.push(p);
-    prev = p;
-  }
-  return out;
-}
-
-function Pagination({ page, pages, onGo }: { page: number; pages: number; onGo: (p: number) => void }) {
-  return (
-    <nav aria-label="Paginare" className="flex flex-wrap items-center justify-center gap-1">
-      <Button variant="outline" size="sm" disabled={page === 1} onClick={() => onGo(page - 1)} aria-label="Pagina anterioară">
-        <ChevronLeft className="size-4" /> Înapoi
-      </Button>
-      {pageNumbers(page, pages).map((p, i) =>
-        p === "…" ? (
-          <span key={`gap-${i}`} className="px-1 text-muted-foreground">…</span>
-        ) : (
-          <Button
-            key={p}
-            variant={p === page ? "default" : "outline"}
-            size="sm"
-            className="min-w-9"
-            aria-current={p === page ? "page" : undefined}
-            onClick={() => onGo(p)}
-          >
-            {p}
-          </Button>
-        ),
-      )}
-      <Button variant="outline" size="sm" disabled={page >= pages} onClick={() => onGo(page + 1)} aria-label="Pagina următoare">
-        Înainte <ChevronRight className="size-4" />
-      </Button>
-    </nav>
   );
 }
 

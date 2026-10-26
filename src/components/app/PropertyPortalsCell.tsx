@@ -9,7 +9,8 @@ import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { StatusBadge } from "@/components/app/StatusBadge";
 import { PortalLogo } from "@/components/app/PortalLogo";
-import { getPropertiesPortalMatrix, type PropertyPortalCell } from "@/lib/portals.functions";
+import { getPropertiesPortalMatrix, type PropertyPortalCell, type PropertyPortalMatrix } from "@/lib/portals.functions";
+import { chunk } from "@/lib/list-page-size";
 import { portalListingLink } from "@/lib/portals/listing-links";
 
 const TONE: Record<PropertyPortalCell["state"], "success" | "warning" | "danger" | "neutral"> = {
@@ -33,7 +34,18 @@ export function usePropertyPortals(propertyIds: string[]) {
   const query = useQuery({
     queryKey: ["property-portals-matrix", ids],
     enabled: ids.length > 0,
-    queryFn: () => loadMatrix({ data: { propertyIds: ids } }),
+    // Loturi mici: limita serverului (100) și cea de 1000 de rânduri per citire.
+    queryFn: async () => {
+      const parts = await Promise.all(chunk(ids, 50).map((part) => loadMatrix({ data: { propertyIds: part } })));
+      return parts.reduce(
+        (acc, part) => ({
+          canManage: acc.canManage || part.canManage,
+          properties: { ...acc.properties, ...part.properties },
+          contactBlocks: { ...acc.contactBlocks, ...part.contactBlocks },
+        }),
+        { canManage: false, properties: {}, contactBlocks: {} } as PropertyPortalMatrix,
+      );
+    },
   });
   return {
     data: query.data,
