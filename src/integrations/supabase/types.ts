@@ -1059,6 +1059,7 @@ export type Database = {
         Row: {
           capability: string
           created_at: string
+          extra_info: Json | null
           fallback_used: boolean
           id: string
           input_tokens: number | null
@@ -1075,6 +1076,7 @@ export type Database = {
         Insert: {
           capability?: string
           created_at?: string
+          extra_info?: Json | null
           fallback_used?: boolean
           id?: string
           input_tokens?: number | null
@@ -1091,6 +1093,7 @@ export type Database = {
         Update: {
           capability?: string
           created_at?: string
+          extra_info?: Json | null
           fallback_used?: boolean
           id?: string
           input_tokens?: number | null

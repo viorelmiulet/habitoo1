@@ -2,12 +2,14 @@ import { formatFloorLabel } from "@/lib/property-floor";
 import type { VideoListing } from "@/lib/property-video";
 
 export const NARRATION_FEATURE = "ai_video_voice" as const;
-export const NARRATION_MODEL = "minimax/speech-2.8-turbo";
+export const NARRATION_MODEL = "speech-2.8-turbo";
 export const NARRATION_BUCKET = "video-narration";
 export const NARRATION_DAILY_LIMIT = 20;
 export const NARRATION_VOICES = {
-  female: { label: "Feminină", id: "Wise_Woman" },
-  male: { label: "Masculină", id: "Deep_Voice_Man" },
+  female: { label: "Feminină · blândă", id: "Romanian_female_2_sample1" },
+  male: { label: "Masculină · neutră", id: "Romanian_male_1_sample2" },
+  female_youth: { label: "Feminină · veselă", id: "Romanian_female_1_sample4" },
+  male_youth: { label: "Masculină · energică", id: "Romanian_male_2_sample1" },
 } as const;
 export type NarrationVoice = keyof typeof NARRATION_VOICES;
 export function narrationWordCount(text: string) { return text.trim() ? text.trim().split(/\s+/u).length : 0; }
