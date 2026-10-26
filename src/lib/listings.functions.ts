@@ -43,6 +43,7 @@ export type OwnerListing = {
 const num = (v: unknown) => (v === null || v === undefined ? null : Number(v));
 
 export const privateListingsFiltersSchema = z.object({
+  scope: z.enum(["habitoo", "facebook"]).optional(),
   county: z.string().max(100).optional(),
   city: z.string().max(80).optional(),
   zone: z.array(z.string().max(80)).max(30).optional(),
@@ -86,6 +87,7 @@ interface OwnerFilterQuery<Q> {
 
 /** Toate filtrele listei, aplicate identic în ambele faze ale sortării „Cele mai noi”. */
 function applyOwnerFilters<Q extends OwnerFilterQuery<Q>>(query: Q, data: PrivateListingsInput): Q {
+  query = applyOwnerScope(query, data.scope);
   const county = geographyKey(data.county);
   const city = geographyKey(data.city);
   const zones = [...new Set((data.zone ?? []).map(geographyKey).filter(Boolean))];
@@ -141,6 +143,11 @@ function applyOwnerFilters<Q extends OwnerFilterQuery<Q>>(query: Q, data: Privat
       : query.or(`year_built.lte.${data.yearMax},year_built.is.null`);
   }
   return query;
+}
+
+/** Scope precedes all counts, pagination and geography facets. */
+function applyOwnerScope<Q extends Pick<OwnerFilterQuery<Q>, "eq" | "or">>(query: Q, scope: "habitoo" | "facebook" = "habitoo"): Q {
+  return scope === "facebook" ? query.eq("source", "facebook") : query.or("source.neq.facebook");
 }
 
 export const getOwnerListings = createServerFn({ method: "GET" })
@@ -216,11 +223,13 @@ export const getOwnerListings = createServerFn({ method: "GET" })
 /** Complete, counted geography facets; every page is read under caller RLS. */
 export const getOwnerListingFacets = createServerFn({ method: "GET" })
   .middleware([requireActiveOrgAuth])
-  .handler(async ({ context }): Promise<ListingFacets> => {
+  .inputValidator((input: unknown) => z.object({ scope: z.enum(["habitoo", "facebook"]).optional() }).parse(input ?? {}))
+  .handler(async ({ data: input, context }): Promise<ListingFacets> => {
     const rows: GeographyRow[] = [];
     for (let from = 0; ; from += 1000) {
-      const { data, error } = await context.supabase.from("listings")
+      const query = context.supabase.from("listings")
         .select("city, county, zone, neighborhood, property_type").eq("is_owner", true)
+      const { data, error } = await applyOwnerScope(query, input.scope)
         .order("id").range(from, from + 999);
       if (error) throw new Error("Localizările nu pot fi încărcate acum.");
       rows.push(...(data ?? []));
