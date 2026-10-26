@@ -1,9 +1,10 @@
 # SEO public — pasul 1a
 
 ## Studio AI — limite lunare pe agenție
-- [ ] Limite 50/30/10 configurabile de SuperAdmin; rezervări atomice și lună România, fără numărarea eșecurilor
-- [ ] Consum în Studio AI și mesaje de limită/resetare
-- [ ] Teste simulate limită/eșec/concurență/lună nouă; verificare în cont fără generări reale
+- [x] Limite 50/30/10 configurabile de SuperAdmin; rezervări atomice și lună România, fără numărarea eșecurilor; rezultatele șterse păstrează consumul
+- [x] Consum în Studio AI și mesaje de limită/resetare; consum real citit în cont desktop/telefon, fără generări reale
+- [x] 40 teste Studio AI (inclusiv trigger SQL izolat) și 16 teste activare AI trec; build OK
+- [ ] Verificare vizuală/salvare limite în cont SuperAdmin: contul conectat este administrator de agenție și este redirecționat corect; acces SuperAdmin indisponibil
 
 ## Oferte partenere — vizualizator foto comun
 - [x] Vizualizator comun cu săgeți, taste, glisare și contor; poze clicabile și +N
