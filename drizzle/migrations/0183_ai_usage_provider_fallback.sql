@@ -1,0 +1,2 @@
+ALTER TABLE public.ai_usage_events ADD COLUMN IF NOT EXISTS fallback_used boolean NOT NULL DEFAULT false;
+COMMENT ON COLUMN public.ai_usage_events.fallback_used IS 'Whether the internal AI request used the configured Gemini reserve provider.';

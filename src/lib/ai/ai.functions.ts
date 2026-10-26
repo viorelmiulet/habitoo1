@@ -66,6 +66,7 @@ export type AiStatus = {
   model: string | null;
   runtime: string;
   plannedProviders: string[];
+  providers: { id: string; model: string; configured: boolean }[];
   /** Funcția este activată de administratorul platformei pentru agenția ta. */
   featureEnabled: boolean;
   message: string;
@@ -86,6 +87,7 @@ export type AiStatus = {
 };
 
 const PROVIDER_LABELS: Record<string, string> = {
+  minimax: "MiniMax",
   gemini: "Google Gemini",
   openai: "OpenAI",
   anthropic: "Anthropic",
@@ -108,6 +110,7 @@ export const getAiStatus = createServerFn({ method: "GET" })
       model: status.configured ? status.model : null,
       runtime: "mastra",
       plannedProviders: status.plannedProviders.map((id) => PROVIDER_LABELS[id] ?? id),
+      providers: status.providers,
       featureEnabled,
       message: !featureEnabled
         ? aiFeatureDisabledMessage(AI_FEATURE)

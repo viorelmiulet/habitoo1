@@ -65,6 +65,7 @@ export type CrmTurnInput = {
   history: AiProviderMessage[];
   tracer: AiTracer;
   conversationId?: string | null;
+  throwProviderErrors?: boolean;
 };
 
 /** Răspunsul agentului la o întrebare CRM (numai citiri). */
@@ -85,6 +86,7 @@ export async function runCrmAgent(input: CrmTurnInput): Promise<CoordinatorResul
     tracer: input.tracer,
     conversationId: input.conversationId ?? null,
     tools: crmReadTools(input.actor),
+    throwProviderErrors: input.throwProviderErrors,
   });
 }
 
@@ -113,6 +115,7 @@ export async function proposeCrmAction(input: {
   question: string;
   readSummary: string;
   tracer: AiTracer;
+  throwProviderErrors?: boolean;
 }): Promise<{ ok: true; request: CrmActionRequest } | { ok: false; message: string }> {
   const declarations = crmActionDeclarations();
   const system = [
@@ -155,6 +158,7 @@ export async function proposeCrmAction(input: {
     if (!validation.ok) return { ok: false, message: validation.message };
     return { ok: true, request: { tool: validation.tool, data: validation.data } };
   } catch (error) {
+    if (input.throwProviderErrors) throw error;
     input.tracer.record("error", `${HABITOO_CRM_AGENT}.proposal`, { status: "failed" });
     return { ok: false, message: safeAiProviderMessage(error) };
   }

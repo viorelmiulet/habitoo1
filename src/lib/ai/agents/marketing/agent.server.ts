@@ -57,7 +57,7 @@ function validate(content: MarketingContent, input: MarketingPromptInput): Marke
  * afirmațiile inventate.
  */
 export async function generateMarketingContent(
-  input: MarketingPromptInput & { provider: AIProvider; tracer: AiTracer },
+  input: MarketingPromptInput & { provider: AIProvider; tracer: AiTracer; throwProviderErrors?: boolean },
 ): Promise<MarketingGenerationResult> {
   const system = buildMarketingSystemPrompt();
   let inputTokens: number | null = null;
@@ -101,6 +101,7 @@ export async function generateMarketingContent(
         details: { attempt, issues: validation.issues.length },
       });
     } catch (error) {
+      if (input.throwProviderErrors) throw error;
       input.tracer.record("error", `${HABITOO_MARKETING_AGENT}.generate`, { status: "failed" });
       return { ok: false, message: safeAiProviderMessage(error) };
     }

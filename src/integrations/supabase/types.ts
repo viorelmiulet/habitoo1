@@ -1059,6 +1059,7 @@ export type Database = {
         Row: {
           capability: string
           created_at: string
+          fallback_used: boolean
           id: string
           input_tokens: number | null
           latency_ms: number
@@ -1074,6 +1075,7 @@ export type Database = {
         Insert: {
           capability?: string
           created_at?: string
+          fallback_used?: boolean
           id?: string
           input_tokens?: number | null
           latency_ms?: number
@@ -1089,6 +1091,7 @@ export type Database = {
         Update: {
           capability?: string
           created_at?: string
+          fallback_used?: boolean
           id?: string
           input_tokens?: number | null
           latency_ms?: number

@@ -58,6 +58,7 @@ describe("parseGeminiResponse", () => {
 
 describe("configurarea providerului", () => {
   it("fără cheie nu există provider", async () => {
+    delete process.env["MINIMAX_API_KEY"];
     delete process.env["GEMINI_API_KEY"];
     vi.resetModules();
     const registry = await import("../providers/registry.server");
@@ -67,6 +68,7 @@ describe("configurarea providerului", () => {
   });
 
   it("cu cheie există provider, iar cheia nu apare în stare", async () => {
+    delete process.env["MINIMAX_API_KEY"];
     process.env["GEMINI_API_KEY"] = "test-key-123";
     vi.resetModules();
     const registry = await import("../providers/registry.server");
