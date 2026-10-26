@@ -48,7 +48,9 @@ function renderSidebar(groups: NavGroup[], collapsed = false) {
 
 function lists(): string[][] {
   return [...document.querySelectorAll("nav ul")].map((ul) =>
-    [...ul.querySelectorAll("a")].map((a) => (a.textContent ?? "").trim()),
+    [...ul.querySelectorAll("a")].map(
+      (a) => a.getAttribute("data-tour") ?? (a.textContent ?? "").trim(),
+    ),
   );
 }
 
