@@ -1,9 +1,9 @@
 # SEO public — pasul 1a
 
 ## Liste — păstrarea filtrelor
-- [ ] Stare persistentă per utilizator/listă, URL prioritar, resetare și MAP separat
-- [ ] Întoarcere din detalii și Back cu pagina și poziția păstrate
-- [ ] Teste și verificare în cont pe MAP și Proprietăți; inventar alte liste
+- [x] Stare persistentă per utilizator/listă, URL prioritar, resetare și MAP separat; Clienți, Lead-uri, Cereri și Oferte partenere
+- [x] Întoarcere din detalii și Back cu pagina și poziția păstrate, verificată în cont desktop și telefon pe MAP/Proprietăți
+- [x] 28 teste de stare/paginare/filtre; inventar: adăugate Contracte, Comisioane, Activități, Agenți și Date piață; listele administrative SuperAdmin rămân separate și neschimbate
 
 ## Studio AI — limite lunare pe agenție
 - [x] Limite 50/30/10 configurabile de SuperAdmin; rezervări atomice și lună România, fără numărarea eșecurilor; rezultatele șterse păstrează consumul
