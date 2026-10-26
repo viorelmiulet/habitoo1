@@ -1006,8 +1006,8 @@ function PropertiesPage() {
       <div className="panel overflow-hidden">
         <div className="flex flex-col justify-between gap-3 border-b border-border px-4 py-3 sm:flex-row sm:items-center">
           <div className="flex items-baseline gap-2">
-            <span className="font-semibold">{total} {total === 1 ? "proprietate" : "proprietăți"}</span>
-            <span className="text-sm text-muted-foreground"><PageRange page={page + 1} pageSize={PAGE_SIZE} total={total} /></span>
+            <span className="whitespace-nowrap font-semibold">{total} {total === 1 ? "proprietate" : "proprietăți"}</span>
+            <span className="whitespace-nowrap text-sm text-muted-foreground"><PageRange page={page + 1} pageSize={PAGE_SIZE} total={total} /></span>
             {filtersActive ? <span className="text-sm text-muted-foreground">din {portfolioTotal} în portofoliu</span> : null}
           </div>
           <div className="flex flex-wrap items-center gap-2">
