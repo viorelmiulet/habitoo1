@@ -13,7 +13,10 @@ vi.mock("@tanstack/react-start", () => ({
 }));
 vi.mock("@/integrations/supabase/auth-middleware", () => ({ requireSupabaseAuth: {} }));
 vi.mock("@/integrations/supabase/client.server", () => ({ supabaseAdmin: { marker: "admin" } }));
-vi.mock("@/lib/video-music-ai.server", () => ({ generateAiMusicTrack: mocks.core }));
+vi.mock("@/lib/video-music-ai.server", async (importOriginal) => {
+  const original = await importOriginal<typeof import("./video-music-ai.server")>();
+  return { generateAiMusicTrack: mocks.core, AiMusicError: original.AiMusicError };
+});
 
 import { generateVideoMusic } from "./video-music-ai.functions";
 import type { AiMusicDb } from "./video-music-ai.server";
@@ -48,8 +51,16 @@ describe("acces SuperAdmin", () => {
     expect(mocks.core).not.toHaveBeenCalled();
   });
   it("fără cheie configurată răspunde că generarea nu este configurată", async () => {
-    await expect(handler({ data: input, context: authContext(true) })).rejects.toThrow("nu este configurată");
-    expect(mocks.core).not.toHaveBeenCalled();
+    mocks.core.mockRejectedValue(new realServer.AiMusicError("Generarea de muzică cu AI nu este configurată.", "configuration"));
+    await expect(handler({ data: input, context: authContext(true) })).resolves.toEqual({ ok: false, message: "Generarea de muzică cu AI nu este configurată." });
+    expect(mocks.core.mock.calls[0][0].apiKey).toBe("");
+  });
+  it("păstrează mesajul sigur în răspunsul serializabil, fără eroarea brută", async () => {
+    mocks.core.mockRejectedValue(new realServer.AiMusicError("Cheia serviciului de generare nu este validă.", "fal_submit_401"));
+    await expect(handler({ data: input, context: authContext(true) })).resolves.toEqual({ ok: false, message: "Cheia serviciului de generare nu este validă." });
+    mocks.core.mockRejectedValue(new Error("secret-provider-response"));
+    const result = await handler({ data: input, context: authContext(true) });
+    expect(JSON.stringify(result)).not.toContain("secret-provider-response");
   });
   it("SuperAdmin cu cheie ajunge la generare, fără ca cheia să apară în răspuns", async () => {
     process.env["FAL_KEY"] = "test-key";
@@ -147,16 +158,17 @@ describe("generarea propriu-zisă", () => {
     ).rejects.toThrow("Încearcă din nou");
     expect(calls.uploads).toHaveLength(0);
     expect(calls.tracks).toHaveLength(0);
-    expect(calls.usage).toEqual([expect.objectContaining({ success: false })]);
+    expect(calls.usage).toEqual([expect.objectContaining({ success: false, extra_info: { error_code: "fal_submit_500" } })]);
   });
 
   it("generare eșuată în coadă → nimic salvat", async () => {
     const { db, calls } = fakeDb();
     await expect(
       realGenerate({ apiKey: "k", input, userId: "u", organizationId: null, db }, { fetchFn: falFetchSequence({ queueStatus: "FAILED" }) as never, sleep }),
-    ).rejects.toThrow("a eșuat");
+    ).rejects.toThrow("nu a reușit");
     expect(calls.uploads).toHaveLength(0);
     expect(calls.tracks).toHaveLength(0);
+    expect(calls.usage[0].extra_info).toEqual({ error_code: "fal_status_failed" });
   });
 
   it("limita de 30 pe zi oprește generarea înainte de orice apel", async () => {
@@ -175,6 +187,41 @@ describe("generarea propriu-zisă", () => {
     await expect(
       realGenerate({ apiKey: "k", input: { ...input, title: "" }, userId: "u", organizationId: null, db }, { fetchFn: vi.fn() as never, sleep }),
     ).rejects.toThrow("titlul");
+    expect(calls.tracks).toHaveLength(0);
+    expect(calls.usage[0].extra_info).toEqual({ error_code: "validation" });
+  });
+  it("titlu 1, Lux, 30 s fără descriere: prompt Lux și piesă inactivă", async () => {
+    const { db, calls } = fakeDb();
+    const fetchFn = falFetchSequence();
+    await realGenerate({ apiKey: "k", input: { title: "1", style: "Lux", durationSec: 30 }, userId: "u", organizationId: null, db }, { fetchFn, sleep });
+    expect(calls.tracks[0]).toMatchObject({ title: "1", style: "Lux", duration_sec: 30, active: false });
+  });
+  it.each([401, 403, 422])("urmărire HTTP %s: mesaj specific și cod sigur", async (status) => {
+    const { db, calls } = fakeDb();
+    const fetchFn = vi.fn().mockResolvedValueOnce(new Response(JSON.stringify({ status_url: "https://queue.fal.run/status/r", response_url: "https://queue.fal.run/result/r" }))).mockResolvedValueOnce(new Response("private response", { status }));
+    await expect(realGenerate({ apiKey: "k", input, userId: "u", organizationId: null, db }, { fetchFn, sleep })).rejects.toBeInstanceOf(realServer.AiMusicError);
+    expect(calls.usage[0].extra_info).toEqual({ error_code: `fal_status_${status}` });
+    expect(calls.tracks).toHaveLength(0);
+    expect(JSON.stringify(calls.usage)).not.toContain("private response");
+  });
+  it("lipsa cheii înregistrează configuration înainte de fal", async () => {
+    const { db, calls } = fakeDb();
+    const fetchFn = vi.fn();
+    await expect(realGenerate({ apiKey: "", input, userId: "u", organizationId: null, db }, { fetchFn, sleep })).rejects.toThrow("nu este configurată");
+    expect(calls.usage[0].extra_info).toEqual({ error_code: "configuration" });
+    expect(fetchFn).not.toHaveBeenCalled();
+  });
+  it("descărcare eșuată înregistrează download_failed", async () => {
+    const { db, calls } = fakeDb();
+    await expect(realGenerate({ apiKey: "k", input, userId: "u", organizationId: null, db }, { fetchFn: falFetchSequence({ audioStatus: 500 }), sleep })).rejects.toThrow("descărcat");
+    expect(calls.usage[0].extra_info).toEqual({ error_code: "download_failed" });
+    expect(calls.uploads).toHaveLength(0);
+  });
+  it("încărcare refuzată înregistrează upload_failed", async () => {
+    const { db, calls } = fakeDb();
+    db.storage.from = () => ({ upload: async () => ({ error: { message: "private-storage-error" } }), remove: async () => ({}) });
+    await expect(realGenerate({ apiKey: "k", input, userId: "u", organizationId: null, db }, { fetchFn: falFetchSequence(), sleep })).rejects.toThrow("salvat");
+    expect(calls.usage[0].extra_info).toEqual({ error_code: "upload_failed" });
     expect(calls.tracks).toHaveLength(0);
   });
 });
