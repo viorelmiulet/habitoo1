@@ -116,6 +116,7 @@ export async function proposeCrmAction(input: {
   readSummary: string;
   tracer: AiTracer;
   throwProviderErrors?: boolean;
+  onUsage?: (input: number | null, output: number | null) => void;
 }): Promise<{ ok: true; request: CrmActionRequest } | { ok: false; message: string }> {
   const declarations = crmActionDeclarations();
   const system = [
@@ -141,6 +142,7 @@ export async function proposeCrmAction(input: {
     const result = await withRetry(() =>
       input.provider.generate({ system, messages, tools: declarations }),
     );
+    input.onUsage?.(result.inputTokens, result.outputTokens);
     input.tracer.record("model", `${input.provider.id}.action_proposal`, {
       details: { toolCalls: result.toolCalls.length },
     });

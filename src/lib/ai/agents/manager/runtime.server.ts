@@ -223,10 +223,15 @@ export async function runManagerTurn(
   const keywordRouting: ManagerRouting = routeManagerRequest(request);
   const { routeManagerRequestSemantic } = await import("./semantic.server");
   let fallbackUsed = provider.id === "gemini";
+  let inputTokens: number | null = null;
+  let outputTokens: number | null = null;
   let routed;
   try {
     const completed = await withAiProviderFallback(provider, selected =>
-      routeManagerRequestSemantic(selected, request, keywordRouting, true));
+      routeManagerRequestSemantic(selected, request, keywordRouting, true, (input, output) => {
+        inputTokens = input;
+        outputTokens = output;
+      }));
     provider = completed.provider;
     fallbackUsed = completed.fallbackUsed;
     routed = completed.result;
@@ -305,8 +310,8 @@ export async function runManagerTurn(
     model: provider.model,
     capability: "manager_agent",
     fallback_used: fallbackUsed,
-    input_tokens: null,
-    output_tokens: null,
+    input_tokens: inputTokens,
+    output_tokens: outputTokens,
     latency_ms: latencyMs,
     success: statusOfPlan(state) !== "failed",
     tool_calls: state.steps.filter((item) => item.status === "completed").length,

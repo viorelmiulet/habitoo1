@@ -7,6 +7,7 @@ import { runCoordinator } from "../agent/coordinator.server";
 import { AiTracer } from "../tracing/trace";
 import { aiToolDeclarations } from "../tools/registry";
 import { writeAiUsage } from "../usage/tracking.server";
+import { AI_NOT_CONFIGURED_MESSAGE } from "../gateway/types";
 
 vi.mock("@/integrations/supabase/client.server", () => ({
   supabaseAdmin: { from: () => ({ insert: async () => ({ error: null }) }) },
@@ -37,6 +38,8 @@ describe("MiniMax protocol and complete-request fallback", () => {
       { type: "tool_result", tool_use_id: "call-real-2", content: '{"ok":true,"data":[]}' },
     ]);
     expect(result.answer).toBe("Gata");
+    expect(result.inputTokens).toBe(42);
+    expect(result.outputTokens).toBe(14);
     expect(execute).toHaveBeenCalledTimes(2);
     expect(bodies[0]).toMatchObject({ model: "MiniMax-M3.1-Flash", max_tokens: 8192, output_config: { effort: "low" }, tool_choice: { type: "auto" } });
     for (const key of ["temperature", "top_p", "cache_control", "service_tier", "thinking"]) expect(bodies[0]).not.toHaveProperty(key);
@@ -79,6 +82,7 @@ describe("MiniMax protocol and complete-request fallback", () => {
   it("returns not configured when neither key exists", () => {
     vi.stubEnv("MINIMAX_API_KEY", ""); vi.stubEnv("GEMINI_API_KEY", "");
     expect(resolveAiProvider()).toBeNull(); expect(aiProviderStatus().configured).toBe(false);
+    expect(AI_NOT_CONFIGURED_MESSAGE).toBe("AI nu este configurat.");
   });
   it("chooses MiniMax model and effort configuration", async () => {
     vi.stubEnv("MINIMAX_API_KEY", "fixture"); vi.stubEnv("MINIMAX_MODEL", "chosen-fixture"); vi.stubEnv("MINIMAX_EFFORT", "medium");
@@ -97,5 +101,33 @@ describe("MiniMax protocol and complete-request fallback", () => {
   it("never falls back on a refusal with empty content", async () => {
     vi.stubGlobal("fetch", vi.fn(async () => Response.json({ stop_reason: "refusal", content: [] })));
     await expect(createMiniMaxProvider("fixture").generate({ system: "rules", messages: [], tools: [] })).rejects.toBeInstanceOf(AiProviderError);
+  });
+  it("restarts after a tool round without carrying MiniMax thinking into Gemini or executing approved actions", async () => {
+    let calls = 0;
+    const primary: AIProvider = {
+      id: "minimax", model: "fixture", supportsTools: true,
+      generate: vi.fn(async () => {
+        calls += 1;
+        if (calls > 1) throw new AiProviderError("temporary", 529, true);
+        return { text: "", toolCalls: [{ id: "native-id", name: "search_properties", arguments: { query: "Cluj" } }],
+          rawAssistantContent: [{ type: "thinking", thinking: "fixture", signature: "fixture" }, { type: "tool_use", id: "native-id", name: "search_properties", input: { query: "Cluj" } }], inputTokens: 5, outputTokens: 3 };
+      }),
+      fallback: { id: "gemini", model: "gemini-fixture", supportsTools: true, generate: vi.fn(async request => {
+        expect(request.messages).toEqual([{ role: "user", content: "Caută" }]);
+        return { text: "Gata", toolCalls: [], inputTokens: 6, outputTokens: 2 };
+      }) },
+    };
+    const read = vi.fn(async () => ({ ok: true as const, data: [], sources: [], summary: "0", capability: "read:properties" }));
+    const approvedAction = vi.fn();
+    const outcome = await withAiProviderFallback(primary, provider => runCoordinator({ actor, provider, system: "rules", messages: [{ role: "user", content: "Caută" }], declarations: aiToolDeclarations(), tracer: trace(), tools: { search_properties: { id: "search_properties", execute: read }, create_task: { id: "create_task", execute: approvedAction } }, throwProviderErrors: true }));
+    expect(primary.generate).toHaveBeenCalledTimes(4);
+    expect(outcome.result.answer).toBe("Gata");
+    expect(read).toHaveBeenCalledTimes(1);
+    expect(approvedAction).not.toHaveBeenCalled();
+  });
+  it("keeps legacy prospecting on Gemini when MiniMax is configured", () => {
+    vi.stubEnv("MINIMAX_API_KEY", "fixture"); vi.stubEnv("GEMINI_API_KEY", "fixture");
+    expect(resolveAiProvider("legacy")?.id).toBe("gemini");
+    expect(resolveAiProvider()?.id).toBe("minimax");
   });
 });

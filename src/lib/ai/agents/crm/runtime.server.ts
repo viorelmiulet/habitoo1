@@ -531,7 +531,10 @@ export async function runCrmTurn(
       const proposal = analysis.failure === null && analysis.answer.trim() && requestsCrmAction(input.question)
         ? await proposeCrmAction({ actor, provider: selected, context, question: input.question,
             readSummary: analysis.toolCalls.map(call => `${call.name}: ${call.summary}`).join(" · "),
-            tracer, throwProviderErrors: true }) : null;
+            tracer, throwProviderErrors: true, onUsage: (inputTokens, outputTokens) => {
+              if (inputTokens !== null) analysis.inputTokens = (analysis.inputTokens ?? 0) + inputTokens;
+              if (outputTokens !== null) analysis.outputTokens = (analysis.outputTokens ?? 0) + outputTokens;
+            } }) : null;
       return { analysis, proposal };
     });
     outcome = completed.result.analysis;
