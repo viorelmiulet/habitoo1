@@ -4,13 +4,13 @@ export const listStateKey = (userId: string, list: string) => `habitoo.listState
 export function readListState(storage: Pick<Storage, "getItem">, userId: string, list: string): ListSnapshot | null {
   try {
     const value = JSON.parse(storage.getItem(listStateKey(userId, list)) ?? "null");
-    if (!value || typeof value.search !== "object" || Array.isArray(value.search)) return null;
+    if (!value || !value.search || typeof value.search !== "object" || Array.isArray(value.search)) return null;
     return { search: value.search, scroll: Number.isFinite(value.scroll) ? Math.max(0, value.scroll) : 0 };
   } catch { return null; }
 }
 
 export function compactListSearch(search: Record<string, unknown>) {
-  return Object.fromEntries(Object.entries(search).filter(([key, value]) => key !== "new" && value !== undefined));
+  return Object.fromEntries(Object.entries(search).filter(([key, value]) => !["new", "nou", "proprietate", "contract"].includes(key) && value !== undefined));
 }
 
 /** Only known primitive fields enter local-list state; action parameters never persist. */

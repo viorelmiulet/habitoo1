@@ -17,11 +17,12 @@ export function useListState<T extends Record<string, unknown>>({ list, userId, 
     if (!userId || !enabled) { active.current = ""; return; }
     const identity = listStateKey(userId, list);
     try {
+      const firstEntry = active.current === "";
       const entering = active.current !== identity;
       active.current = identity;
       const explicit = Object.keys(compactListSearch(location.search)).some((key) => key !== "lista");
       let saved = readListState(localStorage, userId, list);
-      if (entering && !explicit && family && !location.search.lista) saved = readListState(localStorage, userId, family) ?? saved;
+      if (firstEntry && !explicit && family && !location.search.lista) saved = readListState(localStorage, userId, family) ?? saved;
       if (entering && saved) {
         if (!explicit || JSON.stringify(saved.search) === serialized) restoring.current = saved.scroll;
         if (!explicit && JSON.stringify(saved.search) !== serialized) {

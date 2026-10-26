@@ -155,7 +155,7 @@ function LeadsPage() {
   const { data: user } = useCurrentUser();
   const persisted = useFilterList("leads", user?.userId, leadListDefaults, urlSearch,
     (next) => { void navigate({ search: next, replace: true, resetScroll: false }); });
-  const stageParam = persisted.state.stage;
+  const stageParam = (leadStages as readonly string[]).includes(persisted.state.stage) ? persisted.state.stage : "";
   // Etapa primită din dashboard restrânge board-ul la o singură coloană.
   const columns = stageParam ? [stageParam as LeadStage] : allColumns;
 
