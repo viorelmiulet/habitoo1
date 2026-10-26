@@ -7,7 +7,7 @@
  */
 
 /** Atașament trimis modelului (imagine sau PDF), doar în memorie. */
-export type AiProviderAttachment = { mimeType: string; base64: string };
+export type AiProviderAttachment = { mimeType: string; base64: string; detail?: "auto" | "low" | "high" };
 
 export type AiProviderMessage =
   | { role: "user"; content: string; attachments?: AiProviderAttachment[] }
