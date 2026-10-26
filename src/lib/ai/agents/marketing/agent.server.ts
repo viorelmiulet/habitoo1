@@ -39,8 +39,7 @@ export type MarketingGenerationOutput = {
 };
 
 export type MarketingGenerationResult =
-  | { ok: true; result: MarketingGenerationOutput }
-  | { ok: false; message: string };
+  { ok: true; result: MarketingGenerationOutput } | { ok: false; message: string };
 
 function validate(content: MarketingContent, input: MarketingPromptInput): MarketingValidation {
   const spec = marketingChannelSpec(input.channel);
@@ -57,7 +56,11 @@ function validate(content: MarketingContent, input: MarketingPromptInput): Marke
  * afirmațiile inventate.
  */
 export async function generateMarketingContent(
-  input: MarketingPromptInput & { provider: AIProvider; tracer: AiTracer; throwProviderErrors?: boolean },
+  input: MarketingPromptInput & {
+    provider: AIProvider;
+    tracer: AiTracer;
+    throwProviderErrors?: boolean;
+  },
 ): Promise<MarketingGenerationResult> {
   const system = buildMarketingSystemPrompt();
   let inputTokens: number | null = null;
@@ -77,8 +80,10 @@ export async function generateMarketingContent(
           tools: [],
         }),
       );
-      inputTokens = result.inputTokens === null ? inputTokens : (inputTokens ?? 0) + result.inputTokens;
-      outputTokens = result.outputTokens === null ? outputTokens : (outputTokens ?? 0) + result.outputTokens;
+      inputTokens =
+        result.inputTokens === null ? inputTokens : (inputTokens ?? 0) + result.inputTokens;
+      outputTokens =
+        result.outputTokens === null ? outputTokens : (outputTokens ?? 0) + result.outputTokens;
       input.tracer.record("model", `${input.provider.id}.marketing`, {
         details: { attempt, propertyId: input.facts.propertyId },
       });

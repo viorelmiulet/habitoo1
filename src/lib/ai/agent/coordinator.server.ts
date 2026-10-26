@@ -12,7 +12,12 @@
  */
 import type { AIProvider, AiProviderMessage, AiToolDeclaration } from "../providers/types";
 import { safeAiProviderMessage } from "../providers/types";
-import { truncateAiToolCall, type AiActor, type AiSource, type AiToolCallRecord } from "../gateway/types";
+import {
+  truncateAiToolCall,
+  type AiActor,
+  type AiSource,
+  type AiToolCallRecord,
+} from "../gateway/types";
 import { authorizeAiTool } from "../security/permissions";
 import { aiToolCapability } from "../tools/registry";
 import { buildMastraTools, MASTRA_RUNTIME, type HabitooMastraTool } from "../tools/mastra.server";
@@ -93,8 +98,10 @@ export async function runCoordinator(run: CoordinatorRun): Promise<CoordinatorRe
         latencyMs: Date.now() - modelStart,
         details: { step, toolCalls: result.toolCalls.length },
       });
-      inputTokens = result.inputTokens === null ? inputTokens : (inputTokens ?? 0) + result.inputTokens;
-      outputTokens = result.outputTokens === null ? outputTokens : (outputTokens ?? 0) + result.outputTokens;
+      inputTokens =
+        result.inputTokens === null ? inputTokens : (inputTokens ?? 0) + result.inputTokens;
+      outputTokens =
+        result.outputTokens === null ? outputTokens : (outputTokens ?? 0) + result.outputTokens;
 
       if (result.toolCalls.length === 0) {
         answer = result.text;
@@ -102,15 +109,23 @@ export async function runCoordinator(run: CoordinatorRun): Promise<CoordinatorRe
       }
 
       if (result.rawAssistantContent) {
-        messages.push({ role: "assistant", content: result.text, rawContent: result.rawAssistantContent });
+        messages.push({
+          role: "assistant",
+          content: result.text,
+          rawContent: result.rawAssistantContent,
+        });
       }
 
       for (const call of result.toolCalls) {
         if (toolCalls.length >= maxToolCalls) {
           warnings.push("Am oprit căutările suplimentare pentru a limita costul.");
           if (result.rawAssistantContent) {
-            messages.push({ role: "tool_result", toolName: call.name, callId: call.id,
-              content: JSON.stringify({ ok: false, error: "Limita de instrumente a fost atinsă." }) });
+            messages.push({
+              role: "tool_result",
+              toolName: call.name,
+              callId: call.id,
+              content: JSON.stringify({ ok: false, error: "Limita de instrumente a fost atinsă." }),
+            });
             continue;
           }
           break;
@@ -134,13 +149,14 @@ export async function runCoordinator(run: CoordinatorRun): Promise<CoordinatorRe
             status: "failed",
             details: { denied: authorization.reason },
           });
-          if (!result.rawAssistantContent) messages.push({
-            role: "assistant_tool_call",
-            toolName: call.name,
-            arguments: call.arguments,
-            signature: call.signature ?? null,
-            callId: call.id,
-          });
+          if (!result.rawAssistantContent)
+            messages.push({
+              role: "assistant_tool_call",
+              toolName: call.name,
+              arguments: call.arguments,
+              signature: call.signature ?? null,
+              callId: call.id,
+            });
           messages.push({
             role: "tool_result",
             toolName: call.name,
@@ -181,13 +197,14 @@ export async function runCoordinator(run: CoordinatorRun): Promise<CoordinatorRe
         });
         if (execution.ok) sources.push(...execution.sources);
 
-        if (!result.rawAssistantContent) messages.push({
-          role: "assistant_tool_call",
-          toolName: call.name,
-          arguments: call.arguments,
-          signature: call.signature ?? null,
-          callId: call.id,
-        });
+        if (!result.rawAssistantContent)
+          messages.push({
+            role: "assistant_tool_call",
+            toolName: call.name,
+            arguments: call.arguments,
+            signature: call.signature ?? null,
+            callId: call.id,
+          });
         messages.push({
           role: "tool_result",
           toolName: call.name,

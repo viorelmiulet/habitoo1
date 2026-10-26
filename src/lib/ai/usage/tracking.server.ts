@@ -28,8 +28,7 @@ type UsageWriter = {
 export async function writeAiUsage(client: UsageWriter, row: AiUsageRow): Promise<boolean> {
   const marked: AiUsageRow = {
     ...row,
-    tokens_unknown:
-      row.tokens_unknown ?? (row.input_tokens === null && row.output_tokens === null),
+    tokens_unknown: row.tokens_unknown ?? (row.input_tokens === null && row.output_tokens === null),
   };
   try {
     const { error } = await client.from("ai_usage_events").insert(marked);
@@ -43,4 +42,3 @@ export async function writeAiUsage(client: UsageWriter, row: AiUsageRow): Promis
     return false;
   }
 }
-

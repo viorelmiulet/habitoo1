@@ -7,7 +7,11 @@
  */
 import type { AIProvider } from "./types";
 import { createGeminiProvider, GEMINI_DEFAULT_MODEL } from "./gemini.server";
-import { createMiniMaxProvider, MINIMAX_DEFAULT_MODEL, MINIMAX_DEFAULT_EFFORT } from "./minimax.server";
+import {
+  createMiniMaxProvider,
+  MINIMAX_DEFAULT_MODEL,
+  MINIMAX_DEFAULT_EFFORT,
+} from "./minimax.server";
 
 export type AiProviderId = "gemini" | "minimax";
 
@@ -54,6 +58,12 @@ export function resolveAiProvider(scope: "internal" | "legacy" = "internal"): AI
   if (scope === "legacy") return fallback ?? null;
   const miniMaxKey = process.env["MINIMAX_API_KEY"]?.trim();
   if (!miniMaxKey) return fallback ?? null;
-  return { ...createMiniMaxProvider(miniMaxKey, process.env["MINIMAX_MODEL"]?.trim() || MINIMAX_DEFAULT_MODEL,
-    process.env["MINIMAX_EFFORT"]?.trim() || MINIMAX_DEFAULT_EFFORT), fallback };
+  return {
+    ...createMiniMaxProvider(
+      miniMaxKey,
+      process.env["MINIMAX_MODEL"]?.trim() || MINIMAX_DEFAULT_MODEL,
+      process.env["MINIMAX_EFFORT"]?.trim() || MINIMAX_DEFAULT_EFFORT,
+    ),
+    fallback,
+  };
 }

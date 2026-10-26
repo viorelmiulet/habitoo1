@@ -11,7 +11,6 @@ export type AiProviderAttachment = { mimeType: string; base64: string };
 
 export type AiProviderMessage =
   | { role: "user"; content: string; attachments?: AiProviderAttachment[] }
-
   | { role: "assistant"; content: string; rawContent?: Record<string, unknown>[] }
   | {
       role: "assistant_tool_call";

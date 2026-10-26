@@ -89,9 +89,8 @@ describe("mesaje sigure de eroare", () => {
 
 describe("regresie: model și buget de tokeni (Gemini 3)", () => {
   it("modelul implicit nu este cel retras pentru cheile noi", async () => {
-    const { GEMINI_DEFAULT_MODEL, GEMINI_MAX_OUTPUT_TOKENS, GEMINI_THINKING_LEVEL } = await import(
-      "../providers/gemini.server"
-    );
+    const { GEMINI_DEFAULT_MODEL, GEMINI_MAX_OUTPUT_TOKENS, GEMINI_THINKING_LEVEL } =
+      await import("../providers/gemini.server");
     expect(GEMINI_DEFAULT_MODEL).not.toBe("gemini-2.5-flash");
     expect(GEMINI_DEFAULT_MODEL).toMatch(/^gemini-/);
     // Bugetul acoperă și tokenii de raționament ai modelelor Gemini 3.

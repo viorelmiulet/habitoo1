@@ -48,7 +48,6 @@ async function resolveActor(userId: string): Promise<AiActor | null> {
   return { userId, organizationId: profile.organization_id, role };
 }
 
-
 const AI_FEATURE: AiFeatureKey = "ai_assistant";
 
 /** Mesajul de indisponibilitate când agenția nu are funcția activată. */
@@ -153,7 +152,10 @@ export const getAiStatus = createServerFn({ method: "GET" })
   });
 
 const sendSchema = z.object({
-  message: z.string().min(1).max(AI_MAX_MESSAGE_CHARS + 1),
+  message: z
+    .string()
+    .min(1)
+    .max(AI_MAX_MESSAGE_CHARS + 1),
   conversationId: z.string().uuid().nullable().optional(),
   propertyId: z.string().uuid().nullable().optional(),
 });
@@ -272,9 +274,7 @@ export const getAiConversation = createServerFn({ method: "GET" })
 
 export type AiWorkflowRun = import("./workflows/runtime.server").WorkflowRunView;
 
-export type AiWorkflowResult =
-  | { ok: true; run: AiWorkflowRun }
-  | { ok: false; message: string };
+export type AiWorkflowResult = { ok: true; run: AiWorkflowRun } | { ok: false; message: string };
 
 const startWorkflowSchema = z.object({
   question: z.string().min(1).max(AI_MAX_MESSAGE_CHARS),

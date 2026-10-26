@@ -113,9 +113,7 @@ type UsageReader = {
           column: "created_at",
           value: string,
         ) => Promise<{
-          data:
-            | { input_tokens: number | null; output_tokens: number | null }[]
-            | null;
+          data: { input_tokens: number | null; output_tokens: number | null }[] | null;
           error: { message: string } | null;
         }>;
       };
@@ -173,7 +171,6 @@ export async function checkAiQuota(
   return { allowed: true };
 }
 
-
 /** Conversația curentă, creată dacă lipsește. Mereu legată de user + agenție. */
 async function ensureConversation(
   admin: Admin,
@@ -228,7 +225,10 @@ export async function buildRequestContext(
   return buildAiContext({ organizationName: org?.name ?? null, property });
 }
 
-function confidenceOf(toolCalls: AiToolCallRecord[], sources: AiSource[]): AIResponse["confidence"] {
+function confidenceOf(
+  toolCalls: AiToolCallRecord[],
+  sources: AiSource[],
+): AIResponse["confidence"] {
   if (sources.length > 0 && toolCalls.some((call) => call.ok)) return "high";
   if (toolCalls.length > 0) return "medium";
   return "low";
@@ -260,7 +260,6 @@ export async function runAiChat(actor: AiActor, request: AiChatRequest): Promise
   if (!quota.allowed) {
     return emptyAiResponse("rate_limited", quota.message);
   }
-
 
   const conversationId = await ensureConversation(admin, actor, request.conversationId, message);
   if (!conversationId) {
@@ -302,21 +301,31 @@ export async function runAiChat(actor: AiActor, request: AiChatRequest): Promise
   let fallbackUsed = provider.id === "gemini";
   let outcome;
   try {
-    const completed = await withAiProviderFallback(provider, selected => runCoordinator({
-    actor,
-    provider: selected,
-    system,
-    messages,
-    declarations,
-    tracer,
-    conversationId,
-    throwProviderErrors: true,
-    }));
+    const completed = await withAiProviderFallback(provider, (selected) =>
+      runCoordinator({
+        actor,
+        provider: selected,
+        system,
+        messages,
+        declarations,
+        tracer,
+        conversationId,
+        throwProviderErrors: true,
+      }),
+    );
     outcome = completed.result;
     provider = completed.provider;
     fallbackUsed = completed.fallbackUsed;
   } catch (error) {
-    outcome = { answer: "", toolCalls: [], sources: [], warnings: [], inputTokens: null, outputTokens: null, failure: safeAiProviderMessage(error) };
+    outcome = {
+      answer: "",
+      toolCalls: [],
+      sources: [],
+      warnings: [],
+      inputTokens: null,
+      outputTokens: null,
+      failure: safeAiProviderMessage(error),
+    };
   }
 
   const { toolCalls, sources, warnings, inputTokens, outputTokens } = outcome;

@@ -181,7 +181,6 @@ export async function runMarketingTurn(
     };
   }
 
-
   const traceId = newTraceId();
   const tracer = new AiTracer(traceId, {
     organizationId: actor.organizationId,
@@ -214,81 +213,98 @@ export async function runMarketingTurn(
 
   const branding = await marketingBrandingFor(admin, actor);
   let fallbackUsed = provider.id === "gemini";
-  let batch: { results: MarketingResult[]; failures: MarketingWorkflowState["failures"]; inputTokens: number | null; outputTokens: number | null };
+  let batch: {
+    results: MarketingResult[];
+    failures: MarketingWorkflowState["failures"];
+    inputTokens: number | null;
+    outputTokens: number | null;
+  };
   try {
-    const completed = await withAiProviderFallback(provider, async selected => {
-  const results: MarketingResult[] = [];
-  const failures: MarketingWorkflowState["failures"] = [];
+    const completed = await withAiProviderFallback(provider, async (selected) => {
+      const results: MarketingResult[] = [];
+      const failures: MarketingWorkflowState["failures"] = [];
 
-  let inputTokens: number | null = null;
-  let outputTokens: number | null = null;
-  for (const propertyId of propertyIds) {
-    const context = await marketingContextFor(admin, actor, propertyId);
-    if (!context.ok) {
-      failures.push({ propertyId, message: context.error });
-      continue;
-    }
-    const label =
-      (typeof context.row["reference"] === "string" ? context.row["reference"] : null) ??
-      (typeof context.row["title"] === "string" ? context.row["title"] : null) ??
-      "Proprietate";
+      let inputTokens: number | null = null;
+      let outputTokens: number | null = null;
+      for (const propertyId of propertyIds) {
+        const context = await marketingContextFor(admin, actor, propertyId);
+        if (!context.ok) {
+          failures.push({ propertyId, message: context.error });
+          continue;
+        }
+        const label =
+          (typeof context.row["reference"] === "string" ? context.row["reference"] : null) ??
+          (typeof context.row["title"] === "string" ? context.row["title"] : null) ??
+          "Proprietate";
 
-    const generated = await generateMarketingContent({
-      provider: selected,
-      throwProviderErrors: true,
-      tracer,
-      facts: context.facts,
-      channel: input.channel,
-      tone: input.tone,
-      length: input.length,
-      contentType: input.contentType,
-      branding: branding as Record<string, unknown> | null,
-      existingText:
-        input.contentType === "rewrite"
-          ? ((context.row["description"] as string | null) ?? null)
-          : null,
-      notes: input.notes ?? null,
-      missing: context.missing,
-    });
-    if (!generated.ok) {
-      failures.push({ propertyId, message: generated.message });
-      continue;
-    }
-    if (generated.result.inputTokens !== null) inputTokens = (inputTokens ?? 0) + generated.result.inputTokens;
-    if (generated.result.outputTokens !== null) outputTokens = (outputTokens ?? 0) + generated.result.outputTokens;
-    results.push({
-      propertyId,
-      propertyLabel: label,
-      channel: input.channel,
-      contentType: input.contentType,
-      tone: input.tone,
-      length: input.length,
-      content: generated.result.content,
-      validationStatus: generated.result.validation.status,
-      issues: generated.result.validation.issues,
-      missingData: context.missing,
-      contextVersion: AI_CONTEXT_VERSION,
-      contextHash: context.contextHash,
-      provider: selected.id,
-      model: selected.model,
-      draftId: null,
-    });
-  }
-  return { results, failures, inputTokens, outputTokens };
+        const generated = await generateMarketingContent({
+          provider: selected,
+          throwProviderErrors: true,
+          tracer,
+          facts: context.facts,
+          channel: input.channel,
+          tone: input.tone,
+          length: input.length,
+          contentType: input.contentType,
+          branding: branding as Record<string, unknown> | null,
+          existingText:
+            input.contentType === "rewrite"
+              ? ((context.row["description"] as string | null) ?? null)
+              : null,
+          notes: input.notes ?? null,
+          missing: context.missing,
+        });
+        if (!generated.ok) {
+          failures.push({ propertyId, message: generated.message });
+          continue;
+        }
+        if (generated.result.inputTokens !== null)
+          inputTokens = (inputTokens ?? 0) + generated.result.inputTokens;
+        if (generated.result.outputTokens !== null)
+          outputTokens = (outputTokens ?? 0) + generated.result.outputTokens;
+        results.push({
+          propertyId,
+          propertyLabel: label,
+          channel: input.channel,
+          contentType: input.contentType,
+          tone: input.tone,
+          length: input.length,
+          content: generated.result.content,
+          validationStatus: generated.result.validation.status,
+          issues: generated.result.validation.issues,
+          missingData: context.missing,
+          contextVersion: AI_CONTEXT_VERSION,
+          contextHash: context.contextHash,
+          provider: selected.id,
+          model: selected.model,
+          draftId: null,
+        });
+      }
+      return { results, failures, inputTokens, outputTokens };
     });
     provider = completed.provider;
     fallbackUsed = completed.fallbackUsed;
     batch = completed.result;
   } catch (error) {
-    batch = { results: [], failures: propertyIds.map(propertyId => ({ propertyId, message: safeAiProviderMessage(error) })), inputTokens: null, outputTokens: null };
+    batch = {
+      results: [],
+      failures: propertyIds.map((propertyId) => ({
+        propertyId,
+        message: safeAiProviderMessage(error),
+      })),
+      inputTokens: null,
+      outputTokens: null,
+    };
   }
   const { results, failures } = batch;
   for (const result of results) {
-    if (result.validationStatus === "invalid") await logAiAudit({
-      organizationId: actor.organizationId, actorId: actor.userId,
-      action: AI_AUDIT_ACTIONS.marketingValidationFailed,
-      details: { runId: created.id, propertyId: result.propertyId, issues: result.issues.length },
-    });
+    if (result.validationStatus === "invalid")
+      await logAiAudit({
+        organizationId: actor.organizationId,
+        actorId: actor.userId,
+        action: AI_AUDIT_ACTIONS.marketingValidationFailed,
+        details: { runId: created.id, propertyId: result.propertyId, issues: result.issues.length },
+      });
   }
 
   state = { ...state, results, failures };
@@ -372,8 +388,7 @@ async function loadRun(admin: Admin, actor: AiActor, runId: string) {
 }
 
 export type MarketingDecision =
-  | { ok: true; run: MarketingRunView }
-  | { ok: false; message: string };
+  { ok: true; run: MarketingRunView } | { ok: false; message: string };
 
 /**
  * Pregătește propunerea de scriere (ciornă sau aplicare) și SUSPENDĂ fluxul.
@@ -533,7 +548,6 @@ async function decideMarketingWriteClaimed(
   runId: string,
   approved: boolean,
 ): Promise<MarketingDecision> {
-
   const admin = await loadAdmin();
   // Protecție la dublu-click: aprobarea se consumă atomic, deci o a doua cerere
   // paralelă nu mai execută nimic.

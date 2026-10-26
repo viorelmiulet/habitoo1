@@ -67,17 +67,19 @@ export async function routeManagerRequestSemantic(
   }
 
   try {
-    const result = await withRetry(() => provider.generate({
-      system: SYSTEM,
-      messages: [
-        {
-          role: "user",
-          content: `<<<CERERE_UTILIZATOR>>>\n${request}\n<<<SFARSIT>>>`,
-        },
-      ],
-      tools: [],
-      maxOutputTokens: 64,
-    }));
+    const result = await withRetry(() =>
+      provider.generate({
+        system: SYSTEM,
+        messages: [
+          {
+            role: "user",
+            content: `<<<CERERE_UTILIZATOR>>>\n${request}\n<<<SFARSIT>>>`,
+          },
+        ],
+        tools: [],
+        maxOutputTokens: 64,
+      }),
+    );
     onUsage?.(result.inputTokens, result.outputTokens);
     const intent = parseIntent(result.text ?? "");
     if (!intent) return { routing: keyword, semantic: false };
