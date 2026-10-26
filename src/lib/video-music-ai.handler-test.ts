@@ -33,7 +33,7 @@ function authContext(isSuperadmin: boolean, organizationId: string | null = null
   return { supabase: { rpc, from }, userId: "superadmin-user" };
 }
 
-const input = { title: "Pian calm", style: "pian calm, modern", durationSec: 60 };
+const input = { title: "Pian calm", style: "Calm", description: "pian calm, modern", durationSec: 60 };
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -127,7 +127,7 @@ describe("generarea propriu-zisă", () => {
     expect(calls.tracks).toHaveLength(1);
     expect(calls.tracks[0]).toMatchObject({
       title: "Pian calm",
-      style: "pian calm, modern",
+      style: "Calm", description: "pian calm, modern",
       artist: "Habitoo AI",
       license: "Generat AI – ACE-Step (fal.ai)",
       active: false,

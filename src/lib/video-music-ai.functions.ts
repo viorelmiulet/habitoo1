@@ -6,6 +6,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { MUSIC_AI_MAX_SECONDS, MUSIC_AI_MIN_SECONDS } from "@/lib/video-music-ai";
+import { MUSIC_STYLES } from "@/lib/video-music";
 
 type AuthContext = {
   supabase: {
@@ -25,7 +26,8 @@ async function assertSuperadmin(context: AuthContext) {
 
 export const generateVideoMusicSchema = z.object({
   title: z.string().max(120),
-  style: z.string().max(120),
+  style: z.enum(MUSIC_STYLES),
+  description: z.string().max(300).optional(),
   durationSec: z.number().int().min(MUSIC_AI_MIN_SECONDS).max(MUSIC_AI_MAX_SECONDS),
 });
 
