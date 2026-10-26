@@ -1,5 +1,11 @@
 # SEO public — pasul 1a
 
+## Anunțuri particulari — MAP Habitoo / MAP Facebook / Argus
+- [x] Separare server pentru rezultate, totaluri, anunțuri noi și localizări
+- [x] Trei file cu iconițe, URL Facebook și întoarcere din detaliu; Argus neschimbat; iconița oficială de pe argus.me salvată
+- [x] 65 teste trec fără date reale; build OK
+- [ ] Verificare desktop/telefon în cont — autentificarea solicitantului în previzualizare este necesară; pagina redirecționează la login
+
 ## Sursa Facebook — doar Anunțuri particulari
 - [x] Acceptare în baza de date și endpoint, telefon anuntul/facebook, poze neschimbate
 - [x] Filtru, URL, etichete și intercalare la final; link spre postare

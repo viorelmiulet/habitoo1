@@ -10,6 +10,9 @@ import { SearchableSelect } from "@/components/app/SearchableSelect";
 import { ZonePickerDialog } from "@/components/app/ZonePickerDialog";
 import { ImportListingButton } from "@/components/app/ImportListingButton";
 import { ArgusTab } from "@/components/app/argus/ArgusTab";
+import { HabitooMapIcon } from "@/components/brand/HabitooMapIcon";
+import facebookAsset from "@/assets/facebook-brand.svg.asset.json";
+import argusAsset from "@/assets/argus-official.png.asset.json";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -31,8 +34,8 @@ import { PRIVATE_LISTINGS_PAGE_SIZE, type PrivateListingsSort } from "@/lib/priv
 import { geographyKey, localityScope } from "@/lib/private-listing-geography";
 
 const searchSchema = z.object({
-  // „argus” = tabul cu rezultate live de la Argus; lipsa = lista Habitoo.
-  lista: z.enum(["argus"]).optional(),
+  // Lipsa listei păstrează linkurile vechi în MAP Habitoo.
+  lista: z.string().optional(),
   tab: z.enum(["apartamente", "case", "comerciale", "terenuri"]).optional(),
   judet: z.string().optional(),
   oras: z.string().optional(),
@@ -151,7 +154,7 @@ function draftFromSearch(search: Search): Draft {
     zile: search.zile === undefined ? "" : String(search.zile),
     pretMin: numText(search.pretMin),
     pretMax: numText(search.pretMax),
-    sursa: search.sursa ?? "",
+    sursa: search.lista === "facebook" || search.sursa === "facebook" ? "" : search.sursa ?? "",
     id: search.id ?? "",
     camere: (search.camere ?? "")
       .split(",")
@@ -175,6 +178,8 @@ const parseNum = (text: string): number | undefined => {
 
 function PrivateListingsPage() {
   const search = Route.useSearch();
+  const scope = search.lista === "facebook" ? "facebook" : "habitoo";
+  const source = scope === "facebook" || search.sursa === "facebook" ? undefined : search.sursa;
   const navigate = useNavigate({ from: Route.fullPath });
   const fetchListings = useServerFn(getOwnerListings);
   const fetchFacets = useServerFn(getOwnerListingFacets);
@@ -195,6 +200,7 @@ function PrivateListingsPage() {
   const apply = (next: Draft) =>
     navigate({
       search: (prev) => ({
+        lista: prev.lista,
         tab: prev.tab,
         sortare: prev.sortare,
         tranzactie: (next.tranzactie || undefined) as Search["tranzactie"],
@@ -204,7 +210,7 @@ function PrivateListingsPage() {
         zile: next.zile === "" ? undefined : Number(next.zile),
         pretMin: parseNum(next.pretMin),
         pretMax: parseNum(next.pretMax),
-        sursa: (next.sursa || undefined) as Search["sursa"],
+        sursa: scope === "facebook" ? undefined : (next.sursa || undefined) as Search["sursa"],
         id: next.id.trim() || undefined,
         camere: next.camere.length ? [...next.camere].sort().join(",") : undefined,
         mpMin: parseNum(next.mpMin),
@@ -220,29 +226,30 @@ function PrivateListingsPage() {
     });
 
   const resetFilters = () =>
-    navigate({ search: { tab: search.tab, sortare: search.sortare }, replace: true });
+    navigate({ search: { lista: search.lista, tab: search.tab, sortare: search.sortare }, replace: true });
 
   // În tabul „Argus” lista Habitoo nu se încarcă deloc.
   const habitooTab = search.lista !== "argus";
   const facets = useQuery({
-    queryKey: ["owner-listing-facets"],
-    queryFn: () => fetchFacets(),
+    queryKey: ["owner-listing-facets", scope],
+    queryFn: () => fetchFacets({ data: { scope } }),
     staleTime: 5 * 60_000,
     enabled: habitooTab,
   });
   const listings = useQuery({
     queryKey: [
-      "owner-listings", search.tab, search.judet, search.oras, selectedZones.join(","), rooms.join(","), search.q, page,
-      search.sursa, search.tranzactie, search.tip, search.pretMin, search.pretMax, search.mpMin, search.mpMax,
+      "owner-listings", scope, search.tab, search.judet, search.oras, selectedZones.join(","), rooms.join(","), search.q, page,
+      source, search.tranzactie, search.tip, search.pretMin, search.pretMax, search.mpMin, search.mpMax,
       search.sortare, search.zile, search.id, search.etajMin, search.etajMax, search.anMin, search.anMax,
       search.anNespecificat,
     ],
     queryFn: () =>
       fetchListings({
         data: {
+          scope,
           category: search.tab,
           county: search.judet, city: search.oras, zone: selectedZones.length ? selectedZones : undefined, rooms, q: search.q, page,
-          source: search.sursa, transaction: search.tranzactie,
+          source, transaction: search.tranzactie,
           propertyType: search.tab ? undefined : search.tip,
           priceMin: search.pretMin, priceMax: search.pretMax,
           surfaceMin: search.mpMin, surfaceMax: search.mpMax,
@@ -253,7 +260,7 @@ function PrivateListingsPage() {
           sort: search.sortare,
         },
       }),
-    placeholderData: keepPreviousData,
+    placeholderData: (previous, previousQuery) => previousQuery?.queryKey[1] === scope ? keepPreviousData(previous) : undefined,
     enabled: habitooTab,
   });
 
@@ -268,11 +275,11 @@ function PrivateListingsPage() {
     patch({ camere: draft.camere.includes(r) ? draft.camere.filter((x) => x !== r) : [...draft.camere, r] });
 
   const extendedCount = [
-    search.oras, selectedZones.length ? "x" : "", search.sursa, search.id, search.camere, search.q,
+    search.oras, selectedZones.length ? "x" : "", source, search.id, search.camere, search.q,
     search.mpMin, search.mpMax, search.etajMin, search.etajMax, search.anMin, search.anMax,
   ].filter((v) => v !== undefined && v !== "").length;
   const hasFilters = Boolean(
-    search.judet || search.oras || selectedZones.length || rooms.length || search.q || search.sursa || search.tranzactie ||
+    search.judet || search.oras || selectedZones.length || rooms.length || search.q || source || search.tranzactie ||
       search.tip || search.id || search.zile !== undefined ||
       search.pretMin !== undefined || search.pretMax !== undefined ||
       search.mpMin !== undefined || search.mpMax !== undefined ||
@@ -287,32 +294,35 @@ function PrivateListingsPage() {
         description="Anunțuri de la proprietari, aduse automat din alte site-uri. Verifică datele înainte să contactezi proprietarul."
       />
 
-      <div className="flex gap-5 border-b border-border" role="tablist" aria-label="Sursa anunțurilor">
+      <div className="flex gap-3 border-b border-border sm:gap-5" role="tablist" aria-label="Sursa anunțurilor">
         {([
-          { value: "", label: "Anunțuri adunate" },
+          { value: "", label: "MAP Habitoo" },
+          { value: "facebook", label: "MAP Facebook" },
           { value: "argus", label: "Argus" },
         ] as const).map(({ value, label }) => {
-          const active = (search.lista ?? "") === value;
+          const active = (search.lista === "argus" || search.lista === "facebook" ? search.lista : "") === value;
           return (
-            <button
+            <Button
               key={value || "habitoo"}
               type="button"
+              variant="ghost"
               role="tab"
               aria-selected={active}
-              className={`-mb-px shrink-0 border-b-2 px-1 pb-2 text-sm font-medium transition-colors ${
+              className={`-mb-px h-auto shrink-0 gap-1.5 rounded-none border-b-2 px-0 pb-2 pt-0 text-sm font-medium transition-colors hover:bg-transparent ${
                 active
                   ? "border-primary text-primary"
                   : "border-transparent text-muted-foreground hover:text-foreground"
               }`}
               onClick={() =>
                 navigate({
-                  search: value === "argus" ? { lista: "argus" } : {},
+                  search: value ? { lista: value } : {},
                   replace: true,
                 })
               }
             >
+              {value === "" ? <HabitooMapIcon /> : <img src={value === "facebook" ? facebookAsset.url : argusAsset.url} alt="" className="size-4 shrink-0 object-contain" />}
               {label}
-            </button>
+            </Button>
           );
         })}
       </div>
@@ -425,15 +435,15 @@ function PrivateListingsPage() {
                 disabled={!draft.oras || zones.length === 0}
                 onApply={(next) => patch({ zona: next })}
               />
-              <Select value={draft.sursa || ALL} onValueChange={(v) => patch({ sursa: v === ALL ? "" : v })}>
+              {scope === "habitoo" ? <Select value={draft.sursa || ALL} onValueChange={(v) => patch({ sursa: v === ALL ? "" : v })}>
                 <SelectTrigger aria-label="Sursă"><SelectValue placeholder="Sursă" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value={ALL}>Toate sursele</SelectItem>
-                  {Object.entries(SOURCE_LABELS).map(([k, v]) => (
+                  {Object.entries(SOURCE_LABELS).filter(([k]) => k !== "facebook").map(([k, v]) => (
                     <SelectItem key={k} value={k}>{v}</SelectItem>
                   ))}
                 </SelectContent>
-              </Select>
+              </Select> : null}
               <Input value={draft.id} onChange={(e) => patch({ id: e.target.value })} placeholder="ID anunț" aria-label="ID anunț" />
               <div className="flex items-center gap-1" role="group" aria-label="Camere">
                 <span className="mr-1 text-sm text-muted-foreground">Camere</span>

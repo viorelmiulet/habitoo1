@@ -52,7 +52,7 @@ describe("Facebook private listings (no real database writes)", () => {
       in: async (_column: string, ids: string[]) => ({ data: filtered.filter(row => ids.includes(row.id)), error: null }),
     };
     const handler = getOwnerListings as unknown as (input: unknown) => Promise<{ items: { source: string }[]; total: number }>;
-    const result = await handler({ data: privateListingsFiltersSchema.parse({ source: "facebook" }), context: { supabase: { from: () => query } } });
+    const result = await handler({ data: privateListingsFiltersSchema.parse({ scope: "facebook", source: "facebook" }), context: { supabase: { from: () => query } } });
     expect(result.total).toBe(1);
     expect(result.items.map(row => row.source)).toEqual(["facebook"]);
   });

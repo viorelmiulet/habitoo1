@@ -43,6 +43,7 @@ describe("Imoradar private listing endpoint and exact source filtering", () => {
     let filtered = rows;
     const query = {
       select: () => query,
+      or: () => { filtered = filtered.filter(row => row.source !== "facebook"); return query; },
       eq: (column: string, value: unknown) => {
         filtered = filtered.filter(row => row[column as keyof typeof row] === value);
         return query;

@@ -90,10 +90,10 @@ function OwnerListingDetailPage() {
   return <ListingDetail listing={listing.data} />;
 }
 
-function BackLink() {
+function BackLink({ source }: { source?: string }) {
   return (
     <Button asChild variant="ghost" size="sm" className="-ml-2">
-      <Link to="/app/anunturi-particulari">
+      <Link to="/app/anunturi-particulari" search={source === "facebook" ? { lista: "facebook" } : {}}>
         <ArrowLeft className="size-4" /> Înapoi la anunțuri
       </Link>
     </Button>
@@ -124,7 +124,7 @@ function ListingDetail({ listing }: { listing: OwnerListing }) {
 
   return (
     <div className="space-y-6">
-      <BackLink />
+      <BackLink source={listing.source} />
       <PageHeader
         title={listing.title?.trim() || "Anunț fără titlu"}
         description={place || undefined}
