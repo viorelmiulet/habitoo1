@@ -153,7 +153,7 @@ export const getPropertyPromotionBadges = createServerFn({ method: "POST" })
     z
       .object({
         organizationId: z.string().uuid().optional(),
-        propertyIds: z.array(z.string().uuid()).max(100),
+        propertyIds: z.array(z.string().uuid()).max(200),
       })
       .parse(input),
   )

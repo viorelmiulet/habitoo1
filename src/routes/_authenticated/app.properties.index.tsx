@@ -3,7 +3,9 @@ import { StatusChangeDialog } from "@/components/app/StatusChangeDialog";
 import { isWithdrawStatus } from "@/components/app/StatusWithdrawPreview";
 import { changePropertyStatus } from "@/lib/property-status.functions";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { DEFAULT_LIST_PAGE_SIZE, normalizeListPageSize, type ListPageSize } from "@/lib/list-page-size";
+import { ListPagination, PageRange, PageSizeSelect, useRememberedPageSize } from "@/components/app/ListPagination";
 import {
   ArchiveRestore,
   Trash2,
@@ -1023,6 +1025,11 @@ function PropertiesPage() {
             </div>
           </div>
         </div>
+        {totalPages > 1 ? (
+          <div className="border-b border-border px-4 py-3">
+            <ListPagination page={page + 1} pages={totalPages} onGo={(p) => setPage(p - 1)} />
+          </div>
+        ) : null}
         {view === "publish" ? (
           isLoading || portals.isLoading ? <ListSkeleton rows={8} /> : rows.length === 0 ? emptyBlock : (
             <PropertyPublishView
@@ -1217,35 +1224,8 @@ function PropertiesPage() {
           </div>
         )}
 
-        <div className="flex items-center justify-between gap-3 border-t border-border px-4 py-3 text-sm">
-          <span className="text-xs text-muted-foreground">
-            {total > 0
-              ? `Rezultate ${page * PAGE_SIZE + 1}–${Math.min(total, (page + 1) * PAGE_SIZE)} din ${total}`
-              : "Rezultate 0 din 0"}
-          </span>
-          <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="icon"
-              aria-label="Pagina anterioară"
-              disabled={page === 0}
-              onClick={() => setPage((p) => Math.max(0, p - 1))}
-            >
-              <ChevronLeft className="size-4" />
-            </Button>
-            <span className="text-xs text-muted-foreground">
-              Pagina {page + 1} / {totalPages}
-            </span>
-            <Button
-              variant="outline"
-              size="icon"
-              aria-label="Pagina următoare"
-              disabled={page + 1 >= totalPages}
-              onClick={() => setPage((p) => p + 1)}
-            >
-              <ChevronRight className="size-4" />
-            </Button>
-          </div>
+        <div className="border-t border-border px-4 py-3">
+          <ListPagination page={page + 1} pages={totalPages} onGo={(p) => setPage(p - 1)} />
         </div>
       </div>
 
