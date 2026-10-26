@@ -1,5 +1,10 @@
 # SEO public — pasul 1a
 
+## Studio AI — limite lunare pe agenție
+- [ ] Limite 50/30/10 configurabile de SuperAdmin; rezervări atomice și lună România, fără numărarea eșecurilor
+- [ ] Consum în Studio AI și mesaje de limită/resetare
+- [ ] Teste simulate limită/eșec/concurență/lună nouă; verificare în cont fără generări reale
+
 ## Oferte partenere — vizualizator foto comun
 - [x] Vizualizator comun cu săgeți, taste, glisare și contor; poze clicabile și +N
 - [x] Detaliile întorc toate pozele publicabile neconfidențiale, fără limita 12; ordinea existentă păstrată; X/Esc păstrează detaliile
