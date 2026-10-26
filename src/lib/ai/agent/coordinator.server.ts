@@ -35,6 +35,7 @@ export type CoordinatorRun = {
   tools?: Record<string, HabitooMastraTool>;
   maxSteps?: number;
   maxToolCalls?: number;
+  throwProviderErrors?: boolean;
 };
 
 export type CoordinatorResult = {
@@ -100,6 +101,10 @@ export async function runCoordinator(run: CoordinatorRun): Promise<CoordinatorRe
         break;
       }
 
+      if (result.rawAssistantContent) {
+        messages.push({ role: "assistant", content: result.text, rawContent: result.rawAssistantContent });
+      }
+
       for (const call of result.toolCalls) {
         if (toolCalls.length >= maxToolCalls) {
           warnings.push("Am oprit căutările suplimentare pentru a limita costul.");
@@ -124,16 +129,18 @@ export async function runCoordinator(run: CoordinatorRun): Promise<CoordinatorRe
             status: "failed",
             details: { denied: authorization.reason },
           });
-          messages.push({
+          if (!result.rawAssistantContent) messages.push({
             role: "assistant_tool_call",
             toolName: call.name,
             arguments: call.arguments,
             signature: call.signature ?? null,
+            callId: call.id,
           });
           messages.push({
             role: "tool_result",
             toolName: call.name,
             content: JSON.stringify({ ok: false, error: authorization.message }),
+            callId: call.id,
           });
           await logAiAudit({
             organizationId: actor.organizationId,
@@ -169,15 +176,17 @@ export async function runCoordinator(run: CoordinatorRun): Promise<CoordinatorRe
         });
         if (execution.ok) sources.push(...execution.sources);
 
-        messages.push({
+        if (!result.rawAssistantContent) messages.push({
           role: "assistant_tool_call",
           toolName: call.name,
           arguments: call.arguments,
           signature: call.signature ?? null,
+          callId: call.id,
         });
         messages.push({
           role: "tool_result",
           toolName: call.name,
+          callId: call.id,
           content: JSON.stringify(
             execution.ok
               ? { ok: true, data: execution.data }
@@ -199,6 +208,7 @@ export async function runCoordinator(run: CoordinatorRun): Promise<CoordinatorRe
       }
     }
   } catch (error) {
+    if (run.throwProviderErrors) throw error;
     tracer.record("error", HABITOO_COORDINATOR, {
       status: "failed",
       details: { stage: "model" },

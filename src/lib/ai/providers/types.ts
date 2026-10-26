@@ -12,7 +12,7 @@ export type AiProviderAttachment = { mimeType: string; base64: string };
 export type AiProviderMessage =
   | { role: "user"; content: string; attachments?: AiProviderAttachment[] }
 
-  | { role: "assistant"; content: string }
+  | { role: "assistant"; content: string; rawContent?: Record<string, unknown>[] }
   | {
       role: "assistant_tool_call";
       toolName: string;
@@ -22,8 +22,9 @@ export type AiProviderMessage =
        * o cere înapoi la turul următor, altfel refuză cererea (400).
        */
       signature?: string | null;
+      callId?: string;
     }
-  | { role: "tool_result"; toolName: string; content: string };
+  | { role: "tool_result"; toolName: string; content: string; callId?: string };
 
 export type AiToolDeclaration = {
   name: string;
@@ -47,9 +48,12 @@ export type AiGenerateResult = {
     arguments: Record<string, unknown>;
     /** Semnătura de raționament a providerului, retrimisă la turul următor. */
     signature?: string | null;
+    id?: string;
   }[];
   inputTokens: number | null;
   outputTokens: number | null;
+  /** Unmodified provider blocks, held in memory only for tool continuation. */
+  rawAssistantContent?: Record<string, unknown>[];
 };
 
 export type AIProvider = {
@@ -57,6 +61,7 @@ export type AIProvider = {
   readonly id: string;
   readonly model: string;
   readonly supportsTools: boolean;
+  readonly fallback?: AIProvider;
   generate(request: AiGenerateRequest): Promise<AiGenerateResult>;
 };
 
