@@ -142,7 +142,7 @@ describe("generarea propriu-zisă", () => {
   it("eroare la pornire → nimic salvat, eveniment nereușit", async () => {
     const { db, calls } = fakeDb();
     await expect(
-      generateAiMusicTrack({ apiKey: "k", input, userId: "u", organizationId: null, db }, { fetchFn: falFetchSequence({ submitStatus: 500 }) as never, sleep }),
+      realGenerate({ apiKey: "k", input, userId: "u", organizationId: null, db }, { fetchFn: falFetchSequence({ submitStatus: 500 }) as never, sleep }),
     ).rejects.toThrow("Încearcă din nou");
     expect(calls.uploads).toHaveLength(0);
     expect(calls.tracks).toHaveLength(0);
@@ -152,7 +152,7 @@ describe("generarea propriu-zisă", () => {
   it("generare eșuată în coadă → nimic salvat", async () => {
     const { db, calls } = fakeDb();
     await expect(
-      generateAiMusicTrack({ apiKey: "k", input, userId: "u", organizationId: null, db }, { fetchFn: falFetchSequence({ queueStatus: "FAILED" }) as never, sleep }),
+      realGenerate({ apiKey: "k", input, userId: "u", organizationId: null, db }, { fetchFn: falFetchSequence({ queueStatus: "FAILED" }) as never, sleep }),
     ).rejects.toThrow("a eșuat");
     expect(calls.uploads).toHaveLength(0);
     expect(calls.tracks).toHaveLength(0);
@@ -162,7 +162,7 @@ describe("generarea propriu-zisă", () => {
     const { db, calls } = fakeDb(30);
     const fetchFn = vi.fn();
     await expect(
-      generateAiMusicTrack({ apiKey: "k", input, userId: "u", organizationId: null, db }, { fetchFn: fetchFn as never, sleep }),
+      realGenerate({ apiKey: "k", input, userId: "u", organizationId: null, db }, { fetchFn: fetchFn as never, sleep }),
     ).rejects.toThrow("30 de generări pe zi");
     expect(fetchFn).not.toHaveBeenCalled();
     expect(calls.tracks).toHaveLength(0);
@@ -172,7 +172,7 @@ describe("generarea propriu-zisă", () => {
   it("cerere invalidă → nimic apelat", async () => {
     const { db, calls } = fakeDb();
     await expect(
-      generateAiMusicTrack({ apiKey: "k", input: { ...input, title: "" }, userId: "u", organizationId: null, db }, { fetchFn: vi.fn() as never, sleep }),
+      realGenerate({ apiKey: "k", input: { ...input, title: "" }, userId: "u", organizationId: null, db }, { fetchFn: vi.fn() as never, sleep }),
     ).rejects.toThrow("titlul");
     expect(calls.tracks).toHaveLength(0);
   });
