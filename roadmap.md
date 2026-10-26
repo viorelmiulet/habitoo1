@@ -190,4 +190,4 @@
 - [x] Generare fal.ai ACE-Step pe server (coadă → descărcare → stocare → rând inactiv), limită 30/zi, cost afișat, erori în română
 - [x] Buton „Generează cu AI” + formular în SuperAdmin → Muzică video; WAV acceptat la ascultare și mixare video
 - [x] 26 teste (8 handler cu răspunsuri simulate + 18 reguli pure); build OK
-- [ ] O generare reală de 15 s — așteaptă secretul FAL_KEY (Project Settings → Secrets)
+- [x] O generare reală de 15 s cu FAL_KEY: piesa „Test AI Habitoo" (Calm, WAV ~2,9 MB) apare inactivă, se ascultă, eveniment fal/ace-step/music cu succes; lat ~9 s
