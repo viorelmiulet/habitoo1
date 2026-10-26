@@ -5,7 +5,7 @@
 - [x] Reluare pe Gemini a buclelor complete de citire/generare, numai după erori tranzitorii; aprobările rămân în afara reluării
 - [x] Furnizor/model efectiv, tokeni și rezervă în utilizare; stările în Setări AI; migrația 0183 aplicată
 - [x] 374 teste simulate trec, inclusiv 14 MiniMax; build OK; ACP/contracte/Studio păstrate
-- [ ] Verificare în cont și o singură cerere reală Habitoo AI — MINIMAX_API_KEY lipsește; sesiunea solicitantului nu poate fi creată automat (nu există cont asociat)
+- [x] MINIMAX_API_KEY salvată securizat; o singură cerere reală în cont prin Habitoo AI verificată la 26 octombrie 2026, 07:22 UTC: răspuns „Confirmat.”, MiniMax-M3.1-Flash, 5236 tokeni intrare / 5 ieșire, fără rezervă
 
 # Meniul din stânga — Comisioane ca element separat
 
