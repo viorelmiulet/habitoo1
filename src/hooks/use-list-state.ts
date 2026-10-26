@@ -47,9 +47,12 @@ export function useListState<T extends Record<string, unknown>>({ list, userId, 
     if (!enabled || !userId || !ready || restoring.current === null) return;
     const target = restoring.current;
     let attempts = 0;
+    let stable = 0;
     const timer = window.setInterval(() => {
       window.scrollTo({ top: target, behavior: "instant" });
-      if (Math.abs(window.scrollY - target) < 3 || ++attempts >= 50) {
+      attempts += 1;
+      stable = Math.abs(window.scrollY - target) < 3 ? stable + 1 : 0;
+      if ((attempts >= 10 && stable >= 5) || attempts >= 100) {
         restoring.current = null;
         window.clearInterval(timer);
       }
