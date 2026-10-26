@@ -176,7 +176,7 @@ function MediaLimitsEditor({ org }: { org: OrganizationAiFeatures }) {
   const save = useServerFn(setOrganizationMediaLimits);
   const queryClient = useQueryClient();
   const mutation = useMutation({
-    mutationFn: () => save({ data: { organizationId: org.organizationId, ...limits } }),
+    mutationFn: (_input: void) => save({ data: { organizationId: org.organizationId, ...limits } }),
     onSuccess: () => {
       toast.success("Limitele Studio AI au fost salvate.");
       void queryClient.invalidateQueries({ queryKey: ["superadmin", "ai-features"] });
