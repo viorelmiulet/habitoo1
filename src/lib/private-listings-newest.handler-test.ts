@@ -122,7 +122,7 @@ afterEach(() => { vi.clearAllMocks(); });
 describe("MAP scopes — real handler, simulated data only", () => {
   const today = new Date(romaniaTodayStart().getTime() + 3600000).toISOString();
   const rows: Row[] = [
-    ...Array.from({ length: 30 }, (_, i) => ({ id: `fb${i}`, source: "facebook", is_owner: true, first_seen_at: today, property_type: "Apartament", price: i, city: "Cluj-Napoca", county: "Cluj", city_key: "cluj-napoca" })),
+    ...Array.from({ length: 30 }, (_, i) => ({ id: `fb${i}`, source: "facebook", is_owner: true, first_seen_at: today, property_type: "Apartament", price: i, city: "Cluj-Napoca", county: "Cluj", city_key: "cluj napoca" })),
     ...Array.from({ length: 26 }, (_, i) => ({ id: `s${i}`, source: "storia", is_owner: true, first_seen_at: today, property_type: "Casă", price: i, city: "București", county: "București", city_key: "bucuresti" })),
   ];
   it("legacy input defaults to Habitoo without Facebook, including totals and today's count", async () => {
@@ -132,6 +132,7 @@ describe("MAP scopes — real handler, simulated data only", () => {
     expect(result.items).toHaveLength(24);
     expect(result.items.map(r => r.source)).toEqual(Array(24).fill("storia"));
     expect((await run(rows, { page: 1 })).items).toHaveLength(2);
+    expect((await run(rows, { scope: "habitoo", source: "facebook" })).total).toBe(0);
   });
   it("Facebook paginates exclusively Facebook and counts only its new listings", async () => {
     const first = await run(rows, { scope: "facebook" });
