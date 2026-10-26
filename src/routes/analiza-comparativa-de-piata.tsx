@@ -1,3 +1,5 @@
+import { PublicPhotoHeading } from "@/components/marketing/PublicPhotoHeading";
+import { publicPagePhotos, publicPhotoHead } from "@/components/marketing/public-page-photos";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { queryOptions, useSuspenseQuery } from "@tanstack/react-query";
 import { ArrowRight } from "lucide-react";
@@ -20,6 +22,7 @@ const statisticsQuery = queryOptions({
 export const Route = createFileRoute("/analiza-comparativa-de-piata")({
   loader: ({ context }) => context.queryClient.ensureQueryData(statisticsQuery),
   head: ({ loaderData }) => publicHead({
+    ...publicPhotoHead(publicPagePhotos.acp),
     path: PUBLIC_ACP_PATH,
     title: PUBLIC_ACP_TITLE,
     description: PUBLIC_ACP_DESCRIPTION,
@@ -56,7 +59,7 @@ function PublicAcpPage() {
     <PublicLayout>
       <section className="border-b border-border bg-muted/40">
         <Container className="py-14 sm:py-20">
-          <SectionHeading as="h1" eyebrow="Analiză comparativă de piață" title="Analiza comparativă de piață, din oferte reale, cu fiecare ajustare explicată" text="ACP-ul din Habitoo estimează prețul unei proprietăți din portofoliu comparând-o cu oferte similare: proprietățile agenției, ofertele partenerilor din colaborare și ofertele de piață adunate de pe portaluri. Calculul nu folosește AI: ponderi fixe, ajustări explicate și statistică robustă, deci aceeași analiză dă același rezultat de fiecare dată." />
+          <PublicPhotoHeading photo={publicPagePhotos.acp}><SectionHeading align="left" as="h1" eyebrow="Analiză comparativă de piață" title="Analiza comparativă de piață, din oferte reale, cu fiecare ajustare explicată" text="ACP-ul din Habitoo estimează prețul unei proprietăți din portofoliu comparând-o cu oferte similare: proprietățile agenției, ofertele partenerilor din colaborare și ofertele de piață adunate de pe portaluri. Calculul nu folosește AI: ponderi fixe, ajustări explicate și statistică robustă, deci aceeași analiză dă același rezultat de fiecare dată." /></PublicPhotoHeading>
         </Container>
       </section>
       <Section className="py-12 sm:py-16 lg:py-16">

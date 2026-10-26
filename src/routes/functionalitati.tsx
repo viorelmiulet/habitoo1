@@ -1,3 +1,5 @@
+import { PublicPhotoHeading } from "@/components/marketing/PublicPhotoHeading";
+import { publicPagePhotos, publicPhotoHead } from "@/components/marketing/public-page-photos";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import {
   ArrowRight,
@@ -53,6 +55,7 @@ const DESCRIPTION =
 export const Route = createFileRoute("/functionalitati")({
   head: () =>
     publicHead({
+      ...publicPhotoHead(publicPagePhotos.features),
       path: "/functionalitati",
       title: TITLE,
       description: DESCRIPTION,
@@ -248,12 +251,15 @@ function FeaturesPage() {
           className="mk-dots pointer-events-none absolute inset-0 [mask-image:radial-gradient(60%_60%_at_50%_0%,black,transparent)]"
         />
         <Container className="relative py-16 sm:py-20 lg:py-24">
+          <PublicPhotoHeading photo={publicPagePhotos.features}>
           <SectionHeading
+            align="left"
             as="h1"
             eyebrow="Funcționalități"
             title="Toate modulele de care are nevoie o agenție imobiliară, într-un singur CRM"
             text="Fiecare modul funcționează împreună cu celelalte: proprietățile alimentează matching-ul, cererile generează lead-uri, iar activitățile apar în calendar și în rapoarte."
           />
+          </PublicPhotoHeading>
           <nav
             aria-label="Module"
             className="mx-auto mt-10 flex max-w-4xl flex-wrap justify-center gap-2"
