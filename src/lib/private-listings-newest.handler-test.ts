@@ -129,9 +129,9 @@ describe("MAP scopes — real handler, simulated data only", () => {
     const result = await run(rows, {});
     expect(result.total).toBe(26);
     expect(result.newToday).toBe(26);
-    expect(result.items).toHaveLength(24);
-    expect(result.items.map(r => r.source)).toEqual(Array(24).fill("storia"));
-    expect((await run(rows, { page: 1 })).items).toHaveLength(2);
+    expect(result.items).toHaveLength(15);
+    expect(result.items.map(r => r.source)).toEqual(Array(15).fill("storia"));
+    expect((await run(rows, { page: 1 })).items).toHaveLength(11);
     expect((await run(rows, { scope: "habitoo", source: "facebook" })).total).toBe(0);
   });
   it("Facebook paginates exclusively Facebook and counts only its new listings", async () => {
@@ -139,8 +139,8 @@ describe("MAP scopes — real handler, simulated data only", () => {
     const second = await run(rows, { scope: "facebook", page: 1 });
     expect(first.total).toBe(30);
     expect(first.newToday).toBe(30);
-    expect(first.items).toHaveLength(24);
-    expect(second.items).toHaveLength(6);
+    expect(first.items).toHaveLength(15);
+    expect(second.items).toHaveLength(15);
     expect(new Set([...first.items, ...second.items].map(r => r.id)).size).toBe(30);
     expect([...first.items, ...second.items].every(r => r.source === "facebook")).toBe(true);
   });
@@ -152,7 +152,7 @@ describe("MAP scopes — real handler, simulated data only", () => {
   it.each(["price_asc", "price_desc", "surface_desc"])("%s keeps scopes, counts and pagination separate", async sort => {
     const fb = await run(rows, { scope: "facebook", sort, page: 1 });
     const habitoo = await run(rows, { scope: "habitoo", sort });
-    expect(fb.total).toBe(30); expect(fb.newToday).toBe(30); expect(fb.items).toHaveLength(6);
+    expect(fb.total).toBe(30); expect(fb.newToday).toBe(30); expect(fb.items).toHaveLength(15);
     expect(fb.items.every(r => r.source === "facebook")).toBe(true);
     expect(habitoo.total).toBe(26); expect(habitoo.newToday).toBe(26);
     expect(habitoo.items.every(r => r.source === "storia")).toBe(true);
@@ -169,7 +169,7 @@ describe("sortarea Cele mai noi cu surse intercalate", () => {
   it("prima pagină conține anunțuri din toate sursele zilei, intercalate", async () => {
     const result = await run(dayRows(), {});
     expect(result.total).toBe(50);
-    expect(result.items).toHaveLength(24);
+    expect(result.items).toHaveLength(15);
     expect(new Set(result.items.map((r) => r.source))).toEqual(new Set(["storia", "romimo", "olx"]));
     expect(result.items.slice(0, 6).map((r) => r.id)).toEqual(["s0", "r0", "o0", "s1", "r1", "o1"]);
   });
@@ -178,7 +178,8 @@ describe("sortarea Cele mai noi cu surse intercalate", () => {
     const first = await run(dayRows(), { page: 0 });
     const second = await run(dayRows(), { page: 1 });
     const third = await run(dayRows(), { page: 2 });
-    const all = [...first.items, ...second.items, ...third.items];
+    const fourth = await run(dayRows(), { page: 3 });
+    const all = [...first.items, ...second.items, ...third.items, ...fourth.items];
     expect(all).toHaveLength(50);
     expect(new Set(all.map((r) => r.id)).size).toBe(50);
     expect(new Set(second.items.map((r) => r.source))).toEqual(new Set(["storia", "romimo", "olx"]));
