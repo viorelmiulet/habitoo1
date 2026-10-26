@@ -1,3 +1,4 @@
+import { isListPageSize } from "@/lib/list-page-size";
 import { z } from "zod";
 
 export type PropertyListFilters = {
@@ -98,6 +99,10 @@ export const propertyListSearchSchema = z.object({
   promotion: optionalSearchString,
   sort: optionalSearchString,
   page: optionalSearchPage,
+  perPagina: z.preprocess(
+    (value) => (isListPageSize(Number(value)) ? Number(value) : undefined),
+    z.number().int().optional(),
+  ),
   view: optionalSearchString,
 });
 

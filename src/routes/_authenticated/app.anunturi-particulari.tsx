@@ -3,7 +3,7 @@ import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useCallback, useEffect, useState } from "react";
 import { z } from "zod";
-import { ChevronDown, ChevronLeft, ChevronRight, ChevronUp, ExternalLink, MapPin, Phone, Search, SearchX, X } from "lucide-react";
+import { ChevronDown, ChevronUp, ExternalLink, MapPin, Phone, Search, SearchX, X } from "lucide-react";
 import { PageHeader } from "@/components/app/PageHeader";
 import { appHead } from "@/components/app/app-head";
 import { SearchableSelect } from "@/components/app/SearchableSelect";
@@ -33,7 +33,7 @@ import {
 import { type PrivateListingsSort } from "@/lib/private-listings";
 import { normalizeListPageSize, type ListPageSize } from "@/lib/list-page-size";
 import { ListPagination, PageRange, PageSizeSelect, useRememberedPageSize } from "@/components/app/ListPagination";
-import { useCurrentUser } from "@/hooks/useCurrentUser";
+import { useCurrentUser } from "@/hooks/use-session";
 import { geographyKey, localityScope } from "@/lib/private-listing-geography";
 
 const searchSchema = z.object({
