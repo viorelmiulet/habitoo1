@@ -1289,6 +1289,13 @@
       "when": 1792998492641,
       "tag": "0183_ai_usage_provider_fallback",
       "breakpoints": true
+    },
+    {
+      "idx": 184,
+      "version": "7",
+      "when": 1793000593459,
+      "tag": "0184_video_music_ai_generation",
+      "breakpoints": true
     }
   ]
 }

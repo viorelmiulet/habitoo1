@@ -1,8 +1,9 @@
 /** Superadmin → Muzică video: biblioteca de piese folosite în generatorul video. */
 import { useRef, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowDown, ArrowUp, FileText, Music2, Pause, Pencil, Play, Trash2, Upload } from "lucide-react";
+import { ArrowDown, ArrowUp, FileText, Music2, Pause, Pencil, Play, Sparkles, Trash2, Upload } from "lucide-react";
 import { MusicBulkUpload } from "@/components/app/MusicBulkUpload";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader } from "@/components/app/PageHeader";
@@ -14,6 +15,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -23,6 +25,11 @@ import {
   MUSIC_BUCKET, MUSIC_DEFAULT_LICENSE, MUSIC_LICENSES, MUSIC_OTHER_LICENSE, MUSIC_SIGNED_SECONDS, MUSIC_STYLES,
   formatDuration, validateTrackInput,
 } from "@/lib/video-music";
+import {
+  MUSIC_AI_COST_PER_SECOND_USD, MUSIC_AI_DEFAULT_SECONDS, MUSIC_AI_MAX_SECONDS, MUSIC_AI_MIN_SECONDS,
+  formatMusicAiCost, validateAiMusicInput,
+} from "@/lib/video-music-ai";
+import { generateVideoMusic } from "@/lib/video-music-ai.functions";
 
 export const Route = createFileRoute("/_authenticated/superadmin/muzica")({
   head: () => appHead("Habitoo CRM — muzică pentru video"),
@@ -75,7 +82,25 @@ function SuperadminMusicPage() {
   const [editForm, setEditForm] = useState<Form>(EMPTY);
   const [playing, setPlaying] = useState<string | null>(null);
   const [bulkOpen, setBulkOpen] = useState(false);
+  const [aiOpen, setAiOpen] = useState(false);
+  const [aiForm, setAiForm] = useState({ title: "", style: "", durationSec: MUSIC_AI_DEFAULT_SECONDS });
+  const generateMusic = useServerFn(generateVideoMusic);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  const generateAi = useMutation({
+    mutationFn: async () => {
+      const err = validateAiMusicInput(aiForm);
+      if (err) throw new Error(err);
+      return generateMusic({ data: aiForm });
+    },
+    onSuccess: () => {
+      toast.success("Piesa a fost generată și adăugată inactivă în listă. Ascult-o și activeaz-o când ești mulțumit.");
+      setAiOpen(false);
+      setAiForm({ title: "", style: "", durationSec: MUSIC_AI_DEFAULT_SECONDS });
+      refresh();
+    },
+    onError: (e) => toastError(e),
+  });
 
   const create = useMutation({
     mutationFn: async () => {
@@ -155,7 +180,7 @@ function SuperadminMusicPage() {
       <MusicBulkUpload open={bulkOpen} onOpenChange={setBulkOpen} existing={q.data ?? []} onUploaded={refresh} />
 
       <Card>
-        <CardHeader className="flex-row items-center justify-between gap-3 space-y-0"><CardTitle>Adaugă piesă</CardTitle><Button variant="outline" onClick={() => setBulkOpen(true)} disabled={!q.data}><Upload className="size-4" />Încarcă mai multe</Button></CardHeader>
+        <CardHeader className="flex-row items-center justify-between gap-3 space-y-0"><CardTitle>Adaugă piesă</CardTitle><div className="flex flex-wrap items-center gap-2"><Button variant="outline" onClick={() => setAiOpen(true)}><Sparkles className="size-4" />Generează cu AI</Button><Button variant="outline" onClick={() => setBulkOpen(true)} disabled={!q.data}><Upload className="size-4" />Încarcă mai multe</Button></div></CardHeader>
         <CardContent key={formKey} className="grid gap-4 md:grid-cols-2">
           <div className="space-y-1"><Label htmlFor="m-file">Fișier MP3 (max. 10 MB)</Label><Input id="m-file" type="file" accept="audio/mpeg,.mp3" onChange={(e) => setFile(e.target.files?.[0] ?? null)} /></div>
           <div className="space-y-1"><Label htmlFor="m-cert">Certificat de descărcare (PDF sau imagine, opțional)</Label><Input id="m-cert" type="file" accept="application/pdf,image/jpeg,image/png,image/webp" onChange={(e) => setCert(e.target.files?.[0] ?? null)} /></div>
@@ -193,6 +218,21 @@ function SuperadminMusicPage() {
           <DialogHeader><DialogTitle>Editează piesa</DialogTitle></DialogHeader>
           <div className="grid gap-4"><TrackFields form={editForm} setForm={setEditForm} prefix="e" /></div>
           <div className="flex justify-end"><Button onClick={saveEdit} disabled={update.isPending}>Salvează</Button></div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={aiOpen} onOpenChange={(v) => { if (!generateAi.isPending) setAiOpen(v); }}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Generează muzică cu AI</DialogTitle></DialogHeader>
+          <div className="grid gap-4">
+            <div className="space-y-1"><Label htmlFor="ai-title">Titlu</Label><Input id="ai-title" value={aiForm.title} maxLength={120} onChange={(e) => setAiForm({ ...aiForm, title: e.target.value })} /></div>
+            <div className="space-y-1"><Label htmlFor="ai-style">Stilul muzicii</Label><Textarea id="ai-style" value={aiForm.style} maxLength={120} rows={2} placeholder="ex. pian calm, modern, pentru prezentarea unui apartament" onChange={(e) => setAiForm({ ...aiForm, style: e.target.value })} /></div>
+            <div className="space-y-1"><Label htmlFor="ai-duration">Durata (secunde)</Label><Input id="ai-duration" type="number" min={MUSIC_AI_MIN_SECONDS} max={MUSIC_AI_MAX_SECONDS} value={aiForm.durationSec} onChange={(e) => setAiForm({ ...aiForm, durationSec: Number(e.target.value) })} /></div>
+            <p className="text-xs text-muted-foreground">
+              Muzica este întotdeauna instrumentală. Cost estimat: ≈ {formatMusicAiCost(aiForm.durationSec)} ({MUSIC_AI_COST_PER_SECOND_USD.toFixed(4).replace(".", ",")} $ pe secundă). Piesa apare inactivă în listă și o activezi după ce o asculți.
+            </p>
+          </div>
+          <div className="flex justify-end"><Button onClick={() => generateAi.mutate()} disabled={generateAi.isPending}>{generateAi.isPending ? "Se generează… (poate dura un minut)" : "Generează"}</Button></div>
         </DialogContent>
       </Dialog>
     </div>
