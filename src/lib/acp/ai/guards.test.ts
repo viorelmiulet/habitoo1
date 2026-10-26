@@ -97,7 +97,9 @@ describe("fluxul AI ACP – securitate și multi-tenancy", () => {
   });
 
   it("apelează providerul doar server-side, prin secret de mediu", () => {
-    expect(provider).toContain('process.env["LOVABLE_API_KEY"]');
+    expect(provider).toContain("resolveAiProvider()");
+    expect(provider).not.toContain("LOVABLE_API_KEY");
+    expect(provider).not.toContain("ai.gateway.lovable.dev");
     expect(provider).not.toContain("VITE_");
     expect(provider).not.toContain("EXPO_PUBLIC");
     expect(provider).not.toMatch(/import\.meta\.env/);

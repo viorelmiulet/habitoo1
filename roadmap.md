@@ -1,5 +1,9 @@
 # SEO public — pasul 1a
 
+## AI pasul 3 — interpretarea ACP
+- [x] Registry MiniMax/Gemini fără gateway Lovable, JSON validat și o corectare, model și consum efective
+- [x] 253 teste ACP trec; o singură generare reală pe analiza existentă 13694819, MiniMax-M3.1-Flash, 4410 tokeni intrare / 2216 ieșire, fără rezervă; vizibilă după reîncărcare, cifrele și hash-ul determinist neschimbate
+
 ## AI pasul 2 — citirea cărții de identitate
 - [x] Registry MiniMax/Gemini, imagini high și consum cu furnizorul efectiv; limite și MRZ neschimbate
 - [x] Teste simulate spate valid/decupaj și față JSON pe MiniMax și rezervă Gemini 529, inclusiv reluarea completă spate/față; fără acte reale

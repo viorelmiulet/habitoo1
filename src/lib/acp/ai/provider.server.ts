@@ -1,29 +1,23 @@
-/**
- * Stratul de abstracție pentru providerul AI.
- *
- * Un singur provider este implementat acum (Lovable AI Gateway, server-side),
- * dar interfața permite schimbarea lui ulterioară fără să atingem fluxul ACP.
- * Cheia trăiește exclusiv în variabilele de mediu ale serverului și nu ajunge
- * niciodată în bundle-ul clientului.
- */
+/** ACP interpretation uses the shared server-only registry; the engine stays deterministic. */
 import type { AcpAiContext } from "./context";
 import { ACP_AI_PROMPT_VERSION, ACP_AI_SYSTEM_PROMPT, buildAcpAiUserPrompt } from "./prompt";
+import { parseAcpAiInsight } from "./schema";
+import { resolveAiProvider } from "@/lib/ai/providers/registry.server";
+import { withAiProviderFallback } from "@/lib/ai/providers/fallback.server";
+import { withRetry } from "@/lib/ai/reliability/retry";
+import { AiProviderError } from "@/lib/ai/providers/types";
+export { AiProviderError } from "@/lib/ai/providers/types";
 
 export type AiProvider = {
-  /** Identificator scurt al providerului, salvat în audit. */
   readonly id: string;
-  /** Modelul folosit, salvat în `acp_analyses.ai_model`. */
   readonly model: string;
-  /** Versiunea promptului folosit, salvată pentru reproductibilitate. */
   readonly promptVersion: string;
-  /** Returnează textul brut generat de model. */
+  readonly fallbackUsed: boolean;
+  readonly inputTokens: number | null;
+  readonly outputTokens: number | null;
+  readonly calls: number;
   generate(context: AcpAiContext): Promise<string>;
 };
-
-const GATEWAY_URL = "https://ai.gateway.lovable.dev/v1/responses";
-const MODEL = "openai/gpt-6-astra";
-/** Stage 8: fără timeout, o generare blocată ar ține requestul deschis la infinit. */
-const REQUEST_TIMEOUT_MS = 60_000;
 
 const STRING_LIST = {
   type: "array",
@@ -57,122 +51,58 @@ const RESPONSE_SCHEMA = {
   ],
 } as const;
 
-/** Erori de provider, convertite mai sus în mesaje sigure pentru utilizator. */
-export class AiProviderError extends Error {
-  constructor(
-    message: string,
-    readonly status?: number,
-    readonly retryable = false,
-  ) {
-    super(message);
-    this.name = "AiProviderError";
-  }
+/** The registry reads private configuration only on the server. */
+export function isAcpAiConfigured(): boolean {
+  return resolveAiProvider() !== null;
 }
 
-/** Citește textul final din fluxul SSE al Responses API. */
-async function readOutputText(response: Response): Promise<string> {
-  const body = response.body;
-  if (!body) throw new AiProviderError("Providerul AI nu a returnat niciun răspuns.");
-  const reader = body.getReader();
-  const decoder = new TextDecoder();
-  let buffer = "";
-  let out = "";
-  let completed = "";
-  while (true) {
-    const chunk = await reader.read();
-    if (chunk.done) break;
-    buffer += decoder.decode(chunk.value, { stream: true });
-    const lines = buffer.split("\n");
-    buffer = lines.pop() ?? "";
-    for (const line of lines) {
-      const trimmed = line.trim();
-      if (!trimmed.startsWith("data:")) continue;
-      const payload = trimmed.slice(5).trim();
-      if (payload === "" || payload === "[DONE]") continue;
-      let event: {
-        type?: string;
-        delta?: string;
-        response?: { output_text?: string };
-      };
-      try {
-        event = JSON.parse(payload);
-      } catch {
-        continue;
-      }
-      if (event.type === "response.output_text.delta" && typeof event.delta === "string") {
-        out += event.delta;
-      } else if (event.type === "response.completed" && event.response?.output_text) {
-        completed = event.response.output_text;
-      }
-    }
-  }
-  return out.trim() !== "" ? out : completed;
-}
-
-function createLovableGatewayProvider(apiKey: string): AiProvider {
+export function resolveAcpAiProvider(): AiProvider | null {
+  const primary = resolveAiProvider();
+  if (!primary) return null;
+  let actual = primary;
+  let fallbackUsed = primary.id === "gemini";
+  let inputTokens: number | null = null;
+  let outputTokens: number | null = null;
+  let calls = 0;
   return {
-    id: "lovable-ai-gateway",
-    model: MODEL,
+    get id() { return actual.id; },
+    get model() { return actual.model; },
     promptVersion: ACP_AI_PROMPT_VERSION,
+    get fallbackUsed() { return fallbackUsed; },
+    get inputTokens() { return inputTokens; },
+    get outputTokens() { return outputTokens; },
+    get calls() { return calls; },
     async generate(context) {
-      let response: Response;
-      try {
-        response = await fetch(GATEWAY_URL, {
-        signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Lovable-API-Key": apiKey,
-          "X-Lovable-AIG-SDK": "fetch",
-        },
-        body: JSON.stringify({
-          model: MODEL,
-          stream: true,
-          instructions: ACP_AI_SYSTEM_PROMPT,
-          input: buildAcpAiUserPrompt(context),
-          reasoning: { effort: "low" },
-          text: {
-            format: {
-              type: "json_schema",
-              name: "acp_ai_insight",
-              strict: true,
-              schema: RESPONSE_SCHEMA,
-            },
-          },
-        }),
-      });
-      } catch (error) {
-        const name = (error as { name?: string } | null)?.name;
-        if (name === "TimeoutError" || name === "AbortError") {
-          throw new AiProviderError("Providerul AI nu a răspuns în timp util.", 504, true);
+      const completed = await withAiProviderFallback(primary, async (provider) => {
+        actual = provider;
+        fallbackUsed = provider.id === "gemini";
+        inputTokens = null;
+        outputTokens = null;
+        calls = 0;
+        const system = `${ACP_AI_SYSTEM_PROMPT}\nÎntoarce un singur obiect JSON cu exact cele 9 chei din această schemă, fără text în afara lui: ${JSON.stringify(RESPONSE_SCHEMA)}`;
+        const user = buildAcpAiUserPrompt(context);
+        let raw = "";
+        // Format correction is distinct from transient network retries: at most two answers.
+        for (let attempt = 0; attempt < 2; attempt += 1) {
+          const answer = await withRetry(() => {
+            calls += 1;
+            return provider.generate({
+              system,
+              messages: [{ role: "user", content: attempt === 0 ? user : `${user}\nRăspunsul anterior nu a respectat schema. Întoarce acum exclusiv obiectul JSON valid cu exact cele 9 chei obligatorii.` }],
+              tools: [],
+            });
+          });
+          inputTokens = answer.inputTokens === null ? inputTokens : (inputTokens ?? 0) + answer.inputTokens;
+          outputTokens = answer.outputTokens === null ? outputTokens : (outputTokens ?? 0) + answer.outputTokens;
+          raw = answer.text;
+          if (parseAcpAiInsight(raw).ok) break;
         }
-        throw new AiProviderError("Providerul AI nu a putut fi contactat.", undefined, true);
-      }
-
-      if (!response.ok) {
-        const detail = await response.text().catch(() => "");
-        throw new AiProviderError(
-          `Providerul AI a răspuns cu ${response.status}: ${detail.slice(0, 400)}`,
-          response.status,
-          response.status === 429 || response.status >= 500,
-        );
-      }
-
-      return await readOutputText(response);
+        return raw;
+      });
+      fallbackUsed = completed.fallbackUsed;
+      return completed.result;
     },
   };
-}
-
-/** `true` dacă providerul AI este configurat pe server. */
-export function isAcpAiConfigured(): boolean {
-  return Boolean(process.env["LOVABLE_API_KEY"]);
-}
-
-/** Providerul activ sau `null` când secretul nu este configurat. */
-export function resolveAcpAiProvider(): AiProvider | null {
-  const apiKey = process.env["LOVABLE_API_KEY"];
-  if (!apiKey) return null;
-  return createLovableGatewayProvider(apiKey);
 }
 
 /** Traduce eroarea providerului într-un mesaj sigur pentru utilizator. */
