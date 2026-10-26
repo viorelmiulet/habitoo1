@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { interleaveNewest, PRIVATE_LISTINGS_SOURCE_CYCLE } from "./private-listings";
-import { hbsyncMarketBodySchema } from "./market/hbsync";
+import { hbsyncMarketListingSchema } from "./market/hbsync";
 import { MARKET_SOURCES } from "./market/sources";
 
 const mocks = vi.hoisted(() => ({ from: vi.fn(), upload: vi.fn() }));
@@ -65,8 +65,8 @@ describe("Facebook private listings (no real database writes)", () => {
 
   it("does not add Facebook to the ACP ingestion contract or source registry", () => {
     const listing = { source: "facebook", external_id: "fb1", deal_type: "sale", property_type: "apartment", price: 100000, currency: "EUR", surface_built: 50, city: "București" };
-    expect(hbsyncMarketBodySchema.safeParse({ listings: [{ ...listing, source: "storia" }] }).success).toBe(true);
-    expect(hbsyncMarketBodySchema.safeParse({ listings: [listing] }).success).toBe(false);
+    expect(hbsyncMarketListingSchema.safeParse({ ...listing, source: "storia" }).success).toBe(true);
+    expect(hbsyncMarketListingSchema.safeParse(listing).success).toBe(false);
     expect(MARKET_SOURCES.some(source => source.id === "facebook")).toBe(false);
   });
 });
