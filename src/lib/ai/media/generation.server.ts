@@ -1,4 +1,5 @@
 import { AI_MEDIA_MODELS, MediaProviderError, downloadAiMedia, mediaError, readAiMediaPrediction, startAiMediaPrediction, type AiMediaKind } from "./providers.server";
+import { mediaQuotaError } from "./quota";
 
 // Caller client handles rows (RLS); privileged client only writes usage and media.
 type MediaContext = { supabase: any; userId: string };
@@ -35,7 +36,7 @@ async function settle(context: MediaContext, admin: any, row: any, output: strin
 export async function startMediaGeneration(context: MediaContext, admin: any, organizationId: string, input: { kind: AiMediaKind; prompt: string; sourcePath: string | null }) {
   const model = AI_MEDIA_MODELS[input.kind];
   const { data: row, error: insertError } = await context.supabase.from("ai_media_generations").insert({ organization_id: organizationId, created_by: context.userId, kind: input.kind, prompt: input.prompt, source_url: input.sourcePath, model: model.id, status: "running" }).select("*").single();
-  if (insertError || !row) return { ok: false as const, message: "Generarea nu a putut fi înregistrată." };
+  if (insertError || !row) return { ok: false as const, message: mediaQuotaError(insertError?.message ?? "") ?? "Generarea nu a putut fi înregistrată." };
   try {
     await usage(admin, row, context.userId, { success: false, status: "running" }, true);
     let sourceUrl: string | null = null;

@@ -8,21 +8,29 @@ function fixture() {
   const upload = vi.fn().mockResolvedValue({ error: null });
   const remove = vi.fn().mockResolvedValue({ error: null });
   const storage = { from: () => ({ upload, remove, createSignedUrl: vi.fn().mockResolvedValue({ data: { signedUrl: "https://private.example/signed" }, error: null }) }) };
+  const insertGate = vi.fn().mockReturnValue(null);
   const client = { storage, from: (table: string) => {
     const target = table === "ai_usage_events" ? events : rows;
     let operation: string, values: any, filters: [string, unknown][] = [];
     const matches = (r: any) => filters.every(([k, v]) => k === "extra_info->>generation_id" ? r.extra_info?.generation_id === v : r[k] === v);
     const execute = () => {
-      if (operation === "insert") { const row = { id: `row-${target.length}`, created_at: new Date().toISOString(), ...values }; target.push(row); return { data: row, error: null }; }
+      if (operation === "insert") { if (table === "ai_media_generations") { const error = insertGate(values); if (error) return { data: null, error }; } const row = { id: `row-${target.length}`, created_at: new Date().toISOString(), ...values }; target.push(row); return { data: row, error: null }; }
       const changed = target.filter(matches); changed.forEach(r => Object.assign(r, values)); return { data: changed.map(r => ({ ...r })), error: null };
     };
     const q: any = { insert: (v: any) => { operation = "insert"; values = v; return q; }, update: (v: any) => { operation = "update"; values = v; return q; }, eq: (k: string, v: unknown) => { filters.push([k, v]); return q; }, select: () => q, single: async () => execute(), then: (resolve: any) => Promise.resolve(execute()).then(resolve) };
     return q;
   } };
-  return { context: { supabase: client, userId: "user" }, admin: client, rows, events, upload, remove };
+  return { context: { supabase: client, userId: "user" }, admin: client, rows, events, upload, remove, insertGate };
 }
 beforeEach(() => { vi.clearAllMocks(); mocks.download.mockResolvedValue({ bytes: new Uint8Array([137,80,78,71]), extension: "png", contentType: "image/png" }); });
 describe("Studio generation rows, private files and one usage event", () => {
+  it("does not contact a provider or write usage when the monthly reservation is refused", async () => {
+    const f = fixture();
+    f.insertGate.mockReturnValue({ message: "ai_media_limit:photo_video:10:2026-10-31 22:00:00+00:10:0" });
+    const result = await startMediaGeneration(f.context, f.admin, "org", { kind: "photo_video", prompt: "", sourcePath: "org/source" });
+    expect(result.ok).toBe(false);
+    expect(mocks.start).not.toHaveBeenCalled(); expect(f.events).toHaveLength(0); expect(f.rows).toHaveLength(0);
+  });
   it.each(["marketing_image", "photo_enhance"] as const)("saves %s immediately and records successful usage", async kind => {
     const f = fixture(); mocks.start.mockResolvedValue({ id: null, status: "succeeded", outputUrl: "https://media.example/image" });
     expect((await startMediaGeneration(f.context, f.admin, "org", { kind, prompt: "test", sourcePath: kind === "photo_enhance" ? "org/user/source" : null })).ok).toBe(true);
