@@ -20,4 +20,22 @@ describe("navigarea laterală", () => {
     expect(source).toContain("min-h-11");
     expect(source).toContain("window.localStorage.setItem(sidebarOpenStateKey(user?.userId)");
   });
+
+  it("pune Comisioane ca element separat, imediat după grupul Clienți", () => {
+    const clients = agencyNav.find((group) => group.title === "Clienți");
+    expect(clients?.items.map((item) => item.label)).toEqual([
+      "Contacte",
+      "Cereri",
+      "Lead-uri",
+      "Contracte",
+    ]);
+    const after = agencyNav[agencyNav.indexOf(clients!) + 1];
+    expect(after.title).toBeUndefined();
+    expect(after.items.map((item) => [item.label, String(item.to)])).toEqual([
+      ["Comisioane", "/app/comisioane"],
+    ]);
+    expect(
+      agentNav.some((group) => group.items.some((item) => item.to === "/app/comisioane")),
+    ).toBe(true);
+  });
 });
