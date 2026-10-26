@@ -5,12 +5,12 @@
  * Doar prezentare: refolosește imaginile existente din `property_images`
  * (ordinea reală: is_primary → position) și nu modifică nimic.
  */
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { ChevronLeft, ChevronRight, Image, ImageOff } from "lucide-react";
+import { Image, ImageOff } from "lucide-react";
 
 import { supabase } from "@/integrations/supabase/client";
-import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import { PhotoViewer } from "@/components/app/PhotoViewer";
 import { Button } from "@/components/ui/button";
 import { MEDIA_BUCKET, signedUrls } from "@/lib/storage";
 import { cn } from "@/lib/utils";
@@ -98,23 +98,6 @@ export function PropertyHeroGallery({
   // Vizualizator pe ecran complet: click pe orice poză, navigare cu butoane sau taste.
   const [openAt, setOpenAt] = useState<number | null>(null);
   const total = images.length;
-  const step = useCallback(
-    (delta: number) => setOpenAt((prev) => (prev === null ? prev : (prev + delta + total) % total)),
-    [total],
-  );
-
-  useEffect(() => {
-    if (openAt === null) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "ArrowRight") step(1);
-      if (e.key === "ArrowLeft") step(-1);
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [openAt, step]);
-
-  const active = openAt === null ? null : images[openAt];
-  const activeSrc = active ? srcOf(active) : null;
 
   if (!main || !srcOf(main)) {
     return (
@@ -202,49 +185,7 @@ export function PropertyHeroGallery({
       </div>
       ) : null}
 
-      <Dialog open={openAt !== null} onOpenChange={(open) => !open && setOpenAt(null)}>
-        <DialogContent className="max-w-5xl border-none bg-transparent p-0 shadow-none">
-          <DialogTitle className="sr-only">{title}</DialogTitle>
-          <div className="relative">
-            {activeSrc ? (
-              <img
-                src={activeSrc}
-                alt={active?.alt ?? title}
-                className="max-h-[80vh] w-full rounded-2xl bg-background object-contain"
-              />
-            ) : (
-              <Placeholder className="h-72 w-full" />
-            )}
-            {total > 1 ? (
-              <>
-                <Button
-                  type="button"
-                  variant="secondary"
-                  size="icon"
-                  onClick={() => step(-1)}
-                  aria-label="Fotografia anterioară"
-                  className="absolute top-1/2 left-2 -translate-y-1/2 rounded-full bg-background/85 text-foreground hover:bg-background"
-                >
-                  <ChevronLeft className="size-5" aria-hidden />
-                </Button>
-                <Button
-                  type="button"
-                  variant="secondary"
-                  size="icon"
-                  onClick={() => step(1)}
-                  aria-label="Fotografia următoare"
-                  className="absolute top-1/2 right-2 -translate-y-1/2 rounded-full bg-background/85 text-foreground hover:bg-background"
-                >
-                  <ChevronRight className="size-5" aria-hidden />
-                </Button>
-                <span className="absolute bottom-3 left-1/2 -translate-x-1/2 rounded-full bg-foreground/70 px-3 py-1 text-xs font-medium text-background">
-                  {(openAt ?? 0) + 1} / {total}
-                </span>
-              </>
-            ) : null}
-          </div>
-        </DialogContent>
-      </Dialog>
+      <PhotoViewer images={images.map(img => ({ src: srcOf(img), alt: img.alt }))} title={title} openAt={openAt} onOpenAtChange={setOpenAt} />
     </div>
   );
 
