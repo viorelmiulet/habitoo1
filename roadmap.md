@@ -1,5 +1,11 @@
 # SEO public — pasul 1a
 
+## Ghiduri interactive — etapa 1
+- [ ] Fundație: progres per utilizator pe server, pornire contextuală, setare automată și bibliotecă filtrată după acces
+- [ ] Trei ghiduri complete, pași interactivi siguri, panou telefon fără suprapunere
+- [ ] Inventar complet al funcțiilor agent/admin/SuperAdmin cu momentele de pornire
+- [ ] Teste și capturi Dashboard → Proprietăți → Adaugă, agent/admin, desktop/telefon
+
 ## Fotografii pentru șase pagini publice
 - [x] Fotografii generate coerente și versiuni WebP/JPG optimizate
 - [x] Text stânga/foto dreapta, telefon sub text; OG unic, alte pagini neschimbate
