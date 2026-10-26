@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
 import { Bookmark, Download, Search, Sparkles, Target, X } from "lucide-react";
@@ -40,12 +40,13 @@ import {
   requestStatusOptions,
   requestStatusTone,
 } from "@/lib/crm";
+import { useFilterList } from "@/hooks/use-list-state";
+import { validateListSearch } from "@/lib/list-state";
 import { appHead } from "@/components/app/app-head";
 
 export const Route = createFileRoute("/_authenticated/app/requests")({
   head: () => appHead("Habitoo CRM — cereri"),
-  validateSearch: (search: Record<string, unknown>): { new?: boolean } =>
-    search["new"] === true || search["new"] === "true" ? { new: true } : {},
+  validateSearch: (search: Record<string, unknown>) => validateListSearch(listDefaults, search),
   component: RequestsPage,
 });
 
@@ -80,6 +81,8 @@ const emptyFilters: Filters = {
   city: "all",
 };
 
+const listDefaults = { ...emptyFilters, page: 0 };
+
 function useDebounced<T>(value: T, delay = 300) {
   const [debounced, setDebounced] = useState(value);
   useEffect(() => {
@@ -90,21 +93,25 @@ function useDebounced<T>(value: T, delay = 300) {
 }
 
 function RequestsPage() {
-  const { new: openNew } = Route.useSearch();
+  const urlSearch = Route.useSearch();
+  const { new: openNew } = urlSearch;
+  const navigate = useNavigate({ from: Route.fullPath });
   const { data: user } = useCurrentUser();
   const queryClient = useQueryClient();
-  const [filters, setFilters] = useState<Filters>(emptyFilters);
+  const persisted = useFilterList("requests", user?.userId, listDefaults, urlSearch,
+    (next) => { void navigate({ search: next, replace: true, resetScroll: false }); });
+  const filters: Filters = persisted.state;
+  const setFilters = (next: Filters | ((previous: Filters) => Filters)) => {
+    const value = typeof next === "function" ? next(filters) : next;
+    void navigate({ search: { ...urlSearch, ...value, page: 0 }, replace: true, resetScroll: false });
+  };
   const debouncedQ = useDebounced(filters.q);
-  const [page, setPage] = useState(0);
+  const page = persisted.state.page;
+  const setPage = (value: number | ((previous: number) => number)) => persisted.set("page", value);
   const [selected, setSelected] = useState<string[]>([]);
   const [open, setOpen] = useState(Boolean(openNew));
   const [promptRequest, setPromptRequest] = useState<PromptRequest | null>(null);
   const { views, save, remove } = useSavedViews("requests", user?.organization?.id, user?.userId);
-
-  useEffect(
-    () => setPage(0),
-    [debouncedQ, filters.kind, filters.status, filters.priority, filters.assigned, filters.city],
-  );
 
   const { data: agents = [] } = useQuery({
     queryKey: ["profiles-agents", user?.organization?.id],
@@ -427,7 +434,7 @@ function RequestsPage() {
           <Button variant="ghost" size="sm" onClick={saveFilter}>
             <Bookmark className="size-4" /> Salvează filtrul
           </Button>
-          <Button variant="ghost" size="sm" onClick={() => setFilters(emptyFilters)}>
+          <Button variant="ghost" size="sm" onClick={persisted.reset}>
             <X className="size-4" /> Resetează
           </Button>
         </div>

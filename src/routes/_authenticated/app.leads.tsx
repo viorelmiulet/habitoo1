@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import {
@@ -14,6 +14,7 @@ import {
   CalendarClock,
   StickyNote,
   Users,
+  X,
   Trash2,
 } from "lucide-react";
 import { DeleteLeadDialog, canDeleteLead } from "@/components/app/DeleteLeadDialog";
@@ -55,17 +56,13 @@ import { PortalLogo, hasPortalLogo } from "@/components/app/PortalLogo";
 import { UserAvatar } from "@/components/app/UserAvatar";
 import { PropertyThumb, usePropertyCovers } from "@/components/app/PropertyThumb";
 import { cn } from "@/lib/utils";
+import { useFilterList } from "@/hooks/use-list-state";
+import { validateListSearch } from "@/lib/list-state";
 import { appHead } from "@/components/app/app-head";
 
 export const Route = createFileRoute("/_authenticated/app/leads")({
   head: () => appHead("Habitoo CRM — lead-uri"),
-  validateSearch: (search: Record<string, unknown>): { new?: boolean; stage?: string } => {
-    const out: { new?: boolean; stage?: string } = {};
-    if (search["new"] === true || search["new"] === "true") out.new = true;
-    const stage = typeof search["stage"] === "string" ? search["stage"] : undefined;
-    if (stage && (leadStages as readonly string[]).includes(stage)) out.stage = stage;
-    return out;
-  },
+  validateSearch: (search: Record<string, unknown>) => validateListSearch(leadListDefaults, search),
   component: LeadsPage,
 });
 
@@ -149,21 +146,33 @@ function emptyForm() {
   };
 }
 
+const leadListDefaults = { stage: "", onlyMine: false, q: "", agent: "all", source: "all", campaign: "all" };
+
 function LeadsPage() {
-  const { new: openNew, stage: stageParam } = Route.useSearch();
+  const urlSearch = Route.useSearch();
+  const { new: openNew } = urlSearch;
+  const navigate = useNavigate({ from: Route.fullPath });
+  const { data: user } = useCurrentUser();
+  const persisted = useFilterList("leads", user?.userId, leadListDefaults, urlSearch,
+    (next) => { void navigate({ search: next, replace: true, resetScroll: false }); });
+  const stageParam = persisted.state.stage;
   // Etapa primită din dashboard restrânge board-ul la o singură coloană.
   const columns = stageParam ? [stageParam as LeadStage] : allColumns;
 
-  const { data: user } = useCurrentUser();
   const orgId = user?.organization?.id;
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(Boolean(openNew));
   const [editing, setEditing] = useState<Lead | null>(null);
-  const [onlyMine, setOnlyMine] = useState(false);
-  const [search, setSearch] = useState("");
-  const [agentFilter, setAgentFilter] = useState("all");
-  const [sourceFilter, setSourceFilter] = useState("all");
-  const [campaignFilter, setCampaignFilter] = useState("all");
+  const onlyMine = persisted.state.onlyMine;
+  const setOnlyMine = (value: boolean | ((previous: boolean) => boolean)) => persisted.set("onlyMine", value);
+  const search = persisted.state.q;
+  const setSearch = (value: string) => persisted.set("q", value);
+  const agentFilter = persisted.state.agent;
+  const setAgentFilter = (value: string) => persisted.set("agent", value);
+  const sourceFilter = persisted.state.source;
+  const setSourceFilter = (value: string) => persisted.set("source", value);
+  const campaignFilter = persisted.state.campaign;
+  const setCampaignFilter = (value: string) => persisted.set("campaign", value);
   const [detailLead, setDetailLead] = useState<Lead | null>(null);
   const [dragId, setDragId] = useState<string | null>(null);
   const [dragOverStage, setDragOverStage] = useState<LeadStage | null>(null);
@@ -517,7 +526,7 @@ function LeadsPage() {
           <>
             {stageParam ? (
               <Button variant="outline" size="sm" asChild>
-                <Link to="/app/leads">Toate etapele</Link>
+                <Link to="/app/leads" search={{ ...urlSearch, stage: "" }}>Toate etapele</Link>
               </Button>
             ) : null}
 
@@ -568,6 +577,7 @@ function LeadsPage() {
             ))}
           </SelectContent>
         </Select>
+        <Button variant="ghost" size="sm" onClick={persisted.reset}><X className="size-4" /> Șterge filtre</Button>
         <Select value={campaignFilter} onValueChange={setCampaignFilter}>
           <SelectTrigger className="w-40">
             <SelectValue placeholder="Campanie" />

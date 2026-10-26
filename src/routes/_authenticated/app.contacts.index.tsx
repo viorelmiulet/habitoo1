@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
 import {
@@ -58,12 +58,13 @@ import { relativeDays } from "@/lib/format";
 import { contactTypeLabels } from "@/lib/labels";
 import { downloadCsv } from "@/lib/crm";
 import { UserAvatar } from "@/components/app/UserAvatar";
+import { useFilterList } from "@/hooks/use-list-state";
+import { validateListSearch } from "@/lib/list-state";
 import { appHead } from "@/components/app/app-head";
 
 export const Route = createFileRoute("/_authenticated/app/contacts/")({
   head: () => appHead("Habitoo CRM — contacte"),
-  validateSearch: (search: Record<string, unknown>): { new?: boolean } =>
-    search["new"] === true || search["new"] === "true" ? { new: true } : {},
+  validateSearch: (search: Record<string, unknown>) => validateListSearch(listDefaults, search),
   component: ContactsPage,
 });
 
@@ -94,6 +95,8 @@ const emptyFilters: Filters = {
   tag: "all",
 };
 
+const listDefaults = { ...emptyFilters, page: 0, view: "list" as "list" | "card" };
+
 function useDebounced<T>(value: T, delay = 300) {
   const [debounced, setDebounced] = useState(value);
   useEffect(() => {
@@ -104,31 +107,29 @@ function useDebounced<T>(value: T, delay = 300) {
 }
 
 function ContactsPage() {
-  const { new: openNew } = Route.useSearch();
+  const urlSearch = Route.useSearch();
+  const { new: openNew } = urlSearch;
+  const navigate = useNavigate({ from: Route.fullPath });
   const { data: user } = useCurrentUser();
   const queryClient = useQueryClient();
-  const [filters, setFilters] = useState<Filters>(emptyFilters);
+  const persisted = useFilterList("contacts", user?.userId, listDefaults, urlSearch,
+    (next) => { void navigate({ search: next, replace: true, resetScroll: false }); });
+  const filters: Filters = persisted.state;
+  const setFilters = (next: Filters | ((previous: Filters) => Filters)) => {
+    const value = typeof next === "function" ? next(filters) : next;
+    void navigate({ search: { ...urlSearch, ...value, page: 0 }, replace: true, resetScroll: false });
+  };
   const debouncedQ = useDebounced(filters.q);
-  const [view, setView] = useState<"list" | "card">("list");
-  const [page, setPage] = useState(0);
+  const page = persisted.state.page;
+  const setPage = (value: number | ((previous: number) => number)) => persisted.set("page", value);
+  const view = persisted.state.view;
+  const setView = (value: "list" | "card") => persisted.set("view", value);
   const [selected, setSelected] = useState<string[]>([]);
   const [dialogOpen, setDialogOpen] = useState(Boolean(openNew));
   const [confirmDeactivate, setConfirmDeactivate] = useState(false);
   const [promptRequest, setPromptRequest] = useState<PromptRequest | null>(null);
 
   const { views, save, remove } = useSavedViews("contacts", user?.organization?.id, user?.userId);
-
-  useEffect(() => {
-    setPage(0);
-  }, [
-    debouncedQ,
-    filters.type,
-    filters.source,
-    filters.assigned,
-    filters.status,
-    filters.mine,
-    filters.tag,
-  ]);
 
   const { data: agents = [] } = useQuery({
     queryKey: ["profiles-agents", user?.organization?.id],
@@ -441,7 +442,7 @@ function ContactsPage() {
           <Button variant="ghost" size="sm" onClick={saveFilter}>
             <Bookmark className="size-4" /> Salvează filtrul
           </Button>
-          <Button variant="ghost" size="sm" onClick={() => setFilters(emptyFilters)}>
+          <Button variant="ghost" size="sm" onClick={persisted.reset}>
             <X className="size-4" /> Resetează
           </Button>
           <div className="ml-auto flex items-center gap-1 rounded-lg border border-border p-0.5">
