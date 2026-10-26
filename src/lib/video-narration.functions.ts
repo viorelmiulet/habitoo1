@@ -6,7 +6,7 @@ import type { NarrationItem } from "./video-narration";
 type Result = { ok: true; item: NarrationItem } | { ok: false; message: string };
 export const startVideoNarration = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) => z.object({ propertyId: z.string().uuid(), requestKey: z.string().uuid(), text: z.string().max(4000), voice: z.enum(["female", "male"]), seconds: z.number().min(6).max(60) }).parse(input))
+  .inputValidator((input: unknown) => z.object({ propertyId: z.string().uuid(), requestKey: z.string().uuid(), text: z.string().max(4000), voice: z.enum(["female", "male", "female_youth", "male_youth"]), seconds: z.number().min(6).max(60) }).parse(input))
   .handler(async ({ data, context }): Promise<Result> => {
     try {
       const { startNarrationCore } = await import("./video-narration.server");

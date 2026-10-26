@@ -2,8 +2,8 @@
 
 ## AI pasul 4 — voce video MiniMax direct
 - [x] Verificare Get Voice cu cheia existentă: Wise_Woman și Deep_Voice_Man nu apar în lista de 332 voci de sistem
-- [ ] Trecere directă la speech-2.8-turbo, consum usage_characters și teste simulate — așteaptă alegerea utilizatorului pentru vocile alternative, fără înlocuire automată
-- [ ] O singură narațiune reală scurtă cu redare — așteaptă alegerea vocilor și implementarea
+- [ ] Trecere directă la speech-2.8-turbo, consum usage_characters și teste simulate; utilizatorul a ales toate cele patru voci românești
+- [ ] O singură narațiune reală scurtă cu redare
 
 ## AI pasul 3 — interpretarea ACP
 - [x] Registry MiniMax/Gemini fără gateway Lovable, JSON validat și o corectare, model și consum efective
