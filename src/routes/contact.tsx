@@ -1,3 +1,5 @@
+import { PublicPhotoHeading } from "@/components/marketing/PublicPhotoHeading";
+import { publicPagePhotos, publicPhotoHead } from "@/components/marketing/public-page-photos";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
@@ -57,6 +59,7 @@ export const Route = createFileRoute("/contact")({
   validateSearch: (search) => searchSchema.parse(search),
   head: () =>
     publicHead({
+      ...publicPhotoHead(publicPagePhotos.contact),
       path: "/contact",
       title: TITLE,
       description: DESCRIPTION,
@@ -147,12 +150,15 @@ function ContactPage() {
           className="mk-dots pointer-events-none absolute inset-0 [mask-image:radial-gradient(60%_60%_at_50%_0%,black,transparent)]"
         />
         <Container className="relative py-16 sm:py-20">
+          <PublicPhotoHeading photo={publicPagePhotos.contact}>
           <SectionHeading
+            align="left"
             as="h1"
             eyebrow="Contact"
             title="Hai să vorbim despre agenția ta"
             text="Solicită o demonstrație sau pune-ne orice întrebare despre Habitoo CRM. Îți răspundem cu o prezentare adaptată felului în care lucrează echipa ta."
           />
+          </PublicPhotoHeading>
         </Container>
       </section>
 

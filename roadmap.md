@@ -1,5 +1,10 @@
 # SEO public — pasul 1a
 
+## Fotografii pentru șase pagini publice
+- [x] Fotografii generate coerente și versiuni WebP/JPG optimizate
+- [x] Text stânga/foto dreapta, telefon sub text; OG unic, alte pagini neschimbate
+- [x] Șase pagini HTTP 200 desktop/telefon, fără depășiri sau erori; WebP 69–113 KB, OG JPG 1200×630 116–155 KB; 12 capturi salvate; 23 teste trec, build OK; fără publicare
+
 ## Liste — păstrarea filtrelor
 - [x] Stare persistentă per utilizator/listă, URL prioritar, resetare și MAP separat; Clienți, Lead-uri, Cereri și Oferte partenere
 - [x] Întoarcere din detalii și Back cu pagina și poziția păstrate, verificată în cont desktop și telefon pe MAP/Proprietăți

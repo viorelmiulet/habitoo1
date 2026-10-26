@@ -14,6 +14,8 @@ type PublicHeadOptions = {
   description: string;
   ogTitle?: string;
   ogDescription?: string;
+  ogImage?: string;
+  preloadImage?: string;
   jsonLd?: Record<string, unknown> | Record<string, unknown>[];
   noindex?: boolean;
 };
@@ -28,6 +30,8 @@ export function publicHead({
   description,
   ogTitle,
   ogDescription,
+  ogImage = OG_IMAGE_URL,
+  preloadImage,
   jsonLd,
   noindex,
 }: PublicHeadOptions) {
@@ -44,10 +48,10 @@ export function publicHead({
     { name: "twitter:card", content: "summary_large_image" },
     { name: "twitter:title", content: ogTitle ?? title },
     { name: "twitter:description", content: ogDescription ?? description },
-    { property: "og:image", content: OG_IMAGE_URL },
+    { property: "og:image", content: ogImage },
     { property: "og:image:width", content: "1200" },
     { property: "og:image:height", content: "630" },
-    { name: "twitter:image", content: OG_IMAGE_URL },
+    { name: "twitter:image", content: ogImage },
   ];
   if (noindex) meta.push({ name: "robots", content: "noindex, nofollow" });
 
@@ -57,6 +61,7 @@ export function publicHead({
     { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
     { rel: "stylesheet", href: FONTS_HREF },
   ];
+  if (preloadImage) links.push({ rel: "preload", as: "image", href: preloadImage, fetchPriority: "high" });
 
   return {
     meta,

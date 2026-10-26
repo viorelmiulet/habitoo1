@@ -1,3 +1,5 @@
+import { PublicPhotoHeading } from "@/components/marketing/PublicPhotoHeading";
+import { publicPagePhotos, publicPhotoHead } from "@/components/marketing/public-page-photos";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowRight, Check, MessageCircle } from "lucide-react";
 import { useState } from "react";
@@ -22,6 +24,7 @@ const DESCRIPTION =
 export const Route = createFileRoute("/preturi")({
   head: () =>
     publicHead({
+      ...publicPhotoHead(publicPagePhotos.pricing),
       path: "/preturi",
       title: TITLE,
       description: DESCRIPTION,
@@ -255,12 +258,15 @@ function PricingPage() {
           className="mk-dots pointer-events-none absolute inset-0 [mask-image:radial-gradient(60%_60%_at_50%_0%,black,transparent)]"
         />
         <Container className="relative py-16 sm:py-20 lg:py-24">
+          <PublicPhotoHeading photo={publicPagePhotos.pricing}>
           <SectionHeading
+            align="left"
             as="h1"
             eyebrow="Prețuri"
             title="Trei planuri simple, cu prețuri clare"
             text="Alege plata lunară sau anuală pentru fiecare plan. La plata anuală tariful lunar scade cu 50%, iar factura se emite o singură dată pentru 12 luni. Toate planurile încep cu 90 de zile gratuite."
           />
+          </PublicPhotoHeading>
         </Container>
       </section>
 

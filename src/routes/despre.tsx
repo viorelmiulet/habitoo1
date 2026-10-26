@@ -1,3 +1,5 @@
+import { PublicPhotoHeading } from "@/components/marketing/PublicPhotoHeading";
+import { publicPagePhotos, publicPhotoHead } from "@/components/marketing/public-page-photos";
 import { createFileRoute } from "@tanstack/react-router";
 import {
   Building2,
@@ -25,6 +27,7 @@ const DESCRIPTION =
 export const Route = createFileRoute("/despre")({
   head: () =>
     publicHead({
+      ...publicPhotoHead(publicPagePhotos.about),
       path: "/despre",
       title: TITLE,
       description: DESCRIPTION,
@@ -96,12 +99,15 @@ function AboutPage() {
           className="mk-dots pointer-events-none absolute inset-0 [mask-image:radial-gradient(60%_60%_at_50%_0%,black,transparent)]"
         />
         <Container className="relative py-16 sm:py-20 lg:py-24">
+          <PublicPhotoHeading photo={publicPagePhotos.about}>
           <SectionHeading
+            align="left"
             as="h1"
             eyebrow="Despre Habitoo CRM"
             title="Sistemul de lucru al agenției imobiliare moderne"
             text="Habitoo CRM a pornit de la o observație simplă: agenții pierd tranzacții nu pentru că le lipsesc clienții sau proprietățile, ci pentru că informația despre ele este împrăștiată. Am construit un singur loc în care totul se leagă."
           />
+          </PublicPhotoHeading>
         </Container>
       </section>
 
