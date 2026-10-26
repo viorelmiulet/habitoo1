@@ -82,7 +82,25 @@ function SuperadminMusicPage() {
   const [editForm, setEditForm] = useState<Form>(EMPTY);
   const [playing, setPlaying] = useState<string | null>(null);
   const [bulkOpen, setBulkOpen] = useState(false);
+  const [aiOpen, setAiOpen] = useState(false);
+  const [aiForm, setAiForm] = useState({ title: "", style: "", durationSec: MUSIC_AI_DEFAULT_SECONDS });
+  const generateMusic = useServerFn(generateVideoMusic);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  const generateAi = useMutation({
+    mutationFn: async () => {
+      const err = validateAiMusicInput(aiForm);
+      if (err) throw new Error(err);
+      return generateMusic({ data: aiForm });
+    },
+    onSuccess: () => {
+      toast.success("Piesa a fost generată și adăugată inactivă în listă. Ascult-o și activeaz-o când ești mulțumit.");
+      setAiOpen(false);
+      setAiForm({ title: "", style: "", durationSec: MUSIC_AI_DEFAULT_SECONDS });
+      refresh();
+    },
+    onError: (e) => toastError(e),
+  });
 
   const create = useMutation({
     mutationFn: async () => {
@@ -162,7 +180,7 @@ function SuperadminMusicPage() {
       <MusicBulkUpload open={bulkOpen} onOpenChange={setBulkOpen} existing={q.data ?? []} onUploaded={refresh} />
 
       <Card>
-        <CardHeader className="flex-row items-center justify-between gap-3 space-y-0"><CardTitle>Adaugă piesă</CardTitle><Button variant="outline" onClick={() => setBulkOpen(true)} disabled={!q.data}><Upload className="size-4" />Încarcă mai multe</Button></CardHeader>
+        <CardHeader className="flex-row items-center justify-between gap-3 space-y-0"><CardTitle>Adaugă piesă</CardTitle><div className="flex flex-wrap items-center gap-2"><Button variant="outline" onClick={() => setAiOpen(true)}><Sparkles className="size-4" />Generează cu AI</Button><Button variant="outline" onClick={() => setBulkOpen(true)} disabled={!q.data}><Upload className="size-4" />Încarcă mai multe</Button></div></CardHeader>
         <CardContent key={formKey} className="grid gap-4 md:grid-cols-2">
           <div className="space-y-1"><Label htmlFor="m-file">Fișier MP3 (max. 10 MB)</Label><Input id="m-file" type="file" accept="audio/mpeg,.mp3" onChange={(e) => setFile(e.target.files?.[0] ?? null)} /></div>
           <div className="space-y-1"><Label htmlFor="m-cert">Certificat de descărcare (PDF sau imagine, opțional)</Label><Input id="m-cert" type="file" accept="application/pdf,image/jpeg,image/png,image/webp" onChange={(e) => setCert(e.target.files?.[0] ?? null)} /></div>
