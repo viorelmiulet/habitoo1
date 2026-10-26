@@ -77,7 +77,7 @@ describe("meniul cu Comisioane ca element separat", () => {
             "nav:/app/contacts|nav:/app/requests|nav:/app/leads|nav:/app/contracts",
         );
         expect(clientsIndex).toBeGreaterThanOrEqual(0);
-        expect(groups[clientsIndex + 1]).toEqual(["Comisioane"]);
+        expect(groups[clientsIndex + 1]).toEqual(["nav:/app/comisioane"]);
         const commissionsList = [...document.querySelectorAll("nav ul")].find(
           (ul) =>
             ul.querySelectorAll("a").length === 1 &&
