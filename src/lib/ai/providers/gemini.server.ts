@@ -122,7 +122,8 @@ export function createGeminiProvider(apiKey: string, model = GEMINI_DEFAULT_MODE
       }
 
       if (!response.ok) {
-        const detail = await response.text().catch(() => "");
+        const hasAttachments = request.messages.some((message) => message.role === "user" && message.attachments?.length);
+        const detail = hasAttachments ? "" : await response.text().catch(() => "");
         // Detaliul rămâne în logurile serverului, fără cheie.
         console.error(`[ai] gemini ${response.status}: ${detail.slice(0, 400)}`);
         throw new AiProviderError(
