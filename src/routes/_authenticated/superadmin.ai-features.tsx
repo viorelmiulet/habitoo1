@@ -182,7 +182,7 @@ function MediaLimitsEditor({ org }: { org: OrganizationAiFeatures }) {
       void queryClient.invalidateQueries({ queryKey: ["superadmin", "ai-features"] });
       void queryClient.invalidateQueries({ queryKey: ["ai-media-status"] });
     },
-    onError: toastError,
+    onError: (error: unknown) => toastError(error),
   });
   return <div className="space-y-3 border-t border-border pt-4 sm:col-span-2">
     <p className="text-sm font-semibold">Studio AI — limite lunare</p>
