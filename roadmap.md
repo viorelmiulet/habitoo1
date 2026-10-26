@@ -1,9 +1,9 @@
 # SEO public — pasul 1a
 
 ## Clipurile mele — muzică per clip
-- [ ] Înregistrarea fiecărui clip generat cu muzica folosită, fără publicare
-- [ ] Pagină privată pentru agent cu lista clipurilor și muzica aferentă
-- [ ] Teste de acces/înregistrare și verificare în cont
+- [x] Înregistrarea fiecărui clip generat cu muzica folosită, fără publicare; snapshot pentru biblioteca muzicală și MP3 propriu
+- [x] Pagină privată „Clipurile mele” în Portofoliu, 24/pagină; istoricul începe de la această schimbare
+- [x] 31 teste trec; clip real de 9 s generat în cont, muzica și proprietatea citite în pagina nouă, fără publicare
 
 ## AI pasul 1 — MiniMax principal, Gemini rezervă
 - [x] Furnizor MiniMax, istoric brut thinking/tool-use și poze base64

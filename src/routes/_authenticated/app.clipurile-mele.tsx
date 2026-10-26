@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
 import { queryOptions, useSuspenseQuery } from "@tanstack/react-query";
 import { ChevronLeft, ChevronRight, Film, Music2 } from "lucide-react";
 import { PageHeader } from "@/components/app/PageHeader";
@@ -21,9 +21,14 @@ export const Route = createFileRoute("/_authenticated/app/clipurile-mele")({
   loader: ({ context, deps }) => context.queryClient.ensureQueryData(clipsQuery(deps.page)),
   head: () => ({ ...appHead(title), meta: [...appHead(title).meta, { name: "description", content: description }, { property: "og:title", content: title }, { property: "og:description", content: description }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }] }),
   component: ClipsPage,
-  errorComponent: ({ error, reset }) => <QueryError error={error} onRetry={reset} />,
+  errorComponent: ClipsError,
   notFoundComponent: () => <p>Pagina nu este disponibilă.</p>,
 });
+
+function ClipsError({ error }: { error: Error }) {
+  const router = useRouter();
+  return <QueryError error={error} onRetry={() => void router.invalidate()} />;
+}
 
 function ClipsPage() {
   const { page } = Route.useSearch();
@@ -31,7 +36,7 @@ function ClipsPage() {
   const pages = Math.max(1, Math.ceil(data.total / CLIPS_PAGE_SIZE));
   return <div className="space-y-6">
     <PageHeader title="Clipurile mele" />
-    <p className="text-sm text-muted-foreground">{data.total} clipuri</p>
+    <p className="text-sm text-muted-foreground">{data.total} {data.total === 1 ? "clip" : "clipuri"}</p>
     {data.items.length === 0 ? <EmptyState icon={Film} title="Niciun clip înregistrat" /> : <ul className="divide-y divide-border">
       {data.items.map((clip) => <li key={clip.id} className="grid min-w-0 gap-3 py-5 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
         <div className="min-w-0 space-y-1">
