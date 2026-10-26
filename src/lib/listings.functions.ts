@@ -204,9 +204,11 @@ export const getOwnerListings = createServerFn({ method: "GET" })
     const newToday = matches.filter((row) => (row.first_seen_at ?? "") >= todayStart).length;
     const pageIds = ordered.slice(from, from + PRIVATE_LISTINGS_PAGE_SIZE).map((row) => row.id);
     if (pageIds.length === 0) return { total: ordered.length, newToday, items: [] };
-    const { data: rows, error } = await context.supabase
+    const pageQuery = context.supabase
       .from("listings")
       .select(LISTING_COLUMNS)
+      .eq("is_owner", true);
+    const { data: rows, error } = await applyOwnerScope(pageQuery, data.scope)
       .in("id", pageIds);
     if (error) throw new Error("Anunțurile nu pot fi încărcate acum.");
     const byId = new Map((rows ?? []).map((row) => [(row as ListingRow).id, row as ListingRow]));
