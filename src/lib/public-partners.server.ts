@@ -43,7 +43,8 @@ export async function loadAgencyProfile(
 /** Pentru sitemap și llms.txt: `/agentii` apare doar dacă există cel puțin un partener. */
 export async function hasPublicPartners(): Promise<boolean> {
   try {
-    return (await loadPublicPartners()).length > 0;
+    const { publicRead } = await import("@/lib/public-read");
+    return (await publicRead("public_partner_agencies", loadPublicPartners, [])).length > 0;
   } catch {
     return false;
   }
