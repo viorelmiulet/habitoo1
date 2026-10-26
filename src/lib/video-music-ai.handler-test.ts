@@ -129,12 +129,12 @@ describe("generarea propriu-zisă", () => {
       title: "Pian calm",
       style: "Calm",
       artist: "Habitoo AI",
-    expect(calls.tracks[0]).not.toHaveProperty("description");
       license: "Generat AI – ACE-Step (fal.ai)",
       active: false,
       duration_sec: 60,
       position: 5,
     });
+    expect(calls.tracks[0]).not.toHaveProperty("description");
     expect(calls.usage).toHaveLength(1);
     expect(calls.usage[0]).toMatchObject({ provider: "fal", model: "ace-step", capability: "music", success: true, tokens_unknown: true });
     expect(calls.removed).toHaveLength(0);
