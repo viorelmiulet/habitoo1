@@ -56,5 +56,5 @@
 - AI music uses a server-only direct fal ACE-Step call (no queue, 110 s timeout), handler-scoped FAL_KEY, 30 successes/day, inactive tracks and failure cleanup; recoverable failures return safe-message DTOs and record stage codes in ai_usage_events.extra_info, never provider bodies; unexpected errors also record sanitized error_name/message. Why: preserve privacy and actionable production diagnostics.
 
 - Studio AI uses direct MiniMax images/Hailuo tasks and fal Kontext, private media and one terminal-updated usage event. Monthly reservations lock the agency before insertion; failed rows free slots, archived successes retain consumption; quotas use Romania months. SuperAdmin alone edits limits. Why: avoid duplicate usage, races and quota refunds via deletion.
-- Galleries share PhotoViewer; callers own order/index, nested dialogs stay isolated, offer photos stay public and complete. Why: consistent gestures without lost details.
-- List page sizes (15/50/100/200, URL `perPagina`, per-user per-list localStorage) come only from `src/lib/list-page-size.ts` + `ListPagination`; per-page lookups (covers, portal matrix) chunk IDs. Why: servers accept only allowed sizes and 200-row pages stay under the 1000-row read limit.
+- Galleries share PhotoViewer; callers own order/index; nested dialogs stay isolated. Why: consistent gestures.
+- List page sizes come only from `src/lib/list-page-size.ts` + `ListPagination`; per-page lookups chunk IDs. Why: allowed sizes only, under the 1000-row read limit.
