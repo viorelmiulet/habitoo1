@@ -32,7 +32,8 @@ import {
 } from "@/lib/listings.functions";
 import { type PrivateListingsSort } from "@/lib/private-listings";
 import { normalizeListPageSize, type ListPageSize } from "@/lib/list-page-size";
-import { ListPagination, PageRange, PageSizeSelect, useRememberedPageSize } from "@/components/app/ListPagination";
+import { ListPagination, PageRange, PageSizeSelect } from "@/components/app/ListPagination";
+import { useListState } from "@/hooks/use-list-state";
 import { useCurrentUser } from "@/hooks/use-session";
 import { geographyKey, localityScope } from "@/lib/private-listing-geography";
 
@@ -200,12 +201,12 @@ function PrivateListingsPage() {
       navigate({ search: (prev) => ({ ...prev, pagina: undefined, perPagina: size === 15 ? undefined : size }), replace: true }),
     [navigate],
   );
-  const rememberPageSize = useRememberedPageSize(
-    scope === "facebook" ? "map-facebook" : "map-habitoo",
-    currentUser ? currentUser.userId : undefined,
-    search.perPagina,
-    applyPageSize,
-  );
+  const clearListState = useListState({
+    list: scope === "facebook" ? "map-facebook" : "map-habitoo",
+    family: "map-last", userId: currentUser?.userId, search,
+    enabled: search.lista !== "argus",
+    apply: (saved) => { const parsed = searchSchema.safeParse(saved); if (parsed.success) void navigate({ search: parsed.data, replace: true, resetScroll: false }); },
+  });
 
   const [draft, setDraft] = useState<Draft>(() => draftFromSearch(search));
   const [extendedOpen, setExtendedOpen] = useState(false);
@@ -243,8 +244,10 @@ function PrivateListingsPage() {
       replace: true,
     });
 
-  const resetFilters = () =>
-    navigate({ search: { lista: search.lista, tab: search.tab, sortare: search.sortare, perPagina: search.perPagina }, replace: true });
+  const resetFilters = () => {
+    clearListState();
+    void navigate({ search: scope === "facebook" ? { lista: "facebook" } : {}, replace: true });
+  };
 
   // În tabul „Argus” lista Habitoo nu se încarcă deloc.
   const habitooTab = search.lista !== "argus";
@@ -333,7 +336,7 @@ function PrivateListingsPage() {
               }`}
               onClick={() =>
                 navigate({
-                  search: value ? { lista: value } : {},
+                  search: { lista: value || "habitoo" },
                   replace: true,
                 })
               }
@@ -546,7 +549,6 @@ function PrivateListingsPage() {
         <PageSizeSelect
           value={pageSize}
           onChange={(size) => {
-            rememberPageSize(size);
             void applyPageSize(size);
           }}
         />

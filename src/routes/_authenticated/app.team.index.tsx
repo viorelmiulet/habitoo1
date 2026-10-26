@@ -1,8 +1,8 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useMemo, useState } from "react";
-import { Mail, Phone, Search, UserPlus, Users } from "lucide-react";
+import { Mail, Phone, Search, UserPlus, Users, X } from "lucide-react";
 import { toast } from "@/components/ui/sonner";
 import { toastError } from "@/lib/errors";
 import { PageHeader } from "@/components/app/PageHeader";
@@ -24,13 +24,16 @@ import { useCurrentUser } from "@/hooks/use-session";
 import { UserAvatar } from "@/components/app/UserAvatar";
 import { roleLabels } from "@/lib/labels";
 import { getTeamOverview, inviteAgent, type TeamMember } from "@/lib/agency-team.functions";
+import { useFilterList } from "@/hooks/use-list-state";
+import { validateListSearch } from "@/lib/list-state";
 import { appHead } from "@/components/app/app-head";
 import { mobilePhoneSchema, normalizeRoMobile } from "@/lib/user-profile";
 import { TeamMemberActions, teamQueryKey } from "@/components/app/team/TeamMemberActions";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authenticated/app/team/")({
-  head: () => appHead("Habitoo CRM — agenți"),
+  head: () => { const title = "Habitoo CRM — agenți"; const description = "Echipa agenției, agenți activi, invitații și date de contact."; const head = appHead(title); return { ...head, meta: [...head.meta, { name: "description", content: description }, { property: "og:title", content: title }, { property: "og:description", content: description }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }] }; },
+  validateSearch: (search: Record<string, unknown>) => validateListSearch(teamListDefaults, search),
   component: TeamPage,
 });
 
@@ -44,6 +47,8 @@ const FILTERS: { key: Filter; label: string; match: (m: TeamMember) => boolean }
   { key: "nophone", label: "Fără telefon", match: (m) => normalizeRoMobile(m.phone) === null },
 ];
 
+const teamListDefaults = { query: "", filter: "all" as Filter };
+
 function TeamPage() {
   const { data: user } = useCurrentUser();
   const queryClient = useQueryClient();
@@ -51,8 +56,13 @@ function TeamPage() {
   const invite = useServerFn(inviteAgent);
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState({ email: "", full_name: "", phone: "" });
-  const [query, setQuery] = useState("");
-  const [filter, setFilter] = useState<Filter>("all");
+  const navigate = useNavigate({ from: Route.fullPath });
+  const persisted = useFilterList("team", user?.userId, teamListDefaults, Route.useSearch(),
+    (next) => { void navigate({ search: next, replace: true, resetScroll: false }); });
+  const query = persisted.state.query;
+  const setQuery = (value: string) => persisted.set("query", value);
+  const filter = persisted.state.filter;
+  const setFilter = (value: Filter) => persisted.set("filter", value);
   const isAdmin = user?.isAdmin ?? false;
 
   const { data, isLoading, error } = useQuery({
@@ -79,7 +89,8 @@ function TeamPage() {
   const members = data?.members ?? [];
   const visible = useMemo(() => {
     const q = query.trim().toLocaleLowerCase("ro");
-    const f = FILTERS.find((x) => x.key === filter)!;
+    const f = FILTERS.find((x) => x.key === filter) ?? FILTERS[0];
+    if (!f) return members;
     return members.filter(
       (m) =>
         f.match(m) &&
@@ -161,6 +172,7 @@ function TeamPage() {
 
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex flex-wrap gap-2" role="group" aria-label="Filtrează agenții">
+          <Button variant="ghost" size="sm" onClick={persisted.reset}><X className="size-4" /> Șterge filtre</Button>
           {FILTERS.map((f) => (
             <Button
               key={f.key}

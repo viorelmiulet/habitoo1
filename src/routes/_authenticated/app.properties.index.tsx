@@ -5,7 +5,7 @@ import { changePropertyStatus } from "@/lib/property-status.functions";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { DEFAULT_LIST_PAGE_SIZE, normalizeListPageSize, type ListPageSize } from "@/lib/list-page-size";
-import { ListPagination, PageRange, PageSizeSelect, useRememberedPageSize } from "@/components/app/ListPagination";
+import { ListPagination, PageRange, PageSizeSelect } from "@/components/app/ListPagination";
 import {
   ArchiveRestore,
   Trash2,
@@ -80,6 +80,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
+import { useListState } from "@/hooks/use-list-state";
 import { useCurrentUser } from "@/hooks/use-session";
 import { DeletePropertyDialog, canDeleteProperty } from "@/components/app/DeletePropertyDialog";
 import { useSavedViews } from "@/hooks/use-saved-views";
@@ -119,7 +120,7 @@ import type { BulkDraft } from "@/lib/portals/bulk";
 
 export const Route = createFileRoute("/_authenticated/app/properties/")({
   validateSearch: (search) => propertyListSearchSchema.parse(search),
-  head: () => appHead("Habitoo CRM — proprietăți"),
+  head: () => { const title = "Habitoo CRM — proprietăți"; const description = "Proprietățile agenției, filtre, paginare și publicare pe portaluri."; const head = appHead(title); return { ...head, meta: [...head.meta, { name: "description", content: description }, { property: "og:title", content: title }, { property: "og:description", content: description }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }] }; },
   component: PropertiesPage,
 });
 
@@ -222,11 +223,17 @@ function PropertiesPage() {
     },
     [navigate],
   );
-  const rememberPageSize = useRememberedPageSize("properties", user ? user.userId : undefined, search.perPagina, applyPageSize);
+  const clearListState = useListState({ list: "properties", userId: user?.userId, search,
+    apply: (saved) => { const parsed = propertyListSearchSchema.safeParse(saved); if (parsed.success) void navigate({ search: parsed.data, replace: true, resetScroll: false }); },
+  });
+  const resetFilters = () => {
+    if (!confirmDiscardDrafts()) return;
+    clearListState(); setSelected([]); setSearchInput("");
+    void navigate({ search: {}, replace: true });
+  };
   const changePageSize = (size: ListPageSize) => {
     if (!confirmDiscardDrafts()) return;
     setSelected([]);
-    rememberPageSize(size);
     applyPageSize(size);
   };
 
@@ -735,7 +742,7 @@ function PropertiesPage() {
       title="Nicio proprietate pentru filtrele curente"
       description="Renunță la unul dintre filtrele active sau resetează-le pe toate."
       action={
-        <Button size="sm" variant="outline" onClick={() => setFilters(emptyFilters)}>
+        <Button size="sm" variant="outline" onClick={resetFilters}>
           <X className="size-4" /> Resetează filtrele
         </Button>
       }
@@ -814,7 +821,7 @@ function PropertiesPage() {
               <span className="md:hidden">{filtersExpanded ? "Mai puține filtre" : `Mai multe filtre${hiddenPills.length ? ` (${hiddenPills.length})` : ""}`}</span>
               {filtersExpanded ? <ChevronUp aria-hidden /> : <ChevronDown aria-hidden />}
             </Button>
-            <Button variant="ghost" size="sm" onClick={() => setFilters(emptyFilters)}>
+            <Button variant="ghost" size="sm" onClick={resetFilters}>
               <X aria-hidden /> Resetează filtrele
             </Button>
           </div>
