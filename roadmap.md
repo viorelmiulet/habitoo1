@@ -1,5 +1,10 @@
 # SEO public — pasul 1a
 
+## Liste — păstrarea filtrelor
+- [ ] Stare persistentă per utilizator/listă, URL prioritar, resetare și MAP separat
+- [ ] Întoarcere din detalii și Back cu pagina și poziția păstrate
+- [ ] Teste și verificare în cont pe MAP și Proprietăți; inventar alte liste
+
 ## Studio AI — limite lunare pe agenție
 - [x] Limite 50/30/10 configurabile de SuperAdmin; rezervări atomice și lună România, fără numărarea eșecurilor; rezultatele șterse păstrează consumul
 - [x] Consum în Studio AI și mesaje de limită/resetare; consum real citit în cont desktop/telefon, fără generări reale
