@@ -1,5 +1,10 @@
 # SEO public — pasul 1a
 
+## Clipurile mele — muzică per clip
+- [ ] Înregistrarea fiecărui clip generat cu muzica folosită, fără publicare
+- [ ] Pagină privată pentru agent cu lista clipurilor și muzica aferentă
+- [ ] Teste de acces/înregistrare și verificare în cont
+
 ## AI pasul 1 — MiniMax principal, Gemini rezervă
 - [x] Furnizor MiniMax, istoric brut thinking/tool-use și poze base64
 - [x] Reluare pe Gemini a buclelor complete de citire/generare, numai după erori tranzitorii; aprobările rămân în afara reluării
