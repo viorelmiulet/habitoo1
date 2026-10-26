@@ -19,7 +19,8 @@ export function summarizePublicMarket(statistics: LlmsStatistics, observedAt: st
   return { date, total: statistics.market_active };
 }
 
-export function publicMarketText(statistics: LlmsStatistics, observedAt: string) {
+export function publicMarketText(statistics: LlmsStatistics | null, observedAt: string) {
+  if (!statistics) return "ACP folosește ofertele de piață active; cifrele actualizate nu sunt disponibile momentan.";
   const { date, total } = summarizePublicMarket(statistics, observedAt);
   return `La ${date}: ${total} oferte de piață active.`;
 }
