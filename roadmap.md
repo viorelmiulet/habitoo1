@@ -1,5 +1,12 @@
 # SEO public — pasul 1a
 
+# Meniul din stânga — Comisioane ca element separat
+
+- [x] „Comisioane" scos din grupul „Clienți" și pus ca element separat, fără titlu, imediat după grup
+- [x] Același drum /app/comisioane, aceeași iconiță, drepturi neschimbate (agent și administrator), titlu în breadcrumbs, pagina rămâne neindexabilă
+- [x] 8 teste (structură + meniu randat: agent/administrator × desfășurat/restrâns); build OK
+- [ ] Verificare în cont — autentificarea solicitantului în previzualizare este necesară (nu există cont asociat pentru sesiunea de test)
+
 ## Anunțuri particulari — MAP Habitoo / MAP Facebook / Argus
 - [x] Separare server pentru rezultate, totaluri, anunțuri noi și localizări
 - [x] Trei file cu iconițe, URL Facebook și întoarcere din detaliu; Argus neschimbat; iconița oficială de pe argus.me salvată
