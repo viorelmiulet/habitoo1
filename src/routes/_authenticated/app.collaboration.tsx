@@ -9,7 +9,7 @@
  * Datele vin exclusiv prin server functions cu proiecție de coloane sigure:
  * nu se expun proprietarul, notele interne sau agentul agenției sursă.
  */
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useMemo, useState } from "react";
@@ -59,10 +59,13 @@ import {
 import { PartnerOfferItem } from "@/components/app/PartnerOfferItem";
 import { PhotoViewer } from "@/components/app/PhotoViewer";
 import { PARTNER_OFFERS_PAGE_SIZE, nextPartnerOfferOffset, partnerOfferViewKey, parsePartnerOfferView, type PartnerOfferSort, type PartnerOfferView } from "@/lib/partner-offers";
+import { useFilterList } from "@/hooks/use-list-state";
+import { validateListSearch } from "@/lib/list-state";
 import { appHead } from "@/components/app/app-head";
 
 export const Route = createFileRoute("/_authenticated/app/collaboration")({
   head: () => appHead("Habitoo CRM — colaborare"),
+  validateSearch: (search: Record<string, unknown>) => validateListSearch(offerListDefaults, search),
   component: CollaborationPage,
 });
 
@@ -104,21 +107,26 @@ function num(value: string): number | null {
   return value.trim() && Number.isFinite(parsed) ? parsed : null;
 }
 
+const offerListDefaults = { ...emptyFilters, agencyId: "all", sort: "newest" as PartnerOfferSort, view: "cards" as PartnerOfferView, tab: "offers", batches: 1 };
+
 function CollaborationPage() {
   const { data: user } = useCurrentUser();
   const queryClient = useQueryClient();
-  const [agencyId, setAgencyId] = useState("all");
-  const [sort, setSort] = useState<PartnerOfferSort>("newest");
-  const [view, setView] = useState<PartnerOfferView>("cards");
-  useEffect(() => {
-    if (!user?.userId) return;
-    try { setView(parsePartnerOfferView(localStorage.getItem(partnerOfferViewKey(user.userId)))); } catch { setView("cards"); }
-  }, [user?.userId]);
-  const changeView = (next: PartnerOfferView) => {
-    setView(next);
-    if (user?.userId) { try { localStorage.setItem(partnerOfferViewKey(user.userId), next); } catch { /* preference remains for this visit */ } }
+  const urlSearch = Route.useSearch();
+  const navigate = useNavigate({ from: Route.fullPath });
+  const persisted = useFilterList("partner-offers", user?.userId, offerListDefaults, urlSearch,
+    (next) => { void navigate({ search: next, replace: true, resetScroll: false }); });
+  const filters: Filters = persisted.state;
+  const agencyId = persisted.state.agencyId;
+  const setAgencyId = (value: string) => { void navigate({ search: { ...urlSearch, agencyId: value, batches: 1 }, replace: true, resetScroll: false }); };
+  const sort = persisted.state.sort;
+  const setSort = (value: PartnerOfferSort) => { void navigate({ search: { ...urlSearch, sort: value, batches: 1 }, replace: true, resetScroll: false }); };
+  const view = persisted.state.view;
+  const changeView = (value: PartnerOfferView) => persisted.set("view", value);
+  const setFilters = (next: Filters | ((previous: Filters) => Filters)) => {
+    const value = typeof next === "function" ? next(filters) : next;
+    void navigate({ search: { ...urlSearch, ...value, batches: 1 }, replace: true, resetScroll: false });
   };
-  const [filters, setFilters] = useState<Filters>(emptyFilters);
   const [proposeFor, setProposeFor] = useState<CollaborationOffer | null>(null);
   const [detailOffer, setDetailOffer] = useState<CollaborationOffer | null>(null);
   const [threadId, setThreadId] = useState<string | null>(null);
@@ -156,6 +164,10 @@ function CollaborationPage() {
     getNextPageParam: (lastPage: { offers: CollaborationOffer[]; total: number }, pages: { offers: CollaborationOffer[]; total: number }[]) => nextPartnerOfferOffset(pages.reduce((n, p) => n + p.offers.length, 0), lastPage.total),
   });
 
+  useEffect(() => {
+    if (offers.hasNextPage && !offers.isFetching && (offers.data?.pages.length ?? 0) < persisted.state.batches) void offers.fetchNextPage();
+  }, [offers.data?.pages.length, offers.hasNextPage, offers.isFetching, persisted.state.batches]);
+
   const proposals = useQuery({
     queryKey: ["collab-proposals"],
     queryFn: () => fetchProposals(),
@@ -186,7 +198,7 @@ function CollaborationPage() {
         </div>
       ) : null}
 
-      <Tabs defaultValue={participating ? "offers" : "outgoing"}>
+      <Tabs value={participating ? persisted.state.tab : "outgoing"} onValueChange={(value) => persisted.set("tab", value)}>
         <TabsList className="flex-wrap">
           {participating ? (
             <TabsTrigger value="offers">Oferte partenere ({totalOffers})</TabsTrigger>
@@ -289,7 +301,7 @@ function CollaborationPage() {
               />
               <Button
                 variant="outline"
-                onClick={() => { setFilters(emptyFilters); setAgencyId("all"); }}
+                onClick={persisted.reset}
                 aria-label="Resetează filtrele"
               >
                 <X className="size-4" />
@@ -328,7 +340,7 @@ function CollaborationPage() {
               <ul className={view === "cards" ? "grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4" : "divide-y divide-border"}>
                 {allOffers.map((offer) => <PartnerOfferItem key={offer.id} offer={offer} view={view} onDetails={setDetailOffer} onPropose={setProposeFor} />)}
               </ul>
-              {offers.hasNextPage ? <div className="flex justify-center py-4"><Button variant="outline" disabled={offers.isFetchingNextPage} onClick={() => offers.fetchNextPage()}>{offers.isFetchingNextPage ? "Se încarcă…" : "Încarcă mai multe"}</Button></div> : null}
+              {offers.hasNextPage ? <div className="flex justify-center py-4"><Button variant="outline" disabled={offers.isFetchingNextPage} onClick={() => { persisted.set("batches", (offers.data?.pages.length ?? 1) + 1); void offers.fetchNextPage(); }}>{offers.isFetchingNextPage ? "Se încarcă…" : "Încarcă mai multe"}</Button></div> : null}
               {offers.isFetchNextPageError ? <p role="alert" className="text-center text-sm text-destructive">Nu am putut încărca următoarele oferte. Încearcă din nou.</p> : null}
             </>
           )}
