@@ -156,6 +156,8 @@ export async function generateAiMusicTrack(
     if (!audioRes?.ok) throw new AiMusicError("Fișierul generat nu a putut fi descărcat.");
     const contentType = audioRes.headers.get("content-type");
     const bytes = await audioRes.arrayBuffer();
+    const TOO_LARGE = "Piesa generată e prea mare. Alege o durată mai scurtă.";
+    if (bytes.byteLength > 30 * 1024 * 1024) throw new AiMusicError(TOO_LARGE);
 
     const id = crypto.randomUUID();
     const ext = audioExtension(contentType, audioUrl);
@@ -163,7 +165,10 @@ export async function generateAiMusicTrack(
     const upload = await args.db.storage
       .from(MUSIC_BUCKET)
       .upload(storagePath, new Blob([bytes], { type: contentType ?? "audio/wav" }), { contentType: contentType ?? "audio/wav" });
-    if (upload.error) throw new AiMusicError("Fișierul generat nu a putut fi salvat.");
+    if (upload.error) {
+      const msg = upload.error.message ?? "";
+      throw new AiMusicError(/size|large|413|exceed/i.test(msg) ? TOO_LARGE : "Fișierul generat nu a putut fi salvat.");
+    }
 
     const { data: last } = await args.db.from("video_music_tracks").select("position").order("position", { ascending: false }).limit(1);
     const position = (last?.[0]?.position ?? -1) + 1;
