@@ -184,3 +184,10 @@
 - [x] PDF cu perioadă, comparații, grafice și tabel pentru admin
 - [x] Teste automate, formule Excel recalculate fără erori și verificare vizuală PDF lună/custom fără suprapuneri
 - [ ] Verificarea descărcărilor în cont — solicitantul nu are cont asociat pentru sesiunea de test; necesită autentificarea în previzualizare
+
+## Muzică video generată cu AI (SuperAdmin)
+- [x] Migrația 0184: stil liber pe piese (1–120 caractere), organization_id opțional în jurnalul AI
+- [x] Generare fal.ai ACE-Step pe server (coadă → descărcare → stocare → rând inactiv), limită 30/zi, cost afișat, erori în română
+- [x] Buton „Generează cu AI” + formular în SuperAdmin → Muzică video; WAV acceptat la ascultare și mixare video
+- [x] 26 teste (8 handler cu răspunsuri simulate + 18 reguli pure); build OK
+- [ ] O generare reală de 15 s — așteaptă secretul FAL_KEY (Project Settings → Secrets)
