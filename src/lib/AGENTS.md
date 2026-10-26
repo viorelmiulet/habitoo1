@@ -1,4 +1,5 @@
 - Partner offers use authenticated, counted server pagination with global ordering and agency filtering before pagination; agency logos use private signed storage and display preferences are user-scoped. Why: flat views must include all eligible offers rather than sort/filter a truncated first batch; proposal flows remain unchanged.
+- Onboarding guides use a browser-safe registry, caller-RLS progress/settings and atomic claim RPCs; show actions are a fixed safe allowlist. Future inventory entries remain non-executable. Why: one-time cross-device onboarding without executing business mutations.
 - Partner-offer handler mocks run with `vitest.partner-offers.config.ts`. Why: isolate read-query tests from the application's server-function transport transform.
 - Private-listing handler mocks run with `vitest.private-listings.config.ts`. Why: test source filtering through the real handler without the server-function RPC transform.
 - MAP listing and geography queries share an explicit server-side source scope before counting and pagination, with scope-keyed browser caches. Why: prevent cross-tab rows and totals.

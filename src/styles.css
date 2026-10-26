@@ -55,6 +55,7 @@
    * Use as `z-(--z-floating)`.
    */
   --z-floating: 1100;
+  --z-guide: 1200;
   --radius-sm: 8px;
   --radius-md: var(--radius-control);
   --radius-lg: var(--radius-card);

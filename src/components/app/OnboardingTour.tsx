@@ -159,6 +159,14 @@ export function OnboardingTourProvider({ user, children, openMenu, closeMenu }: 
     observer.observe(cardRef.current); return () => observer.disconnect();
   }, [step]);
   useEffect(() => {
+    if (!active || viewport.width >= 768) return;
+    const main = document.getElementById("continut");
+    if (!main) return;
+    const previous = main.style.paddingBottom;
+    main.style.paddingBottom = `${cardHeight + viewport.height / 2}px`;
+    return () => { main.style.paddingBottom = previous; };
+  }, [active, cardHeight, viewport.height, viewport.width]);
+  useEffect(() => {
     if (step?.mode !== "do") return;
     const listener = (event: Event) => {
       const target = visibleTarget(step.selector);
@@ -223,7 +231,7 @@ export function OnboardingTourProvider({ user, children, openMenu, closeMenu }: 
         <details className="border-t border-border pt-3"><summary className="cursor-pointer text-sm font-semibold">Ghiduri pentru etapele următoare ({planned.length})</summary><div className="mt-3 space-y-4">{Array.from(new Set(planned.map((g) => g.group))).map((group) => <section key={group}><h3 className="text-sm font-semibold">{group}</h3><ul className="mt-2 space-y-2">{planned.filter((g) => g.group === group).map((g) => <li key={g.id} className="text-sm text-muted-foreground"><span>{g.title}</span><p className="text-xs">{g.trigger}</p></li>)}</ul></section>)}</div></details>
       </DialogContent>
     </Dialog>
-    {ready && step ? createPortal(<div className="pointer-events-none fixed inset-0 z-[120]">
+    {ready && step ? createPortal(<div className="pointer-events-none fixed inset-0 z-(--z-guide)">
       {rect ? <div className="guide-highlight absolute rounded-lg ring-2 ring-gold" style={{ top: rect.top-5, left: rect.left-5, width: rect.width+10, height: rect.height+10 }} /> : <div className="absolute inset-0 bg-sidebar/50" />}
       <div ref={cardRef} role="dialog" aria-label={step.title} aria-live="polite" data-guide={active?.id} data-guide-step={step.id} className={cn("pointer-events-auto fixed space-y-3 rounded-lg border border-border bg-card p-4 text-card-foreground shadow-xl", mobile && "max-h-[55dvh] overflow-y-auto")} style={mobile ? { bottom: 12, left, width } : { top, left, width }}>
         <div className="flex items-start gap-2"><div className="min-w-0 flex-1"><p className="text-xs font-semibold text-gold-dark">{active?.title} · {index+1}/{active?.steps.length}</p><h2 className="mt-1 text-base font-semibold">{step.title}</h2></div><Button variant="ghost" size="icon" className="size-8 shrink-0" aria-label="Închide ghidul" onClick={() => close(false)}><X className="size-4" /></Button></div>
