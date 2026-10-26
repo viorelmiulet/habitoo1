@@ -61,7 +61,7 @@ import { validateListSearch } from "@/lib/list-state";
 import { appHead } from "@/components/app/app-head";
 
 export const Route = createFileRoute("/_authenticated/app/leads")({
-  head: () => appHead("Habitoo CRM — lead-uri"),
+  head: () => { const title = "Habitoo CRM — lead-uri"; const description = "Pipeline de lead-uri al agenției, cu filtre pe agent, sursă, campanie și etapă."; const head = appHead(title); return { ...head, meta: [...head.meta, { name: "description", content: description }, { property: "og:title", content: title }, { property: "og:description", content: description }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }] }; },
   validateSearch: (search: Record<string, unknown>) => validateListSearch(leadListDefaults, search),
   component: LeadsPage,
 });

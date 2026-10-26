@@ -52,7 +52,7 @@ import { listingAgeDays } from "@/lib/market/listing-age";
 
 export const Route = createFileRoute("/_authenticated/app/acp/date-piata/")({
   validateSearch: (search: Record<string, unknown>) => validateListSearch(marketListDefaults, search),
-  head: () => appHead("Habitoo CRM — date de piață"),
+  head: () => { const title = "Habitoo CRM — date de piață"; const description = "Oferte de piață și filtre pentru analiza datelor, disponibile administratorului platformei."; const head = appHead(title); return { ...head, meta: [...head.meta, { name: "description", content: description }, { property: "og:title", content: title }, { property: "og:description", content: description }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }] }; },
   component: () => (
     <SuperadminGate>
       <MarketDataCenterPage />

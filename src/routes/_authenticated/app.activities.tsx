@@ -52,7 +52,7 @@ import { validateListSearch } from "@/lib/list-state";
 import { appHead } from "@/components/app/app-head";
 
 export const Route = createFileRoute("/_authenticated/app/activities")({
-  head: () => appHead("Habitoo CRM — activități"),
+  head: () => { const title = "Habitoo CRM — activități"; const description = "Activitățile agenției, programări și filtre pe responsabil, tip și perioadă."; const head = appHead(title); return { ...head, meta: [...head.meta, { name: "description", content: description }, { property: "og:title", content: title }, { property: "og:description", content: description }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }] }; },
   validateSearch: (search: Record<string, unknown>) => validateListSearch(activityListDefaults, search),
   component: ActivitiesPage,
 });

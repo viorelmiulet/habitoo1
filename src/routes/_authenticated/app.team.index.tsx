@@ -32,7 +32,7 @@ import { TeamMemberActions, teamQueryKey } from "@/components/app/team/TeamMembe
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authenticated/app/team/")({
-  head: () => appHead("Habitoo CRM — agenți"),
+  head: () => { const title = "Habitoo CRM — agenți"; const description = "Echipa agenției, agenți activi, invitații și date de contact."; const head = appHead(title); return { ...head, meta: [...head.meta, { name: "description", content: description }, { property: "og:title", content: title }, { property: "og:description", content: description }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }] }; },
   validateSearch: (search: Record<string, unknown>) => validateListSearch(teamListDefaults, search),
   component: TeamPage,
 });

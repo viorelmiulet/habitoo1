@@ -64,7 +64,7 @@ import { validateListSearch } from "@/lib/list-state";
 import { appHead } from "@/components/app/app-head";
 
 export const Route = createFileRoute("/_authenticated/app/collaboration")({
-  head: () => appHead("Habitoo CRM — colaborare"),
+  head: () => { const title = "Habitoo CRM — colaborare"; const description = "Oferte partenere între agenții, propuneri și discuții de colaborare."; const head = appHead(title); return { ...head, meta: [...head.meta, { name: "description", content: description }, { property: "og:title", content: title }, { property: "og:description", content: description }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }] }; },
   validateSearch: (search: Record<string, unknown>) => validateListSearch(offerListDefaults, search),
   component: CollaborationPage,
 });

@@ -120,7 +120,7 @@ import type { BulkDraft } from "@/lib/portals/bulk";
 
 export const Route = createFileRoute("/_authenticated/app/properties/")({
   validateSearch: (search) => propertyListSearchSchema.parse(search),
-  head: () => appHead("Habitoo CRM — proprietăți"),
+  head: () => { const title = "Habitoo CRM — proprietăți"; const description = "Proprietățile agenției, filtre, paginare și publicare pe portaluri."; const head = appHead(title); return { ...head, meta: [...head.meta, { name: "description", content: description }, { property: "og:title", content: title }, { property: "og:description", content: description }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }] }; },
   component: PropertiesPage,
 });
 
