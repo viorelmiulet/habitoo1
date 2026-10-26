@@ -1,6 +1,10 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { ArrowDown, ArrowUp, Download, Film, Music, Pause, Play, Share2, X } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
+import { Link } from "@tanstack/react-router";
+import { saveGeneratedClip } from "@/lib/generated-video-clips.functions";
+import type { ClipInput } from "@/lib/generated-video-clips";
 import { supabase } from "@/integrations/supabase/client";
 import { MUSIC_BUCKET, MUSIC_SIGNED_SECONDS, formatDuration, musicChoiceKey, parseMusicChoice, resolveMusicChoice, serializeMusicChoice, type MusicChoice, type MusicTrack } from "@/lib/video-music";
 import { canShareFiles } from "@/lib/share";
@@ -22,6 +26,19 @@ type Photo = { id: string; url: string; alt: string | null };
 
 export function PropertyVideoCard({ photos, listing, propertyId, shareText = "", initialFormat = "vertical", onResult }: { photos: Photo[]; listing: VideoListing; propertyId: string; shareText?: string; initialFormat?: VideoFormat; onResult?: (r: { blob: Blob; name: string; format: VideoFormat; musicTrackId: string | null; videoInfo: import("@/lib/meta/post-core").ReelVideoInfo | null }) => void }) {
   const logShare = useShareLogger(propertyId);
+  const saveClip = useServerFn(saveGeneratedClip);
+  const queryClient = useQueryClient();
+  const [pendingHistory, setPendingHistory] = useState<ClipInput | null>(null);
+  const [historySaving, setHistorySaving] = useState(false);
+  const persistHistory = async (input: ClipInput) => {
+    setHistorySaving(true);
+    try {
+      await saveClip({ data: input });
+      setPendingHistory(null);
+      void queryClient.invalidateQueries({ queryKey: ["generated-video-clips"] });
+    } catch { setPendingHistory(input); }
+    finally { setHistorySaving(false); }
+  };
   const { isEnabled } = useAiFeatures();
   const voiceEnabled = isEnabled("ai_video_voice");
   const [narration, setNarration] = useState<Blob | null>(null);
@@ -96,7 +113,7 @@ export function PropertyVideoCard({ photos, listing, propertyId, shareText = "",
   };
 
   const generate = async () => {
-    setError(null); setResult(null); setProgress(0);
+    setError(null); setResult(null); setPendingHistory(null); setProgress(0);
     const ctrl = new AbortController(); abortRef.current = ctrl;
     audioRef.current?.pause(); setPlaying(null);
     try {
@@ -116,6 +133,9 @@ export function PropertyVideoCard({ photos, listing, propertyId, shareText = "",
       setResult({ url: URL.createObjectURL(r.blob), name: videoFileName(listing.reference, format, r.ext), webm: r.ext === "webm", blob: r.blob });
       const videoInfo = await (await import("@/lib/meta/reel-video")).inspectReelVideo(r.blob).catch(() => null);
       onResult?.({ blob: r.blob, name: videoFileName(listing.reference, format, r.ext), format, musicTrackId: track?.id ?? null, videoInfo });
+      await persistHistory({ id: crypto.randomUUID(), propertyId, fileName: videoFileName(listing.reference, format, r.ext), format,
+        durationSec: plan.total, musicKind: track ? "track" : audio ? "own" : "none", musicTrackId: track?.id ?? null,
+        ownMusicName: choice.kind === "own" ? music?.name.slice(0, 200) : undefined });
     } catch (e) {
       if ((e as Error).name !== "AbortError") {
         setError((e as Error).message === "TRACK" ? "Piesa aleasă nu a putut fi încărcată. Încearcă din nou." : (e as Error).message === "UNSUPPORTED"
@@ -224,12 +244,14 @@ export function PropertyVideoCard({ photos, listing, propertyId, shareText = "",
         <Button type="button" onClick={generate} disabled={!supported || chosen.length === 0}><Film className="size-4" /> Generează video</Button>
       )}
       {error ? <p role="alert" className="text-sm text-destructive">{error}</p> : null}
+      {pendingHistory ? <div role="alert" className="space-y-2"><p className="text-sm text-destructive">Clipul este gata, dar nu a fost salvat în istoric.</p><Button variant="outline" disabled={historySaving} onClick={() => void persistHistory(pendingHistory)}>Reîncearcă salvarea</Button></div> : null}
 
       {result ? (
         <div className="space-y-3">
           {result.webm ? <p role="alert" className="text-sm text-destructive">Browserul a generat WebM. Instagram nu acceptă WebM; pentru MP4 folosește Chrome sau Edge pe calculator.</p> : null}
           <video src={result.url} controls playsInline className="max-h-[480px] w-full rounded-xl bg-muted object-contain" />
           <Button asChild variant="outline"><a href={result.url} download={result.name}><Download className="size-4" /> Descarcă video</a></Button>
+          <Button asChild variant="link"><Link to="/app/clipurile-mele" search={{ page: 1 }}>Clipurile mele</Link></Button>
           {phoneShare ? (
             <Button type="button" variant="outline" className="ml-2" onClick={() => void shareFilesFromPhone([new File([result.blob], result.name, { type: result.blob.type })], shareText, () => logShare("Distribuit din telefon"))}>
               <Share2 className="size-4" /> Distribuie video-ul

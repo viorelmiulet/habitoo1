@@ -4,14 +4,13 @@ import {
   buildYoutubeOAuthUrl,
   classifyYoutubeError,
   refreshYoutubeToken,
-  signYoutubeState,
   startResumableUpload,
-  verifyYoutubeState,
   youtubeDescription,
   youtubeTags,
   youtubeTitle,
   youtubeVideoResource,
 } from "./core";
+import { signYoutubeState, verifyYoutubeState } from "./state.server";
 
 const json = (b: unknown, status = 200, headers: Record<string, string> = {}) =>
   new Response(JSON.stringify(b), { status, headers });

@@ -19,7 +19,8 @@ export const Route = createFileRoute("/api/public/youtube/oauth/callback")({
         const secret = process.env["GOOGLE_YT_CLIENT_SECRET"];
         if (!secret) return back({ yt_error: "config" });
         const core = await import("@/lib/youtube/core");
-        const state = core.verifyYoutubeState(url.searchParams.get("state"), secret);
+        const { verifyYoutubeState } = await import("@/lib/youtube/state.server");
+        const state = verifyYoutubeState(url.searchParams.get("state"), secret);
         if (!state) return back({ yt_error: "invalid_state" });
 
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");

@@ -2,7 +2,6 @@
  * YouTube Data API v3 — părți pure și apeluri HTTP cu `fetch` injectabil (testabile fără rețea).
  * Nu conține secrete; secretul clientului se primește ca parametru doar pe server.
  */
-import { createHmac, randomBytes, timingSafeEqual } from "node:crypto";
 
 export const YT_CLIENT_ID = "541052839618-7751t7pajaglkh0mlmr5ln419i0jbpnv.apps.googleusercontent.com";
 export const YT_REDIRECT_URI = "https://crm.habitoo.ro/api/public/youtube/oauth/callback";
@@ -23,32 +22,6 @@ export const YT_PENDING_APPROVAL_MESSAGE = "Până la aprobarea Google, video-ur
 export type YtPrivacy = "public" | "unlisted" | "private";
 
 type Fetch = typeof fetch;
-
-export type YtState = { organizationId: string; userId: string; exp: number };
-
-export function signYoutubeState(input: { organizationId: string; userId: string }, secret: string, now = Date.now()): string {
-  const payload = Buffer.from(
-    JSON.stringify({ o: input.organizationId, u: input.userId, exp: now + YT_STATE_TTL_MS, n: randomBytes(8).toString("hex") }),
-  ).toString("base64url");
-  const sig = createHmac("sha256", `${secret}:yt-state`).update(payload).digest("base64url");
-  return `${payload}.${sig}`;
-}
-
-export function verifyYoutubeState(state: string | null | undefined, secret: string, now = Date.now()): YtState | null {
-  if (!state) return null;
-  const [payload, sig, extra] = state.split(".");
-  if (!payload || !sig || extra !== undefined) return null;
-  const expected = createHmac("sha256", `${secret}:yt-state`).update(payload).digest();
-  const got = Buffer.from(sig, "base64url");
-  if (got.length !== expected.length || !timingSafeEqual(got, expected)) return null;
-  try {
-    const p = JSON.parse(Buffer.from(payload, "base64url").toString("utf8")) as { o?: string; u?: string; exp?: number };
-    if (typeof p.o !== "string" || typeof p.u !== "string" || typeof p.exp !== "number" || p.exp < now) return null;
-    return { organizationId: p.o, userId: p.u, exp: p.exp };
-  } catch {
-    return null;
-  }
-}
 
 export function buildYoutubeOAuthUrl(state: string): string {
   const u = new URL("https://accounts.google.com/o/oauth2/v2/auth");

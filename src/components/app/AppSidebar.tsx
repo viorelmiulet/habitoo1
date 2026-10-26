@@ -44,6 +44,7 @@ import {
   Newspaper,
   Music2,
   Coins,
+  Film,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { initials } from "@/lib/format";
@@ -81,6 +82,7 @@ export const agencyNav: NavGroup[] = [
     items: [
       { label: "Proprietăți", to: "/app/properties", icon: Building2 },
       { label: "Adaugă proprietate", to: "/app/properties/new", icon: PlusCircle },
+      { label: "Clipurile mele", to: "/app/clipurile-mele", icon: Film },
     ],
   },
   {
