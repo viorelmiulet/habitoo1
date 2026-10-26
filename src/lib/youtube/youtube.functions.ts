@@ -66,7 +66,8 @@ export const startYoutubeConnect = createServerFn({ method: "POST" })
     const ctx = context as unknown as Ctx;
     const orgId = await requireAdminOrg(ctx);
     const { youtubeClientSecret } = await import("./youtube.server");
-    const { signYoutubeState, buildYoutubeOAuthUrl } = await import("./core");
+    const { buildYoutubeOAuthUrl } = await import("./core");
+    const { signYoutubeState } = await import("./state.server");
     return { url: buildYoutubeOAuthUrl(signYoutubeState({ organizationId: orgId, userId: ctx.userId }, youtubeClientSecret())) };
   });
 
