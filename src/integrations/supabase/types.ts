@@ -4973,6 +4973,67 @@ export type Database = {
           },
         ]
       }
+      onboarding_guide_progress: {
+        Row: {
+          completed_at: string | null
+          first_seen_at: string
+          guide_id: string
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string | null
+          first_seen_at?: string
+          guide_id: string
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          completed_at?: string | null
+          first_seen_at?: string
+          guide_id?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "onboarding_guide_progress_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      onboarding_guide_settings: {
+        Row: {
+          auto_start: boolean
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          auto_start?: boolean
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          auto_start?: boolean
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "onboarding_guide_settings_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       organization_ai_features: {
         Row: {
           enabled: boolean
@@ -9602,6 +9663,7 @@ export type Database = {
           isSetofReturn: true
         }
       }
+      claim_onboarding_guide: { Args: { p_guide_id: string }; Returns: boolean }
       claim_portal_bulk_property: {
         Args: { _job_id: string; _property_id: string; _ttl_seconds: number }
         Returns: {
@@ -9833,6 +9895,10 @@ export type Database = {
         Returns: undefined
       }
       ensure_superadmin_profile: { Args: { _user: string }; Returns: undefined }
+      finish_onboarding_guide: {
+        Args: { p_completed: boolean; p_guide_id: string }
+        Returns: undefined
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]

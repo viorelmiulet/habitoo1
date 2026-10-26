@@ -32,7 +32,7 @@ function DashboardPage() {
   return (
     <div className="space-y-8">
       <DashboardOverview organizationId={user.organization?.id} firstName={firstName} />
-      {user.role === "agent" ? <AgentDashboard /> : <ManagerDashboard />}
+      <div data-tour="dashboard-work">{user.role === "agent" ? <AgentDashboard /> : <ManagerDashboard />}</div>
     </div>
   );
 }

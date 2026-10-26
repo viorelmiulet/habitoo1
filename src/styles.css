@@ -55,6 +55,7 @@
    * Use as `z-(--z-floating)`.
    */
   --z-floating: 1100;
+  --z-guide: 1200;
   --radius-sm: 8px;
   --radius-md: var(--radius-control);
   --radius-lg: var(--radius-card);
@@ -124,7 +125,10 @@
   --shadow-soft: none;
   --shadow-raised: none;
   --shadow-float: none;
+  --shadow-guide-highlight: 0 0 0 9999px color-mix(in oklab, var(--sidebar) 55%, transparent);
 }
+
+.guide-highlight { box-shadow: var(--shadow-guide-highlight); }
 
 :root {
   --radius: 10px;

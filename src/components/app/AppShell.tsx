@@ -85,7 +85,7 @@ export function AppShell({
 
   return (
     <TooltipProvider delayDuration={150}>
-      <OnboardingTourProvider user={user}>
+      <OnboardingTourProvider user={user} openMenu={() => setMenuOpen(true)} closeMenu={() => setMenuOpen(false)}>
         <div className="min-h-screen bg-background">
           <a
             href="#continut"
@@ -106,6 +106,7 @@ export function AppShell({
           <Sheet open={menuOpen} onOpenChange={setMenuOpen}>
             <SheetContent
               side="left"
+              onInteractOutside={(event) => { if (document.querySelector('[data-guide="first-steps"]')) event.preventDefault(); }}
               className="w-[min(85vw,300px)] p-0"
               aria-describedby={undefined}
               overlayClassName="bg-sidebar/70"

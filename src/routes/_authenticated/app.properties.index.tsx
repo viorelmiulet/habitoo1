@@ -816,7 +816,7 @@ function PropertiesPage() {
             ))}
           </div>
           <div className="flex shrink-0 items-center gap-1 pb-1">
-            <Button variant="ghost" size="sm" onClick={toggleFiltersExpanded} aria-expanded={filtersExpanded}>
+            <Button data-tour="properties-filters-toggle" variant="ghost" size="sm" onClick={toggleFiltersExpanded} aria-expanded={filtersExpanded}>
               <span className="hidden md:inline">{filtersExpanded ? "Mai puține filtre" : "Mai multe filtre"}</span>
               <span className="md:hidden">{filtersExpanded ? "Mai puține filtre" : `Mai multe filtre${hiddenPills.length ? ` (${hiddenPills.length})` : ""}`}</span>
               {filtersExpanded ? <ChevronUp aria-hidden /> : <ChevronDown aria-hidden />}
@@ -1010,14 +1010,14 @@ function PropertiesPage() {
         ) : null}
       </div>
 
-      <div className="panel overflow-hidden">
+      <div data-tour="properties-results" className="panel overflow-hidden">
         <div className="flex flex-col justify-between gap-3 border-b border-border px-4 py-3 sm:flex-row sm:items-center">
           <div className="flex items-baseline gap-2">
             <span className="whitespace-nowrap font-semibold">{total} {total === 1 ? "proprietate" : "proprietăți"}</span>
             <span className="whitespace-nowrap text-sm text-muted-foreground"><PageRange page={page + 1} pageSize={PAGE_SIZE} total={total} /></span>
             {filtersActive ? <span className="text-sm text-muted-foreground">din {portfolioTotal} în portofoliu</span> : null}
           </div>
-          <div className="flex flex-wrap items-center gap-2">
+          <div data-tour="properties-order" className="flex flex-wrap items-center gap-2">
             <PageSizeSelect value={PAGE_SIZE} onChange={changePageSize} />
             <Select value={sort} onValueChange={(v) => setSort(v as SortKey)}>
               <SelectTrigger className="w-64"><span className="shrink-0 text-muted-foreground">Sortare:</span><SelectValue /></SelectTrigger>
@@ -1026,7 +1026,7 @@ function PropertiesPage() {
             <div className="grid grid-cols-3 overflow-hidden rounded-control border border-input bg-surface">
               <Button variant="ghost" aria-pressed={view === "list"} onClick={() => setView("list")} className={cn("rounded-none border-0 px-3", view === "list" && "bg-sidebar text-surface hover:bg-sidebar hover:text-surface")}><List aria-hidden /> Listă</Button>
               <Button variant="ghost" aria-pressed={view === "grid"} onClick={() => setView("grid")} className={cn("rounded-none border-0 px-3", view === "grid" && "bg-sidebar text-surface hover:bg-sidebar hover:text-surface")}><LayoutGrid aria-hidden /> Carduri</Button>
-              <Button variant="ghost" aria-pressed={view === "publish"} onClick={() => setView("publish")} className={cn("rounded-none border-0 px-3", view === "publish" && "bg-sidebar text-surface hover:bg-sidebar hover:text-surface")}><Send aria-hidden /> Publicare</Button>
+              <Button data-tour="properties-view-publish" variant="ghost" aria-pressed={view === "publish"} onClick={() => setView("publish")} className={cn("rounded-none border-0 px-3", view === "publish" && "bg-sidebar text-surface hover:bg-sidebar hover:text-surface")}><Send aria-hidden /> Publicare</Button>
             </div>
           </div>
         </div>

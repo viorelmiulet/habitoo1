@@ -1,5 +1,12 @@
 # SEO public — pasul 1a
 
+## Ghiduri interactive — etapa 1
+- [x] Fundație: progres per utilizator pe server, revendicare atomică între dispozitive, setare automată și bibliotecă filtrată după acces; inventarul viitor nu este executabil
+- [x] Trei ghiduri complete, pași interactivi siguri, panou telefon fără suprapunere inclusiv ultimul buton; fără mutații de proprietăți în teste
+- [x] Inventar grupat: 190 intrări viitoare plus trei disponibile, momente și acces, document și șase capturi în Files
+- [x] 31 teste trec: utilizatori noi agent/admin desktop/telefon simulați + DB izolată; flux complet real în contul conectat desktop/telefon, progres 3/3 recitit, fără repornire după reload și fără erori; build OK
+- [ ] Conturi noi reale agent și admin: sesiunea disponibilă este contul existent; nu s-au creat conturi sau schimbat roluri pentru verificare
+
 ## Fotografii pentru șase pagini publice
 - [x] Fotografii generate coerente și versiuni WebP/JPG optimizate
 - [x] Text stânga/foto dreapta, telefon sub text; OG unic, alte pagini neschimbate
