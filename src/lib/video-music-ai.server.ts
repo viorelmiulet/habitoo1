@@ -8,6 +8,7 @@ import {
   MUSIC_AI_ARTIST,
   MUSIC_AI_DAILY_LIMIT,
   MUSIC_AI_LICENSE,
+  buildAiMusicPrompt,
   validateAiMusicInput,
   type AiMusicInput,
 } from "@/lib/video-music-ai";
@@ -38,7 +39,7 @@ async function submitFal(apiKey: string, input: AiMusicInput, fetchFn: FetchFn):
     res = await fetchFn(FAL_SUBMIT_URL, {
       method: "POST",
       headers: { Authorization: `Key ${apiKey}`, "Content-Type": "application/json" },
-      body: JSON.stringify({ prompt: input.style.trim(), instrumental: true, duration: input.durationSec }),
+      body: JSON.stringify({ prompt: buildAiMusicPrompt(input), instrumental: true, duration: input.durationSec }),
     });
   } catch {
     throw new AiMusicError("Serviciul de generare nu a putut fi contactat. Încearcă din nou.");

@@ -7,16 +7,18 @@ import {
   estimateMusicAiCostUsd,
   formatMusicAiCost,
   validateAiMusicInput,
+  buildAiMusicPrompt,
 } from "./video-music-ai";
 
 describe("validateAiMusicInput", () => {
-  const ok = { title: "Pian calm", style: "pian calm, modern", durationSec: 60 };
+  const ok = { title: "Pian calm", style: "Calm", description: "pian calm, modern", durationSec: 60 };
   it("acceptă o cerere validă", () => {
     expect(validateAiMusicInput(ok)).toBeNull();
   });
   it("cere titlul și stilul", () => {
     expect(validateAiMusicInput({ ...ok, title: " " })).toMatch(/titlul/i);
     expect(validateAiMusicInput({ ...ok, style: "" })).toMatch(/stilul/i);
+    expect(validateAiMusicInput({ ...ok, style: "pian" })).toMatch(/stilul/i);
   });
   it("limitează durata la 15–120 de secunde", () => {
     expect(validateAiMusicInput({ ...ok, durationSec: MUSIC_AI_MIN_SECONDS })).toBeNull();
@@ -27,7 +29,7 @@ describe("validateAiMusicInput", () => {
   });
   it("respinge titluri și stiluri prea lungi", () => {
     expect(validateAiMusicInput({ ...ok, title: "x".repeat(121) })).toMatch(/120/);
-    expect(validateAiMusicInput({ ...ok, style: "x".repeat(121) })).toMatch(/120/);
+    expect(validateAiMusicInput({ ...ok, description: "x".repeat(301) })).toMatch(/300/);
   });
 });
 
@@ -41,5 +43,12 @@ describe("cost estimat", () => {
   });
   it("limita zilnică este 30", () => {
     expect(MUSIC_AI_DAILY_LIMIT).toBe(30);
+  });
+});
+
+describe("prompt și stil", () => {
+  it("promptul = stil + descriere; fără descriere doar stilul", () => {
+    expect(buildAiMusicPrompt({ title: "t", style: "Calm", description: " pian ", durationSec: 60 })).toBe("Calm, pian");
+    expect(buildAiMusicPrompt({ title: "t", style: "Lux", durationSec: 60 })).toBe("Lux");
   });
 });
