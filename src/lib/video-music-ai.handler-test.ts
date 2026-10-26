@@ -16,7 +16,11 @@ vi.mock("@/integrations/supabase/client.server", () => ({ supabaseAdmin: { marke
 vi.mock("@/lib/video-music-ai.server", () => ({ generateAiMusicTrack: mocks.core }));
 
 import { generateVideoMusic } from "./video-music-ai.functions";
-import { generateAiMusicTrack, type AiMusicDb } from "./video-music-ai.server";
+import type { AiMusicDb } from "./video-music-ai.server";
+
+// Modulul server e mimat pentru wrapper; testele de bază folosesc implementarea reală.
+const realServer = await vi.importActual<typeof import("./video-music-ai.server")>("./video-music-ai.server");
+const realGenerate = realServer.generateAiMusicTrack;
 
 const handler = generateVideoMusic as unknown as (args: { data: { title: string; style: string; durationSec: number }; context: unknown }) => Promise<unknown>;
 
