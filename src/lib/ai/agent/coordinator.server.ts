@@ -93,8 +93,8 @@ export async function runCoordinator(run: CoordinatorRun): Promise<CoordinatorRe
         latencyMs: Date.now() - modelStart,
         details: { step, toolCalls: result.toolCalls.length },
       });
-      inputTokens = result.inputTokens ?? inputTokens;
-      outputTokens = result.outputTokens ?? outputTokens;
+      inputTokens = result.inputTokens === null ? inputTokens : (inputTokens ?? 0) + result.inputTokens;
+      outputTokens = result.outputTokens === null ? outputTokens : (outputTokens ?? 0) + result.outputTokens;
 
       if (result.toolCalls.length === 0) {
         answer = result.text;
@@ -108,6 +108,11 @@ export async function runCoordinator(run: CoordinatorRun): Promise<CoordinatorRe
       for (const call of result.toolCalls) {
         if (toolCalls.length >= maxToolCalls) {
           warnings.push("Am oprit căutările suplimentare pentru a limita costul.");
+          if (result.rawAssistantContent) {
+            messages.push({ role: "tool_result", toolName: call.name, callId: call.id,
+              content: JSON.stringify({ ok: false, error: "Limita de instrumente a fost atinsă." }) });
+            continue;
+          }
           break;
         }
         // Habitoo decide, nu modelul.

@@ -48,9 +48,10 @@ export function isAiConfigured(): boolean {
 }
 
 /** Providerul activ sau `null` când secretul nu este configurat. */
-export function resolveAiProvider(): AIProvider | null {
+export function resolveAiProvider(scope: "internal" | "legacy" = "internal"): AIProvider | null {
   const key = process.env["GEMINI_API_KEY"];
   const fallback = key?.trim() ? createGeminiProvider(key.trim(), geminiModel()) : undefined;
+  if (scope === "legacy") return fallback ?? null;
   const miniMaxKey = process.env["MINIMAX_API_KEY"]?.trim();
   if (!miniMaxKey) return fallback ?? null;
   return { ...createMiniMaxProvider(miniMaxKey, process.env["MINIMAX_MODEL"]?.trim() || MINIMAX_DEFAULT_MODEL,

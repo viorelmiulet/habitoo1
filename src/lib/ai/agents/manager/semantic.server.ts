@@ -59,6 +59,7 @@ export async function routeManagerRequestSemantic(
   request: string,
   keyword: ManagerRouting,
   throwProviderErrors = false,
+  onUsage?: (input: number | null, output: number | null) => void,
 ): Promise<{ routing: ManagerRouting; semantic: boolean }> {
   // Capabilitățile indisponibile și cererile goale rămân decise determinist.
   if (!provider || keyword.intent === "unavailable" || request.trim() === "") {
@@ -77,6 +78,7 @@ export async function routeManagerRequestSemantic(
       tools: [],
       maxOutputTokens: 64,
     }));
+    onUsage?.(result.inputTokens, result.outputTokens);
     const intent = parseIntent(result.text ?? "");
     if (!intent) return { routing: keyword, semantic: false };
     const wantsMarketing =

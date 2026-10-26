@@ -77,8 +77,8 @@ export async function generateMarketingContent(
           tools: [],
         }),
       );
-      inputTokens = result.inputTokens ?? inputTokens;
-      outputTokens = result.outputTokens ?? outputTokens;
+      inputTokens = result.inputTokens === null ? inputTokens : (inputTokens ?? 0) + result.inputTokens;
+      outputTokens = result.outputTokens === null ? outputTokens : (outputTokens ?? 0) + result.outputTokens;
       input.tracer.record("model", `${input.provider.id}.marketing`, {
         details: { attempt, propertyId: input.facts.propertyId },
       });
