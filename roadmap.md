@@ -1,9 +1,9 @@
 # SEO public — pasul 1a
 
 ## Muzică AI — eșecuri în producție
-- [ ] Comparare previzualizare/producție și reproducere titlu „1”, Lux, 30 s, fără descriere
-- [ ] Coduri scurte nesensibile în ai_usage_events și mesaje specifice în română
-- [ ] Teste simulate și verificare finală; fără publicare automată
+- [x] Cererea reală „1”, Lux, 30 s fără descriere reușește prin helperul de previzualizare: submit 200, status 202/200, result/download 200, WAV 5.756.032 B; DB/stocare dublate, fără date reale salvate
+- [x] Coduri scurte nesensibile în extra_info.error_code și mesaje specifice serializabile; 16 teste handler + 8 pure trecute, build OK
+- [ ] Cauza exactă și reproducere autentificată în producție: evenimentele vechi nu au coduri, logurile nu au răspunsuri fal; sesiunea solicitantului nu poate fi emisă, accesul observabilitate externă expirat; nu s-a publicat
 
 ## AI pasul 4 — voce video MiniMax direct
 - [x] Verificare Get Voice cu cheia existentă: Wise_Woman și Deep_Voice_Man nu apar în lista de 332 voci de sistem
