@@ -21,20 +21,22 @@ export function useListState<T extends Record<string, unknown>>({ list, userId, 
     try {
       const firstEntry = active.current === "";
       const bareNavigation = !Object.keys(compactListSearch(location.search)).some((key) => key !== "lista") && previousSearch.current !== serialized;
-      const entering = active.current !== identity || (bareNavigation && !clearing.current);
+      const suppressRestore = clearing.current;
+      const entering = active.current !== identity || (bareNavigation && !suppressRestore);
       previousSearch.current = serialized;
-      clearing.current = false;
+      if (bareNavigation) clearing.current = false;
       active.current = identity;
       const explicit = Object.keys(compactListSearch(location.search)).some((key) => key !== "lista");
       let saved = readListState(localStorage, userId, list);
       if (firstEntry && !explicit && family && !location.search.lista) saved = readListState(localStorage, userId, family) ?? saved;
-      if (entering && saved) {
+      if (entering && saved && !suppressRestore) {
         if (!explicit || JSON.stringify(saved.search) === serialized) restoring.current = saved.scroll;
         if (!explicit && JSON.stringify(saved.search) !== serialized) {
           latest.current.apply(saved.search as T);
           return;
         }
       }
+      if (suppressRestore && !bareNavigation) return;
       const snapshot = { search: JSON.parse(serialized), scroll: restoring.current ?? window.scrollY };
       localStorage.setItem(identity, JSON.stringify(snapshot));
       if (family) localStorage.setItem(listStateKey(userId, family), JSON.stringify(snapshot));
@@ -58,7 +60,7 @@ export function useListState<T extends Record<string, unknown>>({ list, userId, 
   useEffect(() => {
     if (!userId || !enabled) return;
     const saveScroll = () => {
-      if (restoring.current !== null) return;
+      if (restoring.current !== null || clearing.current) return;
       try {
         const snapshot = { search: compactListSearch(latest.current.search), scroll: window.scrollY };
         localStorage.setItem(listStateKey(userId, list), JSON.stringify(snapshot));
