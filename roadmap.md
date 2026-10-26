@@ -1,5 +1,12 @@
 # SEO public — pasul 1a
 
+## AI pasul 1 — MiniMax principal, Gemini rezervă
+- [ ] Furnizor MiniMax, istoric brut thinking/tool-use și poze base64
+- [ ] Reluare integrală pe Gemini numai după erori tranzitorii, fără repetarea aprobărilor
+- [ ] Furnizor/model efectiv, tokeni și rezervă în utilizare; stările în Setări AI
+- [ ] Teste simulate și verificare aplicație
+- [ ] O singură cerere reală Habitoo AI — necesită MINIMAX_API_KEY și sesiune de cont
+
 # Meniul din stânga — Comisioane ca element separat
 
 - [x] „Comisioane" scos din grupul „Clienți" și pus ca element separat, fără titlu, imediat după grup
