@@ -117,7 +117,7 @@ const sleep = async () => {};
 describe("generarea propriu-zisă", () => {
   it("coadă → gata → descărcare → rând nou inactiv, cu eveniment de utilizare", async () => {
     const { db, calls } = fakeDb();
-    const result = await generateAiMusicTrack(
+    const result = await realGenerate(
       { apiKey: "k", input, userId: "u", organizationId: null, db },
       { fetchFn: falFetchSequence() as never, sleep },
     );
