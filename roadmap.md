@@ -1,5 +1,10 @@
 # SEO public — pasul 1a
 
+## Sursa Facebook — doar Anunțuri particulari
+- [ ] Acceptare în baza de date și endpoint, telefon anuntul/facebook, poze neschimbate
+- [ ] Filtru, URL, etichete și intercalare la final; link spre postare
+- [ ] Excludere din cifrele publice și ACP; teste fără date persistente în baza reală
+
 ## SEO pasul 4 — Colaborare între agenții
 - [x] Pagină publică SSR, FAQ și graful comun, fără cifre live
 - [x] Linkuri în subsol, Funcționalități, sitemap (26 octombrie) și generator llms.txt; fără meniul de sus

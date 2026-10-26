@@ -104,7 +104,7 @@ export function buildLlmsTxt(posts: DiscoverableBlogPost[], now: Date, hasPartne
   const blogLines = articles.length
     ? articles.map((post) => `- [${post.title}](${BLOG_SITE_URL}/blog/${post.slug}): ${post.excerpt.replace(/\s+/g, " ").trim()}`).join("\n")
     : "- Nu există încă articole publicate.";
-  const sources = statistics.owner_sources.filter((row) => row.count > 0);
+  const sources = statistics.owner_sources.filter((row) => row.count > 0 && row.source !== "facebook");
   const total = sources.reduce((sum, row) => sum + row.count, 0);
   const today = new Intl.DateTimeFormat("ro-RO", { day: "numeric", month: "long", year: "numeric", timeZone: "Europe/Bucharest" }).format(now);
   const portalLinks = INTEGRATION_PAGES.map((page) => `- [Integrare ${page.name}](${BLOG_SITE_URL}/integrari/${page.slug}): ${page.description}`).join("\n");

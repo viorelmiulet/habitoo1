@@ -2,6 +2,9 @@ import { describe, expect, it } from "vitest";
 import { privateListingsFiltersSchema } from "./listings.functions";
 
 describe("Anunțuri particulari — filtrul de sursă", () => {
+  it("acceptă sursa facebook", () => {
+    expect(privateListingsFiltersSchema.parse({ source: "facebook" })).toMatchObject({ source: "facebook" });
+  });
   it("acceptă sursa imoradar", () => {
     expect(privateListingsFiltersSchema.parse({ source: "imoradar" })).toMatchObject({ source: "imoradar" });
   });

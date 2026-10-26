@@ -40,6 +40,7 @@ const SOURCE_LABELS: Record<string, string> = {
   romimo: "Romimo",
   imoradar: "Imoradar24",
   anuntul: "Anuntul.ro",
+  facebook: "Facebook",
 };
 
 function money(value: number | null, currency: string | null) {
@@ -185,7 +186,7 @@ function ListingDetail({ listing }: { listing: OwnerListing }) {
               {listing.url ? (
                 <Button asChild>
                   <a href={listing.url} target="_blank" rel="noopener noreferrer">
-                    Anunțul original <ExternalLink className="size-4" />
+                    {listing.source === "facebook" ? "Vezi postarea pe Facebook" : "Anunțul original"} <ExternalLink className="size-4" />
                   </a>
                 </Button>
               ) : null}

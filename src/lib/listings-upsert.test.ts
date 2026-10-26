@@ -156,10 +156,16 @@ describe("import fără telefoane", () => {
     expect(row.description).toBe(description);
   });
 
-  it("păstrează telefonul primit doar pentru sursa anuntul", async () => {
+  it("păstrează telefonul primit pentru sursa anuntul", async () => {
     const { buildListingRow } = await import("@/routes/api/public/listings/upsert");
     const row = buildListingRow({ source: "anuntul", external_id: "a1", phone: "0744555666" });
     expect(row).toMatchObject({ source: "anuntul", external_id: "a1", phone: "0744555666" });
+  });
+
+  it("păstrează telefonul primit pentru sursa facebook", async () => {
+    const { buildListingRow } = await import("@/routes/api/public/listings/upsert");
+    expect(buildListingRow({ source: "facebook", external_id: "fb1", phone: "0744555666" }))
+      .toMatchObject({ source: "facebook", external_id: "fb1", phone: "0744555666" });
   });
 
   it("același anunț cu sursa storia rămâne fără telefon", async () => {
