@@ -1,8 +1,8 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
-import { FileSignature, Plus, Search } from "lucide-react";
+import { FileSignature, Plus, Search, X } from "lucide-react";
 import { PageHeader } from "@/components/app/PageHeader";
 import { ListSkeleton } from "@/components/app/LoadingState";
 import { EmptyState } from "@/components/app/EmptyState";
@@ -17,6 +17,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useFilterList } from "@/hooks/use-list-state";
+import { validateListSearch } from "@/lib/list-state";
+import { useCurrentUser } from "@/hooks/use-session";
 import { appHead } from "@/components/app/app-head";
 import { NewContractDialog } from "@/components/app/contracts/NewContractDialog";
 import { listContracts } from "@/lib/contracts.functions";
@@ -30,13 +33,22 @@ import { formatDateTime } from "@/lib/format";
 
 export const Route = createFileRoute("/_authenticated/app/contracts/")({
   head: () => appHead("Habitoo CRM — contracte și documente"),
+  validateSearch: (search: Record<string, unknown>) => validateListSearch(contractListDefaults, search),
   component: ContractsPage,
 });
 
+const contractListDefaults = { status: "all", search: "" };
+
 function ContractsPage() {
   const fetchContracts = useServerFn(listContracts);
-  const [status, setStatus] = useState("all");
-  const [search, setSearch] = useState("");
+  const { data: user } = useCurrentUser();
+  const navigate = useNavigate({ from: Route.fullPath });
+  const persisted = useFilterList("contracts", user?.userId, contractListDefaults, Route.useSearch(),
+    (next) => { void navigate({ search: next, replace: true, resetScroll: false }); });
+  const status = persisted.state.status;
+  const setStatus = (value: string) => persisted.set("status", value);
+  const search = persisted.state.search;
+  const setSearch = (value: string) => persisted.set("search", value);
   const [dialogOpen, setDialogOpen] = useState(false);
 
   const contracts = useQuery({
@@ -85,6 +97,7 @@ function ContractsPage() {
             ))}
           </SelectContent>
         </Select>
+        <Button variant="ghost" onClick={persisted.reset}><X className="size-4" /> Șterge filtre</Button>
       </div>
 
       <SectionCard title="Documente" flush>

@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import {
@@ -7,6 +7,7 @@ import {
   Database,
   Filter,
   ImageOff,
+  X,
   RefreshCw,
   ShieldAlert,
   Upload,
@@ -15,6 +16,9 @@ import { PageHeader } from "@/components/app/PageHeader";
 import { SectionCard } from "@/components/app/SectionCard";
 import { EmptyState } from "@/components/app/EmptyState";
 import { CardGridSkeleton } from "@/components/app/LoadingState";
+import { useFilterList } from "@/hooks/use-list-state";
+import { validateListSearch } from "@/lib/list-state";
+import { useCurrentUser } from "@/hooks/use-session";
 import { appHead } from "@/components/app/app-head";
 import { SuperadminGate } from "@/components/app/SuperadminGate";
 import { Button } from "@/components/ui/button";
@@ -47,6 +51,7 @@ import { MarketIntelligenceCard } from "@/components/app/MarketIntelligenceCard"
 import { listingAgeDays } from "@/lib/market/listing-age";
 
 export const Route = createFileRoute("/_authenticated/app/acp/date-piata/")({
+  validateSearch: (search: Record<string, unknown>) => validateListSearch(marketListDefaults, search),
   head: () => appHead("Habitoo CRM — date de piață"),
   component: () => (
     <SuperadminGate>
@@ -82,17 +87,7 @@ function StatCard({ label, value, hint }: { label: string; value: string; hint?:
   );
 }
 
-function MarketDataCenterPage() {
-  const queryClient = useQueryClient();
-  const overviewFn = useServerFn(getMarketOverview);
-  const listFn = useServerFn(listMarketListings);
-  const importFn = useServerFn(importMarketListings);
-  const syncFn = useServerFn(syncMarketSource);
-  const testFn = useServerFn(testMarketSourceConnection);
-  const reviewsFn = useServerFn(listDedupeReviews);
-  const resolveFn = useServerFn(resolveDedupeReview);
-
-  const [filters, setFilters] = useState({
+const marketListDefaults = { 
     source: "all",
     city: "",
     sector: "",
@@ -108,8 +103,30 @@ function MarketDataCenterPage() {
     rooms: "",
     daysOnMarketMin: "",
     daysOnMarketMax: "",
-  });
-  const [page, setPage] = useState(1);
+ page: 1 };
+
+function MarketDataCenterPage() {
+  const queryClient = useQueryClient();
+  const overviewFn = useServerFn(getMarketOverview);
+  const listFn = useServerFn(listMarketListings);
+  const importFn = useServerFn(importMarketListings);
+  const syncFn = useServerFn(syncMarketSource);
+  const testFn = useServerFn(testMarketSourceConnection);
+  const reviewsFn = useServerFn(listDedupeReviews);
+  const resolveFn = useServerFn(resolveDedupeReview);
+
+  const { data: user } = useCurrentUser();
+  const navigate = useNavigate({ from: Route.fullPath });
+  const urlSearch = Route.useSearch();
+  const persisted = useFilterList("market-data", user?.userId, marketListDefaults, urlSearch,
+    (next) => { void navigate({ search: next, replace: true, resetScroll: false }); });
+  const filters = persisted.state;
+  const setFilters = (next: typeof filters | ((previous: typeof filters) => typeof filters)) => {
+    const value = typeof next === "function" ? next(filters) : next;
+    void navigate({ search: { ...urlSearch, ...value, page: 1 }, replace: true, resetScroll: false });
+  };
+  const page = Math.max(1, persisted.state.page);
+  const setPage = (value: number | ((previous: number) => number)) => persisted.set("page", value);
 
   const [importSource, setImportSource] = useState(MARKET_SOURCES[0]?.id ?? "habitoo_internal");
   const [importFormat, setImportFormat] = useState<"json" | "csv">("json");
@@ -501,6 +518,7 @@ function MarketDataCenterPage() {
       ) : null}
 
       <SectionCard title="Ofertele de piață" icon={Filter}>
+        <Button variant="ghost" size="sm" onClick={persisted.reset}><X className="size-4" /> Șterge filtre</Button>
         <div className="grid gap-3 md:grid-cols-3 xl:grid-cols-6">
           <div className="space-y-1">
             <Label className="text-xs">Sursă</Label>

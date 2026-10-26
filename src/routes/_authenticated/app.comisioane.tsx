@@ -2,7 +2,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
 import { z } from "zod";
-import { Lock, Pencil, Plus, Trash2 } from "lucide-react";
+import { Lock, Pencil, Plus, Trash2, X } from "lucide-react";
 import { toast } from "@/components/ui/sonner";
 import { toastError } from "@/lib/errors";
 import { PageHeader } from "@/components/app/PageHeader";
@@ -19,6 +19,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useCurrentUser } from "@/hooks/use-session";
 import { propertyTypeLabels, transactionLabels } from "@/lib/labels";
 import { formatMoney } from "@/lib/format";
+import { useFilterList } from "@/hooks/use-list-state";
+import { validateListSearch } from "@/lib/list-state";
 import { appHead } from "@/components/app/app-head";
 import {
   COMMISSION_CURRENCIES,
@@ -40,6 +42,7 @@ import { getRonEurRate } from "@/lib/commissions-rates.functions";
 import { resolveCommissionSaveRate } from "@/lib/commission-save-rate";
 
 const searchSchema = z.object({
+  from: z.string().optional(), to: z.string().optional(), agent: z.string().optional(), kind: z.string().optional(), ptype: z.string().optional(), status: z.string().optional(), tab: z.string().optional(),
   nou: z.coerce.boolean().optional(),
   proprietate: z.string().uuid().optional(),
   contract: z.string().uuid().optional(),
@@ -61,6 +64,8 @@ const statusTone: Record<string, "warning" | "success" | "neutral"> = {
 const PROPERTY_FIELDS =
   "id,reference,title,city,transaction_kind,property_type,owner_contact_id,price,sale_price,rent_price,currency,sale_currency,rent_currency,commission,assigned_to";
 
+const commissionListDefaults = { from: "", to: "", agent: ALL, kind: ALL, ptype: ALL, status: ALL, tab: "lista" };
+
 function CommissionsPage() {
   const search = Route.useSearch();
   const navigate = useNavigate();
@@ -70,13 +75,17 @@ function CommissionsPage() {
   const userId = user?.userId ?? "";
   const isAdmin = user?.role === "agency_admin";
 
-  const [filters, setFilters] = useState({ from: "", to: "", agent: ALL, kind: ALL, ptype: ALL, status: ALL });
+  const persisted = useFilterList("commissions", user?.userId, commissionListDefaults, search,
+    (next) => { void navigate({ to: "/app/comisioane", search: next, replace: true, resetScroll: false }); });
+  const filters = persisted.state;
+  const setFilters = (value: typeof filters) => { void navigate({ to: "/app/comisioane", search: { ...search, ...value }, replace: true, resetScroll: false }); };
   const [open, setOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState<CommissionForm>(() => emptyCommissionForm(""));
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [currency, setCurrency] = useState<DisplayCurrency>("EUR");
-  const [tab, setTab] = useState<"lista" | "rapoarte">("lista");
+  const tab = persisted.state.tab;
+  const setTab = (value: "lista" | "rapoarte") => persisted.set("tab", value);
 
   const refs = useQuery({
     queryKey: ["commission-refs", orgId],
@@ -250,6 +259,7 @@ function CommissionsPage() {
       </div>
 
       <div className="flex flex-wrap items-center justify-between gap-3">
+        <Button variant="ghost" size="sm" onClick={persisted.reset}><X className="size-4" /> Șterge filtre</Button>
         <CommissionCurrencySelect value={currency} onChange={setCurrency} />
         <CommissionExportButton prepare={prepareExport} disabled={list.isFetching || !!list.error || !orgId} />
       </div>

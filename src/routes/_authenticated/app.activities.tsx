@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import {
@@ -9,6 +9,7 @@ import {
   Home,
   CheckCircle2,
   XCircle,
+  X,
   Trash2,
   Pencil,
 } from "lucide-react";
@@ -46,12 +47,13 @@ import { formatDateTime } from "@/lib/format";
 import { activityKindLabels } from "@/lib/labels";
 import { activityStatusLabels, activityStatusTone, downloadCsv, logAudit } from "@/lib/crm";
 import type { Tables } from "@/integrations/supabase/types";
+import { useFilterList } from "@/hooks/use-list-state";
+import { validateListSearch } from "@/lib/list-state";
 import { appHead } from "@/components/app/app-head";
 
 export const Route = createFileRoute("/_authenticated/app/activities")({
   head: () => appHead("Habitoo CRM — activități"),
-  validateSearch: (search: Record<string, unknown>): { new?: boolean } =>
-    search["new"] === true || search["new"] === "true" ? { new: true } : {},
+  validateSearch: (search: Record<string, unknown>) => validateListSearch(activityListDefaults, search),
   component: ActivitiesPage,
 });
 
@@ -98,19 +100,27 @@ function sameDayAsToday(day: string) {
   return new Date(day).toDateString() === new Date().toDateString();
 }
 
+const activityListDefaults = { status: "planned", kind: "all", agent: "all", period: "all", q: "" };
+
 function ActivitiesPage() {
   const { new: openNew } = Route.useSearch();
   const { data: user } = useCurrentUser();
   const orgId = user?.organization?.id;
   const queryClient = useQueryClient();
   const [dialogOpen, setDialogOpen] = useState(Boolean(openNew));
-  const [statusFilter, setStatusFilter] = useState<"planned" | "done" | "cancelled" | "all">(
-    "planned",
-  );
-  const [kindFilter, setKindFilter] = useState("all");
-  const [agentFilter, setAgentFilter] = useState("all");
-  const [periodFilter, setPeriodFilter] = useState<"today" | "week" | "overdue" | "all">("all");
-  const [searchInput, setSearchInput] = useState("");
+  const navigate = useNavigate({ from: Route.fullPath });
+  const persisted = useFilterList("activities", user?.userId, activityListDefaults, Route.useSearch(),
+    (next) => { void navigate({ search: next, replace: true, resetScroll: false }); });
+  const statusFilter = persisted.state.status;
+  const setStatusFilter = (value: string) => persisted.set("status", value);
+  const kindFilter = persisted.state.kind;
+  const setKindFilter = (value: string) => persisted.set("kind", value);
+  const agentFilter = persisted.state.agent;
+  const setAgentFilter = (value: string) => persisted.set("agent", value);
+  const periodFilter = persisted.state.period;
+  const setPeriodFilter = (value: string) => persisted.set("period", value);
+  const searchInput = persisted.state.q;
+  const setSearchInput = (value: string) => persisted.set("q", value);
   const search = useDebounced(searchInput);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [reschedule, setReschedule] = useState<Activity | null>(null);
@@ -474,6 +484,7 @@ function ActivitiesPage() {
             <SelectItem value="all">Toate</SelectItem>
           </SelectContent>
         </Select>
+        <Button variant="ghost" size="sm" onClick={persisted.reset}><X className="size-4" /> Șterge filtre</Button>
         <Select value={kindFilter} onValueChange={setKindFilter}>
           <SelectTrigger className="w-40">
             <SelectValue placeholder="Tip" />
