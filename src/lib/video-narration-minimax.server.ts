@@ -22,6 +22,7 @@ export async function generateMiniMaxNarration(text: string, voice: NarrationVoi
     if (!response.ok) throw new Error(FAILED);
     let payload: { base_resp?: { status_code?: number }; data?: { audio?: unknown }; extra_info?: { usage_characters?: unknown } };
     try { payload = await response.json(); } catch { throw new Error(FAILED); }
+    if (!payload || typeof payload !== "object") throw new Error(FAILED);
     const code = payload.base_resp?.status_code;
     if (code === 1002 && attempt === 0) continue;
     if (code !== 0) throw new Error(FAILED);
