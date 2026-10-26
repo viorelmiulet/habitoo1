@@ -91,7 +91,9 @@ function SuperadminMusicPage() {
     mutationFn: async () => {
       const err = validateAiMusicInput(aiForm);
       if (err) throw new Error(err);
-      return generateMusic({ data: { ...aiForm, style: aiForm.style as (typeof MUSIC_STYLES)[number] } });
+      const result = await generateMusic({ data: { ...aiForm, style: aiForm.style as (typeof MUSIC_STYLES)[number] } });
+      if (!result.ok) throw new Error(result.message);
+      return result.track;
     },
     onSuccess: () => {
       toast.success("Piesa a fost generată și adăugată inactivă în listă. Ascult-o și activeaz-o când ești mulțumit.");
