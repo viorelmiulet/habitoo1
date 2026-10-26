@@ -220,6 +220,21 @@ function SuperadminMusicPage() {
           <div className="flex justify-end"><Button onClick={saveEdit} disabled={update.isPending}>Salvează</Button></div>
         </DialogContent>
       </Dialog>
+
+      <Dialog open={aiOpen} onOpenChange={(v) => { if (!generateAi.isPending) setAiOpen(v); }}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Generează muzică cu AI</DialogTitle></DialogHeader>
+          <div className="grid gap-4">
+            <div className="space-y-1"><Label htmlFor="ai-title">Titlu</Label><Input id="ai-title" value={aiForm.title} maxLength={120} onChange={(e) => setAiForm({ ...aiForm, title: e.target.value })} /></div>
+            <div className="space-y-1"><Label htmlFor="ai-style">Stilul muzicii</Label><Textarea id="ai-style" value={aiForm.style} maxLength={120} rows={2} placeholder="ex. pian calm, modern, pentru prezentarea unui apartament" onChange={(e) => setAiForm({ ...aiForm, style: e.target.value })} /></div>
+            <div className="space-y-1"><Label htmlFor="ai-duration">Durata (secunde)</Label><Input id="ai-duration" type="number" min={MUSIC_AI_MIN_SECONDS} max={MUSIC_AI_MAX_SECONDS} value={aiForm.durationSec} onChange={(e) => setAiForm({ ...aiForm, durationSec: Number(e.target.value) })} /></div>
+            <p className="text-xs text-muted-foreground">
+              Muzica este întotdeauna instrumentală. Cost estimat: ≈ {formatMusicAiCost(aiForm.durationSec)} ({MUSIC_AI_COST_PER_SECOND_USD.toFixed(4).replace(".", ",")} $ pe secundă). Piesa apare inactivă în listă și o activezi după ce o asculți.
+            </p>
+          </div>
+          <div className="flex justify-end"><Button onClick={() => generateAi.mutate()} disabled={generateAi.isPending}>{generateAi.isPending ? "Se generează… (poate dura un minut)" : "Generează"}</Button></div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
