@@ -503,6 +503,7 @@ export function AppSidebar({
       </div>
 
       <nav
+        data-tour="main-navigation"
         aria-label="Navigare principală"
         className="scrollbar-hidden flex-1 overflow-x-hidden overflow-y-auto px-2 pb-3"
       >
@@ -524,6 +525,7 @@ export function AppSidebar({
               <div key={title} className="mb-1">
                 <Button
                   type="button"
+                  data-tour={`group:${title}`}
                   variant="ghost"
                   data-nav-row
                   className={cn(

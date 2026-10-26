@@ -11,6 +11,7 @@ import { BrandLogo } from "@/components/brand/BrandLogo";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useOnboardingTour } from "@/components/app/OnboardingTour";
 import { cn } from "@/lib/utils";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import type { CurrentUser } from "@/hooks/use-session";
 
 export function Topbar({
@@ -84,21 +85,24 @@ export function Topbar({
         )}
 
         {tour.available ? (
-          <Tooltip>
-            <TooltipTrigger asChild>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
               <Button
                 variant="ghost"
                 size="sm"
                 className="gap-1.5"
-                onClick={tour.start}
-                aria-label="Pornește ghidul interactiv"
+                data-tour="guide-menu"
+                aria-label="Ghid"
               >
                 <Compass className="size-4" />
                 <span className="hidden sm:inline">Ghid</span>
               </Button>
-            </TooltipTrigger>
-            <TooltipContent>Tur ghidat al aplicației</TooltipContent>
-          </Tooltip>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem disabled={!tour.hasCurrent} onSelect={tour.start}>Repornește ghidul paginii</DropdownMenuItem>
+              <DropdownMenuItem onSelect={tour.openLibrary}>Toate ghidurile și setările</DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         ) : null}
 
         {isPlatform ? null : <SupportWidget />}

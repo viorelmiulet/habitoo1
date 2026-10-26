@@ -207,7 +207,7 @@ function NewPropertyPage() {
           </div>
         </FormSection>
 
-        <FormSection title="Informații generale">
+        <div data-tour="new-general"><FormSection title="Informații generale">
           <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-2">
               <Label>Status</Label>
@@ -244,7 +244,7 @@ function NewPropertyPage() {
           </div>
         </FormSection>
 
-        <FormSection title="Locație">
+        </div><div data-tour="new-location"><FormSection title="Locație">
           <div className="grid gap-4 md:grid-cols-2">
             <LocationPicker idPrefix="new" value={location} onChange={setLocation} />
             <div className="space-y-2">
@@ -276,7 +276,7 @@ function NewPropertyPage() {
           />
         </FormSection>
 
-        <FormSection title="Tranzacție și preț" description="Alege vânzare, închiriere sau ambele.">
+        </div><FormSection title="Tranzacție și preț" description="Alege vânzare, închiriere sau ambele.">
           <PropertyTransactionFields idPrefix="new" value={tx} onChange={setTx} />
 
           <div className="grid gap-4 md:grid-cols-3">
@@ -326,7 +326,7 @@ function NewPropertyPage() {
           >
             Renunță
           </Button>
-          <Button type="submit" disabled={create.isPending}>
+          <Button data-tour="new-save" type="submit" disabled={create.isPending}>
             {create.isPending ? "Se salvează…" : "Salvează proprietatea"}
           </Button>
         </div>

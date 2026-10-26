@@ -124,7 +124,10 @@
   --shadow-soft: none;
   --shadow-raised: none;
   --shadow-float: none;
+  --shadow-guide-highlight: 0 0 0 9999px color-mix(in oklab, var(--sidebar) 55%, transparent);
 }
+
+.guide-highlight { box-shadow: var(--shadow-guide-highlight); }
 
 :root {
   --radius: 10px;

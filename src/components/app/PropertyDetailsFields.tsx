@@ -234,7 +234,7 @@ export function PropertyDetailsFields({ idPrefix = "det", value, onChange }: Pro
     <div className="min-w-0 space-y-6">
     <Accordion type="multiple" className="w-full">
       <AccordionItem value="detalii">
-        <AccordionTrigger className="text-sm font-medium">Detalii</AccordionTrigger>
+        <AccordionTrigger data-tour={idPrefix === "new" ? "new-details" : undefined} className="text-sm font-medium">Detalii</AccordionTrigger>
         <AccordionContent className="space-y-6 pt-2">
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             <div className="space-y-2">

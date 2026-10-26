@@ -85,7 +85,7 @@ export function AppShell({
 
   return (
     <TooltipProvider delayDuration={150}>
-      <OnboardingTourProvider user={user}>
+      <OnboardingTourProvider user={user} openMenu={() => setMenuOpen(true)} closeMenu={() => setMenuOpen(false)}>
         <div className="min-h-screen bg-background">
           <a
             href="#continut"
