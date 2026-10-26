@@ -2953,6 +2953,85 @@ export type Database = {
         }
         Relationships: []
       }
+      generated_video_clips: {
+        Row: {
+          created_at: string
+          created_by: string
+          duration_sec: number
+          file_name: string
+          format: string
+          id: string
+          music_artist: string | null
+          music_kind: string
+          music_license: string | null
+          music_style: string | null
+          music_title: string | null
+          music_track_id: string | null
+          organization_id: string
+          property_id: string | null
+          property_reference: string | null
+          property_title: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          duration_sec: number
+          file_name: string
+          format: string
+          id: string
+          music_artist?: string | null
+          music_kind: string
+          music_license?: string | null
+          music_style?: string | null
+          music_title?: string | null
+          music_track_id?: string | null
+          organization_id: string
+          property_id?: string | null
+          property_reference?: string | null
+          property_title: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          duration_sec?: number
+          file_name?: string
+          format?: string
+          id?: string
+          music_artist?: string | null
+          music_kind?: string
+          music_license?: string | null
+          music_style?: string | null
+          music_title?: string | null
+          music_track_id?: string | null
+          organization_id?: string
+          property_id?: string | null
+          property_reference?: string | null
+          property_title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "generated_video_clips_music_track_id_fkey"
+            columns: ["music_track_id"]
+            isOneToOne: false
+            referencedRelation: "video_music_tracks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "generated_video_clips_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "generated_video_clips_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       geocode_postal_cache: {
         Row: {
           coord_key: string
