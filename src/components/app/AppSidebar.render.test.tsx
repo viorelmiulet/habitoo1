@@ -22,6 +22,7 @@ vi.mock("@/components/app/UserAvatar", () => ({ UserAvatar: () => null }));
 vi.mock("@/integrations/supabase/client", () => ({ supabase: { auth: {} } }));
 
 import { AppSidebar, agencyNavFor, type NavGroup } from "./AppSidebar";
+import { TooltipProvider } from "@/components/ui/tooltip";
 
 let root: ReturnType<typeof createRoot> | null = null;
 
