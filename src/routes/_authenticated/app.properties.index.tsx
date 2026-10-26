@@ -11,8 +11,6 @@ import {
   Trash2,
   Building2,
   ChevronDown,
-  ChevronLeft,
-  ChevronRight,
   ChevronUp,
   Download,
   ExternalLink,
