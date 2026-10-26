@@ -21,8 +21,8 @@ import {
 } from "./private-listing-geography";
 
 describe("filtre anunțuri particulari", () => {
-  it("pagina are 24 de anunțuri, afișate pe rânduri", () => {
-    expect(PRIVATE_LISTINGS_PAGE_SIZE).toBe(24);
+  it("pagina implicită are 15 anunțuri", () => {
+    expect(PRIVATE_LISTINGS_PAGE_SIZE).toBe(15);
   });
   it("sortările după preț și suprafață au o ordonare definită în baza de date", () => {
     expect(PRIVATE_LISTINGS_ORDER.price_asc).toEqual({ column: "price", ascending: true });
