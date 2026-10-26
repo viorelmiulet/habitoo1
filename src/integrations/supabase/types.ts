@@ -1064,7 +1064,7 @@ export type Database = {
           input_tokens: number | null
           latency_ms: number
           model: string
-          organization_id: string
+          organization_id: string | null
           output_tokens: number | null
           provider: string
           success: boolean
@@ -1080,7 +1080,7 @@ export type Database = {
           input_tokens?: number | null
           latency_ms?: number
           model: string
-          organization_id: string
+          organization_id?: string | null
           output_tokens?: number | null
           provider: string
           success?: boolean
@@ -1096,7 +1096,7 @@ export type Database = {
           input_tokens?: number | null
           latency_ms?: number
           model?: string
-          organization_id?: string
+          organization_id?: string | null
           output_tokens?: number | null
           provider?: string
           success?: boolean
