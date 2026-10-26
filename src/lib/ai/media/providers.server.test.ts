@@ -18,6 +18,10 @@ describe("Studio AI official provider contracts", () => {
     expect(JSON.parse(request.mock.calls[0][1].body)).toEqual({ model: "MiniMax-Hailuo-2.3-Fast", prompt: "Slow move", first_frame_image: "https://private.example/signed", resolution: "768P", duration: 6 });
     expect(request).toHaveBeenCalledTimes(1);
   });
+  it("upgrades HTTP image CDN links to HTTPS", async () => {
+    request.mockResolvedValue(ok({ base_resp: { status_code: 0 }, data: { image_urls: ["http://media.example/image.jpg"] } }));
+    expect((await startAiMediaPrediction({ kind: "marketing_image", prompt: "room", sourceUrl: null })).outputUrl).toBe("https://media.example/image.jpg");
+  });
   it.each(["Preparing", "Queueing", "Processing"])("queries %s once, without retrieving files", async status => {
     request.mockResolvedValue(ok({ base_resp: { status_code: 0 }, status }));
     expect((await readAiMediaPrediction("123")).status).toBe("running");

@@ -52,7 +52,12 @@ async function api(provider: "minimax" | "fal", path: string, body?: unknown): P
 }
 function outputUrl(value: unknown): string {
   if (typeof value === "string") {
-    try { if (new URL(value).protocol === "https:") return value; } catch { /* safe error below */ }
+    try {
+      const url = new URL(value);
+      // Some provider CDNs return HTTP links; fetch their HTTPS equivalent only.
+      if (url.protocol === "http:") url.protocol = "https:";
+      if (url.protocol === "https:") return url.href;
+    } catch { /* safe error below */ }
   }
   throw new MediaProviderError("output_missing", "Serviciul nu a returnat fișierul generat.");
 }
