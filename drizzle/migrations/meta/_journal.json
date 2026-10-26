@@ -1303,6 +1303,13 @@
       "when": 1793013596916,
       "tag": "0185_generated_clip_music_history",
       "breakpoints": true
+    },
+    {
+      "idx": 186,
+      "version": "7",
+      "when": 1793017571774,
+      "tag": "0186_video_narration_minimax_direct",
+      "breakpoints": true
     }
   ]
 }
