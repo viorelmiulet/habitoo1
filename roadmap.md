@@ -1,5 +1,11 @@
 # SEO public — pasul 1a
 
+## SEO pasul 4 — Colaborare între agenții
+- [x] Pagină publică SSR, FAQ și graful comun, fără cifre live
+- [x] Linkuri în subsol, Funcționalități, sitemap (26 octombrie) și generator llms.txt; fără meniul de sus
+- [x] Reguli verificate; teste trec, HTTP 200 fără JavaScript, un H1, cinci FAQ identice, sitemap, navigare și desktop/telefon fără depășire; build OK, fără publicare
+- [ ] Citire llms.txt prin HTTP — răspuns 500 la încărcarea datelor publice; linkul este verificat în generator
+
 ## SEO pasul 3 — Analiză comparativă de piață
 - [x] Pagină publică SSR cu agregate live, ponderi din configurația ACP și FAQ în graful comun
 - [x] Meniu public, Funcționalități, sitemap cu data de azi și llms.txt

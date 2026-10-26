@@ -15,6 +15,7 @@ import { Route as AccesContRouteImport } from './routes/acces-cont'
 import { Route as AgentiiRouteImport } from './routes/agentii'
 import { Route as AnalizaComparativaDePiataRouteImport } from './routes/analiza-comparativa-de-piata'
 import { Route as AnunturiProprietariRouteImport } from './routes/anunturi-proprietari'
+import { Route as ColaborareIntreAgentiiRouteImport } from './routes/colaborare-intre-agentii'
 import { Route as ConfidentialitateRouteImport } from './routes/confidentialitate'
 import { Route as ContactRouteImport } from './routes/contact'
 import { Route as DespreRouteImport } from './routes/despre'
@@ -196,6 +197,11 @@ const AnalizaComparativaDePiataRoute =
 const AnunturiProprietariRoute = AnunturiProprietariRouteImport.update({
   id: '/anunturi-proprietari',
   path: '/anunturi-proprietari',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ColaborareIntreAgentiiRoute = ColaborareIntreAgentiiRouteImport.update({
+  id: '/colaborare-intre-agentii',
+  path: '/colaborare-intre-agentii',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ConfidentialitateRoute = ConfidentialitateRouteImport.update({
@@ -1054,6 +1060,7 @@ export interface FileRoutesByFullPath {
   '/agentii': typeof AgentiiRouteWithChildren
   '/analiza-comparativa-de-piata': typeof AnalizaComparativaDePiataRoute
   '/anunturi-proprietari': typeof AnunturiProprietariRoute
+  '/colaborare-intre-agentii': typeof ColaborareIntreAgentiiRoute
   '/confidentialitate': typeof ConfidentialitateRoute
   '/contact': typeof ContactRoute
   '/despre': typeof DespreRoute
@@ -1212,6 +1219,7 @@ export interface FileRoutesByTo {
   '/acces-cont': typeof AccesContRoute
   '/analiza-comparativa-de-piata': typeof AnalizaComparativaDePiataRoute
   '/anunturi-proprietari': typeof AnunturiProprietariRoute
+  '/colaborare-intre-agentii': typeof ColaborareIntreAgentiiRoute
   '/confidentialitate': typeof ConfidentialitateRoute
   '/contact': typeof ContactRoute
   '/despre': typeof DespreRoute
@@ -1370,6 +1378,7 @@ export interface FileRoutesById {
   '/agentii': typeof AgentiiRouteWithChildren
   '/analiza-comparativa-de-piata': typeof AnalizaComparativaDePiataRoute
   '/anunturi-proprietari': typeof AnunturiProprietariRoute
+  '/colaborare-intre-agentii': typeof ColaborareIntreAgentiiRoute
   '/confidentialitate': typeof ConfidentialitateRoute
   '/contact': typeof ContactRoute
   '/despre': typeof DespreRoute
@@ -1531,6 +1540,7 @@ export interface FileRouteTypes {
     | '/agentii'
     | '/analiza-comparativa-de-piata'
     | '/anunturi-proprietari'
+    | '/colaborare-intre-agentii'
     | '/confidentialitate'
     | '/contact'
     | '/despre'
@@ -1689,6 +1699,7 @@ export interface FileRouteTypes {
     | '/acces-cont'
     | '/analiza-comparativa-de-piata'
     | '/anunturi-proprietari'
+    | '/colaborare-intre-agentii'
     | '/confidentialitate'
     | '/contact'
     | '/despre'
@@ -1846,6 +1857,7 @@ export interface FileRouteTypes {
     | '/agentii'
     | '/analiza-comparativa-de-piata'
     | '/anunturi-proprietari'
+    | '/colaborare-intre-agentii'
     | '/confidentialitate'
     | '/contact'
     | '/despre'
@@ -2007,6 +2019,7 @@ export interface RootRouteChildren {
   AgentiiRoute: typeof AgentiiRouteWithChildren
   AnalizaComparativaDePiataRoute: typeof AnalizaComparativaDePiataRoute
   AnunturiProprietariRoute: typeof AnunturiProprietariRoute
+  ColaborareIntreAgentiiRoute: typeof ColaborareIntreAgentiiRoute
   ConfidentialitateRoute: typeof ConfidentialitateRoute
   ContactRoute: typeof ContactRoute
   DespreRoute: typeof DespreRoute
@@ -2139,6 +2152,13 @@ declare module '@tanstack/react-router' {
       path: '/anunturi-proprietari'
       fullPath: '/anunturi-proprietari'
       preLoaderRoute: typeof AnunturiProprietariRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/colaborare-intre-agentii': {
+      id: '/colaborare-intre-agentii'
+      path: '/colaborare-intre-agentii'
+      fullPath: '/colaborare-intre-agentii'
+      preLoaderRoute: typeof ColaborareIntreAgentiiRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/confidentialitate': {
@@ -3453,6 +3473,7 @@ const rootRouteChildren: RootRouteChildren = {
   AgentiiRoute: AgentiiRouteWithChildren,
   AnalizaComparativaDePiataRoute: AnalizaComparativaDePiataRoute,
   AnunturiProprietariRoute: AnunturiProprietariRoute,
+  ColaborareIntreAgentiiRoute: ColaborareIntreAgentiiRoute,
   ConfidentialitateRoute: ConfidentialitateRoute,
   ContactRoute: ContactRoute,
   DespreRoute: DespreRoute,

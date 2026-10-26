@@ -6,6 +6,11 @@ import { INTEGRATION_PAGES } from "@/lib/portals/integration-pages";
 const base = { title: "Articol", excerpt: "Rezumat", updated_at: "2026-10-04T12:00:00.000Z" };
 
 describe("sitemap blog", () => {
+  it("keeps the collaboration page creation date on later sitemap requests", () => {
+    const xml = buildSitemapXml([], new Date("2026-11-01T12:00:00Z"));
+    const entries = [...xml.matchAll(/<url>\s*<loc>([^<]+)<\/loc>\s*(?:<lastmod>([^<]+)<\/lastmod>)?\s*<\/url>/g)];
+    expect(entries.find((row) => row[1] === "https://www.habitoo.ro/colaborare-intre-agentii")?.[2]).toBe("2026-10-26");
+  });
   it("keeps the public ACP creation date when the sitemap regenerates", () => {
     const xml = buildSitemapXml([], new Date("2026-11-01T12:00:00Z"));
     const entries = [...xml.matchAll(/<url>\s*<loc>([^<]+)<\/loc>\s*(?:<lastmod>([^<]+)<\/lastmod>)?\s*<\/url>/g)];
@@ -34,6 +39,10 @@ describe("llms public", () => {
   const now = new Date("2026-10-25T20:12:00Z");
   const stats = { owner_sources: [{ source: "storia", count: 388 }, { source: "anuntul", count: 620 }, { source: "olx", count: 0 }], market_active: 8056 };
   const build = (partners = false) => buildLlmsTxt([], now, partners, stats);
+  it("includes collaboration in the main public discovery links", () => {
+    const mainPages = build().split("## Pagini principale")[1]?.split("## Ce face Habitoo")[0];
+    expect(mainPages).toContain("https://www.habitoo.ro/colaborare-intre-agentii");
+  });
   it("sums positive owner sources and reads the active market count", () => {
     expect(build()).toContain("1008 anunțuri active de la proprietari, din 2 surse: Storia.ro (388), Anuntul.ro (620)");
     expect(build()).toContain("8056 oferte de piață active");
