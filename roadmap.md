@@ -191,3 +191,4 @@
 - [x] Buton „Generează cu AI” + formular în SuperAdmin → Muzică video; WAV acceptat la ascultare și mixare video
 - [x] 26 teste (8 handler cu răspunsuri simulate + 18 reguli pure); build OK
 - [x] O generare reală de 15 s cu FAL_KEY: piesa „Test AI Habitoo" (Calm, WAV ~2,9 MB) apare inactivă, se ascultă, eveniment fal/ace-step/music cu succes; lat ~9 s
+- [x] Reverificare reală după mărirea limitei de stocare: „Test AI Energic 60 secunde”, stil Energic, 60 s (~0,012 $), generată o singură dată; apare inactivă și redarea din listă este confirmată.
