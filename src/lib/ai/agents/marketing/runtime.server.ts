@@ -20,6 +20,8 @@ import {
 import { AiTracer, newTraceId } from "../../tracing/trace";
 import { writeTraceEvents } from "../../tracing/trace.server";
 import { writeAiUsage } from "../../usage/tracking.server";
+import { withAiProviderFallback } from "../../providers/fallback.server";
+import { safeAiProviderMessage } from "../../providers/types";
 import { validateAiRequestSize } from "../../usage/limits";
 import { AI_CONTEXT_VERSION } from "../../context/builder";
 import {
@@ -163,7 +165,7 @@ export async function runMarketingTurn(
   }
 
   const { resolveAiProvider } = await import("../../providers/registry.server");
-  const provider = resolveAiProvider();
+  let provider = resolveAiProvider();
   if (!provider) {
     return { status: "not_configured", run: null, message: "AI nu este configurat." };
   }
@@ -211,9 +213,15 @@ export async function runMarketingTurn(
   state = completeMarketingStep(state, "resolve_organization");
 
   const branding = await marketingBrandingFor(admin, actor);
+  let fallbackUsed = provider.id === "gemini";
+  let batch: { results: MarketingResult[]; failures: MarketingWorkflowState["failures"]; inputTokens: number | null; outputTokens: number | null };
+  try {
+    const completed = await withAiProviderFallback(provider, async selected => {
   const results: MarketingResult[] = [];
   const failures: MarketingWorkflowState["failures"] = [];
 
+  let inputTokens: number | null = null;
+  let outputTokens: number | null = null;
   for (const propertyId of propertyIds) {
     const context = await marketingContextFor(admin, actor, propertyId);
     if (!context.ok) {
@@ -226,7 +234,8 @@ export async function runMarketingTurn(
       "Proprietate";
 
     const generated = await generateMarketingContent({
-      provider,
+      provider: selected,
+      throwProviderErrors: true,
       tracer,
       facts: context.facts,
       channel: input.channel,
@@ -245,6 +254,8 @@ export async function runMarketingTurn(
       failures.push({ propertyId, message: generated.message });
       continue;
     }
+    if (generated.result.inputTokens !== null) inputTokens = (inputTokens ?? 0) + generated.result.inputTokens;
+    if (generated.result.outputTokens !== null) outputTokens = (outputTokens ?? 0) + generated.result.outputTokens;
     results.push({
       propertyId,
       propertyLabel: label,
@@ -258,22 +269,26 @@ export async function runMarketingTurn(
       missingData: context.missing,
       contextVersion: AI_CONTEXT_VERSION,
       contextHash: context.contextHash,
-      provider: provider.id,
-      model: provider.model,
+      provider: selected.id,
+      model: selected.model,
       draftId: null,
     });
-    if (generated.result.validation.status === "invalid") {
-      await logAiAudit({
-        organizationId: actor.organizationId,
-        actorId: actor.userId,
-        action: AI_AUDIT_ACTIONS.marketingValidationFailed,
-        details: {
-          runId: created.id,
-          propertyId,
-          issues: generated.result.validation.issues.length,
-        },
-      });
-    }
+  }
+  return { results, failures, inputTokens, outputTokens };
+    });
+    provider = completed.provider;
+    fallbackUsed = completed.fallbackUsed;
+    batch = completed.result;
+  } catch (error) {
+    batch = { results: [], failures: propertyIds.map(propertyId => ({ propertyId, message: safeAiProviderMessage(error) })), inputTokens: null, outputTokens: null };
+  }
+  const { results, failures } = batch;
+  for (const result of results) {
+    if (result.validationStatus === "invalid") await logAiAudit({
+      organizationId: actor.organizationId, actorId: actor.userId,
+      action: AI_AUDIT_ACTIONS.marketingValidationFailed,
+      details: { runId: created.id, propertyId: result.propertyId, issues: result.issues.length },
+    });
   }
 
   state = { ...state, results, failures };
@@ -289,8 +304,9 @@ export async function runMarketingTurn(
     provider: provider.id,
     model: provider.model,
     capability: "marketing_agent",
-    input_tokens: null,
-    output_tokens: null,
+    fallback_used: fallbackUsed,
+    input_tokens: batch.inputTokens,
+    output_tokens: batch.outputTokens,
     latency_ms: latencyMs,
     success: results.length > 0,
     tool_calls: propertyIds.length,

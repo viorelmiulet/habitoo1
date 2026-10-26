@@ -23,6 +23,8 @@ import { AiTracer, newTraceId } from "../../tracing/trace";
 import { writeTraceEvents } from "../../tracing/trace.server";
 import { validateAiRequestSize } from "../../usage/limits";
 import { writeAiUsage } from "../../usage/tracking.server";
+import { withAiProviderFallback } from "../../providers/fallback.server";
+import { safeAiProviderMessage } from "../../providers/types";
 import { classifyAiError } from "../../reliability/retry";
 import {
   MANAGER_AGENT_LABELS,
@@ -200,7 +202,7 @@ export async function runManagerTurn(
   }
 
   const { resolveAiProvider } = await import("../../providers/registry.server");
-  const provider = resolveAiProvider();
+  let provider = resolveAiProvider();
   if (!provider) {
     return { status: "not_configured", run: null, message: "AI nu este configurat." };
   }
@@ -220,7 +222,17 @@ export async function runManagerTurn(
   // Rutare: reguli deterministe + clasificare semantică (allowlist de intenții).
   const keywordRouting: ManagerRouting = routeManagerRequest(request);
   const { routeManagerRequestSemantic } = await import("./semantic.server");
-  const routed = await routeManagerRequestSemantic(provider, request, keywordRouting);
+  let fallbackUsed = provider.id === "gemini";
+  let routed;
+  try {
+    const completed = await withAiProviderFallback(provider, selected =>
+      routeManagerRequestSemantic(selected, request, keywordRouting, true));
+    provider = completed.provider;
+    fallbackUsed = completed.fallbackUsed;
+    routed = completed.result;
+  } catch (error) {
+    return { status: "failed", run: null, message: safeAiProviderMessage(error) };
+  }
   const routing: ManagerRouting = routed.routing;
   const traceId = newTraceId();
   const tracer = new AiTracer(traceId, {
@@ -292,6 +304,7 @@ export async function runManagerTurn(
     provider: provider.id,
     model: provider.model,
     capability: "manager_agent",
+    fallback_used: fallbackUsed,
     input_tokens: null,
     output_tokens: null,
     latency_ms: latencyMs,

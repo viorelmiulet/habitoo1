@@ -22,6 +22,8 @@ import {
 import { AiTracer, newTraceId } from "../../tracing/trace";
 import { writeTraceEvents } from "../../tracing/trace.server";
 import { writeAiUsage } from "../../usage/tracking.server";
+import { withAiProviderFallback } from "../../providers/fallback.server";
+import { safeAiProviderMessage } from "../../providers/types";
 import { validateAiRequestSize } from "../../usage/limits";
 import { buildAiContext } from "../../context/builder";
 import {
@@ -453,7 +455,7 @@ export async function runCrmTurn(
   if (!validation.ok) return { ...base, message: validation.message };
 
   const { resolveAiProvider } = await import("../../providers/registry.server");
-  const provider = resolveAiProvider();
+  let provider = resolveAiProvider();
   if (!provider) {
     return { ...base, status: "not_configured", message: "AI nu este configurat." };
   }
@@ -510,16 +512,35 @@ export async function runCrmTurn(
   state = { ...state, contextCategories: context.categories };
   state = completeCrmStep(state, "build_context");
 
-  const outcome = await runCrmAgent({
+  let fallbackUsed = provider.id === "gemini";
+  let proposalRequest: Awaited<ReturnType<typeof proposeCrmAction>> | null = null;
+  let outcome;
+  try {
+    const completed = await withAiProviderFallback(provider, async selected => {
+  const analysis = await runCrmAgent({
     actor,
-    provider,
+    provider: selected,
     context,
     filters: filters as unknown as Record<string, unknown>,
     question: input.question,
     history: [],
     tracer,
     conversationId: null,
+    throwProviderErrors: true,
   });
+      const proposal = analysis.failure === null && analysis.answer.trim() && requestsCrmAction(input.question)
+        ? await proposeCrmAction({ actor, provider: selected, context, question: input.question,
+            readSummary: analysis.toolCalls.map(call => `${call.name}: ${call.summary}`).join(" · "),
+            tracer, throwProviderErrors: true }) : null;
+      return { analysis, proposal };
+    });
+    outcome = completed.result.analysis;
+    proposalRequest = completed.result.proposal;
+    provider = completed.provider;
+    fallbackUsed = completed.fallbackUsed;
+  } catch (error) {
+    outcome = { answer: "", toolCalls: [], sources: [], warnings: [], inputTokens: null, outputTokens: null, failure: safeAiProviderMessage(error) };
+  }
   state = {
     ...state,
     readSummary:
@@ -537,6 +558,7 @@ export async function runCrmTurn(
     provider: provider.id,
     model: provider.model,
     capability: "crm_agent",
+    fallback_used: fallbackUsed,
     input_tokens: outcome.inputTokens,
     output_tokens: outcome.outputTokens,
     latency_ms: latencyMs,
@@ -572,15 +594,7 @@ export async function runCrmTurn(
   // Propunere de acțiune doar când utilizatorul a cerut explicit o modificare.
   let proposalMessage: string | null = null;
   if (requestsCrmAction(input.question)) {
-    const proposalRequest = await proposeCrmAction({
-      actor,
-      provider,
-      context,
-      question: input.question,
-      readSummary: state.readSummary ?? "",
-      tracer,
-    });
-    if (proposalRequest.ok) {
+    if (proposalRequest?.ok) {
       const described = await describeProposal(
         admin,
         actor,
@@ -615,7 +629,7 @@ export async function runCrmTurn(
         proposalMessage = described.message;
       }
     } else {
-      proposalMessage = proposalRequest.message;
+      proposalMessage = proposalRequest?.message ?? null;
     }
   }
 
