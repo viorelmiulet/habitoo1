@@ -127,8 +127,9 @@ describe("generarea propriu-zisă", () => {
     expect(calls.tracks).toHaveLength(1);
     expect(calls.tracks[0]).toMatchObject({
       title: "Pian calm",
-      style: "Calm", description: "pian calm, modern",
+      style: "Calm",
       artist: "Habitoo AI",
+    expect(calls.tracks[0]).not.toHaveProperty("description");
       license: "Generat AI – ACE-Step (fal.ai)",
       active: false,
       duration_sec: 60,

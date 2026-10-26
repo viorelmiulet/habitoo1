@@ -8,6 +8,7 @@ import {
   MUSIC_AI_ARTIST,
   MUSIC_AI_DAILY_LIMIT,
   MUSIC_AI_LICENSE,
+  buildAiMusicPrompt,
   validateAiMusicInput,
   type AiMusicInput,
 } from "@/lib/video-music-ai";
