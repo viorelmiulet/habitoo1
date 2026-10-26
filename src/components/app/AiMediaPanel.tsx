@@ -87,7 +87,7 @@ export function AiMediaPanel() {
   const [uploading, setUploading] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const status = useQuery({ queryKey: ["ai-media-status"], queryFn: () => getAiMediaStatus() });
+  const status = useQuery({ queryKey: ["ai-media-status"], queryFn: () => getAiMediaStatus(), refetchInterval: 30_000 });
   const history = useQuery({ queryKey: ["ai-media"], queryFn: () => listAiMedia() });
   const items = history.data?.items ?? [];
   const running = useMemo(() => items.filter((i) => i.status === "running"), [items]);
@@ -96,14 +96,15 @@ export function AiMediaPanel() {
   useEffect(() => {
     if (running.length === 0) return;
     const timer = setInterval(() => {
-      void Promise.all(running.map((item) => refreshAiMedia({ data: { id: item.id } }))).then(() =>
-        queryClient.invalidateQueries({ queryKey: ["ai-media"] }),
-      );
+      void Promise.all(running.map((item) => refreshAiMedia({ data: { id: item.id } }))).then(() => {
+        void queryClient.invalidateQueries({ queryKey: ["ai-media"] });
+        void queryClient.invalidateQueries({ queryKey: ["ai-media-status"] });
+      });
     }, 6000);
     return () => clearInterval(timer);
   }, [running, queryClient]);
 
-  const active = KINDS.find((k) => k.kind === kind)!;
+  const active = KINDS.find((k) => k.kind === kind) ?? KINDS[0];
 
   const generate = useMutation({
     mutationFn: async () => {
@@ -126,6 +127,7 @@ export function AiMediaPanel() {
     },
     onSuccess: (result) => {
       setUploading(false);
+      void queryClient.invalidateQueries({ queryKey: ["ai-media-status"] });
       if (!result.ok) {
         toast.error(result.message);
         return;
@@ -159,6 +161,9 @@ export function AiMediaPanel() {
           <CardTitle className="flex items-center gap-2">
             <Sparkles className="size-4" /> Generare nouă
           </CardTitle>
+          {status.data?.monthlyUsage ? <p className="text-sm text-muted-foreground" aria-label="Consum Studio AI luna curentă">
+            Video {status.data.monthlyUsage.used.photo_video}/{status.data.monthlyUsage.limits.photo_video} · Imagini {status.data.monthlyUsage.used.marketing_image}/{status.data.monthlyUsage.limits.marketing_image} · Îmbunătățiri {status.data.monthlyUsage.used.photo_enhance}/{status.data.monthlyUsage.limits.photo_enhance}
+          </p> : null}
         </CardHeader>
         <CardContent className="space-y-4">
           {status.data && !status.data.configured ? (
@@ -300,7 +305,7 @@ export function AiMediaPanel() {
                       variant="ghost"
                       size="sm"
                       onClick={() => remove.mutate(item.id)}
-                      disabled={remove.isPending}
+                      disabled={remove.isPending || item.status === "running"}
                     >
                       <Trash2 className="mr-1.5 size-4" /> Șterge
                     </Button>

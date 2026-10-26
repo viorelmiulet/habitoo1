@@ -4,6 +4,7 @@ import { z } from "zod";
 
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { aiFeatureDisabledMessage, type AiFeatureKey } from "@/lib/ai/features/keys";
+import type { MediaMonthlyUsage } from "./quota";
 
 export const AI_MEDIA_BUCKET = "ai-media";
 const SIGNED_URL_TTL_SECONDS = 60 * 60;
@@ -87,9 +88,11 @@ export const getAiMediaStatus = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const resolved = await resolveMediaOrganization(context);
-    if ("message" in resolved) return { configured: false, featureEnabled: false };
+    if ("message" in resolved) return { configured: false, featureEnabled: false, monthlyUsage: null };
     const { mediaConfigured } = await import("@/lib/ai/media/providers.server");
-    return { configured: mediaConfigured(), featureEnabled: true };
+    const { data, error } = await context.supabase.rpc("ai_media_monthly_usage");
+    if (error) throw new Error("Consumul Studio AI nu a putut fi citit.");
+    return { configured: mediaConfigured(), featureEnabled: true, monthlyUsage: data as unknown as MediaMonthlyUsage };
   });
 
 /** Istoricul generărilor agenției (cele mai recente primele). */
@@ -101,6 +104,7 @@ export const listAiMedia = createServerFn({ method: "GET" })
     const { data, error } = await context.supabase
       .from("ai_media_generations")
       .select(ROW_COLUMNS)
+      .is("deleted_at", null)
       .order("created_at", { ascending: false })
       .limit(50);
     if (error) throw new Error(error.message);
@@ -187,10 +191,11 @@ export const deleteAiMedia = createServerFn({ method: "POST" })
     if ("message" in resolved) return { ok: true as const };
     const { data: row } = await context.supabase
       .from("ai_media_generations")
-      .select("id, output_url, source_url")
+      .select("id, output_url, source_url, status")
       .eq("id", data.id)
       .maybeSingle();
     if (!row) return { ok: true as const };
+    if (row.status === "running") throw new Error("Așteaptă finalizarea generării înainte de ștergere.");
     const paths = [row.output_url, row.source_url].filter((p): p is string => Boolean(p));
     if (paths.length > 0) {
       const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -198,7 +203,7 @@ export const deleteAiMedia = createServerFn({ method: "POST" })
     }
     const { error } = await context.supabase
       .from("ai_media_generations")
-      .delete()
+      .update({ deleted_at: new Date().toISOString(), output_url: null, source_url: null })
       .eq("id", data.id);
     if (error) throw new Error(error.message);
     return { ok: true as const };

@@ -23,6 +23,8 @@ import { AI_FEATURES, type AiFeatureKey } from "@/lib/ai/features/keys";
 import {
   listOrganizationAiFeatures,
   setOrganizationAiFeature,
+  setOrganizationMediaLimits,
+  type OrganizationAiFeatures,
 } from "@/lib/ai/features/features.functions";
 
 export const Route = createFileRoute("/_authenticated/superadmin/ai-features")({
@@ -159,6 +161,7 @@ function SuperadminAiFeaturesPage() {
                     </div>
                   );
                 })}
+                <MediaLimitsEditor org={org} />
               </CardContent>
             </Card>
           ))}
@@ -166,4 +169,29 @@ function SuperadminAiFeaturesPage() {
       )}
     </div>
   );
+}
+
+function MediaLimitsEditor({ org }: { org: OrganizationAiFeatures }) {
+  const [limits, setLimits] = useState(org.mediaLimits);
+  const save = useServerFn(setOrganizationMediaLimits);
+  const queryClient = useQueryClient();
+  const mutation = useMutation({
+    mutationFn: () => save({ data: { organizationId: org.organizationId, ...limits } }),
+    onSuccess: () => {
+      toast.success("Limitele Studio AI au fost salvate.");
+      void queryClient.invalidateQueries({ queryKey: ["superadmin", "ai-features"] });
+      void queryClient.invalidateQueries({ queryKey: ["ai-media-status"] });
+    },
+    onError: toastError,
+  });
+  return <div className="space-y-3 border-t border-border pt-4 sm:col-span-2">
+    <p className="text-sm font-semibold">Studio AI — limite lunare</p>
+    <div className="grid gap-3 sm:grid-cols-3">
+      {([['marketing_image', 'Imagini marketing'], ['photo_enhance', 'Îmbunătățiri poze'], ['photo_video', 'Video']] as const).map(([key, label]) => <div key={key} className="space-y-2">
+        <Label htmlFor={`${org.organizationId}-limit-${key}`}>{label}</Label>
+        <Input id={`${org.organizationId}-limit-${key}`} type="number" min={0} step={1} value={limits[key]} onChange={event => setLimits(previous => ({ ...previous, [key]: event.target.valueAsNumber }))} />
+      </div>)}
+    </div>
+    <Button variant="outline" disabled={mutation.isPending || Object.values(limits).some(value => !Number.isInteger(value) || value < 0)} onClick={() => mutation.mutate()}>Salvează limitele</Button>
+  </div>;
 }

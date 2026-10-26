@@ -8,6 +8,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { AI_FEATURE_KEYS, emptyAiFeatureMap, isAiFeatureKey, type AiFeatureMap } from "./keys";
+import type { MediaQuotaKind } from "../media/quota";
 
 /** Harta funcțiilor AI pentru agenția utilizatorului curent. */
 export const listMyAiFeatures = createServerFn({ method: "GET" })
@@ -27,6 +28,7 @@ export type OrganizationAiFeatures = {
   organizationId: string;
   organizationName: string;
   features: AiFeatureMap;
+  mediaLimits: Record<MediaQuotaKind, number>;
 };
 
 async function assertSuperadmin(context: { supabase: unknown; userId: string }) {
@@ -47,7 +49,7 @@ export const listOrganizationAiFeatures = createServerFn({ method: "GET" })
     await assertSuperadmin(context);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const [{ data: orgs }, { data: rows }] = await Promise.all([
-      supabaseAdmin.from("organizations").select("id,name").order("name", { ascending: true }),
+      supabaseAdmin.from("organizations").select("id,name,ai_media_image_limit,ai_media_enhance_limit,ai_media_video_limit").order("name", { ascending: true }),
       supabaseAdmin.from("organization_ai_features").select("organization_id,feature_key,enabled"),
     ]);
 
@@ -58,7 +60,7 @@ export const listOrganizationAiFeatures = createServerFn({ method: "GET" })
           features[row.feature_key] = row.enabled === true;
         }
       }
-      return { organizationId: org.id, organizationName: org.name, features };
+      return { organizationId: org.id, organizationName: org.name, features, mediaLimits: { marketing_image: org.ai_media_image_limit, photo_enhance: org.ai_media_enhance_limit, photo_video: org.ai_media_video_limit } };
     });
   });
 
@@ -100,6 +102,21 @@ export const setOrganizationAiFeature = createServerFn({ method: "POST" })
   });
 
 const aiEnabledSchema = z.object({ organizationId: z.string().uuid(), enabled: z.boolean() });
+
+export const setOrganizationMediaLimits = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) => z.object({ organizationId: z.string().uuid(), marketing_image: z.number().int().nonnegative(), photo_enhance: z.number().int().nonnegative(), photo_video: z.number().int().nonnegative() }).parse(input))
+  .handler(async ({ data, context }) => {
+    await assertSuperadmin(context);
+    const values = { ai_media_image_limit: data.marketing_image, ai_media_enhance_limit: data.photo_enhance, ai_media_video_limit: data.photo_video };
+    const { data: before, error: readError } = await context.supabase.from("organizations").select("ai_media_image_limit,ai_media_enhance_limit,ai_media_video_limit").eq("id", data.organizationId).single();
+    if (readError) throw new Error("Agenția nu a fost găsită.");
+    const { error } = await context.supabase.from("organizations").update(values).eq("id", data.organizationId);
+    if (error) throw new Error("Limitele Studio AI nu au putut fi salvate.");
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    await supabaseAdmin.from("audit_logs").insert({ organization_id: data.organizationId, actor_id: context.userId, action: "organization.ai_media_limits_changed", entity: "organizations", entity_id: data.organizationId, old_values: before, new_values: values });
+    return { ok: true as const };
+  });
 
 /** Comutatorul general „Funcții AI activate” pentru o agenție. Doar superadmin, cu audit. */
 export const setOrganizationAiEnabled = createServerFn({ method: "POST" })
