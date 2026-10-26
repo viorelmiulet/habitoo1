@@ -18,7 +18,7 @@
 - Public offers use display prices; billing/seats stay separate. Subscription requests follow src/lib/AGENTS.md. Why: one renewal flow.
 - Collaboration auto-activation lives only in the DB (insert trigger `properties_auto_collaboration`, RPC `collaboration_auto_activate`), copying the agency default commission only when none is explicit; `collaboration_opted_out` is never overridden. Why: one rule for all inserts.
 - `HomeHeader` only on homepage/blog; else `PublicHeader`. Why: isolate overlay.
-- Public photos use PublicPhotoHeading and a leaf asset registry; publicHead keeps the default cover elsewhere. Why: shared loading and previews.
+- Public photos share PublicPhotoHeading and a leaf asset registry; publicHead defaults elsewhere. Why: consistent loading/previews.
 - Public agency pages: `/agentii` and public logo reads use `public_partner_eligible`; `public_partner_agencies` returns a slug only for enabled profiles. `/agentii/$slug` remains opt-in via `public_agency_profile`/`public_agency_agents`; agent phone only with `public_show_phone`. Why: list eligibility is independent of optional profile/contact disclosure.
 - Social posters share a dialog-scoped decoded-image pool for thumbnails/PNG; styles/templates persist locally and latest blob stays in memory. Why: avoid duplicate downloads and use the same poster at every destination.
 
