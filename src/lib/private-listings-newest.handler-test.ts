@@ -88,7 +88,7 @@ function makeSupabase(rows: Row[]) {
           filtered = filtered.filter((r) => cell(r, col) !== null && cell(r, col) !== undefined && cmp(cell(r, col), val) <= 0);
           return query;
         },
-        order: (col: string, options?: { ascending?: boolean }) => { filtered = [...filtered].sort((a, b) => cmp(cell(a, col), cell(b, col)) * (options?.ascending === false ? -1 : 1)); return query; },
+        order: (col: string, options?: { ascending?: boolean }) => { if (options) filtered = [...filtered].sort((a, b) => cmp(cell(a, col), cell(b, col)) * (options.ascending === false ? -1 : 1)); return query; },
         range: async (from: number, to: number) => ({ data: filtered.slice(from, to + 1), count: filtered.length, error: null }),
         in: async (col: string, vals: string[]) => ({
           data: filtered.filter((r) => vals.includes(cell(r, col) as string)),

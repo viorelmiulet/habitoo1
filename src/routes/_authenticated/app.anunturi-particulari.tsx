@@ -11,7 +11,8 @@ import { ZonePickerDialog } from "@/components/app/ZonePickerDialog";
 import { ImportListingButton } from "@/components/app/ImportListingButton";
 import { ArgusTab } from "@/components/app/argus/ArgusTab";
 import { HabitooMapIcon } from "@/components/brand/HabitooMapIcon";
-import facebookAsset from "@/assets/facebook-official.svg.asset.json";
+import facebookAsset from "@/assets/facebook-brand.svg.asset.json";
+import argusAsset from "@/assets/argus-official.png.asset.json";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -319,7 +320,7 @@ function PrivateListingsPage() {
                 })
               }
             >
-              {value === "" ? <HabitooMapIcon /> : value === "facebook" ? <img src={facebookAsset.url} alt="" className="size-4 shrink-0" /> : <span aria-hidden="true" className="size-4 shrink-0" data-argus-logo-placeholder />}
+              {value === "" ? <HabitooMapIcon /> : <img src={value === "facebook" ? facebookAsset.url : argusAsset.url} alt="" className="size-4 shrink-0 object-contain" />}
               {label}
             </Button>
           );
