@@ -1,9 +1,10 @@
 # SEO public — pasul 1a
 
 ## Studio AI — MiniMax și fal
-- [ ] Verificare documentație oficială și înlocuire Replicate: imagine MiniMax, video MiniMax asincron, îmbunătățire fal direct
-- [ ] Consum ai_media și erori sigure; fără schimbări de interfață, tabel, bucket sau limite
-- [ ] Teste simulate și câte o generare reală în cont, rezultate și consum verificate
+- [x] Documentație oficială verificată; MiniMax image-01, Hailuo Fast 768P/6 s fără polling pe server și fal Kontext direct; Replicate eliminat
+- [x] Un eveniment ai_media per generare, actualizat la final; erori sigure; fără schimbări de interfață, tabel, bucket sau limite
+- [x] 28 teste trec; imagine, îmbunătățire și video reale succeeded în cont; usage success pentru fiecare; build OK. Două încercări inițiale de imagine eșuate (link HTTP și refresh concurent), cauze reparate și testate
+- [x] Imagini afișate după reîncărcare; video descărcat HTTP 200, H264 768×768, durată efectivă 5,875 s pentru cererea de 6 s; decodarea confirmată ffmpeg, redarea Chromium indisponibilă în mediul de test
 
 ## Muzică AI — eșecuri în producție
 - [x] Coada fal (submit + urmărire cu pauze setTimeout) înlocuită cu apel direct POST fal.run, timeout 110 s; fără node:*, Buffer sau pauze — compatibil cu runtime-ul de producție
