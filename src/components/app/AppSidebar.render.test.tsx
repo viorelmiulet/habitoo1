@@ -72,7 +72,9 @@ describe("meniul cu Comisioane ca element separat", () => {
         renderSidebar(agencyNavFor(isAdmin), collapsed);
         const groups = lists();
         const clientsIndex = groups.findIndex(
-          (items) => items.join("|") === "Contacte|Cereri|Lead-uri|Contracte",
+          (items) =>
+            items.join("|") ===
+            "nav:/app/contacts|nav:/app/requests|nav:/app/leads|nav:/app/contracts",
         );
         expect(clientsIndex).toBeGreaterThanOrEqual(0);
         expect(groups[clientsIndex + 1]).toEqual(["Comisioane"]);
