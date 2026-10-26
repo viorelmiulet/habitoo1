@@ -1,5 +1,10 @@
 # SEO public — pasul 1a
 
+## Muzică AI — eșecuri în producție
+- [ ] Comparare previzualizare/producție și reproducere titlu „1”, Lux, 30 s, fără descriere
+- [ ] Coduri scurte nesensibile în ai_usage_events și mesaje specifice în română
+- [ ] Teste simulate și verificare finală; fără publicare automată
+
 ## AI pasul 4 — voce video MiniMax direct
 - [x] Verificare Get Voice cu cheia existentă: Wise_Woman și Deep_Voice_Man nu apar în lista de 332 voci de sistem
 - [x] Trecere directă la speech-2.8-turbo, consum usage_characters și 32 teste simulate trecute; toate cele patru voci românești selectabile; Studio neschimbat
