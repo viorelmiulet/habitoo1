@@ -58,6 +58,7 @@ describe("parseGeminiResponse", () => {
 
 describe("configurarea providerului", () => {
   it("fără cheie nu există provider", async () => {
+    delete process.env["MINIMAX_API_KEY"];
     delete process.env["GEMINI_API_KEY"];
     vi.resetModules();
     const registry = await import("../providers/registry.server");
@@ -67,6 +68,7 @@ describe("configurarea providerului", () => {
   });
 
   it("cu cheie există provider, iar cheia nu apare în stare", async () => {
+    delete process.env["MINIMAX_API_KEY"];
     process.env["GEMINI_API_KEY"] = "test-key-123";
     vi.resetModules();
     const registry = await import("../providers/registry.server");
@@ -87,9 +89,8 @@ describe("mesaje sigure de eroare", () => {
 
 describe("regresie: model și buget de tokeni (Gemini 3)", () => {
   it("modelul implicit nu este cel retras pentru cheile noi", async () => {
-    const { GEMINI_DEFAULT_MODEL, GEMINI_MAX_OUTPUT_TOKENS, GEMINI_THINKING_LEVEL } = await import(
-      "../providers/gemini.server"
-    );
+    const { GEMINI_DEFAULT_MODEL, GEMINI_MAX_OUTPUT_TOKENS, GEMINI_THINKING_LEVEL } =
+      await import("../providers/gemini.server");
     expect(GEMINI_DEFAULT_MODEL).not.toBe("gemini-2.5-flash");
     expect(GEMINI_DEFAULT_MODEL).toMatch(/^gemini-/);
     // Bugetul acoperă și tokenii de raționament ai modelelor Gemini 3.

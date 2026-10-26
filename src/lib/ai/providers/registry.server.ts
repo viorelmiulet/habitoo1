@@ -7,8 +7,13 @@
  */
 import type { AIProvider } from "./types";
 import { createGeminiProvider, GEMINI_DEFAULT_MODEL } from "./gemini.server";
+import {
+  createMiniMaxProvider,
+  MINIMAX_DEFAULT_MODEL,
+  MINIMAX_DEFAULT_EFFORT,
+} from "./minimax.server";
 
-export type AiProviderId = "gemini";
+export type AiProviderId = "gemini" | "minimax";
 
 export type AiProviderStatus = {
   configured: boolean;
@@ -16,6 +21,7 @@ export type AiProviderStatus = {
   model: string;
   /** Providerii pregătiți arhitectural, dar neimplementați încă. */
   plannedProviders: string[];
+  providers: { id: AiProviderId; model: string; configured: boolean }[];
 };
 
 function geminiModel(): string {
@@ -26,11 +32,18 @@ function geminiModel(): string {
 /** Starea providerului, fără să expună vreodată cheia. */
 export function aiProviderStatus(): AiProviderStatus {
   const key = process.env["GEMINI_API_KEY"];
+  const miniMaxConfigured = Boolean(process.env["MINIMAX_API_KEY"]?.trim());
+  const geminiConfigured = Boolean(key?.trim());
+  const miniMaxModel = process.env["MINIMAX_MODEL"]?.trim() || MINIMAX_DEFAULT_MODEL;
   return {
-    configured: Boolean(key && key.trim() !== ""),
-    provider: "gemini",
-    model: geminiModel(),
+    configured: miniMaxConfigured || geminiConfigured,
+    provider: miniMaxConfigured || !geminiConfigured ? "minimax" : "gemini",
+    model: miniMaxConfigured || !geminiConfigured ? miniMaxModel : geminiModel(),
     plannedProviders: ["openai", "anthropic"],
+    providers: [
+      { id: "minimax", model: miniMaxModel, configured: miniMaxConfigured },
+      { id: "gemini", model: geminiModel(), configured: geminiConfigured },
+    ],
   };
 }
 
@@ -39,8 +52,18 @@ export function isAiConfigured(): boolean {
 }
 
 /** Providerul activ sau `null` când secretul nu este configurat. */
-export function resolveAiProvider(): AIProvider | null {
+export function resolveAiProvider(scope: "internal" | "legacy" = "internal"): AIProvider | null {
   const key = process.env["GEMINI_API_KEY"];
-  if (!key || key.trim() === "") return null;
-  return createGeminiProvider(key.trim(), geminiModel());
+  const fallback = key?.trim() ? createGeminiProvider(key.trim(), geminiModel()) : undefined;
+  if (scope === "legacy") return fallback ?? null;
+  const miniMaxKey = process.env["MINIMAX_API_KEY"]?.trim();
+  if (!miniMaxKey) return fallback ?? null;
+  return {
+    ...createMiniMaxProvider(
+      miniMaxKey,
+      process.env["MINIMAX_MODEL"]?.trim() || MINIMAX_DEFAULT_MODEL,
+      process.env["MINIMAX_EFFORT"]?.trim() || MINIMAX_DEFAULT_EFFORT,
+    ),
+    fallback,
+  };
 }

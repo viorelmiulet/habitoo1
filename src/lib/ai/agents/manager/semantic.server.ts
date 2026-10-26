@@ -12,6 +12,7 @@
  * deterministe.
  */
 import type { AIProvider } from "../../providers/types";
+import { withRetry } from "../../reliability/retry";
 import {
   MANAGER_INTENTS,
   agentsForIntent,
@@ -57,6 +58,8 @@ export async function routeManagerRequestSemantic(
   provider: AIProvider | null,
   request: string,
   keyword: ManagerRouting,
+  throwProviderErrors = false,
+  onUsage?: (input: number | null, output: number | null) => void,
 ): Promise<{ routing: ManagerRouting; semantic: boolean }> {
   // Capabilitățile indisponibile și cererile goale rămân decise determinist.
   if (!provider || keyword.intent === "unavailable" || request.trim() === "") {
@@ -64,17 +67,20 @@ export async function routeManagerRequestSemantic(
   }
 
   try {
-    const result = await provider.generate({
-      system: SYSTEM,
-      messages: [
-        {
-          role: "user",
-          content: `<<<CERERE_UTILIZATOR>>>\n${request}\n<<<SFARSIT>>>`,
-        },
-      ],
-      tools: [],
-      maxOutputTokens: 64,
-    });
+    const result = await withRetry(() =>
+      provider.generate({
+        system: SYSTEM,
+        messages: [
+          {
+            role: "user",
+            content: `<<<CERERE_UTILIZATOR>>>\n${request}\n<<<SFARSIT>>>`,
+          },
+        ],
+        tools: [],
+        maxOutputTokens: 64,
+      }),
+    );
+    onUsage?.(result.inputTokens, result.outputTokens);
     const intent = parseIntent(result.text ?? "");
     if (!intent) return { routing: keyword, semantic: false };
     const wantsMarketing =
@@ -91,7 +97,8 @@ export async function routeManagerRequestSemantic(
       },
       semantic: true,
     };
-  } catch {
+  } catch (error) {
+    if (throwProviderErrors) throw error;
     // Fallback onest: rutarea deterministă existentă.
     return { routing: keyword, semantic: false };
   }

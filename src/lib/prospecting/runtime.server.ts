@@ -193,7 +193,7 @@ async function classifyWithAi(
 ): Promise<{ prospects: NormalizedProspect[]; warning: string | null }> {
   if (prospects.length === 0) return { prospects, warning: null };
   const { resolveAiProvider } = await import("@/lib/ai/providers/registry.server");
-  const provider = resolveAiProvider();
+  const provider = resolveAiProvider("legacy");
   if (!provider) {
     return {
       prospects,

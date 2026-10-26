@@ -76,7 +76,9 @@ export function AiSettingsCard() {
             <dl className="grid gap-3 sm:grid-cols-2">
               <div>
                 <dt className="text-xs uppercase text-muted-foreground">Furnizor</dt>
-                <dd className="text-sm font-medium">{data.providerLabel}</dd>
+                <dd className="text-sm font-medium">
+                  {data.providerLabel} · {data.model ?? "—"}
+                </dd>
               </div>
               <div>
                 <dt className="text-xs uppercase text-muted-foreground">Model</dt>
@@ -92,10 +94,18 @@ export function AiSettingsCard() {
                 <dt className="text-xs uppercase text-muted-foreground">
                   Furnizori pregătiți pentru viitor
                 </dt>
-                <dd className="text-sm font-medium">
-                  {data.plannedProviders.join(", ") || "—"}
-                </dd>
+                <dd className="text-sm font-medium">{data.plannedProviders.join(", ") || "—"}</dd>
               </div>
+              {data.providers?.map((provider) => (
+                <div key={provider.id}>
+                  <dt className="text-xs uppercase text-muted-foreground">
+                    {provider.id === "minimax" ? "Principal · MiniMax" : "Rezervă · Gemini"}
+                  </dt>
+                  <dd className="text-sm font-medium">
+                    {provider.model} · {provider.configured ? "Configurat" : "Neconfigurat"}
+                  </dd>
+                </div>
+              ))}
             </dl>
 
             <div className="rounded-md border p-3 text-sm">
@@ -117,7 +127,9 @@ export function AiSettingsCard() {
                   ieșire.
                 </p>
               ) : (
-                <p className="text-muted-foreground">Consumul este disponibil în cadrul unei agenții.</p>
+                <p className="text-muted-foreground">
+                  Consumul este disponibil în cadrul unei agenții.
+                </p>
               )}
             </div>
 

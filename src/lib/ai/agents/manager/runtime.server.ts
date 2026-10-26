@@ -23,6 +23,8 @@ import { AiTracer, newTraceId } from "../../tracing/trace";
 import { writeTraceEvents } from "../../tracing/trace.server";
 import { validateAiRequestSize } from "../../usage/limits";
 import { writeAiUsage } from "../../usage/tracking.server";
+import { withAiProviderFallback } from "../../providers/fallback.server";
+import { safeAiProviderMessage } from "../../providers/types";
 import { classifyAiError } from "../../reliability/retry";
 import {
   MANAGER_AGENT_LABELS,
@@ -53,7 +55,6 @@ import {
   type ManagerJson,
   type ManagerStep,
 } from "./plan";
-
 
 async function loadAdmin() {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -152,7 +153,9 @@ async function readTool(
   tracer: AiTracer,
   tool: string,
   args: Record<string, unknown>,
-): Promise<{ ok: true; data: unknown; summary: string } | { ok: false; message: string; retryable: boolean }> {
+): Promise<
+  { ok: true; data: unknown; summary: string } | { ok: false; message: string; retryable: boolean }
+> {
   const { executeAiTool } = await import("../../tools/executors.server");
   let lastMessage = "Instrumentul nu a răspuns.";
   let retryable = false;
@@ -200,7 +203,7 @@ export async function runManagerTurn(
   }
 
   const { resolveAiProvider } = await import("../../providers/registry.server");
-  const provider = resolveAiProvider();
+  let provider = resolveAiProvider();
   if (!provider) {
     return { status: "not_configured", run: null, message: "AI nu este configurat." };
   }
@@ -216,11 +219,26 @@ export async function runManagerTurn(
     };
   }
 
-
   // Rutare: reguli deterministe + clasificare semantică (allowlist de intenții).
   const keywordRouting: ManagerRouting = routeManagerRequest(request);
   const { routeManagerRequestSemantic } = await import("./semantic.server");
-  const routed = await routeManagerRequestSemantic(provider, request, keywordRouting);
+  let fallbackUsed = provider.id === "gemini";
+  let inputTokens: number | null = null;
+  let outputTokens: number | null = null;
+  let routed;
+  try {
+    const completed = await withAiProviderFallback(provider, (selected) =>
+      routeManagerRequestSemantic(selected, request, keywordRouting, true, (input, output) => {
+        inputTokens = input;
+        outputTokens = output;
+      }),
+    );
+    provider = completed.provider;
+    fallbackUsed = completed.fallbackUsed;
+    routed = completed.result;
+  } catch (error) {
+    return { status: "failed", run: null, message: safeAiProviderMessage(error) };
+  }
   const routing: ManagerRouting = routed.routing;
   const traceId = newTraceId();
   const tracer = new AiTracer(traceId, {
@@ -234,7 +252,6 @@ export async function runManagerTurn(
       semantic: routed.semantic,
     },
   });
-
 
   const propertyIds = [...new Set(input.propertyIds ?? [])].slice(0, 5);
   const plan = buildManagerPlan({
@@ -292,8 +309,9 @@ export async function runManagerTurn(
     provider: provider.id,
     model: provider.model,
     capability: "manager_agent",
-    input_tokens: null,
-    output_tokens: null,
+    fallback_used: fallbackUsed,
+    input_tokens: inputTokens,
+    output_tokens: outputTokens,
     latency_ms: latencyMs,
     success: statusOfPlan(state) !== "failed",
     tool_calls: state.steps.filter((item) => item.status === "completed").length,
@@ -366,8 +384,7 @@ async function executePlan(
         continue;
       }
       const reason =
-        result.retryMessage ??
-        "Pasul a eșuat repetat. Planul s-a oprit și necesită atenție.";
+        result.retryMessage ?? "Pasul a eșuat repetat. Planul s-a oprit și necesită atenție.";
       state = failStep(state, step.id, reason) as ManagerState;
       state = skipRemainingSteps(failPlan(state, reason), reason) as ManagerState;
       await persist(admin, actor, runId, state, reason);
@@ -381,7 +398,6 @@ async function executePlan(
 
   return { ...state, summary: state.summary ?? summarize(state) };
 }
-
 
 function summarize(state: ManagerState): string {
   const done = state.steps.filter((item) => item.status === "completed").length;
@@ -401,7 +417,6 @@ type StepOutcome = {
   retry?: boolean;
   retryMessage?: string;
 };
-
 
 async function runStep(
   admin: Admin,
@@ -504,7 +519,11 @@ async function runStep(
       const { runCrmTurn } = await import("../crm/runtime.server");
       const turnResult = await runCrmTurn(actor, { question: state.request });
       if (turnResult.status !== "ok") {
-        state = failStep(state, step.id, turnResult.message ?? "CRM Agent nu a răspuns.") as ManagerState;
+        state = failStep(
+          state,
+          step.id,
+          turnResult.message ?? "CRM Agent nu a răspuns.",
+        ) as ManagerState;
         return { state, stop: true };
       }
       state = completeStep(
@@ -619,7 +638,12 @@ async function runStep(
       }
       const pending = proposal.run.proposal;
       if (!pending) {
-        state = failStep(state, step.id, "Propunerea nu a putut fi creată.", "blocked") as ManagerState;
+        state = failStep(
+          state,
+          step.id,
+          "Propunerea nu a putut fi creată.",
+          "blocked",
+        ) as ManagerState;
         return { state, stop: true };
       }
       const payload = { tool, marketingRunId, argumentsJson: pending.argumentsJson };
@@ -692,7 +716,6 @@ async function decideManagerActionClaimed(
   runId: string,
   approved: boolean,
 ): Promise<ManagerDecision> {
-
   const admin = await loadAdmin();
   // Aprobarea se consumă atomic: două cereri paralele nu pot executa de două ori.
   const row = await claimSuspendedRun<{
@@ -749,8 +772,17 @@ async function decideManagerActionClaimed(
       },
     };
     state = ok
-      ? (completeStep(state, approval.stepId, { executed: approval.tool }, "Marketing Agent") as ManagerState)
-      : (failStep(state, approval.stepId, state.execution?.message ?? "Acțiunea a eșuat.") as ManagerState);
+      ? (completeStep(
+          state,
+          approval.stepId,
+          { executed: approval.tool },
+          "Marketing Agent",
+        ) as ManagerState)
+      : (failStep(
+          state,
+          approval.stepId,
+          state.execution?.message ?? "Acțiunea a eșuat.",
+        ) as ManagerState);
     await logAiAudit({
       organizationId: actor.organizationId,
       actorId: actor.userId,
@@ -795,7 +827,6 @@ async function decideManagerActionClaimed(
     state = skipRemainingSteps(state, "Plan finalizat.") as ManagerState;
   }
   state = { ...state, summary: state.execution?.message ?? summarize(state) };
-
 
   await persist(admin, actor, row.id, state, state.failure);
   await writeTraceEvents(tracer.list());

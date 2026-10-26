@@ -48,7 +48,6 @@ async function resolveActor(userId: string): Promise<AiActor | null> {
   return { userId, organizationId: profile.organization_id, role };
 }
 
-
 const AI_FEATURE: AiFeatureKey = "ai_assistant";
 
 /** Mesajul de indisponibilitate când agenția nu are funcția activată. */
@@ -66,6 +65,7 @@ export type AiStatus = {
   model: string | null;
   runtime: string;
   plannedProviders: string[];
+  providers: { id: string; model: string; configured: boolean }[];
   /** Funcția este activată de administratorul platformei pentru agenția ta. */
   featureEnabled: boolean;
   message: string;
@@ -86,6 +86,7 @@ export type AiStatus = {
 };
 
 const PROVIDER_LABELS: Record<string, string> = {
+  minimax: "MiniMax",
   gemini: "Google Gemini",
   openai: "OpenAI",
   anthropic: "Anthropic",
@@ -108,6 +109,7 @@ export const getAiStatus = createServerFn({ method: "GET" })
       model: status.configured ? status.model : null,
       runtime: "mastra",
       plannedProviders: status.plannedProviders.map((id) => PROVIDER_LABELS[id] ?? id),
+      providers: status.providers,
       featureEnabled,
       message: !featureEnabled
         ? aiFeatureDisabledMessage(AI_FEATURE)
@@ -150,7 +152,10 @@ export const getAiStatus = createServerFn({ method: "GET" })
   });
 
 const sendSchema = z.object({
-  message: z.string().min(1).max(AI_MAX_MESSAGE_CHARS + 1),
+  message: z
+    .string()
+    .min(1)
+    .max(AI_MAX_MESSAGE_CHARS + 1),
   conversationId: z.string().uuid().nullable().optional(),
   propertyId: z.string().uuid().nullable().optional(),
 });
@@ -269,9 +274,7 @@ export const getAiConversation = createServerFn({ method: "GET" })
 
 export type AiWorkflowRun = import("./workflows/runtime.server").WorkflowRunView;
 
-export type AiWorkflowResult =
-  | { ok: true; run: AiWorkflowRun }
-  | { ok: false; message: string };
+export type AiWorkflowResult = { ok: true; run: AiWorkflowRun } | { ok: false; message: string };
 
 const startWorkflowSchema = z.object({
   question: z.string().min(1).max(AI_MAX_MESSAGE_CHARS),
