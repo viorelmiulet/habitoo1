@@ -1,5 +1,10 @@
 # SEO public — pasul 1a
 
+## Oferte partenere — vizualizator foto comun
+- [ ] Extragere vizualizator comun cu săgeți, taste, glisare și contor; pozele din detalii clicabile și +N
+- [ ] Verificare toate pozele publice în ordine și închidere fără pierderea detaliilor
+- [ ] HB-1265: toate cele 8 poze în cont, desktop și telefon; teste și build
+
 ## Studio AI — MiniMax și fal
 - [x] Documentație oficială verificată; MiniMax image-01, Hailuo Fast 768P/6 s fără polling pe server și fal Kontext direct; Replicate eliminat
 - [x] Un eveniment ai_media per generare, actualizat la final; erori sigure; fără schimbări de interfață, tabel, bucket sau limite
