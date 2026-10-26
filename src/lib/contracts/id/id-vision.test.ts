@@ -2,7 +2,7 @@
  * Teste pentru etapa 2: pregătirea imaginii și extragerea vizuală.
  * Toate imaginile sunt sintetice, generate în test; nu există date reale.
  */
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { encode as encodeJpeg } from "jpeg-js";
 import { PDFDocument } from "pdf-lib";
 import {
@@ -27,6 +27,33 @@ import { checkDigit } from "./mrz";
 import { cnpCheckDigit } from "./cnp";
 import { readMrz } from "./read";
 import type { AIProvider } from "@/lib/ai/providers/types";
+import { readIdDocument, getIdReadingStatus } from "../id-document.functions";
+
+const handlerMocks = vi.hoisted(() => ({
+  usage: vi.fn(async () => true),
+  quota: vi.fn(async () => ({ allowed: true })),
+  cap: vi.fn(async () => ({ data: true, error: null })),
+}));
+vi.mock("@tanstack/react-start", () => ({
+  createServerFn: () => {
+    const chain = {
+      middleware: () => chain,
+      inputValidator: () => chain,
+      handler: (handler: unknown) => handler,
+    };
+    return chain;
+  },
+}));
+vi.mock("@/integrations/supabase/auth-middleware", () => ({ requireSupabaseAuth: {} }));
+vi.mock("@/integrations/supabase/client.server", () => ({ supabaseAdmin: { rpc: handlerMocks.cap } }));
+vi.mock("@/lib/ai/gateway/gateway.server", () => ({ checkAiQuota: handlerMocks.quota }));
+vi.mock("@/lib/ai/usage/tracking.server", () => ({ writeAiUsage: handlerMocks.usage }));
+vi.mock("@/lib/ai/features/features.server", () => ({ isOrgAiEnabled: async () => true }));
+afterEach(() => {
+  vi.unstubAllGlobals();
+  vi.unstubAllEnvs();
+  vi.clearAllMocks();
+});
 
 function pad(value: string, length: number): string {
   return value.padEnd(length, "<").slice(0, length);
@@ -272,5 +299,133 @@ describe("imaginea nu este păstrată nicăieri", () => {
       expect(source, file).not.toMatch(/writeFile|createWriteStream|\/tmp\//);
       expect(source, file).not.toMatch(/console\.(log|error|warn)\([^)]*base64/);
     }
+  });
+});
+
+describe("citirea actelor prin registry, fără date reale", () => {
+  const context = {
+    userId: "agent-test",
+    supabase: { rpc: async () => ({ data: "agency-test", error: null }) },
+  };
+  const runHandler = readIdDocument as unknown as (args: {
+    context: typeof context;
+    data: { back?: { contentType: string; base64: string }; front?: { contentType: string; base64: string } };
+  }) => Promise<import("../id-document.functions").IdDocumentReadResult>;
+  const image = () => ({ contentType: "image/jpeg", base64: jpegBase64(90, 60) });
+
+  for (const fallback of [false, true]) {
+    describe(fallback ? "Gemini rezervă după 529" : "MiniMax principal", () => {
+      for (const scenario of ["valid", "crop", "front", "restart"] as const) {
+        it(scenario, async () => {
+          vi.stubEnv("MINIMAX_API_KEY", "synthetic-key");
+          vi.stubEnv("GEMINI_API_KEY", "synthetic-key");
+          vi.stubEnv("MINIMAX_MODEL", "MiniMax-M3.1-Flash");
+          vi.stubEnv("GEMINI_MODEL", "gemini-fixture");
+          const valid = syntheticMrz();
+          const broken = valid.split("\n");
+          broken[0] = `${(broken[0] as string).slice(0, 6)}9${(broken[0] as string).slice(7)}`;
+          const bodies: { minimax: boolean; body: Record<string, unknown> }[] = [];
+          let successfulCalls = 0;
+          let primaryCalls = 0;
+          const fetchMock = vi.fn(async (url: string, init: RequestInit) => {
+            const minimax = url.includes("minimax.io");
+            const body = JSON.parse(String(init.body));
+            bodies.push({ minimax, body });
+            if (minimax) primaryCalls += 1;
+            if (minimax && fallback && (scenario !== "restart" || primaryCalls > 1)) {
+              return new Response("fixture", { status: 529 });
+            }
+            successfulCalls += 1;
+            const frontCall = scenario === "front" || (scenario === "restart" && successfulCalls > (fallback ? 2 : 1));
+            const text = frontCall
+              ? '{"idAddress":"Adresă exemplu","issuedOn":"12.03.2020","surname":"POPESCU"}'
+              : scenario === "crop" && successfulCalls === 1 ? broken.join("\n") : valid;
+            return minimax
+              ? Response.json({ content: [{ type: "text", text }], usage: { input_tokens: 100, output_tokens: 20 } })
+              : Response.json({ candidates: [{ content: { parts: [{ text }] } }], usageMetadata: { promptTokenCount: 100, candidatesTokenCount: 20 } });
+          });
+          vi.stubGlobal("fetch", fetchMock);
+          const data = scenario === "front" ? { front: image() } : scenario === "restart" ? { back: image(), front: image() } : { back: image() };
+          const result = await runHandler({ context, data });
+          expect(result.state).toBe("read");
+          if (result.state !== "read") throw new Error("Expected synthetic reading");
+          if (scenario === "front" || scenario === "restart") {
+            expect(result.front?.fields.issuedOn.value).toBe("2020-03-12");
+            expect(result.front?.fields.issuedOn.status).toBe("unverified");
+          }
+          if (scenario !== "front") expect(result.reading.ok).toBe(true);
+          const providerBodies = bodies.filter((entry) => entry.minimax === !fallback);
+          if (scenario === "crop") {
+            expect(providerBodies).toHaveLength(2);
+            const base64At = (body: Record<string, unknown>) => fallback
+              ? (body.contents as { parts: { inlineData?: { data: string } }[] }[])[0]?.parts[1]?.inlineData?.data
+              : (body.messages as { content: { source?: { data: string } }[] }[])[0]?.content[1]?.source?.data;
+            const full = base64At(providerBodies[0]?.body ?? {});
+            const cropped = base64At(providerBodies[1]?.body ?? {});
+            expect(full).toBeTruthy();
+            expect(cropped).toBeTruthy();
+            expect(cropped).not.toBe(full);
+          }
+          for (const entry of bodies.filter((item) => item.minimax)) {
+            expect((entry.body.messages as { content: unknown[] }[])[0]?.content[1]).toMatchObject({
+              type: "image", detail: "high", source: { type: "base64", media_type: "image/jpeg", data: expect.any(String) },
+            });
+          }
+          const calls = scenario === "crop" || scenario === "restart" ? 2 : 1;
+          expect(handlerMocks.usage).toHaveBeenCalledTimes(1);
+          expect(handlerMocks.usage).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({
+            capability: "id_document_vision", provider: fallback ? "gemini" : "minimax",
+            model: fallback ? "gemini-fixture" : "MiniMax-M3.1-Flash", fallback_used: fallback,
+            input_tokens: calls * 100, output_tokens: calls * 20, tool_calls: calls, success: true,
+          }));
+          expect(handlerMocks.cap).toHaveBeenCalledTimes(1);
+          expect(handlerMocks.cap).toHaveBeenCalledWith("rate_limit_hit", {
+            _bucket: "id_document:user:hour:agent-test", _limit: 20, _window_seconds: 3600,
+          });
+          if (fallback) expect(primaryCalls).toBe(scenario === "restart" ? 4 : 3);
+          if (fallback && scenario === "restart") {
+            expect(providerBodies).toHaveLength(2);
+            expect(providerBodies[0]?.body.systemInstruction).toEqual(bodies[0]?.body.system ? { parts: [{ text: bodies[0]?.body.system }] } : null);
+          }
+        });
+      }
+    });
+  }
+
+  it("configurarea acceptă MiniMax fără cheie Gemini și niciuna rămâne neconfigurată", async () => {
+    vi.stubEnv("MINIMAX_API_KEY", "synthetic-key");
+    vi.stubEnv("GEMINI_API_KEY", "");
+    const status = getIdReadingStatus as unknown as (args: { context: typeof context }) => Promise<{ configured: boolean }>;
+    expect(await status({ context })).toEqual({ configured: true });
+    vi.stubEnv("MINIMAX_API_KEY", "");
+    expect(await status({ context })).toEqual({ configured: false });
+    expect(await runHandler({ context, data: { front: image() } })).toMatchObject({ state: "not_configured" });
+    expect(handlerMocks.usage).not.toHaveBeenCalled();
+  });
+
+  it("fără cheia MiniMax citește fața prin Gemini și înregistrează rezerva", async () => {
+    vi.stubEnv("MINIMAX_API_KEY", "");
+    vi.stubEnv("GEMINI_API_KEY", "synthetic-key");
+    vi.stubGlobal("fetch", vi.fn(async () => Response.json({
+      candidates: [{ content: { parts: [{ text: '{"surname":"POPESCU"}' }] } }],
+      usageMetadata: { promptTokenCount: 70, candidatesTokenCount: 12 },
+    })));
+    const result = await runHandler({ context, data: { front: image() } });
+    expect(result.state).toBe("read");
+    expect(handlerMocks.usage).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({
+      provider: "gemini", fallback_used: true, input_tokens: 70, output_tokens: 12,
+    }));
+  });
+
+  it("eroarea Gemini nu citește și nu loghează răspunsul brut când cererea conține actul", async () => {
+    vi.stubEnv("MINIMAX_API_KEY", "");
+    vi.stubEnv("GEMINI_API_KEY", "synthetic-key");
+    const response = new Response("synthetic-sensitive-body", { status: 400 });
+    const readBody = vi.spyOn(response, "text");
+    const log = vi.spyOn(console, "error").mockImplementation(() => undefined);
+    vi.stubGlobal("fetch", vi.fn(async () => response));
+    await expect(runHandler({ context, data: { front: image() } })).rejects.toMatchObject({ status: 400 });
+    expect(readBody).not.toHaveBeenCalled();
+    expect(log.mock.calls.flat().join(" ")).not.toContain("synthetic-sensitive-body");
   });
 });

@@ -26,6 +26,7 @@ export function toMiniMaxMessages(messages: AiProviderMessage[]): Message[] {
         content.push({
           type: "image",
           source: { type: "base64", media_type: image.mimeType, data: image.base64 },
+          ...(image.detail ? { detail: image.detail } : {}),
         });
       }
     } else if (message.role === "assistant") {

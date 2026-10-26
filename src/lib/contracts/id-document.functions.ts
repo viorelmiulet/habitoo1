@@ -109,7 +109,8 @@ export const getIdReadingStatus = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const ctx = context as unknown as Ctx;
-    if (!process.env["GEMINI_API_KEY"]) return { configured: false };
+    const { resolveAiProvider } = await import("@/lib/ai/providers/registry.server");
+    if (!resolveAiProvider()) return { configured: false };
     const { data: org } = await ctx.supabase.rpc("current_org");
     const { isOrgAiEnabled } = await import("@/lib/ai/features/features.server");
     return { configured: await isOrgAiEnabled(typeof org === "string" ? org : null) };
@@ -139,8 +140,9 @@ export const readIdDocument = createServerFn({ method: "POST" })
       return { state: "invalid", reason: "no_organization", message: "Agenția nu este configurată." };
     }
 
-    const apiKey = process.env["GEMINI_API_KEY"];
-    if (!apiKey) {
+    const { resolveAiProvider } = await import("@/lib/ai/providers/registry.server");
+    const primary = resolveAiProvider();
+    if (!primary) {
       return {
         state: "not_configured",
         message: "Citirea automată a actului nu este configurată. Completează datele manual.",
@@ -160,13 +162,18 @@ export const readIdDocument = createServerFn({ method: "POST" })
       };
     }
 
-    const { createGeminiProvider, GEMINI_DEFAULT_MODEL } = await import("@/lib/ai/providers/gemini.server");
-    const provider = createGeminiProvider(apiKey, process.env["GEMINI_MODEL"]?.trim() || GEMINI_DEFAULT_MODEL);
+    const { withAiProviderFallback } = await import("@/lib/ai/providers/fallback.server");
+    let provider = primary;
+    let fallbackUsed = primary.id === "gemini";
 
     const started = Date.now();
     let usage: VisionUsage = { calls: 0, inputTokens: null, outputTokens: null };
     let success = false;
     try {
+      const completed = await withAiProviderFallback(primary, async (selected): Promise<IdDocumentReadResult> => {
+      provider = selected;
+      fallbackUsed = selected.id === "gemini";
+      usage = { calls: 0, inputTokens: null, outputTokens: null };
       /* Spatele: zona citibilă automat, verificată de cifrele de control. */
       let reading: IdDocumentReading | null = null;
       let quality: IdQualityReason[] = [];
@@ -208,6 +215,9 @@ export const readIdDocument = createServerFn({ method: "POST" })
       const conflicts = front ? detectFrontConflicts(reading.fields, front.fields) : [];
       success = true;
       return { state: "read", reading, front, conflicts, quality, messages: idQualityMessages(quality) };
+      });
+      fallbackUsed = completed.fallbackUsed;
+      return completed.result;
     } finally {
       if (usage.calls > 0) {
         /* Consum contorizat cu tokenii reali; necunoscut rămâne necunoscut. */
@@ -216,6 +226,7 @@ export const readIdDocument = createServerFn({ method: "POST" })
           user_id: ctx.userId,
           provider: provider.id,
           model: provider.model,
+          fallback_used: fallbackUsed,
           capability: "id_document_vision",
           input_tokens: usage.inputTokens,
           output_tokens: usage.outputTokens,

@@ -7,6 +7,7 @@
  * mereu „de confirmat”. Imaginea nu este salvată nicăieri și nu apare în loguri.
  */
 import type { AIProvider } from "@/lib/ai/providers/types";
+import { withRetry } from "@/lib/ai/reliability/retry";
 import { assessMrzCandidates, type IdQualityReason } from "./quality";
 import { emptyReading, readMrz, type IdDocumentReading } from "./read";
 import { mrzCropAttachment, type IdAttachment, type PreparedIdImage } from "./prepare.server";
@@ -58,17 +59,17 @@ async function askForMrz(
   provider: AIProvider,
   attachment: IdAttachment,
 ): Promise<{ candidates: string[]; inputTokens: number | null; outputTokens: number | null }> {
-  const result = await provider.generate({
+  const result = await withRetry(() => provider.generate({
     system: MRZ_PROMPT,
     messages: [
       {
         role: "user",
         content: "Rândurile zonei citibile automat, brute.",
-        attachments: [{ mimeType: attachment.mimeType, base64: attachment.base64 }],
+        attachments: [{ mimeType: attachment.mimeType, base64: attachment.base64, detail: "high" }],
       },
     ],
     tools: [],
-  });
+  }));
   return {
     candidates: extractMrzCandidates(result.text),
     inputTokens: result.inputTokens,
@@ -123,19 +124,19 @@ export async function readFrontFromImage(
   provider: AIProvider,
   prepared: Extract<PreparedIdImage, { ok: true }>,
 ): Promise<FrontVisionOutcome> {
-  const result = await provider.generate({
+  const result = await withRetry(() => provider.generate({
     system: FRONT_PROMPT,
     messages: [
       {
         role: "user",
         content: "Câmpurile vizibile pe fața actului, în JSON.",
         attachments: [
-          { mimeType: prepared.attachment.mimeType, base64: prepared.attachment.base64 },
+          { mimeType: prepared.attachment.mimeType, base64: prepared.attachment.base64, detail: "high" },
         ],
       },
     ],
     tools: [],
-  });
+  }));
   const front = parseFrontVision(result.text);
   return {
     front,
