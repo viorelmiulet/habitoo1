@@ -47,6 +47,11 @@ describe("Studio generation rows, private files and one usage event", () => {
     expect(f.rows[0]).toMatchObject({ status: "failed", output_url: null }); expect(f.upload).not.toHaveBeenCalled();
     expect(f.events).toHaveLength(1); expect(f.events[0]).toMatchObject({ success: false, extra_info: { error_code: "fal_http_401" } });
   });
+  it.each(["marketing_image", "photo_enhance", "photo_video"] as const)("does not fail an in-flight %s submission on a concurrent UI refresh", async kind => {
+    const f = fixture();
+    expect(await refreshMediaGeneration(f.context, f.admin, { id: "in-flight", kind, model: kind === "marketing_image" ? "image-01" : kind === "photo_enhance" ? "fal-ai/flux-pro/kontext" : "MiniMax-Hailuo-2.3-Fast", prediction_id: null })).toEqual({ ok: true });
+    expect(mocks.read).not.toHaveBeenCalled(); expect(f.events).toHaveLength(0); expect(f.upload).not.toHaveBeenCalled();
+  });
   it("records upload_failed without a succeeded row", async () => {
     const f = fixture(); f.upload.mockResolvedValue({ error: { message: "private details" } }); mocks.start.mockResolvedValue({ id: null, status: "succeeded", outputUrl: "https://media.example/image" });
     await startMediaGeneration(f.context, f.admin, "org", { kind: "marketing_image", prompt: "test", sourcePath: null });

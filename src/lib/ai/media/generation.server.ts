@@ -61,6 +61,9 @@ export async function startMediaGeneration(context: MediaContext, admin: any, or
   }
 }
 export async function refreshMediaGeneration(context: MediaContext, admin: any, row: any) {
+  // The unchanged UI may refresh an image row while its synchronous call is
+  // still downloading. Likewise video submission has not yet saved task_id.
+  if (row.model === AI_MEDIA_MODELS[row.kind as AiMediaKind]?.id && (row.kind !== "photo_video" || !row.prediction_id)) return { ok: true as const };
   try {
     // Historical tasks cannot be queried on another provider. No outbound legacy calls.
     if (row.kind !== "photo_video" || row.model !== AI_MEDIA_MODELS.photo_video.id) throw new MediaProviderError("legacy_task", "Această generare veche nu mai poate fi urmărită. Pornește o generare nouă.");
