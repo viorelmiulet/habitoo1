@@ -336,7 +336,7 @@ function PrivateListingsPage() {
               }`}
               onClick={() =>
                 navigate({
-                  search: value ? { lista: value } : {},
+                  search: { lista: value || "habitoo" },
                   replace: true,
                 })
               }
