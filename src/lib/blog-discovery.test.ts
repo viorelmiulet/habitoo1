@@ -39,6 +39,12 @@ describe("llms public", () => {
   const now = new Date("2026-10-25T20:12:00Z");
   const stats = { owner_sources: [{ source: "storia", count: 388 }, { source: "anuntul", count: 620 }, { source: "olx", count: 0 }], market_active: 8056 };
   const build = (partners = false) => buildLlmsTxt([], now, partners, stats);
+  it("excludes Facebook listings from the public owner total and number of sources", () => {
+    const text = buildLlmsTxt([], now, false, { ...stats, owner_sources: [...stats.owner_sources, { source: "facebook", count: 99 }] });
+    const counts = /Habitoo avea (\d+) anunțuri active de la proprietari, din (\d+) surse/.exec(text);
+    expect(Number(counts?.[1])).toBe(1008);
+    expect(Number(counts?.[2])).toBe(2);
+  });
   it("includes collaboration in the main public discovery links", () => {
     const mainPages = build().split("## Pagini principale")[1]?.split("## Ce face Habitoo")[0];
     expect(mainPages).toContain("https://www.habitoo.ro/colaborare-intre-agentii");

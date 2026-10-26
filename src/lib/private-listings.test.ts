@@ -31,7 +31,7 @@ describe("filtre anunțuri particulari", () => {
     expect("newest" in PRIVATE_LISTINGS_ORDER).toBe(false);
   });
   it("ciclul de intercalare începe cu Storia, Romimo, OLX, Imoradar24", () => {
-    expect(PRIVATE_LISTINGS_SOURCE_CYCLE).toEqual(["storia", "romimo", "olx", "imoradar", "imobiliare", "anuntul"]);
+    expect(PRIVATE_LISTINGS_SOURCE_CYCLE).toEqual(["storia", "romimo", "olx", "imoradar", "imobiliare", "anuntul", "facebook"]);
   });
   it("cuvintele cheie elimină caracterele speciale", () => {
     expect(keywordTerms("centrală, parcare%(x)")).toEqual(["centrală", "parcare"]);

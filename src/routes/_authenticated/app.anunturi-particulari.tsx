@@ -42,7 +42,7 @@ const searchSchema = z.object({
   q: z.string().optional(),
   pagina: z.coerce.number().int().min(1).optional(),
   sortare: z.enum(["newest", "price_asc", "price_desc", "surface_desc"]).optional(),
-  sursa: z.enum(["storia", "imobiliare", "olx", "romimo", "imoradar", "anuntul"]).optional(),
+  sursa: z.enum(["storia", "imobiliare", "olx", "romimo", "imoradar", "anuntul", "facebook"]).optional(),
   tranzactie: z.enum(["sale", "rent", "rent_day"]).optional(),
   tip: z.string().max(80).optional(), // linkuri vechi, înlocuit de tab
   zile: z.coerce.number().int().min(0).max(7).optional(),
@@ -67,6 +67,7 @@ const SOURCE_LABELS: Record<string, string> = {
   romimo: "Romimo",
   imoradar: "Imoradar24",
   anuntul: "Anuntul.ro",
+  facebook: "Facebook",
 };
 
 const SORT_LABELS: Record<PrivateListingsSort, string> = {
@@ -667,7 +668,7 @@ function ListingRow({ listing }: { listing: OwnerListing }) {
               <>
                 {" – "}
                 <a href={listing.url} target="_blank" rel="noopener noreferrer" className="relative z-10 text-primary underline">
-                  vezi anunțul pe {SOURCE_LABELS[listing.source] ?? listing.source}
+                  {listing.source === "facebook" ? "Vezi postarea pe Facebook" : `vezi anunțul pe ${SOURCE_LABELS[listing.source] ?? listing.source}`}
                 </a>
               </>
             ) : null}
@@ -694,9 +695,9 @@ function ListingRow({ listing }: { listing: OwnerListing }) {
           </Button>
         ) : null}
         {listing.url ? (
-          <Button asChild className="flex-1 sm:flex-none">
+          <Button asChild className="h-auto min-h-9 flex-1 whitespace-normal sm:flex-none">
             <a href={listing.url} target="_blank" rel="noopener noreferrer">
-              Anunțul original <ExternalLink className="size-4" />
+              {listing.source === "facebook" ? "Vezi postarea pe Facebook" : "Anunțul original"} <ExternalLink className="size-4 shrink-0" />
             </a>
           </Button>
         ) : null}

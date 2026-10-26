@@ -7,7 +7,7 @@ export const OWNER_LISTINGS_TITLE = "Anunțuri de la proprietari pentru agenții
 export const OWNER_LISTINGS_DESCRIPTION = "Anunțurile de la proprietari din Storia, OLX, Romimo, Imoradar24 și Anuntul.ro, într-o singură listă, cu filtre pe zone și import în portofoliu.";
 
 export function summarizeOwnerStatistics(statistics: LlmsStatistics, observedAt: string) {
-  const sources = statistics.owner_sources.filter((row) => row.count > 0);
+  const sources = statistics.owner_sources.filter((row) => row.count > 0 && row.source !== "facebook");
   const date = new Intl.DateTimeFormat("ro-RO", { day: "numeric", month: "long", year: "numeric", timeZone: "Europe/Bucharest" }).format(new Date(observedAt));
   const total = sources.reduce((sum, row) => sum + row.count, 0);
   return { sources, date, total };

@@ -1,10 +1,17 @@
 # SEO public — pasul 1a
 
+## Sursa Facebook — doar Anunțuri particulari
+- [x] Acceptare în baza de date și endpoint, telefon anuntul/facebook, poze neschimbate
+- [x] Filtru, URL, etichete și intercalare la final; link spre postare
+- [x] Excludere din cifrele publice și ACP; 91 teste trec cu endpoint/date/stocare simulate, nicio dată de test în baza reală; schema confirmată și build OK
+- [x] Anunțuri proprietari, ACP și llms.txt: HTTP 200 fără Facebook în surse/cifre
+- [ ] Verificare vizuală a filtrului în cont — solicitantul nu are cont asociat pentru sesiunea de test
+
 ## SEO pasul 4 — Colaborare între agenții
 - [x] Pagină publică SSR, FAQ și graful comun, fără cifre live
 - [x] Linkuri în subsol, Funcționalități, sitemap (26 octombrie) și generator llms.txt; fără meniul de sus
 - [x] Reguli verificate; teste trec, HTTP 200 fără JavaScript, un H1, cinci FAQ identice, sitemap, navigare și desktop/telefon fără depășire; build OK, fără publicare
-- [ ] Citire llms.txt prin HTTP — răspuns 500 la încărcarea datelor publice; linkul este verificat în generator
+- [x] Citire llms.txt prin HTTP — reverificat la adăugarea Facebook: HTTP 200
 
 ## SEO pasul 3 — Analiză comparativă de piață
 - [x] Pagină publică SSR cu agregate live, ponderi din configurația ACP și FAQ în graful comun

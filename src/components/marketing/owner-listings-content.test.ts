@@ -2,6 +2,11 @@ import { describe, expect, it } from "vitest";
 import { summarizeOwnerStatistics } from "./owner-listings-content";
 
 describe("public owner statistics", () => {
+  it("excludes Facebook from public totals and source counts", () => {
+    const summary = summarizeOwnerStatistics({ owner_sources: [{ source: "facebook", count: 99 }, { source: "anuntul", count: 3 }], market_active: 8 }, "2026-10-26T06:03:00Z");
+    expect(summary.total).toBe(3);
+    expect(summary.sources).toEqual([{ source: "anuntul", count: 3 }]);
+  });
   const statistics = { owner_sources: [{ source: "storia", count: 388 }, { source: "anuntul", count: 620 }, { source: "olx", count: 0 }], market_active: 8056 };
   it("counts only positive owner sources, never the market pool", () => {
     const summary = summarizeOwnerStatistics(statistics, "2026-10-25T20:49:00Z");

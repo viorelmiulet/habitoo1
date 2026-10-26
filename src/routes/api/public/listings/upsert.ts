@@ -216,8 +216,8 @@ export function buildListingRow(input: unknown): Record<string, unknown> {
   const row: Record<string, unknown> = {
     source: listing.source,
     external_id: listing.external_id,
-    // Telefonul se păstrează doar pentru anuntul.ro; celelalte surse rămân fără.
-    phone: listing.source === "anuntul" ? (listing.phone ?? null) : null,
+    // Telefonul se păstrează pentru Anuntul.ro și Facebook; celelalte surse rămân fără.
+    phone: ["anuntul", "facebook"].includes(listing.source) ? (listing.phone ?? null) : null,
   };
   const skip = new Set(["source", "external_id", "phone", "perioada", "period", "rooms_label", "images"]);
   for (const [key, value] of Object.entries(listing)) {
