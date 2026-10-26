@@ -1,5 +1,10 @@
 # SEO public — pasul 1a
 
+## AI pasul 4 — voce video MiniMax direct
+- [x] Verificare Get Voice cu cheia existentă: Wise_Woman și Deep_Voice_Man nu apar în lista de 332 voci de sistem
+- [ ] Trecere directă la speech-2.8-turbo, consum usage_characters și teste simulate — așteaptă alegerea utilizatorului pentru vocile alternative, fără înlocuire automată
+- [ ] O singură narațiune reală scurtă cu redare — așteaptă alegerea vocilor și implementarea
+
 ## AI pasul 3 — interpretarea ACP
 - [x] Registry MiniMax/Gemini fără gateway Lovable, JSON validat și o corectare, model și consum efective
 - [x] 253 teste ACP trec; o singură generare reală pe analiza existentă 13694819, MiniMax-M3.1-Flash, 4410 tokeni intrare / 2216 ieșire, fără rezervă; vizibilă după reîncărcare, cifrele și hash-ul determinist neschimbate
