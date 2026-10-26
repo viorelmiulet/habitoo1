@@ -25,7 +25,7 @@ export const Route = createFileRoute("/_authenticated/app/clipurile-mele")({
   notFoundComponent: () => <p>Pagina nu este disponibilă.</p>,
 });
 
-function ClipsError({ error }: { error: Error }) {
+function ClipsError({ error }: { error: unknown }) {
   const router = useRouter();
   return <QueryError error={error} onRetry={() => void router.invalidate()} />;
 }
