@@ -6,6 +6,11 @@ import { INTEGRATION_PAGES } from "@/lib/portals/integration-pages";
 const base = { title: "Articol", excerpt: "Rezumat", updated_at: "2026-10-04T12:00:00.000Z" };
 
 describe("sitemap blog", () => {
+  it("keeps the collaboration page creation date on later sitemap requests", () => {
+    const xml = buildSitemapXml([], new Date("2026-11-01T12:00:00Z"));
+    const entries = [...xml.matchAll(/<url>\s*<loc>([^<]+)<\/loc>\s*(?:<lastmod>([^<]+)<\/lastmod>)?\s*<\/url>/g)];
+    expect(entries.find((row) => row[1] === "https://www.habitoo.ro/colaborare-intre-agentii")?.[2]).toBe("2026-10-26");
+  });
   it("keeps the public ACP creation date when the sitemap regenerates", () => {
     const xml = buildSitemapXml([], new Date("2026-11-01T12:00:00Z"));
     const entries = [...xml.matchAll(/<url>\s*<loc>([^<]+)<\/loc>\s*(?:<lastmod>([^<]+)<\/lastmod>)?\s*<\/url>/g)];

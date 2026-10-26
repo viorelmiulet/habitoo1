@@ -1,5 +1,10 @@
 # SEO public — pasul 1a
 
+## SEO pasul 4 — Colaborare între agenții
+- [ ] Pagină publică SSR, FAQ și graful comun, fără cifre live
+- [ ] Linkuri în subsol, Funcționalități, sitemap (26 octombrie) și llms.txt; fără meniul de sus
+- [ ] Verificare reguli, teste, pagină fără JavaScript și afișare desktop/telefon; fără publicare
+
 ## SEO pasul 3 — Analiză comparativă de piață
 - [x] Pagină publică SSR cu agregate live, ponderi din configurația ACP și FAQ în graful comun
 - [x] Meniu public, Funcționalități, sitemap cu data de azi și llms.txt
