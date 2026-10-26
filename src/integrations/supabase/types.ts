@@ -877,6 +877,7 @@ export type Database = {
         Row: {
           created_at: string
           created_by: string
+          deleted_at: string | null
           error: string | null
           id: string
           kind: string
@@ -892,6 +893,7 @@ export type Database = {
         Insert: {
           created_at?: string
           created_by: string
+          deleted_at?: string | null
           error?: string | null
           id?: string
           kind: string
@@ -907,6 +909,7 @@ export type Database = {
         Update: {
           created_at?: string
           created_by?: string
+          deleted_at?: string | null
           error?: string | null
           id?: string
           kind?: string
@@ -5010,6 +5013,9 @@ export type Database = {
           acp_calibration_enabled: boolean
           acp_calibration_min_sample_size: number
           ai_enabled: boolean
+          ai_media_enhance_limit: number
+          ai_media_image_limit: number
+          ai_media_video_limit: number
           archived_at: string | null
           archived_by: string | null
           city: string | null
@@ -5077,6 +5083,9 @@ export type Database = {
           acp_calibration_enabled?: boolean
           acp_calibration_min_sample_size?: number
           ai_enabled?: boolean
+          ai_media_enhance_limit?: number
+          ai_media_image_limit?: number
+          ai_media_video_limit?: number
           archived_at?: string | null
           archived_by?: string | null
           city?: string | null
@@ -5144,6 +5153,9 @@ export type Database = {
           acp_calibration_enabled?: boolean
           acp_calibration_min_sample_size?: number
           ai_enabled?: boolean
+          ai_media_enhance_limit?: number
+          ai_media_image_limit?: number
+          ai_media_video_limit?: number
           archived_at?: string | null
           archived_by?: string | null
           city?: string | null
@@ -9430,6 +9442,7 @@ export type Database = {
         Args: { _new_org: string; _user_id: string }
         Returns: undefined
       }
+      ai_media_monthly_usage: { Args: never; Returns: Json }
       approve_organization: { Args: { _org: string }; Returns: undefined }
       approve_registration_request: {
         Args: { _request_id: string }
