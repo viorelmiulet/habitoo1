@@ -10,7 +10,7 @@ export function readListState(storage: Pick<Storage, "getItem">, userId: string,
 }
 
 export function compactListSearch(search: Record<string, unknown>) {
-  return Object.fromEntries(Object.entries(search).filter(([key, value]) => !["new", "nou", "proprietate", "contract"].includes(key) && value !== undefined));
+  return Object.fromEntries(Object.entries(search).filter(([key, value]) => !["new", "nou", "proprietate", "contract"].includes(key) && value !== undefined).sort(([a], [b]) => a.localeCompare(b)));
 }
 
 /** Only known primitive fields enter local-list state; action parameters never persist. */

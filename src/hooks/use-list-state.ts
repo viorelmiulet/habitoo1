@@ -30,8 +30,9 @@ export function useListState<T extends Record<string, unknown>>({ list, userId, 
       let saved = readListState(localStorage, userId, list);
       if (firstEntry && !explicit && family && !location.search.lista) saved = readListState(localStorage, userId, family) ?? saved;
       if (entering && saved && !suppressRestore) {
-        if (!explicit || JSON.stringify(saved.search) === serialized) restoring.current = saved.scroll;
-        if (!explicit && JSON.stringify(saved.search) !== serialized) {
+        const savedSearch = JSON.stringify(compactListSearch(saved.search));
+        if (!explicit || savedSearch === serialized) restoring.current = saved.scroll;
+        if (!explicit && savedSearch !== serialized) {
           latest.current.apply(saved.search as T);
           return;
         }

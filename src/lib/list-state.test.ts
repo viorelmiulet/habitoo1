@@ -30,4 +30,7 @@ describe("persistent applied list state", () => {
     expect(readListState({ getItem: () => "{broken" }, "agent-a", "properties")).toBeNull();
     expect(readListState({ getItem: () => '{"search":null}' }, "agent-a", "properties")).toBeNull();
   });
+  it("compares browser-back URLs independently of query parameter order", () => {
+    expect(JSON.stringify(compactListSearch({ q: "HB", perPagina: 15, page: 2 }))).toBe(JSON.stringify(compactListSearch({ page: 2, q: "HB", perPagina: 15 })));
+  });
 });
