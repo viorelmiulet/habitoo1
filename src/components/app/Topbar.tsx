@@ -8,7 +8,6 @@ import { NotificationsMenu } from "@/components/app/NotificationsMenu";
 import { SupportWidget } from "@/components/app/SupportWidget";
 import { type ShellVariant } from "@/components/app/AppSidebar";
 import { BrandLogo } from "@/components/brand/BrandLogo";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useOnboardingTour } from "@/components/app/OnboardingTour";
 import { cn } from "@/lib/utils";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";

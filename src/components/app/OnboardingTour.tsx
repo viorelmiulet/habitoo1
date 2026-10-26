@@ -13,6 +13,7 @@ import { accessibleGuides, acceptsGuideInput, canShowAutomatically, guideForPath
 import { claimGuide, finishGuide, getGuideProgress, setGuideAutoStart } from "@/lib/onboarding.functions";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { plannedGuides } from "@/lib/onboarding-catalog";
 
 type TourApi = { start: () => void; openLibrary: () => void; available: boolean; hasCurrent: boolean };
 const TourContext = createContext<TourApi>({ start: () => {}, openLibrary: () => {}, available: false, hasCurrent: false });
@@ -39,6 +40,7 @@ export function OnboardingTourProvider({ user, children, openMenu, closeMenu }: 
   const available = !!user.profile && !user.impersonation;
   const state = useQuery({ queryKey: key, queryFn: () => load(), enabled: available, staleTime: 0, refetchOnWindowFocus: true });
   const guides = useMemo(() => accessibleGuides(implementedGuides, user.role, features), [user.role, features]);
+  const planned = plannedGuides.filter((g) => g.roles.includes(user.role) && (!g.feature || features[g.feature]));
   const current = guideForPath(pathname);
   const [active, setActive] = useState<GuideDefinition | null>(null);
   const [index, setIndex] = useState(0);
@@ -94,6 +96,7 @@ export function OnboardingTourProvider({ user, children, openMenu, closeMenu }: 
   }, [close, index]);
   const completeInteraction = useCallback(() => {
     if (!step || confirmation) return;
+    if (transitionTimer.current) clearTimeout(transitionTimer.current);
     setConfirmation(step.confirmation ?? "Gata, ai făcut pasul.");
     const generation = run.current;
     transitionTimer.current = setTimeout(() => { if (run.current === generation) next(); }, 850);
@@ -126,7 +129,7 @@ export function OnboardingTourProvider({ user, children, openMenu, closeMenu }: 
     setHint(false); setShowDone(false); setConfirmation("");
     if (!step) return;
     const timer = step.mode === "do" ? setTimeout(() => setHint(true), 20_000) : undefined;
-    return () => { if (timer) clearTimeout(timer); };
+    return () => { if (timer) clearTimeout(timer); if (transitionTimer.current) clearTimeout(transitionTimer.current); };
   }, [step]);
 
   useEffect(() => {
@@ -189,6 +192,13 @@ export function OnboardingTourProvider({ user, children, openMenu, closeMenu }: 
     }
     setShowDone(true);
   };
+  useEffect(() => {
+    if (step?.id === "portfolio" && active?.id === "first-steps") {
+      const el = visibleTarget('[data-tour="group:Portofoliu"]');
+      if (el?.getAttribute("aria-expanded") === "true") el.click();
+    }
+    if (active?.id === "first-steps" && step?.id === "help") closeMenu();
+  }, [active?.id, closeMenu, step]);
   const toggleAuto = async (enabled: boolean) => {
     setSaving(true);
     try { await saveAuto({ data: { enabled } }); queryClient.setQueryData(key, (old: Awaited<ReturnType<typeof load>> | undefined) => ({ autoStart: enabled, progress: old?.progress ?? [] })); }
@@ -210,6 +220,7 @@ export function OnboardingTourProvider({ user, children, openMenu, closeMenu }: 
         <div className="flex items-center justify-between gap-4 border-y border-border py-3"><label htmlFor="guide-auto" className="text-sm">Pornește ghidurile automat</label><Switch id="guide-auto" checked={state.data?.autoStart ?? true} onCheckedChange={(v) => void toggleAuto(v)} disabled={saving || !state.data} /></div>
         {state.isError ? <p role="alert" className="text-sm text-destructive">Progresul nu a putut fi încărcat. Poți relua ghidurile manual.</p> : null}
         {Array.from(new Set(guides.map((g) => g.group))).map((group) => <section key={group}><h3 className="mb-2 text-sm font-semibold text-muted-foreground">{group}</h3><div className="space-y-1">{guides.filter((g) => g.group === group).map((g) => <Button key={g.id} variant="ghost" className="h-auto min-h-11 w-full justify-between whitespace-normal text-left" onClick={() => { if (current?.id === g.id) launch(g); else { setLibrary(false); void navigate({ to: g.path as never }).then(() => launch(g)); } }}><span>{g.title}</span>{state.data?.progress.some((p) => p.guide_id === g.id && p.status === "completed") ? <Check className="size-4 text-success" aria-label="Terminat" /> : <Compass className="size-4 text-muted-foreground" />}</Button>)}</div></section>)}
+        <details className="border-t border-border pt-3"><summary className="cursor-pointer text-sm font-semibold">Ghiduri pentru etapele următoare ({planned.length})</summary><div className="mt-3 space-y-4">{Array.from(new Set(planned.map((g) => g.group))).map((group) => <section key={group}><h3 className="text-sm font-semibold">{group}</h3><ul className="mt-2 space-y-2">{planned.filter((g) => g.group === group).map((g) => <li key={g.id} className="text-sm text-muted-foreground"><span>{g.title}</span><p className="text-xs">{g.trigger}</p></li>)}</ul></section>)}</div></details>
       </DialogContent>
     </Dialog>
     {ready && step ? createPortal(<div className="pointer-events-none fixed inset-0 z-[120]">
