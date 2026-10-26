@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import source from "./AppSidebar?raw";
-import { agencyNav } from "./AppSidebar";
+import { agentNav, agencyNav } from "./AppSidebar";
 import { activeNavigationPath, sidebarOpenStateKey } from "./sidebar-navigation";
 
 describe("navigarea laterală", () => {
