@@ -402,4 +402,30 @@ describe("citirea actelor prin registry, fără date reale", () => {
     expect(await runHandler({ context, data: { front: image() } })).toMatchObject({ state: "not_configured" });
     expect(handlerMocks.usage).not.toHaveBeenCalled();
   });
+
+  it("fără cheia MiniMax citește fața prin Gemini și înregistrează rezerva", async () => {
+    vi.stubEnv("MINIMAX_API_KEY", "");
+    vi.stubEnv("GEMINI_API_KEY", "synthetic-key");
+    vi.stubGlobal("fetch", vi.fn(async () => Response.json({
+      candidates: [{ content: { parts: [{ text: '{"surname":"POPESCU"}' }] } }],
+      usageMetadata: { promptTokenCount: 70, candidatesTokenCount: 12 },
+    })));
+    const result = await runHandler({ context, data: { front: image() } });
+    expect(result.state).toBe("read");
+    expect(handlerMocks.usage).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({
+      provider: "gemini", fallback_used: true, input_tokens: 70, output_tokens: 12,
+    }));
+  });
+
+  it("eroarea Gemini nu citește și nu loghează răspunsul brut când cererea conține actul", async () => {
+    vi.stubEnv("MINIMAX_API_KEY", "");
+    vi.stubEnv("GEMINI_API_KEY", "synthetic-key");
+    const response = new Response("synthetic-sensitive-body", { status: 400 });
+    const readBody = vi.spyOn(response, "text");
+    const log = vi.spyOn(console, "error").mockImplementation(() => undefined);
+    vi.stubGlobal("fetch", vi.fn(async () => response));
+    await expect(runHandler({ context, data: { front: image() } })).rejects.toMatchObject({ status: 400 });
+    expect(readBody).not.toHaveBeenCalled();
+    expect(log.mock.calls.flat().join(" ")).not.toContain("synthetic-sensitive-body");
+  });
 });

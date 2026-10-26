@@ -1,8 +1,8 @@
 # SEO public — pasul 1a
 
 ## AI pasul 2 — citirea cărții de identitate
-- [ ] Registry MiniMax/Gemini, imagini high și consum cu furnizorul efectiv; limite și MRZ neschimbate
-- [ ] Teste simulate spate valid/decupaj și față JSON pe MiniMax și rezervă Gemini 529; fără acte reale
+- [x] Registry MiniMax/Gemini, imagini high și consum cu furnizorul efectiv; limite și MRZ neschimbate
+- [x] Teste simulate spate valid/decupaj și față JSON pe MiniMax și rezervă Gemini 529, inclusiv reluarea completă spate/față; fără acte reale
 
 ## Clipurile mele — muzică per clip
 - [x] Înregistrarea fiecărui clip generat cu muzica folosită, fără publicare; snapshot pentru biblioteca muzicală și MP3 propriu
