@@ -33,13 +33,15 @@ function renderSidebar(groups: NavGroup[], collapsed = false) {
   root = createRoot(host);
   act(() =>
     root!.render(
-      <AppSidebar
-        groups={groups}
-        organizationName="MVA Imobiliare"
-        roleLabel="Agent"
-        variant="agency"
-        collapsed={collapsed}
-      />,
+      <TooltipProvider>
+        <AppSidebar
+          groups={groups}
+          organizationName="MVA Imobiliare"
+          roleLabel="Agent"
+          variant="agency"
+          collapsed={collapsed}
+        />
+      </TooltipProvider>,
     ),
   );
 }
