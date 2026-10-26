@@ -57,5 +57,5 @@
 
 - Studio AI uses direct MiniMax images/Hailuo tasks and fal Kontext, private media and one terminal-updated usage event. Monthly reservations lock the agency before insertion; failed rows free slots, archived successes retain consumption; quotas use Romania months. SuperAdmin alone edits limits. Why: no duplicate usage, races or refunds.
 - Galleries share PhotoViewer. Why: one gesture model.
-- List page sizes: only `list-page-size.ts` + `ListPagination`. Why: allowed sizes.
+- Lists share `ListPagination` + user/list-scoped `use-list-state` (URL priority, scroll/reset). Why: private preferences.
 - Public SSR/feeds read the DB via `publicRead` (timeout, logged fallback); `public_llms_statistics` reads an hourly cron cache. Why: no 500s under load.

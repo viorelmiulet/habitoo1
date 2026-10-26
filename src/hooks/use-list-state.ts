@@ -9,6 +9,8 @@ export function useListState<T extends Record<string, unknown>>({ list, userId, 
 }) {
   const location = useLocation();
   const active = useRef("");
+  const previousSearch = useRef("");
+  const clearing = useRef(false);
   const restoring = useRef<number | null>(null);
   const latest = useRef({ search, apply });
   latest.current = { search, apply };
@@ -18,7 +20,10 @@ export function useListState<T extends Record<string, unknown>>({ list, userId, 
     const identity = listStateKey(userId, list);
     try {
       const firstEntry = active.current === "";
-      const entering = active.current !== identity;
+      const bareNavigation = !Object.keys(compactListSearch(location.search)).some((key) => key !== "lista") && previousSearch.current !== serialized;
+      const entering = active.current !== identity || (bareNavigation && !clearing.current);
+      previousSearch.current = serialized;
+      clearing.current = false;
       active.current = identity;
       const explicit = Object.keys(compactListSearch(location.search)).some((key) => key !== "lista");
       let saved = readListState(localStorage, userId, list);
@@ -65,6 +70,7 @@ export function useListState<T extends Record<string, unknown>>({ list, userId, 
   }, [list, userId, enabled, family]);
 
   return () => {
+    clearing.current = true;
     restoring.current = null;
     if (!userId) return;
     try {
