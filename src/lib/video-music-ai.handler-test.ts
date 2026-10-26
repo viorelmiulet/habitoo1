@@ -1,5 +1,5 @@
 /**
- * Teste cu răspunsuri simulate pentru generarea AI de muzică: coadă → gata →
+ * Teste cu răspunsuri simulate pentru generarea AI de muzică: apel direct fal →
  * descărcare → rând nou inactiv; eroare → nimic salvat; doar SuperAdmin are acces.
  */
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -56,7 +56,7 @@ describe("acces SuperAdmin", () => {
     expect(mocks.core.mock.calls[0][0].apiKey).toBe("");
   });
   it("păstrează mesajul sigur în răspunsul serializabil, fără eroarea brută", async () => {
-    mocks.core.mockRejectedValue(new realServer.AiMusicError("Cheia serviciului de generare nu este validă.", "fal_submit_401"));
+    mocks.core.mockRejectedValue(new realServer.AiMusicError("Cheia serviciului de generare nu este validă.", "fal_401"));
     await expect(handler({ data: input, context: authContext(true) })).resolves.toEqual({ ok: false, message: "Cheia serviciului de generare nu este validă." });
     mocks.core.mockRejectedValue(new Error("secret-provider-response"));
     const result = await handler({ data: input, context: authContext(true) });
@@ -104,16 +104,13 @@ function fakeDb(dailyCount = 0) {
   return { db, calls };
 }
 
-function falFetchSequence(opts: { submitStatus?: number; queueStatus?: string; audioStatus?: number } = {}) {
+/** Secvență pentru apelul direct: răspunsul modelului, apoi descărcarea fișierului. */
+function falDirectSequence(opts: { falStatus?: number; audioStatus?: number } = {}) {
   const responses: Response[] = [];
-  const submitStatus = opts.submitStatus ?? 200;
-  responses.push(new Response(JSON.stringify({ request_id: "r1", status_url: "https://queue.fal.run/status/r1", response_url: "https://queue.fal.run/result/r1" }), { status: submitStatus }));
-  if (submitStatus === 200) {
-    responses.push(new Response(JSON.stringify({ status: opts.queueStatus ?? "COMPLETED" }), { status: 200 }));
-    if ((opts.queueStatus ?? "COMPLETED") === "COMPLETED") {
-      responses.push(new Response(JSON.stringify({ audio: { url: "https://cdn.fal.ai/audio/r1.wav", content_type: "audio/wav" } }), { status: 200 }));
-      responses.push(new Response(new Uint8Array([1, 2, 3]).buffer, { status: opts.audioStatus ?? 200, headers: { "content-type": "audio/wav" } }));
-    }
+  const falStatus = opts.falStatus ?? 200;
+  responses.push(new Response(JSON.stringify({ audio: { url: "https://cdn.fal.ai/audio/r1.wav", content_type: "audio/wav" } }), { status: falStatus }));
+  if (falStatus === 200) {
+    responses.push(new Response(new Uint8Array([1, 2, 3]).buffer, { status: opts.audioStatus ?? 200, headers: { "content-type": "audio/wav" } }));
   }
   const fetchFn = vi.fn(async () => {
     const next = responses.shift();
@@ -123,17 +120,23 @@ function falFetchSequence(opts: { submitStatus?: number; queueStatus?: string; a
   return fetchFn;
 }
 
-const sleep = async () => {};
-
-describe("generarea propriu-zisă", () => {
-  it("coadă → gata → descărcare → rând nou inactiv, cu eveniment de utilizare", async () => {
+describe("generarea propriu-zisă (apel direct)", () => {
+  it("apel direct → descărcare → rând nou inactiv, cu eveniment de utilizare", async () => {
     const { db, calls } = fakeDb();
+    const fetchFn = falDirectSequence();
     const result = await realGenerate(
       { apiKey: "k", input, userId: "u", organizationId: null, db },
-      { fetchFn: falFetchSequence() as never, sleep },
+      { fetchFn: fetchFn as never },
     );
     expect(result.durationSec).toBe(60);
     expect(result.storagePath).toMatch(/^tracks\/.+\.wav$/);
+    // Primul apel: POST direct la fal.run, cu timeout de 110 s.
+    const [url, init] = fetchFn.mock.calls[0] as unknown as [string, RequestInit];
+    expect(url).toBe("https://fal.run/fal-ai/ace-step/prompt-to-audio");
+    expect(init.method).toBe("POST");
+    expect((init.headers as Record<string, string>)["Authorization"]).toBe("Key k");
+    expect(JSON.parse(init.body as string)).toEqual({ prompt: "Calm, pian calm, modern", instrumental: true, duration: 60 });
+    expect(init.signal).toBeDefined();
     expect(calls.uploads).toHaveLength(1);
     expect(calls.tracks).toHaveLength(1);
     expect(calls.tracks[0]).toMatchObject({
@@ -151,31 +154,53 @@ describe("generarea propriu-zisă", () => {
     expect(calls.removed).toHaveLength(0);
   });
 
-  it("eroare la pornire → nimic salvat, eveniment nereușit", async () => {
+  it("eroare 401 la apelul direct → nimic salvat, eveniment nereușit", async () => {
     const { db, calls } = fakeDb();
     await expect(
-      realGenerate({ apiKey: "k", input, userId: "u", organizationId: null, db }, { fetchFn: falFetchSequence({ submitStatus: 500 }) as never, sleep }),
-    ).rejects.toThrow("Încearcă din nou");
+      realGenerate({ apiKey: "k", input, userId: "u", organizationId: null, db }, { fetchFn: falDirectSequence({ falStatus: 401 }) as never }),
+    ).rejects.toThrow("Cheia serviciului de generare nu este validă.");
     expect(calls.uploads).toHaveLength(0);
     expect(calls.tracks).toHaveLength(0);
-    expect(calls.usage).toEqual([expect.objectContaining({ success: false, extra_info: { error_code: "fal_submit_500" } })]);
+    expect(calls.usage).toEqual([expect.objectContaining({ success: false, extra_info: { error_code: "fal_401" } })]);
   });
 
-  it("generare eșuată în coadă → nimic salvat", async () => {
+  it("timeout la apelul direct → mesaj de durată, cod fal_timeout", async () => {
     const { db, calls } = fakeDb();
+    const timeout = new Error("The operation timed out");
+    timeout.name = "TimeoutError";
+    const fetchFn = vi.fn(async () => { throw timeout; });
     await expect(
-      realGenerate({ apiKey: "k", input, userId: "u", organizationId: null, db }, { fetchFn: falFetchSequence({ queueStatus: "FAILED" }) as never, sleep }),
-    ).rejects.toThrow("nu a reușit");
-    expect(calls.uploads).toHaveLength(0);
+      realGenerate({ apiKey: "k", input, userId: "u", organizationId: null, db }, { fetchFn: fetchFn as never }),
+    ).rejects.toThrow("durat prea mult");
     expect(calls.tracks).toHaveLength(0);
-    expect(calls.usage[0].extra_info).toEqual({ error_code: "fal_status_failed" });
+    expect(calls.usage[0].extra_info).toEqual({ error_code: "fal_timeout" });
+  });
+
+  it("eroare neprevăzută → error_name și fragment sigur în extra_info, fără chei sau URL-uri", async () => {
+    const { db, calls } = fakeDb();
+    const weird = new TypeError("cannot read https://cdn.fal.ai/x?token=secret-token cu cheia k în interior");
+    const fetchFn = vi.fn()
+      .mockResolvedValueOnce(new Response(JSON.stringify({ audio: { url: "https://cdn.fal.ai/audio/r1.wav" } }), { status: 200 }))
+      .mockResolvedValueOnce(new Response(new Uint8Array([1, 2, 3]).buffer, { status: 200, headers: { "content-type": "audio/wav" } }));
+    const badDb = fakeDb();
+    badDb.db.storage.from = () => { throw weird; };
+    await expect(
+      realGenerate({ apiKey: "k", input, userId: "u", organizationId: null, db: badDb.db }, { fetchFn: fetchFn as never }),
+    ).rejects.toThrow("probleme interne");
+    const info = badDb.calls.usage[0].extra_info as Record<string, unknown>;
+    expect(info.error_code).toBe("internal");
+    expect(info.error_name).toBe("TypeError");
+    expect(String(info.error_message).length).toBeLessThanOrEqual(150);
+    expect(JSON.stringify(info)).not.toContain("secret-token");
+    expect(JSON.stringify(info)).not.toContain("https://");
+    expect(calls.tracks).toHaveLength(0);
   });
 
   it("limita de 30 pe zi oprește generarea înainte de orice apel", async () => {
     const { db, calls } = fakeDb(30);
     const fetchFn = vi.fn();
     await expect(
-      realGenerate({ apiKey: "k", input, userId: "u", organizationId: null, db }, { fetchFn: fetchFn as never, sleep }),
+      realGenerate({ apiKey: "k", input, userId: "u", organizationId: null, db }, { fetchFn: fetchFn as never }),
     ).rejects.toThrow("30 de generări pe zi");
     expect(fetchFn).not.toHaveBeenCalled();
     expect(calls.tracks).toHaveLength(0);
@@ -185,42 +210,48 @@ describe("generarea propriu-zisă", () => {
   it("cerere invalidă → nimic apelat", async () => {
     const { db, calls } = fakeDb();
     await expect(
-      realGenerate({ apiKey: "k", input: { ...input, title: "" }, userId: "u", organizationId: null, db }, { fetchFn: vi.fn() as never, sleep }),
+      realGenerate({ apiKey: "k", input: { ...input, title: "" }, userId: "u", organizationId: null, db }, { fetchFn: vi.fn() as never }),
     ).rejects.toThrow("titlul");
     expect(calls.tracks).toHaveLength(0);
     expect(calls.usage[0].extra_info).toEqual({ error_code: "validation" });
   });
+
   it("titlu 1, Lux, 30 s fără descriere: prompt Lux și piesă inactivă", async () => {
     const { db, calls } = fakeDb();
-    const fetchFn = falFetchSequence();
-    await realGenerate({ apiKey: "k", input: { title: "1", style: "Lux", durationSec: 30 }, userId: "u", organizationId: null, db }, { fetchFn, sleep });
+    const fetchFn = falDirectSequence();
+    await realGenerate({ apiKey: "k", input: { title: "1", style: "Lux", durationSec: 30 }, userId: "u", organizationId: null, db }, { fetchFn });
     expect(calls.tracks[0]).toMatchObject({ title: "1", style: "Lux", duration_sec: 30, active: false });
   });
-  it.each([401, 403, 422])("urmărire HTTP %s: mesaj specific și cod sigur", async (status) => {
+
+  it("răspuns fal fără audio.url → fal_result_invalid, nimic salvat", async () => {
     const { db, calls } = fakeDb();
-    const fetchFn = vi.fn().mockResolvedValueOnce(new Response(JSON.stringify({ status_url: "https://queue.fal.run/status/r", response_url: "https://queue.fal.run/result/r" }))).mockResolvedValueOnce(new Response("private response", { status }));
-    await expect(realGenerate({ apiKey: "k", input, userId: "u", organizationId: null, db }, { fetchFn, sleep })).rejects.toBeInstanceOf(realServer.AiMusicError);
-    expect(calls.usage[0].extra_info).toEqual({ error_code: `fal_status_${status}` });
+    const fetchFn = vi.fn(async () => new Response(JSON.stringify({}), { status: 200 }));
+    await expect(
+      realGenerate({ apiKey: "k", input, userId: "u", organizationId: null, db }, { fetchFn: fetchFn as never }),
+    ).rejects.toThrow("lipsește");
+    expect(calls.usage[0].extra_info).toEqual({ error_code: "fal_result_invalid" });
     expect(calls.tracks).toHaveLength(0);
-    expect(JSON.stringify(calls.usage)).not.toContain("private response");
   });
+
   it("lipsa cheii înregistrează configuration înainte de fal", async () => {
     const { db, calls } = fakeDb();
     const fetchFn = vi.fn();
-    await expect(realGenerate({ apiKey: "", input, userId: "u", organizationId: null, db }, { fetchFn, sleep })).rejects.toThrow("nu este configurată");
+    await expect(realGenerate({ apiKey: "", input, userId: "u", organizationId: null, db }, { fetchFn })).rejects.toThrow("nu este configurată");
     expect(calls.usage[0].extra_info).toEqual({ error_code: "configuration" });
     expect(fetchFn).not.toHaveBeenCalled();
   });
+
   it("descărcare eșuată înregistrează download_failed", async () => {
     const { db, calls } = fakeDb();
-    await expect(realGenerate({ apiKey: "k", input, userId: "u", organizationId: null, db }, { fetchFn: falFetchSequence({ audioStatus: 500 }), sleep })).rejects.toThrow("descărcat");
+    await expect(realGenerate({ apiKey: "k", input, userId: "u", organizationId: null, db }, { fetchFn: falDirectSequence({ audioStatus: 500 }) })).rejects.toThrow("descărcat");
     expect(calls.usage[0].extra_info).toEqual({ error_code: "download_failed" });
     expect(calls.uploads).toHaveLength(0);
   });
+
   it("încărcare refuzată înregistrează upload_failed", async () => {
     const { db, calls } = fakeDb();
     db.storage.from = () => ({ upload: async () => ({ error: { message: "private-storage-error" } }), remove: async () => ({}) });
-    await expect(realGenerate({ apiKey: "k", input, userId: "u", organizationId: null, db }, { fetchFn: falFetchSequence(), sleep })).rejects.toThrow("salvat");
+    await expect(realGenerate({ apiKey: "k", input, userId: "u", organizationId: null, db }, { fetchFn: falDirectSequence() })).rejects.toThrow("salvat");
     expect(calls.usage[0].extra_info).toEqual({ error_code: "upload_failed" });
     expect(calls.tracks).toHaveLength(0);
   });
