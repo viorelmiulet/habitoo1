@@ -1,5 +1,6 @@
 // Modulul „Anunțuri particulari”: citește anunțurile importate (hbsync) ca
 // utilizatorul conectat. Orice agent sau administrator de agenție activă are acces.
+import { isListPageSize } from "@/lib/list-page-size";
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireActiveOrgAuth } from "@/lib/org-access";
@@ -50,6 +51,7 @@ export const privateListingsFiltersSchema = z.object({
   rooms: z.array(z.number().int()).max(5).optional(),
   q: z.string().max(200).optional(),
   page: z.number().int().min(0).max(1000).optional(),
+  pageSize: z.number().int().refine(isListPageSize, "Mărime de pagină invalidă.").optional(),
   sort: z.enum(["newest", "price_asc", "price_desc", "surface_desc"]).optional(),
   source: z.enum(["storia", "imobiliare", "olx", "romimo", "imoradar", "anuntul", "facebook"]).optional(),
   transaction: z.enum(["sale", "rent", "rent_day"]).optional(),
@@ -155,7 +157,8 @@ export const getOwnerListings = createServerFn({ method: "GET" })
   .inputValidator((input: unknown) => privateListingsFiltersSchema.parse(input ?? {}))
   .handler(async ({ data, context }): Promise<{ items: OwnerListing[]; total: number; newToday: number }> => {
     const page = data.page ?? 0;
-    const from = page * PRIVATE_LISTINGS_PAGE_SIZE;
+    const size = data.pageSize ?? PRIVATE_LISTINGS_PAGE_SIZE;
+    const from = page * size;
     const sort = data.sort ?? "newest";
     const todayStart = romaniaTodayStart().toISOString();
 
@@ -169,7 +172,8 @@ export const getOwnerListings = createServerFn({ method: "GET" })
       const { data: rows, error, count } = await query
         .order(order.column, { ascending: order.ascending, nullsFirst: false })
         .order("scraped_at", { ascending: false, nullsFirst: false })
-        .range(from, from + PRIVATE_LISTINGS_PAGE_SIZE - 1);
+        .order("id")
+        .range(from, from + size - 1);
       if (error) throw new Error("Anunțurile nu pot fi încărcate acum.");
       let todayQuery = context.supabase
         .from("listings")
@@ -202,7 +206,7 @@ export const getOwnerListings = createServerFn({ method: "GET" })
     }
     const ordered = interleaveNewest(matches);
     const newToday = matches.filter((row) => (row.first_seen_at ?? "") >= todayStart).length;
-    const pageIds = ordered.slice(from, from + PRIVATE_LISTINGS_PAGE_SIZE).map((row) => row.id);
+    const pageIds = ordered.slice(from, from + size).map((row) => row.id);
     if (pageIds.length === 0) return { total: ordered.length, newToday, items: [] };
     const pageQuery = context.supabase
       .from("listings")

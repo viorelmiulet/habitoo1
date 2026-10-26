@@ -1,5 +1,6 @@
 /** Filtre pentru modulul „Anunțuri particulari” — logică pură, testabilă. */
-export const PRIVATE_LISTINGS_PAGE_SIZE = 24;
+/** Mărimea implicită a paginii (aceeași cu cea din selectorul comun). */
+export const PRIVATE_LISTINGS_PAGE_SIZE = 15;
 
 /** Sortările disponibile în listă și ordonarea lor în baza de date. */
 export const PRIVATE_LISTINGS_SORTS = ["newest", "price_asc", "price_desc", "surface_desc"] as const;
