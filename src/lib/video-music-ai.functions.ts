@@ -37,19 +37,23 @@ export const generateVideoMusic = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const userId = await assertSuperadmin(context as unknown as AuthContext);
     const apiKey = process.env["FAL_KEY"];
-    if (!apiKey) throw new Error("Generarea de muzică cu AI nu este configurată.");
     const { data: profile } = await (context as unknown as AuthContext).supabase
       .from("profiles")
       .select("organization_id")
       .eq("id", userId)
       .maybeSingle();
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { generateAiMusicTrack } = await import("@/lib/video-music-ai.server");
-    return generateAiMusicTrack({
-      apiKey,
+    const { generateAiMusicTrack, AiMusicError } = await import("@/lib/video-music-ai.server");
+    try {
+      const track = await generateAiMusicTrack({
+      apiKey: apiKey ?? "",
       input: data,
       userId,
       organizationId: profile?.organization_id ?? null,
       db: supabaseAdmin as unknown as Parameters<typeof generateAiMusicTrack>[0]["db"],
-    });
+      });
+      return { ok: true as const, track };
+    } catch (error) {
+      return { ok: false as const, message: error instanceof AiMusicError ? error.message : "Piesa nu a putut fi generată din cauza unei probleme interne. Încearcă din nou." };
+    }
   });

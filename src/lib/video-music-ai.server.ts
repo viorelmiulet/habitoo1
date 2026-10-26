@@ -17,7 +17,9 @@ const FAL_SUBMIT_URL = "https://queue.fal.run/fal-ai/ace-step/prompt-to-audio";
 const POLL_INTERVAL_MS = 2000;
 const POLL_BUDGET_MS = 115_000;
 
-export class AiMusicError extends Error {}
+export class AiMusicError extends Error {
+  constructor(message: string, readonly code = "generation_failed") { super(message); }
+}
 
 type FetchFn = (input: string, init?: RequestInit) => Promise<Response>;
 export type AiMusicDeps = { fetchFn?: FetchFn; sleep?: (ms: number) => Promise<void> };
@@ -42,11 +44,16 @@ async function submitFal(apiKey: string, input: AiMusicInput, fetchFn: FetchFn):
       body: JSON.stringify({ prompt: buildAiMusicPrompt(input), instrumental: true, duration: input.durationSec }),
     });
   } catch {
-    throw new AiMusicError("Serviciul de generare nu a putut fi contactat. Încearcă din nou.");
+    throw new AiMusicError("Serviciul de generare nu a putut fi contactat. Încearcă din nou.", "fal_submit_network");
   }
-  if (!res.ok) throw new AiMusicError(falErrorMessage(res.status));
+  if (!res.ok) throw new AiMusicError(falErrorMessage(res.status), `fal_submit_${res.status}`);
   const body = (await res.json().catch(() => null)) as FalSubmit | null;
-  if (!body?.status_url || !body?.response_url) throw new AiMusicError("Răspunsul serviciului de generare nu a putut fi citit.");
+  if (!body?.status_url || !body?.response_url) throw new AiMusicError("Răspunsul serviciului de generare nu a putut fi citit.", "fal_submit_invalid");
+  for (const url of [body.status_url, body.response_url]) {
+    let parsed: URL;
+    try { parsed = new URL(url); } catch { throw new AiMusicError("Răspunsul serviciului de generare nu a putut fi citit.", "fal_submit_invalid"); }
+    if (parsed.protocol !== "https:" || parsed.hostname !== "queue.fal.run") throw new AiMusicError("Răspunsul serviciului de generare nu a putut fi citit.", "fal_submit_invalid");
+  }
   return { statusUrl: body.status_url, responseUrl: body.response_url };
 }
 
@@ -54,20 +61,21 @@ async function submitFal(apiKey: string, input: AiMusicInput, fetchFn: FetchFn):
 async function awaitFalAudioUrl(apiKey: string, urls: { statusUrl: string; responseUrl: string }, deps: Required<AiMusicDeps>): Promise<string> {
   const startedAt = Date.now();
   for (;;) {
-    if (Date.now() - startedAt > POLL_BUDGET_MS) throw new AiMusicError("Generarea a durat prea mult. Încearcă din nou.");
+    if (Date.now() - startedAt > POLL_BUDGET_MS) throw new AiMusicError("Generarea a durat prea mult. Încearcă din nou.", "fal_status_timeout");
     await deps.sleep(POLL_INTERVAL_MS);
     const statusRes = await deps.fetchFn(urls.statusUrl, { headers: { Authorization: `Key ${apiKey}` } }).catch(() => null);
+    if (statusRes && [401, 403, 404, 422].includes(statusRes.status)) throw new AiMusicError(statusRes.status === 401 || statusRes.status === 403 ? falErrorMessage(statusRes.status) : "Cererea de generare nu poate fi urmărită. Încearcă din nou.", `fal_status_${statusRes.status}`);
     if (statusRes?.ok) {
       const status = ((await statusRes.json().catch(() => null)) as { status?: string } | null)?.status;
-      if (status === "FAILED") throw new AiMusicError("Generarea a eșuat. Încearcă din nou.");
+      if (status === "FAILED") throw new AiMusicError("Serviciul fal.ai nu a reușit să genereze piesa. Încearcă din nou.", "fal_status_failed");
       if (status === "COMPLETED") break;
     }
   }
   const resultRes = await deps.fetchFn(urls.responseUrl, { headers: { Authorization: `Key ${apiKey}` } }).catch(() => null);
-  if (!resultRes?.ok) throw new AiMusicError("Rezultatul generării nu a putut fi citit.");
+  if (!resultRes?.ok) throw new AiMusicError("Rezultatul generării nu a putut fi citit.", resultRes ? `fal_result_${resultRes.status}` : "fal_result_network");
   const result = (await resultRes.json().catch(() => null)) as { audio?: { url?: string; content_type?: string; file_name?: string } } | null;
   const url = result?.audio?.url;
-  if (!url) throw new AiMusicError("Fișierul generat lipsește din răspuns.");
+  if (!url) throw new AiMusicError("Fișierul generat lipsește din răspuns.", "fal_result_invalid");
   return url;
 }
 
@@ -110,7 +118,6 @@ export async function generateAiMusicTrack(
   deps: AiMusicDeps = {},
 ): Promise<AiMusicResult> {
   const validationError = validateAiMusicInput(args.input);
-  if (validationError) throw new AiMusicError(validationError);
   const fetchFn = deps.fetchFn ?? fetch;
   const fullDeps: Required<AiMusicDeps> = { fetchFn, sleep: deps.sleep ?? defaultSleep };
   const startedAt = Date.now();
@@ -128,7 +135,7 @@ export async function generateAiMusicTrack(
     throw new AiMusicError(`Ai atins limita de ${MUSIC_AI_DAILY_LIMIT} de generări pe zi. Încearcă mâine.`);
   }
 
-  const writeUsage = (success: boolean) =>
+  const writeUsage = (success: boolean, errorCode?: string) =>
     args.db
       .from("ai_usage_events")
       .insert({
@@ -144,20 +151,23 @@ export async function generateAiMusicTrack(
         tool_calls: 0,
         tokens_unknown: true,
         fallback_used: false,
+        extra_info: errorCode ? { error_code: errorCode } : null,
       })
       .then(({ error }) => {
-        if (error) console.error("[ai-music] usage insert failed", error.message);
+        if (error) console.error("[ai-music] usage_insert_failed");
       });
 
   try {
+    if (validationError) throw new AiMusicError(validationError, "validation");
+    if (!args.apiKey.trim()) throw new AiMusicError("Generarea de muzică cu AI nu este configurată.", "configuration");
     const urls = await submitFal(args.apiKey, args.input, fetchFn);
     const audioUrl = await awaitFalAudioUrl(args.apiKey, urls, fullDeps);
     const audioRes = await fetchFn(audioUrl).catch(() => null);
-    if (!audioRes?.ok) throw new AiMusicError("Fișierul generat nu a putut fi descărcat.");
+    if (!audioRes?.ok) throw new AiMusicError("Fișierul generat nu a putut fi descărcat.", "download_failed");
     const contentType = audioRes.headers.get("content-type");
-    const bytes = await audioRes.arrayBuffer();
+    const bytes = await audioRes.arrayBuffer().catch(() => { throw new AiMusicError("Fișierul generat nu a putut fi descărcat.", "download_failed"); });
     const TOO_LARGE = "Piesa generată e prea mare. Alege o durată mai scurtă.";
-    if (bytes.byteLength > 30 * 1024 * 1024) throw new AiMusicError(TOO_LARGE);
+    if (bytes.byteLength > 30 * 1024 * 1024) throw new AiMusicError(TOO_LARGE, "audio_too_large");
 
     const id = crypto.randomUUID();
     const ext = audioExtension(contentType, audioUrl);
@@ -167,7 +177,7 @@ export async function generateAiMusicTrack(
       .upload(storagePath, new Blob([bytes], { type: contentType ?? "audio/wav" }), { contentType: contentType ?? "audio/wav" });
     if (upload.error) {
       const msg = upload.error.message ?? "";
-      throw new AiMusicError(/size|large|413|exceed/i.test(msg) ? TOO_LARGE : "Fișierul generat nu a putut fi salvat.");
+      throw new AiMusicError(/size|large|413|exceed/i.test(msg) ? TOO_LARGE : "Fișierul generat nu a putut fi salvat.", "upload_failed");
     }
 
     const { data: last } = await args.db.from("video_music_tracks").select("position").order("position", { ascending: false }).limit(1);
@@ -190,13 +200,14 @@ export async function generateAiMusicTrack(
     });
     if (error) {
       await args.db.storage.from(MUSIC_BUCKET).remove([storagePath]);
-      throw new AiMusicError("Piesa generată nu a putut fi adăugată în bibliotecă.");
+      throw new AiMusicError("Piesa generată nu a putut fi adăugată în bibliotecă.", "track_insert_failed");
     }
 
     await writeUsage(true);
     return { id, title: args.input.title.trim(), durationSec: args.input.durationSec, storagePath };
   } catch (error) {
-    if (!(error instanceof AiMusicError && error.message.startsWith("Ai atins limita"))) await writeUsage(false);
-    throw error;
+    const safe = error instanceof AiMusicError ? error : new AiMusicError("Piesa nu a putut fi generată din cauza unei probleme interne. Încearcă din nou.", "internal");
+    if (!safe.message.startsWith("Ai atins limita")) await writeUsage(false, safe.code);
+    throw safe;
   }
 }
