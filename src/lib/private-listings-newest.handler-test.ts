@@ -7,7 +7,7 @@ vi.mock("@tanstack/react-start", () => ({
   },
 }));
 vi.mock("@/lib/org-access", () => ({ requireActiveOrgAuth: {} }));
-import { getOwnerListings, privateListingsFiltersSchema } from "./listings.functions";
+import { getOwnerListings, getOwnerListingFacets, privateListingsFiltersSchema } from "./listings.functions";
 import { romaniaTodayStart } from "./private-listings";
 
 type Row = {
@@ -26,6 +26,9 @@ type Row = {
   floor_num?: number | null;
   year_built?: number | null;
   external_id?: string;
+  city?: string;
+  county?: string;
+  price?: number;
 };
 
 const cell = (row: Row, col: string) => (row as unknown as Record<string, unknown>)[col];
@@ -50,7 +53,7 @@ function makeSupabase(rows: Row[]) {
         or: (filter: string) => {
           const conditions = filter
             .split(/,(?![^(]*\))/)
-            .map((c) => /^([a-z_0-9]+)\.(eq|ilike|gte|lte|is|in)\.(.*)$/i.exec(c))
+            .map((c) => /^([a-z_0-9]+)\.(eq|neq|ilike|gte|lte|is|in)\.(.*)$/i.exec(c))
             .filter((m): m is RegExpExecArray => Boolean(m));
           if (conditions.length) {
             filtered = filtered.filter((r) =>
@@ -59,6 +62,7 @@ function makeSupabase(rows: Row[]) {
                 const val = m[3];
                 switch (m[2].toLowerCase()) {
                   case "eq": return String(v) === val;
+                  case "neq": return String(v) !== val;
                   case "ilike": return String(v ?? "").toLowerCase().includes(val.replace(/%/g, "").toLowerCase());
                   case "gte": return v !== null && v !== undefined && cmp(v, val) >= 0;
                   case "lte": return v !== null && v !== undefined && cmp(v, val) <= 0;
@@ -84,8 +88,8 @@ function makeSupabase(rows: Row[]) {
           filtered = filtered.filter((r) => cell(r, col) !== null && cell(r, col) !== undefined && cmp(cell(r, col), val) <= 0);
           return query;
         },
-        order: () => query,
-        range: async (from: number, to: number) => ({ data: filtered.slice(from, to + 1), error: null }),
+        order: (col: string, options?: { ascending?: boolean }) => { filtered = [...filtered].sort((a, b) => cmp(cell(a, col), cell(b, col)) * (options?.ascending === false ? -1 : 1)); return query; },
+        range: async (from: number, to: number) => ({ data: filtered.slice(from, to + 1), count: filtered.length, error: null }),
         in: async (col: string, vals: string[]) => ({
           data: filtered.filter((r) => vals.includes(cell(r, col) as string)),
           error: null,
@@ -114,6 +118,51 @@ const run = (rows: Row[], input: unknown) =>
   handler({ data: privateListingsFiltersSchema.parse(input), context: { supabase: makeSupabase(rows) } });
 
 afterEach(() => { vi.clearAllMocks(); });
+
+describe("MAP scopes — real handler, simulated data only", () => {
+  const today = new Date(romaniaTodayStart().getTime() + 3600000).toISOString();
+  const rows: Row[] = [
+    ...Array.from({ length: 30 }, (_, i) => ({ id: `fb${i}`, source: "facebook", is_owner: true, first_seen_at: today, property_type: "Apartament", price: i, city: "Cluj-Napoca", county: "Cluj", city_key: "cluj-napoca" })),
+    ...Array.from({ length: 26 }, (_, i) => ({ id: `s${i}`, source: "storia", is_owner: true, first_seen_at: today, property_type: "Casă", price: i, city: "București", county: "București", city_key: "bucuresti" })),
+  ];
+  it("legacy input defaults to Habitoo without Facebook, including totals and today's count", async () => {
+    const result = await run(rows, {});
+    expect(result.total).toBe(26);
+    expect(result.newToday).toBe(26);
+    expect(result.items).toHaveLength(24);
+    expect(result.items.map(r => r.source)).toEqual(Array(24).fill("storia"));
+    expect((await run(rows, { page: 1 })).items).toHaveLength(2);
+  });
+  it("Facebook paginates exclusively Facebook and counts only its new listings", async () => {
+    const first = await run(rows, { scope: "facebook" });
+    const second = await run(rows, { scope: "facebook", page: 1 });
+    expect(first.total).toBe(30);
+    expect(first.newToday).toBe(30);
+    expect(first.items).toHaveLength(24);
+    expect(second.items).toHaveLength(6);
+    expect(new Set([...first.items, ...second.items].map(r => r.id)).size).toBe(30);
+    expect([...first.items, ...second.items].every(r => r.source === "facebook")).toBe(true);
+  });
+  it("Facebook category and city filters are applied on the server", async () => {
+    expect((await run(rows, { scope: "facebook", category: "case" })).total).toBe(0);
+    expect((await run(rows, { scope: "facebook", category: "apartamente", city: "Cluj-Napoca" })).total).toBe(30);
+    expect((await run(rows, { scope: "facebook", city: "București" })).total).toBe(0);
+  });
+  it.each(["price_asc", "price_desc", "surface_desc"])("%s keeps scopes, counts and pagination separate", async sort => {
+    const fb = await run(rows, { scope: "facebook", sort, page: 1 });
+    const habitoo = await run(rows, { scope: "habitoo", sort });
+    expect(fb.total).toBe(30); expect(fb.newToday).toBe(30); expect(fb.items).toHaveLength(6);
+    expect(fb.items.every(r => r.source === "facebook")).toBe(true);
+    expect(habitoo.total).toBe(26); expect(habitoo.newToday).toBe(26);
+    expect(habitoo.items.every(r => r.source === "storia")).toBe(true);
+  });
+  it("geography facet counts share the same scope", async () => {
+    const facetsHandler = getOwnerListingFacets as unknown as (input: unknown) => Promise<{ counties: { label: string; count: number }[] }>;
+    const context = { supabase: makeSupabase(rows) };
+    expect((await facetsHandler({ data: { scope: "facebook" }, context })).counties).toEqual([expect.objectContaining({ label: "Cluj", count: 30 })]);
+    expect((await facetsHandler({ data: { scope: "habitoo" }, context })).counties).toEqual([expect.objectContaining({ label: "București", count: 26 })]);
+  });
+});
 
 describe("sortarea Cele mai noi cu surse intercalate", () => {
   it("prima pagină conține anunțuri din toate sursele zilei, intercalate", async () => {
