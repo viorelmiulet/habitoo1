@@ -96,7 +96,7 @@ function SuperadminMusicPage() {
     onSuccess: () => {
       toast.success("Piesa a fost generată și adăugată inactivă în listă. Ascult-o și activeaz-o când ești mulțumit.");
       setAiOpen(false);
-      setAiForm({ title: "", style: "", durationSec: MUSIC_AI_DEFAULT_SECONDS });
+      setAiForm({ title: "", style: "", description: "", durationSec: MUSIC_AI_DEFAULT_SECONDS });
       refresh();
     },
     onError: (e) => toastError(e),
