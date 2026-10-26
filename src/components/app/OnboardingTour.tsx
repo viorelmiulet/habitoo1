@@ -141,7 +141,7 @@ export function OnboardingTourProvider({ user, children, openMenu, closeMenu }: 
       let r = target.getBoundingClientRect();
       const mobile = window.innerWidth < 768;
       const safeBottom = window.innerHeight - (mobile ? cardHeight + 32 : 16);
-      if (!scrolled && (r.top < 80 || r.bottom > safeBottom)) {
+      if ((!scrolled || (mobile && r.height < 180)) && (r.top < 80 || Math.min(r.bottom, r.top + 160) > safeBottom)) {
         const targetY = Math.max(88, (safeBottom - Math.min(r.height,180)) / 2);
         window.scrollBy({ top: r.top - targetY, behavior: "instant" });
         scrolled = true;
