@@ -1,3 +1,4 @@
+import { publicRead } from "@/lib/public-read";
 import { createServerFn } from "@tanstack/react-start";
 import { createClient } from "@supabase/supabase-js";
 import { z } from "zod";
@@ -16,21 +17,27 @@ function mapPost(row: Record<string, unknown>): BlogPost {
 }
 
 export const listPublishedBlogPosts = createServerFn({ method: "GET" }).handler(async () => {
-  const db = publicClient();
-  const { data, error } = await db.from("blog_posts").select(rowFields).eq("status", "published").lte("published_at", new Date().toISOString()).order("published_at", { ascending: false });
-  if (error) throw new Error("Articolele nu au putut fi încărcate.");
-  return (data ?? []).map((row) => mapPost(row as Record<string, unknown>));
+  return publicRead("blog_posts list", async () => {
+    const db = publicClient();
+    const { data, error } = await db.from("blog_posts").select(rowFields).eq("status", "published").lte("published_at", new Date().toISOString()).order("published_at", { ascending: false });
+    if (error) throw new Error(error.message);
+    return (data ?? []).map((row) => mapPost(row as Record<string, unknown>));
+  }, [] as BlogPost[]);
 });
 
 export const getPublishedBlogPost = createServerFn({ method: "GET" })
   .inputValidator((data) => z.object({ slug: z.string().min(1).max(180) }).parse(data))
   .handler(async ({ data }) => {
     const db = publicClient();
-    const { data: row, error } = await db.from("blog_posts").select(rowFields).eq("slug", data.slug).eq("status", "published").lte("published_at", new Date().toISOString()).maybeSingle();
-    if (error || !row) return null;
+    const row = await publicRead("blog_posts article", async () => {
+      const { data: found, error } = await db.from("blog_posts").select(rowFields).eq("slug", data.slug).eq("status", "published").lte("published_at", new Date().toISOString()).maybeSingle();
+      if (error) throw new Error(error.message);
+      return found;
+    }, null);
+    if (!row) return null;
     const { renderSafeBlogContent } = await import("@/lib/blog-content.server");
     const post = mapPost(row as Record<string, unknown>);
-    const { data: similar } = await db.from("blog_posts").select(rowFields).eq("status", "published").lte("published_at", new Date().toISOString()).neq("id", post.id).order("published_at", { ascending: false }).limit(12);
+    const similar = await publicRead("blog_posts similar", async () => (await db.from("blog_posts").select(rowFields).eq("status", "published").lte("published_at", new Date().toISOString()).neq("id", post.id).order("published_at", { ascending: false }).limit(12)).data, null);
     const candidates = (similar ?? []).map((item) => mapPost(item as Record<string, unknown>));
     const sameCategory = candidates.filter((item) => item.category === post.category);
     return { post: { ...post, contentHtml: renderSafeBlogContent(post.content) }, similar: [...sameCategory, ...candidates.filter((item) => item.category !== post.category)].slice(0, 3) };

@@ -8416,6 +8416,24 @@ export type Database = {
           },
         ]
       }
+      public_statistics_cache: {
+        Row: {
+          data: Json
+          id: boolean
+          refreshed_at: string
+        }
+        Insert: {
+          data: Json
+          id?: boolean
+          refreshed_at?: string
+        }
+        Update: {
+          data?: Json
+          id?: boolean
+          refreshed_at?: string
+        }
+        Relationships: []
+      }
       rate_limit_hits: {
         Row: {
           bucket: string
@@ -10051,6 +10069,7 @@ export type Database = {
         Args: { _bucket: string; _limit: number; _window_seconds: number }
         Returns: boolean
       }
+      refresh_public_llms_statistics: { Args: never; Returns: undefined }
       reject_registration_request: {
         Args: { _reason?: string; _request_id: string }
         Returns: undefined

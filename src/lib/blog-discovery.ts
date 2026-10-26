@@ -99,12 +99,12 @@ export type LlmsStatistics = {
   market_active: number;
 };
 
-export function buildLlmsTxt(posts: DiscoverableBlogPost[], now: Date, hasPartners: boolean, statistics: LlmsStatistics) {
+export function buildLlmsTxt(posts: DiscoverableBlogPost[], now: Date, hasPartners: boolean, statistics: LlmsStatistics | null) {
   const articles = selectDiscoverablePosts(posts, now);
   const blogLines = articles.length
     ? articles.map((post) => `- [${post.title}](${BLOG_SITE_URL}/blog/${post.slug}): ${post.excerpt.replace(/\s+/g, " ").trim()}`).join("\n")
     : "- Nu există încă articole publicate.";
-  const sources = statistics.owner_sources.filter((row) => row.count > 0 && row.source !== "facebook");
+  const sources = (statistics?.owner_sources ?? []).filter((row) => row.count > 0 && row.source !== "facebook");
   const total = sources.reduce((sum, row) => sum + row.count, 0);
   const today = new Intl.DateTimeFormat("ro-RO", { day: "numeric", month: "long", year: "numeric", timeZone: "Europe/Bucharest" }).format(now);
   const portalLinks = INTEGRATION_PAGES.map((page) => `- [Integrare ${page.name}](${BLOG_SITE_URL}/integrari/${page.slug}): ${page.description}`).join("\n");
@@ -142,10 +142,10 @@ ${hasPartners ? `- [Agenții partenere Habitoo](${BLOG_SITE_URL}/agentii): Agen�
 - Comisioane: agentul își vede comisioanele, adminul toată agenția, cu rapoarte, comparații și export
 - Calendar, activități, obiective, rapoarte, roluri și jurnal de audit
 
-## Cifre (generate automat)
+${statistics ? `## Cifre (generate automat)
 - La ${today}, Habitoo avea ${total} anunțuri active de la proprietari, din ${sources.length} surse: ${sources.map((row) => `${marketSourceName(row.source)} (${row.count})`).join(", ") || "niciuna"}.
 - ${statistics.market_active} oferte de piață active folosite în analizele comparative.
-
+` : ""}
 ## Ce nu face Habitoo
 - Nu are încă aplicație mobilă nativă; funcționează în browser pe telefon, tabletă și calculator.
 - Analiza comparativă folosește prețurile cerute în anunțuri, nu prețurile de tranzacție.

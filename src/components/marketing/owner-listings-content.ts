@@ -13,7 +13,8 @@ export function summarizeOwnerStatistics(statistics: LlmsStatistics, observedAt:
   return { sources, date, total };
 }
 
-export function ownerStatisticsText(statistics: LlmsStatistics, observedAt: string) {
+export function ownerStatisticsText(statistics: LlmsStatistics | null, observedAt: string) {
+  if (!statistics) return "Anunțurile de la proprietari sunt adunate automat din mai multe surse; cifrele actualizate nu sunt disponibile momentan.";
   const { sources, date, total } = summarizeOwnerStatistics(statistics, observedAt);
   return `La ${date}: ${total} anunțuri de la proprietari din ${sources.length} surse: ${sources.map((row) => `${marketSourceName(row.source)} (${row.count})`).join(", ") || "niciuna"}.`;
 }

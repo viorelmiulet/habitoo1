@@ -1,9 +1,15 @@
 import { createClient } from "@supabase/supabase-js";
 import type { Database } from "@/integrations/supabase/types";
 import type { DiscoverableBlogPost, LlmsStatistics } from "@/lib/blog-discovery";
+import { publicRead } from "@/lib/public-read";
 
 /** Only aggregate counts are public; individual listings keep their existing access rules. */
-export async function loadLlmsStatistics(): Promise<LlmsStatistics> {
+/** Null când citirea eșuează sau expiră: paginile se afișează fără cifre. */
+export function loadLlmsStatistics(): Promise<LlmsStatistics | null> {
+  return publicRead("public_llms_statistics", readLlmsStatistics, null);
+}
+
+async function readLlmsStatistics(): Promise<LlmsStatistics> {
   const url = process.env['SUPABASE_URL'];
   const key = process.env['SUPABASE_PUBLISHABLE_KEY'];
   if (!url || !key) throw new Error("Configurația publică lipsește.");
@@ -29,7 +35,11 @@ export async function loadLlmsStatistics(): Promise<LlmsStatistics> {
   return { owner_sources, market_active: market };
 }
 
-export async function loadDiscoverableBlogPosts(limit?: number): Promise<DiscoverableBlogPost[]> {
+export function loadDiscoverableBlogPosts(limit?: number): Promise<DiscoverableBlogPost[]> {
+  return publicRead("blog_posts", () => readDiscoverableBlogPosts(limit), []);
+}
+
+async function readDiscoverableBlogPosts(limit?: number): Promise<DiscoverableBlogPost[]> {
   const url = process.env['SUPABASE_URL'];
   const key = process.env['SUPABASE_PUBLISHABLE_KEY'];
   if (!url || !key) throw new Error("Configurația blogului public lipsește.");
