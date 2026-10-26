@@ -199,7 +199,7 @@ type OfferRow = {
 /** URL-uri semnate pentru fotografiile publicabile ale unor proprietăți. */
 async function signedImages(
   propertyIds: string[],
-  perProperty: number,
+  perProperty = Infinity,
 ): Promise<Map<string, string[]>> {
   const result = new Map<string, string[]>();
   if (propertyIds.length === 0) return result;
@@ -383,7 +383,7 @@ export const getCollaborationOffer = createServerFn({ method: "GET" })
     const agency = agencies.get(row.organization_id);
     if (!agency) return null;
 
-    const images = await signedImages([row.id], 12);
+    const images = await signedImages([row.id]);
     return mapOffer(row, agency, images.get(row.id) ?? [], 0);
   });
 

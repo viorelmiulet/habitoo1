@@ -57,6 +57,7 @@ import {
   type CollaborationProposalStatus,
 } from "@/lib/collaboration.functions";
 import { PartnerOfferItem } from "@/components/app/PartnerOfferItem";
+import { PhotoViewer } from "@/components/app/PhotoViewer";
 import { PARTNER_OFFERS_PAGE_SIZE, nextPartnerOfferOffset, partnerOfferViewKey, parsePartnerOfferView, type PartnerOfferSort, type PartnerOfferView } from "@/lib/partner-offers";
 import { appHead } from "@/components/app/app-head";
 
@@ -453,16 +454,24 @@ function OfferDetailDialog({
   onPropose: (offer: CollaborationOffer) => void;
 }) {
   const fetchOffer = useServerFn(getCollaborationOffer);
+  const [openAt, setOpenAt] = useState<number | null>(null);
+  useEffect(() => { setOpenAt(null); }, [offer?.id]);
   const detail = useQuery({
     queryKey: ["collab-offer", offer?.id],
     enabled: Boolean(offer?.id),
-    queryFn: () => fetchOffer({ data: { id: offer!.id } }),
+    queryFn: () => {
+      if (!offer) throw new Error("Oferta nu a fost găsită.");
+      return fetchOffer({ data: { id: offer.id } });
+    },
   });
   const full = detail.data ?? offer;
 
   return (
     <Dialog open={Boolean(offer)} onOpenChange={(open) => (!open ? onClose() : undefined)}>
-      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
+      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl"
+        onInteractOutside={event => { if (openAt !== null) event.preventDefault(); }}
+        onEscapeKeyDown={event => { if (openAt !== null) event.preventDefault(); }}
+      >
         <DialogHeader>
           <DialogTitle>{full?.title ?? "Ofertă de colaborare"}</DialogTitle>
         </DialogHeader>
@@ -470,13 +479,12 @@ function OfferDetailDialog({
           <div className="space-y-4 text-sm">
             {full.images.length > 0 ? (
               <div className="grid grid-cols-3 gap-2">
-                {full.images.slice(0, 6).map((src: string) => (
-                  <img
-                    key={src}
-                    src={src}
-                    alt=""
-                    className="aspect-[4/3] w-full rounded-lg object-cover"
-                  />
+                {full.images.slice(0, 6).map((src: string, index: number) => (
+                  <Button key={`${index}-${src}`} type="button" variant="ghost" onClick={() => setOpenAt(index)}
+                    aria-label={`Deschide fotografia ${index + 1}`} className="relative block h-auto w-full overflow-hidden rounded-lg p-0">
+                    <img src={src} alt={`${full.title} — fotografia ${index + 1}`} className="aspect-[4/3] w-full cursor-zoom-in rounded-lg object-cover" />
+                    {index === 5 && full.images.length > 6 ? <span className="absolute inset-0 flex items-center justify-center bg-foreground/70 text-lg font-semibold text-background">+{full.images.length - 6}</span> : null}
+                  </Button>
                 ))}
               </div>
             ) : null}
@@ -535,6 +543,7 @@ function OfferDetailDialog({
           </Button>
           {offer ? <Button onClick={() => onPropose(offer)}>Propune unui client</Button> : null}
         </DialogFooter>
+        <PhotoViewer images={(full?.images ?? []).map(src => ({ src }))} title={full?.title ?? "Fotografii ofertă"} openAt={openAt} onOpenAtChange={setOpenAt} />
       </DialogContent>
     </Dialog>
   );
