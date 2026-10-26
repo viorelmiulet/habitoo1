@@ -318,10 +318,28 @@ export const generateAcpAiAnalysis = createServerFn({ method: "POST" })
     };
 
     let raw: string;
+    const started = Date.now();
+    const { writeAiUsage } = await import("@/lib/ai/usage/tracking.server");
+    let generationValid = false;
     try {
       raw = await provider.generate(aiContext);
+      generationValid = parseAcpAiInsight(raw).ok;
     } catch (providerError) {
       return await recordFailure("provider_error", safeAiErrorMessage(providerError));
+    } finally {
+      await writeAiUsage(admin as never, {
+        organization_id: organizationId,
+        user_id: userId,
+        provider: provider.id,
+        model: provider.model,
+        capability: "acp_ai",
+        input_tokens: provider.inputTokens,
+        output_tokens: provider.outputTokens,
+        fallback_used: provider.fallbackUsed,
+        latency_ms: Date.now() - started,
+        success: generationValid,
+        tool_calls: 0,
+      });
     }
 
     const parsed = parseAcpAiInsight(raw);

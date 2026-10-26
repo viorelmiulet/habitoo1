@@ -1,5 +1,9 @@
 # SEO public — pasul 1a
 
+## AI pasul 3 — interprétation ACP
+- [ ] Registry MiniMax/Gemini sans gateway Lovable, JSON validé et une correction, modèle et consommation effectifs
+- [ ] Tests simulés et une génération réelle sur une analyse existante, modèle/tokeni vérifiés
+
 ## AI pasul 2 — citirea cărții de identitate
 - [x] Registry MiniMax/Gemini, imagini high și consum cu furnizorul efectiv; limite și MRZ neschimbate
 - [x] Teste simulate spate valid/decupaj și față JSON pe MiniMax și rezervă Gemini 529, inclusiv reluarea completă spate/față; fără acte reale
