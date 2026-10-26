@@ -1,5 +1,10 @@
 # SEO public — pasul 1a
 
+## Studio AI — MiniMax și fal
+- [ ] Verificare documentație oficială și înlocuire Replicate: imagine MiniMax, video MiniMax asincron, îmbunătățire fal direct
+- [ ] Consum ai_media și erori sigure; fără schimbări de interfață, tabel, bucket sau limite
+- [ ] Teste simulate și câte o generare reală în cont, rezultate și consum verificate
+
 ## Muzică AI — eșecuri în producție
 - [x] Coada fal (submit + urmărire cu pauze setTimeout) înlocuită cu apel direct POST fal.run, timeout 110 s; fără node:*, Buffer sau pauze — compatibil cu runtime-ul de producție
 - [x] Erori neprevăzute: extra_info primește error_name + mesaj sigur (150 caractere, fără chei/URL-uri); coduri scurte păstrate
