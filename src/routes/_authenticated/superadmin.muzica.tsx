@@ -1,8 +1,9 @@
 /** Superadmin → Muzică video: biblioteca de piese folosite în generatorul video. */
 import { useRef, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowDown, ArrowUp, FileText, Music2, Pause, Pencil, Play, Trash2, Upload } from "lucide-react";
+import { ArrowDown, ArrowUp, FileText, Music2, Pause, Pencil, Play, Sparkles, Trash2, Upload } from "lucide-react";
 import { MusicBulkUpload } from "@/components/app/MusicBulkUpload";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader } from "@/components/app/PageHeader";
@@ -14,6 +15,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -23,6 +25,11 @@ import {
   MUSIC_BUCKET, MUSIC_DEFAULT_LICENSE, MUSIC_LICENSES, MUSIC_OTHER_LICENSE, MUSIC_SIGNED_SECONDS, MUSIC_STYLES,
   formatDuration, validateTrackInput,
 } from "@/lib/video-music";
+import {
+  MUSIC_AI_COST_PER_SECOND_USD, MUSIC_AI_DEFAULT_SECONDS, MUSIC_AI_MAX_SECONDS, MUSIC_AI_MIN_SECONDS,
+  formatMusicAiCost, validateAiMusicInput,
+} from "@/lib/video-music-ai";
+import { generateVideoMusic } from "@/lib/video-music-ai.functions";
 
 export const Route = createFileRoute("/_authenticated/superadmin/muzica")({
   head: () => appHead("Habitoo CRM — muzică pentru video"),
