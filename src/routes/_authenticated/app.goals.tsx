@@ -43,7 +43,7 @@ import { formatMoney } from "@/lib/format";
 import { appHead } from "@/components/app/app-head";
 
 export const Route = createFileRoute("/_authenticated/app/goals")({
-  head: () => appHead("Habitoo CRM — obiective"),
+  head: () => { const title = "Habitoo CRM — obiective"; const description = "Obiective lunare pe agent și agenție, cu progres calculat din datele CRM."; const head = appHead(title); return { ...head, meta: [...head.meta, { name: "description", content: description }, { property: "og:title", content: title }, { property: "og:description", content: description }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }] }; },
   component: GoalsPage,
 });
 

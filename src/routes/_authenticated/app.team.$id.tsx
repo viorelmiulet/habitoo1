@@ -17,7 +17,7 @@ import { roleLabels } from "@/lib/labels";
 import { normalizeRoMobile } from "@/lib/user-profile";
 
 export const Route = createFileRoute("/_authenticated/app/team/$id")({
-  head: () => appHead("Habitoo CRM — profil agent"),
+  head: () => { const title = "Habitoo CRM — profil agent"; const description = "Profilul colegului, portofoliul și acțiunile de management ale agenției."; const head = appHead(title); return { ...head, meta: [...head.meta, { name: "description", content: description }, { property: "og:title", content: title }, { property: "og:description", content: description }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }] }; },
   component: AgentDetailPage,
 });
 

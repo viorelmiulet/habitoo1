@@ -43,7 +43,7 @@ import { leadStageLabels, propertyStatusLabels, transactionLabels } from "@/lib/
 import { appHead } from "@/components/app/app-head";
 
 export const Route = createFileRoute("/_authenticated/app/reports")({
-  head: () => appHead("Habitoo CRM — rapoarte"),
+  head: () => { const title = "Habitoo CRM — rapoarte"; const description = "Rapoarte despre portofoliu, lead-uri și activitatea echipei, cu filtre de perioadă."; const head = appHead(title); return { ...head, meta: [...head.meta, { name: "description", content: description }, { property: "og:title", content: title }, { property: "og:description", content: description }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }] }; },
   component: ReportsPage,
 });
 
