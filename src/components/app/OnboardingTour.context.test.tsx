@@ -9,7 +9,7 @@ import type { CurrentUser } from "@/hooks/use-session";
 const mock = vi.hoisted(() => ({ path: "/app/properties/abc", records: new Map<string, string>(), auto: true, claims: [] as string[], mutations: 0 }));
 vi.mock("@tanstack/react-router", () => ({ useLocation: () => ({ pathname: mock.path }), useNavigate: () => vi.fn() }));
 vi.mock("@tanstack/react-start", () => ({ useServerFn: (fn: unknown) => fn }));
-vi.mock("@/hooks/use-ai-features", () => ({ useAiFeatures: () => ({ features: {} }) }));
+vi.mock("@/hooks/use-ai-features", () => ({ useAiFeatures: () => ({ features: {ai_crm:true,ai_marketing:true,ai_media:true,ai_manager:true,ai_assistant:true,acp_ai:true} }) }));
 vi.mock("@/lib/onboarding.functions", () => ({
   getGuideProgress: async () => ({ autoStart: mock.auto, progress: [...mock.records].map(([guide_id, status]) => ({ guide_id, status })) }),
   claimGuide: async ({ data }: { data: { guideId: string } }) => { mock.claims.push(data.guideId); if (!mock.auto || mock.records.has(data.guideId)) return false; mock.records.set(data.guideId, "seen"); return true; },
@@ -114,4 +114,24 @@ describe("étape 3: chaque guide, agent/admin et desktop/téléphone", () => {
       await act(async()=>root.unmount()); client.clear();host.remove();
     }
   });
+});
+
+describe("etapa 4: motorul parcurge toate etapele fără acțiuni finale",()=>{
+ const ids=['anunturi-particulari','anunturi-particulari-detail','anunturi-import','acp-new','acp-saved','acp-detail','ai-crm','ai-marketing','ai-media','ai-manager','habitoo-ai','agent-chat','topbar-tools'];
+ it.each(ids)("%s desktop și telefon fără mutații",async(id)=>{
+  const guide=implementedGuides.find(g=>g.id===id);if(!guide)throw Error('missing');
+  for(const width of [1280,390]){
+   mock.records.clear();mock.claims=[];mock.auto=true;mock.path=guide.path==='/app/*'?'/app':guide.path.replace(':id','existing-record');
+   vi.stubGlobal('IS_REACT_ACT_ENVIRONMENT',true);vi.stubGlobal('ResizeObserver',class{observe(){}disconnect(){}});window.scrollBy=vi.fn();Object.defineProperty(window,'innerWidth',{value:width,configurable:true});
+   const host=document.createElement('div');document.body.append(host);const root=createRoot(host);const client=new QueryClient({defaultOptions:{queries:{retry:false,gcTime:0}}});const user={userId:'agent',role:'agent',profile:{id:'agent'},impersonation:null} as unknown as CurrentUser;
+   await act(async()=>root.render(<QueryClientProvider client={client}><OnboardingTourProvider user={user} openMenu={()=>{}} closeMenu={()=>{}}><button data-tour="studio-generate" onClick={()=>mock.mutations++}>Generează</button><button data-tour="acp-create" onClick={()=>mock.mutations++}>Analizează</button><button onClick={()=>mock.mutations++}>Da</button></OnboardingTourProvider></QueryClientProvider>));
+   await wait(750);if(guide.context){if(document.querySelector('[data-guide]'))await act(async()=>click('Sari peste'));await announce(String(guide.context));await wait(750);}
+   expect(document.querySelector('[data-guide]')?.getAttribute('data-guide')).toBe(id);
+   const before=mock.mutations;
+   for(let n=0;n<20&&document.querySelector(`[data-guide="${id}"]`);n++){
+    const card=document.querySelector(`[data-guide="${id}"]`);const buttons=[...(card?.querySelectorAll('button')??[])];const button=buttons.find(b=>['Arată-mi','Sari pasul','Înainte','Am înțeles'].includes(b.textContent??''));if(button)await act(async()=>button.click());await wait(20);
+   }
+   expect(mock.mutations).toBe(before);expect(mock.records.get(id)).toBe('completed');await wait(750);expect(mock.claims.filter(g=>g===id)).toHaveLength(1);await act(async()=>root.unmount());client.clear();host.remove();
+  }
+ });
 });

@@ -58,10 +58,9 @@ describe("inventarul reorganizat", () => {
     expect(total).toBeGreaterThanOrEqual(38);
     expect(total).toBeLessThanOrEqual(52);
   });
-  it("ghidurile SuperAdmin sunt la finalul inventarului", () => {
-    const firstSuper = plannedGuides.findIndex((g) => g.roles.length === 1 && g.roles[0] === "superadmin");
-    expect(firstSuper).toBeGreaterThan(0);
-    expect(plannedGuides.slice(firstSuper).every((g) => g.roles.length === 1 && g.roles[0] === "superadmin")).toBe(true);
+  it("nu există ghiduri exclusiv SuperAdmin în inventar", () => {
+    expect(plannedGuides.filter(g=>g.roles.length===1&&g.roles[0]==='superadmin')).toEqual([]);
+    expect(implementedGuides.filter(g=>g.roles.length===1&&g.roles[0]==='superadmin')).toEqual([]);
   });
   it("inventarul nu repetă ghidurile deja implementate", () => {
     const done = new Set(implementedGuides.map((g) => g.id));
@@ -99,11 +98,20 @@ describe("etapa 3 — reguli de acces, pornire și siguranță", () => {
       }
     }
   });
-  it("ACP, asistentul, chatul și cele două unelte rapide rămân planificate", () => {
-    const required = ["acp-new", "acp-saved", "acp-detail", "habitoo-ai", "agent-chat", "topbar-search", "topbar-add"];
+  it("etapa 4 înlocuiește intrările planificate fără duplicate", () => {
+    const required = ["acp-new", "acp-saved", "acp-detail", "habitoo-ai", "agent-chat", "topbar-tools"];
     for (const id of required) {
-      expect(plannedGuides.some((g) => g.id === id)).toBe(true);
-      expect(implementedGuides.some((g) => g.id === id)).toBe(false);
+      expect(plannedGuides.some(g=>g.id===id)).toBe(false);
+      expect(implementedGuides.filter(g=>g.id===id)).toHaveLength(1);
     }
   });
+});
+
+describe('etapa 4 — siguranță și acces',()=>{
+ const ids=['anunturi-particulari','anunturi-particulari-detail','anunturi-import','acp-new','acp-saved','acp-detail','ai-crm','ai-marketing','ai-media','ai-manager','habitoo-ai','agent-chat','topbar-tools'];
+ it('înregistrează exact cele 13 ghiduri',()=>{for(const id of ids)expect(GUIDE_IDS).toContain(id);expect(implementedGuides.filter(g=>ids.includes(g.id))).toHaveLength(13);});
+ it('toate cele cinci ghiduri AI cer funcția proprie',()=>{for(const id of ['ai-crm','ai-marketing','ai-media','ai-manager','habitoo-ai'])expect(accessibleGuides(implementedGuides,'agent',emptyAiFeatureMap()).some(g=>g.id===id)).toBe(false);});
+ it('explicația ACP AI dispare fără activare',()=>{const g=implementedGuides.find(g=>g.id==='acp-detail');if(!g)throw Error('missing');expect(stepsForUser(g,'agent',emptyAiFeatureMap()).some(s=>s.id==='ai')).toBe(false);expect(stepsForUser(g,'agent',{...emptyAiFeatureMap(),acp_ai:true}).some(s=>s.id==='ai')).toBe(true);});
+ it('contextele ferestrelor funcționează pe orice pagină CRM',()=>{expect(guidesForContext('/app/anunturi-particulari/abc','listing:import').map(g=>g.id)).toEqual(['anunturi-import']);expect(guidesForContext('/app/properties','chat:directory').map(g=>g.id)).toEqual(['agent-chat']);expect(guidesForContext('/app/ai','topbar:tools').map(g=>g.id)).toEqual(['topbar-tools']);expect(guidesForContext('/superadmin','chat:directory')).toEqual([]);});
+ it('niciun pas interactiv nu execută acțiuni finale sau AI',()=>{const forbidden=/generate|submit|create|rerun|approve|send|import-open|chat-contact|pdf|save/;for(const g of implementedGuides.filter(g=>ids.includes(g.id)))for(const s of g.steps){if(s.mode==='do')expect(s.selector).not.toMatch(forbidden);if(s.show){expect(SAFE_SHOW_SELECTORS[s.show as keyof typeof SAFE_SHOW_SELECTORS]).not.toMatch(forbidden);}}});
 });
