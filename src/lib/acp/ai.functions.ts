@@ -150,154 +150,254 @@ export const listAcpAiInsights = createServerFn({ method: "POST" })
 
 /** Handler pur (testabil fără compilatorul de server functions). */
 export async function runGenerateAcpAiAnalysis({ context, data }: { context: unknown; data: { analysisId: string } }): Promise<AcpAiGenerateResult> {
-  const userId = (context as AuthContext).userId;
-  const admin = await loadAdmin();
-  const organizationId = await loadOrganizationId(admin, userId);
+    const userId = (context as AuthContext).userId;
+    const admin = await loadAdmin();
+    const organizationId = await loadOrganizationId(admin, userId);
 
-  const { isAiFeatureEnabled } = await import("@/lib/ai/features/features.server");
-  if (!(await isAiFeatureEnabled(organizationId, "acp_ai"))) {
-    return { status: "failed", message: aiFeatureDisabledMessage("acp_ai") };
-  }
+    const { isAiFeatureEnabled } = await import("@/lib/ai/features/features.server");
+    if (!(await isAiFeatureEnabled(organizationId, "acp_ai"))) {
+      return { status: "failed", message: aiFeatureDisabledMessage("acp_ai") };
+    }
 
-  // RLS/multi-tenancy: analiza trebuie să aparțină agenției utilizatorului.
-  const { data: analysis, error } = await admin
-    .from("acp_analyses")
-    .select(
-      "id,organization_id,status,version,root_analysis_id,snapshot_at,last_run_at,target_data,analysis_data",
-    )
-    .eq("id", data.analysisId)
-    .eq("organization_id", organizationId)
-    .maybeSingle();
-  if (error) throw error;
-  if (!analysis) throw new Error("Analiza nu a fost găsită în agenția ta.");
+    // RLS/multi-tenancy: analiza trebuie să aparțină agenției utilizatorului.
+    const { data: analysis, error } = await admin
+      .from("acp_analyses")
+      .select(
+        "id,organization_id,status,version,root_analysis_id,snapshot_at,last_run_at,target_data,analysis_data",
+      )
+      .eq("id", data.analysisId)
+      .eq("organization_id", organizationId)
+      .maybeSingle();
+    if (error) throw error;
+    if (!analysis) throw new Error("Analiza nu a fost găsită în agenția ta.");
 
-  const { resolveAcpAiProvider, safeAiErrorMessage } = await import("./ai/provider.server");
-  const provider = resolveAcpAiProvider();
-  if (!provider) {
-    return {
-      status: "not_configured",
-      code: AI_NOT_CONFIGURED,
-      message: "Analiza AI indisponibilă — configurează providerul.",
-    };
-  }
-
-  // Rate limit rezonabil: pe utilizator și pe agenție.
-  for (const [bucket, config] of [
-    [`acp_ai:user:${userId}`, ACP_AI_RATE_LIMITS.perUser],
-    [`acp_ai:org:${organizationId}`, ACP_AI_RATE_LIMITS.perOrganization],
-  ] as const) {
-    const { data: allowed } = await admin.rpc("rate_limit_hit", {
-      _bucket: bucket,
-      _limit: config.limit,
-      _window_seconds: config.windowSeconds,
-    });
-    if (allowed === false) {
+    const { resolveAcpAiProvider, safeAiErrorMessage } = await import("./ai/provider.server");
+    const provider = resolveAcpAiProvider();
+    if (!provider) {
       return {
-        status: "rate_limited",
-        message: "Ai atins limita de generări AI pentru această oră. Încearcă mai târziu.",
+        status: "not_configured",
+        code: AI_NOT_CONFIGURED,
+        message: "Analiza AI indisponibilă — configurează providerul.",
       };
     }
-  }
 
-  const { data: comparables } = await admin
-    .from("acp_comparables")
-    .select(
-      "source_type,source_name,similarity_score,component_scores,tier,adjustment_percent,adjusted_price,adjusted_price_per_sqm,is_selected,is_outlier,outlier_reason,snapshot",
-    )
-    .eq("analysis_id", data.analysisId)
-    .order("similarity_score", { ascending: false });
+    // Rate limit rezonabil: pe utilizator și pe agenție.
+    for (const [bucket, config] of [
+      [`acp_ai:user:${userId}`, ACP_AI_RATE_LIMITS.perUser],
+      [`acp_ai:org:${organizationId}`, ACP_AI_RATE_LIMITS.perOrganization],
+    ] as const) {
+      const { data: allowed } = await admin.rpc("rate_limit_hit", {
+        _bucket: bucket,
+        _limit: config.limit,
+        _window_seconds: config.windowSeconds,
+      });
+      if (allowed === false) {
+        return {
+          status: "rate_limited",
+          message: "Ai atins limita de generări AI pentru această oră. Încearcă mai târziu.",
+        };
+      }
+    }
 
-  const { data: sourceRows } = await admin
-    .from("acp_analysis_sources")
-    .select("source_type,source_name,items_found,items_used,items_excluded")
-    .eq("analysis_id", data.analysisId);
+    const { data: comparables } = await admin
+      .from("acp_comparables")
+      .select(
+        "source_type,source_name,similarity_score,component_scores,tier,adjustment_percent,adjusted_price,adjusted_price_per_sqm,is_selected,is_outlier,outlier_reason,snapshot",
+      )
+      .eq("analysis_id", data.analysisId)
+      .order("similarity_score", { ascending: false });
 
-  const analysisData = (analysis.analysis_data ?? {}) as AnalysisData;
-  const targetData = (analysis.target_data ?? {}) as {
-    title?: string;
-    locationLabel?: string | null;
-    subject?: AcpAiContextInput["target"]["subject"];
-  };
+    const { data: sourceRows } = await admin
+      .from("acp_analysis_sources")
+      .select("source_type,source_name,items_found,items_used,items_excluded")
+      .eq("analysis_id", data.analysisId);
 
-  const analysisVersion = analysis.version ?? 1;
-  // Snapshot-ul versiunii, nu momentul generării: o versiune istorică
-  // rămâne interpretată pe datele ei, nu pe piața de azi.
-  const snapshotAt = analysis.snapshot_at ?? analysis.last_run_at ?? null;
+    const analysisData = (analysis.analysis_data ?? {}) as AnalysisData;
+    const targetData = (analysis.target_data ?? {}) as {
+      title?: string;
+      locationLabel?: string | null;
+      subject?: AcpAiContextInput["target"]["subject"];
+    };
 
-  const aiContext = buildAcpAiContext({
-    acpVersion: analysisVersion,
-    snapshotAt,
-    target: {
-      title: targetData.title ?? null,
-      locationLabel: targetData.locationLabel ?? null,
-      subject: targetData.subject ?? {},
-      pricePerSqm: analysisData.targetPricePerSqm ?? null,
-    },
-    statistics: analysisData.statistics ?? null,
-    estimate: analysisData.estimate ?? null,
-    confidence: analysisData.confidence ?? null,
-    explanation: analysisData.explanation ?? [],
-    // Market Intelligence exclusiv din snapshot-ul versiunii (Stage 4).
-    market: analysisData.marketIntelligence ?? null,
-    comparables: (comparables ?? []).map((c) => {
-      const snapshot = (c.snapshot ?? {}) as {
-        title?: string;
-        locationLabel?: string | null;
-        subject?: AcpAiContextInput["target"]["subject"];
-      };
-      return {
-        title: snapshot.title ?? null,
-        sourceType: c.source_type,
-        sourceName: c.source_name,
-        locationLabel: snapshot.locationLabel ?? null,
-        subject: snapshot.subject ?? {},
-        similarityScore: Number(c.similarity_score ?? 0),
-        components: (c.component_scores ?? null) as Record<string, number> | null,
-        tier: c.tier ?? "excluded",
-        adjustmentPercent: c.adjustment_percent,
-        adjustedPrice: c.adjusted_price,
-        adjustedPricePerSqm: c.adjusted_price_per_sqm,
-        isSelected: Boolean(c.is_selected),
-        isOutlier: Boolean(c.is_outlier),
-        outlierReason: c.outlier_reason,
-      };
-    }),
-    sourceStats: (sourceRows ?? []).map((s) => ({
-      sourceType: s.source_type,
-      sourceName: s.source_name ?? s.source_type,
-      itemsFound: s.items_found ?? 0,
-      itemsUsed: s.items_used ?? 0,
-      itemsExcluded: s.items_excluded ?? 0,
-    })),
-  });
+    const analysisVersion = analysis.version ?? 1;
+    // Snapshot-ul versiunii, nu momentul generării: o versiune istorică
+    // rămâne interpretată pe datele ei, nu pe piața de azi.
+    const snapshotAt = analysis.snapshot_at ?? analysis.last_run_at ?? null;
 
-  const inputSummary = {
-    contextVersion: aiContext.contextVersion,
-    comparablesTotal: aiContext.comparablesTotal,
-    comparablesUsed: aiContext.comparablesUsed,
-    outliers: aiContext.outliersCount,
-    marketSnapshot: aiContext.market !== null,
-    sources: aiContext.sources.length,
-  };
-
-  /** Istoric + audit pentru un eșec, fără scurgeri de secrete. */
-  const recordFailure = async (reason: string, message: string): Promise<AcpAiGenerateResult> => {
-    await admin.from("acp_ai_insights").insert({
-      organization_id: organizationId,
-      analysis_id: analysis.id,
-      root_analysis_id: analysis.root_analysis_id ?? analysis.id,
-      analysis_version: analysisVersion,
-      snapshot_at: snapshotAt,
-      status: "failed",
-      provider: provider.id,
-      model: provider.model,
-      prompt_version: provider.promptVersion,
-      schema_version: ACP_AI_SCHEMA_VERSION,
-      insight: null,
-      input_summary: inputSummary as never,
-      error_reason: reason,
-      created_by: userId,
+    const aiContext = buildAcpAiContext({
+      acpVersion: analysisVersion,
+      snapshotAt,
+      target: {
+        title: targetData.title ?? null,
+        locationLabel: targetData.locationLabel ?? null,
+        subject: targetData.subject ?? {},
+        pricePerSqm: analysisData.targetPricePerSqm ?? null,
+      },
+      statistics: analysisData.statistics ?? null,
+      estimate: analysisData.estimate ?? null,
+      confidence: analysisData.confidence ?? null,
+      explanation: analysisData.explanation ?? [],
+      // Market Intelligence exclusiv din snapshot-ul versiunii (Stage 4).
+      market: analysisData.marketIntelligence ?? null,
+      comparables: (comparables ?? []).map((c) => {
+        const snapshot = (c.snapshot ?? {}) as {
+          title?: string;
+          locationLabel?: string | null;
+          subject?: AcpAiContextInput["target"]["subject"];
+        };
+        return {
+          title: snapshot.title ?? null,
+          sourceType: c.source_type,
+          sourceName: c.source_name,
+          locationLabel: snapshot.locationLabel ?? null,
+          subject: snapshot.subject ?? {},
+          similarityScore: Number(c.similarity_score ?? 0),
+          components: (c.component_scores ?? null) as Record<string, number> | null,
+          tier: c.tier ?? "excluded",
+          adjustmentPercent: c.adjustment_percent,
+          adjustedPrice: c.adjusted_price,
+          adjustedPricePerSqm: c.adjusted_price_per_sqm,
+          isSelected: Boolean(c.is_selected),
+          isOutlier: Boolean(c.is_outlier),
+          outlierReason: c.outlier_reason,
+        };
+      }),
+      sourceStats: (sourceRows ?? []).map((s) => ({
+        sourceType: s.source_type,
+        sourceName: s.source_name ?? s.source_type,
+        itemsFound: s.items_found ?? 0,
+        itemsUsed: s.items_used ?? 0,
+        itemsExcluded: s.items_excluded ?? 0,
+      })),
     });
+
+    const inputSummary = {
+      contextVersion: aiContext.contextVersion,
+      comparablesTotal: aiContext.comparablesTotal,
+      comparablesUsed: aiContext.comparablesUsed,
+      outliers: aiContext.outliersCount,
+      marketSnapshot: aiContext.market !== null,
+      sources: aiContext.sources.length,
+    };
+
+    /** Istoric + audit pentru un eșec, fără scurgeri de secrete. */
+    const recordFailure = async (reason: string, message: string): Promise<AcpAiGenerateResult> => {
+      await admin.from("acp_ai_insights").insert({
+        organization_id: organizationId,
+        analysis_id: analysis.id,
+        root_analysis_id: analysis.root_analysis_id ?? analysis.id,
+        analysis_version: analysisVersion,
+        snapshot_at: snapshotAt,
+        status: "failed",
+        provider: provider.id,
+        model: provider.model,
+        prompt_version: provider.promptVersion,
+        schema_version: ACP_AI_SCHEMA_VERSION,
+        insight: null,
+        input_summary: inputSummary as never,
+        error_reason: reason,
+        created_by: userId,
+      });
+      await logAcpAudit({
+        organizationId,
+        actorId: userId,
+        action: ACP_AUDIT_ACTIONS.aiGenerated,
+        analysisId: analysis.id,
+        details: {
+          provider: provider.id,
+          model: provider.model,
+          promptVersion: provider.promptVersion,
+          analysisVersion,
+          success: false,
+          reason,
+        },
+      });
+      return { status: "failed", message };
+    };
+
+    let raw: string;
+    const started = Date.now();
+    const { writeAiUsage } = await import("@/lib/ai/usage/tracking.server");
+    let generationValid = false;
+    try {
+      raw = await provider.generate(aiContext);
+      generationValid = parseAcpAiInsight(raw).ok;
+    } catch (providerError) {
+      return await recordFailure("provider_error", safeAiErrorMessage(providerError));
+    } finally {
+      await writeAiUsage(admin as never, {
+        organization_id: organizationId,
+        user_id: userId,
+        provider: provider.id,
+        model: provider.model,
+        capability: "acp_ai",
+        input_tokens: provider.inputTokens,
+        output_tokens: provider.outputTokens,
+        fallback_used: provider.fallbackUsed,
+        latency_ms: Date.now() - started,
+        success: generationValid,
+        tool_calls: 0,
+      });
+    }
+
+    const parsed = parseAcpAiInsight(raw);
+    if (!parsed.ok) {
+      return await recordFailure(
+        parsed.reason,
+        "Răspunsul AI nu a respectat formatul așteptat, așa că nu a fost salvat.",
+      );
+    }
+
+    const generatedAt = new Date().toISOString();
+
+    // Istoricul: fiecare regenerare adaugă un rând nou, nu suprascrie nimic.
+    const { data: inserted, error: insertError } = await admin
+      .from("acp_ai_insights")
+      .insert({
+        organization_id: organizationId,
+        analysis_id: analysis.id,
+        root_analysis_id: analysis.root_analysis_id ?? analysis.id,
+        analysis_version: analysisVersion,
+        snapshot_at: snapshotAt,
+        status: "ok",
+        provider: provider.id,
+        model: provider.model,
+        prompt_version: provider.promptVersion,
+        schema_version: ACP_AI_SCHEMA_VERSION,
+        insight: parsed.insight as never,
+        input_summary: inputSummary as never,
+        created_by: userId,
+      })
+      .select("id")
+      .single();
+    if (insertError) throw insertError;
+
+    // Cifrele motorului rămân neatinse: interpretarea trăiește într-o cheie separată.
+    const { error: updateError } = await admin
+      .from("acp_analyses")
+      .update({
+        ai_summary: parsed.insight.executive_summary,
+        ai_model: provider.model,
+        ai_generated_at: generatedAt,
+        analysis_data: {
+          ...analysisData,
+          ai: {
+            insightId: inserted.id,
+            provider: provider.id,
+            model: provider.model,
+            generatedAt,
+            promptVersion: provider.promptVersion,
+            schemaVersion: ACP_AI_SCHEMA_VERSION,
+            analysisVersion,
+            snapshotAt,
+            insight: parsed.insight,
+          },
+        } as never,
+      })
+      .eq("id", analysis.id)
+      .eq("organization_id", organizationId);
+    if (updateError) throw updateError;
+
     await logAcpAudit({
       organizationId,
       actorId: userId,
@@ -308,124 +408,24 @@ export async function runGenerateAcpAiAnalysis({ context, data }: { context: unk
         model: provider.model,
         promptVersion: provider.promptVersion,
         analysisVersion,
-        success: false,
-        reason,
+        snapshotAt,
+        success: true,
+        comparablesUsed: aiContext.comparablesUsed,
+        marketSnapshot: aiContext.market !== null,
       },
     });
-    return { status: "failed", message };
-  };
 
-  let raw: string;
-  const started = Date.now();
-  const { writeAiUsage } = await import("@/lib/ai/usage/tracking.server");
-  let generationValid = false;
-  try {
-    raw = await provider.generate(aiContext);
-    generationValid = parseAcpAiInsight(raw).ok;
-  } catch (providerError) {
-    return await recordFailure("provider_error", safeAiErrorMessage(providerError));
-  } finally {
-    await writeAiUsage(admin as never, {
-      organization_id: organizationId,
-      user_id: userId,
-      provider: provider.id,
-      model: provider.model,
-      capability: "acp_ai",
-      input_tokens: provider.inputTokens,
-      output_tokens: provider.outputTokens,
-      fallback_used: provider.fallbackUsed,
-      latency_ms: Date.now() - started,
-      success: generationValid,
-      tool_calls: 0,
-    });
-  }
-
-  const parsed = parseAcpAiInsight(raw);
-  if (!parsed.ok) {
-    return await recordFailure(
-      parsed.reason,
-      "Răspunsul AI nu a respectat formatul așteptat, așa că nu a fost salvat.",
-    );
-  }
-
-  const generatedAt = new Date().toISOString();
-
-  // Istoricul: fiecare regenerare adaugă un rând nou, nu suprascrie nimic.
-  const { data: inserted, error: insertError } = await admin
-    .from("acp_ai_insights")
-    .insert({
-      organization_id: organizationId,
-      analysis_id: analysis.id,
-      root_analysis_id: analysis.root_analysis_id ?? analysis.id,
-      analysis_version: analysisVersion,
-      snapshot_at: snapshotAt,
+    return {
       status: "ok",
+      insight: parsed.insight,
       provider: provider.id,
       model: provider.model,
-      prompt_version: provider.promptVersion,
-      schema_version: ACP_AI_SCHEMA_VERSION,
-      insight: parsed.insight as never,
-      input_summary: inputSummary as never,
-      created_by: userId,
-    })
-    .select("id")
-    .single();
-  if (insertError) throw insertError;
-
-  // Cifrele motorului rămân neatinse: interpretarea trăiește într-o cheie separată.
-  const { error: updateError } = await admin
-    .from("acp_analyses")
-    .update({
-      ai_summary: parsed.insight.executive_summary,
-      ai_model: provider.model,
-      ai_generated_at: generatedAt,
-      analysis_data: {
-        ...analysisData,
-        ai: {
-          insightId: inserted.id,
-          provider: provider.id,
-          model: provider.model,
-          generatedAt,
-          promptVersion: provider.promptVersion,
-          schemaVersion: ACP_AI_SCHEMA_VERSION,
-          analysisVersion,
-          snapshotAt,
-          insight: parsed.insight,
-        },
-      } as never,
-    })
-    .eq("id", analysis.id)
-    .eq("organization_id", organizationId);
-  if (updateError) throw updateError;
-
-  await logAcpAudit({
-    organizationId,
-    actorId: userId,
-    action: ACP_AUDIT_ACTIONS.aiGenerated,
-    analysisId: analysis.id,
-    details: {
-      provider: provider.id,
-      model: provider.model,
+      generatedAt,
       promptVersion: provider.promptVersion,
+      schemaVersion: ACP_AI_SCHEMA_VERSION,
       analysisVersion,
       snapshotAt,
-      success: true,
-      comparablesUsed: aiContext.comparablesUsed,
-      marketSnapshot: aiContext.market !== null,
-    },
-  });
-
-  return {
-    status: "ok",
-    insight: parsed.insight,
-    provider: provider.id,
-    model: provider.model,
-    generatedAt,
-    promptVersion: provider.promptVersion,
-    schemaVersion: ACP_AI_SCHEMA_VERSION,
-    analysisVersion,
-    snapshotAt,
-  };
+    };
 }
 
 export const generateAcpAiAnalysis = createServerFn({ method: "POST" })
