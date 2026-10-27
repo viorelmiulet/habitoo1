@@ -119,7 +119,7 @@ function TeamPage() {
         title="Agenți"
         description="Echipa agenției tale: cine e activ, cine are invitația în așteptare și cine are nevoie de date."
         actions={
-          <Button onClick={() => setOpen(true)} disabled={!data || limitReached}>
+          <Button data-tour="team-invite-open" onClick={() => setOpen(true)} disabled={!data || limitReached}>
             <UserPlus className="size-4" />
             Adaugă agent
           </Button>
@@ -171,7 +171,7 @@ function TeamPage() {
       ) : null}
 
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex flex-wrap gap-2" role="group" aria-label="Filtrează agenții">
+        <div className="flex flex-wrap gap-2" data-tour="team-filters" role="group" aria-label="Filtrează agenții">
           <Button variant="ghost" size="sm" onClick={persisted.reset}><X className="size-4" /> Șterge filtre</Button>
           {FILTERS.map((f) => (
             <Button
@@ -194,7 +194,7 @@ function TeamPage() {
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Caută nume, email, telefon…"
             className="pl-9"
-            aria-label="Caută agenți"
+            data-tour="team-search" aria-label="Caută agenți"
           />
         </div>
       </div>
@@ -214,7 +214,7 @@ function TeamPage() {
           Niciun agent nu corespunde filtrului.
         </div>
       ) : (
-        <ul className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+        <ul data-tour="team-members" className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
           {visible.map((m) => (
             <li key={m.id} className={cn("panel flex flex-col gap-3 p-4", !m.is_active && "opacity-70")}>
               <div className="flex items-start gap-3">
@@ -271,7 +271,7 @@ function TeamPage() {
               agenția ta.
             </DialogDescription>
           </DialogHeader>
-          <form
+          <form data-tour="team-invite-form"
             className="space-y-4"
             onSubmit={(e) => {
               e.preventDefault();
@@ -310,7 +310,7 @@ function TeamPage() {
               />
             </div>
             <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => setOpen(false)}>
+              <Button data-tour="team-invite-cancel" type="button" variant="outline" onClick={() => setOpen(false)}>
                 Anulează
               </Button>
               <Button type="submit" disabled={inviteMutation.isPending}>

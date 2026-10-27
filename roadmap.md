@@ -1,5 +1,11 @@
 # SEO public — pasul 1a
 
+## Ghiduri interactive — etapa 5
+- [x] Completare 8 ghiduri Management; 50 implementate, fără planificate. Progres distinct per rol/AI: agent 38–44, admin 44–50
+- [x] 67 teste trec pentru agent/admin și desktop/telefon; cele 8 ghiduri parcurse în contul admin pe ambele dimensiuni, fără erori și fără acțiuni de salvare/trimitere/ștergere; 101 proprietăți, 6 profiluri, 0 comisioane, 0 obiective, 1 cerere neschimbate
+- [ ] Parcurgere în cont agent real: autorizarea sesiunii agentului existent nu este disponibilă; verificat prin teste motor agent/admin, fără schimbarea rolurilor sau crearea de conturi
+- [x] Inventar final și 6 capturi Comisioane, Setări profil/agenție și Integrări în Files; colecția creată, sincronizarea membrilor pending
+
 ## Ghiduri interactive — etapa 4
 - [x] Eliminare inventar SuperAdmin și completare 13 ghiduri MAP/import/ACP/AI/chat/bara de sus
 - [x] 53 teste trec; toate cele 13 ghiduri parcurse desktop/telefon, fără generări/salvări/importuri/trimiteri; numerele proprietăților, ACP, comentariilor, chatului și consumului AI neschimbate; build OK

@@ -222,13 +222,14 @@ function CommissionsPage() {
       <PageHeader
         title="Comisioane"
         description={isAdmin ? "Toate comisioanele agenției." : "Comisioanele tale."}
-        actions={<Button onClick={openNew}><Plus className="size-4" /> Adaugă comision</Button>}
+        actions={<Button data-tour="commission-new-open" onClick={openNew}><Plus className="size-4" /> Adaugă comision</Button>}
       />
 
       <div className="flex gap-1 border-b border-border">
         {([["lista", "Comisioane"], ["rapoarte", "Rapoarte"]] as const).map(([key, label]) => (
           <button
             key={key}
+            data-tour={`commissions-${key === "lista" ? "list" : "reports"}-tab`}
             type="button"
             onClick={() => setTab(key)}
             className={`-mb-px border-b-2 px-4 py-2 text-sm font-medium transition-colors ${
@@ -258,7 +259,7 @@ function CommissionsPage() {
         <FilterSelect label="Stare" value={filters.status} onChange={(v) => setFilters({ ...filters, status: v })} options={Object.entries(commissionStatusLabels)} />
       </div>
 
-      <div className="flex flex-wrap items-center justify-between gap-3">
+      <div data-tour="commissions-export" className="flex flex-wrap items-center justify-between gap-3">
         <Button variant="ghost" size="sm" onClick={persisted.reset}><X className="size-4" /> Șterge filtre</Button>
         <CommissionCurrencySelect value={currency} onChange={setCurrency} />
         <CommissionExportButton prepare={prepareExport} disabled={list.isFetching || !!list.error || !orgId} />
@@ -321,7 +322,7 @@ function CommissionsPage() {
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
           <DialogHeader><DialogTitle>{editingId ? "Modifică comisionul" : "Adaugă comision"}</DialogTitle></DialogHeader>
-          <div className="grid gap-3 sm:grid-cols-2">
+          <div data-tour="commission-form" className="grid gap-3 sm:grid-cols-2">
             {isAdmin ? (
               <FormSelect label="Agent" value={form.agent_id} onChange={(v) => set("agent_id", v)}
                 options={(refs.data?.profiles ?? []).map((p) => [p.id, p.full_name ?? "—"])} />
@@ -348,7 +349,7 @@ function CommissionsPage() {
             <div className="sm:col-span-2"><Label>Note</Label><Textarea value={form.notes} onChange={(e) => set("notes", e.target.value)} maxLength={4000} /></div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setOpen(false)}>Renunță</Button>
+            <Button data-tour="commission-cancel" variant="outline" onClick={() => setOpen(false)}>Renunță</Button>
             <Button onClick={() => save.mutate(undefined)} disabled={save.isPending}>Salvează</Button>
           </DialogFooter>
         </DialogContent>

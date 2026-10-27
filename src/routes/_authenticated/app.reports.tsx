@@ -43,7 +43,7 @@ import { leadStageLabels, propertyStatusLabels, transactionLabels } from "@/lib/
 import { appHead } from "@/components/app/app-head";
 
 export const Route = createFileRoute("/_authenticated/app/reports")({
-  head: () => appHead("Habitoo CRM — rapoarte"),
+  head: () => { const title = "Habitoo CRM — rapoarte"; const description = "Rapoarte despre portofoliu, lead-uri și activitatea echipei, cu filtre de perioadă."; const head = appHead(title); return { ...head, meta: [...head.meta, { name: "description", content: description }, { property: "og:title", content: title }, { property: "og:description", content: description }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }] }; },
   component: ReportsPage,
 });
 
@@ -202,11 +202,11 @@ function ReportsPage() {
         description="Performanța portofoliului, a lead-urilor și a echipei."
       />
 
-      <div className="panel flex flex-wrap items-end gap-3 p-4">
+      <div data-tour="reports-filters" className="panel flex flex-wrap items-end gap-3 p-4">
         <div className="space-y-1">
           <p className="text-xs text-muted-foreground">Perioadă</p>
           <Select value={period} onValueChange={(v) => setPeriod(v as PeriodOption)}>
-            <SelectTrigger className="w-44">
+            <SelectTrigger data-tour="reports-period" className="w-44">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -280,7 +280,7 @@ function ReportsPage() {
         </div>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div data-tour="reports-kpis" className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <KpiCard
           label="Proprietăți active"
           value={active}
@@ -313,7 +313,7 @@ function ReportsPage() {
       <div className="grid gap-6 xl:grid-cols-2">
         <div className="panel">
           <div className="flex items-center justify-between border-b border-border px-5 py-4">
-            <h2 className="text-sm font-semibold">Proprietăți după status</h2>
+            <h2 data-tour="reports-status" className="text-sm font-semibold">Proprietăți după status</h2>
             <Button
               size="sm"
               variant="outline"
@@ -352,7 +352,7 @@ function ReportsPage() {
 
         <div className="panel">
           <div className="flex items-center justify-between border-b border-border px-5 py-4">
-            <h2 className="text-sm font-semibold">Lead-uri după sursă</h2>
+            <h2 data-tour="reports-source" className="text-sm font-semibold">Lead-uri după sursă</h2>
             <Button
               size="sm"
               variant="outline"
@@ -391,7 +391,7 @@ function ReportsPage() {
 
         <div className="panel">
           <div className="flex items-center justify-between border-b border-border px-5 py-4">
-            <h2 className="text-sm font-semibold">Funnel lead-uri pe etape</h2>
+            <h2 data-tour="reports-funnel" className="text-sm font-semibold">Funnel lead-uri pe etape</h2>
             <Button
               size="sm"
               variant="outline"
@@ -438,7 +438,7 @@ function ReportsPage() {
 
         <div className="panel">
           <div className="flex items-center justify-between border-b border-border px-5 py-4">
-            <h2 className="text-sm font-semibold">Activitate pe săptămâni</h2>
+            <h2 data-tour="reports-activity" className="text-sm font-semibold">Activitate pe săptămâni</h2>
             <Button
               size="sm"
               variant="outline"

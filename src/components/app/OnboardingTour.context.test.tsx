@@ -135,3 +135,28 @@ describe("etapa 4: motorul parcurge toate etapele fără acțiuni finale",()=>{
   }
  });
 });
+
+describe('etapa 5: fiecare ghid pe desktop/telefon și agent/admin', () => {
+ const ids=['team','team-member','comisioane','reports','goals','settings','settings-integrations','abonament'];
+ it.each(ids)('%s respectă accesul și nu execută mutații',async(id)=>{
+  const guide=implementedGuides.find(g=>g.id===id);if(!guide)throw Error('missing');
+  for(const role of ['agent','agency_admin'] as const)for(const width of [1280,390]){
+   mock.records.clear();mock.claims=[];mock.auto=true;mock.path=guide.path.replace(':id','existing-record');
+   vi.stubGlobal('IS_REACT_ACT_ENVIRONMENT',true);vi.stubGlobal('ResizeObserver',class{observe(){}disconnect(){}});window.scrollBy=vi.fn();Object.defineProperty(window,'innerWidth',{value:width,configurable:true});
+   const host=document.createElement('div');document.body.append(host);const root=createRoot(host);const client=new QueryClient({defaultOptions:{queries:{retry:false,gcTime:0}}});
+   const user={userId:role,role,profile:{id:role},impersonation:null} as unknown as CurrentUser;
+   const before=mock.mutations;
+   await act(async()=>root.render(<QueryClientProvider client={client}><OnboardingTourProvider user={user} openMenu={()=>{}} closeMenu={()=>{}}><button onClick={()=>mock.mutations++}>Salvează</button><button onClick={()=>mock.mutations++}>Trimite</button><button onClick={()=>mock.mutations++}>Șterge</button></OnboardingTourProvider></QueryClientProvider>));
+   await wait(750);if(guide.context){await announce(Array.isArray(guide.context)?guide.context[0]:guide.context);await wait(750);}
+   if(guide.roles.includes(role)){
+    expect(document.querySelector('[data-guide]')?.getAttribute('data-guide')).toBe(id);
+    if(width===390)expect((document.querySelector('[data-guide]') as HTMLElement).style.bottom).toBe('12px');
+    for(let n=0;n<24&&document.querySelector(`[data-guide="${id}"]`);n++){
+     const card=document.querySelector(`[data-guide="${id}"]`);const b=[...(card?.querySelectorAll('button')??[])].find(b=>['Arată-mi','Sari pasul','Înainte','Am înțeles'].includes(b.textContent??''));if(b)await act(async()=>b.click());await wait(20);
+    }
+    expect(mock.records.get(id)).toBe('completed');await wait(750);expect(mock.claims.filter(g=>g===id)).toHaveLength(1);
+   }else {expect(document.querySelector('[data-guide]')).toBeNull();expect(mock.claims).toEqual([]);}
+   expect(mock.mutations).toBe(before);await act(async()=>root.unmount());client.clear();host.remove();
+  }
+ });
+});

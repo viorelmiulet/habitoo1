@@ -9,11 +9,11 @@ import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import type { CurrentUser } from "@/hooks/use-session";
 import { useAiFeatures } from "@/hooks/use-ai-features";
-import { GUIDE_CONTEXT_EVENT, SAFE_SHOW_SELECTORS, accessibleGuides, acceptsGuideInput, canShowAutomatically, guideForPath, guidePathMatches, guidesForContext, implementedGuides, stepsForUser, type GuideDefinition, type GuideId, type TourStep } from "@/lib/onboarding-tour";
+import { GUIDE_CONTEXT_EVENT, SAFE_SHOW_SELECTORS, accessibleGuides, guideProgressSummary, acceptsGuideInput, canShowAutomatically, guideForPath, guidePathMatches, guidesForContext, implementedGuides, stepsForUser, type GuideDefinition, type GuideId, type TourStep } from "@/lib/onboarding-tour";
 import { claimGuide, finishGuide, getGuideProgress, setGuideAutoStart } from "@/lib/onboarding.functions";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-import { plannedGuides } from "@/lib/onboarding-catalog";
+
 
 type TourApi = { start: () => void; openLibrary: () => void; available: boolean; hasCurrent: boolean };
 const TourContext = createContext<TourApi>({ start: () => {}, openLibrary: () => {}, available: false, hasCurrent: false });
@@ -40,7 +40,7 @@ export function OnboardingTourProvider({ user, children, openMenu, closeMenu }: 
   const available = !!user.profile && !user.impersonation;
   const state = useQuery({ queryKey: key, queryFn: () => load(), enabled: available, staleTime: 0, refetchOnWindowFocus: true });
   const guides = useMemo(() => accessibleGuides(implementedGuides, user.role, features), [user.role, features]);
-  const planned = plannedGuides.filter((g) => g.roles.includes(user.role) && (!g.feature || features[g.feature]));
+
   const [contextKey, setContextKey] = useState<string | null>(null);
   useEffect(() => {
     const handler = (event: Event) => setContextKey((event as CustomEvent<string>).detail || null);
@@ -245,16 +245,15 @@ export function OnboardingTourProvider({ user, children, openMenu, closeMenu }: 
   const left = mobile ? 12 : Math.max(12, Math.min(viewport.width-width-12, rect ? rect.left + rect.width/2-width/2 : viewport.width/2-width/2));
   const below = rect ? rect.top + rect.height + 16 : viewport.height/2-cardHeight/2;
   const top = Math.max(12, Math.min(viewport.height-cardHeight-12, rect && below+cardHeight>viewport.height ? rect.top-cardHeight-16 : below));
-  const completed = state.data?.progress.filter((p) => p.status === "completed" && guides.some((g) => g.id === p.guide_id)).length ?? 0;
+  const { completed, total } = guideProgressSummary(guides, state.data?.progress ?? []);
   return <TourContext.Provider value={api}>
     {children}
     <Dialog open={library} onOpenChange={setLibrary}>
       <DialogContent className="max-h-[85dvh] overflow-y-auto sm:max-w-xl">
-        <DialogHeader><DialogTitle>Ghidurile tale</DialogTitle><DialogDescription>{completed} din {guides.length} ghiduri disponibile terminate</DialogDescription></DialogHeader>
+        <DialogHeader><DialogTitle>Ghidurile tale</DialogTitle><DialogDescription>{completed} din {total} ghiduri disponibile terminate</DialogDescription></DialogHeader>
         <div className="flex items-center justify-between gap-4 border-y border-border py-3"><label htmlFor="guide-auto" className="text-sm">Pornește ghidurile automat</label><Switch id="guide-auto" checked={state.data?.autoStart ?? true} onCheckedChange={(v) => void toggleAuto(v)} disabled={saving || !state.data} /></div>
         {state.isError ? <p role="alert" className="text-sm text-destructive">Progresul nu a putut fi încărcat. Poți relua ghidurile manual.</p> : null}
         {Array.from(new Set(guides.map((g) => g.group))).map((group) => <section key={group}><h3 className="mb-2 text-sm font-semibold text-muted-foreground">{group}</h3><div className="space-y-1">{guides.filter((g) => g.group === group).map((g) => <Button key={g.id} variant="ghost" className="h-auto min-h-11 w-full justify-between whitespace-normal text-left" onClick={() => { if (current?.id === g.id || guidePathMatches(g.path, pathname)) { setLibrary(false); launch(g); } else { setLibrary(false); const base = g.path.includes("/:") ? g.path.slice(0, g.path.indexOf("/:")) : g.path; void navigate({ to: base as never }).then(() => { if (!g.path.includes("/:")) launch(g); }); } }}><span>{g.title}</span>{state.data?.progress.some((p) => p.guide_id === g.id && p.status === "completed") ? <Check className="size-4 text-success" aria-label="Terminat" /> : <Compass className="size-4 text-muted-foreground" />}</Button>)}</div></section>)}
-        <details className="border-t border-border pt-3"><summary className="cursor-pointer text-sm font-semibold">Ghiduri pentru etapele următoare ({planned.length})</summary><div className="mt-3 space-y-4">{Array.from(new Set(planned.map((g) => g.group))).map((group) => <section key={group}><h3 className="text-sm font-semibold">{group}</h3><ul className="mt-2 space-y-2">{planned.filter((g) => g.group === group).map((g) => <li key={g.id} className="text-sm text-muted-foreground"><span>{g.title}</span><p className="text-xs">{g.trigger}</p></li>)}</ul></section>)}</div></details>
       </DialogContent>
     </Dialog>
     {ready && step ? createPortal(<div className="pointer-events-none fixed inset-0 z-(--z-guide)">

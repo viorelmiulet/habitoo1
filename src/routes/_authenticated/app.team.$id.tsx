@@ -17,7 +17,7 @@ import { roleLabels } from "@/lib/labels";
 import { normalizeRoMobile } from "@/lib/user-profile";
 
 export const Route = createFileRoute("/_authenticated/app/team/$id")({
-  head: () => appHead("Habitoo CRM — profil agent"),
+  head: () => { const title = "Habitoo CRM — profil agent"; const description = "Profilul colegului, portofoliul și acțiunile de management ale agenției."; const head = appHead(title); return { ...head, meta: [...head.meta, { name: "description", content: description }, { property: "og:title", content: title }, { property: "og:description", content: description }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }] }; },
   component: AgentDetailPage,
 });
 
@@ -98,7 +98,7 @@ function AgentDetailPage() {
         <ArrowLeft className="size-4" /> Agenți
       </Link>
 
-      <section className="panel flex flex-col gap-5 p-5 md:flex-row md:items-center">
+      <section data-tour="team-profile" className="panel flex flex-col gap-5 p-5 md:flex-row md:items-center">
         <UserAvatar name={member.full_name} path={member.avatar_url} className="size-20 text-xl" />
         <div className="min-w-0 flex-1 space-y-2">
           <div>
@@ -137,13 +137,13 @@ function AgentDetailPage() {
         <TeamMemberActions member={member} members={members} currentUserId={user?.userId} variant="buttons" />
       </section>
 
-      <div className="grid gap-3 sm:grid-cols-3">
+      <div data-tour="team-portfolio-stats" className="grid gap-3 sm:grid-cols-3">
         <Stat label="Anunțuri în lucru" value={props.isLoading ? null : active.length} />
         <Stat label="Vândute / închiriate" value={props.isLoading ? null : closed.length} />
         <Stat label="Total portofoliu" value={props.isLoading ? null : list.length} />
       </div>
 
-      <section className="panel overflow-hidden">
+      <section data-tour="team-portfolio" className="panel overflow-hidden">
         <div className="border-b border-border px-5 py-3">
           <h2 className="text-sm font-semibold">Portofoliu</h2>
         </div>
