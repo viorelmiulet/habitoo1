@@ -47,6 +47,7 @@ import { Route as BlogIndexRouteImport } from './routes/blog.index'
 import { Route as BlogSlugRouteImport } from './routes/blog.$slug'
 import { Route as BlogRssDotxmlRouteImport } from './routes/blog/rss[.]xml'
 import { Route as IntegrariSlugRouteImport } from './routes/integrari_.$slug'
+import { Route as OCodeRouteImport } from './routes/o.$code'
 import { Route as OfertaIdRouteImport } from './routes/oferta.$id'
 import { Route as AuthenticatedAppIndexRouteImport } from './routes/_authenticated/app.index'
 import { Route as AuthenticatedAppActivitiesRouteImport } from './routes/_authenticated/app.activities'
@@ -142,6 +143,7 @@ import { Route as ApiPublicFeedProperstarAgencyKeyRouteImport } from './routes/a
 import { Route as ApiPublicHomepitchV1PropertiesRouteImport } from './routes/api/public/homepitch/v1/properties'
 import { Route as ApiPublicListingsMediaIdRouteImport } from './routes/api/public/listings/media.$id'
 import { Route as ApiPublicMetaOauthCallbackRouteImport } from './routes/api/public/meta/oauth.callback'
+import { Route as ApiPublicNeutralOfferMediaCodeIndexRouteImport } from './routes/api/public/neutral-offer-media.$code.$index'
 import { Route as ApiPublicPortalV1AgencyRouteImport } from './routes/api/public/portal/v1/agency'
 import { Route as ApiPublicPortalV1AgentsRouteImport } from './routes/api/public/portal/v1/agents'
 import { Route as ApiPublicPortalV1PropertiesRouteImport } from './routes/api/public/portal/v1/properties'
@@ -359,6 +361,11 @@ const BlogRssDotxmlRoute = BlogRssDotxmlRouteImport.update({
 const IntegrariSlugRoute = IntegrariSlugRouteImport.update({
   id: '/integrari_/$slug',
   path: '/integrari/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OCodeRoute = OCodeRouteImport.update({
+  id: '/o/$code',
+  path: '/o/$code',
   getParentRoute: () => rootRouteImport,
 } as any)
 const OfertaIdRoute = OfertaIdRouteImport.update({
@@ -904,6 +911,12 @@ const ApiPublicMetaOauthCallbackRoute =
     path: '/api/public/meta/oauth/callback',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicNeutralOfferMediaCodeIndexRoute =
+  ApiPublicNeutralOfferMediaCodeIndexRouteImport.update({
+    id: '/api/public/neutral-offer-media/$code/$index',
+    path: '/api/public/neutral-offer-media/$code/$index',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicPortalV1AgencyRoute = ApiPublicPortalV1AgencyRouteImport.update({
   id: '/api/public/portal/v1/agency',
   path: '/api/public/portal/v1/agency',
@@ -1097,6 +1110,7 @@ export interface FileRoutesByFullPath {
   '/blog/$slug': typeof BlogSlugRoute
   '/blog/rss.xml': typeof BlogRssDotxmlRoute
   '/integrari/$slug': typeof IntegrariSlugRoute
+  '/o/$code': typeof OCodeRoute
   '/oferta/$id': typeof OfertaIdRoute
   '/agentii/': typeof AgentiiIndexRoute
   '/blog/': typeof BlogIndexRoute
@@ -1193,6 +1207,7 @@ export interface FileRoutesByFullPath {
   '/api/public/homepitch/v1/properties': typeof ApiPublicHomepitchV1PropertiesRouteWithChildren
   '/api/public/listings/media/$id': typeof ApiPublicListingsMediaIdRoute
   '/api/public/meta/oauth/callback': typeof ApiPublicMetaOauthCallbackRoute
+  '/api/public/neutral-offer-media/$code/$index': typeof ApiPublicNeutralOfferMediaCodeIndexRoute
   '/api/public/portal/v1/agency': typeof ApiPublicPortalV1AgencyRoute
   '/api/public/portal/v1/agents': typeof ApiPublicPortalV1AgentsRoute
   '/api/public/portal/v1/properties': typeof ApiPublicPortalV1PropertiesRouteWithChildren
@@ -1255,6 +1270,7 @@ export interface FileRoutesByTo {
   '/blog/$slug': typeof BlogSlugRoute
   '/blog/rss.xml': typeof BlogRssDotxmlRoute
   '/integrari/$slug': typeof IntegrariSlugRoute
+  '/o/$code': typeof OCodeRoute
   '/oferta/$id': typeof OfertaIdRoute
   '/agentii': typeof AgentiiIndexRoute
   '/blog': typeof BlogIndexRoute
@@ -1350,6 +1366,7 @@ export interface FileRoutesByTo {
   '/api/public/homepitch/v1/properties': typeof ApiPublicHomepitchV1PropertiesRouteWithChildren
   '/api/public/listings/media/$id': typeof ApiPublicListingsMediaIdRoute
   '/api/public/meta/oauth/callback': typeof ApiPublicMetaOauthCallbackRoute
+  '/api/public/neutral-offer-media/$code/$index': typeof ApiPublicNeutralOfferMediaCodeIndexRoute
   '/api/public/portal/v1/agency': typeof ApiPublicPortalV1AgencyRoute
   '/api/public/portal/v1/agents': typeof ApiPublicPortalV1AgentsRoute
   '/api/public/portal/v1/properties': typeof ApiPublicPortalV1PropertiesRouteWithChildren
@@ -1417,6 +1434,7 @@ export interface FileRoutesById {
   '/blog/$slug': typeof BlogSlugRoute
   '/blog/rss.xml': typeof BlogRssDotxmlRoute
   '/integrari_/$slug': typeof IntegrariSlugRoute
+  '/o/$code': typeof OCodeRoute
   '/oferta/$id': typeof OfertaIdRoute
   '/agentii/': typeof AgentiiIndexRoute
   '/blog/': typeof BlogIndexRoute
@@ -1513,6 +1531,7 @@ export interface FileRoutesById {
   '/api/public/homepitch/v1/properties': typeof ApiPublicHomepitchV1PropertiesRouteWithChildren
   '/api/public/listings/media/$id': typeof ApiPublicListingsMediaIdRoute
   '/api/public/meta/oauth/callback': typeof ApiPublicMetaOauthCallbackRoute
+  '/api/public/neutral-offer-media/$code/$index': typeof ApiPublicNeutralOfferMediaCodeIndexRoute
   '/api/public/portal/v1/agency': typeof ApiPublicPortalV1AgencyRoute
   '/api/public/portal/v1/agents': typeof ApiPublicPortalV1AgentsRoute
   '/api/public/portal/v1/properties': typeof ApiPublicPortalV1PropertiesRouteWithChildren
@@ -1580,6 +1599,7 @@ export interface FileRouteTypes {
     | '/blog/$slug'
     | '/blog/rss.xml'
     | '/integrari/$slug'
+    | '/o/$code'
     | '/oferta/$id'
     | '/agentii/'
     | '/blog/'
@@ -1676,6 +1696,7 @@ export interface FileRouteTypes {
     | '/api/public/homepitch/v1/properties'
     | '/api/public/listings/media/$id'
     | '/api/public/meta/oauth/callback'
+    | '/api/public/neutral-offer-media/$code/$index'
     | '/api/public/portal/v1/agency'
     | '/api/public/portal/v1/agents'
     | '/api/public/portal/v1/properties'
@@ -1738,6 +1759,7 @@ export interface FileRouteTypes {
     | '/blog/$slug'
     | '/blog/rss.xml'
     | '/integrari/$slug'
+    | '/o/$code'
     | '/oferta/$id'
     | '/agentii'
     | '/blog'
@@ -1833,6 +1855,7 @@ export interface FileRouteTypes {
     | '/api/public/homepitch/v1/properties'
     | '/api/public/listings/media/$id'
     | '/api/public/meta/oauth/callback'
+    | '/api/public/neutral-offer-media/$code/$index'
     | '/api/public/portal/v1/agency'
     | '/api/public/portal/v1/agents'
     | '/api/public/portal/v1/properties'
@@ -1899,6 +1922,7 @@ export interface FileRouteTypes {
     | '/blog/$slug'
     | '/blog/rss.xml'
     | '/integrari_/$slug'
+    | '/o/$code'
     | '/oferta/$id'
     | '/agentii/'
     | '/blog/'
@@ -1995,6 +2019,7 @@ export interface FileRouteTypes {
     | '/api/public/homepitch/v1/properties'
     | '/api/public/listings/media/$id'
     | '/api/public/meta/oauth/callback'
+    | '/api/public/neutral-offer-media/$code/$index'
     | '/api/public/portal/v1/agency'
     | '/api/public/portal/v1/agents'
     | '/api/public/portal/v1/properties'
@@ -2057,6 +2082,7 @@ export interface RootRouteChildren {
   BlogSlugRoute: typeof BlogSlugRoute
   BlogRssDotxmlRoute: typeof BlogRssDotxmlRoute
   IntegrariSlugRoute: typeof IntegrariSlugRoute
+  OCodeRoute: typeof OCodeRoute
   OfertaIdRoute: typeof OfertaIdRoute
   BlogIndexRoute: typeof BlogIndexRoute
   ApiPublicBlogMediaSplatRoute: typeof ApiPublicBlogMediaSplatRoute
@@ -2097,6 +2123,7 @@ export interface RootRouteChildren {
   ApiPublicHomepitchV1PropertiesRoute: typeof ApiPublicHomepitchV1PropertiesRouteWithChildren
   ApiPublicListingsMediaIdRoute: typeof ApiPublicListingsMediaIdRoute
   ApiPublicMetaOauthCallbackRoute: typeof ApiPublicMetaOauthCallbackRoute
+  ApiPublicNeutralOfferMediaCodeIndexRoute: typeof ApiPublicNeutralOfferMediaCodeIndexRoute
   ApiPublicPortalV1AgencyRoute: typeof ApiPublicPortalV1AgencyRoute
   ApiPublicPortalV1AgentsRoute: typeof ApiPublicPortalV1AgentsRoute
   ApiPublicPortalV1PropertiesRoute: typeof ApiPublicPortalV1PropertiesRouteWithChildren
@@ -2389,6 +2416,13 @@ declare module '@tanstack/react-router' {
       path: '/integrari/$slug'
       fullPath: '/integrari/$slug'
       preLoaderRoute: typeof IntegrariSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/o/$code': {
+      id: '/o/$code'
+      path: '/o/$code'
+      fullPath: '/o/$code'
+      preLoaderRoute: typeof OCodeRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/oferta/$id': {
@@ -3056,6 +3090,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicMetaOauthCallbackRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/neutral-offer-media/$code/$index': {
+      id: '/api/public/neutral-offer-media/$code/$index'
+      path: '/api/public/neutral-offer-media/$code/$index'
+      fullPath: '/api/public/neutral-offer-media/$code/$index'
+      preLoaderRoute: typeof ApiPublicNeutralOfferMediaCodeIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/portal/v1/agency': {
       id: '/api/public/portal/v1/agency'
       path: '/api/public/portal/v1/agency'
@@ -3520,6 +3561,7 @@ const rootRouteChildren: RootRouteChildren = {
   BlogSlugRoute: BlogSlugRoute,
   BlogRssDotxmlRoute: BlogRssDotxmlRoute,
   IntegrariSlugRoute: IntegrariSlugRoute,
+  OCodeRoute: OCodeRoute,
   OfertaIdRoute: OfertaIdRoute,
   BlogIndexRoute: BlogIndexRoute,
   ApiPublicBlogMediaSplatRoute: ApiPublicBlogMediaSplatRoute,
@@ -3563,6 +3605,8 @@ const rootRouteChildren: RootRouteChildren = {
     ApiPublicHomepitchV1PropertiesRouteWithChildren,
   ApiPublicListingsMediaIdRoute: ApiPublicListingsMediaIdRoute,
   ApiPublicMetaOauthCallbackRoute: ApiPublicMetaOauthCallbackRoute,
+  ApiPublicNeutralOfferMediaCodeIndexRoute:
+    ApiPublicNeutralOfferMediaCodeIndexRoute,
   ApiPublicPortalV1AgencyRoute: ApiPublicPortalV1AgencyRoute,
   ApiPublicPortalV1AgentsRoute: ApiPublicPortalV1AgentsRoute,
   ApiPublicPortalV1PropertiesRoute:
