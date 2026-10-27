@@ -158,6 +158,13 @@ export function OnboardingTourProvider({ user, children, openMenu, closeMenu }: 
       let r = target.getBoundingClientRect();
       const mobile = window.innerWidth < 768;
       const safeBottom = window.innerHeight - (mobile ? cardHeight + 32 : 16);
+      const dialog = target.closest<HTMLElement>('[role="dialog"], [role="alertdialog"]');
+      if (mobile && dialog && !dialog.hasAttribute("data-guide") && r.bottom > safeBottom) {
+        const shift = r.bottom - safeBottom + 12;
+        dialog.style.top = `${dialog.getBoundingClientRect().top - shift}px`;
+        dialog.style.transform = "translateX(-50%)";
+        r = target.getBoundingClientRect();
+      }
       if ((!scrolled || (mobile && r.height < 180)) && (r.top < 80 || Math.min(r.bottom, r.top + 160) > safeBottom)) {
         const targetY = Math.max(88, (safeBottom - Math.min(r.height,180)) / 2);
         window.scrollBy({ top: r.top - targetY, behavior: "instant" });
@@ -167,8 +174,10 @@ export function OnboardingTourProvider({ user, children, openMenu, closeMenu }: 
       // Large sections highlight their heading, not an entire scrollable page.
       setRect({ top: r.top, left: r.left, width: r.width, height: Math.min(r.height, 160) });
     };
+    const dialogs = Array.from(document.querySelectorAll<HTMLElement>('[role="dialog"], [role="alertdialog"]')).filter((el) => !el.hasAttribute("data-guide"));
+    const original = dialogs.map((el) => ({ el, top: el.style.top, transform: el.style.transform }));
     sync(); const timer = setInterval(sync, 150);
-    return () => clearInterval(timer);
+    return () => { clearInterval(timer); for (const { el, top, transform } of original) { el.style.top = top; el.style.transform = transform; } };
   }, [cardHeight, ready, step]);
   useEffect(() => {
     if (!cardRef.current) return;
