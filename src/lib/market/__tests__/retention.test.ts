@@ -50,7 +50,7 @@ describe("hbsync historical market offers", () => {
     await ingestListings(repo, opts, [hist]);
     expect(store.listings).toHaveLength(1);
     expect(store.listings[0]!.status).toBe("inactive");
-    expect(store.listings[0]!.disappearedAt).toBe(iso(119).slice(0, 10) === store.listings[0]!.disappearedAt?.slice(0, 10) ? store.listings[0]!.disappearedAt : "x");
+    expect(store.listings[0]!.disappearedAt?.slice(0, 10)).toBe(iso(119).slice(0, 10));
     // Older observation does not overwrite the stored one.
     await ingestListings(repo, opts, [norm({ status: "active", last_seen_at: iso(150) })]);
     expect(store.listings[0]!.status).toBe("inactive");
