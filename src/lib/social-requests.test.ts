@@ -16,6 +16,8 @@ describe("cereri Facebook", () => {
     expect(row.budget_max).toBe(90000);
     expect(row.rooms).toBe(2);
     expect(row.budget_min).toBeNull();
+    expect(buildSocialRequestRow({ source: "facebook", external_id: "1", budget_max: "90.000 €" }).budget_max).toBe(90000);
+    expect(buildSocialRequestRow({ source: "facebook", external_id: "1", budget_max: "85 mii" }).budget_max).toBe(85000);
   });
   it("textul se taie la 5000 de caractere", () => {
     expect((buildSocialRequestRow({ source: "facebook", external_id: "1", text: "a".repeat(6000) }).text as string).length).toBe(5000);

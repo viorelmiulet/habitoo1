@@ -7,9 +7,19 @@ import { placeMatches, type PlaceChoice } from "./search-places";
 export const SOCIAL_REQUESTS_MAX_PER_CALL = 500;
 export const SOCIAL_REQUESTS_RETENTION_DAYS = 30;
 
+/** Bugete scrise românește: „90.000 €”, „1.200.000”, „85 mii”, „90k”. */
+export function budgetNumber(v: unknown): unknown {
+  if (typeof v !== "string") return toLenientNumber(v);
+  const t = v.replace(/\s/g, "");
+  const grouped = /\d{1,3}(?:[.,]\d{3})+(?![\d.,])/.exec(t);
+  const base = grouped ? Number(grouped[0].replace(/[.,]/g, "")) : toLenientNumber(t);
+  if (typeof base !== "number") return base;
+  return /\d(mii|k)\b/i.test(t) || /\d(mii|k)$/i.test(t) ? base * 1000 : base;
+}
+
 const lenient = (int = false) =>
   z.preprocess((v) => {
-    const n = toLenientNumber(v, { int });
+    const n = int ? toLenientNumber(v, { int }) : budgetNumber(v);
     return typeof n === "number" && (!Number.isFinite(n) || n < 0) ? null : n;
   }, z.number().nonnegative().nullish());
 
