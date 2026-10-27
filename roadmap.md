@@ -1,5 +1,9 @@
 # SEO public — pasul 1a
 
+## Publicare — ordinea cardurilor
+- [x] Inversare exclusiv vizuală Imobiliare.ro/VDI, păstrând indicii pentru locuri și toate comportamentele/conținuturile
+- [x] HB-1168 verificată 1440/900/390 px, 3/2/1 coloane; Imobiliare.ro ultimul, fără rânduri următoare împinse în jos; spațiu lateral mare rămâne în ultimul rând la 3/2 coloane. Capturi salvate; build OK; nicio publicare. Storia era în sincronizare, deci starea publicată simultan pe absolut toate portalurile nu este verificată.
+
 ## Contacte — sursă și consimțământ
 - [x] Formular comun adăugare/editare, sursă automată, filtre, istoric acord/retragere și ghid actualizat
 - [x] 7 teste reguli + 26 teste ghid trec; contact real de test creat, filtre sursă/acord verificate, editat cu sursă proprie, retras cu istoric păstrat pe desktop/telefon, apoi șters; 0 contacte de test rămase. Build OK. Portalurile/MAP creează în prezent lead-uri/proprietăți, nu contacte; la asocierea unui lead sursa lipsă este completată fără acord implicit.
