@@ -1415,6 +1415,20 @@
       "when": 1793128793596,
       "tag": "0201_facebook_client_requests",
       "breakpoints": true
+    },
+    {
+      "idx": 202,
+      "version": "7",
+      "when": 1793130565886,
+      "tag": "0202_acp_market_enrichment",
+      "breakpoints": true
+    },
+    {
+      "idx": 203,
+      "version": "7",
+      "when": 1793130867613,
+      "tag": "0203_acp_enrich_price_kind",
+      "breakpoints": true
     }
   ]
 }

@@ -555,6 +555,33 @@ export type Database = {
           },
         ]
       }
+      acp_enrich_state: {
+        Row: {
+          id: string
+          lease_owner: string | null
+          lease_until: string | null
+          paused_at: string | null
+          paused_reason: string | null
+          updated_at: string
+        }
+        Insert: {
+          id: string
+          lease_owner?: string | null
+          lease_until?: string | null
+          paused_at?: string | null
+          paused_reason?: string | null
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          lease_owner?: string | null
+          lease_until?: string | null
+          paused_at?: string | null
+          paused_reason?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       acp_reports: {
         Row: {
           analysis_id: string
@@ -4205,6 +4232,95 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      market_listing_enrichments: {
+        Row: {
+          attempts: number
+          complex_confidence: number | null
+          complex_name: string | null
+          condition: string | null
+          condition_confidence: number | null
+          cost_usd: number | null
+          enriched_at: string
+          error_code: string | null
+          floor: number | null
+          floor_confidence: number | null
+          input_hash: string
+          market_listing_id: string
+          model: string | null
+          price_suspect: boolean | null
+          price_suspect_confidence: number | null
+          price_suspect_kind: string | null
+          price_suspect_reason: string | null
+          prompt_version: string
+          provider: string | null
+          real_property_type: string | null
+          real_property_type_confidence: number | null
+          rooms: number | null
+          rooms_confidence: number | null
+          status: string
+        }
+        Insert: {
+          attempts?: number
+          complex_confidence?: number | null
+          complex_name?: string | null
+          condition?: string | null
+          condition_confidence?: number | null
+          cost_usd?: number | null
+          enriched_at?: string
+          error_code?: string | null
+          floor?: number | null
+          floor_confidence?: number | null
+          input_hash: string
+          market_listing_id: string
+          model?: string | null
+          price_suspect?: boolean | null
+          price_suspect_confidence?: number | null
+          price_suspect_kind?: string | null
+          price_suspect_reason?: string | null
+          prompt_version: string
+          provider?: string | null
+          real_property_type?: string | null
+          real_property_type_confidence?: number | null
+          rooms?: number | null
+          rooms_confidence?: number | null
+          status?: string
+        }
+        Update: {
+          attempts?: number
+          complex_confidence?: number | null
+          complex_name?: string | null
+          condition?: string | null
+          condition_confidence?: number | null
+          cost_usd?: number | null
+          enriched_at?: string
+          error_code?: string | null
+          floor?: number | null
+          floor_confidence?: number | null
+          input_hash?: string
+          market_listing_id?: string
+          model?: string | null
+          price_suspect?: boolean | null
+          price_suspect_confidence?: number | null
+          price_suspect_kind?: string | null
+          price_suspect_reason?: string | null
+          prompt_version?: string
+          provider?: string | null
+          real_property_type?: string | null
+          real_property_type_confidence?: number | null
+          rooms?: number | null
+          rooms_confidence?: number | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "market_listing_enrichments_market_listing_id_fkey"
+            columns: ["market_listing_id"]
+            isOneToOne: true
+            referencedRelation: "market_listings"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       market_listing_snapshots: {
         Row: {
@@ -9825,6 +9941,79 @@ export type Database = {
         Returns: Json
       }
       account_deletion_tick: { Args: never; Returns: undefined }
+      acp_enrich_acquire: {
+        Args: { _owner: string; _ttl_seconds: number }
+        Returns: boolean
+      }
+      acp_enrich_pending: {
+        Args: { _limit: number; _newest: boolean }
+        Returns: {
+          address: string | null
+          balcony: boolean | null
+          bathrooms: number | null
+          city: string | null
+          condition: string | null
+          construction_year: number | null
+          county: string | null
+          created_at: string
+          currency: string | null
+          dedupe_reasons: Json
+          dedupe_score: number | null
+          dedupe_status: string
+          disappeared_at: string | null
+          district: string | null
+          features: Json
+          first_seen_at: string
+          floor: number | null
+          furnished: boolean | null
+          id: string
+          identity_hash: string | null
+          image_url: string | null
+          images: Json | null
+          import_provider: string | null
+          initial_price: number | null
+          is_private: boolean | null
+          last_import_run_id: string | null
+          last_seen_at: string
+          latitude: number | null
+          longitude: number | null
+          market_entity_id: string | null
+          neighborhood: string | null
+          normalized_address: string | null
+          normalized_city: string | null
+          normalized_county: string | null
+          normalized_district: string | null
+          normalized_neighborhood: string | null
+          parking: boolean | null
+          period: string | null
+          price: number | null
+          price_changes: number
+          price_per_sqm: number | null
+          property_type: string | null
+          publisher_type: string | null
+          raw_data: Json
+          rooms: number | null
+          sector: string | null
+          source: string
+          source_listing_id: string | null
+          status: string
+          status_changes: number
+          title: string | null
+          total_area: number | null
+          total_floors: number | null
+          transaction_type: string | null
+          updated_at: string
+          url: string | null
+          usable_area: number | null
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "market_listings"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
+      acp_enrich_release: { Args: { _owner: string }; Returns: undefined }
       acquire_portal_operation_lock: {
         Args: {
           _lock_key: string
