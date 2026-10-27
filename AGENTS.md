@@ -59,3 +59,4 @@
 - Lists share ListPagination/use-list-state; geography uses scoped choices/invoker RPCs (src/lib/AGENTS.md). Why: safe OR/counts.
 - Public SSR/feeds read the DB via `publicRead` (timeout, logged fallback); `public_llms_statistics` reads an hourly cron cache. Why: no 500s under load.
 - FB client requests: only `social_requests` (keyed upsert, DB geography, 30-day RLS+purge); matching in `src/lib/social-requests.ts`. Why: personal data apart from offers.
+- `market_listings` retention runs only in `market_listings_lifecycle()` (nightly cron): unseen 14 days → inactive with `disappeared_at`, `last_seen_at` older than 365 days → deleted; ingestion never deletes and ignores observations older than the stored `last_seen_at`. ACP v5 weights inactive offers by age. Why: one place for retention, idempotent historical imports.
