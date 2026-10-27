@@ -17,7 +17,7 @@ describe("ACP v4 — locație după distanță", () => {
     expect(scoreLocationV4({ ...base, neighborhood: "Militari" }, { ...at(4), neighborhood: "Militari" })).toBeLessThan(30);
   });
   it("direct doar la cel mult 2 km", () => {
-    const t = { ...base, rooms: 2, usableArea: 55, propertyType: "apartment" };
+    const t = { ...base, rooms: 2, usableArea: 55, propertyType: "apartment", transactionType: "sale", floor: 2, totalFloors: 6, constructionYear: 2024, condition: "nou", parking: true, balcony: true, furnished: false };
     expect(calculateComparableSimilarity(t, { ...t, ...at(1.9) }, { geoLocation: true }).tier).toBe("direct");
     expect(calculateComparableSimilarity(t, { ...t, ...at(2.1) }, { geoLocation: true }).tier).toBe("secondary");
   });
