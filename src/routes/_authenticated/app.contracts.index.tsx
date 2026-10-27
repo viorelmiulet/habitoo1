@@ -68,16 +68,17 @@ function ContractsPage() {
         title="Contracte și documente"
         description="Mandate, procese-verbale de vizionare și semnături electronice."
         actions={
-          <Button onClick={() => setDialogOpen(true)}>
+          <Button data-tour="contract-create-open" onClick={() => setDialogOpen(true)}>
             <Plus className="size-4" /> Document nou
           </Button>
         }
       />
 
-      <div className="flex flex-wrap items-center gap-3">
+      <div data-tour="contracts-filters" className="flex flex-wrap items-center gap-3">
         <div className="relative min-w-[220px] flex-1">
           <Search className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
           <Input
+            data-tour="contracts-search"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Caută după titlu…"
@@ -85,7 +86,7 @@ function ContractsPage() {
           />
         </div>
         <Select value={status} onValueChange={setStatus}>
-          <SelectTrigger className="w-[200px]">
+          <SelectTrigger data-tour="contracts-status" className="w-[200px]">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>

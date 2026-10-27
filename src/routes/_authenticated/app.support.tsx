@@ -35,7 +35,7 @@ function MyTicketsPage() {
   const tickets = useQuery({ queryKey: ["support-tickets", "mine"], queryFn: () => load({}) });
 
   return (
-    <>
+    <div data-tour="support-page">
       <PageHeader
         title="Tichetele mele"
         description="Conversațiile cu echipa de suport Habitoo. Deschide un tichet nou din butonul de ajutor."
@@ -110,6 +110,6 @@ function MyTicketsPage() {
           </div>
         </div>
       )}
-    </>
+    </div>
   );
 }

@@ -66,6 +66,7 @@ function NotificationsPage() {
     const isUnread = !n.read_at;
     return (
       <li
+        data-tour="notification-item"
         key={n.id}
         className={`flex items-start gap-3 px-5 py-4 text-sm transition-colors ${
           isUnread ? "bg-primary/[0.04]" : "hover:bg-surface"
@@ -109,7 +110,7 @@ function NotificationsPage() {
   };
 
   return (
-    <>
+    <div data-tour="notifications-page">
       <PageHeader
         title="Notificări"
         description="Alerte despre lead-uri noi, activități apropiate și schimbări în portofoliu."
@@ -126,6 +127,7 @@ function NotificationsPage() {
         actions={
           unread.length > 0 ? (
             <Button
+              data-tour="notifications-read-all"
               size="sm"
               variant="outline"
               onClick={() => markRead.mutate(unread.map((n) => n.id))}
@@ -167,6 +169,6 @@ function NotificationsPage() {
           ) : null}
         </div>
       )}
-    </>
+    </div>
   );
 }

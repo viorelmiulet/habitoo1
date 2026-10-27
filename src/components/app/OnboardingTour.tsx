@@ -9,7 +9,7 @@ import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import type { CurrentUser } from "@/hooks/use-session";
 import { useAiFeatures } from "@/hooks/use-ai-features";
-import { GUIDE_CONTEXT_EVENT, accessibleGuides, acceptsGuideInput, canShowAutomatically, guideForPath, guidePathMatches, guidesForContext, implementedGuides, stepsForUser, type GuideDefinition, type GuideId, type TourStep } from "@/lib/onboarding-tour";
+import { GUIDE_CONTEXT_EVENT, SAFE_SHOW_SELECTORS, accessibleGuides, acceptsGuideInput, canShowAutomatically, guideForPath, guidePathMatches, guidesForContext, implementedGuides, stepsForUser, type GuideDefinition, type GuideId, type TourStep } from "@/lib/onboarding-tour";
 import { claimGuide, finishGuide, getGuideProgress, setGuideAutoStart } from "@/lib/onboarding.functions";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -43,7 +43,7 @@ export function OnboardingTourProvider({ user, children, openMenu, closeMenu }: 
   const planned = plannedGuides.filter((g) => g.roles.includes(user.role) && (!g.feature || features[g.feature]));
   const [contextKey, setContextKey] = useState<string | null>(null);
   useEffect(() => {
-    const handler = (event: Event) => setContextKey((event as CustomEvent<string>).detail);
+    const handler = (event: Event) => setContextKey((event as CustomEvent<string>).detail || null);
     window.addEventListener(GUIDE_CONTEXT_EVENT, handler);
     return () => window.removeEventListener(GUIDE_CONTEXT_EVENT, handler);
   }, []);
@@ -210,10 +210,10 @@ export function OnboardingTourProvider({ user, children, openMenu, closeMenu }: 
       if (el?.getAttribute("aria-expanded") === "false") el.click();
     } else {
       closeMenu();
-      const selectors = { filters: '[data-tour="properties-filters-toggle"]', publish: '[data-tour="properties-view-publish"]', details: '[data-tour="new-details"]' };
+      const selectors = { filters: '[data-tour="properties-filters-toggle"]', publish: '[data-tour="properties-view-publish"]', details: '[data-tour="new-details"]', ...SAFE_SHOW_SELECTORS };
       const selector = selectors[s.show as keyof typeof selectors];
       const el = visibleTarget(selector);
-      if (el && el.getAttribute("aria-expanded") !== "true" && el.getAttribute("aria-pressed") !== "true" && el.getAttribute("data-state") !== "open") el.click();
+      if (el && el.getAttribute("aria-expanded") !== "true" && el.getAttribute("aria-pressed") !== "true" && el.getAttribute("data-state") !== "open" && el.getAttribute("data-state") !== "active") el.click();
     }
     setShowDone(true);
   };

@@ -180,7 +180,7 @@ function ContractDetailPage() {
             <Button variant="outline" asChild>
               <Link to="/app/comisioane" search={{ nou: true, contract: id }}>Adaugă comision</Link>
             </Button>
-            <Button variant="outline" onClick={() => pdf.mutate()} disabled={pdf.isPending}>
+            <Button data-tour="contract-pdf" variant="outline" onClick={() => pdf.mutate()} disabled={pdf.isPending}>
               {pdf.isPending ? (
                 <Loader2 className="size-4 animate-spin" />
               ) : (
@@ -189,7 +189,7 @@ function ContractDetailPage() {
               PDF
             </Button>
             {editable ? (
-              <Button variant="outline" onClick={() => setEditing((v) => !v)}>
+              <Button data-tour="contract-edit" aria-pressed={editing} variant="outline" onClick={() => setEditing((v) => !v)}>
                 <PenLine className="size-4" /> {editing ? "Renunță" : "Editează textul"}
               </Button>
             ) : null}
@@ -224,7 +224,7 @@ function ContractDetailPage() {
               />
             </div>
           ) : (
-            <pre className="max-h-[620px] overflow-auto text-sm leading-relaxed whitespace-pre-wrap">
+            <pre data-tour="contract-body" className="max-h-[620px] overflow-auto text-sm leading-relaxed whitespace-pre-wrap">
               {contract.body}
             </pre>
           )}
@@ -300,7 +300,7 @@ function ContractDetailPage() {
               </Button>
             }
           >
-            <ul className="space-y-3">
+            <ul data-tour="contract-parties" className="space-y-3">
               {parties.map((p) => (
                 <li key={p.id} className="rounded-lg border border-border p-3">
                   <div className="flex items-start gap-2">
@@ -349,6 +349,7 @@ function ContractDetailPage() {
 
             {unsigned.length > 0 && contract.status !== "cancelled" ? (
               <Button
+                data-tour="contract-send"
                 className="mt-4 w-full"
                 onClick={() => send.mutate()}
                 disabled={selected.length === 0 || send.isPending}

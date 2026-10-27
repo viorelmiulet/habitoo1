@@ -34,18 +34,18 @@ function ClipsPage() {
   const { page } = Route.useSearch();
   const { data } = useSuspenseQuery(clipsQuery(page));
   const pages = Math.max(1, Math.ceil(data.total / CLIPS_PAGE_SIZE));
-  return <div className="space-y-6">
+  return <div data-tour="clips-page" className="space-y-6">
     <PageHeader title="Clipurile mele" />
     <p className="text-sm text-muted-foreground">{data.total} {data.total === 1 ? "clip" : "clipuri"}</p>
     {data.items.length === 0 ? <EmptyState icon={Film} title="Niciun clip înregistrat" /> : <ul className="divide-y divide-border">
-      {data.items.map((clip) => <li key={clip.id} className="grid min-w-0 gap-3 py-5 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
+      {data.items.map((clip) => <li data-tour="clip-item" key={clip.id} className="grid min-w-0 gap-3 py-5 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
         <div className="min-w-0 space-y-1">
           <p className="font-medium break-words">{clip.property_reference ? `${clip.property_reference} · ` : ""}{clip.property_title}</p>
           <p className="text-xs text-muted-foreground break-all">{clip.file_name}</p>
           <p className="text-xs text-muted-foreground">{formatDateTime(clip.created_at)} · {VIDEO_FORMATS[clip.format as keyof typeof VIDEO_FORMATS].label} · {formatDuration(clip.duration_sec)}</p>
           {clip.property_id ? <Button asChild variant="link" className="h-auto p-0"><Link to="/app/properties/$id" params={{ id: clip.property_id }}>Proprietate</Link></Button> : null}
         </div>
-        <div className="flex min-w-0 items-start gap-2">
+        <div data-tour="clip-music" className="flex min-w-0 items-start gap-2">
           <Music2 className="mt-1 size-4 shrink-0 text-primary" aria-hidden />
           <div className="min-w-0 space-y-1"><p className="font-medium break-words">{clipMusicLabel(clip)}</p>
             {clip.music_style || clip.music_artist ? <p className="text-sm text-muted-foreground">{[clip.music_style, clip.music_artist].filter(Boolean).join(" · ")}</p> : null}

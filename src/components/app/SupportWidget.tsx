@@ -155,7 +155,7 @@ export function SupportWidget({ children }: { children?: ReactNode }) {
           <Button variant="outline" onClick={() => setOpen(false)}>
             Anulează
           </Button>
-          <Button onClick={() => submit.mutate()} disabled={submit.isPending}>
+          <Button data-tour="support-send" onClick={() => submit.mutate()} disabled={submit.isPending}>
             {submit.isPending ? <Loader2 className="size-4 animate-spin" /> : null}
             Trimite tichetul
           </Button>

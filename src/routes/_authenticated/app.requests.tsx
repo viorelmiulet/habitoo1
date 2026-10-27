@@ -335,18 +335,19 @@ function RequestsPage() {
             <Button variant="outline" size="sm" onClick={exportCsv}>
               <Download className="size-4" /> Export CSV
             </Button>
-            <Button size="sm" onClick={() => setOpen(true)}>
+            <Button data-tour="request-create-open" size="sm" onClick={() => setOpen(true)}>
               Adaugă cerere
             </Button>
           </>
         }
       />
 
-      <div className="panel space-y-3 p-4">
+      <div data-tour="requests-filters" className="panel space-y-3 p-4">
         <div className="flex flex-wrap items-center gap-2">
           <div className="relative min-w-56 flex-1">
             <Search className="pointer-events-none absolute top-2.5 left-3 size-4 text-muted-foreground" />
             <Input
+              data-tour="requests-search"
               value={filters.q}
               onChange={(e) => setFilters((f) => ({ ...f, q: e.target.value }))}
               placeholder="Caută după titlu…"
@@ -613,7 +614,7 @@ function RequestsPage() {
       ) : null}
 
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-h-[90vh] overflow-y-auto">
+        <DialogContent data-tour="request-create-form" className="max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Cerere nouă</DialogTitle>
           </DialogHeader>
