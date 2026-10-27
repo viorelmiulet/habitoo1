@@ -931,7 +931,7 @@ function PropertyDetailPage() {
           ) : null}
         </TabsContent>
 
-        <TabsContent value="overview" className="space-y-6">
+        <TabsContent value="overview" className="space-y-6" data-tour="property-overview">
           {editing ? (
             <form
               id="property-details-form"
@@ -1024,13 +1024,16 @@ function PropertyDetailPage() {
                 />
               </FormSection>
 
+              <div data-tour="edit-transaction">
               <FormSection
                 title="Tranzacție și preț"
                 description="Alege vânzare, închiriere sau ambele."
               >
                 <PropertyTransactionFields idPrefix="edit" value={tx} onChange={setTx} />
               </FormSection>
+              </div>
 
+              <div data-tour="edit-details">
               <FormSection
                 title="Detalii complete"
                 description="Tip, camere, băi, etaj, suprafețe, an construcție și facilități."
@@ -1041,6 +1044,7 @@ function PropertyDetailPage() {
                   onChange={(patch) => setDetails((d) => ({ ...d, ...patch }))}
                 />
               </FormSection>
+              </div>
 
               <PropertyResponsibleAgentField canEdit={canReassign} value={draftAgent}
                 name={responsibleAgent?.full_name} candidates={orgMembers} onChange={setDraftAgent} />
@@ -1064,7 +1068,7 @@ function PropertyDetailPage() {
                 <Button type="button" variant="ghost" onClick={() => setEditing(false)}>
                   Anulează
                 </Button>
-                <Button type="submit" disabled={save.isPending}>
+                <Button type="submit" disabled={save.isPending} data-tour="edit-save">
                   Salvează
                 </Button>
               </div>
