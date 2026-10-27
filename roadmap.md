@@ -2,7 +2,7 @@
 
 ## Contacte — sursă și consimțământ
 - [x] Formular comun adăugare/editare, sursă automată, filtre, istoric acord/retragere și ghid actualizat
-- [ ] Teste reguli și flux real cu contact de test, șters după verificare
+- [x] 7 teste reguli + 26 teste ghid trec; contact real de test creat, filtre sursă/acord verificate, editat cu sursă proprie, retras cu istoric păstrat pe desktop/telefon, apoi șters; 0 contacte de test rămase. Build OK. Portalurile/MAP creează în prezent lead-uri/proprietăți, nu contacte; la asocierea unui lead sursa lipsă este completată fără acord implicit.
 
 ## Ghiduri interactive — etapa 5
 - [x] Completare 8 ghiduri Management; 50 implementate, fără planificate. Progres distinct per rol/AI: agent 38–44, admin 44–50
