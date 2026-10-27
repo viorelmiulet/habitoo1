@@ -37,8 +37,19 @@ function fakeDb(initial: Partial<Job>[] = []) {
   const notifications: unknown[] = [];
   const rpcs: string[] = [];
   const admin = {
-    rpc: async (name: string, args: { _limit: number; _lease_seconds: number }) => {
+    rpc: async (name: string, args: { _limit: number; _lease_seconds: number; _jobs?: { portal_key: string; enabled: boolean }[] }) => {
       rpcs.push(name);
+      if (name === "start_portal_publish_jobs") {
+        const keys: string[] = [];
+        for (const row of args._jobs ?? []) {
+          if (jobs.some((j) => j.portal_key === row.portal_key && ["queued", "running"].includes(j.status))) continue;
+          jobs.push({ ...jobs[0], id: `job-${jobs.length}`, organization_id: "org", property_id: "prop", promoted: null, sync_existing: true,
+            requested_by: "agent-1", superadmin: false, attempts: 0, status: "queued", locked_at: null,
+            next_attempt_at: new Date(0).toISOString(), ...row } as Job);
+          keys.push(row.portal_key);
+        }
+        return { data: keys, error: null };
+      }
       if (name !== "claim_portal_publish_jobs") return { data: null, error: null };
       const now = Date.now();
       const due = jobs
@@ -120,7 +131,7 @@ describe("înscrierea joburilor", () => {
     expect(out.results[0]?.queued).toBe(true);
     expect(db.jobs).toHaveLength(1);
     expect(db.jobs[0]?.status).toBe("queued");
-    expect(db.rpcs).toEqual(["portal_publish_arm"]);
+    expect(db.rpcs).toEqual(["start_portal_publish_jobs"]);
   });
 
   it("un singur job activ per proprietate + portal", async () => {

@@ -125,92 +125,36 @@ export async function enqueueStatusWithdrawals(
   deps: EnqueueDeps,
 ): Promise<{ queued: PlannedWithdrawal[]; manual: PlannedWithdrawal[]; armed: boolean }> {
   const plan = await planStatusWithdrawals(admin, input.organizationId, input.propertyIds);
-  const queued: PlannedWithdrawal[] = [];
-  const manual: PlannedWithdrawal[] = [];
-  const nowIso = new Date().toISOString();
+  const queued = plan.filter((item) => !item.manual);
+  const manual = plan.filter((item) => item.manual);
+  if (plan.length === 0) return { queued, manual, armed: true };
 
-  for (const item of plan) {
-    if (item.manual) {
-      await admin
-        .from("portal_publications")
-        .update({
-          enabled: false,
-          status: "disabled",
-          withdrawn_at: nowIso,
-          withdraw_reason: input.reason,
-          updated_by: input.actorId,
-        })
-        .eq("organization_id", input.organizationId)
-        .eq("property_id", item.propertyId)
-        .eq("portal_key", item.portalId);
-      await admin.from("portal_status_withdraw_items").insert({
-        organization_id: input.organizationId,
-        property_id: item.propertyId,
-        portal_key: item.portalId,
-        reason: input.reason,
-        status: "manual_required",
-        message: `${item.portalName}: ${MANUAL_WITHDRAW_TEXT}.`,
-        requested_by: input.actorId,
-        finished_at: nowIso,
-      });
-      await deps.logOperation({
-        organizationId: input.organizationId,
-        portal: item.portalId,
-        operation: "auto_withdraw_manual_required",
-        success: false,
-        errorMessage: `Motiv: ${input.reason}. ${MANUAL_WITHDRAW_TEXT}.`,
-        propertyId: item.propertyId,
-        actorId: input.actorId,
-      });
-      await admin.from("audit_logs").insert({
-        organization_id: input.organizationId,
-        actor_id: input.actorId,
-        action: "portal_auto_withdraw_manual_required",
-        entity: "property",
-        entity_id: item.propertyId,
-        new_values: { portal: item.portalId, reason: input.reason },
-      });
-      manual.push(item);
-      continue;
-    }
-
-    // O retragere deja în curs pentru aceeași pereche nu se dublează.
-    const { data: existing } = await admin
-      .from("portal_status_withdraw_items")
-      .select("id")
-      .eq("property_id", item.propertyId)
-      .eq("portal_key", item.portalId)
-      .in("status", ["queued", "running"])
-      .limit(1);
-    if (existing && existing.length > 0) {
-      queued.push(item);
-      continue;
-    }
-    const { error } = await admin.from("portal_status_withdraw_items").insert({
-      organization_id: input.organizationId,
+  // O singură tranzacție: retragerile manuale, toate joburile, auditul și armarea.
+  const { error } = await admin.rpc("start_status_withdrawals", {
+    _org: input.organizationId,
+    _actor: input.actorId,
+    _reason: input.reason,
+    _queued: queued.map((item) => ({ property_id: item.propertyId, portal_key: item.portalId })),
+    _manual: manual.map((item) => ({
       property_id: item.propertyId,
       portal_key: item.portalId,
-      reason: input.reason,
-      status: "queued",
-      requested_by: input.actorId,
-    });
-    if (error) throw new Error(error.message);
-    await admin.from("audit_logs").insert({
-      organization_id: input.organizationId,
-      actor_id: input.actorId,
-      action: "portal_auto_withdraw_queued",
-      entity: "property",
-      entity_id: item.propertyId,
-      new_values: { portal: item.portalId, reason: input.reason },
-    });
-    queued.push(item);
-  }
+      message: `${item.portalName}: ${MANUAL_WITHDRAW_TEXT}.`,
+    })),
+  });
+  if (error) throw new Error(error.message);
 
-  let armed = queued.length === 0;
-  if (queued.length > 0) {
-    const { error } = await admin.rpc("portal_status_withdraw_arm");
-    armed = !error;
+  for (const item of manual) {
+    await deps.logOperation({
+      organizationId: input.organizationId,
+      portal: item.portalId,
+      operation: "auto_withdraw_manual_required",
+      success: false,
+      errorMessage: `Motiv: ${input.reason}. ${MANUAL_WITHDRAW_TEXT}.`,
+      propertyId: item.propertyId,
+      actorId: input.actorId,
+    });
   }
+  const armed = true;
   return { queued, manual, armed };
 }
 

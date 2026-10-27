@@ -10,15 +10,14 @@ export async function enqueueContactUpdates(admin: any, input: {
     organizationId: input.organizationId, userId: input.actorId, scope: "all", portalFilter: null, superadmin: false,
   });
   const pairs = candidates.queued.filter(pair => moved.has(pair.propertyId));
-  for (const pair of staggerRepublishPairs(pairs, Date.now())) {
-    const { error } = await admin.rpc("enqueue_portal_contact_update", {
-      _org: input.organizationId, _property: pair.propertyId, _portal: pair.portalId,
-      _actor: input.actorId, _superadmin: input.superadmin, _next: pair.nextAttemptAt,
-    });
-    if (error) throw new Error(error.message);
-  }
   if (pairs.length) {
-    const { error } = await admin.rpc("portal_publish_arm");
+    // O singură tranzacție: toate actualizările și armarea workerului.
+    const { error } = await admin.rpc("start_portal_contact_updates", {
+      _org: input.organizationId, _actor: input.actorId, _superadmin: input.superadmin,
+      _pairs: staggerRepublishPairs(pairs, Date.now()).map(pair => ({
+        property_id: pair.propertyId, portal_key: pair.portalId, next_attempt_at: pair.nextAttemptAt,
+      })),
+    });
     if (error) throw new Error(error.message);
   }
   const { clearProperstarCache } = await import("./properstar/cache");
