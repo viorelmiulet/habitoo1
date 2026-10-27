@@ -314,7 +314,7 @@ function PrivateListingsPage() {
         description="Anunțuri de la proprietari, aduse automat din alte site-uri. Verifică datele înainte să contactezi proprietarul."
       />
 
-      <div data-tour="map-tabs" className="flex gap-3 border-b border-border sm:gap-5" role="tablist" aria-label="Sursa anunțurilor">
+      <div data-tour="map-tabs" className="flex gap-3 overflow-x-auto border-b border-border sm:gap-5" role="tablist" aria-label="Sursa anunțurilor">
         {([
           { value: "", label: "MAP Habitoo" },
           { value: "facebook", label: "MAP Facebook" },
