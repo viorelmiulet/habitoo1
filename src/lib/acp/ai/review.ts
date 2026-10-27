@@ -49,6 +49,7 @@ function describe(subject: AcpSubject, title?: string | null) {
     zona: [subject.neighborhood ?? subject.district, subject.city, subject.county].filter(Boolean).join(", ") || null,
     ansamblu: complex?.label ?? complexLabel(subject.complex),
     zona_ansamblu: complex ? `${complex.city}, ${complex.county}` : null,
+    moneda: subject.currency ?? "EUR",
     stare: subject.condition ?? null,
     an: subject.constructionYear ?? null,
   };
