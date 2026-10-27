@@ -111,27 +111,36 @@ export function OnboardingTourProvider({ user, children, openMenu, closeMenu }: 
   }, [confirmation, next, step]);
 
   useEffect(() => {
-    if (!available || !state.data || active || library || starting.current || !current || !guides.some((g) => g.id === current.id)) return;
-    if (!canShowAutomatically(state.data.autoStart, state.data.progress, current.id)) return;
+    if (!available || !state.data || active || library || starting.current) return;
+    const eligible = (g: GuideDefinition) => guides.some((a) => a.id === g.id) && canShowAutomatically(state.data.autoStart, state.data.progress, g.id);
+    const candidate = contextGuides.find(eligible) ?? (current && !current.context && eligible(current) ? current : undefined);
+    if (!candidate) return;
     let cancelled = false;
     const timer = setTimeout(async () => {
       starting.current = true;
       try {
-        const claimed = await claim({ data: { guideId: current.id as GuideId } });
-        if (claimed) { remember(current.id, "seen"); if (!cancelled && !activeRef.current) launch(current); }
+        const claimed = await claim({ data: { guideId: candidate.id as GuideId } });
+        if (claimed) { remember(candidate.id, "seen"); if (!cancelled && !activeRef.current) launch(candidate); }
         else void queryClient.invalidateQueries({ queryKey: key });
       } catch { /* A failed read/claim never blocks normal work. */ }
       finally { starting.current = false; }
     }, 650);
     return () => { cancelled = true; clearTimeout(timer); };
-  }, [active, available, claim, current, guides, key, launch, library, queryClient, remember, state.data]);
+  }, [active, available, claim, contextGuides, current, guides, key, launch, library, queryClient, remember, state.data]);
 
   // Navigating deliberately leaves the guide; a final click to the next guide completes it.
   useEffect(() => {
-    if (!active || pathname.replace(/\/$/, "") === active.path) return;
-    const last = active.steps[index];
-    close(index === active.steps.length - 1 && last?.event === "click");
-  }, [active, close, index, pathname]);
+    if (!active || guidePathMatches(active.path, pathname)) return;
+    const last = activeSteps[index];
+    close(index === activeSteps.length - 1 && last?.event === "click");
+  }, [active, activeSteps, close, index, pathname]);
+
+  // Un pas optional al cărui element lipsește (filă sau buton indisponibil) se sare singur.
+  useEffect(() => {
+    if (!step?.optional) return;
+    const timer = setTimeout(() => { if (!visibleTarget(step.selector)) next(); }, 900);
+    return () => clearTimeout(timer);
+  }, [step, next]);
 
   useEffect(() => {
     setHint(false); setShowDone(false); setConfirmation("");
