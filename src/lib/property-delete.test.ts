@@ -97,6 +97,18 @@ function fakeAdmin(tables: Record<string, Row[]>) {
     return q;
   };
   const rpc = async (name: string, params: Row) => {
+    if (name === "start_status_withdrawals") {
+      const items = t("portal_status_withdraw_items");
+      for (const m of (params["_manual"] ?? []) as Row[]) {
+        for (const p of t("portal_publications")) if (p["property_id"] === m["property_id"] && p["portal_key"] === m["portal_key"]) Object.assign(p, { enabled: false, status: "disabled", withdraw_reason: params["_reason"] });
+        items.push({ id: `w-${items.length}`, organization_id: params["_org"], property_id: m["property_id"], portal_key: m["portal_key"], reason: params["_reason"], status: "manual_required", message: m["message"], attempts: 0, max_attempts: 5 });
+      }
+      for (const q of (params["_queued"] ?? []) as Row[]) {
+        if (items.some((r) => r["property_id"] === q["property_id"] && r["portal_key"] === q["portal_key"] && ["queued", "running"].includes(r["status"]))) continue;
+        items.push({ id: `w-${items.length}`, organization_id: params["_org"], property_id: q["property_id"], portal_key: q["portal_key"], reason: params["_reason"], status: "queued", requested_by: params["_actor"], attempts: 0, max_attempts: 5 });
+      }
+      return { data: {}, error: null };
+    }
     if (name === "claim_portal_status_withdraw_item") {
       const item = t("portal_status_withdraw_items").find((r) => r["id"] === params["_item_id"] && ["queued", "running"].includes(r["status"]));
       if (!item) return { data: [], error: null };

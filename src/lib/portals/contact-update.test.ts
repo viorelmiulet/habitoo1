@@ -27,8 +27,9 @@ describe("contact refresh queue", () => {
     const admin = db();
     await enqueueContactUpdates(admin, { organizationId: "org", propertyIds: ["moved"], actorId: "admin", superadmin: false });
     const calls = admin.rpc.mock.calls as unknown as [string, Record<string, unknown>][];
-    expect(calls.filter(([name]) => name === "enqueue_portal_contact_update").map(([, args]) => [args._property, args._portal])).toEqual([["moved", "vdi"], ["moved", "imobiliare_ro"]]);
-    expect(calls.map(([name]) => name)).toContain("portal_publish_arm");
+    const start = calls.filter(([name]) => name === "start_portal_contact_updates");
+    expect(start).toHaveLength(1);
+    expect((start[0][1]._pairs as { property_id: string; portal_key: string }[]).map(p => [p.property_id, p.portal_key])).toEqual([["moved", "vdi"], ["moved", "imobiliare_ro"]]);
   });
   it("worker calls update only, with no promotion choices", async () => {
     const admin = db();
