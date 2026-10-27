@@ -429,3 +429,150 @@ export const generateAcpAiAnalysis = createServerFn({ method: "POST" })
       snapshotAt,
     };
   });
+
+// ==================== Verificare AI a comparabilelor ====================
+
+export type AcpAiReviewResult =
+  | { status: "ok"; review: import("./ai/review").AcpAiReviewRecord; suspectCount: number }
+  | { status: "not_configured"; message: string }
+  | { status: "rate_limited"; message: string }
+  | { status: "failed"; message: string };
+
+/**
+ * Trimite proprietatea și comparabilele selectate la AI și salvează verdictele
+ * la versiunea curentă a analizei. Nu exclude nimic și nu recalculează.
+ */
+export const reviewAcpComparables = createServerFn({ method: "POST" })
+  .middleware([requireActiveOrgAuth])
+  .inputValidator((data: unknown) => z.object({ analysisId: z.string().uuid() }).parse(data))
+  .handler(async ({ context, data }): Promise<AcpAiReviewResult> => {
+    const userId = (context as AuthContext).userId;
+    const admin = await loadAdmin();
+    const organizationId = await loadOrganizationId(admin, userId);
+
+    const { isAiFeatureEnabled } = await import("@/lib/ai/features/features.server");
+    if (!(await isAiFeatureEnabled(organizationId, "acp_ai"))) {
+      return { status: "failed", message: aiFeatureDisabledMessage("acp_ai") };
+    }
+    const { data: analysis, error } = await admin
+      .from("acp_analyses")
+      .select("id,organization_id,version,target_data,analysis_data")
+      .eq("id", data.analysisId)
+      .eq("organization_id", organizationId)
+      .maybeSingle();
+    if (error) throw error;
+    if (!analysis) throw new Error("Analiza nu a fost găsită în agenția ta.");
+
+    const { resolveAiProvider } = await import("@/lib/ai/providers/registry.server");
+    if (!resolveAiProvider()) {
+      return { status: "not_configured", message: "Verificarea AI este indisponibilă momentan." };
+    }
+    for (const [bucket, config] of [
+      [`acp_ai_review:user:${userId}`, ACP_AI_RATE_LIMITS.perUser],
+      [`acp_ai_review:org:${organizationId}`, ACP_AI_RATE_LIMITS.perOrganization],
+    ] as const) {
+      const { data: allowed } = await admin.rpc("rate_limit_hit", {
+        _bucket: bucket,
+        _limit: config.limit,
+        _window_seconds: config.windowSeconds,
+      });
+      if (allowed === false) {
+        return { status: "rate_limited", message: "Ai atins limita de verificări AI pentru această oră." };
+      }
+    }
+
+    const { data: rows } = await admin
+      .from("acp_comparables")
+      .select("id,snapshot,adjusted_price_per_sqm,similarity_score")
+      .eq("analysis_id", analysis.id)
+      .eq("is_selected", true)
+      .order("similarity_score", { ascending: false });
+    const comparables = (rows ?? []).map((c) => {
+      const snap = (c.snapshot ?? {}) as {
+        key?: string;
+        title?: string;
+        locationLabel?: string | null;
+        subject?: import("./scoring").AcpSubject;
+        distanceKm?: number | null;
+      };
+      return {
+        key: snap.key ?? c.id,
+        title: snap.title ?? null,
+        locationLabel: snap.locationLabel ?? null,
+        subject: snap.subject ?? {},
+        adjustedPricePerSqm: c.adjusted_price_per_sqm,
+        distanceKm: snap.distanceKm ?? null,
+      };
+    });
+    if (comparables.length === 0) {
+      return { status: "failed", message: "Nu există comparabile folosite de verificat." };
+    }
+    const target = ((analysis.target_data ?? {}) as { subject?: import("./scoring").AcpSubject }).subject ?? {};
+
+    const { callAcpComparableReview } = await import("./ai/review.server");
+    const { ACP_AI_REVIEW_CAPABILITY } = await import("./ai/review");
+    const { writeAiUsage } = await import("@/lib/ai/usage/tracking.server");
+    const { safeAiErrorMessage } = await import("./ai/provider.server");
+    let out: Awaited<ReturnType<typeof callAcpComparableReview>>;
+    try {
+      out = await callAcpComparableReview(target, comparables);
+    } catch (providerError) {
+      await writeAiUsage(admin as never, {
+        organization_id: organizationId,
+        user_id: userId,
+        provider: "unknown",
+        model: "unknown",
+        capability: ACP_AI_REVIEW_CAPABILITY,
+        success: false,
+        tool_calls: 0,
+        extra_info: { analysis_id: analysis.id, stage: "provider_error" },
+      } as never);
+      return { status: "failed", message: safeAiErrorMessage(providerError) };
+    }
+    await writeAiUsage(admin as never, {
+      organization_id: organizationId,
+      user_id: userId,
+      provider: out.provider,
+      model: out.model,
+      capability: ACP_AI_REVIEW_CAPABILITY,
+      input_tokens: out.inputTokens || null,
+      output_tokens: out.outputTokens || null,
+      latency_ms: out.latencyMs,
+      success: out.ok,
+      tool_calls: 0,
+      fallback_used: out.fallbackUsed,
+      extra_info: {
+        cost_usd: Number(out.costUsd.toFixed(6)),
+        analysis_id: analysis.id,
+        analysis_version: analysis.version ?? 1,
+        comparables: comparables.length,
+        prompt_version: out.promptVersion,
+      },
+    } as never);
+    if (!out.ok) {
+      return { status: "failed", message: "Răspunsul AI nu a acoperit toate comparabilele, așa că nu a fost salvat." };
+    }
+
+    const review = {
+      reviewedAt: new Date().toISOString(),
+      analysisVersion: analysis.version ?? 1,
+      provider: out.provider,
+      model: out.model,
+      promptVersion: out.promptVersion,
+      costUsd: Number(out.costUsd.toFixed(6)),
+      items: out.items,
+    };
+    // Cifrele motorului rămân neatinse: verificarea trăiește într-o cheie separată.
+    const { error: updateError } = await admin
+      .from("acp_analyses")
+      .update({ analysis_data: { ...((analysis.analysis_data ?? {}) as object), aiReview: review } as never })
+      .eq("id", analysis.id)
+      .eq("organization_id", organizationId);
+    if (updateError) throw updateError;
+
+    return {
+      status: "ok",
+      review,
+      suspectCount: Object.values(out.items).filter((i) => i.verdict === "suspect").length,
+    };
+  });
