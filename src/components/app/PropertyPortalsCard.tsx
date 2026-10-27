@@ -637,6 +637,7 @@ export const PropertyPortalsCard = forwardRef<
                   <Button
                     onClick={onPublish}
                     disabled={!editing || publishPending}
+                    data-tour="publishing-publish"
                     title={editing ? undefined : "Apasă Editează pentru a publica."}
                     className="max-sm:w-full"
                   >
@@ -659,7 +660,7 @@ export const PropertyPortalsCard = forwardRef<
               className="mb-3 rounded-2xl border border-destructive bg-destructive/5 p-3 text-sm"
             />
           ) : null}
-          <ul className="grid min-w-0 grid-cols-1 items-start gap-4 md:grid-cols-2 lg:grid-cols-3">
+          <ul data-tour="publishing-portals" className="grid min-w-0 grid-cols-1 items-start gap-4 md:grid-cols-2 lg:grid-cols-3">
             <li className="min-w-0">
               <Card className={cn("relative min-w-0 bg-surface p-4 text-sm", fbValue && "border-gold ring-1 ring-gold/40", fbState.key === "excluded" && "bg-warning/10")}>
                 <label htmlFor="portal-facebook-catalog" aria-label="Catalog Facebook" className={cn("absolute inset-0 z-0", editing && canManage && canEditFacebookCatalog && !fb.isLoading ? "cursor-pointer" : "cursor-default")} />
@@ -905,7 +906,7 @@ export const PropertyPortalsCard = forwardRef<
 
               return (
                 <li key={cell.portalId} className="min-w-0">
-                  <Card aria-busy={busy} className={cn("relative min-w-0 bg-surface p-4 text-sm", value && "border-gold ring-1 ring-gold/40", !cell.configured && "opacity-55", busy && "opacity-70")}>
+                  <Card aria-busy={busy} data-tour={`portal-card-${cell.portalId}`} className={cn("relative min-w-0 bg-surface p-4 text-sm", value && "border-gold ring-1 ring-gold/40", !cell.configured && "opacity-55", busy && "opacity-70")}>
                     {cell.configured ? <label htmlFor={`portal-${cell.portalId}`} aria-label={cell.portalName} className={cn("absolute inset-0 z-0", !disabled ? "cursor-pointer" : "cursor-default")} /> : null}
                     <div className="relative z-10 grid grid-cols-[minmax(0,1fr)_auto] items-start gap-2 pointer-events-none">
                       <div className="flex min-w-0 items-start gap-3">
@@ -1102,11 +1103,13 @@ export const PropertyPortalsCard = forwardRef<
                     </div>
 
                     {cell.portalId === "imobiliare_ro" && value ? <>
-                      <RadioGroup aria-label="Destinație Imobiliare.ro" className="relative z-10 mt-3 gap-3" value={imobiliareMode} disabled={!editing || !canManage || busy} onValueChange={(next) => { if (next === "combined" || next === "imoradar_only") setImobiliareModeDraft(next); }}>
+                      <RadioGroup aria-label="Destinație Imobiliare.ro" data-tour="promo-destination" className="relative z-10 mt-3 gap-3" value={imobiliareMode} disabled={!editing || !canManage || busy} onValueChange={(next) => { if (next === "combined" || next === "imoradar_only") setImobiliareModeDraft(next); }}>
                         <Label className="flex items-center gap-2 text-xs" htmlFor="imobiliare-mode-combined"><RadioGroupItem id="imobiliare-mode-combined" value="combined" />Imobiliare.ro + imoradar24</Label>
                         <Label className="flex items-center gap-2 text-xs" htmlFor="imobiliare-mode-imoradar"><RadioGroupItem id="imobiliare-mode-imoradar" value="imoradar_only" />Doar imoradar24</Label>
                       </RadioGroup>
+                      <div data-tour="promo-imobiliare">
                       <PropertyImobiliarePromotionsCard view={imobiliareView.data} drafts={effectiveImobiliareDrafts} disabled={!editing || !canManage || busy || imobiliareMode === "imoradar_only"} errors={promotionErrors} onChange={(id, next) => setImobiliareDrafts((draft) => ({ ...draft, [id]: next }))} onRefresh={() => void imobiliareView.refetch()} loading={imobiliareMode !== "imoradar_only" && imobiliareView.isFetching} loadError={imobiliareMode !== "imoradar_only" && imobiliareView.error instanceof Error ? imobiliareView.error.message : undefined} />
+                      </div>
                     </> : null}
 
                     {/* Anunț trimis, dar pagina publică nu funcționează (cont fără abonament). */}
@@ -1153,7 +1156,7 @@ export const PropertyPortalsCard = forwardRef<
       </div>
 
       {showPortalJournal ? (
-        <aside className="space-y-4">
+        <aside className="space-y-4" data-tour="publishing-journal">
           <Panel className="p-5">
             <h2 className="text-lg font-semibold">Jurnal portal</h2>
             {(journal.data?.length ?? 0) === 0 ? (

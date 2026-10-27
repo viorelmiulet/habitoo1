@@ -127,6 +127,7 @@ import {
 import { activityStatusLabels, activityStatusTone, logAudit } from "@/lib/crm";
 import { matchLabel, matchTone, scoreMatch } from "@/lib/matching";
 import { appHead } from "@/components/app/app-head";
+import { announceGuideContext } from "@/lib/onboarding-tour";
 
 function cleanLocation(district: string | null, city: string | null): string {
   const normalizedCity = (city ?? "")
@@ -183,6 +184,9 @@ function PropertyDetailPage() {
   const [editing, setEditing] = useState(false);
   /** Fila activă; butonul din antet duce direct la fluxul ACP. */
   const [tab, setTab] = useState(() => search.tab === "publishing" ? "publishing" : "overview");
+  // Motorul de ghiduri află ce filă s-a deschis și când pornește editarea.
+  useEffect(() => { announceGuideContext(`property-tab:${tab}`); }, [tab]);
+  useEffect(() => { if (editing) announceGuideContext("property:editing"); }, [editing]);
 
   /** Evită generări suprapuse ale fișei de proprietate. */
   const printingRef = useRef(false);
@@ -823,14 +827,14 @@ function PropertyDetailPage() {
             {usableSurface ? <p className="mt-3 text-sm text-muted-foreground">{pricePerSqm ? `${formatNumber(pricePerSqm)} €/m² · ` : ""}{formatNumber(usableSurface)} m² utili</p> : null}
           </div>
         </div>
-        <div className="mt-6 flex flex-wrap items-center gap-2 border-t border-border pt-5">
-          {editing ? <Button variant="outline" onClick={() => setEditing(false)}>Anulează</Button> : <Button variant="outline" onClick={() => { startEdit(); setTab("overview"); }}><Pencil /> Editează</Button>}
-          <Button variant="outline" onClick={() => setActivityDialog({ open: true, kind: "viewing" })}><CalendarPlus /> Programează vizionare</Button>
+        <div className="mt-6 flex flex-wrap items-center gap-2 border-t border-border pt-5" data-tour="property-actions">
+          {editing ? <Button variant="outline" onClick={() => setEditing(false)}>Anulează</Button> : <Button variant="outline" data-tour="property-edit-button" onClick={() => { startEdit(); setTab("overview"); }}><Pencil /> Editează</Button>}
+          <Button variant="outline" data-tour="property-viewing" onClick={() => setActivityDialog({ open: true, kind: "viewing" })}><CalendarPlus /> Programează vizionare</Button>
           <Button variant="outline" onClick={() => setActivityDialog({ open: true, kind: "call" })}>Adaugă activitate</Button>
           <Button variant="outline" onClick={() => setTab("acp")}><BarChart3 /> Analiză comparativă de piață (ACP)</Button>
           <Button variant="outline" asChild><Link to="/app/comisioane" search={{ nou: true, proprietate: id }}>Adaugă comision</Link></Button>
           <DropdownMenu>
-            <DropdownMenuTrigger asChild><Button size="icon" variant="outline" aria-label="Mai multe acțiuni"><MoreHorizontal /></Button></DropdownMenuTrigger>
+            <DropdownMenuTrigger asChild><Button size="icon" variant="outline" aria-label="Mai multe acțiuni" data-tour="property-more"><MoreHorizontal /></Button></DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuItem onClick={() => duplicate.mutate()} disabled={duplicate.isPending}>Clonează</DropdownMenuItem>
               <DropdownMenuItem onClick={() => { setReadyPdf(null); setPresentationDialogOpen(true); }}><Download /> Generează fișa de proprietate</DropdownMenuItem>
@@ -873,7 +877,7 @@ function PropertyDetailPage() {
 
       <Tabs value={tab} onValueChange={setTab}>
         <div className="sticky top-0 z-40 -mx-1 overflow-x-auto bg-background px-1">
-        <TabsList className="h-auto w-max min-w-full justify-start gap-1 rounded-none border-b border-border bg-transparent p-0" aria-label="Secțiunile proprietății">
+        <TabsList className="h-auto w-max min-w-full justify-start gap-1 rounded-none border-b border-border bg-transparent p-0" aria-label="Secțiunile proprietății" data-tour="property-tabs">
           {[
             ["agent", "Agent"],
             ["overview", "Prezentare"],
@@ -891,6 +895,7 @@ function PropertyDetailPage() {
             <TabsTrigger
               key={value}
               value={value as string}
+              data-tour={`property-tab-${value}`}
               className="rounded-none border-b-[3px] border-transparent bg-transparent px-3 py-2.5 font-normal shadow-none data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:font-semibold data-[state=active]:shadow-none"
             >
               {label}
@@ -926,7 +931,7 @@ function PropertyDetailPage() {
           ) : null}
         </TabsContent>
 
-        <TabsContent value="overview" className="space-y-6">
+        <TabsContent value="overview" className="space-y-6" data-tour="property-overview">
           {editing ? (
             <form
               id="property-details-form"
@@ -1019,13 +1024,16 @@ function PropertyDetailPage() {
                 />
               </FormSection>
 
+              <div data-tour="edit-transaction">
               <FormSection
                 title="Tranzacție și preț"
                 description="Alege vânzare, închiriere sau ambele."
               >
                 <PropertyTransactionFields idPrefix="edit" value={tx} onChange={setTx} />
               </FormSection>
+              </div>
 
+              <div data-tour="edit-details">
               <FormSection
                 title="Detalii complete"
                 description="Tip, camere, băi, etaj, suprafețe, an construcție și facilități."
@@ -1036,6 +1044,7 @@ function PropertyDetailPage() {
                   onChange={(patch) => setDetails((d) => ({ ...d, ...patch }))}
                 />
               </FormSection>
+              </div>
 
               <PropertyResponsibleAgentField canEdit={canReassign} value={draftAgent}
                 name={responsibleAgent?.full_name} candidates={orgMembers} onChange={setDraftAgent} />
@@ -1059,7 +1068,7 @@ function PropertyDetailPage() {
                 <Button type="button" variant="ghost" onClick={() => setEditing(false)}>
                   Anulează
                 </Button>
-                <Button type="submit" disabled={save.isPending}>
+                <Button type="submit" disabled={save.isPending} data-tour="edit-save">
                   Salvează
                 </Button>
               </div>
@@ -1158,15 +1167,15 @@ function PropertyDetailPage() {
           ) : null}
         </TabsContent>
 
-        <TabsContent value="media">
+        <TabsContent value="media" data-tour="property-media">
           <PropertyMediaManager propertyId={id} orgId={orgId} userId={user?.userId} />
         </TabsContent>
 
-        <TabsContent value="acp">
+        <TabsContent value="acp" data-tour="property-acp">
           <PropertyAcpCard propertyId={id} />
         </TabsContent>
 
-        <TabsContent value="marketing">
+        <TabsContent value="marketing" data-tour="property-marketing">
           <MarketingAgentPanel propertyId={id} />
         </TabsContent>
 
@@ -1252,6 +1261,7 @@ function PropertyDetailPage() {
           forceMount
           value="publishing"
           className="space-y-4 data-[state=inactive]:hidden"
+          data-tour="property-publishing"
         >
           <PropertyPortalsCard
             ref={portalsRef}
@@ -1273,7 +1283,7 @@ function PropertyDetailPage() {
           />
         </TabsContent>
 
-        <TabsContent value="promotion">
+        <TabsContent value="promotion" data-tour="property-promotion">
           <PropertyPromotionTab
             propertyId={id}
             onOpenPublishing={() => setTab("publishing")}

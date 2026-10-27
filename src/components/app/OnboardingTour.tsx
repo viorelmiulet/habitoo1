@@ -9,7 +9,7 @@ import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import type { CurrentUser } from "@/hooks/use-session";
 import { useAiFeatures } from "@/hooks/use-ai-features";
-import { accessibleGuides, acceptsGuideInput, canShowAutomatically, guideForPath, implementedGuides, type GuideDefinition, type GuideId, type TourStep } from "@/lib/onboarding-tour";
+import { GUIDE_CONTEXT_EVENT, accessibleGuides, acceptsGuideInput, canShowAutomatically, guideForPath, guidePathMatches, guidesForContext, implementedGuides, stepsForUser, type GuideDefinition, type GuideId, type TourStep } from "@/lib/onboarding-tour";
 import { claimGuide, finishGuide, getGuideProgress, setGuideAutoStart } from "@/lib/onboarding.functions";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -41,7 +41,15 @@ export function OnboardingTourProvider({ user, children, openMenu, closeMenu }: 
   const state = useQuery({ queryKey: key, queryFn: () => load(), enabled: available, staleTime: 0, refetchOnWindowFocus: true });
   const guides = useMemo(() => accessibleGuides(implementedGuides, user.role, features), [user.role, features]);
   const planned = plannedGuides.filter((g) => g.roles.includes(user.role) && (!g.feature || features[g.feature]));
-  const current = guideForPath(pathname);
+  const [contextKey, setContextKey] = useState<string | null>(null);
+  useEffect(() => {
+    const handler = (event: Event) => setContextKey((event as CustomEvent<string>).detail);
+    window.addEventListener(GUIDE_CONTEXT_EVENT, handler);
+    return () => window.removeEventListener(GUIDE_CONTEXT_EVENT, handler);
+  }, []);
+  useEffect(() => { setContextKey(null); }, [pathname]);
+  const contextGuides = useMemo(() => guidesForContext(pathname, contextKey), [pathname, contextKey]);
+  const current = contextGuides[0] ?? guideForPath(pathname);
   const [active, setActive] = useState<GuideDefinition | null>(null);
   const [index, setIndex] = useState(0);
   const [library, setLibrary] = useState(false);
@@ -58,7 +66,8 @@ export function OnboardingTourProvider({ user, children, openMenu, closeMenu }: 
   const run = useRef(0);
   const starting = useRef(false);
   const transitionTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const step = active?.steps[index];
+  const activeSteps = useMemo(() => (active ? stepsForUser(active, user.role, features) : []), [active, user.role, features]);
+  const step = activeSteps[index];
   activeRef.current = active;
 
   useEffect(() => {
@@ -90,10 +99,9 @@ export function OnboardingTourProvider({ user, children, openMenu, closeMenu }: 
   }, []);
   const next = useCallback(() => {
     setConfirmation("");
-    if (!activeRef.current) return;
-    if (index + 1 >= activeRef.current.steps.length) close(true);
+    if (index + 1 >= activeSteps.length) close(true);
     else { setIndex(index + 1); setRect(null); }
-  }, [close, index]);
+  }, [activeSteps.length, close, index]);
   const completeInteraction = useCallback(() => {
     if (!step || confirmation) return;
     if (transitionTimer.current) clearTimeout(transitionTimer.current);
@@ -103,27 +111,36 @@ export function OnboardingTourProvider({ user, children, openMenu, closeMenu }: 
   }, [confirmation, next, step]);
 
   useEffect(() => {
-    if (!available || !state.data || active || library || starting.current || !current || !guides.some((g) => g.id === current.id)) return;
-    if (!canShowAutomatically(state.data.autoStart, state.data.progress, current.id)) return;
+    if (!available || !state.data || active || library || starting.current) return;
+    const eligible = (g: GuideDefinition) => guides.some((a) => a.id === g.id) && canShowAutomatically(state.data.autoStart, state.data.progress, g.id);
+    const candidate = contextGuides.find(eligible) ?? (current && !current.context && eligible(current) ? current : undefined);
+    if (!candidate) return;
     let cancelled = false;
     const timer = setTimeout(async () => {
       starting.current = true;
       try {
-        const claimed = await claim({ data: { guideId: current.id as GuideId } });
-        if (claimed) { remember(current.id, "seen"); if (!cancelled && !activeRef.current) launch(current); }
+        const claimed = await claim({ data: { guideId: candidate.id as GuideId } });
+        if (claimed) { remember(candidate.id, "seen"); if (!cancelled && !activeRef.current) launch(candidate); }
         else void queryClient.invalidateQueries({ queryKey: key });
       } catch { /* A failed read/claim never blocks normal work. */ }
       finally { starting.current = false; }
     }, 650);
     return () => { cancelled = true; clearTimeout(timer); };
-  }, [active, available, claim, current, guides, key, launch, library, queryClient, remember, state.data]);
+  }, [active, available, claim, contextGuides, current, guides, key, launch, library, queryClient, remember, state.data]);
 
   // Navigating deliberately leaves the guide; a final click to the next guide completes it.
   useEffect(() => {
-    if (!active || pathname.replace(/\/$/, "") === active.path) return;
-    const last = active.steps[index];
-    close(index === active.steps.length - 1 && last?.event === "click");
-  }, [active, close, index, pathname]);
+    if (!active || guidePathMatches(active.path, pathname)) return;
+    const last = activeSteps[index];
+    close(index === activeSteps.length - 1 && last?.event === "click");
+  }, [active, activeSteps, close, index, pathname]);
+
+  // Un pas optional al cărui element lipsește (filă sau buton indisponibil) se sare singur.
+  useEffect(() => {
+    if (!step?.optional) return;
+    const timer = setTimeout(() => { if (!visibleTarget(step.selector)) next(); }, 900);
+    return () => clearTimeout(timer);
+  }, [step, next]);
 
   useEffect(() => {
     setHint(false); setShowDone(false); setConfirmation("");
@@ -227,19 +244,19 @@ export function OnboardingTourProvider({ user, children, openMenu, closeMenu }: 
         <DialogHeader><DialogTitle>Ghidurile tale</DialogTitle><DialogDescription>{completed} din {guides.length} ghiduri disponibile terminate</DialogDescription></DialogHeader>
         <div className="flex items-center justify-between gap-4 border-y border-border py-3"><label htmlFor="guide-auto" className="text-sm">Pornește ghidurile automat</label><Switch id="guide-auto" checked={state.data?.autoStart ?? true} onCheckedChange={(v) => void toggleAuto(v)} disabled={saving || !state.data} /></div>
         {state.isError ? <p role="alert" className="text-sm text-destructive">Progresul nu a putut fi încărcat. Poți relua ghidurile manual.</p> : null}
-        {Array.from(new Set(guides.map((g) => g.group))).map((group) => <section key={group}><h3 className="mb-2 text-sm font-semibold text-muted-foreground">{group}</h3><div className="space-y-1">{guides.filter((g) => g.group === group).map((g) => <Button key={g.id} variant="ghost" className="h-auto min-h-11 w-full justify-between whitespace-normal text-left" onClick={() => { if (current?.id === g.id) launch(g); else { setLibrary(false); void navigate({ to: g.path as never }).then(() => launch(g)); } }}><span>{g.title}</span>{state.data?.progress.some((p) => p.guide_id === g.id && p.status === "completed") ? <Check className="size-4 text-success" aria-label="Terminat" /> : <Compass className="size-4 text-muted-foreground" />}</Button>)}</div></section>)}
+        {Array.from(new Set(guides.map((g) => g.group))).map((group) => <section key={group}><h3 className="mb-2 text-sm font-semibold text-muted-foreground">{group}</h3><div className="space-y-1">{guides.filter((g) => g.group === group).map((g) => <Button key={g.id} variant="ghost" className="h-auto min-h-11 w-full justify-between whitespace-normal text-left" onClick={() => { if (current?.id === g.id || guidePathMatches(g.path, pathname)) { setLibrary(false); launch(g); } else { setLibrary(false); const base = g.path.includes("/:") ? g.path.slice(0, g.path.indexOf("/:")) : g.path; void navigate({ to: base as never }).then(() => { if (!g.path.includes("/:")) launch(g); }); } }}><span>{g.title}</span>{state.data?.progress.some((p) => p.guide_id === g.id && p.status === "completed") ? <Check className="size-4 text-success" aria-label="Terminat" /> : <Compass className="size-4 text-muted-foreground" />}</Button>)}</div></section>)}
         <details className="border-t border-border pt-3"><summary className="cursor-pointer text-sm font-semibold">Ghiduri pentru etapele următoare ({planned.length})</summary><div className="mt-3 space-y-4">{Array.from(new Set(planned.map((g) => g.group))).map((group) => <section key={group}><h3 className="text-sm font-semibold">{group}</h3><ul className="mt-2 space-y-2">{planned.filter((g) => g.group === group).map((g) => <li key={g.id} className="text-sm text-muted-foreground"><span>{g.title}</span><p className="text-xs">{g.trigger}</p></li>)}</ul></section>)}</div></details>
       </DialogContent>
     </Dialog>
     {ready && step ? createPortal(<div className="pointer-events-none fixed inset-0 z-(--z-guide)">
       {rect ? <div className="guide-highlight absolute rounded-lg ring-2 ring-gold" style={{ top: rect.top-5, left: rect.left-5, width: rect.width+10, height: rect.height+10 }} /> : <div className="absolute inset-0 bg-sidebar/50" />}
       <div ref={cardRef} role="dialog" aria-label={step.title} aria-live="polite" data-guide={active?.id} data-guide-step={step.id} className={cn("pointer-events-auto fixed space-y-3 rounded-lg border border-border bg-card p-4 text-card-foreground shadow-xl", mobile && "max-h-[55dvh] overflow-y-auto")} style={mobile ? { bottom: 12, left, width } : { top, left, width }}>
-        <div className="flex items-start gap-2"><div className="min-w-0 flex-1"><p className="text-xs font-semibold text-gold-dark">{active?.title} · {index+1}/{active?.steps.length}</p><h2 className="mt-1 text-base font-semibold">{step.title}</h2></div><Button variant="ghost" size="icon" className="size-8 shrink-0" aria-label="Închide ghidul" onClick={() => close(false)}><X className="size-4" /></Button></div>
+        <div className="flex items-start gap-2"><div className="min-w-0 flex-1"><p className="text-xs font-semibold text-gold-dark">{active?.title} · {index+1}/{activeSteps.length}</p><h2 className="mt-1 text-base font-semibold">{step.title}</h2></div><Button variant="ghost" size="icon" className="size-8 shrink-0" aria-label="Închide ghidul" onClick={() => close(false)}><X className="size-4" /></Button></div>
         <p className="text-sm text-muted-foreground">{step.text}</p>
         {!rect && step.selector ? <p className="text-xs text-muted-foreground">{step.fallbackNote ?? "Elementul nu este vizibil acum. Îl poți căuta în pagină sau poți sări pasul."}</p> : null}
         {confirmation ? <p role="status" className="text-sm font-medium text-success">{confirmation}</p> : null}
         {hint && !confirmation ? <p className="border-l-2 border-gold pl-3 text-xs text-muted-foreground">{step.hint ?? "Folosește elementul evidențiat sau sari pasul."}</p> : null}
-        <div className="flex flex-wrap items-center justify-between gap-2"><Button variant="ghost" size="sm" onClick={() => close(false)}>Sari peste</Button><div className="flex gap-1"><Button variant="outline" size="sm" disabled={index===0} onClick={() => setIndex(index-1)}>Înapoi</Button>{step.mode === "show" && !showDone ? <Button size="sm" onClick={() => show(step)}>Arată-mi</Button> : <Button size="sm" onClick={next} disabled={!!confirmation}>{step.mode === "do" ? "Sari pasul" : index+1 === active?.steps.length ? "Am înțeles" : "Înainte"}</Button>}</div></div>
+        <div className="flex flex-wrap items-center justify-between gap-2"><Button variant="ghost" size="sm" onClick={() => close(false)}>Sari peste</Button><div className="flex gap-1"><Button variant="outline" size="sm" disabled={index===0} onClick={() => setIndex(index-1)}>Înapoi</Button>{step.mode === "show" && !showDone ? <Button size="sm" onClick={() => show(step)}>Arată-mi</Button> : <Button size="sm" onClick={next} disabled={!!confirmation}>{step.mode === "do" ? "Sari pasul" : index+1 === activeSteps.length ? "Am înțeles" : "Înainte"}</Button>}</div></div>
         <Button variant="link" size="sm" className="h-auto whitespace-normal p-0 text-xs" disabled={saving} onClick={() => void toggleAuto(!(state.data?.autoStart ?? true))}>{state.data?.autoStart === false ? "Reactivează ghidurile automate" : "Nu mai porni ghidurile automat"}</Button>
       </div>
     </div>, document.body) : null}

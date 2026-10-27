@@ -93,6 +93,7 @@ import {
   transactionLabels,
 } from "@/lib/labels";
 import { appHead } from "@/components/app/app-head";
+import { announceGuideContext } from "@/lib/onboarding-tour";
 import { cn } from "@/lib/utils";
 import { canShowDeleteAction, formatPropertyListDetails, formatPropertyListPrice, portalDotTone, portalStateLabel } from "@/lib/property-list-row";
 import { agentFilterClause, buildAgentFilterOptions, showMainAgentFilter, UNASSIGNED_AGENT_FILTER } from "@/lib/property-list-filters";
@@ -161,6 +162,10 @@ function PropertiesPage() {
   const queryClient = useQueryClient();
   const [searchInput, setSearchInput] = useState(filters.q);
   const [selected, setSelected] = useState<string[]>([]);
+  // Ghidul „Unelte din listă” pornește o singură dată: la prima vedere schimbată sau prima selecție.
+  const toolsAnnounced = useRef(false);
+  const announceTools = () => { if (!toolsAnnounced.current) { toolsAnnounced.current = true; announceGuideContext("properties:tools"); } };
+  useEffect(() => { if (selected.length > 0) announceTools(); }, [selected.length]);
   const [filtersExpanded, setFiltersExpanded] = useState(true);
   const [archiveTarget, setArchiveTarget] = useState<string[] | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
@@ -201,6 +206,7 @@ function PropertiesPage() {
 
   const setSort = (nextSort: SortKey) => void writeUrlState(filters, nextSort);
   const setView = (nextView: PropertyListView) => {
+    announceTools();
     if (nextView !== "publish" && view === "publish" && Object.keys(portalDrafts).length > 0) {
       if (!window.confirm(`Renunți la ${Object.keys(portalDrafts).length} modificări?`)) return;
       setPortalDrafts({});
@@ -786,7 +792,7 @@ function PropertiesPage() {
         actions={
           <>
             <PortalRepublishButton organizationId={orgId} />
-            <Button variant="outline" size="sm" onClick={exportCsv}>
+            <Button variant="outline" size="sm" onClick={exportCsv} data-tour="properties-export">
               <Download className="size-4" /> Export CSV
             </Button>
             <Button size="sm" asChild data-tour="property-add">
@@ -927,7 +933,7 @@ function PropertiesPage() {
           </div>
           <div className="flex flex-wrap items-center gap-2">
             <DropdownMenu>
-              <DropdownMenuTrigger asChild><Button variant="outline">Filtre salvate <ChevronDown aria-hidden /></Button></DropdownMenuTrigger>
+              <DropdownMenuTrigger asChild><Button variant="outline" data-tour="properties-saved-views">Filtre salvate <ChevronDown aria-hidden /></Button></DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="min-w-56">
                 {savedViews.views.length > 0 ? savedViews.views.map((saved) => <DropdownMenuItem key={saved.id} onSelect={() => setFilters(normalizeSavedPropertyFilters(saved.config))}>{saved.name}</DropdownMenuItem>) : <DropdownMenuItem disabled>Niciun filtru salvat</DropdownMenuItem>}
               </DropdownMenuContent>
@@ -937,7 +943,7 @@ function PropertiesPage() {
         </div>
 
         {selected.length > 0 ? (
-          <div className="flex flex-wrap items-center gap-3 rounded-xl border border-primary/30 bg-primary/5 px-4 py-3">
+          <div data-tour="properties-selection" className="flex flex-wrap items-center gap-3 rounded-xl border border-primary/30 bg-primary/5 px-4 py-3">
             <span className="text-sm font-medium">{selected.length} selectate</span>
             <Select
               value=""
@@ -1023,7 +1029,7 @@ function PropertiesPage() {
               <SelectTrigger className="w-64"><span className="shrink-0 text-muted-foreground">Sortare:</span><SelectValue /></SelectTrigger>
               <SelectContent>{Object.entries(sortOptions).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}</SelectContent>
             </Select>
-            <div className="grid grid-cols-3 overflow-hidden rounded-control border border-input bg-surface">
+            <div data-tour="properties-views" className="grid grid-cols-3 overflow-hidden rounded-control border border-input bg-surface">
               <Button variant="ghost" aria-pressed={view === "list"} onClick={() => setView("list")} className={cn("rounded-none border-0 px-3", view === "list" && "bg-sidebar text-surface hover:bg-sidebar hover:text-surface")}><List aria-hidden /> Listă</Button>
               <Button variant="ghost" aria-pressed={view === "grid"} onClick={() => setView("grid")} className={cn("rounded-none border-0 px-3", view === "grid" && "bg-sidebar text-surface hover:bg-sidebar hover:text-surface")}><LayoutGrid aria-hidden /> Carduri</Button>
               <Button data-tour="properties-view-publish" variant="ghost" aria-pressed={view === "publish"} onClick={() => setView("publish")} className={cn("rounded-none border-0 px-3", view === "publish" && "bg-sidebar text-surface hover:bg-sidebar hover:text-surface")}><Send aria-hidden /> Publicare</Button>

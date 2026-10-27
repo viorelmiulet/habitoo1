@@ -277,7 +277,7 @@ export function PropertyPromotionTab({
 
   return (
     <div className="space-y-6">
-      <section className="space-y-4">
+      <section className="space-y-4" data-tour="social-cards">
         <h2 className="font-sans text-lg font-bold">Promovează proprietatea pe rețelele sociale</h2>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4" data-testid="promotion-cards">
           {cards.map((c) => (
@@ -391,7 +391,7 @@ export function PropertyPromotionTab({
 
       <div className="panel space-y-5 p-5">
         <div>
-          <h3 className="font-medium">Postare pe rețele sociale</h3>
+          <h3 className="font-medium" data-tour="social-post">Postare pe rețele sociale</h3>
           <p className="text-sm text-muted-foreground">
             Textul și pozele se pregătesc aici; le copiezi și le postezi tu. Nimic nu se salvează.
           </p>
