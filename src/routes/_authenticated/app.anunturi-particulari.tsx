@@ -613,7 +613,7 @@ function ListingRow({ listing }: { listing: OwnerListing }) {
   return (
     <article className="relative flex flex-col gap-3 rounded-lg border border-border bg-card p-3 transition-colors hover:border-primary/40 sm:flex-row sm:gap-4">
       {firstImage ? (
-        <img
+        <img referrerPolicy="no-referrer"
           src={firstImage}
           alt={listing.title?.trim() || "Fotografie anunț"}
           loading="lazy"

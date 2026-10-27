@@ -7,19 +7,17 @@
  * Face upsert în `listings` pe (source, external_id) — idempotent: același
  * anunț trimis de două ori actualizează același rând.
  *
- * Imaginile (max 12/anunț, max 5MB, timeout 10s) sunt descărcate și urcate în
- * bucketul privat `listing-images` sub <external_id>/; în coloana `images` se
- * salvează URL-uri stabile /api/public/listings/media/<id> care redirectează
- * către URL-uri semnate. O imagine care pică nu oprește importul.
+ * Imaginile (max 12/anunț) se salvează imediat cu URL-urile originale (cele
+ * deja copiate se păstrează) și se pun în coada `listing_image_jobs`; worker-ul
+ * /api/public/cron/listing-images le copiază în bucketul privat `listing-images`
+ * și înlocuiește URL-ul, pe aceeași poziție, cu /api/public/listings/media/<id>.
  */
 import { createFileRoute } from "@tanstack/react-router";
 import { timingSafeEqual } from "crypto";
 import { z } from "zod";
+import { MAX_IMAGES_PER_LISTING, mergeIncomingImages, planImageJobs } from "@/lib/listing-images";
 
 const MAX_LISTINGS_PER_CALL = 500;
-const MAX_IMAGES_PER_LISTING = 12;
-const IMAGE_TIMEOUT_MS = 10_000;
-const IMAGE_MAX_BYTES = 5 * 1024 * 1024;
 export const LISTING_IMAGES_BUCKET = "listing-images";
 
 /**
@@ -250,76 +248,6 @@ export function preserveExistingFields(
   }
 }
 
-/** Extensia din content-type; fallback la extensia din URL, apoi .jpg. */
-function imageExtension(contentType: string | null, url: string): string {
-  const fromType: Record<string, string> = {
-    "image/jpeg": "jpg",
-    "image/png": "png",
-    "image/webp": "webp",
-    "image/gif": "gif",
-  };
-  if (contentType) {
-    const base = contentType.split(";")[0].trim().toLowerCase();
-    if (fromType[base]) return fromType[base];
-  }
-  const match = /\.(jpe?g|png|webp|gif)(?:[?#]|$)/i.exec(url);
-  return match ? match[1].toLowerCase().replace("jpeg", "jpg") : "jpg";
-}
-
-/**
- * Descarcă și urcă imaginile unui anunț în bucketul privat; returnează
- * URL-urile stabile /api/public/listings/media/<uuid>. Eșecurile individuale
- * sunt ignorate — nu opresc importul.
- */
-export async function mirrorListingImages(
-  supabaseAdmin: {
-    storage: {
-      from: (bucket: string) => {
-        upload: (
-          path: string,
-          body: Blob | ArrayBuffer,
-          opts: { contentType?: string; upsert?: boolean },
-        ) => Promise<{ error: { message: string } | null }>;
-      };
-    };
-  },
-  externalId: string,
-  imageUrls: string[],
-  baseUrl: string,
-): Promise<string[]> {
-  const stored: string[] = [];
-  const safeId = externalId.replace(/[^a-zA-Z0-9_.-]+/g, "-").slice(0, 180);
-  for (const [index, url] of imageUrls.slice(0, MAX_IMAGES_PER_LISTING).entries()) {
-    try {
-      const controller = new AbortController();
-      const timer = setTimeout(() => controller.abort(), IMAGE_TIMEOUT_MS);
-      let response: Response;
-      try {
-        response = await fetch(url, { signal: controller.signal });
-      } finally {
-        clearTimeout(timer);
-      }
-      if (!response.ok) continue;
-      const contentType = response.headers.get("content-type") ?? "";
-      if (!contentType.toLowerCase().startsWith("image/")) continue;
-      const buffer = await response.arrayBuffer();
-      if (buffer.byteLength === 0 || buffer.byteLength > IMAGE_MAX_BYTES) continue;
-      const path = `${safeId}/${index}-${crypto.randomUUID()}.${imageExtension(contentType, url)}`;
-      const { error } = await supabaseAdmin.storage
-        .from(LISTING_IMAGES_BUCKET)
-        .upload(path, buffer, { contentType: contentType.split(";")[0].trim(), upsert: true });
-      if (error) {
-        console.error(`[listings-upsert] image upload failed for ${externalId}: ${error.message}`);
-        continue;
-      }
-      stored.push(`${baseUrl}/api/public/listings/media/${crypto.randomUUID()}?p=${encodeURIComponent(path)}`);
-    } catch {
-      // Imaginea pică — continuăm cu celelalte.
-    }
-  }
-  return stored;
-}
-
 export const Route = createFileRoute("/api/public/listings/upsert")({
   server: {
     handlers: {
@@ -352,10 +280,6 @@ export const Route = createFileRoute("/api/public/listings/upsert")({
         }
 
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-        // URL-urile de imagini salvate în DB trebuie să fie publice și stabile,
-        // nu origin-ul cererii (care poate fi localhost în dev).
-        const { CRM_URL } = await import("@/lib/host");
-        const baseUrl = CRM_URL;
 
         const rows: Record<string, unknown>[] = [];
         for (const listing of parsed.data.listings) {
@@ -379,43 +303,69 @@ export const Route = createFileRoute("/api/public/listings/upsert")({
               row.description = desc ? `${prefix}\n\n${desc}` : prefix;
             }
           }
-          // Imaginile: descărcare + upload în storage; salvăm doar URL-urile.
+          // Imaginile: URL-urile originale; copierea în storage se face în coadă.
           const remoteImages = (listing.images ?? []).slice(0, MAX_IMAGES_PER_LISTING);
-          if (remoteImages.length > 0) {
-            const mirrored = await mirrorListingImages(
-              supabaseAdmin,
-              listing.external_id,
-              remoteImages,
-              baseUrl,
-            );
-            if (mirrored.length > 0) row.images = mirrored;
-          }
+          if (remoteImages.length > 0) row.images = remoteImages;
           rows.push(row);
         }
 
-        // Un batch fără link/imagini nu trebuie să șteargă ce era deja salvat.
-        const needsExisting = rows.filter((r) => !r.url || !r.images);
-        if (needsExisting.length > 0) {
-          const { data: existing } = await supabaseAdmin
-            .from("listings")
-            .select("source, external_id, url, images")
-            .in("external_id", needsExisting.map((r) => r.external_id as string));
-          preserveExistingFields(rows, existing ?? []);
+        // Rândurile existente: link/imagini lipsă și pozele deja copiate.
+        const { data: existing } = await supabaseAdmin
+          .from("listings")
+          .select("id, source, external_id, url, images")
+          .in("external_id", rows.map((r) => r.external_id as string));
+        const existingRows = (existing ?? []) as (ExistingListingFields & { id: string })[];
+        preserveExistingFields(rows, existingRows);
+        const existingByKey = new Map(existingRows.map((e) => [`${e.source}|${e.external_id}`, e]));
+        const doneByListing = new Map<string, Map<string, string>>();
+        if (existingRows.length > 0) {
+          const { data: done } = await supabaseAdmin
+            .from("listing_image_jobs")
+            .select("listing_id, source_url, stored_url")
+            .in("listing_id", existingRows.map((e) => e.id))
+            .eq("status", "done");
+          for (const d of done ?? []) {
+            if (!d.stored_url) continue;
+            const m = doneByListing.get(d.listing_id) ?? new Map<string, string>();
+            m.set(d.source_url, d.stored_url);
+            doneByListing.set(d.listing_id, m);
+          }
         }
-
+        for (const [index, row] of rows.entries()) {
+          const incoming = parsed.data.listings[index]?.images ?? [];
+          if (incoming.length === 0) continue;
+          const old = existingByKey.get(`${row.source}|${row.external_id}`);
+          row.images = mergeIncomingImages(
+            incoming,
+            Array.isArray(old?.images) ? (old.images as string[]) : null,
+            (old && doneByListing.get(old.id)) ?? new Map(),
+          );
+        }
 
         // Geography is canonicalized by the listings trigger for both insert and
         // re-import, using the app's locality/county nomenclature.
-        const { error } = await supabaseAdmin
+        const { data: saved, error } = await supabaseAdmin
           .from("listings")
-          .upsert(rows as never, { onConflict: "source,external_id" });
+          .upsert(rows as never, { onConflict: "source,external_id" })
+          .select("id, images");
 
         if (error) {
           console.error(`[listings-upsert] upsert failed: ${error.message}`);
           return json({ success: false, error: "upsert_failed" }, 500);
         }
 
-        return json({ success: true, inserted: rows.length });
+        // Coada pozelor: unic pe (anunț, URL sursă) — retrimiterea nu dublează.
+        const jobs = (saved ?? []).flatMap((r) => planImageJobs(r.id, (r.images ?? []) as string[]));
+        let queued = 0;
+        if (jobs.length > 0) {
+          const { error: queueError } = await supabaseAdmin
+            .from("listing_image_jobs")
+            .upsert(jobs, { onConflict: "listing_id,source_url", ignoreDuplicates: true });
+          if (queueError) console.error(`[listings-upsert] image queue failed: ${queueError.message}`);
+          else queued = jobs.length;
+        }
+
+        return json({ success: true, inserted: rows.length, images_queued: queued });
       },
     },
   },

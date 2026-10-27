@@ -214,7 +214,7 @@ function Gallery({ images, title }: { images: string[]; title: string }) {
   return (
     <section className="space-y-2">
       <div className="relative overflow-hidden rounded-lg border border-border bg-muted">
-        <img
+        <img referrerPolicy="no-referrer"
           src={images[current]}
           alt={`${title} — poza ${current + 1}`}
           className="aspect-[4/3] w-full object-cover"
@@ -262,7 +262,7 @@ function Gallery({ images, title }: { images: string[]; title: string }) {
                 i === current ? "border-primary" : "border-transparent"
               }`}
             >
-              <img src={src} alt="" loading="lazy" className="h-16 w-20 object-cover" />
+              <img referrerPolicy="no-referrer" src={src} alt="" loading="lazy" className="h-16 w-20 object-cover" />
             </button>
           ))}
         </div>

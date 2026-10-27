@@ -104,7 +104,7 @@ export function OwnerListingsTable({ items, sourceLabels }: { items: OwnerListin
               >
                 <td className="p-3">
                   {l.images[0] ? (
-                    <img src={l.images[0]} alt="" loading="lazy" className="h-[70px] w-[100px] rounded-md object-cover" />
+                    <img referrerPolicy="no-referrer" src={l.images[0]} alt="" loading="lazy" className="h-[70px] w-[100px] rounded-md object-cover" />
                   ) : (
                     <div className="h-[70px] w-[100px] rounded-md bg-muted" />
                   )}

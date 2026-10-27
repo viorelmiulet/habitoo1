@@ -112,6 +112,7 @@ import { Route as ApiPublicCronChatEmailRouteImport } from './routes/api/public/
 import { Route as ApiPublicCronCommissionRatesRouteImport } from './routes/api/public/cron/commission-rates'
 import { Route as ApiPublicCronLacheieResendRouteImport } from './routes/api/public/cron/lacheie-resend'
 import { Route as ApiPublicCronListingCollectorRouteImport } from './routes/api/public/cron/listing-collector'
+import { Route as ApiPublicCronListingImagesRouteImport } from './routes/api/public/cron/listing-images'
 import { Route as ApiPublicCronListingsRetentionRouteImport } from './routes/api/public/cron/listings-retention'
 import { Route as ApiPublicCronMarketPriceIndicesRouteImport } from './routes/api/public/cron/market-price-indices'
 import { Route as ApiPublicCronOlxStatusRouteImport } from './routes/api/public/cron/olx-status'
@@ -738,6 +739,12 @@ const ApiPublicCronListingCollectorRoute =
     path: '/api/public/cron/listing-collector',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicCronListingImagesRoute =
+  ApiPublicCronListingImagesRouteImport.update({
+    id: '/api/public/cron/listing-images',
+    path: '/api/public/cron/listing-images',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicCronListingsRetentionRoute =
   ApiPublicCronListingsRetentionRouteImport.update({
     id: '/api/public/cron/listings-retention',
@@ -1194,6 +1201,7 @@ export interface FileRoutesByFullPath {
   '/api/public/cron/commission-rates': typeof ApiPublicCronCommissionRatesRoute
   '/api/public/cron/lacheie-resend': typeof ApiPublicCronLacheieResendRoute
   '/api/public/cron/listing-collector': typeof ApiPublicCronListingCollectorRoute
+  '/api/public/cron/listing-images': typeof ApiPublicCronListingImagesRoute
   '/api/public/cron/listings-retention': typeof ApiPublicCronListingsRetentionRoute
   '/api/public/cron/market-price-indices': typeof ApiPublicCronMarketPriceIndicesRoute
   '/api/public/cron/olx-status': typeof ApiPublicCronOlxStatusRoute
@@ -1357,6 +1365,7 @@ export interface FileRoutesByTo {
   '/api/public/cron/commission-rates': typeof ApiPublicCronCommissionRatesRoute
   '/api/public/cron/lacheie-resend': typeof ApiPublicCronLacheieResendRoute
   '/api/public/cron/listing-collector': typeof ApiPublicCronListingCollectorRoute
+  '/api/public/cron/listing-images': typeof ApiPublicCronListingImagesRoute
   '/api/public/cron/listings-retention': typeof ApiPublicCronListingsRetentionRoute
   '/api/public/cron/market-price-indices': typeof ApiPublicCronMarketPriceIndicesRoute
   '/api/public/cron/olx-status': typeof ApiPublicCronOlxStatusRoute
@@ -1526,6 +1535,7 @@ export interface FileRoutesById {
   '/api/public/cron/commission-rates': typeof ApiPublicCronCommissionRatesRoute
   '/api/public/cron/lacheie-resend': typeof ApiPublicCronLacheieResendRoute
   '/api/public/cron/listing-collector': typeof ApiPublicCronListingCollectorRoute
+  '/api/public/cron/listing-images': typeof ApiPublicCronListingImagesRoute
   '/api/public/cron/listings-retention': typeof ApiPublicCronListingsRetentionRoute
   '/api/public/cron/market-price-indices': typeof ApiPublicCronMarketPriceIndicesRoute
   '/api/public/cron/olx-status': typeof ApiPublicCronOlxStatusRoute
@@ -1695,6 +1705,7 @@ export interface FileRouteTypes {
     | '/api/public/cron/commission-rates'
     | '/api/public/cron/lacheie-resend'
     | '/api/public/cron/listing-collector'
+    | '/api/public/cron/listing-images'
     | '/api/public/cron/listings-retention'
     | '/api/public/cron/market-price-indices'
     | '/api/public/cron/olx-status'
@@ -1858,6 +1869,7 @@ export interface FileRouteTypes {
     | '/api/public/cron/commission-rates'
     | '/api/public/cron/lacheie-resend'
     | '/api/public/cron/listing-collector'
+    | '/api/public/cron/listing-images'
     | '/api/public/cron/listings-retention'
     | '/api/public/cron/market-price-indices'
     | '/api/public/cron/olx-status'
@@ -2026,6 +2038,7 @@ export interface FileRouteTypes {
     | '/api/public/cron/commission-rates'
     | '/api/public/cron/lacheie-resend'
     | '/api/public/cron/listing-collector'
+    | '/api/public/cron/listing-images'
     | '/api/public/cron/listings-retention'
     | '/api/public/cron/market-price-indices'
     | '/api/public/cron/olx-status'
@@ -2144,6 +2157,7 @@ export interface RootRouteChildren {
   ApiPublicCronCommissionRatesRoute: typeof ApiPublicCronCommissionRatesRoute
   ApiPublicCronLacheieResendRoute: typeof ApiPublicCronLacheieResendRoute
   ApiPublicCronListingCollectorRoute: typeof ApiPublicCronListingCollectorRoute
+  ApiPublicCronListingImagesRoute: typeof ApiPublicCronListingImagesRoute
   ApiPublicCronListingsRetentionRoute: typeof ApiPublicCronListingsRetentionRoute
   ApiPublicCronMarketPriceIndicesRoute: typeof ApiPublicCronMarketPriceIndicesRoute
   ApiPublicCronOlxStatusRoute: typeof ApiPublicCronOlxStatusRoute
@@ -2926,6 +2940,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicCronListingCollectorRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/cron/listing-images': {
+      id: '/api/public/cron/listing-images'
+      path: '/api/public/cron/listing-images'
+      fullPath: '/api/public/cron/listing-images'
+      preLoaderRoute: typeof ApiPublicCronListingImagesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/cron/listings-retention': {
       id: '/api/public/cron/listings-retention'
       path: '/api/public/cron/listings-retention'
@@ -3655,6 +3676,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicCronCommissionRatesRoute: ApiPublicCronCommissionRatesRoute,
   ApiPublicCronLacheieResendRoute: ApiPublicCronLacheieResendRoute,
   ApiPublicCronListingCollectorRoute: ApiPublicCronListingCollectorRoute,
+  ApiPublicCronListingImagesRoute: ApiPublicCronListingImagesRoute,
   ApiPublicCronListingsRetentionRoute: ApiPublicCronListingsRetentionRoute,
   ApiPublicCronMarketPriceIndicesRoute: ApiPublicCronMarketPriceIndicesRoute,
   ApiPublicCronOlxStatusRoute: ApiPublicCronOlxStatusRoute,
