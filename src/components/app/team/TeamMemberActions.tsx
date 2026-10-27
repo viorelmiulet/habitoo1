@@ -126,7 +126,7 @@ export function TeamMemberActions({
           </DropdownMenuContent>
         </DropdownMenu>
       ) : (
-        <div className="flex flex-wrap gap-2">
+        <div data-tour="team-member-actions" className="flex flex-wrap gap-2">
           {perms.canEdit ? (
             <Button variant="outline" onClick={() => setEditing(true)}>
               <Pencil className="size-4" /> Editează profilul

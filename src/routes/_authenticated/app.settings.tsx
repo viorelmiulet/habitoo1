@@ -76,6 +76,7 @@ import {
 } from "lucide-react";
 import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
+import { announceGuideContext } from "@/lib/onboarding-tour";
 
 const TAB_ICONS: Record<SettingsTab, LucideIcon> = {
   profile: UserRound,
@@ -198,6 +199,7 @@ function SettingsPage() {
   const groups = settingsTabGroups(user);
   const visibleTabs = groups.flatMap((g) => g.tabs);
   const activeTab: SettingsTab = visibleTabs.includes(tab) ? tab : "profile";
+  useEffect(() => { announceGuideContext(`settings:${activeTab}`); }, [activeTab]);
   const selectTab = (value: SettingsTab) => {
     void navigate({
       search: (previous) => ({
@@ -365,6 +367,7 @@ function SettingsPage() {
                     key={value}
                     type="button"
                     data-settings-nav={value}
+                    data-tour={`settings-tab-${value}`}
                     aria-current={active ? "page" : undefined}
                     onClick={() => selectTab(value)}
                     className={cn(
@@ -398,6 +401,7 @@ function SettingsPage() {
                     key={value}
                     className="min-h-11 shrink-0 gap-2 rounded-full border border-border/70 bg-card px-4 data-[state=active]:border-gold/50 data-[state=active]:bg-gold/15"
                     value={value}
+                    data-tour={`settings-tab-${value}`}
                   >
                     <Icon className="size-4" aria-hidden />
                     {SETTINGS_TAB_LABELS[value]}
@@ -409,7 +413,7 @@ function SettingsPage() {
         </div>
 
         <div className="min-w-0 max-w-4xl">
-          <TabsContent value="profile" className="mt-0">
+          <TabsContent data-tour="settings-profile" value="profile" className="mt-0">
             <SettingsCard title="Profilul tău" description="Fotografia, numele și datele de contact afișate clienților.">
               {user ? (
                 <ProfileEditForm
@@ -433,7 +437,7 @@ function SettingsPage() {
           </TabsContent>
 
           {user?.role === "agency_admin" ? (
-            <TabsContent value="agency" className="mt-0">
+            <TabsContent data-tour="settings-agency" value="agency" className="mt-0">
               <form
                 className="space-y-6"
                 onSubmit={(e) => {
@@ -665,7 +669,7 @@ function SettingsPage() {
           ) : null}
 
           {user?.isAdmin ? (
-            <TabsContent value="branding" className="mt-0">
+            <TabsContent data-tour="settings-branding" value="branding" className="mt-0">
               <AgencyBrandingCard />
             </TabsContent>
           ) : null}
@@ -704,7 +708,7 @@ function SettingsPage() {
           ) : null}
 
           {user?.isAdmin ? (
-            <TabsContent value="portals" className="mt-0">
+            <TabsContent data-tour="settings-portals" value="portals" className="mt-0">
               <div className="space-y-6">
                 <AgencyPortalCatalogCard />
                 <PortalSlotsCard />
@@ -716,7 +720,7 @@ function SettingsPage() {
           ) : null}
 
           {user?.isAdmin ? (
-            <TabsContent value="promotion" className="mt-0">
+            <TabsContent data-tour="settings-promotion" value="promotion" className="mt-0">
               <div className="space-y-6">
                 <MetaConnectionCard />
                 <YoutubeConnectionCard />
@@ -726,7 +730,7 @@ function SettingsPage() {
           ) : null}
 
           {user?.isAdmin ? (
-            <TabsContent value="integrations" className="mt-0">
+            <TabsContent data-tour="settings-integrations" value="integrations" className="mt-0">
               <div className="space-y-6">
                 <SiteFeedCard />
                 <ArgusConnectionCard />

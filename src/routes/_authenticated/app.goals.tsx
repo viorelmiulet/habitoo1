@@ -235,6 +235,7 @@ function GoalsPage() {
         actions={
           user?.isAdmin ? (
             <Button
+              data-tour="goal-new-open"
               size="sm"
               onClick={() => {
                 setEditing(null);
@@ -310,7 +311,7 @@ function GoalsPage() {
                         <StatusBadge tone={tone}>{pct}%</StatusBadge>
                       </div>
 
-                      <div className="space-y-2">
+                      <div data-tour="goal-progress" className="space-y-2">
                         <Progress value={pct} className="h-2" />
                         <div className="flex items-baseline justify-between text-xs">
                           <span className="font-medium tabular-nums">
@@ -383,7 +384,7 @@ function GoalsPage() {
           <DialogHeader>
             <DialogTitle>{editing ? "Editează obiectivul" : "Obiectiv nou"}</DialogTitle>
           </DialogHeader>
-          <form
+          <form data-tour="goal-form"
             className="space-y-4"
             onSubmit={(e) => {
               e.preventDefault();
@@ -430,7 +431,7 @@ function GoalsPage() {
               </div>
             </div>
             <div className="space-y-2">
-              <Label>Atribuit</Label>
+              <Label data-tour="goal-assignee">Atribuit</Label>
               <Select
                 value={form.user_id || "org"}
                 onValueChange={(v) => setForm((f) => ({ ...f, user_id: v === "org" ? "" : v }))}
@@ -449,7 +450,7 @@ function GoalsPage() {
               </Select>
             </div>
             <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => setOpen(false)}>
+              <Button data-tour="goal-cancel" type="button" variant="outline" onClick={() => setOpen(false)}>
                 Renunță
               </Button>
               <Button type="submit" disabled={create.isPending}>

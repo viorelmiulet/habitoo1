@@ -1,6 +1,7 @@
 import type { AppRole } from "@/hooks/use-session";
 import type { AiFeatureKey, AiFeatureMap } from "@/lib/ai/features/keys";
 import { stage4Guides } from './onboarding-stage4';
+import { stage5Guides } from './onboarding-stage5';
 
 export type TourStep = {
   id: string; title: string; text: string;
@@ -9,7 +10,7 @@ export type TourStep = {
   event?: "click" | "input";
   hint?: string;
   confirmation?: string;
-  show?: "menu" | "portfolio" | "clients" | "management" | "filters" | "publish" | "details" | "contacts-cards" | "contact-requests" | "contact-leads" | "contact-activities" | "contact-documents" | "contact-notes" | "contact-timeline" | "request-create" | "request-leads" | "request-activities" | "contract-create" | "contract-edit" | "activity-reschedule" | "calendar-day" | "calendar-create" | "matching-direction" | "support-create" | "map-filters" | "map-places" | "acp-adjustments" | "studio-video" | "studio-marketing" | "studio-enhance" | "topbar-search-open" | "topbar-search-close" | "topbar-add-open";
+  show?: "team-invite" | "team-invite-cancel" | "commission-new" | "commission-cancel" | "commission-reports" | "goal-new" | "goal-cancel" | "settings-profile" | "settings-agency" | "settings-branding" | "settings-portals" | "settings-integrations" | "settings-promotion" | "menu" | "portfolio" | "clients" | "management" | "filters" | "publish" | "details" | "contacts-cards" | "contact-requests" | "contact-leads" | "contact-activities" | "contact-documents" | "contact-notes" | "contact-timeline" | "request-create" | "request-leads" | "request-activities" | "contract-create" | "contract-edit" | "activity-reschedule" | "calendar-day" | "calendar-create" | "matching-direction" | "support-create" | "map-filters" | "map-places" | "acp-adjustments" | "studio-video" | "studio-marketing" | "studio-enhance" | "topbar-search-open" | "topbar-search-close" | "topbar-add-open";
   fallbackNote?: string;
   /** Pasul se sare singur dacă elementul nu există pentru utilizatorul curent. */
   optional?: boolean;
@@ -28,6 +29,7 @@ export type GuideDefinition = {
   steps: TourStep[];
 };
 export const GUIDE_IDS = [
+  "team", "team-member", "comisioane", "reports", "goals", "settings", "settings-integrations", "abonament",
   "anunturi-particulari", "anunturi-particulari-detail", "anunturi-import", "acp-new", "acp-saved", "acp-detail", "ai-crm", "ai-marketing", "ai-media", "ai-manager", "habitoo-ai", "agent-chat", "topbar-tools",
   "first-steps", "properties-list", "property-create",
   "properties-tools", "property-detail", "property-edit", "property-media",
@@ -43,6 +45,7 @@ const adminRoles: AppRole[] = ["agency_admin", "superadmin"];
 const PROPERTY = "/app/properties/:id";
 
 const guideDefinitions: GuideDefinition[] = [
+  ...stage5Guides,
   ...stage4Guides,
   { id: "first-steps", title: "Primii pași", group: "Dashboard", path: "/app", roles: ["agent", "agency_admin"], steps: [
     { id: "welcome", title: "Primii pași", text: "Bun venit! Descoperim pagina de start și principalele zone. Nu salvăm și nu trimitem nimic." },
@@ -328,11 +331,17 @@ export function acceptsGuideInput(value: string): boolean { return value.trim().
 export function canShowAutomatically(autoStart: boolean, progress: { guide_id: string }[], id: string): boolean {
   return autoStart && !progress.some((p) => p.guide_id === id);
 }
-export const SAFE_SHOW_SELECTORS = {'map-filters':'[data-tour="map-filters-toggle"]','map-places':'[data-tour="map-places"] button','acp-adjustments':'[data-tour="acp-adjustments-toggle"]','studio-video':'[data-tour="studio-photo_video"]','studio-marketing':'[data-tour="studio-marketing_image"]','studio-enhance':'[data-tour="studio-photo_enhance"]','topbar-search-open':'[data-tour="global-search-open"]','topbar-search-close':'[data-tour="global-search-close"]','topbar-add-open':'[data-tour="quick-add-open"]','contacts-cards': '[data-tour="contacts-cards"]', 'contact-requests': '[data-tour="contact-tab-requests"]', 'contact-leads': '[data-tour="contact-tab-leads"]', 'contact-activities': '[data-tour="contact-tab-activities"]', 'contact-documents': '[data-tour="contact-tab-documents"]', 'contact-notes': '[data-tour="contact-tab-notes"]', 'contact-timeline': '[data-tour="contact-tab-timeline"]', 'request-create': '[data-tour="request-create-open"]', 'request-leads': '[data-tour="request-tab-leads"]', 'request-activities': '[data-tour="request-tab-activities"]', 'contract-create': '[data-tour="contract-create-open"]', 'contract-edit': '[data-tour="contract-edit"]', 'activity-reschedule': '[data-tour="activity-reschedule"]', 'calendar-day': '[data-tour="calendar-day"]', 'calendar-create': '[data-tour="calendar-create"]', 'matching-direction': '[data-tour="matching-direction"]', 'support-create': '[data-tour="support-button"]'} as const;
+export const SAFE_SHOW_SELECTORS = {'team-invite':'[data-tour="team-invite-open"]:not(:disabled)', 'team-invite-cancel':'[data-tour="team-invite-cancel"]', 'commission-new':'[data-tour="commission-new-open"]', 'commission-cancel':'[data-tour="commission-cancel"]', 'commission-reports':'[data-tour="commissions-reports-tab"]', 'goal-new':'[data-tour="goal-new-open"]', 'goal-cancel':'[data-tour="goal-cancel"]', 'settings-profile':'[data-tour="settings-tab-profile"]', 'settings-agency':'[data-tour="settings-tab-agency"]', 'settings-branding':'[data-tour="settings-tab-branding"]', 'settings-portals':'[data-tour="settings-tab-portals"]', 'settings-integrations':'[data-tour="settings-tab-integrations"]', 'settings-promotion':'[data-tour="settings-tab-promotion"]', 'map-filters':'[data-tour="map-filters-toggle"]','map-places':'[data-tour="map-places"] button','acp-adjustments':'[data-tour="acp-adjustments-toggle"]','studio-video':'[data-tour="studio-photo_video"]','studio-marketing':'[data-tour="studio-marketing_image"]','studio-enhance':'[data-tour="studio-photo_enhance"]','topbar-search-open':'[data-tour="global-search-open"]','topbar-search-close':'[data-tour="global-search-close"]','topbar-add-open':'[data-tour="quick-add-open"]','contacts-cards': '[data-tour="contacts-cards"]', 'contact-requests': '[data-tour="contact-tab-requests"]', 'contact-leads': '[data-tour="contact-tab-leads"]', 'contact-activities': '[data-tour="contact-tab-activities"]', 'contact-documents': '[data-tour="contact-tab-documents"]', 'contact-notes': '[data-tour="contact-tab-notes"]', 'contact-timeline': '[data-tour="contact-tab-timeline"]', 'request-create': '[data-tour="request-create-open"]', 'request-leads': '[data-tour="request-tab-leads"]', 'request-activities': '[data-tour="request-tab-activities"]', 'contract-create': '[data-tour="contract-create-open"]', 'contract-edit': '[data-tour="contract-edit"]', 'activity-reschedule': '[data-tour="activity-reschedule"]', 'calendar-day': '[data-tour="calendar-day"]', 'calendar-create': '[data-tour="calendar-create"]', 'matching-direction': '[data-tour="matching-direction"]', 'support-create': '[data-tour="support-button"]'} as const;
 export const SAFE_SHOW_ACTIONS = ["menu", "portfolio", "clients", "management", "filters", "publish", "details", ...Object.keys(SAFE_SHOW_SELECTORS)] as const;
 
 export const GUIDE_CONTEXT_EVENT = "habitoo:guide-context";
 /** Paginile anunță contextul (filă deschisă, editare pornită) ca să pornească ghidul potrivit. */
 export function announceGuideContext(key: string): void {
   if (typeof window !== "undefined") window.dispatchEvent(new CustomEvent(GUIDE_CONTEXT_EVENT, { detail: key }));
+}
+
+/** Count distinct completed guides within the current role/feature inventory only. */
+export function guideProgressSummary(guides: GuideDefinition[], progress: {guide_id: string; status: string}[]) {
+ const ids = new Set(guides.map(g => g.id));
+ return { completed: new Set(progress.filter(p => p.status === "completed" && ids.has(p.guide_id)).map(p => p.guide_id)).size, total: ids.size };
 }
