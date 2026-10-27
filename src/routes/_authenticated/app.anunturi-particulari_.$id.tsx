@@ -41,6 +41,7 @@ const SOURCE_LABELS: Record<string, string> = {
   imoradar: "Imoradar24",
   anuntul: "Anuntul.ro",
   facebook: "Facebook",
+  homezz: "Homezz.ro",
 };
 
 function money(value: number | null, currency: string | null) {
