@@ -877,7 +877,7 @@ function PropertyDetailPage() {
 
       <Tabs value={tab} onValueChange={setTab}>
         <div className="sticky top-0 z-40 -mx-1 overflow-x-auto bg-background px-1">
-        <TabsList className="h-auto w-max min-w-full justify-start gap-1 rounded-none border-b border-border bg-transparent p-0" aria-label="Secțiunile proprietății">
+        <TabsList className="h-auto w-max min-w-full justify-start gap-1 rounded-none border-b border-border bg-transparent p-0" aria-label="Secțiunile proprietății" data-tour="property-tabs">
           {[
             ["agent", "Agent"],
             ["overview", "Prezentare"],
@@ -895,6 +895,7 @@ function PropertyDetailPage() {
             <TabsTrigger
               key={value}
               value={value as string}
+              data-tour={`property-tab-${value}`}
               className="rounded-none border-b-[3px] border-transparent bg-transparent px-3 py-2.5 font-normal shadow-none data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:font-semibold data-[state=active]:shadow-none"
             >
               {label}
