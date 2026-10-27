@@ -10,7 +10,7 @@ const superOnly: AppRole[] = ["superadmin"];
 /**
  * Inventarul ghidurilor planificate pentru etapele următoare.
  * Câte un ghid pe pagină, filă sau fereastră; acțiunile mici sunt pași în ghidul paginii lor.
- * Ghidurile deja implementate (etapele 1–2) NU sunt aici: Dashboard/Primii pași,
+ * Ghidurile deja implementate (etapele 1–3) NU sunt aici: Dashboard/Primii pași,
  * Proprietăți (listă, unelte, adăugare), pagina proprietății (detaliu, editare, Poze,
  * Publicare, Promovare portaluri, Video și social, Lead-uri/cereri/activități,
  * Documente/Istoric, ACP, Marketing AI) și Colaborare.
@@ -18,14 +18,6 @@ const superOnly: AppRole[] = ["superadmin"];
  */
 export const plannedGuides: PlannedGuide[] = [
   // ————— Clienți —————
-  { id: "contacts-list", title: "Contacte", group: "Clienți", trigger: "Prima deschidere a paginii Contacte", access: "Agent, admin", roles: agency, feature: null },
-  { id: "contact-detail", title: "Pagina contactului", group: "Clienți", trigger: "Prima deschidere a unui contact (filele: Prezentare, Proprietăți, Cereri, Lead-uri, Activități, Vizionări, Documente, Note, Cronologie)", access: "Agent, admin", roles: agency, feature: null },
-  { id: "contact-create", title: "Adaugă un contact", group: "Clienți", trigger: "Prima deschidere a ferestrei Adaugă contact", access: "Agent, admin", roles: agency, feature: null },
-  { id: "requests-list", title: "Cereri", group: "Clienți", trigger: "Prima deschidere a paginii Cereri", access: "Agent, admin", roles: agency, feature: null },
-  { id: "request-detail", title: "Pagina cererii", group: "Clienți", trigger: "Prima deschidere a unei cereri (Prezentare, Proprietăți compatibile, Lead-uri, Activități, Documente)", access: "Agent, admin", roles: agency, feature: null },
-  { id: "leads-list", title: "Lead-uri", group: "Clienți", trigger: "Prima deschidere a paginii Lead-uri", access: "Agent, admin", roles: agency, feature: null },
-  { id: "contracts-list", title: "Contracte", group: "Clienți", trigger: "Prima deschidere a paginii Contracte", access: "Agent, admin", roles: agency, feature: null },
-  { id: "contract-detail", title: "Pagina contractului", group: "Clienți", trigger: "Prima deschidere a unui contract", access: "Agent, admin", roles: agency, feature: null },
 
   // ————— Anunțuri —————
   { id: "anunturi-particulari", title: "Anunțuri particulari", group: "Anunțuri", trigger: "Prima deschidere a paginii Anunțuri particulari (taburile Habitoo, Facebook, Argus)", access: "Agent, admin", roles: agency, feature: null },
@@ -33,12 +25,14 @@ export const plannedGuides: PlannedGuide[] = [
   { id: "anunturi-import", title: "Import în portofoliu", group: "Anunțuri", trigger: "Prima folosire a acțiunii de import dintr-un anunț particular", access: "Agent, admin; importul creează draft, fără publicare", roles: agency, feature: null },
 
   // ————— Activitate —————
-  { id: "activities", title: "Activități", group: "Activitate", trigger: "Prima deschidere a paginii Activități", access: "Agent, admin", roles: agency, feature: null },
-  { id: "calendar", title: "Calendar", group: "Activitate", trigger: "Prima deschidere a paginii Calendar", access: "Agent, admin", roles: agency, feature: null },
-  { id: "matching", title: "Potriviri", group: "Activitate", trigger: "Prima deschidere a paginii Potriviri", access: "Agent, admin", roles: agency, feature: null },
-  { id: "notifications", title: "Notificări", group: "Activitate", trigger: "Prima deschidere a paginii Notificări", access: "Agent, admin", roles: agency, feature: null },
-  { id: "clipurile-mele", title: "Clipurile mele", group: "Activitate", trigger: "Prima deschidere a paginii Clipurile mele", access: "Agent, admin", roles: agency, feature: null },
-  { id: "support", title: "Suport", group: "Activitate", trigger: "Prima deschidere a paginii Suport", access: "Agent, admin", roles: agency, feature: null },
+  { id: "agent-chat", title: "Mesaje între agenți", group: "Activitate", trigger: "Prima deschidere a ferestrei Mesaje din bara de sus", access: "Agent, admin", roles: agency, feature: null },
+  { id: "topbar-search", title: "Căutare rapidă", group: "Dashboard", trigger: "Prima deschidere a căutării din bara de sus", access: "Agent, admin", roles: agency, feature: null },
+  { id: "topbar-add", title: "Adăugare rapidă", group: "Dashboard", trigger: "Prima deschidere a meniului Adaugă din bara de sus", access: "Agent, admin", roles: agency, feature: null },
+
+  // ————— Analize ACP —————
+  { id: "acp-new", title: "ACP — analiză nouă", group: "ACP", trigger: "Prima deschidere a paginii /app/acp/new", access: "Agent, admin", roles: agency, feature: null },
+  { id: "acp-saved", title: "ACP — analize salvate", group: "ACP", trigger: "Prima deschidere a paginii /app/acp", access: "Agent, admin", roles: agency, feature: null },
+  { id: "acp-detail", title: "Pagina analizei ACP", group: "ACP", trigger: "Prima deschidere a unei analize /app/acp/:id", access: "Agent, admin", roles: agency, feature: null },
 
   // ————— Management —————
   { id: "team", title: "Echipa", group: "Management", trigger: "Prima deschidere a paginii Echipă", access: "Admin", roles: admin, feature: null },
@@ -50,6 +44,7 @@ export const plannedGuides: PlannedGuide[] = [
   { id: "abonament", title: "Abonament", group: "Management", trigger: "Prima deschidere a paginii Abonament", access: "Admin", roles: admin, feature: null },
 
   // ————— AI (doar cu funcția activată) —————
+  { id: "habitoo-ai", title: "Habitoo AI — asistentul", group: "AI", trigger: "Prima deschidere a paginii /app/ai", access: "Agent, admin; asistentul AI activat", roles: agency, feature: "ai_crm" },
   { id: "ai-crm", title: "AI CRM", group: "AI", trigger: "Prima deschidere a paginii AI CRM", access: "Agent, admin; funcția AI CRM activată", roles: agency, feature: "ai_crm" },
   { id: "ai-marketing", title: "AI Marketing", group: "AI", trigger: "Prima deschidere a paginii AI Marketing", access: "Agent, admin; funcția AI Marketing activată", roles: agency, feature: "ai_marketing" },
   { id: "ai-media", title: "Studio AI", group: "AI", trigger: "Prima deschidere a paginii Studio AI", access: "Agent, admin; funcția Studio AI activată", roles: agency, feature: "ai_media" },
