@@ -1311,7 +1311,8 @@ function PropertyDetailPage() {
 
         <TabsContent value="history">
           <div className="panel overflow-hidden">
-            {(data?.audit.length ?? 0) === 0 ? (
+            {data?.activities.filter(a => a.title === "Ofertă trimisă").map(a => <div key={a.id} className="border-b border-border px-5 py-3 text-sm"><p className="font-medium">{a.title}</p><p className="text-xs text-muted-foreground">{formatDateTime(a.starts_at)} · {a.description}</p></div>)}
+            {(data?.audit.length ?? 0) === 0 && !data?.activities.some(a => a.title === "Ofertă trimisă") ? (
               <EmptyState title="Niciun eveniment în istoric" />
             ) : (
               <ul className="divide-y divide-border">
