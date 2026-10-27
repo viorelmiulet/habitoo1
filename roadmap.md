@@ -1,5 +1,9 @@
 # SEO public — pasul 1a
 
+## Contacte — sursă și consimțământ
+- [x] Formular comun adăugare/editare, sursă automată, filtre, istoric acord/retragere și ghid actualizat
+- [ ] Teste reguli și flux real cu contact de test, șters după verificare
+
 ## Ghiduri interactive — etapa 5
 - [x] Completare 8 ghiduri Management; 50 implementate, fără planificate. Progres distinct per rol/AI: agent 38–44, admin 44–50
 - [x] 67 teste trec pentru agent/admin și desktop/telefon; cele 8 ghiduri parcurse în contul admin pe ambele dimensiuni, fără erori și fără acțiuni de salvare/trimitere/ștergere; 101 proprietăți, 6 profiluri, 0 comisioane, 0 obiective, 1 cerere neschimbate

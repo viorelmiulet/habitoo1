@@ -263,6 +263,7 @@ function ContactsPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["contacts"] });
       setDialogOpen(false);
+      queryClient.invalidateQueries({ queryKey: ["contacts-meta"] });
       setForm({
         ...EMPTY_CONTACT_CONSENT,
         first_name: "",
@@ -389,7 +390,7 @@ function ContactsPage() {
             value={filters.source}
             onValueChange={(v) => setFilters((f) => ({ ...f, source: v }))}
           >
-            <SelectTrigger className="w-40">
+            <SelectTrigger aria-label="Filtru sursă" className="w-52">
               <SelectValue placeholder="Sursă" />
             </SelectTrigger>
             <SelectContent>

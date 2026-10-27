@@ -164,7 +164,7 @@ function ContactDetailPage() {
     mutationFn: async (patch: Record<string, unknown>) => {
       const { error } = await supabase
         .from("contacts")
-        .update(patch as never)
+        .update({ ...patch, ...contactConsentPatch(editConsent) } as never)
         .eq("id", id);
       if (error) throw error;
     },
@@ -173,6 +173,7 @@ function ContactDetailPage() {
       queryClient.invalidateQueries({ queryKey: ["contact", id] });
       queryClient.invalidateQueries({ queryKey: ["contacts"] });
       toast.success("Contact actualizat.");
+      queryClient.invalidateQueries({ queryKey: ["contacts-meta"] });
     },
     onError: (e: Error) => toastError(e),
   });
@@ -394,7 +395,6 @@ function ContactDetailPage() {
           onSubmit={(e) => {
             e.preventDefault();
             save.mutate({
-              ...contactConsentPatch(editConsent),
               first_name: edit.first_name,
               last_name: edit.last_name,
               phone: edit.phone || null,
