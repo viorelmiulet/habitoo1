@@ -7,7 +7,7 @@
  */
 import { z } from "zod";
 
-export const ACP_ENRICH_PROMPT_VERSION = "acp-enrich-1";
+export const ACP_ENRICH_PROMPT_VERSION = "acp-enrich-2";
 export const ACP_ENRICH_CAPABILITY = "acp_enrich";
 export const ACP_ENRICH_MIN_CONFIDENCE = 0.7;
 /** Plafon lunar de cost (USD), verificat înaintea fiecărui apel. */
@@ -74,7 +74,14 @@ export type EnrichInputListing = {
   total_area?: number | null;
   rooms: number | null;
   floor: number | null;
+  raw_data?: unknown;
 };
+
+function rawSurface(raw: unknown): number | null {
+  const value = (raw as { original?: { surface?: unknown } } | null)?.original?.surface;
+  const n = typeof value === "number" ? value : typeof value === "string" ? Number(value.replace(",", ".")) : NaN;
+  return Number.isFinite(n) && n > 0 ? n : null;
+}
 
 /** Doar câmpuri despre proprietate; fără URL, sursă, telefoane sau identificatori. */
 export function enrichPayload(listing: EnrichInputListing, ref: string) {
@@ -87,7 +94,7 @@ export function enrichPayload(listing: EnrichInputListing, ref: string) {
     tranzactie: listing.transaction_type,
     pret: listing.price,
     moneda: listing.currency,
-    suprafata_mp: listing.usable_area ?? listing.total_area ?? null,
+    suprafata_mp: listing.usable_area ?? listing.total_area ?? rawSurface(listing.raw_data),
     camere: listing.rooms,
     etaj: listing.floor,
   };
@@ -109,7 +116,8 @@ Pentru fiecare anunț primit întorci câmpuri extrase din text, fiecare cu înc
 - stare: una dintre bloc_nou, finisat, semifinisat, renovat, de_renovat, sau null.
 - tip_real: garsoniera, apartament, casa, vila, teren, spatiu_comercial, birou, altul. Garsoniera = apartament cu 1 cameră.
 - camere și etaj: numere, doar dacă reies din text (parter = 0, demisol = -1, mansardă = etajul ultim).
-- pret_suspect: true dacă prețul pare greșit pentru tip: chirie pusă la vânzare, preț pe m² în loc de total, avans în loc de preț total, preț în altă monedă. Dă motivul scurt, în română.
+- pret_suspect: true doar dacă prețul pare greșit pentru tranzacția și tipul anunțului: chirie lunară pusă la vânzare (pret_suspect_tip = chirie_la_vanzare), preț pe m² în loc de total (pret_pe_mp), avans în loc de preț total (avans), altă monedă (moneda), altceva (altul). Prețurile mici la închiriere sunt normale. Dă motivul scurt, în română, folosind doar cifrele din anunțul respectiv.
+Fiecare anunț se judecă izolat: nu folosi niciodată date (suprafețe, prețuri, nume) din alte anunțuri ale listei. Nu inventa suprafețe care nu apar.
 Răspunde exclusiv cu JSON valid.`;
 
 const conf = z.number().min(0).max(1);
@@ -127,6 +135,7 @@ const ItemSchema = z.object({
   etaj_incredere: conf,
   pret_suspect: z.boolean(),
   pret_suspect_incredere: conf,
+  pret_suspect_tip: z.enum(["chirie_la_vanzare", "pret_pe_mp", "avans", "moneda", "altul"]).nullable(),
   pret_suspect_motiv: z.string().max(200).nullable(),
 });
 export type AcpEnrichItem = z.infer<typeof ItemSchema>;
@@ -156,6 +165,7 @@ export const ACP_ENRICH_RESPONSE_SCHEMA = {
           etaj_incredere: { type: "number" },
           pret_suspect: { type: "boolean" },
           pret_suspect_incredere: { type: "number" },
+          pret_suspect_tip: { type: ["string", "null"], enum: ["chirie_la_vanzare", "pret_pe_mp", "avans", "moneda", "altul", null] },
           pret_suspect_motiv: { type: ["string", "null"] },
         },
       },
@@ -202,6 +212,7 @@ export type AcpEnrichmentRow = {
   price_suspect: boolean | null;
   price_suspect_confidence: number | null;
   price_suspect_reason: string | null;
+  price_suspect_kind?: string | null;
 };
 
 /** Starea AI → eticheta pe care o înțeleg scoring-ul și ajustările ACP. */
@@ -247,8 +258,9 @@ export function usableEnrichment(
         : null,
     rooms,
     floor: original.floor == null && ok(row.floor_confidence) && row.floor !== null ? Number(row.floor) : null,
+    // „altul” nu exclude: doar tipurile de eroare clare și verificabile.
     priceSuspectReason:
-      row.price_suspect && ok(row.price_suspect_confidence)
+      row.price_suspect && ok(row.price_suspect_confidence) && row.price_suspect_kind && row.price_suspect_kind !== "altul"
         ? row.price_suspect_reason || "preț suspect"
         : null,
   };
@@ -271,5 +283,6 @@ export function enrichmentRow(item: AcpEnrichItem) {
     price_suspect: item.pret_suspect,
     price_suspect_confidence: n(item.pret_suspect_incredere),
     price_suspect_reason: item.pret_suspect ? item.pret_suspect_motiv : null,
+    price_suspect_kind: item.pret_suspect ? item.pret_suspect_tip : null,
   };
 }

@@ -442,7 +442,7 @@ async function collectCandidates(params: {
       for (let i = 0; i < ids.length; i += 200) {
         const { data } = await admin
           .from("market_listing_enrichments")
-          .select("market_listing_id,status,complex_name,complex_confidence,condition,condition_confidence,real_property_type,real_property_type_confidence,rooms,rooms_confidence,floor,floor_confidence,price_suspect,price_suspect_confidence,price_suspect_reason")
+          .select("market_listing_id,status,complex_name,complex_confidence,condition,condition_confidence,real_property_type,real_property_type_confidence,rooms,rooms_confidence,floor,floor_confidence,price_suspect,price_suspect_confidence,price_suspect_reason,price_suspect_kind")
           .in("market_listing_id", ids.slice(i, i + 200));
         for (const r of data ?? []) enrichments.set(r.market_listing_id, r as unknown as AcpEnrichmentRow);
       }
