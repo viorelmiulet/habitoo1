@@ -10188,6 +10188,217 @@ export type Database = {
       restore_lead: { Args: { _id: string }; Returns: string }
       restore_property: { Args: { _id: string }; Returns: string }
       ro_normalize_name: { Args: { _v: string }; Returns: string }
+      search_listings_places: {
+        Args: { _choices: Json }
+        Returns: {
+          availability: string | null
+          bca: string | null
+          building_type: string | null
+          city: string | null
+          city_key: string | null
+          county: string | null
+          county_key: string | null
+          currency: string | null
+          description: string | null
+          external_id: string
+          fingerprint: string | null
+          first_seen_at: string
+          floor: string | null
+          floor_num: number | null
+          floors_count: number | null
+          furnished: string | null
+          has_lift: string | null
+          heating: string | null
+          id: string
+          images: string[] | null
+          is_owner: boolean | null
+          location: string | null
+          min_term: string | null
+          neighborhood: string | null
+          neighborhood_key: string | null
+          owner_type: string | null
+          parking: string | null
+          phone: string | null
+          plot_area: number | null
+          price: number | null
+          price_per_m2: number | null
+          property_type: string | null
+          published_at: string | null
+          raw_data: Json | null
+          rooms: number | null
+          scraped_at: string | null
+          source: string
+          surface: number | null
+          title: string | null
+          transaction_type: string | null
+          updated_at: string
+          url: string | null
+          year_built: number | null
+          zone: string | null
+          zone_key: string | null
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "listings"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
+      search_place_city_key: { Args: { v: string }; Returns: string }
+      search_place_matches: {
+        Args: {
+          _choices: Json
+          _city: string
+          _county: string
+          _neighborhood: string
+          _zone: string
+        }
+        Returns: boolean
+      }
+      search_properties_places: {
+        Args: { _choices: Json }
+        Returns: {
+          additional_spaces: string[]
+          address: string | null
+          address_apartment: string | null
+          address_building: string | null
+          address_staircase: string | null
+          appliances: string[]
+          archived_at: string | null
+          archived_by: string | null
+          assigned_to: string | null
+          balconies: number | null
+          balcony: boolean
+          balcony_surface: number | null
+          bathroom_window: boolean
+          bathrooms: number | null
+          bedrooms: number | null
+          blinds: string[]
+          build_year: number | null
+          building_amenities: string[]
+          building_floors: number | null
+          building_structure: string | null
+          building_type: string | null
+          built_surface: number | null
+          category: string | null
+          city: string | null
+          collab_commission_percent: number | null
+          collab_terms: string | null
+          collaboration: boolean
+          collaboration_opted_out: boolean
+          comfort: string | null
+          commission: string | null
+          construction_stage: string | null
+          cooling_systems: string[]
+          county: string | null
+          county_siruta_code: number | null
+          created_at: string
+          created_by: string | null
+          currency: string
+          deleted_at: string | null
+          deleted_by: string | null
+          description: string | null
+          destination: string | null
+          district: string | null
+          energy_class: string | null
+          entry_door: string[]
+          external_id: string | null
+          features: string[]
+          finish_state: string | null
+          floor: number | null
+          floor_finishes: string[]
+          floor_label: string | null
+          for_rent: boolean
+          for_sale: boolean
+          furnishing: string | null
+          garages: number | null
+          garden_surface: number | null
+          has_attic: boolean
+          has_basement: boolean
+          has_ground_floor: boolean
+          has_loft: boolean
+          has_semi_basement: boolean
+          heating: string | null
+          heating_systems: string[]
+          id: string
+          insulation: string[]
+          interior_doors: string[]
+          internal_notes: string | null
+          is_exclusive: boolean | null
+          key_in_agency: boolean
+          kitchen_features: string[]
+          kitchens: number | null
+          land_surface: number | null
+          last_activity_at: string | null
+          lat: number | null
+          layout: string | null
+          lng: number | null
+          locality_siruta_code: number | null
+          location_precise: boolean
+          metering: string[]
+          misc_features: string[]
+          negotiable: boolean
+          open_kitchen: boolean
+          organization_id: string
+          orientation: string | null
+          owner_contact_id: string | null
+          parking: string | null
+          parking_spaces: number | null
+          pet_friendly: boolean
+          postal_code: string | null
+          postal_code_resolved_at: string | null
+          postal_code_resolved_from: string | null
+          postal_code_source: string | null
+          pre_archive_status:
+            | Database["public"]["Enums"]["property_status"]
+            | null
+          pre_delete_status:
+            | Database["public"]["Enums"]["property_status"]
+            | null
+          price: number | null
+          property_type: string
+          publish_status: string
+          published_at: string | null
+          recessed_floors: number | null
+          reference: string | null
+          renovation_year: number | null
+          rent_currency: string | null
+          rent_price: number | null
+          rooms: number | null
+          sale_currency: string | null
+          sale_price: number | null
+          seismic_risk: string | null
+          shutters: string[]
+          source: string | null
+          status: Database["public"]["Enums"]["property_status"]
+          storia_auto_renew: boolean | null
+          street: string | null
+          street_arrangement: string[]
+          street_number: string | null
+          surface: number | null
+          tags: string[]
+          terrace_surface: number | null
+          terraces: number | null
+          title: string
+          total_usable_surface: number | null
+          transaction_kind: Database["public"]["Enums"]["transaction_kind"]
+          uat_siruta_code: number | null
+          updated_at: string
+          updated_by: string | null
+          usable_surface: number | null
+          utilities: string[]
+          vat_included: boolean
+          views: string[]
+          wall_finishes: string[]
+          windows: string[]
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "properties"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
       set_organization_subscription: {
         Args: { _org: string; _term: string }
         Returns: string
