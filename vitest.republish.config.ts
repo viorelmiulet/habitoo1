@@ -1,2 +1,2 @@
 import { defineConfig } from 'vitest/config';
-export default defineConfig({ resolve: { alias: { '@': new URL('./src', import.meta.url).pathname } }, test: { environment: 'jsdom', include: ['src/components/app/PortalRepublishDialog.test.tsx', 'src/lib/portals/tests/republish.test.ts', 'src/lib/portals/tests/republish-notification.test.ts'] } });
+export default defineConfig({ resolve: { alias: { '@': new URL('./src', import.meta.url).pathname } }, test: { environment: 'jsdom', include: ['src/components/app/PortalRepublishDialog.test.tsx', 'src/lib/portals/tests/republish.test.ts', 'src/lib/portals/tests/republish-notification.test.ts', 'src/lib/portals/tests/republish-start-atomic.test.ts'] } });
