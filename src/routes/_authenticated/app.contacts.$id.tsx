@@ -54,6 +54,8 @@ import {
 } from "@/lib/labels";
 import { requestStatusLabels, requestStatusTone, activityStatusTone } from "@/lib/crm";
 import { appHead } from "@/components/app/app-head";
+import { ContactConsentFields } from "@/components/app/ContactConsentFields";
+import { EMPTY_CONTACT_CONSENT, contactConsentPatch, consentHistory } from "@/lib/contact-consent";
 
 export const Route = createFileRoute("/_authenticated/app/contacts/$id")({
   head: () => { const title = "Habitoo CRM — detalii contact"; const description = "Datele contactului, proprietăți, cereri, activități și cronologia interacțiunilor."; const head = appHead(title); return { ...head, meta: [...head.meta, { name: "description", content: description }, { property: "og:title", content: title }, { property: "og:description", content: description }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }] }; },
@@ -145,6 +147,19 @@ function ContactDetailPage() {
   });
 
   const [edit, setEdit] = useState<Record<string, string> | null>(null);
+  const [editConsent, setEditConsent] = useState(EMPTY_CONTACT_CONSENT);
+  const withdraw = useMutation({
+    mutationFn: async () => {
+      const { error } = await supabase.from("contacts").update({ gdpr_consent: false }).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["contact", id] });
+      queryClient.invalidateQueries({ queryKey: ["contacts"] });
+      toast.success("Retragerea acordului a fost înregistrată.");
+    },
+    onError: (e: Error) => toastError(e),
+  });
   const save = useMutation({
     mutationFn: async (patch: Record<string, unknown>) => {
       const { error } = await supabase
@@ -253,7 +268,8 @@ function ContactDetailPage() {
         actions={
           <Button
             size="sm"
-            onClick={() =>
+            onClick={() => {
+              setEditConsent({ source: contact.source ?? '', gdpr_consent: Boolean(contact.gdpr_consent), gdpr_consent_method: contact.gdpr_consent_method ?? '' });
               setEdit({
                 first_name: contact.first_name,
                 last_name: contact.last_name,
@@ -261,8 +277,8 @@ function ContactDetailPage() {
                 email: contact.email ?? "",
                 company: contact.company ?? "",
                 notes: contact.notes ?? "",
-              })
-            }
+              });
+            }}
           >
             Editează
           </Button>
@@ -285,7 +301,7 @@ function ContactDetailPage() {
               </StatusBadge>
               {contact.gdpr_consent ? (
                 <StatusBadge tone="success">Consimțământ GDPR</StatusBadge>
-              ) : null}
+              ) : <StatusBadge tone="neutral">Fără acord marketing</StatusBadge>}
             </div>
             <div className="mt-3 grid gap-x-6 gap-y-2 text-sm sm:grid-cols-2 lg:grid-cols-4">
               <div>
@@ -310,6 +326,7 @@ function ContactDetailPage() {
                 <p className="text-xs text-muted-foreground">Adăugat</p>
                 <p>{formatDate(contact.created_at)}</p>
               </div>
+              <div><p className="text-xs text-muted-foreground">Sursă</p><p>{contact.source || '—'}</p></div>
             </div>
           </div>
           <div className="flex flex-wrap items-center gap-1">
@@ -377,6 +394,7 @@ function ContactDetailPage() {
           onSubmit={(e) => {
             e.preventDefault();
             save.mutate({
+              ...contactConsentPatch(editConsent),
               first_name: edit.first_name,
               last_name: edit.last_name,
               phone: edit.phone || null,
@@ -413,6 +431,7 @@ function ContactDetailPage() {
               onChange={(e) => setEdit((d) => ({ ...(d ?? {}), notes: e.target.value }))}
             />
           </div>
+          <ContactConsentFields value={editConsent} onChange={patch => setEditConsent(f => ({ ...f, ...patch }))} />
           <div className="flex justify-end gap-2">
             <Button type="button" variant="outline" onClick={() => setEdit(null)}>
               Anulează
@@ -424,6 +443,13 @@ function ContactDetailPage() {
         </form>
       ) : null}
 
+      <section aria-label="Istoricul acordului" className="space-y-3 border-y border-border py-4">
+        <div className="flex flex-wrap items-center justify-between gap-2"><h2 className="text-sm font-semibold">Consimțământ GDPR</h2>{contact.gdpr_consent && <Button variant="outline" size="sm" disabled={withdraw.isPending} onClick={() => withdraw.mutate()}>Acordul a fost retras</Button>}</div>
+        <p className="text-sm">{contact.gdpr_consent ? 'Acord marketing înregistrat' : 'Fără acord marketing'}{contact.gdpr_consent_at && <> · {formatDateTime(contact.gdpr_consent_at)} · {contact.gdpr_consent_method || 'Mod neînregistrat'} · {agentName(contact.gdpr_consent_by)}</>}</p>
+        {contact.gdpr_withdrawn_at && <p className="text-sm">Retras la {formatDateTime(contact.gdpr_withdrawn_at)}</p>}
+        {!contact.gdpr_consent && <p className="text-xs text-muted-foreground">Trimiterea unei oferte cerute de client rămâne posibilă.</p>}
+        <ul className="space-y-1 text-sm">{consentHistory(contact.gdpr_consent_history).map((event, i) => <li key={`${event.at}-${i}`}>{event.action === 'granted' ? 'Acord înregistrat' : 'Acord retras'} · {formatDateTime(event.at)} · {event.method || 'Mod neînregistrat'} · {agentName(event.agent_id)}</li>)}</ul>
+      </section>
       <Tabs defaultValue="overview">
         <TabsList data-tour="contact-tabs" className="flex-wrap">
           <TabsTrigger value="overview">Overview</TabsTrigger>

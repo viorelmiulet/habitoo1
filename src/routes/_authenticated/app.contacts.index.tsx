@@ -401,6 +401,10 @@ function ContactsPage() {
               ))}
             </SelectContent>
           </Select>
+          <Select value={filters.consent} onValueChange={v => setFilters(f => ({ ...f, consent: v }))}>
+            <SelectTrigger aria-label="Filtru consimțământ" className="w-52"><SelectValue /></SelectTrigger>
+            <SelectContent><SelectItem value="all">Orice consimțământ</SelectItem><SelectItem value="yes">Cu acord marketing</SelectItem><SelectItem value="no">Fără acord marketing</SelectItem></SelectContent>
+          </Select>
           <Select
             value={filters.assigned}
             onValueChange={(v) => setFilters((f) => ({ ...f, assigned: v }))}
@@ -722,7 +726,7 @@ function ContactsPage() {
       ) : null}
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent data-tour="contact-create-form">
+        <DialogContent data-tour="contact-create-form" className="max-h-[90dvh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Contact nou</DialogTitle>
             <DialogDescription>
@@ -808,6 +812,7 @@ function ContactsPage() {
                 onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value }))}
               />
             </div>
+            <ContactConsentFields value={form} onChange={patch => setForm(f => ({ ...f, ...patch }))} />
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>
                 Renunță
