@@ -1,5 +1,10 @@
 # SEO public — pasul 1a
 
+## Trimite oferta către client
+- [ ] Buton pe pagina proprietății și meniul listei, dialog mobil complet cu client/canale/mesaj
+- [ ] Eligibilitate publică verificată pe server, email existent și activitate legată la client/proprietate
+- [ ] Teste fără mesaje reale: activ/inactiv, mesaj, WhatsApp și activitate
+
 ## Localități și zone multiple
 - [x] Selector comun cu numere și listă pe tot ecranul pe telefon: MAP Habitoo/Facebook, Proprietăți și Oferte partenere
 - [x] Filtrare OR parametrizată cu acces existent, totaluri exacte, URL și stare salvată, linkuri vechi inclusiv Sector 6
