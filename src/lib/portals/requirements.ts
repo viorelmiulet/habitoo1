@@ -440,6 +440,17 @@ export const PORTAL_REQUIREMENTS: Record<string, PortalRequirementSpec> = {
     ],
     allowed: COMMON_ALLOWED,
   },
+  // imo24.ro (pasul 1, doar conexiunea): setul minim comun. Limitele reale din
+  // `GET /me` (titlu, descriere, preț minim) se adaugă odată cu publicarea.
+  imo24: {
+    required: [
+      RULE.transaction(),
+      RULE.price(),
+      RULE.propertyType(),
+      RULE.location(),
+    ],
+    allowed: COMMON_ALLOWED,
+  },
   // VDI.ro: obligatorii idintern, titlu (≥10, completat de mapper), tip ofertă,
   // tip operațiune, județ, localitate, monedă. Emailul agentului e verificat în adaptor.
   vdi: {

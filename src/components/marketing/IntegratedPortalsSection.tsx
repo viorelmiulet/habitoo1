@@ -9,7 +9,9 @@ const integratedPortals = PORTALS.filter(
     !isPortalCovered(portal.id) &&
     // OLX direct (cont prepaid) rămâne doar în aplicație; pe homepage OLX
     // apare deja prin cardul Storia+OLX.
-    portal.id !== "olx_direct",
+    portal.id !== "olx_direct" &&
+    // Portalurile încă fără publicare nu se prezintă public ca integrate.
+    portal.capabilities.includes("publish_listing"),
 );
 
 /** Portalurile care acoperă alte portaluri (ex. Storia+OLX) își arată grupul pe homepage. */
