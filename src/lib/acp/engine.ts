@@ -586,7 +586,7 @@ export function buildSanityCheck(input: {
   }
   // Dispersia prețurilor.
   const ratio = typeof input.dispersionRatio === "number" ? input.dispersionRatio : null;
-  if (ratio !== null && ratio > 0.15) {
+  if (ratio !== null && ratio > 0.25) {
     const p25 = percentile([...input.ppsmValues], 0.25);
     const p75 = percentile([...input.ppsmValues], 0.75);
     causes.push({
