@@ -124,6 +124,14 @@ async function loadActor(context: AuthContext): Promise<Actor> {
 }
 
 /** Metadate reale de prospețime/istoric pentru o ofertă de piață. */
+/** Eticheta unei oferte de piață inactive: „ofertă din <lună an>, nu mai e activă”. */
+export function inactiveOfferLabel(lastSeenAt: string | null): string {
+  const time = lastSeenAt ? Date.parse(lastSeenAt) : NaN;
+  if (!Number.isFinite(time)) return "ofertă care nu mai e activă";
+  const month = new Date(time).toLocaleDateString("ro-RO", { month: "long", year: "numeric", timeZone: "Europe/Bucharest" });
+  return `ofertă din ${month}, nu mai e activă`;
+}
+
 function marketListingMeta(
   row: Record<string, unknown>,
   extra: { status: string; duplicateCount: number },
@@ -485,7 +493,7 @@ async function collectCandidates(params: {
         sourceType: "portal",
         sourceName: item.active
           ? sourceNames || ACP_SOURCE_TYPE_LABELS.portal
-          : `${sourceNames || ACP_SOURCE_TYPE_LABELS.portal} (dispărută din feed)`,
+          : `${sourceNames || ACP_SOURCE_TYPE_LABELS.portal} · ${inactiveOfferLabel((row as { last_seen_at?: string | null }).last_seen_at ?? null)}`,
         marketListingId: row.id,
         title: row.title ?? row.address ?? row.url ?? "Ofertă de piață",
         locationLabel: locationLabel({
