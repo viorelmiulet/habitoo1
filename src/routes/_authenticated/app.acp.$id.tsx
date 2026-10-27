@@ -164,7 +164,7 @@ function ComparableRow({
           </p>
           <p className="mt-1 text-xs text-muted-foreground">{comparable.selectionReason}</p>
           {review?.verdict === "suspect" && review.reason ? (
-            <p className="mt-1 flex items-start gap-1 text-xs font-medium text-warning-foreground">
+            <p className="mt-1 flex items-start gap-1 text-xs font-medium text-foreground">
               <TriangleAlert className="mt-0.5 size-3.5 shrink-0 text-warning" aria-hidden />
               Verificare AI: {review.reason}
             </p>
