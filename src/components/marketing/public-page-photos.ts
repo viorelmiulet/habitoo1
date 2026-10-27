@@ -12,6 +12,8 @@ import contact from "@/assets/public-photos/contact.webp.asset.json";
 import contactOg from "@/assets/public-photos/contact-og.jpg.asset.json";
 import commissions from "@/assets/public-photos/comisioane.webp.asset.json";
 import commissionsOg from "@/assets/public-photos/comisioane-og.jpg.asset.json";
+import propertyImport from "@/assets/public-photos/import-proprietati.webp.asset.json";
+import propertyImportOg from "@/assets/public-photos/import-proprietati-og.jpg.asset.json";
 import { SITE_URL } from "./public-identity";
 
 export const publicPagePhotos = {
@@ -22,6 +24,7 @@ export const publicPagePhotos = {
   blog: { src: blog.url, ogImage: `${SITE_URL}${blogOg.url}`, alt: "Laptop, carnet de notițe și cafea pe o masă într-un apartament luminos, cu vedere spre clădiri rezidențiale." },
   contact: { src: contact.url, ogImage: `${SITE_URL}${contactOg.url}`, alt: "Colț primitor de agenție cu birou și telefon, lângă o ușă deschisă spre un hol luminos." },
   commissions: { src: commissions.url, ogImage: `${SITE_URL}${commissionsOg.url}`, alt: "Laptop cu un tabel de cifre, contract cu stilou, calculator și chei de apartament pe un birou luminos de agenție." },
+  propertyImport: { src: propertyImport.url, ogImage: `${SITE_URL}${propertyImportOg.url}`, alt: "Laptop cu fotografii de apartamente care se transferă, lângă o cutie cu dosare și chei pe un birou de agenție." },
 } as const;
 
 export type PublicPagePhoto = (typeof publicPagePhotos)[keyof typeof publicPagePhotos];
