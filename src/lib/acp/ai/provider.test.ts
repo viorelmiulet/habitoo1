@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { generateAcpAiAnalysis, ACP_AI_RATE_LIMITS } from "../ai.functions";
+import { runGenerateAcpAiAnalysis, ACP_AI_RATE_LIMITS } from "../ai.functions";
 import { resolveAcpAiProvider } from "./provider.server";
 
 const fixtures = vi.hoisted(() => ({
@@ -38,7 +38,7 @@ const insight = {
   comparable_analysis: "Comparabile", key_drivers: ["Suprafața"], risks_and_limitations: ["Eșantion"],
   recommended_positioning: "Poziționare", confidence_explanation: "Încredere", client_friendly_summary: "Rezumat client",
 };
-const run = generateAcpAiAnalysis as unknown as (args: { context: { userId: string }; data: { analysisId: string } }) => Promise<{ status: string; model?: string; message?: string }>;
+const run = runGenerateAcpAiAnalysis as unknown as (args: { context: { userId: string }; data: { analysisId: string } }) => Promise<{ status: string; model?: string; message?: string }>;
 afterEach(() => { vi.unstubAllGlobals(); vi.unstubAllEnvs(); vi.clearAllMocks(); fixtures.inserts.length = 0; fixtures.updates.length = 0; });
 
 describe("ACP AI shared registry and validated persistence", () => {
