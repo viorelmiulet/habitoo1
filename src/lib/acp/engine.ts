@@ -79,6 +79,8 @@ export type AcpCandidate = {
   subject: AcpSubject;
   /** Metadate reale de piață (prospețime, istoric preț), când există. */
   meta?: AcpListingMeta | null;
+  /** Motor v4: preț semnalat ca suspect de îmbogățirea AI (încredere ≥ 0,7). */
+  priceSuspect?: string | null;
 };
 
 /** Opțiuni Stage 7: calibrare activă și momentul de referință pentru prospețime. */
@@ -246,6 +248,10 @@ export function runAcpAnalysis(
     let reason = hasPrice
       ? tierReason(tier, row.similarity.similarityScore)
       : "Exclus: comparabilul nu are preț publicat.";
+    if (geoEnabled && row.candidate.priceSuspect && row.override !== "include") {
+      eligible = false;
+      reason = `Exclus: preț suspect (${row.candidate.priceSuspect}).`;
+    }
     if (row.override === "exclude") {
       eligible = false;
       reason = "Exclus manual de utilizator.";

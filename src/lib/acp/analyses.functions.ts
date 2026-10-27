@@ -28,6 +28,7 @@ import type {
 } from "./time-adjustment";
 import type { AcpSubject } from "./scoring";
 import { detectResidentialComplex, residentialComplexByKey } from "./complexes";
+import { usableEnrichment, type AcpEnrichmentRow } from "./enrichment";
 import type { AcpComparableResult, AcpSanityCheck } from "./engine";
 import { ACP_AUDIT_ACTIONS, logAcpAudit } from "./audit";
 import { acpDbError, acpError, acpSafeMessage } from "./safe-error";
@@ -434,6 +435,18 @@ async function collectCandidates(params: {
       }
     }
     const deduped = dedupeMarketCandidates(rows as never);
+    // Motor v4: câmpurile îmbogățite cu AI, folosite doar cu încredere ≥ 0,7.
+    const enrichments = new Map<string, AcpEnrichmentRow>();
+    if (geo && deduped.length > 0) {
+      const ids = deduped.map((d) => (d.row as unknown as { id: string }).id);
+      for (let i = 0; i < ids.length; i += 200) {
+        const { data } = await admin
+          .from("market_listing_enrichments")
+          .select("market_listing_id,status,complex_name,complex_confidence,condition,condition_confidence,real_property_type,real_property_type_confidence,rooms,rooms_confidence,floor,floor_confidence,price_suspect,price_suspect_confidence,price_suspect_reason")
+          .in("market_listing_id", ids.slice(i, i + 200));
+        for (const r of data ?? []) enrichments.set(r.market_listing_id, r as unknown as AcpEnrichmentRow);
+      }
+    }
     // Portalurile suplimentare ale unei oferte unite între portaluri: fără ele,
     // cititorul analizei nu ar vedea de unde provine de fapt comparabilul.
     const extraSources = new Map<string, string[]>();
@@ -481,7 +494,24 @@ async function collectCandidates(params: {
           county: row.county,
         }),
         url: row.url,
-        subject: marketListingToSubject(row as never),
+        ...(() => {
+          const base = marketListingToSubject(row as never);
+          const use = usableEnrichment(enrichments.get(row.id), base);
+          if (!use) return { subject: base };
+          const complexKey = use.complexName
+            ? (detectResidentialComplex(use.complexName)?.key ?? `ai:${use.complexName.toLowerCase().normalize("NFD").replace(/[^a-z0-9]+/g, "-")}`)
+            : null;
+          return {
+            subject: {
+              ...base,
+              complex: base.complex ?? complexKey,
+              condition: base.condition ?? use.condition,
+              rooms: base.rooms ?? use.rooms,
+              floor: base.floor ?? use.floor,
+            },
+            priceSuspect: use.priceSuspectReason,
+          };
+        })(),
         // Stage 7: prospețime și istoric de preț din datele reale ale ofertei.
         meta: marketListingMeta(item.row as unknown as Record<string, unknown>, {
           status: row.status,
