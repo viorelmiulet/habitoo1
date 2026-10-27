@@ -72,6 +72,7 @@ export const setImoradarOptOut = createServerFn({ method: "POST" })
 const orgSchema = z.object({ organizationId: z.string().uuid().optional() });
 
 async function activeBatch(admin: Awaited<ReturnType<typeof loadAdmin>>, organizationId: string) {
+  await admin.rpc("close_stale_republish_batches", { _org: organizationId });
   const { data } = await admin.from("portal_republish_batches").select("id, kind")
     .eq("organization_id", organizationId).eq("status", "running").maybeSingle();
   return data ?? null;
