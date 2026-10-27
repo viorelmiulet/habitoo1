@@ -1758,6 +1758,94 @@ export type Database = {
           },
         ]
       }
+      collaborator_offer_deliveries: {
+        Row: {
+          activity_id: string | null
+          agent_id: string
+          channel: string
+          id: string
+          link_id: string
+          organization_id: string
+          property_id: string
+          recipient: string
+          recipient_agent_id: string | null
+          recipient_name: string
+          sent_at: string | null
+          status: string
+        }
+        Insert: {
+          activity_id?: string | null
+          agent_id: string
+          channel: string
+          id: string
+          link_id: string
+          organization_id: string
+          property_id: string
+          recipient: string
+          recipient_agent_id?: string | null
+          recipient_name: string
+          sent_at?: string | null
+          status?: string
+        }
+        Update: {
+          activity_id?: string | null
+          agent_id?: string
+          channel?: string
+          id?: string
+          link_id?: string
+          organization_id?: string
+          property_id?: string
+          recipient?: string
+          recipient_agent_id?: string | null
+          recipient_name?: string
+          sent_at?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "collaborator_offer_deliveries_activity_id_fkey"
+            columns: ["activity_id"]
+            isOneToOne: false
+            referencedRelation: "activities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "collaborator_offer_deliveries_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "collaborator_offer_deliveries_link_id_fkey"
+            columns: ["link_id"]
+            isOneToOne: false
+            referencedRelation: "neutral_offer_links"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "collaborator_offer_deliveries_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "collaborator_offer_deliveries_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "collaborator_offer_deliveries_recipient_agent_id_fkey"
+            columns: ["recipient_agent_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       collector_items: {
         Row: {
           etag: string | null
@@ -4913,6 +5001,58 @@ export type Database = {
           },
           {
             foreignKeyName: "meta_posts_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      neutral_offer_links: {
+        Row: {
+          code: string
+          created_at: string
+          created_by: string
+          id: string
+          organization_id: string
+          property_id: string
+          revoked_at: string | null
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          created_by: string
+          id?: string
+          organization_id: string
+          property_id: string
+          revoked_at?: string | null
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          created_by?: string
+          id?: string
+          organization_id?: string
+          property_id?: string
+          revoked_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "neutral_offer_links_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "neutral_offer_links_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "neutral_offer_links_property_id_fkey"
             columns: ["property_id"]
             isOneToOne: false
             referencedRelation: "properties"
@@ -9917,6 +10057,16 @@ export type Database = {
         Args: { _actor: string; _org: string; _source: string }
         Returns: number
       }
+      collaborator_offer_recipients: {
+        Args: never
+        Returns: {
+          agency_name: string
+          email: string
+          full_name: string
+          phone: string
+          user_id: string
+        }[]
+      }
       collector_arm: { Args: never; Returns: undefined }
       collector_tick: { Args: never; Returns: undefined }
       cron_nonce_claim: {
@@ -9983,6 +10133,10 @@ export type Database = {
         Returns: undefined
       }
       ensure_superadmin_profile: { Args: { _user: string }; Returns: undefined }
+      finish_collaborator_offer_delivery: {
+        Args: { _id: string }
+        Returns: string
+      }
       finish_offer_client_delivery: { Args: { _id: string }; Returns: string }
       finish_onboarding_guide: {
         Args: { p_completed: boolean; p_guide_id: string }
@@ -10128,6 +10282,14 @@ export type Database = {
         }
         Returns: undefined
       }
+      neutral_offer_media: {
+        Args: { _code: string; _index: number }
+        Returns: string
+      }
+      neutral_offer_text: {
+        Args: { _org: string; _text: string }
+        Returns: string
+      }
       next_contract_number: { Args: never; Returns: string }
       next_property_reference: { Args: never; Returns: string }
       normalize_listing_geography: {
@@ -10202,6 +10364,7 @@ export type Database = {
         }[]
       }
       public_llms_statistics: { Args: never; Returns: Json }
+      public_neutral_offer: { Args: { _code: string }; Returns: Json }
       public_partner_agencies: {
         Args: never
         Returns: {
