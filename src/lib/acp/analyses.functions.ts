@@ -1886,3 +1886,18 @@ export const recalculateAcpAsNewVersion = createServerFn({ method: "POST" })
       };
     },
   );
+
+// TEMP-DRYRUN-START
+export async function __acpDryRun(analysisId: string, engineVersion: number) {
+  const admin = await loadAdmin();
+  const { data: a } = await admin.from("acp_analyses").select("*").eq("id", analysisId).single();
+  const row = a as unknown as AnalysisRow & { organization_id: string; created_by: string };
+  const actor = { userId: row.created_by, organizationId: row.organization_id, collaborationEnabled: true };
+  const subject = await prepareTargetSubject(admin, readSubject(row.target_data), row.target_data, row.property_id, engineVersion);
+  const sources = (row.sources as Record<string, boolean> | null) ?? { own_properties: true };
+  const { candidates } = await collectCandidates({ admin, actor, target: subject, targetPropertyId: row.property_id, sources, engineVersion: Math.min(engineVersion, 2) === engineVersion ? engineVersion : engineVersion, });
+  const calibration = await loadCalibration(admin, actor.organizationId);
+  const priceIndex = await loadPriceIndex(admin);
+  return { subject, result: runAcpAnalysis(subject, candidates, readOverrides(row.analysis_data), { calibration, priceIndex, engineVersion }) };
+}
+// TEMP-DRYRUN-END
