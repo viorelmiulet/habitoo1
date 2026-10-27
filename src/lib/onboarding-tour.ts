@@ -183,9 +183,10 @@ export function guideForPath(pathname: string): GuideDefinition | undefined {
   return implementedGuides.find((g) => !g.context && guidePathMatches(g.path, pathname));
 }
 
-export function guideForContext(pathname: string, context: string | null): GuideDefinition | undefined {
-  if (!context) return undefined;
-  return implementedGuides.find((g) => {
+/** Toate ghidurile legate de un context, în ordinea în care trebuie să pornească. */
+export function guidesForContext(pathname: string, context: string | null): GuideDefinition[] {
+  if (!context) return [];
+  return implementedGuides.filter((g) => {
     const contexts = Array.isArray(g.context) ? g.context : g.context ? [g.context] : [];
     return contexts.includes(context) && guidePathMatches(g.path, pathname);
   });
