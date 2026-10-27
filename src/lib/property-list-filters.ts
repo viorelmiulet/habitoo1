@@ -76,6 +76,7 @@ const optionalSearchPage = z.preprocess(
 );
 
 export const propertyListSearchSchema = z.object({
+  republicare: z.string().uuid().optional().catch(undefined),
   q: optionalSearchString,
   status: optionalSearchString,
   transaction: optionalSearchString,

@@ -8,22 +8,47 @@ import { toast } from "@/components/ui/sonner";
 import { toastError } from "@/lib/errors";
 import { getRepublishBatch, getRepublishPreview, startRepublish } from "@/lib/portals/republish.functions";
 import { cn } from "@/lib/utils";
+import { useCurrentUser } from "@/hooks/use-session";
 
 type Scope = "mine" | "all";
 const STORAGE_KEY = "habitoo.republish.batch";
 
-export function PortalRepublishButton({ organizationId }: { organizationId?: string }) {
+export function PortalRepublishButton({ organizationId, reportBatchId }: { organizationId?: string; reportBatchId?: string }) {
+  const user = useCurrentUser().data;
+  const storageKey = `${STORAGE_KEY}:${user?.userId ?? ""}:${organizationId ?? user?.organization?.id ?? ""}`;
   const [open, setOpen] = useState(false);
   const [batchId, setBatchId] = useState<string | null>(null);
-  useEffect(() => { setBatchId(window.localStorage.getItem(STORAGE_KEY)); }, []);
+  useEffect(() => {
+    if (!user?.userId) return;
+    setBatchId(reportBatchId ?? window.localStorage.getItem(storageKey));
+    if (reportBatchId) setOpen(true);
+  }, [storageKey, reportBatchId, user?.userId]);
+  useEffect(() => {
+    const onStarted = (event: Event) => {
+      const detail = (event as CustomEvent<{batchId:string; storageKey:string}>).detail;
+      if (detail.storageKey === storageKey) setBatchId(detail.batchId);
+    };
+    window.addEventListener("habitoo:republish-started", onStarted);
+    return () => window.removeEventListener("habitoo:republish-started", onStarted);
+  }, [storageKey]);
   const loadBatch = useServerFn(getRepublishBatch);
   const { data: batch } = useQuery({
     queryKey: ["portal-republish-batch", batchId],
     enabled: Boolean(batchId),
-    queryFn: () => loadBatch({ data: { batchId: batchId! } }),
+    queryFn: () => {
+      if (!batchId) throw new Error("Republicarea nu a fost găsită.");
+      return loadBatch({ data: { batchId } });
+    },
     refetchInterval: (q) => (q.state.data?.status === "done" ? false : 3_000),
   });
   const running = batch?.status === "running";
+  useEffect(() => {
+    if (!batchId || batch?.status !== "done") return;
+    const key = `${storageKey}:reported:${batchId}`;
+    if (window.localStorage.getItem(key)) return;
+    window.localStorage.setItem(key, "true");
+    toast.success(`Republicare terminată: ${batch.succeeded} reușite, ${batch.failed} erori`);
+  }, [batch, batchId, storageKey]);
   return (
     <>
       <Button variant="outline" size="sm" onClick={() => setOpen(true)}>
@@ -35,8 +60,12 @@ export function PortalRepublishButton({ organizationId }: { organizationId?: str
         organizationId={organizationId}
         batch={batch ?? null}
         onClose={() => setOpen(false)}
-        onStarted={(id) => { window.localStorage.setItem(STORAGE_KEY, id); setBatchId(id); }}
-        onDismiss={() => { window.localStorage.removeItem(STORAGE_KEY); setBatchId(null); }}
+        onStarted={(id) => {
+          window.localStorage.setItem(storageKey, id);
+          setBatchId(id);
+          window.dispatchEvent(new CustomEvent("habitoo:republish-started", { detail: {batchId:id,storageKey} }));
+        }}
+        onDismiss={() => { window.localStorage.removeItem(storageKey); setBatchId(null); }}
       />
     </>
   );
@@ -65,7 +94,7 @@ function PortalRepublishDialog({ open, organizationId, batch, onClose, onStarted
   });
   const mutation = useMutation({
     mutationFn: () => start({ data: { organizationId, scope, portalKeys: portalFilter.length ? portalFilter : null } }),
-    onSuccess: (result) => { onStarted(result.batchId); toast.success("Republicarea rulează în fundal. Poți închide pagina."); },
+    onSuccess: (result) => { onStarted(result.batchId); onClose(); toast.success("Republicarea a pornit în fundal"); },
     onError: (error: Error) => toastError(error),
   });
   const toggle = (id: string) => setPortalFilter((cur) => (cur.includes(id) ? cur.filter((x) => x !== id) : [...cur, id]));

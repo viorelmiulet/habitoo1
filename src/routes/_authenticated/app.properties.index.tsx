@@ -783,7 +783,7 @@ function PropertiesPage() {
         description="Portofoliul agenției, cu filtrare avansată, editare rapidă și acțiuni în masă."
         actions={
           <>
-            <PortalRepublishButton organizationId={orgId} />
+            <PortalRepublishButton organizationId={orgId} reportBatchId={search.republicare} />
             <Button variant="outline" size="sm" onClick={exportCsv} data-tour="properties-export">
               <Download className="size-4" /> Export CSV
             </Button>

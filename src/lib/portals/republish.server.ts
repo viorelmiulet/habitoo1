@@ -76,7 +76,8 @@ export async function refreshRepublishBatches(admin: Admin) {
       succeeded, failed, skipped,
       ...(pending ? {} : { status: "done", finished_at: new Date().toISOString() }),
     }).eq("id", batch.id);
-    if (!pending) {
+    // Regular republish notifications are atomic with completion in the DB.
+    if (!pending && batch.kind === "imoradar") {
       await admin.from("notifications").insert({
         organization_id: batch.organization_id, user_id: batch.requested_by, created_by: batch.requested_by,
         ...(batch.kind === "imoradar"
