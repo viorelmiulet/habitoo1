@@ -8,6 +8,9 @@ import imobiliareLogo from "@/assets/portals/imobiliare_ro.png";
 import olxLogo from "@/assets/portals/olx.png";
 import romimoLogo from "@/assets/portals/romimo.png";
 import storiaLogo from "@/assets/portals/storia.png";
+import imoradarLogo from "@/assets/portals/imoradar.png";
+import anuntulLogo from "@/assets/portals/anuntul.png";
+import homezzLogo from "@/assets/portals/homezz.png";
 
 const SOURCE_ICONS: Record<string, string> = {
   storia: storiaLogo,
@@ -15,8 +18,11 @@ const SOURCE_ICONS: Record<string, string> = {
   imobiliare: imobiliareLogo,
   romimo: romimoLogo,
   facebook: facebookLogo,
+  imoradar: imoradarLogo,
+  anuntul: anuntulLogo,
+  homezz: homezzLogo,
 };
-const SOURCE_TOKENS: Record<string, string> = { imoradar: "IR", anuntul: "AN", homezz: "HZ" };
+const SOURCE_TOKENS: Record<string, string> = {};
 
 function typeLabel(t: string | null) {
   const v = (t ?? "").toLowerCase();
