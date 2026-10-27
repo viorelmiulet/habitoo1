@@ -66,7 +66,8 @@ export function OnboardingTourProvider({ user, children, openMenu, closeMenu }: 
   const run = useRef(0);
   const starting = useRef(false);
   const transitionTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const step = active?.steps[index];
+  const activeSteps = useMemo(() => (active ? stepsForUser(active, user.role, features) : []), [active, user.role, features]);
+  const step = activeSteps[index];
   activeRef.current = active;
 
   useEffect(() => {
@@ -98,10 +99,9 @@ export function OnboardingTourProvider({ user, children, openMenu, closeMenu }: 
   }, []);
   const next = useCallback(() => {
     setConfirmation("");
-    if (!activeRef.current) return;
-    if (index + 1 >= activeRef.current.steps.length) close(true);
+    if (index + 1 >= activeSteps.length) close(true);
     else { setIndex(index + 1); setRect(null); }
-  }, [close, index]);
+  }, [activeSteps.length, close, index]);
   const completeInteraction = useCallback(() => {
     if (!step || confirmation) return;
     if (transitionTimer.current) clearTimeout(transitionTimer.current);
