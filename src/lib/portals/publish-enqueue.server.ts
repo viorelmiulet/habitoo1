@@ -40,7 +40,13 @@ export async function enqueuePublishJobsForOrg(input: EnqueueInput) {
   );
 
   const results: { portalId: string; portalName: string; queued: boolean; message: string | null }[] = [];
-  let inserted = 0;
+  const pending: {
+    portalId: string;
+    name: string;
+    row: Record<string, unknown>;
+    wanted: EnqueueInput["data"]["selections"][number];
+    wasEnabled: boolean;
+  }[] = [];
 
   for (const wanted of input.data.selections) {
     const definition = getPortalDefinition(wanted.portalId);
@@ -78,43 +84,56 @@ export async function enqueuePublishJobsForOrg(input: EnqueueInput) {
       }
     }
 
-    const { error } = await admin.from("portal_publish_jobs").insert({
-      organization_id: input.organizationId,
-      property_id: input.data.propertyId,
-      portal_key: definition.id,
-      enabled: wanted.enabled,
-      promoted: wanted.promoted ?? null,
-      imobiliare_promotions: definition.id === "imobiliare_ro" ? wanted.imobiliarePromotions ?? null : null,
-      imobiliare_mode: definition.id === "imobiliare_ro" ? mode ?? null : null,
-      sync_existing: input.data.syncExisting,
-      requested_by: input.actorId,
-      superadmin: input.superadmin,
+    pending.push({
+      portalId: definition.id,
+      name,
+      row: {
+        portal_key: definition.id,
+        enabled: wanted.enabled,
+        promoted: wanted.promoted ?? null,
+        imobiliare_promotions: definition.id === "imobiliare_ro" ? wanted.imobiliarePromotions ?? null : null,
+        imobiliare_mode: definition.id === "imobiliare_ro" ? mode ?? null : null,
+      },
+      wanted,
+      wasEnabled,
+    });
+  }
+
+  // O singură tranzacție: toate joburile portalurilor și armarea workerului.
+  if (pending.length > 0) {
+    const { data: keys, error } = await admin.rpc("start_portal_publish_jobs", {
+      _org: input.organizationId,
+      _property: input.data.propertyId,
+      _actor: input.actorId,
+      _superadmin: input.superadmin,
+      _sync_existing: input.data.syncExisting,
+      _jobs: pending.map((p) => p.row),
     });
     if (error) {
-      const busy = (error as { code?: string }).code === "23505";
-      results.push({
-        portalId: definition.id,
-        portalName: name,
-        queued: false,
-        message: busy ? `${name}: se sincronizează deja.` : `${name}: nu a putut fi pus în coadă.`,
-      });
-      continue;
+      for (const p of pending) results.push({ portalId: p.portalId, portalName: p.name, queued: false, message: `${p.name}: nu a putut fi pus în coadă.` });
+      return { results };
     }
-    if (definition.id === "imobiliare_ro" && typeof wanted.imobiliarePromotions?.promote_imoradar === "boolean") {
-      // Persist the explicit per-listing preference with publication, not on checkbox clicks.
-      const { error: preferenceError } = await admin.from("portal_publications").upsert({
-        organization_id: input.organizationId,
-        property_id: input.data.propertyId,
-        portal_key: definition.id,
-        enabled: wasEnabled,
-        imoradar_opt_out: !wanted.imobiliarePromotions.promote_imoradar,
-        created_by: input.actorId,
-        updated_by: input.actorId,
-      }, { onConflict: "organization_id,property_id,portal_key" });
-      if (preferenceError) console.error("[portal-publish] imoradar preference could not be persisted");
+    const queuedKeys = new Set<string>((keys ?? []) as string[]);
+    for (const p of pending) {
+      if (!queuedKeys.has(p.portalId)) {
+        results.push({ portalId: p.portalId, portalName: p.name, queued: false, message: `${p.name}: se sincronizează deja.` });
+        continue;
+      }
+      if (p.portalId === "imobiliare_ro" && typeof p.wanted.imobiliarePromotions?.promote_imoradar === "boolean") {
+        // Persist the explicit per-listing preference with publication, not on checkbox clicks.
+        const { error: preferenceError } = await admin.from("portal_publications").upsert({
+          organization_id: input.organizationId,
+          property_id: input.data.propertyId,
+          portal_key: p.portalId,
+          enabled: p.wasEnabled,
+          imoradar_opt_out: !p.wanted.imobiliarePromotions.promote_imoradar,
+          created_by: input.actorId,
+          updated_by: input.actorId,
+        }, { onConflict: "organization_id,property_id,portal_key" });
+        if (preferenceError) console.error("[portal-publish] imoradar preference could not be persisted");
+      }
+      results.push({ portalId: p.portalId, portalName: p.name, queued: true, message: null });
     }
-    inserted += 1;
-    results.push({ portalId: definition.id, portalName: name, queued: true, message: null });
   }
 
   // Publicarea manuală sau debifarea anulează programarea activă a portalului.
@@ -134,11 +153,5 @@ export async function enqueuePublishJobsForOrg(input: EnqueueInput) {
     }
   }
 
-  // Pornește workerul imediat (cerere asincronă din baza de date) și armează
-  // verificarea de rezervă cât timp există joburi active.
-  if (inserted > 0) {
-    const { error } = await admin.rpc("portal_publish_arm");
-    if (error) console.error("[portal-publish] armarea a eșuat", error.message);
-  }
   return { results };
 }
