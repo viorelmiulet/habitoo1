@@ -1373,6 +1373,13 @@
       "when": 1793083069179,
       "tag": "0195_neutral_offer_privacy_hardening",
       "breakpoints": true
+    },
+    {
+      "idx": 196,
+      "version": "7",
+      "when": 1793086390215,
+      "tag": "0196_contacts_source_consent_history",
+      "breakpoints": true
     }
   ]
 }

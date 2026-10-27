@@ -2219,6 +2219,11 @@ export type Database = {
           email: string | null
           first_name: string
           gdpr_consent: boolean
+          gdpr_consent_at: string | null
+          gdpr_consent_by: string | null
+          gdpr_consent_history: Json
+          gdpr_consent_method: string | null
+          gdpr_withdrawn_at: string | null
           id: string
           last_name: string
           notes: string | null
@@ -2240,6 +2245,11 @@ export type Database = {
           email?: string | null
           first_name?: string
           gdpr_consent?: boolean
+          gdpr_consent_at?: string | null
+          gdpr_consent_by?: string | null
+          gdpr_consent_history?: Json
+          gdpr_consent_method?: string | null
+          gdpr_withdrawn_at?: string | null
           id?: string
           last_name?: string
           notes?: string | null
@@ -2261,6 +2271,11 @@ export type Database = {
           email?: string | null
           first_name?: string
           gdpr_consent?: boolean
+          gdpr_consent_at?: string | null
+          gdpr_consent_by?: string | null
+          gdpr_consent_history?: Json
+          gdpr_consent_method?: string | null
+          gdpr_withdrawn_at?: string | null
           id?: string
           last_name?: string
           notes?: string | null
@@ -10069,6 +10084,7 @@ export type Database = {
       }
       collector_arm: { Args: never; Returns: undefined }
       collector_tick: { Args: never; Returns: undefined }
+      contact_source_label: { Args: { _source: string }; Returns: string }
       cron_nonce_claim: {
         Args: { _purpose: string; _token: string }
         Returns: boolean
