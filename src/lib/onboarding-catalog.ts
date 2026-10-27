@@ -38,6 +38,7 @@ export const plannedGuides: PlannedGuide[] = [
   { id: "matching", title: "Potriviri", group: "Activitate", trigger: "Prima deschidere a paginii Potriviri", access: "Agent, admin", roles: agency, feature: null },
   { id: "notifications", title: "Notificări", group: "Activitate", trigger: "Prima deschidere a paginii Notificări", access: "Agent, admin", roles: agency, feature: null },
   { id: "clipurile-mele", title: "Clipurile mele", group: "Activitate", trigger: "Prima deschidere a paginii Clipurile mele", access: "Agent, admin", roles: agency, feature: null },
+  { id: "support", title: "Suport", group: "Activitate", trigger: "Prima deschidere a paginii Suport", access: "Agent, admin", roles: agency, feature: null },
 
   // ————— Management —————
   { id: "team", title: "Echipa", group: "Management", trigger: "Prima deschidere a paginii Echipă", access: "Admin", roles: admin, feature: null },
