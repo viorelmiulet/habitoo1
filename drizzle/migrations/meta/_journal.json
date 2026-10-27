@@ -1338,6 +1338,13 @@
       "when": 1793080944896,
       "tag": "0190_multi_geography_read_filters",
       "breakpoints": true
+    },
+    {
+      "idx": 191,
+      "version": "7",
+      "when": 1793081197501,
+      "tag": "0191_multi_geography_legacy_sector_scope",
+      "breakpoints": true
     }
   ]
 }
