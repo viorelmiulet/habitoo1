@@ -1,5 +1,10 @@
 # SEO public — pasul 1a
 
+## Localități și zone multiple
+- [ ] Selector comun cu numere și listă pe tot ecranul pe telefon: MAP Habitoo/Facebook, Proprietăți și Oferte partenere
+- [ ] Filtrare OR sigură pe server, URL și stare salvată, compatibilitate linkuri vechi
+- [ ] Teste Militari + Chiajna + județ Ilfov, ștergere etichetă și întoarcere din detaliu în cont
+
 ## Oferta publică — galerie foto
 - [x] PhotoViewer comun pe toate pozele publice, șase miniaturi și +N pe ultima; noindex și restul paginii neschimbate
 - [x] Oferta cerută fără cont: 8 imagini distincte decodate desktop/telefon, +2 deschide 6/8, săgeți/taste și gesturi tactile reale în ambele direcții, Escape; fără erori. 17 teste trec, captură mobil în Files
