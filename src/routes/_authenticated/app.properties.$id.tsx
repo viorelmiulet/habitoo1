@@ -1167,15 +1167,15 @@ function PropertyDetailPage() {
           ) : null}
         </TabsContent>
 
-        <TabsContent value="media">
+        <TabsContent value="media" data-tour="property-media">
           <PropertyMediaManager propertyId={id} orgId={orgId} userId={user?.userId} />
         </TabsContent>
 
-        <TabsContent value="acp">
+        <TabsContent value="acp" data-tour="property-acp">
           <PropertyAcpCard propertyId={id} />
         </TabsContent>
 
-        <TabsContent value="marketing">
+        <TabsContent value="marketing" data-tour="property-marketing">
           <MarketingAgentPanel propertyId={id} />
         </TabsContent>
 
@@ -1261,6 +1261,7 @@ function PropertyDetailPage() {
           forceMount
           value="publishing"
           className="space-y-4 data-[state=inactive]:hidden"
+          data-tour="property-publishing"
         >
           <PropertyPortalsCard
             ref={portalsRef}
@@ -1282,7 +1283,7 @@ function PropertyDetailPage() {
           />
         </TabsContent>
 
-        <TabsContent value="promotion">
+        <TabsContent value="promotion" data-tour="property-promotion">
           <PropertyPromotionTab
             propertyId={id}
             onOpenPublishing={() => setTab("publishing")}
