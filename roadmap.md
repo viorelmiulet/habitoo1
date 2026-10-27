@@ -1,9 +1,10 @@
 # SEO public — pasul 1a
 
 ## Localități și zone multiple
-- [ ] Selector comun cu numere și listă pe tot ecranul pe telefon: MAP Habitoo/Facebook, Proprietăți și Oferte partenere
-- [ ] Filtrare OR sigură pe server, URL și stare salvată, compatibilitate linkuri vechi
-- [ ] Teste Militari + Chiajna + județ Ilfov, ștergere etichetă și întoarcere din detaliu în cont
+- [x] Selector comun cu numere și listă pe tot ecranul pe telefon: MAP Habitoo/Facebook, Proprietăți și Oferte partenere
+- [x] Filtrare OR parametrizată cu acces existent, totaluri exacte, URL și stare salvată, linkuri vechi inclusiv Sector 6
+- [x] MAP desktop/telefon: Militari + Chiajna 111, plus Ilfov 520, fără alte zone; ștergere Militari 465, întoarcere păstrată. Proprietăți: Militari 88, ștergere/revenire corecte; Facebook și Colaborare aplică selecții. Eroare izolată Leaflet la navigarea din detaliu, filtrele fără erori.
+- [ ] Test real Proprietăți Militari + Chiajna + Ilfov: contul agenției nu are Chiajna/Ilfov; fără creare sau mutare de date. Regula verificată SQL izolat.
 
 ## Oferta publică — galerie foto
 - [x] PhotoViewer comun pe toate pozele publice, șase miniaturi și +N pe ultima; noindex și restul paginii neschimbate
