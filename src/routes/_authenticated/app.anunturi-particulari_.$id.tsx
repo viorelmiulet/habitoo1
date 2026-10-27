@@ -214,7 +214,7 @@ function Gallery({ images, title }: { images: string[]; title: string }) {
   return (
     <section className="space-y-2">
       <div className="relative overflow-hidden rounded-lg border border-border bg-muted">
-        <img
+        <img referrerPolicy="no-referrer"
           src={images[current]}
           alt={`${title} — poza ${current + 1}`}
           className="aspect-[4/3] w-full object-cover"
