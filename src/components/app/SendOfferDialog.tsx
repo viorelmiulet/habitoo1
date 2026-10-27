@@ -17,12 +17,12 @@ export function SendOfferDialog({propertyId,open,onOpenChange}:{propertyId:strin
  const qc=useQueryClient();
  const draft=useQuery({queryKey:['offer-client-draft',propertyId],queryFn:()=>load({data:{propertyId}}),enabled:open,staleTime:0});
  const [channel,setChannel]=useState<OfferChannel>('whatsapp'),[selected,setSelected]=useState(''),[query,setQuery]=useState(''),[phone,setPhone]=useState(''),[email,setEmail]=useState(''),[message,setMessage]=useState(''),[busy,setBusy]=useState(false),[handoff,setHandoff]=useState(false),[error,setError]=useState(''),[done,setDone]=useState(false);
- const key=useRef(''),lock=useRef(false),opened=useRef(false);
+ const key=useRef(''),lock=useRef(false),opened=useRef(false),initialized=useRef(false);
  const client=draft.data?.recipients.find(c=>c.key===selected);
- useEffect(()=>{if(open&&!opened.current){key.current=crypto.randomUUID();setChannel('whatsapp');setSelected('');setQuery('');setPhone('');setEmail('');setHandoff(false);setError('');setDone(false);setMessage('');}opened.current=open;},[open]);
- useEffect(()=>{if(open&&draft.data)setMessage(draft.data.message);},[open,draft.data]);
+ useEffect(()=>{if(open&&!opened.current){initialized.current=false;key.current=crypto.randomUUID();setChannel('whatsapp');setSelected('');setQuery('');setPhone('');setEmail('');setHandoff(false);setError('');setDone(false);setMessage('');}opened.current=open;},[open]);
+ useEffect(()=>{if(open&&draft.data&&!initialized.current){setMessage(draft.data.message);initialized.current=true;}},[open,draft.data]);
  const payload=()=>({propertyId,channel,recipient:channel==='email'?email:phone,message,sendKey:key.current,contactId:client?.contactId??null,leadId:client?.leadId??null});
- const finish=async()=>{const result=await send({data:{...payload(),confirmed:true}});await Promise.all([qc.invalidateQueries({queryKey:['property',propertyId]}),qc.invalidateQueries({queryKey:['activities']}),qc.invalidateQueries({queryKey:['contact']}),qc.invalidateQueries({queryKey:['lead-detail']})]);setDone(true);toast.success(channel==='email'?'Oferta a fost trimisă.':'Activitatea „Ofertă trimisă” a fost salvată.');return result;};
+ const finish=async()=>{const result=await send({data:{...payload(),confirmed:true}});await Promise.all([qc.invalidateQueries({queryKey:['property',propertyId]}),qc.invalidateQueries({queryKey:['activities']}),qc.invalidateQueries({queryKey:['contact']}),qc.invalidateQueries({queryKey:['lead-detail']}),qc.invalidateQueries({queryKey:['lead']})]);setDone(true);toast.success(channel==='email'?'Oferta a fost trimisă.':'Activitatea „Ofertă trimisă” a fost salvată.');return result;};
  const action=async(confirm=false)=>{
   if(lock.current)return;lock.current=true;setBusy(true);setError('');
   try{

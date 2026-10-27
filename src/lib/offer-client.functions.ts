@@ -3,7 +3,7 @@ import { z } from "zod";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/integrations/supabase/types";
 import { requireActiveOrgAuth } from "./org-access";
-import { offerSendReason, offerMessage, offerPhone, offerChannelUrl, type OfferChannel } from "./offer-client";
+import { offerSendReason, offerMessage, offerPhone, offerChannelUrl } from "./offer-client";
 import { offerShareUrl } from "./share";
 import { isEmail } from "./mailgun";
 

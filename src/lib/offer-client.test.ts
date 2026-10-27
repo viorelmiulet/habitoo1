@@ -1,0 +1,39 @@
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { readFileSync } from 'node:fs';
+import { PGlite } from '@electric-sql/pglite';
+const mocks=vi.hoisted(()=>({send:vi.fn(),cfg:vi.fn(()=>({defaultFrom:'offers@example.com'}))}));
+vi.mock('@tanstack/react-start',()=>({createServerFn:()=>{const b={middleware:()=>b,inputValidator:()=>b,handler:(h:unknown)=>h};return b;}}));
+vi.mock('@/lib/org-access',()=>({requireActiveOrgAuth:{}}));
+vi.mock('./mailgun.server',()=>({sendEmail:mocks.send,getMailgunConfig:mocks.cfg}));
+import { offerSendReason,offerMessage,offerChannelUrl,offerPhone } from './offer-client';
+import { offerShareUrl } from './share';
+import { sendOfferClient,previewOfferClientSend } from './offer-client.functions';
+const property={id:'614b08b7-704f-4b90-8787-8b670118bcbe',organization_id:'org',status:'active',publish_status:'published',deleted_at:null,title:'Apartament Militari',price:100000,currency:'EUR',transaction_kind:'sale',city:'București',district:'Militari'};
+const agent='11111111-1111-4111-8111-111111111111',lead='22222222-2222-4222-8222-222222222222',contact='33333333-3333-4333-8333-333333333333';
+function fake(p=property){
+ let delivery:any=null;const insert=vi.fn(),rpc=vi.fn(async()=>({data:'activity',error:null}));
+ const db={rpc,from:(table:string)=>{let result:any=table==='properties'?p:table==='profiles'?{id:agent,organization_id:'org',full_name:'Ana',email:'ana@example.com'}:table==='organizations'?{name:'Agenția'}:table==='leads'?{id:lead,contact_id:contact,organization_id:'org'}:table==='contacts'?{id:contact,organization_id:'org'}:delivery;
+ const chain:any={select:()=>chain,eq:()=>chain,is:()=>chain,maybeSingle:async()=>({data:result,error:null}),insert:async(v:any)=>{insert(table,v);if(table==='offer_client_deliveries')delivery=v;return {error:null};},update:(v:any)=>{if(delivery)Object.assign(delivery,v);result=delivery;return chain;},then:(r:any)=>Promise.resolve({data:result,error:null}).then(r)};return chain;}};return {db,insert,rpc};
+}
+const input=(channel='email')=>({propertyId:property.id,channel,recipient:channel==='email'?'client@example.com':'0722123456',message:offerMessage(property,'Ana','Agenția'),sendKey:'44444444-4444-4444-8444-444444444444',leadId:lead,confirmed:true});
+const run=sendOfferClient as unknown as (v:any)=>Promise<any>,preview=previewOfferClientSend as unknown as (v:any)=>Promise<any>;
+beforeEach(()=>{vi.clearAllMocks();mocks.send.mockResolvedValue({ok:true});});
+describe('sending client offers safely',()=>{
+ it('enables only active public offers',()=>{expect(offerSendReason(property)).toBeNull();for(const status of ['draft','archived','sold','reserved','negotiation'])expect(offerSendReason({...property,status})).toBe('Proprietatea nu e activă, linkul nu se deschide');expect(offerSendReason({...property,publish_status:'unpublished'})).not.toBeNull();});
+ it('prefills public details, agent and agency without owner information',()=>{const msg=offerMessage(property,'Ana','Agenția','Maria');expect(msg).toContain('Bună, Maria!');expect(msg).toContain(property.title);expect(msg).toContain('100');expect(msg).toContain('Militari, București');expect(msg).toContain(offerShareUrl(property.id));expect(msg.endsWith('Ana\nAgenția')).toBe(true);});
+ it('builds targeted WhatsApp and mobile SMS without duplicated link',()=>{expect(offerPhone('0722 123 456')).toBe('40722123456');const url=offerChannelUrl('whatsapp','0722123456','Salut\nlink');expect(url).toBe('https://wa.me/40722123456?text=Salut%0Alink');expect(offerChannelUrl('sms','0722123456','Salut',true)).toBe('sms:+40722123456&body=Salut');});
+ it('previews without emails or activity writes',async()=>{const f=fake();const result=await preview({data:input('whatsapp'),context:{supabase:f.db,userId:agent}});expect(result.url).toContain('https://wa.me/40722123456');expect(mocks.send).not.toHaveBeenCalled();expect(f.insert).not.toHaveBeenCalled();});
+ it('blocks inactive offers on the server before sending',async()=>{const f=fake({...property,status:'draft'});await expect(run({data:input(),context:{supabase:f.db,userId:agent}})).rejects.toThrow('Proprietatea nu e activă');expect(mocks.send).not.toHaveBeenCalled();expect(f.insert).not.toHaveBeenCalled();});
+ it('logs linked contact/property/lead after successful email and never sends twice',async()=>{const f=fake();const ctx={supabase:f.db,userId:agent};await run({data:input(),context:ctx});expect(f.insert).toHaveBeenCalledWith('offer_client_deliveries',expect.objectContaining({contact_id:contact,lead_id:lead,property_id:property.id,agent_id:agent}));expect(mocks.send).toHaveBeenCalledWith(expect.objectContaining({from:'Ana <offers@example.com>',replyTo:'ana@example.com',text:input().message}));expect(f.rpc).toHaveBeenCalledWith('finish_offer_client_delivery',{_id:input().sendKey});await run({data:input(),context:ctx});expect(mocks.send).toHaveBeenCalledTimes(1);});
+ it('does not log an activity after email failure',async()=>{mocks.send.mockResolvedValue({ok:false});const f=fake();await expect(run({data:input(),context:{supabase:f.db,userId:agent}})).rejects.toThrow('Emailul nu a fost trimis');expect(f.rpc).not.toHaveBeenCalled();});
+ it('WhatsApp must be explicitly confirmed before logging',async()=>{const f=fake();await expect(run({data:{...input('whatsapp'),confirmed:false},context:{supabase:f.db,userId:agent}})).rejects.toThrow('Confirmă');expect(f.insert).not.toHaveBeenCalled();});
+ it('SQL activity is atomic, idempotent and linked to both histories',async()=>{
+ const db=new PGlite();
+ await db.exec(`CREATE SCHEMA auth; CREATE FUNCTION auth.uid() RETURNS uuid LANGUAGE sql AS $$ SELECT '${agent}'::uuid $$; CREATE FUNCTION public.current_org() RETURNS uuid LANGUAGE sql AS $$ SELECT 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'::uuid $$; CREATE ROLE authenticated; CREATE ROLE service_role; CREATE ROLE anon; CREATE TYPE activity_kind AS ENUM('email','note'); CREATE TABLE organizations(id uuid PRIMARY KEY); CREATE TABLE profiles(id uuid PRIMARY KEY,full_name text); CREATE TABLE properties(id uuid PRIMARY KEY); CREATE TABLE contacts(id uuid PRIMARY KEY); CREATE TABLE leads(id uuid PRIMARY KEY); CREATE TABLE activities(id uuid PRIMARY KEY DEFAULT gen_random_uuid(),organization_id uuid,kind activity_kind,title text,description text,starts_at timestamptz,ends_at timestamptz,done boolean,status text,duration_minutes int,contact_id uuid,property_id uuid,lead_id uuid,assigned_to uuid,created_by uuid); CREATE TABLE audit_logs(organization_id uuid,actor_id uuid,action text,entity text,entity_id uuid,new_values jsonb);`);
+ await db.exec(readFileSync('drizzle/migrations/0192_offer_client_delivery_activity.sql','utf8'));
+ await db.query('insert into organizations values ($1)',['aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa']);await db.query('insert into profiles values ($1,$2)',[agent,'Ana']);await db.query('insert into properties values ($1)',[property.id]);await db.query('insert into contacts values ($1)',[contact]);await db.query('insert into leads values ($1)',[lead]);
+ await db.query("insert into offer_client_deliveries(id,organization_id,agent_id,property_id,contact_id,lead_id,channel,status) values($1,$2,$3,$4,$5,$6,'whatsapp','sent')",[input().sendKey,'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',agent,property.id,contact,lead]);
+ await db.query('select finish_offer_client_delivery($1)',[input().sendKey]);await db.query('select finish_offer_client_delivery($1)',[input().sendKey]);
+ const result=await db.query<any>('select title,description,property_id,contact_id,lead_id,created_by,done from activities');expect(result.rows).toHaveLength(1);expect(result.rows[0]).toMatchObject({title:'Ofertă trimisă',property_id:property.id,contact_id:contact,lead_id:lead,created_by:agent,done:true});expect(result.rows[0].description).toContain('WhatsApp');expect(result.rows[0].description).toContain('Ana');await db.close();
+ });
+});
