@@ -9,6 +9,7 @@ import { appHead } from "@/components/app/app-head";
 import { SearchPlacesPicker } from "@/components/app/SearchPlacesPicker";
 import { legacyPlaceChoices, parsePlaceChoices, serializePlaces } from "@/lib/search-places";
 import { ImportListingButton } from "@/components/app/ImportListingButton";
+import { OwnerListingsTable } from "@/components/app/OwnerListingsTable";
 import { ArgusTab } from "@/components/app/argus/ArgusTab";
 import { FacebookRequestsTab } from "@/components/app/FacebookRequestsTab";
 import { HabitooMapIcon } from "@/components/brand/HabitooMapIcon";
@@ -33,7 +34,7 @@ import {
 } from "@/lib/listings.functions";
 import { type PrivateListingsSort } from "@/lib/private-listings";
 import { normalizeListPageSize, type ListPageSize } from "@/lib/list-page-size";
-import { ListPagination, PageRange, PageSizeSelect } from "@/components/app/ListPagination";
+import { ListPagination, PageSizeSelect } from "@/components/app/ListPagination";
 import { useListState } from "@/hooks/use-list-state";
 import { useCurrentUser } from "@/hooks/use-session";
 import { geographyKey } from "@/lib/private-listing-geography";
@@ -513,7 +514,7 @@ function PrivateListingsPage() {
       <div className="flex flex-wrap items-center justify-between gap-2 text-sm text-muted-foreground">
         <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
           <span className="font-medium text-foreground">
-            {listings.isLoading ? "Se încarcă…" : <PageRange page={page + 1} pageSize={pageSize} total={total} />}
+            {listings.isLoading ? "Se încarcă…" : `Pagina ${page + 1}, ${total.toLocaleString("ro-RO")} rezultate`}
           </span>
           <span aria-hidden="true">·</span>
           <button
@@ -574,9 +575,14 @@ function PrivateListingsPage() {
           </p>
         </div>
       ) : (
-        <div className="flex flex-col gap-3">
-          {listings.data?.items.map((l) => <ListingRow key={l.id} listing={l} />)}
-        </div>
+        <>
+          <div className="flex flex-col gap-3 md:hidden">
+            {listings.data?.items.map((l) => <ListingRow key={l.id} listing={l} />)}
+          </div>
+          <div className="hidden md:block">
+            <OwnerListingsTable items={listings.data?.items ?? []} sourceLabels={SOURCE_LABELS} />
+          </div>
+        </>
       )}
 
       <ListPagination page={page + 1} pages={pages} onGo={(p) => navigate({ search: (prev) => ({ ...prev, pagina: p > 1 ? p : undefined }) })} />

@@ -40,6 +40,7 @@ export type OwnerListing = {
   scrapedAt: string | null;
   firstSeenAt: string | null;
   phone: string | null;
+  yearBuilt: number | null;
 };
 
 const num = (v: unknown) => (v === null || v === undefined ? null : Number(v));
@@ -243,7 +244,7 @@ export const getOwnerListingFacets = createServerFn({ method: "GET" })
   });
 
 const LISTING_COLUMNS =
-  "id, source, title, price, currency, price_per_m2, rooms, surface, floor, city, zone, location, county, property_type, transaction_type, url, description, images, scraped_at, first_seen_at, phone";
+  "id, source, title, price, currency, price_per_m2, rooms, surface, floor, city, zone, location, county, property_type, transaction_type, url, description, images, scraped_at, first_seen_at, phone, year_built";
 
 type ListingRow = {
   id: string;
@@ -267,6 +268,7 @@ type ListingRow = {
   scraped_at: string | null;
   first_seen_at: string | null;
   phone: string | null;
+  year_built?: number | null;
 };
 
 function toOwnerListing(row: ListingRow): OwnerListing {
@@ -292,6 +294,7 @@ function toOwnerListing(row: ListingRow): OwnerListing {
     scrapedAt: row.scraped_at,
     firstSeenAt: row.first_seen_at,
     phone: row.phone,
+    yearBuilt: row.year_built ?? null,
   };
 }
 
