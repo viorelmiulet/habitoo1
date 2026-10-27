@@ -40,7 +40,7 @@ export function budgetLabel(r: Pick<SocialRequest, "budgetMin" | "budgetMax" | "
 
 export function FacebookRequestsTab() {
   const search = useSearch({ from: FROM });
-  const navigate = useNavigate({ from: FROM });
+  const navigate = useNavigate({ from: "/app/anunturi-particulari" });
   const { data: user } = useCurrentUser();
   const load = useServerFn(getSocialRequests), loadFacets = useServerFn(getSocialRequestFacets);
   const page = (search.pagina ?? 1) - 1, pageSize = normalizeListPageSize(search.perPagina);
