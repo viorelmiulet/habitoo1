@@ -87,7 +87,7 @@ export const Route = createFileRoute("/api/public/sites/v1/contacts")({
                 last_name: lastName || "-",
                 phone: input.telefon ?? null,
                 email: input.email ?? null,
-                source,
+                source: "Site-ul agenției",
                 notes: input.mesaj ?? null,
                 status: "new",
               })

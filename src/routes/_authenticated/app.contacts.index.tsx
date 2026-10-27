@@ -62,6 +62,8 @@ import { useFilterList } from "@/hooks/use-list-state";
 import { validateListSearch } from "@/lib/list-state";
 import { appHead } from "@/components/app/app-head";
 import { announceGuideContext } from "@/lib/onboarding-tour";
+import { ContactConsentFields } from "@/components/app/ContactConsentFields";
+import { CONTACT_SOURCES, EMPTY_CONTACT_CONSENT, contactConsentPatch } from "@/lib/contact-consent";
 
 export const Route = createFileRoute("/_authenticated/app/contacts/")({
   head: () => { const title = "Habitoo CRM — contacte"; const description = "Clienții, proprietarii și partenerii agenției, cu filtre și detalii de contact."; const head = appHead(title); return { ...head, meta: [...head.meta, { name: "description", content: description }, { property: "og:title", content: title }, { property: "og:description", content: description }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }] }; },
@@ -80,6 +82,7 @@ type Filters = {
   q: string;
   type: string;
   source: string;
+  consent: string;
   assigned: string;
   status: string;
   mine: boolean;
@@ -90,6 +93,7 @@ const emptyFilters: Filters = {
   q: "",
   type: "all",
   source: "all",
+  consent: "all",
   assigned: "all",
   status: "all",
   mine: false,
@@ -183,7 +187,7 @@ function ContactsPage() {
   });
 
   const sources = useMemo(
-    () => [...new Set(metaContacts.map((c) => c.source).filter(Boolean) as string[])].sort(),
+    () => [...new Set([...CONTACT_SOURCES, ...metaContacts.map((c) => c.source).filter(Boolean) as string[]])].sort(),
     [metaContacts],
   );
   const tags = useMemo(
@@ -201,6 +205,8 @@ function ContactsPage() {
         .eq("organization_id", user!.organization!.id);
       if (filters.type !== "all") query = query.eq("type", filters.type as never);
       if (filters.source !== "all") query = query.eq("source", filters.source);
+      if (filters.consent === "yes") query = query.eq("gdpr_consent", true);
+      if (filters.consent === "no") query = query.or("gdpr_consent.eq.false,gdpr_consent.is.null");
       if (filters.assigned !== "all") query = query.eq("assigned_to", filters.assigned);
       if (filters.status !== "all") query = query.eq("status", filters.status);
       if (filters.mine) query = query.eq("assigned_to", user!.userId);
@@ -225,6 +231,7 @@ function ContactsPage() {
   const agentName = (id: string | null) => agents.find((a) => a.id === id)?.full_name ?? "—";
 
   const [form, setForm] = useState({
+    ...EMPTY_CONTACT_CONSENT,
     first_name: "",
     last_name: "",
     type: "buyer",
@@ -248,7 +255,7 @@ function ContactsPage() {
         phone: form.phone || null,
         email: form.email || null,
         company: form.company || null,
-        source: form.source || null,
+        ...contactConsentPatch(form),
         notes: form.notes || null,
       });
       if (error) throw error;
@@ -256,7 +263,9 @@ function ContactsPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["contacts"] });
       setDialogOpen(false);
+      queryClient.invalidateQueries({ queryKey: ["contacts-meta"] });
       setForm({
+        ...EMPTY_CONTACT_CONSENT,
         first_name: "",
         last_name: "",
         type: "buyer",
@@ -381,7 +390,7 @@ function ContactsPage() {
             value={filters.source}
             onValueChange={(v) => setFilters((f) => ({ ...f, source: v }))}
           >
-            <SelectTrigger className="w-40">
+            <SelectTrigger aria-label="Filtru sursă" className="w-52">
               <SelectValue placeholder="Sursă" />
             </SelectTrigger>
             <SelectContent>
@@ -392,6 +401,10 @@ function ContactsPage() {
                 </SelectItem>
               ))}
             </SelectContent>
+          </Select>
+          <Select value={filters.consent} onValueChange={v => setFilters(f => ({ ...f, consent: v }))}>
+            <SelectTrigger aria-label="Filtru consimțământ" className="w-52"><SelectValue /></SelectTrigger>
+            <SelectContent><SelectItem value="all">Orice consimțământ</SelectItem><SelectItem value="yes">Cu acord marketing</SelectItem><SelectItem value="no">Fără acord marketing</SelectItem></SelectContent>
           </Select>
           <Select
             value={filters.assigned}
@@ -714,7 +727,7 @@ function ContactsPage() {
       ) : null}
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent data-tour="contact-create-form">
+        <DialogContent data-tour="contact-create-form" className="max-h-[90dvh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Contact nou</DialogTitle>
             <DialogDescription>
@@ -800,6 +813,7 @@ function ContactsPage() {
                 onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value }))}
               />
             </div>
+            <ContactConsentFields value={form} onChange={patch => setForm(f => ({ ...f, ...patch }))} />
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>
                 Renunță
