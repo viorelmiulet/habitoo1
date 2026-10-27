@@ -32,10 +32,11 @@ export type AcpReviewCallResult = {
 export async function callAcpComparableReview(
   target: AcpSubject,
   comparables: readonly AcpReviewComparableInput[],
+  targetTitle?: string | null,
 ): Promise<AcpReviewCallResult> {
   const primary = resolveAiProvider();
   if (!primary) throw new AiProviderError("AI neconfigurat", 401);
-  const { refs, payload } = buildReviewPayload(target, comparables);
+  const { refs, payload } = buildReviewPayload(target, comparables, targetTitle);
   const user = buildReviewUserPrompt(payload);
   const started = Date.now();
   let inputTokens = 0;

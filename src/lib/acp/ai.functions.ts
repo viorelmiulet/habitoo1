@@ -507,7 +507,8 @@ export const reviewAcpComparables = createServerFn({ method: "POST" })
     if (comparables.length === 0) {
       return { status: "failed", message: "Nu există comparabile folosite de verificat." };
     }
-    const target = ((analysis.target_data ?? {}) as { subject?: import("./scoring").AcpSubject }).subject ?? {};
+    const targetData = (analysis.target_data ?? {}) as { title?: string; subject?: import("./scoring").AcpSubject };
+    const target = targetData.subject ?? {};
 
     const { callAcpComparableReview } = await import("./ai/review.server");
     const { ACP_AI_REVIEW_CAPABILITY } = await import("./ai/review");
@@ -515,7 +516,7 @@ export const reviewAcpComparables = createServerFn({ method: "POST" })
     const { safeAiErrorMessage } = await import("./ai/provider.server");
     let out: Awaited<ReturnType<typeof callAcpComparableReview>>;
     try {
-      out = await callAcpComparableReview(target, comparables);
+      out = await callAcpComparableReview(target, comparables, targetData.title ?? null);
     } catch (providerError) {
       await writeAiUsage(admin as never, {
         organization_id: organizationId,
