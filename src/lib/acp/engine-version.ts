@@ -16,20 +16,24 @@
  *    (comparabilele directe la cel mult 2 km), ansamblurile rezidențiale sunt
  *    zone proprii, garsoniera = apartament cu 1 cameră și verificarea de
  *    bun-simț față de prețul de listare.
+ *  - versiunea 5: în plus, ofertele inactive din ultimele 12 luni intră cu o
+ *    pondere care scade cu vechimea (mediană ponderată); cele active rămân
+ *    prioritare, iar cele inactive mai vechi de 12 luni sunt excluse.
  */
 
-export const ACP_ENGINE_VERSIONS = [1, 2, 3, 4] as const;
+export const ACP_ENGINE_VERSIONS = [1, 2, 3, 4, 5] as const;
 
 export type AcpEngineVersion = (typeof ACP_ENGINE_VERSIONS)[number];
 
 /** Versiunea folosită pentru analizele și versiunile noi. */
-export const ACP_CURRENT_ENGINE_VERSION: AcpEngineVersion = 4;
+export const ACP_CURRENT_ENGINE_VERSION: AcpEngineVersion = 5;
 
 export const ACP_ENGINE_VERSION_LABELS: Record<AcpEngineVersion, string> = {
   1: "Motor v1 — fără ajustare în timp",
   2: "Motor v2 — ajustare în timp cu indicele național",
   3: "Motor v3 — comparabile cerute live de la surse partenere",
   4: "Motor v4 — locație după distanță și ansambluri rezidențiale",
+  5: "Motor v5 — oferte inactive din ultimele 12 luni, ponderate după vechime",
 };
 
 /** Normalizează o valoare stocată la o versiune cunoscută (implicit 1). */
@@ -65,4 +69,9 @@ export function engineSupportsGeoLocation(version: number): boolean {
  */
 export function engineVersionForRerun(stored: AcpEngineVersion): AcpEngineVersion {
   return stored >= 3 ? ACP_CURRENT_ENGINE_VERSION : stored;
+}
+
+/** De la versiunea 5: ofertele inactive (≤ 12 luni) cu pondere după vechime. */
+export function engineSupportsAgeWeighting(version: number): boolean {
+  return version >= 5;
 }
