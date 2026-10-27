@@ -160,7 +160,7 @@ function RequestRow({ request: r }: { request: SocialRequest }) {
           <Button asChild variant="outline" size="sm"><a href={`https://wa.me/${phone}`} target="_blank" rel="noopener noreferrer"><MessageCircle className="size-4" /> WhatsApp</a></Button>
         </>}
         <Button size="sm" variant="secondary" onClick={() => setMatchesOpen(true)}><Sparkles className="size-4" /> Proprietăți potrivite</Button>
-        {leadId ? <Button asChild size="sm" variant="ghost"><Link to="/app/leads/$id" params={{ id: leadId }}>Deschide lead-ul</Link></Button>
+        {leadId ? <Button asChild size="sm" variant="ghost"><Link to="/app/leads">Vezi lead-urile</Link></Button>
           : <Button size="sm" variant="ghost" disabled={lead.isPending} onClick={() => lead.mutate()}><UserPlus className="size-4" /> Adaugă ca lead</Button>}
       </div>
       {matchesOpen && <MatchesDialog request={r} open={matchesOpen} onOpenChange={setMatchesOpen} />}
