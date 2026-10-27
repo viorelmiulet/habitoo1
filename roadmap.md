@@ -1,9 +1,9 @@
 # SEO public — pasul 1a
 
 ## Trimite oferta către client
-- [ ] Buton pe pagina proprietății și meniul listei, dialog mobil complet cu client/canale/mesaj
-- [ ] Eligibilitate publică verificată pe server, email existent și activitate legată la client/proprietate
-- [ ] Teste fără mesaje reale: activ/inactiv, mesaj, WhatsApp și activitate
+- [x] Buton pe pagina proprietății și meniul listei, dialog mobil complet cu client/canale/mesaj
+- [x] Eligibilitate activă/publicată și client din aceeași agenție pe server; email prin sendEmail existent, cheie stabilă, activitate/audit atomic; WhatsApp/SMS numai după confirmarea agentului
+- [x] 27 teste trec (email simulat, eșec fără activitate, idempotență, SQL legături contact/lead/proprietate). Desktop/telefon: activ/inactiv, mesaj și URL WhatsApp interceptat; un link copiat real, activitate recitită în istoricul proprietății și legată la lead/agent. Fără emailuri sau mesaje reale; fără contacte în cont.
 
 ## Localități și zone multiple
 - [x] Selector comun cu numere și listă pe tot ecranul pe telefon: MAP Habitoo/Facebook, Proprietăți și Oferte partenere

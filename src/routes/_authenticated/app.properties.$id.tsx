@@ -1316,7 +1316,7 @@ function PropertyDetailPage() {
               <EmptyState title="Niciun eveniment în istoric" />
             ) : (
               <ul className="divide-y divide-border">
-                {data?.audit.map((a) => (
+                {data?.audit.filter(a => a.action !== "Ofertă trimisă" || !data.activities.some(activity => activity.title === "Ofertă trimisă")).map((a) => (
                   <li key={a.id} className="px-5 py-3 text-sm">
                     <p className="font-medium">{a.action}</p>
                     <p className="text-xs text-muted-foreground">{formatDateTime(a.created_at)}</p>
