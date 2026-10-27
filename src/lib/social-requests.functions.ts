@@ -87,12 +87,12 @@ export const getSocialRequestMatches = createServerFn({ method: "POST" })
     const { data: profile } = await context.supabase.from("profiles").select("organization_id").eq("id", context.userId).maybeSingle();
     if (!profile?.organization_id) return { items: [] };
     const { data: props, error } = await context.supabase.from("properties")
-      .select("id,code,title,status,publish_status,deleted_at,transaction_kind,property_type,rooms,price,currency,county,city,district")
+      .select("id,reference,title,status,publish_status,deleted_at,transaction_kind,property_type,rooms,price,currency,county,city,district")
       .eq("organization_id", profile.organization_id).eq("status", "active").is("deleted_at", null).limit(2000);
     if (error) throw new Error("Proprietățile nu au putut fi încărcate.");
     const items = (props ?? []).flatMap((p) => {
       const m = matchRequestProperty({ ...r, budget_min: r.budgetMin, budget_max: r.budgetMax, transaction_type: r.transactionType, property_type: r.propertyType }, { ...p, price: p.price === null ? null : Number(p.price) });
-      return m ? [{ id: p.id, code: p.code as string | null, title: p.title, price: p.price === null ? null : Number(p.price), currency: p.currency, city: p.city, district: p.district, rooms: p.rooms, score: m.score, reasons: m.reasons, canSend: offerSendReason(p) === null }] : [];
+      return m ? [{ id: p.id, code: p.reference, title: p.title, price: p.price === null ? null : Number(p.price), currency: p.currency, city: p.city, district: p.district, rooms: p.rooms, score: m.score, reasons: m.reasons, canSend: offerSendReason(p) === null }] : [];
     }).sort((a, b) => b.score - a.score).slice(0, 30);
     return { items };
   });
