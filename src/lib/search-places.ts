@@ -9,7 +9,7 @@ export const placeChoiceSchema = z.object({
 export type PlaceChoice = z.infer<typeof placeChoiceSchema>;
 export type SearchPlaceOption = { value: string; label: string; count: number; choice: PlaceChoice };
 export type SearchPlaceRow = { county?: string | null; city?: string | null; zone?: string | null; neighborhood?: string | null; district?: string | null };
-export const placeCityKey = (v?: string | null) => geographyKey((v ?? "").replace(/\s+Sector(ul)?\s+[1-6]\s*$/iu, ""));
+export const placeCityKey = (v?: string | null) => /^sector(ul)? [1-6]$/.test(geographyKey(v)) ? "bucuresti" : geographyKey((v ?? "").replace(/\s+Sector(ul)?\s+[1-6]\s*$/iu, ""));
 export const placeToken = (c: PlaceChoice) => JSON.stringify(c);
 export function parsePlaceChoices(value?: string): PlaceChoice[] {
   if (!value) return [];
@@ -35,7 +35,7 @@ export function buildSearchPlaces(rows: SearchPlaceRow[]): SearchPlaceOption[] {
     const city = placeCityKey(row.city);
     const county = geographyKey(row.county) || (city === "bucuresti" ? "bucuresti" : "");
     const countyLabel = titleCaseRo(row.county || (county === "bucuresti" ? "București" : ""));
-    const cityLabel = titleCaseRo((row.city ?? "").replace(/\s+Sector(ul)?\s+[1-6]\s*$/iu, ""));
+    const cityLabel = city === "bucuresti" ? "București" : titleCaseRo((row.city ?? "").replace(/\s+Sector(ul)?\s+[1-6]\s*$/iu, ""));
     const add = (choice: PlaceChoice, label: string) => {
       const value = placeToken(choice); const old = options.get(value);
       options.set(value, { value, choice, label: old?.label ?? label, count: (old?.count ?? 0) + 1 });
@@ -51,5 +51,5 @@ export function buildSearchPlaces(rows: SearchPlaceRow[]): SearchPlaceOption[] {
 export function placeMatches(row: SearchPlaceRow, choices: PlaceChoice[]): boolean {
   if (!choices.length) return true;
   const city = placeCityKey(row.city), county = geographyKey(row.county) || (city === "bucuresti" ? "bucuresti" : "");
-  return choices.some(c => (!c.county || c.county === county) && (c.kind === "county" || c.city === city) && (c.kind !== "zone" || [row.zone,row.neighborhood,row.district].some(v => geographyKey(v) === c.zone)));
+  return choices.some(c => (!c.county || c.county === county) && (c.kind === "county" || !c.city || c.city === city) && (c.kind !== "zone" || [row.zone,row.neighborhood,row.district].some(v => geographyKey(v) === c.zone)));
 }

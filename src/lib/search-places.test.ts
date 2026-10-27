@@ -18,10 +18,12 @@ describe("cross-region geography", () => {
  it("counts all rows and scopes repeated neighborhoods",()=>{const opts=buildSearchPlaces(rows);expect(opts.find(o=>o.label==='Ilfov (tot județul)')?.count).toBe(2);expect(opts.filter(o=>o.choice.zone==='militari')).toHaveLength(2);});
  it("URL and saved filters preserve choices alongside price",()=>{const locuri=serializePlaces(choices);const state=propertyListStateFromSearch(propertyListSearchSchema.parse({locuri,priceMin:'100000'}));expect(parsePlaceChoices(propertyListSearchFromState(state.filters,state.sort,state.page,state.view).locuri)).toEqual(choices);expect(normalizeSavedPropertyFilters(state.filters).locuri).toBe(locuri);expect(state.filters.priceMin).toBe('100000');});
  it("keeps old county/city/zone links",()=>{expect(legacyPlaceChoices('Ilfov')[0].kind).toBe('county');expect(legacyPlaceChoices(undefined,'București','Militari')[0]).toMatchObject({county:'',city:'bucuresti',zone:'militari'});});
+ it("Sector 6 legacy properties belong to București and the same Militari option",()=>{const row={county:'Bucureşti',city:'Sector 6',district:'Militari'};expect(placeMatches(row,choices)).toBe(true);expect(buildSearchPlaces([rows[0],row]).find(o=>o.choice.zone==='militari')?.count).toBe(2);});
  it("executes parameterized SQL union and conjunctive price filtering", async()=>{
   const db=new PGlite();
   await db.exec("CREATE FUNCTION public.ro_normalize_name(v text) RETURNS text LANGUAGE sql IMMUTABLE AS $$ SELECT trim(regexp_replace(lower(translate(coalesce(v,''),'ăâîșşțţ','aaisstt')), '[^a-z0-9]+',' ','g')) $$; CREATE TABLE public.properties(id int,county text,city text,district text,price int); CREATE TABLE public.listings(id int,county text,city text,zone text,neighborhood text); CREATE ROLE anon; CREATE ROLE authenticated; CREATE ROLE service_role;");
   await db.exec(readFileSync('drizzle/migrations/0190_multi_geography_read_filters.sql','utf8'));
+  await db.exec(readFileSync('drizzle/migrations/0191_multi_geography_legacy_sector_scope.sql','utf8'));
   for (const [i,r] of rows.entries()) await db.query('INSERT INTO properties VALUES ($1,$2,$3,$4,$5)',[i,r.county,r.city,r.district,100+i]);
   expect((await db.query('SELECT id FROM search_properties_places($1::jsonb) ORDER BY id',[serializePlaces(choices)])).rows).toEqual([{id:0},{id:1}]);
   expect((await db.query('SELECT id FROM search_properties_places($1::jsonb) WHERE price >= $2 ORDER BY id',[serializePlaces([...choices,...legacyPlaceChoices('Ilfov')]),101])).rows).toEqual([{id:1},{id:2}]);
