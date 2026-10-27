@@ -1380,6 +1380,13 @@
       "when": 1793086390215,
       "tag": "0196_contacts_source_consent_history",
       "breakpoints": true
+    },
+    {
+      "idx": 197,
+      "version": "7",
+      "when": 1793086885260,
+      "tag": "0197_contact_source_portal_aliases",
+      "breakpoints": true
     }
   ]
 }
