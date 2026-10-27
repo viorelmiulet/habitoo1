@@ -10068,6 +10068,10 @@ export type Database = {
           isSetofReturn: true
         }
       }
+      close_stale_republish_batches: {
+        Args: { _org?: string }
+        Returns: number
+      }
       collaboration_auto_activate: {
         Args: { _actor: string; _org: string; _source: string }
         Returns: number
@@ -10680,6 +10684,22 @@ export type Database = {
           _views: number
         }
         Returns: undefined
+      }
+      start_portal_republish_batch: {
+        Args: {
+          _busy_message: string
+          _kind: string
+          _operation: string
+          _org: string
+          _pairs: Json
+          _portal_keys: string[]
+          _requested_by: string
+          _scope: string
+          _skipped_items: Json
+          _superadmin: boolean
+          _sync_existing: boolean
+        }
+        Returns: Json
       }
       storia_webhook_retry_arm: { Args: never; Returns: undefined }
       storia_webhook_retry_tick: { Args: never; Returns: undefined }
