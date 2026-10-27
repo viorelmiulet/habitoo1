@@ -10,6 +10,7 @@ import { SearchPlacesPicker } from "@/components/app/SearchPlacesPicker";
 import { legacyPlaceChoices, parsePlaceChoices, serializePlaces } from "@/lib/search-places";
 import { ImportListingButton } from "@/components/app/ImportListingButton";
 import { ArgusTab } from "@/components/app/argus/ArgusTab";
+import { FacebookRequestsTab } from "@/components/app/FacebookRequestsTab";
 import { HabitooMapIcon } from "@/components/brand/HabitooMapIcon";
 import facebookAsset from "@/assets/facebook-brand.svg.asset.json";
 import argusAsset from "@/assets/argus-official.png.asset.json";
@@ -207,7 +208,7 @@ function PrivateListingsPage() {
   const clearListState = useListState({
     list: scope === "facebook" ? "map-facebook" : "map-habitoo",
     family: "map-last", userId: currentUser?.userId, search,
-    enabled: search.lista !== "argus",
+    enabled: search.lista !== "argus" && search.lista !== "cereri",
     apply: (saved) => { const parsed = searchSchema.safeParse(saved); if (parsed.success) void navigate({ search: parsed.data, replace: true, resetScroll: false }); },
   });
 
@@ -251,7 +252,7 @@ function PrivateListingsPage() {
   };
 
   // În tabul „Argus” lista Habitoo nu se încarcă deloc.
-  const habitooTab = search.lista !== "argus";
+  const habitooTab = search.lista !== "argus" && search.lista !== "cereri";
   const facets = useQuery({
     queryKey: ["owner-listing-facets", scope],
     queryFn: () => fetchFacets({ data: { scope } }),
@@ -318,8 +319,9 @@ function PrivateListingsPage() {
           { value: "", label: "MAP Habitoo" },
           { value: "facebook", label: "MAP Facebook" },
           { value: "argus", label: "Argus" },
+          { value: "cereri", label: "Cereri Facebook" },
         ] as const).map(({ value, label }) => {
-          const active = (search.lista === "argus" || search.lista === "facebook" ? search.lista : "") === value;
+          const active = (search.lista === "argus" || search.lista === "facebook" || search.lista === "cereri" ? search.lista : "") === value;
           return (
             <Button
               data-tour={`map-tab-${value || "habitoo"}`}
@@ -340,7 +342,7 @@ function PrivateListingsPage() {
                 })
               }
             >
-              {value === "" ? <HabitooMapIcon /> : <img src={value === "facebook" ? facebookAsset.url : argusAsset.url} alt="" className="size-4 shrink-0 object-contain" />}
+              {value === "" ? <HabitooMapIcon /> : <img src={value === "facebook" || value === "cereri" ? facebookAsset.url : argusAsset.url} alt="" className="size-4 shrink-0 object-contain" />}
               {label}
             </Button>
           );
@@ -349,6 +351,8 @@ function PrivateListingsPage() {
 
       {search.lista === "argus" ? (
         <ArgusTab />
+      ) : search.lista === "cereri" ? (
+        <FacebookRequestsTab />
       ) : (
       <>
       <form
