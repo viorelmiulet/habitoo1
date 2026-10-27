@@ -45,6 +45,7 @@ import {
 } from "./calibration";
 import {
   ACP_CURRENT_ENGINE_VERSION,
+  engineSupportsGeoLocation,
   engineSupportsTimeAdjustment,
   normalizeAcpEngineVersion,
   type AcpEngineVersion,
@@ -140,6 +141,19 @@ export type AcpComparableResult = {
    * 1, ca rezultatele istorice să se reproducă identic.
    */
   timeAdjustment?: AcpTimeAdjustment;
+  /** Motor v4: distanța față de proprietate (km), când ambele au coordonate. */
+  distanceKm?: number | null;
+};
+
+/** Motor v4: estimarea diferă cu peste acest procent de prețul de listare. */
+export const ACP_SANITY_DEVIATION_PERCENT = 25;
+
+/** Motor v4: avertismentul de bun-simț, cu cele mai importante cauze. */
+export type AcpSanityCheck = {
+  listingPrice: number;
+  estimatedValue: number;
+  deviationPercent: number;
+  causes: string[];
 };
 
 
@@ -171,6 +185,8 @@ export type AcpAnalysisResult = {
   engineVersion?: AcpEngineVersion;
   /** Motor v2: nota de nivel analiză despre ajustarea în timp. */
   timeAdjustment?: AcpTimeAdjustmentSummary;
+  /** Motor v4: avertisment când estimarea diferă mult de prețul de listare. */
+  sanityCheck?: AcpSanityCheck | null;
 };
 
 
@@ -205,10 +221,13 @@ export function runAcpAnalysis(
     options.engineVersion ?? ACP_CURRENT_ENGINE_VERSION,
   );
   const timeEnabled = engineSupportsTimeAdjustment(engineVersion);
+  const geoEnabled = engineSupportsGeoLocation(engineVersion);
 
   // 1. Scoring determinist pentru fiecare candidat.
   const scored = candidates.map((candidate) => {
-    const similarity = calculateComparableSimilarity(target, candidate.subject);
+    const similarity = calculateComparableSimilarity(target, candidate.subject, {
+      geoLocation: geoEnabled,
+    });
     const override = overrides[candidate.key] ?? null;
     const price = num(candidate.subject.price);
     return { candidate, similarity, override, price };
@@ -347,6 +366,7 @@ export function runAcpAnalysis(
         freshnessScore: freshness.score,
       }),
       ...(row.timeAdjustment ? { timeAdjustment: row.timeAdjustment } : {}),
+      ...(geoEnabled ? { distanceKm: row.similarity.distanceKm ?? null } : {}),
     };
 
   });
@@ -498,6 +518,15 @@ export function runAcpAnalysis(
     `Calitatea datelor ${quality.score}/100 (${quality.level}); indicator distinct de scorul de încredere.`,
   );
 
+  const sanityCheck = geoEnabled
+    ? buildSanityCheck({ target, estimate, used, dispersionRatio: confidence.dispersionRatio, ppsmValues })
+    : null;
+  if (sanityCheck) {
+    explanation.push(
+      `Atenție: estimarea diferă cu ${sanityCheck.deviationPercent}% de prețul de listare al proprietății. Cauze probabile: ${sanityCheck.causes.join(" ")}`,
+    );
+  }
+
   return {
     comparables,
     statistics,
@@ -509,6 +538,91 @@ export function runAcpAnalysis(
     quality,
     advanced,
     ...(timeEnabled ? { engineVersion, timeAdjustment: timeSummary ?? undefined } : {}),
+    ...(geoEnabled ? { sanityCheck } : {}),
+  };
+}
+
+/**
+ * Motor v4: verificarea de bun-simț. Nu modifică estimarea; doar explică,
+ * cu cele mai importante 3 cauze, de ce diferă mult de prețul de listare.
+ */
+export function buildSanityCheck(input: {
+  target: AcpSubject;
+  estimate: AcpEstimate;
+  used: readonly AcpComparableResult[];
+  dispersionRatio: number | null | undefined;
+  ppsmValues: readonly number[];
+}): AcpSanityCheck | null {
+  const listing = num(input.target.price);
+  const value = input.estimate.estimatedValue;
+  if (listing === null || listing <= 0 || value === null || value <= 0) return null;
+  const deviation = ((value - listing) / listing) * 100;
+  if (Math.abs(deviation) <= ACP_SANITY_DEVIATION_PERCENT) return null;
+
+  const causes: { weight: number; text: string }[] = [];
+  const used = input.used;
+  const n = used.length;
+
+  // Zona comparabilelor.
+  const farOrOther = used.filter((c) => {
+    if (typeof c.distanceKm === "number") return c.distanceKm > 2;
+    return (c.components["location"] ?? 0) < 85;
+  });
+  if (n > 0 && farOrOther.length > 0) {
+    const labels = new Map<string, number>();
+    for (const c of farOrOther) {
+      const label = c.locationLabel ?? "altă zonă";
+      labels.set(label, (labels.get(label) ?? 0) + 1);
+    }
+    const top = [...labels.entries()].sort((a, b) => b[1] - a[1])[0]?.[0];
+    causes.push({
+      weight: (farOrOther.length / n) * 100,
+      text: `${farOrOther.length} din ${n} comparabile sunt din altă zonă sau la peste 2 km (mai ales ${top}).`,
+    });
+  }
+  // Numărul comparabilelor.
+  if (n < 5) {
+    causes.push({ weight: 90 - n * 10, text: `Doar ${n} comparabile au fost folosite în calcul.` });
+  }
+  // Dispersia prețurilor.
+  const ratio = typeof input.dispersionRatio === "number" ? input.dispersionRatio : null;
+  if (ratio !== null && ratio > 0.15) {
+    const p25 = percentile([...input.ppsmValues], 0.25);
+    const p75 = percentile([...input.ppsmValues], 0.75);
+    causes.push({
+      weight: Math.min(100, ratio * 200),
+      text:
+        p25 !== null && p75 !== null
+          ? `Prețurile pe mp ale comparabilelor variază mult (${Math.round(p25)}–${Math.round(p75)} €/mp).`
+          : "Prețurile pe mp ale comparabilelor variază mult.",
+    });
+  }
+  // Nivelul de preț pe mp față de proprietate.
+  const targetArea = num(input.target.usableArea);
+  const median = percentile([...input.ppsmValues], 0.5);
+  if (targetArea && median !== null) {
+    causes.push({
+      weight: Math.min(60, Math.abs(deviation)),
+      text: `Comparabilele au în medie ${Math.round(median)} €/mp, față de ${Math.round(listing / targetArea)} €/mp la proprietate.`,
+    });
+  }
+  // Similaritate redusă.
+  const avgScore = n > 0 ? used.reduce((s, c) => s + c.similarityScore, 0) / n : 0;
+  if (n > 0 && avgScore < 85) {
+    causes.push({
+      weight: 85 - avgScore,
+      text: `Comparabilele seamănă doar parțial cu proprietatea (scor mediu ${Math.round(avgScore)}).`,
+    });
+  }
+
+  return {
+    listingPrice: listing,
+    estimatedValue: value,
+    deviationPercent: Math.round(deviation),
+    causes: causes
+      .sort((a, b) => b.weight - a.weight)
+      .slice(0, 3)
+      .map((c) => c.text),
   };
 }
 
