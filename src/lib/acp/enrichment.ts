@@ -41,7 +41,7 @@ const URL = /\bhttps?:\/\/\S+|\bwww\.\S+/gi;
 // Telefoane RO/internaționale: +40 7xx xxx xxx, 07xx.xxx.xxx, 021 xxx xx xx etc.
 const PHONE = /(?:\+?\d[\d\s().-]{7,}\d)/g;
 // Nume după cuvinte de contact („Contact: Ion Popescu”, „dna Maria”, „agent Andrei”).
-const NAME_AFTER = /\b(contact(?:ati|ează|eaza|ați)?|persoan[aă] de contact|sun[aă]ți|sunati|suna[țt]i-?m[aă]|agent(?:ul)?|consultant(?:ul)?|d-?na|dna|d-?l|dl|domnul|doamna|ing\.?|proprietar(?:ul)?)\s*[:\-–]?\s*((?:[A-ZĂÂÎȘŞȚŢ][a-zăâîșşțţ]+|[A-ZĂÂÎȘŞȚŢ]{2,})(?:[\s-]+(?:[A-ZĂÂÎȘŞȚŢ][a-zăâîșşțţ]+|[A-ZĂÂÎȘŞȚŢ]{2,})){0,2})/g;
+const NAME_AFTER = /\b(contact(?:ati|ează|eaza|ați)?|persoan[aă] de contact|sun[aă]ți|sunati|suna[țt]i-?m[aă]|agent(?:ul)?|consultant(?:ul)?|d-?na|dna|d-?l|dl|domnul|doamna|ing\.?|proprietar(?:ul)?)\s*[:\-–]?\s*((?:[A-ZĂÂÎȘŞȚŢ][a-zăâîșşțţ]+|[A-ZĂÂÎȘŞȚŢ]{2,})(?:[\s-]+(?:[A-ZĂÂÎȘŞȚŢ][a-zăâîșşțţ]+|[A-ZĂÂÎȘŞȚŢ]{2,})){0,2})/gi;
 
 export function redactListingText(text: string | null | undefined): string {
   if (!text) return "";
