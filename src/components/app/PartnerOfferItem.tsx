@@ -43,8 +43,8 @@ export function PartnerOfferItem({ offer, view, onDetails, onPropose }: {
 function OfferActions({ offer, onDetails, onPropose }: { offer: CollaborationOffer; onDetails: (o: CollaborationOffer) => void; onPropose: (o: CollaborationOffer) => void }) {
   return <div className="mt-auto min-w-0 pt-2">
     <div className="grid grid-cols-[auto_minmax(0,1fr)] gap-2">
-      <Button size="sm" variant="outline" onClick={() => onDetails(offer)}>Detalii</Button>
-      <Button size="sm" className="min-w-0 px-2 text-xs" onClick={() => onPropose(offer)}>Propune unui client</Button>
+      <Button size="sm" variant="outline" data-tour="collab-offer-details" onClick={() => onDetails(offer)}>Detalii</Button>
+      <Button size="sm" className="min-w-0 px-2 text-xs" data-tour="collab-offer-propose" onClick={() => onPropose(offer)}>Propune unui client</Button>
     </div>
     <p className="mt-2 border-t border-border pt-2 text-[11px] text-muted-foreground">{offer.myProposalCount > 0 ? `${offer.myProposalCount} propunere(i) trimise` : "Nicio propunere trimisă"}</p>
   </div>;
