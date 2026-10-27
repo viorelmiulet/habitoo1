@@ -127,6 +127,7 @@ import {
 import { activityStatusLabels, activityStatusTone, logAudit } from "@/lib/crm";
 import { matchLabel, matchTone, scoreMatch } from "@/lib/matching";
 import { appHead } from "@/components/app/app-head";
+import { announceGuideContext } from "@/lib/onboarding-tour";
 
 function cleanLocation(district: string | null, city: string | null): string {
   const normalizedCity = (city ?? "")
@@ -183,6 +184,9 @@ function PropertyDetailPage() {
   const [editing, setEditing] = useState(false);
   /** Fila activă; butonul din antet duce direct la fluxul ACP. */
   const [tab, setTab] = useState(() => search.tab === "publishing" ? "publishing" : "overview");
+  // Motorul de ghiduri află ce filă s-a deschis și când pornește editarea.
+  useEffect(() => { announceGuideContext(`property-tab:${tab}`); }, [tab]);
+  useEffect(() => { if (editing) announceGuideContext("property:editing"); }, [editing]);
 
   /** Evită generări suprapuse ale fișei de proprietate. */
   const printingRef = useRef(false);
