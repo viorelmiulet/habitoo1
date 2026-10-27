@@ -45,6 +45,7 @@ import {
 } from "./calibration";
 import {
   ACP_CURRENT_ENGINE_VERSION,
+  engineSupportsAgeWeighting,
   engineSupportsGeoLocation,
   engineSupportsTimeAdjustment,
   normalizeAcpEngineVersion,
@@ -60,6 +61,38 @@ import {
 
 /** Marja aplicată valorii estimate pentru prețul recomandat de listare. */
 export const ACP_LISTING_PREMIUM_PERCENT = 3;
+
+/** Motor v5: ofertele inactive mai vechi de atât nu se mai folosesc. */
+export const ACP_INACTIVE_MAX_AGE_DAYS = 365;
+/** Motor v5: ponderea minimă a unei oferte inactive (la 12 luni). */
+export const ACP_INACTIVE_MIN_WEIGHT = 0.4;
+
+/**
+ * Motor v5: ponderea unui comparabil după vechime. Ofertele active au 1;
+ * cele inactive scad liniar de la 0,9 (abia dispărute) la 0,4 (12 luni), ca
+ * ofertele active să rămână mereu prioritare. `null` = prea veche, exclusă.
+ */
+export function acpAgeWeight(meta: AcpListingMeta | null | undefined, now: string): number | null {
+  if (!meta || meta.status !== "inactive") return 1;
+  const seen = meta.lastSeenAt ? Date.parse(meta.lastSeenAt) : NaN;
+  if (!Number.isFinite(seen)) return ACP_INACTIVE_MIN_WEIGHT;
+  const ageDays = Math.max(0, (Date.parse(now) - seen) / 86_400_000);
+  if (ageDays > ACP_INACTIVE_MAX_AGE_DAYS) return null;
+  return round2(0.9 - (0.9 - ACP_INACTIVE_MIN_WEIGHT) * (ageDays / ACP_INACTIVE_MAX_AGE_DAYS));
+}
+
+/** Mediana ponderată (prima valoare la care ponderea cumulată atinge p). */
+export function weightedPercentile(items: readonly { value: number; weight: number }[], p: number): number | null {
+  const sorted = items.filter((i) => i.value > 0 && i.weight > 0).sort((a, b) => a.value - b.value);
+  if (sorted.length === 0) return null;
+  const total = sorted.reduce((sum, i) => sum + i.weight, 0);
+  let acc = 0;
+  for (const item of sorted) {
+    acc += item.weight;
+    if (acc >= total * p - 1e-9) return round2(item.value);
+  }
+  return round2(sorted[sorted.length - 1]!.value);
+}
 
 /** Intervalul minim de valoare (±%) când comparabilele sunt foarte apropiate. */
 export const ACP_MIN_RANGE_PERCENT = 4;
@@ -145,6 +178,8 @@ export type AcpComparableResult = {
   timeAdjustment?: AcpTimeAdjustment;
   /** Motor v4: distanța față de proprietate (km), când ambele au coordonate. */
   distanceKm?: number | null;
+  /** Motor v5: ponderea după vechime (1 = activă). */
+  ageWeight?: number;
 };
 
 /** Motor v4: estimarea diferă cu peste acest procent de prețul de listare. */
@@ -224,6 +259,7 @@ export function runAcpAnalysis(
   );
   const timeEnabled = engineSupportsTimeAdjustment(engineVersion);
   const geoEnabled = engineSupportsGeoLocation(engineVersion);
+  const ageEnabled = engineSupportsAgeWeighting(engineVersion);
 
   // 1. Scoring determinist pentru fiecare candidat.
   const scored = candidates.map((candidate) => {
@@ -251,6 +287,11 @@ export function runAcpAnalysis(
     if (geoEnabled && row.candidate.priceSuspect && row.override !== "include") {
       eligible = false;
       reason = `Exclus: preț suspect (${row.candidate.priceSuspect}).`;
+    }
+    const ageWeight = ageEnabled ? acpAgeWeight(row.candidate.meta, now) : 1;
+    if (ageWeight === null && row.override !== "include") {
+      eligible = false;
+      reason = "Exclus: ofertă inactivă mai veche de 12 luni.";
     }
     if (row.override === "exclude") {
       eligible = false;
@@ -283,7 +324,7 @@ export function runAcpAnalysis(
           }
         : row.candidate.subject;
     const adjustment = hasPrice ? calculateAdjustments(target, subjectForAdjustments) : null;
-    return { ...row, tier, eligible, reason, adjustment, timeAdjustment };
+    return { ...row, tier, eligible, reason, adjustment, timeAdjustment, ageWeight: ageWeight ?? ACP_INACTIVE_MIN_WEIGHT };
   });
 
   // 2b. Motor v2: nota de nivel analiză despre ajustarea în timp.
@@ -373,6 +414,7 @@ export function runAcpAnalysis(
       }),
       ...(row.timeAdjustment ? { timeAdjustment: row.timeAdjustment } : {}),
       ...(geoEnabled ? { distanceKm: row.similarity.distanceKm ?? null } : {}),
+      ...(ageEnabled ? { ageWeight: row.ageWeight } : {}),
     };
 
   });
@@ -381,6 +423,8 @@ export function runAcpAnalysis(
   // (similaritate + completitudine + prospețime), nu doar după similaritate.
   comparables.sort((a, b) => {
     if (a.isSelected !== b.isSelected) return a.isSelected ? -1 : 1;
+    // Motor v5: ofertele active înaintea celor inactive.
+    if (ageEnabled && (a.ageWeight ?? 1) !== (b.ageWeight ?? 1)) return (b.ageWeight ?? 1) - (a.ageWeight ?? 1);
     if (b.relevanceScore !== a.relevanceScore) return b.relevanceScore - a.relevanceScore;
     return b.similarityScore - a.similarityScore;
   });
@@ -427,9 +471,19 @@ export function runAcpAnalysis(
   };
 
   if (targetArea !== null && targetArea > 0 && ppsmValues.length > 0) {
-    const medianPpsm = percentile(ppsmValues, 0.5)!;
-    const p25 = percentile(ppsmValues, 0.25);
-    const p75 = percentile(ppsmValues, 0.75);
+    const weighted = used
+      .filter((c) => typeof c.adjustedPricePerSqm === "number" && c.adjustedPricePerSqm > 0)
+      .map((c) => ({ value: c.adjustedPricePerSqm as number, weight: c.ageWeight ?? 1 }));
+    const useWeights = ageEnabled && weighted.some((w) => w.weight < 1);
+    const medianPpsm = useWeights ? weightedPercentile(weighted, 0.5)! : percentile(ppsmValues, 0.5)!;
+    const p25 = useWeights ? weightedPercentile(weighted, 0.25) : percentile(ppsmValues, 0.25);
+    const p75 = useWeights ? weightedPercentile(weighted, 0.75) : percentile(ppsmValues, 0.75);
+    if (useWeights) {
+      const inactive = weighted.filter((w) => w.weight < 1).length;
+      explanation.push(
+        `${inactive} comparabile sunt oferte care nu mai sunt active (din ultimele 12 luni): prețul lor e adus la zi cu indicele de preț și contează mai puțin, cu atât mai puțin cu cât sunt mai vechi (pondere între ${ACP_INACTIVE_MIN_WEIGHT} și 0,9 față de 1 pentru ofertele active). Se folosește mediana ponderată.`,
+      );
+    }
     const value = round2(medianPpsm * targetArea);
     const range = buildRange(
       value,

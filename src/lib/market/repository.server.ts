@@ -88,6 +88,8 @@ function toExisting(row: Record<string, unknown>): ExistingListing {
     priceChanges: Number(row.price_changes ?? 0),
     statusChanges: Number(row.status_changes ?? 0),
     firstSeenAt: String(row.first_seen_at),
+    lastSeenAt: (row.last_seen_at as string | null) ?? null,
+    disappearedAt: (row.disappeared_at as string | null) ?? null,
     marketEntityId: (row.market_entity_id as string | null) ?? null,
     dedupeStatus: String(row.dedupe_status ?? "unique"),
   };
@@ -266,6 +268,10 @@ export function createMarketRepository(admin: Admin): MarketRepository {
           initial_price: row.listing.price,
           first_seen_at: row.listing.observedFirstSeenAt ?? row.now,
           last_seen_at: row.listing.observedLastSeenAt ?? row.now,
+          disappeared_at:
+            row.listing.status === "active"
+              ? null
+              : (row.listing.observedDisappearedAt ?? row.listing.observedLastSeenAt ?? row.now),
           last_import_run_id: row.runId,
         })
         .select("id")

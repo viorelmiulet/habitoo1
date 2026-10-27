@@ -67,6 +67,6 @@ describe("ACP v4 — verificare de bun-simț", () => {
     expect(runAcpAnalysis(target, [cand(1, 2000)], {}, { engineVersion: 3 }).sanityCheck).toBeUndefined();
     expect(engineVersionForRerun(1)).toBe(1);
     expect(engineVersionForRerun(2)).toBe(2);
-    expect(engineVersionForRerun(3)).toBe(4);
+    expect(engineVersionForRerun(3)).toBe(5);
   });
 });

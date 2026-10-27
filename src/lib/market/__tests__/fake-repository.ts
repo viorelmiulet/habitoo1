@@ -136,13 +136,16 @@ export function createFakeRepository(): { repo: MarketRepository; store: FakeSto
         initialPrice: row.listing.price,
         priceChanges: 0,
         statusChanges: 0,
-        firstSeenAt: row.now,
-        lastSeenAt: row.now,
+        firstSeenAt: row.listing.observedFirstSeenAt ?? row.now,
+        lastSeenAt: row.listing.observedLastSeenAt ?? row.now,
         marketEntityId: row.marketEntityId,
         dedupeStatus: row.dedupeStatus,
         dedupeScore: row.dedupeScore,
         dedupeReasons: row.dedupeReasons,
-        disappearedAt: null,
+        disappearedAt:
+          row.listing.status === "active"
+            ? null
+            : (row.listing.observedDisappearedAt ?? row.listing.observedLastSeenAt ?? row.now),
         listing: row.listing,
       });
       if (row.marketEntityId) {
@@ -166,7 +169,7 @@ export function createFakeRepository(): { repo: MarketRepository; store: FakeSto
       existing.priceChanges = patch.priceChanges;
       existing.statusChanges = patch.statusChanges;
       existing.initialPrice = patch.initialPrice;
-      existing.lastSeenAt = patch.now;
+      existing.lastSeenAt = patch.listing.observedLastSeenAt ?? patch.now;
       existing.disappearedAt = patch.disappearedAt;
       if (patch.marketEntityId !== undefined) existing.marketEntityId = patch.marketEntityId;
       if (patch.dedupeStatus !== undefined) existing.dedupeStatus = patch.dedupeStatus;

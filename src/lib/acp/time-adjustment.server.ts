@@ -18,7 +18,17 @@ type AnyClient = {
 /** Seria folosită de ajustarea în timp: indicele total, nu defalcările. */
 export const ACP_TIME_INDEX_SERIES = "total";
 
-export async function loadAcpPriceIndex(admin: AnyClient): Promise<AcpPriceIndexSnapshot | null> {
+const regionKey = (v: string | null | undefined) =>
+  (v ?? "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, " ").trim();
+
+/**
+ * Indicele zonei, când există un rând pentru regiunea proprietății (localitate
+ * sau județ), altfel indicele național „RO” — exact comportamentul anterior.
+ */
+export async function loadAcpPriceIndex(
+  admin: AnyClient,
+  zone: { city?: string | null; county?: string | null } = {},
+): Promise<AcpPriceIndexSnapshot | null> {
   try {
     const { data, error } = await admin
       .from("market_price_indices")
@@ -27,7 +37,7 @@ export async function loadAcpPriceIndex(admin: AnyClient): Promise<AcpPriceIndex
       .order("period_year", { ascending: true })
       .order("period_quarter", { ascending: true });
     if (error) return null;
-    const rows = (data ?? []) as {
+    const all = (data ?? []) as {
       source: string | null;
       dataset: string | null;
       series: string | null;
@@ -38,6 +48,12 @@ export async function loadAcpPriceIndex(admin: AnyClient): Promise<AcpPriceIndex
       period_quarter: number | null;
       index_value: number | string | null;
     }[];
+    const wanted = [zone.city, zone.county].map(regionKey).filter(Boolean);
+    const regional = wanted.length
+      ? all.filter((row) => wanted.includes(regionKey(row.region)))
+      : [];
+    const chosenRegion = regional[0]?.region ?? (all.some((r) => r.region === "RO") ? "RO" : (all[0]?.region ?? null));
+    const rows = all.filter((row) => row.region === chosenRegion);
     const points = rows
       .map((row) => {
         const value =

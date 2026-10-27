@@ -18,9 +18,12 @@ export const hbsyncMarketListingSchema = z.object({
   publisher_type: z.enum(["particular", "agency", "unknown"]).nullish(),
   first_seen_at: z.string().datetime({ offset: true }).nullish(),
   last_seen_at: z.string().datetime({ offset: true }).nullish(),
+  disappeared_at: z.string().datetime({ offset: true }).nullish(),
   status: text(50), images: z.array(z.string().url().max(2000)).max(12).nullish(),
   period: text(100), crm: crmSchema.nullish(),
 });
+/** Retenția datelor de piață ACP (zile după `last_seen_at`). */
+export const MARKET_RETENTION_DAYS = 365;
 export const hbsyncMarketBodySchema = z.object({ listings: z.array(z.unknown()).min(1).max(500) });
 
 const mapping: MarketFieldMapping = {
@@ -68,12 +71,21 @@ export function normalizeHbsyncMarketListing(input: unknown):
     return { ok: false, reference: row.external_id, message: missing ?? "Moneda sau tipul proprietății nu este cunoscut." };
   }
   const firstSeenAt = row.first_seen_at ?? null;
+  const lastSeenAt = row.last_seen_at ?? firstSeenAt;
+  // Retenția ACP: 12 luni după ultima observare; nimic mai vechi nu se importă.
+  if (lastSeenAt && Date.now() - Date.parse(lastSeenAt) > MARKET_RETENTION_DAYS * 86_400_000) {
+    return { ok: false, reference: row.external_id, message: "Anunț nevăzut de peste 12 luni: nu se mai păstrează." };
+  }
+  if (row.disappeared_at && result.listing.status === "active") {
+    return { ok: false, reference: row.external_id, message: "disappeared_at se trimite doar cu status „inactive”." };
+  }
   return { ok: true, listing: {
     ...result.listing,
     publisherType: row.publisher_type ?? null,
     isPrivate: row.publisher_type === "particular" ? true : row.publisher_type === "agency" ? false : null,
     sector: row.sector ?? crm?.sector ?? null, images, importProvider: "hbsync", period,
     observedFirstSeenAt: firstSeenAt,
-    observedLastSeenAt: row.last_seen_at ?? firstSeenAt,
+    observedLastSeenAt: lastSeenAt,
+    observedDisappearedAt: result.listing.status === "active" ? null : (row.disappeared_at ?? null),
   } };
 }

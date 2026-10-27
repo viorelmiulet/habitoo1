@@ -278,6 +278,6 @@ describe("criterii și versiuni de motor", () => {
     expect(engineSupportsLiveMarketQuery(1)).toBe(false);
     expect(engineSupportsLiveMarketQuery(2)).toBe(false);
     expect(engineSupportsLiveMarketQuery(3)).toBe(true);
-    expect(ACP_CURRENT_ENGINE_VERSION).toBe(4);
+    expect(ACP_CURRENT_ENGINE_VERSION).toBe(5);
   });
 });

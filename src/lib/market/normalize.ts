@@ -94,6 +94,8 @@ export type NormalizedListing = {
   period?: string | null;
   observedFirstSeenAt?: string | null;
   observedLastSeenAt?: string | null;
+  /** Momentul real al dispariției, trimis de importuri istorice (hbsync). */
+  observedDisappearedAt?: string | null;
 };
 
 export type MarketListingStatus = "active" | "inactive" | "archived";

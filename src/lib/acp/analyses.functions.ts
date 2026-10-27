@@ -124,6 +124,14 @@ async function loadActor(context: AuthContext): Promise<Actor> {
 }
 
 /** Metadate reale de prospețime/istoric pentru o ofertă de piață. */
+/** Eticheta unei oferte de piață inactive: „ofertă din <lună an>, nu mai e activă”. */
+export function inactiveOfferLabel(lastSeenAt: string | null): string {
+  const time = lastSeenAt ? Date.parse(lastSeenAt) : NaN;
+  if (!Number.isFinite(time)) return "ofertă care nu mai e activă";
+  const month = new Date(time).toLocaleDateString("ro-RO", { month: "long", year: "numeric", timeZone: "Europe/Bucharest" });
+  return `ofertă din ${month}, nu mai e activă`;
+}
+
 function marketListingMeta(
   row: Record<string, unknown>,
   extra: { status: string; duplicateCount: number },
@@ -156,9 +164,12 @@ function marketListingMeta(
  * Indicele trimestrial pentru ajustarea în timp, citit doar din baza de date.
  * Tabel gol ⇒ `null` ⇒ motorul nu aplică nicio ajustare în timp.
  */
-async function loadPriceIndex(admin: unknown): Promise<AcpPriceIndexSnapshot | null> {
+async function loadPriceIndex(
+  admin: unknown,
+  zone: { city?: string | null; county?: string | null } = {},
+): Promise<AcpPriceIndexSnapshot | null> {
   const { loadAcpPriceIndex } = await import("./time-adjustment.server");
-  return loadAcpPriceIndex(admin as never);
+  return loadAcpPriceIndex(admin as never, zone);
 }
 
 async function loadCalibration(
@@ -485,7 +496,7 @@ async function collectCandidates(params: {
         sourceType: "portal",
         sourceName: item.active
           ? sourceNames || ACP_SOURCE_TYPE_LABELS.portal
-          : `${sourceNames || ACP_SOURCE_TYPE_LABELS.portal} (dispărută din feed)`,
+          : `${sourceNames || ACP_SOURCE_TYPE_LABELS.portal} · ${inactiveOfferLabel((row as { last_seen_at?: string | null }).last_seen_at ?? null)}`,
         marketListingId: row.id,
         title: row.title ?? row.address ?? row.url ?? "Ofertă de piață",
         locationLabel: locationLabel({
@@ -942,7 +953,7 @@ export const createAcpAnalysis = createServerFn({ method: "POST" })
         engineVersion: ACP_CURRENT_ENGINE_VERSION,
       });
       const calibration = await loadCalibration(admin, actor.organizationId);
-      const priceIndex = await loadPriceIndex(admin);
+      const priceIndex = await loadPriceIndex(admin, { city: subject.city, county: subject.county });
       const result = runAcpAnalysis(subject, candidates, {}, {
         calibration,
         priceIndex,
@@ -1157,7 +1168,7 @@ async function recalculate(
     });
     const calibration = await loadCalibration(admin, actor.organizationId);
     const engineVersion = rerunVersion;
-    const priceIndex = await loadPriceIndex(admin);
+    const priceIndex = await loadPriceIndex(admin, { city: subject.city, county: subject.county });
     const result = runAcpAnalysis(subject, candidates, overrides, {
       calibration,
       priceIndex,
@@ -1848,7 +1859,7 @@ export const recalculateAcpAsNewVersion = createServerFn({ method: "POST" })
           engineVersion: ACP_CURRENT_ENGINE_VERSION,
         });
         const calibration = await loadCalibration(admin, actor.organizationId);
-        const priceIndex = await loadPriceIndex(admin);
+        const priceIndex = await loadPriceIndex(admin, { city: subject.city, county: subject.county });
         const result = runAcpAnalysis(subject, candidates, overrides, {
           calibration,
           priceIndex,
