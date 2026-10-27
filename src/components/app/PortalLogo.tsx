@@ -11,6 +11,7 @@ import facebookLogo from "@/assets/portals/facebook.svg";
 import homepitchLogo from "@/assets/portals/homepitch.png";
 import imobiliareRoLogo from "@/assets/portals/imobiliare_ro.png";
 import imospotLogo from "@/assets/portals/imospot.png";
+import imo24Logo from "@/assets/portals/imo24.png";
 import imoveLogo from "@/assets/portals/imove.png";
 import lacheieLogo from "@/assets/portals/lacheie.png";
 import olxLogo from "@/assets/portals/olx.png";
@@ -30,6 +31,7 @@ const PORTAL_LOGOS: Record<string, string> = {
   imove: imoveLogo,
   lacheie: lacheieLogo,
   imospot: imospotLogo,
+  imo24: imo24Logo,
   homepitch: homepitchLogo,
   imobiliare_ro: imobiliareRoLogo,
   storia: storiaLogo,

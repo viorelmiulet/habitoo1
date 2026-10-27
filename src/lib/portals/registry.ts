@@ -10,6 +10,7 @@
  * Nu se modifică baza de date, UI-ul sau managementul de secrete.
  */
 import { CRM_URL } from "@/lib/host";
+import { IMO24_KEY_FORMAT_MESSAGE, isValidImo24Key } from "./imo24/key";
 
 export type PortalId = string;
 
@@ -54,7 +55,7 @@ export type PortalConfigField = {
   secret?: boolean;
   optional?: boolean;
   /** Validare suplimentară de format, aplicată în UI și server-side. */
-  validate?: "email";
+  validate?: "email" | "imo24_key";
   /** Unde se persistă: identificatorul contului, credențialul criptat sau setările. */
   target: "external_account_id" | "credentials" | "settings" | "webhook_secret";
 };
@@ -272,6 +273,35 @@ export const PORTALS: PortalDefinition[] = [
     docs: "https://www.imospot.ro/api/v1",
     notes:
       "Publicarea este PUSH direct, idempotentă după external_id (derivat din identificatorul intern al ofertei). Retragerea arhivează anunțul la Imospot, nu îl șterge definitiv, iar o nouă publicare îl readuce live. Cerințe obligatorii verificate înainte de trimitere: titlu de minimum 8 caractere, descriere de minimum 60 caractere, preț întreg pozitiv, telefon de contact, județ și localitate, minimum o imagine publicabilă. O proprietate cu ambele tranzacții active generează două anunțuri separate (vânzare și închiriere). Promovările plătite nu sunt trimise din Habitoo.",
+  },
+  {
+    id: "imo24",
+    display_name: "imo24.ro",
+    description:
+      "imo24.ro expune un API REST de publicare: Habitoo se conectează direct cu cheia de agenție generată în panoul imo24.ro. În această etapă este disponibil doar testul conexiunii; publicarea anunțurilor urmează.",
+    logo: "imo24",
+    status: "available",
+    directions: ["habitoo_to_portal"],
+    // Cheia (i24_<8 hex>_<40 hex>) este GENERATĂ DE AGENȚIE în panoul imo24.ro.
+    authentication: ["portal_api_key"],
+    capabilities: ["test_connection"],
+    configuration_schema: {
+      fields: [
+        {
+          key: "api_key",
+          label: "Cheie API imo24.ro",
+          help: "Cheia de agenție generată în panoul imo24.ro (format i24_<8 hex>_<40 hex>). Se afișează o singură dată la generare; o salvăm criptat și o trimitem ca Bearer token. Pentru publicare are nevoie de scopul „scriere”.",
+          placeholder: "i24_xxxxxxxx_…",
+          secret: true,
+          validate: "imo24_key",
+          target: "credentials",
+        },
+      ],
+    },
+    website: "https://imo24.ro",
+    docs: "https://imo24.ro/api/v1",
+    notes:
+      "API imo24 v1.0.1, doar HTTPS pe https://imo24.ro/api/v1. Testul conexiunii folosește GET /me (agenția, starea pachetului, sloturi libere/total și scopurile cheii). Limita este 600 de cereri pe oră pe cheie; un răspuns 401 nu se reîncearcă. Publicarea anunțurilor, imaginile, creditele și promovarea nu sunt încă implementate.",
   },
   {
     id: "homepitch",
@@ -599,7 +629,7 @@ export function validatePortalConfigValues(
   if (!definition) return null;
   const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   for (const field of definition.configuration_schema.fields) {
-    if (field.validate !== "email") continue;
+    if (!field.validate) continue;
     const raw =
       field.target === "external_account_id"
         ? values.externalAccountId
@@ -609,6 +639,10 @@ export function validatePortalConfigValues(
     const value = (raw ?? "").trim();
     // Câmpul necompletat nu e validat aici: lipsa lui e semnalată la conectare.
     if (value.length === 0) continue;
+    if (field.validate === "imo24_key") {
+      if (!isValidImo24Key(value)) return IMO24_KEY_FORMAT_MESSAGE;
+      continue;
+    }
     if (!emailPattern.test(value)) {
       return `„${field.label}" trebuie să fie o adresă de email validă.`;
     }
