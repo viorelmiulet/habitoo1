@@ -10068,7 +10068,16 @@ export type Database = {
           isSetofReturn: true
         }
       }
+      close_stale_portal_bulk_jobs: { Args: { _org?: string }; Returns: number }
+      close_stale_portal_publish_jobs: {
+        Args: { _org?: string }
+        Returns: number
+      }
       close_stale_republish_batches: {
+        Args: { _org?: string }
+        Returns: number
+      }
+      close_stale_status_withdrawals: {
         Args: { _org?: string }
         Returns: number
       }
@@ -10685,6 +10694,35 @@ export type Database = {
         }
         Returns: undefined
       }
+      start_portal_bulk_job: {
+        Args: {
+          _accepted: Json
+          _org: string
+          _requested_by: string
+          _skipped: Json
+        }
+        Returns: Json
+      }
+      start_portal_contact_updates: {
+        Args: {
+          _actor: string
+          _org: string
+          _pairs: Json
+          _superadmin: boolean
+        }
+        Returns: number
+      }
+      start_portal_publish_jobs: {
+        Args: {
+          _actor: string
+          _jobs: Json
+          _org: string
+          _property: string
+          _superadmin: boolean
+          _sync_existing: boolean
+        }
+        Returns: string[]
+      }
       start_portal_republish_batch: {
         Args: {
           _busy_message: string
@@ -10698,6 +10736,16 @@ export type Database = {
           _skipped_items: Json
           _superadmin: boolean
           _sync_existing: boolean
+        }
+        Returns: Json
+      }
+      start_status_withdrawals: {
+        Args: {
+          _actor: string
+          _manual: Json
+          _org: string
+          _queued: Json
+          _reason: string
         }
         Returns: Json
       }
