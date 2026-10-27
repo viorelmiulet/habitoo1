@@ -106,7 +106,8 @@ describe("worker-ul cozii", () => {
       : new Response(new Uint8Array([1, 2, 3]), { status: 200, headers: { "content-type": "image/jpeg" } })) as unknown as typeof fetch;
     const { runListingImages } = await import("./listing-images.server");
     const totals = await runListingImages({ admin: fakeAdmin(), fetchImpl, baseUrl: "https://crm.test" });
-    expect(totals).toEqual({ done: 2, pending: 0, failed: 1 });
+    // Poza stricată: prima încercare rămâne în așteptare, a doua o închide.
+    expect(totals).toEqual({ done: 2, pending: 1, failed: 1 });
     const images = db.listings[0]!.images!;
     expect(isMirroredUrl(images[0]!)).toBe(true);
     expect(images[0]).toMatch(/^https:\/\/crm\.test\/api\/public\/listings\/media\/.+\?p=ir-1%2F0-/);
