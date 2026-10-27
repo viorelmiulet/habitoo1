@@ -1156,7 +1156,7 @@ export const PropertyPortalsCard = forwardRef<
       </div>
 
       {showPortalJournal ? (
-        <aside className="space-y-4">
+        <aside className="space-y-4" data-tour="publishing-journal">
           <Panel className="p-5">
             <h2 className="text-lg font-semibold">Jurnal portal</h2>
             {(journal.data?.length ?? 0) === 0 ? (
