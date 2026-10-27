@@ -1,5 +1,10 @@
 # SEO public — pasul 1a
 
+## Ghiduri interactive — etapa 4
+- [ ] Eliminare inventar SuperAdmin și completare 13 ghiduri MAP/import/ACP/AI/chat/bara de sus
+- [ ] Teste motor și siguranță, parcurgere desktop/telefon fără generări/salvări/importuri/trimiteri
+- [ ] Inventar actualizat și capturi ghiduri 1, 6, 9 în Files
+
 ## Trimite unui colaborator — ofertă neutră
 - [x] Cod aleator revocabil, pagină și fotografii originale fără watermark aplicat, metadate foto eliminate; noindex, fără identitate/ID-uri/adresă exactă/comision în DTO/HTML și previzualizare neutră
 - [x] Dialog cu căutare trei agenți parteneri verificată, destinatar manual/canale/mesaj editabil, generare și dezactivare; butoane în detaliu/listă și activitate recitită în istoricul proprietății
